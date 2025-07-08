@@ -1,4 +1,3 @@
-#ifdef LUA
 #include "catch/catch.hpp"
 
 #include "avatar.h"
@@ -25,6 +24,9 @@
 #include <optional>
 #include <string>
 #include <stdexcept>
+
+// workaround for https://github.com/llvm/llvm-project/issues/113087
+#define CHECK_TUPLE(...) CHECK((__VA_ARGS__))
 
 static void run_lua_test_script( sol::state &lua, const std::string &script_name )
 {
@@ -105,28 +107,28 @@ TEST_CASE( "lua_called_from_cpp", "[lua]" )
     REQUIRE( out_data["i"].valid() );
     REQUIRE( out_data["s"].valid() );
 
-    CHECK( out_data["i"] == 0 );
+    CHECK_TUPLE( out_data["i"] == 0 );
     CHECK( out_data.get<std::string>( "s" ).empty() );
 
     // Execute function
     ret = lua_func( 4, "Bright " );
 
     CHECK( ret == 8 );
-    CHECK( out_data["i"] == 4 );
+    CHECK_TUPLE( out_data["i"] == 4 );
     CHECK( out_data.get<std::string>( "s" ) == "Bright " );
 
     // Execute function again
     ret = lua_func( 6, "Nights" );
 
     CHECK( ret == 12 );
-    CHECK( out_data["i"] == 10 );
+    CHECK_TUPLE( out_data["i"] == 10 );
     CHECK( out_data.get<std::string>( "s" ) == "Bright Nights" );
 
     // And again, but this time with 1 parameter
     ret = lua_func( 1 );
 
     CHECK( ret == 2 );
-    CHECK( out_data["i"] == 11 );
+    CHECK_TUPLE( out_data["i"] == 11 );
     CHECK( out_data.get<std::string>( "s" ) == "Bright Nights" );
 }
 
@@ -769,5 +771,3 @@ TEST_CASE( "lua_units_functions", "[lua]" )
     REQUIRE( lua_mass_grams == units::to_gram( units::from_kilogram( mass_kilograms ) ) );
     REQUIRE( lua_volume_milliliters == units::to_milliliter( units::from_liter( volume_liters ) ) );
 }
-
-#endif

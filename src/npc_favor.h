@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_NPC_FAVOR_H
-#define CATA_SRC_NPC_FAVOR_H
 
 #include <string>
 
@@ -35,4 +33,4 @@ struct npc_favor {
     void deserialize( JsonIn &jsin );
 };
 
-#endif // CATA_SRC_NPC_FAVOR_H
+

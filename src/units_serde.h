@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UNITS_SERDE_H
-#define CATA_SRC_UNITS_SERDE_H
 
 /**
  * Measurement units (de-)serialization.
@@ -114,4 +112,4 @@ void dump_to_json_string( T t, JsonOut &jsout,
     jsout.write( str );
 }
 
-#endif // CATA_SRC_UNITS_SERDE_H
+

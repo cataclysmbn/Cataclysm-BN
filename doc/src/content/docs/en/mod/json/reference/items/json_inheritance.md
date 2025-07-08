@@ -18,6 +18,8 @@ The identifier of the item you wish to copy properties from. This allows you to 
 of an item **of the same type** and only provide entries that should change from the item you copied
 from.
 
+Giving the new item the same `"id"` as the `copy-from` target _replaces_ the original item.
+
 ### `extends`
 
 Modders can add an `"extends"` field to their definition to append entries to a list instead of

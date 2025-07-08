@@ -26,7 +26,10 @@
           { "id": [ "overlay_worn_shield_leather_large", "overlay_wielded_shield_leather_large" ], "fg": 17 },
           { "id": "shield_banded_large", "fg": 18 },
           { "id": [ "overlay_worn_shield_banded_large", "overlay_wielded_shield_banded_large" ], "fg": 19 },
-          { "id": [ "f_hive_young", "f_hive_growing", "f_hive_recovering" ], "fg": 20 },
+          {
+            "id": [ "beehive_empty", "overlay_wielded_beehive_empty", "f_hive_young", "f_hive_growing", "f_hive_recovering" ],
+            "fg": 20
+          },
           { "id": "f_hive_ready", "fg": 21 },
           { "id": "razor_macuahuitl", "fg": 22 },
           { "id": "overlay_wielded_razor_macuahuitl", "fg": 23 },
@@ -101,7 +104,9 @@
           { "id": "spear_tooth", "fg": 89 },
           { "id": "overlay_wielded_spear_tooth", "fg": 90 },
           { "id": [ "spear_stinger", "spear_triffid" ], "fg": 91 },
-          { "id": [ "overlay_wielded_spear_stinger", "overlay_wielded_spear_triffid" ], "fg": 92 }
+          { "id": [ "overlay_wielded_spear_stinger", "overlay_wielded_spear_triffid" ], "fg": 92 },
+          { "id": "scouter", "fg": 93 },
+          { "id": "overlay_worn_scouter", "fg": 94 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

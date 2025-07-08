@@ -237,8 +237,8 @@
     "difficulty": 3,
     "time": "1 h",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 1 } ],
-    "components": [ [ [ "2x4", 30 ] ], [ [ "wire", 6 ] ] ]
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 1 }, { "id": "SANDING", "level": 1 } ],
+    "components": [ [ [ "2x4", 30 ] ], [ [ "wire", 6 ] ], [ [ "varnish", 15, "LIST" ] ] ]
   },
   {
     "type": "recipe",
@@ -250,8 +250,12 @@
     "time": "12 m",
     "autolearn": true,
     "tools": [ [ [ "surface_heat", 20, "LIST" ] ] ],
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_W", "level": 1 } ],
-    "components": [ [ [ "2x4", 6 ] ], [ [ "copper_scrap_equivalent", 2, "LIST" ] ] ]
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_W", "level": 1 }, { "id": "SANDING", "level": 1 } ],
+    "components": [
+      [ [ "2x4", 6 ] ],
+      [ [ "copper_scrap_equivalent", 2, "LIST" ], [ "cartridgebrass", 100 ] ],
+      [ [ "varnish", 3, "LIST" ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -584,11 +588,12 @@
     "time": "30 m",
     "autolearn": true,
     "using": [ [ "adhesive", 1 ], [ "waterproofing", 1 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SAW_W", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SAW_W", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "tools": [ [ [ "surface_heat", 10, "LIST" ] ] ],
     "components": [
       [ [ "2x4", 2 ] ],
-      [ [ "wire", 1 ], [ "scrap", 2 ], [ "copper_scrap_equivalent", 1, "LIST" ] ],
+      [ [ "varnish", 1, "LIST" ] ],
+      [ [ "wire", 1 ], [ "scrap", 2 ], [ "copper_scrap_equivalent", 1, "LIST" ], [ "cartridgebrass", 50 ] ],
       [ [ "fabric_standard", 2, "LIST" ], [ "felt_patch", 2 ], [ "fabric_hides_any", 2, "LIST" ] ]
     ]
   },

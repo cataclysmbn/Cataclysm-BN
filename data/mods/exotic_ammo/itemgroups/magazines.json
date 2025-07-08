@@ -1,0 +1,46 @@
+[
+  {
+    "type": "item_group",
+    "id": "mags_obscure",
+    "//": "Magazines for imported firearms.",
+    "items": [
+      [ "makarovmag", 10 ],
+      [ "skorpion82mag", 20 ],
+      [ "af2011a1mag", 10 ],
+      [ "ak74mag", 90 ],
+      [ "tokarevmag", 10 ],
+      [ "ppshdrum", 10 ],
+      [ "ppshmag", 20 ]
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mags_pistol_common",
+    "//": "Factory specification pistol magazines commonly owned by citizens.",
+    "items": [ [ "m1911mag_10rd_38super", 15 ], [ "500_speedloader5", 15 ], [ "fn57mag", 10 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "mags_pistol_rare",
+    "//": "Aftermarket or otherwise uncommon pistol magazines excluding milspec.",
+    "items": [ [ "454_speedloader5", 1 ], [ "454_speedloader6", 1 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "mags_cop",
+    "//": "Standard issue police magazines.",
+    "items": [ [ "fn57mag", 15 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "mags_swat",
+    "//": "Magazines issued to paramilitary forces in addition to standard police issue.",
+    "items": [ [ "fnp90mag", 20 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "mags_smg_rare",
+    "//": "Aftermarket or otherwise uncommon SMG magazines excluding milspec.",
+    "items": [ [ "fnp90mag", 50 ] ]
+  }
+]

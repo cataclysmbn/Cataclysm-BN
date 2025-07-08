@@ -3,13 +3,51 @@
     "type": "tool_quality",
     "id": "CUT",
     "name": { "str": "cutting" },
-    "usages": [ [ 1, [ "salvage", "inscribe", "cauterize" ] ] ]
+    "usages": [ [ 1, [ "inscribe", "cauterize" ] ] ],
+    "salvagable_materials": [
+      "acidchitin",
+      "alien_resin",
+      "bone",
+      "chitin",
+      "cotton",
+      "faux_fur",
+      "fur",
+      "kevlar",
+      "kevlar_rigid",
+      "leather",
+      "neoprene",
+      "nomex",
+      "nylon",
+      "plastic",
+      "rubber",
+      "wood",
+      "wool"
+    ]
   },
   {
     "type": "tool_quality",
     "id": "CUT_FINE",
     "name": { "str": "fine cutting" },
-    "usages": [ [ 1, [ "salvage", "inscribe", "cauterize", "enzlave" ] ] ]
+    "usages": [ [ 1, [ "inscribe", "cauterize", "enzlave" ] ] ],
+    "salvagable_materials": [
+      "acidchitin",
+      "alien_resin",
+      "bone",
+      "chitin",
+      "cotton",
+      "faux_fur",
+      "fur",
+      "kevlar",
+      "kevlar_rigid",
+      "leather",
+      "neoprene",
+      "nomex",
+      "nylon",
+      "plastic",
+      "rubber",
+      "wood",
+      "wool"
+    ]
   },
   {
     "type": "tool_quality",
@@ -76,12 +114,15 @@
     "type": "tool_quality",
     "id": "SAW_M",
     "name": { "str": "metal sawing" },
-    "usages": [ [ 2, [ "HACKSAW", "saw_barrel" ] ] ]
+    "usages": [ [ 2, [ "HACKSAW", "saw_barrel" ] ] ],
+    "salvagable_materials": [ "steel", "budget_steel", "tin", "silver", "gold", "copper", "iron" ]
   },
   {
     "type": "tool_quality",
     "id": "SAW_M_FINE",
-    "name": { "str": "fine metal sawing" }
+    "copy-from": "SAW_M",
+    "name": { "str": "fine metal sawing" },
+    "extend": { "salvagable_materials": [ "hardsteel" ] }
   },
   {
     "type": "tool_quality",
@@ -283,5 +324,30 @@
     "type": "tool_quality",
     "id": "FILTER",
     "name": { "str": "filtration" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "SANDING",
+    "name": { "str": "sanding" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "HV_INSULATION",
+    "name": { "str": "high voltage insulation" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "VOLT_MEASURE",
+    "name": { "str": "voltage measurement" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "PULL_FINE",
+    "name": { "str": "fine pulling" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "CUT_M",
+    "name": { "str": "metal cutting" }
   }
 ]

@@ -36,10 +36,28 @@
     "material": [ "leather" ]
   },
   {
+    "id": "string_36_plastic",
+    "copy-from": "string_36",
+    "type": "GENERIC",
+    "name": { "str": "long plastic cord" },
+    "description": "A 3-foot (or about 90 cm) long piece of plastic cord.  Useful for a variety of purposes, but it's not as flexible as string.",
+    "proportional": { "price": 0.5 },
+    "material": [ "plastic" ]
+  },
+  {
+    "id": "string_6_plastic",
+    "copy-from": "string_6",
+    "type": "GENERIC",
+    "name": { "str": "short plastic cord" },
+    "description": "A 6-inch (or about 15 cm) long piece of plastic cord.  Useful for a variety of purposes, but it's not as flexible as string.",
+    "proportional": { "price": 0.5 },
+    "material": [ "plastic" ]
+  },
+  {
     "id": "string_6",
     "type": "GENERIC",
     "stackable": true,
-    "category": "spare_parts",
+    "category": "scrap_fabric",
     "name": { "str": "short string" },
     "description": "A 6-inch (or about 15 cm) long piece of cotton string.",
     "weight": "6 g",
@@ -77,6 +95,24 @@
     "description": "A 30-foot (or about 9 m) long rope.  Useful for keeping yourself safe from falls.",
     "armor_data": { "covers": [ "torso" ], "coverage": 10, "encumbrance": 12, "material_thickness": 6 },
     "proportional": { "weight": 5, "volume": 5, "price": 5 }
+  },
+  {
+    "id": "rope_6_plastic",
+    "copy-from": "rope_6",
+    "type": "GENERIC",
+    "name": { "str": "short plastic rope" },
+    "description": "A 6-foot (or about 180 cm) long piece of plastic or nylon rope.  Too small to be of much use.",
+    "proportional": { "price": 0.5 },
+    "material": [ "plastic" ]
+  },
+  {
+    "id": "rope_30_plastic",
+    "copy-from": "rope_30",
+    "type": "GENERIC",
+    "name": { "str": "long plastic rope" },
+    "description": "A 30-foot (or about 9 m) length of plastic or nylon rope.  Useful for keeping yourself safe from falls.",
+    "proportional": { "price": 0.5 },
+    "material": [ "plastic" ]
   },
   {
     "id": "vine_6",
@@ -127,7 +163,7 @@
   {
     "id": "stick_fiber",
     "type": "COMESTIBLE",
-    "category": "spare_parts",
+    "category": "other",
     "name": "fibrous stalk",
     "symbol": "=",
     "material": "dry_plant",

@@ -1,0 +1,11 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "no_global_uniques",
+    "name": "No Global Uniques",
+    "authors": [ "YellowbakaFan" ],
+    "description": "Makes all special locations no longer globally unique!!",
+    "category": "rebalance",
+    "dependencies": [ "bn" ]
+  }
+]

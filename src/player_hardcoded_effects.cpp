@@ -1073,6 +1073,35 @@ void Character::hardcoded_effects( effect &it )
         }
 
         if( get_fatigue() <= 10 && !has_effect( effect_narcosis ) && !is_hibernating() ) {
+            // Mycus folks upgrade once per night of sleep.
+            if( has_trait( trait_THRESH_MYCUS ) ) {
+                mutate_category( mutation_category_id( "MYCUS" ) );
+            }
+
+            // Check mutation category strengths to see if we're mutated enough to get a dream
+            mutation_category_id highcat = get_highest_category();
+            int highest = mutation_category_level[highcat];
+
+            // Determine the strength of effects or dreams based upon category strength
+            int strength = 0; // Category too weak for any effect or dream
+            if( crossed_threshold() ) {
+                strength = 4; // Post-human.
+            } else if( highest >= 20 && highest < 35 ) {
+                strength = 1; // Low strength
+            } else if( highest >= 35 && highest < 50 ) {
+                strength = 2; // Medium strength
+            } else if( highest >= 50 ) {
+                strength = 3; // High strength
+            }
+
+            // Get a dream if category strength is high enough.
+            if( strength != 0 ) {
+                // Select a dream
+                std::string dream = dreams::get_random_for_category( highcat, strength );
+                if( !dream.empty() && x_in_y( strength + 5, 10 ) ) {
+                    add_msg( dream );
+                }
+            }
             set_fatigue( 0 );
             if( get_sleep_deprivation() < sleep_deprivation_levels::harmless ) {
                 add_msg_if_player( m_good, _( "You feel well rested." ) );
@@ -1112,43 +1141,6 @@ void Character::hardcoded_effects( effect &it )
             }
             if( has_trait( trait_WATERSLEEP ) ) {
                 mod_fatigue( -3 ); // Fish sleep less in water
-            }
-        }
-
-        // Check mutation category strengths to see if we're mutated enough to get a dream
-        mutation_category_id highcat = get_highest_category();
-        int highest = mutation_category_level[highcat];
-
-        // Determine the strength of effects or dreams based upon category strength
-        int strength = 0; // Category too weak for any effect or dream
-        if( crossed_threshold() ) {
-            strength = 4; // Post-human.
-        } else if( highest >= 20 && highest < 35 ) {
-            strength = 1; // Low strength
-        } else if( highest >= 35 && highest < 50 ) {
-            strength = 2; // Medium strength
-        } else if( highest >= 50 ) {
-            strength = 3; // High strength
-        }
-
-        // Get a dream if category strength is high enough.
-        if( strength != 0 ) {
-            //Once every 6 / 3 / 2 hours, with a bit of randomness
-            if( calendar::once_every( 6_hours / strength ) && one_in( 3 ) ) {
-                // Select a dream
-                std::string dream = dreams::get_random_for_category( highcat, strength );
-                if( !dream.empty() ) {
-                    add_msg_if_player( dream );
-                }
-                // Mycus folks upgrade in their sleep.
-                if( has_trait( trait_THRESH_MYCUS ) ) {
-                    if( one_in( 8 ) ) {
-                        mutate_category( mutation_category_id( "MYCUS" ) );
-                        mod_stored_nutr( 10 );
-                        mod_thirst( 10 );
-                        mod_fatigue( 5 );
-                    }
-                }
             }
         }
 

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATALUA_LOG_H
-#define CATA_SRC_CATALUA_LOG_H
 
 #include <deque>
 #include <string>
@@ -48,4 +46,4 @@ lua_log_handler &get_lua_log_instance();
 
 } // namespace cata
 
-#endif // CATA_SRC_CATALUA_LOG_H
+

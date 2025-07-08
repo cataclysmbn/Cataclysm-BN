@@ -36,7 +36,7 @@
       "rotation": 1,
       "palettes": [ "FEMA_camp" ],
       "terrain": { "C": "t_floor", "o": "t_floor", "R": "t_floor", "s": "t_floor", "U": "t_floor", "c": "t_region_soil" },
-      "items": { "C": { "item": "kitchen", "chance": 30 }, "X": { "item": "mil_food", "chance": 70 } }
+      "items": { "C": { "item": "kitchen", "chance": 50, "repeat": 2 }, "X": { "item": "mil_food", "chance": 70, "repeat": [ 1, 3 ] } }
     }
   }
 ]

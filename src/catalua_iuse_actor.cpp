@@ -1,5 +1,3 @@
-#if defined(LUA)
-
 #include "catalua_iuse_actor.h"
 
 #include "catalua_impl.h"
@@ -43,5 +41,3 @@ std::unique_ptr<iuse_actor> lua_iuse_actor::clone() const
 {
     return std::make_unique<lua_iuse_actor>( *this );
 }
-
-#endif // LUA

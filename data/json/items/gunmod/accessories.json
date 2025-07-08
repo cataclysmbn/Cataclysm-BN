@@ -14,7 +14,7 @@
     "color": "dark_gray",
     "location": "accessories",
     "mod_target_category": [ [ "BOWS" ] ],
-    "dispersion_modifier": -100
+    "dispersion_modifier": -250
   },
   {
     "id": "bow_stabilizer",
@@ -31,7 +31,7 @@
     "color": "brown",
     "location": "stabilizer",
     "mod_target_category": [ [ "BOWS" ] ],
-    "dispersion_modifier": -100
+    "dispersion_modifier": -400
   },
   {
     "id": "bow_stabilizer_set",
@@ -48,7 +48,7 @@
     "color": "brown",
     "location": "stabilizer",
     "mod_target_category": [ [ "BOWS" ] ],
-    "dispersion_modifier": -150,
+    "dispersion_modifier": -500,
     "flags": [ "NEEDS_UNFOLD" ]
   },
   {
@@ -66,7 +66,7 @@
     "color": "brown",
     "location": "dampening",
     "mod_target_category": [ [ "BOWS" ], [ "S_XBOWS" ], [ "M_XBOWS" ] ],
-    "dispersion_modifier": -50,
+    "dispersion_modifier": -100,
     "loudness_modifier": -8
   },
   {

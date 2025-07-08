@@ -1003,6 +1003,9 @@ static void draw_ascii( ui_adaptor &ui,
             } else if( blink && overmap_buffer.is_path( omp ) ) {
                 ter_color = c_light_blue;
                 ter_sym = "!";
+            } else if( blink && uistate.overmap_highlighted_omts.contains( omp ) ) {
+                ter_color = c_pink;
+                ter_sym = "&";
             } else if( blink && showhordes && los &&
                        overmap_buffer.get_horde_size( omp ) >= HORDE_VISIBILITY_SIZE ) {
                 // Display Hordes only when within player line-of-sight
@@ -1420,6 +1423,8 @@ static void draw_om_sidebar(
         print_hint( "TOGGLE_FAST_SCROLL", fast_scroll ? c_pink : c_magenta );
         print_hint( "TOGGLE_FOREST_TRAILS", uistate.overmap_show_forest_trails ? c_pink : c_magenta );
         print_hint( "TOGGLE_OVERMAP_WEATHER", uistate.overmap_visible_weather ? c_pink : c_magenta );
+        print_hint( "TOGGLE_DEFAULT_0", uistate.overmap_default_0 ? c_pink : c_magenta );
+        print_hint( "SET_CUSTOM_WAYPOINT", player_character.custom_waypoint ? c_pink : c_magenta );
         print_hint( "HELP_KEYBINDINGS" );
         print_hint( "QUIT" );
     }
@@ -1548,6 +1553,7 @@ static bool search( const ui_adaptor &om_ui, tripoint_abs_omt &curs, const tripo
     std::string term = string_input_popup()
                        .title( _( "Search term:" ) )
                        .description( _( "Multiple entries separated with comma (,). Excludes starting with hyphen (-)." ) )
+                       .identifier( "overmap" )
                        .query_string();
     if( term.empty() ) {
         return false;
@@ -1913,12 +1919,12 @@ static std::vector<tripoint_abs_omt> get_overmap_path_to( const tripoint_abs_omt
     }
 }
 
-static int overmap_zoom_level = DEFAULT_TILESET_ZOOM;
+static float overmap_zoom_level = DEFAULT_TILESET_ZOOM;
 
 static tripoint_abs_omt display( const tripoint_abs_omt &orig,
                                  const draw_data_t &data = draw_data_t() )
 {
-    const int previous_zoom = g->get_zoom();
+    const float previous_zoom = g->get_zoom();
     g->set_zoom( overmap_zoom_level );
     on_out_of_scope reset_zoom( [&]() {
         overmap_zoom_level = g->get_zoom();
@@ -1989,6 +1995,8 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
     ictxt.register_action( "TOGGLE_OVERMAP_WEATHER" );
     ictxt.register_action( "TOGGLE_FOREST_TRAILS" );
     ictxt.register_action( "MISSIONS" );
+    ictxt.register_action( "TOGGLE_DEFAULT_0" );
+    ictxt.register_action( "SET_CUSTOM_WAYPOINT" );
 
     if( data.debug_editor ) {
         ictxt.register_action( "PLACE_TERRAIN" );
@@ -2003,7 +2011,9 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
     std::optional<tripoint> mouse_pos;
     std::chrono::time_point<std::chrono::steady_clock> last_blink = std::chrono::steady_clock::now();
     grids_draw_data grids_data;
-
+    if( uistate.overmap_default_0 ) {
+        curs.z() = 0;
+    }
 
     ui.on_redraw( [&]( ui_adaptor & ui ) {
         draw( ui, curs, orig, uistate.overmap_show_overlays,
@@ -2011,6 +2021,7 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
     } );
 
     do {
+
         ui_manager::redraw();
 #if (defined TILES || defined _WIN32 || defined WINDOWS )
         int scroll_timeout = get_option<int>( "EDGE_SCROLL" );
@@ -2123,6 +2134,7 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
             uistate.overmap_show_city_labels = !uistate.overmap_show_city_labels;
         } else if( action == "TOGGLE_EXPLORED" ) {
             overmap_buffer.toggle_explored( curs );
+            uistate.overmap_highlighted_omts.erase( curs );
         } else if( action == "TOGGLE_MARK_PATH" ) {
             overmap_buffer.toggle_path( curs );
         } else if( action == "TOGGLE_OVERMAP_WEATHER" ) {
@@ -2131,6 +2143,20 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
             fast_scroll = !fast_scroll;
         } else if( action == "TOGGLE_FOREST_TRAILS" ) {
             uistate.overmap_show_forest_trails = !uistate.overmap_show_forest_trails;
+        } else if( action == "TOGGLE_DEFAULT_0" ) {
+            if( uistate.overmap_default_0 ) {
+                curs.z() = orig.z();
+            } else {
+                curs.z() = 0;
+            }
+            uistate.overmap_default_0 = !uistate.overmap_default_0;
+        } else if( action == "SET_CUSTOM_WAYPOINT" ) {
+            avatar &player_character = get_avatar();
+            if( player_character.custom_waypoint != nullptr ) {
+                player_character.custom_waypoint = nullptr;
+            } else {
+                player_character.custom_waypoint = std::make_unique<tripoint_abs_omt>( curs );
+            }
         } else if( action == "SEARCH" ) {
             if( !search( ui, curs, orig ) ) {
                 continue;

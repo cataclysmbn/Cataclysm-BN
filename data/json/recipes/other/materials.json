@@ -91,7 +91,7 @@
     "time": "54 m",
     "autolearn": true,
     "charges": 4,
-    "byproducts": [ [ "seed_cotton_boll", 2 ] ],
+    "byproducts": [ [ "seed_cotton_boll", 1 ] ],
     "components": [ [ [ "cotton_boll", 1 ] ] ]
   },
   {
@@ -103,7 +103,7 @@
     "time": "9 m",
     "autolearn": true,
     "charges": 4,
-    "byproducts": [ [ "seed_cotton_boll", 2 ] ],
+    "byproducts": [ [ "seed_cotton_boll", 1 ] ],
     "tools": [ [ [ "carding_paddles", -1 ] ] ],
     "components": [ [ [ "cotton_boll", 1 ] ] ]
   },
@@ -199,7 +199,7 @@
     "time": "7 m 30 s",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "string_36", 6 ], [ "string_6", 36 ] ] ]
+    "components": [ [ [ "string_36", 6 ], [ "string_6", 36 ], [ "string_36_plastic", 6 ] ] ]
   },
   {
     "type": "recipe",
@@ -269,8 +269,7 @@
     "difficulty": 2,
     "time": "8 m",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 3 } ],
-    "tools": [ [ [ "boltcutters", -1 ], [ "toolset", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "CUT_M", "level": 1 } ],
     "components": [ [ [ "wire", 2 ] ] ]
   },
   {
@@ -608,7 +607,6 @@
     "components": [
       [
         [ "plastic_scrap", 10 ],
-        [ "button_plastic", 3 ],
         [ "bottle_folding", 4 ],
         [ "plastic_six_dice", 10 ],
         [ "bag_zipper", 10 ],
@@ -1048,12 +1046,9 @@
     "difficulty": 2,
     "time": "5 m",
     "autolearn": [ [ "fabrication", 4 ] ],
+    "qualities": [ { "id": "PULL_FINE", "level": 2 }, { "id": "CUT_M", "level": 1 } ],
     "book_learn": [ [ "textbook_armwest", 1 ], [ "textbook_fabrication", 1 ], [ "recipe_melee", 1 ] ],
-    "tools": [
-      [ [ "pliers", -1 ], [ "multitool", -1 ], [ "toolset", -1 ] ],
-      [ [ "cutting_wire_standard", 1, "LIST" ] ],
-      [ [ "cu_pipe", -1 ], [ "cudgel", -1 ] ]
-    ],
+    "tools": [ [ [ "cu_pipe", -1 ], [ "cudgel", -1 ] ] ],
     "components": [ [ [ "wire", 1 ] ] ]
   },
   {
@@ -1067,8 +1062,12 @@
     "time": "30 m",
     "autolearn": [ [ "fabrication", 4 ] ],
     "book_learn": [ [ "textbook_armwest", 2 ], [ "textbook_fabrication", 2 ], [ "recipe_melee", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "ANVIL", "level": 1 }, { "id": "DRILL", "level": 2 } ],
-    "tools": [ [ [ "pliers", -1 ], [ "multitool", -1 ], [ "toolset", -1 ] ] ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "ANVIL", "level": 1 },
+      { "id": "DRILL", "level": 2 },
+      { "id": "PULL_FINE", "level": 2 }
+    ],
     "components": [ [ [ "chain_link", 900 ] ] ]
   },
   {
@@ -1169,6 +1168,20 @@
     "components": [ [ [ "material_aluminium_ingot", 1 ] ], [ [ "copper_scrap_equivalent", 40, "LIST" ] ] ]
   },
   {
+    "result": "cartridgebrass",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "30 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
+    "charges": 100,
+    "using": [ [ "blacksmithing_intermediate", 1 ] ],
+    "components": [ [ [ "zinc_metal", 400 ] ], [ [ "copper", 35 ] ] ]
+  },
+  {
     "type": "recipe",
     "result": "tempered_glass_sheet",
     "category": "CC_OTHER",
@@ -1245,11 +1258,32 @@
     "skill_used": "fabrication",
     "difficulty": 4,
     "time": "12 m",
+    "batch_time_factors": [ 90, 4 ],
     "reversible": true,
     "//": "sawing it down doesn't teach anything useful",
     "autolearn": true,
-    "using": [ [ "welding_standard", 5 ] ],
-    "components": [ [ [ "steel_lump", 4 ] ] ]
+    "using": [ [ "blacksmithing_standard", 4 ], [ "steel_standard", 1 ] ],
+    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "hard_steel_armor",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "20 m",
+    "batch_time_factors": [ 90, 4 ],
+    "autolearn": true,
+    "using": [ [ "forging_standard", 6 ] ],
+    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
+    "//": "Additional coal and flux to increase carbon content, oil for quenching.",
+    "components": [
+      [ [ "steel_armor", 1 ] ],
+      [ [ "coal_lump", 2 ], [ "charcoal", 8 ] ],
+      [ [ "material_limestone", 1 ], [ "material_quicklime", 1 ], [ "chem_carbide", 20 ] ],
+      [ [ "lamp_oil", 100 ], [ "motor_oil", 100 ], [ "cooking_oil", 20 ], [ "cooking_oil2", 20 ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -1362,6 +1396,21 @@
     "components": [ [ [ "fur", 1 ] ] ]
   },
   {
+    "result": "material_aluminium_ingot",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "60 m",
+    "batch_time_factors": [ 90, 4 ],
+    "reversible": true,
+    "autolearn": true,
+    "using": [ [ "forging_standard", 4 ] ],
+    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
+    "components": [ [ [ "can_drink_unsealed", 27 ], [ "aluminum_foil", 68 ], [ "chem_aluminium_powder", 135 ] ] ]
+  },
+  {
     "result": "steel_chunk",
     "type": "recipe",
     "id_suffix": "hammering",
@@ -1434,7 +1483,7 @@
   {
     "result": "tin",
     "type": "recipe",
-    "byproducts": [ [ "steel_chunk" ] ],
+    "byproducts": [ [ "scrap", 4 ], [ "water_acid_weak", 3 ] ],
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_MATERIALS",
     "skill_used": "cooking",
@@ -1443,12 +1492,39 @@
     "book_learn": [ [ "textbook_chemistry", 3 ], [ "textbook_fabrication", 4 ], [ "welding_book", 4 ], [ "reference_cooking", 5 ] ],
     "time": "10 m",
     "charges": 10,
-    "batch_time_factors": [ 50, 2 ],
-    "tools": [ [ [ "electrolysis_kit", 100 ] ], [ [ "jar_glass", -1 ], [ "jar_3l_glass", -1 ] ] ],
+    "batch_time_factors": [ 60, 2 ],
+    "tools": [
+      [ [ "electrolysis_kit", 100 ] ],
+      [ [ "jar_glass", -1 ], [ "jar_3l_glass", -1 ] ],
+      [ [ "water", 3 ], [ "water_clean", 3 ] ]
+    ],
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "//": "hammer to actually break down what's left of cans",
     "components": [
       [ [ "acid", 1 ], [ "chem_sulphuric_acid", 1 ] ],
-      [ [ "water", 3 ], [ "water_clean", 3 ] ],
-      [ [ "can_food_big_unsealed", 1 ], [ "can_medium_unsealed", 5 ], [ "can_food_unsealed", 10 ] ]
+      [ [ "can_food_big_unsealed", 1 ], [ "can_medium_unsealed", 5 ], [ "can_food_unsealed", 9 ] ]
+    ]
+  },
+  {
+    "result": "tin",
+    "id_suffix": "from_lye",
+    "type": "recipe",
+    "byproducts": [ [ "scrap", 24 ], [ "water", 9 ] ],
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "cooking",
+    "difficulty": 4,
+    "autolearn": [ [ "cooking", 6 ] ],
+    "book_learn": [ [ "textbook_chemistry", 3 ], [ "textbook_fabrication", 4 ], [ "welding_book", 4 ], [ "reference_cooking", 5 ] ],
+    "time": "20 m",
+    "charges": 50,
+    "batch_time_factors": [ 60, 2 ],
+    "tools": [ [ [ "electrolysis_kit", 100 ] ], [ [ "jar_3l_glass", -1 ] ], [ [ "water", 9 ], [ "water_clean", 9 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "//": "hammer to actually break down what's left of cans",
+    "components": [
+      [ [ "chem_lye", 1, "LIST" ] ],
+      [ [ "can_food_big_unsealed", 5 ], [ "can_medium_unsealed", 25 ], [ "can_food_unsealed", 45 ] ]
     ]
   },
   {
@@ -1512,9 +1588,9 @@
     "byproducts": [ [ "scrap", 3 ] ],
     "subcategory": "CSC_OTHER_MATERIALS",
     "skill_used": "fabrication",
+    "qualities": [ { "id": "CUT_M", "level": 1 } ],
     "autolearn": true,
     "time": "30 m",
-    "tools": [ [ [ "boltcutters", -1 ], [ "pliers", -1 ], [ "toolset", -1 ], [ "multitool", -1 ] ] ],
     "components": [ [ [ "wire_barbed", 1 ] ] ]
   },
   {
@@ -1576,5 +1652,148 @@
     "book_learn": [ [ "textbook_computer", 5 ], [ "advanced_electronics", 5 ], [ "adv_chemistry", 4 ], [ "reference_fabrication1", 4 ] ],
     "tools": [ [ [ "3d_printer_advanced", 5 ] ] ],
     "components": [ [ [ "plastic_chunk", 1 ], [ "pitch_wood", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "string_36_plastic",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "5 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 4, "LIST" ] ], [ [ "mold_plastic", -1 ] ] ],
+    "components": [
+      [
+        [ "bottle_plastic", 1 ],
+        [ "condiment_bottle_unsealed", 1 ],
+        [ "bottle_plastic_small", 2 ],
+        [ "cup_plastic_unsealed", 2 ],
+        [ "plastic_chunk", 1 ]
+      ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "string_36_plastic",
+    "id_suffix": "printed",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "computer",
+    "difficulty": 1,
+    "time": "30 s",
+    "autolearn": true,
+    "using": [ [ "3d_printing_standard", 1 ] ],
+    "components": [ [ [ "plastic_chunk", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "string_6_plastic",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "5 m",
+    "autolearn": true,
+    "charges": 2,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 4, "LIST" ] ], [ [ "mold_plastic", -1 ] ] ],
+    "components": [
+      [
+        [ "bottle_plastic", 1 ],
+        [ "condiment_bottle_unsealed", 1 ],
+        [ "bottle_plastic_small", 2 ],
+        [ "cup_plastic_unsealed", 2 ],
+        [ "plastic_chunk", 1 ],
+        [ "string_36_plastic", 1 ]
+      ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "string_6_plastic",
+    "id_suffix": "printed",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "computer",
+    "difficulty": 1,
+    "time": "30 s",
+    "autolearn": true,
+    "charges": 2,
+    "using": [ [ "3d_printing_standard", 1 ] ],
+    "components": [ [ [ "plastic_chunk", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "rope_6_plastic",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "5 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 4, "LIST" ] ], [ [ "mold_plastic", -1 ] ] ],
+    "components": [
+      [
+        [ "bottle_plastic", 6 ],
+        [ "condiment_bottle_unsealed", 6 ],
+        [ "bottle_plastic_small", 12 ],
+        [ "cup_plastic_unsealed", 12 ],
+        [ "plastic_chunk", 6 ],
+        [ "string_36_plastic", 6 ],
+        [ "string_6_plastic", 12 ]
+      ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "rope_6_plastic",
+    "id_suffix": "printed",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "computer",
+    "difficulty": 1,
+    "time": "30 s",
+    "autolearn": true,
+    "using": [ [ "3d_printing_standard", 6 ] ],
+    "components": [ [ [ "plastic_chunk", 6 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "rope_30_plastic",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "5 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 4, "LIST" ] ], [ [ "mold_plastic", -1 ] ] ],
+    "components": [
+      [
+        [ "bottle_plastic", 30 ],
+        [ "condiment_bottle_unsealed", 30 ],
+        [ "bottle_plastic_small", 60 ],
+        [ "cup_plastic_unsealed", 60 ],
+        [ "plastic_chunk", 30 ],
+        [ "string_36_plastic", 30 ],
+        [ "string_6_plastic", 60 ]
+      ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "rope_30_plastic",
+    "id_suffix": "printed",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "computer",
+    "difficulty": 1,
+    "time": "30 s",
+    "autolearn": true,
+    "using": [ [ "3d_printing_standard", 30 ] ],
+    "components": [ [ [ "plastic_chunk", 30 ] ] ]
   }
 ]

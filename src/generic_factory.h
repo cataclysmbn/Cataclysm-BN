@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_GENERIC_FACTORY_H
-#define CATA_SRC_GENERIC_FACTORY_H
 
 #include <algorithm>
 #include <bitset>
@@ -855,4 +853,4 @@ bool one_char_symbol_reader( const JsonObject &jo, const std::string &member_nam
 bool unicode_codepoint_from_symbol_reader( const JsonObject &jo,
         const std::string &member_name, uint32_t &member, bool );
 
-#endif // CATA_SRC_GENERIC_FACTORY_H
+

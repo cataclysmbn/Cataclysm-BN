@@ -2,7 +2,7 @@
   {
     "id": "bathroom_scale",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "scrap_metal",
     "name": { "str": "bathroom scale" },
     "symbol": "■",
     "color": "light_gray",
@@ -20,7 +20,7 @@
   {
     "id": "brush",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "scrub brush", "str_pl": "scrub brushes" },
     "description": "This is a simple scrub brush.",
     "weight": "70 g",
@@ -31,13 +31,12 @@
     "bashing": 1,
     "material": "plastic",
     "symbol": "/",
-    "color": "light_gray",
-    "use_action": "WASH_HARD_ITEMS"
+    "color": "light_gray"
   },
   {
     "id": "elec_hairtrimmer",
     "type": "TOOL",
-    "category": "tools",
+    "category": "electronics",
     "name": { "str": "electric hair trimmer" },
     "description": "This is a pocket-sized electric trimmer made for cutting hair.  You can use it to cut your hair if it's supplied with batteries.  It requires 10 batteries per use.",
     "weight": "138 g",
@@ -75,18 +74,36 @@
     "use_action": "MOP"
   },
   {
+    "id": "mop_folded",
+    "type": "TOOL",
+    "name": { "str": "collapsible mop" },
+    "description": "A long unwieldy mop with a collapsible handle for convenient transportation.  You may use it to clean up any 'mess' you have made.",
+    "weight": "730 g",
+    "volume": "760 ml",
+    "price": "15 USD",
+    "price_postapoc": "15 cent",
+    "to_hit": -2,
+    "bashing": 3,
+    "material": [ "plastic" ],
+    "symbol": "/",
+    "color": "light_gray",
+    "looks_like": "mop",
+    "use_action": [ "MOP" ]
+  },
+  {
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "id": "razor_blade",
     "symbol": ",",
     "color": "light_cyan",
     "name": { "str": "razor blade" },
-    "description": "A double-edged razor blade.",
+    "description": "A double-edged razor blade.  Finicky to use on its own, but can be used as a cutting tool in a pinch.",
     "price": "6 USD",
     "price_postapoc": "1 USD",
     "material": "steel",
     "weight": "10 g",
-    "cutting": 1
+    "cutting": 1,
+    "qualities": [ [ "CUT", 1 ], [ "CUT_FINE", 1 ] ]
   },
   {
     "id": "shavingkit",
@@ -111,9 +128,9 @@
   {
     "id": "sponge",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "sponge" },
-    "description": "A sponge is a tool or cleaning aid made of soft, porous material.  Typically used for cleaning impervious surfaces.",
+    "description": "A sponge is a tool or cleaning aid made of soft, porous material.  Typically used for cleaning impervious surfaces, it can also be used for sanding wood when dried.",
     "weight": "80 g",
     "volume": "250 ml",
     "price": "0 cent",
@@ -121,7 +138,7 @@
     "material": "plastic",
     "symbol": "s",
     "color": "yellow",
-    "use_action": "WASH_HARD_ITEMS",
+    "qualities": [ [ "SANDING", 1 ] ],
     "flags": [ "NO_SALVAGE" ]
   },
   {
@@ -164,7 +181,7 @@
   {
     "id": "washboard",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "washboard" },
     "description": "This is a wooden washboard.  You can use it to wash filthy clothing if it's supplied with cleansing agent.",
     "weight": "90 g",
@@ -175,13 +192,12 @@
     "material": "wood",
     "symbol": ";",
     "color": "white",
-    "use_action": "WASH_SOFT_ITEMS",
     "flags": [ "ALLOWS_REMOTE_USE" ]
   },
   {
     "id": "wash_kit",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "washing kit" },
     "description": "A combination kit of a washboard and a scrubbing tool.  Everything you need to clean items after the apocalypse.",
     "weight": "100 g",
@@ -191,7 +207,6 @@
     "material": [ "wood", "plastic" ],
     "symbol": "%",
     "color": "yellow",
-    "use_action": "WASH_ALL_ITEMS",
     "flags": [ "ALLOWS_REMOTE_USE", "NO_SALVAGE" ]
   }
 ]

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_VEH_UTILS_H
-#define CATA_SRC_VEH_UTILS_H
 
 #include "type_id.h"
 
@@ -27,4 +25,4 @@ vehicle_part &most_repairable_part( vehicle &veh, Character &who_arg,
 bool repair_part( vehicle &veh, vehicle_part &pt, Character &who );
 } // namespace veh_utils
 
-#endif // CATA_SRC_VEH_UTILS_H
+

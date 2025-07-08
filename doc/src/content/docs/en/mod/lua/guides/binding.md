@@ -48,7 +48,6 @@ similar file. They are also spread out into functions, for the same reasons. Let
    ```
 3. Make a new file, `catalua_bindings_horde.cpp`, with the following contents:
    ```cpp
-   #ifdef LUA
    #include "catalua_bindings.h"
 
    #include "horde.h" // Replace with the header where your type is defined
@@ -124,7 +123,6 @@ Now what's left to do is to take the chunk of text and use it in a Lua binding. 
 horde example, this is how the code should look like with these macros:
 
 ```cpp
-#ifdef LUA
 #include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
 

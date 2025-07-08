@@ -1175,7 +1175,7 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [ "loffice_tower_16", "loffice_tower_17", "loffice_tower_18", "loffice_tower_19", "loffice_tower_20" ],
+    "id": [ "loffice_tower_17", "loffice_tower_18", "loffice_tower_19", "loffice_tower_20" ],
     "name": "open air",
     "sym": ".",
     "color": "blue"
@@ -1369,7 +1369,7 @@
     "type": "overmap_terrain",
     "id": "headshop",
     "copy-from": "generic_city_building",
-    "name": "Head Shop",
+    "name": "head shop",
     "sym": "0",
     "color": "i_white",
     "extend": { "flags": [ "SOURCE_LUXURY" ] }

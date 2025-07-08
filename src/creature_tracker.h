@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CREATURE_TRACKER_H
-#define CATA_SRC_CREATURE_TRACKER_H
 
 #include <cstddef>
 #include <memory>
@@ -100,4 +98,4 @@ class Creature_tracker
         void remove_from_location_map( const monster &critter );
 };
 
-#endif // CATA_SRC_CREATURE_TRACKER_H
+

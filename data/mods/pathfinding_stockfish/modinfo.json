@@ -1,0 +1,12 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "pathfinding_stockfish",
+    "name": "Pathfinding: Stockfish AI",
+    "authors": [ "DeltaEpsilon" ],
+    "description": "Stockfish-level AI pathfinding: allow complete and unlimited pathfinding for AI regardless of intended enemy intelligence. Additionally, enables pathing around mobs",
+    "category": "rebalance",
+    "obsolete": false,
+    "dependencies": [ "bn" ]
+  }
+]

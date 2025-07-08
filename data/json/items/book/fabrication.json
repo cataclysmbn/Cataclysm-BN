@@ -440,25 +440,6 @@
     "fun": -2
   },
   {
-    "id": "textbook_extraction",
-    "type": "BOOK",
-    "copy-from": "base_book",
-    "name": { "str": "The Essential Oil Enthusiasts Handbook", "str_pl": "copies of The Essential Oil Enthusiasts Handbook" },
-    "description": "A heavy hardback book explaining the process of essential oil making, with schematics for the equipment to do it.  Good luck, and don't blow yourself up!",
-    "looks_like": "textbook_chemistry",
-    "weight": "1420 g",
-    "volume": "1 L",
-    "price": "60 USD",
-    "price_postapoc": "100 USD",
-    "bashing": 4,
-    "color": "blue",
-    "skill": "fabrication",
-    "required_level": 5,
-    "max_level": 8,
-    "intelligence": 10,
-    "time": "60 m"
-  },
-  {
     "id": "concrete_book",
     "type": "BOOK",
     "copy-from": "base_book",

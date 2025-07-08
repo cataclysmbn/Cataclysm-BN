@@ -1,5 +1,6 @@
 #include "mutation.h"
 
+#include <algorithm>
 #include <cmath>
 #include <algorithm>
 #include <cstdlib>
@@ -20,6 +21,7 @@
 #include "event_bus.h"
 #include "field_type.h"
 #include "game.h"
+#include "handle_liquid.h"
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
@@ -105,7 +107,7 @@ bool Character::has_trait( const trait_id &b ) const
 
 bool Character::has_trait_flag( const trait_flag_str_id &b ) const
 {
-    return std::any_of( cached_mutations.cbegin(), cached_mutations.cend(),
+    return std::ranges::any_of( cached_mutations,
     [&b]( const mutation_branch * mut ) -> bool {
         return mut->flags.contains( b );
     } );
@@ -466,6 +468,11 @@ bool Character::can_install_cbm_on_bp( const std::vector<bodypart_id> &bps ) con
 
 void Character::activate_mutation( const trait_id &mut )
 {
+    // Make sure we actually have the mutation, and it's inactive.
+    if( !( has_trait( mut ) && !my_mutations[mut].powered ) ) {
+        return;
+    }
+
     const mutation_branch &mdata = mut.obj();
     char_trait_data &tdata = my_mutations[mut];
     // You can take yourself halfway to Near Death levels of hunger/thirst.
@@ -578,7 +585,12 @@ void Character::activate_mutation( const trait_id &mut )
             return;
         }
     } else if( !mdata.spawn_item.is_empty() ) {
-        i_add_or_drop( item::spawn( mdata.spawn_item ) );
+        detached_ptr<item> granted = item::spawn( mdata.spawn_item );
+        if( granted->made_of( LIQUID ) ) {
+            liquid_handler::consume_liquid( std::move( granted ), 1 );
+        } else {
+            i_add_or_drop( std::move( granted ) );
+        }
         add_msg_if_player( mdata.spawn_item_message() );
         tdata.powered = false;
         return;
@@ -593,6 +605,11 @@ void Character::activate_mutation( const trait_id &mut )
 
 void Character::deactivate_mutation( const trait_id &mut )
 {
+    // No-op if we don't have the required mutation.
+    if( !has_active_mutation( mut ) ) {
+        return;
+    }
+
     my_mutations[mut].powered = false;
 
     // Handle stat changes from deactivation
@@ -623,7 +640,8 @@ bool Character::mutation_ok( const trait_id &mutation, bool force_good, bool for
         return false;
     }
 
-    for( const bionic_id &bid : get_bionics() ) {
+    for( const bionic &i : get_bionic_collection() ) {
+        const bionic_id &bid = i.id;
         for( const trait_id &mid : bid->canceled_mutations ) {
             if( mid == mutation ) {
                 return false;
@@ -694,7 +712,7 @@ static std::map<mutation_category_id, float> calc_category_weights(
     const std::map<mutation_category_id, int> &mcl, bool addition )
 {
     std::map<mutation_category_id, float> category_weights;
-    auto max_lvl_iter = std::max_element( mcl.begin(), mcl.end(),
+    auto max_lvl_iter = std::ranges::max_element( mcl,
     []( const auto & best, const auto & current ) {
         return current.second > best.second;
     } );
@@ -1105,7 +1123,7 @@ bool Character::mutate_towards( const trait_id &mut )
 
     // Check mutations of the same type - except for the ones we might need for pre-reqs
     for( const auto &consider : same_type ) {
-        if( std::find( all_prereqs.begin(), all_prereqs.end(), consider ) == all_prereqs.end() ) {
+        if( std::ranges::find( all_prereqs, consider ) == all_prereqs.end() ) {
             cancel.push_back( consider );
         }
     }
@@ -1495,7 +1513,7 @@ static mutagen_rejection try_reject_mutagen( Character &guy, const item &it, boo
             "MYCUS", "MARLOSS", "MARLOSS_SEED", "MARLOSS_GEL"
         }
     };
-    if( std::any_of( safe.begin(), safe.end(), [&it]( const std::string & flag ) {
+    if( std::ranges::any_of( safe, [&it]( const std::string & flag ) {
     return it.type->can_use( flag );
     } ) ) {
         return mutagen_rejection::accepted;
@@ -1673,7 +1691,7 @@ bool are_same_type_traits( const trait_id &trait_a, const trait_id &trait_b )
 
 bool contains_trait( std::vector<string_id<mutation_branch>> traits, const trait_id &trait )
 {
-    return std::find( traits.begin(), traits.end(), trait ) != traits.end();
+    return std::ranges::find( traits, trait ) != traits.end();
 }
 
 bool can_use_mutation( const trait_id &mut, const Character &character )
@@ -1683,6 +1701,15 @@ bool can_use_mutation( const trait_id &mut, const Character &character )
     // Fatigue can go to Exhausted.
     return !( ( mdata.hunger && character.get_kcal_percent() < 0.5f ) ||
               ( mdata.thirst && character.get_thirst() >= thirst_levels::dehydrated ) ||
+              ( mdata.stamina && character.get_stamina() <= 1000 ) ||
+              // 1000+ = too much stamina
+              ( mdata.pain && character.get_pain() >= 100 ) || // too much pain
+              ( mdata.bionic && character.get_power_level() <= units::from_kilojoule( 1 ) ) ||
+              // 1kJ or more = too much bionic power
+              ( mdata.mana && character.magic->available_mana() <= 10 ) ||
+              // 10 or more = too much mana
+              ( mdata.health && character.get_healthy() <= -100 ) ||
+              // 10 or more = too much mana
               ( mdata.fatigue && character.get_fatigue() >= fatigue_levels::exhausted ) );
 }
 
@@ -1719,6 +1746,22 @@ void Character::mutation_spend_resources( const trait_id &mut )
         }
         if( mdata.fatigue ) {
             mod_fatigue( cost );
+        }
+        if( mdata.stamina ) {
+            mod_stamina( -cost ); // flipped, because it should be consuming stamina not adding to it
+        }
+        if( mdata.mana ) {
+            magic->mod_mana( *this, -cost ); // flipped, because it should be consuming mana not adding to it
+        }
+        if( mdata.health ) {
+            mod_healthy( -cost ); // flipped, because it should be consuming health not adding to it
+        }
+        if( mdata.pain ) {
+            mod_pain( cost );
+        }
+        if( mdata.bionic ) {
+            // flipped, because it should be consuming bionic power not adding to it
+            mod_power_level( units::from_kilojoule( -cost ) );
         }
 
         // Handle stat changes from activation

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAPGENDATA_H
-#define CATA_SRC_MAPGENDATA_H
 
 #include <unordered_map>
 
@@ -200,4 +198,4 @@ class mapgendata
         }
 };
 
-#endif // CATA_SRC_MAPGENDATA_H
+

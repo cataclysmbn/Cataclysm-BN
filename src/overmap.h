@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_OVERMAP_H
-#define CATA_SRC_OVERMAP_H
 
 #include <algorithm>
 #include <array>
@@ -57,6 +55,9 @@ struct city {
     // location of the city (in overmap terrain coordinates)
     point_om_omt pos;
     int size;
+    int finale_counter;
+    bool finale_placed;
+    bool attempt_finale;
     std::string name;
     city( const point_om_omt &P = point_om_omt(), int S = -1 );
 
@@ -432,13 +433,14 @@ class overmap
                 const overmap *south, const overmap *west );
 
         // City Building
-        overmap_special_id pick_random_building_to_place( int town_dist ) const;
+        overmap_special_id pick_random_building_to_place( int town_dist, bool attempt_finale_place ) const;
 
         void place_cities();
-        void place_building( const tripoint_om_omt &p, om_direction::type dir, const city &town );
+        bool place_building( const tripoint_om_omt &p, om_direction::type dir, city &town,
+                             bool attempt_finale_place );
 
         void build_city_street( const overmap_connection &connection, const point_om_omt &p, int cs,
-                                om_direction::type dir, const city &town, std::vector<tripoint_om_omt> &sewers,
+                                om_direction::type dir, city &town, std::vector<tripoint_om_omt> &sewers,
                                 int block_width = 2 );
 
         // Connection laying
@@ -555,4 +557,4 @@ const std::string &oter_get_rotation_string( const oter_id &oter );
  * Determine whether provided tile belongs to overmap connection.
  */
 bool belongs_to_connection( const overmap_connection_id &id, const oter_id &oter );
-#endif // CATA_SRC_OVERMAP_H
+

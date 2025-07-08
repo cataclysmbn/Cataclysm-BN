@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_BODYPART_H
-#define CATA_SRC_BODYPART_H
 
 #include <array>
 #include <bitset>
@@ -96,6 +94,8 @@ struct body_part_type {
         bodypart_str_id id;
         bool was_loaded = false;
 
+        int sort_order = 0;
+
         // Those are stored untranslated
         translation name;
         translation name_multiple;
@@ -136,7 +136,6 @@ struct body_part_type {
         float hot_morale_mod = 0;
         float cold_morale_mod = 0;
         float stylish_bonus = 0;
-        int squeamish_penalty = 0;
 
         int base_hp = 60;
 
@@ -399,4 +398,4 @@ body_part opposite_body_part( body_part bp );
 /** Returns the matching body_part token from the corresponding body_part string. */
 body_part get_body_part_token( const std::string &id );
 
-#endif // CATA_SRC_BODYPART_H
+

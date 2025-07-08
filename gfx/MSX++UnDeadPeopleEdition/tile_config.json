@@ -11883,9 +11883,9 @@
         { "id": "flashlight_on", "fg": 6495, "rotates": false },
         { "id": "overlay_wielded_flashlight_on", "fg": 6496, "rotates": false },
         { "id": "gasoline_lantern", "fg": 6497, "bg": 9172, "rotates": false },
-        { "id": "overlay_wielded_gasoline_lantern", "fg": 6497, "rotates": false },
+        { "id": "overlay_wielded_gasoline_lantern", "fg": 6516, "rotates": false },
         { "id": "gasoline_lantern_on", "fg": 6498, "bg": 9172, "rotates": false },
-        { "id": "overlay_wielded_gasoline_lantern_on", "fg": 6498, "rotates": false },
+        { "id": "overlay_wielded_gasoline_lantern_on", "fg": 6518, "rotates": false },
         { "id": "glowstick", "fg": 6499, "rotates": false },
         { "id": "overlay_wielded_glowstick", "fg": 6500, "rotates": false },
         { "id": "glowstick_dead", "fg": 6501, "rotates": false },
@@ -17227,11 +17227,7 @@
         { "id": "refctr_fence_N", "fg": [ 9636 ], "bg": [  ], "rotates": true },
         { "id": "refctr_fence_W", "fg": [ 9637 ], "bg": [  ], "rotates": true },
         {
-          "id": [
-            "refctr_fence_S",
-            "refctr_fence_entrance_L",
-            "refctr_fence_entrance_R"
-          ],
+          "id": [ "refctr_fence_S", "refctr_fence_entrance_L", "refctr_fence_entrance_R" ],
           "fg": [ 9638 ],
           "bg": [  ],
           "rotates": true
@@ -22010,13 +22006,7 @@
         { "id": "f_autoclave", "fg": 11583, "rotates": false },
         { "id": "f_autoclave_full", "fg": 11584, "rotates": false },
         { "id": "f_autodoc", "fg": [ 11587, 11588, 11586, 11585 ], "rotates": true },
-        {
-          "id": "vp_autodoc",
-          "fg": [ 11587, 11588, 11586, 11585 ],
-          "bg": 9122,
-          "rotates": true,
-          "multitile": true
-        },
+        { "id": "vp_autodoc", "fg": [ 11587, 11588, 11586, 11585 ], "bg": 9122, "rotates": true, "multitile": true },
         { "id": "f_autodoc_couch", "fg": [ 11591, 11592, 11590, 11589 ], "rotates": true },
         {
           "id": "vp_autodoc_couch",
@@ -35036,21 +35026,21 @@
       "file": "Temporary-maptiles.png",
       "tiles": [
         { "id": [ "s_hunting" ], "fg": 19337, "rotates": false },
-        { "id": [ "s_hunting_roof" ], "fg": 19338, "bg": 19346, "rotates": false },
+        { "id": [ "s_hunting_roof" ], "fg": 19338, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "dojo" ], "fg": 19339, "rotates": false },
-        { "id": [ "dojo_roof" ], "fg": 19340, "bg": 19346, "rotates": false },
-        { "id": [ "dojo_upper_roof" ], "fg": 19340, "bg": 19346, "rotates": false },
+        { "id": [ "dojo_roof" ], "fg": 19340, "bg": 19346, "rotates": false, "has_om_transparency": true },
+        { "id": [ "dojo_upper_roof" ], "fg": 19340, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "dojo_1" ], "fg": 19339, "rotates": false },
-        { "id": [ "dojo_roof_1" ], "fg": 19340, "bg": 19346, "rotates": false },
-        { "id": [ "dojo_upper_roof_1" ], "fg": 19340, "bg": 19346, "rotates": false },
+        { "id": [ "dojo_roof_1" ], "fg": 19340, "bg": 19346, "rotates": false, "has_om_transparency": true },
+        { "id": [ "dojo_upper_roof_1" ], "fg": 19340, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "recyclecenter" ], "fg": 19341, "rotates": false },
-        { "id": [ "recyclecenter_roof" ], "fg": 19342, "bg": 19346, "rotates": false },
+        { "id": [ "recyclecenter_roof" ], "fg": 19342, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "recyclecenter_1" ], "fg": 19341, "rotates": false },
-        { "id": [ "recyclecenter_roof_1" ], "fg": 19342, "bg": 19346, "rotates": false },
+        { "id": [ "recyclecenter_roof_1" ], "fg": 19342, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "recyclecenter_2" ], "fg": 19341, "rotates": false },
-        { "id": [ "recyclecenter_roof_2" ], "fg": 19342, "bg": 19346, "rotates": false },
-        { "id": [ "pool_roof" ], "fg": 19344, "bg": 19346, "rotates": false },
-        { "id": [ "emptycommerciallot" ], "fg": 19345, "bg": 19346, "rotates": false },
+        { "id": [ "recyclecenter_roof_2" ], "fg": 19342, "bg": 19346, "rotates": false, "has_om_transparency": true },
+        { "id": [ "pool_roof" ], "fg": 19344, "bg": 19346, "rotates": false, "has_om_transparency": true },
+        { "id": [ "emptycommerciallot" ], "fg": 19345, "bg": 19346, "rotates": false, "has_om_transparency": true },
         {
           "id": [ "open_air", "cs_private_park_roof" ],
           "fg": [
@@ -35059,7 +35049,8 @@
             { "weight": 25, "sprite": 19348 },
             { "weight": 25, "sprite": 19349 }
           ],
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [
@@ -35260,7 +35251,8 @@
           ],
           "fg": [ 19350, 19351, 19352, 19353 ],
           "bg": 19346,
-          "rotates": true
+          "rotates": true,
+          "has_om_transparency": true
         },
         {
           "id": [ "s_restaurant_coffee", "s_restaurant_coffee_1", "s_restaurant_coffee_2" ],
@@ -35271,31 +35263,34 @@
           "id": [ "s_restaurant_coffee_roof", "s_restaurant_coffee_roof_1", "s_restaurant_coffee_roof_2" ],
           "fg": 19355,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "bar_1" ], "fg": 19356, "rotates": false },
-        { "id": [ "bar_roof_1" ], "fg": 19357, "bg": 19346, "rotates": false },
+        { "id": [ "bar_roof_1" ], "fg": 19357, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "bar" ], "fg": 19358, "rotates": false },
-        { "id": [ "bar_roof" ], "fg": 19359, "bg": 19346, "rotates": false },
+        { "id": [ "bar_roof" ], "fg": 19359, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "s_grocery_1" ], "fg": 19360, "rotates": false },
-        { "id": [ "s_grocery_roof_1" ], "fg": 19361, "bg": 19346, "rotates": false },
+        { "id": [ "s_grocery_roof_1" ], "fg": 19361, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "s_grocery" ], "fg": 19360, "rotates": false },
-        { "id": [ "s_grocery_roof" ], "fg": 19361, "bg": 19346, "rotates": false },
+        { "id": [ "s_grocery_roof" ], "fg": 19361, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "s_electronics", "s_electronics_1", "s_electronics_2", "s_thrift" ], "fg": 19362, "rotates": false },
         {
           "id": [ "s_electronics_roof", "s_electronics_roof_1", "s_electronics_roof_2", "s_thrift_roof" ],
           "fg": 19363,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "s_sports" ], "fg": 19364, "rotates": false },
-        { "id": [ "s_sports_roof" ], "fg": 19365, "bg": 19346, "rotates": false },
+        { "id": [ "s_sports_roof" ], "fg": 19365, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "s_butcher", "s_butcher_1", "s_butcher_2" ], "fg": 19366, "rotates": false },
         {
           "id": [ "s_butcher_roof", "s_butcher_upper_roof", "s_butcher_roof_1", "s_butcher_upper_roof_1", "s_butcher_roof_2" ],
           "fg": 19367,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [ "s_library", "s_library_1", "s_library_2", "s_bookstore", "s_bookstore_1", "s_bookstore_2" ],
@@ -35315,25 +35310,57 @@
           ],
           "fg": 19369,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "craft_shop", "craft_shop_1", "craft_shop_2" ], "fg": 19370, "rotates": false },
         {
           "id": [ "craft_shop_roof", "craft_shop_upper_roof", "craft_shop_roof_1", "craft_shop_roof_2", "craft_shop_2ndfloor_2" ],
           "fg": 19371,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "pawn", "pawn_1" ], "fg": 19372, "rotates": false },
-        { "id": [ "pawn_roof", "pawn_roof_1" ], "fg": 19373, "bg": 19346, "rotates": false },
-        { "id": [ "" ], "fg": 19374, "bg": 19346, "rotates": false },
+        {
+          "id": [ "pawn_roof", "pawn_roof_1" ],
+          "fg": 19373,
+          "bg": 19346,
+          "rotates": false,
+          "has_om_transparency": true
+        },
+        { "id": [ "" ], "fg": 19374, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "construction_site" ], "fg": 19375, "rotates": false },
-        { "id": [ "BotanicalGarden_1b_roof" ], "fg": [ 19378, 19379, 19376, 19377 ], "bg": 19346, "rotates": true },
-        { "id": [ "BotanicalGarden_1a_roof" ], "fg": [ 19376, 19377, 19378, 19379 ], "bg": 19346, "rotates": true },
-        { "id": [ "sub_station_roof" ], "fg": 19380, "bg": 19346, "rotates": false },
-        { "id": [ "small_power_substation_roof" ], "fg": 19381, "bg": 19346, "rotates": false },
-        { "id": [ "pwr_sub_s_roof" ], "fg": 19381, "bg": 19346, "rotates": false },
-        { "id": [ "bank_roof", "bank_roof_1" ], "fg": 19382, "bg": 19346, "rotates": false },
+        {
+          "id": [ "BotanicalGarden_1b_roof" ],
+          "fg": [ 19378, 19379, 19376, 19377 ],
+          "bg": 19346,
+          "rotates": true,
+          "has_om_transparency": true
+        },
+        {
+          "id": [ "BotanicalGarden_1a_roof" ],
+          "fg": [ 19376, 19377, 19378, 19379 ],
+          "bg": 19346,
+          "rotates": true,
+          "has_om_transparency": true
+        },
+        { "id": [ "sub_station_roof" ], "fg": 19380, "bg": 19346, "rotates": false, "has_om_transparency": true },
+        {
+          "id": [ "small_power_substation_roof" ],
+          "fg": 19381,
+          "bg": 19346,
+          "rotates": false,
+          "has_om_transparency": true
+        },
+        { "id": [ "pwr_sub_s_roof" ], "fg": 19381, "bg": 19346, "rotates": false, "has_om_transparency": true },
+        {
+          "id": [ "bank_roof", "bank_roof_1" ],
+          "fg": 19382,
+          "bg": 19346,
+          "rotates": false,
+          "has_om_transparency": true
+        },
         {
           "id": [
             "cabin_roof",
@@ -35353,7 +35380,8 @@
           ],
           "fg": 19383,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [
@@ -35387,28 +35415,38 @@
           ],
           "fg": 19384,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
-        { "id": [ "2silos_1", "2silos_2", "2silos_roof" ], "fg": 19385, "bg": 19346, "rotates": false },
-        { "id": [ "campground_roof" ], "fg": 19386, "bg": 19346, "rotates": false },
+        {
+          "id": [ "2silos_1", "2silos_2", "2silos_roof" ],
+          "fg": 19385,
+          "bg": 19346,
+          "rotates": false,
+          "has_om_transparency": true
+        },
+        { "id": [ "campground_roof" ], "fg": 19386, "bg": 19346, "rotates": false, "has_om_transparency": true },
         {
           "id": [ "moonshine_still_roof", "moonshine_still_roof_1", "moonshine_still_roof_2" ],
           "fg": 19387,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
-        { "id": [ "roadstop_roof" ], "fg": 19388, "bg": 19346, "rotates": false },
+        { "id": [ "roadstop_roof" ], "fg": 19388, "bg": 19346, "rotates": false, "has_om_transparency": true },
         {
           "id": [ "sewage_treatment_0_0_roof", "sewage_treatment_0_1_roof", "sewage_treatment_1_1_roof", "sewage_treatment_1_0_roof" ],
           "fg": 19389,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [ "s_gun_roof_1", "s_gun_roof_2", "s_gun_roof_3", "s_gun_roof_4", "s_gun_2ndfloor_4", "s_gun_roof" ],
           "fg": 19390,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [
@@ -35423,53 +35461,78 @@
           ],
           "fg": 19391,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
-        { "id": [ "s_pizza_parlor_roof", "s_pizza_parlor_roof_1" ], "fg": 19392, "bg": 19346, "rotates": false },
-        { "id": [ "fire_station_roof", "fire_station_roof_1" ], "fg": 19393, "bg": 19346, "rotates": false },
+        {
+          "id": [ "s_pizza_parlor_roof", "s_pizza_parlor_roof_1" ],
+          "fg": 19392,
+          "bg": 19346,
+          "rotates": false,
+          "has_om_transparency": true
+        },
+        {
+          "id": [ "fire_station_roof", "fire_station_roof_1" ],
+          "fg": 19393,
+          "bg": 19346,
+          "rotates": false,
+          "has_om_transparency": true
+        },
         {
           "id": [ "mil_surplus_roof", "mil_surplus_roof_1", "mil_surplus_roof_2" ],
           "fg": 19394,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [ "police_roof", "police_roof_1", "police_roof_2", "police_2ndfloor_1", "police_upper_roof_2" ],
           "fg": 19395,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "s_antique" ], "fg": 19396, "rotates": false },
-        { "id": [ "s_antique_roof" ], "fg": 19397, "bg": 19346, "rotates": false },
+        { "id": [ "s_antique_roof" ], "fg": 19397, "bg": 19346, "rotates": false, "has_om_transparency": true },
         {
           "id": [ "s_hardware_roof", "s_hardware_roof_1", "s_hardware_roof_2", "s_hardware_roof_3" ],
           "fg": 19398,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [ "s_garage_roof", "s_garage_roof_1", "s_garage_roof_2", "s_garage_upper_roof_2" ],
           "fg": 19399,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [ "office_doctor_roof", "office_doctor_roof_1", "office_doctor_roof_2", "office_doctor_upper_roof_2" ],
           "fg": 19400,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "s_liquor" ], "fg": 19401, "rotates": false },
-        { "id": [ "s_liquor_roof" ], "fg": 19402, "bg": 19346, "rotates": false },
+        { "id": [ "s_liquor_roof" ], "fg": 19402, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "s_bike_shop", "s_bike_shop_1" ], "fg": 19403, "rotates": false },
-        { "id": [ "s_bike_shop_roof", "s_bike_shop_roof_1" ], "fg": 19404, "bg": 19346, "rotates": false },
+        {
+          "id": [ "s_bike_shop_roof", "s_bike_shop_roof_1" ],
+          "fg": 19404,
+          "bg": 19346,
+          "rotates": false,
+          "has_om_transparency": true
+        },
         { "id": [ "skate_park" ], "fg": 19405, "rotates": false },
         { "id": [ "pavilion", "pavilion_1", "paintball_field", "paintball_field_1" ], "fg": 19406, "rotates": false },
         {
           "id": [ "pavilion_roof", "pavilion_roof_1", "paintball_field_roof", "paintball_field_roof_1" ],
           "fg": 19407,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [
@@ -35497,50 +35560,74 @@
           ],
           "fg": 19409,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "s_teashop", "s_teashop_1" ], "fg": 19410, "rotates": false },
         {
           "id": [ "s_teashop_roof", "s_teashop_roof_1", "s_teashop_upper_roof_1" ],
           "fg": 19411,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "post_office", "post_office_1" ], "fg": 19412, "rotates": false },
-        { "id": [ "post_office_roof", "post_office_roof_1" ], "fg": 19413, "bg": 19346, "rotates": false },
+        {
+          "id": [ "post_office_roof", "post_office_roof_1" ],
+          "fg": 19413,
+          "bg": 19346,
+          "rotates": false,
+          "has_om_transparency": true
+        },
         { "id": [ "gambling_hall" ], "fg": 19414, "rotates": false },
-        { "id": [ "gambling_hall_roof", "gambling_hall_upper_roof" ], "fg": 19415, "bg": 19346, "rotates": false },
+        {
+          "id": [ "gambling_hall_roof", "gambling_hall_upper_roof" ],
+          "fg": 19415,
+          "bg": 19346,
+          "rotates": false,
+          "has_om_transparency": true
+        },
         { "id": [ "gym_fitness", "gym_fitness_1" ], "fg": 19416, "rotates": false },
         {
           "id": [ "gym_fitness_roof", "gym_fitness_2ndFloor_1", "gym_fitness_roof_1" ],
           "fg": 19417,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "mortuary" ], "fg": 19418, "rotates": false },
-        { "id": [ "mortuary_roof" ], "fg": 19419, "bg": 19346, "rotates": false },
+        { "id": [ "mortuary_roof" ], "fg": 19419, "bg": 19346, "rotates": false, "has_om_transparency": true },
         { "id": [ "lancenter", "lancenter_1" ], "fg": 19420, "rotates": false },
-        { "id": [ "lancenter_roof", "lancenter_roof_1" ], "fg": 19421, "bg": 19346, "rotates": false },
+        {
+          "id": [ "lancenter_roof", "lancenter_roof_1" ],
+          "fg": 19421,
+          "bg": 19346,
+          "rotates": false,
+          "has_om_transparency": true
+        },
         { "id": [ "s_arcade", "cs_internet_cafe" ], "fg": 19422, "rotates": false },
         {
           "id": [ "s_arcade_roof", "cs_internet_cafe_roof", "cs_internet_cafe_upper_roof" ],
           "fg": 19423,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "stripclub", "stripclub_1", "stripclub_2" ], "fg": 19424, "rotates": false },
         {
           "id": [ "stripclub_roof", "stripclub_roof_1", "stripclub_roof_2" ],
           "fg": 19425,
           "bg": 19346,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "bakery" ], "fg": 19426, "rotates": false },
         {
           "id": [ "bakery_roof", "bakery_upper_roof", "bakery_upper_roof_1" ],
           "fg": 19427,
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [ "small_storage_units", "small_storage_units_1", "small_storage_units_2" ],
@@ -35551,21 +35638,23 @@
           "id": [ "small_storage_units_roof", "small_storage_units_roof_1", "small_storage_units_roof_2" ],
           "fg": 19429,
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "office_cubical", "office_cubical_1", "small_office" ], "fg": 19430, "rotates": false },
         {
           "id": [ "office_cubical_roof", "office_cubical_roof_1", "small_office_roof", "small_office_upper_roof" ],
           "fg": 19431,
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "s_daycare" ], "fg": 19432, "rotates": false },
-        { "id": [ "s_daycare_roof" ], "fg": 19433, "bg": 19347, "rotates": false },
+        { "id": [ "s_daycare_roof" ], "fg": 19433, "bg": 19347, "rotates": false, "has_om_transparency": true },
         { "id": [ "animalpound" ], "fg": 19434, "rotates": false },
-        { "id": [ "animalpound_roof" ], "fg": 19435, "bg": 19347, "rotates": false },
+        { "id": [ "animalpound_roof" ], "fg": 19435, "bg": 19347, "rotates": false, "has_om_transparency": true },
         { "id": [ "warehouse" ], "fg": 19436, "rotates": false },
-        { "id": [ "warehouse_roof" ], "fg": 19437, "bg": 19347, "rotates": false },
+        { "id": [ "warehouse_roof" ], "fg": 19437, "bg": 19347, "rotates": false, "has_om_transparency": true },
         {
           "id": [ "abandonedwarehouse", "abandonedwarehouse_1", "abandonedwarehouse_2", "abandonedwarehouse_3", "abandonedwarehouse_4" ],
           "fg": 19438,
@@ -35581,22 +35670,36 @@
           ],
           "fg": 19439,
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "home_improvement" ], "fg": 19440, "rotates": false },
-        { "id": [ "home_improvement_roof" ], "fg": 19441, "bg": 19347, "rotates": false },
+        { "id": [ "home_improvement_roof" ], "fg": 19441, "bg": 19347, "rotates": false, "has_om_transparency": true },
         { "id": [ "s_jewelry" ], "fg": 19442, "rotates": false },
-        { "id": [ "s_jewelry_roof" ], "fg": 19443, "bg": 19347, "rotates": false },
+        { "id": [ "s_jewelry_roof" ], "fg": 19443, "bg": 19347, "rotates": false, "has_om_transparency": true },
         {
           "id": [ "garage_gas_roof", "garage_gas_roof_1", "garage_gas_roof_2", "garage_gas_roof_3" ],
           "fg": 19444,
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
-        { "id": [ "s_gas_roof", "s_gas_roof_1", "s_gas_rural_roof" ], "fg": 19445, "bg": 19347, "rotates": false },
+        {
+          "id": [ "s_gas_roof", "s_gas_roof_1", "s_gas_rural_roof" ],
+          "fg": 19445,
+          "bg": 19347,
+          "rotates": false,
+          "has_om_transparency": true
+        },
         { "id": [ "station_radio", "station_radio_1" ], "fg": 19446, "rotates": false },
-        { "id": [ "station_radio_roof", "station_radio_roof_1" ], "fg": 19447, "bg": 19347, "rotates": false },
-        { "id": [ "veterinarian_roof" ], "fg": 19448, "bg": 19347, "rotates": false },
+        {
+          "id": [ "station_radio_roof", "station_radio_roof_1" ],
+          "fg": 19447,
+          "bg": 19347,
+          "rotates": false,
+          "has_om_transparency": true
+        },
+        { "id": [ "veterinarian_roof" ], "fg": 19448, "bg": 19347, "rotates": false, "has_om_transparency": true },
         {
           "id": [ "dispensary", "dispensary_1", "dispensary_2", "headshop", "smoke_lounge", "smoke_lounge_1" ],
           "fg": 19449,
@@ -35614,100 +35717,209 @@
           ],
           "fg": 19450,
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "landscapingsupplyco_1b" ], "fg": 19451, "rotates": false },
         { "id": [ "landscapingsupplyco_1a" ], "fg": 19452, "rotates": false },
-        { "id": [ "landscapingsupplyco_1b_roof" ], "fg": 19453, "bg": 19347, "rotates": false },
-        { "id": [ "s_laundromat_roof", "s_laundromat_roof_1" ], "fg": 19454, "bg": 19347, "rotates": false },
-        { "id": [ "s_pharm_roof", "s_pharm_roof_1" ], "fg": 19455, "bg": 19347, "rotates": false },
+        {
+          "id": [ "landscapingsupplyco_1b_roof" ],
+          "fg": 19453,
+          "bg": 19347,
+          "rotates": false,
+          "has_om_transparency": true
+        },
+        {
+          "id": [ "s_laundromat_roof", "s_laundromat_roof_1" ],
+          "fg": 19454,
+          "bg": 19347,
+          "rotates": false,
+          "has_om_transparency": true
+        },
+        {
+          "id": [ "s_pharm_roof", "s_pharm_roof_1" ],
+          "fg": 19455,
+          "bg": 19347,
+          "rotates": false,
+          "has_om_transparency": true
+        },
         { "id": [ "abstorefront", "abstorefront_1", "abstorefront_2" ], "fg": 19456, "rotates": false },
         {
           "id": [ "abstorefront_roof", "abstorefront_roof_1", "abstorefront_roof_2" ],
           "fg": 19457,
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "icecream_shop" ], "fg": 19458, "rotates": false },
-        { "id": [ "icecream_shop_roof" ], "fg": 19459, "bg": 19347, "rotates": false },
+        { "id": [ "icecream_shop_roof" ], "fg": 19459, "bg": 19347, "rotates": false, "has_om_transparency": true },
         { "id": [ "s_petstore", "s_petstore_1", "s_petstore_2" ], "fg": 19460, "rotates": false },
         {
           "id": [ "s_petstore_roof", "s_petstore_roof_1", "s_petstore_roof_2" ],
           "fg": 19461,
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "animalshelter" ], "fg": 19462, "rotates": false },
-        { "id": [ "animalshelter_roof" ], "fg": 19463, "bg": 19347, "rotates": false },
+        { "id": [ "animalshelter_roof" ], "fg": 19463, "bg": 19347, "rotates": false, "has_om_transparency": true },
         { "id": [ "dollarstore", "dollarstore_1" ], "fg": 19464, "rotates": false },
-        { "id": [ "dollarstore_roof", "dollarstore_roof_1" ], "fg": 19465, "bg": 19347, "rotates": false },
+        {
+          "id": [ "dollarstore_roof", "dollarstore_roof_1" ],
+          "fg": 19465,
+          "bg": 19347,
+          "rotates": false,
+          "has_om_transparency": true
+        },
         { "id": [ "candy_shop", "candy_shop_1" ], "fg": 19466, "rotates": false },
-        { "id": [ "candy_shop_roof", "candy_shop_roof_1" ], "fg": 19467, "bg": 19347, "rotates": false },
+        {
+          "id": [ "candy_shop_roof", "candy_shop_roof_1" ],
+          "fg": 19467,
+          "bg": 19347,
+          "rotates": false,
+          "has_om_transparency": true
+        },
         { "id": [ "cs_market_small" ], "fg": 19468, "rotates": false },
         {
           "id": [ "bus_stat_0_roof", "bus_stat_1_roof", "mine_entrance_loading_zone_roof", "cs_gardening_allotment_roof" ],
           "fg": 19469,
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
-        { "id": [ "mine_entrance_roof" ], "fg": 19470, "bg": 19347, "rotates": false },
+        { "id": [ "mine_entrance_roof" ], "fg": 19470, "bg": 19347, "rotates": false, "has_om_transparency": true },
         { "id": [ "music_venue", "music_venue_1", "s_music" ], "fg": 19471, "rotates": false },
         {
           "id": [ "music_venue_roof", "music_venue_1_roof", "music_venue_1_roof_top", "s_music_roof" ],
           "fg": 19472,
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": [ "gym" ], "fg": 19473, "rotates": false },
-        { "id": [ "gym_roof", "gym_upper_roof" ], "fg": 19474, "bg": 19347, "rotates": false },
-        { "id": [ "cs_sex_shop_roof" ], "fg": 19475, "bg": 19347, "rotates": false },
+        {
+          "id": [ "gym_roof", "gym_upper_roof" ],
+          "fg": 19474,
+          "bg": 19347,
+          "rotates": false,
+          "has_om_transparency": true
+        },
+        { "id": [ "cs_sex_shop_roof" ], "fg": 19475, "bg": 19347, "rotates": false, "has_om_transparency": true },
         { "id": [ "house_2story_basement" ], "fg": 19476, "bg": 9477, "rotates": false },
         { "id": [ "s_baseballfield_a1" ], "fg": [ 19477 ], "rotates": true },
         { "id": [ "s_baseballfield_a2" ], "fg": [ 19481 ], "rotates": true },
         { "id": [ "s_baseballfield_b1" ], "fg": [ 19485 ], "rotates": true },
         { "id": [ "s_baseballfield_b2" ], "fg": [ 19489 ], "rotates": true },
         { "id": [ "cs_tire_shop" ], "fg": 19493, "rotates": false },
-        { "id": [ "cs_tire_shop_roof" ], "fg": 19494, "bg": 19347, "rotates": false },
+        { "id": [ "cs_tire_shop_roof" ], "fg": 19494, "bg": 19347, "rotates": false, "has_om_transparency": true },
         { "id": [ "s_gardening" ], "fg": 19495, "rotates": false },
-        { "id": [ "s_gardening_roof" ], "fg": 19496, "bg": 19347, "rotates": false },
+        { "id": [ "s_gardening_roof" ], "fg": 19496, "bg": 19347, "rotates": false, "has_om_transparency": true },
         { "id": [ "house_modern_1" ], "fg": [ 19497, 19498, 19499, 19500 ], "rotates": true },
-        { "id": [ "house_modern_1_roof" ], "fg": [ 19501, 19502, 19503, 19504 ], "bg": 19347, "rotates": true },
+        {
+          "id": [ "house_modern_1_roof" ],
+          "fg": [ 19501, 19502, 19503, 19504 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
         { "id": [ "urban_1_1" ], "fg": [ 19505, 19506, 19507, 19512 ], "rotates": true },
         { "id": [ "urban_1_2" ], "fg": [ 19509, 19510, 19511, 19508 ], "rotates": true },
-        { "id": [ "urban_1_3", "urban_1_5" ], "fg": [ 19513, 19514, 19515, 19520 ], "bg": 19347, "rotates": true },
-        { "id": [ "urban_1_4", "urban_1_6" ], "fg": [ 19517, 19518, 19519, 19516 ], "bg": 19347, "rotates": true },
+        {
+          "id": [ "urban_1_3", "urban_1_5" ],
+          "fg": [ 19513, 19514, 19515, 19520 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
+        {
+          "id": [ "urban_1_4", "urban_1_6" ],
+          "fg": [ 19517, 19518, 19519, 19516 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
         { "id": [ "urban_2_1" ], "fg": [ 19505, 19506, 19507, 19512 ], "rotates": true },
         { "id": [ "urban_2_2" ], "fg": [ 19509, 19510, 19511, 19508 ], "rotates": true },
-        { "id": [ "urban_2_3", "urban_2_5" ], "fg": [ 19513, 19514, 19515, 19520 ], "bg": 19347, "rotates": true },
-        { "id": [ "urban_2_4", "urban_2_6" ], "fg": [ 19517, 19518, 19519, 19516 ], "bg": 19347, "rotates": true },
+        {
+          "id": [ "urban_2_3", "urban_2_5" ],
+          "fg": [ 19513, 19514, 19515, 19520 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
+        {
+          "id": [ "urban_2_4", "urban_2_6" ],
+          "fg": [ 19517, 19518, 19519, 19516 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
         { "id": [ "urban_3_1" ], "fg": [ 19505, 19506, 19507, 19512 ], "rotates": true },
         { "id": [ "urban_3_2" ], "fg": [ 19509, 19510, 19511, 19508 ], "rotates": true },
-        { "id": [ "urban_3_3", "urban_3_5" ], "fg": [ 19513, 19514, 19515, 19520 ], "bg": 19347, "rotates": true },
-        { "id": [ "urban_3_4", "urban_3_6" ], "fg": [ 19517, 19518, 19519, 19516 ], "bg": 19347, "rotates": true },
+        {
+          "id": [ "urban_3_3", "urban_3_5" ],
+          "fg": [ 19513, 19514, 19515, 19520 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
+        {
+          "id": [ "urban_3_4", "urban_3_6" ],
+          "fg": [ 19517, 19518, 19519, 19516 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
         { "id": [ "urban_5_1" ], "fg": [ 19505, 19506, 19507, 19512 ], "rotates": true },
         { "id": [ "urban_5_2" ], "fg": [ 19509, 19510, 19511, 19508 ], "rotates": true },
-        { "id": [ "urban_5_3", "urban_5_5" ], "fg": [ 19513, 19514, 19515, 19520 ], "bg": 19347, "rotates": true },
-        { "id": [ "urban_5_4", "urban_5_6" ], "fg": [ 19517, 19518, 19519, 19516 ], "bg": 19347, "rotates": true },
+        {
+          "id": [ "urban_5_3", "urban_5_5" ],
+          "fg": [ 19513, 19514, 19515, 19520 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
+        {
+          "id": [ "urban_5_4", "urban_5_6" ],
+          "fg": [ 19517, 19518, 19519, 19516 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
         { "id": [ "urban_4_3" ], "fg": [ 19505, 19506, 19507, 19512 ], "rotates": true },
         { "id": [ "urban_4_4" ], "fg": [ 19509, 19510, 19511, 19508 ], "rotates": true },
-        { "id": [ "urban_4_5", "urban_4_7" ], "fg": [ 19513, 19514, 19515, 19520 ], "bg": 19347, "rotates": true },
-        { "id": [ "urban_4_6", "urban_4_8" ], "fg": [ 19517, 19518, 19519, 19516 ], "bg": 19347, "rotates": true },
+        {
+          "id": [ "urban_4_5", "urban_4_7" ],
+          "fg": [ 19513, 19514, 19515, 19520 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
+        {
+          "id": [ "urban_4_6", "urban_4_8" ],
+          "fg": [ 19517, 19518, 19519, 19516 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
         { "id": [ "urban_6_1", "urban_7_1" ], "fg": [ 19505, 19506, 19507, 19512 ], "rotates": true },
         { "id": [ "urban_6_2", "urban_7_2" ], "fg": [ 19509, 19510, 19511, 19508 ], "rotates": true },
         {
           "id": [ "urban_6_3", "urban_7_3", "urban_6_5", "urban_7_5" ],
           "fg": [ 19513, 19514, 19515, 19520 ],
           "bg": 19347,
-          "rotates": true
+          "rotates": true,
+          "has_om_transparency": true
         },
         {
           "id": [ "urban_6_4", "urban_7_4", "urban_6_6", "urban_7_6" ],
           "fg": [ 19517, 19518, 19519, 19516 ],
           "bg": 19347,
-          "rotates": true
+          "rotates": true,
+          "has_om_transparency": true
         },
         { "id": [ "museum" ], "fg": [ 19521 ], "rotates": false },
-        { "id": [ "museum_roof" ], "fg": [ 19522 ], "bg": 19347, "rotates": false },
+        { "id": [ "museum_roof" ], "fg": [ 19522 ], "bg": 19347, "rotates": false, "has_om_transparency": true },
         {
           "id": [
             "urban_1_1_basement",
@@ -35749,14 +35961,21 @@
           ],
           "rotates": false
         },
-        { "id": [ "roadstop_b_roof" ], "fg": [ 19535 ], "bg": 19347, "rotates": false },
+        { "id": [ "roadstop_b_roof" ], "fg": [ 19535 ], "bg": 19347, "rotates": false, "has_om_transparency": true },
         { "id": [ "house_02" ], "fg": [ 19536, 19537, 19538, 19539 ], "rotates": true },
-        { "id": [ "house_02_roof" ], "fg": [ 19540, 19541, 19542, 19543 ], "bg": 19347, "rotates": true },
+        {
+          "id": [ "house_02_roof" ],
+          "fg": [ 19540, 19541, 19542, 19543 ],
+          "bg": 19347,
+          "rotates": true,
+          "has_om_transparency": true
+        },
         {
           "id": [ "public_works_NE_roof", "public_works_NW_roof", "public_works_SE_roof", "public_works_SW_roof" ],
           "fg": [ 19544 ],
           "bg": 19347,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         {
           "id": [ "mil_base_minefield_w" ],
@@ -35837,31 +36056,35 @@
       "file": "Temporary-Maptiles-Large.png",
       "tiles": [
         { "id": "cs_car_showroom", "fg": 19638, "rotates": false },
-        { "id": "cs_car_showroom_2ndfloor", "fg": 19639, "bg": 19637, "rotates": false },
-        { "id": "cs_car_showroom_roof", "fg": 19640, "bg": 19637, "rotates": false },
+        { "id": "cs_car_showroom_2ndfloor", "fg": 19639, "bg": 19637, "rotates": false, "has_om_transparency": true },
+        { "id": "cs_car_showroom_roof", "fg": 19640, "bg": 19637, "rotates": false, "has_om_transparency": true },
         {
           "id": [ "loffice_tower_7", "loffice_tower_11", "loffice_tower_15", "loffice_tower_19" ],
           "fg": [ 19643, 19644, 19642, 19641 ],
           "bg": 19637,
-          "rotates": true
+          "rotates": true,
+          "has_om_transparency": true
         },
         {
           "id": [ "loffice_tower_5", "loffice_tower_9", "loffice_tower_9b", "loffice_tower_13", "loffice_tower_17" ],
           "fg": [ 19641, 19643, 19644, 19642 ],
           "bg": 19637,
-          "rotates": true
+          "rotates": true,
+          "has_om_transparency": true
         },
         {
           "id": [ "loffice_tower_8", "loffice_tower_12", "loffice_tower_16", "loffice_tower_20" ],
           "fg": [ 19644, 19642, 19641, 19643 ],
           "bg": 19637,
-          "rotates": true
+          "rotates": true,
+          "has_om_transparency": true
         },
         {
           "id": [ "loffice_tower_6", "loffice_tower_10", "loffice_tower_10b", "loffice_tower_14", "loffice_tower_18" ],
           "fg": [ 19642, 19641, 19643, 19644 ],
           "bg": 19637,
-          "rotates": true
+          "rotates": true,
+          "has_om_transparency": true
         },
         {
           "id": [
@@ -35877,11 +36100,24 @@
           ],
           "fg": [ 19645 ],
           "bg": 19637,
-          "rotates": false
+          "rotates": false,
+          "has_om_transparency": true
         },
         { "id": "house_2story_base", "fg": [ 19647, 19648, 19646, 19649 ], "rotates": true },
-        { "id": "house_2story_second", "fg": [ 19651, 19652, 19650, 19653 ], "bg": 19637, "rotates": true },
-        { "id": "house_2story_roof", "fg": [ 19655, 19656, 19654, 19657 ], "bg": 19637, "rotates": true },
+        {
+          "id": "house_2story_second",
+          "fg": [ 19651, 19652, 19650, 19653 ],
+          "bg": 19637,
+          "rotates": true,
+          "has_om_transparency": true
+        },
+        {
+          "id": "house_2story_roof",
+          "fg": [ 19655, 19656, 19654, 19657 ],
+          "bg": 19637,
+          "rotates": true,
+          "has_om_transparency": true
+        },
         {
           "id": [ "city_block2_1", "city_block2_flr2_1", "city_block2_roof_1" ],
           "fg": [ 19658, 19661, 19660, 19659 ],

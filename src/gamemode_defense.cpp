@@ -64,7 +64,7 @@ std::string caravan_category_name( caravan_category cat );
 std::vector<itype_id> caravan_items( caravan_category cat );
 std::set<m_flag> monflags_to_add;
 
-int caravan_price( player &u, int price );
+int caravan_price( Character &who, int price );
 
 void draw_caravan_borders( const catacurses::window &w, int current_window );
 void draw_caravan_categories( const catacurses::window &w, int category_selected,
@@ -1268,13 +1268,13 @@ void draw_caravan_items( const catacurses::window &w, std::vector<itype_id> *ite
     wnoutrefresh( w );
 }
 
-int caravan_price( player &u, int price )
+int caravan_price( Character &who, int price )
 {
     ///\EFFECT_BARTER reduces caravan prices, 5% per point, up to 50%
-    if( u.get_skill_level( skill_barter ) > 10 ) {
+    if( who.get_skill_level( skill_barter ) > 10 ) {
         return static_cast<int>( static_cast<double>( price ) * .5 );
     }
-    return price * ( 1.0 - u.get_skill_level( skill_barter ) * .05 );
+    return price * ( 1.0 - who.get_skill_level( skill_barter ) * .05 );
 }
 
 void defense_game::spawn_wave()

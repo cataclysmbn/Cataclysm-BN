@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAPGEN_PARAMETER_H
-#define CATA_SRC_MAPGEN_PARAMETER_H
 
 #include "cata_variant.h"
 #include "memory_fast.h"
@@ -68,4 +66,4 @@ struct mapgen_parameters {
                           mapgen_parameter_scope up_to_scope = mapgen_parameter_scope::last );
 };
 
-#endif // CATA_SRC_MAPGEN_PARAMETER_H
+

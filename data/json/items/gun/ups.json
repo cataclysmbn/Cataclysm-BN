@@ -208,6 +208,7 @@
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 5 ] ],
     "ammo": "water",
     "clip_size": 80,
+    "reload": 300,
     "extend": { "flags": [ "MOUNTED_GUN", "NO_RECOVER_AMMO" ] },
     "delete": { "flags": [ "NO_UNLOAD" ] }
   }

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MONDEFENSE_H
-#define CATA_SRC_MONDEFENSE_H
 
 class monster;
 class Creature;
@@ -22,4 +20,4 @@ void revenge_aggro( monster &m, Creature *source, const dealt_projectile_attack 
 void none( monster &, Creature *, const dealt_projectile_attack * );
 } //namespace mdefense
 
-#endif // CATA_SRC_MONDEFENSE_H
+

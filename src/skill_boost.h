@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_SKILL_BOOST_H
-#define CATA_SRC_SKILL_BOOST_H
 
 #include <optional>
 #include <string>
@@ -38,4 +36,4 @@ class skill_boost
         void load( const JsonObject &jo, const std::string &src );
 };
 
-#endif // CATA_SRC_SKILL_BOOST_H
+

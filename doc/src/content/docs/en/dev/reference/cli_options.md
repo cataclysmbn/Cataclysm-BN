@@ -13,8 +13,8 @@ This page is auto-generated from `tools/gen_cli_docs.ts` and should not be edite
 
 :::
 
-The game executable can not only run your favorite roguelike, but also provides a number of command
-line options to help modders and developers.
+The game executable can not only run your favorite roguelike,
+but also provides a number of command line options to help modders and developers.
 
 ---
 
@@ -58,9 +58,13 @@ Base path for all game data subdirectories.
 
 If set, no debug messages will be printed.
 
-### `--lua-doc`
+### `--lua-doc <output path>`
 
-If set, will generate Lua docs and exit.
+Generate Lua docs to given path and exit.
+
+### `--lua-types <output path>`
+
+Generate Lua types to given path and exit.
 
 ### `--datadir <directory name>`
 
@@ -86,8 +90,7 @@ Instructs map-sharing code to use this name for your character..
 
 ### `--addadmin <username>`
 
-Instructs map-sharing code to use this name for your character and give you access to the cheat
-functions..
+Instructs map-sharing code to use this name for your character and give you access to the cheat functions..
 
 ### `--adddebugger <username>`
 

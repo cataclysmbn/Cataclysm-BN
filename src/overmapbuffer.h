@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_OVERMAPBUFFER_H
-#define CATA_SRC_OVERMAPBUFFER_H
 
 #include <array>
 #include <functional>
@@ -9,11 +7,14 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
+#include <shared_mutex>
 
 #include "coordinates.h"
 #include "enums.h"
+#include "json.h"
 #include "memory_fast.h"
 #include "overmap_types.h"
 #include "point.h"
@@ -109,28 +110,38 @@ struct overmap_with_local_coords {
  * Standard arguments for finding overmap terrain
  * @param origin Location of search
  * @param types vector of Terrain type/matching rule to use to find the type
- * @param search_range The maximum search distance.  If 0, OMAPX is used.
+ * @param exclude_types vector of Terrain type/matching rule to use to find the type
+ * @param search_range The [minimum, maximum] search distance. If maximum is 0, a function specific default is used.
+ * @param search_layers If set, overrides the search layers to this range. Layer from search origin otherwise.
  * @param min_distance Matches within min_distance are ignored.
- * @param must_see If true, only terrain seen by the player should be searched.
- * @param cant_see If true, only terrain not seen by the player should be searched
- * @param existing_overmaps_only If true, will restrict searches to existing overmaps only. This
+ * @param seen If true, only terrain seen by the player should be searched.
+ * If false, only terrain not seen by the player should be searched.
+ * @param explored If true, only terrain marked as explored by the player should be searched.
+ * If false, only terrain not marked as explored by the player should be searched.
+ * @param existing_only If true, will restrict searches to existing overmaps only. This
  * is particularly useful if we want to attempt to add a missing overmap special to an existing
  * overmap rather than creating many overmaps in an attempt to find it.
  * @param om_special If set, the terrain must be part of the specified overmap special.
  * @param popup If set, the popup will be periodically updated to indicate ongoing search.
+ * @param max_results, If set, limits the search result to at most n entries
 */
 struct omt_find_params {
     ~omt_find_params();
 
     std::vector<std::pair<std::string, ot_match_type>> types;
-    int search_range = 0;
-    int min_distance = 0;
-    bool must_see = false;
-    bool cant_see = false;
+    std::vector<std::pair<std::string, ot_match_type>> exclude_types;
+    std::pair<int, int> search_range = { 0, 0 };
+    std::optional<std::pair<int, int>> search_layers = std::nullopt;
+    std::optional<bool> seen = std::nullopt;
+    std::optional<bool> explored = std::nullopt;
     bool existing_only = false;
     std::optional<overmap_special_id> om_special = std::nullopt;
     shared_ptr_fast<throbber_popup> popup = nullptr;
+    std::optional<int> max_results = std::nullopt;
 };
+
+constexpr const std::pair<int, int> omt_find_all_layers = { -OVERMAP_DEPTH, OVERMAP_HEIGHT };
+constexpr const std::pair<int, int> omt_find_above_ground_layer = { 0, OVERMAP_HEIGHT };
 
 /**
  * Standard arguments for finding overmap route
@@ -151,9 +162,6 @@ class overmapbuffer
     public:
         overmapbuffer();
 
-        static std::string terrain_filename( const point_abs_om & );
-        static std::string player_filename( const point_abs_om & );
-
         /**
          * Uses overmap coordinates, that means x and y are directly
          * compared with the position of the overmap.
@@ -162,6 +170,11 @@ class overmapbuffer
         void save();
         void clear();
         void create_custom_overmap( const point_abs_om &, overmap_special_batch &specials );
+
+        /**
+        * Generates overmap tiles, if missing
+        */
+        void generate( const std::vector<point_abs_om> &locs );
 
         /**
          * Returns the overmap terrain at the given OMT coordinates.
@@ -302,19 +315,18 @@ class overmapbuffer
 
         /**
          * Find all places with the specific overmap terrain type.
-         * The function only searches on the z-level indicated by
-         * origin.
          * This function may create a new overmap if needed.
          * @param origin Location of search
          * see omt_find_params for definitions of the terms
          */
         std::vector<tripoint_abs_omt> find_all( const tripoint_abs_omt &origin,
                                                 const omt_find_params &params );
-        std::vector<tripoint_abs_omt> find_all(
-            const tripoint_abs_omt &origin, const std::string &type,
-            int dist, bool must_be_seen, ot_match_type match_type = ot_match_type::type,
-            bool existing_overmaps_only = false,
-            const std::optional<overmap_special_id> &om_special = std::nullopt );
+    private:
+        std::vector<tripoint_abs_omt> find_all_async( const tripoint_abs_omt &origin,
+                const omt_find_params &params );
+        std::vector<tripoint_abs_omt> find_all_sync( const tripoint_abs_omt &origin,
+                const omt_find_params &params );
+    public:
 
         /**
          * Returns a random point of specific terrain type among those found in certain search
@@ -325,11 +337,16 @@ class overmapbuffer
          */
         tripoint_abs_omt find_random( const tripoint_abs_omt &origin,
                                       const omt_find_params &params );
-        tripoint_abs_omt find_random(
-            const tripoint_abs_omt &origin, const std::string &type, int dist,
-            bool must_be_seen, ot_match_type match_type = ot_match_type::type,
-            bool existing_overmaps_only = false,
-            const std::optional<overmap_special_id> &om_special = std::nullopt );
+
+        /**
+         * Returns the closest point of terrain type.
+         * @param origin Location of search
+         * see omt_find_params for definitions of the terms
+         */
+        tripoint_abs_omt find_closest( const tripoint_abs_omt &origin,
+                                       const omt_find_params &params );
+
+
         /**
          * Mark a square area around center on Z-level z
          * as seen.
@@ -348,17 +365,6 @@ class overmapbuffer
             const tripoint_abs_omt &src, const tripoint_abs_omt &dest, overmap_path_params params );
         bool reveal_route( const tripoint_abs_omt &source, const tripoint_abs_omt &dest,
                            const omt_route_params &params );
-        /**
-         * Returns the closest point of terrain type.
-         * @param origin Location of search
-         * see omt_find_params for definitions of the terms
-         */
-        tripoint_abs_omt find_closest( const tripoint_abs_omt &origin,
-                                       const omt_find_params &params );
-        tripoint_abs_omt find_closest(
-            const tripoint_abs_omt &origin, const std::string &type, int radius, bool must_be_seen,
-            ot_match_type match_type = ot_match_type::type, bool existing_overmaps_only = false,
-            const std::optional<overmap_special_id> &om_special = std::nullopt );
 
         /* These functions return the overmap that contains the given
          * overmap terrain coordinate, and the local coordinates of that point
@@ -501,6 +507,7 @@ class overmapbuffer
                             int min_radius, int max_radius );
 
     private:
+        std::shared_mutex mutex;
         /**
          * Common function used by the find_closest/all/random to determine if the location is
          * findable based on the specified criteria.
@@ -508,15 +515,18 @@ class overmapbuffer
          * see omt_find_params for definitions of the terms
          */
         bool is_findable_location( const tripoint_abs_omt &location, const omt_find_params &params );
+        bool is_findable_location( const overmap_with_local_coords &map_loc,
+                                   const omt_find_params &params );
 
         std::unordered_map< point_abs_om, std::unique_ptr< overmap > > overmaps;
         /**
          * Set of overmap coordinates of overmaps that are known
          * to not exist on disk. See @ref get_existing for usage.
          */
-        mutable std::set<point_abs_om> known_non_existing;
-        // Cached result of previous call to overmapbuffer::get_existing
-        overmap mutable *last_requested_overmap;
+        std::set<point_abs_om> known_non_existing;
+
+        // Set of globally unique overmap specials that have already been placed
+        std::unordered_set<overmap_special_id> placed_unique_specials;
 
         /**
          * Get a list of notes in the (loaded) overmaps.
@@ -551,6 +561,24 @@ class overmapbuffer
                                 const tripoint_abs_omt &loc );
         bool check_overmap_special_type_existing( const overmap_special_id &id,
                 const tripoint_abs_omt &loc );
+
+        /**
+         * Adds the given globally unique overmap special to the list of placed specials.
+         */
+        void add_unique_special( const overmap_special_id &id );
+        /**
+         * Returns true if the given globally unique overmap special has already been placed.
+         */
+        bool contains_unique_special( const overmap_special_id &id ) const;
+        /**
+         * Writes the placed unique specials as a JSON value.
+         */
+        void serialize_placed_unique_specials( JsonOut &json ) const;
+        /**
+         * Reads placed unique specials from JSON and overwrites the global value.
+         */
+        void deserialize_placed_unique_specials( JsonIn &jsin );
+
     private:
         /**
          * Go thorough the monster groups of the overmap and move out-of-bounds
@@ -598,4 +626,4 @@ class overmapbuffer
 
 extern overmapbuffer overmap_buffer;
 
-#endif // CATA_SRC_OVERMAPBUFFER_H
+

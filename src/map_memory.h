@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAP_MEMORY_H
-#define CATA_SRC_MAP_MEMORY_H
 
 #include <map>
 #include <string>
@@ -204,4 +202,4 @@ class map_memory
         void clear_cache();
 };
 
-#endif // CATA_SRC_MAP_MEMORY_H
+

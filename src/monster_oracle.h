@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MONSTER_ORACLE_H
-#define CATA_SRC_MONSTER_ORACLE_H
 
 #include "behavior.h"
 #include "behavior_oracle.h"
@@ -27,4 +25,4 @@ class monster_oracle_t : public oracle_t
 };
 
 } // namespace behavior
-#endif // CATA_SRC_MONSTER_ORACLE_H
+

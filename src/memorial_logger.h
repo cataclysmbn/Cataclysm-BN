@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MEMORIAL_LOGGER_H
-#define CATA_SRC_MEMORIAL_LOGGER_H
 
 #include <iosfwd>
 #include <string>
@@ -48,4 +46,4 @@ class memorial_logger : public event_subscriber
         std::vector<std::string> log;
 };
 
-#endif // CATA_SRC_MEMORIAL_LOGGER_H
+

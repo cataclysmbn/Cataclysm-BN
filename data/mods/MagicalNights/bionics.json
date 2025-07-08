@@ -1,0 +1,13 @@
+[
+  {
+    "id": "bio_sneeze_beam",
+    "type": "bionic",
+    "name": { "str": "Crystallized Mana Nose Replacement" },
+    "description": "A large gem made with crystallized mana and some other stabilizing metals.  Comes with a specially designed power pack (installed into the skull) that does not interfere with your normal facial functions.  WARNING: for Technophile use only.  By using this spell you are waiving all liability of Frikken Laser Beams Inc.  and its subsidiaries.",
+    "occupied_bodyparts": [ [ "head", 10 ], [ "mouth", 1 ] ],
+    "capacity": "500 kJ",
+    "learned_spells": [ [ "overcharge_eyes", 4 ] ],
+    "enchantments": [ "ench_bio_sneeze_beam" ],
+    "flags": [ "BIONIC_SHOCKPROOF" ]
+  }
+]

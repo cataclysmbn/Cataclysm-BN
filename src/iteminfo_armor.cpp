@@ -78,7 +78,7 @@ auto parts_to_display( const item &it,
 {
     auto result = std::vector<BodyPartInfoPair>();
 
-    std::copy_if( xs.begin(), xs.end(), std::back_inserter( result ),
+    std::ranges::copy_if( xs, std::back_inserter( result ),
     [&it, armor]( const auto & piece ) {
         if( !piece.second.active ) {
             return false;
@@ -339,7 +339,7 @@ void item::armor_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                     continue;
                 }
                 for( const bodypart_str_id &covering_id : piece.covers ) {
-                    if( covering_id != bodypart_str_id( "num_bp" ) ) {
+                    if( covering_id ) {
                         const int encumbrance_when_full =
                             get_encumber_when_containing( you, get_total_capacity(), covering_id.id() );
                         to_display_data[covering_id] = { covering_id.obj().name_as_heading, {

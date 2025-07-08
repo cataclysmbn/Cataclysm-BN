@@ -590,10 +590,11 @@
     "color": "yellow",
     "covers": [ "hands" ],
     "coverage": 100,
-    "encumbrance": 40,
+    "encumbrance": 15,
     "warmth": 10,
     "material_thickness": 3,
     "environmental_protection": 8,
+    "qualities": [ [ "HV_INSULATION", 1 ] ],
     "flags": [ "WATERPROOF" ]
   },
   {
@@ -678,10 +679,10 @@
     "color": "blue",
     "covers": [ "hands" ],
     "coverage": 95,
-    "encumbrance": 20,
+    "encumbrance": 15,
     "warmth": 60,
     "material_thickness": 3,
-    "valid_mods": [ "resized_large" ]
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "gloves_wool_fingerless",
@@ -695,7 +696,7 @@
     "looks_like": "gloves_fingerless",
     "coverage": 50,
     "warmth": 24,
-    "encumbrance": 10,
+    "encumbrance": 7,
     "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS" ] }
   },
   {
@@ -714,12 +715,12 @@
     "color": "brown",
     "covers": [ "hands" ],
     "coverage": 95,
-    "encumbrance": 20,
+    "encumbrance": 10,
     "warmth": 25,
     "material_thickness": 3,
     "environmental_protection": 5,
-    "valid_mods": [ "steel_padded", "alloy_padded", "resized_large" ],
-    "flags": [ "WATERPROOF", "STURDY" ]
+    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
   },
   {
     "id": "gloves_cut_resistant",
@@ -738,7 +739,7 @@
     "color": "light_gray",
     "covers": [ "hands" ],
     "coverage": 95,
-    "encumbrance": 40,
+    "encumbrance": 15,
     "warmth": 10,
     "material_thickness": 4,
     "environmental_protection": 1,
@@ -762,7 +763,7 @@
     "coverage": 50,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "OVERSIZE", "COMPACT", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "gloves_wraps_fur",
@@ -780,10 +781,10 @@
     "color": "white",
     "covers": [ "hands" ],
     "coverage": 50,
-    "encumbrance": 5,
+    "encumbrance": 4,
     "warmth": 20,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "OVERSIZE", "COMPACT", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "gloves_wraps_leather",
@@ -801,10 +802,10 @@
     "color": "white",
     "covers": [ "hands" ],
     "coverage": 50,
-    "encumbrance": 5,
+    "encumbrance": 3,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "gloves_wraps_wool",
@@ -825,7 +826,7 @@
     "encumbrance": 2,
     "warmth": 15,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "gloves_wsurvivor",
@@ -843,7 +844,7 @@
     "color": "light_gray",
     "covers": [ "hands" ],
     "coverage": 100,
-    "encumbrance": 37,
+    "encumbrance": 25,
     "warmth": 75,
     "material_thickness": 4,
     "environmental_protection": 5,
@@ -886,7 +887,7 @@
     "color": "blue",
     "covers": [ "hands" ],
     "coverage": 100,
-    "encumbrance": 80,
+    "encumbrance": 30,
     "warmth": 70,
     "material_thickness": 4,
     "flags": [ "OVERSIZE", "OUTER" ]

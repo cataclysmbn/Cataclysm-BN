@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ADVANCED_INV_PANE_H
-#define CATA_SRC_ADVANCED_INV_PANE_H
 
 #include <array>
 #include <cstddef>
@@ -128,4 +126,3 @@ class advanced_inventory_pane
 
         mutable std::map<std::string, std::function<bool( const item & )>> filtercache;
 };
-#endif // CATA_SRC_ADVANCED_INV_PANE_H

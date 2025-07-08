@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DEPENDENCY_TREE_H
-#define CATA_SRC_DEPENDENCY_TREE_H
 
 #include <map>
 #include <stack>
@@ -104,4 +102,4 @@ class dependency_tree
         void check_for_conflicting_dependencies();
 };
 
-#endif // CATA_SRC_DEPENDENCY_TREE_H
+

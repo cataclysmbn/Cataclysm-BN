@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_EXPLOSION_H
-#define CATA_SRC_EXPLOSION_H
 
 #include <optional>
 #include <string>
@@ -66,4 +64,4 @@ float blast_radius_from_legacy( int power, float distance_factor );
 
 explosion_data load_explosion_data( const JsonObject &jo );
 
-#endif // CATA_SRC_EXPLOSION_H
+

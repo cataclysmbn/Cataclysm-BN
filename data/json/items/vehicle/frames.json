@@ -101,7 +101,7 @@
     "type": "GENERIC",
     "id": "frame_plastic",
     "name": { "str": "plastic frame" },
-    "description": "A large frame made of plastic.  Useful for cheap and lightweight vehicles.",
+    "description": "A large  foldable frame made of plastic.  Useful for cheap and lightweight vehicles.",
     "weight": "2500 g",
     "color": "brown",
     "material": [ "plastic" ],
@@ -113,12 +113,27 @@
     "type": "GENERIC",
     "id": "frame_carbon",
     "name": { "str": "carbon fiber frame" },
-    "description": "A large frame made of plastic.  Useful for lightweight yet sturdy vehicles.",
+    "description": "A large foldable frame made from sheets of carbon fiber.  Useful for lightweight yet sturdy vehicles.",
     "weight": "1500 g",
     "color": "brown",
     "material": [ "carbon_fiber" ],
     "price": "35 USD",
     "price_postapoc": "1 USD",
+    "copy-from": "foldframe"
+  },
+  {
+    "type": "GENERIC",
+    "id": "frame_wood_deck",
+    "name": { "str": "skateboard deck" },
+    "symbol": "]",
+    "description": "A small skateboard frame made of thin layers of wood glued together.",
+    "weight": "1500 g",
+    "to_hit": -5,
+    "color": "brown",
+    "material": [ "wood" ],
+    "volume": "8750 ml",
+    "price": 1000,
+    "price_postapoc": 50,
     "copy-from": "foldframe"
   }
 ]

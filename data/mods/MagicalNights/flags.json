@@ -1,0 +1,20 @@
+[
+  {
+    "id": "owlbear_furred",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "info": "This clothing has an owlbear fur lining sewn into it to <good>greatly increase</good> its overall <info>warmth</info>."
+  },
+  {
+    "id": "demonchitin_padded",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "info": "This clothing has a demon chitin padding sewn into it to <good>greatly increase</good> its overall <info>fire resistance</info>."
+  },
+  {
+    "id": "blackdragon_coated",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "info": "This clothing has a coating of black dragon scales applied to it in order to <good>greatly increase</good> its overall <info>acid resistance</info>."
+  }
+]

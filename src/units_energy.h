@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UNITS_ENERGY_H
-#define CATA_SRC_UNITS_ENERGY_H
 
 #include <algorithm>
 
@@ -50,27 +48,26 @@ constexpr value_type to_kilojoule( const quantity<value_type, energy_in_joule_ta
 
 } // namespace units
 
-constexpr units::energy operator"" _J( const unsigned long long v )
+constexpr units::energy operator""_J( const unsigned long long v )
 {
     return units::from_joule( v );
 }
 
-constexpr units::quantity<double, units::energy_in_joule_tag> operator"" _J(
+constexpr units::quantity<double, units::energy_in_joule_tag> operator""_J(
     const long double v )
 {
     return units::from_joule( v );
 }
 
-constexpr units::energy operator"" _kJ( const unsigned long long v )
+constexpr units::energy operator""_kJ( const unsigned long long v )
 {
     return units::from_kilojoule( v );
 }
 
-constexpr units::quantity<double, units::energy_in_joule_tag> operator"" _kJ(
+constexpr units::quantity<double, units::energy_in_joule_tag> operator""_kJ(
     const long double v )
 {
     return units::from_kilojoule( v );
 }
 
 
-#endif // CATA_SRC_UNITS_ENERGY_H

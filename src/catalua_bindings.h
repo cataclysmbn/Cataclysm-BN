@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATALUA_BINDINGS_H
-#define CATA_SRC_CATALUA_BINDINGS_H
 
 #include "catalua_sol_fwd.h"
 
@@ -32,10 +30,16 @@ void reg_item( sol::state &lua );
 void reg_locale_api( sol::state &lua );
 void reg_map( sol::state &lua );
 void reg_monster( sol::state &lua );
+void mod_mutation_branch( sol::state &lua );
+void reg_magic( sol::state &lua );
 void reg_npc( sol::state &lua );
 void reg_player( sol::state &lua );
 void reg_point_tripoint( sol::state &lua );
+void reg_recipe( sol::state &lua );
 void reg_skill_level_map( sol::state &lua );
+void reg_spell_type( sol::state &lua );
+void reg_spell_fake( sol::state &lua );
+void reg_spell( sol::state &lua );
 void reg_testing_library( sol::state &lua );
 void reg_time_types( sol::state &lua );
 void reg_types( sol::state &lua );
@@ -48,4 +52,4 @@ void reg_all_bindings( sol::state &lua );
 
 } // namespace cata
 
-#endif // CATA_SRC_CATALUA_BINDINGS_H
+

@@ -42,8 +42,8 @@
 static const skill_id skill_barter( "barter" );
 static const flag_id json_flag_NO_UNWIELD( "NO_UNWIELD" );
 
-void npc_trading::transfer_items( std::vector<item_pricing> &stuff, player &,
-                                  player &receiver, bool npc_gives )
+void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
+                                  Character &receiver, bool npc_gives )
 {
     for( item_pricing &ip : stuff ) {
         if( !ip.selected ) {
@@ -92,7 +92,7 @@ std::vector<item_pricing> npc_trading::init_selling( npc &np )
     return result;
 }
 
-double npc_trading::net_price_adjustment( const player &buyer, const player &seller )
+double npc_trading::net_price_adjustment( const Character &buyer, const Character &seller )
 {
     // Adjust the prices based on your barter skill.
     // cap adjustment so nothing is ever sold below value
@@ -119,7 +119,8 @@ void buy_helper( T &src, Callback cb )
     } );
 }
 
-std::vector<item_pricing> npc_trading::init_buying( player &buyer, player &seller, bool is_npc )
+std::vector<item_pricing> npc_trading::init_buying( Character &buyer, Character &seller,
+        bool is_npc )
 {
     std::vector<item_pricing> result;
     npc *np_p = dynamic_cast<npc *>( &buyer );
@@ -188,7 +189,7 @@ std::vector<item_pricing> npc_trading::init_buying( player &buyer, player &selle
                                   std::make_pair( b.locs.front()->get_category(), b.locs.front()->display_name() ) );
     };
 
-    std::sort( result.begin(), result.end(), cmp );
+    std::ranges::sort( result, cmp );
 
     return result;
 }

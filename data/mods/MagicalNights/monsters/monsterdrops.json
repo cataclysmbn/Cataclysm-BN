@@ -1,0 +1,77 @@
+[
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "goblin_warrior_drops",
+    "entries": [
+      { "item": "helmet_scrap", "prob": 40 },
+      { "item": "legguard_scrap", "prob": 40 },
+      { "item": "boots_scrap", "prob": 40 },
+      { "item": "armguard_scrap", "prob": 40 },
+      { "item": "cuirass_scrap", "prob": 40 },
+      { "item": "cudgel", "prob": 95 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "goblin_slinger_drops",
+    "entries": [
+      { "item": "helmet_scrap", "prob": 40 },
+      { "item": "legguard_scrap", "prob": 40 },
+      { "item": "boots_scrap", "prob": 40 },
+      { "item": "armguard_scrap", "prob": 40 },
+      { "item": "cuirass_scrap", "prob": 40 },
+      { "item": "sling", "prob": 95 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "goblin_chieftain_drops",
+    "entries": [
+      { "item": "helmet_scrap", "prob": 40 },
+      { "item": "legguard_scrap", "prob": 40 },
+      { "item": "boots_scrap", "prob": 40 },
+      { "item": "armguard_scrap", "prob": 40 },
+      { "item": "cuirass_scrap", "prob": 40 },
+      { "group": "enchanted_melee_weapons_plus1", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "orc_warrior_drops",
+    "entries": [
+      { "item": "chainmail_legs", "prob": 40 },
+      { "item": "chainmail_feet", "prob": 40 },
+      { "item": "chainmail_arms", "prob": 40 },
+      { "item": "chainmail_vest", "prob": 40 },
+      { "item": "cutlass", "prob": 95 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "orc_archer_drops",
+    "entries": [
+      { "item": "chainmail_legs", "prob": 40 },
+      { "item": "chainmail_feet", "prob": 40 },
+      { "item": "chainmail_arms", "prob": 40 },
+      { "item": "chainmail_vest", "prob": 40 },
+      { "item": "longbow", "prob": 95 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "orc_blood_warrior_drops",
+    "entries": [
+      { "item": "chainmail_legs", "prob": 40 },
+      { "item": "chainmail_feet", "prob": 40 },
+      { "item": "chainmail_arms", "prob": 40 },
+      { "item": "chainmail_vest", "prob": 40 },
+      { "item": "pike_plus_one", "prob": 95 }
+    ]
+  }
+]

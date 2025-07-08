@@ -9,19 +9,14 @@
 #include <ostream>
 #include <set>
 #include <system_error>
-#include <type_traits>
 #include <unordered_map>
 
 #include "avatar.h"
-#include "bodypart.h"
-#include "cached_options.h"
-#include "calendar.h"
 #include "coordinate_conversions.h"
+#include "character.h"
 #include "creature.h"
 #include "debug.h"
-#include "effect.h"
 #include "enums.h"
-#include "enum_conversions.h"
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
@@ -43,7 +38,6 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
-#include "value_ptr.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -423,16 +417,16 @@ static bool describe_sound( sounds::sound_t category, bool from_player_position 
     return true;
 }
 
-void sounds::process_sound_markers( player *p )
+void sounds::process_sound_markers( Character *who )
 {
-    bool is_deaf = p->is_deaf();
-    const float volume_multiplier = p->hearing_ability();
+    bool is_deaf = who->is_deaf();
+    const float volume_multiplier = who->hearing_ability();
     const int weather_vol = get_weather().weather_id->sound_attn;
     auto sounds_copy = sounds_since_last_turn;
     for( const auto &sound_event_pair : sounds_copy ) {
         const tripoint &pos = sound_event_pair.first;
         const sound_event &sound = sound_event_pair.second;
-        const int distance_to_sound = sound_distance( p->pos(), pos );
+        const int distance_to_sound = sound_distance( who->pos(), pos );
         const int raw_volume = sound.volume;
 
         // The felt volume of a sound is not affected by negative multipliers, such as already
@@ -446,23 +440,23 @@ void sounds::process_sound_markers( player *p )
 
         // Deaf players hear no sound, but still are at risk of additional hearing loss.
         if( is_deaf ) {
-            if( is_sound_deafening && !p->is_immune_effect( effect_deaf ) ) {
-                p->add_effect( effect_deaf, std::min( 4_minutes,
-                                                      time_duration::from_turns( felt_volume - 130 ) / 8 ) );
-                if( !p->has_trait( trait_id( "NOPAIN" ) ) ) {
-                    p->add_msg_if_player( m_bad, _( "Your eardrums suddenly ache!" ) );
-                    if( p->get_pain() < 10 ) {
-                        p->mod_pain( rng( 0, 2 ) );
+            if( is_sound_deafening && !who->is_immune_effect( effect_deaf ) ) {
+                who->add_effect( effect_deaf, std::min( 4_minutes,
+                                                        time_duration::from_turns( felt_volume - 130 ) / 8 ) );
+                if( !who->has_trait( trait_id( "NOPAIN" ) ) ) {
+                    who->add_msg_if_player( m_bad, _( "Your eardrums suddenly ache!" ) );
+                    if( who->get_pain() < 10 ) {
+                        who->mod_pain( rng( 0, 2 ) );
                     }
                 }
             }
             continue;
         }
 
-        if( is_sound_deafening && !p->is_immune_effect( effect_deaf ) ) {
+        if( is_sound_deafening && !who->is_immune_effect( effect_deaf ) ) {
             const time_duration deafness_duration = time_duration::from_turns( felt_volume - 130 ) / 4;
-            p->add_effect( effect_deaf, deafness_duration );
-            if( p->is_deaf() && !is_deaf ) {
+            who->add_effect( effect_deaf, deafness_duration );
+            if( who->is_deaf() && !is_deaf ) {
                 is_deaf = true;
                 continue;
             }
@@ -472,51 +466,51 @@ void sounds::process_sound_markers( player *p )
         const int heard_volume = static_cast<int>( ( raw_volume - weather_vol ) *
                                  volume_multiplier ) - distance_to_sound;
 
-        if( heard_volume <= 0 && pos != p->pos() ) {
+        if( heard_volume <= 0 && pos != who->pos() ) {
             continue;
         }
 
         // Player volume meter includes all sounds from their tile and adjacent tiles
         if( distance_to_sound <= 1 ) {
-            p->volume = std::max( p->volume, heard_volume );
+            who->volume = std::max( who->volume, heard_volume );
         }
 
         // Noises from vehicle player is in.
-        if( p->controlling_vehicle ) {
-            vehicle *veh = veh_pointer_or_null( get_map().veh_at( p->pos() ) );
+        if( who->controlling_vehicle ) {
+            vehicle *veh = veh_pointer_or_null( get_map().veh_at( who->pos() ) );
             const int noise = veh ? static_cast<int>( veh->vehicle_noise ) : 0;
 
-            p->volume = std::max( p->volume, noise );
+            who->volume = std::max( who->volume, noise );
         }
 
         // Secure the flag before wake_up() clears the effect
-        bool slept_through = p->has_effect( effect_slept_through_alarm );
+        bool slept_through = who->has_effect( effect_slept_through_alarm );
         // See if we need to wake someone up
-        if( p->has_effect( effect_sleep ) ) {
-            if( ( ( !( p->has_trait( trait_HEAVYSLEEPER ) ||
-                       p->has_trait( trait_HEAVYSLEEPER2 ) ) && dice( 2, 15 ) < heard_volume ) ||
-                  ( p->has_trait( trait_HEAVYSLEEPER ) && dice( 3, 15 ) < heard_volume ) ||
-                  ( p->has_trait( trait_HEAVYSLEEPER2 ) && dice( 6, 15 ) < heard_volume ) ) &&
-                !p->has_effect( effect_narcosis ) ) {
+        if( who->has_effect( effect_sleep ) ) {
+            if( ( ( !( who->has_trait( trait_HEAVYSLEEPER ) ||
+                       who->has_trait( trait_HEAVYSLEEPER2 ) ) && dice( 2, 15 ) < heard_volume ) ||
+                  ( who->has_trait( trait_HEAVYSLEEPER ) && dice( 3, 15 ) < heard_volume ) ||
+                  ( who->has_trait( trait_HEAVYSLEEPER2 ) && dice( 6, 15 ) < heard_volume ) ) &&
+                !who->has_effect( effect_narcosis ) ) {
                 //Not kidding about sleep-through-firefight
-                p->wake_up();
-                p->add_msg_if_player( m_warning, _( "Something is making noise." ) );
+                who->wake_up();
+                who->add_msg_if_player( m_warning, _( "Something is making noise." ) );
             } else {
                 continue;
             }
         }
         const std::string &description = sound.description.empty() ? _( "a noise" ) : sound.description;
-        if( p->is_npc() ) {
+        if( who->is_npc() ) {
             if( !sound.ambient ) {
-                npc *guy = dynamic_cast<npc *>( p );
+                npc *guy = dynamic_cast<npc *>( who );
                 guy->handle_sound( sound.category, description, heard_volume, pos );
             }
             continue;
         }
 
         // don't print our own noise or things without descriptions
-        if( !sound.ambient && ( pos != p->pos() ) && !get_map().pl_sees( pos, distance_to_sound ) ) {
-            if( !p->activity->is_distraction_ignored( distraction_type::noise ) &&
+        if( !sound.ambient && ( pos != who->pos() ) && !get_map().pl_sees( pos, distance_to_sound ) ) {
+            if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
                 !get_safemode().is_sound_safe( sound.description, distance_to_sound ) ) {
                 const std::string query = string_format( _( "Heard %s!" ), description );
                 g->cancel_activity_or_ignore_query( distraction_type::noise, query );
@@ -524,39 +518,39 @@ void sounds::process_sound_markers( player *p )
         }
 
         // skip some sounds to avoid message spam
-        if( describe_sound( sound.category, pos == p->pos() ) ) {
+        if( describe_sound( sound.category, pos == who->pos() ) ) {
             game_message_type severity = m_info;
             if( sound.category == sound_t::combat || sound.category == sound_t::alarm ) {
                 severity = m_warning;
             }
             // if we can see it, don't print a direction
-            if( pos == p->pos() ) {
+            if( pos == who->pos() ) {
                 add_msg( severity, _( "From your position you hear %1$s" ), description );
-            } else if( p->sees( pos ) ) {
+            } else if( who->sees( pos ) ) {
                 add_msg( severity, _( "You hear %1$s" ), description );
             } else {
-                std::string direction = direction_name( direction_from( p->pos(), pos ) );
+                std::string direction = direction_name( direction_from( who->pos(), pos ) );
                 add_msg( severity, _( "From the %1$s you hear %2$s" ), direction, description );
             }
         }
 
-        if( !p->has_effect( effect_sleep ) && p->has_effect( effect_alarm_clock ) &&
-            !p->has_bionic( bionic_id( "bio_infolink" ) ) ) {
+        if( !who->has_effect( effect_sleep ) && who->has_effect( effect_alarm_clock ) &&
+            !who->has_bionic( bionic_id( "bio_infolink" ) ) ) {
             // if we don't have effect_sleep but we're in_sleep_state, either
             // we were trying to fall asleep for so long our alarm is now going
             // off or something disturbed us while trying to sleep
-            const bool trying_to_sleep = p->in_sleep_state();
-            if( p->get_effect( effect_alarm_clock ).get_duration() == 1_turns ) {
+            const bool trying_to_sleep = who->in_sleep_state();
+            if( who->get_effect( effect_alarm_clock ).get_duration() == 1_turns ) {
                 if( slept_through ) {
                     add_msg( _( "Your alarm clock finally wakes you up." ) );
                 } else if( !trying_to_sleep ) {
                     add_msg( _( "Your alarm clock wakes you up." ) );
                 } else {
                     add_msg( _( "Your alarm clock goes off and you haven't slept a wink." ) );
-                    p->activity->set_to_null();
+                    who->activity->set_to_null();
                 }
                 add_msg( _( "You turn off your alarm-clock." ) );
-                p->get_effect( effect_alarm_clock ).set_duration( 0_turns );
+                who->get_effect( effect_alarm_clock ).set_duration( 0_turns );
             }
         }
 
@@ -567,7 +561,7 @@ void sounds::process_sound_markers( player *p )
         }
 
         // Place footstep markers.
-        if( pos == p->pos() || p->sees( pos ) ) {
+        if( pos == who->pos() || who->sees( pos ) ) {
             // If we are or can see the source, don't draw a marker.
             continue;
         }
@@ -582,13 +576,13 @@ void sounds::process_sound_markers( player *p )
         }
 
         // If Z-coordinate is different, draw even when you can see the source
-        const bool diff_z = pos.z != p->posz();
+        const bool diff_z = pos.z != who->posz();
 
         // Enumerate the valid points the player *cannot* see.
         // Unless the source is on a different z-level, then any point is fine
         std::vector<tripoint> unseen_points;
         for( const tripoint &newp : get_map().points_in_radius( pos, err_offset ) ) {
-            if( diff_z || !p->sees( newp ) ) {
+            if( diff_z || !who->sees( newp ) ) {
                 unseen_points.emplace_back( newp );
             }
         }
@@ -598,7 +592,7 @@ void sounds::process_sound_markers( player *p )
             sound_markers.emplace( random_entry( unseen_points ), sound );
         }
     }
-    if( p->is_player() ) {
+    if( who->is_player() ) {
         sounds_since_last_turn.clear();
     }
 }
@@ -1069,7 +1063,7 @@ void sfx::generate_gun_sound( const tripoint &source, const item &firing )
         selected_sound = "fire_gun";
 
         const auto mods = firing.gunmods();
-        if( std::any_of( mods.begin(), mods.end(),
+        if( std::ranges::any_of( mods,
         []( const item * e ) {
         return e->type->gunmod->loudness < 0;
     } ) ) {
@@ -1230,7 +1224,7 @@ void sfx::do_projectile_hit( const Creature &target )
             material_id( "veggy" ),
             material_id( "bone" ),
         };
-        const bool is_fleshy = std::any_of( fleshy.begin(), fleshy.end(), [&mon]( const material_id & m ) {
+        const bool is_fleshy = std::ranges::any_of( fleshy, [&mon]( const material_id & m ) {
             return mon.made_of( m );
         } );
 

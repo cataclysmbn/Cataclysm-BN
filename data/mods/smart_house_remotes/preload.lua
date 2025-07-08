@@ -6,11 +6,8 @@ gdebug.log_info("SHR: preload.")
 local mod = game.mod_runtime[game.current_mod]
 
 -- Register our map post-process hook
-game.hooks.on_mapgen_postprocess[#game.hooks.on_mapgen_postprocess + 1] = function(...)
-  return mod.on_mapgen_postprocess_hook(...)
-end
+game.hooks.on_mapgen_postprocess[#game.hooks.on_mapgen_postprocess + 1] =
+  function(...) return mod.on_mapgen_postprocess_hook(...) end
 
 -- Register our item use function
-game.iuse_functions["SMART_HOUSE_REMOTE"] = function(...)
-  return mod.iuse_function(...)
-end
+game.iuse_functions["SMART_HOUSE_REMOTE"] = function(...) return mod.iuse_function(...) end

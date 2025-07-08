@@ -563,7 +563,7 @@ TEST_CASE( "inventory_remove_invalidates_binning_cache", "[visitable][inventory]
     clear_all_state();
     inventory inv;
     std::vector<item *> items = { item::spawn_temporary( "bone" ) };
-    inv += items;
+    inv.add_items( items, false );
     CHECK( inv.charges_of( itype_id( "bone" ) ) == 1 );
     inv.remove_items_with( return_true<item> );
     CHECK( inv.size() == 0 );

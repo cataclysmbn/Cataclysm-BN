@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MOD_TILESET_H
-#define CATA_SRC_MOD_TILESET_H
 
 #include <string>
 #include <vector>
@@ -45,4 +43,4 @@ class mod_tileset
         std::vector<std::string> compatibility;
 };
 
-#endif // CATA_SRC_MOD_TILESET_H
+

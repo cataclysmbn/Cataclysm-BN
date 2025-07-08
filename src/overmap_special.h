@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_OVERMAP_SPECIAL_H
-#define CATA_SRC_OVERMAP_SPECIAL_H
 
 #include <climits>
 #include <cstddef>
@@ -254,4 +252,4 @@ class overmap_special_batch
         point_abs_om origin_overmap;
 };
 
-#endif // CATA_SRC_OVERMAP_SPECIAL_H
+

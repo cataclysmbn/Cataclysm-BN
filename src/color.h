@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_COLOR_H
-#define CATA_SRC_COLOR_H
 
 #include <array>
 #include <list>
@@ -512,4 +510,4 @@ std::string get_note_string_from_color( const nc_color &color );
 nc_color get_note_color( const std::string &note_id );
 std::list<std::pair<std::string, std::string>> get_note_color_names();
 
-#endif // CATA_SRC_COLOR_H
+

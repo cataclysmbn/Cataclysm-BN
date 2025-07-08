@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_LIGHTMAP_H
-#define CATA_SRC_LIGHTMAP_H
 
 #include <cmath>
 #include <ostream>
@@ -79,4 +77,4 @@ enum vision_adjustment {
     VISION_ADJUST_HIDDEN
 };
 
-#endif // CATA_SRC_LIGHTMAP_H
+

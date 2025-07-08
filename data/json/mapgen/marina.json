@@ -209,7 +209,8 @@
         { "chance": 10, "fuel": 15, "vehicle": "boat_motor_single", "x": 113, "y": 52, "rotation": 270 },
         { "chance": 10, "fuel": 15, "vehicle": "boat_motor_single", "x": 61, "y": 9, "rotation": 90 },
         { "chance": 10, "fuel": 15, "vehicle": "boat_motor_single", "x": 69, "y": 9, "rotation": 90 },
-        { "chance": 10, "fuel": 15, "vehicle": "boat_motor_single", "x": 75, "y": 9, "rotation": 90 }
+        { "chance": 10, "fuel": 15, "vehicle": "boat_motor_single", "x": 75, "y": 9, "rotation": 90 },
+        { "chance": 5, "fuel": 15, "vehicle": "hovercraft_motor_single", "x": 75, "y": 9, "rotation": 90 }
       ]
     }
   }

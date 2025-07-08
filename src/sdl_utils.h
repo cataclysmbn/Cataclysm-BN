@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_SDL_UTILS_H
-#define CATA_SRC_SDL_UTILS_H
 
 #include <algorithm>
 #include <cmath>
@@ -67,4 +65,4 @@ SDL_Rect fit_rect_inside( const SDL_Rect &inner, const SDL_Rect &outer );
 std::vector<SDL_Color> color_linear_interpolate( const SDL_Color &start_color,
         const SDL_Color &end_color, unsigned additional_steps );
 
-#endif // CATA_SRC_SDL_UTILS_H
+

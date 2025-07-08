@@ -25,6 +25,7 @@
 #include "enums.h"
 #include "event.h"
 #include "field.h"
+#include "flag.h"
 #include "game.h"
 #include "generic_factory.h"
 #include "input.h"
@@ -39,6 +40,7 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "output.h"
+#include "options.h"
 #include "pldata.h"
 #include "point.h"
 #include "requirements.h"
@@ -47,6 +49,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "translations.h"
+#include "type_id.h"
 #include "ui.h"
 #include "units.h"
 
@@ -100,6 +103,9 @@ std::string enum_to_string<spell_flag>( spell_flag data )
         case spell_flag::PAIN_NORESIST: return "PAIN_NORESIST";
         case spell_flag::NO_FAIL: return "NO_FAIL";
         case spell_flag::WONDER: return "WONDER";
+        case spell_flag::BRAWL: return "BRAWL";
+        case spell_flag::DUPE_SOUND: return "DUPE_SOUND";
+        case spell_flag::ADD_MELEE_DAM: return "ADD_MELEE_DAM";
         case spell_flag::LAST: break;
     }
     debugmsg( "Invalid spell_flag" );
@@ -154,31 +160,43 @@ static energy_type energy_source_from_string( const std::string &str )
     }
 }
 
-static damage_type damage_type_from_string( const std::string &str )
+static damage_type damage_type_from_string( std::string &str )
 {
-    if( str == "fire" ) {
+    // Uppercase the string so that case on the input doesn't matter
+    std::transform( str.begin(), str.end(), str.begin(), ::toupper );
+    if( str == "FIRE" ) {
         return DT_HEAT;
-    } else if( str == "acid" ) {
+    } else if( str == "ACID" ) {
         return DT_ACID;
-    } else if( str == "bash" ) {
+    } else if( str == "BASH" ) {
         return DT_BASH;
-    } else if( str == "bio" ) {
+    } else if( str == "BIO" ) {
         return DT_BIOLOGICAL;
-    } else if( str == "cold" ) {
+    } else if( str == "COLD" ) {
         return DT_COLD;
-    } else if( str == "cut" ) {
+    } else if( str == "DARK" ) {
+        return DT_DARK;
+    } else if( str == "LIGHT" ) {
+        return DT_LIGHT;
+    } else if( str == "PSI" ) {
+        return DT_PSI;
+    } else if( str == "CUT" ) {
         return DT_CUT;
-    } else if( str == "bullet" ) {
+    } else if( str == "BULLET" ) {
         return DT_BULLET;
-    } else if( str == "electric" ) {
+    } else if( str == "ELECTRIC" ) {
         return DT_ELECTRIC;
-    } else if( str == "stab" ) {
+    } else if( str == "STAB" ) {
         return DT_STAB;
-    } else if( str == "none" || str == "NONE" ) {
+    } else if( str == "TRUE" ) {
+        return DT_TRUE;
+    } else if( str == "NONE" ) {
+        debugmsg( _( "ERROR: 'None' damage is not not valid and obsoleted for spells!  Please switch to 'True' instead" ) );
         return DT_TRUE;
     } else {
-        debugmsg( _( "ERROR: Invalid damage type string.  Defaulting to none" ) );
-        return DT_TRUE;
+        // Bash is much less problematic than defaulting to True damage, bypassing any and all armor, like it did previously
+        debugmsg( _( "ERROR: Invalid damage type string.  Defaulting to bash" ) );
+        return DT_BASH;
     }
 }
 
@@ -248,6 +266,11 @@ void spell_type::load( const JsonObject &jo, const std::string & )
         effect = found_effect->second;
     }
 
+    optional( jo, was_loaded, "scale_str", scale_str, false );
+    optional( jo, was_loaded, "scale_dex", scale_dex, false );
+    optional( jo, was_loaded, "scale_per", scale_per, false );
+    optional( jo, was_loaded, "scale_int", scale_int, false );
+
     const auto effect_targets_reader = enum_flags_reader<valid_target> { "effect_targets" };
     optional( jo, was_loaded, "effect_filter", effect_targets, effect_targets_reader );
 
@@ -257,6 +280,8 @@ void spell_type::load( const JsonObject &jo, const std::string & )
 
     const auto trigger_reader = enum_flags_reader<valid_target> { "valid_targets" };
     mandatory( jo, was_loaded, "valid_targets", valid_targets, trigger_reader );
+
+    optional( jo, was_loaded, "blocker_mutations", blocker_mutations, auto_flags_reader<trait_id> {} );
 
     if( jo.has_array( "extra_effects" ) ) {
         for( JsonObject fake_spell_obj : jo.get_array( "extra_effects" ) ) {
@@ -287,6 +312,11 @@ void spell_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "damage_increment", damage_increment, 0.0f );
     optional( jo, was_loaded, "max_damage", max_damage, 0 );
 
+    // minimum is defaulted to -1 for default detection reasons
+    optional( jo, was_loaded, "min_accuracy", min_accuracy, -1 );
+    optional( jo, was_loaded, "accuracy_increment", accuracy_increment, 0.0f );
+    optional( jo, was_loaded, "max_accuracy", max_accuracy, 100 );
+
     optional( jo, was_loaded, "min_range", min_range, 0 );
     optional( jo, was_loaded, "range_increment", range_increment, 0.0f );
     optional( jo, was_loaded, "max_range", max_range, 0 );
@@ -310,13 +340,15 @@ void spell_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "base_energy_cost", base_energy_cost, 0 );
     optional( jo, was_loaded, "final_energy_cost", final_energy_cost, base_energy_cost );
     optional( jo, was_loaded, "energy_increment", energy_increment, 0.0f );
+    optional( jo, was_loaded, "arm_encumbrance_threshold", arm_encumbrance_threshold, 20 );
+    optional( jo, was_loaded, "leg_encumbrance_threshold", leg_encumbrance_threshold, 20 );
 
     std::string temp_string;
     optional( jo, was_loaded, "spell_class", temp_string, "NONE" );
     spell_class = trait_id( temp_string );
     optional( jo, was_loaded, "energy_source", temp_string, "NONE" );
     energy_source = energy_source_from_string( temp_string );
-    optional( jo, was_loaded, "damage_type", temp_string, "NONE" );
+    optional( jo, was_loaded, "damage_type", temp_string, "TRUE" );
     dmg_type = damage_type_from_string( temp_string );
     optional( jo, was_loaded, "difficulty", difficulty, 0 );
     optional( jo, was_loaded, "max_level", max_level, 0 );
@@ -456,6 +488,34 @@ skill_id spell::skill() const
     return type->skill;
 }
 
+int spell::get_stats_deltas( const Character &guy ) const
+{
+    int total = 0;
+    if( type->scale_str ) {
+        total += guy.get_str() - 8;
+    }
+    if( type->scale_dex ) {
+        total += guy.get_dex() - 8;
+    }
+    if( type->scale_per ) {
+        total += guy.get_per() - 8;
+    }
+    if( type->scale_int ) {
+        total += guy.get_int() - 8;
+    }
+    return total;
+}
+
+double spell::get_stat_mult( bool decrease, const Character &guy ) const
+{
+    if( decrease ) {
+        return std::max( ( 1.0 - ( 0.1 * get_stats_deltas( guy ) ) ),
+                         0.1 ); // Max is necessary to avoid negatives / 0
+    }
+    return ( 1.0 + ( 0.1 * get_stats_deltas(
+                         guy ) ) ); // No else block needed because return early above
+}
+
 int spell::field_intensity() const
 {
     return std::min( type->max_field_intensity,
@@ -484,12 +544,33 @@ int spell::damage() const
     }
 }
 
-std::string spell::damage_string() const
+int spell::damage_as_character( const Character &guy ) const
+{
+    // Open-ended for the purposes of further expansion
+    double total_damage = damage();
+    if( has_flag( spell_flag::ADD_MELEE_DAM ) ) {
+        item &weapon = guy.used_weapon();
+        int weapon_damage = 0;
+        if( !weapon.is_null() ) {
+            // Just take the max, rather than worrying about how to integrate the other damage types
+            // Also assumes that weapons aren't dealing other damage types
+            weapon_damage = std::max( {weapon.damage_melee( DT_STAB ), weapon.damage_melee( DT_CUT ), weapon.damage_melee( DT_BASH )} );
+        }
+        total_damage += weapon_damage;
+    }
+
+    total_damage *= get_stat_mult( false,
+                                   guy ); // This should safely result in 1x mult if no stats are set to scale
+
+    return std::round( total_damage );
+}
+
+std::string spell::damage_string( const Character &guy ) const
 {
     if( has_flag( spell_flag::RANDOM_DAMAGE ) ) {
         return string_format( "%d-%d", min_leveled_damage(), type->max_damage );
     } else {
-        const int dmg = damage();
+        const int dmg = damage_as_character( guy );
         if( dmg >= 0 ) {
             return string_format( "%d", dmg );
         } else {
@@ -533,6 +614,22 @@ std::string spell::aoe_string() const
         return string_format( "%d-%d", min_leveled_aoe(), type->max_aoe );
     } else {
         return string_format( "%d", aoe() );
+    }
+}
+
+int spell::accuracy() const
+{
+    // default detection for special case
+    if( type->min_accuracy == -1 ) {
+        return -1;
+    }
+
+    const int leveled_accuracy = type->min_accuracy + std::round( get_level() *
+                                 type->accuracy_increment );
+    if( type-> max_accuracy >= type->min_accuracy ) {
+        return std::min( leveled_accuracy, type->max_accuracy );
+    } else {
+        return std::max( leveled_accuracy, type->max_accuracy );
     }
 }
 
@@ -644,6 +741,9 @@ int spell::energy_cost( const Character &guy ) const
                 break;
         }
     }
+
+    cost *= get_stat_mult( true, guy );
+
     return cost;
 }
 
@@ -688,7 +788,7 @@ bool spell::can_cast( Character &guy ) const
     }
 }
 
-void spell::use_components( player &you ) const
+void spell::use_components( Character &who ) const
 {
     if( type->spell_components.is_empty() ) {
         return;
@@ -697,11 +797,11 @@ void spell::use_components( player &you ) const
     // if we're here, we're assuming the Character has the correct components (using can_cast())
     inventory map_inv;
     for( const auto &it : spell_components.get_components() ) {
-        you.consume_items( you.select_item_component( it, 1, map_inv ), 1 );
+        who.consume_items( who.select_item_component( it, 1, map_inv ), 1 );
     }
     for( const auto &it : spell_components.get_tools() ) {
-        you.consume_tools( crafting::select_tool_component(
-                               it, 1, map_inv, you.as_character() ), 1 );
+        who.consume_tools( crafting::select_tool_component(
+                               it, 1, map_inv, &who ), 1 );
     }
 }
 
@@ -726,17 +826,22 @@ int spell::casting_time( const Character &guy ) const
         casting_time = type->base_casting_time;
     }
     if( !has_flag( spell_flag::NO_LEGS ) ) {
-        // the first 20 points of encumbrance combined is ignored
+        // The first base leg encumbrance combined points of encumbrance are ignored
         const int legs_encumb = std::max( 0,
-                                          guy.encumb( body_part_leg_l ) + guy.encumb( body_part_leg_r ) - 20 );
+                                          guy.encumb( body_part_leg_l ) + guy.encumb( body_part_leg_r ) - type->leg_encumbrance_threshold );
         casting_time += legs_encumb * 3;
     }
     if( has_flag( spell_flag::SOMATIC ) ) {
-        // the first 20 points of encumbrance combined is ignored
+        // the first base arm encumbrance combined points of encumbrance are ignored.
         const int arms_encumb = std::max( 0,
-                                          guy.encumb( body_part_arm_l ) + guy.encumb( body_part_arm_r ) - 20 );
+                                          guy.encumb( body_part_arm_l ) + guy.encumb( body_part_arm_r ) - type->arm_encumbrance_threshold );
         casting_time += arms_encumb * 2;
     }
+    if( guy.is_armed() && !has_flag( spell_flag::NO_HANDS ) &&
+        !guy.primary_weapon().has_flag( flag_MAGIC_FOCUS ) ) {
+        casting_time = std::round( casting_time * 1.5 );
+    }
+    casting_time *= get_stat_mult( true, guy );
     return casting_time;
 }
 
@@ -768,12 +873,28 @@ float spell::spell_fail( const Character &guy ) const
     if( has_flag( spell_flag::NO_FAIL ) ) {
         return 0.0f;
     }
+
+    // note: This has the potential to get very dumb if you set a spell to scale off all stats. You have been warned
+    int stats_vals = 0;
+    if( type->scale_str ) {
+        stats_vals += guy.get_str();
+    }
+    if( type->scale_dex ) {
+        stats_vals += guy.get_dex();
+    }
+    if( type->scale_per ) {
+        stats_vals += guy.get_per();
+    }
+    if( type->scale_int ) {
+        stats_vals += guy.get_int();
+    }
+
     // formula is based on the following:
     // exponential curve
     // effective skill of 0 or less is 100% failure
-    // effective skill of 8 (8 int, 0 spellcraft, 0 spell level, spell difficulty 0) is ~50% failure
+    // effective skill of 8 (8 of relevant stats, 0 spellcraft, 0 spell level, spell difficulty 0) is ~50% failure
     // effective skill of 30 is 0% failure
-    const float effective_skill = 2 * ( get_level() - get_difficulty() ) + guy.get_int() +
+    const float effective_skill = ( 2 * ( get_level() - get_difficulty() ) ) + stats_vals +
                                   guy.get_skill_level( skill() );
     // add an if statement in here because sufficiently large numbers will definitely overflow because of exponents
     if( effective_skill > 30.0f ) {
@@ -784,9 +905,9 @@ float spell::spell_fail( const Character &guy ) const
     float fail_chance = std::pow( ( effective_skill - 30.0f ) / 30.0f, 2 );
     if( has_flag( spell_flag::SOMATIC ) &&
         !guy.has_trait_flag( trait_flag_SUBTLE_SPELL ) ) {
-        // the first 20 points of encumbrance combined is ignored
+        // the first arm_encumbrance_threshold points of encumbrance combined is ignored
         const int arms_encumb = std::max( 0,
-                                          guy.encumb( body_part_arm_l ) + guy.encumb( body_part_arm_r ) - 20 );
+                                          guy.encumb( body_part_arm_l ) + guy.encumb( body_part_arm_r ) - type->arm_encumbrance_threshold );
         // each encumbrance point beyond the "gray" color counts as half an additional fail %
         fail_chance += arms_encumb / 200.0f;
     }
@@ -1027,21 +1148,27 @@ nc_color spell::damage_type_color() const
         case DT_ACID:
             return c_light_green;
         case DT_BASH:
-            return c_magenta;
+            return c_brown;
         case DT_BIOLOGICAL:
             return c_green;
         case DT_COLD:
+            return c_blue;
+        case DT_DARK:
+            return c_magenta;
+        case DT_LIGHT:
             return c_white;
+        case DT_PSI:
+            return c_pink;
         case DT_CUT:
             return c_light_gray;
         case DT_ELECTRIC:
-            return c_light_blue;
+            return c_light_cyan;
         case DT_BULLET:
         /* fallthrough */
         case DT_STAB:
             return c_light_red;
         case DT_TRUE:
-            return c_dark_gray;
+            return c_light_gray;
         default:
             return c_black;
     }
@@ -1067,6 +1194,11 @@ int spell::get_level() const
 int spell::get_max_level() const
 {
     return type->max_level;
+}
+
+std::set<trait_id> spell::get_blocker_muts() const
+{
+    return type->blocker_mutations;
 }
 
 // helper function to calculate xp needed to be at a certain level
@@ -1173,6 +1305,20 @@ dealt_damage_instance spell::get_dealt_damage_instance() const
 {
     dealt_damage_instance dmg;
     dmg.set_damage( dmg_type(), damage() );
+    return dmg;
+}
+
+damage_instance spell::get_damage_instance( const Character &guy ) const
+{
+    damage_instance dmg;
+    dmg.add_damage( dmg_type(), damage_as_character( guy ) );
+    return dmg;
+}
+
+dealt_damage_instance spell::get_dealt_damage_instance( const Character &guy ) const
+{
+    dealt_damage_instance dmg;
+    dmg.set_damage( dmg_type(), damage_as_character( guy ) );
     return dmg;
 }
 
@@ -1477,11 +1623,22 @@ int known_magic::max_mana( const Character &guy ) const
 
 double known_magic::mana_regen_rate( const Character &guy ) const
 {
-    // mana should replenish in 8 hours.
-    double full_replenish = to_turns<double>( 8_hours );
-    double capacity = max_mana( guy );
+    bool is_flat_rate = get_option<bool>( "MANA_REGEN_IS_FLAT" );
+    double base_rate;
+    if( !is_flat_rate ) {
+        // mana should replenish in hours_to_regen hours by default.
+        int hours_to_regen = get_option<int>( "MANA_REGEN_HOURS_RATE" );
+        double full_replenish = to_turns<double>( time_duration::from_hours( hours_to_regen ) );
+        double capacity = max_mana( guy );
+        base_rate = capacity / full_replenish;
+    } else {
+        // mana should regen at a rate of flat_rate by default
+        base_rate = get_option<int>( "MANA_REGEN_FLAT" ) / to_turns<double>( 1_hours );
+    }
+
     double mut_mul = guy.mutation_value( "mana_regen_multiplier" );
-    double natural_regen = std::max( 0.0, capacity * mut_mul / full_replenish );
+    double natural_regen = std::max( 0.0, base_rate * mut_mul );
+
 
     double ench_bonus = guy.bonus_from_enchantments( natural_regen, enchant_vals::mod::MANA_REGEN );
 
@@ -1616,12 +1773,14 @@ static bool casting_time_encumbered( const spell &sp, const Character &guy )
 {
     int encumb = 0;
     if( !sp.has_flag( spell_flag::NO_LEGS ) ) {
-        // the first 20 points of encumbrance combined is ignored
-        encumb += std::max( 0, guy.encumb( body_part_leg_l ) + guy.encumb( body_part_leg_r ) - 20 );
+        // the first leg_encumbrance_threshold points of encumbrance combined is ignored
+        encumb += std::max( 0, guy.encumb( body_part_leg_l ) + guy.encumb( body_part_leg_r ) -
+                            sp.id()->leg_encumbrance_threshold );
     }
     if( sp.has_flag( spell_flag::SOMATIC ) ) {
-        // the first 20 points of encumbrance combined is ignored
-        encumb += std::max( 0, guy.encumb( body_part_arm_l ) + guy.encumb( body_part_arm_r ) - 20 );
+        // the first arm_encumbrance_threshold points of encumbrance combined is ignored
+        encumb += std::max( 0, guy.encumb( body_part_arm_l ) + guy.encumb( body_part_arm_r ) -
+                            sp.id()->arm_encumbrance_threshold );
     }
     return encumb > 0;
 }
@@ -1659,8 +1818,40 @@ static std::string enumerate_spell_data( const spell &sp )
     if( sp.effect() == "target_attack" && sp.range() > 1 ) {
         spell_data.emplace_back( _( "can be cast through walls" ) );
     }
+    if( sp.has_flag( spell_flag::BRAWL ) ) {
+        spell_data.emplace_back( _( "can be used by Brawlers" ) );
+    }
+    if( sp.has_flag( spell_flag::ADD_MELEE_DAM ) ) {
+        spell_data.emplace_back( _( "can be augmented by melee weapon damage" ) );
+    }
+    if( sp.type->scale_str ) {
+        spell_data.emplace_back( _( "scales off of strength stat" ) );
+    }
+    if( sp.type->scale_dex ) {
+        spell_data.emplace_back( _( "scales off of dexterity stat" ) );
+    }
+    if( sp.type->scale_per ) {
+        spell_data.emplace_back( _( "scales off of perception stat" ) );
+    }
+    if( sp.type->scale_int ) {
+        spell_data.emplace_back( _( "scales off of intelligence stat" ) );
+    }
     return enumerate_as_string( spell_data );
 }
+
+static std::string enumerate_traits( const std::set<trait_id> st )
+{
+    std::vector<std::string> str_vector;
+    if( !st.empty() ) {
+        for( trait_id trait : st ) {
+            str_vector.push_back( trait->name() );
+        }
+    } else {
+        str_vector.push_back( "None" );
+    }
+    return enumerate_as_string( str_vector );
+}
+
 
 void spellcasting_callback::draw_spell_info( const spell &sp, const uilist *menu )
 {
@@ -1690,6 +1881,11 @@ void spellcasting_callback::draw_spell_info( const spell &sp, const uilist *menu
     if( line <= win_height / 3 ) {
         line++;
     }
+
+    line += fold_and_print( w_menu, point( h_col1, line++ ), info_width, gray, string_format( "%s: %s",
+                            _( "Blocker mutations" ), enumerate_traits( sp.get_blocker_muts() ) ) );
+    line += fold_and_print( w_menu, point( h_col1, line++ ), info_width, gray, string_format( "%s: %s",
+                            _( "Skill" ), sp.skill() ) );
 
     print_colored_text( w_menu, point( h_col1, line ), gray, gray,
                         string_format( "%s: %d %s", _( "Spell Level" ), sp.get_level(),
@@ -1753,18 +1949,18 @@ void spellcasting_callback::draw_spell_info( const spell &sp, const uilist *menu
         line++;
     }
 
-    const int damage = sp.damage();
+    const int damage = sp.damage_as_character( g->u );
     std::string damage_string;
     std::string aoe_string;
     // if it's any type of attack spell, the stats are normal.
     if( fx == "target_attack" || fx == "projectile_attack" || fx == "cone_attack" ||
         fx == "line_attack" ) {
         if( damage > 0 ) {
-            damage_string = string_format( "%s: %s %s", _( "Damage" ), colorize( sp.damage_string(),
+            damage_string = string_format( "%s: %s %s", _( "Damage" ), colorize( sp.damage_string( g->u ),
                                            sp.damage_type_color() ),
                                            colorize( sp.damage_type_string(), sp.damage_type_color() ) );
         } else if( damage < 0 ) {
-            damage_string = string_format( "%s: %s", _( "Healing" ), colorize( sp.damage_string(),
+            damage_string = string_format( "%s: %s", _( "Healing" ), colorize( sp.damage_string( g->u ),
                                            light_green ) );
         }
         if( sp.aoe() > 0 ) {

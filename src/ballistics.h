@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_BALLISTICS_H
-#define CATA_SRC_BALLISTICS_H
 
 class Creature;
 class item;
@@ -51,4 +49,4 @@ double hit_chance( const dispersion_sources &dispersion, double range, double ta
 
 } // namespace ranged
 
-#endif // CATA_SRC_BALLISTICS_H
+

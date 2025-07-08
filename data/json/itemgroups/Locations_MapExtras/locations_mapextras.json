@@ -18,30 +18,28 @@
           { "item": "electric_lighter", "prob": 5 }
         ]
       },
-      { "group": "salty_snacks", "prob": 80 },
-      { "group": "liquor_and_spirits", "prob": 16 },
+      {
+        "distribution": [
+          { "group": "salty_snacks", "prob": 25 },
+          { "group": "liquor_and_spirits", "prob": 25 },
+          { "group": "softdrugs", "prob": 50 }
+        ]
+      },
       { "group": "methlab", "prob": 25 },
-      { "group": "softdrugs", "prob": 50 },
       { "group": "smokedrugs", "prob": 100 },
       { "group": "baddrugs", "prob": 90 },
       {
         "distribution": [
-          { "group": "gunmod_common", "prob": 50 },
-          { "group": "gunmod_rare", "prob": 25 },
-          { "group": "auto_sears", "prob": 25 }
-        ],
-        "prob": 25
-      },
-      {
-        "distribution": [
           { "group": "guns_pistol_common", "prob": 50 },
-          { "group": "guns_rifle_common", "prob": 10 },
           { "group": "guns_shotgun_common", "prob": 15 },
-          { "group": "guns_smg_common", "prob": 25 }
+          { "group": "guns_smg_common", "prob": 35 },
+          { "group": "weapons", "prob": 50 },
+          { "group": "gunmod_common", "prob": 25 },
+          { "group": "gunmod_rare", "prob": 10 },
+          { "group": "auto_sears", "prob": 15 }
         ],
         "prob": 50
-      },
-      { "group": "weapons", "prob": 70 }
+      }
     ]
   }
 ]

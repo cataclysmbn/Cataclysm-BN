@@ -1,5 +1,4 @@
-#ifndef CATA_SRC_SCORES_UI_H
-#define CATA_SRC_SCORES_UI_H
+#pragma once
 
 class achievements_tracker;
 class kill_tracker;
@@ -11,4 +10,4 @@ void show_scores_ui( const achievements_tracker &achievements, stats_tracker &,
 /** Display kills in a scrollable window */
 void show_kills( kill_tracker & );
 
-#endif // CATA_SRC_SCORES_UI_H
+

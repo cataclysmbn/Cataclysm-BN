@@ -1,5 +1,4 @@
-#ifndef CATA_SRC_RANGED_H
-#define CATA_SRC_RANGED_H
+#pragma once
 
 #include <map>
 #include <optional>
@@ -192,16 +191,19 @@ int fire_gun( Character &who, const tripoint &target, int shots = 1 );
 int fire_gun( Character &who, const tripoint &target, int shots, item &gun,
               item *ammo );
 
+/** Expected thrown damage with a given item, given the thrower's effective strength and skill. */
+auto throw_damage( const item &it, const int skill, const int str ) -> int;
+
 /**
  * Execute a throw.
  * @param who Character whose stats to use
  * @param to_throw Item being thrown
  * @param blind_throw_from_pos Position of blind throw (if blind throwing)
  */
-dealt_projectile_attack throw_item( Character &who, const tripoint &target,
-                                    detached_ptr<item> &&to_throw,
-                                    std::optional<tripoint> blind_throw_from_pos );
+auto throw_item( Character &who, const tripoint &target,
+                 detached_ptr<item> &&to_throw,
+                 std::optional<tripoint> blind_throw_from_pos ) -> dealt_projectile_attack;
 
 } // namespace ranged
 
-#endif // CATA_SRC_RANGED_H
+

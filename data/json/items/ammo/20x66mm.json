@@ -51,7 +51,7 @@
     "price": "100 USD",
     "price_postapoc": "80 USD",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 16, "armor_penetration": 4 },
+    "damage": { "damage_type": "bullet", "amount": 16, "armor_penetration": 4, "armor_multiplier": 1.5 },
     "dispersion": 120,
     "effects": [ "COOKOFF", "EXPLOSIVE_TINY", "NEVER_MISFIRES" ]
   },
@@ -73,7 +73,7 @@
   },
   {
     "id": "20x66_flechette",
-    "copy-from": "20x66_shot",
+    "copy-from": "20x66_shot_abstract",
     "type": "AMMO",
     "name": { "str": "20x66mm flechette" },
     "description": "20x66mm caseless shotgun rounds, flechette type.  Proprietary ammunition for Rivtech shotguns.  Being caseless rounds, these cannot be disassembled or reloaded.",
@@ -81,7 +81,7 @@
     "price_postapoc": "40 USD",
     "count": 10,
     "//": "Balanced as AP.",
-    "relative": { "damage": { "damage_type": "bullet", "amount": -18, "armor_penetration": 36 } }
+    "relative": { "damage": { "damage_type": "bullet", "amount": -18, "armor_penetration": 36, "armor_multiplier": -1.5 } }
   },
   {
     "id": "20x66_frag",
@@ -97,7 +97,7 @@
   },
   {
     "id": "20x66_inc",
-    "copy-from": "20x66_shot",
+    "copy-from": "20x66_shot_abstract",
     "type": "AMMO",
     "name": { "str": "20x66mm incendiary", "str_pl": "20x66mm incendiaries" },
     "description": "20x66mm caseless shotgun rounds, incendiary type.  Proprietary ammunition for Rivtech shotguns.  Being caseless rounds, these cannot be disassembled or reloaded.",
@@ -123,7 +123,7 @@
     "stack_size": 20,
     "ammo_type": "20x66mm",
     "range": 20,
-    "damage": { "damage_type": "bullet", "amount": 100 },
+    "damage": { "damage_type": "bullet", "amount": 100, "armor_multiplier": 2 },
     "recoil": 2500,
     "effects": [ "COOKOFF", "SHOT", "NEVER_MISFIRES" ]
   },
@@ -144,7 +144,7 @@
     "price": "15 USD",
     "price_postapoc": "40 USD",
     "//": "Balanced as FMJ",
-    "damage": { "damage_type": "bullet", "amount": 84, "armor_penetration": 21 },
+    "damage": { "damage_type": "bullet", "amount": 84, "armor_penetration": 21, "armor_multiplier": 1 },
     "relative": { "range": 20 },
     "proportional": { "dispersion": 1.3 },
     "delete": { "effects": [ "SHOT" ] }

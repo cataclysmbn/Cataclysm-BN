@@ -1,10 +1,5 @@
 [
   {
-    "id": "ammo_762_25",
-    "type": "requirement",
-    "components": [ [ [ "762_25_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ] ]
-  },
-  {
     "id": "ammo_9mm",
     "type": "requirement",
     "//": "Components required for 9mm ammo",
@@ -15,12 +10,6 @@
     "type": "requirement",
     "//": "Components required for 380 ammo",
     "components": [ [ [ "380_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ] ]
-  },
-  {
-    "id": "ammo_57",
-    "type": "requirement",
-    "//": "Components required for 57 ammo",
-    "components": [ [ [ "57mm_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ] ]
   },
   {
     "id": "ammo_shot",
@@ -53,22 +42,10 @@
     "components": [ [ [ "45colt_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ] ]
   },
   {
-    "id": "ammo_38super",
-    "type": "requirement",
-    "//": "Components required for .38 Super ammo",
-    "components": [ [ [ "38super_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ] ]
-  },
-  {
     "id": "ammo_410shot",
     "type": "requirement",
     "//": "Components required for .410 ammo",
     "components": [ [ [ "410shot_hull", 1 ] ], [ [ "shotgun_primer", 1 ] ] ]
-  },
-  {
-    "id": "ammo_270win",
-    "type": "requirement",
-    "//": "Components required for .270 Winchester ammo",
-    "components": [ [ [ "270win_casing", 1 ] ], [ [ "lgrifle_primer", 1 ] ] ]
   },
   {
     "id": "ammo_300blk",
@@ -88,9 +65,7 @@
         [ "22_lr", -1 ],
         [ "22_ratshot", -1 ],
         [ "bp_22_cphp", -1 ],
-        [ "bp_22_lr", -1 ],
-        [ "reloaded_22_lr", -1 ],
-        [ "reloaded_22_cphp", -1 ]
+        [ "bp_22_lr", -1 ]
       ]
     ]
   },
@@ -108,13 +83,9 @@
         [ "bp_223", -1 ],
         [ "bp_556", -1 ],
         [ "bp_556_incendiary", -1 ],
-        [ "reloaded_223", -1 ],
-        [ "reloaded_556", -1 ],
-        [ "reloaded_556_incendiary", -1 ],
         [ "300blk", -1 ],
         [ "300blk_ss", -1 ],
-        [ "bp_300blk", -1 ],
-        [ "reloaded_300blk", -1 ]
+        [ "bp_300blk", -1 ]
       ]
     ]
   },
@@ -130,10 +101,7 @@
         [ "762_51_incendiary", -1 ],
         [ "bp_308", -1 ],
         [ "bp_762_51", -1 ],
-        [ "bp_762_51_incendiary", -1 ],
-        [ "reloaded_308", -1 ],
-        [ "reloaded_762_51", -1 ],
-        [ "reloaded_762_51_incendiary", -1 ]
+        [ "bp_762_51_incendiary", -1 ]
       ]
     ]
   },
@@ -149,11 +117,7 @@
         [ "9mmP", -1 ],
         [ "9mmP2", -1 ],
         [ "bp_9mm", -1 ],
-        [ "bp_9mmfmj", -1 ],
-        [ "reloaded_9mm", -1 ],
-        [ "reloaded_9mmfmj", -1 ],
-        [ "reloaded_9mmP", -1 ],
-        [ "reloaded_9mmP2", -1 ]
+        [ "bp_9mmfmj", -1 ]
       ]
     ]
   },
@@ -169,12 +133,8 @@
         [ "40sw", -1 ],
         [ "bp_40fmj", -1 ],
         [ "bp_40sw", -1 ],
-        [ "reloaded_40fmj", -1 ],
-        [ "reloaded_40sw", -1 ],
         [ "357sig_fmj", -1 ],
-        [ "357sig_jhp", -1 ],
-        [ "reloaded_357sig_fmj", -1 ],
-        [ "reloaded_357sig_jhp", -1 ]
+        [ "357sig_jhp", -1 ]
       ]
     ]
   },
@@ -185,21 +145,11 @@
     "tools": [
       [
         [ "45_casing", -1 ],
-        [ "460_casing", -1 ],
-        [ "460_fmj", -1 ],
-        [ "460_rowland", -1 ],
-        [ "bp_460_fmj", -1 ],
-        [ "bp_460_rowland", -1 ],
-        [ "reloaded_460_fmj", -1 ],
-        [ "reloaded_460_rowland", -1 ],
         [ "45_acp", -1 ],
         [ "45_jhp", -1 ],
         [ "45_super", -1 ],
         [ "bp_45_acp", -1 ],
-        [ "bp_45_jhp", -1 ],
-        [ "reloaded_45_acp", -1 ],
-        [ "reloaded_45_jhp", -1 ],
-        [ "reloaded_45_super", -1 ]
+        [ "bp_45_jhp", -1 ]
       ]
     ]
   },
@@ -215,13 +165,7 @@
         [ "3006_incendiary", -1 ],
         [ "bp_3006", -1 ],
         [ "bp_3006fmj", -1 ],
-        [ "bp_3006_incendiary", -1 ],
-        [ "reloaded_3006", -1 ],
-        [ "reloaded_3006fmj", -1 ],
-        [ "reloaded_3006_incendiary", -1 ],
-        [ "270win_casing", -1 ],
-        [ "270win_jsp", -1 ],
-        [ "reloaded_270win_jsp", -1 ]
+        [ "bp_3006_incendiary", -1 ]
       ]
     ]
   },
@@ -229,15 +173,13 @@
     "id": "762_casehead",
     "type": "requirement",
     "//": "References needed for boltfaces and magazines using 7.62x39 or derivatives",
-    "tools": [
-      [ [ "762_casing", -1 ], [ "762_m43", -1 ], [ "762_m87", -1 ], [ "reloaded_762_m43", -1 ], [ "reloaded_762_m87", -1 ] ]
-    ]
+    "tools": [ [ [ "762_casing", -1 ], [ "762_m43", -1 ], [ "762_m87", -1 ] ] ]
   },
   {
     "id": "762R_casehead",
     "type": "requirement",
     "//": "References needed for boltfaces and magazines using 7.62x54R or derivatives",
-    "tools": [ [ [ "762R_casing", -1 ], [ "762_54R", -1 ], [ "reloaded_762_54R", -1 ] ] ]
+    "tools": [ [ [ "762R_casing", -1 ], [ "762_54R", -1 ] ] ]
   },
   {
     "id": "explosives_casting_standard",

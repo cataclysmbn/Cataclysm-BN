@@ -1,0 +1,9 @@
+[
+  {
+    "id": "eink_tablet_pc",
+    "type": "TOOL",
+    "name": { "str": "e-ink tablet PC" },
+    "copy-from": "eink_tablet_pc",
+    "use_action": [ "EINKTABLETPC", "TOGGLE_UPS_CHARGING", "LUA_EBOOK" ]
+  }
+]

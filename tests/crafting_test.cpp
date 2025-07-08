@@ -732,7 +732,7 @@ TEST_CASE( "tool selection ui", "[crafting][ui]" )
         tool_comp tool_component( itype_id( "test_soldering_iron" ), 10 );
         tools = {tool_component};
         map_inv.add_item( *item::spawn_temporary( tool_component.type, calendar::start_of_cataclysm,
-                          100 ) );
+                          100 ), false );
 
         comp_selection<tool_comp> result = crafting::select_tool_component( tools, 1, map_inv,
                                            &dummy, false,
@@ -750,8 +750,8 @@ TEST_CASE( "tool selection ui", "[crafting][ui]" )
         tool_comp costly( itype_id( "test_soldering_iron" ), 10 );
         tool_comp free( itype_id( "test_screwdriver" ), -1 );
         tools = {costly, free};
-        map_inv.add_item( *item::spawn_temporary( costly.type ) );
-        map_inv.add_item( *item::spawn_temporary( free.type ) );
+        map_inv.add_item( *item::spawn_temporary( costly.type ), false );
+        map_inv.add_item( *item::spawn_temporary( free.type ), false );
 
         comp_selection<tool_comp> result = crafting::select_tool_component( tools, 1, map_inv,
                                            &dummy, false,
@@ -766,8 +766,9 @@ TEST_CASE( "tool selection ui", "[crafting][ui]" )
         tool_comp too_little( itype_id( "test_soldering_iron" ), 200 );
         tool_comp enough( itype_id( "test_battery_tool" ), 100 );
         tools = {too_little, enough};
-        map_inv.add_item( *item::spawn_temporary( too_little.type, calendar::start_of_cataclysm, 100 ) );
-        map_inv.add_item( *item::spawn_temporary( enough.type, calendar::start_of_cataclysm, 100 ) );
+        map_inv.add_item( *item::spawn_temporary( too_little.type, calendar::start_of_cataclysm, 100 ),
+                          false );
+        map_inv.add_item( *item::spawn_temporary( enough.type, calendar::start_of_cataclysm, 100 ), false );
 
         comp_selection<tool_comp> result = crafting::select_tool_component( tools, 1, map_inv,
                                            &dummy, false,

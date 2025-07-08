@@ -45,7 +45,7 @@
         "*": "t_dirt",
         "N": "t_region_soil"
       },
-      "items": { "x": { "item": "mil_surplus", "chance": 30 }, "X": { "item": "ammo_rifle_milspec", "chance": 80 } },
+      "items": { "x": [ { "item": "mil_food_nodrugs", "chance": 75 }, { "item": "mil_accessories", "chance": 50 } ] },
       "monster": { "Z": { "monster": "mon_zombie_soldier" }, "z": { "monster": "mon_zombie_soldier" } }
     }
   }

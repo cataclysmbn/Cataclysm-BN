@@ -35,7 +35,6 @@
     "traits": [
       { "trait": "GLASSJAW" },
       { "trait": "VEGETARIAN" },
-      { "trait": "SQUEAMISH" },
       { "trait": "MOODSWINGS" },
       { "trait": "SLOWHEALER" },
       { "trait": "SLOWRUNNER" },

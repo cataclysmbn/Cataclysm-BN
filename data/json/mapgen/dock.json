@@ -112,7 +112,8 @@
       "palettes": [ "dock_small" ],
       "place_vehicles": [
         { "chance": 10, "fuel": 15, "vehicle": "boat_motor_single", "x": 8, "y": 5, "rotation": 270 },
-        { "chance": 10, "fuel": 15, "vehicle": "boat_motor_single", "x": 13, "y": 5, "rotation": 270 }
+        { "chance": 10, "fuel": 15, "vehicle": "boat_motor_single", "x": 13, "y": 5, "rotation": 270 },
+        { "chance": 5, "fuel": 15, "vehicle": "hovercraft_motor_single", "x": 8, "y": 5, "rotation": 270 }
       ]
     }
   },

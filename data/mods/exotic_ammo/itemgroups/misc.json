@@ -1,0 +1,51 @@
+[
+  {
+    "type": "item_group",
+    "id": "pawn",
+    "items": [ [ "700nx", 1 ], [ "700nx_casing", 1 ], [ "trex_gun", 1 ], [ "raging_bull", 1 ], [ "sw_500", 1 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "antique_rare",
+    "subtype": "distribution",
+    "entries": [ { "item": "trex_gun", "prob": 4 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "antique_bank_vault",
+    "subtype": "distribution",
+    "entries": [ { "item": "trex_gun", "prob": 4 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "defense_caravan_ammunition",
+    "subtype": "collection",
+    "items": [ { "item": "57mm" } ]
+  },
+  {
+    "type": "item_group",
+    "id": "npc_misc",
+    "ammo": 75,
+    "magazine": 50,
+    "items": [ [ "57mm_casing", 1 ], [ "46mm_casing", 1 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_rifle",
+    "subtype": "distribution",
+    "entries": [ { "item": "ak74", "prob": 4 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "spider",
+    "magazine": 100,
+    "subtype": "distribution",
+    "entries": [ { "item": "ak74", "prob": 4 }, { "item": "an94", "prob": 1 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_BANDIT_smg",
+    "subtype": "distribution",
+    "entries": [ { "item": "ppsh", "prob": 4 }, { "item": "skorpion_82", "prob": 3 } ]
+  }
+]

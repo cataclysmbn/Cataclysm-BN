@@ -102,14 +102,14 @@ const std::map<std::string, std::string> &get_mod_list_cat_tab()
 
 void mod_manager::load_replacement_mods( const std::string &path )
 {
-    read_from_file_optional_json( path, [&]( JsonIn & jsin ) {
+    read_from_file_json( path, [&]( JsonIn & jsin ) {
         jsin.start_array();
         while( !jsin.end_array() ) {
             auto arr = jsin.get_array();
             mod_replacements.emplace( mod_id( arr.get_string( 0 ) ),
                                       mod_id( arr.size() > 1 ? arr.get_string( 1 ) : "" ) );
         }
-    } );
+    }, true );
 }
 
 mod_manager::mod_manager()
@@ -308,7 +308,7 @@ std::optional<MOD_INFORMATION> load_modfile( const JsonObject &jo, const std::st
 void load_mod_info( const std::string &info_file_path, std::vector<MOD_INFORMATION> &out )
 {
     const std::string main_path = info_file_path.substr( 0, info_file_path.find_last_of( "/\\" ) );
-    read_from_file_optional_json( info_file_path, [&]( JsonIn & jsin ) {
+    read_from_file_json( info_file_path, [&]( JsonIn & jsin ) {
         if( jsin.test_object() ) {
             // find type and dispatch single object
             JsonObject jo = jsin.get_object();
@@ -334,7 +334,7 @@ void load_mod_info( const std::string &info_file_path, std::vector<MOD_INFORMATI
             // not an object or an array?
             jsin.error( "expected array or object" );
         }
-    } );
+    }, true );
 }
 
 bool save_mod_list( const t_mod_list &list, const std::string &path )
@@ -353,7 +353,7 @@ std::optional<t_mod_list> load_mod_list( const std::string &path )
         jsin.read( res, true );
     };
 
-    if( read_from_file_optional_json( path, reader ) ) {
+    if( read_from_file_json( path, reader, true ) ) {
         return { std::move( res ) };
     } else {
         return std::nullopt;
@@ -413,12 +413,12 @@ bool mod_manager::set_default_mods( const t_mod_list &mods )
     return mod_management::save_mod_list( mods, PATH_INFO::mods_user_default() );
 }
 
-std::string mod_manager::get_mods_list_file( const WORLDPTR world )
+std::string mod_manager::get_mods_list_file( WORLDINFO *world )
 {
     return world->folder_path() + "/mods.json";
 }
 
-void mod_manager::save_mods_list( WORLDPTR world ) const
+void mod_manager::save_mods_list( WORLDINFO *world ) const
 {
     if( world == nullptr ) {
         return;
@@ -436,7 +436,7 @@ void mod_manager::save_mods_list( WORLDPTR world ) const
     }, _( "list of mods" ) );
 }
 
-void mod_manager::load_mods_list( WORLDPTR world ) const
+void mod_manager::load_mods_list( WORLDINFO *world ) const
 {
     if( world == nullptr ) {
         return;
@@ -444,7 +444,7 @@ void mod_manager::load_mods_list( WORLDPTR world ) const
     std::vector<mod_id> &amo = world->active_mod_order;
     amo.clear();
     bool obsolete_mod_found = false;
-    read_from_file_optional_json( get_mods_list_file( world ), [&]( JsonIn & jsin ) {
+    read_from_file_json( get_mods_list_file( world ), [&]( JsonIn & jsin ) {
         for( const std::string line : jsin.get_array() ) {
             const mod_id mod( line );
             if( std::find( amo.begin(), amo.end(), mod ) != amo.end() ) {
@@ -460,7 +460,7 @@ void mod_manager::load_mods_list( WORLDPTR world ) const
             }
             amo.push_back( mod );
         }
-    } );
+    }, true );
     if( obsolete_mod_found ) {
         // If we found an obsolete mod, overwrite the mod list without the obsolete one.
         save_mods_list( world );

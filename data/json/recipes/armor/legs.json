@@ -37,7 +37,7 @@
     "autolearn": true,
     "book_learn": [ [ "mag_tailor", 1 ], [ "manual_tailor", 1 ] ],
     "using": [ [ "sewing_standard", 15 ] ],
-    "components": [ [ [ "rag", 3 ] ] ]
+    "components": [ [ [ "nylon", 3 ] ] ]
   },
   {
     "result": "boxer_briefs",

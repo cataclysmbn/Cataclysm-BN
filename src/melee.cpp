@@ -543,6 +543,11 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
             cur_weapon.has_flag( flag_POLEARM ) ) {
             d.mult_damage( 0.7 );
         }
+        // If stamina is below 25%, damage starts to scale down linearly until reaching 50% at 0 stamina
+        if( get_stamina() < get_stamina_max() / 4 ) {
+            d.mult_damage( 0.5 + ( static_cast<float>( get_stamina() ) / static_cast<float>
+                                   ( get_stamina_max() ) * 2.0f ) );
+        }
 
         const ma_technique &technique = technique_id.obj();
 
@@ -653,7 +658,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
     check_dead_state();
     if( t.as_character() ) {
         dealt_projectile_attack dp = dealt_projectile_attack();
-        t.as_character()->on_hit( this, bodypart_id( "num_bp" ), &dp );
+        t.as_character()->on_hit( this, bodypart_str_id::NULL_ID().id(), &dp );
     }
     return;
 }
@@ -852,12 +857,17 @@ double Character::crit_chance( float roll_hit, float target_dodge, const item &w
 
 float Character::get_dodge() const
 {
-    //If we're asleep or busy we can't dodge
-    if( in_sleep_state() || has_effect( effect_narcosis ) ) {
+    //If we're asleep, busy, or out of stamina we can't dodge
+    if( in_sleep_state() || has_effect( effect_narcosis ) || get_stamina() == 0 ) {
         return 0.0f;
     }
 
     float ret = Creature::get_dodge();
+    // If stamina is below 50%, suffer progressively worse dodge until unable to dodge at zero
+    if( get_stamina() < get_stamina_max() / 2 ) {
+        ret *= static_cast<float>( get_stamina() ) / static_cast<float>( get_stamina_max() ) * 2.0f;
+    }
+
     // Chop in half if we are unable to move
     if( has_effect( effect_beartrap ) || has_effect( effect_lightsnare ) ||
         has_effect( effect_heavysnare ) ) {
@@ -1770,7 +1780,8 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
 
         // non-electrical "elemental" damage types do their full damage if unarmed,
         // but severely mitigated damage if not
-        else if( elem.type == DT_HEAT || elem.type == DT_ACID || elem.type == DT_COLD ) {
+        else if( elem.type == DT_HEAT || elem.type == DT_ACID || elem.type == DT_COLD ||
+                 elem.type == DT_DARK || elem.type == DT_LIGHT || elem.type == DT_PSI ) {
             // Unarmed weapons won't block those
             if( item_blocking ) {
                 float previous_amount = elem.amount;

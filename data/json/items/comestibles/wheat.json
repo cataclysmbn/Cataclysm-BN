@@ -14,15 +14,16 @@
     "description": "Whole-grain wheat cereal.  It's surprisingly good, and allegedly good for your heart.",
     "price": "3 USD",
     "price_postapoc": "6 USD",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "1 L",
     "charges": 12,
-    "vitamins": [ [ "vitC", 7 ], [ "calcium", 2 ], [ "iron", 9 ] ],
+    "vitamins": [ [ "vitC", 7 ], [ "calcium", 2 ], [ "iron", 9 ], [ "wheat_allergen", 1 ] ],
     "fun": 8
   },
   {
     "type": "COMESTIBLE",
     "id": "wheat",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "wheat" },
     "weight": "203 g",
     "color": "brown",
@@ -34,11 +35,11 @@
     "description": "Raw wheat, not very tasty.",
     "price": "120 cent",
     "price_postapoc": "1 USD",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "milling": { "into": "flour", "conversion_rate": 15 },
     "volume": "250 ml",
     "flags": [ "RAW" ],
-    "vitamins": [ [ "calcium", 4 ], [ "iron", 40 ] ],
+    "vitamins": [ [ "calcium", 4 ], [ "iron", 40 ], [ "wheat_allergen", 1 ] ],
     "fun": -10
   },
   {
@@ -59,12 +60,13 @@
     "material": [ "wheat" ],
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
-    "vitamins": [ [ "calcium", 5 ], [ "iron", 34 ] ],
+    "vitamins": [ [ "calcium", 5 ], [ "iron", 34 ], [ "wheat_allergen", 1 ] ],
     "fun": -1
   },
   {
     "type": "COMESTIBLE",
     "id": "spaghetti_raw",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "raw spaghetti pasta" },
     "weight": "60 g",
     "color": "yellow",
@@ -75,15 +77,16 @@
     "description": "A type of pasta usually used when preparing spaghetti.  It could be eaten raw if you're desperate, but is much better cooked.",
     "price": "120 cent",
     "price_postapoc": "1 USD",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "62 ml",
     "flags": [ "RAW" ],
-    "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ] ],
+    "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ], [ "wheat_allergen", 1 ] ],
     "fun": -8
   },
   {
     "type": "COMESTIBLE",
     "id": "lasagne_raw",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "raw lasagne pasta" },
     "weight": "60 g",
     "color": "yellow",
@@ -94,10 +97,10 @@
     "description": "A pasta sheet used in making lasagne.  It could be eaten raw if you're desperate, but is much better cooked.",
     "price": "120 cent",
     "price_postapoc": "1 USD",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "62 ml",
     "flags": [ "RAW" ],
-    "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ] ],
+    "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ], [ "wheat_allergen", 1 ] ],
     "fun": -8
   },
   {
@@ -115,14 +118,15 @@
     "description": "Fresh wet noodles.  Fairly bland, but fills you up.",
     "price": "20 cent",
     "price_postapoc": "50 cent",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "250 ml",
     "flags": [ "EATEN_HOT", "TRADER_AVOID" ],
-    "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ] ]
+    "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "macaroni_raw",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "raw macaroni" },
     "weight": "60 g",
     "color": "yellow",
@@ -133,10 +137,10 @@
     "description": "It could be eaten raw if you're desperate, but is much better cooked.",
     "price": "150 cent",
     "price_postapoc": "1 USD",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "flags": [ "RAW" ],
     "volume": "62 ml",
-    "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ] ],
+    "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ], [ "wheat_allergen", 1 ] ],
     "fun": -6
   },
   {
@@ -158,11 +162,12 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT", "TRADER_AVOID" ],
     "fun": 5,
-    "vitamins": [ [ "calcium", 10 ], [ "iron", 11 ] ]
+    "vitamins": [ [ "calcium", 10 ], [ "iron", 11 ], [ "wheat_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "flour",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "flour" },
     "weight": "13 g",
     "color": "white",
@@ -178,12 +183,13 @@
     "volume": "250 ml",
     "flags": [ "RAW" ],
     "charges": 10,
-    "vitamins": [ [ "iron", 3 ] ],
+    "vitamins": [ [ "iron", 3 ], [ "wheat_allergen", 1 ] ],
     "fun": -5
   },
   {
     "type": "COMESTIBLE",
     "id": "oatmeal",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "oatmeal" },
     "weight": "50 g",
     "color": "light_gray",
@@ -195,17 +201,18 @@
     "description": "Dry flakes of flattened grain.  Tasty and nutritious when cooked, it also doubles as food for horses while dry.",
     "price": "75 USD",
     "price_postapoc": "50 cent",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "250 ml",
     "cooks_like": "oatmeal_cooked",
     "flags": [ "NUTRIENT_OVERRIDE", "RAW" ],
     "charges": 10,
-    "vitamins": [ [ "iron", 2 ] ],
+    "vitamins": [ [ "iron", 2 ], [ "wheat_allergen", 1 ] ],
     "fun": -2
   },
   {
     "type": "COMESTIBLE",
     "id": "oats",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "oats" },
     "weight": "86 g",
     "color": "brown",
@@ -217,11 +224,11 @@
     "description": "Raw oats.",
     "price": "120 cent",
     "price_postapoc": "1 USD",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "250 ml",
     "milling": { "into": "flour", "conversion_rate": 4 },
     "flags": [ "RAW" ],
-    "vitamins": [ [ "calcium", 3 ], [ "iron", 20 ] ],
+    "vitamins": [ [ "calcium", 3 ], [ "iron", 20 ], [ "wheat_allergen", 1 ] ],
     "fun": -10
   },
   {
@@ -238,11 +245,11 @@
     "description": "A filling and nutritious New England classic that has sustained pioneers and captains of industry alike.",
     "price": "5 USD",
     "price_postapoc": "50 cent",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "250 ml",
     "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
     "fun": 2,
-    "vitamins": [ [ "calcium", 1 ], [ "iron", 12 ] ]
+    "vitamins": [ [ "calcium", 1 ], [ "iron", 12 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -259,12 +266,12 @@
     "description": "A filling and nutritious New England classic that has been improved with the addition of extra wholesome ingredients.",
     "price": "550 cent",
     "price_postapoc": "75 cent",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "375 ml",
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
     "fun": 3,
-    "vitamins": [ [ "vitA", 1 ], [ "vitC", 30 ], [ "calcium", 1 ], [ "iron", 1 ] ]
+    "vitamins": [ [ "vitA", 1 ], [ "vitC", 30 ], [ "calcium", 1 ], [ "iron", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -286,7 +293,7 @@
     "charges": 4,
     "flags": [ "EATEN_HOT" ],
     "fun": 3,
-    "vitamins": [ [ "vitA", 1 ], [ "calcium", 6 ], [ "iron", 4 ] ]
+    "vitamins": [ [ "vitA", 1 ], [ "calcium", 6 ], [ "iron", 4 ], [ "wheat_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -350,7 +357,14 @@
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
     "fun": 8,
-    "vitamins": [ [ "vitA", 4 ], [ "calcium", 3 ], [ "iron", 5 ] ]
+    "vitamins": [
+      [ "vitA", 4 ],
+      [ "calcium", 3 ],
+      [ "iron", 5 ],
+      [ "wheat_allergen", 1 ],
+      [ "egg_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -370,7 +384,7 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 5,
-    "vitamins": [ [ "vitA", 3 ], [ "calcium", 15 ], [ "iron", 9 ] ]
+    "vitamins": [ [ "vitA", 3 ], [ "calcium", 15 ], [ "iron", 9 ], [ "wheat_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -419,7 +433,15 @@
     "volume": "375 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 6,
-    "vitamins": [ [ "vitA", 6 ], [ "vitC", 120 ], [ "calcium", 2 ], [ "iron", 2 ] ]
+    "vitamins": [
+      [ "vitA", 6 ],
+      [ "vitC", 120 ],
+      [ "calcium", 2 ],
+      [ "iron", 2 ],
+      [ "wheat_allergen", 1 ],
+      [ "fruit_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -435,10 +457,10 @@
     "description": "Dry and salty, these crackers will leave you quite thirsty.",
     "price": "110 cent",
     "price_postapoc": "6 USD",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "1 L",
     "charges": 8,
-    "vitamins": [ [ "calcium", 5 ], [ "iron", 12 ] ],
+    "vitamins": [ [ "calcium", 5 ], [ "iron", 12 ], [ "wheat_allergen", 1 ] ],
     "fun": 2
   },
   {
@@ -491,7 +513,7 @@
     "flags": [ "EATEN_HOT" ],
     "fun": 3,
     "//": "these vitamins are only for pies that may spawn.  generally they will be inherited from the fruit used.",
-    "vitamins": [ [ "vitA", 3 ], [ "vitC", 6 ], [ "calcium", 1 ], [ "iron", 3 ] ]
+    "vitamins": [ [ "vitA", 3 ], [ "vitC", 6 ], [ "calcium", 1 ], [ "iron", 3 ], [ "wheat_allergen", 1 ], [ "fruit_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -513,7 +535,7 @@
     "charges": 4,
     "flags": [ "EATEN_HOT" ],
     "fun": 10,
-    "vitamins": [ [ "vitA", 12 ], [ "vitC", 4 ], [ "calcium", 25 ], [ "iron", 23 ] ]
+    "vitamins": [ [ "vitA", 12 ], [ "vitC", 4 ], [ "calcium", 25 ], [ "iron", 23 ], [ "wheat_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -562,7 +584,7 @@
     "primary_material": "wheat",
     "volume": "250 ml",
     "charges": 4,
-    "vitamins": [ [ "calcium", 2 ], [ "iron", 7 ] ],
+    "vitamins": [ [ "calcium", 2 ], [ "iron", 7 ], [ "wheat_allergen", 1 ], [ "fruit_allergen", 1 ] ],
     "fun": 3
   },
   {
@@ -587,7 +609,7 @@
     "charges": 8,
     "flags": [ "EATEN_HOT" ],
     "fun": 6,
-    "vitamins": [ [ "vitA", 2 ], [ "calcium", 4 ], [ "iron", 8 ] ]
+    "vitamins": [ [ "vitA", 2 ], [ "calcium", 4 ], [ "iron", 8 ], [ "wheat_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -603,9 +625,9 @@
     "description": "So-called ramen noodles.  Can be eaten raw.",
     "price": "2 USD",
     "price_postapoc": "1 USD",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "250 ml",
-    "vitamins": [ [ "calcium", 1 ], [ "iron", 18 ] ]
+    "vitamins": [ [ "calcium", 1 ], [ "iron", 18 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -626,7 +648,7 @@
     "volume": "250 ml",
     "stack_size": 1,
     "fun": 9,
-    "vitamins": [ [ "vitC", 2 ], [ "calcium", 6 ], [ "iron", 8 ] ]
+    "vitamins": [ [ "vitC", 2 ], [ "calcium", 6 ], [ "iron", 8 ], [ "wheat_allergen", 1 ], [ "fruit_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -649,7 +671,7 @@
     "charges": 6,
     "flags": [ "EATEN_HOT" ],
     "fun": 6,
-    "vitamins": [ [ "vitA", 8 ], [ "calcium", 2 ], [ "iron", 4 ] ]
+    "vitamins": [ [ "vitA", 8 ], [ "calcium", 2 ], [ "iron", 4 ], [ "wheat_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "id": "sponge_cake",
@@ -663,13 +685,13 @@
     "price": "50 USD",
     "price_postapoc": "3 USD",
     "charges": 4,
-    "material": "wheat",
+    "material": [ "wheat" ],
     "symbol": "%",
     "color": "brown",
     "calories": 278,
     "fun": 4,
     "spoils_in": "14 days",
-    "vitamins": [ [ "vitA", 8 ], [ "calcium", 2 ], [ "iron", 5 ] ],
+    "vitamins": [ [ "vitA", 8 ], [ "calcium", 2 ], [ "iron", 5 ], [ "wheat_allergen", 1 ] ],
     "flags": [ "EATEN_HOT" ]
   },
   {
@@ -680,7 +702,12 @@
     "price_postapoc": "5 USD",
     "description": "This cake's destiny is to take you on a gnarly trip.",
     "fun": 12,
-    "use_action": "WEED_CAKE"
+    "use_action": {
+      "type": "consume_drug",
+      "activation_message": "You start scarfing down the delicious cake.  It tastes a little funny though…",
+      "do_weed_msg": true,
+      "effects": [ { "id": "weed_high", "duration": "12 m" }, { "id": "pkill1", "duration": "12 m" } ]
+    }
   },
   {
     "id": "brownie",
@@ -701,7 +728,12 @@
     "description": "This is definitely not how grandma used to bake them.",
     "price_postapoc": "5 USD",
     "fun": 15,
-    "use_action": "WEED_CAKE"
+    "use_action": {
+      "type": "consume_drug",
+      "activation_message": "You start scarfing down the delicious brownie.  It tastes a little funny though…",
+      "do_weed_msg": true,
+      "effects": [ { "id": "weed_high", "duration": "12 m" }, { "id": "pkill1", "duration": "12 m" } ]
+    }
   },
   {
     "id": "noodles_kimchi",
@@ -718,6 +750,7 @@
     "calories": 300,
     "quench": 4,
     "fun": 6,
-    "flags": [ "EATEN_COLD" ]
+    "flags": [ "EATEN_COLD" ],
+    "vitamins": [ [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   }
 ]

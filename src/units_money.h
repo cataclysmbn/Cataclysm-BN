@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UNITS_MONEY_H
-#define CATA_SRC_UNITS_MONEY_H
 
 #include <algorithm>
 
@@ -60,38 +58,37 @@ constexpr value_type to_kusd( const quantity<value_type, money_in_cent_tag> &v )
 
 } // namespace units
 
-constexpr units::money operator"" _cent( const unsigned long long v )
+constexpr units::money operator""_cent( const unsigned long long v )
 {
     return units::from_cent( v );
 }
 
-constexpr units::quantity<double, units::money_in_cent_tag> operator"" _cent(
+constexpr units::quantity<double, units::money_in_cent_tag> operator""_cent(
     const long double v )
 {
     return units::from_cent( v );
 }
 
-constexpr units::money operator"" _USD( const unsigned long long v )
+constexpr units::money operator""_USD( const unsigned long long v )
 {
     return units::from_usd( v );
 }
 
-constexpr units::quantity<double, units::money_in_cent_tag> operator"" _USD(
+constexpr units::quantity<double, units::money_in_cent_tag> operator""_USD(
     const long double v )
 {
     return units::from_usd( v );
 }
 
-constexpr units::money operator"" _kUSD( const unsigned long long v )
+constexpr units::money operator""_kUSD( const unsigned long long v )
 {
     return units::from_kusd( v );
 }
 
-constexpr units::quantity<double, units::money_in_cent_tag> operator"" _kUSD(
+constexpr units::quantity<double, units::money_in_cent_tag> operator""_kUSD(
     const long double v )
 {
     return units::from_kusd( v );
 }
 
 
-#endif // CATA_SRC_UNITS_MONEY_H

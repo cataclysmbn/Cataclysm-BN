@@ -30,7 +30,7 @@
     "type": "GENERIC",
     "id": "motor_super",
     "name": { "str": "super electric motor" },
-    "description": "The most powerfull electric motor on the market.  Useful for crafting, and its advanced design means it won't suffer power loss if multiple are installed on a vehicle.",
+    "description": "The most powerful electric motor on the market.  Useful for crafting, and its advanced design means it won't suffer power loss if multiple are installed on a vehicle.",
     "weight": "125 kg",
     "volume": "25 L",
     "price": "800 USD",

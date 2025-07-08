@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "point.h"
+#include "catch/catch.hpp"
 
 namespace map_helpers
 {

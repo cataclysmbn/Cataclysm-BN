@@ -85,6 +85,8 @@
       [ "bio_power_armor_interface_mkII", 5 ],
       [ "bio_remote", 10 ],
       [ "bio_cable", 10 ],
+      [ "bio_cable_mkII", 2 ],
+      [ "bio_cable_upgrade", 2 ],
       [ "bio_syringe", 10 ],
       [ "bio_weight", 10 ],
       [ "bio_shock_absorber", 10 ],
@@ -212,6 +214,7 @@
       [ "bio_infolink", 20 ],
       [ "bio_power_armor_interface_mkII", 5 ],
       [ "bio_cable", 10 ],
+      [ "bio_cable_mkII", 3 ],
       [ "bio_weight", 10 ],
       [ "bio_jointservo", 10 ],
       [ "bio_shotgun", 10 ],
@@ -229,6 +232,7 @@
       [ "bio_batteries", 10 ],
       [ "bio_blood_anal", 5 ],
       [ "bio_cable", 10 ],
+      [ "bio_cable_mkII", 6 ],
       [ "bio_cqb", 5 ],
       [ "bio_ethanol", 10 ],
       [ "bio_fuel_cell_gasoline", 10 ],
@@ -306,6 +310,7 @@
       [ "bio_infolink", 20 ],
       [ "bio_power_armor_interface_mkII", 5 ],
       [ "bio_cable", 10 ],
+      [ "bio_cable_mkII", 3 ],
       [ "bio_jointservo", 20 ],
       [ "bio_shotgun", 10 ],
       [ "bn_bio_solar", 15 ],
@@ -396,7 +401,8 @@
       [ "bio_weight", 20 ],
       [ "bio_shock_absorber", 20 ],
       [ "bio_soporific", 20 ],
-      [ "bio_electrosense", 5 ]
+      [ "bio_electrosense", 5 ],
+      [ "bio_cable_mkII", 5 ]
     ]
   },
   {
@@ -465,6 +471,7 @@
       [ "bio_weight", 15 ],
       [ "afs_bio_missiles", 10 ],
       [ "afs_bio_dopamine_stimulators", 15 ],
+      [ "bio_cable_mkII", 10 ],
       [ "bio_reactor", 10 ]
     ]
   },
@@ -542,7 +549,9 @@
       [ "afs_bio_linguistic_coprocessor", 10 ],
       [ "afs_bio_dopamine_stimulators", 10 ],
       [ "bio_reactor", 10 ],
-      [ "bio_reactor_upgrade", 10 ]
+      [ "bio_reactor_upgrade", 10 ],
+      [ "bio_cable_mkII", 10 ],
+      [ "bio_cable_upgrade", 10 ]
     ]
   },
   {

@@ -468,7 +468,7 @@ bool copy_file( const std::string &source_path, const std::string &dest_path )
     }
     bool res = write_to_file( dest_path, [&]( std::ostream & dest_stream ) {
         dest_stream << source_stream->rdbuf();
-    }, nullptr );
+    }, "" );
     return res && !source_stream.fail();
 }
 
@@ -513,7 +513,7 @@ bool can_write_to_dir( const std::string &dir_path )
         s << CBN << '\n';
     };
 
-    if( !write_to_file( dummy_file, writer, nullptr ) ) {
+    if( !write_to_file( dummy_file, writer, "" ) ) {
         return false;
     }
 

@@ -1,4 +1,3 @@
-#if defined(LUA)
 #include "catalua_serde.h"
 
 #include "catalua_impl.h"
@@ -204,6 +203,3 @@ void deserialize_lua_table( sol::table t, JsonObject &obj )
 }
 
 } // namespace cata
-
-#endif
-

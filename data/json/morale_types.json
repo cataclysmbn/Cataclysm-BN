@@ -355,12 +355,6 @@
     "text": "Longing to kill"
   },
   {
-    "id": "morale_perm_filthy",
-    "type": "morale_type",
-    "text": "Filthy Gear",
-    "permanent": true
-  },
-  {
     "id": "morale_butcher",
     "type": "morale_type",
     "text": "Anguished by memories of butchering human corpse"

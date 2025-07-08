@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MATRIX_MATH_H
-#define CATA_SRC_MATRIX_MATH_H
 
 #include <array>
 #include <cmath>
@@ -49,4 +47,4 @@ matrix_3d rotation_z_axis( units::angle angle );
 
 } // namespace matrices
 
-#endif // CATA_SRC_MATRIX_MATH_H
+

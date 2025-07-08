@@ -1,0 +1,89 @@
+[
+  {
+    "id": "mon_orc_warrior",
+    "type": "MONSTER",
+    "name": "Orc Warrior",
+    "description": "A big, badly behaved brutish humanoid.  Armed with a sword and possessing more than enough strength to use it to deadly effect, you don't want to be in the way of one when its angry.  It's also well armored, alongside a hide one might slightly exaggerate as being ironlike.  Generally less intelligent than goblins, but it's ill advised to mention that.",
+    "default_faction": "orcs",
+    "bodytype": "human",
+    "species": [ "ORC" ],
+    "volume": "90 L",
+    "weight": "120 kg",
+    "hp": 150,
+    "speed": 90,
+    "material": [ "flesh" ],
+    "symbol": "O",
+    "color": "green",
+    "aggression": 90,
+    "morale": 80,
+    "vision_day": 20,
+    "vision_night": 10,
+    "melee_skill": 6,
+    "melee_dice": 3,
+    "melee_dice_sides": 8,
+    "melee_damage": [ { "damage_type": "cut", "amount": 4 } ],
+    "dodge": 1,
+    "armor_bash": 15,
+    "armor_cut": 18,
+    "armor_bullet": 8,
+    "armor_stab": 12,
+    "harvest": "human",
+    "//": "We haven't demihuman, so I went with the Troll solution of just going human.",
+    "death_function": [ "NORMAL" ],
+    "death_drops": "orc_warrior_drops",
+    "special_attacks": [ { "type": "bite", "cooldown": 5 } ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "PATH_AVOID_DANGER_1",
+      "GROUP_MORALE",
+      "ATTACKMON",
+      "PUSH_MON",
+      "SWARMS",
+      "BONES",
+      "CAN_OPEN_DOORS"
+    ]
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_orc_archer",
+    "name": { "str": "Orc 'Arrer" },
+    "description": "A big brute who wields a powerful bow.  Not as respected among orc society, but still very effective.  It won't hesitate to slam you with the bow if necessary, though.",
+    "copy-from": "mon_orc_warrior",
+    "melee_skill": 3,
+    "dodge": 2,
+    "death_drops": "orc_archer_drops",
+    "starting_ammo": { "arrow_metal_sharpened_fletched": 30 },
+    "extend": {
+      "special_attacks": [
+        {
+          "type": "gun",
+          "cooldown": 15,
+          "move_cost": 120,
+          "gun_type": "longbow",
+          "ammo_type": "arrow_metal_sharpened_fletched",
+          "fake_skills": [ [ "gun", 6 ], [ "rifle", 6 ] ],
+          "fake_dex": 8,
+          "fake_per": 8,
+          "require_targeting_player": false,
+          "description": "The orc fires its bow at you!",
+          "ranges": [ [ 2, 18, "DEFAULT" ] ],
+          "no_ammo_sound": "grunting"
+        }
+      ]
+    }
+  },
+  {
+    "id": "mon_orc_blood_warrior",
+    "type": "MONSTER",
+    "copy-from": "mon_orc_warrior",
+    "name": { "str": "Orc Blood Warrior" },
+    "description": "As a deviation from the normal verdant skin of the orcs, the blood warriors are believed to be blessed by the gods of the orcs.  They certainly look the part, and from what you can tell their strength matches up with it.  You best be ready for a fight, because they'll certainly give you one.",
+    "hp": 300,
+    "color": "red",
+    "melee_dice_sides": 12,
+    "melee_damage": [ { "damage_type": "cut", "amount": 8 }, { "damage_type": "stab", "amount": 4 } ],
+    "death_drops": "orc_blood_warrior_drops"
+  }
+]

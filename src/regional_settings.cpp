@@ -554,6 +554,9 @@ void load_region_settings( const JsonObject &jo )
         load_building_types( "houses", new_region.city_spec.houses );
         load_building_types( "shops", new_region.city_spec.shops );
         load_building_types( "parks", new_region.city_spec.parks );
+        if( cjo.has_member( "finales" ) ) {
+            load_building_types( "finales", new_region.city_spec.finales );
+        }
     }
 
     if( !jo.has_object( "weather" ) ) {
@@ -714,6 +717,9 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
     load_building_types( "houses", region.city_spec.houses );
     load_building_types( "shops", region.city_spec.shops );
     load_building_types( "parks", region.city_spec.parks );
+    if( cityjo.has_member( "finales" ) ) {
+        load_building_types( "finales", region.city_spec.finales );
+    }
 
     load_overmap_feature_flag_settings( jo, region.overmap_feature_flag, false, true );
 
@@ -1030,11 +1036,19 @@ overmap_special_id city_settings::pick_park() const
     return parks.pick()->id;
 }
 
+overmap_special_id city_settings::pick_finale() const
+{
+    return finales.pick()->id;
+}
+
 void city_settings::finalize()
 {
     houses.finalize();
     shops.finalize();
     parks.finalize();
+    if( !finales.unfinalized_buildings.empty() ) {
+        finales.finalize();
+    }
 }
 
 void building_bin::add( const overmap_special_id &building, int weight )

@@ -24,29 +24,40 @@
     "m2c": 65,
     "//": "40% energy efficiency",
     "extend": { "flags": [ "E_COLD_START" ] },
-    "description": "A combustion engine.  Burns diesel fuel from a tank in the vehicle.  Can also burn biodiesel or lamp oil, though somewhat less efficiently."
+    "description": "A combustion engine.  Burns diesel fuel from a tank in the vehicle.  Can also burn biodiesel or oil, though somewhat less efficiently."
   },
   {
     "abstract": "gasoline_engine",
     "copy-from": "engine_combustion",
     "type": "vehicle_part",
     "fuel_type": "gasoline",
-    "fuel_options": [ "gasoline", "avgas", "biodiesel" ],
+    "fuel_options": [ "gasoline", "avgas", "chem_ethanol", "denat_alcohol", "chem_methanol" ],
     "//2": "TODO: remove when injectors are implemented",
     "m2c": 60,
     "//": "30% energy efficiency",
-    "description": "A combustion engine.  Burns gasoline fuel from a tank in the vehicle."
+    "description": "A combustion engine.  Burns gasoline fuel from a tank in the vehicle.  Can also burn concentrated alcohol, though somewhat less efficiently."
   },
   {
     "abstract": "gas_turbine_engine",
     "copy-from": "engine_combustion",
     "type": "vehicle_part",
     "fuel_type": "gasoline",
-    "fuel_options": [ "gasoline", "diesel", "lamp_oil", "jp8", "motor_oil", "avgas", "biodiesel" ],
+    "fuel_options": [
+      "gasoline",
+      "diesel",
+      "lamp_oil",
+      "jp8",
+      "motor_oil",
+      "avgas",
+      "biodiesel",
+      "chem_ethanol",
+      "denat_alcohol",
+      "chem_methanol"
+    ],
     "m2c": 60,
     "//": "25% energy efficiency",
     "extend": { "flags": [ "E_NO_POWER_DECAY" ] },
-    "description": "An advanced combustion engine.  Burns gasoline or diesel or aviation fuel from a tank in the vehicle.  Can also burn lamp oil, though somewhat less efficiently.  Better power-to-weight ratio than a traditional engine but consumes more fuel, its power will not diminish even when multiple of them are installed."
+    "description": "An advanced combustion engine.  Burns gasoline or diesel or aviation fuel from a tank in the vehicle.  Can also burn biodiesel, oil, or concentrated alcohol; though somewhat less efficiently.  Better power-to-weight ratio than a traditional engine but consumes more fuel, its power will not diminish even when multiple of them are installed."
   },
   {
     "id": "diesel_engine_i6",
@@ -112,7 +123,10 @@
       "removal": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 5 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "damage_reduction": { "all": 100 }
+    "damage_reduction": { "all": 100 },
+    "//": "More powerful engines require higher-quality fuel, aside from low-efficiency turbines which can eat anything.",
+    "fuel_options": [ "diesel", "biodiesel", "jp8" ],
+    "description": "A combustion engine.  Burns diesel fuel from a tank in the vehicle.  Can also burn biodiesel, though somewhat less efficiently."
   },
   {
     "id": "engine_1cyl",
@@ -206,7 +220,10 @@
       "removal": { "skills": [ [ "mechanics", 6 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "damage_reduction": { "all": 110 }
+    "damage_reduction": { "all": 110 },
+    "//": "More powerful engines require higher-quality fuel, aside from low-efficiency turbines which can eat anything.",
+    "fuel_options": [ "gasoline", "avgas" ],
+    "description": "A combustion engine.  Burns gasoline fuel from a tank in the vehicle."
   },
   {
     "id": "diesel_engine_v12",
@@ -228,7 +245,10 @@
       "removal": { "skills": [ [ "mechanics", 6 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "damage_reduction": { "all": 110 }
+    "damage_reduction": { "all": 110 },
+    "//": "More powerful engines require higher-quality fuel, aside from low-efficiency turbines which can eat anything.",
+    "fuel_options": [ "diesel", "biodiesel", "jp8" ],
+    "description": "A combustion engine.  Burns diesel fuel from a tank in the vehicle.  Can also burn biodiesel, though somewhat less efficiently."
   },
   {
     "id": "engine_v6",
@@ -272,7 +292,10 @@
       "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "damage_reduction": { "all": 100 }
+    "damage_reduction": { "all": 100 },
+    "//": "More powerful engines require higher-quality fuel, aside from low-efficiency turbines which can eat anything.",
+    "fuel_options": [ "gasoline", "avgas" ],
+    "description": "A combustion engine.  Burns gasoline fuel from a tank in the vehicle."
   },
   {
     "id": "engine_vtwin",

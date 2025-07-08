@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_IO_TAGS_H
-#define CATA_SRC_IO_TAGS_H
 
 namespace io
 {
@@ -28,4 +26,4 @@ struct object_archive_tag {
 
 } // namespace io
 
-#endif // CATA_SRC_IO_TAGS_H
+

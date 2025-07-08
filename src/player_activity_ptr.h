@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_PLAYER_ACTIVITY_PTR_H
-#define CATA_SRC_PLAYER_ACTIVITY_PTR_H
 
 #include <memory>
 
@@ -46,4 +44,4 @@ class activity_ptr
         void deserialize( JsonIn &jsin );
 };
 
-#endif // CATA_SRC_PLAYER_ACTIVITY_PTR_H
+

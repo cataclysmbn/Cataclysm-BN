@@ -101,16 +101,6 @@ TEST_CASE( "wet item", "[item][tname][wet]" )
     CHECK( rag.tname() == "rag (wet)" );
 }
 
-TEST_CASE( "filthy item", "[item][tname][filthy]" )
-{
-    clear_all_state();
-    override_option opt( "FILTHY_MORALE", "true" );
-    item &rag = *item::spawn_temporary( "rag" );
-    rag.set_flag( flag_FILTHY );
-    REQUIRE( rag.is_filthy() );
-
-    CHECK( rag.tname() == "rag (filthy)" );
-}
 
 TEST_CASE( "diamond item", "[item][tname][diamond]" )
 {

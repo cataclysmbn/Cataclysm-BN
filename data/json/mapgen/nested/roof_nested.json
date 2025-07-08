@@ -507,7 +507,7 @@
       "terrain": { "_": "t_null" },
       "place_nested": [
         {
-          "chunks": [ [ "null", 30 ], [ "solar_panels_4X4", 5 ], [ "solar_panels_2X4", 5 ], [ "solar_panels_3X3", 5 ] ],
+          "chunks": [ [ "null", 85 ], [ "solar_panels_4X4", 2 ], [ "solar_panels_2X4", 8 ], [ "solar_panels_3X3", 5 ] ],
           "x": 0,
           "y": 0
         }

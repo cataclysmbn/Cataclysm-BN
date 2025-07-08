@@ -39,6 +39,11 @@ There are six principles applied for content in general:
    guns that differ only in name and +1 to damage value. If such variety is desired, it should be
    relegated to mods.
 
+3.1 Clutter benefits nobody. If these additions are just more bloat, mainline mod it.
+Examples are guns, books, food, drugs, morale items, furniture variants, clothes.
+Opt-out is preferred for additional bloat, and Opt-in for things that change game theme.
+e.g. Magical Nights, Aftershock, CRIT. When in doubt, ask.
+
 4. The gameplay should be less about pressing buttons and spending time in submenus and more about
    interacting with the surrounding world and progressing (achieving results).
 
@@ -58,9 +63,11 @@ There are six principles applied for content in general:
 2. weirdness is a sign that things are unintuitive. Somethings benefit from not being obvious. But
    things that are too far from people's expectations break the suspension of disbelief and require
    people to remember more disconnected elements.
-3. This is sort of an expansion of 1. Adding things that have a distinct purpose for existing adds
-   more interactions. Things that have some flexibility are particularly valuable. But the purpose
-   makes new items add more depth than an item which is a slight variant. slight variants.
+3. More items means more interactions, more depth, but finding what you want or understanding
+   what items are good when we have 30 AK pattern rifles and 30 AR-15 platforms.
+   Distributions are also cluttered badly from increased variants. This is bad for gameplay.
+   A more believable world has 10,000 firearm variants, a more playable world has 10.
+   If in doubt, Add your new items as a mod package.
 4. Sorting through complexity in menus isn't fun. menus are only fun when there are meaningful
    choices or tradeoffs being made there. (I.E. what to equip, what to carry, what to loot first,
    etc.)
@@ -68,18 +75,18 @@ There are six principles applied for content in general:
 
 ### Removals and re-adding
 
-Presence or absence of content is often a contentious issue. In cases where it is not obvious:
+Removal of content is a contentious problem in the community. To clarify official stance:
 
-- Content should not be kept on the basis of "it can be made good". If it isn't good now, it isn't
-  good. It can be re-added later, when it becomes good.
-- Content should not be re-added on the basis of "it was present before". Re-added content should be
-  treated the same way new content is.
-- Content should not be "spared" from removal by giving it forced updates that still don't make it
-  good enough. It should be treated like new content is.
+- Content should not be kept inside the mainline on the basis of "it can be made good".
+  If it isn't good now, it isn't good. Shift it to a mainline mod, or improve/obsolete it.
+- Content should not be re-added to mainline on the basis of "it was present before".
+  Re-added content should be treated the same way new content is.
+- Content should not be "spared" from shifting/obsoletion by giving it forced updates that still
+  don't make it good enough. It should be treated like new content is.
 - This doesn't cover arguments regarding content being thematic, liked etc., content can still be
-  given extra "points" based on those.
+  given extra "points" based on those. We want a level of flavor to the world.
 
-In short, don't ask "why remove it?", ask "why should it be present in the game?".
+In short, if it doesn't feel like a good "default" experience, improve or shift to a mod.
 
 ## Depth
 
@@ -98,3 +105,22 @@ kill?) How much cost do you take from a fight? How far/fast can I run vs. them (
 terrain nearby.(terrain speed slowdowns. damage terrain, chokepoints, etc.) other clusters of
 enemies. How much benefit is there to a fight? (zombie drops + nearby loot locations that are now
 safe)
+
+## Bloat
+
+Bloat happens because we all want to add things that we personally like. But we can't add everything.
+
+The rule on bloat is to save it for opt-out/opt-in mods, or third party mods.
+
+Bloat is when there is no meaningful reason to have something in the game, A gun is a gun.
+Clothes are clothes. We don't want 30 variations of the same T-Shirt but colored differently inside
+the base game. Now you can't find what you want.
+
+There is a difference between bloat, and flavor. Flavor is adding a missing cooking recipe.
+We've historically not represented much European/African/Asian cooking. Some recipes exist,
+Such as lutefisk and haggis, but a lot of recipes are generic or common American fare.
+
+Bloat is adding rechambered versions of firearms, example being Vektor variants.
+Another example would be adding 30 variations of the bible, or 30 novels. Put it in an expanded literature mod, or a religion mod in the case of religious books.
+We don't need 20 types of beer, it just makes it harder to parse the comestibles menu. Put it in a (craft) brewery mod.
+We don't need clothes whose only distinction is a different player sprite. Put it in a clothing/fashion mod.

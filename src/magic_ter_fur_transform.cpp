@@ -75,6 +75,12 @@ void ter_furn_data<T>::load( const JsonObject &jo )
     message_good = jo.get_bool( "message_good", true );
 }
 
+template<class T>
+bool ter_furn_data<T>::is_empty() const
+{
+    return list.empty();
+}
+
 void ter_furn_transform::load( const JsonObject &jo, const std::string & )
 {
     std::string input;
@@ -93,6 +99,10 @@ void ter_furn_transform::load( const JsonObject &jo, const std::string & )
 
             for( const std::string valid_terrain : ter_obj.get_array( "valid_flags" ) ) {
                 ter_flag_transform.emplace( valid_terrain, cur_results );
+            }
+
+            if( ter_obj.get_bool( "diggable", false ) ) {
+                diggable_ter_transform = cur_results;
             }
         }
     }
@@ -218,6 +228,11 @@ void ter_furn_transform::transform( map &m, const tripoint &location ) const
                 if( ter_potential ) {
                     break;
                 }
+            }
+        }
+        if( !ter_potential ) {
+            if( ter_at_loc->is_diggable() && !diggable_ter_transform.is_empty() ) {
+                ter_potential = diggable_ter_transform.pick();
             }
         }
     }

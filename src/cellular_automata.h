@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CELLULAR_AUTOMATA_H
-#define CATA_SRC_CELLULAR_AUTOMATA_H
 
 #include <vector>
 
@@ -44,4 +42,4 @@ std::vector<std::vector<int>> generate_cellular_automaton(
                                const int stasis_limit );
 } // namespace CellularAutomata
 
-#endif // CATA_SRC_CELLULAR_AUTOMATA_H
+

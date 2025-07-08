@@ -74,8 +74,7 @@
       "REVIVES",
       "BILE_BLOOD",
       "PUSH_MON",
-      "PATH_AVOID_DANGER_1",
-      "FILTHY"
+      "PATH_AVOID_DANGER_1"
     ]
   },
   {
@@ -107,7 +106,7 @@
     "harvest": "exempt",
     "special_attacks": [ [ "FLESH_TENDRIL", 1 ] ],
     "death_function": [ "GAS" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "IMMOBILE", "WARM", "POISON", "IMMOBILE", "NO_BREATHE", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "IMMOBILE", "WARM", "POISON", "IMMOBILE", "NO_BREATHE" ]
   },
   {
     "id": "mon_zombie_gasbag_immobile",
@@ -137,7 +136,7 @@
     "death_drops": "default_zombie_items",
     "upgrades": { "half_life": 8, "into": "mon_zombie_gasbag_crawler" },
     "death_function": [ "GAS" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "IMMOBILE", "WARM", "POISON", "NO_BREATHE", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "IMMOBILE", "WARM", "POISON", "NO_BREATHE" ]
   },
   {
     "id": "mon_zombie_gasbag_crawler",
@@ -235,6 +234,6 @@
     "armor_bullet": 20,
     "harvest": "zombie",
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "IMMOBILE", "WARM", "POISON", "IMMOBILE", "NO_BREATHE", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "IMMOBILE", "WARM", "POISON", "IMMOBILE", "NO_BREATHE" ]
   }
 ]

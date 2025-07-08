@@ -118,7 +118,7 @@
     "difficulty": 5,
     "value": 50000,
     "start": {
-      "assign_mission_target": { "om_terrain": "bandit_cabin", "om_special": "bandit_cabin", "reveal_radius": 1, "search_range": 60 },
+      "assign_mission_target": { "om_terrain": "bandit_cabin", "om_special": "bandit_cabin", "reveal_radius": 1 },
       "update_mapgen": {
         "set": [
           { "point": "trap", "id": "tr_landmine_buried", "x": 7, "y": 6 },
@@ -214,13 +214,7 @@
     "difficulty": 10,
     "value": 300000,
     "start": {
-      "assign_mission_target": {
-        "om_terrain": "bandit_camp_1",
-        "om_special": "bandit_camp",
-        "reveal_radius": 1,
-        "min_distance": 10,
-        "search_range": 120
-      },
+      "assign_mission_target": { "om_terrain": "bandit_camp_1", "om_special": "bandit_camp", "reveal_radius": 1, "min_distance": 10 },
       "update_mapgen": { "place_npcs": [ { "class": "bandit", "x": 17, "y": 9, "target": true } ] },
       "effect": [
         { "u_buy_item": "ruger_redhawk" },
@@ -253,9 +247,7 @@
     "difficulty": 8,
     "value": 200000,
     "item": "necropolis_datasheet",
-    "start": {
-      "assign_mission_target": { "om_terrain": "necropolis_a_29", "om_special": "Necropolis", "reveal_radius": 5, "search_range": 360 }
-    },
+    "start": { "assign_mission_target": { "om_terrain": "necropolis_a_29", "om_special": "Necropolis", "reveal_radius": 5 } },
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_FREE_MERCHANTS_EVAC_4",
     "dialogue": {

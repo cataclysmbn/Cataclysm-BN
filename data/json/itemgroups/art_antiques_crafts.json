@@ -126,6 +126,7 @@
       { "item": "textbook_armeast", "prob": 5 },
       { "item": "textbook_armschina", "prob": 5 },
       { "item": "q_staff", "prob": 10 },
+      { "item": "club_spiked", "prob": 10 },
       { "item": "i_staff", "prob": 5 },
       { "item": "sword_bayonet", "prob": 10 },
       { "item": "bagh_nakha", "prob": 5 },
@@ -213,8 +214,20 @@
     "id": "antique_rare",
     "subtype": "distribution",
     "entries": [
-      { "item": "trex_gun", "prob": 4 },
       { "item": "spiral_stone", "prob": 2 },
+      { "item": "pistol_flintlock", "prob": 3 },
+      { "item": "carbine_flintlock", "prob": 3 },
+      { "item": "rifle_flintlock", "prob": 3 },
+      { "item": "longrifle_flintlock", "prob": 3 },
+      { "item": "shotgun_paper", "prob": 4 },
+      { "group": "antique_medieval_arms", "prob": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "antique_medieval_arms",
+    "subtype": "distribution",
+    "entries": [
       { "item": "cutlass", "prob": 2 },
       { "item": "broadsword", "prob": 2 },
       { "item": "nodachi", "prob": 2 },
@@ -257,11 +270,6 @@
       { "item": "wakizashi_fake", "prob": 4 },
       { "item": "wakizashi_inferior", "prob": 8 },
       { "item": "kris_fake", "prob": 8 },
-      { "item": "pistol_flintlock", "prob": 3 },
-      { "item": "carbine_flintlock", "prob": 3 },
-      { "item": "rifle_flintlock", "prob": 3 },
-      { "item": "longrifle_flintlock", "prob": 3 },
-      { "item": "shotgun_paper", "prob": 4 },
       { "item": "petrified_eye", "prob": 2 },
       { "item": "ji", "prob": 1 },
       { "item": "dao", "prob": 3 },
@@ -279,7 +287,6 @@
     "id": "antique_bank_vault",
     "subtype": "distribution",
     "entries": [
-      { "item": "trex_gun", "prob": 4 },
       { "item": "spiral_stone", "prob": 2 },
       { "item": "cutlass", "prob": 2 },
       { "item": "broadsword", "prob": 2 },

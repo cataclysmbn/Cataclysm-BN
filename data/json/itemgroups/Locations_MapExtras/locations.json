@@ -501,7 +501,7 @@
       { "item": "hard_plate", "prob": 50, "count": [ 1, 3 ] },
       { "item": "alloy_plate", "prob": 25, "count": [ 1, 3 ] },
       { "item": "alloy_sheet", "prob": 25, "count": [ 1, 10 ] },
-      { "item": "thermal_cooling", "prob": 50, "count": [ 1, 3 ] }
+      { "item": "thermal_cooling_suit", "prob": 50, "count": [ 1, 3 ] }
     ]
   },
   {
@@ -596,6 +596,7 @@
       [ "manual_zui_quan", 20 ],
       [ "howto_computer", 20 ],
       [ "touristmap", 25 ],
+      [ "regionaltransportmap", 25 ],
       [ "restaurantmap", 25 ],
       [ "roadmap", 25 ],
       [ "trailmap", 25 ],
@@ -646,6 +647,7 @@
       [ "carver_off", 5 ],
       [ "coffeemaker", 5 ],
       [ "dehydrator", 5 ],
+      [ "soda_machine", 5 ],
       [ "food_processor", 5 ],
       [ "hotplate", 5 ],
       [ "multi_cooker", 5 ],
@@ -705,6 +707,7 @@
       [ "glass_bowl", 80 ],
       [ "bottle_glass", 150 ],
       [ "pipe_glass", 10 ],
+      [ "pipe_glass_bong", 10 ],
       [ "jar_glass", 120 ],
       [ "flask_glass", 60 ],
       [ "tempered_glass_sheet", 5 ]
@@ -1050,6 +1053,7 @@
       [ "morningstar", 2 ],
       [ "morningstar_fake", 3 ],
       [ "morningstar_inferior", 4 ],
+      [ "club_spiked", 3 ],
       [ "warhammer", 2 ],
       [ "scythe_war", 2 ],
       [ "pike", 2 ],
@@ -1450,9 +1454,11 @@
       { "item": "seed_tobacco", "prob": 5 },
       { "item": "rolling_paper", "prob": 5 },
       { "item": "pipe_glass", "prob": 15 },
+      { "item": "pipe_glass_bong", "prob": 15 },
       { "item": "coke", "prob": 8 },
       { "item": "meth", "prob": 2 },
       { "item": "heroin", "prob": 1 },
+      { "item": "sizzurp", "prob": 4 },
       { "item": "syringe", "prob": 8 },
       { "item": "electrohack", "prob": 3 },
       { "item": "textbook_gaswarfare", "prob": 1 },
@@ -1561,6 +1567,7 @@
       { "item": "razor_blade", "prob": 20 },
       { "item": "soap", "prob": 5 },
       { "item": "detergent", "prob": 5 },
+      { "item": "shimmer", "prob": 3 },
       { "item": "knitting_needles", "prob": 1 },
       { "group": "auto_sears", "prob": 5 },
       { "item": "survnote", "prob": 2 }
@@ -1615,7 +1622,7 @@
       { "item": "kufi", "prob": 10 },
       { "item": "kittel", "prob": 10 },
       { "item": "kippah", "prob": 10 },
-      { "item": "icon", "prob": 20 }
+      { "item": "money_bundle", "prob": 20 }
     ]
   },
   {
@@ -1682,9 +1689,12 @@
       [ "seed_tobacco", 5 ],
       [ "rolling_paper", 5 ],
       [ "pipe_glass", 5 ],
+      [ "pipe_glass_bong", 5 ],
+      [ "nectar_collector", 5 ],
       [ "coke", 8 ],
       [ "meth", 2 ],
       [ "heroin", 1 ],
+      [ "sizzurp", 3 ],
       [ "sneakers", 40 ],
       [ "mask_hockey", 5 ],
       [ "mask_guy_fawkes", 5 ],
@@ -1865,6 +1875,8 @@
       [ "helmet_football", 5 ],
       [ "mouthpiece", 5 ],
       [ "roller_blades", 20 ],
+      [ "folding_skateboard", 10 ],
+      [ "folding_wagon", 5 ],
       [ "rollerskates", 10 ],
       [ "rollerskates", 10 ],
       [ "roller_shoes_off", 10 ],
@@ -2717,6 +2729,7 @@
       [ "quiver", 20 ],
       [ "canteen", 20 ],
       [ "knife_hunting", 30 ],
+      [ "gps_device", 5 ],
       [ "shovel", 30 ],
       { "group": "ammo_pocket_batteries_full", "prob": 30 }
     ]

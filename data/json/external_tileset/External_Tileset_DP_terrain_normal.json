@@ -25,7 +25,12 @@
           { "id": "t_shrub_blueberry_season_spring", "fg": 19 },
           { "id": "t_shrub_blueberry_season_summer", "fg": 20 },
           { "id": "t_shrub_strawberry_season_spring", "fg": 21 },
-          { "id": "t_shrub_strawberry_season_summer", "fg": 22 }
+          { "id": "t_shrub_strawberry_season_summer", "fg": 22 },
+          { "id": "t_door_metal_welded", "fg": 23 },
+          { "id": "t_door_metal_welded_peephole", "fg": 24 },
+          { "id": "t_door_metal_welded_lab", "fg": 25 },
+          { "id": "t_door_metal_welded_bulkhead", "fg": 26 },
+          { "id": "t_door_metal_welded_bars", "fg": 27 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

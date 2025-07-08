@@ -40,6 +40,7 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
+#include "world.h"
 
 static const item_category_id itcat_food( "food" );
 
@@ -54,6 +55,7 @@ static const zone_type_id zone_LOOT_PDRINK( "LOOT_PDRINK" );
 static const zone_type_id zone_LOOT_PFOOD( "LOOT_PFOOD" );
 static const zone_type_id zone_LOOT_SEEDS( "LOOT_SEEDS" );
 static const zone_type_id zone_LOOT_UNSORTED( "LOOT_UNSORTED" );
+static const zone_type_id zone_LOOT_DUMP( "LOOT_DUMP" );
 static const zone_type_id zone_LOOT_WOOD( "LOOT_WOOD" );
 static const zone_type_id zone_NO_AUTO_PICKUP( "NO_AUTO_PICKUP" );
 static const zone_type_id zone_NO_NPC_PICKUP( "NO_NPC_PICKUP" );
@@ -847,7 +849,7 @@ zone_type_id zone_manager::get_near_zone_type_for_item( const item &it,
         return *zone_check_first;
     }
 
-    if( cat.zone() ) {
+    if( cat.zone() && has_near( *cat.zone(), where, range ) ) {
         return *cat.zone();
     }
 
@@ -868,9 +870,15 @@ zone_type_id zone_manager::get_near_zone_type_for_item( const item &it,
                 return zone_LOOT_PFOOD;
             }
         }
-
-        return zone_LOOT_FOOD;
+        if( has_near( zone_LOOT_FOOD, where, range ) ) {
+            return zone_LOOT_FOOD;
+        }
     }
+
+    if( has_near( zone_LOOT_DUMP, where, range ) ) {
+        return zone_LOOT_DUMP;
+    }
+
 
     return zone_type_id();
 }
@@ -1182,12 +1190,10 @@ void zone_data::deserialize( JsonIn &jsin )
 
 bool zone_manager::save_zones()
 {
-    std::string savefile = g->get_player_base_save_path() + ".zones.json";
-
     added_vzones.clear();
     changed_vzones.clear();
     removed_vzones.clear();
-    return write_to_file( savefile, [&]( std::ostream & fout ) {
+    return g->get_active_world()->write_to_player_file( ".zones.json", [&]( std::ostream & fout ) {
         JsonOut jsout( fout );
         serialize( jsout );
     }, _( "zones date" ) );
@@ -1195,12 +1201,10 @@ bool zone_manager::save_zones()
 
 void zone_manager::load_zones()
 {
-    std::string savefile = g->get_player_base_save_path() + ".zones.json";
-
-    read_from_file_optional( savefile, [&]( std::istream & fin ) {
+    g->get_active_world()->read_from_player_file( ".zones.json", [&]( std::istream & fin ) {
         JsonIn jsin( fin );
         deserialize( jsin );
-    } );
+    }, true );
     revert_vzones();
     added_vzones.clear();
     changed_vzones.clear();

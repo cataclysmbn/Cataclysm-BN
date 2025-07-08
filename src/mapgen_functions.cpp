@@ -2181,7 +2181,7 @@ void mapgen_forest( mapgendata &dat )
         for( auto &b : dat.region.forest_composition.biomes ) {
             factors.push_back( b.second.sparseness_adjacency_factor );
         }
-        return *max_element( std::begin( factors ), std::end( factors ) );
+        return *std::ranges::max_element( factors );
     };
 
     // Get the sparesness factor for this terrain, and fill it.
@@ -2557,16 +2557,16 @@ void mapgen_lake_shore( mapgendata &dat )
                 }
             }
 
-            if( std::find( dat.region.overmap_lake.shore_extendable_overmap_terrain.begin(),
-                           dat.region.overmap_lake.shore_extendable_overmap_terrain.end(),
-                           match ) != dat.region.overmap_lake.shore_extendable_overmap_terrain.end() ) {
+            if( std::ranges::find( dat.region.overmap_lake.shore_extendable_overmap_terrain,
+
+                                   match ) != dat.region.overmap_lake.shore_extendable_overmap_terrain.end() ) {
                 adjacent_type_count[match] += 1;
             }
         }
 
         if( !adjacent_type_count.empty() ) {
-            const auto most_common_adjacent = std::max_element( std::begin( adjacent_type_count ),
-                                              std::end( adjacent_type_count ), []( const std::pair<oter_id, int> &p1,
+            const auto most_common_adjacent = std::ranges::max_element( adjacent_type_count,
+                                              []( const std::pair<oter_id, int> &p1,
             const std::pair<oter_id, int> &p2 ) {
                 return p1.second < p2.second;
             } );

@@ -1,0 +1,494 @@
+[
+  {
+    "result": "bp_9mm",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "9mm_casing", 1 ] ], [ [ "chem_black_powder", 4 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_9mmfmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "9mm_casing", 1 ] ],
+      [ [ "chem_black_powder", 4 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_40fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "40_casing", 1 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "chem_black_powder", 6 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_40sw",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "40_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "chem_black_powder", 6 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_32_acp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "32_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "chem_black_powder", 3 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_38_fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "38_casing", 1 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "chem_black_powder", 3 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_44fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 4 ] ],
+      [ [ "44_casing", 1 ] ],
+      [ [ "lgpistol_primer", 1 ] ],
+      [ [ "chem_black_powder", 9 ] ],
+      [ [ "copper", 2 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_45_acp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 3 ] ],
+      [ [ "45_casing", 1 ] ],
+      [ [ "lgpistol_primer", 1 ] ],
+      [ [ "chem_black_powder", 6 ] ],
+      [ [ "copper", 2 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_45_jhp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 3 ] ], [ [ "45_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "chem_black_powder", 6 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_380_JHP",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "380_casing", 1 ] ], [ [ "chem_black_powder", 3 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_380_FMJ",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "380_casing", 1 ] ],
+      [ [ "chem_black_powder", 3 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "32_acp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "32_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "gunpowder", 2 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "38_fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "38_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "gunpowder", 2 ] ], [ [ "copper", 1 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "38_special",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "38_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "gunpowder", 2 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "357sig_fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "357sig_casing", 1 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "gunpowder", 5 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "357sig_jhp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "357sig_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "gunpowder", 5 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "357mag_fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "357mag_casing", 1 ] ],
+      [ [ "lgpistol_primer", 1 ] ],
+      [ [ "gunpowder", 5 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "357mag_jhp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "357mag_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "gunpowder", 5 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_357mag_fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "357mag_casing", 1 ] ],
+      [ [ "lgpistol_primer", 1 ] ],
+      [ [ "chem_black_powder", 8 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_357mag_jhp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "357mag_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "chem_black_powder", 8 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_357sig_fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "357sig_casing", 1 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "chem_black_powder", 7 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_357sig_jhp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "357sig_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "chem_black_powder", 8 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_38_special",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "38_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "chem_black_powder", 3 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "40fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "40_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "gunpowder", 4 ] ], [ [ "copper", 1 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "40sw",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "40_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "gunpowder", 4 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "10mm_fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "10mm_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "gunpowder", 5 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_10mm_fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "10mm_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "chem_black_powder", 8 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "44fmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 4 ] ], [ [ "44_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "gunpowder", 6 ] ], [ [ "copper", 2 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "44magnum",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 5 ] ], [ [ "44_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "gunpowder", 6 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_44magnum",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 5 ] ], [ [ "44_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "chem_black_powder", 9 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "45_acp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 3 ] ], [ [ "45_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "gunpowder", 4 ] ], [ [ "copper", 2 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "45_jhp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 3 ] ], [ [ "45_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "gunpowder", 4 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "45_super",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 3 ] ], [ [ "45_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "gunpowder", 5 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "45colt_jhp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 4 ] ], [ [ "45colt_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "gunpowder", 4 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_45colt_jhp",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 5 ] ], [ [ "45colt_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ], [ [ "chem_black_powder", 5 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "9mm",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "9mm_casing", 1 ] ], [ [ "gunpowder", 3 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "9mmP",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "9mm_casing", 1 ] ], [ [ "gunpowder", 4 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "9mmP2",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "9mm_casing", 1 ] ], [ [ "gunpowder", 5 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "9mmfmj",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "9mm_casing", 1 ] ],
+      [ [ "gunpowder", 3 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "380_JHP",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "380_casing", 1 ] ], [ [ "gunpowder", 2 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "380_p",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "lead", 2 ] ], [ [ "smpistol_primer", 1 ] ], [ [ "380_casing", 1 ] ], [ [ "gunpowder", 3 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "380_FMJ",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 1 } ],
+    "components": [
+      [ [ "lead", 2 ] ],
+      [ [ "smpistol_primer", 1 ] ],
+      [ [ "380_casing", 1 ] ],
+      [ [ "gunpowder", 2 ] ],
+      [ [ "copper", 1 ] ]
+    ],
+    "charges": 1
+  }
+]

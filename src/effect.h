@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_EFFECT_H
-#define CATA_SRC_EFFECT_H
 
 #include <set>
 #include <string>
@@ -17,7 +15,7 @@
 #include "translations.h"
 #include "type_id.h"
 
-class player;
+class Character;
 
 enum game_message_type : int;
 class JsonIn;
@@ -26,7 +24,7 @@ class JsonOut;
 class effect;
 
 /** Handles the large variety of weed messages. */
-void weed_msg( player &p );
+void weed_msg( Character &who );
 
 enum effect_rating {
     e_good,     // The effect is good for the one who has it.
@@ -91,6 +89,8 @@ class effect_type
         /** Returns if an effect is good or bad for message display. */
         effect_rating get_rating() const;
 
+        /** Returns looks_like. */
+        std::string get_looks_like() const;
         /** Returns true if there is a listed name in the JSON entry for each intensity from
          *  1 to max_intensity. */
         bool use_name_ints() const;
@@ -157,6 +157,7 @@ class effect_type
         int max_intensity = 0;
         int max_effective_intensity = 0;
         time_duration max_duration = 0_turns;
+        std::string looks_like;
 
         int dur_add_perc = 0;
         int int_add_val = 0;
@@ -218,13 +219,13 @@ class effect_type
 class effect
 {
     public:
-        effect() : eff_type( nullptr ), duration( 0_turns ), bp( num_bp ),
+        effect() : eff_type( nullptr ), duration( 0_turns ), bp(),
             intensity( 1 ), start_time( calendar::turn_zero ),
             removed( true ) {
         }
         effect( const effect_type *peff_type, const time_duration &dur,
                 const bodypart_str_id &part, int nintensity, const time_point &nstart_time ) :
-            eff_type( peff_type ), duration( dur ), bp( part->token ),
+            eff_type( peff_type ), duration( dur ), bp( part ),
             intensity( nintensity ), start_time( nstart_time ),
             removed( false ) {
         }
@@ -378,7 +379,7 @@ class effect
     protected:
         const effect_type *eff_type;
         time_duration duration;
-        body_part bp;
+        bodypart_str_id bp;
         int intensity;
         time_point start_time;
         bool removed;
@@ -408,4 +409,4 @@ class effects_map : public
 {
 };
 
-#endif // CATA_SRC_EFFECT_H
+

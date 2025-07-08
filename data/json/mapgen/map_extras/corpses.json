@@ -157,13 +157,13 @@
       "mapgensize": [ 24, 24 ],
       "place_nested": [
         {
-          "chunks": [ [ "drugbust_crimescene_1", 90 ], [ "drugbust_crimescene_3", 10 ] ],
+          "chunks": [ [ "drugbust_crimescene_1", 75 ], [ "drugbust_crimescene_3", 25 ] ],
           "x": [ 0, 5 ],
           "y": [ 0, 20 ],
           "repeat": [ 3, 9 ]
         },
         {
-          "chunks": [ [ "drugbust_crimescene_2", 90 ], [ "drugbust_crimescene_3", 10 ] ],
+          "chunks": [ [ "drugbust_crimescene_2", 75 ], [ "drugbust_crimescene_3", 25 ] ],
           "x": [ 15, 20 ],
           "y": [ 0, 20 ],
           "repeat": [ 3, 9 ]
@@ -180,13 +180,13 @@
       "mapgensize": [ 24, 24 ],
       "place_nested": [
         {
-          "chunks": [ [ "drugbust_crimescene_1b", 80 ], [ "drugbust_crimescene_1c", 10 ], [ "drugbust_crimescene_3b", 10 ] ],
+          "chunks": [ [ "drugbust_crimescene_1b", 60 ], [ "drugbust_crimescene_1c", 15 ], [ "drugbust_crimescene_3b", 25 ] ],
           "x": [ 0, 5 ],
           "y": [ 0, 20 ],
           "repeat": [ 2, 6 ]
         },
         {
-          "chunks": [ [ "drugbust_crimescene_2", 90 ], [ "drugbust_crimescene_3", 10 ] ],
+          "chunks": [ [ "drugbust_crimescene_2", 75 ], [ "drugbust_crimescene_3", 25 ] ],
           "x": [ 15, 20 ],
           "y": [ 0, 20 ],
           "repeat": [ 3, 9 ]
@@ -203,13 +203,13 @@
       "mapgensize": [ 24, 24 ],
       "place_nested": [
         {
-          "chunks": [ [ "drugbust_crimescene_1", 90 ], [ "drugbust_crimescene_3", 10 ] ],
+          "chunks": [ [ "drugbust_crimescene_1", 75 ], [ "drugbust_crimescene_3", 25 ] ],
           "x": [ 0, 5 ],
           "y": [ 0, 20 ],
           "repeat": [ 3, 9 ]
         },
         {
-          "chunks": [ [ "drugbust_crimescene_2b", 80 ], [ "drugbust_crimescene_2c", 10 ], [ "drugbust_crimescene_3b", 10 ] ],
+          "chunks": [ [ "drugbust_crimescene_2b", 60 ], [ "drugbust_crimescene_2c", 15 ], [ "drugbust_crimescene_3b", 10 ] ],
           "x": [ 15, 20 ],
           "y": [ 0, 20 ],
           "repeat": [ 2, 6 ]

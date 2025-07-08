@@ -43,6 +43,7 @@
       [ "plastic_shopping_bag", 15 ],
       [ "meth", 2 ],
       [ "heroin", 1 ],
+      [ "sizzurp", 3 ],
       [ "string_6", 2 ],
       [ "chain", 20 ],
       { "item": "glass_shard", "prob": 20, "count": [ 0, 1 ] },

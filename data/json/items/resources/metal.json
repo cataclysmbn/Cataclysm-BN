@@ -5,7 +5,7 @@
     "weapon_category": [ "BATONS" ],
     "name": { "str": "pipe" },
     "description": "A steel pipe, makes a good melee weapon.  Useful in a few crafting recipes.",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "weight": "1250 g",
     "to_hit": 1,
     "color": "dark_gray",
@@ -20,9 +20,28 @@
     "stackable": true
   },
   {
+    "type": "GENERIC",
+    "id": "cartridgebrass",
+    "symbol": ",",
+    "color": "light_gray",
+    "looks_like": "scrap_bronze",
+    "name": { "str_sp": "brass" },
+    "category": "scrap_metal",
+    "description": "Some brass scraps, if you have the right tools they could be formed into cartridge casings.",
+    "price": "10 USD",
+    "price_postapoc": "10 cent",
+    "material": "brass",
+    "weight": "1 g",
+    "volume": "1 ml",
+    "bashing": 1,
+    "to_hit": -2,
+    "flags": [ "NO_SALVAGE" ],
+    "stackable": true
+  },
+  {
     "id": "scrap",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str": "scrap metal" },
     "description": "A bulky assortment of small bits of scrap steel useful in all kinds of crafting.",
     "weight": "50 g",
@@ -43,7 +62,7 @@
     "type": "GENERIC",
     "name": { "str": "spike" },
     "description": "A large and slightly misshapen spike, could do some damage mounted on a vehicle.",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "weight": "550 g",
     "to_hit": -2,
     "color": "light_gray",
@@ -62,7 +81,7 @@
     "weapon_category": [ "BATONS" ],
     "name": { "str": "copper tubing" },
     "description": "A copper tube, too thin to be much use as a melee weapon, but will do if nothing else is available.  Useful in a few crafting recipes.",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "weight": "345 g",
     "to_hit": -1,
     "color": "light_red",
@@ -77,7 +96,7 @@
   {
     "id": "material_aluminium_ingot",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str": "aluminum ingot" },
     "description": "A small aluminum ingot, standardized for further processing.  Light but durable, this could be cast into various shapes for construction or ground down to a powder, for more… high-profile applications.",
     "weight": "270 g",
@@ -93,7 +112,7 @@
   {
     "id": "bismuth",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str_sp": "bismuth" },
     "description": "A dense but brittle metal often used as an alternative to lead.",
     "weight": "2 g",
@@ -112,7 +131,7 @@
   {
     "id": "gold_small",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "valuables",
     "name": { "str_sp": "gold" },
     "description": "A soft shiny metal.  Before the apocalypse this would've been worth a small fortune but now its value is greatly diminished.",
     "weight": "5 g",
@@ -131,7 +150,7 @@
   {
     "id": "platinum_small",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "valuables",
     "name": { "str_sp": "platinum" },
     "description": "A soft shiny metal.  Before the apocalypse this would've been worth a small fortune but now its value is greatly diminished.",
     "weight": "5 g",
@@ -150,7 +169,7 @@
   {
     "id": "zinc_metal",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str_sp": "zinc" },
     "description": "A slightly brittle metal.  Apart from being an essential mineral that the body needs, it reacts readily with acids, alkalis and other non-metals.  It can be crushed to make zinc powder, used in the production of batteries, among other things.",
     "weight": "70 mg",
@@ -168,7 +187,7 @@
   {
     "id": "lead",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str_sp": "lead" },
     "description": "A soft dull metal known since ancient times.  Due to its malleability it has a wide variety of uses including the manufacture of ammunition.",
     "weight": "3 g",
@@ -187,7 +206,7 @@
   {
     "id": "magnesium",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str_sp": "magnesium powder" },
     "description": "A gray powder composed of the highly flammable alkaline earth metal magnesium.  Useful for constructing flares and similar items.",
     "weight": "1120 mg",
@@ -206,7 +225,7 @@
   {
     "id": "silver_small",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "valuables",
     "name": { "str_sp": "silver" },
     "description": "A soft shiny metal.  Before the Cataclysm it was worth quite a bit but its value is now greatly diminished.",
     "weight": "3 g",
@@ -225,7 +244,7 @@
   {
     "id": "sheet_metal_small",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str": "small metal sheet" },
     "description": "A small sheet of metal.",
     "looks_like": "sheet_metal",
@@ -246,7 +265,7 @@
   {
     "id": "steel_chunk",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str": "chunk of steel", "str_pl": "chunks of steel" },
     "description": "A misshapen chunk of steel.  Makes a decent weapon in a pinch, and is also useful for some crafting recipes.",
     "weight": "250 g",
@@ -262,12 +281,12 @@
     "color": "light_gray",
     "ammo_type": "components",
     "flags": [ "NO_SALVAGE" ],
-    "qualities": [ [ "HAMMER", 1 ] ]
+    "qualities": [ [ "HAMMER", 1 ], [ "SANDING", 1 ] ]
   },
   {
     "id": "steel_lump",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str": "lump of steel", "str_pl": "lumps of steel" },
     "description": "A heavy formed piece of steel.  Useful for some crafting recipes.",
     "weight": "1000 g",
@@ -283,12 +302,12 @@
     "color": "light_gray",
     "ammo_type": "components",
     "flags": [ "NO_SALVAGE" ],
-    "qualities": [ [ "HAMMER", 1 ] ]
+    "qualities": [ [ "HAMMER", 1 ], [ "SANDING", 1 ] ]
   },
   {
     "id": "hinge",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str": "door hinge" },
     "description": "A small metal hinge with two metal plates with screw holes.  Useful for making doors.",
     "weight": "300 g",
@@ -310,7 +329,7 @@
     "symbol": ",",
     "color": "light_gray",
     "name": { "str_sp": "scrap copper" },
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "description": "A small chunk of copper, usable for crafting or repairs.",
     "price": "10 USD",
     "price_postapoc": "10 cent",
@@ -326,7 +345,7 @@
   {
     "id": "tin",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "valuables",
     "price": "750 cent",
     "price_postapoc": "10 cent",
     "name": { "str_sp": "tin" },
@@ -345,7 +364,7 @@
   {
     "id": "solder_wire",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_electronics",
     "price": "50 USD",
     "price_postapoc": "50 cent",
     "name": { "str_sp": "solder" },

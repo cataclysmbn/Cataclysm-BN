@@ -18,7 +18,7 @@
     "color": "white",
     "ammo_type": "conc_alcohol",
     "fuel": {
-      "energy": 15.6,
+      "energy": 24,
       "explosion_data": { "chance_hot": 5, "chance_cold": 10, "factor": 0.2, "fiery": true, "size_factor": 0.1 }
     }
   },
@@ -38,7 +38,11 @@
     "type": "AMMO",
     "description": "High purity methanol suitable for use in chemical reactions.  Could be used in alcohol-burning stoves.  Very toxic.",
     "price": "5 cent",
-    "price_postapoc": "1 USD"
+    "price_postapoc": "1 USD",
+    "fuel": {
+      "energy": 15.6,
+      "explosion_data": { "chance_hot": 5, "chance_cold": 10, "factor": 0.2, "fiery": true, "size_factor": 0.1 }
+    }
   },
   {
     "id": "diesel",
@@ -242,7 +246,7 @@
     "type": "AMMO",
     "name": { "str_sp": "gelled gasoline" },
     "copy-from": "gasoline",
-    "description": "A flammable gel composed of gasoline and dissolved shavings of polystyrene, roughly similar in properties to napalm b.  It's meant to be used with a flamethrower.",
+    "description": "A flammable gel composed of gasoline and a chemical that renders it to a gel, it is roughly similar in properties to napalm b.  It's meant to be used with a flamethrower.",
     "price": "4 USD",
     "price_postapoc": "5 USD",
     "ammo_type": "flammable",
@@ -253,7 +257,7 @@
     "id": "flamethrower_fuel",
     "type": "AMMO",
     "name": { "str_sp": "flamethrower fuel" },
-    "copy-from": "gasoline",
+    "copy-from": "napalm",
     "description": "A mixture of gasoline and diesel oil in equal parts.  Its combustion properties make it unfit for applications where you would use any of them separately, but it can be used to feed a flamethrower.",
     "price": "4 USD",
     "price_postapoc": "5 USD",

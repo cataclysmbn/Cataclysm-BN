@@ -152,6 +152,7 @@ class event_transformation::impl
         virtual std::unique_ptr<impl> clone() const = 0;
 };
 
+event_transformation::~event_transformation() = default;
 class event_statistic::impl
 {
     public:
@@ -164,6 +165,7 @@ class event_statistic::impl
         virtual std::unique_ptr<impl> clone() const = 0;
 };
 
+event_statistic::~event_statistic() = default;
 struct value_constraint {
     std::optional<cata_variant> equals_;
     std::optional<std::string> equals_string_;

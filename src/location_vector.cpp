@@ -408,9 +408,12 @@ void location_vector<T>::remove_with( std::function < detached_ptr<T>( detached_
         debugmsg( "Attempted to remove_with from a destroyed location." );
         return;
     }
+    size_t i = 0;
     for( auto it = contents.begin(); it != contents.end(); ) {
+        item &as_item = **it;
         location<T> *saved_loc = ( *it )->loc;
         ( *it )->remove_location();
+        ( *it )->saved_loc = saved_loc;
         detached_ptr<T> original( *it );
         detached_ptr<T> n = cb( std::move( original ) );
         if( n ) {
@@ -420,9 +423,19 @@ void location_vector<T>::remove_with( std::function < detached_ptr<T>( detached_
             } else {
                 debugmsg( "Returning a different item in remove_with is not currently supported" );
             }
+            ( *it )->saved_loc = nullptr;
             it++;
+            i++;
         } else {
-            it = contents.erase( it );
+            if( as_item.saved_loc == nullptr ) {
+                if( i >= contents.size() ) {
+                    break;
+                }
+                it = contents.begin() + i;
+            } else {
+                as_item.saved_loc = nullptr;
+                it = contents.erase( it );
+            }
         }
     }
 }

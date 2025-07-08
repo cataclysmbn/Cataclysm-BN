@@ -351,6 +351,55 @@
     "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "FOLDABLE", "STEERABLE" ]
   },
   {
+    "id": "wheel_skateboard",
+    "type": "vehicle_part",
+    "name": { "str": "skateboard wheels" },
+    "item": "wheel_skateboard",
+    "location": "under",
+    "color": "dark_gray",
+    "symbol": "o",
+    "broken_symbol": "x",
+    "durability": 70,
+    "description": "A set of four small wheels, for a skateboard.",
+    "damage_modifier": 50,
+    "folded_volume": "1250 ml",
+    "wheel_type": "standard",
+    "contact_area": 4,
+    "requirements": {
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "1 m", "qualities": [ { "id": "WRENCH", "level": 2 } ] },
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "1 m", "qualities": [ { "id": "WRENCH", "level": 2 } ] }
+    },
+    "flags": [ "WHEEL", "NEEDS_WHEEL_MOUNT_SKATEBOARD", "STABLE", "STEERABLE" ]
+  },
+  {
+    "id": "wheel_mount_skateboard",
+    "type": "vehicle_part",
+    "name": { "str": "skateboard trucks" },
+    "item": "wheel_mount_skateboard",
+    "location": "axle",
+    "symbol": "-",
+    "broken_symbol": "x",
+    "damage_modifier": 80,
+    "folded_volume": "200 ml",
+    "durability": 120,
+    "description": "A pair of skateboard trucks, for attaching wheels to.",
+    "flags": [ "WHEEL_MOUNT_SKATEBOARD" ],
+    "requirements": {
+      "removal": {
+        "skills": [ [ "mechanics", 0 ] ],
+        "time": "3 m",
+        "qualities": [ { "id": "WRENCH", "level": 2 }, { "id": "SCREW", "level": 1 } ]
+      },
+      "install": {
+        "skills": [ [ "mechanics", 0 ] ],
+        "time": "3 m",
+        "qualities": [ { "id": "WRENCH", "level": 2 }, { "id": "SCREW", "level": 1 } ]
+      }
+    },
+    "breaks_into": [ { "item": "scrap", "count": [ 0, 1 ] } ],
+    "damage_reduction": { "all": 10 }
+  },
+  {
     "id": "wheel_10",
     "type": "vehicle_part",
     "name": { "str": "wheels" },

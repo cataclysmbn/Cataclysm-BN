@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_EXPLOSION_QUEUE_H
-#define CATA_SRC_EXPLOSION_QUEUE_H
 
 #include "explosion.h"
 #include "point.h"
@@ -70,4 +68,4 @@ explosion_queue &get_explosion_queue();
 
 } // namespace explosion_handler
 
-#endif // CATA_SRC_EXPLOSION_QUEUE_H
+

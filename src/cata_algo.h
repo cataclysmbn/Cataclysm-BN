@@ -1,14 +1,14 @@
 #pragma once
-#ifndef CATA_SRC_CATA_ALGO_H
-#define CATA_SRC_CATA_ALGO_H
 
 #include <algorithm>
+#include <functional>
 #include <map>
 #include <cassert>
 #include <optional>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <ranges>
 
 namespace cata
 {
@@ -122,16 +122,6 @@ std::vector<std::vector<T>> find_cycles( const std::unordered_map<T, std::vector
     return result;
 }
 
-/// poor person's https://en.cppreference.com/w/cpp/utility/optional/and_then
-template <typename T, typename Fn>
-auto and_then( std::optional<T> const &opt, Fn &&f ) -> std::optional<std::invoke_result_t<Fn, T>>
-{
-    if( opt ) {
-        return std::optional{f( *opt )};
-    }
-    return std::nullopt;
-}
-
 /// @brief Group elements of a container into key-value map by a given selector function.
 ///
 /// @tparam M map type to use for the result. defaults to std::map
@@ -159,6 +149,99 @@ auto group_by( const C &c, F && selector )
     return result;
 }
 
-} // namespace cata
+namespace ranges
+{
 
-#endif // CATA_SRC_CATA_ALGO_H
+/// @remark poor person's flatmap
+inline constexpr auto flat_map = []( auto &&func )
+{
+    return std::views::transform( std::forward<decltype( func )>( func ) ) | std::views::join;
+};
+
+/// allows any invocable that accepts a range to be used in ranges pipeline
+/// doesn't require @tparam Self to be a range adaptor closure
+template <typename Self, std::ranges::input_range R> requires std::invocable<Self, R>
+auto operator|( R &&r, const Self &&adaptor )
+{
+    return adaptor( std::forward<R>( r ) );
+}
+
+template <typename Comp>
+struct MaxAdaptor {
+    Comp comp;
+    explicit MaxAdaptor( Comp c ) : comp( std::move( c ) ) {}
+
+    template <std::ranges::input_range R>
+    requires std::copy_constructible<std::ranges::range_value_t<R>>
+    auto operator()( R &&r ) const -> std::optional<std::ranges::range_value_t<R>> {
+        auto current_it = std::ranges::begin( r );
+        const auto last_it = std::ranges::end( r );
+
+        if( current_it == last_it ) {
+            return std::nullopt;
+        }
+
+        std::ranges::range_value_t<R> max_val = *current_it;
+        ++current_it;
+
+        while( current_it != last_it ) {
+            if( comp( max_val, *current_it ) ) {
+                max_val = *current_it;
+            }
+            ++current_it;
+        }
+        return max_val;
+    }
+};
+
+template <typename Comp>
+struct MinAdaptor {
+    Comp comp;
+    explicit MinAdaptor( Comp c ) : comp( std::move( c ) ) {}
+
+    template <std::ranges::input_range R>
+    requires std::copy_constructible<std::ranges::range_value_t<R>>
+    auto operator()( R &&r ) const -> std::optional<std::ranges::range_value_t<R>> {
+        auto current_it = std::ranges::begin( r );
+        const auto last_it = std::ranges::end( r );
+
+        if( current_it == last_it ) {
+            return std::nullopt;
+        }
+
+        std::ranges::range_value_t<R> min_val = *current_it;
+        ++current_it;
+
+        while( current_it != last_it ) {
+            if( comp( *current_it, min_val ) ) {
+                min_val = *current_it;
+            }
+            ++current_it;
+        }
+        return min_val;
+    }
+};
+
+template <typename Comp>
+inline auto max_by( Comp &&comp )
+{
+    return MaxAdaptor<std::decay_t<Comp>>( std::forward<Comp>( comp ) );
+}
+inline auto max()
+{
+    return MaxAdaptor( std::less{} );
+}
+
+template <typename Comp>
+inline auto min_by( Comp &&comp )
+{
+    return MinAdaptor<std::decay_t<Comp>>( std::forward<Comp>( comp ) );
+}
+inline auto min()
+{
+    return MinAdaptor( std::less{} );
+}
+
+} // namespace ranges
+
+} // namespace cata

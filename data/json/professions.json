@@ -218,7 +218,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "bandolier_rifle_hunter",
-    "entries": [ { "item": "270win_jsp", "charges": 16 } ]
+    "entries": [ { "item": "3006", "charges": 16 } ]
   },
   {
     "type": "item_group",
@@ -736,6 +736,32 @@
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
     }
+  },
+  {
+    "type": "profession",
+    "id": "bionic_labtech",
+    "name": "Bionic Lab-tech",
+    "description": "You've spent your career keeping up with the latest advances in science, even enrolling as a subject yourself to benefit from cutting-edge bionics that would assist your own studies.  Now however, you're starting to wish they offered courses on xenobiology.",
+    "points": 8,
+    "copy-from": "labtech",
+    "skills": [
+      { "level": 4, "name": "firstaid" },
+      { "level": 4, "name": "electronics" },
+      { "level": 3, "name": "computer" },
+      { "level": 3, "name": "cooking" },
+      { "level": 3, "name": "mechanics" }
+    ],
+    "CBMs": [
+      "bio_geiger",
+      "bio_blood_anal",
+      "bio_faraday",
+      "bio_infolink",
+      "bio_electrosense",
+      "bio_surgical_razor",
+      "bio_batteries",
+      "bio_power_storage_mkII"
+    ],
+    "traits": [ "PROF_AUTODOC" ]
   },
   {
     "type": "profession",
@@ -1635,7 +1661,13 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
+          {
+            "item": "usp_45",
+            "ammo-item": "45_acp",
+            "charges": 12,
+            "container-item": "holster",
+            "contents-item": "pistol_lanyard"
+          },
           { "item": "legpouch_large", "contents-group": "army_mags_usp45" }
         ]
       },
@@ -1694,7 +1726,13 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
+          {
+            "item": "usp_45",
+            "ammo-item": "45_acp",
+            "charges": 12,
+            "container-item": "holster",
+            "contents-item": "pistol_lanyard"
+          },
           { "item": "legpouch_large", "contents-group": "army_mags_usp45" }
         ]
       },
@@ -1758,7 +1796,13 @@
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "tacvest", "contents-group": [ "army_mags_mp5", "army_mags_usp9" ] },
           { "item": "grenadebandolier", "contents-item": [ "flashbang", "flashbang" ] },
-          { "item": "usp_9mm", "ammo-item": "9mm", "charges": 15, "container-item": "holster" },
+          {
+            "item": "usp_9mm",
+            "ammo-item": "9mm",
+            "charges": 15,
+            "container-item": "holster",
+            "contents-item": "pistol_lanyard"
+          },
           {
             "item": "hk_mp5",
             "ammo-item": "9mm",
@@ -1803,7 +1847,13 @@
           { "item": "bandolier_shotgun", "contents-group": "bandolier_swat_cqc1" },
           { "item": "bandolier_shotgun", "contents-group": "bandolier_swat_cqc2" },
           { "item": "legpouch_large", "contents-group": "army_mags_usp9" },
-          { "item": "usp_9mm", "ammo-item": "9mmfmj", "charges": 15, "container-item": "holster" },
+          {
+            "item": "usp_9mm",
+            "ammo-item": "9mmfmj",
+            "charges": 15,
+            "container-item": "holster",
+            "contents-item": "pistol_lanyard"
+          },
           { "item": "baton-extended", "container-item": "police_belt" },
           { "item": "ksg", "ammo-item": "shot_00", "charges": 7, "contents-item": "shoulder_strap" }
         ]
@@ -1839,7 +1889,13 @@
         ],
         "entries": [
           { "group": "charged_two_way_radio" },
-          { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
+          {
+            "item": "usp_45",
+            "ammo-item": "45_acp",
+            "charges": 12,
+            "container-item": "holster",
+            "contents-item": "pistol_lanyard"
+          },
           { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
           { "item": "762_51", "charges": 20 },
           { "item": "M24", "ammo-item": "762_51", "charges": 20, "container-item": "back_holster" }
@@ -1882,7 +1938,13 @@
         ],
         "entries": [
           { "group": "charged_two_way_radio" },
-          { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
+          {
+            "item": "usp_45",
+            "ammo-item": "45_acp",
+            "charges": 12,
+            "container-item": "holster",
+            "contents-item": "pistol_lanyard"
+          },
           { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
           { "item": "tonfa", "container-item": "police_belt" },
           { "group": "charged_tazer" }
@@ -2015,7 +2077,7 @@
         ],
         "entries": [
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "remington700_270", "ammo-item": "270win_jsp", "charges": 4, "contents-item": "shoulder_strap" },
+          { "item": "remington_700", "ammo-item": "3006", "charges": 4, "contents-item": "shoulder_strap" },
           { "item": "bandolier_rifle", "contents-group": "bandolier_rifle_hunter" },
           { "item": "sheath", "contents-item": "knife_hunting" }
         ]
@@ -2149,11 +2211,7 @@
     "skills": [ { "level": 4, "name": "computer" } ],
     "items": {
       "both": {
-        "items": [ "pants", "tshirt_text", "socks", "sneakers", "mbag", "smart_phone", "caffeine" ],
-        "entries": [
-          { "item": "light_plus_battery_cell", "ammo-item": "battery", "charges": 150, "container-item": "portable_game" },
-          { "item": "medium_battery_cell", "ammo-item": "battery", "charges": 500, "container-item": "laptop" }
-        ]
+        "items": [ "pants", "tshirt_text", "socks", "sneakers", "mbag", "smart_phone", "caffeine", "laptop", "portable_game" ]
       },
       "male": [ "briefs" ],
       "female": [ "panties" ]
@@ -2470,7 +2528,7 @@
         ],
         "entries": [
           { "group": "charged_two_way_radio" },
-          { "item": "glock_18c", "ammo-item": "9mmP", "container-item": "holster" },
+          { "item": "glock_18c", "ammo-item": "9mmP", "container-item": "holster", "contents-item": "pistol_lanyard" },
           { "item": "tacvest", "contents-group": "army_mags_glock17" }
         ]
       },
@@ -4294,10 +4352,10 @@
   {
     "type": "profession",
     "id": "skaterkid",
-    "name": { "male": "Skater Boy", "female": "Skater Girl" },
+    "name": { "male": "Skater Boy (Rollerblades)", "female": "Skater Girl (Rollerblades)" },
     "description": "You love to skate!  At least now the grown-ups aren't telling you where you can't roll.",
     "points": 1,
-    "skills": [ { "level": 1, "name": "dodge" } ],
+    "skills": [ { "level": 1, "name": "dodge" }, { "level": 2, "name": "swimming" } ],
     "traits": [ "PROF_SKATER" ],
     "items": {
       "both": {
@@ -4315,6 +4373,35 @@
           "smart_phone",
           "sports_drink"
         ]
+      },
+      "male": [ "briefs" ],
+      "female": [ "boy_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "skaterkid_board",
+    "name": { "male": "Skater Boy (Skateboard)", "female": "Skater Girl (Skateboard)" },
+    "description": "You love to skate!  You've probably spent more time on a skateboard than off.  Things have gotten pretty bad, but at least the grown-ups aren't telling you where you can't roll.",
+    "points": 1,
+    "skills": [ { "level": 1, "name": "driving" }, { "level": 2, "name": "swimming" } ],
+    "traits": [ "PROF_SKATER" ],
+    "items": {
+      "both": {
+        "items": [
+          "hoodie",
+          "jeans",
+          "socks",
+          "elbow_pads",
+          "knee_pads",
+          "gloves_fingerless",
+          "helmet_skid",
+          "sneakers",
+          "wristwatch",
+          "smart_phone",
+          "sports_drink"
+        ],
+        "entries": [ { "item": "folding_skateboard", "custom-flags": [ "auto_wield" ] } ]
       },
       "male": [ "briefs" ],
       "female": [ "boy_shorts" ]
@@ -5281,7 +5368,13 @@
           { "item": "boots", "damage": [ 0, 3 ] },
           { "item": "police_belt", "damage": [ 0, 3 ] },
           { "item": "legpouch_large", "damage": [ 0, 3 ] },
-          { "item": "m9", "ammo-item": "9mm", "charges": [ 1, 15 ], "container-item": "holster" },
+          {
+            "item": "m9",
+            "ammo-item": "9mm",
+            "charges": [ 1, 15 ],
+            "container-item": "holster",
+            "contents-item": "pistol_lanyard"
+          },
           {
             "item": "light_battery_cell",
             "ammo-item": "battery",

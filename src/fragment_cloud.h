@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_FRAGMENT_CLOUD_H
-#define CATA_SRC_FRAGMENT_CLOUD_H
 
 enum class quadrant;
 
@@ -13,4 +11,4 @@ float accumulate_fragment_cloud( const float &cumulative_obstacle,
                                  const float &current_obstacle,
                                  const int &distance );
 
-#endif // CATA_SRC_FRAGMENT_CLOUD_H
+

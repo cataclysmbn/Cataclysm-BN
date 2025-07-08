@@ -61,6 +61,12 @@
   },
   {
     "type": "dream",
+    "messages": [ "You have a strange dream about foxes.", "Your dreams give you a mischievous furry feeling." ],
+    "category": "KITSUNE",
+    "strength": 1
+  },
+  {
+    "type": "dream",
     "messages": [
       "You have strange dreams of soaring through the sky.",
       "In a dream, you see a curiously harpy-like reflection of yourself."
@@ -135,6 +141,16 @@
     "type": "dream",
     "messages": [ "You dream of… sneaking.", "You dream of a cold winter night.  Your jacket is too big to put on." ],
     "category": "MOUSEGIRL",
+    "strength": 2
+  },
+  {
+    "type": "dream",
+    "messages": [
+      "You have a vivid dream of hunting in the woods.",
+      "You have a vivid dream of sneaking up to a chicken coop.",
+      "Whilst dreaming, you see yourself… but with a pair of fox ears on your head?"
+    ],
+    "category": "KITSUNE",
     "strength": 2
   },
   {
@@ -219,6 +235,15 @@
       "Once you finish your tasty dinner of seeds, you look around for your drink, but you already ate it."
     ],
     "category": "MOUSEGIRL",
+    "strength": 3
+  },
+  {
+    "type": "dream",
+    "messages": [
+      "You vividly dream of running away from a chicken coop, your prey held by the neck between your teeth.",
+      "You vividly dream of… a wedding altar?!?"
+    ],
+    "category": "KITSUNE",
     "strength": 3
   },
   {
@@ -316,6 +341,16 @@
       "You hear the sirens again, but this time you stay in your hole in the wall.  Nobody will think to look there!"
     ],
     "category": "MOUSEGIRL",
+    "strength": 4
+  },
+  {
+    "type": "dream",
+    "messages": [
+      "You vividly dream of committing tax fraud: the ultimate trick!",
+      "You find yourself subconsciously moving your head from your normal pillow to your tail as you sleep.",
+      "You dream of sharing your love of mischief with a partner."
+    ],
+    "category": "KITSUNE",
     "strength": 4
   }
 ]

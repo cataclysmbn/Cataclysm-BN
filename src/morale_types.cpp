@@ -79,7 +79,6 @@ const morale_type MORALE_PYROMANIA_NEARFIRE( "morale_pyromania_nearfire" );
 const morale_type MORALE_PYROMANIA_NOFIRE( "morale_pyromania_nofire" );
 const morale_type MORALE_KILLER_HAS_KILLED( "morale_killer_has_killed" );
 const morale_type MORALE_KILLER_NEED_TO_KILL( "morale_killer_need_to_kill" );
-const morale_type MORALE_PERM_FILTHY( "morale_perm_filthy" );
 const morale_type MORALE_PERM_DEBUG( "morale_perm_debug" );
 const morale_type MORALE_BUTCHER( "morale_butcher" );
 const morale_type MORALE_GRAVEDIGGER( "morale_gravedigger" );

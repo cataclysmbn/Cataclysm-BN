@@ -6,8 +6,7 @@
 //
 // For the license information refer to fmtlib_format.h.
 
-#ifndef CATA_SRC_FMTLIB_FORMAT_INL_H
-#define CATA_SRC_FMTLIB_FORMAT_INL_H
+#pragma once
 
 #include <cassert>
 #include <cctype>
@@ -3057,4 +3056,4 @@ FMT_FUNC void vprint( string_view format_str, format_args args )
 
 FMT_END_NAMESPACE
 
-#endif  // CATA_SRC_FMTLIB_FORMAT_INL_H
+

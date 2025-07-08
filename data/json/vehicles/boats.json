@@ -145,6 +145,40 @@
   },
   {
     "type": "vehicle",
+    "id": "hovercraft_motor_single",
+    "name": "hovercraft",
+    "blueprint": [
+      [ "|--\\" ],
+      [ "|==O>" ],
+      [ "|--/ " ]
+    ],
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "frame_vertical", "hovercraft_section" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "hovercraft_section" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_horizontal", "hovercraft_section" ] },
+      { "x": 3, "y": 0, "parts": [ "frame_sw", "hovercraft_section" ] },
+      {
+        "x": 0,
+        "y": 1,
+        "parts": [ "frame_vertical", "hovercraft_section", "engine_1cyl_large", "alternator_bicycle", "battery_motorbike" ]
+      },
+      { "x": 1, "y": 1, "parts": [ "frame_cross", "hovercraft_section", "trunk" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_cross", "hovercraft_section" ] },
+      { "x": 2, "y": 1, "part": "tank", "fuel": "gasoline" },
+      {
+        "x": 3,
+        "y": 1,
+        "parts": [ "frame_cross", "hovercraft_section", "seat", "seatbelt", "controls", "dashboard" ]
+      },
+      { "x": 4, "y": 1, "parts": [ "frame_horizontal", "hovercraft_section", "windshield" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "hovercraft_section" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_horizontal", "hovercraft_section" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_horizontal", "hovercraft_section" ] },
+      { "x": 3, "y": 2, "parts": [ "frame_ne", "hovercraft_section" ] }
+    ]
+  },
+  {
+    "type": "vehicle",
     "id": "wood_rowboat_double",
     "name": "wooden rowboat",
     "blueprint": [

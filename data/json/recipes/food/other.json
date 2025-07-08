@@ -143,12 +143,13 @@
     "category": "CC_FOOD",
     "subcategory": "CSC_FOOD_OTHER",
     "skill_used": "cooking",
-    "time": "1 h 30 m",
+    "time": "10 m",
     "autolearn": true,
+    "charges": 10,
     "batch_time_factors": [ 50, 3 ],
     "qualities": [ { "id": "BOIL", "level": 1 } ],
-    "tools": [ [ [ "water_boiling_heat", 3, "LIST" ] ] ],
-    "components": [ [ [ "salt_water", 10 ], [ "saline", 50 ] ] ]
+    "tools": [ [ [ "water_boiling_heat", 5, "LIST" ] ] ],
+    "components": [ [ [ "salt_water", 1 ], [ "saline", 5 ] ] ]
   },
   {
     "type": "recipe",
@@ -186,6 +187,7 @@
         [ "seed_canola", 4 ],
         [ "seed_grapes", 6 ],
         [ "seed_weed", 6 ],
+        [ "corn", 3 ],
         [ "rice_bran", 6 ]
       ]
     ]
@@ -1251,8 +1253,6 @@
         [ "seed_raw_dandelion", 10 ],
         [ "seed_raw_burdock", 10 ],
         [ "seed_rhubarb", 10 ],
-        [ "seed_mushroom", 10 ],
-        [ "seed_mushroom_morel", 10 ],
         [ "seed_celery", 10 ],
         [ "seed_oats", 10 ],
         [ "seed_wheat", 10 ],
@@ -2187,6 +2187,22 @@
     "byproducts": [ [ "rice_bran", 1 ] ],
     "qualities": [ { "id": "COOK", "level": 2 }, { "id": "HAMMER", "level": 1 } ],
     "tools": [ [ [ "surface_heat", 10, "LIST" ] ] ],
+    "components": [ [ [ "seed_rice", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "dry_rice",
+    "id_suffix": "with_food_processor",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_OTHER",
+    "skill_used": "cooking",
+    "difficulty": 4,
+    "charges": 1,
+    "time": "5 m",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 1 ],
+    "byproducts": [ [ "rice_bran", 1 ] ],
+    "tools": [ [ [ "food_processor", 20 ] ] ],
     "components": [ [ [ "seed_rice", 1 ] ] ]
   },
   {

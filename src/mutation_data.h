@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MUTATION_DATA_H
-#define CATA_SRC_MUTATION_DATA_H
 
 #include <string>
 #include <vector>
@@ -26,4 +24,4 @@ std::string get_random_for_category( const mutation_category_id &cat, int streng
 
 } // namespace dreams
 
-#endif // CATA_SRC_MUTATION_DATA_H
+

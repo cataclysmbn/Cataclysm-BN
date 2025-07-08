@@ -403,6 +403,28 @@
   },
   {
     "type": "MONSTER",
+    "id": "mon_zoabosaurus_brute",
+    "name": { "str": "Moab Masher" },
+    "copy-from": "mon_zoabosaurus",
+    "description": "Huge, long-necked, four-legged dinosaur corpse with a long tail.  Its entire body bulges with distended muscles and swollen, festering wounds.",
+    "diff": 2,
+    "color": "red",
+    "proportional": { "hp": 1.5, "speed": 1.5 },
+    "relative": {
+      "melee_dice": 1,
+      "melee_dice_sides": 5,
+      "melee_damage": [ { "damage_type": "bash", "amount": 2 } ],
+      "armor_bash": 4,
+      "armor_cut": 6,
+      "vision_night": 1
+    },
+    "upgrades": {  },
+    "special_attacks": [ [ "SMASH", 30 ] ],
+    "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
+    "categories": [ "DINOSAUR" ]
+  },
+  {
+    "type": "MONSTER",
     "id": "mon_zaplocanthosaurus_brute",
     "name": { "str_sp": "Haplosmashosaurus" },
     "copy-from": "mon_zaplocanthosaurus",
@@ -561,6 +583,28 @@
     "name": { "str": "Brachiosaurus Brute" },
     "copy-from": "mon_zrachiosaurus",
     "description": "Gigantic four-legged dinosaur corpse with longer forelegs and a whip-like tail.  Its entire body bulges with distended muscles and swollen, festering wounds.",
+    "diff": 2,
+    "color": "red",
+    "proportional": { "hp": 1.5, "speed": 1.5 },
+    "relative": {
+      "melee_dice": 1,
+      "melee_dice_sides": 5,
+      "melee_damage": [ { "damage_type": "bash", "amount": 2 } ],
+      "armor_bash": 4,
+      "armor_cut": 6,
+      "vision_night": 1
+    },
+    "upgrades": { "half_life": 42, "into_group": "GROUP_zapatosaurus_BRUTE" },
+    "special_attacks": [ [ "SMASH", 30 ] ],
+    "extend": { "flags": [ "GROUP_BASH", "PUSH_MON", "PUSH_VEH" ] },
+    "categories": [ "DINOSAUR" ]
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_zastrodon_brute",
+    "name": { "str": "Astrodon Assault" },
+    "copy-from": "mon_zastrodon",
+    "description": "Gigantic four-legged dinosaur corpse with an enormous nose.  Its entire body bulges with distended muscles and swollen, festering wounds.",
     "diff": 2,
     "color": "red",
     "proportional": { "hp": 1.5, "speed": 1.5 },
@@ -1583,7 +1627,6 @@
       "DESTROYS",
       "NO_BREATHE",
       "REVIVES",
-      "FILTHY",
       "WARM",
       "SWIMS",
       "NIGHT_INVISIBILITY"
@@ -1632,7 +1675,6 @@
       "DESTROYS",
       "NO_BREATHE",
       "REVIVES",
-      "FILTHY",
       "WARM",
       "NIGHT_INVISIBILITY"
     ],
@@ -1658,19 +1700,7 @@
     "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 10 ], { "type": "bite", "cooldown": 5 } ],
     "burn_into": "mon_zallosaurus_scorched",
     "fungalize_into": "mon_zallosaurus_fungus",
-    "flags": [
-      "SEES",
-      "SMELLS",
-      "HEARS",
-      "POISON",
-      "STUMBLES",
-      "BASHES",
-      "NO_BREATHE",
-      "REVIVES",
-      "FILTHY",
-      "WARM",
-      "NIGHT_INVISIBILITY"
-    ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "POISON", "STUMBLES", "BASHES", "NO_BREATHE", "REVIVES", "WARM", "NIGHT_INVISIBILITY" ]
   },
   {
     "type": "MONSTER",
@@ -1859,7 +1889,6 @@
       "DESTROYS",
       "NO_BREATHE",
       "REVIVES",
-      "FILTHY",
       "WARM",
       "NIGHT_INVISIBILITY"
     ],
@@ -1906,7 +1935,6 @@
       "STUMBLES",
       "NO_BREATHE",
       "REVIVES",
-      "FILTHY",
       "WARM",
       "NIGHT_INVISIBILITY"
     ],
@@ -2022,19 +2050,7 @@
     ],
     "burn_into": "mon_zeinonychus_scorched",
     "fungalize_into": "mon_zeinonychus_fungus",
-    "flags": [
-      "SEES",
-      "SMELLS",
-      "HEARS",
-      "KEENNOSE",
-      "POISON",
-      "STUMBLES",
-      "NO_BREATHE",
-      "REVIVES",
-      "FILTHY",
-      "WARM",
-      "NIGHT_INVISIBILITY"
-    ],
+    "flags": [ "SEES", "SMELLS", "HEARS", "KEENNOSE", "POISON", "STUMBLES", "NO_BREATHE", "REVIVES", "WARM", "NIGHT_INVISIBILITY" ],
     "harvest": "zed_dino_feather",
     "categories": [ "DINOSAUR" ]
   },
@@ -2089,7 +2105,7 @@
     "special_attacks": [ [ "scratch", 10 ], [ "GRAB", 10 ], { "type": "bite", "cooldown": 5 }, [ "tailsmash_DinoMod", 30 ] ],
     "burn_into": "mon_zankylosaurus_scorched",
     "fungalize_into": "mon_zankylosaurus_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "POISON", "STUMBLES", "NO_BREATHE", "REVIVES", "FILTHY", "BASHES", "NIGHT_INVISIBILITY" ],
+    "flags": [ "SEES", "SMELLS", "HEARS", "POISON", "STUMBLES", "NO_BREATHE", "REVIVES", "BASHES", "NIGHT_INVISIBILITY" ],
     "harvest": "zed_dino_leather",
     "categories": [ "DINOSAUR" ]
   },
@@ -2517,7 +2533,7 @@
     "vision_night": 3,
     "upgrades": { "half_life": 15, "into": "mon_silophosaurus_brute" },
     "special_attacks": [ [ "scratch", 10 ], { "type": "bite", "cooldown": 5 } ],
-    "flags": [ "SEES", "HEARS", "PET_MOUNTABLE", "POISON", "NO_BREATHE", "REVIVES", "FILTHY", "HARDTOSHOOT" ],
+    "flags": [ "SEES", "HEARS", "PET_MOUNTABLE", "POISON", "NO_BREATHE", "REVIVES", "HARDTOSHOOT" ],
     "harvest": "mr_bones_heavy",
     "categories": [ "DINOSAUR" ]
   },
@@ -2564,7 +2580,7 @@
     "melee_dice_sides": 10,
     "melee_cut": 16,
     "upgrades": { "half_life": 15, "into": "mon_sorvosaurus_brute" },
-    "flags": [ "SEES", "HEARS", "POISON", "BASHES", "NO_BREATHE", "REVIVES", "FILTHY", "HARDTOSHOOT" ]
+    "flags": [ "SEES", "HEARS", "POISON", "BASHES", "NO_BREATHE", "REVIVES", "HARDTOSHOOT" ]
   },
   {
     "type": "MONSTER",
@@ -2881,6 +2897,30 @@
   },
   {
     "type": "MONSTER",
+    "id": "mon_soabosaurus",
+    "name": { "str_sp": "armored moabosaurus" },
+    "copy-from": "mon_zoabosaurus",
+    "color": "white",
+    "material": [ "bone" ],
+    "armor_bash": 0,
+    "description": "This zombified sauropod has grown dense bone armor, completely covering the huge, four-legged body and long neck and tail.",
+    "proportional": { "hp": 0.4, "speed": 0.875 },
+    "relative": {
+      "melee_dice": 9,
+      "melee_dice_sides": 5,
+      "melee_damage": [ { "damage_type": "bash", "amount": 7 } ],
+      "armor_cut": 22,
+      "armor_stab": 30,
+      "armor_acid": 3,
+      "vision_day": -20
+    },
+    "upgrades": {  },
+    "extend": { "flags": [ "HARDTOSHOOT" ] },
+    "harvest": "mr_bones_heavy",
+    "categories": [ "DINOSAUR" ]
+  },
+  {
+    "type": "MONSTER",
     "id": "mon_saplocanthosaurus",
     "name": { "str_sp": "armored haplocanthosaurus" },
     "copy-from": "mon_zaplocanthosaurus",
@@ -3013,7 +3053,7 @@
     "name": { "str_sp": "armored camarasaurus" },
     "copy-from": "mon_sapatosaurus",
     "proportional": { "speed": 0.8 },
-    "description": "This zombified Camarasaurus has grown dense body armor, completely covering the massive, long-necked, four-legged body."
+    "description": "This zombified camarasaurus has grown dense body armor, completely covering the massive, long-necked, four-legged body."
   },
   {
     "type": "MONSTER",
@@ -3021,7 +3061,15 @@
     "name": { "str_sp": "armored brachiosaurus" },
     "copy-from": "mon_sapatosaurus",
     "proportional": { "speed": 0.6, "hp": 3 },
-    "description": "This zombified Brachiosaurus has grown dense body armor, completely covering the gigantic, long-necked, four-legged body."
+    "description": "This zombified brachiosaurus has grown dense body armor, completely covering the gigantic, long-necked, four-legged body."
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_sastrodon",
+    "name": { "str": "armored astrodon" },
+    "copy-from": "mon_sapatosaurus",
+    "proportional": { "speed": 0.7, "hp": 2 },
+    "description": "This zombified astrodon has grown dense body armor, completely covering the gigantic, long-necked, four-legged body."
   },
   {
     "type": "MONSTER",
@@ -4647,7 +4695,6 @@
       "ACID_BLOOD",
       "NO_BREATHE",
       "REVIVES",
-      "FILTHY",
       "PUSH_MON",
       "WARM"
     ]
@@ -4697,7 +4744,6 @@
       "ACID_BLOOD",
       "NO_BREATHE",
       "REVIVES",
-      "FILTHY",
       "PUSH_MON",
       "WARM",
       "SWIMS"

@@ -1,0 +1,194 @@
+[
+  {
+    "result": "223_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 5 ] ] ]
+  },
+  {
+    "result": "22_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 2 ] ] ]
+  },
+  {
+    "result": "3006_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "300_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "308_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 6 ] ] ]
+  },
+  {
+    "result": "762_51_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 6 ] ] ]
+  },
+  {
+    "result": "32_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 2 ] ] ]
+  },
+  {
+    "result": "38_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "40_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "10mm_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "44_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 4 ] ] ]
+  },
+  {
+    "result": "45_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 4 ] ] ]
+  },
+  {
+    "result": "45colt_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 4 ] ] ]
+  },
+  {
+    "result": "4570_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "50_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 18 ] ] ]
+  },
+  {
+    "result": "762R_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "762_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 6 ] ] ]
+  },
+  {
+    "result": "9mm_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "357sig_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "357mag_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "380_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "300blk_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 5 ] ] ]
+  },
+  {
+    "result": "shot_hull",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 2 ] ], [ [ "plastic_scrap", 2 ] ] ]
+  },
+  {
+    "result": "410shot_hull",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 1 ] ], [ [ "plastic_scrap", 1 ] ] ]
+  }
+]

@@ -1,0 +1,135 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "orichalcum_mine_entrance",
+    "object": {
+      "fill_ter": "t_null",
+      "rows": [
+        "________________________",
+        "___$____________________",
+        "__________________  ____",
+        "___________________ ____",
+        "______ ____________  ___",
+        "____________________  __",
+        "_____________________ __",
+        "_________bbbbbb_________",
+        "________bbbbbbbb________",
+        "_______bbccccccbb_______",
+        "_______bbc....cbb_______",
+        "_______bbc.>>.cbb_______",
+        "_ _____bbc.>>.cbb_______",
+        "_______bbccccccbb_______",
+        "___ ____bcaccacb________",
+        "________cccccccc________",
+        "_________cccccc_________",
+        "__$_____________________",
+        "________________________",
+        "__ ________________ ____",
+        "___  ___________________",
+        "________________________",
+        "_______T____________ _T_",
+        "________________________"
+      ],
+      "items": { " ": [ { "item": "forest", "chance": 1 }, { "item": "field", "chance": 2 } ] },
+      "place_monster": [
+        { "monster": "mon_orc_warrior", "x": [ 0, 23 ], "y": [ 0, 23 ], "repeat": 2 },
+        { "monster": "mon_orc_archer", "x": [ 0, 23 ], "y": [ 0, 23 ] }
+      ],
+      "terrain": {
+        "c": "t_dirtfloor",
+        "b": "t_wall_rammed_earth",
+        " ": [ [ "t_region_groundcover", 60 ], [ "t_region_shrub", 2 ], "t_region_tree" ],
+        "T": [ "t_region_tree_fruit", "t_region_tree_nut" ],
+        "#": "t_rock",
+        "_": [ "t_region_groundcover", [ "t_region_groundcover_barren", 9 ] ],
+        "(": "t_slope_down",
+        "$": [ "t_region_tree_fruit", "t_region_tree_nut", "t_region_shrub_fruit", "t_region_shrub" ],
+        ")": "t_slope_up",
+        ">": "t_stairs_down",
+        "+": "t_door_metal_c",
+        ".": "t_rock_floor",
+        "S": [
+          [ "t_region_groundcover", 5 ],
+          "t_region_tree_fruit",
+          "t_region_tree_nut",
+          "t_region_tree",
+          "t_region_shrub_fruit",
+          "t_region_shrub"
+        ],
+        "v": "t_open_air",
+        "a": "t_wall_log"
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "orichalcum_mine_lower",
+    "object": {
+      "fill_ter": "t_rock_floor",
+      "rows": [
+        "........................",
+        "......... a  a ....k ...",
+        "........a       ...  ...",
+        "........    a  a...  k..",
+        "........a       ....  ..",
+        "........       a....  ..",
+        "..........    ......k ..",
+        "..........   k......  ..",
+        "...........dd.......  ..",
+        ".. h h.....  ......  k..",
+        "..i   ...      ....  ...",
+        "..     c   <<        ...",
+        "..i    c   <<        ...",
+        "..    ...      ..... k..",
+        ".. j j...      .....  ..",
+        "...........  .......  ..",
+        "...........cc.......  ..",
+        "........gggggggg...k ...",
+        "........gfgfgfgf...  ...",
+        ".a   ...gggggggg...  ...",
+        ".    ...gfgfgfgf...  ...",
+        ".   a.............. ....",
+        ".a      ee.lee      ....",
+        "........................"
+      ],
+      "place_monster": [
+        { "monster": "mon_orc_warrior", "x": [ 0, 23 ], "y": [ 9, 14 ], "repeat": 2 },
+        { "monster": "mon_orc_warrior", "x": [ 8, 15 ], "y": [ 17, 20 ], "repeat": 2 }
+      ],
+      "items": {
+        "j": { "item": "preserved_food", "chance": 75, "repeat": [ 3, 5 ] },
+        "i": { "item": "mine_materials", "chance": 50, "repeat": [ 2, 4 ] },
+        "k": { "item": "cave_minerals", "chance": 80, "repeat": [ 2, 4 ] },
+        "h": { "item": "mine_equipment", "chance": 75, "repeat": [ 2, 3 ] },
+        "f": { "item": "bed", "chance": 75 }
+      },
+      "furniture": {
+        "l": "f_boulder_small",
+        "j": "f_crate_o",
+        "h": "f_rack_wood",
+        "f": "f_makeshift_bed",
+        "i": "f_rack",
+        "e": "f_rubble_rock",
+        "a": "f_glow_boulder"
+      },
+      "terrain": {
+        "l": "t_rock_floor",
+        ".": "t_rock",
+        "i": "t_rock_floor",
+        "a": "t_rock_floor",
+        "c": "t_door_makeshift_c",
+        "f": "t_floor_primitive",
+        "g": "t_floor_primitive",
+        "e": "t_rock_floor",
+        "j": "t_rock_floor",
+        " ": "t_rock_floor",
+        "<": "t_stairs_up",
+        "h": "t_rock_floor",
+        "d": "t_door_bar_locked",
+        "k": "t_rock_floor"
+      }
+    }
+  }
+]

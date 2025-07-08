@@ -24,7 +24,7 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO" ]
   },
   {
     "type": "MONSTER",
@@ -75,7 +75,7 @@
     "vision_day": 10,
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO" ]
   },
   {
     "type": "MONSTER",
@@ -268,18 +268,7 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [
-      "SEES",
-      "HEARS",
-      "STUMBLES",
-      "POISON",
-      "NO_BREATHE",
-      "REVIVES",
-      "REVIVES_HEALTHY",
-      "NO_NECRO",
-      "FILTHY",
-      "PET_MOUNTABLE"
-    ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "PET_MOUNTABLE" ]
   },
   {
     "type": "MONSTER",
@@ -315,18 +304,7 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [
-      "SEES",
-      "HEARS",
-      "STUMBLES",
-      "POISON",
-      "NO_BREATHE",
-      "REVIVES",
-      "REVIVES_HEALTHY",
-      "NO_NECRO",
-      "FILTHY",
-      "PET_MOUNTABLE"
-    ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "PET_MOUNTABLE" ]
   },
   {
     "type": "MONSTER",
@@ -421,7 +399,7 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO" ]
   },
   {
     "type": "MONSTER",
@@ -483,6 +461,14 @@
     "fungalize_into": "mon_zissi_fungus",
     "description": "Heavily-burned two-legged zombie dinosaur sauropod that still reeks of charred meat.  Its flesh has mended into a leathery shell.",
     "color": "white"
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_zoabosaurus_scorched",
+    "name": { "str": "scorched moabosaurus zombie" },
+    "copy-from": "mon_zamarasaurus_scorched",
+    "looks_like": "mon_zoabosaurus",
+    "fungalize_into": "mon_zoabosaurus_fungus"
   },
   {
     "type": "MONSTER",
@@ -584,6 +570,21 @@
     "armor_cut": 17,
     "hp": 285,
     "fungalize_into": "mon_zrachiosaurus_fungus"
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_zastrodon_scorched",
+    "name": { "str": "scorched astrodon zombie" },
+    "copy-from": "mon_zapatosaurus_scorched",
+    "looks_like": "mon_zrachiosaurus",
+    "speed": 40,
+    "attack_cost": 40,
+    "melee_dice": 6,
+    "armor_bash": 10,
+    "armor_cut": 17,
+    "armor_bullet": 10,
+    "hp": 270,
+    "fungalize_into": "mon_zastrodon_fungus"
   },
   {
     "type": "MONSTER",
@@ -757,7 +758,7 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO" ]
   },
   {
     "type": "MONSTER",
@@ -813,7 +814,7 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO" ]
   },
   {
     "type": "MONSTER",
@@ -849,7 +850,7 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO" ]
   },
   {
     "type": "MONSTER",
@@ -885,7 +886,7 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO" ]
   },
   {
     "type": "MONSTER",
@@ -1046,7 +1047,7 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO" ]
   },
   {
     "type": "MONSTER",
@@ -1262,7 +1263,7 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO" ]
   },
   {
     "type": "MONSTER",
@@ -1300,18 +1301,6 @@
     "special_attacks": [ [ "GRAB", 7 ] ],
     "death_function": [ "SMOKEBURST", "NORMAL" ],
     "harvest": "zed_dino_leather",
-    "flags": [
-      "SEES",
-      "HEARS",
-      "STUMBLES",
-      "POISON",
-      "NO_BREATHE",
-      "REVIVES",
-      "REVIVES_HEALTHY",
-      "NO_NECRO",
-      "FILTHY",
-      "SWIMS",
-      "AQUATIC"
-    ]
+    "flags": [ "SEES", "HEARS", "STUMBLES", "POISON", "NO_BREATHE", "REVIVES", "REVIVES_HEALTHY", "NO_NECRO", "SWIMS", "AQUATIC" ]
   }
 ]

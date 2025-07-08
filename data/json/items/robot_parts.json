@@ -18,49 +18,56 @@
     "id": "targeting_module",
     "name": { "str": "targeting module" },
     "description": "This module integrates visual and proprioceptive information from peripheric sensors and outputs information necessary for accurate aiming.",
-    "copy-from": "robot_module_abstract"
+    "copy-from": "robot_module_abstract",
+    "category": "scrap_electronics"
   },
   {
     "type": "GENERIC",
     "id": "identification_module",
     "name": { "str": "identification module" },
     "description": "This module continuously runs image recognition algorithms to identify friends from foe.",
-    "copy-from": "robot_module_abstract"
+    "copy-from": "robot_module_abstract",
+    "category": "scrap_electronics"
   },
   {
     "type": "GENERIC",
     "id": "pathfinding_module",
     "name": { "str": "pathfinding module" },
     "description": "This module uses a combination of vector integration and egocentric mapping to find the best path available.",
-    "copy-from": "robot_module_abstract"
+    "copy-from": "robot_module_abstract",
+    "category": "scrap_electronics"
   },
   {
     "type": "GENERIC",
     "id": "memory_module",
     "name": { "str": "memory banks module" },
     "description": "Allows for storage and recovery of information.",
-    "copy-from": "robot_module_abstract"
+    "copy-from": "robot_module_abstract",
+    "category": "scrap_electronics"
   },
   {
     "type": "GENERIC",
     "id": "sensor_module",
     "name": { "str": "sensor array" },
     "description": "A wide range of sensors meant to give the ability to perceive the surrounding world.",
-    "copy-from": "robot_module_abstract"
+    "copy-from": "robot_module_abstract",
+    "category": "scrap_electronics"
   },
   {
     "type": "GENERIC",
     "id": "self_monitoring_module",
     "name": { "str_sp": "self monitoring sensors" },
     "description": "An array of sensors and diagnostic modules allowing the robot to perceive itself.",
-    "copy-from": "robot_module_abstract"
+    "copy-from": "robot_module_abstract",
+    "category": "scrap_electronics"
   },
   {
     "type": "GENERIC",
     "id": "ai_module",
     "name": { "str": "AI core" },
     "description": "This module is responsible for decision-making, it basically runs the AI of the robot.",
-    "copy-from": "robot_module_abstract"
+    "copy-from": "robot_module_abstract",
+    "category": "scrap_electronics"
   },
   {
     "type": "GENERIC",
@@ -82,7 +89,8 @@
     "id": "gun_module",
     "name": { "str": "gun operating system" },
     "description": "This system can operate most conventional weapons.",
-    "copy-from": "robot_module_abstract"
+    "copy-from": "robot_module_abstract",
+    "category": "scrap_electronics"
   },
   {
     "type": "GENERIC",

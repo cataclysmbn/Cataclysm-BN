@@ -3,7 +3,7 @@
     "id": "match_trigger",
     "type": "GUNMOD",
     "name": { "str": "match trigger" },
-    "description": "A precision weighted trigger assembly that slightly improves a firearm's accuracy.",
+    "description": "A precision weighted trigger assembly that improves a firearm's accuracy.",
     "weight": "120 g",
     "volume": "250 ml",
     "integral_volume": "0 ml",
@@ -27,7 +27,7 @@
       [ "FLAMETHROWERS" ]
     ],
     "install_time": "30 m",
-    "dispersion_modifier": -1
+    "dispersion_modifier": -100
   },
   {
     "id": "dias",
@@ -46,7 +46,7 @@
     "location": "mechanism",
     "mod_targets": [ "ar15" ],
     "install_time": "5 m",
-    "dispersion_modifier": 10,
+    "dispersion_modifier": 25,
     "mode_modifier": [ [ "AUTO", "auto", 4 ] ]
   },
   {
@@ -66,7 +66,7 @@
     "mod_targets": [ "ar15" ],
     "install_time": "25 m",
     "min_skills": [ [ "weapon", 5 ] ],
-    "dispersion_modifier": 40,
+    "dispersion_modifier": 50,
     "mode_modifier": [ [ "DEFAULT", "auto", 6 ] ],
     "flags": [ "INSTALL_DIFFICULT" ]
   },
@@ -87,7 +87,7 @@
     "mod_targets": [ "glock_17", "glock_19", "glock_20", "glock_21", "glock_22", "glock_31" ],
     "install_time": "10 m",
     "min_skills": [ [ "weapon", 5 ] ],
-    "dispersion_modifier": 65,
+    "dispersion_modifier": 100,
     "mode_modifier": [ [ "semi-auto", "auto", 6 ] ],
     "flags": [ "INSTALL_DIFFICULT" ]
   },
@@ -119,6 +119,78 @@
     ],
     "install_time": "10 m",
     "flags": [ "WATERPROOF_GUN" ]
+  },
+  {
+    "id": "g36_stanag_adapter",
+    "type": "GUNMOD",
+    "name": { "str": "G36 STANAG adapter" },
+    "description": "A custom magwell which is installed into the lower receiver of a G36 to enable the use of most STANAG magazines save for the largest ones.",
+    "weight": "100 g",
+    "volume": "150 ml",
+    "integral_volume": "150 ml",
+    "price": "320 USD",
+    "material": "plastic",
+    "symbol": ":",
+    "color": "green",
+    "location": "mechanism",
+    "mod_targets": [ "hk_g36" ],
+    "acceptable_ammo": [ "223" ],
+    "install_time": "10 m",
+    "magazine_adaptor": [
+      [
+        "223",
+        [
+          "stanag30",
+          "stanag5",
+          "stanag10",
+          "stanag20",
+          "stanag40",
+          "stanag50",
+          "stanag60",
+          "stanag60drum",
+          "carbonmag_223",
+          "survivor223mag"
+        ]
+      ]
+    ],
+    "min_skills": [ [ "weapon", 4 ], [ "mechanics", 3 ] ],
+    "flags": [ "INSTALL_DIFFICULT" ]
+  },
+  {
+    "id": "aug_nato_conversion",
+    "type": "GUNMOD",
+    "name": { "str": "AUG NATO conversion kit" },
+    "description": "A STANAG sized magwell and a modified trigger group to facilitate the use of STANAG magazines on an AUG rifle.  Most versions of the rifle come with this out of the factory as the A3 variant but it's quite simple to convert the older variants.  Fits all but the largest STANAG magazines.",
+    "weight": "100 g",
+    "volume": "150 ml",
+    "integral_volume": "150 ml",
+    "price": "320 USD",
+    "material": "plastic",
+    "symbol": ":",
+    "color": "green",
+    "location": "mechanism",
+    "mod_targets": [ "steyr_aug" ],
+    "acceptable_ammo": [ "223" ],
+    "install_time": "10 m",
+    "magazine_adaptor": [
+      [
+        "223",
+        [
+          "stanag30",
+          "stanag5",
+          "stanag10",
+          "stanag20",
+          "stanag40",
+          "stanag50",
+          "stanag60",
+          "stanag60drum",
+          "carbonmag_223",
+          "survivor223mag"
+        ]
+      ]
+    ],
+    "min_skills": [ [ "weapon", 4 ], [ "mechanics", 3 ] ],
+    "flags": [ "INSTALL_DIFFICULT" ]
   },
   {
     "id": "xbow_string",
@@ -158,5 +230,23 @@
     "install_time": "5 m",
     "reload_modifier": -80,
     "ups_charges_modifier": 40
+  },
+  {
+    "id": "mod_makeshift_capacitor",
+    "type": "GUNMOD",
+    "name": { "str": "handmade coil capacitor" },
+    "description": "This particular modification is a handmade, but by no means crude, capacitor bank designed to increase transferrance efficiency as well as utilizing an atomic battery to reduce, but not eliminate, the power draw.  It was even rarer to see than the makeshift railgun weapons and firearm conversions during the protests before the Cataclysm, if only because of the sheer rarity of particular materials.  It unfortunately cannot effect makeshift accelerators thanks to them lacking the proper internal components.",
+    "looks_like": "high_density_capacitor",
+    "weight": "820 g",
+    "volume": "250 ml",
+    "price": "10 USD",
+    "price_postapoc": "10 USD",
+    "material": [ "steel", "copper" ],
+    "symbol": ":",
+    "color": "light_gray",
+    "location": "mechanism",
+    "install_time": "5 m",
+    "blacklist_mod": "emitter",
+    "ups_charges_multiplier": 0.5
   }
 ]

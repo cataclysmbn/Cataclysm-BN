@@ -227,6 +227,7 @@
     "symbol": "[",
     "color": "light_gray",
     "covers": [ "head", "eyes", "mouth", "torso", "legs", "arms", "hands", "feet" ],
+    "qualities": [ [ "HV_INSULATION", 1 ] ],
     "coverage": 100,
     "encumbrance": 25,
     "warmth": 15,

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_WEATHER_H
-#define CATA_SRC_WEATHER_H
 
 #include "calendar.h"
 #include "color.h"
@@ -230,4 +228,4 @@ class weather_manager
 
 weather_manager &get_weather();
 
-#endif // CATA_SRC_WEATHER_H
+

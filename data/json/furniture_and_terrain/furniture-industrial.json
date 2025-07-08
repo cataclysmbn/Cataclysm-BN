@@ -227,7 +227,15 @@
     "move_cost_mod": 1,
     "coverage": 30,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "NOCOLLIDE" ],
+    "flags": [ "TRANSPARENT", "NOCOLLIDE", "ADV_DECONSTRUCT" ],
+    "deconstruct": {
+      "items": [
+        { "item": "scrap", "count": [ 1, 4 ] },
+        { "item": "scrap_copper", "count": [ 10, 20 ] },
+        { "item": "cable", "charges": [ 20, 100 ] },
+        { "item": "pipe", "count": [ 1, 2 ] }
+      ]
+    },
     "bash": {
       "str_min": 10,
       "str_max": 100,
@@ -254,7 +262,19 @@
     "move_cost_mod": 4,
     "coverage": 40,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "MOUNTABLE" ],
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "ADV_DECONSTRUCT" ],
+    "deconstruct": {
+      "items": [
+        { "item": "scrap", "count": [ 1, 4 ] },
+        { "item": "cable", "charges": [ 100, 800 ] },
+        { "item": "pipe", "count": [ 0, 4 ] },
+        { "item": "circuit", "count": [ 0, 5 ] },
+        { "item": "e_scrap", "count": [ 2, 8 ] },
+        { "item": "amplifier", "count": [ 0, 4 ] },
+        { "item": "power_supply", "count": [ 0, 2 ] },
+        { "item": "metal_tank_little", "count": [ 0, 6 ] }
+      ]
+    },
     "bash": {
       "str_min": 25,
       "str_max": 200,

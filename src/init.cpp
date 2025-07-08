@@ -28,7 +28,6 @@
 #include "construction.h"
 #include "construction_category.h"
 #include "construction_group.h"
-#include "construction_sequence.h"
 #include "crafting_gui.h"
 #include "creature.h"
 #include "cursesdef.h"
@@ -111,6 +110,10 @@
 #  include "mod_tileset.h"
 #endif
 
+struct DynamicDataLoader::cached_streams {
+    lru_cache<std::string, shared_ptr_fast<std::istringstream>> cache;
+};
+
 DynamicDataLoader::DynamicDataLoader()
 {
     initialize();
@@ -135,10 +138,6 @@ void DynamicDataLoader::load_object( const JsonObject &jo, const std::string &sr
     }
     it->second( jo, src, base_path, full_path );
 }
-
-struct DynamicDataLoader::cached_streams {
-    lru_cache<std::string, shared_ptr_fast<std::istringstream>> cache;
-};
 
 shared_ptr_fast<std::istream> DynamicDataLoader::get_cached_stream( const std::string &path )
 {
@@ -400,7 +399,6 @@ void DynamicDataLoader::initialize()
     add( "overmap_terrain", &overmap_terrains::load );
     add( "construction_category", &construction_categories::load );
     add( "construction_group", &construction_groups::load );
-    add( "construction_sequence", &construction_sequences::load );
     add( "construction", &constructions::load );
     add( "mapgen", &load_mapgen );
     add( "overmap_land_use_code", &overmap_land_use_codes::load );
@@ -561,7 +559,6 @@ void DynamicDataLoader::unload_data()
     clothing_mods::reset();
     construction_categories::reset();
     construction_groups::reset();
-    construction_sequences::reset();
     constructions::reset();
     Creature::reset_hit_range();
     disease_type::reset();
@@ -703,7 +700,6 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Monster factions" ), &monfactions::finalize },
             { _( "Factions" ), &npc_factions::finalize },
             { _( "Constructions" ), &constructions::finalize },
-            { _( "Construction sequences" ), &construction_sequences::finalize },
             { _( "Crafting recipes" ), &recipe_dictionary::finalize },
             { _( "Recipe groups" ), &recipe_group::check },
             { _( "Martial arts" ), &finialize_martial_arts },
@@ -942,11 +938,12 @@ void init::load_core_bn_modfiles()
     );
 }
 
-void init::load_world_modfiles( loading_ui &ui, const std::string &artifacts_file )
+void init::load_world_modfiles( loading_ui &ui, const world *world,
+                                const std::string &artifacts_file )
 {
     clear_loaded_data();
 
-    mod_management::t_mod_list &mods = world_generator->active_world->active_mod_order;
+    mod_management::t_mod_list &mods = world->info->active_mod_order;
 
     // remove any duplicates whilst preserving order (fixes #19385)
     std::set<mod_id> found;
@@ -967,7 +964,7 @@ void init::load_world_modfiles( loading_ui &ui, const std::string &artifacts_fil
     }
 
     // TODO: get rid of artifacts
-    load_artifacts( artifacts_file );
+    load_artifacts( world, artifacts_file );
 
     // this code does not care about mod dependencies,
     // it assumes that those dependencies are static and
@@ -1025,7 +1022,7 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         world_generator->set_active_world( nullptr );
         world_generator->init();
         const std::vector<mod_id> mods_empty;
-        WORLDPTR test_world = world_generator->make_new_world( mods_empty );
+        WORLDINFO *test_world = world_generator->make_new_world( mods_empty );
         if( !test_world ) {
             std::cerr << "Failed to generate test world." << '\n';
             return false;
@@ -1045,7 +1042,7 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
             std::cerr << "Error loading data: " << err.what() << '\n';
         }
 
-        std::string world_name = world_generator->active_world->world_name;
+        std::string world_name = world_generator->active_world->info->world_name;
         world_generator->delete_world( world_name, true );
 
         // TODO: Why would we need these calls?

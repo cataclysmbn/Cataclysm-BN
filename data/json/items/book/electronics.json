@@ -303,8 +303,8 @@
   {
     "id": "schematics_antimateriel",
     "type": "BOOK",
-    "name": { "str_sp": "anti-materiel turret schematics" },
-    "description": "Assembly plans, design specs, and technical drawings for the anti-materiel turret.  Most of this is useless to you, but you could use the assembly plans to re-assemble the robot from salvaged parts.",
+    "name": { "str_sp": "support turret schematics" },
+    "description": "Assembly plans, design specs, and technical drawings for several types of specialized turrets.  Most of this is useless to you, but you could use the assembly plans to re-assemble the robot from salvaged parts.",
     "copy-from": "schematics_generic"
   },
   {

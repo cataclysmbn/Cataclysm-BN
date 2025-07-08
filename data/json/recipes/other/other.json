@@ -135,6 +135,20 @@
   },
   {
     "type": "recipe",
+    "result": "folding_skateboard",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "mechanics",
+    "difficulty": 1,
+    "time": "30 m",
+    "reversible": true,
+    "decomp_learn": 0,
+    "autolearn": true,
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
+    "components": [ [ [ "wheel_mount_skateboard", 1 ] ], [ [ "frame_wood_deck", 1 ] ], [ [ "wheel_skateboard", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "candle",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
@@ -207,16 +221,26 @@
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "fabrication",
-    "difficulty": 5,
-    "time": "5 m",
-    "charges": 125,
+    "difficulty": 3,
+    "time": "10 m",
+    "charges": 135,
     "autolearn": true,
-    "qualities": [ { "id": "SAW_M", "level": 1 } ],
-    "components": [
-      [ [ "material_aluminium_ingot", 1 ], [ "can_drink_unsealed", 20 ], [ "aluminum_foil", 75 ] ],
-      [ [ "water", 5 ], [ "water_clean", 5 ] ],
-      [ [ "material_sand", 25 ] ]
-    ]
+    "tools": [ [ [ "angle_grinder", 90 ] ] ],
+    "components": [ [ [ "material_aluminium_ingot", 1 ], [ "can_drink_unsealed", 27 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "id_suffix": "from_cans",
+    "result": "chem_aluminium_powder",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "25 s",
+    "charges": 5,
+    "autolearn": true,
+    "tools": [ [ [ "angle_grinder", 4 ] ] ],
+    "components": [ [ [ "can_drink_unsealed", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -512,6 +536,7 @@
     "skill_used": "fabrication",
     "difficulty": 5,
     "decomp_learn": 5,
+    "book_learn": [ [ "textbook_mechanics", 5 ], [ "manual_mechanics", 5 ], [ "textbook_fabrication", 5 ] ],
     "time": "50 m",
     "reversible": true,
     "using": [ [ "soldering_standard", 20 ], [ "welding_standard", 3 ] ],
@@ -556,7 +581,7 @@
     "time": "1 h 20 m",
     "book_learn": [ [ "sa_cryptology_key", 10 ] ],
     "tools": [
-      [ [ "software_hacking", -1 ] ],
+      [ [ "software_hacking", -1 ], [ "control_laptop", -1 ] ],
       [ [ "laptop", -1 ], [ "control_laptop", -1 ] ],
       [ [ "sa_cryptology_key", -1 ] ],
       [ [ "black_box", -1 ] ]
@@ -636,5 +661,104 @@
     "autolearn": true,
     "qualities": [ { "id": "HAMMER", "level": 1 } ],
     "components": [ [ [ "rock", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "ceramic_bowl",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "skills_required": [ "survival", 1 ],
+    "difficulty": 3,
+    "time": "40 m",
+    "autolearn": true,
+    "using": [ [ "glazing", 1 ], [ "earthenware_firing", 60 ] ],
+    "components": [ [ [ "water", 1 ], [ "water_clean", 1 ] ], [ [ "clay_lump", 5 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "ceramic_plate",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "skills_required": [ "survival", 1 ],
+    "difficulty": 2,
+    "time": "30 m",
+    "autolearn": true,
+    "using": [ [ "glazing", 1 ], [ "earthenware_firing", 30 ] ],
+    "components": [ [ [ "water", 1 ], [ "water_clean", 1 ] ], [ [ "clay_lump", 3 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "ceramic_cup",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "skills_required": [ "survival", 1 ],
+    "difficulty": 2,
+    "time": "35 m",
+    "autolearn": true,
+    "using": [ [ "glazing", 1 ], [ "earthenware_firing", 30 ] ],
+    "components": [ [ [ "water", 1 ], [ "water_clean", 1 ] ], [ [ "clay_lump", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "ceramic_mug",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "skills_required": [ "survival", 1 ],
+    "difficulty": 4,
+    "time": "45 m",
+    "autolearn": true,
+    "using": [ [ "glazing", 1 ], [ "earthenware_firing", 30 ] ],
+    "components": [ [ [ "water", 1 ], [ "water_clean", 1 ] ], [ [ "clay_lump", 3 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "brush",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "4 m",
+    "autolearn": true,
+    "tools": [ [ [ "surface_heat", 1, "LIST" ] ] ],
+    "components": [ [ [ "plastic_chunk", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "glass",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "35 m",
+    "book_learn": [ [ "glassblowing_book", 4 ] ],
+    "qualities": [ { "id": "CHISEL", "level": 3 } ],
+    "tools": [ [ [ "tongs", -1 ] ], [ [ "pipe", -1 ] ], [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ], [ [ "forge", 50 ] ] ],
+    "components": [ [ [ "glass_shard", 2 ], [ "flask_glass", 2 ], [ "test_tube", 4 ], [ "marble", 50 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "adv_butchery",
+    "category": "CC_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "computer", 5 ], [ "fabrication", 3 ] ],
+    "difficulty": 7,
+    "time": "4 h",
+    "reversible": true,
+    "decomp_learn": 1,
+    "book_learn": [ [ "recipe_lab_elec", 6 ], [ "recipe_mil_augs", 6 ], [ "textbook_robots", 6 ] ],
+    "using": [ [ "welding_standard", 15 ], [ "soldering_standard", 40 ] ],
+    "components": [
+      [ [ "workbench", 1 ] ],
+      [ [ "plut_cell", 1 ] ],
+      [ [ "cable", 60 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "ai_module", 1 ] ],
+      [ [ "sheet_metal_small", 10 ] ],
+      [ [ "broken_dissector", 1 ] ]
+    ]
   }
 ]

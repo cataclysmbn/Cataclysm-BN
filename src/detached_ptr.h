@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DETACHED_PTR_H
-#define CATA_SRC_DETACHED_PTR_H
 
 template <typename T>
 class game_object;
@@ -50,4 +48,4 @@ class detached_ptr
         explicit detached_ptr( T *obj );
         T *release();
 };
-#endif // CATA_SRC_DETACHED_PTR_H
+

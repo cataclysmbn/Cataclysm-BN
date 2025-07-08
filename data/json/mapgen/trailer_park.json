@@ -32,7 +32,7 @@
         "       d     d  d  d d  "
       ],
       "palettes": [ "trailer_park" ],
-      "items": { "{": { "item": "trash_dumpster", "chance": 80 } },
+      "items": { "{": { "item": "trash_dumpster", "chance": 80 }, "F": { "item": "SUS_fridge", "chance": 100 } },
       "place_items": [
         { "chance": 10, "item": "kitchen_nonfood", "x": 20, "y": 3 },
         { "chance": 20, "item": "cannedfood", "x": 20, "y": 21 },
@@ -50,8 +50,6 @@
         { "chance": 10, "item": "textbooks", "x": 15, "y": 21 },
         { "chance": 10, "item": "softdrugs", "x": 7, "y": 20 },
         { "chance": 10, "item": "softdrugs", "x": 8, "y": 3 },
-        { "chance": 60, "item": "SUS_fridge", "x": 21, "y": 21 },
-        { "chance": 60, "item": "SUS_fridge", "x": 18, "y": 3 },
         { "chance": 30, "item": "kitchen", "x": 19, "y": 3 },
         { "chance": 5, "item": "road", "x": 5, "y": 10 },
         { "chance": 5, "item": "road", "x": 2, "y": 8 }
@@ -129,6 +127,7 @@
         "       d     d  d  d d  "
       ],
       "palettes": [ "trailer_park" ],
+      "items": { "F": { "item": "SUS_fridge", "chance": 100 } },
       "place_item": [ { "item": "blanket", "repeat": 1, "x": 11, "y": 17 } ],
       "place_items": [
         { "chance": 45, "item": "cannedfood", "x": 20, "y": 21 },
@@ -137,7 +136,6 @@
         { "chance": 25, "item": "clutter_bedroom", "x": 10, "y": 20 },
         { "chance": 35, "item": "clutter_bedroom", "x": 11, "y": 18 },
         { "chance": 15, "item": "textbooks", "x": 15, "y": 21 },
-        { "chance": 70, "item": "SUS_fridge", "x": 21, "y": 21 },
         { "chance": 35, "item": "softdrugs", "x": 7, "y": 20 }
       ],
       "place_monster": [
@@ -218,7 +216,7 @@
         "        d    d  d  d d  "
       ],
       "palettes": [ "trailer_park" ],
-      "items": { "{": { "item": "trash_dumpster", "chance": 80 } },
+      "items": { "{": { "item": "trash_dumpster", "chance": 80 }, "F": { "item": "SUS_fridge", "chance": 100 } },
       "place_items": [
         { "chance": 20, "item": "table_livingroom", "x": 16, "y": 21 },
         { "chance": 20, "item": "table_livingroom", "x": 9, "y": 2 },
@@ -233,8 +231,6 @@
         { "chance": 20, "item": "clutter_bedroom", "x": 11, "y": 18 },
         { "chance": 10, "item": "textbooks", "x": 15, "y": 21 },
         { "chance": 35, "item": "clothing_female", "x": 11, "y": 21 },
-        { "chance": 70, "item": "SUS_fridge", "x": 21, "y": 21 },
-        { "chance": 60, "item": "SUS_fridge", "x": 4, "y": 3 },
         { "chance": 35, "item": "dresser", "x": 13, "y": 6 },
         { "chance": 45, "item": "kitchen", "x": 18, "y": 21 },
         { "chance": 30, "item": "kitchen", "x": 6, "y": 2 }

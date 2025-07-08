@@ -42,7 +42,7 @@
     "phase": "liquid",
     "flags": [ "EATEN_COLD" ],
     "charges": 2,
-    "vitamins": [ [ "vitA", 10 ], [ "vitB", 6 ], [ "vitC", 4 ], [ "calcium", 25 ] ],
+    "vitamins": [ [ "vitA", 10 ], [ "vitB", 6 ], [ "vitC", 4 ], [ "calcium", 25 ], [ "milk_allergen", 1 ] ],
     "fun": 1
   },
   {
@@ -63,7 +63,7 @@
     "volume": "250 ml",
     "phase": "liquid",
     "fun": 15,
-    "vitamins": [ [ "vitA", 2 ], [ "vitB", 3 ], [ "vitC", 3 ], [ "calcium", 33 ], [ "iron", 1 ] ]
+    "vitamins": [ [ "vitA", 2 ], [ "vitB", 3 ], [ "vitC", 3 ], [ "calcium", 33 ], [ "iron", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -83,7 +83,7 @@
     "material": [ "milk" ],
     "volume": "500 ml",
     "charges": 32,
-    "vitamins": [ [ "vitA", 7 ], [ "vitB", 3 ] ],
+    "vitamins": [ [ "vitA", 7 ], [ "vitB", 3 ], [ "milk_allergen", 1 ] ],
     "fun": -1
   },
   {
@@ -118,7 +118,7 @@
     "volume": "250 ml",
     "phase": "liquid",
     "fun": 20,
-    "vitamins": [ [ "calcium", 8 ], [ "iron", 1 ] ]
+    "vitamins": [ [ "calcium", 8 ], [ "iron", 1 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -157,7 +157,7 @@
     "primary_material": "cheese",
     "volume": "250 ml",
     "charges": 5,
-    "vitamins": [ [ "vitA", 5 ], [ "calcium", 32 ], [ "iron", 2 ] ],
+    "vitamins": [ [ "vitA", 5 ], [ "calcium", 32 ], [ "iron", 2 ], [ "milk_allergen", 1 ] ],
     "fun": 5,
     "flags": [ "NUTRIENT_OVERRIDE" ]
   },
@@ -180,7 +180,7 @@
     "volume": "250 ml",
     "charges": 8,
     "fun": 7,
-    "vitamins": [ [ "vitA", 8 ], [ "calcium", 16 ] ]
+    "vitamins": [ [ "vitA", 8 ], [ "calcium", 16 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -202,11 +202,12 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 6,
-    "vitamins": [ [ "vitA", 12 ], [ "calcium", 38 ], [ "iron", 10 ] ]
+    "vitamins": [ [ "vitA", 12 ], [ "calcium", 38 ], [ "iron", 10 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "milk_powder",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "powdered milk" },
     "weight": "30 g",
     "color": "white",
@@ -223,7 +224,7 @@
     "volume": "250 ml",
     "cooks_like": "milk",
     "charges": 4,
-    "vitamins": [ [ "vitA", 3 ], [ "vitB", 2 ], [ "vitC", 1 ], [ "calcium", 7 ] ],
+    "vitamins": [ [ "vitA", 3 ], [ "vitB", 2 ], [ "vitC", 1 ], [ "calcium", 7 ], [ "milk_allergen", 1 ] ],
     "fun": -5
   },
   {
@@ -246,7 +247,7 @@
     "volume": "500 ml",
     "phase": "liquid",
     "charges": 20,
-    "vitamins": [ [ "vitA", 2 ], [ "vitB", 1 ], [ "vitC", 1 ], [ "calcium", 7 ] ],
+    "vitamins": [ [ "vitA", 2 ], [ "vitB", 1 ], [ "vitC", 1 ], [ "calcium", 7 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ],
     "fun": 3
   },
   {
@@ -269,6 +270,6 @@
     "volume": "250 ml",
     "phase": "liquid",
     "flags": [ "EATEN_COLD" ],
-    "vitamins": [ [ "vitA", 1 ], [ "vitB", 1 ], [ "vitC", 1 ], [ "calcium", 1 ] ]
+    "vitamins": [ [ "vitA", 1 ], [ "vitB", 1 ], [ "vitC", 1 ], [ "calcium", 1 ], [ "milk_allergen", 1 ] ]
   }
 ]

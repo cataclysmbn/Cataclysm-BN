@@ -21,7 +21,7 @@
   {
     "id": "autoclave",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "autoclave" },
     "description": "This is an autoclave.  It's useful for sterilizing things like CBMs.  It requires a massive amount of power, so standard batteries will not power it sufficiently.  Examine a non-sterile CBM and mend it to sterilize.",
     "weight": "34500 g",
@@ -61,7 +61,7 @@
   {
     "id": "rx12_injector",
     "type": "TOOL",
-    "category": "tools",
+    "category": "drugs",
     "name": { "str": "RX12 jet injector" },
     "description": "The Rivtech RX12 jet injector is a small pistol-shaped device used to inject advanced fast-healing chemicals through the skin without using a needle.  A label on the side warns against using more than two doses per hour.",
     "weight": "316 g",
@@ -81,7 +81,7 @@
   {
     "id": "scalpel",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "weapon_category": [ "KNIVES" ],
     "name": { "str": "scalpel" },
     "description": "This is a very sharp knife designed for surgical cutting.  Its small, sharp blade allows for precision strikes in the hands of the skilled.",
@@ -101,7 +101,7 @@
   {
     "id": "smoxygen_tank",
     "type": "TOOL",
-    "category": "tools",
+    "category": "drugs",
     "name": { "str": "emergency oxygen pack" },
     "description": "This is a small tank of compressed medical oxygen with a folding regulator and mask.  Commonly used in emergency situations, it provides immediate relief for asthma attacks or smoke inhalation, and can provide a brief burst of energy.",
     "weight": "1134 g",
@@ -121,7 +121,7 @@
   {
     "id": "syringe",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "syringe" },
     "description": "A medical syringe.  Used for administering intravenous drugs.",
     "weight": "10 g",
@@ -135,7 +135,7 @@
   {
     "id": "thermometer",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "thermometer" },
     "description": "A plastic thermometer that can read the air temperature.",
     "weight": "1 g",
@@ -152,7 +152,7 @@
   {
     "id": "oxygen_tank",
     "type": "TOOL",
-    "category": "tools",
+    "category": "drugs",
     "name": { "str": "oxygen tank" },
     "description": "This is tank of compressed medical oxygen with a regulator and mask.  Commonly used in emergency situations, it provides immediate relief for asthma attacks or smoke inhalation, and can provide a brief burst of energy.",
     "weight": "2268 g",
@@ -172,7 +172,7 @@
   {
     "id": "vacutainer",
     "type": "CONTAINER",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "blood draw kit" },
     "description": "This is a kit for drawing blood, including a test tube for holding the sample.  Use this tool to draw blood, either from yourself or from a corpse you are standing on.",
     "weight": "13 g",
@@ -193,7 +193,7 @@
   {
     "id": "wrapped_rad_badge",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "wrapped radiation badge" },
     "description": "This is a badge that detects radiation dosage sealed in a radiation-blocking bag.  Use it to remove it from the bag.",
     "weight": "20 g",

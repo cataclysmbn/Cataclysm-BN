@@ -1,5 +1,7 @@
 #include "assign.h"
 
+#include <algorithm>
+
 void report_strict_violation( const JsonObject &jo, const std::string &message,
                               const std::string &name )
 {
@@ -8,22 +10,17 @@ void report_strict_violation( const JsonObject &jo, const std::string &message,
         jo.throw_error( message, name );
     } catch( const JsonError &err ) {
         // And catch the exception so the loading continues like normal.
-        debugmsg( "(json-error)\n%s", err.what() );
+        debugmsg_of( DL::Warn, "(json-error)\n%s", err.what() );
     }
 }
 
 
-bool assign( const JsonObject &jo, const std::string &name, bool &val, bool strict )
+bool assign( const JsonObject &jo, const std::string &name, bool &val, bool )
 {
     bool out;
 
     if( !jo.read( name, out ) ) {
         return false;
-    }
-
-    if( strict && out == val ) {
-        report_strict_violation( jo, "cannot assign explicit value the same as default or inherited value",
-                                 name );
     }
 
     val = out;
@@ -32,7 +29,7 @@ bool assign( const JsonObject &jo, const std::string &name, bool &val, bool stri
 }
 
 bool assign( const JsonObject &jo, const std::string &name, units::volume &val,
-             bool strict,
+             bool,
              const units::volume lo,
              const units::volume hi )
 {
@@ -82,7 +79,6 @@ bool assign( const JsonObject &jo, const std::string &name, units::volume &val,
         if( !parse( err, tmp ) ) {
             err.throw_error( "invalid relative value specified", name );
         }
-        strict = false;
         out = val + tmp;
 
     } else if( proportional.has_member( name ) ) {
@@ -91,7 +87,6 @@ bool assign( const JsonObject &jo, const std::string &name, units::volume &val,
         if( !err.read( name, scalar ) || scalar <= 0 || scalar == 1 ) {
             err.throw_error( "multiplier must be a positive number other than 1", name );
         }
-        strict = false;
         out = val * scalar;
 
     } else if( !parse( jo, out ) ) {
@@ -102,11 +97,6 @@ bool assign( const JsonObject &jo, const std::string &name, units::volume &val,
         err.throw_error( "value outside supported range", name );
     }
 
-    if( strict && out == val ) {
-        report_strict_violation( err, "cannot assign explicit value the same as default or inherited value",
-                                 name );
-    }
-
     val = out;
 
     return true;
@@ -115,7 +105,7 @@ bool assign( const JsonObject &jo, const std::string &name, units::volume &val,
 bool assign( const JsonObject &jo,
              const std::string &name,
              units::mass &val,
-             bool strict,
+             bool,
              const units::mass lo,
              const units::mass hi )
 {
@@ -152,7 +142,6 @@ bool assign( const JsonObject &jo,
         if( !parse( err, tmp ) ) {
             err.throw_error( "invalid relative value specified", name );
         }
-        strict = false;
         out = val + tmp;
 
     } else if( proportional.has_member( name ) ) {
@@ -162,7 +151,6 @@ bool assign( const JsonObject &jo,
             err.throw_error( "multiplier must be a positive number other than 1",
                              name );
         }
-        strict = false;
         out = val * scalar;
 
     } else if( !parse( jo, out ) ) {
@@ -173,13 +161,6 @@ bool assign( const JsonObject &jo,
         err.throw_error( "value outside supported range", name );
     }
 
-    if( strict && out == val ) {
-        report_strict_violation( err,
-                                 "cannot assign explicit value the same as "
-                                 "default or inherited value",
-                                 name );
-    }
-
     val = out;
 
     return true;
@@ -188,7 +169,7 @@ bool assign( const JsonObject &jo,
 bool assign( const JsonObject &jo,
              const std::string &name,
              units::money &val,
-             bool strict,
+             bool,
              const units::money lo,
              const units::money hi )
 {
@@ -225,7 +206,6 @@ bool assign( const JsonObject &jo,
         if( !parse( err, tmp ) ) {
             err.throw_error( "invalid relative value specified", name );
         }
-        strict = false;
         out = val + tmp;
 
     } else if( proportional.has_member( name ) ) {
@@ -235,7 +215,6 @@ bool assign( const JsonObject &jo,
             err.throw_error( "multiplier must be a positive number other than 1",
                              name );
         }
-        strict = false;
         out = val * scalar;
 
     } else if( !parse( jo, out ) ) {
@@ -246,13 +225,6 @@ bool assign( const JsonObject &jo,
         err.throw_error( "value outside supported range", name );
     }
 
-    if( strict && out == val ) {
-        report_strict_violation( err,
-                                 "cannot assign explicit value the same as "
-                                 "default or inherited value",
-                                 name );
-    }
-
     val = out;
 
     return true;
@@ -261,7 +233,7 @@ bool assign( const JsonObject &jo,
 bool assign( const JsonObject &jo,
              const std::string &name,
              units::energy &val,
-             bool strict,
+             bool,
              const units::energy lo,
              const units::energy hi )
 {
@@ -303,7 +275,6 @@ bool assign( const JsonObject &jo,
         if( !parse( err, tmp ) ) {
             err.throw_error( "invalid relative value specified", name );
         }
-        strict = false;
         out = val + tmp;
 
     } else if( proportional.has_member( name ) ) {
@@ -313,7 +284,6 @@ bool assign( const JsonObject &jo,
             err.throw_error( "multiplier must be a positive number other than 1",
                              name );
         }
-        strict = false;
         out = val * scalar;
 
     } else if( !parse( jo, out ) ) {
@@ -322,13 +292,6 @@ bool assign( const JsonObject &jo,
 
     if( out < lo || out > hi ) {
         err.throw_error( "value outside supported range", name );
-    }
-
-    if( strict && out == val ) {
-        report_strict_violation( err,
-                                 "cannot assign explicit value the same as "
-                                 "default or inherited value",
-                                 name );
     }
 
     val = out;
@@ -388,8 +351,8 @@ bool assign( const JsonObject &jo,
                 obj.throw_error( "syntax error when specifying temperature", name );
             }
             const auto &unit_suffixes = units::temperature_units;
-            auto iter = std::find_if(
-                            unit_suffixes.begin(), unit_suffixes.end(),
+            auto iter = std::ranges::find_if(
+                            unit_suffixes,
                             [&suffix]( const std::pair<std::string, units::temperature> &
             suffix_value ) {
                 return suffix_value.first == suffix;
@@ -412,7 +375,7 @@ bool assign( const JsonObject &jo,
 bool assign( const JsonObject &jo,
              const std::string &name,
              nc_color &val,
-             const bool strict )
+             const bool )
 {
     if( !jo.has_member( name ) ) {
         return false;
@@ -421,12 +384,7 @@ bool assign( const JsonObject &jo,
     if( out == c_unset ) {
         jo.throw_error( "invalid color name", name );
     }
-    if( strict && out == val ) {
-        report_strict_violation( jo,
-                                 "cannot assign explicit value the same as "
-                                 "default or inherited value",
-                                 name );
-    }
+
     val = out;
     return true;
 }
@@ -573,14 +531,14 @@ void check_assigned_dmg( const JsonObject &err,
                          const damage_instance &hi_inst )
 {
     for( const damage_unit &out_dmg : out.damage_units ) {
-        auto lo_iter = std::find_if(
-                           lo_inst.damage_units.begin(), lo_inst.damage_units.end(),
+        auto lo_iter = std::ranges::find_if(
+                           lo_inst.damage_units,
         [&out_dmg]( const damage_unit & du ) {
             return du.type == out_dmg.type || du.type == DT_NULL;
         } );
 
-        auto hi_iter = std::find_if(
-                           hi_inst.damage_units.begin(), hi_inst.damage_units.end(),
+        auto hi_iter = std::ranges::find_if(
+                           hi_inst.damage_units,
         [&out_dmg]( const damage_unit & du ) {
             return du.type == out_dmg.type || du.type == DT_NULL;
         } );

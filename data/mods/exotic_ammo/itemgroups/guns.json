@@ -1,0 +1,157 @@
+[
+  {
+    "type": "item_group",
+    "id": "guns_pistol_obscure",
+    "//": "Imported or otherwise very obscure pistols.",
+    "items": [
+      { "group": "nested_makarov", "prob": 50 },
+      { "group": "nested_af2011a1_38super", "prob": 10 },
+      { "group": "nested_m1911-460", "prob": 5 },
+      { "group": "nested_raging_bull", "prob": 60 },
+      { "group": "nested_raging_judge", "prob": 40 },
+      { "group": "nested_tokarev", "prob": 50 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "carried_guns_pistol_obscure",
+    "//": "Imported or otherwise very obscure pistols being carried, with either mags or loose ammo.",
+    "items": [
+      { "group": "everyday_makarov", "prob": 50 },
+      { "group": "everyday_af2011a1_38super", "prob": 10 },
+      { "group": "everyday_m1911-460", "prob": 5 },
+      { "group": "everyday_raging_bull", "prob": 60 },
+      { "group": "everyday_raging_judge", "prob": 40 },
+      { "group": "everyday_tokarev", "prob": 50 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_smg_obscure",
+    "//": "Imported or otherwise very obscure SMGs.",
+    "items": [ { "group": "nested_skorpion_82", "prob": 100 }, { "group": "nested_ppsh", "prob": 150 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "carried_guns_smg_obscure",
+    "//": "Imported or otherwise very obscure SMGs. Just mags, no loose ammo.",
+    "items": [ { "group": "everyday_skorpion_82", "prob": 100 }, { "group": "everyday_ppsh", "prob": 150 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_pistol_common",
+    "//": "Pistols commonly owned by citizens and found in many locations.",
+    "items": [
+      { "group": "nested_m1911a1_38super", "prob": 15 },
+      { "group": "nested_sw_500", "prob": 25 },
+      { "group": "nested_fn57", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "carried_guns_pistol_common",
+    "//": "Pistols commonly owned by citizens and carried by them. If a gun has mags, it has no loose ammo. If it has no mags, it has loose ammo.",
+    "items": [
+      { "group": "everyday_m1911a1_38super", "prob": 15 },
+      { "group": "everyday_sw_500", "prob": 25 },
+      { "group": "everyday_fn57", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_pistol_common_display",
+    "//": "Empty pistols found exclusively in gun stores.",
+    "items": [
+      { "item": "m1911a1_38super", "prob": 15, "charges-min": 0, "charges-max": 0 },
+      { "item": "sw_500", "prob": 25, "charges-min": 0, "charges-max": 0 },
+      { "item": "fn57", "prob": 10, "charges-min": 0, "charges-max": 0 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_rifle_obscure",
+    "//": "Mostly imported or otherwise very obscure rifles.",
+    "items": [
+      { "group": "nested_trex_gun", "prob": 20 },
+      { "group": "nested_ak74", "prob": 50 },
+      { "group": "nested_an94", "prob": 40 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "carried_guns_rifle_obscure",
+    "//": "Imported or otherwise very obscure rifles. Comes with mags or loose ammo.",
+    "items": [
+      { "group": "everyday_trex_gun", "prob": 20 },
+      { "group": "everyday_ak74", "prob": 50 },
+      { "group": "everyday_an94", "prob": 40 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_hunting",
+    "//": "Guns typically used by hunters, be it rifles, shotguns or archery.",
+    "items": [
+      { "group": "nested_trex_gun", "prob": 5 },
+      { "group": "nested_bh_m89", "prob": 5 },
+      { "group": "nested_remington700_270", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_rifle_common",
+    "//": "Rifles owned by citizens and found in many locations.",
+    "items": [ { "group": "nested_bh_m89", "prob": 20 }, { "group": "nested_remington700_270", "prob": 30 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "carried_guns_rifle_common",
+    "//": "Rifles commonly owned by citizens and carried by them. Has mags or loose ammo.",
+    "items": [ { "group": "everyday_bh_m89", "prob": 20 }, { "group": "everyday_remington700_270", "prob": 30 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_rifle_common_display",
+    "//": "Empty rifles commonly found in gun stores.",
+    "items": [
+      { "item": "bh_m89", "prob": 20, "charges-min": 0, "charges-max": 0 },
+      { "item": "remington700_270", "prob": 30, "charges-min": 0, "charges-max": 0 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_cop",
+    "//": "Police issue weapons of all types",
+    "items": [ { "group": "nested_fn57", "prob": 20 }, { "group": "nested_fn_p90", "prob": 5 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "carried_guns_cop",
+    "//": "Police issue weapons of all types. Carried, so they have mags or loose ammo.",
+    "items": [ { "group": "everyday_fn57", "prob": 20 }, { "group": "everyday_fn_p90", "prob": 5 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_smg_rare",
+    "//": "SMGs including those only used by police/paramilitary forces.",
+    "items": [ { "group": "nested_fn_p90", "prob": 50 }, { "group": "nested_hk_mp7", "prob": 60 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "carried_guns_smg_rare",
+    "//": "SMGs including those only carried by police/paramilitary forces. Either mags or loose ammo are included.",
+    "items": [ { "group": "everyday_fn_p90", "prob": 50 }, { "group": "everyday_hk_mp7", "prob": 60 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_smg_milspec",
+    "//": "Military specification SMGs only ever found at military sites.",
+    "items": [ { "group": "nested_hk_mp7", "prob": 100 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "carried_guns_smg_milspec",
+    "//": "Military specification SMGs only ever carried by the military. Comes with mags or loose ammo.",
+    "items": [ { "group": "everyday_hk_mp7", "prob": 100 } ]
+  }
+]

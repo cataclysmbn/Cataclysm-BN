@@ -7,6 +7,7 @@
 #include "string_formatter.h"
 #include "path_info.h"
 #include "game.h"
+#include "world.h"
 #include "cata_utility.h"
 
 static std::string str_to_hex( const std::string &s )
@@ -31,7 +32,7 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
     CAPTURE( str_to_hex( s3 ) );
 
     // Make sure there's no interference from e.g. uncleaned old runs
-    std::string base = g->get_world_base_save_path() + "/fs_test_" +
+    std::string base = g->get_active_world()->info->folder_path() + "/fs_test_" +
                        get_pid_string() + "_" + std::to_string( serial ) + "/";
     CAPTURE( base );
     REQUIRE( !dir_exist( base ) );

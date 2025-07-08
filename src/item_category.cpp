@@ -34,7 +34,6 @@ void zone_priority_data::load( JsonObject &jo )
 {
     mandatory( jo, was_loaded, "id", id );
     optional( jo, was_loaded, "flags", flags );
-    optional( jo, was_loaded, "filthy", filthy, false );
 }
 
 void item_category::load_item_cat( const JsonObject &jo, const std::string &src )
@@ -90,14 +89,6 @@ std::optional<zone_type_id> item_category::zone() const
 std::optional<zone_type_id> item_category::priority_zone( const item &it ) const
 {
     for( const zone_priority_data &zone_dat : zone_priority_ ) {
-        if( zone_dat.filthy ) {
-            if( it.is_filthy() ) {
-                return zone_dat.id;
-
-            } else {
-                continue;
-            }
-        }
         if( it.has_any_flag( zone_dat.flags ) ) {
             return zone_dat.id;
         }

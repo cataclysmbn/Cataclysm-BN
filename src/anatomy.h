@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ANATOMY_H
-#define CATA_SRC_ANATOMY_H
 
 #include <string>
 #include <vector>
@@ -57,5 +55,3 @@ class anatomy
 };
 
 extern anatomy_id human_anatomy;
-
-#endif // CATA_SRC_ANATOMY_H

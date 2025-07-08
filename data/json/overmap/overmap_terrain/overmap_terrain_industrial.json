@@ -986,9 +986,8 @@
   {
     "type": "overmap_terrain",
     "id": "industrial_center_light_industry_roof",
-    "copy-from": "generic_city_building_no_sidewalk",
-    "name": "light industry roof",
-    "color": "dark_gray"
+    "copy-from": "industrial_center_light_industry",
+    "name": "light industry roof"
   },
   {
     "type": "overmap_terrain",
@@ -1048,9 +1047,8 @@
   {
     "type": "overmap_terrain",
     "id": "industrial_center_data_center_roof",
-    "name": "data center roof",
-    "copy-from": "generic_city_building_no_sidewalk",
-    "color": "light_gray"
+    "copy-from": "industrial_center_data_center",
+    "name": "data center roof"
   },
   {
     "type": "overmap_terrain",
@@ -1063,8 +1061,8 @@
   {
     "type": "overmap_terrain",
     "id": "industrial_center_admin_roof",
-    "name": "administration roof",
-    "copy-from": "industrial_center_admin"
+    "copy-from": "industrial_center_admin",
+    "name": "administration roof"
   },
   {
     "type": "overmap_terrain",

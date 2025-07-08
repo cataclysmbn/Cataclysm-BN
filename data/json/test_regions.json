@@ -125,7 +125,8 @@
         "s_hardware": 2,
         "police": 1,
         "s_lot": 6
-      }
+      },
+      "finales": { "Military Outpost": 200 }
     },
     "weather": {
       "spring_temp": 16,
@@ -250,7 +251,8 @@
     "symbol": ".",
     "color": "light_gray",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "DIGGABLE", "FLAT" ]
+    "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
+    "flags": [ "TRANSPARENT", "FLAT" ]
   },
   {
     "type": "furniture",

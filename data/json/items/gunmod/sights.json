@@ -91,7 +91,7 @@
     "id": "improve_sights",
     "type": "GUNMOD",
     "name": { "str_sp": "iron sights" },
-    "description": "A basic set of iron sights",
+    "description": "A basic set of removable iron sights, suitable as a backup if a gun doesn't come with its own optics.",
     "weight": "60 g",
     "volume": "250 ml",
     "integral_volume": "0 ml",

@@ -158,5 +158,65 @@
     "type": "item_group",
     "id": "mass_grave_casings",
     "items": [ [ "223_casing", 60 ], [ "308_casing", 20 ], [ "shot_hull", 20 ] ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "map_extra_supplydrop",
+    "//": "40% food and drugs (favoring more basic first aid), 20% assorted accessories/wearables, 20% explosives (weighted a bit towards standard frag grenades), 20% magazines and ammo",
+    "//2": "Ammo spawns are 25% STANAGs, 25% pistol mags plus shotshells, 30% non-standard rifle magazines, and 20% ammo belts",
+    "ammo": 100,
+    "entries": [
+      {
+        "distribution": [
+          { "group": "mil_food_nodrugs", "prob": 40, "count": [ 1, 2 ] },
+          { "group": "mil_food", "prob": 40 },
+          { "group": "drugs_soldier", "prob": 20 }
+        ],
+        "prob": 40
+      },
+      {
+        "distribution": [
+          { "group": "mil_accessories", "prob": 50 },
+          { "group": "clothing_tactical_torso", "prob": 25 },
+          { "group": "clothing_tactical_leg", "prob": 25 }
+        ],
+        "prob": 20
+      },
+      {
+        "distribution": [
+          { "group": "grenades", "prob": 50 },
+          { "group": "military_standard_grenades", "prob": 25 },
+          { "group": "ammo_launcher_grenade", "prob": 25 }
+        ],
+        "prob": 20
+      },
+      {
+        "distribution": [
+          { "item": "p320mag_17rd_9x19mm", "ammo-group": "on_hand_9mm", "prob": 5, "count": [ 1, 2 ] },
+          { "group": "nested_m9_mag", "prob": 5, "count": [ 1, 2 ] },
+          { "group": "nested_m1911_mag", "prob": 5, "count": [ 1, 2 ] },
+          { "group": "on_hand_shot", "prob": 10, "count": [ 2, 3 ] },
+          { "group": "nested_stanag_mag", "prob": 25, "count": [ 1, 2 ] },
+          {
+            "distribution": [
+              { "group": "nested_mp5_mag", "prob": 5, "count": [ 1, 2 ] },
+              { "group": "nested_stanag_mag_300", "prob": 5, "count": [ 1, 2 ] },
+              { "group": "nested_hk417_13_mag", "prob": 5, "count": [ 1, 2 ] },
+              { "group": "nested_m14_mag", "prob": 5, "count": [ 1, 2 ] },
+              { "group": "nested_scar_h_mag", "prob": 5, "count": [ 1, 2 ] },
+              { "item": "m107a1mag", "ammo-group": "on_hand_50", "prob": 5, "count": [ 1, 2 ] },
+              { "item": "tac50mag", "ammo-group": "on_hand_50", "prob": 5, "count": [ 1, 2 ] },
+              { "item": "m2010mag", "ammo-group": "on_hand_300", "prob": 5, "count": [ 1, 2 ] }
+            ],
+            "prob": 30
+          },
+          { "item": "belt223", "ammo-group": "on_hand_223", "prob": 10 },
+          { "item": "belt308", "ammo-group": "on_hand_308", "prob": 5 },
+          { "item": "belt50", "ammo-group": "on_hand_50", "prob": 5 }
+        ],
+        "prob": 20
+      }
+    ]
   }
 ]

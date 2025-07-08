@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_PATH_INFO_H
-#define CATA_SRC_PATH_INFO_H
 
 #include <string>
 
@@ -57,7 +55,6 @@ std::string mods_replacements();
 std::string mods_dev_default();
 std::string mods_user_default();
 std::string soundpack_conf();
-std::string lua_doc_output();
 
 std::string credits();
 std::string motd();
@@ -74,4 +71,4 @@ void set_motd( const std::string &motd );
 
 } // namespace PATH_INFO
 
-#endif // CATA_SRC_PATH_INFO_H
+

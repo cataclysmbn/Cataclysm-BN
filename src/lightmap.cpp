@@ -1,6 +1,7 @@
 #include "lightmap.h" // IWYU pragma: associated
 #include "shadowcasting.h" // IWYU pragma: associated
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -229,8 +230,8 @@ bool map::build_vision_transparency_cache( const Character &player )
                 dirty = true;
                 vision_transparency_cache[i] = VISION_ADJUST_SOLID;
             } else {
-                if( std::find( four_diagonal_offsets.begin(), four_diagonal_offsets.end(),
-                               adjacent ) != four_diagonal_offsets.end() ) {
+                if( std::ranges::find( four_diagonal_offsets,
+                                       adjacent ) != four_diagonal_offsets.end() ) {
                     const optional_vpart_position adjacent_vp = veh_at( p + adjacent );
 
                     point adjacent_mount;
@@ -1483,8 +1484,8 @@ void map::apply_vision_transparency_cache( const tripoint &center, int target_z,
             transparency_cache[p.x][p.y] = LIGHT_TRANSPARENCY_SOLID;
         } else if( vision_transparency_cache[i] == VISION_ADJUST_HIDDEN ) {
 
-            if( std::find( four_diagonal_offsets.begin(), four_diagonal_offsets.end(),
-                           adjacent ) == four_diagonal_offsets.end() ) {
+            if( std::ranges::find( four_diagonal_offsets,
+                                   adjacent ) == four_diagonal_offsets.end() ) {
                 debugmsg( "Hidden tile not on a diagonal" );
                 continue;
             }

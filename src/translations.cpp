@@ -58,7 +58,7 @@ std::string gettext_gendered( const GenderMap &genders, const std::string &msg )
         // default if no match
         std::string chosen_gender = language_genders[0];
         for( const std::string &gender : subject_genders.second ) {
-            if( std::find( language_genders.begin(), language_genders.end(), gender ) !=
+            if( std::ranges::find( language_genders, gender ) !=
                 language_genders.end() ) {
                 chosen_gender = gender;
                 break;

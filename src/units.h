@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UNITS_H
-#define CATA_SRC_UNITS_H
 
 #include <limits>
 #include <ostream>
@@ -115,4 +113,4 @@ static const std::vector<std::pair<std::string, probability>> probability_units 
 };
 } // namespace units
 
-#endif // CATA_SRC_UNITS_H
+

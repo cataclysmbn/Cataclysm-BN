@@ -605,18 +605,7 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( orientation faci
             ret.occupied_zone.emplace_back( x, y );
         }
     }
-    for( int part_num : driven_veh.rotors ) {
-        const vehicle_part &part = driven_veh.cpart( part_num );
-        const int diameter = part.info().rotor_diameter();
-        const int radius = ( diameter + 1 ) / 2;
-        if( radius > 0 ) {
-            tripoint pos;
-            driven_veh.coord_translate( angle, pivot, part.mount, pos );
-            for( tripoint pt : points_in_radius( pos, radius ) ) {
-                ret.occupied_zone.emplace_back( pt.xy() );
-            }
-        }
-    }
+
     // figure out the maximum amount of displacement that can happen from advancing the
     // tileray a single step by advancing it a bunch of times and reducing the x and y
     // components of the displacement to at most 1

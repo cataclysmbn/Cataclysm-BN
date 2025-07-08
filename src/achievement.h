@@ -1,5 +1,4 @@
-#ifndef CATA_SRC_ACHIEVEMENT_H
-#define CATA_SRC_ACHIEVEMENT_H
+#pragma once
 
 #include <array>
 #include <functional>
@@ -262,4 +261,3 @@ achievement_completion skill_req_completed( const achievement &ach );
 /** Uses comparator supplied to compare target and supplied value. Only works on integers.*/
 bool ach_compare( const achievement_comparison symbol, const int target, const int to_compare );
 
-#endif // CATA_SRC_ACHIEVEMENT_H

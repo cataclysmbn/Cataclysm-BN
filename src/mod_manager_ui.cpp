@@ -154,7 +154,7 @@ static void check_conflicts( const mod_id &mod, const std::vector<mod_id> &activ
 
 ret_val<bool> mod_ui::try_add( const mod_id &mod_to_add, std::vector<mod_id> &active_list )
 {
-    if( std::find( active_list.begin(), active_list.end(), mod_to_add ) != active_list.end() ) {
+    if( std::ranges::find( active_list, mod_to_add ) != active_list.end() ) {
         // The same mod can not be added twice. That makes no sense.
         return ret_val<bool>::make_failure( _( "The mod is already on the list." ) );
     }
@@ -200,7 +200,7 @@ ret_val<bool> mod_ui::try_add( const mod_id &mod_to_add, std::vector<mod_id> &ac
         std::vector<mod_id> mods_to_add;
         bool new_core = false;
         for( auto &i : dependencies ) {
-            if( std::find( active_list.begin(), active_list.end(), i ) == active_list.end() ) {
+            if( std::ranges::find( active_list, i ) == active_list.end() ) {
                 if( i->core ) {
                     mods_to_add.insert( mods_to_add.begin(), i );
                     new_core = true;
@@ -241,12 +241,12 @@ void mod_ui::try_rem( size_t selection, std::vector<mod_id> &active_list )
 
     // search through the rest of the active list for mods that depend on this one
     for( auto &i : dependents ) {
-        auto rem = std::find( active_list.begin(), active_list.end(), i );
+        auto rem = std::ranges::find( active_list, i );
         if( rem != active_list.end() ) {
             active_list.erase( rem );
         }
     }
-    std::vector<mod_id>::iterator rem = std::find( active_list.begin(), active_list.end(),
+    std::vector<mod_id>::iterator rem = std::ranges::find( active_list,
                                         sel_string );
     if( rem != active_list.end() ) {
         active_list.erase( rem );
@@ -314,7 +314,7 @@ bool mod_ui::can_shift_up( size_t selection, const std::vector<mod_id> &active_l
 
     mod_id newsel_id = active_list[newsel];
     bool newsel_is_dependency =
-        std::find( dependencies.begin(), dependencies.end(), newsel_id ) != dependencies.end();
+        std::ranges::find( dependencies, newsel_id ) != dependencies.end();
 
     return !newsel_id->core && !newsel_is_dependency;
 }
@@ -339,7 +339,7 @@ bool mod_ui::can_shift_down( size_t selection, const std::vector<mod_id> &active
     mod_id modstring = active_list[newsel];
     mod_id selstring = active_list[oldsel];
     bool sel_is_dependency =
-        std::find( dependents.begin(), dependents.end(), selstring ) != dependents.end();
+        std::ranges::find( dependents, selstring ) != dependents.end();
 
     return !modstring->core && !sel_is_dependency;
 }

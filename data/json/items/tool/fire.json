@@ -29,12 +29,13 @@
         ]
       ]
     ],
-    "flags": [ "FIRESTARTER" ]
+    "flags": [ "FIRESTARTER" ],
+    "category": "tools_cooking"
   },
   {
     "id": "fire_drill",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "fire drill" },
     "description": "This fire drill is a simple item for starting fires; it is made from two pieces of wood and some string.  Since it is constructed out of simple materials, it's slow and rather difficult to get a fire started using this tool.",
     "weight": "240 g",
@@ -53,7 +54,7 @@
   {
     "id": "fire_drill_large",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "camp fire drill" },
     "description": "This stout fire drill is a simple item for starting fires; it is made from two pieces of wood and some string.  Since it is constructed out of simple materials, it's slow and rather difficult to get a fire started using this tool.",
     "weight": "1280 g",
@@ -72,7 +73,7 @@
   {
     "id": "flint_steel",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "flint and steel", "str_pl": "sets of flint and steel" },
     "description": "This is a magnesium bar and a carbon steel striker.  Use it to spark a flame.",
     "weight": "400 g",
@@ -92,7 +93,7 @@
   {
     "id": "lighter",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "lighter" },
     "description": "This is a disposable plastic lighter.  A lighter must be carried to use various drugs, like cigarettes, or to light things like Molotov cocktails.  You can also use a lighter to light nearby items on fire.",
     "weight": "14 g",
@@ -111,7 +112,7 @@
   {
     "id": "magnifying_glass",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "magnifying glass", "str_pl": "magnifying glasses" },
     "description": "This is a magnifying glass.  May be useful for starting fires during sunny skies.",
     "weight": "400 g",
@@ -128,7 +129,7 @@
   {
     "id": "matches",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "matchbook" },
     "description": "This is a small book of matches with a coarse strike surface on the outside flap.  Matches must be carried to use various drugs like cigarettes, or to light things like Molotov cocktails.  You can also use matches to light nearby items on fire.",
     "weight": "10 g",
@@ -147,7 +148,7 @@
   {
     "id": "ref_lighter",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "refillable lighter" },
     "description": "This is a lighter featuring a flip top cover and refuelable tank.  A lighter must be carried to use various drugs, like cigarettes, or to light things like Molotov cocktails.  You can also use a lighter to light nearby items on fire.",
     "weight": "20 g",
@@ -179,7 +180,7 @@
   {
     "id": "ref_lighter_on",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "refillable lighter" },
     "description": "This is a lighter featuring a flip top cover and refuelable tank.  It is lit.",
     "weight": "20 g",
@@ -210,7 +211,7 @@
   {
     "id": "tinderbox",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "ember carrier" },
     "description": "This is a small container for holding tinder, with holes punched in it to provide a controlled airflow.  It can nurture a smoldering ember for a long time, to start fires without modern tools.",
     "weight": "500 g",
@@ -236,7 +237,7 @@
   {
     "id": "tinderbox_on",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "ember carrier (lit)", "str_pl": "ember carriers (lit)" },
     "description": "This is a small container for holding tinder, with holes punched in it to provide a controlled airflow.  An ember is smoldering inside it, and can be used to start a campfire.",
     "weight": "500 g",

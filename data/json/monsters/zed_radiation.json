@@ -30,7 +30,7 @@
     "special_attacks": [ [ "LONGSWIPE", 8 ], { "id": "scratch", "damage_max_instance": [ { "damage_type": "cut", "amount": 21 } ] } ],
     "death_drops": "mon_necropolis_general_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON" ]
   },
   {
     "id": "mon_irradiated_wanderer_1",
@@ -63,7 +63,7 @@
     "special_attacks": [ [ "LUNGE", 20 ] ],
     "death_drops": "mon_necropolis_general_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON" ]
   },
   {
     "id": "mon_irradiated_wanderer_2",
@@ -97,7 +97,7 @@
     "special_attacks": [ [ "LUNGE", 15 ] ],
     "death_drops": "mon_necropolis_general_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON" ]
   },
   {
     "id": "mon_irradiated_wanderer_3",
@@ -131,7 +131,7 @@
     "special_attacks": [ [ "LUNGE", 10 ] ],
     "death_drops": "mon_necropolis_general_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON" ]
   },
   {
     "id": "mon_irradiated_wanderer_4",
@@ -165,6 +165,6 @@
     "special_attacks": [ [ "LUNGE", 5 ] ],
     "death_drops": "mon_necropolis_general_death_drops",
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "NOGIB", "POISON" ]
   }
 ]

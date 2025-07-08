@@ -31,7 +31,7 @@
 
 ### 실행 파일
 
-[![Stable][stable-releases-badge]][stable-releases] [![Recent][all-releases-badge]][all-releases]
+[![Stable][stable-releases-badge]][stable-releases] [![Recent][all-releases-badge]][all-releases] [![Experiemental][experimental-badge]][experimental-releases]
 
 ### 소스 코드
 
@@ -41,6 +41,8 @@
 [stable-releases-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=success&label=안정판
 [all-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases?q=prerelease%3Atrue&expanded=true "실험판 실행 파일 내려받기"
 [all-releases-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=important&label=최신%20실험판&include_prereleases&sort=date
+[experimental-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases/tag/experimental
+[experimental-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=salmon&label=Experimental%20Release&include_prereleases&sort=date
 [source]: https://github.com/cataclysmbnteam/Cataclysm-BN/archive/master.zip "소스 코드를 .zip 아카이브로 다운로드할 수 있습니다"
 [source-badge]: https://img.shields.io/badge/ZIP%20아카이브로%20내려받기-black?style=for-the-badge&logo=github
 [clone]: https://github.com/cataclysmbnteam/Cataclysm-BN/ "GitHub 저장소에서 클론할 수 있습니다"

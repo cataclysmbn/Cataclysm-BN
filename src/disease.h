@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DISEASE_H
-#define CATA_SRC_DISEASE_H
 
 #include <optional>
 #include <set>
@@ -38,4 +36,4 @@ class disease_type
         LUA_TYPE_OPS( disease_type, id );
 
 };
-#endif // CATA_SRC_DISEASE_H
+

@@ -1,5 +1,6 @@
 #include "output.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <cctype>
 #include <cstdio>
@@ -1128,7 +1129,7 @@ std::vector<size_t> get_tag_positions( const std::string &s )
         ret.push_back( pos );
         pos = s.find( "</color>", pos + 1, 8 );
     }
-    std::sort( ret.begin(), ret.end() );
+    std::ranges::sort( ret );
     return ret;
 }
 
@@ -1294,7 +1295,7 @@ void draw_tabs( const catacurses::window &w, const std::vector<std::string> &tab
 void draw_tabs( const catacurses::window &w, const std::vector<std::string> &tab_texts,
                 const std::string &current_tab )
 {
-    auto it = std::find( tab_texts.begin(), tab_texts.end(), current_tab );
+    auto it = std::ranges::find( tab_texts, current_tab );
     assert( it != tab_texts.end() );
     draw_tabs( w, tab_texts, it - tab_texts.begin() );
 }

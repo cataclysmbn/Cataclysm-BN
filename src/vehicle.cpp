@@ -50,14 +50,12 @@
 #include "map_iterator.h"
 #include "mapbuffer.h"
 #include "mapdata.h"
-#include "math_defines.h"
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"
 #include "options.h"
 #include "output.h"
 #include "overmapbuffer.h"
-#include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
 #include "point_float.h"
@@ -69,10 +67,7 @@
 #include "translations.h"
 #include "units_utility.h"
 #include "veh_type.h"
-#include "vehicle_move.h"
-#include "vehicle_selector.h"
 #include "weather.h"
-#include "weather_gen.h"
 
 /*
  * Speed up all those if ( blarg == "structure" ) statements that are used everywhere;
@@ -392,7 +387,7 @@ vehicle::vehicle() : vehicle( vproto_id() )
 
 vehicle::~vehicle() = default;
 
-bool vehicle::player_in_control( const Character &p ) const
+bool vehicle::player_in_control( const Character &who ) const
 {
     // Debug switch to prevent vehicles from skidding
     // without having to place the player in them.
@@ -400,19 +395,19 @@ bool vehicle::player_in_control( const Character &p ) const
         return true;
     }
 
-    const optional_vpart_position vp = g->m.veh_at( p.pos() );
+    const optional_vpart_position vp = g->m.veh_at( who.pos() );
     if( vp && &vp->vehicle() == this &&
         ( ( part_with_feature( vp->part_index(), "CONTROL_ANIMAL", true ) >= 0 &&
             has_engine_type( fuel_type_animal, false ) && has_harnessed_animal() ) ||
           ( part_with_feature( vp->part_index(), VPFLAG_CONTROLS, false ) >= 0 ) ) &&
-        p.controlling_vehicle ) {
+        who.controlling_vehicle ) {
         return true;
     }
 
-    return remote_controlled( p );
+    return remote_controlled( who );
 }
 
-bool vehicle::remote_controlled( const Character &p ) const
+bool vehicle::remote_controlled( const Character &who ) const
 {
     vehicle *veh = g->remoteveh();
     if( veh != this ) {
@@ -420,7 +415,7 @@ bool vehicle::remote_controlled( const Character &p ) const
     }
 
     for( const vpart_reference &vp : get_avail_parts( "REMOTE_CONTROLS" ) ) {
-        if( rl_dist( p.pos(), vp.pos() ) <= 40 ) {
+        if( rl_dist( who.pos(), vp.pos() ) <= 40 ) {
             return true;
         }
     }
@@ -2355,10 +2350,10 @@ bool vehicle::find_and_split_vehicles( int exclude )
     return false;
 }
 
-void vehicle::relocate_passengers( const std::vector<player *> &passengers )
+void vehicle::relocate_passengers( const std::vector<Character *> &passengers )
 {
     const auto boardables = get_avail_parts( "BOARDABLE" );
-    for( player *passenger : passengers ) {
+    for( auto *passenger : passengers ) {
         for( const vpart_reference &vp : boardables ) {
             if( vp.part().passenger_id == passenger->getID() ) {
                 passenger->setpos( vp.pos() );
@@ -2434,7 +2429,7 @@ bool vehicle::split_vehicles( const std::vector<std::vector <int>> &new_vehs,
         }
         new_vehicle->last_fluid_check = last_fluid_check;
 
-        std::vector<player *> passengers;
+        std::vector<Character *> passengers;
         for( size_t new_part = 0; new_part < split_parts.size(); new_part++ ) {
             int mov_part = split_parts[ new_part ];
             point cur_mount = parts[ mov_part ].mount;
@@ -2958,12 +2953,12 @@ std::vector<int> vehicle::all_parts_at_location( const std::string &location ) c
 // as the part index was first "chosen" before the NPC started traveling here.
 // therefore the part index is now invalid shifted by one or two ( depending on how many other NPCs working on this vehicle )
 // so loop over the part indexes in reverse order to get the next one down that matches the part type we wanted to remove
-int vehicle::get_next_shifted_index( int original_index, player &p )
+int vehicle::get_next_shifted_index( int original_index, Character &who )
 {
     int ret_index = original_index;
     bool found_shifted_index = false;
     for( std::vector<vehicle_part>::reverse_iterator it = parts.rbegin(); it != parts.rend(); ++it ) {
-        if( p.get_value( "veh_index_type" ) == it->info().name() ) {
+        if( who.get_value( "veh_index_type" ) == it->info().name() ) {
             ret_index = index_of_part( &*it );
             found_shifted_index = true;
             break;
@@ -6644,24 +6639,46 @@ void vehicle::damage_all( int dmg1, int dmg2, damage_type type, point impact )
     if( dmg2 < dmg1 ) {
         std::swap( dmg1, dmg2 );
     }
-
     if( dmg1 < 1 ) {
         return;
     }
-
+    const float damage_min = std::abs( dmg1 );
+    const float damage_max = std::abs( dmg2 );
+    add_msg( m_debug, "Shock damage to vehicle of %.2f to %.2f", damage_min, damage_max );
     for( const vpart_reference &vp : get_all_parts() ) {
         const size_t p = vp.part_index();
+        const vpart_info &shockpart = part_info( p );
         int distance = 1 + square_dist( vp.mount(), impact );
         if( distance > 1 ) {
             int net_dmg = rng( dmg1, dmg2 ) / ( distance * distance );
-            if( part_info( p ).location != part_location_structure ||
-                !part_info( p ).has_flag( "PROTRUSION" ) ) {
+            if( shockpart.location != part_location_structure ||
+                !shockpart.has_flag( "PROTRUSION" ) ) {
+                if( shockpart.has_flag( "SHOCK_IMMUNE" ) ) {
+                    net_dmg = 0;
+                    continue;
+                }
                 int shock_absorber = part_with_feature( p, "SHOCK_ABSORBER", true );
                 if( shock_absorber >= 0 ) {
-                    net_dmg = std::max( 0, net_dmg - parts[ shock_absorber ].info().bonus );
+                    net_dmg = std::max( 0.0f, net_dmg - ( parts[ shock_absorber ].info().bonus ) -
+                                        shockpart.damage_reduction.type_resist( type ) );
+                }
+                if( shockpart.has_flag( "SHOCK_RESISTANT" ) ) {
+                    float damage_resist = 0;
+                    for( const int elem : all_parts_at_location( shockpart.location ) ) {
+                        //Original intent was to find the frame that the part was mounted on and grab that objects resistance, but instead we will go with half the largest damage resist in the stack.
+                        damage_resist = std::max( damage_resist, part_info( elem ).damage_reduction.type_resist( type ) );
+                    }
+                    damage_resist = damage_resist / 2;
+
+                    add_msg( m_debug, "%1s inherited %.1f damage resistance!", shockpart.name(), damage_resist );
+                    net_dmg = std::max( 0.0f, net_dmg - damage_resist );
                 }
             }
-            damage_direct( p, net_dmg, type );
+            if( net_dmg > part_info( p ).damage_reduction.type_resist( type ) ) {
+                damage_direct( p, net_dmg, type );
+                add_msg( m_debug, _( "%1s took %.1f damage from shock." ), part_info( p ).name(), 1.0f * net_dmg );
+            }
+
         }
     }
 }
@@ -6826,6 +6843,66 @@ bool vehicle::explode_fuel( int p, damage_type type )
     }
 
     return true;
+}
+
+unsigned int vehicle::hits_to_destroy( int p, int dmg, damage_type type ) const
+{
+    const int armor_part = part_with_feature( p, VPFLAG_ARMOR, true );
+    const bool is_armor_considered = !(
+                                         armor_part < 0 ||
+                                         part_flag( p, VPFLAG_ROOF ) ||
+                                         part_info( p ).location == "on_roof"
+                                     );
+
+
+    const int part_hp = parts[p].hp();
+    const int part_damage_reduction = part_info( p ).damage_reduction.type_resist( type );
+    const int part_threshold_damage = std::clamp( part_info( p ).durability / 10, 1, 20 );
+
+    const int part_dmg_without_armor = dmg - part_damage_reduction;
+
+    // Easiest case: part will not get destroyed, period
+    if( part_dmg_without_armor <= 0 ||
+        ( type != DT_TRUE &&
+          part_dmg_without_armor < part_threshold_damage ) ) {
+        return 0;
+    }
+
+    // Easy case: part unprotected and will be destroyed
+    if( !is_armor_considered ) {
+        const int part_htd = part_hp / part_dmg_without_armor +
+                             ( part_hp % part_dmg_without_armor > 0 );
+        return part_htd;
+    }
+
+    const int armor_hp = parts[armor_part].hp();
+    const int armor_damage_reduction = part_info( armor_part ).damage_reduction.type_resist( type );
+    const int armor_threshold_damage = std::clamp( part_info( armor_part ).durability / 10, 1, 20 );
+    const int armor_dmg = dmg - armor_damage_reduction;
+
+    // First, determine how long armor will remain for
+    const int armor_htd = armor_dmg <= 0 || ( type != DT_TRUE && armor_dmg < armor_threshold_damage ) ?
+                          INT_MAX :
+                          armor_hp / armor_dmg + ( armor_hp % armor_dmg > 0 );
+
+    const int part_dmg_with_armor = part_dmg_without_armor - armor_damage_reduction;
+    // How long will the part remain with armor unbroken?
+    const int part_htd_with_armor = ( part_dmg_with_armor <= 0 ||
+                                      ( type != DT_TRUE && part_dmg_with_armor < part_threshold_damage ) ) ?
+                                    INT_MAX :
+                                    part_hp / part_dmg_with_armor + ( part_hp % part_dmg_with_armor  > 0 );
+
+    // Part gets destroyed before armor does
+    if( part_htd_with_armor <= armor_htd ) {
+        return part_htd_with_armor;
+    }
+
+    // Armor gets destroyed before part does
+    const int part_hp_after_armor = part_hp - armor_htd * std::max( part_dmg_with_armor, 0 );
+    const int part_htd_after_armor = part_hp_after_armor / part_dmg_without_armor +
+                                     ( part_hp_after_armor % part_dmg_without_armor  > 0 );
+
+    return armor_htd + part_htd_after_armor;
 }
 
 int vehicle::damage_direct( int p, int dmg, damage_type type )

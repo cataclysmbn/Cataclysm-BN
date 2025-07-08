@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MARTIALARTS_H
-#define CATA_SRC_MARTIALARTS_H
 
 #include <cstddef>
 #include <set>
@@ -63,6 +61,9 @@ struct ma_requirements {
 
     /** Weapon categories compatible with this requirement. If empty, allow any weapon category. */
     std::vector<weapon_category_id> weapon_categories_allowed;
+
+    // A list of mutations that are compatible with the technique (i.e. without them no technique usage for you)
+    std::vector<trait_id> mutations_required;
 
     /** Minimum amount of given skill to trigger this bonus */
     std::vector<std::pair<skill_id, int>> min_skill;
@@ -157,6 +158,8 @@ class ma_technique
         float move_cost_multiplier( const Character &u ) const;
         float move_cost_penalty( const Character &u ) const;
         float armor_penetration( const Character &u, damage_type type ) const;
+
+        LUA_TYPE_OPS( ma_technique, id );
 };
 
 class ma_buff
@@ -286,6 +289,8 @@ class martialart
         std::set<matec_id> techniques; // all available techniques
         std::set<itype_id> weapons; // all style weapons
         std::set<weapon_category_id> weapon_category; // all style weapon categories
+        std::set<trait_id>
+        mutation; // style-based necessary mutations (if set, need at least 1 to use style)
         bool strictly_unarmed = false; // Punch daggers etc.
         bool strictly_melee = false; // Must have a weapon.
         bool allow_melee = false; // Can use unarmed or with ANY weapon
@@ -332,4 +337,4 @@ std::vector<matype_id> autolearn_martialart_types();
 /** Returns true if the character can learn the entered martial art */
 bool can_autolearn_martial_art( const Character &who, const matype_id &ma_id );
 
-#endif // CATA_SRC_MARTIALARTS_H
+

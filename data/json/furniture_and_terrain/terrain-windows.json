@@ -158,6 +158,64 @@
   },
   {
     "type": "terrain",
+    "id": "t_window_empty_taped",
+    "looks_like": "t_window_taped",
+    "copy-from": "t_window_taped",
+    "name": "taped window",
+    "description": "An empty window.  This one has been blocked out with duct tape.  You could remove the duct tape by cutting it off.",
+    "//": "Taped window without curtains",
+    "symbol": "\"",
+    "color": "dark_gray",
+    "move_cost": 0,
+    "delete": { "flags": [ "TRANSPARENT", "NO_SCENT", "BARRICADABLE_WINDOW", "CONNECT_TO_WALL" ] },
+    "extend": { "flags": [ "WALL" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_window_empty_domestic_taped",
+    "looks_like": "t_window_taped",
+    "copy-from": "t_window_taped",
+    "name": "taped window",
+    "description": "An empty window.  This one has been blocked out with duct tape.  You could remove the duct tape by cutting it off.",
+    "//": "Taped window without curtains",
+    "symbol": "\"",
+    "color": "dark_gray",
+    "move_cost": 0,
+    "delete": { "flags": [ "TRANSPARENT", "NO_SCENT", "BARRICADABLE_WINDOW", "CONNECT_TO_WALL" ] },
+    "extend": { "flags": [ "WALL" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_wall_glass_taped",
+    "looks_like": "t_window_taped",
+    "copy-from": "t_window_taped",
+    "name": "taped glass wall",
+    "description": "A glass wall.  This one has been blocked out with duct tape.  You could remove the duct tape by cutting it off.",
+    "//": "Taped window without curtains",
+    "symbol": "\"",
+    "color": "dark_gray",
+    "move_cost": 0,
+    "delete": { "flags": [ "TRANSPARENT", "NO_SCENT", "BARRICADABLE_WINDOW", "CONNECT_TO_WALL" ] },
+    "extend": { "flags": [ "WALL" ] },
+    "bash": { "items": [ { "item": "glass_shard", "count": [ 2, 5 ] } ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_wall_glass_alarm_taped",
+    "looks_like": "t_window_taped",
+    "copy-from": "t_window_taped",
+    "name": "taped glass wall",
+    "description": "A glass wall.  This one has been blocked out with duct tape.  You could remove the duct tape by cutting it off.",
+    "//": "Taped window without curtains",
+    "symbol": "\"",
+    "color": "dark_gray",
+    "move_cost": 0,
+    "delete": { "flags": [ "TRANSPARENT", "NO_SCENT", "BARRICADABLE_WINDOW", "CONNECT_TO_WALL" ] },
+    "extend": { "flags": [ "WALL", "ALARMED" ] },
+    "bash": { "items": [ { "item": "glass_shard", "count": [ 2, 5 ] } ] }
+  },
+  {
+    "type": "terrain",
     "id": "t_window_domestic_taped",
     "copy-from": "t_window_no_curtains_taped",
     "name": "taped window",
@@ -403,6 +461,8 @@
     "coverage": 95,
     "roof": "t_flat_roof",
     "flags": [ "FLAMMABLE", "NOITEM", "NO_SCENT", "CONNECT_TO_WALL", "BLOCK_WIND" ],
+    "nail_pull_result": "t_window_frame",
+    "nail_pull_items": [ 8, 4 ],
     "bash": {
       "str_min": 3,
       "str_max": 30,
@@ -427,6 +487,8 @@
     "coverage": 95,
     "roof": "t_flat_roof",
     "flags": [ "FLAMMABLE", "NOITEM", "NO_SCENT", "CONNECT_TO_WALL", "BLOCK_WIND" ],
+    "nail_pull_result": "t_window_empty",
+    "nail_pull_items": [ 8, 4 ],
     "bash": {
       "str_min": 3,
       "str_max": 30,
@@ -451,6 +513,8 @@
     "coverage": 95,
     "roof": "t_flat_roof",
     "flags": [ "FLAMMABLE", "NOITEM", "NO_SCENT", "CONNECT_TO_WALL", "BLOCK_WIND" ],
+    "nail_pull_result": "t_window_boarded",
+    "nail_pull_items": [ 16, 8 ],
     "bash": {
       "str_min": 12,
       "str_max": 30,
@@ -473,6 +537,8 @@
     "coverage": 95,
     "roof": "t_flat_roof",
     "flags": [ "FLAMMABLE", "NOITEM", "REDUCE_SCENT", "CONNECT_TO_WALL", "BLOCK_WIND" ],
+    "nail_pull_result": "t_window_boarded_noglass",
+    "nail_pull_items": [ 16, 8 ],
     "bash": {
       "str_min": 12,
       "str_max": 30,
@@ -561,6 +627,12 @@
     "roof": "t_flat_roof",
     "flags": [ "TRANSPARENT", "NOITEM", "CONNECT_TO_WALL", "THIN_OBSTACLE", "PERMEABLE" ],
     "oxytorch": { "result": "t_window_empty", "duration": "9 seconds", "byproducts": [ { "item": "rebar", "count": [ 1, 2 ] } ] },
+    "hacksaw": {
+      "result": "t_window_empty",
+      "duration": "10 minutes",
+      "message": "You finish cutting the metal.",
+      "byproducts": [ { "item": "rebar", "count": [ 1, 8 ] } ]
+    },
     "bash": {
       "str_min": 60,
       "str_max": 250,

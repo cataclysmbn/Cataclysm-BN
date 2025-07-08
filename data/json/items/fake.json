@@ -31,6 +31,7 @@
     "max_charges": 10000,
     "use_action": [ "HAMMER", "CROWBAR" ],
     "qualities": [
+      [ "HOSE", 1 ],
       [ "HAMMER", 3 ],
       [ "HAMMER_FINE", 1 ],
       [ "SAW_W", 1 ],
@@ -43,9 +44,23 @@
       [ "SCREW_FINE", 1 ],
       [ "CUT", 1 ],
       [ "PRY", 1 ],
+      [ "CUT_M", 2 ],
+      [ "PULL_FINE", 2 ],
+      [ "HV_INSULATION", 2 ],
       [ "DRILL", 3 ],
       [ "BUTCHER", -38 ]
     ]
+  },
+  {
+    "id": "voltmeter_bionic",
+    "sub": "voltmeter",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str": "integrated voltmeter" },
+    "flags": [ "TRADER_AVOID", "USES_BIONIC_POWER" ],
+    "max_charges": 10000,
+    "qualities": [ [ "VOLT_MEASURE", 1 ] ],
+    "use_action": [ "REPORT_GRID_CHARGE", "REPORT_GRID_CONNECTIONS", "MODIFY_GRID_CONNECTIONS" ]
   },
   {
     "id": "fake_goggles",
@@ -233,6 +248,31 @@
     "flags": [ "USES_GRID_POWER" ]
   },
   {
+    "id": "fake_gridgunkit",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str": "grid gunsmith repair kit" },
+    "sub": "large_repairkit",
+    "max_charges": 1000,
+    "charges_per_use": 25,
+    "qualities": [
+      [ "HAMMER_FINE", 1 ],
+      [ "HAMMER", 3 ],
+      [ "PRY", 1 ],
+      [ "SAW_M_FINE", 1 ],
+      [ "SAW_M", 2 ],
+      [ "WRENCH_FINE", 1 ],
+      [ "WRENCH", 2 ],
+      [ "SCREW_FINE", 1 ],
+      [ "SCREW", 1 ],
+      [ "CHISEL", 3 ],
+      [ "DRILL", 3 ],
+      [ "PULL", 2 ]
+    ],
+    "use_action": [ "GUN_CLEAN", "GUN_REPAIR" ],
+    "flags": [ "USES_GRID_POWER" ]
+  },
+  {
     "id": "fake_gridsolderingiron",
     "copy-from": "fake_item",
     "looks_like": "soldering_iron",
@@ -314,6 +354,15 @@
     "type": "TOOL",
     "name": { "str": "grid food processor" },
     "sub": "food_processor",
+    "max_charges": 2500,
+    "flags": [ "USES_GRID_POWER" ]
+  },
+  {
+    "id": "fake_gridsoda_machine",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str": "grid soda machine" },
+    "sub": "soda_machine",
     "max_charges": 2500,
     "flags": [ "USES_GRID_POWER" ]
   },
@@ -429,5 +478,39 @@
     "name": { "str": "installed reloading press" },
     "//": "Doesn't substitute for hand press because we want to define this tool in crafting requirements separately, due to disassembly code.",
     "qualities": [ [ "PULL", 2 ] ]
+  },
+  {
+    "id": "grid_hydraulic_press",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str": "grid hydraulic press" },
+    "sub": "hydraulic_press",
+    "max_charges": 2500,
+    "charges_per_use": 5,
+    "flags": [ "USES_GRID_POWER" ]
+  },
+  {
+    "id": "fake_adv_butchery",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str": "installed advanced butchering station" },
+    "qualities": [ [ "BUTCHER", 50 ], [ "CUT", 3 ], [ "CUT_FINE", 5 ] ]
+  },
+  {
+    "id": "translocation_caster_spell",
+    "type": "SPELL",
+    "name": { "str": "Translocate Self" },
+    "description": "Translocates the user to an attuned gate.",
+    "message": "",
+    "valid_targets": [ "self" ],
+    "effect": "translocate",
+    "flags": [ "SILENT", "NO_LEGS", "NO_EXPLOSION_VFX", "NO_HANDS" ]
+  },
+  {
+    "id": "translocation_caster",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str_sp": "local gateway" },
+    "use_action": { "type": "cast_spell", "spell_id": "translocation_caster_spell", "no_fail": true, "level": 0 }
   }
 ]

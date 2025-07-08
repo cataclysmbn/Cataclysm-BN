@@ -32,7 +32,7 @@
   {
     "id": "alarmclock",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "electronics",
     "name": { "str": "alarm clock" },
     "description": "A wind-up alarm clock.  Though the noise it makes is unpleasant to wake up to, it's always good to get an early start to your day.  Can also be disassembled into some useful parts.",
     "weight": "562 g",
@@ -63,7 +63,7 @@
     "max_charges": 30,
     "charges_per_use": 1,
     "material": [ "steel" ],
-    "flags": [  ],
+    "flags": [ "NO_UNLOAD" ],
     "explosion": {
       "power": 4503,
       "distance_factor": 0.1,
@@ -122,40 +122,6 @@
     }
   },
   {
-    "type": "TOOL",
-    "category": "tools",
-    "id": "dab_pen_on",
-    "name": { "str": "dab pen (on)", "str_pl": "dab pens (on)" },
-    "description": "This dab pen, for vaporizing cannabis, is turned on.  Now all you need is a distillate cartridge and you're ready to rock and roll.",
-    "symbol": "!",
-    "color": "dark_gray",
-    "looks_like": "ecig",
-    "weight": "20 g",
-    "volume": "100 ml",
-    "price": "25 USD",
-    "price_postapoc": "1 USD",
-    "material": "plastic",
-    "ammo": "battery",
-    "power_draw": 9000,
-    "revert_to": "dab_pen",
-    "magazines": [
-      [
-        "battery",
-        [ "light_minus_battery_cell", "light_minus_disposable_cell", "light_battery_cell", "light_disposable_cell" ]
-      ]
-    ],
-    "charges_per_use": 1,
-    "max_charges": 100,
-    "use_action": {
-      "target": "dab_pen",
-      "msg": "You turn off the dab pen.",
-      "active": false,
-      "need_charges": 0,
-      "need_charges_msg": "The dab pen's batteries need more charge.",
-      "type": "transform"
-    }
-  },
-  {
     "id": "debug_active_relic_test",
     "type": "TOOL",
     "category": "tools",
@@ -192,6 +158,7 @@
     ],
     "magazine_well": "250 ml",
     "relic_data": {
+      "recharge_scheme": [ { "type": "time", "req": "none", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
         {
           "has": "HELD",
@@ -241,7 +208,7 @@
   {
     "id": "e_tool",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_farming",
     "weapon_category": [ "CLUBS" ],
     "name": { "str": "entrenching tool" },
     "description": "This is a stout collapsible spade.  It's commonly used by military forces and favored by hikers for digging.  This was a popular weapon during WW1.",
@@ -251,7 +218,7 @@
     "price_postapoc": "5 USD",
     "bashing": 14,
     "cutting": 20,
-    "to_hit": -1,
+    "to_hit": 1,
     "material": "steel",
     "symbol": "/",
     "color": "dark_gray",
@@ -261,7 +228,7 @@
   {
     "id": "etched_skull",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "other",
     "name": { "str": "etched human skull" },
     "description": "This is a human skull with strange etchings covering it.",
     "weight": "311 g",
@@ -269,7 +236,7 @@
     "price": "3 kUSD",
     "price_postapoc": "10 cent",
     "bashing": 6,
-    "material": "bone",
+    "material": [ "bone" ],
     "symbol": ";",
     "color": "white"
   },
@@ -295,7 +262,7 @@
   {
     "id": "fur_rollmat",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "fur rollmat" },
     "description": "This is a bedroll made of pelts which can be rolled up for transport.  It insulates you from the floor, making it easier to sleep.  Use it to unroll and place on the ground.",
     "weight": "1800 g",
@@ -319,7 +286,7 @@
   {
     "id": "grapnel",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_entry",
     "name": { "str": "grappling hook" },
     "description": "A folding grappling hook attached to a stout 30-foot long piece of lightweight cord.  Useful for keeping yourself safe from falls.  Can be used in place of a long rope for butchering, in a pinch.",
     "weight": "1980 g",
@@ -359,7 +326,7 @@
   {
     "id": "hand_pump",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "symbol": "/",
     "color": "blue",
     "name": { "str": "hand pump" },
@@ -435,7 +402,7 @@
   {
     "id": "large_space_heater",
     "type": "TOOL",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "large space heater" },
     "description": "A portable electric heater that steadily emits warm air.  Raises temperature about 10 degrees C and fills a larger volume of air than the smaller version.",
     "weight": "12000 g",
@@ -479,7 +446,7 @@
   {
     "id": "lifestraw",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "lifestraw" },
     "description": "Set the lifestraw in suspect water, let sit for one minute then drink.  The two part filtration system will purify the water you drink.  Water taken from uncertain sources like a river may be dirty.",
     "weight": "104 g",
@@ -514,24 +481,6 @@
     "flags": [ "TRADER_AVOID" ]
   },
   {
-    "type": "GENERIC",
-    "category": "tools",
-    "id": "gasket_plastic",
-    "name": { "str": "plastic gasket" },
-    "description": " A single-use plastic gasket.",
-    "symbol": "(",
-    "color": "dark_gray",
-    "looks_like": "plastic_chunk",
-    "weight": "5 g",
-    "volume": "30 ml",
-    "//": "gasket sizes range from 1in diameter to 6in.",
-    "price": "150 cent",
-    "price_postapoc": "50 cent",
-    "to_hit": 10,
-    "bashing": 1,
-    "material": "plastic"
-  },
-  {
     "id": "permanent_marker",
     "type": "TOOL",
     "category": "tools",
@@ -561,7 +510,7 @@
     "price": "40 USD",
     "price_postapoc": "1 USD",
     "to_hit": -1,
-    "material": "flesh",
+    "material": [ "flesh" ],
     "symbol": "*",
     "color": "red",
     "initial_charges": 3,
@@ -588,7 +537,7 @@
   {
     "id": "rollmat",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "rollmat" },
     "description": "This is a sheet of foam which can be rolled tightly for storage.  It insulates you from the floor, making it easier to sleep.  Use it to unroll and place on the ground.",
     "weight": "250 g",
@@ -630,7 +579,7 @@
   {
     "id": "sarcophagus_access_code",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "valuables",
     "name": { "str": "sarcophagus access code" },
     "description": "This printout is a string of numbers to access the elevator in the hazardous waste sarcophagus.",
     "weight": "5 g",
@@ -646,7 +595,7 @@
   {
     "id": "small_space_heater",
     "type": "TOOL",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "small space heater" },
     "description": "A portable electric heater that steadily emits warm air.  Raises temperature about 10 degrees C.",
     "weight": "6000 g",
@@ -712,7 +661,7 @@
   {
     "id": "stepladder",
     "type": "TOOL",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "stepladder" },
     "description": "This is a wooden stepladder.  Use it to set it down.",
     "weight": "20000 g",
@@ -724,7 +673,8 @@
     "material": "wood",
     "symbol": "H",
     "color": "brown",
-    "use_action": "LADDER"
+    "use_action": "LADDER",
+    "flags": [ "DESTROY_ON_DECHARGE" ]
   },
   {
     "id": "survival_marker",
@@ -897,7 +847,7 @@
   {
     "id": "whistle_multitool",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_farming",
     "name": { "str": "whistle multitool" },
     "description": "A cheap gadget combining a whistle, thermometer, magnifying glass, and compass.",
     "weight": "7 g",

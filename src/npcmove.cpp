@@ -1079,9 +1079,22 @@ void npc::execute_action( npc_action action )
             }
             break;
 
-        case npc_aim:
-            aim();
-            break;
+        case npc_aim: {
+            gun_mode mode = cbm_active.is_null() ? primary_weapon().gun_current_mode() :
+                            cbm_fake_active->gun_current_mode();
+            if( !mode ) {
+                std::string error_weapon = cbm_active.is_null() ? primary_weapon().tname() :
+                                           cbm_fake_active->tname();
+                debugmsg( "NPC tried to aim %s without valid mode.", error_weapon );
+            }
+
+            bool did_aim = aim();
+            if( !did_aim ) {
+                debugmsg( "%s is trying to aim, but failing repeatedly", disp_name().c_str() );
+                set_moves( 0 );
+            }
+        }
+        break;
 
         case npc_shoot: {
             gun_mode mode = cbm_active.is_null() ? primary_weapon().gun_current_mode() :
@@ -2083,7 +2096,7 @@ auto item::ideal_ranged_dps( const Character &who, std::optional<gun_mode> &mode
                               body_part_hand_r );
         // HACK: Doesn't check how much ammo they'll actually get from the reload. Because we don't know.
         // DPS is less impacted the larger the magazine being swapped.
-        reload_cost /= magazine_integral() ? 1 : ammo_capacity() / burst_size;
+        reload_cost /= magazine_integral() ? 1 : std::max( 1, ammo_capacity() / burst_size );
         move_cost += reload_cost;
     }
     std::vector<ranged::aim_type> aim_types = ranged::get_aim_types( who, *this );
@@ -2178,15 +2191,27 @@ bool npc::enough_time_to_reload( const item &gun ) const
     return turns_til_reloaded < turns_til_reached;
 }
 
-void npc::aim()
+bool npc::aim()
 {
-    double aim_amount = ranged::aim_per_move( *this, primary_weapon(), recoil );
+    gun_mode mode = cbm_active.is_null() ? primary_weapon().gun_current_mode() :
+                    cbm_fake_active->gun_current_mode();
+    if( !mode ) {
+        std::string error_weapon = cbm_active.is_null() ? primary_weapon().tname() :
+                                   cbm_fake_active->tname();
+        debugmsg( "NPC tried to aim %s without valid mode.", error_weapon );
+    }
+
+    bool did_aim = false;
+    double aim_amount = ranged::aim_per_move( *this, *mode.target, recoil );
     while( aim_amount > 0 && recoil > 0 && moves > 0 ) {
+        did_aim = true;
         moves--;
         recoil -= aim_amount;
         recoil = std::max( 0.0, recoil );
-        aim_amount = ranged::aim_per_move( *this, primary_weapon(), recoil );
+        aim_amount = ranged::aim_per_move( *this, *mode.target, recoil );
     }
+
+    return did_aim;
 }
 
 bool npc::update_path( const tripoint &p, const bool no_bashing, bool force )
@@ -2208,8 +2233,8 @@ bool npc::update_path( const tripoint &p, const bool no_bashing, bool force )
         }
     }
 
-    auto new_path = get_map().route( pos(), p, get_pathfinding_settings( no_bashing ),
-                                     get_path_avoid() );
+    auto new_path = get_map().route( pos(), p, get_legacy_pathfinding_settings( no_bashing ),
+                                     get_legacy_path_avoid() );
     if( new_path.empty() ) {
         if( !ai_cache.sound_alerts.empty() ) {
             ai_cache.sound_alerts.erase( ai_cache.sound_alerts.begin() );
@@ -3652,7 +3677,7 @@ void npc::activate_item( int item_index )
     }
 }
 
-void npc::heal_player( player &patient )
+void npc::heal_player( Character &patient )
 {
     int dist = rl_dist( pos(), patient.pos() );
 
@@ -3684,7 +3709,7 @@ void npc::heal_player( player &patient )
 
 }
 
-void npc:: pretend_heal( player &patient, item &used )
+void npc:: pretend_heal( Character &patient, item &used )
 {
     if( get_player_character().sees( *this ) ) {
         add_msg( _( "%1$s heals %2$s." ), disp_name(),
@@ -4118,8 +4143,9 @@ void npc::set_omt_destination()
             // note: no shuffle of `find_params.types` is needed, because `find_closest`
             // disregards `types` order anyway, and already returns random result among
             // those having equal minimal distance
-            find_params.search_range = 75;
-            find_params.existing_only = false;
+            find_params.search_range = { 0, 75 };
+            find_params.search_layers = omt_find_all_layers;
+
             goal = overmap_buffer.find_closest( surface_omt_loc, find_params );
             npc_need_goal_cache &cache = goal_cache[fulfill];
             cache.goal = goal;
@@ -4213,7 +4239,7 @@ void npc::go_to_omt_destination()
             }
         }
     }
-    path = here.route( pos(), centre_sub, get_pathfinding_settings(), get_path_avoid() );
+    path = here.route( pos(), centre_sub, get_legacy_pathfinding_settings(), get_legacy_path_avoid() );
     add_msg( m_debug, "%s going %s->%s", name, omt_pos.to_string(), goal.to_string() );
 
     if( !path.empty() ) {

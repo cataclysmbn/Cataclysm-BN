@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_TRAIT_GROUP_H
-#define CATA_SRC_TRAIT_GROUP_H
 
 #include <memory>
 #include <string>
@@ -201,4 +199,4 @@ class Trait_group_distribution : public Trait_group
         void add_entry( std::unique_ptr<Trait_creation_data> ptr ) override;
 };
 
-#endif // CATA_SRC_TRAIT_GROUP_H
+

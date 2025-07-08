@@ -464,7 +464,7 @@ std::vector<detached_ptr<item>> profession::items( bool male,
         }
     }
 
-    std::stable_sort( result.begin(), result.end(),
+    std::ranges::stable_sort( result,
     []( const detached_ptr<item> &first, const detached_ptr<item> &second ) {
         return first->get_layer() < second->get_layer();
     } );
@@ -513,7 +513,7 @@ bool profession::has_flag( const std::string &flag ) const
 
 bool profession::is_locked_trait( const trait_id &trait ) const
 {
-    return std::find( _starting_traits.begin(), _starting_traits.end(), trait ) !=
+    return std::ranges::find( _starting_traits, trait ) !=
            _starting_traits.end();
 }
 
@@ -571,7 +571,7 @@ void json_item_substitution::load( const JsonObject &jo )
 
     auto check_duplicate_item = [&]( const itype_id & it ) {
         return substitutions.find( it ) != substitutions.end() ||
-               std::find_if( bonuses.begin(), bonuses.end(),
+               std::ranges::find_if( bonuses,
         [&it]( const std::pair<itype_id, trait_requirements> &p ) {
             return p.first == it;
         } ) != bonuses.end();
@@ -652,10 +652,10 @@ bool json_item_substitution::trait_requirements::meets_condition( const std::vec
         &traits ) const
 {
     const auto pred = [&traits]( const trait_id & s ) {
-        return std::find( traits.begin(), traits.end(), s ) != traits.end();
+        return std::ranges::find( traits, s ) != traits.end();
     };
-    return std::all_of( present.begin(), present.end(), pred ) &&
-           std::none_of( absent.begin(), absent.end(), pred );
+    return std::ranges::all_of( present, pred ) &&
+           std::ranges::none_of( absent, pred );
 }
 
 std::vector<detached_ptr<item>> json_item_substitution::get_substitution( const item &it,

@@ -197,7 +197,7 @@
       "mma_tec_iron_heart_wide",
       "mma_tec_iron_heart_wide_crit"
     ],
-    "weapon_category": [ "HAND_AXES", "2H_SWORDS", "1H_SWORDS" ]
+    "weapon_category": [ "1H_AXES", "2H_AXES", "2H_SWORDS", "1H_SWORDS" ]
   },
   {
     "type": "martial_art",
@@ -576,6 +576,6 @@
       }
     ],
     "techniques": [ "mma_tec_tiger_claw_break" ],
-    "weapon_category": [ "1H_AXES", "FIST_WEAPONS", "KNIVES", "HAND_AXES" ]
+    "weapon_category": [ "1H_AXES", "FIST_WEAPONS", "KNIVES" ]
   }
 ]

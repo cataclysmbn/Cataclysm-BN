@@ -1,5 +1,4 @@
-#ifndef CATA_SRC_SETS_INTERSECT_H
-#define CATA_SRC_SETS_INTERSECT_H
+#pragma once
 
 namespace cata
 {
@@ -26,4 +25,3 @@ bool sets_intersect( const SetL &l, const SetR &r )
 
 } // namespace cata
 
-#endif // CATA_SRC_SETS_INTERSECT_H

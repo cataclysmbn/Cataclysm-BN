@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CACHED_OPTIONS_H
-#define CATA_SRC_CACHED_OPTIONS_H
 
 // A collection of options which are accessed frequently enough that we don't
 // want to pay the overhead of a string lookup each time one is tested.
@@ -66,6 +64,9 @@ extern bool tile_iso;
 
 /** Static z level effect. */
 extern bool static_z_effect;
+
+/** Render overmap air as transparent and render tiles that are below. */
+extern bool overmap_transparency;
 
 /**
  * Whether to show the pixel minimap. Always false for ncurses build,
@@ -137,4 +138,4 @@ extern error_log_format_t error_log_format;
 constexpr error_log_format_t error_log_format = error_log_format_t::human_readable;
 #endif
 
-#endif // CATA_SRC_CACHED_OPTIONS_H
+

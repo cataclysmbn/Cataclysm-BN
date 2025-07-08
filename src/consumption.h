@@ -1,10 +1,9 @@
 #pragma once
-#ifndef CATA_SRC_CONSUMPTION_H
-#define CATA_SRC_CONSUMPTION_H
 
 #include <list>
 
 #include "calendar.h"
+#include "character.h"
 #include "type_id.h"
 
 class item;
@@ -30,4 +29,4 @@ struct consumption_history_t {
 };
 bool query_consume_ownership( item &target, avatar &you );
 
-#endif // CATA_SRC_CONSUMPTION_H
+void consume_poison( Character &consumer, item &food );

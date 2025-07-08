@@ -50,7 +50,7 @@
     "color": "green",
     "broken_color": "green",
     "breaks_into": [ { "item": "splinter", "count": [ 4, 8 ] }, { "item": "string_6", "count": [ 1, 2 ] } ],
-    "requirements": { "install": { "skills": [ [ "mechanics", 3 ], [ "smg", 1 ] ] }, "removal": { "skills": [ [ "mechanics", 1 ] ] } }
+    "requirements": { "install": { "skills": [ [ "mechanics", 3 ], [ "rifle", 1 ] ] }, "removal": { "skills": [ [ "mechanics", 1 ] ] } }
   },
   {
     "id": "mounted_emp_gun",

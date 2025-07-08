@@ -13,8 +13,7 @@
     "material": [ "steel", "wood" ],
     "ammo": "44paper",
     "dispersion": 400,
-    "durability": 7,
-    "blackpowder_tolerance": 96
+    "durability": 7
   },
   {
     "id": "lemat_revolver",
@@ -32,7 +31,6 @@
     "ammo": "44paper",
     "dispersion": 420,
     "durability": 6,
-    "blackpowder_tolerance": 56,
     "clip_size": 9,
     "valid_mod_locations": [
       [ "accessories", 2 ],

@@ -14,19 +14,19 @@
     "description": "Vegetable stock.  Tasty and fairly nutritious.",
     "price": "350 cent",
     "price_postapoc": "25 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "500 ml",
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT" ],
     "fun": 4,
-    "vitamins": [ [ "iron", 3 ] ]
+    "vitamins": [ [ "iron", 3 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "broth_bone",
     "name": "bone broth",
-    "conditional_names": [ { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "human %s" } } ],
+    "conditional_names": [ { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "human %s" } } ],
     "weight": "267 g",
     "color": "yellow",
     "spoils_in": "6 days 16 hours",
@@ -38,14 +38,14 @@
     "description": "A tasty and nutritious broth made from bones.",
     "price": "350 cent",
     "price_postapoc": "25 cent",
-    "material": "bone",
+    "material": [ "bone" ],
     "primary_material": "water",
     "volume": "500 ml",
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_SALVAGE" ],
     "fun": 6,
-    "vitamins": [ [ "calcium", 1 ], [ "iron", 1 ] ]
+    "vitamins": [ [ "calcium", 1 ], [ "iron", 1 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -63,12 +63,12 @@
     "description": "A nutritious and delicious hearty vegetable soup.",
     "price": "4 USD",
     "price_postapoc": "25 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "500 ml",
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
-    "vitamins": [ [ "vitA", 43 ], [ "vitC", 4 ], [ "calcium", 1 ], [ "iron", 5 ] ],
+    "vitamins": [ [ "vitA", 43 ], [ "vitC", 4 ], [ "calcium", 1 ], [ "iron", 5 ], [ "veggy_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -76,7 +76,7 @@
     "id": "soup_meat",
     "name": "meat soup",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "sap soup" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "sap soup" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "mutant %s" } }
     ],
     "weight": "253 g",
@@ -91,12 +91,12 @@
     "description": "A nutritious and delicious hearty meat soup.",
     "price": "4 USD",
     "price_postapoc": "1 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "500 ml",
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
-    "vitamins": [ [ "vitA", 80 ], [ "vitC", 36 ], [ "calcium", 3 ], [ "iron", 13 ], [ "vitB", 20 ] ],
+    "vitamins": [ [ "vitA", 80 ], [ "vitC", 36 ], [ "calcium", 3 ], [ "iron", 13 ], [ "vitB", 20 ], [ "meat_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -125,12 +125,12 @@
     "description": "A nutritious and delicious hearty fish soup.",
     "price": "4 USD",
     "price_postapoc": "1 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "500 ml",
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
-    "vitamins": [ [ "vitA", 12 ], [ "vitC", 28 ], [ "calcium", 4 ], [ "iron", 5 ], [ "vitB", 20 ] ],
+    "vitamins": [ [ "vitA", 12 ], [ "vitC", 28 ], [ "calcium", 4 ], [ "iron", 5 ], [ "vitB", 20 ], [ "meat_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -149,12 +149,12 @@
     "description": "Spicy, and filled with bits of peppers.  It's pretty good.",
     "price": "750 cent",
     "price_postapoc": "75 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "charges": 2,
     "volume": "500 ml",
     "phase": "liquid",
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
-    "vitamins": [ [ "vitA", 178 ], [ "vitC", 35 ], [ "calcium", 4 ], [ "iron", 12 ] ],
+    "vitamins": [ [ "vitA", 178 ], [ "vitC", 35 ], [ "calcium", 4 ], [ "iron", 12 ], [ "veggy_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -179,7 +179,15 @@
     "phase": "liquid",
     "charges": 2,
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
-    "vitamins": [ [ "vitA", 19 ], [ "vitC", 30 ], [ "calcium", 5 ], [ "iron", 28 ], [ "vitB", 24 ] ],
+    "vitamins": [
+      [ "vitA", 19 ],
+      [ "vitC", 30 ],
+      [ "calcium", 5 ],
+      [ "iron", 28 ],
+      [ "vitB", 24 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ]
+    ],
     "fun": 5
   },
   {
@@ -204,7 +212,7 @@
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
-    "vitamins": [ [ "vitA", 20 ], [ "vitC", 9 ], [ "iron", 3 ], [ "vitB", 5 ] ],
+    "vitamins": [ [ "vitA", 20 ], [ "vitC", 9 ], [ "iron", 3 ], [ "vitB", 5 ], [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -229,7 +237,7 @@
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
-    "vitamins": [ [ "vitA", 10 ], [ "calcium", 1 ], [ "iron", 9 ], [ "vitB", 8 ] ],
+    "vitamins": [ [ "vitA", 10 ], [ "calcium", 1 ], [ "iron", 9 ], [ "vitB", 8 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -248,13 +256,13 @@
     "description": "A mushy, gray semi-liquid soup made from mushrooms.",
     "price": "450 cent",
     "price_postapoc": "1 USD",
-    "material": "mushroom",
+    "material": [ "mushroom" ],
     "volume": "500 ml",
     "phase": "liquid",
     "charges": 2,
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
     "fun": 3,
-    "vitamins": [ [ "calcium", 2 ], [ "iron", 2 ] ]
+    "vitamins": [ [ "calcium", 2 ], [ "iron", 2 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -272,12 +280,12 @@
     "description": "It smells of tomatoes.  Not very filling, but it goes well with grilled cheese.",
     "price": "4 USD",
     "price_postapoc": "50 cent",
-    "material": "tomato",
+    "material": [ "tomato" ],
     "volume": "250 ml",
     "phase": "liquid",
     "charges": 2,
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
-    "vitamins": [ [ "vitA", 7 ], [ "vitC", 10 ], [ "calcium", 1 ], [ "iron", 4 ] ],
+    "vitamins": [ [ "vitA", 7 ], [ "vitC", 10 ], [ "calcium", 1 ], [ "iron", 4 ], [ "veggy_allergen", 1 ] ],
     "fun": 3
   },
   {
@@ -302,7 +310,15 @@
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
-    "vitamins": [ [ "vitA", 81 ], [ "vitC", 7 ], [ "calcium", 9 ], [ "iron", 13 ], [ "vitB", 20 ] ],
+    "vitamins": [
+      [ "vitA", 81 ],
+      [ "vitC", 7 ],
+      [ "calcium", 9 ],
+      [ "iron", 13 ],
+      [ "vitB", 20 ],
+      [ "meat_allergen", 1 ],
+      [ "wheat_allergen", 1 ]
+    ],
     "fun": 4
   },
   {
@@ -326,7 +342,15 @@
     "charges": 2,
     "phase": "liquid",
     "flags": [ "EATEN_HOT", "USE_EAT_VERB" ],
-    "vitamins": [ [ "vitA", 15 ], [ "vitC", 8 ], [ "calcium", 7 ], [ "iron", 7 ], [ "vitB", 8 ] ],
+    "vitamins": [
+      [ "vitA", 15 ],
+      [ "vitC", 8 ],
+      [ "calcium", 7 ],
+      [ "iron", 7 ],
+      [ "vitB", 8 ],
+      [ "meat_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ],
     "fun": 5
   }
 ]

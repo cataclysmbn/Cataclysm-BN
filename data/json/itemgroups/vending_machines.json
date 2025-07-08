@@ -129,6 +129,304 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "vending_medicine",
-    "entries": [ { "group": "drugs_pharmacy", "count-min": 10, "count-max": 20 } ]
+    "entries": [ { "group": "drugs_vending", "count-min": 10, "count-max": 20 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "vending_items_adult",
+    "items": [
+      { "item": "condom", "prob": 30, "count": [ 1, 5 ] },
+      { "group": "ss_merch_1", "prob": 20 },
+      { "group": "ss_merch_2", "prob": 20 },
+      { "group": "ss_merch_3", "prob": 20 },
+      { "item": "mag_porn", "prob": 20, "count": [ 1, 3 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "vending_items_useful",
+    "items": [
+      { "item": "umbrella", "prob": 10 },
+      { "item": "teleumbrella", "prob": 10 },
+      { "item": "pen", "count": [ 1, 5 ], "prob": 50 },
+      { "item": "usb_drive", "prob": 30 },
+      { "group": "tools_drawer", "prob": 50 },
+      { "group": "tools_cleaning_small", "prob": 30 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "vending_items_pet",
+    "items": [ { "group": "petstore_misc", "prob": 100 }, { "group": "animalshelter_toys", "prob": 100 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "vending_items_electronics",
+    "items": [
+      { "group": "consumer_electronics", "prob": 40 },
+      { "item": "light_battery_cell", "prob": 20 },
+      { "item": "medium_battery_cell", "prob": 20 },
+      { "item": "heavy_battery_cell", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_cars",
+    "entries": [
+      { "item": "gloves_work", "prob": 100, "count": [ 1, 5 ] },
+      { "item": "wrench", "prob": 50 },
+      { "item": "jumper_cable", "prob": 50 },
+      { "item": "screwdriver_set", "prob": 50 },
+      { "group": "supplies_spares_vehicle", "prob": 100 },
+      { "group": "supplies_spares_vehicle", "prob": 100 },
+      { "group": "supplies_spares_vehicle", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_bling",
+    "entries": [
+      { "group": "clothing_watch", "prob": 100 },
+      { "group": "dental_grills", "prob": 100 },
+      { "group": "jewelry_accessories", "prob": 100 },
+      { "group": "rings_and_things", "prob": 100 },
+      { "group": "jewelry_front", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_alcohol",
+    "entries": [
+      { "group": "alcohol_bottled_canned", "prob": 100 },
+      { "group": "bar_alcohol", "prob": 100 },
+      { "group": "alcohol_bottled_canned", "prob": 100 },
+      { "group": "bar_alcohol", "prob": 100 },
+      { "group": "alcohol_bottled_canned", "prob": 100 },
+      { "group": "bar_alcohol", "prob": 100 },
+      { "group": "alcohol_bottled_canned", "prob": 100 },
+      { "group": "bar_alcohol", "prob": 100 },
+      { "group": "alcohol_bottled_canned", "prob": 50 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_grocery",
+    "entries": [
+      { "group": "cannedfood", "prob": 100 },
+      { "group": "groce_premade", "prob": 100 },
+      { "group": "groce_cereal", "prob": 100 },
+      { "group": "groce_pasta", "prob": 100 },
+      { "group": "groce_ingredient", "prob": 100 },
+      { "group": "groce_condiment", "prob": 100 },
+      { "group": "groce_frozen", "prob": 100 },
+      { "group": "groce_meat", "prob": 100 },
+      { "group": "groce_dairyegg", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_useful",
+    "entries": [
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 },
+      { "group": "vending_items_useful", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_pet",
+    "entries": [
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 },
+      { "group": "vending_items_pet", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_fishing",
+    "entries": [
+      { "group": "fishing_items", "prob": 100 },
+      { "group": "fishing_items", "prob": 100 },
+      { "group": "fishing_items", "prob": 100 },
+      { "group": "fishing_items", "prob": 100 },
+      { "group": "fishing_items", "prob": 100 },
+      { "group": "fishing_items", "prob": 100 },
+      { "group": "fishing_items", "prob": 100 },
+      { "group": "fishing_items", "prob": 100 },
+      { "group": "fishing_items", "prob": 100 },
+      { "group": "fishing_items", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_sports",
+    "entries": [
+      { "group": "sports", "prob": 100 },
+      { "group": "allsporting", "prob": 100 },
+      { "group": "sports", "prob": 100 },
+      { "group": "allsporting", "prob": 100 },
+      { "group": "sports", "prob": 100 },
+      { "group": "allsporting", "prob": 100 },
+      { "group": "sports", "prob": 100 },
+      { "group": "allsporting", "prob": 100 },
+      { "group": "sports", "prob": 100 },
+      { "group": "allsporting", "prob": 100 },
+      { "group": "sports", "prob": 100 },
+      { "group": "allsporting", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_smoking",
+    "entries": [
+      { "group": "tobacco_products", "prob": 100 },
+      { "group": "tobacco_products", "prob": 100 },
+      { "group": "tobacco_products", "prob": 100 },
+      { "group": "tobacco_products", "prob": 100 },
+      { "group": "misc_smoking", "prob": 100 },
+      { "group": "misc_smoking", "prob": 100 },
+      { "group": "misc_smoking", "prob": 100 },
+      { "group": "misc_smoking", "prob": 100 },
+      { "group": "smokedrugs", "prob": 100 },
+      { "group": "smokedrugs", "prob": 100 },
+      { "group": "smokedrugs", "prob": 100 },
+      { "group": "smokedrugs", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_electronics",
+    "entries": [
+      { "group": "vending_items_electronics", "prob": 100 },
+      { "group": "vending_items_electronics", "prob": 100 },
+      { "group": "vending_items_electronics", "prob": 100 },
+      { "group": "vending_items_electronics", "prob": 100 },
+      { "group": "vending_items_electronics", "prob": 100 },
+      { "group": "vending_items_electronics", "prob": 100 },
+      { "group": "vending_items_electronics", "prob": 100 },
+      { "group": "vending_items_electronics", "prob": 100 },
+      { "group": "vending_items_electronics", "prob": 100 },
+      { "group": "vending_items_electronics", "prob": 100 },
+      { "group": "vending_items_electronics", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_toys",
+    "entries": [
+      { "group": "crate_toys", "prob": 100 },
+      { "group": "crate_toys", "prob": 100 },
+      { "group": "games", "prob": 100 },
+      { "group": "games", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_maps",
+    "entries": [
+      { "group": "maps", "prob": 100 },
+      { "group": "newspaper", "prob": 100 },
+      { "group": "magazines", "prob": 100 },
+      { "group": "maps", "prob": 100 },
+      { "group": "newspaper", "prob": 100 },
+      { "group": "magazines", "prob": 100 },
+      { "group": "maps", "prob": 100 },
+      { "group": "newspaper", "prob": 100 },
+      { "group": "magazines", "prob": 100 },
+      { "group": "maps", "prob": 100 },
+      { "group": "newspaper", "prob": 100 },
+      { "group": "magazines", "prob": 100 },
+      { "group": "maps", "prob": 100 },
+      { "group": "newspaper", "prob": 100 },
+      { "group": "magazines", "prob": 100 },
+      { "group": "maps", "prob": 100 },
+      { "group": "newspaper", "prob": 100 },
+      { "group": "magazines", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_adult",
+    "entries": [
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 },
+      { "group": "vending_items_adult", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_bionics",
+    "entries": [
+      { "group": "bionics_common", "prob": 100 },
+      { "group": "bionics_common", "prob": 100 },
+      { "group": "bionics_common", "prob": 100 },
+      { "group": "bionics_common", "prob": 100 },
+      { "group": "bionics_common", "prob": 100 },
+      { "group": "bionic_power_storage_civ", "prob": 100 },
+      { "group": "bionic_power_storage_civ", "prob": 80 },
+      { "group": "bionic_power_storage_civ", "prob": 80 },
+      { "group": "bionic_power_storage_civ", "prob": 60 },
+      { "group": "bionic_power_storage_civ", "prob": 60 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_clothes",
+    "entries": [
+      { "group": "donated_clothes", "prob": 100 },
+      { "group": "hatstore_hats", "prob": 100 },
+      { "group": "hatstore_accessories", "prob": 100 }
+    ]
   }
 ]

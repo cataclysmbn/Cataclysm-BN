@@ -31,12 +31,8 @@ storage.tri_as_str = tostring(Tripoint.new(3, 4, 5))
 mod.on_game_load_hook = function()
   gdebug.log_info("SLT: on_load")
 
-  if storage.num then
-    gdebug.log_info("Data found! num = ", storage.num)
-  end
-  if storage.tri then
-    gdebug.log_info("Data found! tri = ", storage.tri)
-  end
+  if storage.num then gdebug.log_info("Data found! num = ", storage.num) end
+  if storage.tri then gdebug.log_info("Data found! tri = ", storage.tri) end
 end
 
 --[[
@@ -48,7 +44,5 @@ end
 mod.on_game_save_hook = function()
   gdebug.log_info("SLT: on_save")
 
-  if storage.num then
-    gdebug.log_info("Saving NUM value = ", storage.num)
-  end
+  if storage.num then gdebug.log_info("Saving NUM value = ", storage.num) end
 end

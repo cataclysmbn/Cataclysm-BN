@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATACHARSET_H
-#define CATA_SRC_CATACHARSET_H
 
 #include <cstddef>
 #include <cstdint>
@@ -173,4 +171,4 @@ class utf8_wrapper
         void init_utf8_wrapper();
 };
 
-#endif // CATA_SRC_CATACHARSET_H
+

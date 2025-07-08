@@ -2207,7 +2207,7 @@
   {
     "type": "item_group",
     "id": "fireman_torso",
-    "items": [ [ "bunker_coat", 80 ], [ "vest", 30 ], [ "thermal_cooling", 20 ] ]
+    "items": [ [ "bunker_coat", 80 ], [ "vest", 30 ], [ "thermal_cooling_suit", 20 ] ]
   },
   {
     "type": "item_group",
@@ -3171,85 +3171,172 @@
     ]
   },
   {
+    "id": "cloaks",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "item": "cloak", "prob": 80 },
+      { "item": "cloak_wool", "prob": 40 },
+      { "item": "cloak_leather", "prob": 20 },
+      { "item": "cloak_fur", "prob": 10 },
+      { "item": "jedi_cloak", "prob": 5 }
+    ]
+  },
+  {
+    "id": "dusters",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "item": "duster", "prob": 80 },
+      { "item": "duster_leather", "prob": 60 },
+      { "item": "duster_faux_fur", "prob": 30 },
+      { "item": "duster_fur", "prob": 5 },
+      { "item": "sleeveless_duster", "prob": 70 },
+      { "item": "sleeveless_duster_leather", "prob": 50 },
+      { "item": "sleeveless_duster_fur", "prob": 20 },
+      { "item": "sleeveless_duster_faux_fur", "prob": 10 }
+    ]
+  },
+  {
+    "id": "trenchcoats",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "item": "trenchcoat", "prob": 80 },
+      { "item": "trenchcoat_leather", "prob": 60 },
+      { "item": "trenchcoat_faux_fur", "prob": 30 },
+      { "item": "trenchcoat_fur", "prob": 5 },
+      { "item": "sleeveless_trenchcoat", "prob": 40 },
+      { "item": "sleeveless_trenchcoat_leather", "prob": 30 },
+      { "item": "sleeveless_trenchcoat_fur", "prob": 10 },
+      { "item": "sleeveless_trenchcoat_faux_fur", "prob": 20 }
+    ]
+  },
+  {
+    "id": "normal_coats",
+    "//": "The coats you probably think of when you think of the word 'coat'",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "item": "coat_rain", "prob": 80 },
+      { "item": "coat_winter", "prob": 50 },
+      { "item": "peacoat", "prob": 50 },
+      { "item": "greatcoat", "prob": 35 },
+      { "item": "coat_faux_fur", "prob": 20 },
+      { "item": "coat_fur", "prob": 10 },
+      { "item": "coat_fur_sf", "prob": 5 }
+    ]
+  },
+  {
+    "id": "normal_jackets",
+    "//": "We have another jackets itemgroup that I don't wanna conflict with but also looks a bit strange",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "item": "jacket_jean", "prob": 80 },
+      { "item": "jacket_flannel", "prob": 50 },
+      { "item": "jacket_leather", "prob": 50 },
+      { "item": "jacket_leather_red", "prob": 25 },
+      { "item": "jacket_light", "prob": 60 },
+      { "item": "jacket_windbreaker", "prob": 70 },
+      { "item": "poncho", "prob": 30 },
+      { "item": "ski_jacket", "prob": 25 }
+    ]
+  },
+  {
+    "id": "misc_coats",
+    "//": "Bathrobes and kimonos in the same itemgroup",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [ { "item": "house_coat", "prob": 80 }, { "item": "kimono", "prob": 20 }, { "item": "robe", "prob": 10 } ]
+  },
+  {
+    "id": "vests",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [ { "item": "vest", "prob": 80 }, { "item": "vest_leather", "prob": 20 }, { "item": "blazer", "prob": 70 } ]
+  },
+  {
     "id": "coats_unisex",
     "type": "item_group",
     "//": "unisex coats, jackets, cloaks, etc.",
     "subtype": "distribution",
     "items": [
-      {
-        "distribution": [
-          { "item": "cloak", "prob": 80 },
-          { "item": "cloak_wool", "prob": 40 },
-          { "item": "cloak_leather", "prob": 20 },
-          { "item": "cloak_fur", "prob": 10 },
-          { "item": "jedi_cloak", "prob": 5 }
-        ],
-        "prob": 20
-      },
-      {
-        "distribution": [
-          { "item": "duster", "prob": 80 },
-          { "item": "duster_leather", "prob": 60 },
-          { "item": "duster_faux_fur", "prob": 30 },
-          { "item": "duster_fur", "prob": 5 },
-          { "item": "sleeveless_duster", "prob": 70 },
-          { "item": "sleeveless_duster_leather", "prob": 50 },
-          { "item": "sleeveless_duster_fur", "prob": 20 },
-          { "item": "sleeveless_duster_faux_fur", "prob": 10 }
-        ],
-        "prob": 60
-      },
-      {
-        "distribution": [
-          { "item": "trenchcoat", "prob": 80 },
-          { "item": "trenchcoat_leather", "prob": 60 },
-          { "item": "trenchcoat_faux_fur", "prob": 30 },
-          { "item": "trenchcoat_fur", "prob": 5 },
-          { "item": "sleeveless_trenchcoat", "prob": 40 },
-          { "item": "sleeveless_trenchcoat_leather", "prob": 30 },
-          { "item": "sleeveless_trenchcoat_fur", "prob": 10 },
-          { "item": "sleeveless_trenchcoat_faux_fur", "prob": 20 }
-        ],
-        "prob": 40
-      },
-      {
-        "distribution": [
-          { "item": "coat_rain", "prob": 80 },
-          { "item": "coat_winter", "prob": 50 },
-          { "item": "peacoat", "prob": 50 },
-          { "item": "greatcoat", "prob": 35 },
-          { "item": "coat_faux_fur", "prob": 20 },
-          { "item": "coat_fur", "prob": 10 },
-          { "item": "coat_fur_sf", "prob": 5 }
-        ],
-        "prob": 80
-      },
-      {
-        "distribution": [
-          { "item": "jacket_jean", "prob": 80 },
-          { "item": "jacket_flannel", "prob": 50 },
-          { "item": "jacket_leather", "prob": 50 },
-          { "item": "jacket_leather_red", "prob": 25 },
-          { "item": "jacket_light", "prob": 60 },
-          { "item": "jacket_windbreaker", "prob": 70 },
-          { "item": "poncho", "prob": 30 },
-          { "item": "ski_jacket", "prob": 25 }
-        ],
-        "prob": 60
-      },
-      {
-        "distribution": [ { "item": "house_coat", "prob": 80 }, { "item": "kimono", "prob": 20 }, { "item": "robe", "prob": 10 } ],
-        "prob": 30
-      },
-      {
-        "distribution": [
-          { "item": "vest", "prob": 80 },
-          { "item": "vest_leather", "prob": 20 },
-          { "item": "army_top", "prob": 40 },
-          { "item": "blazer", "prob": 70 }
-        ],
-        "prob": 40
-      }
+      { "group": "cloaks", "prob": 20 },
+      { "group": "dusters", "prob": 60 },
+      { "group": "trenchcoats", "prob": 40 },
+      { "group": "normal_coats", "prob": 80 },
+      { "group": "normal_jackets", "prob": 60 },
+      { "group": "misc_coats", "prob": 30 },
+      { "group": "vests", "prob": 40 }
+    ]
+  },
+  {
+    "id": "boots",
+    "type": "item_group",
+    "//": "Boots often worn by civilians, for de-inlining purposes",
+    "subtype": "distribution",
+    "items": [
+      { "item": "boots", "prob": 80 },
+      { "item": "boots_hiking", "prob": 50 },
+      { "item": "boots_steel", "prob": 50 },
+      { "item": "boots_combat", "prob": 45 },
+      { "item": "boots_fur", "prob": 10 },
+      { "item": "boots_western", "prob": 40 },
+      { "item": "boots_winter", "prob": 30 },
+      { "item": "knee_high_boots", "prob": 15 },
+      { "item": "motorbike_boots", "prob": 35 },
+      { "item": "thigh_high_boots", "prob": 5 }
+    ]
+  },
+  {
+    "id": "sandals",
+    "type": "item_group",
+    "//": "Sandals, de-inlined",
+    "subtype": "distribution",
+    "items": [
+      { "item": "bastsandals", "prob": 20 },
+      { "item": "straw_sandals", "prob": 20 },
+      { "item": "flip_flops", "prob": 40 },
+      { "item": "leathersandals", "prob": 35 }
+    ]
+  },
+  {
+    "id": "sports_shoes",
+    "type": "item_group",
+    "//": "Footwear used in sports, no tennis shoes because they're really 'general shoes' now.",
+    "subtype": "distribution",
+    "items": [
+      { "item": "cleats", "prob": 20 },
+      { "item": "golf_shoes", "prob": 20 },
+      { "item": "dance_shoes", "prob": 30 },
+      { "item": "roller_blades", "prob": 35 },
+      { "item": "rollerskates", "prob": 35 },
+      { "item": "roller_shoes_off", "prob": 45 }
+    ]
+  },
+  {
+    "id": "standard_shoes",
+    "type": "item_group",
+    "//": "Average everyday footwear",
+    "subtype": "distribution",
+    "items": [
+      { "item": "dress_shoes", "prob": 50 },
+      { "item": "lowtops", "prob": 30 },
+      { "item": "mocassins", "prob": 10 },
+      { "item": "sneakers", "prob": 35 }
+    ]
+  },
+  {
+    "id": "misc_shoes",
+    "type": "item_group",
+    "//": "The weird ones",
+    "subtype": "distribution",
+    "items": [
+      { "item": "boots_rubber", "prob": 50 },
+      { "item": "clogs", "prob": 20 },
+      { "item": "geta", "prob": 10 },
+      { "item": "slippers", "prob": 75 }
     ]
   },
   {
@@ -3258,59 +3345,11 @@
     "//": "unisex shoes (there are no men's only shoes)",
     "subtype": "distribution",
     "items": [
-      {
-        "distribution": [
-          { "item": "boots", "prob": 80 },
-          { "item": "boots_hiking", "prob": 50 },
-          { "item": "boots_steel", "prob": 50 },
-          { "item": "boots_combat", "prob": 45 },
-          { "item": "boots_fur", "prob": 10 },
-          { "item": "boots_western", "prob": 40 },
-          { "item": "boots_winter", "prob": 30 },
-          { "item": "knee_high_boots", "prob": 15 },
-          { "item": "motorbike_boots", "prob": 35 },
-          { "item": "thigh_high_boots", "prob": 5 }
-        ],
-        "prob": 60
-      },
-      {
-        "distribution": [
-          { "item": "bastsandals", "prob": 20 },
-          { "item": "straw_sandals", "prob": 20 },
-          { "item": "flip_flops", "prob": 40 },
-          { "item": "leathersandals", "prob": 35 }
-        ],
-        "prob": 60
-      },
-      {
-        "distribution": [
-          { "item": "cleats", "prob": 20 },
-          { "item": "golf_shoes", "prob": 20 },
-          { "item": "dance_shoes", "prob": 30 },
-          { "item": "roller_blades", "prob": 35 },
-          { "item": "rollerskates", "prob": 35 },
-          { "item": "roller_shoes_off", "prob": 45 }
-        ],
-        "prob": 20
-      },
-      {
-        "distribution": [
-          { "item": "dress_shoes", "prob": 50 },
-          { "item": "lowtops", "prob": 30 },
-          { "item": "mocassins", "prob": 10 },
-          { "item": "sneakers", "prob": 35 }
-        ],
-        "prob": 70
-      },
-      {
-        "distribution": [
-          { "item": "boots_rubber", "prob": 50 },
-          { "item": "clogs", "prob": 20 },
-          { "item": "geta", "prob": 10 },
-          { "item": "slippers", "prob": 75 }
-        ],
-        "prob": 70
-      }
+      { "group": "boots", "prob": 60 },
+      { "group": "sandals", "prob": 60 },
+      { "group": "sports_shoes", "prob": 20 },
+      { "group": "standard_shoes", "prob": 70 },
+      { "group": "misc_shoes", "prob": 70 }
     ]
   },
   {
@@ -3395,6 +3434,38 @@
     ]
   },
   {
+    "id": "typical_accessories_combined",
+    "type": "item_group",
+    "//": "Combination of the above accessories groups, for the sake of avoiding inlining to make modders happy and faciliate more use in the future.",
+    "subtype": "distribution",
+    "items": [
+      { "group": "accessory_bracelet", "prob": 20 },
+      { "group": "accessory_earring", "prob": 20 },
+      { "group": "accessory_necklace", "prob": 20 },
+      { "group": "accessory_ring", "prob": 30 },
+      { "group": "accessory_teeth", "prob": 10 }
+    ]
+  },
+  {
+    "id": "kids_accessories_combined",
+    "type": "item_group",
+    "//": "Like the above, but no inappropriate rings or grills.",
+    "subtype": "distribution",
+    "items": [
+      { "group": "accessory_bracelet", "prob": 20 },
+      { "group": "accessory_earring", "prob": 20 },
+      { "group": "accessory_necklace", "prob": 20 },
+      { "group": "tiaras_silver", "prob": 2 },
+      { "group": "tiaras_gold", "prob": 2 },
+      { "group": "tiaras_platinum", "prob": 1 },
+      { "item": "copper_ring", "prob": 10 },
+      { "group": "rings_silver", "prob": 5 },
+      { "group": "rings_gold", "prob": 5 },
+      { "item": "barrette", "prob": 5 },
+      { "item": "badge_foodkid", "prob": 5 }
+    ]
+  },
+  {
     "id": "accessory_cat",
     "type": "item_group",
     "//": "accessories that some say were the cause of the cataclysm.",
@@ -3448,6 +3519,32 @@
     ]
   },
   {
+    "id": "misc_personal_accessories",
+    "type": "item_group",
+    "//": "The american flag etc. group since no better name was imagined",
+    "subtype": "distribution",
+    "items": [
+      { "group": "accessory_cat", "prob": 10 },
+      { "item": "folding_poncho", "prob": 10 },
+      { "item": "american_flag", "prob": 10 },
+      { "item": "leather_belt", "prob": 10 },
+      { "item": "tool_belt", "prob": 10 },
+      { "item": "wearable_light", "prob": 15 },
+      { "item": "binoculars", "prob": 5 },
+      { "item": "whistle", "prob": 5 },
+      { "item": "flute", "prob": 3 },
+      { "item": "clarinet", "prob": 2 },
+      { "item": "harmonica_holder", "prob": 5 },
+      { "item": "saxophone", "prob": 2 },
+      { "item": "trumpet", "prob": 2 },
+      { "item": "tuba", "prob": 1 },
+      { "item": "violin", "prob": 5 },
+      { "item": "ukulele", "prob": 3 },
+      { "item": "acoustic_guitar", "prob": 1 },
+      { "item": "guitar_electric", "prob": 1 }
+    ]
+  },
+  {
     "id": "accesories_personal_unisex",
     "type": "item_group",
     "//": "unisex personal accessories",
@@ -3455,33 +3552,13 @@
     "items": [
       { "group": "clothing_glasses", "prob": 10 },
       { "group": "clothing_watch", "prob": 10 },
-      {
-        "distribution": [
-          { "group": "accessory_bracelet", "prob": 20 },
-          { "group": "accessory_earring", "prob": 20 },
-          { "group": "accessory_necklace", "prob": 20 },
-          { "group": "accessory_ring", "prob": 30 },
-          { "group": "accessory_teeth", "prob": 10 }
-        ],
-        "prob": 25
-      },
+      { "group": "typical_accessories_combined", "prob": 25 },
       {
         "distribution": [ { "group": "accessory_sportsgear", "prob": 50 }, { "group": "accessory_weaponcarry", "prob": 50 } ],
         "prob": 25
       },
       {
-        "distribution": [
-          { "group": "accessory_cat", "prob": 10 },
-          { "item": "folding_poncho", "prob": 10 },
-          { "item": "american_flag", "prob": 10 },
-          { "item": "tool_belt", "prob": 10 },
-          { "item": "leather_belt", "prob": 20 },
-          { "item": "wearable_light", "prob": 15 },
-          { "item": "binoculars", "prob": 5 },
-          { "item": "whistle", "prob": 5 },
-          { "item": "harmonica_holder", "prob": 5 },
-          { "group": "flask_liquor", "prob": 10 }
-        ],
+        "distribution": [ { "group": "misc_personal_accessories", "prob": 90 }, { "group": "flask_liquor", "prob": 10 } ],
         "prob": 10
       },
       {
@@ -3504,45 +3581,9 @@
     "items": [
       { "group": "clothing_glasses", "prob": 10 },
       { "group": "clothing_watch", "prob": 10 },
-      {
-        "distribution": [
-          { "group": "accessory_bracelet", "prob": 20 },
-          { "group": "accessory_earring", "prob": 20 },
-          { "group": "accessory_necklace", "prob": 20 },
-          { "group": "tiaras_silver", "prob": 2 },
-          { "group": "tiaras_gold", "prob": 2 },
-          { "group": "tiaras_platinum", "prob": 1 },
-          { "item": "copper_ring", "prob": 10 },
-          { "group": "rings_silver", "prob": 5 },
-          { "group": "rings_gold", "prob": 5 },
-          { "item": "barrette", "prob": 5 },
-          { "item": "badge_foodkid", "prob": 5 }
-        ],
-        "prob": 25
-      },
+      { "group": "kids_accessories_combined", "prob": 25 },
       { "group": "accessory_sportsgear", "prob": 25 },
-      {
-        "distribution": [
-          { "group": "accessory_cat", "prob": 20 },
-          { "item": "folding_poncho", "prob": 10 },
-          { "item": "american_flag", "prob": 10 },
-          { "item": "leather_belt", "prob": 10 },
-          { "item": "wearable_light", "prob": 15 },
-          { "item": "binoculars", "prob": 5 },
-          { "item": "whistle", "prob": 5 },
-          { "item": "flute", "prob": 3 },
-          { "item": "clarinet", "prob": 2 },
-          { "item": "harmonica_holder", "prob": 5 },
-          { "item": "saxophone", "prob": 2 },
-          { "item": "trumpet", "prob": 2 },
-          { "item": "tuba", "prob": 1 },
-          { "item": "violin", "prob": 5 },
-          { "item": "ukulele", "prob": 3 },
-          { "item": "acoustic_guitar", "prob": 1 },
-          { "item": "guitar_electric", "prob": 1 }
-        ],
-        "prob": 10
-      },
+      { "group": "misc_personal_accessories", "prob": 10 },
       { "group": "child_items", "prob": 20 }
     ]
   },
@@ -3582,24 +3623,46 @@
     ]
   },
   {
+    "id": "sporting_protection",
+    "type": "item_group",
+    "//": "Uninlined from below",
+    "subtype": "distribution",
+    "items": [
+      { "item": "armguard_hard", "prob": 5 },
+      { "item": "boxing_gloves", "prob": 20 },
+      { "item": "chestguard_hard", "prob": 5 },
+      { "item": "fencing_jacket", "prob": 5 },
+      { "item": "fencing_mask", "prob": 10 },
+      { "item": "fencing_pants", "prob": 5 },
+      { "item": "football_armor", "prob": 10 },
+      { "item": "golf_bag", "prob": 10 },
+      { "item": "helmet_football", "prob": 20 },
+      { "item": "legguard_hard", "prob": 10 }
+    ]
+  },
+  {
+    "id": "sporting_ammo_storage",
+    "type": "item_group",
+    "//": "Un-inlined from below, your typical bandoliers and quivers mostly",
+    "subtype": "distribution",
+    "items": [
+      { "item": "bandolier_pistol", "prob": 10 },
+      { "item": "bandolier_rifle", "prob": 20 },
+      { "item": "bandolier_shotgun", "prob": 10 },
+      { "item": "bandolier_wrist", "prob": 5 },
+      { "item": "quiver", "prob": 25 },
+      { "item": "quiver_large", "prob": 20 },
+      { "item": "torso_bandolier_shotgun", "prob": 5 },
+      { "item": "bandolier_knife", "prob": 5 }
+    ]
+  },
+  {
     "id": "wardrobe_sporting_misc",
     "type": "item_group",
     "//": "Assorted clothing or other wearable items for domestic wardrobes, outdoors and sporting good items.",
     "subtype": "distribution",
     "items": [
-      {
-        "distribution": [
-          { "item": "bandolier_pistol", "prob": 10 },
-          { "item": "bandolier_rifle", "prob": 20 },
-          { "item": "bandolier_shotgun", "prob": 10 },
-          { "item": "bandolier_wrist", "prob": 5 },
-          { "item": "quiver", "prob": 25 },
-          { "item": "quiver_large", "prob": 20 },
-          { "item": "torso_bandolier_shotgun", "prob": 5 },
-          { "item": "bandolier_knife", "prob": 5 }
-        ],
-        "prob": 25
-      },
+      { "group": "sporting_ammo_storage", "prob": 25 },
       {
         "distribution": [
           { "item": "fishing_waders", "prob": 25 },
@@ -3610,21 +3673,7 @@
         ],
         "prob": 25
       },
-      {
-        "distribution": [
-          { "item": "armguard_hard", "prob": 5 },
-          { "item": "boxing_gloves", "prob": 20 },
-          { "item": "chestguard_hard", "prob": 5 },
-          { "item": "fencing_jacket", "prob": 5 },
-          { "item": "fencing_mask", "prob": 10 },
-          { "item": "fencing_pants", "prob": 5 },
-          { "item": "football_armor", "prob": 10 },
-          { "item": "golf_bag", "prob": 10 },
-          { "item": "helmet_football", "prob": 20 },
-          { "item": "legguard_hard", "prob": 10 }
-        ],
-        "prob": 50
-      }
+      { "group": "sporting_protection", "prob": 50 }
     ]
   }
 ]

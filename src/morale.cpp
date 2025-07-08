@@ -48,7 +48,7 @@ static const trait_id trait_OPTIMISTIC( "OPTIMISTIC" );
 static const trait_id trait_ROOTS1( "ROOTS1" );
 static const trait_id trait_ROOTS2( "ROOTS2" );
 static const trait_id trait_ROOTS3( "ROOTS3" );
-static const trait_id trait_STYLISH( "STYLISH" );
+static const trait_id trait_UNSTYLISH( "UNSTYLISH" );
 
 namespace io
 {
@@ -269,7 +269,7 @@ player_morale::player_morale() :
     level_is_valid( false ),
     took_prozac( false ),
     took_prozac_bad( false ),
-    stylish( false ),
+    stylish( true ),
     perceived_pain( 0 )
 {
     using namespace std::placeholders;
@@ -288,9 +288,9 @@ player_morale::player_morale() :
     mutations[trait_BADTEMPER]     = mutation_data(
                                          std::bind( set_badtemper, _1, -9 ),
                                          std::bind( set_badtemper, _1, 0 ) );
-    mutations[trait_STYLISH]       = mutation_data(
-                                         std::bind( set_stylish, _1, true ),
-                                         std::bind( set_stylish, _1, false ) );
+    mutations[trait_UNSTYLISH]       = mutation_data(
+                                           std::bind( set_stylish, _1, false ),
+                                           std::bind( set_stylish, _1, true ) );
     mutations[trait_FLOWERS]       = mutation_data( update_constrained );
     mutations[trait_ROOTS1]         = mutation_data( update_constrained );
     mutations[trait_ROOTS2]        = mutation_data( update_constrained );
@@ -377,7 +377,7 @@ void player_morale::set_permanent_typed( const morale_type &type, int bonus,
 
 bool player_morale::has( const morale_type &type ) const
 {
-    return std::any_of( points.begin(), points.end(), [&type]( const morale_point & m ) {
+    return std::ranges::any_of( points, [&type]( const morale_point & m ) {
         return m.type_matches( type );
     } );
 }
@@ -385,7 +385,7 @@ bool player_morale::has( const morale_type &type ) const
 int player_morale::get( const morale_type &type ) const
 {
     // TODO: This should be well defined for multiple bonuses of the same type!
-    auto iter = std::find_if( points.begin(), points.end(), [&type]( const morale_point & m ) {
+    auto iter = std::ranges::find_if( points, [&type]( const morale_point & m ) {
         return m.type_matches( type );
     } );
     return iter != points.end() ? iter->get_net_bonus() : 0;
@@ -527,7 +527,7 @@ void player_morale::decay( const time_duration &ticks )
         m.decay( ticks );
     };
 
-    std::for_each( points.begin(), points.end(), do_decay );
+    std::ranges::for_each( points, do_decay );
     remove_expired();
     update_bodytemp_penalty( ticks );
     invalidate();
@@ -658,8 +658,8 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
         return localized_compare( std::make_pair( -lhs_percent, lhs.get_name() ),
                                   std::make_pair( -rhs_percent, rhs.get_name() ) );
     };
-    std::sort( positive_morale.begin(), positive_morale.end(), sort_morale );
-    std::sort( negative_morale.begin(), negative_morale.end(), sort_morale );
+    std::ranges::sort( positive_morale, sort_morale );
+    std::ranges::sort( negative_morale, sort_morale );
 
     // Initialize lines
     const std::vector<morale_line> top_lines {
@@ -849,7 +849,7 @@ bool player_morale::consistent_with( const player_morale &morale ) const
                 continue;
             }
 
-            const auto iter = std::find_if( rhs.points.begin(), rhs.points.end(),
+            const auto iter = std::ranges::find_if( rhs.points,
             [ &lhp ]( const morale_point & rhp ) {
                 return lhp.matches( rhp );
             } );
@@ -892,7 +892,7 @@ void player_morale::clear()
     }
     took_prozac = false;
     took_prozac_bad = false;
-    stylish = false;
+    stylish = true;
     super_fancy_items.clear();
 
     invalidate();
@@ -945,26 +945,6 @@ void player_morale::on_item_takeoff( const item &it )
     set_worn( it, false );
 }
 
-void player_morale::on_worn_item_washed( const item &it )
-{
-    const auto update_body_part = [&]( body_part_data & bp_data ) {
-        bp_data.filthy -= 1;
-    };
-
-    const body_part_set covered( it.get_covered_body_parts() );
-
-    if( covered.any() ) {
-        for( const bodypart_id &bp : g->u.get_all_body_parts() ) {
-            if( covered.test( bp.id() ) ) {
-                update_body_part( body_parts[bp] );
-            }
-        }
-    } else {
-        update_body_part( no_body_part );
-    }
-
-    update_squeamish_penalty();
-}
 
 void player_morale::on_effect_int_change( const efftype_id &eid, int intensity,
         const bodypart_str_id &bp_id )
@@ -996,15 +976,11 @@ void player_morale::set_worn( const item &it, bool worn )
 {
     const bool fancy = it.has_flag( STATIC( flag_id( "FANCY" ) ) );
     const bool super_fancy = it.has_flag( STATIC( flag_id( "SUPER_FANCY" ) ) );
-    const bool filthy_gear = it.has_flag( STATIC( flag_id( "FILTHY" ) ) );
     const int sign = ( worn ) ? 1 : -1;
 
     const auto update_body_part = [&]( body_part_data & bp_data ) {
         if( fancy || super_fancy ) {
             bp_data.fancy += sign;
-        }
-        if( filthy_gear ) {
-            bp_data.filthy += sign;
         }
         bp_data.covered += sign;
     };
@@ -1038,9 +1014,6 @@ void player_morale::set_worn( const item &it, bool worn )
     }
     if( fancy || super_fancy ) {
         update_stylish_bonus();
-    }
-    if( filthy_gear ) {
-        update_squeamish_penalty();
     }
     update_constrained_penalty();
 }
@@ -1149,21 +1122,6 @@ void player_morale::update_constrained_penalty()
     set_permanent( MORALE_PERM_CONSTRAINED, -std::min( pen, 10 ) );
 }
 
-void player_morale::update_squeamish_penalty()
-{
-    if( !get_option<bool>( "FILTHY_MORALE" ) ) {
-        set_permanent( MORALE_PERM_FILTHY, 0 );
-        return;
-    }
-    int penalty = 0;
-    for( const std::pair<const bodypart_id, body_part_data> &bpt : body_parts ) {
-        if( bpt.second.filthy > 0 ) {
-            penalty += bpt.first->squeamish_penalty;
-        }
-    }
-    penalty += 2 * std::min( static_cast<int>( no_body_part.filthy ), 3 );
-    set_permanent( MORALE_PERM_FILTHY, -penalty );
-}
 
 // For some reason, moving this to header breaks things
 player_morale::morale_subtype::morale_subtype() = default;

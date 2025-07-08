@@ -51,16 +51,6 @@
     "volume": "10ml"
   },
   {
-    "id": "270win_casing",
-    "copy-from": "casing",
-    "looks_like": "223_casing",
-    "type": "GENERIC",
-    "name": { "str": ".270 Winchester casing" },
-    "description": "An empty casing from a .270 Winchester round.",
-    "weight": "7 g",
-    "volume": "10ml"
-  },
-  {
     "id": "300_casing",
     "copy-from": "casing",
     "looks_like": "223_casing",
@@ -107,16 +97,6 @@
     "type": "GENERIC",
     "name": { "str": ".38 Special casing" },
     "description": "An empty casing from a .38 Special round.",
-    "weight": "3 g",
-    "volume": "4ml"
-  },
-  {
-    "id": "38super_casing",
-    "copy-from": "casing",
-    "looks_like": "9mm_casing",
-    "type": "GENERIC",
-    "name": { "str": ".38 Super casing" },
-    "description": "An empty casing from a .38 Super round.",
     "weight": "3 g",
     "volume": "4ml"
   },
@@ -211,16 +191,6 @@
     "volume": "6ml"
   },
   {
-    "id": "454_casing",
-    "copy-from": "casing",
-    "looks_like": "9mm_casing",
-    "type": "GENERIC",
-    "name": { "str": ".454 Casull casing" },
-    "description": "An empty casing from a .454 Casull round.",
-    "weight": "7 g",
-    "volume": "10ml"
-  },
-  {
     "id": "45_casing",
     "copy-from": "casing",
     "looks_like": "9mm_casing",
@@ -247,28 +217,8 @@
     "type": "GENERIC",
     "name": { "str": ".45-70 casing" },
     "description": "An empty casing from a .45-70 Government round.",
-    "weight": "4 g",
+    "weight": "7 g",
     "volume": "10ml"
-  },
-  {
-    "id": "46mm_casing",
-    "copy-from": "casing",
-    "looks_like": "9mm_casing",
-    "type": "GENERIC",
-    "name": { "str": "4.6x30mm casing" },
-    "description": "An empty casing from a 4.6x30mm round.",
-    "weight": "2 g",
-    "volume": "3ml"
-  },
-  {
-    "id": "460_casing",
-    "copy-from": "casing",
-    "looks_like": "9mm_casing",
-    "type": "GENERIC",
-    "name": { "str": ".460 Rowland casing" },
-    "description": "An empty casing from a .460 Rowland round.  It looks deceptively like a .45ACP casing.",
-    "weight": "4 g",
-    "volume": "6ml"
   },
   {
     "id": "5x50_hull",
@@ -283,52 +233,12 @@
     "color": "light_green"
   },
   {
-    "id": "500_casing",
-    "copy-from": "casing",
-    "looks_like": "9mm_casing",
-    "type": "GENERIC",
-    "name": { "str": ".500 S&W Magnum casing" },
-    "description": "An empty casing from a .500 S&W Magnum round.",
-    "weight": "7 g",
-    "volume": "10ml"
-  },
-  {
     "id": "50_casing",
     "copy-from": "casing",
     "looks_like": "223_casing",
     "type": "GENERIC",
     "name": { "str": ".50 BMG casing" },
     "description": "An empty casing from a .50 BMG round.  These are rare, so you might want to hold onto these.",
-    "weight": "18 g",
-    "volume": "12ml"
-  },
-  {
-    "id": "545_casing",
-    "copy-from": "casing",
-    "looks_like": "9mm_casing",
-    "type": "GENERIC",
-    "name": { "str": "5.45x39mm casing" },
-    "description": "An empty casing from a 5.45x39mm round.",
-    "weight": "4 g",
-    "volume": "7ml"
-  },
-  {
-    "id": "57mm_casing",
-    "copy-from": "casing",
-    "looks_like": "9mm_casing",
-    "type": "GENERIC",
-    "name": { "str": "5.7x28mm casing" },
-    "description": "An empty casing from a 5.7x28mm round.",
-    "weight": "2 g",
-    "volume": "3ml"
-  },
-  {
-    "id": "700nx_casing",
-    "copy-from": "casing",
-    "looks_like": "9mm_casing",
-    "type": "GENERIC",
-    "name": { "str": ".700 NX casing" },
-    "description": "An empty casing from a .700 NX round.  These are rare, so you might want to hold onto these.",
     "weight": "18 g",
     "volume": "12ml"
   },
@@ -351,16 +261,6 @@
     "description": "An empty casing from a 7.62x39mm round.",
     "weight": "6 g",
     "volume": "9ml"
-  },
-  {
-    "id": "762_25_casing",
-    "copy-from": "casing",
-    "looks_like": "9mm_casing",
-    "type": "GENERIC",
-    "name": { "str": "7.62x25mm casing" },
-    "description": "An empty casing from a 7.62x25mm round.",
-    "weight": "4 g",
-    "volume": "7ml"
   },
   {
     "id": "9mm_casing",
@@ -392,16 +292,6 @@
     "volume": "5ml"
   },
   {
-    "id": "9x18mm_casing",
-    "copy-from": "casing",
-    "looks_like": "9mm_casing",
-    "type": "GENERIC",
-    "name": { "str": "9x18mm casing" },
-    "description": "An empty casing from a 9x18mm round.",
-    "weight": "3 g",
-    "volume": "5ml"
-  },
-  {
     "id": "380_casing",
     "copy-from": "casing",
     "looks_like": "9mm_casing",
@@ -428,7 +318,7 @@
     "category": "spare_parts",
     "name": { "str": "shotgun hull" },
     "description": "An empty hull from a shotgun shell.",
-    "weight": "8 g",
+    "weight": "12 g",
     "volume": "12ml",
     "stackable": true,
     "material": "plastic",
@@ -442,8 +332,8 @@
     "category": "spare_parts",
     "name": { "str": ".410 hull" },
     "description": "An empty hull from a .410 shotgun shell.",
-    "weight": "8 g",
-    "volume": "12ml",
+    "weight": "6 g",
+    "volume": "9ml",
     "stackable": true,
     "material": "plastic",
     "symbol": "=",
@@ -458,7 +348,7 @@
     "type": "GENERIC",
     "name": { "str": ".300BLK casing" },
     "description": "An empty casing from a .300 AAC Blackout round.",
-    "weight": "6 g",
-    "volume": "9ml"
+    "weight": "5 g",
+    "volume": "5ml"
   }
 ]

@@ -1,20 +1,140 @@
 #pragma once
-#ifndef CATA_SRC_ACTIVITY_ACTOR_H
-#define CATA_SRC_ACTIVITY_ACTOR_H
 
+#include <deque>
 #include <memory>
 #include <optional>
 #include <unordered_map>
 #include <vector>
 
 #include "activity_type.h"
-#include "clone_ptr.h"
+#include "calendar.h"
+#include "type_id.h"
+#include "units.h"
 
 class avatar;
 class Character;
 class JsonIn;
 class JsonOut;
 class player_activity;
+class inventory;
+
+struct bench_loc;
+
+using metric = std::pair<units::mass, units::volume>;
+
+struct simple_task {
+    // Name of the target that's being processed
+    const std::string target_name;
+    /* Total number of moves required for this target/task to complete */
+    const int moves_total = 0;
+    /* The number of moves remaining for this target/task to complete */
+    int moves_left = 0;
+
+    inline bool complete() const {
+        return moves_left <= 0;
+    }
+
+    inline bool not_started() const {
+        return moves_left == moves_total;
+    }
+
+    int to_counter() const;
+
+    //Json stuff
+    void serialize( JsonOut &json ) const;
+};
+
+/*
+ * Special class to track progress of current activity
+ * Outside is a queue with slighly altered functionality
+*/
+class progress_counter
+{
+    private:
+        /** Total number of moves required to complete the activity aka all the tasks */
+        int moves_total = 0;
+        /** The number of moves remaining in this activity before it is complete aka all the tasks */
+        int moves_left = 0;
+        //Index of current task - 1-based, since expected to be used only for printing
+        int idx = 1;
+        //Counts total amount of tasks - done and in queue
+        int total_tasks = 0;
+
+        std::deque<simple_task> targets;
+
+    public:
+        inline void emplace( std::string name, int moves_total_ ) {
+            moves_total += moves_total_;
+            moves_left += moves_total_;
+            targets.emplace_back( simple_task {
+                .target_name = name,
+                .moves_total = moves_total_,
+                .moves_left = moves_total_
+            } );
+            total_tasks++;
+        }
+        inline void emplace( std::string name, int moves_total_, int moves_left_ ) {
+            moves_total += moves_total_;
+            moves_left += moves_left_;
+            targets.emplace_back( simple_task {
+                .target_name = name,
+                .moves_total = moves_total_,
+                .moves_left = moves_left_
+            } );
+            total_tasks++;
+        }
+        void pop();
+        void purge();
+        inline bool empty() const {
+            return targets.empty();
+        }
+        inline bool complete() const {
+            return total_tasks > 0 && moves_left <= 0;
+        }
+        inline bool invalid() const {
+            return total_tasks == 0 && empty();
+        }
+        inline int get_index() const {
+            return idx;
+        }
+        inline int get_total_tasks() const {
+            return total_tasks;
+        }
+        inline int get_moves_total() const {
+            return moves_total;
+        }
+        inline int get_moves_left() const {
+            return moves_left;
+        }
+        inline size_t size() const {
+            return targets.size();
+        }
+        inline const simple_task &front() const {
+            return targets.front();
+        }
+        inline const simple_task &back() const {
+            return targets.back();
+        }
+        //Modifies move_left of the first task(and total progress)
+        inline void mod_moves_left( int moves ) {
+            moves_left += moves;
+            targets.front().moves_left += moves;
+        }
+        /*
+        * Creates a dummy task, ends it instantaneously
+        * For very certain and rare occasions, use cautiously
+        * Basically to properly process "unique" activities, like autodrive
+        */
+        inline void dummy() {
+            emplace( "If you see this it's a bug", calendar::INDEFINITELY_LONG );
+        }
+
+        //Json stuff
+
+        void serialize( JsonOut &json ) const;
+        void deserialize( JsonIn &jsin );
+};
+
 
 struct act_progress_message {
     /**
@@ -52,9 +172,10 @@ struct act_progress_message {
     }
 };
 
+
 class activity_actor
 {
-    private:
+    protected:
         /**
          * Returns true if `this` activity is resumable, and `this` and @p other
          * are "equivalent" i.e. similar enough that `this` activity
@@ -70,11 +191,20 @@ class activity_actor
 
     public:
         virtual ~activity_actor() = default;
-
+        //List of task with names of ACTUAL targets, like a wall you mine or a grave you dig
+        //Also tracks number of moves left and total
+        progress_counter progress;
         /**
          * Should return the activity id of the corresponding activity
          */
         virtual activity_id get_type() const = 0;
+
+
+        /**
+         * Actor specific behaviour to recalc all speed values
+         * Expected to be called once per target and on game load
+         */
+        virtual void calc_all_moves( player_activity &act, Character &who );
 
         /**
          * Called once at the start of the activity.
@@ -130,6 +260,45 @@ class activity_actor
             msg.implemented = false;
             return msg;
         }
+
+        /*
+         * actor specific formula for speed factor based on skills
+         * anything above 0 is a valid number
+         * anything below 0 is invalid, promting to use default formula
+        */
+        virtual float calc_skill_factor( const Character &/*who*/,
+                                         const std::vector<activity_req<skill_id>> &/*skills*/ ) const {
+            return -1.0f;
+        }
+
+        /*
+         * actor specific formula for speed factor based on tools' qualities
+         * anything above 0 is a valid number
+         * anything below 0 is invalid, promting to use default formula
+        */
+        virtual float calc_tools_factor( const std::vector<activity_req<quality_id>> &/*qualities*/,
+                                         const inventory &/*inv*/ ) const {
+            return -1.0f;
+        }
+
+        /*
+         * actor specific formula for speed factor based on player's morale
+         * anything above 0 is a valid number
+         * anything below 0 is invalid, promting to use default formula
+        */
+        virtual float calc_morale_factor( const Character &/*who*/ ) const {
+            return -1.0f;
+        }
+
+        /*
+         * actor specific formula for speed factor based on stats
+         * anything above 0 is a valid number
+         * anything below 0 is invalid, promting to use default formula
+        */
+        std::vector<std::pair<character_stat, float>> calc_stats_factors( const Character &/*who*/,
+        const std::vector<activity_req<character_stat>> &/*stats*/ ) const {
+            return {};
+        }
 };
 
 namespace activity_actors
@@ -144,4 +313,3 @@ deserialize_functions;
 void serialize( const std::unique_ptr<activity_actor> &actor, JsonOut &jsout );
 void deserialize( std::unique_ptr<activity_actor> &actor, JsonIn &jsin );
 
-#endif // CATA_SRC_ACTIVITY_ACTOR_H

@@ -56,7 +56,19 @@
     "autolearn": true,
     "reversible": true,
     "flags": [ "BLIND_HARD" ],
-    "components": [ [ [ "rolling_paper", 1 ] ], [ [ "weed", 1 ], [ "joint_roach", 5 ] ] ]
+    "components": [ [ [ "rolling_paper", 1 ] ], [ [ "weed", 1 ], [ "joint_roach", 5 ], [ "blunt_roach", 5 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "blunt",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_DRUGS",
+    "skill_used": "fabrication",
+    "time": "2 m",
+    "autolearn": true,
+    "reversible": true,
+    "flags": [ "BLIND_HARD" ],
+    "components": [ [ [ "tobacco_raw", 2 ] ], [ [ "weed", 2 ], [ "blunt_roach", 5 ], [ "joint_roach", 5 ] ] ]
   },
   {
     "type": "recipe",
@@ -295,6 +307,55 @@
   },
   {
     "type": "recipe",
+    "result": "thc_liquid_unrefined",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_DRUGS",
+    "skill_used": "cooking",
+    "skills_required": [ "cooking", 4 ],
+    "difficulty": 5,
+    "charges": 70,
+    "time": "30 m",
+    "//": "unfortunately this is a weird process - 30min to actually extract and a few hours to purge the remaining liquid. we'll go with 2h30m for purging. 28g at 20% yield is 7g unrefined distillate",
+    "batch_time_factors": [ 80, 5 ],
+    "autolearn": true,
+    "tools": [ [ [ "surface_heat", 8, "LIST" ] ], [ [ "butane_can", 30 ], [ "butane_tank", 30 ] ] ],
+    "qualities": [ { "id": "CONTAIN", "level": 1 }, { "id": "CHEM", "level": 2 }, { "id": "BOIL", "level": 1 } ],
+    "components": [ [ [ "weed", 28 ], [ "cannabis", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "thc_liquid",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_DRUGS",
+    "skill_used": "cooking",
+    "skills_required": [ "cooking", 4 ],
+    "difficulty": 5,
+    "time": "4 h",
+    "//": "purging generally can take 24-48 hours, however we don't want to make the player wait that long. 4 will do hopefully. this step encompasses winterization, distillation, and purging since we have no freezing for recipes",
+    "batch_time_factors": [ 99, 5 ],
+    "autolearn": true,
+    "tools": [ [ [ "surface_heat", 8, "LIST" ] ], [ [ "vac_sealer", 1 ] ] ],
+    "qualities": [ { "id": "CONTAIN", "level": 1 }, { "id": "BOIL", "level": 1 }, { "id": "DISTILL", "level": 2 } ],
+    "components": [ [ [ "thc_liquid_unrefined", 10 ] ], [ [ "chem_ethanol", 1 ] ], [ [ "paper", 1 ], [ "rag", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "thc_wax",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_DRUGS",
+    "skill_used": "cooking",
+    "skills_required": [ "cooking", 4 ],
+    "difficulty": 5,
+    "time": "4 h",
+    "//": "purging generally can take 24-48 hours, however we don't want to make the player wait that long. 4 will do hopefully. this step encompasses whippikng and a long purge under slight heat",
+    "batch_time_factors": [ 99, 5 ],
+    "autolearn": true,
+    "tools": [ [ [ "surface_heat", 8, "LIST" ] ], [ [ "vac_sealer", 1 ] ] ],
+    "qualities": [ { "id": "CONTAIN", "level": 1 }, { "id": "BOIL", "level": 1 } ],
+    "components": [ [ [ "thc_liquid_unrefined", 10 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "diazepam",
     "category": "CC_CHEM",
     "subcategory": "CSC_CHEM_DRUGS",
@@ -452,6 +513,36 @@
     "qualities": [ { "id": "CHEM", "level": 1 } ],
     "tools": [ [ [ "surface_heat", 2, "LIST" ] ] ],
     "components": [ [ [ "poppy_bud", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "sizzurp",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_DRUGS",
+    "skill_used": "cooking",
+    "skills_required": [ "firstaid", 1 ],
+    "result_mult": 2,
+    "difficulty": 2,
+    "time": "2 m",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 5 ],
+    "qualities": [ { "id": "CHEM", "level": 1 } ],
+    "components": [
+      [ [ "dayquil", 1 ], [ "nyquil", 1 ], [ "poppysyrup", 1 ] ],
+      [ [ "oxycodone", 1 ], [ "codeine", 2 ], [ "poppy_pain", 2 ] ],
+      [ [ "candy3", 1 ], [ "powder_candy", 1 ], [ "neccowafers", 1 ], [ "candycigarette", 1 ], [ "maple_candy", 1 ] ],
+      [
+        [ "orangesoda", 1 ],
+        [ "creamsoda", 1 ],
+        [ "crispycran", 1 ],
+        [ "lemonlime", 1 ],
+        [ "cola", 1 ],
+        [ "colamdew", 1 ],
+        [ "purple_drink", 1 ],
+        [ "rootbeer", 1 ],
+        [ "suicidesoda", 1 ]
+      ]
+    ]
   },
   {
     "type": "recipe",

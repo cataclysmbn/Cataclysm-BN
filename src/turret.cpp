@@ -265,14 +265,14 @@ turret_data::status turret_data::query() const
     return status::ready;
 }
 
-void turret_data::prepare_fire( player &p )
+void turret_data::prepare_fire( Character &who )
 {
     // prevent turrets from shooting their own vehicles
-    p.add_effect( effect_on_roof, 1_turns );
+    who.add_effect( effect_on_roof, 1_turns );
 
     // turrets are subject only to recoil_vehicle()
-    cached_recoil = p.recoil;
-    p.recoil = 0;
+    cached_recoil = who.recoil;
+    who.recoil = 0;
 
     // set fuel tank fluid as ammo, if appropriate
     if( part->info().has_flag( "USE_TANKS" ) ) {
@@ -283,11 +283,11 @@ void turret_data::prepare_fire( player &p )
     }
 }
 
-void turret_data::post_fire( player &p, int shots )
+void turret_data::post_fire( Character &who, int shots )
 {
     // remove any temporary recoil adjustments
-    p.remove_effect( effect_on_roof );
-    p.recoil = cached_recoil;
+    who.remove_effect( effect_on_roof );
+    who.recoil = cached_recoil;
 
     auto mode = base().gun_current_mode();
 
@@ -300,7 +300,7 @@ void turret_data::post_fire( player &p, int shots )
     veh->drain( fuel_type_battery, mode->get_gun_ups_drain() * shots );
 }
 
-int turret_data::fire( player &p, const tripoint &target )
+int turret_data::fire( Character &who, const tripoint &target )
 {
     if( !veh || !part ) {
         return 0;
@@ -308,9 +308,9 @@ int turret_data::fire( player &p, const tripoint &target )
     int shots = 0;
     auto mode = base().gun_current_mode();
 
-    prepare_fire( p );
-    shots = ranged::fire_gun( p, target, mode.qty, *mode, nullptr );
-    post_fire( p, shots );
+    prepare_fire( who );
+    shots = ranged::fire_gun( who, target, mode.qty, *mode, nullptr );
+    post_fire( who, shots );
     return shots;
 }
 

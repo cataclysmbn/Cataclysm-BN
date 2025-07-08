@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_LANGUAGE_H
-#define CATA_SRC_LANGUAGE_H
 
 #include <string>
 #include <vector>
@@ -136,4 +134,4 @@ void load_mod_catalogues();
 void unload_mod_catalogues();
 } // namespace l10n_data
 
-#endif // CATA_SRC_LANGUAGE_H
+

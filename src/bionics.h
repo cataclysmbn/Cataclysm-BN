@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_BIONICS_H
-#define CATA_SRC_BIONICS_H
 
 #include <cstddef>
 #include <map>
@@ -64,6 +62,8 @@ struct bionic_data {
     std::map<character_stat, int> stat_bonus;
     /**This bionic draws power through a cable*/
     bool is_remote_fueled = false;
+    /**This bionic draws power through a cable*/
+    units::energy remote_fuel_draw = 0_J;
     /**Fuel types that can be used by this bionic*/
     std::vector<itype_id> fuel_opts;
     /**How much fuel this bionic can hold*/
@@ -165,6 +165,7 @@ struct bionic {
         int         charge_timer  = 0;
         char        invlet  = 'a';
         bool        powered = false;
+        bool        show_sprite = true;
         /* Ammunition actually loaded in this bionic gun in deactivated state */
         itype_id    ammo_loaded = itype_id::NULL_ID();
         /* Ammount of ammo actually held inside by this bionic gun in deactivated state */
@@ -219,9 +220,16 @@ char get_free_invlet( bionic_collection &bionics );
 std::string list_occupied_bps( const bionic_id &bio_id, const std::string &intro,
                                bool each_bp_on_new_line = true );
 
+/// Checks if Character needs anesthesia at all
+bool cbm_needs_anesthesia( const Character &who );
+
+/// Has enough anesthetic for surgery
+bool has_enough_anesthesia( const itype *cbm, Character &doc,
+                            const Character &patient );
+
 int bionic_manip_cos( float adjusted_skill, int bionic_difficulty );
 
 std::vector<bionic_id> bionics_cancelling_trait( const std::vector<bionic_id> &bios,
         const trait_id &tid );
 
-#endif // CATA_SRC_BIONICS_H
+

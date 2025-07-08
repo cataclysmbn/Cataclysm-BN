@@ -10,6 +10,7 @@
 #include "itype.h"
 #include "ret_val.h"
 #include "math_defines.h"
+#include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
 #include "cached_item_options.h"
@@ -295,5 +296,42 @@ TEST_CASE( "items_have_default_attack_statblocks", "[item]" )
         CHECK( du.damage_multiplier == 1.0f );
         CHECK( du.res_mult == 1.0f );
         CHECK( du.res_pen == 0.0f );
+    }
+}
+
+TEST_CASE( "stacking_corpses", "[item]" )
+{
+    item &human_corpse1 = *item::make_corpse();
+    item &human_corpse2 = *item::make_corpse();
+    item &non_human_corpse1 = *item::make_corpse( mtype_id( "mon_dog" ) );
+    item &non_human_corpse2 = *item::make_corpse( mtype_id( "mon_rabbit" ) );
+    item not_a_corpse( "test_rock" );
+
+    WHEN( "not all corpses" ) {
+        THEN( "corpses only stacks with corpses" ) {
+            CHECK( human_corpse1.stacks_with( human_corpse2 ) );
+            CHECK( !human_corpse1.stacks_with( not_a_corpse ) );
+        }
+    }
+
+    WHEN( "corpse type different" ) {
+        THEN( "they don't stack" ) {
+            CHECK( !human_corpse1.stacks_with( non_human_corpse1 ) );
+        }
+    }
+
+    WHEN( "corpses differently damaged" ) {
+        human_corpse2.inc_damage();
+        THEN( "should still stack" ) {
+            CHECK( human_corpse1.stacks_with( human_corpse2 ) );
+        }
+    }
+
+    WHEN( "default merge_comestible_mode doesn't stack corpses like rottable food" ) {
+        merge_comestible_mode = merge_comestible_t::merge_all;
+
+        THEN( "different corpses don't stack" ) {
+            CHECK( !non_human_corpse1.stacks_with( non_human_corpse2 ) );
+        }
     }
 }

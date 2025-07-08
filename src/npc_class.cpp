@@ -1,5 +1,6 @@
 #include "npc_class.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <list>
 #include <algorithm>
@@ -275,8 +276,8 @@ void npc_class::load( const JsonObject &jo, const std::string & )
             &p ) {
                 return p.second.id == mutation;
             };
-            if( std::find_if( mutation_categories.begin(), mutation_categories.end(),
-                              category_match ) == mutation_categories.end() ) {
+            if( std::ranges::find_if( mutation_categories,
+                                      category_match ) == mutation_categories.end() ) {
                 debugmsg( "Unrecognized mutation category %s", mutation.str() );
                 continue;
             }

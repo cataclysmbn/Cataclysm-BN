@@ -603,7 +603,7 @@
         "response": { "text": "This is a repeated category books test response", "topic": "TALK_DONE" }
       },
       {
-        "for_category": [ "books", "food" ],
+        "for_category": [ "books", "food", "drugs" ],
         "response": { "text": "This is a repeated category books, food test response", "topic": "TALK_DONE" }
       }
     ]

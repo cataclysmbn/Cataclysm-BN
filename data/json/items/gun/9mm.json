@@ -58,6 +58,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "9mm",
+    "handling": 30,
     "range": 20,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 180,
@@ -84,10 +85,23 @@
     "ammo": "9mm",
     "ranged_damage": { "damage_type": "bullet", "amount": -1 },
     "durability": 6,
-    "blackpowder_tolerance": 48,
+    "blackpowder_tolerance": 24,
     "min_cycle_recoil": 380,
     "magazine_well": "250 ml",
-    "magazines": [ [ "9mm", [ "glockmag", "glockbigmag", "glock17_17", "glock17_22", "glock_drum_50rd", "glock_drum_100rd" ] ] ]
+    "magazines": [
+      [
+        "9mm",
+        [
+          "glockmag",
+          "glockbigmag",
+          "glock17_17",
+          "glock17_22",
+          "glock_drum_50rd",
+          "glock_drum_100rd",
+          "kriss_vector_9mm_mag"
+        ]
+      ]
+    ]
   },
   {
     "id": "hk_mp5",
@@ -107,7 +121,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 1 },
     "dispersion": 240,
     "min_cycle_recoil": 450,
-    "blackpowder_tolerance": 32,
+    "blackpowder_tolerance": 24,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 3 ], [ "AUTO", "auto", 4 ] ],
     "valid_mod_locations": [
       [ "accessories", 3 ],
@@ -218,6 +232,7 @@
     "price": "4800 USD",
     "price_postapoc": "50 USD",
     "bashing": 15,
+    "handling": 5,
     "dispersion": 520,
     "sight_dispersion": 520,
     "armor_data": { "covers": [ "arm_either", "hand_either" ], "coverage": 10, "encumbrance": 30, "material_thickness": 2 },
@@ -240,6 +255,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "9mm",
+    "handling": 30,
     "range": 18,
     "ranged_damage": { "damage_type": "bullet", "amount": 3 },
     "dispersion": 180,
@@ -351,7 +367,7 @@
     "durability": 4,
     "blackpowder_tolerance": 24,
     "min_cycle_recoil": 380,
-    "handling": 40,
+    "handling": 20,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
     "loudness": 25,
     "barrel_length": "250 ml",
@@ -377,7 +393,7 @@
     "durability": 5,
     "blackpowder_tolerance": 24,
     "min_cycle_recoil": 450,
-    "handling": 40,
+    "handling": 25,
     "modes": [ [ "DEFAULT", "burst", 4 ] ],
     "barrel_length": "250 ml",
     "valid_mod_locations": [
@@ -412,7 +428,7 @@
     "dispersion": 520,
     "durability": 6,
     "min_cycle_recoil": 450,
-    "handling": 40,
+    "handling": 25,
     "modes": [ [ "DEFAULT", "burst", 4 ] ],
     "magazine_well": "250 ml",
     "magazines": [ [ "9mm", [ "tec9mag" ] ] ]
@@ -434,7 +450,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -1 },
     "dispersion": 400,
     "durability": 9,
-    "blackpowder_tolerance": 48,
+    "blackpowder_tolerance": 24,
     "min_cycle_recoil": 450,
     "magazine_well": "250 ml",
     "magazines": [ [ "9mm", [ "usp9mag" ] ] ]
@@ -482,11 +498,13 @@
     "ammo": "9mm",
     "ranged_damage": { "damage_type": "bullet", "amount": -1 },
     "durability": 6,
-    "blackpowder_tolerance": 48,
+    "blackpowder_tolerance": 24,
     "min_cycle_recoil": 380,
     "magazine_well": "250 ml",
     "//2": "Glock 17s cannot load a 15 round magazine. See http://guns-of-fun.com/portals/0/LiveContent/Mounts/Glock-Mags-Comp.jpg and #33038",
-    "magazines": [ [ "9mm", [ "glock17_17", "glock17_22", "glock_drum_50rd", "glock_drum_100rd", "glockbigmag" ] ] ]
+    "magazines": [
+      [ "9mm", [ "glock17_17", "glock17_22", "glock_drum_50rd", "glock_drum_100rd", "glockbigmag", "kriss_vector_9mm_mag" ] ]
+    ]
   },
   {
     "id": "glock_18c",
@@ -603,6 +621,7 @@
     "material": [ "plastic", "steel", "zinc" ],
     "color": "dark_gray",
     "ammo": "9mm",
+    "handling": 5,
     "durability": 7,
     "magazine_well": "250 ml",
     "magazines": [ [ "9mm", [ "hptc9mag_8rd", "hptc9mag_10rd", "hptc9mag_15rd" ] ] ]
@@ -660,5 +679,33 @@
     "magazine_well": "250 ml",
     "magazines": [ [ "9mm", [ "glockmag", "glockbigmag", "glock17_17", "glock17_22", "glock_drum_50rd", "glock_drum_100rd" ] ] ],
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 3 ] ]
+  },
+  {
+    "id": "kriss_vector_9mm",
+    "copy-from": "smg_base",
+    "type": "GUN",
+    "looks_like": "TDI",
+    "name": { "str": "Kriss Vector 9mm" },
+    "description": "A submachine gun with a sleek in-line design.  It features a 2-round burst mode to make the most out of its unique recoil mitigation system alongside a blistering full-auto mode.  This one is chambered in 9mm and uses full-size Glock 17 magazines.",
+    "weight": "3400 g",
+    "volume": "1750 ml",
+    "barrel_length": "150 ml",
+    "price": "3100 USD",
+    "price_postapoc": "35 USD",
+    "to_hit": -2,
+    "bashing": 9,
+    "material": [ "steel", "plastic" ],
+    "color": "dark_gray",
+    "ammo": "9mm",
+    "dispersion": 260,
+    "durability": 10,
+    "min_cycle_recoil": 300,
+    "blackpowder_tolerance": 24,
+    "handling": 40,
+    "built_in_mods": [ "folding_stock" ],
+    "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 2 ], [ "AUTO", "auto", 6 ] ],
+    "magazines": [
+      [ "9mm", [ "kriss_vector_9mm_mag", "glock17_17", "glock17_22", "glock_drum_50rd", "glock_drum_100rd", "glockbigmag" ] ]
+    ]
   }
 ]

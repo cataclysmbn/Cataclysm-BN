@@ -107,7 +107,7 @@
     "type": "uncraft",
     "time": "30 s",
     "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "rag", 1 ] ] ],
+    "components": [ [ [ "nylon", 1 ] ] ],
     "flags": [ "BLIND_EASY" ]
   },
   {
@@ -560,6 +560,22 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ], [ [ "string_6", 2 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "armguard_paper",
+    "type": "uncraft",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "paper", 60 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "legguard_paper",
+    "type": "uncraft",
+    "time": "30 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "paper", 60 ] ] ],
     "flags": [ "BLIND_EASY" ]
   },
   {

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_EVENT_BUS_H
-#define CATA_SRC_EVENT_BUS_H
 
 #include <utility>
 #include <vector>
@@ -45,4 +43,4 @@ class event_bus
 
 event_bus &get_event_bus();
 
-#endif // CATA_SRC_EVENT_BUS_H
+

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_STRING_ID_H
-#define CATA_SRC_STRING_ID_H
 
 #include <cstdint>
 #include <string>
@@ -387,4 +385,4 @@ struct lexicographic {
     }
 };
 
-#endif // CATA_SRC_STRING_ID_H
+

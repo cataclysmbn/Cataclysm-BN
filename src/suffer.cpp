@@ -297,12 +297,24 @@ void Character::suffer_from_addictions()
 
 void Character::suffer_while_awake( const int current_stim )
 {
-    if( !has_trait( trait_DEBUG_STORAGE ) &&
-        ( weight_carried() > 4 * weight_capacity() ) ) {
-        if( has_effect( effect_downed ) ) {
-            add_effect( effect_downed, 1_turns, bodypart_str_id::NULL_ID(), 0 );
+    if( !has_trait( trait_DEBUG_STORAGE ) ) {
+        units::mass w_carry;
+        units::mass w_cap;
+        if( is_mounted() ) {
+            auto &mount = *mounted_creature;
+            w_carry = mount.get_carried_weight() + this->get_weight();
+            w_cap = 4 * mount.weight_capacity();
         } else {
-            add_effect( effect_downed, 2_turns, bodypart_str_id::NULL_ID(), 0 );
+            w_carry = weight_carried();
+            w_cap = 4 * weight_capacity();
+        }
+
+        if( w_carry > w_cap ) {
+            if( has_effect( effect_downed ) ) {
+                add_effect( effect_downed, 1_turns, bodypart_str_id::NULL_ID(), 0 );
+            } else {
+                add_effect( effect_downed, 2_turns, bodypart_str_id::NULL_ID(), 0 );
+            }
         }
     }
     if( has_trait( trait_CHEMIMBALANCE ) ) {
@@ -893,7 +905,7 @@ std::map<bodypart_id, float> Character::bodypart_exposure()
         // What body parts does this item cover?
         body_part_set covered = it->get_covered_body_parts();
         for( const bodypart_id &bp : all_body_parts )  {
-            if( bp->token != num_bp && !covered.test( bp.id() ) ) {
+            if( bp.id() && !covered.test( bp.id() ) ) {
                 continue;
             }
             // How much exposure does this item leave on this part? (1.0 == naked)
@@ -1545,7 +1557,7 @@ void Character::suffer()
         }
     }
 
-    for( bionic &bio : *my_bionics ) {
+    for( bionic &bio : get_bionic_collection() ) {
         process_bionic( bio );
     }
 
@@ -1917,7 +1929,7 @@ void Character::add_addiction( add_type type, int strength )
 
 bool Character::has_addiction( add_type type ) const
 {
-    return std::any_of( addictions.begin(), addictions.end(),
+    return std::ranges::any_of( addictions,
     [type]( const addiction & ad ) {
         return ad.type == type && ad.intensity >= MIN_ADDICTION_LEVEL;
     } );
@@ -1925,7 +1937,7 @@ bool Character::has_addiction( add_type type ) const
 
 void Character::rem_addiction( add_type type )
 {
-    auto iter = std::find_if( addictions.begin(), addictions.end(),
+    auto iter = std::ranges::find_if( addictions,
     [type]( const addiction & ad ) {
         return ad.type == type;
     } );
@@ -1938,7 +1950,7 @@ void Character::rem_addiction( add_type type )
 
 int Character::addiction_level( add_type type ) const
 {
-    auto iter = std::find_if( addictions.begin(), addictions.end(),
+    auto iter = std::ranges::find_if( addictions,
     [type]( const addiction & ad ) {
         return ad.type == type;
     } );

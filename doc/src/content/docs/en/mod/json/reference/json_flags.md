@@ -50,22 +50,15 @@ chambering! :-)
 - `40mm` 40mm Grenade
 - `44` .44 Magnum
 - `44paper` .44 cap & ball
-- `454` .454 Casull
 - `45` .45 ACP (and relatives)
-- `46` 46mm
-- `500` .500 Magnum
 - `50` .50 BMG
-- `57` 57mm
 - `5x50` 5x50 Dart
 - `66mm` 66mm HEAT
-- `700nx` .700 Nitro Express
 - `762R` 7.62x54mm
 - `762` 7.62x39mm
-- `762x25` 7.62x25mm
 - `84x246mm` 84x246mm HE
 - `8x40mm` 8mm Caseless
 - `9mm` 9x19mm Luger (and relatives)
-- `9x18` 9x18mm
 - `BB` BB
 - `RPG-7` RPG-7
 - `UPS` UPS charges
@@ -102,6 +95,21 @@ chambering! :-)
 - `thrown` Thrown
 - `unfinished_char` Semi-charred fuel
 - `water` Water
+
+The following ammo types are (or will soon be) available in in-repo mods
+`exotic_ammo`:
+
+- `454` .454 Casull
+- `500` .500 Magnum
+- `57` 5.7 mm
+- `46` 4.6 mm
+- `762x25` 7.62x25mm (Tokarev)
+- `9x18` 9x18mm
+- `700nx` .700 Nitro Express
+- `38super` .38 super
+- `460` .460 Rowland
+- `545x39` 5.45x39mm
+- `270win` .270 winchester
 
 ### Effects
 
@@ -200,7 +208,8 @@ to find which flags work elsewhere.
 - `COLLAR` This piece of clothing has a wide collar that can keep your mouth warm.
 - `DEAF` Makes the player deaf.
 - `ELECTRIC_IMMUNE` This gear completely protects you from electric discharges.
-- `FANCY` Wearing this clothing gives a morale bonus if the player has the `Stylish` trait.
+- `FANCY` Wearing this clothing gives a morale bonus if the player doesn't have the
+  `Fashion Deficient` trait.
 - `FIX_FARSIGHT` This gear corrects farsightedness.
 - `FIX_NEARSIGHT` This gear corrects nearsightedness.
 - `FLOTATION` Prevents the player from drowning in deep water. Also prevents diving underwater.
@@ -249,7 +258,8 @@ to find which flags work elsewhere.
   0.70.
 - `STURDY` This clothing is a lot more resistant to damage than normal.
 - `SUN_GLASSES` Prevents glaring when in sunlight.
-- `SUPER_FANCY` Gives an additional moral bonus over `FANCY` if the player has the `Stylish` trait.
+- `SUPER_FANCY` Gives an additional moral bonus over `FANCY` if the player doesn't have the
+  `Fashion Deficient` trait.
 - `SWIM_GOGGLES` Allows you to see much further under water.
 - `THERMOMETER` This gear is equipped with an accurate thermometer (which is used to measure
   temperature).
@@ -379,9 +389,6 @@ to find which flags work elsewhere.
 - `TOWEL` Dry your character using the item as towel.
 - `TOW_ATTACH` This is a tow cable, activate it to attach it to a vehicle.
 - `TURRET` Activate a turret.
-- `WASH_ALL_ITEMS` Wash items with FILTHY flag.
-- `WASH_HARD_ITEMS` Wash hard items with FILTHY flag.
-- `WASH_SOFT_ITEMS` Wash soft items with FILTHY flag.
 - `WATER_PURIFIER` Purify water.
 
 ## Comestibles
@@ -516,6 +523,9 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
    |      O
   ```
 
+- `ADV_DECONSTRUCT` This cannot be deconstructed using normal deconstruction; a specially-defined
+  construction action is necessary. Most of these fall under the "`advanced_object_deconstruction`"
+  group.
 - `BARRICADABLE_DOOR_DAMAGED`
 - `BARRICADABLE_DOOR_REINFORCED_DAMAGED`
 - `BARRICADABLE_DOOR_REINFORCED`
@@ -626,6 +636,10 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
   smashed instead of destroying the tile beneath it.
 - `WALL` This terrain is an upright obstacle. Used for fungal conversion, and also implies
   `CONNECT_TO_WALL`.
+- `WELDABLE_DOOR` The "weld shut metal door" construction will convert this terrain into `t_door_metal_welded`.
+- `WELDABLE_BARS` As above, but converts to `t_door_metal_welded_bars` instead. If you want it to convert
+  into specific terrain instead, add a separate construction entry to the `weld_shut_metal_door` construction
+  group that uses `pre_terrain` instead of `pre_flags`.
 - `WINDOW` This terrain is a window, though it may be closed, broken, or covered up. Used by teh
   tiles code to align furniture sprites away from the window.
 
@@ -634,7 +648,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `aggie_plant` Harvest plants.
 - `autodoc` Brings the autodoc consoles menu. Needs the `AUTODOC` flag to function properly and an
   adjacent furniture with the `AUTODOC_COUCH` flag.
-- `autoclave_empty` Start the autoclave cycle if it contains filthy CBM, and the player has enough
+- `autoclave_empty` Start the autoclave cycle if it contains faulty CBM, and the player has enough
   water.
 - `autoclave_full` Check on the progress of the cycle, and collect sterile CBM once cycle is
   completed.
@@ -703,7 +717,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `CORPSE` ... Flag used to spawn various human corpses during the mapgen.
 - `DANGEROUS` ... NPCs will not accept this item. Explosion iuse actor implies this flag. Implies
   "NPC_THROW_NOW".
-- `DETERGENT` ... This item can be used as a detergent in a washing machine.
+- `DESTROY_ON_DECHARGE` ... This item should be destroyed if loses charges.
 - `DURABLE_MELEE` ... Item is made to hit stuff and it does it well, so it's considered to be a lot
   tougher than other weapons made of the same materials.
 - `FAKE_MILL` ... Item is a fake item, to denote a partially milled product by @ref
@@ -755,8 +769,11 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
   firestarter.
 - `TRADER_AVOID` ... NPCs will not start with this item. Use this for active items (e.g. flashlight
   (on)), dangerous items (e.g. active bomb), fake item or unusual items (e.g. unique quest item).
+- `UNBREAKABLE` ... Armor with this flag will never take damage when taking hits for the wearer.
 - `UNBREAKABLE_MELEE` ... Does never get damaged when used as melee weapon.
 - `UNRECOVERABLE` ... Cannot be recovered from a disassembly.
+- `TOBACCO` ... When lit, this item gives the cigarette effect every puff.
+- `MARIJUANA` ... When lit, this item gives the marijuana effect every puff.
 
 ## Guns
 
@@ -772,8 +789,10 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `CROSSBOW` Counts as a crossbow for the purpose of gunmod compatibility. Default behavior is to
   match the skill used by that weapon.
 - `DISABLE_SIGHTS` Prevents use of the base weapon sights
-- `FIRE_100` Uses 100 shots per firing.
+- `FIRE_20` Uses 20 shots per firing.
 - `FIRE_50` Uses 50 shots per firing.
+- `FIRE_100` Uses 100 shots per firing. See also the `ammo_to_fire` property to specify any amount
+  of ammo usage per shot desired. These flags will override `ammo_to_fire` if present.
 - `HEAVY_WEAPON_SUPPORT` Wearing this will let you hip-fire heavy weapons without needing terrain
   support, like Large or Huge mutants can.
 - `FIRE_TWOHAND` Gun can only be fired if player has two free hands.
@@ -798,6 +817,9 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
   instead of being a strict limit like it normally would be.
 - `STR_RELOAD` Reload speed is affected by strength.
 - `UNDERWATER_GUN` Gun is optimized for usage underwater, does perform badly outside of water.
+- `USE_PARENT_GUN` For gunmods with `gun_data` meant to represent extra magazines on a gun, e.g. KSG.
+  Will make fouling apply to the gun it's installed on instead of itself, check for suppressors installed
+  on the parent item, and apply brass catcher behavior if present on parent item.
 - `WATERPROOF_GUN` Gun does not rust and can be used underwater.
 
 ### Firing modes
@@ -935,12 +957,13 @@ Flags used to describe monsters and define their properties and abilities.
 ### Anger, Fear and Placation Triggers
 
 - `FIRE` There's a fire nearby.
-- `FRIEND_ATTACKED` A monster of the same type was attacked.
-- `FRIEND_DIED` A monster of the same type died.
-- `HURT` The monster is hurt.
+- `FRIEND_ATTACKED` A monster of the same type was attacked. Always triggers character aggro.
+- `FRIEND_DIED` A monster of the same type died. Always triggers character aggro.
+- `HURT` The monster is hurt. Always triggers character aggro.
 - `MEAT` Meat or a corpse is nearby.
 - `NULL` Source use only?
-- `PLAYER_CLOSE` The player gets within a few tiles distance.
+- `PLAYER_CLOSE` The player gets within a few tiles distance. Triggers character aggro `<anger>%` of
+  the time.
 - `PLAYER_WEAK` The player is hurt.
 - `SOUND` Heard a sound.
 - `STALK` Increases when following the player.
@@ -955,30 +978,42 @@ Flags used to describe monsters and define their properties and abilities.
 
 Multiple death functions can be used. Not all combinations make sense.
 
-- `ACID` Acid instead of a body. not the same as the ACID_BLOOD flag. In most cases you want both.
+- `ACID` Acid instead of a body. Not the same as the ACID_BLOOD flag. In most cases you want both.
 - `AMIGARA` Removes hypnosis if the last one.
 - `BLOBSPLIT` Creates more blobs.
+- `BOOMER_GLOW` Explodes in glowing vomit.
 - `BOOMER` Explodes in vomit.
+- `BRAINBLOB` Spawns 2 blobs.
+- `BROKEN_AMMO` Gives a message about destroying ammo and then calls "BROKEN".
 - `BROKEN` Spawns a broken robot item, its id calculated like this: the prefix "mon_" is removed
-  from the monster id, than the prefix "broken_" is added. Example: mon_eyebot -> broken_eyebot
+  from the monster id, then the prefix "broken_" is added. Example: mon_eyebot -> broken_eyebot.
+- `CONFLAGRATION` Explode in a huge fireball.
+- `DARKMAN` Sight returns to normal.
+- `DETONATE` Self destructs.
 - `DISAPPEAR` Hallucination disappears.
 - `DISINTEGRATE` Falls apart.
 - `EXPLODE` Damaging explosion.
 - `FIREBALL` 10 percent chance to explode in a fireball.
-- `FLAME_EXPLOSION` guaranteed to explode and starts fires.
+- `FOCUSEDBEAM` Blinding ray.
+- `FUNGALBURST` Explode with a cloud of fungal haze.
 - `FUNGUS` Explodes in spores.
 - `GAMEOVER` Game over man! Game over! Defense mode.
+- `GAS` Explodes in toxic gas.
 - `GUILT` Moral penalty. There is also a flag with a similar effect.
+- `JABBERWOCKY` Snicker-snack!
+- `JACKSON` Reverts dancers.
 - `KILL_BREATHERS` All breathers die.
 - `KILL_VINES` Kill all nearby vines.
 - `MELT` Normal death, but melts.
 - `NORMAL` Drop a body, leave gibs.
+- `PREG_ROACH` Spawn some cockroach nymphs.
 - `RATKING` Cure verminitis.
 - `SMOKEBURST` Explode like a huge smoke bomb.
+- `SPLATTER` Explodes in gibs and chunks.
 - `THING` Turn into a full thing.
 - `TRIFFID_HEART` Destroys all roots.
 - `VINE_CUT` Kill adjacent vine if it's cut.
-- `WORM` Spawns 2 half-worms
+- `WORM` Spawns 2 half-worms.
 
 ### Flags
 
@@ -997,6 +1032,10 @@ Multiple death functions can be used. Not all combinations make sense.
 - `BASHES` Bashes down doors.
 - `BILE_BLOOD` Makes monster bleed bile.
 - `BIOPROOF` Makes monster immune to Bio damage (A damage type mostly used by magic mods)
+- `COLDPROOF` Makes monster immune to Cold damage (A damage type mostly used by magic mods)
+- `DARKPROOF` Makes monster immune to Dark damage (A damage type completely used by magic mods)
+- `LIGHTPROOF` Makes monster immune to Light damage (A damage type completely used by magic mods)
+- `PSIPROOF` Makes monster immune to Psionic damage (A damage type mostly used by magic mods)
 - `BIRDFOOD` Becomes friendly / tamed with bird food.
 - `BLEED` Causes the player to bleed.
 - `BONES` May produce bones and sinews when butchered.
@@ -1027,7 +1066,6 @@ Multiple death functions can be used. Not all combinations make sense.
 - `ELECTRONIC` e.g. A Robot; affected by emp blasts and other stuff.
 - `FAT` May produce fat when butchered.
 - `FEATHER` May produce feathers when butchered.
-- `FILTHY` Any clothing it drops will be filthy.
 - `FIREPROOF` Immune to fire.
 - `FIREY` Burns stuff and is immune to fire.
 - `FISHABLE` It is fishable.
@@ -1097,9 +1135,11 @@ Multiple death functions can be used. Not all combinations make sense.
 
 ### Monster Defense and Attacks
 
-- `ACIDSPLASH` Splash acid on the attacker
-- `NONE` No special attack-back
-- `ZAPBACK` Shock attacker on hit
+- `ACIDSPLASH` Splash acid on the attacker.
+- `NONE` No special attack-back.
+- `RETURN_FIRE` Blind fire on unseen attacker.
+- `REVENGE_AGGRO` Make allies aggro on target.
+- `ZAPBACK` Shock attacker on hit.
 
 ### Sizes
 
@@ -1570,7 +1610,6 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `CURTAIN` Can be installed over a part flagged with `WINDOW`, and functions the same as blinds
   found on windows in buildings.
 - `DIFFICULTY_REMOVE`
-- `DISHWASHER` Can be used to wash filthy non-soft items en masse.
 - `DOME_LIGHT`
 - `DOOR_MOTOR` Can only be installed on a part with `OPENABLE` flag.
 - `E_ALTERNATOR` Is an engine that can power an alternator.
@@ -1652,6 +1691,8 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `SEAT` A seat where the player can sit or sleep.
 - `SEATBELT` Helps prevent the player from being ejected from the vehicle during an accident. Can
   only be installed on a part with `BELTABLE` flag.
+- `SEAT_REQUIRES_BALANCE` The player may fall off once they run into something determined by a
+  strength roll. TRAIT_DEFT and TRAIT_PROF_SKATER makes it harder to be thrown from vehicle.
 - `SECURITY`
 - `SHARP` Striking a monster with this part does cutting damage instead of bashing damage, and
   prevents stunning the monster.
@@ -1680,7 +1721,6 @@ Those flags are added by the game code to specific items (that specific welder, 
   give it special handling.
 - `VARIABLE_SIZE` Has 'bigness' for power, wheel radius, etc.
 - `VISION`
-- `WASHING_MACHINE` Can be used to wash filthy clothes en masse.
 - `WATER_WHEEL` Recharges vehicle batteries when in flowing water.
 - `WELDRIG` Acts as a welder for crafting.
 - `WHEEL` Counts as a wheel in wheel calculations.

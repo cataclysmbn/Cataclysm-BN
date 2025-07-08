@@ -46,11 +46,6 @@
   },
   {
     "type": "recipe",
-    "result": "lightstrip_dead",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "milk",
     "id_suffix": "from_powder",
     "obsolete": true
@@ -88,16 +83,6 @@
   },
   {
     "type": "recipe",
-    "result": "30gal_drum",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "55gal_drum",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "anesthesia",
     "obsolete": true
   },
@@ -113,27 +98,12 @@
   },
   {
     "type": "recipe",
-    "result": "scythe_war",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "laser_sight",
     "obsolete": true
   },
   {
     "type": "recipe",
     "result": "rail_laser_sight",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "goggles_nv",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "goggles_ir",
     "obsolete": true
   },
   {
@@ -158,379 +128,7 @@
   },
   {
     "type": "recipe",
-    "result": "peanut_unshelled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "walnut_unshelled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "pecan_unshelled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "pistachio_unshelled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "almond_unshelled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "chestnut_unshelled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hazelnut_unshelled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hickory_nut_unshelled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hickory_nutuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hazelnutuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "chestnutuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "almonduncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "pistachiouncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "pecanuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "walnutuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "peanutuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bag_meat_vac",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bag_fish_vac",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bag_hflesh_vac",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bag_veggy_vac",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bag_apple_vac",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "dry_hflesh",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "dry_hflesh",
-    "id_suffix": "frozen_ingredients",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "rehydrated_hflesh",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "human_haggis",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hfleshbologna",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "h_currywurst",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mannwurstgravy",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hflesh_aspic",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hflesh_pemmican",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "sandwich_human",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "sandwich_dudeluxe",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hobo_helper",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "chili_human",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "pie_human",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "pizza_human",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "human_canned",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "human_canned",
-    "id_suffix": "jarred",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hflesh_salted",
-    "id_suffix": "vacuum_packed",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "spaghetti_human",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "luigilasagne",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "cheeseburgerhuman",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bobburger",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "manwich",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "tiotaco",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mannwurst_raw",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mannwurst_cooked",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mann_bratwurst",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "human_pickled",
-    "id_suffix": "jarred",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "human_pickled",
-    "id_suffix": "jarred_3l",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "human_smoked",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jerky_human",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hflesh_drink",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hflesh_powder",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hflesh_powder",
-    "id_suffix": "with_from_food_processor",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hflesh_shake",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "hflesh_shake_fortified",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broth_human",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broth_human",
-    "id_suffix": "canned",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broth_human",
-    "id_suffix": "jarred",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broth_human",
-    "id_suffix": "jarred_3l",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "soup_human",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "soup_human",
-    "id_suffix": "canned",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "soup_human",
-    "id_suffix": "jarred",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "soup_human",
-    "id_suffix": "jarred_3l",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "nachoshf",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "nachoshc",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "chilidogs_human",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mannwurst",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "1st_aid",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "20x66_bootleg_flechette",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "20x66_bootleg_shot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "20x66_bootleg_slug",
     "obsolete": true
   },
   {
@@ -541,16 +139,6 @@
   {
     "type": "recipe",
     "result": "40mm_acidbomb",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "8mm_bootleg",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "8mm_bootleg_jsp",
     "obsolete": true
   },
   {
@@ -600,16 +188,6 @@
   },
   {
     "type": "recipe",
-    "result": "arrowhead",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "arrowhead_plastic",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "badge_deputyuncraft",
     "obsolete": true
   },
@@ -626,16 +204,6 @@
   {
     "type": "recipe",
     "result": "baseballuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "battery",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "battery_truck",
     "obsolete": true
   },
   {
@@ -661,46 +229,6 @@
   {
     "type": "recipe",
     "result": "binocularsuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_blood_filteruncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_digestionuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_face_maskuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_ground_sonaruncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_metabolicsuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_nanobotsuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_power_armor_interface_mkII",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_recycleruncraft",
     "obsolete": true
   },
   {
@@ -751,46 +279,6 @@
   {
     "type": "recipe",
     "result": "brew_fruit_winefrom_berries",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broken_copbot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broken_eyebot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broken_manhack",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broken_molebot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broken_riotbot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broken_skitterbot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broken_tankbot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broken_tripod",
     "obsolete": true
   },
   {
@@ -875,97 +363,7 @@
   },
   {
     "type": "recipe",
-    "result": "crude_brick",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "cured_hidescraped",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "dart",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_bayonet",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_broadsword",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_dental_grilluncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_katana",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_knife",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_kukri",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_machete",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_nodachi",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_pistol_bayonet",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_rapier",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_ringuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_sword_bayonet",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_wakizashi",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "diamond_zweihander",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "down_blanketuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "down_pillowuncraft",
     "obsolete": true
   },
   {
@@ -995,37 +393,7 @@
   },
   {
     "type": "recipe",
-    "result": "fish_bait_bread",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "fish_bait_fish",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "fish_bait_meat",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "fish_bait_veggy",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "flamethrower_crude",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "fletching",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "fletchingmakeshift",
     "obsolete": true
   },
   {
@@ -1165,111 +533,6 @@
   },
   {
     "type": "recipe",
-    "result": "jam_blueberries",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jam_strawberries",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_V8",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_apple_canned",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_broth",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_broth_bone",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_fish_canned",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_fish_pickled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_human_canned",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_human_pickled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_kompot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_meat_canned",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_meat_pickled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_soup_fish",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_soup_human",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_soup_meat",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_soup_veggy",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_soup_woods",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_tomato_canned",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_veggy_canned",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "jar_veggy_pickled",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "jug_plasticplastic-mod",
     "obsolete": true
   },
@@ -1360,32 +623,7 @@
   },
   {
     "type": "recipe",
-    "result": "material_shrd_limestoneuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mess_kituncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "metal_tank_small",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "microwave",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mil_mess_kituncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "militarymapuncraft",
     "obsolete": true
   },
   {
@@ -1411,31 +649,6 @@
   {
     "type": "recipe",
     "result": "months_old_newspaperuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mre_beef_boxuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mre_chicken_boxuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mre_hotdog_boxuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mre_ravioli_boxuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "mre_veggy_boxuncraft",
     "obsolete": true
   },
   {
@@ -1481,11 +694,6 @@
   {
     "type": "recipe",
     "result": "one_year_old_newspaperuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "pdauncraft",
     "obsolete": true
   },
   {
@@ -1555,16 +763,6 @@
   },
   {
     "type": "recipe",
-    "result": "ragknitting",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "raguncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "rebreather_xlmod_existing",
     "obsolete": true
   },
@@ -1576,26 +774,6 @@
   {
     "type": "recipe",
     "result": "ref_lighteruncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_40mm_flechette",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_40mm_shot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_shot_beanbag",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_shot_he",
     "obsolete": true
   },
   {
@@ -1661,26 +839,6 @@
   {
     "type": "recipe",
     "result": "sf_watchuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "shaft_metal",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "shaft_plastic",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "shaft_wood",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "shaft_wood_heavy",
     "obsolete": true
   },
   {
@@ -1820,17 +978,7 @@
   },
   {
     "type": "recipe",
-    "result": "rock_pot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "small_storage_battery",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "snare_trigger",
     "obsolete": true
   },
   {
@@ -1895,31 +1043,6 @@
   },
   {
     "type": "recipe",
-    "result": "strawberries_cooked",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "sugarfrom_beets",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "sugarfrom_sweet_water",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "sugarfrom_sweets",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "sugarfrom_wood",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "survivormapuncraft",
     "obsolete": true
   },
@@ -1931,11 +1054,6 @@
   {
     "type": "recipe",
     "result": "sweaterknitting",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "sword_forged",
     "obsolete": true
   },
   {
@@ -1960,11 +1078,6 @@
   },
   {
     "type": "recipe",
-    "result": "television",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "thermal_outfitthermal_outfit_from_bits",
     "obsolete": true
   },
@@ -1976,11 +1089,6 @@
   {
     "type": "recipe",
     "result": "tieclipuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "toaster",
     "obsolete": true
   },
   {
@@ -2055,26 +1163,6 @@
   },
   {
     "type": "recipe",
-    "result": "bio_reactoruncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_plut_filteruncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_reactor_upgradeuncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bio_advreactoruncraft",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "plut_slurry_dense",
     "obsolete": true
   },
@@ -2135,16 +1223,6 @@
   },
   {
     "type": "recipe",
-    "result": "leather_scraped",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "tanned_hide_scraped",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "matchbomb",
     "obsolete": true
   },
@@ -2195,36 +1273,6 @@
   },
   {
     "type": "recipe",
-    "result": "broken_chickenbot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bot_chickenbot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broken_tripod",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bot_tripod",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "broken_tankbot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bot_tankbot",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "soap_flakes",
     "id_suffix": "fast_cut",
     "obsolete": true
@@ -2242,11 +1290,6 @@
   {
     "type": "recipe",
     "result": "battletorch_done",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "battletorch",
     "obsolete": true
   },
   {
@@ -2421,73 +1464,13 @@
     "obsolete": true
   },
   {
-    "result": "reloaded_22_fmj",
-    "type": "recipe",
-    "obsolete": true
-  },
-  {
-    "result": "bp_22_fmj",
-    "type": "recipe",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bp_shot_00",
-    "id_suffix": "with dowel",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bp_shot_bird",
-    "id_suffix": "with dowel",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bp_shot_dragon",
-    "id_suffix": "with dowel",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bp_shot_slug",
-    "id_suffix": "with dowel",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "bp_shot_scrap",
-    "id_suffix": "with dowel",
-    "obsolete": true
-  },
-  {
     "type": "recipe",
     "result": "hand_axe",
     "obsolete": true
   },
   {
     "type": "recipe",
-    "result": "sheet_cotton_patchwork",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "sheet_neoprene",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "makeshift_axe",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "sheet_neoprene_patchwork",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "sheet_cotton",
     "obsolete": true
   },
   {
@@ -2507,33 +1490,12 @@
     "obsolete": true
   },
   {
-    "type": "recipe",
-    "result": "neoprene",
-    "id_suffix": "from_sheet",
-    "obsolete": true
-  },
-  {
     "result": "sieve_primitive",
     "type": "recipe",
     "obsolete": true
   },
   {
     "result": "sieve_steel",
-    "type": "recipe",
-    "obsolete": true
-  },
-  {
-    "result": "gunpowder",
-    "type": "recipe",
-    "obsolete": true
-  },
-  {
-    "result": "mp3",
-    "type": "recipe",
-    "obsolete": true
-  },
-  {
-    "result": "portable_game",
     "type": "recipe",
     "obsolete": true
   },
@@ -2596,346 +1558,6 @@
   {
     "type": "recipe",
     "result": "milk_cream",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_32_acp",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_38_fmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_38_special",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_38super_fmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_357sig_fmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_357sig_jhp",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_357mag_fmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_357mag_jhp",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_38_super",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_40fmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_40sw",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_10mm_fmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_44fmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_44magnum",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_45_acp",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_45_jhp",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_45_super",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_454_Casull",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_45colt_jhp",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_46mm",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_460_fmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_460_rowland",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_500_Magnum",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_57mm",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_762_25",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_9mm",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_9mmP",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_9mmP2",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_9mmfmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_9x18mm",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_9x18mmfmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_9x18mmP2",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_380_JHP",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_380_FMJ",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_380_p",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_22_cphp",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_22_lr",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_223",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_270win_jsp",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_300_winmag",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_3006",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_3006fmj",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_3006_incendiary",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_308",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_4570_sp",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_4570_pen",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_4570_low",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_5x50dart",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_50bmg",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_50_incendiary",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_50ss",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_545",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_545_ap",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_300blk",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_556",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_556_incendiary",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_700nx",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_762_51",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_762_51_incendiary",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_762_54R",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_762_m43",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_762_m87",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_shot_00",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_410shot_000",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_shot_bird",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_shot_dragon",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_shot_flechette",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "reloaded_shot_slug",
     "obsolete": true
   },
   {
@@ -3335,11 +1957,6 @@
     "obsolete": true
   },
   {
-    "type": "recipe",
-    "result": "aux_flamer",
-    "obsolete": true
-  },
-  {
     "result": "makeshift_grenade",
     "type": "recipe",
     "obsolete": true
@@ -3415,6 +2032,248 @@
     "type": "recipe",
     "result": "fertilizer_liquid",
     "id_suffix": "simple",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "thermal_cooling_mask",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "thermal_cooling",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "thermal_cooling",
+    "id_suffix": "thermal_outfit_from_bits",
+    "obsolete": true
+  },
+  {
+    "result": "bp_9x18mm",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_9x18mmfmj",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "9x18mm",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "9x18mmfmj",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "9x18mmP2",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "9x18mm_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "38_super",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "38super_fmj",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_38_super",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_38super_fmj",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "38super_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "700nx_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "700nx",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_700nx",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_460_fmj",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_460_rowland",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "460_fmj",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "460_rowland",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "460_casing",
+    "id_suffix": "resize",
+    "obsolete": true
+  },
+  {
+    "result": "460_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "454_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "454_Casull",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_454_Casull",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_500_Magnum",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "500_Magnum",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "500_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_57mm",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "57mm",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "57mm_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_46mm",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "46mm",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "46mm_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "545",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "545_ap",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_545",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_545_ap",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "545_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "270win_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "270win_jsp",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_270win_jsp",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "762_25_casing",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "bp_762_25",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "762_25",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "762_25hot",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "result": "762_25typeP",
+    "type": "recipe",
     "obsolete": true
   }
 ]

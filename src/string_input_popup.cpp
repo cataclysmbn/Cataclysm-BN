@@ -603,6 +603,7 @@ string_input_popup &string_input_popup::window( const catacurses::window &w, poi
     _starty = start.y;
     _endx = endx;
     custom_window = true;
+    this->w_full = catacurses::newwin( 1, _endx - _startx, point( getbegx( w ) + _startx, _starty ) );
     return *this;
 }
 

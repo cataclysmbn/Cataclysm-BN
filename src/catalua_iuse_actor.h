@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATALUA_IUSE_ACTOR_H
-#define CATA_SRC_CATALUA_IUSE_ACTOR_H
 
 #include "iuse.h"
 #include "catalua_sol.h"
@@ -21,4 +19,4 @@ class lua_iuse_actor : public iuse_actor
         std::unique_ptr<iuse_actor> clone() const override;
 };
 
-#endif // CATA_SRC_CATALUA_IUSE_ACTOR_H
+

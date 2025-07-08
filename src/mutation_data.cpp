@@ -296,8 +296,13 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "cost", cost, 0 );
     optional( jo, was_loaded, "time", cooldown, 0 );
     optional( jo, was_loaded, "hunger", hunger, false );
+    optional( jo, was_loaded, "bionic", bionic, false );
     optional( jo, was_loaded, "thirst", thirst, false );
     optional( jo, was_loaded, "fatigue", fatigue, false );
+    optional( jo, was_loaded, "stamina", stamina, false );
+    optional( jo, was_loaded, "mana", mana, false );
+    optional( jo, was_loaded, "health", health, false );
+    optional( jo, was_loaded, "pain", pain, false );
     optional( jo, was_loaded, "valid", valid, true );
     optional( jo, was_loaded, "purifiable", purifiable, true );
 

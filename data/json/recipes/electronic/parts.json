@@ -716,5 +716,21 @@
     "using": [ [ "soldering_standard", 10 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
     "components": [ [ [ "power_supply", 1 ], [ "e_scrap", 2 ] ], [ [ "scrap", 2 ] ], [ [ "cable", 3 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "foldable_solar_panel",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_PARTS",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "50 m",
+    "reversible": true,
+    "decomp_learn": 5,
+    "autolearn": true,
+    "book_learn": [ [ "manual_electronics", 7 ], [ "textbook_electronics", 6 ], [ "advanced_electronics", 6 ] ],
+    "using": [ [ "soldering_standard", 35 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 } ],
+    "components": [ [ [ "power_supply", 1 ] ], [ [ "amplifier", 1 ] ], [ [ "solar_cell", 6 ] ], [ [ "cable", 10 ] ] ]
   }
 ]

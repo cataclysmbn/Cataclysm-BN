@@ -74,7 +74,7 @@
     "id": "schematics_teleportation",
     "type": "BOOK",
     "name": { "str_sp": "Teleporter network schematics" },
-    "description": "A disjointed collection of lab book pages , post-it notes, and computer printouts containing some funky physics equations and circuit diagrams. They seem to be describing some form of stable teleportation technology.",
+    "description": "A disjointed collection of lab book pages, post-it notes, and computer printouts containing some funky physics equations and circuit diagrams.  They seem to be describing some form of stable teleportation technology.",
     "copy-from": "schematics_generic"
   }
 ]

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_PICKUP_TOKEN_H
-#define CATA_SRC_PICKUP_TOKEN_H
 
 #include <list>
 #include <optional>
@@ -61,4 +59,4 @@ std::vector<std::list<item_stack::iterator>> flatten( const std::vector<stacked_
 
 } // namespace pickup
 
-#endif // CATA_SRC_PICKUP_TOKEN_H
+

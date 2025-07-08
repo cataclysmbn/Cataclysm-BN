@@ -666,6 +666,39 @@
     ]
   },
   {
+    "id": "hoodie_drugrug",
+    "repairs_like": "hoodie",
+    "type": "ARMOR",
+    "copy-from": "wool_hoodie",
+    "name": { "str": "drug rug" },
+    "description": "A hooded pullover made of a coarse, woven fabric.  Popular among festival-goers and chill backpackers.  Smells faintly of patchouli.",
+    "price": "40 USD",
+    "price_postapoc": "2 USD",
+    "environmental_protection": 1,
+    "snippet_category": [
+      {
+        "id": "earthtone",
+        "text": "A cozy hoodie patterned with thick earth-toned stripes—burnt umber, forest green, and sand.  The texture is rough but comforting."
+      },
+      {
+        "id": "sunset_trip",
+        "text": "A hoodie woven with psychedelic sunset colors—deep orange, radiant purple, and hints of electric pink.  It radiates good vibes."
+      },
+      {
+        "id": "rasta_vibe",
+        "text": "A green, yellow, and red striped drug rug hoodie.  Slightly faded, like it's seen a few beach fires and late-night jam sessions."
+      },
+      {
+        "id": "mystic_pattern",
+        "text": "A hoodie decorated with vaguely Aztec patterns in black and gray.  You feel wiser just wearing it, or maybe that’s the edibles."
+      },
+      {
+        "id": "desert_dream",
+        "text": "Tan and teal stripes dance across the weave of this soft, oversized hoodie.  Looks perfect for stargazing in the desert."
+      }
+    ]
+  },
+  {
     "id": "vest_leather",
     "type": "ARMOR",
     "name": { "str": "leather vest" },

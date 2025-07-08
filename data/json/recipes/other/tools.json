@@ -8,7 +8,7 @@
     "difficulty": 3,
     "time": "8 m",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "nail_glue", 8, "LIST" ] ], [ [ "2x4", 3 ] ] ]
   },
   {
@@ -160,7 +160,7 @@
         [ "chem_aluminium_powder", 15 ],
         [ "can_drink_unsealed", 2 ]
       ],
-      [ [ "copper_scrap_equivalent", 4, "LIST" ] ]
+      [ [ "copper_scrap_equivalent", 4, "LIST" ], [ "cartridgebrass", 200 ] ]
     ]
   },
   {
@@ -420,8 +420,21 @@
     "difficulty": 2,
     "time": "40 m",
     "autolearn": true,
-    "qualities": [ { "id": "DRILL", "level": 1 } ],
+    "qualities": [ { "id": "DRILL", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "stick", 1 ], [ "2x4", 1 ] ] ]
+  },
+  {
+    "result": "nectar_collector",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "40 m",
+    "autolearn": true,
+    "using": [ [ "forging_standard", 1 ], [ "steel_tiny", 1 ] ],
+    "qualities": [ { "id": "DRILL", "level": 1 }, { "id": "SAW_M", "level": 2 }, { "id": "SANDING", "level": 1 } ],
+    "components": [ [ [ "stick", 1 ], [ "2x4", 1 ] ], [ [ "adhesive_proper", 1, "LIST" ] ] ]
   },
   {
     "type": "recipe",
@@ -462,7 +475,7 @@
     "time": "1 h",
     "reversible": true,
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "stick", 1 ], [ "2x4", 1 ] ],
       [ [ "rock", 1 ], [ "ceramic_shard", 1 ], [ "sharp_rock", 1 ] ],
@@ -475,7 +488,8 @@
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TOOLS",
     "skill_used": "fabrication",
-    "difficulty": 4,
+    "difficulty": 3,
+    "skills_required": [ "survival", 2 ],
     "time": "1 h",
     "reversible": true,
     "autolearn": true,
@@ -493,14 +507,14 @@
     "result": "primitive_axe",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TOOLS",
-    "skill_used": "survival",
-    "skills_required": [ "fabrication", 2 ],
+    "skill_used": "fabrication",
+    "skills_required": [ "survival", 2 ],
     "difficulty": 3,
     "time": "1 h",
     "reversible": true,
     "autolearn": true,
     "book_learn": [ [ "mag_survival", 1 ], [ "atomic_survival", 1 ], [ "textbook_carpentry", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "stick", 1 ], [ "2x4", 1 ] ],
       [ [ "rock", 1 ], [ "ceramic_shard", 1 ], [ "sharp_rock", 1 ] ],
@@ -518,7 +532,7 @@
     "time": "1 h",
     "reversible": true,
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "stick", 1 ], [ "2x4", 1 ] ],
       [ [ "rock", 1 ], [ "ceramic_shard", 1 ], [ "sharp_rock", 1 ] ],
@@ -587,7 +601,7 @@
     "difficulty": 2,
     "time": "6 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "pool_cue", 1 ] ] ]
   },
   {
@@ -599,7 +613,7 @@
     "difficulty": 3,
     "time": "9 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "stick", 2 ], [ "2x4", 1 ] ], [ [ "skewer_bone", 20 ], [ "splinter", 20 ] ] ]
   },
   {
@@ -860,6 +874,19 @@
   },
   {
     "type": "recipe",
+    "result": "large_repairkit",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "mechanics",
+    "difficulty": 1,
+    "time": "2 m",
+    "reversible": true,
+    "book_learn": [ [ "manual_gun", 4 ], [ "textbook_mechanics", 1 ], [ "mag_mechanics", 2 ], [ "mag_rifle", 2 ] ],
+    "using": [ [ "soldering_standard", 5 ] ],
+    "components": [ [ [ "small_repairkit", 1 ] ], [ [ "plastic_chunk", 3 ] ], [ [ "puller", 1 ] ], [ [ "cordless_drill", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "pipe_cleaner",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TOOLS",
@@ -1014,8 +1041,8 @@
     "time": "30 m",
     "autolearn": true,
     "qualities": [ { "id": "ANVIL", "level": 1 }, { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "forge", 150 ], [ "oxy_torch", 30 ] ] ],
-    "components": [ [ [ "steel_lump", 1 ], [ "steel_chunk", 4 ], [ "scrap", 12 ], [ "pipe", 3 ] ] ]
+    "using": [ [ "forging_standard", 4 ] ],
+    "components": [ [ [ "steel_standard", 1, "LIST" ], [ "pipe", 2 ] ] ]
   },
   {
     "type": "recipe",
@@ -1051,9 +1078,7 @@
     "difficulty": 4,
     "time": "2 h",
     "autolearn": true,
-    "using": [ [ "forging_standard", 12 ], [ "steel_standard", 1 ] ],
-    "qualities": [ { "id": "ANVIL", "level": 1 }, { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "tongs", -1 ] ] ],
+    "using": [ [ "blacksmithing_standard", 4 ], [ "steel_standard", 1 ] ],
     "components": [ [ [ "wood_structural_small", 1, "LIST" ] ] ]
   },
   {
@@ -1225,6 +1250,19 @@
   },
   {
     "type": "recipe",
+    "result": "multitool",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "1 h 30 m",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_advanced", 4 ], [ "steel_standard", 1 ] ],
+    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
+    "components": [ [ [ "plastic_chunk", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "hacksaw",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TOOLS",
@@ -1247,11 +1285,10 @@
     "time": "50 m",
     "autolearn": true,
     "book_learn": [ [ "manual_mechanics", 2 ], [ "manual_fabrication", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "plastic_chunk", 1 ], [ "wood_structural_small", 1, "LIST" ] ],
       [ [ "cable", 10 ], [ "wire", 1 ], [ "string_floss", 1 ] ],
-      [ [ "material_sand", 10 ], [ "salt", 20 ] ],
       [ [ "adhesive_proper", 1, "LIST" ] ]
     ]
   },
@@ -1742,7 +1779,7 @@
     "reversible": true,
     "autolearn": true,
     "using": [ [ "cordage", 1 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "stick", 1 ], [ "2x4", 1 ] ], [ [ "rag", 4 ] ] ]
   },
   {
@@ -1913,7 +1950,11 @@
       [ [ "hacksaw", 1 ] ],
       [ [ "wrench", 1 ] ],
       [ [ "saw", 1 ] ],
-      [ [ "hammer", 1 ] ]
+      [ [ "hammer", 1 ] ],
+      [ [ "sandpaper", 1 ] ],
+      [ [ "hand_drill", 1 ] ],
+      [ [ "multitool", 1 ] ],
+      [ [ "gloves_rubber", 1 ] ]
     ]
   },
   {
@@ -1938,7 +1979,11 @@
       [ [ "hammer", 1 ] ],
       [ [ "metal_file", 1 ] ],
       [ [ "pin_reamer", 1 ] ],
-      [ [ "clamp", 1 ] ]
+      [ [ "clamp", 1 ] ],
+      [ [ "sandpaper", 1 ] ],
+      [ [ "hand_drill", 1 ] ],
+      [ [ "multitool", 1 ] ],
+      [ [ "gloves_rubber", 1 ] ]
     ]
   },
   {
@@ -2063,7 +2108,7 @@
     "difficulty": 1,
     "time": "8 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "rag", 1 ] ], [ [ "2x4", 1 ], [ "stick", 1 ], [ "broom", 1 ] ] ]
   },
   {
@@ -2215,7 +2260,7 @@
     "difficulty": 1,
     "time": "1 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "2x4", 1 ] ] ]
   },
   {
@@ -2606,6 +2651,17 @@
     "using": [ [ "blacksmithing_advanced", 3 ], [ "steel_tiny", 3 ] ]
   },
   {
+    "result": "kettle",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "1 h 15 m",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_advanced", 34 ], [ "steel_tiny", 4 ] ]
+  },
+  {
     "result": "awl_bone",
     "type": "recipe",
     "category": "CC_OTHER",
@@ -2668,7 +2724,7 @@
     "time": "3 h",
     "reversible": true,
     "book_learn": [ [ "family_cookbook", 4 ], [ "textbook_survival", 4 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "2x4", 18 ] ],
       [ [ "nail_glue", 14, "LIST" ] ],
@@ -2957,7 +3013,7 @@
     "skill_used": "fabrication",
     "time": "1 m",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
     "components": [ [ [ "pipe", 1 ] ] ]
   },
   {
@@ -2985,7 +3041,7 @@
     "difficulty": 2,
     "time": "20 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "DRILL", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "DRILL", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "2x4", 1 ], [ "stick", 1 ] ] ]
   },
   {
@@ -3034,7 +3090,7 @@
     "skill_used": "fabrication",
     "time": "20 m",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "rock", 1 ], [ "sharp_rock", 1 ] ], [ [ "stick", 1 ], [ "2x4", 1 ] ] ]
   },
   {
@@ -3074,6 +3130,37 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 4 ], [ "atomic_survival", 3 ], [ "survival_book", 3 ] ],
     "using": [ [ "wood_structural", 8 ], [ "nail_glue", 10 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 1 } ]
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 1 }, { "id": "SANDING", "level": 1 } ],
+    "components": [ [ [ "varnish", 1, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "sandpaper",
+    "category": "CC_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "10 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 } ],
+    "components": [
+      [ [ "material_sand", 1 ], [ "glass_shard", 1 ] ],
+      [ [ "paper", 1 ], [ "rag", 1 ] ],
+      [ [ "adhesive_proper", 1, "LIST" ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "crucible",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "autolearn": true,
+    "book_learn": [ [ "concrete_book", 5 ], [ "textbook_armwest", 5 ], [ "textbook_weapwest", 5 ] ],
+    "time": "2 h",
+    "using": [ [ "forging_standard", 10 ] ],
+    "//": "Mullite is created by firing kaolinite clay at very high temeperatures.",
+    "components": [ [ [ "clay_lump", 6 ] ], [ [ "material_sand", 60 ] ] ],
+    "//2": "Sand was used in the actual recipes that scientists re-discovered."
   }
 ]

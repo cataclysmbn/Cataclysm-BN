@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_STRING_FORMATTER_H
-#define CATA_SRC_STRING_FORMATTER_H
 
 #include <cstddef>
 #include <optional>
@@ -463,4 +461,4 @@ inline void cata_printf( std::string_view format, Args &&...args )
 
 /**@}*/
 
-#endif // CATA_SRC_STRING_FORMATTER_H
+

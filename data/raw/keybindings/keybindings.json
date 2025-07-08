@@ -475,6 +475,13 @@
   },
   {
     "type": "keybinding",
+    "id": "TOGGLE_CLOTH",
+    "category": "SORT_ARMOR",
+    "name": "Toggle armor visibility on character sprite",
+    "bindings": [ { "input_method": "keyboard", "key": "H" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "ASSIGN_INVLETS",
     "category": "SORT_ARMOR",
     "name": "Assign invlets to armor",
@@ -739,6 +746,13 @@
   },
   {
     "type": "keybinding",
+    "id": "TOGGLE_V2_SAVE_FORMAT",
+    "category": "WORLDGEN_CONFIRM_DIALOG",
+    "name": "Toggle new world save format",
+    "bindings": [ { "input_method": "keyboard", "key": "=" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "QUIT",
     "category": "WORLDGEN_CONFIRM_DIALOG",
     "name": "Exit worldgen screen",
@@ -912,6 +926,20 @@
     "category": "OVERMAP",
     "id": "MISSIONS",
     "bindings": [ { "input_method": "keyboard", "key": "M" } ]
+  },
+  {
+    "type": "keybinding",
+    "name": "Toggle Map Defaulting to Level 0",
+    "category": "OVERMAP",
+    "id": "TOGGLE_DEFAULT_0",
+    "bindings": [ { "input_method": "keyboard", "key": "." } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "SET_CUSTOM_WAYPOINT",
+    "category": "OVERMAP",
+    "name": "Toggle Custom Waypoint",
+    "bindings": [ { "input_method": "keyboard", "key": "c" } ]
   },
   {
     "type": "keybinding",
@@ -1139,15 +1167,36 @@
     "type": "keybinding",
     "id": "REROLL_CHARACTER",
     "category": "NEW_CHAR_DESCRIPTION",
-    "name": "Reroll Random Character",
+    "name": "Reroll random character",
     "bindings": [ { "input_method": "keyboard", "key": "%" } ]
   },
   {
     "type": "keybinding",
     "id": "REROLL_CHARACTER_WITH_SCENARIO",
     "category": "NEW_CHAR_DESCRIPTION",
-    "name": "Reroll Random Character With Scenario",
+    "name": "Reroll random character with scenario",
     "bindings": [ { "input_method": "keyboard", "key": "^" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "REROLL_CHARACTER",
+    "category": "NEW_CHAR_TRAITS",
+    "name": "Reroll random character",
+    "bindings": [ { "input_method": "keyboard", "key": "%" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "REROLL_CHARACTER_WITH_SCENARIO",
+    "category": "NEW_CHAR_TRAITS",
+    "name": "Reroll random character with scenario",
+    "bindings": [ { "input_method": "keyboard", "key": "^" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "REROLL_APPEARANCE",
+    "category": "NEW_CHAR_TRAITS",
+    "name": "Reroll appearance",
+    "bindings": [ { "input_method": "keyboard", "key": "&" } ]
   },
   {
     "type": "keybinding",
@@ -1534,6 +1583,13 @@
   },
   {
     "type": "keybinding",
+    "id": "TOGGLE_SPRITE",
+    "category": "BIONICS",
+    "name": "Toggle sprite",
+    "bindings": [ { "input_method": "keyboard", "key": "H" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "TOGGLE_AUTO_START",
     "category": "BIONICS",
     "name": "Toggle auto start mod",
@@ -1885,6 +1941,13 @@
   },
   {
     "type": "keybinding",
+    "id": "TOGGLE_SPRITE",
+    "category": "MUTATIONS",
+    "name": "Toggle sprite",
+    "bindings": [ { "input_method": "keyboard", "key": "," } ]
+  },
+  {
+    "type": "keybinding",
     "name": "View/Activate Mutations",
     "category": "DEFAULTMODE",
     "id": "mutations",
@@ -1931,6 +1994,13 @@
     "category": "DEFAULTMODE",
     "id": "disassemble",
     "bindings": [ { "input_method": "keyboard", "key": "(" } ]
+  },
+  {
+    "type": "keybinding",
+    "name": "Salvage items",
+    "category": "DEFAULTMODE",
+    "id": "salvage",
+    "bindings": [  ]
   },
   {
     "type": "keybinding",
@@ -2051,6 +2121,13 @@
   },
   {
     "type": "keybinding",
+    "name": "Open Hitchhiker's Guide",
+    "category": "DEFAULTMODE",
+    "id": "open_hhg",
+    "bindings": [ { "input_method": "keyboard", "key": "h" } ]
+  },
+  {
+    "type": "keybinding",
     "name": "View Help",
     "category": "DEFAULTMODE",
     "id": "help",
@@ -2079,7 +2156,7 @@
     "name": "Debug Menu",
     "category": "DEFAULTMODE",
     "id": "debug",
-    "bindings": [ { "input_method": "keyboard", "key": "F11" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "F12" } ]
   },
   {
     "type": "keybinding",
@@ -3262,6 +3339,13 @@
     "bindings": [ { "input_method": "keyboard", "key": "m" } ]
   },
   {
+    "id": "SALVAGE",
+    "type": "keybinding",
+    "category": "INVENTORY_ITEM",
+    "name": "Salvage",
+    "bindings": [ { "input_method": "keyboard", "key": "S" } ]
+  },
+  {
     "id": "DISASSEMBLE",
     "type": "keybinding",
     "category": "INVENTORY_ITEM",
@@ -3274,6 +3358,13 @@
     "category": "INVENTORY_ITEM",
     "name": "Kills",
     "bindings": [ { "input_method": "keyboard", "key": "K" } ]
+  },
+  {
+    "id": "OPEN_ITEM_IN_HHG",
+    "type": "keybinding",
+    "category": "INVENTORY_ITEM",
+    "name": "Hitchhiker's Guide",
+    "bindings": [ { "input_method": "keyboard", "key": "h" } ]
   },
   {
     "id": "FAVORITE_ADD",
@@ -3523,5 +3614,72 @@
     "category": "ADVANCED_INVENTORY",
     "//": "Toggles option AIM_AUTORESET_FILTER",
     "bindings": [ { "input_method": "keyboard", "key": "T" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "YES",
+    "category": "YN_IGNORE_QUERY",
+    "name": "Yes",
+    "bindings": [ { "input_method": "keyboard", "key": "Y" }, { "input_method": "keyboard", "key": "y" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "ABORT",
+    "category": "YN_IGNORE_QUERY",
+    "name": "Abort",
+    "bindings": [
+      { "input_method": "keyboard", "key": "A" },
+      { "input_method": "keyboard", "key": "a" },
+      { "input_method": "keyboard", "key": "ESC" }
+    ]
+  },
+  {
+    "type": "keybinding",
+    "id": "SKIP",
+    "category": "YN_IGNORE_QUERY",
+    "name": "Skip",
+    "bindings": [ { "input_method": "keyboard", "key": "S" }, { "input_method": "keyboard", "key": "s" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "IGNORE",
+    "category": "YN_IGNORE_QUERY",
+    "name": "Ignore further promts and finish",
+    "bindings": [ { "input_method": "keyboard", "key": "I" }, { "input_method": "keyboard", "key": "i" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RANDOMIZE",
+    "category": "NEW_CHAR_TRAITS",
+    "name": "Select random trait",
+    "bindings": [ { "input_method": "keyboard", "key": "*" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RANDOMIZE",
+    "category": "NEW_CHAR_PROFESSIONS",
+    "name": "Select random profession",
+    "bindings": [ { "input_method": "keyboard", "key": "*" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RANDOMIZE",
+    "category": "NEW_CHAR_SCENARIOS",
+    "name": "Select random scenario",
+    "bindings": [ { "input_method": "keyboard", "key": "*" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RANDOMIZE",
+    "category": "NEW_CHAR_SKILLS",
+    "name": "Select random skill",
+    "bindings": [ { "input_method": "keyboard", "key": "*" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RANDOMIZE",
+    "category": "NEW_CHAR_STATS",
+    "name": "Select random stat",
+    "bindings": [ { "input_method": "keyboard", "key": "*" } ]
   }
 ]

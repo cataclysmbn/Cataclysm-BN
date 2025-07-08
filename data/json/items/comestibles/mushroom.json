@@ -28,13 +28,13 @@
     "description": "Prized by chefs and woodsmen alike, morel mushrooms are delicious but must be cooked before they are safe to eat.",
     "price": "20 USD",
     "price_postapoc": "50 cent",
-    "material": "mushroom",
+    "material": [ "mushroom" ],
     "volume": "250 ml",
     "fun": 1,
     "charges": 6,
     "flags": [ "SMOKABLE", "UNSAFE_CONSUME" ],
     "smoking_result": "dry_mushroom",
-    "vitamins": [ [ "calcium", 2 ], [ "iron", 52 ] ]
+    "vitamins": [ [ "calcium", 2 ], [ "iron", 52 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -79,10 +79,11 @@
     "description": "Dried mushrooms are a tasty and healthy addition to many meals.",
     "price": "180 cent",
     "price_postapoc": "1 USD",
-    "material": "mushroom",
+    "material": [ "mushroom" ],
     "primary_material": "dried_vegetable",
     "volume": "25 ml",
-    "fun": 1
+    "fun": 1,
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -98,12 +99,12 @@
     "description": "Mushrooms are tasty, but be careful.  Some can poison you, while others are hallucinogenic.",
     "price": "140 cent",
     "price_postapoc": "50 cent",
-    "material": "mushroom",
+    "material": [ "mushroom" ],
     "volume": "250 ml",
     "fun": -3,
     "charges": 10,
     "flags": [ "SMOKABLE", "FORAGE_POISON", "FORAGE_HALLU", "RAW" ],
     "smoking_result": "dry_mushroom",
-    "vitamins": [ [ "vitC", 2 ], [ "iron", 2 ] ]
+    "vitamins": [ [ "vitC", 2 ], [ "iron", 2 ], [ "veggy_allergen", 1 ] ]
   }
 ]

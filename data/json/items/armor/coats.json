@@ -451,7 +451,7 @@
     "volume": "2250 ml",
     "price": "10 USD",
     "price_postapoc": "50 cent",
-    "material": [ "plastic", "cotton" ],
+    "material": [ "plastic", "nylon" ],
     "symbol": "[",
     "looks_like": "jacket_leather",
     "color": "cyan",

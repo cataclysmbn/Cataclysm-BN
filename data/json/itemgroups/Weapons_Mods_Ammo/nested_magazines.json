@@ -81,17 +81,6 @@
     ]
   },
   {
-    "id": "nested_m1911_mag_460",
-    "type": "item_group",
-    "subtype": "distribution",
-    "//": "Used so the .460 1911 spawns with correct ammo.",
-    "ammo": 100,
-    "entries": [
-      { "item": "m1911mag", "ammo-group": "on_hand_460", "prob": 100 },
-      { "item": "m1911bigmag", "ammo-group": "on_hand_460", "prob": 5 }
-    ]
-  },
-  {
     "id": "nested_m9_mag",
     "type": "item_group",
     "subtype": "distribution",
@@ -234,13 +223,15 @@
     ]
   },
   {
-    "id": "nested_hk_mp7_mag",
+    "id": "nested_kriss_vector_9mm_mag",
     "type": "item_group",
     "subtype": "distribution",
     "ammo": 100,
     "entries": [
-      { "item": "hk46mag", "ammo-group": "on_hand_46", "prob": 100 },
-      { "item": "hk46bigmag", "ammo-group": "on_hand_46", "prob": 5 }
+      { "item": "kriss_vector_9mm_mag", "ammo-group": "on_hand_9mm", "prob": 100 },
+      { "item": "glockbigmag", "ammo-group": "on_hand_9mm", "prob": 5 },
+      { "item": "glock_drum_50rd", "ammo-group": "on_hand_9mm", "prob": 5 },
+      { "item": "glock_drum_100rd", "ammo-group": "on_hand_9mm", "prob": 5 }
     ]
   },
   {
@@ -418,16 +409,6 @@
     ]
   },
   {
-    "id": "nested_ak74_mag",
-    "type": "item_group",
-    "subtype": "distribution",
-    "ammo": 100,
-    "entries": [
-      { "item": "ak74mag", "ammo-group": "on_hand_545x39", "prob": 100 },
-      { "item": "rpk74mag", "ammo-group": "on_hand_545x39", "prob": 5 }
-    ]
-  },
-  {
     "id": "nested_steyr_aug_mag",
     "type": "item_group",
     "subtype": "distribution",
@@ -487,16 +468,6 @@
     "entries": [
       { "item": "5x50_100_mag", "ammo-group": "on_hand_5x50mm", "prob": 100 },
       { "item": "5x50_50_mag", "ammo-group": "on_hand_5x50mm", "prob": 5 }
-    ]
-  },
-  {
-    "id": "nested_ppsh_mag",
-    "type": "item_group",
-    "subtype": "distribution",
-    "ammo": 100,
-    "entries": [
-      { "item": "ppshmag", "ammo-group": "on_hand_762x25", "prob": 100 },
-      { "item": "ppshdrum", "ammo-group": "on_hand_762x25", "prob": 5 }
     ]
   },
   {

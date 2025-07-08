@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CONSTRUCTION_GROUP_H
-#define CATA_SRC_CONSTRUCTION_GROUP_H
 
 #include <string>
 #include <vector>
@@ -34,4 +32,4 @@ const std::vector<construction_group> &get_all();
 
 } // namespace construction_groups
 
-#endif // CATA_SRC_CONSTRUCTION_GROUP_H
+

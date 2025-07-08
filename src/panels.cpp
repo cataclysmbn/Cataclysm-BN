@@ -290,11 +290,13 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
     }
 }
 
+
 static void draw_minimap( const avatar &u, const catacurses::window &w_minimap )
 {
     const tripoint_abs_omt curs = u.global_omt_location();
-    overmap_ui::draw_overmap_chunk( w_minimap, u, curs, point_zero, 7, 7 );
+    overmap_ui::draw_overmap_chunk( w_minimap, u, curs, point( -1, -1 ), 7, 7 );
 }
+
 
 static void decorate_panel( const std::string &name, const catacurses::window &w )
 {
@@ -826,7 +828,7 @@ static void draw_limb2( avatar &u, const catacurses::window &w )
         } else {
             wmove( w, point( 11, i / 2 ) );
         }
-        wprintz( w, u.limb_color( bp, true, true, true ), str );
+        wprintz( w, u.limb_color( bp.id(), true, true, true ), str );
         if( i % 2 == 0 ) {
             wmove( w, point( 5, i / 2 ) );
         } else {
@@ -1140,7 +1142,7 @@ static void draw_limb_narrow( avatar &u, const catacurses::window &w )
         std::string str = body_part_hp_bar_ui_text( bp );
         wmove( w, point( nx, ny ) );
         str = left_justify( str, 5 );
-        wprintz( w, u.limb_color( bp, true, true, true ), str + ":" );
+        wprintz( w, u.limb_color( bp.id(), true, true, true ), str + ":" );
     }
     wnoutrefresh( w );
 }
@@ -1300,38 +1302,52 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
     werase( w );
     // display location
     const oter_id &cur_ter = overmap_buffer.ter( u.global_omt_location() );
+    tripoint_abs_omt coord = u.global_omt_location();
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Place: " ) );
     wprintz( w, c_white, utf8_truncate( cur_ter->get_name(), getmaxx( w ) - 13 ) );
+    // display coordinates
+    mvwprintz( w, point( 1, 1 ), c_light_gray, _( "X,Y,Z: " ) );
+    if( get_option<std::string>( "OVERMAP_COORDINATE_FORMAT" ) == "subdivided" ) {
+        point_abs_om abs_coord;
+        tripoint_om_omt rel_coord;
+        std::tie( abs_coord, rel_coord ) = project_remain<coords::om>( coord );
+        wprintz( w, c_white, string_format( "%d'%d, %d'%d, %d", abs_coord.x(), rel_coord.x(), abs_coord.y(),
+                                            rel_coord.y(),
+                                            u.global_omt_location().z() ) );
+    } else {
+        wprintz( w, c_white, string_format( "%d, %d, %d", coord.x(), coord.y(), coord.z() ) );
+    }
+
     // display weather
     if( g->get_levz() < 0 ) {
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        mvwprintz( w, point( 1, 1 ), c_light_gray, _( "Sky  : Underground" ) );
+        mvwprintz( w, point( 1, 2 ), c_light_gray, _( "Sky  : Underground" ) );
     } else {
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        mvwprintz( w, point( 1, 1 ), c_light_gray, _( "Sky  :" ) );
+        mvwprintz( w, point( 1, 2 ), c_light_gray, _( "Sky  :" ) );
         wprintz( w, get_weather().weather_id->color, " %s", get_weather().weather_id->name.translated() );
     }
     // display lighting
     const std::pair<std::string, nc_color> ll = get_light_level(
                 character_funcs::fine_detail_vision_mod( get_avatar() ) );
-    mvwprintz( w, point( 1, 2 ), c_light_gray, "%s ", _( "Light:" ) );
+    mvwprintz( w, point( 1, 3 ), c_light_gray, "%s ", _( "Light:" ) );
     wprintz( w, ll.second, ll.first );
 
     // display date
-    mvwprintz( w, point( 1, 3 ), c_light_gray, _( "Date : %s, day %d" ),
+    mvwprintz( w, point( 1, 4 ), c_light_gray, _( "Date : %s, day %d" ),
                calendar::name_season( season_of_year( calendar::turn ) ),
                day_of_season<int>( calendar::turn ) + 1 );
 
     // display time
     if( u.has_watch() ) {
-        mvwprintz( w, point( 1, 4 ), c_light_gray, _( "Time : %s" ),
+        mvwprintz( w, point( 1, 5 ), c_light_gray, _( "Time : %s" ),
                    to_string_time_of_day( calendar::turn ) );
     } else if( g->get_levz() >= 0 ) {
-        mvwprintz( w, point( 1, 4 ), c_light_gray, _( "Time : %s" ), time_approx() );
+        mvwprintz( w, point( 1, 5 ), c_light_gray, _( "Time : %s" ), time_approx() );
     } else {
         // NOLINTNEXTLINE(cata-text-style): the question mark does not end a sentence
-        mvwprintz( w, point( 1, 4 ), c_light_gray, _( "Time : ???" ) );
+        mvwprintz( w, point( 1, 5 ), c_light_gray, _( "Time : ???" ) );
     }
     if( minimap ) {
         const int offset = getmaxx( w ) - 6;
@@ -1576,7 +1592,7 @@ static void draw_health_classic( avatar &u, const catacurses::window &w )
     for( const bodypart_id &bp : u.get_all_body_parts( true ) ) {
         const std::string str = body_part_hp_bar_ui_text( part[i] );
         wmove( w, point( 8, i ) );
-        wprintz( w, u.limb_color( part[i], true, true, true ), str );
+        wprintz( w, u.limb_color( part[i].id(), true, true, true ), str );
         wmove( w, point( 14, i ) );
         draw_limb_health( u, w, bp.id() );
         i++;
@@ -1721,6 +1737,38 @@ static void draw_armor( const avatar &u, const catacurses::window &w )
                         max_length ) );
     wnoutrefresh( w );
 }
+static std::string get_armor_comp( const avatar &u, bodypart_id bp )
+{
+    for( auto it = u.worn.rbegin(); it != u.worn.rend(); ++it ) {
+        if( ( *it )->covers( bp ) ) {
+            std::string armor_name = ( *it )->tname( 1, true );  // Get full name
+            std::size_t end_pos = armor_name.find( "</color>" );
+            if( end_pos != std::string::npos ) {
+                return armor_name.substr( 0, end_pos + 8 );  // Include everything until </color>
+            } else {
+                return armor_name.substr( 0, 2 );  // If no </color> can be found, show first 2 letters instead.
+            }
+        }
+    }
+    return "-";
+}
+
+static void draw_armor_comp( const avatar &u, const catacurses::window &w )
+{
+    werase( w );
+    nc_color color = c_light_gray;
+    mvwprintz( w, point_zero, color, _( "H:" ) );
+    mvwprintz( w, point( 5, 0 ), color, _( "T:" ) );
+    mvwprintz( w, point( 10, 0 ), color, _( "A:" ) );
+    mvwprintz( w, point( 15, 0 ), color, _( "L:" ) );
+    mvwprintz( w, point( 20, 0 ), color, _( "F:" ) );
+    print_colored_text( w, point( 2, 0 ), color, color, get_armor_comp( u, bodypart_id( "head" ) ) );
+    print_colored_text( w, point( 7, 0 ), color, color, get_armor_comp( u, bodypart_id( "torso" ) ) );
+    print_colored_text( w, point( 12, 0 ), color, color, get_armor_comp( u, bodypart_id( "arm_r" ) ) );
+    print_colored_text( w, point( 17, 0 ), color, color, get_armor_comp( u, bodypart_id( "leg_r" ) ) );
+    print_colored_text( w, point( 22, 0 ), color, color, get_armor_comp( u, bodypart_id( "foot_r" ) ) );
+    wnoutrefresh( w );
+}
 
 static void draw_messages( avatar &, const catacurses::window &w )
 {
@@ -1755,6 +1803,86 @@ static void draw_compass( avatar &, const catacurses::window &w )
     g->mon_info( w );
     wnoutrefresh( w );
 }
+
+// Forward declarations
+std::string direction_to_enemy_improved( const tripoint &enemy_pos, const tripoint &player_pos );
+void check( const char *msg, std::function < auto( const tripoint &,
+            const tripoint & ) -> std::string > fn );
+
+// Improved direction function
+std::string direction_to_enemy_improved( const tripoint &enemy_pos, const tripoint &player_pos )
+{
+    // Constants based on cos(22.5°) / sin(22.5°) approximation
+    constexpr int x0 = 80782;
+    constexpr int y0 = 33461;
+
+    struct wedge_range {
+        const char *direction;
+        int x0, y0;
+        int x1, y1;
+    };
+
+    constexpr std::array<wedge_range, 8> wedges = {{
+            { "N",  -y0, -x0,   y0, -x0 },
+            { "NE",  y0, -x0,   x0, -y0 },
+            { "E",   x0, -y0,   x0,  y0 },
+            { "SE",  x0,  y0,   y0,  x0 },
+            { "S",   y0,  x0,  -y0,  x0 },
+            { "SW", -y0,  x0,  -x0,  y0 },
+            { "W",  -x0,  y0,  -x0, -y0 },
+            { "NW", -x0, -y0, -y0, -x0 }
+        }
+    };
+
+    auto between = []( int cx, int cy, const wedge_range & wr ) {
+        auto side_of_sign = []( int ax, int ay, int bx, int by ) {
+            int dot = ax * by - ay * bx;
+            return ( dot > 0 ) - ( dot < 0 );
+        };
+
+        int dot_ab = side_of_sign( wr.x0, wr.y0, wr.x1, wr.y1 );
+        int dot_ac = side_of_sign( wr.x0, wr.y0, cx, cy );
+        int dot_cb = side_of_sign( cx, cy, wr.x1, wr.y1 );
+
+        return ( dot_ab == dot_ac ) && ( dot_ab == dot_cb );
+    };
+
+    const int dx = enemy_pos.x - player_pos.x;
+    const int dy = enemy_pos.y - player_pos.y;
+
+    for( const auto &wr : wedges ) {
+        if( between( dx, dy, wr ) ) {
+            return wr.direction;
+        }
+    }
+    return "--";
+}
+
+
+static void draw_simple_compass( avatar &u, const catacurses::window &w )
+{
+    werase( w );
+
+    const auto &visible_creatures = u.get_visible_creatures( 200 );
+    std::map<std::string, int> direction_count;
+    const tripoint player_pos = u.pos();
+
+    for( const auto &creature : visible_creatures ) {
+        const tripoint enemy_pos = creature->pos();
+        std::string direction = direction_to_enemy_improved( enemy_pos, player_pos );
+        direction_count[direction]++;
+    }
+
+    std::string enemies_text;
+    for( const auto &entry : direction_count ) {
+        enemies_text += entry.first + "(" + std::to_string( entry.second ) + ") ";
+    }
+
+    mvwprintz( w, point( 0, 0 ), c_white, enemies_text );
+    wnoutrefresh( w );
+}
+
+
 
 static void draw_compass_padding( avatar &, const catacurses::window &w )
 {
@@ -2050,8 +2178,13 @@ static std::vector<window_panel> initialize_default_classic_panels()
     ret.emplace_back( draw_time_classic, translate_marker( "Time" ), 1, 44, true );
     ret.emplace_back( draw_wind, translate_marker( "Wind" ), 1, 44, false );
     ret.emplace_back( draw_armor, translate_marker( "Armor" ), 5, 44, false );
+    ret.emplace_back( draw_armor_comp, translate_marker( "comp.Armor" ), 1, 32, false );
     ret.emplace_back( draw_compass_padding, translate_marker( "Compass" ), 8, 44,
                       true );
+    ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 44,
+                      false );
+    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
+
     ret.emplace_back( draw_messages_classic, translate_marker( "Log" ), -2, 44, true );
 #if defined(TILES)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 44, true,
@@ -2077,8 +2210,11 @@ static std::vector<window_panel> initialize_default_compact_panels()
     ret.emplace_back( draw_weightvolume_compact, translate_marker( "Wgt/Vol" ), 2, 32,
                       true );
     ret.emplace_back( draw_armor, translate_marker( "Armor" ), 5, 32, false );
+    ret.emplace_back( draw_armor_comp, translate_marker( "comp.Armor" ), 1, 32, false );
     ret.emplace_back( draw_messages_classic, translate_marker( "Log" ), -2, 32, true );
     ret.emplace_back( draw_compass, translate_marker( "Compass" ), 8, 32, true );
+    ret.emplace_back( draw_compass, translate_marker( "Comp.Compass" ), 3, 32, false );
+    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
 #if defined(TILES)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
                       default_render, true );
@@ -2099,7 +2235,7 @@ static std::vector<window_panel> initialize_default_label_narrow_panels()
                       spell_panel );
     ret.emplace_back( draw_stat_narrow, translate_marker( "Stats" ), 3, 32, true );
     ret.emplace_back( draw_veh_padding, translate_marker( "Vehicle" ), 1, 32, true );
-    ret.emplace_back( draw_loc_narrow, translate_marker( "Location" ), 5, 32, true );
+    ret.emplace_back( draw_loc_narrow, translate_marker( "Location" ), 6, 32, true );
     ret.emplace_back( draw_wind_padding, translate_marker( "Wind" ), 1, 32, false );
     ret.emplace_back( draw_weapon_labels, translate_marker( "Weapon" ), 2, 32, true );
     ret.emplace_back( draw_weightvolume_narrow, translate_marker( "Wgt/Vol" ), 2, 32,
@@ -2109,8 +2245,12 @@ static std::vector<window_panel> initialize_default_label_narrow_panels()
     ret.emplace_back( draw_messages, translate_marker( "Log" ), -2, 32, true );
     ret.emplace_back( draw_moon_narrow, translate_marker( "Moon" ), 2, 32, false );
     ret.emplace_back( draw_armor_padding, translate_marker( "Armor" ), 5, 32, false );
+    ret.emplace_back( draw_armor_comp, translate_marker( "comp.Armor" ), 1, 32, false );
     ret.emplace_back( draw_compass_padding, translate_marker( "Compass" ), 8, 32,
                       true );
+    ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 32,
+                      false );
+    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
 #if defined(TILES)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
                       default_render, true );
@@ -2131,9 +2271,9 @@ static std::vector<window_panel> initialize_default_label_panels()
                       spell_panel );
     ret.emplace_back( draw_stat_wide, translate_marker( "Stats" ), 2, 44, true );
     ret.emplace_back( draw_veh_padding, translate_marker( "Vehicle" ), 1, 44, true );
-    ret.emplace_back( draw_loc_wide_map, translate_marker( "Location" ), 5, 44, true );
+    ret.emplace_back( draw_loc_wide_map, translate_marker( "Location" ), 6, 44, true );
     ret.emplace_back( draw_wind_padding, translate_marker( "Wind" ), 1, 44, false );
-    ret.emplace_back( draw_loc_wide, translate_marker( "Location Alt" ), 5, 44, false );
+    ret.emplace_back( draw_loc_wide, translate_marker( "Location Alt" ), 6, 44, false );
     ret.emplace_back( draw_weapon_labels, translate_marker( "Weapon" ), 2, 44, true );
     ret.emplace_back( draw_weightvolume_labels, translate_marker( "Wgt/Vol" ), 1, 44,
                       true );
@@ -2142,8 +2282,12 @@ static std::vector<window_panel> initialize_default_label_panels()
     ret.emplace_back( draw_messages, translate_marker( "Log" ), -2, 44, true );
     ret.emplace_back( draw_moon_wide, translate_marker( "Moon" ), 1, 44, false );
     ret.emplace_back( draw_armor_padding, translate_marker( "Armor" ), 5, 44, false );
+    ret.emplace_back( draw_armor_comp, translate_marker( "comp.Armor" ), 1, 32, false );
     ret.emplace_back( draw_compass_padding, translate_marker( "Compass" ), 8, 44,
                       true );
+    ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 32,
+                      false );
+    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
 #if defined(TILES)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 44, true,
                       default_render, true );
@@ -2226,9 +2370,9 @@ bool panel_manager::save()
 
 bool panel_manager::load()
 {
-    return read_from_file_optional_json( PATH_INFO::panel_options(), [&]( JsonIn & jsin ) {
+    return read_from_file_json( PATH_INFO::panel_options(), [&]( JsonIn & jsin ) {
         deserialize( jsin );
-    } );
+    }, true );
 }
 
 void panel_manager::serialize( JsonOut &json )

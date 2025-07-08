@@ -39,16 +39,49 @@ something that takes more than just one turn.
   roots into the ground. Should be true if the activity lasts longer than a few minutes, and can
   always be accomplished without moving your feet.
 
-- based_on: Can be 'time', 'speed', or 'neither'.
+- special (false): activity is considered special and expects to have unconventional logic,
+  compared to other activities
 
-  - time: The amount that `player_activity::moves_left` is decremented by is independent from the
-    character's speed.
+- complex_moves(false):
+  - if false - activity expects to have no speed calculations and do 100 moves per turn,
+    in JSON it's specified by absence of `complex_moves` block;
+  - if true - activity expects to have complex speed/moves calculations, based on several factors:
+    - max_assistants(0): activity can be assisted by provided maximum of other creatures(range is 0-32);
+    - bench(false): activity can be done using workbench;
+    - light(false): activity speed is affected by current light level;
+    - speed(false): activity speed is affected by creature's speed;
+    - skills: activity speed is affected by skills provided in by pairs `skill_name: modifier`
+      or `"skills": true` if you want to explicitely show that activity expects to have modifications
+      based on skills, but those will have to be determine on go (like crafting or constructing):
+      - `"skills": true`
+      - `"skills": ["fabrication", 5]`
+    - stats: activity speed is affected by skills provided in by pairs `stat_name: modifier`
+      or `"stats": true` if you want to explicitely show that activity expects to have modifications
+      based on stats, but those will have to be determine on go (like crafting or constructing):
+      - `"stats": true`
+      - `"stats": ["DEX", 5]`
+    - qualities: activity speed is affected by qualities provided in by pairs `q_name: modifier`
+      or `"qualities": true` if you want to explicitely show that activity expects to have modifications
+      based on qualities, but those will have to be determine on go (like crafting or constructing):
+      - `"qualities": true`
+      - `"qualities": ["CUT_FINE", 5]`
+    - morale(false): activity speed is affected by creature's current morale level.
 
-  - speed: `player_activity::moves_left` may be decremented faster or slower, depending on the
-    character's speed.
+    Example for whole block:
+    "complex_moves": {
+    "max_assistants": 2,
+    "bench": true,
+    "light": true,
+    "speed": true,
+    "stats": true,
+    "skills": [ ], - //same as `"skills": true`
+    "qualities": [ ["CUT_FINE", "5"] ],
+    "morale": true
+    }
 
-  - neither: `moves_left` will not be decremented. Thus you must define a do_turn function;
-    otherwise the activity will never end!
+- morale_blocked(false): activity won't be performed if creature's morale level is below certain level.
+
+- verbose_tooltip(true): activity will have an expanded progress window, showing a lot of information
 
 - no_resume (false): Rather than resuming, you must always restart the activity from scratch.
 
@@ -76,11 +109,30 @@ There are several ways an activity can be ended:
    should call `set_to_null()`. If there isn't a finish function, `set_to_null()` will be called for
    you (from activity_actor::do_turn).
 
-3. `Character::cancel_activity`
+3. `progress.complete()`
+
+   Basically the same as `moves_left` <= 0, but with extra checks and using a progress system.
+
+4. `Character::cancel_activity`
 
    Canceling an activity prevents the `activity_actor::finish` function from running, and the
    activity does therefore not yield a result. Instead, `activity_actor::canceled` is called. If
    activity is suspendable, a copy of it is written to `Character::backlog`.
+
+## Progress
+
+`progress_counter` - class specialize on tracking progress of and activity
+
+- targets: queue of targets that are expected to be processed, stores target name, moves_total and
+  moves_left for the target;
+
+- moves_total (0): Total number of moves required to complete the activity aka all the tasks;
+
+- moves_left (): The number of moves remaining in this activity before it is complete aka all the tasks;
+
+- idx (1): 1-based index of currently prcessing task;
+
+- total_tasks (0): Counts total amount of tasks - done and in queue.
 
 ## Notes
 
@@ -110,9 +162,7 @@ based on time or speed.
 
 To prevent an infinite loop, ensure that one of the following is satisfied:
 
-- The `based_on` JSON property is `speed` or `time`
-
-- The `player_activity::moves_left` is decreased in `do_turn`
+- The `player_activity::progress.moves_left` is decreased in `do_turn`
 
 - The the activity is stopped in `do_turn` (see 'Termination' above)
 

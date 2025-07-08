@@ -161,7 +161,7 @@
     "location": "rail",
     "mod_target_category": [ [ "SUBMACHINE_GUNS" ], [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ], [ "M_XBOWS" ] ],
     "mod_exclusion_category": [ [ "ENERGY_WEAPONS" ] ],
-    "dispersion_modifier": -1,
+    "dispersion_modifier": -50,
     "handling_modifier": 10
   },
   {

@@ -6,8 +6,7 @@
 //
 // For the license information refer to fmtlib_format.h.
 
-#ifndef CATA_SRC_FMTLIB_CORE_H
-#define CATA_SRC_FMTLIB_CORE_H
+#pragma once
 
 #include <cstdio>  // std::FILE
 #include <cstring>
@@ -2367,4 +2366,4 @@ inline void print( const S &format_str, Args && ... args )
 }
 FMT_END_NAMESPACE
 
-#endif  // CATA_SRC_FMTLIB_CORE_H
+

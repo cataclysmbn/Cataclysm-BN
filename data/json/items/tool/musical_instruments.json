@@ -41,7 +41,7 @@
     "price": "50 USD",
     "price_postapoc": "1 USD",
     "bashing": 2,
-    "material": "bone",
+    "material": [ "bone" ],
     "symbol": "-",
     "color": "white",
     "initial_charges": 1,

@@ -1,0 +1,63 @@
+[
+  {
+    "id": "ammo_38super",
+    "type": "requirement",
+    "//": "Components required for .38 Super ammo",
+    "components": [ [ [ "38super_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ] ]
+  },
+  {
+    "id": "45_casehead",
+    "type": "requirement",
+    "//": "References needed for boltfaces and magazines using .45acp or derivatives",
+    "tools": [
+      [
+        [ "45_casing", -1 ],
+        [ "460_casing", -1 ],
+        [ "460_fmj", -1 ],
+        [ "460_rowland", -1 ],
+        [ "bp_460_fmj", -1 ],
+        [ "bp_460_rowland", -1 ],
+        [ "45_acp", -1 ],
+        [ "45_jhp", -1 ],
+        [ "45_super", -1 ],
+        [ "bp_45_acp", -1 ],
+        [ "bp_45_jhp", -1 ]
+      ]
+    ]
+  },
+  {
+    "id": "ammo_57",
+    "type": "requirement",
+    "//": "Components required for 57 ammo",
+    "components": [ [ [ "57mm_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ] ]
+  },
+  {
+    "id": "ammo_270win",
+    "type": "requirement",
+    "//": "Components required for .270 Winchester ammo",
+    "components": [ [ [ "270win_casing", 1 ] ], [ [ "lgrifle_primer", 1 ] ] ]
+  },
+  {
+    "id": "3006_casehead",
+    "type": "requirement",
+    "//": "References needed for boltfaces and magazines using .30-06 or derivatives",
+    "tools": [
+      [
+        [ "3006_casing", -1 ],
+        [ "3006", -1 ],
+        [ "3006fmj", -1 ],
+        [ "3006_incendiary", -1 ],
+        [ "bp_3006", -1 ],
+        [ "bp_3006fmj", -1 ],
+        [ "bp_3006_incendiary", -1 ],
+        [ "270win_casing", -1 ],
+        [ "270win_jsp", -1 ]
+      ]
+    ]
+  },
+  {
+    "id": "ammo_762_25",
+    "type": "requirement",
+    "components": [ [ [ "762_25_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ] ]
+  }
+]

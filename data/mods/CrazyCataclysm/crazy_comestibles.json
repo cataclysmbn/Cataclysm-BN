@@ -15,7 +15,8 @@
     "charges": 4,
     "stack_size": 20,
     "fun": 10,
-    "flags": [ "MYCUS_OK", "FUNGAL_VECTOR" ]
+    "flags": [ "MYCUS_OK", "FUNGAL_VECTOR" ],
+    "vitamins": [ [ "wheat_allergen", 1 ], [ "fruit_allergen", 1 ] ]
   },
   {
     "type": "recipe",

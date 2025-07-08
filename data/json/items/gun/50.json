@@ -53,6 +53,16 @@
     "flags": [ "MOUNTED_GUN" ]
   },
   {
+    "id": "m2browning_turret_fake",
+    "copy-from": "m2browning",
+    "type": "GUN",
+    "name": { "str_sp": "M2HB Browning MG" },
+    "description": "If you see it - it is bug!",
+    "clip_size": 300,
+    "dispersion": 900,
+    "magazines": [  ]
+  },
+  {
     "id": "m2browning_sawn",
     "copy-from": "rifle_manual",
     "type": "GUN",
@@ -67,7 +77,6 @@
     "to_hit": -4,
     "bashing": 18,
     "reload": 400,
-    "handling": 40,
     "ammo": "50",
     "range": 110,
     "ranged_damage": { "damage_type": "bullet", "amount": -4 },

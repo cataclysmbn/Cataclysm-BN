@@ -92,6 +92,7 @@
       { "item": "qstaff_extended", "prob": 5 },
       { "item": "nailboard", "prob": 10 },
       { "item": "club_spiked", "prob": 10 },
+      { "item": "spike_staff", "prob": 10 },
       { "item": "homewrecker", "prob": 5 }
     ]
   },

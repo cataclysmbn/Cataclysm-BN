@@ -28,7 +28,7 @@
     "id": "radiocontrol",
     "copy-from": "radio_car_base",
     "type": "TOOL",
-    "category": "tools",
+    "category": "electronics",
     "name": { "str": "RC control" },
     "description": "A remote control for RC cars, with joystick to steer the car and colorful buttons that don't seem to do anything.  Perhaps they were for the deluxe model?",
     "symbol": "#",
@@ -58,7 +58,7 @@
     "id": "radio_car",
     "copy-from": "radio_car_base",
     "type": "TOOL",
-    "category": "tools",
+    "category": "electronics",
     "name": { "str": "RC car" },
     "description": "A remote-controlled car.  Fun for young and old alike.",
     "symbol": "#",
@@ -92,12 +92,13 @@
     "material": "steel",
     "symbol": ";",
     "color": "dark_gray",
-    "use_action": "RADIO_MOD"
+    "use_action": "RADIO_MOD",
+    "flags": [ "DESTROY_ON_DECHARGE" ]
   },
   {
     "id": "radio",
     "type": "TOOL",
-    "category": "tools",
+    "category": "electronics",
     "name": { "str": "radio (off)", "str_pl": "radios (off)" },
     "description": "This is a portable radio.  Using this radio turns it on.  It will pick up any nearby signals being broadcast and play them audibly.",
     "weight": "295 g",
@@ -144,7 +145,7 @@
   {
     "id": "two_way_radio",
     "type": "TOOL",
-    "category": "tools",
+    "category": "electronics",
     "name": { "str": "two-way radio" },
     "description": "This is a radio with a transmitting unit.  You could use it to contact someone who also has one.  Unfortunately no one seems to use those nowadays…",
     "weight": "400 g",
@@ -177,7 +178,7 @@
   {
     "id": "remotevehcontrol",
     "type": "TOOL",
-    "category": "tools",
+    "category": "electronics",
     "name": { "str": "remote vehicle controller" },
     "description": "A remote controller for real cars.  Can turn onboard devices on and off.  Some cars can be driven remotely.",
     "weight": "907 g",

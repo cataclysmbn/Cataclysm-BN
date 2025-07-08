@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_PLDATA_H
-#define CATA_SRC_PLDATA_H
 
 #include "calendar.h"
 #include "enum_conversions.h"
@@ -64,4 +62,4 @@ inline social_modifiers operator+( social_modifiers lhs, const social_modifiers 
     return lhs;
 }
 
-#endif // CATA_SRC_PLDATA_H
+

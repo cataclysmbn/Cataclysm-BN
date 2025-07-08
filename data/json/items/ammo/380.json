@@ -40,9 +40,9 @@
     "price": "190 cent",
     "price_postapoc": "15 USD",
     "count": 25,
-    "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 0 },
+    "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 15 },
     "relative": { "dispersion": -15 },
-    "proportional": { "recoil": 2 }
+    "proportional": { "recoil": 1.2 }
   },
   {
     "id": "bp_380_FMJ",

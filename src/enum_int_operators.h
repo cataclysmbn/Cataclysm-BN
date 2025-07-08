@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ENUM_INT_OPERATORS_H
-#define CATA_SRC_ENUM_INT_OPERATORS_H
 
 #define DEFINE_INTEGER_OPERATORS(Type) \
     \
@@ -69,4 +67,4 @@
         return static_cast<int>(t);\
     }
 
-#endif // CATA_SRC_ENUM_INT_OPERATORS_H
+

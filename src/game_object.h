@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_GAME_OBJECT_H
-#define CATA_SRC_GAME_OBJECT_H
 
 #include <utility>
 
@@ -63,4 +61,4 @@ class game_object
         virtual std::string debug_name() const = 0;
 };
 
-#endif // CATA_SRC_GAME_OBJECT_H
+

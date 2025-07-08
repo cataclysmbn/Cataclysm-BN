@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MATTACK_COMMON_H
-#define CATA_SRC_MATTACK_COMMON_H
 
 #include <memory>
 #include <string>
@@ -58,4 +56,4 @@ struct mtype_special_attack {
         }
 };
 
-#endif // CATA_SRC_MATTACK_COMMON_H
+

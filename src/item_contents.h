@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ITEM_CONTENTS_H
-#define CATA_SRC_ITEM_CONTENTS_H
 
 #include <cstddef>
 #include <functional>
@@ -116,4 +114,4 @@ class item_contents
         location_vector<item> items;
 };
 
-#endif // CATA_SRC_ITEM_CONTENTS_H
+

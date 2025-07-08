@@ -1,33 +1,6 @@
 [
   {
     "type": "uncraft",
-    "result": "grenade",
-    "skill_used": "fabrication",
-    "difficulty": 3,
-    "time": "50 s",
-    "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ [ [ "delay_fuze", 1 ] ], [ [ "canister_empty", 1 ] ], [ [ "chem_compositionb", 200 ] ] ]
-  },
-  {
-    "type": "uncraft",
-    "result": "grenade_inc",
-    "skill_used": "fabrication",
-    "difficulty": 3,
-    "time": "50 s",
-    "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ [ [ "delay_fuze", 1 ] ], [ [ "canister_empty", 1 ] ], [ [ "incendiary", 150 ] ] ]
-  },
-  {
-    "type": "uncraft",
-    "result": "landmine",
-    "skill_used": "fabrication",
-    "difficulty": 4,
-    "time": "50 s",
-    "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ [ [ "delay_fuze", 1 ] ], [ [ "canister_empty", 1 ] ], [ [ "bearing", 50 ] ], [ [ "chem_compositionb", 600 ] ] ]
-  },
-  {
-    "type": "uncraft",
     "result": "LAW_Packed",
     "skill_used": "fabrication",
     "difficulty": 6,

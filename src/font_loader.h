@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_FONT_LOADER_H
-#define CATA_SRC_FONT_LOADER_H
 
 #include <algorithm>
 #include <stdexcept>
@@ -41,4 +39,4 @@ class font_loader
         void load();
 };
 
-#endif // CATA_SRC_FONT_LOADER_H
+

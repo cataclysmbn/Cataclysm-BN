@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_EVENT_FIELD_TRANSFORMATIONS_H
-#define CATA_SRC_EVENT_FIELD_TRANSFORMATIONS_H
 
 #include <string>
 #include <unordered_map>
@@ -18,4 +16,4 @@ struct event_field_transformation {
 extern const std::unordered_map<std::string, event_field_transformation>
 event_field_transformations;
 
-#endif // CATA_SRC_EVENT_FIELD_TRANSFORMATIONS_H
+

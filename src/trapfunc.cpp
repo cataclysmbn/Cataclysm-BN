@@ -336,22 +336,22 @@ bool trapfunc::crossbow( const tripoint &p, Creature *c, item * )
         if( n != nullptr ) {
             ///\EFFECT_DODGE reduces chance of being hit by crossbow trap
             if( !one_in( 4 ) && rng( 8, 20 ) > n->get_dodge() ) {
-                bodypart_id hit = bodypart_id( " num_bp" );
+                bodypart_str_id hit;
                 switch( rng( 1, 10 ) ) {
                     case  1:
                         if( one_in( 2 ) ) {
-                            hit = bodypart_id( "foot_l" );
+                            hit = body_part_foot_l;
                         } else {
-                            hit = bodypart_id( "foot_r" );
+                            hit = body_part_foot_r;
                         }
                         break;
                     case  2:
                     case  3:
                     case  4:
                         if( one_in( 2 ) ) {
-                            hit = bodypart_id( "leg_l" );
+                            hit = body_part_leg_l;
                         } else {
-                            hit = bodypart_id( "leg_r" );
+                            hit = body_part_leg_r;
                         }
                         break;
                     case  5:
@@ -359,10 +359,10 @@ bool trapfunc::crossbow( const tripoint &p, Creature *c, item * )
                     case  7:
                     case  8:
                     case  9:
-                        hit = bodypart_id( "torso" );
+                        hit = body_part_torso;
                         break;
                     case 10:
-                        hit = bodypart_id( "head" );
+                        hit = body_part_head;
                         break;
                 }
                 //~ %s is bodypart
@@ -400,7 +400,7 @@ bool trapfunc::crossbow( const tripoint &p, Creature *c, item * )
                 if( seen ) {
                     add_msg( m_bad, _( "A bolt shoots out and hits the %s!" ), z->name() );
                 }
-                z->deal_damage( nullptr, bodypart_id( "torso" ), damage_instance( DT_STAB, rng( 30, 45 ) ) );
+                z->deal_damage( nullptr, body_part_torso.id(), damage_instance( DT_STAB, rng( 30, 45 ) ) );
                 add_bolt = !one_in( 10 );
             } else if( seen ) {
                 add_msg( m_neutral, _( "A bolt shoots out, but misses the %s." ), z->name() );
@@ -432,22 +432,22 @@ bool trapfunc::shotgun( const tripoint &p, Creature *c, item * )
         if( n != nullptr ) {
             ///\EFFECT_DODGE reduces chance of being hit by shotgun trap
             if( rng( 5, 50 ) > n->get_dodge() ) {
-                bodypart_id hit = bodypart_id( "num_bp" );
+                bodypart_str_id hit;
                 switch( rng( 1, 10 ) ) {
                     case  1:
                         if( one_in( 2 ) ) {
-                            hit = bodypart_id( "foot_l" );
+                            hit = body_part_foot_l;
                         } else {
-                            hit = bodypart_id( "foot_r" );
+                            hit = body_part_foot_r;
                         }
                         break;
                     case  2:
                     case  3:
                     case  4:
                         if( one_in( 2 ) ) {
-                            hit = bodypart_id( "leg_l" );
+                            hit = body_part_leg_l;
                         } else {
-                            hit = bodypart_id( "leg_r" );
+                            hit = body_part_leg_r;
                         }
                         break;
                     case  5:
@@ -455,10 +455,10 @@ bool trapfunc::shotgun( const tripoint &p, Creature *c, item * )
                     case  7:
                     case  8:
                     case  9:
-                        hit = bodypart_id( "torso" );
+                        hit = body_part_torso;
                         break;
                     case 10:
-                        hit = bodypart_id( "head" );
+                        hit = body_part_head;
                         break;
                 }
                 //~ %s is bodypart
@@ -478,10 +478,10 @@ bool trapfunc::shotgun( const tripoint &p, Creature *c, item * )
                 add_msg( m_bad, _( "A shotgun fires and hits the %s!" ), z->name() );
             }
             if( shots > 1 ) {
-                z->deal_damage( nullptr, bodypart_id( "torso" ), damage_instance( DT_BULLET, rng( 60,
+                z->deal_damage( nullptr, body_part_torso.id(), damage_instance( DT_BULLET, rng( 60,
                                 80 ), 0, 1.5f ) );
             }
-            z->deal_damage( nullptr, bodypart_id( "torso" ), damage_instance( DT_BULLET, rng( 60,
+            z->deal_damage( nullptr, body_part_torso.id(), damage_instance( DT_BULLET, rng( 60,
                             80 ), 0, 1.5f ) );
         }
         c->check_dead_state();
@@ -823,19 +823,19 @@ bool trapfunc::pit_spikes( const tripoint &p, Creature *c, item * )
         } else if( 0 == damage || rng( 5, 30 ) < dodge ) {
             n->add_msg_if_player( _( "You avoid the spikes within." ) );
         } else {
-            bodypart_id hit( "num_bp" );
+            bodypart_str_id hit;
             switch( rng( 1, 10 ) ) {
                 case  1:
-                    hit = bodypart_id( "leg_l" );
+                    hit = body_part_leg_l;
                     break;
                 case  2:
-                    hit = bodypart_id( "leg_r" );
+                    hit = body_part_leg_r;
                     break;
                 case  3:
-                    hit = bodypart_id( "arm_l" );
+                    hit = body_part_arm_l;
                     break;
                 case  4:
-                    hit = bodypart_id( "arm_r" );
+                    hit = body_part_arm_r;
                     break;
                 case  5:
                 case  6:
@@ -843,7 +843,7 @@ bool trapfunc::pit_spikes( const tripoint &p, Creature *c, item * )
                 case  8:
                 case  9:
                 case 10:
-                    hit = bodypart_id( "torso" );
+                    hit = body_part_torso;
                     break;
             }
             n->add_msg_if_player( m_bad, _( "The spikes impale your %s!" ),
@@ -855,7 +855,7 @@ bool trapfunc::pit_spikes( const tripoint &p, Creature *c, item * )
             add_msg( m_bad, _( "Your %s falls into a pit!" ), z->get_name() );
             g->u.forced_dismount();
         }
-        z->deal_damage( nullptr, bodypart_id( "torso" ), damage_instance( DT_CUT, rng( 20, 50 ) ) );
+        z->deal_damage( nullptr, body_part_torso.id(), damage_instance( DT_CUT, rng( 20, 50 ) ) );
     }
     c->check_dead_state();
     if( one_in( 4 ) ) {
@@ -904,31 +904,31 @@ bool trapfunc::pit_glass( const tripoint &p, Creature *c, item * )
         } else if( 0 == damage || rng( 5, 30 ) < dodge ) {
             n->add_msg_if_player( _( "You avoid the glass shards within." ) );
         } else {
-            bodypart_id hit( " num_bp" );
+            bodypart_str_id hit;
             switch( rng( 1, 10 ) ) {
                 case  1:
-                    hit = bodypart_id( "leg_l" );
+                    hit = body_part_leg_l;
                     break;
                 case  2:
-                    hit = bodypart_id( "leg_r" );
+                    hit = body_part_leg_r;
                     break;
                 case  3:
-                    hit = bodypart_id( "arm_l" );
+                    hit = body_part_arm_l;
                     break;
                 case  4:
-                    hit = bodypart_id( "arm_r" );
+                    hit = body_part_arm_r;
                     break;
                 case  5:
-                    hit = bodypart_id( "foot_l" );
+                    hit = body_part_foot_l;
                     break;
                 case  6:
-                    hit = bodypart_id( "foot_r" );
+                    hit = body_part_foot_r;
                     break;
                 case  7:
                 case  8:
                 case  9:
                 case 10:
-                    hit = bodypart_id( "torso" );
+                    hit = body_part_torso;
                     break;
             }
             n->add_msg_if_player( m_bad, _( "The glass shards slash your %s!" ),
@@ -940,7 +940,7 @@ bool trapfunc::pit_glass( const tripoint &p, Creature *c, item * )
             add_msg( m_bad, _( "Your %s falls into a pit!" ), z->get_name() );
             g->u.forced_dismount();
         }
-        z->deal_damage( nullptr, bodypart_id( "torso" ), damage_instance( DT_CUT, rng( 20, 50 ) ) );
+        z->deal_damage( nullptr, body_part_torso.id(), damage_instance( DT_CUT, rng( 20, 50 ) ) );
     }
     c->check_dead_state();
     if( one_in( 5 ) ) {

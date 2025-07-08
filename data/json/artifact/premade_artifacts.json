@@ -15,6 +15,21 @@
     }
   },
   {
+    "id": "radiation_triangle",
+    "type": "TOOL",
+    "name": { "str": "The irradiation triangle" },
+    "description": "Who so ever dares to hold this triangle inside inventory when not underground shall gain 1 to 3 irradiation every 10 minutes.",
+    "weight": "1 g",
+    "volume": "1 ml",
+    "material": [ "iron" ],
+    "symbol": "]",
+    "color": "light_gray",
+    "flags": [ "TRADER_AVOID" ],
+    "relic_data": {
+      "passive_effects": [ { "has": "HELD", "condition": "ABOVEGROUND", "ench_effects": [ { "effect": "debug_irradiation", "intensity": 1 } ] } ]
+    }
+  },
+  {
     "id": "chaos_dagger",
     "type": "GENERIC",
     "category": "weapons",

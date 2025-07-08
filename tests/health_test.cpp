@@ -15,13 +15,17 @@ static void test_diet( const time_duration &dur, npc &dude,
 {
     std::vector<int> health_samples;
     for( time_duration i = 0_turns; i < dur; i += 1_days ) {
-        const size_t index = to_days<int>( i ) % 4;
-        // They lightly correspond to breakfast, dinner, supper, night snack
-        // No, they don't. The correspond to one meal each day.
-        dude.mod_healthy_mod( hmod_changes_per_day[ index ],
-                              sgn( hmod_changes_per_day[ index ] ) * 200 );
-        dude.update_health();
-        health_samples.emplace_back( dude.get_healthy() );
+        // 'Eat' every 6 hours
+        for( size_t index = 0u; index < 4u; ++index ) {
+            // They lightly correspond to breakfast, dinner, supper, night snack
+            dude.mod_healthy_mod( hmod_changes_per_day[ index ],
+                                  sgn( hmod_changes_per_day[ index ] ) * 200 );
+            // And update health every 30m over the 6h period
+            for( time_duration n = 0_turns; n < 6_hours; n += 30_minutes ) {
+                dude.update_health();
+            }
+            health_samples.emplace_back( dude.get_healthy() );
+        }
     }
 
     std::stringstream ss;

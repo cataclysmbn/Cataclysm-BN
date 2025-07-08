@@ -116,7 +116,8 @@
       { "item": "soysauce", "prob": 25 },
       { "item": "horseradish", "prob": 15 },
       { "item": "honey_bottled", "prob": 35 },
-      { "item": "honey_glassed", "prob": 35 }
+      { "item": "honey_glassed", "prob": 35 },
+      { "item": "gochujang", "prob": 15 }
     ]
   },
   {
@@ -562,7 +563,8 @@
       { "item": "pie_veggy", "prob": 18 },
       { "item": "pie_meat", "prob": 18 },
       { "item": "pie_maple", "prob": 9 },
-      { "group": "dessert", "prob": 20 }
+      { "group": "dessert", "prob": 20 },
+      { "item": "bibimbap", "prob": 4 }
     ]
   },
   {
@@ -679,7 +681,8 @@
       { "item": "sandwich_deluxe_nocheese", "charges": [ 1, 2 ], "prob": 10 },
       { "item": "sandwich_t", "charges": [ 1, 2 ], "prob": 10 },
       { "item": "junk_burrito", "prob": 10 },
-      { "item": "chili", "charges": [ 1, 2 ], "prob": 10 }
+      { "item": "chili", "charges": [ 1, 2 ], "prob": 10 },
+      { "item": "bibimbap", "prob": 10 }
     ]
   },
   {
@@ -783,7 +786,8 @@
       { "item": "mre_asianbeef_box" },
       { "item": "mre_chickenpesto_box" },
       { "item": "mre_southwestbeef_box" },
-      { "item": "mre_hotdog_box" }
+      { "item": "mre_hotdog_box" },
+      { "item": "mre_omelette_box" }
     ]
   },
   {

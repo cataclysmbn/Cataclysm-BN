@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_LOCATIONS_H
-#define CATA_SRC_LOCATIONS_H
 
 #include "point.h"
 #include "type_id.h"
@@ -234,4 +232,4 @@ class fake_item_location : public item_location
         std::string describe( const Character *ch, const item *it ) const override;
 };
 
-#endif // CATA_SRC_LOCATIONS_H
+

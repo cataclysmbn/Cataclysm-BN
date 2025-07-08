@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_BEHAVIOR_ORACLE_H
-#define CATA_SRC_BEHAVIOR_ORACLE_H
 
 #include <functional>
 #include <string>
@@ -26,4 +24,4 @@ status_t return_running( const oracle_t * );
 extern std::unordered_map<std::string, std::function<status_t( const oracle_t * )>> predicate_map;
 
 } // namespace behavior
-#endif // CATA_SRC_BEHAVIOR_ORACLE_H
+

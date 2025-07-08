@@ -4,9 +4,8 @@ import sys
 import glob
 import json
 
-assert(len(sys.argv) == 3)
 blacklist_filename = sys.argv[1]
-do_lua = sys.argv[2] == "1"
+do_lua = True
 
 with open(blacklist_filename) as blacklist_file:
     blacklist = {s.rstrip('\n') for s in blacklist_file.readlines()}

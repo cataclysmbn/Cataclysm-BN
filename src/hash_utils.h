@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_HASH_UTILS_H
-#define CATA_SRC_HASH_UTILS_H
 
 #include <cstdint>
 #include <functional>
@@ -119,4 +117,4 @@ inline std::size_t hash64( std::uint64_t val )
 
 } // namespace cata
 
-#endif // CATA_SRC_HASH_UTILS_H
+

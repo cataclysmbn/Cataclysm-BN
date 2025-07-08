@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_FILESYSTEM_H
-#define CATA_SRC_FILESYSTEM_H
 
 #include <string>
 #include <vector>
@@ -106,4 +104,4 @@ std::vector<std::string> get_directories_with( const std::string &pattern,
  */
 std::string ensure_valid_file_name( const std::string &file_name );
 
-#endif // CATA_SRC_FILESYSTEM_H
+

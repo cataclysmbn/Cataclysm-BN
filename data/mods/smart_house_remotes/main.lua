@@ -34,9 +34,7 @@ mod.remote_wireless_range = 24
 mod.remote_wireless_range_z = 2
 
 -- Get abs omt of remote's base
-mod.get_remote_base_omt = function(item)
-  return item:get_var_tri(mod.var_base, Tripoint.new(0, 0, 0))
-end
+mod.get_remote_base_omt = function(item) return item:get_var_tri(mod.var_base, Tripoint.new(0, 0, 0)) end
 
 -- Get abs ms of remote's base
 mod.get_remote_base_abs_ms = function(item)
@@ -45,9 +43,7 @@ mod.get_remote_base_abs_ms = function(item)
 end
 
 -- Set remote's base abs omt
-mod.set_remote_base = function(item, p_omt)
-  item:set_var_tri(mod.var_base, p_omt)
-end
+mod.set_remote_base = function(item, p_omt) item:set_var_tri(mod.var_base, p_omt) end
 
 -- Look for spawned remotes and bind them to given omt
 mod.on_mapgen_postprocess_hook = function(map, p_omt, when)
@@ -61,9 +57,7 @@ mod.on_mapgen_postprocess_hook = function(map, p_omt, when)
       if map:has_items_at(p) then
         local items = map:get_items_at(p):as_item_stack()
         for _, item in pairs(items) do
-          if item:get_type():str() == item_id then
-            mod.set_remote_base(item, p_omt)
-          end
+          if item:get_type():str() == item_id then mod.set_remote_base(item, p_omt) end
         end
       end
     end
@@ -125,12 +119,8 @@ mod.get_neighbours_at = function(opts, block, p)
   if v ~= nil and v.idx == block.idx then
     opts[k] = nil
     block.points[#block.points + 1] = p
-    if v.can_open then
-      block.can_open_num = block.can_open_num + 1
-    end
-    if v.can_close then
-      block.can_close_num = block.can_close_num + 1
-    end
+    if v.can_open then block.can_open_num = block.can_open_num + 1 end
+    if v.can_close then block.can_close_num = block.can_close_num + 1 end
     mod.get_neighbours(opts, block, p)
   end
 end
@@ -144,9 +134,7 @@ end
 -- Helper func to check whether value is in array
 local find_in_array = function(arr, val)
   for k, v in pairs(arr) do
-    if v == val then
-      return k
-    end
+    if v == val then return k end
   end
   return nil
 end
@@ -154,9 +142,7 @@ end
 -- Helper func to check whether tile is considered as inert for one of the blocks
 local check_is_tile_inert = function(tlist, val)
   for idx, transform in pairs(tlist) do
-    if transform.i and find_in_array(transform.i, val) then
-      return idx
-    end
+    if transform.i and find_in_array(transform.i, val) then return idx end
   end
   return nil
 end
@@ -238,9 +224,7 @@ end
 mod.block_close = function(block, transform)
   for _, p in pairs(block.points) do
     local ter_at_p = gapi.get_map():get_ter_at(p):str_id()
-    if ter_at_p:str() == transform.o then
-      gapi.get_map():set_ter_at(p, TerId.new(transform.c):int_id())
-    end
+    if ter_at_p:str() == transform.o then gapi.get_map():set_ter_at(p, TerId.new(transform.c):int_id()) end
   end
 end
 
@@ -248,9 +232,7 @@ end
 mod.block_open = function(block, transform)
   for _, p in pairs(block.points) do
     local ter_at_p = gapi.get_map():get_ter_at(p):str_id()
-    if ter_at_p:str() == transform.c then
-      gapi.get_map():set_ter_at(p, TerId.new(transform.o):int_id())
-    end
+    if ter_at_p:str() == transform.c then gapi.get_map():set_ter_at(p, TerId.new(transform.o):int_id()) end
   end
 end
 
@@ -289,9 +271,7 @@ mod.show_no_endpoints_error = function()
 end
 
 -- Add message indicating the remote works
-mod.show_msg_remote_working = function()
-  gapi.add_msg(locale.gettext("The remote beeps quietly."))
-end
+mod.show_msg_remote_working = function() gapi.add_msg(locale.gettext("The remote beeps quietly.")) end
 
 -- Open or close all tiles in block
 mod.invoke_block = function(block, grid)

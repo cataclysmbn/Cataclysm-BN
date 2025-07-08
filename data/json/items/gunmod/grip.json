@@ -61,13 +61,13 @@
       [ "ROCKET_LAUNCHERS" ],
       [ "FLAMETHROWERS" ]
     ],
-    "handling_modifier": 4
+    "handling_modifier": 5
   },
   {
     "id": "breacher_grip",
     "type": "GUNMOD",
     "name": { "str": "breacher grip" },
-    "description": "A very uncomfortable straight grip.  Clearly not intended for regular use.",
+    "description": "A very uncomfortable straight grip.  Designed to absorb recoil while blasting open obstacles, at the expense of accuracy.",
     "weight": "125 g",
     "volume": "250 ml",
     "integral_volume": "0 ml",
@@ -78,7 +78,17 @@
     "symbol": ":",
     "color": "dark_gray",
     "location": "grip",
-    "mod_target_category": [ [ "PISTOLS" ], [ "REVOLVERS" ] ],
-    "handling_modifier": -10
+    "mod_target_category": [
+      [ "PISTOLS" ],
+      [ "REVOLVERS" ],
+      [ "SUBMACHINE_GUNS" ],
+      [ "RIFLES" ],
+      [ "MACHINE_GUNS" ],
+      [ "SHOTGUNS" ],
+      [ "M_XBOWS" ],
+      [ "GRENADE_LAUNCHERS" ]
+    ],
+    "handling_modifier": -10,
+    "dispersion_modifier": 50
   }
 ]

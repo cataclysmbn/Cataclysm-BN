@@ -2,7 +2,7 @@
   {
     "id": "digging_stick",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_farming",
     "weapon_category": [ "CLUBS" ],
     "name": { "str": "digging stick" },
     "description": "This is a large stick, with the end carved into a broad blade for digging.  It could be used to dig shallow pits, but not deep ones.",
@@ -21,7 +21,7 @@
   {
     "id": "g_shovel",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_farming",
     "name": { "str": "trowel" },
     "description": "A small, sharp gardening shovel, perfect for digging up grubs and worms.",
     "weight": "280 g",
@@ -39,7 +39,7 @@
   {
     "id": "hoe",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_farming",
     "weapon_category": [ "HOOKED_POLES" ],
     "name": { "str": "hoe" },
     "description": "This is a farming implement.  You can use it to turn tillable land into a slow-to-cross pile of dirt, or dig a shallow pit.",
@@ -60,7 +60,7 @@
   {
     "id": "primitive_shovel",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_farming",
     "weapon_category": [ "CLUBS" ],
     "name": { "str": "primitive shovel" },
     "conditional_names": [
@@ -82,7 +82,7 @@
   {
     "id": "scythe",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_farming",
     "weapon_category": [ "HOOKED_POLES" ],
     "name": { "str": "scythe" },
     "description": "This is an old-fashioned farming tool used to cut tall grass.  While it may be a giant blade on the end of a stick, it is incredibly awkward to use for anything but its intended purpose.",
@@ -103,7 +103,7 @@
   {
     "id": "shovel",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_farming",
     "weapon_category": [ "CLUBS" ],
     "name": { "str": "shovel" },
     "description": "This is a digging tool.  Use it to dig pits adjacent to your location.",
@@ -129,14 +129,14 @@
     "description": "This digging tool has had its handle cut shorter to be easier to carry.  Digs holes just like any other shovel, but less effective as a weapon.",
     "bashing": 12,
     "cutting": 25,
-    "to_hit": -1,
+    "to_hit": 0,
     "proportional": { "weight": 0.75, "volume": 0.5, "price_postapoc": 0.5 },
     "extend": { "flags": [ "BELT_CLIP" ] }
   },
   {
     "id": "sickle",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_farming",
     "weapon_category": [ "1H_HOOKED" ],
     "name": { "str": "sickle" },
     "description": "This is an old-fashioned farming tool used to cut tall grass.  While it may be a massive curved blade on a handle, it is incredibly awkward to use for anything but its intended purpose.",
@@ -157,7 +157,7 @@
   {
     "id": "trimmer_off",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_farming",
     "name": { "str": "hedge trimmer (off)", "str_pl": "hedge trimmers (off)" },
     "description": "A cordless, double-sided, gasoline-powered hedge trimmer.  A long line of sharp-edged teeth extends from the engine; turning the trimmer on will make them rapidly vibrate.  The poor man's chainsaw as far as the zombies are concerned.",
     "weight": "4500 g",

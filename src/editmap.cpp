@@ -150,10 +150,10 @@ void edit_json( SAVEOBJ &it )
         } else if( tmret == 2 ) {
             write_to_file( "save/jtest-1j.txt", [&]( std::ostream & fout ) {
                 fout << osave1;
-            }, nullptr );
+            }, "" );
             write_to_file( "save/jtest-2j.txt", [&]( std::ostream & fout ) {
                 fout << serialize( it );
-            }, nullptr );
+            }, "" );
         }
         tm.addentry( 0, true, 'r', pgettext( "item manipulation debug menu entry", "rehash" ) );
         tm.addentry( 1, true, 'e', pgettext( "item manipulation debug menu entry", "edit" ) );
@@ -173,6 +173,16 @@ void edit_json( SAVEOBJ &it )
     } while( tmret != 3 );
 
 }
+
+class editmap::game_draw_callback_t_container
+{
+    public:
+        game_draw_callback_t_container( editmap *em ) : em( em ) {}
+        shared_ptr_fast<game::draw_callback_t> create_or_get();
+    private:
+        editmap *em;
+        weak_ptr_fast<game::draw_callback_t> cbw;
+};
 
 editmap::editmap()
 {
@@ -284,16 +294,6 @@ bool editmap::eget_direction( tripoint &p, const std::string &action ) const
     }
     return true;
 }
-
-class editmap::game_draw_callback_t_container
-{
-    public:
-        game_draw_callback_t_container( editmap *em ) : em( em ) {}
-        shared_ptr_fast<game::draw_callback_t> create_or_get();
-    private:
-        editmap *em;
-        weak_ptr_fast<game::draw_callback_t> cbw;
-};
 
 shared_ptr_fast<game::draw_callback_t> editmap::game_draw_callback_t_container::create_or_get()
 {

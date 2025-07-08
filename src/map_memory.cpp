@@ -9,27 +9,13 @@
 #include "line.h"
 #include "translations.h"
 #include "map.h"
+#include "world.h"
 const memorized_terrain_tile mm_submap::default_tile { "", 0, 0 };
 const int mm_submap::default_symbol = 0;
 
 #define MM_SIZE (MAPSIZE * 2)
 
 #define dbg(x) DebugLog((x),DC::MapMem)
-
-static std::string find_legacy_mm_file()
-{
-    return g->get_player_base_save_path() + ".mm";
-}
-
-static std::string find_mm_dir()
-{
-    return string_format( "%s.mm1", g->get_player_base_save_path() );
-}
-
-static std::string find_region_path( const std::string &dirname, const tripoint &p )
-{
-    return string_format( "%s/%d.%d.%d.mmr", dirname, p.x, p.y, p.z );
-}
 
 /**
  * Helper class for converting global sm coord into
@@ -235,14 +221,7 @@ shared_ptr_fast<mm_submap> map_memory::load_submap( const tripoint &sm_pos )
         return nullptr;
     }
 
-    const std::string dirname = find_mm_dir();
     reg_coord_pair p( sm_pos );
-    const std::string path = find_region_path( dirname, p.reg );
-
-    if( !dir_exist( dirname ) ) {
-        // Old saves don't have [plname].mm1 folder
-        return nullptr;
-    }
 
     mm_region mmr;
     const auto loader = [&]( JsonIn & jsin ) {
@@ -250,7 +229,7 @@ shared_ptr_fast<mm_submap> map_memory::load_submap( const tripoint &sm_pos )
     };
 
     try {
-        if( !read_from_file_optional_json( path, loader ) ) {
+        if( !g->get_active_world()->read_player_mm_quad( p.reg, loader ) ) {
             // Region not found
             return nullptr;
         }
@@ -299,24 +278,7 @@ mm_submap &map_memory::get_submap( const tripoint &sm_pos )
 
 void map_memory::load( const tripoint &pos )
 {
-    const std::string dirname = find_mm_dir();
-
     clear_cache();
-
-    if( !dir_exist( dirname ) ) {
-        // Old saves have [plname].mm file and no [plname].mm1 folder
-        const std::string legacy_file = find_legacy_mm_file();
-        if( file_exist( legacy_file ) ) {
-            try {
-                read_from_file_optional_json( legacy_file, [&]( JsonIn & jsin ) {
-                    this->load_legacy( jsin );
-                } );
-            } catch( const std::exception &err ) {
-                debugmsg( "Failed to load legacy memory map file: %s", err.what() );
-            }
-        }
-        return;
-    }
 
     coord_pair p( pos );
     tripoint start = p.sm - tripoint( MM_SIZE / 2, MM_SIZE / 2, 0 );
@@ -333,8 +295,6 @@ void map_memory::load( const tripoint &pos )
 bool map_memory::save( const tripoint &pos )
 {
     tripoint sm_center = coord_pair( pos ).sm;
-    const std::string dirname = find_mm_dir();
-    assure_dir_exist( dirname );
 
     clear_cache();
 
@@ -361,12 +321,6 @@ bool map_memory::save( const tripoint &pos )
         const tripoint &regp = it.first;
         mm_region &reg = it.second;
         if( !reg.is_empty() ) {
-            const std::string path = find_region_path( dirname, regp );
-            const std::string descr = string_format(
-                                          _( "memory map region for (%d,%d,%d)" ),
-                                          regp.x, regp.y, regp.z
-                                      );
-
             const auto writer = [&]( std::ostream & fout ) -> void {
                 fout << serialize_wrapper( [&]( JsonOut & jsout )
                 {
@@ -374,7 +328,7 @@ bool map_memory::save( const tripoint &pos )
                 } );
             };
 
-            const bool res = write_to_file( path, writer, descr.c_str() );
+            const bool res = g->get_active_world()->write_player_mm_quad( regp, writer );
             result = result & res;
         }
         tripoint regp_sm = mmr_to_sm_copy( regp );

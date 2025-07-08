@@ -10,8 +10,8 @@
     "effects": [ { "id": "bleed", "duration": 100, "bp": "torso" }, { "id": "downed", "duration": 3 } ],
     "hit_dmg_u": "The %1$s impales your torso!",
     "hit_dmg_npc": "The %1$s impales <npcname>'s torso!",
-    "no_dmg_msg_u": "The %1$s tries to impale your torso, but fails to penetrate your armor!",
-    "no_dmg_msg_npc": "The %1$s tries to impale <npcname>'s torso, but fails to penetrate their armor!"
+    "no_dmg_msg_u": "The %1$s tries to impale you, but fails to.",
+    "no_dmg_msg_npc": "The %1$s tries to impale <npcname>, but fails to."
   },
   {
     "type": "monster_attack",
@@ -87,8 +87,8 @@
     "effects": [ { "id": "bleed", "duration": 10, "affect_hit_bp": true }, { "id": "poison", "duration": 30, "bp": "torso" } ],
     "hit_dmg_u": "The %1$s stabs you!",
     "hit_dmg_npc": "The %1$s stabs <npcname>!",
-    "no_dmg_msg_u": "The %1$s tries to stab you, but fails to penetrate your armor.",
-    "no_dmg_msg_npc": "The %1$s tries to stab <npcname>, but fails to penetrate their armor!."
+    "no_dmg_msg_u": "The %1$s tries to stab you, but fails to.",
+    "no_dmg_msg_npc": "The %1$s tries to stab <npcname>, but fails to."
   },
   {
     "type": "monster_attack",
@@ -103,8 +103,8 @@
     "hit_dmg_npc": "The %1$s stings <npcname>'s %2$s!",
     "miss_msg_u": "The %1$s tries to sting you, but you dodge!",
     "miss_msg_npc": "The %1$s tries to sting <npcname>, but they dodge!",
-    "no_dmg_msg_u": "The %1$s tries to sting your %2$s, but it fails to penetrate your armor.",
-    "no_dmg_msg_npc": "The %1$s tries to sting <npcname>'s %2$s, but it fails to penetrate their armor."
+    "no_dmg_msg_u": "The %1$s tries to sting your %2$s, but it fails to.",
+    "no_dmg_msg_npc": "The %1$s tries to sting <npcname>'s %2$s, but it fails to."
   },
   {
     "id": "acid_spray",

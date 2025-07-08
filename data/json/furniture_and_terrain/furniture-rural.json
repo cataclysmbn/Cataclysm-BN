@@ -138,7 +138,7 @@
     "description": "A traditional beehive, buzzing with activity.  The colony is still recovering from last harvest.",
     "symbol": "^",
     "color": "brown",
-    "transforms_into": "f_hive_regrowing",
+    "transforms_into": "f_hive_ready",
     "deconstruct": { "items": [ { "item": "beehive_empty", "count": 1 }, { "item": "honeycomb", "count": [ 1, 2 ] } ] },
     "bash": {
       "str_min": 12,

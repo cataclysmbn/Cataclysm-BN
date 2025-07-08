@@ -1,5 +1,4 @@
-#ifndef CATA_SRC_CUBOID_RECTANGLE_H
-#define CATA_SRC_CUBOID_RECTANGLE_H
+#pragma once
 
 #include "cata_utility.h"
 #include "point.h"
@@ -157,4 +156,4 @@ Tripoint clamp( const Tripoint &p, const inclusive_cuboid<Tripoint> &c )
 static constexpr rectangle<point> rectangle_zero( point_zero, point_zero );
 static constexpr cuboid<tripoint> cuboid_zero( tripoint_zero, tripoint_zero );
 
-#endif // CATA_SRC_CUBOID_RECTANGLE_H
+

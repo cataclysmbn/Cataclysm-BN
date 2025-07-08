@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ASCII_ART_H
-#define CATA_SRC_ASCII_ART_H
 
 #include <string>
 #include <vector>
@@ -22,4 +20,4 @@ class ascii_art
         std::vector<std::string> picture;
 };
 
-#endif // CATA_SRC_ASCII_ART_H
+

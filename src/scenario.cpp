@@ -1,5 +1,6 @@
 #include "scenario.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <algorithm>
 
@@ -159,7 +160,7 @@ void scenario::check_definition() const
             debugmsg( "profession %s for scenario %s does not exist", p.c_str(), id.c_str() );
         }
     }
-    if( std::any_of( professions.begin(), professions.end(), [&]( const string_id<profession> &p ) {
+    if( std::ranges::any_of( professions, [&]( const string_id<profession> &p ) {
     return std::count( professions.begin(), professions.end(), p ) > 1;
     } ) ) {
         debugmsg( "Duplicate entries in the professions array." );
@@ -310,8 +311,8 @@ std::vector<profession_id> scenario::permitted_professions() const
     const auto all = profession::get_all();
     std::vector<profession_id> &res = cached_permitted_professions;
     for( const profession &p : all ) {
-        const bool present = std::find( professions.begin(), professions.end(),
-                                        p.ident() ) != professions.end();
+        const bool present = std::ranges::find( professions,
+                                                p.ident() ) != professions.end();
 
         bool conflicting_traits = scenario_traits_conflict_with_profession_traits( p );
 
@@ -447,7 +448,7 @@ bool scenario::has_flag( const std::string &flag ) const
 bool scenario::allowed_start( const start_location_id &loc ) const
 {
     auto &vec = _allowed_locs;
-    return std::find( vec.begin(), vec.end(), loc ) != vec.end();
+    return std::ranges::find( vec, loc ) != vec.end();
 }
 
 bool scenario::can_pick( const scenario &current_scenario, const int points ) const

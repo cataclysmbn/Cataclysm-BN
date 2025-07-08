@@ -15,6 +15,7 @@
     "dispersion": 45,
     "ups_charges": 5,
     "loudness": 50,
+    "modes": [ [ "DEFAULT", "semi-auto", 1 ], [ "BURST", "auto", 3 ] ],
     "magazines": [ [ "12mm", [ "hk_g80mag" ] ] ]
   }
 ]

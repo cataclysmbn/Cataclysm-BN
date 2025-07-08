@@ -114,9 +114,10 @@
     "description": "An irradiated cucumber will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "price": "320 cent",
     "price_postapoc": "1 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "flags": [ "SMOKABLE" ],
-    "volume": "250 ml"
+    "volume": "250 ml",
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -132,8 +133,9 @@
     "description": "An irradiated cluster of celery will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "price": "220 cent",
     "price_postapoc": "50 cent",
-    "material": "veggy",
-    "volume": "250 ml"
+    "material": [ "veggy" ],
+    "volume": "250 ml",
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",

@@ -1,5 +1,7 @@
 Cataclysm is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
 
+The mod Magical Nights is licensed under the Creative Commons Attribution-ShareAlike 4.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
+
 Documentation site (doc/*, excluding doc/src/content/docs/*) is licensed under the AGPL 3.0-only license, see doc/LICENSE for text of license.
 
 Scripts (scripts/*) are licensed under the AGPL 3.0-only license, see doc/LICENSE for text of license.

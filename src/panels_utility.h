@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_PANELS_UTILITY_H
-#define CATA_SRC_PANELS_UTILITY_H
 
 #include <string>
 #include "color.h"
@@ -13,4 +11,4 @@ std::string value_trimmed( int value, int maximum = 100 );
 
 nc_color focus_color( int focus );
 
-#endif // CATA_SRC_PANELS_UTILITY_H
+

@@ -2,6 +2,7 @@
   {
     "type": "COMESTIBLE",
     "id": "wine_mycus",
+    "category": "drugs",
     "name": { "str_sp": "marloss wine" },
     "weight": "33 g",
     "color": "white",
@@ -23,11 +24,13 @@
     "phase": "liquid",
     "charges": 5,
     "flags": [ "UNSAFE_CONSUME", "EATEN_COLD", "MYCUS_OK" ],
-    "fun": 25
+    "fun": 25,
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "wine_riesling",
+    "category": "drugs",
     "name": { "str_sp": "Riesling" },
     "weight": "50 g",
     "color": "white",
@@ -55,6 +58,7 @@
   {
     "type": "COMESTIBLE",
     "id": "wine_chardonnay",
+    "category": "drugs",
     "name": { "str_sp": "Chardonnay" },
     "weight": "50 g",
     "color": "white",
@@ -82,6 +86,7 @@
   {
     "type": "COMESTIBLE",
     "id": "wine_cabernet",
+    "category": "drugs",
     "name": { "str_sp": "Cabernet Sauvignon" },
     "weight": "50 g",
     "color": "red",
@@ -107,6 +112,7 @@
   {
     "type": "COMESTIBLE",
     "id": "wine_noir",
+    "category": "drugs",
     "name": { "str_sp": "pinot noir" },
     "weight": "50 g",
     "color": "red",
@@ -133,6 +139,7 @@
   {
     "type": "COMESTIBLE",
     "id": "wine_marsala",
+    "category": "drugs",
     "name": { "str_sp": "marsala" },
     "weight": "50 g",
     "color": "red",
@@ -159,6 +166,7 @@
   {
     "type": "COMESTIBLE",
     "id": "wine_vermouth",
+    "category": "drugs",
     "name": { "str_sp": "vermouth" },
     "weight": "50 g",
     "color": "red",
@@ -185,6 +193,7 @@
   {
     "type": "COMESTIBLE",
     "id": "wine_barley",
+    "category": "drugs",
     "name": { "str_sp": "barley wine" },
     "weight": "249 g",
     "color": "brown",
@@ -212,6 +221,7 @@
   {
     "type": "COMESTIBLE",
     "id": "whiskey",
+    "category": "drugs",
     "name": { "str_sp": "whiskey" },
     "weight": "33 g",
     "color": "brown",
@@ -239,6 +249,7 @@
   {
     "type": "COMESTIBLE",
     "id": "vodka",
+    "category": "drugs",
     "name": { "str_sp": "vodka" },
     "weight": "33 g",
     "color": "light_cyan",
@@ -265,6 +276,7 @@
   {
     "type": "COMESTIBLE",
     "id": "gin",
+    "category": "drugs",
     "name": { "str_sp": "gin" },
     "weight": "33 g",
     "color": "light_cyan",
@@ -291,6 +303,7 @@
   {
     "type": "COMESTIBLE",
     "id": "rum",
+    "category": "drugs",
     "name": { "str_sp": "rum" },
     "weight": "33 g",
     "color": "light_cyan",
@@ -317,6 +330,7 @@
   {
     "type": "COMESTIBLE",
     "id": "tequila",
+    "category": "drugs",
     "name": { "str_sp": "tequila" },
     "weight": "34 g",
     "color": "yellow",
@@ -343,6 +357,7 @@
   {
     "type": "COMESTIBLE",
     "id": "triple_sec",
+    "category": "drugs",
     "name": { "str_sp": "triple sec" },
     "weight": "30 g",
     "color": "light_cyan",
@@ -369,6 +384,7 @@
   {
     "type": "COMESTIBLE",
     "id": "bum_wine",
+    "category": "drugs",
     "name": { "str_sp": "cheap wine" },
     "weight": "35 g",
     "color": "red",
@@ -396,6 +412,7 @@
   {
     "type": "COMESTIBLE",
     "id": "mixed_alcohol_strong",
+    "category": "drugs",
     "name": { "str_sp": "strong mixed alcohol" },
     "weight": "34 g",
     "color": "red",
@@ -421,6 +438,7 @@
   {
     "type": "COMESTIBLE",
     "id": "mixed_alcohol_weak",
+    "category": "drugs",
     "name": { "str_sp": "weak mixed alcohol" },
     "weight": "248 g",
     "color": "light_red",
@@ -447,6 +465,7 @@
   {
     "type": "COMESTIBLE",
     "id": "fruit_wine",
+    "category": "drugs",
     "name": { "str_sp": "fruit wine" },
     "weight": "36 g",
     "color": "light_red",
@@ -474,6 +493,7 @@
   {
     "type": "COMESTIBLE",
     "id": "brandy",
+    "category": "drugs",
     "name": { "str_sp": "brandy" },
     "weight": "34 g",
     "color": "light_red",
@@ -500,6 +520,7 @@
   {
     "type": "COMESTIBLE",
     "id": "irish_coffee",
+    "category": "drugs",
     "name": { "str_sp": "Irish coffee" },
     "weight": "260 g",
     "color": "brown",
@@ -521,11 +542,13 @@
     "volume": "250 ml",
     "phase": "liquid",
     "fun": 20,
-    "flags": [ "UNSAFE_CONSUME", "EATEN_HOT" ]
+    "flags": [ "UNSAFE_CONSUME", "EATEN_HOT" ],
+    "vitamins": [ [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "long_island",
+    "category": "drugs",
     "name": { "str_sp": "Long Island iced tea" },
     "weight": "232 g",
     "color": "brown",
@@ -554,6 +577,7 @@
   {
     "type": "COMESTIBLE",
     "id": "drink_screwdriver",
+    "category": "drugs",
     "name": "screwdriver cocktail",
     "weight": "258 g",
     "color": "yellow",
@@ -576,11 +600,12 @@
     "phase": "liquid",
     "flags": [ "UNSAFE_CONSUME", "EATEN_COLD" ],
     "fun": 20,
-    "vitamins": [ [ "vitA", 2 ], [ "vitC", 118 ], [ "calcium", 2 ], [ "iron", 1 ] ]
+    "vitamins": [ [ "vitA", 2 ], [ "vitC", 118 ], [ "calcium", 2 ], [ "iron", 1 ], [ "fruit_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "drink_wild_apple",
+    "category": "drugs",
     "name": { "str_sp": "wild apple" },
     "weight": "258 g",
     "color": "brown",
@@ -603,11 +628,12 @@
     "phase": "liquid",
     "flags": [ "UNSAFE_CONSUME", "EATEN_COLD" ],
     "fun": 20,
-    "vitamins": [ [ "vitC", 135 ], [ "calcium", 1 ], [ "iron", 1 ] ]
+    "vitamins": [ [ "vitC", 135 ], [ "calcium", 1 ], [ "iron", 1 ], [ "fruit_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "drink_rumcola",
+    "category": "drugs",
     "name": { "str_sp": "rum & cola" },
     "weight": "251 g",
     "color": "brown",
@@ -629,11 +655,13 @@
     "volume": "250 ml",
     "phase": "liquid",
     "flags": [ "UNSAFE_CONSUME", "EATEN_COLD" ],
-    "fun": 20
+    "fun": 20,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "beer",
+    "category": "drugs",
     "name": { "str_sp": "beer" },
     "weight": "251 g",
     "color": "brown",
@@ -660,6 +688,7 @@
   {
     "type": "COMESTIBLE",
     "id": "mead",
+    "category": "drugs",
     "name": { "str_sp": "spiced mead" },
     "weight": "36 g",
     "color": "yellow",
@@ -686,6 +715,7 @@
   {
     "type": "COMESTIBLE",
     "id": "dandelion_wine",
+    "category": "drugs",
     "name": { "str_sp": "dandelion wine" },
     "weight": "35 g",
     "color": "yellow",
@@ -713,6 +743,7 @@
   {
     "type": "COMESTIBLE",
     "id": "burdock_wine",
+    "category": "drugs",
     "name": { "str_sp": "burdock wine" },
     "weight": "247 g",
     "color": "yellow",
@@ -739,6 +770,7 @@
   {
     "type": "COMESTIBLE",
     "id": "pine_wine",
+    "category": "drugs",
     "name": { "str_sp": "pine wine" },
     "weight": "35 g",
     "color": "light_green",
@@ -766,6 +798,7 @@
   {
     "type": "COMESTIBLE",
     "id": "hb_beer",
+    "category": "drugs",
     "name": { "str_sp": "homebrew beer" },
     "weight": "249 g",
     "color": "brown",
@@ -792,6 +825,7 @@
   {
     "type": "COMESTIBLE",
     "id": "moonshine",
+    "category": "drugs",
     "name": { "str_sp": "moonshine" },
     "weight": "35 g",
     "color": "brown",
@@ -818,6 +852,7 @@
   {
     "type": "COMESTIBLE",
     "id": "european_pilsner",
+    "category": "drugs",
     "name": { "str_sp": "European pilsner" },
     "weight": "249 g",
     "color": "brown",
@@ -845,6 +880,7 @@
   {
     "type": "COMESTIBLE",
     "id": "pale_ale",
+    "category": "drugs",
     "name": { "str_sp": "American pale ale" },
     "weight": "249 g",
     "color": "brown",
@@ -872,6 +908,7 @@
   {
     "type": "COMESTIBLE",
     "id": "india_pale_ale",
+    "category": "drugs",
     "name": { "str_sp": "India pale ale" },
     "weight": "249 g",
     "color": "brown",
@@ -899,6 +936,7 @@
   {
     "type": "COMESTIBLE",
     "id": "stout",
+    "category": "drugs",
     "name": { "str_sp": "stout" },
     "weight": "205 g",
     "color": "brown",
@@ -926,6 +964,7 @@
   {
     "type": "COMESTIBLE",
     "id": "belgian_ale",
+    "category": "drugs",
     "name": { "str_sp": "Belgian ale" },
     "weight": "249 g",
     "color": "brown",
@@ -953,6 +992,7 @@
   {
     "type": "COMESTIBLE",
     "id": "imperial_stout",
+    "category": "drugs",
     "name": { "str_sp": "imperial stout" },
     "weight": "249 g",
     "color": "brown",
@@ -980,6 +1020,7 @@
   {
     "type": "COMESTIBLE",
     "id": "drink_strawberry_surprise",
+    "category": "drugs",
     "name": "strawberry surprise",
     "weight": "43 g",
     "color": "pink",
@@ -1003,11 +1044,12 @@
     "charges": 6,
     "flags": [ "UNSAFE_CONSUME", "EATEN_COLD" ],
     "fun": 8,
-    "vitamins": [ [ "vitC", 20 ] ]
+    "vitamins": [ [ "vitC", 20 ], [ "fruit_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "drink_boozeberry",
+    "category": "drugs",
     "name": { "str": "boozeberry", "str_pl": "boozeberries" },
     "weight": "43 g",
     "color": "cyan",
@@ -1031,11 +1073,12 @@
     "charges": 6,
     "flags": [ "UNSAFE_CONSUME", "EATEN_COLD" ],
     "fun": -12,
-    "vitamins": [ [ "vitC", 20 ] ]
+    "vitamins": [ [ "vitC", 20 ], [ "fruit_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "single_malt_whiskey",
+    "category": "drugs",
     "name": { "str_sp": "single malt whiskey" },
     "weight": "33 g",
     "color": "brown",
@@ -1093,6 +1136,7 @@
   {
     "type": "COMESTIBLE",
     "id": "sherry",
+    "category": "drugs",
     "name": { "str_sp": "sherry" },
     "weight": "120 g",
     "color": "brown",
@@ -1139,6 +1183,7 @@
   {
     "type": "COMESTIBLE",
     "id": "drink_hobo",
+    "category": "drugs",
     "name": { "str_sp": "fancy hobo" },
     "weight": "50 g",
     "color": "yellow",
@@ -1161,11 +1206,13 @@
     "phase": "liquid",
     "charges": 5,
     "flags": [ "UNSAFE_CONSUME", "EATEN_COLD" ],
-    "fun": 20
+    "fun": 20,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "drink_kalimotxo",
+    "category": "drugs",
     "name": { "str_sp": "kalimotxo" },
     "weight": "250 g",
     "color": "red",
@@ -1188,11 +1235,13 @@
     "phase": "liquid",
     "charges": 2,
     "flags": [ "UNSAFE_CONSUME", "EATEN_COLD" ],
-    "fun": 20
+    "fun": 20,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "drink_beeknees",
+    "category": "drugs",
     "name": { "str_sp": "bee's knees" },
     "weight": "248 g",
     "color": "yellow",
@@ -1218,6 +1267,7 @@
   {
     "type": "COMESTIBLE",
     "id": "drink_wsour",
+    "category": "drugs",
     "name": "whiskey sour",
     "weight": "249 g",
     "color": "yellow",
@@ -1243,6 +1293,7 @@
   {
     "type": "COMESTIBLE",
     "id": "honey_gold",
+    "category": "drugs",
     "name": "honeygold brew",
     "weight": "259 g",
     "color": "yellow",
@@ -1268,6 +1319,7 @@
   {
     "type": "COMESTIBLE",
     "id": "honey_ant",
+    "category": "drugs",
     "name": "honey ball",
     "weight": "178 g",
     "color": "yellow",
@@ -1289,11 +1341,12 @@
     "charges": 2,
     "stack_size": 20,
     "fun": -1,
-    "vitamins": [ [ "vitC", 2 ], [ "iron", 4 ] ]
+    "vitamins": [ [ "vitC", 2 ], [ "iron", 4 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "eggnog_spiked",
+    "category": "drugs",
     "name": "spiked eggnog",
     "weight": "132 g",
     "color": "white",
@@ -1318,11 +1371,12 @@
     "charges": 2,
     "flags": [ "UNSAFE_CONSUME", "EATEN_COLD" ],
     "fun": 20,
-    "vitamins": [ [ "vitA", 5 ], [ "vitC", 3 ], [ "calcium", 12 ], [ "iron", 2 ] ]
+    "vitamins": [ [ "vitA", 5 ], [ "vitC", 3 ], [ "calcium", 12 ], [ "iron", 2 ], [ "egg_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "drink_martini",
+    "category": "drugs",
     "name": "martini",
     "weight": "49600 mg",
     "color": "white",
@@ -1349,6 +1403,7 @@
   {
     "type": "COMESTIBLE",
     "id": "sake",
+    "category": "drugs",
     "name": { "str_sp": "sake" },
     "weight": "36 g",
     "color": "light_red",

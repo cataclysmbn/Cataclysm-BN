@@ -1,0 +1,23 @@
+[
+  {
+    "id": "spell_components_flamesword",
+    "type": "requirement",
+    "//": "Wooden swords usable for the Flamesword spell",
+    "components": [ [ [ "sword_wood", 1 ], [ "sword_nail", 1 ], [ "sword_crude", 1 ] ] ]
+  },
+  {
+    "id": "spell_components_flamebreath",
+    "type": "requirement",
+    "//": "100ml portions of combustible dusts usable for the Flamebreath spell",
+    "components": [ [ [ "sugar", 28 ], [ "flour", 4 ], [ "tinder", 100 ], [ "cinnamon", 40 ], [ "chilly-p", 40 ] ] ]
+  },
+  {
+    "id": "spell_components_decayingboneclub",
+    "type": "requirement",
+    "//": "Weapon materials and 1000 energy from blood suitable for the Decaying Boneclub spell",
+    "components": [
+      [ [ "bone", 3 ], [ "bone_human", 3 ], [ "bone_tainted", 6 ] ],
+      [ [ "blood", 4 ], [ "blood_tainted", 200 ], [ "dragon_blood", 20 ] ]
+    ]
+  }
+]

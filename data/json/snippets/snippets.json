@@ -137,6 +137,33 @@
   },
   {
     "type": "snippet",
+    "category": "chewing_gum_flavor",
+    "text": [
+      "Tastes like strawberry watermelon.",
+      "Tastes like sour blue raspberry.",
+      "Tastes like pink bubblegum.",
+      "Tastes like tropical punch.",
+      "Tastes like mango peach.",
+      "Tastes like classic peppermint.",
+      "Tastes like spearmint — clean and cool.",
+      "Tastes like cinnamon - kind of spicy.",
+      "Tastes like crisp green apple.",
+      "Tastes like wild cherry.",
+      "Tastes like sweet strawberry.",
+      "Tastes like banana.",
+      "Tastes like watermelon — strong at first, then fades.",
+      "Tastes like smooth vanilla mint.",
+      "Tastes like light citrus — mostly orange.",
+      "Tastes like hibiscus.  Tart, floral, with a tangy kick.",
+      "Tastes like piña colada.  Sweet and creamy, but artificial.",
+      "Tastes like salted lime margarita.",
+      "Tastes like mango habanero.  It’s sweet with a spicy kick.",
+      "Tastes like grape, artificial but familiar.",
+      "Tastes like mild wintergreen, soft and cooling."
+    ]
+  },
+  {
+    "type": "snippet",
     "category": "killer_on_kill",
     "text": [
       "You feel the rush of the kill.",

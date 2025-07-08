@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CHARACTER_ID_H
-#define CATA_SRC_CHARACTER_ID_H
 
 #include <cassert>
 #include <ostream>
@@ -51,4 +49,4 @@ class character_id
         int value;
 };
 
-#endif // CATA_SRC_CHARACTER_ID_H
+

@@ -22,7 +22,7 @@ For Example, a PR title can be:
 
 ```
 feat: add new mutation
-feat(content, port): port mutation description from DDA
+feat(port): port mutation description from DDA
 ```
 
 
@@ -74,21 +74,14 @@ Improve build process:
 3. They are optional, but recommended.
 4. these are only guidelines, not rules. choose the best one for your PR freely!
 
-### `<None>`: Player/Worldwide Features
+### `<None>`: General Features
+
+For example,
 
 Changes related to player:
 
 - player can do something new (e.g: mutations, skills)
 - something new can happen to the player (e.g: new disease)
-
-Example PR title:
-
-```
-feat: strength training activity
-feat: mutation system overhaul
-```
-
-### `content`: Contents
 
 New contents like:
 
@@ -101,8 +94,10 @@ New contents like:
 Example PR title:
 
 ```
-feat(content): semi-plausible smokeless gunpowder recipe
-feat(content, port): game store
+feat: strength training activity
+feat: mutation system overhaul
+feat: semi-plausible smokeless gunpowder recipe
+feat(port): game store
 ```
 
 ### `UI`: Interfaces
@@ -126,7 +121,7 @@ feat(UI): overhaul encumbrance UI
 Improve translation and other languages support.
 
 ```
-fix(UI, i18n): recipe names not translated unless learned
+fix(UI,i18n): recipe names not translated unless learned
 ```
 
 ### `mods/<MOD_ID>`: Mods
@@ -137,7 +132,7 @@ fix(UI, i18n): recipe names not translated unless learned
 Example PR title:
 
 ```
-feat(mods/magiclysm, content): add missing owlbear pelts recipe
+feat(mods/Magical_Nights): add missing owlbear pelts recipe
 fix(mods/no_hope): No Hope doesn't make the world freezing
 ```
 
@@ -156,5 +151,5 @@ feat(balance): Give moose pelts instead of hides
 Example PR title:
 
 ```
-feat(content,port): game shop
+feat(port): game shop
 ```

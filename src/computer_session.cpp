@@ -66,6 +66,8 @@ static const itype_id itype_sewage( "sewage" );
 static const itype_id itype_usb_drive( "usb_drive" );
 static const itype_id itype_vacutainer( "vacutainer" );
 
+static const vitamin_id vitamin_human_flesh_vitamin( "human_flesh_vitamin" );
+
 static const skill_id skill_computer( "computer" );
 
 static const mtype_id mon_manhack( "mon_manhack" );
@@ -190,12 +192,12 @@ void computer_session::use()
     reset_terminal(); // This should have been done by now, but just in case.
 }
 
-bool computer_session::hack_attempt( player &p, int Security )
+bool computer_session::hack_attempt( Character &who, int Security )
 {
     if( Security == -1 ) {
         Security = comp.security;    // Set to main system security if no value passed
     }
-    const int hack_skill = p.get_skill_level( skill_computer );
+    const int hack_skill = who.get_skill_level( skill_computer );
 
     // Every time you dig for lab notes, (or, in future, do other suspicious stuff?)
     // +2 dice to the system's hack-resistance
@@ -204,19 +206,19 @@ bool computer_session::hack_attempt( player &p, int Security )
         Security += ( comp.alerts * 2 );
     }
 
-    p.moves -= 10 * ( 5 + Security * 2 ) / std::max( 1, hack_skill + 1 );
+    who.moves -= 10 * ( 5 + Security * 2 ) / std::max( 1, hack_skill + 1 );
     int player_roll = hack_skill;
     ///\EFFECT_INT <8 randomly penalizes hack attempts, 50% of the time
-    if( p.int_cur < 8 && one_in( 2 ) ) {
-        player_roll -= rng( 0, 8 - p.int_cur );
+    if( who.int_cur < 8 && one_in( 2 ) ) {
+        player_roll -= rng( 0, 8 - who.int_cur );
         ///\EFFECT_INT >8 randomly benefits hack attempts, 33% of the time
-    } else if( p.int_cur > 8 && one_in( 3 ) ) {
-        player_roll += rng( 0, p.int_cur - 8 );
+    } else if( who.int_cur > 8 && one_in( 3 ) ) {
+        player_roll += rng( 0, who.int_cur - 8 );
     }
 
     ///\EFFECT_COMPUTER increases chance of successful hack attempt, vs Security level
     bool successful_attempt = ( dice( player_roll, 6 ) >= dice( Security, 6 ) );
-    p.practice( skill_computer, successful_attempt ? ( 15 + Security * 3 ) : 7 );
+    who.practice( skill_computer, successful_attempt ? ( 15 + Security * 3 ) : 7 );
     return successful_attempt;
 }
 
@@ -773,7 +775,7 @@ void computer_session::action_blood_anal()
                             print_error( _( "USB drive required!" ) );
                         }
                     }
-                } else if( blood.has_flag( flag_CANNIBALISM ) ) {  // Normal human blood
+                } else if( blood.has_vitamin( vitamin_human_flesh_vitamin ) ) {  // Normal human blood
                     print_line( _( "Result: Human blood, no pathogens found." ) );
                 } else { // Anything else
                     print_line( _( "Result: Unknown blood type.  Test non-conclusive." ) );
@@ -1471,7 +1473,7 @@ void computer_session::action_emerg_ref_center()
     std::vector<mission *> missions = g->u.get_active_missions();
     missions.insert( missions.end(), completed_missions.begin(), completed_missions.end() );
 
-    const bool has_mission = std::any_of( missions.begin(), missions.end(), [ &mission_type,
+    const bool has_mission = std::ranges::any_of( missions, [ &mission_type,
     &mission_target ]( mission * mission ) {
         if( mission->get_type().id == mission_type ) {
             mission_target = mission->get_target();

@@ -119,7 +119,7 @@
     "symbol": "#",
     "color": "brown",
     "move_cost": 2,
-    "flags": [ "SUPPORTS_ROOF", "WALL", "NO_SCENT" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "WALL", "NO_SCENT" ],
     "bash": {
       "str_min": 12,
       "str_max": 150,

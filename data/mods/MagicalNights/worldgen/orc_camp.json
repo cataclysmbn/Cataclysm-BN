@@ -1,0 +1,101 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "orc_camp",
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_null",
+      "rows": [
+        "###########HH###########",
+        "#**********************#",
+        "#*----............----*#",
+        "#*-QG-............-GQ-*#",
+        "#*-GG-............-GG-*#",
+        "#*--=-............-=--*#",
+        "#*.................*..*#",
+        "#*....................I#",
+        "#*%%.....------.......*#",
+        "#*%......-Bold-.......I#",
+        "#*.......WrrrrW.......*#",
+        "H*.......WrrrrW.......*H",
+        "H*.......-rrrr-.......*H",
+        "#*.......--++--.......*#",
+        "#**...................P#",
+        "#**...................*#",
+        "#*....................P#",
+        "#*....................*#",
+        "#*--=-...-=--=-*..-=--*#",
+        "#*-GG-...-GGGG-...-GG-*#",
+        "#*-QG-...-RSSR-...-GQ-*#",
+        "#*----...------...----*#",
+        "#**********************#",
+        "###########HH###########"
+      ],
+      "place_monster": [
+        { "monster": "mon_orc_warrior", "x": [ 3, 20 ], "y": [ 6, 16 ], "repeat": 2 },
+        { "monster": "mon_orc_archer", "x": [ 3, 20 ], "y": [ 6, 16 ], "repeat": 2 },
+        { "monster": "mon_goblin_chieftain", "x": [ 10, 13 ], "y": [ 10, 12 ] }
+      ],
+      "items": {
+        "%": [
+          { "item": "preserved_food", "chance": 75, "repeat": [ 2, 4 ] },
+          { "item": "stash_food", "chance": 66, "repeat": [ 2, 4 ] }
+        ],
+        "B": { "item": "bed", "chance": 80 },
+        "R": [
+          { "item": "camping", "chance": 50, "repeat": [ 1, 3 ] },
+          { "item": "gear_survival", "chance": 30, "repeat": [ 1, 3 ] },
+          { "item": "tools_home", "chance": 50, "repeat": [ 1, 3 ] },
+          { "item": "hand_tools", "chance": 50, "repeat": [ 1, 3 ] }
+        ],
+        "S": [
+          { "item": "supplies_hardware", "chance": 66, "repeat": [ 2, 4 ] },
+          { "item": "supplies_metal", "chance": 50, "repeat": [ 2, 4 ] },
+          { "item": "tailoring_fabric", "chance": 33, "repeat": [ 2, 4 ] }
+        ],
+        "o": [
+          { "item": "enchanted_rings_uncommon", "chance": 100 },
+          { "item": "magic_tools_and_loot", "chance": 95, "repeat": [ 2, 3 ] }
+        ],
+        "d": [ { "item": "spell_scroll_tier_1", "chance": 66, "repeat": [ 2, 3 ] }, { "item": "spellbook_tier_1", "chance": 10 } ]
+      },
+      "furniture": {
+        "%": "f_crate_o",
+        "Q": "f_makeshift_bed",
+        "I": "f_target",
+        "P": "f_punching_bag",
+        "B": "f_bed",
+        "R": [ "f_rack", "f_utility_shelf" ],
+        "S": "f_rack_wood",
+        "o": "f_safe_l",
+        "d": "f_desk",
+        "l": "f_stool",
+        "z": "f_brazier"
+      },
+      "terrain": {
+        "+": [ [ "t_door_c", 3 ], "t_door_locked" ],
+        "#": "t_junk_wall",
+        "=": "t_door_c",
+        "-": "t_wall_log",
+        "%": "t_region_groundcover",
+        "*": [ [ "t_region_groundcover", 15 ], "t_region_shrub" ],
+        ".": [ [ "t_region_groundcover", 4 ], "t_region_groundcover_forest" ],
+        "G": "t_floor",
+        "H": "t_gate_metal_c",
+        "I": "t_region_groundcover",
+        "P": "t_region_groundcover",
+        "Q": "t_floor",
+        "R": "t_floor",
+        "S": "t_floor",
+        "W": "t_window",
+        "o": "t_rock_floor",
+        "r": "t_rock_floor",
+        "d": "t_rock_floor",
+        "~": [ [ "t_region_groundcover_barren", 3 ], "t_region_groundcover" ],
+        "B": "t_rock_floor",
+        "l": "t_rock_floor"
+      }
+    }
+  }
+]

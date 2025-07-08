@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MUTATION_H
-#define CATA_SRC_MUTATION_H
 
 #include <map>
 #include <memory>
@@ -96,10 +94,15 @@ struct mutation_branch {
         bool starts_active = false;
         // Allow soft (fabric) gear on restricted body parts
         bool allow_soft_gear  = false;
-        // IF any of the three are true, it drains that as the "cost"
+        // IF any of the 8 are true, it drains that as the "cost"
         bool fatigue       = false;
         bool hunger        = false;
         bool thirst        = false;
+        bool stamina        = false;
+        bool mana        = false;
+        bool bionic        = false;
+        bool pain        = false;
+        bool health        = false;
         // How many points it costs in character creation
         int points     = 0;
         int visibility = 0;
@@ -528,4 +531,4 @@ mutagen_attempt mutagen_common_checks( Character &guy, const item &it, bool stro
 
 void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category );
 
-#endif // CATA_SRC_MUTATION_H
+

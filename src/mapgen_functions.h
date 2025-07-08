@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAPGEN_FUNCTIONS_H
-#define CATA_SRC_MAPGEN_FUNCTIONS_H
 
 #include <functional>
 #include <map>
@@ -93,4 +91,4 @@ bool has_update_id( const mapgen_id &id );
 
 } // namespace mapgen
 
-#endif // CATA_SRC_MAPGEN_FUNCTIONS_H
+

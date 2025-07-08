@@ -1,7 +1,29 @@
 [
   {
     "type": "COMESTIBLE",
+    "id": "sandwich_generic",
+    "name": { "str": "GENERIC SANDWICH", "str_pl": "GENERIC SANDWICHES" },
+    "weight": "300 g",
+    "healthy": 1,
+    "calories": 300,
+    "color": "brown",
+    "spoils_in": "1 day 12 hours",
+    "container": "wrapper",
+    "comestible_type": "FOOD",
+    "symbol": "%",
+    "description": "If you can see this, you shouldn't be able to.  This is to solve dumb copy-from issues.",
+    "price": "2 USD",
+    "price_postapoc": "2 USD",
+    "primary_material": "wheat",
+    "volume": "500 ml",
+    "material": [ "wheat" ],
+    "fun": 12,
+    "charges": 4
+  },
+  {
+    "type": "COMESTIBLE",
     "id": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "name": { "str": "deluxe sandwich", "str_pl": "deluxe sandwiches" },
     "conditional_names": [
       {
@@ -23,28 +45,27 @@
       { "type": "COMPONENT_ID", "condition": "soysauce", "name": "%s with soy sauce" },
       { "type": "COMPONENT_ID", "condition": "seasoning_salt", "name": "%s with seasoned salt" }
     ],
-    "weight": "300 g",
-    "healthy": 1,
-    "calories": 300,
-    "color": "brown",
-    "spoils_in": "1 day 12 hours",
-    "container": "wrapper",
-    "comestible_type": "FOOD",
-    "symbol": "%",
     "description": "A sandwich of meat, vegetables, and cheese with condiments.  Tasty and nutritious!",
     "price": "12 USD",
     "price_postapoc": "3 USD",
     "primary_material": "wheat",
-    "volume": "500 ml",
     "material": [ "flesh", "veggy", "wheat", "milk" ],
-    "fun": 12,
-    "vitamins": [ [ "vitA", 8 ], [ "vitC", 26 ], [ "calcium", 8 ], [ "iron", 49 ], [ "vitB", 389 ] ],
-    "charges": 4
+    "vitamins": [
+      [ "vitA", 8 ],
+      [ "vitC", 26 ],
+      [ "calcium", 8 ],
+      [ "iron", 49 ],
+      [ "vitB", 389 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ],
+      [ "wheat_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sandwich_cheese_grilled",
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "name": { "str": "grilled cheese sandwich", "str_pl": "grilled cheese sandwiches" },
     "calories": 160,
     "description": "A delicious grilled cheese sandwich, because everything is better with melted cheese.",
@@ -53,12 +74,12 @@
     "material": [ "milk", "wheat" ],
     "flags": [ "EATEN_HOT" ],
     "fun": 10,
-    "vitamins": [ [ "vitA", 18 ], [ "calcium", 50 ], [ "iron", 12 ] ]
+    "vitamins": [ [ "vitA", 18 ], [ "calcium", 50 ], [ "iron", 12 ], [ "wheat_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sandwich_cheese",
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "name": { "str": "cheese sandwich", "str_pl": "cheese sandwiches" },
     "calories": 160,
     "description": "A simple cheese sandwich.",
@@ -66,12 +87,12 @@
     "price_postapoc": "2 USD",
     "material": [ "milk", "wheat" ],
     "fun": 8,
-    "vitamins": [ [ "vitA", 18 ], [ "calcium", 50 ], [ "iron", 12 ] ]
+    "vitamins": [ [ "vitA", 18 ], [ "calcium", 50 ], [ "iron", 12 ], [ "wheat_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sandwich_jam",
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "name": { "str": "jam sandwich", "str_pl": "jam sandwiches" },
     "conditional_names": [
       { "type": "COMPONENT_ID", "condition": "apple", "name": "apple %s" },
@@ -107,24 +128,25 @@
     "price_postapoc": "2 USD",
     "material": [ "fruit", "wheat" ],
     "fun": 15,
-    "vitamins": [ [ "vitC", 6 ], [ "calcium", 7 ], [ "iron", 12 ] ]
+    "vitamins": [ [ "vitC", 6 ], [ "calcium", 7 ], [ "iron", 12 ], [ "wheat_allergen", 1 ], [ "fruit_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sandwich_fairy",
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "name": { "str_sp": "fairy bread" },
     "calories": 200,
     "description": "An 'open-faced sandwich' consisting of sliced white bread, a healthy crust-to-crust slathering of butter, and sprinkles.  Supposedly a staple of birthday parties in Australia.",
     "price": "85 cent",
     "price_postapoc": "3 USD",
     "material": [ "junk", "wheat" ],
-    "fun": 10
+    "fun": 10,
+    "vitamins": [ [ "wheat_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sandwich_honey",
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "name": { "str": "honey sandwich", "str_pl": "honey sandwiches" },
     "calories": 200,
     "description": "A delicious honey sandwich.",
@@ -132,12 +154,12 @@
     "price_postapoc": "3 USD",
     "material": [ "honey", "wheat" ],
     "fun": 10,
-    "vitamins": [ [ "calcium", 10 ], [ "iron", 24 ] ]
+    "vitamins": [ [ "calcium", 10 ], [ "iron", 24 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sandwich_sauce",
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "name": { "str": "sauce sandwich", "str_pl": "sauce sandwiches" },
     "conditional_names": [
       {
@@ -191,12 +213,13 @@
     "material": [ "veggy", "wheat" ],
     "price": "2 USD",
     "price_postapoc": "2 USD",
-    "fun": 2
+    "fun": 2,
+    "vitamins": [ [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sandwich_veggy",
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "name": { "str": "vegetable sandwich", "str_pl": "vegetable sandwiches" },
     "calories": 180,
     "description": "Bread and vegetables, that's it.",
@@ -205,15 +228,19 @@
     "material": [ "veggy", "wheat" ],
     "flags": [ "EATEN_COLD" ],
     "fun": 1,
-    "vitamins": [ [ "vitA", 16 ], [ "vitC", 36 ], [ "calcium", 14 ], [ "iron", 28 ] ]
+    "vitamins": [ [ "vitA", 16 ], [ "vitC", 36 ], [ "calcium", 14 ], [ "iron", 28 ], [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sandwich_t",
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "name": { "str": "meat sandwich", "str_pl": "meat sandwiches" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str": "slob sandwich", "str_pl": "slob sandwiches" } },
+      {
+        "type": "VITAMIN",
+        "condition": "human_flesh_vitamin",
+        "name": { "str": "slob sandwich", "str_pl": "slob sandwiches" }
+      },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "mutant %s" } }
     ],
     "calories": 200,
@@ -222,7 +249,7 @@
     "price_postapoc": "250 cent",
     "material": [ "flesh", "wheat" ],
     "fun": 3,
-    "vitamins": [ [ "vitC", 8 ], [ "calcium", 6 ], [ "iron", 47 ], [ "vitB", 389 ] ]
+    "vitamins": [ [ "vitC", 8 ], [ "calcium", 6 ], [ "iron", 47 ], [ "vitB", 389 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -238,10 +265,10 @@
     "description": "Some peanut butter smothered between two pieces of bread.  Not very filling and will stick to the roof of your mouth like glue.",
     "price": "175 cent",
     "price_postapoc": "175 cent",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "volume": "500 ml",
     "fun": 3,
-    "vitamins": [ [ "calcium", 10 ], [ "iron", 28 ] ],
+    "vitamins": [ [ "calcium", 10 ], [ "iron", 28 ], [ "wheat_allergen", 1 ] ],
     "charges": 4
   },
   {
@@ -252,7 +279,7 @@
     "description": "A delicious peanut butter and jelly sandwich.  It reminds you of the times your mother would make you lunch.",
     "material": [ "fruit", "wheat" ],
     "fun": 6,
-    "vitamins": [ [ "vitC", 3 ], [ "calcium", 7 ], [ "iron", 14 ] ]
+    "vitamins": [ [ "vitC", 3 ], [ "calcium", 7 ], [ "iron", 14 ], [ "wheat_allergen", 1 ], [ "fruit_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -263,7 +290,7 @@
     "description": "Some damned fool put honey on this peanut butter sandwich, who in their right mind- oh wait this is pretty good.",
     "material": [ "wheat", "honey" ],
     "fun": 6,
-    "vitamins": [ [ "calcium", 8 ], [ "iron", 16 ] ]
+    "vitamins": [ [ "calcium", 8 ], [ "iron", 16 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -272,14 +299,14 @@
     "name": { "str": "PB&M sandwich", "str_pl": "PB&M sandwiches" },
     "calories": 170,
     "description": "Who knew you could mix maple syrup and peanut butter to create yet another different sandwich?",
-    "material": "wheat",
+    "material": [ "wheat" ],
     "fun": 6,
-    "vitamins": [ [ "calcium", 12 ], [ "iron", 28 ] ]
+    "vitamins": [ [ "calcium", 12 ], [ "iron", 28 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "fish_sandwich",
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "name": { "str": "fish sandwich", "str_pl": "fish sandwiches" },
     "calories": 200,
     "description": "A delicious fish sandwich.",
@@ -287,25 +314,26 @@
     "price_postapoc": "250 cent",
     "material": [ "flesh", "wheat" ],
     "fun": 14,
-    "vitamins": [ [ "vitA", 4 ], [ "vitC", 5 ], [ "calcium", 19 ], [ "iron", 17 ] ]
+    "vitamins": [ [ "vitA", 4 ], [ "vitC", 5 ], [ "calcium", 19 ], [ "iron", 17 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sandwich_okay",
     "name": { "str": "okay sandwich", "str_pl": "okay sandwiches" },
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "looks_like": "sandwich_deluxe",
     "description": "A simple sandwich, little more than meat and veggies on bread.  Rather dry.",
     "price": "2 USD",
     "price_postapoc": "2 USD",
     "fun": 6,
-    "material": [ "flesh", "veggy", "wheat" ]
+    "material": [ "flesh", "veggy", "wheat" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sandwich_deluxe_nocheese",
     "name": { "str": "dairy-free deluxe sandwich", "str_pl": "dairy-free deluxe sandwiches" },
-    "copy-from": "sandwich_deluxe",
+    "copy-from": "sandwich_generic",
     "looks_like": "sandwich_deluxe",
     "conditional_names": [
       {
@@ -331,6 +359,7 @@
     "price": "2 USD",
     "price_postapoc": "2 USD",
     "fun": 9,
-    "material": [ "flesh", "veggy", "wheat" ]
+    "material": [ "flesh", "veggy", "wheat" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   }
 ]

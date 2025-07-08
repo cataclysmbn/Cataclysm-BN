@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CACHED_ITEM_OPTIONS_H
-#define CATA_SRC_CACHED_ITEM_OPTIONS_H
 
 enum class merge_comestible_t {
     merge_legacy,
@@ -21,4 +19,4 @@ extern merge_comestible_t merge_comestible_mode;
  */
 extern float similarity_threshold;
 
-#endif // CATA_SRC_CACHED_ITEM_OPTIONS_H
+

@@ -841,6 +841,13 @@
   },
   {
     "type": "effect_type",
+    "id": "debug_irradiation",
+    "name": [ "Irradiation triangle" ],
+    "desc": [ "This irradiates you every 15 minutes while aboveground so long as you have it in your inventory!" ],
+    "base_mods": { "rad_min": [ 1 ], "rad_max": [ 3 ], "rad_tick": [ 900 ] }
+  },
+  {
+    "type": "effect_type",
     "id": "took_xanax",
     "name": [ "Took Xanax" ],
     "desc": [ "You took Xanax some time ago and you might still be under its influence." ],
@@ -1001,8 +1008,9 @@
       "str_mod": [ -1 ],
       "dex_mod": [ -1 ],
       "vomit_chance": [ 1000, 1200 ],
-      "fatigue_min": [ 360, 180 ],
-      "fatigue_chance": [ -102 ]
+      "fatigue_min": [ 2, 1 ],
+      "fatigue_chance": [ -102 ],
+      "fatigue_tick": [ 6 ]
     },
     "scaling_mods": {
       "pain_max_val": [ 30, 20 ],
@@ -1028,7 +1036,7 @@
       "str_mod": [ -1 ],
       "dex_mod": [ -1 ],
       "vomit_chance": [ 1000 ],
-      "fatigue_min": [ 360 ],
+      "fatigue_min": [ 2 ],
       "fatigue_chance": [ -102 ],
       "fatigue_tick": [ 6 ],
       "pain_tick": [ 6 ],
@@ -1048,8 +1056,8 @@
     "max_effective_intensity": 8,
     "part_descs": true,
     "max_duration": "4 d",
-    "base_mods": { "healing_rate": [ 2 ], "healing_head": [ 50 ], "healing_torso": [ 150 ] },
-    "scaling_mods": { "healing_rate": [ 2 ] }
+    "base_mods": { "healing_rate": [ 1 ], "healing_head": [ 75 ], "healing_torso": [ 75 ] },
+    "scaling_mods": { "healing_rate": [ 1 ] }
   },
   {
     "type": "effect_type",
@@ -1063,8 +1071,8 @@
     "max_effective_intensity": 8,
     "part_descs": true,
     "max_duration": "4 d",
-    "base_mods": { "healing_rate": [ 2 ], "healing_head": [ 50 ], "healing_torso": [ 150 ] },
-    "scaling_mods": { "healing_rate": [ 2 ] }
+    "base_mods": { "healing_rate": [ 1 ], "healing_head": [ 75 ], "healing_torso": [ 75 ] },
+    "scaling_mods": { "healing_rate": [ 1 ] }
   },
   {
     "type": "effect_type",
@@ -1116,13 +1124,19 @@
   {
     "type": "effect_type",
     "id": "pblue",
-    "base_mods": { "rad_chance": [ 600 ], "rad_min": [ -1 ] },
+    "name": [ "Took Prussian blue" ],
+    "desc": [ "You consumed Prussian blue, to help remove radioactive contaminants from your body more quickly." ],
+    "//": "Roughly 36 rads lost per hour, baseline per character.cpp is 72/hour so +50% increase",
+    "base_mods": { "rad_chance": [ 100 ], "rad_min": [ -1 ] },
     "blood_analysis_description": "Prussian Blue",
     "rating": "good"
   },
   {
     "type": "effect_type",
     "id": "iodine",
+    "name": [ "Took potassium iodide" ],
+    "desc": [ "You consumed potassium iodide, reducing the amount of contaminants you'll accumulate during radiation exposure." ],
+    "//": "Effects are in suffer.cpp, reduces rad gain by 40-70% depending on if you have any of the the Radioactive mutations",
     "rating": "good",
     "blood_analysis_description": "Potassium Iodide"
   },
@@ -2154,17 +2168,11 @@
     "desc": [ "AI effect to increase stats after fusing with another critter. 1 stack means one absorbed max_hp." ],
     "//": "stats modified by the zombie_fuse special attack.",
     "//1": "scaling:",
-    "//2": "/48 HP: +0,5 melee_skill, +0,5 dodge_skill (unexpected movement), +5 Speed (bigger steps&more to attack with), +4 bash",
-    "//3": "/160 HP: +1 size",
-    "max_intensity": 480,
-    "base_mods": { "hit_mod": [ 0.0104 ], "dodge_mod": [ 0.0104 ], "speed_mod": [ 0.1042 ], "bash_mod": [ 0.08333 ] },
-    "scaling_mods": {
-      "hit_mod": [ 0.0104 ],
-      "dodge_mod": [ 0.0104 ],
-      "speed_mod": [ 0.1042 ],
-      "bash_mod": [ 0.08333 ],
-      "size_mod": [ 0.00625 ]
-    },
+    "//2": "/100 HP: +0,5 melee_skill, +0,5 dodge_skill (unexpected movement), +5 Speed (bigger steps&more to attack with), +2 bash",
+    "//3": "/333 HP: +1 size",
+    "max_intensity": 1000,
+    "base_mods": { "hit_mod": [ 0.005 ], "dodge_mod": [ 0.005 ], "speed_mod": [ 0.05 ], "bash_mod": [ 0.02 ] },
+    "scaling_mods": { "hit_mod": [ 0.005 ], "dodge_mod": [ 0.005 ], "speed_mod": [ 0.05 ], "bash_mod": [ 0.02 ], "size_mod": [ 0.003 ] },
     "show_in_info": true,
     "int_decay_step": 0
   },
@@ -2280,6 +2288,258 @@
     "//": "Zombie master buff",
     "base_mods": { "hit_mod": [ 1 ], "dodge_mod": [ 2 ], "speed_mod": [ 20 ], "bash_mod": [ 4 ] },
     "max_duration": "5 m",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "dazed_emote",
+    "looks_like": "dazed",
+    "name": [ "Dazed (emote)" ],
+    "desc": [ "You're pretending to look dazed." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "high_emote",
+    "looks_like": "high",
+    "name": [ "High (emote)" ],
+    "desc": [ "You're pretending to look high." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "drunk_emote",
+    "looks_like": "drunk",
+    "name": [ "Drunk (emote)" ],
+    "desc": [ "You're pretending to look drunk." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "evil_emote",
+    "looks_like": "evil",
+    "name": [ "Evil Aura (emote)" ],
+    "desc": [ "You're pretending to look evil." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "heart_emote",
+    "looks_like": "pet",
+    "name": [ "In Love (emote)" ],
+    "desc": [ "You're pretending to look in love." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "nausea_emote",
+    "looks_like": "nausea",
+    "name": [ "Nausea (emote)" ],
+    "desc": [ "You're pretending to look nauseous." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "shrieking_emote",
+    "looks_like": "shrieking",
+    "name": [ "Shrieking (emote)" ],
+    "desc": [ "You're pretending to look terrified or angry." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "winded_emote",
+    "looks_like": "winded",
+    "name": [ "Winded (emote)" ],
+    "desc": [ "You're pretending to look like you're winded." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "tired_emote",
+    "looks_like": "sleep",
+    "name": [ "Tired (emote)" ],
+    "desc": [ "You're pretending to look like you're tired." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "bleed_emote",
+    "looks_like": "bleed",
+    "name": [ "Bleeding (emote)" ],
+    "desc": [ "You're pretending you're bleeding." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "downed_emote",
+    "looks_like": "downed",
+    "name": [ "Laying Down (emote)" ],
+    "desc": [ "You're laying down on the ground." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "poison_emote",
+    "looks_like": "poison",
+    "name": [ "Poison (emote)" ],
+    "desc": [ "You're pretending to look like you've been poisoned." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "bouldering_emote",
+    "looks_like": "bouldering",
+    "name": [ "Bouldering (emote)" ],
+    "desc": [ "You're pretending to look like you can't find your footing." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "hot_emote",
+    "looks_like": "hot",
+    "name": [ "Hot (emote)" ],
+    "desc": [ "You're pretending you're hot." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "cold_emote",
+    "looks_like": "cold",
+    "name": [ "Cold (emote)" ],
+    "desc": [ "You're pretending you're cold." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "glowing_emote",
+    "looks_like": "glowing",
+    "name": [ "Glowing Aura (emote)" ],
+    "desc": [ "You're radiating a glowing aura." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "blue_aura_emote",
+    "looks_like": "attention",
+    "name": [ "Blue Aura (emote)" ],
+    "desc": [ "You're radiating a blue aura." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "glare_emote",
+    "looks_like": "glare",
+    "name": [ "Beauty (emote)" ],
+    "desc": [ "You're pretending to look like you're beautiful." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "teargas_emote",
+    "looks_like": "teargas",
+    "name": [ "Teargas (emote)" ],
+    "desc": [ "You're pretending to look like you've been teargassed." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "playing_instrument_emote",
+    "looks_like": "playing_instrument",
+    "name": [ "Musical (emote)" ],
+    "desc": [ "You're surrounded by musical notes. (At least, in your imagination.)" ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "visuals_emote",
+    "looks_like": "visuals",
+    "name": [ "Tweaking (emote)" ],
+    "desc": [ "You're pretending to look like you're tweaking." ],
+    "apply_message": "You start emoting.",
+    "remove_message": "You stop emoting.",
+    "rating": "neutral",
+    "max_duration": "999999 d",
     "show_in_info": true
   }
 ]

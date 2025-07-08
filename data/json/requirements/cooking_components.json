@@ -23,7 +23,7 @@
     "id": "cheese_any",
     "type": "requirement",
     "//": "All available types of cheese and cheese-like objects.",
-    "components": [ [ [ "cheese", 1 ], [ "cheese_fresh", 1 ], [ "cheese_hard", 1 ], [ "can_cheese", 1 ] ] ]
+    "components": [ [ [ "cheese", 1 ], [ "cheese_fresh", 1 ], [ "cheese_hard", 1 ], [ "can_cheese", 1 ], [ "pouch_cheese", 1 ] ] ]
   },
   {
     "id": "eggs_bird",
@@ -182,7 +182,8 @@
         [ "wine_vermouth", 1 ],
         [ "sherry", 1 ],
         [ "bristol_sherry", 1 ],
-        [ "madeira", 1 ]
+        [ "madeira", 1 ],
+        [ "sake", 1 ]
       ]
     ]
   },

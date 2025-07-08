@@ -1,4 +1,3 @@
-#ifdef LUA
 #include "catalua_bindings.h"
 
 #include "catalua_bindings_utils.h"
@@ -205,5 +204,3 @@ void cata::detail::reg_coords_library( sol::state &lua )
 
     luna::finalize_lib( lib );
 }
-
-#endif

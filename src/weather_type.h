@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_WEATHER_TYPE_H
-#define CATA_SRC_WEATHER_TYPE_H
 
 #include <climits>
 #include <string>
@@ -144,4 +142,4 @@ void load( const JsonObject &jo, const std::string &src );
 /** Checks all loaded from JSON are valid */
 void check_consistency();
 } // namespace weather_types
-#endif // CATA_SRC_WEATHER_TYPE_H
+

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_IUSE_SOFTWARE_KITTEN_H
-#define CATA_SRC_IUSE_SOFTWARE_KITTEN_H
 
 #include <string>
 
@@ -58,4 +56,4 @@ class robot_finds_kitten
         bool end_animation_last_input_left_or_up = false;
 };
 
-#endif // CATA_SRC_IUSE_SOFTWARE_KITTEN_H
+

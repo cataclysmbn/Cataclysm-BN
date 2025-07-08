@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_SCENT_BLOCK_H
-#define CATA_SRC_SCENT_BLOCK_H
 
 #include <algorithm>
 #include <array>
@@ -42,4 +40,4 @@ struct scent_block {
     void apply_slime( const tripoint &p, int intensity );
 };
 
-#endif // CATA_SRC_SCENT_BLOCK_H
+

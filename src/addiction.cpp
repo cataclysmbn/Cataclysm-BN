@@ -61,6 +61,7 @@ void addict_effect( Character &u, addiction &add )
 
     switch( add.type ) {
         case add_type::CIG:
+            u.mod_int_bonus( -1 );
             if( !one_in( 2000 - 20 * in ) ) {
                 break;
             }
@@ -167,7 +168,7 @@ void addict_effect( Character &u, addiction &add )
             }
             u.mod_int_bonus( -1 );
             u.mod_str_bonus( -1 );
-            if( current_stim > in * -5 && calendar::once_every( 3_minutes ) ) {
+            if( current_stim > -75 && calendar::once_every( 3_minutes ) ) {
                 u.mod_stim( -1 );
             }
             if( rng( 0, 150 ) <= in ) {

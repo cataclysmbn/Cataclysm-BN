@@ -483,9 +483,6 @@ void recipe_dictionary::finalize()
         if( e.second.autolearn ) {
             recipe_dict.autolearn.insert( &e.second );
         }
-        if( e.second.is_blueprint() ) {
-            recipe_dict.blueprints.insert( &e.second );
-        }
     }
 
     recipe_dict.find_items_on_loops();

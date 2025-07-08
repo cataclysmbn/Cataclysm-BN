@@ -70,7 +70,6 @@ static const itype_id fuel_type_none( "null" );
 static const itype_id fuel_type_wind( "wind" );
 
 static const itype_id itype_battery( "battery" );
-static const itype_id itype_detergent( "detergent" );
 static const itype_id itype_fungal_seeds( "fungal_seeds" );
 static const itype_id itype_hotplate( "hotplate" );
 static const itype_id itype_marloss_seed( "marloss_seed" );
@@ -90,7 +89,6 @@ static const fault_id fault_starter( "fault_engine_starter" );
 
 static const skill_id skill_mechanics( "mechanics" );
 
-static const flag_id json_flag_FILTHY( "FILTHY" );
 
 enum change_types : int {
     OPENCURTAINS = 0,
@@ -887,6 +885,7 @@ void vehicle::use_controls( const tripoint &pos )
 bool vehicle::fold_up()
 {
     const bool can_be_folded = is_foldable();
+
     const bool is_convertible = ( tags.contains( "convertible" ) );
     if( !( can_be_folded || is_convertible ) ) {
         debugmsg( _( "Tried to fold non-folding vehicle %s" ), name );
@@ -912,18 +911,18 @@ bool vehicle::fold_up()
         add_msg( _( "You let go of %s as you fold it." ), name );
     }
 
-    std::string itype_id = "folding_bicycle";
+    std::string itype_id = "generic_folded_vehicle";
     for( const auto &elem : tags ) {
-        if( elem.compare( 0, 12, "convertible:" ) == 0 ) {
+        if( elem.starts_with( "convertible:" ) ) {
             itype_id = elem.substr( 12 );
             break;
         }
     }
 
-    // create a folding [non]bicycle item
-    detached_ptr<item> bicycle = item::spawn( can_be_folded ? "generic_folded_vehicle" :
-                                 "folding_bicycle",
-                                 calendar::turn );
+    // Create the item
+    detached_ptr<item> folding_veh_item = item::spawn( can_be_folded ? "generic_folded_vehicle" :
+                                          itype_id, calendar::turn );
+
 
     // Drop stuff in containers on ground
     for( const vpart_reference &vp : get_any_parts( "CARGO" ) ) {
@@ -944,21 +943,25 @@ bool vehicle::fold_up()
         std::ostringstream veh_data;
         JsonOut json( veh_data );
         json.write( parts );
-        bicycle->set_var( "folding_bicycle_parts", veh_data.str() );
+        folding_veh_item->set_var( "folding_bicycle_parts", veh_data.str() );
     } catch( const JsonError &e ) {
         debugmsg( "Error storing vehicle: %s", e.c_str() );
     }
 
+    // evalautes to true on foldable items (folding_bicycle, skateboard)
+    // and false on vehicles with folding flags (wheelchair, unicycle)
     if( can_be_folded ) {
-        bicycle->set_var( "weight", to_milligram( total_mass() ) );
-        bicycle->set_var( "volume", total_folded_volume() / units::legacy_volume_factor );
-        bicycle->set_var( "name", string_format( _( "folded %s" ), name ) );
-        bicycle->set_var( "vehicle_name", name );
+        folding_veh_item->set_var( "weight", to_milligram( total_mass() ) );
+        folding_veh_item->set_var( "volume", total_folded_volume() / units::legacy_volume_factor );
+        // remove "folded" from name to allow for more flexibility with folded vehicle names. also lowers first character
+        folding_veh_item->set_var( "name", string_format( _( "%s" ), ( name.empty() ? name : std::string( 1,
+                                   std::tolower( name[0] ) ) + name.substr( 1 ) ) ) );
+        folding_veh_item->set_var( "vehicle_name", name );
         // TODO: a better description?
-        bicycle->set_var( "description", string_format( _( "A folded %s." ), name ) );
+        folding_veh_item->set_var( "description", string_format( _( "A folded %s." ), name ) );
     }
 
-    g->m.add_item_or_charges( global_part_pos3( 0 ), std::move( bicycle ) );
+    g->m.add_item_or_charges( global_part_pos3( 0 ), std::move( folding_veh_item ) );
     g->m.destroy_vehicle( this );
 
     // TODO: take longer to fold bigger vehicles
@@ -1360,7 +1363,7 @@ void vehicle::transform_terrain()
         const transform_terrain_data &ttd = vp.info().transform_terrain;
         bool prereq_fulfilled = false;
         for( const std::string &flag : ttd.pre_flags ) {
-            if( g->m.has_flag( flag, start_pos ) ) {
+            if( ( ttd.diggable && g->m.ter( start_pos )->is_diggable() ) || g->m.has_flag( flag, start_pos ) ) {
                 prereq_fulfilled = true;
                 break;
             }
@@ -1647,145 +1650,6 @@ void vehicle::open_or_close( const int part_index, const bool opening )
     coeff_air_dirty = true;
 }
 
-void vehicle::use_washing_machine( int p )
-{
-    // Get all the items that can be used as detergent
-    const inventory &inv = g->u.crafting_inventory();
-    std::vector<item *> detergents = inv.items_with( [inv]( const item & it ) {
-        return it.has_flag( STATIC( flag_id( "DETERGENT" ) ) ) && inv.has_charges( it.typeId(), 5 );
-    } );
-
-    auto items = get_items( p );
-    bool filthy_items = std::all_of( items.begin(), items.end(), []( const item * const & i ) {
-        return i->has_flag( json_flag_FILTHY );
-    } );
-
-    bool cbms = std::any_of( items.begin(), items.end(), []( const item * const & i ) {
-        return i->is_bionic();
-    } );
-
-    if( parts[p].enabled ) {
-        parts[p].enabled = false;
-        add_msg( m_bad,
-                 _( "You turn the washing machine off before it's finished the program, and open its lid." ) );
-    } else if( items.empty() ) {
-        add_msg( m_bad,
-                 _( "The washing machine is empty, there's no point in starting it." ) );
-    } else if( fuel_left( itype_water ) < 24 && fuel_left( itype_water_clean ) < 24 ) {
-        add_msg( m_bad, _( "You need 24 charges of water in tanks of the %s to fill the washing machine." ),
-                 name );
-    } else if( detergents.empty() ) {
-        add_msg( m_bad, _( "You need 5 charges of a detergent for the washing machine." ) );
-    } else if( !filthy_items ) {
-        add_msg( m_bad,
-                 _( "You need to remove all non-filthy items from the washing machine to start the washing program." ) );
-    } else if( cbms ) {
-        add_msg( m_bad,
-                 _( "CBMs can't be cleaned in a washing machine.  You need to remove them." ) );
-    } else {
-        uilist detergent_selector;
-        detergent_selector.text = _( "Use what detergent?" );
-
-        std::vector<itype_id> det_types;
-        for( const item *it : detergents ) {
-            itype_id det_type = it->typeId();
-            // If the vector does not contain the detergent type, add it
-            if( std::find( det_types.begin(), det_types.end(), det_type ) == det_types.end() ) {
-                det_types.emplace_back( det_type );
-            }
-
-        }
-        int chosen_detergent = 0;
-        // If there's a choice to be made on what detergent to use, ask the player
-        if( det_types.size() > 1 ) {
-            for( size_t i = 0; i < det_types.size(); ++i ) {
-                detergent_selector.addentry( i, true, 0, item::nname( det_types[i] ) );
-            }
-            detergent_selector.addentry( UILIST_CANCEL, true, 0, _( "Cancel" ) );
-            detergent_selector.query();
-            chosen_detergent = detergent_selector.ret;
-        }
-
-        // If the player exits the menu, don't do anything else
-        if( chosen_detergent == UILIST_CANCEL ) {
-            return;
-        }
-
-        parts[p].enabled = true;
-        for( auto &n : items ) {
-            n->set_age( 0_turns );
-        }
-
-        if( fuel_left( itype_water ) >= 24 ) {
-            drain( itype_water, 24 );
-        } else {
-            drain( itype_water_clean, 24 );
-        }
-
-        std::vector<item_comp> detergent;
-        detergent.emplace_back( det_types[chosen_detergent], 5 );
-        g->u.consume_items( detergent, 1, is_crafting_component );
-
-        add_msg( m_good,
-                 _( "You pour some detergent into the washing machine, close its lid, and turn it on.  The washing machine is being filled with water from vehicle tanks." ) );
-    }
-}
-
-void vehicle::use_dishwasher( int p )
-{
-    bool detergent_is_enough = g->u.crafting_inventory().has_charges( itype_detergent, 5 );
-    auto items = get_items( p );
-    bool filthy_items = std::all_of( items.begin(), items.end(), []( const item * const & i ) {
-        return i->has_flag( json_flag_FILTHY );
-    } );
-
-    std::string buffer;
-    buffer += _( "Soft items can't be cleaned in a dishwasher, you should use a washing machine for that.  You need to remove them:" );
-    bool soft_items = false;
-    for( const item * const &it : items ) {
-        if( it->is_soft() ) {
-            soft_items = true;
-            buffer += " " + it->tname();
-        }
-    }
-
-    if( parts[p].enabled ) {
-        parts[p].enabled = false;
-        add_msg( m_bad,
-                 _( "You turn the dishwasher off before it's finished the program, and open its lid." ) );
-    } else if( items.empty() ) {
-        add_msg( m_bad,
-                 _( "The dishwasher is empty, there's no point in starting it." ) );
-    } else if( fuel_left( itype_water ) < 24 && fuel_left( itype_water_clean ) < 24 ) {
-        add_msg( m_bad, _( "You need 24 charges of water in tanks of the %s to fill the dishwasher." ),
-                 name );
-    } else if( !detergent_is_enough ) {
-        add_msg( m_bad, _( "You need 5 charges of detergent for the dishwasher." ) );
-    } else if( !filthy_items ) {
-        add_msg( m_bad,
-                 _( "You need to remove all non-filthy items from the dishwasher to start the washing program." ) );
-    } else if( soft_items ) {
-        add_msg( m_bad, buffer );
-    } else {
-        parts[p].enabled = true;
-        for( auto &n : items ) {
-            n->set_age( 0_turns );
-        }
-
-        if( fuel_left( itype_water ) >= 24 ) {
-            drain( itype_water, 24 );
-        } else {
-            drain( itype_water_clean, 24 );
-        }
-
-        std::vector<item_comp> detergent;
-        detergent.emplace_back( itype_detergent, 5 );
-        g->u.consume_items( detergent, 1, is_crafting_component );
-
-        add_msg( m_good,
-                 _( "You pour some detergent into the dishwasher, close its lid, and turn it on.  The dishwasher is being filled with water from vehicle tanks." ) );
-    }
-}
 
 void vehicle::use_monster_capture( int part, const tripoint &pos )
 {
@@ -1986,14 +1850,6 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     const int autodoc_part = avail_part_with_feature( interact_part, "AUTODOC", true );
     const bool has_autodoc = autodoc_part >= 0;
     const bool remotely_controlled = g->remoteveh() == this;
-    const int washing_machine_part = avail_part_with_feature( interact_part, "WASHING_MACHINE", true );
-    const bool has_washmachine = washing_machine_part >= 0;
-    bool washing_machine_on = ( washing_machine_part == -1 ) ? false :
-                              parts[washing_machine_part].enabled;
-    const int dishwasher_part = avail_part_with_feature( interact_part, "DISHWASHER", true );
-    const bool has_dishwasher = dishwasher_part >= 0;
-    bool dishwasher_on = ( dishwasher_part == -1 ) ? false :
-                         parts[dishwasher_part].enabled;
     const int monster_capture_part = avail_part_with_feature( interact_part, "CAPTURE_MONSTER_VEH",
                                      true );
     const bool has_monster_capture = monster_capture_part >= 0;
@@ -2005,8 +1861,8 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
 
     enum {
         EXAMINE, TRACK, HANDBRAKE, CONTROL, CONTROL_ELECTRONICS, GET_ITEMS, GET_ITEMS_ON_GROUND, FOLD_VEHICLE, UNLOAD_TURRET,
-        RELOAD_TURRET, USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_WELDER, USE_PURIFIER, PURIFY_TANK, USE_AUTOCLAVE, USE_AUTODOC, USE_WASHMACHINE,
-        USE_DISHWASHER, USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, USE_TOWEL, PEEK_CURTAIN,
+        RELOAD_TURRET, USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_WELDER, USE_PURIFIER, PURIFY_TANK, USE_AUTOCLAVE, USE_AUTODOC,
+        USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, USE_TOWEL, PEEK_CURTAIN,
     };
     uilist selectmenu;
 
@@ -2026,17 +1882,7 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     if( has_autodoc ) {
         selectmenu.addentry( USE_AUTODOC, true, 'I', _( "Use autodoc" ) );
     }
-    if( has_washmachine ) {
-        selectmenu.addentry( USE_WASHMACHINE, true, 'W',
-                             washing_machine_on ? _( "Deactivate the washing machine" ) :
-                             _( "Activate the washing machine (1.5 hours)" ) );
-    }
-    if( has_dishwasher ) {
-        selectmenu.addentry( USE_DISHWASHER, true, 'D',
-                             dishwasher_on ? _( "Deactivate the dishwasher" ) :
-                             _( "Activate the dishwasher (1.5 hours)" ) );
-    }
-    if( from_vehicle && !washing_machine_on && !dishwasher_on ) {
+    if( from_vehicle ) {
         selectmenu.addentry( GET_ITEMS, true, 'g', _( "Get items" ) );
     }
     if( has_items_on_ground && !items_are_sealed ) {
@@ -2146,14 +1992,6 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
         }
         case USE_AUTODOC: {
             iexamine::autodoc( you, pos );
-            return;
-        }
-        case USE_WASHMACHINE: {
-            use_washing_machine( washing_machine_part );
-            return;
-        }
-        case USE_DISHWASHER: {
-            use_dishwasher( dishwasher_part );
             return;
         }
         case FILL_CONTAINER: {

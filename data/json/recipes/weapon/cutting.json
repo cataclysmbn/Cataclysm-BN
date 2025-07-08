@@ -139,6 +139,7 @@
     "difficulty": 6,
     "time": "5 h",
     "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 4 ], [ "steel_standard", 1 ] ],
     "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ] ]
   },
@@ -168,6 +169,7 @@
     "time": "6 h",
     "autolearn": true,
     "using": [ [ "blacksmithing_advanced", 8 ], [ "steel_standard", 2 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ]
   },
   {
@@ -251,6 +253,7 @@
     "time": "7 h",
     "book_learn": [ [ "textbook_fireman", 8 ], [ "textbook_fabrication", 9 ] ],
     "using": [ [ "blacksmithing_intermediate", 16 ], [ "steel_standard", 4 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "components": [ [ [ "2x4", 2 ], [ "stick", 4 ] ] ]
   },
@@ -263,6 +266,7 @@
     "difficulty": 6,
     "time": "7 h 40 m",
     "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 24 ], [ "steel_standard", 6 ] ],
     "components": [ [ [ "2x4", 2 ], [ "stick", 4 ] ] ]
   },
@@ -280,6 +284,27 @@
   },
   {
     "type": "recipe",
+    "result": "shishkebab_off",
+    "category": "CC_WEAPON",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "skills_required": [ "fabrication", 4 ],
+    "time": "2 h",
+    "reversible": true,
+    "autolearn": true,
+    "book_learn": [ [ "book_icef", 4 ], [ "textbook_mechanics", 3 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
+    "components": [
+      [ [ "adhesive", 1, "LIST" ] ],
+      [ [ "aux_pressurized_tank", 1 ] ],
+      [ [ "pilot_light", 1 ] ],
+      [ [ "pipe", 1 ] ],
+      [ [ "hose", 2 ] ],
+      [ [ "makeshift_machete", 1 ], [ "machete", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "cutlass",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_CUTTING",
@@ -287,6 +312,7 @@
     "difficulty": 7,
     "time": "6 h 40 m",
     "book_learn": [ [ "textbook_weapwest", 6 ], [ "scots_cookbook", 8 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 12 ], [ "steel_standard", 3 ] ],
     "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fabric_hides_any", 1, "LIST" ] ] ]
   },
@@ -299,6 +325,7 @@
     "difficulty": 8,
     "time": "8 h",
     "book_learn": [ [ "textbook_weapwest", 7 ], [ "scots_cookbook", 9 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 12 ], [ "steel_standard", 3 ] ],
     "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fabric_hides_any", 1, "LIST" ] ] ]
   },
@@ -311,6 +338,7 @@
     "difficulty": 8,
     "time": "7 h",
     "book_learn": [ [ "textbook_weapwest", 7 ], [ "scots_cookbook", 9 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 12 ], [ "steel_standard", 3 ] ],
     "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fabric_hides_any", 1, "LIST" ] ] ]
   },
@@ -335,6 +363,7 @@
     "difficulty": 8,
     "time": "8 h",
     "book_learn": [ [ "textbook_weapwest", 8 ], [ "recipe_melee", 7 ], [ "scots_cookbook", 9 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 12 ], [ "steel_standard", 3 ] ],
     "components": [ [ [ "2x4", 2 ], [ "stick", 4 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ]
   },
@@ -347,6 +376,7 @@
     "difficulty": 8,
     "time": "8 h",
     "book_learn": [ [ "textbook_armschina", 7 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 12 ], [ "steel_standard", 3 ] ],
     "components": [ [ [ "filament", 100, "LIST" ] ], [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fabric_hides_any", 1, "LIST" ] ] ]
   },
@@ -359,6 +389,7 @@
     "difficulty": 8,
     "time": "7 h",
     "book_learn": [ [ "textbook_armschina", 7 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 12 ], [ "steel_standard", 3 ] ],
     "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fabric_hides_any", 1, "LIST" ] ] ]
   },
@@ -371,6 +402,7 @@
     "difficulty": 8,
     "time": "7 h",
     "book_learn": [ [ "textbook_weapwest", 7 ], [ "scots_cookbook", 9 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 16 ], [ "steel_standard", 4 ] ],
     "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fabric_hides_any", 1, "LIST" ] ] ]
   },
@@ -383,6 +415,7 @@
     "difficulty": 9,
     "time": "8 h",
     "book_learn": [ [ "textbook_weapwest", 8 ], [ "scots_cookbook", 10 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 16 ], [ "steel_standard", 4 ] ],
     "components": [ [ [ "2x4", 2 ], [ "stick", 4 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ]
   },
@@ -395,6 +428,7 @@
     "difficulty": 8,
     "time": "7 h",
     "book_learn": [ [ "textbook_weapeast", 7 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 8 ], [ "steel_standard", 2 ] ],
     "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ]
   },
@@ -407,6 +441,7 @@
     "difficulty": 9,
     "time": "8 h",
     "book_learn": [ [ "textbook_weapeast", 8 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 8 ], [ "steel_standard", 2 ] ],
     "components": [ [ [ "2x4", 2 ], [ "stick", 4 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ]
   },
@@ -419,6 +454,7 @@
     "difficulty": 10,
     "time": "9 h 40 m",
     "book_learn": [ [ "textbook_weapeast", 8 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 20 ], [ "steel_standard", 5 ] ],
     "components": [ [ [ "2x4", 3 ], [ "stick", 6 ] ], [ [ "fabric_hides_any", 3, "LIST" ] ] ]
   },
@@ -480,6 +516,7 @@
     "time": "6 h",
     "book_learn": [ [ "textbook_weapwest", 6 ] ],
     "using": [ [ "blacksmithing_advanced", 12 ], [ "steel_standard", 3 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "stick_long", 1 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ]
   },
   {
@@ -492,6 +529,7 @@
     "time": "7 h 40 m",
     "book_learn": [ [ "textbook_weapwest", 6 ] ],
     "using": [ [ "blacksmithing_advanced", 8 ], [ "steel_standard", 2 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "stick_long", 1 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ]
   },
   {
@@ -504,6 +542,7 @@
     "time": "7 h 40 m",
     "book_learn": [ [ "textbook_weapeast", 6 ] ],
     "using": [ [ "blacksmithing_advanced", 8 ], [ "steel_standard", 2 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "stick_long", 1 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ]
   },
   {
@@ -517,6 +556,7 @@
     "time": "46 m",
     "book_learn": [ [ "textbook_weapeast", 6 ] ],
     "using": [ [ "blacksmithing_advanced", 5 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "katana", 1 ], [ "wakizashi", 1 ] ], [ [ "stick_long", 1 ] ] ]
   },
   {
@@ -543,6 +583,7 @@
     "time": "13 h 20 m",
     "book_learn": [ [ "textbook_weapeast", 6 ] ],
     "using": [ [ "blacksmithing_advanced", 20 ], [ "steel_standard", 5 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "//": "basically 2.5x the resources of a single machete to cover the fact that it's two weapons, each with a hand guard",
     "components": [ [ [ "2x4", 2 ], [ "stick", 4 ] ], [ [ "fabric_hides_any", 4, "LIST" ] ] ]
   },
@@ -555,6 +596,7 @@
     "difficulty": 8,
     "time": "420 m",
     "book_learn": [ [ "textbook_weapwest", 7 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
     "using": [ [ "blacksmithing_advanced", 2 ], [ "steel_standard", 2 ] ],
     "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ]
   },
@@ -642,7 +684,7 @@
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_CUTTING",
     "skill_used": "fabrication",
-    "difficulty": 3,
+    "difficulty": 5,
     "skills_required": [ "survival", 3 ],
     "time": "1 h",
     "reversible": true,
@@ -669,7 +711,7 @@
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_CUTTING",
     "skill_used": "fabrication",
-    "difficulty": 4,
+    "difficulty": 5,
     "skills_required": [ "survival", 3 ],
     "time": "1 h",
     "reversible": true,

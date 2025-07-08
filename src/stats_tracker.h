@@ -1,5 +1,4 @@
-#ifndef CATA_SRC_STATS_TRACKER_H
-#define CATA_SRC_STATS_TRACKER_H
+#pragma once
 
 #include <memory>
 #include <set>
@@ -194,4 +193,4 @@ class stats_tracker : public event_subscriber
         std::unordered_set<string_id<score>> initial_scores;
 };
 
-#endif // CATA_SRC_STATS_TRACKER_H
+

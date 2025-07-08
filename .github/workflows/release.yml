@@ -38,7 +38,7 @@ jobs:
   release:
     needs: metadata
     name: Create Release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     if: github.event_name == 'workflow_dispatch' || fromJson(needs.metadata.outputs.count) > 0
     outputs:
@@ -99,92 +99,67 @@ jobs:
           - name: Windows Tiles x64 MSVC
             artifact: windows-tiles-x64-msvc
             arch: x64
-            os: windows-2019
-            mxe: none
+            os: windows-latest
             ext: zip
             content: application/zip
           - name: Windows Tiles x32 MSVC
             artifact: windows-tiles-x32-msvc
             arch: x86
-            os: windows-2019
-            mxe: none
-            ext: zip
-            content: application/zip
-          - name: Windows Tiles x64
-            mxe: x86_64
-            mxe_apt: x86-64
-            artifact: windows-tiles-x64
-            os: ubuntu-24.04
-            ext: zip
-            content: application/zip
-          - name: Windows Tiles x32
-            mxe: i686
-            mxe_apt: i686
-            artifact: windows-tiles-x32
-            os: ubuntu-24.04
+            os: windows-latest
             ext: zip
             content: application/zip
           - name: Linux Tiles x64
-            os: ubuntu-24.04
-            mxe: none
+            os: ubuntu-latest
             android: none
             tiles: 1
             artifact: linux-tiles-x64
             ext: tar.gz
             content: application/gzip
           - name: linux-curses-x64
-            os: ubuntu-24.04
-            mxe: none
+            os: ubuntu-latest
             android: none
             tiles: 0
             artifact: linux-curses-x64
             ext: tar.gz
             content: application/gzip
           - name: osx-curses-x64
-            os: macos-14
-            mxe: none
+            os: macos-13
             tiles: 0
             artifact: osx-curses-x64
             ext: dmg
             content: application/x-apple-diskimage
           - name: osx-tiles-x64
-            os: macos-14
-            mxe: none
+            os: macos-13
             tiles: 1
             artifact: osx-tiles-x64
             ext: dmg
             content: application/x-apple-diskimage
           - name: osx-curses-arm
             os: macos-14
-            mxe: none
             tiles: 0
             artifact: osx-curses-arm
             ext: dmg
             content: application/x-apple-diskimage
           - name: osx-tiles-arm
             os: macos-14
-            mxe: none
             tiles: 1
             artifact: osx-tiles-arm
             ext: dmg
             content: application/x-apple-diskimage
           - name: Android x64
-            os: ubuntu-24.04
-            mxe: none
+            os: ubuntu-latest
             android: arm64
             artifact: android-x64
             ext: apk
             content: application/apk
           - name: Android x32
-            os: ubuntu-24.04
-            mxe: none
+            os: ubuntu-latest
             android: arm32
             artifact: android-x32
             ext: apk
             content: application/apk
           - name: Android Bundle
-            os: ubuntu-24.04
-            mxe: none
+            os: ubuntu-latest
             android: bundle
             artifact: android-bundle
             ext: aab
@@ -219,81 +194,55 @@ jobs:
 
       - name: Install MSBuild (windows msvc)
         if: runner.os == 'Windows'
-        uses: microsoft/setup-msbuild@v1.3.1
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: 17.13
 
       - name: Install stable CMake
-        uses: lukka/get-cmake@latest
+        uses: lukka/get-cmake@v3.31.6
 
       - name: Install vcpkg
-        uses: lukka/run-vcpkg@v11
+        uses: lukka/run-vcpkg@main
         id: runvcpkg
         with:
-          vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
-          vcpkgGitCommitId: "66444e13a86da7087ee24c342f91801cc6eb9877"
+          vcpkgDirectory: "${{ runner.workspace }}/b/vcpkg"
 
       - name: Integrate vcpkg
         if: runner.os == 'Windows'
         run: |
           vcpkg integrate install
 
-      - name: Install dependencies (windows mxe)
-        if: matrix.mxe != 'none'
-        run: |
-          sudo apt update
-          sudo apt install astyle autoconf automake autopoint bash bison bzip2 cmake flex gettext git g++ gperf intltool \
-            libffi-dev libgdk-pixbuf2.0-dev libtool libltdl-dev libssl-dev libxml-parser-perl lzip make mingw-w64 openssl \
-            p7zip-full patch perl pkg-config python3 ruby scons sed unzip wget xz-utils g++-multilib libc6-dev-i386 libtool-bin
-
-      - name: Install MXE
-        if: matrix.mxe != 'none'
-        run: |
-          curl -L -o mxe-${{ matrix.mxe }}.tar.xz https://github.com/BrettDong/MXE-GCC/releases/download/mxe-sdl-2-0-20/mxe-${{ matrix.mxe }}.tar.xz
-          curl -L -o mxe-${{ matrix.mxe }}.tar.xz.sha256 https://github.com/BrettDong/MXE-GCC/releases/download/mxe-sdl-2-0-20/mxe-${{ matrix.mxe }}.tar.xz.sha256
-          shasum -a 256 -c ./mxe-${{ matrix.mxe }}.tar.xz.sha256
-          sudo tar xJf mxe-${{ matrix.mxe }}.tar.xz -C /opt
-          curl -L -o SDL2-devel-2.26.2-mingw.tar.gz https://github.com/libsdl-org/SDL/releases/download/release-2.26.2/SDL2-devel-2.26.2-mingw.tar.gz
-          shasum -a 256 -c ./build-scripts/SDL2-devel-2.26.2-mingw.tar.gz.sha256
-          sudo tar -xzf SDL2-devel-2.26.2-mingw.tar.gz -C /opt/mxe/usr/${{ matrix.mxe }}-w64-mingw32.static.gcc12 --strip-components=2 SDL2-2.26.2/${{ matrix.mxe }}-w64-mingw32
-          curl -L -o libbacktrace-${{ matrix.mxe }}-w64-mingw32.tar.gz https://github.com/Qrox/libbacktrace/releases/download/2020-01-03/libbacktrace-${{ matrix.mxe }}-w64-mingw32.tar.gz
-          shasum -a 256 -c ./build-scripts/libbacktrace-${{ matrix.mxe }}-w64-mingw32-sha256
-          sudo tar -xzf libbacktrace-${{ matrix.mxe }}-w64-mingw32.tar.gz --exclude=LICENSE -C /opt/mxe/usr/${{ matrix.mxe }}-w64-mingw32.static.gcc12
-
       - name: Install dependencies (Linux)
-        if: runner.os == 'Linux' && matrix.mxe == 'none' && matrix.android == 'none'
+        if: runner.os == 'Linux' && matrix.android == 'none'
         run: |
           sudo apt-get update
-          sudo apt-get install libncursesw5-dev libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev \
-            libsdl2-mixer-dev libpulse-dev ccache gettext parallel
+          sudo apt-get install gcc-14 libncursesw5-dev libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev \
+            libsdl2-mixer-dev libpulse-dev ccache gettext parallel libsqlite3-dev zlib1g-dev
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
+          g++ --version
 
       - name: Install runtime dependencies (mac)
         if: runner.os == 'macOS'
         uses: BrettDong/setup-sdl2-frameworks@v1
         with:
-          sdl2: latest
-          sdl2-ttf: latest
-          sdl2-image: latest
-          sdl2-mixer: latest
+          sdl2: 2.30.11
+          sdl2-ttf: 2.24.0
+          sdl2-image: 2.8.4
+          sdl2-mixer: 2.8.0
       - name: Install build dependencies (mac)
         if: runner.os == 'macOS'
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install gettext ccache parallel
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install gettext ccache parallel llvm astyle sqlite3 zlib
           python3 -m venv ./venv
           source ./venv/bin/activate
-          pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist
+          pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
 
       - name: Build CBN (linux)
-        if: runner.os == 'Linux' && matrix.mxe == 'none' && matrix.android == 'none'
+        if: runner.os == 'Linux' && matrix.android == 'none'
         run: |
-          make -j$((`nproc`+0)) TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} LUA=1 RELEASE=1 LANGUAGES=all PCH=0 bindist
+          make -j$((`nproc`+0)) TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LANGUAGES=all PCH=0 bindist
           mv cataclysmbn-unstable.tar.gz cbn-${{ matrix.artifact }}-${{ needs.metadata.outputs.tag_name }}.tar.gz
-
-      - name: Build CBN (windows)
-        if: matrix.mxe != 'none'
-        env:
-          PLATFORM: /opt/mxe/usr/bin/${{ matrix.mxe }}-w64-mingw32.static.gcc12-
-        run: |
-          make -j$((`nproc`+0)) CROSS="${PLATFORM}" TILES=1 SOUND=1 LUA=1 RELEASE=1 LANGUAGES=all PCH=0 bindist
-          mv cataclysmbn-unstable.zip cbn-${{ matrix.artifact }}-${{ needs.metadata.outputs.tag_name }}.zip
 
       - name: Build CBN (windows msvc)
         if: runner.os == 'Windows'
@@ -308,24 +257,24 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           source ./venv/bin/activate
-          make -j3 TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LUA=1 LOCALIZE=1 LANGUAGES=all BACKTRACE=0 PCH=0 USE_HOME_DIR=1 OSX_MIN=11 FRAMEWORK=1 dmgdist
+          make -j3 TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LOCALIZE=1 LANGUAGES=all BACKTRACE=0 PCH=0 USE_HOME_DIR=1 OSX_MIN=11 FRAMEWORK=1 COMPILER=$(brew --prefix llvm)/bin/clang++ dmgdist
           mv CataclysmBN-unstable.dmg cbn-${{ matrix.artifact }}-${{ needs.metadata.outputs.tag_name }}.dmg
 
       - name: Set up JDK 11 (android)
-        if: runner.os == 'Linux' && matrix.android != 'none' && matrix.mxe == 'none'
+        if: runner.os == 'Linux' && matrix.android != 'none'
         uses: actions/setup-java@v4.1.0
         with:
           java-version: "11"
           distribution: "adopt"
 
       - name: Setup Build and Dependencies (android)
-        if: runner.os == 'Linux' && matrix.android != 'none' && matrix.mxe == 'none'
+        if: runner.os == 'Linux' && matrix.android != 'none'
         run: |
           sudo apt-get update
           sudo apt-get install gettext
 
       - name: Build CBN (android)
-        if: runner.os == 'Linux' && matrix.android != 'none' && matrix.mxe == 'none'
+        if: runner.os == 'Linux' && matrix.android != 'none'
         working-directory: ./android
         run: |
           echo "${{ secrets.KEYSTORE }}" > release.keystore.asc

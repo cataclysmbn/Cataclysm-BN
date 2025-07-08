@@ -297,10 +297,6 @@ std::string PATH_INFO::soundpack_conf()
 {
     return "soundpack.txt";
 }
-std::string PATH_INFO::lua_doc_output()
-{
-    return config_dir_value + "lua_doc.md";
-}
 std::string PATH_INFO::gfxdir()
 {
     return gfxdir_value;

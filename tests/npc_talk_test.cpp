@@ -630,6 +630,7 @@ TEST_CASE( "npc_talk_effects_advanced", "[npc_talk]" )
     player_character.remove_top_items_with( []( detached_ptr<item> &&it ) {
         return ( it->get_category().get_id() == item_category_id( "books" ) ||
                  it->get_category().get_id() == item_category_id( "food" ) ||
+                 it->get_category().get_id() == item_category_id( "drugs" ) ||
                  it->typeId() == itype_id( "bottle_glass" ) ) ? detached_ptr<item>() : std::move( it );
     } );
 

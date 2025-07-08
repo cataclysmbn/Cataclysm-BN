@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATA_UTILITY_H
-#define CATA_SRC_CATA_UTILITY_H
 
 #include <algorithm>
 #include <cstddef>
@@ -343,4 +341,4 @@ class restore_on_out_of_scope
 */
 holiday get_holiday_from_time( std::time_t time = 0, bool force_refresh = false );
 
-#endif // CATA_SRC_CATA_UTILITY_H
+

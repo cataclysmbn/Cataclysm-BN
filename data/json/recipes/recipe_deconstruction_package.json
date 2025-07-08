@@ -19,7 +19,7 @@
     "result": "mre_dessert",
     "type": "uncraft",
     "time": "4 s",
-    "components": [ [ [ "dry_fruit", 1 ] ], [ [ "chocolate", 1 ] ], [ [ "candy2", 1 ] ], [ [ "cookies", 1 ] ], [ [ "bag_plastic", 1 ] ] ],
+    "components": [ [ [ "dry_fruit", 1 ] ], [ [ "candy2", 1 ] ], [ [ "cookies", 1 ] ], [ [ "bag_plastic", 1 ] ] ],
     "flags": [ "BLIND_EASY" ]
   },
   {
@@ -219,6 +219,14 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "mre_hotdog", 1 ] ] ],
+    "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "mre_omelette_box",
+    "type": "uncraft",
+    "time": "30 s",
+    "components": [ [ [ "mre_omelette", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
     "flags": [ "BLIND_EASY" ]
   }

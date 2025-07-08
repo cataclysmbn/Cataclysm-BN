@@ -91,5 +91,23 @@
     "mutagen_message": "You feel the woods calling to you.",
     "iv_message": "You feel like you could live forever, just like the trees!",
     "memorial_message": "Spoke with the trees."
+  },
+  {
+    "type": "mutation_category",
+    "id": "KITSUNE",
+    "name": "Kitsune",
+    "threshold_mut": "THRESH_KITSUNE",
+    "mutagen_message": "You suddenly have an indescribable craving for chicken...",
+    "iv_message": "Your blood runs wild with mischief and merriment as the mutagen flows through it.",
+    "memorial_message": "Learned what the fox says."
+  },
+  {
+    "type": "mutation_category",
+    "id": "BUNNYGIRL",
+    "name": "Usagimimi",
+    "threshold_mut": "THRESH_BUNNYGIRL",
+    "mutagen_message": "You feel like literally jumping for joy!",
+    "iv_message": "You feel the most intense craving for carrots you've ever had...",
+    "memorial_message": "Acquired a taste for carrots."
   }
 ]

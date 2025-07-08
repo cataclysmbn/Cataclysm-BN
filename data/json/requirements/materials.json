@@ -45,13 +45,29 @@
     "id": "cordage",
     "type": "requirement",
     "//": "Materials used for tying items, primitive bowstrings, and other uses involving string or makeshift cordage, 36 g/90 cm of cordage per unit.",
-    "components": [ [ [ "string_36", 1 ], [ "cordage_36", 1 ], [ "cordage_36_leather", 1 ], [ "cordage_short", 6, "LIST" ] ] ]
+    "components": [
+      [
+        [ "string_36", 1 ],
+        [ "cordage_36", 1 ],
+        [ "cordage_36_leather", 1 ],
+        [ "string_36_plastic", 1 ],
+        [ "cordage_short", 6, "LIST" ]
+      ]
+    ]
   },
   {
     "id": "cordage_short",
     "type": "requirement",
     "//": "Materials used for tying smaller items requiring less string, 6 g/15 cm of cordage per unit.",
-    "components": [ [ [ "string_6", 1 ], [ "cordage_6", 1 ], [ "cordage_6_leather", 1 ], [ "filament", 50, "LIST" ] ] ]
+    "components": [
+      [
+        [ "string_6", 1 ],
+        [ "cordage_6", 1 ],
+        [ "cordage_6_leather", 1 ],
+        [ "string_6_plastic", 1 ],
+        [ "filament", 50, "LIST" ]
+      ]
+    ]
   },
   {
     "id": "cordage_superior",
@@ -69,7 +85,7 @@
     "id": "cvd_diamond",
     "type": "requirement",
     "//": "Materials required to apply diamond coating (per 250ml volume)",
-    "components": [ [ [ "plasma", 5 ], [ "c_hydrogen_gas", 200 ] ], [ [ "charcoal", 25 ], [ "coal_lump", 25 ] ] ]
+    "components": [ [ [ "plasma", 5 ], [ "c_hydrogen_gas", 20 ] ], [ [ "charcoal", 25 ], [ "coal_lump", 25 ] ] ]
   },
   {
     "id": "autoclave",
@@ -153,13 +169,21 @@
     "id": "rope_natural",
     "type": "requirement",
     "//": "Materials used for lashing, when choice of makeshift rope or vine is sensible, per 1080 g/9 m of rope",
-    "components": [ [ [ "rope_30", 1 ], [ "rope_makeshift_30", 1 ], [ "vine_30", 1 ], [ "rope_natural_short", 5, "LIST" ] ] ]
+    "components": [
+      [
+        [ "rope_30", 1 ],
+        [ "rope_makeshift_30", 1 ],
+        [ "vine_30", 1 ],
+        [ "rope_30_plastic", 1 ],
+        [ "rope_natural_short", 5, "LIST" ]
+      ]
+    ]
   },
   {
     "id": "rope_natural_short",
     "type": "requirement",
     "//": "Materials used for lashing, when choice of makeshift rope is sensible, per 216 g/180 cm of rope.",
-    "components": [ [ [ "rope_6", 1 ], [ "vine_6", 1 ], [ "rope_makeshift_6", 1 ], [ "seatbelt", 1 ] ] ]
+    "components": [ [ [ "rope_6", 1 ], [ "vine_6", 1 ], [ "rope_makeshift_6", 1 ], [ "seatbelt", 1 ], [ "rope_6_plastic", 1 ] ] ]
   },
   {
     "id": "rope_superior",
@@ -322,6 +346,32 @@
         [ "bandages_makeshift", 1 ],
         [ "bandages_makeshift_bleached", 1 ],
         [ "bandages_makeshift_boiled", 1 ]
+      ]
+    ]
+  },
+  {
+    "id": "varnish",
+    "type": "requirement",
+    "//": "Any kind of item that can be used for the purpose of varnishing wood.",
+    "components": [
+      [
+        [ "any_tallow", 1, "LIST" ],
+        [ "edible_lard", 1, "LIST" ],
+        [ "cooking_oil", 8 ],
+        [ "cooking_oil2", 8 ],
+        [ "lamp_oil", 100 ],
+        [ "r_paint", 10 ],
+        [ "b_paint", 10 ],
+        [ "w_paint", 10 ],
+        [ "g_paint", 10 ],
+        [ "p_paint", 10 ],
+        [ "y_paint", 10 ],
+        [ "bone_glue", 1 ],
+        [ "superglue", 1 ],
+        [ "wax", 1 ],
+        [ "soap", 1 ],
+        [ "soap_flakes", 1 ],
+        [ "shimmer", 1 ]
       ]
     ]
   }

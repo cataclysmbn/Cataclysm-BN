@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_GAMEMODE_H
-#define CATA_SRC_GAMEMODE_H
 
 #include <memory>
 #include <string>
@@ -34,4 +32,4 @@ struct special_game {
 
 };
 
-#endif // CATA_SRC_GAMEMODE_H
+

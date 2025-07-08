@@ -228,7 +228,7 @@
           { "item": "human_cooked", "chance": 100 }
         ],
         "?": { "item": "bottle_glass", "chance": 70, "repeat": 6 },
-        "^": [ { "item": "bucket", "chance": 100 }, { "item": "mop", "chance": 100 } ],
+        "^": [ { "item": "bucket", "chance": 100 }, { "item": "mop", "chance": 60 }, { "item": "mop_folded", "chance": 40 } ],
         "8": { "item": "rennet", "chance": 50, "repeat": 5 },
         "A": { "item": "wheel_wood", "chance": 100 },
         "C": { "item": "bucket", "chance": 100 },

@@ -21,7 +21,7 @@
     "death_function": [ "MELT" ],
     "regenerates": 50,
     "regeneration_modifiers": [ { "effect": "onfire", "base_mod": -0.3, "scaling_mod": -0.15 }, { "effect": "corroding", "base_mod": -0.8 } ],
-    "flags": [ "IMMOBILE", "NOT_HALLUCINATION", "FILTHY" ]
+    "flags": [ "IMMOBILE", "NOT_HALLUCINATION" ]
   },
   {
     "id": "debug_mon_threat",

@@ -218,6 +218,14 @@ hostility on detection)
 Monster morale. Defines how low monster HP can get before it retreats. This number is treated as %
 of their max HP.
 
+## "aggro_character"
+
+(bool, optional, default true)
+
+If the monster will differentiate between monsters and characters (NPC, Player) when deciding on
+targets - if false the monster will ignore characters regardless of current anger/morale until a
+character trips and anger trigger. Resets randomly when the monster is at its base anger level.
+
 ## "speed"
 
 (integer)
@@ -317,6 +325,62 @@ see ITEM_SPAWN.md. The default subtype is "distribution".
 
 How the monster behaves on death. See JSON_FLAGS.md for a list of possible functions. One can add or
 remove entries in mods via "add:death_function" and "remove:death_function".
+
+## "on_death"
+
+(dictionary, optional)
+
+A collection of behaviors to apply on death. Can embed "death_function" within. If this field is
+present the field "death_function" will be skipped.
+
+```json
+"on_death": {
+  "death_function": [ "THING" ]
+}
+```
+
+Also supports
+
+### "spawn_mon"
+
+(string, optional) Spawns a single monster at the location of the dying monster
+
+```json
+"on_death": {
+  "spawn_mon": "mon_thing"
+}
+```
+
+### "spawn_mon_near"
+
+(dictionary, optional)
+
+Made up of two values:
+
+- "distance": (integer, required) maximum distance from death location to allow a monster to spawn
+- "ids": (string or array of strings, optional) ids of monsters to try to spawn within set distance
+
+Can spawn a single monster
+
+```json
+"on_death": {
+  "spawn_mon_near": {
+    "distance": 5,
+    "ids": "mon_thing"
+  }
+}
+```
+
+or multiple monsters
+
+```json
+"on_death": {
+  "spawn_mon_near": {
+    "distance": 3,
+    "ids": [ "mon_thing", "mon_zombie", "mon_zombie_anklebiter" ]
+  }
+}
+```
 
 ## "harvest"
 

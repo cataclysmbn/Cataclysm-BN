@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CLOTHING_MOD_H
-#define CATA_SRC_CLOTHING_MOD_H
 
 #include <array>
 #include <cstddef>
@@ -84,4 +82,4 @@ std::string string_from_clothing_mod_type( clothing_mod_type type );
 
 } // namespace clothing_mods
 
-#endif // CATA_SRC_CLOTHING_MOD_H
+

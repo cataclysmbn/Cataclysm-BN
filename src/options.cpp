@@ -1,5 +1,6 @@
 #include "options.h"
 
+#include <algorithm>
 #include <locale>
 #include <cfloat>
 #include <climits>
@@ -289,7 +290,7 @@ void options_manager::add_external( const std::string &sNameIn, const std::strin
             thisOpt.iSet = 0;
             break;
         case cOpt::CVT_FLOAT:
-            thisOpt.fMin = FLT_MIN;
+            thisOpt.fMin = -FLT_MAX;
             thisOpt.fMax = FLT_MAX;
             thisOpt.fDefault = 0;
             thisOpt.fSet = 0;
@@ -763,8 +764,8 @@ int options_manager::cOpt::value_as<int>() const
 std::string options_manager::cOpt::getValueName() const
 {
     if( sType == "string_select" ) {
-        const auto iter = std::find_if( vItems.begin(),
-        vItems.end(), [&]( const id_and_option & e ) {
+        const auto iter = std::ranges::find_if( vItems,
+        [&]( const id_and_option & e ) {
             return e.first == sSet;
         } );
         if( iter != vItems.end() ) {
@@ -789,7 +790,7 @@ std::string options_manager::cOpt::getValueName() const
 std::string options_manager::cOpt::getDefaultText( const bool bTranslated ) const
 {
     if( sType == "string_select" ) {
-        const auto iter = std::find_if( vItems.begin(), vItems.end(),
+        const auto iter = std::ranges::find_if( vItems,
         [this]( const id_and_option & elem ) {
             return elem.first == sDefault;
         } );
@@ -1108,7 +1109,7 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
     std::vector<options_manager::id_and_option> user_tilesets = load_tilesets_from(
                 PATH_INFO::user_gfx() );
     for( const options_manager::id_and_option &id : user_tilesets ) {
-        if( std::find( result.begin(), result.end(), id ) == result.end() ) {
+        if( std::ranges::find( result, id ) == result.end() ) {
             result.emplace_back( id );
         }
     }
@@ -1222,7 +1223,7 @@ void options_manager::add_options_general()
     };
 
     add( "PROMPT_ON_CHARACTER_DEATH", general, translate_marker( "Prompt on character death" ),
-         translate_marker( "If enabled, when your character dies, the player is given a prompt that gives the option to cancel savefile deletion and other death effects, returning to the main menu without saving instead." ),
+         translate_marker( "If enabled, when your character dies, the player is given a prompt that gives the option to reload the last saved game instead of dying." ),
          false
        );
 
@@ -1330,7 +1331,7 @@ void options_manager::add_options_general()
 
     add( "AUTO_FORAGING", general, translate_marker( "Auto foraging" ),
          translate_marker( "Action to perform when 'Auto foraging' is enabled.  Bushes: Only forage bushes.  - Trees: Only forage trees.  - Everything: Forage bushes, trees, and everything else including flowers, cattails etc." ),
-    { { "off", to_translation( "options", "Disabled" ) }, { "bushes", translate_marker( "Bushes" ) }, { "trees", translate_marker( "Trees" ) }, { "both", translate_marker( "Everything" ) } },
+    { { "off", to_translation( "options", "Disabled" ) }, { "bushes", translate_marker( "Bushes" ) }, { "trees", translate_marker( "Trees" ) }, { "flowers", translate_marker( "Flowers" ) }, { "both", translate_marker( "Everything" ) } },
     "off"
        );
 
@@ -1393,6 +1394,31 @@ void options_manager::add_options_general()
          translate_marker( "If true, you will be prompted to confirm before attacking neutral or fleeing monsters that you have yet to engage in combat with." ),
          true
        );
+
+    add_empty_line();
+
+    add_option_group( general, Group( "clothing_destruction_popup",
+                                      to_translation( "Clothing destruction popup" ),
+                                      to_translation( "Configure when popups appear due to clothing being destroyed." ) ),
+    [&]( auto & page_id ) {
+        add( "CLOTHING_DESTRUCTION_POPUP", page_id, translate_marker( "Enable popup" ),
+             translate_marker( "If true, a popup will display when a piece of the player/NPC's worn clothing is destroyed." ),
+             true );
+
+        add( "CLOTHING_DESTRUCTION_POPUP_CONTENTS", page_id, translate_marker( "Only if contents present" ),
+             translate_marker( "Only show popup if destroyed clothing has contents." ),
+             false );
+
+        add( "CLOTHING_DESTRUCTION_POPUP_MIN_WEIGHT", page_id,
+             translate_marker( "Min weight for popup (g)" ),
+             translate_marker( "Minimum weight of the item for the popup to trigger." ),
+             0, 1000000, 0 );
+
+        add( "CLOTHING_DESTRUCTION_POPUP_MIN_VOLUME", page_id,
+             translate_marker( "Min volume for popup (ml)" ),
+             translate_marker( "Minimum volume of the item for the popup to trigger." ),
+             0, 1000000, 0 );
+    } );
 
     add_empty_line();
 
@@ -1521,6 +1547,19 @@ void options_manager::add_options_interface()
 
     add( "USE_LANG", interface, translate_marker( "Language" ),
          translate_marker( "Switch Language." ), lang_options, "" );
+
+    add_empty_line();
+
+
+    add( "WIKI_DOC_URL", interface, translate_marker( "Wiki URL" ),
+         translate_marker( "The URL opened by pressing the open wiki keybind." ),
+         "https://docs.cataclysmbn.org", 60
+       );
+
+    add( "HHG_URL", interface, translate_marker( "Hitchhiker's Guide URL" ),
+         translate_marker( "The URL opened by pressing the open HHG keybind." ),
+         "https://next.cbn-guide.pages.dev", 60
+       );
 
     add_empty_line();
 
@@ -1994,6 +2033,11 @@ void options_manager::add_options_graphics()
          false, COPT_CURSES_HIDE
        );
 
+    add( "OVERMAP_TRANSPARENCY", graphics, translate_marker( "Overmap air transparent" ),
+         translate_marker( "If true, overmap z levels with air are transparent, lower layers are rendered. Decreases rendering perfomance." ),
+         true, COPT_CURSES_HIDE
+       );
+
     add_empty_line();
 
     add( "PIXEL_MINIMAP", graphics, translate_marker( "Pixel minimap" ),
@@ -2053,6 +2097,10 @@ void options_manager::add_options_graphics()
        );
 
     get_option( "PIXEL_MINIMAP_BLINK" ).setPrerequisite( "PIXEL_MINIMAP" );
+
+    add( "ZOOM_STEP_COUNT", graphics, translate_marker( "Zoom steps" ),
+         translate_marker( "Number of steps between zoom levels." ),
+         1, 7, 1, COPT_CURSES_HIDE );
 
     add_empty_line();
 
@@ -2281,6 +2329,9 @@ void options_manager::add_options_debug()
 
     get_option( "MADE_OF_EXPLODIUM" ).setPrerequisite( "OLD_EXPLOSIONS", "false" );
 
+    add( "CHRONIC_PAIN", debug, translate_marker( "Chronic pain" ),
+         translate_marker( "If true, injuries cause persistent pain until they are healed." ), false );
+
     add_empty_line();
 
     add( "MIN_AUTODRIVE_SPEED", debug, translate_marker( "Minimum auto-drive speed" ),
@@ -2293,6 +2344,13 @@ void options_manager::add_options_debug()
 
     add( "LIMITED_BAYONETS", debug, translate_marker( "New bayonet system" ),
          translate_marker( "If true, bayonets replace weapon attack instead of adding to it.  WIP feature, weakens bayonets heavily at the moment." ),
+         false );
+
+    add_empty_line();
+
+    add( "USE_LEGACY_PATHFINDING", debug,
+         translate_marker( "Use legacy pathfinding" ),
+         translate_marker( "If true, opt out of new pathfinding in favor of legacy one. This makes pathfinding mods not work." ),
          false );
 }
 
@@ -2748,7 +2806,7 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
 
             tilecontext->load_tileset(
                 get_option<std::string>( "TILES" ),
-                ingame ? world_generator->active_world->active_mod_order : dummy,
+                ingame ? world_generator->active_world->info->active_mod_order : dummy,
                 /*precheck=*/false,
                 /*force=*/force_tile_change,
                 /*pump_events=*/true
@@ -2860,7 +2918,7 @@ struct string_col {
 std::string options_manager::show( bool ingame, const bool world_options_only,
                                    const std::function<bool()> &on_quit )
 {
-    const int iWorldOptPage = std::find_if( pages_.begin(), pages_.end(), [&]( const Page & p ) {
+    const int iWorldOptPage = std::ranges::find_if( pages_, [&]( const Page & p ) {
         return p.id_ == world_default;
     } ) - pages_.begin();
 
@@ -3309,8 +3367,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
 
             save();
             if( ingame && world_options_changed ) {
-                world_generator->active_world->WORLD_OPTIONS = ACTIVE_WORLD_OPTIONS;
-                world_generator->active_world->save();
+                world_generator->active_world->info->WORLD_OPTIONS = ACTIVE_WORLD_OPTIONS;
+                world_generator->active_world->info->save();
             }
             g->on_options_changed();
         } else {
@@ -3447,6 +3505,7 @@ void options_manager::cache_to_globals()
     fov_3d = ::get_option<bool>( "FOV_3D" );
     fov_3d_z_range = ::get_option<int>( "FOV_3D_Z_RANGE" );
     static_z_effect = ::get_option<bool>( "STATICZEFFECT" );
+    overmap_transparency = ::get_option<bool>( "OVERMAP_TRANSPARENCY" );
     PICKUP_RANGE = ::get_option<int>( "PICKUP_RANGE" );
 
     merge_comestible_mode = ( [] {
@@ -3478,9 +3537,9 @@ bool options_manager::save()
 void options_manager::load()
 {
     const auto file = PATH_INFO::options();
-    read_from_file_optional_json( file, [&]( JsonIn & jsin ) {
+    read_from_file_json( file, [&]( JsonIn & jsin ) {
         deserialize( jsin );
-    } );
+    }, true );
 
     cache_to_globals();
 }

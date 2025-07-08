@@ -263,7 +263,8 @@
           { "item": "novel_coa", "count": [ 1, 2 ], "prob": 30 }
         ],
         "prob": 75
-      }
+      },
+      { "group": "religious_books", "count": [ 1, 2 ], "prob": 60 }
     ]
   }
 ]

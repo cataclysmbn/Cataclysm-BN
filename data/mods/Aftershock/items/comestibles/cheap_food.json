@@ -127,7 +127,7 @@
     "charges": 3,
     "description": "Smooth crackers colored grayish-green.  Used to be perfectly edible seaweed, or so the wrapper claims.",
     "fun": 2,
-    "vitamins": [ [ "calcium", 5 ], [ "iron", 5 ], [ "vitC", 10 ], [ "bad_food", 1 ] ]
+    "vitamins": [ [ "calcium", 5 ], [ "iron", 5 ], [ "vitC", 10 ], [ "bad_food", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "id": "afs_beefsim",
@@ -142,7 +142,15 @@
     "description": "Soy or pureed rat?  Better not to know.\n(But its probably both.) ",
     "fun": 0,
     "charges": 2,
-    "vitamins": [ [ "calcium", 5 ], [ "iron", 5 ], [ "vitC", 10 ], [ "vitB", 10 ], [ "bad_food", 1 ] ]
+    "vitamins": [
+      [ "calcium", 5 ],
+      [ "iron", 5 ],
+      [ "vitC", 10 ],
+      [ "vitB", 10 ],
+      [ "bad_food", 1 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ]
+    ]
   },
   {
     "id": "afs_soup_27",
@@ -156,7 +164,16 @@
     "healthy": 3,
     "description": "Yellow chunks float on creamy liquid, like flotsam on a filthy summer pond.  Branding implies at least 26 other flavors, but you have neither seen or heard about any of them.",
     "fun": 0,
-    "vitamins": [ [ "calcium", 1 ], [ "iron", 10 ], [ "vitC", 5 ], [ "vitB", 10 ], [ "vitA", 5 ], [ "bad_food", 1 ] ]
+    "vitamins": [
+      [ "calcium", 1 ],
+      [ "iron", 10 ],
+      [ "vitC", 5 ],
+      [ "vitB", 10 ],
+      [ "vitA", 5 ],
+      [ "bad_food", 1 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ]
+    ]
   },
   {
     "id": "afs_caffex",

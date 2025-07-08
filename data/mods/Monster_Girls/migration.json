@@ -192,12 +192,12 @@
   {
     "id": "mutagen_beast",
     "type": "MIGRATION",
-    "replace": "mutagen"
+    "replace": "mutagen_kitsune"
   },
   {
     "id": "iv_mutagen_beast",
     "type": "MIGRATION",
-    "replace": "iv_mutagen"
+    "replace": "iv_mutagen_kitsune"
   },
   {
     "id": "mutagen_fish",

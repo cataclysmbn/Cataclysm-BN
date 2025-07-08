@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_TYPE_ID_H
-#define CATA_SRC_TYPE_ID_H
 
 #include "int_id.h"
 #include "string_id.h"
@@ -224,4 +222,4 @@ class json_trait_flag;
 using trait_flag_id = int_id<json_trait_flag>;
 using trait_flag_str_id = string_id<json_trait_flag>;
 
-#endif // CATA_SRC_TYPE_ID_H
+

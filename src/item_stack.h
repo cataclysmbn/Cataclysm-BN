@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ITEM_STACK_H
-#define CATA_SRC_ITEM_STACK_H
 
 #include <cstddef>
 
@@ -72,4 +70,4 @@ class item_stack
         const item *stacks_with( const item &it ) const;
 };
 
-#endif // CATA_SRC_ITEM_STACK_H
+

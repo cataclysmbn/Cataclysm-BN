@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_EDITMAP_H
-#define CATA_SRC_EDITMAP_H
 
 #include <functional>
 #include <map>
@@ -120,4 +118,4 @@ class editmap
         game_draw_callback_t_container &draw_cb_container();
 };
 
-#endif // CATA_SRC_EDITMAP_H
+

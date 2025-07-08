@@ -11,7 +11,6 @@
 #   LTO         Set to 1 to enable link-time optimization.
 #   TILES       Set to 1 to enable tiles. Requires SDL.
 #   SOUND       Set to 1 to enable sounds. Requires SDL.
-#   LUA         Set to 1 to enable Lua.
 #
 # Platforms:
 # Linux/Cygwin native
@@ -432,9 +431,9 @@ ifndef RELEASE
 endif
 
 ifeq ($(shell sh -c 'uname -o 2>/dev/null || echo not'),Cygwin)
-  OTHERS += -std=gnu++20
+  OTHERS += -std=gnu++23
 else
-  OTHERS += -std=c++20
+  OTHERS += -std=c++23
 endif
 
 ifeq ($(CYGWIN),1)
@@ -606,6 +605,11 @@ ifeq ($(shell git rev-parse --is-inside-work-tree),true)
 endif
 
 PKG_CONFIG = $(CROSS)pkg-config
+
+CXXFLAGS += $(shell $(PKG_CONFIG) --cflags sqlite3)
+LDFLAGS += $(shell $(PKG_CONFIG) --libs sqlite3)
+CXXFLAGS += $(shell $(PKG_CONFIG) --cflags zlib)
+LDFLAGS += $(shell $(PKG_CONFIG) --libs zlib)
 
 ifeq ($(SOUND), 1)
   ifneq ($(TILES),1)
@@ -818,12 +822,7 @@ ifeq ($(TARGETSYSTEM),WINDOWS)
 endif
 OBJS = $(sort $(patsubst %,$(ODIR)/%,$(_OBJS)))
 
-ifeq ($(LUA), 1)
-  DEFINES += -DLUA
-  LUA_OBJS = $(sort $(LUA_SOURCES:$(LUA_SRC_DIR)/%.c=$(ODIRLUA)/%.o))
-else
-  LUA_OBJS =
-endif
+LUA_OBJS = $(sort $(LUA_SOURCES:$(LUA_SRC_DIR)/%.c=$(ODIRLUA)/%.o))
 
 ifdef LANGUAGES
   L10N = localization
@@ -853,6 +852,12 @@ ifeq ($(USE_XDG_DIR),1)
     $(error "USE_HOME_DIR=1 does not work with USE_XDG_DIR=1")
   endif
   DEFINES += -DUSE_XDG_DIR
+endif
+
+ifeq ($(USE_XDG_DIR),0)
+  ifeq ($(USE_HOME_DIR),0)
+    BINDIST_EXTRAS += mods sound
+  endif
 endif
 
 ifeq ($(LTO), 1)

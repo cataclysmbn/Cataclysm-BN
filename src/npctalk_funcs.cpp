@@ -103,7 +103,7 @@ void talk_function::assign_mission( npc &p )
     }
     miss->assign( g->u );
     p.chatbin.missions_assigned.push_back( miss );
-    const auto it = std::find( p.chatbin.missions.begin(), p.chatbin.missions.end(), miss );
+    const auto it = std::ranges::find( p.chatbin.missions, miss );
     p.chatbin.missions.erase( it );
 }
 
@@ -147,8 +147,8 @@ void talk_function::clear_mission( npc &p )
         debugmsg( "clear_mission: mission_selected == nullptr" );
         return;
     }
-    const auto it = std::find( p.chatbin.missions_assigned.begin(), p.chatbin.missions_assigned.end(),
-                               miss );
+    const auto it = std::ranges::find( p.chatbin.missions_assigned,
+                                       miss );
     if( it == p.chatbin.missions_assigned.end() ) {
         debugmsg( "clear_mission: mission_selected not in assigned" );
         return;
@@ -424,8 +424,8 @@ void talk_function::bionic_remove( npc &p )
     std::vector<itype_id> bionic_types;
     std::vector<std::string> bionic_names;
     for( const bionic &bio : all_bio ) {
-        if( std::find( bionic_types.begin(), bionic_types.end(),
-                       bio.info().itype() ) == bionic_types.end() ) {
+        if( std::ranges::find( bionic_types,
+                               bio.info().itype() ) == bionic_types.end() ) {
             if( bio.id != bio_power_storage ||
                 bio.id != bio_power_storage_mkII ) {
                 bionic_types.push_back( bio.info().itype() );
@@ -606,9 +606,13 @@ void talk_function::morale_chat_activity( npc &p )
 
 void talk_function::buy_10_logs( npc &p )
 {
-    std::vector<tripoint_abs_omt> places =
-        overmap_buffer.find_all( get_player_character().global_omt_location(), "ranch_camp_67", 1,
-                                 false );
+    omt_find_params find_params{};
+    find_params.types.emplace_back( "ranch_camp_67", ot_match_type::type );
+    find_params.search_range = { 0, 1 };
+    find_params.search_layers = { 0, 0 };
+
+    std::vector<tripoint_abs_omt> places = overmap_buffer.find_all(
+            get_player_character().global_omt_location(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;
@@ -633,9 +637,13 @@ void talk_function::buy_10_logs( npc &p )
 
 void talk_function::buy_100_logs( npc &p )
 {
+    omt_find_params find_params{};
+    find_params.types.emplace_back( "ranch_camp_67", ot_match_type::type );
+    find_params.search_range = { 0, 1 };
+    find_params.search_layers = { 0, 0 };
+
     std::vector<tripoint_abs_omt> places =
-        overmap_buffer.find_all( get_player_character().global_omt_location(), "ranch_camp_67", 1,
-                                 false );
+        overmap_buffer.find_all( get_player_character().global_omt_location(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;

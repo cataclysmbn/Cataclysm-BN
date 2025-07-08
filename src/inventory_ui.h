@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_INVENTORY_UI_H
-#define CATA_SRC_INVENTORY_UI_H
 
 #include <cassert>
 #include <climits>
@@ -723,4 +721,4 @@ class inventory_drop_selector : public inventory_multiselector
         excluded_stacks dropping;
 };
 
-#endif // CATA_SRC_INVENTORY_UI_H
+

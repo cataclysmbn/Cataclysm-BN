@@ -201,7 +201,8 @@ int main( int argc, char *argv[] )
     int seed = time( nullptr );
     bool verifyexit = false;
     bool check_mods = false;
-    bool lua_doc_mode = false;
+    std::filesystem::path lua_doc_output_path;
+    std::filesystem::path lua_types_output_path;
     std::string dump;
     dump_mode dmode = dump_mode::TSV;
     std::vector<std::string> opts;
@@ -241,7 +242,7 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 14> first_pass_arguments = {{
+        const std::array<arg_handler, 15> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
@@ -421,12 +422,30 @@ int main( int argc, char *argv[] )
                     }
                 },
                 {
-                    "--lua-doc", nullptr,
-                    "If set, will generate Lua docs and exit",
+                    "--lua-doc", "<output path>",
+                    "Generate Lua docs to given path and exit",
                     section_default,
-                    [&]( int, const char ** ) -> int {
+                    [&]( int num_args, const char **params ) -> int {
+                        if( num_args < 1 )
+                        {
+                            return -1;
+                        }
                         test_mode = true;
-                        lua_doc_mode = true;
+                        lua_doc_output_path = params[0];
+                        return 0;
+                    }
+                },
+                {
+                    "--lua-types", "<output path>",
+                    "Generate Lua types to given path and exit",
+                    section_default,
+                    [&]( int num_args, const char **params ) -> int {
+                        if( num_args < 1 )
+                        {
+                            return -1;
+                        }
+                        test_mode = true;
+                        lua_types_output_path = params[0];
                         return 0;
                     }
                 }
@@ -753,15 +772,29 @@ int main( int argc, char *argv[] )
     DebugLog( DL::Info, DC::Main ) << "LAPI version: " << cata::get_lapi_version_string();
     cata::startup_lua_test();
 
-    if( lua_doc_mode ) {
+    if( !lua_doc_output_path.empty() || !lua_types_output_path.empty() ) {
         init_colors();
-        if( cata::generate_lua_docs() ) {
-            cata_printf( "Lua doc: Done!\n" );
-            return 0;
-        } else {
-            cata_printf( "Lua doc: Failed.\n" );
-            return 1;
+        const auto doc_script = std::filesystem::path{PATH_INFO::datadir()} / "raw" / "generate_docs.lua";
+        const auto types_script = std::filesystem::path{PATH_INFO::datadir()} / "raw" /
+                                  "generate_types.lua";
+
+        if( !lua_doc_output_path.empty() ) {
+            const bool doc_result = cata::generate_lua_docs( doc_script, lua_doc_output_path );
+            if( !doc_result ) {
+                cata_printf( "Lua doc: Failed.\n" );
+                return 1;
+            }
+            cata_printf( "Lua doc: Success.\n" );
         }
+        if( !lua_types_output_path.empty() ) {
+            const bool types_result = cata::generate_lua_docs( types_script, lua_types_output_path );
+            if( !types_result ) {
+                cata_printf( "Lua types: Failed.\n" );
+                return 1;
+            }
+            cata_printf( "Lua types: Success.\n" );
+        }
+        return 0;
     }
 
     prompt_select_lang_on_startup();

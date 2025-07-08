@@ -57,7 +57,7 @@
       ],
       "palettes": [ "lumberyard" ],
       "terrain": { "o": "t_concrete" },
-      "gaspumps": { "G": { "fuel": "gasoline", "amount": [ 50000, 268750 ] } },
+      "gaspumps": { "G": { "fuel": "gasoline", "amount": [ 10000, 50000 ] } },
       "place_vehicles": [
         { "vehicle": "flatbed_truck", "x": [ 43, 45 ], "y": 33, "chance": 30, "fuel": 25, "status": 1, "rotation": 90 },
         {

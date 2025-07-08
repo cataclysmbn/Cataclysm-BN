@@ -15,6 +15,7 @@ bool display_object_ids;
 bool trigdist;
 bool fov_3d;
 bool static_z_effect = false;
+bool overmap_transparency = true;
 int fov_3d_z_range;
 bool tile_iso;
 bool pixel_minimap_option = false;

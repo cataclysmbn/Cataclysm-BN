@@ -27,7 +27,7 @@
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
     "upgrades": { "half_life": 14, "into": "mon_zombie_surgeon" },
-    "flags": [ "SEES", "HEARS", "WARM", "POISON", "BLEED", "NO_BREATHE", "REVIVES", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "WARM", "POISON", "BLEED", "NO_BREATHE", "REVIVES" ]
   },
   {
     "id": "mon_zombie_surgeon",

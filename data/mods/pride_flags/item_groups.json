@@ -19,7 +19,7 @@
     ]
   },
   {
-    "id": "accesories_personal_unisex",
+    "id": "misc_personal_accessories",
     "type": "item_group",
     "subtype": "distribution",
     "entries": [ { "group": "pride_flag_itemgroup", "prob": 10 } ]

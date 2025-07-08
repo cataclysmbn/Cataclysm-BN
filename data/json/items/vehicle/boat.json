@@ -123,5 +123,22 @@
     "bashing": 8,
     "to_hit": -1,
     "category": "veh_parts"
+  },
+  {
+    "type": "WHEEL",
+    "id": "hovercraft_section",
+    "symbol": "o",
+    "color": "green",
+    "looks_like": "inflatable_airbag",
+    "name": { "str_sp": "hovercraft impeller" },
+    "description": "An impeller and skirt used by air-cushion-vehicles to float just above the surface of land or water.",
+    "price": "80 USD",
+    "price_postapoc": "1 USD",
+    "material": [ "steel", "rubber" ],
+    "weight": "300 g",
+    "volume": "5 L",
+    "bashing": 8,
+    "to_hit": -1,
+    "category": "veh_parts"
   }
 ]

@@ -1,0 +1,10 @@
+Style:
+  QuotedHeaders: "src/.*"
+
+InlayHints:
+  Enabled: true
+  ParameterNames: true
+  DeducedTypes: true
+  Designators: false
+  BlockEnd: false
+  DefaultArguments: true

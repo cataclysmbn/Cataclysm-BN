@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_FLAG_H
-#define CATA_SRC_FLAG_H
 
 #include <set>
 #include <string>
@@ -54,7 +52,6 @@ extern const flag_id flag_CABLE_SPOOL;
 extern const flag_id flag_CAMERA_PRO;
 extern const flag_id flag_CAN_PLANT_UNDERGROUND;
 extern const flag_id flag_CANNIBAL;
-extern const flag_id flag_CANNIBALISM;
 extern const flag_id flag_CANT_HEAL_EVERYONE;
 extern const flag_id flag_CARNIVORE_OK;
 extern const flag_id flag_CASING;
@@ -77,7 +74,9 @@ extern const flag_id flag_CORPSE;
 extern const flag_id flag_CUSTOM_EXPLOSION;
 extern const flag_id flag_CUT_IMMUNE;
 extern const flag_id flag_DANGEROUS;
+extern const flag_id flag_DARK_IMMUNE;
 extern const flag_id flag_DEAF;
+extern const flag_id flag_DESTROY_ON_DECHARGE;
 extern const flag_id flag_DIAMOND;
 extern const flag_id flag_DIG_TOOL;
 extern const flag_id flag_DIMENSIONAL_ANCHOR;
@@ -95,12 +94,15 @@ extern const flag_id flag_EFFECT_CLAIRVOYANCE;
 extern const flag_id flag_EFFECT_CLAIRVOYANCE_PLUS;
 extern const flag_id flag_EFFECT_COLD_IMMUNE;
 extern const flag_id flag_EFFECT_CUT_IMMUNE;
+extern const flag_id flag_EFFECT_DARK_IMMUNE;
 extern const flag_id flag_EFFECT_ELECTRIC_IMMUNE;
 extern const flag_id flag_EFFECT_FEATHER_FALL;
 extern const flag_id flag_EFFECT_HEAT_IMMUNE;
 extern const flag_id flag_EFFECT_IMPEDING;
 extern const flag_id flag_EFFECT_INVISIBLE;
+extern const flag_id flag_EFFECT_LIGHT_IMMUNE;
 extern const flag_id flag_EFFECT_NIGHT_VISION;
+extern const flag_id flag_EFFECT_PSI_IMMUNE;
 extern const flag_id flag_EFFECT_STAB_IMMUNE;
 extern const flag_id flag_EFFECT_SUPER_CLAIRVOYANCE;
 extern const flag_id flag_ELECTRIC_IMMUNE;
@@ -114,7 +116,6 @@ extern const flag_id flag_FELINE;
 extern const flag_id flag_FERTILIZER;
 extern const flag_id flag_FIELD_DRESS;
 extern const flag_id flag_FIELD_DRESS_FAILED;
-extern const flag_id flag_FILTHY;
 extern const flag_id flag_FIN;
 extern const flag_id flag_FIRE;
 extern const flag_id flag_FIRESTARTER;
@@ -170,6 +171,7 @@ extern const flag_id flag_IS_PET_ARMOR;
 extern const flag_id flag_IS_UPS;
 extern const flag_id flag_LEAK_ALWAYS;
 extern const flag_id flag_LEAK_DAM;
+extern const flag_id flag_LIGHT_IMMUNE;
 extern const flag_id flag_LITCIG;
 extern const flag_id flag_LUPINE;
 extern const flag_id flag_MAGIC_FOCUS;
@@ -225,6 +227,7 @@ extern const flag_id flag_NPC_THROWN;
 extern const flag_id flag_NPC_THROW_NOW;
 extern const flag_id flag_NUTRIENT_OVERRIDE;
 extern const flag_id flag_ONLY_ONE;
+extern const flag_id flag_EXOSUIT;
 extern const flag_id flag_ORGANIC;
 extern const flag_id flag_OUTER;
 extern const flag_id flag_OVERSIZE;
@@ -244,6 +247,7 @@ extern const flag_id flag_PRIMITIVE_RANGED_WEAPON;
 extern const flag_id flag_PROCESSING;
 extern const flag_id flag_PROCESSING_RESULT;
 extern const flag_id flag_PSEUDO;
+extern const flag_id flag_PSI_IMMUNE;
 extern const flag_id flag_PSYSHIELD_PARTIAL;
 extern const flag_id flag_PULPED;
 extern const flag_id flag_PUMP_ACTION;
@@ -329,6 +333,7 @@ extern const flag_id flag_TRADER_KEEP;
 extern const flag_id flag_TRADER_KEEP_EQUIPPED;
 extern const flag_id flag_TWO_WAY_RADIO;
 extern const flag_id flag_UNARMED_WEAPON;
+extern const flag_id flag_UNBREAKABLE;
 extern const flag_id flag_UNBREAKABLE_MELEE;
 extern const flag_id flag_UNDERSIZE;
 extern const flag_id flag_UNDERWATER_GUN;
@@ -338,6 +343,7 @@ extern const flag_id flag_URSINE_HONEY;
 extern const flag_id flag_USES_BIONIC_POWER;
 extern const flag_id flag_USES_GRID_POWER;
 extern const flag_id flag_USE_EAT_VERB;
+extern const flag_id flag_USE_PARENT_GUN;
 extern const flag_id flag_USE_PLAYER_ENERGY;
 extern const flag_id flag_USE_UPS;
 extern const flag_id flag_VARSIZE;
@@ -455,4 +461,4 @@ class json_flag
         static void reset();
 };
 
-#endif // CATA_SRC_FLAG_H
+

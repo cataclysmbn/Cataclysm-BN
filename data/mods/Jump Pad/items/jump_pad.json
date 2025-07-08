@@ -1,0 +1,40 @@
+[
+  {
+    "id": "jumppad_deployer",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "jump pad deployer" },
+    "description": "A tool that uses science to generate a trampoline made of energy which disipates in 5 seconds.  You can use it to reach a ledge and climb up.",
+    "weight": "200 g",
+    "volume": "500 ml",
+    "price": "2300 USD",
+    "price_postapoc": "30 USD",
+    "to_hit": -3,
+    "bashing": 1,
+    "material": [ "plastic", "aluminum" ],
+    "symbol": "H",
+    "color": "blue",
+    "ammo": "battery",
+    "use_action": { "type": "deploy_furn", "furn_type": "f_jumppad" },
+    "magazines": [
+      [
+        "battery",
+        [ "light_minus_battery_cell", "light_minus_disposable_cell", "light_battery_cell", "light_disposable_cell" ]
+      ]
+    ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_jumppad",
+    "name": "jump pad",
+    "looks_like": "tr_telepad",
+    "description": "A trampoline made of energy that allows you to jump up to a ledge.",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "symbol": "_",
+    "light_emitted": 10,
+    "color": "magenta",
+    "active": [ "countdown", { "timer": "5 s" } ],
+    "flags": [ "LADDER", "TRANSPARENT", "SEEN_FROM_ABOVE" ]
+  }
+]

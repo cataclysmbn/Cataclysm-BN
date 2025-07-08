@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UI_MANAGER_H
-#define CATA_SRC_UI_MANAGER_H
 
 #include <functional>
 
@@ -279,4 +277,4 @@ void redraw_invalidated();
 void screen_resized();
 } // namespace ui_manager
 
-#endif // CATA_SRC_UI_MANAGER_H
+

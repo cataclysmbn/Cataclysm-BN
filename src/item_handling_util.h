@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ITEM_HANDLING_UTIL_H
-#define CATA_SRC_ITEM_HANDLING_UTIL_H
 
 #include <list>
 
@@ -25,4 +23,4 @@ using iuse_locations = std::vector<iuse_location>;
 using drop_location = iuse_location;
 using drop_locations = std::vector<drop_location>;
 
-#endif // CATA_SRC_ITEM_HANDLING_UTIL_H
+

@@ -53,7 +53,8 @@
     "recoil": 350,
     "durability": 7,
     "clip_size": 10,
-    "loudness": 16
+    "loudness": 16,
+    "extend": { "flags": [ "RELOAD_ONE" ] }
   },
   {
     "id": "tihar",
@@ -104,7 +105,7 @@
     "durability": 7,
     "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],
     "clip_size": 2,
-    "reload": 6000,
+    "reload": 1000,
     "loudness": 22,
     "valid_mod_locations": [
       [ "accessories", 4 ],

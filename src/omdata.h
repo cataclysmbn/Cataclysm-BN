@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_OMDATA_H
-#define CATA_SRC_OMDATA_H
 
 #include <climits>
 #include <cstddef>
@@ -335,4 +333,4 @@ const std::vector<overmap_land_use_code> &get_all();
 
 } // namespace overmap_land_use_codes
 
-#endif // CATA_SRC_OMDATA_H
+

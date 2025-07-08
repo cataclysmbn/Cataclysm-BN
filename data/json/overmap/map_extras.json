@@ -21,7 +21,7 @@
     "//": "ID retained for compatibility.",
     "type": "map_extra",
     "name": "Lost Campers",
-    "description": "Several corpses of college kids or hunters out camping are here.",
+    "description": "Several corpses of teenagers out camping are here.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_collegekids" },
     "sym": "c",
     "color": "light_red",

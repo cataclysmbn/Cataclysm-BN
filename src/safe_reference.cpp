@@ -42,7 +42,7 @@ void safe_reference<T>::deserialize_global( const JsonArray &jsin )
         }
 
         pair = false;
-        uint32_t count = val.get_int();
+        uint32_t count = val.get_uint();
         record *rec = new record( id );
         rec->json_count = count;
         records_by_id.insert( {id, rec} );

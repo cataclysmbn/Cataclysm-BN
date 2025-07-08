@@ -1,0 +1,74 @@
+[
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_panic", "mon_civilian_stationary", "mon_civilian_child", "mon_civilian_parent" ],
+    "sound": "howling in terror.",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_panic", "mon_civilian_stationary", "mon_civilian_child", "mon_civilian_parent" ],
+    "sound": "wailing in fear.",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_panic", "mon_civilian_stationary", "mon_civilian_child", "mon_civilian_parent" ],
+    "sound": "an anguished shriek.",
+    "volume": 32
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_panic", "mon_civilian_stationary", "mon_civilian_child", "mon_civilian_parent" ],
+    "sound": "agonized crying.",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_panic", "mon_civilian_stationary", "mon_civilian_child", "mon_civilian_parent" ],
+    "sound": "faint, almost inhuman, whimpering.",
+    "volume": 8
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
+    "sound": "\"Die!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
+    "sound": "\"Die, zombie scum!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
+    "sound": "\"You'll get what's coming to you!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
+    "sound": "\"Kick the bucket, filthy dead!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
+    "sound": "\"Come get some!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
+    "sound": "\"Will you die already?!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_civilian_zombiefighter", "mon_civilian_police" ],
+    "sound": "an unrestrained warcry.",
+    "volume": 35
+  }
+]

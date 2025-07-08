@@ -2,7 +2,7 @@
   {
     "id": "copper_knife",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "weapon_category": [ "KNIVES" ],
     "name": { "str": "copper knife", "str_pl": "copper knives" },
     "description": "A knife consisting of crudely-worked copper, and a simple handle.  Primitive, but a step above stone-age.",
@@ -41,7 +41,7 @@
   {
     "id": "honey_scraper",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "weapon_category": [ "KNIVES" ],
     "name": { "str": "honey scraper" },
     "description": "A sharp, knife-like tool used in harvesting honey from beehives.  Makes a passable melee weapon.",
@@ -60,7 +60,7 @@
   {
     "id": "pockknife",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "weapon_category": [ "KNIVES" ],
     "name": { "str": "pocket knife", "str_pl": "pocket knives" },
     "description": "This is a small pocket knife.  It isn't great for combat, but it's better than nothing.  It's sharp enough to butcher with.",
@@ -79,7 +79,7 @@
   {
     "id": "primitive_knife",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "weapon_category": [ "KNIVES" ],
     "name": { "str": "primitive knife", "str_pl": "primitive knives" },
     "conditional_names": [

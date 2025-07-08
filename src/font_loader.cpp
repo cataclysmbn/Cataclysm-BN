@@ -1,8 +1,10 @@
 #include "font_loader.h"
 
+#include <algorithm>
+
 void ensure_unifont_loaded( std::vector<std::string> &font_list )
 {
-    if( std::find( std::begin( font_list ), std::end( font_list ), "unifont" ) == font_list.end() ) {
+    if( std::ranges::find( font_list, "unifont" ) == font_list.end() ) {
         font_list.emplace_back( PATH_INFO::fontdir() + "unifont.ttf" );
     }
 }

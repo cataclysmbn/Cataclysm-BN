@@ -96,7 +96,6 @@ auto config_directory() -> std::string
         { _( "user font config" ), PATH_INFO::user_fontconfig() },
         { _( "user keybindings" ), PATH_INFO::user_keybindings() },
         { _( "last world" ), PATH_INFO::lastworld() },
-        { _( "Lua doc output" ), PATH_INFO::lua_doc_output() },
         { _( "panel options" ), PATH_INFO::panel_options() },
         { _( "safe mode" ), PATH_INFO::safemode() },
     } );

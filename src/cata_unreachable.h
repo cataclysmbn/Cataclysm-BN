@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATA_UNREACHABLE_H
-#define CATA_SRC_CATA_UNREACHABLE_H
 
 namespace cata
 {
@@ -39,4 +37,4 @@ inline void unreachable() {}
 
 } // namespace cata
 
-#endif // CATA_SRC_CATA_UNREACHABLE_H
+

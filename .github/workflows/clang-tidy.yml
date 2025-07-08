@@ -4,9 +4,23 @@ on:
   # push:
   #   branches: [main]
   #   paths: [ "**.cpp", "**.h", "**.c", "**/CMakeLists.txt", "**/Makefile", "**.hpp", "**.cmake", "build-scripts/**","tools/clang-tidy-plugin/**", ".github/workflows/clang-tidy.yml", "**/.clang-tidy" ]
+  workflow_dispatch:
   pull_request:
     branches: [main]
-    paths: [ "**.cpp", "**.h", "**.c", "**/CMakeLists.txt", "**/Makefile", "**.hpp", "**.cmake", "build-scripts/**", "tools/clang-tidy-plugin/**", ".github/workflows/clang-tidy.yml", "**/.clang-tidy" ]
+    paths:
+      [
+        "**.cpp",
+        "**.h",
+        "**.c",
+        "**/CMakeLists.txt",
+        "**/Makefile",
+        "**.hpp",
+        "**.cmake",
+        "build-scripts/**",
+        "tools/clang-tidy-plugin/**",
+        ".github/workflows/clang-tidy.yml",
+        "**/.clang-tidy",
+      ]
 
 # We only care about the latest revision of a PR, so cancel all previous instances.
 concurrency:
@@ -16,7 +30,7 @@ concurrency:
 jobs:
   skip-duplicates:
     continue-on-error: true
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     # Map a step output to a job output
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
@@ -30,11 +44,11 @@ jobs:
     needs: skip-duplicates
     if: ${{ needs.skip-duplicates.outputs.should_skip != 'true' }}
 
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     env:
       CMAKE: 1
-      CLANG: /usr/bin/clang++-18
-      COMPILER: /usr/bin/clang++-18
+      CLANG: /usr/bin/clang++-19
+      COMPILER: /usr/bin/clang++-19
       TILES: 1
       SOUND: 1
       BUILD_PATH: "build"
@@ -49,24 +63,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install \
             cmake gettext ninja-build mold ccache jq \
-            clang-18 libclang-18-dev llvm-18 llvm-18-dev clang-tidy-18 \
-            libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer-dev libpulse-dev libflac-dev
+            libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer-dev libpulse-dev libflac-dev \
+            sqlite3 libsqlite3-dev zlib1g-dev
 
-      - name: ensure clang 18 is installed
-        run: |
-          if [ -z "$(command -v clang++-18)" ]; then
-            echo "clang 18 not found"
-            exit 1
-          fi
-          ls -al /usr/lib/llvm-18/lib
-          if [ ! -d /usr/lib/llvm-18/lib ]; then
-            echo "llvm-18 not found"
-            exit 1
-          fi
-
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100
-          sudo update-alternatives --install /usr/bin/FileCheck FileCheck /usr/bin/FileCheck-18 100
-          sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-18 100
+          VERSION=20
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x ./llvm.sh
+          sudo ./llvm.sh $VERSION all
+          for bin in clang clang++ clang-format clang-tidy run-clang-tidy; do
+            sudo update-alternatives --install /usr/bin/$bin $bin /usr/bin/$bin-$VERSION 200
+          done
 
       - name: Setup ccache
         uses: Chocobo1/setup-ccache-action@v1

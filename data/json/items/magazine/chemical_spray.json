@@ -15,7 +15,7 @@
     "ammo_type": "chemical_spray",
     "capacity": 800,
     "reliability": 9,
-    "reload_time": 3,
+    "reload_time": 1,
     "flags": [ "MAG_BULKY" ]
   }
 ]

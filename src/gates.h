@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_GATES_H
-#define CATA_SRC_GATES_H
 
 #include <string>
 
@@ -18,7 +16,7 @@ void check();
 void reset();
 
 /** opens/closes the gate via player's activity */
-void toggle_gate( const tripoint &pos, player &p );
+void toggle_gate( const tripoint &pos, Character &who );
 /** opens/closes the gate immediately */
 void toggle_gate( const tripoint &pos );
 
@@ -35,4 +33,4 @@ void close_door( map &m, Character &who, const tripoint &closep );
 
 } // namespace doors
 
-#endif // CATA_SRC_GATES_H
+

@@ -57,7 +57,6 @@
     "price_postapoc": "15 USD",
     "//": "Mono-material as it likely would need to be taken apart to repair, plus the material of the vest is less of a factor on resistances.",
     "material": [ "soil" ],
-    "coverage": 85,
     "encumbrance": 45,
     "material_thickness": 6,
     "extend": { "flags": [ "OVERSIZE", "FRAGILE" ] },

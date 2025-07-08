@@ -109,21 +109,15 @@
   },
   {
     "type": "weapon_category",
-    "id": "HAND_AXES",
-    "name": "Hand Axes",
-    "//": "Axe with a short handle, typically wielded in one hand, ocassionally thrown."
-  },
-  {
-    "type": "weapon_category",
     "id": "1H_AXES",
     "name": "One-handed Axes",
-    "//": "Axes meant to be wielded with one hand, typically with a handle longer than the handaxe."
+    "//": "Axes meant to be wielded with one hand."
   },
   {
     "type": "weapon_category",
     "id": "2H_AXES",
     "name": "Two-handed Axes",
-    "//": "Axes meant to be wielded with two hands."
+    "//": "Axes with a handle long enough to allow or require wielding with two hands."
   },
   {
     "type": "weapon_category",

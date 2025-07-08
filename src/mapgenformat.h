@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAPGENFORMAT_H
-#define CATA_SRC_MAPGENFORMAT_H
 
 #include <cstddef>
 #include <string>
@@ -85,4 +83,4 @@ inline format_effect<furn_id> furn_bind( const char ( &characters )[N], Args... 
 
 } //END NAMESPACE mapf
 
-#endif // CATA_SRC_MAPGENFORMAT_H
+

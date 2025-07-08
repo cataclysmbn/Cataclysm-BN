@@ -76,7 +76,7 @@
     "warmth": 20,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "flags": [ "BELTED", "WATER_FRIENDLY", "BLOCK_WHILE_WORN" ]
+    "flags": [ "OUTER", "WATER_FRIENDLY", "BLOCK_WHILE_WORN" ]
   },
   {
     "id": "armguard_larmor",
@@ -152,7 +152,7 @@
     "encumbrance": 15,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "flags": [ "BELTED", "BLOCK_WHILE_WORN", "WATER_FRIENDLY" ]
+    "flags": [ "OUTER", "BLOCK_WHILE_WORN", "WATER_FRIENDLY" ]
   },
   {
     "id": "armguard_bronze",
@@ -210,7 +210,7 @@
     "encumbrance": 18,
     "warmth": 20,
     "material_thickness": 2,
-    "flags": [ "BELTED", "BLOCK_WHILE_WORN" ]
+    "flags": [ "OUTER", "BLOCK_WHILE_WORN" ]
   },
   {
     "id": "armguard_soft",
@@ -295,7 +295,7 @@
     "material_thickness": 3,
     "environmental_protection": 1,
     "valid_mods": [ "steel_padded", "alloy_padded", "resized_large" ],
-    "flags": [ "STURDY", "BELTED", "WATER_FRIENDLY" ]
+    "flags": [ "STURDY", "WATER_FRIENDLY" ]
   },
   {
     "id": "armguard_bone",
@@ -310,6 +310,7 @@
     "material_thickness": 4,
     "valid_mods": [  ],
     "proportional": { "weight": 1.2 },
+    "extend": { "flags": [ "OUTER" ] },
     "delete": { "flags": [ "WATER_FRIENDLY" ] }
   },
   {

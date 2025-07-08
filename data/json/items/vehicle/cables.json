@@ -11,13 +11,13 @@
     "volume": "500 ml",
     "weight": "75 g",
     "bashing": 2,
-    "category": "tools",
+    "category": "tools_workshop",
     "price": "1 cent",
     "price_postapoc": "1 USD",
     "max_charges": 3,
     "initial_charges": 3,
     "use_action": "CABLE_ATTACH",
-    "flags": [ "CABLE_SPOOL" ]
+    "flags": [ "CABLE_SPOOL", "DESTROY_ON_DECHARGE" ]
   },
   {
     "type": "TOOL",
@@ -31,13 +31,13 @@
     "volume": "3000 ml",
     "weight": "24000 g",
     "bashing": 6,
-    "category": "tools",
+    "category": "tools_workshop",
     "price": "80 cent",
     "price_postapoc": "5 USD",
     "max_charges": 6,
     "initial_charges": 6,
     "use_action": "TOW_ATTACH",
-    "flags": [ "CABLE_SPOOL", "TOW_CABLE" ]
+    "flags": [ "CABLE_SPOOL", "TOW_CABLE", "DESTROY_ON_DECHARGE" ]
   },
   {
     "type": "TOOL",

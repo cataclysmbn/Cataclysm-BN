@@ -10,9 +10,7 @@
 #include "assign.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "cata_utility.h"
 #include "character.h"
-#include "construction.h"
 #include "debug.h"
 #include "flag.h"
 #include "flat_set.h"
@@ -22,7 +20,6 @@
 #include "json.h"
 #include "mapgen_functions.h"
 #include "output.h"
-#include "player.h"
 #include "skill.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -31,9 +28,7 @@
 #include "type_id.h"
 #include "uistate.h"
 #include "units.h"
-#include "value_ptr.h"
 
-static const std::string flag_ALLOW_FILTHY( "ALLOW_FILTHY" );
 
 static const itype_id itype_hotplate( "hotplate" );
 static const itype_id itype_dehydrator( "dehydrator" );
@@ -223,13 +218,6 @@ void recipe::load( const JsonObject &jo, const std::string &src )
     // inline requirements are always replaced (cannot be inherited)
     reqs_internal.clear();
 
-    // These cannot be inherited
-    check_blueprint_needs = false;
-    has_blueprint_needs = false;
-    time_blueprint = 0;
-    skills_blueprint.clear();
-    reqs_blueprint.clear();
-
     if( type == "recipe" ) {
         if( jo.has_string( "id_suffix" ) ) {
             if( abstract ) {
@@ -253,64 +241,6 @@ void recipe::load( const JsonObject &jo, const std::string &src )
                 byproducts[ byproduct ] += arr.size() == 2 ? arr.get_int( 1 ) : 1;
             }
         }
-        assign( jo, "construction_blueprint", blueprint );
-        if( !blueprint.empty() ) {
-            assign( jo, "blueprint_name", bp_name );
-            bp_resources.clear();
-            for( const std::string resource : jo.get_array( "blueprint_resources" ) ) {
-                bp_resources.emplace_back( resource );
-            }
-            for( JsonObject provide : jo.get_array( "blueprint_provides" ) ) {
-                bp_provides.emplace_back( provide.get_string( "id" ),
-                                          provide.get_int( "amount", 1 ) );
-            }
-            // all blueprints provide themselves with needing it written in JSON
-            bp_provides.emplace_back( result_.str(), 1 );
-            for( JsonObject require : jo.get_array( "blueprint_requires" ) ) {
-                bp_requires.emplace_back( require.get_string( "id" ),
-                                          require.get_int( "amount", 1 ) );
-            }
-            // all blueprints exclude themselves with needing it written in JSON
-            bp_excludes.emplace_back( result_.str(), 1 );
-            for( JsonObject exclude : jo.get_array( "blueprint_excludes" ) ) {
-                bp_excludes.emplace_back( exclude.get_string( "id" ),
-                                          exclude.get_int( "amount", 1 ) );
-            }
-            if( jo.has_member( "blueprint_needs" ) ) {
-                has_blueprint_needs = true;
-                const JsonObject jneeds = jo.get_object( "blueprint_needs" );
-                if( jneeds.has_member( "time" ) ) {
-                    if( jneeds.has_int( "time" ) ) {
-                        // so we can specify moves that is not a multiple of 100
-                        time_blueprint = jneeds.get_int( "time" );
-                    } else {
-                        time_blueprint = to_moves<int>( read_from_json_string<time_duration>( *jneeds.get_raw( "time" ),
-                                                        time_duration::units ) );
-                    }
-                    time += time_blueprint;
-                }
-                if( jneeds.has_member( "skills" ) ) {
-                    for( JsonArray cur : jneeds.get_array( "skills" ) ) {
-                        skills_blueprint[skill_id( cur.get_string( 0 ) )] = cur.get_int( 1 );
-                    }
-                    for( const std::pair<const skill_id, int> &p : skills_blueprint ) {
-                        const auto it = required_skills.find( p.first );
-                        if( it == required_skills.end() ) {
-                            required_skills.emplace( p );
-                        } else {
-                            it->second = std::max( it->second, p.second );
-                        }
-                    }
-                }
-                if( jneeds.has_member( "inline" ) ) {
-                    const requirement_id req_id( "inline_blueprint_" + type + "_" + ident_.str() );
-                    requirement_data::load_requirement( jneeds.get_object( "inline" ), req_id );
-                    reqs_blueprint.emplace_back( req_id, 1 );
-                    reqs_internal.emplace_back( req_id, 1 );
-                }
-            }
-            check_blueprint_needs = jo.get_bool( "check_blueprint_needs", true );
-        }
     } else if( type == "uncraft" ) {
         reversible = true;
     } else {
@@ -328,22 +258,12 @@ void recipe::load( const JsonObject &jo, const std::string &src )
 void recipe::finalize()
 {
     // TODO: Rethink bools used for slow checks
-    if( json_report_strict && check_blueprint_needs ) {
-        check_blueprint_requirements();
-    }
-
     // concatenate both external and inline requirements
     add_requirements( reqs_external );
     add_requirements( reqs_internal );
 
     reqs_external.clear();
     reqs_internal.clear();
-
-    if( has_blueprint_needs ) {
-        time_blueprint = 0;
-        skills_blueprint.clear();
-        reqs_blueprint.clear();
-    }
 
     deduped_requirements_ = deduped_requirement_data( requirements_, ident() );
 
@@ -392,7 +312,7 @@ void recipe::add_requirements( const std::vector<std::pair<requirement_id, int>>
 std::string recipe::get_consistency_error() const
 {
     if( category == "CC_BUILDING" ) {
-        if( is_blueprint() || oter_str_id( result_.c_str() ).is_valid() ) {
+        if( oter_str_id( result_.c_str() ).is_valid() ) {
             return std::string();
         }
         return "defines invalid result";
@@ -418,7 +338,7 @@ std::string recipe::get_consistency_error() const
         return !elem.first.is_valid();
     };
 
-    if( std::any_of( byproducts.begin(), byproducts.end(), is_invalid_bp ) ) {
+    if( std::ranges::any_of( byproducts, is_invalid_bp ) ) {
         return "defines invalid byproducts";
     }
 
@@ -435,7 +355,7 @@ std::string recipe::get_consistency_error() const
     };
 
     if( ( skill_used && !skill_used.is_valid() ) ||
-        std::any_of( required_skills.begin(), required_skills.end(), is_invalid_skill ) ) {
+        std::ranges::any_of( required_skills, is_invalid_skill ) ) {
         return "uses invalid skill";
     }
 
@@ -443,13 +363,8 @@ std::string recipe::get_consistency_error() const
         return !elem.first->book;
     };
 
-    if( std::any_of( booksets.begin(), booksets.end(), is_invalid_book ) ) {
+    if( std::ranges::any_of( booksets, is_invalid_book ) ) {
         return "defines invalid book";
-    }
-
-    // TODO: IDs instead of raw string
-    if( !blueprint.empty() && !mapgen::has_update_id( blueprint ) ) {
-        return "has invalid mapgen id";
     }
 
     return std::string();
@@ -631,7 +546,7 @@ bool recipe::will_be_blacklisted() const
             return req.first->is_blacklisted();
         };
 
-        return std::any_of( reqs.begin(), reqs.end(), req_is_blacklisted );
+        return std::ranges::any_of( reqs, req_is_blacklisted );
     };
 
     return any_is_blacklisted( reqs_internal ) || any_is_blacklisted( reqs_external );
@@ -665,59 +580,15 @@ std::function<bool( const item & )> recipe::get_component_filter(
         };
     }
 
-    // Filter out filthy components here instead of with is_crafting_component
-    // Make an exception for recipes with the ALLOW_FILTHY flag
-    std::function<bool( const item & )> filthy_filter = return_true<item>;
-    if( !has_flag( flag_ALLOW_FILTHY ) ) {
-        filthy_filter = []( const item & component ) {
-            return !component.is_filthy();
-        };
-    }
 
-    return [ rotten_filter, magazine_filter, filthy_filter ]( const item & component ) {
-        return is_crafting_component_allow_filthy( component ) &&
+    return [ rotten_filter, magazine_filter ]( const item & component ) {
+        return is_crafting_component( component ) &&
                rotten_filter( component ) &&
-               magazine_filter( component ) &&
-               filthy_filter( component );
+               magazine_filter( component );
     };
 }
 
-bool recipe::is_blueprint() const
-{
-    return !blueprint.empty();
-}
-
-const std::string &recipe::get_blueprint() const
-{
-    return blueprint;
-}
-
-const translation &recipe::blueprint_name() const
-{
-    return bp_name;
-}
-
-const std::vector<itype_id> &recipe::blueprint_resources() const
-{
-    return bp_resources;
-}
-
-const std::vector<std::pair<std::string, int>> &recipe::blueprint_provides() const
-{
-    return bp_provides;
-}
-
-const std::vector<std::pair<std::string, int>>  &recipe::blueprint_requires() const
-{
-    return bp_requires;
-}
-
-const std::vector<std::pair<std::string, int>>  &recipe::blueprint_excludes() const
-{
-    return bp_excludes;
-}
-
-static std::string dump_requirements(
+[[maybe_unused]] static std::string dump_requirements(
     const requirement_data &reqs,
     int move_cost,
     const std::map<skill_id, int> &skills )
@@ -752,58 +623,6 @@ static std::string dump_requirements(
 
     jsout.end_object();
     return os.str();
-}
-
-void recipe::check_blueprint_requirements()
-{
-    if( !blueprint.empty() && !mapgen::has_update_id( blueprint ) ) {
-        debugmsg( "Blueprint %1$s has invalid mapgen id %2$s", ident_.str(), blueprint );
-        return;
-    }
-    build_reqs total_reqs;
-    const std::pair<std::map<ter_id, int>, std::map<furn_id, int>> &changed_ids
-            = get_changed_ids_from_update( blueprint );
-    get_build_reqs_for_furn_ter_ids( ident(), changed_ids, total_reqs );
-
-    requirement_data req_data_blueprint = std::accumulate(
-            reqs_blueprint.begin(), reqs_blueprint.end(), requirement_data(),
-    []( const requirement_data & lhs, const std::pair<requirement_id, int> &rhs ) {
-        return lhs + ( *rhs.first * rhs.second );
-    } );
-    requirement_data req_data_calc = std::accumulate(
-                                         total_reqs.reqs.begin(), total_reqs.reqs.end(), requirement_data(),
-    []( const requirement_data & lhs, const std::pair<requirement_id, int> &rhs ) {
-        return lhs + ( *rhs.first * rhs.second );
-    } );
-    // do not consolidate req_data_blueprint: it actually changes the meaning of the requirement.
-    // instead we enforce specifying the exact consolidated requirement.
-    req_data_calc.consolidate();
-    if( time_blueprint != total_reqs.time || skills_blueprint != total_reqs.skills
-        || !req_data_blueprint.has_same_requirements_as( req_data_calc ) ) {
-        std::string calc_req_str = dump_requirements( req_data_calc, total_reqs.time, total_reqs.skills );
-        std::string got_req_str = dump_requirements( req_data_blueprint, time_blueprint, skills_blueprint );
-
-        std::stringstream ss;
-        for( auto &id_count : changed_ids.first ) {
-            ss << string_format( "%s: %d\n", id_count.first.id(), id_count.second );
-        }
-        for( auto &id_count : changed_ids.second ) {
-            ss << string_format( "%s: %d\n", id_count.first.id(), id_count.second );
-        }
-
-        debugmsg( "Specified blueprint requirements of %1$s does not match calculated requirements.  "
-                  "Specify \"check_blueprint_needs\": false to disable the check or "
-                  "Update \"blueprint_needs\" to the following value (you can use tools/update_blueprint_needs.py):\n"
-                  // mark it for the auto-update python script
-                  "~~~ auto-update-blueprint: %1$s\n"
-                  "%2$s\n"
-                  "~~~ end-auto-update\n"
-                  "If the stated requirements match the above, but the error still appears, it is a bug.\n"
-                  "Stated requirements are expanded to:\n"
-                  "%3$s\n"
-                  "---Begin expected tile changes---\n%4$s---End expected tile changes--",
-                  ident_.str(), calc_req_str, got_req_str, ss.str() );
-    }
 }
 
 bool recipe::hot_result() const

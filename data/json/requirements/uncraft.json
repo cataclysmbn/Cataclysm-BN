@@ -24,12 +24,12 @@
     "id": "mre_dessert_list",
     "type": "requirement",
     "//": "Was previously mre_dessert comestible, merged to reduce clutter",
-    "components": [ [ [ "dry_fruit", 1 ] ], [ [ "chocolate", 1 ] ], [ [ "candy2", 1 ] ], [ [ "cookies", 1 ] ], [ [ "bag_plastic", 1 ] ] ]
+    "components": [ [ [ "dry_fruit", 1 ] ], [ [ "candy2", 1 ] ], [ [ "cookies", 1 ] ], [ [ "bag_plastic", 1 ] ] ]
   },
   {
     "id": "mre_extras_list",
     "type": "requirement",
     "//": "The extra parts that come with an MRE when you open it, separate to the accessory / dessert pack",
-    "components": [ [ [ "crackers", 1 ] ], [ [ "can_cheese", 1 ] ], [ [ "heatpack", 1 ] ], [ [ "bag_plastic", 1 ] ] ]
+    "components": [ [ [ "crackers", 1 ] ], [ [ "pouch_cheese", 1 ] ], [ [ "heatpack", 1 ] ], [ [ "bag_plastic", 1 ] ] ]
   }
 ]

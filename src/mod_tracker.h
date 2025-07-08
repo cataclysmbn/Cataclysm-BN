@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MOD_TRACKER_H
-#define CATA_SRC_MOD_TRACKER_H
 
 #include <string>
 
@@ -49,4 +47,4 @@ requires has_src_member<T>::value {
     def.src.emplace_back( def.id, mod_id( src ) );
 }
 
-#endif // CATA_SRC_MOD_TRACKER_H
+

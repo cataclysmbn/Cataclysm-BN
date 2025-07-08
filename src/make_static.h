@@ -1,5 +1,4 @@
-#ifndef CATA_SRC_MAKE_STATIC_H
-#define CATA_SRC_MAKE_STATIC_H
+#pragma once
 
 /**
  *  The purpose of this macro is to provide a concise syntax for
@@ -29,4 +28,4 @@
         return _cached_expr; \
     })())
 
-#endif // CATA_SRC_MAKE_STATIC_H
+

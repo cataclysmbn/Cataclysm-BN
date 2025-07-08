@@ -27,7 +27,7 @@ ccache --zero-stats
 ccache -M 5G
 ccache --show-stats
 
-echo "CMAKE: $CMAKE, COMPILER: $COMPILER, OS: $OS, TILES: $TILES, SOUND: $SOUND, LUA: $LUA, TEST_STAGE: $TEST_STAGE"
+echo "CMAKE: $CMAKE, COMPILER: $COMPILER, OS: $OS, TILES: $TILES, SOUND: $SOUND, TEST_STAGE: $TEST_STAGE"
 echo "LANGUAGES: $LANGUAGES, LIBBACKTRACE: $LIBBACKTRACE, NATIVE: $NATIVE, RELEASE: $RELEASE, CROSS_COMPILATION: $CROSS_COMPILATION"
 
 if [ "$CMAKE" = "1" ]
@@ -52,8 +52,7 @@ then
         -DCMAKE_BUILD_TYPE="$build_type" \
         -DTILES="${TILES}" \
         -DCURSES="${CURSES}" \
-        -DSOUND="${SOUND:-0}" \
-        -DLUA="${LUA:-0}"
+        -DSOUND="${SOUND:-0}"
 
     make -j$num_jobs -C build
 else

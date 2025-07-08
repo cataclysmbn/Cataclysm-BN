@@ -41,6 +41,10 @@
   },
   {
     "type": "MONSTER_FACTION",
+    "name": "leech_plant"
+  },
+  {
+    "type": "MONSTER_FACTION",
     "name": "cult",
     "base_faction": "zombie",
     "neutral": [ "nether" ]

@@ -2,8 +2,8 @@
   {
     "id": "crash_axe",
     "type": "GENERIC",
-    "category": "tools",
-    "weapon_category": [ "HAND_AXES" ],
+    "category": "tools_entry",
+    "weapon_category": [ "1H_AXES" ],
     "symbol": ";",
     "color": "light_gray",
     "name": { "str": "crash axe" },
@@ -45,7 +45,7 @@
   {
     "id": "fire_ax",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_entry",
     "weapon_category": [ "2H_AXES" ],
     "name": { "str": "fire axe" },
     "description": "This is a large, two-handed pickhead axe normally used by firefighters.  It makes a powerful melee weapon, but is a bit slow to recover between swings.",
@@ -66,7 +66,7 @@
   {
     "id": "halligan",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_entry",
     "weapon_category": [ "CLUBS" ],
     "name": { "str": "Halligan bar" },
     "description": "This is a heavy multiple-use tool commonly carried by firefighters, law enforcement, and military rescue units.  Use it to open locked doors without destroying them or to lift manhole covers.  You could also wield it to bash some heads in.",
@@ -106,7 +106,7 @@
   },
   {
     "id": "throw_extinguisher",
-    "type": "GENERIC",
+    "type": "TOOL",
     "category": "tools",
     "name": { "str": "throwable fire extinguisher" },
     "description": "This is a fire extinguisher in grenade form.  While not as effective as a regular fire extinguisher, you can use it from a distance.  It is activated by heat, so just throw it into the flames.",
@@ -120,7 +120,7 @@
     "symbol": "*",
     "color": "blue",
     "use_action": "THROWABLE_EXTINGUISHER_ACT",
-    "flags": [ "ACT_IN_FIRE" ]
+    "flags": [ "ACT_IN_FIRE", "DESTROY_ON_DECHARGE" ]
   },
   {
     "id": "pike_pole",
@@ -146,7 +146,7 @@
   {
     "id": "ny_hook",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_entry",
     "weapon_category": [ "HOOKED_POLES" ],
     "symbol": "/",
     "color": "yellow",

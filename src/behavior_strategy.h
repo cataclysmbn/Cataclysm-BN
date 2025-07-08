@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_BEHAVIOR_STRATEGY_H
-#define CATA_SRC_BEHAVIOR_STRATEGY_H
 
 #include <unordered_map>
 #include <vector>
@@ -45,4 +43,4 @@ extern std::unordered_map<std::string, const strategy_t *> strategy_map;
 
 } // namespace behavior
 
-#endif // CATA_SRC_BEHAVIOR_STRATEGY_H
+

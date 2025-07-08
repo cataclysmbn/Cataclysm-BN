@@ -6,6 +6,6 @@
     "authors": [ "Fuji" ],
     "description": "Numerous military themed professions",
     "category": "rebalance",
-    "dependencies": [ "bn" ]
+    "dependencies": [ "bn", "exotic_ammo" ]
   }
 ]

@@ -2,8 +2,8 @@
   {
     "id": "axe_ring",
     "type": "ARMOR",
-    "name": { "str": "axe ring holster" },
-    "description": "A combination of leather and a metal ring to hold an axe on your waist.",
+    "name": { "str": "ring holster" },
+    "description": "A combination of leather and a metal ring to hold an axe, hammer, or similar tool at your side.",
     "weight": "130 g",
     "volume": "600 ml",
     "price": "30 USD",
@@ -12,17 +12,17 @@
     "symbol": "[",
     "looks_like": "sheath",
     "color": "brown",
-    "covers": [ "torso" ],
+    "covers": [ "leg_either" ],
     "coverage": 5,
     "max_encumbrance": 2,
     "material_thickness": 1,
     "use_action": {
       "type": "holster",
-      "holster_prompt": "Sheath axe",
+      "holster_prompt": "Sheath tool",
       "holster_msg": "You sheath your %s",
-      "min_volume": "1 L",
-      "max_volume": "3250 ml",
-      "flags": [ "SHEATH_AXE" ]
+      "min_volume": "750 ml",
+      "max_volume": "2500 ml",
+      "flags": [ "SHEATH_AXE", "BELT_CLIP" ]
     },
     "flags": [ "NONCONDUCTIVE", "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
   },
@@ -76,7 +76,7 @@
       "type": "holster",
       "holster_prompt": "Sheath knife",
       "holster_msg": "You sheath your %s",
-      "min_volume": "15 ml",
+      "min_volume": "10 ml",
       "max_volume": "500 ml",
       "draw_cost": 150,
       "flags": [ "SHEATH_KNIFE" ]
@@ -105,7 +105,7 @@
       "type": "holster",
       "holster_prompt": "Sheath knife",
       "holster_msg": "You sheath your %s",
-      "min_volume": "15 ml",
+      "min_volume": "10 ml",
       "max_volume": "250 ml",
       "draw_cost": 50,
       "flags": [ "SHEATH_KNIFE" ]
@@ -202,7 +202,7 @@
     "id": "spearsling",
     "type": "ARMOR",
     "name": { "str": "spear strap" },
-    "description": "A leather strap tied around the torso for toting spears while keeping your hands free.  You have to duck to get through doors while one's in it, though.  Activate to holster/draw a weapon.",
+    "description": "A leather strap tied around the torso for toting spears, two-handed axes, or similar weapons while keeping your hands free.  Activate to holster/draw a weapon.",
     "weight": "160 g",
     "volume": "500 ml",
     "price": "52 USD",
@@ -218,11 +218,11 @@
     "material_thickness": 1,
     "use_action": {
       "type": "holster",
-      "holster_prompt": "Holster spear",
+      "holster_prompt": "Holster weapon",
       "holster_msg": "You holster your %s.",
       "max_volume": "3500 ml",
       "draw_cost": 150,
-      "flags": [ "SHEATH_SPEAR" ]
+      "flags": [ "SHEATH_SPEAR", "SHEATH_AXE" ]
     },
     "flags": [ "BELTED", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY" ]
   }

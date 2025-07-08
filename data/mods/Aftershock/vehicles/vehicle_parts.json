@@ -449,7 +449,7 @@
   {
     "type": "vehicle_part",
     "id": "robot_cargo",
-    "name": "robot_carrier",
+    "name": "robot carrier",
     "symbol": "=",
     "categories": [ "Cargo" ],
     "color": "light_gray",

@@ -1,21 +1,22 @@
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 
-#include <algorithm>
 #include <cmath>
 #include <list>
 #include <memory>
 #include <string>
 #include <utility>
 
-#include "avatar_action.h"
 #include "activity_handlers.h" // put_into_vehicle_or_drop and drop_on_map
+#include "activity_speed.h"
 #include "advanced_inv.h"
 #include "avatar.h"
-#include "avatar_functions.h"
+#include "avatar_action.h"
 #include "calendar.h"
 #include "character.h"
 #include "character_functions.h"
+#include "construction.h"
+#include "construction_partial.h"
 #include "crafting.h"
 #include "debug.h"
 #include "enums.h"
@@ -38,7 +39,6 @@
 #include "mapdata.h"
 #include "messages.h"
 #include "npc.h"
-#include "output.h"
 #include "options.h"
 #include "pickup.h"
 #include "player.h"
@@ -51,10 +51,15 @@
 #include "timed_event.h"
 #include "translations.h"
 #include "uistate.h"
-#include "units.h"
 #include "vehicle.h"
-#include "vehicle_part.h"
 #include "vpart_position.h"
+
+#define dbg(x) DebugLog((x),DC::Game)
+
+static const construction_str_id deconstruct_simple( "constr_deconstruct_simple" );
+static const construction_str_id deconstruct( "constr_deconstruct" );
+static const construction_group_str_id
+advanced_object_deconstruction( "advanced_object_deconstruction" );
 
 static const itype_id itype_bone_human( "bone_human" );
 static const itype_id itype_electrohack( "electrohack" );
@@ -70,7 +75,43 @@ static const mtype_id mon_zombie_crawler( "mon_zombie_crawler" );
 
 static const quality_id qual_LOCKPICK( "LOCKPICK" );
 
+static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
+
 static const std::string has_thievery_witness( "has_thievery_witness" );
+
+int simple_task::to_counter() const
+{
+    double ret = 10'000'000.0 / moves_total * ( moves_total - moves_left );
+    return std::round( ret );
+}
+
+inline void progress_counter::pop()
+{
+    if( empty() ) {
+        dbg( DL::Error ) << "task was popped out of empty progress queue";
+        return;
+    }
+    moves_left -= targets.front().moves_left;
+    targets.pop_front();
+    idx++;
+}
+
+inline void progress_counter::purge()
+{
+    if( empty() ) {
+        dbg( DL::Error ) << "task was purged out of empty progress queue";
+        return;
+    }
+    moves_left -= targets.front().moves_left;
+    moves_total -= targets.front().moves_total;
+    total_tasks--;
+    targets.pop_front();
+}
+
+inline void activity_actor::calc_all_moves( player_activity &act, Character &who )
+{
+    act.speed.calc_all_moves( who );
+}
 
 aim_activity_actor::aim_activity_actor() : fake_weapon( new fake_item_location() )
 {
@@ -99,11 +140,11 @@ std::unique_ptr<aim_activity_actor> aim_activity_actor::use_mutation( detached_p
     return act;
 }
 
-void aim_activity_actor::start( player_activity &act, Character &/*who*/ )
+void aim_activity_actor::start( player_activity &/*act*/, Character &/*who*/ )
 {
     // Time spent on aiming is determined on the go by the player
-    act.moves_total = 1;
-    act.moves_left = 1;
+    // Dummy progress task to indicate ongoing activity
+    progress.dummy();
 }
 
 void aim_activity_actor::do_turn( player_activity &act, Character &who )
@@ -111,7 +152,7 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
     if( !who.is_avatar() ) {
         debugmsg( "ACT_AIM not implemented for NPCs" );
         aborted = true;
-        act.moves_left = 0;
+        progress.pop();
         return;
     }
     avatar &you = get_avatar();
@@ -119,7 +160,7 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
     item *weapon = get_weapon();
     if( !weapon || !avatar_action::can_fire_weapon( you, get_map(), *weapon ) ) {
         aborted = true;
-        act.moves_left = 0;
+        progress.pop();
         return;
     }
 
@@ -127,7 +168,7 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
     if( !gun->ammo_remaining() && !reload_loc && gun->has_flag( flag_RELOAD_AND_SHOOT ) ) {
         if( !load_RAS_weapon() ) {
             aborted = true;
-            act.moves_left = 0;
+            progress.pop();
             return;
         }
     }
@@ -147,11 +188,11 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
     g->reenter_fullscreen();
 
     if( aborted ) {
-        act.moves_left = 0;
+        progress.pop();
     } else {
         if( !trajectory.empty() ) {
             fin_trajectory = trajectory;
-            act.moves_left = 0;
+            progress.pop();
         }
 
         // Allow interrupting activity only during 'aim and fire'.
@@ -226,6 +267,7 @@ void aim_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "fake_weapon", fake_weapon ? *fake_weapon : null_item_reference() );
     jsout.member( "bp_cost_per_shot", bp_cost_per_shot );
     jsout.member( "stamina_cost_per_shot", stamina_cost_per_shot );
@@ -250,6 +292,7 @@ std::unique_ptr<activity_actor> aim_activity_actor::deserialize( JsonIn &jsin )
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "fake_weapon", actor->fake_weapon );
     data.read( "bp_cost_per_shot", actor->bp_cost_per_shot );
     data.read( "stamina_cost_per_shot", actor->stamina_cost_per_shot );
@@ -334,7 +377,7 @@ bool aim_activity_actor::load_RAS_weapon()
     return true;
 }
 
-void autodrive_activity_actor::start( player_activity &act, Character &who )
+void autodrive_activity_actor::start( player_activity &/* act */, Character &who )
 {
     const bool in_vehicle = who.in_vehicle && who.controlling_vehicle;
     const optional_vpart_position vp = get_map().veh_at( who.pos() );
@@ -345,10 +388,10 @@ void autodrive_activity_actor::start( player_activity &act, Character &who )
 
     player_vehicle = &vp->vehicle();
     player_vehicle->is_autodriving = true;
-    act.moves_left = calendar::INDEFINITELY_LONG;
+    progress.dummy();
 }
 
-void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
+void autodrive_activity_actor::do_turn( player_activity &/* act */, Character &who )
 {
     if( who.in_vehicle && who.controlling_vehicle && player_vehicle ) {
         if( who.moves <= 0 ) {
@@ -369,7 +412,7 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
                 who.cancel_activity();
                 break;
             case autodrive_result::finished:
-                act.moves_left = 0;
+                progress.pop();
                 break;
         }
     } else {
@@ -405,14 +448,23 @@ std::unique_ptr<activity_actor> autodrive_activity_actor::deserialize( JsonIn & 
     return std::make_unique<autodrive_activity_actor>();
 }
 
-void dig_activity_actor::start( player_activity &act, Character & )
+void dig_activity_actor::start( player_activity &/*act*/, Character & )
 {
-    act.moves_total = moves_total;
-    act.moves_left = moves_total;
+    map &here = get_map();
+    ter_id ter_here = here.ter( location );
+    const bool grave = ter_here == t_grave;
+    const std::string name = grave
+                             ? "grave"
+                             : ter_here->name();
+    progress.emplace( name, moves_total );
 }
 
-void dig_activity_actor::do_turn( player_activity &, Character & )
+void dig_activity_actor::do_turn( player_activity &/*act*/, Character & )
 {
+    if( progress.front().complete() ) {
+        progress.pop();
+        return;
+    }
     sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location ) );
     if( calendar::once_every( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
@@ -441,14 +493,14 @@ void dig_activity_actor::finish( player_activity &act, Character &who )
             here.spawn_item( location, itype_bone_human, rng( 5, 15 ) );
             here.furn_set( location, f_coffin_c );
         }
-        std::vector<item *> dropped = g->m.place_items( item_group_id( "allclothes" ), 50, location,
+        std::vector<item *> dropped = get_map().place_items( item_group_id( "allclothes" ), 50, location,
                                       location, false,
                                       calendar::turn );
-        g->m.place_items( item_group_id( "grave" ), 25, location, location, false, calendar::turn );
-        g->m.place_items( item_group_id( "jewelry_front" ), 20, location, location, false, calendar::turn );
+        get_map().place_items( item_group_id( "grave" ), 25, location, location, false, calendar::turn );
+        get_map().place_items( item_group_id( "jewelry_front" ), 20, location, location, false,
+                               calendar::turn );
         for( item * const &it : dropped ) {
             if( it->is_armor() ) {
-                it->set_flag( flag_FILTHY );
                 it->set_damage( rng( 1, it->max_damage() - 1 ) );
             }
         }
@@ -457,11 +509,9 @@ void dig_activity_actor::finish( player_activity &act, Character &who )
 
     here.ter_set( location, ter_id( result_terrain ) );
 
-    for( int i = 0; i < byproducts_count; i++ ) {
-        here.spawn_items( byproducts_location,
-                          item_group::items_from( item_group_id( byproducts_item_group ),
-                                  calendar::turn ) );
-    }
+    here.spawn_items( byproducts_location,
+                      item_group::items_from( item_group_id( byproducts_item_group ),
+                              calendar::turn ) );
 
     const int act_exertion = act.moves_total;
 
@@ -472,7 +522,7 @@ void dig_activity_actor::finish( player_activity &act, Character &who )
         who.add_msg_if_player( m_good, _( "You finish exhuming a grave." ) );
     } else {
         who.add_msg_if_player( m_good, _( "You finish digging the %s." ),
-                               here.ter( location ).obj().name() );
+                               here.ter( location )->name() );
     }
 
     act.set_to_null();
@@ -482,11 +532,11 @@ void dig_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "moves", moves_total );
     jsout.member( "location", location );
     jsout.member( "result_terrain", result_terrain );
     jsout.member( "byproducts_location", byproducts_location );
-    jsout.member( "byproducts_count", byproducts_count );
     jsout.member( "byproducts_item_group", byproducts_item_group );
 
     jsout.end_object();
@@ -495,28 +545,32 @@ void dig_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> dig_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<dig_activity_actor> actor( new dig_activity_actor( 0, tripoint_zero,
-            {}, tripoint_zero, 0, {} ) );
+            {}, tripoint_zero, {} ) );
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "moves", actor->moves_total );
     data.read( "location", actor->location );
     data.read( "result_terrain", actor->result_terrain );
     data.read( "byproducts_location", actor->byproducts_location );
-    data.read( "byproducts_count", actor->byproducts_count );
     data.read( "byproducts_item_group", actor->byproducts_item_group );
 
     return actor;
 }
 
-void dig_channel_activity_actor::start( player_activity &act, Character & )
+void dig_channel_activity_actor::start( player_activity &/*act*/, Character & )
 {
-    act.moves_total = moves_total;
-    act.moves_left = moves_total;
+    map &here = get_map();
+    progress.emplace( here.ter( location )->name(), moves_total );
 }
 
-void dig_channel_activity_actor::do_turn( player_activity &, Character & )
+void dig_channel_activity_actor::do_turn( player_activity &/*act*/, Character & )
 {
+    if( progress.front().complete() ) {
+        progress.pop();
+        return;
+    }
     sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location ) );
     if( calendar::once_every( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
@@ -529,11 +583,9 @@ void dig_channel_activity_actor::finish( player_activity &act, Character &who )
     map &here = get_map();
     here.ter_set( location, ter_id( result_terrain ) );
 
-    for( int i = 0; i < byproducts_count; i++ ) {
-        here.spawn_items( byproducts_location,
-                          item_group::items_from( item_group_id( byproducts_item_group ),
-                                  calendar::turn ) );
-    }
+    here.spawn_items( byproducts_location,
+                      item_group::items_from( item_group_id( byproducts_item_group ),
+                              calendar::turn ) );
 
     const int act_exertion = act.moves_total;
 
@@ -541,7 +593,7 @@ void dig_channel_activity_actor::finish( player_activity &act, Character &who )
     who.mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
     who.mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
     who.add_msg_if_player( m_good, _( "You finish digging up %s." ),
-                           here.ter( location ).obj().name() );
+                           here.ter( location )->name() );
 
     act.set_to_null();
 }
@@ -550,11 +602,11 @@ void dig_channel_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "moves", moves_total );
     jsout.member( "location", location );
     jsout.member( "result_terrain", result_terrain );
     jsout.member( "byproducts_location", byproducts_location );
-    jsout.member( "byproducts_count", byproducts_count );
     jsout.member( "byproducts_item_group", byproducts_item_group );
 
     jsout.end_object();
@@ -563,21 +615,21 @@ void dig_channel_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> dig_channel_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<dig_channel_activity_actor> actor( new dig_channel_activity_actor( 0, tripoint_zero,
-            {}, tripoint_zero, 0, {} ) );
+            {}, tripoint_zero, {} ) );
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "moves", actor->moves_total );
     data.read( "location", actor->location );
     data.read( "result_terrain", actor->result_terrain );
     data.read( "byproducts_location", actor->byproducts_location );
-    data.read( "byproducts_count", actor->byproducts_count );
     data.read( "byproducts_item_group", actor->byproducts_item_group );
 
     return actor;
 }
 
-bool disassemble_activity_actor::try_start_single( player_activity &act, Character &who )
+bool disassemble_activity_actor::try_start_single( player_activity &/* act */, Character &who )
 {
     if( targets.empty() ) {
         return false;
@@ -589,7 +641,6 @@ bool disassemble_activity_actor::try_start_single( player_activity &act, Charact
         return false;
     }
     const item &itm = *target.loc;
-    const recipe &dis = recipe_dictionary::get_uncraft( itm.typeId() );
 
     // Have to check here again in case we ran out of tools
     const ret_val<bool> can_do = crafting::can_disassemble( who, itm, who.crafting_inventory() );
@@ -597,17 +648,24 @@ bool disassemble_activity_actor::try_start_single( player_activity &act, Charact
         who.add_msg_if_player( m_info, "%s", can_do.c_str() );
         return false;
     }
-
-    int moves_needed = dis.time * target.count;
-
-    act.moves_total = moves_needed;
-    act.moves_left = moves_needed;
     return true;
 }
 
-int disassemble_activity_actor::calc_num_targets() const
+inline void disassemble_activity_actor::process_target( player_activity &/*act*/,
+        iuse_location &target )
 {
-    return static_cast<int>( targets.size() );
+    const item &itm = *target.loc;
+    const recipe &dis = recipe_dictionary::get_uncraft( itm.typeId() );
+    int moves_needed = dis.time * target.count;
+    progress.emplace( itm.tname( target.count ), moves_needed );
+}
+
+inline void disassemble_activity_actor::calc_all_moves( player_activity &act, Character &who )
+{
+    const auto &target = targets.front().loc;
+    auto reqs = activity_reqs_adapter( recipe_dictionary::get_uncraft( target->typeId() ),
+                                       std::make_pair( target->weight(), target->volume() ) );
+    act.speed.calc_all_moves( who, reqs );
 }
 
 void disassemble_activity_actor::start( player_activity &act, Character &who )
@@ -618,23 +676,37 @@ void disassemble_activity_actor::start( player_activity &act, Character &who )
     } else if( !try_start_single( act, who ) ) {
         act.set_to_null();
     }
-    initial_num_targets = calc_num_targets();
+    for( auto &target : targets ) {
+        process_target( act, target );
+    }
+}
+
+void disassemble_activity_actor::do_turn( player_activity &act, Character &who )
+{
+    if( progress.front().complete() ) {
+        const iuse_location &target = targets.front();
+        if( !target.loc ) {
+            debugmsg( "Lost target of ACT_DISASSEMBLY" );
+        } else {
+            crafting::complete_disassemble( who, target, get_map().getlocal( pos.raw() ) );
+        }
+        targets.erase( targets.begin() );
+        progress.pop();
+        if( !progress.empty() ) {
+            if( try_start_single( act, who ) ) {
+                calc_all_moves( act, who );
+            } else {
+                act.set_to_null();
+            }
+        }
+    }
 }
 
 void disassemble_activity_actor::finish( player_activity &act, Character &who )
 {
-    const iuse_location &target = targets.front();
-    if( !target.loc ) {
-        debugmsg( "Lost target of ACT_DISASSEMBLY" );
-    } else {
-        crafting::complete_disassemble( who, target, get_map().getlocal( pos.raw() ) );
-    }
-    targets.erase( targets.begin() );
-
     if( try_start_single( act, who ) ) {
-        return;
+        debugmsg( "disassemble_activity_actor call finish function while able to start new disassembly" );
     }
-
     // Make a copy to avoid use-after-free
     bool recurse = this->recursive;
 
@@ -649,10 +721,10 @@ void disassemble_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "targets", targets );
     jsout.member( "pos", pos );
     jsout.member( "recursive", recursive );
-    jsout.member( "initial_num_targets", initial_num_targets );
 
     jsout.end_object();
 }
@@ -663,36 +735,12 @@ std::unique_ptr<activity_actor> disassemble_activity_actor::deserialize( JsonIn 
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "targets", actor->targets );
     data.read( "pos", actor->pos );
     data.read( "recursive", actor->recursive );
-    data.read( "initial_num_targets", actor->initial_num_targets );
 
     return actor;
-}
-
-act_progress_message disassemble_activity_actor::get_progress_message(
-    const player_activity &act, const Character & ) const
-{
-    std::string msg;
-
-    const int percentage = ( ( act.moves_total - act.moves_left ) * 100 ) / act.moves_total;
-
-    msg = string_format( "%d%%", percentage );
-
-    if( initial_num_targets != 1 ) {
-        constexpr int width = 20; // An arbitrary value
-        std::string item_name_trimmed = trim_by_length( targets.front().loc->display_name(), width );
-
-        msg += string_format(
-                   _( "\n%d out of %d, working on %-20s" ),
-                   initial_num_targets - calc_num_targets() + 1,
-                   initial_num_targets,
-                   item_name_trimmed
-               );
-    }
-
-    return act_progress_message::make_extra_info( std::move( msg ) );
 }
 
 drop_activity_actor::drop_activity_actor( Character &ch, const drop_locations &items,
@@ -702,17 +750,17 @@ drop_activity_actor::drop_activity_actor( Character &ch, const drop_locations &i
     this->items = pickup::reorder_for_dropping( ch, items );
 }
 
-void drop_activity_actor::start( player_activity &act, Character & )
+void drop_activity_actor::start( player_activity &/* act */, Character & )
 {
-    // Set moves_left to value other than zero to indicate ongoing activity
-    act.moves_total = 1;
-    act.moves_left = 1;
+    // Dummy progress task to indicate ongoing activity
+    progress.dummy();
 }
 
 void drop_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "items", items );
     jsout.member( "force_ground", force_ground );
     jsout.member( "relpos", relpos );
@@ -726,17 +774,12 @@ std::unique_ptr<activity_actor> drop_activity_actor::deserialize( JsonIn &jsin )
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "items", actor->items );
     data.read( "force_ground", actor->force_ground );
     data.read( "relpos", actor->relpos );
 
     return actor;
-}
-
-void hacking_activity_actor::start( player_activity &act, Character & )
-{
-    act.moves_total = to_moves<int>( 5_minutes );
-    act.moves_left = to_moves<int>( 5_minutes );
 }
 
 enum hack_result {
@@ -753,23 +796,65 @@ enum hack_type {
     HACK_NULL
 };
 
+static hack_type get_hack_type( tripoint examp )
+{
+    hack_type type = HACK_NULL;
+    const map &here = get_map();
+    const furn_t &xfurn_t = *here.furn( examp );
+    const ter_t &xter_t = *here.ter( examp );
+    if( xter_t.examine == &iexamine::pay_gas || xfurn_t.examine == &iexamine::pay_gas ) {
+        type = HACK_GAS;
+    } else if( xter_t.examine == &iexamine::cardreader || xfurn_t.examine == &iexamine::cardreader ) {
+        type = HACK_DOOR;
+    } else if( xter_t.examine == &iexamine::gunsafe_el || xfurn_t.examine == &iexamine::gunsafe_el ) {
+        type = HACK_SAFE;
+    }
+    return type;
+}
+
+void hacking_activity_actor::start( player_activity &act, Character & )
+{
+    hack_type type = get_hack_type( act.placement );
+    std::string name;
+
+    switch( type ) {
+        case hack_type::HACK_SAFE:
+            name = "safe";
+            break;
+        case hack_type::HACK_DOOR:
+            name = "door panel";
+            break;
+        case hack_type::HACK_GAS:
+            name = "gas pump";
+            break;
+        default:
+            name = "";
+            break;
+    }
+
+    progress.emplace( name, to_moves<int>( 5_minutes ) );
+}
+
+void hacking_activity_actor::do_turn( player_activity &/*act*/, Character & )
+{
+    if( progress.front().complete() ) {
+        progress.pop();
+        return;
+    }
+}
+
 static int hack_level( const Character &who )
 {
     ///\EFFECT_COMPUTER increases success chance of hacking card readers
     // odds go up with int>8, down with int<8
     // 4 int stat is worth 1 computer skill here
     ///\EFFECT_INT increases success chance of hacking card readers
-    return who.get_skill_level( skill_computer ) + who.int_cur / 2 - 8;
+    return who.get_skill_level( skill_computer ) + ( who.int_cur - 8 ) / 4;
 }
 
 static hack_result hack_attempt( Character &who, const bool using_bionic )
 {
-    // TODO: Remove this once player -> Character migration is complete
-    {
-        player *p = dynamic_cast<player *>( &who );
-        p->practice( skill_computer, 20 );
-    }
-
+    who.practice( skill_computer, 20 );
     // only skilled supergenius never cause short circuits, but the odds are low for people
     // with moderate skills
     const int hack_stddev = 5;
@@ -798,22 +883,6 @@ static hack_result hack_attempt( Character &who, const bool using_bionic )
     } else {
         return HACK_SUCCESS;
     }
-}
-
-static hack_type get_hack_type( tripoint examp )
-{
-    hack_type type = HACK_NULL;
-    const map &here = get_map();
-    const furn_t &xfurn_t = here.furn( examp ).obj();
-    const ter_t &xter_t = here.ter( examp ).obj();
-    if( xter_t.examine == &iexamine::pay_gas || xfurn_t.examine == &iexamine::pay_gas ) {
-        type = HACK_GAS;
-    } else if( xter_t.examine == &iexamine::cardreader || xfurn_t.examine == &iexamine::cardreader ) {
-        type = HACK_DOOR;
-    } else if( xter_t.examine == &iexamine::gunsafe_el || xfurn_t.examine == &iexamine::gunsafe_el ) {
-        type = HACK_SAFE;
-    }
-    return type;
 }
 
 hacking_activity_actor::hacking_activity_actor( use_bionic )
@@ -882,7 +951,10 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
 void hacking_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
+
+    jsout.member( "progress", progress );
     jsout.member( "using_bionic", using_bionic );
+
     jsout.end_object();
 }
 
@@ -897,6 +969,7 @@ std::unique_ptr<activity_actor> hacking_activity_actor::deserialize( JsonIn &jsi
     } else {
         JsonObject jsobj = jsin.get_object();
         jsobj.read( "using_bionic", actor->using_bionic );
+        jsobj.read( "progress", actor->progress );
     }
     return actor;
 }
@@ -959,6 +1032,7 @@ void move_items_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "target_items", target_items );
     jsout.member( "quantities", quantities );
     jsout.member( "to_vehicle", to_vehicle );
@@ -974,6 +1048,7 @@ std::unique_ptr<activity_actor> move_items_activity_actor::deserialize( JsonIn &
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "target_items", actor->target_items );
     data.read( "quantities", actor->quantities );
     data.read( "to_vehicle", actor->to_vehicle );
@@ -1043,6 +1118,7 @@ void pickup_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "target_items", target_items );
     jsout.member( "starting_pos", starting_pos );
 
@@ -1055,6 +1131,7 @@ std::unique_ptr<activity_actor> pickup_activity_actor::deserialize( JsonIn &jsin
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "target_items", actor->target_items );
     data.read( "starting_pos", actor->starting_pos );
 
@@ -1074,8 +1151,7 @@ void hacksaw_activity_actor::start( player_activity &act, Character &/*who*/ )
             act.set_to_null();
             return;
         }
-
-        act.moves_total = to_moves<int>( furn_type->hacksaw->duration() );
+        progress.emplace( furn_type->name(), to_moves<int>( furn_type->hacksaw->duration() ) );
     } else if( !here.ter( target )->is_null() ) {
         const ter_id ter_type = here.ter( target );
         if( !ter_type->hacksaw->valid() ) {
@@ -1085,7 +1161,7 @@ void hacksaw_activity_actor::start( player_activity &act, Character &/*who*/ )
             act.set_to_null();
             return;
         }
-        act.moves_total = to_moves<int>( ter_type->hacksaw->duration() );
+        progress.emplace( ter_type->name(), to_moves<int>( ter_type->hacksaw->duration() ) );
     } else {
         if( !testing ) {
             debugmsg( "hacksaw activity called on invalid terrain" );
@@ -1093,12 +1169,14 @@ void hacksaw_activity_actor::start( player_activity &act, Character &/*who*/ )
         act.set_to_null();
         return;
     }
-
-    act.moves_left = act.moves_total;
 }
 
-void hacksaw_activity_actor::do_turn( player_activity &/*act*/, Character &who )
+void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who )
 {
+    if( progress.front().complete() ) {
+        progress.pop();
+        return;
+    }
     if( tool->ammo_sufficient() ) {
         tool->ammo_consume( tool->ammo_required(), tool->position() );
         sfx::play_activity_sound( "tool", "hacksaw", sfx::get_heard_volume( target ) );
@@ -1122,7 +1200,6 @@ void hacksaw_activity_actor::do_turn( player_activity &/*act*/, Character &who )
 void hacksaw_activity_actor::finish( player_activity &act, Character &who )
 {
     map &here = get_map();
-    std::string message;
     const activity_data_common *data;
 
     if( here.has_furn( target ) ) {
@@ -1196,8 +1273,11 @@ void hacksaw_activity_actor::finish( player_activity &act, Character &who )
 void hacksaw_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
+
+    jsout.member( "progress", progress );
     jsout.member( "target", target );
     jsout.member( "tool", tool );
+
     jsout.end_object();
 }
 
@@ -1206,6 +1286,7 @@ std::unique_ptr<activity_actor> hacksaw_activity_actor::deserialize( JsonIn &jsi
     std::unique_ptr<hacksaw_activity_actor> actor( new hacksaw_activity_actor(
                 tripoint_zero, safe_reference<item>() ) );
     JsonObject data = jsin.get_object();
+    data.read( "progress", actor->progress );
     data.read( "target", actor->target );
     data.read( "tool", actor->tool );
     return actor;
@@ -1224,8 +1305,7 @@ void boltcutting_activity_actor::start( player_activity &act, Character &/*who*/
             act.set_to_null();
             return;
         }
-
-        act.moves_total = to_moves<int>( furn_type->boltcut->duration() );
+        progress.emplace( furn_type->name(), to_moves<int>( furn_type->boltcut->duration() ) );
     } else if( !here.ter( target )->is_null() ) {
         const ter_id ter_type = here.ter( target );
         if( !ter_type->boltcut->valid() ) {
@@ -1235,7 +1315,7 @@ void boltcutting_activity_actor::start( player_activity &act, Character &/*who*/
             act.set_to_null();
             return;
         }
-        act.moves_total = to_moves<int>( ter_type->boltcut->duration() );
+        progress.emplace( ter_type->name(), to_moves<int>( ter_type->boltcut->duration() ) );
     } else {
         if( !testing ) {
             debugmsg( "boltcut activity called on invalid terrain" );
@@ -1243,12 +1323,14 @@ void boltcutting_activity_actor::start( player_activity &act, Character &/*who*/
         act.set_to_null();
         return;
     }
-
-    act.moves_left = act.moves_total;
 }
 
-void boltcutting_activity_actor::do_turn( player_activity &/*act*/, Character &who )
+void boltcutting_activity_actor::do_turn( player_activity &/* act */, Character &who )
 {
+    if( progress.front().complete() ) {
+        progress.pop();
+        return;
+    }
     if( tool->ammo_sufficient() ) {
         tool->ammo_consume( tool->ammo_required(), tool->position() );
     } else {
@@ -1267,7 +1349,6 @@ void boltcutting_activity_actor::do_turn( player_activity &/*act*/, Character &w
 void boltcutting_activity_actor::finish( player_activity &act, Character &who )
 {
     map &here = get_map();
-    std::string message;
     const activity_data_common *data;
 
     if( here.has_furn( target ) ) {
@@ -1350,8 +1431,11 @@ void boltcutting_activity_actor::finish( player_activity &act, Character &who )
 void boltcutting_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
+
+    jsout.member( "progress", progress );
     jsout.member( "target", target );
     jsout.member( "tool", tool );
+
     jsout.end_object();
 }
 
@@ -1361,6 +1445,7 @@ std::unique_ptr<activity_actor> boltcutting_activity_actor::deserialize( JsonIn 
                 tripoint_zero, safe_reference<item>() ) );
 
     JsonObject data = jsin.get_object();
+    data.read( "progress", actor->progress );
     data.read( "target", actor->target );
     data.read( "tool", actor->tool );
     return actor;
@@ -1393,10 +1478,33 @@ std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_bionic(
             ) );
 }
 
-void lockpick_activity_actor::start( player_activity &act, Character & )
+void lockpick_activity_actor::start( player_activity &/*act*/, Character & )
 {
-    act.moves_left = moves_total;
-    act.moves_total = moves_total;
+    const tripoint target = get_map().getlocal( this->target );
+    const ter_id ter_type = get_map().ter( target );
+    const furn_id furn_type = get_map().furn( target );
+
+    if( furn_type != f_null ) {
+        if( furn_type->lockpick_result.is_null() ) {
+            debugmsg( "%s lockpick_result is null", furn_type.id().str() );
+            return;
+        }
+        progress.emplace( furn_type->name(), moves_total );
+    } else {
+        if( ter_type->lockpick_result.is_null() ) {
+            debugmsg( "%s lockpick_result is null", ter_type.id().str() );
+            return;
+        }
+        progress.emplace( ter_type->name(), moves_total );
+    }
+}
+
+void lockpick_activity_actor::do_turn( player_activity &/* act */, Character & )
+{
+    if( progress.front().complete() ) {
+        progress.pop();
+        return;
+    }
 }
 
 void lockpick_activity_actor::finish( player_activity &act, Character &who )
@@ -1415,14 +1523,14 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
 
-    const tripoint target = g->m.getlocal( this->target );
-    const ter_id ter_type = g->m.ter( target );
-    const furn_id furn_type = g->m.furn( target );
+    const tripoint target = get_map().getlocal( this->target );
+    const ter_id ter_type = get_map().ter( target );
+    const furn_id furn_type = get_map().furn( target );
     ter_id new_ter_type = t_null;
     furn_id new_furn_type = f_null;
     std::string open_message = _( "The lock opens…" );
 
-    if( g->m.has_furn( target ) ) {
+    if( furn_type != f_null ) {
         if( furn_type->lockpick_result.is_null() ) {
             debugmsg( "%s lockpick_result is null", furn_type.id().str() );
             return;
@@ -1457,9 +1565,9 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     int xp_gain = 0;
     if( perfect || ( pick_roll >= lock_roll ) ) {
         xp_gain += lock_roll;
-        g->m.has_furn( target ) ?
-        g->m.furn_set( target, new_furn_type ) :
-        static_cast<void>( g->m.ter_set( target, new_ter_type ) );
+        get_map().has_furn( target ) ?
+        get_map().furn_set( target, new_furn_type ) :
+        static_cast<void>( get_map().ter_set( target, new_ter_type ) );
         who.add_msg_if_player( m_good, open_message );
     } else if( lock_roll > ( 1.5 * pick_roll ) ) {
         if( it->inc_damage() ) {
@@ -1480,7 +1588,8 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     }
     who.practice( skill_mechanics, xp_gain );
 
-    if( !perfect && g->m.has_flag( "ALARMED", target ) && ( lock_roll + dice( 1, 30 ) ) > pick_roll ) {
+    if( !perfect && get_map().has_flag( "ALARMED", target ) &&
+        ( lock_roll + dice( 1, 30 ) ) > pick_roll ) {
         sounds::sound( who.pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ),
                        true, "environment", "alarm" );
         if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
@@ -1496,8 +1605,8 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
 
 bool lockpick_activity_actor::is_pickable( const tripoint &p )
 {
-    return g->m.has_furn( p ) ? !g->m.furn( p )->lockpick_result.is_null() :
-           !g->m.ter( p )->lockpick_result.is_null();
+    return get_map().has_furn( p ) ? !get_map().furn( p )->lockpick_result.is_null() :
+           !get_map().ter( p )->lockpick_result.is_null();
 }
 
 std::optional<tripoint> lockpick_activity_actor::select_location( avatar &you )
@@ -1517,7 +1626,7 @@ std::optional<tripoint> lockpick_activity_actor::select_location( avatar &you )
         return target;
     }
 
-    const ter_id terr_type = g->m.ter( *target );
+    const ter_id terr_type = get_map().ter( *target );
     if( *target == you.pos() ) {
         you.add_msg_if_player( m_info, _( "You pick your nose and your sinuses swing open." ) );
     } else if( g->critter_at<npc>( *target ) ) {
@@ -1535,6 +1644,7 @@ void lockpick_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "moves_total", moves_total );
     jsout.member( "lockpick", lockpick );
     jsout.member( "fake_lockpick", fake_lockpick );
@@ -1550,6 +1660,7 @@ std::unique_ptr<activity_actor> lockpick_activity_actor::deserialize( JsonIn &js
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "moves_total", actor->moves_total );
     data.read( "lockpick", actor->lockpick );
     data.read( "fake_lockpick", actor->fake_lockpick );
@@ -1571,8 +1682,7 @@ void oxytorch_activity_actor::start( player_activity &act, Character &/*who*/ )
             act.set_to_null();
             return;
         }
-
-        act.moves_total = to_moves<int>( furn_type->oxytorch->duration() );
+        progress.emplace( furn_type->name(), to_moves<int>( furn_type->oxytorch->duration() ) );
     } else if( !here.ter( target )->is_null() ) {
         const ter_id ter_type = here.ter( target );
         if( !ter_type->oxytorch->valid() ) {
@@ -1582,7 +1692,7 @@ void oxytorch_activity_actor::start( player_activity &act, Character &/*who*/ )
             act.set_to_null();
             return;
         }
-        act.moves_total = to_moves<int>( ter_type->oxytorch->duration() );
+        progress.emplace( ter_type->name(), to_moves<int>( ter_type->oxytorch->duration() ) );
     } else {
         if( !testing ) {
             debugmsg( "oxytorch activity called on invalid terrain" );
@@ -1590,12 +1700,11 @@ void oxytorch_activity_actor::start( player_activity &act, Character &/*who*/ )
         act.set_to_null();
         return;
     }
-
-    act.moves_left = act.moves_total;
 }
 
 void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who )
 {
+    // We check available charges when first starting the cut, but this prevents abnormal behavior if torch status changes mid-activity.
     if( tool->ammo_sufficient() ) {
         tool->ammo_consume( tool->ammo_required(), tool->position() );
         sfx::play_activity_sound( "tool", "oxytorch", sfx::get_heard_volume( target ) );
@@ -1613,12 +1722,14 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
         }
         who.cancel_activity();
     }
+    if( progress.front().complete() ) {
+        progress.pop();
+    }
 }
 
 void oxytorch_activity_actor::finish( player_activity &act, Character &who )
 {
     map &here = get_map();
-    std::string message;
     const activity_data_common *data;
 
     if( here.has_furn( target ) ) {
@@ -1697,6 +1808,7 @@ void oxytorch_activity_actor::finish( player_activity &act, Character &who )
 void oxytorch_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
+    jsout.member( "progress", progress );
     jsout.member( "target", target );
     jsout.member( "tool", tool );
     jsout.end_object();
@@ -1707,6 +1819,7 @@ std::unique_ptr<activity_actor> oxytorch_activity_actor::deserialize( JsonIn &js
     std::unique_ptr<oxytorch_activity_actor> actor( new oxytorch_activity_actor(
                 tripoint_zero, safe_reference<item>() ) );
     JsonObject data = jsin.get_object();
+    data.read( "progress", actor->progress );
     data.read( "target", actor->target );
     data.read( "tool", actor->tool );
     return actor;
@@ -1740,10 +1853,17 @@ std::unique_ptr<activity_actor> migration_cancel_activity_actor::deserialize( Js
     return std::unique_ptr<migration_cancel_activity_actor>();
 }
 
-void toggle_gate_activity_actor::start( player_activity &act, Character & )
+void toggle_gate_activity_actor::start( player_activity &, Character & )
 {
-    act.moves_total = moves_total;
-    act.moves_left = moves_total;
+    progress.emplace( "gate", moves_total );
+}
+
+void toggle_gate_activity_actor::do_turn( player_activity &, Character & )
+{
+    if( progress.front().complete() ) {
+        progress.pop();
+        return;
+    }
 }
 
 void toggle_gate_activity_actor::finish( player_activity &act, Character & )
@@ -1756,6 +1876,7 @@ void toggle_gate_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "moves", moves_total );
     jsout.member( "placement", placement );
 
@@ -1769,17 +1890,13 @@ std::unique_ptr<activity_actor> toggle_gate_activity_actor::deserialize( JsonIn 
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "moves", actor->moves_total );
     data.read( "placement", actor->placement );
 
     return actor;
 }
 
-void wash_activity_actor::start( player_activity &act, Character & )
-{
-    act.moves_total = moves_total;
-    act.moves_left = moves_total;
-}
 
 stash_activity_actor::stash_activity_actor( Character &ch, const drop_locations &items,
         const tripoint &relpos ) : relpos( relpos )
@@ -1787,17 +1904,17 @@ stash_activity_actor::stash_activity_actor( Character &ch, const drop_locations 
     this->items = pickup::reorder_for_dropping( ch, items );
 }
 
-void stash_activity_actor::start( player_activity &act, Character & )
+void stash_activity_actor::start( player_activity &, Character & )
 {
-    // Set moves_left to value other than zero to indicate ongoing activity
-    act.moves_total = 1;
-    act.moves_left = 1;
+    // Dummy progress task to indicate ongoing activity
+    progress.dummy();
 }
 
 void stash_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "items", items );
     jsout.member( "relpos", relpos );
 
@@ -1810,6 +1927,7 @@ std::unique_ptr<activity_actor> stash_activity_actor::deserialize( JsonIn &jsin 
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "items", actor->items );
     data.read( "relpos", actor->relpos );
 
@@ -1870,6 +1988,7 @@ void throw_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
 
+    jsout.member( "progress", progress );
     jsout.member( "target_loc", target );
     jsout.member( "blind_throw_from_pos", blind_throw_from_pos );
 
@@ -1878,34 +1997,152 @@ void throw_activity_actor::serialize( JsonOut &jsout ) const
 
 std::unique_ptr<activity_actor> throw_activity_actor::deserialize( JsonIn &jsin )
 {
-    std::unique_ptr<throw_activity_actor> actor;
+    std::unique_ptr<throw_activity_actor> actor( new throw_activity_actor() );
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "target_loc", actor->target );
     data.read( "blind_throw_from_pos", actor->blind_throw_from_pos );
 
     return actor;
 }
 
-void wash_activity_actor::serialize( JsonOut &jsout ) const
+
+inline void construction_activity_actor::calc_all_moves( player_activity &act, Character &who )
+{
+    // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
+    if( !pc ) {
+        map &here = get_map();
+        auto local = here.getlocal( target );
+        pc = here.partial_con_at( local );
+    }
+    //if something goes terribly wrong we don't CTD
+    if( !pc ) {
+        act.set_to_null();
+        return;
+    }
+    auto reqs = activity_reqs_adapter( *pc->id );
+    act.speed.calc_all_moves( who, reqs );
+}
+
+void construction_activity_actor::start( player_activity &/*act*/, Character &/*who*/ )
+{
+    map &here = get_map();
+    auto local = here.getlocal( target );
+    pc = here.partial_con_at( local );
+    auto &built = *pc->id;
+
+    std::string name;
+
+    if( pc->id == deconstruct || pc->id == deconstruct_simple ||
+        built.group == advanced_object_deconstruction ) {
+        if( here.has_furn( local ) ) {
+            const furn_id furn_type = here.furn( local );
+            name = furn_type->name();
+        } else if( !here.ter( local )->is_null() ) {
+            const ter_id ter_type = here.ter( local );
+            name = ter_type->name();
+        }
+    } else {
+        name = built.post_furniture.is_empty()
+               ? ""
+               : built.post_furniture->name();
+        name = built.post_terrain.is_empty()
+               ? name
+               : built.post_terrain->name();
+    }
+
+    int total_time = std::max( 1, built.adjusted_time() );
+    int left = pc->counter == 0
+               ? total_time
+               : total_time - pc->counter / 10'000'000.0 * total_time;
+
+    progress.emplace( name, total_time, left );
+}
+
+void construction_activity_actor::do_turn( player_activity &act, Character &who )
+{
+    // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
+    if( !pc ) {
+        map &here = get_map();
+        auto local = here.getlocal( target );
+        pc = here.partial_con_at( local );
+    }
+
+    // Maybe the player and the NPC are working on the same construction at the same time or toubles during load
+    if( !pc ) {
+        act.set_to_null();
+        add_msg( m_info, _( "%s did not find an unfinished construction at the activity spot." ),
+                 who.disp_name() );
+        return;
+    }
+
+    pc->counter = progress.front().to_counter();
+
+    if( progress.front().complete() ) {
+        progress.pop();
+        return;
+    } else {
+        auto &built = *pc->id;
+        if( !who.has_trait( trait_DEBUG_HS ) && !who.meets_skill_requirements( built ) ) {
+            add_msg( m_info, _( "%s can't work on this construction anymore." ), who.disp_name() );
+            act.set_to_null();
+            return;
+        }
+    }
+}
+
+void construction_activity_actor::finish( player_activity &act, Character &who )
+{
+    complete_construction( who, target );
+    act.set_to_null();
+}
+
+void construction_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
-
-    jsout.member( "targets", targets );
-    jsout.member( "moves_total", moves_total );
-
+    jsout.member( "progress", progress );
+    jsout.member( "target", target );
     jsout.end_object();
 }
 
-std::unique_ptr<activity_actor> wash_activity_actor::deserialize( JsonIn &jsin )
+std::unique_ptr<activity_actor> construction_activity_actor::deserialize( JsonIn &jsin )
 {
-    std::unique_ptr<wash_activity_actor> actor;
+    std::unique_ptr<construction_activity_actor> actor( new construction_activity_actor(
+                tripoint_abs_ms( tripoint_zero ) ) );
+    JsonObject data = jsin.get_object();
+    data.read( "progress", actor->progress );
+    data.read( "target", actor->target );
+    return actor;
+}
+
+void assist_activity_actor::start( player_activity &/*act*/, Character &/*who*/ )
+{
+    progress.dummy();
+}
+
+void assist_activity_actor::serialize( JsonOut &jsout ) const
+{
+    // Activity is not being saved but still provide some valid json if called.
+    jsout.write_null();
+}
+
+std::unique_ptr<activity_actor> assist_activity_actor::deserialize( JsonIn & )
+{
+    return std::make_unique<assist_activity_actor>();
+}
+
+std::unique_ptr<activity_actor> salvage_activity_actor::deserialize( JsonIn &jsin )
+{
+    std::unique_ptr<salvage_activity_actor> actor( new salvage_activity_actor() );
 
     JsonObject data = jsin.get_object();
 
+    data.read( "progress", actor->progress );
     data.read( "targets", actor->targets );
-    data.read( "moves_total", actor->moves_total );
+    data.read( "pos", actor->pos );
+    data.read( "mute_prompts", actor->mute_prompts );
 
     return actor;
 }
@@ -1919,8 +2156,10 @@ deserialize_functions = {
     { activity_id( "ACT_AIM" ), &aim_activity_actor::deserialize },
     { activity_id( "ACT_AUTODRIVE" ), &autodrive_activity_actor::deserialize },
     { activity_id( "ACT_BOLTCUTTING" ), &boltcutting_activity_actor::deserialize },
+    { activity_id( "ACT_BUILD" ), &construction_activity_actor::deserialize },
     { activity_id( "ACT_DIG" ), &dig_activity_actor::deserialize },
     { activity_id( "ACT_DIG_CHANNEL" ), &dig_channel_activity_actor::deserialize },
+    { activity_id( "ACT_DISASSEMBLE" ), &disassemble_activity_actor::deserialize },
     { activity_id( "ACT_DROP" ), &drop_activity_actor::deserialize },
     { activity_id( "ACT_HACKING" ), &hacking_activity_actor::deserialize },
     { activity_id( "ACT_HACKSAW" ), &hacksaw_activity_actor::deserialize },
@@ -1932,7 +2171,8 @@ deserialize_functions = {
     { activity_id( "ACT_PICKUP" ), &pickup_activity_actor::deserialize },
     { activity_id( "ACT_STASH" ), &stash_activity_actor::deserialize },
     { activity_id( "ACT_THROW" ), &throw_activity_actor::deserialize },
-    { activity_id( "ACT_WASH" ), &wash_activity_actor::deserialize },
+    { activity_id( "ACT_ASSIST" ), &assist_activity_actor::deserialize },
+    { activity_id( "ACT_LONGSALVAGE" ), &salvage_activity_actor::deserialize }
 };
 } // namespace activity_actors
 
@@ -1972,3 +2212,4 @@ void deserialize( std::unique_ptr<activity_actor> &actor, JsonIn &jsin )
         }
     }
 }
+

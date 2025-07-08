@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UNITS_DEF_H
-#define CATA_SRC_UNITS_DEF_H
 
 #include <compare>
 #include <type_traits>
@@ -297,4 +295,4 @@ inline auto operator%=( quantity<lvt, ut> &lhs, const quantity<rvt, ut> &rhs )
 /**@}*/
 } // namespace units
 
-#endif // CATA_SRC_UNITS_DEF_H
+

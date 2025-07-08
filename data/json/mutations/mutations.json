@@ -7,7 +7,7 @@
     "description": "You can move more quickly than most, resulting in a 15% speed bonus on sure footing.",
     "starting_trait": true,
     "changes_to": [ "FLEET2" ],
-    "category": [ "SPIDER", "MOUSE" ],
+    "category": [ "SPIDER", "MOUSE", "RABBIT" ],
     "types": [ "RUNNING" ],
     "movecost_flatground_modifier": 0.85
   },
@@ -48,7 +48,7 @@
     "points": 1,
     "description": "Your hearing is better than average, and you can hear distant sounds more easily.",
     "starting_trait": true,
-    "category": [ "ALPHA", "MOUSE", "ELFA" ],
+    "category": [ "ALPHA", "MOUSE", "ELFA", "RABBIT" ],
     "cancels": [ "BADHEARING" ],
     "hearing_modifier": 1.5
   },
@@ -120,8 +120,8 @@
     "valid": false,
     "prereqs": [ "GOODCARDIO" ],
     "cancels": [ "BADCARDIO" ],
-    "threshreq": [ "THRESH_MOUSE" ],
-    "category": [ "MOUSE" ],
+    "threshreq": [ "THRESH_MOUSE", "THRESH_RABBIT" ],
+    "category": [ "MOUSE", "RABBIT" ],
     "max_stamina_modifier": 1.4
   },
   {
@@ -131,7 +131,7 @@
     "points": 4,
     "description": "You're just generally quick!  You get a 10% bonus to action points.",
     "starting_trait": true,
-    "category": [ "FISH", "BIRD", "INSECT", "TROGLOBITE", "CHIMERA", "RAPTOR", "MOUSE" ],
+    "category": [ "FISH", "BIRD", "INSECT", "TROGLOBITE", "CHIMERA", "RAPTOR", "MOUSE", "RABBIT" ],
     "speed_modifier": 1.1
   },
   {
@@ -182,7 +182,7 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "INSOMNIA" ],
-    "category": [ "MOUSE", "INSECT" ]
+    "category": [ "MOUSE", "INSECT", "RABBIT" ]
   },
   {
     "type": "mutation",
@@ -192,8 +192,8 @@
     "description": "Your body's demanding energy needs mean you can fall asleep just about anywhere.",
     "prereqs": [ "MET_RAT" ],
     "cancels": [ "INSOMNIA" ],
-    "threshreq": [ "THRESH_MOUSE" ],
-    "category": [ "MOUSE" ]
+    "threshreq": [ "THRESH_MOUSE", "THRESH_RABBIT" ],
+    "category": [ "MOUSE", "RABBIT" ]
   },
   {
     "type": "mutation",
@@ -211,13 +211,11 @@
     "id": "NIGHTVISION",
     "name": { "str": "Night Vision" },
     "points": 2,
-    "description": "You possess natural night vision, and can see further in the dark than most.  Activate to toggle NV-visible areas on or off.",
+    "description": "You possess natural night vision, and can see further in the dark than most.",
     "starting_trait": true,
     "changes_to": [ "NIGHTVISION2" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "URSINE_EYE" ],
     "category": [ "BIRD", "CATTLE", "INSECT", "URSINE" ],
-    "active": true,
-    "starts_active": true,
     "night_vision_range": 2
   },
   {
@@ -307,7 +305,7 @@
     "id": "THICKSKIN",
     "name": { "str": "Thick-Skinned" },
     "points": 1,
-    "description": "Your skin is tough.  Physical damage is slightly reduced for you.  There's a small chance you don't cut yourself on sharp terrain.",
+    "description": "Your skin is tough.  Armor is increased by 2 for your whole body.  There's a small chance you don't cut yourself on sharp terrain.",
     "starting_trait": true,
     "category": [ "LIZARD", "CATTLE", "CHIMERA", "RAPTOR" ],
     "cancels": [ "THINSKIN" ],
@@ -363,7 +361,7 @@
     "description": "Your attacks are 10% faster overall.  You are also better at recovering from a miss, and will be able to attempt another strike faster.",
     "starting_trait": true,
     "attackcost_modifier": 0.9,
-    "category": [ "BIRD", "BEAST", "RAPTOR", "MOUSE", "FELINE" ]
+    "category": [ "BIRD", "BEAST", "RAPTOR", "MOUSE", "FELINE", "RABBIT" ]
   },
   {
     "type": "mutation",
@@ -502,10 +500,10 @@
   },
   {
     "type": "mutation",
-    "id": "STYLISH",
-    "name": { "str": "Stylish" },
-    "points": 2,
-    "description": "Practicality is far less important than style.  Your morale is improved by wearing fashionable and attractive clothing.",
+    "id": "UNSTYLISH",
+    "name": { "str": "Fashion Deficient" },
+    "points": -1,
+    "description": "You have no sense of style, and don't care about wearing anything 'fancy';  you'd be perfectly happy to wear non-matching socks, or wear socks and sandals.  You get no morale bonus from fancy equipment.",
     "starting_trait": true,
     "valid": false
   },
@@ -685,7 +683,7 @@
     "ugliness": -2,
     "description": "You are a sight to behold.  People who care about such things will react more kindly to you.",
     "starting_trait": true,
-    "category": [ "ALPHA", "FELINE", "LUPINE" ],
+    "category": [ "ALPHA", "FELINE", "LUPINE", "RABBIT" ],
     "cancels": [ "UGLY", "DEFORMED", "DEFORMED2", "DEFORMED3" ],
     "changes_to": [ "BEAUTIFUL" ]
   },
@@ -898,7 +896,7 @@
     "id": "THINSKIN",
     "name": { "str": "Thin-Skinned" },
     "points": -1,
-    "description": "Your skin is fragile.  Physical damage is slightly increased for you.",
+    "description": "Your skin is fragile.  Physical armor is reduced by 2 across your whole body.",
     "starting_trait": true,
     "cancels": [ "THICKSKIN" ],
     "armor": [ { "parts": "ALL", "physical": -2 } ]
@@ -943,7 +941,7 @@
     "starting_trait": true,
     "cancels": [ "PROJUNK" ],
     "vitamins_absorb_multi": [ [ "junk", [ [ "vitA", 0 ], [ "vitB", 0 ], [ "vitC", 0 ], [ "calcium", 0 ], [ "iron", 0 ] ] ] ],
-    "category": [ "BEAST", "RAPTOR", "ALPHA", "ELFA" ]
+    "category": [ "BEAST", "RAPTOR", "ALPHA", "ELFA", "RABBIT" ]
   },
   {
     "type": "mutation",
@@ -1005,7 +1003,7 @@
     "description": "It's easier for you to become addicted to substances, and harder to rid yourself of these addictions.",
     "starting_trait": true,
     "valid": false,
-    "category": [ "MEDICAL", "MOUSE" ],
+    "category": [ "MEDICAL", "MOUSE", "RABBIT" ],
     "cancels": [ "NONADDICTIVE" ]
   },
   {
@@ -1048,7 +1046,7 @@
     "description": "Natural animals like dogs and wolves see you as prey, and are liable to attack you on sight.",
     "cancels": [ "ANIMALEMPATH" ],
     "prereqs": [ "ANIMALDISCORD" ],
-    "category": [ "MOUSE" ]
+    "category": [ "MOUSE", "RABBIT" ]
   },
   {
     "type": "mutation",
@@ -1099,7 +1097,7 @@
     "description": "When very hungry or under the effects of stimulants, you may find your hands shaking uncontrollably, severely reducing your Dexterity.",
     "starting_trait": true,
     "valid": false,
-    "category": [ "MEDICAL", "MOUSE" ]
+    "category": [ "MEDICAL", "MOUSE", "RABBIT" ]
   },
   {
     "type": "mutation",
@@ -1189,7 +1187,7 @@
     "description": "You lack skin pigmentation due to a genetic problem.  You sunburn extremely easily, and typically use an umbrella and sunglasses when going out in the sun.",
     "starting_trait": true,
     "changes_to": [ "SUNBURN" ],
-    "category": [ "TROGLOBITE", "MOUSE" ],
+    "category": [ "TROGLOBITE", "MOUSE", "RABBIT" ],
     "types": [ "skin_tone" ]
   },
   {
@@ -1201,7 +1199,7 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "TOUGH", "TOUGH2", "TOUGH3" ],
-    "category": [ "MOUSE", "ELFA" ],
+    "category": [ "MOUSE", "ELFA", "RABBIT" ],
     "changes_to": [ "FLIMSY2" ],
     "hp_modifier": -0.25
   },
@@ -1270,13 +1268,11 @@
     "id": "NIGHTVISION2",
     "name": { "str": "High Night Vision" },
     "points": 4,
-    "description": "You can see incredibly well in the dark!  Activate to toggle NV-visible areas on or off.",
+    "description": "You can see incredibly well in the dark!",
     "prereqs": [ "NIGHTVISION" ],
     "changes_to": [ "NIGHTVISION3" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "URSINE_EYE" ],
     "category": [ "FISH", "BEAST", "INSECT", "RAT", "CHIMERA", "LUPINE", "MOUSE", "FELINE", "URSINE" ],
-    "active": true,
-    "starts_active": true,
     "night_vision_range": 4.5
   },
   {
@@ -1284,14 +1280,12 @@
     "id": "NIGHTVISION3",
     "name": { "str": "Full Night Vision" },
     "points": 6,
-    "description": "You can see in pitch blackness as if you were wearing night-vision goggles, and read in darkness as one can in dim lighting.  Activate to toggle NV-visible areas on or off.",
+    "description": "You can see in pitch blackness as if you were wearing night-vision goggles, and read in darkness as one can in dim lighting.",
     "prereqs": [ "NIGHTVISION2" ],
     "leads_to": [ "INFRARED" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "URSINE_EYE" ],
     "threshreq": [ "THRESH_FISH", "THRESH_TROGLOBITE", "THRESH_SPIDER", "THRESH_INSECT", "THRESH_ELFA", "THRESH_CEPHALOPOD" ],
     "category": [ "FISH", "TROGLOBITE", "SPIDER", "INSECT", "ELFA", "CEPHALOPOD" ],
-    "active": true,
-    "starts_active": true,
     "night_vision_range": 10
   },
   {
@@ -1503,12 +1497,12 @@
     "ugliness": 3,
     "description": "Your big teeth have grown in.  Folks had best show some more respect.",
     "types": [ "TEETH" ],
-    "prereqs": [ "MUZZLE_RAT" ],
-    "threshreq": [ "THRESH_RAT" ],
-    "category": [ "RAT" ],
+    "prereqs": [ "MUZZLE_RAT", "RABBIT_NOSE" ],
+    "threshreq": [ "THRESH_RAT", "THRESH_RABBIT" ],
+    "category": [ "RAT", "RABBIT" ],
     "attacks": {
-      "attack_text_u": "You bite into %s with your ratlike incisors",
-      "attack_text_npc": "%1$s bites %2$s with their ratlike incisors",
+      "attack_text_u": "You bite into %s with your large incisors",
+      "attack_text_npc": "%1$s bites %2$s with their large incisors",
       "body_part": "mouth",
       "chance": 18,
       "base_damage": [ { "damage_type": "cut", "amount": 3 }, { "damage_type": "bash", "amount": 3 } ]
@@ -1557,7 +1551,7 @@
     "points": 2,
     "visibility": 10,
     "ugliness": 8,
-    "description": "We have begun adapting local physiology to Mycus physical structure, greatly reducing wet effects.",
+    "description": "We have begun adapting local physiology to Mycus physical structure, greatly reducing wet effects and granting this vessel 1 cut and 2 bash armor.",
     "valid": false,
     "purifiable": false,
     "category": [ "MYCUS" ],
@@ -1586,7 +1580,7 @@
     "points": 5,
     "visibility": 10,
     "ugliness": 8,
-    "description": "We have spliced the dense, amphibole fibers from Mycus core towers with the resilient, adaptive flesh of local physiology.  This reduces our speed by a moderate amount, but provides powerful armor across our body, nullifies wet effects, and provides complete protection from fire.",
+    "description": "We have spliced the dense, amphibole fibers from Mycus core towers with the resilient, adaptive flesh of local physiology.  This reduces our speed by a moderate amount, but provides 2 cut 3 bash 1 bullet armor across our body, nullifies wet effects, and provides complete protection from fire.",
     "valid": false,
     "purifiable": false,
     "category": [ "MYCUS" ],
@@ -1616,7 +1610,7 @@
     "points": 7,
     "visibility": 10,
     "ugliness": 10,
-    "description": "Local physiology has been fully incorporated with that of Mycus silicate fibers.  In addition to benefits conferred by previous developments, we may join with Mycus fibers beneath us - sleeping on top of fungal areas places us into a dormant state, which spreads spores around us as we sleep and revitalizes our body much more quickly than regular sleep.",
+    "description": "Local physiology has been fully incorporated with that of Mycus silicate fibers.  In addition to benefits conferred by previous developments, as well as 3 cut 5 bash and 2 bullet armor, we may join with Mycus fibers beneath us - sleeping on top of fungal areas places us into a dormant state, which spreads spores around us as we sleep and revitalizes our body much more quickly than regular sleep.",
     "valid": false,
     "purifiable": false,
     "category": [ "MYCUS" ],
@@ -1644,7 +1638,7 @@
     "points": 2,
     "visibility": 10,
     "ugliness": 3,
-    "description": "A set of flexible green scales has grown to cover your body, acting as natural armor.  Somewhat reduces wet effects.",
+    "description": "A set of flexible green scales has grown to cover your body, acting as 3 points of natural armor across your body.  Somewhat reduces wet effects.",
     "types": [ "SKIN" ],
     "category": [ "CHIMERA", "RAPTOR", "LIZARD" ],
     "prereqs": [ "SKIN_ROUGH" ],
@@ -1672,7 +1666,7 @@
     "visibility": 10,
     "ugliness": 4,
     "mixed_effect": true,
-    "description": "A set of heavy green scales has grown to cover your body, acting as natural armor.  While difficult to penetrate, it also limits your flexibility, resulting in a -2 penalty to Dexterity.  Greatly reduces wet effects.",
+    "description": "A set of heavy green scales has grown to cover your body, acting as 10 points of natural armor.  While difficult to penetrate, it also limits your flexibility, resulting in a -2 penalty to Dexterity.  Greatly reduces wet effects.",
     "types": [ "SKIN" ],
     "prereqs": [ "SCALES" ],
     "threshreq": [ "THRESH_LIZARD" ],
@@ -1699,7 +1693,7 @@
     "points": 4,
     "visibility": 10,
     "ugliness": 4,
-    "description": "A set of very flexible and slick scales has grown to cover your body.  These act as weak natural armor, improve your ability to swim, and make you difficult to grab.  Mostly reduces wet effects.",
+    "description": "A set of very flexible and slick scales has grown to cover your body.  These act as 2 points of weak natural armor, improve your ability to swim, and make you difficult to grab.  Mostly reduces wet effects.",
     "types": [ "SKIN" ],
     "prereqs": [ "SCALES" ],
     "category": [ "FISH" ],
@@ -1725,7 +1719,7 @@
     "points": 2,
     "mixed_effect": true,
     "description": "Your bones are very light.  This enables you to move and attack 10% faster, but also reduces your carrying weight by 20% and makes bashing attacks hurt a little more.",
-    "category": [ "MOUSE" ],
+    "category": [ "MOUSE", "RABBIT" ],
     "changes_to": [ "HOLLOW_BONES" ],
     "movecost_modifier": 0.9,
     "attackcost_modifier": 0.9,
@@ -1739,7 +1733,7 @@
     "visibility": 10,
     "ugliness": 3,
     "bodytemp_modifiers": [ 50, 100 ],
-    "description": "Iridescent feathers have grown to cover your entire body, providing a marginal protection against attacks and minor protection from cold.  They also provide a natural waterproofing.",
+    "description": "Iridescent feathers have grown to cover your entire body, providing 3 points of armor against bash attacks and minor protection from cold.  They also provide a natural waterproofing.",
     "types": [ "SKIN" ],
     "leads_to": [ "DOWN" ],
     "prereqs": [ "SKIN_ROUGH" ],
@@ -1774,7 +1768,7 @@
     "category": [ "CHIMERA", "SPIDER", "MOUSE" ],
     "types": [ "SKIN" ],
     "prereqs": [ "SKIN_ROUGH" ],
-    "changes_to": [ "FUR", "FELINE_FUR", "LUPINE_FUR", "URSINE_FUR", "CHITIN_FUR", "PATCHSKIN1" ]
+    "changes_to": [ "FUR", "FELINE_FUR", "LUPINE_FUR", "URSINE_FUR", "CHITIN_FUR", "PATCHSKIN1", "RABBIT_FUR" ]
   },
   {
     "type": "mutation",
@@ -1785,7 +1779,7 @@
     "ugliness": 3,
     "bodytemp_modifiers": [ 250, 1200 ],
     "bodytemp_sleep": 500,
-    "description": "Thick black fur has grown to cover your entire body, providing a marginal protection against bashing attacks, and considerable protection from cold.",
+    "description": "Thick black fur has grown to cover your entire body, providing 3 points of armor against bashing attacks, and considerable protection from cold.",
     "types": [ "SKIN" ],
     "changes_to": [ "URSINE_FUR" ],
     "prereqs": [ "LIGHTFUR" ],
@@ -1801,7 +1795,7 @@
     "ugliness": 3,
     "bodytemp_modifiers": [ 250, 1200 ],
     "bodytemp_sleep": 500,
-    "description": "Your fur has grown out and thickened, providing noticeable protection from bashing attacks as well as considerable insulation.",
+    "description": "Your fur has grown out and thickened, providing 5 points of armor against bashing attacks as well as considerable insulation.",
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR" ],
     "category": [ "URSINE" ],
@@ -1816,7 +1810,7 @@
     "ugliness": 3,
     "bodytemp_modifiers": [ 250, 1200 ],
     "bodytemp_sleep": 500,
-    "description": "Dense gray fur has grown to cover your entire body, providing a marginal protection against bashing attacks, and considerable protection from cold.",
+    "description": "Dense gray fur has grown to cover your entire body, providing a 3 points of armor against bashing attacks, and considerable protection from cold.",
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR" ],
     "category": [ "LUPINE" ],
@@ -1858,7 +1852,7 @@
     "ugliness": 6,
     "bodytemp_modifiers": [ 125, 250 ],
     "bodytemp_sleep": 50,
-    "description": "Your skin has mutated into an amalgamation of fur and scales.",
+    "description": "Your skin has mutated into an amalgamation of fur and scales, providing 2 points of armor across your entire body.",
     "movecost_swim_modifier": 0.95,
     "wet_protection": [
       { "part": "head", "ignored": 2 },
@@ -1887,7 +1881,7 @@
     "ugliness": 8,
     "bodytemp_modifiers": [ 250, 500 ],
     "bodytemp_sleep": 100,
-    "description": "Your skin has mutated into an amalgamation of thickened fur and scales.",
+    "description": "Your skin has mutated into an amalgamation of thickened fur and scales, providing 5 points of armor across your entire body.",
     "movecost_swim_modifier": 0.9,
     "wet_protection": [
       { "part": "head", "ignored": 3 },
@@ -1913,7 +1907,7 @@
     "points": 2,
     "visibility": 3,
     "ugliness": 2,
-    "description": "Your epidermis has turned into a thin, flexible layer of chitin.  It provides minor protection from physical attacks.  Slightly reduces wet effects.",
+    "description": "Your epidermis has turned into a thin, flexible layer of chitin.  It provides 5 points of protection from physical attacks.  Slightly reduces wet effects.",
     "types": [ "SKIN" ],
     "prereqs": [ "SKIN_ROUGH" ],
     "changes_to": [ "CHITIN2", "CHITIN_FUR" ],
@@ -1941,7 +1935,7 @@
     "ugliness": 3,
     "bash_dmg_bonus": 2,
     "mixed_effect": true,
-    "description": "You've grown a chitin exoskeleton, much like that of an insect.  It provides considerable physical protection, but reduces your Dexterity by 1.  Somewhat reduces wet effects.",
+    "description": "You've grown a chitin exoskeleton, much like that of an insect.  It provides 8 points of armor across your entire body, but reduces your Dexterity by 1.  Somewhat reduces wet effects.",
     "types": [ "SKIN" ],
     "prereqs": [ "CHITIN" ],
     "changes_to": [ "CHITIN3" ],
@@ -1969,7 +1963,7 @@
     "visibility": 8,
     "ugliness": 5,
     "bash_dmg_bonus": 3,
-    "description": "You've grown a chitin exoskeleton made of thick, stiff plates.  It provides excellent physical protection, but reduces your Dexterity by 1 and encumbers all body parts but your eyes and mouth.  Greatly reduces wet effects.",
+    "description": "You've grown a chitin exoskeleton made of thick, stiff plates.  It provides 12 points of armor across your entire body, but reduces your Dexterity by 1 and encumbers all body parts but your eyes and mouth.  Greatly reduces wet effects.",
     "types": [ "SKIN" ],
     "prereqs": [ "CHITIN2", "CHITIN_FUR2" ],
     "category": [ "SPIDER" ],
@@ -2011,7 +2005,7 @@
     "ugliness": 4,
     "bodytemp_modifiers": [ 100, 150 ],
     "bodytemp_sleep": 50,
-    "description": "You've developed some sort of hair growing out of your chitin.  It's a bit warmer than not having hair.",
+    "description": "You've developed some sort of hair growing out of your chitin.  It's a bit warmer than not having hair, and provides 5 points of armor across your body.",
     "types": [ "SKIN" ],
     "prereqs": [ "CHITIN", "LIGHTFUR" ],
     "category": [ "SPIDER" ],
@@ -2027,7 +2021,7 @@
     "ugliness": 4,
     "bodytemp_modifiers": [ 150, 250 ],
     "bodytemp_sleep": 75,
-    "description": "Your chitin hair has thickened and spread across your body.  It provides good protection from physical attacks, especially bashing ones.",
+    "description": "Your chitin hair has thickened and spread across your body.  It provides 7 physical armor across your body, plus another 10 bash armor.",
     "types": [ "SKIN" ],
     "prereqs": [ "CHITIN_FUR" ],
     "category": [ "SPIDER" ],
@@ -2043,7 +2037,7 @@
     "ugliness": 4,
     "bodytemp_modifiers": [ 150, 250 ],
     "bodytemp_sleep": 75,
-    "description": "Your exoskeleton has hardened considerably, imposing a further -1 to Dexterity, and boasts a fine coat of hairs that put feline whiskers to shame.",
+    "description": "Your exoskeleton has hardened considerably, providing 10 physical armor and 15 bash armor, imposing a further -1 to Dexterity, and boasts a fine coat of hairs that put feline whiskers to shame.",
     "encumbrance_always": [
       [ "torso", 10 ],
       [ "head", 10 ],
@@ -2117,7 +2111,7 @@
     "points": 3,
     "visibility": 3,
     "ugliness": 2,
-    "description": "Your skin is light green and has a slightly woody quality to it.  This provides a weak armor, and helps you retain moisture, resulting in less thirst.  Greatly decreases wet penalties.",
+    "description": "Your skin is light green and has a slightly woody quality to it.  This provides 2 points of cut and stab armor and 1 point of ballistic armor, and helps you retain moisture, resulting in less thirst.  Greatly decreases wet penalties.",
     "types": [ "SKIN", "skin_tone" ],
     "changes_to": [ "BARK" ],
     "leads_to": [ "THORNS", "LEAVES" ],
@@ -2144,7 +2138,7 @@
     "points": 5,
     "visibility": 10,
     "ugliness": 3,
-    "description": "Your skin is coated in a light bark, like that of a tree.  This provides resistance to cutting and piercing damage and minor protection from fire.  Greatly reduces wet effects.",
+    "description": "Your skin is coated in a light bark, like that of a tree.  This provides 5 points of cutting and piercing damage, 4 points of ballistic armor, and one point of protection from fire.  Greatly reduces wet effects.",
     "types": [ "SKIN", "skin_tone" ],
     "prereqs": [ "PLANTSKIN" ],
     "category": [ "PLANT" ],
@@ -2736,7 +2730,7 @@
     "visibility": 2,
     "ugliness": 2,
     "mixed_effect": true,
-    "description": "Your feet have fused into hooves.  This allows kicking attacks to do much more damage and provides natural armor; however, you cannot wear shoes of any kind.  Reduces wet effects.",
+    "description": "Your feet have fused into hooves.  This allows kicking attacks to do much more damage and provides 10 points of natural armor to your feet; however, you cannot wear shoes of any kind.  Reduces wet effects.",
     "types": [ "LEGS" ],
     "category": [ "CATTLE", "CHIMERA" ],
     "wet_protection": [ { "part": "foot_l", "neutral": 10 }, { "part": "foot_r", "neutral": 10 } ],
@@ -2853,10 +2847,10 @@
     "name": { "str": "Grazer" },
     "points": 3,
     "description": "You're accustomed to eating plants directly, and can get nutrition from grass as well as underbrush and shrubs.  Eat either one by activating this, standing over your target, and pressing E.",
-    "prereqs": [ "RUMINANT" ],
-    "threshreq": [ "THRESH_CATTLE" ],
+    "prereqs": [ "RUMINANT", "INCISORS" ],
+    "threshreq": [ "THRESH_CATTLE", "THRESH_RABBIT" ],
     "cancels": [ "CARNIVORE", "SAPROVORE" ],
-    "category": [ "CATTLE" ],
+    "category": [ "CATTLE", "RABBIT" ],
     "active": true,
     "cost": 0
   },
@@ -2878,10 +2872,10 @@
     "valid": false,
     "purifiable": false,
     "description": "Your claws and teeth allow you to dig through dirt and rubble with ease.",
-    "prereqs": [ "CLAWS_ST" ],
+    "prereqs": [ "CLAWS_ST", "PAWS", "PAWS_LARGE", "PAWS_LITTLE" ],
     "prereqs2": [ "INCISORS" ],
-    "threshreq": [ "THRESH_RAT" ],
-    "category": [ "RAT" ],
+    "threshreq": [ "THRESH_RAT", "THRESH_RABBIT" ],
+    "category": [ "RAT", "RABBIT" ],
     "active": true
   },
   {
@@ -3705,9 +3699,9 @@
     "points": 1,
     "visibility": 3,
     "ugliness": 1,
-    "description": "You have a handsome set of feline whiskers around your mouth.  These make you more aware of vibrations in the air, and improve your ability to dodge very slightly, but only when uncovered.",
+    "description": "You have a handsome set of whiskers around your mouth.  These make you more aware of vibrations in the air, and improve your ability to dodge very slightly, but only when uncovered.",
     "types": [ "WHISKERS" ],
-    "category": [ "FELINE" ]
+    "category": [ "FELINE", "RABBIT" ]
   },
   {
     "type": "mutation",
@@ -3730,7 +3724,7 @@
     "ugliness": 1,
     "bodytemp_modifiers": [ 200, 200 ],
     "mixed_effect": true,
-    "description": "You've put on some additional weight around your body.  It slows you down a little, but helps your swimming and warmth.",
+    "description": "You've put on some additional weight around your body.  It slows you down a little, but helps your swimming and warmth and even provides 2 points of physical armor across your body.",
     "prereqs": [ "STR_UP", "STR_UP_2", "STR_UP_3", "STR_UP_4" ],
     "leads_to": [ "HIBERNATE" ],
     "category": [ "URSINE" ],
@@ -3893,7 +3887,7 @@
     "description": "You are nimbler.  +2 Dexterity.",
     "prereqs": [ "DEX_UP" ],
     "changes_to": [ "DEX_UP_3", "DEX_ALPHA" ],
-    "category": [ "LIZARD", "SPIDER", "CHIMERA", "RAPTOR", "MOUSE", "ALPHA" ],
+    "category": [ "LIZARD", "SPIDER", "CHIMERA", "RAPTOR", "MOUSE", "ALPHA", "RABBIT" ],
     "passive_mods": { "dex_mod": 2 }
   },
   {
@@ -3996,7 +3990,7 @@
     "points": 4,
     "visibility": 10,
     "ugliness": 10,
-    "description": "Your brain has evolved beyond human imagination.  You'll show them the REAL meaning of 'gray goo'!",
+    "description": "Your brain has evolved beyond human imagination, though your body has become more vulnerable to bashing damage by -3 points of armor.  You'll show them the REAL meaning of 'gray goo'!",
     "valid": false,
     "purifiable": false,
     "leads_to": [ "SLIMESPAWNER" ],
@@ -4105,7 +4099,7 @@
     "description": "You've noticeably shrunk in size.  You're able to move with increased litheness, but your smaller stature prevents you from carrying as much.",
     "types": [ "SIZE" ],
     "changes_to": [ "SMALL2" ],
-    "category": [ "MOUSE" ],
+    "category": [ "MOUSE", "RABBIT" ],
     "hp_modifier": -0.05,
     "dodge_modifier": 1,
     "weight_capacity_modifier": 0.8,
@@ -4359,7 +4353,7 @@
     "cancels": [ "UGLY", "DEFORMED", "DEFORMED2", "DEFORMED3" ],
     "prereqs": [ "PRETTY" ],
     "changes_to": [ "BEAUTIFUL2" ],
-    "category": [ "FELINE", "LUPINE" ]
+    "category": [ "FELINE", "LUPINE", "RABBIT" ]
   },
   {
     "type": "mutation",
@@ -4371,6 +4365,7 @@
     "description": "You are a vision of beauty.  Some people will react very well to your looks, and most people will trust you immediately.",
     "cancels": [ "UGLY", "DEFORMED", "DEFORMED2", "DEFORMED3" ],
     "prereqs": [ "BEAUTIFUL" ],
+    "category": [ "RABBIT" ],
     "changes_to": [ "BEAUTIFUL3" ]
   },
   {
@@ -4393,7 +4388,18 @@
     "visibility": 4,
     "ugliness": 3,
     "description": "Your face and jaw have begun… changing.  Masks and such fit OK, but you're noticeably mutated.",
-    "changes_to": [ "BEAK", "BEAK_HUM", "BEAK_PECK", "PROBOSCIS", "MINOTAUR", "MUZZLE", "MUZZLE_BEAR", "MUZZLE_LONG", "MUZZLE_RAT" ],
+    "changes_to": [
+      "BEAK",
+      "BEAK_HUM",
+      "BEAK_PECK",
+      "PROBOSCIS",
+      "MINOTAUR",
+      "MUZZLE",
+      "MUZZLE_BEAR",
+      "MUZZLE_LONG",
+      "MUZZLE_RAT",
+      "RABBIT_NOSE"
+    ],
     "category": [ "FELINE" ]
   },
   {
@@ -4577,7 +4583,7 @@
     "starting_trait": true,
     "types": [ "METABOLISM" ],
     "changes_to": [ "HUNGER2", "MET_RAT" ],
-    "category": [ "RAT", "ALPHA", "MEDICAL", "ELFA", "BEAST", "SLIME", "RAPTOR", "CHIMERA", "MOUSE" ],
+    "category": [ "RAT", "ALPHA", "MEDICAL", "ELFA", "BEAST", "SLIME", "RAPTOR", "CHIMERA", "MOUSE", "RABBIT" ],
     "metabolism_modifier": 0.5
   },
   {
@@ -4591,7 +4597,7 @@
     "cancels": [ "LIGHTEATER", "COLDBLOOD", "COLDBLOOD2", "COLDBLOOD3", "COLDBLOOD4", "WAKEFUL", "WAKEFUL2", "WAKEFUL3" ],
     "prereqs": [ "HUNGER" ],
     "prereqs2": [ "SLEEPY" ],
-    "category": [ "RAT", "MOUSE" ],
+    "category": [ "RAT", "MOUSE", "RABBIT" ],
     "healing_awake": 0.2,
     "healing_resting": 0.5,
     "fatigue_modifier": 0.5,
@@ -4687,7 +4693,7 @@
     "description": "You find yourself needing to sleep quite often.  You'll spend about half of your time in or around a bed.",
     "prereqs": [ "SLEEPY" ],
     "types": [ "SLEEP" ],
-    "category": [ "FELINE" ],
+    "category": [ "FELINE", "RABBIT" ],
     "fatigue_modifier": 1
   },
   {
@@ -4988,7 +4994,7 @@
     "points": 4,
     "visibility": 7,
     "ugliness": 8,
-    "description": "Your body's slime output has become sticky and gel-like.  Somewhat protects from acid.  Greatly increases wet benefits.",
+    "description": "Your body's slime output has become sticky and gel-like.  Provides 2 points of acid protection.  Greatly increases wet benefits.",
     "leads_to": [ "AMORPHOUS" ],
     "prereqs": [ "SLIMY" ],
     "threshreq": [ "THRESH_SLIME" ],
@@ -5014,7 +5020,7 @@
     "points": -2,
     "visibility": 10,
     "ugliness": 10,
-    "description": "Your flesh is a pleasing gel-like consistency.  Your bodily functions seem to be moving around, and your leg-equivalents flow comfortably - if a little slower than your old meat-legs.",
+    "description": "Your flesh is a pleasing gel-like consistency, providing 4 points of bash armor all over.  Your bodily functions seem to be moving around, and your leg-equivalents flow comfortably - if a little slower than your old meat-legs.",
     "purifiable": false,
     "leads_to": [ "INT_SLIME", "PER_SLIME" ],
     "prereqs": [ "VISCOUS" ],
@@ -5384,7 +5390,7 @@
     "points": -2,
     "visibility": 8,
     "ugliness": 2,
-    "description": "Your arms have grown vibrantly-colored feathers.  They effectively waterproof your arms and take the edge off hits, but really get in the way.  They're simply too small to help you in the air.",
+    "description": "Your arms have grown vibrantly-colored feathers.  They effectively waterproof your arms and provide 1 point of bashing armor, but really get in the way.  They're simply too small to help you in the air.",
     "category": [ "RAPTOR" ],
     "wet_protection": [
       { "part": "arm_l", "neutral": 50 },
@@ -5479,7 +5485,7 @@
     "types": [ "HANDS" ],
     "leads_to": [ "CLAWS_TENTACLE" ],
     "changes_to": [ "ARM_TENTACLES_4" ],
-    "cancels": [ "NAILS", "CLAWS", "TALONS", "WEBBED" ],
+    "cancels": [ "NAILS", "CLAWS", "CLAWS_RETRACT", "TALONS", "WEBBED" ],
     "wet_protection": [
       { "part": "arm_l", "neutral": 19 },
       { "part": "arm_r", "neutral": 19 },
@@ -5587,7 +5593,7 @@
     "points": -5,
     "visibility": 8,
     "ugliness": 3,
-    "description": "You have grown a thick shell over your torso, providing excellent armor.  You find you can use the empty space as 16 storage space, but cannot wear anything on your torso.  Somewhat reduces wet effects.",
+    "description": "You have grown a thick shell over your torso, providing 6 bash, 14 cut, and 5 bullet armor.  You find you can use the empty space as 16 storage space, but cannot wear anything on your torso.  Somewhat reduces wet effects.",
     "prereqs": [ "CHITIN" ],
     "cancels": [ "CHITIN3" ],
     "changes_to": [ "SHELL2" ],
@@ -5606,7 +5612,7 @@
     "bodytemp_modifiers": [ 250, 750 ],
     "bodytemp_sleep": 200,
     "mixed_effect": true,
-    "description": "Your protective shell has grown large enough to accommodate--if need be--your whole body.  Activate to pull your head and limbs into your shell, trading mobility and vision for warmth and shelter.",
+    "description": "Your protective shell has grown large enough to accommodate--if need be--your whole body, providing 9 bash, 17 cut, and 5 bullet armor.  Activate to pull your head and limbs into your shell, trading mobility and vision for warmth and shelter.",
     "encumbrance_always": [ [ "torso", 10 ] ],
     "prereqs": [ "SHELL" ],
     "threshreq": [ "THRESH_CEPHALOPOD" ],
@@ -5891,6 +5897,111 @@
   },
   {
     "type": "mutation",
+    "id": "THRESH_RABBIT",
+    "name": { "str": "Lagomorph" },
+    "points": 1,
+    "description": "You really want to eat some carrots.  Welcome to the Lagomorpha family.",
+    "valid": false,
+    "purifiable": false,
+    "threshold": true,
+    "mutagen_target_modifier": 10
+  },
+  {
+    "type": "mutation",
+    "id": "RABBIT_EARS",
+    "name": { "str": "Rabbit Ears" },
+    "points": 1,
+    "visibility": 9,
+    "ugliness": -1,
+    "description": "Your ears have grown into tall, flexible and pretty rabbit ears.  They're are slender and enhance your hearing beyond the normal range.",
+    "valid": false,
+    "types": [ "EARS" ],
+    "category": [ "RABBIT" ],
+    "hearing_modifier": 1.8
+  },
+  {
+    "type": "mutation",
+    "id": "TAIL_RABBIT",
+    "name": { "str": "Rabbit Tail" },
+    "points": 0,
+    "visibility": 1,
+    "ugliness": -1,
+    "description": "Your stubby tail has become fuzzy and more round.  It looks adorable, but doesn't seem to serve another purpose beyond that.",
+    "types": [ "TAIL" ],
+    "cancels": [ "TAIL_STUB" ],
+    "category": [ "RABBIT", "BEAST" ]
+  },
+  {
+    "type": "mutation",
+    "id": "RABBIT_FUR",
+    "name": { "str": "Rabbit Fur" },
+    "points": 2,
+    "visibility": 10,
+    "ugliness": 3,
+    "bodytemp_modifiers": [ 750, 1500 ],
+    "bodytemp_sleep": 500,
+    "description": "Your fur keeps you covered in winter, providing 1 point of bash armor across most of your body and maintaining heat and allowing you to better tolerate cold temperatures.",
+    "types": [ "SKIN" ],
+    "prereqs": [ "LIGHTFUR" ],
+    "category": [ "RABBIT", "BEAST" ],
+    "armor": [
+      {
+        "parts": [ "torso", "head", "arm_l", "arm_r", "hand_l", "hand_r", "leg_l", "leg_r", "foot_l", "foot_r", "mouth" ],
+        "bash": 1
+      }
+    ]
+  },
+  {
+    "type": "mutation",
+    "id": "RABBIT_FEET",
+    "name": { "str": "Rabbit Feet" },
+    "points": -1,
+    "visibility": 2,
+    "ugliness": 2,
+    "mixed_effect": true,
+    "description": "Your feet have grown into strong and large rabbit feet.  This makes your kicks pack a little more oomph, and gives your feet 1 bashing armor.  Emphasis on little.  It also offers some warmth, and the lucky part is but superstition.  The downside is you are unable to wear shoes.",
+    "types": [ "LEGS" ],
+    "category": [ "RABBIT" ],
+    "wet_protection": [ { "part": "foot_l", "neutral": 10 }, { "part": "foot_r", "neutral": 10 } ],
+    "restricts_gear": [ "foot_l", "foot_r" ],
+    "bodytemp_modifiers": [ 25, 50 ],
+    "armor": [ { "parts": [ "foot_l", "foot_r" ], "bash": 1 } ],
+    "attacks": {
+      "attack_text_u": "You kick %s with your large feet",
+      "attack_text_npc": "%1$s kicks %2$s with their large feet",
+      "chance": 15,
+      "strength_damage": { "damage_type": "bash", "amount": 1.5 }
+    }
+  },
+  {
+    "type": "mutation",
+    "id": "RABBIT_NOSE",
+    "name": { "str": "Rabbit Nose" },
+    "points": -1,
+    "visibility": 6,
+    "ugliness": 1,
+    "description": "Your nose has morphed into a cute bunny nose, along with the snout.  It's extremely twitchy too.",
+    "types": [ "MUZZLE" ],
+    "prereqs": [ "SNOUT" ],
+    "category": [ "RABBIT" ]
+  },
+  {
+    "type": "mutation",
+    "id": "PAWS_LITTLE",
+    "name": { "str": "Little Paws" },
+    "points": -1,
+    "visibility": 2,
+    "ugliness": 1,
+    "description": "Your hands have elongated and look a bit more like paws.  It makes fine manipulation a little more difficult, but you can still probably manage.",
+    "encumbrance_always": [ [ "hand_l", 5 ], [ "hand_r", 5 ] ],
+    "craft_skill_bonus": [ [ "electronics", -1 ], [ "tailor", -1 ], [ "mechanics", -1 ] ],
+    "types": [ "HANDS" ],
+    "prereqs": [ "NAILS" ],
+    "cancels": [ "TALONS" ],
+    "category": [ "RABBIT" ]
+  },
+  {
+    "type": "mutation",
     "id": "THRESH_MARLOSS",
     "name": { "str": "Marloss Gateway" },
     "points": 1,
@@ -5957,7 +6068,7 @@
     "points": 2,
     "visibility": 3,
     "ugliness": 4,
-    "description": "Like a true fish, your eyes lack eyelids, and are instead covered by a translucent, protective membrane that blocks irritants and water, and provides minor armor.  It also allows you to sleep with your eyes open!  Activate to cause the approach of hostile creatures to wake you up.",
+    "description": "Like a true fish, your eyes lack eyelids, and are instead covered by a translucent, protective membrane that blocks irritants and water, and provides 3 cut and 1 bash armor.  It also allows you to sleep with your eyes open!  Activate to cause the approach of hostile creatures to wake you up.",
     "category": [ "FISH" ],
     "threshreq": [ "THRESH_FISH" ],
     "armor": [ { "parts": "eyes", "cut": 3, "bash": 1 } ],
@@ -6414,14 +6525,6 @@
     "valid": false,
     "description": "Lets you run or swim forever (in other words, until you fix that bug).",
     "debug": true
-  },
-  {
-    "type": "mutation",
-    "id": "SQUEAMISH",
-    "name": { "str": "Squeamish" },
-    "points": -1,
-    "starting_trait": true,
-    "description": "You can't even think about putting filthy clothes on yourself, especially from zombies' corpses."
   },
   {
     "type": "mutation",

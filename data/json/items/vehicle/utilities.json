@@ -2,7 +2,7 @@
   {
     "type": "TOOL",
     "id": "black_box",
-    "category": "other",
+    "category": "scrap_electronics",
     "name": { "str": "military black box", "str_pl": "military black boxes" },
     "description": "This is a black box, seemingly pulled from some sort of military vehicle wreckage.  If you can find a system to analyze this, you may find something of interest.",
     "weight": "4535 g",
@@ -25,7 +25,7 @@
     "color": "light_cyan",
     "symbol": ":",
     "material": [ "superalloy", "ceramic" ],
-    "volume": "100 L",
+    "volume": "75 L",
     "bashing": 7,
     "category": "veh_parts",
     "price": "900 USD",
@@ -207,13 +207,16 @@
     "copy-from": "washing_machine"
   },
   {
-    "type": "GENERIC",
+    "type": "CONTAINER",
     "copy-from": "washing_machine",
     "id": "fridgetank",
     "name": { "str": "refrigerated tank" },
     "description": "A 60L refrigerated tank for keeping liquids cool.  Provides some insulation from outside weather.",
     "volume": "60 L",
-    "weight": "48 kg"
+    "weight": "48 kg",
+    "contains": "60 L",
+    "seals": true,
+    "watertight": true
   },
   {
     "type": "GENERIC",

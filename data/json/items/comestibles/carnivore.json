@@ -4,11 +4,11 @@
     "type": "COMESTIBLE",
     "comestible_type": "FOOD",
     "name": { "str_sp": "meat/fish" },
-    "material": "flesh",
+    "material": [ "flesh" ],
     "symbol": "%",
     "color": "red",
     "parasites": 32,
-    "vitamins": [  ],
+    "vitamins": [ [ "meat_allergen", 1 ] ],
     "flags": [ "RAW", "UNSAFE_CONSUME" ]
   },
   {
@@ -54,7 +54,8 @@
     "type": "COMESTIBLE",
     "name": "human stomach",
     "description": "The stomach of a human.  It is surprisingly durable.",
-    "material": "hflesh"
+    "material": [ "hflesh" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "id": "hstomach_large",
@@ -70,7 +71,8 @@
     "type": "COMESTIBLE",
     "name": { "str": "chunk of human fat", "str_pl": "chunks of human fat" },
     "description": "Freshly harvested from a human body.",
-    "material": "hflesh"
+    "material": [ "hflesh" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -80,7 +82,8 @@
     "description": "A smooth white block of cleaned and rendered human fat.  It will remain edible for a very long time, and can be used as an ingredient in many foods and projects.",
     "price": "5 USD",
     "//": "*May* have been commercially traded.",
-    "material": "hflesh"
+    "material": [ "hflesh" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -96,7 +99,8 @@
     "cooks_like": "human_cooked",
     "name": { "str": "human flesh", "str_pl": "human fleshes" },
     "description": "Freshly butchered from a human body.",
-    "material": "hflesh"
+    "vitamins": [ [ "calcium", 2 ], [ "iron", 12 ], [ "human_flesh_vitamin", 100 ], [ "meat_allergen", 1 ] ],
+    "material": [ "hflesh" ]
   },
   {
     "id": "human_cooked",
@@ -181,7 +185,8 @@
     "cooks_like": "mutant_human_cooked",
     "name": "mutant humanoid meat",
     "description": "Freshly butchered from the body of a heavily mutated creature that was unsettlingly humanoid in appearance.  It smells like a failed chemical experiment.  You'd have to be crazy or starving to eat this.",
-    "material": "hflesh"
+    "material": [ "hflesh" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "id": "mutant_human_cooked",
@@ -399,7 +404,7 @@
     "type": "COMESTIBLE",
     "name": { "str_sp": "meat jerky" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "jerk jerky" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "jerk jerky" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "monster jerky" } }
     ],
     "description": "Salty dried meat that lasts for a long time, but will make you thirsty.",
@@ -440,7 +445,7 @@
     "type": "COMESTIBLE",
     "name": "smoked meat",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "smoked sucker" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "smoked sucker" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "%s, mutant" } }
     ],
     "description": "Tasty meat that has been heavily smoked for preservation.  It could be further smoked to dehydrate it completely.",
@@ -555,6 +560,7 @@
   {
     "type": "COMESTIBLE",
     "id": "blood",
+    "category": "other",
     "name": { "str_sp": "blood" },
     "weight": "265 g",
     "color": "red",
@@ -567,20 +573,37 @@
     "calories": 43,
     "description": "Blood, possibly that of a human.  Disgusting!",
     "price": "0 cent",
-    "material": "hflesh",
+    "material": [ "hflesh" ],
     "volume": "250 ml",
     "phase": "liquid",
     "fun": -50,
     "flags": [ "IS_BLOOD" ],
-    "drop_action": { "type": "emit_actor", "emits": [ "emit_drop_blood" ], "scale_qty": true }
+    "drop_action": { "type": "emit_actor", "emits": [ "emit_drop_blood" ], "scale_qty": true },
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "animal_blood",
-    "copy-from": "blood",
+    "category": "other",
     "name": { "str_sp": "animal blood" },
+    "weight": "265 g",
+    "color": "red",
+    "container": "bag_iv",
+    "comestible_type": "DRINK",
+    "symbol": "~",
+    "quench": 5,
+    "healthy": -8,
+    "price_postapoc": "10 cent",
+    "calories": 43,
     "description": "Blood extracted from a living creature.",
-    "material": "flesh"
+    "material": [ "flesh" ],
+    "price": "0 cent",
+    "volume": "250 ml",
+    "phase": "liquid",
+    "fun": -50,
+    "flags": [ "IS_BLOOD" ],
+    "drop_action": { "type": "emit_actor", "emits": [ "emit_drop_blood" ], "scale_qty": true },
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -597,12 +620,17 @@
   {
     "type": "COMESTIBLE",
     "id": "animal_blood_concentrate",
-    "copy-from": "blood_concentrate",
+    "copy-from": "animal_blood",
     "name": { "str_sp": "concentrated animal blood" },
+    "weight": "65 g",
+    "container": "bottle_glass",
+    "quench": 1,
     "description": "Blood extracted from a living creature, concentrated by some means.",
-    "material": "flesh",
+    "material": [ "flesh" ],
+    "price_postapoc": "20 cent",
     "//": "Wouldn't be good to run it through a centrifuge",
-    "delete": { "flags": [ "IS_BLOOD" ] }
+    "delete": { "flags": [ "IS_BLOOD" ] },
+    "volume": "62 ml"
   },
   {
     "type": "COMESTIBLE",
@@ -643,7 +671,7 @@
   {
     "type": "COMESTIBLE",
     "id": "bone",
-    "category": "spare_parts",
+    "category": "other",
     "name": { "str": "bone" },
     "weight": "225 g",
     "color": "white",
@@ -651,14 +679,15 @@
     "description": "A bone from some creature or other.  Could be used to make some stuff, like needles.",
     "price": "0 cent",
     "price_postapoc": "10 cent",
-    "material": "bone",
+    "material": [ "bone" ],
     "milling": { "into": "meal_bone", "conversion_rate": 4 },
     "volume": "250 ml",
-    "vitamins": [ [ "calcium", 96 ] ]
+    "vitamins": [ [ "calcium", 96 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "fat",
+    "category": "cooking_ingredients",
     "name": { "str": "chunk of fat", "str_pl": "chunks of fat" },
     "weight": "220 g",
     "color": "pink",
@@ -671,16 +700,18 @@
     "calories": 1923,
     "description": "Freshly butchered fat.  You could eat it raw, but it is better used as an ingredient in other foods or projects.",
     "price": "0 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "parasites": 32,
     "stack_size": 1,
     "fun": -20,
-    "flags": [ "RAW", "UNSAFE_CONSUME" ]
+    "flags": [ "RAW", "UNSAFE_CONSUME" ],
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "tallow",
+    "category": "cooking_ingredients",
     "name": "tallow",
     "weight": "110 g",
     "color": "white",
@@ -693,11 +724,12 @@
     "price": "5 USD",
     "price_postapoc": "8 USD",
     "//": "*May* have been commercially traded.",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "charges": 2,
     "stack_size": 4,
-    "vitamins": [  ],
+    "flags": [ "UNRECOVERABLE", "NO_SALVAGE" ],
+    "vitamins": [ [ "meat_allergen", 1 ] ],
     "fun": -18
   },
   {
@@ -740,7 +772,8 @@
     "copy-from": "mutant_fat",
     "name": { "str": "chunk of mutant humanoid fat", "str_pl": "chunks of mutant humanoid fat" },
     "description": "Freshly butchered fat from a heavily mutated humanoid.",
-    "material": "hflesh"
+    "material": [ "hflesh" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -748,7 +781,8 @@
     "name": "mutant humanoid tallow",
     "copy-from": "mutant_tallow",
     "description": "A smooth white block of cleaned and rendered fat sourced from a mutant humanoid.  It won't rot for a very long time, and can be used as an ingredient in many foods and projects.",
-    "material": "hflesh"
+    "material": [ "hflesh" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -768,19 +802,21 @@
     "comestible_type": "DRINK",
     "looks_like": "blood",
     "symbol": "~",
+    "spoils_in": "0 days",
     "quench": 5,
     "healthy": -8,
     "price_postapoc": "10 cent",
     "calories": 43,
     "description": "Blood that's obviously unhealthy.  You could drink it, but it will poison you.",
     "price": "0 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "phase": "liquid",
     "fun": -50,
     "extend": { "flags": [ "IS_BLOOD" ] },
     "delete": { "flags": [ "SMOKABLE" ] },
-    "drop_action": { "type": "emit_actor", "emits": [ "emit_drop_blood" ], "scale_qty": true }
+    "drop_action": { "type": "emit_actor", "emits": [ "emit_drop_blood" ], "scale_qty": true },
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -810,11 +846,12 @@
     "description": "Meat that's obviously unhealthy.  You could eat it, but it will poison you.",
     "price": "0 cent",
     "price_postapoc": "10 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "fun": -10,
     "flags": [ "TRADER_AVOID", "SMOKABLE", "NUTRIENT_OVERRIDE", "RAW", "UNSAFE_CONSUME" ],
-    "smoking_result": "dry_meat_tainted"
+    "smoking_result": "dry_meat_tainted",
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -832,19 +869,20 @@
     "price": "0 cent",
     "price_postapoc": "5 cent",
     "//": "Not for use in edible recipes, and should require ~200% as much as normal for applicable inedible recipes except for charcoal.",
-    "material": "bone",
+    "material": [ "bone" ],
     "volume": "250 ml",
     "milling": { "into": "meal_bone_tainted", "conversion_rate": 4 },
     "fun": -10,
-    "flags": [ "NO_SALVAGE", "UNSAFE_CONSUME" ]
+    "flags": [ "NO_SALVAGE", "UNSAFE_CONSUME" ],
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
-    "type": "GENERIC",
+    "type": "COMESTIBLE",
     "id": "bone_human",
     "copy-from": "bone",
     "name": { "str": "human bone" },
     "description": "A bone from a human being.  Could be used to make some stuff, if you're feeling sufficiently ghoulish.",
-    "flags": [ "CANNIBALISM" ]
+    "vitamins": [ [ "calcium", 96 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -863,10 +901,11 @@
     "price": "0 cent",
     "price_postapoc": "25 cent",
     "//": "Not for use in edible recipes, and should require ~200% as much as normal for applicable inedible recipes.",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "fun": -10,
-    "flags": [ "RAW", "UNSAFE_CONSUME" ]
+    "flags": [ "RAW", "UNSAFE_CONSUME" ],
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -885,12 +924,13 @@
     "price": "0 cent",
     "price_postapoc": "50 cent",
     "//": "Not for use in edible/foodsafe recipes.  Inefficiency is handled by tainted tallow recipe requiring 200% as much materials input as regular tallow recipe.",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "charges": 2,
     "stack_size": 4,
     "fun": -18,
-    "flags": [ "UNSAFE_CONSUME" ]
+    "flags": [ "UNSAFE_CONSUME" ],
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -907,7 +947,8 @@
     "copy-from": "stomach_boiled",
     "name": { "str": "boiled large human stomach" },
     "description": "A boiled stomach from a large humanoid creature, nothing else.  It looks all but appetizing.",
-    "material": "hflesh"
+    "material": [ "hflesh" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -922,10 +963,11 @@
     "description": "A small boiled stomach from an animal, nothing else.  It looks all but appetizing.",
     "price": "375 cent",
     "price_postapoc": "10 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
-    "fun": -3
+    "fun": -3,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -933,7 +975,8 @@
     "copy-from": "small_stomach_boiled",
     "name": { "str": "boiled human stomach" },
     "description": "A small boiled stomach from a human, nothing else.  It looks all but appetizing.",
-    "material": "hflesh"
+    "material": [ "hflesh" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -952,11 +995,12 @@
     "description": "A carefully folded raw skin harvested from an animal.  You can cure it for storage and tanning, or eat it if you're desperate enough.",
     "price": "330 cent",
     "price_postapoc": "20 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "flags": [ "RAW", "TRADER_AVOID", "UNSAFE_CONSUME", "SMOKABLE" ],
     "smoking_result": "cured_hide",
     "stack_size": 1,
-    "fun": -12
+    "fun": -12,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -975,7 +1019,8 @@
     "copy-from": "raw_leather",
     "name": "raw human skin",
     "description": "A carefully folded raw skin harvested from a human.  You can cure it for storage and tanning, or eat it if you're desperate enough.",
-    "material": "hflesh"
+    "material": [ "hflesh" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -998,7 +1043,8 @@
     "flags": [ "NO_SALVAGE", "TRADER_AVOID", "SMOKABLE" ],
     "smoking_result": "cured_pelt",
     "stack_size": 1,
-    "fun": -24
+    "fun": -24,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -1018,11 +1064,13 @@
     "copy-from": "raw_fur",
     "name": "raw human pelt",
     "description": "A carefully folded raw skin harvested from a fur-bearing mutant human.  It still has the fur attached.  You can cure it for storage and tanning, or eat it if you're desperate enough.",
-    "material": [ "fur", "hflesh" ]
+    "material": [ "fur", "hflesh" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
     "comestible_type": "FOOD",
+    "category": "other",
     "id": "flesh_golem_heart",
     "name": "seeping heart",
     "weight": "2035 g",
@@ -1037,11 +1085,13 @@
     "material": [ "flesh" ],
     "volume": "500 ml",
     "fun": -25,
-    "use_action": { "type": "mutagen", "mutation_category": "BEAST", "is_strong": false }
+    "use_action": { "type": "mutagen", "mutation_category": "BEAST", "is_strong": false },
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "comestible_type": "FOOD",
+    "category": "other",
     "id": "jabberwock_heart",
     "name": "putrid heart",
     "weight": "4535 g",
@@ -1056,11 +1106,13 @@
     "material": [ "flesh" ],
     "volume": "1 L",
     "fun": -25,
-    "use_action": { "type": "mutagen", "mutation_category": "BEAST", "is_strong": true }
+    "use_action": { "type": "mutagen", "mutation_category": "BEAST", "is_strong": true },
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "comestible_type": "FOOD",
+    "category": "other",
     "id": "jabberwock_heart_desiccated",
     "name": "desiccated putrid heart",
     "weight": "1360 g",
@@ -1073,7 +1125,8 @@
     "price_postapoc": "25 cent",
     "material": [ "flesh" ],
     "volume": "250 ml",
-    "fun": -30
+    "fun": -30,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "id": "meat_frond",
@@ -1089,6 +1142,7 @@
   {
     "id": "leech_flower",
     "type": "COMESTIBLE",
+    "category": "drugs",
     "comestible_type": "FOOD",
     "name": "leech flower",
     "color": "blue",

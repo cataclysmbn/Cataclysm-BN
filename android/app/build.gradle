@@ -142,6 +142,29 @@ task unzipDeps(type: Copy) {
     into outputDir
 }
 
+task fetchSqlite {
+    doLast {
+        def url = new URL('https://www.sqlite.org/2025/sqlite-amalgamation-3480000.zip')
+        def file = new File('/tmp/sqlite-amalgamation-3480000.zip')
+        file.withOutputStream { out ->
+            url.withInputStream { from -> out << from }
+        }
+    }
+}
+
+task unzipSqlite(type: Copy) {
+    dependsOn fetchSqlite
+    from(zipTree(file('/tmp/sqlite-amalgamation-3480000.zip'))) {
+        includeEmptyDirs = false
+        eachFile { fileCopyDetails ->
+            if (fileCopyDetails.path.startsWith('sqlite-amalgamation-3480000/')) {
+                fileCopyDetails.path = fileCopyDetails.path - 'sqlite-amalgamation-3480000/'
+            }
+        }
+    }
+    into 'jni/sqlite3'
+}
+
 task makeLocalization(type: Exec) {
     if (localize) {
         println("Building with localization'")
@@ -168,6 +191,7 @@ task makeLocalization(type: Exec) {
 makeLocalization
 unzipDeps.dependsOn makeLocalization
 preBuild.dependsOn unzipDeps
+preBuild.dependsOn unzipSqlite
 
 android {
     namespace "com.cleverraven.cataclysmdda"

@@ -10,27 +10,20 @@
       "name": "windows-tiles-sounds-x64-msvc",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "displayName": "Windows Tiles Sounds x64 MSVC",
-      "description": "Target Windows (64-bit) with the Visual Studio 2019 development environment.",
-      "generator": "Visual Studio 16 2019",
+      "description": "Target Windows (64-bit) with the Visual Studio 2022 development environment.",
+      "generator": "Visual Studio 17 2022",
       "cacheVariables": {
         "CMAKE_PROJECT_INCLUDE_BEFORE": "${sourceDir}/build-scripts/${presetName}.cmake",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build-scripts/MSVC.cmake",
         "VCPKG_TARGET_TRIPLET": "x64-windows-static",
         "DYNAMIC_LINKING": "False",
         "CMAKE_CONFIGURATION_TYPES": "Debug;RelWithDebInfo;Release",
-        "CURSES": "False", "LOCALIZE": "True", "TILES": "True", "SOUND": "True", "LUA": "True", "TESTS": "True",
+        "CURSES": "False",
+        "LOCALIZE": "True",
+        "TILES": "True",
+        "SOUND": "True",
+        "TESTS": "True",
         "CMAKE_INSTALL_MESSAGE": "NEVER"
-      }
-    },
-    {
-      "name": "windows-tiles-sounds-x64-msvc-2022",
-      "inherits": ["windows-tiles-sounds-x64-msvc"],
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "displayName": "Windows Tiles Sounds x64 MSVC 2022",
-      "description": "Target Windows (64-bit) with the Visual Studio 2022 development environment.",
-      "generator": "Visual Studio 17 2022",
-      "cacheVariables": {
-        "CMAKE_PROJECT_INCLUDE_BEFORE": "${sourceDir}/build-scripts/windows-tiles-sounds-x64-msvc.cmake"
       }
     },
     {
@@ -40,24 +33,46 @@
       "description": "Target Linux (64-bit) with the GCC development environment.",
       "generator": "Ninja Multi-Config",
       "cacheVariables": {
-        "DYNAMIC_LINKING": "True", "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "CURSES": "False", "LOCALIZE": "True", "TILES": "True", "SOUND": "True", "LUA": "True", "TESTS": "False",
+        "DYNAMIC_LINKING": "True",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CURSES": "False",
+        "LOCALIZE": "True",
+        "TILES": "True",
+        "SOUND": "True",
+        "TESTS": "False",
         "CMAKE_INSTALL_MESSAGE": "NEVER"
       }
     },
     {
-      "name": "linux-tiles-sounds-x64-vcpkg",
-      "inherits": ["linux-tiles-sounds-x64"],
-      "displayName": "Linux Tiles Sounds x64 VCPKG",
-      "description": "Target Linux (64-bit) with the GCC development environment and VCPKG.",
-      "generator": "Ninja Multi-Config",
-      "environment": {
-        "VCPKG_ROOT": "/usr/local/vcpkg"
-      },
+      "name": "linux-full",
+      "binaryDir": "${sourceDir}/build",
+      "displayName": "Linux Full Build (Clang, Tiles, Sounds, Tracy)",
+      "description": "Target Linux with Clang, ccache, and Tracy profiling support",
+      "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_TARGET_TRIPLET": "x64-linux",
-        "VCPKG_MANIFEST_DIR": "${sourceDir}/msvc-full-features/"
+        "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_INSTALL_PREFIX": "$env{XDG_DATA_HOME}",
+        "JSON_FORMAT": "ON",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CURSES": "OFF",
+        "TILES": "ON",
+        "SOUND": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CATA_CLANG_TIDY_PLUGIN": "ON",
+        "BACKTRACE": "ON",
+        "LIBBACKTRACE": "ON",
+        "LINKER": "mold",
+        "USE_XDG_DIR": "ON",
+        "USE_HOME_DIR": "OFF",
+        "USE_PREFIX_DATA_DIR": "OFF",
+        "USE_TRACY": "ON",
+        "TRACY_VERSION": "master",
+        "TRACY_ON_DEMAND": "ON",
+        "TRACY_ONLY_IPV4": "ON"
       }
     }
   ],
@@ -67,8 +82,9 @@
       "configurePreset": "linux-tiles-sounds-x64"
     },
     {
-      "name": "linux-tiles-sounds-x64-vcpkg",
-      "configurePreset": "linux-tiles-sounds-x64-vcpkg"
+      "name": "linux-full",
+      "configurePreset": "linux-full",
+      "description": "The canonical build preset for Linux. This is the one used by the devteam."
     }
   ]
 }

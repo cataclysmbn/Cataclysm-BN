@@ -16,7 +16,7 @@
     "dispersion": 520,
     "durability": 6,
     "clip_size": 2,
-    "blackpowder_tolerance": 80,
+    "blackpowder_tolerance": 96,
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "barrel", 1 ],
@@ -45,7 +45,8 @@
     "dispersion": 180,
     "durability": 7,
     "clip_size": 14,
-    "blackpowder_tolerance": 56,
+    "handling": 30,
+    "blackpowder_tolerance": 72,
     "reload_noise": "chik chik.",
     "flags": [ "RELOAD_ONE" ]
   },
@@ -64,17 +65,35 @@
     "material": [ "steel", "wood" ],
     "ammo": "45colt",
     "dispersion": 360,
-    "blackpowder_tolerance": 56,
+    "blackpowder_tolerance": 72,
     "proportional": { "reload": 1.5 }
   },
   {
     "id": "taurus_judge",
-    "copy-from": "raging_judge",
+    "copy-from": "pistol_revolver",
     "type": "GUN",
     "name": { "str_sp": "Taurus Judge" },
-    "description": "The Taurus Judge is a 6-shot revolver chambered in .45 Colt.  It can fire .410 shotshells as well.",
+    "description": "The Taurus Judge is a 5-shot revolver chambered in .45 Colt.  It can fire .410 shotshells as well.",
     "ammo": [ "45colt", "410shot" ],
+    "barrel_length": "50 ml",
+    "price": "641 USD",
+    "price_postapoc": "25 USD",
+    "bashing": 12,
+    "material": [ "steel", "plastic" ],
+    "color": "light_gray",
+    "weight": "2070 g",
+    "volume": "1175 ml",
+    "clip_size": 5,
     "dispersion": 360,
+    "valid_mod_locations": [
+      [ "accessories", 2 ],
+      [ "grip", 1 ],
+      [ "mechanism", 4 ],
+      [ "rail", 1 ],
+      [ "sights", 1 ],
+      [ "stock", 1 ],
+      [ "underbarrel", 1 ]
+    ],
     "durability": 6
   }
 ]

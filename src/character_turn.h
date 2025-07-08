@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CHARACTER_TURN_H
-#define CATA_SRC_CHARACTER_TURN_H
 
 class Character;
 struct w_point;
@@ -22,4 +20,4 @@ void update_mental_focus( Character &who );
 
 } // namespace character_funcs
 
-#endif // CATA_SRC_CHARACTER_TURN_H
+

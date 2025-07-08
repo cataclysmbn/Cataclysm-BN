@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <map>
 #include <sstream>
 #include <vector>
@@ -366,7 +367,7 @@ class effect_edit_callback : public uilist_callback
                     c.remove_effect( eff.get_id(), bp_from );
                     c.add_effect( eff.get_id(), eff.get_duration(), *bp, eff.get_intensity(), true );
                 }
-                auto iter_to = std::find_if( meta.begin(), meta.end(), [bp]( const entry_data & ed ) {
+                auto iter_to = std::ranges::find_if( meta, [bp]( const entry_data & ed ) {
                     return ed.body_part == *bp;
                 } );
                 size_t bp_index = std::distance( iter_to, meta.begin() ) % meta.size();

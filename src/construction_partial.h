@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CONSTRUCTION_PARTIAL_H
-#define CATA_SRC_CONSTRUCTION_PARTIAL_H
 
 #include <list>
 
@@ -15,4 +13,4 @@ struct partial_con {
     construction_id id = construction_id( -1 );
 };
 
-#endif // CATA_SRC_CONSTRUCTION_PARTIAL_H
+

@@ -10,14 +10,12 @@
     "time": "15 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 1 ], [ "pocket_survival", 1 ], [ "book_archery", 2 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -45,16 +43,19 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 3 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "ANVIL", "level": 1 } ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "CUT", "level": 1 },
+      { "id": "ANVIL", "level": 1 },
+      { "id": "SANDING", "level": 1 }
+    ],
     "tools": [ [ [ "tongs", -1 ] ] ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "steel_tiny", 1, "LIST" ], [ "scrap_bronze", 1 ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -68,16 +69,19 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 3 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "ANVIL", "level": 1 } ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "CUT", "level": 1 },
+      { "id": "ANVIL", "level": 1 },
+      { "id": "SANDING", "level": 1 }
+    ],
     "tools": [ [ [ "tongs", -1 ] ] ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "steel_tiny", 1, "LIST" ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -91,16 +95,19 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 3 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "ANVIL", "level": 1 } ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "CUT", "level": 1 },
+      { "id": "ANVIL", "level": 1 },
+      { "id": "SANDING", "level": 1 }
+    ],
     "tools": [ [ [ "tongs", -1 ] ] ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "steel_tiny", 1, "LIST" ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -113,14 +120,17 @@
     "time": "20 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 3 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CUT", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "qualities": [
+      { "id": "HAMMER", "level": 1 },
+      { "id": "CUT", "level": 1 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SANDING", "level": 1 }
+    ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 10, "LIST" ] ],
       [ [ "wire", 5 ], [ "pipe", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -132,15 +142,13 @@
     "difficulty": 3,
     "time": "20 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "tools": [ [ [ "fire", -1 ] ] ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 10, "LIST" ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ], [ "arrow_fire_hardened_fletched", 10 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -153,15 +161,13 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 2 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "bee_sting", 1 ], [ "wasp_sting", 1 ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -174,15 +180,13 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 2 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "fighter_sting", 1 ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -195,15 +199,13 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 2 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "teeth_serrated", 1 ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -216,7 +218,7 @@
     "time": "20 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 2 ], [ "pocket_survival", 2 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "stick", 2 ], [ "broom", 2 ], [ "2x4", 2 ], [ "bee_sting", 2 ] ],
@@ -233,9 +235,7 @@
         [ "sharp_rock", 1 ]
       ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -249,16 +249,19 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 3 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "ANVIL", "level": 1 } ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "CUT", "level": 1 },
+      { "id": "ANVIL", "level": 1 },
+      { "id": "SANDING", "level": 1 }
+    ],
     "tools": [ [ [ "tongs", -1 ] ] ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "steel_tiny", 1, "LIST" ], [ "scrap_bronze", 1 ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -272,16 +275,19 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 3 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "ANVIL", "level": 1 } ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "CUT", "level": 1 },
+      { "id": "ANVIL", "level": 1 },
+      { "id": "SANDING", "level": 1 }
+    ],
     "tools": [ [ [ "tongs", -1 ] ] ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "steel_tiny", 1, "LIST" ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -295,16 +301,19 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 3 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "ANVIL", "level": 1 } ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "CUT", "level": 1 },
+      { "id": "ANVIL", "level": 1 },
+      { "id": "SANDING", "level": 1 }
+    ],
     "tools": [ [ [ "tongs", -1 ] ] ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "steel_tiny", 1, "LIST" ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -317,15 +326,13 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 2 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "bee_sting", 1 ], [ "wasp_sting", 1 ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -338,15 +345,13 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 2 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "fighter_sting", 1 ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -359,15 +364,13 @@
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 2 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "teeth_serrated", 1 ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -385,9 +388,7 @@
       [ [ "adhesive", 1, "LIST" ], [ "filament", 10, "LIST" ] ],
       [ [ "wire", 4 ], [ "pipe", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -413,15 +414,13 @@
     "difficulty": 3,
     "time": "20 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "tools": [ [ [ "fire", -1 ] ] ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 10, "LIST" ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ], [ "bolt_crude", 10 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -434,14 +433,12 @@
     "time": "15 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 1 ], [ "pocket_survival", 1 ], [ "book_archery", 2 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -454,7 +451,7 @@
     "time": "20 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_arrows", 2 ], [ "pocket_survival", 2 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "adhesive", 1, "LIST" ], [ "filament", 20, "LIST" ] ],
       [ [ "stick", 2 ], [ "broom", 2 ], [ "2x4", 2 ], [ "bee_sting", 2 ] ],
@@ -471,9 +468,7 @@
         [ "sharp_rock", 1 ]
       ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -486,7 +481,7 @@
     "time": "1 m",
     "reversible": true,
     "book_learn": [ [ "recipe_arrows", 5 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [
         [ "arrow_field_point_fletched", 1 ],
@@ -507,9 +502,7 @@
         [ "diesel", 50, "NO_RECOVER" ],
         [ "biodiesel", 50, "NO_RECOVER" ]
       ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "type": "recipe",
@@ -576,15 +569,13 @@
     "difficulty": 5,
     "time": "56 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "tools": [ [ [ "mold_plastic", -1 ] ], [ [ "surface_heat", 15, "LIST" ] ] ],
     "components": [
       [ [ "plastic_chunk", 3 ] ],
       [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ],
       [ [ "fletching", 1, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "result": "bolt_cf",

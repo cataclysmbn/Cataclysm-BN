@@ -117,6 +117,7 @@
       { "item": "seed_tobacco", "prob": 15 },
       { "item": "rolling_paper", "prob": 9 },
       { "item": "pipe_glass", "prob": 17 },
+      { "item": "nectar_collector", "prob": 10 },
       { "item": "coke", "prob": 8 },
       { "item": "meth", "prob": 2 },
       { "item": "heroin", "prob": 1 },

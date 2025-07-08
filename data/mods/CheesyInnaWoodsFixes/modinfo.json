@@ -7,6 +7,6 @@
     "description": "CheesyInnaWoodFixes ports CDDA innawoods content and makes industrial age possible.",
     "version": "BN version, update 05/09/2024",
     "category": "items",
-    "dependencies": [ "bn" ]
+    "dependencies": [ "bn", "exotic_ammo" ]
   }
 ]

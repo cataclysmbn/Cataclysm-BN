@@ -1,0 +1,58 @@
+[
+  {
+    "type": "overmap_special",
+    "id": "aircraft_carrier",
+    "copy-from": "aircraft_carrier",
+    "delete": { "flags": [ "GLOBALLY_UNIQUE" ] },
+    "extend": { "flags": [ "UNIQUE" ] }
+  },
+  {
+    "type": "overmap_special",
+    "id": "evac_center",
+    "copy-from": "evac_center",
+    "delete": { "flags": [ "GLOBALLY_UNIQUE" ] },
+    "extend": { "flags": [ "UNIQUE" ] }
+  },
+  {
+    "type": "overmap_special",
+    "id": "hub_01",
+    "copy-from": "hub_01",
+    "delete": { "flags": [ "GLOBALLY_UNIQUE" ] },
+    "extend": { "flags": [ "UNIQUE" ] }
+  },
+  {
+    "type": "overmap_special",
+    "id": "Occupied Scrap Yard",
+    "copy-from": "Occupied Scrap Yard",
+    "delete": { "flags": [ "GLOBALLY_UNIQUE" ] },
+    "extend": { "flags": [ "UNIQUE" ] }
+  },
+  {
+    "type": "overmap_special",
+    "id": "Occupied Chem Lab",
+    "copy-from": "Occupied Chem Lab",
+    "delete": { "flags": [ "GLOBALLY_UNIQUE" ] },
+    "extend": { "flags": [ "UNIQUE" ] }
+  },
+  {
+    "type": "overmap_special",
+    "id": "Occupied Lumbermill",
+    "copy-from": "Occupied Lumbermill",
+    "delete": { "flags": [ "GLOBALLY_UNIQUE" ] },
+    "extend": { "flags": [ "UNIQUE" ] }
+  },
+  {
+    "type": "overmap_special",
+    "id": "Cabin_Lapin",
+    "copy-from": "Cabin_Lapin",
+    "delete": { "flags": [ "GLOBALLY_UNIQUE" ] },
+    "extend": { "flags": [ "UNIQUE" ] }
+  },
+  {
+    "type": "overmap_special",
+    "id": "St_Johns_farm",
+    "copy-from": "St_Johns_farm",
+    "delete": { "flags": [ "GLOBALLY_UNIQUE" ] },
+    "extend": { "flags": [ "UNIQUE" ] }
+  }
+]

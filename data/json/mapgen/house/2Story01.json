@@ -251,9 +251,9 @@
       ],
       "items": { " ": { "item": "trash", "chance": 5 } },
       "place_loot": [
-        { "group": "on_hand_270win", "x": 17, "y": 7, "repeat": [ 1, 2 ] },
+        { "group": "on_hand_3006", "x": 17, "y": 7, "repeat": [ 1, 2 ] },
         { "group": "stash_food", "x": [ 14, 16 ], "y": [ 13, 14 ], "repeat": [ 7, 10 ] },
-        { "item": "remington700_270", "x": 16, "y": 8, "chance": 25 },
+        { "item": "remington_700", "x": 16, "y": 8, "chance": 25 },
         { "item": "2x4", "x": [ 19, 21 ], "y": [ 10, 11 ], "repeat": [ 13, 17 ] },
         { "item": "survivor_scope", "x": 15, "y": 7, "chance": 75 },
         { "item": "binoculars", "x": 15, "y": 7, "chance": 50 },

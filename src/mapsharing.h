@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAPSHARING_H
-#define CATA_SRC_MAPSHARING_H
 
 #include <set>
 #include <string>
@@ -39,4 +37,4 @@ void addDebugger( const std::string &name );
 void setDefaults();
 } // namespace MAP_SHARING
 
-#endif // CATA_SRC_MAPSHARING_H
+

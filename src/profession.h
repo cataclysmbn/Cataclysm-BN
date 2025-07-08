@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_PROFESSION_H
-#define CATA_SRC_PROFESSION_H
 
 #include <list>
 #include <map>
@@ -123,4 +121,4 @@ class profession
         std::set<trait_id> get_forbidden_traits() const;
 };
 
-#endif // CATA_SRC_PROFESSION_H
+

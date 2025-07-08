@@ -73,9 +73,7 @@
         [ "shotgun_primer", 1 ]
       ],
       [ [ "volatile_explosive", 2, "LIST" ], [ "stable_explosive", 2, "LIST" ], [ "military_explosive", 2, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "result": "incendiary",

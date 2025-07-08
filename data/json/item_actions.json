@@ -146,11 +146,6 @@
   },
   {
     "type": "item_action",
-    "id": "salvage",
-    "name": { "str": "Cut up an item" }
-  },
-  {
-    "type": "item_action",
     "id": "inscribe",
     "name": { "str": "Write on an item" }
   },
@@ -326,11 +321,6 @@
   },
   {
     "type": "item_action",
-    "id": "CHEW",
-    "name": { "str": "Chew" }
-  },
-  {
-    "type": "item_action",
     "id": "CLEAR_RUBBLE",
     "name": { "str": "Clear rubble" }
   },
@@ -378,11 +368,6 @@
     "type": "item_action",
     "id": "DOLLCHAT",
     "name": { "str": "Make it talk" }
-  },
-  {
-    "type": "item_action",
-    "id": "ECIG",
-    "name": { "ctxt": "ECIG", "str": "Smoke" }
   },
   {
     "type": "item_action",
@@ -766,11 +751,6 @@
   },
   {
     "type": "item_action",
-    "id": "SMOKING",
-    "name": { "ctxt": "SMOKING", "str": "Smoke" }
-  },
-  {
-    "type": "item_action",
     "id": "SPRAY_CAN",
     "name": { "str": "Write something" }
   },
@@ -861,21 +841,6 @@
   },
   {
     "type": "item_action",
-    "id": "WASH_SOFT_ITEMS",
-    "name": { "str": "Wash soft items" }
-  },
-  {
-    "type": "item_action",
-    "id": "WASH_HARD_ITEMS",
-    "name": { "str": "Wash hard items" }
-  },
-  {
-    "type": "item_action",
-    "id": "WASH_ALL_ITEMS",
-    "name": { "str": "Wash items" }
-  },
-  {
-    "type": "item_action",
     "id": "WATER_PURIFIER",
     "name": { "str": "Purify some water" }
   },
@@ -883,11 +848,6 @@
     "type": "item_action",
     "id": "WEATHER_TOOL",
     "name": { "str": "Check weather information" }
-  },
-  {
-    "type": "item_action",
-    "id": "WEED_CAKE",
-    "name": { "str": "Consume" }
   },
   {
     "type": "item_action",
@@ -1008,6 +968,11 @@
     "type": "item_action",
     "id": "weigh_self",
     "name": { "str": "Use Scale" }
+  },
+  {
+    "type": "item_action",
+    "id": "gps_device",
+    "name": { "str": "Search GPS" }
   },
   {
     "type": "item_action",

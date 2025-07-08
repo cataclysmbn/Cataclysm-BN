@@ -17,7 +17,7 @@
     "symbol": "(",
     "color": "dark_gray",
     "ammo": "10mm",
-    "blackpowder_tolerance": 48,
+    "blackpowder_tolerance": 24,
     "min_cycle_recoil": 570,
     "magazines": [ [ "10mm", [ "glock20mag", "glock20bigmag", "glock20drum50rd" ] ] ]
   },
@@ -37,6 +37,7 @@
     "color": "dark_gray",
     "ammo": "10mm",
     "range": 20,
+    "handling": 30,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 170,
     "durability": 10,

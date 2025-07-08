@@ -35,7 +35,7 @@
       ],
       "rotation": 0,
       "palettes": [ "FEMA_camp" ],
-      "items": { "X": [ { "item": "mechanics", "chance": 30 }, { "item": "mil_food", "chance": 30 } ] },
+      "items": { "X": [ { "item": "mechanics", "chance": 50, "repeat": 2 }, { "item": "mil_food", "chance": 30, "repeat": 2 } ] },
       "vehicles": { "v": { "vehicle": "school_vehicles", "chance": 30, "status": 0 } }
     }
   }

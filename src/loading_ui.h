@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_LOADING_UI_H
-#define CATA_SRC_LOADING_UI_H
 
 #include <memory>
 #include <string>
@@ -40,4 +38,4 @@ class loading_ui
         void show();
 };
 
-#endif // CATA_SRC_LOADING_UI_H
+

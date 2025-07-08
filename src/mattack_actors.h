@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MATTACK_ACTORS_H
-#define CATA_SRC_MATTACK_ACTORS_H
 
 #include <climits>
 #include <map>
@@ -101,7 +99,7 @@ class melee_actor : public mattack_actor
         translation hit_dmg_npc;
 
         melee_actor();
-        ~melee_actor() override = default;
+        ~melee_actor() override;
 
         virtual Creature *find_target( monster &z ) const;
         virtual void on_damage( monster &z, Creature &target, dealt_damage_instance &dealt ) const;
@@ -200,4 +198,4 @@ class gun_actor : public mattack_actor
         std::unique_ptr<mattack_actor> clone() const override;
 };
 
-#endif // CATA_SRC_MATTACK_ACTORS_H
+

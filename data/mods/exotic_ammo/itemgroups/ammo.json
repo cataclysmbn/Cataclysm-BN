@@ -1,0 +1,138 @@
+[
+  {
+    "type": "item_group",
+    "id": "ammo_pistol_obscure",
+    "//": "Imported or otherwise very obscure pistol ammo.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "9x18mm", "prob": 20, "charges": [ 1, 100 ] },
+      { "item": "9x18mmfmj", "prob": 20, "charges": [ 1, 100 ] },
+      { "item": "9x18mmP2", "prob": 10, "charges": [ 1, 100 ] },
+      { "item": "460_fmj", "prob": 3, "charges": [ 1, 100 ] },
+      { "item": "460_rowland", "prob": 2, "charges": [ 1, 100 ] },
+      { "item": "454_Casull", "prob": 60, "charges": [ 1, 100 ] },
+      { "item": "762_25", "prob": 25, "charges": [ 1, 100 ] },
+      { "item": "762_25hot", "prob": 15, "charges": [ 1, 100 ] },
+      { "item": "762_25typeP", "prob": 10, "charges": [ 1, 100 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "ammo_smg_obscure",
+    "//": "Imported or otherwise very obscure SMG ammo.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "9x18mm", "prob": 60, "charges": [ 1, 100 ] },
+      { "item": "9x18mmfmj", "prob": 30, "charges": [ 1, 100 ] },
+      { "item": "9x18mmP2", "prob": 10, "charges": [ 1, 100 ] },
+      { "item": "762_25", "prob": 100, "charges": [ 1, 100 ] },
+      { "item": "762_25hot", "prob": 25, "charges": [ 1, 100 ] },
+      { "item": "762_25typeP", "prob": 25, "charges": [ 1, 100 ] }
+    ]
+  },
+  {
+    "id": "ammo_casings",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "9x18mm_casing", "prob": 80 },
+      { "item": "38super_casing", "prob": 80 },
+      { "item": "700nx_casing", "prob": 40 },
+      { "item": "460_casing", "prob": 60 },
+      { "item": "454_casing", "prob": 60 },
+      { "item": "500_casing", "prob": 60 },
+      { "item": "57mm_casing", "prob": 60 },
+      { "item": "46mm_casing", "prob": 60 },
+      { "item": "545_casing", "prob": 60 },
+      { "item": "270win_casing", "prob": 60 },
+      { "item": "762_25_casing", "prob": 60 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "ammo_pistol_common",
+    "//": "Pistol ammo commonly owned by citizens and found in many locations.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "38super_fmj", "prob": 7, "charges": [ 1, 100 ] },
+      { "item": "500_Magnum", "prob": 25, "charges": [ 1, 100 ] },
+      { "item": "57mm", "prob": 10, "charges": [ 1, 100 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "ammo_pistol_blackpowder_handloads",
+    "//": "Blackpowder pistol ammo balanced according to rarity, additional weight for calibers that have common, manual-action firearms available in that chambering.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "bp_38super_fmj", "prob": 7, "charges": [ 1, 100 ] },
+      { "item": "bp_500_Magnum", "prob": 25, "charges": [ 1, 100 ] },
+      { "item": "bp_57mm", "prob": 10, "charges": [ 1, 100 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "ammo_pistol_common_full",
+    "//": "Pistol ammo commonly owned by citizens and found in many locations, for vending machines.",
+    "subtype": "distribution",
+    "entries": [ { "item": "38super_fmj", "prob": 7 }, { "item": "500_Magnum", "prob": 25 }, { "item": "57mm", "prob": 10 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "ammo_rifle_obscure",
+    "//": "Imported or otherwise very obscure rifle ammo.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "700nx", "prob": 20, "charges": [ 1, 100 ] },
+      { "item": "545", "prob": 60, "charges": [ 1, 100 ] },
+      { "item": "545_ap", "prob": 30, "charges": [ 1, 100 ] }
+    ]
+  },
+  {
+    "id": "casings",
+    "//": "casings list for shooting range.",
+    "type": "item_group",
+    "items": [ [ "700nx_casing", 10 ], [ "454_casing", 10 ], [ "500_casing", 10 ], [ "57mm_casing", 10 ], [ "46mm_casing", 10 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "ammo_rifle_common",
+    "//": "Rifle ammo commonly owned by citizens and found in many locations.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "500_Magnum", "prob": 20, "charges": [ 1, 100 ] },
+      { "item": "270win_jsp", "prob": 30, "charges": [ 1, 100 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "ammo_rifle_blackpowder_handloads",
+    "//": "Blackpowder rifle ammo balanced according to rarity, additional weight for calibers that have common, manual-action firearms available in that chambering.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "bp_500_Magnum", "prob": 20, "charges": [ 1, 100 ] },
+      { "item": "bp_270win_jsp", "prob": 30, "charges": [ 1, 100 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "ammo_rifle_common_full",
+    "//": "Rifle ammo commonly owned by citizens and found in many locations, for vending machines.",
+    "subtype": "distribution",
+    "entries": [ { "item": "500_Magnum", "prob": 20 }, { "item": "270win_jsp", "prob": 30 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "ammo_cop",
+    "//": "Ammo for police issue firearms.",
+    "subtype": "distribution",
+    "entries": [ { "item": "57mm", "prob": 80, "charges": [ 1, 100 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "ammo_pistol_milspec",
+    "//": "Military specification pistol ammo found at military sites.",
+    "subtype": "distribution",
+    "entries": [ { "item": "46mm", "prob": 70, "charges": [ 1, 100 ] } ]
+  }
+]

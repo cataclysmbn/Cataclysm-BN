@@ -92,9 +92,7 @@
         [ "shotgun_primer", 1 ]
       ],
       [ [ "volatile_explosive", 2, "LIST" ], [ "stable_explosive", 2, "LIST" ], [ "military_explosive", 2, "LIST" ] ]
-    ],
-    "delete_flags": [ "FILTHY" ],
-    "flags": [ "ALLOW_FILTHY" ]
+    ]
   },
   {
     "result": "incendiary",
@@ -117,18 +115,41 @@
     "skill_used": "fabrication",
     "skills_required": [ "gun", 3 ],
     "difficulty": 4,
-    "time": "22 m 30 s",
-    "charges": 100,
+    "time": "30 s",
+    "reversible": true,
+    "charges": 1,
+    "decomp_learn": 6,
     "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 3 } ],
-    "tools": [ [ [ "swage", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "components": [
+      [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
+      [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "smpistol_primer",
+    "id_suffix": "bulk",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 3 ],
+    "difficulty": 4,
+    "time": "22 m 30 s",
+    "charges": 50,
+    "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
     "components": [
       [
         [ "can_drink_unsealed", 1 ],
         [ "can_food_unsealed", 1 ],
         [ "canister_empty", 1 ],
         [ "scrap", 2 ],
-        [ "copper_scrap_equivalent", 2, "LIST" ]
+        [ "copper_scrap_equivalent", 2, "LIST" ],
+        [ "cartridgebrass", 100 ],
+        [ "aluminum_foil", 100 ]
       ],
       [ [ "oxy_powder", 50 ], [ "chem_match_head_powder", 50 ] ]
     ]
@@ -141,18 +162,41 @@
     "skill_used": "fabrication",
     "skills_required": [ "gun", 3 ],
     "difficulty": 4,
-    "time": "22 m 30 s",
-    "charges": 100,
+    "time": "30 s",
+    "reversible": true,
+    "charges": 1,
+    "decomp_learn": 6,
     "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 3 } ],
-    "tools": [ [ [ "swage", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "components": [
+      [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
+      [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "lgpistol_primer",
+    "id_suffix": "bulk",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 3 ],
+    "difficulty": 4,
+    "time": "22 m 30 s",
+    "charges": 50,
+    "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
     "components": [
       [
         [ "can_drink_unsealed", 1 ],
         [ "can_food_unsealed", 1 ],
         [ "canister_empty", 1 ],
         [ "scrap", 2 ],
-        [ "copper_scrap_equivalent", 2, "LIST" ]
+        [ "copper_scrap_equivalent", 2, "LIST" ],
+        [ "cartridgebrass", 100 ],
+        [ "aluminum_foil", 100 ]
       ],
       [ [ "oxy_powder", 50 ], [ "chem_match_head_powder", 50 ] ]
     ]
@@ -165,18 +209,41 @@
     "skill_used": "fabrication",
     "skills_required": [ "gun", 3 ],
     "difficulty": 4,
-    "time": "22 m 30 s",
-    "charges": 100,
+    "time": "30 s",
+    "reversible": true,
+    "charges": 1,
+    "decomp_learn": 6,
     "book_learn": [ [ "mag_rifle", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 3 } ],
-    "tools": [ [ [ "swage", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "components": [
+      [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
+      [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "smrifle_primer",
+    "id_suffix": "bulk",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 3 ],
+    "difficulty": 4,
+    "time": "22 m 30 s",
+    "charges": 50,
+    "book_learn": [ [ "mag_rifle", 3 ], [ "recipe_bullets", 2 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
     "components": [
       [
         [ "can_drink_unsealed", 1 ],
         [ "can_food_unsealed", 1 ],
         [ "canister_empty", 1 ],
         [ "scrap", 2 ],
-        [ "copper_scrap_equivalent", 2, "LIST" ]
+        [ "copper_scrap_equivalent", 2, "LIST" ],
+        [ "cartridgebrass", 100 ],
+        [ "aluminum_foil", 100 ]
       ],
       [ [ "oxy_powder", 50 ], [ "chem_match_head_powder", 50 ] ]
     ]
@@ -189,18 +256,41 @@
     "skill_used": "fabrication",
     "skills_required": [ "gun", 3 ],
     "difficulty": 4,
-    "time": "22 m 30 s",
-    "charges": 100,
+    "time": "30 s",
+    "reversible": true,
+    "charges": 1,
+    "decomp_learn": 6,
     "book_learn": [ [ "mag_rifle", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 3 } ],
-    "tools": [ [ [ "swage", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "components": [
+      [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
+      [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "lgrifle_primer",
+    "id_suffix": "bulk",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 3 ],
+    "difficulty": 4,
+    "time": "22 m 30 s",
+    "charges": 50,
+    "book_learn": [ [ "mag_rifle", 3 ], [ "recipe_bullets", 2 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
     "components": [
       [
         [ "can_drink_unsealed", 1 ],
         [ "can_food_unsealed", 1 ],
         [ "canister_empty", 1 ],
         [ "scrap", 2 ],
-        [ "copper_scrap_equivalent", 2, "LIST" ]
+        [ "copper_scrap_equivalent", 2, "LIST" ],
+        [ "cartridgebrass", 100 ],
+        [ "aluminum_foil", 100 ]
       ],
       [ [ "oxy_powder", 50 ], [ "chem_match_head_powder", 50 ] ]
     ]
@@ -213,40 +303,49 @@
     "skill_used": "fabrication",
     "skills_required": [ "gun", 3 ],
     "difficulty": 4,
-    "time": "22 m 30 s",
-    "charges": 100,
+    "time": "30 s",
+    "reversible": true,
+    "charges": 1,
+    "decomp_learn": 6,
     "book_learn": [ [ "manual_shotgun", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 3 } ],
-    "tools": [ [ [ "swage", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "components": [
+      [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
+      [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "shotgun_primer",
+    "id_suffix": "bulk",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 3 ],
+    "difficulty": 4,
+    "time": "22 m 30 s",
+    "charges": 50,
+    "book_learn": [ [ "manual_shotgun", 3 ], [ "recipe_bullets", 2 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
     "components": [
       [
         [ "can_drink_unsealed", 1 ],
         [ "can_food_unsealed", 1 ],
         [ "canister_empty", 1 ],
         [ "scrap", 2 ],
-        [ "copper_scrap_equivalent", 2, "LIST" ]
+        [ "copper_scrap_equivalent", 2, "LIST" ],
+        [ "cartridgebrass", 100 ],
+        [ "aluminum_foil", 100 ]
       ],
       [ [ "oxy_powder", 50 ], [ "chem_match_head_powder", 50 ] ]
     ]
   },
   {
     "type": "recipe",
-    "result": "460_casing",
-    "category": "CC_AMMO",
-    "subcategory": "CSC_AMMO_COMPONENTS",
-    "skill_used": "fabrication",
-    "difficulty": 3,
-    "skills_required": [ "gun", 4 ],
-    "time": "3 m",
-    "batch_time_factors": [ 60, 5 ],
-    "book_learn": [ [ "manual_pistol", 5 ], [ "recipe_bullets", 3 ] ],
-    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "DRILL", "level": 2 } ],
-    "tools": [ [ [ "press", -1 ] ], [ [ "cordless_drill", 2 ] ] ],
-    "components": [ [ [ "308_casing", 1 ], [ "3006_casing", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
     "result": "380_casing",
+    "id_suffix": "resize",
     "category": "CC_AMMO",
     "subcategory": "CSC_AMMO_COMPONENTS",
     "skill_used": "fabrication",
@@ -262,6 +361,7 @@
   {
     "type": "recipe",
     "result": "300blk_casing",
+    "id_suffix": "resize",
     "category": "CC_AMMO",
     "subcategory": "CSC_AMMO_COMPONENTS",
     "skill_used": "fabrication",
@@ -326,5 +426,469 @@
     "charges": 1,
     "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
     "components": [ [ [ "22_casing", 1 ] ], [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ] ]
+  },
+  {
+    "result": "223_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 5 ] ] ]
+  },
+  {
+    "result": "22_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 2 ] ] ]
+  },
+  {
+    "result": "3006_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "300_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "308_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 6 ] ] ]
+  },
+  {
+    "result": "762_51_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 6 ] ] ]
+  },
+  {
+    "result": "32_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 2 ] ] ]
+  },
+  {
+    "result": "38_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "40_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "10mm_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "44_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 4 ] ] ]
+  },
+  {
+    "result": "45_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 4 ] ] ]
+  },
+  {
+    "result": "45colt_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 4 ] ] ]
+  },
+  {
+    "result": "4570_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "50_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 18 ] ] ]
+  },
+  {
+    "result": "762R_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "762_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 6 ] ] ]
+  },
+  {
+    "result": "9mm_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "357sig_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "357mag_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "380_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "300blk_casing",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 5 ] ] ]
+  },
+  {
+    "result": "shot_hull",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_shotgun", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ],
+      [ [ "mold_plastic", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 2 ] ], [ [ "plastic_scrap", 2 ] ] ]
+  },
+  {
+    "result": "410shot_hull",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "5 m",
+    "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_shotgun", 3 ] ],
+    "tools": [
+      [ [ "hydraulic_press", 10 ] ],
+      [ [ "forging_standard", 1, "LIST" ] ],
+      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ],
+      [ [ "mold_plastic", -1 ] ]
+    ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 1 ] ], [ [ "plastic_scrap", 1 ] ] ]
+  },
+  {
+    "result": "impact_fuze",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "mechanics",
+    "difficulty": 7,
+    "autolearn": [ [ "fabrication", 5 ] ],
+    "time": "10 m",
+    "reversible": true,
+    "decomp_learn": 8,
+    "book_learn": [ [ "manual_traps_mil", 5 ], [ "manual_launcher", 6 ], [ "textbook_anarch", 7 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "//": "Components called for explicitly instead of volatile_explosive in order to use smaller amounts, and to place HTMD first",
+    "components": [
+      [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
+      [
+        [ "smpistol_primer", 1 ],
+        [ "lgpistol_primer", 1 ],
+        [ "smrifle_primer", 1 ],
+        [ "lgrifle_primer", 1 ],
+        [ "shotgun_primer", 1 ]
+      ],
+      [ [ "chem_hmtd", 3 ], [ "gunpowder", 2 ], [ "chem_black_powder", 4 ], [ "chem_match_head_powder", 8 ] ]
+    ]
+  },
+  {
+    "result": "delay_fuze",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "mechanics",
+    "difficulty": 8,
+    "autolearn": [ [ "fabrication", 6 ] ],
+    "time": "10 m",
+    "reversible": true,
+    "decomp_learn": 9,
+    "book_learn": [ [ "manual_traps_mil", 6 ], [ "manual_launcher", 7 ], [ "textbook_anarch", 8 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 } ],
+    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "components": [
+      [ [ "copper", 2 ], [ "cartridgebrass", 4 ], [ "aluminum_foil", 4 ] ],
+      [
+        [ "smpistol_primer", 1 ],
+        [ "lgpistol_primer", 1 ],
+        [ "smrifle_primer", 1 ],
+        [ "lgrifle_primer", 1 ],
+        [ "shotgun_primer", 1 ]
+      ],
+      [ [ "chem_hmtd", 3 ], [ "gunpowder", 2 ], [ "chem_black_powder", 4 ], [ "chem_match_head_powder", 8 ] ],
+      [ [ "fuse", 2 ] ]
+    ]
   }
 ]

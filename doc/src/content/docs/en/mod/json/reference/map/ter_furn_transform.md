@@ -70,8 +70,20 @@ You can also use flags instead of specific IDs for both furniture and terrain.
 ```json
 "terrain": [
   {
+    "result": "t_floor",
+    "valid_flags": [ "FLAT" ],
+    "message": "flooring"
+  }
+]
+```
+
+To target any diggable terrain, use the boolean.
+
+```json
+"terrain": [
+  {
     "result": "t_dirt",
-    "valid_flags": [ "DIGGABLE" ],
+    "diggable": true,
     "message": "digdug"
   }
 ]

@@ -37,3 +37,4 @@
 *.png     binary
 *.ttf     binary
 
+lua_annotations.txt linguist-generated=true

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_TRAP_H
-#define CATA_SRC_TRAP_H
 
 #include <cstddef>
 #include <functional>
@@ -14,6 +12,7 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "catalua_type_operators.h"
 
 class Character;
 class Creature;
@@ -265,6 +264,8 @@ struct trap {
         static void check_consistency();
         /*@}*/
         static size_t count();
+
+        LUA_TYPE_OPS( trap, id );
 };
 
 const trap_function &trap_function_from_string( const std::string &function_name );
@@ -313,4 +314,4 @@ tr_shadow,
 tr_drain,
 tr_snake;
 
-#endif // CATA_SRC_TRAP_H
+

@@ -32,6 +32,7 @@
         "........................"
       ],
       "palettes": [ "cabin_palette" ],
+      "terrain": { "0": [ [ "t_region_groundcover_barren", 3 ], "t_region_groundcover" ] },
       "faction_owner": [ { "id": "wasteland_scavengers", "x": [ 1, 23 ], "y": [ 1, 23 ] } ],
       "items": { "C": [ { "item": "cabin_chemist_sell", "chance": 100, "repeat": [ 4, 5 ] } ] },
       "npcs": { "@": { "class": "NPC_cabin_chemist" } }

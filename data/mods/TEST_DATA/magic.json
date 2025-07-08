@@ -5,7 +5,7 @@
     "name": "Pew, Pew",
     "description": "You aim your finger at your opponent and make 'Pew, pew' sounds.",
     "effect": "target_attack",
-    "damage_type": "none",
+    "damage_type": "true",
     "valid_targets": [ "hostile" ],
     "flags": [ "VERBAL", "SOMATIC", "NO_LEGS" ],
     "max_level": 10,
@@ -22,9 +22,31 @@
     "energy_source": "MANA"
   },
   {
+    "id": "test_spell_pew_melee",
+    "type": "SPELL",
+    "name": "Pew, Pew, MELEE",
+    "description": "You aim your finger at your opponent and make 'Pew, pew' sounds, then punch the opponent.",
+    "effect": "target_attack",
+    "damage_type": "true",
+    "valid_targets": [ "hostile" ],
+    "flags": [ "VERBAL", "SOMATIC", "NO_LEGS", "ADD_MELEE_DAM" ],
+    "max_level": 10,
+    "min_damage": 1,
+    "max_damage": 5,
+    "damage_increment": 1,
+    "min_range": 10,
+    "max_range": 30,
+    "range_increment": 2,
+    "spell_class": "NONE",
+    "difficulty": 1,
+    "base_casting_time": 100,
+    "base_energy_cost": 50,
+    "energy_source": "MANA"
+  },
+  {
     "type": "ter_furn_transform",
     "id": "test_lava_terrain",
-    "terrain": [ { "result": "t_lava", "valid_flags": [ "DIGGABLE" ] } ]
+    "terrain": [ { "result": "t_lava", "diggable": true } ]
   },
   {
     "id": "test_spell_lava",

@@ -12,6 +12,7 @@
     "material": [ "steel", "wood" ],
     "color": "dark_gray",
     "ammo": "32",
+    "handling": 20,
     "min_cycle_recoil": 135,
     "valid_mod_locations": [
       [ "accessories", 2 ],
@@ -68,6 +69,7 @@
     "material": [ "steel", "wood" ],
     "color": "light_gray",
     "ammo": "32",
+    "handling": 20,
     "min_cycle_recoil": 135,
     "valid_mod_locations": [
       [ "accessories", 2 ],

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DROP_TOKEN_H
-#define CATA_SRC_DROP_TOKEN_H
 
 #include <iostream>
 
@@ -72,4 +70,4 @@ drop_token_provider &get_provider();
 
 std::ostream &operator<<( std::ostream &os, const item_drop_token &dt );
 
-#endif // CATA_SRC_DROP_TOKEN_H
+

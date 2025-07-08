@@ -10,7 +10,8 @@
     "hp": 20,
     "special_attacks": [ [ "SPIT_SAP", 10 ] ],
     "upgrades": { "age_grow": 14, "into": "mon_biollante_sprout" },
-    "death_drops": { "subtype": "collection", "groups": [ [ "biollante", 2 ] ] }
+    "//": "Not developed enough to harvest buds.",
+    "harvest": "triffid_small"
   },
   {
     "id": "mon_biollante_sprout",
@@ -22,8 +23,7 @@
     "weight": "81500 g",
     "hp": 60,
     "special_attacks": [ [ "SPIT_SAP", 6 ] ],
-    "upgrades": { "age_grow": 14, "into": "mon_biollante" },
-    "death_drops": { "subtype": "collection", "groups": [ [ "biollante", 5 ] ] }
+    "upgrades": { "age_grow": 14, "into": "mon_biollante" }
   },
   {
     "id": "mon_biollante",
@@ -44,10 +44,9 @@
     "morale": 100,
     "melee_cut": 0,
     "harvest": "biollante",
-    "special_attacks": [ [ "SPIT_SAP", 2 ] ],
-    "death_drops": { "subtype": "collection", "groups": [ [ "biollante", 8 ] ], "//": "80% chance of an item from group biollante" },
+    "special_attacks": [ [ "SPIT_SAP", 4 ] ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "NOHEAD", "IMMOBILE" ]
+    "flags": [ "SEES", "NOHEAD", "IMMOBILE" ]
   },
   {
     "id": "mon_creeper_hub",
@@ -252,16 +251,15 @@
     "armor_bash": 4,
     "armor_cut": 6,
     "armor_bullet": 5,
-    "harvest": "triffid_large",
+    "harvest": "fungal_fighter",
     "attack_effs": [
       { "id": "paralyzepoison", "//": "applying this multiple times makes intensity go up by 3 instead of 1", "duration": 33 },
       { "id": "paralyzepoison", "duration": 33 },
       { "id": "paralyzepoison", "duration": 33 }
     ],
     "special_attacks": [ [ "PARA_STING", 10 ] ],
-    "death_drops": { "subtype": "collection", "groups": [ [ "fungal_sting", 80 ] ], "//": "80% chance of an item from group fungal_sting" },
     "death_function": [ "NORMAL" ],
-    "flags": [ "HEARS", "SMELLS", "NOHEAD", "CAN_DIG" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "NOHEAD", "CAN_DIG" ]
   },
   {
     "id": "mon_triffid_flower",
@@ -282,10 +280,10 @@
     "morale": 100,
     "melee_cut": 0,
     "harvest": "triffid_large",
-    "special_attacks": [ [ "SPIT_SAP", 3 ], [ "PARA_STING", 12 ] ],
+    "special_attacks": [ [ "SPIT_SAP", 6 ], [ "PARA_STING", 12 ] ],
     "emit_fields": [ { "emit_id": "emit_pollen_stream", "delay": "1 s" } ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "NOHEAD", "IMMOBILE" ]
+    "flags": [ "SEES", "NOHEAD", "IMMOBILE" ]
   },
   {
     "id": "mon_triffid_heart",

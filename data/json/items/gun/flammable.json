@@ -21,7 +21,8 @@
       [ "rail", 1 ],
       [ "stock", 1 ],
       [ "sights", 1 ],
-      [ "underbarrel", 1 ]
+      [ "underbarrel", 1 ],
+      [ "muzzle", 1 ]
     ],
     "magazines": [ [ "flammable", [ "pressurized_tank" ] ] ]
   },
@@ -42,9 +43,57 @@
     "durability": 9,
     "loudness": 3,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
-    "valid_mod_locations": [ [ "accessories", 4 ], [ "rail", 1 ], [ "grip", 1 ], [ "sling", 1 ], [ "stock", 1 ], [ "underbarrel", 1 ] ],
-    "extend": { "flags": [ "FIRE_20", "MODE_BURST", "NON_FOULING" ] },
-    "delete": { "flags": [ "FIRE_100" ] },
+    "valid_mod_locations": [
+      [ "accessories", 4 ],
+      [ "rail", 1 ],
+      [ "grip", 1 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ],
+      [ "underbarrel", 1 ],
+      [ "muzzle", 1 ]
+    ],
+    "ammo_to_fire": 20,
+    "extend": { "flags": [ "MODE_BURST", "NON_FOULING" ] },
     "magazines": [ [ "flammable", [ "rm4502", "rm4504" ] ] ]
+  },
+  {
+    "id": "flamethrower_crude",
+    "copy-from": "flamethrower_base",
+    "type": "GUN",
+    "name": { "str": "spraycan flamethrower" },
+    "description": "A favorite of hooligans around the world, this lighter duct-taped to a spray can is probably as dangerous to the user as anyone else.  The nozzle has been crudely modified to disperse gasoline, and a small pump attached to the side allows for repressurization, though this process takes a few minutes.",
+    "weight": "500 g",
+    "volume": "500 ml",
+    "price": "160 USD",
+    "material": "steel",
+    "range": -2,
+    "gun_data": { "ammo": "gasoline", "skill": "launcher", "dispersion": 300, "durability": 1, "reload_noise": "slosh." },
+    "dispersion": 300,
+    "//": "inefficient, so it uses a lot of gasoline",
+    "clip_size": 100,
+    "ammo_to_fire": 100,
+    "ranged_damage": { "damage_type": "heat", "amount": 3 },
+    "valid_mod_locations": [ [ "sling", 1 ], [ "stock", 1 ], [ "rail", 1 ] ],
+    "relative": { "reload": 4 }
+  },
+  {
+    "id": "flamethrower_simple",
+    "copy-from": "flamethrower_base",
+    "type": "GUN",
+    "name": { "str": "simple flamethrower" },
+    "description": "A simple, home-made flamethrower.  While its capacity is not superb, it is more than capable of igniting terrain and monsters alike.",
+    "weight": "907 g",
+    "volume": "5 L",
+    "price": "200 USD",
+    "bashing": 8,
+    "material": [ "steel", "plastic" ],
+    "gun_data": { "ammo": "gasoline", "skill": "launcher", "dispersion": 600, "durability": 3, "reload_noise": "slosh." },
+    "range": 1,
+    "dispersion": 600,
+    "clip_size": 100,
+    "ammo_to_fire": 20,
+    "durability": 6,
+    "relative": { "reload": 2 },
+    "ranged_damage": { "damage_type": "heat", "amount": 6 }
   }
 ]

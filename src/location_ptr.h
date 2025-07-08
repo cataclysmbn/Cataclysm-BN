@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_LOCATION_PTR_H
-#define CATA_SRC_LOCATION_PTR_H
 
 #include <memory>
 
@@ -61,4 +59,4 @@ class location_ptr
         location<T> *get_loc_hack() const;
 };
 
-#endif // CATA_SRC_LOCATION_PTR_H
+

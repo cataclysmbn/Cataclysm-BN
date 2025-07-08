@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DAMAGE_H
-#define CATA_SRC_DAMAGE_H
 
 #include <array>
 #include <map>
@@ -28,6 +26,9 @@ enum damage_type : int {
     DT_STAB, // stabbing/piercing damage
     DT_HEAT, // e.g. fire, plasma
     DT_COLD, // e.g. heatdrain, cryogrenades
+    DT_DARK, // e.g. eldritch blast from D&D, death coil from Warcraft
+    DT_LIGHT, // e.g. holy magic that damages undead, Holy light from Warcraft
+    DT_PSI, // e.g. mental magic from Spellforce, Mind Spike from D&D
     DT_ELECTRIC, // e.g. electrical discharge
     DT_BULLET, // bullets and other fast moving projectiles
     NUM_DT
@@ -108,7 +109,7 @@ struct damage_instance {
 
 struct dealt_damage_instance {
     std::array<int, NUM_DT> dealt_dams;
-    body_part bp_hit;
+    bodypart_str_id bp_hit;
 
     dealt_damage_instance();
     void set_damage( damage_type dt, int amount );
@@ -150,4 +151,4 @@ resistances load_resistances_instance( const JsonObject &jo );
 // Handles some shorthands
 std::map<damage_type, float> load_damage_map( const JsonObject &jo );
 
-#endif // CATA_SRC_DAMAGE_H
+

@@ -1,0 +1,7 @@
+[
+  {
+    "type": "item_action",
+    "id": "LUA_EBOOK",
+    "name": { "str": "Scan/Load a book" }
+  }
+]

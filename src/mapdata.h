@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAPDATA_H
-#define CATA_SRC_MAPDATA_H
 
 #include <array>
 #include <bitset>
@@ -108,6 +106,21 @@ struct map_bash_info {
     // ID as string, because 3 type weirdness...
     void check( const std::string &id, map_object_type type ) const;
 };
+
+struct map_dig_info {
+    // Minimum digging quality to dig this tile
+    int dig_min = 0;
+    // Terrain to become after digging
+    ter_str_id result_ter = ter_str_id::NULL_ID();
+    // Items to drop upon finishing digging
+    item_group_id result_items = item_group_id( "digging_soil_loam_200L" );
+    // number of minutes it takes to dig
+    int num_minutes = 0;
+
+    // Load in the actual data
+    void deserialize( JsonIn &jsin );
+};
+
 struct map_deconstruct_info {
     // Only if true, the terrain/furniture can be deconstructed
     bool can_do;
@@ -196,7 +209,6 @@ struct pry_result {
  * DOOR - Can be opened (used for NPC pathfinding)
  * FLAMMABLE - Can be lit on fire
  * FLAMMABLE_HARD - Harder to light on fire, but still possible
- * DIGGABLE - Digging monsters, seeding monsters, digging with shovel, etc
  * LIQUID - Blocks movement, but isn't a wall (lava, water, etc)
  * SWIMMABLE - Player and monsters can swim through it
  * SHARP - May do minor damage to players/monsters passing through it
@@ -224,6 +236,7 @@ struct pry_result {
  * OPENCLOSE_INSIDE - If it's a door (with an 'open' or 'close' field), it can only be opened or closed if you're inside.
  * PERMEABLE - Allows gases to flow through unimpeded.
  * RAMP - Higher z-levels can be accessed from this tile
+ * ADV_DECONSTRUCT - Player cannot use "Deconstruct (Simple) Furniture"; alternative means are required
  * EASY_DECONSTRUCT - Player can deconstruct this without tools
  * HIDE_PLACE - Creature on this tile can't be seen by other creature not standing on adjacent tiles
  * BLOCK_WIND - This tile will partially block wind
@@ -276,7 +289,6 @@ enum ter_bitflags : int {
     TFLAG_FLAMMABLE_HARD,
     TFLAG_SUPPRESS_SMOKE,
     TFLAG_SHARP,
-    TFLAG_DIGGABLE,
     TFLAG_ROUGH,
     TFLAG_UNSTABLE,
     TFLAG_WALL,
@@ -330,6 +342,7 @@ enum ter_connects : int {
     TERCONN_WATER,
     TERCONN_PAVEMENT,
     TERCONN_RAIL,
+    TERCONN_GUTTER,
     TERCONN_COUNTER,
 };
 
@@ -452,8 +465,6 @@ struct map_data_common_t {
         int movecost = 0;
         // The coverage percentage of a furniture piece of terrain. <30 won't cover from sight.
         int coverage = 0;
-        // What itemgroup spawns when digging a shallow pit in this terrain, defaults to standard soil yield
-        std::string digging_result = "digging_soil_loam_200L";
         // Maximal volume of items that can be stored in/on this furniture
         units::volume max_volume = 1000_liter;
 
@@ -547,7 +558,14 @@ struct ter_t : map_data_common_t {
     ter_str_id transforms_into; // Transform into what terrain?
     ter_str_id roof;            // What will be the floor above this terrain
 
+    ter_str_id  nail_pull_result; // Terrain to transform into after pulling out nails
+    std::array<short, 2> nail_pull_items; // Nails and planks given upon pulling nails (respectively).
+
     trap_id trap; // The id of the trap located at this terrain. Limit one trap per tile currently.
+
+    map_dig_info digging_results; // Dig action: resulting items, terrain, and min digging level
+    ter_str_id fill_result; // Fill action: resulting terrain
+    int fill_minutes; // Fill action: minutes to fill up
 
     int heat_radiation = 0; // In fire field intensity "units"
 
@@ -560,6 +578,8 @@ struct ter_t : map_data_common_t {
     void load( const JsonObject &jo, const std::string &src ) override;
     void check() const override;
     static const std::vector<ter_t> &get_all();
+
+    bool is_diggable() const;
 
     LUA_TYPE_OPS( ter_t, id );
 };
@@ -806,4 +826,4 @@ extern furn_id f_null,
 // consistency checking of terlist & furnlist.
 void check_furniture_and_terrain();
 
-#endif // CATA_SRC_MAPDATA_H
+

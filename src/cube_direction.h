@@ -1,5 +1,4 @@
-#ifndef CATA_SRC_CUBE_DIRECTION_H
-#define CATA_SRC_CUBE_DIRECTION_H
+#pragma once
 
 #include <functional>
 
@@ -46,4 +45,4 @@ cube_direction operator-( cube_direction, int i );
 
 tripoint displace( cube_direction d );
 
-#endif // CATA_SRC_CUBE_DIRECTION_H
+

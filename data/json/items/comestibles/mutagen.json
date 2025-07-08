@@ -188,6 +188,15 @@
     "use_action": { "type": "mutagen_iv", "mutation_category": "PLANT" }
   },
   {
+    "id": "iv_mutagen_rabbit",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "rabbit serum",
+    "description": "A super-concentrated mutagen that looks like pureed carrots.  You need a syringe to inject it… if you really want to?",
+    "color": "light_red",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "RABBIT" }
+  },
+  {
     "id": "iv_mutagen_raptor",
     "copy-from": "iv_mutagen_flavor",
     "type": "COMESTIBLE",
@@ -388,6 +397,13 @@
     "use_action": { "type": "mutagen", "mutation_category": "RAPTOR" }
   },
   {
+    "id": "mutagen_rabbit",
+    "copy-from": "mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "rabbit mutagen",
+    "use_action": { "type": "mutagen", "mutation_category": "RABBIT" }
+  },
+  {
     "id": "mutagen_rat",
     "copy-from": "mutagen_flavor",
     "type": "COMESTIBLE",
@@ -462,7 +478,7 @@
     "comestible_type": "MED",
     "category": "mutagen",
     "name": "purifier smart shot",
-    "description": "An experimental stem cell treatment, offering limited control over which mutations are purified.  The liquid sloshes strangely inside of this syringe.",
+    "description": "An experimental stem cell treatment utilizing medical nanomachines, offering limited control over which mutations are purified.  The liquid sloshes strangely inside of this syringe.",
     "weight": "12 g",
     "volume": "10ml",
     "price": "12 kUSD",
@@ -492,9 +508,10 @@
     "description": "A deformed human fetus.  Eating this would be the most vile thing you can think of, and just might cause you to mutate.",
     "price": "0 cent",
     "price_postapoc": "0 cent",
-    "material": "hflesh",
+    "material": [ "hflesh" ],
     "volume": "250 ml",
-    "fun": -60
+    "fun": -60,
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -513,9 +530,10 @@
     "description": "A misshapen human arm.  Eating this would be incredibly disgusting and probably cause you to mutate.",
     "price": "0 cent",
     "price_postapoc": "0 cent",
-    "material": "hflesh",
+    "material": [ "hflesh" ],
     "volume": "2 L",
-    "fun": -20
+    "fun": -20,
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -534,9 +552,10 @@
     "description": "A malformed human leg.  This would be gross to eat, and probably cause mutations.",
     "price": "0 cent",
     "price_postapoc": "0 cent",
-    "material": "hflesh",
+    "material": [ "hflesh" ],
     "volume": "5 L",
-    "fun": -20
+    "fun": -20,
+    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -561,7 +580,7 @@
     "charges": 2,
     "flags": [ "NUTRIENT_OVERRIDE" ],
     "fun": -40,
-    "vitamins": [ [ "mutant_toxin", 2000 ] ]
+    "vitamins": [ [ "mutant_toxin", 2000 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -587,6 +606,32 @@
     "charges": 2,
     "flags": [ "NUTRIENT_OVERRIDE" ],
     "fun": -15,
-    "vitamins": [ [ "mutant_toxin", 2000 ] ]
+    "vitamins": [ [ "mutant_toxin", 2000 ], [ "junk_allergen", 1 ] ]
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "drink_sewersoda",
+    "name": "sewer soda",
+    "weight": "250 g",
+    "color": "yellow",
+    "addiction_type": "alcohol",
+    "stim": -20,
+    "container": "can_drink",
+    "comestible_type": "DRINK",
+    "symbol": "~",
+    "quench": -5,
+    "healthy": -33,
+    "addiction_potential": 5,
+    "calories": 52,
+    "description": "Improvised, uncontrolled mutagen.  It tastes bearable now that it's been loaded with sugar and carbonated, however still not 'enjoyable.'  It is sewage, after all.",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "material": [ "alcohol", "junk" ],
+    "volume": "500 ml",
+    "phase": "liquid",
+    "charges": 2,
+    "fun": -2,
+    "flags": [ "NUTRIENT_OVERRIDE" ],
+    "vitamins": [ [ "mutant_toxin", 2000 ], [ "junk_allergen", 3 ] ]
   }
 ]

@@ -33,7 +33,9 @@
       { "item": "bot_gasbomb_hack", "prob": 2 },
       { "item": "bot_haulerbot", "prob": 2 },
       { "item": "bot_turret_medium", "prob": 2 },
-      { "item": "bot_turret_longrange", "prob": 2 }
+      { "item": "bot_turret_longrange", "prob": 2 },
+      { "item": "bot_turret_antimateriel", "prob": 2 },
+      { "item": "bot_turret_mark19", "prob": 2 }
     ]
   },
   {

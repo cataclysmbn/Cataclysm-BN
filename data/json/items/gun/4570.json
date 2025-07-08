@@ -15,6 +15,7 @@
     "ammo": [ "4570" ],
     "dispersion": 200,
     "clip_size": 7,
+    "blackpowder_tolerance": 72,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "brass catcher", 1 ],
@@ -47,6 +48,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -15 },
     "dispersion": 180,
     "clip_size": 5,
+    "blackpowder_tolerance": 72,
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "barrel", 1 ],
@@ -76,6 +78,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 4 },
     "dispersion": 100,
     "clip_size": 1,
+    "blackpowder_tolerance": 96,
     "built_in_mods": [ "match_trigger" ],
     "valid_mod_locations": [
       [ "accessories", 2 ],
@@ -106,7 +109,7 @@
     "color": "yellow",
     "ammo": "4570",
     "dispersion": 400,
-    "blackpowder_tolerance": 80,
+    "blackpowder_tolerance": 72,
     "valid_mod_locations": [ [ "brass catcher", 1 ], [ "rail", 1 ], [ "sights", 1 ] ],
     "modes": [ [ "DEFAULT", "single", 1 ], [ "AUTO", "burst", 3 ] ],
     "//": "If speedloaders get fixed to allow topping off a partially-loaded gun, adding the more common Bruce feed (40 round feed tray topped off with 20-round blocks) would be an option.",

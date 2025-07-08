@@ -8,9 +8,6 @@ BN uses Lua 5.3.6 to run scripts and relies on sol2 v3.3.0 for bindings on C++ s
 
 ## C++ layout
 
-Lua build can be enabled by passing `LUA=1` to the Makefile, or enabling `LUA` build switch in CMake
-builds. Both msvc and android for simplicity always build with Lua **enabled**.
-
 ### Lua source files
 
 To simplify build setup and improve portability we bundle `Lua 5.3.6` source code in `src/lua/`
@@ -36,8 +33,7 @@ If you want to add new bindings, consider looking at existing examples in `src/c
 and reading relevant part of Sol2 docs.
 
 - `catalua.h` (and `catalua.cpp`) - Main Lua interface. It's the only header most of the codebase
-  will have to include, and it provides a public interface that works in both `LUA=1` and `LUA=0`
-  builds ( in builds without Lua, most of the functions there are no-op ).
+  will have to include, and it provides a public interface.
 - `catalua_sol.h` and `catalua_sol_fwd.h` - Wrappers for `sol/sol.hpp` and `sol/forward.hpp` with
   custom pragmas to make them compile.
 - `catalua_bindings*` - Game Lua bindings live here.

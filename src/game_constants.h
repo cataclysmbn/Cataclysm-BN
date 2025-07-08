@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_GAME_CONSTANTS_H
-#define CATA_SRC_GAME_CONSTANTS_H
 
 #include "units.h"
 
@@ -177,4 +175,4 @@ constexpr float morbidly_obese = 40.0f;
 } // namespace character_weight_category
 
 
-#endif // CATA_SRC_GAME_CONSTANTS_H
+

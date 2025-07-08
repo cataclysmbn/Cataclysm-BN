@@ -78,14 +78,7 @@
       ],
       [ [ "salt", 150 ] ],
       [ [ "leather", 105 ] ],
-      [
-        [ "rag", 18 ],
-        [ "lycra_patch", 18 ],
-        [ "nylon", 18 ],
-        [ "leather", 18 ],
-        [ "nomex", 18 ],
-        [ "neoprene", 18 ]
-      ]
+      [ [ "rag", 18 ], [ "nylon", 18 ], [ "leather", 18 ], [ "nomex", 18 ], [ "neoprene", 18 ] ]
     ]
   },
   {

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAPGEN_H
-#define CATA_SRC_MAPGEN_H
 
 #include <cstddef>
 #include <memory>
@@ -562,4 +560,4 @@ void circle( map *m, const ter_id &type, point, int rad );
 void circle_furn( map *m, const furn_id &type, point, int rad );
 void add_corpse( map *m, point );
 
-#endif // CATA_SRC_MAPGEN_H
+

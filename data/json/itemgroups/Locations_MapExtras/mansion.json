@@ -812,6 +812,7 @@
       [ "hockey_stick", 45 ],
       [ "golf_club", 80 ],
       [ "roller_blades", 20 ],
+      [ "folding_skateboard", 10 ],
       [ "rollerskates", 10 ],
       [ "longbow", 5 ],
       [ "compositebow", 5 ],
@@ -1172,7 +1173,8 @@
     "subtype": "distribution",
     "items": [
       [ "broom", 40 ],
-      [ "mop", 40 ],
+      [ "mop", 25 ],
+      [ "mop_folded", 15 ],
       { "item": "ammonia", "prob": 24, "charges-min": 1 },
       [ "chem_hydrogen_peroxide", 20 ],
       [ "boots_rubber", 20 ],

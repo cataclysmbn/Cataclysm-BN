@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_TYPE_ID_IMPLEMENT_H
-#define CATA_SRC_TYPE_ID_IMPLEMENT_H
 
 /**
  * Macros with boilerplate code for implementing string_id<T> and int_id<T>
@@ -61,4 +59,4 @@
     IMPLEMENT_INT_STRING_ID_CONVERSIONS( T, factory )           \
 
 
-#endif // CATA_SRC_TYPE_ID_IMPLEMENT_H
+

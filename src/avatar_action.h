@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_AVATAR_ACTION_H
-#define CATA_SRC_AVATAR_ACTION_H
 
 #include <optional>
 
@@ -110,4 +108,4 @@ void plthrow( avatar &you, item *loc,
 void use_item( avatar &you, item *loc = nullptr );
 } // namespace avatar_action
 
-#endif // CATA_SRC_AVATAR_ACTION_H
+

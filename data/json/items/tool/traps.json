@@ -2,7 +2,7 @@
   {
     "id": "beartrap",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "bear trap" },
     "description": "This is a spring-loaded pair of steel jaws connected to a sensitive pressure plate.  Use it to set it on the ground, creating a trap that will ensnare and damage anything that steps on it.  If you are carrying a shovel, you will have the option of burying it.",
     "weight": "14000 g",
@@ -29,7 +29,7 @@
   {
     "id": "blade_trap",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "blade trap" },
     "description": "This is a machete attached laterally to a motor, with a tripwire controlling its throttle.  When the tripwire is pulled, the blade is swung around with great force.  The trap forms a 3x3 area of effect.",
     "weight": "2381 g",
@@ -54,7 +54,7 @@
   {
     "id": "board_trap",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "nailboard trap" },
     "description": "These are several pieces of wood nailed together, with some nails sticking straight up.  If an unsuspecting victim steps on it, they'll get nails through the foot.",
     "weight": "2041 g",
@@ -79,7 +79,7 @@
   {
     "id": "boobytrap",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "booby trap" },
     "description": "This is a crude explosive device triggered by a piece of string.  Use it to set up and watch some poor bastard trigger it.",
     "weight": "586 g",
@@ -101,7 +101,7 @@
   {
     "id": "bubblewrap",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "bubble wrap" },
     "description": "This is a sheet of plastic covered with air-filled bubbles.  Use it to set it on the ground, creating a trap that will warn you with noise when something steps on it.",
     "weight": "6 g",
@@ -123,7 +123,7 @@
   {
     "id": "caltrops",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str_sp": "loose caltrops" },
     "description": "These are small metal objects covered with many sharp points.  If an unsuspecting victim steps on one, they'll get a spine through the foot.",
     "weight": "264 g",
@@ -147,7 +147,7 @@
   {
     "id": "caltrops_glass",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str_sp": "loose glass caltrops" },
     "description": "These are glass shards glued together to expose their sharp edges.  If an unsuspecting victim steps on one, they'll get cut.",
     "weight": "264 g",
@@ -170,7 +170,7 @@
   {
     "id": "crossbow_trap",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "crossbow trap" },
     "description": "This is a simple tripwire, which is attached to the trigger of a loaded crossbow.  When pulled, the crossbow fires.  Only a single round can be used, after which the trap is disabled.",
     "weight": "1772 g",
@@ -193,7 +193,7 @@
   {
     "id": "landmine",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "land mine" },
     "description": "This is a military anti-personnel mine that is triggered when stepped upon.",
     "weight": "2360 g",
@@ -218,7 +218,7 @@
   {
     "id": "shotgun_trap",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "double-barreled shotgun trap" },
     "description": "This is a simple tripwire is attached to the trigger of a loaded double-barreled shotgun.  When pulled, the shotgun fires, discharging both barrels into the target.",
     "weight": "3500 g",
@@ -257,7 +257,7 @@
   {
     "id": "tripwire",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "tripwire trap" },
     "description": "This is some thin strong cable with some affixing tools on either end.  A tripwire trap must be placed across a doorway or other thin passage.  Its purpose is to trip up bypassers, causing them to stumble and possibly hurt themselves slightly.",
     "weight": "40 g",
@@ -280,7 +280,7 @@
   {
     "id": "can_alarm_trap",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "makeshift perimeter alarm" },
     "description": "This is a set of empty cans used as makeshift noisemakers, strung up across a doorway or other thin passage.  It will make noise when activated to alert you of intruders, but is otherwise harmless.",
     "weight": "120 g",
@@ -304,7 +304,7 @@
   {
     "id": "glass_shard_trap",
     "type": "GENERIC",
-    "category": "other",
+    "category": "deployables",
     "symbol": ",",
     "color": "light_cyan",
     "name": { "str": "glass shard trap" },

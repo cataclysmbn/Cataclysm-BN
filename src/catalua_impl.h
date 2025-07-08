@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATALUA_IMPL_H
-#define CATA_SRC_CATALUA_IMPL_H
 
 #include "calendar.h"
 #include "catalua_sol.h"
@@ -66,4 +64,4 @@ bool compare_tables( sol::table a, sol::table b );
  */
 sol::object find_equivalent_key( const sol::table &t, sol::object desired_key );
 
-#endif // CATA_SRC_CATALUA_IMPL_H
+

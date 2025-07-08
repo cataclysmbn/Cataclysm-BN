@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_PICKUP_H
-#define CATA_SRC_PICKUP_H
 
 #include <vector>
 
@@ -50,4 +48,4 @@ int cost_to_move_item( const Character &who, const item &it );
 detached_ptr<item> handle_spillable_contents( Character &c, detached_ptr<item> &&it, map &m );
 } // namespace pickup
 
-#endif // CATA_SRC_PICKUP_H
+

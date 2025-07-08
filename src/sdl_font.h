@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_SDL_FONT_H
-#define CATA_SRC_SDL_FONT_H
 
 #if defined(TILES)
 
@@ -171,4 +169,4 @@ class FontFallbackList : public Font
 
 #endif // TILES
 
-#endif // CATA_SRC_SDL_FONT_H
+

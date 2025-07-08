@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_RECIPE_H
-#define CATA_SRC_RECIPE_H
 
 #include <cstddef>
 #include <functional>
@@ -163,21 +161,6 @@ class recipe
         /** Returns a non-empty string describing an inconsistency (if any) in the recipe. */
         std::string get_consistency_error() const;
 
-        bool is_blueprint() const;
-        const std::string &get_blueprint() const;
-        const translation &blueprint_name() const;
-        const std::vector<itype_id> &blueprint_resources() const;
-        const std::vector<std::pair<std::string, int>> &blueprint_provides() const;
-        const std::vector<std::pair<std::string, int>> &blueprint_requires() const;
-        const std::vector<std::pair<std::string, int>> &blueprint_excludes() const;
-        /**
-         * Calculate blueprint requirements according to changed terrain and furniture
-         * tiles, then check the calculated requirements against blueprint requirements
-         * specified in JSON.  If there's any inconsistency, it issues a debug message.
-         * This is only used in unit tests so as to speed up data loading in gameplay.
-         */
-        void check_blueprint_requirements();
-
         bool hot_result() const;
 
         bool dehydrate_result() const;
@@ -230,19 +213,13 @@ class recipe
         double batch_rscale = 0.0;
         int batch_rsize = 0; // minimum batch size to needed to reach batch_rscale
         int result_mult = 1; // used by certain batch recipes that create more than one stack of the result
-        std::string blueprint;
+
         translation bp_name;
         std::vector<itype_id> bp_resources;
         std::vector<std::pair<std::string, int>> bp_provides;
         std::vector<std::pair<std::string, int>> bp_requires;
         std::vector<std::pair<std::string, int>> bp_excludes;
 
-        /** Blueprint requirements to be checked in unit test */
-        bool has_blueprint_needs = false;
-        bool check_blueprint_needs = false;
-        int time_blueprint = 0;
-        std::map<skill_id, int> skills_blueprint;
-        std::vector<std::pair<requirement_id, int>> reqs_blueprint;
 };
 
-#endif // CATA_SRC_RECIPE_H
+

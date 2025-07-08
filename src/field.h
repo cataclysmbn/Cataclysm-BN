@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_FIELD_H
-#define CATA_SRC_FIELD_H
 
 #include <map>
 #include <string>
@@ -201,4 +199,4 @@ class field
         field_type_id _displayed_field_type;
 };
 
-#endif // CATA_SRC_FIELD_H
+

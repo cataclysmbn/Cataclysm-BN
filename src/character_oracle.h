@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CHARACTER_ORACLE_H
-#define CATA_SRC_CHARACTER_ORACLE_H
 
 #include "behavior.h"
 #include "behavior_oracle.h"
@@ -32,4 +30,4 @@ class character_oracle_t : public oracle_t
 };
 
 } //namespace behavior
-#endif // CATA_SRC_CHARACTER_ORACLE_H
+

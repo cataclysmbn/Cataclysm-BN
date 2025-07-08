@@ -32,6 +32,7 @@
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
     "upgrades": { "half_life": 28, "into": "mon_zombie_brute_winged" },
+    "path_settings": { "max_dist": 45, "max_length": 15, "avoid_traps": true, "allow_open_doors": false, "bash_strength": 5 },
     "flags": [
       "SEES",
       "HEARS",
@@ -44,8 +45,8 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "FILTHY",
       "HIT_AND_RUN",
+      "PATH_AVOID_DANGER_1",
       "FLIES"
     ],
     "//": "In the future, it would be nice if these guys could be resistant to fall damage."
@@ -88,6 +89,7 @@
     "death_drops": "default_zombie_death_drops",
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_fiend",
+    "path_settings": { "max_dist": 45, "max_length": 15, "avoid_traps": true, "allow_open_doors": false, "bash_strength": 8 },
     "flags": [
       "SEES",
       "HEARS",
@@ -100,8 +102,8 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "FILTHY",
       "HIT_AND_RUN",
+      "PATH_AVOID_DANGER_1",
       "FLIES"
     ]
   },
@@ -131,6 +133,7 @@
     "harvest": "zombie",
     "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_RAPTOR_UPGRADES" },
     "special_attacks": [ { "id": "impale", "damage_max_instance": [ { "damage_type": "stab", "amount": 15, "armor_multiplier": 0.6 } ] } ],
+    "path_settings": { "max_dist": 45, "max_length": 15, "avoid_traps": true, "allow_open_doors": false, "bash_strength": 3 },
     "death_function": [ "NORMAL" ],
     "flags": [
       "SEES",
@@ -142,8 +145,8 @@
       "BASHES",
       "GROUP_BASH",
       "NO_BREATHE",
-      "FILTHY",
       "HIT_AND_RUN",
+      "PATH_AVOID_DANGER_1",
       "SWARMS",
       "FLIES"
     ]

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATALUA_BINDINGS_UTILS_H
-#define CATA_SRC_CATALUA_BINDINGS_UTILS_H
 
 #include "catalua_luna.h"
 #include "json.h"
@@ -21,6 +19,10 @@ void reg_serde_functions( sol::usertype<T> &ut )
 #define SET_MEMB(prop_name) luna::set( ut, #prop_name, &UT_CLASS::prop_name )
 // SET MEMBer with Name
 //#define SET_MEMB_N(prop_name, lua_name_str) luna::set( ut, lua_name_str, &UT_CLASS::prop_name )
+// SET MEMBer, Read-Only
+#define SET_MEMB_RO(prop_name) luna::set( ut, #prop_name, sol::readonly( &UT_CLASS::prop_name ) )
+// SET MEMBer with Name, Read-Only
+#define SET_MEMB_N_RO(prop_name, lua_name_str) luna::set( ut, lua_name_str, sol::readonly( &UT_CLASS::prop_name ) )
 // SET FX (function)
 #define SET_FX(func_name) luna::set_fx ( ut, #func_name, &UT_CLASS::func_name)
 // SET FX (function) with Type
@@ -32,4 +34,4 @@ void reg_serde_functions( sol::usertype<T> &ut )
 #define SET_FX_N_T(func_name, lua_name_str, func_type) luna::set_fx( ut, lua_name_str, \
         sol::resolve< func_type >( &UT_CLASS::func_name))
 
-#endif // CATA_SRC_CATALUA_BINDINGS_UTILS_H
+

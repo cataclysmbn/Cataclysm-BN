@@ -29,6 +29,7 @@
       { "item": "trailmap", "prob": 20 },
       { "item": "file", "prob": 10 },
       { "item": "touristmap", "prob": 20 },
+      { "item": "regionaltransportmap", "prob": 20 },
       { "item": "restaurantmap", "prob": 20 },
       { "item": "money_bundle", "prob": 55 },
       { "item": "gold_watch", "prob": 5 },
@@ -56,6 +57,7 @@
       [ "bottle_glass", 10 ],
       [ "flask_glass", 10 ],
       [ "pipe_glass", 10 ],
+      [ "pipe_glass_bong", 10 ],
       [ "fish_bowl", 1 ],
       [ "glass_sheet", 5 ],
       [ "jar_3l_glass", 15 ],
@@ -202,21 +204,20 @@
       [ "scimitar_inferior", 30 ],
       [ "mace_inferior", 30 ],
       [ "morningstar_inferior", 30 ],
-      [ "trex_gun", 1 ],
       [ "combination_gun", 1 ],
-      [ "700nx", 1 ],
-      [ "700nx_casing", 1 ],
       [ "moss_brownie", 5 ],
       [ "cop_38", 5 ],
       [ "cigar", 5 ],
       [ "sword_cane", 5 ],
       [ "hollow_cane", 5 ],
       [ "advanced_ecig", 5 ],
+      { "item": "light_battery_cell", "charges": 100, "container-item": "dab_pen", "prob": 5 },
       [ "television", 10 ],
       [ "microwave", 5 ],
       [ "multi_cooker", 1 ],
       [ "pastaextruder", 8 ],
       [ "can_sealer", 5 ],
+      [ "folding_wagon", 5 ],
       [ "knuckle_brass", 15 ],
       [ "platinum_small", 10 ],
       [ "foodperson_mask", 1 ],
@@ -418,6 +419,7 @@
       [ "char_smoker", 25 ],
       [ "lawn_dart", 10 ],
       [ "dehydrator", 15 ],
+      [ "soda_machine", 15 ],
       [ "pickelhaube", 50 ],
       [ "well_pump", 2 ],
       [ "firehelmet", 10 ],
@@ -443,8 +445,6 @@
       [ "flotation_vest", 1 ],
       [ "quiver", 2 ],
       [ "quiver_large", 1 ],
-      [ "raging_bull", 1 ],
-      [ "sw_500", 1 ],
       [ "wristwatch", 15 ],
       [ "pocketwatch", 20 ],
       [ "umbrella", 5 ],
@@ -462,6 +462,7 @@
       [ "boots_hiking", 10 ],
       [ "roller_blades", 20 ],
       [ "rollerskates", 10 ],
+      [ "folding_skateboard", 10 ],
       [ "roller_shoes_off", 10 ],
       [ "runner_bag", 5 ],
       [ "gloves_tactical", 1 ],
@@ -476,6 +477,7 @@
       [ "atomic_light", 1 ],
       [ "atomic_lamp", 1 ],
       [ "atomic_coffeepot", 1 ],
+      [ "atomic_soda_machine", 1 ],
       [ "flaregun", 10 ],
       [ "signal_flare", 15 ],
       [ "rm120c", 2 ],
@@ -599,6 +601,7 @@
       [ "silver_medal", 2 ],
       [ "gold_medal", 1 ],
       [ "bionic_scanner", 5 ],
+      [ "gps_device", 5 ],
       { "group": "tinware", "prob": 10 },
       [ "shield_riot", 5 ],
       [ "pirate_flag", 5 ]
@@ -803,6 +806,7 @@
       { "item": "roadmap", "prob": 10 },
       { "item": "trailmap", "prob": 20 },
       { "item": "touristmap", "prob": 5 },
+      { "item": "regionaltransportmap", "prob": 5 },
       { "item": "restaurantmap", "prob": 5 },
       { "item": "magnifying_glass", "prob": 25 },
       { "item": "glasses_reading", "prob": 50 },
@@ -843,6 +847,7 @@
       { "group": "kids_books", "prob": 215 },
       { "item": "novel_pulp", "prob": 30 },
       { "item": "folding_bicycle", "prob": 3 },
+      { "item": "folding_skateboard", "prob": 3 },
       { "item": "sunglasses", "prob": 25 },
       { "item": "cowboy_hat", "prob": 25 },
       { "item": "mp3", "prob": 35 },
@@ -1006,6 +1011,7 @@
       { "item": "syringe", "prob": 20 },
       { "item": "meth", "prob": 10 },
       { "item": "heroin", "prob": 5 },
+      { "item": "sizzurp", "prob": 5 },
       { "item": "mag_porn", "prob": 35 },
       { "item": "hairpin", "prob": 5 },
       { "item": "purse", "prob": 15 }
@@ -1087,8 +1093,14 @@
           { "item": "bike_rack", "prob": 20 },
           { "item": "small_storage_battery", "prob": 10 },
           { "item": "alternator_bicycle", "prob": 10 },
+          { "item": "foldable_solar_panel", "prob": 5 },
           { "item": "folding_bicycle", "prob": 10 },
-          { "item": "roller_blades", "prob": 10 }
+          { "item": "roller_blades", "prob": 10 },
+          { "item": "folding_skateboard", "prob": 10 },
+          { "item": "folding_wagon", "prob": 10 },
+          { "item": "wheel_skateboard", "prob": 5 },
+          { "item": "wheel_mount_skateboard", "prob": 5 },
+          { "item": "frame_wood_deck", "prob": 5 }
         ]
       },
       {
@@ -1595,7 +1607,8 @@
       [ "dehydrator", 30 ],
       [ "vac_sealer", 45 ],
       [ "forge", 5 ],
-      [ "atomic_coffeepot", 2 ]
+      [ "atomic_coffeepot", 2 ],
+      [ "atomic_soda_machine", 2 ]
     ]
   },
   {
@@ -1913,5 +1926,11 @@
       [ "recipe_fauxfur", 5 ],
       [ "textbook_tailor", 3 ]
     ]
+  },
+  {
+    "id": "smoke_shop_clothing",
+    "type": "item_group",
+    "//": "only this for now, but when we get more clothing we should probably add some more flavor",
+    "items": [ [ "hoodie_drugrug", 100 ], [ "tshirt_tour", 20 ] ]
   }
 ]

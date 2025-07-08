@@ -38,7 +38,7 @@ void reset_mod_tileset()
 
 bool mod_tileset::is_compatible( const std::string &tileset_id ) const
 {
-    const auto iter = std::find( compatibility.begin(), compatibility.end(), tileset_id );
+    const auto iter = std::ranges::find( compatibility, tileset_id );
     return iter != compatibility.end();
 }
 

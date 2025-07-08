@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DIALOGUE_H
-#define CATA_SRC_DIALOGUE_H
 
 #include <functional>
 #include <set>
@@ -439,4 +437,4 @@ class json_talk_topic
 void unload_talk_topics();
 void load_talk_topic( const JsonObject &jo );
 
-#endif // CATA_SRC_DIALOGUE_H
+

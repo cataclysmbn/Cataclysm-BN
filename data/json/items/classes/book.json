@@ -25,6 +25,7 @@
     "symbol": "?",
     "color": "green",
     "use_action": "MA_MANUAL",
-    "book_data": { "time": 10, "intelligence": 9 }
+    "book_data": { "time": 10, "intelligence": 9 },
+    "flags": [ "DESTROY_ON_DECHARGE" ]
   }
 ]

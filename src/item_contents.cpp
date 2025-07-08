@@ -1,5 +1,6 @@
 #include "item_contents.h"
 
+#include <algorithm>
 #include <limits>
 #include <algorithm>
 #include <memory>
@@ -121,7 +122,7 @@ void item_contents::set_item_defaults()
 void item_contents::migrate_item( item &obj, const std::set<itype_id> &migrations )
 {
     for( const itype_id &c : migrations ) {
-        if( std::none_of( items.begin(), items.end(), [&]( const item * const & e ) {
+        if( std::ranges::none_of( items, [&]( const item * const & e ) {
         return e->typeId() == c;
         } ) ) {
             obj.put_in( item::spawn( c, obj.birthday() ) );
@@ -131,7 +132,7 @@ void item_contents::migrate_item( item &obj, const std::set<itype_id> &migration
 
 bool item_contents::has_any_with( const std::function<bool( const item &it )> &filter ) const
 {
-    return std::any_of( items.begin(), items.end(), [&filter]( const item * const & it ) -> bool{ return filter( *it );} );
+    return std::ranges::any_of( items, [&filter]( const item * const & it ) -> bool{ return filter( *it );} );
 }
 
 bool item_contents::stacks_with( const item_contents &rhs ) const
@@ -144,8 +145,8 @@ bool item_contents::stacks_with( const item_contents &rhs ) const
 
 item *item_contents::get_item_with( const std::function<bool( const item &it )> &filter )
 {
-    auto bomb_it = std::find_if( items.begin(),
-                                 items.end(), [&filter]( const item * const & it ) -> bool{ return filter( *it );} );
+    auto bomb_it = std::ranges::find_if( items,
+                                         [&filter]( const item * const & it ) -> bool{ return filter( *it );} );
     if( bomb_it == items.end() ) {
         return nullptr;
     } else {
@@ -160,8 +161,8 @@ const std::vector<item *> &item_contents::all_items_top() const
 
 detached_ptr<item> item_contents::remove_top( item *it )
 {
-    auto iter = std::find_if( items.begin(),
-    items.end(), [&it]( item *&against ) {
+    auto iter = std::ranges::find_if( items,
+    [&it]( item *&against ) {
         return against == it;
     } );
     detached_ptr<item> ret;

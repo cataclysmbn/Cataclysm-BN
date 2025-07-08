@@ -53,11 +53,6 @@
     "obsolete": true
   },
   {
-    "type": "recipe",
-    "result": "flamethrower_simple",
-    "obsolete": true
-  },
-  {
     "id": "wheel_steerable",
     "copy-from": "wheel",
     "type": "vehicle_part",
@@ -194,8 +189,7 @@
     "price": "0 cent",
     "material": "cotton",
     "symbol": ",",
-    "color": "white",
-    "use_action": "WASH_HARD_ITEMS"
+    "color": "white"
   },
   {
     "id": "fault_gun_clogged",
@@ -329,35 +323,6 @@
     }
   },
   {
-    "type": "material",
-    "id": "lycra",
-    "name": "Lycra",
-    "//": "not actually pure Lycra, but poly/nylon and Lycra blend",
-    "density": 2,
-    "specific_heat_liquid": 1.7,
-    "specific_heat_solid": 1.7,
-    "latent_heat": 27,
-    "soft": true,
-    "reinforces": true,
-    "bash_resist": 2,
-    "cut_resist": 2,
-    "bullet_resist": 2,
-    "acid_resist": 9,
-    "fire_resist": 2,
-    "elec_resist": 2,
-    "chip_resist": 6,
-    "repaired_with": "lycra_patch",
-    "salvaged_into": "lycra_patch",
-    "dmg_adj": [ "ripped", "torn", "shredded", "tattered" ],
-    "bash_dmg_verb": "ripped",
-    "cut_dmg_verb": "cut",
-    "burn_data": [
-      { "fuel": 1, "smoke": 2, "burn": 1, "volume_per_turn": "650 ml" },
-      { "fuel": 1, "smoke": 3, "burn": 3 },
-      { "fuel": 1, "smoke": 5, "burn": 5 }
-    ]
-  },
-  {
     "type": "terrain",
     "//": "Obsoleted in favor of a furniture version.",
     "id": "t_water_dispenser",
@@ -450,5 +415,11 @@
       "//": "destroy_threshold equal to str_min instead of str_max due to delicate electronics",
       "ranged": { "reduction": [ 16, 32 ], "destroy_threshold": 32, "block_unaimed_chance": "50%" }
     }
+  },
+  {
+    "type": "weapon_category",
+    "id": "HAND_AXES",
+    "name": "Hand Axes",
+    "//": "Axe with a short handle, typically wielded in one hand, ocassionally thrown."
   }
 ]

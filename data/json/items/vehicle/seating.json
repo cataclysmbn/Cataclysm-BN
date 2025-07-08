@@ -31,7 +31,7 @@
     "name": { "str": "saddle" },
     "description": "A leather-covered seat designed to be straddled.",
     "weight": "300 g",
-    "material": [ "plastic", "aluminum" ],
+    "material": [ "plastic", "aluminum", "leather" ],
     "volume": "1250 ml",
     "bashing": 2,
     "price": "25 USD",

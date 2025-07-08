@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UNITS_UTILITY_H
-#define CATA_SRC_UNITS_UTILITY_H
 
 #include "units.h"
 
@@ -115,4 +113,4 @@ double convert_volume( int volume );
  */
 double convert_volume( int volume, int *out_scale );
 
-#endif // CATA_SRC_UNITS_UTILITY_H
+

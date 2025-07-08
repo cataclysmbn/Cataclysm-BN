@@ -42,10 +42,9 @@
     "range": 10,
     "dispersion": 450,
     "durability": 10,
-    "handling": 40,
     "modes": [ [ "DEFAULT", "burst", 4 ] ],
     "clip_size": 100,
-    "reload": 0,
+    "reload": 500,
     "loudness": 5,
     "valid_mod_locations": [ [ "sling", 1 ] ]
   }

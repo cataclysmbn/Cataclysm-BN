@@ -27,7 +27,7 @@
     "luminance": 0,
     "harvest": "zombie_tooth_leather",
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "SWIMS", "AQUATIC", "POISON", "NO_BREATHE", "REVIVES", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "SWIMS", "AQUATIC", "POISON", "NO_BREATHE", "REVIVES" ]
   },
   {
     "id": "mon_zombie_dog",
@@ -58,7 +58,7 @@
     "special_attacks": [ { "type": "bite", "cooldown": 5 } ],
     "death_function": [ "NORMAL" ],
     "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_DOG_UPGRADE" },
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES" ]
   },
   {
     "id": "mon_dog_skeleton",
@@ -90,7 +90,7 @@
     "harvest": "mr_bones",
     "special_attacks": [ { "type": "bite", "cooldown": 5 } ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "NO_BREATHE", "HARDTOSHOOT", "REVIVES", "POISON", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "NO_BREATHE", "HARDTOSHOOT", "REVIVES", "POISON" ]
   },
   {
     "id": "mon_dog_zombie_cop",
@@ -124,7 +124,7 @@
     "special_attacks": [ { "type": "bite", "cooldown": 5 } ],
     "death_drops": { "subtype": "collection", "groups": [ [ "dog_cop", 40 ] ], "//": "40% chance of an item from group dog_cop" },
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON" ]
   },
   {
     "id": "mon_dog_zombie_rot",
@@ -154,7 +154,7 @@
     "harvest": "zombie",
     "special_attacks": [ { "type": "bite", "cooldown": 2, "accuracy": 4, "no_infection_chance": 12 } ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON" ]
   },
   {
     "id": "mon_zolf",
@@ -185,7 +185,7 @@
     "anger_triggers": [ "PLAYER_CLOSE", "HURT" ],
     "fear_triggers": [ "FIRE" ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "KEENNOSE", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "KEENNOSE", "BASHES", "POISON", "NO_BREATHE", "REVIVES" ]
   },
   {
     "id": "mon_zombear",
@@ -219,7 +219,7 @@
     "anger_triggers": [ "PLAYER_CLOSE", "HURT" ],
     "fear_triggers": [ "FIRE" ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON" ]
   },
   {
     "id": "mon_zombie_pig",
@@ -251,20 +251,7 @@
     "anger_triggers": [ "PLAYER_WEAK", "PLAYER_CLOSE" ],
     "fear_triggers": [ "FIRE" ],
     "death_function": [ "NORMAL" ],
-    "flags": [
-      "SEES",
-      "HEARS",
-      "SMELLS",
-      "STUMBLES",
-      "WARM",
-      "KEENNOSE",
-      "BLEED",
-      "BASHES",
-      "POISON",
-      "NO_BREATHE",
-      "REVIVES",
-      "FILTHY"
-    ],
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "KEENNOSE", "BLEED", "BASHES", "POISON", "NO_BREATHE", "REVIVES" ],
     "//": "1d8->2d5, minor bonus over 1d9"
   },
   {
@@ -296,7 +283,7 @@
     "anger_triggers": [ "PLAYER_CLOSE", "HURT" ],
     "fear_triggers": [ "FIRE" ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "FILTHY", "SWIMS" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "SWIMS" ]
   },
   {
     "id": "mon_zoose",
@@ -329,7 +316,7 @@
     "anger_triggers": [ "PLAYER_CLOSE", "HURT" ],
     "fear_triggers": [ "FIRE" ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES" ]
   },
   {
     "id": "mon_zougar",
@@ -373,8 +360,70 @@
       "BASHES",
       "POISON",
       "NO_BREATHE",
-      "REVIVES",
-      "FILTHY"
+      "REVIVES"
     ]
+  },
+  {
+    "id": "mon_zow",
+    "type": "MONSTER",
+    "name": { "str": "zombie cow" },
+    "description": "Once a placid cow, this leathery horror stumbles and shudders, its pulsing black eyes scanning for prey beneath wicked horns.  It is big and heavy and murderous.",
+    "looks_like": "mon_cow",
+    "default_faction": "zombie",
+    "bodytype": "dog",
+    "categories": [ "CLASSIC" ],
+    "species": [ "ZOMBIE" ],
+    "volume": "680 L",
+    "weight": "680 kg",
+    "hp": 166,
+    "speed": 104,
+    "material": [ "flesh" ],
+    "symbol": "Z",
+    "color": "green",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 6,
+    "melee_dice": 2,
+    "melee_dice_sides": 10,
+    "melee_cut": 6,
+    "armor_bash": 3,
+    "armor_cut": 3,
+    "vision_day": 30,
+    "vision_night": 3,
+    "anger_triggers": [ "PLAYER_CLOSE", "PLAYER_WEAK" ],
+    "death_drops": { "subtype": "collection", "groups": [ [ "cow", 25 ] ], "//": "25% chance of an item from group cow" },
+    "death_function": [ "NORMAL" ],
+    "harvest": "zombie_leather",
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "POISON", "NO_BREATHE", "REVIVES" ]
+  },
+  {
+    "id": "mon_zeer",
+    "type": "MONSTER",
+    "name": { "str": "woodland wight" },
+    "looks_like": "mon_deer",
+    "description": "Pale, stumbling white-tailed deer with blackened eyes and drooling slime down its neck.  Its legs twist and bend in strange, haphazard directions, but with unnatural strength and speed.  Preys on coyotes, wolves, and giant spider mutants.",
+    "default_faction": "zombie",
+    "bodytype": "horse",
+    "categories": [ "CLASSIC" ],
+    "species": [ "ZOMBIE" ],
+    "volume": "87 L",
+    "weight": "87 kg",
+    "hp": 100,
+    "speed": 240,
+    "material": [ "flesh" ],
+    "symbol": "Z",
+    "color": "green",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 3,
+    "melee_dice": 3,
+    "melee_dice_sides": 3,
+    "melee_cut": 0,
+    "armor_bash": 1,
+    "armor_cut": 3,
+    "vision_night": 15,
+    "death_function": [ "NORMAL" ],
+    "harvest": "zombie_leather",
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "POISON", "NO_BREATHE", "REVIVES" ]
   }
 ]

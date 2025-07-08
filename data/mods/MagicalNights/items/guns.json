@@ -1,0 +1,70 @@
+[
+  {
+    "type": "AMMO",
+    "copy-from": "45_acp",
+    "id": "bulette_45_acp",
+    "name": "Bulette .45 ACP",
+    "count": 6,
+    "stack_size": 6,
+    "color": "red",
+    "description": "A .45 ACP round with what looks like a small bulette pearl as the projectile.  While the round doesn't seem much better than a standard FMJ round at the moment, you get the feeling that it's hiding some special properties deep down.",
+    "proportional": { "damage": { "damage_type": "bullet", "amount": 1.1 }, "dispersion": 0.9 }
+  },
+  {
+    "type": "AMMO",
+    "copy-from": "357mag_fmj",
+    "id": "bulette_357mag",
+    "name": "Bulette .357 Magnum",
+    "color": "red",
+    "count": 6,
+    "stack_size": 6,
+    "description": "A .357 Magnum round with what looks like a small bulette pearl as the projectile.  While the round doesn't seem much better than a standard FMJ round at the moment, you get the feeling that it's hiding some special properties deep down.  Some of this specialness is already displayed with the fact that it can even be used in guns that only take .38 special otherwise.",
+    "proportional": { "damage": { "damage_type": "bullet", "amount": 1.1 }, "dispersion": 0.9 },
+    "//": "Half the number of guns take .357 magnum as take .38 at the moment. Besides, cute lil bonus already",
+    "ammo_type": "38"
+  },
+  {
+    "type": "AMMO",
+    "copy-from": "40fmj",
+    "id": "bulette_40fmj",
+    "name": "Bulette .40 S&W",
+    "color": "red",
+    "count": 6,
+    "stack_size": 6,
+    "description": "A .40 Smith and Wesson round with what looks like a small bulette pearl as the projectile.  While the round doesn't seem much better than a standard FMJ round at the moment, you get the feeling that it's hiding some special properties deep down.",
+    "proportional": { "damage": { "damage_type": "bullet", "amount": 1.1 }, "dispersion": 0.9 }
+  },
+  {
+    "type": "AMMO",
+    "copy-from": "45_acp",
+    "id": "bulette_45_acp_enhanced",
+    "name": "Bulette .45 ACP Enhanced",
+    "color": "red",
+    "description": "A .45 ACP round with what looks like a small bulette pearl as the projectile.  The essence of Earth infused into the bullet allows it to crumple armor with ease",
+    "proportional": { "dispersion": 0.9 },
+    "//": "Damage specified manually because idk how to edit the armor pen and multiplier in particular otherwise",
+    "damage": { "damage_type": "bullet", "amount": 45, "armor_penetration": 999, "armor_multiplier": 0.1 }
+  },
+  {
+    "type": "AMMO",
+    "copy-from": "357mag_fmj",
+    "id": "bulette_357mag_enhanced",
+    "name": "Bulette .357 Magnum Enhanced",
+    "color": "red",
+    "description": "A .357 Magnum round with what looks like a small bulette pearl as the projectile.  The Air energy infused into it allows it to act as practically a pocket-sniper.",
+    "proportional": { "damage": { "damage_type": "bullet", "amount": 1.5 }, "dispersion": 0.5 },
+    "range": 50,
+    "//": "Half the number of guns take .357 magnum as take .38 at the moment.",
+    "ammo_type": "38"
+  },
+  {
+    "type": "AMMO",
+    "copy-from": "40fmj",
+    "id": "bulette_40fmj_enhanced",
+    "name": "Bulette .40 S&W Enhanced",
+    "color": "red",
+    "description": "A .40 Smith and Wesson round with what looks like a small bulette pearl as the projectile.  The Fire imbued into it has made it quite the spicy round, dealing large amounts of damage as well as having some incendiary properties.  Not terribly good against armor though.",
+    "damage": { "damage_type": "bullet", "amount": 100, "armor_penetration": 8, "armor_multiplier": 2.5 },
+    "effects": [ "IGNITE" ]
+  }
+]

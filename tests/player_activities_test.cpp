@@ -13,7 +13,7 @@
 #include "point.h"
 #include "player_activity.h"
 
-static const activity_id ACT_NULL( "ACT_NULL" );
+static const activity_id ACT_NULL = activity_id::NULL_ID();
 static const activity_id ACT_BOLTCUTTING( "ACT_BOLTCUTTING" );
 static const activity_id ACT_HACKSAW( "ACT_HACKSAW" );
 static const activity_id ACT_OXYTORCH( "ACT_OXYTORCH" );
@@ -143,7 +143,7 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             WHEN( "terrain has a duration of 10 seconds" ) {
                 REQUIRE( ter_test_t_boltcut1->boltcut->duration() == 10_seconds );
                 THEN( "moves_left is equal to 10 seconds" ) {
-                    CHECK( dummy.activity->moves_left == to_moves<int>( 10_seconds ) );
+                    CHECK( dummy.activity->get_moves_left() == to_moves<int>( 10_seconds ) );
                 }
             }
         }
@@ -162,7 +162,7 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             WHEN( "furniture has a duration of 5 seconds" ) {
                 REQUIRE( furn_t_test_f_boltcut1->boltcut->duration() == 5_seconds );
                 THEN( "moves_left is equal to 5 seconds" ) {
-                    CHECK( dummy.activity->moves_left == to_moves<int>( 5_seconds ) );
+                    CHECK( dummy.activity->get_moves_left() == to_moves<int>( 5_seconds ) );
                 }
             }
         }
@@ -197,7 +197,8 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
                         dummy.moves = dummy.get_speed();
                         dummy.activity->do_turn( dummy );
                         CHECK( dummy.activity->id() == ACT_BOLTCUTTING );
-                        CHECK( dummy.activity->moves_left < to_moves<int>( furn_t_test_f_boltcut3->boltcut->duration() ) );
+                        CHECK( dummy.activity->get_moves_left() < to_moves<int>
+                               ( furn_t_test_f_boltcut3->boltcut->duration() ) );
                     }
                 }
             }
@@ -404,7 +405,7 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             WHEN( "terrain has a duration of 10 minutes" ) {
                 REQUIRE( ter_test_t_hacksaw1->hacksaw->duration() == 10_minutes );
                 THEN( "moves_left is equal to 10 minutes" ) {
-                    CHECK( dummy.activity->moves_left == to_moves<int>( 10_minutes ) );
+                    CHECK( dummy.activity->get_moves_left() == to_moves<int>( 10_minutes ) );
                 }
             }
         }
@@ -423,7 +424,7 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             WHEN( "furniture has a duration of 5 minutes" ) {
                 REQUIRE( furn_t_test_f_hacksaw1->hacksaw->duration() == 5_minutes );
                 THEN( "moves_left is equal to 5 minutes" ) {
-                    CHECK( dummy.activity->moves_left == to_moves<int>( 5_minutes ) );
+                    CHECK( dummy.activity->get_moves_left() == to_moves<int>( 5_minutes ) );
                 }
             }
         }
@@ -459,7 +460,8 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
                         dummy.moves = dummy.get_speed();
                         dummy.activity->do_turn( dummy );
                         CHECK( dummy.activity->id() == ACT_HACKSAW );
-                        CHECK( dummy.activity->moves_left < to_moves<int>( furn_t_test_f_hacksaw3->hacksaw->duration() ) );
+                        CHECK( dummy.activity->get_moves_left() < to_moves<int>
+                               ( furn_t_test_f_hacksaw3->hacksaw->duration() ) );
                     }
                 }
             }
@@ -667,7 +669,7 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             WHEN( "terrain has a duration of 10 seconds" ) {
                 REQUIRE( ter_test_t_oxytorch1->oxytorch->duration() == 10_seconds );
                 THEN( "moves_left is equal to 10 seconds" ) {
-                    CHECK( dummy.activity->moves_left == to_moves<int>( 10_seconds ) );
+                    CHECK( dummy.activity->get_moves_left() == to_moves<int>( 10_seconds ) );
                 }
             }
         }
@@ -686,7 +688,7 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             WHEN( "furniture has a duration of 5 seconds" ) {
                 REQUIRE( furn_t_test_f_oxytorch1->oxytorch->duration() == 5_seconds );
                 THEN( "moves_left is equal to 5 seconds" ) {
-                    CHECK( dummy.activity->moves_left == to_moves<int>( 5_seconds ) );
+                    CHECK( dummy.activity->get_moves_left() == to_moves<int>( 5_seconds ) );
                 }
             }
         }
@@ -716,7 +718,7 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
                         dummy.moves = dummy.get_speed();
                         dummy.activity->do_turn( dummy );
                         CHECK( dummy.activity->id() == ACT_OXYTORCH );
-                        CHECK( dummy.activity->moves_left < to_moves<int>
+                        CHECK( dummy.activity->get_moves_left() < to_moves<int>
                                ( furn_t_test_f_oxytorch3->oxytorch->duration() ) );
                     }
                 }

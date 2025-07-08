@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ITYPE_H
-#define CATA_SRC_ITYPE_H
 
 #include <array>
 #include <iosfwd>
@@ -562,6 +560,9 @@ struct islot_gun : common_ranged_data {
      *  @note useful for adding recoil effect to guns which otherwise consume no ammo
      */
     int recoil = 0;
+
+    /** How much ammo is consumed per shot. */
+    int ammo_to_fire = 1;
 };
 
 struct islot_gunmod : common_ranged_data {
@@ -595,6 +596,12 @@ struct islot_gunmod : common_ranged_data {
 
     /** Increases base gun UPS consumption by this value per shot */
     int ups_charges_modifier = 0;
+
+    /** Increases base gun ammo to fire by this many times per shot */
+    float ammo_to_fire_multiplier = 1.0f;
+
+    /** Increases base gun ammo to fire by this value per shot */
+    int ammo_to_fire_modifier = 0;
 
     /** Increases gun weight by this many times */
     float weight_multiplier = 1.0f;
@@ -798,8 +805,9 @@ struct islot_artifact {
     int dream_freq_met;
 };
 
-enum condition_type {
+enum class condition_type {
     FLAG,
+    VITAMIN,
     COMPONENT_ID,
     num_condition_types
 };
@@ -1087,4 +1095,4 @@ struct itype {
         bool is_seed() const;
 };
 
-#endif // CATA_SRC_ITYPE_H
+

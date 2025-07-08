@@ -40,19 +40,6 @@
     ]
   },
   {
-    "result": "plut_cell",
-    "type": "recipe",
-    "category": "CC_ELECTRONIC",
-    "subcategory": "CSC_ELECTRONIC_COMPONENTS",
-    "skill_used": "mechanics",
-    "skills_required": [ "electronics", 4 ],
-    "difficulty": 8,
-    "time": 30000,
-    "book_learn": [ [ "textbook_atomic_lab", 5 ] ],
-    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
-    "components": [ [ [ "canister_empty", 1 ] ], [ [ "plut_slurry", 10 ], [ "plut_slurry_dense", 5 ] ], [ [ "power_supply", 2 ] ] ]
-  },
-  {
     "result": "light_battery_cell",
     "id_suffix": "afs_plutonium_battery",
     "type": "recipe",
@@ -253,41 +240,6 @@
     "qualities": [ { "id": "SCREW", "level": 1 } ],
     "//": "Conversion of a normal smartphone into an atomic one by replacing the power supply.",
     "components": [ [ [ "plastic_chunk", 1 ] ], [ [ "processor", 1 ] ], [ [ "smart_phone", 1 ] ], [ [ "plut_cell", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "purifier_smart_shot",
-    "category": "CC_CHEM",
-    "subcategory": "CSC_CHEM_MUTAGEN",
-    "skill_used": "cooking",
-    "skills_required": [ "firstaid", 6 ],
-    "difficulty": 10,
-    "time": 120000,
-    "tools": [ [ [ "surface_heat", 30, "LIST" ] ] ],
-    "book_learn": [ [ "recipe_alpha", 9 ], [ "recipe_serum", 9 ] ],
-    "qualities": [ { "id": "CHEM", "level": 3 } ],
-    "components": [ [ [ "iv_purifier", 3 ] ], [ [ "royal_jelly", 1 ] ], [ [ "slime_scrap", 1 ] ], [ [ "syringe", 1 ] ] ]
-  },
-  {
-    "result": "plut_cell",
-    "type": "recipe",
-    "category": "CC_ELECTRONIC",
-    "subcategory": "CSC_ELECTRONIC_COMPONENTS",
-    "skill_used": "electronics",
-    "difficulty": 5,
-    "time": 5000,
-    "autolearn": [ [ "electronics", 7 ] ],
-    "book_learn": [ [ "textbook_atomic", 5 ] ],
-    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
-    "tools": [ [ [ "soldering_iron", 50 ] ] ],
-    "components": [
-      [ [ "nuclear_fuel", 2 ] ],
-      [ [ "e_scrap", 5 ] ],
-      [ [ "lead", 25 ] ],
-      [ [ "plastic_chunk", 5 ] ],
-      [ [ "scrap", 5 ] ],
-      [ [ "can_drink_unsealed", 5 ], [ "can_food_unsealed", 5 ], [ "canister_empty", 5 ] ]
-    ]
   },
   {
     "type": "recipe",

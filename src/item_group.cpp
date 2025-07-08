@@ -53,7 +53,7 @@ detached_ptr<item> Single_item_creator::create_single( const time_point &birthda
             tmp = item::spawn( id, birthday );
         }
     } else if( type == S_ITEM_GROUP ) {
-        if( std::find( rec.begin(), rec.end(), id ) != rec.end() ) {
+        if( std::ranges::find( rec, id ) != rec.end() ) {
             debugmsg( "recursion in item spawn list %s", id.c_str() );
             return detached_ptr<item>();
         }
@@ -97,7 +97,7 @@ std::vector<detached_ptr<item>> Single_item_creator::create( const time_point &b
                 result.push_back( std::move( itm ) );
             }
         } else {
-            if( std::find( rec.begin(), rec.end(), id ) != rec.end() ) {
+            if( std::ranges::find( rec, id ) != rec.end() ) {
                 debugmsg( "recursion in item spawn list %s", id.c_str() );
                 return result;
             }

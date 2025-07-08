@@ -33,7 +33,7 @@ const overmap_location &string_id<overmap_location>::obj() const
 
 bool overmap_location::test( const oter_id &oter ) const
 {
-    return std::any_of( terrains.cbegin(), terrains.cend(),
+    return std::ranges::any_of( terrains,
     [ &oter ]( const oter_type_str_id & type ) {
         return oter->type_is( type );
     } );

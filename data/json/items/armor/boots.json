@@ -253,7 +253,7 @@
     "color": "dark_gray",
     "covers": [ "feet" ],
     "coverage": 100,
-    "encumbrance": 35,
+    "encumbrance": 30,
     "warmth": 15,
     "material_thickness": 6,
     "environmental_protection": 5,
@@ -267,7 +267,7 @@
     "description": "A pair of customized Kevlar boots, heavily armored with superalloy and modified to provide maximum protection from harm, even when knee-deep in the dead.",
     "material": [ "kevlar", "superalloy" ],
     "color": "light_cyan",
-    "encumbrance": 30,
+    "encumbrance": 25,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -345,7 +345,7 @@
     "color": "light_gray",
     "covers": [ "feet" ],
     "coverage": 100,
-    "encumbrance": 28,
+    "encumbrance": 27,
     "warmth": 20,
     "material_thickness": 4,
     "environmental_protection": 1,
@@ -379,7 +379,7 @@
     "color": "dark_gray",
     "covers": [ "feet" ],
     "coverage": 100,
-    "encumbrance": 30,
+    "encumbrance": 15,
     "warmth": 10,
     "material_thickness": 3,
     "environmental_protection": 12,
@@ -713,10 +713,9 @@
     "color": "brown",
     "covers": [ "feet" ],
     "coverage": 65,
-    "encumbrance": 2,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "footrags_fur",
@@ -733,10 +732,10 @@
     "color": "brown",
     "covers": [ "feet" ],
     "coverage": 65,
-    "encumbrance": 5,
+    "encumbrance": 4,
     "warmth": 20,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "footrags_leather",
@@ -753,10 +752,10 @@
     "color": "brown",
     "covers": [ "feet" ],
     "coverage": 65,
-    "encumbrance": 5,
+    "encumbrance": 3,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "footrags_wool",
@@ -773,10 +772,10 @@
     "color": "blue",
     "covers": [ "feet" ],
     "coverage": 65,
-    "encumbrance": 5,
+    "encumbrance": 2,
     "warmth": 15,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "geta",
@@ -1141,7 +1140,7 @@
     "color": "dark_gray",
     "covers": [ "feet" ],
     "coverage": 100,
-    "encumbrance": 15,
+    "encumbrance": 13,
     "warmth": 30,
     "material_thickness": 2,
     "environmental_protection": 1,
@@ -1472,7 +1471,7 @@
   {
     "id": "carbon_boots",
     "type": "ARMOR",
-    "name": { "str": "carbon fiber boots" },
+    "name": { "str": "pair of carbon fiber boots", "str_pl": "pairs of carbon fiber boots" },
     "description": "A custom pair of boots made out of layered carbon fiber armor made using a 3D printer.  Its rigid plates are more comparable to a suit of armor than kevlar, but it's very protective and lightweight.",
     "copy-from": "boots_plarmor",
     "encumbrance": 22,
@@ -1482,7 +1481,7 @@
   {
     "id": "boots_scute",
     "type": "ARMOR",
-    "name": { "str": "scaleskin boots" },
+    "name": { "str": "pair of scaleskin boots", "str_pl": "pairs of scaleskin boots" },
     "description": "Boots made from the hardened scales of large reptiles.  It doesn't look quite like normal alligator skin boots due to the armored design.",
     "copy-from": "boots_larmor",
     "material": [ "scute" ],

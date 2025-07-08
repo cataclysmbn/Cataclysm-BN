@@ -46,7 +46,7 @@ void event_bus::subscribe( event_subscriber *s )
 
 void event_bus::unsubscribe( event_subscriber *s )
 {
-    auto it = std::find( subscribers.begin(), subscribers.end(), s );
+    auto it = std::ranges::find( subscribers, s );
     if( it == subscribers.end() ) {
         debugmsg( "Trying to remove subscriber that isn't there" );
     } else {

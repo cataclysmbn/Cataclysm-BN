@@ -13,7 +13,7 @@
   {
     "id": "nail",
     "type": "AMMO",
-    "category": "spare_parts",
+    "category": "scrap_metal",
     "name": { "str": "nail" },
     "description": "A pin-shaped piece of iron, can be used to construct various things with a hammer.",
     "weight": "4 g",

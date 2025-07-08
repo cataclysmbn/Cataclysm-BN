@@ -229,6 +229,15 @@ through some means. Valid entries are:
 "mixed"
 ```
 
+### Looks_like
+
+```json
+"looks_like": "drunk"
+```
+
+If the "looks_like" field exists, the effect will visually resemble the specified tag (for example, "drunk").
+This only affects the appearance of the effect over a NPC or character, not its mechanical behavior.
+
 ### Messages
 
 ```json
@@ -635,6 +644,7 @@ Special case: The only special case is if base_mods' "X_chance_bot" + intensity 
     "Trashed",
     "Wasted"
 ],
+"looks_like": "drunk",
 "max_intensity": 4,
 "apply_message": "You feel lightheaded.",
 "int_dur_factor": 1000,

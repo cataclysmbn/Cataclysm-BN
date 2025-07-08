@@ -188,7 +188,7 @@ void advanced_inv_area::init()
     ( const ter_id & id ) {
         return get_map().ter( this->pos ) == id;
     };
-    if( std::any_of( ter_water.begin(), ter_water.end(), ter_check ) ) {
+    if( std::ranges::any_of( ter_water, ter_check ) ) {
         flags.append( _( " WATER" ) );
     }
 

@@ -61,7 +61,7 @@
     "difficulty": 2,
     "time": "5 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "stick", 1 ], [ "broom", 1 ], [ "2x4", 1 ], [ "bee_sting", 1 ] ], [ [ "scrap", 4 ] ] ]
   },
   {
@@ -83,7 +83,7 @@
     "subcategory": "CSC_AMMO_OTHER",
     "skill_used": "fabrication",
     "difficulty": 1,
-    "time": "45 m",
+    "time": "30 m",
     "autolearn": true,
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
     "components": [ [ [ "rebar", 2 ] ] ]
@@ -93,9 +93,23 @@
     "result": "steel_rail",
     "category": "CC_AMMO",
     "subcategory": "CSC_AMMO_OTHER",
+    "id_suffix": "welding",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "15 m",
+    "batch_time_factors": [ 90, 1 ],
+    "autolearn": true,
+    "using": [ [ "welding_standard", 30 ], [ "steel_standard", 1 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 } ]
+  },
+  {
+    "type": "recipe",
+    "result": "steel_rail",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_OTHER",
     "skill_used": "fabrication",
     "difficulty": 3,
-    "time": "45 m",
+    "time": "30 m",
     "batch_time_factors": [ 70, 1 ],
     "autolearn": true,
     "using": [ [ "blacksmithing_intermediate", 16 ], [ "steel_standard", 1 ] ],
@@ -171,5 +185,32 @@
     "book_learn": [ [ "textbook_computer", 2 ], [ "advanced_electronics", 2 ], [ "reference_fabrication1", 2 ] ],
     "using": [ [ "3d_printing_standard", 1 ], [ "blacksmithing_standard", 2 ], [ "steel_tiny", 2 ] ],
     "components": [ [ [ "carbon_fiber_filament", 5 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "12mm_makeshift",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_OTHER",
+    "id_suffix": "welding",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "15 m",
+    "batch_time_factors": [ 90, 1 ],
+    "autolearn": true,
+    "using": [ [ "welding_standard", 30 ], [ "steel_standard", 1 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 } ]
+  },
+  {
+    "type": "recipe",
+    "result": "12mm_makeshift",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "30 m",
+    "batch_time_factors": [ 70, 1 ],
+    "autolearn": true,
+    "using": [ [ "blacksmithing_intermediate", 16 ], [ "steel_standard", 1 ] ],
+    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
   }
 ]

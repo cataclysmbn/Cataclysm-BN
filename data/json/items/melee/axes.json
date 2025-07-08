@@ -3,7 +3,7 @@
     "id": "battleaxe",
     "type": "GENERIC",
     "category": "weapons",
-    "weapon_category": [ "1H_AXES" ],
+    "weapon_category": [ "2H_AXES" ],
     "name": { "str": "battle axe" },
     "description": "This is a huge axe designed for warfare.  Though intended for use as a weapon, it can also be pressed into service as a rather clumsy woodcutting tool.",
     "weight": "2002 g",

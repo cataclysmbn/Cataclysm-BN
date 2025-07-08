@@ -214,7 +214,7 @@
   {
     "type": "talk_topic",
     "id": "TALK_REFUGEE_BEGGAR_4_LIFEBEFORE1",
-    "dynamic_line": "Well, I used to be a roofer, but I had a bad fall and wrecked my back around '06.  Tried to get into other kinds of carpentry but I just don't have the head for it.  My wife managed to support both of us with the extra bit I made from odd jobs, but she had a stroke in 2016 and left me on my own the last few years slowly draining my savings dry while I work whatever junk jobs I can handle.  Couple days before <the_cataclysm> I got the notice that the bank was going to foreclose on my crappy little trailer.",
+    "dynamic_line": "Well, I used to be a roofer, but ten years ago I had a bad fall and wrecked my back.  Tried to get into other kinds of carpentry and construction but I just don't have the head for it and my back still hurt.  My wife managed to support both of us with the extra bit I made from odd jobs, but she had a stroke and I was on my own the last few years slowly draining my savings dry while I work whatever junk jobs I can handle.  Couple days before <the_cataclysm> I got the notice that the bank was going to foreclose on my crappy little trailer.",
     "responses": [
       { "text": "You have any kids?", "topic": "TALK_REFUGEE_BEGGAR_4_LIFEBEFORE2" },
       {

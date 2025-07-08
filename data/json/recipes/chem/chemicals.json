@@ -15,6 +15,20 @@
   },
   {
     "type": "recipe",
+    "result": "chem_hydrogen_peroxide",
+    "id_suffix": "from oxidation",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_CHEMICALS",
+    "skill_used": "cooking",
+    "difficulty": 8,
+    "time": "60 m",
+    "book_learn": [ [ "textbook_chemistry", 4 ], [ "adv_chemistry", 5 ], [ "reference_cooking", 4 ] ],
+    "batch_time_factors": [ 80, 5 ],
+    "qualities": [ { "id": "CHEM", "level": 2 } ],
+    "components": [ [ [ "water_clean", 55 ] ], [ [ "zinc_metal", 55 ], [ "copper", 55 ] ], [ [ "chem_sulphuric_acid", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "acid",
     "id_suffix": "from batteries",
     "category": "CC_CHEM",
@@ -289,15 +303,16 @@
     "subcategory": "CSC_CHEM_CHEMICALS",
     "skill_used": "cooking",
     "difficulty": 3,
-    "time": "45 m",
+    "time": "30 m",
     "qualities": [ { "id": "CHEM", "level": 1 } ],
     "autolearn": true,
     "batch_time_factors": [ 80, 5 ],
-    "tools": [ [ [ "surface_heat", 18, "LIST" ] ] ],
+    "charges": 5,
+    "tools": [ [ [ "surface_heat", 9, "LIST" ] ] ],
     "components": [
-      [ [ "edible_tallow_lard", 2, "LIST" ], [ "cooking_oil", 16 ], [ "cooking_oil2", 16 ] ],
-      [ [ "chem_lye", 2, "LIST" ] ],
-      [ [ "water", 2 ], [ "water_clean", 2 ] ]
+      [ [ "edible_tallow_lard", 1, "LIST" ], [ "cooking_oil", 8 ], [ "cooking_oil2", 8 ] ],
+      [ [ "chem_lye", 1, "LIST" ] ],
+      [ [ "water", 1 ], [ "water_clean", 1 ] ]
     ],
     "flags": [ "ALLOW_ROTTEN" ]
   },

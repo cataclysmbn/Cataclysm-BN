@@ -1,0 +1,12 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "civilians",
+    "name": "Civilians",
+    "authors": [ "NetSysFire", "Kota" ],
+    "maintainers": [ "Kota" ],
+    "description": "Adds a few civilian monsters & a faction that simulates the collapse of civilization and the resulting riots.",
+    "category": "creatures",
+    "dependencies": [ "bn" ]
+  }
+]

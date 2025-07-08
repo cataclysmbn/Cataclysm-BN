@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+
+Name=Cataclysm-BN
+Comment=A graphical post-apocalyptic roguelike that focuses on gameplay over realism
+Categories=Game;RolePlaying;
+
+Icon=org.cataclysmbn.CataclysmBN
+Exec=cataclysm-bn-tiles
+Terminal=false

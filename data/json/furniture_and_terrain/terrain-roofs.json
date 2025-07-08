@@ -49,7 +49,7 @@
     "color": "white",
     "move_cost": 3,
     "flags": [ "TRANSPARENT", "NOITEM", "THIN_OBSTACLE", "MOUNTABLE", "TINY", "AUTO_WALL_SYMBOL", "UNSTABLE" ],
-    "connects_to": "RAILING",
+    "connects_to": "GUTTER",
     "deconstruct": {
       "ter_set": "t_flat_roof",
       "items": [ { "item": "sheet_metal_small", "count": 2 }, { "item": "scrap", "count": [ 2, 3 ] } ]
@@ -73,7 +73,7 @@
     "color": "white",
     "move_cost": 3,
     "flags": [ "TRANSPARENT", "NOITEM", "THIN_OBSTACLE", "MOUNTABLE", "TINY", "AUTO_WALL_SYMBOL", "UNSTABLE", "CLIMBABLE" ],
-    "connects_to": "RAILING",
+    "connects_to": "GUTTER",
     "deconstruct": {
       "ter_set": "t_flat_roof",
       "items": [ { "item": "sheet_metal_small", "count": 2 }, { "item": "scrap", "count": [ 2, 3 ] } ]
@@ -132,7 +132,7 @@
     "symbol": ".",
     "color": "dark_gray",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "FLAT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "FLAT", "ROOF" ],
     "bash": { "str_min": 30, "str_max": 210, "sound": "crash!", "sound_fail": "whump!", "bash_below": true }
   },
   {

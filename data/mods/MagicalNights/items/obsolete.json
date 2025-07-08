@@ -1,0 +1,50 @@
+[
+  {
+    "id": "wand_fireball",
+    "name": { "str": "wand of fireballs", "str_pl": "wands of fireballs" },
+    "description": "A classic, this wand shoots fireballs without fail.  A more skilled Kelvinist could cast them more efficiently, though.",
+    "type": "TOOL",
+    "weight": "230 g",
+    "volume": "500 ml",
+    "price": "100 USD",
+    "bashing": 3,
+    "to_hit": 2,
+    "material": [ "wood" ],
+    "symbol": "|",
+    "color": "brown",
+    "charges_per_use": 1,
+    "ammo": "crystallized_mana",
+    "use_action": { "type": "cast_spell", "spell_id": "fireball", "no_fail": true, "level": 5, "need_wielding": true },
+    "magazines": [ [ "crystallized_mana", [ "small_mana_crystal" ] ] ],
+    "magazine_well": "250 ml"
+  },
+  {
+    "id": "wand_magic_missile",
+    "name": { "str": "wand of magic missiles", "str_pl": "wands of magic missiles" },
+    "description": "A classic, this wand shoots magic missiles without fail.  A more skilled Magus could cast them more efficiently, though.",
+    "type": "TOOL",
+    "weight": "230 g",
+    "volume": "500 ml",
+    "price": "100 USD",
+    "bashing": 3,
+    "to_hit": 2,
+    "material": [ "wood" ],
+    "symbol": "|",
+    "color": "brown",
+    "charges_per_use": 1,
+    "ammo": "crystallized_mana",
+    "use_action": { "type": "cast_spell", "spell_id": "magic_missile", "no_fail": true, "level": 10, "need_wielding": true },
+    "magazines": [ [ "crystallized_mana", [ "small_mana_crystal" ] ] ],
+    "magazine_well": "250 ml"
+  },
+  {
+    "id": "bio_fuel_cell_blood",
+    "copy-from": "bionic_general",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "OBSOLETE! Blood Power Generator CBM" },
+    "description": "OBSOLETE ITEM!  Only exists for save integrity",
+    "price": "4500 USD",
+    "weight": "500 g",
+    "difficulty": 8
+  }
+]

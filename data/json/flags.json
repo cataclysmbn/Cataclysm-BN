@@ -117,6 +117,11 @@
     "conflicts": [ "PARTIAL_DEAF" ]
   },
   {
+    "id": "DESTROY_ON_DECHARGE",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "DIAMOND",
     "type": "json_flag",
     "context": [ "GENERIC", "TOOL" ],
@@ -251,6 +256,24 @@
     "info": "This gear <good>completely protects</good> you from <info>low temperatures</info>."
   },
   {
+    "id": "DARK_IMMUNE",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "type": "json_flag",
+    "info": "This gear <good>completely protects</good> you from <info>dark damage</info>."
+  },
+  {
+    "id": "LIGHT_IMMUNE",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "type": "json_flag",
+    "info": "This gear <good>completely protects</good> you from <info>light damage</info>."
+  },
+  {
+    "id": "PSI_IMMUNE",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "type": "json_flag",
+    "info": "This gear <good>completely protects</good> you from <info>psionic damage</info>."
+  },
+  {
     "id": "ACID",
     "context": [ "COMESTIBLE" ],
     "type": "json_flag"
@@ -262,10 +285,15 @@
     "info": "You can wear <info>only one</info>."
   },
   {
+    "id": "EXOSUIT",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ]
+  },
+  {
     "id": "FANCY",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "//": "Wearing this clothing gives a morale bonus if the player has the Stylish trait.",
+    "//": "Wearing this clothing gives a morale bonus if the player doesn't have the Fashion Deficient trait.",
     "info": "This clothing is <info>fancy</info>.",
     "conflicts": [ "SUPER_FANCY" ]
   },
@@ -285,7 +313,7 @@
     "id": "FIREWOOD",
     "type": "json_flag",
     "context": [ "GENERIC" ],
-    "info": "This item can serve as a firewood."
+    "info": "This item can serve as firewood."
   },
   {
     "id": "FIX_FARSIGHT",
@@ -300,14 +328,6 @@
     "info": "This gear <good>corrects nearsightedness</good>."
   },
   {
-    "id": "FILTHY",
-    "type": "json_flag",
-    "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "//": "Zombie-dropped clothing giving various penalties if Filthy mod is active.  Also CBMs harvested from zombies.",
-    "craft_inherit": true,
-    "info": "This item is <bad>filthy</bad>."
-  },
-  {
     "id": "FLAMMABLE",
     "type": "json_flag",
     "context": [ "GENERIC" ]
@@ -316,7 +336,8 @@
     "id": "FLASH_PROTECTION",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "//": "Used for eyes protection from flashbang."
+    "//": "Used for eyes protection from flashbang.",
+    "info": "This clothing will <good>partially protect from a flash from a flashbang</good>."
   },
   {
     "id": "FLOTATION",
@@ -390,13 +411,13 @@
     "id": "HYGROMETER",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "info": "This gear is equipped with an accurate hygrometer (which is used to measure humidity)."
+    "info": "This gear is equipped with an accurate hygrometer (which is used to <info>measure humidity</info>)."
   },
   {
     "id": "BRASS_CATCHER",
     "type": "json_flag",
     "context": [ "GUNMOD" ],
-    "info": "This gun mod catches ejected casings."
+    "info": "This gun mod <info>catches ejected casings</info>."
   },
   {
     "id": "IRREMOVABLE",
@@ -504,7 +525,7 @@
     "id": "POLEARM",
     "type": "json_flag",
     "context": [ "GENERIC", "TOOL" ],
-    "info": "As a weapon, this item needs considerable space to use properly and does 70% of its normal damage to adjacent enemies."
+    "info": "As a weapon, this item <info>needs considerable space to use</info> properly and <bad>does 70% of its normal damage to adjacent enemies</bad>."
   },
   {
     "id": "SPAWN_FRIENDLY",
@@ -798,7 +819,7 @@
     "id": "SUPER_FANCY",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "//": "Gives an additional moral bonus over FANCY if the player has the Stylish trait.",
+    "//": "Gives an additional moral bonus over FANCY if the player doesn't have the Fashion Deficient trait.",
     "info": "This clothing is <info>very fancy</info>.",
     "conflicts": [ "FANCY" ]
   },
@@ -1166,6 +1187,21 @@
     "type": "json_flag"
   },
   {
+    "id": "EFFECT_DARK_IMMUNE",
+    "context": [  ],
+    "type": "json_flag"
+  },
+  {
+    "id": "EFFECT_LIGHT_IMMUNE",
+    "context": [  ],
+    "type": "json_flag"
+  },
+  {
+    "id": "EFFECT_PSI_IMMUNE",
+    "context": [  ],
+    "type": "json_flag"
+  },
+  {
     "id": "EFFECT_ELECTRIC_IMMUNE",
     "context": [  ],
     "type": "json_flag"
@@ -1204,7 +1240,7 @@
     "id": "CANNIBALISM",
     "type": "json_flag",
     "context": [ "COMESTIBLE" ],
-    "craft_inherit": true
+    "//": "Obsoleted"
   },
   {
     "id": "ALLERGEN_EGG",
@@ -1630,7 +1666,7 @@
     "id": "MOUNTED_GUN",
     "type": "json_flag",
     "context": [  ],
-    "info": "This weapon <bad>can only be fired if mounted</bad> on a vehicle or furniture (window, table, mound of dirt, etc.) to fire, <info>Large or Huge</info> mutants or those with active <info>Power Armor</info> can fire from the hip with <bad>reduced accuracy.</bad>"
+    "info": "This weapon <bad>can only be fired if mounted</bad> on a vehicle or furniture (window, table, mound of dirt, etc.) to fire, <info>Large or Huge</info> mutants or those with active <info>Power Armor</info> can fire from the hip with <bad>reduced accuracy</bad>."
   },
   {
     "id": "MYCUS_OK",
@@ -1864,6 +1900,12 @@
     "context": [  ]
   },
   {
+    "id": "USE_PARENT_GUN",
+    "//": "If this is a gunmod that can be fired, treat it as if the gun it's installed on is firing for relevant behaviors (brass catcher, installed suppressor, etc).  Used for 'second magazine' type gunmods, not just second barrel gunmods in general.",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "RELOAD_ONE",
     "type": "json_flag",
     "context": [  ]
@@ -1943,7 +1985,8 @@
   {
     "id": "STR_RELOAD",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "info": "This weapon's <info>reload speed</info> is <good>increased by strength</good>."
   },
   {
     "id": "TACK",
@@ -1977,6 +2020,11 @@
     "context": [  ]
   },
   {
+    "id": "MARIJUANA",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "TOURNIQUET",
     "type": "json_flag",
     "context": [  ]
@@ -2004,7 +2052,8 @@
   {
     "id": "UNDERWATER_GUN",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "info": "This weapon is inherently <good>designed to work underwater</good>."
   },
   {
     "id": "UNRECOVERABLE",
@@ -2104,11 +2153,6 @@
     "context": [  ]
   },
   {
-    "id": "DETERGENT",
-    "type": "json_flag",
-    "context": [  ]
-  },
-  {
     "id": "FIRE_100",
     "type": "json_flag",
     "context": [  ]
@@ -2132,7 +2176,7 @@
     "id": "HEAVY_WEAPON_SUPPORT",
     "type": "json_flag",
     "context": [  ],
-    "info": "This equipment <good>allows you to fire</good> unwieldy weapons without requiring support from mountable terrain, as a <info>Large or Huge</info> mutant could, at the expense of <bad>reduced accuracy.</bad>"
+    "info": "This equipment <good>allows you to fire</good> unwieldy weapons without requiring support from mountable terrain, as a <info>Large or Huge</info> mutant could, at the expense of <bad>reduced accuracy</bad>."
   },
   {
     "id": "FIRE_TWOHAND",
@@ -2175,6 +2219,11 @@
     "context": [  ]
   },
   {
+    "id": "UNBREAKABLE",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "UNBREAKABLE_MELEE",
     "type": "json_flag",
     "context": [  ]
@@ -2182,7 +2231,8 @@
   {
     "id": "WATERPROOF_GUN",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "info": "This weapon <good>can shoot underwater</good>, but <info>unless it was specifically designed to do so</info>, it <bad>will suffer from accuracy penalty</bad>."
   },
   {
     "id": "no_auto_equip",
@@ -2233,11 +2283,18 @@
     "id": "WEATHER_FORECAST",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "info": "It can show the automated weather forcast."
+    "info": "This item can show the <info>automated weather forecast</info>."
   },
   {
     "id": "WINDMETER",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "info": "This item can show the <info>current heading and speed of the wind</info> as well as <info>perceived temperature</info>."
+  },
+  {
+    "id": "HIDDEN",
+    "type": "json_flag",
+    "info": "You have marked this article to not display a sprite when worn.",
+    "context": [ "ARMOR", "TOOL_ARMOR" ]
   }
 ]

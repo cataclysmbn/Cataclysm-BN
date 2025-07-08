@@ -24,7 +24,7 @@
     ],
     "dispersion_modifier": 15,
     "handling_modifier": 10,
-    "loudness_modifier": 8
+    "loudness_modifier": 20
   },
   {
     "id": "muzzle_brake",
@@ -40,9 +40,9 @@
     "color": "light_gray",
     "location": "muzzle",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ], [ "SHOTGUNS" ] ],
-    "dispersion_modifier": 15,
-    "handling_modifier": 12,
-    "loudness_modifier": 14
+    "dispersion_modifier": 25,
+    "handling_modifier": 10,
+    "loudness_modifier": 30
   },
   {
     "id": "muzzle_brake_mod",
@@ -78,9 +78,7 @@
     "mod_target_category": [ [ "PISTOLS" ], [ "SUBMACHINE_GUNS" ], [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
     "consume_chance": 20,
     "consume_divisor": 110,
-    "damage_modifier": { "damage_type": "bullet", "amount": -5 },
-    "dispersion_modifier": 40,
-    "handling_modifier": 3,
+    "dispersion_modifier": 50,
     "loudness_modifier": -45,
     "flags": [ "DISABLE_SIGHTS", "CONSUMABLE" ]
   },
@@ -102,8 +100,7 @@
     "mod_target_category": [ [ "PISTOLS" ], [ "SUBMACHINE_GUNS" ], [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
     "consume_chance": 100,
     "consume_divisor": 40,
-    "dispersion_modifier": 10,
-    "handling_modifier": 3,
+    "dispersion_modifier": 100,
     "loudness_modifier": -20,
     "flags": [ "DISABLE_SIGHTS", "CONSUMABLE" ]
   },
@@ -123,7 +120,6 @@
     "mod_target_category": [ [ "PISTOLS" ], [ "SUBMACHINE_GUNS" ], [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
     "consume_chance": 1,
     "consume_divisor": 1,
-    "damage_modifier": { "damage_type": "bullet", "amount": -5 },
     "dispersion_modifier": 125,
     "loudness_modifier": -15,
     "flags": [ "DISABLE_SIGHTS", "TRADER_AVOID", "CONSUMABLE" ]
@@ -140,8 +136,8 @@
     "price_postapoc": "15 USD",
     "material": [ "superalloy", "ceramic" ],
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
-    "handling_modifier": 0,
-    "proportional": { "loudness_modifier": 2 },
+    "handling_modifier": 5,
+    "loudness_modifier": -100,
     "flags": [ "IRREMOVABLE" ]
   },
   {
@@ -161,8 +157,7 @@
     "color": "dark_gray",
     "location": "muzzle",
     "mod_target_category": [ [ "SHOTGUNS" ] ],
-    "damage_modifier": { "damage_type": "bullet", "amount": -4 },
-    "handling_modifier": 6,
+    "handling_modifier": -5,
     "loudness_modifier": -75
   },
   {
@@ -184,9 +179,7 @@
     "mod_target_category": [ [ "SHOTGUNS" ] ],
     "consume_chance": 20,
     "consume_divisor": 110,
-    "damage_modifier": { "damage_type": "bullet", "amount": -5 },
-    "dispersion_modifier": 40,
-    "handling_modifier": 4,
+    "dispersion_modifier": 75,
     "loudness_modifier": -45,
     "flags": [ "DISABLE_SIGHTS", "CONSUMABLE" ]
   },
@@ -208,7 +201,7 @@
     "location": "muzzle",
     "mod_target_category": [ [ "PISTOLS" ], [ "SUBMACHINE_GUNS" ], [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
     "install_time": "0 m",
-    "handling_modifier": 4,
+    "handling_modifier": 5,
     "loudness_modifier": -75
   },
   {
@@ -223,8 +216,7 @@
     "//": "weight is accounted for in gun item",
     "integral_weight": "0 g",
     "loudness_modifier": -50,
-    "range_modifier": -1,
-    "dispersion_modifier": 0,
+    "range_modifier": -5,
     "location": "barrel",
     "flags": [ "IRREMOVABLE" ]
   },
@@ -244,7 +236,27 @@
     "location": "muzzle",
     "mod_target_category": [ [ "PISTOLS" ], [ "SUBMACHINE_GUNS" ] ],
     "install_time": "0 m",
-    "handling_modifier": 3,
+    "handling_modifier": 5,
     "loudness_modifier": -50
+  },
+  {
+    "id": "mod_flamethrower_nozzle",
+    "type": "GUNMOD",
+    "name": { "str": "high-pressure combustion nozzle" },
+    "description": "An attachment resembling a rocket nozzle along with parts from a pump assembly.  Installing this on a flamethrower will increase its maximum range and damage, but increase fuel consumption.",
+    "looks_like": "pump_complex",
+    "weight": "700 g",
+    "volume": "250 ml",
+    "price": "100 USD",
+    "price_postapoc": "5 USD",
+    "material": [ "steel" ],
+    "symbol": ":",
+    "color": "light_gray",
+    "location": "muzzle",
+    "mod_target_category": [ [ "FLAMETHROWERS" ] ],
+    "install_time": "5 m",
+    "damage_modifier": [ { "damage_type": "heat", "amount": 5 } ],
+    "range_modifier": 5,
+    "ammo_to_fire_multiplier": 1.25
   }
 ]

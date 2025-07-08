@@ -167,7 +167,7 @@ Trait_list Trait_group_creator::create( RecursionList &rec ) const
 {
 
     Trait_list result;
-    if( std::find( rec.begin(), rec.end(), id ) != rec.end() ) {
+    if( std::ranges::find( rec, id ) != rec.end() ) {
         debugmsg( "recursion in trait creation list %s", id.c_str() );
         return result;
     }

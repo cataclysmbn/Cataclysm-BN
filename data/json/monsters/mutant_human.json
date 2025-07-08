@@ -29,7 +29,7 @@
       "groups": [ [ "subway", 40 ], [ "sewer", 20 ], [ "trash", 5 ], [ "bedroom", 5 ], [ "dresser", 10 ], [ "ammo", 18 ] ]
     },
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "HEARS", "WARM", "BASHES", "GROUP_BASH", "HUMAN", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "WARM", "BASHES", "GROUP_BASH", "HUMAN" ]
   },
   {
     "id": "mon_mutant_experimental",
@@ -47,6 +47,7 @@
     "symbol": "M",
     "color": "brown",
     "morale": 50,
+    "aggro_character": false,
     "melee_skill": 6,
     "melee_dice": 3,
     "melee_dice_sides": 6,

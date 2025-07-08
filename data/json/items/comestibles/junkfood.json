@@ -17,7 +17,7 @@
     "volume": "1 L",
     "charges": 8,
     "flags": [ "EATEN_HOT" ],
-    "vitamins": [ [ "vitA", 3 ], [ "iron", 10 ] ],
+    "vitamins": [ [ "vitA", 3 ], [ "iron", 10 ], [ "wheat_allergen", 1 ], [ "junk_allergen", 1 ] ],
     "fun": 20
   },
   {
@@ -56,7 +56,7 @@
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
     "fun": -10,
-    "vitamins": [ [ "vitA", 16 ], [ "iron", 10 ] ]
+    "vitamins": [ [ "vitA", 16 ], [ "iron", 10 ], [ "wheat_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -87,6 +87,7 @@
   {
     "type": "COMESTIBLE",
     "id": "kernels",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "popcorn kernels" },
     "weight": "32 g",
     "color": "brown",
@@ -97,10 +98,11 @@
     "description": "Dried kernels from a particular type of corn.  Practically inedible raw, they can be cooked to make a tasty snack.",
     "price": "1 USD",
     "price_postapoc": "4 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "charges": 8,
-    "fun": -6
+    "fun": -6,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -117,12 +119,12 @@
     "description": "Plain and unseasoned popcorn.  Not as tasty as other kinds, but healthier as a result.",
     "price": "115 cent",
     "price_postapoc": "25 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "1 L",
     "charges": 4,
     "flags": [ "EATEN_HOT" ],
     "fun": 4,
-    "vitamins": [ [ "iron", 2 ] ]
+    "vitamins": [ [ "iron", 2 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -132,8 +134,9 @@
     "quench": -3,
     "healthy": -1,
     "description": "Popcorn with salt added for extra flavor.",
-    "material": "junk",
-    "fun": 8
+    "material": [ "junk" ],
+    "fun": 8,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -143,8 +146,9 @@
     "healthy": -1,
     "calories": 50,
     "description": "Popcorn with a light covering of butter for extra flavor.",
-    "material": "junk",
-    "fun": 10
+    "material": [ "junk" ],
+    "fun": 10,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -163,7 +167,7 @@
     "material": [ "wheat", "junk" ],
     "volume": "250 ml",
     "charges": 3,
-    "vitamins": [ [ "iron", 16 ] ],
+    "vitamins": [ [ "iron", 16 ], [ "wheat_allergen", 1 ], [ "junk_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -183,7 +187,8 @@
     "material": [ "wheat", "junk" ],
     "volume": "500 ml",
     "charges": 3,
-    "fun": 6
+    "fun": 6,
+    "vitamins": [ [ "wheat_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -198,10 +203,11 @@
     "description": "Chocolate isn't very healthy, but it does make a delicious treat.",
     "price": "130 cent",
     "price_postapoc": "2 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "charges": 3,
-    "fun": 10
+    "fun": 10,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -216,9 +222,10 @@
     "description": "A handful of squishy, fluffy, puffy, delicious marshmallows.",
     "price": "250 cent",
     "price_postapoc": "1 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
-    "fun": 10
+    "fun": 10,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -235,7 +242,7 @@
     "price_postapoc": "250 cent",
     "material": [ "wheat", "junk" ],
     "volume": "250 ml",
-    "vitamins": [ [ "calcium", 4 ], [ "iron", 6 ] ],
+    "vitamins": [ [ "calcium", 4 ], [ "iron", 6 ], [ "wheat_allergen", 1 ], [ "junk_allergen", 1 ] ],
     "fun": 20
   },
   {
@@ -253,10 +260,11 @@
     "description": "A handful of peanut butter cups… your favorite!",
     "price": "180 cent",
     "price_postapoc": "150 cent",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "charges": 3,
-    "fun": 4
+    "fun": 4,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -272,10 +280,10 @@
     "description": "A handful of colorful chocolate filled candies.",
     "price": "180 cent",
     "price_postapoc": "4 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "charges": 3,
-    "vitamins": [ [ "iron", 9 ] ],
+    "vitamins": [ [ "iron", 9 ], [ "junk_allergen", 1 ] ],
     "fun": 3
   },
   {
@@ -292,10 +300,25 @@
     "description": "A handful of colorful fruit-flavored chewy candy.",
     "price": "180 cent",
     "price_postapoc": "2 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "charges": 3,
-    "fun": 3
+    "fun": 3,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "candy3_weed",
+    "name": { "str": "'special' chewy candy" },
+    "copy-from": "candy3",
+    "price_postapoc": "12 USD",
+    "fun": 15,
+    "use_action": {
+      "type": "consume_drug",
+      "activation_message": "You start scarfing down the candy.  They taste a little funny though…",
+      "do_weed_msg": true,
+      "effects": [ { "id": "weed_high", "duration": "12 m" }, { "id": "pkill1", "duration": "12 m" } ]
+    }
   },
   {
     "type": "COMESTIBLE",
@@ -311,10 +334,11 @@
     "description": "Thin paper tubes of sweet & sour candy powder.  Who thinks of this stuff?",
     "price": "120 cent",
     "price_postapoc": "3 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "charges": 5,
-    "fun": 6
+    "fun": 6,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -331,10 +355,11 @@
     "description": "This golden, translucent leaf candy is made with pure maple syrup and melt slowly as you savor the taste of real maple.",
     "price": "6 USD",
     "price_postapoc": "50 cent",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "100 ml",
     "charges": 2,
-    "fun": 10
+    "fun": 10,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -353,7 +378,7 @@
     "material": [ "wheat", "junk" ],
     "volume": "750 ml",
     "charges": 8,
-    "vitamins": [ [ "calcium", 4 ], [ "iron", 6 ] ],
+    "vitamins": [ [ "calcium", 4 ], [ "iron", 6 ], [ "wheat_allergen", 1 ], [ "junk_allergen", 1 ] ],
     "fun": 2
   },
   {
@@ -402,7 +427,7 @@
     "volume": "250 ml",
     "charges": 4,
     "stack_size": 20,
-    "vitamins": [ [ "calcium", 2 ], [ "iron", 6 ] ],
+    "vitamins": [ [ "calcium", 2 ], [ "iron", 6 ], [ "wheat_allergen", 1 ], [ "junk_allergen", 1 ] ],
     "fun": 7
   },
   {
@@ -419,12 +444,12 @@
     "description": "Boiling the sap of a maple tree has concentrated it into sweet, delicious maple syrup.",
     "price": "6 USD",
     "price_postapoc": "750 cent",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "phase": "liquid",
     "charges": 16,
     "fun": 5,
-    "vitamins": [ [ "calcium", 2 ] ]
+    "vitamins": [ [ "calcium", 2 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -440,10 +465,10 @@
     "description": "A thick syrup produced from shredded sugar beets.  Useful in cooking as a sweetener.",
     "price": "15 USD",
     "price_postapoc": "350 cent",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "phase": "liquid",
-    "vitamins": [ [ "iron", 34 ] ],
+    "vitamins": [ [ "iron", 34 ], [ "junk_allergen", 1 ] ],
     "charges": 16
   },
   {
@@ -462,7 +487,7 @@
     "material": [ "wheat", "junk" ],
     "volume": "2 L",
     "charges": 12,
-    "vitamins": [ [ "calcium", 3 ], [ "iron", 6 ] ],
+    "vitamins": [ [ "calcium", 3 ], [ "iron", 6 ], [ "wheat_allergen", 1 ], [ "junk_allergen", 1 ] ],
     "fun": 15
   },
   {
@@ -505,7 +530,8 @@
     "volume": "250 ml",
     "charges": 5,
     "stack_size": 30,
-    "fun": 2
+    "fun": 2,
+    "vitamins": [ [ "veggy_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -522,10 +548,10 @@
     "description": "Fast-food fried potatoes.  Somehow, they're still edible.",
     "price": "120 cent",
     "price_postapoc": "50 cent",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "fun": 4,
-    "vitamins": [ [ "vitC", 4 ], [ "calcium", 1 ], [ "iron", 3 ] ],
+    "vitamins": [ [ "vitC", 4 ], [ "calcium", 1 ], [ "iron", 3 ], [ "junk_allergen", 1 ] ],
     "flags": [ "EATEN_HOT" ]
   },
   {
@@ -551,10 +577,11 @@
     "description": "A handful of soft chocolate-covered peppermint patties… yum!",
     "price": "130 cent",
     "price_postapoc": "150 cent",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "charges": 3,
-    "fun": 4
+    "fun": 4,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -571,9 +598,10 @@
     "description": "A handful of candy wafers, in assorted flavors: orange, lemon, lime, clove, chocolate, wintergreen, cinnamon, and licorice.  Yum!",
     "price": "1 USD",
     "price_postapoc": "1 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "40 ml",
-    "fun": 4
+    "fun": 4,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -590,10 +618,11 @@
     "description": "Candy sticks.  Slightly more healthy than tobacco cigarettes, but with no possibility of addiction.",
     "price": "130 cent",
     "price_postapoc": "1 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "84 ml",
     "charges": 3,
-    "fun": 4
+    "fun": 4,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -610,10 +639,10 @@
     "description": "Some caramel.  Still bad for your health.",
     "price": "150 cent",
     "price_postapoc": "5 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "charges": 5,
-    "vitamins": [ [ "calcium", 9 ], [ "vitB", 8 ] ],
+    "vitamins": [ [ "calcium", 9 ], [ "vitB", 8 ], [ "junk_allergen", 1 ] ],
     "fun": 2
   },
   {
@@ -630,10 +659,10 @@
     "description": "Betcha can't eat just one.",
     "price": "180 cent",
     "price_postapoc": "2 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "charges": 3,
-    "vitamins": [ [ "vitC", 7 ], [ "calcium", 1 ], [ "iron", 2 ] ],
+    "vitamins": [ [ "vitC", 7 ], [ "calcium", 1 ], [ "iron", 2 ], [ "junk_allergen", 1 ] ],
     "fun": 6
   },
   {
@@ -650,9 +679,9 @@
     "description": "Sugary breakfast cereal with marshmallows.  It takes you back to your childhood.",
     "price": "4 USD",
     "price_postapoc": "1 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
-    "vitamins": [ [ "vitA", 21 ], [ "vitC", 17 ], [ "calcium", 13 ], [ "iron", 48 ] ],
+    "vitamins": [ [ "vitA", 21 ], [ "vitC", 17 ], [ "calcium", 13 ], [ "iron", 48 ], [ "junk_allergen", 1 ] ],
     "fun": 10
   },
   {
@@ -669,9 +698,9 @@
     "description": "Plain cornflake cereal.  They're not that good, but it beats nothing.",
     "price": "3 USD",
     "price_postapoc": "75 cent",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
-    "vitamins": [ [ "iron", 42 ] ],
+    "vitamins": [ [ "iron", 42 ], [ "junk_allergen", 1 ] ],
     "fun": 6
   },
   {
@@ -688,9 +717,9 @@
     "description": "Salted chips made from corn tortillas, could really use some cheese, maybe some beef.",
     "price": "170 cent",
     "price_postapoc": "150 cent",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
-    "vitamins": [ [ "calcium", 5 ], [ "iron", 3 ] ],
+    "vitamins": [ [ "calcium", 5 ], [ "iron", 3 ], [ "junk_allergen", 1 ] ],
     "fun": 8
   },
   {
@@ -713,14 +742,14 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 16,
-    "vitamins": [ [ "calcium", 12 ], [ "iron", 6 ] ]
+    "vitamins": [ [ "calcium", 12 ], [ "iron", 6 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "nachosm",
     "name": { "str_sp": "meat nachos" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "niño nachos" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "niño nachos" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "nachos con chupacabra" } }
     ],
     "weight": "125 g",
@@ -739,14 +768,14 @@
     "charges": 3,
     "flags": [ "EATEN_HOT" ],
     "fun": 16,
-    "vitamins": [ [ "vitC", 5 ], [ "calcium", 2 ], [ "iron", 24 ], [ "vitB", 259 ] ]
+    "vitamins": [ [ "vitC", 5 ], [ "calcium", 2 ], [ "iron", 24 ], [ "vitB", 259 ], [ "meat_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "nachosmc",
     "name": { "str_sp": "meat nachos with cheese" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "niño nachos with cheese" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "niño nachos with cheese" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "cheese and chupacabra nachos" } }
     ],
     "weight": "22 g",
@@ -765,7 +794,15 @@
     "volume": "500 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 20,
-    "vitamins": [ [ "vitA", 10 ], [ "calcium", 10 ], [ "iron", 12 ], [ "vitB", 29 ] ]
+    "vitamins": [
+      [ "vitA", 10 ],
+      [ "calcium", 10 ],
+      [ "iron", 12 ],
+      [ "vitB", 29 ],
+      [ "meat_allergen", 1 ],
+      [ "junk_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -784,7 +821,7 @@
     "material": [ "flesh", "junk" ],
     "volume": "250 ml",
     "charges": 4,
-    "vitamins": [ [ "vitA", 1 ], [ "calcium", 8 ], [ "iron", 4 ] ],
+    "vitamins": [ [ "vitA", 1 ], [ "calcium", 8 ], [ "iron", 4 ], [ "meat_allergen", 1 ], [ "junk_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -807,7 +844,8 @@
     "primary_material": "processed_food",
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
-    "fun": 5
+    "fun": 5,
+    "vitamins": [ [ "meat_allergen", 1 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -829,7 +867,8 @@
     "primary_material": "processed_food",
     "volume": "1 L",
     "charges": 2,
-    "fun": -3
+    "fun": -3,
+    "vitamins": [ [ "meat_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -851,7 +890,8 @@
     "volume": "1 L",
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
-    "fun": 2
+    "fun": 2,
+    "vitamins": [ [ "meat_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -872,7 +912,7 @@
     "volume": "1 L",
     "charges": 4,
     "fun": 12,
-    "vitamins": [ [ "iron", 4 ] ]
+    "vitamins": [ [ "iron", 4 ], [ "meat_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -894,7 +934,15 @@
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
     "fun": 15,
-    "vitamins": [ [ "vitA", 7 ], [ "vitC", 46 ], [ "calcium", 14 ], [ "iron", 21 ] ]
+    "vitamins": [
+      [ "vitA", 7 ],
+      [ "vitC", 46 ],
+      [ "calcium", 14 ],
+      [ "iron", 21 ],
+      [ "meat_allergen", 1 ],
+      [ "wheat_allergen", 1 ],
+      [ "junk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -916,7 +964,7 @@
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
     "fun": -18,
-    "vitamins": [ [ "vitA", 4 ], [ "calcium", 6 ], [ "iron", 8 ], [ "vitB", 15 ] ]
+    "vitamins": [ [ "vitA", 4 ], [ "calcium", 6 ], [ "iron", 8 ], [ "vitB", 15 ], [ "meat_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -955,7 +1003,15 @@
     "material": [ "wheat", "junk", "milk" ],
     "primary_material": "processed_food",
     "fun": 6,
-    "vitamins": [ [ "vitA", 5 ], [ "calcium", 5 ], [ "iron", 17 ], [ "vitB", 33 ] ]
+    "vitamins": [
+      [ "vitA", 5 ],
+      [ "calcium", 5 ],
+      [ "iron", 17 ],
+      [ "vitB", 33 ],
+      [ "wheat_allergen", 1 ],
+      [ "junk_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -975,7 +1031,15 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 12,
-    "vitamins": [ [ "vitA", 7 ], [ "calcium", 25 ], [ "iron", 25 ], [ "vitB", 63 ] ]
+    "vitamins": [
+      [ "vitA", 7 ],
+      [ "calcium", 25 ],
+      [ "iron", 25 ],
+      [ "vitB", 63 ],
+      [ "wheat_allergen", 1 ],
+      [ "junk_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -997,7 +1061,26 @@
     "charges": 8,
     "flags": [ "EATEN_HOT" ],
     "fun": 6,
-    "vitamins": [ [ "vitA", 1 ], [ "calcium", 15 ] ]
+    "vitamins": [ [ "vitA", 1 ], [ "calcium", 15 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ]
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "pouch_cheese",
+    "name": "cheese spread pouch",
+    "weight": "10 g",
+    "color": "yellow",
+    "comestible_type": "FOOD",
+    "symbol": "%",
+    "calories": 89,
+    "description": "Heavily processed cheese spread.  Sterilized and packed atmospherically to last long.",
+    "price": "160 cent",
+    "price_postapoc": "3 USD",
+    "material": [ "milk", "junk" ],
+    "primary_material": "cheese",
+    "volume": "30 ml",
+    "flags": [ "EATEN_HOT" ],
+    "fun": 6,
+    "vitamins": [ [ "vitA", 1 ], [ "calcium", 15 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -1019,7 +1102,7 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 6,
-    "vitamins": [ [ "vitA", 7 ], [ "vitC", 4 ], [ "calcium", 17 ], [ "iron", 3 ] ]
+    "vitamins": [ [ "vitA", 7 ], [ "vitC", 4 ], [ "calcium", 17 ], [ "iron", 3 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -1040,7 +1123,7 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 6,
-    "vitamins": [ [ "calcium", 4 ], [ "iron", 7 ] ]
+    "vitamins": [ [ "calcium", 4 ], [ "iron", 7 ], [ "veggy_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -1062,7 +1145,7 @@
     "charges": 10,
     "flags": [ "EATEN_HOT" ],
     "fun": -6,
-    "vitamins": [ [ "iron", 3 ] ]
+    "vitamins": [ [ "iron", 3 ], [ "meat_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "id": "hotdogs_campfire",
@@ -1093,7 +1176,14 @@
     "volume": "500 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 12,
-    "vitamins": [ [ "vitC", 85 ], [ "calcium", 22 ], [ "iron", 15 ] ]
+    "vitamins": [
+      [ "vitC", 85 ],
+      [ "calcium", 22 ],
+      [ "iron", 15 ],
+      [ "meat_allergen", 1 ],
+      [ "wheat_allergen", 1 ],
+      [ "junk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -1114,7 +1204,7 @@
     "primary_material": "processed_food",
     "volume": "500 ml",
     "charges": 4,
-    "vitamins": [ [ "calcium", 4 ] ],
+    "vitamins": [ [ "calcium", 4 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ],
     "fun": 6
   }
 ]

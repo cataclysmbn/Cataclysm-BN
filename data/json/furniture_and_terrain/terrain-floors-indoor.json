@@ -324,7 +324,8 @@
     "color": "brown",
     "move_cost": 2,
     "roof": "t_shingle_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "DIGGABLE" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT" ],
+    "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -343,7 +344,8 @@
     "color": "brown",
     "move_cost": 2,
     "roof": "t_thatch_roof",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "DIGGABLE" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT" ],
+    "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -368,15 +370,15 @@
     "id": "t_utility_light",
     "name": "utility light",
     "description": "An industrial flood light set up to illuminate the surroundings.  It could be salvaged to install elsewhere, but will require grid power once taken down.  Examine it to switch it off.",
-    "symbol": ".",
-    "color": "white",
+    "symbol": "T",
+    "color": "yellow",
     "coverage": 30,
     "move_cost": 4,
     "roof": "t_flat_roof",
     "light_emitted": 240,
     "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "INDOORS", "FLAT", "MINEABLE" ],
     "deconstruct": {
-      "ter_set": "t_floor",
+      "ter_set": "t_concrete",
       "items": [
         { "item": "cable", "charges": 4 },
         { "item": "power_supply", "count": 1 },
@@ -389,7 +391,7 @@
     "bash": {
       "sound": "metal screeching!",
       "sound_fail": "clang!",
-      "ter_set": "t_floor",
+      "ter_set": "t_concrete",
       "str_min": 20,
       "str_max": 70,
       "//": "Some extra wire and scrap metal from smash results matching vehicle floodlights",
@@ -416,7 +418,7 @@
     "looks_like": "t_utility_light",
     "name": "utility light (off)",
     "description": "An industrial flood light, which could be turned on to illuminate your surroundings.  It could also be salvaged if you're willing to provide it more than emergency power.  Examine it to switch it back on.",
-    "symbol": ".",
+    "symbol": "T",
     "color": "white",
     "move_cost": 4,
     "roof": "t_flat_roof",
@@ -453,7 +455,7 @@
     "color": "magenta",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "INDOORS", "TRANSPARENT", "FLAT", "ELEVATOR" ]
+    "flags": [ "INDOORS", "TRANSPARENT", "FLAT", "ELEVATOR", "ROAD" ]
   },
   {
     "type": "terrain",
@@ -670,7 +672,7 @@
     "roof": "t_flat_roof",
     "looks_like": "t_scrap_floor",
     "description": "A simple roof and floor of rusty scrap metal bolted and wire-tied to a makeshift frame.  Very fashionable in post-apocalyptic shantytowns.  Hope you like the sound of rain on corrugated metal.",
-    "symbol": "LINE_OXOX",
+    "symbol": "`",
     "color": "dark_gray",
     "move_cost": 2,
     "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT" ],
@@ -694,7 +696,8 @@
     "move_cost": 2,
     "looks_like": "t_dirt",
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD", "PLOWABLE", "DIGGABLE" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD", "PLOWABLE" ],
+    "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 50, "str_max": 100, "str_min_supported": 100, "bash_below": true }
   },
   {
@@ -708,8 +711,8 @@
     "looks_like": "t_sand",
     "move_cost": 2,
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "INDOORS", "FLAT", "DIGGABLE" ],
-    "digging_result": "digging_sand_200L",
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "INDOORS", "FLAT" ],
+    "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60, "items": "digging_sand_200L" },
     "bash": {
       "sound": "thump",
       "ter_set": "t_pit_shallow",
@@ -730,7 +733,8 @@
     "color": "brown",
     "move_cost": 3,
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "INDOORS", "FLAT", "DIGGABLE" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "INDOORS", "FLAT" ],
+    "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 50, "str_max": 100, "str_min_supported": 100, "bash_below": true }
   },
   {
@@ -744,7 +748,8 @@
     "symbol": ".",
     "color": "light_green",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "DIGGABLE", "FLAT", "SUPPORTS_ROOF", "INDOORS" ],
+    "flags": [ "TRANSPARENT", "FLAT", "SUPPORTS_ROOF", "INDOORS" ],
+    "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 40, "str_max": 100, "str_min_supported": 100, "bash_below": true }
   },
   {
@@ -757,8 +762,8 @@
     "color": "light_red",
     "move_cost": 2,
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "DIGGABLE", "FLAT", "SUPPORTS_ROOF", "INDOORS" ],
-    "digging_result": "digging_clay_200L",
+    "flags": [ "TRANSPARENT", "FLAT", "SUPPORTS_ROOF", "INDOORS" ],
+    "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60, "items": "digging_clay_200L" },
     "bash": {
       "sound": "thump",
       "ter_set": "t_pit_shallow",
@@ -778,8 +783,8 @@
     "color": "brown",
     "move_cost": 5,
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "BURROWABLE", "DIGGABLE", "SUPPORTS_ROOF", "INDOORS" ],
-    "digging_result": "digging_clay_mound_200L",
+    "flags": [ "TRANSPARENT", "BURROWABLE", "SUPPORTS_ROOF", "INDOORS" ],
+    "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60, "items": "digging_clay_mound_200L" },
     "bash": {
       "sound": "thump",
       "sound_fail": "thump!",

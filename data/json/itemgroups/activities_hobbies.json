@@ -77,6 +77,7 @@
       [ "knee_pads", 40 ],
       [ "roller_blades", 20 ],
       [ "rollerskates", 10 ],
+      [ "folding_skateboard", 10 ],
       [ "manual_throw", 12 ],
       {
         "item": "protein_powder",
@@ -181,9 +182,12 @@
       [ "hotplate", 10 ],
       [ "popcan_stove", 10 ],
       [ "coffeemaker", 5 ],
+      [ "folding_wagon", 5 ],
       { "group": "tinware", "prob": 10 },
       [ "kukri", 4 ],
       [ "knife_hunting", 18 ],
+      [ "gps_device", 5 ],
+      [ "scouter", 4 ],
       [ "knife_heat", 10 ],
       [ "knife_rambo", 20 ],
       [ "machete", 5 ],
@@ -330,7 +334,9 @@
       [ "mess_tin", 10 ],
       [ "survival_kit", 30 ],
       [ "premium_survival_kit", 3 ],
-      [ "wire_saw", 10 ]
+      [ "wire_saw", 10 ],
+      [ "butane_can", 20 ],
+      [ "butane_tank", 15 ]
     ]
   },
   {

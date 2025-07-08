@@ -18,7 +18,6 @@
     "ammo": "38",
     "dispersion": 620,
     "durability": 3,
-    "blackpowder_tolerance": 60,
     "clip_size": 2,
     "reload": 200,
     "valid_mod_locations": [ [ "accessories", 4 ], [ "grip", 1 ], [ "sights", 1 ], [ "underbarrel", 1 ], [ "rail", 1 ], [ "stock", 1 ] ],
@@ -40,7 +39,6 @@
     "range": 3,
     "dispersion": 520,
     "durability": 6,
-    "blackpowder_tolerance": 96,
     "clip_size": 4,
     "valid_mod_locations": [
       [ "accessories", 2 ],
@@ -68,7 +66,6 @@
     "material": [ "steel", "wood" ],
     "color": "dark_gray",
     "ammo": "38",
-    "blackpowder_tolerance": 56,
     "magazines": [ [ "38", [ "38_speedloader6" ] ] ]
   },
   {
@@ -101,9 +98,9 @@
     "material": [ "steel", "aluminum", "plastic" ],
     "color": "dark_gray",
     "ammo": "38",
+    "handling": 20,
     "ranged_damage": { "damage_type": "bullet", "amount": -2 },
     "durability": 10,
-    "blackpowder_tolerance": 56,
     "clip_size": 5,
     "magazines": [ [ "38", [ "38_speedloader5" ] ] ],
     "valid_mod_locations": [
@@ -131,12 +128,12 @@
     "price": "620 USD",
     "price_postapoc": "1250 cent",
     "bashing": 9,
+    "handling": 20,
     "material": [ "steel", "plastic" ],
     "color": "light_gray",
     "ammo": [ "357mag", "38" ],
     "dispersion": 320,
     "durability": 10,
-    "blackpowder_tolerance": 56,
     "clip_size": 7,
     "magazines": [ [ "38", [ "38_speedloader" ] ] ],
     "valid_mod_locations": [
@@ -171,7 +168,7 @@
     "dispersion": 280,
     "durability": 10,
     "bashing": 9,
-    "blackpowder_tolerance": 48,
+    "handling": 20,
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "barrel", 1 ],
@@ -198,9 +195,9 @@
     "material": [ "iron", "wood" ],
     "color": "brown",
     "ammo": [ "357mag", "38" ],
+    "handling": 30,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 160,
-    "blackpowder_tolerance": 56,
     "clip_size": 9,
     "range": 10,
     "flags": [ "RELOAD_ONE" ],

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_JSON_H
-#define CATA_SRC_JSON_H
 
 #include <array>
 #include <bitset>
@@ -1283,6 +1281,9 @@ class JsonValue
         int get_int() const {
             return seek().get_int();
         }
+        unsigned int get_uint() const {
+            return seek().get_uint();
+        }
         int64_t get_int64() const {
             return seek().get_int64();
         }
@@ -1548,4 +1549,4 @@ void deserialize( std::optional<T> &obj, JsonIn &jsin )
     }
 }
 
-#endif // CATA_SRC_JSON_H
+

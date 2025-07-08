@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MISSION_H
-#define CATA_SRC_MISSION_H
 
 #include <functional>
 #include <map>
@@ -152,7 +150,7 @@ struct mission_target_params {
     bool cant_see = false;
     bool random = false;
     bool create_if_necessary = true;
-    int search_range = OMAPX;
+    int search_range = OMAPX * 14;
     std::optional<int> z;
     npc *guy = nullptr;
 };
@@ -476,4 +474,4 @@ struct enum_traits<mission::mission_status> {
     static constexpr mission::mission_status last = mission::mission_status::num_mission_status;
 };
 
-#endif // CATA_SRC_MISSION_H
+

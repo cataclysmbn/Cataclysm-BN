@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_AVATAR_FUNCTIONS_H
-#define CATA_SRC_AVATAR_FUNCTIONS_H
 
 #include "calendar.h"
 #include "type_id.h"
@@ -68,4 +66,4 @@ bool handle_theft_witnesses( avatar &you, const faction_id &owners );
 
 } // namespace avatar_funcs
 
-#endif // CATA_SRC_AVATAR_FUNCTIONS_H
+

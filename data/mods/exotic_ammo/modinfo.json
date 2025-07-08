@@ -1,0 +1,12 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "exotic_ammo",
+    "name": "Exotic ammo types",
+    "authors": [ "Robbietheneko" ],
+    "maintainers": [ "Robbietheneko" ],
+    "description": "9x18mm and similar ammo types, but now easily contained in a mod so that people can turn them off if they consider them bloat.  Should be a dependency of any mod that uses the ammo types.",
+    "category": "content",
+    "dependencies": [ "bn" ]
+  }
+]

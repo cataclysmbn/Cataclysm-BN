@@ -42,7 +42,7 @@
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
     "components": [
       [ [ "gunpowder", 8 ], [ "chem_black_powder", 10 ], [ "chem_match_head_powder", 10 ] ],
-      [ [ "scrap", 1 ], [ "nail", 10 ], [ "copper", 10 ], [ "lead", 10 ] ],
+      [ [ "scrap", 1 ], [ "nail", 10 ], [ "copper", 10 ], [ "lead", 10 ], [ "cartridgebrass", 20 ] ],
       [ [ "paper", 1 ], [ "aluminum_foil", 1 ] ]
     ]
   },
@@ -329,6 +329,8 @@
         [ "lead", 7 ],
         [ "silver_small", 7 ],
         [ "bismuth", 7 ],
+        [ "copper", 7 ],
+        [ "cartridgebrass", 14 ],
         [ "shrapnel", 4 ]
       ]
     ]
@@ -361,6 +363,8 @@
         [ "lead", 7 ],
         [ "silver_small", 7 ],
         [ "lead", 7 ],
+        [ "copper", 7 ],
+        [ "cartridgebrass", 14 ],
         [ "shrapnel", 4 ]
       ]
     ]

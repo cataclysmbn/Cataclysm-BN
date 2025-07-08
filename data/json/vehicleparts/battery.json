@@ -25,7 +25,7 @@
         "using": [ [ "soldering_standard", 5 ], [ "vehicle_repair_electronics", 1 ], [ "plastics", 1 ] ]
       }
     },
-    "flags": [ "FOLDABLE" ]
+    "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ]
   },
   {
     "id": "battery_motorbike",

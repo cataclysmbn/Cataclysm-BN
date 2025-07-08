@@ -253,46 +253,61 @@
     "id": "mon_eoraptor_hatchling",
     "type": "MONSTER",
     "copy-from": "mon_compsognathus_hatchling",
-    "name": "dark gray and yellow hatchling",
+    "name": "predator hatchling",
     "default_faction": "eoraptor",
-    "upgrades": { "age_grow": 14, "into": "mon_eoraptor" },
-    "petfood": { "food": [ "DINOFOOD_B" ] },
-    "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "GUILT", "CANPLAY", "STUMBLES", "NO_BREED" ]
+    "petfood": { "food": [ "DINOFOOD_A", "DINOFOOD_B", "DINOFOOD_C" ] },
+    "upgrades": { "age_grow": 14, "into": "mon_eoraptor" }
   },
   {
     "id": "mon_sarahsaurus_hatchling",
     "type": "MONSTER",
-    "name": "brown and magenta hatchling",
+    "name": "long neck hatchling",
     "copy-from": "mon_gallimimus_hatchling",
     "weight": "2 kg",
     "volume": "2 L",
-    "upgrades": { "age_grow": 40, "into": "mon_sarahsaurus_juvenile" },
-    "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "GUILT", "CANPLAY", "STUMBLES", "NO_BREED" ]
+    "petfood": { "food": [ "DINOFOOD_C" ] },
+    "upgrades": { "age_grow": 40, "into": "mon_sarahsaurus_juvenile" }
   },
   {
     "id": "mon_anchisaurus_hatchling",
     "type": "MONSTER",
-    "copy-from": "mon_sarahsaurus_hatchling",
+    "name": "long neck hatchling",
+    "copy-from": "mon_gallimimus_hatchling",
+    "weight": "2 kg",
+    "volume": "2 L",
+    "petfood": { "food": [ "DINOFOOD_C" ] },
     "upgrades": { "age_grow": 20, "into": "mon_anchisaurus_juvenile" }
   },
   {
     "id": "mon_issi_hatchling",
     "type": "MONSTER",
-    "copy-from": "mon_sarahsaurus_hatchling",
+    "name": "long neck hatchling",
+    "copy-from": "mon_gallimimus_hatchling",
+    "weight": "2 kg",
+    "volume": "2 L",
+    "petfood": { "food": [ "DINOFOOD_C" ] },
     "upgrades": { "age_grow": 40, "into": "mon_issi_juvenile" }
+  },
+  {
+    "id": "mon_moabosaurus_hatchling",
+    "type": "MONSTER",
+    "copy-from": "mon_amargasaurus_hatchling",
+    "upgrades": { "age_grow": 45, "into": "mon_moabosaurus_juvenile" }
   },
   {
     "id": "mon_haplocanthosaurus_hatchling",
     "type": "MONSTER",
-    "copy-from": "mon_issi_hatchling",
-    "weight": "4 kg",
-    "volume": "4 L",
+    "copy-from": "mon_amargasaurus_hatchling",
     "upgrades": { "age_grow": 45, "into": "mon_haplocanthosaurus_juvenile" }
   },
   {
     "id": "mon_amargasaurus_hatchling",
     "type": "MONSTER",
-    "copy-from": "mon_haplocanthosaurus_hatchling",
+    "name": "long neck hatchling",
+    "copy-from": "mon_gallimimus_hatchling",
+    "weight": "4 kg",
+    "volume": "4 L",
+    "petfood": { "food": [ "DINOFOOD_C" ] },
     "upgrades": { "age_grow": 50, "into": "mon_amargasaurus_juvenile" }
   },
   {
@@ -330,6 +345,12 @@
     "type": "MONSTER",
     "copy-from": "mon_apatosaurus_hatchling",
     "upgrades": { "age_grow": 50, "into": "mon_brachiosaurus_juvenile" }
+  },
+  {
+    "id": "mon_astrodon_hatchling",
+    "type": "MONSTER",
+    "copy-from": "mon_apatosaurus_hatchling",
+    "upgrades": { "age_grow": 50, "into": "mon_astrodon_juvenile" }
   },
   {
     "id": "mon_alamosaurus_hatchling",

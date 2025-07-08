@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_TEXT_STYLE_CHECK_H
-#define CATA_SRC_TEXT_STYLE_CHECK_H
 
 // This is used in both the game itself and the clang-tidy check,
 // so only system headers should be included here.
@@ -199,4 +197,4 @@ void text_style_check( Iter beg, Iter end,
     }
 }
 
-#endif // CATA_SRC_TEXT_STYLE_CHECK_H
+

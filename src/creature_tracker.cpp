@@ -34,7 +34,7 @@ shared_ptr_fast<monster> Creature_tracker::find( const tripoint &pos ) const
 
 int Creature_tracker::temporary_id( const monster &critter ) const
 {
-    const auto iter = std::find_if( monsters_list.begin(), monsters_list.end(),
+    const auto iter = std::ranges::find_if( monsters_list,
     [&]( const shared_ptr_fast<monster> &ptr ) {
         return ptr.get() == &critter;
     } );
@@ -108,7 +108,7 @@ void Creature_tracker::add_to_faction_map( const shared_ptr_fast<monster> &critt
 void Creature_tracker::update_faction( const monster &critter )
 {
     // find critter in monsters_list and obtain shared_ptr
-    const auto critter_ptr = std::find_if( monsters_list.begin(), monsters_list.end(),
+    const auto critter_ptr = std::ranges::find_if( monsters_list,
     [&]( const shared_ptr_fast<monster> &ptr ) {
         return ptr.get() == &critter;
     } );
@@ -159,7 +159,7 @@ bool Creature_tracker::update_pos( const monster &critter, const tripoint &new_p
         }
     }
 
-    const auto iter = std::find_if( monsters_list.begin(), monsters_list.end(),
+    const auto iter = std::ranges::find_if( monsters_list,
     [&]( const shared_ptr_fast<monster> &ptr ) {
         return ptr.get() == &critter;
     } );
@@ -190,7 +190,7 @@ void Creature_tracker::remove_from_location_map( const monster &critter )
 
     // When it's not in the map at its current location, it might still be there under,
     // another location, so look for it.
-    const auto iter = std::find_if( monsters_by_location.begin(), monsters_by_location.end(),
+    const auto iter = std::ranges::find_if( monsters_by_location,
     [&]( const decltype( monsters_by_location )::value_type & v ) {
         return v.second.get() == &critter;
     } );
@@ -201,7 +201,7 @@ void Creature_tracker::remove_from_location_map( const monster &critter )
 
 void Creature_tracker::remove( const monster &critter )
 {
-    const auto iter = std::find_if( monsters_list.begin(), monsters_list.end(),
+    const auto iter = std::ranges::find_if( monsters_list,
     [&]( const shared_ptr_fast<monster> &ptr ) {
         return ptr.get() == &critter;
     } );

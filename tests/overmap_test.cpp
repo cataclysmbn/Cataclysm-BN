@@ -52,7 +52,7 @@ TEST_CASE( "default_overmap_generation_always_succeeds", "[overmap][slow]" )
         overmap_buffer.create_custom_overmap( candidate_addr, test_specials );
         for( const auto &special_placement : test_specials ) {
             auto special = special_placement.special_details;
-            if( special->has_flag( "UNIQUE" ) ) {
+            if( special->has_flag( "UNIQUE" ) || special->has_flag( "GLOBALLY_UNIQUE" ) ) {
                 continue;
             }
             INFO( "In attempt #" << overmaps_to_construct

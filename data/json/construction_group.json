@@ -31,6 +31,11 @@
   },
   {
     "type": "construction_group",
+    "id": "weld_shut_metal_door",
+    "name": "Weld Shut Metal Door"
+  },
+  {
+    "type": "construction_group",
     "id": "build_a_bellow",
     "name": "Build a bellow"
   },
@@ -981,6 +986,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_industrial_freezer",
+    "name": "Install Industrial Freezer"
+  },
+  {
+    "type": "construction_group",
     "id": "install_glass_freezer",
     "name": "Install Glass Freezer"
   },
@@ -1206,6 +1216,11 @@
   },
   {
     "type": "construction_group",
+    "id": "place_gunsmith_kit",
+    "name": "Place Gunsmith Kit"
+  },
+  {
+    "type": "construction_group",
     "id": "place_autoclave",
     "name": "Place Autoclave"
   },
@@ -1236,6 +1251,11 @@
   },
   {
     "type": "construction_group",
+    "id": "place_adv_butchery",
+    "name": "Place Advanced Butchering Station"
+  },
+  {
+    "type": "construction_group",
     "id": "place_electrolysis_kit",
     "name": "Place Electrolysis Kit"
   },
@@ -1258,6 +1278,11 @@
     "type": "construction_group",
     "id": "place_food_processor",
     "name": "Place Food Processor"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_soda_machine",
+    "name": "Place Soda Machine"
   },
   {
     "type": "construction_group",
@@ -1533,5 +1558,15 @@
     "type": "construction_group",
     "id": "build_light_switch",
     "name": "Install a light switch"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_hydraulic_press",
+    "name": "Install Hydraulic Press"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_f_recycler",
+    "name": "Install Metal Compactor"
   }
 ]

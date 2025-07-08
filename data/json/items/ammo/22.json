@@ -8,7 +8,7 @@
     "//": "Hollowpoint damage increase of 25%",
     "damage": { "damage_type": "bullet", "amount": 20, "armor_penetration": 0 },
     "relative": { "range": 3 },
-    "proportional": { "recoil": 1.5 }
+    "proportional": { "recoil": 1.2 }
   },
   {
     "id": "22_lr",
@@ -45,6 +45,7 @@
     "range": 0,
     "shape": [ "cone", { "half_angle": 15, "length": 8 } ],
     "proportional": { "recoil": 0.334 },
+    "relative": { "damage": { "damage_type": "bullet", "armor_multiplier": 2 } },
     "extend": { "effects": [ "SHOT", "NOGIB" ] }
   },
   {

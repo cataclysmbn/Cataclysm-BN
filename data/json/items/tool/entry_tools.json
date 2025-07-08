@@ -2,7 +2,7 @@
   {
     "id": "crowbar",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_entry",
     "weapon_category": [ "CLUBS", "1H_HOOKED" ],
     "name": { "str": "crowbar" },
     "description": "This is a hefty prying tool.  Use it to open locked doors without destroying them or to lift manhole covers.  You could also wield it to bash some heads in.",
@@ -24,7 +24,7 @@
   {
     "id": "hairpin_picklock",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_entry",
     "looks_like": "hairpin",
     "name": { "str": "hairpin lockpick" },
     "description": "This is a metal hairpin bent into shape by hand, worse than an improvised set but easier to work with than a bone skewer.  You need MacGyver-like skills to open locks with this as it is brittle, but it lowers the chance of an alarm being set off.  If you're crouched, examining a locked door will have you prioritize picking the lock instead of using a crowbar on it.",
@@ -40,7 +40,7 @@
   {
     "id": "crude_picklock",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_entry",
     "name": { "str": "improvised lockpick" },
     "description": "This is an improvised set of picks and torsion wrenches made from scrap metal.  You need MacGyver-like skills to open locks with these as they are brittle, but they lower the chances of alarms being set off.  If you're crouched, examining a locked door will have you prioritize picking the lock instead of using a crowbar on it.",
     "weight": "23 g",
@@ -55,8 +55,8 @@
   {
     "id": "iceaxe",
     "type": "GENERIC",
-    "category": "tools",
-    "weapon_category": [ "HAND_AXES" ],
+    "category": "tools_entry",
+    "weapon_category": [ "1H_AXES" ],
     "name": { "str": "ice axe" },
     "description": "This is an ice axe with hammer on its head, a multi-purpose hiking and climbing tool used by mountaineers.  It is sturdy enough to pry open closed doors or lift manhole covers.",
     "weight": "500 g",
@@ -76,7 +76,7 @@
   {
     "id": "makeshift_crowbar",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_entry",
     "weapon_category": [ "CLUBS", "1H_HOOKED" ],
     "name": { "str": "makeshift crowbar" },
     "description": "This is a pipe whose ends have been bent and hammered flat to resemble a crowbar.  Use it to open locked crates without destroying them, to lift manhole covers, or even open doors and windows.  You could also wield it to fight with, in a pinch.",
@@ -98,7 +98,7 @@
   {
     "id": "picklocks",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_entry",
     "name": { "str": "locksmith kit" },
     "description": "This is a locksmith's set of sturdy steel lock picks and torsion wrenches.  It is essential for silently and quickly opening locks, provided you have some mechanical skill.  If you're crouched, examining a locked door will have you prioritize picking the lock instead of using a crowbar on it.",
     "weight": "544 g",

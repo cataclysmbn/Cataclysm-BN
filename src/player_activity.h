@@ -1,9 +1,6 @@
 #pragma once
-#ifndef CATA_SRC_PLAYER_ACTIVITY_H
-#define CATA_SRC_PLAYER_ACTIVITY_H
 
 #include <climits>
-#include <cstddef>
 #include <memory>
 #include <optional>
 #include <set>
@@ -12,14 +9,13 @@
 #include <vector>
 
 #include "activity_actor.h"
-#include "clone_ptr.h"
+#include "activity_speed.h"
 #include "enums.h"
 #include "memory_fast.h"
 #include "point.h"
-#include "type_id.h"
 #include "safe_reference.h"
+#include "type_id.h"
 
-class activity_actor;
 class Character;
 class JsonIn;
 class JsonOut;
@@ -28,6 +24,7 @@ class monster;
 class player;
 class translation;
 class activity_ptr;
+class npc;
 
 class player_activity
 {
@@ -44,6 +41,10 @@ class player_activity
         /** Unlocks the activity, or deletes it if it's already gone. */
         void resolve_active();
 
+        std::vector<npc *> assistants_;
+        //Cuz game code is borked
+        std::set<int> assistants_ids_;
+
     public:
         /** Total number of moves required to complete the activity */
         int moves_total = 0;
@@ -51,6 +52,9 @@ class player_activity
         int moves_left = 0;
         /** Controls whether this activity can be cancelled with 'pause' action */
         bool interruptable_with_kb = true;
+
+        activity_speed speed;
+        std::vector<safe_reference<item>> tools;
 
         // The members in the following block are deprecated, prefer creating a new
         // activity_actor.
@@ -98,28 +102,25 @@ class player_activity
         bool is_null() const {
             return type.is_null();
         }
-        bool is_multi_type() const;
-        /** This replaces the former usage `act.type = ACT_NULL` */
-        void set_to_null();
 
-        const activity_id &id() const {
-            return type;
+        int get_moves_left() const {
+            if( actor ) {
+                return actor->progress.get_moves_left();
+            }
+            return moves_left;
         }
-        bool rooted() const;
 
-        // Question to ask when the activity is to be stopped,
-        // e.g. "Stop doing something?", already translated.
-        std::string get_stop_phrase() const;
-
-        const translation &get_verb() const;
-
-        int get_value( size_t index, int def = 0 ) const;
-        std::string get_str_value( size_t index, const std::string &def = "" ) const;
-
-        /**
-         * Helper that returns an activity specific progress message.
-         */
-        std::optional<std::string> get_progress_message( const avatar &u ) const;
+        bool complete() const {
+            if( actor ) {
+                return actor->progress.complete();
+            }
+            return moves_left <= 0;
+        }
+        //Wrapper func to return assistants array properly
+        inline std::vector<npc *> &assistants();
+        /*
+        * Members to work with activity_actor.
+        */
 
         /**
          * If this returns true, the action can be continued without
@@ -127,7 +128,57 @@ class player_activity
          * possible if the player start the very same activity (with the same
          * parameters) again.
          */
-        bool is_suspendable() const;
+        bool is_suspendable() const {
+            return type->suspendable();
+        }
+
+        bool is_multi_type() const {
+            return type->multi_activity();
+        }
+
+        /** This replaces the former usage `act.type = ACT_NULL` */
+        void set_to_null();
+
+        const activity_id &id() const {
+            return type;
+        }
+        bool rooted() const {
+            return type != activity_id::NULL_ID() && type->rooted();
+        }
+
+        // Question to ask when the activity is to be stopped,
+        // e.g. "Stop doing something?", already translated.
+        std::string get_stop_phrase() const {
+            return type->stop_phrase();
+        }
+
+        const translation &get_verb() const {
+            return type->verb();
+        }
+
+        int get_value( size_t index, int def = 0 ) const;
+        std::string get_str_value( size_t index, const std::string &def = "" ) const;
+
+        /*
+         * Bunch of functioins to calculate speed factors based on certain conditions
+         * Most of those are quite self-explanatory by the name
+        */
+
+        void init_all_moves( Character &who );
+
+        //Calculates speed factors that may change every turn
+        void calc_moves( const Character &who ) {
+            speed.calc_moves( who );
+        }
+
+        //Fills assistant vector with applicable assistants
+        void get_assistants( const Character &who );
+        static std::vector<npc *> get_assistants( const Character &who, unsigned short max );
+
+        /**
+         * Helper that returns an activity specific progress message.
+         */
+        std::optional<std::string> get_progress_message( const avatar &u ) const;
 
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );
@@ -163,4 +214,4 @@ class player_activity
         void inherit_distractions( const player_activity & );
 };
 
-#endif // CATA_SRC_PLAYER_ACTIVITY_H
+

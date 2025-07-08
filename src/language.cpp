@@ -235,7 +235,7 @@ static std::vector<language_info> load_languages( const std::string &filepath )
 
     for( language_info &info : ret ) {
         for( const std::string &g : info.genders ) {
-            if( find( all_genders.begin(), all_genders.end(), g ) == all_genders.end() ) {
+            if( std::ranges::find( all_genders, g ) == all_genders.end() ) {
                 debugmsg( "Unexpected gender '%s' in grammatical gender list for language '%d'",
                           g, info.id );
             }
@@ -504,7 +504,7 @@ static bool add_mod_catalogues( std::vector<trans_catalogue> &list, const std::s
         return false;
     }
 
-    const std::vector<mod_id> &mods = world_generator->active_world->active_mod_order;
+    const std::vector<mod_id> &mods = world_generator->active_world->info->active_mod_order;
     for( const mod_id &mod : mods ) {
         add_mod_catalogue_if_exists( list, lang_id, mod->path );
     }

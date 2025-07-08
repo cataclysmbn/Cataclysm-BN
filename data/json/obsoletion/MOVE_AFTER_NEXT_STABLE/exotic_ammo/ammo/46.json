@@ -1,0 +1,40 @@
+[
+  {
+    "id": "46mm",
+    "type": "AMMO",
+    "name": { "str": "4.6x30mm" },
+    "description": "4.6x30mm ammunition with 31gr copper plated steel bullets.  The 4.6x30mm round was developed by H&K to compete with FN Herstal's 5.7x28mm cartridge.  It has low recoil and excellent armor penetration.",
+    "weight": "5 g",
+    "volume": "250 ml",
+    "price": "3 USD",
+    "price_postapoc": "16 USD",
+    "material": [ "steel", "powder" ],
+    "symbol": "=",
+    "color": "dark_gray",
+    "count": 40,
+    "stack_size": 80,
+    "ammo_type": "46",
+    "casing": "46mm_casing",
+    "range": 14,
+    "//": "Base damage of 20, balance increase of one third.",
+    "damage": { "damage_type": "bullet", "amount": 24, "armor_penetration": 24 },
+    "dispersion": 40,
+    "recoil": 300,
+    "effects": [ "COOKOFF" ]
+  },
+  {
+    "id": "bp_46mm",
+    "copy-from": "46mm",
+    "type": "AMMO",
+    "name": { "str": "4.6x30mm, black powder" },
+    "description": "4.6x30mm ammunition with 31gr copper plated lead bullets.  The 4.6x30mm round was developed by H&K to compete with FN Herstal's 5.7x28mm cartridge.  It has low recoil, but no usual armor penetration due to using simple lead bullets rather than proper factory-made penetrator projectiles.",
+    "proportional": {
+      "price": 0.5,
+      "price_postapoc": 0.5,
+      "damage": { "damage_type": "bullet", "amount": 0.76, "armor_penetration": 0.1 },
+      "recoil": 0.76,
+      "dispersion": 1.2
+    },
+    "extend": { "effects": [ "RECYCLED", "BLACKPOWDER", "MUZZLE_SMOKE" ] }
+  }
+]

@@ -135,7 +135,7 @@ detached_ptr<item> npc_mission_item_location::detach( item *it )
 void npc_mission_item_location::attach( detached_ptr<item> &&obj )
 {
     npc *as_npc = static_cast<npc *>( holder );
-    as_npc->companion_mission_inv.add_item( std::move( obj ) );
+    as_npc->companion_mission_inv.add_item( std::move( obj ), false );
 }
 
 detached_ptr<item> wield_item_location::detach( item *it )

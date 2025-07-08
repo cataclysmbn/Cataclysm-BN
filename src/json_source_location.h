@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_JSON_SOURCE_LOCATION_H
-#define CATA_SRC_JSON_SOURCE_LOCATION_H
 
 #include <string>
 
@@ -18,4 +16,4 @@ void throw_error_at_json_loc( const json_source_location &loc, const std::string
 /** Show warning at given JSON location. */
 void show_warning_at_json_loc( const json_source_location &loc, const std::string &message );
 
-#endif // CATA_SRC_JSON_SOURCE_LOCATION_H
+

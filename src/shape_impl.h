@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_SHAPE_IMPL_H
-#define CATA_SRC_SHAPE_IMPL_H
 
 #include <algorithm>
 #include <cmath>
@@ -322,4 +320,4 @@ class cone_factory : public shape_factory_impl
         }
 };
 
-#endif // CATA_SRC_SHAPE_IMPL_H
+

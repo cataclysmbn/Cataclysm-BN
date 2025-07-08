@@ -49,7 +49,6 @@
     "dispersion": 855,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 6 ] ],
     "reload": 200,
-    "handling": 30,
     "valid_mod_locations": [ [ "accessories", 4 ], [ "sights", 1 ], [ "rail", 1 ] ],
     "magazines": [ [ "shot", [ "shotbelt_20" ] ] ],
     "flags": [ "MOUNTED_GUN" ]
@@ -70,6 +69,7 @@
     "dispersion": 425,
     "durability": 6,
     "clip_size": 5,
+    "blackpowder_tolerance": 24,
     "extend": { "flags": [ "RELOAD_ONE" ] }
   },
   {
@@ -77,7 +77,7 @@
     "copy-from": "shotgun_pump",
     "type": "GUN",
     "name": { "str_sp": "Kel-Tec KSG" },
-    "description": "A bullpup pump-action shotgun, the Kel-Tec KSG uses a pair of magazine tubes to increase its capacity.  Each tube has to be loaded separately, but this offers the option of loading different ammunition for different situations.",
+    "description": "A bullpup pump-action shotgun, the Kel-Tec KSG uses a pair of magazine tubes to increase its capacity.  Each tube has to be loaded separately, but this offers the option of loading different ammunition for different situations.  An integral top rail is provided for mounting sights, without which it will perform poorly.",
     "weight": "1550 g",
     "volume": "3371 ml",
     "price": "990 USD",
@@ -91,6 +91,7 @@
     "durability": 7,
     "clip_size": 7,
     "built_in_mods": [ "ksg_aux_shotgun" ],
+    "default_mods": [ "improve_sights" ],
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],
@@ -110,7 +111,7 @@
     "copy-from": "shotgun_pump",
     "type": "GUN",
     "name": { "str_sp": "Kel-Tec KSG-25" },
-    "description": "A bullpup pump-action shotgun, the Kel-Tec KSG-25 uses a pair of magazine tubes to increase its capacity.  Each tube has to be loaded separately, but this offers the option of loading different ammunition for different situations.  The big brother of the KSG, it has a longer barrel and longer magazine tubes.",
+    "description": "A bullpup pump-action shotgun, the Kel-Tec KSG-25 uses a pair of magazine tubes to increase its capacity.  Each tube has to be loaded separately, but this offers the option of loading different ammunition for different situations.  The big brother of the KSG, it has a longer barrel and longer magazine tubes.  An integral top rail is provided for mounting sights, without which it will perform poorly.",
     "weight": "2100 g",
     "volume": "4495 ml",
     "price": "1400 USD",
@@ -123,6 +124,7 @@
     "durability": 7,
     "clip_size": 12,
     "built_in_mods": [ "ksg25_aux_shotgun" ],
+    "default_mods": [ "improve_sights" ],
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],
@@ -282,6 +284,7 @@
     "price_postapoc": "5 USD",
     "ascii_picture": "lg_pipe_gun",
     "material": [ "steel", "wood" ],
+    "handling": 10,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 855,
     "durability": 6,
@@ -325,13 +328,12 @@
     "copy-from": "remington_870",
     "type": "GUN",
     "name": { "str": "Remington 870 MCS" },
-    "description": "This Remington 870 Modular Combat System shotgun is currently setup for breaching operations, with a 10 inch barrel and no stock.  It is small enough to carry as a secondary weapon, specifically to pop open any pesky doors you might come across.  The grip's design makes for controllable yet unpleasant recoil, and the barrel lacks any sights.",
+    "description": "This Remington 870 Modular Combat System shotgun is currently setup for breaching operations, with a 10 inch barrel and no stock.  It is small enough to carry as a secondary weapon, specifically to pop open any pesky doors you might come across.  The grip's design makes for controllable recoil, and the barrel lacks any integral sights, requiring you to install your own if you want better accuracy.",
     "weight": "2812 g",
     "volume": "1284 ml",
     "ascii_picture": "remington870mcs",
     "material": [ "steel", "plastic" ],
     "ranged_damage": { "damage_type": "bullet", "amount": -3 },
-    "skill": "pistol",
     "modes": [ [ "DEFAULT", "single", 1 ] ],
     "//": "dispersion should be 300 moa, but CDDA exaggerates dispersion.",
     "sight_dispersion": 750,
@@ -340,6 +342,7 @@
     "price_postapoc": "2250 cent",
     "barrel_length": "0 ml",
     "built_in_mods": [ "breacher_grip" ],
+    "default_mods": [ "improve_sights" ],
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],
@@ -430,6 +433,7 @@
       [ "sights", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "blackpowder_tolerance": 48,
     "flags": [ "RELOAD_ONE", "RELOAD_EJECT", "NEVER_JAMS" ]
   },
   {
@@ -459,6 +463,7 @@
       [ "sights", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "blackpowder_tolerance": 24,
     "magazines": [ [ "shot", [ "saiga10mag", "saiga30mag" ] ] ]
   },
   {
@@ -505,6 +510,7 @@
       [ "rail", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "blackpowder_tolerance": 96,
     "extend": { "flags": [ "NEVER_JAMS" ] }
   },
   {
@@ -580,7 +586,7 @@
     "copy-from": "shotgun_base",
     "type": "GUN",
     "name": { "str": "Tavor TS12" },
-    "description": "This is a triple tube magazine fed, gas-operated bullpup shotgun of Israeli Weapon Industries make.  It is capable of loading 15 shells, all in a relatively small package.  Like many other modern IWI designs, this looks more like a sci-fi prop gun than a firearm.  An integral top rail is provided for mounting sights.",
+    "description": "This is a triple tube magazine fed, gas-operated bullpup shotgun of Israeli Weapon Industries make.  It is capable of loading 15 shells, all in a relatively small package.  Like many other modern IWI designs, this looks more like a sci-fi prop gun than a firearm.  An integral top rail is provided for mounting sights, without which it will perform poorly.",
     "weight": "4200 g",
     "volume": "4040 ml",
     "looks_like": "ksg",
@@ -593,6 +599,7 @@
     "sight_dispersion": 500,
     "ranged_damage": { "damage_type": "bullet", "amount": 1 },
     "built_in_mods": [ "ts12_aux_shotgun", "ts12_aux_shotgun2" ],
+    "default_mods": [ "improve_sights" ],
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "bore", 1 ],
@@ -655,7 +662,6 @@
     "durability": 6,
     "clip_size": 6,
     "reload": 120,
-    "skill": "pistol",
     "modes": [ [ "DEFAULT", "single", 1 ] ],
     "valid_mod_locations": [
       [ "accessories", 2 ],
@@ -668,6 +674,7 @@
       [ "sights", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "blackpowder_tolerance": 72,
     "flags": [ "RELOAD_ONE" ]
   },
   {
@@ -701,6 +708,7 @@
       [ "sights", 1 ],
       [ "underbarrel", 1 ]
     ],
+    "blackpowder_tolerance": 72,
     "default_mods": [ "sword_bayonet" ],
     "flags": [ "RELOAD_ONE" ]
   }

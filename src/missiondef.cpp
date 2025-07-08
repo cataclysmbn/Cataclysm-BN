@@ -250,7 +250,7 @@ void mission_type::load( const JsonObject &jo, const std::string &src )
         }
     }
 
-    if( std::any_of( origins.begin(), origins.end(), []( mission_origin origin ) {
+    if( std::ranges::any_of( origins, []( mission_origin origin ) {
     return origin == ORIGIN_ANY_NPC || origin == ORIGIN_OPENER_NPC || origin == ORIGIN_SECONDARY;
 } ) ) {
         auto djo = jo.get_object( "dialogue" );
@@ -464,7 +464,7 @@ mission_type_id mission_type::get_random_id( const mission_origin origin,
 {
     std::vector<mission_type_id> valid;
     for( auto &t : get_all() ) {
-        if( std::find( t.origins.begin(), t.origins.end(), origin ) == t.origins.end() ) {
+        if( std::ranges::find( t.origins, origin ) == t.origins.end() ) {
             continue;
         }
         if( t.place( p ) ) {

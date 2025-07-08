@@ -30,7 +30,6 @@
 #include "trap.h"
 #include "type_id.h"
 
-static const std::string flag_DIGGABLE( "DIGGABLE" );
 static const std::string flag_TRANSPARENT( "TRANSPARENT" );
 
 static void set_furn_ids();
@@ -152,7 +151,6 @@ static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { 
         { "UNSTABLE",                 TFLAG_UNSTABLE },       // monmove
         { "LIQUID",                   TFLAG_LIQUID },         // *move(), add/spawn_item*()
         { "FIRE_CONTAINER",           TFLAG_FIRE_CONTAINER }, // fire
-        { "DIGGABLE",                 TFLAG_DIGGABLE },       // monmove
         { "SUPPRESS_SMOKE",           TFLAG_SUPPRESS_SMOKE }, // fire
         { "FLAMMABLE_HARD",           TFLAG_FLAMMABLE_HARD }, // fire
         { "SEALED",                   TFLAG_SEALED },         // Fire, acid
@@ -215,6 +213,7 @@ static const std::unordered_map<std::string, ter_connects> ter_connects_map = { 
         { "WATER",                    TERCONN_WATER },
         { "PAVEMENT",                 TERCONN_PAVEMENT },
         { "RAIL",                     TERCONN_RAIL },
+        { "GUTTER",                     TERCONN_GUTTER },
         { "COUNTER",                     TERCONN_COUNTER },
     }
 };
@@ -344,6 +343,21 @@ void map_bash_info::check( const std::string &id, map_object_type type ) const
         debugmsg( _( "Errors for \"bash\" field in \"%s\": \"%s\":\n%s" ),
                   type_str, id,
                   enumerate_as_string( errors, enumeration_conjunction::newline ) );
+    }
+}
+
+void map_dig_info::deserialize( JsonIn &jsin )
+{
+    JsonObject jo = jsin.get_object();
+
+    assign( jo, "digging_min", dig_min );
+    assign( jo, "result_ter", result_ter );
+    assign( jo, "num_minutes", num_minutes );
+    // Support for individual items specified or an itemgroup
+    if( jo.has_array( "items" ) ) {
+        result_items = item_group::load_item_group( jo.get_member( "items" ), "collection" );
+    } else if( jo.has_string( "items" ) ) {
+        assign( jo, "items", result_items );
     }
 }
 
@@ -486,7 +500,6 @@ ter_t null_terrain_t()
     new_terrain.movecost = 0;
     new_terrain.transparent = true;
     new_terrain.set_flag( flag_TRANSPARENT );
-    new_terrain.set_flag( flag_DIGGABLE );
     new_terrain.examine = iexamine_function_from_string( "none" );
     new_terrain.max_volume = DEFAULT_MAX_VOLUME_IN_SQUARE;
     return new_terrain;
@@ -1274,8 +1287,8 @@ void map_data_common_t::load( const JsonObject &jo, const std::string &src )
         for( JsonObject harvest_jo : jo.get_array( "harvest_by_season" ) ) {
             auto season_strings = harvest_jo.get_tags( "seasons" );
             std::set<season_type> seasons;
-            std::transform( season_strings.begin(), season_strings.end(), std::inserter( seasons,
-                            seasons.begin() ), io::string_to_enum<season_type> );
+            std::ranges::transform( season_strings, std::inserter( seasons,
+                                    seasons.begin() ), io::string_to_enum<season_type> );
 
             harvest_id hl;
             if( harvest_jo.has_array( "entries" ) ) {
@@ -1315,6 +1328,11 @@ bool ter_t::is_null() const
     return id == ter_str_id::NULL_ID();
 }
 
+bool ter_t::is_diggable() const
+{
+    return !digging_results.result_ter->is_null();
+}
+
 void ter_t::load( const JsonObject &jo, const std::string &src )
 {
     connect_group = TERCONN_NONE;
@@ -1322,7 +1340,6 @@ void ter_t::load( const JsonObject &jo, const std::string &src )
     mandatory( jo, was_loaded, "name", name_ );
     mandatory( jo, was_loaded, "move_cost", movecost );
     assign( jo, "coverage", coverage, is_json_check_strict( src ) );
-    assign( jo, "digging_result", digging_result, is_json_check_strict( src ) );
     assign( jo, "max_volume", max_volume, is_json_check_strict( src ) );
     assign( jo, "trap", trap_id_str, is_json_check_strict( src ) );
 
@@ -1347,6 +1364,8 @@ void ter_t::load( const JsonObject &jo, const std::string &src )
 
     optional( jo, was_loaded, "lockpick_result", lockpick_result, ter_str_id::NULL_ID() );
     optional( jo, was_loaded, "lockpick_message", lockpick_message, translation() );
+    optional( jo, was_loaded, "nail_pull_result", nail_pull_result, ter_str_id::NULL_ID() );
+    optional( jo, was_loaded, "nail_pull_items", nail_pull_items, {0, 0} );
 
     oxytorch = cata::make_value<activity_data_ter>();
     if( jo.has_object( "oxytorch" ) ) {
@@ -1363,8 +1382,12 @@ void ter_t::load( const JsonObject &jo, const std::string &src )
         hacksaw->load( jo.get_object( "hacksaw" ) );
     }
 
+    optional( jo, was_loaded, "fill_result", fill_result, ter_str_id::NULL_ID() );
+    optional( jo, was_loaded, "fill_minutes", fill_minutes, 15 );
+
     // Not assign, because we want to overwrite individual fields
     optional( jo, was_loaded, "bash", bash );
+    optional( jo, was_loaded, "digging_results", digging_results );
     deconstruct.load( jo, "deconstruct", false );
     pry.load( jo, "pry", pry_result::terrain );
 }
@@ -1534,7 +1557,6 @@ void furn_t::load( const JsonObject &jo, const std::string &src )
     mandatory( jo, was_loaded, "name", name_ );
     mandatory( jo, was_loaded, "move_cost_mod", movecost );
     optional( jo, was_loaded, "coverage", coverage );
-    optional( jo, was_loaded, "digging_result", digging_result );
     optional( jo, was_loaded, "comfort", comfort, 0 );
     optional( jo, was_loaded, "floor_bedding_warmth", floor_bedding_warmth, 0 );
     optional( jo, was_loaded, "emissions", emissions );

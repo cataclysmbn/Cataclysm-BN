@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_FACTION_H
-#define CATA_SRC_FACTION_H
 
 #include <bitset>
 #include <map>
@@ -141,4 +139,4 @@ class faction_manager
         faction *get( const faction_id &id, bool complain = true );
 };
 
-#endif // CATA_SRC_FACTION_H
+

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UI_H
-#define CATA_SRC_UI_H
 
 #include <initializer_list>
 #include <map>
@@ -438,4 +436,4 @@ class pointmenu_cb : public uilist_callback
         void select( uilist *menu ) override;
 };
 
-#endif // CATA_SRC_UI_H
+

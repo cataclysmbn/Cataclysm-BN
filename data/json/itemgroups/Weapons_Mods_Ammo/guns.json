@@ -11,7 +11,6 @@
       { "group": "nested_cz75", "prob": 10 },
       { "group": "nested_deagle_44", "prob": 10 },
       { "group": "nested_fn1910", "prob": 5 },
-      { "group": "nested_fn57", "prob": 10 },
       { "group": "nested_glock_17", "prob": 55 },
       { "group": "nested_glock_19", "prob": 40 },
       { "group": "nested_glock_20", "prob": 20 },
@@ -29,7 +28,6 @@
       { "group": "nested_kp3at", "prob": 15 },
       { "group": "nested_kpf9", "prob": 15 },
       { "group": "nested_m1911", "prob": 30 },
-      { "group": "nested_m1911a1_38super", "prob": 15 },
       { "group": "nested_m9", "prob": 25 },
       { "group": "nested_model_10_revolver", "prob": 20 },
       { "group": "nested_p226_357sig", "prob": 35 },
@@ -42,7 +40,6 @@
       { "group": "nested_rugerlcp", "prob": 35 },
       { "group": "nested_sig_mosquito", "prob": 15 },
       { "group": "nested_sw_22", "prob": 15 },
-      { "group": "nested_sw_500", "prob": 25 },
       { "group": "nested_sw_610", "prob": 20 },
       { "group": "nested_sw_619", "prob": 25 },
       { "group": "nested_sw629", "prob": 30 },
@@ -71,7 +68,6 @@
       { "group": "everyday_cz75", "prob": 10 },
       { "group": "everyday_deagle_44", "prob": 10 },
       { "group": "everyday_fn1910", "prob": 5 },
-      { "group": "everyday_fn57", "prob": 10 },
       { "group": "everyday_glock_17", "prob": 55 },
       { "group": "everyday_glock_19", "prob": 40 },
       { "group": "everyday_glock_20", "prob": 20 },
@@ -89,7 +85,6 @@
       { "group": "everyday_kp3at", "prob": 15 },
       { "group": "everyday_kpf9", "prob": 15 },
       { "group": "everyday_m1911", "prob": 30 },
-      { "group": "everyday_m1911a1_38super", "prob": 15 },
       { "group": "everyday_m9", "prob": 25 },
       { "group": "everyday_model_10_revolver", "prob": 20 },
       { "group": "everyday_p226_357sig", "prob": 35 },
@@ -102,7 +97,6 @@
       { "group": "everyday_rugerlcp", "prob": 35 },
       { "group": "everyday_sig_mosquito", "prob": 15 },
       { "group": "everyday_sw_22", "prob": 15 },
-      { "group": "everyday_sw_500", "prob": 25 },
       { "group": "everyday_sw_610", "prob": 20 },
       { "group": "everyday_sw_619", "prob": 25 },
       { "group": "everyday_sw629", "prob": 30 },
@@ -131,7 +125,6 @@
       { "item": "cz75", "prob": 10, "charges-min": 0, "charges-max": 0 },
       { "item": "deagle_44", "prob": 10, "charges-min": 0, "charges-max": 0 },
       { "item": "fn1910", "prob": 5, "charges-min": 0, "charges-max": 0 },
-      { "item": "fn57", "prob": 10, "charges-min": 0, "charges-max": 0 },
       { "item": "glock_17", "prob": 55, "charges-min": 0, "charges-max": 0 },
       { "item": "glock_19", "prob": 40, "charges-min": 0, "charges-max": 0 },
       { "item": "glock_20", "prob": 20, "charges-min": 0, "charges-max": 0 },
@@ -149,7 +142,6 @@
       { "item": "kp3at", "prob": 15, "charges-min": 0, "charges-max": 0 },
       { "item": "kpf9", "prob": 15, "charges-min": 0, "charges-max": 0 },
       { "item": "m1911", "prob": 30, "charges-min": 0, "charges-max": 0 },
-      { "item": "m1911a1_38super", "prob": 15, "charges-min": 0, "charges-max": 0 },
       { "item": "m9", "prob": 25, "charges-min": 0, "charges-max": 0 },
       { "item": "model_10_revolver", "prob": 20, "charges-min": 0, "charges-max": 0 },
       { "item": "p226_357sig", "prob": 35, "charges-min": 0, "charges-max": 0 },
@@ -162,7 +154,6 @@
       { "item": "rugerlcp", "prob": 35, "charges-min": 0, "charges-max": 0 },
       { "item": "sig_mosquito", "prob": 15, "charges-min": 0, "charges-max": 0 },
       { "item": "sw_22", "prob": 15, "charges-min": 0, "charges-max": 0 },
-      { "item": "sw_500", "prob": 25, "charges-min": 0, "charges-max": 0 },
       { "item": "sw_610", "prob": 20, "charges-min": 0, "charges-max": 0 },
       { "item": "sw_619", "prob": 25, "charges-min": 0, "charges-max": 0 },
       { "item": "sw629", "prob": 30, "charges-min": 0, "charges-max": 0 },
@@ -240,7 +231,6 @@
     "id": "guns_pistol_obscure",
     "//": "Imported or otherwise very obscure pistols.",
     "items": [
-      { "group": "nested_af2011a1_38super", "prob": 10 },
       { "group": "nested_bond_410", "prob": 20 },
       { "group": "nested_colt_army", "prob": 50 },
       { "group": "nested_colt_navy", "prob": 50 },
@@ -248,15 +238,10 @@
       { "group": "nested_cop_38", "prob": 30 },
       { "group": "nested_draco", "prob": 30 },
       { "group": "nested_lemat_revolver", "prob": 50 },
-      { "group": "nested_m1911-460", "prob": 5 },
-      { "group": "nested_makarov", "prob": 50 },
       { "group": "nested_moss_brownie", "prob": 20 },
       { "group": "nested_pistol_flintlock", "prob": 70 },
-      { "group": "nested_raging_bull", "prob": 60 },
-      { "group": "nested_raging_judge", "prob": 40 },
       { "group": "nested_rm99_pistol", "prob": 30 },
-      { "group": "nested_sig_p230", "prob": 10 },
-      { "group": "nested_tokarev", "prob": 50 }
+      { "group": "nested_sig_p230", "prob": 10 }
     ]
   },
   {
@@ -264,7 +249,6 @@
     "id": "carried_guns_pistol_obscure",
     "//": "Imported or otherwise very obscure pistols being carried, with either mags or loose ammo.",
     "items": [
-      { "group": "everyday_af2011a1_38super", "prob": 10 },
       { "group": "everyday_bond_410", "prob": 20 },
       { "group": "everyday_colt_army", "prob": 50 },
       { "group": "everyday_colt_navy", "prob": 50 },
@@ -272,15 +256,10 @@
       { "group": "everyday_cop_38", "prob": 30 },
       { "group": "everyday_draco", "prob": 30 },
       { "group": "everyday_lemat_revolver", "prob": 50 },
-      { "group": "everyday_m1911-460", "prob": 5 },
-      { "group": "everyday_makarov", "prob": 50 },
       { "group": "everyday_moss_brownie", "prob": 20 },
       { "group": "everyday_pistol_flintlock", "prob": 70 },
-      { "group": "everyday_raging_bull", "prob": 60 },
-      { "group": "everyday_raging_judge", "prob": 40 },
       { "group": "everyday_rm99_pistol", "prob": 30 },
-      { "group": "everyday_sig_p230", "prob": 10 },
-      { "group": "everyday_tokarev", "prob": 50 }
+      { "group": "everyday_sig_p230", "prob": 10 }
     ]
   },
   {
@@ -301,6 +280,8 @@
       { "group": "nested_american_180", "prob": 20 },
       { "group": "nested_hk_mp5_semi_pistol", "prob": 70 },
       { "group": "nested_kriss_vector", "prob": 40 },
+      { "group": "nested_TDI", "prob": 40 },
+      { "group": "nested_kriss_vector_9mm", "prob": 40 },
       { "group": "nested_mac_10", "prob": 40 },
       { "group": "nested_mac_11", "prob": 20 },
       { "group": "nested_sten", "prob": 100 },
@@ -318,6 +299,7 @@
       { "group": "everyday_american_180", "prob": 20 },
       { "group": "everyday_hk_mp5_semi_pistol", "prob": 70 },
       { "group": "everyday_kriss_vector", "prob": 40 },
+      { "group": "everyday_TDI", "prob": 40 },
       { "group": "everyday_mac_10", "prob": 40 },
       { "group": "everyday_mac_11", "prob": 20 },
       { "group": "everyday_sten", "prob": 100 },
@@ -335,6 +317,7 @@
       { "item": "american_180", "prob": 20, "charges-min": 0, "charges-max": 0 },
       { "item": "hk_mp5_semi_pistol", "prob": 70, "charges-min": 0, "charges-max": 0 },
       { "item": "kriss_vector", "prob": 40, "charges-min": 0, "charges-max": 0 },
+      { "item": "kriss_vector_9mm", "prob": 40, "charges-min": 0, "charges-max": 0 },
       { "item": "mac_10", "prob": 40, "charges-min": 0, "charges-max": 0 },
       { "item": "mac_11", "prob": 20, "charges-min": 0, "charges-max": 0 },
       { "item": "sten", "prob": 100, "charges-min": 0, "charges-max": 0 },
@@ -350,10 +333,10 @@
     "//": "SMGs including those only used by police/paramilitary forces.",
     "items": [
       { "group": "nested_calico", "prob": 30 },
-      { "group": "nested_fn_p90", "prob": 50 },
       { "group": "nested_hk_mp5", "prob": 100 },
       { "group": "nested_hk_mp5sd", "prob": 10 },
-      { "group": "nested_hk_mp7", "prob": 60 },
+      { "group": "nested_kriss_vector_9mm", "prob": 10 },
+      { "group": "nested_TDI", "prob": 10 },
       { "group": "nested_hk_ump45", "prob": 30 }
     ]
   },
@@ -363,10 +346,10 @@
     "//": "SMGs including those only carried by police/paramilitary forces. Either mags or loose ammo are included.",
     "items": [
       { "group": "everyday_calico", "prob": 30 },
-      { "group": "everyday_fn_p90", "prob": 50 },
       { "group": "everyday_hk_mp5", "prob": 100 },
       { "group": "everyday_hk_mp5sd", "prob": 10 },
-      { "group": "everyday_hk_mp7", "prob": 60 },
+      { "group": "nested_kriss_vector_9mm", "prob": 10 },
+      { "group": "nested_TDI", "prob": 10 },
       { "group": "everyday_hk_ump45", "prob": 30 }
     ]
   },
@@ -375,9 +358,9 @@
     "id": "guns_smg_milspec",
     "//": "Military specification SMGs only ever found at military sites.",
     "items": [
-      { "group": "nested_hk_mp7", "prob": 100 },
       { "group": "nested_needlegun", "prob": 30 },
       { "group": "nested_rm2000_smg", "prob": 50 },
+      { "group": "nested_kriss_vector_9mm", "prob": 10 },
       { "group": "nested_hk_mp5", "prob": 100 },
       { "group": "nested_hk_mp5k", "prob": 10 },
       { "group": "nested_hk_mp5sd", "prob": 5 }
@@ -388,9 +371,9 @@
     "id": "carried_guns_smg_milspec",
     "//": "Military specification SMGs only ever carried by the military. Comes with mags or loose ammo.",
     "items": [
-      { "group": "everyday_hk_mp7", "prob": 100 },
       { "group": "everyday_needlegun", "prob": 30 },
       { "group": "everyday_rm2000_smg", "prob": 50 },
+      { "group": "nested_kriss_vector_9mm", "prob": 10 },
       { "group": "everyday_hk_mp5", "prob": 100 },
       { "group": "everyday_hk_mp5k", "prob": 10 },
       { "group": "everyday_hk_mp5sd", "prob": 5 }
@@ -400,23 +383,13 @@
     "type": "item_group",
     "id": "guns_smg_obscure",
     "//": "Imported or otherwise very obscure SMGs.",
-    "items": [
-      { "group": "nested_briefcase_smg", "prob": 80 },
-      { "group": "nested_ppsh", "prob": 150 },
-      { "group": "nested_skorpion_61", "prob": 100 },
-      { "group": "nested_skorpion_82", "prob": 100 }
-    ]
+    "items": [ { "group": "nested_briefcase_smg", "prob": 80 }, { "group": "nested_skorpion_61", "prob": 100 } ]
   },
   {
     "type": "item_group",
     "id": "carried_guns_smg_obscure",
     "//": "Imported or otherwise very obscure SMGs. Just mags, no loose ammo.",
-    "items": [
-      { "group": "everyday_briefcase_smg", "prob": 80 },
-      { "group": "everyday_ppsh", "prob": 150 },
-      { "group": "everyday_skorpion_61", "prob": 100 },
-      { "group": "everyday_skorpion_82", "prob": 100 }
-    ]
+    "items": [ { "group": "everyday_briefcase_smg", "prob": 80 }, { "group": "everyday_skorpion_61", "prob": 100 } ]
   },
   {
     "type": "item_group",
@@ -436,7 +409,6 @@
       { "group": "nested_ar10", "prob": 20 },
       { "group": "nested_ar15", "prob": 30 },
       { "group": "nested_asr_10mm", "prob": 15 },
-      { "group": "nested_bh_m89", "prob": 20 },
       { "group": "nested_browning_blr", "prob": 25 },
       { "group": "nested_colt_lightning", "prob": 15 },
       { "group": "nested_cx4", "prob": 45 },
@@ -456,7 +428,6 @@
       { "group": "nested_mosin91_30", "prob": 20 },
       { "group": "nested_oa93", "prob": 5 },
       { "group": "nested_remington_700", "prob": 20 },
-      { "group": "nested_remington700_270", "prob": 30 },
       { "group": "nested_ruger_1022", "prob": 70 },
       { "group": "nested_ruger_mini", "prob": 60 },
       { "group": "nested_savage_111f", "prob": 15 },
@@ -478,7 +449,6 @@
       { "group": "everyday_ar10", "prob": 20 },
       { "group": "everyday_ar15", "prob": 30 },
       { "group": "everyday_asr_10mm", "prob": 15 },
-      { "group": "everyday_bh_m89", "prob": 20 },
       { "group": "everyday_browning_blr", "prob": 25 },
       { "group": "everyday_colt_lightning", "prob": 15 },
       { "group": "everyday_cx4", "prob": 45 },
@@ -498,7 +468,6 @@
       { "group": "everyday_mosin91_30", "prob": 20 },
       { "group": "everyday_oa93", "prob": 5 },
       { "group": "everyday_remington_700", "prob": 20 },
-      { "group": "everyday_remington700_270", "prob": 30 },
       { "group": "everyday_ruger_1022", "prob": 70 },
       { "group": "everyday_ruger_mini", "prob": 60 },
       { "group": "everyday_savage_111f", "prob": 15 },
@@ -520,7 +489,6 @@
       { "item": "ar10", "prob": 20, "charges-min": 0, "charges-max": 0 },
       { "item": "ar15", "prob": 30, "charges-min": 0, "charges-max": 0 },
       { "item": "asr_10mm", "prob": 15, "charges-min": 0, "charges-max": 0 },
-      { "item": "bh_m89", "prob": 20, "charges-min": 0, "charges-max": 0 },
       { "item": "browning_blr", "prob": 25, "charges-min": 0, "charges-max": 0 },
       { "item": "colt_lightning", "prob": 15, "charges-min": 0, "charges-max": 0 },
       { "item": "cx4", "prob": 45, "charges-min": 0, "charges-max": 0 },
@@ -540,7 +508,6 @@
       { "item": "mosin91_30", "prob": 20, "charges-min": 0, "charges-max": 0 },
       { "item": "oa93", "prob": 5, "charges-min": 0, "charges-max": 0 },
       { "item": "remington_700", "prob": 20, "charges-min": 0, "charges-max": 0 },
-      { "item": "remington700_270", "prob": 30, "charges-min": 0, "charges-max": 0 },
       { "item": "ruger_1022", "prob": 70, "charges-min": 0, "charges-max": 0 },
       { "item": "ruger_mini", "prob": 60, "charges-min": 0, "charges-max": 0 },
       { "item": "savage_111f", "prob": 15, "charges-min": 0, "charges-max": 0 },
@@ -721,8 +688,6 @@
     "//": "Mostly imported or otherwise very obscure rifles.",
     "items": [
       { "group": "nested_ak47", "prob": 50 },
-      { "group": "nested_ak74", "prob": 50 },
-      { "group": "nested_an94", "prob": 40 },
       { "group": "nested_arx160", "prob": 40 },
       { "group": "nested_bfg50", "prob": 5 },
       { "group": "nested_carbine_flintlock", "prob": 140 },
@@ -733,8 +698,7 @@
       { "group": "nested_iwi_tavor_x95_300blk", "prob": 20 },
       { "group": "nested_longrifle_flintlock", "prob": 90 },
       { "group": "nested_rifle_flintlock", "prob": 90 },
-      { "group": "nested_steyr_aug", "prob": 40 },
-      { "group": "nested_trex_gun", "prob": 20 }
+      { "group": "nested_steyr_aug", "prob": 40 }
     ]
   },
   {
@@ -743,8 +707,6 @@
     "//": "Imported or otherwise very obscure rifles. Comes with mags or loose ammo.",
     "items": [
       { "group": "everyday_ak47", "prob": 50 },
-      { "group": "everyday_ak74", "prob": 50 },
-      { "group": "everyday_an94", "prob": 40 },
       { "group": "everyday_arx160", "prob": 40 },
       { "group": "everyday_bfg50", "prob": 5 },
       { "group": "everyday_carbine_flintlock", "prob": 140 },
@@ -755,8 +717,7 @@
       { "group": "everyday_iwi_tavor_x95_300blk", "prob": 20 },
       { "group": "everyday_longrifle_flintlock", "prob": 90 },
       { "group": "everyday_rifle_flintlock", "prob": 90 },
-      { "group": "everyday_steyr_aug", "prob": 40 },
-      { "group": "everyday_trex_gun", "prob": 20 }
+      { "group": "everyday_steyr_aug", "prob": 40 }
     ]
   },
   {
@@ -1060,8 +1021,6 @@
     "items": [
       { "group": "nested_ar15", "prob": 15 },
       { "group": "nested_cx4", "prob": 20 },
-      { "group": "nested_fn57", "prob": 20 },
-      { "group": "nested_fn_p90", "prob": 5 },
       { "group": "nested_glock_19", "prob": 15 },
       { "group": "nested_glock_22", "prob": 20 },
       { "group": "nested_hk_mp5", "prob": 10 },
@@ -1085,8 +1044,6 @@
     "items": [
       { "group": "everyday_ar15", "prob": 15 },
       { "group": "everyday_cx4", "prob": 20 },
-      { "group": "everyday_fn57", "prob": 20 },
-      { "group": "everyday_fn_p90", "prob": 5 },
       { "group": "everyday_glock_19", "prob": 15 },
       { "group": "everyday_glock_22", "prob": 20 },
       { "group": "everyday_hk_mp5", "prob": 10 },
@@ -1174,9 +1131,7 @@
     "id": "guns_hunting",
     "//": "Guns typically used by hunters, be it rifles, shotguns or archery.",
     "items": [
-      { "group": "nested_trex_gun", "prob": 5 },
       { "group": "nested_remington_700", "prob": 20 },
-      { "group": "nested_remington700_270", "prob": 10 },
       { "group": "nested_marlin_1894c", "prob": 30 },
       { "group": "nested_henry_big_boy", "prob": 20 },
       { "group": "nested_m1a", "prob": 10 },
@@ -1202,7 +1157,6 @@
       { "group": "nested_shotgun_d", "prob": 10 },
       { "group": "nested_shotgun_s", "prob": 10 },
       { "group": "nested_winchester_1887", "prob": 20 },
-      { "group": "nested_bh_m89", "prob": 5 },
       { "group": "nested_shotgun_paper", "prob": 5 },
       { "group": "nested_shotgun_410", "prob": 10 },
       { "group": "guns_shotgun_common", "prob": 5 },

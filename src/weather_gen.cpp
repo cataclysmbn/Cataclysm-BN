@@ -196,7 +196,7 @@ const weather_type_id &weather_generator::get_bad_weather() const
 
 int weather_generator::forecast_priority( const weather_type_id &w ) const
 {
-    auto it = std::find( weather_types.begin(), weather_types.end(), w );
+    auto it = std::ranges::find( weather_types, w );
     if( it == weather_types.end() ) {
         return -1;
     }
@@ -239,8 +239,8 @@ const weather_type_id &weather_generator::get_weather_conditions( const w_point 
         }
 
         if( !wrequires.required_weathers.empty() ) {
-            if( std::find( wrequires.required_weathers.begin(), wrequires.required_weathers.end(),
-                           *current_conditions ) == wrequires.required_weathers.end() ) {
+            if( std::ranges::find( wrequires.required_weathers,
+                                   *current_conditions ) == wrequires.required_weathers.end() ) {
                 continue;
             }
         }

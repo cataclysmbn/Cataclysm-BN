@@ -2,6 +2,7 @@
   {
     "type": "COMESTIBLE",
     "abstract": "brew_base",
+    "category": "cooking_ingredients",
     "name": "base brew",
     "price": "0 cent",
     "price_postapoc": "10 cent",
@@ -122,7 +123,8 @@
     "quench": 6,
     "fun": -5,
     "material": [ "fruit", "water" ],
-    "brewable": { "time": "12 hours", "results": [ "fruit_wine", "yeast" ] }
+    "brewable": { "time": "12 hours", "results": [ "fruit_wine", "yeast" ] },
+    "vitamins": [ [ "fruit_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -185,7 +187,8 @@
     "quench": 2,
     "fun": -5,
     "material": [ "water", "junk" ],
-    "brewable": { "time": "6 hours", "results": [ "wash_moonshine", "yeast" ] }
+    "brewable": { "time": "6 hours", "results": [ "wash_moonshine", "yeast" ] },
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UNITS_TEMPERATURE_H
-#define CATA_SRC_UNITS_TEMPERATURE_H
 
 #include <algorithm>
 
@@ -136,26 +134,26 @@ constexpr value_type to_kelvins( const
 
 } // namespace units
 
-constexpr units::temperature operator"" _mc( const unsigned long long v )
+constexpr units::temperature operator""_mc( const unsigned long long v )
 {
     // Cast to int because fahrenheit conversion needs it
     // Rest gets it for consistency
     return units::from_millidegree_celsius<int>( v );
 }
 
-constexpr units::temperature operator"" _c( const unsigned long long v )
+constexpr units::temperature operator""_c( const unsigned long long v )
 {
     return units::from_celsius<int>( v );
 }
 
-constexpr units::temperature operator"" _c( const long double v )
+constexpr units::temperature operator""_c( const long double v )
 {
     return units::from_celsius<double>( static_cast<double>( v ) );
 }
 
-constexpr units::temperature operator"" _f( const unsigned long long v )
+constexpr units::temperature operator""_f( const unsigned long long v )
 {
     return units::from_fahrenheit<int>( v );
 }
 
-#endif // CATA_SRC_UNITS_TEMPERATURE_H
+

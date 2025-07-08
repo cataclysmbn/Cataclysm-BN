@@ -45,13 +45,14 @@
     "id": "blacksmithing_standard",
     "type": "requirement",
     "//": "Includes forging resources as well as tools needed for basic blacksmithing.  Permits working hot metal on stone surfaces.",
-    "qualities": [ { "id": "ANVIL", "level": 1 }, { "id": "HAMMER", "level": 3 } ],
+    "qualities": [ { "id": "ANVIL", "level": 1 }, { "id": "HAMMER", "level": 2 } ],
     "tools": [ [ [ "forge", 20 ], [ "oxy_torch", 20 ] ], [ [ "tongs", -1 ] ] ]
   },
   {
     "id": "blacksmithing_intermediate",
     "type": "requirement",
     "//": "Includes forging resources as well as tools needed for mid-level blacksmithing.  Require a harder work surface for hot-cut chiseling and other uses of chisel quality.",
+    "//2": "TODO: Downgrade chisel requirement to 2 if we ever get a chisel in between stone and steel",
     "qualities": [ { "id": "ANVIL", "level": 2 }, { "id": "HAMMER", "level": 3 }, { "id": "CHISEL", "level": 3 } ],
     "tools": [ [ [ "forge", 20 ], [ "oxy_torch", 20 ] ], [ [ "tongs", -1 ] ] ]
   },
@@ -98,9 +99,9 @@
       { "id": "CUT", "level": 1 },
       { "id": "HAMMER", "level": 2 },
       { "id": "ANVIL", "level": 1 },
-      { "id": "DRILL", "level": 2 }
+      { "id": "DRILL", "level": 2 },
+      { "id": "PULL_FINE", "level": 2 }
     ],
-    "tools": [ [ [ "pliers", -1 ], [ "multitool", -1 ], [ "toolset", -1 ] ] ],
     "components": [ [ [ "link_sheet", 1 ] ], [ [ "chain_link", 25 ] ], [ [ "rag", 2 ] ] ]
   },
   {
@@ -131,18 +132,8 @@
   {
     "id": "cutting_wire_standard",
     "type": "requirement",
-    "//": "Cutting wires",
-    "tools": [
-      [
-        [ "hacksaw", -1 ],
-        [ "multitool", -1 ],
-        [ "boltcutters", -1 ],
-        [ "toolset", -1 ],
-        [ "toolbox", -1 ],
-        [ "survivor_belt", -1 ],
-        [ "toolbox_workshop", -1 ]
-      ]
-    ]
+    "//": "Metal cutting from bolt cutters and the multi-tool is good enough here, the recipes imply its metal wire.",
+    "qualities": [ { "id": "CUT_M", "level": 1 } ]
   },
   {
     "id": "mining_standard",
@@ -220,38 +211,28 @@
     "id": "advanced_electronics_low_voltage",
     "type": "requirement",
     "//": "For electronics and electrical terrain with voltage low enough it's going to mildly inconvenience you, includes wirecutting and pliers",
-    "tools": [
-      [
-        [ "hacksaw", -1 ],
-        [ "multitool", -1 ],
-        [ "boltcutters", -1 ],
-        [ "toolset", -1 ],
-        [ "toolbox", -1 ],
-        [ "toolbox_workshop", -1 ]
-      ],
-      [ [ "multitool", -1 ], [ "pliers", -1 ], [ "toolset", -1 ] ]
-    ],
-    "qualities": [ { "id": "PRY", "level": 2 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ]
+    "qualities": [
+      { "id": "PRY", "level": 2 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "WRENCH_FINE", "level": 1 },
+      { "id": "PULL_FINE", "level": 1 },
+      { "id": "CUT_M", "level": 1 }
+    ]
   },
   {
     "id": "advanced_electronics_high_voltage",
     "type": "requirement",
     "//": "For electronics and electrical terrain with voltage so high it kills you just for looking at it funny, includes wirecutting and pliers",
-    "tools": [
-      [
-        [ "hacksaw", -1 ],
-        [ "multitool", -1 ],
-        [ "boltcutters", -1 ],
-        [ "toolset", -1 ],
-        [ "toolbox", -1 ],
-        [ "survivor_belt", -1 ],
-        [ "toolbox_workshop", -1 ]
-      ],
-      [ [ "multitool", -1 ], [ "pliers", -1 ], [ "toolset", -1 ] ],
-      [ [ "voltmeter", 10 ] ],
-      [ [ "gloves_rubber", -1 ] ]
-    ],
-    "qualities": [ { "id": "PRY", "level": 2 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ]
+    "//2": "We switched to qualities here, instead of explicit tools. Always avoid direct specification of tools where possible, it damages mod compatibility.",
+    "qualities": [
+      { "id": "PRY", "level": 2 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "WRENCH_FINE", "level": 1 },
+      { "id": "PULL_FINE", "level": 1 },
+      { "id": "CUT_M", "level": 1 },
+      { "id": "HV_INSULATION", "level": 1 },
+      { "id": "VOLT_MEASURE", "level": 1 }
+    ]
   },
   {
     "id": "tool_flat_press_large",

@@ -9,10 +9,10 @@
 
 import { walk } from "@std/fs"
 import { asynciter } from "$asynciter/mod.ts"
-import { SafeParseSuccess, z } from "$zod/mod.ts"
 import * as YAML from "@std/yaml"
 import { outdent } from "$outdent/mod.ts"
 import { resolve } from "@std/path"
+import * as v from "@valibot/valibot"
 
 type Config = {
   enabled: boolean
@@ -41,14 +41,17 @@ const types = [
   "revert",
 ] as const
 
-type Modinfo = z.infer<typeof modinfoSchema>
-
 /** Extracts ID from Modinfo entry. */
-export const modinfoSchema = z
-  .object({ type: z.literal("MOD_INFO"), id: z.string() })
-  .transform((x) => x.id)
+export const modinfoSchema = v.pipe(
+  v.object({ type: v.literal("MOD_INFO"), id: v.string() }),
+  v.transform((x) => x.id),
+)
 
-const parseModinfos = (xs: unknown[]) => xs.map((x) => modinfoSchema.safeParse(x))
+const parseModinfos = (xs: unknown[]) =>
+  xs.flatMap((x) => {
+    const parsed = v.safeParse(modinfoSchema, x)
+    return parsed.success ? [parsed.output] : []
+  })
 
 /**
  * @param path Path to `modinfo.json` file.
@@ -59,7 +62,7 @@ export const extractModinfo = (path: string): Promise<string | undefined> =>
     .readTextFile(path)
     .then(JSON.parse)
     .then(parseModinfos)
-    .then((xs) => xs.find((x): x is SafeParseSuccess<Modinfo> => x.success)?.data)
+    .then((xs) => xs[0])
 
 /** List of all mod IDs. */
 export const allModIds = await asynciter(walk("data/mods", {
@@ -79,9 +82,9 @@ export const allModIds = await asynciter(walk("data/mods", {
  */
 export const scopes = {
   /** Default allowed scopes */
-  base: ["content", "UI", "i18n", "balance", "port"],
+  base: ["UI", "i18n", "balance", "port"],
   /** List of `mods/<MOD_ID>` */
-  mods: allModIds.toSorted().map((x) => `mods/${x}`),
+  mods: allModIds.toSorted().map((x) => `mods/${x}`).concat("mods"),
 }
 
 // https://github.com/Ezard/semantic-prs?tab=readme-ov-file#configuration

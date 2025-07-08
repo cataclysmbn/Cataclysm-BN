@@ -127,6 +127,7 @@
         [ "egg_dino_theropod_large", 1 ],
         [ "egg_spinosaurus", 1 ],
         [ "egg_tyrannosaurus", 1 ],
+        [ "egg_moabosaurus", 1 ],
         [ "egg_haplocanthosaurus", 1 ],
         [ "egg_amargasaurus", 1 ],
         [ "egg_apatosaurus", 1 ],
@@ -135,6 +136,7 @@
         [ "egg_barosaurus", 1 ],
         [ "egg_camarasaurus", 1 ],
         [ "egg_brachiosaurus", 1 ],
+        [ "egg_astrodon", 1 ],
         [ "egg_alamosaurus", 1 ]
       ]
     ]

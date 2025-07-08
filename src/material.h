@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MATERIAL_H
-#define CATA_SRC_MATERIAL_H
 
 #include <cstddef>
 #include <map>
@@ -10,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "catalua_type_operators.h"
 #include "fire.h"
 #include "type_id.h"
 
@@ -117,6 +116,8 @@ class material_type
         const mat_burn_products &burn_products() const;
         const material_id_list &compact_accepts() const;
         const mat_compacts_into &compacts_into() const;
+
+        LUA_TYPE_OPS( material_type, id );
 };
 
 namespace materials
@@ -132,4 +133,4 @@ std::set<material_id> get_rotting();
 
 } // namespace materials
 
-#endif // CATA_SRC_MATERIAL_H
+

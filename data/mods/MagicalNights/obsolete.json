@@ -1,0 +1,77 @@
+[
+  {
+    "type": "recipe",
+    "result": "flu_shot",
+    "obsolete": true
+  },
+  {
+    "id": "armor_stonefist",
+    "type": "MIGRATION",
+    "replace": "stonefist"
+  },
+  {
+    "id": "bio_fuel_cell_blood",
+    "type": "bionic",
+    "name": { "str": "Obsolete Blood Power Generator CBM" },
+    "description": "This bionic is obsolete!",
+    "occupied_bodyparts": [ [ "torso", 8 ] ]
+  },
+  {
+    "id": "acid_resistance",
+    "type": "SPELL",
+    "name": { "str": "OBSOLETE Acid Resistance" },
+    "description": "OBSOLETE!  Please instead switch to the proper acid ward.",
+    "valid_targets": [ "none" ],
+    "min_range": 0,
+    "max_range": 0,
+    "min_damage": 1,
+    "max_damage": 1,
+    "effect": "spawn_item",
+    "effect_str": "acid_res_aura",
+    "energy_source": "MANA",
+    "spell_class": "NONE",
+    "flags": [ "CONCENTRATE", "NO_LEGS", "NO_EXPLOSION_VFX", "NO_HANDS" ],
+    "difficulty": 4,
+    "max_level": 22,
+    "base_casting_time": 600,
+    "base_energy_cost": 450,
+    "min_duration": 2864000,
+    "max_duration": 6912000,
+    "duration_increment": 184000
+  },
+  {
+    "id": "acid_resistance_greater",
+    "type": "SPELL",
+    "name": { "str": "OBSOLETE Greater Acid Resistance" },
+    "description": "OBSOLETE!  And likely not even very good at that.",
+    "valid_targets": [ "none" ],
+    "min_range": 0,
+    "max_range": 0,
+    "min_damage": 1,
+    "max_damage": 1,
+    "effect": "spawn_item",
+    "effect_str": "acid_res_aura_greater",
+    "energy_source": "MANA",
+    "spell_class": "NONE",
+    "flags": [ "CONCENTRATE", "NO_LEGS", "NO_EXPLOSION_VFX", "NO_HANDS" ],
+    "difficulty": 7,
+    "max_level": 1,
+    "base_casting_time": 300,
+    "base_energy_cost": 250,
+    "min_duration": 1800000
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "spell_scroll",
+    "id": "spell_scroll_acid_resistance",
+    "//": "Obsolete, to be removed at some point in the future",
+    "name": { "str": "OBSOLETE Scroll of Acid Resistance", "str_pl": "OBSOLETE Scrolls of Acid Resistance" },
+    "description": "OBSOLETE!  This spell creates an invisible aura to protect you poorly from acid.",
+    "use_action": { "type": "learn_spell", "spells": [ "acid_resistance" ] }
+  },
+  {
+    "type": "recipe",
+    "result": "spell_scroll_acid_resistance",
+    "obsolete": true
+  }
+]

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAP_SELECTOR_H
-#define CATA_SRC_MAP_SELECTOR_H
 
 #include <vector>
 
@@ -74,4 +72,4 @@ class map_selector : public location_visitable<map_selector>
         std::vector<value_type> data;
 };
 
-#endif // CATA_SRC_MAP_SELECTOR_H
+

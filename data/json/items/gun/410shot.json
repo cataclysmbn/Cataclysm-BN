@@ -15,6 +15,7 @@
     "barrel_length": "750 ml",
     "magazine_well": "250 ml",
     "ammo": "410shot",
+    "blackpowder_tolerance": 24,
     "magazines": [ [ "410shot", [ "saiga410mag_10rd", "saiga410mag_30rd" ] ] ],
     "flags": [ "NEVER_JAMS" ]
   },
@@ -28,7 +29,6 @@
     "volume": "1748 ml",
     "price": "100 USD",
     "price_postapoc": "20 USD",
-    "blackpowder_tolerance": 80,
     "ammo": "410shot",
     "material": [ "steel", "wood" ],
     "dispersion": 210,

@@ -27,6 +27,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
+#include "world.h"
 
 template<typename V, typename B>
 inline units::quantity<V, B> rng( const units::quantity<V, B> &min,
@@ -1086,9 +1087,9 @@ std::string artifact_name( const std::string &type )
 
 /* Json Loading and saving */
 
-void load_artifacts( const std::string &path )
+void load_artifacts( const world *world, const std::string &path )
 {
-    read_from_file_optional_json( path, []( JsonIn & artifact_json ) {
+    world->read_from_file_json( path, []( JsonIn & artifact_json ) {
         artifact_json.start_array();
         while( !artifact_json.end_array() ) {
             JsonObject jo = artifact_json.get_object();
@@ -1101,7 +1102,7 @@ void load_artifacts( const std::string &path )
                 jo.throw_error( "unrecognized artifact type.", "type" );
             }
         }
-    } );
+    }, true );
 }
 
 void it_artifact_tool::deserialize( const JsonObject &jo )
@@ -1266,9 +1267,9 @@ void it_artifact_armor::deserialize( const JsonObject &jo )
     }
 }
 
-bool save_artifacts( const std::string &path )
+bool save_artifacts( const world *world, const std::string &path )
 {
-    return write_to_file( path, [&]( std::ostream & fout ) {
+    return world->write_to_file( path, [&]( std::ostream & fout ) {
         JsonOut json( fout, true );
         json.start_array();
         // We only want runtime types, otherwise static artifacts are loaded twice (on init and then on game load)

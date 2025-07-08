@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_TRANSLATIONS_H
-#define CATA_SRC_TRANSLATIONS_H
 
 #include <map>
 #include <ostream>
@@ -348,4 +346,4 @@ struct localized_comparator {
 
 constexpr localized_comparator localized_compare{};
 
-#endif // CATA_SRC_TRANSLATIONS_H
+

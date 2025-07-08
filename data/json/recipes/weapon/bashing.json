@@ -9,8 +9,8 @@
     "time": "40 m",
     "autolearn": true,
     "using": [ [ "adhesive", 1 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "2x4", 1 ] ], [ [ "nail_glue", 5, "LIST" ] ] ]
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
+    "components": [ [ [ "2x4", 1 ] ], [ [ "nail_glue", 5, "LIST" ] ], [ [ "varnish", 2, "LIST" ] ] ]
   },
   {
     "type": "recipe",
@@ -22,9 +22,9 @@
     "difficulty": 3,
     "time": "360 m",
     "autolearn": true,
-    "qualities": [ { "id": "SAW_W", "level": 1 }, { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "SAW_W", "level": 1 }, { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "tools": [ [ [ "char_smoker", 100 ] ] ],
-    "components": [ [ [ "log", 1 ] ], [ [ "butter", 30 ], [ "edible_lard", 4, "LIST" ] ] ]
+    "components": [ [ [ "log", 1 ] ], [ [ "varnish", 2, "LIST" ] ] ]
   },
   {
     "type": "recipe",
@@ -132,7 +132,7 @@
     "skill_used": "fabrication",
     "time": "25 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "2x4", 2 ], [ "stick", 4 ] ] ]
   },
   {
@@ -236,12 +236,12 @@
     "subcategory": "CSC_WEAPON_BASHING",
     "skill_used": "fabrication",
     "skills_required": [ "melee", 1 ],
-    "difficulty": 4,
+    "difficulty": 2,
     "time": "30 m",
     "autolearn": true,
     "book_learn": [ [ "recipe_melee", 3 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ] ]
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
+    "components": [ [ [ "2x4", 1 ], [ "stick", 2 ] ], [ [ "varnish", 1, "LIST" ] ] ]
   },
   {
     "type": "recipe",
@@ -287,17 +287,11 @@
     "difficulty": 7,
     "time": "5 h 40 m",
     "book_learn": [ [ "textbook_weapeast", 6 ] ],
-    "qualities": [ { "id": "SAW_W", "level": 1 }, { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "SAW_W", "level": 1 }, { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "//": "Bokken is a single piece of wood, and the heavy stick just isn't large enough.",
     "components": [
       [ [ "log", 1 ] ],
-      [
-        [ "any_tallow", 2, "LIST" ],
-        [ "cooking_oil", 16 ],
-        [ "cooking_oil2", 16 ],
-        [ "lamp_oil", 250 ],
-        [ "motor_oil", 250 ]
-      ],
+      [ [ "varnish", 2, "LIST" ] ],
       [ [ "fabric_hides_any", 2, "LIST" ] ],
       [ [ "duct_tape", 20 ], [ "filament", 20, "LIST" ] ]
     ]
@@ -333,11 +327,11 @@
     "subcategory": "CSC_WEAPON_BASHING",
     "skill_used": "fabrication",
     "difficulty": 2,
-    "time": "18 m",
-    "reversible": true,
+    "skills_required": [ "melee", 1 ],
+    "time": "45 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "stick_long", 1 ] ], [ [ "fabric_hides_any", 2, "LIST" ] ] ]
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
+    "components": [ [ [ "stick_long", 1 ] ], [ [ "varnish", 3, "LIST" ] ] ]
   },
   {
     "type": "recipe",
@@ -375,18 +369,9 @@
     "time": "5 h 40 m",
     "book_learn": [ [ "textbook_weapeast", 4 ] ],
     "autolearn": true,
-    "qualities": [ { "id": "SAW_W", "level": 1 }, { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "SAW_W", "level": 1 }, { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "//": "a long pole is a single piece of wood, and the heavy stick just isn't large enough.",
-    "components": [
-      [ [ "wood_beam", 1 ] ],
-      [
-        [ "any_tallow", 4, "LIST" ],
-        [ "cooking_oil", 32 ],
-        [ "cooking_oil2", 32 ],
-        [ "lamp_oil", 500 ],
-        [ "motor_oil", 500 ]
-      ]
-    ]
+    "components": [ [ [ "wood_beam", 1 ] ], [ [ "varnish", 4, "LIST" ] ] ]
   },
   {
     "type": "recipe",
@@ -411,7 +396,7 @@
     "time": "32 m",
     "reversible": true,
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "stick_long", 1 ] ], [ [ "fabric_hides_any", 5, "LIST" ] ] ]
   },
   {
@@ -479,8 +464,12 @@
     "time": "30 m",
     "autolearn": true,
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
-    "using": [ [ "steel_tiny", 2 ] ],
-    "components": [ [ [ "log", 1 ], [ "shillelagh", 1 ], [ "bat", 1 ] ], [ [ "spike", 4 ], [ "steel_chunk", 4 ] ] ]
+    "components": [
+      [ [ "shillelagh", 1 ], [ "bat", 1 ], [ "cudgel", 1 ], [ "wood_structural_small", 1, "LIST" ] ],
+      [ [ "steel_tiny", 2, "LIST" ], [ "wire", 1 ] ],
+      [ [ "wire_barbed", 1 ], [ "spike", 4 ], [ "nail", 20 ] ],
+      [ [ "fabric_standard", 1, "LIST" ], [ "felt_patch", 1 ], [ "fabric_hides_any", 1, "LIST" ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -503,6 +492,41 @@
         [ "filament", 100, "LIST" ]
       ],
       [ [ "bone_heavy", 4 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "spike_staff",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_BASHING",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ [ "melee", 2 ] ],
+    "time": "45 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [
+      [ [ "stick_long", 1 ], [ "q_staff", 1 ], [ "i_staff", 1 ], [ "pool_cue", 1 ], [ "broom", 1 ] ],
+      [ [ "steel_standard", 1, "LIST" ], [ "canister_empty", 1 ] ],
+      [ [ "steel_tiny", 2, "LIST" ], [ "wire", 1 ], [ "wire_barbed", 1 ] ],
+      [ [ "wire", 1 ], [ "wire_barbed", 1 ], [ "spike", 4 ], [ "nail", 20 ] ],
+      [ [ "fabric_standard", 1, "LIST" ], [ "felt_patch", 1 ], [ "fabric_hides_any", 1, "LIST" ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "battletorch",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_BASHING",
+    "difficulty": 0,
+    "time": "20 m",
+    "reversible": true,
+    "autolearn": true,
+    "components": [
+      [ [ "bat", 1 ] ],
+      [ [ "nomex", 5 ] ],
+      [ [ "flammable_liquid", 100, "LIST" ], [ "hard_liquor", 6, "LIST" ], [ "pitch_wood", 4 ] ],
+      [ [ "rag", 1 ] ]
     ]
   }
 ]

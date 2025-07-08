@@ -16,9 +16,13 @@
 #include "itype.h"
 #include "messages.h"
 #include "output.h"
+#include "salvage.h"
 #include "recipe_dictionary.h"
 #include "rot.h"
 #include "ui_manager.h"
+//#include "handle_action.cpp"
+#include "url_utility.h"
+#include "options.h"
 #include "ui.h"
 
 struct action_entry {
@@ -202,6 +206,11 @@ bool run(
         return true;
     } );
 
+    add_entry( "SALVAGE", rate_action_salvage( you, itm ), [&]() {
+        salvage::prompt_salvage_single( you, itm );
+        return true;
+    } );
+
     add_entry( "DISASSEMBLE", rate_action_disassemble( you, itm ), [&]() {
         crafting::disassemble( you, itm );
         return true;
@@ -224,6 +233,14 @@ bool run(
         add_entry( "FAVORITE_REMOVE",
         hint_rating::good, [&]() {
             itm.is_favorite = false;
+            return false;
+        } );
+    }
+
+    if( get_option<std::string>( "HHG_URL" ).length() > 0 ) {
+        add_entry( "OPEN_ITEM_IN_HHG", hint_rating::good, [&]() {
+            open_url( get_option<std::string>( "HHG_URL" ) + std::string( "/item/" ) + itm.typeId().c_str() +
+                      std::string( "?t=UNDEAD_PEOPLE" ) );
             return false;
         } );
     }
@@ -457,6 +474,23 @@ hint_rating rate_action_disassemble( avatar &you, const item &it )
         return hint_rating::iffy; // potentially possible but we currently lack requirements
     } else {
         return hint_rating::cant; // never possible
+    }
+}
+
+hint_rating rate_action_salvage( avatar &you, const item &it )
+{
+    //is_salvageable is much cheaper so we do it first
+    if( !it.is_salvageable() ) {
+        return hint_rating::cant; // never possible
+    } else if( auto cache = you.crafting_inventory().get_quality_cache();
+               salvage::try_salvage( it, cache ).success() ) {
+        return hint_rating::good; // possible
+    } else {
+        return it.weight() < salvage::minimal_weight_to_cut( it )
+               ? hint_rating::cant
+               // potentially possible but we currently lack requirements
+               : hint_rating::iffy;
+
     }
 }
 

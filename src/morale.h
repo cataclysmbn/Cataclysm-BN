@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MORALE_H
-#define CATA_SRC_MORALE_H
 
 #include <functional>
 #include <map>
@@ -86,7 +84,6 @@ class player_morale
         void on_stat_change( const std::string &stat, int value );
         void on_item_wear( const item &it );
         void on_item_takeoff( const item &it );
-        void on_worn_item_washed( const item &it );
         void on_effect_int_change( const efftype_id &eid, int intensity,
                                    const bodypart_str_id &bp = bodypart_str_id::NULL_ID() );
 
@@ -226,7 +223,6 @@ class player_morale
         void invalidate();
 
         void update_stylish_bonus();
-        void update_squeamish_penalty();
         void update_masochist_bonus();
         void update_bodytemp_penalty( const time_duration &ticks );
         void update_constrained_penalty();
@@ -237,14 +233,12 @@ class player_morale
         struct body_part_data {
             unsigned int covered;
             unsigned int fancy;
-            unsigned int filthy;
             int hot;
             int cold;
 
             body_part_data() :
                 covered( 0 ),
                 fancy( 0 ),
-                filthy( 0 ),
                 hot( 0 ),
                 cold( 0 ) {}
         };
@@ -285,4 +279,4 @@ class player_morale
         int perceived_pain;
 };
 
-#endif // CATA_SRC_MORALE_H
+

@@ -2,7 +2,7 @@
   "tasks": {
     "doc": "deno task doc:cli & deno task doc:lua && deno fmt",
     "doc:cli": "deno run --allow-run=./cataclysm-bn-tiles --allow-write=doc/src/content/docs ./scripts/gen_cli_docs.ts",
-    "doc:lua": "./cataclysm-bn-tiles --lua-doc && cp config/lua_doc.md doc/src/content/docs/en/mod/lua/reference/lua.md",
+    "doc:lua": "./cataclysm-bn-tiles --lua-doc doc/src/content/docs/en/mod/lua/reference/lua.md --lua-types lua_annotations.lua",
     "migrate-unit": "deno run -A scripts/migrate_legacy_unit.ts --path data/json; deno run -A scripts/migrate_legacy_unit.ts --path data/mods; make style-all-json-parallel",
     "dprint": "deno run -A npm:dprint",
     // creates a weekly reddit changelog template
@@ -13,9 +13,10 @@
   "lint": { "include": ["scripts"] },
   "fmt": {
     "exclude": ["doc/dist", "doc/.astro", "doc/pnpm-lock.yaml"],
-    "include": ["scripts", "doc", "*.md"],
+    "include": ["scripts", "doc", "*.md", ".github"],
     "semiColons": false,
-    "lineWidth": 100
+    "lineWidth": 100,
+    "proseWrap": "preserve"
   },
   "imports": {
     "$asynciter/": "https://deno.land/x/asynciter@0.0.18/",
@@ -24,11 +25,15 @@
     "$zod/": "https://deno.land/x/zod@v3.22.4/",
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.7",
     "@cliffy/flags": "jsr:@cliffy/flags@^1.0.0-rc.7",
+    "@scarf/json-map": "jsr:@scarf/json-map@^0.0.4",
     "@std/assert": "jsr:@std/assert@^1.0.6",
+    "@std/async": "jsr:@std/async@^1.0.12",
     "@std/collections": "jsr:@std/collections@^1.0.7",
+    "@std/fmt": "jsr:@std/fmt@^1.0.6",
     "@std/front-matter": "jsr:@std/front-matter@^1.0.5",
     "@std/fs": "jsr:@std/fs@^1.0.4",
     "@std/path": "jsr:@std/path@^1.0.6",
-    "@std/yaml": "jsr:@std/yaml@^1.0.5"
+    "@std/yaml": "jsr:@std/yaml@^1.0.5",
+    "@valibot/valibot": "jsr:@valibot/valibot@^1.1.0"
   }
 }

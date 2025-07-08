@@ -116,7 +116,7 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "flags": [ "SEAT", "BOARDABLE", "CARGO", "BELTABLE" ],
+    "flags": [ "SEAT", "BOARDABLE", "CARGO", "BELTABLE", "SHOCK_RESISTANT" ],
     "breaks_into": "ig_vp_seat",
     "damage_reduction": { "all": 2 }
   },
@@ -151,7 +151,7 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "flags": [ "BED", "SEAT", "BOARDABLE", "BELTABLE", "CARGO" ],
+    "flags": [ "BED", "SEAT", "BOARDABLE", "BELTABLE", "CARGO", "SHOCK_RESISTANT" ],
     "breaks_into": "ig_vp_seat",
     "damage_reduction": { "all": 3 }
   },
@@ -452,29 +452,6 @@
   },
   {
     "type": "vehicle_part",
-    "id": "trunk_floor",
-    "name": { "str": "floor trunk" },
-    "symbol": "=",
-    "looks_like": "t_carpet_red",
-    "color": "white",
-    "broken_symbol": "#",
-    "broken_color": "light_gray",
-    "durability": 400,
-    "description": "An aisle.  A hatch lets you access a cargo space beneath it.",
-    "size": "87500 ml",
-    "item": "cargo_aisle",
-    "location": "center",
-    "requirements": {
-      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
-      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
-    },
-    "flags": [ "AISLE", "BOARDABLE", "CARGO", "LOCKABLE_CARGO", "COVERED" ],
-    "breaks_into": "ig_vp_sheet_metal",
-    "damage_reduction": { "all": 28 }
-  },
-  {
-    "type": "vehicle_part",
     "id": "roof_cloth",
     "name": { "str": "cloth roof" },
     "symbol": "#",
@@ -680,7 +657,7 @@
     "color": "light_gray",
     "broken_symbol": "*",
     "broken_color": "dark_gray",
-    "flags": [ "NO_REPAIR" ],
+    "flags": [ "NO_REPAIR", "SHOCK_IMMUNE" ],
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "qualities": [ { "id": "SCREW", "level": 3 }, { "id": "WRENCH", "level": 3 } ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "using": [ [ "vehicle_screw", 1 ] ] }
@@ -843,7 +820,7 @@
     "broken_color": "light_blue",
     "damage_modifier": 80,
     "durability": 100,
-    "description": "A small washing machine.  With detergent, water, and some electrical power, you could clean a lot of clothes.  'e'xamine the tile with the washing machine to use it.",
+    "description": "A small washing machine.  It's only good for salvage, or decorating your vehicle.",
     "epower": -400,
     "size": "40 L",
     "item": "washing_machine",
@@ -857,7 +834,7 @@
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
       }
     },
-    "flags": [ "CARGO", "OBSTACLE", "WASHING_MACHINE", "COVERED", "ENABLED_DRAINS_EPOWER" ],
+    "flags": [ "CARGO", "OBSTACLE", "COVERED", "ENABLED_DRAINS_EPOWER" ],
     "breaks_into": [
       { "item": "steel_lump", "count": [ 8, 13 ] },
       { "item": "steel_chunk", "count": [ 8, 13 ] },
@@ -876,7 +853,7 @@
     "broken_color": "light_blue",
     "damage_modifier": 80,
     "durability": 100,
-    "description": "A small dishwasher.  With detergent, water, and some electrical power, you could clean your dishes…  Or something more useful like a CBM dripping with zombie gore.  'e'xamine the tile with the dishwasher to use it.",
+    "description": "A small dishwasher.  It's only good for salvage, or decorating your vehicle.",
     "epower": -400,
     "size": "40 L",
     "item": "dishwasher",
@@ -891,7 +868,7 @@
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
       }
     },
-    "flags": [ "CARGO", "OBSTACLE", "DISHWASHER", "COVERED", "ENABLED_DRAINS_EPOWER" ],
+    "flags": [ "CARGO", "OBSTACLE", "COVERED", "ENABLED_DRAINS_EPOWER" ],
     "breaks_into": [
       { "item": "steel_lump", "count": [ 8, 13 ] },
       { "item": "steel_chunk", "count": [ 8, 13 ] },
@@ -996,29 +973,6 @@
   },
   {
     "type": "vehicle_part",
-    "id": "trunk",
-    "name": { "str": "trunk" },
-    "symbol": "H",
-    "looks_like": "f_locker",
-    "color": "brown",
-    "broken_symbol": "#",
-    "broken_color": "brown",
-    "damage_modifier": 80,
-    "durability": 350,
-    "size": "162500 ml",
-    "item": "frame",
-    "location": "center",
-    "requirements": {
-      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
-      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
-    },
-    "flags": [ "CARGO", "LOCKABLE_CARGO", "COVERED", "BOARDABLE" ],
-    "breaks_into": "ig_vp_frame",
-    "damage_reduction": { "all": 30 }
-  },
-  {
-    "type": "vehicle_part",
     "id": "travois",
     "name": { "str": "travois" },
     "symbol": "o",
@@ -1038,53 +992,6 @@
       "repair": { "time": "5 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_small_wood", 4 ] ] }
     },
     "damage_reduction": { "all": 18, "stab": 8, "cut": 8 }
-  },
-  {
-    "type": "vehicle_part",
-    "id": "wood box",
-    "name": { "str": "wood box" },
-    "symbol": "o",
-    "looks_like": "f_crate_o",
-    "color": "brown",
-    "broken_symbol": "#",
-    "broken_color": "brown",
-    "damage_modifier": 60,
-    "durability": 70,
-    "size": "75 L",
-    "item": "frame_wood",
-    "location": "center",
-    "requirements": {
-      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 15 ] ] },
-      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "adhesive", 2 ], [ "wood_structural_small", 1 ] ] }
-    },
-    "flags": [ "CARGO", "BOARDABLE", "COVERED", "LOCKABLE_CARGO" ],
-    "breaks_into": [ { "item": "splinter", "count": [ 3, 5 ] }, { "item": "nail", "charges": [ 10, 15 ] } ],
-    "damage_reduction": { "all": 16, "stab": 6, "cut": 6 }
-  },
-  {
-    "type": "vehicle_part",
-    "id": "folding wood box",
-    "name": { "str": "folding wood box" },
-    "symbol": "o",
-    "looks_like": "wood box",
-    "color": "brown",
-    "broken_symbol": "#",
-    "broken_color": "brown",
-    "damage_modifier": 60,
-    "durability": 65,
-    "folded_volume": "1500 ml",
-    "size": "30 L",
-    "item": "foldwoodframe",
-    "location": "center",
-    "requirements": {
-      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 10 ] ] },
-      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "adhesive", 2 ], [ "wood_structural_small", 1 ] ] }
-    },
-    "flags": [ "CARGO", "BOARDABLE", "COVERED", "FOLDABLE", "LOCKABLE_CARGO" ],
-    "breaks_into": [ { "item": "splinter", "count": [ 3, 5 ] }, { "item": "nail", "charges": [ 10, 15 ] } ],
-    "damage_reduction": { "all": 10, "stab": 4, "cut": 5 }
   },
   {
     "type": "vehicle_part",
@@ -1171,6 +1078,36 @@
     ],
     "workbench": { "multiplier": 1.2, "mass": "300 kg", "volume": "30L" },
     "damage_reduction": { "all": 29 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "robobench",
+    "name": { "str": "robobench" },
+    "symbol": "#",
+    "looks_like": "machinery_heavy",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 60,
+    "durability": 300,
+    "size": "30 L",
+    "item": "robobench",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "breaks_into": [
+      { "item": "pipe", "count": [ 4, 6 ] },
+      { "item": "sheet_metal", "count": [ 0, 1 ] },
+      { "item": "sheet_metal_small", "count": [ 12, 24 ] },
+      { "item": "steel_chunk", "count": [ 4, 8 ] },
+      { "item": "scrap", "count": [ 12, 24 ] }
+    ],
+    "workbench": { "multiplier": 1.5, "mass": "300 kg", "volume": "30L" },
+    "damage_reduction": { "all": 25 }
   },
   {
     "type": "vehicle_part",
@@ -1267,6 +1204,42 @@
     "flags": [ "FLOATS", "BOARDABLE" ],
     "breaks_into": [ { "item": "kevlar_plate", "count": [ 1, 3 ] } ],
     "damage_reduction": { "all": 14 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "hovercraft_section",
+    "name": { "str": "hovercraft impeller" },
+    "description": "An impeller and skirt used by air-cushion vehicles to float just above the surface of land or water.",
+    "symbol": "o",
+    "color": "dark_gray",
+    "looks_like": "inflatable_airbag",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 40,
+    "durability": 240,
+    "contact_area": 20,
+    "folded_volume": "250 ml",
+    "item": "hovercraft_section",
+    "location": "under",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 5 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 6 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "flags": [ "WHEEL", "FLOATS", "MULTISQUARE", "TRACKED", "VARIABLE_SIZE", "FOLDABLE", "STABLE", "SELF_JACK" ],
+    "wheel_type": "off-road",
+    "cargo_weight_modifier": 75,
+    "breaks_into": [
+      { "item": "steel_lump" },
+      { "item": "steel_chunk", "count": [ 1, 3 ] },
+      { "item": "scrap", "count": [ 1, 3 ] },
+      { "item": "cable", "charges": [ 0, 4 ] }
+    ],
+    "damage_reduction": { "all": 25 }
   },
   {
     "type": "vehicle_part",
@@ -1611,7 +1584,7 @@
       "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "20 s", "using": [ [ "adhesive", 1 ], [ "fabric_standard", 1 ] ] }
     },
-    "flags": [ "SEATBELT", "FOLDABLE" ],
+    "flags": [ "SEATBELT", "FOLDABLE", "SHOCK_IMMUNE" ],
     "breaks_into": [ { "item": "nylon", "count": [ 0, 3 ] } ]
   },
   {
@@ -1665,7 +1638,7 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m", "using": [ [ "vehicle_screw", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "20 s", "using": [ [ "adhesive", 1 ], [ "fabric_standard", 1 ] ] }
     },
-    "flags": [ "SEATBELT", "FOLDABLE" ],
+    "flags": [ "SEATBELT", "FOLDABLE", "SHOCK_IMMUNE" ],
     "breaks_into": [ { "item": "seatbelt", "count": [ 0, 3 ] } ]
   },
   {
@@ -1690,6 +1663,41 @@
     },
     "flags": [ "OPENABLE", "OPENCLOSE_INSIDE", "OPAQUE", "CURTAIN", "MULTISQUARE", "NEEDS_WINDOW" ],
     "breaks_into": [  ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "v_shutter",
+    "copy-from": "v_curtain",
+    "name": { "str": "shutter" },
+    "durability": 250,
+    "description": "Sheet metal shutters to protect a window, which can be opened or closed.",
+    "item": "sheet_metal",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "breaks_into": "ig_vp_sheet_metal",
+    "damage_reduction": { "all": 28 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "v_hdshutter",
+    "copy-from": "v_shutter",
+    "name": { "str": "heavy duty shutter" },
+    "durability": 500,
+    "description": "Strong metal shutters to armor a window, which can be opened or closed.",
+    "item": "steel_plate",
+    "requirements": {
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "breaks_into": "ig_vp_steel_plate",
+    "damage_reduction": { "all": 75 }
   },
   {
     "type": "vehicle_part",
@@ -1733,7 +1741,7 @@
     "damage_modifier": 10,
     "durability": 50,
     "description": "A water wheel.  Will slowly recharge the vehicle's electrical power when built over shallow moving water.",
-    "epower": 80,
+    "epower": 240,
     "item": "water_wheel",
     "location": "center",
     "flags": [ "WATER_WHEEL", "OBSTACLE" ],
@@ -1757,7 +1765,7 @@
     "damage_modifier": 10,
     "durability": 80,
     "description": "A large water wheel with wooden supports.  Will recharge the vehicle's electrical power when built over shallow moving water.",
-    "epower": 180,
+    "epower": 540,
     "item": "xl_water_wheel",
     "location": "center",
     "flags": [ "WATER_WHEEL", "OBSTACLE", "EXTRA_DRAG" ],
@@ -1811,7 +1819,7 @@
     "damage_modifier": 10,
     "durability": 15,
     "description": "A small wind turbine.  Will slowly recharge the vehicle's electrical power when exposed to the wind.",
-    "epower": 10,
+    "epower": 30,
     "item": "wind_turbine",
     "location": "on_roof",
     "requirements": {
@@ -1851,7 +1859,7 @@
     "damage_modifier": 10,
     "durability": 70,
     "description": "A large wind turbine with stabilizing legs.  Will recharge the vehicle's electrical power when exposed to the wind.  Will cause extra drag on the vehicle.",
-    "epower": 30,
+    "epower": 90,
     "item": "xl_wind_turbine",
     "location": "on_roof",
     "power": -3000,
@@ -2349,72 +2357,6 @@
   },
   {
     "type": "vehicle_part",
-    "id": "cargo_space",
-    "name": { "str": "cargo space" },
-    "symbol": "=",
-    "looks_like": "box",
-    "color": "light_gray",
-    "broken_symbol": "#",
-    "broken_color": "dark_gray",
-    "durability": 250,
-    "size": "500 L",
-    "item": "cargo_rack",
-    "location": "center",
-    "requirements": {
-      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
-      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
-    },
-    "flags": [ "BOARDABLE", "CARGO", "COVERED" ],
-    "breaks_into": [
-      { "item": "steel_lump", "count": [ 6, 8 ] },
-      { "item": "steel_chunk", "count": [ 6, 8 ] },
-      { "item": "scrap", "count": [ 6, 8 ] }
-    ],
-    "damage_reduction": { "all": 28 }
-  },
-  {
-    "type": "vehicle_part",
-    "id": "livestock_stall",
-    "name": { "str": "livestock stall" },
-    "symbol": "=",
-    "color": "light_gray",
-    "looks_like": "cargo_space",
-    "broken_symbol": "#",
-    "broken_color": "dark_gray",
-    "durability": 250,
-    "description": "A cargo space for carrying livestock.  'e'xamine it to capture an animal next to you, or to release the animal currently contained.  When selecting an animal to capture, choose its tile relative to you, not the part.",
-    "size": "200 L",
-    "item": "livestock_carrier",
-    "location": "center",
-    "requirements": {
-      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
-      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
-    },
-    "flags": [ "BOARDABLE", "CARGO", "COVERED", "CAPTURE_MONSTER_VEH" ],
-    "breaks_into": [
-      { "item": "steel_lump", "count": [ 6, 8 ] },
-      { "item": "steel_chunk", "count": [ 6, 8 ] },
-      { "item": "scrap", "count": [ 6, 8 ] }
-    ],
-    "damage_reduction": { "all": 30 }
-  },
-  {
-    "type": "vehicle_part",
-    "id": "animal_compartment",
-    "copy-from": "livestock_stall",
-    "looks_like": "livestock_stall",
-    "name": { "str": "animal compartment" },
-    "durability": 125,
-    "description": "A large locker for transporting smaller animals.  'e'xamine it to capture an animal next to you, or to release the animal currently contained.  When selecting an animal to capture, choose its tile relative to you, not the part.",
-    "size": "50 L",
-    "item": "animal_locker",
-    "flags": [ "CARGO", "COVERED", "CAPTURE_MONSTER_VEH", "OBSTACLE" ],
-    "breaks_into": [ { "item": "steel_chunk", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 3, 4 ] } ]
-  },
-  {
-    "type": "vehicle_part",
     "id": "recharge_station",
     "name": { "str": "recharging station" },
     "symbol": "o",
@@ -2886,7 +2828,7 @@
         "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "WATCH", "ALARMCLOCK", "FOLDABLE" ],
+    "flags": [ "WATCH", "ALARMCLOCK", "FOLDABLE", "SHOCK_RESISTANT" ],
     "breaks_into": [ { "item": "scrap", "prob": 50 } ]
   },
   {
@@ -3423,5 +3365,38 @@
     "color": "dark_gray",
     "item": "pirate_flag",
     "breaks_into": [ { "item": "splinter", "count": [ 1, 5 ] }, { "item": "pirate_flag", "count": 1 } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "foldable_solar_panel",
+    "name": { "str": "foldable solar panel" },
+    "symbol": "#",
+    "color": "yellow",
+    "broken_symbol": "x",
+    "broken_color": "yellow",
+    "looks_like": "solar_panel",
+    "damage_modifier": 10,
+    "durability": 20,
+    "description": "A foldable solar panel.  Will very slowly recharge the vehicle's electrical power when exposed to the sun.  Clouds will slow the recharge speed even more.",
+    "epower": 40,
+    "item": "foldable_solar_panel",
+    "folded_volume": "1 L",
+    "location": "on_roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "electronics", 6 ] ],
+        "time": "50 m",
+        "using": [ [ "vehicle_screw", 1 ], [ "solar_panel", 1 ], [ "soldering_standard", 8 ] ]
+      }
+    },
+    "flags": [ "SOLAR_PANEL", "FOLDABLE" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 2, 4 ] },
+      { "item": "steel_chunk", "count": [ 2, 4 ] },
+      { "item": "scrap", "count": [ 2, 4 ] },
+      { "item": "solar_cell", "count": [ 1, 2 ] }
+    ]
   }
 ]

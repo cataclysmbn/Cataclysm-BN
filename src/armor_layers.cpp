@@ -34,6 +34,7 @@ namespace
 {
 const activity_id ACT_ARMOR_LAYERS( "ACT_ARMOR_LAYERS" );
 const bodypart_str_id body_part_appendix( "num_bp" );
+const flag_id json_flag_HIDDEN( "HIDDEN" );
 
 std::string clothing_layer( const item &worn_item );
 std::vector<std::string> clothing_properties(
@@ -77,7 +78,7 @@ item_penalties get_item_penalties( const location_vector<item>::const_iterator &
     std::vector<std::set<std::string>> lists_of_bad_items_within;
 
     for( const bodypart_id &bp : c.get_all_body_parts() ) {
-        if( _bp->token && _bp != body_part_appendix ) {
+        if( _bp->token && _bp.id().is_null() ) {
             continue;
         }
         if( !worn_item->covers( bp ) ) {
@@ -287,9 +288,9 @@ std::vector<std::string> clothing_properties(
     props.reserve( 5 );
 
     const std::string space = "  ";
-    const int coverage = bp == body_part_appendix ? worn_item.get_avg_coverage() :
+    const int coverage = bp.id().is_null() ? worn_item.get_avg_coverage() :
                          worn_item.get_coverage( bp );
-    const int encumbrance = bp == body_part_appendix ? worn_item.get_avg_encumber(
+    const int encumbrance = bp.id().is_null() ? worn_item.get_avg_encumber(
                                 c ) : worn_item.get_encumber( c, bp );
     props.push_back( string_format( "<color_c_green>[%s]</color>", _( "Properties" ) ) );
     props.push_back( name_and_value( space + _( "Coverage:" ),
@@ -435,7 +436,7 @@ void show_armor_layers_ui( Character &who )
     * + 3 - horizontal lines;
     * + 1 - caption line;
     * + 2 - innermost/outermost string lines;
-    * + num_bp - sub-categories (torso, head, eyes, etc.);
+    * + num_of_parts - sub-categories (torso, head, eyes, etc.);
     * + 1 - gap;
     * number of lines required for displaying all items is calculated dynamically,
     * because some items can have multiple entries (i.e. cover a few parts of body).
@@ -451,7 +452,7 @@ void show_armor_layers_ui( Character &who )
     for( const bodypart_id &it : all_parts ) {
         armor_cat.insert( it );
     }
-    armor_cat.insert( body_part_appendix );
+    armor_cat.insert( bodypart_str_id::NULL_ID().id() );
 
     int req_right_h = 3 + 1 + 2 + num_of_parts + 1;
     for( const bodypart_id &cover : armor_cat ) {
@@ -467,9 +468,9 @@ void show_armor_layers_ui( Character &who )
     * + 1 - caption line;
     * + 8 - general properties
     * + 13 - ASSUMPTION: max possible number of flags @ item
-    * + num_bp+1 - warmth & enc block
+    * + num_of_parts+1 - warmth & enc block
     */
-    const int req_mid_h = 3 + 1 + 8 + 13 + num_bp + 1;
+    const int req_mid_h = 3 + 1 + 8 + 13 + num_of_parts + 1;
 
     int win_h = 0;
     int win_w = 0;
@@ -541,6 +542,7 @@ void show_armor_layers_ui( Character &who )
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "MOVE_ARMOR" );
     ctxt.register_action( "CHANGE_SIDE" );
+    ctxt.register_action( "TOGGLE_CLOTH" );
     ctxt.register_action( "ASSIGN_INVLETS" );
     ctxt.register_action( "SORT_ARMOR" );
     ctxt.register_action( "EQUIP_ARMOR" );
@@ -572,11 +574,15 @@ void show_armor_layers_ui( Character &who )
 
         // top bar
         wprintz( w_sort_cat, c_white, _( "Sort Armor" ) );
-        const auto name = bp != body_part_appendix ? body_part_name_as_heading( bp, 1 ) : _( "All" );
+        const auto name = bp.id() ? body_part_name_as_heading( bp, 1 ) : _( "All" );
         wprintz( w_sort_cat, c_yellow, "  << %s >>", name );
         right_print( w_sort_cat, 0, 0, c_white, string_format(
-                         _( "Press [<color_yellow>%s</color>] for help.  "
+                         _( "[<color_yellow>%s</color>] Hide sprite.  "
+                            "[<color_yellow>%s</color>] Change side.  "
+                            "Press [<color_yellow>%s</color>] for help.  "
                             "Press [<color_yellow>%s</color>] to change keybindings." ),
+                         ctxt.get_desc( "TOGGLE_CLOTH" ),
+                         ctxt.get_desc( "CHANGE_SIDE" ),
                          ctxt.get_desc( "USAGE_HELP" ),
                          ctxt.get_desc( "HELP_KEYBINDINGS" ) ) );
 
@@ -604,15 +610,34 @@ void show_armor_layers_ui( Character &who )
                 mvwprintz( w_sort_left, point( 0, drawindex + 1 ), c_yellow, ">>" );
             }
 
-            std::string worn_armor_name = ( *access_tmp_worn( itemindex ) )->tname();
+            std::string worn_armor_name = ( *access_tmp_worn( itemindex ) )->display_name();
             item_penalties const penalties =
                 get_item_penalties( access_tmp_worn( itemindex ), who, bp );
 
-            const int offset_x = ( itemindex == selected ) ? 3 : 2;
+            const int offset_x = ( itemindex == selected ) ? 4 : 3;
             trim_and_print( w_sort_left, point( offset_x, drawindex + 1 ), left_w - offset_x - 3,
                             penalties.color_for_stacking_badness(), worn_armor_name );
             right_print( w_sort_left, drawindex + 1, 0, c_light_gray,
                          format_volume( ( *access_tmp_worn( itemindex ) )->get_storage() ) );
+            if( ( *access_tmp_worn( itemindex ) )->has_flag( json_flag_HIDDEN ) ) {
+                //~ Hint: Letter to show which piece of armor is Hidden in the layering menu
+                mvwprintz( w_sort_left, point( offset_x - 1, drawindex + 1 ), c_cyan, _( "H" ) );
+            }
+        }
+
+        // Total armor for the given part (Ignoring the "All" condition)
+        if( bp.id() ) {
+            mvwprintz( w_sort_left, point( 0, cont_h - 6 ), c_white, _( "Total Protection:" ) );
+            mvwprintz( w_sort_left, point( 2, cont_h - 5 ), c_light_gray,
+                       _( "Bash: " + std::to_string( who.get_armor_bash( bp ) ) ) );
+            mvwprintz( w_sort_left, point( 2, cont_h - 4 ), c_light_gray,
+                       _( "Cut: " + std::to_string( who.get_armor_cut( bp ) ) ) );
+            // Assuming that float armor values are rounded and not floored or truncated
+            mvwprintz( w_sort_left, point( 2, cont_h - 3 ), c_light_gray,
+                       _( "Stab: " + std::to_string( static_cast<int>( std::round( who.get_armor_cut(
+                                   bp ) * 0.8f ) ) ) ) );
+            mvwprintz( w_sort_left, point( 2, cont_h - 2 ), c_light_gray,
+                       _( "Ballistic: " + std::to_string( who.get_armor_bullet( bp ) ) ) );
         }
 
         // Left footer
@@ -668,7 +693,7 @@ void show_armor_layers_ui( Character &who )
         }
         int pos = 1, curr = 0;
         for( const bodypart_id cover : rl ) {
-            if( cover == body_part_appendix ) {
+            if( cover.id().is_null() ) {
                 continue;
             }
             if( curr >= rightListOffset && pos <= rightListLines ) {
@@ -733,7 +758,7 @@ void show_armor_layers_ui( Character &who )
         // Create ptr list of items to display
         tmp_worn.clear();
         const bodypart_id &bp = armor_cat[ tabindex ];
-        if( bp == body_part_appendix ) {
+        if( bp.id().is_null() ) {
             // All
             int i = 0;
             for( auto it = who.worn.begin(); it != who.worn.end(); ++it ) {
@@ -839,6 +864,12 @@ void show_armor_layers_ui( Character &who )
                     who.change_side( *access_tmp_worn( leftListIndex ) );
                 }
             }
+        } else if( action == "TOGGLE_CLOTH" ) {
+            if( !( *access_tmp_worn( leftListIndex ) )->has_flag( json_flag_HIDDEN ) ) {
+                ( *access_tmp_worn( leftListIndex ) )->set_flag( json_flag_HIDDEN );
+            } else {
+                ( *access_tmp_worn( leftListIndex ) )->unset_flag( json_flag_HIDDEN );
+            }
         } else if( action == "SORT_ARMOR" ) {
             std::stable_sort( who.worn.begin(),
                               who.worn.end(),
@@ -858,7 +889,7 @@ void show_armor_layers_ui( Character &who )
                 bool equipped = who.as_player()->wear_possessed( *loc );
                 if( equipped ) {
                     const bodypart_id &bp = armor_cat[tabindex];
-                    if( tabindex == num_bp || loc->covers( bp ) ) {
+                    if( tabindex == num_of_parts || loc->covers( bp ) ) {
                         // Set ourselves up to be pointing at the new item
                         // TODO: This doesn't work yet because we don't save our
                         // state through other activities, but that's a thing
@@ -870,7 +901,7 @@ void show_armor_layers_ui( Character &who )
                             if( i == loc ) {
                                 found = true;
                             }
-                            return !found && ( tabindex == num_bp || i->covers( bp ) );
+                            return !found && ( tabindex == num_of_parts || i->covers( bp ) );
                         } );
                     }
                 } else if( who.is_npc() ) {
@@ -959,6 +990,7 @@ void show_armor_layers_ui( Character &who )
                 ctxt.get_desc( "NEXT_TAB" ),
                 ctxt.get_desc( "ASSIGN_INVLETS" ),
                 ctxt.get_desc( "CHANGE_SIDE" ),
+                ctxt.get_desc( "TOGGLE_CLOTH" ),
                 ctxt.get_desc( "SORT_ARMOR" ),
                 ctxt.get_desc( "EQUIP_ARMOR" ),
                 ctxt.get_desc( "EQUIP_ARMOR_HERE" ),

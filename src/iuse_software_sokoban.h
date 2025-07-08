@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_IUSE_SOFTWARE_SOKOBAN_H
-#define CATA_SRC_IUSE_SOFTWARE_SOKOBAN_H
 
 #include <cstddef>
 #include <iosfwd>
@@ -55,4 +53,4 @@ class sokoban_game
         sokoban_game();
 };
 
-#endif // CATA_SRC_IUSE_SOFTWARE_SOKOBAN_H
+

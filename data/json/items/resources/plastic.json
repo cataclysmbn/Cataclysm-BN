@@ -2,7 +2,7 @@
   {
     "id": "plastic_chunk",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "scrap_plastic",
     "name": { "str": "plastic chunk" },
     "description": "This is a piece of plastic.  It could be used to fabricate, repair, or reinforce plastic items.",
     "weight": "50 g",
@@ -35,7 +35,7 @@
   {
     "id": "nylon",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "scrap_fabric",
     "name": { "str_sp": "synthetic fabric" },
     "description": "This is small bolt of synthetic fabric.  Unlike you and other natural materials, it won't degrade much with age.  Maybe that's less of a bad thing now.",
     "weight": "55 g",
@@ -51,7 +51,7 @@
   {
     "id": "plastic_sheet",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "scrap_plastic",
     "name": { "str": "plastic sheet" },
     "description": "This is a large sheet of heavy flexible plastic, the sort that might have been used for commercial wrapping or for weather-sealing a home.",
     "weight": "1000 g",
@@ -67,7 +67,7 @@
   {
     "id": "rigid_plastic_sheet",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "scrap_plastic",
     "name": "rigid plastic sheet",
     "description": "A large, rigid sheet of translucent plastic, useful for all manner of things; from construction to art, or even junior snowboarding.",
     "weight": "7500 g",
@@ -81,7 +81,7 @@
   {
     "id": "plastic_scrap",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "scrap_plastic",
     "name": { "str": "plastic scrap" },
     "description": "This is a tiny piece of plastic.  Useless on its own, but could be melted down if you gather enough.",
     "weight": "5 g",

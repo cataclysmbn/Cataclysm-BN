@@ -15,6 +15,7 @@
   {
     "type": "COMESTIBLE",
     "id": "starch",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "starch" },
     "weight": "180 g",
     "color": "light_gray",
@@ -26,11 +27,11 @@
     "description": "Sticky, gooey carbohydrate paste extracted from plants.  Spoils rather quickly if not prepared for storage.",
     "price": "0 cent",
     "price_postapoc": "10 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
     "milling": { "into": "flour", "conversion_rate": 15 },
     "fun": -14,
-    "vitamins": [  ]
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -51,7 +52,7 @@
     "volume": "150 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 1,
-    "vitamins": [ [ "calcium", 2 ], [ "iron", 2 ] ]
+    "vitamins": [ [ "calcium", 2 ], [ "iron", 2 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -71,7 +72,7 @@
     "material": [ "veggy" ],
     "volume": "83 ml",
     "flags": [ "EATEN_HOT" ],
-    "vitamins": [ [ "vitC", 16 ], [ "calcium", 1 ], [ "iron", 2 ] ],
+    "vitamins": [ [ "vitC", 16 ], [ "calcium", 1 ], [ "iron", 2 ], [ "veggy_allergen", 1 ] ],
     "fun": 1
   },
   {
@@ -125,10 +126,11 @@
     "description": "Wild burdocks that have been battered and deep-fried.  Very tasty and nutritious.",
     "price": "250 cent",
     "price_postapoc": "50 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "500 ml",
     "flags": [ "EATEN_HOT" ],
-    "fun": 5
+    "fun": 5,
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -142,10 +144,11 @@
     "description": "Wild dandelions and burdocks that have been battered and deep-fried.  Very tasty and nutritious.",
     "price": "5 USD",
     "price_postapoc": "50 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "500 ml",
     "flags": [ "EATEN_HOT" ],
-    "fun": 6
+    "fun": 6,
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -182,15 +185,17 @@
     "description": "A dish in which vegetables are set into a gelatin made from a plant stock.",
     "price": "15 USD",
     "price_postapoc": "150 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "500 ml",
     "charges": 2,
     "//": "TODO: Confirm nutrition facts for aspic",
-    "flags": [ "EATEN_COLD" ]
+    "flags": [ "EATEN_COLD" ],
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "buckwheat_cooked",
+    "category": "food",
     "name": { "str_sp": "cooked buckwheat" },
     "copy-from": "buckwheat",
     "spoils_in": "20 days",
@@ -209,8 +214,8 @@
     "weight": "178 g",
     "color": "yellow",
     "symbol": "%",
-    "material": "veggy",
-    "vitamins": [ [ "vitA", 6 ], [ "vitC", 3 ], [ "iron", 3 ] ],
+    "material": [ "veggy" ],
+    "vitamins": [ [ "vitA", 6 ], [ "vitC", 3 ], [ "iron", 3 ], [ "veggy_allergen", 1 ] ],
     "spoils_in": "2 days",
     "container": "can_medium",
     "quench": 5,
@@ -230,8 +235,8 @@
     "weight": "178 g",
     "color": "yellow",
     "symbol": "%",
-    "material": "veggy",
-    "vitamins": [ [ "vitA", 6 ], [ "vitC", 3 ], [ "iron", 3 ] ],
+    "material": [ "veggy" ],
+    "vitamins": [ [ "vitA", 6 ], [ "vitC", 3 ], [ "iron", 3 ], [ "veggy_allergen", 1 ] ],
     "spoils_in": "2 days",
     "container": "bowl_plastic",
     "calories": 120,
@@ -243,6 +248,7 @@
   {
     "type": "COMESTIBLE",
     "id": "cornmeal",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "cornmeal" },
     "weight": "19 g",
     "color": "yellow",
@@ -251,7 +257,7 @@
     "symbol": "%",
     "quench": -1,
     "calories": 47,
-    "vitamins": [ [ "iron", 3 ] ],
+    "vitamins": [ [ "iron", 3 ], [ "veggy_allergen", 1 ] ],
     "description": "This yellow cornmeal is useful for baking.",
     "price": "450 cent",
     "price_postapoc": "25 cent",
@@ -271,7 +277,7 @@
     "symbol": "%",
     "healthy": 1,
     "calories": 295,
-    "vitamins": [ [ "vitC", 3 ], [ "calcium", 8 ], [ "iron", 32 ] ],
+    "vitamins": [ [ "vitC", 3 ], [ "calcium", 8 ], [ "iron", 32 ], [ "veggy_allergen", 1 ] ],
     "description": "Slow-cooked beans with vegetables.  Tasty and very filling.",
     "price": "7 USD",
     "price_postapoc": "1 USD",
@@ -284,6 +290,7 @@
   {
     "type": "COMESTIBLE",
     "id": "dry_rice",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "dried rice" },
     "weight": "40 g",
     "color": "white",
@@ -295,19 +302,20 @@
     "description": "Dehydrated long-grain rice.  Tasty and nutritious when cooked, virtually inedible when dry.",
     "price": "5 USD",
     "price_postapoc": "3 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "primary_material": "dried_vegetable",
     "volume": "250 ml",
     "cooks_like": "rice_cooked",
     "milling": { "into": "flour", "conversion_rate": 3 },
     "charges": 3,
-    "vitamins": [ [ "iron", 3 ] ],
+    "vitamins": [ [ "iron", 3 ], [ "veggy_allergen", 1 ] ],
     "fun": -15,
     "flags": [ "NUTRIENT_OVERRIDE" ]
   },
   {
     "type": "COMESTIBLE",
     "id": "rice_cooked",
+    "category": "food",
     "name": { "str_sp": "cooked rice" },
     "copy-from": "dry_rice",
     "weight": "62 g",
@@ -338,11 +346,11 @@
     "description": "Delicious fried rice with vegetables.  Tasty and very filling.",
     "price": "7 USD",
     "price_postapoc": "150 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 5,
-    "vitamins": [ [ "vitA", 2 ], [ "vitC", 4 ], [ "calcium", 3 ], [ "iron", 3 ] ]
+    "vitamins": [ [ "vitA", 2 ], [ "vitC", 4 ], [ "calcium", 3 ], [ "iron", 3 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -362,7 +370,7 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 2,
-    "vitamins": [ [ "vitC", 14 ], [ "calcium", 4 ], [ "iron", 16 ] ]
+    "vitamins": [ [ "vitC", 14 ], [ "calcium", 4 ], [ "iron", 16 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -378,11 +386,11 @@
     "description": "Delicious tofu fried rice with vegetables.  Tasty and very filling.",
     "price": "6 USD",
     "price_postapoc": "150 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
     "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
     "fun": 5,
-    "vitamins": [ [ "calcium", 17 ], [ "iron", 16 ], [ "vitC", 84 ], [ "vitA", 61 ] ]
+    "vitamins": [ [ "calcium", 17 ], [ "iron", 16 ], [ "vitC", 84 ], [ "vitA", 61 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -399,11 +407,11 @@
     "description": "A tofu stirfry with rice and a sweet bold flavor sure to be on your mind through these dark days.",
     "price": "12 USD",
     "price_postapoc": "2 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "1 L",
     "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
     "fun": 19,
-    "vitamins": [ [ "vitA", 2 ], [ "calcium", 7 ], [ "iron", 5 ], [ "vitC", 24 ] ]
+    "vitamins": [ [ "vitA", 2 ], [ "calcium", 7 ], [ "iron", 5 ], [ "vitC", 24 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -424,7 +432,7 @@
     "//": "one bean + one rice + one veggy",
     "flags": [ "EATEN_HOT" ],
     "fun": 4,
-    "vitamins": [ [ "vitC", 28 ], [ "calcium", 8 ], [ "iron", 32 ] ]
+    "vitamins": [ [ "vitC", 28 ], [ "calcium", 8 ], [ "iron", 32 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -440,11 +448,11 @@
     "description": "A delicious baked potato.  Got any sour cream?",
     "price": "150 cent",
     "price_postapoc": "50 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
     "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
     "fun": 3,
-    "vitamins": [ [ "vitA", 1 ], [ "vitC", 9 ], [ "calcium", 13 ], [ "iron", 8 ] ]
+    "vitamins": [ [ "vitA", 1 ], [ "vitC", 9 ], [ "calcium", 13 ], [ "iron", 8 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -458,10 +466,11 @@
     "description": "This is a simple dish made by cooking the pumpkin pulp and then mashing.",
     "price": "50 cent",
     "price_postapoc": "50 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
     "delete": { "flags": [ "RAW" ] },
-    "charges": 1
+    "charges": 1,
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -484,7 +493,7 @@
     "charges": 8,
     "flags": [ "EATEN_HOT" ],
     "fun": 3,
-    "vitamins": [ [ "vitA", 5 ], [ "vitC", 4 ], [ "calcium", 3 ], [ "iron", 14 ] ]
+    "vitamins": [ [ "vitA", 5 ], [ "vitC", 4 ], [ "calcium", 3 ], [ "iron", 14 ], [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -505,7 +514,7 @@
     "charges": 4,
     "flags": [ "EATEN_HOT" ],
     "fun": 10,
-    "vitamins": [ [ "vitA", 7 ], [ "vitC", 20 ], [ "calcium", 30 ], [ "iron", 20 ] ]
+    "vitamins": [ [ "vitA", 7 ], [ "vitC", 20 ], [ "calcium", 30 ], [ "iron", 20 ], [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -526,7 +535,7 @@
     "volume": "250 ml",
     "charges": 4,
     "phase": "liquid",
-    "vitamins": [ [ "vitA", 7 ], [ "calcium", 11 ], [ "iron", 3 ] ],
+    "vitamins": [ [ "vitA", 7 ], [ "calcium", 11 ], [ "iron", 3 ], [ "veggy_allergen", 1 ], [ "nut_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -544,9 +553,9 @@
     "description": "This mushy pile of vegetable matter was boiled and canned in an earlier life.  Better eat it before it oozes through your fingers.",
     "price": "250 cent",
     "price_postapoc": "150 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
-    "vitamins": [ [ "vitA", 73 ], [ "vitC", 11 ], [ "calcium", 5 ], [ "iron", 9 ] ]
+    "vitamins": [ [ "vitA", 73 ], [ "vitC", 11 ], [ "calcium", 5 ], [ "iron", 9 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -564,9 +573,9 @@
     "description": "Vegetable chunks pickled in a salt bath.  Goes well with burgers, if only you can find one.",
     "price": "5 USD",
     "price_postapoc": "1 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
-    "vitamins": [ [ "vitA", 46 ], [ "vitC", 7 ], [ "calcium", 5 ], [ "iron", 9 ] ]
+    "vitamins": [ [ "vitA", 46 ], [ "vitC", 7 ], [ "calcium", 5 ], [ "iron", 9 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -587,7 +596,7 @@
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
     "fun": 15,
-    "vitamins": [ [ "calcium", 10 ], [ "iron", 10 ] ]
+    "vitamins": [ [ "calcium", 10 ], [ "iron", 10 ], [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ], [ "nut_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -600,9 +609,10 @@
     "description": "A pickled cucumber.  Rather sour, but tastes good and lasts for a long time.",
     "price": "250 cent",
     "price_postapoc": "50 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
-    "fun": 5
+    "fun": 5,
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -619,12 +629,12 @@
     "description": "This is a delicious sautee of lovely diced onions and sauerkraut.  The smell alone is enough to make your mouth water.",
     "price": "5 USD",
     "price_postapoc": "1 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "//": "assumes the sauerkraut and onions cook down to half their raw values.  vitamins and calories are the two added together",
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 5,
-    "vitamins": [ [ "vitC", 99 ], [ "calcium", 21 ], [ "iron", 2 ] ]
+    "vitamins": [ [ "vitC", 99 ], [ "calcium", 21 ], [ "iron", 2 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -650,11 +660,12 @@
     "description": "Dehydrated vegetable flakes.  With proper storage, this dried food will remain edible for an incredibly long time.",
     "price": "9 USD",
     "price_postapoc": "1 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "primary_material": "dried_vegetable",
     "volume": "250 ml",
     "charges": 2,
-    "delete": { "flags": [ "RAW" ] }
+    "delete": { "flags": [ "RAW" ] },
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -685,14 +696,15 @@
     "description": "Salad with all kind of vegetables.",
     "price": "350 cent",
     "price_postapoc": "1 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
     "fun": 1,
-    "vitamins": [ [ "vitC", 30 ], [ "calcium", 6 ], [ "iron", 10 ] ]
+    "vitamins": [ [ "vitC", 30 ], [ "calcium", 6 ], [ "iron", 10 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "dried_salad",
+    "category": "cooking_ingredients",
     "name": "dried salad",
     "copy-from": "veggy_salad",
     "weight": "150 g",
@@ -758,11 +770,11 @@
     "description": "A serving of sticky vinegared rice commonly used in sushi.",
     "price": "1 USD",
     "price_postapoc": "4 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
     "charges": 4,
     "fun": 3,
-    "vitamins": [  ]
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -779,11 +791,11 @@
     "description": "A triangular block of tasty sushi rice with a healthy green vegetable folded around it.",
     "price": "210 cent",
     "price_postapoc": "1 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
     "charges": 2,
     "fun": 8,
-    "vitamins": [  ]
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -800,10 +812,10 @@
     "description": "Delicious chopped vegetables wrapped in tasty sushi rice and rolled up in a healthy green vegetable.",
     "price": "290 cent",
     "price_postapoc": "150 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
     "fun": 12,
-    "vitamins": [ [ "vitA", 28 ], [ "vitC", 80 ], [ "calcium", 2 ], [ "iron", 4 ] ]
+    "vitamins": [ [ "vitA", 28 ], [ "vitC", 80 ], [ "calcium", 2 ], [ "iron", 4 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -832,9 +844,9 @@
     "description": "This crunchy, sour topping made from lettuce or cabbage is perfect for your hot dogs and hamburgers, or, if you're desperate, straight to your stomach.",
     "price": "450 cent",
     "price_postapoc": "50 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "250 ml",
-    "vitamins": [ [ "vitC", 85 ], [ "calcium", 17 ] ],
+    "vitamins": [ [ "vitC", 85 ], [ "calcium", 17 ], [ "veggy_allergen", 1 ] ],
     "fun": -2
   },
   {
@@ -852,9 +864,9 @@
     "description": "A less prickly version of cactus pads.",
     "price": "1 USD",
     "price_postapoc": "50 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "500 ml",
-    "vitamins": [ [ "vitA", 27 ], [ "vitC", 27 ], [ "calcium", 48 ], [ "iron", 9 ] ],
+    "vitamins": [ [ "vitA", 27 ], [ "vitC", 27 ], [ "calcium", 48 ], [ "iron", 9 ], [ "veggy_allergen", 1 ] ],
     "fun": 3
   },
   {
@@ -872,11 +884,11 @@
     "description": "Boiled fiddleheads.  Not bad, but would be better sauteed in butter.",
     "price": "80 cent",
     "price_postapoc": "25 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "120 ml",
     "fun": 1,
     "healthy": 1,
-    "vitamins": [ [ "vitC", 6 ], [ "vitA", 10 ], [ "calcium", 4 ] ]
+    "vitamins": [ [ "vitC", 6 ], [ "vitA", 10 ], [ "calcium", 4 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -892,22 +904,30 @@
     "description": "Fiddleheads sauteed in fat.  Tender and delicious.",
     "price": "4 USD",
     "price_postapoc": "50 cent",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "volume": "240 ml",
     "fun": 5,
     "healthy": 1,
-    "vitamins": [ [ "vitC", 32 ], [ "vitA", 40 ], [ "calcium", 4 ] ]
+    "vitamins": [ [ "vitC", 32 ], [ "vitA", 40 ], [ "calcium", 4 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "veggy_sausage",
     "name": "smoked veggy sausage",
-    "copy-from": "sausage",
+    "weight": "148 g",
+    "comestible_type": "FOOD",
+    "symbol": "%",
+    "quench": -1,
     "calories": 56,
     "healthy": 1,
-    "material": "veggy",
+    "material": [ "veggy" ],
     "description": "A plant based sausage that has been cured and smoked for long term storage.",
-    "fun": 4
+    "price": "16 USD",
+    "volume": "250 ml",
+    "price_postapoc": "3 USD",
+    "fun": 4,
+    "flags": [ "EATEN_HOT", "SMOKED" ],
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -934,11 +954,11 @@
     "description": "Roasted edamame, a heart healthy snack.",
     "price": "10 cent",
     "price_postapoc": "6 USD",
-    "material": "bean",
+    "material": [ "bean" ],
     "volume": "250 ml",
     "flags": [ "NUTRIENT_OVERRIDE", "EATEN_HOT" ],
     "charges": 4,
-    "vitamins": [ [ "calcium", 8 ], [ "iron", 4 ] ],
+    "vitamins": [ [ "calcium", 8 ], [ "iron", 4 ], [ "veggy_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -955,11 +975,11 @@
     "description": "Roasted soybeans, often called soy nuts.",
     "price": "10 cent",
     "price_postapoc": "5 USD",
-    "material": "bean",
+    "material": [ "bean" ],
     "volume": "250 ml",
     "flags": [ "NUTRIENT_OVERRIDE", "EATEN_HOT" ],
     "charges": 4,
-    "vitamins": [ [ "calcium", 8 ], [ "iron", 4 ] ],
+    "vitamins": [ [ "calcium", 8 ], [ "iron", 4 ], [ "veggy_allergen", 1 ] ],
     "fun": 4
   },
   {
@@ -979,9 +999,9 @@
     "quench": -2,
     "description": "A spicy pickled veggie made of variable ingredients.  Before the Cataclysm, it was traditionally stored in a dedicated refrigerator, but it's actually a preserved food.",
     "price": "2 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "charges": 4,
-    "vitamins": [ [ "vitC", 48 ], [ "calcium", 7 ], [ "iron", 2 ] ],
+    "vitamins": [ [ "vitC", 48 ], [ "calcium", 7 ], [ "iron", 2 ], [ "veggy_allergen", 1 ] ],
     "fun": 2
   },
   {
@@ -1018,7 +1038,7 @@
     "type": "COMESTIBLE",
     "name": { "str_sp": "tofu kimchi" },
     "description": "Soft, boiled tofu served with spicy, stir-fried kimchi.  The mild tofu complements the bold flavors of the kimchi for a balanced taste.",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "weight": "160 g",
     "volume": "180 ml",
     "color": "white",
@@ -1030,6 +1050,24 @@
     "charges": 2,
     "fun": 6,
     "comestible_type": "FOOD",
-    "flags": [ "EATEN_HOT" ]
+    "flags": [ "EATEN_HOT" ],
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
+  },
+  {
+    "id": "kebab_veggy",
+    "name": { "str_sp": "vegetable kebab" },
+    "type": "COMESTIBLE",
+    "description": "Cooked veggies on a stick.  Popular street food originating from the Middle East and later spread to Asia and the rest of the world.",
+    "weight": "150 g",
+    "volume": "150 ml",
+    "color": "white",
+    "spoils_in": "2 days 12 hours",
+    "comestible_type": "FOOD",
+    "symbol": "%",
+    "calories": 100,
+    "material": [ "veggy" ],
+    "fun": 5,
+    "looks_like": "veggy_cooked",
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   }
 ]

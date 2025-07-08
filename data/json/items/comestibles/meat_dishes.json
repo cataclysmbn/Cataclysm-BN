@@ -4,7 +4,7 @@
     "id": "sausage_raw",
     "name": "raw sausage",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "raw Mannwurst" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "raw Mannwurst" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "sinister %s" } }
     ],
     "weight": "148 g",
@@ -19,11 +19,11 @@
     "description": "A hefty raw sausage, prepared for smoking or cooking.",
     "price": "16 USD",
     "price_postapoc": "2 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "flags": [ "SMOKABLE" ],
     "smoking_result": "sausage",
-    "vitamins": [ [ "vitA", 2 ], [ "calcium", 2 ], [ "iron", 6 ], [ "vitB", 36 ] ],
+    "vitamins": [ [ "vitA", 2 ], [ "calcium", 2 ], [ "iron", 6 ], [ "vitB", 36 ], [ "meat_allergen", 1 ] ],
     "fun": -10
   },
   {
@@ -31,7 +31,7 @@
     "id": "sausage",
     "name": "smoked sausage",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "smoked Mannwurst" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "smoked Mannwurst" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "sinister %s" } }
     ],
     "copy-from": "sausage_raw",
@@ -48,7 +48,7 @@
     "id": "sausage_cooked",
     "name": "cooked sausage",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "cooked Mannwurst" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "cooked Mannwurst" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "sinister %s" } }
     ],
     "copy-from": "sausage_raw",
@@ -80,7 +80,7 @@
     "looks_like": "meat_cooked",
     "name": { "str_sp": "potted meat" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "potted person" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "potted person" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "potted freak" } }
     ],
     "weight": "351 g",
@@ -96,7 +96,7 @@
     "price_postapoc": "350 cent",
     "material": [ "flesh" ],
     "volume": "250 ml",
-    "vitamins": [ [ "calcium", 2 ], [ "iron", 20 ] ],
+    "vitamins": [ [ "calcium", 2 ], [ "iron", 20 ], [ "meat_allergen", 1 ] ],
     "fun": 1,
     "flags": [ "EATEN_HOT" ]
   },
@@ -113,10 +113,10 @@
     "calories": 539,
     "description": "A sweet and delicious sausage.  Better eat it fresh.",
     "price": "24 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "price_postapoc": "250 cent",
-    "vitamins": [ [ "vitA", 30 ], [ "vitC", 4 ], [ "iron", 22 ], [ "vitB", 36 ] ],
+    "vitamins": [ [ "vitA", 30 ], [ "vitC", 4 ], [ "iron", 22 ], [ "vitB", 36 ], [ "meat_allergen", 1 ] ],
     "flags": [ "EATEN_HOT" ],
     "fun": 8
   },
@@ -125,7 +125,7 @@
     "id": "bratwurst_sausage",
     "name": { "str": "bratwurst" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "Mannbrat" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "Mannbrat" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "baleful %s" } }
     ],
     "weight": "100 g",
@@ -139,11 +139,12 @@
     "description": "A type of German sausage made of finely chopped meat and meant to be pan fried or roasted.  Better eat it hot and fresh.",
     "price": "18 USD",
     "price_postapoc": "15 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "500 ml",
     "charges": 10,
     "flags": [ "EATEN_HOT" ],
-    "fun": 5
+    "fun": 5,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -159,10 +160,10 @@
     "description": "A chunk of meat with a coat of honey or royal jelly over it, making it quite rich and savory.",
     "price": "210 USD",
     "price_postapoc": "45 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "500 ml",
     "fun": 7,
-    "vitamins": [ [ "vitC", 16 ], [ "calcium", 2 ], [ "iron", 69 ], [ "vitB", 778 ] ]
+    "vitamins": [ [ "vitC", 16 ], [ "calcium", 2 ], [ "iron", 69 ], [ "vitB", 778 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -179,11 +180,11 @@
     "description": "A thick slab of salty cured bacon.  Shelf stable, precooked and ready-to-eat, it tastes better when reheated.",
     "price": "19 USD",
     "price_postapoc": "5 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
-    "vitamins": [ [ "calcium", 1 ], [ "iron", 5 ], [ "vitB", 39 ] ],
+    "vitamins": [ [ "calcium", 1 ], [ "iron", 5 ], [ "vitB", 39 ], [ "meat_allergen", 1 ] ],
     "fun": 5
   },
   {
@@ -262,7 +263,7 @@
     "id": "cracklins",
     "name": { "str_sp": "cracklins" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "long pork rinds" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "long pork rinds" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "cursed %s" } }
     ],
     "weight": "42 g",
@@ -276,11 +277,12 @@
     "description": "Also known as pork rinds or chicharrones, these are bits of edible fat and skin that have been fried until they are crispy and delicious.",
     "price": "170 cent",
     "price_postapoc": "5 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "charges": 4,
     "flags": [ "EATEN_HOT" ],
-    "fun": 4
+    "fun": 4,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -304,14 +306,22 @@
     "charges": 3,
     "flags": [ "EATEN_HOT" ],
     "fun": 18,
-    "vitamins": [ [ "vitA", 5 ], [ "vitC", 17 ], [ "calcium", 8 ], [ "iron", 32 ], [ "vitB", 259 ] ]
+    "vitamins": [
+      [ "vitA", 5 ],
+      [ "vitC", 17 ],
+      [ "calcium", 8 ],
+      [ "iron", 32 ],
+      [ "vitB", 259 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
     "id": "currywurst",
     "name": "currywurst",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "cheapskate %s" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "cheapskate %s" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "bloodcurdling %s" } }
     ],
     "weight": "85 g",
@@ -325,12 +335,12 @@
     "description": "Sausage covered in a curry ketchup sauce.  Fairly spicy and impressive at the same time!",
     "price": "9 USD",
     "price_postapoc": "350 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
     "fun": 10,
-    "vitamins": [ [ "vitA", 2 ], [ "calcium", 20 ], [ "iron", 10 ] ]
+    "vitamins": [ [ "vitA", 2 ], [ "calcium", 20 ], [ "iron", 10 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -338,7 +348,7 @@
     "name": { "str": "aspic" },
     "conditional_names": [
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "abomination %s" } },
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "amoral %s" } }
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "amoral %s" } }
     ],
     "weight": "154 g",
     "color": "red",
@@ -350,9 +360,9 @@
     "description": "A dish in which meat or fish is set into a gelatin made from a meat or vegetable stock.",
     "price": "25 USD",
     "price_postapoc": "150 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
-    "vitamins": [ [ "vitA", 10 ], [ "vitC", 15 ], [ "calcium", 2 ], [ "iron", 8 ] ],
+    "vitamins": [ [ "vitA", 10 ], [ "vitC", 15 ], [ "calcium", 2 ], [ "iron", 8 ], [ "meat_allergen", 1 ] ],
     "flags": [ "EATEN_COLD" ]
   },
   {
@@ -391,8 +401,9 @@
     "quench": -1,
     "healthy": 1,
     "description": "This is a serving of crisply brined and canned fish.  Tasty and nutritious.",
-    "material": "flesh",
-    "fun": 7
+    "material": [ "flesh" ],
+    "fun": 7,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -421,11 +432,11 @@
     "description": "A delicious golden brown serving of crispy fried fish.",
     "price": "5 USD",
     "price_postapoc": "4 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 10,
-    "vitamins": [ [ "calcium", 3 ], [ "iron", 5 ], [ "vitB", 94 ] ]
+    "vitamins": [ [ "calcium", 3 ], [ "iron", 5 ], [ "vitB", 94 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -444,16 +455,16 @@
     "price": "14 cent",
     "price_postapoc": "75 cent",
     "//": "*Looking for ~$6 per pound here.",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "75 ml",
-    "vitamins": [ [ "iron", 2 ] ]
+    "vitamins": [ [ "iron", 2 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "bologna",
     "name": { "str_sp": "bologna" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "brat %s" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "brat %s" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "bleak %s" } }
     ],
     "weight": "56 g",
@@ -468,10 +479,10 @@
     "description": "Formally known as Bologna sausage, this is a finely ground preserved meat that comes in circular slices.  Its first name isn't Oscar.  You can eat it cold.",
     "price": "10 USD",
     "price_postapoc": "250 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "750 ml",
     "charges": 10,
-    "vitamins": [ [ "iron", 15 ], [ "vitB", 8 ] ]
+    "vitamins": [ [ "iron", 15 ], [ "vitB", 8 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -488,12 +499,12 @@
     "description": "Lutefisk is preserved fish that has been dried in a lye solution.  Vile and soap-like yet highly nutritious, it is reminiscent of the afterbirth of a dog or the world's largest chunk of phlegm.",
     "price": "2 USD",
     "price_postapoc": "250 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "primary_material": "cured_meat",
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": -15,
-    "vitamins": [ [ "iron", 3 ] ]
+    "vitamins": [ [ "iron", 3 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -511,12 +522,12 @@
     "description": "A canned pork product that is unnaturally pink, oddly rubbery, and not very tasty, this SPAM remains quite filling.  Completely unappetizing, but quite filling.",
     "price": "4 USD",
     "price_postapoc": "3 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "500 ml",
     "charges": 6,
     "flags": [ "EATEN_HOT" ],
     "fun": -2,
-    "vitamins": [ [ "iron", 3 ] ]
+    "vitamins": [ [ "iron", 3 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -543,18 +554,22 @@
     "description": "Salty little fish.  They'll make you thirsty.",
     "price": "2 USD",
     "price_postapoc": "3 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 1,
-    "vitamins": [ [ "calcium", 40 ], [ "iron", 12 ] ]
+    "vitamins": [ [ "calcium", 40 ], [ "iron", 12 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sausagegravy",
     "name": { "str": "sausage gravy", "str_pl": "sausage gravies" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str": "Mannwurst gravy", "str_pl": "Mannwurst gravies" } },
+      {
+        "type": "VITAMIN",
+        "condition": "human_flesh_vitamin",
+        "name": { "str": "Mannwurst gravy", "str_pl": "Mannwurst gravies" }
+      },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "ghastly %s" } }
     ],
     "weight": "60 g",
@@ -571,14 +586,15 @@
     "material": [ "flesh", "wheat", "mushroom" ],
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
-    "fun": 9
+    "fun": 9,
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "pemmican",
     "name": { "str_sp": "pemmican" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "prepper %s" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "prepper %s" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "pernicious %s" } }
     ],
     "weight": "106 g",
@@ -593,7 +609,7 @@
     "price_postapoc": "350 cent",
     "material": [ "flesh", "veggy" ],
     "volume": "250 ml",
-    "vitamins": [ [ "vitC", 3 ], [ "calcium", 24 ], [ "iron", 14 ] ],
+    "vitamins": [ [ "vitC", 3 ], [ "calcium", 24 ], [ "iron", 14 ], [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ],
     "fun": 3
   },
   {
@@ -601,7 +617,7 @@
     "id": "macaroni_helper",
     "name": "hamburger helper",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "hobo helper" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "hobo helper" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "heinous %s" } }
     ],
     "weight": "170 g",
@@ -620,7 +636,16 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 5,
-    "vitamins": [ [ "vitA", 15 ], [ "vitC", 4 ], [ "calcium", 32 ], [ "iron", 20 ], [ "vitB", 195 ] ]
+    "vitamins": [
+      [ "vitA", 15 ],
+      [ "vitC", 4 ],
+      [ "calcium", 32 ],
+      [ "iron", 20 ],
+      [ "vitB", 195 ],
+      [ "meat_allergen", 1 ],
+      [ "wheat_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -640,14 +665,18 @@
     "volume": "500 ml",
     "flags": [ "EATEN_HOT" ],
     "charges": 2,
-    "vitamins": [ [ "vitA", 6 ], [ "calcium", 16 ], [ "iron", 9 ] ]
+    "vitamins": [ [ "vitA", 6 ], [ "calcium", 16 ], [ "iron", 9 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "chili",
     "name": { "str": "chili con carne", "str_pl": "chilis con carne" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str": "chili con cabron", "str_pl": "chilis con cabron" } },
+      {
+        "type": "VITAMIN",
+        "condition": "human_flesh_vitamin",
+        "name": { "str": "chili con cabron", "str_pl": "chilis con cabron" }
+      },
       {
         "type": "COMPONENT_ID",
         "condition": "mutant",
@@ -670,7 +699,7 @@
     "flags": [ "EATEN_HOT" ],
     "fun": 5,
     "charges": 2,
-    "vitamins": [ [ "vitA", 14 ], [ "vitC", 7 ], [ "calcium", 6 ], [ "iron", 27 ] ]
+    "vitamins": [ [ "vitA", 14 ], [ "vitC", 7 ], [ "calcium", 6 ], [ "iron", 27 ], [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -692,7 +721,7 @@
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
     "fun": 5,
-    "vitamins": [ [ "vitC", 6 ], [ "calcium", 14 ], [ "iron", 25 ] ]
+    "vitamins": [ [ "vitC", 6 ], [ "calcium", 14 ], [ "iron", 25 ], [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -708,10 +737,10 @@
     "description": "Now with 95 percent fewer dolphins!",
     "price": "2 USD",
     "price_postapoc": "3 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "fun": 2,
-    "vitamins": [ [ "vitA", 4 ], [ "calcium", 2 ], [ "iron", 12 ], [ "vitB", 141 ] ]
+    "vitamins": [ [ "vitA", 4 ], [ "calcium", 2 ], [ "iron", 12 ], [ "vitB", 141 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -727,10 +756,10 @@
     "description": "Bright pink fish-paste in a can!",
     "price": "5 USD",
     "price_postapoc": "350 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "fun": 1,
-    "vitamins": [ [ "vitA", 4 ], [ "calcium", 57 ], [ "iron", 9 ], [ "vitB", 413 ] ]
+    "vitamins": [ [ "vitA", 4 ], [ "calcium", 57 ], [ "iron", 9 ], [ "vitB", 413 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -746,11 +775,11 @@
     "description": "Bright white chicken-paste.",
     "price": "4 USD",
     "price_postapoc": "6 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "500 ml",
     "charges": 2,
     "fun": 1,
-    "vitamins": [ [ "vitA", 18 ], [ "calcium", 3 ], [ "iron", 18 ], [ "vitB", 34 ] ]
+    "vitamins": [ [ "vitA", 18 ], [ "calcium", 3 ], [ "iron", 18 ], [ "vitB", 34 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -766,11 +795,11 @@
     "description": "Fish fillets pickled in some sort of tangy white sauce.",
     "price": "310 cent",
     "price_postapoc": "7 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "500 ml",
     "fun": 3,
     "charges": 2,
-    "vitamins": [ [ "calcium", 34 ], [ "iron", 34 ] ]
+    "vitamins": [ [ "calcium", 34 ], [ "iron", 34 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -787,10 +816,10 @@
     "description": "Chopped quahog clams in water.",
     "price": "5 USD",
     "price_postapoc": "5 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "fun": 2,
-    "vitamins": [ [ "vitA", 28 ], [ "calcium", 11 ], [ "iron", 25 ], [ "vitB", 1312 ] ]
+    "vitamins": [ [ "vitA", 28 ], [ "calcium", 11 ], [ "iron", 25 ], [ "vitB", 1312 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -816,7 +845,15 @@
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
     "fun": 6,
-    "vitamins": [ [ "vitA", 20 ], [ "vitC", 14 ], [ "calcium", 7 ], [ "iron", 16 ], [ "vitB", 348 ] ]
+    "vitamins": [
+      [ "vitA", 20 ],
+      [ "vitC", 14 ],
+      [ "calcium", 7 ],
+      [ "iron", 16 ],
+      [ "vitB", 348 ],
+      [ "meat_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -838,7 +875,7 @@
     "//": "One beans + one protein = 2 servings",
     "flags": [ "EATEN_HOT" ],
     "fun": 4,
-    "vitamins": [ [ "vitC", 10 ], [ "calcium", 6 ], [ "iron", 51 ], [ "vitB", 389 ] ]
+    "vitamins": [ [ "vitC", 10 ], [ "calcium", 6 ], [ "iron", 51 ], [ "vitB", 389 ], [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -860,7 +897,15 @@
     "//": "One rice + one protein/veg = 2 servings",
     "flags": [ "EATEN_HOT" ],
     "fun": 5,
-    "vitamins": [ [ "vitA", 1 ], [ "vitC", 8 ], [ "calcium", 1 ], [ "iron", 40 ], [ "vitB", 389 ] ]
+    "vitamins": [
+      [ "vitA", 1 ],
+      [ "vitC", 8 ],
+      [ "calcium", 1 ],
+      [ "iron", 40 ],
+      [ "vitB", 389 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -882,14 +927,14 @@
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
     "fun": 4,
-    "vitamins": [ [ "vitA", 2 ], [ "vitC", 5 ], [ "calcium", 4 ], [ "iron", 10 ] ]
+    "vitamins": [ [ "vitA", 2 ], [ "vitC", 5 ], [ "calcium", 4 ], [ "iron", 10 ], [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "pie_meat",
     "name": "meat pie",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "prick pie" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "prick pie" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "malignant %s" } }
     ],
     "weight": "189 g",
@@ -909,14 +954,14 @@
     "charges": 8,
     "flags": [ "EATEN_HOT" ],
     "fun": 3,
-    "vitamins": [ [ "calcium", 2 ], [ "iron", 14 ] ]
+    "vitamins": [ [ "calcium", 2 ], [ "iron", 14 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "pizza_meat",
     "name": "meat pizza",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "poser pizza" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "poser pizza" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "miserable %s" } }
     ],
     "weight": "230 g",
@@ -934,7 +979,7 @@
     "charges": 4,
     "flags": [ "EATEN_HOT" ],
     "fun": 10,
-    "vitamins": [ [ "vitA", 3 ], [ "vitC", 10 ], [ "calcium", 28 ], [ "iron", 28 ] ]
+    "vitamins": [ [ "vitA", 3 ], [ "vitC", 10 ], [ "calcium", 28 ], [ "iron", 28 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -949,7 +994,16 @@
     "price_postapoc": "15 USD",
     "material": [ "wheat", "flesh", "veggy", "milk" ],
     "fun": 11,
-    "vitamins": [ [ "vitA", 12 ], [ "vitC", 20 ], [ "calcium", 32 ], [ "iron", 28 ] ]
+    "vitamins": [
+      [ "vitA", 12 ],
+      [ "vitC", 20 ],
+      [ "calcium", 32 ],
+      [ "iron", 28 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ],
+      [ "wheat_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -971,14 +1025,22 @@
     "charges": 3,
     "flags": [ "EATEN_HOT" ],
     "fun": 4,
-    "vitamins": [ [ "vitA", 9 ], [ "vitC", 8 ], [ "calcium", 4 ], [ "iron", 39 ], [ "vitB", 410 ] ]
+    "vitamins": [
+      [ "vitA", 9 ],
+      [ "vitC", 8 ],
+      [ "calcium", 4 ],
+      [ "iron", 39 ],
+      [ "vitB", 410 ],
+      [ "meat_allergen", 1 ],
+      [ "egg_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
     "id": "meat_canned",
     "name": "canned meat",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "soylent slice" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "soylent slice" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "%s, mutant" } }
     ],
     "copy-from": "meat_cooked",
@@ -995,7 +1057,7 @@
     "id": "meat_salted",
     "name": "salted meat slice",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "salted simpleton slice" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "salted simpleton slice" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "%s, mutant" } }
     ],
     "copy-from": "meat_cooked",
@@ -1005,17 +1067,18 @@
     "description": "Meat slices cured in brine.  Salty but tasty in a pinch.",
     "price": "5 USD",
     "price_postapoc": "3 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "delete": { "flags": [ "NUTRIENT_OVERRIDE" ] },
     "primary_material": "cured_meat",
-    "fun": 2
+    "fun": 2,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "spaghetti_bolognese",
     "name": { "str_sp": "spaghetti bolognese" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "scoundrel spaghetti" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "scoundrel spaghetti" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "gnarly %s" } }
     ],
     "weight": "150 g",
@@ -1033,14 +1096,14 @@
     "charges": 8,
     "flags": [ "EATEN_HOT" ],
     "fun": 4,
-    "vitamins": [ [ "vitA", 3 ], [ "vitC", 3 ], [ "calcium", 13 ], [ "iron", 4 ] ]
+    "vitamins": [ [ "vitA", 3 ], [ "vitC", 3 ], [ "calcium", 13 ], [ "iron", 4 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "lasagne",
     "name": "lasagne",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "Luigi %s" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "Luigi %s" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "monster %s" } }
     ],
     "weight": "255 g",
@@ -1060,7 +1123,15 @@
     "charges": 8,
     "flags": [ "EATEN_HOT" ],
     "fun": 15,
-    "vitamins": [ [ "vitA", 5 ], [ "vitC", 19 ], [ "calcium", 22 ], [ "iron", 10 ] ]
+    "vitamins": [
+      [ "vitA", 5 ],
+      [ "vitC", 19 ],
+      [ "calcium", 22 ],
+      [ "iron", 10 ],
+      [ "meat_allergen", 1 ],
+      [ "wheat_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -1072,16 +1143,17 @@
     "quench": -6,
     "description": "Having been fried, this SPAM is actually pretty tasty.",
     "price": "5 USD",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "flags": [ "EATEN_HOT" ],
-    "fun": 8
+    "fun": 8,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "cheeseburger",
     "name": "cheeseburger",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "chump %s" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "chump %s" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "chilling %s" } }
     ],
     "weight": "133 g",
@@ -1099,14 +1171,14 @@
     "volume": "500 ml",
     "flags": [ "EATEN_HOT", "ALLERGEN_MILK" ],
     "fun": 5,
-    "vitamins": [ [ "calcium", 9 ], [ "iron", 14 ] ]
+    "vitamins": [ [ "calcium", 9 ], [ "iron", 14 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "hamburger",
     "name": "hamburger",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "bobburger" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "bobburger" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "horrible %s" } }
     ],
     "weight": "99 g",
@@ -1123,14 +1195,14 @@
     "volume": "500 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 4,
-    "vitamins": [ [ "vitC", 2 ], [ "calcium", 8 ], [ "iron", 16 ] ]
+    "vitamins": [ [ "vitC", 2 ], [ "calcium", 8 ], [ "iron", 16 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sloppyjoe",
     "name": "sloppy joe",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str": "manwich", "str_pl": "manwiches" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str": "manwich", "str_pl": "manwiches" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "suspicious %s" } }
     ],
     "weight": "113 g",
@@ -1147,14 +1219,21 @@
     "volume": "500 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 4,
-    "vitamins": [ [ "vitC", 5 ], [ "calcium", 4 ], [ "iron", 5 ] ]
+    "vitamins": [
+      [ "vitC", 5 ],
+      [ "calcium", 4 ],
+      [ "iron", 5 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ],
+      [ "wheat_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
     "id": "taco",
     "name": "taco",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "tio %s" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "tio %s" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "terrifying %s" } }
     ],
     "weight": "102 g",
@@ -1168,17 +1247,17 @@
     "description": "A traditional Mexican dish composed of a corn tortilla folded or rolled around a meat filling.",
     "price": "210 cent",
     "price_postapoc": "150 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
     "fun": 8,
-    "vitamins": [ [ "calcium", 13 ], [ "iron", 9 ], [ "vitB", 36 ] ]
+    "vitamins": [ [ "calcium", 13 ], [ "iron", 9 ], [ "vitB", 36 ], [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "meat_pickled",
     "name": "pickled meat",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "pickled punk" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "pickled punk" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "%s, mutant" } }
     ],
     "copy-from": "meat_cooked",
@@ -1197,7 +1276,7 @@
     "id": "dry_meat",
     "name": "dehydrated meat",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "%s, human" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "%s, human" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "%s, mutant" } }
     ],
     "copy-from": "meat_cooked",
@@ -1209,16 +1288,17 @@
     "price": "9 USD",
     "price_postapoc": "3 USD",
     "delete": { "flags": [ "NUTRIENT_OVERRIDE" ] },
-    "material": "flesh",
+    "material": [ "flesh" ],
     "primary_material": "cured_meat",
-    "volume": "125 ml"
+    "volume": "125 ml",
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "rehydrated_meat",
     "name": "rehydrated meat",
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "%s, human" } },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "%s, human" } },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "%s, mutant" } }
     ],
     "copy-from": "meat_cooked",
@@ -1233,7 +1313,7 @@
     "type": "COMESTIBLE",
     "id": "haggis",
     "name": { "str": "haggis", "str_pl": "haggises" },
-    "conditional_names": [ { "type": "FLAG", "condition": "CANNIBALISM", "name": { "str_sp": "human %s" } } ],
+    "conditional_names": [ { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": { "str_sp": "human %s" } } ],
     "//": "That's whisky without an 'e' because we're talking about Scotch whisky.",
     "weight": "156 g",
     "color": "brown",
@@ -1250,7 +1330,7 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 2,
-    "vitamins": [ [ "vitA", 144 ], [ "vitC", 21 ], [ "calcium", 1 ], [ "iron", 29 ] ]
+    "vitamins": [ [ "vitA", 144 ], [ "vitC", 21 ], [ "calcium", 1 ], [ "iron", 29 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -1270,7 +1350,15 @@
     "volume": "750 ml",
     "charges": 3,
     "fun": 14,
-    "vitamins": [ [ "vitA", 1 ], [ "vitC", 23 ], [ "calcium", 3 ], [ "iron", 3 ], [ "vitB", 22 ] ]
+    "vitamins": [
+      [ "vitA", 1 ],
+      [ "vitC", 23 ],
+      [ "calcium", 3 ],
+      [ "iron", 3 ],
+      [ "vitB", 22 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -1291,7 +1379,7 @@
     "volume": "1 L",
     "charges": 2,
     "fun": 13,
-    "vitamins": [ [ "vitC", 36 ], [ "calcium", 4 ], [ "iron", 37 ], [ "vitB", 389 ] ]
+    "vitamins": [ [ "vitC", 36 ], [ "calcium", 4 ], [ "iron", 37 ], [ "vitB", 389 ], [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -1306,7 +1394,8 @@
     "price": "6 USD",
     "price_postapoc": "3 USD",
     "material": [ "veggy", "flesh" ],
-    "fun": 7
+    "fun": 7,
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -1321,10 +1410,11 @@
     "description": "Pieces of poisonous meat that have been dried to prevent them from rotting away.  It will still poison you if you eat this.",
     "price": "0 cent",
     "price_postapoc": "10 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "125 ml",
     "fun": -4,
-    "delete": { "flags": [ "RAW" ] }
+    "delete": { "flags": [ "RAW" ] },
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -1345,7 +1435,7 @@
     "volume": "250 ml",
     "flags": [ "EATEN_HOT" ],
     "fun": 6,
-    "vitamins": [ [ "vitC", 3 ], [ "calcium", 2 ], [ "iron", 15 ] ]
+    "vitamins": [ [ "vitC", 3 ], [ "calcium", 2 ], [ "iron", 15 ], [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -1367,7 +1457,7 @@
     "charges": 3,
     "flags": [ "EATEN_HOT" ],
     "fun": 7,
-    "vitamins": [ [ "vitC", 3 ], [ "calcium", 19 ], [ "iron", 12 ] ]
+    "vitamins": [ [ "vitC", 3 ], [ "calcium", 19 ], [ "iron", 12 ], [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "id": "curdled_blood",
@@ -1387,7 +1477,7 @@
     "id": "bibimbap",
     "name": { "str_sp": "bibimbap" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "saram %s" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "saram %s" },
       { "type": "COMPONENT_ID", "condition": "fish", "name": "sashimi %s" }
     ],
     "type": "COMESTIBLE",
@@ -1402,13 +1492,14 @@
     "calories": 680,
     "material": [ "veggy", "flesh" ],
     "fun": 10,
-    "looks_like": "rice_cooked"
+    "looks_like": "rice_cooked",
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "id": "bibimbap_simple",
     "name": { "str_sp": "simple bibimbap" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "saram %s" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "saram %s" },
       { "type": "COMPONENT_ID", "condition": "fish", "name": "sashimi %s" }
     ],
     "type": "COMESTIBLE",
@@ -1423,7 +1514,8 @@
     "calories": 555,
     "material": [ "veggy", "flesh" ],
     "fun": 5,
-    "looks_like": "rice_cooked"
+    "looks_like": "rice_cooked",
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "id": "deluxe_rice_kimchi",
@@ -1440,7 +1532,8 @@
     "fun": 10,
     "material": [ "veggy", "flesh" ],
     "looks_like": "deluxe_rice",
-    "flags": [ "EATEN_HOT" ]
+    "flags": [ "EATEN_HOT" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "id": "samhap",
@@ -1457,7 +1550,8 @@
     "charges": 3,
     "fun": 12,
     "material": [ "veggy", "flesh" ],
-    "flags": [ "EATEN_HOT" ]
+    "flags": [ "EATEN_HOT" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "id": "bossam",
@@ -1474,6 +1568,49 @@
     "charges": 2,
     "fun": 10,
     "material": [ "veggy", "flesh" ],
-    "flags": [ "EATEN_HOT" ]
+    "flags": [ "EATEN_HOT" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
+  },
+  {
+    "id": "kebab",
+    "name": { "str_sp": "kebab" },
+    "conditional_names": [
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "donner kebab" },
+      { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "killer %s" } }
+    ],
+    "type": "COMESTIBLE",
+    "description": "Cooked meats and veggies on a stick.  Popular street food originating from the Middle East and later spread to Asia and the rest of the world.",
+    "weight": "150 g",
+    "volume": "150 ml",
+    "color": "white",
+    "spoils_in": "2 days 12 hours",
+    "comestible_type": "FOOD",
+    "symbol": "%",
+    "calories": 300,
+    "material": [ "veggy", "flesh" ],
+    "fun": 5,
+    "looks_like": "meat_cooked",
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ] ]
+  },
+  {
+    "id": "kebab_meat",
+    "name": { "str_sp": "meat kebab" },
+    "conditional_names": [
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "donner kebab" },
+      { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "killer %s" } }
+    ],
+    "type": "COMESTIBLE",
+    "description": "Cooked meats on a stick.  Popular street food originating from the Middle East and later spread to Asia and the rest of the world.",
+    "weight": "150 g",
+    "volume": "150 ml",
+    "color": "white",
+    "spoils_in": "2 days 12 hours",
+    "comestible_type": "FOOD",
+    "symbol": "%",
+    "calories": 450,
+    "material": [ "flesh" ],
+    "fun": 5,
+    "looks_like": "meat_cooked",
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   }
 ]

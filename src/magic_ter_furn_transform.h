@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAGIC_TER_FURN_TRANSFORM_H
-#define CATA_SRC_MAGIC_TER_FURN_TRANSFORM_H
 
 #include <map>
 #include <optional>
@@ -33,6 +31,7 @@ class ter_furn_data
         void add_msg( const Creature &critter ) const;
         std::optional<T> pick() const;
         void load( const JsonObject &jo );
+        bool is_empty() const;
 };
 
 class ter_furn_transform
@@ -44,6 +43,7 @@ class ter_furn_transform
 
         std::map<ter_str_id, ter_furn_data<ter_str_id>> ter_transform;
         std::map<std::string, ter_furn_data<ter_str_id>> ter_flag_transform;
+        ter_furn_data<ter_str_id> diggable_ter_transform;
 
         std::map<furn_str_id, ter_furn_data<furn_str_id>> furn_transform;
         std::map<std::string, ter_furn_data<furn_str_id>> furn_flag_transform;
@@ -84,4 +84,4 @@ class ter_furn_transform
         bool is_valid() const;
 };
 
-#endif // CATA_SRC_MAGIC_TER_FURN_TRANSFORM_H
+

@@ -264,6 +264,14 @@
     "requirements": [ { "event_statistic": "num_avatar_mutation_threshold_plant", "is": ">=", "target": 1 } ]
   },
   {
+    "id": "achievement_mutation_threshold_rabbit",
+    "type": "achievement",
+    "name": { "str": "[Mutation] Finally beat the tortoise…" },
+    "description": "You finally won the race against the tortoise.  You are now a post-threshold Rabbit mutant.",
+    "hidden_by": [ "achievement_mutation_threshold_rabbit" ],
+    "requirements": [ { "event_statistic": "num_avatar_mutation_threshold_rabbit", "is": ">=", "target": 1 } ]
+  },
+  {
     "id": "achievement_mutation_threshold_rat",
     "type": "achievement",
     "name": { "str": "[Mutation] At First I Was Afraid, I Was Petrified…" },

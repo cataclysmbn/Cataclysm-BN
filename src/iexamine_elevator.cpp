@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <optional>
 
 #include "cata_algo.h"
@@ -49,7 +50,7 @@ auto dest( const elevator::tiles &elevator_here,
            int movez ) -> elevator::tiles
 {
     elevator::tiles tiles;
-    std::transform( elevator_here.begin(), elevator_here.end(), std::back_inserter( tiles ),
+    std::ranges::transform( elevator_here, std::back_inserter( tiles ),
     [turns, &sm_orig, movez]( tripoint const & p ) {
         return rotate_point_sm( { p.xy(), movez }, sm_orig, turns );
     } );
@@ -107,7 +108,7 @@ auto vehicle_status( const wrapped_vehicle &veh, const elevator::tiles &tiles ) 
     const int all_vparts_count = ps.part_count();
     const int vparts_inside = std::count_if( ps.begin(), ps.end(), [&]( const vpart_reference & vp ) {
         const tripoint p = veh.pos + vp.part().precalc[0];
-        const auto eit = std::find( tiles.cbegin(), tiles.cend(), p );
+        const auto eit = std::ranges::find( tiles, p );
         return eit != tiles.cend();
     } );
 
@@ -161,13 +162,13 @@ auto move_creatures_away( const elevator::tiles &dest ) -> void
     for( Creature &critter : g->all_creatures() ) {
         const tripoint local_pos = here.getlocal( here.getglobal( critter.pos() ) );
 
-        const auto eit = std::find( dest.cbegin(), dest.cend(), local_pos );
+        const auto eit = std::ranges::find( dest, local_pos );
         if( eit == dest.cend() ) {
             continue;
         }
 
         const auto xs = closest_points_first( *eit, 10 );
-        const auto candidate = std::find_if( xs.begin(), xs.end(), is_movable );
+        const auto candidate = std::ranges::find_if( xs, is_movable );
         if( candidate == xs.end() ) {
             continue;
         }
@@ -190,7 +191,7 @@ auto move_items( const elevator::tiles &from, const elevator::tiles &dest ) -> v
 auto move_creatures( const elevator::tiles &from, const elevator::tiles &dest ) -> void
 {
     for( Creature &critter : g->all_creatures() ) {
-        const auto eit = std::find( from.cbegin(), from.cend(), critter.pos() );
+        const auto eit = std::ranges::find( from, critter.pos() );
         if( eit != from.cend() ) {
             critter.setpos( dest[ std::distance( from.cbegin(), eit ) ] );
         }
@@ -218,9 +219,8 @@ auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> v
 
     g->vertical_shift( movez );
     // yes, this is inefficient, but i'm lazy
-    cata::and_then( elevator::find_elevators_nearby( p.pos() ), []( const tripoint & pos ) {
-        return g->place_player( pos );
-    } );
+    elevator::find_elevators_nearby( p.pos() )
+    .transform( []( const tripoint & pos ) -> point { return g->place_player( pos ); } );
 
     cata_event_dispatch::avatar_moves( *p.as_avatar(), here, old_abs_pos.raw() );
 }

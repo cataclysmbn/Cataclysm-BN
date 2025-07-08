@@ -1,5 +1,7 @@
 #include "mapgendata.h"
 
+#include <algorithm>
+
 #include "all_enum_values.h"
 #include "debug.h"
 #include "int_id.h"
@@ -41,7 +43,7 @@ mapgendata::mapgendata( map &mp, dummy_settings_t )
 {
     oter_id any = oter_id( "field" );
     t_above = t_below = terrain_type_ = any;
-    std::fill( std::begin( t_nesw ), std::end( t_nesw ), any );
+    std::ranges::fill( t_nesw, any );
 }
 
 mapgendata::mapgendata( const tripoint_abs_omt &over, map &mp, const float density,

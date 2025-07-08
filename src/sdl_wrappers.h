@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_SDL_WRAPPERS_H
-#define CATA_SRC_SDL_WRAPPERS_H
 
 #if defined(TILES)
 
@@ -144,4 +142,4 @@ inline bool operator!=( const SDL_Rect &lhs, const SDL_Rect &rhs )
 
 #endif // if defined(TILES)
 
-#endif // CATA_SRC_SDL_WRAPPERS_H
+

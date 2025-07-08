@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ACTIVE_TILE_DATA_H
-#define CATA_SRC_ACTIVE_TILE_DATA_H
 
 #include <string>
 #include "calendar.h"
@@ -62,4 +60,3 @@ T * furn_at( const tripoint_abs_ms &pos );
 
 } // namespace active_tiles
 
-#endif // CATA_SRC_ACTIVE_TILE_DATA_H

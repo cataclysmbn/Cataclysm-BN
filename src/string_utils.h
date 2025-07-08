@@ -1,6 +1,4 @@
 ﻿#pragma once
-#ifndef CATA_SRC_STRING_UTILS_H
-#define CATA_SRC_STRING_UTILS_H
 
 #include <string>
 #include <vector>
@@ -131,4 +129,4 @@ std::string &capitalize_letter( std::string &str, size_t n = 0 );
  */
 std::string trim_whitespaces( const std::string &str );
 
-#endif // CATA_SRC_STRING_UTILS_H
+

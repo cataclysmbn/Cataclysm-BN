@@ -33,8 +33,11 @@
       [ "GOODHEARING", 100 ],
       [ "DEFT", 100 ],
       [ "ANIMALEMPATH2", 100 ],
-      [ "LIGHTFUR", 100 ],
-      [ "HOOVES", 100 ]
+      [ "RABBIT_NOSE", 100 ],
+      [ "RABBIT_FUR", 100 ],
+      [ "TAIL_RABBIT", 100 ],
+      [ "RABBIT_EARS", 100 ],
+      [ "THRESH_RABBIT", 100 ]
     ]
   },
   {
@@ -81,7 +84,7 @@
     "type": "talk_topic",
     "id": "TALK_WARRENER_MUTATION",
     "dynamic_line": {
-      "u_has_any_trait": [ "CANINE_EARS", "LUPINE_EARS", "FELINE_EARS", "URSINE_EARS", "ELFA_EARS", "LIGHTFUR" ],
+      "u_has_any_trait": [ "RABBIT_EARS", "CANINE_EARS", "LUPINE_EARS", "FELINE_EARS", "URSINE_EARS", "ELFA_EARS", "LIGHTFUR" ],
       "yes": "Same way you got yours, I bet.",
       "no": "CRISPR?  Radiation?  Something in the water?  Maybe it was bunnies."
     },
@@ -94,7 +97,7 @@
     "type": "talk_topic",
     "id": "TALK_WARRENER_MUTATION_INSULT",
     "dynamic_line": {
-      "u_has_any_trait": [ "CANINE_EARS", "LUPINE_EARS", "FELINE_EARS", "URSINE_EARS", "ELFA_EARS", "LIGHTFUR" ],
+      "u_has_any_trait": [ "RABBIT_EARS", "CANINE_EARS", "LUPINE_EARS", "FELINE_EARS", "URSINE_EARS", "ELFA_EARS", "LIGHTFUR" ],
       "yes": "I'm very sorry to tell you this, but you should look in a mirror.",
       "no": "Insulting people who could help you is unlikely to aid survival."
     },

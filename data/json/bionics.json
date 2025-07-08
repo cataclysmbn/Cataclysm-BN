@@ -163,12 +163,25 @@
     "id": "bio_cable",
     "type": "bionic",
     "name": { "str": "Cable Charger System" },
-    "description": "You have a complex port surgically mounted above your hip.  While active, it will recharge bionic power when connected to a power source via jumper cable.",
+    "description": "You have a complex port surgically mounted above your hip.  While active, it will recharge bionic power when connected to a power source via cable.",
     "occupied_bodyparts": [ [ "torso", 10 ] ],
-    "is_remote_fueled": true,
+    "remote_fuel_draw": "1 kJ",
     "time": 1,
     "fuel_efficiency": 1,
-    "flags": [ "BIONIC_POWER_SOURCE", "BIONIC_SHOCKPROOF", "BIONIC_TOGGLED" ]
+    "flags": [ "BIONIC_POWER_SOURCE", "BIONIC_SHOCKPROOF", "BIONIC_TOGGLED" ],
+    "available_upgrades": [ "bio_cable_mkII" ]
+  },
+  {
+    "id": "bio_cable_mkII",
+    "type": "bionic",
+    "name": { "str": "Cable Charger System Mk. II" },
+    "description": "This is a military-grade electronic port and power converter system which are surgically mounted above your hip, it has ten times higher throughput than basic version.  While active, it will recharge bionic power when connected to a power source via cable.",
+    "occupied_bodyparts": [ [ "torso", 12 ] ],
+    "remote_fuel_draw": "10 kJ",
+    "time": 1,
+    "fuel_efficiency": 1,
+    "flags": [ "BIONIC_POWER_SOURCE", "BIONIC_SHOCKPROOF", "BIONIC_TOGGLED" ],
+    "upgraded_bionic": "bio_cable"
   },
   {
     "id": "bio_carbon",
@@ -328,9 +341,10 @@
     "id": "bio_ears",
     "type": "bionic",
     "name": { "str": "Enhanced Hearing" },
-    "description": "When this bionic is active, your hearing will be drastically improved, allowing you to hear ten times better than the average person.  Additionally, high-intensity sounds will be automatically dampened before they can damage your hearing.",
+    "description": "When this bionic is active, your hearing will be drastically improved, allowing you to hear ten times better than the average person.  Additionally, high-intensity sounds will be automatically dampened before they can damage your hearing, and preexisting hearing problems will be fixed.",
     "occupied_bodyparts": [ [ "head", 3 ] ],
     "flags": [ "BIONIC_TOGGLED" ],
+    "canceled_mutations": [ "BADHEARING", "DEAF" ],
     "included_bionics": [ "bio_earplugs" ]
   },
   {
@@ -370,9 +384,10 @@
     "id": "bio_eye_enhancer",
     "type": "bionic",
     "name": { "str": "Diamond Cornea" },
-    "description": "Your vision is greatly enhanced, giving you a +2 bonus to perception.",
+    "description": "Your vision is greatly enhanced, giving you a +2 bonus to perception and fixing any vision problems.",
     "occupied_bodyparts": [ [ "eyes", 1 ] ],
     "stat_bonus": [ [ "PER", 2 ] ],
+    "canceled_mutations": [ "HYPEROPIC", "MYOPIC" ],
     "flags": [ "BIONIC_NPC_USABLE" ]
   },
   {
@@ -797,10 +812,11 @@
     "id": "bio_purifier",
     "type": "bionic",
     "name": { "str": "Air Filtration System (passive)" },
-    "description": "Surgically implanted in your trachea is an advanced filtration system.  In it's passive form it will protect you against smoke inhalation.  Once activated, it will prevent spores, toxins and diseases from being inhaled.",
+    "description": "Surgically implanted in your trachea is an advanced filtration system.  In it's passive form it will protect you against smoke inhalation and even particulate matter that triggers asthma attacks.  Once activated, it will prevent spores, toxins and diseases from being inhaled.",
     "occupied_bodyparts": [ [ "torso", 4 ], [ "mouth", 2 ] ],
     "env_protec": [ [ "mouth", 7 ] ],
     "flags": [ "BIONIC_NPC_USABLE" ],
+    "canceled_mutations": [ "ASTHMA" ],
     "included_bionics": [ "bio_purifier_active" ]
   },
   {
@@ -1076,8 +1092,9 @@
     "id": "bio_jointservo",
     "type": "bionic",
     "name": { "str": "Joint Servo" },
-    "description": "Your leg joints have been equipped with servomotors that provide power-assisted movement.  They are optimized for running, but walking also requires less effort.  When unpowered, the bionic still improves your speed slightly by balancing your gait and preventing incorrect or excessive movements.",
+    "description": "Your leg joints have been equipped with servomotors that provide power-assisted movement.  They are optimized for running, but walking also requires less effort.  When unpowered, the bionic still improves your speed slightly by balancing your gait and preventing incorrect or excessive movements, even compensating for joint problems.",
     "occupied_bodyparts": [ [ "leg_l", 12 ], [ "leg_r", 12 ] ],
+    "canceled_mutations": [ "BADKNEES" ],
     "flags": [ "BIONIC_TOGGLED" ],
     "trigger_cost": "35 J"
   },
@@ -1144,10 +1161,10 @@
     "id": "bio_fuel_cell_hydrogen",
     "type": "bionic",
     "name": { "str": "Hydrogen Fuel Cell CBM" },
-    "description": "A small hydrogen fuel cell fixed to your scapula.  Fairly efficient and produces minimal heat, though the low density of even compressed hydrogen is a hindrance.  A network of compressors and fuel tanks has been distributed throughout your body to store fuel.",
+    "description": "A small hydrogen fuel cell fixed to your scapula.  Fairly efficient and high-yield, though the low density of compressed hydrogen and potential waste heat is a hindrance.  A network of compressors and fuel tanks has been distributed throughout your body, able to compactly store 2 liters of hydrogen.",
     "occupied_bodyparts": [ [ "torso", 10 ] ],
     "fuel_options": [ "c_hydrogen_gas" ],
-    "fuel_capacity": 500,
+    "fuel_capacity": 20,
     "fuel_efficiency": 0.5,
     "exothermic_power_gen": true,
     "time": 1,
@@ -1204,9 +1221,10 @@
     "id": "bio_weight",
     "type": "bionic",
     "name": { "str": "Skeletal Bracing" },
-    "description": "A framework of lightweight alloy bracing has been installed onto your elbows, knees, and spine, making them far better at handling strain.  Your carrying capacity is increased by 20 kilograms, or about 44 pounds.",
+    "description": "A framework of lightweight alloy bracing has been installed onto your elbows, knees, and spine, making them far better at handling strain and fixing any spinal issues.  Your carrying capacity is increased by 20 kilograms, or about 44 pounds.",
     "occupied_bodyparts": [ [ "torso", 8 ], [ "arm_l", 3 ], [ "arm_r", 3 ], [ "leg_l", 3 ], [ "leg_r", 3 ] ],
     "weight_capacity_bonus": "20 kg",
+    "canceled_mutations": [ "BADBACK" ],
     "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ]
   },
   {
@@ -1287,13 +1305,13 @@
     "id": "bio_electrosense",
     "type": "bionic",
     "name": { "str": "Electrosense Scanner" },
-    "description": "Activating this bionic will allow you to see robots and other electric creatures through walls, and automatically scan nearby corpses for bionics that could be harvested, at the cost of steadily draining power.",
+    "description": "Activating this bionic will allow you to see robots and other electric creatures through walls, at the cost of steadily draining power.",
     "occupied_bodyparts": [ [ "head", 1 ] ],
     "flags": [ "BIONIC_TOGGLED" ],
     "act_cost": "20 J",
     "react_cost": "20 J",
     "time": 1,
-    "included_bionics": [ "bio_electrosense_voltmeter" ]
+    "included_bionics": [ "bio_electrosense_voltmeter", "bio_electrosense_bscanner" ]
   },
   {
     "id": "bio_electrosense_voltmeter",
@@ -1301,6 +1319,16 @@
     "name": { "str": "Electrosense Voltmeter" },
     "description": "Using this bionic allows you to check the status of any local grid connections or battery charge in your surroundings, as well as make modifications to grid connections.",
     "act_cost": "10 J",
+    "fake_item": "voltmeter_bionic",
+    "included": true
+  },
+  {
+    "id": "bio_electrosense_bscanner",
+    "type": "bionic",
+    "name": { "str": "Electrosense Bionic Scanner" },
+    "description": "Activating this bionic scans nearby corpses for bionics at 750J per bionic.  If you do not possess enough bionic power to scan 1 bionic, it deactivates.",
+    "flags": [ "BIONIC_TOGGLED" ],
+    "trigger_cost": "750 J",
     "included": true
   },
   {

@@ -56,7 +56,7 @@
 #include "output.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
-#include "pathfinding.h"
+#include "legacy_pathfinding.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "ranged.h"
@@ -910,7 +910,7 @@ bool npc::can_read( const item &book, std::vector<std::string> &fail_reasons )
     return true;
 }
 
-int npc::time_to_read( const item &book, const player &reader ) const
+int npc::time_to_read( const item &book, const Character &reader ) const
 {
     const auto &type = book.type->book;
     const skill_id &skill = type->skill;
@@ -1036,7 +1036,7 @@ void npc::finish_read( item *it )
     revert_after_activity();
 }
 
-void npc::start_read( item &it, player *pl )
+void npc::start_read( item &it, Character *pl )
 {
     item &chosen = it;
     const int time_taken = time_to_read( chosen, *pl );
@@ -1127,7 +1127,7 @@ detached_ptr<item> npc::wear_if_wanted( detached_ptr<item> &&it, std::string &re
                 continue;
             }
             // Find an item that covers the same body part as the new item
-            auto iter = std::find_if( worn.begin(), worn.end(), [bp]( const item * const & armor ) {
+            auto iter = std::ranges::find_if( worn, [bp]( const item * const & armor ) {
                 return armor->covers( bp );
             } );
             if( iter != worn.end() && !( is_limb_broken( bp ) && ( *iter )->has_flag( flag_SPLINT ) ) ) {
@@ -1241,7 +1241,7 @@ detached_ptr<item> npc::wield( detached_ptr<item> &&target )
 
 
     inv.update_invlet( obj );
-    inv.update_cache_with_item( obj );
+    inv.update_invlet_cache_with_item( obj );
     return detached_ptr<item>();
 }
 
@@ -1265,7 +1265,7 @@ void npc::invalidate_range_cache()
     }
 }
 
-void npc::form_opinion( const player &u )
+void npc::form_opinion( const Character &u )
 {
     // FEAR
     if( u.primary_weapon().is_gun() ) {
@@ -1517,7 +1517,7 @@ int npc::assigned_missions_value()
     return ret;
 }
 
-std::vector<skill_id> npc::skills_offered_to( const player &p ) const
+std::vector<skill_id> npc::skills_offered_to( const Character &p ) const
 {
     std::vector<skill_id> ret;
     for( const auto &pair : *_skills ) {
@@ -1529,7 +1529,7 @@ std::vector<skill_id> npc::skills_offered_to( const player &p ) const
     return ret;
 }
 
-std::vector<matype_id> npc::styles_offered_to( const player &p ) const
+std::vector<matype_id> npc::styles_offered_to( const Character &p ) const
 {
     return p.martial_arts_data->get_unknown_styles( *martial_arts_data );
 }
@@ -1774,7 +1774,7 @@ void npc::shop_restock()
         for( map_cursor &cursor : map_selector( pos(), 0 ) ) {
             cursor.remove_top_items_with( [this]( detached_ptr<item> &&it ) {
                 if( it->is_owned_by( *this ) ) {
-                    inv.push_back( std::move( it ) );
+                    inv.add_item( std::move( it ), false );
                     return detached_ptr<item>();
                 } else {
                     return std::move( it );
@@ -1786,7 +1786,7 @@ void npc::shop_restock()
         // clear out inventory and add in restocked items
         has_new_items = true;
         inv.clear();
-        inv.push_back( ret );
+        inv.add_items( ret, false );
     }
 }
 
@@ -2018,7 +2018,7 @@ void npc::set_faction_ver( int new_version )
     faction_api_version = new_version;
 }
 
-bool npc::has_faction_relationship( const player &p,
+bool npc::has_faction_relationship( const Character &p,
                                     const npc_factions::relationship flag ) const
 {
     faction *p_fac = p.get_faction();
@@ -2865,7 +2865,7 @@ bool npc::dispose_item( item &obj, const std::string & )
             item_handling_cost( obj ),
             [this, &obj] {
                 moves -= item_handling_cost( obj );
-                inv.add_item_keep_invlet( obj.detach() );
+                inv.add_item( obj.detach(), true );
                 inv.unsort();
             }
         } );
@@ -2877,7 +2877,7 @@ bool npc::dispose_item( item &obj, const std::string & )
         return true;
     }
 
-    const auto mn = std::min_element( opts.begin(), opts.end(),
+    const auto mn = std::ranges::min_element( opts,
     []( const dispose_option & lop, const dispose_option & rop ) {
         return lop.moves < rop.moves;
     } );
@@ -3020,12 +3020,12 @@ bool npc::will_accept_from_player( const item &it ) const
     return true;
 }
 
-const pathfinding_settings &npc::get_pathfinding_settings() const
+const pathfinding_settings &npc::get_legacy_pathfinding_settings() const
 {
-    return get_pathfinding_settings( false );
+    return get_legacy_pathfinding_settings( false );
 }
 
-const pathfinding_settings &npc::get_pathfinding_settings( bool no_bashing ) const
+const pathfinding_settings &npc::get_legacy_pathfinding_settings( bool no_bashing ) const
 {
     path_settings->bash_strength = no_bashing ? 0 : smash_ability();
     // TODO: Extract climb skill
@@ -3042,7 +3042,7 @@ const pathfinding_settings &npc::get_pathfinding_settings( bool no_bashing ) con
     return *path_settings;
 }
 
-std::set<tripoint> npc::get_path_avoid() const
+std::set<tripoint> npc::get_legacy_path_avoid() const
 {
     std::set<tripoint> ret;
     for( Creature &critter : g->all_creatures() ) {
@@ -3064,6 +3064,48 @@ std::set<tripoint> npc::get_path_avoid() const
         }
     }
     return ret;
+}
+
+std::pair<PathfindingSettings, RouteSettings> npc::get_pathfinding_pair()
+const
+{
+    return this->get_pathfinding_pair( false );
+}
+
+std::pair<PathfindingSettings, RouteSettings> npc::get_pathfinding_pair(
+    bool no_bashing ) const
+{
+    PathfindingSettings path_settings;
+
+    path_settings.door_open_cost = rules.has_flag( ally_rule::avoid_doors ) ? INFINITY : 2.0;
+    path_settings.mob_presence_penalty = 16.0;
+    path_settings.rough_terrain_cost = 0.0;
+    path_settings.sharp_terrain_cost = INFINITY;
+    path_settings.trap_cost = INFINITY;
+    path_settings.can_climb_stairs = true;
+    path_settings.bash_strength_val = no_bashing ? 0 : smash_ability() /
+                                      path_settings.bash_strength_quanta;
+
+    const int climb = std::min( 20, get_dex() );
+    if( climb <= 1 ) {
+        path_settings.climb_cost = INFINITY;
+    } else {
+        const float climb_success_prob = 1.0 - 1.0 / climb;
+        path_settings.climb_cost = 5 / climb_success_prob;
+    }
+
+    RouteSettings route_settings;
+    // TODO: Make it assign a stockfish preset instead
+    route_settings.alpha = 1.0;
+    route_settings.h_coeff = 1.0;
+    route_settings.max_dist = INFINITY;
+    route_settings.max_f_coeff = INFINITY;
+    route_settings.max_s_coeff = INFINITY;
+    route_settings.f_limit_based_on_max_dist = false;
+    route_settings.search_cone_angle = 180.0;
+    route_settings.search_radius_coeff = INFINITY;
+
+    return { path_settings, route_settings };
 }
 
 mfaction_id npc::get_monster_faction() const

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ITEM_FUNCTIONS_H
-#define CATA_SRC_ITEM_FUNCTIONS_H
 
 #include "units.h"
 
@@ -18,4 +16,4 @@ int shots_remaining( const Character &who, const item &it );
 
 } // namespace item_funcs
 
-#endif // CATA_SRC_ITEM_FUNCTIONS_H
+

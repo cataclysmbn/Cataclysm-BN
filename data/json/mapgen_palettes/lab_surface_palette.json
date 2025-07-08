@@ -32,13 +32,17 @@
       "<": "t_stairs_up",
       ">": "t_stairs_down",
       "e": "t_elevator",
-      "@": "t_elevator_control_off"
+      "@": "t_elevator_control_off",
+      "t̲": "t_railroad_rubble",
+      "ḇ": "t_railroad_rubble"
     },
     "furniture": {
       "&": "f_trashcan",
+      "t̲": "f_trashcan",
       "{": "f_glass_fridge",
       "1": [ "f_indoor_plant", "f_indoor_plant_y" ],
       "b": "f_bench",
+      "ḇ": "f_bench",
       "B": "f_bookcase",
       "C": "f_counter",
       "c": "f_chair",
@@ -84,6 +88,8 @@
       "*": "t_region_shrub_decorative",
       "<": "t_stairs_up",
       ">": "t_stairs_down",
+      "↑": "t_ladder_up",
+      "↓": "t_ladder_down",
       "e": "t_elevator",
       "@": "t_elevator_control_off",
       "V": "t_radio_tower"

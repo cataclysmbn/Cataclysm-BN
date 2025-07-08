@@ -34,5 +34,27 @@
     "bashing": 8,
     "price": "400 USD",
     "copy-from": "v_table"
+  },
+  {
+    "type": "GENERIC",
+    "id": "robobench",
+    "name": { "str": "robobench", "str_pl": "robobenches" },
+    "description": "Having upgraded the basic workbench, you've now created a robotic workbench that helps speed up crafting.",
+    "weight": "43000 g",
+    "material": [ "steel" ],
+    "bashing": 9,
+    "price": "4000 USD",
+    "copy-from": "v_table"
+  },
+  {
+    "type": "GENERIC",
+    "id": "adv_butchery",
+    "name": { "str": "advanced butchering station" },
+    "description": "Combining a fixed-up dissector, workbench and advanced electronics, this is a marvel capable of butchering, dissecting and cutting like nothing else!",
+    "weight": "46280 g",
+    "material": [ "steel", "aluminum" ],
+    "bashing": 9,
+    "price": "4000 USD",
+    "copy-from": "v_table"
   }
 ]

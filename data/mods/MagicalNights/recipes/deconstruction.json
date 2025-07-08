@@ -1,0 +1,69 @@
+[
+  {
+    "result": "broken_claygolem",
+    "type": "uncraft",
+    "skill_used": "spellcraft",
+    "difficulty": 2,
+    "time": "4 h",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "//": "Balanced based on weight",
+    "components": [ [ [ "clay_lump", 231 ] ] ]
+  },
+  {
+    "result": "broken_stonegolem",
+    "type": "uncraft",
+    "skill_used": "spellcraft",
+    "difficulty": 4,
+    "time": "4 h",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "rock", 222 ] ], [ [ "sharp_rock", 33 ] ] ]
+  },
+  {
+    "result": "broken_irongolem",
+    "type": "uncraft",
+    "skill_used": "spellcraft",
+    "difficulty": 6,
+    "time": "6 h",
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [ [ [ "scrap", 800 ] ], [ [ "steel_lump", 200 ] ] ]
+  },
+  {
+    "result": "broken_plasticgolem",
+    "type": "uncraft",
+    "skill_used": "spellcraft",
+    "difficulty": 3,
+    "time": "5 h",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "plastic_chunk", 1400 ] ] ]
+  },
+  {
+    "result": "broken_resingolem_fresh",
+    "type": "uncraft",
+    "skill_used": "spellcraft",
+    "difficulty": 3,
+    "time": "8 h",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "//": "Terrible yields on purpose",
+    "components": [ [ [ "plastic_chunk", 200 ] ] ]
+  },
+  {
+    "result": "broken_resingolem_half",
+    "type": "uncraft",
+    "skill_used": "spellcraft",
+    "difficulty": 3,
+    "time": "6 h",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "//": "Poor yields on purpose",
+    "components": [ [ [ "plastic_chunk", 800 ] ] ]
+  },
+  {
+    "result": "broken_resingolem_cured",
+    "type": "uncraft",
+    "skill_used": "spellcraft",
+    "difficulty": 3,
+    "time": "5 h",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "//": "Slightly less than pure plastic to account for differences between resin and plastic, I suppose",
+    "components": [ [ [ "plastic_chunk", 1200 ] ] ]
+  }
+]

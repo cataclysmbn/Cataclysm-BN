@@ -6,7 +6,7 @@
     "name": { "str_sp": "foie gras" },
     "symbol": "%",
     "looks_like": "meat_cooked",
-    "description": "Thought it's not technically foie gras, you don't have to think about that.",
+    "description": "Though it's not technically foie gras, you don't have to think about that.",
     "price_postapoc": "150 cent",
     "material": [ "flesh", "fruit" ],
     "color": "brown",
@@ -19,7 +19,15 @@
     "fun": 15,
     "quench": 3,
     "flags": [ "EATEN_HOT" ],
-    "vitamins": [ [ "vitA", 4 ], [ "vitC", 5 ], [ "calcium", 0 ], [ "iron", 2 ], [ "vitB", 15 ] ]
+    "vitamins": [
+      [ "vitA", 4 ],
+      [ "vitC", 5 ],
+      [ "calcium", 0 ],
+      [ "iron", 2 ],
+      [ "vitB", 15 ],
+      [ "meat_allergen", 1 ],
+      [ "fruit_allergen", 1 ]
+    ]
   },
   {
     "id": "liver_onion",
@@ -39,7 +47,15 @@
     "healthy": 2,
     "quench": -3,
     "flags": [ "EATEN_HOT" ],
-    "vitamins": [ [ "vitA", 75 ], [ "vitC", 1 ], [ "calcium", 0 ], [ "iron", 8 ], [ "vitB", 336 ] ]
+    "vitamins": [
+      [ "vitA", 75 ],
+      [ "vitC", 1 ],
+      [ "calcium", 0 ],
+      [ "iron", 8 ],
+      [ "vitB", 336 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ]
+    ]
   },
   {
     "id": "fried_livers",
@@ -62,7 +78,16 @@
     "fun": 6,
     "quench": -4,
     "flags": [ "EATEN_HOT" ],
-    "vitamins": [ [ "vitA", 75 ], [ "vitC", 0 ], [ "calcium", 2 ], [ "iron", 9 ], [ "vitB", 337 ] ]
+    "vitamins": [
+      [ "vitA", 75 ],
+      [ "vitC", 0 ],
+      [ "calcium", 2 ],
+      [ "iron", 9 ],
+      [ "vitB", 337 ],
+      [ "meat_allergen", 1 ],
+      [ "wheat_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "id": "humble_pie",
@@ -84,7 +109,15 @@
     "weight": "249 g",
     "charges": 3,
     "flags": [ "EATEN_HOT" ],
-    "vitamins": [ [ "vitA", 36 ], [ "vitC", 15 ], [ "calcium", 1 ], [ "iron", 40 ], [ "vitB", 171 ] ]
+    "vitamins": [
+      [ "vitA", 36 ],
+      [ "vitC", 15 ],
+      [ "calcium", 1 ],
+      [ "iron", 40 ],
+      [ "vitB", 171 ],
+      [ "meat_allergen", 1 ],
+      [ "wheat_allergen", 1 ]
+    ]
   },
   {
     "id": "stewed_tripe",
@@ -105,7 +138,8 @@
     "volume": "250 ml",
     "weight": "70 g",
     "flags": [ "EATEN_HOT" ],
-    "calories": 130
+    "calories": 130,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "id": "fried_tripe",
@@ -126,7 +160,8 @@
     "volume": "250 ml",
     "weight": "70 g",
     "flags": [ "EATEN_HOT" ],
-    "calories": 310
+    "calories": 310,
+    "vitamins": [ [ "meat_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "id": "leverpostej",
@@ -145,7 +180,17 @@
     "weight": "112 g",
     "charges": 14,
     "calories": 344,
-    "vitamins": [ [ "vitA", 43 ], [ "vitC", 0 ], [ "calcium", 1 ], [ "iron", 5 ], [ "vitB", 193 ] ]
+    "vitamins": [
+      [ "vitA", 43 ],
+      [ "vitC", 0 ],
+      [ "calcium", 1 ],
+      [ "iron", 5 ],
+      [ "vitB", 193 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ],
+      [ "wheat_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ]
   },
   {
     "id": "brain_cooked",
@@ -181,7 +226,15 @@
     "flags": [ "EATEN_HOT" ],
     "calories": 285,
     "charges": 3,
-    "vitamins": [ [ "vitA", 1 ], [ "vitB", 144 ], [ "vitC", 6 ], [ "iron", 13 ], [ "calcium", 1 ] ]
+    "vitamins": [
+      [ "vitA", 1 ],
+      [ "vitB", 144 ],
+      [ "vitC", 6 ],
+      [ "iron", 13 ],
+      [ "calcium", 1 ],
+      [ "meat_allergen", 1 ],
+      [ "wheat_allergen", 1 ]
+    ]
   },
   {
     "id": "kidney_cooked",
@@ -218,7 +271,16 @@
     "charges": 3,
     "flags": [ "EATEN_HOT" ],
     "calories": 301,
-    "vitamins": [ [ "vitA", 5 ], [ "vitB", 104 ], [ "vitC", 1 ], [ "iron", 6 ], [ "calcium", 1 ] ]
+    "vitamins": [
+      [ "vitA", 5 ],
+      [ "vitB", 104 ],
+      [ "vitC", 1 ],
+      [ "iron", 6 ],
+      [ "calcium", 1 ],
+      [ "meat_allergen", 1 ],
+      [ "veggy_allergen", 1 ],
+      [ "wheat_allergen", 1 ]
+    ]
   },
   {
     "id": "sweetbread_cooked",
@@ -293,7 +355,8 @@
     "weight": "180 g",
     "charges": 6,
     "calories": 100,
-    "flags": [ "EATEN_HOT" ]
+    "flags": [ "EATEN_HOT" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "id": "toettchen",
@@ -314,7 +377,8 @@
     "weight": "180 g",
     "charges": 6,
     "calories": 400,
-    "flags": [ "EATEN_HOT" ]
+    "flags": [ "EATEN_HOT" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "id": "scrambledeggsandbrain",
@@ -335,7 +399,8 @@
     "weight": "180 g",
     "charges": 6,
     "calories": 400,
-    "flags": [ "EATEN_HOT" ]
+    "flags": [ "EATEN_HOT" ],
+    "vitamins": [ [ "meat_allergen", 1 ], [ "veggy_allergen", 1 ], [ "wheat_allergen", 1 ] ]
   },
   {
     "id": "sausage_casings",
@@ -344,8 +409,9 @@
     "name": { "str": "sausage casing" },
     "description": "Sausage casings made from animal intestines.  Ready to be used for forming meat products.",
     "color": "red",
-    "material": "flesh",
-    "charges": 60
+    "material": [ "flesh" ],
+    "charges": 60,
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "id": "sausage_casings_plastic",
@@ -367,7 +433,7 @@
     "type": "COMESTIBLE",
     "name": { "str_sp": "fried offal" },
     "conditional_names": [
-      { "type": "FLAG", "condition": "CANNIBALISM", "name": "fried Frank offal" },
+      { "type": "VITAMIN", "condition": "human_flesh_vitamin", "name": "fried Frank offal" },
       { "type": "COMPONENT_ID", "condition": "mutant", "name": { "str_sp": "fried freak offal" } }
     ],
     "description": "This is freshly cooked organ meat and entrails.  Deep-frying it makes it more palatable, and while it's probably less healthy it's still filled with essential vitamins.",

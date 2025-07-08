@@ -569,9 +569,9 @@
   },
   {
     "id": "helmet_scavenger",
-    "type": "ARMOR",
+    "type": "TOOL_ARMOR",
     "name": { "str": "scavenger cowl" },
-    "description": "A sturdy protective cowl extending down to the neck, fitted with a respirator, helmet, and eye protection.  For dangerous scavenging ventures.",
+    "description": "A sturdy protective cowl extending down to the neck, fitted with a respirator, helmet, certain level of glare and eye protection.  For dangerous scavenging ventures.",
     "weight": "695 g",
     "volume": "2500 ml",
     "price": "550 USD",
@@ -586,8 +586,15 @@
     "encumbrance": 23,
     "warmth": 30,
     "material_thickness": 8,
-    "environmental_protection": 7,
+    "max_charges": 100,
+    "initial_charges": 100,
+    "charges_per_use": 1,
+    "ammo": "gasfilter_m",
+    "use_action": "GASMASK",
+    "environmental_protection": 1,
+    "environmental_protection_with_filter": 15,
     "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "qualities": [ [ "GLARE", 1 ] ],
     "flags": [ "VARSIZE", "STURDY", "WATERPROOF", "SUN_GLASSES" ]
   },
   {

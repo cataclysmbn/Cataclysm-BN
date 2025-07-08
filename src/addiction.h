@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ADDICTION_H
-#define CATA_SRC_ADDICTION_H
 
 #include <string>
 
@@ -27,4 +25,3 @@ add_type addiction_type( const std::string &name );
 
 std::string addiction_text( const addiction &cur );
 
-#endif // CATA_SRC_ADDICTION_H

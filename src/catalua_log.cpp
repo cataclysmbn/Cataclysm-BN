@@ -1,4 +1,3 @@
-#if defined(LUA)
 #include "catalua_log.h"
 
 namespace cata
@@ -38,6 +37,3 @@ lua_log_handler &get_lua_log_instance()
 }
 
 } // namespace cata
-
-#endif
-

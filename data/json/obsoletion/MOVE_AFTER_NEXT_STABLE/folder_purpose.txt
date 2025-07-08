@@ -1,0 +1,1 @@
+This folder's purpose is to hold files in obsoletion until the next stable, where they should be moved into mods and out of vanilla wholesale. Essentially, this is for save compatibility reasons only.

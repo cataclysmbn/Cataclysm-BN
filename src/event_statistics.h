@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_EVENT_STATISTICS_H
-#define CATA_SRC_EVENT_STATISTICS_H
 
 #include <memory>
 #include <string>
@@ -40,6 +38,8 @@ using event_fields_type = std::unordered_map<std::string, cata_variant_type>;
 class event_transformation
 {
     public:
+        ~event_transformation();
+
         event_multiset value( stats_tracker & ) const;
         std::unique_ptr<stats_tracker_state> watch( stats_tracker & ) const;
 
@@ -64,6 +64,8 @@ class event_transformation
 class event_statistic
 {
     public:
+        ~event_statistic();
+
         cata_variant value( stats_tracker & ) const;
         std::unique_ptr<stats_tracker_state> watch( stats_tracker & ) const;
 
@@ -111,4 +113,4 @@ class score
         string_id<event_statistic> stat_;
 };
 
-#endif // CATA_SRC_EVENT_STATISTICS_H
+

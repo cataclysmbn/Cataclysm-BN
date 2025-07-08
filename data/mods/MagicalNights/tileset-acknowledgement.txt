@@ -1,0 +1,11 @@
+Part of the graphic tiles used in this mod are from the public domain roguelike tileset "RLTiles".
+Some of the tiles have been modified.
+
+You can find the original tileset at:
+http://rltiles.sf.net
+
+Some of the graphic tiles used are from the CC0-licensed portion of Dungeon Crawl: Stone Soup's tileset.
+Many of these tiles have been recolored and had small alterations.
+
+You can find Dungeon Crawl: Stone Soup at:
+https://github.com/crawl/crawl

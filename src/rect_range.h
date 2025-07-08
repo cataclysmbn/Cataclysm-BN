@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_RECT_RANGE_H
-#define CATA_SRC_RECT_RANGE_H
 
 #include "point.h"
 
@@ -60,4 +58,4 @@ class rect_range
         }
 };
 
-#endif // CATA_SRC_RECT_RANGE_H
+

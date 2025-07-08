@@ -2208,6 +2208,7 @@
       [ [ "water", 12 ], [ "water_clean", 12 ] ],
       [ [ "edible_blood_concentrate", 6, "LIST" ] ],
       [ [ "vinegar", 2 ] ],
+      [ [ "jar_glass", 1 ] ],
       [
         [ "seasoning_italian", 4 ],
         [ "wild_herbs", 4 ],
@@ -2510,6 +2511,7 @@
       [ [ "water", 22 ], [ "water_clean", 22 ] ],
       [ [ "edible_blood_concentrate", 36, "LIST" ] ],
       [ [ "vinegar", 12 ] ],
+      [ [ "jar_3l_glass", 1 ] ],
       [
         [ "seasoning_italian", 24 ],
         [ "wild_herbs", 24 ],
@@ -2932,7 +2934,15 @@
     "//": "Charcuterie: The Craft of Salting, Smoking, and Curing would be a good book for someone to use for further meat products recipes.",
     "book_learn": [ [ "survival_book", 3 ], [ "family_cookbook", 3 ], [ "offalcooking", 2 ] ],
     "qualities": [ { "id": "COOK", "level": 2 }, { "id": "CUT", "level": 1 } ],
-    "tools": [ [ [ "funnel", -1 ] ] ],
+    "tools": [
+      [
+        [ "funnel", -1 ],
+        [ "birchbark_funnel", -1 ],
+        [ "leather_funnel", -1 ],
+        [ "makeshift_funnel", -1 ],
+        [ "metal_funnel", -1 ]
+      ]
+    ],
     "components": [ [ [ "stomach", 1 ], [ "stomach_large", 1 ] ], [ [ "salt", 20 ] ], [ [ "water", 2 ], [ "water_clean", 2 ] ] ]
   },
   {
@@ -3194,6 +3204,82 @@
       [ [ "seasoning_mild", 2, "LIST" ] ],
       [ [ "water", 1 ], [ "water_clean", 1 ] ],
       [ [ "kimchi", 3 ], [ "kimchi_raw", 3 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "kebab",
+    "//": "This recipe uses a wood or bone skewer, which is disposed of after eating.",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_MEAT",
+    "skill_used": "cooking",
+    "time": "10 m",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 1 ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 7, "LIST" ] ] ],
+    "components": [
+      [ [ "skewer_bone", 1 ], [ "splinter", 1 ] ],
+      [ [ "offals_raw", 1, "LIST" ], [ "meat_nofish_raw", 1, "LIST" ], [ "curdled_blood", 1 ] ],
+      [ [ "veggy_green", 1, "LIST" ] ],
+      [ [ "seasoning_mild", 1, "LIST" ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "kebab_meat",
+    "//": "This recipe uses a wood or bone skewer, which is disposed of after eating.",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_MEAT",
+    "skill_used": "cooking",
+    "time": "10 m",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 1 ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 7, "LIST" ] ] ],
+    "components": [
+      [ [ "skewer_bone", 1 ], [ "splinter", 1 ] ],
+      [ [ "offals_raw", 1, "LIST" ], [ "meat_nofish_raw", 1, "LIST" ], [ "curdled_blood", 1 ] ],
+      [ [ "offals_raw", 1, "LIST" ], [ "meat_nofish_raw", 1, "LIST" ], [ "curdled_blood", 1 ] ],
+      [ [ "seasoning_mild", 1, "LIST" ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "kebab",
+    "id_suffix": "metal_skewer",
+    "//": "This recipe uses a metal skewer, which is reused.",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_MEAT",
+    "skill_used": "cooking",
+    "time": "10 m",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 1 ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 7, "LIST" ] ], [ [ "scrap", -1 ], [ "spike", -1 ] ] ],
+    "components": [
+      [ [ "offals_raw", 1, "LIST" ], [ "meat_nofish_raw", 1, "LIST" ], [ "curdled_blood", 1 ] ],
+      [ [ "veggy_green", 1, "LIST" ] ],
+      [ [ "seasoning_mild", 1, "LIST" ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "kebab_meat",
+    "id_suffix": "metal_skewer",
+    "//": "This recipe uses a metal skewer, which is reused.",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_MEAT",
+    "skill_used": "cooking",
+    "time": "10 m",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 1 ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 7, "LIST" ] ], [ [ "scrap", -1 ], [ "spike", -1 ] ] ],
+    "components": [
+      [ [ "offals_raw", 1, "LIST" ], [ "meat_nofish_raw", 1, "LIST" ], [ "curdled_blood", 1 ] ],
+      [ [ "offals_raw", 1, "LIST" ], [ "meat_nofish_raw", 1, "LIST" ], [ "curdled_blood", 1 ] ],
+      [ [ "seasoning_mild", 1, "LIST" ] ]
     ]
   }
 ]

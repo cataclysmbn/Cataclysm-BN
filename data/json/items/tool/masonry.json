@@ -2,7 +2,7 @@
   {
     "id": "masonrysaw_off",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "masonry saw (off)", "str_pl": "masonry saws (off)" },
     "description": "This is a construction tool for cutting through concrete or other surfaces.  It runs on gasoline.  Using this item will cause it to turn on, turning it into a very powerful but unwieldy melee weapon or a terrible chainsaw.",
     "looks_like": "chainsaw_off",

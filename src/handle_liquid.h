@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_HANDLE_LIQUID_H
-#define CATA_SRC_HANDLE_LIQUID_H
 
 #include "item_stack.h"
 #include "map.h"
@@ -76,4 +74,4 @@ bool handle_liquid( tripoint pos, int radius = 0 );
 bool handle_liquid( vehicle *veh, int part_id, int radius = 0 );
 } // namespace liquid_handler
 
-#endif // CATA_SRC_HANDLE_LIQUID_H
+

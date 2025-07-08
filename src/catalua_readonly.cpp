@@ -1,4 +1,3 @@
-#ifdef LUA
 #include "catalua_readonly.h"
 
 #include "catalua_sol.h"
@@ -45,5 +44,3 @@ sol::table cata::make_readonly_table( sol::state_view &lua, sol::table read_from
     ret[sol::metatable_key] = read_from;
     return ret;
 }
-
-#endif

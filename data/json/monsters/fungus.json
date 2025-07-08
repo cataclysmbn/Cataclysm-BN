@@ -29,7 +29,7 @@
     "death_drops": "default_zombie_items",
     "death_function": [ "FUNGUS", "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "POISON", "NO_BREATHE", "PUSH_MON", "FILTHY" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "POISON", "NO_BREATHE", "PUSH_MON" ]
   },
   {
     "id": "mon_fungal_blossom",
@@ -341,7 +341,7 @@
     "death_drops": "default_zombie_death_drops",
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
-    "flags": [ "SEES", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "POISON", "NO_BREATHE", "PUSH_MON", "FILTHY" ]
+    "flags": [ "SEES", "SMELLS", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "POISON", "NO_BREATHE", "PUSH_MON" ]
   },
   {
     "id": "mon_zombie_gasbag_fungus",
@@ -373,7 +373,7 @@
     "special_attacks": [ [ "SUICIDE", 20 ], [ "scratch", 15 ] ],
     "death_drops": "default_zombie_items",
     "death_function": [ "FUNGALBURST" ],
-    "flags": [ "SEES", "STUMBLES", "WARM", "POISON", "NO_BREATHE", "FILTHY" ]
+    "flags": [ "SEES", "STUMBLES", "WARM", "POISON", "NO_BREATHE" ]
   },
   {
     "id": "mon_zombie_smoker_fungus",
@@ -406,7 +406,7 @@
     "emit_fields": [ { "emit_id": "emit_fungal_haze_plume", "delay": "1 s" } ],
     "special_attacks": [ { "type": "bite", "cooldown": 5 }, [ "scratch", 15 ] ],
     "death_function": [ "FUNGUS" ],
-    "flags": [ "SEES", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "POISON", "HARDTOSHOOT", "NO_BREATHE", "PUSH_MON", "FILTHY" ]
+    "flags": [ "SEES", "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "POISON", "HARDTOSHOOT", "NO_BREATHE", "PUSH_MON" ]
   },
   {
     "id": "mon_skeleton_hulk_fungus",
@@ -453,8 +453,7 @@
       "NO_BREATHE",
       "PUSH_MON",
       "PUSH_VEH",
-      "HARDTOSHOOT",
-      "FILTHY"
+      "HARDTOSHOOT"
     ]
   },
   {
@@ -491,7 +490,7 @@
     },
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_child_scorched",
-    "flags": [ "SEES", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE", "FILTHY" ],
+    "flags": [ "SEES", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE" ],
     "//": "no GUILT because it no longer looks enough like a child to evoke pity"
   },
   {

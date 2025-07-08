@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_LINE_H
-#define CATA_SRC_LINE_H
 
 #include <cmath>
 #include <functional>
@@ -275,4 +273,4 @@ void calc_ray_end( units::angle, int range, const tripoint &p, tripoint &out );
  */
 units::angle coord_to_angle( const tripoint &a, const tripoint &b );
 
-#endif // CATA_SRC_LINE_H
+

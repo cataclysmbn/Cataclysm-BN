@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef CATA_SRC_SIMPLEXNOISE_H
-#define CATA_SRC_SIMPLEXNOISE_H
+#pragma once
 
 /* 2D, 3D and 4D Simplex Noise functions return 'random' values in (-1, 1).
 
@@ -181,4 +180,4 @@ static const int simplex[64][4] = {
     {2, 1, 0, 3}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {3, 1, 0, 2}, {0, 0, 0, 0}, {3, 2, 0, 1}, {3, 2, 1, 0}
 };
 
-#endif // CATA_SRC_SIMPLEXNOISE_H
+

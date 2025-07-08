@@ -25,7 +25,8 @@
     "price_postapoc": "5 USD",
     "material": "steel",
     "symbol": "{",
-    "color": "light_cyan"
+    "color": "light_cyan",
+    "category": "scrap_electronics"
   },
   {
     "id": "freezer",
@@ -39,7 +40,8 @@
     "price_postapoc": "5 USD",
     "material": "steel",
     "symbol": "{",
-    "color": "blue"
+    "color": "blue",
+    "category": "scrap_electronics"
   },
   {
     "id": "glass_fridge",
@@ -54,7 +56,8 @@
     "price_postapoc": "5 USD",
     "material": [ "steel", "glass" ],
     "symbol": "{",
-    "color": "light_cyan"
+    "color": "light_cyan",
+    "category": "scrap_electronics"
   },
   {
     "id": "glass_freezer",
@@ -68,7 +71,8 @@
     "price_postapoc": "5 USD",
     "material": [ "steel", "glass" ],
     "symbol": "{",
-    "color": "blue"
+    "color": "blue",
+    "category": "scrap_electronics"
   },
   {
     "id": "oven",
@@ -82,7 +86,8 @@
     "price_postapoc": "5 USD",
     "material": "steel",
     "symbol": "#",
-    "color": "dark_gray"
+    "color": "dark_gray",
+    "category": "scrap_electronics"
   },
   {
     "id": "plut_generator_item",
@@ -91,11 +96,27 @@
     "name": "plutonium generator",
     "description": "A generator used on large ships or submarines.  Using a compact nuclear reactor, refined nuclear fuel is sealed within and configured to provide a constant low yield of power when properly installed.  It could be taken apart to reuse the minireactor for more energy-intensive applications, or installed in a local grid to continue providing a small but limitless source of electricity.",
     "weight": "150 kg",
-    "volume": "75 L",
+    "volume": "100 L",
     "price": "50000 USD",
     "price_postapoc": "100 USD",
     "material": "steel",
     "symbol": "0",
-    "color": "light_green"
+    "color": "light_green",
+    "category": "scrap_electronics"
+  },
+  {
+    "id": "recycler_item",
+    "type": "TOOL",
+    "looks_like": "t_recycler",
+    "name": "metal compactor",
+    "description": "A hydraulic compactor that can accept items made of various metals, and press them into basic shapes, ready for further crafting.",
+    "weight": "150 kg",
+    "volume": "75 L",
+    "price": "5000 USD",
+    "price_postapoc": "75 USD",
+    "material": "steel",
+    "symbol": "&",
+    "color": "green",
+    "category": "scrap_electronics"
   }
 ]

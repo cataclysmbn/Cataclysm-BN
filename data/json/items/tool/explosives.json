@@ -1021,7 +1021,15 @@
     "use_action": "MOLOTOV_LIT",
     "revert_to": "molotov",
     "revert_msg": "Your lit molotov goes out.",
-    "flags": [ "LIGHT_20", "TRADER_AVOID", "NPC_THROW_NOW", "NO_REPAIR", "WATER_EXTINGUISH", "ACT_ON_RANGED_HIT" ]
+    "flags": [
+      "LIGHT_20",
+      "TRADER_AVOID",
+      "NPC_THROW_NOW",
+      "NO_REPAIR",
+      "WATER_EXTINGUISH",
+      "ACT_ON_RANGED_HIT",
+      "DESTROY_ON_DECHARGE"
+    ]
   },
   {
     "id": "improvised_pipebomb",

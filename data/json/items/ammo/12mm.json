@@ -18,5 +18,14 @@
     "dispersion": 45,
     "loudness": 0,
     "recoil": 100
+  },
+  {
+    "id": "12mm_makeshift",
+    "type": "AMMO",
+    "name": { "str": "steel 12mm slug" },
+    "description": "A handmade steel slug measured exactly 12mm in diameter intended for use with railguns.  The H&K G80 normally uses rare earth metals like cobalt for its ammunition, but it's not exactly something easy- or possible- to get outside of what was once the Democratic Republic of the Congo.",
+    "copy-from": "12mm",
+    "weight": "18 g",
+    "damage": { "damage_type": "bullet", "amount": 40, "armor_penetration": 30 }
   }
 ]

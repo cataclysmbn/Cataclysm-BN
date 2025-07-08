@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_STRING_EDITOR_WINDOW_H
-#define CATA_SRC_STRING_EDITOR_WINDOW_H
 
 #include <string>
 #include <vector>
@@ -71,4 +69,4 @@ class string_editor_window
         /*returns line and position in folded text for position in text*/
         point get_line_and_position( const int position, const bool zero_x );
 };
-#endif // CATA_SRC_STRING_EDITOR_WINDOW_H
+

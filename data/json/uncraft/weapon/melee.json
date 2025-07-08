@@ -105,7 +105,7 @@
     "difficulty": 3,
     "time": "10 m",
     "qualities": [ { "id": "HAMMER", "level": 1 } ],
-    "components": [ [ [ "material_aluminium_ingot", 4 ] ] ]
+    "components": [ [ [ "material_aluminium_ingot", 4 ] ], [ [ "chem_aluminium_powder", 50 ] ] ]
   },
   {
     "result": "longsword_fake",
@@ -113,8 +113,8 @@
     "skill_used": "fabrication",
     "difficulty": 3,
     "time": "10 m",
-    "qualities": [ { "id": "HAMMER", "level": 1 } ],
-    "components": [ [ [ "material_aluminium_ingot", 4 ] ] ]
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
+    "components": [ [ [ "material_aluminium_ingot", 4 ] ], [ [ "chem_aluminium_powder", 50 ] ] ]
   },
   {
     "result": "arming_sword_fake",
@@ -122,8 +122,8 @@
     "skill_used": "fabrication",
     "difficulty": 3,
     "time": "10 m",
-    "qualities": [ { "id": "HAMMER", "level": 1 } ],
-    "components": [ [ [ "material_aluminium_ingot", 3 ] ] ]
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
+    "components": [ [ [ "material_aluminium_ingot", 3 ] ], [ [ "chem_aluminium_powder", 10 ] ] ]
   },
   {
     "result": "tanto_fake",
@@ -149,8 +149,8 @@
     "skill_used": "fabrication",
     "difficulty": 3,
     "time": "10 m",
-    "qualities": [ { "id": "HAMMER", "level": 1 } ],
-    "components": [ [ [ "material_aluminium_ingot", 7 ] ] ]
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
+    "components": [ [ [ "material_aluminium_ingot", 7 ] ], [ [ "chem_aluminium_powder", 10 ] ] ]
   },
   {
     "result": "nodachi_fake",
@@ -158,8 +158,8 @@
     "skill_used": "fabrication",
     "difficulty": 3,
     "time": "10 m",
-    "qualities": [ { "id": "HAMMER", "level": 1 } ],
-    "components": [ [ [ "material_aluminium_ingot", 6 ] ] ]
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
+    "components": [ [ [ "material_aluminium_ingot", 6 ] ], [ [ "chem_aluminium_powder", 70 ] ] ]
   },
   {
     "result": "broadsword_fake",
@@ -167,7 +167,7 @@
     "skill_used": "fabrication",
     "difficulty": 3,
     "time": "10 m",
-    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
     "components": [ [ [ "material_aluminium_ingot", 2 ] ] ]
   },
   {
@@ -196,5 +196,14 @@
     "time": "10 m",
     "qualities": [ { "id": "HAMMER", "level": 1 } ],
     "components": [ [ [ "material_aluminium_ingot", 2 ] ] ]
+  },
+  {
+    "result": "bat_metal",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "5 m",
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
+    "components": [ [ [ "material_aluminium_ingot", 2 ] ], [ [ "chem_aluminium_powder", 30 ] ] ]
   }
 ]

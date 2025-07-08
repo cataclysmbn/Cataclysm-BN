@@ -15,16 +15,18 @@
     "price": "4 cent",
     "price_postapoc": "50 cent",
     "//": "Small cans--needs upsized after the string freeze.",
-    "material": "tomato",
+    "material": [ "tomato" ],
     "volume": "500 ml",
     "charges": 8,
     "phase": "liquid",
     "flags": [ "EATEN_HOT" ],
-    "fun": 1
+    "fun": 1,
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "id": "maple_sap",
     "type": "COMESTIBLE",
+    "category": "cooking_ingredients",
     "symbol": "~",
     "color": "light_cyan",
     "name": { "str_sp": "maple sap" },
@@ -64,7 +66,8 @@
     "spoils_in": "6 days 16 hours",
     "charges": 16,
     "fun": -7,
-    "phase": "liquid"
+    "phase": "liquid",
+    "vitamins": [ [ "egg_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "id": "ketchup",
@@ -84,7 +87,8 @@
     "spoils_in": "15 days",
     "charges": 16,
     "fun": -6,
-    "phase": "liquid"
+    "phase": "liquid",
+    "vitamins": [ [ "veggy_allergen", 1 ], [ "junk_allergen", 1 ] ]
   },
   {
     "id": "mustard",
@@ -95,7 +99,7 @@
     "description": "A condiment made from the seeds of a mustard plant (/Brassica/ or /Sinapis/), vinegar, salt, and spices.",
     "price": "50 cent",
     "price_postapoc": "1 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "weight": "5 g",
     "volume": "250 ml",
     "comestible_type": "DRINK",
@@ -105,7 +109,7 @@
     "spoils_in": "15 days",
     "charges": 48,
     "phase": "liquid",
-    "vitamins": [ [ "iron", 2 ] ]
+    "vitamins": [ [ "iron", 2 ], [ "junk_allergen", 1 ] ]
   },
   {
     "id": "honey_bottled",
@@ -162,6 +166,7 @@
   {
     "type": "COMESTIBLE",
     "id": "vinegar",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "vinegar" },
     "weight": "15 g",
     "color": "white",
@@ -181,6 +186,7 @@
   {
     "type": "COMESTIBLE",
     "id": "cooking_oil",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "vegetable cooking oil" },
     "weight": "15 g",
     "color": "yellow",
@@ -199,15 +205,32 @@
     "phase": "liquid",
     "fun": -25,
     "flags": [ "NUTRIENT_OVERRIDE" ],
-    "vitamins": [  ]
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "cooking_oil2",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "animal cooking oil" },
-    "copy-from": "cooking_oil",
+    "//": "Can't copy-from the vegetable oil because it extends vitamins instead of overwriting them",
+    "weight": "15 g",
+    "color": "yellow",
+    "container": "jug_plastic",
+    "comestible_type": "DRINK",
+    "symbol": "~",
+    "quench": -1,
+    "healthy": -2,
+    "calories": 127,
     "description": "Thin yellow animal oil used for cooking.",
-    "material": [ "flesh", "oil" ]
+    "price": "40 cent",
+    "price_postapoc": "5 USD",
+    "material": [ "flesh", "oil" ],
+    "volume": "250 ml",
+    "charges": 16,
+    "phase": "liquid",
+    "fun": -25,
+    "flags": [ "NUTRIENT_OVERRIDE" ],
+    "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -224,13 +247,13 @@
     "description": "An extremely sugary tar-like syrup, produced by repeatedly boiling the juice of sugarcane or sugar beets.  It has a slightly bitter aftertaste.",
     "price": "2 USD",
     "price_postapoc": "5 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "phase": "liquid",
     "charges": 4,
     "fun": 2,
     "flags": [ "USE_EAT_VERB" ],
-    "vitamins": [ [ "calcium", 18 ], [ "iron", 23 ] ]
+    "vitamins": [ [ "calcium", 18 ], [ "iron", 23 ], [ "junk_allergen", 1 ] ]
   },
   {
     "id": "horseradish",
@@ -241,7 +264,7 @@
     "description": "A spicy grated root vegetable packed in vinegared brine.",
     "price": "75 cent",
     "price_postapoc": "1 USD",
-    "material": "veggy",
+    "material": [ "veggy" ],
     "weight": "6 g",
     "volume": "250 ml",
     "comestible_type": "FOOD",
@@ -251,7 +274,8 @@
     "charges": 48,
     "healthy": 1,
     "fun": -20,
-    "phase": "liquid"
+    "phase": "liquid",
+    "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -271,11 +295,12 @@
     "description": "A thick syrup made of water and sugar strained through coffee grounds.  Can be used to flavor many foods and beverages.",
     "price": "8 USD",
     "price_postapoc": "1 USD",
-    "material": "junk",
+    "material": [ "junk" ],
     "volume": "250 ml",
     "phase": "liquid",
     "charges": 8,
     "calories": 80,
-    "fun": 6
+    "fun": 6,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   }
 ]

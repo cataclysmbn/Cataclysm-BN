@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_SHADOWCASTING_H
-#define CATA_SRC_SHADOWCASTING_H
 
 #include <algorithm>
 #include <array>
@@ -144,4 +142,4 @@ void cast_zlight(
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
     const tripoint &origin, int offset_distance, T numerator );
 
-#endif // CATA_SRC_SHADOWCASTING_H
+

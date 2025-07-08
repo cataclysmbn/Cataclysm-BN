@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CONSISTENCY_REPORT_H
-#define CATA_SRC_CONSISTENCY_REPORT_H
 
 #include <vector>
 #include <string>
@@ -53,4 +51,4 @@ class consistency_report
         }
 };
 
-#endif // CATA_SRC_CONSISTENCY_REPORT_H
+

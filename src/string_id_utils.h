@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_STRING_ID_UTILS_H
-#define CATA_SRC_STRING_ID_UTILS_H
 
 #include "string_id.h"
 #include <algorithm>
@@ -44,4 +42,4 @@ requires std::is_same_v<El, string_id<typename El::value_type>> {
     return ret;
 }
 
-#endif // CATA_SRC_STRING_ID_UTILS_H
+

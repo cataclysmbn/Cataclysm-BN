@@ -4059,6 +4059,31 @@
   {
     "type": "mapgen",
     "method": "json",
+    "nested_mapgen_id": "11x11_gym_open_1",
+    "object": {
+      "mapgensize": [ 11, 11 ],
+      "rows": [
+        "           ",
+        "         ] ",
+        "  $ $   ]  ",
+        "  $ $i   ] ",
+        "  !!!i  ]  ",
+        "  $ $i   ] ",
+        "  $ $   ]  ",
+        "  ===    ] ",
+        "  =%=  &   ",
+        "  ===  &&& ",
+        "           "
+      ],
+      "terrain": { "=": "t_carpet_green", "%": "t_carpet_green" },
+      "furniture": { "&": "f_barricade_road", "%": "f_floor_canvas", "!": "f_sandbag_wall", "$": "f_sandbag_half", "i": "f_bench" },
+      "place_loot": [ { "item": "towel", "x": 5, "y": [ 3, 5 ], "chance": 100, "repeat": [ 1, 2 ] } ],
+      "item": { "]": { "item": "wheel_wide" } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "11x11_recroom_open",
     "object": {
       "mapgensize": [ 11, 11 ],

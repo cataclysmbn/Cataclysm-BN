@@ -30,5 +30,15 @@
     "modes": [ [ "DEFAULT", "semi", 1, "NPC_AVOID" ], [ "AUTO", "auto", 2, "NPC_AVOID" ] ],
     "magazines": [ [ "40x53mm", [ "belt40mm" ] ] ],
     "flags": [ "MOUNTED_GUN" ]
+  },
+  {
+    "id": "mark19_turret_fake",
+    "copy-from": "mark19",
+    "type": "GUN",
+    "name": { "str_sp": "Mark 19 grenade launcher" },
+    "description": "If you see it - it is bug!",
+    "clip_size": 20,
+    "dispersion": 900,
+    "magazines": [  ]
   }
 ]

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CRAFTING_H
-#define CATA_SRC_CRAFTING_H
 
 #include <list>
 #include <set>
@@ -9,24 +7,17 @@
 #include "point.h"
 #include "ret_val.h"
 #include "type_id.h"
+#include "activity_speed_adapters.h"
 
 class avatar;
 class Character;
 class inventory;
 class item;
-class player;
 class recipe;
 struct iuse_location;
 struct tool_comp;
 
 enum class cost_adjustment : int;
-
-enum class bench_type : int {
-    ground = 0,
-    hands,
-    furniture,
-    vehicle
-};
 
 struct bench_location {
     explicit bench_location( bench_type type, tripoint position )
@@ -35,7 +26,6 @@ struct bench_location {
     bench_type type;
     tripoint position;
 };
-
 template<typename Type>
 struct comp_selection;
 
@@ -48,7 +38,7 @@ void remove_ammo( item &dis_item, Character &who );
  */
 void remove_ammo( std::vector<item *> &dis_items, Character &who );
 
-bench_location find_best_bench( const player &p, const item &craft );
+bench_location find_best_bench( const Character &who, const item &craft );
 
 float workbench_crafting_speed_multiplier( const item &craft, const bench_location &bench );
 float morale_crafting_speed_multiplier( const Character &who, const recipe &rec );
@@ -56,18 +46,19 @@ float lighting_crafting_speed_multiplier( const Character &who, const recipe &re
 float crafting_speed_multiplier( const Character &who, const recipe &rec, bool in_progress );
 float crafting_speed_multiplier( const Character &who, const item &craft,
                                  const bench_location &bench );
-void complete_craft( player &p, item &craft, const bench_location &bench );
+void complete_craft( Character &who, item &craft );
 
 namespace crafting
 {
-
+std::pair<bench_type, float> best_bench_here( const item &craft, const tripoint &loc,
+        bool can_lift );
 /**
- * Returns the set of book types in crafting_inv that provide the
- * given recipe.
- * @param c Character whose skills are used to limit the available recipes
- * @param crafting_inv Current available items that may contain readable books
- * @param r Recipe to search for in the available books
- */
+* Returns the set of book types in crafting_inv that provide the
+* given recipe.
+* @param c Character whose skills are used to limit the available recipes
+* @param crafting_inv Current available items that may contain readable books
+* @param r Recipe to search for in the available books
+*/
 std::set<itype_id> get_books_for_recipe( const Character &c, const inventory &crafting_inv,
         const recipe *r );
 
@@ -126,5 +117,3 @@ bool disassemble_all( avatar &you, bool recursively );
 void complete_disassemble( Character &who, const iuse_location &target, const tripoint &pos );
 
 } // namespace crafting
-
-#endif // CATA_SRC_CRAFTING_H

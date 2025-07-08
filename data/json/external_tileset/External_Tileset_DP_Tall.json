@@ -45,7 +45,13 @@
           { "id": "f_pirate_flag_metal", "fg": 25 },
           { "id": "f_pirate_flag_wood", "fg": 26 },
           { "id": "vp_mounted_pirate_flag", "fg": 27 },
-          { "id": "vp_sail_large", "fg": 28 }
+          { "id": "vp_sail_large", "fg": 28 },
+          { "id": "t_treetop_season_spring", "fg": 29 },
+          { "id": "t_treetop_season_summer", "fg": 30 },
+          { "id": "t_treetop_season_autumn", "fg": 31 },
+          { "id": "t_treetop_season_winter", "fg": 32 },
+          { "id": "t_treetop_evergreen", "fg": 33 },
+          { "id": "t_treetop_dead", "fg": 34 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,

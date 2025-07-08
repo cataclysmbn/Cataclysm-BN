@@ -145,34 +145,42 @@ detached_ptr<item> vehicle_part::set_base( detached_ptr<item> &&new_base )
 detached_ptr<item> vehicle_part::properties_to_item() const
 {
     //TODO!: the big check
-    map &here = get_map();
     detached_ptr<item> tmp = item::spawn( *base );
     tmp->unset_flag( flag_VEHICLE );
 
     // Cables get special handling: their target coordinates need to remain
     // stored, and if a cable actually drops, it should be half-connected.
     // Except grid-connected ones, for now.
-    if( tmp->has_flag( flag_CABLE_SPOOL ) && !tmp->has_flag( flag_TOW_CABLE ) ) {
-        if( has_flag( targets_grid ) ) {
-            // Ideally, we'd drop the cable on the charger instead
-            tmp->erase_var( "source_x" );
-            tmp->erase_var( "source_y" );
-            tmp->erase_var( "source_z" );
-            tmp->erase_var( "state" );
-            tmp->deactivate();
-            tmp->charges = tmp->type->maximum_charges();
+    if( tmp->has_flag( flag_CABLE_SPOOL ) ) {
+        auto data = cable_connection_data::make_data( *tmp );
+        if( !data || tmp->has_flag( flag_TOW_CABLE ) ) {
+            tmp->reset_cable();
         } else {
-            const tripoint local_pos = here.getlocal( target.first );
-            if( !here.veh_at( local_pos ) ) {
-                // That vehicle ain't there no more.
-                tmp->set_flag( flag_NO_DROP );
+            if( data->intermap_connection() ) {
+                if( data->con1.point.raw() == target.first ) {
+                    data->unset_con2( tmp.get() );
+                } else if( data->con2.point.raw() == target.first ) {
+                    data->unset_con1( tmp.get() );
+                } else {
+                    tmp->reset_cable();
+                }
+                if( !has_flag( targets_grid ) ) {
+                    map &here = get_map();
+                    const tripoint local_pos = here.getlocal( target.first );
+                    if( !here.veh_at( local_pos ) ) {
+                        // That vehicle ain't there no more.
+                        tmp->set_flag( flag_NO_DROP );
+                    }
+                }
+            } else if( data->character_connected() ) {
+                if( auto *const con = data->get_nonchar_connection() ) {
+                    data->unset_con( tmp.get(), *con );
+                } else {
+                    tmp->reset_cable();
+                }
+            } else {
+                tmp->reset_cable();
             }
-
-            tmp->set_var( "source_x", target.first.x );
-            tmp->set_var( "source_y", target.first.y );
-            tmp->set_var( "source_z", target.first.z );
-            tmp->set_var( "state", "pay_out_cable" );
-            tmp->activate();
         }
     }
 
@@ -462,6 +470,14 @@ void vehicle_part::process_contents( const tripoint &pos, const bool e_heater )
         if( e_heater ) {
             flag = temperature_flag::TEMP_HEATER;
         }
+
+        const vpart_info vpinfo = info();
+        if( enabled && vpinfo.has_flag( VPFLAG_FRIDGE ) ) {
+            flag = temperature_flag::TEMP_FRIDGE;
+        } else if( enabled && vpinfo.has_flag( VPFLAG_FREEZER ) ) {
+            flag = temperature_flag::TEMP_FREEZER;
+        }
+
         base = item::process( base.release(), nullptr, pos, false, flag );
     }
 }
@@ -634,7 +650,7 @@ bool vehicle::mod_hp( vehicle_part &pt, int qty, damage_type dt )
 
 bool vehicle::can_enable( const vehicle_part &pt, bool alert ) const
 {
-    if( std::none_of( parts.begin(), parts.end(), [&pt]( const vehicle_part & e ) {
+    if( std::ranges::none_of( parts, [&pt]( const vehicle_part & e ) {
     return &e == &pt;
 } ) || pt.removed ) {
         debugmsg( "Cannot enable removed or non-existent part" );

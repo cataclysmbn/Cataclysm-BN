@@ -183,7 +183,7 @@ char get_free_invlet( bionic_collection &bionics )
     return ' ';
 }
 
-static void draw_bionics_titlebar( const catacurses::window &window, Character *p,
+static void draw_bionics_titlebar( const catacurses::window &window, Character *who,
                                    bionic_menu_mode mode )
 {
     input_context ctxt( "BIONICS" );
@@ -193,29 +193,29 @@ static void draw_bionics_titlebar( const catacurses::window &window, Character *
     std::string fuel_string;
     bool found_fuel = false;
     fuel_string = _( "Available Fuel: " );
-    for( const bionic &bio : *p->my_bionics ) {
-        for( const itype_id &fuel : p->get_fuel_available( bio.id ) ) {
+    for( const bionic &bio : *who->my_bionics ) {
+        for( const itype_id &fuel : who->get_fuel_available( bio.id ) ) {
             found_fuel = true;
             //TODO!: figure out tname so we don't need this, it's an infinite one
             const item &temp_fuel = *item::spawn_temporary( fuel );
             if( temp_fuel.has_flag( json_flag_PERPETUAL ) ) {
-                if( fuel == itype_id( "sunlight" ) && !g->is_in_sunlight( p->pos() ) ) {
+                if( fuel == itype_id( "sunlight" ) && !g->is_in_sunlight( who->pos() ) ) {
                     continue;
                 }
                 fuel_string += colorize( temp_fuel.tname(), c_green ) + " ";
                 continue;
             }
-            fuel_string += temp_fuel.tname() + ": " + colorize( p->get_value( fuel.str() ),
-                           c_green ) + "/" + std::to_string( p->get_total_fuel_capacity( fuel ) ) + " ";
+            fuel_string += temp_fuel.tname() + ": " + colorize( who->get_value( fuel.str() ),
+                           c_green ) + "/" + std::to_string( who->get_total_fuel_capacity( fuel ) ) + " ";
         }
-        if( bio.info().is_remote_fueled && p->has_active_bionic( bio.id ) ) {
-            const itype_id rem_fuel = p->find_remote_fuel( true );
+        if( bio.info().is_remote_fueled && who->has_active_bionic( bio.id ) ) {
+            const itype_id rem_fuel = who->find_remote_fuel( true );
             if( !rem_fuel.is_empty() ) {
                 const item &tmp_rem_fuel = *item::spawn_temporary( rem_fuel );
                 if( tmp_rem_fuel.has_flag( json_flag_PERPETUAL ) ) {
                     fuel_string += colorize( tmp_rem_fuel.tname(), c_green ) + " ";
                 } else {
-                    fuel_string += tmp_rem_fuel.tname() + ": " + colorize( p->get_value( "rem_" + rem_fuel.str() ),
+                    fuel_string += tmp_rem_fuel.tname() + ": " + colorize( who->get_value( "rem_" + rem_fuel.str() ),
                                    c_green ) + " ";
                 }
                 found_fuel = true;
@@ -226,7 +226,7 @@ static void draw_bionics_titlebar( const catacurses::window &window, Character *
         fuel_string.clear();
     }
     std::string power_string;
-    const int curr_power = units::to_joule( p->get_power_level() );
+    const int curr_power = units::to_joule( who->get_power_level() );
     const int kilo = curr_power / units::to_joule( 1_kJ );
     const int joule = ( curr_power % units::to_joule( 1_kJ ) ) / units::to_joule( 1_J );
     if( kilo > 0 ) {
@@ -242,7 +242,7 @@ static void draw_bionics_titlebar( const catacurses::window &window, Character *
 
     const int pwr_str_pos = right_print( window, 1, 1, c_white,
                                          string_format( _( "Bionic Power: <color_light_blue>%s</color>/<color_light_blue>%ikJ</color>" ),
-                                                 power_string, units::to_kilojoule( p->get_max_power_level() ) ) );
+                                                 power_string, units::to_kilojoule( who->get_max_power_level() ) ) );
 
     mvwputch( window, point( pwr_str_pos - 1, 1 ), BORDER_COLOR, LINE_XOXO ); // |
     mvwputch( window, point( pwr_str_pos - 1, 2 ), BORDER_COLOR, LINE_XXOO ); // |_
@@ -258,8 +258,10 @@ static void draw_bionics_titlebar( const catacurses::window &window, Character *
     std::string desc_append = string_format(
                                   _( "[<color_yellow>%s</color>] Reassign, [<color_yellow>%s</color>] Switch tabs, "
                                      "[<color_yellow>%s</color>] Toggle fuel saving mode, "
+                                     "[<color_yellow>%s</color>] Toggle sprite visibility, "
                                      "[<color_yellow>%s</color>] Toggle auto start mode." ),
                                   ctxt.get_desc( "REASSIGN" ), ctxt.get_desc( "NEXT_TAB" ), ctxt.get_desc( "TOGGLE_SAFE_FUEL" ),
+                                  ctxt.get_desc( "TOGGLE_SPRITE" ),
                                   ctxt.get_desc( "TOGGLE_AUTO_START" ) );
     desc_append += string_format( _( " [<color_yellow>%s</color>] Sort: %s" ), ctxt.get_desc( "SORT" ),
                                   sort_mode_str( uistate.bionic_sort_mode ) );
@@ -317,6 +319,9 @@ static std::string build_bionic_poweronly_string( const bionic &bio )
     if( bio.incapacitated_time > 0_turns ) {
         properties.emplace_back( _( "(incapacitated)" ) );
     }
+    if( !bio.show_sprite ) {
+        properties.emplace_back( _( "(hidden)" ) );
+    }
     if( !bio.has_flag( flag_SAFE_FUEL_OFF ) && ( !bio.info().fuel_opts.empty() ||
             bio.info().is_remote_fueled ) ) {
         properties.emplace_back( _( "(fuel saving ON)" ) );
@@ -370,7 +375,8 @@ static void draw_bionics_tabs( const catacurses::window &win, const size_t activ
     wnoutrefresh( win );
 }
 
-static void draw_description( const catacurses::window &win, const bionic &bio )
+static void draw_description( const catacurses::window &win, const bionic &bio,
+                              const Character &who )
 {
     werase( win );
     const int width = getmaxx( win );
@@ -384,7 +390,8 @@ static void draw_description( const catacurses::window &win, const bionic &bio )
 
     // TODO: Unhide when enforcing limits
     if( get_option < bool >( "CBM_SLOTS_ENABLED" ) ) {
-        const bool each_bp_on_new_line = ypos + static_cast<int>( num_bp ) + 1 < getmaxy( win );
+        int body_part_count = who.get_all_body_parts().size();
+        const bool each_bp_on_new_line = ypos + body_part_count + 1 < getmaxy( win );
         fold_and_print( win, point( 0, ypos ), width, c_light_gray, list_occupied_bps( bio.id,
                         _( "This bionic occupies the following body parts:" ), each_bp_on_new_line ) );
     }
@@ -628,6 +635,7 @@ void show_bionics_ui( Character &who )
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "TOGGLE_SAFE_FUEL" );
+    ctxt.register_action( "TOGGLE_SPRITE" );
     ctxt.register_action( "TOGGLE_AUTO_START" );
     ctxt.register_action( "SORT" );
 
@@ -707,7 +715,7 @@ void show_bionics_ui( Character &who )
 
         draw_bionics_titlebar( w_title, &who, menu_mode );
         if( menu_mode == EXAMINING && !current_bionic_list->empty() ) {
-            draw_description( w_description, *( *current_bionic_list )[cursor] );
+            draw_description( w_description, *( *current_bionic_list )[cursor], who );
         }
     } );
 
@@ -837,6 +845,13 @@ void show_bionics_ui( Character &who )
                 } else {
                     popup( _( "You can't toggle auto start mode on a non-fueled CBM." ) );
                 }
+            }
+
+        } else if( action == "TOGGLE_SPRITE" ) {
+            auto &bio_list = tab_mode == TAB_ACTIVE ? active : passive;
+            if( !current_bionic_list->empty() ) {
+                tmp = bio_list[cursor];
+                tmp->show_sprite = !tmp->show_sprite;
             }
         } else if( action == "SORT" ) {
             uistate.bionic_sort_mode = pick_sort_mode();

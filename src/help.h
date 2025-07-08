@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_HELP_H
-#define CATA_SRC_HELP_H
 
 #include <map>
 #include <string>
@@ -34,4 +32,4 @@ help &get_help();
 
 std::string get_hint();
 
-#endif // CATA_SRC_HELP_H
+

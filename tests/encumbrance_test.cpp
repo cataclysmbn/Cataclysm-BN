@@ -22,7 +22,7 @@
 static void test_encumbrance_on(
     player &p,
     std::vector<detached_ptr<item>> &clothing,
-    const std::string &body_part,
+    const bodypart_str_id &body_part,
     int expected_encumbrance,
     const std::function<void( player & )> &tweak_player = {}
 )
@@ -38,13 +38,13 @@ static void test_encumbrance_on(
         p.worn.push_back( std::move( i ) );
     }
     p.reset_encumbrance();
-    encumbrance_data enc = p.get_encumbrance().elems[ get_body_part_token( body_part ) ];
+    encumbrance_data enc = p.get_encumbrance().elems[ body_part ];
     CHECK( enc.encumbrance == expected_encumbrance );
 }
 
 static void test_encumbrance_items(
     std::vector<detached_ptr<item>> &clothing,
-    const std::string &body_part,
+    const bodypart_str_id &body_part,
     const int expected_encumbrance,
     const std::function<void( player & )> &tweak_player = {}
 )
@@ -62,7 +62,7 @@ static void test_encumbrance_items(
 
 static void test_encumbrance(
     const std::vector<std::string> &clothing_types,
-    const std::string &body_part,
+    const bodypart_str_id &body_part,
     const int expected_encumbrance
 )
 {
@@ -92,21 +92,21 @@ static constexpr int greatcoat_e = 23;
 TEST_CASE( "regular_clothing_encumbrance", "[encumbrance]" )
 {
     clear_all_state();
-    test_encumbrance( { "karate_gi" }, "TORSO", karate_gi_e );
-    test_encumbrance( { "vest" }, "TORSO", vest_e );
-    test_encumbrance( { "greatcoat" }, "TORSO", greatcoat_e );
+    test_encumbrance( { "karate_gi" }, body_part_torso, karate_gi_e );
+    test_encumbrance( { "vest" }, body_part_torso, vest_e );
+    test_encumbrance( { "greatcoat" }, body_part_torso, greatcoat_e );
 }
 
 TEST_CASE( "separate_layer_encumbrance", "[encumbrance]" )
 {
     clear_all_state();
-    test_encumbrance( { "vest", "greatcoat" }, "TORSO", vest_e + greatcoat_e );
+    test_encumbrance( { "vest", "greatcoat" }, body_part_torso, vest_e + greatcoat_e );
 }
 
 TEST_CASE( "out_of_order_encumbrance", "[encumbrance]" )
 {
     clear_all_state();
-    test_encumbrance( { "greatcoat", "vest" }, "TORSO", vest_e * 2 + greatcoat_e );
+    test_encumbrance( { "greatcoat", "vest" }, body_part_torso, vest_e * 2 + greatcoat_e );
 }
 
 TEST_CASE( "same_layer_encumbrance", "[encumbrance]" )
@@ -114,11 +114,11 @@ TEST_CASE( "same_layer_encumbrance", "[encumbrance]" )
     clear_all_state();
     // When stacking within a layer, encumbrance for additional items is
     // counted twice
-    test_encumbrance( { "vest", "vest" }, "TORSO", vest_e * 2 + vest_e );
+    test_encumbrance( { "vest", "vest" }, body_part_torso, vest_e * 2 + vest_e );
     // ... with a minimum of 2
-    test_encumbrance( { "karate_gi", "karate_gi" }, "TORSO", karate_gi_e * 2 + 2 );
+    test_encumbrance( { "karate_gi", "karate_gi" }, body_part_torso, karate_gi_e * 2 + 2 );
     // ... and a maximum of 10
-    test_encumbrance( { "greatcoat", "greatcoat" }, "TORSO", greatcoat_e * 2 + 10 );
+    test_encumbrance( { "greatcoat", "greatcoat" }, body_part_torso, greatcoat_e * 2 + 10 );
 }
 
 TEST_CASE( "tiny_clothing", "[encumbrance]" )
@@ -128,7 +128,7 @@ TEST_CASE( "tiny_clothing", "[encumbrance]" )
     i->set_flag( flag_id( "UNDERSIZE" ) );
     std::vector<detached_ptr<item>> items;
     items.push_back( std::move( i ) );
-    test_encumbrance_items( items, "TORSO",
+    test_encumbrance_items( items, body_part_torso,
                             vest_e * 3 );
 }
 
@@ -140,13 +140,13 @@ TEST_CASE( "tiny_character", "[encumbrance]" )
     std::vector<detached_ptr<item>> items;
     items.push_back( std::move( i ) );
     SECTION( "regular shirt" ) {
-        test_encumbrance_items( items, "TORSO",
+        test_encumbrance_items( items, body_part_torso,
                                 vest_e * 2,
                                 add_trait( "SMALL2" ) );
     }
     SECTION( "undersize shrt" ) {
         obj.set_flag( flag_id( "UNDERSIZE" ) );
-        test_encumbrance_items( items, "TORSO", vest_e,
+        test_encumbrance_items( items, body_part_torso, vest_e,
                                 add_trait( "SMALL2" ) );
     }
 }

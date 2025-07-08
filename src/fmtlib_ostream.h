@@ -6,8 +6,7 @@
 //
 // For the license information refer to fmtlib_format.h.
 
-#ifndef CATA_SRC_FMTLIB_OSTREAM_H
-#define CATA_SRC_FMTLIB_OSTREAM_H
+#pragma once
 
 #include <ostream>
 
@@ -185,4 +184,4 @@ template <typename S, typename... Args,
 }
 FMT_END_NAMESPACE
 
-#endif  // CATA_SRC_FMTLIB_OSTREAM_H
+

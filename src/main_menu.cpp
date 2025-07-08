@@ -50,6 +50,7 @@
 #include "ui.h"
 #include "wcwidth.h"
 #include "worldfactory.h"
+#include "game_info.h"
 
 enum class main_menu_opts : int {
     MOTD = 0,
@@ -218,7 +219,7 @@ void main_menu::display_sub_menu( int sel, const point &bottom_left, int sel_lin
             }
             std::vector<std::string> all_worldnames = world_generator->all_worldnames();
             for( int i = 0; static_cast<size_t>( i ) < all_worldnames.size(); i++ ) {
-                WORLDPTR world = world_generator->get_world( all_worldnames[i] );
+                WORLDINFO *world = world_generator->get_world( all_worldnames[i] );
                 int savegames_count = world->world_saves.size();
                 nc_color clr = c_white;
                 std::string txt = all_worldnames[i];
@@ -364,7 +365,7 @@ std::vector<std::string> main_menu::load_file( const std::string &path,
         const std::string &alt_text ) const
 {
     std::vector<std::string> result;
-    read_from_file_optional( path, [&result]( std::istream & fin ) {
+    read_from_file( path, [&result]( std::istream & fin ) {
         std::string line;
         while( std::getline( fin, line ) ) {
             if( !line.empty() && line[0] == '#' ) {
@@ -372,7 +373,7 @@ std::vector<std::string> main_menu::load_file( const std::string &path,
             }
             result.push_back( line );
         }
-    } );
+    }, true );
     if( result.empty() ) {
         result.push_back( alt_text );
     }
@@ -427,14 +428,14 @@ void main_menu::init_strings()
 
     // Credits
     mmenu_credits.clear();
-    read_from_file_optional( PATH_INFO::credits(), [&]( std::istream & stream ) {
+    read_from_file( PATH_INFO::credits(), [&]( std::istream & stream ) {
         std::string line;
         while( std::getline( stream, line ) ) {
             if( line[0] != '#' ) {
                 mmenu_credits += ( line.empty() ? " " : line ) + "\n";
             }
         }
-    } );
+    }, true );
 
     if( mmenu_credits.empty() ) {
         mmenu_credits = _( "No credits information found." );
@@ -500,9 +501,10 @@ void main_menu::init_strings()
     vWorldSubItems.emplace_back( pgettext( "Main Menu|World", "Character to Template" ) );
     vWorldSubItems.emplace_back( pgettext( "Main Menu|World", "Reset World" ) );
     vWorldSubItems.emplace_back( pgettext( "Main Menu|World", "Delete World" ) );
+    vWorldSubItems.emplace_back( pgettext( "Main Menu|World", "Convert to V2 Save Format" ) );
     vWorldSubItems.emplace_back( pgettext( "Main Menu|World", "<= Return" ) );
 
-    vWorldHotkeys = { 'm', 'e', 's', 't', 'r', 'd', 'q' };
+    vWorldHotkeys = { 'm', 'e', 's', 't', 'r', 'd', 'f', 'q' };
 
     vSettingsSubItems.clear();
     vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "<O|o>ptions" ) );
@@ -894,7 +896,7 @@ bool main_menu::new_character_tab()
     } );
     g->gamemode.reset();
 
-    WORLDPTR world;
+    WORLDINFO *world;
     if( sel2 == 5 ) {
         g->gamemode = get_special_game( special_game_type::TUTORIAL );
         world = world_generator->make_new_world( special_game_type::TUTORIAL );
@@ -961,7 +963,7 @@ bool main_menu::new_character_tab()
 
 bool main_menu::load_character_tab( const std::string &worldname )
 {
-    WORLDPTR world = world_generator->get_world( worldname );
+    WORLDINFO *world = world_generator->get_world( worldname );
     savegames = world->world_saves;
     if( MAP_SHARING::isSharing() ) {
         auto new_end = std::remove_if( savegames.begin(), savegames.end(), []( const save_t &str ) {
@@ -1061,7 +1063,21 @@ void main_menu::world_tab( const std::string &worldname )
         }
     };
 
+    auto convert_v2 = [this, &worldname]() {
+        world_generator->set_active_world( nullptr );
+        savegames.clear();
+        MAPBUFFER.clear();
+        overmap_buffer.clear();
+        world_generator->convert_to_v2( worldname );
+    };
+
     switch( opt_val ) {
+        case 6: // Convert to V2 Save Format
+            if( query_yn(
+                    _( "Convert to V2 Save Format? A backup will be created. Conversion may take several minutes." ) ) ) {
+                convert_v2();
+            }
+            break;
         case 5: // Delete World
             if( query_yn( _( "Delete the world and all saves within?" ) ) ) {
                 clear_world( true );
@@ -1083,7 +1099,7 @@ void main_menu::world_tab( const std::string &worldname )
                               "If you have just started playing, consider creating new world instead.\n"
                               "Proceed?"
                           ) ) ) {
-                WORLDPTR world = world_generator->get_world( worldname );
+                WORLDINFO *world = world_generator->get_world( worldname );
                 world_generator->edit_active_world_mods( world );
             }
             break;

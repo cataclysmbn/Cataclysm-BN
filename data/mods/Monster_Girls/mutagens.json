@@ -138,5 +138,20 @@
     "copy-from": "iv_mutagen_elfa",
     "name": "Fey serum",
     "use_action": { "type": "mutagen_iv", "mutation_category": "ELF" }
+  },
+  {
+    "id": "mutagen_kitsune",
+    "type": "COMESTIBLE",
+    "copy-from": "mutagen_beast",
+    "name": "Kitsune mutagen",
+    "use_action": { "type": "mutagen", "mutation_category": "KITSUNE" }
+  },
+  {
+    "id": "iv_mutagen_kitsune",
+    "type": "COMESTIBLE",
+    "copy-from": "iv_mutagen_beast",
+    "name": "Kitsune serum",
+    "description": "A super-concentrated mutagen the color of amber.  You need a syringe to inject it… if you really want to?",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "KITSUNE" }
   }
 ]

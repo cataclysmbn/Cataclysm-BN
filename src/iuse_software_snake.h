@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_IUSE_SOFTWARE_SNAKE_H
-#define CATA_SRC_IUSE_SOFTWARE_SNAKE_H
 
 namespace catacurses
 {
@@ -17,4 +15,4 @@ class snake_game
         int start_game();
 };
 
-#endif // CATA_SRC_IUSE_SOFTWARE_SNAKE_H
+

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAGIC_ENCHANTMENT_H
-#define CATA_SRC_MAGIC_ENCHANTMENT_H
 
 #include <map>
 #include <optional>
@@ -42,6 +40,9 @@ enum class mod : int {
     BONUS_DODGE,
     ARMOR_BASH,
     ARMOR_CUT,
+    ARMOR_DARK,
+    ARMOR_LIGHT,
+    ARMOR_PSI,
     ARMOR_STAB,
     ARMOR_BULLET,
     ARMOR_HEAT,
@@ -55,6 +56,9 @@ enum class mod : int {
     ITEM_DAMAGE_STAB,
     ITEM_ARMOR_BASH,
     ITEM_ARMOR_CUT,
+    ITEM_ARMOR_DARK,
+    ITEM_ARMOR_LIGHT,
+    ITEM_ARMOR_PSI,
     ITEM_ARMOR_STAB,
     ITEM_ARMOR_BULLET,
     ITEM_ARMOR_HEAT,
@@ -83,8 +87,14 @@ class enchantment
         enum condition {
             ALWAYS,
             UNDERGROUND,
+            ABOVEGROUND,
             UNDERWATER,
+            NIGHT,
+            DAY,
+            DUSK,
+            DAWN,
             ACTIVE, // the item, mutation, etc. is active
+            INACTIVE,
             NUM_CONDITION
         };
 
@@ -172,4 +182,4 @@ class enchantment
                                      const fake_spell &sp ) const;
 };
 
-#endif // CATA_SRC_MAGIC_ENCHANTMENT_H
+

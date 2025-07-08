@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_VEHICLE_MOVE_H
-#define CATA_SRC_VEHICLE_MOVE_H
 
 #include "units_angle.h"
 #include "point.h"
@@ -30,4 +28,4 @@ bool is_on_rails( const map &m, const vehicle &veh );
 
 } // namespace vehicle_movement
 
-#endif // CATA_SRC_VEHICLE_MOVE_H
+

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CLZONES_H
-#define CATA_SRC_CLZONES_H
 
 #include <cstddef>
 #include <functional>
@@ -435,4 +433,4 @@ class zone_manager
         void deserialize( JsonIn &jsin );
 };
 
-#endif // CATA_SRC_CLZONES_H
+

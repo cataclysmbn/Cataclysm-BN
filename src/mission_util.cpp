@@ -33,8 +33,13 @@
 static tripoint_abs_omt reveal_destination( const std::string &type )
 {
     const tripoint_abs_omt your_pos = get_player_character().global_omt_location();
-    const tripoint_abs_omt center_pos =
-        overmap_buffer.find_random( your_pos, type, rng( 40, 80 ), false );
+
+    omt_find_params params{};
+    params.types.emplace_back( type, ot_match_type::type );
+    params.search_range = { 0, rng( 40, 80 ) };
+    params.search_layers = std::nullopt;
+
+    const tripoint_abs_omt center_pos = overmap_buffer.find_random( your_pos, params );
 
     if( center_pos != overmap::invalid_tripoint ) {
         overmap_buffer.reveal( center_pos, 2 );
@@ -73,13 +78,18 @@ static void reveal_any_target( mission *miss, const std::vector<std::string> &om
 bool mission_util::reveal_road( const tripoint_abs_omt &source, const tripoint_abs_omt &dest,
                                 overmapbuffer &omb )
 {
-    const tripoint_abs_omt source_road = overmap_buffer.find_closest( source, "road", 3, false );
-    const tripoint_abs_omt dest_road = overmap_buffer.find_closest( dest, "road", 3, false );
+    omt_find_params find_params{};
+    find_params.types.emplace_back( "road", ot_match_type::type );
+    find_params.search_range = { 0, 3 };
+    find_params.search_layers = { 0, 0 };
 
-    omt_route_params params;
-    params.popup = make_shared_fast<throbber_popup>( _( "Please wait…" ) );
+    const tripoint_abs_omt source_road = overmap_buffer.find_closest( source, find_params );
+    const tripoint_abs_omt dest_road = overmap_buffer.find_closest( dest, find_params );
 
-    return omb.reveal_route( source_road, dest_road, params );
+    omt_route_params route_params;
+    route_params.popup = make_shared_fast<throbber_popup>( _( "Please wait…" ) );
+
+    return omb.reveal_route( source_road, dest_road, route_params );
 }
 
 /**
@@ -88,10 +98,17 @@ bool mission_util::reveal_road( const tripoint_abs_omt &source, const tripoint_a
 tripoint_abs_omt mission_util::reveal_om_ter( const std::string &omter, int reveal_rad,
         bool must_see, int target_z )
 {
+    omt_find_params find_params{};
+    find_params.types.emplace_back( omter, ot_match_type::type );
+    find_params.search_range = { 0, 0 };
+    // TODO: Determine if search_layers can be safely constrained to { target_z, target_z }
+    find_params.search_layers = omt_find_all_layers;
+    find_params.seen = must_see ? std::make_optional( true ) : std::nullopt;
+
     // Missions are normally on z-level 0, but allow an optional argument.
     tripoint_abs_omt loc = get_player_character().global_omt_location();
     loc.z() = target_z;
-    const tripoint_abs_omt place = overmap_buffer.find_closest( loc, omter, 0, must_see );
+    const tripoint_abs_omt place = overmap_buffer.find_closest( loc, find_params );
     if( place != overmap::invalid_tripoint && reveal_rad >= 0 ) {
         overmap_buffer.reveal( place, reveal_rad );
     }
@@ -132,17 +149,18 @@ tripoint_abs_omt mission_util::random_house_in_closest_city()
 tripoint_abs_omt mission_util::target_closest_lab_entrance(
     const tripoint_abs_omt &origin, int reveal_rad, mission *miss )
 {
-    tripoint_abs_omt testpoint = origin;
-    // Get the surface locations for labs and for spaces above hidden lab stairs.
-    testpoint.z() = 0;
-    tripoint_abs_omt surface = overmap_buffer.find_closest( testpoint, "lab_stairs", 0, false,
-                               ot_match_type::contains );
+    omt_find_params find_params;
+    find_params.types.emplace_back( "lab_stairs", ot_match_type::contains );
+    find_params.search_range = { 0, 0 };
+    find_params.search_layers = std::nullopt;
 
-    testpoint.z() = -1;
-    tripoint_abs_omt underground =
-        overmap_buffer.find_closest( testpoint, "hidden_lab_stairs", 0, false,
-                                     ot_match_type::contains );
-    underground.z() = 0;
+    // Get the surface locations for labs and for spaces above hidden lab stairs.
+    tripoint_abs_omt surface = overmap_buffer.find_closest( tripoint_abs_omt( origin.xy(), 0 ),
+                               find_params );
+
+    find_params.types.front().first = "hidden_lab_stairs";
+    tripoint_abs_omt underground = overmap_buffer.find_closest( tripoint_abs_omt( origin.xy(), -1 ),
+                                   find_params );
 
     tripoint_abs_omt closest;
     if( square_dist( surface.xy(), origin.xy() ) <= square_dist( underground.xy(), origin.xy() ) ) {
@@ -151,7 +169,13 @@ tripoint_abs_omt mission_util::target_closest_lab_entrance(
         closest = underground;
     }
 
-    if( closest != overmap::invalid_tripoint && reveal_rad >= 0 ) {
+    if( closest == overmap::invalid_tripoint ) {
+        return closest;
+    }
+
+    // Reveal / Target surface regardless
+    closest = tripoint_abs_omt( closest.xy(), 0 );
+    if( reveal_rad >= 0 ) {
         overmap_buffer.reveal( closest, reveal_rad );
     }
     miss->set_target( closest );
@@ -163,21 +187,30 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
 {
     tripoint_abs_omt target_pos = overmap::invalid_tripoint;
 
-    omt_find_params find_params;
-    std::vector<std::pair<std::string, ot_match_type>> temp_types;
-    std::pair<std::string, ot_match_type> temp_pair;
-    temp_pair.first = params.overmap_terrain;
-    temp_pair.second = params.overmap_terrain_match_type;
-    temp_types.push_back( temp_pair );
-    find_params.types = temp_types;
-    find_params.search_range = params.search_range;
-    find_params.min_distance = params.min_distance;
-    find_params.must_see = params.must_see;
-    find_params.cant_see = params.cant_see;
-    find_params.existing_only = true;
-    find_params.popup = make_shared_fast<throbber_popup>( _( "Please wait…" ) );
+    auto make_find_params = [&]( bool existing_only ) {
+        omt_find_params find_params;
+        find_params.types.emplace_back( params.overmap_terrain, params.overmap_terrain_match_type );
+        find_params.search_range = { params.min_distance, params.search_range };
+        find_params.existing_only = existing_only;
+        find_params.seen = params.must_see
+                           ? std::make_optional( true )
+                           : params.cant_see
+                           ? std::make_optional( false )
+                           : std::nullopt;
+        find_params.popup = make_shared_fast<throbber_popup>( _( "Please wait…" ) );
+        if( params.z.has_value() ) {
+            find_params.search_layers = std::make_pair( params.z.value(), params.z.value() );
+        } else {
+            // TODO: Change to omt_find_all_layers if things don't work as expected
+            find_params.search_layers = std::nullopt;
+        }
+        return find_params;
+    };
+
+    omt_find_params find_params = make_find_params( true );
 
     auto get_target_position = [&]() {
+
         // Either find a random or closest match, based on the criteria.
         if( params.random ) {
             target_pos = overmap_buffer.find_random( origin_pos, find_params );
@@ -187,8 +220,7 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
 
         // If we didn't find a match, and we're allowed to create new terrain, and the player didn't
         // have to see the location beforehand, then we can attempt to create the new terrain.
-        if( target_pos == overmap::invalid_tripoint && params.create_if_necessary &&
-            !params.must_see ) {
+        if( target_pos == overmap::invalid_tripoint && params.create_if_necessary && !params.must_see ) {
             // If this terrain is part of an overmap special...
             if( params.overmap_special ) {
                 // ...then attempt to place the whole special.
@@ -197,18 +229,18 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
                 // If we succeeded in placing the special, then try and find the particular location
                 // we're interested in.
                 if( placed ) {
-                    find_params.must_see = false;
+                    find_params.seen = std::nullopt;
                     target_pos = overmap_buffer.find_closest( origin_pos, find_params );
                 }
             } else if( params.replaceable_overmap_terrain ) {
                 // This terrain wasn't part of an overmap special, but we do have a replacement
                 // terrain specified. Find a random location of that replacement type.
-                find_params.must_see = false;
+                find_params.seen = std::nullopt;
                 find_params.types.front().first = *params.replaceable_overmap_terrain;
                 target_pos = overmap_buffer.find_random( origin_pos, find_params );
 
                 // We didn't find it, so allow this search to create new overmaps and try again.
-                find_params.existing_only = true;
+                find_params.existing_only = false;
                 if( target_pos == overmap::invalid_tripoint ) {
                     target_pos = overmap_buffer.find_random( origin_pos, find_params );
                 }
@@ -228,14 +260,15 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
     if( target_pos == overmap::invalid_tripoint ) {
         // If it's invalid, then that means we couldn't find it or create it (if allowed) on
         // our current overmap. We'll now go ahead and try again but allow it to create new overmaps.
-        find_params.existing_only = false;
+        find_params = make_find_params( false );
         get_target_position();
     }
 
     // If we got here and this is still invalid, it means that we couldn't find it nor create it
     // on any overmap (new or existing) within the allowed search range.
     if( target_pos == overmap::invalid_tripoint ) {
-        debugmsg( "Unable to find and assign mission target %s.", params.overmap_terrain );
+        debugmsg( "Unable to find and assign mission target %s within %d tiles.",
+                  params.overmap_terrain, find_params.search_range.second );
         return std::nullopt;
     }
     return target_pos;
@@ -333,7 +366,13 @@ tripoint_abs_omt mission_util::target_om_ter_random( const std::string &omter, i
         loc = g->u.global_omt_location();
     }
 
-    auto places = overmap_buffer.find_all( loc, omter, range, must_see );
+    omt_find_params find_params{};
+    find_params.types.emplace_back( omter, ot_match_type::type );
+    find_params.search_range = { 0, range };
+    find_params.search_layers = std::nullopt;
+    find_params.seen = must_see ? std::make_optional( true ) : std::nullopt;
+
+    auto places = overmap_buffer.find_all( loc, find_params );
     if( places.empty() ) {
         return g->u.global_omt_location();
     }

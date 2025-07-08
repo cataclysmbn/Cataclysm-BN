@@ -197,10 +197,34 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Cable Charger System CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "A complex port that is mounted above the hip.  While active, it will recharge bionic power when connected to a battery via jumper cable.",
+    "description": "A complex port that is mounted above the hip.  While active, it will recharge bionic power when connected to a battery via cable.",
     "price": "800 USD",
     "weight": "250 g",
     "difficulty": 4
+  },
+  {
+    "id": "bio_cable_upgrade",
+    "bionic_id": "bio_cable_mkII",
+    "copy-from": "bionic_general",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Cable Charger Upgrade CBM" },
+    "description": "A kit for upgrading a pre-installed cable charger with enhanced power throughput.",
+    "price": "4000 USD",
+    "weight": "250 g",
+    "difficulty": 7,
+    "is_upgrade": true
+  },
+  {
+    "id": "bio_cable_mkII",
+    "bionic_id": "bio_cable_mkII",
+    "copy-from": "bionic_general",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Cable Charger System CBM Mk. II" },
+    "looks_like": "bio_int_enhancer",
+    "description": "This is a military-grade electronic port and power converter system which are surgically mounted above your hip, it has ten times higher throughput than basic version.  While active, it will recharge bionic power when connected to a power source via cable.",
+    "price": "8000 USD",
+    "weight": "500 g",
+    "difficulty": 9
   },
   {
     "id": "bio_carbon",
@@ -778,7 +802,7 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Hydrogen Fuel Cell CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "A small hydrogen fuel cell able to generate bionic power at a decent rate of efficiency.  It's connected to a diffuse network of compressors and compact canisters able to hold up to 500 ml of hydrogen.",
+    "description": "A small hydrogen fuel cell able to generate bionic power at a decent rate of efficiency.  It's connected to a diffuse network of compressors and compact canisters able to hold up to 2 liters of hydrogen.",
     "price": "7 kUSD",
     "weight": "600 g",
     "difficulty": 9
@@ -948,7 +972,7 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Teleportation Unit CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "This highly experimental unit folds space over short distances, instantly transporting the user's body up to 25 feet in a random duration at the cost of much power.  Note that prolonged or frequent use may have dangerous side effects.",
+    "description": "This highly experimental unit folds space over short distances, instantly transporting the user's body up to 25 feet in a random direction at the cost of much power.  Note that prolonged or frequent use may have dangerous side effects.",
     "price": "7 kUSD",
     "difficulty": 7
   },

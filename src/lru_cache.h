@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_LRU_CACHE_H
-#define CATA_SRC_LRU_CACHE_H
 
 #include <list>
 #include <unordered_map>
@@ -26,4 +24,4 @@ class lru_cache
         std::unordered_map<Key, typename std::list<Pair>::iterator> map;
 };
 
-#endif // CATA_SRC_LRU_CACHE_H
+

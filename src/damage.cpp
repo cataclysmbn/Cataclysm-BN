@@ -1,5 +1,6 @@
 #include "damage.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <algorithm>
 #include <map>
@@ -46,6 +47,12 @@ const std::string damage_unit::get_name() const
             return "Heat";
         case DT_COLD:
             return "Cold";
+        case DT_DARK:
+            return "Dark";
+        case DT_LIGHT:
+            return "Light";
+        case DT_PSI:
+            return "Psionic";
         case DT_ELECTRIC:
             return "Electric";
         case DT_BULLET:
@@ -53,6 +60,7 @@ const std::string damage_unit::get_name() const
         case NUM_DT:
             return std::to_string( NUM_DT );
     }
+    return std::to_string( NUM_DT );
 }
 
 damage_instance::damage_instance() = default;
@@ -131,7 +139,7 @@ void damage_instance::add( const damage_instance &added_di )
 
 void damage_instance::add( const damage_unit &new_du )
 {
-    auto iter = std::find_if( damage_units.begin(), damage_units.end(),
+    auto iter = std::ranges::find_if( damage_units,
     [&new_du]( const damage_unit & du ) {
         return du.type == new_du.type;
     } );
@@ -310,6 +318,12 @@ std::string io::enum_to_string<damage_type>( damage_type dt )
             return "DT_HEAT";
         case DT_COLD:
             return "DT_COLD";
+        case DT_DARK:
+            return "DT_DARK";
+        case DT_LIGHT:
+            return "DT_LIGHT";
+        case DT_PSI:
+            return "DT_PSI";
         case DT_ELECTRIC:
             return "DT_ELECTRIC";
         case DT_BULLET:
@@ -331,6 +345,9 @@ static const std::map<std::string, damage_type> dt_map = {
     { translate_marker_context( "damage_type", "bullet" ), DT_BULLET },
     { translate_marker_context( "damage type", "heat" ), DT_HEAT },
     { translate_marker_context( "damage type", "cold" ), DT_COLD },
+    { translate_marker_context( "damage type", "dark" ), DT_DARK },
+    { translate_marker_context( "damage type", "light" ), DT_LIGHT },
+    { translate_marker_context( "damage type", "psionic" ), DT_PSI },
     { translate_marker_context( "damage type", "electric" ), DT_ELECTRIC }
 };
 
@@ -407,8 +424,8 @@ static damage_unit load_damage_unit_inherit( const JsonObject &curr, const damag
     damage_unit ret = load_damage_unit( curr );
 
     const std::vector<damage_unit> &parent_damage = parent.damage_units;
-    auto du_iter = std::find_if( parent_damage.begin(),
-    parent_damage.end(), [&ret]( const damage_unit & dmg ) {
+    auto du_iter = std::ranges::find_if( parent_damage,
+    [&ret]( const damage_unit & dmg ) {
         return dmg.type == ret.type;
     } );
 
@@ -515,6 +532,9 @@ std::map<damage_type, float> load_damage_map( const JsonObject &jo )
     load_if_present( "acid", DT_ACID, non_phys ? *non_phys : init_val );
     load_if_present( "heat", DT_HEAT, non_phys ? *non_phys : init_val );
     load_if_present( "cold", DT_COLD, non_phys ? *non_phys : init_val );
+    load_if_present( "cold", DT_DARK, non_phys ? *non_phys : init_val );
+    load_if_present( "cold", DT_LIGHT, non_phys ? *non_phys : init_val );
+    load_if_present( "cold", DT_PSI, non_phys ? *non_phys : init_val );
     load_if_present( "electric", DT_ELECTRIC, non_phys ? *non_phys : init_val );
 
     // DT_TRUE should never be resisted

@@ -191,12 +191,12 @@
     "type": "scenario",
     "id": "medieval",
     "name": "Challenge - Medieval Peasant",
-    "points": -8,
+    "points": -7,
     "description": "Som nigromancie hath brought yow hidder!  Ye have only the hoose on youre legges and the knyf at youre syde and youre prayeres to Marie moder of God.",
     "start_name": "Wilderness",
     "allowed_locs": [ "sloc_forest", "sloc_field" ],
     "professions": [ "churl" ],
-    "forced_traits": [ "ILLITERATE", "ANTIJUNK", "STRONGSTOMACH", "WAYFARER", "SPIRITUAL" ],
+    "forced_traits": [ "ILLITERATE", "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH", "SPIRITUAL" ],
     "forbidden_traits": [ "FASTREADER", "SLOWREADER" ],
     "flags": [ "CHALLENGE", "LONE_START" ]
   },
@@ -241,7 +241,7 @@
     ],
     "traits": [ "RADIOGENIC", "ROT2", "SAPROVORE", "SORES", "UNSTABLE" ],
     "forced_traits": [ "PSYCHOPATH", "SCHIZOPHRENIC", "CARNIVORE" ],
-    "forbidden_traits": [ "ANIMALEMPATH", "ANIMALDISCORD", "ANTIWHEAT", "ANTIFRUIT", "MEATARIAN", "SQUEAMISH" ],
+    "forbidden_traits": [ "ANIMALEMPATH", "ANIMALDISCORD", "ANTIWHEAT", "ANTIFRUIT", "MEATARIAN" ],
     "flags": [ "CHALLENGE", "LONE_START", "SUM_START", "CITY_START" ]
   },
   {
@@ -256,6 +256,7 @@
       "mutant_patient",
       "mutant_volunteer",
       "labtech",
+      "bionic_labtech",
       "broken_cyborg",
       "faulty_bionic",
       "cykotic",
@@ -325,7 +326,7 @@
     "points": -8,
     "description": "You were deemed non-essential and made to stay behind during the lab evacuation.  Find a way to escape or starve to death.",
     "start_name": "Locked Lab",
-    "professions": [ "labtech", "security", "medic", "bionic_installer", "bio_medic", "bionic_mentat", "bionic_spy" ],
+    "professions": [ "labtech", "bionic_labtech", "security", "medic", "bionic_installer", "bio_medic", "bionic_mentat", "bionic_spy" ],
     "allowed_locs": [ "sloc_lab_random", "sloc_lab_escape_cells", "sloc_lab_finale", "sloc_ice_lab_stairs", "sloc_ice_lab_finale" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ]
   },
@@ -577,7 +578,7 @@
     "start_name": "A Stop On The Road",
     "allowed_locs": [ "sloc_gas_station" ],
     "missions": [ "MISSION_LAST_DELIVERY" ],
-    "flags": [ "LONE_START" ]
+    "flags": [ "LONE_START", "CITY_START" ]
   },
   {
     "type": "scenario",
@@ -649,7 +650,7 @@
     "description": "You were participating in a mining operation when you found… something.  You're not sure what, but it sure is dark down here.",
     "start_name": "Bottom of a mine",
     "allowed_locs": [ "sloc_mine_finale" ],
-    "professions": [ "miner", "labtech", "security", "bionic_worker", "archaeologist", "drone_op", "demolition_expert" ],
+    "professions": [ "miner", "labtech", "bionic_labtech", "security", "bionic_worker", "archaeologist", "drone_op", "demolition_expert" ],
     "flags": [ "CITY_START", "LONE_START" ]
   },
   {
@@ -686,7 +687,8 @@
       "bionic_athlete",
       "bionic_runner",
       "bionic_prepper",
-      "bionic_installer"
+      "bionic_installer",
+      "bionic_labtech"
     ]
   },
   {
@@ -709,6 +711,7 @@
       "bio_soldier",
       "bio_sniper",
       "labtech",
+      "bionic_labtech",
       "medic",
       "mili_pilot"
     ],

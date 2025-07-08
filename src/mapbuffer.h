@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAPBUFFER_H
-#define CATA_SRC_MAPBUFFER_H
 
 #include <list>
 #include <map>
@@ -79,12 +77,11 @@ class mapbuffer
         void remove_submap( tripoint addr );
         submap *unserialize_submaps( const tripoint &p );
         void deserialize( JsonIn &jsin );
-        void save_quad( const std::string &dirname, const std::string &filename,
-                        const tripoint &om_addr, std::list<tripoint> &submaps_to_delete,
+        void save_quad( const tripoint &om_addr, std::list<tripoint> &submaps_to_delete,
                         bool delete_after_save );
         submap_map_t submaps;
 };
 
 extern mapbuffer MAPBUFFER;
 
-#endif // CATA_SRC_MAPBUFFER_H
+

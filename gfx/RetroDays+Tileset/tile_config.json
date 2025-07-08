@@ -8020,6 +8020,15 @@
         { "offset": 3584, "bold": true, "color": "MAGENTA" },
         { "offset": 3840, "bold": true, "color": "YELLOW" }
       ]
+    },
+    {
+      "file": "sees_player_retro.png",
+      "tiles": [
+        { "id": "overlay_hostile_sees_player", "fg": 0 },
+        { "id": "overlay_friendly_sees_player", "fg": 0 },
+        { "id": "overlay_neutral_sees_player", "fg": 0 },
+        { "id": "overlay_other_sees_player", "fg": 0 }
+      ]
     }
   ],
   "overlay_ordering": [

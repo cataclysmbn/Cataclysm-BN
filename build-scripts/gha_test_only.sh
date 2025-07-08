@@ -80,14 +80,8 @@ else
         # just to verify that all the mod data can be successfully loaded.
         # Because some mods might be mutually incompatible we might need to run a few times.
         blacklist=build-scripts/mod_test_blacklist
-        if [ "$LUA" == "1" ]
-        then
-            do_lua="1"
-        else
-            do_lua="0"
-        fi
 
-        ./build-scripts/get_all_mods.py $blacklist $do_lua | \
+        ./build-scripts/get_all_mods.py $blacklist | \
             while read -r mods
             do
                 run_test ./tests/cata_test '(all_mods)=> ' '~*' --user-dir=all_modded --mods="${mods}"

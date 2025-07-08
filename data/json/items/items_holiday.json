@@ -66,6 +66,7 @@
     "color": "green",
     "looks_like": "steel_plate",
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "use_action": { "type": "deploy_furn", "furn_type": "f_winter_wreath" }
+    "use_action": { "type": "deploy_furn", "furn_type": "f_winter_wreath" },
+    "category": "deployables"
   }
 ]

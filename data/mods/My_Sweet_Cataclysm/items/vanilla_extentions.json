@@ -9,7 +9,7 @@
     "spoils_in": "180 days",
     "color": "magenta",
     "comestible_type": "FOOD",
-    "material": "junk",
+    "material": [ "junk" ],
     "description": "The corpse of a necco, now it really looks like a giant necco wafer.  Surely a bite wouldn't hurt, right?",
     "price": "40 USD",
     "charges": 40,
@@ -17,7 +17,8 @@
     "healthy": -1,
     "calories": 220,
     "stim": 1,
-    "fun": 4
+    "fun": 4,
+    "vitamins": [ [ "junk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -84,7 +85,7 @@
     "id": "gum",
     "name": { "str_sp": "chewing gum" },
     "comestible_type": "FOOD",
-    "description": "Bright pink chewing gum.  Sugary, sweet, and bad for your teeth.  It's oddly warm to the touch…",
+    "description": "Sugary chewing gum wrapped in bright pink packaging, with a question mark on the label.  It's a mystery what flavor it is, but the label claims there's 20 unique flavors.  It's oddly warm to the touch…",
     "symbol": "*",
     "copy-from": "gum",
     "rot_spawn": "GROUP_EGG_GUM",

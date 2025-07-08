@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_COORDINATE_CONVERSIONS_H
-#define CATA_SRC_COORDINATE_CONVERSIONS_H
 
 #include "game_constants.h"
 #include "point.h"
@@ -244,4 +242,4 @@ auto sm_to_mmr_remain( int &x, int &y ) -> point;
 // Note: this produces sm coords of top-left corner of the region.
 auto mmr_to_sm_copy( const tripoint &p ) -> tripoint;
 
-#endif // CATA_SRC_COORDINATE_CONVERSIONS_H
+

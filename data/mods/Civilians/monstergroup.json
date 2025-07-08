@@ -1,0 +1,22 @@
+[
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ZOMBIE",
+    "default": "mon_zombie",
+    "monsters": [
+      { "monster": "mon_civilian_panic", "freq": 12, "cost_multiplier": 1, "pack_size": [ 1, 5 ], "ends": 72 },
+      { "monster": "mon_civilian_stationary", "freq": 12, "cost_multiplier": 0, "ends": 48 },
+      {
+        "monster": "mon_civilian_parent",
+        "freq": 12,
+        "cost_multiplier": 1,
+        "pack_size": [ 1, 2 ],
+        "starts": 24,
+        "ends": 72
+      },
+      { "monster": "mon_civilian_child", "freq": 12, "cost_multiplier": 0, "starts": 24, "ends": 72 },
+      { "monster": "mon_civilian_zombiefighter", "freq": 12, "cost_multiplier": 0, "ends": 72 },
+      { "monster": "mon_civilian_police", "freq": 8, "cost_multiplier": 0, "ends": 72 }
+    ]
+  }
+]

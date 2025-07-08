@@ -3,7 +3,7 @@
     "id": "bipod",
     "type": "GUNMOD",
     "name": { "str": "bipod" },
-    "description": "Bipods are commonly used on rifles and machine guns to provide a forward rest and reduce motion.  Although they greatly improve handling of recoil they are usable only on certain surfaces and are slow to equip.",
+    "description": "Bipods are commonly used on rifles and machine guns to provide a forward rest and reduce motion.  Although they noticably improve handling and precision they are slow to equip and usable only on certain mountable surfaces such as window frames and mounds of dirt.",
     "weight": "400 g",
     "volume": "500 ml",
     "price": "680 USD",
@@ -23,6 +23,7 @@
       [ "FLAMETHROWERS" ]
     ],
     "handling_modifier": 40,
+    "dispersion_modifier": -50,
     "flags": [ "BIPOD", "SLOW_WIELD" ]
   },
   {
@@ -30,7 +31,7 @@
     "copy-from": "bipod",
     "type": "GUNMOD",
     "name": { "str": "modified bipod" },
-    "description": "Bipods are commonly used on rifles and machine guns to provide a forward rest and reduce motion.  Although they greatly improve handling of recoil they are usable only on certain surfaces and are slow to equip.  This one was modified and customized to mount on pretty much any weapon, if you so want.",
+    "description": "Bipods are commonly used on rifles and machine guns to provide a forward rest and reduce motion.  Although they noticably improve handling and precision they are slow to equip and usable only on certain mountable surfaces such as window frames and mounds of dirt.  This one was modified and customized to mount on pretty much any weapon, if you so want.",
     "mod_target_category": [
       [ "PISTOLS" ],
       [ "REVOLVERS" ],
@@ -62,7 +63,15 @@
     "color": "light_red",
     "location": "underbarrel",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
-    "gun_data": { "ammo": "shot", "skill": "shotgun", "range": 2, "dispersion": 345, "durability": 10, "clip_size": 2 },
+    "gun_data": {
+      "ammo": "shot",
+      "skill": "shotgun",
+      "range": 2,
+      "dispersion": 345,
+      "durability": 10,
+      "blackpowder_tolerance": 72,
+      "clip_size": 2
+    },
     "flags": [ "IRREMOVABLE", "RELOAD_ONE", "RELOAD_EJECT" ]
   },
   {
@@ -80,7 +89,7 @@
     "color": "light_red",
     "location": "underbarrel",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
-    "gun_data": { "ammo": "shot", "skill": "shotgun", "dispersion": 480, "durability": 6, "clip_size": 2 },
+    "gun_data": { "ammo": "shot", "skill": "shotgun", "dispersion": 480, "durability": 6, "blackpowder_tolerance": 72, "clip_size": 2 },
     "flags": [ "IRREMOVABLE", "RELOAD_ONE", "NEVER_JAMS", "RELOAD_EJECT" ]
   },
   {
@@ -108,7 +117,7 @@
       [ "ROCKET_LAUNCHERS" ],
       [ "FLAMETHROWERS" ]
     ],
-    "handling_modifier": 10,
+    "handling_modifier": 5,
     "flags": [ "PUMP_RAIL_COMPATIBLE" ]
   },
   {
@@ -173,9 +182,10 @@
       "dispersion": 425,
       "durability": 7,
       "clip_size": 7,
+      "blackpowder_tolerance": 48,
       "reload": 120
     },
-    "flags": [ "RELOAD_ONE", "IRREMOVABLE" ]
+    "flags": [ "RELOAD_ONE", "IRREMOVABLE", "USE_PARENT_GUN" ]
   },
   {
     "id": "ksg25_aux_shotgun",
@@ -198,9 +208,10 @@
       "dispersion": 425,
       "durability": 7,
       "clip_size": 12,
+      "blackpowder_tolerance": 48,
       "reload": 120
     },
-    "flags": [ "RELOAD_ONE", "IRREMOVABLE" ]
+    "flags": [ "RELOAD_ONE", "IRREMOVABLE", "USE_PARENT_GUN" ]
   },
   {
     "id": "ts12_aux_shotgun",
@@ -226,7 +237,7 @@
       "clip_size": 5,
       "reload": 120
     },
-    "flags": [ "RELOAD_ONE", "IRREMOVABLE" ]
+    "flags": [ "RELOAD_ONE", "IRREMOVABLE", "USE_PARENT_GUN" ]
   },
   {
     "id": "ts12_aux_shotgun2",
@@ -252,7 +263,7 @@
       "clip_size": 5,
       "reload": 120
     },
-    "flags": [ "RELOAD_ONE", "IRREMOVABLE" ]
+    "flags": [ "RELOAD_ONE", "IRREMOVABLE", "USE_PARENT_GUN" ]
   },
   {
     "id": "laser_sight",
@@ -307,6 +318,7 @@
       "dispersion": 600,
       "durability": 10,
       "reload": 150,
+      "blackpowder_tolerance": 96,
       "clip_size": 1
     },
     "flags": [ "RELOAD_ONE", "NO_UNLOAD", "IRREMOVABLE" ]
@@ -396,7 +408,15 @@
     "color": "light_red",
     "location": "underbarrel",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
-    "gun_data": { "ammo": "shot", "skill": "shotgun", "range": 1, "dispersion": 320, "durability": 10, "clip_size": 1 },
+    "gun_data": {
+      "ammo": "shot",
+      "skill": "shotgun",
+      "range": 1,
+      "dispersion": 320,
+      "durability": 10,
+      "blackpowder_tolerance": 72,
+      "clip_size": 1
+    },
     "flags": [ "RELOAD_EJECT" ]
   },
   {
@@ -436,7 +456,7 @@
     "color": "light_red",
     "location": "underbarrel",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ], [ "M_XBOWS" ] ],
-    "gun_data": { "ammo": "shot", "skill": "shotgun", "dispersion": 330, "durability": 10, "clip_size": 4 },
+    "gun_data": { "ammo": "shot", "skill": "shotgun", "dispersion": 330, "durability": 10, "blackpowder_tolerance": 72, "clip_size": 4 },
     "flags": [ "RELOAD_ONE" ]
   },
   {

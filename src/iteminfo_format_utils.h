@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ITEMINFO_FORMAT_UTILS_H
-#define CATA_SRC_ITEMINFO_FORMAT_UTILS_H
 
 #include "item.h"
 
@@ -9,5 +7,5 @@
  */
 void insert_separation_line( std::vector<iteminfo> &info );
 
-#endif // CATA_SRC_ITEMINFO_FORMAT_UTILS_H
+
 

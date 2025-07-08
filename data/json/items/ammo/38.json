@@ -28,7 +28,7 @@
     "//": "Hollowpoint damage bonus of 25%.",
     "damage": { "damage_type": "bullet", "amount": 30 },
     "dispersion": 30,
-    "recoil": 250,
+    "recoil": 300,
     "effects": [ "COOKOFF" ]
   },
   {

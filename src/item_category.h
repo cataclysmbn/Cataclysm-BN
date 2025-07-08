@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ITEM_CATEGORY_H
-#define CATA_SRC_ITEM_CATEGORY_H
 
 #include <optional>
 #include <string>
@@ -18,7 +16,6 @@ class item;
 struct zone_priority_data {
     bool was_loaded = false;
     zone_type_id id;
-    bool filthy = false;
     cata::flat_set<flag_id> flags;
 
     void deserialize( JsonIn &jsin );
@@ -81,5 +78,5 @@ class item_category
         void load( const JsonObject &jo, const std::string & );
 };
 
-#endif // CATA_SRC_ITEM_CATEGORY_H
+
 

@@ -31,7 +31,7 @@
     ],
     "can_only_eat": [ "junk", "sugar", "honey" ],
     "can_only_heal_with": [ "caramel_ointement" ],
-    "description": "You are literally made of sugar.",
+    "description": "You are literally made of sugar, giving you 10 cut armor, 5 bash armor, and making you immune to bleeding, radiation, and thirst, but it also prevents you from installing CBMs, prevents you from eating anything but sugar, and you can only heal using caramel ointment.",
     "vitamin_rates": [ [ "vitC", -900 ], [ "vitB", -900 ], [ "vitA", -900 ], [ "iron", -900 ], [ "calcium", -900 ] ],
     "starting_trait": true,
     "healing_awake": 0,

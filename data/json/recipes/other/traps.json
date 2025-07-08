@@ -35,8 +35,7 @@
     "difficulty": 3,
     "time": "30 m",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 1 } ],
-    "tools": [ [ [ "boltcutters", -1 ], [ "toolset", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CUT_M", "level": 2 } ],
     "components": [ [ [ "wire_barbed", 3 ], [ "wire", 9 ], [ "nail", 10 ] ] ]
   },
   {
@@ -214,31 +213,31 @@
     "components": [
       [ [ "adhesive", 1, "LIST" ] ],
       [
+        [ "canister_empty", 1 ],
         [ "scrap", 3 ],
         [ "steel_chunk", 1 ],
-        [ "canister_empty", 1 ],
         [ "clay_canister", 1 ],
         [ "can_food_unsealed", 1 ]
       ],
       [
+        [ "bearing", 50 ],
         [ "scrap", 10 ],
         [ "nail", 100 ],
         [ "bb", 200 ],
         [ "solder_wire", 100 ],
         [ "platinum_small", 40 ],
         [ "gold_small", 40 ],
-        [ "bearing", 50 ],
         [ "lead", 70 ],
         [ "silver_small", 70 ],
         [ "bismuth", 70 ],
         [ "shrapnel", 40 ]
       ],
       [
-        [ "volatile_explosive", 75, "LIST" ],
+        [ "military_explosive", 75, "LIST" ],
         [ "stable_explosive", 75, "LIST" ],
-        [ "military_explosive", 75, "LIST" ]
+        [ "volatile_explosive", 75, "LIST" ]
       ],
-      [ [ "delay_fuze", 1 ], [ "impact_fuze", 1 ], [ "fuse", 1 ] ]
+      [ [ "impact_fuze", 1 ], [ "delay_fuze", 1 ], [ "fuse", 1 ] ]
     ]
   },
   {

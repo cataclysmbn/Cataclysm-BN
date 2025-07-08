@@ -412,7 +412,7 @@
     "visibility": 2,
     "ugliness": 2,
     "mixed_effect": true,
-    "description": "Your feet have grown massive and ready to support huge weight.  This allows kicking attacks to do much more damage, provides natural armor, and removes the need to wear shoes; however, you cannot wear normal size shoes.  Reduces wet effects.",
+    "description": "Your feet have grown massive and ready to support huge weight.  This allows kicking attacks to do much more damage, provides 2 armor, and removes the need to wear shoes; however, you cannot wear normal size shoes.  Reduces wet effects.",
     "types": [ "LEGS" ],
     "category": [ "MASTODON" ],
     "wet_protection": [ { "part": "foot_l", "neutral": 10 }, { "part": "foot_r", "neutral": 10 } ],

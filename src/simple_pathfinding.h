@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_SIMPLE_PATHFINDING_H
-#define CATA_SRC_SIMPLE_PATHFINDING_H
 
 #include <functional>
 #include <optional>
@@ -132,4 +130,4 @@ simple_path<tripoint_abs_omt> find_overmap_path( const tripoint_abs_omt &source,
 
 } // namespace pf
 
-#endif // CATA_SRC_SIMPLE_PATHFINDING_H
+

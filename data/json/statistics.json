@@ -438,6 +438,19 @@
     "drop_fields": [ "category" ]
   },
   {
+    "id": "num_avatar_mutation_threshold_rabbit",
+    "type": "event_statistic",
+    "stat_type": "count",
+    "event_transformation": "avatar_mutation_threshold_rabbit"
+  },
+  {
+    "id": "avatar_mutation_threshold_rabbit",
+    "type": "event_transformation",
+    "event_type": "crosses_mutation_threshold",
+    "value_constraints": { "category": { "equals": "RABBIT" } },
+    "drop_fields": [ "category" ]
+  },
+  {
     "id": "num_avatar_mutation_threshold_rat",
     "type": "event_statistic",
     "stat_type": "count",

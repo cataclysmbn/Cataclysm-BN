@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_VALUE_PTR_H
-#define CATA_SRC_VALUE_PTR_H
 
 #include <memory>
 
@@ -61,4 +59,4 @@ bool value_ptr_equals( const value_ptr<T> &lhs, const value_ptr<T> &rhs )
 
 } // namespace cata
 
-#endif // CATA_SRC_VALUE_PTR_H
+

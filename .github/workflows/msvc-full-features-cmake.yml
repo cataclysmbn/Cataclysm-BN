@@ -3,41 +3,45 @@ name: Cataclysm Windows build (CMake + MSVC)
 on:
   push:
     branches:
-    - main
+      - main
     paths-ignore:
-    - 'android/**'
-    - 'build-data/osx/**'
-    - 'doc/**'
-    - 'doxygen_doc/**'
-    - 'gfx/**'
-    - 'lang/**'
-    - 'lgtm/**'
-    - 'tools/**'
-    - '!tools/format/**'
-    - 'utilities/**'
-    - 'scripts/**'
+      - "android/**"
+      - "build-data/osx/**"
+      - "doc/**"
+      - "doxygen_doc/**"
+      - "gfx/**"
+      - "lang/**"
+      - "lgtm/**"
+      - "tools/**"
+      - "!tools/format/**"
+      - "utilities/**"
+      - "scripts/**"
+      - "**.md"
+      - "**.mdx"
   pull_request:
     branches:
-    - main
+      - main
     paths-ignore:
-    - 'android/**'
-    - 'build-data/osx/**'
-    - 'doc/**'
-    - 'doxygen_doc/**'
-    - 'gfx/**'
-    - 'lang/**'
-    - 'lgtm/**'
-    - 'tools/**'
-    - '!tools/format/**'
-    - 'utilities/**'
-    - 'scripts/**'
-
+      - "android/**"
+      - "build-data/osx/**"
+      - "doc/**"
+      - "doxygen_doc/**"
+      - "gfx/**"
+      - "lang/**"
+      - "lgtm/**"
+      - "tools/**"
+      - "!tools/format/**"
+      - "utilities/**"
+      - "scripts/**"
+      - "**.md"
+      - "**.mdx"
 # We only care about the latest revision, so cancel previous instances.
 concurrency:
   group: msvc-cmake-build-${{ github.ref_name }}
   cancel-in-progress: true
 
 env:
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   # There's not enough disk space to build both release and debug versions of
   # our dependencies, so we hack the triplet file to build only release versions
   # Have to use github.workspace because runner namespace isn't available yet.
@@ -48,64 +52,73 @@ env:
 jobs:
   build_catatclysm:
     name: Build
-    runs-on: windows-2019
+    runs-on: windows-latest
     if: github.event.pull_request.draft == false
 
     steps:
-    - name: checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
+      - name: checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.3.1
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: 17.13
 
-    - name: Remove Strawberry Perl from PATH
-      run: |
-        echo $env:PATH
-        echo =========================
-        $env:PATH = $env:PATH -replace "C:\\Strawberry\\c\\bin;", ""
-        $env:PATH = $env:PATH -replace "C:\\Strawberry\\perl\\site\\bin;", ""
-        $env:PATH = $env:PATH -replace "C:\\Strawberry\\perl\\bin;", ""
-        "PATH=$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
-        echo =========================
-        echo $env:PATH
+      - name: Remove Strawberry Perl from PATH
+        run: |
+          echo $env:PATH
+          echo =========================
+          $env:PATH = $env:PATH -replace "C:\\Strawberry\\c\\bin;", ""
+          $env:PATH = $env:PATH -replace "C:\\Strawberry\\perl\\site\\bin;", ""
+          $env:PATH = $env:PATH -replace "C:\\Strawberry\\perl\\bin;", ""
+          "PATH=$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo =========================
+          echo $env:PATH
 
-    - name: Install stable CMake
-      uses: lukka/get-cmake@latest
+      - name: Install stable CMake
+        uses: lukka/get-cmake@v3.31.6
 
-    - name: Install vcpkg
-      uses: lukka/run-vcpkg@v11
-      id: runvcpkg
-      with:
-        vcpkgDirectory: '${{ runner.workspace }}/b/vcpkg'
-        vcpkgGitCommitId: "66444e13a86da7087ee24c342f91801cc6eb9877"
+      # https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache#1---export-required-github-actions-environment-variables
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable("ACTIONS_CACHE_URL", process.env.ACTIONS_CACHE_URL || "")
+            core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env.ACTIONS_RUNTIME_TOKEN || "")
 
-    - name: Integrate vcpkg
-      run: |
-        vcpkg integrate install
+      - name: Install vcpkg
+        uses: lukka/run-vcpkg@main
+        id: runvcpkg
+        with:
+          vcpkgDirectory: "${{ runner.workspace }}/b/vcpkg"
 
-    - uses: ammaraskar/msvc-problem-matcher@master
-    - name: Configure
-      run: |
+      - name: Integrate vcpkg
+        run: |
+          vcpkg integrate install
+
+      - uses: ammaraskar/msvc-problem-matcher@master
+      - name: Configure
+        run: |
           cmake -DTESTS=ON --preset $env:CMAKE_PRESET
 
-    - uses: ammaraskar/msvc-problem-matcher@master
-    - name: Build
-      run: |
+      - uses: ammaraskar/msvc-problem-matcher@master
+      - name: Build
+        run: |
           cmake --build out/build/$env:CMAKE_PRESET --config RelWithDebInfo
 
-    - name: Dump logs if build failed
-      if: failure()
-      run: |
-        echo =================================================
-        Get-ChildItem "${{ runner.workspace }}/Cataclysm-BN/out/build/$env:CMAKE_PRESET" -Recurse
-        echo =================================================
+      - name: Dump logs if build failed
+        if: failure()
+        run: |
+          echo =================================================
+          Get-ChildItem "${{ runner.workspace }}/Cataclysm-BN/out/build/$env:CMAKE_PRESET" -Recurse
+          echo =================================================
 
-    - name: Compile .mo files for localization
-      run: |
+      - name: Compile .mo files for localization
+        run: |
           cmake --build out/build/$env:CMAKE_PRESET --target translations_compile --config RelWithDebInfo
 
-    - name: Run tests
-      run: |
+      - name: Run tests
+        run: |
           .\RelWithDebInfo\cata_test-tiles.exe --rng-seed time

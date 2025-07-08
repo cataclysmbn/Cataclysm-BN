@@ -147,7 +147,7 @@ static void init_global_game_state( const std::vector<mod_id> &mods,
 
     world_generator->set_active_world( nullptr );
     world_generator->init();
-    WORLDPTR test_world = world_generator->make_new_world( mods );
+    WORLDINFO *test_world = world_generator->make_new_world( mods );
     assert( test_world != nullptr );
     world_generator->set_active_world( test_world );
     assert( world_generator->active_world != nullptr );
@@ -156,7 +156,7 @@ static void init_global_game_state( const std::vector<mod_id> &mods,
     calendar::set_season_length( get_option<int>( "SEASON_LENGTH" ) );
 
     loading_ui ui( false );
-    init::load_world_modfiles( ui, g->get_world_base_save_path() + "/" + SAVE_ARTIFACTS );
+    init::load_world_modfiles( ui, g->get_active_world(), SAVE_ARTIFACTS );
 
     g->u = avatar();
     g->u.create( character_type::NOW );
@@ -352,7 +352,7 @@ int main( int argc, const char *argv[] )
 
     clear_all_state();
 
-    auto world_name = world_generator->active_world->world_name;
+    auto world_name = world_generator->active_world->info->world_name;
     if( result == 0 || dont_save ) {
         world_generator->delete_world( world_name, true );
     } else {

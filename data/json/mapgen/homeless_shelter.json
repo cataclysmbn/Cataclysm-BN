@@ -52,7 +52,8 @@
       "v": "t_window_bars",
       "f": "t_chainfence",
       "g": "t_chaingate_l",
-      "n": "t_dirtmound"
+      "n": "t_dirtmound",
+      "D": "t_concrete"
     },
     "furniture": {
       "]": "f_street_light",

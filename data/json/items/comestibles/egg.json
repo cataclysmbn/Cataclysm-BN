@@ -14,13 +14,13 @@
     "description": "Nutritious egg laid by a bird.",
     "price": "44 cent",
     "price_postapoc": "50 cent",
-    "material": "egg",
+    "material": [ "egg" ],
     "volume": "50 ml",
     "stack_size": 1,
     "fun": -3,
     "flags": [ "RAW" ],
     "rot_spawn": "GROUP_EGG_BIRD_WILD",
-    "vitamins": [ [ "vitA", 9 ], [ "calcium", 3 ], [ "iron", 4 ], [ "vitB", 21 ] ],
+    "vitamins": [ [ "vitA", 9 ], [ "calcium", 3 ], [ "iron", 4 ], [ "vitB", 21 ], [ "egg_allergen", 1 ] ],
     "rot_spawn_chance": 50
   },
   {
@@ -116,13 +116,14 @@
     "description": "An egg belonging to one of reptile species found in New England.",
     "price": "250 cent",
     "price_postapoc": "50 cent",
-    "material": "egg",
+    "material": [ "egg" ],
     "volume": "250 ml",
     "stack_size": 4,
     "fun": -4,
     "flags": [ "RAW" ],
     "rot_spawn": "GROUP_EGG_SNAKE",
-    "rot_spawn_chance": 60
+    "rot_spawn_chance": 60,
+    "vitamins": [ [ "egg_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -144,7 +145,7 @@
     "price": "25 cent",
     "price_postapoc": "5 cent",
     "flags": [ "RAW" ],
-    "vitamins": [ [ "vitA", 19 ], [ "calcium", 7 ], [ "iron", 18 ], [ "vitB", 66 ], [ "mutant_toxin", 25 ] ]
+    "vitamins": [ [ "vitA", 19 ], [ "calcium", 7 ], [ "iron", 18 ], [ "vitB", 66 ], [ "mutant_toxin", 25 ], [ "egg_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -180,8 +181,9 @@
     "quench": 3,
     "description": "A egg from a giant roach, a bit bigger than a chicken one.  Incredibly gross.",
     "price": "80 cent",
-    "material": "egg",
-    "rot_spawn": "GROUP_EGG_ROACH"
+    "material": [ "egg" ],
+    "rot_spawn": "GROUP_EGG_ROACH",
+    "vitamins": [ [ "egg_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -214,7 +216,8 @@
     "description": "The fist-sized egg of a mutant firefly.  Glows faintly in the dark.",
     "material": [ "egg" ],
     "rot_spawn": "GROUP_EGG_FIREFLY",
-    "rot_spawn_chance": 50
+    "rot_spawn_chance": 50,
+    "vitamins": [ [ "egg_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -265,9 +268,9 @@
     "description": "A clump of razorclaw eggs.  A post-Cataclysm delicacy.",
     "price": "30 USD",
     "price_postapoc": "750 cent",
-    "material": "flesh",
+    "material": [ "flesh" ],
     "volume": "250 ml",
-    "vitamins": [ [ "vitA", 24 ], [ "vitC", 42 ], [ "calcium", 5 ], [ "iron", 8 ], [ "vitB", 985 ] ],
+    "vitamins": [ [ "vitA", 24 ], [ "vitC", 42 ], [ "calcium", 5 ], [ "iron", 8 ], [ "vitB", 985 ], [ "meat_allergen", 1 ] ],
     "fun": 5,
     "flags": [ "RAW" ]
   },
@@ -286,16 +289,17 @@
     "description": "Common roe from an unknown fish.",
     "price": "50 cent",
     "price_postapoc": "1 USD",
-    "material": "egg",
+    "material": [ "egg" ],
     "volume": "25 ml",
     "stack_size": 4,
     "fun": 1,
-    "vitamins": [ [ "vitC", 1 ], [ "vitB", 24 ] ],
+    "vitamins": [ [ "vitC", 1 ], [ "vitB", 24 ], [ "egg_allergen", 1 ] ],
     "flags": [ "RAW" ]
   },
   {
     "type": "COMESTIBLE",
     "id": "powder_eggs",
+    "category": "cooking_ingredients",
     "name": { "str": "powdered egg" },
     "weight": "7 g",
     "color": "yellow",
@@ -312,7 +316,7 @@
     "volume": "250 ml",
     "charges": 16,
     "fun": -3,
-    "vitamins": [ [ "vitB", 2 ] ]
+    "vitamins": [ [ "vitB", 2 ], [ "egg_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -325,11 +329,12 @@
     "description": "Fluffy and delicious scrambled eggs.",
     "price": "4 USD",
     "price_postapoc": "1 USD",
-    "material": "egg",
+    "material": [ "egg" ],
     "volume": "125 ml",
     "charges": 2,
     "flags": [ "EATEN_HOT" ],
-    "fun": 3
+    "fun": 3,
+    "vitamins": [ [ "egg_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -342,10 +347,11 @@
     "description": "A hard-boiled egg, still in its shell.  Portable and nutritious!",
     "price": "95 cent",
     "price_postapoc": "50 cent",
-    "material": "egg",
+    "material": [ "egg" ],
     "fun": 2,
     "spoils_in": "10 days",
-    "delete": { "flags": [ "RAW" ] }
+    "delete": { "flags": [ "RAW" ] },
+    "vitamins": [ [ "egg_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -376,8 +382,9 @@
     "description": "A pickled egg.  Rather salty, but tastes good and lasts for a long time.",
     "price": "95 cent",
     "price_postapoc": "75 cent",
-    "material": "egg",
-    "fun": 2
+    "material": [ "egg" ],
+    "fun": 2,
+    "vitamins": [ [ "egg_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -392,7 +399,15 @@
     "quench": 4,
     "healthy": 1,
     "calories": 349,
-    "vitamins": [ [ "vitA", 9 ], [ "vitC", 18 ], [ "calcium", 11 ], [ "iron", 9 ], [ "vitB", 21 ] ],
+    "vitamins": [
+      [ "vitA", 9 ],
+      [ "vitC", 18 ],
+      [ "calcium", 11 ],
+      [ "iron", 9 ],
+      [ "vitB", 21 ],
+      [ "veggy_allergen", 1 ],
+      [ "egg_allergen", 1 ]
+    ],
     "price": "490 cent",
     "price_postapoc": "150 cent",
     "material": [ "egg", "veggy" ],
@@ -414,7 +429,15 @@
     "comestible_type": "FOOD",
     "healthy": 1,
     "calories": 209,
-    "vitamins": [ [ "vitA", 9 ], [ "vitC", 36 ], [ "calcium", 7 ], [ "iron", 8 ], [ "vitB", 21 ] ],
+    "vitamins": [
+      [ "vitA", 9 ],
+      [ "vitC", 36 ],
+      [ "calcium", 7 ],
+      [ "iron", 8 ],
+      [ "vitB", 21 ],
+      [ "veggy_allergen", 1 ],
+      [ "egg_allergen", 1 ]
+    ],
     "price": "1190 cent",
     "price_postapoc": "2 USD",
     "material": [ "egg", "veggy" ],
@@ -436,7 +459,15 @@
     "healthy": 1,
     "comestible_type": "FOOD",
     "calories": 215,
-    "vitamins": [ [ "vitA", 9 ], [ "vitC", 4 ], [ "calcium", 3 ], [ "iron", 11 ], [ "vitB", 21 ] ],
+    "vitamins": [
+      [ "vitA", 9 ],
+      [ "vitC", 4 ],
+      [ "calcium", 3 ],
+      [ "iron", 11 ],
+      [ "vitB", 21 ],
+      [ "veggy_allergen", 1 ],
+      [ "egg_allergen", 1 ]
+    ],
     "price": "4 USD",
     "price_postapoc": "1 USD",
     "material": [ "egg", "veggy" ],
@@ -458,10 +489,10 @@
     "comestible_type": "FOOD",
     "healthy": 1,
     "calories": 322,
-    "vitamins": [ [ "vitA", 10 ], [ "vitC", 9 ], [ "calcium", 13 ], [ "iron", 12 ], [ "vitB", 21 ] ],
+    "vitamins": [ [ "vitA", 10 ], [ "vitC", 9 ], [ "calcium", 13 ], [ "iron", 12 ], [ "vitB", 21 ], [ "egg_allergen", 1 ] ],
     "price": "4 USD",
     "price_postapoc": "1 USD",
-    "material": "egg",
+    "material": [ "egg" ],
     "volume": "125 ml",
     "charges": 2,
     "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],

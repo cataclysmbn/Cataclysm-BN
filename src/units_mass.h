@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UNITS_MASS_H
-#define CATA_SRC_UNITS_MASS_H
 
 #include <cstdint>
 #include <algorithm>
@@ -85,45 +83,45 @@ constexpr value_type to_newton( const quantity<value_type, mass_in_milligram_tag
 } // namespace units
 
 // Implicitly converted to mass, which has int as value_type!
-constexpr units::mass operator"" _milligram( const unsigned long long v )
+constexpr units::mass operator""_milligram( const unsigned long long v )
 {
     return units::from_milligram( v );
 }
 
-constexpr units::mass operator"" _gram( const unsigned long long v )
+constexpr units::mass operator""_gram( const unsigned long long v )
 {
     return units::from_gram( v );
 }
 
-constexpr units::mass operator"" _kilogram( const unsigned long long v )
+constexpr units::mass operator""_kilogram( const unsigned long long v )
 {
     return units::from_kilogram( v );
 }
 
-constexpr units::mass operator"" _newton( const unsigned long long v )
+constexpr units::mass operator""_newton( const unsigned long long v )
 {
     return units::from_newton( v );
 }
 
-constexpr units::quantity<double, units::mass_in_milligram_tag> operator"" _milligram(
+constexpr units::quantity<double, units::mass_in_milligram_tag> operator""_milligram(
     const long double v )
 {
     return units::from_milligram( v );
 }
 
-constexpr units::quantity<double, units::mass_in_milligram_tag> operator"" _gram(
+constexpr units::quantity<double, units::mass_in_milligram_tag> operator""_gram(
     const long double v )
 {
     return units::from_gram( v );
 }
 
-constexpr units::quantity<double, units::mass_in_milligram_tag> operator"" _kilogram(
+constexpr units::quantity<double, units::mass_in_milligram_tag> operator""_kilogram(
     const long double v )
 {
     return units::from_kilogram( v );
 }
 
-constexpr units::quantity<double, units::mass_in_milligram_tag> operator"" _newton(
+constexpr units::quantity<double, units::mass_in_milligram_tag> operator""_newton(
     const long double v )
 {
     return units::from_newton( v );
@@ -131,4 +129,4 @@ constexpr units::quantity<double, units::mass_in_milligram_tag> operator"" _newt
 
 
 
-#endif // CATA_SRC_UNITS_MASS_H
+

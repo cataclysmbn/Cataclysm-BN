@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_TEXT_SNIPPETS_H
-#define CATA_SRC_TEXT_SNIPPETS_H
 
 #include <map>
 #include <optional>
@@ -44,6 +42,11 @@ class snippet_library
          * call `expand()` to do that.
          */
         std::optional<translation> get_snippet_by_id( const snippet_id &id ) const;
+        /**
+        * Returns the name connected with the snippet referenced by the id, or cata::nullopt if there
+        * is no snippet with such id.
+        */
+        std::optional<translation> get_name_by_id( const snippet_id &id ) const;
         /**
          * Returns a reference to the snippet with the id, or a reference to an
          * empty translation object if no such snippet exist.
@@ -102,7 +105,8 @@ class snippet_library
 
     private:
         std::unordered_map<snippet_id, translation> snippets_by_id;
-
+        // front facing name
+        std::unordered_map<snippet_id, translation> name_by_id;
         struct category_snippets {
             std::vector<snippet_id> ids;
             std::vector<translation> no_id;
@@ -117,4 +121,4 @@ extern snippet_library SNIPPET;
 /** Get random pre-translated tip of the day for the main menu. */
 std::string get_random_tip_of_the_day();
 
-#endif // CATA_SRC_TEXT_SNIPPETS_H
+

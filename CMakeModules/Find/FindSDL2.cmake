@@ -134,13 +134,6 @@ if(NOT APPLE)
   find_package(Threads)
 endif()
 
-# MinGW needs an additional library, mwindows
-# It's total link flags should look like -lmingw32 -lSDLmain -lSDL -lmwindows
-# (Actually on second look, I think it only needs one of the m* libraries.)
-if(MINGW)
-  set(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
-endif()
-
 if(SDL2_LIBRARY_TEMP)
   # For SDLmain
   if(SDL2MAIN_LIBRARY AND NOT SDL2_BUILDING_LIBRARY)
@@ -166,11 +159,6 @@ if(SDL2_LIBRARY_TEMP)
   # and try using this line, so I'm just skipping it entirely for OS X.
   if(NOT APPLE)
     set(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} ${CMAKE_THREAD_LIBS_INIT})
-  endif()
-
-  # For MinGW library
-  if(MINGW)
-    set(SDL2_LIBRARY_TEMP ${MINGW32_LIBRARY} ${SDL2_LIBRARY_TEMP})
   endif()
 
   # Set the final string here so the GUI reflects the final state.

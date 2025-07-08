@@ -54,6 +54,17 @@
     ]
   },
   {
+    "id": "drugs_vending",
+    "type": "item_group",
+    "//": "Drugs that weren't bought during the panic",
+    "items": [
+      { "group": "drugs_heal_simple", "prob": 100 },
+      { "group": "drugs_misc", "prob": 100 },
+      { "item": "tramadol", "prob": 10 },
+      { "item": "codeine", "prob": 5 }
+    ]
+  },
+  {
     "id": "drugs_rare",
     "type": "item_group",
     "//": "Rare and/or valuable drugs excluding painkillers",
@@ -92,7 +103,36 @@
     "type": "item_group",
     "//": "For sale display appropriate packaging",
     "subtype": "distribution",
-    "items": [ [ "jar_3l_glass", 100 ], { "item": "weed", "charges": [ 10, 420 ], "prob": 100, "container-item": "jar_3l_glass" } ]
+    "items": [
+      { "item": "weed", "charges": [ 4, 7 ], "prob": 200, "container-item": "jar_glass" },
+      { "item": "weed", "charges": [ 28, 112 ], "prob": 100, "container-item": "jar_3l_glass" }
+    ]
+  },
+  {
+    "id": "weed_accessories",
+    "type": "item_group",
+    "//": "Processed weed and weed accessories",
+    "items": [
+      [ "pipe_glass", 50 ],
+      [ "pipe_glass_bong", 50 ],
+      { "item": "rolling_paper", "prob": 70, "charges": 32 },
+      { "item": "light_battery_cell", "charges": 100, "container-item": "dab_pen", "prob": 20 },
+      [ "nectar_collector", 10 ]
+    ]
+  },
+  {
+    "id": "dispensary",
+    "type": "item_group",
+    "//": "Processed weed ONLY",
+    "items": [
+      [ "joint", 50 ],
+      [ "thc_liquid", 20 ],
+      [ "thc_wax", 20 ],
+      { "item": "light_battery_cell", "charges": 100, "container-item": "dab_pen", "prob": 20 },
+      [ "dab_pen_disposable", 30 ],
+      [ "candy3_weed", 20 ],
+      { "group": "jar_weed", "prob": 100 }
+    ]
   },
   {
     "type": "item_group",
@@ -166,6 +206,7 @@
       [ "coke", 8 ],
       [ "meth", 2 ],
       [ "heroin", 1 ],
+      [ "sizzurp", 4 ],
       [ "syringe", 8 ],
       [ "crack", 8 ],
       [ "lsd", 10 ]
@@ -185,6 +226,8 @@
       [ "cigar", 10 ],
       [ "handrolled_cig", 10 ],
       [ "ecig", 20 ],
+      [ "dab_pen_disposable", 20 ],
+      { "item": "light_battery_cell", "charges": 100, "container-item": "dab_pen", "prob": 20 },
       [ "advanced_ecig", 10 ]
     ]
   },

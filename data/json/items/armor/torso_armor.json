@@ -440,7 +440,6 @@
     "description": "A cuirass made from large pieces of carved bone, laced together like lamellar armor.  Tough but stiff, and a bit brittle.",
     "material": [ "bone_heavy" ],
     "color": "white",
-    "encumbrance": 12,
     "warmth": 12,
     "environmental_protection": 1,
     "valid_mods": [  ],

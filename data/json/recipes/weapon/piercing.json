@@ -98,10 +98,11 @@
     "difficulty": 3,
     "time": "30 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "tools": [ [ [ "fire", -1 ] ] ],
     "components": [
       [ [ "long_pole", 1 ] ],
+      [ [ "varnish", 4, "LIST" ] ],
       [ [ "fabric_standard", 1, "LIST" ], [ "felt_patch", 1 ], [ "fabric_hides_any", 1, "LIST" ] ],
       [ [ "duct_tape", 20 ], [ "filament", 20, "LIST" ] ]
     ]
@@ -135,7 +136,7 @@
     "difficulty": 2,
     "time": "2 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "tools": [ [ [ "fire", -1 ] ] ],
     "components": [
       [ [ "stick_long", 1 ] ],
@@ -154,7 +155,7 @@
     "time": "30 m",
     "book_learn": [ [ "manual_survival", 2 ], [ "textbook_survival", 2 ], [ "survival_book", 2 ] ],
     "autolearn": [ [ "fabrication", 3 ], [ "survival", 3 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "stick_long", 1 ], [ "long_pole", 1 ] ],
       [ [ "duct_tape", 20 ], [ "cordage_short", 1, "LIST" ], [ "filament", 50, "LIST" ] ],
@@ -171,7 +172,7 @@
     "time": "2 m 24 s",
     "reversible": true,
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "tools": [ [ [ "surface_heat", 10, "LIST" ] ] ],
     "components": [
       [ [ "stick_long", 1 ], [ "pool_cue", 1 ] ],
@@ -191,7 +192,7 @@
     "time": "2 m 36 s",
     "autolearn": true,
     "//": "Extra duct tape/string needed to attach the spikes; rag/leather for grip.",
-    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "stick_long", 1 ], [ "pool_cue", 1 ] ],
       [ [ "fabric_standard", 1, "LIST" ], [ "felt_patch", 1 ], [ "fabric_hides_any", 1, "LIST" ] ],
@@ -209,7 +210,12 @@
     "difficulty": 3,
     "time": "30 m",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "CUT_FINE", "level": 1 } ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "CUT", "level": 1 },
+      { "id": "CUT_FINE", "level": 1 },
+      { "id": "SANDING", "level": 1 }
+    ],
     "components": [
       [ [ "stick_long", 1 ] ],
       [ [ "spike", 1 ] ],
@@ -227,7 +233,7 @@
     "difficulty": 3,
     "time": "5 m",
     "autolearn": true,
-    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "tools": [ [ [ "fire", -1 ] ] ],
     "components": [
       [ [ "spear_wood", 1 ], [ "pointy_stick", 1 ] ],

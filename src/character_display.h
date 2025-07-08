@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CHARACTER_DISPLAY_H
-#define CATA_SRC_CHARACTER_DISPLAY_H
 
 #include "character_stat.h"
 
@@ -43,4 +41,4 @@ int display_empty_handed_base_damage( const Character &you );
 } // namespace character_display
 
 
-#endif // CATA_SRC_CHARACTER_DISPLAY_H
+

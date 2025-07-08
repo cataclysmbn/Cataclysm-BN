@@ -48,7 +48,8 @@
     "cutting": 2,
     "to_hit": -1,
     "qualities": [ [ "BUTCHER", -66 ] ],
-    "stackable": true
+    "stackable": true,
+    "category": "scrap_ceramics"
   },
   {
     "id": "fighter_sting",
@@ -88,7 +89,7 @@
   {
     "id": "mattress",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "deployables",
     "name": { "str": "mattress", "str_pl": "mattresses" },
     "description": "This is a single, or twin, sized mattress.",
     "weight": "20000 g",
@@ -104,7 +105,7 @@
   {
     "id": "down_mattress",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "deployables",
     "name": { "str": "down mattress", "str_pl": "down mattresses" },
     "description": "This is a single, or twin, sized down filled mattress.",
     "weight": "6 kg",
@@ -148,7 +149,8 @@
     "bashing": 5,
     "cutting": 3,
     "to_hit": -3,
-    "qualities": [ [ "BUTCHER", -50 ] ]
+    "qualities": [ [ "BUTCHER", -50 ] ],
+    "category": "rocks"
   },
   {
     "id": "ugl_buttstock",

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATALUA_TYPE_OPERATORS_H
-#define CATA_SRC_CATALUA_TYPE_OPERATORS_H
 
 /**
  * Due to some strange behavior in sol2, we need to define
@@ -30,4 +28,4 @@
         return (id_getter) < rhs.id_getter;               \
     }
 
-#endif // CATA_SRC_CATALUA_TYPE_OPERATORS_H
+

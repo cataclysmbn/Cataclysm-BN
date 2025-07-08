@@ -2,7 +2,7 @@
   {
     "id": "atomic_coffeepot",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "atomic coffee maker" },
     "description": "This is a Curie-G coffeemaker, by CuppaTech.  It famously uses a radioactive generator to heat water for coffee.  Normally the water is heated using energy stored in a capacitor, and makes ordinary coffee.  However, as a special feature, water from the RTG containment area can be used, giving the coffee a very special kick.  The Curie-G is illegal in most countries.",
     "weight": "6585 g",
@@ -52,7 +52,7 @@
   {
     "id": "can_sealer",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "can sealer" },
     "description": "A hand crank powered cast steel machine designed to automatically seal tin cans.",
     "weight": "9800 g",
@@ -68,7 +68,7 @@
   {
     "id": "carver_off",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "electric carver (off)", "str_pl": "electric carvers (off)" },
     "description": "An electric meat carver powered by batteries.  Two serrated blades that vibrate together to slice just about anything from turkey to ham… even zombies!",
     "weight": "1106 g",
@@ -121,7 +121,7 @@
   {
     "id": "char_purifier",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "charcoal water purifier" },
     "description": "Using this item on a container full of water will purify the water using layered charcoal.  Once the charcoal has purified enough water, it will become unusable and can be disassembled and recycled.  Water taken from uncertain sources like a river may be dirty.",
     "weight": "1820 g",
@@ -142,7 +142,7 @@
   {
     "id": "char_smoker",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "charcoal smoker" },
     "description": "This is a portable charcoal smoker.  Good for weekend barbecuing and preserving meat with smoke.",
     "weight": "2600 g",
@@ -161,7 +161,7 @@
   {
     "id": "charcoal_cooker",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "charcoal cooker" },
     "description": "This is a little metal tank for holding charcoal with a pilot light attached.  You could use it for cooking food.",
     "weight": "400 g",
@@ -183,7 +183,7 @@
   {
     "id": "clay_pot",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "clay pot" },
     "description": "A crude clay pot with lid used for cooking.",
     "weight": "500 g",
@@ -202,7 +202,7 @@
   {
     "id": "clay_quern",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "clay quern" },
     "description": "This is a simple hand-powered clay quern for grinding grain.",
     "weight": "2264 g",
@@ -216,7 +216,7 @@
   {
     "id": "clay_teapot",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "clay teapot" },
     "description": "A clay teapot.  Now all you need is tea and water.",
     "weight": "400 g",
@@ -235,7 +235,7 @@
   {
     "id": "coffeemaker",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "coffeemaker" },
     "description": "This is a heating element with pot and frame for holding coffee or other powders.  It's got a battery compartment for use when the power goes out.  You can use it to make coffee, or other drinks if you so choose.",
     "weight": "3100 g",
@@ -262,7 +262,7 @@
   {
     "id": "dehydrator",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "food dehydrator" },
     "description": "This is a portable electric food dehydrator.  It's powered by batteries, and could be invaluable in preserving food.",
     "weight": "4200 g",
@@ -287,7 +287,7 @@
   {
     "id": "eggs_ferment",
     "type": "GENERIC",
-    "category": "food",
+    "category": "cooking_ingredients",
     "name": { "str": "fermenting eggs jar" },
     "description": "This jar contains a batch of eggs in a pickling solution.  You can seal up the jar once the process is completed.",
     "weight": "1750 g",
@@ -311,7 +311,7 @@
   {
     "id": "esbit_stove",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "hexamine stove" },
     "description": "Known as an Esbit stove, this is a lightweight, folding stove designed to use small hexamine tablets for cooking.",
     "weight": "180 g",
@@ -333,7 +333,7 @@
   {
     "id": "flask_yeast",
     "type": "GENERIC",
-    "category": "food",
+    "category": "cooking_ingredients",
     "name": { "str_sp": "small sealed yeast culture" },
     "description": "A sealed flask holding sanitized yeast wort.  You may harvest the yeast inside when it's done culturing.",
     "weight": "250 g",
@@ -461,7 +461,7 @@
   {
     "id": "food_processor",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "food processor" },
     "description": "This is a kitchen appliance capable of slicing, chopping, shredding, grinding, pureeing and mixing.",
     "weight": "3000 g",
@@ -484,9 +484,53 @@
     "magazine_well": "500 ml"
   },
   {
-    "id": "gasoline_cooker",
+    "id": "soda_machine",
     "type": "TOOL",
     "category": "tools",
+    "name": { "str": "soda machine" },
+    "looks_like": "coffeemaker",
+    "description": "This is a kitchen appliance capable of creating carbonated beverages.",
+    "weight": "3000 g",
+    "volume": "2 L",
+    "price": "50 USD",
+    "price_postapoc": "1 USD",
+    "to_hit": -2,
+    "bashing": 5,
+    "material": [ "plastic", "aluminum" ],
+    "symbol": "%",
+    "color": "white",
+    "ammo": "battery",
+    "flags": [ "ALLOWS_REMOTE_USE" ],
+    "magazines": [
+      [
+        "battery",
+        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
+      ]
+    ],
+    "magazine_well": "500 ml"
+  },
+  {
+    "id": "atomic_soda_machine",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "atomic soda machine" },
+    "looks_like": "atomic_coffeepot",
+    "description": "This is a Curie-G soda machine, a follow-up to the infamous coffeepot by CuppaTech.  It uses the same miniature RTG core to chill and carbonate beverages.  Normally, it dispenses standard fizzy drinks using stored CO₂ and coolant, but with a twist of the dial, it can cycle irradiated condensation from the RTG chamber into the mix.  Like its predecessor, the atomic soda machine is banned in most regions.",
+    "weight": "3000 g",
+    "volume": "2 L",
+    "price": "1 kUSD",
+    "price_postapoc": "30 USD",
+    "to_hit": -2,
+    "bashing": 5,
+    "material": [ "plastic", "aluminum" ],
+    "symbol": "%",
+    "color": "white",
+    "flags": [ "LEAK_DAM", "RADIOACTIVE", "ALLOWS_REMOTE_USE", "DURABLE_MELEE" ]
+  },
+  {
+    "id": "gasoline_cooker",
+    "type": "TOOL",
+    "category": "tools_cooking",
     "name": { "str": "gasoline cooker" },
     "description": "This is a simple heater powered by gasoline.  It is designed for cooking food.",
     "weight": "1944 g",
@@ -508,7 +552,7 @@
   {
     "id": "heatpack",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "heat pack" },
     "description": "This is a chemical heat pack.  It's used to treat sports injuries and heat food.  It is usable only once.",
     "weight": "226 g",
@@ -526,7 +570,7 @@
   {
     "id": "hotplate",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "hotplate" },
     "description": "This is a small heating element on a stand, powered by batteries.  It is indispensable for cooking and chemistry.  Try not to burn yourself.",
     "weight": "2835 g",
@@ -624,7 +668,7 @@
   {
     "id": "makeshift_sealer",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "makeshift vacuum sealer" },
     "description": "This is a homemade heat sealer unit with an air pump.  It's used for vacuum packing food to preserve it.",
     "weight": "3218 g",
@@ -648,7 +692,7 @@
   {
     "id": "mess_kit",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "mess kit" },
     "description": "A self-contained camping mess kit, containing everything you might need for wilderness cooking.  This model relies on a battery-operated hotplate, rather than the more commonplace chemical-fueled Esbit stove.",
     "weight": "1500 g",
@@ -676,7 +720,7 @@
   {
     "id": "mess_tin",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "mess tin" },
     "description": "A compact military-style pan and tray, designed for heating food over a fire or portable stove.  It is shallower than a proper pot or pan, and lacks the integrated heating elements modern mess kits have.",
     "weight": "500 g",
@@ -694,7 +738,7 @@
   {
     "id": "mil_mess_kit",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "military mess kit" },
     "description": "Military mess kit designed for long-range reconnaissance patrols deployed behind enemy lines.  All parts are made from thin sheet of aluminum / superalloy composite and are insulated with ceramic coating.  Relies on a battery-operated hotplate, rather than the smoke-producing chemical-fueled Esbit stove.  Compact, durable and lightweight.",
     "weight": "900 g",
@@ -722,7 +766,7 @@
   {
     "id": "mortar_pestle",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "mortar and pestle", "str_pl": "mortars and pestles" },
     "description": "This is a simple combination of a small grindstone and a bowl-shaped stone.  Used for grinding grain, but time-consuming compared to more complex methods.",
     "weight": "1000 g",
@@ -739,7 +783,7 @@
   {
     "id": "multi_cooker",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "multi cooker" },
     "description": "A professional-grade multi-cooker, with a battery slot for camping trips or tailgating.  Its multitude of settings and features promise to handle any sort of cooking, from parboiling potatoes to cooking curry to popping popcorn.  There's no manual, but you're sure you can work it out.",
     "weight": "11339 g",
@@ -773,7 +817,7 @@
   {
     "id": "oil_cooker",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "lamp oil cooker" },
     "description": "This is a simple heater powered by lamp oil.  It is designed for cooking food.",
     "weight": "2264 g",
@@ -795,7 +839,7 @@
   {
     "id": "pastaextruder",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "pasta extruder" },
     "description": "A pasta extruder run by a hand-crank.  Useful in making pasta.  It comes with various heads to make various kinds of pasta.",
     "weight": "2628 g",
@@ -811,7 +855,7 @@
   {
     "id": "pickles_ferment",
     "type": "GENERIC",
-    "category": "food",
+    "category": "cooking_ingredients",
     "name": { "str": "fermenting pickle jar" },
     "description": "This jar contains a batch of pickles set to ferment.  You can seal up the jar once the process is completed.",
     "weight": "1750 g",
@@ -836,7 +880,7 @@
   {
     "id": "popcan_stove",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "soda can stove kit" },
     "//": "Should be 20 but currently recipes do not utilize this value",
     "description": "This is an ultra-light alcohol-burning stove with simmer ring.  It comes with a 500 ml container to hold concentrated alcohol fuel.",
@@ -858,7 +902,7 @@
   {
     "id": "pressure_cooker",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "pressure cooker" },
     "description": "Useful for boiling water when cooking spaghetti and more.  This sealed pot is designed to cook food at higher pressures and temperatures.  Can also be used for pressure sensitive chemical reactions.",
     "weight": "2200 g",
@@ -879,7 +923,7 @@
   {
     "id": "rock_quern",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "quern" },
     "description": "This is a simple hand-powered stone quern for grinding grain.",
     "weight": "3264 g",
@@ -895,7 +939,7 @@
   {
     "id": "sauerkraut_ferment",
     "type": "GENERIC",
-    "category": "food",
+    "category": "cooking_ingredients",
     "name": { "str": "fermenting sauerkraut jar" },
     "description": "This jar contains a batch of sauerkraut set to ferment.  You can seal up the jar once the process is completed.",
     "weight": "1750 g",
@@ -920,7 +964,7 @@
   {
     "id": "still",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "still" },
     "description": "This is a still.  It's useful for creating distillation of alcohol and other, more curious substances.",
     "weight": "10000 g",
@@ -937,7 +981,7 @@
   {
     "id": "retort_clay",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "clay retort" },
     "description": "This is a primitive distillation tool made from clay, with a long neck that acts as a condenser.",
     "weight": "500 g",
@@ -966,7 +1010,7 @@
   {
     "id": "survivor_mess_kit",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "survivor mess kit" },
     "description": "A homemade mess kit, containing everything you might need for creating post-apocalyptic cuisine.  Powered by a lamp oil burner, it is composed of simple yet durable tools and materials.",
     "weight": "2160 g",
@@ -988,7 +1032,7 @@
   {
     "id": "teapot",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "teapot" },
     "description": "A small metal teapot.  Teatime wouldn't be complete without one.",
     "weight": "229 g",
@@ -1006,7 +1050,7 @@
   {
     "id": "vac_sealer",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "vacuum sealer" },
     "description": "This is a portable heat sealer unit with an air pump.  It's used for vacuum packing food to preserve it.",
     "weight": "2449 g",
@@ -1031,7 +1075,7 @@
   {
     "id": "waffleiron",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "waffle iron" },
     "description": "A waffle iron.  For making waffles.",
     "weight": "2628 g",
@@ -1048,7 +1092,7 @@
   {
     "id": "water_purifier",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "water purifier" },
     "description": "This is a battery-powered device designed to purify drinking water.  Using this item on a container full of water will purify the contents.  It could be useful for water taken from uncertain sources like a river, as it may be non-potable.",
     "weight": "1360 g",

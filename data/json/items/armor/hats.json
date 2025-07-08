@@ -554,6 +554,7 @@
     "color": "yellow",
     "covers": [ "head" ],
     "coverage": 90,
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ARMOR_PSI", "add": -10 } ] } ] },
     "flags": [ "OVERSIZE", "PSYSHIELD_PARTIAL", "SKINTIGHT", "TRADER_AVOID", "POWERARMOR_COMPATIBLE" ]
   },
   {

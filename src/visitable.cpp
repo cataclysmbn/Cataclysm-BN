@@ -35,6 +35,7 @@
 static const itype_id itype_apparatus( "apparatus" );
 static const itype_id itype_adv_UPS_off( "adv_UPS_off" );
 static const itype_id itype_toolset( "toolset" );
+static const itype_id itype_voltmeter_bionic( "voltmeter_bionic" );
 static const itype_id itype_UPS( "UPS" );
 static const itype_id itype_UPS_off( "UPS_off" );
 static const itype_id itype_bio_armor( "bio_armor" );
@@ -42,6 +43,7 @@ static const itype_id itype_bio_armor( "bio_armor" );
 static const quality_id qual_BUTCHER( "BUTCHER" );
 
 static const bionic_id bio_tools( "bio_tools" );
+static const bionic_id bio_electrosense_voltmeter( "bio_electrosense_voltmeter" );
 static const bionic_id bio_ups( "bio_ups" );
 
 static const flag_id flag_BIONIC_ARMOR_INTERFACE( "BIONIC_ARMOR_INTERFACE" );
@@ -724,7 +726,7 @@ void location_visitable<location_inventory>::remove_items_with( const
 
         for( auto istack_iter = istack.begin(); istack_iter != istack.end() &&
              last != VisitResponse::ABORT; ) {
-
+            location<item> *saved_loc = ( *istack_iter )->loc;
             ( *istack_iter )->remove_location();
             detached_ptr<item> t( *istack_iter );
 
@@ -745,7 +747,7 @@ void location_visitable<location_inventory>::remove_items_with( const
 
             if( t ) {
                 t.release();
-                ( *istack_iter )->set_location( &*inv->loc );
+                ( *istack_iter )->set_location( saved_loc );
                 istack_iter++;
             }
         }
@@ -1054,6 +1056,14 @@ int visitable<Character>::charges_of( const itype_id &what, int limit,
         }
     }
 
+    if( what == itype_voltmeter_bionic ) {
+        if( p && p->has_bionic( bio_electrosense_voltmeter ) ) {
+            return std::min( units::to_kilojoule( p->get_power_level() ), limit );
+        } else {
+            return 0;
+        }
+    }
+
     if( what == itype_bio_armor ) {
         float efficiency = 1;
         int power_charges = 0;
@@ -1164,6 +1174,10 @@ int visitable<Character>::amount_of( const itype_id &what, bool pseudo, int limi
     auto self = static_cast<const Character *>( this );
 
     if( what == itype_toolset && pseudo && self->has_active_bionic( bio_tools ) ) {
+        return 1;
+    }
+
+    if( what == itype_voltmeter_bionic && pseudo && self->has_bionic( bio_electrosense_voltmeter ) ) {
         return 1;
     }
 

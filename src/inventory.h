@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_INVENTORY_H
-#define CATA_SRC_INVENTORY_H
 
 #include <array>
 #include <bitset>
@@ -89,6 +87,10 @@ class invlet_favorites
 
 class inventory : public temp_visitable<inventory>
 {
+    private:
+        template<bool IsCached>
+        item &add_item_internal( item &newit, bool keep_invlet, bool assign_invlet, bool should_stack );
+
     public:
         const_invslice const_slice() const;
         const std::vector<item *> &const_stack( int i ) const;
@@ -103,28 +105,29 @@ class inventory : public temp_visitable<inventory>
         inventory &operator=( inventory && ) = default;
         inventory &operator=( const inventory & ) = default;
 
-        inventory &operator+= ( const inventory &rhs );
-        inventory &operator+= ( item &rhs );
-        inventory &operator+= ( const location_inventory &rhs );
-        inventory &operator+= ( const location_vector<item> &rhs );
-        inventory &operator+= ( const std::vector<item *> &rhs );
-        inventory &operator+= ( const item_stack &rhs );
-        inventory  operator+ ( const inventory &rhs );
-        inventory  operator+ ( item &rhs );
-        inventory  operator+ ( const std::vector<item *> &rhs );
-
         void unsort(); // flags the inventory as unsorted
         void clear();
-        void push_back( const std::vector<item *> &newits );
+
+        // --- Currently Unused - Kept since there was an add-assign overload before
+        inventory &add_items( const inventory &rhs, bool keep_invlet, bool assign_invlet = true,
+                              bool should_stack = true );
+        inventory &add_items( const item_stack &rhs, bool keep_invlet, bool assign_invlet = true,
+                              bool should_stack = true );
+        // ---
+
+        inventory &add_items( const location_inventory &rhs, bool keep_invlet, bool assign_invlet = true,
+                              bool should_stack = true );
+        inventory &add_items( const std::vector<item *> &rhs, bool keep_invlet, bool assign_invlet = true,
+                              bool should_stack = true );
+        inventory &add_items( const location_vector<item> &rhs, bool keep_invlet, bool assign_invlet = true,
+                              bool should_stack = true );
+
         // returns a reference to the added item
-        item &add_item( item &newit, bool keep_invlet = false, bool assign_invlet = true,
+        item &add_item( item &newit, bool keep_invlet, bool assign_invlet = true,
                         bool should_stack = true );
         // use item type cache to speed up, remember to run build_items_type_cache() before using it
-        item &add_item_by_items_type_cache( item &newit, bool keep_invlet = false,
-                                            bool assign_invlet = true,
+        item &add_item_by_items_type_cache( item &newit, bool keep_invlet, bool assign_invlet = true,
                                             bool should_stack = true );
-        void add_item_keep_invlet( item &newit );
-        void push_back( item &newit );
 
         /* Check all items for proper stacking, rearranging as needed
          * game pointer is not necessary, but if supplied, will ensure no overlap with
@@ -214,7 +217,7 @@ class inventory : public temp_visitable<inventory>
          */
         const itype_bin &get_binned_items() const;
 
-        void update_cache_with_item( item &newit );
+        void update_invlet_cache_with_item( item &newit );
         // gets a singular enchantment that is an amalgamation of all items that have active enchantments
         enchantment get_active_enchantment_cache( const Character &owner ) const;
 
@@ -255,6 +258,10 @@ class location_inventory : public location_visitable<location_inventory>
 
         friend location_visitable<location_inventory>;
         friend visitable<location_inventory>;
+
+        template<bool IsCached>
+        item &add_item_internal( detached_ptr<item> &&newit, bool keep_invlet, bool assign_invlet,
+                                 bool should_stack );
     public:
 
         const_invslice const_slice() const;
@@ -273,16 +280,15 @@ class location_inventory : public location_visitable<location_inventory>
 
         void unsort();
         void clear();
-        void push_back( std::vector<detached_ptr<item>> &newits );
+
+        void add_items( std::vector<detached_ptr<item>> &newits, bool keep_invlet,
+                        bool assign_invlet = true, bool should_stack = true );
         // returns a reference to the added item
-        item &add_item( detached_ptr<item> &&newit, bool keep_invlet = false, bool assign_invlet = true,
+        item &add_item( detached_ptr<item> &&newit, bool keep_invlet, bool assign_invlet = true,
                         bool should_stack = true );
         // use item type cache to speed up, remember to run build_items_type_cache() before using it
-        item &add_item_by_items_type_cache( detached_ptr<item> &&newit, bool keep_invlet = false,
-                                            bool assign_invlet = true,
-                                            bool should_stack = true );
-        void add_item_keep_invlet( detached_ptr<item> &&newit );
-        void push_back( detached_ptr<item> &&newit );
+        item &add_item_by_items_type_cache( detached_ptr<item> &&newit, bool keep_invlet,
+                                            bool assign_invlet = true, bool should_stack = true );
 
         /* Check all items for proper stacking, rearranging as needed
          * game pointer is not necessary, but if supplied, will ensure no overlap with
@@ -382,7 +388,7 @@ class location_inventory : public location_visitable<location_inventory>
          */
         const itype_bin &get_binned_items() const;
 
-        void update_cache_with_item( item &newit );
+        void update_invlet_cache_with_item( item &newit );
 
         // gets a singular enchantment that is an amalgamation of all items that have active enchantments
         enchantment get_active_enchantment_cache( const Character &owner ) const;
@@ -397,4 +403,4 @@ class location_inventory : public location_visitable<location_inventory>
         const inventory &as_inventory() const;
 };
 
-#endif // CATA_SRC_INVENTORY_H
+

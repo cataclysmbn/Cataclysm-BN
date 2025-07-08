@@ -2,7 +2,7 @@
   {
     "id": "press",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "hand press", "str_pl": "hand presses" },
     "description": "This is a small hand press for hand loading firearm ammunition.  It comes with everything you need to start hand loading your own munitions.",
     "weight": "2268 g",
@@ -18,7 +18,7 @@
   {
     "id": "press_dowel",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "makeshift shotshell press", "str_pl": "makeshift shotshell presses" },
     "description": "This is a collection of items improvised for field reloading of shotshells.  A plank with a hole cut in the center, a medium-sized nail, and a selection of whittled dowels are used to seat wads, decap primers, and reprime (carefully!) hulls.  The opposite side of the plank has been shaped to allow for roll crimping of the plastic hulls.",
     "weight": "348 g",
@@ -35,7 +35,7 @@
   {
     "id": "puller",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "kinetic bullet puller" },
     "description": "This is a tool used for properly disassembling firearm ammunition.",
     "weight": "500 g",

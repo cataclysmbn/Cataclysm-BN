@@ -25,7 +25,6 @@
 #include "input.h"
 #include "json.h"
 #include "mod_manager.h"
-#include "name.h"
 #include "output.h"
 #include "path_info.h"
 #include "point.h"
@@ -35,6 +34,7 @@
 #include "string_utils.h"
 #include "translations.h"
 #include "ui_manager.h"
+#include "name.h"
 
 using namespace std::placeholders;
 
@@ -46,78 +46,6 @@ std::unique_ptr<worldfactory> world_generator;
   * 0 index is inclusive.
   */
 static const int max_worldname_len = 32;
-
-save_t::save_t( const std::string &name ): name( name ) {}
-
-std::string save_t::decoded_name() const
-{
-    return name;
-}
-
-std::string save_t::base_path() const
-{
-    return base64_encode( name );
-}
-
-save_t save_t::from_save_id( const std::string &save_id )
-{
-    return save_t( save_id );
-}
-
-save_t save_t::from_base_path( const std::string &base_path )
-{
-    return save_t( base64_decode( base_path ) );
-}
-
-static std::string get_next_valid_worldname()
-{
-    std::string worldname = Name::get( nameIsWorldName );
-
-    return worldname;
-}
-
-WORLD::WORLD()
-{
-    world_name = get_next_valid_worldname();
-    WORLD_OPTIONS = get_options().get_world_defaults();
-
-    world_saves.clear();
-    active_mod_order = world_generator->get_mod_manager().get_default_mods();
-}
-
-void WORLD::COPY_WORLD( const WORLD *world_to_copy )
-{
-    world_name = world_to_copy->world_name + "_copy";
-    WORLD_OPTIONS = world_to_copy->WORLD_OPTIONS;
-    active_mod_order = world_to_copy->active_mod_order;
-}
-
-bool WORLD::needs_lua() const
-{
-    for( const mod_id &mod : active_mod_order ) {
-        if( mod.is_valid() && mod->lua_api_version ) {
-            return true;
-        }
-    }
-    return false;
-}
-
-std::string WORLD::folder_path() const
-{
-    return PATH_INFO::savedir() + world_name;
-}
-
-bool WORLD::save_exists( const save_t &name ) const
-{
-    return std::find( world_saves.begin(), world_saves.end(), name ) != world_saves.end();
-}
-
-void WORLD::add_save( const save_t &name )
-{
-    if( !save_exists( name ) ) {
-        world_saves.push_back( name );
-    }
-}
 
 worldfactory::worldfactory()
     : active_world( nullptr )
@@ -131,7 +59,7 @@ worldfactory::worldfactory()
 
 worldfactory::~worldfactory() = default;
 
-WORLDPTR worldfactory::add_world( std::unique_ptr<WORLD> retworld )
+WORLDINFO *worldfactory::add_world( std::unique_ptr<WORLDINFO> retworld )
 {
     if( !retworld->save() ) {
         return nullptr;
@@ -139,17 +67,17 @@ WORLDPTR worldfactory::add_world( std::unique_ptr<WORLD> retworld )
     return ( all_worlds[ retworld->world_name ] = std::move( retworld ) ).get();
 }
 
-WORLDPTR worldfactory::make_new_world( const std::vector<mod_id> &mods )
+WORLDINFO *worldfactory::make_new_world( const std::vector<mod_id> &mods )
 {
-    std::unique_ptr<WORLD> retworld = std::make_unique<WORLD>();
+    std::unique_ptr<WORLDINFO> retworld = std::make_unique<WORLDINFO>();
     retworld->active_mod_order = mods;
     return add_world( std::move( retworld ) );
 }
 
-WORLDPTR worldfactory::make_new_world( bool show_prompt, const std::string &world_to_copy )
+WORLDINFO *worldfactory::make_new_world( bool show_prompt, const std::string &world_to_copy )
 {
     // World to return after generating
-    std::unique_ptr<WORLD> retworld = std::make_unique<WORLD>();
+    std::unique_ptr<WORLDINFO> retworld = std::make_unique<WORLDINFO>();
 
     if( !world_to_copy.empty() ) {
         retworld->COPY_WORLD( world_generator->get_world( world_to_copy ) );
@@ -191,7 +119,7 @@ WORLDPTR worldfactory::make_new_world( bool show_prompt, const std::string &worl
     return add_world( std::move( retworld ) );
 }
 
-WORLDPTR worldfactory::make_new_world( special_game_type special_type )
+WORLDINFO *worldfactory::make_new_world( special_game_type special_type )
 {
     std::string worldname;
     switch( special_type ) {
@@ -211,7 +139,7 @@ WORLDPTR worldfactory::make_new_world( special_game_type special_type )
         return all_worlds[worldname].get();
     }
 
-    std::unique_ptr<WORLD> special_world = std::make_unique<WORLD>();
+    std::unique_ptr<WORLDINFO> special_world = std::make_unique<WORLDINFO>();
     special_world->world_name = worldname;
 
     special_world->WORLD_OPTIONS["WORLD_END"].setValue( "delete" );
@@ -223,54 +151,18 @@ WORLDPTR worldfactory::make_new_world( special_game_type special_type )
     return ( all_worlds[worldname] = std::move( special_world ) ).get();
 }
 
-void worldfactory::set_active_world( WORLDPTR world )
+void worldfactory::set_active_world( WORLDINFO *new_world )
 {
-    world_generator->active_world = world;
-    if( world ) {
-        get_options().set_world_options( &world->WORLD_OPTIONS );
+    DebugLog( DL::Info, DC::Main ) << "Setting active world to " << ( new_world ?
+                                   new_world->folder_path() : "NULL" );
+
+    if( new_world ) {
+        get_options().set_world_options( &new_world->WORLD_OPTIONS );
+        active_world = std::make_unique<world>( new_world );
     } else {
         get_options().set_world_options( nullptr );
+        active_world = nullptr;
     }
-}
-
-bool WORLD::save( const bool is_conversion ) const
-{
-    if( !assure_dir_exist( folder_path() ) ) {
-        DebugLog( DL::Error, DC::Main ) << "Unable to create or open world[" << world_name
-                                        << "] directory for saving";
-        return false;
-    }
-
-    if( !is_conversion ) {
-        const auto savefile = folder_path() + "/" + PATH_INFO::worldoptions();
-        const bool saved = write_to_file( savefile, [&]( std::ostream & fout ) {
-            JsonOut jout( fout );
-
-            jout.start_array();
-
-            for( auto &elem : WORLD_OPTIONS ) {
-                // Skip hidden option because it is set by mod and should not be saved
-                if( !elem.second.getDefaultText().empty() ) {
-                    jout.start_object();
-
-                    jout.member( "info", elem.second.getTooltip() );
-                    jout.member( "default", elem.second.getDefaultText( false ) );
-                    jout.member( "name", elem.first );
-                    jout.member( "value", elem.second.getValue( true ) );
-
-                    jout.end_object();
-                }
-            }
-
-            jout.end_array();
-        }, _( "world data" ) );
-        if( !saved ) {
-            return false;
-        }
-    }
-
-    world_generator->get_mod_manager().save_mods_list( const_cast<WORLDPTR>( this ) );
-    return true;
 }
 
 void worldfactory::init()
@@ -301,9 +193,15 @@ void worldfactory::init()
         worldname = world_dir.substr( name_index + 1 );
 
         // create and store the world
-        all_worlds[worldname] = std::make_unique<WORLD>();
+        all_worlds[worldname] = std::make_unique<WORLDINFO>();
         // give the world a name
         all_worlds[worldname]->world_name = worldname;
+        // Record the world save format. V2 is identified by the presence of a map.sqlite3 file.
+        if( file_exist( world_dir + "/map.sqlite3" ) ) {
+            all_worlds[worldname]->world_save_format = save_format::V2_COMPRESSED_SQLITE3;
+        } else {
+            all_worlds[worldname]->world_save_format = save_format::V1;
+        }
         // add sav files
         for( auto &world_sav_file : world_sav_files ) {
             all_worlds[worldname]->world_saves.push_back( save_t::from_base_path( world_sav_file ) );
@@ -321,9 +219,9 @@ void worldfactory::init()
     // check to see if there exists a worldname "save" which denotes that a world exists in the save
     // directory and not in a sub-world directory
     if( has_world( "save" ) ) {
-        const WORLD &old_world = *all_worlds["save"];
+        const WORLDINFO &old_world = *all_worlds["save"];
 
-        std::unique_ptr<WORLD> newworld = std::make_unique<WORLD>();
+        std::unique_ptr<WORLDINFO> newworld = std::make_unique<WORLDINFO>();
         newworld->world_name = get_next_valid_worldname();
 
         // save world as conversion world
@@ -362,7 +260,7 @@ std::vector<std::string> worldfactory::all_worldnames() const
     return result;
 }
 
-WORLDPTR worldfactory::pick_world( bool show_prompt, bool empty_only )
+WORLDINFO *worldfactory::pick_world( bool show_prompt, bool empty_only )
 {
     std::vector<std::string> world_names = all_worldnames();
 
@@ -485,7 +383,7 @@ WORLDPTR worldfactory::pick_world( bool show_prompt, bool empty_only )
             wmove( w_worlds, point( 4, static_cast<int>( i ) ) );
 
             std::string world_name = ( world_pages[selpage] )[i];
-            WORLDPTR world = get_world( world_name );
+            WORLDINFO *world = get_world( world_name );
             size_t saves_num = world->world_saves.size();
 
             std::string text = string_format( "%s (%d)", world_name, saves_num );
@@ -575,7 +473,7 @@ WORLDPTR worldfactory::pick_world( bool show_prompt, bool empty_only )
                 }
             } while( world_pages[selpage].empty() );
         } else if( action == "CONFIRM" ) {
-            WORLDPTR world = get_world( world_pages[selpage][sel] );
+            WORLDINFO *world = get_world( world_pages[selpage][sel] );
             if( !( world->needs_lua() && !cata::has_lua() ) ) {
                 return world;
             }
@@ -589,10 +487,9 @@ void worldfactory::remove_world( const std::string &worldname )
 {
     auto it = all_worlds.find( worldname );
     if( it != all_worlds.end() ) {
-        WORLDPTR wptr = it->second.get();
-        if( active_world == wptr ) {
-            get_options().set_world_options( nullptr );
-            active_world = nullptr;
+        WORLDINFO *wptr = it->second.get();
+        if( active_world && active_world->info == wptr ) {
+            set_active_world( nullptr );
         }
         all_worlds.erase( it );
     }
@@ -633,7 +530,14 @@ std::string worldfactory::pick_random_name()
     return get_next_valid_worldname();
 }
 
-int worldfactory::show_worldgen_tab_options( const catacurses::window &, WORLDPTR world,
+std::string worldfactory::get_next_valid_worldname()
+{
+    std::string worldname = Name::get( nameIsWorldName );
+
+    return worldname;
+}
+
+int worldfactory::show_worldgen_tab_options( const catacurses::window &, WORLDINFO *world,
         const std::function<bool()> &on_quit )
 {
     get_options().set_world_options( &world->WORLD_OPTIONS );
@@ -851,7 +755,7 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
     }
 }
 
-void worldfactory::edit_active_world_mods( WORLDPTR world )
+void worldfactory::edit_active_world_mods( WORLDINFO *world )
 {
     // set up window
     catacurses::window wf_win;
@@ -884,7 +788,7 @@ void worldfactory::edit_active_world_mods( WORLDPTR world )
     }
 }
 
-int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win, WORLDPTR world,
+int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win, WORLDINFO *world,
         const std::function<bool()> &on_quit )
 {
     return show_modselection_window( win, world->active_mod_order, on_quit, on_quit, false );
@@ -1052,7 +956,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
                 if( !show_obsolete && mod->obsolete ) {
                     continue;
                 }
-                auto it = std::find( active_mod_order.begin(), active_mod_order.end(), mod );
+                auto it = std::ranges::find( active_mod_order, mod );
                 if( it != active_mod_order.end() ) {
                     continue;
                 }
@@ -1357,7 +1261,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
     return tab_output;
 }
 
-int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORLDPTR world,
+int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORLDINFO *world,
         const std::function<bool()> &on_quit )
 {
     catacurses::window w_confirmation;
@@ -1375,6 +1279,7 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "PICK_RANDOM_WORLDNAME" );
+    ctxt.register_action( "TOGGLE_V2_SAVE_FORMAT" );
     // string input popup actions
     ctxt.register_action( "TEXT.LEFT" );
     ctxt.register_action( "TEXT.RIGHT" );
@@ -1424,6 +1329,22 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
         fold_and_print( w_confirmation, point( 2, 3 ), getmaxx( w_confirmation ) - 2, c_light_gray,
                         _( "Press [<color_yellow>%s</color>] to pick a random name for your world." ),
                         ctxt.get_desc( "PICK_RANDOM_WORLDNAME" ) );
+
+        if( world->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
+            mvwprintz( w_confirmation, point( 2, 6 ), c_cyan,
+                       _( "Save Format: Experimental V2 save format" ) );
+        } else {
+            mvwprintz( w_confirmation, point( 2, 6 ), c_white,
+                       _( "Save Format: Standard (V1) save format" ) );
+        }
+
+        fold_and_print( w_confirmation, point( 2, 8 ), getmaxx( w_confirmation ) - 2, c_light_gray,
+                        _( "<color_cyan>[Experimental]</color> Press [<color_yellow>%s</color>] to toggle save format.\n"
+                           "<color_light_blue>The new format shrinks save files and reduces save corruption, at the cost of "
+                           "slightly slower saves. You can opt into this later by converting an existing world to V2"
+                           " from the main menu. V2 worlds cannot currently be converted back to V1.</color>" ),
+                        ctxt.get_desc( "TOGGLE_V2_SAVE_FORMAT" ) );
+
         fold_and_print( w_confirmation, point( 2, TERMY / 2 - 2 ), getmaxx( w_confirmation ) - 2,
                         c_light_gray,
                         _( "Press [<color_yellow>%s</color>] when you are satisfied with the world as it is and are ready "
@@ -1472,6 +1393,12 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
             return -1;
         } else if( action == "PICK_RANDOM_WORLDNAME" ) {
             world->world_name = worldname = pick_random_name();
+        } else if( action == "TOGGLE_V2_SAVE_FORMAT" ) {
+            if( world->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
+                world->world_save_format = save_format::V1;
+            } else {
+                world->world_save_format = save_format::V2_COMPRESSED_SQLITE3;
+            }
         } else if( action == "QUIT" && ( !on_quit || on_quit() ) ) {
             world->world_name = worldname;
             return -999;
@@ -1565,8 +1492,8 @@ void worldfactory::draw_worldgen_tabs( const catacurses::window &w, size_t curre
     };
 
     std::vector<std::string> tab_strings_translated( tab_strings );
-    std::for_each( tab_strings_translated.begin(),
-                   tab_strings_translated.end(), []( std::string & str )->void { str = _( str ); } );
+    std::ranges::for_each( tab_strings_translated,
+                           []( std::string & str )->void { str = _( str ); } );
 
     draw_tabs( w, tab_strings_translated, current );
     draw_border_below_tabs( w );
@@ -1599,107 +1526,13 @@ bool worldfactory::valid_worldname( const std::string &name, bool automated )
     return false;
 }
 
-void WORLD::load_options( JsonIn &jsin )
-{
-    auto &opts = get_options();
-
-    jsin.start_array();
-    while( !jsin.end_array() ) {
-        JsonObject jo = jsin.get_object();
-        jo.allow_omitted_members();
-        const std::string name = opts.migrateOptionName( jo.get_string( "name" ) );
-        const std::string value = opts.migrateOptionValue( jo.get_string( "name" ),
-                                  jo.get_string( "value" ) );
-
-        if( opts.has_option( name ) && opts.get_option( name ).getPage() == "world_default" ) {
-            WORLD_OPTIONS[ name ].setValue( value );
-        }
-    }
-}
-
-void WORLD::load_legacy_options( std::istream &fin )
-{
-    auto &opts = get_options();
-
-    //load legacy txt
-    std::string sLine;
-    while( !fin.eof() ) {
-        getline( fin, sLine );
-        if( !sLine.empty() && sLine[0] != '#' && std::count( sLine.begin(), sLine.end(), ' ' ) == 1 ) {
-            size_t ipos = sLine.find( ' ' );
-            // make sure that the option being loaded is part of the world_default page in OPTIONS
-            // In 0.C some lines consisted of a space and nothing else
-            const std::string name = opts.migrateOptionName( sLine.substr( 0, ipos ) );
-            const std::string value = opts.migrateOptionValue( sLine.substr( 0, ipos ), sLine.substr( ipos + 1,
-                                      sLine.length() ) );
-
-            if( ipos != 0 && opts.get_option( name ).getPage() == "world_default" ) {
-                WORLD_OPTIONS[name].setValue( value );
-            }
-        }
-    }
-}
-
-bool WORLD::load_options()
-{
-    WORLD_OPTIONS = get_options().get_world_defaults();
-
-    using namespace std::placeholders;
-    const auto path = folder_path() + "/" + PATH_INFO::worldoptions();
-    return read_from_file_optional_json( path, [&]( JsonIn & jsin ) {
-        load_options( jsin );
-    } );
-}
-
-void load_world_option( const JsonObject &jo )
-{
-    auto arr = jo.get_array( "options" );
-    if( arr.empty() ) {
-        jo.throw_error( "no options specified", "options" );
-    }
-    for( const std::string line : arr ) {
-        get_options().get_option( line ).setValue( "true" );
-    }
-}
-
-//load external option from json
-void load_external_option( const JsonObject &jo )
-{
-    auto name = jo.get_string( "name" );
-    auto stype = jo.get_string( "stype" );
-    options_manager &opts = get_options();
-    if( !opts.has_option( name ) ) {
-        auto sinfo = jo.get_string( "info" );
-        opts.add_external( name, "external_options", stype, sinfo, sinfo );
-    }
-    options_manager::cOpt &opt = opts.get_option( name );
-    if( stype == "float" ) {
-        opt.setValue( static_cast<float>( jo.get_float( "value" ) ) );
-    } else if( stype == "int" ) {
-        opt.setValue( jo.get_int( "value" ) );
-    } else if( stype == "bool" ) {
-        if( jo.get_bool( "value" ) ) {
-            opt.setValue( "true" );
-        } else {
-            opt.setValue( "false" );
-        }
-    } else if( stype == "string" ) {
-        opt.setValue( jo.get_string( "value" ) );
-    } else {
-        jo.throw_error( "Unknown or unsupported stype for external option", "stype" );
-    }
-    // Just visit this member if it exists
-    if( jo.has_member( "info" ) ) {
-        jo.get_string( "info" );
-    }
-}
 
 mod_manager &worldfactory::get_mod_manager()
 {
     return *mman;
 }
 
-WORLDPTR worldfactory::get_world( const std::string &name )
+WORLDINFO *worldfactory::get_world( const std::string &name )
 {
     const auto iter = all_worlds.find( name );
     if( iter == all_worlds.end() ) {
@@ -1712,8 +1545,8 @@ WORLDPTR worldfactory::get_world( const std::string &name )
 size_t worldfactory::get_world_index( const std::string &name )
 {
     std::vector<std::string> worlds = all_worldnames();
-    size_t world_pos = std::find( worlds.begin(), worlds.end(),
-                                  name ) - worlds.begin();
+    size_t world_pos = std::ranges::find( worlds,
+                                          name ) - worlds.begin();
     if( world_pos >= worlds.size() ) {
         world_pos = 0;
     }
@@ -1729,16 +1562,21 @@ static bool isForbidden( const std::string &candidate )
 
 void worldfactory::delete_world( const std::string &worldname, const bool delete_folder )
 {
+    // Disconnect to the database if we're somehow trying to delete the currently active world
+    if( active_world && active_world->info->world_name == worldname ) {
+        set_active_world( nullptr );
+    }
+
     std::string worldpath = get_world( worldname )->folder_path();
     std::set<std::string> directory_paths;
 
     auto file_paths = get_files_from_path( "", worldpath, true, true );
     if( !delete_folder ) {
-        std::vector<std::string>::iterator forbidden = find_if( file_paths.begin(), file_paths.end(),
+        std::vector<std::string>::iterator forbidden = std::ranges::find_if( file_paths,
                 isForbidden );
         while( forbidden != file_paths.end() ) {
             file_paths.erase( forbidden );
-            forbidden = find_if( file_paths.begin(), file_paths.end(), isForbidden );
+            forbidden = std::ranges::find_if( file_paths, isForbidden );
         }
     }
     for( auto &file_path : file_paths ) {
@@ -1768,4 +1606,51 @@ void worldfactory::delete_world( const std::string &worldname, const bool delete
     } else {
         get_world( worldname )->world_saves.clear();
     }
+}
+
+void worldfactory::convert_to_v2( const std::string &worldname )
+{
+    // Ensure we're ready to convert
+    WORLDINFO *worldinfo = get_world( worldname );
+    if( worldinfo == nullptr ) {
+        popup( _( "Tried to convert non-existing world %s to v2" ), worldname );
+        return;
+    }
+
+    if( worldinfo->world_save_format != save_format::V1 ) {
+        popup( _( "World %s is already at savefile version 2" ), worldname );
+        return;
+    }
+
+    // Backup the world by renaming it to a new name
+    if( worldname.find( " (V2 Conversion Backup)" ) != std::string::npos ) {
+        popup( _( "World '%s' is already a backup. Rename the world before trying again." ), worldname );
+        return;
+    }
+
+    std::string backup_name = worldname + " (V2 Conversion Backup)";
+    if( has_world( backup_name ) ) {
+        popup( _( "Backup world '%s' already exists, aborting conversion" ), backup_name );
+        return;
+    }
+
+    std::unique_ptr<WORLDINFO> old_world = std::make_unique<WORLDINFO>();
+    old_world->COPY_WORLD( world_generator->get_world( worldname ) );
+    old_world->world_name = backup_name;
+
+    // Deep copy the world saves
+    std::vector<save_t> world_saves_copy( worldinfo->world_saves );
+    old_world->world_saves = worldinfo->world_saves;
+
+    // Rename the world folder perform the move
+    rename_file( worldinfo->folder_path(), old_world->folder_path() );
+    worldinfo->world_save_format = save_format::V2_COMPRESSED_SQLITE3;
+    world new_world( worldinfo );
+    new_world.convert_from_v1( old_world );
+    add_world( std::move( old_world ) );
+
+    // Save the world
+    worldinfo->save();
+
+    popup( _( "Conversion Complete!" ) );
 }

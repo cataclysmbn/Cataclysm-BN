@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/9e681265e467fd434a0e19653d0823e1116a5240/crates/emmylua_code_analysis/resources/schema.json",
+  "completion": {
+    "autoRequire": false,
+    "callSnippet": false,
+    "enable": true,
+    "postfix": "@"
+  },
+  "workspace": {
+    "ignoreDir": [
+      "src"
+    ],
+    "library": [
+      "./lua_annotations.lua"
+    ]
+  },
+  "diagnostics": {
+    "enable": true,
+    "globals": [
+      "test_data"
+    ]
+  }
+}

@@ -38,7 +38,7 @@
     "id": "bthk_stock",
     "type": "GUNMOD",
     "name": "butt hook stock",
-    "description": ", A military-grade stock which folds reducing the guns volume.  The weight and the pivoting hook which latches onto your forearm allows for greater stability.  ",
+    "description": "A military-grade stock which folds reducing the guns volume.  The weight and the pivoting hook which latches onto your forearm allows for greater stability.",
     "weight": "500 g",
     "volume": "125 ml",
     "integral_volume": "0 ml",
@@ -56,8 +56,8 @@
       [ "GATLING_GUNS" ],
       [ "SHOTGUNS" ]
     ],
-    "dispersion_modifier": -20,
-    "handling_modifier": 2,
+    "dispersion_modifier": -25,
+    "handling_modifier": 5,
     "min_skills": [ [ "weapon", 1 ] ],
     "flags": [ "NEEDS_UNFOLD", "COLLAPSIBLE_STOCK" ]
   },
@@ -66,9 +66,9 @@
     "copy-from": "beam_scatterer",
     "type": "GUNMOD",
     "name": { "str": "diffracting lens", "str_pl": "diffracting lenses" },
-    "description": "A set of optics made to fit on laser weapons, which will diffract the laser beam into several lower powered beams.  This slightly increases point-blank damage and makes it difficult to not hit, but reduces range",
+    "description": "A set of optics made to fit on laser weapons, which will diffract the laser beam into several lower powered beams.  This slightly increases point-blank damage and makes it difficult to not hit, but reduces range.",
     "range_modifier": -7,
-    "damage_modifier": { "damage_type": "stab", "amount": 2 },
+    "damage_modifier": { "damage_type": "heat", "amount": 5 },
     "ammo_effects": [ "SHOT" ],
     "min_skills": [ [ "weapon", 1 ] ],
     "mod_target_category": [

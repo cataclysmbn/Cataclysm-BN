@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ASSIGN_H
-#define CATA_SRC_ASSIGN_H
 
 #include <algorithm>
 #include <map>
@@ -45,7 +43,7 @@ void report_strict_violation( const JsonObject &jo, const std::string &message,
                               const std::string &name );
 
 template <Arithmetic T>
-bool assign( const JsonObject &jo, const std::string &name, T &val, bool strict = false,
+bool assign( const JsonObject &jo, const std::string &name, T &val, bool = false,
              T lo = std::numeric_limits<T>::lowest(), T hi = std::numeric_limits<T>::max() )
 {
     T out;
@@ -63,7 +61,6 @@ bool assign( const JsonObject &jo, const std::string &name, T &val, bool strict 
     // such as +10% are well-formed independent of whether they affect base value
     if( relative.read( name, out ) ) {
         err = relative;
-        strict = false;
         out += val;
 
     } else if( proportional.read( name, scalar ) ) {
@@ -71,7 +68,6 @@ bool assign( const JsonObject &jo, const std::string &name, T &val, bool strict 
         if( scalar <= 0 || scalar == 1 ) {
             err.throw_error( "multiplier must be a positive number other than 1", name );
         }
-        strict = false;
         out = val * scalar;
 
     } else if( !jo.read( name, out ) ) {
@@ -80,11 +76,6 @@ bool assign( const JsonObject &jo, const std::string &name, T &val, bool strict 
 
     if( out < lo || out > hi ) {
         err.throw_error( "value outside supported range", name );
-    }
-
-    if( strict && out == val ) {
-        report_strict_violation( err, "cannot assign explicit value the same as default or inherited value",
-                                 name );
     }
 
     val = out;
@@ -98,7 +89,7 @@ bool assign( const JsonObject &jo, const std::string &name, bool &val, bool stri
 
 template <Arithmetic T>
 bool assign( const JsonObject &jo, const std::string &name, std::pair<T, T> &val,
-             bool strict = false, T lo = std::numeric_limits<T>::lowest(), T hi = std::numeric_limits<T>::max() )
+             bool = false, T lo = std::numeric_limits<T>::lowest(), T hi = std::numeric_limits<T>::max() )
 {
     std::pair<T, T> out;
 
@@ -122,11 +113,6 @@ bool assign( const JsonObject &jo, const std::string &name, std::pair<T, T> &val
         jo.throw_error( "value outside supported range", name );
     }
 
-    if( strict && out == val ) {
-        report_strict_violation( jo, "cannot assign explicit value the same as default or inherited value",
-                                 name );
-    }
-
     val = out;
 
     return true;
@@ -135,17 +121,12 @@ bool assign( const JsonObject &jo, const std::string &name, std::pair<T, T> &val
 // Note: is_optional excludes any types based on std::optional, which is
 // handled below in a separate function.
 template < typename T>
-bool assign( const JsonObject &jo, const std::string &name, T &val, bool strict = false )
+bool assign( const JsonObject &jo, const std::string &name, T &val, bool = false )
 requires( std::is_class_v<T> && !is_optional<T>::value ) //*NOPAD*
 {
     T out;
     if( !jo.read( name, out ) ) {
         return false;
-    }
-
-    if( strict && out == val ) {
-        report_strict_violation( jo, "cannot assign explicit value the same as default or inherited value",
-                                 name );
     }
 
     val = out;
@@ -381,7 +362,7 @@ requires( !units::quantity_details<ut>::common_zero_point::value )
 
 template<typename T, typename F>
 inline bool assign_unit_common( const JsonObject &jo, const std::string &name, T &val, F parse,
-                                bool strict, const T lo, const T hi )
+                                bool, const T lo, const T hi )
 {
     T out;
 
@@ -401,7 +382,6 @@ inline bool assign_unit_common( const JsonObject &jo, const std::string &name, T
         if( !parse( err, tmp ) ) {
             err.throw_error( "invalid relative value specified", name );
         }
-        strict = false;
         out = val + tmp;
 
     } else if( proportional.has_member( name ) ) {
@@ -410,7 +390,6 @@ inline bool assign_unit_common( const JsonObject &jo, const std::string &name, T
         if( !err.read( name, scalar ) || scalar <= 0 || scalar == 1 ) {
             err.throw_error( "multiplier must be a positive number other than 1", name );
         }
-        strict = false;
         out = mult_unit( err, name, val, scalar );
 
     } else if( !parse( jo, out ) ) {
@@ -419,11 +398,6 @@ inline bool assign_unit_common( const JsonObject &jo, const std::string &name, T
 
     if( out < lo || out > hi ) {
         err.throw_error( "value outside supported range", name );
-    }
-
-    if( strict && out == val ) {
-        report_strict_violation( err, "cannot assign explicit value the same as default or inherited value",
-                                 name );
     }
 
     val = out;
@@ -479,7 +453,7 @@ requires std::is_same_v<std::decay_t<T>, time_duration> {
 template<typename T>
 inline typename
 std::enable_if<std::is_same<typename std::decay<T>::type, time_duration>::value, bool>::type assign(
-    const JsonObject &jo, const std::string &name, T &val, bool strict, const T &factor )
+    const JsonObject &jo, const std::string &name, T &val, bool, const T &factor )
 {
     T out{};
     double scalar;
@@ -496,7 +470,6 @@ std::enable_if<std::is_same<typename std::decay<T>::type, time_duration>::value,
     // such as +10% are well-formed independent of whether they affect base value
     if( read_with_factor( relative, name, out, factor ) ) {
         err = relative;
-        strict = false;
         out = out + val;
 
     } else if( proportional.read( name, scalar ) ) {
@@ -504,16 +477,10 @@ std::enable_if<std::is_same<typename std::decay<T>::type, time_duration>::value,
         if( scalar <= 0 || scalar == 1 ) {
             err.throw_error( "multiplier must be a positive number other than 1", name );
         }
-        strict = false;
         out = val * scalar;
 
     } else if( !read_with_factor( jo, name, out, factor ) ) {
         return false;
-    }
-
-    if( strict && out == val ) {
-        report_strict_violation( err, "cannot assign explicit value the same as default or inherited value",
-                                 name );
     }
 
     val = out;
@@ -574,4 +541,4 @@ bool assign( const JsonObject &jo,
                      float_max,
                      float_max,
                      float_max ) );
-#endif // CATA_SRC_ASSIGN_H
+

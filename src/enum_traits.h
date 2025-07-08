@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ENUM_TRAITS_H
-#define CATA_SRC_ENUM_TRAITS_H
 
 #include <type_traits>
 
@@ -21,4 +19,4 @@ struct has_enum_traits : std::false_type {};
 template<typename E>
 struct has_enum_traits<E, enum_traits_detail::last_type<E>> : std::true_type {};
 
-#endif // CATA_SRC_ENUM_TRAITS_H
+

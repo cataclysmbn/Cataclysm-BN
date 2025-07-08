@@ -277,7 +277,7 @@ void game::item_action_menu()
         } );
     };
     // Add mapped actions to the menu vector.
-    std::transform( iactions.begin(), iactions.end(), std::back_inserter( menu_items ),
+    std::ranges::transform( iactions, std::back_inserter( menu_items ),
     []( const std::pair<item_action_id, item *> &elem ) {
         std::string ss = elem.second->display_name();
         if( elem.second->ammo_required() ) {

@@ -1,0 +1,43 @@
+[
+  {
+    "type": "clothing_mod",
+    "id": "owlbear_furred",
+    "flag": "owlbear_furred",
+    "item": "owlbear_fur",
+    "implement_prompt": "Line it with owlbear fur",
+    "destroy_prompt": "Destroy owlbear fur lining",
+    "mod_value": [
+      { "type": "encumbrance", "value": 1 },
+      { "type": "encumbrance", "value": 4, "proportion": [ "coverage" ] },
+      { "type": "warmth", "value": 75, "proportion": [ "coverage" ] }
+    ]
+  },
+  {
+    "type": "clothing_mod",
+    "id": "demonchitin_padded",
+    "flag": "demonchitin_padded",
+    "item": "demon_chitin_piece",
+    "implement_prompt": "Pad with demon chitin",
+    "destroy_prompt": "Destroy demon chitin padding",
+    "mod_value": [
+      { "type": "cut", "value": 1.75, "proportion": [ "thickness" ] },
+      { "type": "bullet", "value": 1.75, "proportion": [ "thickness" ] },
+      { "type": "fire", "value": 60, "proportion": [ "coverage" ] },
+      { "type": "encumbrance", "value": 2, "round_up": true, "proportion": [ "thickness", "coverage" ] }
+    ]
+  },
+  {
+    "type": "clothing_mod",
+    "id": "blackdragon_coated",
+    "flag": "blackdragon_coated",
+    "item": "dragon_black_scale",
+    "implement_prompt": "Add black dragon scale coating",
+    "destroy_prompt": "Destroy black dragon scale coating",
+    "mod_value": [
+      { "type": "cut", "value": 1.8, "proportion": [ "thickness" ] },
+      { "type": "bullet", "value": 1.8, "proportion": [ "thickness" ] },
+      { "type": "acid", "value": 40, "proportion": [ "coverage" ] },
+      { "type": "encumbrance", "value": 2, "round_up": true, "proportion": [ "thickness", "coverage" ] }
+    ]
+  }
+]

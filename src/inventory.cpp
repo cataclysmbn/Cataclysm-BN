@@ -1,5 +1,6 @@
 #include "inventory.h"
 
+#include <algorithm>
 #include <climits>
 #include <cmath>
 #include <cstdint>
@@ -100,7 +101,7 @@ void invlet_favorites::erase( char invlet )
         return;
     }
     std::string &invlets = invlets_by_id[id];
-    std::string::iterator it = std::find( invlets.begin(), invlets.end(), invlet );
+    std::string::iterator it = std::ranges::find( invlets, invlet );
     invlets.erase( it );
     ids_by_invlet[invlet_u] = itype_id();
 }
@@ -157,69 +158,6 @@ size_t inventory::size() const
     return items.size();
 }
 
-inventory &inventory::operator+= ( const inventory &rhs )
-{
-    for( size_t i = 0; i < rhs.size(); i++ ) {
-        push_back( rhs.const_stack( i ) );
-    }
-    return *this;
-}
-
-inventory &inventory::operator+= ( const location_inventory &rhs )
-{
-    for( size_t i = 0; i < rhs.size(); i++ ) {
-        push_back( rhs.const_stack( i ) );
-    }
-    return *this;
-}
-
-inventory &inventory::operator+= ( const location_vector<item> &rhs )
-{
-    for( item * const &it : rhs ) {
-        add_item( *it, true );
-    }
-    return *this;
-}
-
-inventory &inventory::operator+= ( const std::vector<item *> &rhs )
-{
-    for( const auto &rh : rhs ) {
-        add_item( *rh, true );
-    }
-    return *this;
-}
-
-inventory &inventory::operator+= ( item &rhs )
-{
-    add_item( rhs );
-    return *this;
-}
-
-inventory &inventory::operator+= ( const item_stack &rhs )
-{
-    for( const auto &p : rhs ) {
-        if( !p->made_of( LIQUID ) ) {
-            add_item( *p, true );
-        }
-    }
-    return *this;
-}
-
-inventory inventory::operator+ ( const inventory &rhs )
-{
-    return inventory( *this ) += rhs;
-}
-
-inventory inventory::operator+ ( const std::vector<item *> &rhs )
-{
-    return inventory( *this ) += rhs;
-}
-
-inventory inventory::operator+ ( item &rhs )
-{
-    return inventory( *this ) += rhs;
-}
-
 void inventory::unsort()
 {
     binned = false;
@@ -238,15 +176,55 @@ void inventory::clear()
     items_type_cached = false;
 }
 
-void inventory::push_back( const std::vector<item *> &newits )
+inventory &inventory::add_items( const inventory &rhs, bool keep_invlet, bool assign_invlet,
+                                 bool should_stack )
 {
-    for( const auto &newit : newits ) {
-        add_item( *newit, true );
+    for( size_t i = 0; i < rhs.size(); i++ ) {
+        add_items( rhs.const_stack( i ), keep_invlet, assign_invlet, should_stack );
     }
+    return *this;
+}
+
+inventory &inventory::add_items( const item_stack &rhs, bool keep_invlet, bool assign_invlet,
+                                 bool should_stack )
+{
+    for( const auto &it : rhs ) {
+        if( !it->made_of( LIQUID ) ) {
+            add_item( *it, keep_invlet, assign_invlet, should_stack );
+        }
+    }
+    return *this;
+}
+
+inventory &inventory::add_items( const std::vector<item *> &rhs, bool keep_invlet,
+                                 bool assign_invlet, bool should_stack )
+{
+    for( const auto &it : rhs ) {
+        add_item( *it, keep_invlet, assign_invlet, should_stack );
+    }
+    return *this;
+}
+
+inventory &inventory::add_items( const location_inventory &rhs, bool keep_invlet,
+                                 bool assign_invlet, bool should_stack )
+{
+    for( size_t i = 0; i < rhs.size(); i++ ) {
+        add_items( rhs.const_stack( i ), keep_invlet, assign_invlet, should_stack );
+    }
+    return *this;
+}
+
+inventory &inventory::add_items( const location_vector<item> &rhs, bool keep_invlet,
+                                 bool assign_invlet, bool should_stack )
+{
+    for( item * const &it : rhs ) {
+        add_item( *it, keep_invlet, assign_invlet, should_stack );
+    }
+    return *this;
 }
 
 // This function keeps the invlet cache updated when a new item is added.
-void inventory::update_cache_with_item( item &newit )
+void inventory::update_invlet_cache_with_item( item &newit )
 {
     // This function does two things:
     // 1. It adds newit's invlet to the list of favorite letters for newit's item type.
@@ -279,45 +257,6 @@ char inventory::find_usable_cached_invlet( const itype_id &item_type )
     return 0;
 }
 
-item &inventory::add_item( item &newit, bool keep_invlet, bool assign_invlet, bool should_stack )
-{
-    binned = false;
-    items_type_cached = false;
-
-    if( should_stack ) {
-        // See if we can't stack this item.
-        for( auto &elem : items ) {
-            item *&it = *elem.begin();
-            if( it->stacks_with( newit ) ) {
-                if( it->invlet == '\0' ) {
-                    if( !keep_invlet ) {
-                        update_invlet( newit, assign_invlet );
-                    }
-                    update_cache_with_item( newit );
-                    it->invlet = newit.invlet;
-                } else {
-                    newit.invlet = it->invlet;
-                }
-                elem.push_back( &newit );
-                return *elem.back();
-            } else if( keep_invlet && assign_invlet && it->invlet == newit.invlet &&
-                       it->invlet != '\0' ) {
-                // If keep_invlet is true, we'll be forcing other items out of their current invlet.
-                assign_empty_invlet( *it, g->u );
-            }
-        }
-    }
-
-    // Couldn't stack the item, proceed.
-    if( !keep_invlet ) {
-        update_invlet( newit, assign_invlet );
-    }
-    update_cache_with_item( newit );
-
-    items.push_back( {&newit} );
-    return *items.back().back();
-}
-
 void inventory::build_items_type_cache()
 {
     items_type_cache.clear();
@@ -328,35 +267,64 @@ void inventory::build_items_type_cache()
     items_type_cached = true;
 }
 
-item &inventory::add_item_by_items_type_cache( item &newit, bool keep_invlet, bool assign_invlet,
-        bool should_stack )
+namespace
+{
+inline static bool add_item_stack_helper( inventory &inv, item &newit, std::vector<item *> &elem,
+        bool keep_invlet, bool assign_invlet, item *&existing )
+{
+    item *&it = *elem.begin();
+    if( it->stacks_with( newit ) ) {
+        if( it->invlet == '\0' ) {
+            if( !keep_invlet ) {
+                inv.update_invlet( newit, assign_invlet );
+            }
+            inv.update_invlet_cache_with_item( newit );
+            it->invlet = newit.invlet;
+        } else {
+            newit.invlet = it->invlet;
+        }
+        elem.push_back( &newit );
+        existing = elem.back();
+        return true;
+    } else if( keep_invlet && assign_invlet && it->invlet == newit.invlet &&
+               it->invlet != '\0' ) {
+        // If keep_invlet is true, we'll be forcing other items out of their current invlet.
+        inv.assign_empty_invlet( *it, g->u );
+    }
+    return false;
+}
+}
+
+template<bool IsCached>
+item &inventory::add_item_internal( item &newit, bool keep_invlet, bool assign_invlet,
+                                    bool should_stack )
 {
     binned = false;
-    if( !items_type_cached ) {
-        debugmsg( "Tried to add item to inventory using cache without building the items_type_cache." );
-        build_items_type_cache();
-    }
+
     itype_id type = newit.typeId();
-    if( should_stack ) {
-        // See if we can't stack this item.
-        for( auto &elem : items_type_cache[type] ) {
-            auto it_ref = *elem->begin();
-            if( it_ref->stacks_with( newit, false, true ) ) {
-                if( it_ref->invlet == '\0' ) {
-                    if( !keep_invlet ) {
-                        update_invlet( newit, assign_invlet );
-                    }
-                    update_cache_with_item( newit );
-                    it_ref->invlet = newit.invlet;
-                } else {
-                    newit.invlet = it_ref->invlet;
+    if constexpr( IsCached ) {
+        if( !items_type_cached ) {
+            debugmsg( "Tried to add item to inventory using cache without building the items_type_cache." );
+            build_items_type_cache();
+        }
+        if( should_stack ) {
+            // See if we can't stack this item.
+            for( auto &elem : items_type_cache[type] ) {
+                item *ex{};
+                if( ::add_item_stack_helper( *this, newit, *elem, keep_invlet, assign_invlet, ex ) ) {
+                    return *ex;
                 }
-                elem->push_back( &newit );
-                return *elem->back();
-            } else if( keep_invlet && assign_invlet && it_ref->invlet == newit.invlet &&
-                       it_ref->invlet != '\0' ) {
-                // If keep_invlet is true, we'll be forcing other items out of their current invlet.
-                assign_empty_invlet( *it_ref, g->u );
+            }
+        }
+    } else {
+        items_type_cached = false;
+        if( should_stack ) {
+            // See if we can't stack this item.
+            for( auto &elem : items ) {
+                item *ex{};
+                if( ::add_item_stack_helper( *this, newit, elem, keep_invlet, assign_invlet, ex ) ) {
+                    return *ex;
+                }
             }
         }
     }
@@ -365,21 +333,26 @@ item &inventory::add_item_by_items_type_cache( item &newit, bool keep_invlet, bo
     if( !keep_invlet ) {
         update_invlet( newit, assign_invlet );
     }
-    update_cache_with_item( newit );
+    update_invlet_cache_with_item( newit );
 
     items.push_back( {&newit} );
-    items_type_cache[type].push_back( &items.back() );
+
+    if constexpr( IsCached ) {
+        items_type_cache[type].push_back( &items.back() );
+    }
+
     return *items.back().back();
 }
 
-void inventory::add_item_keep_invlet( item &newit )
+item &inventory::add_item( item &newit, bool keep_invlet, bool assign_invlet, bool should_stack )
 {
-    add_item( newit, true );
+    return add_item_internal<false>( newit, keep_invlet, assign_invlet, should_stack );
 }
 
-void inventory::push_back( item &newit )
+item &inventory::add_item_by_items_type_cache( item &newit, bool keep_invlet, bool assign_invlet,
+        bool should_stack )
 {
-    add_item( newit );
+    return add_item_internal<true>( newit, keep_invlet, assign_invlet, should_stack );
 }
 
 #if defined(__ANDROID__)
@@ -399,6 +372,10 @@ void inventory::restack( player &p )
     int idx = 0;
     for( invstack::iterator iter = items.begin(); iter != items.end(); ++iter, ++idx ) {
         std::vector<item *> &stack = *iter;
+        // Sort the inner stack itself, so the most recently used item is at front and keeps the invlet
+        std::ranges::sort( stack, []( auto * lhs, auto * rhs ) {
+            return *lhs < *rhs;
+        } );
         item &topmost = *stack.front();
 
         const item *invlet_item = p.invlet_to_item( topmost.invlet );
@@ -436,7 +413,7 @@ void inventory::restack( player &p )
 
     //re-add non-matching items
     for( auto &elem : to_restack ) {
-        add_item( *elem );
+        add_item( *elem, false );
     }
 
     //Ensure that all items in the same stack have the same invlet.
@@ -504,6 +481,7 @@ void inventory::form_from_map( map &m, std::vector<tripoint> pts, const Characte
                                bool assign_invlet )
 {
     const time_point bday = calendar::start_of_cataclysm;
+    std::unordered_map<const vehicle *, std::unordered_set<const vpart_reference *>> checked_vehi;
     items.clear();
     build_items_type_cache();
     for( const tripoint &p : pts ) {
@@ -576,10 +554,17 @@ void inventory::form_from_map( map &m, std::vector<tripoint> pts, const Characte
             continue;
         }
         vehicle *const veh = &vp->vehicle();
+        if( !checked_vehi.contains( veh ) ) {
+            // We haven't worked with this vehicle yet.
+            checked_vehi[veh] = std::unordered_set<const vpart_reference *>();
+        }
+        // Make sure we're ready to record
+        std::unordered_set<const vpart_reference *> &found_parts = checked_vehi[veh];
 
         //Adds faucet to kitchen stuff; may be horribly wrong to do such....
         //ShouldBreak into own variable
         const std::optional<vpart_reference> kpart = vp.part_with_feature( "KITCHEN", true );
+        const std::optional<vpart_reference> butcherpart = vp.part_with_feature( "BUTCHER_EQ", true );
         const std::optional<vpart_reference> faupart = vp.part_with_feature( "FAUCET", true );
         const std::optional<vpart_reference> weldpart = vp.part_with_feature( "WELDRIG", true );
         const std::optional<vpart_reference> craftpart = vp.part_with_feature( "CRAFTRIG", true );
@@ -596,7 +581,7 @@ void inventory::form_from_map( map &m, std::vector<tripoint> pts, const Characte
             }
         }
 
-        if( faupart ) {
+        if( faupart && !found_parts.contains( &*faupart ) ) {
             for( const auto &it : veh->fuels_left() ) {
                 item &fuel = *item::spawn_temporary( it.first, bday );
                 if( fuel.made_of( LIQUID ) ) {
@@ -604,85 +589,105 @@ void inventory::form_from_map( map &m, std::vector<tripoint> pts, const Characte
                     add_item_by_items_type_cache( fuel, false, true, false );
                 }
             }
+            found_parts.insert( &*faupart );
         }
 
         static const flag_id flag_PSEUDO( "PSEUDO" );
         static const flag_id flag_HEATS_FOOD( "HEATS_FOOD" );
-        if( kpart ) {
+        static const flag_id flag_FLATSURF( "FLAT_SURFACE" );
+
+        if( kpart && !found_parts.contains( &*kpart ) ) {
             item &hotplate = *item::spawn_temporary( "hotplate", bday );
             hotplate.charges = veh->fuel_left( itype_battery, true );
             hotplate.item_tags.insert( flag_PSEUDO );
             // TODO: Allow disabling
             hotplate.item_tags.insert( flag_HEATS_FOOD );
-            add_item_by_items_type_cache( hotplate );
+            add_item_by_items_type_cache( hotplate, false );
 
             item &pot = *item::spawn_temporary( "pot", bday );
             pot.set_flag( flag_PSEUDO );
-            add_item_by_items_type_cache( pot );
+            add_item_by_items_type_cache( pot, false );
             item &pan = *item::spawn_temporary( "pan", bday );
             pan.set_flag( flag_PSEUDO );
-            add_item_by_items_type_cache( pan );
+            add_item_by_items_type_cache( pan, false );
+            found_parts.insert( &*kpart );
         }
-        if( weldpart ) {
+        if( butcherpart &&
+            !found_parts.contains( &*butcherpart ) ) { //copy n paste code moment(this will go wrong)
+            item &butchery = *item::spawn_temporary( "fake_adv_butchery", bday );
+            butchery.charges = veh->fuel_left( itype_battery, true );
+            butchery.item_tags.insert( flag_PSEUDO );
+            //A very hacky way to make game take vehicle part into the account for flat surface
+            butchery.item_tags.insert( flag_FLATSURF );
+            add_item_by_items_type_cache( butchery, false );
+            found_parts.insert( &*butcherpart );
+        }
+        if( weldpart && !found_parts.contains( &*weldpart ) ) {
             item &welder = *item::spawn_temporary( "welder", bday );
             welder.charges = veh->fuel_left( itype_battery, true );
             welder.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( welder );
+            add_item_by_items_type_cache( welder, false );
 
             item &soldering_iron = *item::spawn_temporary( "soldering_iron", bday );
             soldering_iron.charges = veh->fuel_left( itype_battery, true );
             soldering_iron.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( soldering_iron );
+            add_item_by_items_type_cache( soldering_iron, false );
+            found_parts.insert( &*weldpart );
         }
-        if( craftpart ) {
+        if( craftpart && !found_parts.contains( &*craftpart ) ) {
             item &vac_sealer = *item::spawn_temporary( "vac_sealer", bday );
             vac_sealer.charges = veh->fuel_left( itype_battery, true );
             vac_sealer.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( vac_sealer );
+            add_item_by_items_type_cache( vac_sealer, false );
 
             item &dehydrator = *item::spawn_temporary( "dehydrator", bday );
             dehydrator.charges = veh->fuel_left( itype_battery, true );
             dehydrator.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( dehydrator );
+            add_item_by_items_type_cache( dehydrator, false );
 
             item &food_processor = *item::spawn_temporary( "food_processor", bday );
             food_processor.charges = veh->fuel_left( itype_battery, true );
             food_processor.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( food_processor );
+            add_item_by_items_type_cache( food_processor, false );
 
             item &press = *item::spawn_temporary( "press", bday );
             press.charges = veh->fuel_left( itype_battery, true );
             press.set_flag( flag_PSEUDO );
-            add_item_by_items_type_cache( press );
+            add_item_by_items_type_cache( press, false );
+            found_parts.insert( &*craftpart );
         }
-        if( forgepart ) {
+        if( forgepart && !found_parts.contains( &*forgepart ) ) {
             item &forge = *item::spawn_temporary( "forge", bday );
             forge.charges = veh->fuel_left( itype_battery, true );
             forge.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( forge );
+            add_item_by_items_type_cache( forge, false );
+            found_parts.insert( &*forgepart );
         }
-        if( kilnpart ) {
+        if( kilnpart && !found_parts.contains( &*kilnpart ) ) {
             item &kiln = *item::spawn_temporary( "kiln", bday );
             kiln.charges = veh->fuel_left( itype_battery, true );
             kiln.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( kiln );
+            add_item_by_items_type_cache( kiln, false );
+            found_parts.insert( &*kilnpart );
         }
-        if( chempart ) {
+        if( chempart && !found_parts.contains( &*chempart ) ) {
             item &chemistry_set = *item::spawn_temporary( "chemistry_set", bday );
             chemistry_set.charges = veh->fuel_left( itype_battery, true );
             chemistry_set.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( chemistry_set );
+            add_item_by_items_type_cache( chemistry_set, false );
 
             item &electrolysis_kit = *item::spawn_temporary( "electrolysis_kit", bday );
             electrolysis_kit.charges = veh->fuel_left( itype_battery, true );
             electrolysis_kit.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( electrolysis_kit );
+            add_item_by_items_type_cache( electrolysis_kit, false );
+            found_parts.insert( &*chempart );
         }
-        if( autoclavepart ) {
+        if( autoclavepart && !found_parts.contains( &*autoclavepart ) ) {
             item &autoclave = *item::spawn_temporary( "autoclave", bday );
             autoclave.charges = veh->fuel_left( itype_battery, true );
             autoclave.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( autoclave );
+            add_item_by_items_type_cache( autoclave, false );
+            found_parts.insert( &*autoclavepart );
         }
     }
     pts.clear();
@@ -1200,7 +1205,7 @@ void inventory::assign_empty_invlet( item &it, const Character &p, const bool fo
                 // don't overwrite assigned keys
                 continue;
             }
-            if( std::find( binds.begin(), binds.end(), inv_char ) != binds.end() ) {
+            if( std::ranges::find( binds, inv_char ) != binds.end() ) {
                 // don't auto-assign bound keys
                 continue;
             }
@@ -1234,8 +1239,18 @@ void inventory::reassign_item( item &it, char invlet, bool remove_old )
     if( remove_old && it.invlet ) {
         invlet_cache.erase( it.invlet );
     }
+
+    // Remove invlet from other items beforehand, since restack may assign it to other items in the same stack.
+    auto fn = [ = ]( item * ii ) {
+        if( ii->invlet == invlet ) {
+            ii->invlet = 0;
+        }
+        return VisitResponse::SKIP;
+    };
+    visit_items( fn );
+
     it.invlet = invlet;
-    update_cache_with_item( it );
+    update_invlet_cache_with_item( it );
 }
 
 void inventory::update_invlet( item &newit, bool assign_invlet )
@@ -1368,26 +1383,17 @@ void location_inventory::clear()
     return inv.clear();
 }
 
-void location_inventory::push_back( std::vector<detached_ptr<item>> &newits )
+void location_inventory::add_items( std::vector<detached_ptr<item>> &newits, bool keep_invlet,
+                                    bool assign_invlet, bool should_stack )
 {
     for( detached_ptr<item> &it : newits ) {
-        if( !it ) {
-            continue;
-        }
-        item *as_p = it.release();
-        if( &*loc == as_p->saved_loc ) {
-            as_p->saved_loc = nullptr;
-            as_p->set_location( &*loc );
-        } else {
-            as_p->resolve_saved_loc();
-            as_p->set_location( &*loc );
-            inv.push_back( *as_p );
-        }
+        add_item( std::move( it ), keep_invlet, assign_invlet, should_stack );
     }
 }
 
-item &location_inventory::add_item( detached_ptr<item> &&newit, bool keep_invlet,
-                                    bool assign_invlet, bool should_stack )
+template<bool IsCached>
+item &location_inventory::add_item_internal( detached_ptr<item> &&newit, bool keep_invlet,
+        bool assign_invlet, bool should_stack )
 {
     if( !newit ) {
         return null_item_reference();
@@ -1417,84 +1423,24 @@ item &location_inventory::add_item( detached_ptr<item> &&newit, bool keep_invlet
 
     newit.release();
     as_p->set_location( &*loc );
-    return inv.add_item( *as_p, keep_invlet, assign_invlet, should_stack );
+
+    if constexpr( IsCached ) {
+        return inv.add_item_by_items_type_cache( *as_p, keep_invlet, assign_invlet, should_stack );
+    } else {
+        return inv.add_item( *as_p, keep_invlet, assign_invlet, should_stack );
+    }
 }
+
+item &location_inventory::add_item( detached_ptr<item> &&newit, bool keep_invlet,
+                                    bool assign_invlet, bool should_stack )
+{
+    return add_item_internal<false>( std::move( newit ), keep_invlet, assign_invlet, should_stack );
+}
+
 item &location_inventory::add_item_by_items_type_cache( detached_ptr<item> &&newit,
         bool keep_invlet, bool assign_invlet, bool should_stack )
 {
-    if( !newit ) {
-        return null_item_reference();
-    }
-    item *as_p = &*newit;
-    if( &*loc == as_p->saved_loc ) {
-        newit.release();
-        as_p->saved_loc = nullptr;
-        as_p->set_location( &*loc );
-        return *as_p;
-    }
-
-    as_p->resolve_saved_loc();
-    if( should_stack ) {
-        for( auto &elem : inv.items ) {
-            item *&it = *elem.begin();
-            // NOLINTNEXTLINE(bugprone-use-after-move)
-            if( it->stacks_with( *newit ) ) {
-                if( it->merge_charges( std::move( newit ) ) ) {
-                    return null_item_reference();
-                }
-            }
-        }
-    }
-
-    newit.release();
-    as_p->set_location( &*loc );
-    return inv.add_item_by_items_type_cache( *as_p, keep_invlet, assign_invlet, should_stack );
-}
-void location_inventory::add_item_keep_invlet( detached_ptr<item> &&newit )
-{
-    if( !newit ) {
-        return;
-    }
-    item *as_p = &*newit;
-    if( &*loc == as_p->saved_loc ) {
-        newit.release();
-        as_p->saved_loc = nullptr;
-        as_p->set_location( &*loc );
-        return;
-    }
-
-    as_p->resolve_saved_loc();
-    for( auto &elem : inv.items ) {
-        item *&it = *elem.begin();
-        // NOLINTNEXTLINE(bugprone-use-after-move)
-        if( it->stacks_with( *newit ) ) {
-            if( it->merge_charges( std::move( newit ) ) ) {
-                return;
-            }
-        }
-    }
-
-    newit.release();
-    as_p->set_location( &*loc );
-    return inv.add_item_keep_invlet( *as_p );
-}
-
-void location_inventory::push_back( detached_ptr<item> &&newit )
-{
-    if( !newit ) {
-        return;
-    }
-
-    item *as_p = newit.release();
-    if( &*loc == as_p->saved_loc ) {
-        as_p->saved_loc = nullptr;
-        as_p->set_location( &*loc );
-        return;
-    }
-
-    as_p->resolve_saved_loc();
-    as_p->set_location( &*loc );
-    return inv.push_back( *as_p );
+    return add_item_internal<true>( std::move( newit ), keep_invlet, assign_invlet, should_stack );
 }
 
 void location_inventory::restack( player &p )
@@ -1638,9 +1584,9 @@ const itype_bin &location_inventory::get_binned_items() const
     return inv.get_binned_items();
 }
 
-void location_inventory::update_cache_with_item( item &newit )
+void location_inventory::update_invlet_cache_with_item( item &newit )
 {
-    return inv.update_cache_with_item( newit );
+    return inv.update_invlet_cache_with_item( newit );
 }
 
 enchantment location_inventory::get_active_enchantment_cache( const Character &owner ) const

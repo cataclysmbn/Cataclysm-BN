@@ -3,11 +3,13 @@
 #include <algorithm>
 #include <cassert>
 #include <climits>
+#include <cstdint>
 #include <iterator>
 #include <list>
 #include <map>
 #include <optional>
 #include <queue>
+#include <future>
 
 #include "avatar.h"
 #include "calendar.h"
@@ -44,13 +46,18 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "profile.h"
+#include "world.h"
 
 class map_extra;
+
+template<typename _Mutex>
+using write_lock = std::unique_lock< _Mutex >;
+template<typename _Mutex>
+using read_lock = std::shared_lock< _Mutex >;
 
 overmapbuffer overmap_buffer;
 
 overmapbuffer::overmapbuffer()
-    : last_requested_overmap( nullptr )
 {
 }
 
@@ -66,49 +73,84 @@ omt_find_params::~omt_find_params() = default;
 
 omt_route_params::~omt_route_params() = default;
 
-std::string overmapbuffer::terrain_filename( const point_abs_om &p )
-{
-    return string_format( "%s/o.%d.%d", g->get_world_base_save_path(), p.x(), p.y() );
-}
-
-std::string overmapbuffer::player_filename( const point_abs_om &p )
-{
-    return string_format( "%s.seen.%d.%d", g->get_player_base_save_path(), p.x(), p.y() );
-}
-
 overmap &overmapbuffer::get( const point_abs_om &p )
 {
-    if( last_requested_overmap != nullptr && last_requested_overmap->pos() == p ) {
-        return *last_requested_overmap;
+    {
+        read_lock<std::shared_mutex> _l( mutex );
+        const auto it = overmaps.find( p );
+        if( it != overmaps.end() ) {
+            return *it->second.get();
+        }
     }
 
-    const auto it = overmaps.find( p );
-    if( it != overmaps.end() ) {
-        return *( last_requested_overmap = it->second.get() );
-    }
+    overmap *new_om;
+    {
+        write_lock<std::shared_mutex> _l( mutex );
+        // Search for it again, but now with a lock since another thread could've loaded this overmap tile first
+        const auto it = overmaps.find( p );
+        if( it != overmaps.end() ) {
+            return *it->second.get();
+        }
 
-    // That constructor loads an existing overmap or creates a new one.
-    overmap &new_om = *( overmaps[ p ] = std::make_unique<overmap>( p ) );
-    new_om.populate();
+        // That constructor loads an existing overmap or creates a new one.
+        assert( overmaps.find( p ) == overmaps.end() );
+        overmaps[p] = std::make_unique<overmap>( p );
+        new_om = overmaps[p].get();
+    }
     // Note: fix_mongroups might load other overmaps, so overmaps.back() is not
     // necessarily the overmap at (x,y)
-    fix_mongroups( new_om );
-    fix_npcs( new_om );
+    new_om->populate();
+    fix_mongroups( *new_om );
+    fix_npcs( *new_om );
 
-    last_requested_overmap = &new_om;
-    return new_om;
+    return *new_om;
 }
 
 void overmapbuffer::create_custom_overmap( const point_abs_om &p, overmap_special_batch &specials )
 {
-    if( last_requested_overmap != nullptr ) {
-        auto om_iter = overmaps.find( p );
-        if( om_iter != overmaps.end() && om_iter->second.get() == last_requested_overmap ) {
-            last_requested_overmap = nullptr;
+    overmap *new_om;
+    {
+        write_lock<std::shared_mutex> _l( mutex );
+        overmaps[p] = std::make_unique<overmap>( p );
+        new_om = overmaps[p].get();
+    }
+    new_om->populate( specials );
+}
+
+void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
+{
+    using overmap_loc = std::pair<point_abs_om, std::unique_ptr<overmap>>;
+
+    std::vector<std::future<overmap_loc>> async_data;
+    for( auto &loc : locs ) {
+        if( overmap_buffer.has( loc ) ) {
+            continue;
+        }
+
+        auto gen_func = [&]() {
+            auto map = std::make_unique<overmap>( loc );
+            map->populate();
+            fix_mongroups( *map );
+            fix_npcs( *map );
+            return std::make_pair( loc, std::move( map ) );
+        };
+        async_data.push_back( std::async( std::launch::async, gen_func ) );
+    }
+
+    auto popup = make_shared_fast<throbber_popup>( _( "Please wait..." ) );
+    for( auto &f : async_data ) {
+        while( f.wait_for( std::chrono::milliseconds( 10 ) ) != std::future_status::ready ) {
+            popup->refresh();
         }
     }
-    overmap &new_om = *( overmaps[ p ] = std::make_unique<overmap>( p ) );
-    new_om.populate( specials );
+
+    {
+        write_lock<std::shared_mutex> _l( mutex );
+        for( auto &m : async_data ) {
+            auto result = m.get();
+            overmaps[result.first] = std::move( result.second );
+        }
+    }
 }
 
 void overmapbuffer::fix_mongroups( overmap &new_overmap )
@@ -198,6 +240,8 @@ void overmapbuffer::fix_npcs( overmap &new_overmap )
 
 void overmapbuffer::save()
 {
+    read_lock<std::shared_mutex> _l( mutex );
+
     for( auto &omp : overmaps ) {
         // Note: this may throw io errors from std::ofstream
         omp.second->save();
@@ -206,9 +250,11 @@ void overmapbuffer::save()
 
 void overmapbuffer::clear()
 {
+    write_lock<std::shared_mutex> _l( mutex );
+
     overmaps.clear();
     known_non_existing.clear();
-    last_requested_overmap = nullptr;
+    placed_unique_specials.clear();
 }
 
 const regional_settings &overmapbuffer::get_settings( const tripoint_abs_omt &p )
@@ -255,19 +301,20 @@ void overmapbuffer::delete_extra( const tripoint_abs_omt &p )
 
 overmap *overmapbuffer::get_existing( const point_abs_om &p )
 {
-    if( last_requested_overmap && last_requested_overmap->pos() == p ) {
-        return last_requested_overmap;
+    {
+        read_lock<std::shared_mutex> _l( mutex );
+        const auto it = overmaps.find( p );
+        if( it != overmaps.end() ) {
+            return it->second.get();
+        }
+
+        if( known_non_existing.contains( p ) ) {
+            // This overmap does not exist on disk (this has already been
+            // checked in a previous call of this function).
+            return nullptr;
+        }
     }
-    const auto it = overmaps.find( p );
-    if( it != overmaps.end() ) {
-        return last_requested_overmap = it->second.get();
-    }
-    if( known_non_existing.contains( p ) ) {
-        // This overmap does not exist on disk (this has already been
-        // checked in a previous call of this function).
-        return nullptr;
-    }
-    if( file_exist( terrain_filename( p ) ) ) {
+    if( g->get_active_world() && g->get_active_world()->overmap_exists( p ) ) {
         // File exists, load it normally (the get function
         // indirectly call overmap::open to do so).
         return &get( p );
@@ -278,7 +325,10 @@ overmap *overmapbuffer::get_existing( const point_abs_om &p )
     // return early.
     // If the overmap had been created in the mean time, the previous
     // loop would have found and returned it.
-    known_non_existing.insert( p );
+    {
+        write_lock<std::shared_mutex> _l( mutex );
+        known_non_existing.insert( p );
+    }
     return nullptr;
 }
 
@@ -947,62 +997,73 @@ bool overmapbuffer::check_overmap_special_type( const overmap_special_id &id,
     return om_loc.om->check_overmap_special_type( id, om_loc.local );
 }
 
-static omt_find_params assign_params(
-    const std::string &type, int const radius, bool must_be_seen,
-    ot_match_type match_type, bool existing_overmaps_only,
-    const std::optional<overmap_special_id> &om_special )
+void overmapbuffer::add_unique_special( const overmap_special_id &id )
 {
-    omt_find_params params;
-    std::vector<std::pair<std::string, ot_match_type>> temp_types;
-    std::pair<std::string, ot_match_type> temp_pair;
-    temp_pair.first = type;
-    temp_pair.second = match_type;
-    temp_types.push_back( temp_pair );
-    params.types = temp_types;
-    params.search_range = radius;
-    params.must_see = must_be_seen;
-    params.existing_only = existing_overmaps_only;
-    params.om_special = om_special;
-    return params;
+    if( contains_unique_special( id ) ) {
+        debugmsg( "Unique overmap special placed more than once: %s", id.str() );
+    }
+    placed_unique_specials.emplace( id );
+}
+
+bool overmapbuffer::contains_unique_special( const overmap_special_id &id ) const
+{
+    return placed_unique_specials.contains( id );
 }
 
 bool overmapbuffer::is_findable_location( const tripoint_abs_omt &location,
         const omt_find_params &params )
 {
-    bool type_matches = false;
+    overmap_with_local_coords om_loc;
     if( params.existing_only ) {
-        for( const std::pair<std::string, ot_match_type> &elem : params.types ) {
-            type_matches = check_ot_existing( elem.first, elem.second, location );
-            if( type_matches ) {
-                break;
-            }
-        }
+        om_loc = get_existing_om_global( location );
     } else {
-        for( const std::pair<std::string, ot_match_type> &elem : params.types ) {
-            type_matches = check_ot( elem.first, elem.second, location );
-            if( type_matches ) {
-                break;
-            }
-        }
+        om_loc = get_om_global( location );
     }
-    if( !type_matches ) {
+
+    return is_findable_location( om_loc, params );
+}
+
+bool overmapbuffer::is_findable_location( const overmap_with_local_coords &om_loc,
+        const omt_find_params &params )
+{
+    if( om_loc.om == nullptr ) {
         return false;
     }
 
-    if( params.must_see && !seen( location ) ) {
+    const auto is_seen = om_loc.om->seen( om_loc.local );
+    if( params.seen.has_value() && params.seen.value() != is_seen ) {
         return false;
     }
-    if( params.cant_see && seen( location ) ) {
+
+    const auto is_explored = om_loc.om->explored( om_loc.local );
+    if( params.explored.has_value() && params.explored.value() != is_explored ) {
+        return false;
+    }
+
+    bool is_excluded = false;
+    for( const std::pair<std::string, ot_match_type> &elem : params.exclude_types ) {
+        is_excluded = om_loc.om->check_ot( elem.first, elem.second, om_loc.local );
+        if( is_excluded ) {
+            break;
+        }
+    }
+    if( is_excluded ) {
+        return false;
+    }
+
+    bool is_included = false;
+    for( const std::pair<std::string, ot_match_type> &elem : params.types ) {
+        is_included = om_loc.om->check_ot( elem.first, elem.second, om_loc.local );
+        if( is_included ) {
+            break;
+        }
+    }
+    if( !is_included ) {
         return false;
     }
 
     if( params.om_special ) {
-        bool meets_om_special = false;
-        if( params.existing_only ) {
-            meets_om_special = check_overmap_special_type_existing( *params.om_special, location );
-        } else {
-            meets_om_special = check_overmap_special_type( *params.om_special, location );
-        }
+        bool meets_om_special = om_loc.om->check_overmap_special_type( *params.om_special, om_loc.local );
         if( !meets_om_special ) {
             return false;
         }
@@ -1011,26 +1072,271 @@ bool overmapbuffer::is_findable_location( const tripoint_abs_omt &location,
     return true;
 }
 
-tripoint_abs_omt overmapbuffer::find_closest(
-    const tripoint_abs_omt &origin, const std::string &type, int const radius, bool must_be_seen,
-    ot_match_type match_type, bool existing_overmaps_only,
-    const std::optional<overmap_special_id> &om_special )
+namespace
 {
-    const omt_find_params params = assign_params( type, radius, must_be_seen, match_type,
-                                   existing_overmaps_only, om_special );
-    return find_closest( origin, params );
+using find_task = std::pair
+                  <point_abs_om, std::vector<std::pair<tripoint_abs_omt, tripoint_om_omt>>>;
+
+struct find_task_generator {
+    const spiral_generator<point> _gen;
+    const int _min_z;
+    const int _max_z;
+    const int _max_coords;
+    const int _n_steps;
+    spiral_generator<point>::iterator _it;
+    const spiral_generator<point>::iterator _end;
+    std::pair<point_abs_om, point_om_omt> _current;
+    bool _done;
+
+    auto get_om_loc() {
+        auto &p = *_it;
+        tripoint_abs_omt loc( p.x, p.y, 0 );
+        point_abs_om om_pos;
+        point_om_omt local;
+        std::tie( om_pos, local ) = project_remain<coords::om>( loc.xy() );
+        return std::make_pair( om_pos, local );
+    }
+
+    find_task_generator( point p, int mind, int maxd, int minz, int maxz, int chunk )
+        : _gen( p, mind, maxd )
+        , _min_z( minz )
+        , _max_z( maxz )
+        , _max_coords( chunk )
+        , _n_steps( chunk / ( maxz - minz + 1 ) )
+        , _it( _gen.begin() )
+        , _end( _gen.end() ) {
+        _current = get_om_loc();
+        _done = _end == _it;
+    }
+
+    std::optional<find_task> operator()() {
+        if( _done ) {
+            return std::nullopt;
+        }
+
+        std::vector<std::pair<tripoint_abs_omt, tripoint_om_omt>> v;
+        v.reserve( _max_coords );
+        point_abs_om om_loc = _current.first;
+
+        for( int n = 0; n < _n_steps; n++ ) {
+            auto &p = *_it;
+            for( int z = _min_z; z <= _max_z; z++ ) {
+                tripoint_abs_omt abs( p.x, p.y, z );
+                tripoint_om_omt om( _current.second, z );
+                v.emplace_back( abs, om );
+            }
+
+            ++_it;
+            _current = get_om_loc();
+            _done = _end == _it;
+            if( _done || _current.first != om_loc ) {
+                break;
+            }
+        }
+
+        return std::make_pair( om_loc, std::move( v ) );
+    }
+};
+}
+
+std::vector<tripoint_abs_omt> overmapbuffer::find_all( const tripoint_abs_omt &origin,
+        const omt_find_params &params )
+{
+    const auto concurrency = std::max( 1u, std::thread::hardware_concurrency() - 1 );
+    if( concurrency == 1 ) {
+        return find_all_sync( origin, params );
+    } else {
+        return find_all_async( origin, params );
+    }
+}
+
+std::vector<tripoint_abs_omt> overmapbuffer::find_all_sync( const tripoint_abs_omt &origin,
+        const omt_find_params &params )
+{
+    // max_dist == 0 means search a whole overmap diameter.
+    const int min_dist = params.search_range.first;
+    const int max_dist = params.search_range.second ? params.search_range.second : OMAPX;
+
+    // empty search_layers means origin.z
+    const auto search_layers = params.search_layers.value_or( std::make_pair( origin.z(),
+                               origin.z() ) );
+    const int min_layer = search_layers.first;
+    const int max_layer = search_layers.second;
+
+    find_task_generator gen( origin.raw().xy(), min_dist, max_dist, min_layer, max_layer, 256 );
+
+    std::vector<tripoint_abs_omt> find_result;
+    find_result.reserve( params.max_results.value_or( 256 ) );
+    while( true ) {
+
+        if( params.popup ) {
+            params.popup->refresh();
+        }
+
+        auto task_data = gen();
+        if( !task_data.has_value() ) {
+            break;
+        }
+
+        auto& [task_om, task_omts] = task_data.value();
+        if( params.existing_only && !has( task_om ) ) {
+            continue;
+        }
+
+        overmap *om_loc = &get( task_om );
+
+        bool done = false;
+        for( const auto &loc : task_omts ) {
+            overmap_with_local_coords q{ om_loc, loc.second };
+            if( is_findable_location( q, params ) ) {
+                find_result.push_back( loc.first );
+            }
+            if( params.max_results.has_value() &&
+                find_result.size() == static_cast<size_t>( params.max_results.value() ) ) {
+                done = true;
+                break;
+            }
+        }
+
+        if( done ) {
+            break;
+        }
+    }
+
+    return find_result;
+}
+
+std::vector<tripoint_abs_omt> overmapbuffer::find_all_async( const tripoint_abs_omt &origin,
+        const omt_find_params &params )
+{
+    // max_dist == 0 means search a whole overmap diameter.
+    const int min_dist = params.search_range.first;
+    const int max_dist = params.search_range.second ? params.search_range.second : OMAPX;
+
+    // empty search_layers means origin.z
+    const auto search_layers = params.search_layers.value_or( std::make_pair( origin.z(),
+                               origin.z() ) );
+    const int min_layer = search_layers.first;
+    const int max_layer = search_layers.second;
+    // const int num_layers = max_layer - min_layer + 1;
+
+    find_task_generator gen( origin.raw().xy(), min_dist, max_dist, min_layer, max_layer, 256 );
+
+    std::deque<std::future<std::vector<tripoint_abs_omt>>> tasks;
+
+    std::vector<tripoint_abs_omt> find_result;
+    int free_tasks = std::max( 1u, std::thread::hardware_concurrency() - 1 );
+    auto try_finish_task = []( std::future<std::vector<tripoint_abs_omt>> &task,
+    std::vector<tripoint_abs_omt> &dst, omt_find_params params ) -> bool {
+        if( task.wait_for( std::chrono::milliseconds( 0 ) ) == std::future_status::ready )
+        {
+            auto task_result = task.get();
+
+            if( !params.max_results.has_value() ||
+                dst.size() < static_cast<size_t>( params.max_results.value() ) ) {
+                std::ranges::copy( task_result, std::back_inserter( dst ) );
+                if( params.max_results.has_value() &&
+                    dst.size() > static_cast<uint64_t>( params.max_results.value() ) ) {
+                    dst.resize( params.max_results.value() );
+                }
+            }
+
+            return true;
+        }
+        return false;
+    };
+
+    while( true ) {
+        if( params.popup ) {
+            params.popup->refresh();
+        }
+
+        if( !tasks.empty() ) {
+            if( try_finish_task( tasks.front(), find_result, params ) ) {
+                tasks.pop_front();
+                ++free_tasks;
+            }
+            if( params.max_results.has_value() &&
+                find_result.size() >= static_cast<uint64_t>( params.max_results.value() ) ) {
+                break;
+            }
+        }
+
+        if( free_tasks == 0 ) {
+            continue;
+        }
+
+        auto task_data = gen();
+        if( !task_data.has_value() ) {
+            break;
+        }
+
+        auto& [task_om, task_omts] = task_data.value();
+
+        if( params.existing_only && !has( task_om ) ) {
+            continue;
+        }
+
+        auto task_func = [&]( point_abs_om l,
+        std::vector<std::pair<tripoint_abs_omt, tripoint_om_omt>> locals ) {
+            std::vector<tripoint_abs_omt> result;
+
+            overmap *om_loc;
+            if( params.existing_only ) {
+                om_loc = get_existing( l );
+            } else {
+                om_loc = &get( l );
+            }
+            if( !om_loc ) {
+                return result;
+            }
+
+            for( const auto &loc : locals ) {
+                overmap_with_local_coords q{ om_loc, loc.second };
+                if( is_findable_location( q, params ) ) {
+                    result.push_back( loc.first );
+                }
+                if( params.max_results.has_value() &&
+                    result.size() == static_cast<uint64_t>( params.max_results.value() ) ) {
+                    break;
+                }
+            }
+
+            return result;
+        };
+
+        auto task = std::async( std::launch::async, task_func, task_om, std::move( task_omts ) );
+
+        tasks.push_back( std::move( task ) );
+
+        --free_tasks;
+    }
+
+    while( !tasks.empty() ) {
+        if( params.popup ) {
+            params.popup->refresh();
+        }
+
+        if( try_finish_task( tasks.front(), find_result, params ) ) {
+            tasks.pop_front();
+            ++free_tasks;
+        }
+    }
+
+    return find_result;
 }
 
 tripoint_abs_omt overmapbuffer::find_closest( const tripoint_abs_omt &origin,
-        const omt_find_params &params )
+        const omt_find_params &pp )
 {
     // Check the origin before searching adjacent tiles!
-    if( params.min_distance == 0 && is_findable_location( origin, params ) ) {
+    if( pp.search_range.first == 0 && is_findable_location( origin, pp ) ) {
         return origin;
     }
 
     // By default search overmaps within a radius of 4,
     // i.e. C = current overmap, X = overmaps searched:
+    //
     // XXXXXXXXX
     // XXXXXXXXX
     // XXXXXXXXX
@@ -1044,98 +1350,47 @@ tripoint_abs_omt overmapbuffer::find_closest( const tripoint_abs_omt &origin,
     // See overmap::place_specials for how we attempt to insure specials are placed within this
     // range.  The actual number is 5 because 1 covers the current overmap,
     // and each additional one expends the search to the next concentric circle of overmaps.
-    const int min_dist = params.min_distance;
-    const int max_dist = params.search_range ? params.search_range : OMAPX * 5;
 
-    std::vector<tripoint_abs_omt> result;
-    std::optional<int> found_dist;
-
-    size_t num_overmaps = overmaps.size();
-    size_t counter = 0;
-
-    for( const point_abs_omt &loc_xy : closest_points_first( origin.xy(), min_dist, max_dist ) ) {
-        const int dist_xy = square_dist( origin.xy(), loc_xy );
-
-        if( found_dist && *found_dist < dist_xy ) {
-            break;
-        }
-
-        for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-            const tripoint_abs_omt loc( loc_xy, z );
-            const int dist = square_dist( origin, loc );
-
-            if( found_dist && *found_dist < dist ) {
-                continue;
-            }
-
-            if( is_findable_location( loc, params ) ) {
-                found_dist = dist;
-                result.push_back( loc );
-            }
-
-            counter += 1;
-            if( params.popup && ( num_overmaps != overmaps.size() || counter == 512 ) ) {
-                params.popup->refresh();
-                num_overmaps = overmaps.size();
-                counter = 0;
-            }
-        }
+    omt_find_params params = pp;
+    if( params.search_range.second == 0 ) {
+        params.search_range.second = OMAPX * 5;
+    }
+    if( !params.max_results.has_value() ) {
+        // Limit potential random sample size, scaling with number of terrain types
+        params.max_results = 10 * pp.types.size();
     }
 
-    return random_entry( result, overmap::invalid_tripoint );
-}
+    auto scan_result = find_all( origin, params );
 
-std::vector<tripoint_abs_omt> overmapbuffer::find_all( const tripoint_abs_omt &origin,
-        const omt_find_params &params )
-{
-    std::vector<tripoint_abs_omt> result;
-    // dist == 0 means search a whole overmap diameter.
-    const int min_dist = params.min_distance;
-    const int max_dist = params.search_range ? params.search_range : OMAPX;
-
-    size_t num_overmaps = overmaps.size();
-    size_t counter = 0;
-
-    for( const tripoint_abs_omt &loc : closest_points_first( origin, min_dist, max_dist ) ) {
-        if( is_findable_location( loc, params ) ) {
-            result.push_back( loc );
-        }
-
-        counter += 1;
-        if( params.popup && ( num_overmaps != overmaps.size() || counter == 512 ) ) {
-            params.popup->refresh();
-            num_overmaps = overmaps.size();
-            counter = 0;
-        }
+    if( scan_result.empty() ) {
+        return overmap::invalid_tripoint;
     }
 
-    return result;
-}
+    std::vector<tripoint_abs_omt> near_points;
+    int min_dist = INT_MAX;
 
-std::vector<tripoint_abs_omt> overmapbuffer::find_all(
-    const tripoint_abs_omt &origin, const std::string &type, int dist, bool must_be_seen,
-    ot_match_type match_type, bool existing_overmaps_only,
-    const std::optional<overmap_special_id> &om_special )
-{
-    const omt_find_params params = assign_params( type, dist, must_be_seen, match_type,
-                                   existing_overmaps_only, om_special );
-    return find_all( origin, params );
+    // Only care about the absolute nearest points, so only keep those points
+    for( auto &p : scan_result ) {
+        int dist = square_dist( origin, p );
+        if( dist < min_dist ) {
+            near_points.clear();
+            min_dist = dist;
+        } else if( dist > min_dist ) {
+            continue;
+        }
+        near_points.emplace_back( p );
+    }
+
+    // rng is inclusive
+    auto random_idx = rng( 0, near_points.size() - 1 );
+    return near_points[random_idx];
 }
 
 tripoint_abs_omt overmapbuffer::find_random( const tripoint_abs_omt &origin,
         const omt_find_params &params )
 {
-    return random_entry( find_all( origin, params ), overmap::invalid_tripoint );
-}
-
-tripoint_abs_omt overmapbuffer::find_random(
-    const tripoint_abs_omt &origin, const std::string &type, int dist, bool must_be_seen,
-    ot_match_type match_type, bool existing_overmaps_only,
-    const std::optional<overmap_special_id> &om_special )
-{
-    const omt_find_params params = assign_params( type, dist, must_be_seen, match_type,
-                                   existing_overmaps_only, om_special );
-    return find_random( origin, params );
+    auto found = find_all( origin, params );
+    return random_entry( found, overmap::invalid_tripoint );
 }
 
 shared_ptr_fast<npc> overmapbuffer::find_npc( character_id id )
@@ -1201,7 +1456,7 @@ std::vector<overmap *> overmapbuffer::get_overmaps_near( const tripoint_abs_sm &
 
     // Sort the resulting overmaps so that the closest ones are first.
     const tripoint_abs_om center = project_to<coords::om>( location );
-    std::sort( result.begin(), result.end(), [&center]( const overmap * lhs,
+    std::ranges::sort( result, [&center]( const overmap * lhs,
     const overmap * rhs ) {
         const tripoint_abs_om lhs_pos( lhs->pos(), 0 );
         const tripoint_abs_om rhs_pos( rhs->pos(), 0 );
@@ -1329,7 +1584,7 @@ std::vector<city_reference> overmapbuffer::get_cities_near( const tripoint_abs_s
 
     for( const auto om : get_overmaps_near( location, radius ) ) {
         result.reserve( result.size() + om->cities.size() );
-        std::transform( om->cities.begin(), om->cities.end(), std::back_inserter( result ),
+        std::ranges::transform( om->cities, std::back_inserter( result ),
         [&]( city & element ) {
             const auto rel_pos_city = project_to<coords::sm>( element.pos );
             const auto abs_pos_city =
@@ -1340,7 +1595,7 @@ std::vector<city_reference> overmapbuffer::get_cities_near( const tripoint_abs_s
         } );
     }
 
-    std::sort( result.begin(), result.end(), []( const city_reference & lhs,
+    std::ranges::sort( result, []( const city_reference & lhs,
     const city_reference & rhs ) {
         return lhs.get_distance_from_bounds() < rhs.get_distance_from_bounds();
     } );
@@ -1362,7 +1617,7 @@ city_reference overmapbuffer::closest_city( const tripoint_abs_sm &center )
 city_reference overmapbuffer::closest_known_city( const tripoint_abs_sm &center )
 {
     const auto cities = get_cities_near( center, omt_to_sm_copy( OMAPX ) );
-    const auto it = std::find_if( cities.begin(), cities.end(),
+    const auto it = std::ranges::find_if( cities,
     [this]( const city_reference & elem ) {
         const tripoint_abs_omt p = project_to<coords::omt>( elem.abs_sm_pos );
         return seen( p );
@@ -1665,12 +1920,12 @@ bool overmapbuffer::add_grid_connection( const tripoint_abs_omt &lhs, const trip
     overmap_with_local_coords lhs_omc = get_om_global( lhs );
     overmap_with_local_coords rhs_omc = get_om_global( rhs );
 
-    const auto lhs_iter = std::find( six_cardinal_directions.begin(),
-                                     six_cardinal_directions.end(),
-                                     coord_diff.raw() );
-    const auto rhs_iter = std::find( six_cardinal_directions.begin(),
-                                     six_cardinal_directions.end(),
-                                     -coord_diff.raw() );
+    const auto lhs_iter = std::ranges::find( six_cardinal_directions,
+
+                          coord_diff.raw() );
+    const auto rhs_iter = std::ranges::find( six_cardinal_directions,
+
+                          -coord_diff.raw() );
 
     size_t lhs_i = std::distance( six_cardinal_directions.begin(), lhs_iter );
     size_t rhs_i = std::distance( six_cardinal_directions.begin(), rhs_iter );
@@ -1706,12 +1961,12 @@ bool overmapbuffer::remove_grid_connection( const tripoint_abs_omt &lhs,
     overmap_with_local_coords lhs_omc = get_om_global( lhs );
     overmap_with_local_coords rhs_omc = get_om_global( rhs );
 
-    const auto lhs_iter = std::find( six_cardinal_directions.begin(),
-                                     six_cardinal_directions.end(),
-                                     coord_diff.raw() );
-    const auto rhs_iter = std::find( six_cardinal_directions.begin(),
-                                     six_cardinal_directions.end(),
-                                     -coord_diff.raw() );
+    const auto lhs_iter = std::ranges::find( six_cardinal_directions,
+
+                          coord_diff.raw() );
+    const auto rhs_iter = std::ranges::find( six_cardinal_directions,
+
+                          -coord_diff.raw() );
 
     size_t lhs_i = std::distance( six_cardinal_directions.begin(), lhs_iter );
     size_t rhs_i = std::distance( six_cardinal_directions.begin(), rhs_iter );

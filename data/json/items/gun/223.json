@@ -91,6 +91,7 @@
     "volume": "1758 ml",
     "price": "914 USD",
     "price_postapoc": "35 USD",
+    "handling": 15,
     "to_hit": -2,
     "bashing": 9,
     "material": [ "steel", "aluminum" ],
@@ -127,8 +128,8 @@
     "id": "famas",
     "copy-from": "rifle_auto",
     "type": "GUN",
-    "name": { "str_sp": "MAS 223" },
-    "description": "A bullpup assault rifle that was used by French armed forces only until recently.  While the FAMAS was famous for its high fire rate, the MAS .223 is a semi-auto only variation imported to the US in the late eighties.  It retains the integral bipod, though.",
+    "name": { "str_sp": "FAMAS G2" },
+    "description": "A select fire bullpup assault rifle that was used by French armed forces until recently.  While the FAMAS was famous for its high fire rate and futuristic look, the failure of the disposable magazine design principle and lack of rails necessitated the invention of the G2 variant.  It can not utilize oversized STANAG snail and drum mags but it retains the integral bipod and blistering rate of fire.",
     "weight": "3800 g",
     "volume": "4162 ml",
     "barrel_length": "250 ml",
@@ -139,6 +140,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -2 },
     "dispersion": 180,
     "min_cycle_recoil": 1350,
+    "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 3 ], [ "AUTO", "auto", 5 ] ],
     "built_in_mods": [ "bipod" ],
     "valid_mod_locations": [
       [ "accessories", 4 ],
@@ -154,7 +156,23 @@
       [ "underbarrel", 1 ],
       [ "underbarrel", 1 ]
     ],
-    "magazines": [ [ "223", [ "famasmag" ] ] ]
+    "magazines": [
+      [
+        "223",
+        [
+          "stanag30",
+          "stanag5",
+          "stanag10",
+          "stanag20",
+          "stanag40",
+          "stanag50",
+          "stanag60",
+          "stanag60drum",
+          "carbonmag_223",
+          "survivor223mag"
+        ]
+      ]
+    ]
   },
   {
     "id": "h&k416a5",
@@ -222,6 +240,7 @@
     "type": "GUN",
     "name": { "str": "M249" },
     "description": "The M249 is a mountable machine gun used by the US military and SWAT teams.  Quite inaccurate and difficult to control, the M249 is designed to fire many rounds very quickly.",
+    "//": "Has a STANAG magwell to accept 5.56 STANAG magazines for emergency use that does not fit snail or very large 150rnd drum mags.",
     "weight": "7330 g",
     "volume": "3 L",
     "barrel_length": "250 ml",
@@ -262,10 +281,8 @@
           "stanag50",
           "stanag60",
           "stanag60drum",
-          "stanag90",
           "stanag100",
           "stanag100drum",
-          "stanag150",
           "carbonmag_223",
           "survivor223mag"
         ]
@@ -407,6 +424,7 @@
     "volume": "1400 ml",
     "price": "1250 USD",
     "price_postapoc": "55 USD",
+    "handling": 15,
     "to_hit": -2,
     "bashing": 9,
     "material": [ "steel", "aluminum" ],
@@ -534,8 +552,8 @@
     "id": "sig552",
     "copy-from": "rifle_auto",
     "type": "GUN",
-    "name": { "str": "SIG 552" },
-    "description": "A compact selective fire automatic rifle designed for the Swiss military.  It features a three-round burst mode and an integrated folding stock.",
+    "name": { "str": "SIG 552 SWAT" },
+    "description": "A select fire rifle originally made for the Swiss military and redesigned for American specifications.  This is the shortened version, made with SWAT teams and vehicle crewmen in mind.  Unlike the European original it features a STANAG magwell.",
     "weight": "3000 g",
     "volume": "1750 ml",
     "barrel_length": "250 ml",
@@ -624,7 +642,6 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -4 },
     "dispersion": 550,
     "durability": 6,
-    "blackpowder_tolerance": 32,
     "loudness": 25,
     "reload": 200,
     "valid_mod_locations": [

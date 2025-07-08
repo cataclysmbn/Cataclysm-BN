@@ -20,7 +20,7 @@
     "difficulty": 2,
     "time": "7 m",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [
       [ [ "pipe", 1 ] ],
       [ [ "scrap", 1 ] ],
@@ -220,9 +220,22 @@
     "difficulty": 3,
     "skills_required": [ "mechanics", 3 ],
     "time": "15 m",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 6 ] ],
+    "components": [ [ [ "material_aluminium_ingot", 19 ] ] ]
+  },
+  {
+    "result": "wheel_mount_skateboard",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_PARTS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "skills_required": [ "mechanics", 3 ],
+    "time": "60 m",
     "reversible": true,
     "autolearn": true,
     "using": [ [ "welding_standard", 6 ] ],
-    "components": [ [ [ "material_aluminium_ingot", 20 ] ] ]
+    "components": [ [ [ "material_aluminium_ingot", 4 ] ] ]
   }
 ]

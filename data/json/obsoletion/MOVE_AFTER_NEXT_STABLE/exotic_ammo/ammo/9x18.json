@@ -1,0 +1,76 @@
+[
+  {
+    "id": "9x18mm",
+    "type": "AMMO",
+    "name": { "str": "9x18mm 57-N-181S" },
+    "description": "9x18mm Makarov ammunition with 93gr steel core FMJ bullets.  The 9x18mm round was very common in the Eastern Bloc during the 20th century and remained in Russian military service into the 21st century.",
+    "weight": "8 g",
+    "volume": "250 ml",
+    "price": "1 USD",
+    "price_postapoc": "10 USD",
+    "material": [ "steel", "powder" ],
+    "symbol": "=",
+    "color": "yellow",
+    "count": 50,
+    "stack_size": 50,
+    "ammo_type": "9x18",
+    "casing": "9x18mm_casing",
+    "range": 13,
+    "//": "Base damage of 16, balance increase of one-third.",
+    "damage": { "damage_type": "bullet", "amount": 21, "armor_penetration": 12 },
+    "dispersion": 60,
+    "recoil": 450,
+    "effects": [ "COOKOFF" ]
+  },
+  {
+    "id": "9x18mmP2",
+    "copy-from": "9x18mm",
+    "type": "AMMO",
+    "name": { "str": "9x18mm SP-7" },
+    "description": "9x18mm Makarov SP-7 ammunition.  The 9x18mm round was very common in the Eastern Bloc during the 20th century and remained in Russian military service into the 21st century.",
+    "price": "150 cent",
+    "price_postapoc": "10 USD",
+    "count": 25,
+    "relative": { "range": 2, "damage": { "damage_type": "bullet", "amount": 4 }, "dispersion": -10 },
+    "proportional": { "recoil": 1.1 }
+  },
+  {
+    "id": "9x18mmfmj",
+    "copy-from": "9x18mm",
+    "type": "AMMO",
+    "name": { "str": "9x18mm RG028" },
+    "description": "9x18mm Makarov RG028 ammunition.  The RG028 round uses bullets with a hardened steel core to improve armor penetration.",
+    "price": "2 USD",
+    "price_postapoc": "31 USD",
+    "//": "AP variant, 7/8 damage relative to FMJ variant, armor penetration matches damage.",
+    "relative": { "damage": { "damage_type": "bullet", "amount": -3, "armor_penetration": 6 } }
+  },
+  {
+    "id": "bp_9x18mm",
+    "copy-from": "9x18mm",
+    "type": "AMMO",
+    "name": { "str": "9x18mm, black powder" },
+    "proportional": {
+      "price": 0.5,
+      "price_postapoc": 0.5,
+      "damage": { "damage_type": "bullet", "amount": 0.8, "armor_penetration": 0.5 },
+      "recoil": 0.76,
+      "dispersion": 1.2
+    },
+    "extend": { "effects": [ "RECYCLED", "BLACKPOWDER", "MUZZLE_SMOKE" ] }
+  },
+  {
+    "id": "bp_9x18mmfmj",
+    "copy-from": "9x18mmfmj",
+    "type": "AMMO",
+    "name": { "str": "9x18mm FMJ, black powder" },
+    "proportional": {
+      "price": 0.5,
+      "price_postapoc": 0.5,
+      "damage": { "damage_type": "bullet", "amount": 0.8, "armor_penetration": 0.5 },
+      "recoil": 0.76,
+      "dispersion": 1.2
+    },
+    "extend": { "effects": [ "RECYCLED", "BLACKPOWDER", "MUZZLE_SMOKE" ] }
+  }
+]

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_STRING_INPUT_POPUP_H
-#define CATA_SRC_STRING_INPUT_POPUP_H
 
 #include <cstddef>
 #include <cstdint>
@@ -285,4 +283,4 @@ class string_input_popup // NOLINT(cata-xy)
         std::map<long, std::function<bool()>> callbacks;
 };
 
-#endif // CATA_SRC_STRING_INPUT_POPUP_H
+

@@ -46,6 +46,7 @@
     "ammo": "380",
     "durability": 7,
     "min_cycle_recoil": 270,
+    "blackpowder_tolerance": 24,
     "magazines": [ [ "380", [ "fn1910mag" ] ] ]
   },
   {
@@ -119,6 +120,7 @@
     "ammo": "380",
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 250,
+    "handling": 30,
     "range": 15,
     "min_cycle_recoil": 180,
     "barrel_length": "500 ml",

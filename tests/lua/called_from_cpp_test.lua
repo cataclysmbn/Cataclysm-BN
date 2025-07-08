@@ -8,9 +8,7 @@ local func = function(i, s)
   -- Add to existing value
   test_data.out.i = test_data.out.i + i
   -- Append string, but only if string is passed
-  if s ~= nil then
-    test_data.out.s = test_data.out.s .. s
-  end
+  if s ~= nil then test_data.out.s = test_data.out.s .. s end
   -- Return some new integer value
   return i * 2
 end

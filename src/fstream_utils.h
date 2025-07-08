@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_FSTREAM_UTILS_H
-#define CATA_SRC_FSTREAM_UTILS_H
 
 #include <iosfwd>
 #include <string>
@@ -100,6 +98,11 @@ struct cata_ifstream {
 #endif
 };
 
+
+using file_read_fn = const std::function<void( std::istream & )> &;
+using file_read_json_fn = const std::function<void( JsonIn & )> &;
+using file_write_fn = const std::function<void( std::ostream & )> &;
+
 /**
  * Open a file for writing, calls the writer on that stream.
  *
@@ -111,11 +114,8 @@ struct cata_ifstream {
  * @throw The void function throws when writing failes or when the @p writer throws.
  * The other function catches all exceptions and returns false.
  */
-///@{
-bool write_to_file( const std::string &path, const std::function<void( std::ostream & )> &writer,
-                    const char *fail_message );
-void write_to_file( const std::string &path, const std::function<void( std::ostream & )> &writer );
-///@}
+bool write_to_file( const std::string &path, file_write_fn &writer,
+                    const char *fail_message = nullptr );
 
 class JsonDeserializer;
 
@@ -139,15 +139,11 @@ class JsonDeserializer;
  * @return `true` is the file was read without any errors, `false` upon any error.
  */
 /**@{*/
-bool read_from_file( const std::string &path, const std::function<void( std::istream & )> &reader );
-bool read_from_file_json( const std::string &path, const std::function<void( JsonIn & )> &reader );
-bool read_from_file( const std::string &path, JsonDeserializer &reader );
+bool read_from_file( const std::string &path, file_read_fn reader,
+                     bool optional = false );
+bool read_from_file_json( const std::string &path, file_read_json_fn reader,
+                          bool optional = false );
 
-bool read_from_file_optional( const std::string &path,
-                              const std::function<void( std::istream & )> &reader );
-bool read_from_file_optional_json( const std::string &path,
-                                   const std::function<void( JsonIn & )> &reader );
-bool read_from_file_optional( const std::string &path, JsonDeserializer &reader );
 /**@}*/
 /**
  * Wrapper around std::ofstream that handles error checking and throws on errors.
@@ -233,4 +229,4 @@ inline void deserialize( T *&obj, const std::string &data )
 }
 /**@}*/
 
-#endif // CATA_SRC_FSTREAM_UTILS_H
+

@@ -15,6 +15,64 @@
     ]
   },
   {
+    "result": "c4",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_EXPLOSIVE",
+    "skill_used": "fabrication",
+    "skills_required": [ "electronics", 4 ],
+    "difficulty": 6,
+    "time": "15 m",
+    "autolearn": true,
+    "reversible": true,
+    "book_learn": [ [ "textbook_anarch", 4 ], [ "manual_traps_mil", 3 ] ],
+    "//": "Using the contents of military_explosive separately to make RDX the preferred component for premade C4",
+    "components": [
+      [ [ "chem_rdx", 300 ], [ "chem_compositionb", 400 ] ],
+      [ [ "circuit", 1 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "delay_fuze", 1 ] ],
+      [ [ "motor_oil", 50, "NO_RECOVER" ], [ "lamp_oil", 50, "NO_RECOVER" ] ]
+    ],
+    "using": [ [ "soldering_standard", 5 ] ]
+  },
+  {
+    "result": "grenade",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_EXPLOSIVE",
+    "skill_used": "fabrication",
+    "skills_required": [ "mechanics", 3 ],
+    "difficulty": 4,
+    "time": "15 m",
+    "autolearn": true,
+    "reversible": true,
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [
+      [ [ "military_explosive", 25, "LIST" ] ],
+      [ [ "delay_fuze", 1 ] ],
+      [ [ "canister_empty", 1 ], [ "can_drink_unsealed", 1 ], [ "can_food_unsealed", 1 ] ]
+    ]
+  },
+  {
+    "result": "grenade_inc",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_EXPLOSIVE",
+    "skill_used": "fabrication",
+    "skills_required": [ "mechanics", 3 ],
+    "difficulty": 5,
+    "time": "15 m",
+    "autolearn": true,
+    "reversible": true,
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [
+      [ [ "incendiary", 150 ] ],
+      [ [ "delay_fuze", 1 ] ],
+      [ [ "canister_empty", 1 ], [ "can_drink_unsealed", 1 ], [ "can_food_unsealed", 1 ] ]
+    ]
+  },
+  {
     "result": "dynamite",
     "type": "recipe",
     "category": "CC_WEAPON",
@@ -126,7 +184,7 @@
     "time": "5 m",
     "autolearn": true,
     "components": [
-      [ [ "volatile_explosive", 24, "LIST" ], [ "stable_explosive", 24, "LIST" ], [ "military_explosive", 24, "LIST" ] ],
+      [ [ "volatile_explosive", 120, "LIST" ], [ "stable_explosive", 120, "LIST" ], [ "military_explosive", 120, "LIST" ] ],
       [ [ "delay_fuze", 1 ], [ "fuse", 1 ] ],
       [ [ "jug_plastic", 1 ] ]
     ]

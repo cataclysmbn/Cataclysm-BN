@@ -492,30 +492,6 @@
     ]
   },
   {
-    "id": "everyday_m1911a1_38super",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "m1911a1_38super", "ammo-group": "on_hand_38super", "charges": [ 0, 9 ] },
-      { "item": "m1911mag_10rd_38super", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_38super" },
-      { "item": "m1911mag_10rd_38super", "charges-min": 0, "ammo-group": "on_hand_38super", "prob": 50 },
-      { "group": "on_hand_38super", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
-    "id": "everyday_fn57",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "fn57", "ammo-group": "on_hand_57", "charges": [ 0, 20 ] },
-      { "item": "fn57mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_57" },
-      { "item": "fn57mag", "charges-min": 0, "ammo-group": "on_hand_57", "prob": 50 },
-      { "group": "on_hand_57", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
     "id": "everyday_sig_40",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -612,18 +588,6 @@
     ]
   },
   {
-    "id": "everyday_tokarev",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "tokarev", "ammo-group": "on_hand_762x25" },
-      { "item": "tokarevmag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_762x25" },
-      { "item": "tokarevmag", "charges-min": 0, "ammo-group": "on_hand_762x25", "prob": 50 },
-      { "group": "on_hand_762x25", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
     "id": "everyday_walther_ppk",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -648,42 +612,6 @@
     ]
   },
   {
-    "id": "everyday_af2011a1_38super",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "af2011a1_38super", "ammo-group": "on_hand_38super" },
-      { "item": "af2011a1mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_38super" },
-      { "item": "af2011a1mag", "charges-min": 0, "ammo-group": "on_hand_38super", "prob": 50 },
-      { "group": "on_hand_38super", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
-    "id": "everyday_m1911-460",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "m1911-460", "ammo-group": "on_hand_460", "charges": [ 0, 7 ] },
-      { "group": "nested_m1911_mag_460", "charges-min": 0, "prob": 80 },
-      { "group": "nested_m1911_mag_460", "charges-min": 0, "prob": 50 },
-      { "group": "on_hand_460", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
-    "id": "everyday_makarov",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "makarov", "ammo-group": "on_hand_9x18", "charges": [ 0, 8 ] },
-      { "item": "makarovmag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_9x18" },
-      { "item": "makarovmag", "charges-min": 0, "ammo-group": "on_hand_9x18", "prob": 50 },
-      { "group": "on_hand_9x18", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
     "id": "everyday_hk_mp5_semi_pistol",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -705,18 +633,6 @@
       { "item": "calicomag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_9mm" },
       { "item": "calicomag", "charges-min": 0, "ammo-group": "on_hand_9mm", "prob": 50 },
       { "group": "on_hand_9mm", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
-    "id": "everyday_fn_p90",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "fn_p90", "ammo-group": "on_hand_57", "charges": [ 0, 50 ] },
-      { "item": "fnp90mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_57" },
-      { "item": "fnp90mag", "charges-min": 0, "ammo-group": "on_hand_57", "prob": 50 },
-      { "group": "on_hand_57", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
   {
@@ -840,6 +756,18 @@
     ]
   },
   {
+    "id": "everyday_kriss_vector_9mm",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "kriss_vector_9mm", "ammo-group": "on_hand_9mm", "charges": [ 0, 30 ] },
+      { "group": "nested_kriss_vector_9mm_mag", "charges-min": 0, "prob": 80 },
+      { "group": "nested_kriss_vector_9mm_mag", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_9mm", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
     "id": "everyday_american_180",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -873,18 +801,6 @@
       { "item": "tec9mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_9mm" },
       { "item": "tec9mag", "charges-min": 0, "ammo-group": "on_hand_9mm", "prob": 50 },
       { "group": "on_hand_9mm", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
-    "id": "everyday_hk_mp7",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "hk_mp7", "ammo-group": "on_hand_46", "charges": [ 0, 20 ] },
-      { "group": "nested_hk_mp7_mag", "charges-min": 0, "prob": 80 },
-      { "group": "nested_hk_mp7_mag", "charges-min": 0, "prob": 50 },
-      { "group": "on_hand_46", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
   {
@@ -1436,26 +1352,14 @@
     ]
   },
   {
-    "id": "everyday_ak74",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "ak74", "ammo-group": "on_hand_545x39", "charges": [ 0, 30 ] },
-      { "group": "nested_ak74_mag", "charges-min": 0, "prob": 80 },
-      { "group": "nested_ak74_mag", "charges-min": 0, "prob": 50 },
-      { "group": "on_hand_545x39", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
     "id": "everyday_famas",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
       { "item": "famas", "ammo-group": "on_hand_223", "charges": [ 0, 25 ] },
-      { "item": "famasmag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_223" },
-      { "item": "famasmag", "charges-min": 0, "ammo-group": "on_hand_223", "prob": 50 },
+      { "group": "nested_stanag_mag", "charges-min": 0, "prob": 80 },
+      { "group": "nested_stanag_mag", "charges-min": 0, "prob": 50 },
       { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
@@ -1699,27 +1603,6 @@
     ]
   },
   {
-    "id": "everyday_sw_500",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "sw_500", "ammo-group": "on_hand_500", "charges": [ 0, 5 ] },
-      {
-        "distribution": [
-          {
-            "collection": [
-              { "item": "500_speedloader5", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_500" },
-              { "item": "500_speedloader5", "charges-min": 0, "ammo-group": "on_hand_500", "prob": 50 }
-            ],
-            "prob": 50
-          },
-          { "group": "on_hand_500", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-        ]
-      }
-    ]
-  },
-  {
     "id": "everyday_sw629",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -1758,48 +1641,6 @@
     "entries": [
       { "item": "moss_brownie", "ammo-group": "on_hand_22", "charges": [ 0, 6 ] },
       { "group": "on_hand_22", "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
-    "id": "everyday_raging_bull",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "raging_bull", "ammo-group": "on_hand_454_or_45colt", "charges": [ 0, 5 ] },
-      {
-        "distribution": [
-          {
-            "collection": [
-              { "item": "454_speedloader5", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_454_or_45colt" },
-              { "item": "454_speedloader5", "charges-min": 0, "ammo-group": "on_hand_454_or_45colt", "prob": 50 }
-            ],
-            "prob": 50
-          },
-          { "group": "on_hand_454_or_45colt", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "everyday_raging_judge",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "raging_judge", "ammo-group": "on_hand_454_mixed", "charges": [ 0, 6 ] },
-      {
-        "distribution": [
-          {
-            "collection": [
-              { "item": "454_speedloader6", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_454_mixed" },
-              { "item": "454_speedloader6", "charges-min": 0, "ammo-group": "on_hand_454_mixed", "prob": 50 }
-            ],
-            "prob": 50
-          },
-          { "group": "on_hand_454_mixed", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-        ]
-      }
     ]
   },
   {
@@ -1924,16 +1765,6 @@
           { "group": "on_hand_762R", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
         ]
       }
-    ]
-  },
-  {
-    "id": "everyday_remington700_270",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "remington700_270", "ammo-group": "on_hand_270win", "charges": [ 0, 4 ] },
-      { "group": "on_hand_270win", "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
   {
@@ -2196,16 +2027,6 @@
     ]
   },
   {
-    "id": "everyday_bh_m89",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "bh_m89", "ammo-group": "on_hand_500", "charges": [ 0, 7 ] },
-      { "group": "on_hand_500", "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
     "id": "everyday_bfg50",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -2243,16 +2064,6 @@
     "entries": [
       { "item": "longrifle_flintlock", "ammo-group": "on_hand_flintlock", "charges": [ 0, 1 ] },
       { "group": "on_hand_flintlock", "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
-    "id": "everyday_trex_gun",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "trex_gun", "ammo-group": "on_hand_700nx", "charges": [ 0, 2 ] },
-      { "group": "on_hand_700nx", "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
   {
@@ -2478,18 +2289,6 @@
     ]
   },
   {
-    "id": "everyday_an94",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "an94", "ammo-group": "on_hand_545x39", "charges": [ 0, 30 ] },
-      { "group": "nested_ak74_mag", "charges-min": 0, "prob": 80 },
-      { "group": "nested_ak74_mag", "charges-min": 0, "prob": 50 },
-      { "group": "on_hand_545x39", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
     "id": "everyday_USAS_12",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -2547,18 +2346,6 @@
     ]
   },
   {
-    "id": "everyday_ppsh",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "ppsh", "ammo-group": "on_hand_762x25", "charges": [ 0, 35 ] },
-      { "group": "nested_ppsh_mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_762x25" },
-      { "group": "nested_ppsh_mag", "charges-min": 0, "ammo-group": "on_hand_762x25", "prob": 50 },
-      { "group": "on_hand_762x25", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
     "id": "everyday_skorpion_61",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -2568,18 +2355,6 @@
       { "item": "skorpion61mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_32" },
       { "item": "skorpion61mag", "charges-min": 0, "ammo-group": "on_hand_32", "prob": 50 },
       { "group": "on_hand_32", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
-    ]
-  },
-  {
-    "id": "everyday_skorpion_82",
-    "type": "item_group",
-    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
-    "subtype": "collection",
-    "entries": [
-      { "item": "skorpion_82", "ammo-group": "on_hand_9x18", "charges": [ 0, 20 ] },
-      { "item": "skorpion82mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_9x18" },
-      { "item": "skorpion82mag", "charges-min": 0, "ammo-group": "on_hand_9x18", "prob": 50 },
-      { "group": "on_hand_9x18", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
   {

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MELEE_H
-#define CATA_SRC_MELEE_H
 
 class Character;
 class Creature;
@@ -67,4 +65,4 @@ const attack_statblock &pick_attack( const Character &c, const item &weapon,
 
 } // namespace melee
 
-#endif // CATA_SRC_MELEE_H
+

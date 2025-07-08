@@ -1,5 +1,4 @@
-#ifndef CATA_SRC_CLOTHING_UTILS_H
-#define CATA_SRC_CLOTHING_UTILS_H
+#pragma once
 
 class Character;
 class item;
@@ -8,4 +7,4 @@ class item;
 /// without encumbrance penalty.
 auto is_compact( const item &it, const Character &c ) -> bool;
 
-#endif // CATA_SRC_CLOTHING_UTILS_H
+

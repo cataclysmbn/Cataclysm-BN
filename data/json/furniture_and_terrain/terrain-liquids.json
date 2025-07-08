@@ -119,7 +119,7 @@
     "symbol": "~",
     "color": "blue",
     "move_cost": 10,
-    "flags": [ "TRANSPARENT", "LIQUID", "NO_SCENT", "SWIMMABLE", "DEEP_WATER", "FISHABLE", "CURRENT" ],
+    "flags": [ "TRANSPARENT", "LIQUID", "NO_SCENT", "SWIMMABLE", "GOES_DOWN", "DEEP_WATER", "FISHABLE", "CURRENT" ],
     "connects_to": "WATER",
     "examine_action": "water_source"
   },
@@ -134,7 +134,18 @@
     "color": "blue",
     "move_cost": 10,
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "LIQUID", "NO_SCENT", "SWIMMABLE", "DEEP_WATER", "FISHABLE", "CURRENT", "INDOORS" ],
+    "flags": [
+      "TRANSPARENT",
+      "LIQUID",
+      "NO_SCENT",
+      "SWIMMABLE",
+      "GOES_DOWN",
+      "GOES_UP",
+      "DEEP_WATER",
+      "FISHABLE",
+      "CURRENT",
+      "INDOORS"
+    ],
     "connects_to": "WATER",
     "examine_action": "water_source"
   },

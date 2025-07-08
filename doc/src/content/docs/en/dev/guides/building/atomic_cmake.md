@@ -59,7 +59,8 @@ installation script. For Bazzite, that script looks like:
 ```sh
 $ sudo dnf install git cmake clang ninja-build mold ccache \
   SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
-  freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel
+  freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
+  sqlite-devel zlib-devel
 ```
 
 After this, your container is set up for all your building needs in the future! Now, onto the steps

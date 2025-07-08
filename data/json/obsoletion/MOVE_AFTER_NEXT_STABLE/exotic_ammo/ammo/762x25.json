@@ -1,0 +1,66 @@
+[
+  {
+    "id": "762_25",
+    "type": "AMMO",
+    "name": { "str": "7.62x25mm FMJ" },
+    "description": "A commercial version of the 7.62x25mm cartridge created for the armed forces of Soviet Russia.  It was derived from the 7.63x25mm cartridge used by the C96 pistol.",
+    "weight": "10 g",
+    "volume": "250 ml",
+    "price": "1 USD",
+    "price_postapoc": "8 USD",
+    "material": [ "brass", "powder" ],
+    "symbol": "=",
+    "color": "light_gray",
+    "count": 40,
+    "stack_size": 40,
+    "ammo_type": "762x25",
+    "casing": "762_25_casing",
+    "range": 13,
+    "//": "Base damage of 24, balance increase of two-nineths.",
+    "damage": { "damage_type": "bullet", "amount": 37, "armor_penetration": 16 },
+    "dispersion": 120,
+    "recoil": 540,
+    "effects": [ "COOKOFF" ]
+  },
+  {
+    "id": "762_25hot",
+    "copy-from": "762_25",
+    "type": "AMMO",
+    "name": { "str": "7.62x25mm JHP hot load" },
+    "description": "A high-pressure commercial version of the 7.62x25mm cartridge, loaded with an 85 gr. FMJ bullet.  It is more powerful than the original.",
+    "//": "Hollowpoint bonus of 25%, retains armor penetration due to being a +P load.",
+    "relative": { "price": 500, "range": 2, "damage": { "damage_type": "bullet", "amount": 6 } },
+    "proportional": { "recoil": 1.2 }
+  },
+  {
+    "id": "762_25typeP",
+    "copy-from": "762_25",
+    "type": "AMMO",
+    "name": { "str": "7.62x25mm Type P" },
+    "//": "Stopgap price of $1 per.  Anti-China prejudice in the pre-Cataclysm US may have made this ammo tougher to come by.",
+    "//2": "AP variant, 7/8 damage relative to FMJ variant, armor penetration matches damage.",
+    "description": "A subsonic cartridge derived from the 7.62x25mm, designed for silenced firearms.  It offers good armor penetration at the cost of slightly less damage.",
+    "weight": "12 g",
+    "count": 50,
+    "relative": {
+      "price": 2000,
+      "range": -1,
+      "damage": { "damage_type": "bullet", "amount": -5, "armor_penetration": 16 },
+      "recoil": -270
+    }
+  },
+  {
+    "id": "bp_762_25",
+    "copy-from": "762_25hot",
+    "type": "AMMO",
+    "name": { "str": "7.62x25mm FMJ, black powder" },
+    "proportional": {
+      "price": 0.5,
+      "price_postapoc": 0.5,
+      "damage": { "damage_type": "bullet", "amount": 0.8, "armor_penetration": 0.5 },
+      "recoil": 0.76,
+      "dispersion": 1.2
+    },
+    "extend": { "effects": [ "RECYCLED", "BLACKPOWDER", "MUZZLE_SMOKE" ] }
+  }
+]

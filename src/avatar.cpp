@@ -10,11 +10,9 @@
 #include <memory>
 #include <optional>
 #include <set>
-#include <unordered_map>
 #include <utility>
 
 #include "action.h"
-#include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -24,7 +22,6 @@
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
-#include "clzones.h"
 #include "color.h"
 #include "debug.h"
 #include "diary.h"
@@ -57,11 +54,9 @@
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
-#include "pathfinding.h"
-#include "pimpl.h"
+#include "legacy_pathfinding.h"
 #include "player.h"
 #include "player_activity.h"
-#include "ranged.h"
 #include "recipe.h"
 #include "ret_val.h"
 #include "rng.h"
@@ -72,9 +67,7 @@
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
-#include "value_ptr.h"
 #include "vehicle.h"
-#include "vehicle_part.h"
 #include "vpart_position.h"
 
 static const activity_id ACT_READ( "ACT_READ" );
@@ -117,6 +110,8 @@ avatar::avatar()
     active_mission = nullptr;
     grab_type = OBJECT_NONE;
     a_diary = nullptr;
+    start_location = start_location_id( "sloc_shelter" );
+    movecounter = 0;
 }
 
 avatar::~avatar() = default;
@@ -215,9 +210,17 @@ tripoint_abs_omt avatar::get_active_mission_target() const
     return active_mission->get_target();
 }
 
+tripoint_abs_omt avatar::get_custom_mission_target()
+{
+    if( custom_waypoint == nullptr ) {
+        return overmap::invalid_tripoint;
+    }
+    return *custom_waypoint;
+}
+
 void avatar::set_active_mission( mission &cur_mission )
 {
-    const auto iter = std::find( active_missions.begin(), active_missions.end(), &cur_mission );
+    const auto iter = std::ranges::find( active_missions, &cur_mission );
     if( iter == active_missions.end() ) {
         debugmsg( "new active mission %d is not in the active_missions list", cur_mission.get_id() );
     } else {
@@ -241,7 +244,7 @@ void avatar::on_mission_finished( mission &cur_mission )
         add_msg_if_player( m_good, _( "Mission \"%s\" is successfully completed." ),
                            cur_mission.name() );
     }
-    const auto iter = std::find( active_missions.begin(), active_missions.end(), &cur_mission );
+    const auto iter = std::ranges::find( active_missions, &cur_mission );
     if( iter == active_missions.end() ) {
         debugmsg( "completed mission %d was not in the active_missions list", cur_mission.get_id() );
     } else {
@@ -256,9 +259,10 @@ void avatar::on_mission_finished( mission &cur_mission )
     }
 }
 
-const player *avatar::get_book_reader( const item &book, std::vector<std::string> &reasons ) const
+const Character *avatar::get_book_reader( const item &book,
+        std::vector<std::string> &reasons ) const
 {
-    const player *reader = nullptr;
+    const Character *reader = nullptr;
     if( !book.is_book() ) {
         reasons.push_back( string_format( _( "Your %s is not good reading material." ),
                                           book.tname() ) );
@@ -348,7 +352,8 @@ const player *avatar::get_book_reader( const item &book, std::vector<std::string
     return reader;
 }
 
-int avatar::time_to_read( const item &book, const player &reader, const player *learner ) const
+int avatar::time_to_read( const item &book, const Character &reader,
+                          const Character *learner ) const
 {
     const auto &type = book.type->book;
     const skill_id &skill = type->skill;
@@ -403,7 +408,7 @@ bool avatar::read( item *loc, const bool continuous )
         skim_book_msg( it, *this );
     }
     std::vector<std::string> fail_messages;
-    const player *reader = get_book_reader( it, fail_messages );
+    const auto *reader = get_book_reader( it, fail_messages );
     if( reader == nullptr ) {
         // We can't read, and neither can our followers
         for( const std::string &reason : fail_messages ) {
@@ -482,8 +487,8 @@ bool avatar::read( item *loc, const bool continuous )
             };
 
             auto max_length = [&length]( const std::map<npc *, std::string> &m ) {
-                auto max_ele = std::max_element( m.begin(),
-                                                 m.end(), [&length]( const std::pair<npc *, std::string> &left,
+                auto max_ele = std::ranges::max_element( m,
+                               [&length]( const std::pair<npc *, std::string> &left,
                 const std::pair<npc *, std::string> &right ) {
                     return length( left ) < length( right );
                 } );
@@ -582,7 +587,7 @@ bool avatar::read( item *loc, const bool continuous )
     }
 
     if( !continuous ||
-    !std::all_of( learners.begin(), learners.end(), [&]( const std::pair<npc *, std::string> &elem ) {
+    !std::ranges::all_of( learners, [&]( const std::pair<npc *, std::string> &elem ) {
     return std::count( activity->values.begin(), activity->values.end(),
                        elem.first->getID().get_value() ) != 0;
     } ) ||
@@ -628,7 +633,7 @@ bool avatar::read( item *loc, const bool continuous )
     const int intelligence = get_int();
     const bool complex_penalty = type->intel > std::min( intelligence, reader->get_int() ) &&
                                  !reader->has_trait( trait_PROF_DICEMASTER );
-    const player *complex_player = reader->get_int() < intelligence ? reader : this;
+    const auto *complex_player = reader->get_int() < intelligence ? reader : this;
     if( complex_penalty && !continuous ) {
         add_msg( m_warning,
                  _( "This book is too complex for %s to easily understand.  It will take longer to read." ),
@@ -982,6 +987,25 @@ void avatar::wake_up()
     Character::wake_up();
 }
 
+void avatar::add_snippet( snippet_id snippet )
+{
+    // Optional: caller can check !has_seen_snippet(snippet) before calling this
+    // to avoid doing unnecessary work. This function is safe to call multiple times:
+    // set_value() and emplace() won't change anything if the snippet was already added.
+    std::string combined_name = "has_seen_snippet_" + snippet.str();
+    get_avatar().set_value( combined_name, "true" );
+    snippets_read.emplace( snippet );
+}
+bool avatar::has_seen_snippet( const snippet_id &snippet ) const
+{
+    return snippets_read.contains( snippet );
+}
+
+const std::set<snippet_id> &avatar::get_snippets()
+{
+    return snippets_read;
+}
+
 void avatar::vomit()
 {
     if( stomach.get_calories() > 0 ) {
@@ -1067,7 +1091,7 @@ int avatar::free_upgrade_points() const
 
 std::optional<int> avatar::kill_xp_for_next_point() const
 {
-    auto it = std::lower_bound( xp_cutoffs.begin(), xp_cutoffs.end(), kill_xp() );
+    auto it = std::ranges::lower_bound( xp_cutoffs, kill_xp() );
     if( it == xp_cutoffs.end() ) {
         return std::nullopt;
     } else {
@@ -1252,7 +1276,7 @@ bool avatar::wield( item &target )
     target.on_wield( *this, mv );
 
     inv.update_invlet( target );
-    inv.update_cache_with_item( target );
+    inv.update_invlet_cache_with_item( target );
 
     return true;
 }
@@ -1281,7 +1305,7 @@ detached_ptr<item> avatar::wield( detached_ptr<item> &&target )
 
 
     inv.update_invlet( obj );
-    inv.update_cache_with_item( obj );
+    inv.update_invlet_cache_with_item( obj );
     return detached_ptr<item>();
 }
 
@@ -1306,8 +1330,8 @@ bool avatar::invoke_item( item *used, const tripoint &pt )
                              res.str() );
     }
 
-    umenu.desc_enabled = std::any_of( umenu.entries.begin(),
-    umenu.entries.end(), []( const uilist_entry & elem ) {
+    umenu.desc_enabled = std::ranges::any_of( umenu.entries,
+    []( const uilist_entry & elem ) {
         return !elem.desc.empty();
     } );
 

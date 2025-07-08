@@ -78,6 +78,11 @@ static const std::string flag_CHALLENGE( "CHALLENGE" );
 static const std::string flag_CITY_START( "CITY_START" );
 static const std::string flag_SECRET( "SECRET" );
 
+static const std::string type_hair_style( "hair_style" );
+static const std::string type_skin_tone( "skin_tone" );
+static const std::string type_facial_hair( "facial_hair" );
+static const std::string type_eye_color( "eye_color" );
+
 static const flag_id json_flag_no_auto_equip( "no_auto_equip" );
 static const flag_id json_flag_auto_wield( "auto_wield" );
 
@@ -192,7 +197,7 @@ static matype_id choose_ma_style( const character_type type, const std::vector<m
  *
  * @return true, if player can pick profession. Otherwise - false.
  */
-static bool can_pick_prof( const profession &prof, const player &u, int points )
+static bool can_pick_prof( const profession &prof, const Character &u, int points )
 {
     return prof.point_cost() - u.prof->point_cost() <= points;
 }
@@ -225,7 +230,8 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
     init_age = rng( 16, 55 );
     // if adjusting min and max height from 145 and 200, make sure to see set_description()
     init_height = rng( 145, 200 );
-    bool cities_enabled = world_generator->active_world->WORLD_OPTIONS["CITY_SIZE"].getValue() != "0";
+    bool cities_enabled = world_generator->active_world->info->WORLD_OPTIONS["CITY_SIZE"].getValue() !=
+                          "0";
     if( random_scenario ) {
         std::vector<const scenario *> scenarios;
         for( const auto &scen : scenario::get_all() ) {
@@ -404,7 +410,30 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
         }
         loops++;
     }
+
     set_body();
+}
+
+void Character::clear_cosmetic_traits( std::string mutation_type, trait_id new_trait )
+{
+    for( const mutation_branch &mb : mutation_branch::get_all() ) {
+        if( mb.points == 0 && mb.types.count( mutation_type ) ) {
+            if( has_trait( mb.id ) && mb.id != new_trait ) {
+                toggle_trait( mb.id );
+            }
+        }
+    }
+}
+
+void avatar::randomize_cosmetics()
+{
+    randomize_cosmetic_trait( type_hair_style );
+    randomize_cosmetic_trait( type_skin_tone );
+    randomize_cosmetic_trait( type_eye_color );
+    //arbitrary 50% chance to add beard to male characters
+    if( male && one_in( 2 ) ) {
+        randomize_cosmetic_trait( type_facial_hair );
+    }
 }
 
 bool avatar::create( character_type type, const std::string &tempname )
@@ -430,6 +459,7 @@ bool avatar::create( character_type type, const std::string &tempname )
         case character_type::RANDOM:
             //random scenario, default name if exist
             randomize( true, points );
+            randomize_cosmetics();
             tab = NEWCHAR_TAB_MAX;
             break;
         case character_type::NOW:
@@ -455,13 +485,13 @@ bool avatar::create( character_type type, const std::string &tempname )
     }
 
     auto nameExists = [&]( const std::string & name ) {
-        return world_generator->active_world->save_exists( save_t::from_save_id( name ) ) &&
+        return world_generator->active_world->info->save_exists( save_t::from_save_id( name ) ) &&
                !query_yn( _( "A save with the name '%s' already exists in this world.\n"
                              "Saving will overwrite the already existing character.\n\n"
                              "Continue anyways?" ), name );
     };
     set_body();
-    const bool allow_reroll = type == character_type::RANDOM;
+    const bool allow_reroll = true;
     tab_direction result = tab_direction::QUIT;
     do {
         if( !interactive ) {
@@ -587,19 +617,19 @@ bool avatar::create( character_type type, const std::string &tempname )
         // TODO: debugmsg if food that isn't a seed is inedible
         if( it->has_flag( json_flag_no_auto_equip ) ) {
             it->unset_flag( json_flag_no_auto_equip );
-            inv.push_back( std::move( it ) );
+            inv.add_item( std::move( it ), false );
         } else if( it->has_flag( json_flag_auto_wield ) ) {
             it->unset_flag( json_flag_auto_wield );
             if( !is_armed() ) {
                 wield( std::move( it ) );
             } else {
-                inv.push_back( std::move( it ) );
+                inv.add_item( std::move( it ), false );
             }
         } else if( it->is_armor() ) {
             // TODO: debugmsg if wearing fails
             wear_item( std::move( it ), false );
         } else {
-            inv.push_back( std::move( it ) );
+            inv.add_item( std::move( it ), false );
         }
     }
 
@@ -805,6 +835,7 @@ tab_direction set_stats( avatar &u, points_left &points )
     ctxt.register_cardinal();
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "RANDOMIZE" );
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "QUIT" );
 
@@ -968,6 +999,8 @@ tab_direction set_stats( avatar &u, points_left &points )
             } else {
                 sel = 4;
             }
+        } else if( action == "RANDOMIZE" ) {
+            sel = rng( 1, 4 );
         } else if( action == "LEFT" ) {
             if( sel == 1 && u.str_max > 4 ) {
                 if( u.str_max > HIGH_STAT ) {
@@ -1161,6 +1194,10 @@ tab_direction set_traits( avatar &u, points_left &points )
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "RANDOMIZE" );
+    ctxt.register_action( "REROLL_CHARACTER" );
+    ctxt.register_action( "REROLL_CHARACTER_WITH_SCENARIO" );
+    ctxt.register_action( "REROLL_APPEARANCE" );
     ctxt.register_action( "QUIT" );
 #if defined(TILES)
     ctxt.register_action( "zoom_in" );
@@ -1310,11 +1347,28 @@ tab_direction set_traits( avatar &u, points_left &points )
             } else {
                 iCurrentLine[iCurWorkingPage]--;
             }
+        } else if( action == "REROLL_CHARACTER" ) {
+            points.init_from_options();
+            u.randomize( false, points );
+            // Return tab_direction::NONE so we re-enter this tab again, but it forces a complete redrawing of it.
+            return tab_direction::NONE;
+        } else if( action == "REROLL_CHARACTER_WITH_SCENARIO" ) {
+            points.init_from_options();
+            u.randomize( true, points );
+            // Return tab_direction::NONE so we re-enter this tab again, but it forces a complete redrawing of it.
+            return tab_direction::NONE;
+        } else if( action == "REROLL_APPEARANCE" ) {
+            u.randomize_cosmetics();
+            //u.set_body();
+            // Return tab_direction::NONE so we re-enter this tab again, but it forces a complete redrawing of it.
+            return tab_direction::NONE;
         } else if( action == "DOWN" ) {
             iCurrentLine[iCurWorkingPage]++;
             if( static_cast<size_t>( iCurrentLine[iCurWorkingPage] ) >= traits_size[iCurWorkingPage] ) {
                 iCurrentLine[iCurWorkingPage] = 0;
             }
+        } else if( action == "RANDOMIZE" ) {
+            iCurrentLine[iCurWorkingPage] = rng( 0, traits_size[iCurWorkingPage] - 1 );
         } else if( action == "CONFIRM" ) {
             int inc_type = 0;
             const trait_id cur_trait = vStartingTraits[iCurWorkingPage][iCurrentLine[iCurWorkingPage]].id;
@@ -1466,6 +1520,7 @@ tab_direction set_profession( avatar &u, points_left &points,
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "SORT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "RANDOMIZE" );
     ctxt.register_action( "FILTER" );
     ctxt.register_action( "QUIT" );
 
@@ -1762,6 +1817,8 @@ tab_direction set_profession( avatar &u, points_left &points,
             if( desc_offset > 0 ) {
                 desc_offset--;
             }
+        } else if( action == "RANDOMIZE" ) {
+            cur_id = rng( 0, profs_length - 1 );
         } else if( action == "RIGHT" ) {
             if( desc_offset < iheight ) {
                 desc_offset++;
@@ -1862,6 +1919,7 @@ tab_direction set_skills( avatar &u, points_left &points )
     ctxt.register_action( "SCROLL_UP" );
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "NEXT_TAB" );
+    ctxt.register_action( "RANDOMIZE" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "QUIT" );
 
@@ -2029,6 +2087,8 @@ tab_direction set_skills( avatar &u, points_left &points )
         } else if( action == "UP" ) {
             cur_pos = modulo( cur_pos - 1, num_skills );
             currentSkill = skill_list[cur_pos].first;
+        } else if( action == "RANDOMIZE" ) {
+            cur_pos = modulo( rng( 0, num_skills - 1 ), num_skills );
         } else if( action == "LEFT" ) {
             const int level = u.get_skill_level( currentSkill->ident() );
             if( level > 0 ) {
@@ -2125,6 +2185,7 @@ tab_direction set_scenario( avatar &u, points_left &points,
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "SORT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "RANDOMIZE" );
     ctxt.register_action( "FILTER" );
     ctxt.register_action( "QUIT" );
 
@@ -2338,7 +2399,7 @@ tab_direction set_scenario( avatar &u, points_left &points,
     do {
         if( recalc_scens ) {
             sorted_scens.clear();
-            auto &wopts = world_generator->active_world->WORLD_OPTIONS;
+            auto &wopts = world_generator->active_world->info->WORLD_OPTIONS;
             for( const auto &scen : scenario::get_all() ) {
                 if( scen.scen_is_blacklisted() ) {
                     continue;
@@ -2394,6 +2455,8 @@ tab_direction set_scenario( avatar &u, points_left &points,
             if( cur_id < 0 ) {
                 cur_id = scens_length - 1;
             }
+        } else if( action == "RANDOMIZE" ) {
+            cur_id = rng( 0, scens_length - 1 );
         } else if( action == "CONFIRM" ) {
             if( sorted_scens[cur_id]->has_flag( "CITY_START" ) && !scenario_sorter.cities_enabled ) {
                 continue;
@@ -3001,7 +3064,7 @@ trait_id newcharacter::random_good_trait()
     std::vector<trait_id> vTraitsGood;
 
     for( auto &traits_iter : mutation_branch::get_all() ) {
-        if( traits_iter.points >= 0 && g->scen->traitquery( traits_iter.id ) ) {
+        if( traits_iter.points > 0 && g->scen->traitquery( traits_iter.id ) ) {
             vTraitsGood.push_back( traits_iter.id );
         }
     }
@@ -3020,6 +3083,35 @@ trait_id newcharacter::random_bad_trait()
     }
 
     return random_entry( vTraitsBad );
+}
+
+trait_id Character::get_random_trait( const std::function<bool( const mutation_branch & )> &func )
+{
+    std::vector<trait_id> vTraits;
+
+    for( const mutation_branch &traits_iter : mutation_branch::get_all() ) {
+        if( func( traits_iter ) ) {
+            vTraits.push_back( traits_iter.id );
+        }
+    }
+
+    return random_entry( vTraits );
+}
+
+
+void Character::randomize_cosmetic_trait( std::string mutation_type )
+{
+    trait_id trait = get_random_trait( [mutation_type]( const mutation_branch & mb ) {
+        return mb.points == 0 && mb.types.count( mutation_type );
+    } );
+
+    if( trait.is_valid() ) { // <-- IMPORTANT
+        clear_cosmetic_traits( mutation_type, trait );
+
+        if( !has_trait( trait ) ) {
+            toggle_trait( trait );
+        }
+    }
 }
 
 std::optional<std::string> query_for_template_name()

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MUTATION_UI_H
-#define CATA_SRC_MUTATION_UI_H
 
 #include "type_id.h"
 
@@ -25,4 +23,4 @@ mutations_ui_result show_mutations_ui_internal( Character &who );
 
 void show_mutations_ui( Character &who );
 
-#endif // CATA_SRC_MUTATION_UI_H
+

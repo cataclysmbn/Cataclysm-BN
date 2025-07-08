@@ -2,10 +2,10 @@
 title: Modding guide
 ---
 
-:::danger{title="Most of the documentations are not up-to date"}
+:::caution{title="Some documentation is not complete"}
 
-Most of the documentations are outdated (unchanged since fork from CDDA) and may not work as
-expected. Updates are welcome.
+Some parts of the documentation are incomplete or have not been properly updated from older
+documentation. Contributions to fix this are greatly appreciated.
 
 :::
 

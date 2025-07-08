@@ -127,6 +127,8 @@
       { "item": "multi_cooker", "prob": 25 },
       { "item": "pastaextruder", "prob": 10 },
       { "item": "dehydrator", "prob": 10 },
+      { "item": "soda_machine", "prob": 10 },
+      { "item": "carbondioxide_tank", "prob": 2 },
       { "item": "hotplate", "prob": 10 },
       { "collection": [ { "item": "charcoal", "prob": 70 }, { "item": "char_smoker", "prob": 100 } ], "prob": 5 },
       { "item": "can_sealer", "prob": 2 },

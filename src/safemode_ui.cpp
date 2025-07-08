@@ -29,6 +29,7 @@
 #include "string_utils.h"
 #include "translations.h"
 #include "ui_manager.h"
+#include "world.h"
 
 safemode &get_safemode()
 {
@@ -761,23 +762,25 @@ bool safemode::save_global()
 bool safemode::save( const bool is_character_in )
 {
     is_character = is_character_in;
-    auto file = PATH_INFO::safemode();
-
-    if( is_character ) {
-        file = g->get_player_base_save_path() + ".sfm.json";
-        if( !file_exist( g->get_player_base_save_path() + ".sav" ) ) {
-            return true; //Character not saved yet.
-        }
-    }
-
-    return write_to_file( file, [&]( std::ostream & fout ) {
+    auto serializer = [&]( std::ostream & fout ) {
         JsonOut jout( fout, true );
         serialize( jout );
 
         if( !is_character ) {
             create_rules();
         }
-    }, _( "safemode configuration" ) );
+    };
+
+    if( is_character ) {
+        world *world = g->get_active_world();
+        if( !world->player_file_exist( ".sav" ) ) {
+            return true; //Character not saved yet.
+        }
+
+        return world->write_to_player_file( ".sfm.json", serializer, _( "safemode configuration" ) );
+    } else {
+        return write_to_file( PATH_INFO::safemode(), serializer, _( "safemode configuration" ) );
+    }
 }
 
 void safemode::load_character()
@@ -793,25 +796,21 @@ void safemode::load_global()
 void safemode::load( const bool is_character_in )
 {
     is_character = is_character_in;
-
-    std::ifstream fin;
-    std::string file = PATH_INFO::safemode();
-    if( is_character ) {
-        file = g->get_player_base_save_path() + ".sfm.json";
-    }
-
-    fin.open( file.c_str(), std::ifstream::in | std::ifstream::binary );
-
-    if( fin.good() ) {
+    auto loader = [&]( JsonIn & jsin ) {
         try {
-            JsonIn jsin( fin );
             deserialize( jsin );
         } catch( const JsonError &e ) {
-            debugmsg( "Error while loading safemode settings: %s", e.what() );
+            debugmsg( "Error loading safemode settings: %s", e.c_str() );
         }
+    };
+
+    std::ifstream fin;
+    if( is_character ) {
+        g->get_active_world()->read_from_player_file_json( ".sfm.json", loader, true );
+    } else {
+        read_from_file_json( PATH_INFO::safemode(), loader, true );
     }
 
-    fin.close();
     create_rules();
 }
 

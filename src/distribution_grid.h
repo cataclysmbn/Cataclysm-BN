@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DISTRIBUTION_GRID_H
-#define CATA_SRC_DISTRIBUTION_GRID_H
 
 #include <cstdint>
 #include <vector>
@@ -222,4 +220,4 @@ constexpr traverse_visitor_result noop_visitor_veh( const vehicle & )
  */
 distribution_grid_tracker &get_distribution_grid_tracker();
 
-#endif // CATA_SRC_DISTRIBUTION_GRID_H
+

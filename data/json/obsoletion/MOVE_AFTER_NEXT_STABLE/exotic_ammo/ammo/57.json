@@ -1,0 +1,40 @@
+[
+  {
+    "id": "57mm",
+    "type": "AMMO",
+    "name": { "str": "5.7x28mm SS190" },
+    "description": "5.7x28mm ammunition with 31gr AP FMJ bullets.  The 5.7x28mm cartridge was designed by FN Herstal to replace the 9x19mm round in NATO use.  Although the project to replace 9x19mm Parabellum was effectively canceled the 5.7x28mm round has seen action in many conflicts and has proven to be reliable.  It has very low recoil and its armor penetration is a defining feature.",
+    "weight": "6 g",
+    "volume": "250 ml",
+    "price": "350 cent",
+    "price_postapoc": "16 USD",
+    "material": [ "steel", "powder" ],
+    "symbol": "=",
+    "color": "dark_gray",
+    "count": 40,
+    "stack_size": 60,
+    "ammo_type": "57",
+    "casing": "57mm_casing",
+    "range": 14,
+    "//": "Base damage of 20, balance increase of one third.  Armor penetration balanced on the assumption that this is the AP variant of a hypothetical FMJ round.",
+    "damage": { "damage_type": "bullet", "amount": 26, "armor_penetration": 26 },
+    "dispersion": 40,
+    "recoil": 350,
+    "effects": [ "COOKOFF" ]
+  },
+  {
+    "id": "bp_57mm",
+    "copy-from": "57mm",
+    "type": "AMMO",
+    "name": { "str": "5.7x28mm, black powder" },
+    "description": "5.7x28mm ammunition with 31gr AP FMJ bullets.  The 5.7x28mm cartridge was designed by FN Herstal to replace the 9x19mm round in NATO use.  Although the project to replace 9x19mm Parabellum was effectively canceled the 5.7x28mm round has seen action in many conflicts and has proven to be reliable.  It has very low recoil but no usual armor penetration due to using simple lead bullets rather than proper factory-made penetrator projectiles.",
+    "proportional": {
+      "price": 0.5,
+      "price_postapoc": 0.5,
+      "damage": { "damage_type": "bullet", "amount": 0.8, "armor_penetration": 0.1 },
+      "recoil": 0.76,
+      "dispersion": 1.2
+    },
+    "extend": { "effects": [ "RECYCLED", "BLACKPOWDER", "MUZZLE_SMOKE" ] }
+  }
+]

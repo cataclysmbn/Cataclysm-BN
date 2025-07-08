@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_REGEN_H
-#define CATA_SRC_REGEN_H
 
 #include "type_id.h"
 
@@ -15,4 +13,4 @@ class Character;
 /// TODO: merge into `Character::heal`?
 auto heal_adjusted( Character &c, const bodypart_id &bp, const int heal ) -> int;
 
-#endif // CATA_SRC_REGEN_H
+

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CHARACTER_EFFECTS_H
-#define CATA_SRC_CHARACTER_EFFECTS_H
 
 class Character;
 
@@ -45,4 +43,4 @@ int calc_focus_change( const Character &who );
 
 } // namespace character_effects
 
-#endif // CATA_SRC_CHARACTER_EFFECTS_H
+

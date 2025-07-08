@@ -20,19 +20,20 @@ title: Martial arts & techniques
     "id" : "debug_elem_resist",
     "heat_arm_per" : 1.0
 ],
-"ondodge_buffs" : []        // List of buffs that are automatically applied on successful dodge
-"onattack_buffs" : []       // List of buffs that are automatically applied after any attack, hit or miss
-"onhit_buffs" : []          // List of buffs that are automatically applied on successful hit
-"onmove_buffs" : []         // List of buffs that are automatically applied on movement
-"onmiss_buffs" : []         // List of buffs that are automatically applied on a miss
-"oncrit_buffs" : []         // List of buffs that are automatically applied on a crit
-"onkill_buffs" : []         // List of buffs that are automatically applied upon killing an enemy
+"ondodge_buffs" : [],        // List of buffs that are automatically applied on successful dodge
+"onattack_buffs" : [],       // List of buffs that are automatically applied after any attack, hit or miss
+"onhit_buffs" : [],          // List of buffs that are automatically applied on successful hit
+"onmove_buffs" : [],         // List of buffs that are automatically applied on movement
+"onmiss_buffs" : [],         // List of buffs that are automatically applied on a miss
+"oncrit_buffs" : [],         // List of buffs that are automatically applied on a crit
+"onkill_buffs" : [],         // List of buffs that are automatically applied upon killing an enemy
 "techniques" : [            // List of techniques available when this martial art is used
     "tec_debug_slow",
     "tec_debug_arpen"
-]
-"weapons": [ "tonfa" ]      // List of weapons usable with this art
+],
+"weapons": [ "tonfa" ],      // List of weapons usable with this art
 "weapon_category": [ "WEAPON_CAT1" ], // Weapons that have one of the categories in here are usable with this art.
+"mutation": [ "UNSTYLISH" ] // A list of mutations, at least 1 of which is needed to use this art
 ```
 
 ### Techniques
@@ -72,7 +73,8 @@ title: Martial arts & techniques
     "You phase-strike %s",
     "<npcname> phase-strikes %s"
 ]
-"movecost_mult" : 0.3       // Any bonuses, as described below
+"movecost_mult" : 0.3,       // Any bonuses, as described below
+"mutations_required": [ "MASOCHIST" ] // List of mutations, at least 1 of which is required to use the technique
 ```
 
 ### Buffs

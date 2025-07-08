@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MORALE_TYPES_H
-#define CATA_SRC_MORALE_TYPES_H
 
 #include <string>
 
@@ -108,7 +106,6 @@ extern const morale_type MORALE_PYROMANIA_NEARFIRE;
 extern const morale_type MORALE_PYROMANIA_NOFIRE;
 extern const morale_type MORALE_KILLER_HAS_KILLED;
 extern const morale_type MORALE_KILLER_NEED_TO_KILL;
-extern const morale_type MORALE_PERM_FILTHY;
 extern const morale_type MORALE_PERM_DEBUG;
 extern const morale_type MORALE_BUTCHER;
 extern const morale_type MORALE_GRAVEDIGGER;
@@ -117,4 +114,4 @@ extern const morale_type MORALE_TREE_COMMUNION;
 extern const morale_type MORALE_ACCOMPLISHMENT;
 extern const morale_type MORALE_FAILURE;
 
-#endif // CATA_SRC_MORALE_TYPES_H
+

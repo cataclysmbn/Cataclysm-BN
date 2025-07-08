@@ -45,7 +45,6 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "FILTHY",
       "NO_FUNG_DMG"
     ]
   },
@@ -91,8 +90,7 @@
       "BLEED",
       "NO_BREATHE",
       "REVIVES",
-      "PUSH_MON",
-      "FILTHY"
+      "PUSH_MON"
     ]
   },
   {
@@ -143,8 +141,7 @@
       "BLEED",
       "NO_BREATHE",
       "REVIVES",
-      "PUSH_MON",
-      "FILTHY"
+      "PUSH_MON"
     ]
   },
   {
@@ -178,20 +175,7 @@
     "death_function": [ "NORMAL" ],
     "upgrades": { "half_life": 14, "into_group": "GROUP_ZOMBIE_CRAWLER_UPGRADE" },
     "burn_into": "mon_zombie_scorched",
-    "flags": [
-      "SEES",
-      "HEARS",
-      "SMELLS",
-      "STUMBLES",
-      "WARM",
-      "BASHES",
-      "GRABS",
-      "POISON",
-      "BLEED",
-      "NO_BREATHE",
-      "REVIVES",
-      "FILTHY"
-    ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BASHES", "GRABS", "POISON", "BLEED", "NO_BREATHE", "REVIVES" ]
   },
   {
     "id": "mon_zombie_dancer",
@@ -225,7 +209,7 @@
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_zombie_fungus",
     "regenerates": 50,
-    "flags": [ "WARM", "BASHES", "DESTROYS", "NO_BREATHE", "POISON", "FILTHY" ]
+    "flags": [ "WARM", "BASHES", "DESTROYS", "NO_BREATHE", "POISON" ]
   },
   {
     "id": "mon_zombie_fat",
@@ -273,8 +257,7 @@
       "BLEED",
       "NO_BREATHE",
       "REVIVES",
-      "PUSH_MON",
-      "FILTHY"
+      "PUSH_MON"
     ]
   },
   {
@@ -324,7 +307,6 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "FILTHY",
       "NO_FUNG_DMG"
     ]
   },
@@ -372,7 +354,6 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "FILTHY",
       "NO_FUNG_DMG"
     ]
   },
@@ -418,8 +399,7 @@
       "BLEED",
       "NO_BREATHE",
       "REVIVES",
-      "PUSH_MON",
-      "FILTHY"
+      "PUSH_MON"
     ]
   },
   {
@@ -470,8 +450,7 @@
       "BLEED",
       "NO_BREATHE",
       "REVIVES",
-      "PUSH_MON",
-      "FILTHY"
+      "PUSH_MON"
     ]
   },
   {
@@ -521,8 +500,7 @@
       "BLEED",
       "NO_BREATHE",
       "REVIVES",
-      "PUSH_MON",
-      "FILTHY"
+      "PUSH_MON"
     ]
   },
   {

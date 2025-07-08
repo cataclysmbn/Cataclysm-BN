@@ -359,7 +359,7 @@
     "storage": "3 L",
     "material_thickness": 1,
     "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
   },
   {
     "id": "fanny",
@@ -382,7 +382,7 @@
     "storage": "3 L",
     "material_thickness": 1,
     "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
   },
   {
     "id": "golf_bag",
@@ -874,7 +874,7 @@
     "id": "survivor_hiking_backpack",
     "type": "ARMOR",
     "name": { "str": "survivor hiking backpack" },
-    "description": "A custom-built backpack hiking.  Durable and carefully crafted to hold as much stuff as possible.",
+    "description": "A custom-built hiking backpack.  Durable and carefully crafted to hold as much stuff as possible.",
     "weight": "2500 g",
     "volume": "15000 ml",
     "price": "150 USD",

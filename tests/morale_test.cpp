@@ -179,13 +179,18 @@ TEST_CASE( "player_morale", "[morale]" )
         m.on_item_wear( heels );
 
         WHEN( "not a stylish person" ) {
+            m.on_mutation_gain( trait_id( "UNSTYLISH" ) );
             THEN( "just don't care (even if man)" ) {
                 CHECK( m.get_level() == 0 );
+            }
+
+            AND_WHEN( "not anymore" ) {
+                m.on_mutation_loss( trait_id( "UNSTYLISH" ) );
+                CHECK( m.get_level() == 19 );
             }
         }
 
         WHEN( "a stylish person" ) {
-            m.on_mutation_gain( trait_id( "STYLISH" ) );
 
             CHECK( m.get_level() == 19 );
 
@@ -215,10 +220,6 @@ TEST_CASE( "player_morale", "[morale]" )
                 THEN( "there's a limit" ) {
                     CHECK( m.get_level() == 20 );
                 }
-            }
-            AND_WHEN( "not anymore" ) {
-                m.on_mutation_loss( trait_id( "STYLISH" ) );
-                CHECK( m.get_level() == 0 );
             }
         }
     }

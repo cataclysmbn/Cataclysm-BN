@@ -182,6 +182,12 @@
     "info": "This item <good>can be used as a flat surface</good> for <info>butchering</info>."
   },
   {
+    "id": "BUTCHER_EQ",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "This item <good>can be used as a butchering rack</good>."
+  },
+  {
     "id": "WORKBENCH",
     "type": "json_flag",
     "context": [ "vehicle_part" ],
@@ -240,5 +246,31 @@
     "type": "json_flag",
     "context": [ "vehicle_part" ],
     "requires_flag": "ROOF"
+  },
+  {
+    "id": "SEAT_REQUIRES_BALANCE",
+    "context": [ "vehicle_part" ],
+    "type": "json_flag"
+  },
+  {
+    "id": "WHEEL_MOUNT_SKATEBOARD",
+    "context": [ "vehicle_part" ],
+    "type": "json_flag"
+  },
+  {
+    "id": "NEEDS_WHEEL_MOUNT_SKATEBOARD",
+    "context": [ "vehicle_part" ],
+    "type": "json_flag",
+    "requires_flag": "WHEEL_MOUNT_SKATEBOARD"
+  },
+  {
+    "id": "SHOCK_IMMUNE",
+    "context": [ "vehicle_part" ],
+    "type": "json_flag"
+  },
+  {
+    "id": "SHOCK_RESISTANT",
+    "context": [ "vehicle_part" ],
+    "type": "json_flag"
   }
 ]

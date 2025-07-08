@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ADVANCED_INV_LISTITEM_H
-#define CATA_SRC_ADVANCED_INV_LISTITEM_H
 
 #include <list>
 #include <string>
@@ -104,4 +102,4 @@ class advanced_inv_listitem
         advanced_inv_listitem( const std::list<item *> &list, int index,
                                aim_location area, bool from_vehicle );
 };
-#endif // CATA_SRC_ADVANCED_INV_LISTITEM_H
+

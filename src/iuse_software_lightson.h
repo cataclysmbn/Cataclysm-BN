@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_IUSE_SOFTWARE_LIGHTSON_H
-#define CATA_SRC_IUSE_SOFTWARE_LIGHTSON_H
 
 #include <vector>
 
@@ -36,4 +34,4 @@ class lightson_game
         lightson_game() = default;
 };
 
-#endif // CATA_SRC_IUSE_SOFTWARE_LIGHTSON_H
+

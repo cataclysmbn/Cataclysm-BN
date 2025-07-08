@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_SAFE_REFERENCE_H
-#define CATA_SRC_SAFE_REFERENCE_H
 
 /**
  *
@@ -559,4 +557,4 @@ void serialize( const safe_reference<T> &, JsonOut & );
 
 void cleanup_references();
 
-#endif // CATA_SRC_SAFE_REFERENCE_H
+

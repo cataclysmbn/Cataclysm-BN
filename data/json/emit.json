@@ -16,6 +16,14 @@
     "chance": 2
   },
   {
+    "id": "emit_blunt_trail",
+    "type": "emit",
+    "//": "Intermittent blunt smoke",
+    "field": "fd_bluntsmoke",
+    "intensity": 3,
+    "chance": 2
+  },
+  {
     "id": "emit_AEP_SMOKE",
     "type": "emit",
     "//": "Intermittent smoke from an artifact",

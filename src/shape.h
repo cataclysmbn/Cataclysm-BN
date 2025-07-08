@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_SHAPE_H
-#define CATA_SRC_SHAPE_H
 
 #include <map>
 #include <memory>
@@ -61,4 +59,4 @@ class shape_factory
         std::shared_ptr<shape_factory_impl> impl;
 };
 
-#endif // CATA_SRC_SHAPE_H
+

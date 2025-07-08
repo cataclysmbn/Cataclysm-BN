@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DRAWING_PRIMITIVES_H
-#define CATA_SRC_DRAWING_PRIMITIVES_H
 
 #include <functional>
 
@@ -17,4 +15,4 @@ void draw_circle( const std::function<void( point )> &set, const rl_vec2d &p, do
 
 void draw_circle( const std::function<void( point )> &set, point p, int rad );
 
-#endif // CATA_SRC_DRAWING_PRIMITIVES_H
+

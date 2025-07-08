@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ITEM_ACTION_H
-#define CATA_SRC_ITEM_ACTION_H
 
 #include <map>
 #include <string>
@@ -59,4 +57,4 @@ class item_action_generator
         void reset();
 };
 
-#endif // CATA_SRC_ITEM_ACTION_H
+

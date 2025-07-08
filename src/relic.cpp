@@ -273,30 +273,38 @@ void relic::check() const
 namespace relic_funcs
 {
 
-bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Character &carrier )
+bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Character *carrier )
 {
+    bool possess = carrier;
+
     switch( rech.req ) {
         case relic_recharge_req::none: {
             return true;
         }
         case relic_recharge_req::equipped: {
+            if( !possess ) {
+                return false;
+            }
             if( itm.is_armor() ) {
-                return carrier.is_wearing( itm );
+                return carrier->is_wearing( itm );
             } else {
-                return carrier.is_wielding( itm );
+                return carrier->is_wielding( itm );
             }
         }
         case relic_recharge_req::close_to_skin: {
+            if( !possess ) {
+                return false;
+            }
             if( itm.is_armor() ) {
-                if( !carrier.is_wearing( itm ) ) {
+                if( !carrier->is_wearing( itm ) ) {
                     return false;
                 }
-                for( const bodypart_id &bp : carrier.get_all_body_parts() ) {
+                for( const bodypart_id &bp : carrier->get_all_body_parts() ) {
                     if( !itm.covers( bp ) ) {
                         continue;
                     }
                     bool this_bp_good = true;
-                    for( const item *wi : carrier.worn ) {
+                    for( const item *wi : carrier->worn ) {
                         if( wi->get_coverage( bp ) == 0 ) {
                             continue;
                         }
@@ -313,12 +321,12 @@ bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Cha
                 }
                 return false;
             } else {
-                if( !carrier.is_wielding( itm ) ) {
+                if( !carrier->is_wielding( itm ) ) {
                     return false;
                 }
                 bool hand_l_ok = true;
                 bool hand_r_ok = true;
-                for( const item *wi : carrier.worn ) {
+                for( const item *wi : carrier->worn ) {
                     if( wi->get_coverage( body_part_hand_l ) == 0 && wi->get_coverage( body_part_hand_r ) == 0 ) {
                         continue;
                     }
@@ -333,28 +341,33 @@ bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Cha
             }
         }
         case relic_recharge_req::sleep: {
-            return carrier.has_effect( effect_sleep );
+            if( !possess ) {
+                return false;
+            }
+            return carrier->has_effect( effect_sleep );
         }
         case relic_recharge_req::rad: {
-            return get_map().get_radiation( carrier.pos() ) > 0 || carrier.get_rad() > 0;
+            return get_map().get_radiation( itm.position() ) > 0 || ( possess && carrier->get_rad() > 0 );
         }
         case relic_recharge_req::wet: {
-            bool has_wet = std::any_of( carrier.get_body().begin(), carrier.get_body().end(),
-            []( const std::pair<const bodypart_str_id, bodypart> &elem ) {
-                return elem.second.get_wetness() != 0;
-            } );
-            if( has_wet ) {
-                return true;
-            } else {
+            bool soaked = false;
+            if( possess ) {
+                soaked = std::any_of( carrier->get_body().begin(), carrier->get_body().end(),
+                []( const std::pair<const bodypart_str_id, bodypart> &elem ) {
+                    return elem.second.get_wetness() != 0;
+                } );
+            }
+            if( !soaked ) {
                 const weather_type &wt = get_weather().weather_id.obj();
                 if( !wt.rains || wt.acidic || wt.precip == precip_class::none ) {
                     return false;
                 }
-                return get_map().is_outside( carrier.pos() );
+                soaked = get_map().is_outside( itm.position() );
             }
+            return soaked;
         }
         case relic_recharge_req::sky: {
-            return carrier.posz() > 0;
+            return itm.position().z > 0;
         }
         default: {
             std::abort();
@@ -363,7 +376,7 @@ bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Cha
     cata::unreachable();
 }
 
-bool process_recharge_entry( item &itm, const relic_recharge &rech, Character &carrier )
+bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *carrier )
 {
     if( !calendar::once_every( rech.interval ) ) {
         return false;
@@ -377,30 +390,42 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character &c
             break;
         }
         case relic_recharge_type::solar: {
-            if( !g->is_in_sunlight( carrier.pos() ) ) {
+            if( !g->is_in_sunlight( itm.position() ) ) {
                 return false;
             }
             break;
         }
         case relic_recharge_type::pain: {
-            carrier.add_msg_if_player( m_bad, _( "You suddenly feel sharp pain for no reason." ) );
-            carrier.mod_pain_noresist( rng( rech.intensity_min, rech.intensity_max ) );
+            if( carrier ) {
+                carrier->add_msg_if_player( m_bad, _( "You suddenly feel sharp pain for no reason." ) );
+                carrier->mod_pain_noresist( rng( rech.intensity_min, rech.intensity_max ) );
+            } else {
+                return false;
+            }
             break;
         }
         case relic_recharge_type::hp: {
-            carrier.add_msg_if_player( m_bad, _( "You feel your body decaying." ) );
-            carrier.hurtall( rng( rech.intensity_min, rech.intensity_max ), nullptr );
+            if( carrier ) {
+                carrier->add_msg_if_player( m_bad, _( "You feel your body decaying." ) );
+                carrier->hurtall( rng( rech.intensity_min, rech.intensity_max ), nullptr );
+            } else {
+                return false;
+            }
             break;
         }
         case relic_recharge_type::fatigue: {
-            carrier.add_msg_if_player( m_bad, _( "You feel fatigue seeping into your body." ) );
-            carrier.mod_fatigue( rng( rech.intensity_min, rech.intensity_max ) );
-            carrier.mod_stamina( -100 * rng( rech.intensity_min, rech.intensity_max ) );
+            if( carrier ) {
+                carrier->add_msg_if_player( m_bad, _( "You feel fatigue seeping into your body." ) );
+                carrier->mod_fatigue( rng( rech.intensity_min, rech.intensity_max ) );
+                carrier->mod_stamina( -100 * rng( rech.intensity_min, rech.intensity_max ) );
+            } else {
+                return false;
+            }
             break;
         }
         case relic_recharge_type::field: {
             bool consumed = false;
-            for( const tripoint &dest : here.points_in_radius( carrier.pos(), 1 ) ) {
+            for( const tripoint &dest : here.points_in_radius( itm.position(), 1 ) ) {
                 field_entry *field_at = here.field_at( dest ).find_field( rech.field_type );
                 if( !field_at ) {
                     continue;
@@ -419,7 +444,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character &c
         }
         case relic_recharge_type::trap: {
             bool consumed = false;
-            for( const tripoint &dest : here.points_in_radius( carrier.pos(), 1 ) ) {
+            for( const tripoint &dest : here.points_in_radius( itm.position(), 1 ) ) {
                 if( here.tr_at( dest ).id == rech.trap_type ) {
                     here.remove_trap( dest );
                     consumed = true;
@@ -437,7 +462,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character &c
     // If it already has ammo, increment charges of ammo inside.
     if( itm.ammo_data() ) {
         int ammo_charge = clamp( itm.ammo_remaining() + rech.rate, 0, itm.ammo_capacity() );
-        itm.magazine_integral() ? itm.charges = ammo_charge : itm.contents.front().charges = ammo_charge;
+        itm.ammo_set( itm.ammo_current(), ammo_charge );
     } else {
         // If not, either give it default ammo, or increment charges directly.
         if( !itm.ammo_types().empty() ) {
@@ -448,12 +473,14 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character &c
         }
     }
     if( rech.message ) {
-        carrier.add_msg_if_player( _( *rech.message ) );
+        if( carrier ) {
+            carrier->add_msg_if_player( _( *rech.message ) );
+        }
     }
     return true;
 }
 
-void process_recharge( item &itm, Character &carrier )
+void process_recharge( item &itm, Character *carrier )
 {
     if( itm.is_tool() || itm.is_gun() || itm.is_magazine() ) {
         if( itm.ammo_remaining() >= itm.ammo_capacity() ) {

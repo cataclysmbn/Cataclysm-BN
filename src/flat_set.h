@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_FLAT_SET_H
-#define CATA_SRC_FLAT_SET_H
 
 #include <algorithm>
 #include <vector>
@@ -218,4 +216,4 @@ class flat_set : private Compare, Data
 
 } // namespace cata
 
-#endif // CATA_SRC_FLAT_SET_H
+

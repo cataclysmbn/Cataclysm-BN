@@ -29,7 +29,9 @@ TEST_CASE( "mx_minefield real spawn", "[.][map_extra][overmap]" )
     // Find all of the bridges within a 180 OMT radius of this location.
     omt_find_params find_params;
     find_params.types = {{"bridgehead_ground", ot_match_type::type}};
-    find_params.search_range = 180;
+    find_params.search_range = { 0, 180 };
+    find_params.search_layers = std::nullopt;
+
     const std::vector<tripoint_abs_omt> bridges = overmap_buffer.find_all( origin, find_params );
 
     // The rest of this check is pointless if there are no bridges.

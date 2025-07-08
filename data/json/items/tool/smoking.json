@@ -3,8 +3,8 @@
     "id": "advanced_ecig",
     "type": "TOOL",
     "category": "drugs",
-    "name": { "str": "advanced electronic cigarette" },
-    "description": "An advanced version of the electronic cigarette.  A less harmful way to get your nicotine fix than regular cigarettes, but still addictive.  It needs batteries and nicotine liquid to function.",
+    "name": { "str": "boxmod vape" },
+    "description": "An advanced version of the electronic cigarette.  A less harmful way to get your nicotine fix than regular cigarettes, but still addictive.  It needs batteries and nicotine liquid to function.  The side has a display showing the battery and amount of nicotine liquid left.  Additionally, it allows you to play simple games on it.",
     "weight": "200 g",
     "volume": "250 ml",
     "price": "50 USD",
@@ -16,7 +16,20 @@
     "ammo": "battery",
     "charges_per_use": 1,
     "power_draw": 7500,
-    "use_action": "ECIG",
+    "use_action": [
+      "PORTABLE_GAME",
+      {
+        "type": "consume_drug",
+        "activation_message": "You take a puff from your boxmod vape.",
+        "stat_adjustments": { "thirst": 1, "hunger": -10 },
+        "effects": [ { "id": "cig", "duration": "300 s" } ],
+        "fields_produced": { "fd_cigsmoke": 3 },
+        "charges_needed": { "nicotine_liquid": 1 },
+        "moves": 200,
+        "addiction_type_too_much": [ [ "cig", "nicotine" ] ],
+        "fake_item": "fake_ecig"
+      }
+    ],
     "magazines": [
       [
         "battery",
@@ -32,6 +45,33 @@
       ]
     ],
     "magazine_well": "250 ml"
+  },
+  {
+    "id": "ecig",
+    "type": "TOOL",
+    "category": "drugs",
+    "name": "disposable vape",
+    "description": "This battery-operated device vaporizes a liquid that contains flavorings and nicotine.  A less harmful alternative to traditional cigarettes, but it's still addictive.  It can't be reused once it's empty.  The side has a display showing the battery and amount of nicotine liquid left.",
+    "weight": "1 g",
+    "volume": "250 ml",
+    "price": "30 USD",
+    "price_postapoc": "5 USD",
+    "symbol": "!",
+    "color": "dark_gray",
+    "flags": [ "NO_INGEST", "NO_RELOAD", "NO_UNLOAD" ],
+    "max_charges": 40,
+    "initial_charges": 40,
+    "charges_per_use": 1,
+    "use_action": {
+      "type": "consume_drug",
+      "activation_message": "You take a puff from your disposable vape.",
+      "stat_adjustments": { "thirst": 1, "hunger": -10 },
+      "effects": [ { "id": "cig", "duration": "300 s" } ],
+      "fields_produced": { "fd_cigsmoke": 1 },
+      "moves": 200,
+      "addiction_type_too_much": [ [ "cig", "nicotine" ] ],
+      "fake_item": "fake_ecig"
+    }
   },
   {
     "id": "crackpipe",
@@ -67,6 +107,22 @@
     "qualities": [ [ "SMOKE_PIPE", 1 ] ]
   },
   {
+    "id": "pipe_glass_bong",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str": "glass bong" },
+    "copy-from": "pipe_glass",
+    "description": "This is a hand-blown glass beaker bong.  Easy to clean, hard to tip over, and functional even after society collapses.",
+    "weight": "600 g",
+    "volume": "900 ml",
+    "price": "40 USD",
+    "to_hit": -4,
+    "bashing": 4,
+    "symbol": "&",
+    "color": "light_gray",
+    "qualities": [ [ "SMOKE_PIPE", 2 ] ]
+  },
+  {
     "id": "pipe_tobacco",
     "type": "GENERIC",
     "category": "tools",
@@ -82,5 +138,108 @@
     "symbol": ",",
     "color": "brown",
     "qualities": [ [ "SMOKE_PIPE", 1 ] ]
+  },
+  {
+    "type": "TOOL",
+    "category": "drugs",
+    "id": "dab_pen",
+    "name": { "str": "dab pen" },
+    "description": "This is a dab pen for vaporizing cannabis.  Now all you need is 'thc distillate' and you're ready to rock and roll.",
+    "symbol": "!",
+    "color": "dark_gray",
+    "looks_like": "ecig",
+    "weight": "20 g",
+    "volume": "100 ml",
+    "price": "25 USD",
+    "price_postapoc": "1 USD",
+    "material": "plastic",
+    "ammo": "battery",
+    "power_draw": 9000,
+    "magazines": [
+      [
+        "battery",
+        [ "light_minus_battery_cell", "light_minus_disposable_cell", "light_battery_cell", "light_disposable_cell" ]
+      ]
+    ],
+    "charges_per_use": 1,
+    "flags": [ "NO_INGEST" ],
+    "use_action": {
+      "type": "consume_drug",
+      "activation_message": "You hit your dab pen. Sooooo smooth...",
+      "effects": [
+        { "id": "weed_high", "duration": "90 m" },
+        { "id": "pkill1", "duration": "90 m" },
+        { "id": "pkill2", "duration": "5 m" }
+      ],
+      "stat_adjustments": { "hunger": 3, "thirst": 5 },
+      "tools_needed": { "thc_liquid": 1 },
+      "charges_needed": { "thc_liquid": 1 },
+      "fields_produced": { "fd_weedsmoke": 1 },
+      "moves": 200
+    }
+  },
+  {
+    "type": "TOOL",
+    "category": "drugs",
+    "id": "dab_pen_disposable",
+    "name": { "str": "disposable dab pen" },
+    "description": "This is a disposable dab pen for vaporizing cannabis.  This one is already filled with distillate for your convenience, but can't be recharged.",
+    "symbol": "!",
+    "color": "dark_gray",
+    "looks_like": "ecig",
+    "weight": "20 g",
+    "volume": "100 ml",
+    "price": "25 USD",
+    "price_postapoc": "1 USD",
+    "material": "plastic",
+    "ammo": "battery",
+    "max_charges": 30,
+    "initial_charges": 30,
+    "charges_per_use": 1,
+    "flags": [ "NO_INGEST" ],
+    "use_action": {
+      "type": "consume_drug",
+      "activation_message": "You hit your disposable dab pen. Sooooo smooth...",
+      "effects": [
+        { "id": "weed_high", "duration": "90 m" },
+        { "id": "pkill1", "duration": "90 m" },
+        { "id": "pkill2", "duration": "5 m" }
+      ],
+      "stat_adjustments": { "hunger": 3, "thirst": 5 },
+      "fields_produced": { "fd_weedsmoke": 1 },
+      "moves": 200
+    }
+  },
+  {
+    "type": "TOOL",
+    "category": "drugs",
+    "id": "nectar_collector",
+    "name": { "str": "nectar collector" },
+    "description": "This is a metal and wooden nectar collector.  The top cover can be attached and detached magnetically.  The wood has engravings depicting bees, honey, and flowers.  You need 'thc wax' to use this item.",
+    "symbol": "!",
+    "color": "brown",
+    "looks_like": "ecig",
+    "weight": "50 g",
+    "volume": "100 ml",
+    "price": "15 USD",
+    "price_postapoc": "1 USD",
+    "material": [ "steel", "wood" ],
+    "ammo": "battery",
+    "flags": [ "NO_INGEST" ],
+    "use_action": {
+      "type": "consume_drug",
+      "activation_message": "You heat the nectar collector and hit it. Sooooo smooth...",
+      "//": "duration for pkill2 is decreased because wax extract is 60-90% while distillate is 90-99%",
+      "effects": [
+        { "id": "weed_high", "duration": "90 m" },
+        { "id": "pkill1", "duration": "90 m" },
+        { "id": "pkill2", "duration": "1 m" }
+      ],
+      "stat_adjustments": { "hunger": 3, "thirst": 5 },
+      "charges_needed": { "fire": 1, "thc_wax": 1 },
+      "tools_needed": { "thc_wax": 1 },
+      "fields_produced": { "fd_weedsmoke": 1 },
+      "moves": 200
+    }
   }
 ]

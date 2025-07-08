@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MONFACTION_H
-#define CATA_SRC_MONFACTION_H
 
 #include <unordered_map>
 
@@ -47,4 +45,4 @@ class monfaction
         LUA_TYPE_OPS( monfaction, id );
 };
 
-#endif // CATA_SRC_MONFACTION_H
+

@@ -69,13 +69,7 @@
     "id": "LOOT_CLOTHING",
     "type": "LOOT_ZONE",
     "name": "Loot: Clothing",
-    "description": "Destination for clothing.  Does include filthy clothing if such zone is not specified."
-  },
-  {
-    "id": "LOOT_FCLOTHING",
-    "type": "LOOT_ZONE",
-    "name": "Loot: F.Clothing",
-    "description": "Destination for filthy clothing."
+    "description": "Destination for clothing."
   },
   {
     "id": "LOOT_DRUGS",
@@ -198,6 +192,120 @@
     "description": "Favorite items inside of this zone are ignored by \"sort out loot\" zone-action."
   },
   {
+    "id": "LOOT_TOOLS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Other Tools",
+    "description": "Destination for other tools."
+  },
+  {
+    "id": "LOOT_ENTRY_TOOLS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Entry Tools",
+    "description": "Destination for entry tools."
+  },
+  {
+    "id": "LOOT_WORKSHOP_TOOLS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Workshop Tools",
+    "description": "Destination for workshop tools."
+  },
+  {
+    "id": "LOOT_COOKING_TOOLS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Cooking Tools",
+    "description": "Destination for cooking tools."
+  },
+  {
+    "id": "LOOT_CHEMISTRY_TOOLS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Chemistry Tools",
+    "description": "Destination for chemistry tools."
+  },
+  {
+    "id": "LOOT_FARM_TOOLS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Farm Tools",
+    "description": "Destination for farm tools."
+  },
+  {
+    "id": "LOOT_DEPLOYABLES",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Deployables",
+    "description": "Destination for deployable objects."
+  },
+  {
+    "id": "LOOT_ELECTRONICS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Electronics",
+    "description": "Destination for electronics."
+  },
+  {
+    "id": "LOOT_COOKING_INGREDIENTS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Cooking Ingredients",
+    "description": "Destination for cooking ingredients."
+  },
+  {
+    "id": "LOOT_SCRAP_METAL",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Scrap Metal",
+    "description": "Destination for scrap metal."
+  },
+  {
+    "id": "LOOT_SCRAP_ELECTRONICS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Scrap Electronics",
+    "description": "Destination for scrap electronics."
+  },
+  {
+    "id": "LOOT_SCRAP_FABRIC",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Scrap Fabric",
+    "description": "Destination for scrap fabric."
+  },
+  {
+    "id": "LOOT_SCRAP_WOOD",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Scrap Wood",
+    "description": "Destination for scrap wood."
+  },
+  {
+    "id": "LOOT_SCRAP_PLASTIC",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Scrap Plastic",
+    "description": "Destination for scrap plastic."
+  },
+  {
+    "id": "LOOT_SCRAP_CERAMICS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Scrap Ceramics",
+    "description": "Destination for scrap ceramics."
+  },
+  {
+    "id": "LOOT_SCRAP_GLASS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Scrap Glass",
+    "description": "Destination for scrap glass."
+  },
+  {
+    "id": "LOOT_VALUABLES",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Valuables",
+    "description": "Destination for valuables."
+  },
+  {
+    "id": "LOOT_ROCKS",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Rocks",
+    "description": "Destination for rocks and minerals."
+  },
+  {
+    "id": "LOOT_SOIL",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Soil",
+    "description": "Destination for soil."
+  },
+  {
     "id": "NO_AUTO_PICKUP",
     "type": "LOOT_ZONE",
     "name": "No Auto Pickup",
@@ -226,5 +334,11 @@
     "type": "LOOT_ZONE",
     "name": "NPC Investigation Area",
     "description": "Friendly NPCs will investigate unseen sounds only if they come from inside this area."
+  },
+  {
+    "id": "LOOT_DUMP",
+    "type": "LOOT_ZONE",
+    "name": "Loot: Dump",
+    "description": "Any item not otherwise sorted will be placed here if this zone is specified."
   }
 ]

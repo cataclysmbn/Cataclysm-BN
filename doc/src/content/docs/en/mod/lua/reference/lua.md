@@ -9,8 +9,8 @@ sidebar:
 
 :::note
 
-This page is auto-generated from [`data/raw/generate_docs.lua`][generate_docs] and should not be
-edited directly.
+This page is auto-generated from [`data/raw/generate_docs.lua`][generate_docs]
+and should not be edited directly.
 
 [generate_docs]: https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/data/raw/generate_docs.lua
 
@@ -498,13 +498,33 @@ Function `( Character ) -> bool`
 
 Function `( Character ) -> bool`
 
+#### get_part_temp_btu
+
+Gets the current temperature of a specific body part (in Body Temperature Units).
+Function `( Character, BodyPartTypeIntId ) -> int`
+
+#### set_part_temp_btu
+
+Sets a specific body part to a given temperature (in Body Temperature Units).
+Function `( Character, BodyPartTypeIntId, int )`
+
+#### get_temp_btu
+
+Gets all bodyparts and their associated temperatures (in Body Temperature Units).
+Function `( Character ) -> Map( BodyPartTypeIntId, int )`
+
+#### set_temp_btu
+
+Sets ALL body parts on a creature to the given temperature (in Body Temperature Units).
+Function `( Character, int )`
+
 #### blood_loss
 
 Function `( Character, BodyPartTypeIntId ) -> int`
 
 #### get_part_encumbrance
 
-Function `( Character, BodyPart ) -> int`
+Function `( Character, BodyPartTypeId ) -> int`
 
 #### is_wearing_power_armor
 
@@ -579,6 +599,14 @@ Function `( Character, MutationBranchId ) -> bool`
 Function `( Character, MutationBranchId )`
 
 #### unset_mutation
+
+Function `( Character, MutationBranchId )`
+
+#### activate_mutation
+
+Function `( Character, MutationBranchId )`
+
+#### deactivate_mutation
 
 Function `( Character, MutationBranchId )`
 
@@ -732,6 +760,11 @@ Function `( Character, Vector( MutationBranchId ), int ) -> bool`
 
 #### mutate_towards
 
+Function `( Character, MutationBranchId ) -> bool`
+
+#### mutate_towards
+
+Function `( Character, Vector( MutationBranchId ), int ) -> bool`
 Function `( Character, MutationBranchId ) -> bool`
 
 #### remove_mutation
@@ -898,9 +931,17 @@ Function `( Character, ItypeId, BodyPartTypeIntId ) -> bool`
 
 Function `( Character, JsonFlagId, BodyPartTypeIntId ) -> bool`
 
+#### worn_with_id
+
+Function `( Character, ItypeId, BodyPartTypeIntId ) -> bool`
+
 #### item_worn_with_flag
 
 Function `( Character, JsonFlagId, BodyPartTypeIntId ) -> Item`
+
+#### item_worn_with_id
+
+Function `( Character, ItypeId, BodyPartTypeIntId ) -> Item`
 
 #### get_skill_level
 
@@ -1002,13 +1043,40 @@ Function `( Character, AddictionType ) -> int`
 
 Function `( Character ) -> bool`
 
+#### add_item_with_id
+
+Adds an item with the given id and amount
+Function `( Character, ItypeId, int )`
+
+#### has_item_with_id
+
+Checks for an item with the given id
+Function `( Character, ItypeId, bool ) -> bool`
+
+#### get_item_with_id
+
+Gets the first occurrence of an item with the given id
+Function `( Character, ItypeId, bool ) -> Item`
+
 #### has_item_with_flag
 
+Checks for an item with the given flag
 Function `( Character, JsonFlagId, bool ) -> bool`
 
 #### all_items_with_flag
 
-Function `( Character, JsonFlagId ) -> Vector( Item )`
+Gets all items with the given flag
+Function `( Character, JsonFlagId, bool ) -> Vector( Item )`
+
+#### all_items
+
+Gets all items
+Function `( Character, bool ) -> Vector( Item )`
+
+#### inv_remove_item
+
+Removes given `Item` from character's inventory. The `Item` must be in the inventory, neither wielded nor worn.
+Function `( Character, Item )`
 
 #### assign_activity
 
@@ -1157,9 +1225,6 @@ Function `( Character )`
 #### fall_asleep
 
 Function `( Character )`
-
-#### fall_asleep
-
 Function `( Character, TimeDuration )`
 
 #### get_hostile_creatures
@@ -1320,10 +1385,6 @@ Function `( Creature ) -> Character`
 
 Function `( Creature ) -> Avatar`
 
-#### hit_roll
-
-Function `( Creature ) -> double`
-
 #### dodge_roll
 
 Function `( Creature ) -> double`
@@ -1446,8 +1507,8 @@ Function `( Creature, EffectTypeId, Opt( BodyPartTypeId ) ) -> int`
 
 #### add_effect
 
-Effect type, duration, bodypart and intensity Function
-`( Creature, EffectTypeId, TimeDuration, Opt( BodyPartTypeId ), Opt( int ) )`
+Effect type, duration, bodypart and intensity
+Function `( Creature, EffectTypeId, TimeDuration, Opt( BodyPartTypeId ), Opt( int ) )`
 
 #### remove_effect
 
@@ -1779,11 +1840,11 @@ No constructors.
 
 #### dealt_dams
 
-Variable of type `Array( int, 11 )`
+Variable of type `Array( int, 14 )`
 
 #### bp_hit
 
-Variable of type `BodyPart`
+Variable of type `BodyPartTypeId`
 
 #### type_damage
 
@@ -1859,11 +1920,13 @@ No constructors.
 
 #### get_resource
 
-Boolean argument controls recursive behavior Function `( DistributionGrid, bool ) -> int`
+Boolean argument controls recursive behavior
+Function `( DistributionGrid, bool ) -> int`
 
 #### mod_resource
 
-Boolean argument controls recursive behavior Function `( DistributionGrid, int, bool ) -> int`
+Boolean argument controls recursive behavior
+Function `( DistributionGrid, int, bool ) -> int`
 
 ## DistributionGridTracker
 
@@ -2269,29 +2332,493 @@ No constructors.
 
 Function `( Item ) -> ItypeId`
 
+#### get_mtype
+
+Almost for a corpse.
+Function `( Item ) -> MtypeId`
+
+#### tname
+
+Translated item name with prefixes
+Function `( Item, int, bool, int ) -> string`
+
+#### display_name
+
+Display name with all bells and whistles like ammo and prefixes
+Function `( Item, int ) -> string`
+
+#### weight
+
+Weight of the item. The first `bool` is whether including contents, second `bool` is whether it is `integral_weight`.
+Function `( Item, Opt( bool ), Opt( bool ) ) -> Mass`
+
+#### volume
+
+Volume of the item. `bool` is whether it is `integral_volume`.
+Function `( Item, Opt( bool ) ) -> Volume`
+
+#### price
+
+Cents of the item. `bool` is whether it is a post-cataclysm value.
+Function `( Item, bool ) -> int`
+
 #### has_var
 
-Check for variable of any type Function `( Item, string ) -> bool`
+Check for variable of any type
+Function `( Item, string ) -> bool`
 
 #### erase_var
 
-Erase variable Function `( Item, string )`
+Erase variable
+Function `( Item, string )`
 
 #### clear_vars
 
-Erase all variables Function `( Item )`
+Erase all variables
+Function `( Item )`
+
+#### is_null
+
+Function `( Item ) -> bool`
+
+#### is_unarmed_weapon
+
+Function `( Item ) -> bool`
+
+#### is_sided
+
+Function `( Item ) -> bool`
+
+#### is_power_armor
+
+Function `( Item ) -> bool`
+
+#### is_money
+
+Function `( Item ) -> bool`
+
+#### is_gun
+
+Function `( Item ) -> bool`
+
+#### is_firearm
+
+Function `( Item ) -> bool`
+
+#### is_silent
+
+Function `( Item ) -> bool`
+
+#### is_gunmod
+
+Function `( Item ) -> bool`
+
+#### is_bionic
+
+Function `( Item ) -> bool`
+
+#### is_ammo_belt
+
+Function `( Item ) -> bool`
+
+#### is_bandolier
+
+Function `( Item ) -> bool`
+
+#### is_holster
+
+Function `( Item ) -> bool`
+
+#### is_ammo
+
+Function `( Item ) -> bool`
+
+#### is_comestible
+
+Function `( Item ) -> bool`
+
+#### is_food
+
+Function `( Item ) -> bool`
+
+#### is_medication
+
+Function `( Item ) -> bool`
+
+#### is_brewable
+
+Function `( Item ) -> bool`
+
+#### is_food_container
+
+Function `( Item ) -> bool`
+
+#### is_med_container
+
+Function `( Item ) -> bool`
+
+#### is_corpse
+
+Function `( Item ) -> bool`
+
+#### is_ammo_container
+
+Function `( Item ) -> bool`
+
+#### is_armor
+
+Function `( Item ) -> bool`
+
+#### is_book
+
+Function `( Item ) -> bool`
+
+#### is_map
+
+Function `( Item ) -> bool`
+
+#### is_container
+
+Function `( Item ) -> bool`
+
+#### is_watertight_container
+
+Function `( Item ) -> bool`
+
+#### is_non_resealable_container
+
+Function `( Item ) -> bool`
+
+#### is_bucket
+
+Function `( Item ) -> bool`
+
+#### is_bucket_nonempty
+
+Function `( Item ) -> bool`
+
+#### is_engine
+
+Function `( Item ) -> bool`
+
+#### is_wheel
+
+Function `( Item ) -> bool`
+
+#### is_fuel
+
+Function `( Item ) -> bool`
+
+#### is_toolmod
+
+Function `( Item ) -> bool`
+
+#### is_faulty
+
+Function `( Item ) -> bool`
+
+#### is_irremovable
+
+Function `( Item ) -> bool`
+
+#### is_container_empty
+
+Function `( Item ) -> bool`
+
+#### is_salvageable
+
+Function `( Item, bool ) -> bool`
+
+#### is_craft
+
+Function `( Item ) -> bool`
+
+#### is_emissive
+
+Function `( Item ) -> bool`
+
+#### is_deployable
+
+Function `( Item ) -> bool`
+
+#### is_tool
+
+Function `( Item ) -> bool`
+
+#### is_transformable
+
+Function `( Item ) -> bool`
+
+#### is_artifact
+
+Function `( Item ) -> bool`
+
+#### is_relic
+
+Function `( Item ) -> bool`
+
+#### is_seed
+
+Function `( Item ) -> bool`
+
+#### is_dangerous
+
+Function `( Item ) -> bool`
+
+#### is_tainted
+
+Function `( Item ) -> bool`
+
+#### is_soft
+
+Function `( Item ) -> bool`
+
+#### is_reloadable
+
+Function `( Item ) -> bool`
+
+#### is_filthy
+
+DEPRECATED: Items are no longer filthy
+Function `() -> bool`
+
+#### is_active
+
+Function `( Item ) -> bool`
+
+#### is_upgrade
+
+Function `( Item ) -> bool`
+
+#### is_melee
+
+Is this item an effective melee weapon for the given damage type?
+Function `( Item, DamageType ) -> bool`
+
+#### is_magazine
+
+Is this a magazine? (batteries are magazines)
+Function `( Item ) -> bool`
+
+#### is_battery
+
+DEPRECATED: Is this a battery? (spoiler: it isn't)
+Function `( Item ) -> bool`
+
+#### conductive
+
+Function `( Item ) -> bool`
+
+#### is_stackable
+
+Function `( Item ) -> bool`
+
+#### charges
+
+Variable of type `int`
+
+#### energy_remaining
+
+Function `( Item ) -> Energy`
+
+#### has_infinite_charges
+
+Function `( Item ) -> bool`
+
+#### mod_charges
+
+Function `( Item, int )`
+
+#### made_of
+
+Function `( Item ) -> <cppval: St6vectorI9string_idI13material_typeESaIS2_EE >`
+
+#### is_made_of
+
+Function `( Item, MaterialTypeId ) -> bool`
+
+#### get_kcal
+
+Function `( Item ) -> int`
+
+#### get_quench
+
+Function `( Item ) -> int`
+
+#### get_comestible_fun
+
+Function `( Item ) -> int`
+
+#### get_rot
+
+Gets the TimeDuration until this item rots
+Function `( Item ) -> TimeDuration`
+
+#### get_category_id
+
+Gets the category id this item is in
+Function `( Item ) -> string`
+
+#### get_owner
+
+Gets the faction id that owns this item
+Function `( Item ) -> FactionId`
+
+#### set_owner
+
+Sets the ownership of this item to a faction
+Function `( Item, FactionId )`
+
+#### set_owner
+
+Sets the ownership of this item to a character
+Function `( Item, Character )`
+
+#### get_owner_name
+
+Function `( Item ) -> string`
+
+#### is_owned_by
+
+Checks if this item owned by a character
+Function `( Item, Character, bool ) -> bool`
+
+#### has_technique
+
+Checks if this item has the technique as an addition. Doesn't check original techniques.
+Function `( Item, MartialArtsTechniqueId ) -> bool`
+
+#### get_techniques
+
+Gets all techniques. Including original techniques.
+Function `( Item ) -> Set( MartialArtsTechniqueId )`
+
+#### add_technique
+
+Adds the technique. It isn't treated original, but additional.
+Function `( Item, MartialArtsTechniqueId )`
+
+#### remove_technique
+
+Removes the additional technique. Doesn't affect originial techniques.
+Function `( Item, MartialArtsTechniqueId )`
+
+#### can_contain
+
+Checks if this item can contain another
+Function `( Item, Item ) -> bool`
+
+#### remaining_capacity_for_id
+
+Gets the remaining space available for a type of liquid
+Function `( Item, ItypeId, bool ) -> int`
+
+#### total_capacity
+
+Gets maximum volume this item can hold (liquids, ammo, etc)
+Function `( Item ) -> Volume`
+
+#### current_magazine
+
+Gets the current magazine
+Function `( Item ) -> Item`
+
+#### ammo_capacity
+
+Gets the maximum capacity of a magazine
+Function `( Item, bool ) -> int`
+
+#### ammo_remaining
+
+Get remaining ammo, works with batteries & stuff too
+Function `( Item ) -> int`
+
+#### ammo_data
+
+Function `( Item ) -> ItypeRaw`
+
+#### ammo_required
+
+Function `( Item ) -> int`
+
+#### ammo_current
+
+Function `( Item ) -> ItypeId`
+
+#### ammo_consume
+
+Function `( Item, int, Tripoint ) -> int`
+
+#### ammo_set
+
+Function `( Item, ItypeId, int )`
+
+#### ammo_unset
+
+Function `( Item )`
+
+#### get_reload_time
+
+Function `( Item ) -> int`
+
+#### add_item_with_id
+
+Adds an item(s) to contents
+Function `( Item, ItypeId, int )`
+
+#### has_item_with_id
+
+Checks item contents for a given item id
+Function `( Item, ItypeId ) -> bool`
+
+#### covers
+
+Checks if the item covers a bodypart
+Function `( Item, BodyPartTypeIntId ) -> bool`
+
+#### set_flag
+
+Function `( Item, JsonFlagId )`
+
+#### unset_flag
+
+Function `( Item, JsonFlagId )`
+
+#### has_flag
+
+Function `( Item, JsonFlagId ) -> bool`
+
+#### has_own_flag
+
+Function `( Item, JsonFlagId ) -> bool`
+
+#### set_flag_recursive
+
+Function `( Item, JsonFlagId )`
+
+#### unset_flags
+
+Function `( Item )`
+
+#### convert
+
+Converts the item as given `ItypeId`.
+Function `( Item, ItypeId )`
 
 #### get_var_str
 
-Get variable as string Function `( Item, string, string ) -> string`
+Get variable as string
+Function `( Item, string, string ) -> string`
 
 #### get_var_num
 
-Get variable as float number Function `( Item, string, double ) -> double`
+Get variable as float number
+Function `( Item, string, double ) -> double`
 
 #### get_var_tri
 
-Get variable as tripoint Function `( Item, string, Tripoint ) -> Tripoint`
+Get variable as tripoint
+Function `( Item, string, Tripoint ) -> Tripoint`
 
 #### set_var_str
 
@@ -2321,8 +2848,7 @@ No constructors.
 
 #### __pairs
 
-Function
-`( ItemStack ) -> ( <cppval: FSt5tupleIJN3sol12basic_objectINS0_15basic_referenceILb0EEEEES4_EENS0_4userIR23item_stack_lua_it_stateEENS0_10this_stateEE >, <cppval: N3sol4userI23item_stack_lua_it_stateEE >, nil )`
+Function `( ItemStack ) -> ( <cppval: FSt5tupleIJN3sol12basic_objectINS0_15basic_referenceILb0EEEEES4_EENS0_4userIR23item_stack_lua_it_stateEENS0_10this_stateEE >, <cppval: N3sol4userI23item_stack_lua_it_stateEE >, nil )`
 
 ## ItypeId
 
@@ -2494,11 +3020,13 @@ No constructors.
 
 #### get_abs_ms
 
-Convert local ms -> absolute ms Function `( Map, Tripoint ) -> Tripoint`
+Convert local ms -> absolute ms
+Function `( Map, Tripoint ) -> Tripoint`
 
 #### get_local_ms
 
-Convert absolute ms -> local ms Function `( Map, Tripoint ) -> Tripoint`
+Convert absolute ms -> local ms
+Function `( Map, Tripoint ) -> Tripoint`
 
 #### get_map_size_in_submaps
 
@@ -2506,7 +3034,18 @@ Function `( Map ) -> int`
 
 #### get_map_size
 
-In map squares Function `( Map ) -> int`
+In map squares
+Function `( Map ) -> int`
+
+#### create_item_at
+
+Creates a new item(s) at a position on the map.
+Function `( Map, Tripoint, ItypeId, int )`
+
+#### create_corpse_at
+
+Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag.
+Function `( Map, Tripoint, Opt( MtypeId ), Opt( TimePoint ), Opt( string ), Opt( int ) )`
 
 #### has_items_at
 
@@ -2515,6 +3054,14 @@ Function `( Map, Tripoint ) -> bool`
 #### get_items_at
 
 Function `( Map, Tripoint ) -> <cppval: St10unique_ptrI9map_stackSt14default_deleteIS0_EE >`
+
+#### remove_item_at
+
+Function `( Map, Tripoint, Item )`
+
+#### clear_items_at
+
+Function `( Map, Tripoint )`
 
 #### get_ter_at
 
@@ -2567,6 +3114,25 @@ Function `( Map, Tripoint, FieldTypeIntId, int, TimeDuration ) -> bool`
 #### remove_field_at
 
 Function `( Map, Tripoint, FieldTypeIntId )`
+
+#### get_trap_at
+
+Function `( Map, Tripoint ) -> TrapIntId`
+
+#### set_trap_at
+
+Set a trap at a position on the map. It can also replace existing trap, even with `trap_null`.
+Function `( Map, Tripoint, TrapIntId )`
+
+#### disarm_trap_at
+
+Disarms a trap using your skills and stats, with consequences depending on success or failure.
+Function `( Map, Tripoint )`
+
+#### remove_trap_at
+
+Simpler version of `set_trap_at` with `trap_null`.
+Function `( Map, Tripoint )`
 
 ## MapStack
 
@@ -2636,6 +3202,58 @@ Function `( MartialArtsBuffId, <cppval: 7JsonOut > )`
 
 Function `( MartialArtsBuffId, <cppval: 6JsonIn > )`
 
+## MartialArtsTechniqueId
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+#### `MartialArtsTechniqueId.new()`
+
+#### `MartialArtsTechniqueId.new( MartialArtsTechniqueId )`
+
+#### `MartialArtsTechniqueId.new( string )`
+
+### Members
+
+#### obj
+
+Function `( MartialArtsTechniqueId ) -> MartialArtsTechniqueRaw`
+
+#### implements_int_id
+
+Function `() -> bool`
+
+#### is_null
+
+Function `( MartialArtsTechniqueId ) -> bool`
+
+#### is_valid
+
+Function `( MartialArtsTechniqueId ) -> bool`
+
+#### str
+
+Function `( MartialArtsTechniqueId ) -> string`
+
+#### NULL_ID
+
+Function `() -> MartialArtsTechniqueId`
+
+#### __tostring
+
+Function `( MartialArtsTechniqueId ) -> string`
+
+#### serialize
+
+Function `( MartialArtsTechniqueId, <cppval: 7JsonOut > )`
+
+#### deserialize
+
+Function `( MartialArtsTechniqueId, <cppval: 6JsonIn > )`
+
 ## Mass
 
 ### Bases
@@ -2692,6 +3310,78 @@ Function `( Mass, Mass ) -> bool`
 
 Function `( Mass, Mass ) -> bool`
 
+## MaterialTypeId
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+#### `MaterialTypeId.new()`
+
+#### `MaterialTypeId.new( MaterialTypeId )`
+
+#### `MaterialTypeId.new( string )`
+
+### Members
+
+#### obj
+
+Function `( MaterialTypeId ) -> MaterialTypeRaw`
+
+#### implements_int_id
+
+Function `() -> bool`
+
+#### is_null
+
+Function `( MaterialTypeId ) -> bool`
+
+#### is_valid
+
+Function `( MaterialTypeId ) -> bool`
+
+#### str
+
+Function `( MaterialTypeId ) -> string`
+
+#### NULL_ID
+
+Function `() -> MaterialTypeId`
+
+#### __tostring
+
+Function `( MaterialTypeId ) -> string`
+
+#### serialize
+
+Function `( MaterialTypeId, <cppval: 7JsonOut > )`
+
+#### deserialize
+
+Function `( MaterialTypeId, <cppval: 6JsonIn > )`
+
+## MaterialTypeRaw
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+No constructors.
+
+### Members
+
+#### str_id
+
+Function `( MaterialTypeRaw ) -> MaterialTypeId`
+
+#### name
+
+Function `( MaterialTypeRaw ) -> string`
+
 ## Monster
 
 ### Bases
@@ -2727,6 +3417,10 @@ Variable of type `bool`
 #### unique_name
 
 Variable of type `string`
+
+#### get_type
+
+Function `( Monster ) -> MtypeId`
 
 #### can_upgrade
 
@@ -2986,6 +3680,58 @@ Function `( MoraleTypeDataId, <cppval: 7JsonOut > )`
 
 Function `( MoraleTypeDataId, <cppval: 6JsonIn > )`
 
+## MtypeId
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+#### `MtypeId.new()`
+
+#### `MtypeId.new( MtypeId )`
+
+#### `MtypeId.new( string )`
+
+### Members
+
+#### obj
+
+Function `( MtypeId ) -> MtypeRaw`
+
+#### implements_int_id
+
+Function `() -> bool`
+
+#### is_null
+
+Function `( MtypeId ) -> bool`
+
+#### is_valid
+
+Function `( MtypeId ) -> bool`
+
+#### str
+
+Function `( MtypeId ) -> string`
+
+#### NULL_ID
+
+Function `() -> MtypeId`
+
+#### __tostring
+
+Function `( MtypeId ) -> string`
+
+#### serialize
+
+Function `( MtypeId, <cppval: 7JsonOut > )`
+
+#### deserialize
+
+Function `( MtypeId, <cppval: 6JsonIn > )`
+
 ## MutationBranchId
 
 ### Bases
@@ -3037,6 +3783,333 @@ Function `( MutationBranchId, <cppval: 7JsonOut > )`
 #### deserialize
 
 Function `( MutationBranchId, <cppval: 6JsonIn > )`
+
+## MutationBranchRaw
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+No constructors.
+
+### Members
+
+#### id
+
+Variable of type `MutationBranchId`
+
+#### valid
+
+Whether this mutation is available through generic mutagen.
+Variable of type `bool`
+
+#### purifiable
+
+Whether this mutation is possible to remove through Purifier. False for 'special' mutations.
+Variable of type `bool`
+
+#### threshold
+
+Whether this is a Threshold mutation, and thus especially difficult to mutate. One per character.
+Variable of type `bool`
+
+#### profession
+
+Whether this trait is ONLY gained through professional training/experience (and/or quests).
+Variable of type `bool`
+
+#### debug
+
+Whether or not this mutation is limited to debug use.
+Variable of type `bool`
+
+#### player_display
+
+Whether or not this mutation shows up in the status (`@`) menu.
+Variable of type `bool`
+
+#### mixed_effect
+
+Whether this mutation has positive /and/ negative effects.
+Variable of type `bool`
+
+#### starting_trait
+
+Whether this trait can normally be taken during character generation.
+Variable of type `bool`
+
+#### activated
+
+Whether this mutation can be activated at will.
+Variable of type `bool`
+
+#### starts_active
+
+Whether a mutation activates when granted.
+Variable of type `bool`
+
+#### allow_soft_gear
+
+Mutation allows soft gear to be worn over otherwise-restricted parts.
+Variable of type `bool`
+
+#### fatigue
+
+Mutation causes fatigue when used.
+Variable of type `bool`
+
+#### hunger
+
+Mutation deducts calories when used.
+Variable of type `bool`
+
+#### thirst
+
+Mutation dehydrates when used.
+Variable of type `bool`
+
+#### points
+
+Point cost in character creation(?).
+Variable of type `int`
+
+#### visibility
+
+How visible the mutation is to others.
+Variable of type `int`
+
+#### ugliness
+
+How physically unappealing the mutation is. Can be negative.
+Variable of type `int`
+
+#### cost
+
+Variable of type `int`
+
+#### cooldown
+
+Costs are incurred every 'cooldown' turns.
+Variable of type `int`
+
+#### bodytemp_min_btu
+
+Variable of type `int`
+
+#### bodytemp_max_btu
+
+Variable of type `int`
+
+#### bodytemp_sleep_btu
+
+Variable of type `int`
+
+#### pain_recovery
+
+Pain recovery per turn from mutation.
+Variable of type `double`
+
+#### healing_awake
+
+Healing per turn from mutation.
+Variable of type `double`
+
+#### healing_resting
+
+Healing per turn from mutation, while asleep.
+Variable of type `double`
+
+#### mending_modifier
+
+Multiplier applied to broken limb regeneration. Normally 0.25; clamped to 0.25..1.0.
+Variable of type `double`
+
+#### hp_modifier
+
+Bonus HP multiplier. 1.0 doubles HP; -0.5 halves it.
+Variable of type `double`
+
+#### hp_modifier_secondary
+
+Secondary HP multiplier; stacks with the other one. 1.0 doubles HP; -0.5 halves it.
+Variable of type `double`
+
+#### hp_adjustment
+
+Flat adjustment to HP.
+Variable of type `double`
+
+#### str_modifier
+
+Adjustment to Strength that doesn't affect HP.
+Variable of type `double`
+
+#### dodge_modifier
+
+Variable of type `double`
+
+#### speed_modifier
+
+Variable of type `double`
+
+#### movecost_modifier
+
+Variable of type `double`
+
+#### movecost_flatground_modifier
+
+Variable of type `double`
+
+#### movecost_obstacle_modifier
+
+Variable of type `double`
+
+#### attackcost_modifier
+
+Variable of type `double`
+
+#### falling_damage_multiplier
+
+Variable of type `double`
+
+#### max_stamina_modifier
+
+Variable of type `double`
+
+#### weight_capacity_modifier
+
+Variable of type `double`
+
+#### hearing_modifier
+
+Variable of type `double`
+
+#### movecost_swim_modifier
+
+Variable of type `double`
+
+#### noise_modifier
+
+Variable of type `double`
+
+#### scent_modifier
+
+Variable of type `double`
+
+#### bleed_resist
+
+Variable of type `double`
+
+#### healthy_rate
+
+How quickly health (not HP) trends toward healthy_mod.
+Variable of type `double`
+
+#### stealth_modifier
+
+Variable of type `double`
+
+#### night_vision_range
+
+Variable of type `double`
+
+#### temperature_speed_modifier
+
+Variable of type `double`
+
+#### metabolism_modifier
+
+Variable of type `double`
+
+#### thirst_modifier
+
+Variable of type `double`
+
+#### fatigue_modifier
+
+Variable of type `double`
+
+#### fatigue_regen_modifier
+
+Variable of type `double`
+
+#### stamina_regen_modifier
+
+Variable of type `double`
+
+#### overmap_sight
+
+Variable of type `double`
+
+#### overmap_multiplier
+
+Variable of type `double`
+
+#### reading_speed_multiplier
+
+Variable of type `double`
+
+#### skill_rust_multiplier
+
+Variable of type `double`
+
+#### name
+
+Function `( MutationBranchRaw ) -> string`
+
+#### desc
+
+Function `( MutationBranchRaw ) -> string`
+
+#### get_all
+
+Returns a (long) list of every mutation in the game.
+Function `() -> <cppval: St6vectorI15mutation_branchSaIS0_EE >`
+
+#### __tostring
+
+Function `( MutationBranchRaw ) -> string`
+
+#### prerequisites
+
+Lists the primary mutation(s) needed to gain this mutation.
+Function `( MutationBranchRaw ) -> Vector( MutationBranchId )`
+
+#### other_prerequisites
+
+Lists the secondary mutation(s) needed to gain this mutation.
+Function `( MutationBranchRaw ) -> Vector( MutationBranchId )`
+
+#### thresh_requirements
+
+Lists the threshold mutation(s) required to gain this mutation.
+Function `( MutationBranchRaw ) -> Vector( MutationBranchId )`
+
+#### mutation_types
+
+Lists the type(s) of this mutation. Mutations of a given type are mutually exclusive.
+Function `( MutationBranchRaw ) -> Set( string )`
+
+#### conflicts_with
+
+Lists conflicting mutations.
+Function `( MutationBranchRaw ) -> Vector( MutationBranchId )`
+
+#### replaced_by
+
+Lists mutations that replace (e.g. evolve from) this one.
+Function `( MutationBranchRaw ) -> Vector( MutationBranchId )`
+
+#### addition_mutations
+
+Function `( MutationBranchRaw ) -> Vector( MutationBranchId )`
+
+#### categories
+
+Lists the categories this mutation belongs to.
+Function `( MutationBranchRaw ) -> Vector( MutationCategoryTraitId )`
 
 ## MutationCategoryTraitId
 
@@ -3192,10 +4265,6 @@ Function `( Npc ) -> bool`
 
 Function `( Npc ) -> bool`
 
-#### within_boundaries_of_camp
-
-Function `( Npc ) -> bool`
-
 #### has_player_activity
 
 Function `( Npc ) -> bool`
@@ -3285,10 +4354,6 @@ Function `( Npc ) -> NpcAttitude`
 Function `( Npc, NpcAttitude )`
 
 #### has_activity
-
-Function `( Npc ) -> bool`
-
-#### has_job
 
 Function `( Npc ) -> bool`
 
@@ -3445,6 +4510,38 @@ Function `( Point, int ) -> Point`
 
 Function `( Point ) -> Point`
 
+## PopupInputStr
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+#### `PopupInputStr.new()`
+
+### Members
+
+#### title
+
+`title` is on the left of input field.
+Function `( PopupInputStr, string )`
+
+#### desc
+
+`desc` is above input field.
+Function `( PopupInputStr, string )`
+
+#### query_str
+
+Returns your input.
+Function `( PopupInputStr ) -> string`
+
+#### query_int
+
+Returns your input, but allows numbers only.
+Function `( PopupInputStr ) -> int`
+
 ## QueryPopup
 
 ### Bases
@@ -3467,11 +4564,23 @@ Function `( QueryPopup, Color )`
 
 #### allow_any_key
 
-Set whether to allow any key Function `( QueryPopup, bool )`
+Set whether to allow any key
+Function `( QueryPopup, bool )`
 
 #### query
 
-Returns selected action Function `( QueryPopup ) -> string`
+Returns selected action
+Function `( QueryPopup ) -> string`
+
+#### query_yn
+
+Returns `YES` or `NO`. If ESC pressed, returns `NO`.
+Function `( QueryPopup ) -> string`
+
+#### query_ynq
+
+Returns `YES`, `NO` or `QUIT`. If ESC pressed, returns `QUIT`.
+Function `( QueryPopup ) -> string`
 
 ## RecipeId
 
@@ -3524,6 +4633,78 @@ Function `( RecipeId, <cppval: 7JsonOut > )`
 #### deserialize
 
 Function `( RecipeId, <cppval: 6JsonIn > )`
+
+## RecipeRaw
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+No constructors.
+
+### Members
+
+#### category
+
+Variable of type `string`
+
+#### subcategory
+
+Variable of type `string`
+
+#### time
+
+Variable of type `int`
+
+#### skill_used
+
+Variable of type `SkillId`
+
+#### difficulty
+
+Variable of type `int`
+
+#### required_skills
+
+Variable of type `Map( SkillId, int )`
+
+#### learn_by_disassembly
+
+Variable of type `Map( SkillId, int )`
+
+#### booksets
+
+Variable of type `Map( ItypeId, int )`
+
+#### ident
+
+Function `( RecipeRaw ) -> RecipeId`
+
+#### result
+
+Function `( RecipeRaw ) -> ItypeId`
+
+#### result_name
+
+Function `( RecipeRaw ) -> string`
+
+#### has_flag
+
+Function `( RecipeRaw, string ) -> bool`
+
+#### get_from_skill_used
+
+Function `( SkillId ) -> Vector( RecipeRaw )`
+
+#### get_from_flag
+
+Function `( string ) -> Vector( RecipeRaw )`
+
+#### get_all
+
+Function `() -> Vector( RecipeRaw )`
 
 ## SkillId
 
@@ -3684,6 +4865,324 @@ Function `( SpeciesTypeId, <cppval: 7JsonOut > )`
 #### deserialize
 
 Function `( SpeciesTypeId, <cppval: 6JsonIn > )`
+
+## Spell
+
+The class used for spells that _a player_ knows, casts, and gains experience for using. If a given spell is not supposed to be directly cast by a player, consider using SpellSimple instead.
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+#### `Spell.new( SpellTypeId, int )`
+
+### Members
+
+#### id
+
+Variable of type `SpellTypeId`
+
+#### xp
+
+Function `( Spell ) -> int`
+
+#### gain_exp
+
+Function `( Spell, int )`
+
+#### set_exp
+
+Function `( Spell, int )`
+
+#### gain_levels
+
+Function `( Spell, int )`
+
+#### set_level
+
+Function `( Spell, int )`
+
+#### get_level
+
+Function `( Spell ) -> int`
+
+#### name
+
+Function `( Spell ) -> string`
+
+#### desc
+
+Function `( Spell ) -> string`
+
+#### cast
+
+Cast this spell, as well as any sub-spells.
+Function `( Spell, Creature, Tripoint )`
+
+#### cast_single_effect
+
+Cast _only_ this spell's main effects. Generally, cast() should be used instead.
+Function `( Spell, Creature, Tripoint )`
+
+## SpellSimple
+
+The type for basic spells. If you don't need to track XP from casting (e.g., if a spell is intended to be cast by anything _other than_ a player), this is likely the appropriate type. Otherwise, see the Spell type.
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+#### `SpellSimple.new( SpellTypeId, bool )`
+
+#### `SpellSimple.new( SpellTypeId, bool, int )`
+
+### Members
+
+#### __tostring
+
+Function `( SpellSimple ) -> string`
+
+#### id
+
+Variable of type `SpellTypeId`
+
+#### max_level
+
+Returns the defined maximum level of this SpellSimple instance, if defined. Otherwise, returns 0.
+Function `( SpellSimple ) -> int`
+
+#### level
+
+Variable of type `int`
+
+#### force_target_source
+
+Whether or not the target point is _locked_ to the source's location.
+Variable of type `bool`
+
+#### trigger_once_in
+
+Used for enchantments; the spell's _chance_ to trigger every turn.
+Variable of type `int`
+
+#### cast
+
+Function `( SpellSimple, Creature, Tripoint, Opt( int ) )`
+
+#### prompt_cast
+
+Static function: Creates and immediately casts a SimpleSpell, then returns the new spell for potential reuse. If the given tripoint is the player's location, the spell will be locked to the player. (This does not necessarily cause friendly fire!) If an integer is specified, the spell will be cast at that level.
+Function `( SpellTypeId, Tripoint, Opt( int ) ) -> SpellSimple`
+
+## SpellTypeId
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+#### `SpellTypeId.new()`
+
+#### `SpellTypeId.new( SpellTypeId )`
+
+#### `SpellTypeId.new( string )`
+
+### Members
+
+#### obj
+
+Function `( SpellTypeId ) -> SpellTypeRaw`
+
+#### implements_int_id
+
+Function `() -> bool`
+
+#### is_null
+
+Function `( SpellTypeId ) -> bool`
+
+#### is_valid
+
+Function `( SpellTypeId ) -> bool`
+
+#### str
+
+Function `( SpellTypeId ) -> string`
+
+#### NULL_ID
+
+Function `() -> SpellTypeId`
+
+#### __tostring
+
+Function `( SpellTypeId ) -> string`
+
+#### serialize
+
+Function `( SpellTypeId, <cppval: 7JsonOut > )`
+
+#### deserialize
+
+Function `( SpellTypeId, <cppval: 6JsonIn > )`
+
+## SpellTypeRaw
+
+The 'raw' type for storing the information defining every spell in the game. It's not possible to cast directly from this type; check SpellSimple and Spell.
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+No constructors.
+
+### Members
+
+#### __tostring
+
+Function `( SpellTypeRaw ) -> string`
+
+#### id
+
+Variable of type `SpellTypeId`
+
+#### effect_name
+
+The name of the primary effect this spell will enact.
+Variable of type `string`
+
+#### effect_str
+
+Specifics about the effect this spell will enact.
+Variable of type `string`
+
+#### field_chance
+
+Variable of type `int`
+
+#### min_field_intensity
+
+Variable of type `int`
+
+#### field_intensity_increment
+
+Variable of type `double`
+
+#### max_field_intensity
+
+Variable of type `int`
+
+#### field_intensity_variance
+
+Variable of type `double`
+
+#### min_damage
+
+Variable of type `int`
+
+#### damage_increment
+
+Variable of type `double`
+
+#### max_damage
+
+Variable of type `int`
+
+#### min_range
+
+Variable of type `int`
+
+#### range_increment
+
+Variable of type `double`
+
+#### max_range
+
+Variable of type `int`
+
+#### min_aoe
+
+Variable of type `int`
+
+#### aoe_increment
+
+Variable of type `double`
+
+#### max_aoe
+
+Variable of type `int`
+
+#### min_dot
+
+Variable of type `int`
+
+#### dot_increment
+
+Variable of type `double`
+
+#### max_dot
+
+Variable of type `int`
+
+#### min_duration
+
+Variable of type `int`
+
+#### duration_increment
+
+Variable of type `int`
+
+#### max_duration
+
+Variable of type `int`
+
+#### base_energy_cost
+
+Variable of type `int`
+
+#### energy_increment
+
+Variable of type `double`
+
+#### final_energy_cost
+
+Variable of type `int`
+
+#### difficulty
+
+Variable of type `int`
+
+#### max_level
+
+Variable of type `int`
+
+#### base_casting_time
+
+Variable of type `int`
+
+#### casting_time_increment
+
+Variable of type `double`
+
+#### final_casting_time
+
+Variable of type `int`
+
+#### additional_spells
+
+Other spells cast by this spell.
+Function `( SpellTypeRaw ) -> Vector( SpellSimple )`
+
+#### get_all
+
+Returns a (long) list of every spell in the game.
+Function `() -> <cppval: St6vectorI10spell_typeSaIS0_EE >`
 
 ## TerId
 
@@ -3997,8 +5496,8 @@ Function `( TimePoint, TimeDuration ) -> TimePoint`
 
 #### __sub
 
-Function `( TimePoint, TimePoint ) -> TimeDuration` Function
-`( TimePoint, TimeDuration ) -> TimePoint`
+Function `( TimePoint, TimePoint ) -> TimeDuration`
+Function `( TimePoint, TimeDuration ) -> TimePoint`
 
 ## Tinymap
 
@@ -4013,6 +5512,96 @@ No constructors.
 ### Members
 
 No members.
+
+## TrapId
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+#### `TrapId.new()`
+
+#### `TrapId.new( TrapId )`
+
+#### `TrapId.new( TrapIntId )`
+
+#### `TrapId.new( string )`
+
+### Members
+
+#### obj
+
+Function `( TrapId ) -> TrapRaw`
+
+#### int_id
+
+Function `( TrapId ) -> TrapIntId`
+
+#### implements_int_id
+
+Function `() -> bool`
+
+#### is_null
+
+Function `( TrapId ) -> bool`
+
+#### is_valid
+
+Function `( TrapId ) -> bool`
+
+#### str
+
+Function `( TrapId ) -> string`
+
+#### NULL_ID
+
+Function `() -> TrapId`
+
+#### __tostring
+
+Function `( TrapId ) -> string`
+
+#### serialize
+
+Function `( TrapId, <cppval: 7JsonOut > )`
+
+#### deserialize
+
+Function `( TrapId, <cppval: 6JsonIn > )`
+
+## TrapIntId
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+#### `TrapIntId.new()`
+
+#### `TrapIntId.new( TrapIntId )`
+
+#### `TrapIntId.new( TrapId )`
+
+### Members
+
+#### obj
+
+Function `( TrapIntId ) -> TrapRaw`
+
+#### str_id
+
+Function `( TrapIntId ) -> TrapId`
+
+#### is_valid
+
+Function `( TrapIntId ) -> bool`
+
+#### __tostring
+
+Function `( TrapIntId ) -> string`
 
 ## Tripoint
 
@@ -4078,11 +5667,13 @@ Function `( Tripoint, Tripoint ) -> bool`
 
 #### __add
 
-Function `( Tripoint, Tripoint ) -> Tripoint` Function `( Tripoint, Point ) -> Tripoint`
+Function `( Tripoint, Tripoint ) -> Tripoint`
+Function `( Tripoint, Point ) -> Tripoint`
 
 #### __sub
 
-Function `( Tripoint, Tripoint ) -> Tripoint` Function `( Tripoint, Point ) -> Tripoint`
+Function `( Tripoint, Tripoint ) -> Tripoint`
+Function `( Tripoint, Point ) -> Tripoint`
 
 #### __mul
 
@@ -4114,15 +5705,112 @@ No base classes.
 
 #### title
 
+Sets title which is on the top line.
 Function `( UiList, string )`
+
+#### text
+
+Sets text which is in upper box.
+Function `( UiList, string )`
+
+#### footer
+
+Sets footer text which is in lower box. It overwrites descs of entries unless is empty.
+Function `( UiList, string )`
+
+#### desc_enabled
+
+Puts a lower box. Footer or entry desc appears on it.
+Function `( UiList, bool )`
 
 #### add
 
-Return value, text Function `( UiList, int, string )`
+Adds an entry. `string` is its name, and `int` is what it returns. If `int` is `-1`, the number is decided orderly.
+Function `( UiList, int, string )`
+
+#### add_w_desc
+
+Adds an entry with desc(second `string`). `desc_enabled(true)` is required for showing desc.
+Function `( UiList, int, string, string )`
+
+#### add_w_col
+
+Adds an entry with desc and col(third `string`). col is additional text on the right of the entry name.
+Function `( UiList, int, string, string, string )`
+
+#### entries
+
+Entries from uilist. Remember, in lua, the first element of vector is `entries[1]`, not `entries[0]`.
+Variable of type `Vector( UiListEntry )`
+
+#### border_color
+
+Changes the color. Default color is `c_magenta`.
+Function `( UiList, Color )`
+
+#### text_color
+
+Changes the color. Default color is `c_light_gray`.
+Function `( UiList, Color )`
+
+#### title_color
+
+Changes the color. Default color is `c_green`.
+Function `( UiList, Color )`
+
+#### hilight_color
+
+Changes the color. Default color is `h_white`.
+Function `( UiList, Color )`
+
+#### hotkey_color
+
+Changes the color. Default color is `c_light_green`.
+Function `( UiList, Color )`
 
 #### query
 
-Returns retval for selected entry, or a negative number on fail/cancel Function `( UiList ) -> int`
+Returns retval for selected entry, or a negative number on fail/cancel
+Function `( UiList ) -> int`
+
+## UiListEntry
+
+This type came from UiList.
+
+### Bases
+
+No base classes.
+
+### Constructors
+
+No constructors.
+
+### Members
+
+#### enable
+
+Entry whether it's enabled or not. Default is `true`.
+Variable of type `bool`
+
+#### txt
+
+Entry text
+Variable of type `string`
+
+#### desc
+
+Entry description
+Variable of type `string`
+
+#### ctxt
+
+Entry text of column.
+Variable of type `string`
+
+#### txt_color
+
+Entry text color. Its default color is `c_red_red`, which makes color of the entry same as what `uilist` decides. So if you want to make color different, choose one except `c_red_red`.
+Function `( UiListEntry, Color )`
 
 ## Volume
 
@@ -4382,8 +6070,11 @@ Function `( Volume, Volume ) -> bool`
 - `DT_STAB` = `6`
 - `DT_HEAT` = `7`
 - `DT_COLD` = `8`
-- `DT_ELECTRIC` = `9`
-- `DT_BULLET` = `10`
+- `DT_DARK` = `9`
+- `DT_LIGHT` = `10`
+- `DT_PSI` = `11`
+- `DT_ELECTRIC` = `12`
+- `DT_BULLET` = `13`
 
 ## MonsterAttitude
 
@@ -4448,82 +6139,84 @@ Function `( Volume, Volume ) -> bool`
 - `SLUDGETRAIL` = `34`
 - `COLDPROOF` = `35`
 - `BIOPROOF` = `36`
-- `FIREY` = `37`
-- `QUEEN` = `38`
-- `ELECTRONIC` = `39`
-- `FUR` = `40`
-- `LEATHER` = `41`
-- `WOOL` = `42`
-- `FEATHER` = `43`
-- `BONES` = `44`
-- `FAT` = `45`
-- `CONSOLE_DESPAWN` = `46`
-- `IMMOBILE` = `47`
-- `ID_CARD_DESPAWN` = `48`
-- `RIDEABLE_MECH` = `49`
-- `MILITARY_MECH` = `50`
-- `MECH_RECON_VISION` = `51`
-- `MECH_DEFENSIVE` = `52`
-- `HIT_AND_RUN` = `53`
-- `GUILT` = `54`
-- `PAY_BOT` = `55`
-- `HUMAN` = `56`
-- `NO_BREATHE` = `57`
-- `FLAMMABLE` = `58`
-- `REVIVES` = `59`
-- `CHITIN` = `60`
-- `VERMIN` = `61`
-- `NOGIB` = `62`
-- `LARVA` = `63`
-- `ARTHROPOD_BLOOD` = `64`
-- `ACID_BLOOD` = `65`
-- `BILE_BLOOD` = `66`
-- `ABSORBS` = `67`
-- `ABSORBS_SPLITS` = `68`
-- `CBM_CIV` = `69`
-- `CBM_POWER` = `70`
-- `CBM_SCI` = `71`
-- `CBM_OP` = `72`
-- `CBM_TECH` = `73`
-- `CBM_SUBS` = `74`
-- `FILTHY` = `75`
-- `FISHABLE` = `76`
-- `GROUP_BASH` = `77`
-- `SWARMS` = `78`
-- `GROUP_MORALE` = `79`
-- `INTERIOR_AMMO` = `80`
-- `CLIMBS` = `81`
-- `PACIFIST` = `82`
-- `PUSH_MON` = `83`
-- `PUSH_VEH` = `84`
-- `NIGHT_INVISIBILITY` = `85`
-- `REVIVES_HEALTHY` = `86`
-- `NO_NECRO` = `87`
-- `PATH_AVOID_DANGER_1` = `88`
-- `PATH_AVOID_DANGER_2` = `89`
-- `PATH_AVOID_FIRE` = `90`
-- `PATH_AVOID_FALL` = `91`
-- `PRIORITIZE_TARGETS` = `92`
-- `NOT_HALLUCINATION` = `93`
-- `CATFOOD` = `94`
-- `CATTLEFODDER` = `95`
-- `BIRDFOOD` = `96`
-- `CANPLAY` = `97`
-- `PET_MOUNTABLE` = `98`
-- `PET_HARNESSABLE` = `99`
-- `DOGFOOD` = `100`
-- `MILKABLE` = `101`
-- `SHEARABLE` = `102`
-- `NO_BREED` = `103`
-- `NO_FUNG_DMG` = `104`
-- `PET_WONT_FOLLOW` = `105`
-- `DRIPS_NAPALM` = `106`
-- `DRIPS_GASOLINE` = `107`
-- `ELECTRIC_FIELD` = `108`
-- `LOUDMOVES` = `109`
-- `CAN_OPEN_DOORS` = `110`
-- `STUN_IMMUNE` = `111`
-- `DROPS_AMMO` = `112`
+- `DARKPROOF` = `37`
+- `LIGHTPROOF` = `38`
+- `PSIPROOF` = `39`
+- `FIREY` = `40`
+- `QUEEN` = `41`
+- `ELECTRONIC` = `42`
+- `FUR` = `43`
+- `LEATHER` = `44`
+- `WOOL` = `45`
+- `FEATHER` = `46`
+- `BONES` = `47`
+- `FAT` = `48`
+- `CONSOLE_DESPAWN` = `49`
+- `IMMOBILE` = `50`
+- `ID_CARD_DESPAWN` = `51`
+- `RIDEABLE_MECH` = `52`
+- `CARD_OVERRIDE` = `53`
+- `MILITARY_MECH` = `54`
+- `MECH_RECON_VISION` = `55`
+- `MECH_DEFENSIVE` = `56`
+- `HIT_AND_RUN` = `57`
+- `GUILT` = `58`
+- `PAY_BOT` = `59`
+- `HUMAN` = `60`
+- `NO_BREATHE` = `61`
+- `FLAMMABLE` = `62`
+- `REVIVES` = `63`
+- `CHITIN` = `64`
+- `VERMIN` = `65`
+- `NOGIB` = `66`
+- `LARVA` = `67`
+- `ARTHROPOD_BLOOD` = `68`
+- `ACID_BLOOD` = `69`
+- `BILE_BLOOD` = `70`
+- `ABSORBS` = `71`
+- `ABSORBS_SPLITS` = `72`
+- `CBM_CIV` = `73`
+- `CBM_POWER` = `74`
+- `CBM_SCI` = `75`
+- `CBM_OP` = `76`
+- `CBM_TECH` = `77`
+- `CBM_SUBS` = `78`
+- `UNUSED_76` = `79`
+- `FISHABLE` = `80`
+- `GROUP_BASH` = `81`
+- `SWARMS` = `82`
+- `GROUP_MORALE` = `83`
+- `INTERIOR_AMMO` = `84`
+- `CLIMBS` = `85`
+- `PACIFIST` = `86`
+- `PUSH_MON` = `87`
+- `PUSH_VEH` = `88`
+- `NIGHT_INVISIBILITY` = `89`
+- `REVIVES_HEALTHY` = `90`
+- `NO_NECRO` = `91`
+- `PATH_AVOID_DANGER_1` = `92`
+- `PATH_AVOID_DANGER_2` = `93`
+- `PATH_AVOID_FIRE` = `94`
+- `PATH_AVOID_FALL` = `95`
+- `PRIORITIZE_TARGETS` = `96`
+- `NOT_HALLUCINATION` = `97`
+- `CANPLAY` = `98`
+- `PET_MOUNTABLE` = `99`
+- `PET_HARNESSABLE` = `100`
+- `DOGFOOD` = `101`
+- `MILKABLE` = `102`
+- `SHEARABLE` = `103`
+- `NO_BREED` = `104`
+- `NO_FUNG_DMG` = `105`
+- `PET_WONT_FOLLOW` = `106`
+- `DRIPS_NAPALM` = `107`
+- `DRIPS_GASOLINE` = `108`
+- `ELECTRIC_FIELD` = `109`
+- `LOUDMOVES` = `110`
+- `CAN_OPEN_DOORS` = `111`
+- `STUN_IMMUNE` = `112`
+- `DROPS_AMMO` = `113`
+- `CAN_BE_ORDERED` = `114`
 
 ## MonsterSize
 
@@ -4680,15 +6373,18 @@ Function `( Point, Opt( Tripoint ) ) -> Tripoint`
 
 #### rl_dist
 
-Function `( Tripoint, Tripoint ) -> int` Function `( Point, Point ) -> int`
+Function `( Tripoint, Tripoint ) -> int`
+Function `( Point, Point ) -> int`
 
 #### trig_dist
 
-Function `( Tripoint, Tripoint ) -> double` Function `( Point, Point ) -> double`
+Function `( Tripoint, Tripoint ) -> double`
+Function `( Point, Point ) -> double`
 
 #### square_dist
 
-Function `( Tripoint, Tripoint ) -> int` Function `( Point, Point ) -> int`
+Function `( Tripoint, Tripoint ) -> int`
+Function `( Point, Point ) -> int`
 
 ## gapi
 
@@ -4710,7 +6406,8 @@ Function `() -> DistributionGridTracker`
 
 #### add_msg
 
-Function `( MsgType, ... )` Function `( ... )`
+Function `( MsgType, ... )`
+Function `( ... )`
 
 #### place_player_overmap_at
 
@@ -4736,6 +6433,10 @@ Function `( int, int ) -> int`
 
 Function `( TimeDuration, function )`
 
+#### create_item
+
+Function `( ItypeId, int ) -> <cppval: St10unique_ptrI4itemSt14default_deleteIS0_EE >`
+
 #### get_creature_at
 
 Function `( Tripoint, Opt( bool ) ) -> Creature`
@@ -4743,6 +6444,10 @@ Function `( Tripoint, Opt( bool ) ) -> Creature`
 #### get_monster_at
 
 Function `( Tripoint, Opt( bool ) ) -> Monster`
+
+#### place_monster_at
+
+Function `( MtypeId, Tripoint ) -> Monster`
 
 #### get_character_at
 
@@ -4766,7 +6471,8 @@ Function `() -> Opt( Tripoint )`
 
 #### play_variant_sound
 
-Function `( string, string, int )` Function `( string, string, int, Angle, double, double )`
+Function `( string, string, int )`
+Function `( string, string, int, Angle, double, double )`
 
 #### play_ambient_variant_sound
 
@@ -4818,7 +6524,7 @@ Function `()`
 
 Function `() -> bool`
 
-## hooks_doc
+## hooks
 
 Documentation for hooks
 
@@ -4826,21 +6532,23 @@ Documentation for hooks
 
 #### on_game_save
 
-Called when game is about to save Function `()`
+Called when game is about to save
+Function `()`
 
 #### on_game_load
 
-Called right after game has loaded Function `()`
+Called right after game has loaded
+Function `()`
 
 #### on_every_x
 
-Called every in-game period Function `()`
+Called every in-game period
+Function `()`
 
 #### on_mapgen_postprocess
 
-Called right after mapgen has completed. Map argument is the tinymap that represents 24x24 area (2x2
-submaps, or 1x1 omt), tripoint is the absolute omt pos, and time_point is the current time (for
-time-based effects). Function `( Map, Tripoint, TimePoint )`
+Called right after mapgen has completed. Map argument is the tinymap that represents 24x24 area (2x2 submaps, or 1x1 omt), tripoint is the absolute omt pos, and time_point is the current time (for time-based effects).
+Function `( Map, Tripoint, TimePoint )`
 
 ## locale
 
@@ -4850,21 +6558,23 @@ Localization API.
 
 #### gettext
 
-Expects english source string, returns translated string. Function `( string ) -> string`
+Expects english source string, returns translated string.
+Function `( string ) -> string`
 
 #### vgettext
 
-First is english singular string, second is english plural string. Number is amount to translate
-for. Function `( string, string, int ) -> string`
+First is english singular string, second is english plural string. Number is amount to translate for.
+Function `( string, string, <cppval: m > ) -> string`
 
 #### pgettext
 
-First is context string. Second is english source string. Function `( string, string ) -> string`
+First is context string. Second is english source string.
+Function `( string, string ) -> string`
 
 #### vpgettext
 
-First is context string. Second is english singular string. third is english plural. Number is
-amount to translate for. Function `( string, string, string, int ) -> string`
+First is context string. Second is english singular string. third is english plural. Number is amount to translate for.
+Function `( string, string, string, <cppval: m > ) -> string`
 
 ## tests_lib
 

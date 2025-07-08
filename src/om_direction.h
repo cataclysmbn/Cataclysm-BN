@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_OM_DIRECTION_H
-#define CATA_SRC_OM_DIRECTION_H
 
 #include <cstdint>
 #include <climits>
@@ -115,4 +113,4 @@ struct enum_traits<om_direction::type> {
     static constexpr om_direction::type last = om_direction::type::last;
 };
 
-#endif // CATA_SRC_OM_DIRECTION_H
+

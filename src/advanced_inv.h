@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ADVANCED_INV_H
-#define CATA_SRC_ADVANCED_INV_H
 
 #include <array>
 #include <cctype>
@@ -185,5 +183,3 @@ class advanced_inventory
         bool query_charges( aim_location destarea, const advanced_inv_listitem &sitem,
                             const std::string &action, int &amount );
 };
-
-#endif // CATA_SRC_ADVANCED_INV_H

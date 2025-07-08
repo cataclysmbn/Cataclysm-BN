@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ACTIVE_ITEM_CACHE_H
-#define CATA_SRC_ACTIVE_ITEM_CACHE_H
 
 #include <iosfwd>
 #include <list>
@@ -75,4 +73,3 @@ class active_item_cache
         std::vector<item *> get_special( special_item_type type );
 };
 
-#endif // CATA_SRC_ACTIVE_ITEM_CACHE_H

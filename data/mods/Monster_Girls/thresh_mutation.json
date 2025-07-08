@@ -79,7 +79,7 @@
   {
     "type": "mutation",
     "id": "THRESH_DRYAD",
-    "name": { "str": "Drayd" },
+    "name": { "str": "Dryad" },
     "points": 1,
     "description": "You've found yourself enjoying and communing with nature even more since you became so intertwined with it and the nature talks back.  Once this is all over and natural order has been restored, you'll *have* to start a conservationist group.",
     "valid": false,
@@ -104,6 +104,28 @@
     "name": { "str": "Fey" },
     "points": 1,
     "description": "You've found yourself with an incredible craving for lembas, as well as a strong desire to nock an arrow to a bow.  The trees speak to you, and you speak back.  In the darkest hour of mankind, the fae shall bring the light!",
+    "valid": false,
+    "purifiable": false,
+    "threshold": true,
+    "mutagen_target_modifier": 10
+  },
+  {
+    "type": "mutation",
+    "id": "THRESH_KITSUNE",
+    "name": { "str": "Kitsune" },
+    "points": 1,
+    "description": "While you may not have gained the magical powers of the japanese fox spirits, you embody their mischievous nature perfectly.  Perhaps one day, you'll find that special partner-in-crime to live up to the other reputation Kitsunes have.",
+    "valid": false,
+    "purifiable": false,
+    "threshold": true,
+    "mutagen_target_modifier": 10
+  },
+  {
+    "type": "mutation",
+    "id": "THRESH_BUNNYGIRL",
+    "name": { "str": "Usagimimi" },
+    "points": 1,
+    "description": "Those playboys hussies are just a bunch of posers, here's a REAL bunnygirl!  Those zombies are practically tortoises compared to you now, and you look stunning while doing it!  Something tells you it's gonna be a challenge to find a partner that can keep up with you…",
     "valid": false,
     "purifiable": false,
     "threshold": true,

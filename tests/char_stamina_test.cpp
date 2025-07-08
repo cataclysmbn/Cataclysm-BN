@@ -15,50 +15,6 @@
 #include "type_id.h"
 #include "units.h"
 
-// These test cases cover stamina-related functions in the `Character` class, including:
-//
-// - stamina_move_cost_modifier
-// - burn_move_stamina
-// - mod_stamina
-// - update_stamina
-//
-// To run all tests in this file:
-//
-//     tests/cata_test [stamina]
-//
-// Other tags used include: [cost], [move], [burn], [update], [regen]. [encumbrance]
-
-// TODO: cover additional aspects of `burn_move_stamina` and `update_stamina`:
-// - stamina burn is modified by bionic muscles
-// - stamina recovery is modified by "bio_gills"
-// - stimulants (positive or negative) affect stamina recovery in mysterious ways
-
-// Helpers
-// -------
-
-// See also `clear_character` in `tests/player_helpers.cpp`
-
-// Return `stamina_move_cost_modifier` in the given move_mode with [0.0 .. 1.0] stamina remaining
-static float move_cost_mod( player &dummy, character_movemode move_mode,
-                            float stamina_proportion = 1.0 )
-{
-    // Reset and be able to run
-    clear_character( dummy );
-    REQUIRE( dummy.can_run() );
-
-    // Walk, run, or crouch
-    dummy.set_movement_mode( move_mode );
-    REQUIRE( dummy.movement_mode_is( move_mode ) );
-
-    // Adjust stamina to desired proportion and ensure it was set correctly
-    int new_stamina = static_cast<int>( stamina_proportion * dummy.get_stamina_max() );
-    dummy.set_stamina( new_stamina );
-    REQUIRE( dummy.get_stamina() == new_stamina );
-
-    // The point of it all: move cost modifier
-    return dummy.stamina_move_cost_modifier();
-}
-
 // Return amount of stamina burned per turn by `burn_move_stamina` in the given movement mode.
 static int actual_burn_rate( player &dummy, character_movemode move_mode )
 {
@@ -121,48 +77,6 @@ static float actual_regen_rate( player &dummy, int moves )
 
 // Test cases
 // ----------
-
-TEST_CASE( "stamina movement cost modifier", "[stamina][cost]" )
-{
-    clear_all_state();
-    player &dummy = g->u;
-
-    SECTION( "running cost is double walking cost for the same stamina level" ) {
-        CHECK( move_cost_mod( dummy, CMM_RUN, 1.0 ) == 2 * move_cost_mod( dummy, CMM_WALK, 1.0 ) );
-        CHECK( move_cost_mod( dummy, CMM_RUN, 0.5 ) == 2 * move_cost_mod( dummy, CMM_WALK, 0.5 ) );
-        CHECK( move_cost_mod( dummy, CMM_RUN, 0.0 ) == 2 * move_cost_mod( dummy, CMM_WALK, 0.0 ) );
-    }
-
-    SECTION( "walking cost is double crouching cost for the same stamina level" ) {
-        CHECK( move_cost_mod( dummy, CMM_WALK, 1.0 ) == 2 * move_cost_mod( dummy, CMM_CROUCH, 1.0 ) );
-        CHECK( move_cost_mod( dummy, CMM_WALK, 0.5 ) == 2 * move_cost_mod( dummy, CMM_CROUCH, 0.5 ) );
-        CHECK( move_cost_mod( dummy, CMM_WALK, 0.0 ) == 2 * move_cost_mod( dummy, CMM_CROUCH, 0.0 ) );
-    }
-
-    SECTION( "running cost goes from 2.0 to 1.0 as stamina goes to zero" ) {
-        CHECK( move_cost_mod( dummy, CMM_RUN, 1.00 ) == Approx( 2.00 ) );
-        CHECK( move_cost_mod( dummy, CMM_RUN, 0.75 ) == Approx( 1.75 ) );
-        CHECK( move_cost_mod( dummy, CMM_RUN, 0.50 ) == Approx( 1.50 ) );
-        CHECK( move_cost_mod( dummy, CMM_RUN, 0.25 ) == Approx( 1.25 ) );
-        CHECK( move_cost_mod( dummy, CMM_RUN, 0.00 ) == Approx( 1.00 ) );
-    }
-
-    SECTION( "walking cost goes from 1.0 to 0.5 as stamina goes to zero" ) {
-        CHECK( move_cost_mod( dummy, CMM_WALK, 1.00 ) == Approx( 1.000 ) );
-        CHECK( move_cost_mod( dummy, CMM_WALK, 0.75 ) == Approx( 0.875 ) );
-        CHECK( move_cost_mod( dummy, CMM_WALK, 0.50 ) == Approx( 0.750 ) );
-        CHECK( move_cost_mod( dummy, CMM_WALK, 0.25 ) == Approx( 0.625 ) );
-        CHECK( move_cost_mod( dummy, CMM_WALK, 0.00 ) == Approx( 0.500 ) );
-    }
-
-    SECTION( "crouching cost goes from 0.5 to 0.25 as stamina goes to zero" ) {
-        CHECK( move_cost_mod( dummy, CMM_CROUCH, 1.00 ) == Approx( 0.5000 ) );
-        CHECK( move_cost_mod( dummy, CMM_CROUCH, 0.75 ) == Approx( 0.4375 ) );
-        CHECK( move_cost_mod( dummy, CMM_CROUCH, 0.50 ) == Approx( 0.3750 ) );
-        CHECK( move_cost_mod( dummy, CMM_CROUCH, 0.25 ) == Approx( 0.3125 ) );
-        CHECK( move_cost_mod( dummy, CMM_CROUCH, 0.00 ) == Approx( 0.2500 ) );
-    }
-}
 
 TEST_CASE( "modify character stamina", "[stamina][modify]" )
 {

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MONEXAMINE_H
-#define CATA_SRC_MONEXAMINE_H
 
 class monster;
 
@@ -43,4 +41,4 @@ void deactivate_pet( monster &z );
 */
 void milk_source( monster &source_mon );
 } // namespace monexamine
-#endif // CATA_SRC_MONEXAMINE_H
+

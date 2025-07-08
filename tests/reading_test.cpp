@@ -412,7 +412,7 @@ TEST_CASE( "Learning recipes from books", "[reading][book][recipe]" )
 static void destroyed_book_test_helper( avatar &u, item *loc )
 {
     std::vector<std::string> reasons_cant_read;
-    const player *reader = u.get_book_reader( *loc, reasons_cant_read );
+    const auto *reader = u.get_book_reader( *loc, reasons_cant_read );
     CAPTURE( reasons_cant_read );
     REQUIRE( reader != nullptr );
     WHEN( "You start reading the book" ) {

@@ -2,7 +2,7 @@
   {
     "id": "barometer",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "barometer" },
     "description": "A plastic barometer that can read the atmospheric pressure.",
     "weight": "1 g",
@@ -39,7 +39,7 @@
   {
     "id": "chemistry_set",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "chemistry set" },
     "description": "This is a chemistry set stored in a box.  The contents include glass containers, hoses, metal wire, a hotplate, and safety glasses.  It might be used to craft some chemistry projects if you're so inclined.",
     "weight": "5200 g",
@@ -67,7 +67,7 @@
   {
     "id": "chemistry_set_basic",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "basic chemistry set" },
     "description": "This is a basic chemistry set which includes glass containers, hoses and safety glasses.  It might be used to craft some chemistry projects if you're so inclined, but you'll need a source of heat.",
     "weight": "1884 g",
@@ -84,7 +84,7 @@
   {
     "id": "electrolysis_kit",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "electrolysis kit" },
     "description": "A set of wiring and electrodes for applying a direct current, usually to a liquid.  Useful for crafting.  Load with a storage battery or 12V vehicle battery to use.",
     "weight": "250 g",
@@ -104,9 +104,9 @@
   {
     "id": "butane_tank",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "butane tank", "str_pl": "tanks of butane" },
-    "description": "This is a tank of compressed butane.  It can be used to extract essential oils from organic material.",
+    "description": "This is a tank of liquid compressed butane.  It can be used to extract essential oils from organic material.",
     "weight": "22700 g",
     "volume": "18950 ml",
     "price": "250 USD",
@@ -115,11 +115,12 @@
     "material": [ "steel", "plastic" ],
     "symbol": ";",
     "color": "dark_gray",
-    "initial_charges": 20,
-    "max_charges": 20,
+    "max_charges": 2000,
+    "initial_charges": 2000,
     "charges_per_use": 1,
+    "turns_per_charge": 2000,
     "looks_like": "oxygen_tank",
-    "flags": [  ],
+    "flags": [ "NO_UNLOAD" ],
     "explosion": {
       "power": 90100,
       "distance_factor": 0.5,
@@ -131,7 +132,7 @@
   {
     "id": "hydrogen_tank",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "hydrogen tank" },
     "description": "This is a tank of compressed hydrogen gas.  If you need to make water from scratch, or lift a zeppelin, it could come in handy.",
     "weight": "2268 g",
@@ -151,7 +152,7 @@
   {
     "id": "hygrometer",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "hygrometer" },
     "description": "A plastic hygrometer that can read the relative humidity in the air.",
     "weight": "1 g",
@@ -168,7 +169,7 @@
   {
     "id": "nitrogen_tank",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "nitrogen tank" },
     "description": "This is a tank of compressed nitrogen gas.  Nitrogen is useful for its lack of reactivity.  Don't try to breathe it.",
     "weight": "2268 g",
@@ -188,7 +189,7 @@
   {
     "id": "oxygen_cylinder",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "oxygen cylinder" },
     "description": "A large steel cylinder used for storing pressurized gas.  It is marked with a faded, but legible O2 symbol.",
     "weight": "12888 g",
@@ -206,9 +207,29 @@
     "use_action": "OXYGEN_BOTTLE"
   },
   {
+    "id": "carbondioxide_tank",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "carbon dioxide tank" },
+    "description": "This is a tank of compressed carbon dioxide gas.",
+    "weight": "2268 g",
+    "volume": "1500 ml",
+    "price": "10 USD",
+    "price_postapoc": "250 cent",
+    "to_hit": -4,
+    "bashing": 10,
+    "material": [ "steel", "plastic" ],
+    "symbol": ";",
+    "color": "light_gray",
+    "initial_charges": 24,
+    "max_charges": 24,
+    "charges_per_use": 1,
+    "looks_like": "oxygen_tank"
+  },
+  {
     "id": "platinum_grille",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "platinum grille" },
     "description": "This is a metal grille with a layer of platinum plating, suitable for use as a catalyst for some chemical reactions.",
     "weight": "660 g",
@@ -246,7 +267,7 @@
   {
     "id": "telepad",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "deployables",
     "name": { "str": "teleport pad" },
     "description": "This is a kit for a teleporter trap consisting of a teleporter and a solar cell that is triggered when stepped upon.",
     "weight": "2000 g",
@@ -284,7 +305,7 @@
   {
     "id": "weather_reader",
     "type": "TOOL",
-    "category": "tools",
+    "category": "electronics",
     "name": { "str": "Doppler Radar Turbo 2000" },
     "description": "A briefcase with built-in laptop that looks like it's from the 80s.  Its vintage monochrome monitor displays a plethora of meteorological data.  No sign of the FLDSMDFR, however.",
     "weight": "10 g",
@@ -319,7 +340,7 @@
   {
     "id": "analytical_set_basic",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "basic laboratory analysis kit" },
     "description": "This hefty kit contains some basic things you should probably not try to do precise chemistry without: namely, a small balance scale, a spectrophotometer, a melting point apparatus, a pH meter, and a set of paper for thin layer chromatography.  This makes it a lot easier to feel confident that the chemical you've made is what you think you've made.",
     "weight": "12500 g",
@@ -344,7 +365,7 @@
   {
     "id": "balance_small",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "small weight scale" },
     "description": "This is a simple scale that uses a set of steel weights on sliding bars to measure a sample's mass quite accurately.",
     "weight": "1000 g",
@@ -360,7 +381,7 @@
   {
     "id": "spectrophotometer",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "spectrophotometer" },
     "description": "This ubiquitous analytical chemistry tool measures the light absorption of a liquid sample in a special tube called a cuvette.",
     "weight": "5000 g",
@@ -384,7 +405,7 @@
   {
     "id": "ph_meter",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "pH meter" },
     "description": "This is basically a pair of glass probes on a voltmeter.  By putting one probe into a calibration solution (conveniently included) and the other in a substance, you can calculate the acidity.",
     "weight": "500 g",
@@ -416,7 +437,7 @@
   {
     "id": "voltmeter",
     "type": "TOOL",
-    "category": "tools",
+    "category": "electronics",
     "name": { "str": "voltmeter" },
     "description": "This device has two probes that let you measure the electrical potential between two points.  Activate to check the status of any local grid connections or battery charge in your surroundings, as well as make modifications to grid connections",
     "weight": "500 g",
@@ -431,6 +452,7 @@
     "color": "light_gray",
     "use_action": [ "REPORT_GRID_CHARGE", "REPORT_GRID_CONNECTIONS", "MODIFY_GRID_CONNECTIONS" ],
     "flags": [ "BELT_CLIP" ],
+    "qualities": [ [ "VOLT_MEASURE", 1 ] ],
     "magazines": [
       [
         "battery",
@@ -450,7 +472,7 @@
   {
     "id": "melting_point",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "melting point apparatus", "str_pl": "units of melting point apparatus" },
     "description": "This is basically a hot plate, with a metal housing attached.  The metal housing has a magnification viewport and a slot into which a capillary tube containing a crystallized sample is inserted.  The device lets you precisely measure the melting point of a crystal, a property very useful in identifying what it is and how pure it is.",
     "weight": "5000 g",
@@ -482,7 +504,7 @@
   {
     "id": "vortex",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "vortex device" },
     "description": "This is a small, hefty, boring looking machine.  Its weighted trapezoidal frame has a single on-off switch and a speed dial, and on top of it sits a rubber receptacle.  Pressing a test tube into the receptacle would, with power, rapidly shake and mix the contents of the test tube.  It's surprisingly fun to use.",
     "weight": "3500 g",
@@ -498,7 +520,7 @@
   {
     "id": "light_detector",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "tools_chemistry",
     "name": { "str": "light detector" },
     "description": "This is a photodiode on a chip, designed to convert incoming light to electrical energy for quantification.",
     "weight": "50 g",
@@ -515,7 +537,7 @@
   {
     "id": "glass_prism",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "tools_chemistry",
     "name": { "str": "glass prism" },
     "description": "This is a high quality crystal glass prism for separating and redirecting light.",
     "weight": "50 g",
@@ -531,7 +553,7 @@
   {
     "id": "glass_tube_small",
     "type": "GENERIC",
-    "category": "spare_parts",
+    "category": "scrap_glass",
     "name": { "str": "small glass tube" },
     "description": "This is a small glass tube.  What more could you possibly want to know about it?",
     "weight": "9 g",
@@ -548,7 +570,7 @@
   {
     "id": "microscope",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "microscope" },
     "description": "A classic tool for the ages!  This hefty, durable piece of lab equipment makes small things look bigger.  Without electricity the light doesn't work, but the rest of it is surprisingly functional.  Unfortunately it's not useful for very much at the moment.",
     "weight": "2000 g",
@@ -564,7 +586,7 @@
   {
     "id": "microscope_dissecting",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "dissecting microscope" },
     "description": "This microscope has less magnification than a standard one.  It's also stereoscopic and produces a neat 3d image of the surface.  It was typically used for doing dissections and other fine detail work on small creatures.  It still works pretty well with an added light source, but what would you do with it?",
     "weight": "2200 g",
@@ -580,7 +602,7 @@
   {
     "id": "funnel_separation",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "separation funnel" },
     "description": "This thing doesn't look much like a funnel.  It's a teardrop shaped piece of glass with a stopper at the wide end and a valve at the other.  It can be used to wash one liquid with another, like water and an oil, and then draw off whichever of the two liquids contains a higher amount of whatever compound you're trying to isolate.  With a high level of skill it can also be used to make juvenile farting noises.",
     "weight": "200 g",
@@ -599,7 +621,7 @@
   {
     "id": "rotovap",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "rotary evaporator" },
     "description": "Just looking at this thing makes you feel like a proper mad scientist.  It's a series of glass tubes and round flasks, connected to a central motor and a heating element.  The heating element warms one flask, kept rotating by the motor, evaporating the contents.  The vapour is then condensed in the tubes and collected in another flask, in case you wanted to save it for later.",
     "weight": "18000 g",
@@ -616,7 +638,7 @@
   {
     "id": "still_lab",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "fractional distillation apparatus", "str_pl": "fractional distillation apparati" },
     "description": "One of the classic pieces of mad science glassware, this is basically a small volume still that passes the vapour through a fractional distillation column and then condenses the distillate in a cooled collection column.  A grad student or a robot (is there really any difference?) collects the distillate in fractions so that specific contents can be analyzed.  Going a few milliliters at a time, it would not be very effective to try to distill whiskey in this thing.",
     "weight": "1000 g",
@@ -634,7 +656,7 @@
   {
     "id": "gelbox",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "electrophoresis tray" },
     "description": "This is a set of plastic trays, electrodes, and a power supply designed to create an electric voltage gradient through a liquid solution containing a solid gel.  Stuff like proteins and DNA would then get separated on the gel according to electrical charge and size.  Pretty useless now, for anything but salvage.",
     "weight": "1000 g",
@@ -651,7 +673,7 @@
   {
     "id": "microcentrifuge",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_chemistry",
     "name": { "str": "microcentrifuge" },
     "description": "This is a smaller, benchtop version of the larger furniture-sized centrifuge.  Don't be fooled by its portable scale; it's still a very powerful piece of equipment that can spin stuff really quickly.  It's not a toy!",
     "weight": "2000 g",
@@ -685,7 +707,7 @@
   {
     "id": "3d_printer_basic",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "3D printer" },
     "description": "Although it's not nearly as fancy as the experimental nanofabricators, this civilian-grade 3D printer can produce almost any item out of plastic, polymer, or carbon fiber…  so long as you can program it.",
     "weight": "2000 g",

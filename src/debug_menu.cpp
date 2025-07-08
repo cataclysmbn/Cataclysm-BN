@@ -107,6 +107,7 @@
 #include "weather.h"
 #include "weather_gen.h"
 #include "weighted_list.h"
+#include "game_info.h"
 
 static const mtype_id mon_generator( "mon_generator" );
 
@@ -199,7 +200,7 @@ class mission_debug
         static void remove_mission( mission &m );
     public:
         static void edit_mission( mission &m );
-        static void edit( player &who );
+        static void edit( Character &who );
         static void edit_player();
         static void edit_npc( npc &who );
         static std::string describe( const mission &m );
@@ -965,19 +966,22 @@ void character_edit_menu( Character &c )
             break;
         case edit_character::healthy: {
             uilist smenu;
-            smenu.addentry( 0, true, 'h', "%s: %d", _( "Health" ), p.get_healthy() );
-            smenu.addentry( 1, true, 'm', "%s: %d", _( "Health modifier" ), p.get_healthy_mod() );
+            smenu.addentry( 0, true, 'h', "%s: %d", _( "Health" ), static_cast<int>( p.get_healthy() ) );
+            smenu.addentry( 1, true, 'm', "%s: %d", _( "Health modifier" ),
+                            static_cast<int>( p.get_healthy_mod() ) );
             smenu.addentry( 2, true, 'r', "%s: %d", _( "Radiation" ), p.get_rad() );
             smenu.query();
             int value;
             switch( smenu.ret ) {
                 case 0:
-                    if( query_int( value, _( "Set the value to?  Currently: %d" ), p.get_healthy() ) ) {
+                    if( query_int( value, _( "Set the value to?  Currently: %d" ),
+                                   static_cast<int>( p.get_healthy() ) ) ) {
                         p.set_healthy( value );
                     }
                     break;
                 case 1:
-                    if( query_int( value, _( "Set the value to?  Currently: %d" ), p.get_healthy_mod() ) ) {
+                    if( query_int( value, _( "Set the value to?  Currently: %d" ),
+                                   static_cast<int>( p.get_healthy_mod() ) ) ) {
                         p.set_healthy_mod( value );
                     }
                     break;
@@ -1188,7 +1192,7 @@ static void add_header( uilist &mmenu, const std::string &str )
     mmenu.entries.push_back( header );
 }
 
-void mission_debug::edit( player &who )
+void mission_debug::edit( Character &who )
 {
     if( who.is_player() ) {
         edit_player();

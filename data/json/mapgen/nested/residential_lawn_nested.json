@@ -672,8 +672,8 @@
         "___"
       ],
       "terrain": { "_": "t_null" },
-      "place_vehicles": [ { "vehicle": "scooter_electric", "x": 0, "y": 3, "chance": 50, "status": 1, "rotation": 0 } ],
-      "place_loot": [ { "item": "tarp", "x": 1, "y": 3 } ]
+      "place_vehicles": [ { "vehicle": "scooter_electric", "x": 1, "y": 2, "chance": 50, "status": 1, "rotation": 0 } ],
+      "place_loot": [ { "item": "tarp", "x": 2, "y": 2 } ]
     }
   },
   {

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_UNITS_PROBABILITY_H
-#define CATA_SRC_UNITS_PROBABILITY_H
 
 #include "units_def.h"
 
@@ -48,20 +46,20 @@ constexpr value_type to_one_in_million( const
 
 } // namespace units
 
-constexpr units::probability operator"" _pm( const unsigned long long v )
+constexpr units::probability operator""_pm( const unsigned long long v )
 {
     return units::from_one_in_million<int>( v );
 }
 
-constexpr units::probability operator"" _pct( const unsigned long long v )
+constexpr units::probability operator""_pct( const unsigned long long v )
 {
     return units::from_one_in_million<int>( v * 10000 );
 }
 
-constexpr units::probability operator"" _pct( const long double v )
+constexpr units::probability operator""_pct( const long double v )
 {
     return units::from_one_in_million<int>( v * 10000 );
 }
 
 
-#endif // CATA_SRC_UNITS_PROBABILITY_H
+

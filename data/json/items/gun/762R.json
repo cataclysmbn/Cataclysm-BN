@@ -59,6 +59,7 @@
     "durability": 10,
     "clip_size": 5,
     "barrel_length": "1000 ml",
+    "blackpowder_tolerance": 72,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],

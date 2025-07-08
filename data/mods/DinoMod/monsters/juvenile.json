@@ -264,6 +264,7 @@
   {
     "id": "mon_sarahsaurus_juvenile",
     "type": "MONSTER",
+    "name": "sarahsaurus juvenile",
     "copy-from": "mon_amargasaurus_juvenile",
     "description": "A large, two-legged, plant-eating juvenile sauropod with a long neck and tail.",
     "zombify_into": "mon_zarahsaurus_juvenile",
@@ -282,6 +283,7 @@
   {
     "id": "mon_anchisaurus_juvenile",
     "type": "MONSTER",
+    "name": "anchisaurus juvenile",
     "copy-from": "mon_issi_juvenile",
     "description": "A four-legged, plant-eating juvenile sauropod with a long neck.",
     "zombify_into": "mon_zanchisaurus",
@@ -295,6 +297,7 @@
   {
     "id": "mon_issi_juvenile",
     "type": "MONSTER",
+    "name": "issi juvenile",
     "copy-from": "mon_amargasaurus_juvenile",
     "description": "A large, two-legged, plant-eating juvenile sauropod with a long neck and tail.",
     "zombify_into": "mon_zissi_juvenile",
@@ -311,16 +314,25 @@
     "extend": { "flags": [ "PET_MOUNTABLE" ] }
   },
   {
+    "id": "mon_moabosaurus_juvenile",
+    "type": "MONSTER",
+    "name": "moabosaurus juvenile",
+    "copy-from": "mon_amargasaurus_juvenile",
+    "zombify_into": "mon_zoabosaurus_juvenile",
+    "upgrades": { "age_grow": 1460, "into": "mon_moabosaurus" }
+  },
+  {
     "id": "mon_haplocanthosaurus_juvenile",
     "type": "MONSTER",
+    "name": "haplocanthosaurus juvenile",
     "copy-from": "mon_amargasaurus_juvenile",
     "zombify_into": "mon_zaplocanthosaurus_juvenile",
-    "upgrades": { "age_grow": 365, "into": "mon_haplocanthosaurus" }
+    "upgrades": { "age_grow": 1460, "into": "mon_haplocanthosaurus" }
   },
   {
     "id": "mon_amargasaurus_juvenile",
     "type": "MONSTER",
-    "name": "brown and magenta sauropod juvenile",
+    "name": "amargasaurus juvenile",
     "copy-from": "mon_gallimimus_juvenile",
     "looks_like": "mon_apatosaurus",
     "default_faction": "herbivore_dino",
@@ -344,60 +356,80 @@
     "harvest": "dino_sauropod",
     "anger_triggers": [ "HURT", "FRIEND_ATTACKED" ],
     "fear_triggers": [ "FRIEND_DIED" ],
-    "upgrades": { "age_grow": 365, "into": "mon_amargasaurus" },
+    "upgrades": { "age_grow": 1460, "into": "mon_amargasaurus" },
     "petfood": { "food": [ "DINOFOOD_C" ] },
-    "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "NO_BREED", "CANPLAY", "GROUP_MORALE" ]
+    "flags": [ "SEES", "HEARS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "NO_BREED", "CANPLAY", "GROUP_MORALE" ]
   },
   {
     "id": "mon_apatosaurus_juvenile",
     "type": "MONSTER",
+    "name": "apatosaurus juvenile",
     "copy-from": "mon_amargasaurus_juvenile",
     "zombify_into": "mon_zapatosaurus_juvenile",
-    "upgrades": { "age_grow": 365, "into": "mon_apatosaurus" }
+    "upgrades": { "age_grow": 1460, "into": "mon_apatosaurus" }
   },
   {
     "id": "mon_brontosaurus_juvenile",
     "type": "MONSTER",
+    "name": "brontosaurus juvenile",
     "copy-from": "mon_amargasaurus_juvenile",
     "zombify_into": "mon_zrontosaurus_juvenile",
-    "upgrades": { "age_grow": 365, "into": "mon_brontosaurus" }
+    "upgrades": { "age_grow": 1460, "into": "mon_brontosaurus" }
   },
   {
     "id": "mon_diplodocus_juvenile",
     "type": "MONSTER",
+    "name": "diplodocus juvenile",
     "copy-from": "mon_amargasaurus_juvenile",
     "zombify_into": "mon_ziplodocus_juvenile",
-    "upgrades": { "age_grow": 365, "into": "mon_diplodocus" }
+    "upgrades": { "age_grow": 1460, "into": "mon_diplodocus" }
   },
   {
     "id": "mon_barosaurus_juvenile",
     "type": "MONSTER",
+    "name": "barosaurus juvenile",
     "copy-from": "mon_amargasaurus_juvenile",
     "zombify_into": "mon_zarosaurus_juvenile",
-    "upgrades": { "age_grow": 365, "into": "mon_barosaurus" }
+    "upgrades": { "age_grow": 1460, "into": "mon_barosaurus" }
   },
   {
     "id": "mon_camarasaurus_juvenile",
     "type": "MONSTER",
+    "name": "camarasaurus juvenile",
     "copy-from": "mon_amargasaurus_juvenile",
+    "special_attacks": [
+      { "id": "stomp_DinoMod", "cooldown": 10, "damage_max_instance": [ { "damage_type": "bash", "amount": 8 } ] },
+      [ "tailsmash_long_DinoMod", 30 ],
+      [ "EAT_CROP", 5 ]
+    ],
     "zombify_into": "mon_zamarasaurus_juvenile",
-    "upgrades": { "age_grow": 365, "into": "mon_camarasaurus" }
+    "upgrades": { "age_grow": 1460, "into": "mon_camarasaurus" }
   },
   {
     "id": "mon_brachiosaurus_juvenile",
     "type": "MONSTER",
-    "copy-from": "mon_amargasaurus_juvenile",
+    "name": "brachiosaurus juvenile",
+    "copy-from": "mon_camarasaurus_juvenile",
     "zombify_into": "mon_zrachiosaurus_juvenile",
-    "upgrades": { "age_grow": 365, "into": "mon_brachiosaurus" }
+    "upgrades": { "age_grow": 1460, "into": "mon_brachiosaurus" }
+  },
+  {
+    "id": "mon_astrodon_juvenile",
+    "type": "MONSTER",
+    "name": "astrodon juvenile",
+    "copy-from": "mon_amargasaurus_juvenile",
+    "zombify_into": "mon_zastrodon_juvenile",
+    "upgrades": { "age_grow": 1460, "into": "mon_astrodon" }
   },
   {
     "id": "mon_alamosaurus_juvenile",
     "type": "MONSTER",
-    "copy-from": "mon_amargasaurus_juvenile",
-    "zombify_into": "mon_zalamosaurus_juvenile",
+    "name": "alamosaurus juvenile",
+    "copy-from": "mon_camarasaurus_juvenile",
     "armor_bash": 7,
     "armor_cut": 9,
-    "upgrades": { "age_grow": 365, "into": "mon_alamosaurus" }
+    "zombify_into": "mon_zalamosaurus_juvenile",
+    "upgrades": { "age_grow": 1460, "into": "mon_alamosaurus" }
   },
   {
     "id": "mon_stegosaurus_juvenile",

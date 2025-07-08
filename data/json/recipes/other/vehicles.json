@@ -26,6 +26,355 @@
   },
   {
     "type": "recipe",
+    "result": "robobench",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "electronics",
+    "skills_required": [ [ "computer", 5 ], [ "fabrication", 3 ] ],
+    "difficulty": 7,
+    "time": "4 h",
+    "reversible": true,
+    "decomp_learn": 1,
+    "book_learn": [ [ "recipe_lab_elec", 6 ], [ "recipe_mil_augs", 6 ], [ "textbook_robots", 6 ] ],
+    "using": [ [ "welding_standard", 15 ], [ "soldering_standard", 40 ] ],
+    "components": [
+      [ [ "workbench", 1 ] ],
+      [ [ "plut_cell", 2 ] ],
+      [ [ "motor_small", 6 ] ],
+      [ [ "cable", 60 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "ai_module", 1 ] ],
+      [ [ "sheet_metal_small", 10 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "pump_complex",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "difficulty": 5,
+    "time": "6 h",
+    "decomp_learn": 2,
+    "book_learn": [ [ "book_icef", 5 ] ],
+    "using": [ [ "welding_standard", 20 ] ],
+    "qualities": [
+      { "id": "SAW_M_FINE", "level": 1 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "SCREW", "level": 1 }
+    ],
+    "components": [ [ [ "steel_lump", 5 ] ], [ [ "cu_pipe", 1 ] ], [ [ "chunk_rubber", 3 ] ], [ [ "scrap", 30 ] ], [ [ "copper", 100 ] ] ],
+    "skills_required": [ [ "fabrication", 5 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "engine_block_tiny",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "2 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_fabrication", 2 ], [ "textbook_carpentry", 2 ], [ "reference_fabrication1", 2 ] ],
+    "using": [ [ "welding_standard", 2 ], [ "steel_standard", 8 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 1 } ],
+    "skills_required": [ [ "mechanics", 1 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "engine_block_small",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "3 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_fabrication", 2 ], [ "textbook_carpentry", 2 ], [ "reference_fabrication1", 2 ] ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 40 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 1 } ],
+    "skills_required": [ [ "mechanics", 2 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "engine_block_medium",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "4 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_fabrication", 2 ], [ "textbook_carpentry", 2 ], [ "reference_fabrication1", 2 ] ],
+    "using": [ [ "welding_standard", 25 ], [ "steel_standard", 90 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 1 } ],
+    "skills_required": [ [ "mechanics", 3 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "engine_block_large",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "5 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_fabrication", 2 ], [ "textbook_carpentry", 2 ], [ "reference_fabrication1", 2 ] ],
+    "using": [ [ "welding_standard", 50 ], [ "steel_standard", 190 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 1 } ],
+    "skills_required": [ [ "mechanics", 4 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "engine_block_massive",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "6 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_fabrication", 2 ], [ "textbook_carpentry", 2 ], [ "reference_fabrication1", 2 ] ],
+    "using": [ [ "welding_standard", 70 ], [ "steel_standard", 280 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 1 } ],
+    "skills_required": [ [ "mechanics", 5 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "v12_combustion",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "difficulty": 10,
+    "time": "6 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_mechanics", 9 ], [ "book_icef", 9 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "drivebelt", 2 ] ],
+      [ [ "motor_oil", 12000 ] ],
+      [ [ "engine_block_massive", 1 ] ],
+      [ [ "well_pump", 2 ] ],
+      [ [ "motor_small", 1 ] ],
+      [ [ "filter_air", 1 ] ],
+      [ [ "chain", 1 ] ],
+      [ [ "pipe", 6 ] ],
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "filter_liquid", 1 ] ],
+      [ [ "cable", 70 ] ]
+    ],
+    "skills_required": [ [ "fabrication", 6 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "v8_combustion",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "difficulty": 8,
+    "time": "6 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_mechanics", 8 ], [ "book_icef", 8 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "drivebelt", 2 ] ],
+      [ [ "motor_oil", 8800 ] ],
+      [ [ "engine_block_large", 1 ] ],
+      [ [ "well_pump", 2 ] ],
+      [ [ "motor_small", 1 ] ],
+      [ [ "filter_air", 1 ] ],
+      [ [ "chain", 1 ] ],
+      [ [ "pipe", 4 ] ],
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "filter_liquid", 1 ] ],
+      [ [ "cable", 60 ] ]
+    ],
+    "skills_required": [ [ "fabrication", 5 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "v6_combustion",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "time": "6 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_mechanics", 5 ], [ "book_icef", 5 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "drivebelt", 2 ] ],
+      [ [ "motor_oil", 6600 ] ],
+      [ [ "engine_block_medium", 1 ] ],
+      [ [ "well_pump", 2 ] ],
+      [ [ "motor_small", 1 ] ],
+      [ [ "filter_air", 1 ] ],
+      [ [ "chain", 1 ] ],
+      [ [ "pipe", 6 ] ],
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "filter_liquid", 1 ] ],
+      [ [ "cable", 50 ] ]
+    ],
+    "skills_required": [ [ "fabrication", 4 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "i4_combustion",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "difficulty": 5,
+    "time": "4 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_mechanics", 5 ], [ "book_icef", 5 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "drivebelt", 2 ] ],
+      [ [ "motor_oil", 4700 ] ],
+      [ [ "engine_block_small", 1 ] ],
+      [ [ "well_pump", 2 ] ],
+      [ [ "motor_small", 1 ] ],
+      [ [ "filter_air", 1 ] ],
+      [ [ "chain", 1 ] ],
+      [ [ "pipe", 2 ] ],
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "filter_liquid", 1 ] ],
+      [ [ "cable", 40 ] ]
+    ],
+    "skills_required": [ [ "fabrication", 4 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "v12_diesel",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "difficulty": 10,
+    "time": "6 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_biodiesel", 9 ], [ "book_icef", 10 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "drivebelt", 2 ] ],
+      [ [ "chain", 2 ] ],
+      [ [ "filter_air", 1 ] ],
+      [ [ "filter_liquid", 1 ] ],
+      [ [ "motor_small", 1 ] ],
+      [ [ "well_pump", 1 ] ],
+      [ [ "pump_complex", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "glowplug", 1 ] ],
+      [ [ "motor_oil", 12000 ] ],
+      [ [ "engine_block_massive", 1 ] ],
+      [ [ "pipe", 6 ] ],
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "cable", 70 ] ]
+    ],
+    "skills_required": [ [ "fabrication", 6 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "v8_diesel",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "difficulty": 8,
+    "time": "6 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_biodiesel", 7 ], [ "book_icef", 8 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "drivebelt", 2 ] ],
+      [ [ "chain", 1 ] ],
+      [ [ "filter_air", 1 ] ],
+      [ [ "filter_liquid", 1 ] ],
+      [ [ "motor_small", 1 ] ],
+      [ [ "well_pump", 1 ] ],
+      [ [ "pump_complex", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "glowplug", 1 ] ],
+      [ [ "motor_oil", 8800 ] ],
+      [ [ "engine_block_large", 1 ] ],
+      [ [ "pipe", 6 ] ],
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "cable", 60 ] ]
+    ],
+    "skills_required": [ [ "fabrication", 5 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "v6_diesel",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "time": "6 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_biodiesel", 5 ], [ "book_icef", 7 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "drivebelt", 2 ] ],
+      [ [ "chain", 1 ] ],
+      [ [ "filter_air", 1 ] ],
+      [ [ "filter_liquid", 1 ] ],
+      [ [ "motor_small", 1 ] ],
+      [ [ "well_pump", 1 ] ],
+      [ [ "pump_complex", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "glowplug", 1 ] ],
+      [ [ "motor_oil", 6600 ] ],
+      [ [ "engine_block_medium", 1 ] ],
+      [ [ "pipe", 3 ] ],
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "cable", 50 ] ]
+    ],
+    "skills_required": [ [ "fabrication", 4 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "i6_diesel",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "time": "4 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "book_learn": [ [ "textbook_biodiesel", 5 ], [ "book_icef", 5 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "drivebelt", 2 ] ],
+      [ [ "filter_air", 1 ] ],
+      [ [ "filter_liquid", 1 ] ],
+      [ [ "motor_small", 1 ] ],
+      [ [ "well_pump", 1 ] ],
+      [ [ "pump_complex", 1 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "glowplug", 1 ] ],
+      [ [ "motor_oil", 6600 ] ],
+      [ [ "engine_block_medium", 1 ] ],
+      [ [ "pipe", 3 ] ],
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "cable", 50 ] ]
+    ],
+    "skills_required": [ [ "fabrication", 4 ] ]
+  },
+  {
+    "type": "recipe",
     "result": "water_mill",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
@@ -226,6 +575,20 @@
     "qualities": [ { "id": "HAMMER", "level": 1 } ],
     "using": [ [ "sewing_standard", 100 ] ],
     "components": [ [ [ "leather", 6 ], [ "fur", 6 ] ], [ [ "wood_structural", 4, "LIST" ] ], [ [ "rope_natural_short", 4, "LIST" ] ] ]
+  },
+  {
+    "result": "seatbelt",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "30 m",
+    "autolearn": true,
+    "reversible": true,
+    "using": [ [ "sewing_standard", 20 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "components": [ [ [ "nylon", 10 ] ], [ [ "steel_tiny", 1, "LIST" ] ] ]
   },
   {
     "result": "five-point_harness",
@@ -543,6 +906,20 @@
     "components": [ [ [ "plastic_chunk", 4 ] ] ]
   },
   {
+    "result": "wheel_skateboard",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "90 m",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 4 ], [ "steel_tiny", 4 ] ],
+    "tools": [ [ [ "mold_plastic", -1 ] ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "components": [ [ [ "plastic_chunk", 4 ] ] ]
+  },
+  {
     "result": "mounted_spare_tire",
     "type": "recipe",
     "category": "CC_OTHER",
@@ -637,6 +1014,34 @@
   },
   {
     "type": "recipe",
+    "result": "hovercraft_section",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "skills_required": [ "electronics", 2 ],
+    "difficulty": 5,
+    "time": "1 h",
+    "autolearn": [ [ "mechanics", 6 ], [ "electronics", 3 ] ],
+    "reversible": true,
+    "book_learn": [ [ "textbook_fabrication", 5 ], [ "textbook_mechanics", 4 ], [ "reference_fabrication1", 5 ] ],
+    "using": [ [ "welding_standard", 3 ], [ "steel_standard", 4 ], [ "soldering_standard", 10 ], [ "sewing_standard", 20 ] ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "WRENCH", "level": 1 },
+      { "id": "SCREW", "level": 1 }
+    ],
+    "components": [
+      [ [ "fabric_standard", 10, "LIST" ] ],
+      [ [ "pipe", 1 ] ],
+      [ [ "motor_tiny", 2 ], [ "motor_small", 1 ] ],
+      [ [ "hose", 1 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "chunk_rubber", 10 ], [ "neoprene", 10 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "hand_paddles",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
@@ -644,7 +1049,7 @@
     "difficulty": 1,
     "time": "1 h",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "2x4", 4 ] ], [ [ "nail_glue", 10, "LIST" ] ] ]
   },
   {
@@ -804,7 +1209,7 @@
     "time": "9 m",
     "reversible": true,
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CUT", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "2x4", 5 ] ], [ [ "stick", 2 ] ], [ [ "nail_glue", 20, "LIST" ] ] ]
   },
   {
@@ -932,6 +1337,19 @@
   },
   {
     "type": "recipe",
+    "result": "frame_wood_deck",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "skills_required": [ "mechanics", 0 ],
+    "time": "90 m",
+    "reversible": true,
+    "autolearn": true,
+    "qualities": [ { "id": "SAW_W", "level": 1 }, { "id": "DRILL", "level": 1 } ],
+    "components": [ [ [ "2x4", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "wheel_wood",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
@@ -979,7 +1397,8 @@
     "reversible": true,
     "//": "sawing it down doesn't teach anything useful",
     "autolearn": true,
-    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 8 ] ]
+    "using": [ [ "welding_standard", 10 ] ],
+    "components": [ [ [ "steel_armor", 12 ] ] ]
   },
   {
     "type": "recipe",
@@ -992,7 +1411,7 @@
     "reversible": true,
     "book_learn": [ [ "textbook_fabrication", 3 ], [ "welding_book", 3 ], [ "textbook_mechanics", 4 ] ],
     "using": [ [ "welding_standard", 10 ] ],
-    "components": [ [ [ "steel_standard", 8, "LIST" ], [ "steel_plate", 1 ] ], [ [ "steel_tiny", 4, "LIST" ], [ "spike", 4 ] ] ]
+    "components": [ [ [ "steel_armor", 12 ], [ "steel_plate", 1 ] ], [ [ "steel_tiny", 4, "LIST" ], [ "spike", 4 ] ] ]
   },
   {
     "type": "recipe",
@@ -1005,7 +1424,8 @@
     "time": "12 m",
     "reversible": true,
     "book_learn": [ [ "textbook_fabrication", 5 ], [ "adv_chemistry", 6 ], [ "welding_book", 5 ] ],
-    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 24 ] ]
+    "using": [ [ "welding_standard", 10 ] ],
+    "components": [ [ [ "hard_steel_armor", 12 ] ] ]
   },
   {
     "type": "recipe",
@@ -1251,8 +1671,8 @@
     "autolearn": true,
     "using": [ [ "rope_natural", 4 ], [ "welding_standard", 10 ] ],
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
-    "byproducts": [ [ "steel_lump", 50 ] ],
-    "components": [ [ [ "hdframe", 3 ] ], [ [ "steel_chunk", 4 ], [ "scrap", 12 ] ] ]
+    "byproducts": [ [ "steel_lump", 20 ] ],
+    "components": [ [ [ "hdframe", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -1265,7 +1685,7 @@
     "reversible": true,
     "decomp_learn": 1,
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_W", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_W", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "2x4", 4 ] ], [ [ "wood_panel", 1 ] ], [ [ "nail_glue", 8, "LIST" ] ] ]
   },
   {
@@ -1321,6 +1741,19 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 50 ], [ "welding_standard", 5 ] ],
     "components": [ [ [ "pipe", 4 ] ], [ [ "spring", 2 ] ], [ [ "fabric_hides_proper", 12, "LIST" ], [ "fur", 12 ] ], [ [ "rag", 8 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "saddle",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "10 m",
+    "reversible": true,
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 25 ], [ "welding_standard", 5 ] ],
+    "components": [ [ [ "pipe", 2 ] ], [ [ "spring", 1 ] ], [ [ "fabric_hides_proper", 4, "LIST" ] ], [ [ "rag", 3 ] ] ]
   },
   {
     "type": "recipe",
@@ -1514,7 +1947,7 @@
     "skills_required": [ "fabrication", 2 ],
     "time": "20 m",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "components": [ [ [ "nail_glue", 4, "LIST" ] ], [ [ "stick", 2 ], [ "2x4", 2 ] ] ]
   },
   {
@@ -1539,9 +1972,10 @@
     "skill_used": "computer",
     "difficulty": 1,
     "autolearn": true,
-    "time": "50 m",
-    "using": [ [ "3d_printing_standard", 50 ] ],
-    "components": [ [ [ "plastic_chunk", 50 ] ] ]
+    "time": "30 m",
+    "batch_time_factors": [ 60, 1 ],
+    "using": [ [ "3d_printing_standard", 30 ] ],
+    "components": [ [ [ "plastic_chunk", 30 ] ] ]
   },
   {
     "type": "recipe",
@@ -1552,8 +1986,9 @@
     "difficulty": 3,
     "time": "75 m",
     "autolearn": true,
-    "tools": [ [ [ "mold_plastic", -1 ] ], [ [ "surface_heat", 75, "LIST" ] ] ],
-    "components": [ [ [ "plastic_chunk", 50 ] ] ]
+    "batch_time_factors": [ 60, 1 ],
+    "tools": [ [ [ "mold_plastic", -1 ] ], [ [ "surface_heat", 55, "LIST" ] ] ],
+    "components": [ [ [ "plastic_chunk", 30 ] ] ]
   },
   {
     "result": "frame_carbon",
@@ -1563,8 +1998,23 @@
     "skill_used": "computer",
     "difficulty": 2,
     "autolearn": true,
-    "time": "30 m",
-    "using": [ [ "3d_printing_standard", 30 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 300 ] ] ]
+    "time": "20 m",
+    "batch_time_factors": [ 60, 1 ],
+    "using": [ [ "3d_printing_standard", 20 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 200 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "cargo_rack_carbon",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "computer",
+    "difficulty": 3,
+    "skills_required": [ "mechanics", 1 ],
+    "autolearn": true,
+    "time": "20 m",
+    "batch_time_factors": [ 60, 1 ],
+    "using": [ [ "3d_printing_standard", 20 ], [ "rope_natural", 4 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 400 ], [ "frame_carbon", 2 ] ] ]
   }
 ]

@@ -1,5 +1,6 @@
 #include "overmap_connection.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <algorithm>
 #include <cassert>
@@ -61,8 +62,8 @@ bool overmap_connection::subtype::allows_terrain( const oter_id &oter ) const
         return true;    // Can be built on similar terrains.
     }
 
-    return std::any_of( locations.cbegin(),
-    locations.cend(), [&oter]( const overmap_location_id & elem ) {
+    return std::ranges::any_of( locations,
+    [&oter]( const overmap_location_id & elem ) {
         return elem->test( oter );
     } );
 }
@@ -98,8 +99,8 @@ const overmap_connection::subtype *overmap_connection::pick_subtype_for(
         return cached_subtypes[cache_index].value;
     }
 
-    const auto iter = std::find_if( subtypes.cbegin(),
-    subtypes.cend(), [&ground]( const subtype & elem ) {
+    const auto iter = std::ranges::find_if( subtypes,
+    [&ground]( const subtype & elem ) {
         return elem.allows_terrain( ground );
     } );
 
@@ -119,7 +120,7 @@ bool overmap_connection::can_start_at( const oter_id &ground ) const
 
 bool overmap_connection::has( const oter_id &oter ) const
 {
-    return std::find_if( subtypes.cbegin(), subtypes.cend(), [&oter]( const subtype & elem ) {
+    return std::ranges::find_if( subtypes, [&oter]( const subtype & elem ) {
         return oter->type_is( elem.terrain );
     } ) != subtypes.cend();
 }
@@ -184,8 +185,8 @@ void reset()
 overmap_connection_id guess_for( const oter_id &oter )
 {
     const auto &all = connections.get_all();
-    const auto iter = std::find_if( all.cbegin(),
-    all.cend(), [&oter]( const overmap_connection & elem ) {
+    const auto iter = std::ranges::find_if( all,
+    [&oter]( const overmap_connection & elem ) {
         return elem.pick_subtype_for( oter ) != nullptr;
     } );
 

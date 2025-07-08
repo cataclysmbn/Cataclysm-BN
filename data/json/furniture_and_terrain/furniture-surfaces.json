@@ -172,6 +172,36 @@
   },
   {
     "type": "furniture",
+    "id": "f_robobench",
+    "name": "Robotic workbench",
+    "description": "Having upgraded the basic workbench, you've now created a robotic workbench that helps speed up crafting.",
+    "symbol": "#",
+    "color": "red",
+    "move_cost_mod": 2,
+    "coverage": 50,
+    "required_str": 10,
+    "looks_like": "t_machinery_heavy",
+    "flags": [ "TRANSPARENT", "PLACE_ITEM", "MOUNTABLE", "FLAT_SURF", "EASY_DECONSTRUCT" ],
+    "deconstruct": { "items": [ { "item": "robobench", "count": 1 } ] },
+    "bash": {
+      "str_min": 35,
+      "str_max": 80,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "pipe", "count": [ 4, 6 ] },
+        { "item": "sheet_metal", "count": [ 0, 1 ] },
+        { "item": "sheet_metal_small", "count": [ 12, 24 ] },
+        { "item": "steel_chunk", "count": [ 4, 8 ] },
+        { "item": "scrap", "count": [ 12, 24 ] }
+      ],
+      "ranged": { "reduction": [ 35, 35 ], "destroy_threshold": 80, "block_unaimed_chance": "50%" }
+    },
+    "examine_action": "workbench",
+    "workbench": { "multiplier": 1.5, "mass": "500 kg", "volume": "200L" }
+  },
+  {
+    "type": "furniture",
     "id": "f_leather_tarp",
     "name": "leather tarp",
     "description": "A large sheet of sewn leather that can be used instead of a picnic blanket, but it's more valuable as a butchery appliance as it does not soak in blood.",

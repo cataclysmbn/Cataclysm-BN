@@ -56,7 +56,6 @@
     "ups_charges": 1,
     "ranged_damage": { "damage_type": "bullet", "amount": -1 },
     "durability": 9,
-    "blackpowder_tolerance": 96,
     "modes": [ [ "DEFAULT", "low auto", 6 ], [ "AUTO", "high auto", 18 ] ],
     "magazines": [ [ "308", [ "belt308" ] ] ],
     "extend": { "flags": [ "NEVER_JAMS" ] }
@@ -148,7 +147,6 @@
     "dispersion": 200,
     "durability": 9,
     "min_cycle_recoil": 2700,
-    "handling": 45,
     "modes": [ [ "DEFAULT", "burst", 4 ] ],
     "built_in_mods": [ "bipod" ],
     "valid_mod_locations": [
@@ -219,7 +217,6 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -5 },
     "dispersion": 550,
     "durability": 6,
-    "blackpowder_tolerance": 60,
     "reload": 200,
     "barrel_length": "500 ml",
     "valid_mod_locations": [
@@ -253,8 +250,6 @@
     "ammo": "308",
     "dispersion": 90,
     "durability": 9,
-    "handling": 50,
-    "blackpowder_tolerance": 24,
     "clip_size": 3,
     "barrel_length": "750 ml",
     "flags": [ "RELOAD_ONE", "NEVER_JAMS" ]

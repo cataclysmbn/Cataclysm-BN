@@ -2,7 +2,7 @@
   {
     "id": "awl_bone",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "bone sewing awl" },
     "description": "This is a crude sharpened bone awl; those were used for leatherworking before metal was discovered.  It can also serve as an improvised stabbing weapon, but will break quickly.",
     "weight": "200 g",
@@ -12,7 +12,7 @@
     "to_hit": -1,
     "bashing": 2,
     "cutting": 5,
-    "material": "bone",
+    "material": [ "bone" ],
     "symbol": ";",
     "color": "yellow",
     "qualities": [ [ "LEATHER_AWL", 1 ] ],
@@ -35,7 +35,7 @@
   {
     "id": "knitting_needles",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "knitting needles", "str_pl": "pairs of knitting needles" },
     "description": "A pair of stout wooden needles with round ends used to turn thread and yarn into cloth.",
     "weight": "56 g",
@@ -52,14 +52,14 @@
   {
     "id": "needle_bone",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "bone needle" },
     "description": "This is sharp needle made from a bone.  It would be useful for making rough clothing and items.  Its low quality makes it rather unsuitable for anything requiring speed or precision.",
     "weight": "85 g",
     "volume": "250 ml",
     "price": "0 cent",
     "price_postapoc": "10 cent",
-    "material": "bone",
+    "material": [ "bone" ],
     "symbol": ";",
     "color": "white",
     "ammo": "thread",
@@ -81,7 +81,7 @@
   {
     "id": "needle_curved",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "curved needle" },
     "description": "A curved sharp needle made of steel.  Its rounded shape allows it to make stitches that only pierce one side of the material.  While unsuitable for most tailoring projects, it's a necessity for stitching neoprene.",
     "weight": "85 g",
@@ -110,7 +110,7 @@
   {
     "id": "needle_wood",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "wooden needle" },
     "description": "This is a wooden needle whittled down to a sharp point.  It has a narrow hole carved into the head for threading.  Its low quality makes it rather unsuitable for anything requiring speed or precision, or involving tougher materials like Kevlar.",
     "weight": "85 g",
@@ -139,7 +139,7 @@
   {
     "id": "sewing_kit",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "sewing kit" },
     "description": "This is a plastic kit with a variety of needles, some plastic spools for thread, and a few other useful textile tools.  Use a sewing kit on an article of clothing to attempt to repair or reinforce that clothing.  This uses your tailoring skill.",
     "weight": "85 g",
@@ -158,7 +158,7 @@
     "use_action": {
       "type": "repair_item",
       "item_action_type": "repair_fabric",
-      "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "gutskin" ],
+      "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "scute", "gutskin" ],
       "skill": "tailor",
       "tool_quality": 2,
       "cost_scaling": 0.1,
@@ -183,7 +183,7 @@
   {
     "id": "tailors_kit",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_workshop",
     "name": { "str": "tailor's kit" },
     "description": "This is a high quality kit consisting of a variety of needles, some plastic spools for thread, some small scissors, and an awl.  Using your tailoring skill, this kit can customize your clothing and armor, whether up-armoring them or altering some items to fit large mutant wearers.",
     "weight": "100 g",

@@ -36,9 +36,9 @@ help &get_help()
 
 void help::load()
 {
-    read_from_file_optional_json( PATH_INFO::help(), [&]( JsonIn & jsin ) {
+    read_from_file_json( PATH_INFO::help(), [&]( JsonIn & jsin ) {
         deserialize( jsin );
-    } );
+    }, true );
 }
 
 void help::deserialize( JsonIn &jsin )

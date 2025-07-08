@@ -209,7 +209,7 @@
   {
     "type": "GENERIC",
     "id": "crt_hatchet_extended",
-    "weapon_category": [ "1H_AXES" ],
+    "weapon_category": [ "2H_AXES" ],
     "symbol": ";",
     "color": "light_gray",
     "name": "C.R.I.T axe",

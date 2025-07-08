@@ -2163,7 +2163,8 @@
       { "x": -2, "y": 1, "chance": 7, "items": [ "screwdriver" ] },
       { "x": -2, "y": 1, "chance": 10, "items": [ "mag_fieldrepair" ] },
       { "x": -2, "y": 1, "chance": 7, "items": [ "wrench" ] },
-      { "x": -2, "y": 1, "chance": 5, "items": [ "two_way_radio" ] }
+      { "x": -2, "y": 1, "chance": 5, "items": [ "two_way_radio" ] },
+      { "x": -2, "y": 1, "chance": 5, "items": [ "mil_gps_device" ] }
     ]
   },
   {
@@ -2610,6 +2611,7 @@
       { "x": -2, "y": 1, "chance": 10, "items": [ "mag_fieldrepair" ] },
       { "x": -2, "y": 1, "chance": 7, "items": [ "wrench" ] },
       { "x": -2, "y": 1, "chance": 5, "items": [ "two_way_radio" ] },
+      { "x": -2, "y": 1, "chance": 5, "items": [ "mil_gps_device" ] },
       { "x": 0, "y": -1, "chance": 5, "items": [ "advanced_ecig" ] },
       { "x": 0, "y": -1, "chance": 10, "items": [ "helmet_army" ] },
       { "x": 0, "y": 1, "chance": 20, "item_groups": [ "remains_pilot" ] }
@@ -2983,6 +2985,7 @@
       { "x": -2, "y": 1, "chance": 10, "items": [ "mag_fieldrepair" ] },
       { "x": -2, "y": 1, "chance": 7, "items": [ "wrench" ] },
       { "x": -2, "y": 1, "chance": 5, "items": [ "two_way_radio" ] },
+      { "x": -2, "y": 1, "chance": 5, "items": [ "mil_gps_device" ] },
       { "x": 0, "y": 1, "chance": 20, "item_groups": [ "remains_pilot" ] }
     ]
   },
@@ -3188,6 +3191,7 @@
       { "x": -1, "y": 2, "chance": 7, "items": [ "mag_fieldrepair" ] },
       { "x": -1, "y": 2, "chance": 7, "items": [ "misc_repairkit" ] },
       { "x": -1, "y": 2, "chance": 5, "items": [ "two_way_radio" ] },
+      { "x": -1, "y": 2, "chance": 5, "items": [ "mil_gps_device" ] },
       { "x": 0, "y": 2, "chance": 7, "items": [ "roadmap" ] },
       { "x": 0, "y": 2, "chance": 7, "items": [ "pockknife" ] },
       { "x": 0, "y": 2, "chance": 5, "items": [ "box_cigarette" ] }
@@ -3385,6 +3389,7 @@
       { "x": -1, "y": 2, "chance": 7, "items": [ "mag_fieldrepair" ] },
       { "x": -1, "y": 2, "chance": 7, "items": [ "misc_repairkit" ] },
       { "x": -1, "y": 2, "chance": 5, "items": [ "two_way_radio" ] },
+      { "x": -1, "y": 2, "chance": 5, "items": [ "mil_gps_device" ] },
       { "x": 0, "y": 2, "chance": 7, "items": [ "roadmap" ] },
       { "x": 0, "y": 2, "chance": 7, "items": [ "pockknife" ] },
       { "x": 0, "y": 2, "chance": 5, "items": [ "box_cigarette" ] }
@@ -3539,6 +3544,7 @@
       { "x": -1, "y": 2, "chance": 7, "items": [ "mag_fieldrepair" ] },
       { "x": -1, "y": 2, "chance": 7, "items": [ "misc_repairkit" ] },
       { "x": -1, "y": 2, "chance": 5, "items": [ "two_way_radio" ] },
+      { "x": -1, "y": 2, "chance": 5, "items": [ "mil_gps_device" ] },
       { "x": 0, "y": 2, "chance": 7, "items": [ "roadmap" ] },
       { "x": 0, "y": 2, "chance": 7, "items": [ "pockknife" ] },
       { "x": 0, "y": 2, "chance": 5, "items": [ "box_cigarette" ] }

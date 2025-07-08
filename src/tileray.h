@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_TILERAY_H
-#define CATA_SRC_TILERAY_H
 
 #include "point.h"
 #include "units_angle.h"
@@ -64,4 +62,4 @@ class tileray
         int get_steps() const;  // how many steps we advanced
 };
 
-#endif // CATA_SRC_TILERAY_H
+

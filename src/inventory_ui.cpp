@@ -1559,7 +1559,7 @@ void inventory_selector::refresh_window() const
 void inventory_selector::set_filter()
 {
     spopup = std::make_unique<string_input_popup>();
-    spopup->max_length( 256 )
+    spopup->max_length( 256 ).identifier( "inventory" )
     .text( filter );
 
     shared_ptr_fast<ui_adaptor> current_ui = ui.lock();

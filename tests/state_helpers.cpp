@@ -1,13 +1,12 @@
 #include "state_helpers.h"
 
-#include "map_helpers.h"
-#include "player_helpers.h"
-#include "rng.h"
 #include "calendar.h"
-#include "weather.h"
-#include "game.h"
+#include "cata_arena.h"
 #include "map.h"
+#include "map_helpers.h"
 #include "name.h"
+#include "player_helpers.h"
+#include "weather.h"
 
 void clear_all_state( )
 {

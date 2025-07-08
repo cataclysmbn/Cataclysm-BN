@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_HARVEST_H
-#define CATA_SRC_HARVEST_H
 
 #include <list>
 #include <map>
@@ -93,4 +91,4 @@ class harvest_list
         void finalize();
 };
 
-#endif // CATA_SRC_HARVEST_H
+

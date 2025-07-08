@@ -1,4 +1,3 @@
-#ifdef LUA
 #include "catalua_bindings.h"
 
 #include "activity_type.h"
@@ -23,6 +22,7 @@
 #include "monfaction.h"
 #include "monster.h"
 #include "morale_types.h"
+#include "mtype.h"
 #include "mutation.h"
 #include "npc.h"
 #include "player.h"
@@ -277,6 +277,10 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_MEMB( unique_name );
 
         // Methods
+        luna::set_fx( ut, "get_type", []( const monster & m )
+        {
+            return m.type -> id; //I really don't want to break the uniformity, but...
+        } );
         SET_FX_T( can_upgrade, bool() const );
         SET_FX_T( hasten_upgrade, void() );
         SET_FX_T( get_upgrade_time, int() const );
@@ -300,7 +304,7 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( swims, bool() const );
 
         SET_FX_T( move_target, tripoint() );
-        SET_FX_N_T( wander, "is_wandering", bool() );
+        SET_FX_N_T( is_wandering, "is_wandering", bool() );
 
         SET_FX_T( wander_to, void( const tripoint & p, int f ) );
         SET_FX_T( move_to, bool( const tripoint & p, bool force, bool step_on_critter,
@@ -370,14 +374,14 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( mod_per_bonus, void( int ) );
         SET_FX_T( mod_int_bonus, void( int ) );
 
-        SET_FX_T( get_healthy, int() const );
-        SET_FX_T( get_healthy_mod, int() const );
+        SET_FX_T( get_healthy, float() const );
+        SET_FX_T( get_healthy_mod, float() const );
 
-        SET_FX_T( mod_healthy, void( int ) );
-        SET_FX_T( mod_healthy_mod, void( int, int ) );
+        SET_FX_T( mod_healthy, void( float ) );
+        SET_FX_T( mod_healthy_mod, void( float, float ) );
 
-        SET_FX_T( set_healthy, void( int ) );
-        SET_FX_T( set_healthy_mod, void( int ) );
+        SET_FX_T( set_healthy, void( float ) );
+        SET_FX_T( set_healthy_mod, void( float ) );
 
         SET_FX_T( get_stored_kcal, int() const );
 
@@ -411,6 +415,18 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( has_alarm_clock, bool() const );
 
         SET_FX_T( has_watch, bool() const );
+
+        // These are named with 'BTU' (body temperature units) because other
+        // body temperature measurements might/can/should be added later.
+        DOC( "Gets the current temperature of a specific body part (in Body Temperature Units)." );
+        SET_FX_N_T( get_part_temp_cur, "get_part_temp_btu", int( const bodypart_id & id ) const );
+        DOC( "Sets a specific body part to a given temperature (in Body Temperature Units)." );
+        SET_FX_N_T( set_part_temp_cur, "set_part_temp_btu", void( const bodypart_id & id, int temp ) );
+        DOC( "Gets all bodyparts and their associated temperatures (in Body Temperature Units)." );
+        // May want to remove the 'resolve' call, but it clarifies the type...
+        luna::set_fx( ut, "get_temp_btu", sol::resolve< std::map<bodypart_id, int>() >( &UT_CLASS::get_temp_cur ) );
+        DOC( "Sets ALL body parts on a creature to the given temperature (in Body Temperature Units)." );
+        SET_FX_N_T( set_temp_cur, "set_temp_btu", void( int temp ) );
 
         SET_FX_T( blood_loss, int( const bodypart_id & bp ) const );
 
@@ -452,6 +468,9 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( set_mutation, void( const trait_id & ) );
         SET_FX_T( unset_mutation, void( const trait_id & ) );
+
+        SET_FX_T( activate_mutation, void( const trait_id & ) );
+        SET_FX_T( deactivate_mutation, void( const trait_id & ) );
 
         SET_FX_T( can_mount, bool( const monster & critter ) const );
         SET_FX_T( mount_creature, void( monster & z ) );
@@ -522,6 +541,12 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( mutate_towards, bool( std::vector<trait_id>, int ) );
 
         SET_FX_T( mutate_towards, bool( const trait_id & ) );
+
+        luna::set_fx( ut, "mutate_towards", sol::overload(
+                          sol::resolve<bool( std::vector<trait_id>, int )>( &UT_CLASS::mutate_towards ),
+                          sol::resolve<bool( const trait_id & )>( &UT_CLASS::mutate_towards )
+                      ) );
+
 
         SET_FX_T( remove_mutation, void( const trait_id &, bool ) );
 
@@ -598,8 +623,13 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( worn_with_flag, bool( const flag_id &, const bodypart_id & ) const );
 
+        SET_FX_T( worn_with_id, bool( const itype_id &, const bodypart_id & ) const );
+
         SET_FX_T( item_worn_with_flag,
                   const item * ( const flag_id &, const bodypart_id & ) const );
+
+        SET_FX_T( item_worn_with_id,
+                  const item * ( const itype_id &, const bodypart_id & ) const );
 
         SET_FX_T( get_skill_level, int( const skill_id & ) const );
 
@@ -646,9 +676,29 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( is_hauling, bool() const );
 
+        DOC( "Adds an item with the given id and amount" );
+        SET_FX_T( add_item_with_id, void( const itype_id & itype, int count ) );
+
+        DOC( "Checks for an item with the given id" );
+        SET_FX_T( has_item_with_id, bool( const itype_id & itype, bool need_charges ) const );
+
+        DOC( "Gets the first occurrence of an item with the given id" );
+        SET_FX_T( get_item_with_id, const item * ( const itype_id & itype, bool need_charges ) const );
+
+        DOC( "Checks for an item with the given flag" );
         SET_FX_T( has_item_with_flag, bool( const flag_id & flag, bool need_charges ) const );
+
+        DOC( "Gets all items with the given flag" );
         SET_FX_T( all_items_with_flag,
-                  std::vector<item *>( const flag_id & flag ) const );
+                  std::vector<item *>( const flag_id & flag, bool need_charges ) const );
+
+        DOC( "Gets all items" );
+        SET_FX_T( all_items, std::vector<item *>( bool need_charges ) const );
+
+        DOC( "Removes given `Item` from character's inventory. The `Item` must be in the inventory, neither wielded nor worn." );
+        luna::set_fx( ut, "inv_remove_item", []( Character & ch, item * it ) -> void {
+            ch.inv_remove_item( it );
+        } );
 
         SET_FX_T( assign_activity,
                   void( const activity_id &, int, int, int, const std::string & ) );
@@ -711,8 +761,10 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( rooted, void() );
 
-        SET_FX_T( fall_asleep, void() );
-        SET_FX_T( fall_asleep, void( const time_duration & duration ) );
+        luna::set_fx( ut, "fall_asleep", sol::overload(
+                          sol::resolve<void()>( &UT_CLASS::fall_asleep ),
+                          sol::resolve<void( const time_duration &duration )>( &UT_CLASS::fall_asleep )
+                      ) );
 
         SET_FX_T( get_hostile_creatures, std::vector<Creature *>( int ) const );
 
@@ -935,5 +987,3 @@ void cata::detail::reg_avatar( sol::state &lua )
             );
     }
 }
-
-#endif // #ifdef LUA

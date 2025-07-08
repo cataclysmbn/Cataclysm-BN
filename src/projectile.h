@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_PROJECTILE_H
-#define CATA_SRC_PROJECTILE_H
 
 #include <memory>
 #include <set>
@@ -39,7 +37,7 @@ struct projectile {
         void set_custom_explosion( const explosion_data &ex );
         void unset_custom_explosion();
 
-        const std::set<ammo_effect_str_id> &get_ammo_effects() {
+        const std::set<ammo_effect_str_id> &get_ammo_effects() const {
             return proj_effects;
         }
 
@@ -83,4 +81,4 @@ void apply_ammo_effects( const tripoint &p, const std::set<std::string> &effects
 int max_aoe_size( const std::set<ammo_effect_str_id> &tags );
 int max_aoe_size( const std::set<std::string> &tags );
 
-#endif // CATA_SRC_PROJECTILE_H
+

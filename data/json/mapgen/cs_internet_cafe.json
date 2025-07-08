@@ -91,7 +91,10 @@
         "V": { "item": "ic_merch_vending", "chance": 100 },
         "L": { "item": "cleaning", "chance": 100 }
       },
-      "add": [ { "item": "mop", "x": [ 11, 12 ], "y": [ 17, 20 ], "chance": 2 } ],
+      "add": [
+        { "item": "mop", "x": [ 11, 12 ], "y": [ 17, 20 ], "chance": 1 },
+        { "item": "mop_folded", "x": [ 11, 12 ], "y": [ 17, 20 ], "chance": 1 }
+      ],
       "place_items": [
         { "item": "ic_merch_vending", "x": 3, "y": 7, "chance": 90 },
         { "item": "ic_merch_vending", "x": 3, "y": 7, "chance": 90 },

@@ -161,12 +161,10 @@
     "id": "ELFA_NV",
     "name": { "str": "Fey Vision" },
     "points": 3,
-    "description": "The shadows don't seem as dark now.  Activate to toggle NV-visible areas on or off.",
+    "description": "The shadows don't seem as dark now.",
     "prereqs": [ "ELFAEYES" ],
     "changes_to": [ "ELFA_FNV" ],
     "cancels": [ "LIZ_IR", "FEL_NV", "NIGHTVISION", "NIGHTVISION2", "NIGHTVISION3" ],
-    "active": true,
-    "starts_active": true,
     "valid": false,
     "night_vision_range": 4.5
   },
@@ -175,11 +173,9 @@
     "id": "ELFA_FNV",
     "name": { "str": "Fey Nightsight" },
     "points": 5,
-    "description": "You have great low-light vision now, though that doesn't allow you to perform fine tasks such as crafting and reading in darkness.  Activate to toggle NV-visible areas on or off.",
+    "description": "You have great low-light vision now, though that doesn't allow you to perform fine tasks such as crafting and reading in darkness.",
     "prereqs": [ "ELFA_NV" ],
     "cancels": [ "LIZ_IR", "FEL_NV", "NIGHTVISION", "NIGHTVISION2", "NIGHTVISION3" ],
-    "active": true,
-    "starts_active": true,
     "valid": false,
     "night_vision_range": 10
   },
@@ -188,11 +184,9 @@
     "id": "FEL_NV",
     "name": { "str": "Feline Vision" },
     "points": 4,
-    "description": "Your optic nerves and brain caught up with your eyes.  Now you can see pretty well at night.  Activate to toggle NV-visible areas on or off.",
+    "description": "Your optic nerves and brain caught up with your eyes.  Now you can see pretty well at night.",
     "prereqs": [ "FEL_EYE" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "LIZ_IR", "NIGHTVISION", "NIGHTVISION2", "NIGHTVISION3" ],
-    "active": true,
-    "starts_active": true,
     "valid": false,
     "night_vision_range": 4.5
   },
@@ -201,10 +195,8 @@
     "id": "CEPH_VISION",
     "name": { "str": "Cephalopod Vision" },
     "points": 3,
-    "description": "Your brain has caught up with your eyes.  You can see much better in the dark, but sunlight seems much brighter now.  Activate to toggle NV-visible areas on or off.",
+    "description": "Your brain has caught up with your eyes.  You can see much better in the dark, but sunlight seems much brighter now.",
     "cancels": [ "LIZ_IR", "FEL_NV", "NIGHTVISION", "NIGHTVISION2", "NIGHTVISION3", "ELFA_NV", "ELFA_FNV" ],
-    "active": true,
-    "starts_active": true,
     "valid": false,
     "night_vision_range": 10
   },
@@ -237,6 +229,14 @@
     "name": { "str": "Tough Feet" },
     "points": 1,
     "description": "This mutation has been obsoleted due to the hidden movement speed penalty being removed.  If you see this on a profession or mutate this trait, this is a bug.",
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "STYLISH",
+    "name": { "str": "Stylish" },
+    "points": 2,
+    "description": "Obsoleted due to becoming default behavior.",
     "valid": false
   }
 ]

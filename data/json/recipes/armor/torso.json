@@ -1408,5 +1408,29 @@
       [ [ "cordage", 4, "LIST" ] ],
       [ [ "fabric_standard", 9, "LIST" ], [ "fabric_hides_any", 9, "LIST" ] ]
     ]
+  },
+  {
+    "result": "camisole",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_TORSO",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "time": "20 m",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 3 ] ],
+    "components": [ [ [ "rag", 4 ] ] ]
+  },
+  {
+    "result": "corset",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_TORSO",
+    "skill_used": "tailor",
+    "difficulty": 4,
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 6 ] ],
+    "components": [ [ [ "leather", 8 ] ] ]
   }
 ]

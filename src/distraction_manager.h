@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DISTRACTION_MANAGER_H
-#define CATA_SRC_DISTRACTION_MANAGER_H
 
 #include <string>
 #include <array>
@@ -29,4 +27,4 @@ class distraction_manager_gui
 
 distraction_manager::distraction_manager_gui &get_distraction_manager();
 
-#endif // CATA_SRC_DISTRACTION_MANAGER_H
+

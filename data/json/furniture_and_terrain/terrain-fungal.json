@@ -20,7 +20,8 @@
     "symbol": ".",
     "color": "light_gray",
     "move_cost": 3,
-    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "DIGGABLE", "FUNGUS", "NOCOLLIDE" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "FUNGUS", "NOCOLLIDE" ],
+    "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": {
       "sound": "smash",
       "//": "muffled because fungus",

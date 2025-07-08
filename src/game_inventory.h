@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_GAME_INVENTORY_H
-#define CATA_SRC_GAME_INVENTORY_H
 
 #include <functional>
 #include <list>
@@ -16,7 +14,6 @@ class avatar;
 class item;
 class player;
 class repair_item_actor;
-class salvage_actor;
 class Character;
 
 using item_filter = std::function<bool( const item & )>;
@@ -59,15 +56,6 @@ void swap_letters( player &p );
  */
 drop_locations multidrop( player &p );
 
-/**
- * Select items to wash.
- * @param water Available water
- * @param cleanser Available cleanser
- * @param do_soft Whether to allow soft items
- * @param do_hard Whether to allow hard items
- * @return A list of selected item_locations with quantities.
- */
-iuse_locations multiwash( Character &ch, int water, int cleanser, bool do_soft, bool do_hard );
 
 /** Consuming an item. */
 item *consume( player &p );
@@ -102,7 +90,7 @@ item *wear( player &p );
 /** Choose item to take off. */
 item *take_off( avatar &you );
 /** Item cut up menu. */
-item *salvage( player &p, const salvage_actor *actor );
+item *salvage( player &p );
 /** Repair menu. */
 item *repair( player &p, const repair_item_actor *actor, const item *main_tool );
 /** Bionic install menu. */
@@ -117,4 +105,4 @@ item *sterilize_cbm( player &p );
 
 } // namespace game_menus
 
-#endif // CATA_SRC_GAME_INVENTORY_H
+

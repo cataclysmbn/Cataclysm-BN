@@ -314,12 +314,7 @@
       },
       { "group": "guns_rifle_common", "prob": 25 },
       {
-        "distribution": [
-          { "item": "crossbow_carbon", "prob": 10 },
-          { "item": "huge_crossbow", "prob": 5 },
-          { "item": "ak47", "prob": 50 },
-          { "item": "ak74", "prob": 50 }
-        ],
+        "distribution": [ { "item": "crossbow_carbon", "prob": 10 }, { "item": "huge_crossbow", "prob": 5 }, { "item": "ak47", "prob": 50 } ],
         "prob": 10
       },
       { "group": "guns_rifle_rare", "prob": 5 },
@@ -341,10 +336,7 @@
         "prob": 50
       },
       { "group": "guns_smg_common", "prob": 25 },
-      {
-        "distribution": [ { "item": "ppsh", "prob": 150 }, { "item": "skorpion_61", "prob": 100 }, { "item": "skorpion_82", "prob": 100 } ],
-        "prob": 10
-      },
+      { "item": "skorpion_61", "prob": 3 },
       { "group": "guns_smg_rare", "prob": 5 },
       { "group": "guns_smg_improvised", "prob": 10 }
     ]

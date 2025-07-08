@@ -19,7 +19,7 @@ TEST_CASE( "line_attack", "[magic]" )
         "    \"name\": { \"str\": \"Test Line Spell\" },\n"
         "    \"description\": \"Spews a line of magic\",\n"
         "    \"valid_targets\": [ \"ground\" ],\n"
-        "    \"damage_type\": \"none\",\n"
+        "    \"damage_type\": \"true\",\n"
         "    \"min_range\": 5,\n"
         "    \"max_range\": 5,\n"
         "    \"effect\": \"line_attack\",\n"

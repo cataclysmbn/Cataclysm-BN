@@ -1,0 +1,68 @@
+[
+  {
+    "type": "ammunition_type",
+    "id": "9x18",
+    "name": "9x18mm",
+    "default": "9x18mm"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "38super",
+    "name": ".38 Super",
+    "default": "38super_fmj"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "700nx",
+    "name": ".700 Nitro Express",
+    "default": "700nx"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "460",
+    "name": ".460",
+    "default": "460_rowland"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "454",
+    "name": ".454",
+    "default": "454_Casull"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "500",
+    "name": ".500",
+    "default": "500_Magnum"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "57",
+    "name": "5.7mm",
+    "default": "57mm"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "46",
+    "name": "4.6mm",
+    "default": "46mm"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "545x39",
+    "name": "5.45x39mm",
+    "default": "545"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "270win",
+    "name": ".270 Winchester",
+    "default": "270win_jsp"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "762x25",
+    "name": "7.62x25mm",
+    "default": "762_25"
+  }
+]

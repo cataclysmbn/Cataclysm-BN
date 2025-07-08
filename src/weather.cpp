@@ -389,16 +389,16 @@ void weather_effect::wet_player( int amount )
         return;
     }
     std::map<bodypart_id, std::vector<const item *>> clothing_map;
-    for( const bodypart_id &bp : target.get_all_body_parts() ) {
+    const auto &all_bps = target.get_all_body_parts();
+    for( const bodypart_id &bp : all_bps ) {
         clothing_map.emplace( bp, std::vector<const item *>() );
     }
     for( const item * const &it : target.worn ) {
         // TODO: Port body part set id changes
         const body_part_set &covered = it->get_covered_body_parts();
-        for( size_t i = 0; i < num_bp; i++ ) {
-            body_part token = static_cast<body_part>( i );
-            if( covered.test( convert_bp( token ) ) ) {
-                clothing_map[convert_bp( token )].emplace_back( it );
+        for( const bodypart_id &bp : all_bps ) {
+            if( covered.test( bp.id() ) ) {
+                clothing_map[bp.id()].emplace_back( it );
             }
         }
     }

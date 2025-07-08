@@ -62,6 +62,8 @@
 #include "vehicle_selector.h"
 #include "vpart_position.h"
 
+static const trait_id trait_DEBUG_STORAGE( "DEBUG_STORAGE" );
+
 using item_count = std::pair<item *, int>;
 using pickup_map = std::map<std::string, item_count>;
 
@@ -94,6 +96,9 @@ static bool select_autopickup_items( const std::vector<std::list<item_stack::ite
 
                 //Check the Pickup Rules
                 if( get_auto_pickup().check_item( item_name ) == RULE_WHITELISTED ) {
+                    do_pickup = true;
+                } else if( begin->is_container() && !begin->is_container_empty() &&
+                           get_auto_pickup().check_item( begin->get_contained().tname( 1, false ) ) == RULE_WHITELISTED ) {
                     do_pickup = true;
                 } else if( get_auto_pickup().check_item( item_name ) != RULE_BLACKLISTED ) {
                     //No prematched pickup rule found
@@ -531,7 +536,7 @@ std::vector<stacked_items> stack_for_pickup_ui( const
         }
 
         // Each sub-stack has to be sorted separately
-        std::sort( restacked_children.begin(), restacked_children.end(),
+        std::ranges::sort( restacked_children,
         []( const std::list<item_stack::iterator> &lhs, const std::list<item_stack::iterator> &rhs ) {
             return **lhs.front() < **rhs.front();
         } );
@@ -539,7 +544,7 @@ std::vector<stacked_items> stack_for_pickup_ui( const
     }
 
     // Sorting by parent is a bit arbitrary (parent-less go last) - sort by count?
-    std::sort( restacked_with_parents.begin(), restacked_with_parents.end(),
+    std::ranges::sort( restacked_with_parents,
     []( const stacked_items & lhs, stacked_items & rhs ) {
         return lhs.parent.has_value() && ( !rhs.parent.has_value() || **lhs.parent < **rhs.parent );
     } );
@@ -1078,8 +1083,8 @@ void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
                 if( selected_stack.parent ) {
                     pickup_count &parent_stack = getitem[*selected_stack.parent];
                     if( selected_stack.pick ) {
-                        parent_stack.all_children_picked = std::all_of(
-                                                               parent_stack.children.begin(), parent_stack.children.end(),
+                        parent_stack.all_children_picked = std::ranges::all_of(
+                                                               parent_stack.children,
                         [&]( size_t child_index ) {
                             return getitem[child_index].pick;
                         } );
@@ -1267,6 +1272,10 @@ int pickup::cost_to_move_item( const Character &who, const item &it )
         // No free hand? That will cost you extra
         ret += 20;
     }
+    if( who.has_trait( trait_DEBUG_STORAGE ) ) {
+        return ret;
+    }
+
     const int delta_weight = units::to_gram( it.weight() - who.weight_capacity() );
     // Is it too heavy? It'll take 10 moves per kg over limit
     ret += std::max( 0, delta_weight / 100 );

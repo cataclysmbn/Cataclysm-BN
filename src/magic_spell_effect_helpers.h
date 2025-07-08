@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_MAGIC_SPELL_EFFECT_HELPERS_H
-#define CATA_SRC_MAGIC_SPELL_EFFECT_HELPERS_H
 
 #include <functional>
 #include <set>
@@ -16,4 +14,4 @@ std::set<tripoint> calculate_spell_effect_area( const spell &sp, const tripoint 
         &
         aoe_func, const Creature &caster, bool ignore_walls = false );
 
-#endif // CATA_SRC_MAGIC_SPELL_EFFECT_HELPERS_H
+

@@ -36,7 +36,7 @@
     "ammo": "40",
     "ranged_damage": { "damage_type": "bullet", "amount": 1 },
     "durability": 6,
-    "blackpowder_tolerance": 48,
+    "blackpowder_tolerance": 24,
     "min_cycle_recoil": 425,
     "valid_mod_locations": [
       [ "accessories", 2 ],
@@ -52,7 +52,7 @@
       [ "underbarrel", 1 ]
     ],
     "magazine_well": "250 ml",
-    "magazines": [ [ "40", [ "glock40mag", "glock40bigmag", "glock40drum50rd" ] ] ]
+    "magazines": [ [ "40", [ "glock40mag", "glock40bigmag", "glock40drum50rd", "kriss_mag" ] ] ]
   },
   {
     "id": "px4_40",
@@ -143,7 +143,7 @@
     "durability": 4,
     "blackpowder_tolerance": 24,
     "min_cycle_recoil": 425,
-    "handling": 40,
+    "handling": 20,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
     "loudness": 25,
     "barrel_length": "250 ml",
@@ -179,7 +179,6 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -1 },
     "dispersion": 620,
     "durability": 6,
-    "blackpowder_tolerance": 60,
     "loudness": 25,
     "magazines": [ [ "40", [ "40_speedloader6" ] ] ],
     "reload": 285,
@@ -213,7 +212,6 @@
     "ammo": [ "10mm", "40" ],
     "ranged_damage": { "damage_type": "bullet", "amount": 1 },
     "dispersion": 320,
-    "blackpowder_tolerance": 56,
     "magazines": [ [ "40", [ "40_speedloader6" ] ] ],
     "valid_mod_locations": [
       [ "accessories", 2 ],
@@ -293,6 +291,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "40",
+    "handling": 30,
     "range": 20,
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 170,
@@ -305,9 +304,9 @@
     "copy-from": "smg_base",
     "looks_like": "TDI",
     "type": "GUN",
-    "name": { "str": "KRISS Vector" },
-    "description": "The KRISS Vector is a submachine gun with a unique, in-line design that makes recoil very manageable.  It is a evolution of the formally known TDI Vector, this particullar model uses .40 S&W.",
-    "weight": "3100 g",
+    "name": { "str": "KRISS Vector .40 S&W" },
+    "description": "A submachine gun with a sleek in-line design.  It features a 2-round burst mode to make the most out of its unique recoil mitigation system alongside a blistering full-auto mode.  This one is chambered in .40 S&W and uses Glock 22 magazines.",
+    "weight": "3400 g",
     "volume": "1750 ml",
     "barrel_length": "150 ml",
     "price": "3100 USD",
@@ -317,10 +316,12 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "40",
-    "dispersion": 280,
+    "dispersion": 260,
     "durability": 7,
+    "handling": 40,
     "min_cycle_recoil": 540,
-    "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 6 ] ],
+    "built_in_mods": [ "folding_stock" ],
+    "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 2 ], [ "AUTO", "auto", 6 ] ],
     "magazine_well": "500 ml",
     "magazines": [ [ "40", [ "kriss_mag", "glock40mag", "glock40bigmag", "glock40drum50rd" ] ] ]
   }

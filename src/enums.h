@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ENUMS_H
-#define CATA_SRC_ENUMS_H
 
 #include "enum_traits.h"
 
@@ -372,4 +370,4 @@ enum MULTITILE_TYPE {
     num_multitile_types
 };
 
-#endif // CATA_SRC_ENUMS_H
+

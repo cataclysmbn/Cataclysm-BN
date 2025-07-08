@@ -13,6 +13,7 @@
     "symbol": ":",
     "color": "light_gray",
     "location": "brass catcher",
+    "flags": [ "BRASS_CATCHER" ],
     "mod_target_category": [
       [ "PISTOLS" ],
       [ "SUBMACHINE_GUNS" ],

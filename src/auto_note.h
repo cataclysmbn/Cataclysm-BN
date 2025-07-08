@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_AUTO_NOTE_H
-#define CATA_SRC_AUTO_NOTE_H
 
 #include <string>
 #include <unordered_map>
@@ -73,10 +71,6 @@ class auto_note_settings
         void default_initialize();
 
     private:
-        /// Build string containing path to the auto notes save file for the active player.
-        std::string build_save_path() const;
-
-    private:
         /// This set contains the ID strings of all map extras that have auto note enabled.
         std::unordered_set<string_id<map_extra>> autoNoteEnabled;
 
@@ -88,4 +82,4 @@ class auto_note_settings
 
 auto_notes::auto_note_settings &get_auto_notes_settings();
 
-#endif // CATA_SRC_AUTO_NOTE_H
+

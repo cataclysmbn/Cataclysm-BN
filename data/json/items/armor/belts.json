@@ -27,7 +27,7 @@
       "flags": [ "BELT_CLIP" ]
     },
     "valid_mods": [ "resized_large" ],
-    "flags": [ "FANCY", "WAIST", "NO_QUICKDRAW", "WATER_FRIENDLY" ]
+    "flags": [ "FANCY", "WAIST", "COMPACT", "WATER_FRIENDLY" ]
   },
   {
     "abstract": "judo_belt_abstract",
@@ -47,7 +47,7 @@
     "encumbrance": 2,
     "material_thickness": 5,
     "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
   },
   {
     "id": "judo_belt_black",
@@ -130,7 +130,7 @@
       "flags": [ "BELT_CLIP" ]
     },
     "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
   },
   {
     "id": "obi_gi",
@@ -175,7 +175,7 @@
       "flags": [ "BELT_CLIP" ]
     },
     "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
   },
   {
     "id": "survivor_belt_notools",
@@ -201,11 +201,11 @@
       "holster_msg": "You put your %1$s in your %2$s",
       "multi": 6,
       "min_volume": "40 ml",
-      "max_volume": "1500 ml",
-      "max_weight": "1500 g",
+      "max_volume": "2000 ml",
+      "max_weight": "2500 g",
       "flags": [ "BELT_CLIP", "SHEATH_KNIFE", "SHEATH_SWORD" ]
     },
-    "flags": [ "WATER_FRIENDLY", "STURDY", "WAIST", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "STURDY", "WAIST", "COMPACT", "OVERSIZE" ]
   },
   {
     "id": "tool_belt",
@@ -238,7 +238,7 @@
       "flags": [ "BELT_CLIP", "SHEATH_KNIFE" ]
     },
     "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "NO_QUICKDRAW", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
   },
   {
     "id": "webbing_belt",
@@ -266,6 +266,6 @@
       "flags": [ "BELT_CLIP" ]
     },
     "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
   }
 ]

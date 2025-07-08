@@ -21,6 +21,7 @@ CataclysmBN:
   - `glibc`
   - `zlib`
   - `bzip2`
+  - `sqlite3`
 - Curses
   - `ncurses`
 - Tiles
@@ -48,18 +49,26 @@ Obtain packages specified above with your system package manager.
 - For Ubuntu-based distros (24.04 onwards):
 
 ```sh
-$ sudo apt install git cmake ninja-build mold clang ccache \ 
-  libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \ 
-  freetype glibc bzip2 zlib libvorbis ncurses gettext libflac++-dev
+sudo apt install git cmake ninja-build mold clang ccache \
+libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
+libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
+gettext libflac++-dev libsqlite3-dev zlib1g-dev
 ```
 
 - For Fedora-based distros:
 
 ```sh
-$ sudo dnf install git cmake ninja-build mold clang ccache \
-  SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
-  freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel
+sudo dnf install git cmake ninja-build mold clang ccache \
+SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
+freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
+sqlite-devel zlib-devel
 ```
+
+### Windows Subsystem for Linux (WSL)
+
+Follow the same instructions for `UNIX environment`; it just works (TM)
+
+If you plan on using `tiles`, make sure you have the latest [WSL 2 that supports GUI](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps).
 
 ### Windows Environment (MSYS2)
 
@@ -118,9 +127,9 @@ Inside the source tree build is **NOT** supported.
 To build CataclysmBN out of source:
 
 ```sh
-$ mkdir build && cd build
-$ cmake .. -DCMAKE_BUILD_TYPE=Release
-$ make
+mkdir build
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
 ```
 
 The above example creates a build directory inside the source directory, but that's not required -
@@ -129,28 +138,28 @@ you can just as easily create it in a completely different location.
 To install CataclysmBN after building (as root using su or sudo if necessary):
 
 ```sh
-# make install
+cmake --install build
 ```
 
 To change build options, you can either pass the options on the command line:
 
 ```sh
-$ cmake .. -DOPTION_NAME=option_value
+cmake .. -DOPTION_NAME=option_value
 ```
 
 Or use either the `ccmake` or `cmake-gui` front-ends, which display all options and their cached
 values on a console and graphical UI, respectively.
 
 ```sh
-$ ccmake ..
-$ cmake-gui ..
+ccmake ..
+cmake-gui ..
 ```
 
 A CMake build with almost all options with build optimizations (ccache, ninja, mold) + tracy
 profiler may look like:
 
 ```sh
-mkdir -p build
+mkdir build
 cmake \
   -B build \
   -G Ninja \
@@ -175,78 +184,10 @@ cmake \
   -DTRACY_VERSION=master \
   -DTRACY_ON_DEMAND=ON \
   -DTRACY_ONLY_IPV4=ON
+cmake --build build
 ```
 
-## Build for MSYS2 (MinGW)
-
-**NOTE**: For development purposes it is preferred to use `MinGW Win64 Shell` or `MinGW Win32 Shell`
-instead of `MSYS2 Shell`. In other case, you will need to set `PATH` variable manually.
-
-For Mingw,MSYS,MSYS2 you should set
-[Makefiles generator](https://cmake.org/cmake/help/v3.0/manual/cmake-generators.7.html) to "MSYS
-Makefiles". Setting it to "MinGW Makefiles" might work as well, but might also require additional
-hackery.
-
-Example:
-
-```sh
-$ cd <Path-to-CataclysmBN-Sources>
-$ mkdir build
-$ cd build
-$ cmake .. -G "MSYS Makefiles"
-$ make  # or $ cmake --build .
-```
-
-The resulting binary will be placed inside the source code directory.
-
-Shared libraries:
-
-If you got `libgcc_s_dw2-1.dll not found` error you need to copy shared libraries to directory with
-CataclysmBN executables.
-
-**NOTE**: For `-DRELEASE=OFF` development builds, You can automate copy process with:
-
-```
-$ make install
-```
-
-However, it likely will fail b/c you have different build environment setup :)
-
-Currently known depends (Maybe outdated use ldd.exe to correct it for Your system)
-
-- MINGW deps:
-  - `libwinpthread-1.dll`
-  - `libgcc_s_dw2-1.dll`
-  - `libstdc++-6.dll`
-
-- TILES deps:
-  - `SDL2.dll`
-  - `SDL2_ttf.dll`
-  - `libfreetype-6.dll`
-  - `libbz2-1.dll`
-  - `libharfbuzz-0.dll`
-  - `SDL2_image.dll`
-  - `libpng16-16.dll`
-  - `libjpeg-8.dll`
-  - `libtiff-5.dll`
-  - `libjbig-0.dll`
-  - `liblzma-5.dll`
-  - `libwebp-5.dll`
-  - `zlib1.dll`
-  - `libglib-2.0-0.dll`
-
-- SOUND deps:
-  - `SDL2_mixer.dll`
-  - `libFLAC-8.dll`
-  - `libogg-0.dll`
-  - `libfluidsynth-1.dll`
-  - `libportaudio-2.dll`
-  - `libsndfile-1.dll`
-  - `libvorbis-0.dll`
-  - `libvorbisenc-2.dll`
-  - `libmodplug-1.dll`
-  - `smpeg2.dll`
-  - `libvorbisfile-3.dll`
+This will place the executables into `build/src/`.
 
 ## Build for Visual Studio / MSBuild
 
@@ -289,10 +230,10 @@ Open windows command line (or powershell), set the environment variables to poin
 as follows (adjusting the paths as appropriate):
 
 ```sh
-$ set SDL2DIR=C:\path\to\SDL2-devel-2.0.9-VC
-$ set SDL2TTFDIR=C:\path\to\SDL2_ttf-devel-2.0.15-VC
-$ set SDL2IMAGEDIR=C:\path\to\SDL2_image-devel-2.0.4-VC
-$ set SDL2MIXERDIR=C:\path\to\SDL2_mixer-devel-2.0.4-VC
+set SDL2DIR=C:\path\to\SDL2-devel-2.0.9-VC
+set SDL2TTFDIR=C:\path\to\SDL2_ttf-devel-2.0.15-VC
+set SDL2IMAGEDIR=C:\path\to\SDL2_image-devel-2.0.4-VC
+set SDL2MIXERDIR=C:\path\to\SDL2_mixer-devel-2.0.4-VC
 ```
 
 (for powershell the syntax is `$env:SDL2DIR="C:\path\to\SDL2-devel-2.0.9-VC"`).
@@ -300,16 +241,15 @@ $ set SDL2MIXERDIR=C:\path\to\SDL2_mixer-devel-2.0.4-VC
 Make a build directory and run cmake configuration step
 
 ```sh
-$ cd <path to cbn sources>
-$ mkdir build
-$ cd build
-$ cmake .. -DTILES=ON -DLANGUAGES=none -DBACKTRACE=OFF -DSOUND=ON
+cd <path to cbn sources>
+mkdir build
+cmake -B build -DTILES=ON -DLANGUAGES=none -DBACKTRACE=OFF -DSOUND=ON
 ```
 
 Build!
 
 ```
-$ cmake --build . -j 2 -- /p:Configuration=Release
+cmake --build build -j 2 -- /p:Configuration=Release
 ```
 
 The `-j 2` flag controls build parallelism - you can omit it if you wish. The
@@ -337,7 +277,7 @@ front-ends, or run `cmake` and open the generated CMakeCache.txt from the build 
 editor.
 
 ```
-$ cmake -DOPTION_NAME1=option_value1 [-DOPTION_NAME2=option_value2 [...]]
+cmake -DOPTION_NAME1=option_value1 [-DOPTION_NAME2=option_value2 [...]]
 ```
 
 ### CMake specific options

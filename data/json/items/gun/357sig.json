@@ -27,7 +27,7 @@
     "volume": "443 ml",
     "price_postapoc": "2250 cent",
     "ammo": "357sig",
-    "magazines": [ [ "357sig", [ "glock40mag", "glock40bigmag", "glock40drum50rd" ] ] ]
+    "magazines": [ [ "357sig", [ "glock40mag", "glock40bigmag", "glock40drum50rd", "kriss_mag" ] ] ]
   },
   {
     "id": "p320_357sig",
@@ -67,6 +67,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 170,
     "durability": 10,
+    "handling": 30,
     "min_cycle_recoil": 400,
     "magazines": [ [ "357sig", [ "glock40mag", "glock40bigmag", "glock40drum50rd" ] ] ]
   }

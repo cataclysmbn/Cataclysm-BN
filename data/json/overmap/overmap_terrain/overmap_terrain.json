@@ -205,7 +205,8 @@
       "cabin_roof_5",
       "cabin_roof_6",
       "cabin_roof_7",
-      "cabin_roof_lapin"
+      "cabin_roof_lapin",
+      "bandit_cabin_roof"
     ],
     "name": "cabin roof",
     "sym": "C",
@@ -307,6 +308,14 @@
     "see_cost": 5,
     "//": "RISK_LOW due to risk and safety being based on NPCs perception of what the area may contain",
     "flags": [ "RISK_LOW", "SOURCE_SAFETY" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "bandit_camp_1_roof", "bandit_camp_2_roof", "bandit_camp_4_roof" ],
+    "name": "wooden fort",
+    "sym": "+",
+    "color": "brown",
+    "see_cost": 5
   },
   {
     "type": "overmap_terrain",
@@ -465,6 +474,14 @@
     "color": "white",
     "see_cost": 5,
     "flags": [ "RISK_LOW", "SOURCE_SAFETY", "SOURCE_FOOD" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "bandit_garage_2_roof",
+    "name": "garage",
+    "sym": "O",
+    "color": "white",
+    "see_cost": 5
   },
   {
     "type": "overmap_terrain",

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_NPC_H
-#define CATA_SRC_NPC_H
 
 #include <algorithm>
 #include <array>
@@ -763,7 +761,7 @@ class npc : public player
         // Faction version number
         int get_faction_ver() const;
         void set_faction_ver( int new_version );
-        bool has_faction_relationship( const player &p,
+        bool has_faction_relationship( const Character &p,
                                        npc_factions::relationship flag ) const;
         void set_fac( const faction_id &id );
         faction *get_faction() const override;
@@ -805,8 +803,8 @@ class npc : public player
         int faction_display( const catacurses::window &fac_w, int width ) const;
 
         // Interaction with the player
-        void form_opinion( const player &u );
-        std::string pick_talk_topic( const player &u );
+        void form_opinion( const Character &u );
+        std::string pick_talk_topic( const Character &u );
         float character_danger( const Character &u ) const;
         float vehicle_danger( int radius ) const;
         void pretend_fire( npc *source, int shots, item &gun ); // fake ranged attack for hallucination
@@ -827,11 +825,11 @@ class npc : public player
          * @return Skills of which this NPC has a higher level than the given player. In other
          * words: skills this NPC could teach the player.
          */
-        std::vector<skill_id> skills_offered_to( const player &p ) const;
+        std::vector<skill_id> skills_offered_to( const Character &p ) const;
         /**
          * Martial art styles that we known, but the player p doesn't.
          */
-        std::vector<matype_id> styles_offered_to( const player &p ) const;
+        std::vector<matype_id> styles_offered_to( const Character &p ) const;
         // State checks
         // We want to kill/mug/etc the player
         bool is_enemy() const;
@@ -886,10 +884,10 @@ class npc : public player
         int value( const item &it ) const;
         int value( const item &it, int market_price ) const;
         detached_ptr<item> wear_if_wanted( detached_ptr<item> &&it, std::string &reason );
-        void start_read( item &it, player *pl );
+        void start_read( item &it, Character *pl );
         void finish_read( item *it );
         bool can_read( const item &book, std::vector<std::string> &fail_reasons );
-        int time_to_read( const item &book, const player &reader ) const;
+        int time_to_read( const item &book, const Character &reader ) const;
         void do_npc_read();
         void stow_weapon( );
         bool wield( item &it ) override;
@@ -1060,7 +1058,7 @@ class npc : public player
 
         bool dispose_item( item &obj, const std::string &prompt = std::string() ) override;
 
-        void aim();
+        bool aim();
         void do_reload( item &it );
 
         // Physical movement from one tile to the next
@@ -1091,9 +1089,12 @@ class npc : public player
 
         void set_movement_mode( character_movemode mode ) override;
 
-        const pathfinding_settings &get_pathfinding_settings() const override;
-        const pathfinding_settings &get_pathfinding_settings( bool no_bashing ) const;
-        std::set<tripoint> get_path_avoid() const override;
+        const pathfinding_settings &get_legacy_pathfinding_settings() const override;
+        const pathfinding_settings &get_legacy_pathfinding_settings( bool no_bashing ) const;
+        std::set<tripoint> get_legacy_path_avoid() const override;
+
+        std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
+        std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair( bool no_bashing ) const;
 
         // Item discovery and fetching
 
@@ -1123,9 +1124,9 @@ class npc : public player
         // Combat functions and player interaction functions
         // Returns true if did something
         bool alt_attack();
-        void heal_player( player &patient );
+        void heal_player( Character &patient );
         void heal_self();
-        void pretend_heal( player &patient, item &used ); // healing action of hallucinations
+        void pretend_heal( Character &patient, item &used ); // healing action of hallucinations
         void mug_player( Character &mark );
         void look_for_player( const Character &sought );
         // Do we have an idea of where u are?
@@ -1407,4 +1408,4 @@ static constexpr int density_search_radius = 120;
 double spawn_chance_in_hour( int current_npc_count, double density );
 } // namespace npc_overmap
 
-#endif // CATA_SRC_NPC_H
+

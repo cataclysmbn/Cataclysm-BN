@@ -39,6 +39,7 @@ enum class mutation_menu_mode {
     activating,
     examining,
     reassigning,
+    hiding,
 };
 enum class mutation_tab_mode {
     active,
@@ -78,9 +79,14 @@ static void show_mutations_titlebar( const catacurses::window &window,
                           c_light_blue ) + "  " + shortcut_desc( _( "%s to activate mutation, " ),
                                   ctxt.get_desc( "TOGGLE_EXAMINE" ) );
     }
+    if( menu_mode == mutation_menu_mode::hiding ) {
+        desc += colorize( _( "Hiding" ), c_cyan ) + "  " + shortcut_desc( _( "%s to activate mutation, " ),
+                ctxt.get_desc( "TOGGLE_EXAMINE" ) );
+    }
     if( menu_mode != mutation_menu_mode::reassigning ) {
         desc += shortcut_desc( _( "%s to reassign invlet, " ), ctxt.get_desc( "REASSIGN" ) );
     }
+    desc += shortcut_desc( _( "%s to toggle sprite visibility, " ), ctxt.get_desc( "TOGGLE_SPRITE" ) );
     desc += shortcut_desc( _( "%s to change keybindings." ), ctxt.get_desc( "HELP_KEYBINDINGS" ) );
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     fold_and_print( window, point( 1, 0 ), getmaxx( window ) - 1, c_white, desc );
@@ -234,6 +240,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
     ctxt.register_updown();
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "TOGGLE_EXAMINE" );
+    ctxt.register_action( "TOGGLE_SPRITE" );
     ctxt.register_action( "REASSIGN" );
     ctxt.register_action( "NEXT_TAB" );
     ctxt.register_action( "PREV_TAB" );
@@ -285,6 +292,10 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                 }
                 mvwprintz( wBio, point( 2, list_start_y + i - scroll_position ),
                            type, "%c %s", td.key, md.name() );
+                if( !td.show_sprite ) {
+                    //~ Hint: Letter to show which mutation is Hidden in the mutation menu
+                    wprintz( wBio, c_cyan, _( " H" ) );
+                }
             }
         }
 
@@ -439,6 +450,9 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                     case mutation_menu_mode::examining:
                         // Describing mutations, not activating them!
                         examine_id = mut_id;
+                        break;
+                    case mutation_menu_mode::hiding:
+                        who.my_mutations[*mut_id].show_sprite = !who.my_mutations[*mut_id].show_sprite;
                         break;
                 }
                 handled = true;
@@ -602,6 +616,9 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                             // Describing mutations, not activating them!
                             examine_id = mut_id;
                             break;
+                        case mutation_menu_mode::hiding:
+                            who.my_mutations[mut_id].show_sprite = !who.my_mutations[mut_id].show_sprite;
+                            break;
                     }
                 }
             } else if( action == "REASSIGN" ) {
@@ -611,6 +628,9 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                 // switches between activation and examination
                 menu_mode = menu_mode == mutation_menu_mode::activating ?
                             mutation_menu_mode::examining : mutation_menu_mode::activating;
+                examine_id = std::nullopt;
+            } else if( action == "TOGGLE_SPRITE" ) {
+                menu_mode = mutation_menu_mode::hiding;
                 examine_id = std::nullopt;
             } else if( action == "QUIT" ) {
                 ret.cmd = mutations_ui_cmd::exit;

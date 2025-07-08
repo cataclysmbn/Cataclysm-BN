@@ -39,7 +39,7 @@ generic_factory<trap> trap_factory( "trap" );
 
 /** @relates string_id */
 template<>
-inline bool int_id<trap>::is_valid() const
+bool int_id<trap>::is_valid() const
 {
     return trap_factory.is_valid( *this );
 }

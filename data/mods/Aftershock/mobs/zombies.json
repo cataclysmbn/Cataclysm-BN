@@ -25,19 +25,7 @@
     "death_drops": "default_zombie_death_drops",
     "death_function": [ "NORMAL" ],
     "upgrades": { "half_life": 28, "into": "mon_afs_headless_horror" },
-    "flags": [
-      "STUMBLES",
-      "WARM",
-      "BASHES",
-      "GROUP_BASH",
-      "POISON",
-      "NO_BREATHE",
-      "REVIVES",
-      "PUSH_MON",
-      "FILTHY",
-      "NOHEAD",
-      "LOUDMOVES"
-    ]
+    "flags": [ "STUMBLES", "WARM", "BASHES", "GROUP_BASH", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON", "NOHEAD", "LOUDMOVES" ]
   },
   {
     "id": "mon_afs_headless_horror",
@@ -79,7 +67,6 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "FILTHY",
       "NOHEAD",
       "LOUDMOVES"
     ]
@@ -130,7 +117,6 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "FILTHY",
       "LOUDMOVES"
     ]
   },
@@ -174,7 +160,6 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "FILTHY",
       "LOUDMOVES"
     ]
   },
@@ -222,8 +207,7 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "PUSH_VEH",
-      "FILTHY"
+      "PUSH_VEH"
     ]
   }
 ]

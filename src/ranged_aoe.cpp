@@ -53,7 +53,7 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
     const auto aoe_permeable = [&here]( const tripoint & p ) {
         return here.passable( p ) ||
                // Necessary evil. TODO: Make map::shoot not evil.
-               ( here.is_transparent( p ) && here.has_flag_furn( TFLAG_PERMEABLE, p ) );
+               ( here.is_transparent( p ) && here.has_flag_ter( TFLAG_PERMEABLE, p ) );
     };
     const tripoint &origin = sh.get_origin();
     std::priority_queue<tripoint_distance> queue;
@@ -129,11 +129,11 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
 
     // Here and not above because we want the animation first
     // Terrain will be shown damaged, but having it in unknown state would complicate timing the animation
-    for( const std::pair<const tripoint, double> &pr : final_coverage ) {
-        Creature *critter = g->critter_at( pr.first );
+    for( const auto &[point, coverage] : final_coverage ) {
+        Creature *critter = g->critter_at( point );
         if( critter != nullptr ) {
             dealt_projectile_attack atk;
-            atk.end_point = pr.first;
+            atk.end_point = point;
             atk.hit_critter = critter;
             atk.proj = proj;
             atk.missed_by = rng_float( 0.15, 0.45 );
@@ -179,7 +179,7 @@ std::map<tripoint, double> expected_coverage( const shape &sh, const map &here, 
         double current_coverage = parent_coverage;
         if( here.passable( p ) ||
             // Necessary evil. TODO: Make map::shoot not evil.
-            ( here.is_transparent( p ) && here.has_flag_furn( TFLAG_PERMEABLE, p ) ) ) {
+            ( here.is_transparent( p ) && here.has_flag_ter( TFLAG_PERMEABLE, p ) ) ) {
             // noop
         } else {
             int bash_str = here.bash_strength( p );

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_AUTO_PICKUP_H
-#define CATA_SRC_AUTO_PICKUP_H
 
 #include <functional>
 #include <iosfwd>
@@ -162,4 +160,4 @@ class npc_settings : public base_settings
 
 auto_pickup::player_settings &get_auto_pickup();
 
-#endif // CATA_SRC_AUTO_PICKUP_H
+

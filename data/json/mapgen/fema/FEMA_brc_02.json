@@ -34,11 +34,7 @@
         ".f......................"
       ],
       "rotation": 2,
-      "palettes": [ "FEMA_camp" ],
-      "place_monsters": [
-        { "monster": "GROUP_VANILLA", "x": [ 1, 22 ], "y": [ 1, 22 ] },
-        { "monster": "GROUP_SCHOOL", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 20 }
-      ]
+      "palettes": [ "FEMA_camp" ]
     }
   }
 ]

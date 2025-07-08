@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_NUMERIC_INTERVAL_H
-#define CATA_SRC_NUMERIC_INTERVAL_H
 
 #include <limits>
 #include <type_traits>
@@ -48,4 +46,4 @@ struct numeric_interval {
     }
 };
 
-#endif // CATA_SRC_NUMERIC_INTERVAL_H
+

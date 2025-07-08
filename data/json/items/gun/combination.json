@@ -12,7 +12,7 @@
     "ammo": "3006",
     "weight": "4200 g",
     "volume": "3 L",
-    "blackpowder_tolerance": 56,
+    "blackpowder_tolerance": 72,
     "clip_size": 1,
     "barrel_length": "500 ml",
     "built_in_mods": [ "combination_gun_shotgun" ],

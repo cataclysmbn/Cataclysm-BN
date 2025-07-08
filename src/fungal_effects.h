@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_FUNGAL_EFFECTS_H
-#define CATA_SRC_FUNGAL_EFFECTS_H
 
 struct tripoint;
 class map;
@@ -27,4 +25,4 @@ class fungal_effects
         void spread_fungus_one_tile( const tripoint &p, int growth );
 };
 
-#endif // CATA_SRC_FUNGAL_EFFECTS_H
+

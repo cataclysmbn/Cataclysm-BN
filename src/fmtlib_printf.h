@@ -6,8 +6,7 @@
 //
 // For the license information refer to fmtlib_format.h.
 
-#ifndef CATA_SRC_FMTLIB_PRINTF_H
-#define CATA_SRC_FMTLIB_PRINTF_H
+#pragma once
 
 #include <algorithm>  // std::max
 #include <limits>     // std::numeric_limits
@@ -822,4 +821,4 @@ inline int fprintf( std::basic_ostream<Char> &os, const S &format_str,
 }
 FMT_END_NAMESPACE
 
-#endif  // CATA_SRC_FMTLIB_PRINTF_H
+

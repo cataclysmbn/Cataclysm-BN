@@ -202,22 +202,27 @@ bool monexamine::pet_menu( monster &z )
     }
 
     if( !z.has_flag( MF_RIDEABLE_MECH ) ) {
-        if( z.has_flag( MF_PET_MOUNTABLE ) && you.can_mount( z ) ) {
-            if( z.has_effect( effect_tied ) ) {
-                amenu.addentry( mount, true, 'r', _( "Untie and mount %s" ), pet_name );
+        if( z.has_flag( MF_PET_MOUNTABLE ) ) {
+            auto status = you.get_mountable_status( z );
+            if( status.can_mount() ) {
+                const auto msg = z.has_effect( effect_tied )
+                                 ? _( "Untie and mount %s" )
+                                 : _( "Mount %s" );
+                amenu.addentry( mount, true, 'r', msg, pet_name );
+            } else if( !status.size ) {
+                amenu.addentry( mount, false, 'r', _( "%s is too small to carry your weight" ), pet_name );
+            } else if( !status.carry_weight ) {
+                amenu.addentry( mount, false, 'r', _( "You are too heavy to mount %s" ), pet_name );
+            } else if( !status.skills && you.get_skill_level( skill_survival ) < 1 ) {
+                amenu.addentry( mount, false, 'r', _( "You have no knowledge of riding at all" ) );
+            } else if( !status.skills && you.get_skill_level( skill_survival ) < 4 &&
+                       !z.has_effect( effect_saddled ) ) {
+                amenu.addentry( mount, false, 'r', _( "You are not skilled enough to ride without a saddle" ) );
             } else {
-                amenu.addentry( mount, true, 'r', _( "Mount %s" ), pet_name );
+                amenu.addentry( mount, false, 'r', _( "%s cannot be mounted right now" ), pet_name );
             }
-        } else if( !z.has_flag( MF_PET_MOUNTABLE ) ) {
+        } else {
             amenu.addentry( mount, false, 'r', _( "%s cannot be mounted" ), pet_name );
-        } else if( z.get_size() <= you.get_size() ) {
-            amenu.addentry( mount, false, 'r', _( "%s is too small to carry your weight" ), pet_name );
-        } else if( you.get_skill_level( skill_survival ) < 1 ) {
-            amenu.addentry( mount, false, 'r', _( "You have no knowledge of riding at all" ) );
-        } else if( you.get_weight() >= z.get_weight() * z.get_mountable_weight_ratio() ) {
-            amenu.addentry( mount, false, 'r', _( "You are too heavy to mount %s" ), pet_name );
-        } else if( !z.has_effect( effect_saddled ) && you.get_skill_level( skill_survival ) < 4 ) {
-            amenu.addentry( mount, false, 'r', _( "You are not skilled enough to ride without a saddle" ) );
         }
     } else {
         const itype &type = *z.type->mech_battery;
@@ -252,9 +257,9 @@ bool monexamine::pet_menu( monster &z )
             amenu.addentry( change_orders, true, 'O', _( "Order to ignore enemies and follow" ), pet_name );
         }
     }
-    if( !mon_item_id.is_empty() && !z.has_flag( MF_RIDEABLE_MECH ) && !z.has_flag( MF_PAY_BOT ) ) {
+    if( !mon_item_id.is_empty() && !z.has_flag( MF_PAY_BOT ) ) {
         if( z.has_effect( effect_has_bag ) || z.has_effect( effect_monster_armor ) ||
-            z.has_effect( effect_leashed ) || z.has_effect( effect_saddled ) ) {
+            z.has_effect( effect_leashed ) || z.has_effect( effect_saddled ) || z.get_battery_item() ) {
             amenu.addentry( disable_pet, true, 'D', _( "Remove items and deactivate the %s" ), pet_name );
         } else {
             amenu.addentry( disable_pet, true, 'D', _( "Deactivate the %s" ), pet_name );
@@ -454,7 +459,7 @@ bool monexamine::mech_hack( monster &z )
         if( query_yn( _( "Swipe your %s into the %s's security port?" ), item::nname( card_type ),
                       z.get_name() ) ) {
             you.mod_moves( -100 );
-            z.add_effect( effect_pet, 1_turns, num_bp );
+            z.add_effect( effect_pet, 1_turns );
             z.friendly = -1;
             if( z.has_flag( MF_RIDEABLE_MECH ) ) {
                 add_msg( m_good, _( "The %s whirs into life and opens its restraints to accept a pilot." ),
@@ -513,7 +518,7 @@ bool monexamine::pay_bot( monster &z )
                 time_duration time_bought = time_duration::from_minutes( amount );
                 you.use_charges( itype_cash_card, amount * 10 );
                 z.add_effect( effect_pet, time_bought );
-                z.add_effect( effect_paid, time_bought, num_bp );
+                z.add_effect( effect_paid, time_bought );
                 z.friendly = -1;
                 popup( _( "Your friendship grows stronger!\n This %s will follow you for %s." ), z.get_name(),
                        to_string( z.get_effect_dur( effect_pet ) ) );
@@ -552,7 +557,7 @@ bool monexamine::mfriend_menu( monster &z )
             amenu.addentry( change_orders, true, 'O', _( "Order to ignore enemies and follow" ), pet_name );
         }
     }
-    if( !mon_item_id.is_empty() && !z.has_flag( MF_RIDEABLE_MECH ) && !z.has_flag( MF_PAY_BOT ) ) {
+    if( !mon_item_id.is_empty() && !z.has_flag( MF_PAY_BOT ) ) {
         amenu.addentry( disable_pet, true, 'D', _( "Deactivate the %s" ), pet_name );
     }
     amenu.addentry( attack, true, 'a', _( "Attack" ) );
@@ -599,24 +604,40 @@ void monexamine::attach_or_remove_saddle( monster &z )
             add_msg( _( "Never mind." ) );
             return;
         }
-        z.add_effect( effect_saddled, 1_turns, num_bp );
+        z.add_effect( effect_saddled, 1_turns );
         z.set_tack_item( loc->detach() );
     }
 }
 
 bool Character::can_mount( const monster &critter ) const
 {
-    const auto &avoid = get_path_avoid();
-    auto route = get_map().route( pos(), critter.pos(), get_pathfinding_settings(), avoid );
+    auto status = get_mountable_status( critter );
+    return status.can_mount();
+}
+
+mountable_status Character::get_mountable_status( const monster &critter ) const
+{
+    const auto &avoid = get_legacy_path_avoid();
+    auto route = get_map().route( pos(), critter.pos(), get_legacy_pathfinding_settings(), avoid );
 
     if( route.empty() ) {
-        return false;
+        return {};
     }
-    return ( critter.has_flag( MF_PET_MOUNTABLE ) && critter.friendly == -1 &&
-             !critter.has_effect( effect_ridden ) ) &&
-           ( ( critter.has_effect( effect_saddled ) && get_skill_level( skill_survival ) >= 1 ) ||
-             get_skill_level( skill_survival ) >= 4 ) && ( critter.get_size() >= ( get_size() + 1 ) &&
-                     get_weight() <= critter.get_weight() * critter.get_mountable_weight_ratio() );
+
+    mountable_status status{};
+    status.mountable = critter.has_flag( MF_PET_MOUNTABLE )
+                       && critter.friendly == -1
+                       && !critter.has_effect( effect_ridden );
+    status.skills = (
+                        critter.has_effect( effect_saddled )
+                        && get_skill_level( skill_survival ) >= 1
+                    )
+                    || get_skill_level( skill_survival ) >= 4;
+    status.size = critter.get_size() >= ( get_size() + 1 );
+    status.carry_weight = ( get_weight() + critter.get_carried_weight() ) <=
+                          ( 4 * critter.weight_capacity() );
+
+    return status;
 }
 
 void monexamine::mount_pet( monster &z )
@@ -669,7 +690,7 @@ void monexamine::attach_bag_to( monster &z )
     item &it = *loc;
     z.set_storage_item( it.detach( ) );
     add_msg( _( "You mount the %1$s on your %2$s." ), it.display_name(), pet_name );
-    z.add_effect( effect_has_bag, 1_turns, num_bp );
+    z.add_effect( effect_has_bag, 1_turns );
     // Update encumbrance in case we were wearing it
     you.flag_encumbrance();
     you.moves -= 200;
@@ -798,7 +819,7 @@ bool monexamine::add_armor( monster &z )
     z.set_armor_item( loc->detach() );
     add_msg( pgettext( "pet armor", "You put the %1$s on your %2$s." ), armor.display_name(),
              pet_name );
-    z.add_effect( effect_monster_armor, 1_turns, num_bp );
+    z.add_effect( effect_monster_armor, 1_turns );
     // TODO: armoring a horse takes a lot longer than 2 seconds. This should be a long action.
     get_avatar().moves -= 200;
     return true;
@@ -972,6 +993,9 @@ void monexamine::deactivate_pet( monster &z )
     if( z.has_effect( effect_saddled ) ) {
         attach_or_remove_saddle( z );
     }
+    if( z.get_battery_item() ) {
+        remove_battery( z );
+    }
     map &here = get_map();
     here.add_item_or_charges( z.pos(), z.to_item() );
     if( !z.has_flag( MF_INTERIOR_AMMO ) ) {
@@ -1001,7 +1025,7 @@ void monexamine::milk_source( monster &source_mon )
         // pin the cow in place if it isn't already
         bool temp_tie = !source_mon.has_effect( effect_tied );
         if( temp_tie ) {
-            source_mon.add_effect( effect_tied, 1_turns, num_bp );
+            source_mon.add_effect( effect_tied, 1_turns );
             you.activity->str_values.emplace_back( "temp_tie" );
         }
         add_msg( _( "You milk the %s." ), source_mon.get_name() );

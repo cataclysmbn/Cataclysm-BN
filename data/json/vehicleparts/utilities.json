@@ -170,6 +170,38 @@
     "type": "vehicle_part"
   },
   {
+    "abstract": "adv_butchery_abstract",
+    "breaks_into": [
+      { "count": [ 4, 6 ], "item": "steel_lump" },
+      { "count": [ 4, 6 ], "item": "steel_chunk" },
+      { "count": [ 4, 6 ], "item": "scrap" }
+    ],
+    "broken_color": "light_cyan",
+    "broken_symbol": "x",
+    "color": "light_cyan",
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 30 },
+    "description": "Combining a fixed-up dissector, workbench and advanced electronics, this is a marvel capable of butchering, dissecting and cutting like nothing else!",
+    "durability": 80,
+    "flags": [ "CARGO", "OBSTACLE", "BUTCHER_EQ", "TRANSPARENT", "FLAT_SURF" ],
+    "item": "adv_butchery",
+    "location": "center",
+    "looks_like": "vp_autodoc",
+    "name": { "str": "advanced butchering station" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "size": "50 L",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
     "abstract": "veh_kiln_abstract",
     "breaks_into": [
       { "count": [ 4, 5 ], "item": "steel_lump" },
@@ -234,6 +266,12 @@
   {
     "copy-from": "veh_kiln_abstract",
     "id": "veh_kiln",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "adv_butchery_abstract",
+    "id": "adv_butchery",
     "symbol": "&",
     "type": "vehicle_part"
   }

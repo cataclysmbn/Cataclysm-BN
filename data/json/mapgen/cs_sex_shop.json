@@ -79,7 +79,8 @@
         { "item": "touristmap", "x": 4, "y": 6, "chance": 10 },
         { "item": "touristmap", "x": 6, "y": 6, "chance": 10 },
         { "item": "syringe", "x": 20, "y": 19, "chance": 5 },
-        { "item": "mop", "x": [ 4, 5 ], "y": [ 7, 8 ], "chance": 2 },
+        { "item": "mop", "x": [ 4, 5 ], "y": [ 7, 8 ], "chance": 1 },
+        { "item": "mop_folded", "x": [ 4, 5 ], "y": [ 7, 8 ], "chance": 1 },
         { "item": "extinguisher", "x": 3, "y": 7, "chance": 5 },
         { "item": "television", "x": 6, "y": 13, "chance": 5 },
         { "item": "television", "x": 7, "y": 13, "chance": 5 }

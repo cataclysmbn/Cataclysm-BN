@@ -657,7 +657,7 @@ void mdeath::broken( monster &z )
         return;
     }
     std::string item_id = z.type->id.str();
-    if( item_id.compare( 0, 4, "mon_" ) == 0 ) {
+    if( item_id.starts_with( "mon_" ) ) {
         item_id.erase( 0, 4 );
     }
     // make "broken_manhack", or "broken_eyebot", ...
@@ -773,8 +773,9 @@ void mdeath::jabberwock( monster &z )
     player *ch = dynamic_cast<player *>( z.get_killer() );
 
     bool vorpal = ch && ch->is_player() &&
-                  ch->primary_weapon().has_flag( STATIC( flag_id( "DIAMOND" ) ) ) &&
-                  ch->primary_weapon().volume() > 750_ml;
+                  ( ch->primary_weapon().damage_melee( DT_CUT ) >= ( ch->primary_weapon().damage_melee(
+                              DT_BASH ) * 1.5 ) ) &&
+                  ch->primary_weapon().volume() > 500_ml;
 
     if( vorpal && !ch->primary_weapon().has_technique( matec_id( "VORPAL" ) ) ) {
         if( ch->sees( z ) ) {
@@ -864,7 +865,7 @@ void mdeath::detonate( monster &z )
         }
     }
     // HACK, used to stop them from having ammo on respawn
-    z.add_effect( effect_no_ammo, 1_turns, num_bp );
+    z.add_effect( effect_no_ammo, 1_turns );
 
     // First die normally
     mdeath::normal( z );

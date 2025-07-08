@@ -89,8 +89,8 @@ void TextStyleCheck::check( const MatchFinder::MatchResult &Result )
         const SourceLocation &loc = text.getStrTokenLoc( i );
         if( loc.isInvalid() ) {
             return;
-        } else if( StringRef( SrcMgr.getPresumedLoc( SrcMgr.getSpellingLoc(
-                                  loc ) ).getFilename() ).equals( "<scratch space>" ) ) {
+        } else if( StringRef( SrcMgr.getPresumedLoc( SrcMgr.getSpellingLoc( loc ) ).getFilename() )
+                   .equals_insensitive( "<scratch space>" ) ) {
             return;
         }
     }

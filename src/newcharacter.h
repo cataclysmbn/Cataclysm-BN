@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_NEWCHARACTER_H
-#define CATA_SRC_NEWCHARACTER_H
 
 #include <string>
 
@@ -56,4 +54,4 @@ bool has_higher_trait( const Character &ch, const trait_id &t );
 bool has_same_type_trait( const Character &ch, const trait_id &t );
 } // namespace newcharacter
 
-#endif // CATA_SRC_NEWCHARACTER_H
+

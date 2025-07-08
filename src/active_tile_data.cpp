@@ -48,6 +48,7 @@ template vehicle_connector_tile *furn_at<vehicle_connector_tile>( const tripoint
 template battery_tile *furn_at<battery_tile>( const tripoint_abs_ms & );
 template steady_consumer_tile *furn_at<steady_consumer_tile>( const tripoint_abs_ms & );
 template charge_watcher_tile *furn_at<charge_watcher_tile>( const tripoint_abs_ms & );
+template countdown_tile *furn_at<countdown_tile>( const tripoint_abs_ms & );
 
 void furn_transform::serialize( JsonOut &jsout ) const
 {
@@ -376,6 +377,47 @@ void vehicle_connector_tile::load( JsonObject &jo )
     jo.read( "connected_vehicles", connected_vehicles );
 }
 
+void countdown_tile::update_internal( time_point to, const tripoint_abs_ms &p,
+                                      distribution_grid & )
+{
+    if( ticks == -1 ) {
+        ticks = to_turns<int>( timer );
+    }
+    ticks = ticks - ( to_turns<int>( to - calendar::turn_zero ) - to_turns<int>
+                      ( get_last_updated() - calendar::turn_zero ) );
+    if( ticks > 0 ) {
+        return;
+    }
+
+    get_distribution_grid_tracker().get_transform_queue().add( p, transform.id, transform.msg );
+
+}
+
+active_tile_data *countdown_tile::clone() const
+{
+    return new countdown_tile( *this );
+}
+
+const std::string &countdown_tile::get_type() const
+{
+    static const std::string type( "countdown" );
+    return type;
+}
+
+void countdown_tile::store( JsonOut &jsout ) const
+{
+    jsout.member( "timer", timer );
+    jsout.member( "transform", transform );
+    jsout.member( "ticks", ticks );
+}
+
+void countdown_tile::load( JsonObject &jo )
+{
+    jo.read( "timer", timer );
+    jo.read( "transform", transform );
+    jo.read( "ticks", ticks );
+}
+
 static std::map<std::string, std::unique_ptr<active_tile_data>> build_type_map()
 {
     std::map<std::string, std::unique_ptr<active_tile_data>> type_map;
@@ -388,6 +430,7 @@ static std::map<std::string, std::unique_ptr<active_tile_data>> build_type_map()
     add_type( new solar_tile() );
     add_type( new steady_consumer_tile() );
     add_type( new vehicle_connector_tile() );
+    add_type( new countdown_tile() );
     return type_map;
 }
 

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_LOCATION_VECTOR_H
-#define CATA_SRC_LOCATION_VECTOR_H
 
 #include <vector>
 #include <functional>
@@ -273,4 +271,4 @@ class location_vector
         void on_destroy();
 };
 
-#endif // CATA_SRC_LOCATION_VECTOR_H
+

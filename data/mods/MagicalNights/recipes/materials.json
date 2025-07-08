@@ -1,0 +1,93 @@
+[
+  {
+    "type": "recipe",
+    "result": "cured_hide",
+    "id_suffix": "scraped_owlbear",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "survival",
+    "difficulty": 1,
+    "time": "5 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "cured_owlbear_pelt", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "cured_owlbear_pelt",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "survival",
+    "difficulty": 1,
+    "time": "10 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "salt_water", 1 ], [ "saline", 2 ], [ "salt", 2 ] ], [ [ "raw_owlbear_fur", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "cured_owlbear_pelt",
+    "id_suffix": "smoked",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "survival",
+    "skills_required": [ "cooking", 2 ],
+    "difficulty": 1,
+    "time": "25 m",
+    "batch_time_factors": [ 80, 1 ],
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "char_smoker", 5 ] ] ],
+    "components": [ [ [ "raw_owlbear_fur", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "owlbear_fur",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "survival",
+    "difficulty": 3,
+    "time": "12 m",
+    "batch_time_factors": [ 20, 10 ],
+    "autolearn": true,
+    "qualities": [
+      { "id": "CUT", "level": 1 },
+      { "id": "COOK", "level": 2 },
+      { "id": "BOIL", "level": 1 },
+      { "id": "CONTAIN", "level": 1 }
+    ],
+    "tools": [ [ [ "surface_heat", 4, "LIST" ] ] ],
+    "components": [
+      [ [ "water_clean", 1 ], [ "water", 1 ] ],
+      [ [ "tanbark", 1 ], [ "acorns", 1 ], [ "hops", 1 ], [ "pine_bough", 1 ], [ "brain", 1 ] ],
+      [ [ "salt_water", 1 ], [ "saline", 2 ], [ "salt", 2 ] ],
+      [ [ "edible_tallow_lard", 1, "LIST" ], [ "tallow_tainted", 1 ] ],
+      [ [ "cured_owlbear_pelt", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "owlbear_fur",
+    "id_suffix": "modern",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "survival",
+    "difficulty": 3,
+    "time": "5 m",
+    "batch_time_factors": [ 50, 5 ],
+    "autolearn": true,
+    "book_learn": [ [ "textbook_survival", 2 ], [ "modern_tanner", 2 ] ],
+    "qualities": [
+      { "id": "CHEM", "level": 1 },
+      { "id": "COOK", "level": 3 },
+      { "id": "BOIL", "level": 2 },
+      { "id": "CONTAIN", "level": 1 }
+    ],
+    "tools": [ [ [ "surface_heat", 1, "LIST" ] ] ],
+    "components": [
+      [ [ "water_clean", 1 ], [ "water", 1 ] ],
+      [ [ "lye_powder", 2 ], [ "aspirin", 2 ], [ "chem_phenol", 20 ] ],
+      [ [ "cured_owlbear_pelt", 1 ] ]
+    ]
+  }
+]

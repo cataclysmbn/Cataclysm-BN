@@ -16,5 +16,44 @@
     "time": "150 s",
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "rag", 23 ] ], [ [ "leather", 25 ] ], [ [ "scrap", 12 ] ], [ [ "kevlar_plate", 24 ] ] ]
+  },
+  {
+    "result": "exosuit_military",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "skills_required": [ "electronics", 6 ],
+    "time": "2 h",
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
+    "tools": [ [ [ "soldering_standard", 100, "LIST" ] ] ],
+    "components": [
+      [ [ "alloy_sheet", 5 ] ],
+      [ [ "power_supply", 8 ] ],
+      [ [ "amplifier", 6 ] ],
+      [ [ "medium_battery_cell", 1 ] ],
+      [ [ "motor_tiny", 4 ] ],
+      [ [ "hose", 4 ] ],
+      [ [ "cable", 100 ] ]
+    ]
+  },
+  {
+    "result": "exosuit_industrial",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "skills_required": [ "electronics", 6 ],
+    "time": "2 h",
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
+    "tools": [ [ [ "soldering_standard", 100, "LIST" ] ] ],
+    "components": [
+      [ [ "steel_chunk", 10 ] ],
+      [ [ "power_supply", 16 ] ],
+      [ [ "amplifier", 12 ] ],
+      [ [ "medium_battery_cell", 1 ] ],
+      [ [ "motor_tiny", 8 ] ],
+      [ [ "hose", 4 ] ],
+      [ [ "foldframe", 2 ] ],
+      [ [ "cable", 100 ] ]
+    ]
   }
 ]

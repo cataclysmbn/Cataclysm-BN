@@ -137,7 +137,7 @@
     "move_cost_mod": -1,
     "coverage": 55,
     "required_str": -1,
-    "flags": [ "CONTAINER", "PLACE_ITEM", "LIQUIDCONT", "NOITEM", "SEALED" ],
+    "flags": [ "CONTAINER", "PLACE_ITEM", "LIQUIDCONT", "NOITEM", "SEALED", "ADV_DECONSTRUCT" ],
     "examine_action": "keg",
     "keg_capacity": 240,
     "deconstruct": {

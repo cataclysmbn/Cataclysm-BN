@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_NAME_H
-#define CATA_SRC_NAME_H
 
 #include <string>
 
@@ -41,4 +39,4 @@ inline nameFlags operator&( nameFlags l, nameFlags r )
     return static_cast<nameFlags>( static_cast<unsigned>( l ) & static_cast<unsigned>( r ) );
 }
 
-#endif // CATA_SRC_NAME_H
+

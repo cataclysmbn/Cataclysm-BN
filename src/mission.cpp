@@ -487,8 +487,8 @@ void mission::get_all_item_group_matches( std::vector<item *> &items,
             std::vector<item *> content = std::vector<item *>();
 
             //list of item into list item*
-            std::transform(
-                content_list.begin(), content_list.end(),
+            std::ranges::transform(
+                content_list,
                 std::back_inserter( content ),
             []( item * p ) {
                 return p;

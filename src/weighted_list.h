@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_WEIGHTED_LIST_H
-#define CATA_SRC_WEIGHTED_LIST_H
 
 #include "json.h"
 #include "rng.h"
@@ -288,4 +286,4 @@ void load_weighted_list( const JsonValue &jsv, weighted_list<W, T> &list, W defa
     }
 }
 
-#endif // CATA_SRC_WEIGHTED_LIST_H
+

@@ -1,5 +1,4 @@
-#ifndef CATA_SRC_CLONE_PTR_H
-#define CATA_SRC_CLONE_PTR_H
+#pragma once
 
 #include <memory>
 
@@ -62,4 +61,4 @@ class clone_ptr
 
 } // namespace cata
 
-#endif // CATA_SRC_CLONE_PTR_H
+

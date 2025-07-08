@@ -10,6 +10,7 @@
       [ "pistol_grip", 30 ],
       [ "rifle_scope", 30 ],
       [ "shoulder_strap", 100 ],
+      [ "pistol_lanyard", 50 ],
       [ "suppressor", 60 ],
       [ "suppressor_compact", 40 ],
       [ "cheek_pad", 25 ]
@@ -42,6 +43,9 @@
       [ "u_shotgun", 60 ],
       [ "waterproof_gunmod", 40 ],
       [ "retool_ar15_300blk", 40 ],
+      [ "g36_stanag_adapter", 40 ],
+      [ "aug_nato_conversion", 40 ],
+      [ "breacher_grip", 10 ],
       { "group": "auto_sears", "prob": 40 }
     ]
   },
@@ -56,7 +60,8 @@
       [ "m320_mod", 10 ],
       [ "masterkey", 30 ],
       [ "rm121aux", 10 ],
-      [ "sword_bayonet", 10 ]
+      [ "sword_bayonet", 10 ],
+      [ "breacher_grip", 10 ]
     ]
   },
   {

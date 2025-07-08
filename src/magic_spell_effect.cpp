@@ -151,7 +151,7 @@ void spell_effect::pain_split( const spell &sp, Creature &caster, const tripoint
     int total_hp = 0; // total hp among limbs
 
     for( const std::pair<const bodypart_str_id, bodypart> &elem : p->get_body() ) {
-        if( elem.first == bodypart_str_id( "num_bp" ) ) {
+        if( !elem.first ) {
             continue;
         }
         num_limbs++;
@@ -482,11 +482,15 @@ static void add_effect_to_target( const tripoint &target, const spell &sp )
 static void damage_targets( const spell &sp, Creature &caster,
                             const std::set<tripoint> &targets )
 {
+    bool sound_played = false;
     for( const tripoint &target : targets ) {
         if( !sp.is_valid_target( caster, target ) ) {
             continue;
         }
-        sp.make_sound( target );
+        if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
+            sp.make_sound( target );
+            sound_played = true;
+        }
         sp.create_field( target );
         Creature *const cr = g->critter_at<Creature>( target );
         if( !cr ) {
@@ -495,14 +499,22 @@ static void damage_targets( const spell &sp, Creature &caster,
 
         projectile bolt;
         bolt.speed = 10000;
-        bolt.impact = sp.get_damage_instance();
+        bolt.impact = ( caster.is_monster() ) ? sp.get_damage_instance() : sp.get_damage_instance(
+                          *caster.as_character() );
         bolt.add_effect( ammo_effect_magic );
 
         dealt_projectile_attack atk;
         atk.end_point = target;
         atk.hit_critter = cr;
         atk.proj = bolt;
-        atk.missed_by = 0.0;
+        if( sp.accuracy() == -1 ) {
+            // defaults to either great odds of hitting the head if it's the player or more reasonable accuracy if not
+            atk.missed_by = ( caster.is_player() ) ? 0.0 : 0.4;
+        } else {
+            // accuracy is an int and is meant to represent % to hit, so have to reverse it and divide
+            atk.missed_by = static_cast<double>( 100 - sp.accuracy() ) / 100.0;
+        }
+
         if( !sp.effect_data().empty() ) {
             add_effect_to_target( target, sp );
         }
@@ -642,7 +654,7 @@ void area_expander::sort_ascending()
 {
     // Since internal caches like 'area_search' and 'frontier' use indexes inside 'area',
     // these caches will be invalidated.
-    std::sort( area.begin(), area.end(),
+    std::ranges::sort( area,
     []( const node & a, const node & b )  -> bool {
         return a.cost < b.cost;
     } );
@@ -652,7 +664,7 @@ void area_expander::sort_descending()
 {
     // Since internal caches like 'area_search' and 'frontier' use indexes inside 'area',
     // these caches will be invalidated.
-    std::sort( area.begin(), area.end(),
+    std::ranges::sort( area,
     []( const node & a, const node & b ) -> bool {
         return a.cost > b.cost;
     } );
@@ -798,7 +810,7 @@ void spell_effect::directed_push( const spell &sp, Creature &caster, const tripo
         targets_ordered_by_range.emplace( sign * rl_dist( pt, caster.pos() ), pt );
     }
 
-    for( const std::pair<int, tripoint> &pair : targets_ordered_by_range ) {
+    for( const std::pair<const int, tripoint> &pair : targets_ordered_by_range ) {
         const tripoint &push_point = pair.second;
         const  units::angle start_angle = coord_to_angle( caster.pos(), target );
         // positive is push, negative is pull
@@ -1011,13 +1023,17 @@ void spell_effect::spawn_summoned_monster( const spell &sp, Creature &caster,
     // this should never be negative, but this'll keep problems from happening
     size_t num_mons = std::abs( sp.damage() );
     const time_duration summon_time = sp.duration_turns();
+    bool sound_played = false;
     while( num_mons > 0 && !area.empty() ) {
         const size_t mon_spot = rng( 0, area.size() - 1 );
         auto iter = area.begin();
         std::advance( iter, mon_spot );
         if( add_summoned_mon( mon_id, *iter, summon_time, sp ) ) {
             num_mons--;
-            sp.make_sound( *iter );
+            if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
+                sound_played = true;
+                sp.make_sound( *iter );
+            }
         } else {
             add_msg( m_bad, "failed to place monster" );
         }
@@ -1082,6 +1098,7 @@ void spell_effect::noise( const spell &sp, Creature &, const tripoint &target )
 void spell_effect::vomit( const spell &sp, Creature &caster, const tripoint &target )
 {
     const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), true );
+    bool sound_played = false;
     for( const tripoint &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
             continue;
@@ -1090,7 +1107,10 @@ void spell_effect::vomit( const spell &sp, Creature &caster, const tripoint &tar
         if( !ch ) {
             continue;
         }
-        sp.make_sound( target );
+        if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
+            sound_played = true;
+            sp.make_sound( target );
+        }
         ch->vomit();
     }
 }
@@ -1114,6 +1134,7 @@ void spell_effect::flashbang( const spell &sp, Creature &caster, const tripoint 
 void spell_effect::mod_moves( const spell &sp, Creature &caster, const tripoint &target )
 {
     const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), false );
+    bool sound_played = false;
     for( const tripoint &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
             continue;
@@ -1122,7 +1143,10 @@ void spell_effect::mod_moves( const spell &sp, Creature &caster, const tripoint 
         if( !critter ) {
             continue;
         }
-        sp.make_sound( potential_target );
+        if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
+            sound_played = true;
+            sp.make_sound( potential_target );
+        }
         critter->moves += sp.damage();
     }
 }
@@ -1151,6 +1175,7 @@ void spell_effect::morale( const spell &sp, Creature &caster, const tripoint &ta
                   sp.effect_data() );
         return;
     }
+    bool sound_played = false;
     for( const tripoint &potential_target : area ) {
         player *player_target;
         if( !( sp.is_valid_target( caster, potential_target ) &&
@@ -1159,13 +1184,17 @@ void spell_effect::morale( const spell &sp, Creature &caster, const tripoint &ta
         }
         player_target->add_morale( morale_type( sp.effect_data() ), sp.damage(), 0, sp.duration_turns(),
                                    sp.duration_turns() / 10, false );
-        sp.make_sound( potential_target );
+        if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
+            sound_played = true;
+            sp.make_sound( potential_target );
+        }
     }
 }
 
 void spell_effect::charm_monster( const spell &sp, Creature &caster, const tripoint &target )
 {
     const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), false );
+    bool sound_played = false;
     for( const tripoint &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
             continue;
@@ -1174,7 +1203,10 @@ void spell_effect::charm_monster( const spell &sp, Creature &caster, const tripo
         if( !mon ) {
             continue;
         }
-        sp.make_sound( potential_target );
+        if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
+            sound_played = true;
+            sp.make_sound( potential_target );
+        }
         if( mon->friendly == 0 && mon->get_hp() <= sp.damage() ) {
             mon->unset_dest();
             mon->friendly += sp.duration() / 100;
@@ -1185,6 +1217,7 @@ void spell_effect::charm_monster( const spell &sp, Creature &caster, const tripo
 void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint &target )
 {
     const std::set<tripoint> area = spell_effect_blast( sp, caster.pos(), target, sp.aoe(), false );
+    bool sound_played = false;
     for( const tripoint &potential_target : area ) {
         if( !sp.is_valid_target( caster, potential_target ) ) {
             continue;
@@ -1207,7 +1240,10 @@ void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint &ta
                 guy->mutate_category( mutation_category_id( sp.effect_data() ) );
             }
         }
-        sp.make_sound( potential_target );
+        if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
+            sound_played = true;
+            sp.make_sound( potential_target );
+        }
     }
 }
 

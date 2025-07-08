@@ -146,8 +146,7 @@
       }
     },
     "breaks_into": [
-      { "item": "steel_lump", "count": [ 10, 15 ] },
-      { "item": "steel_chunk", "count": [ 3, 5 ] },
+      { "item": "alloy_sheet", "count": [ 10, 15 ] },
       { "item": "scrap", "count": [ 3, 5 ] },
       { "item": "e_scrap", "count": [ 5, 10 ] },
       { "item": "bearing", "count": [ 20, 50 ] },

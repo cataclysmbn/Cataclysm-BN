@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DEBUG_H
-#define CATA_SRC_DEBUG_H
 
 /**
  *      debugmsg(msg, ...)
@@ -67,69 +65,6 @@ template<typename E> class enum_bitset;
 #define __FUNCTION_NAME__ __func__
 #endif
 
-/**
- * Debug message of level DL::Error and class DC::DebugMsg, also includes the source
- * file name and line, uses varg style arguments, the first argument must be
- * a printf style format string.
- */
-#define debugmsg(...) realDebugmsg(__FILE__, STRING(__LINE__), __FUNCTION_NAME__, __VA_ARGS__)
-
-// Don't use this, use debugmsg instead.
-void realDebugmsg( const char *filename, const char *line, const char *funcname,
-                   const std::string &text );
-template<typename ...Args>
-inline void realDebugmsg( const char *const filename, const char *const line,
-                          const char *const funcname, const char *const mes, Args &&... args )
-{
-    return realDebugmsg( filename, line, funcname, string_format( mes,
-                         std::forward<Args>( args )... ) );
-}
-
-// A fatal error for use in constexpr functions
-// This exists for compatibility reasons.  On gcc 5.3 we need a
-// different implementation that is messier.
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=67371
-// Pass a placeholder return value to be used on gcc 5.3 (it won't
-// actually be returned, it's just needed for the type), and then
-// args as if to debugmsg for the remaining args.
-#if defined(__GNUC__) && __GNUC__ < 6
-#define constexpr_fatal(ret, ...) \
-    do { return false ? ( ret ) : ( abort(), ( ret ) ); } while(false)
-#else
-#define constexpr_fatal(ret, ...) \
-    do { debugmsg(__VA_ARGS__); abort(); } while(false)
-#endif
-
-/**
- * Used to generate game report information.
- */
-namespace game_info
-{
-/** Return the name of the current operating system.
- */
-std::string operating_system();
-/** Return a detailed version of the operating system; e.g. "Ubuntu 18.04" or "(Windows) 10 1809".
- */
-std::string operating_system_version();
-/** Return the "bitness" of the game (not necessarily of the operating system); either: 64, 32 or nullopt.
- */
-std::optional<int> bitness();
-/** Return the "bitness" string of the game (not necessarily of the operating system); either: 64-bit, 32-bit or Unknown.
- */
-std::string bitness_string();
-/** Return the game version, as in the entry screen.
- */
-std::string game_version();
-/** Return the underlying graphics version used by the game; either Tiles or Curses.
-*/
-std::string graphics_version();
-/** Return a list of the loaded mods, including the mod full name and its id name in brackets, e.g. "Dark Days Ahead [dda]".
-*/
-std::string mods_loaded();
-/** Generate a game report, including the information returned by all of the other functions.
- */
-std::string game_report();
-} // namespace game_info
 
 // Enumerations                                                     {{{1
 // ---------------------------------------------------------------------
@@ -203,6 +138,40 @@ enum class DebugOutput {
     std_err,
     file,
 };
+
+#define debugmsg_of(debug_level, ...) realDebugmsg(__FILE__, STRING(__LINE__), __FUNCTION_NAME__, debug_level, __VA_ARGS__)
+
+/**
+ * Debug message of level DL::Error and class DC::DebugMsg, also includes the source
+ * file name and line, uses varg style arguments, the first argument must be
+ * a printf style format string.
+ */
+#define debugmsg(...) debugmsg_of(DL::Error, __VA_ARGS__)
+// Don't use this, use debugmsg instead.
+void realDebugmsg( const char *filename, const char *line, const char *funcname,
+                   const DL debug_level, const std::string &text );
+template<typename ...Args>
+inline void realDebugmsg( const char *const filename, const char *const line,
+                          const char *const funcname, const DL debug_level, const char *const mes, Args &&... args )
+{
+    return realDebugmsg( filename, line, funcname, debug_level, string_format( mes,
+                         std::forward<Args>( args )... ) );
+}
+
+// A fatal error for use in constexpr functions
+// This exists for compatibility reasons.  On gcc 5.3 we need a
+// different implementation that is messier.
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=67371
+// Pass a placeholder return value to be used on gcc 5.3 (it won't
+// actually be returned, it's just needed for the type), and then
+// args as if to debugmsg for the remaining args.
+#if defined(__GNUC__) && __GNUC__ < 6
+#define constexpr_fatal(ret, ...) \
+    do { return false ? ( ret ) : ( abort(), ( ret ) ); } while(false)
+#else
+#define constexpr_fatal(ret, ...) \
+    do { debugmsg(__VA_ARGS__); abort(); } while(false)
+#endif
 
 /** Initializes the debugging system, called exactly once from main() */
 void setupDebug( DebugOutput );
@@ -297,4 +266,4 @@ void debug_write_backtrace( std::ostream &out );
 #endif
 
 // vim:tw=72:sw=4:fdm=marker:fdl=0:
-#endif // CATA_SRC_DEBUG_H
+

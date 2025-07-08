@@ -1,9 +1,6 @@
 #pragma once
-#ifndef CATA_SRC_ACTIVITY_HANDLERS_H
-#define CATA_SRC_ACTIVITY_HANDLERS_H
 
 #include <functional>
-#include <list>
 #include <map>
 #include <optional>
 #include <string>
@@ -120,8 +117,7 @@ struct butchery_setup {
 };
 
 butchery_setup consider_butchery( const item &corpse_item, player &u, butcher_type action );
-int butcher_time_to_cut( const Character &who, const inventory &inv, const item &corpse_item,
-                         butcher_type action );
+int butcher_time_to_cut( const item &corpse_item, butcher_type action );
 
 // activity_item_handling.cpp
 void activity_on_turn_drop();
@@ -215,7 +211,6 @@ void chop_tree_do_turn( player_activity *act, player *p );
 void jackhammer_do_turn( player_activity *act, player *p );
 void find_mount_do_turn( player_activity *act, player *p );
 void tidy_up_do_turn( player_activity *act, player *p );
-void build_do_turn( player_activity *act, player *p );
 void fill_pit_do_turn( player_activity *act, player *p );
 void fertilize_plot_do_turn( player_activity *act, player *p );
 void try_sleep_do_turn( player_activity *act, player *p );
@@ -270,7 +265,6 @@ void vibe_finish( player_activity *act, player *p );
 void hand_crank_finish( player_activity *act, player *p );
 void atm_finish( player_activity *act, player *p );
 void eat_menu_finish( player_activity *act, player *p );
-void washing_finish( player_activity *act, player *p );
 void pry_nails_finish( player_activity *act, player *p );
 void chop_tree_finish( player_activity *act, player *p );
 void chop_logs_finish( player_activity *act, player *p );
@@ -315,4 +309,3 @@ void patch_activity_for_furniture( player_activity &activity,
 
 } // namespace activity_handlers
 
-#endif // CATA_SRC_ACTIVITY_HANDLERS_H

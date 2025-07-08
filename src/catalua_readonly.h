@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATALUA_READONLY_H
-#define CATA_SRC_CATALUA_READONLY_H
 
 #include "catalua_sol_fwd.h"
 
@@ -13,4 +11,4 @@ sol::table make_readonly_table( sol::state_view &lua, sol::table read_from,
 
 } // namespace cata
 
-#endif // CATA_SRC_CATALUA_READONLY_H
+

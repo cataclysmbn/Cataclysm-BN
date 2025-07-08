@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CURSESPORT_H
-#define CATA_SRC_CURSESPORT_H
 
 #include <utility>
 #if defined(TILES) || defined(_WIN32)
@@ -88,5 +86,5 @@ void resize_term( int cell_w, int cell_h );
 int get_scaling_factor();
 
 #endif
-#endif // CATA_SRC_CURSESPORT_H
+
 

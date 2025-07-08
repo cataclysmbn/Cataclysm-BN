@@ -581,5 +581,23 @@
     "capacity": 8,
     "reliability": 8,
     "flags": [ "MAG_COMPACT" ]
+  },
+  {
+    "id": "kriss_vector_9mm_mag",
+    "looks_like": "tdi_mag",
+    "type": "MAGAZINE",
+    "name": { "str": "Kriss Vector 9mm magazine" },
+    "description": "A 40-round modified Glock 17 magazine with a +23 MagEx kit installed, intended to be used with a KRISS Vector 9mm.  Can also fit in a Glock 19.",
+    "weight": "200 g",
+    "volume": "500 ml",
+    "price": "60 USD",
+    "price_postapoc": "1 USD",
+    "material": "steel",
+    "symbol": "#",
+    "color": "light_gray",
+    "ammo_type": "9mm",
+    "capacity": 40,
+    "reliability": 9,
+    "flags": [ "MAG_COMPACT" ]
   }
 ]

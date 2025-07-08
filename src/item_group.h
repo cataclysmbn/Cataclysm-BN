@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_ITEM_GROUP_H
-#define CATA_SRC_ITEM_GROUP_H
 
 #include <memory>
 #include <optional>
@@ -328,4 +326,4 @@ class Item_group : public Item_spawn_data
         prop_list items;
 };
 
-#endif // CATA_SRC_ITEM_GROUP_H
+

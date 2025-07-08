@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_DIARY_H
-#define CATA_SRC_DIARY_H
 
 #include <string>
 #include <list>
@@ -137,4 +135,4 @@ class diary
         /*method for adding changes to the changelist. with the possibility to connect a description*/
         void add_to_change_list( const std::string &entry, const std::string &desc = "" );
 };
-#endif // CATA_SRC_DIARY_H
+

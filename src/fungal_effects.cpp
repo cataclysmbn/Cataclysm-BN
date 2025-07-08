@@ -46,7 +46,6 @@ static const species_id FUNGUS( "FUNGUS" );
 static const trait_id trait_TAIL_CATTLE( "TAIL_CATTLE" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 
-static const std::string flag_DIGGABLE( "DIGGABLE" );
 static const std::string flag_FLAT( "FLAT" );
 static const std::string flag_INDOORS( "INDOORS" );
 static const std::string flag_SUPPORTS_ROOF( "SUPPORTS_ROOF" );
@@ -151,7 +150,7 @@ void fungal_effects::spread_fungus_one_tile( const tripoint &p, const int growth
 {
     bool converted = false;
     // Terrain conversion
-    if( m.has_flag_ter( flag_DIGGABLE, p ) ) {
+    if( m.ter( p )->is_diggable() ) {
         if( x_in_y( growth * 10, 100 ) ) {
             m.ter_set( p, t_fungus );
             converted = true;
@@ -239,8 +238,8 @@ void fungal_effects::spread_fungus_one_tile( const tripoint &p, const int growth
             // Replace the (already existing) seed
             // Can't use item_stack::only_item() since there might be fertilizer
             map_stack items = m.i_at( p );
-            const map_stack::iterator seed = std::find_if( items.begin(),
-            items.end(), []( const item * const & it ) {
+            const map_stack::iterator seed = std::ranges::find_if( items,
+            []( const item * const & it ) {
                 return it->is_seed();
             } );
             if( seed == items.end() || !( *seed )->is_seed() ) {

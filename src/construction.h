@@ -1,9 +1,6 @@
 #pragma once
-#ifndef CATA_SRC_CONSTRUCTION_H
-#define CATA_SRC_CONSTRUCTION_H
 
 #include <functional>
-#include <list>
 #include <map>
 #include <optional>
 #include <set>
@@ -14,10 +11,10 @@
 #include "calendar.h"
 #include "translations.h"
 #include "type_id.h"
+#include "coordinates.h"
 
 class Character;
 class inventory;
-class player;
 struct construction;
 struct point;
 
@@ -65,6 +62,9 @@ struct construction {
         // Flags beginning terrain must have
         std::set<std::string> pre_flags;
 
+        // Flags that exclude a given terrain tile
+        std::set<std::string> deny_flags;
+
         // Post construction flags
         std::set<std::string> post_flags;
 
@@ -89,13 +89,15 @@ struct construction {
 
         // NPC assistance adjusted
         int adjusted_time() const;
-        int print_time( const catacurses::window &w, point, int width, nc_color col ) const;
         std::vector<std::string> get_folded_time_string( int width ) const;
 
         // Result of construction scaling option
         float time_scale() const;
 
         bool is_blacklisted() const;
+
+        // Whether the construction needs diggable terrain
+        bool needs_diggable;
 
         // If true, the requirements are generated during finalization
         bool vehicle_start = false;
@@ -124,12 +126,9 @@ void override_build_times( time_duration time );
 } // namespace constructions
 
 std::optional<construction_id> construction_menu( bool blueprint );
-void complete_construction( Character &ch );
+void complete_construction( Character &who, tripoint_abs_ms &where );
 bool can_construct( const construction &con, const tripoint &p );
 bool player_can_build( Character &ch, const inventory &inv, const construction &con );
 
-void get_build_reqs_for_furn_ter_ids( const recipe_id &rid,
-                                      const std::pair<std::map<ter_id, int>,
-                                      std::map<furn_id, int>> &changed_ids,
-                                      build_reqs &total_reqs );
-#endif // CATA_SRC_CONSTRUCTION_H
+
+

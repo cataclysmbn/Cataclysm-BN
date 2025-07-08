@@ -42,6 +42,8 @@ cata_test
 cata_test-tiles
 cataclysm
 cataclysm-tiles
+cataclysm-bn-tiles
+json_formatter
 *.exe.manifest
 cataclysm-vcpkg
 cataclysmdda-*
@@ -170,7 +172,6 @@ cataclysm.a
 
 # clang tooling
 compile_commands.json
-.clangd
 
 # IDA database
 Cataclysm.i64
@@ -225,3 +226,6 @@ test/Output
 test/.lit_test_times.txt
 affected_files.txt
 clang-tidy-trace
+
+CMakeFiles/
+CMakeCache.txt

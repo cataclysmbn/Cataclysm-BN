@@ -46,10 +46,10 @@
     "healthy": -1,
     "price": "250 cent",
     "price_postapoc": "1 USD",
-    "material": "milk",
+    "material": [ "milk" ],
     "phase": "liquid",
     "charges": 2,
-    "vitamins": [ [ "vitA", 1 ], [ "calcium", 12 ] ],
+    "vitamins": [ [ "vitA", 1 ], [ "calcium", 12 ], [ "milk_allergen", 1 ] ],
     "flags": [ "MELTS" ]
   },
   {
@@ -64,7 +64,8 @@
     "price": "275 cent",
     "price_postapoc": "1 USD",
     "material": [ "milk", "junk" ],
-    "primary_material": "milk"
+    "primary_material": "milk",
+    "vitamins": [ [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -107,7 +108,8 @@
     "price": "4 USD",
     "price_postapoc": "150 cent",
     "material": [ "milk", "junk" ],
-    "primary_material": "milk"
+    "primary_material": "milk",
+    "vitamins": [ [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -126,12 +128,12 @@
     "healthy": -1,
     "price": "250 cent",
     "price_postapoc": "3 USD",
-    "material": "milk",
+    "material": [ "milk" ],
     "primary_material": "ice_cream",
     "phase": "liquid",
     "//": "not technically a drink, but is quasi-liquid enough that it'd get all over everything if you carried it",
     "charges": 2,
-    "vitamins": [ [ "vitA", 9 ], [ "calcium", 9 ], [ "vitB", 11 ] ],
+    "vitamins": [ [ "vitA", 9 ], [ "calcium", 9 ], [ "vitB", 11 ], [ "milk_allergen", 1 ] ],
     "flags": [ "MELTS", "EATEN_COLD" ]
   },
   {
@@ -144,7 +146,8 @@
     "price": "2 USD",
     "price_postapoc": "1 USD",
     "primary_material": "ice_cream",
-    "material": [ "milk", "junk" ]
+    "material": [ "milk", "junk" ],
+    "vitamins": [ [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
@@ -158,7 +161,7 @@
     "price_postapoc": "3 USD",
     "calories": 330,
     "primary_material": "ice_cream",
-    "vitamins": [ [ "vitA", 9 ], [ "calcium", 8 ], [ "iron", 4 ], [ "vitB", 8 ] ],
+    "vitamins": [ [ "vitA", 9 ], [ "calcium", 8 ], [ "iron", 4 ], [ "vitB", 8 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ],
     "material": [ "milk", "junk" ]
   },
   {
@@ -173,7 +176,15 @@
     "price": "3 USD",
     "price_postapoc": "3 USD",
     "primary_material": "ice_cream",
-    "vitamins": [ [ "vitA", 8 ], [ "vitC", 6 ], [ "calcium", 8 ], [ "iron", 1 ], [ "vitB", 9 ] ],
+    "vitamins": [
+      [ "vitA", 8 ],
+      [ "vitC", 6 ],
+      [ "calcium", 8 ],
+      [ "iron", 1 ],
+      [ "vitB", 9 ],
+      [ "fruit_allergen", 1 ],
+      [ "milk_allergen", 1 ]
+    ],
     "material": [ "milk", "fruit" ]
   },
   {
@@ -187,7 +198,7 @@
     "price": "3 USD",
     "price_postapoc": "3 USD",
     "primary_material": "ice_cream",
-    "vitamins": [ [ "vitA", 1 ], [ "calcium", 8 ], [ "vitB", 10 ] ],
+    "vitamins": [ [ "vitA", 1 ], [ "calcium", 8 ], [ "vitB", 10 ], [ "egg_allergen", 1 ], [ "milk_allergen", 1 ] ],
     "material": [ "milk", "egg" ]
   },
   {
@@ -201,7 +212,7 @@
     "price_postapoc": "1 USD",
     "weight": "80 g",
     "primary_material": "ice_cream",
-    "vitamins": [ [ "vitC", 4 ], [ "calcium", 10 ] ],
+    "vitamins": [ [ "vitC", 4 ], [ "calcium", 10 ], [ "milk_allergen", 1 ] ],
     "material": [ "milk" ]
   },
   {
@@ -217,7 +228,7 @@
     "price": "175 cent",
     "price_postapoc": "1 USD",
     "weight": "106 g",
-    "vitamins": [  ],
+    "vitamins": [ [ "fruit_allergen", 1 ] ],
     "material": [ "water", "fruit" ]
   },
   {
@@ -231,7 +242,7 @@
     "price_postapoc": "2 USD",
     "weight": "90 g",
     "primary_material": "ice_cream",
-    "vitamins": [ [ "calcium", 2 ], [ "iron", 2 ] ],
+    "vitamins": [ [ "calcium", 2 ], [ "iron", 2 ], [ "milk_allergen", 1 ] ],
     "material": [ "milk" ]
   }
 ]

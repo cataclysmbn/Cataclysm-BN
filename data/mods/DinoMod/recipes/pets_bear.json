@@ -169,7 +169,7 @@
     "time": "3 h",
     "autolearn": true,
     "qualities": [ { "id": "SEW", "level": 1 }, { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "duct_tape", 350 ] ], [ [ "bag_plastic", 70 ] ], [ [ "scrap_cotton", 70 ] ] ]
+    "components": [ [ [ "duct_tape", 350 ] ], [ [ "bag_plastic", 70 ] ], [ [ "rag", 10 ] ] ]
   },
   {
     "result": "sweater_armor_bear",

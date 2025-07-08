@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_POPUP_H
-#define CATA_SRC_POPUP_H
 
 #include <chrono>
 #include <cstddef>
@@ -332,4 +330,4 @@ class throbber_popup : private query_popup
         std::chrono::steady_clock::time_point last_update;
 };
 
-#endif // CATA_SRC_POPUP_H
+

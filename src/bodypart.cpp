@@ -1,5 +1,6 @@
 #include "bodypart.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <set>
 #include <unordered_map>
@@ -126,8 +127,8 @@ bool is_legacy_bodypart_id( const std::string &id )
         "NUM_BP",
     };
 
-    return std::find( legacy_body_parts.begin(), legacy_body_parts.end(),
-                      id ) != legacy_body_parts.end();
+    return std::ranges::find( legacy_body_parts,
+                              id ) != legacy_body_parts.end();
 }
 
 static body_part legacy_id_to_enum( const std::string &legacy_id )
@@ -278,6 +279,8 @@ void body_part_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "hp_bar_ui_text", hp_bar_ui_text );
     optional( jo, was_loaded, "encumbrance_text", encumb_text );
 
+    mandatory( jo, was_loaded, "sort_order", sort_order );
+
     assign( jo, "hit_size", hit_size, true );
     assign( jo, "hit_difficulty", hit_difficulty, true );
     assign( jo, "hit_size_relative", hit_size_relative, true );
@@ -298,7 +301,6 @@ void body_part_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "cold_morale_mod", cold_morale_mod, 0.0 );
 
     optional( jo, was_loaded, "stylish_bonus", stylish_bonus, 0 );
-    optional( jo, was_loaded, "squeamish_penalty", squeamish_penalty, 0 );
 
     optional( jo, was_loaded, "bionic_slots", bionic_slots_, 0 );
 

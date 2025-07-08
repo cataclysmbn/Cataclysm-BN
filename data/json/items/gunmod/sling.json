@@ -25,5 +25,22 @@
       [ "FLAMETHROWERS" ]
     ],
     "flags": [ "IS_ARMOR", "BELTED", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+  },
+  {
+    "id": "pistol_lanyard",
+    "type": "GUNMOD",
+    "name": { "str": "pistol lanyard" },
+    "description": "A pistol lanyard allows the attached gun to hang freely off your belt, so you won't lose it in case it's not in a holster.  However, it offers no protection.",
+    "weight": "10 g",
+    "volume": "25 ml",
+    "integral_volume": "100 ml",
+    "price": "250 cent",
+    "price_postapoc": "5 cent",
+    "material": "cotton",
+    "symbol": ":",
+    "color": "green",
+    "location": "sling",
+    "mod_target_category": [ [ "PISTOLS" ] ],
+    "flags": [ "IS_ARMOR", "BELTED", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
   }
 ]

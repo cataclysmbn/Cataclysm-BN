@@ -182,7 +182,9 @@
           { "item": "handrolled_cig", "prob": 10 },
           { "item": "nic_gum", "prob": 20 },
           { "item": "ecig", "prob": 15 },
+          { "item": "butane_can", "prob": 10 },
           { "collection": [ { "item": "weed" }, { "item": "pipe_glass", "prob": 50 } ], "prob": 10 },
+          { "collection": [ { "item": "nectar_collector" }, { "item": "thc_wax", "prob": 50 } ], "prob": 10 },
           { "distribution": [ { "item": "joint", "prob": 80 }, { "item": "joint_roach", "prob": 20 } ], "prob": 10 },
           {
             "collection": [
@@ -192,6 +194,10 @@
             "prob": 10
           },
           { "collection": [ { "item": "advanced_ecig" }, { "item": "nicotine_liquid" } ], "prob": 10 },
+          {
+            "collection": [ { "item": "light_battery_cell", "charges": 100, "container-item": "dab_pen" }, { "item": "thc_liquid" } ],
+            "prob": 10
+          },
           { "collection": [ { "item": "crackpipe" }, { "item": "crack" } ], "prob": 5 }
         ],
         "prob": 50
@@ -209,6 +215,7 @@
       { "item": "coke", "prob": 2 },
       { "item": "lsd", "prob": 2 },
       { "item": "heroin", "prob": 2 },
+      { "item": "sizzurp", "prob": 2 },
       { "item": "mobile_memory_card", "prob": 10 },
       { "item": "flyer", "prob": 30 },
       { "item": "multitool", "prob": 5 },

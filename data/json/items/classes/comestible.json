@@ -10,6 +10,7 @@
     "volume": "250 ml",
     "price": "250 cent",
     "container": "bag_plastic",
+    "category": "cooking_ingredients",
     "material": "powder",
     "symbol": "%",
     "charges": 100

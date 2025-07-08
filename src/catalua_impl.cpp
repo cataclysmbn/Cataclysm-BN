@@ -1,4 +1,3 @@
-#ifdef LUA
 #include "catalua_impl.h"
 
 #include "catalua_bindings.h"
@@ -274,5 +273,3 @@ bool compare_tables( sol::table a, sol::table b )
     }
     return are_equal;
 }
-
-#endif

@@ -39,6 +39,44 @@
     }
   },
   {
+    "id": "regionaltransportmap",
+    "copy-from": "abstractmap",
+    "type": "GENERIC",
+    "name": { "str": "regional transport map" },
+    "description": "This is a printed guide to the local regional transportation systems.  This one specifically seems to show bus stations, airports, and entrances to subways.",
+    "color": "pink",
+    "volume": "10 ml",
+    "weight": "10 g",
+    "use_action": {
+      "type": "reveal_map",
+      "radius": 180,
+      "message": "You add the regional transportation systems to your map.",
+      "terrain": [
+        "sub_station",
+        "runway_start",
+        "runway_end",
+        "runway_fuel",
+        "runway_fuel2",
+        "runway_wild",
+        "runway_hangar",
+        "runway_hangar2",
+        "runway_carts",
+        "runway",
+        "s_air_runway",
+        "s_air_runway_hangars",
+        "s_air_runway_l",
+        "s_air_runway_B",
+        "s_air_runway_term",
+        "s_air_runway_r",
+        "bus_stat_0",
+        "bus_stat_1",
+        "airport_lot_0",
+        "airport_lot_1",
+        "s_air_helicopter_pad"
+      ]
+    }
+  },
+  {
     "id": "militarymap",
     "copy-from": "abstractmap",
     "type": "GENERIC",
@@ -74,7 +112,21 @@
     "use_action": {
       "type": "reveal_map",
       "radius": 180,
-      "terrain": [ "hiway", "road", "bridge", "s_pharm", "s_gun", "s_grocery", "s_hunting", "mil_surplus", "s_gas" ],
+      "terrain": [
+        "hiway",
+        "road",
+        "bridge",
+        "s_pharm",
+        "s_gun",
+        "s_grocery",
+        "s_hunting",
+        "mil_surplus",
+        "s_gas",
+        "afs_augmentation_clinic_n1",
+        "afs_augmentation_clinic_n2",
+        "afs_augmentation_clinic_n3",
+        "afs_augmentation_clinic_n4"
+      ],
       "message": "You add roads and possible supply points to your map."
     }
   },

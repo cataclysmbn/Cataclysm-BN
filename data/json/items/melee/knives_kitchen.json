@@ -4,7 +4,7 @@
     "name": { "str": "generic kitchen knife", "str_pl": "generic kitchen knives" },
     "description": "generic item template",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "weapon_category": [ "KNIVES" ],
     "material": "steel",
     "symbol": ";",

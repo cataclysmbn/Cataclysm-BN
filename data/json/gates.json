@@ -13,9 +13,13 @@
       "t_wall_g",
       "t_wall_y",
       "t_wall_p",
-      "t_concrete_wall",
+      "t_wall_P",
       "t_brick_wall",
-      "t_strconc_wall"
+      "t_adobe_brick_wall",
+      "t_sconc_wall",
+      "t_concrete_wall",
+      "t_strconc_wall",
+      "t_rock_wall"
     ],
     "messages": {
       "pull": "You turn the handle…",

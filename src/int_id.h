@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_INT_ID_H
-#define CATA_SRC_INT_ID_H
 
 #include <functional>
 #include <string>
@@ -127,4 +125,4 @@ struct hash< int_id<T> > {
 };
 } // namespace std
 
-#endif // CATA_SRC_INT_ID_H
+

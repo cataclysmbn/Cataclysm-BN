@@ -1,0 +1,66 @@
+[
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "PATHFINDING_DEFAULT_IS_OVERRIDE",
+    "info": "If true, default is applied even if the value IS specified. This makes all monsters pathfind the same.",
+    "//": "Temporary option, should be removed once intelligence presets are implemented",
+    "stype": "bool",
+    "value": false
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "PATHFINDING_H_COEFF_DEFAULT",
+    "info": "If `h_coeff` is unspecified, it will be this: how directed the pathfinding is. A value of 1.0 makes pathfinding equivalent to A*, 0.0 is raw Dijikstra; this adjusts precision, high values will converge quicker, but produce a possibly less than shortest path.",
+    "stype": "float",
+    "value": 1.0
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "PATHFINDING_ALPHA_DEFAULT",
+    "info": "If `alpha` is unspecified, it will be this: alpha coefficient is a coefficient that makes pathfinding sometimes take slightly less than most optimal tiles. 1.0 only allows taking the best tiles, 0 will pick any _better_ tile that current one, not necessarily the best one. Use it to make pathfinding more 'flowy' and to decongest routes",
+    "stype": "float",
+    "value": 1.0
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "PATHFINDING_SEARCH_RADIUS_COEFF_DEFAULT",
+    "info": "If `search_radius_coeff` is unspecified, the value will be this: limits pathfinding search domain, will include tiles within the circle centered at the midpoint between start position and end position of diameter equal to the distance between said points multiplied by this coefficient. Setting this less that 1 will make pathfinding always fail. Negative values will disable search radius limit. Be aware, this forces pathfinding to be redone on each call, which is expensive.",
+    "stype": "float",
+    "value": -999
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "PATHFINDING_SEARCH_CONE_ANGLE_DEFAULT",
+    "info": "If `search_cone_angle` is unspecified, the value will be this: limits pathfinding search domain, will include tiles within a cone of this angle starting from start position and going towards end position. A value of 180 and more disables search cone. Be aware, this forces pathfinding to be redone on each call, which is expensive.",
+    "stype": "float",
+    "value": 180.0
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "PATHFINDING_RANGE_MULT",
+    "info": "Multiply specified `max_dist` and `max_length` by this value. If set to negative, makes both infinite, allowing any distance pathfinding.",
+    "stype": "float",
+    "value": 1.0
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "PATHFINDING_MAX_F_LIMIT_BASED_ON_MAX_DIST",
+    "info": "Use specified `max_dist` instead of distance between the start position and the end position when limiting search domain based on unbiased f-values: this replicates `max_length` constraint used by legacy pathfinding. This makes maximum allowed produced path complexity depend on how close the target position is to the start position.",
+    "stype": "bool",
+    "value": true
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "PATHFINDING_MAX_F_COEFF_DEFAULT",
+    "info": "If max_f_coeff is unspecified, the value will be this: limits pathfinding search domain based on unbiased f-values: this will make pathfinding not succeed when the f-value is more than this value multiplied by either the distance between the start position and the end position or by `max_dist` is the option is enabled. 2.5 is equivalent to legacy pathfinding, negative values disable the limit.",
+    "stype": "float",
+    "value": 2.5
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "PATHFINDING_MOB_PRESENCE_PENALTY_DEFAULT",
+    "info": "If mob avoidance is unspecified, the value will be this. This makes pathfinding route around living mobs with higher values increasing the route-around range. Negative values will make pathfinding treat mobs as impassable walls.",
+    "stype": "float",
+    "value": 0.0
+  }
+]

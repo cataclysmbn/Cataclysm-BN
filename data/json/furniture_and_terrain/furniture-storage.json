@@ -373,7 +373,7 @@
     "lockpick_result": "f_gunsafe_o",
     "lockpick_message": "With a satisfying click, the lock on the gun safe door opens.",
     "examine_action": "locked_object",
-    "oxytorch": { "result": "f_gunsafe_o", "duration": "14 seconds" },
+    "oxytorch": { "result": "f_gunsafe_o", "duration": "15 seconds" },
     "pry": {
       "success_message": "You pry open the safe.",
       "fail_message": "You pry, but cannot pry open the safe.",
@@ -414,7 +414,7 @@
     "required_str": 14,
     "max_volume": "250 L",
     "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "PLACE_ITEM", "MOUNTABLE", "MINEABLE" ],
-    "oxytorch": { "result": "f_gunsafe_o", "duration": "14 seconds" },
+    "oxytorch": { "result": "f_gunsafe_o", "duration": "15 seconds" },
     "bash": {
       "str_min": 40,
       "str_max": 200,
@@ -442,7 +442,7 @@
     "required_str": 14,
     "max_volume": "250 L",
     "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "PLACE_ITEM", "MOUNTABLE", "MINEABLE" ],
-    "oxytorch": { "result": "f_gunsafe_o", "duration": "14 seconds" },
+    "oxytorch": { "result": "f_gunsafe_o", "duration": "15 seconds" },
     "examine_action": "gunsafe_el",
     "pry": {
       "success_message": "You pry open the safe.",
@@ -699,7 +699,7 @@
     "coverage": 30,
     "required_str": 14,
     "max_volume": "250 L",
-    "oxytorch": { "result": "f_safe_o", "duration": "14 seconds" },
+    "oxytorch": { "result": "f_safe_o", "duration": "15 seconds" },
     "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "PLACE_ITEM", "MOUNTABLE", "MINEABLE" ],
     "examine_action": "safe",
     "pry": {

@@ -27,8 +27,8 @@
       [ "ROCKET_LAUNCHERS" ],
       [ "FLAMETHROWERS" ]
     ],
-    "dispersion_modifier": -1,
-    "handling_modifier": 3
+    "dispersion_modifier": -75,
+    "handling_modifier": 5
   },
   {
     "id": "folding_stock",
@@ -71,8 +71,8 @@
     "material": [ "steel" ],
     "symbol": ":",
     "color": "dark_gray",
+    "handling_modifier": -5,
     "location": "stock",
-    "handling_modifier": 5,
     "mod_target_category": [
       [ "PISTOLS" ],
       [ "REVOLVERS" ],
@@ -98,7 +98,7 @@
     "color": "dark_gray",
     "location": "stock",
     "mod_target_category": [ [ "PISTOLS" ], [ "REVOLVERS" ], [ "S_XBOWS" ], [ "M_XBOWS" ] ],
-    "handling_modifier": 15
+    "handling_modifier": 10
   },
   {
     "id": "recoil_stock",
@@ -146,7 +146,7 @@
     "color": "dark_gray",
     "location": "stock",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
-    "dispersion_modifier": -1,
+    "dispersion_modifier": -50,
     "handling_modifier": 5
   },
   {
@@ -163,7 +163,7 @@
     "mod_target_category": [ [ "SUBMACHINE_GUNS" ], [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ], [ "SHOTGUNS" ] ],
     "dispersion_modifier": 100,
     "weight_multiplier": 0.75,
-    "handling_modifier": -15,
+    "handling_modifier": -5,
     "flags": [ "COLLAPSIBLE_STOCK", "IRREMOVABLE" ]
   }
 ]

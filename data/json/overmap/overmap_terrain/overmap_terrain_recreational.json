@@ -87,11 +87,29 @@
     "color": "i_blue"
   },
   {
-    "id": "skate_park",
+    "id": [ "skate_park", "skate_park_up", "skate_park_down" ],
     "type": "overmap_terrain",
     "copy-from": "generic_city_building",
     "name": "skate park",
     "sym": "O",
+    "color": "light_gray"
+  },
+  {
+    "id": [ "vending_park_1", "vending_park_2" ],
+    "type": "overmap_terrain",
+    "looks_like": "small_storage_units",
+    "copy-from": "generic_city_building",
+    "name": "vending park",
+    "sym": "V",
+    "color": "light_gray"
+  },
+  {
+    "id": [ "vending_park_roof_1", "vending_park_roof_2" ],
+    "type": "overmap_terrain",
+    "looks_like": "small_storage_units",
+    "copy-from": "generic_city_building",
+    "name": "vending park roof",
+    "sym": "V",
     "color": "light_gray"
   },
   {

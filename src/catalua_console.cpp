@@ -1,5 +1,3 @@
-#if defined(LUA)
-
 #include "catalua_console.h"
 
 #include "catalua_log.h"
@@ -296,5 +294,3 @@ void show_lua_console_impl()
 }
 
 } // namespace cata
-
-#endif // LUA

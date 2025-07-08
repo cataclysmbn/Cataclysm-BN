@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_BEHAVIOR_H
-#define CATA_SRC_BEHAVIOR_H
 
 #include <functional>
 #include <string>
@@ -90,4 +88,4 @@ void check_consistency();
 
 } // namespace behavior
 
-#endif // CATA_SRC_BEHAVIOR_H
+

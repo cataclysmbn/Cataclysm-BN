@@ -2,7 +2,7 @@
   {
     "id": "stapler",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "scrap_metal",
     "name": { "str": "stapler" },
     "description": "A stapler for fastening sheets of paper together.",
     "weight": "300 g",
@@ -16,7 +16,7 @@
   {
     "id": "pen",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "other",
     "name": { "str": "pen" },
     "description": "A plastic ball point pen.",
     "weight": "20 g",
@@ -30,7 +30,7 @@
   {
     "id": "scissors",
     "type": "GENERIC",
-    "category": "tools",
+    "category": "tools_workshop",
     "weapon_category": [ "KNIVES" ],
     "name": { "str": "pair of scissors", "str_pl": "pairs of scissors" },
     "description": "These are a long pair of heavy-duty scissors.  Use scissors to cut items made from cotton (like clothing) into rags.",
@@ -50,7 +50,7 @@
     "type": "GENERIC",
     "id": "paper",
     "name": "paper",
-    "category": "spare_parts",
+    "category": "scrap_wood",
     "weight": "3 g",
     "color": "white",
     "symbol": "`",

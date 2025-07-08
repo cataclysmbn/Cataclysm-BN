@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_OVERMAP_UI_H
-#define CATA_SRC_OVERMAP_UI_H
 
 #include "coordinates.h"
 #include "type_id.h"
@@ -107,4 +105,4 @@ auto fmt_omt_coords( const tripoint_abs_omt &coord ) -> std::string;
 weather_type_id get_weather_at_point( const point_abs_omt &pos );
 std::tuple<char, nc_color, size_t> get_note_display_info( const std::string &note );
 } // namespace overmap_ui
-#endif // CATA_SRC_OVERMAP_UI_H
+

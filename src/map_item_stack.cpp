@@ -60,7 +60,7 @@ std::vector<map_item_stack> filter_item_stacks( const std::vector<map_item_stack
     std::vector<map_item_stack> ret;
 
     auto z = item_filter_from_string( filter );
-    std::copy_if( stack.begin(), stack.end(),
+    std::ranges::copy_if( stack,
     std::back_inserter( ret ), [z]( const map_item_stack & a ) {
         if( a.example != nullptr ) {
             return z( *a.example );

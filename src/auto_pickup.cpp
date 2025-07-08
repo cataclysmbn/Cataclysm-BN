@@ -29,6 +29,7 @@
 #include "translations.h"
 #include "type_id.h"
 #include "ui_manager.h"
+#include "world.h"
 
 using namespace auto_pickup;
 
@@ -582,15 +583,15 @@ bool check_special_rule( const std::vector<material_id> &materials, const std::s
     }
 
     if( type == 'm' ) {
-        return std::any_of( materials.begin(), materials.end(), [&filter]( const material_id & mat ) {
-            return std::any_of( filter.begin(), filter.end(), [&mat]( const std::string & search ) {
+        return std::ranges::any_of( materials, [&filter]( const material_id & mat ) {
+            return std::ranges::any_of( filter, [&mat]( const std::string & search ) {
                 return lcmatch( mat->name(), search );
             } );
         } );
 
     } else if( type == 'M' ) {
-        return std::all_of( materials.begin(), materials.end(), [&filter]( const material_id & mat ) {
-            return std::any_of( filter.begin(), filter.end(), [&mat]( const std::string & search ) {
+        return std::ranges::all_of( materials, [&filter]( const material_id & mat ) {
+            return std::ranges::any_of( filter, [&mat]( const std::string & search ) {
                 return lcmatch( mat->name(), search );
             } );
         } );
@@ -714,22 +715,22 @@ bool player_settings::save_global()
 
 bool player_settings::save( const bool bCharacter )
 {
-    auto savefile = PATH_INFO::autopickup();
-
     if( bCharacter ) {
-        savefile = g->get_player_base_save_path() + ".apu.json";
-
-        const std::string player_save = g->get_player_base_save_path() + ".sav";
         //Character not saved yet.
-        if( !file_exist( player_save ) ) {
+        if( !g->get_active_world()->player_file_exist( ".sav" ) ) {
             return true;
         }
-    }
 
-    return write_to_file( savefile, [&]( std::ostream & fout ) {
-        JsonOut jout( fout, true );
-        ( bCharacter ? character_rules : global_rules ).serialize( jout );
-    }, _( "autopickup configuration" ) );
+        return g->get_active_world()->write_to_player_file( ".apu.json", [&]( std::ostream & fout ) {
+            JsonOut jout( fout, true );
+            ( bCharacter ? character_rules : global_rules ).serialize( jout );
+        }, _( "autopickup configuration" ) );
+    } else {
+        return write_to_file( PATH_INFO::autopickup(), [&]( std::ostream & fout ) {
+            JsonOut jout( fout, true );
+            ( bCharacter ? character_rules : global_rules ).serialize( jout );
+        }, _( "autopickup configuration" ) );
+    }
 }
 
 void player_settings::load_character()
@@ -744,15 +745,15 @@ void player_settings::load_global()
 
 void player_settings::load( const bool bCharacter )
 {
-    std::string sFile = PATH_INFO::autopickup();
     if( bCharacter ) {
-        sFile = g->get_player_base_save_path() + ".apu.json";
+        g->get_active_world()->read_from_player_file_json( ".apu.json", [&]( JsonIn & jsin ) {
+            ( bCharacter ? character_rules : global_rules ).deserialize( jsin );
+        }, true );
+    } else {
+        read_from_file_json( PATH_INFO::autopickup(), [&]( JsonIn & jsin ) {
+            ( bCharacter ? character_rules : global_rules ).deserialize( jsin );
+        }, true );
     }
-
-    read_from_file_optional_json( sFile, [&]( JsonIn & jsin ) {
-        ( bCharacter ? character_rules : global_rules ).deserialize( jsin );
-    } );
-
     invalidate();
 }
 

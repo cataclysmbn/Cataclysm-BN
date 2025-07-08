@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_POINT_ROTATE_H
-#define CATA_SRC_POINT_ROTATE_H
 
 #include "point.h"
 #include "coordinates.h"
@@ -23,4 +21,4 @@ auto rotate_point_sm( const tripoint &p, const tripoint &orig, int turns ) -> tr
 
 auto get_rot_turns( const tripoint_abs_omt &here, const tripoint_abs_omt &there ) -> int;
 
-#endif // CATA_SRC_POINT_ROTATE_H
+

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATA_TILES_H
-#define CATA_SRC_CATA_TILES_H
 
 #include <cstddef>
 #include <map>
@@ -38,6 +36,7 @@ struct tile_type {
     bool multitile = false;
     bool rotates = false;
     bool animated = false;
+    bool has_om_transparency = false;
     int height_3d = 0;
     point offset = point_zero;
 
@@ -359,7 +358,7 @@ class cata_tiles
 
         /** Reload tileset, with the given scale. Scale is divided by 16 to allow for scales < 1 without risking
          *  float inaccuracies. */
-        void set_draw_scale( int scale );
+        void set_draw_scale( float scale );
 
         /** Tries to find tile with specified parameters and return it if exists **/
         std::optional<tile_search_result> tile_type_search(
@@ -450,6 +449,16 @@ class cata_tiles
                                   const std::string &subcategory, const tripoint &pos, int subtile, int rota,
                                   lit_level ll, bool apply_night_vision_goggles, int &height_3d, int overlay_count,
                                   bool as_independent_entity = false );
+        /**
+        * @brief Draw overmap tile, if it's transparent, then draw lower tile first
+        *
+        * @param id String id of the tile to draw.
+        * @param rotation { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
+        * @param subtile variant of the tile
+        * @param base_z_offset Z offset from given position, used to calculate overlay opacity
+        */
+        void draw_om_tile_recursively( const tripoint_abs_omt omp, const std::string &id, int rotation,
+                                       int subtile, int base_z_offset );
 
         /**
          * @brief draw_sprite_at() without height_3d
@@ -469,7 +478,7 @@ class cata_tiles
         bool draw_sprite_at(
             const tile_type &tile, const weighted_int_list<std::vector<int>> &svlist,
             point, unsigned int loc_rand, bool rota_fg, int rota, lit_level ll,
-            bool apply_night_vision_goggles, int &height_3d, int overlay_count );
+            bool apply_night_vision_goggles, int &height_3d, int overlay_alpha );
 
         /**
          * @brief Calls draw_sprite_at() twice each for foreground and background.
@@ -487,6 +496,17 @@ class cata_tiles
          */
         bool draw_tile_at( const tile_type &tile, point, unsigned int loc_rand, int rota,
                            lit_level ll, bool apply_night_vision_goggles, int &height_3d, int overlay_count );
+
+        /**
+         * @brief Draws a colored solid color tile at position, with optional blending
+         *
+         * @param color Color to draw.
+         * @param p Point to draw the tile at.
+         * @param blend_mode Blend mode to draw the tile with
+         * @return always true.
+         */
+        bool draw_color_at( const SDL_Color &color, point p,
+                            SDL_BlendMode blend_mode = SDL_BLENDMODE_NONE );
 
         /** Tile Picking */
         void get_tile_values( int t, const int *tn, int &subtile, int &rotation );
@@ -798,4 +818,4 @@ class cata_tiles
         std::string memory_map_mode = "color_pixel_sepia";
 };
 
-#endif // CATA_SRC_CATA_TILES_H
+

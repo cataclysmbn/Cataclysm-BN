@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATA_LIBINTL_H
-#define CATA_SRC_CATA_LIBINTL_H
 
 #include <memory>
 #include <string>
@@ -226,4 +224,4 @@ class trans_library
 };
 } // namespace cata_libintl
 
-#endif // CATA_SRC_CATA_LIBINTL_H
+

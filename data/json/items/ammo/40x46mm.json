@@ -4,7 +4,7 @@
     "type": "AMMO",
     "looks_like": "84x246mm_he",
     "name": { "str": "40x46mm grenade" },
-    "volume": "250 ml",
+    "volume": "125 ml",
     "price": "100 USD",
     "price_postapoc": "5 USD",
     "material": [ "steel", "powder" ],
@@ -16,7 +16,7 @@
     "range": 60,
     "damage": { "damage_type": "bullet", "amount": 80 },
     "dispersion": 30,
-    "recoil": 225,
+    "recoil": 2000,
     "effects": [ "COOKOFF", "NEVER_MISFIRES" ]
   },
   {
@@ -52,8 +52,8 @@
     "description": "A 40x46mm buckshot load, designed for use in thick vegetation or room clearing.",
     "weight": "120 g",
     "range": 12,
-    "damage": { "damage_type": "bullet", "amount": 120 },
-    "recoil": 1000,
+    "damage": { "damage_type": "bullet", "amount": 120, "armor_multiplier": 2 },
+    "proportional": { "recoil": 1.2 },
     "casing": "40x46mm_m199_casing",
     "extend": { "effects": [ "SHOT" ] }
   },
@@ -78,8 +78,8 @@
     "description": "An improvised 40x46mm buckshot load somewhat resembling M576.  Aside from using the M118 casing normally used by HEDP shells, it performs as well as buckshot loads using the intended M199 casing.",
     "weight": "120 g",
     "range": 10,
-    "damage": { "damage_type": "bullet", "amount": 120 },
-    "recoil": 1000,
+    "damage": { "damage_type": "bullet", "amount": 120, "armor_multiplier": 2 },
+    "proportional": { "recoil": 1.2 },
     "casing": "40x46mm_m118_casing",
     "extend": { "effects": [ "SHOT" ] }
   },
@@ -93,7 +93,7 @@
     "range": 10,
     "//": "Balanced as FMJ.",
     "damage": { "damage_type": "bullet", "amount": 96, "armor_penetration": 42 },
-    "recoil": 1000,
+    "proportional": { "recoil": 1.4 },
     "casing": "40x46mm_m118_casing"
   },
   {
@@ -106,7 +106,7 @@
     "range": 10,
     "//": "Balanced as FMJ.",
     "damage": { "damage_type": "bullet", "amount": 96, "armor_penetration": 42 },
-    "recoil": 1000,
+    "proportional": { "recoil": 1.4 },
     "casing": "40x46mm_m199_casing"
   },
   {
@@ -119,7 +119,7 @@
     "range": 10,
     "//": "Balanced as AP.",
     "damage": { "damage_type": "bullet", "amount": 84, "armor_penetration": 72 },
-    "recoil": 1000,
+    "proportional": { "recoil": 1.2 },
     "casing": "40x46mm_m118_casing",
     "extend": { "effects": [ "SHOT" ] }
   },
@@ -133,7 +133,7 @@
     "range": 10,
     "//": "Balanced as AP.",
     "damage": { "damage_type": "bullet", "amount": 84, "armor_penetration": 72 },
-    "recoil": 1000,
+    "proportional": { "recoil": 1.2 },
     "casing": "40x46mm_m199_casing",
     "extend": { "effects": [ "SHOT" ] }
   }

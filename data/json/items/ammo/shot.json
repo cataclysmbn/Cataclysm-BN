@@ -123,7 +123,7 @@
     "range": 0,
     "damage": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 3 },
     "loudness": 80,
-    "shape": [ "cone", { "half_angle": 15, "length": 8 } ],
+    "shape": [ "cone", { "half_angle": 15, "length": 10 } ],
     "extend": { "effects": [ "NOGIB" ] }
   },
   {
@@ -150,7 +150,7 @@
     "price_postapoc": "8 USD",
     "count": 10,
     "//": "Balanced as standard AP.",
-    "relative": { "damage": { "damage_type": "bullet", "amount": -20, "armor_penetration": 30, "armor_multiplier": -1 } }
+    "relative": { "damage": { "damage_type": "bullet", "amount": -20, "armor_penetration": 15, "armor_multiplier": -1.5 } }
   },
   {
     "id": "shot_he",
@@ -163,7 +163,7 @@
     "price_postapoc": "16 USD",
     "//2": "currently can't be crafted",
     "count": 5,
-    "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 0 },
+    "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 10 },
     "extend": { "effects": [ "EXPLOSIVE" ] }
   },
   {
@@ -200,7 +200,7 @@
     "price_postapoc": "4 USD",
     "dispersion": 80,
     "//": "Balanced as FMJ",
-    "relative": { "range": 12, "damage": { "damage_type": "bullet", "amount": -15, "armor_penetration": 18, "armor_multiplier": -0.5 } },
+    "relative": { "range": 12, "damage": { "damage_type": "bullet", "amount": -15, "armor_penetration": 18, "armor_multiplier": -1 } },
     "proportional": { "recoil": 1.4 },
     "delete": { "effects": [ "SHOT" ] }
   }

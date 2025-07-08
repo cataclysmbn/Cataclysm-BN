@@ -7,6 +7,29 @@
         "file": "terrain.png",
         "tiles": [
           {
+            "id": "t_strconc_floor",
+            "fg": [
+              { "weight": 10, "sprite": 0 },
+              { "weight": 10, "sprite": 1 },
+              { "weight": 10, "sprite": 2 },
+              { "weight": 10, "sprite": 3 }
+            ]
+          },
+          {
+            "id": "t_concrete_wall",
+            "fg": 6,
+            "rotates": false,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "center", "fg": 7 },
+              { "id": "corner", "fg": [ 8, 9, 10, 11 ] },
+              { "id": "t_connection", "fg": [ 18, 19, 20, 21 ] },
+              { "id": "edge", "fg": [ 12, 13 ] },
+              { "id": "end_piece", "fg": [ 14, 15, 16, 17 ] },
+              { "id": "unconnected", "fg": 22 }
+            ]
+          },
+          {
             "id": "t_sidewalk",
             "fg": [
               { "weight": 90, "sprite": 23 },
@@ -113,35 +136,34 @@
           { "id": "t_door_green_frame", "fg": 124, "bg": 95 },
           { "id": "t_door_curtain_c", "fg": 125 },
           { "id": "t_door_curtain_o", "fg": 126 },
-          { "id": "t_thconc_floor", "fg": 127 },
           { "id": "t_door_lab_c", "fg": 128 },
           { "id": "t_door_lab_b", "fg": 129 },
-          { "id": "t_door_lab_o", "fg": 130, "bg": 127 },
-          { "id": "t_door_lab_frame", "fg": 131, "bg": 127 },
+          { "id": "t_door_lab_o", "fg": 130, "bg": 163 },
+          { "id": "t_door_lab_frame", "fg": 131, "bg": 163 },
           { "id": "t_rdoor_c", "fg": 132 },
           { "id": "t_rdoor_b", "fg": 133 },
           { "id": "t_rdoor_o", "fg": 134, "bg": 95 },
           { "id": "t_rdoor_boarded", "fg": 135 },
           { "id": "t_rdoor_boarded_damaged", "fg": 136 },
           { "id": "t_door_glass_frosted_lab_c", "fg": 137 },
-          { "id": "t_door_glass_frosted_lab_o", "fg": 138, "bg": 127 },
+          { "id": "t_door_glass_frosted_lab_o", "fg": 138, "bg": 163 },
           { "id": "t_door_glass_frosted_c", "fg": 139 },
           { "id": "t_door_glass_frosted_o", "fg": 140, "bg": 143 },
           { "id": "t_door_metal_lab_c", "fg": 141 },
-          { "id": "t_door_metal_lab_o", "fg": 142, "bg": 127 },
+          { "id": "t_door_metal_lab_o", "fg": 142, "bg": 163 },
           { "id": "bg_metal_block", "fg": 143 },
           { "id": "t_laminated_door_glass_c", "fg": 144 },
-          { "id": "t_laminated_door_glass_o", "fg": 145, "bg": 127 },
+          { "id": "t_laminated_door_glass_o", "fg": 145, "bg": 163 },
           { "id": "t_ballistic_door_glass_c", "fg": 146 },
-          { "id": "t_ballistic_door_glass_o", "fg": 147, "bg": 127 },
+          { "id": "t_ballistic_door_glass_o", "fg": 147, "bg": 163 },
           { "id": "t_reinforced_door_glass_c", "fg": 148 },
-          { "id": "t_reinforced_door_glass_o", "fg": 149, "bg": 127 },
+          { "id": "t_reinforced_door_glass_o", "fg": 149, "bg": 163 },
           { "id": "t_reinforced_door_glass_lab_c", "fg": 150 },
-          { "id": "t_reinforced_door_glass_lab_o", "fg": 151, "bg": 127 },
+          { "id": "t_reinforced_door_glass_lab_o", "fg": 151, "bg": 163 },
           { "id": "t_door_makeshift_c", "fg": 152 },
           { "id": "t_door_makeshift_o", "fg": 153, "bg": 95 },
           { "id": "t_door_metal_locked", "fg": 154 },
-          { "id": "t_door_metal_locked_o", "fg": 155, "bg": 127 },
+          { "id": "t_door_metal_locked_o", "fg": 155, "bg": 163 },
           {
             "id": "t_concrete",
             "fg": [
@@ -153,7 +175,24 @@
             "bg": 156
           },
           { "id": "t_floor_waxed", "fg": 161 },
-          { "id": "t_floor_waxed_y", "fg": 162 }
+          { "id": "t_floor_waxed_y", "fg": 162 },
+          { "id": "t_thconc_floor", "fg": 163 },
+          { "id": "t_thconc_floor_olight", "fg": 164 },
+          {
+            "id": "t_shingle_flat_roof",
+            "fg": 165,
+            "rotates": false,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "center", "fg": 166 },
+              { "id": "corner", "fg": [ 167, 168, 169, 170 ] },
+              { "id": "t_connection", "fg": [ 177, 178, 179, 180 ] },
+              { "id": "edge", "fg": [ 171, 172 ] },
+              { "id": "end_piece", "fg": [ 173, 174, 175, 176 ] },
+              { "id": "unconnected", "fg": 181 }
+            ]
+          },
+          { "id": "t_door_metal_welded_lab", "fg": 182 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
