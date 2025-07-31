@@ -158,6 +158,22 @@ std::vector<const recipe *> recipe_subset::recent() const
 
     return res;
 }
+
+
+std::vector<const recipe *> recipe_subset::nested() const
+{
+    std::vector<const recipe *> res;
+
+    std::copy_if( recipes.begin(), recipes.end(), std::back_inserter( res ), [&]( const recipe * r ) {
+        if( !*r || r->obsolete ) {
+            return false;
+        }
+        return uistate.nested_recipes.find( r->ident() ) != uistate.nested_recipes.end();
+    } );
+
+    return res;
+}
+
 std::vector<const recipe *> recipe_subset::search( const std::string &txt,
         const search_type key ) const
 {
@@ -256,6 +272,8 @@ bool recipe_subset::empty_category( const std::string &cat, const std::string &s
         return uistate.recent_recipes.empty();
     } else if( subcat == "CSC_*_HIDDEN" ) {
         return uistate.hidden_recipes.empty();
+    } else if( subcat == "CSC_*_NESTED" ) {
+        return uistate.nested_recipes.empty();
     }
 
     auto iter = category.find( cat );
@@ -311,6 +329,11 @@ void recipe_dictionary::load_recipe( const JsonObject &jo, const std::string &sr
 void recipe_dictionary::load_uncraft( const JsonObject &jo, const std::string &src )
 {
     load( jo, src, recipe_dict.uncraft );
+}
+
+void recipe_dictionary::load_nested_category( const JsonObject &jo, const std::string &src )
+{
+    load( jo, src, recipe_dict.recipes );
 }
 
 recipe &recipe_dictionary::load( const JsonObject &jo, const std::string &src,

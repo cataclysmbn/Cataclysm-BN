@@ -135,6 +135,29 @@ void reset_recipe_categories()
     craft_subcat_list.clear();
 }
 
+template<typename T>
+list_circularizer<T> make_circular( std::vector<T> &vec )
+{
+    return list_circularizer<T>( vec );
+}
+
+static void perform_nested( const recipe *rec, std::string filterstring,
+                            list_circularizer<std::string> &tab,
+                            list_circularizer<std::string> &subtab, bool &recalc )
+{
+    // if the recipe is just a nested group move to a place to view it
+    uistate.nested_recipes.clear();
+    for( const recipe_id &r : rec->nested_category_data ) {
+        uistate.nested_recipes.insert( r );
+    }
+    // set back to * and to the nested category
+    tab.set_index( 0 );
+    subtab = make_circular( craft_subcat_list[tab.cur()] );
+    // TODO: Make this less hard coded
+    subtab.prev();
+    recalc = true;
+}
+
 namespace
 {
 struct availability {
@@ -149,6 +172,7 @@ struct availability {
         can_craft = known && could_craft_if_knew;
         can_craft_non_rotten = req.can_make_with_inventory(
                                    inv, no_rotten_filter, batch_size, cost_adjustment::start_only );
+        is_nested_category = r->is_nested();
         const requirement_data &simple_req = r->simple_requirements();
         apparently_craftable = simple_req.can_make_with_inventory(
                                    inv, all_items_filter, batch_size, cost_adjustment::start_only );
@@ -166,6 +190,7 @@ struct availability {
     bool could_craft_if_knew;
     bool apparently_craftable;
     bool has_all_skills;
+    bool is_nested_category;
     bool known;
 
     nc_color selected_color() const {
@@ -202,11 +227,13 @@ static std::vector<std::string> recipe_info(
     oss << string_format( _( "Other skills: %s\n" ),
                           recp.required_skills_string( &u, false, false ) );
 
+    if( !recp.is_nested() ) {
+        const int expected_turns = u.expected_time_to_craft( recp, batch_size )
+                                   / to_moves<int>( 1_turns );
+        oss << string_format( _( "Time to complete: <color_cyan>%s</color>\n" ),
+                              to_string( time_duration::from_turns( expected_turns ) ) );
 
-    const int expected_turns = u.expected_time_to_craft( recp, batch_size )
-                               / to_moves<int>( 1_turns );
-    oss << string_format( _( "Time to complete: <color_cyan>%s</color>\n" ),
-                          to_string( time_duration::from_turns( expected_turns ) ) );
+    }
 
     oss << string_format( _( "Batch time savings: <color_cyan>%s</color>\n" ),
                           recp.batch_savings_string() );
@@ -269,13 +296,15 @@ static std::vector<std::string> recipe_info(
 
     std::vector<std::string> result = foldstring( oss.str(), fold_width );
 
-    const requirement_data &req = recp.simple_requirements();
-    const std::vector<std::string> tools = req.get_folded_tools_list(
-            fold_width, color, crafting_inv, batch_size );
-    const std::vector<std::string> comps = req.get_folded_components_list(
-            fold_width, color, crafting_inv, recp.get_component_filter(), batch_size, qry_comps );
-    result.insert( result.end(), tools.begin(), tools.end() );
-    result.insert( result.end(), comps.begin(), comps.end() );
+    if( !recp.is_nested() ) {
+        const requirement_data &req = recp.simple_requirements();
+        const std::vector<std::string> tools = req.get_folded_tools_list(
+                fold_width, color, crafting_inv, batch_size );
+        const std::vector<std::string> comps = req.get_folded_components_list(
+                fold_width, color, crafting_inv, recp.get_component_filter(), batch_size, qry_comps );
+        result.insert( result.end(), tools.begin(), tools.end() );
+        result.insert( result.end(), comps.begin(), comps.end() );
+    }
 
     oss = std::ostringstream();
     if( !u.knows_recipe( &recp ) ) {
@@ -587,7 +616,7 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                                   uistate.read_recipes.count( current[i]->ident() );
             const point print_from( 2, i - recipe_scroll_window_min );
             const bool highlight = i == line;
-            const nc_color col = highlight ? available[i].selected_color() : available[i].color();
+            nc_color col = highlight ? available[i].selected_color() : available[i].color();
             if( highlight ) {
                 ui.set_cursor( w_data, print_from );
             }
@@ -646,12 +675,20 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         wnoutrefresh( w_data );
 
         if( isWide && !current.empty() ) {
-            item_info_data data = item_info_data_from_recipe( current[line], batch_size, item_info_scroll );
-            data.without_getch = true;
-            data.without_border = true;
-            data.scrollbar_left = false;
-            data.use_full_win = true;
-            draw_item_info( w_iteminfo, data );
+            if( current[line]->is_nested() ) {
+                const std::string desc = current[line]->description.translated() + "\n\n";;
+                fold_and_print( w_iteminfo, point_zero, item_info_width, c_light_gray, desc );
+                scrollbar().offset_x( item_info_width - 1 ).offset_y( 0 ).content_size( 1 ).viewport_size( getmaxy(
+                            w_iteminfo ) ).apply( w_iteminfo );
+                wnoutrefresh( w_iteminfo );
+            } else {
+                item_info_data data = item_info_data_from_recipe( current[line], batch_size, item_info_scroll );
+                data.without_getch = true;
+                data.without_border = true;
+                data.scrollbar_left = false;
+                data.use_full_win = true;
+                draw_item_info( w_iteminfo, data );
+            }
         }
     } );
 
@@ -747,9 +784,17 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                         qry_begin = qry_end + 1;
                     } while( qry_end != std::string::npos );
                     picking.insert( picking.end(), filtered_recipes.begin(), filtered_recipes.end() );
+                } else if( subtab.cur() == "CSC_*_FAVORITE" ) {
+                    picking = shown_recipes.favorite();
+                } else if( subtab.cur() == "CSC_*_RECENT" ) {
+                    picking = shown_recipes.recent();
+                } else if( subtab.cur() == "CSC_*_HIDDEN" ) {
+                    current = shown_recipes.hidden();
+                    show_hidden = true;
+                } else if( subtab.cur() == "CSC_*_NESTED" ) {
+                    picking = shown_recipes.nested();
                 } else {
-                    const std::pair<std::vector<const recipe *>, bool> result = recipes_from_cat(
-                                shown_recipes, tab.cur(), subtab.cur() );
+                    const auto result = recipes_from_cat( shown_recipes, tab.cur(), subtab.cur() );
                     show_hidden = result.second;
                     if( show_hidden ) {
                         current = result.first;
@@ -760,11 +805,10 @@ const recipe *select_crafting_recipe( int &batch_size_out )
 
                 if( !show_hidden ) {
                     current.clear();
-                    for( auto i : picking ) {
-                        if( !uistate.hidden_recipes.contains( i->ident() ) ) {
-                            current.push_back( i );
-                        }
-                    }
+                    std::ranges::copy_if( picking, std::back_inserter( current ),
+                    []( const recipe *const recp ) {
+                        return !uistate.hidden_recipes.contains( recp->ident() );
+                    } );
                     num_hidden = picking.size() - current.size();
                     num_recipe = picking.size();
                 }
@@ -935,6 +979,9 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         } else if( action == "UP" ) {
             line--;
             user_moved_line = highlight_unread_recipes;
+        } else if( action == "CONFIRM" && current[line]->is_nested() ) {
+            perform_nested( current[line], filterstring, tab, subtab, recalc );
+            recalc = true;
         } else if( action == "CONFIRM" ) {
             if( available.empty() || !available[line].can_craft ) {
                 popup( _( "You can't do that!  Press [<color_yellow>ESC</color>]!" ) );

@@ -390,6 +390,7 @@ void DynamicDataLoader::initialize()
     add( "recipe_category", &load_recipe_category );
     add( "recipe",  &recipe_dictionary::load_recipe );
     add( "uncraft", &recipe_dictionary::load_uncraft );
+    add( "nested_category", &recipe_dictionary::load_nested_category );
     add( "recipe_group",  &recipe_group::load );
 
     add( "tool_quality", &quality::load_static );
