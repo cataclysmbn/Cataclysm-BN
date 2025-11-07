@@ -449,7 +449,7 @@ bool vehicle::collision( std::vector<veh_collision> &colls,
     for( int p = 0; static_cast<size_t>( p ) < parts.size(); p++ ) {
         const vpart_info &info = part_info( p );
         if( ( info.location != part_location_structure && !info.has_flag( VPFLAG_EXTENDABLE )
-              && info.rotor_diameter() == 0 ) || parts[ p ].removed || info.has_flag( VPFLAG_NOCOLLIDE ) ) {
+              && info.rotor_diameter() == 0 ) || parts[ p ].removed ) {
             continue;
         }
         empty = false;
@@ -458,6 +458,12 @@ bool vehicle::collision( std::vector<veh_collision> &colls,
         const tripoint dsp = global_pos3() + dp + parts[p].precalc[1];
         veh_collision coll = part_collision( p, dsp, just_detect, bash_floor );
         if( coll.type == veh_coll_nothing ) {
+            continue;
+        }
+        if( info.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            if( coll.type == veh_coll_veh ) {
+                g->m.add_vehicle_to_cache( static_cast<vehicle *>( coll.target ) );
+            }
             continue;
         }
 
