@@ -79,10 +79,14 @@ std::string temp_item_location::describe( const Character *, const item * ) cons
 }
 detached_ptr<item> temp_item_location::detach( item *it )
 {
+    debugmsg( "Attempted to detach a fake item\nPlease report this as a bug" );
     return item::spawn( *it );
 }
 
-void temp_item_location::attach( detached_ptr<item> && ) {}
+void temp_item_location::attach( detached_ptr<item> &&it )
+{
+    g->add_fake_item( it );
+}
 
 bool temp_item_location::is_loaded( const item * ) const
 {

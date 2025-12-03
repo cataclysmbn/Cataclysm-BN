@@ -185,7 +185,7 @@
 #include "wcwidth.h"
 #include "weather.h"
 #include "worldfactory.h"
-
+#include "location_vector.h"
 class computer;
 
 #if defined(TILES)

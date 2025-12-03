@@ -237,7 +237,7 @@ class temp_item_location : public item_location
     public:
         temp_item_location() = default;
         detached_ptr<item> detach( item *it ) override;
-        void attach( detached_ptr<item> &&obj ) override;
+        void attach( detached_ptr<item> &&it ) override;
         bool is_loaded( const item *it ) const override;
         tripoint position( const item *it ) const override;
         item_location_type where() const override;
