@@ -26,7 +26,7 @@ const std::map<std::string, std::string> &get_mod_list_cat_tab();
 struct translatable_mod_info {
     private:
         std::string mod_path;
-        std::string name_raw;
+        std::string name_raw_;
         std::string name_tr;
         std::string description_raw;
         std::string description_tr;
@@ -36,6 +36,7 @@ struct translatable_mod_info {
         translatable_mod_info();
         translatable_mod_info( std::string name, std::string description, std::string path );
         std::string name();
+        std::string name_raw() const;
         std::string description();
 };
 
@@ -45,6 +46,7 @@ struct MOD_INFORMATION {
 
     public:
         std::string name() const;
+        std::string name_raw() const;
         std::string description() const;
 
         void set_translatable_info( translatable_mod_info &&tmi ) {

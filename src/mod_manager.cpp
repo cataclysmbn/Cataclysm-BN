@@ -52,6 +52,15 @@ std::string MOD_INFORMATION::name() const
     }
 }
 
+std::string MOD_INFORMATION::name_raw() const
+{
+    if( translatable_info.name_raw().empty() ) {
+        return string_format( "No name (%s)", ident.c_str() );
+    } else {
+        return translatable_info.name_raw();
+    }
+}
+
 std::string MOD_INFORMATION::description() const
 {
     return translatable_info.description();
@@ -513,7 +522,7 @@ translatable_mod_info::translatable_mod_info()
 
 translatable_mod_info::translatable_mod_info( std::string name,
         std::string description, std::string mod_path ) :
-    mod_path( std::move( mod_path ) ), name_raw( std::move( name ) ),
+    mod_path( std::move( mod_path ) ), name_raw_( std::move( name ) ),
     description_raw( std::move( description ) )
 {
     language_version = INVALID_LANGUAGE_VERSION;
@@ -521,13 +530,18 @@ translatable_mod_info::translatable_mod_info( std::string name,
 
 std::string translatable_mod_info::name()
 {
-    if( name_raw.empty() ) {
+    if( name_raw_.empty() ) {
         return "";
     }
     if( language_version != detail::get_current_language_version() ) {
         update();
     }
     return name_tr;
+}
+
+std::string translatable_mod_info::name_raw() const
+{
+    return name_raw_;
 }
 
 std::string translatable_mod_info::description()
