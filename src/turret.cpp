@@ -26,6 +26,7 @@
 #include "ui.h"
 #include "value_ptr.h"
 #include "veh_type.h"
+#include "vehicle_functions.h"
 #include "vehicle_selector.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
@@ -567,6 +568,13 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
     turret_data gun = turret_query( pt );
 
     int shots = 0;
+
+    // Try to automatically reload if out of ammo and autoloader is present
+    if( gun.query() == turret_data::status::no_ammo ) {
+        vehicle_funcs::try_autoload_turret( *this, pt );
+        // Refresh turret data after potential reload
+        gun = turret_query( pt );
+    }
 
     if( gun.query() != turret_data::status::ready ) {
         return shots;
