@@ -12517,9 +12517,10 @@ bool game::slip_down()
     }
     return false;
 }
-void game::add_fake_item( detached_ptr<item> &&it )
+item *game::add_fake_item( detached_ptr<item> &&it )
 {
     fake_items.insert( fake_items.end(), std::move( it ) );
+    return *fake_items.end();
 }
 
 void game::remove_fake_item( item &it )

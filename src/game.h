@@ -1084,7 +1084,7 @@ class game
     private:
         location_vector<item> fake_items;
     public:
-        void add_fake_item( detached_ptr<item> &&fake );
+        item *add_fake_item( detached_ptr<item> &&fake );
         void remove_fake_item( item &it );
 };
 
