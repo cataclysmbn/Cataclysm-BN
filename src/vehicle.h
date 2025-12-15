@@ -1151,6 +1151,7 @@ class vehicle
          */
         double total_lift( bool fuelled, bool safe = false, bool ideal = false ) const;
         bool has_sufficient_lift() const;
+        double get_lift_percent() const;
         int get_z_change() const;
         bool is_flying_in_air() const;
         void set_flying( bool new_flying_value );

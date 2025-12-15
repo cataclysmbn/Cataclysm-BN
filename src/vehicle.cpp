@@ -4074,7 +4074,7 @@ int vehicle::current_acceleration( const bool fueled ) const
 int vehicle::max_ground_velocity( const bool fueled, const bool ideal ) const
 {
     int total_engine_w = ( ideal ? ideal_engine_power() : total_power_w( fueled ) );
-    double c_rolling_drag = coeff_rolling_drag();
+    double c_rolling_drag = coeff_rolling_drag() * get_lift_percent();
     double max_in_mps = simple_cubic_solution( coeff_air_drag(), c_rolling_drag,
                         c_rolling_drag * vehicles::rolling_constant_to_variable,
                         -total_engine_w );
@@ -4096,7 +4096,7 @@ int vehicle::max_ground_velocity( const bool fueled, const bool ideal ) const
 int vehicle::max_water_velocity( const bool fueled, const bool ideal ) const
 {
     int total_engine_w = ( ideal ? ideal_engine_power() : total_power_w( fueled ) );
-    double total_drag = coeff_water_drag() + coeff_air_drag();
+    double total_drag = coeff_water_drag() * get_lift_percent() + coeff_air_drag();
     double max_in_mps = std::cbrt( total_engine_w / total_drag );
     add_msg( m_debug, "%s: power %d, c_air %3.2f, c_water %3.2f, water max_in_mps %3.2f",
              name, total_engine_w, coeff_air_drag(), coeff_water_drag(), max_in_mps );
@@ -4157,7 +4157,7 @@ int vehicle::safe_ground_velocity( const bool fueled, const bool ideal ) const
         }
     }
     int effective_engine_w = ( ideal ? ideal_engine_power( true ) : total_power_w( fueled, true ) );
-    double c_rolling_drag = coeff_rolling_drag();
+    double c_rolling_drag = coeff_rolling_drag() * get_lift_percent();
     double safe_in_mps = simple_cubic_solution( coeff_air_drag(), c_rolling_drag,
                          c_rolling_drag * vehicles::rolling_constant_to_variable,
                          -effective_engine_w );
@@ -4177,7 +4177,7 @@ int vehicle::safe_aircraft_velocity( const bool fueled, const bool ideal ) const
 int vehicle::safe_water_velocity( const bool fueled, const bool ideal ) const
 {
     int total_engine_w = ( ideal ? ideal_engine_power( true ) : total_power_w( fueled, true ) );
-    double total_drag = coeff_water_drag() + coeff_air_drag();
+    double total_drag = coeff_water_drag() * get_lift_percent() + coeff_air_drag();
     double safe_in_mps = std::cbrt( total_engine_w / total_drag );
     return mps_to_vmiph( safe_in_mps );
 }
@@ -4719,6 +4719,11 @@ bool vehicle::has_lift() const
 bool vehicle::has_sufficient_lift() const
 {
     return total_lift( true ) > to_newton( total_mass() );
+}
+
+double vehicle::get_lift_percent() const
+{
+    return std::max( 0.0, 1 - ( total_lift( true ) / to_newton( total_mass() ) ) );
 }
 
 bool vehicle::is_rotorcraft() const
