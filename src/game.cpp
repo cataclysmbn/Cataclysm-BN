@@ -109,6 +109,7 @@
 #include "line.h"
 #include "live_view.h"
 #include "loading_ui.h"
+#include "locations.h"
 #include "npc.h"
 #include "magic.h"
 #include "map.h"
@@ -326,7 +327,8 @@ game::game() :
     user_action_counter( 0 ),
     tileset_zoom( DEFAULT_TILESET_ZOOM ),
     seed( 0 ),
-    last_mouse_edge_scroll( std::chrono::steady_clock::now() )
+    last_mouse_edge_scroll( std::chrono::steady_clock::now() ),
+    fake_items( new fake_item_location( ) )
 {
     first_redraw_since_waiting_started = true;
     reset_light_level();
@@ -12515,7 +12517,15 @@ bool game::slip_down()
     }
     return false;
 }
+void game::add_fake_item( detached_ptr<item> &&it )
+{
+    fake_items.insert( fake_items.end(), std::move( it ) );
+}
 
+void game::remove_fake_item( item &it )
+{
+    fake_items.remove( &it );
+}
 namespace cata_event_dispatch
 {
 void avatar_moves( const avatar &u, const map &m, const tripoint &p )

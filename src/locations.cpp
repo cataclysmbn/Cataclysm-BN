@@ -17,7 +17,7 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "veh_type.h"
-
+#include "game.h"
 namespace
 {
 
@@ -85,7 +85,7 @@ detached_ptr<item> temp_item_location::detach( item *it )
 
 void temp_item_location::attach( detached_ptr<item> &&it )
 {
-    g->add_fake_item( it );
+    g->add_fake_item( std::move( it ) );
 }
 
 bool temp_item_location::is_loaded( const item * ) const

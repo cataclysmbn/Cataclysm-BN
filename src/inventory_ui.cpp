@@ -1282,7 +1282,8 @@ void inventory_selector::add_bionics_items( Character &character )
         const itype_id fake = bio.info().fake_item;
         if( !fake.is_null() && fake.str() != "" ) {
             detached_ptr<item> real_fake = item::spawn( fake );
-            add_fake_item( own_gear_column, std::move( real_fake ), &bio_cat );
+            g->add_fake_item( std::move( real_fake ) );
+            add_entry( own_gear_column, std::vector<item *>( 1, &*real_fake ), &bio_cat );
         }
     }
 }
