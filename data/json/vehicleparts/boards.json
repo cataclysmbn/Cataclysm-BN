@@ -229,6 +229,30 @@
     "damage_reduction": { "all": 8 }
   },
   {
+    "id": "rc_car_body",
+    "type": "vehicle_part",
+    "name": { "str": "RC car body" },
+    "item": "rc_car_body",
+    "location": "center",
+    "looks_like": "radio_car",
+    "size": "2 L",
+    "durability": 96,
+    "folded_volume": "250 ml",
+    "description": "A carbon fiber exterior of an RC car.  It looks like a futuristic scale model of a dune buggy or rock crawler.  Keeps the interior protected from debris and damage from rollovers and crashes.",
+    "breaks_into": [ { "item": "", "prob": 50 } ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "3d_printing_standard", 5 ] ]
+      }
+    },
+    "flags": [ "CARGO", "FOLDABLE", "HALF_BOARD", "NO_ROOF_NEEDED" ],
+    "damage_reduction": { "all": 8 }
+  },
+  {
     "id": "halfboard_cover",
     "copy-from": "halfboard",
     "type": "vehicle_part",

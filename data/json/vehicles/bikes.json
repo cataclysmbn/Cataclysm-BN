@@ -309,5 +309,11 @@
     "name": "Skateboard",
     "blueprint": [ "$" ],
     "parts": [ { "x": 0, "y": 0, "parts": [ "frame_wood_deck", "wheel_mount_skateboard", "wheel_skateboard" ] } ]
+  },
+  {
+    "id": "rc_car",
+    "type": "vehicle",
+    "name": "RC Car",
+    "parts": [ { "x": 0, "y": 0, "parts": [ "frame_carbon_cross", "wheel_rc_car", "battery_motorbike_small", "rc_car_body", "rc_car_controls", "engine_electric_tiny" ] } ]
   }
 ]

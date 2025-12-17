@@ -135,5 +135,20 @@
     "price": 1000,
     "price_postapoc": 50,
     "copy-from": "foldframe"
+  },
+  {
+    "id": "rc_car_body",
+    "type": "GENERIC",
+    "category": "veh_parts",
+    "name": { "str": "RC car body", "str_pl": "RC car bodies" },
+    "description": "A carbon fiber exterior of an RC car.  It looks like a futuristic scale model of a dune buggy or rock crawler.  Keeps the interior protected from debris and damage from rollovers and crashes.",
+    "weight": "600 g",
+    "volume": "250 ml",
+    "price": 200,
+    "price_postapoc": 20,
+    "to_hit": -2,
+    "material": [ "steel" ],
+    "symbol": "]",
+    "color": "dark_gray"
   }
 ]

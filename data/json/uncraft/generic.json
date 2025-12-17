@@ -2829,8 +2829,8 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [
-      [ [ "radio_car", 1 ] ],
-      [ [ "radiocontrol", 1 ] ],
+      [ [ "folding_rc_car", 1 ] ],
+      [ [ "remotevehcontrol", 1 ] ],
       [ [ "light_minus_battery_cell", 1 ] ],
       [ [ "light_battery_cell", 1 ] ]
     ]
