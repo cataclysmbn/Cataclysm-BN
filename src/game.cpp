@@ -2375,6 +2375,7 @@ input_context get_default_mode_input_context()
 #endif
 #if defined(TILES)
     ctxt.register_action( "toggle_pixel_minimap" );
+    ctxt.register_action( "toggle_zone_overlay" );
 #endif // TILES
     ctxt.register_action( "toggle_panel_adm" );
     ctxt.register_action( "reload_tileset" );
@@ -3226,6 +3227,7 @@ static shared_ptr_fast<game::draw_callback_t> create_zone_callback(
     const bool &is_moving_zone = false
 )
 {
+    ( void ) zone_blink;
     return make_shared_fast<game::draw_callback_t>(
     [&]() {
         if( zone_cursor ) {
@@ -3239,7 +3241,7 @@ static shared_ptr_fast<game::draw_callback_t> create_zone_callback(
                 }
             }
         }
-        if( zone_blink && zone_start && zone_end ) {
+        if( zone_start && zone_end ) {
             const point offset2( g->u.view_offset.xy() + point( g->u.posx() - getmaxx( g->w_terrain ) / 2,
                                  g->u.posy() - getmaxy( g->w_terrain ) / 2 ) );
 
@@ -6364,7 +6366,6 @@ void game::zones_manager()
     auto &mgr = zone_manager::get_manager();
     int start_index = 0;
     int active_index = 0;
-    bool blink = false;
     bool stuff_changed = false;
     bool show_all_zones = false;
     int zone_cnt = 0;
@@ -6573,8 +6574,6 @@ void game::zones_manager()
 
                 stuff_changed = true;
             } while( false );
-
-            blink = false;
         } else if( action == "SHOW_ALL_ZONES" ) {
             show_all_zones = !show_all_zones;
             zones = get_zones();
@@ -6585,24 +6584,19 @@ void game::zones_manager()
                 if( active_index < 0 ) {
                     active_index = zone_cnt - 1;
                 }
-                blink = false;
             } else if( action == "DOWN" ) {
                 active_index++;
                 if( active_index >= zone_cnt ) {
                     active_index = 0;
                 }
-                blink = false;
             } else if( action == "REMOVE_ZONE" ) {
                 if( active_index < zone_cnt ) {
                     mgr.remove( zones[active_index] );
                     zones = get_zones();
                     active_index--;
 
-                    if( active_index < 0 ) {
-                        active_index = 0;
-                    }
+                    active_index = std::max( active_index, 0 );
                 }
-                blink = false;
                 stuff_changed = true;
 
             } else if( action == "CONFIRM" ) {
@@ -6682,14 +6676,12 @@ void game::zones_manager()
                         break;
                 }
 
-                blink = false;
             } else if( action == "MOVE_ZONE_UP" && zone_cnt > 1 ) {
                 if( active_index < zone_cnt - 1 ) {
                     mgr.swap( zones[active_index], zones[active_index + 1] );
                     zones = get_zones();
                     active_index++;
                 }
-                blink = false;
                 stuff_changed = true;
 
             } else if( action == "MOVE_ZONE_DOWN" && zone_cnt > 1 ) {
@@ -6698,7 +6690,6 @@ void game::zones_manager()
                     zones = get_zones();
                     active_index--;
                 }
-                blink = false;
                 stuff_changed = true;
 
             } else if( action == "SHOW_ZONE_ON_MAP" ) {
@@ -6721,21 +6712,17 @@ void game::zones_manager()
         }
 
         if( zone_cnt > 0 ) {
-            blink = !blink;
             const auto &zone = zones[active_index].get();
             zone_start = m.getlocal( zone.get_start_point() );
             zone_end = m.getlocal( zone.get_end_point() );
-            ctxt.set_timeout( get_option<int>( "BLINK_SPEED" ) );
         } else {
-            blink = false;
             zone_start = zone_end = std::nullopt;
-            ctxt.reset_timeout();
         }
 
         // Actually accessed from the terrain overlay callback `zone_cb` in the
         // call to `ui_manager::redraw`.
         //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
-        zone_blink = blink;
+        zone_blink = zone_cnt > 0;
         invalidate_main_ui_adaptor();
 
         ui_manager::redraw();
@@ -6880,6 +6867,7 @@ look_around_result game::look_around( bool show_window, tripoint &center,
     }
 #if defined(TILES)
     ctxt.register_action( "toggle_pixel_minimap" );
+    ctxt.register_action( "toggle_zone_overlay" );
 #endif // TILES
 
     const int old_levz = get_levz();
@@ -6891,7 +6879,6 @@ look_around_result game::look_around( bool show_window, tripoint &center,
     m.update_visibility_cache( old_levz );
     const visibility_variables &cache = m.get_visibility_variables_cache();
 
-    bool blink = true;
     look_around_result result;
 
     shared_ptr_fast<draw_callback_t> ter_indicator_cb;
@@ -6966,25 +6953,16 @@ look_around_result game::look_around( bool show_window, tripoint &center,
                 zone_start = lp;
                 zone_end = std::nullopt;
             }
-            // Actually accessed from the terrain overlay callback `zone_cb` in the
-            // call to `ui_manager::redraw`.
-            //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
-            zone_blink = blink;
+            zone_blink = zone_start.has_value();
         }
 
         if( is_moving_zone ) {
             zone_start = lp - ( start_point + end_point ) / 2 + start_point;
             zone_end = lp - ( start_point + end_point ) / 2 + end_point;
-            // Actually accessed from the terrain overlay callback `zone_cb` in the
-            // call to `ui_manager::redraw`.
-            //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
-            zone_blink = blink;
+            zone_blink = true;
         }
         invalidate_main_ui_adaptor();
         ui_manager::redraw();
-        if( ( select_zone && has_first_point ) || is_moving_zone ) {
-            ctxt.set_timeout( get_option<int>( "BLINK_SPEED" ) );
-        }
 
         if( pixel_minimap_option ) {
             ctxt.set_timeout( 125 );
@@ -7001,12 +6979,7 @@ look_around_result game::look_around( bool show_window, tripoint &center,
         } else {
             action = ctxt.handle_input();
         }
-        if( ( action == "LEVEL_UP" || action == "LEVEL_DOWN" || action == "MOUSE_MOVE" ||
-              ctxt.get_direction( action ) ) && ( ( select_zone && has_first_point ) || is_moving_zone ) ) {
-            blink = true; // Always draw blink symbols when moving cursor
-        } else if( action == "TIMEOUT" ) {
-            blink = !blink;
-        }
+        ( void ) zone_blink; // kept for callback signature
         if( action == "LIST_ITEMS" ) {
             list_items_monsters();
         } else if( action == "TOGGLE_FAST_SCROLL" ) {
@@ -7017,6 +6990,8 @@ look_around_result game::look_around( bool show_window, tripoint &center,
             if( show_window && ui ) {
                 ui->mark_resize();
             }
+        } else if( action == "toggle_zone_overlay" ) {
+            g->show_zone_overlay = !g->show_zone_overlay;
         } else if( action == "LEVEL_UP" || action == "LEVEL_DOWN" ) {
             if( !allow_zlev_move ) {
                 continue;
