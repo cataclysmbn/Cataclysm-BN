@@ -35026,7 +35026,12 @@
         { "id": "medical_sample", "fg": 19227, "rotates": false },
         { "id": "mon_starer_axe", "fg": 19228, "rotates": false },
         { "id": "mon_starer_crowbar", "fg": 19229, "rotates": false },
-        { "id": "mon_starer_pipe", "fg": 19230, "rotates": false }
+        { "id": "mon_starer_pipe", "fg": 19230, "rotates": false },
+        { "id": "mon_starer_pipe", "fg": 19230, "rotates": false },
+        { "id": "rc_car_body", "fg": 19231, "rotates": true },
+        { "id": "vp_rc_car_body", "fg": 19231, "rotates": true },
+        { "id": "wheel_rc_car", "fg": 19232, "rotates": true },
+        { "id": "vp_wheel_rc_car", "fg": 19232, "rotates": true }
       ],
       "//": "range 19137 to 19336"
     },

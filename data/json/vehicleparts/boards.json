@@ -234,7 +234,7 @@
     "name": { "str": "RC car body" },
     "item": "rc_car_body",
     "location": "center",
-    "looks_like": "radio_car",
+    "looks_like": "rc_car_body",
     "size": "2 L",
     "durability": 96,
     "folded_volume": "250 ml",
@@ -243,11 +243,7 @@
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
-      "repair": {
-        "skills": [ [ "mechanics", 2 ] ],
-        "time": "60 m",
-        "using": [ [ "3d_printing_standard", 5 ] ]
-      }
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "3d_printing_standard", 5 ] ] }
     },
     "flags": [ "CARGO", "FOLDABLE", "HALF_BOARD", "NO_ROOF_NEEDED" ],
     "damage_reduction": { "all": 8 }

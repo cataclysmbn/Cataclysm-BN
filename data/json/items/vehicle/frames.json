@@ -141,6 +141,7 @@
     "type": "GENERIC",
     "category": "veh_parts",
     "name": { "str": "RC car body", "str_pl": "RC car bodies" },
+    "looks_like": "rc_car_body",
     "description": "A carbon fiber exterior of an RC car.  It looks like a futuristic scale model of a dune buggy or rock crawler.  Keeps the interior protected from debris and damage from rollovers and crashes.",
     "weight": "600 g",
     "volume": "250 ml",
