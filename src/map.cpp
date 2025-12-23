@@ -353,7 +353,7 @@ void map::add_vehicle_to_cache( vehicle *veh )
 
     // Get parts
     for( const vpart_reference &vpr : veh->get_all_parts() ) {
-        if( vpr.part().removed || vpr.part().has_flag( VPFLAG_NOCOLLIDE ) ) {
+        if( vpr.part().removed ) {
             continue;
         }
         const tripoint p = veh->global_part_pos3( vpr.part() );
@@ -379,11 +379,11 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint &pt )
     }
 
     level_cache &ch = get_cache( pt.z );
-    if( inbounds( pt ) ) {
-        ch.veh_exists_at[pt.x][pt.y] = false;
-    }
     auto it = ch.veh_cached_parts.find( pt );
     if( it != ch.veh_cached_parts.end() && it->second.first == veh ) {
+        if( inbounds( pt ) ) {
+            ch.veh_exists_at[pt.x][pt.y] = false;
+        }
         ch.veh_cached_parts.erase( it );
     }
 
