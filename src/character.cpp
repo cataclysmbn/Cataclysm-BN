@@ -5480,7 +5480,7 @@ void Character::update_needs( int rate_multiplier )
     const bool wasnt_fatigued = get_fatigue() <= fatigue_levels::dead_tired;
     // Don't increase fatigue if sleeping or trying to sleep or if we're at the cap.
     if( get_fatigue() < 1050 && !asleep && !debug_ls ) {
-        if( rates.fatigue > 0.0f ) {
+        if( !npc_no_food && rates.fatigue > 0.0f ) {
             int fatigue_roll = roll_remainder( rates.fatigue * rate_multiplier );
             mod_fatigue( fatigue_roll );
 
@@ -5493,13 +5493,9 @@ void Character::update_needs( int rate_multiplier )
                 // 5. If rate_multiplier is > 1, fatigue_roll will be higher and this will work out.
                 mod_sleep_deprivation( fatigue_roll * 5 );
             }
-
-            if( npc_no_food && get_fatigue() > fatigue_levels::tired ) {
-                set_fatigue( static_cast<int>( fatigue_levels::tired ) );
-            }
-            if( npc_no_food ) {
-                set_sleep_deprivation( 0 );
-            }
+        } else if( npc_no_food ) {
+            set_fatigue( 0 );
+            set_sleep_deprivation( 0 );
         }
     } else if( asleep && rates.recovery > 0.0f ) {
         int recovered = roll_remainder( rates.recovery * rate_multiplier );
