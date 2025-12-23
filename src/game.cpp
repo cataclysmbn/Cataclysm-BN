@@ -6565,8 +6565,13 @@ void game::zones_manager()
                     break;
                 }
 
-                mgr.add( name, id, g->u.get_faction()->id, false, true, position->first,
-                         position->second, options );
+                if( position->first.z != position->second.z ) {
+                    popup( _( "The zone start and end should be on the same z-level!" ) );
+                    break;
+                }
+
+                mgr.add( name, id, g->u.get_faction()->id, false, true, position->first, position->second,
+                         options );
 
                 zones = get_zones();
                 active_index = zone_cnt - 1;
