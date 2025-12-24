@@ -219,6 +219,7 @@ class overmapbuffer
         int get_horde_size( const tripoint_abs_omt &p );
         std::vector<om_vehicle> get_vehicle( const tripoint_abs_omt &p );
         const regional_settings &get_settings( const tripoint_abs_omt &p );
+        std::string current_region_type;
         /**
          * Accessors for horde introspection into overmaps.
          * Probably also useful for NPC overmap-scale navigation.

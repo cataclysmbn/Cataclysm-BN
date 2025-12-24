@@ -676,6 +676,7 @@ bool game::start_game()
     refresh_display();
 
     load_master();
+    overmap_buffer.current_region_type = "default";
     u.setID( assign_npc_id() ); // should be as soon as possible, but *after* load_master
 
     const start_location &start_loc = u.random_start_location ? scen->random_start_location().obj() :
@@ -2596,8 +2597,12 @@ bool game::is_game_over()
         }
 
         auto followers = get_follower_list()
-        | std::views::transform( [&]( const auto & elem ) { return overmap_buffer.find_npc( elem ); } )
-        | std::views::filter( []( const auto & follower ) { return follower && !follower->is_dead_state(); } )
+        | std::views::transform( [&]( const auto & elem ) {
+            return overmap_buffer.find_npc( elem );
+        } )
+        | std::views::filter( []( const auto & follower ) {
+            return follower && !follower->is_dead_state();
+        } )
         | std::ranges::to<std::vector>();
 
         if( !followers.empty() ) {
@@ -2610,7 +2615,9 @@ bool game::is_game_over()
             charmenu.addentry( charnum, true, 'q', _( "No, end the game" ) );
             charmenu.query();
             if( charmenu.ret >= 0 && static_cast<size_t>( charmenu.ret ) < followers.size() ) {
-                if( u.in_vehicle ) { m.unboard_vehicle( u.pos() ); }
+                if( u.in_vehicle ) {
+                    m.unboard_vehicle( u.pos() );
+                }
                 uquit = QUIT_NO;
                 get_avatar().control_npc( *followers.at( charmenu.ret ) );
                 return false;
@@ -2729,6 +2736,17 @@ void game::load_master()
     using namespace std::placeholders;
     get_active_world()->read_from_file( SAVE_MASTER, std::bind( &game::unserialize_master, this, _1 ),
                                         true );
+}
+
+bool game::load_dimension_data()
+{
+    using namespace std::placeholders;
+    // Reset region type to default when loading dimension data
+    overmap_buffer.current_region_type = "default";
+    // If dimension_data.gsav doesn't exist, return false
+    return get_active_world()->read_from_file( SAVE_MASTER, std::bind( &game::unserialize_master, this,
+            _1 ),
+            true );
 }
 
 bool game::load( const std::string &world )
@@ -2892,6 +2910,14 @@ bool game::save_factions_missions_npcs()
     return get_active_world()->write_to_file( SAVE_MASTER, [&]( std::ostream & fout ) {
         serialize_master( fout );
     }, _( "factions data" ) );
+}
+
+//Saves per-dimension data like Weather and overmapbuffer state
+bool game::save_dimension_data()
+{
+    return get_active_world()->write_to_file( SAVE_DIMENSION_DATA, [&]( std::ostream & fout ) {
+        serialize_dimension_data( fout );
+    }, _( "dimension data" ) );
 }
 
 bool game::save_artifacts()
@@ -5594,6 +5620,11 @@ bool game::revive_corpse( const tripoint &p, item &it )
 {
     if( !it.is_corpse() ) {
         debugmsg( "Tried to revive a non-corpse." );
+        return false;
+    }
+    // If this is not here, the game may attempt to spawn a monster before the map exists,
+    // leading to it querying for furniture, and crashing.
+    if( g->new_game || g->swapping_dimensions ) {
         return false;
     }
     shared_ptr_fast<monster> newmon_ptr = make_shared_fast<monster>
@@ -12156,6 +12187,156 @@ void game::vertical_move( int movez, bool force, bool peeking )
     m.creature_on_trap( u, !force );
 
     cata_event_dispatch::avatar_moves( u, m, u.pos() );
+}
+
+bool game::travel_to_dimension( const std::string &new_prefix,
+                                const std::string &region_type,
+                                const std::vector<npc *> &npc_travellers,
+                                vehicle *veh )
+{
+    map &here = get_map();
+    avatar &player = get_avatar();
+    if( !npc_travellers.empty() ) {
+        int traveller_count = npc_travellers.size();
+        for( auto it = active_npc.begin(); it != active_npc.end(); ) {
+            // skip unloading a traveller
+            bool skip = false;
+            if( traveller_count > 0 ) {
+                for( npc *guy : npc_travellers ) {
+                    if( guy->getID() == ( *it )->getID() ) {
+                        skip = true;
+                        traveller_count--;
+                        break;
+                    }
+                }
+            }
+            if( !skip ) {
+                ( *it )->on_unload();
+                it = active_npc.erase( it );
+            } else {
+                it++;
+            }
+        }
+    } else {
+        unload_npcs();
+    }
+    for( monster &critter : all_monsters() ) {
+        despawn_monster( critter );
+    }
+    bool controlling_vehicle = player.controlling_vehicle;
+    if( player.in_vehicle ) {
+        here.unboard_vehicle( player.pos() );
+    }
+    std::unique_ptr<vehicle> vehicle_ref;
+    if( veh != nullptr ) {
+        vehicle_ref = here.detach_vehicle( veh );
+    }
+    // Make sure we don't mess up savedata if for some reason maps can't be saved
+    if( !save_maps() || !save_dimension_data() ) {
+        return false;
+    }
+    player.save_map_memory();
+    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+        here.clear_vehicle_list( z );
+    }
+    here.reset_vehicle_cache();
+    // Inputting an empty string to the text input EOC fails
+    // so i'm using 'default' as empty/main dimension
+    std::string old_prefix = dimension_prefix;
+    if( new_prefix != "default" ) {
+        dimension_prefix = new_prefix;
+    } else {
+        dimension_prefix.clear();
+    }
+    // Load in data specific to the dimension (like weather)
+    if( !load_dimension_data() ) {
+        // dimension data file not found/created yet
+        // Set the region type for new dimensions if provided
+        if( !region_type.empty() && region_type != "default" ) {
+            overmap_buffer.current_region_type = region_type;
+        }
+    }
+    // Clear the immediate game area around the player
+    MAPBUFFER.clear();
+    // hack to prevent crashes from temperature checks
+    // This returns to false in 'on_turn()' so it should be fine?
+    swapping_dimensions = true;
+    // Clear the overmap
+    overmap_buffer.clear();
+    // load/create new overmap
+    overmap_buffer.get( point_abs_om{} );
+    // clear map memory from the previous dimension
+    player.clear_map_memory();
+    // Load map memory in new dimension, if there is any
+    player.load_map_memory();
+    // Loads submaps and invalidate related caches
+    here.load( tripoint_abs_sm( here.get_abs_sub() ), false );
+
+    // Invalidate visibility and other caches for all z-levels
+    int const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z;
+    int const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z;
+    for( int z = zmin; z <= zmax; z++ ) {
+        here.invalidate_map_cache( z );
+    }
+    bool undo_shift = false;
+    if( vehicle_ref ) {
+        // Place the vehicle back on the map
+        // Check for collision while placing
+        bool collision = false;
+        tripoint const vehicle_origin = vehicle_ref->global_pos3();
+        for( const auto &mount_point : vehicle_ref->relative_parts ) {
+            tripoint const part_pos = vehicle_origin + mount_point.first;
+            if( here.impassable( part_pos ) ) {
+                collision = true;
+                break;
+            }
+        }
+
+        // Get the target submap and place the vehicle
+        point const sm_pos_xy = vehicle_ref->sm_pos.xy() - here.get_abs_sub().xy();
+        submap *place_on_submap = here.get_submap_at_grid( sm_pos_xy );
+        if( place_on_submap == nullptr ) {
+            debugmsg( "Tried to add vehicle at %d,%d,%d but the submap is not loaded",
+                      vehicle_ref->sm_pos.x, vehicle_ref->sm_pos.y, vehicle_ref->sm_pos.z );
+        } else {
+            place_on_submap->vehicles.push_back( std::move( vehicle_ref ) );
+        }
+        undo_shift = collision;
+    }
+    // Rebuild vehicle cache and lists from all submaps
+    // This ensures all vehicle positions and caches are correct in the new dimension
+    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+        for( int x = 0; x < here.getmapsize(); x++ ) {
+            for( int y = 0; y < here.getmapsize(); y++ ) {
+                point const grid_xy( x, y );
+                submap *const sm = here.get_submap_at_grid( tripoint( grid_xy, z ) );
+                if( sm != nullptr ) {
+                    for( auto const &elem : sm->vehicles ) {
+                        // Reset submap position (this should be redundant but ensures correctness)
+                        elem->sm_pos = tripoint( here.get_abs_sub().xy() + grid_xy, z );
+                        here.add_vehicle_to_cache( &*elem );
+                        // Update vehicle list using public API
+                        here.update_vehicle_list( sm, z );
+                    }
+                }
+            }
+        }
+    }
+    if( here.veh_at( player.pos() ) ) {
+        here.board_vehicle( player.pos(), &player );
+        player.controlling_vehicle = controlling_vehicle;
+    }
+    load_npcs();
+    // Handle static monsters
+    here.spawn_monsters( true );
+    // updates the weather, if the weather settings are different in the new world
+    get_weather().weather_override = weather_type_id::NULL_ID();
+    get_weather().set_nextweather( calendar::turn );
+    update_overmap_seen();
+    if( undo_shift ) {
+        travel_to_dimension( old_prefix, region_type, npc_travellers, veh );
+    }
+    return true;
 }
 
 void game::start_hauling( const tripoint &pos )
