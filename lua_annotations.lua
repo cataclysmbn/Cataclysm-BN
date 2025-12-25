@@ -17,16 +17,85 @@ game = {}
 ---@field character Character
 on_character_reset_stats = {}
 
+---@class OnCharacterEffectAddedParams
+---@field character Character
+---@field effect Effect
+on_character_effect_added = {}
+
+---@class OnCharacterEffectParams
+---@field character Character
+---@field effect Effect
+on_character_effect = {}
+
+---@class OnMonEffectAddedParams
+---@field mon Monster
+---@field effect Effect
+on_mon_effect_added = {}
+
+---@class OnMonEffectParams
+---@field mon Monster
+---@field effect Effect
+on_mon_effect = {}
+
+---@class OnMonDeathParams
+---@field mon Monster
+---@field killer Creature?
+on_mon_death = {}
+
+---@class OnCharacterDeathParams
+---@field character Character
+---@field killer Creature?
+on_character_death = {}
+
+---@class OnShootParams
+---@field shooter Character
+---@field target_pos Tripoint
+---@field shots integer
+---@field gun Item
+---@field ammo Item?
+on_shoot = {}
+
+---@class OnThrowParams
+---@field thrower Character
+---@field target_pos Tripoint
+---@field throw_from_pos Tripoint
+---@field item Item
+on_throw = {}
+
+---@class OnCreatureDodgedParams
+---@field char Character || Creature
+---@field source Creature?
+---@field difficulty integer
+on_creature_dodged = {}
+
+---@class OnCreatureBlockedParams
+---@field char Character
+---@field source Creature?
+---@field bodypart_id BodyPartTypeId
+---@field damage_instance DamageInstance
+---@field damage_blocked number
+on_creature_blocked = {}
+
+---@class OnCreaturePerformedTechniqueParams
+---@field char Character
+---@field technique MartialArtsTechniqueRaw
+---@field target Creature
+---@field damage_instance DamageInstance
+---@field move_cost integer
+on_creature_performed_technique = {}
+
+---@class OnCreatureMeleeAttackedParams
+---@field char Character || Monster
+---@field target Creature
+---@field success boolean
+on_creature_melee_attacked = {}
+
 ---@class OnMapgenPostprocessParams
 ---@field map Map
 ---@field omt Tripoint
 ---@field when TimePoint
 on_mapgen_postprocess = {}
 
----@class OnMonDeathParams
----@field mon Monster
----@field killer Character?
-on_mon_death = {}
 --================---- Classes ----================
 
 ---@class ActivityTypeId
@@ -185,10 +254,10 @@ function BookRecipe.new() end
 ---@field activate_mutation fun(self: Character, arg2: MutationBranchId)
 ---@field add_addiction fun(self: Character, arg2: AddictionType, arg3: integer)
 ---@field add_bionic fun(self: Character, arg2: BionicDataId)
+---@field addiction_level fun(self: Character, arg2: AddictionType): integer
 ---@field add_item fun(self: Character, arg2: Detached<Item>) @Adds a detached item to the player inventory
 ---@field add_item_with_id fun(self: Character, arg2: ItypeId, arg3: integer): Item @DEPRECATED: use create_item instead
 ---@field add_morale fun(self: Character, arg2: MoraleTypeDataId, arg3: integer, arg4: integer, arg5: TimeDuration, arg6: TimeDuration, arg7: boolean, arg8: ItypeRaw)
----@field addiction_level fun(self: Character, arg2: AddictionType): integer
 ---@field age fun(self: Character): integer
 ---@field all_items fun(self: Character, arg2: boolean): Item[] @Gets all items
 ---@field all_items_with_flag fun(self: Character, arg2: JsonFlagId, arg3: boolean): Item[] @Gets all items with the given flag
@@ -201,6 +270,7 @@ function BookRecipe.new() end
 ---@field blossoms fun(self: Character)
 ---@field bodypart_exposure fun(self: Character): table<BodyPartTypeIntId, number>
 ---@field bodyweight fun(self: Character): Mass
+---@field cancel_activity fun(self: Character)
 ---@field can_hear fun(self: Character, arg2: Tripoint, arg3: integer): boolean
 ---@field can_mount fun(self: Character, arg2: Monster): boolean
 ---@field can_pick_volume fun(self: Character, arg2: Volume): boolean
@@ -210,7 +280,6 @@ function BookRecipe.new() end
 ---@field can_unwield fun(self: Character, arg2: Item): boolean
 ---@field can_wear fun(self: Character, arg2: Item, arg3: boolean): boolean @Checks if creature can wear a given item. If boolean parameter is true, ignores already worn items
 ---@field can_wield fun(self: Character, arg2: Item): boolean
----@field cancel_activity fun(self: Character)
 ---@field check_mount_is_spooked fun(self: Character): boolean
 ---@field check_mount_will_move fun(self: Character, arg2: Tripoint): boolean
 ---@field clear_bionics fun(self: Character)
@@ -222,11 +291,11 @@ function BookRecipe.new() end
 ---@field crossed_threshold fun(self: Character): boolean
 ---@field deactivate_mutation fun(self: Character, arg2: MutationBranchId)
 ---@field dismount fun(self: Character)
+---@field drop_all_items fun(self: Character) @Drops all items (inventory, worn, wielded) at the character's current position.
 ---@field drop_inv fun(self: Character, arg2: integer)
 ---@field expose_to_disease fun(self: Character, arg2: DiseaseTypeId)
 ---@field fall_asleep fun(self: Character) | fun(self: Character, arg2: TimeDuration)
 ---@field forced_dismount fun(self: Character)
----@field getID fun(self: Character): CharacterId
 ---@field get_all_skills fun(self: Character): SkillLevelMap
 ---@field get_armor_acid fun(self: Character, arg2: BodyPartTypeIntId): integer
 ---@field get_base_traits fun(self: Character): MutationBranchId[]
@@ -242,6 +311,7 @@ function BookRecipe.new() end
 ---@field get_healthy_mod fun(self: Character): number
 ---@field get_highest_category fun(self: Character): MutationCategoryTraitId
 ---@field get_hostile_creatures fun(self: Character, arg2: integer): Creature[]
+---@field getID fun(self: Character): CharacterId
 ---@field get_int fun(self: Character): integer
 ---@field get_int_base fun(self: Character): integer
 ---@field get_int_bonus fun(self: Character): integer
@@ -339,9 +409,9 @@ function BookRecipe.new() end
 ---@field is_wearing_power_armor fun(self: Character, arg2: boolean): boolean
 ---@field is_wielding fun(self: Character, arg2: Item): boolean
 ---@field is_worn fun(self: Character, arg2: Item): boolean
+---@field items_with fun(self: Character, arg2: bool): Item[] @Filters items
 ---@field item_worn_with_flag fun(self: Character, arg2: JsonFlagId, arg3: BodyPartTypeIntId): Item
 ---@field item_worn_with_id fun(self: Character, arg2: ItypeId, arg3: BodyPartTypeIntId): Item
----@field items_with fun(self: Character, arg2: bool): Item[] @Filters items
 ---@field knows_recipe fun(self: Character, arg2: RecipeId): boolean
 ---@field learn_recipe fun(self: Character, arg2: RecipeId)
 ---@field mabuff_armor_bonus fun(self: Character, arg2: DamageType): integer
@@ -379,9 +449,9 @@ function BookRecipe.new() end
 ---@field mount_creature fun(self: Character, arg2: Monster)
 ---@field mutate fun(self: Character)
 ---@field mutate_category fun(self: Character, arg2: MutationCategoryTraitId)
----@field mutate_towards fun(self: Character, arg2: MutationBranchId): boolean
 ---@field mutate_towards fun(self: Character, arg2: MutationBranchId[], arg3: integer): boolean
 ---@field mutate_towards fun(self: Character, arg2: MutationBranchId[], arg3: integer): boolean | fun(self: Character, arg2: MutationBranchId): boolean
+---@field mutate_towards fun(self: Character, arg2: MutationBranchId): boolean
 ---@field mutation_armor fun(self: Character, arg2: BodyPartTypeIntId, arg3: DamageType): number
 ---@field mutation_effect fun(self: Character, arg2: MutationBranchId)
 ---@field mutation_loss_effect fun(self: Character, arg2: MutationBranchId)
@@ -398,11 +468,10 @@ function BookRecipe.new() end
 ---@field remove_worn fun(self: Character, arg2: Item): Detached<Item> @Attempts to remove the worn `Item` from character.
 ---@field reset fun(self: Character)
 ---@field reset_encumbrance fun(self: Character)
----@field rest_quality fun(self: Character): number
 ---@field restore_scent fun(self: Character)
+---@field rest_quality fun(self: Character): number
 ---@field rooted fun(self: Character)
 ---@field rust_rate fun(self: Character): integer
----@field setID fun(self: Character, arg2: CharacterId, arg3: boolean)
 ---@field set_base_age fun(self: Character, arg2: integer)
 ---@field set_base_height fun(self: Character, arg2: integer)
 ---@field set_dex_bonus fun(self: Character, arg2: integer)
@@ -410,6 +479,7 @@ function BookRecipe.new() end
 ---@field set_fatigue fun(self: Character, arg2: integer)
 ---@field set_healthy fun(self: Character, arg2: number)
 ---@field set_healthy_mod fun(self: Character, arg2: number)
+---@field setID fun(self: Character, arg2: CharacterId, arg3: boolean)
 ---@field set_int_bonus fun(self: Character, arg2: integer)
 ---@field set_max_power_level fun(self: Character, arg2: Energy)
 ---@field set_movement_mode fun(self: Character, arg2: CharacterMoveMode)
@@ -1097,8 +1167,8 @@ function IslotSeed.new() end
 ---@field ammo_id AmmunitionTypeId[]
 ---@field charge_factor integer
 ---@field charges_per_use integer
----@field def_charges integer
 ---@field default_ammo ItypeId
+---@field def_charges integer
 ---@field max_charges integer
 ---@field power_draw integer
 ---@field rand_charges integer[]
@@ -1147,11 +1217,16 @@ function IslotWheel.new() end
 ---@field get_category_id fun(self: Item): string @Gets the category id this item is in
 ---@field get_comestible_fun fun(self: Item): integer
 ---@field get_counter fun(self: Item): integer
+---@field get_damage fun(self: Item): integer @Get current item damage value (durability). Higher values mean more damaged. Default range is -1000 (min) to 4000 (max), configurable via 'damage_states' in JSON.
+---@field get_damage_level fun(self: Item): integer | fun(self: Item, arg2: integer): integer @Get item damage as a level from 0 to max. Used for UI display and damage thresholds.
 ---@field get_kcal fun(self: Item): integer
+---@field get_max_damage fun(self: Item): integer @Get maximum possible damage value before item is destroyed. Default is 4000, configurable via 'damage_states' in JSON.
+---@field get_min_damage fun(self: Item): integer @Get minimum possible damage value (can be negative for reinforced items). Default is -1000, configurable via 'damage_states' in JSON.
 ---@field get_mtype fun(self: Item): MonsterTypeId @Almost for a corpse.
 ---@field get_owner fun(self: Item): FactionId @Gets the faction id that owns this item
 ---@field get_owner_name fun(self: Item): string
 ---@field get_quench fun(self: Item): integer
+---@field get_relative_health fun(self: Item): number @Get relative health as ratio 0.0-1.0, where 1.0 is undamaged and 0.0 is destroyed
 ---@field get_reload_time fun(self: Item): integer
 ---@field get_rot fun(self: Item): TimeDuration @Gets the TimeDuration until this item rots
 ---@field get_techniques fun(self: Item): MartialArtsTechniqueId[] @Gets all techniques. Including original techniques.
@@ -1226,11 +1301,13 @@ function IslotWheel.new() end
 ---@field is_wheel fun(self: Item): boolean
 ---@field made_of fun(self: Item): MaterialTypeId[]
 ---@field mod_charges fun(self: Item, arg2: integer)
+---@field mod_damage fun(self: Item, arg2: integer): boolean | fun(self: Item, arg2: integer, arg3: DamageType): boolean @Modify item damage by given amount. Returns true if item should be destroyed.
 ---@field price fun(self: Item, arg2: boolean): number @Cents of the item. `bool` is whether it is a post-cataclysm value.
 ---@field remaining_capacity_for_id fun(self: Item, arg2: ItypeId, arg3: boolean): integer @Gets the remaining space available for a type of liquid
 ---@field remove_technique fun(self: Item, arg2: MartialArtsTechniqueId) @Removes the additional technique. Doesn't affect originial techniques.
 ---@field set_charges fun(self: Item, arg2: integer)
 ---@field set_counter fun(self: Item, arg2: integer)
+---@field set_damage fun(self: Item, arg2: integer) @Set item damage to specified value. Clamped between min_damage and max_damage.
 ---@field set_flag fun(self: Item, arg2: JsonFlagId)
 ---@field set_flag_recursive fun(self: Item, arg2: JsonFlagId)
 ---@field set_owner fun(self: Item, arg2: Character) @Sets the ownership of this item to a character
@@ -1405,9 +1482,11 @@ function JsonTraitFlagId.new() end
 
 ---@class Map
 ---@field add_field_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId, arg4: integer, arg5: TimeDuration): boolean
+---@field add_item fun(self: Map, arg2: Tripoint, arg3: Detached<Item>): Detached<Item> @Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed.
 ---@field clear_items_at fun(self: Map, arg2: Tripoint)
 ---@field create_corpse_at fun(self: Map, arg2: Tripoint, arg3: MonsterTypeId, arg4: TimePoint, arg5: string, arg6: integer) @Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag.
 ---@field create_item_at fun(self: Map, arg2: Tripoint, arg3: ItypeId, arg4: integer): Item @Creates a new item(s) at a position on the map.
+---@field detach_item_at fun(self: Map, arg2: Tripoint, arg3: Item): Detached<Item> @Removes an item from the map and returns it as a detached_ptr. The item is now owned by Lua - store it in a table to keep it alive, or let it be GC'd to destroy it. Use add_item to place it back on a map.
 ---@field disarm_trap_at fun(self: Map, arg2: Tripoint) @Disarms a trap using your skills and stats, with consequences depending on success or failure.
 ---@field get_abs_ms fun(self: Map, arg2: Tripoint): Tripoint @Convert local ms -> absolute ms
 ---@field get_field_age_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId): TimeDuration
@@ -1424,6 +1503,7 @@ function JsonTraitFlagId.new() end
 ---@field has_items_at fun(self: Map, arg2: Tripoint): boolean
 ---@field mod_field_age_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId, arg4: TimeDuration): TimeDuration
 ---@field mod_field_int_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId, arg4: integer): integer
+---@field move_item_to fun(self: Map, arg2: Tripoint, arg3: Item, arg4: Tripoint) @Moves an item from one position to another, preserving all item state including contents.
 ---@field remove_field_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId)
 ---@field remove_item_at fun(self: Map, arg2: Tripoint, arg3: Item)
 ---@field remove_trap_at fun(self: Map, arg2: Tripoint) @Simpler version of `set_trap_at` with `trap_null`.
@@ -1646,6 +1726,8 @@ function ModInfoId.new() end
 ---@field friendly integer
 ---@field morale integer
 ---@field unique_name string
+---@field add_faction_anger fun(self: Monster, arg2: string, arg3: integer)
+---@field add_item fun(self: Monster, arg2: Item)
 ---@field attitude fun(self: Monster, arg2: Character): MonsterAttitude
 ---@field can_climb fun(self: Monster): boolean
 ---@field can_dig fun(self: Monster): boolean
@@ -1654,9 +1736,14 @@ function ModInfoId.new() end
 ---@field can_see fun(self: Monster): boolean
 ---@field can_submerge fun(self: Monster): boolean
 ---@field can_upgrade fun(self: Monster): boolean
+---@field clear_items fun(self: Monster): Detached<Item>[]
 ---@field climbs fun(self: Monster): boolean
 ---@field digs fun(self: Monster): boolean
+---@field drop_items fun(self: Monster, arg2: Tripoint)
+---@field drop_items_here fun(self: Monster)
 ---@field flies fun(self: Monster): boolean
+---@field get_faction_anger fun(self: Monster, arg2: string): integer
+---@field get_items fun(self: Monster): Item[]
 ---@field get_type fun(self: Monster): MonsterTypeId
 ---@field get_upgrade_time fun(self: Monster): integer
 ---@field hasten_upgrade fun(self: Monster)
@@ -1670,6 +1757,7 @@ function ModInfoId.new() end
 ---@field name fun(self: Monster, arg2: integer): string
 ---@field name_with_armor fun(self: Monster): string
 ---@field refill_udders fun(self: Monster)
+---@field remove_item fun(self: Monster, arg2: Item): Detached<Item>
 ---@field set_hp fun(self: Monster, arg2: integer)
 ---@field spawn fun(self: Monster, arg2: Tripoint)
 ---@field swims fun(self: Monster): boolean
@@ -1936,6 +2024,50 @@ function NpcOpinion.new() end
 NpcPersonality = {}
 ---@return NpcPersonality
 function NpcPersonality.new() end
+
+---@class OmtFindParams
+---@field exclude_types (string, OtMatchType)[] @Vector of (terrain_type, match_type) pairs to exclude from search.
+---@field existing_only boolean @If true, restricts search to existing overmaps only.
+---@field explored boolean @If set, filters by terrain explored status (true = explored only, false = unexplored only).
+---@field max_results integer @If set, limits the number of results returned.
+---@field seen boolean @If set, filters by terrain seen status (true = seen only, false = unseen only).
+---@field types (string, OtMatchType)[] @Vector of (terrain_type, match_type) pairs to search for.
+---@field add_exclude_type fun(self: OmtFindParams, arg2: string, arg3: OtMatchType) @Helper method to add a terrain type to exclude from search.
+---@field add_type fun(self: OmtFindParams, arg2: string, arg3: OtMatchType) @Helper method to add a terrain type to search for.
+---@field set_search_layers fun(self: OmtFindParams, arg2: integer, arg3: integer) @Set the search layer range (z-levels).
+---@field set_search_range fun(self: OmtFindParams, arg2: integer, arg3: integer) @Set the search range in overmap tiles (min, max).
+OmtFindParams = {}
+---@return OmtFindParams
+function OmtFindParams.new() end
+
+---@class OterId
+---@field NULL_ID fun(): OterId
+---@field implements_int_id fun(): boolean
+---@field int_id fun(self: OterId): OterIntId
+---@field is_null fun(self: OterId): boolean
+---@field is_valid fun(self: OterId): boolean
+---@field obj fun(self: OterId): OterRaw
+---@field str fun(self: OterId): string
+---@field serialize fun(self: OterId, arg2: any)
+---@field deserialize fun(self: OterId, arg2: any)
+---@field __tostring fun(self: OterId): string
+OterId = {}
+---@return OterId
+---@overload fun(self: OterId): OterId
+---@overload fun(arg1: OterIntId): OterId
+---@overload fun(arg1: string): OterId
+function OterId.new() end
+
+---@class OterIntId
+---@field is_valid fun(self: OterIntId): boolean
+---@field obj fun(self: OterIntId): OterRaw
+---@field str_id fun(self: OterIntId): OterId
+---@field __tostring fun(self: OterIntId): string
+OterIntId = {}
+---@return OterIntId
+---@overload fun(self: OterIntId): OterIntId
+---@overload fun(arg1: OterId): OterIntId
+function OterIntId.new() end
 
 ---@class Player : Character, Creature
 Player = {}
@@ -2463,11 +2595,11 @@ function WeaponCategoryId.new() end
 
 --- Various game constants
 ---@class const
----@field OMT_MS_SIZE integer # value: 24
----@field OMT_SM_SIZE integer # value: 2
 ---@field OM_MS_SIZE integer # value: 4320
 ---@field OM_OMT_SIZE integer # value: 180
 ---@field OM_SM_SIZE integer # value: 360
+---@field OMT_MS_SIZE integer # value: 24
+---@field OMT_SM_SIZE integer # value: 2
 ---@field SM_MS_SIZE integer # value: 12
 const = {}
 
@@ -2543,6 +2675,10 @@ gdebug = {}
 ---@field on_mon_death fun(params: table) @Called when a monster is dead.  <br />The hook receives a table with keys:  <br />* `mon` (Monster)  <br />* `killer` (Creature)  
 ---@field on_mon_effect fun(params: table) @Called when character is on the effect which has `EFFECT_LUA_ON_TICK` flag.  <br />The hook receives a table with keys:  <br />* `mon` (Monster)  <br />* `effect` (Effect)  
 ---@field on_mon_effect_added fun(params: table) @Called when monster gets the effect which has `EFFECT_LUA_ON_ADDED` flag.  <br />The hook receives a table with keys:  <br />* `mon` (Monster)  <br />* `effect` (Effect)  
+---@field on_shoot fun(params: table) @Called when shot(s) is fired from a gun.  <br />The hook receives a table with keys:  <br />* `shooter` (Character)  <br />* `target_pos` (Tripoint)  <br />* `shots` (int)  <br />* `gun` (item)  <br />* `ammo` (item): For `RELOAD_AND_SHOOT` guns like a bow. On the others, it returns `nil` value.  
+---@field on_throw fun(params: table) @Called when an item is thrown.  <br />The hook receives a table with keys:  <br />* `thrower` (Character)  <br />* `target_pos` (Tripoint)  <br />* `throw_from_pos` (Tripoint)  <br />* `thrown` (item)  
+---@field on_weather_changed fun(params: table) @Called when the weather has changed.  <br />The hook receives a table with keys:  <br />* `weather_id` (string): Current weather ID  <br />* `old_weather_id` (string): Previous weather ID  <br />* `temperature` (float): Current temperature in Celsius  <br />* `temperature_f` (float): Current temperature in Fahrenheit  <br />* `windspeed` (float): Wind speed  <br />* `winddirection` (integer): Wind direction in degrees  <br />* `humidity` (float): Humidity percentage  <br />* `pressure` (float): Atmospheric pressure  <br />* `is_sheltered` (boolean): Whether player is sheltered  
+---@field on_weather_updated fun(params: table) @Called every 5 minutes when weather data is updated.  <br />The hook receives a table with keys:  <br />* `weather_id` (string): Current weather ID  <br />* `temperature` (float): Current temperature in Celsius  <br />* `temperature_f` (float): Current temperature in Fahrenheit  <br />* `windspeed` (float): Wind speed  <br />* `winddirection` (integer): Wind direction in degrees  <br />* `humidity` (float): Humidity percentage  <br />* `pressure` (float): Atmospheric pressure  <br />* `is_sheltered` (boolean): Whether player is sheltered  
 hooks = {}
 
 --- Localization API.
@@ -2552,6 +2688,18 @@ hooks = {}
 ---@field vgettext fun(arg1: string, arg2: string, arg3: integer): string @First is english singular string, second is english plural string. Number is amount to translate for.
 ---@field vpgettext fun(arg1: string, arg2: string, arg3: string, arg4: integer): string @First is context string. Second is english singular string. third is english plural. Number is amount to translate for.
 locale = {}
+
+--- Global overmap buffer interface for finding and inspecting overmap terrain.
+---@class overmapbuffer
+---@field check_ot fun(arg1: string, arg2: OtMatchType, arg3: Tripoint): boolean @Check if the terrain at the given position matches the type and match mode. Returns boolean.
+---@field find_all fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint[] @Find all overmap terrain tiles matching the given parameters. Returns a vector of tripoints.
+---@field find_closest fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint @Find the closest overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
+---@field find_random fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint @Find a random overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
+---@field is_explored fun(arg1: Tripoint): boolean @Check if the terrain at the given position has been explored by the player. Returns boolean.
+---@field seen fun(arg1: Tripoint): boolean @Check if the terrain at the given position has been seen by the player. Returns boolean.
+---@field set_seen fun(arg1: Tripoint, arg2: boolean) @Set the seen status of terrain at the given position.
+---@field ter fun(arg1: Tripoint): OterIntId @Get the overmap terrain type at the given position. Returns an oter_id.
+overmapbuffer = {}
 
 --- Library for testing purposes
 ---@class tests_lib
@@ -3061,7 +3209,10 @@ MonsterFlag = {
 	PROJECTILE_RESISTANT_2 = 123,
 	PROJECTILE_RESISTANT_3 = 124,
 	PROJECTILE_RESISTANT_4 = 125,
-	VOLATILE = 126
+	VOLATILE = 126,
+	MOUNTABLE_STAIRS = 127,
+	MOUNTABLE_OBSTACLES = 128,
+	FACTION_MEMORY = 129
 }
 
 ---@enum MonsterSize
@@ -3119,6 +3270,14 @@ NpcNeed = {
 	need_food = 4,
 	need_drink = 5,
 	need_safety = 6
+}
+
+---@enum OtMatchType
+OtMatchType = {
+	EXACT = 0,
+	TYPE = 1,
+	PREFIX = 2,
+	CONTAINS = 3
 }
 
 ---@enum SfxChannel

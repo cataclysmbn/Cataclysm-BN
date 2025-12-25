@@ -8950,7 +8950,13 @@ bool game::prompt_dangerous_tile( const tripoint &dest_loc ) const
         }
         ledge_examine( u, dest_loc );
         return false;
+    } else {
+        auto crit = u.mounted_creature.get();
+        if( crit->has_flag( MF_RIDEABLE_MECH ) ) {
+            return true; // mount can climb down ledges
+        }
     }
+
 
     add_msg( m_warning, _( "Your %s refuses to move over that ledge!" ),
              u.mounted_creature->get_name() );
@@ -9169,7 +9175,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     const int previous_moves = u.moves;
     if( u.is_mounted() ) {
         auto crit = u.mounted_creature.get();
-        if( !crit->has_flag( MF_RIDEABLE_MECH ) &&
+        if( !crit->has_flag( MF_MOUNTABLE_OBSTACLES ) &&
             ( m.has_flag_ter_or_furn( "MOUNTABLE", dest_loc ) ||
               m.has_flag_ter_or_furn( "BARRICADABLE_DOOR", dest_loc ) ||
               m.has_flag_ter_or_furn( "OPENCLOSE_INSIDE", dest_loc ) ||

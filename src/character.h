@@ -796,6 +796,8 @@ class Character : public Creature, public location_visitable<Character>
 
         /** Toggles a trait on the player and in their mutation list */
         void toggle_trait( const trait_id & );
+        /** Toggles a bionic on the player */
+        void toggle_bionic( const bionic_id & );
         /** Add or removes a mutation on the player, but does not trigger mutation loss/gain effects. */
         void set_mutation( const trait_id & );
         void unset_mutation( const trait_id & );

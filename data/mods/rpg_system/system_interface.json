@@ -44,5 +44,16 @@
       "pain_max_val": [ 100 ],
       "morale": [ -20 ]
     }
+  },
+  {
+    "type": "recipe",
+    "result": "system_interface",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "time": "1 m",
+    "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
+    "components": [ [ [ "rock", 1 ], [ "sharp_rock", 1 ] ] ]
   }
 ]

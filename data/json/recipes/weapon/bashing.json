@@ -123,6 +123,18 @@
   },
   {
     "type": "recipe",
+    "result": "bat_metal_bolted",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_BASHING",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "15 m",
+    "autolearn": true,
+    "qualities": [ { "id": "DRILL", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
+    "components": [ [ [ "bat_metal", 1 ] ], [ [ "scrap", 4 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "sword_wood",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_BASHING",

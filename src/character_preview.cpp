@@ -100,6 +100,9 @@ class char_preview_adapter : public cata_tiles
             for( const bionic_id &bio : av.prof->CBMs() ) {
                 t_av.add_bionic( bio );
             }
+            for( const bionic &bio : *av.my_bionics ) {
+                t_av.add_bionic( bio.id );
+            }
             for( const bionic &bio : *t_av.my_bionics ) {
                 std::string overlay_id = ( bio.powered ? "active_" : "" ) + bio.id.str();
                 int order = get_overlay_order_of_mutation( overlay_id );
@@ -112,13 +115,20 @@ class char_preview_adapter : public cata_tiles
 
             // now that we have bionics applied we can see what clothing we can wear
             if( with_clothing ) {
+                static const flag_id json_flag_auto_wield( "auto_wield" );
+                std::vector<itype_id> wielded_items;
                 for( const auto &it : av.prof->items( av.male, av.get_mutations() ) ) {
-                    if( it->is_armor() && av.can_wear( *it ).success() ) {
+                    if( it->has_flag( json_flag_auto_wield ) ) {
+                        wielded_items.push_back( it->typeId() );
+                    } else if( it->is_armor() && av.can_wear( *it ).success() ) {
                         t_av.wear_item( item::spawn( *std::move( it ) ), false );
                     }
                 }
                 for( const item * const &worn_item : t_av.worn ) {
                     rval.push_back( "worn_" + worn_item->typeId().str() );
+                }
+                for( const itype_id &wielded : wielded_items ) {
+                    rval.push_back( "wielded_" + wielded.str() );
                 }
             }
             return rval;

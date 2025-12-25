@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -313,7 +314,7 @@ class monster : public Creature, public location_visitable<monster>
 
         // Combat
         bool is_fleeing( Character &who ) const; // True if we're fleeing
-        monster_attitude attitude( const Character *u = nullptr ) const; // See the enum above
+        auto attitude( const Character *u = nullptr ) const -> monster_attitude; // See the enum above
         Attitude attitude_to( const Creature &other ) const override;
         void process_triggers(); // Process things that anger/scare us
 
@@ -506,6 +507,7 @@ class monster : public Creature, public location_visitable<monster>
         int friendly;
         int anger = 0;
         int morale = 0;
+        std::unordered_map<mfaction_id, int> faction_anger;  //< Per-faction anger tracking
         // Our faction (species, for most monsters)
         mfaction_id faction;
         // If we're related to a mission
@@ -609,9 +611,16 @@ class monster : public Creature, public location_visitable<monster>
         detached_ptr<item> remove_corpse_component( item &it );
         std::vector<detached_ptr<item>> remove_corpse_components();
 
+        // Faction-specific anger tracking
+        void add_faction_anger( mfaction_id target_faction, int amount );
+        auto get_faction_anger( mfaction_id target_faction ) const -> int;
+
     private:
         void process_trigger( mon_trigger trig, int amount );
-        void process_trigger( mon_trigger trig, const std::function<int()> &amount_func );
+        void process_trigger( mon_trigger trig, const std::function < auto() -> int > &amount_func );
+        void process_trigger( mon_trigger trig, int amount, mfaction_id target_faction );
+        void process_trigger( mon_trigger trig, const std::function < auto() -> int > &amount_func,
+                              mfaction_id target_faction );
 
         void trigger_character_aggro( const char *reason );
         void trigger_character_aggro_chance( int chance, const char *reason );

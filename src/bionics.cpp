@@ -269,6 +269,11 @@ void bionic_data::finalize_all()
     }
 }
 
+std::vector<bionic_data> bionic_data::get_all()
+{
+    return bionic_factory.get_all();
+}
+
 void bionic_data::reset()
 {
     bionic_factory.reset();
@@ -320,6 +325,8 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
     assign( jsobj, "flags", flags, strict );
     assign( jsobj, "can_uninstall", can_uninstall, strict );
     assign( jsobj, "no_uninstall_reason", no_uninstall_reason, strict );
+    assign( jsobj, "starting_bionic", starting_bionic, strict );
+    assign( jsobj, "points", points, strict );
 
 
     activated = has_flag( flag_BIONIC_TOGGLED ) ||
@@ -3138,5 +3145,15 @@ void Character::introduce_into_anesthesia( const time_duration &duration, Charac
     } else {
         add_effect( effect_narcosis, duration );
         fall_asleep( duration );
+    }
+}
+// NOTE: Not toggling in the sense of activation
+// Instead toggling in the sense of having it
+void Character::toggle_bionic( const bionic_id &bio )
+{
+    if( has_bionic( bio ) ) {
+        remove_bionic( bio );
+    } else {
+        add_bionic( bio );
     }
 }

@@ -3597,6 +3597,32 @@
   },
   {
     "type": "vehicle_part",
+    "id": "bomber controls",
+    "looks_like": "turret_controls",
+    "name": { "str": "bomber control unit" },
+    "symbol": "$",
+    "color": "yellow",
+    "broken_symbol": "$",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 50,
+    "item": "bomber_controls",
+    "description": "A set of motors and an AI unit which allows for automatically activating and dropping standard items to attack foes from a connected cargo bay.",
+    "folded_volume": "750 ml",
+    "flags": [ "DROPPER", "SHOCK_RESISTANT" ],
+    "requirements": {
+      "install": {
+        "time": "40 m",
+        "skills": [ [ "mechanics", 3 ], [ "electronics", 3 ] ],
+        "qualities": [ { "id": "SCREW", "level": 1 } ]
+      },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "3 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "qualities": [ { "id": "SCREW", "level": 1 } ] }
+    },
+    "breaks_into": "ig_vp_device"
+  },
+  {
+    "type": "vehicle_part",
     "id": "fridgetank",
     "name": { "str": "refrigerated tank (60L)" },
     "symbol": "O",

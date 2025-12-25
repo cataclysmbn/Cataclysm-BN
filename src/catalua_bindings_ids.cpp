@@ -26,6 +26,7 @@
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
+#include "omdata.h"
 #include "recipe.h"
 #include "skill.h"
 #include "trap.h"
@@ -127,6 +128,8 @@ void cata::detail::reg_game_ids( sol::state &lua )
     reg_id<mtype, false>( lua );
     reg_id<mutation_branch, false>( lua );
     reg_id<mutation_category_trait, false>( lua );
+    reg_id<oter_t, true>( lua );
+    // TODO: reg_id<overmap_special, false>( lua ); // Requires comparison operators
     reg_id<recipe, false>( lua );
     reg_id<Skill, false>( lua );
     reg_id<species_type, false>( lua );

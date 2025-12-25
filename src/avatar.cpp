@@ -139,6 +139,10 @@ void avatar::control_npc( npc &np )
         debugmsg( "control_npc() called on non-allied npc %s", np.name );
         return;
     }
+    // Cancel activities before swap to prevent issues with stale references
+    // Avatar's activity would transfer to NPC and reference invalid items/state
+    cancel_activity();
+    np.cancel_activity();
     if( !shadow_npc ) {
         shadow_npc = std::make_unique<npc>();
         shadow_npc->op_of_u.trust = 10;

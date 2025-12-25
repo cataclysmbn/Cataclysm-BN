@@ -1,80 +1,35 @@
 # Cataclysm: Bright Nights - Agent Guidelines
 
-Repository for post-apocalyptic sci-fi survival roguelike.
+## C++23 & Style
 
-- **Tech Stack:** C++23, CMake, Catch2
-- **Platforms:** Linux, Windows, macOS, Android
+- **Standard**: Use C++23: `auto`, trailing returns (`->`), designated initializers, `std::ranges`, `std::optional`, `std::expected`, `<=>`.
+- **Formatting**: Prefer single-line functions. Append `// *NOPAD*` to `<=>` and `-> <type>&` to prevent astyle bugs.
+- **Headers**: Avoid modifying headers with >10 usages. Create new file with pure functions.
+- **Refactoring**: Apply Boyscout rule to modified paths.
 
-## Directory Structure
+## Workflow
 
-```
-src/              Core game logic (C++ source)
-tests/            Unit and integration tests
-data/json/        Game content (items, monsters, etc.)
-gfx/              Tilesets and graphics
-lang/             Localization files
-docs/             Project documentation
-```
+1. **Context**: Fetch issue details via GitHub MCP (if applicable). `git switch -c <type>/<issue-id>/<slug>` (Types: feat, fix, refactor, chore, build, ci).
+2. **Develop**: Follow [Code Style](./docs/en/dev/explanation/code_style.md). Use `_( "text" )` for L10n.
+3. **Test**: Build and verify. Create/update `tests/` (Catch2).
+4. **Commit**: Run astyle. Follow Atomic Commit and [Conventional Commits](./docs/en/contribute/changelog_guidelines.md). **No body/footer unless critical.**
+5. **PR**: Use [Template](./.github/pull_request_template.md). **Zero fluff**.
 
-## Build & Test
+## Build & Verify
 
 ```sh
-# Configure and build
+# Build Game & Tests
 cmake --preset linux-full
 cmake --build --preset linux-full --target cataclysm-bn-tiles cata_test-tiles
 
-# Run tests
-./out/build/linux-full/tests/cata_test-tiles "test filter"
+# Run Tests
+./out/build/linux-full/tests/cata_test-tiles "[optional-filter]"
+
+# Validate JSON
+./build-scripts/lint-json.sh
 ```
 
-See [build docs](./docs/en/dev/guides/building/cmake.md) for details.
+## References
 
-## Development Workflow
-
-1. **Always** get issue details via GitHub MCP tools
-2. **CREATE SEPARATE BRANCHES PER ISSUE** from `main`: `git switch --create <type>/<issue-number>/<description>`
-   - Types: conventional commits (feat, fix, docs, style, refactor, test, chore) depending on issue type
-3. Make changes following [style guide](./docs/en/dev/explanation/code_style.md)
-   - Prefer modern C++ (auto, `trailing return`, `<ranges>`, `std::optional`, smart pointers, etc)
-4. Add/update tests in `tests/` (use Catch2: `TEST_CASE`, `REQUIRE`, `CHECK`)
-5. Build and test before committing
-6. Commit with [conventional commits](./docs/en/contribute/changelog_guidelines.md)
-   - messages must be terse and straight to the point
-   - DO NOT add message body or footer unless absolutely necessary
-   - use atomic commits
-7. Submit PR using [PR template](./.github/pull_request_template.md)
-   - **Be terse. Never waste reviewer time. No fluff or meta-commentary.**
-
-## Guidelines
-
-- Legacy codebase
-  - Search for patterns, read tests, consult docs before making assumptions.
-  - Boyscout rule: refactor parts you touch.
-
-## Common Tasks
-
-**JSON content:** Edit `data/json/`, validate with `build-scripts/lint-json.sh`
-**Game logic:** Modify `src/*.cpp`, run affected tests
-**Localization:** Use `_("text")` for translatable strings
-**Formatting:** See [formatting guide](./docs/en/dev/guides/formatting.md)
-
-## Code Review (GitHub Copilot)
-
-- Comment only on objective, obvious mistakes
-- All comments must be direct, actionable, PR-specific
-- No summaries, assessments, or meta-commentary
-
-### Using `suggestion` Blocks
-
-- Use **ONLY** when change is completely self-contained (no new variables/functions, single file):
-- **DON'T** use for multi-file changes or changes needing external context. Use regular code blocks instead.
-
-## Security
-
-- Avoid unbounded loops/recursion
-- Validate JSON input, check array bounds
-- Use smart pointers, be cautious with save file deserialization
-
-## Resources
-
-- [Dev docs](./docs/en/dev/)
+- **Docs**: [Building](./docs/en/dev/guides/building/cmake.md), [Formatting](./docs/en/dev/guides/formatting.md), [Dev Index](./docs/en/dev/).
+- **Review**: [LLM Guide](./.github/llm_review_guide.md).

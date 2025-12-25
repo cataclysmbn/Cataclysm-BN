@@ -412,6 +412,13 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             critter = nullptr;
         }
 
+        // Skip friendly creatures within 1 tile of shooter to prevent adjacent friendly fire
+        if( critter != nullptr && origin != nullptr &&
+            origin->attitude_to( *critter ) == Attitude::A_FRIENDLY &&
+            rl_dist( source, tp ) <= 1 ) {
+            critter = nullptr;
+        }
+
         auto *mon = dynamic_cast<monster *>( critter );
         // ignore non-point-blank digging targets (since they are underground)
         if( mon != nullptr && mon->digging() &&

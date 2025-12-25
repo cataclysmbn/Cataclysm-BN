@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <memory>
 #include <numeric>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -29,6 +30,7 @@
 #include "string_id.h"
 #include "string_utils.h"
 #include "translations.h"
+#include "type_id.h"
 #include "units.h"
 #include "units_utility.h"
 #include "value_ptr.h"
@@ -109,7 +111,8 @@ static const std::unordered_map<std::string, vpart_bitflags> vpart_bitflag_map =
     { "WING", VPFLAG_WING },
     { "PROPELLER", VPFLAG_PROPELLER },
     { "EXTENDABLE", VPFLAG_EXTENDABLE },
-    { "NOFIELDS", VPFLAG_NOFIELDS }
+    { "NOFIELDS", VPFLAG_NOFIELDS },
+    { "DROPPER", VPFLAG_DROPPER }
 };
 
 static const std::vector<std::pair<std::string, int>> standard_terrain_mod = {{
@@ -1113,8 +1116,45 @@ void vehicle_prototype::load( const JsonObject &jo )
     }
 
     if( jo.has_member( "blueprint" ) ) {
-        // currently unused, read to suppress unvisited members warning
-        jo.get_array( "blueprint" );
+        if( jo.has_member( "palette" ) ) {
+            std::map< char, JsonArray > string_palette;
+            for( const JsonMember member : jo.get_object( "palette" ) ) {
+                std::vector<std::string> members;
+                for( const auto entry : member.get_array() ) {
+                    members.push_back( entry );
+                }
+                string_palette[member.name().at( 0 )] = member.get_array();
+            }
+            std::map< char, std::vector<vpart_id> > veh_palette;
+            for( auto const character : string_palette ) {
+                for( std::string part : character.second ) {
+                    if( !veh_palette.contains( character.first ) ) {
+                        veh_palette[character.first] = { vpart_id( part ) };
+                    } else {
+                        veh_palette[character.first].push_back( vpart_id( part ) );
+                    }
+                }
+            }
+            auto pnt = jo.get_object( "blueprint_origin" );
+            int y = -pnt.get_int( "y", 0 );
+            for( std::string row : jo.get_array( "blueprint" ) ) {
+                int x = -pnt.get_int( "x", 0 ) - 1;
+                for( char character : row ) {
+                    x += 1;
+                    if( !veh_palette.contains( character ) ) { continue; }
+                    for( auto const part : veh_palette.at( character ) ) {
+                        part_def pt;
+                        pt.pos = point( x, y );
+                        pt.part = part;
+                        vproto.parts.push_back( pt );
+                    }
+                }
+                y += 1;
+            }
+        } else {
+            // This still has to be optional in cases where old mods or places are still using it for only display purposes
+            jo.get_array( "blueprint" );
+        }
     }
 
     for( JsonObject part : jo.get_array( "parts" ) ) {

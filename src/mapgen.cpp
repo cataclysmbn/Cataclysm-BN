@@ -1921,8 +1921,8 @@ class jmapgen_item_group : public jmapgen_piece
             repeat = jmapgen_int( jsi, "repeat", 1, 1 );
         }
         void check( const std::string &context, const mapgen_parameters & ) const override {
-            if( !group_id.is_valid() ) {
-                debugmsg( "Invalid item_group_id \"%s\" in %s", group_id.str(), context );
+            if( !group_id.is_valid() && !itype_id( group_id.str() ).is_valid() ) {
+                debugmsg( "Invalid item_group_id / itype_id \"%s\" in %s", group_id.str(), context );
             }
         }
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
@@ -6266,18 +6266,23 @@ std::vector<item *> map::place_items( const item_group_id &loc, const int chance
 {
     // TODO: implement for 3D
     std::vector<item *> res;
-
+    itype_id it;
+    bool is_type = false;
     if( chance > 100 || chance <= 0 ) {
         debugmsg( "map::place_items() called with an invalid chance (%d)", chance );
         return res;
     }
     if( !item_group::group_is_defined( loc ) ) {
-        // TODO: fix point types
-        const tripoint_abs_omt omt( sm_to_omt_copy( get_abs_sub() ) );
-        const oter_id &oid = overmap_buffer.ter( omt );
-        debugmsg( "place_items: invalid item group '%s', om_terrain = '%s' (%s)",
-                  loc.c_str(), oid.id().c_str(), oid->get_mapgen_id().c_str() );
-        return res;
+        it = itype_id( loc.str() );
+        if( !it.is_valid() ) {
+            // TODO: fix point types
+            const tripoint_abs_omt omt( sm_to_omt_copy( get_abs_sub() ) );
+            const oter_id &oid = overmap_buffer.ter( omt );
+            debugmsg( "place_items: invalid item group / item '%s', om_terrain = '%s' (%s)",
+                      loc.c_str(), oid.id().c_str(), oid->get_mapgen_id().c_str() );
+            return res;
+        }
+        is_type = true;
     }
 
     const float spawn_rate = get_option<float>( "ITEM_SPAWNRATE" );
@@ -6302,6 +6307,13 @@ std::vector<item *> map::place_items( const item_group_id &loc, const int chance
         } while( is_valid_terrain( p ) && tries < 20 );
 
         if( tries < 20 ) {
+            if( is_type ) {
+                detached_ptr<item> placed = add_item_or_charges( p, item::spawn( it ) );
+                if( placed ) {
+                    res.push_back( std::move( &*placed ) );
+                }
+                return res;
+            }
             std::vector<detached_ptr<item>> initial = item_group::items_from( loc, turn );
 
             for( detached_ptr<item> &itm : initial ) {

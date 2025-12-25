@@ -802,6 +802,7 @@
       { "level": 1, "name": "fabrication" },
       { "level": 1, "name": "tailor" }
     ],
+    "forbids_bionics": true,
     "traits": [ "PROF_CHURL", "ILLITERATE", "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH", "SPIRITUAL" ]
   },
   {

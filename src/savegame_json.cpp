@@ -1928,6 +1928,15 @@ void monster::load( const JsonObject &data )
     data.read( "dead", dead );
     data.read( "anger", anger );
     data.read( "morale", morale );
+
+    if( data.has_member( "faction_anger" ) ) {
+        JsonObject ja = data.get_object( "faction_anger" );
+        for( const auto &member : ja ) {
+            mfaction_str_id faction_str( member.name() );
+            faction_anger[mfaction_id( faction_str )] = member.get_int();
+        }
+    }
+
     data.read( "hallucination", hallucination );
     data.read( "aggro_character", aggro_character );
     data.read( "stairscount", staircount ); // really?
@@ -2021,6 +2030,16 @@ void monster::store( JsonOut &json ) const
     json.member( "dead", dead );
     json.member( "anger", anger );
     json.member( "morale", morale );
+
+    if( !faction_anger.empty() ) {
+        json.member( "faction_anger" );
+        json.start_object();
+        for( const auto &pair : faction_anger ) {
+            json.member( pair.first.id().str(), pair.second );
+        }
+        json.end_object();
+    }
+
     json.member( "hallucination", hallucination );
     json.member( "aggro_character", aggro_character );
     json.member( "stairscount", staircount );

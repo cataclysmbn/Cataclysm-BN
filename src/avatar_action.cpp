@@ -10,6 +10,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <numeric>
 
 #include "action.h"
 #include "activity_actor_definitions.h"

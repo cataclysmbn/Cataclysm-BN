@@ -450,7 +450,7 @@ mod.mc_io = function(reader, device)
             ui.query_any_key(string.format(locale.gettext("%s has nothing new books."), that_mc:tname(1, false, 0)))
           else
             ui.query_any_key(
-              string.format(locale.gettext("%d books downloaded from %s."), dl_count, that_mc:tname(1, false, 0))
+              string.format(locale.gettext("%1$d books downloaded from %2$s."), dl_count, that_mc:tname(1, false, 0))
             )
           end
         elseif ans_mc_menu == 2 then --Upload
@@ -468,7 +468,7 @@ mod.mc_io = function(reader, device)
           else
             ui.query_any_key(
               string.format(
-                locale.gettext("%d books uploaded on %s.\nNaming the card is recommended."),
+                locale.gettext("%1$d books uploaded on %2$s.\nNaming the card is recommended."),
                 ul_count,
                 that_mc:tname(1, false, 0)
               )

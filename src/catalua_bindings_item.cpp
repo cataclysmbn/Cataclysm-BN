@@ -286,6 +286,39 @@ void reg_item( sol::state &lua )
 
         SET_FX( attack_cost );
         SET_FX( stamina_cost );
+
+        // Damage (breakage) related bindings
+        DOC( "Get current item damage value (durability). Higher values mean more damaged. Default range is -1000 (min) to 4000 (max), configurable via 'damage_states' in JSON." );
+        luna::set_fx( ut, "get_damage", &item::damage );
+
+        DOC( "Get item damage as a level from 0 to max. Used for UI display and damage thresholds." );
+        luna::set_fx( ut, "get_damage_level", sol::overload(
+        []( const item & self ) -> int {
+            return self.damage_level( 4 );
+        },
+        []( const item & self, int max ) -> int {
+            return self.damage_level( max );
+        }
+                      ) );
+
+        DOC( "Get minimum possible damage value (can be negative for reinforced items). Default is -1000, configurable via 'damage_states' in JSON." );
+        luna::set_fx( ut, "get_min_damage", &item::min_damage );
+
+        DOC( "Get maximum possible damage value before item is destroyed. Default is 4000, configurable via 'damage_states' in JSON." );
+        luna::set_fx( ut, "get_max_damage", &item::max_damage );
+
+        DOC( "Get relative health as ratio 0.0-1.0, where 1.0 is undamaged and 0.0 is destroyed" );
+        luna::set_fx( ut, "get_relative_health", &item::get_relative_health );
+
+        DOC( "Set item damage to specified value. Clamped between min_damage and max_damage." );
+        luna::set_fx( ut, "set_damage", &item::set_damage );
+
+        DOC( "Modify item damage by given amount. Returns true if item should be destroyed." );
+        luna::set_fx( ut, "mod_damage", sol::overload(
+                          static_cast<bool( item::* )( int )>( &item::mod_damage ),
+                          static_cast<bool( item::* )( int, damage_type )>( &item::mod_damage )
+                      ) );
+
     }
 #undef UT_CLASS
 }

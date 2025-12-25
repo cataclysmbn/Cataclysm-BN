@@ -734,13 +734,6 @@
     "copy-from": "schematics_generic"
   },
   {
-    "id": "schematics_tankbot",
-    "type": "BOOK",
-    "name": { "str_sp": "tank drone schematics" },
-    "description": "Bearing the logo of Northrop, those are assembly plans, design specs, and technical drawings for the tank drone.  Most of this is useless to you, but you could use the assembly plans to re-assemble the robot from salvaged parts.",
-    "copy-from": "schematics_generic"
-  },
-  {
     "id": "schematics_tripod",
     "type": "BOOK",
     "name": { "str_sp": "tripod schematics" },
@@ -768,32 +761,6 @@
       "//": "Milspec, but was deployed in active service implying a reliable IFF",
       "difficulty": 9,
       "moves": 250,
-      "skills": [ "electronics", "computer" ]
-    }
-  },
-  {
-    "id": "bot_tankbot",
-    "looks_like": "broken_tankbot",
-    "type": "TOOL",
-    "name": { "str": "inactive tank drone" },
-    "description": "This is an inactive Beagle Mini-Tank UGV.  Using this item involves placing it on the ground, loading the unit with the factory-loaded 5.56 rounds and 40mm cartridge grenades in your inventory (if you wish to divide your ammunition, set aside whatever ammunition you do NOT want to give the robot) and turning it on.  If reprogrammed and rewired successfully the tank drone will then identify you as a friendly, roam around or follow you, and attack all enemies with a built-in firearm and grenade launcher.",
-    "weight": "200000 g",
-    "//": "cheating a bit with the volume due to lack of proper vehicle storage options",
-    "volume": "250 L",
-    "price": "1000 kUSD",
-    "to_hit": -3,
-    "bashing": 8,
-    "material": [ "steel" ],
-    "symbol": ";",
-    "color": "light_green",
-    "use_action": {
-      "type": "place_monster",
-      "monster_id": "mon_tankbot",
-      "friendly_msg": "The tank drone rolls out and begins acquiring targets.",
-      "hostile_msg": "The tank drone swivels its turret and aims directly at you. Don your brown pants!",
-      "//": "Milspec, clearly designed with little concern for collateral damage. What did you expect of a robo-tank?",
-      "difficulty": 10,
-      "moves": 500,
       "skills": [ "electronics", "computer" ]
     }
   },
@@ -868,23 +835,6 @@
   },
   {
     "type": "GENERIC",
-    "id": "broken_tankbot",
-    "symbol": ",",
-    "color": "green",
-    "name": { "str": "broken tank drone" },
-    "category": "other",
-    "description": "A broken tank drone.  Still looks intimidating despite being permanently inoperative, possibly due to the sheer size and mass.  Could be gutted for parts.",
-    "price": "10 USD",
-    "material": [ "steel", "plastic" ],
-    "weight": "1223850 g",
-    "volume": "875 L",
-    "bashing": 20,
-    "cutting": 15,
-    "to_hit": -3,
-    "flags": [ "TRADER_AVOID", "NO_REPAIR" ]
-  },
-  {
-    "type": "GENERIC",
     "id": "tripod_chassis",
     "name": { "str_sp": "tripod chassis" },
     "description": "What's left when you remove all moving parts and electronics.  It's the skeleton and armor of the tripod.",
@@ -906,19 +856,6 @@
     "weight": "60000 g",
     "volume": "80000 ml",
     "price": "3 kUSD",
-    "material": [ "steel" ],
-    "category": "spare_parts"
-  },
-  {
-    "type": "GENERIC",
-    "id": "tankbot_chassis",
-    "name": { "str_sp": "Beagle chassis" },
-    "description": "What's left when you remove all moving parts and electronics.  It's the skeleton and armor of the Beagle tank.",
-    "symbol": "c",
-    "color": "light_gray",
-    "weight": "150000 g",
-    "volume": "575000 ml",
-    "price": "10 kUSD",
     "material": [ "steel" ],
     "category": "spare_parts"
   },

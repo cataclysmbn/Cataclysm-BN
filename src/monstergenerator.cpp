@@ -195,8 +195,11 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_PROJECTILE_RESISTANT_2: return "PROJECTILE_RESISTANT_2";
         case MF_PROJECTILE_RESISTANT_3: return "PROJECTILE_RESISTANT_3";
         case MF_PROJECTILE_RESISTANT_4: return "PROJECTILE_RESISTANT_4";
-        case MF_VOLATILE: return "VOLATILE";
-        // *INDENT-ON*
+         case MF_VOLATILE: return "VOLATILE";
+         case MF_MOUNTABLE_STAIRS: return "MOUNTABLE_STAIRS";
+         case MF_MOUNTABLE_OBSTACLES: return "MOUNTABLE_OBSTACLES";
+         case MF_FACTION_MEMORY: return "FACTION_MEMORY";
+         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
     }

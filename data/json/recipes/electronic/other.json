@@ -1003,5 +1003,44 @@
       [ [ "ai_module_basic", 1 ], [ "ai_module", 1 ], [ "ai_module_advanced", 1 ] ],
       [ [ "omnicamera", 1 ], [ "sensor_module", 1 ], [ "camera", 1 ], [ "camera_pro", 1 ] ]
     ]
+  },
+  {
+    "type": "recipe",
+    "result": "bot_tankbot",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "mechanics", 9 ], [ "computer", 8 ] ],
+    "reversible": true,
+    "decomp_learn": 8,
+    "book_learn": [ [ "schematics_tankbot", 9 ] ],
+    "difficulty": 9,
+    "time": "1 h 15 m",
+    "using": [ [ "soldering_standard", 30 ], [ "welding_standard", 20 ] ],
+    "qualities": [
+      { "id": "SCREW", "level": 1 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "WRENCH", "level": 2 },
+      { "id": "WRENCH_FINE", "level": 1 }
+    ],
+    "components": [
+      [ [ "ai_module", 1 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "memory_module", 1 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "tank_tread", 1 ] ],
+      [ [ "tankbot_chassis", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "gun_module", 3 ] ],
+      [ [ "flamethrower", 1 ] ],
+      [ [ "tazer", 1 ] ],
+      [ [ "m4a1", 1 ] ],
+      [ [ "power_supply", 20 ] ],
+      [ [ "storage_battery", 1 ] ],
+      [ [ "plut_cell", 4 ] ],
+      [ [ "mil_plate", 2 ] ]
+    ]
   }
 ]

@@ -1424,7 +1424,7 @@ npc_action npc::method_of_attack()
 
     gun_mode g_mode = cbm_active.is_null() ? primary_weapon().gun_current_mode() :
                       cbm_fake_active->gun_current_mode();
-    if( !can_use_gun || dist <= 1 ||
+    if( !can_use_gun || dist == 0 ||
         ( g_mode && ( ( use_silent && !g_mode->is_silent() ) ||
                       ( item_funcs::shots_remaining( *this, *g_mode ) < g_mode.qty ) ) ) ) {
         g_mode = gun_mode();
@@ -2205,6 +2205,10 @@ bool npc::wont_hit_friend( const tripoint &tar, const item &it, bool throwing ) 
         // TODO: Extract common functions with turret target selection
         units::angle safe_angle_ally = safe_angle;
         int ally_dist = rl_dist( pos(), ally.pos() );
+        // Skip adjacent allies - ballistics code now protects them
+        if( ally_dist <= 1 ) {
+            continue;
+        }
         if( ally_dist < 3 ) {
             safe_angle_ally += ( 3 - ally_dist ) * 30_degrees;
         }
@@ -3439,8 +3443,7 @@ bool npc::wield_better_weapon()
 
     const auto compare_weapon =
     [this, &best, &best_dps, can_use_gun, use_silent, dist, &mode_pairs ]( const item & it ) {
-        // If dist is 1 then we're in melee range, so disallow shooting guns.
-        bool gun_usable = can_use_gun && ( dist > 1 || dist == -1 ) && ( !use_silent || it.is_silent() );
+        bool gun_usable = can_use_gun && dist != 0 && ( !use_silent || it.is_silent() );
         double dps = 0.0f;
         auto [mode_id, mode_] = npc_ai::best_mode_for_range( *this, it, dist );
 

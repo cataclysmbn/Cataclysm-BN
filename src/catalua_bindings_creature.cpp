@@ -19,6 +19,7 @@
 #include "field_type.h"
 #include "flag.h"
 #include "flag_trait.h"
+#include "map.h"
 #include "monfaction.h"
 #include "monster.h"
 #include "morale_types.h"
@@ -329,6 +330,27 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( make_friendly, void() );
 
         SET_FX_T( make_ally, void( const monster & ) );
+
+        SET_FX_T( get_items, const std::vector<item *> &() const );
+        luna::set_fx( ut, "add_item", []( monster & m, item * it )
+        {
+            if( it == nullptr ) { return; }
+            detached_ptr<item> ptr = item::spawn( *it );
+            m.add_item( std::move( ptr ) );
+        } );
+        SET_FX_T( remove_item, detached_ptr<item>( item * ) );
+        SET_FX_T( clear_items, std::vector<detached_ptr<item>>() );
+        SET_FX_T( drop_items, void( const tripoint & ) );
+        SET_FX_N_T( drop_items, "drop_items_here", void() );
+
+        luna::set_fx( ut, "add_faction_anger", []( monster & m, const std::string & faction_str, int amount )
+        {
+            m.add_faction_anger( mfaction_id( faction_str ), amount );
+        } );
+
+        luna::set_fx( ut, "get_faction_anger", []( const monster & m, const std::string & faction_str ) -> int {
+            return m.get_faction_anger( mfaction_id( faction_str ) );
+        } );
     }
 #undef UT_CLASS // #define UT_CLASS monster
 }
@@ -889,6 +911,16 @@ void cata::detail::reg_character( sol::state &lua )
 
         // Respawn Stuff
         SET_FX_T( drop_inv, void( const int count ) );
+
+        DOC( "Drops all items (inventory, worn, wielded) at the character's current position." );
+        luna::set_fx( ut, "drop_all_items", []( Character & ch ) -> void {
+            std::vector<detached_ptr<item>> tmp = ch.inv_dump_remove();
+            map &here = get_map();
+            for( auto &itm : tmp )
+            {
+                here.add_item_or_charges( ch.pos(), std::move( itm ) );
+            }
+        } );
 
         SET_FX( bodypart_exposure );
 

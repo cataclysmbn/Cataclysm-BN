@@ -25,6 +25,7 @@ enum art_charge_req : int;
 enum art_effect_active : int;
 enum art_effect_passive : int;
 enum vitamin_type : int;
+enum class ot_match_type : int;
 
 namespace sfx
 {
@@ -38,6 +39,7 @@ class Creature;
 class distribution_grid;
 class distribution_grid_tracker;
 class effect;
+class overmapbuffer;
 class effect_type;
 class item;
 class item_stack;
@@ -73,6 +75,8 @@ struct mutation_branch;
 struct mission_type;
 struct npc_opinion;
 struct npc_personality;
+struct omt_find_params;
+struct oter_t;
 struct point;
 struct species_type;
 struct tripoint;
@@ -177,6 +181,7 @@ LUNA_VAL( monster, "Monster" );
 LUNA_VAL( npc, "Npc" );
 LUNA_VAL( npc_opinion, "NpcOpinion" );
 LUNA_VAL( npc_personality, "NpcPersonality" );
+LUNA_VAL( omt_find_params, "OmtFindParams" );
 LUNA_VAL( player, "Player" );
 LUNA_VAL( point, "Point" );
 LUNA_VAL( string_input_popup, "PopupInputStr" );
@@ -228,6 +233,7 @@ LUNA_ID( mission_type_id, "MissionTypeId" )
 LUNA_ID( mtype, "MonsterType" )
 LUNA_ID( mutation_branch, "MutationBranch" )
 LUNA_ID( mutation_category_trait, "MutationCategoryTrait" )
+LUNA_ID( oter_t, "Oter" )
 LUNA_ID( recipe, "Recipe" )
 LUNA_ID( Skill, "Skill" )
 LUNA_ID( species_type, "SpeciesType" )
@@ -254,6 +260,7 @@ LUNA_ENUM( monster_attitude, "MonsterAttitude" )
 LUNA_ENUM( creature_size, "MonsterSize" )
 LUNA_ENUM( npc_attitude, "NpcAttitude" )
 LUNA_ENUM( npc_need, "NpcNeed" )
+LUNA_ENUM( ot_match_type, "OtMatchType" )
 LUNA_ENUM( sfx::channel, "SfxChannel" )
 LUNA_ENUM( mission_origin, "MissionOrigin" )
 LUNA_ENUM( mission_goal, "MissionGoal" )

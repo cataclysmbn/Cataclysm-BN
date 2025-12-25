@@ -139,6 +139,18 @@ void cata::detail::reg_map( sol::state &lua )
 
         luna::set_fx( ut, "has_items_at", &map::has_items );
         luna::set_fx( ut, "remove_item_at", []( map & m, const tripoint & p, item * it ) -> void { m.i_rem( p, it ); } );
+
+        DOC( "Removes an item from the map and returns it as a detached_ptr. The item is now owned by Lua - store it in a table to keep it alive, or let it be GC'd to destroy it. Use add_item to place it back on a map." );
+        luna::set_fx( ut, "detach_item_at", []( map & m, const tripoint & p,
+        item * it ) -> detached_ptr<item> {
+            return m.i_rem( p, it );
+        } );
+
+        DOC( "Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed." );
+        luna::set_fx( ut, "add_item", []( map & m, const tripoint & p,
+        detached_ptr<item> &it ) -> detached_ptr<item> {
+            return m.add_item_or_charges( p, std::move( it ) );
+        } );
         luna::set_fx( ut, "clear_items_at", []( map & m, const tripoint & p ) -> void { m.i_clear( p ); } );
 
         luna::set_fx( ut, "get_items_at", []( map & m, const tripoint & p ) {
@@ -152,6 +164,16 @@ void cata::detail::reg_map( sol::state &lua )
                 items.push_back( m.i_at( pt ) );
             }
             return items;
+        } );
+
+        DOC( "Moves an item from one position to another, preserving all item state including contents." );
+        luna::set_fx( ut, "move_item_to", []( map & m, const tripoint & from, item * it,
+        const tripoint & to ) -> void {
+            detached_ptr<item> detached = m.i_rem( from, it );
+            if( detached )
+            {
+                m.add_item_or_charges( to, std::move( detached ) );
+            }
         } );
 
         luna::set_fx( ut, "get_ter_at", sol::resolve<ter_id( const tripoint & )const>( &map::ter ) );

@@ -3,14 +3,38 @@
     "type": "scenario",
     "id": "lab_staff",
     "copy-from": "lab_staff",
-    "extend": { "professions": [ "crt", "crt_engineer", "crt_medic", "crt_tech", "crt_employee", "crt_vamp" ] }
+    "extend": {
+      "professions": [
+        "crt",
+        "crt_engineer_t3",
+        "crt_engineer_t1",
+        "crt_medic_t3",
+        "crt_medic_t2",
+        "crt_medic_t1",
+        "crt_employee",
+        "crt_vamp"
+      ]
+    }
   },
   {
     "type": "scenario",
     "id": "heli_crash",
     "copy-from": "heli_crash",
     "extend": {
-      "professions": [ "crt_rotc", "crt_nco", "crt_rifleman", "crt_medic", "crt_tech", "crt_saw", "crt_officer", "crt", "crt_normie" ]
+      "professions": [
+        "crt_rotc",
+        "crt_nco",
+        "crt_rifleman",
+        "crt_engineer_t3",
+        "crt_engineer_t1",
+        "crt_medic_t3",
+        "crt_medic_t2",
+        "crt_medic_t1",
+        "crt_saw",
+        "crt_officer",
+        "crt",
+        "crt_normie"
+      ]
     }
   },
   {
@@ -18,19 +42,36 @@
     "id": "overrun",
     "copy-from": "overrun",
     "extend": {
-      "professions": [ "crt_rotc", "crt_nco", "crt_rifleman", "crt_medic", "crt_tech", "crt_saw", "crt_officer", "crt", "crt_normie" ]
+      "professions": [
+        "crt_rotc",
+        "crt_nco",
+        "crt_rifleman",
+        "crt_engineer_t3",
+        "crt_engineer_t1",
+        "crt_medic_t3",
+        "crt_medic_t2",
+        "crt_medic_t1",
+        "crt_saw",
+        "crt_officer",
+        "crt",
+        "crt_normie"
+      ]
     }
   },
   {
     "type": "scenario",
     "id": "prisonbreak",
     "copy-from": "prisonbreak",
-    "extend": { "professions": [ "crt_guard", "crt_juggernaught" ] }
+    "extend": {
+      "professions": [ "crt_guard_t3", "crt_guard_t2", "crt_guard_t1", "crt_lonewolf_t3", "crt_lonewolf_t2", "crt_lonewolf_t1" ]
+    }
   },
   {
     "type": "scenario",
     "id": "alcatraz",
     "copy-from": "alcatraz",
-    "extend": { "professions": [ "crt_guard", "crt_juggernaught" ] }
+    "extend": {
+      "professions": [ "crt_guard_t3", "crt_guard_t2", "crt_guard_t1", "crt_lonewolf_t3", "crt_lonewolf_t2", "crt_lonewolf_t1" ]
+    }
   }
 ]

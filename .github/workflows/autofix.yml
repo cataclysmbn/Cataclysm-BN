@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: sudo apt-get install astyle ninja-build gettext
+      - run: sudo apt-get install astyle ninja-build gettext ccache
 
       - uses: denoland/setup-deno@v2
         with: { cache: true }

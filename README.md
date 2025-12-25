@@ -3,7 +3,7 @@
 <header align="center">
   <a><img src="docs/en/contribute/img/readme-title.png" title="screenshots of (clockwise from upper-right: Chaosvolt (x2), ExecutorBill, scarf005"></a>
 
-[![en][icon-en]][en] [![ko][icon-ko]][ko]
+[![en][icon-en]][en] [![ko][icon-ko]][ko] [![ja][icon-ja]][ja]
 
 </header>
 
@@ -11,6 +11,8 @@
 [icon-en]: https://img.shields.io/badge/lang-en-red?style=flat-square
 [ko]: ./README.ko.md
 [icon-ko]: https://img.shields.io/badge/lang-ko-orange?style=flat-square
+[ja]: ./README.ja.md
+[icon-ja]: https://img.shields.io/badge/lang-ja-green?style=flat-square
 
 Cataclysm: Bright Nights is a roguelike with sci-fi elements set in a post-apocalyptic world.
 
@@ -56,17 +58,17 @@ Bright Nights uses a [mod registry](https://mods.cataclysmbn.org/) for easier di
 
 [![Source Code][source-badge]][source] [![Zip Archive][clone-badge]][clone]
 
-[stable-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases/latest "Download stable executable"
-[stable-releases-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=success&label=stable
-[all-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases?q=prerelease%3Atrue&expanded=true
-[all-releases-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=important&label=Latest%20Release&include_prereleases&sort=date
-[experimental-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases/tag/experimental
-[experimental-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=salmon&label=Experimental%20Release&include_prereleases&sort=date
+[stable-releases]: https://github.com/cataclysmbn/Cataclysm-BN/releases/latest "Download stable executable"
+[stable-releases-badge]: https://img.shields.io/github/v/release/cataclysmbn/Cataclysm-BN?style=for-the-badge&color=success&label=stable
+[all-releases]: https://github.com/cataclysmbn/Cataclysm-BN/releases?q=prerelease%3Atrue&expanded=true
+[all-releases-badge]: https://img.shields.io/github/v/release/cataclysmbn/Cataclysm-BN?style=for-the-badge&color=important&label=Latest%20Release&include_prereleases&sort=date
+[experimental-releases]: https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/experimental
+[experimental-badge]: https://img.shields.io/github/v/release/cataclysmbn/Cataclysm-BN?style=for-the-badge&color=salmon&label=Experimental%20Release&include_prereleases&sort=date
 [flathub-releases]: https://flathub.org/apps/org.cataclysmbn.CataclysmBN
 [flathub-badge]: https://img.shields.io/flathub/v/org.cataclysmbn.CataclysmBN?style=for-the-badge&color=success
-[source]: https://github.com/cataclysmbnteam/Cataclysm-BN/archive/master.zip "The source can be downloaded as a .zip archive"
+[source]: https://github.com/cataclysmbn/Cataclysm-BN/archive/master.zip "The source can be downloaded as a .zip archive"
 [source-badge]: https://img.shields.io/badge/Zip%20Archive-black?style=for-the-badge&logo=github
-[clone]: https://github.com/cataclysmbnteam/Cataclysm-BN/ "clone from our GitHub repo"
+[clone]: https://github.com/cataclysmbn/Cataclysm-BN/ "clone from our GitHub repo"
 [clone-badge]: https://img.shields.io/badge/Clone%20From%20Repo-black?style=for-the-badge&logo=github
 
 ## Building
@@ -106,7 +108,7 @@ in markdown format. You can also
 [![Discord](https://img.shields.io/discord/830879262763909202?style=for-the-badge&logo=discord)][discord]
 [![Discussions](https://img.shields.io/badge/CDDA%20Modding-green?style=for-the-badge&logo=discord)][modding]
 
-[discussion]: https://github.com/cataclysmbnteam/Cataclysm-BN/discussions
+[discussion]: https://github.com/cataclysmbn/Cataclysm-BN/discussions
 [discord]: https://discord.gg/XW7XhXuZ89
 [modding]: https://discord.gg/B5q4XCa "Unofficial DDA modding community discord has a BN channel"
 [docs]: https://docs.cataclysmbn.org "Official BN documentation"
@@ -155,7 +157,7 @@ Alternatively, you can always use the Catapult launcher and let it handle updati
 
 #### I've found a bug. What should I do?
 
-[Bug report](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/new?template=bug_report.yml) can
+[Bug report](https://github.com/cataclysmbn/Cataclysm-BN/issues/new?template=bug_report.yml) can
 be submitted via debug menu.
 
 Run `Submit a bug report on github` inside the game to submit an issue.
@@ -171,8 +173,8 @@ It will open a bug report on browser with `Version and configuration` filled in.
 #### I would like to make a suggestion. What should I do?
 
 - For simple ideas: please visit
-  [our Discussions page](https://github.com/cataclysmbnteam/Cataclysm-BN/discussions/categories/ideas).
+  [our Discussions page](https://github.com/cataclysmbn/Cataclysm-BN/discussions/categories/ideas).
   It could be a new feature, a port request, a mod idea, or anything else.
 - Please submit an issue on
-  [our GitHub page](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/) using
-  [feature request form](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/new?template=feature_request.yml).
+  [our GitHub page](https://github.com/cataclysmbn/Cataclysm-BN/issues/) using
+  [feature request form](https://github.com/cataclysmbn/Cataclysm-BN/issues/new?template=feature_request.yml).

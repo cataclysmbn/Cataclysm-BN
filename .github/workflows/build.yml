@@ -161,16 +161,48 @@ jobs:
         if: runner.os == 'Windows'
         run: vcpkg integrate install
 
+      - name: Setup ccache (Windows)
+        if: runner.os == 'Windows'
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: windows-${{ matrix.artifact }}-${{ github.ref_name }}
+          restore-keys: |
+            windows-${{ matrix.artifact }}-${{ github.ref_name }}
+            windows-${{ matrix.artifact }}-main
+            windows-${{ matrix.artifact }}-
+          max-size: 500M
+          verbose: 2
+          save: ${{ github.event_name != 'pull_request' }}
+
+      - name: Configure ccache for MSVC
+        run: |
+          echo "CCACHE_BASEDIR=${{ github.workspace }}" >> $env:GITHUB_ENV
+          echo "CCACHE_SLOPPINESS=include_file_ctime,include_file_mtime,time_macros,pch_defines" >> $env:GITHUB_ENV
+          echo "CCACHE_NOHASHDIR=1" >> $env:GITHUB_ENV
+
       # Linux setup
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
         run: |
           sudo apt-get update
           sudo apt-get install gcc-14 libncursesw5-dev libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev \
-            libsdl2-mixer-dev libpulse-dev mold ccache gettext parallel libsqlite3-dev zlib1g-dev
+            libsdl2-mixer-dev libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
+
+      - name: Setup ccache (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.artifact }}-${{ github.ref_name }}
+          restore-keys: |
+            ${{ matrix.artifact }}-${{ github.ref_name }}
+            ${{ matrix.artifact }}-main
+            ${{ matrix.artifact }}-
+          max-size: 500M
+          verbose: 2
+          save: ${{ github.event_name != 'pull_request' }}
 
       # macOS setup
       - name: Install runtime dependencies (mac)
@@ -185,19 +217,31 @@ jobs:
       - name: Install build dependencies (mac)
         if: runner.os == 'macOS'
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install gettext ccache parallel llvm@20 astyle sqlite3 zlib cmake ninja
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
 
-      # Build with CMake (Linux)
-      - name: Configure with CMake (Linux)
-        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
-        run: cmake --preset ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
+      - name: Setup ccache (mac)
+        if: runner.os == 'macOS'
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.artifact }}-${{ github.ref_name }}
+          restore-keys: |
+            ${{ matrix.artifact }}-${{ github.ref_name }}
+            ${{ matrix.artifact }}-main
+            ${{ matrix.artifact }}-
+          max-size: 500M
+          verbose: 2
+          save: ${{ github.event_name != 'pull_request' }}
 
-      - name: Build with CMake (Linux)
+      # Build with CMake (Linux)
+      - name: Configure and Build with CMake (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
-        run: cmake --build --preset ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }} --parallel $(nproc)
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
+          buildPreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
 
       - name: Create distribution package (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
@@ -206,22 +250,29 @@ jobs:
           tar -czvf cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.tar.gz \
             cataclysmbn-${{ inputs.version-label }}
 
-      # Build with CMake (Windows MSVC)
-      - name: Build CBN (windows msvc)
+      - name: Configure and Build CBN (windows msvc)
         if: runner.os == 'Windows'
+        uses: lukka/run-cmake@v10
         env:
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
+        with:
+          configurePreset: windows-tiles-sounds-x64-msvc
+          buildPreset: windows-msvc-build
+          configurePresetAdditionalArgs: "['-DRELEASE=ON']"
+          buildPresetAdditionalArgs: "['--config', 'Release']"
+
+      - name: Create distribution package (windows msvc)
+        if: runner.os == 'Windows'
         run: |
-          msbuild -m -p:Configuration=Release -p:Platform=${{ matrix.arch }} "-target:Cataclysm-vcpkg-static;JsonFormatter-vcpkg-static" msvc-full-features\Cataclysm-vcpkg-static.sln
-          .\build-scripts\windist.ps1
-          mv cataclysmbn.zip cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
+          cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix cataclysmbn-${{ inputs.version-label }} --config Release
+          Compress-Archive -Force -Path cataclysmbn-${{ inputs.version-label }}/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
       # Build with Make (macOS) - TODO: migrate to CMake once dmgdist target is implemented
       - name: Build CBN (osx)
         if: runner.os == 'macOS'
         run: |
           source ./venv/bin/activate
-          make -j3 TILES=${{ matrix.tiles && '1' || '0' }} SOUND=${{ matrix.sound && '1' || '0' }} RELEASE=1 LOCALIZE=1 LANGUAGES=all BACKTRACE=0 PCH=0 USE_HOME_DIR=1 OSX_MIN=11 FRAMEWORK=1 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist
+          make -j3 CCACHE=1 TILES=${{ matrix.tiles && '1' || '0' }} SOUND=${{ matrix.sound && '1' || '0' }} RELEASE=1 LOCALIZE=1 LANGUAGES=all BACKTRACE=0 PCH=0 USE_HOME_DIR=1 OSX_MIN=11 FRAMEWORK=1 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist
           mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
 
       # Android builds
@@ -238,9 +289,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install gettext
 
+      - name: Setup ccache (android)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.artifact }}-${{ github.ref_name }}
+          restore-keys: |
+            ${{ matrix.artifact }}-${{ github.ref_name }}
+            ${{ matrix.artifact }}-main
+            ${{ matrix.artifact }}-
+          max-size: 500M
+          verbose: 2
+          save: ${{ github.event_name != 'pull_request' }}
+
       - name: Build CBN (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         working-directory: ./android
+        env:
+          NDK_CCACHE: ccache
         run: |
           echo "${{ secrets.KEYSTORE }}" > release.keystore.asc
           gpg -d --passphrase "${{ secrets.KEYSTORE_PASSWORD }}" --batch release.keystore.asc > app/release.keystore

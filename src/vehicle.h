@@ -1393,6 +1393,20 @@ class vehicle
         // Be aware this will not consider damage to more outside parts such as inner parts protected by an outer wall, only armor effects are considered
         unsigned int hits_to_destroy( int p, int dmg, damage_type type ) const;
 
+        /**
+         * @name Vehicle Droppers
+         *
+         *@{*/
+
+        vehicle_part *get_cargo_part( vehicle_part *part );
+
+        bool has_item_stored( vehicle_part *part );
+
+        void item_dropper_drop( std::vector<vehicle_part *> droppers, bool single );
+
+        void item_dropper_drop_all();
+
+        void item_dropper_drop_single( bool single );
     private:
         /*
          * Find all turrets that are ready to fire.
@@ -1608,11 +1622,12 @@ class vehicle
         std::vector<int> loose_parts;      // List of UNMOUNT_ON_MOVE parts
         std::vector<int> wheelcache;       // List of wheels
         std::vector<int> rotors;           // List of rotors
-        std::vector<int> balloons;         // List of repulsors
+        std::vector<int> balloons;         // List of balloons
         std::vector<int> wings;            // List of wings
         std::vector<int> propellers;       // List of propellerrs
         std::vector<int> rail_wheelcache;  // List of rail wheels
         std::vector<int> steering;         // List of STEERABLE parts
+        std::vector<int> droppers;         // List of droppers
         // List of parts that will not be on a vehicle very often, or which only one will be present
         std::vector<int> speciality;
         std::vector<int> floating;         // List of parts that provide buoyancy to boats

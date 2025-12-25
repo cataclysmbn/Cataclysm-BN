@@ -1,6 +1,7 @@
 #include "item.h"
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <cassert>
 #include <cctype>
@@ -6158,7 +6159,7 @@ namespace
  * further acceleration at 40C.
  *
  * Original formula:
- * @see https://github.com/cataclysmbnteam/Cataclysm-BN/blob/033901af4b52ad0bfcfd6abfe06bca4e403d44b1/src/item.cpp#L5612-L5640
+ * @see https://github.com/cataclysmbn/Cataclysm-BN/blob/033901af4b52ad0bfcfd6abfe06bca4e403d44b1/src/item.cpp#L5612-L5640
  */
 constexpr auto rot_chart = std::array<int, 44>
 {

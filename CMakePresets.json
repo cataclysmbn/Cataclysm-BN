@@ -18,11 +18,13 @@
         "VCPKG_TARGET_TRIPLET": "x64-windows-static",
         "DYNAMIC_LINKING": "False",
         "CMAKE_CONFIGURATION_TYPES": "Debug;RelWithDebInfo;Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CURSES": "False",
         "LOCALIZE": "True",
         "TILES": "True",
         "SOUND": "True",
         "TESTS": "True",
+        "JSON_FORMAT": "ON",
         "CMAKE_INSTALL_MESSAGE": "NEVER"
       }
     },
@@ -38,6 +40,8 @@
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_AR": "llvm-ar",
+        "CMAKE_RANLIB": "llvm-ranlib",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CURSES": "OFF",
         "TILES": "ON",
@@ -60,6 +64,8 @@
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_AR": "llvm-ar",
+        "CMAKE_RANLIB": "llvm-ranlib",
         "CMAKE_INSTALL_PREFIX": "$env{XDG_DATA_HOME}",
         "JSON_FORMAT": "ON",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
@@ -88,7 +94,10 @@
       "generator": "Ninja",
       "cacheVariables": {
         "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CURSES": "OFF",
         "TILES": "ON",
         "SOUND": "ON",
@@ -108,7 +117,10 @@
       "generator": "Ninja",
       "cacheVariables": {
         "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CURSES": "ON",
         "TILES": "OFF",
         "SOUND": "OFF",
@@ -128,6 +140,8 @@
       "generator": "Ninja",
       "cacheVariables": {
         "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_BUILD_TYPE": "Debug",
         "CURSES": "OFF",
         "TILES": "OFF",
@@ -135,9 +149,64 @@
         "TESTS": "OFF",
         "JSON_FORMAT": "ON"
       }
+    },
+    {
+      "name": "ci-curses",
+      "binaryDir": "${sourceDir}/build",
+      "displayName": "CI Build (Curses)",
+      "description": "CI build configuration for curses with GCC.",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc-14",
+        "CMAKE_CXX_COMPILER": "g++-14",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "TILES": "OFF",
+        "CURSES": "ON",
+        "SOUND": "OFF",
+        "LOCALIZE": "OFF",
+        "BACKTRACE": "ON",
+        "LIBBACKTRACE": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "JSON_FORMAT": "ON",
+        "TESTS": "ON",
+        "LINKER": "mold"
+      }
+    },
+    {
+      "name": "ci-tiles",
+      "binaryDir": "${sourceDir}/build",
+      "displayName": "CI Build (Tiles, Sound)",
+      "description": "CI build configuration for tiles and sound with GCC.",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc-14",
+        "CMAKE_CXX_COMPILER": "g++-14",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "TILES": "ON",
+        "CURSES": "OFF",
+        "SOUND": "ON",
+        "LOCALIZE": "ON",
+        "LANGUAGES": "all",
+        "BACKTRACE": "ON",
+        "LIBBACKTRACE": "OFF",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "JSON_FORMAT": "OFF",
+        "TESTS": "ON",
+        "LINKER": "mold"
+      }
     }
   ],
   "buildPresets": [
+    {
+      "name": "windows-msvc-build",
+      "configurePreset": "windows-tiles-sounds-x64-msvc",
+      "targets": ["cataclysm-bn-tiles", "cata_test-tiles", "json_formatter", "translations"],
+      "description": "Build for Windows with tiles and sounds using MSVC."
+    },
     {
       "name": "linux-slim",
       "configurePreset": "linux-slim",
@@ -165,6 +234,18 @@
       "configurePreset": "lint",
       "targets": ["json_formatter"],
       "description": "Build formatting tools only."
+    },
+    {
+      "name": "ci-curses",
+      "configurePreset": "ci-curses",
+      "targets": ["cataclysm-bn", "cata_test"],
+      "description": "CI build for curses."
+    },
+    {
+      "name": "ci-tiles",
+      "configurePreset": "ci-tiles",
+      "targets": ["cataclysm-bn-tiles", "cata_test-tiles"],
+      "description": "CI build for tiles and sound."
     }
   ]
 }

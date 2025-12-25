@@ -3,6 +3,7 @@
 // IWYU pragma: no_include <cxxabi.h>
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <chrono>
 #include <csignal>
@@ -2169,7 +2170,7 @@ void debug()
 
         case DEBUG_BUG_REPORT: {
             constexpr const char *const bug_report_url =
-                "https://github.com/cataclysmbnteam/Cataclysm-BN/issues/new"
+                "https://github.com/cataclysmbn/Cataclysm-BN/issues/new"
                 "?labels=bug"
                 "&template=bug_report.yml"
                 "&versions-and-configuration=";

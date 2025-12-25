@@ -196,6 +196,9 @@ enum m_flag : int {
     MF_PROJECTILE_RESISTANT_3,      // This monster has a torso and limbs that are extremely resistant to projectiles, with a default x0.5 damage mult cap.
     MF_PROJECTILE_RESISTANT_4,      // This monster has a torso and limbs that are almost immune to projectiles, with a default x0.2 damage mult cap.
     MF_VOLATILE,            // This monster tends to explode if hit by fire or bullets, fire weapons will always catch them on fire.
+    MF_MOUNTABLE_STAIRS,     // When ridden, this monster can go up or down stairs and climb.
+    MF_MOUNTABLE_OBSTACLES,     // When ridden, this monster can pass obstacles like fences or doorways when mounted.
+    MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };

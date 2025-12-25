@@ -405,7 +405,7 @@ Any or all of the following alterations can be made to the event stream:
 
 - Add new fields to each event based on event field transformations. The event field transformations
   can be found in
-  [`event_field_transformation.cpp`](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/src/event_field_transformations.cpp).
+  [`event_field_transformation.cpp`](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/src/event_field_transformations.cpp).
 - Filter events based on the values they contain to produce a stream containing some subset of the
   input stream.
 - Drop some fields which are not of interest in the output stream.

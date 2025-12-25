@@ -182,16 +182,85 @@ game = {}
 ---@field character Character
 on_character_reset_stats = {}
 
+---@class OnCharacterEffectAddedParams
+---@field character Character
+---@field effect Effect
+on_character_effect_added = {}
+
+---@class OnCharacterEffectParams
+---@field character Character
+---@field effect Effect
+on_character_effect = {}
+
+---@class OnMonEffectAddedParams
+---@field mon Monster
+---@field effect Effect
+on_mon_effect_added = {}
+
+---@class OnMonEffectParams
+---@field mon Monster
+---@field effect Effect
+on_mon_effect = {}
+
+---@class OnMonDeathParams
+---@field mon Monster
+---@field killer Creature?
+on_mon_death = {}
+
+---@class OnCharacterDeathParams
+---@field character Character
+---@field killer Creature?
+on_character_death = {}
+
+---@class OnShootParams
+---@field shooter Character
+---@field target_pos Tripoint
+---@field shots integer
+---@field gun Item
+---@field ammo Item?
+on_shoot = {}
+
+---@class OnThrowParams
+---@field thrower Character
+---@field target_pos Tripoint
+---@field throw_from_pos Tripoint
+---@field item Item
+on_throw = {}
+
+---@class OnCreatureDodgedParams
+---@field char Character || Creature
+---@field source Creature?
+---@field difficulty integer
+on_creature_dodged = {}
+
+---@class OnCreatureBlockedParams
+---@field char Character
+---@field source Creature?
+---@field bodypart_id BodyPartTypeId
+---@field damage_instance DamageInstance
+---@field damage_blocked number
+on_creature_blocked = {}
+
+---@class OnCreaturePerformedTechniqueParams
+---@field char Character
+---@field technique MartialArtsTechniqueRaw
+---@field target Creature
+---@field damage_instance DamageInstance
+---@field move_cost integer
+on_creature_performed_technique = {}
+
+---@class OnCreatureMeleeAttackedParams
+---@field char Character || Monster
+---@field target Creature
+---@field success boolean
+on_creature_melee_attacked = {}
+
 ---@class OnMapgenPostprocessParams
 ---@field map Map
 ---@field omt Tripoint
 ---@field when TimePoint
 on_mapgen_postprocess = {}
 
----@class OnMonDeathParams
----@field mon Monster
----@field killer Character?
-on_mon_death = {}
 ]]
 
   ---@diagnostic disable-next-line: undefined-global
