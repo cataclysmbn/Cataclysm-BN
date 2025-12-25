@@ -821,6 +821,8 @@ class holster_actor : public iuse_actor
         std::vector<skill_id> skills;
         /** Items with any of these flags set can be holstered */
         std::vector<std::string> flags;
+        /** Items in this weapon_cateogry can be holstered */
+        std::optional<weapon_category_id> weapon_category;
 
         /** Check if obj could be stored in the holster */
         bool can_holster( const item &obj ) const;

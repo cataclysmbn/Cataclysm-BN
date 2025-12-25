@@ -405,6 +405,17 @@ std::string JsonObject::get_string( const std::string &name, const std::string &
     return jsin->get_string();
 }
 
+std::optional<std::string> JsonObject::get_string_maybe( const std::string &name ) const
+{
+    int pos = verify_position( name, false );
+    if( !pos ) {
+        return std::nullopt;
+    }
+    mark_visited( name );
+    jsin->seek( pos );
+    return jsin->get_string();
+}
+
 /* returning containers by name */
 
 JsonArray JsonObject::get_array( const std::string &name ) const

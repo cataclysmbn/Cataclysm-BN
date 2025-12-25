@@ -2736,6 +2736,10 @@ void holster_actor::load( const JsonObject &obj )
     } );
 
     flags = obj.get_string_array( "flags" );
+    auto wc = obj.get_string_maybe( "weapon_category" );
+    if( wc != std::nullopt ) {
+        weapon_category = weapon_category_id( *wc );
+    }
 }
 
 bool holster_actor::can_holster( const item &obj ) const
@@ -2752,7 +2756,8 @@ bool holster_actor::can_holster( const item &obj ) const
     return std::any_of( flags.begin(), flags.end(), [&]( const std::string & f ) {
         return obj.has_flag( flag_id( f ) );
     } ) ||
-    std::find( skills.begin(), skills.end(), obj.gun_skill() ) != skills.end();
+    std::find( skills.begin(), skills.end(), obj.gun_skill() ) != skills.end() ||
+    ( weapon_category != std::nullopt && obj.type->weapon_category.contains( *weapon_category ) );
 }
 
 detached_ptr<item> holster_actor::store( player &p, item &holster, detached_ptr<item> &&obj ) const
@@ -2789,7 +2794,9 @@ detached_ptr<item> holster_actor::store( player &p, item &holster, detached_ptr<
 
     if( std::none_of( flags.begin(), flags.end(), [&]( const std::string & f ) {
     return obj->has_flag( flag_id( f ) );
-    } ) &&
+    } ) && !( weapon_category != std::nullopt &&
+              obj->type->weapon_category.contains( *weapon_category ) )
+    &&
     std::find( skills.begin(), skills.end(), obj->gun_skill() ) == skills.end() ) {
         p.add_msg_if_player( m_info, _( "You can't put your %1$s in your %2$s" ),
                              obj->tname(), holster.tname() );
