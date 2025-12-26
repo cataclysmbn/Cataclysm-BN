@@ -2611,9 +2611,7 @@ bool game::is_game_over()
             charmenu.addentry( charnum, true, 'q', _( "No, end the game" ) );
             charmenu.query();
             if( charmenu.ret >= 0 && static_cast<size_t>( charmenu.ret ) < followers.size() ) {
-                if( u.in_vehicle ) {
-                    m.unboard_vehicle( u.pos() );
-                }
+                if( u.in_vehicle ) { m.unboard_vehicle( u.pos() ); }
                 uquit = QUIT_NO;
                 get_avatar().control_npc( *followers.at( charmenu.ret ) );
                 return false;
