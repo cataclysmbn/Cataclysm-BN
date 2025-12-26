@@ -23,18 +23,18 @@ template<typename range_type>
 class vehicle_part_iterator
 {
     private:
-        const range_type *range_ = nullptr;
+        // store range by value to prevent dangling pointers when iterating over temporary views.
+        // The range_type (View) is designed to be lightweight/copyable.
+        range_type range_;
         std::optional<vpart_reference> vp_;
 
-        auto range() const -> const range_type & { return *range_; } // *NOPAD*
-
         auto skip_to_next_valid( size_t i ) -> void {
-            while( i < range().part_count() &&
-                   !range().matches( i ) ) {
+            while( i < range_.part_count() &&
+                   !range_.matches( i ) ) {
                 ++i;
             }
-            if( i < range().part_count() ) {
-                vp_.emplace( range().vehicle(), i );
+            if( i < range_.part_count() ) {
+                vp_.emplace( range_.vehicle(), i );
             } else {
                 vp_.reset();
             }
@@ -50,8 +50,8 @@ class vehicle_part_iterator
 
         vehicle_part_iterator() = default;
 
-        vehicle_part_iterator( const range_type *r, size_t i ) : range_( r ) {
-            assert( i <= range().part_count() );
+        vehicle_part_iterator( const range_type &r, size_t i ) : range_( r ) {
+            assert( i <= range_.part_count() );
             skip_to_next_valid( i );
         }
 
@@ -103,8 +103,11 @@ class generic_vehicle_part_range : public std::ranges::view_interface<range_type
     private:
         ::vehicle *vehicle_ = nullptr;
 
-        generic_vehicle_part_range() = default;
-        generic_vehicle_part_range( ::vehicle &v ) : vehicle_( &v ) { }
+    protected:
+        // Default constructor is protected to allow iterator default construction
+        // while preventing direct instantiation of the base class.
+        generic_vehicle_part_range() = default; // NOLINT(bugprone-crtp-constructor-accessibility)
+        generic_vehicle_part_range( ::vehicle &v ) : vehicle_( &v ) { } // NOLINT(bugprone-crtp-constructor-accessibility)
 
     public:
         // Templated because see top of file.
@@ -116,11 +119,11 @@ class generic_vehicle_part_range : public std::ranges::view_interface<range_type
         using iterator = vehicle_part_iterator<range_type>;
 
         auto begin() const -> iterator {
-            return iterator( static_cast<const range_type *>( this ), 0 );
+            return iterator( static_cast<const range_type &>( *this ), 0 );
         }
 
         auto end() const -> iterator {
-            return iterator( static_cast<const range_type *>( this ), part_count() );
+            return iterator( static_cast<const range_type &>( *this ), part_count() );
         }
 
         auto vehicle() const -> ::vehicle& { // *NOPAD*
@@ -133,9 +136,14 @@ class generic_vehicle_part_range : public std::ranges::view_interface<range_type
 class vehicle_part_range : public generic_vehicle_part_range<vehicle_part_range>
 {
     public:
+        vehicle_part_range() = default;
         vehicle_part_range( ::vehicle &v ) : generic_vehicle_part_range( v ) { }
 
         auto matches( const size_t /*part*/ ) const -> bool { return true; }
+
+        auto empty() const -> bool {
+            return begin() == end();
+        }
 };
 
 /** A range that contains parts that have a given feature and (optionally) are not broken. */
@@ -144,15 +152,30 @@ class vehicle_part_with_feature_range : public
     generic_vehicle_part_range<vehicle_part_with_feature_range<feature_type>>
 {
     private:
-        feature_type feature_;
-        part_status_flag required_;
+        feature_type feature_ {};
+        part_status_flag required_ {};
 
     public:
+        vehicle_part_with_feature_range() = default;
         vehicle_part_with_feature_range( ::vehicle &v, feature_type f, part_status_flag r ) :
             generic_vehicle_part_range<vehicle_part_with_feature_range<feature_type>>( v ),
                     feature_( std::move( f ) ), required_( r ) { }
 
         auto matches( size_t part ) const -> bool;
+
+        auto empty() const -> bool {
+            return this->begin() == this->end();
+        }
 };
 
+// Enable borrowed_range to allow std::ranges algorithms to work with temporary range objects.
+// This is safe because our iterators store the range state by value (not by pointer).
+namespace std::ranges
+{
+template<>
+inline constexpr bool enable_borrowed_range<vehicle_part_range> = true;
+
+template<typename T>
+inline constexpr bool enable_borrowed_range<vehicle_part_with_feature_range<T>> = true;
+} // namespace std::ranges
 
