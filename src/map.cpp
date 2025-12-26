@@ -5277,15 +5277,14 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
     }
 
     for( item *active_item_ref : cur_veh.active_items.get_for_processing() ) {
-        if( empty( cargo_parts ) ) {
+        if( cargo_parts.empty() ) {
             return;
         }
-        const auto it = std::find_if( begin( cargo_parts ),
-        end( cargo_parts ), [&]( const vpart_reference & part ) {
+        const auto it = std::ranges::find_if( cargo_parts, [&]( const vpart_reference & part ) {
             return active_item_ref->position() == cur_veh.mount_to_tripoint( part.mount() );
         } );
 
-        if( it == end( cargo_parts ) ) {
+        if( it == cargo_parts.end() ) {
             continue; // Can't find a cargo part matching the active item.
         }
         const item &target = *active_item_ref;

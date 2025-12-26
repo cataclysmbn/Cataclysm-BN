@@ -13231,20 +13231,20 @@ bool game::non_dead_range<Creature>::iterator::valid()
 game::monster_range::monster_range( game &game_ref )
 {
     const auto &monsters = game_ref.critter_tracker->get_monsters_list();
-    items.insert( items.end(), monsters.begin(), monsters.end() );
+    items->insert( items->end(), monsters.begin(), monsters.end() );
 }
 
 game::Creature_range::Creature_range( game &game_ref ) : u( &game_ref.u, []( Character * ) { } )
 {
     const auto &monsters = game_ref.critter_tracker->get_monsters_list();
-    items.insert( items.end(), monsters.begin(), monsters.end() );
-    items.insert( items.end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
-    items.emplace_back( u );
+    items->insert( items->end(), monsters.begin(), monsters.end() );
+    items->insert( items->end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
+    items->emplace_back( u );
 }
 
 game::npc_range::npc_range( game &game_ref )
 {
-    items.insert( items.end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
+    items->insert( items->end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
 }
 
 game::Creature_range game::all_creatures()

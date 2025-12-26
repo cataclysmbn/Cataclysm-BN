@@ -6556,7 +6556,7 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
     //Check for boat type vehicles that should be placeable in deep water
     //WARNING: CURSED CODE
     //If changed to veh->can_float mass calculations are messed up
-    const bool can_float = size( veh->get_avail_parts( "FLOATS" ) ) >= 1;
+    const bool can_float = std::ranges::distance( veh->get_avail_parts( "FLOATS" ) ) >= 1;
 
     //When hitting a wall, only smash the vehicle once (but walls many times)
     bool needs_smashing = false;
