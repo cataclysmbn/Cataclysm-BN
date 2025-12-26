@@ -702,7 +702,12 @@
   {
     "type": "item_action",
     "id": "RADIOCONTROL",
-    "name": { "str": "Control an RC car" }
+    "name": { "str": "Control a vehicle" }
+  },
+  {
+    "type": "item_action",
+    "id": "radio_signal",
+    "name": { "str": "Send a radio signal" }
   },
   {
     "type": "item_action",

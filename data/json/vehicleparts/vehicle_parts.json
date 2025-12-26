@@ -2951,7 +2951,7 @@
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "CONTROLS", "FOLDABLE", "REMOTE_CONTROLS", "SHOCK_RESISTANT" ],
+    "flags": [ "CONTROLS", "FOLDABLE", "REMOTE_CONTROLS_SMALL", "RC_COMPATIBLE", "SHOCK_RESISTANT" ],
     "breaks_into": [ { "item": "motor_tiny" }, { "item": "steel_chunk", "count": [ 1, 3 ] }, { "item": "scrap", "count": [ 1, 3 ] } ]
   },
   {

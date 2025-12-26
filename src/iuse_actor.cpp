@@ -99,6 +99,7 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vehicle_selector.h"
+#include "veh_type.h"
 #include "visitable.h"
 #include "vitamin.h"
 #include "vpart_position.h"
@@ -139,6 +140,7 @@ static const fault_id fault_bionic_nonsterile( "fault_bionic_nonsterile" );
 static const bionic_id bio_syringe( "bio_syringe" );
 
 static const itype_id itype_barrel_small( "barrel_small" );
+static const itype_id itype_battery( "battery" );
 static const itype_id itype_brazier( "brazier" );
 static const itype_id itype_char_smoker( "char_smoker" );
 static const itype_id itype_fire( "fire" );
@@ -148,6 +150,7 @@ static const itype_id itype_fertilizer( "fertilizer" );
 
 static const skill_id skill_fabrication( "fabrication" );
 static const skill_id skill_firstaid( "firstaid" );
+static const skill_id skill_computer( "computer" );
 static const skill_id skill_survival( "survival" );
 
 static const species_id HUMAN( "HUMAN" );
@@ -166,6 +169,7 @@ static const trait_id trait_MASOCHIST( "MASOCHIST" );
 static const trait_id trait_MASOCHIST_MED( "MASOCHIST_MED" );
 static const trait_id trait_MUT_JUNKIE( "MUT_JUNKIE" );
 static const trait_id trait_SAPIOVORE( "SAPIOVORE" );
+static const trait_id trait_WAYFARER( "WAYFARER" );
 
 static const trait_flag_str_id trait_flag_PRED1( "PRED1" );
 static const trait_flag_str_id trait_flag_PRED2( "PRED2" );
@@ -2388,6 +2392,401 @@ ret_val<bool> manualnoise_actor::can_use( const Character &, const item &it, boo
         return ret_val<bool>::make_failure( _( "This tool doesn't have enough charges." ) );
     }
 
+    return ret_val<bool>::make_success();
+}
+
+static void emit_radio_signal( player &p, const flag_id &signal )
+{
+    const auto visitor = [&]( item & it, const tripoint & loc ) -> VisitResponse {
+        if( it.has_flag( flag_RADIO_ACTIVATION ) && it.has_flag( signal ) )
+        {
+            sounds::sound( p.pos(), 6, sounds::sound_t::alarm, _( "beep" ), true, "misc", "beep" );
+            const bool invoke_proc = it.has_flag( flag_RADIO_INVOKE_PROC );
+            it.type->invoke( p, it, loc );
+            if( invoke_proc ) {
+                it.ammo_unset();
+            }
+        }
+        return VisitResponse::NEXT;
+    };
+
+    const int z_min = g->m.has_zlevels() ? -OVERMAP_DEPTH : 0;
+    const int z_max = g->m.has_zlevels() ? OVERMAP_HEIGHT : 0;
+    for( int zlev = z_min; zlev <= z_max; zlev++ ) {
+        for( tripoint loc : g->m.points_on_zlevel( zlev ) ) {
+            map_cursor mc( loc );
+            mc.visit_items( [&]( item * it ) {
+                return visitor( *it, loc );
+            } );
+
+            optional_vpart_position vp = g->m.veh_at( loc );
+            if( !vp ) {
+                continue;
+            }
+            std::optional<vpart_reference> vpr = vp.part_with_feature( "CARGO", false );
+            if( !vpr ) {
+                continue;
+            }
+            vehicle_cursor vc( vp->vehicle(), vpr->part_index() );
+            vc.visit_items( [&]( item * it ) {
+                return visitor( *it, loc );
+            } );
+        }
+    }
+
+    for( Creature &cr : g->all_creatures() ) {
+        const tripoint &cr_pos = cr.pos();
+        if( cr.is_monster() ) {
+            monster &mon = *cr.as_monster();
+            mon.visit_items( [&]( item * it ) {
+                return visitor( *it, cr_pos );
+            } );
+        } else {
+            Character &ch = *cr.as_character();
+            ch.visit_items( [&]( item * it ) {
+                return visitor( *it, cr_pos );
+            } );
+        }
+    }
+}
+
+std::unique_ptr<iuse_actor> radio_signal_actor::clone() const
+{
+    return std::make_unique<radio_signal_actor>( *this );
+}
+
+void radio_signal_actor::load( const JsonObject &obj )
+{
+    assign( obj, "menu_text", menu_text );
+    assign( obj, "prompt", prompt );
+    assign( obj, "use_message", use_message );
+    moves = obj.get_int( "moves", moves );
+
+    signals.clear();
+    if( obj.has_array( "signals" ) ) {
+        for( const JsonObject entry : obj.get_array( "signals" ) ) {
+            signal_entry next;
+            next.signal = entry.get_int( "signal", next.signal );
+            assign( entry, "menu_text", next.menu_text );
+            if( next.signal < 1 || next.signal > 3 ) {
+                entry.throw_error( "signal must be between 1 and 3" );
+            }
+            signals.emplace_back( std::move( next ) );
+        }
+    } else {
+        signal_entry next;
+        next.signal = obj.get_int( "signal", next.signal );
+        assign( obj, "menu_text", next.menu_text );
+        if( next.signal < 1 || next.signal > 3 ) {
+            obj.throw_error( "signal must be between 1 and 3" );
+        }
+        signals.emplace_back( std::move( next ) );
+    }
+}
+
+std::string radio_signal_actor::get_name() const
+{
+    if( !menu_text.empty() ) {
+        return menu_text.translated();
+    }
+    return iuse_actor::get_name();
+}
+
+int radio_signal_actor::use( player &p, item &it, bool t, const tripoint & ) const
+{
+    if( t ) {
+        return 0;
+    }
+    if( !it.units_sufficient( p ) ) {
+        p.add_msg_if_player( _( "This tool doesn't have enough charges." ) );
+        return 0;
+    }
+
+    int selected_signal = 0;
+    if( signals.size() <= 1 ) {
+        if( signals.empty() ) {
+            debugmsg( "radio_signal_actor used with no signals defined" );
+            return 0;
+        }
+        selected_signal = signals.front().signal;
+    } else {
+        uilist menu;
+        menu.text = prompt.empty() ? _( "Which signal?" ) : prompt.translated();
+        for( size_t i = 0; i < signals.size(); i++ ) {
+            const std::string entry_text = signals[i].menu_text.empty()
+                                           ? string_format( _( "Signal %d" ), signals[i].signal )
+                                           : signals[i].menu_text.translated();
+            menu.addentry( static_cast<int>( i ), true, MENU_AUTOASSIGN, entry_text );
+        }
+        menu.query();
+        if( menu.ret < 0 || static_cast<size_t>( menu.ret ) >= signals.size() ) {
+            p.add_msg_if_player( m_info, _( "Never mind." ) );
+            return 0;
+        }
+        selected_signal = signals[menu.ret].signal;
+    }
+
+    const flag_id signal_flag( "RADIOSIGNAL_" + std::to_string( selected_signal ) );
+    std::vector<item *> bombs = p.items_with( [&]( const item & it ) -> bool {
+        return it.has_flag( flag_RADIO_ACTIVATION ) && it.has_flag( flag_BOMB ) && it.has_flag( signal_flag );
+    } );
+
+    if( !bombs.empty() ) {
+        p.add_msg_if_player( m_warning,
+                             _( "The %s in your inventory would explode on this signal.  Place it down before sending the signal." ),
+                             bombs.front()->display_name() );
+        return 0;
+    }
+
+    if( !use_message.empty() ) {
+        p.add_msg_if_player( _( use_message ) );
+    }
+    emit_radio_signal( p, signal_flag );
+    p.moves -= moves;
+    return it.type->charges_to_use();
+}
+
+ret_val<bool> radio_signal_actor::can_use( const Character &who, const item &it, bool,
+        const tripoint & ) const
+{
+    if( !it.units_sufficient( who ) ) {
+        return ret_val<bool>::make_failure( _( "This tool doesn't have enough charges." ) );
+    }
+    return ret_val<bool>::make_success();
+}
+
+static bool vehicle_all_parts_rc_compatible( const vehicle &veh )
+{
+    static const std::string rcflag = "RC_COMPATIBLE";
+    for( const vpart_reference &vp : veh.get_all_parts() ) {
+        if( vp.part().removed ) {
+            continue;
+        }
+        if( !vp.info().has_flag( rcflag ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool has_remote_controls_small( const vehicle &veh )
+{
+    return !empty( veh.get_avail_parts( "REMOTE_CONTROLS_SMALL" ) ) &&
+           vehicle_all_parts_rc_compatible( veh );
+}
+
+static bool has_remote_controls( const vehicle &veh, const bool advanced )
+{
+    if( advanced ) {
+        return !empty( veh.get_avail_parts( "REMOTE_CONTROLS" ) );
+    }
+    return has_remote_controls_small( veh );
+}
+
+static std::optional<tripoint> remote_controls_pos( vehicle &veh, const bool advanced )
+{
+    if( advanced ) {
+        const auto large_controls = veh.get_avail_parts( "REMOTE_CONTROLS" );
+        if( !empty( large_controls ) ) {
+            return large_controls.begin()->pos();
+        }
+        return std::nullopt;
+    }
+    if( !has_remote_controls_small( veh ) ) {
+        return std::nullopt;
+    }
+    const auto small_controls = veh.get_avail_parts( "REMOTE_CONTROLS_SMALL" );
+    if( !empty( small_controls ) ) {
+        return small_controls.begin()->pos();
+    }
+    return std::nullopt;
+}
+
+static bool hackveh( player &p, item &it, vehicle &veh, const bool advanced )
+{
+    if( !veh.is_locked || !veh.has_security_working() ) {
+        return true;
+    }
+    if( advanced && veh.is_alarm_on ) {
+        p.add_msg_if_player( m_bad, _( "This vehicle's security system has locked you out!" ) );
+        return false;
+    }
+
+    /** @EFFECT_INT increases chance of bypassing vehicle security system */
+
+    /** @EFFECT_COMPUTER increases chance of bypassing vehicle security system */
+    int roll = dice( p.get_skill_level( skill_computer ) + 2, p.int_cur ) - ( advanced ? 50 : 25 );
+    int effort = 0;
+    bool success = false;
+    if( roll < -20 ) { // Really bad rolls will trigger the alarm before you know it exists
+        effort = 1;
+        p.add_msg_if_player( m_bad, _( "You trigger the alarm!" ) );
+        veh.is_alarm_on = true;
+    } else if( roll >= 20 ) { // Don't bother the player if it's trivial
+        effort = 1;
+        p.add_msg_if_player( m_good, _( "You quickly bypass the security system!" ) );
+        success = true;
+    }
+
+    if( effort == 0 && !query_yn( _( "Try to hack this car's security system?" ) ) ) {
+        // Scanning for security systems isn't free
+        p.moves -= to_moves<int>( 1_seconds );
+        it.charges -= 1;
+        return false;
+    }
+
+    p.practice( skill_computer, advanced ? 10 : 3 );
+    if( roll < -10 ) {
+        effort = rng( 4, 8 );
+        p.add_msg_if_player( m_bad, _( "You waste some time, but fail to affect the security system." ) );
+    } else if( roll < 0 ) {
+        effort = 1;
+        p.add_msg_if_player( m_bad, _( "You fail to affect the security system." ) );
+    } else if( roll < 20 ) {
+        effort = rng( 2, 8 );
+        p.add_msg_if_player( m_mixed,
+                             _( "You take some time, but manage to bypass the security system!" ) );
+        success = true;
+    }
+
+    p.moves -= to_moves<int>( time_duration::from_seconds( effort ) );
+    it.charges -= effort;
+    if( success && advanced ) { // Unlock controls, but only if they're drive-by-wire
+        veh.is_locked = false;
+    }
+    return success;
+}
+
+static vehicle *pickveh( const tripoint &center, const bool advanced )
+{
+    uilist pmenu;
+    pmenu.title = _( "Select vehicle to access" );
+    std::vector<vehicle *> vehs;
+
+    for( auto &veh : g->m.get_vehicles() ) {
+        auto &v = veh.v;
+        if( rl_dist( center, v->global_pos3() ) < 40 &&
+            v->fuel_left( itype_battery, true ) > 0 &&
+            has_remote_controls( *v, advanced ) ) {
+            vehs.push_back( v );
+        }
+    }
+    std::vector<tripoint> locations;
+    for( int i = 0; i < static_cast<int>( vehs.size() ); i++ ) {
+        auto veh = vehs[i];
+        locations.push_back( veh->global_pos3() );
+        pmenu.addentry( i, true, MENU_AUTOASSIGN, veh->name );
+    }
+
+    if( vehs.empty() ) {
+        add_msg( m_bad, _( "No vehicle available." ) );
+        return nullptr;
+    }
+
+    pointmenu_cb callback( locations );
+    pmenu.callback = &callback;
+    pmenu.w_y_setup = 0;
+    pmenu.query();
+
+    if( pmenu.ret < 0 || pmenu.ret >= static_cast<int>( vehs.size() ) ) {
+        return nullptr;
+    }
+    return vehs[pmenu.ret];
+}
+
+std::unique_ptr<iuse_actor> remoteveh_actor::clone() const
+{
+    return std::make_unique<remoteveh_actor>( *this );
+}
+
+void remoteveh_actor::load( const JsonObject &obj )
+{
+    advanced = obj.get_bool( "advanced", advanced );
+}
+
+int remoteveh_actor::use( player &p, item &it, bool t, const tripoint &pos ) const
+{
+    vehicle *remote = g->remoteveh();
+    if( t ) {
+        bool stop = false;
+        if( !it.units_sufficient( p ) ) {
+            p.add_msg_if_player( m_bad, _( "The remote control's battery goes dead." ) );
+            stop = true;
+        } else if( remote == nullptr ) {
+            p.add_msg_if_player( _( "Lost contact with the vehicle." ) );
+            stop = true;
+        } else if( remote->fuel_left( itype_battery, true ) == 0 ) {
+            p.add_msg_if_player( m_bad, _( "The vehicle's battery died." ) );
+            stop = true;
+        }
+        if( stop ) {
+            it.deactivate();
+            g->setremoteveh( nullptr );
+        }
+
+        return it.type->charges_to_use();
+    }
+
+    const bool controlling = it.is_active() && remote != nullptr;
+    int choice = uilist( _( "What to do with remote vehicle control:" ), {
+        controlling ? _( "Stop controlling the vehicle." ) : _( "Take control of a vehicle." ),
+        _( "Execute one vehicle action" )
+    } );
+
+    if( choice < 0 || choice > 1 ) {
+        return 0;
+    }
+
+    if( choice == 0 && controlling ) {
+        it.deactivate();
+        g->setremoteveh( nullptr );
+        return 0;
+    }
+
+    point p2( g->u.view_offset.xy() );
+
+    vehicle *veh = pickveh( pos, advanced );
+
+    if( veh == nullptr ) {
+        return 0;
+    }
+
+    if( !hackveh( p, it, *veh, advanced ) ) {
+        return 0;
+    }
+
+    if( choice == 0 ) {
+        if( g->u.has_trait( trait_WAYFARER ) ) {
+            add_msg( m_info,
+                     _( "Despite using a controller, you still refuse to take control of this vehicle." ) );
+        } else {
+            it.activate();
+            g->setremoteveh( veh );
+            p.add_msg_if_player( m_good, _( "You take control of the vehicle." ) );
+            if( !veh->engine_on ) {
+                veh->start_engines();
+            }
+        }
+    } else if( choice == 1 ) {
+        std::optional<tripoint> controls_pos = remote_controls_pos( *veh, advanced );
+        if( !controls_pos ) {
+            p.add_msg_if_player( m_bad, _( "This vehicle cannot be controlled remotely." ) );
+            return 0;
+        }
+        veh->use_controls( *controls_pos );
+    }
+
+    g->u.view_offset.x = p2.x;
+    g->u.view_offset.y = p2.y;
+    return it.type->charges_to_use();
+}
+
+ret_val<bool> remoteveh_actor::can_use( const Character &who, const item &it, bool,
+                                        const tripoint & ) const
+{
+    if( !it.units_sufficient( who ) ) {
+        return ret_val<bool>::make_failure( _( "This tool doesn't have enough charges." ) );
+    }
     return ret_val<bool>::make_success();
 }
 

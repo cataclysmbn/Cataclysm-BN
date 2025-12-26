@@ -3099,7 +3099,15 @@
     "use_action": [
       "PORTABLE_GAME",
       "WEATHER_TOOL",
-      "RADIOCONTROL",
+      { "type": "REMOTEVEH", "advanced": false },
+      {
+        "type": "radio_signal",
+        "signals": [
+          { "signal": 1, "menu_text": "Press red button" },
+          { "signal": 2, "menu_text": "Press blue button" },
+          { "signal": 3, "menu_text": "Press green button" }
+        ]
+      },
       { "type": "gps_device", "radius": 40, "additional_charges_per_tile": 0.1 },
       {
         "type": "transform",
@@ -3135,7 +3143,15 @@
     "use_action": [
       "PORTABLE_GAME",
       "WEATHER_TOOL",
-      "RADIOCONTROL",
+      { "type": "REMOTEVEH", "advanced": false },
+      {
+        "type": "radio_signal",
+        "signals": [
+          { "signal": 1, "menu_text": "Press red button" },
+          { "signal": 2, "menu_text": "Press blue button" },
+          { "signal": 3, "menu_text": "Press green button" }
+        ]
+      },
       { "type": "gps_device", "radius": 120, "additional_charges_per_tile": 0.1 },
       {
         "type": "transform",

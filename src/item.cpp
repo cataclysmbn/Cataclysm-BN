@@ -10398,8 +10398,12 @@ detached_ptr<item> item::process_tool( detached_ptr<item> &&self, player *carrie
     // Calls all use functions if active
     if( ( self->get_use( "REMOTEVEH" ) || self->get_use( "RADIOCONTROL" ) ) && self->is_active() ) {
         const use_function *method = nullptr;
-        if( g->remoteveh() != nullptr && self->get_use( "REMOTEVEH" ) ) {
-            method = &self->type->use_methods.find( "REMOTEVEH" )->second;
+        if( g->remoteveh() != nullptr ) {
+            if( self->get_use( "REMOTEVEH" ) ) {
+                method = &self->type->use_methods.find( "REMOTEVEH" )->second;
+            } else if( self->get_use( "RADIOCONTROL" ) ) {
+                method = &self->type->use_methods.find( "RADIOCONTROL" )->second;
+            }
         } else if( !g->u.get_value( "remote_controlling" ).empty() && self->get_use( "RADIOCONTROL" ) ) {
             method = &self->type->use_methods.find( "RADIOCONTROL" )->second;
         }

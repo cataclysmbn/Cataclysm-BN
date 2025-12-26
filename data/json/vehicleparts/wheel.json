@@ -391,7 +391,7 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "1 m", "qualities": [ { "id": "WRENCH", "level": 2 } ] },
       "install": { "skills": [ [ "mechanics", 0 ] ], "time": "1 m", "qualities": [ { "id": "WRENCH", "level": 2 } ] }
     },
-    "flags": [ "WHEEL", "STABLE", "FOLDABLE", "STEERABLE", "SHOCK_RESISTANT" ]
+    "flags": [ "WHEEL", "STABLE", "FOLDABLE", "STEERABLE", "SHOCK_RESISTANT", "RC_COMPATIBLE" ]
   },
   {
     "id": "wheel_mount_skateboard",

@@ -245,7 +245,7 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "3d_printing_standard", 5 ] ] }
     },
-    "flags": [ "CARGO", "FOLDABLE", "HALF_BOARD", "NO_ROOF_NEEDED" ],
+    "flags": [ "CARGO", "FOLDABLE", "HALF_BOARD", "NO_ROOF_NEEDED", "RC_COMPATIBLE" ],
     "damage_reduction": { "all": 8 }
   },
   {

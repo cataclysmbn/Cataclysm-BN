@@ -1007,6 +1007,7 @@ void veh_interact::do_install()
                part.has_flag( "CHIMES" ) ||
                part.has_flag( "MUFFLER" ) ||
                part.has_flag( "REMOTE_CONTROLS" ) ||
+               part.has_flag( "REMOTE_CONTROLS_SMALL" ) ||
                part.has_flag( "CURTAIN" ) ||
                part.has_flag( "SEATBELT" ) ||
                part.has_flag( "SECURITY" ) ||
@@ -1098,6 +1099,22 @@ void veh_interact::do_install()
                 }
                 if( veh->is_foldable() && !sel_vpart_info->has_flag( "FOLDABLE" ) &&
                     !query_yn( _( "Installing this part will make the vehicle unfoldable.  Continue?" ) ) ) {
+                    return;
+                }
+                static const std::string rcflag = "RC_COMPATIBLE";
+                const auto all_parts_rc_compatible = [&]() {
+                    for( const vpart_reference &vp : veh->get_all_parts() ) {
+                        if( vp.part().removed ) {
+                            continue;
+                        }
+                        if( !vp.info().has_flag( rcflag ) ) {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+                if( all_parts_rc_compatible() && !sel_vpart_info->has_flag( rcflag ) &&
+                    !query_yn( _( "Installing this part will make the vehicle non-RC compatible.  Continue?" ) ) ) {
                     return;
                 }
                 const auto &shapes =

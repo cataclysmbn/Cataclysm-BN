@@ -675,6 +675,20 @@ void vehicle::use_controls( const tripoint &pos )
 
     bool remote = g->remoteveh() == this;
     bool has_electronic_controls = false;
+    static const std::string rcflag = "RC_COMPATIBLE";
+    const auto all_parts_rc_compatible = [&]() {
+        for( const vpart_reference &vp : get_all_parts() ) {
+            if( vp.part().removed ) {
+                continue;
+            }
+            if( !vp.info().has_flag( rcflag ) ) {
+                return false;
+            }
+        }
+        return true;
+    };
+    const bool has_remote_controls = has_part( "REMOTE_CONTROLS" ) ||
+                                     ( has_part( "REMOTE_CONTROLS_SMALL" ) && all_parts_rc_compatible() );
     avatar &you = get_avatar();
     const auto confirm_stop_driving = [this] {
         return !is_flying_in_air() || !has_part( VPFLAG_WING ) || query_yn(
@@ -693,7 +707,7 @@ void vehicle::use_controls( const tripoint &pos )
             }
         } );
 
-        has_electronic_controls = has_part( "CTRL_ELECTRONIC" ) || has_part( "REMOTE_CONTROLS" );
+        has_electronic_controls = has_part( "CTRL_ELECTRONIC" ) || has_remote_controls;
 
     } else if( veh_pointer_or_null( g->m.veh_at( pos ) ) == this ) {
         if( you.controlling_vehicle ) {
@@ -789,8 +803,7 @@ void vehicle::use_controls( const tripoint &pos )
         options.emplace_back( _( "Honk horn" ), keybind( "SOUND_HORN" ) );
         actions.emplace_back( [&] { honk_horn(); refresh(); } );
     }
-    if( has_part( "AUTOPILOT" ) && ( has_part( "CTRL_ELECTRONIC" ) ||
-                                     has_part( "REMOTE_CONTROLS" ) ) ) {
+    if( has_part( "AUTOPILOT" ) && ( has_part( "CTRL_ELECTRONIC" ) || has_remote_controls ) ) {
         options.emplace_back( _( "Control autopilot" ),
                               keybind( "CONTROL_AUTOPILOT" ) );
         actions.emplace_back( [&] { toggle_autopilot(); refresh(); } );

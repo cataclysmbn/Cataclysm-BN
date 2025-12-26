@@ -440,13 +440,39 @@ bool vehicle::remote_controlled( const Character &who ) const
         return false;
     }
 
+    static const std::string rcflag = "RC_COMPATIBLE";
+    auto all_parts_rc_compatible = [&]() {
+        for( const vpart_reference &vp : get_all_parts() ) {
+            if( vp.part().removed ) {
+                continue;
+            }
+            if( !vp.info().has_flag( rcflag ) ) {
+                return false;
+            }
+        }
+        return true;
+    };
     for( const vpart_reference &vp : get_avail_parts( "REMOTE_CONTROLS" ) ) {
         if( rl_dist( who.pos(), vp.pos() ) <= 40 ) {
             return true;
         }
     }
 
-    add_msg( m_bad, _( "Lost connection with the vehicle due to distance!" ) );
+    const bool has_small_controls = !empty( get_avail_parts( "REMOTE_CONTROLS_SMALL" ) );
+    const bool rc_compatible = has_small_controls && all_parts_rc_compatible();
+    if( rc_compatible ) {
+        for( const vpart_reference &vp : get_avail_parts( "REMOTE_CONTROLS_SMALL" ) ) {
+            if( rl_dist( who.pos(), vp.pos() ) <= 40 ) {
+                return true;
+            }
+        }
+    }
+
+    if( has_small_controls && !rc_compatible ) {
+        add_msg( m_bad, _( "Lost connection with the vehicle due to incompatible parts!" ) );
+    } else {
+        add_msg( m_bad, _( "Lost connection with the vehicle due to distance!" ) );
+    }
     g->setremoteveh( nullptr );
     return false;
 }

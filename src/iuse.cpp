@@ -7521,161 +7521,9 @@ int iuse::radiocaron( player *p, item *it, bool t, const tripoint &pos )
     return it->type->charges_to_use();
 }
 
-/**
- * Send radio signal from player.
- */
-static void emit_radio_signal( player &p, const flag_id &signal )
+int iuse::radiocontrol( player *p, item *it, bool t, const tripoint &pos )
 {
-    const auto visitor = [&]( item & it, const tripoint & loc ) -> VisitResponse {
-        if( it.has_flag( flag_RADIO_ACTIVATION ) && it.has_flag( signal ) )
-        {
-            sounds::sound( p.pos(), 6, sounds::sound_t::alarm, _( "beep" ), true, "misc", "beep" );
-            bool invoke_proc = it.has_flag( flag_RADIO_INVOKE_PROC );
-            // Invoke to transform item
-            it.type->invoke( p, it, loc );
-            if( invoke_proc ) {
-                // Cause invocation of transformed item on next turn processing
-                it.ammo_unset();
-            }
-        }
-        return VisitResponse::NEXT;
-    };
-
-    int z_min = g->m.has_zlevels() ? -OVERMAP_DEPTH : 0;
-    int z_max = g->m.has_zlevels() ? OVERMAP_HEIGHT : 0;
-    for( int zlev = z_min; zlev <= z_max; zlev++ ) {
-        for( tripoint loc : g->m.points_on_zlevel( zlev ) ) {
-            // Items on ground
-            map_cursor mc( loc );
-            mc.visit_items( [&]( item * it ) {
-                return visitor( *it, loc );
-            } );
-
-            // Items in vehicles
-            optional_vpart_position vp = g->m.veh_at( loc );
-            if( !vp ) {
-                continue;
-            }
-            std::optional<vpart_reference> vpr = vp.part_with_feature( "CARGO", false );
-            if( !vpr ) {
-                continue;
-            }
-            vehicle_cursor vc( vp->vehicle(), vpr->part_index() );
-            vc.visit_items( [&]( item * it ) {
-                return visitor( *it, loc );
-            } );
-        }
-    }
-
-    // Items on creatures
-    for( Creature &cr : g->all_creatures() ) {
-        const tripoint &cr_pos = cr.pos();
-        if( cr.is_monster() ) {
-            monster &mon = *cr.as_monster();
-            mon.visit_items( [&]( item * it ) {
-                return visitor( *it, cr_pos );
-            } );
-        } else {
-            Character &ch = *cr.as_character();
-            ch.visit_items( [&]( item * it ) {
-                return visitor( *it, cr_pos );
-            } );
-        }
-    }
-}
-
-int iuse::radiocontrol( player *p, item *it, bool t, const tripoint & )
-{
-    if( t ) {
-        if( !it->units_sufficient( *p ) ) {
-            it->deactivate();
-            p->remove_value( "remote_controlling" );
-        } else if( p->get_value( "remote_controlling" ).empty() ) {
-            it->deactivate();
-        }
-
-        return it->type->charges_to_use();
-    }
-
-    const char *car_action = nullptr;
-
-    if( !it->is_active() ) {
-        car_action = _( "Take control of RC car" );
-    } else {
-        car_action = _( "Stop controlling RC car" );
-    }
-
-    int choice = uilist( _( "What to do with radio control?" ), {
-        car_action,
-        _( "Press red button" ), _( "Press blue button" ), _( "Press green button" )
-    } );
-
-    if( choice < 0 ) {
-        return 0;
-    } else if( choice == 0 ) {
-        if( it->is_active() ) {
-            it->deactivate();
-            p->remove_value( "remote_controlling" );
-        } else {
-            std::vector<std::pair<tripoint, item *>> rc_pairs;
-            for( tripoint pt : g->m.points_on_zlevel( p->posz() ) ) {
-                map_cursor mc( pt );
-                std::vector<item *> rc_items_here = mc.items_with( [&]( const item & it ) {
-                    return it.has_flag( flag_RADIO_CONTROLLED );
-                } );
-                for( item *it : rc_items_here ) {
-                    rc_pairs.emplace_back( pt, it );
-                }
-            }
-
-            if( rc_pairs.empty() ) {
-                p->add_msg_if_player( _( "No active RC cars on ground and in range." ) );
-                return it->type->charges_to_use();
-            }
-
-            std::vector<tripoint> locations;
-            uilist pick_rc;
-            pick_rc.text = _( "Choose car to control." );
-            for( size_t i = 0; i < rc_pairs.size(); i++ ) {
-                pick_rc.addentry( i, true, MENU_AUTOASSIGN, rc_pairs[i].second->display_name() );
-                locations.push_back( rc_pairs[i].first );
-            }
-            pointmenu_cb callback( locations );
-            pick_rc.callback = &callback;
-            pick_rc.query();
-            if( pick_rc.ret < 0 || static_cast<size_t>( pick_rc.ret ) >= rc_pairs.size() ) {
-                p->add_msg_if_player( m_info, _( "Never mind." ) );
-                return it->type->charges_to_use();
-            }
-
-            tripoint rc_loc = locations[pick_rc.ret];
-
-            p->add_msg_if_player( m_good, _( "You take control of the RC car." ) );
-            p->set_value( "remote_controlling", serialize_wrapper( [&]( JsonOut & jo ) {
-                rc_loc.serialize( jo );
-            } ) );
-            it->activate();
-        }
-    } else if( choice > 0 ) {
-        const flag_id signal( "RADIOSIGNAL_" + std::to_string( choice ) );
-
-        std::vector<item *> bombs = p->items_with( [&]( const item & it ) -> bool {
-            return it.has_flag( flag_RADIO_ACTIVATION ) && it.has_flag( flag_BOMB ) && it.has_flag( signal );
-        } );
-
-        if( !bombs.empty() ) {
-            p->add_msg_if_player( m_warning,
-                                  _( "The %s in your inventory would explode on this signal.  Place it down before sending the signal." ),
-                                  bombs.front()->display_name() );
-            return 0;
-        }
-
-        p->add_msg_if_player( _( "Click." ) );
-        emit_radio_signal( *p, signal );
-        p->moves -= to_moves<int>( 2_seconds );
-    }
-
-    return it->type->charges_to_use();
+    return remoteveh( p, it, t, pos );
 }
 
 static bool hackveh( player &p, item &it, vehicle &veh )
@@ -7734,10 +7582,57 @@ static bool hackveh( player &p, item &it, vehicle &veh )
     return success;
 }
 
+static bool vehicle_all_parts_rc_compatible( const vehicle &veh )
+{
+    static const std::string rcflag = "RC_COMPATIBLE";
+    for( const vpart_reference &vp : veh.get_all_parts() ) {
+        if( vp.part().removed ) {
+            continue;
+        }
+        if( !vp.info().has_flag( rcflag ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool has_remote_controls_small( const vehicle &veh )
+{
+    return !empty( veh.get_avail_parts( "REMOTE_CONTROLS_SMALL" ) ) &&
+           vehicle_all_parts_rc_compatible( veh );
+}
+
+static bool has_remote_controls_large( const vehicle &veh )
+{
+    return !empty( veh.get_avail_parts( "REMOTE_CONTROLS" ) );
+}
+
+static bool has_remote_controls( const vehicle &veh, bool advanced )
+{
+    if( has_remote_controls_large( veh ) || has_remote_controls_small( veh ) ) {
+        return true;
+    }
+    return !advanced && !empty( veh.get_avail_parts( "CTRL_ELECTRONIC" ) );
+}
+
+static std::optional<tripoint> remote_controls_pos( vehicle &veh )
+{
+    const auto large_controls = veh.get_avail_parts( "REMOTE_CONTROLS" );
+    if( !empty( large_controls ) ) {
+        return large_controls.begin()->pos();
+    }
+    if( !has_remote_controls_small( veh ) ) {
+        return std::nullopt;
+    }
+    const auto small_controls = veh.get_avail_parts( "REMOTE_CONTROLS_SMALL" );
+    if( !empty( small_controls ) ) {
+        return small_controls.begin()->pos();
+    }
+    return std::nullopt;
+}
+
 static vehicle *pickveh( const tripoint &center, bool advanced )
 {
-    static const std::string ctrl = "CTRL_ELECTRONIC";
-    static const std::string advctrl = "REMOTE_CONTROLS";
     uilist pmenu;
     pmenu.title = _( "Select vehicle to access" );
     std::vector< vehicle * > vehs;
@@ -7746,8 +7641,7 @@ static vehicle *pickveh( const tripoint &center, bool advanced )
         auto &v = veh.v;
         if( rl_dist( center, v->global_pos3() ) < 40 &&
             v->fuel_left( itype_battery, true ) > 0 &&
-            ( !empty( v->get_avail_parts( advctrl ) ) ||
-              ( !advanced && !empty( v->get_avail_parts( ctrl ) ) ) ) ) {
+            has_remote_controls( *v, advanced ) ) {
             vehs.push_back( v );
         }
     }
@@ -7839,12 +7733,14 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint &pos )
             }
         }
     } else if( choice == 1 ) {
-        const auto rctrl_parts = veh->get_avail_parts( "REMOTE_CONTROLS" );
-        // Revert to original behavior if we can't find remote controls.
-        if( empty( rctrl_parts ) ) {
+        std::optional<tripoint> controls_pos = remote_controls_pos( *veh );
+        if( controls_pos ) {
+            veh->use_controls( *controls_pos );
+        } else if( !empty( veh->get_avail_parts( "CTRL_ELECTRONIC" ) ) ) {
             veh->use_controls( pos );
         } else {
-            veh->use_controls( rctrl_parts.begin()->pos() );
+            p->add_msg_if_player( m_bad, _( "This vehicle cannot be controlled remotely." ) );
+            return 0;
         }
     }
 
@@ -9014,4 +8910,3 @@ int iuse::bullet_vibe_on( player *p, item *it, bool t, const tripoint & )
     }
     return it->type->charges_to_use();
 }
-

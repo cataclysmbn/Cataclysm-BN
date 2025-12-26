@@ -153,7 +153,15 @@
         "need_charges": 1
       },
       "ROBOTCONTROL",
-      "RADIOCONTROL",
+      { "type": "REMOTEVEH", "advanced": false },
+      {
+        "type": "radio_signal",
+        "signals": [
+          { "signal": 1, "menu_text": "Press red button" },
+          { "signal": 2, "menu_text": "Press blue button" },
+          { "signal": 3, "menu_text": "Press green button" }
+        ]
+      },
       "PORTABLE_GAME",
       "TOGGLE_UPS_CHARGING"
     ],
@@ -339,7 +347,15 @@
         "need_charges": 1
       },
       "PORTABLE_GAME",
-      "RADIOCONTROL",
+      { "type": "REMOTEVEH", "advanced": false },
+      {
+        "type": "radio_signal",
+        "signals": [
+          { "signal": 1, "menu_text": "Press red button" },
+          { "signal": 2, "menu_text": "Press blue button" },
+          { "signal": 3, "menu_text": "Press green button" }
+        ]
+      },
       "ROBOTCONTROL",
       "EINKTABLETPC",
       "RADGLOVE"
