@@ -87,7 +87,7 @@ static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
     for( const tripoint &p : here.points_in_rectangle( expanded_bb.p_min, expanded_bb.p_max ) ) {
         double signed_distance = s->distance_at( p );
         bool distance_on_shape_is_negative = signed_distance < 0.0;
-        bool point_is_covered = cov.find( p ) != cov.end() && cov.at( p ) > 0.0;
+        bool point_is_covered = cov.contains( p ) && cov.at( p ) > 0.0;
         bool in_bounding_box = bb.contains( p );
         CAPTURE( p );
         CAPTURE( signed_distance );
