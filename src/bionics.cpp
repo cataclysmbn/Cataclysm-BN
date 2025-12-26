@@ -250,7 +250,7 @@ itype_id bionic_data::itype() const
 
 bool bionic_data::is_included( const bionic_id &id ) const
 {
-    return std::ranges::find( included_bionics, id ) != included_bionics.end();
+    return std::ranges::contains( included_bionics, id );
 }
 
 void bionic_data::load_bionic( const JsonObject &jo, const std::string &src )
@@ -2977,7 +2977,7 @@ int bionic::get_quality( const quality_id &quality ) const
 bool bionic::is_this_fuel_powered( const itype_id &this_fuel ) const
 {
     const std::vector<itype_id> fuel_op = info().fuel_opts;
-    return std::ranges::find( fuel_op, this_fuel ) != fuel_op.end();
+    return std::ranges::contains( fuel_op, this_fuel );
 }
 
 void bionic::toggle_safe_fuel_mod()

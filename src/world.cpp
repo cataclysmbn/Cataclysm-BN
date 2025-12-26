@@ -103,7 +103,7 @@ void WORLDINFO::COPY_WORLD( const WORLDINFO *world_to_copy )
 
 bool WORLDINFO::save_exists( const save_t &name ) const
 {
-    return std::ranges::find( world_saves, name ) != world_saves.end();
+    return std::ranges::contains( world_saves, name );
 }
 
 void WORLDINFO::add_save( const save_t &name )

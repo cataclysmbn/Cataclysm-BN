@@ -360,7 +360,7 @@ static bool is_cqb_skill( const skill_id &id )
             skill_id( "bashing" ), skill_id( "stabbing" ),
         }
     };
-    return std::ranges::find( cqb_skills, id ) != cqb_skills.end();
+    return std::ranges::contains( cqb_skills, id );
 }
 
 namespace

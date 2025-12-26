@@ -746,7 +746,7 @@ bool json_item_substitution::trait_requirements::meets_condition( const std::vec
         &traits ) const
 {
     const auto pred = [&traits]( const trait_id & s ) {
-        return std::ranges::find( traits, s ) != traits.end();
+        return std::ranges::contains( traits, s );
     };
     return std::ranges::all_of( present, pred ) &&
            std::ranges::none_of( absent, pred );

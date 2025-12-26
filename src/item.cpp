@@ -7307,7 +7307,7 @@ bool item::only_made_of( const std::set<material_id> &mat_idents ) const
 bool item::made_of( const material_id &mat_ident ) const
 {
     const std::vector<material_id> &materials = made_of();
-    return std::ranges::find( materials, mat_ident ) != materials.end();
+    return std::ranges::contains( materials, mat_ident );
 }
 
 bool item::contents_made_of( const phase_id phase ) const
@@ -10929,7 +10929,7 @@ bool item::has_effect_when_wielded( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ew = type->artifact->effects_wielded;
-    return std::ranges::find( ew, effect ) != ew.end();
+    return std::ranges::contains( ew, effect );
 }
 
 bool item::has_effect_when_worn( art_effect_passive effect ) const
@@ -10938,7 +10938,7 @@ bool item::has_effect_when_worn( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ew = type->artifact->effects_worn;
-    return std::ranges::find( ew, effect ) != ew.end();
+    return std::ranges::contains( ew, effect );
 }
 
 bool item::has_effect_when_carried( art_effect_passive effect ) const
@@ -10947,7 +10947,7 @@ bool item::has_effect_when_carried( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ec = type->artifact->effects_carried;
-    if( std::ranges::find( ec, effect ) != ec.end() ) {
+    if( std::ranges::contains( ec, effect ) ) {
         return true;
     }
     for( const item *i : contents.all_items_top() ) {

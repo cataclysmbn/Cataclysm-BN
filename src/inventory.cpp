@@ -1135,7 +1135,7 @@ void inventory::assign_empty_invlet( item &it, const Character &p, const bool fo
                 // don't overwrite assigned keys
                 continue;
             }
-            if( std::ranges::find( binds, inv_char ) != binds.end() ) {
+            if( std::ranges::contains( binds, inv_char ) ) {
                 // don't auto-assign bound keys
                 continue;
             }

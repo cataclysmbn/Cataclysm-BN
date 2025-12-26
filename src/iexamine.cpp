@@ -2751,7 +2751,7 @@ itype_id iexamine::choose_fertilizer( player &p, const std::string &pname, bool 
     std::vector<itype_id> f_types;
     std::vector<std::string> f_names;
     for( auto &f : f_inv ) {
-        if( std::ranges::find( f_types, f->typeId() ) == f_types.end() ) {
+        if( !std::ranges::contains( f_types, f->typeId() ) ) {
             f_types.push_back( f->typeId() );
             f_names.push_back( f->tname() );
         }
@@ -3282,7 +3282,7 @@ void iexamine::fvat_empty( player &p, const tripoint &examp )
         std::vector<itype_id> b_types;
         std::vector<std::string> b_names;
         for( auto &b : b_inv ) {
-            if( std::ranges::find( b_types, b->typeId() ) == b_types.end() ) {
+            if( !std::ranges::contains( b_types, b->typeId() ) ) {
                 b_types.push_back( b->typeId() );
                 b_names.push_back( item::nname( b->typeId() ) );
             }

@@ -19,7 +19,7 @@ TEST_CASE( "Radius one 2D square centered at origin." )
 {
     for( const tripoint &candidate :
          tripoint_range<tripoint>( tripoint_north_west, tripoint_south_east ) ) {
-        REQUIRE( std::ranges::find( range_1_2d_centered, candidate ) != range_1_2d_centered.end() );
+        REQUIRE( std::ranges::contains( range_1_2d_centered, candidate ) );
     }
 }
 
@@ -33,7 +33,7 @@ static std::array<tripoint, 9> range_1_2d_offset = {
 TEST_CASE( "Radius one 2D square centered at -4/-4/0." )
 {
     for( const tripoint &candidate : tripoint_range<tripoint>( {-5, -5, 0}, {-3, -3, 0} ) ) {
-        REQUIRE( std::ranges::find( range_1_2d_offset, candidate ) != range_1_2d_offset.end() );
+        REQUIRE( std::ranges::contains( range_1_2d_offset, candidate ) );
     }
 }
 
@@ -41,7 +41,7 @@ TEST_CASE( "Radius one 2D square centered at -4/-4/0 in abs_omt coords." )
 {
     for( const tripoint_abs_omt &candidate :
          tripoint_range<tripoint_abs_omt>( {-5, -5, 0}, {-3, -3, 0} ) ) {
-        REQUIRE( std::ranges::find( range_1_2d_offset, candidate.raw() ) != range_1_2d_offset.end() );
+        REQUIRE( std::ranges::contains( range_1_2d_offset, candidate.raw() ) );
     }
 }
 
@@ -107,7 +107,7 @@ static std::array<tripoint, 343> range_3_3d_offset = {
 TEST_CASE( "Radius three 3D square centered at 8/8/1." )
 {
     for( const tripoint &candidate : tripoint_range<tripoint>( {5, 5, -2}, {11, 11, 4} ) ) {
-        REQUIRE( std::ranges::find( range_3_3d_offset, candidate ) != range_3_3d_offset.end() );
+        REQUIRE( std::ranges::contains( range_3_3d_offset, candidate ) );
     }
 }
 

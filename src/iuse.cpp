@@ -7167,7 +7167,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
                               e.c_str() );
                 }
 
-                const bool selfie = std::ranges::find( player_vec, p ) != player_vec.end();
+                const bool selfie = std::ranges::contains( player_vec, p );
 
                 if( selfie ) {
                     p->add_msg_if_player( _( "You took a selfie." ) );

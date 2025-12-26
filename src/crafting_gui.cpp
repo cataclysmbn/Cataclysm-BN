@@ -91,7 +91,7 @@ void load_recipe_category( const JsonObject &jsobj )
     }
 
     if( !is_hidden ) {
-        if( std::ranges::find( craft_cat_list, category ) == craft_cat_list.end() ) {
+        if( !std::ranges::contains( craft_cat_list, category ) ) {
             craft_cat_list.push_back( category );
         }
         const std::string cat_name = get_cat_unprefixed( category );

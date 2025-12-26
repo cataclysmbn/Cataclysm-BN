@@ -76,7 +76,7 @@ auto cut_up_yields( const std::string &target ) -> void
             }
         }
         CHECK( has_quality );
-        CHECK( std::ranges::find( madeof, material ) != madeof.end() );
+        CHECK( std::ranges::contains( madeof, material ) );
     }
 }
 } // namespace

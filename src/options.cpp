@@ -1109,7 +1109,7 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
     std::vector<options_manager::id_and_option> user_tilesets = load_tilesets_from(
                 PATH_INFO::user_gfx() );
     for( const options_manager::id_and_option &id : user_tilesets ) {
-        if( std::ranges::find( result, id ) == result.end() ) {
+        if( !std::ranges::contains( result, id ) ) {
             result.emplace_back( id );
         }
     }
