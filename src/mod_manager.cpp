@@ -457,7 +457,7 @@ void mod_manager::load_mods_list( WORLDINFO *world ) const
     read_from_file_json( get_mods_list_file( world ), [&]( JsonIn & jsin ) {
         for( const std::string line : jsin.get_array() ) {
             const mod_id mod( line );
-            if( std::ranges::find( amo, mod ) != amo.end() ) {
+            if( std::ranges::contains( amo, mod ) ) {
                 continue;
             }
             const auto iter = mod_replacements.find( mod );

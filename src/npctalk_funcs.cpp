@@ -428,7 +428,7 @@ void talk_function::bionic_remove( npc &p )
     std::vector<itype_id> bionic_types;
     std::vector<std::string> bionic_names;
     for( const bionic &bio : all_bio ) {
-        if( std::ranges::find( bionic_types, bio.info().itype() ) == bionic_types.end() ) {
+        if( !std::ranges::contains( bionic_types, bio.info().itype() ) ) {
             bionic_types.push_back( bio.info().itype() );
             if( bio.info().itype().is_valid() ) {
                 item *tmp = item::spawn_temporary( bio.id.str(), calendar::start_of_cataclysm );

@@ -7155,7 +7155,7 @@ const std::vector<material_id> Character::fleshy = { material_id( "flesh" ), mat
 bool Character::made_of( const material_id &m ) const
 {
     // TODO: check for mutations that change this.
-    return std::ranges::find( fleshy, m ) != fleshy.end();
+    return std::ranges::contains( fleshy, m );
 }
 bool Character::made_of_any( const std::set<material_id> &ms ) const
 {
@@ -10272,7 +10272,7 @@ bool Character::has_activity( const activity_id &type ) const
 
 bool Character::has_activity( const std::vector<activity_id> &types ) const
 {
-    return std::ranges::find( types, activity->id() ) != types.end();
+    return std::ranges::contains( types, activity->id() );
 }
 
 void Character::cancel_activity()
