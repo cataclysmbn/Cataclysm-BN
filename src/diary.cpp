@@ -363,8 +363,7 @@ void diary::kill_changes()
             bool flag = true;
             for( const std::string &npc_name : curr_page->npc_kills ) {
 
-                if( ( std::find( prev_npc_kills.begin(), prev_npc_kills.end(),
-                                 npc_name ) == prev_npc_kills.end() ) ) {
+                if( ( std::ranges::find( prev_npc_kills, npc_name ) == prev_npc_kills.end() ) ) {
                     if( flag ) {
                         add_to_change_list( _( "NPC killed:" ) );
                         flag = false;

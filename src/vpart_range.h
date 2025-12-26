@@ -1,10 +1,10 @@
 #pragma once
 
 #include <cassert>
-#include <functional>
 #include <cstddef>
 #include <iterator>
 #include <optional>
+#include <ranges>
 #include <utility>
 
 #include "vpart_position.h"
@@ -23,13 +23,12 @@ template<typename range_type>
 class vehicle_part_iterator
 {
     private:
-        std::reference_wrapper<const range_type> range_;
+        const range_type *range_ = nullptr;
         std::optional<vpart_reference> vp_;
 
-        const range_type &range() const {
-            return range_.get();
-        }
-        void skip_to_next_valid( size_t i ) {
+        auto range() const -> const range_type & { return *range_; } // *NOPAD*
+
+        auto skip_to_next_valid( size_t i ) -> void {
             while( i < range().part_count() &&
                    !range().matches( i ) ) {
                 ++i;
@@ -42,29 +41,46 @@ class vehicle_part_iterator
         }
 
     public:
-        vehicle_part_iterator( const range_type &r, size_t i ) : range_( r ) {
+        using value_type = vpart_reference;
+        using difference_type = std::ptrdiff_t;
+        using pointer = const vpart_reference *;
+        using reference = const vpart_reference &;
+        using iterator_category = std::forward_iterator_tag;
+        using iterator_concept = std::forward_iterator_tag;
+
+        vehicle_part_iterator() = default;
+
+        vehicle_part_iterator( const range_type *r, size_t i ) : range_( r ) {
             assert( i <= range().part_count() );
             skip_to_next_valid( i );
         }
+
         vehicle_part_iterator( const vehicle_part_iterator & ) = default;
         vehicle_part_iterator &operator=( const vehicle_part_iterator & ) = default;
 
-        const vpart_reference &operator*() const {
+        auto operator*() const -> reference {
             assert( vp_ );
             return *vp_;
         }
-        const vpart_reference *operator->() const {
+
+        auto operator->() const -> pointer {
             assert( vp_ );
             return &*vp_;
         }
 
-        vehicle_part_iterator &operator++() {
+        auto operator++() -> vehicle_part_iterator & { // *NOPAD*
             assert( vp_ );
             skip_to_next_valid( vp_->part_index() + 1 );
             return *this;
         }
 
-        bool operator==( const vehicle_part_iterator &rhs ) const {
+        auto operator++( int ) -> vehicle_part_iterator {
+            auto tmp = *this;
+            ++( *this );
+            return tmp;
+        }
+
+        auto operator==( const vehicle_part_iterator &rhs ) const -> bool {
             if( vp_.has_value() != rhs.vp_.has_value() ) {
                 return false;
             }
@@ -73,23 +89,7 @@ class vehicle_part_iterator
             }
             return &vp_->vehicle() == &rhs.vp_->vehicle() && vp_->part_index() == rhs.vp_->part_index();
         }
-        bool operator!=( const vehicle_part_iterator &rhs ) const {
-            return !operator==( rhs );
-        }
 };
-
-namespace std
-{
-template<class T> struct iterator_traits<vehicle_part_iterator<T>> {
-    using difference_type = size_t;
-    using value_type = vpart_reference;
-    using pointer = vpart_reference*;
-    using reference = vpart_reference&;
-    // TODO: maybe change into random access iterator? This requires adding
-    // more operators to the iterator, which may not be efficient.
-    using iterator_category = std::forward_iterator_tag;
-};
-} // namespace std
 
 /**
  * The generic range, it misses the `bool contained(size_t)` function that is
@@ -98,45 +98,35 @@ template<class T> struct iterator_traits<vehicle_part_iterator<T>> {
  * so use your derived range class as @ref range_type.
  */
 template<typename range_type>
-class generic_vehicle_part_range
+class generic_vehicle_part_range : public std::ranges::view_interface<range_type>
 {
     private:
-        std::reference_wrapper<::vehicle> vehicle_;
+        ::vehicle *vehicle_ = nullptr;
+
+        generic_vehicle_part_range() = default;
+        generic_vehicle_part_range( ::vehicle &v ) : vehicle_( &v ) { }
 
     public:
-        generic_vehicle_part_range( ::vehicle &v ) : vehicle_( v ) { }
-
         // Templated because see top of file.
         template<typename T = ::vehicle>
-        size_t part_count() const {
-            return static_cast<const T &>( vehicle_.get() ).part_count();
+        auto part_count() const -> size_t {
+            return static_cast<const T &>( *vehicle_ ).part_count();
         }
 
         using iterator = vehicle_part_iterator<range_type>;
-        iterator begin() const {
-            return iterator( const_cast<range_type &>( static_cast<const range_type &>( *this ) ), 0 );
-        }
-        iterator end() const {
-            return iterator( const_cast<range_type &>( static_cast<const range_type &>( *this ) ),
-                             part_count() );
+
+        auto begin() const -> iterator {
+            return iterator( static_cast<const range_type *>( this ), 0 );
         }
 
-        friend bool empty( const generic_vehicle_part_range<range_type> &range ) {
-            return range.begin() == range.end();
-        }
-        friend size_t size( const generic_vehicle_part_range<range_type> &range ) {
-            return std::distance( range.begin(), range.end() );
-        }
-        friend iterator begin( const generic_vehicle_part_range<range_type> &range ) {
-            return range.begin();
-        }
-        friend iterator end( const generic_vehicle_part_range<range_type> &range ) {
-            return range.end();
+        auto end() const -> iterator {
+            return iterator( static_cast<const range_type *>( this ), part_count() );
         }
 
-        ::vehicle &vehicle() const {
-            return vehicle_.get();
+        auto vehicle() const -> ::vehicle& { // *NOPAD*
+            return *vehicle_;
         }
+        friend range_type;
 };
 
 /** A range that contains all parts of the vehicle. */
@@ -145,9 +135,7 @@ class vehicle_part_range : public generic_vehicle_part_range<vehicle_part_range>
     public:
         vehicle_part_range( ::vehicle &v ) : generic_vehicle_part_range( v ) { }
 
-        bool matches( const size_t /*part*/ ) const {
-            return true;
-        }
+        auto matches( const size_t /*part*/ ) const -> bool { return true; }
 };
 
 /** A range that contains parts that have a given feature and (optionally) are not broken. */
@@ -164,7 +152,7 @@ class vehicle_part_with_feature_range : public
             generic_vehicle_part_range<vehicle_part_with_feature_range<feature_type>>( v ),
                     feature_( std::move( f ) ), required_( r ) { }
 
-        bool matches( size_t part ) const;
+        auto matches( size_t part ) const -> bool;
 };
 
 
