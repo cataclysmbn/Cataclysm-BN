@@ -182,9 +182,9 @@ TEST_CASE( "tripoint_range iterator survives temporary range (no dangling)" )
     auto it = points_in_radius( tripoint_zero, 1 ).begin();
     // points_in_radius returns temporary, destroyed after this line
     // Iterator must still be valid
-    REQUIRE( *it == tripoint( -1, -1, -1 ) );
+    REQUIRE( *it == tripoint( -1, -1, 0 ) );
     ++it; // Would crash if iterator stored dangling pointer
-    REQUIRE( *it == tripoint( 0, -1, -1 ) );
+    REQUIRE( *it == tripoint( 0, -1, 0 ) );
 }
 
 TEST_CASE( "tripoint_range copied iterator remains valid" )

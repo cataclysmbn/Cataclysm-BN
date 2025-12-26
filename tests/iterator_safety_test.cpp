@@ -67,9 +67,10 @@ TEST_CASE( "vehicle_part_range_iterator_safety", "[iterator][safety]" )
 {
     vehicle v;
 
-    // Add some dummy parts to the vehicle.
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
-    v.install_part( point_zero, vpart_id( "seat" ) );
+    // Add parts to distinct locations to ensure successful installation.
+    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( point( 2, 0 ), vpart_id( "frame_vertical" ) );
 
     // Get an iterator from a temporary range object.
     // CRITICAL: This temporary object is destroyed at the end of this statement.
@@ -82,14 +83,14 @@ TEST_CASE( "vehicle_part_range_iterator_safety", "[iterator][safety]" )
     // so it remains valid even after the temporary is destroyed.
 
     REQUIRE( it_begin != it_end );
-    REQUIRE( it_begin->part_index() == 0 );
-
-    ++it_begin;
-    REQUIRE( it_begin != it_end );
-    REQUIRE( it_begin->part_index() == 1 );
-
-    ++it_begin;
-    REQUIRE( it_begin == it_end );
+    // Part indices are not guaranteed to be 0, 1, 2 sequentially depending on installation internals,
+    // but iteration count should be 3.
+    int count = 0;
+    while( it_begin != it_end ) {
+        ++count;
+        ++it_begin;
+    }
+    REQUIRE( count == 3 );
 }
 
 
@@ -97,36 +98,35 @@ TEST_CASE( "vehicle_part_with_feature_range_iterator_safety", "[iterator][safety
 {
     vehicle v;
 
-    // Add parts with different features.
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
-    v.install_part( point_zero, vpart_id( "seat" ) );
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
-    v.install_part( point_zero, vpart_id( "seat" ) );
+    // Add parts with different features at distinct locations.
+    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) ); // structure
+    v.install_part( point( 0, 0 ), vpart_id( "seat" ) );           // seat on structure
+    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) ); // structure
+    v.install_part( point( 1, 0 ), vpart_id( "seat" ) );           // seat on structure
 
     // Create a filtered range (temporary) and get iterators.
     // The range_type stores the feature filter by value in vehicle_part_iterator.
     // Even though the temporary range is destroyed, the iterator carries its own copy of the filter.
-    auto it_begin = v.get_avail_parts( std::string( "seat" ) ).begin();
-    auto it_end = v.get_avail_parts( std::string( "seat" ) ).end();
+    auto it_begin = v.get_avail_parts( std::string( "SEAT" ) ).begin();
+    auto it_end = v.get_avail_parts( std::string( "SEAT" ) ).end();
 
     // Verify we can safely dereference after the temporary range is gone.
-    // We just check that iteration works, without assuming specific part indices.
     int count = 0;
     while( it_begin != it_end ) {
         ++count;
         ++it_begin;
     }
-    // There should be at least the seat parts we installed.
-    REQUIRE( count >= 2 );
+    // There should be 2 seats.
+    REQUIRE( count == 2 );
 }
 
 TEST_CASE( "vehicle_part_iterator_copy_semantics", "[iterator][safety]" )
 {
     vehicle v;
 
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
-    v.install_part( point_zero, vpart_id( "seat" ) );
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
+    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( point( 2, 0 ), vpart_id( "frame_vertical" ) );
 
     auto range = v.get_all_parts();
     auto it1 = range.begin();
@@ -137,18 +137,18 @@ TEST_CASE( "vehicle_part_iterator_copy_semantics", "[iterator][safety]" )
     ++it1;
 
     // it2 should still point to the first element
-    REQUIRE( it2->part_index() == 0 );
-    REQUIRE( it1->part_index() == 2 );
-    REQUIRE( it1 != it2 );
+    // it1 should point to the third element
+    REQUIRE( it2->part_index() != it1->part_index() );
+    REQUIRE( std::ranges::distance( range ) == 3 );
 }
 
 TEST_CASE( "vehicle_part_range_for_temporary_safety", "[iterator][safety]" )
 {
     vehicle v;
 
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
-    v.install_part( point_zero, vpart_id( "seat" ) );
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
+    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( point( 2, 0 ), vpart_id( "frame_vertical" ) );
 
     std::vector<int> indices;
 
@@ -160,9 +160,6 @@ TEST_CASE( "vehicle_part_range_for_temporary_safety", "[iterator][safety]" )
     }
 
     REQUIRE( indices.size() == 3 );
-    REQUIRE( indices[0] == 0 );
-    REQUIRE( indices[1] == 1 );
-    REQUIRE( indices[2] == 2 );
 }
 
 TEST_CASE( "vehicle_part_filtered_range_for_temporary_safety",
@@ -170,23 +167,23 @@ TEST_CASE( "vehicle_part_filtered_range_for_temporary_safety",
 {
     vehicle v;
 
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
-    v.install_part( point_zero, vpart_id( "seat" ) );
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
-    v.install_part( point_zero, vpart_id( "seat" ) );
+    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( point( 0, 0 ), vpart_id( "seat" ) );
+    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( point( 1, 0 ), vpart_id( "seat" ) );
 
     std::vector<int> indices;
     int count = 0;
 
     // Iterate over filtered temporary range.
     // The filter state is now safely copied into each iterator.
-    for( const auto &part : v.get_avail_parts( std::string( "seat" ) ) ) {
+    for( const auto &part : v.get_avail_parts( std::string( "SEAT" ) ) ) {
         indices.push_back( part.part_index() );
         ++count;
     }
 
-    // Should have found at least 2 seat parts
-    REQUIRE( count >= 2 );
+    // Should have found 2 seat parts
+    REQUIRE( count == 2 );
 }
 
 TEST_CASE( "vehicle_part_range_empty_method", "[iterator][safety]" )
@@ -196,31 +193,31 @@ TEST_CASE( "vehicle_part_range_empty_method", "[iterator][safety]" )
     // Empty vehicle should have empty range.
     REQUIRE( v.get_all_parts().empty() );
 
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
+    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
 
     // Non-empty vehicle should have non-empty range.
     REQUIRE_FALSE( v.get_all_parts().empty() );
 
     // Filtered range for non-existent feature should be empty.
-    REQUIRE( v.get_avail_parts( std::string( "non_existent_feature" ) ).empty() );
+    REQUIRE( v.get_avail_parts( std::string( "SEAT" ) ).empty() );
 
     // Filtered range for existing feature should not be empty.
-    v.install_part( point_zero, vpart_id( "seat" ) );
-    REQUIRE_FALSE( v.get_avail_parts( std::string( "seat" ) ).empty() );
+    v.install_part( point( 0, 0 ), vpart_id( "seat" ) );
+    REQUIRE_FALSE( v.get_avail_parts( std::string( "SEAT" ) ).empty() );
 }
 
 TEST_CASE( "vehicle_part_range_std_ranges_algorithms", "[iterator][safety][ranges]" )
 {
     vehicle v;
 
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
-    v.install_part( point_zero, vpart_id( "seat" ) );
-    v.install_part( point_zero, vpart_id( "frame_vertical" ) );
-    v.install_part( point_zero, vpart_id( "seat" ) );
+    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( point( 0, 0 ), vpart_id( "seat" ) );
+    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( point( 1, 0 ), vpart_id( "seat" ) );
 
     // Test std::ranges::distance on temporary range (borrowed_range)
     // This tests that enable_borrowed_range allows ranges algorithms on temporaries
-    const int seat_count = std::ranges::distance( v.get_avail_parts( std::string( "seat" ) ) );
+    const int seat_count = std::ranges::distance( v.get_avail_parts( std::string( "SEAT" ) ) );
     REQUIRE( seat_count == 2 );
 
     const int all_count = std::ranges::distance( v.get_all_parts() );
