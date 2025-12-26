@@ -1351,6 +1351,7 @@ void game::serialize_master( std::ostream &fout )
 void game::serialize_dimension_data( std::ostream &fout )
 {
     fout << "# version " << savegame_version << '\n';
+
     try {
         JsonOut json( fout, true ); // pretty-print
         json.start_object();
