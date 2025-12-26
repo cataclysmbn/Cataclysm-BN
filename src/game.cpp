@@ -2597,12 +2597,8 @@ bool game::is_game_over()
         }
 
         auto followers = get_follower_list()
-        | std::views::transform( [&]( const auto & elem ) {
-            return overmap_buffer.find_npc( elem );
-        } )
-        | std::views::filter( []( const auto & follower ) {
-            return follower && !follower->is_dead_state();
-        } )
+        | std::views::transform( [&]( const auto & elem ) { return overmap_buffer.find_npc( elem ); } )
+        | std::views::filter( []( const auto & follower ) { return follower && !follower->is_dead_state(); } )
         | std::ranges::to<std::vector>();
 
         if( !followers.empty() ) {
