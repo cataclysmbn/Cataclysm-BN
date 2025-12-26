@@ -707,6 +707,7 @@ void unfold_vehicle_iuse::load( const JsonObject &obj )
     obj.read( "unfold_msg", unfold_msg );
     obj.read( "moves", moves );
     obj.read( "tools_needed", tools_needed );
+    obj.read( "allow_edit", allow_edit );
 }
 
 int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) const
@@ -739,6 +740,9 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) cons
     veh->tags.insert( "convertible" );
     // Store the id of the item the vehicle is made of.
     veh->tags.insert( std::string( "convertible:" ) + it.typeId().str() );
+    if( allow_edit ) {
+        veh->tags.insert( "convertible_allow_edit" );
+    }
     if( !unfold_msg.empty() ) {
         p.add_msg_if_player( _( unfold_msg ), it.tname() );
     }

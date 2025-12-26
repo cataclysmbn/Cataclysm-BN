@@ -556,7 +556,9 @@ task_reason veh_interact::cant_do( char mode )
         case 'i':
             // install mode
             enough_morale = you.has_morale_to_craft();
-            valid_target = !can_mount.empty() && !veh->tags.contains( "convertible" );
+            valid_target = !can_mount.empty() &&
+                           ( !veh->tags.contains( "convertible" ) ||
+                             veh->tags.contains( "convertible_allow_edit" ) );
             //tool checks processed later
             enough_light = character_funcs::can_see_fine_details( you );
             has_tools = true;
@@ -598,7 +600,9 @@ task_reason veh_interact::cant_do( char mode )
         case 'o':
             // remove mode
             enough_morale = you.has_morale_to_craft();
-            valid_target = cpart >= 0 && !veh->tags.contains( "convertible" );
+            valid_target = cpart >= 0 &&
+                           ( !veh->tags.contains( "convertible" ) ||
+                             veh->tags.contains( "convertible_allow_edit" ) );
             part_free = parts_here.size() > 1 || ( cpart >= 0 && veh->can_unmount( cpart ) );
             //tool and skill checks processed later
             has_tools = true;
