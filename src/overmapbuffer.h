@@ -424,14 +424,31 @@ class overmapbuffer
          */
         void signal_hordes( const tripoint_abs_sm &center, int sig_power );
         /**
+         * Signal the nemesis horde to the player's location.
+         * @param p The player's location in absolute submap coordinates.
+         */
+        void signal_nemesis( tripoint_abs_sm p );
+        /**
          * Process nearby monstergroups (dying mostly).
          */
         void process_mongroups();
+        /**
+         * Adds a nemesis horde into the overmap where the kill_nemesis mission is targeted.
+         */
+        void add_nemesis( const tripoint_abs_omt &p );
         /**
          * Let hordes move a step. Note that this may move monster groups inside the reality bubble,
          * therefore you should probably call @ref map::spawn_monsters to spawn them.
          */
         void move_hordes();
+        /**
+         * Moves the nemesis horde spawned by the hunted trait across every overmap.
+         */
+        void move_nemesis();
+        /**
+         * Removes the nemesis horde on player death.
+         */
+        void remove_nemesis();
         // hordes -- this uses overmap terrain coordinates!
         std::vector<mongroup *> monsters_at( const tripoint_abs_omt &p );
         /**
@@ -587,6 +604,10 @@ class overmapbuffer
          */
         void fix_mongroups( overmap &new_overmap );
         /**
+         * Move the nemesis horde into the overmap matching its absolute position.
+         */
+        void fix_nemesis( overmap &new_overmap );
+        /**
          * Moves out-of-bounds NPCs to the overmaps they should be in.
          */
         void fix_npcs( overmap &new_overmap );
@@ -626,5 +647,4 @@ class overmapbuffer
 };
 
 extern overmapbuffer overmap_buffer;
-
 

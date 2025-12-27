@@ -1951,6 +1951,8 @@ class Character : public Creature, public location_visitable<Character>
         int get_shout_volume() const;
         // shouts a message
         void shout( std::string msg = "", bool order = false );
+        // Signals the player's location to the nemesis horde.
+        void signal_nemesis();
         /** Handles Character vomiting effects */
         void vomit();
 
@@ -2652,4 +2654,3 @@ nc_color bodytemp_color( const Character &c, const bodypart_str_id &bp );
 
 /** Returns true if the player has a psyshield artifact, or sometimes if wearing tinfoil */
 bool has_psy_protection( const Character &c, int partial_chance );
-

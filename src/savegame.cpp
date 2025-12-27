@@ -1063,12 +1063,14 @@ void mongroup::io( Archive &archive )
 {
     archive.io( "type", type );
     archive.io( "pos", pos, tripoint_om_sm() );
+    archive.io( "abs_pos", abs_pos, tripoint_abs_sm() );
     archive.io( "radius", radius, 1u );
     archive.io( "population", population, 1u );
     archive.io( "diffuse", diffuse, false );
     archive.io( "dying", dying, false );
     archive.io( "horde", horde, false );
     archive.io( "target", target, tripoint_om_sm() );
+    archive.io( "nemesis_target", nemesis_target, tripoint_abs_sm() );
     archive.io( "interest", interest, 0 );
     archive.io( "horde_behaviour", horde_behaviour, io::empty_default_tag() );
     archive.io( "monsters", monsters, io::empty_default_tag() );
@@ -1097,6 +1099,8 @@ void mongroup::deserialize_legacy( JsonIn &json )
             type = mongroup_id( json.get_string() );
         } else if( name == "pos" ) {
             pos.deserialize( json );
+        } else if( name == "abs_pos" ) {
+            abs_pos.deserialize( json );
         } else if( name == "radius" ) {
             radius = json.get_int();
         } else if( name == "population" ) {
@@ -1109,6 +1113,8 @@ void mongroup::deserialize_legacy( JsonIn &json )
             horde = json.get_bool();
         } else if( name == "target" ) {
             target.deserialize( json );
+        } else if( name == "nemesis_target" ) {
+            nemesis_target.deserialize( json );
         } else if( name == "interest" ) {
             interest = json.get_int();
         } else if( name == "horde_behaviour" ) {

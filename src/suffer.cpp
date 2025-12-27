@@ -125,6 +125,7 @@ static const trait_id trait_DEBUG_STORAGE( "DEBUG_STORAGE" );
 static const trait_id trait_FRESHWATEROSMOSIS( "FRESHWATEROSMOSIS" );
 static const trait_id trait_GILLS( "GILLS" );
 static const trait_id trait_GILLS_CEPH( "GILLS_CEPH" );
+static const trait_id trait_HAS_NEMESIS( "HAS_NEMESIS" );
 static const trait_id trait_JITTERY( "JITTERY" );
 static const trait_id trait_KILLER( "KILLER" );
 static const trait_id trait_LEAVES( "LEAVES" );
@@ -357,6 +358,10 @@ void Character::suffer_while_awake( const int current_stim )
 
     if( has_trait( trait_VOMITOUS ) && one_turn_in( 7_hours ) ) {
         vomit();
+    }
+
+    if( has_trait( trait_HAS_NEMESIS ) && one_turn_in( 2_minutes ) ) {
+        signal_nemesis();
     }
 
     if( has_trait( trait_SHOUT1 ) && one_turn_in( 6_hours ) ) {
