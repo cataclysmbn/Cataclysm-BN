@@ -39,7 +39,6 @@ class game_object
         void destroy_in_place();
 
         void remove_location();
-        void set_location( location<T> *own );
 
         void resolve_saved_loc();
 
@@ -55,6 +54,7 @@ class game_object
         bool is_detached() const;
         bool is_loaded() const;
         bool has_position() const;
+        void set_location( location<T> *own );
 
         tripoint position( ) const;
         /** Returns the name that will be used when referring to the object in error messages */

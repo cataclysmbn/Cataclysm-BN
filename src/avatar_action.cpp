@@ -1014,7 +1014,7 @@ void avatar_action::plthrow( avatar &you, item *loc,
 
 void avatar_action::use_item( avatar &you, item *loc )
 {
-
+    temp_item_location *bio_tool_spot = new temp_item_location( );
     if( !loc ) {
         loc = game_menus::inv::use( you );
 
@@ -1023,9 +1023,15 @@ void avatar_action::use_item( avatar &you, item *loc )
             return;
         }
 
+        if( loc->has_flag( flag_BIONIC_TOOLS ) ) {
+            loc->set_location( bio_tool_spot );
+        }
+
         if( !loc->has_flag( flag_ALLOWS_REMOTE_USE ) ) {
             const int obtain_cost = loc->obtain_cost( you );
-            loc->obtain( you );
+            if( !loc->has_flag( flag_BIONIC_TOOLS ) ) {
+                loc->obtain( you );
+            }
 
             // TODO: the following comment is inaccurate and this mechanic needs to be rexamined
             // This method only handles items in the inventory, so refund the obtain cost.

@@ -73,6 +73,37 @@ std::string fake_item_location::describe( const Character *, const item * ) cons
     return "Error: Nowhere";
 }
 
+std::string temp_item_location::describe( const Character *, const item * ) const
+{
+    return "You shouldn't see this";
+}
+detached_ptr<item> temp_item_location::detach( item *it )
+{
+    return item::spawn( *it );
+}
+
+void temp_item_location::attach( detached_ptr<item> && ) {}
+
+bool temp_item_location::is_loaded( const item * ) const
+{
+    return false; //Loaded means in the reality bubble so no
+}
+
+tripoint temp_item_location::position( const item * ) const
+{
+    return tripoint_zero;
+}
+
+item_location_type temp_item_location::where() const
+{
+    return item_location_type::character;
+}
+
+int temp_item_location::obtain_cost( const Character &, int, const item * ) const
+{
+    return 10;
+}
+
 detached_ptr<item> character_item_location::detach( item *it )
 {
     return holder->inv_remove_item( it );

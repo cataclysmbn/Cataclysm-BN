@@ -5,9 +5,11 @@
 #include "catacharset.h"
 #include "character.h"
 #include "debug.h"
+#include "detached_ptr.h"
 #include "game.h"
 #include "ime.h"
 #include "inventory.h"
+#include "itype.h"
 #include "item.h"
 #include "item_category.h"
 #include "item_search.h"
@@ -1179,6 +1181,12 @@ void inventory_selector::add_item( inventory_column &target_column,
                custom_category );
 }
 
+void inventory_selector::add_fake_item( inventory_column &target_column, detached_ptr<item> &&i,
+                                        const item_category *custom_category )
+{
+    add_entry( target_column, std::vector<item *>( 1, &*i ), custom_category );
+}
+
 void inventory_selector::add_items( inventory_column &target_column,
                                     const std::function<item*( item * )> &locator,
                                     const std::vector<std::list<item *>> &stacks,
@@ -1263,6 +1271,18 @@ void inventory_selector::add_nearby_items( int radius )
             }
             add_map_items( pos );
             add_vehicle_items( pos );
+        }
+    }
+}
+
+void inventory_selector::add_bionics_items( Character &character )
+{
+    const item_category bio_cat( "BIONICS", no_translation( "BIONICS" ), 0 );
+    for( bionic bio : character.get_bionic_collection() ) {
+        const itype_id fake = bio.info().fake_item;
+        if( !fake.is_null() && fake.str() != "" ) {
+            detached_ptr<item> real_fake = item::spawn( fake );
+            add_fake_item( own_gear_column, std::move( real_fake ), &bio_cat );
         }
     }
 }

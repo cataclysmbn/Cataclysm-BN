@@ -297,5 +297,11 @@
     "type": "ITEM_CATEGORY",
     "name": { "str": "WEAPON HELD" },
     "sort_rank": -200
+  },
+  {
+    "id": "BIONICS",
+    "type": "ITEM_CATEGORY",
+    "name": { "str": "USABLE BIONICS" },
+    "sort_rank": 0
   }
 ]
