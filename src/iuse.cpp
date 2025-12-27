@@ -8806,12 +8806,30 @@ int iuse::toggle_ups_charging( player *p, item *it, bool, const tripoint & )
 
 int iuse::report_grid_charge( player *p, item *, bool, const tripoint &pos )
 {
-    tripoint_abs_ms pos_abs( get_map().getabs( pos ) );
+    const tripoint_abs_ms pos_abs( get_map().getabs( pos ) );
     const distribution_grid &gr = get_distribution_grid_tracker().grid_at( pos_abs );
+    const int amt = gr.get_resource();
+    const auto stat = gr.get_power_stat();
 
-    int amt = gr.get_resource();
-    p->add_msg_if_player( _( "This electric grid stores %d kJ of electric power." ), amt );
+    std::string msg = string_format( _( "This electric grid stores %d kJ of electric power." ), amt );
 
+    // format in MW/kW with three-point precision
+    auto display_watt = []( int64_t watts = 0 ) {
+        if( std::abs( watts ) >= 1'000'000 ) {
+            return string_format( "%.3f MW", watts / 1'000'000.0 );
+        } else if( std::abs( watts ) >= 1'000 ) {
+            return string_format( "%.3f kW", watts / 1'000.0 );
+        } else {
+            return string_format( "%d W", watts );
+        }
+    };
+
+    if( stat.gen_w > 0 || stat.use_w > 0 ) {
+        msg += string_format( _( "\nGeneration: %s" ), display_watt( stat.gen_w ) );
+        msg += string_format( _( "\nConsumption: %s" ), display_watt( stat.use_w ) );
+        msg += string_format( _( "\nNet: %s" ), display_watt( stat.net_w() ) );
+    }
+    p->add_msg_if_player( "%s", msg );
     return 0;
 }
 
