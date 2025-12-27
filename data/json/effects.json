@@ -326,6 +326,13 @@
   },
   {
     "type": "effect_type",
+    "id": "scenery_cooldown",
+    "name": [ "Scenery Cooldown" ],
+    "desc": [ "You recently appreciated some scenery." ],
+    "max_duration": "12 h"
+  },
+  {
+    "type": "effect_type",
     "id": "heating_bionic",
     "name": [ "Heated" ],
     "max_intensity": 1000,

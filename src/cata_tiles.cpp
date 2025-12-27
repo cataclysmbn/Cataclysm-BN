@@ -1937,6 +1937,30 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     std::vector<tile_render_info> &draw_points = *draw_points_cache;
     int min_z = OVERMAP_HEIGHT;
 
+    // Calculate sunset/sunrise overlay state once
+    int sunset_sunrise_alpha = 0;
+    bool is_sunrise = false;
+    {
+        const auto now = calendar::turn;
+        const auto sunrise_time = sunrise( now );
+        const auto sunset_time = sunset( now );
+        const auto window = 30_minutes;
+
+        const int time_to_sunrise = to_turns<int>( now - sunrise_time );
+        const int time_to_sunset = to_turns<int>( now - sunset_time );
+        const int window_turns = to_turns<int>( window );
+
+        const bool near_sunrise = std::abs( time_to_sunrise ) <= window_turns;
+        const bool near_sunset = std::abs( time_to_sunset ) <= window_turns;
+
+        if( near_sunrise || near_sunset ) {
+            is_sunrise = near_sunrise;
+            const int time_delta = near_sunrise ? std::abs( time_to_sunrise ) : std::abs( time_to_sunset );
+            const float progress = 1.0f - ( static_cast<float>( time_delta ) / window_turns );
+            sunset_sunrise_alpha = static_cast<int>( progress * 40.0f );
+        }
+    }
+
     for( int row = min_row; row < max_row; row ++ ) {
 
         draw_points.clear();
@@ -2041,6 +2065,16 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 overlay_strings.emplace(
                     player_to_screen( point( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
                     formatted_text( visibility_str, catacurses::black, direction::NORTH ) );
+            }
+
+            // Sunset/sunrise atmospheric overlay on outdoor tiles
+            if( sunset_sunrise_alpha > 0 && !invis && here.is_outside( {temp_x, temp_y, center.z} ) ) {
+                // sunrise = warm orange, sunset = warm redish purple
+                auto overlay_color = is_sunrise ?
+                                     SDL_Color{ 255, 153, 51, static_cast<Uint8>( sunset_sunrise_alpha ) } :
+                                     SDL_Color{ 204, 51, 102, static_cast<Uint8>( sunset_sunrise_alpha ) };
+                color_blocks.first = SDL_BLENDMODE_BLEND;
+                color_blocks.second.emplace( player_to_screen( point( temp_x, temp_y ) ), overlay_color );
             }
 
             static std::vector<SDL_Color> lighting_colors;

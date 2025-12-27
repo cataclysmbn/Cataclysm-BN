@@ -200,6 +200,7 @@ static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_took_prozac( "took_prozac" );
 static const efftype_id effect_took_xanax( "took_xanax" );
 static const efftype_id effect_webbed( "webbed" );
+static const efftype_id effect_scenery_cooldown( "scenery_cooldown" );
 
 static const itype_id itype_apparatus( "apparatus" );
 static const itype_id itype_beartrap( "beartrap" );
@@ -9977,6 +9978,44 @@ void Character::apply_persistent_morale()
             add_morale( MORALE_PERM_FPMODE_ON, 10, 10, 1_minutes, 1_minutes, true );
         } else {
             rem_morale( MORALE_PERM_FPMODE_ON );
+        }
+    }
+
+    // Sunset/sunrise morale boost
+    // TODO: Lua-ify this
+    if( !has_effect( effect_scenery_cooldown ) ) {
+        const auto now = calendar::turn;
+        const auto sunrise_time = sunrise( now );
+        const auto sunset_time = sunset( now );
+        const auto window = 30_minutes;
+
+        const int time_to_sunrise = to_turns<int>( now - sunrise_time );
+        const int time_to_sunset = to_turns<int>( now - sunset_time );
+        const int window_turns = to_turns<int>( window );
+
+        const bool near_sunrise = std::abs( time_to_sunrise ) <= window_turns;
+        const bool near_sunset = std::abs( time_to_sunset ) <= window_turns;
+
+        auto check_visibility = [this] {
+            map &here = get_map();
+            if( here.is_outside( pos() ) ) { return true; }
+            for( const tripoint &pt : here.points_in_radius( pos(), 2 ) )
+            {
+                if( here.is_outside( pt ) && this->sees( pt ) ) { return true; }
+            }
+            return false;
+        };
+
+        if( ( near_sunrise || near_sunset ) && check_visibility() ) {
+            if( near_sunrise ) {
+                add_morale( MORALE_SUNRISE, 10, 10, 2_hours, 1_hours );
+                add_msg_if_player( m_good,
+                                   _( "You feel a little better as you watch the orange glow of sunrise." ) );
+            } else {
+                add_morale( MORALE_SUNSET, 10, 10, 2_hours, 1_hours );
+                add_msg_if_player( m_good, _( "You feel a little better as you watch the red hues of sunset." ) );
+            }
+            add_effect( effect_scenery_cooldown, 8_hours );
         }
     }
 }
