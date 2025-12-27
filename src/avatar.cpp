@@ -1165,37 +1165,40 @@ int avatar::kill_xp() const
     return g->get_kill_tracker().kill_xp();
 }
 
-// based on  D&D 5e level progression
-static const std::array<int, 20> xp_cutoffs = { {
-        400, 1600, 3600, 6400, 10000,
-        14400, 19600, 25600, 32400, 40000,
-        48400, 57600, 67600, 78400, 90000,
-        102400, 115600, 129600, 144400, 160000
-    }
-};
+static int xp_cutoffs( unsigned int level )
+{
+    int coeff = get_option<int>( "AVATAR_LEVEL_XP_COEFF" );
+    // In nicer terms, this is a quadratic
+    return ( pow( level, 2 ) * coeff );
+}
 
 int avatar::free_upgrade_points() const
 {
     const int xp = kill_xp();
     int lvl = 0;
-    for( const int &xp_lvl : xp_cutoffs ) {
-        if( xp >= xp_lvl ) {
+    bool found_level = false;
+    while( !found_level ) {
+        if( xp >= xp_cutoffs( lvl + 1 ) ) {
             lvl++;
         } else {
-            break;
+            found_level = true;
         }
     }
     return lvl - str_upgrade - dex_upgrade - int_upgrade - per_upgrade;
 }
 
-std::optional<int> avatar::kill_xp_for_next_point() const
+int avatar::kill_xp_for_next_point() const
 {
-    auto it = std::ranges::lower_bound( xp_cutoffs, kill_xp() );
-    if( it == xp_cutoffs.end() ) {
-        return std::nullopt;
-    } else {
-        return *it - kill_xp();
+    const int xp_gained = kill_xp();
+    int level = 0;
+    bool found_higher = false;
+    while( !found_higher ) {
+        level++;
+        if( xp_gained < xp_cutoffs( level ) ) {
+            found_higher = true;
+        }
     }
+    return xp_cutoffs( level ) - xp_gained;
 }
 
 void avatar::upgrade_stat( character_stat stat )
