@@ -2041,6 +2041,13 @@ void options_manager::add_options_graphics()
 
     get_option( "OVERMAP_TILES" ).setPrerequisite( "USE_TILES_OVERMAP" );
 
+    add( "VEHICLE_EDIT_TILES", graphics, translate_marker( "Graphical vehicle display" ),
+         translate_marker( "If true, the vehicle interaction screen will display vehicle parts using graphical tiles instead of ASCII symbols." ),
+         true, COPT_CURSES_HIDE
+       );
+
+    get_option( "VEHICLE_EDIT_TILES" ).setPrerequisite( "USE_TILES" );
+
     add( "USE_CHARACTER_PREVIEW", graphics, translate_marker( "Enable character preview window" ),
          translate_marker( "If true, shows character preview window in traits tab on character creation.  "
                            "While having a window press 'z'/'Z' to perform zoom-in/zoom-out.  "
