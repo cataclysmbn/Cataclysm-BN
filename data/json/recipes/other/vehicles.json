@@ -1118,6 +1118,25 @@
   },
   {
     "type": "recipe",
+    "result": "turret_autoloader",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "skills_required": [ [ "mechanics", 3 ], [ "electronics", 1 ] ],
+    "difficulty": 4,
+    "time": "2 h",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 5 ], [ "steel_standard", 4 ], [ "soldering_standard", 10 ] ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "WRENCH", "level": 1 },
+      { "id": "SCREW", "level": 1 }
+    ],
+    "components": [ [ [ "spring", 4 ] ], [ [ "motor_small", 4 ] ], [ [ "motor_tiny", 4 ] ], [ [ "cable", 5 ] ], [ [ "scrap", 10 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "basket",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",

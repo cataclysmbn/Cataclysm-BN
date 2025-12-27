@@ -70,6 +70,7 @@
 #include "translations.h"
 #include "units_utility.h"
 #include "veh_type.h"
+#include "vehicle_functions.h"
 #include "weather.h"
 #include "ui.h"
 /*
@@ -5858,6 +5859,8 @@ void vehicle::idle( bool on_map )
     if( is_alarm_on ) {
         alarm();
     }
+
+    vehicle_funcs::process_autoloaders( *this );
 }
 
 void vehicle::on_move()
