@@ -744,6 +744,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `NO_PACKED` ... This item is not protected against contamination and won't stay sterile. Only
   applies to CBMs.
 - `NO_REPAIR` ... Prevents repairing of this item even if otherwise suitable tools exist.
+- `NO_REFOLD` ... Prevents folding the vehicle that this item creates
 - `NO_SALVAGE` ... Item cannot be broken down through a salvage process. Best used when something
   should not be able to be broken down (i.e. base components like leather patches).
 - `NO_STERILE` ... This item is not sterile. Only applies to CBMs.

@@ -731,10 +731,12 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) cons
     }
     veh->set_owner( p );
 
-    // Mark the vehicle as foldable.
-    veh->tags.insert( "convertible" );
-    // Store the id of the item the vehicle is made of.
-    veh->tags.insert( std::string( "convertible:" ) + it.typeId().str() );
+    if( !it.has_flag( flag_NO_REFOLD ) ) {
+        // Mark the vehicle as foldable.
+        veh->tags.insert( "convertible" );
+        // Store the id of the item the vehicle is made of.
+        veh->tags.insert( std::string( "convertible:" ) + it.typeId().str() );
+    }
     if( !unfold_msg.empty() ) {
         p.add_msg_if_player( _( unfold_msg ), it.tname() );
     }
