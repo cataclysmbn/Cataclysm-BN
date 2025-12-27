@@ -60,7 +60,7 @@
     "flags": [ "TRADER_AVOID", "USES_BIONIC_POWER" ],
     "max_charges": 10000,
     "qualities": [ [ "VOLT_MEASURE", 1 ] ],
-    "use_action": [ "REPORT_GRID_CHARGE", "REPORT_GRID_CONNECTIONS", "MODIFY_GRID_CONNECTIONS" ]
+    "use_action": [ "VOLTMETER" ]
   },
   {
     "id": "fake_goggles",

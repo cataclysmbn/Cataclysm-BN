@@ -811,6 +811,11 @@
   },
   {
     "type": "item_action",
+    "id": "VOLTMETER",
+    "name": { "str": "Measure grid power" }
+  },
+  {
+    "type": "item_action",
     "id": "TOWEL",
     "name": { "str": "Dry/clean yourself" }
   },
