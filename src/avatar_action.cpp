@@ -1203,7 +1203,7 @@ void avatar_action::reload( item &loc, bool prompt, bool empty )
                 return;
             }
         }
-        if( it->is_watertight_container() && it->is_container_full() ) {
+        if( it->is_container() && it->is_container_full() ) {
             add_msg( m_info, _( "The %s is already full!" ), it->tname() );
             return;
         }

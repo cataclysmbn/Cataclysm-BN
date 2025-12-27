@@ -798,6 +798,8 @@ class item : public location_visitable<item>, public game_object<item>
         bool is_container_empty() const;
         /** Whether removing this item's contents will permanently alter it. */
         bool is_non_resealable_container() const;
+        /** Weather the item is contained in a container. */
+        bool is_in_container() const;
         /**
          * Whether this item has no more free capacity for its current content.
          * @param allow_bucket Allow filling non-sealable containers
@@ -1061,6 +1063,10 @@ class item : public location_visitable<item>, public game_object<item>
          * If contents nonempty, return true if item phase is same, else false
          */
         bool contents_made_of( phase_id phase ) const;
+        /**
+         * If contents nonempty, return true if itype phase is same, else false
+         */
+        bool contents_normally_made_of( phase_id phase ) const;
         /**
          * Are we solid, liquid, gas, plasma?
          */
