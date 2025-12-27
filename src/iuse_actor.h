@@ -24,6 +24,7 @@
 
 class Character;
 class item;
+class npc;
 class npc_template;
 class player;
 struct iteminfo;
@@ -1469,4 +1470,25 @@ class iuse_flowerpot_collect final : public iuse_actor
                                                item &flowerpot,
                                                const iuse_flowerpot_plant *actor,
                                                const itype_id &seed_type );
+};
+
+class iuse_dimension_travel : public iuse_actor
+{
+    public:
+        std::string destination = "default";
+        int travel_radius = 1;
+        bool allow_npcs = false;
+        bool allow_vehicles = false;
+        int need_charges = 1;
+        std::string fail_message;
+        std::string success_message;
+
+        iuse_dimension_travel( const std::string &type = "dimension_travel" ) : iuse_actor( type ) {}
+        ~iuse_dimension_travel() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &p, item &, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &it, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+    private:
+        void dimension_travel( player &p, item &, const tripoint &pos ) const;
 };

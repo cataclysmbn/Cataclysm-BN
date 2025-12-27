@@ -175,6 +175,11 @@ class distribution_grid_tracker
         void on_changed( const tripoint_abs_ms &p );
         void on_saved();
         void on_options_changed();
+
+        /**
+         * Clears all grids. Used when changing dimensions.
+         */
+        void clear();
 };
 
 class vehicle;

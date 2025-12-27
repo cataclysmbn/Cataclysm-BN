@@ -256,6 +256,12 @@ void distribution_grid_tracker::on_changed( const tripoint_abs_ms &p )
     }
 }
 
+void distribution_grid_tracker::clear()
+{
+    parent_distribution_grids.clear();
+    grids_requiring_updates.clear();
+}
+
 void distribution_grid_tracker::on_options_changed()
 {
     on_saved();

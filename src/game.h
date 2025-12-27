@@ -40,6 +40,7 @@ static constexpr int DEFAULT_TILESET_ZOOM = 16;
 
 static const std::string SAVE_MASTER( "master.gsav" );
 static const std::string SAVE_ARTIFACTS( "artifacts.gsav" );
+static const std::string SAVE_DIMENSION_DATA( "dimension_data.gsav" );
 static const std::string SAVE_EXTENSION( ".sav" );
 static const std::string SAVE_EXTENSION_LOG( ".log" );
 static const std::string SAVE_EXTENSION_WEATHER( ".weather" );
@@ -170,6 +171,7 @@ class game
         /** Saving and loading functions. */
         void serialize( std::ostream &fout ); // for save
         void unserialize( std::istream &fin ); // for load
+        void unserialize_dimension_data( std::istream &fin ); // for load
         void unserialize_master( std::istream &fin ); // for load
 
         /** write statistics to stdout and @return true if successful */
@@ -236,6 +238,21 @@ class game
          */
         void vertical_move( int z, bool force, bool peeking = false );
         void start_hauling( const tripoint &pos );
+        /**
+        * Moves the player to an alternate dimension.
+        * @param prefix identifies the dimension and its properties.
+        * @param npc_travellers vector of NPCs that should be brought along when travelling to another dimension
+        * @param veh pointer to a vehicle to bring along.
+        */
+        bool travel_to_dimension( const std::string &prefix, const std::string &region_type,
+                                  const std::vector<npc *> &npc_travellers, vehicle *veh = nullptr );
+        /**
+         * Retrieve the identifier of the current dimension.
+         * TODO: this should be a dereferencable id that gives properties of the dimension.
+         */
+        std::string get_dimension_prefix() {
+            return dimension_prefix;
+        }
         /** Returns the other end of the stairs (if any). May query, affect u etc.  */
         std::optional<tripoint> find_stairs( map &mp, int z_after, bool peeking );
         std::optional<tripoint> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
@@ -734,7 +751,10 @@ class game
         //private save functions.
         // returns false if saving failed for whatever reason
         bool save_factions_missions_npcs();
+        bool save_dimension_data();
+        bool load_dimension_data();
         void reset_npc_dispositions();
+        void serialize_dimension_data( std::ostream &fout );
         void serialize_master( std::ostream &fout );
         // returns false if saving failed for whatever reason
         bool save_artifacts();
@@ -1079,6 +1099,11 @@ class game
         @return whether player has slipped down
         */
         bool slip_down();
+
+        //currently used as a hacky workaround for dimension swapping
+        bool swapping_dimensions = false;
+    private:
+        std::string dimension_prefix;
 };
 
 // Returns temperature modifier from direct heat radiation of nearby sources
