@@ -16,6 +16,8 @@
 #include "point.h"
 #include "string_id.h"
 #include "type_id.h"
+#include "avatar.h"
+#include "map.h"
 
 class JsonIn;
 class JsonObject;
@@ -45,6 +47,8 @@ class zone_type
 
         std::string name() const;
         std::string desc() const;
+
+        bool can_be_personal = false;
 
         static void reset_zones();
         static void load_zones( const JsonObject &jo, const std::string &src );
@@ -233,9 +237,14 @@ class zone_data
         faction_id faction;
         bool invert;
         bool enabled;
+        bool temporarily_disabled;
         bool is_vehicle;
         tripoint start;
         tripoint end;
+        //centered on the player
+        bool is_personal;
+        // for personal zones a cached value for the global shift to where the zone was
+        tripoint cached_shift;
         shared_ptr_fast<zone_options> options;
 
     public:
@@ -243,22 +252,26 @@ class zone_data
             type = zone_type_id( "" );
             invert = false;
             enabled = false;
+            temporarily_disabled = false;
             is_vehicle = false;
+            is_personal = false;
             start = tripoint_zero;
             end = tripoint_zero;
+            cached_shift = tripoint_zero;
             options = nullptr;
         }
 
         zone_data( const std::string &_name, const zone_type_id &_type, const faction_id &_faction,
                    bool _invert, const bool _enabled,
                    const tripoint &_start, const tripoint &_end,
-                   shared_ptr_fast<zone_options> _options = nullptr ) {
+                   shared_ptr_fast<zone_options> _options = nullptr, bool personal = false) {
             name = _name;
             type = _type;
             faction = _faction;
             invert = _invert;
             enabled = _enabled;
             is_vehicle = false;
+            is_personal = personal;
             start = _start;
             end = _end;
 
@@ -274,8 +287,10 @@ class zone_data
         bool set_name();
         // returns true if type is changed
         bool set_type();
-        void set_position( const std::pair<tripoint, tripoint> &position, bool manual = true );
+        void set_position(const std::pair<tripoint, tripoint>& position, bool manual = true,
+            bool update_avatar = true);
         void set_enabled( bool enabled_arg );
+        void set_temporary_disabled( bool enabled_arg );
         void set_is_vehicle( bool is_vehicle_arg );
 
         static std::string make_type_hash( const zone_type_id &_type, const faction_id &_fac ) {
@@ -306,14 +321,34 @@ class zone_data
         bool get_enabled() const {
             return enabled;
         }
+        bool get_temporarily_disabled() const {
+            return temporarily_disabled;
+        }
         bool get_is_vehicle() const {
             return is_vehicle;
         }
-        tripoint get_start_point() const {
+        bool get_is_personal() const {
+            return is_personal;
+        }
+        // get absolute start/end; if cached == true and this is a personal zone the
+        // cached_shift value will be used instead of the current avatar position.
+        tripoint get_start_point( bool cached = false ) const {
+            if( is_personal ) {
+                const tripoint shift = cached ? cached_shift : get_map().getabs( get_avatar().pos() );
+                return start + shift;
+            }
             return start;
         }
-        tripoint get_end_point() const {
+        tripoint get_end_point( bool cached = false ) const {
+            if( is_personal ) {
+                const tripoint shift = cached ? cached_shift : get_map().getabs( get_avatar().pos() );
+                return end + shift;
+            }
             return end;
+        }
+        void update_cached_shift() {
+            avatar& player_character = get_avatar();
+            cached_shift = get_map().getabs(player_character.pos());
         }
         tripoint get_center_point() const;
         bool has_options() const {
@@ -322,14 +357,33 @@ class zone_data
         const zone_options &get_options() const {
             return *options;
         }
-        zone_options &get_options() {
-            return *options;
+            zone_options &get_options() {
+                return *options;
         }
-        bool has_inside( const tripoint &p ) const {
-            return p.x >= start.x && p.x <= end.x &&
-                   p.y >= start.y && p.y <= end.y &&
-                   p.z >= start.z && p.z <= end.z;
-        }
+        // check if the entry is inside
+            bool has_inside(const tripoint& p) const
+            {
+                tripoint abs_start;
+                tripoint abs_end;
+
+                if (is_personal) {
+                    // start/end are stored relative to the player
+                    const tripoint player_abs = get_map().getabs(get_avatar().pos());
+                    abs_start = start + player_abs;
+                    abs_end = end + player_abs;
+                }
+                else {
+                    // start/end are already absolute
+                    abs_start = start;
+                    abs_end = end;
+                }
+
+                return p.x >= abs_start.x && p.x <= abs_end.x &&
+                    p.y >= abs_start.y && p.y <= abs_end.y &&
+                    p.z >= abs_start.z && p.z <= abs_end.z;
+            }
+
+
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );
 };
@@ -350,6 +404,8 @@ class zone_manager
         std::vector<std::pair<zone_data, zone_data *>> changed_vzones;
         //copy of original data to be re-added
         std::vector<zone_data> removed_vzones;
+        // a count of the number of personal zones the character has
+        int num_personal_zones = 0;
 
         std::map<zone_type_id, zone_type> types;
         std::unordered_map<std::string, std::unordered_set<tripoint>> area_cache;
@@ -376,8 +432,8 @@ class zone_manager
         void add( const std::string &name, const zone_type_id &type, const faction_id &faction,
                   bool invert, bool enabled,
                   const tripoint &start, const tripoint &end,
-                  shared_ptr_fast<zone_options> options = nullptr );
-        const zone_data *get_zone_at( const tripoint &where, const zone_type_id &type ) const;
+                  shared_ptr_fast<zone_options> options = nullptr, const bool personal = false);
+        const zone_data* get_zone_at(const tripoint& where, const zone_type_id& type    ) const;
         void create_vehicle_loot_zone( class vehicle &vehicle, point mount_point,
                                        zone_data &new_zone );
 
@@ -392,7 +448,9 @@ class zone_manager
         std::string get_name_from_type( const zone_type_id &type ) const;
         bool has_type( const zone_type_id &type ) const;
         bool has_defined( const zone_type_id &type, const faction_id &fac = your_fac ) const;
-        void cache_data();
+        void cache_data( bool update_avatar = true );
+        void reset_disabled();
+        void cache_avatar_location();
         void cache_vzones();
         bool has( const zone_type_id &type, const tripoint &where,
                   const faction_id &fac = your_fac ) const;
@@ -412,7 +470,7 @@ class zone_manager
         const zone_data *get_bottom_zone( const tripoint &where,
                                           const faction_id &fac = your_fac ) const;
         std::optional<std::string> query_name( const std::string &default_name = "" ) const;
-        std::optional<zone_type_id> query_type() const;
+        std::optional<zone_type_id> query_type(bool personal = false) const;
         void swap( zone_data &a, zone_data &b );
         void rotate_zones( map &target_map, int turns );
         // list of tripoints of zones that are loot zones only
@@ -424,6 +482,8 @@ class zone_manager
         // 'direct' access to zone_manager::zones, giving direct access was nono
         std::vector<ref_zone_data> get_zones( const faction_id &fac = your_fac );
         std::vector<ref_const_zone_data> get_zones( const faction_id &fac = your_fac ) const;
+
+        bool has_personal_zones() const;
 
         bool save_zones();
         void load_zones();

@@ -1115,6 +1115,8 @@ static void loot()
     enum ZoneFlags {
         None = 1,
         SortLoot = 2,
+        SortLootStatic = 4,
+        SortLootPersonal = 8,
         FertilizePlots = 16,
         ConstructPlots = 64,
         MultiFarmPlots = 128,
@@ -1130,6 +1132,14 @@ static void loot()
     int flags = 0;
     auto &mgr = zone_manager::get_manager();
     const bool has_fertilizer = u.has_item_with_flag( flag_FERTILIZER );
+
+    // reset any potentially disabled zones from a past activity
+    mgr.reset_disabled();
+   
+    // cache should only happen if we have personal zones defined
+    if (mgr.has_personal_zones()) {
+        mgr.cache_data();
+    }
 
     // Manually update vehicle cache.
     // In theory this would be handled by the related activity (activity_on_turn_move_loot())
@@ -1164,8 +1174,18 @@ static void loot()
     menu.desc_enabled = true;
 
     if( flags & SortLoot ) {
-        menu.addentry_desc( SortLoot, true, 'o', _( "Sort out my loot" ),
+        menu.addentry_desc( SortLoot, true, 'o', _( "Sort out my loot (All Zones)" ),
                             _( "Sorts out the loot from Loot: Unsorted zone to nearby appropriate Loot zones.  Uses empty space in your inventory or utilizes a cart, if you are holding one." ) );
+    }
+
+    if (flags & SortLoot) {
+        menu.addentry_desc(SortLootPersonal, true, 'O', _("Sort out my loot (Personal Zones)"),
+            _("Sorts out the loot from Loot: Unsorted zone to nearby appropriate Loot zones.  Uses empty space in your inventory or utilizes a cart, if you are holding one."));
+    }
+
+    if (flags & SortLoot) {
+        menu.addentry_desc(SortLootStatic, true, 'I', _("Sort out my loot (Static Zones)"),
+            _("Sorts out the loot from Loot: Unsorted zone to nearby appropriate Loot zones.  Uses empty space in your inventory or utilizes a cart, if you are holding one."));
     }
 
     if( flags & FertilizePlots ) {
@@ -1209,13 +1229,46 @@ static void loot()
 
     menu.query();
     flags = ( menu.ret >= 0 ) ? menu.ret : None;
+    bool recache = false;
 
     switch( flags ) {
         case None:
             add_msg( _( "Never mind." ) );
             break;
         case SortLoot:
-            u.assign_activity( ACT_MOVE_LOOT );
+            u.assign_activity(ACT_MOVE_LOOT);
+            break;
+        case SortLootStatic:
+            //temporarily disable personal zones
+            for (auto &i : mgr.get_zones()) {
+                auto &zone = i.get();
+                if (zone.get_is_personal() && zone.get_enabled()) {
+                    zone.set_enabled(false);
+                    zone.set_temporary_disabled(true);
+                    recache = true;
+                }
+            }
+            if (recache) {
+                // update cached area to reflect temporary changes so the activity will operate on static zones only
+                mgr.cache_data();
+            }
+            u.assign_activity(ACT_MOVE_LOOT);
+            break;
+        case SortLootPersonal:
+            //temporarily disable non personal zones
+            for (auto &i : mgr.get_zones()) {
+                auto &zone = i.get();
+                if (!zone.get_is_personal() && zone.get_enabled()) {
+                    zone.set_enabled(false);
+                    zone.set_temporary_disabled(true);
+                    recache = true;
+                }
+            }
+            if (recache) {
+                // update cached area to reflect temporary changes so the activity will operate on personal zones only
+                mgr.cache_data();
+            }
+            u.assign_activity(ACT_MOVE_LOOT);
             break;
         case FertilizePlots:
             u.assign_activity( ACT_FERTILIZE_PLOT );
