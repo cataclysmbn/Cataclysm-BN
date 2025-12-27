@@ -2874,14 +2874,6 @@ bool npc::query_yn( const std::string &/*msg*/ ) const
     return false;
 }
 
-float npc::speed_rating() const
-{
-    float ret = get_speed() / 100.0f;
-    ret *= 100.0f / run_cost( 100, false );
-
-    return ret;
-}
-
 bool npc::dispose_item( item &obj, const std::string & )
 {
     using dispose_option = struct {

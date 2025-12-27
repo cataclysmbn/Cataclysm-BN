@@ -860,17 +860,10 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
                                     ( source_weapon->is_gun() ) ? sender->get_skill_level(
                                         source_weapon->gun_skill() ) : 0.0;
         const double stat_adjust = 0.05 * ( ( sender_dex ) + ( sender_per ) - 16 );
-        // Use a different forumla for stamina percentage if the sender is an NPC rather than the player.
-        // NPCs feel no pain and pretty much always have full stamina... but they do bleed.
-        // They get seperate meaner logic to prevent them from auto-headshotting everything forever.
-        // Capping NPCs out at a x0.8 percentage, because I dont love them.
-        // HP percentage provides an int 0-100 value, so adjust to what we are using.
-        const double stamina_percentage = ( sourceplayer ) ? ( ( ( sender->get_stamina() > 0 ?
-                                          ( sender->get_stamina() ) :
-                                          1 ) ) / sender->get_stamina_max() ) : std::min( 0.8, std::max( 0.01,
-                                                  0.01 * ( sender->hp_percentage() ) ) );
-        // NPCs get a worse skill ratio, 0.1 instead of 0.15. If they felt pain, got hungry/thirsty, or got tired they could get an equivalent skill adjust.
-        const double wep_skill_adjust = sender_skill * ( ( sourceplayer ) ? 0.15 : 0.1 );
+        const double stamina_percentage = std::max( 0.01,
+                                          static_cast<double>( sender->get_stamina() > 0 ? sender->get_stamina() : 1 ) /
+                                          sender->get_stamina_max() );
+        const double wep_skill_adjust = sender_skill * 0.15;
         hit_location_variance = std::max( 0.05, std::min( 0.9,
                                           ( hit_location_variance - ( ( stat_adjust + wep_skill_adjust ) * stamina_percentage ) ) ) );
 
