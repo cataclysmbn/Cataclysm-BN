@@ -387,6 +387,16 @@ item *game::inv_map_splice( const item_filter &filter, const std::string &title,
 item *game_menus::inv::container_for( avatar &you, const item &liquid, int radius )
 {
     const auto filter = [ &liquid ]( const item & location ) {
+        // Reject containers that already contain a different liquid (different set_vars)
+        if( location.is_container() && !location.is_container_empty() ) {
+            const item &cont_liq = location.get_contained();
+
+            // Compare set_vars – if they don't match, skip this container. used for DNA comparison
+            if( cont_liq.get_var( "specimen_sample" ) != liquid.get_var( "specimen_sample" ) ) {
+                return false;
+            }
+        }
+
         if( location.where() == item_location_type::character ) {
             Character *character = g->critter_at<Character>( location.position() );
             if( character == nullptr ) {
@@ -2107,7 +2117,7 @@ class bionic_sterilize_preset : public inventory_selector_preset
         }
 
         bool is_shown( const item *loc ) const override {
-            return loc->has_fault( fault_bionic_nonsterile ) && loc->is_bionic();
+            return loc->has_fault( fault_bionic_nonsterile );
         }
 
 
@@ -2121,7 +2131,7 @@ static item *autoclave_internal( player &u,
 {
     inventory_pick_selector inv_s( u, preset );
     inv_s.set_title( _( "Sterilization" ) );
-    inv_s.set_hint( _( "<color_yellow>Select one CBM to sterilize</color>" ) );
+    inv_s.set_hint( _( "<color_yellow>Select a device to sterilize:</color>" ) );
     inv_s.set_display_stats( false );
 
     do {
@@ -2132,7 +2142,7 @@ static item *autoclave_internal( player &u,
         inv_s.add_nearby_items( radius );
 
         if( inv_s.empty() ) {
-            popup( _( "You don't have any CBM to sterilize." ), PF_GET_KEY );
+            popup( _( "You don't have any devices to sterilize." ), PF_GET_KEY );
             return nullptr;
         }
 

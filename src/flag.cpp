@@ -114,6 +114,7 @@ const flag_id flag_ETHEREAL_ITEM( "ETHEREAL_ITEM" );
 const flag_id flag_EXPLOSION_SMASHED( "EXPLOSION_SMASHED" );
 const flag_id flag_EXPLOSION_PROPELLED( "EXPLOSION_PROPELLED" );
 const flag_id flag_FAKE_MILL( "FAKE_MILL" );
+const flag_id flag_FAKE_CLONING_VAT( "FAKE_CLONING_VAT" );
 const flag_id flag_FAKE_SMOKE( "FAKE_SMOKE" );
 const flag_id flag_FANCY( "FANCY" );
 const flag_id flag_FELINE( "FELINE" );

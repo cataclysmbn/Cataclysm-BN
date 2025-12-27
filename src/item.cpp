@@ -5028,6 +5028,15 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         tagtext += _( " (heats)" );
     }
 
+
+    if( has_var( "specimen_sample" ) ) {
+        tagtext += string_format( " (%s)", get_var( "specimen_name" ) );
+    }
+
+    if( has_var( "place_monster_override" ) ) {
+        tagtext += string_format( " (%s)", get_var( "place_monster_override_name" ) );
+    }
+
     if( has_var( "NANOFAB_GROUP_ID" ) ) {
         std::string group_id_str = get_var( "NANOFAB_GROUP_ID" );
         const std::string prefix = "nanofab_template_";
@@ -9937,6 +9946,26 @@ detached_ptr<item> item::process_fake_mill( detached_ptr<item> &&self, player * 
     return std::move( self );
 }
 
+detached_ptr<item> item::process_fake_cloning_vat( detached_ptr<item> &&self, player * /*carrier*/,
+        const tripoint &pos )
+{
+    if( !self ) {
+        return std::move( self );
+    }
+    map &here = get_map();
+    if( here.furn( pos ) != furn_str_id( "f_cloning_vat_active" ) ) {
+        self->item_counter = 0;
+        return detached_ptr<item>(); //destroy fake smoke
+    }
+
+    if( self->item_counter == 0 ) {
+        iexamine::cloning_vat_finalize( pos, self->birthday() ); //activate effects when timers goes to zero
+        return detached_ptr<item>(); //destroy fake smoke when it 'burns out'
+    }
+
+    return std::move( self );
+}
+
 detached_ptr<item> item::process_fake_smoke( detached_ptr<item> &&self, player * /*carrier*/,
         const tripoint &pos )
 {
@@ -10540,6 +10569,12 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
 
     if( self->has_flag( flag_FAKE_SMOKE ) ) {
         self = process_fake_smoke( std::move( self ), carrier, pos );
+        if( !self ) {
+            return std::move( self );
+        }
+    }
+    if( self->has_flag( flag_FAKE_CLONING_VAT ) ) {
+        self = process_fake_cloning_vat( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }

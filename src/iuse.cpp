@@ -1642,6 +1642,9 @@ int iuse::remove_all_mods( player *p, item *, bool, const tripoint & )
                 return true;
             }
         }
+        if( e.has_flag( flag_RADIO_MOD ) ) {
+            return true;
+        }
         return false;
     },
     _( "Remove mods from tool?" ), 1,

@@ -6957,7 +6957,7 @@ void science_room( map *m, const point &p1, const point &p2, int z, int rotate )
             for( int x = p1.x + 1; x <= p2.x - 1; x++ ) {
                 for( int y = p1.y + 1; y <= p2.y - 1; y++ ) {
                     if( x % 3 == 0 && y % 3 == 0 ) {
-                        m->ter_set( point( x, y ), t_vat );
+                        m->furn_set( point( x, y ), furn_str_id( "f_cloning_vat" ) );
                         m->place_items( item_group_id( "cloning_vat" ), 20, point( x, y ), point( x, y ), false,
                                         calendar::start_of_cataclysm );
                     }

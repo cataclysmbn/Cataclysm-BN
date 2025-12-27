@@ -586,6 +586,16 @@
   },
   {
     "type": "item_action",
+    "id": "cloning_syringe",
+    "name": { "str": "Take specimen sample" }
+  },
+  {
+    "type": "item_action",
+    "id": "dna_editor",
+    "name": { "str": "Inspect genome drive" }
+  },
+  {
+    "type": "item_action",
     "id": "SOLARPACK",
     "name": { "str": "Unfold" }
   },

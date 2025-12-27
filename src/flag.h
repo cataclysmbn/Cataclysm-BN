@@ -115,6 +115,7 @@ extern const flag_id flag_ETHEREAL_ITEM;
 extern const flag_id flag_EXPLOSION_SMASHED;
 extern const flag_id flag_EXPLOSION_PROPELLED;
 extern const flag_id flag_FAKE_MILL;
+extern const flag_id flag_FAKE_CLONING_VAT;
 extern const flag_id flag_FAKE_SMOKE;
 extern const flag_id flag_FANCY;
 extern const flag_id flag_FELINE;

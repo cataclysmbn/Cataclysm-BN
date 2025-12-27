@@ -2363,6 +2363,8 @@ class item : public location_visitable<item>, public game_object<item>
         // Place conditions that should remove fake smoke item in this sub-function
         static detached_ptr<item> process_fake_smoke( detached_ptr<item> &&self, player *carrier,
                 const tripoint &pos );
+        static detached_ptr<item> process_fake_cloning_vat( detached_ptr<item> &&self, player *carrier,
+                const tripoint &pos );
         static detached_ptr<item> process_fake_mill( detached_ptr<item> &&self, player *carrier,
                 const tripoint &pos );
         static detached_ptr<item> process_cable( detached_ptr<item> &&self, player *carrier,

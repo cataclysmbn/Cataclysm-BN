@@ -49,6 +49,44 @@
   },
   {
     "type": "recipe",
+    "result": "embryo_empty",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "electronics", 5 ], [ "firstaid", 3 ], [ "computer", 2 ] ],
+    "difficulty": 6,
+    "time": "1 h 30 m",
+    "reversible": true,
+    "autolearn": false,
+    "qualities": [
+      { "id": "SAW_M_FINE", "level": 1 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "SCREW", "level": 1 }
+    ],
+    "book_learn": [ [ "recipe_lab_elec", 4 ] ],
+    "using": [
+      [ "welding_standard", 10 ],
+      [ "soldering_standard", 20 ],
+      [ "coding_standard", 120 ],
+      [ "utility_software_standard", -1 ]
+    ],
+    "components": [
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "filter_liquid", 1 ] ],
+      [ [ "sheet_metal_small", 20 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "hose", 4 ] ],
+      [ [ "plut_cell", 1 ] ],
+      [ [ "glass_sheet", 2 ] ],
+      [ [ "pouch_autoclave", 1 ] ],
+      [ [ "superglue", 5 ] ],
+      [ [ "water_clean", 10 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "pump_complex",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",

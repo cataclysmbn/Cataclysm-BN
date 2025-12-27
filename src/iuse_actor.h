@@ -449,6 +449,37 @@ class change_scent_iuse : public iuse_actor
         std::unique_ptr<iuse_actor> clone() const override;
 };
 
+class cloning_syringe_iuse : public iuse_actor
+{
+    public:
+        /** How many move points this action takes. */
+        int moves = 100;
+        /** How many move points this action takes. */
+        int charges_to_use = 10;
+
+        cloning_syringe_iuse() : iuse_actor( "cloning_syringe" ) { }
+        ~cloning_syringe_iuse() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
+
+class dna_editor_iuse : public iuse_actor
+{
+    public:
+        /** How many move points this action takes. */
+        int moves = 100;
+        /** How many move points this action takes. */
+        int charges_to_use = 10;
+
+        dna_editor_iuse() : iuse_actor( "dna_editor" ) { }
+        ~dna_editor_iuse() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
 /**
  * This iuse contains the logic to summon an npc on the map.
  */

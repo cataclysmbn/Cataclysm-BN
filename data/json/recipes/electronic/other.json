@@ -993,7 +993,7 @@
     "reversible": true,
     "decomp_learn": 5,
     "book_learn": [ [ "recipe_lab_elec", 4 ], [ "textbook_electronics", 5 ] ],
-    "using": [ [ "soldering_standard", 20 ] ],
+    "using": [ [ "soldering_standard", 20 ], [ "coding_standard", 120 ], [ "utility_software_standard", -1 ] ],
     "qualities": [ { "id": "SCREW_FINE", "level": 1 } ],
     "components": [
       [ [ "plastic_chunk", 4 ] ],
@@ -1002,6 +1002,62 @@
       [ [ "small_lcd_screen", 1 ] ],
       [ [ "ai_module_basic", 1 ], [ "ai_module", 1 ], [ "ai_module_advanced", 1 ] ],
       [ [ "omnicamera", 1 ], [ "sensor_module", 1 ], [ "camera", 1 ], [ "camera_pro", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "genome_sampler",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "computer", 4 ], [ "firstaid", 8 ] ],
+    "difficulty": 8,
+    "time": "2 h",
+    "reversible": true,
+    "book_learn": [ [ "recipe_lab_elec", 4 ] ],
+    "using": [
+      [ "soldering_standard", 20 ],
+      [ "coding_standard", 120 ],
+      [ "medical_software_standard", -1 ],
+      [ "utility_software_standard", -1 ]
+    ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 } ],
+    "components": [
+      [ [ "plastic_chunk", 4 ] ],
+      [ [ "superglue", 3 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "small_lcd_screen", 1 ] ],
+      [ [ "ai_module", 1 ], [ "ai_module_advanced", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "syringe", 1 ] ],
+      [ [ "vac_sealer", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "dna_editor",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "computer", 4 ], [ "firstaid", 8 ] ],
+    "difficulty": 8,
+    "time": "2 h",
+    "reversible": true,
+    "book_learn": [ [ "recipe_lab_elec", 4 ] ],
+    "using": [
+      [ "soldering_standard", 20 ],
+      [ "coding_standard", 120 ],
+      [ "medical_software_standard", -1 ],
+      [ "utility_software_standard", -1 ]
+    ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 } ],
+    "components": [
+      [ [ "microcentrifuge", 1 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "small_lcd_screen", 1 ] ],
+      [ [ "ai_module", 1 ], [ "ai_module_advanced", 1 ] ],
+      [ [ "hose", 2 ] ],
+      [ [ "sensor_module", 1 ] ]
     ]
   },
   {

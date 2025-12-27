@@ -1079,5 +1079,72 @@
     "revert_to": "bionic_scanner",
     "revert_msg": "The %s shuts down.",
     "flags": [ "SLEEP_IGNORE" ]
+  },
+  {
+    "id": "genome_sampler",
+    "type": "TOOL",
+    "category": "electronics",
+    "name": { "str": "genome sampler" },
+    "looks_like": "90two",
+    "description": "A handheld device designed to extract and analyze DNA from living organisms.  If you have an empty USB drive on hand, scanning a creature with it can create a genome sample for later sequencing in a cloning vat.",
+    "weight": "141 g",
+    "volume": "250 ml",
+    "price": "10 kUSD",
+    "price_postapoc": "100 USD",
+    "material": [ "plastic", "aluminum" ],
+    "symbol": ";",
+    "color": "light_cyan",
+    "ammo": "battery",
+    "use_action": [ { "type": "cloning_syringe", "moves": 250, "charges_to_use": 25 } ],
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_minus_disposable_cell",
+          "light_battery_cell",
+          "light_disposable_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell"
+        ]
+      ]
+    ]
+  },
+  {
+    "id": "dna_editor",
+    "type": "TOOL",
+    "category": "tools_cooking",
+    "looks_like": "microcentrifuge",
+    "name": { "str": "genome workstation" },
+    "description": "A medium-sized, high-tech machine with screens and sample trays.  It can scan genetic samples off USB drives, and produce DNA samples for cloning if provided with growth medium.  It can also be used as a microcentrifuge in a pinch.",
+    "weight": "2500 g",
+    "volume": "2000 ml",
+    "price": "25 USD",
+    "price_postapoc": "250 cent",
+    "to_hit": -1,
+    "bashing": 4,
+    "material": [ "aluminum", "plastic" ],
+    "symbol": "#",
+    "color": "light_gray",
+    "ammo": "battery",
+    "charges_per_use": 5,
+    "use_action": { "type": "dna_editor", "charges_to_use": 5 },
+    "flags": [ "ALLOWS_REMOTE_USE" ],
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_minus_disposable_cell",
+          "light_battery_cell",
+          "light_disposable_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell"
+        ]
+      ]
+    ],
+    "magazine_well": "500 ml"
   }
 ]

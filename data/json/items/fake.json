@@ -156,6 +156,15 @@
     "flags": [ "TRADER_AVOID", "FAKE_MILL" ]
   },
   {
+    "id": "fake_cloning_vat_item",
+    "copy-from": "fake_item",
+    "type": "GENERIC",
+    "name": { "str_sp": "growing embryo" },
+    "looks_like": "fetus",
+    "description": "A growing embryo.",
+    "flags": [ "TRADER_AVOID", "FAKE_CLONING_VAT" ]
+  },
+  {
     "id": "fake_smoke_plume",
     "copy-from": "fake_item",
     "type": "GENERIC",
