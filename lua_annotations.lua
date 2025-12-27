@@ -703,15 +703,28 @@ DiseaseTypeId = {}
 ---@overload fun(arg1: string): DiseaseTypeId
 function DiseaseTypeId.new() end
 
+--- A grid that organizes producers, storage and consumers of a resource like electricity
 ---@class DistributionGrid
----@field get_resource fun(self: DistributionGrid, arg2: boolean): integer @Boolean argument controls recursive behavior
----@field mod_resource fun(self: DistributionGrid, arg2: integer, arg3: boolean): integer @Boolean argument controls recursive behavior
+---@field empty fun(self: DistributionGrid): boolean @Check if grid is empty
+---@field get_contents fun(self: DistributionGrid): any[] @Get current resource amount. Boolean argument (optional) controls recursive behavior (default true)<br />Get vector of absolute map square coordinates of grid contents
+---@field get_power_stat fun(self: DistributionGrid): PowerStat @Get power generation and consumption statistics for the grid
+---@field get_resource fun(self: DistributionGrid, arg2: boolean?): integer @Modify resource amount. First argument is amount, second (optional) controls recursive behavior (default true)
+---@field is_valid fun(self: DistributionGrid): boolean @Check if grid is valid
+---@field mod_resource fun(self: DistributionGrid, arg2: integer, arg3: boolean?): integer
+---@field update fun(self: DistributionGrid, arg2: TimePoint) @Update the grid to the given time point
 DistributionGrid = {}
 ---@return DistributionGrid
 function DistributionGrid.new() end
 
+--- Manages all active distribution grids
 ---@class DistributionGridTracker
----@field get_grid_at_abs_ms fun(self: DistributionGridTracker, arg2: Tripoint): DistributionGrid
+---@field debug_grid_id fun(self: DistributionGridTracker, arg2: Tripoint): integer @Get unique identifier for grid at given overmap tile (for debug purposes, returns 0 if no grid)
+---@field grid_at fun(self: DistributionGridTracker, arg2: Tripoint): DistributionGrid | fun(self: DistributionGridTracker, arg2: Tripoint): DistributionGrid @Get grid at absolute map square position
+---@field load fun(self: DistributionGridTracker, arg2: Map) @Load grids for the given map
+---@field on_changed fun(self: DistributionGridTracker, arg2: Tripoint) @Notify tracker that a tile at the given position has changed
+---@field on_options_changed fun(self: DistributionGridTracker) @Notify tracker that game options have changed
+---@field on_saved fun(self: DistributionGridTracker) @Notify tracker that the game has been saved
+---@field update fun(self: DistributionGridTracker, arg2: TimePoint) @Update all grids to the given time point
 DistributionGridTracker = {}
 ---@return DistributionGridTracker
 function DistributionGridTracker.new() end
@@ -2087,6 +2100,16 @@ OterIntId = {}
 ---@overload fun(arg1: OterId): OterIntId
 function OterIntId.new() end
 
+--- Global overmap buffer that manages all overmap data
+---@class OvermapBuffer
+---@field add_grid_connection fun(self: OvermapBuffer, arg2: Tripoint, arg3: Tripoint): boolean @Add an electric grid connection between two positions
+---@field electric_grid_at fun(self: OvermapBuffer, arg2: Tripoint): Tripoint[] @Get all overmap tiles belonging to the electric grid at the given position
+---@field electric_grid_connectivity_at fun(self: OvermapBuffer, arg2: Tripoint): Tripoint[] @Get all electric grid connections from the given position
+---@field remove_grid_connection fun(self: OvermapBuffer, arg2: Tripoint, arg3: Tripoint): boolean @Remove an electric grid connection between two positions
+OvermapBuffer = {}
+---@return OvermapBuffer
+function OvermapBuffer.new() end
+
 ---@class Player : Character, Creature
 Player = {}
 ---@return Player
@@ -2122,6 +2145,16 @@ function Point.new() end
 PopupInputStr = {}
 ---@return PopupInputStr
 function PopupInputStr.new() end
+
+--- Power generation and consumption statistics for a grid
+---@class PowerStat
+---@field gen_w integer @Power generation in watts
+---@field use_w integer @Power consumption in watts
+---@field net_w fun(self: PowerStat): integer @Net power (generation - consumption) in watts
+---@field __add fun(self: PowerStat, arg2: PowerStat): PowerStat
+PowerStat = {}
+---@return PowerStat
+function PowerStat.new() end
 
 ---@class QualityId
 ---@field NULL_ID fun(): QualityId
@@ -2644,6 +2677,8 @@ coords = {}
 ---@field choose_direction fun(arg1: string, arg2: boolean?): Tripoint?
 ---@field create_item fun(arg1: ItypeId, arg2: integer): Detached<Item> @Spawns a new item. Same as Item::spawn 
 ---@field current_turn fun(): TimePoint
+---@field direction_from fun(arg1: Tripoint): any @Get direction from a tripoint delta
+---@field direction_name fun(arg1: any): string @Get direction name from direction enum
 ---@field get_avatar fun(): Avatar
 ---@field get_character_at fun(arg1: Tripoint, arg2: boolean?): Character
 ---@field get_creature_at fun(arg1: Tripoint, arg2: boolean?): Creature
@@ -2651,6 +2686,7 @@ coords = {}
 ---@field get_map fun(): Map
 ---@field get_monster_at fun(arg1: Tripoint, arg2: boolean?): Monster
 ---@field get_npc_at fun(arg1: Tripoint, arg2: boolean?): Npc
+---@field get_overmap_buffer fun(): OvermapBuffer @Get the global overmap buffer
 ---@field look_around fun(): Tripoint?
 ---@field place_monster_around fun(arg1: MonsterTypeId, arg2: Tripoint, arg3: integer): Monster
 ---@field place_monster_at fun(arg1: MonsterTypeId, arg2: Tripoint): Monster
@@ -2660,6 +2696,7 @@ coords = {}
 ---@field play_variant_sound fun(arg1: string, arg2: string, arg3: integer) | fun(arg1: string, arg2: string, arg3: integer, arg4: Angle, arg5: number, arg6: number)
 ---@field remove_npc_follower fun(arg1: Npc)
 ---@field rng fun(arg1: integer, arg2: integer): integer
+---@field six_cardinal_directions fun(): Tripoint[] @Get the six cardinal directions (N, S, E, W, Up, Down)
 ---@field turn_zero fun(): TimePoint
 gapi = {}
 
@@ -2709,11 +2746,15 @@ locale = {}
 
 --- Global overmap buffer interface for finding and inspecting overmap terrain.
 ---@class overmapbuffer
+---@field add_grid_connection fun(arg1: Tripoint, arg2: Tripoint): boolean @Add an electric grid connection between two positions. Returns true on success.
 ---@field check_ot fun(arg1: string, arg2: OtMatchType, arg3: Tripoint): boolean @Check if the terrain at the given position matches the type and match mode. Returns boolean.
+---@field electric_grid_at fun(arg1: Tripoint): Tripoint[] @Get all overmap tiles belonging to the electric grid at the given position. Returns vector of tripoints.
+---@field electric_grid_connectivity_at fun(arg1: Tripoint): Tripoint[] @Get all electric grid connections from the given position. Returns vector of relative tripoint offsets.
 ---@field find_all fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint[] @Find all overmap terrain tiles matching the given parameters. Returns a vector of tripoints.
 ---@field find_closest fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint? @Find the closest overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
 ---@field find_random fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint? @Find a random overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
 ---@field is_explored fun(arg1: Tripoint): boolean @Check if the terrain at the given position has been explored by the player. Returns boolean.
+---@field remove_grid_connection fun(arg1: Tripoint, arg2: Tripoint): boolean @Remove an electric grid connection between two positions. Returns true on success.
 ---@field seen fun(arg1: Tripoint): boolean @Check if the terrain at the given position has been seen by the player. Returns boolean.
 ---@field set_seen fun(arg1: Tripoint, arg2: boolean?) @Set the seen status of terrain at the given position.
 ---@field ter fun(arg1: Tripoint): OterIntId @Get the overmap terrain type at the given position. Returns an oter_id.

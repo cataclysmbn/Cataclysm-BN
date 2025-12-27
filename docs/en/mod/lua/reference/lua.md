@@ -2148,6 +2148,8 @@ No base classes.
 
 ## DistributionGrid {#sol::DistributionGrid}
 
+> A grid that organizes producers, storage and consumers of a resource like electricity
+
 ### Bases {#sol::DistributionGrid::@bases}
 
 No base classes.
@@ -2158,19 +2160,50 @@ No constructors.
 
 ### Members {#sol::DistributionGrid::@members}
 
-#### get_resource {#sol::DistributionGrid::get_resource}
+#### empty {#sol::DistributionGrid::empty}
 
-🇲 Method --> <code>( boolean ) -> integer</code>
+🇲 Method --> <code>( ) -> boolean</code>
 
-> Boolean argument controls recursive behavior
+> Check if grid is empty
 
 #### mod_resource {#sol::DistributionGrid::mod_resource}
 
-🇲 Method --> <code>( integer, boolean ) -> integer</code>
+🇲 Method --> <code>( integer, boolean? ) -> integer</code>
 
-> Boolean argument controls recursive behavior
+#### get_contents {#sol::DistributionGrid::get_contents}
+
+🇲 Method --> <code>( ) -> CppVal&lt;coords_coord_point&lt;tripoint,coords_origin_abs,coords_scale_map_square&gt;&gt;[]</code>
+
+> Get current resource amount. Boolean argument (optional) controls recursive behavior (default true)
+> Get vector of absolute map square coordinates of grid contents
+
+#### get_resource {#sol::DistributionGrid::get_resource}
+
+🇲 Method --> <code>( boolean? ) -> integer</code>
+
+> Modify resource amount. First argument is amount, second (optional) controls recursive behavior (default true)
+
+#### is_valid {#sol::DistributionGrid::is_valid}
+
+🇲 Method --> <code>( ) -> boolean</code>
+
+> Check if grid is valid
+
+#### update {#sol::DistributionGrid::update}
+
+🇲 Method --> <code>( [TimePoint](#sol::TimePoint) )</code>
+
+> Update the grid to the given time point
+
+#### get_power_stat {#sol::DistributionGrid::get_power_stat}
+
+🇲 Method --> <code>( ) -> [PowerStat](#sol::PowerStat)</code>
+
+> Get power generation and consumption statistics for the grid
 
 ## DistributionGridTracker {#sol::DistributionGridTracker}
+
+> Manages all active distribution grids
 
 ### Bases {#sol::DistributionGridTracker::@bases}
 
@@ -2182,9 +2215,48 @@ No constructors.
 
 ### Members {#sol::DistributionGridTracker::@members}
 
-#### get_grid_at_abs_ms {#sol::DistributionGridTracker::get_grid_at_abs_ms}
+#### grid_at {#sol::DistributionGridTracker::grid_at}
 
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [DistributionGrid](#sol::DistributionGrid)</code>\
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [DistributionGrid](#sol::DistributionGrid)</code>
+
+> Get grid at absolute map square position
+
+#### on_changed {#sol::DistributionGridTracker::on_changed}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) )</code>
+
+> Notify tracker that a tile at the given position has changed
+
+#### on_saved {#sol::DistributionGridTracker::on_saved}
+
+🇲 Method --> <code>( )</code>
+
+> Notify tracker that the game has been saved
+
+#### load {#sol::DistributionGridTracker::load}
+
+🇲 Method --> <code>( [Map](#sol::Map) )</code>
+
+> Load grids for the given map
+
+#### debug_grid_id {#sol::DistributionGridTracker::debug_grid_id}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> integer</code>
+
+> Get unique identifier for grid at given overmap tile (for debug purposes, returns 0 if no grid)
+
+#### update {#sol::DistributionGridTracker::update}
+
+🇲 Method --> <code>( [TimePoint](#sol::TimePoint) )</code>
+
+> Update all grids to the given time point
+
+#### on_options_changed {#sol::DistributionGridTracker::on_options_changed}
+
+🇲 Method --> <code>( )</code>
+
+> Notify tracker that game options have changed
 
 ## Effect {#sol::Effect}
 
@@ -7199,6 +7271,44 @@ No base classes.
 
 🇲 Method --> <code>( ) -> [OterId](#sol::OterId)</code>
 
+## OvermapBuffer {#sol::OvermapBuffer}
+
+> Global overmap buffer that manages all overmap data
+
+### Bases {#sol::OvermapBuffer::@bases}
+
+No base classes.
+
+### Constructors {#sol::OvermapBuffer::@ctors}
+
+No constructors.
+
+### Members {#sol::OvermapBuffer::@members}
+
+#### electric_grid_at {#sol::OvermapBuffer::electric_grid_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [Tripoint](#sol::Tripoint)[]</code>
+
+> Get all overmap tiles belonging to the electric grid at the given position
+
+#### add_grid_connection {#sol::OvermapBuffer::add_grid_connection}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [Tripoint](#sol::Tripoint) ) -> boolean</code>
+
+> Add an electric grid connection between two positions
+
+#### electric_grid_connectivity_at {#sol::OvermapBuffer::electric_grid_connectivity_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [Tripoint](#sol::Tripoint)[]</code>
+
+> Get all electric grid connections from the given position
+
+#### remove_grid_connection {#sol::OvermapBuffer::remove_grid_connection}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [Tripoint](#sol::Tripoint) ) -> boolean</code>
+
+> Remove an electric grid connection between two positions
+
 ## Player {#sol::Player}
 
 ### Bases {#sol::Player::@bases}
@@ -7279,6 +7389,38 @@ No base classes.
 🇲 Method --> <code>( ) -> integer</code>
 
 > Returns your input, but allows numbers only.
+
+## PowerStat {#sol::PowerStat}
+
+> Power generation and consumption statistics for a grid
+
+### Bases {#sol::PowerStat::@bases}
+
+No base classes.
+
+### Constructors {#sol::PowerStat::@ctors}
+
+No constructors.
+
+### Members {#sol::PowerStat::@members}
+
+#### gen_w {#sol::PowerStat::gen_w}
+
+🇻 Variable --> <code>integer</code>
+
+> Power generation in watts
+
+#### use_w {#sol::PowerStat::use_w}
+
+🇻 Variable --> <code>integer</code>
+
+> Power consumption in watts
+
+#### net_w {#sol::PowerStat::net_w}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+> Net power (generation - consumption) in watts
 
 ## QualityId {#sol::QualityId}
 
@@ -9420,6 +9562,18 @@ Global game methods
 
 🇫 Function --> <code>( ) -> [Avatar](#sol::Avatar)</code>
 
+#### choose_direction {#sol::nil::choose_direction}
+
+🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
+
+#### look_around {#sol::nil::look_around}
+
+🇫 Function --> <code>( ) -> [Tripoint](#sol::Tripoint)?</code>
+
+#### choose_adjacent {#sol::nil::choose_adjacent}
+
+🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
+
 #### get_character_at {#sol::nil::get_character_at}
 
 🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Character](#sol::Character)</code>
@@ -9432,30 +9586,6 @@ Global game methods
 
 🇫 Function --> <code>( [MonsterTypeId](#sol::MonsterTypeId), [Tripoint](#sol::Tripoint), integer ) -> [Monster](#sol::Monster)</code>
 
-#### place_monster_at {#sol::nil::place_monster_at}
-
-🇫 Function --> <code>( [MonsterTypeId](#sol::MonsterTypeId), [Tripoint](#sol::Tripoint) ) -> [Monster](#sol::Monster)</code>
-
-#### get_monster_at {#sol::nil::get_monster_at}
-
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Monster](#sol::Monster)</code>
-
-#### choose_adjacent {#sol::nil::choose_adjacent}
-
-🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
-
-#### look_around {#sol::nil::look_around}
-
-🇫 Function --> <code>( ) -> [Tripoint](#sol::Tripoint)?</code>
-
-#### choose_direction {#sol::nil::choose_direction}
-
-🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
-
-#### play_ambient_variant_sound {#sol::nil::play_ambient_variant_sound}
-
-🇫 Function --> <code>( string, string, integer, [SfxChannel](#sol::SfxChannel), integer, number, integer )</code>
-
 #### play_variant_sound {#sol::nil::play_variant_sound}
 
 🇫 Function --> <code>( string, string, integer )</code>\
@@ -9465,18 +9595,39 @@ Global game methods
 
 🇫 Function --> <code>( [Npc](#sol::Npc) )</code>
 
+#### direction_from {#sol::nil::direction_from}
+
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> CppVal&lt;direction&gt;</code>
+
+> Get direction from a tripoint delta
+
+#### play_ambient_variant_sound {#sol::nil::play_ambient_variant_sound}
+
+🇫 Function --> <code>( string, string, integer, [SfxChannel](#sol::SfxChannel), integer, number, integer )</code>
+
+#### get_overmap_buffer {#sol::nil::get_overmap_buffer}
+
+🇫 Function --> <code>( ) -> [OvermapBuffer](#sol::OvermapBuffer)</code>
+
+> Get the global overmap buffer
+
+#### remove_npc_follower {#sol::nil::remove_npc_follower}
+
+🇫 Function --> <code>( [Npc](#sol::Npc) )</code>
+
+#### direction_name {#sol::nil::direction_name}
+
+🇫 Function --> <code>( CppVal&lt;direction&gt; ) -> string</code>
+
+> Get direction name from direction enum
+
+#### place_monster_at {#sol::nil::place_monster_at}
+
+🇫 Function --> <code>( [MonsterTypeId](#sol::MonsterTypeId), [Tripoint](#sol::Tripoint) ) -> [Monster](#sol::Monster)</code>
+
 #### get_creature_at {#sol::nil::get_creature_at}
 
 🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Creature](#sol::Creature)</code>
-
-#### add_on_every_x_hook {#sol::nil::add_on_every_x_hook}
-
-🇫 Function --> <code>( [TimeDuration](#sol::TimeDuration), function )</code>
-
-#### add_msg {#sol::nil::add_msg}
-
-🇫 Function --> <code>( [MsgType](#sol::MsgType), any )</code>\
-🇫 Function --> <code>( any )</code>
 
 #### place_player_overmap_at {#sol::nil::place_player_overmap_at}
 
@@ -9484,13 +9635,36 @@ Global game methods
 
 > Teleports player to absolute coordinate in overmap
 
-#### get_distribution_grid_tracker {#sol::nil::get_distribution_grid_tracker}
+#### place_player_local_at {#sol::nil::place_player_local_at}
 
-🇫 Function --> <code>( ) -> [DistributionGridTracker](#sol::DistributionGridTracker)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint) )</code>
+
+> Teleports player to local coordinates within active map
+
+#### add_msg {#sol::nil::add_msg}
+
+🇫 Function --> <code>( [MsgType](#sol::MsgType), any )</code>\
+🇫 Function --> <code>( any )</code>
 
 #### get_map {#sol::nil::get_map}
 
 🇫 Function --> <code>( ) -> [Map](#sol::Map)</code>
+
+#### get_distribution_grid_tracker {#sol::nil::get_distribution_grid_tracker}
+
+🇫 Function --> <code>( ) -> [DistributionGridTracker](#sol::DistributionGridTracker)</code>
+
+#### get_monster_at {#sol::nil::get_monster_at}
+
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Monster](#sol::Monster)</code>
+
+#### current_turn {#sol::nil::current_turn}
+
+🇫 Function --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
+
+#### before_time_starts {#sol::nil::before_time_starts}
+
+🇫 Function --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
 
 #### create_item {#sol::nil::create_item}
 
@@ -9498,31 +9672,23 @@ Global game methods
 
 > Spawns a new item. Same as <code>[Item](#sol::Item)</code>::spawn
 
-#### place_player_local_at {#sol::nil::place_player_local_at}
-
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint) )</code>
-
-> Teleports player to local coordinates within active map
-
 #### turn_zero {#sol::nil::turn_zero}
 
 🇫 Function --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
 
-#### current_turn {#sol::nil::current_turn}
+#### add_on_every_x_hook {#sol::nil::add_on_every_x_hook}
 
-🇫 Function --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
+🇫 Function --> <code>( [TimeDuration](#sol::TimeDuration), function )</code>
 
 #### rng {#sol::nil::rng}
 
 🇫 Function --> <code>( integer, integer ) -> integer</code>
 
-#### before_time_starts {#sol::nil::before_time_starts}
+#### six_cardinal_directions {#sol::nil::six_cardinal_directions}
 
-🇫 Function --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
+🇫 Function --> <code>( ) -> [Tripoint](#sol::Tripoint)[]</code>
 
-#### remove_npc_follower {#sol::nil::remove_npc_follower}
-
-🇫 Function --> <code>( [Npc](#sol::Npc) )</code>
+> Get the six cardinal directions (N, S, E, W, Up, Down)
 
 ## gdebug {#sol::gdebug}
 
@@ -9820,17 +9986,11 @@ Global overmap buffer interface for finding and inspecting overmap terrain.
 
 > Find all overmap terrain tiles matching the given parameters. Returns a vector of tripoints.
 
-#### check_ot {#sol::nil::check_ot}
-
-🇫 Function --> <code>( string, [OtMatchType](#sol::OtMatchType), [Tripoint](#sol::Tripoint) ) -> boolean</code>
-
-> Check if the terrain at the given position matches the type and match mode. Returns boolean.
-
-#### seen {#sol::nil::seen}
+#### is_explored {#sol::nil::is_explored}
 
 🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
 
-> Check if the terrain at the given position has been seen by the player. Returns boolean.
+> Check if the terrain at the given position has been explored by the player. Returns boolean.
 
 #### set_seen {#sol::nil::set_seen}
 
@@ -9838,11 +9998,41 @@ Global overmap buffer interface for finding and inspecting overmap terrain.
 
 > Set the seen status of terrain at the given position.
 
+#### electric_grid_at {#sol::nil::electric_grid_at}
+
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> [Tripoint](#sol::Tripoint)[]</code>
+
+> Get all overmap tiles belonging to the electric grid at the given position. Returns vector of tripoints.
+
+#### electric_grid_connectivity_at {#sol::nil::electric_grid_connectivity_at}
+
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> [Tripoint](#sol::Tripoint)[]</code>
+
+> Get all electric grid connections from the given position. Returns vector of relative tripoint offsets.
+
+#### add_grid_connection {#sol::nil::add_grid_connection}
+
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [Tripoint](#sol::Tripoint) ) -> boolean</code>
+
+> Add an electric grid connection between two positions. Returns true on success.
+
+#### seen {#sol::nil::seen}
+
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
+
+> Check if the terrain at the given position has been seen by the player. Returns boolean.
+
 #### ter {#sol::nil::ter}
 
 🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> [OterIntId](#sol::OterIntId)</code>
 
 > Get the overmap terrain type at the given position. Returns an oter_id.
+
+#### check_ot {#sol::nil::check_ot}
+
+🇫 Function --> <code>( string, [OtMatchType](#sol::OtMatchType), [Tripoint](#sol::Tripoint) ) -> boolean</code>
+
+> Check if the terrain at the given position matches the type and match mode. Returns boolean.
 
 #### find_closest {#sol::nil::find_closest}
 
@@ -9856,11 +10046,11 @@ Global overmap buffer interface for finding and inspecting overmap terrain.
 
 > Find a random overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
 
-#### is_explored {#sol::nil::is_explored}
+#### remove_grid_connection {#sol::nil::remove_grid_connection}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [Tripoint](#sol::Tripoint) ) -> boolean</code>
 
-> Check if the terrain at the given position has been explored by the player. Returns boolean.
+> Remove an electric grid connection between two positions. Returns true on success.
 
 ## tests_lib {#sol::tests_lib}
 
