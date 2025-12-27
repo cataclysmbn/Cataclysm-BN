@@ -12,7 +12,6 @@
     "difficulty": 1,
     "noise_factor": 5,
     "m2c": 45,
-    "exclusions": [ "manual" ],
     "flags": [ "ENGINE", "E_STARTS_INSTANTLY", "E_ALTERNATOR", "SHOCK_RESISTANT" ]
   },
   {
