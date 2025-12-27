@@ -1960,6 +1960,10 @@ void options_manager::add_options_graphics()
          true
        );
 
+    add( "NIGHT_VISION_GREEN", graphics, translate_marker( "Night Vision Green Tint " ),
+         translate_marker( "If true sets night vision to have a green tint. Requires Restart to take effect." ),
+         true );
+
     add_empty_line();
 
     add( "TERMINAL_X", graphics, translate_marker( "Terminal width" ),
@@ -3811,7 +3815,7 @@ void options_manager::cache_to_globals()
     static_z_effect = ::get_option<bool>( "STATICZEFFECT" );
     overmap_transparency = ::get_option<bool>( "OVERMAP_TRANSPARENCY" );
     PICKUP_RANGE = ::get_option<int>( "PICKUP_RANGE" );
-
+    green_night_vision = ::get_option<bool>( "NIGHT_VISION_GREEN" );
     merge_comestible_mode = ( [] {
         const auto opt = ::get_option<std::string>( "MERGE_COMESTIBLES" );
         return opt == "legacy" ? merge_comestible_t::merge_legacy

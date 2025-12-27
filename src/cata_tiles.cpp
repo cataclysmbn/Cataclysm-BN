@@ -695,10 +695,12 @@ static color_pixel_function_pointer get_pixel_function( const tileset_fx_type &t
             return get_color_pixel_function( "color_pixel_grayscale" );
             break;
         case tileset_fx_type::night:
-            return get_color_pixel_function( "color_pixel_nightvision" );
+            return get_color_pixel_function( green_night_vision ? "color_pixel_nightvision" :
+                                             "color_pixel_grayscale" );
             break;
         case tileset_fx_type::overexposed:
-            return get_color_pixel_function( "color_pixel_overexposed" );
+            return get_color_pixel_function( green_night_vision ? "color_pixel_overexposed" :
+                                             "color_pixel_grayscale" );
             break;
         case tileset_fx_type::underwater:
             return get_color_pixel_function( "color_pixel_underwater" );
