@@ -98,6 +98,8 @@ struct resistances;
 struct armor_portion_data;
 class vitamin;
 struct explosion_data;
+struct requirement_data;
+class inventory;
 
 namespace units
 {
@@ -211,6 +213,8 @@ LUNA_VAL( resistances, "Resistances" );
 LUNA_VAL( armor_portion_data, "ArmorPortionData" );
 LUNA_VAL( effect, "Effect" );
 LUNA_VAL( explosion_data, "ExplosionData" );
+LUNA_VAL( requirement_data, "RequirementData" );
+LUNA_VAL( inventory, "Inventory" );
 
 // Ids for in-game objects
 LUNA_ID( ammunition_type, "AmmunitionType" )

@@ -124,7 +124,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return overmap_buffer; } );
 
     DOC( "Get direction from a tripoint delta" );
-    luna::set_fx( lib, "direction_from", []( const tripoint & delta ) -> direction { return direction_from( delta.xy() ); } );
+    luna::set_fx( lib, "direction_from", []( const tripoint & delta ) -> direction { return direction_from( delta ); } );
 
     DOC( "Get direction name from direction enum" );
     luna::set_fx( lib, "direction_name", []( direction dir ) -> std::string { return direction_name( dir ); } );

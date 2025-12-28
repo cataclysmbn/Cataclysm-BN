@@ -293,7 +293,10 @@ function BookRecipe.new() end
 ---@field clear_morale fun(self: Character)
 ---@field clear_mutations fun(self: Character)
 ---@field clear_skills fun(self: Character)
+---@field consume_items fun(self: Character, arg2: any[]) @Consumes items from inventory based on item component list
+---@field consume_tools fun(self: Character, arg2: any[]) @Consumes tool charges from inventory based on tool component list
 ---@field cough fun(self: Character, arg2: boolean, arg3: integer)
+---@field crafting_inventory fun(self: Character): Inventory @Returns the crafting inventory for this character (includes nearby items)
 ---@field create_item fun(self: Character, arg2: ItypeId, arg3: integer): Item @Creates and an item with the given id and amount to the player inventory
 ---@field crossed_threshold fun(self: Character): boolean
 ---@field deactivate_mutation fun(self: Character, arg2: MutationBranchId)
@@ -392,6 +395,7 @@ function BookRecipe.new() end
 ---@field hitall fun(self: Character, arg2: integer, arg3: integer, arg4: Creature): integer
 ---@field hurtall fun(self: Character, arg2: integer, arg3: Creature, arg4: boolean)
 ---@field in_climate_control fun(self: Character): boolean
+---@field invalidate_crafting_inventory fun(self: Character) @Invalidates the cached crafting inventory
 ---@field inv_remove_item fun(self: Character, arg2: Item): Detached<Item> @DEPRECATED: use remove_item instead
 ---@field irradiate fun(self: Character, arg2: number, arg3: boolean): boolean
 ---@field is_armed fun(self: Character): boolean
@@ -944,6 +948,23 @@ function FurnIntId.new() end
 FurnRaw = {}
 ---@return FurnRaw
 function FurnRaw.new() end
+
+--- Look up requirement_data by ID string. Returns nil if not found.
+--- Represents a character's inventory
+---@class Inventory
+---@field clear fun(self: Inventory) @Clear all items from the inventory
+---@field count_item fun(self: Inventory, arg2: ItypeId): integer @Count items of a specific type
+---@field find_item fun(self: Inventory, arg2: integer): Item @Find item at position
+---@field has_charges fun(self: Inventory, arg2: ItypeId, arg3: integer): boolean @Check if inventory has the specified charges
+---@field has_components fun(self: Inventory, arg2: ItypeId, arg3: integer): boolean @Check if inventory has the specified components
+---@field has_tools fun(self: Inventory, arg2: ItypeId, arg3: integer): boolean @Check if inventory has the specified tool
+---@field position_by_type fun(self: Inventory, arg2: ItypeId): integer @Get item position by type
+---@field size fun(self: Inventory): integer @Get the number of item stacks in the inventory
+---@field volume fun(self: Inventory): Volume @Get the total volume of the inventory
+---@field weight fun(self: Inventory): Mass @Get the total weight of the inventory
+Inventory = {}
+---@return Inventory
+function Inventory.new() end
 
 ---@class IslotAmmo : RangedData
 ---@field ammo_effects AmmunitionEffectId[]
@@ -2239,6 +2260,24 @@ function RecipeRaw.new() end
 Relic = {}
 ---@return Relic
 function Relic.new() end
+
+--- Represents crafting requirements (tools, components, qualities)
+---@class RequirementData
+---@field can_make_with_inventory fun(self: RequirementData, arg2: Inventory): boolean @Check if requirements can be made with given inventory
+---@field get_components fun(self: RequirementData): any[][] @Get list of all required components
+---@field get_qualities fun(self: RequirementData): any[][] @Get list of all required qualities
+---@field get_tools fun(self: RequirementData): any[][] @Get list of all required tools
+---@field id fun(self: RequirementData): string @Get the requirement ID as string
+---@field is_blacklisted fun(self: RequirementData): boolean @Check if this requirement is blacklisted
+---@field is_empty fun(self: RequirementData): boolean @Check if this requirement is empty
+---@field is_null fun(self: RequirementData): boolean @Check if this is a null requirement
+---@field list_all fun(self: RequirementData): string @Get a formatted list of all requirements
+---@field list_missing fun(self: RequirementData): string @Get a formatted list of missing requirements
+---@field serialize fun(self: RequirementData, arg2: any) @Multiply requirements by a scalar (e.g. for batch crafting)
+---@field deserialize fun(self: RequirementData, arg2: any)
+RequirementData = {}
+---@return RequirementData
+function RequirementData.new() end
 
 ---@class Resistances
 ---@field get_all_resist fun(self: Resistances): table<DamageType, number>
