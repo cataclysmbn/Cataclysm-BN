@@ -888,5 +888,61 @@
     "price": "250 USD",
     "price_postapoc": "1 USD",
     "material": [ "iron", "glass" ]
+  },
+  {
+    "id": "debug_testing_dimension_travel",
+    "type": "TOOL",
+    "copy-from": "pocketwatch",
+    "name": { "str": "Dimensional Pocket Watch (Desert)" },
+    "description": "A pocket watch that allows the user to travel to the desert dimension.  Used for debugging purposes only.  Transforms after use.",
+    "looks_like": "pocketwatch",
+    "weight": "500 g",
+    "volume": "500 ml",
+    "price": "1 kUSD",
+    "price_postapoc": "1 USD",
+    "material": [ "brass", "glass" ],
+    "use_action": [
+      {
+        "type": "dimension_travel",
+        "destination": "desert_test",
+        "travel_radius": 5,
+        "need_charges": 0,
+        "allow_npcs": true,
+        "allow_vehicles": true,
+        "fail_message": "The watch vibrates but nothing happens.",
+        "success_message": "You feel a wrenching sensation as you are pulled through space and time."
+      },
+      {
+        "type": "transform",
+        "target": "debug_testing_dimension_travel_return",
+        "msg": "The watch reconfigures itself."
+      }
+    ]
+  },
+  {
+    "id": "debug_testing_dimension_travel_return",
+    "type": "TOOL",
+    "copy-from": "pocketwatch",
+    "name": { "str": "Dimensional Pocket Watch (Default)" },
+    "description": "A pocket watch that allows the user to return to the default dimension.  Used for debugging purposes only.",
+    "looks_like": "pocketwatch",
+    "weight": "500 g",
+    "volume": "500 ml",
+    "price": "1 kUSD",
+    "price_postapoc": "1 USD",
+    "material": [ "brass", "glass" ],
+    "use_action": [
+      {
+        "type": "dimension_travel",
+        "destination": "default",
+        "travel_radius": 5,
+        "need_charges": 0,
+        "allow_npcs": true,
+        "allow_vehicles": true,
+        "fail_message": "The watch vibrates but nothing happens.",
+        "success_message": "You feel reality snap back into place."
+      },
+      { "type": "transform", "target": "debug_testing_dimension_travel", "msg": "The watch reconfigures itself." }
+    ]
   }
 ]

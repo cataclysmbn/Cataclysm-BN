@@ -222,6 +222,11 @@ void avatar::load_map_memory()
     player_map_memory->load( g->m.getabs( pos() ) );
 }
 
+void avatar::clear_map_memory()
+{
+    player_map_memory->clear();
+}
+
 void avatar::prepare_map_memory_region( const tripoint &p1, const tripoint &p2 )
 {
     player_map_memory->prepare_region( p1, p2 );

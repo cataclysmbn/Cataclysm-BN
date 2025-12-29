@@ -69,6 +69,7 @@
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
+#include "npc.h"
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
@@ -6544,4 +6545,122 @@ auto iuse_flowerpot_collect::can_use( const Character &who, const item &, bool,
 auto iuse_flowerpot_collect::clone() const -> std::unique_ptr<iuse_actor>
 {
     return std::make_unique<iuse_flowerpot_collect>( *this );
+}
+
+// -------------------
+
+std::unique_ptr<iuse_actor> iuse_dimension_travel::clone() const
+{
+    return std::make_unique<iuse_dimension_travel>( *this );
+}
+
+void iuse_dimension_travel::load( const JsonObject &obj )
+{
+    obj.read( "destination", destination );
+    obj.read( "travel_radius", travel_radius );
+    obj.read( "allow_npcs", allow_npcs );
+    obj.read( "allow_vehicles", allow_vehicles );
+    obj.read( "need_charges", need_charges );
+    obj.read( "fail_message", fail_message );
+    obj.read( "success_message", success_message );
+    if( travel_radius < 1 ) {
+        obj.throw_error( "dimension_travel actor specified travel_radius less than 1", "travel_radius" );
+    }
+}
+
+int iuse_dimension_travel::use( player &p, item &it, bool, const tripoint &pos ) const
+{
+    dimension_travel( p, it, pos );
+    return need_charges;
+}
+
+ret_val<bool> iuse_dimension_travel::can_use( const Character &, const item &it, bool,
+        const tripoint & ) const
+{
+    if( it.ammo_remaining() < need_charges ) {
+        return ret_val<bool>::make_failure( _( "The %s doesn't have enough charges." ), it.tname() );
+    }
+    return ret_val<bool>::make_success();
+}
+
+void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint &pos ) const
+{
+    if( destination.empty() ) {
+        p.add_msg_if_player( m_bad, _( "This item has no destination configured." ) );
+        return;
+    }
+
+    // Debug: Show current and target dimensions
+    add_msg( m_debug, "[DIM_TRAVEL] Current region_type: %s", overmap_buffer.current_region_type );
+    add_msg( m_debug, "[DIM_TRAVEL] Current dimension_prefix: %s", g->get_dimension_prefix() );
+    add_msg( m_debug, "[DIM_TRAVEL] Target destination: %s", destination );
+
+    // Check if already in target dimension
+    // Both dimension_prefix and region_type should match the destination
+    std::string current_dim = g->get_dimension_prefix();
+    if( current_dim.empty() ) {
+        current_dim = "default";
+    }
+
+    if( current_dim == destination ) {
+        p.add_msg_if_player( m_info, _( "You are already in that dimension." ) );
+        add_msg( m_debug, "[DIM_TRAVEL] Already in target dimension" );
+        return;
+    }
+
+    map &here = get_map();
+    avatar &u = get_avatar();
+
+    // Check if avatar is within travel radius
+    const int dist_to_avatar = rl_dist( pos, u.pos() );
+    if( dist_to_avatar > travel_radius ) {
+        if( fail_message.empty() ) {
+            p.add_msg_if_player( m_bad, _( "You are too far from the portal!" ) );
+        } else {
+            p.add_msg_if_player( m_bad, "%s", _( fail_message ) );
+        }
+        return;
+    }
+
+    // Collect NPCs within radius
+    std::vector<npc *> npc_travellers;
+    if( allow_npcs ) {
+        for( npc &guy : g->all_npcs() ) {
+            if( rl_dist( pos, guy.pos() ) <= travel_radius && !guy.is_dead() ) {
+                npc_travellers.push_back( &guy );
+            }
+        }
+    }
+
+    // Find vehicle to transport (only if completely within radius)
+    vehicle *veh = nullptr;
+    if( allow_vehicles ) {
+        const optional_vpart_position vp = here.veh_at( pos );
+        if( vp ) {
+            vehicle *candidate = &vp->vehicle();
+            bool all_parts_in_radius = true;
+
+            for( const vpart_reference &vpr : candidate->get_all_parts() ) {
+                if( rl_dist( pos, vpr.pos() ) > travel_radius ) {
+                    all_parts_in_radius = false;
+                    break;
+                }
+            }
+
+            if( all_parts_in_radius ) {
+                veh = candidate;
+            }
+        }
+    }
+
+    if( success_message.empty() ) {
+        p.add_msg_if_player( m_good, _( "You travel to another dimension!" ) );
+    } else {
+        p.add_msg_if_player( m_good, "%s", _( success_message ) );
+    }
+
+    // Use destination as both the dimension prefix and region type
+    // The dimension prefix determines which save folder to use
+    // The region type determines the world generation parameters
+    g->travel_to_dimension( destination, destination, npc_travellers, veh );
 }

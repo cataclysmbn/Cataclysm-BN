@@ -2861,13 +2861,28 @@ void overmap_special::check() const
 // *** BEGIN overmap FUNCTIONS ***
 overmap::overmap( const point_abs_om &p ) : loc( p )
 {
-    const std::string rsettings_id = get_option<std::string>( "DEFAULT_REGION" );
+    // Try to use current_region_type if set, otherwise fall back to DEFAULT_REGION option
+    std::string rsettings_id = overmap_buffer.current_region_type;
+
+    // If current_region_type is empty or "default", use the DEFAULT_REGION option
+    if( rsettings_id.empty() || rsettings_id == "default" ) {
+        rsettings_id = get_option<std::string>( "DEFAULT_REGION" );
+    }
+
+    // Look up the regional settings by ID
     t_regional_settings_map_citr rsit = region_settings_map.find( rsettings_id );
 
     if( rsit == region_settings_map.end() ) {
-        // gonna die now =[
-        debugmsg( "overmap %s: can't find region '%s'", loc.to_string(), rsettings_id.c_str() );
+        // Fallback to "default" if the specified region doesn't exist
+        rsit = region_settings_map.find( "default" );
+        if( rsit == region_settings_map.end() ) {
+            debugmsg( "overmap %s: can't find region '%s' or 'default'",
+                      loc.to_string(), rsettings_id.c_str() );
+            // Use first available region as last resort
+            rsit = region_settings_map.begin();
+        }
     }
+
     settings = &rsit->second;
 
     init_layers();

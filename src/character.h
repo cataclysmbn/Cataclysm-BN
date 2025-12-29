@@ -2616,6 +2616,14 @@ class Character : public Creature, public location_visitable<Character>
         // Relative direction of a grab, add to posx, posy to get the coordinates of the grabbed thing.
         tripoint grab_point = tripoint_zero;
 
+    private:
+        // Whether the player can open overmap.
+        bool signal_lost = false;
+    public:
+        // And its getter and setter
+        bool get_signal_lost() const;
+        void set_signal_lost( bool lost );
+
 };
 
 Character &get_player_character();

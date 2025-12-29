@@ -1183,6 +1183,38 @@ void game::unserialize_master( std::istream &fin )
     }
 }
 
+void game::unserialize_dimension_data( std::istream &fin )
+{
+    savegame_loading_version = 0;
+    chkversion( fin );
+    if( savegame_loading_version < 11 ) {
+        std::unique_ptr<static_popup>popup = std::make_unique<static_popup>();
+        popup->message(
+            _( "Cannot find loader for save data in old version %d, attempting to load as current version %d." ),
+            savegame_loading_version, savegame_version );
+        ui_manager::redraw();
+        refresh_display();
+    }
+    try {
+        // Parse dimension-specific data from JSON
+        JsonIn jsin( fin );
+        jsin.start_object();
+        while( !jsin.end_object() ) {
+            std::string name = jsin.get_member_name();
+            if( name == "region_type" ) {
+                // Load the region type for this dimension
+                jsin.read( overmap_buffer.current_region_type );
+            } else {
+                // Skip unknown members for forward/backward compatibility
+                // (e.g., DDA's "overmapbuffer", "weather", "placed_unique_specials")
+                jsin.skip_value();
+            }
+        }
+    } catch( const JsonError &e ) {
+        debugmsg( "error loading %s: %s", SAVE_DIMENSION_DATA, e.c_str() );
+    }
+}
+
 void mission::serialize_all( JsonOut &json )
 {
     json.start_array();
@@ -1219,6 +1251,27 @@ void game::serialize_master( std::ostream &fout )
         json.end_object();
     } catch( const JsonError &e ) {
         debugmsg( "error saving to %s: %s", SAVE_MASTER, e.c_str() );
+    }
+}
+
+void game::serialize_dimension_data( std::ostream &fout )
+{
+    fout << "# version " << savegame_version << '\n';
+
+    try {
+        JsonOut json( fout, true ); // pretty-print
+        json.start_object();
+
+        // Save the region type for this dimension
+        // This allows different dimensions to have different regional settings
+        json.member( "region_type", overmap_buffer.current_region_type );
+
+        // Note: BN doesn't use DDA's global_state or weather_manager
+        // Those are stored differently in BN's architecture
+
+        json.end_object();
+    } catch( const JsonError &e ) {
+        debugmsg( "error saving to %s: %s", SAVE_DIMENSION_DATA, e.c_str() );
     }
 }
 

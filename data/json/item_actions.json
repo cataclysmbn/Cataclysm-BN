@@ -1023,5 +1023,10 @@
     "type": "item_action",
     "id": "flowerpot_collect",
     "name": { "str": "Collect a plant" }
+  },
+  {
+    "type": "item_action",
+    "id": "dimension_travel",
+    "name": { "str": "Travel to another dimension" }
   }
 ]

@@ -2383,7 +2383,11 @@ bool game::handle_action()
                 break;
 
             case ACTION_MAP:
-                ui::omap::display();
+                if( u.get_signal_lost() ) {
+                    add_msg( m_info, _( "You have no idea where you are." ) );
+                } else {
+                    ui::omap::display();
+                }
                 break;
 
             case ACTION_SKY:
