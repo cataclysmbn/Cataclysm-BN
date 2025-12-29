@@ -6855,5 +6855,22 @@
     "initial_ma_styles": [ "style_swordsmanship" ],
     "purifiable": false,
     "profession": true
+  },
+  {
+    "type": "mutation",
+    "id": "UDDERS",
+    "name": { "str": "Udders" },
+    "points": 1,
+    "visibility": 8,
+    "ugliness": 6,
+    "description": "You have grown a set of udders low on your torso. They hang visibly and add noticeable bulk. The glands naturally produce a mild, nutrient-rich milk when you are well-fed, though the output is modest and not a reliable source of nutrition for yourself.",
+    "types": [ "METABOLISM" ],
+    "threshreq": [ "THRESH_CATTLE" ],
+    "category": [ "CATTLE" ],
+    "active": true,
+    "cost": 24,
+    "hunger": true,
+    "thirst": true,
+    "spawn_item": { "type": "milk", "message": "You milk yourself." }
   }
 ]
