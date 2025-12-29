@@ -199,7 +199,7 @@ mod.on_throw_fun = function(params)
     ---@type Character
     local thrower = params.thrower
     ---@type Item
-    local thrown = params.item
+    local thrown = params.thrown
     if thrown:is_gun() then
         gdebug.log_info("Hey! Guns are not for throwing!")
     end
@@ -299,6 +299,30 @@ end
 
 -- Check for special abilities
 print("Uncanny dodge: " .. (you:uncanny_dodge() and "yes" or "no"))
+```
+
+## Character Magics
+
+### Learn a new spell and forget it
+
+learning a spell:
+
+```lua
+local u = gapi.get_avatar()
+local km = u:get_magic()
+local ex_sp = SpellTypeId.new("example_template")
+km:learn_spell(ex_sp, u, true) -- learn forced
+print( km:knows_spell(ex_sp) ) -- check
+```
+
+forgetting a spell:
+
+```lua
+local u = gapi.get_avatar()
+local km = u:get_magic()
+local ex_sp = SpellTypeId.new("example_template")
+km:forget_spell(ex_sp)         -- forget
+print( km:knows_spell(ex_sp) ) -- check again
 ```
 
 ## Dynamic Item Actions
