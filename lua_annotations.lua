@@ -96,6 +96,13 @@ on_creature_melee_attacked = {}
 ---@field when TimePoint
 on_mapgen_postprocess = {}
 
+---@class OnExplodeParams
+---@field pos Tripoint
+---@field damage integer
+---@field radius integer
+---@field fire boolean
+on_explosion_start = {}
+
 --================---- Classes ----================
 
 ---@class ActivityTypeId
@@ -465,7 +472,7 @@ function BookRecipe.new() end
 ---@field remove_child_flag fun(self: Character, arg2: MutationBranchId)
 ---@field remove_item fun(self: Character, arg2: Item): Detached<Item> @Removes given `Item` from character's inventory. The `Item` must be in the inventory, neither wielded nor worn.
 ---@field remove_mutation fun(self: Character, arg2: MutationBranchId, arg3: boolean)
----@field remove_worn fun(self: Character, arg2: Item): Detached<Item> @Attempts to remove the worn `Item` from character.
+---@field remove_worn fun(self: Character, arg2: Item): Detached<Item>? @Attempts to remove the worn `Item` from character.
 ---@field reset fun(self: Character)
 ---@field reset_encumbrance fun(self: Character)
 ---@field restore_scent fun(self: Character)
@@ -532,7 +539,7 @@ CharacterId = {}
 function CharacterId.new() end
 
 ---@class Creature
----@field add_effect fun(self: Creature, arg2: EffectTypeId, arg3: TimeDuration, arg4: BodyPartTypeId, arg5: integer) @Effect type, duration, bodypart and intensity
+---@field add_effect fun(self: Creature, arg2: EffectTypeId, arg3: TimeDuration, arg4: BodyPartTypeId?, arg5: integer?) @Effect type, duration, bodypart and intensity
 ---@field apply_damage fun(self: Creature, arg2: Creature, arg3: BodyPartTypeIntId, arg4: integer, arg5: boolean)
 ---@field as_avatar fun(self: Creature): Avatar
 ---@field as_character fun(self: Creature): Character
@@ -558,16 +565,16 @@ function CharacterId.new() end
 ---@field get_dodge fun(self: Creature): number
 ---@field get_dodge_base fun(self: Creature): number
 ---@field get_dodge_bonus fun(self: Creature): number
----@field get_effect fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId): Effect
----@field get_effect_dur fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId): TimeDuration
----@field get_effect_int fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId): integer
+---@field get_effect fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId?): Effect
+---@field get_effect_dur fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId?): TimeDuration
+---@field get_effect_int fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId?): integer
 ---@field get_env_resist fun(self: Creature, arg2: BodyPartTypeIntId): integer
 ---@field get_grammatical_genders fun(self: Creature): string[]
 ---@field get_hit fun(self: Creature): number
 ---@field get_hit_base fun(self: Creature): number
 ---@field get_hit_bonus fun(self: Creature): number
----@field get_hp fun(self: Creature, arg2: BodyPartTypeIntId): integer
----@field get_hp_max fun(self: Creature, arg2: BodyPartTypeIntId): integer
+---@field get_hp fun(self: Creature, arg2: BodyPartTypeIntId?): integer
+---@field get_hp_max fun(self: Creature, arg2: BodyPartTypeIntId?): integer
 ---@field get_melee fun(self: Creature): number
 ---@field get_moves fun(self: Creature): integer
 ---@field get_name fun(self: Creature): string
@@ -587,8 +594,8 @@ function CharacterId.new() end
 ---@field get_value fun(self: Creature, arg2: string): string
 ---@field get_weight fun(self: Creature): Mass
 ---@field get_weight_capacity fun(self: Creature): integer
----@field has_effect fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId): boolean
----@field has_effect_with_flag fun(self: Creature, arg2: JsonFlagId, arg3: BodyPartTypeId): boolean
+---@field has_effect fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId?): boolean
+---@field has_effect_with_flag fun(self: Creature, arg2: JsonFlagId, arg3: BodyPartTypeId?): boolean
 ---@field has_flag fun(self: Creature, arg2: MonsterFlag): boolean
 ---@field has_grab_break_tec fun(self: Creature): boolean
 ---@field has_trait fun(self: Creature, arg2: MutationBranchId): boolean
@@ -615,7 +622,7 @@ function CharacterId.new() end
 ---@field mod_part_hp_max fun(self: Creature, arg2: BodyPartTypeIntId, arg3: integer)
 ---@field power_rating fun(self: Creature): number
 ---@field ranged_target_size fun(self: Creature): number
----@field remove_effect fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId): boolean
+---@field remove_effect fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId?): boolean
 ---@field remove_value fun(self: Creature, arg2: string)
 ---@field sees fun(self: Creature, arg2: Creature): boolean
 ---@field set_all_parts_hp_cur fun(self: Creature, arg2: integer)
@@ -782,6 +789,15 @@ Energy = {}
 ---@return Energy
 function Energy.new() end
 
+---@class ExplosionData
+---@field damage integer @Damage dealt by the explosion
+---@field fire boolean @Whether the explosion creates fire
+---@field radius number @Radius of the explosion
+---@field safe_range fun(self: ExplosionData): integer @Returns the safe range of the explosion
+ExplosionData = {}
+---@return ExplosionData
+function ExplosionData.new() end
+
 ---@class FactionId
 ---@field NULL_ID fun(): FactionId
 ---@field implements_int_id fun(): boolean
@@ -919,14 +935,14 @@ function FurnRaw.new() end
 ---@class IslotAmmo : RangedData
 ---@field ammo_effects AmmunitionEffectId[]
 ---@field ammo_id AmmunitionTypeId @Ammo type, basically the "form" of the ammo that fits into the gun/tool
----@field casing_id ItypeId @Type id of casings, if any
+---@field casing_id ItypeId? @Type id of casings, if any
 ---@field cookoff boolean @Should this ammo explode in fire?
 ---@field def_charges integer @Default charges
 ---@field dont_recover_one_in integer @Chance to fail to recover the ammo used.
 ---@field drop ItypeId
 ---@field drop_active boolean
 ---@field drop_count integer
----@field force_stat_display boolean
+---@field force_stat_display boolean?
 ---@field loudness integer @Base loudness of ammo (possibly modified by gun/gunmods)
 ---@field recoil integer @Recoil (per shot), roughly equivalent to kinetic energy (in Joules)
 ---@field special_cookoff boolean @Should this ammo apply a special explosion effect when in fire?
@@ -1117,7 +1133,7 @@ function IslotGunmod.new() end
 ---@field capacity integer @Capacity of magazine (in equivalent units to ammo charges)
 ---@field count integer @Default amount of ammo contained by a magazine (often set for ammo belts)
 ---@field default_ammo ItypeId @Default type of ammo contained by a magazine (often set for ammo belts)
----@field linkage ItypeId @For ammo belts one linkage (of given type) is dropped for each unit of ammo consumed
+---@field linkage ItypeId? @For ammo belts one linkage (of given type) is dropped for each unit of ammo consumed
 ---@field protects_contents boolean @If false, ammo will cook off if this mag is affected by fire
 ---@field reliability integer @How reliable this magazine on a range of 0 to 10?
 ---@field reload_time integer @How long it takes to load each unit of ammo into the magazine
@@ -1173,7 +1189,7 @@ function IslotSeed.new() end
 ---@field power_draw integer
 ---@field rand_charges integer[]
 ---@field revert_msg string
----@field revert_to ItypeId
+---@field revert_to ItypeId?
 ---@field subtype ItypeId
 ---@field turns_active integer
 ---@field turns_per_charge integer
@@ -1321,8 +1337,8 @@ function IslotWheel.new() end
 ---@field total_capacity fun(self: Item): Volume @Gets maximum volume this item can hold (liquids, ammo, etc)
 ---@field unset_flag fun(self: Item, arg2: JsonFlagId)
 ---@field unset_flags fun(self: Item)
----@field volume fun(self: Item, arg2: boolean): Volume @Volume of the item. `bool` is whether it is `integral_volume`.
----@field weight fun(self: Item, arg2: boolean, arg3: boolean): Mass @Weight of the item. The first `bool` is whether including contents, second `bool` is whether it is `integral_weight`.
+---@field volume fun(self: Item, arg2: boolean?): Volume @Volume of the item. `bool` is whether it is `integral_volume`.
+---@field weight fun(self: Item, arg2: boolean?, arg3: boolean?): Mass @Weight of the item. The first `bool` is whether including contents, second `bool` is whether it is `integral_weight`.
 Item = {}
 ---@return Item
 function Item.new() end
@@ -1370,10 +1386,10 @@ function ItypeId.new() end
 ---@field attacks table<string, any>
 ---@field countdown_destroy boolean
 ---@field countdown_interval integer
----@field default_container ItypeId
+---@field default_container ItypeId?
 ---@field emits FieldEmitId[]
 ---@field explode_in_fire boolean
----@field explosion_data any
+---@field explosion_data ExplosionData
 ---@field faults FaultId[]
 ---@field integral_volume Volume
 ---@field integral_weight Mass
@@ -1484,13 +1500,14 @@ function JsonTraitFlagId.new() end
 ---@field add_field_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId, arg4: integer, arg5: TimeDuration): boolean
 ---@field add_item fun(self: Map, arg2: Tripoint, arg3: Detached<Item>): Detached<Item> @Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed.
 ---@field clear_items_at fun(self: Map, arg2: Tripoint)
----@field create_corpse_at fun(self: Map, arg2: Tripoint, arg3: MonsterTypeId, arg4: TimePoint, arg5: string, arg6: integer) @Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag.
+---@field create_corpse_at fun(self: Map, arg2: Tripoint, arg3: MonsterTypeId?, arg4: TimePoint?, arg5: string?, arg6: integer?) @Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag.
 ---@field create_item_at fun(self: Map, arg2: Tripoint, arg3: ItypeId, arg4: integer): Item @Creates a new item(s) at a position on the map.
 ---@field detach_item_at fun(self: Map, arg2: Tripoint, arg3: Item): Detached<Item> @Removes an item from the map and returns it as a detached_ptr. The item is now owned by Lua - store it in a table to keep it alive, or let it be GC'd to destroy it. Use add_item to place it back on a map.
 ---@field disarm_trap_at fun(self: Map, arg2: Tripoint) @Disarms a trap using your skills and stats, with consequences depending on success or failure.
 ---@field get_abs_ms fun(self: Map, arg2: Tripoint): Tripoint @Convert local ms -> absolute ms
 ---@field get_field_age_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId): TimeDuration
 ---@field get_field_int_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId): integer
+---@field get_field_name_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId): string
 ---@field get_furn_at fun(self: Map, arg2: Tripoint): FurnIntId
 ---@field get_items_at fun(self: Map, arg2: Tripoint): MapStack
 ---@field get_items_in_radius fun(self: Map, arg2: Tripoint, arg3: integer): MapStack[]
@@ -1504,6 +1521,7 @@ function JsonTraitFlagId.new() end
 ---@field mod_field_age_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId, arg4: TimeDuration): TimeDuration
 ---@field mod_field_int_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId, arg4: integer): integer
 ---@field move_item_to fun(self: Map, arg2: Tripoint, arg3: Item, arg4: Tripoint) @Moves an item from one position to another, preserving all item state including contents.
+---@field points_in_radius fun(self: Map, arg2: Tripoint, arg3: integer, arg4: integer?): Tripoint[] @Returns all points within a radius from the center point. `radiusz` defaults to 0.
 ---@field remove_field_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId)
 ---@field remove_item_at fun(self: Map, arg2: Tripoint, arg3: Item)
 ---@field remove_trap_at fun(self: Map, arg2: Tripoint) @Simpler version of `set_trap_at` with `trap_null`.
@@ -1657,7 +1675,7 @@ function MaterialTypeRaw.new() end
 ---@field has_target fun(self: Mission): boolean @Returns true if the mission has a target.
 ---@field in_progress fun(self: Mission): boolean @Returns true if the mission is currently in progress.
 ---@field is_assigned fun(self: Mission): boolean @Returns true if the mission is currently assigned.
----@field is_complete fun(self: Mission, arg2: CharacterId): boolean @Returns true if the mission goal has been completed (optionally checked against given NPC ID).
+---@field is_complete fun(self: Mission, arg2: CharacterId?): boolean @Returns true if the mission goal has been completed (optionally checked against given NPC ID).
 ---@field mission_id fun(self: Mission): MissionTypeIdRaw @Returns the mission type ID of this mission.
 ---@field name fun(self: Mission): string @Returns the mission's name as a string.
 ---@field reserve_new fun(arg1: MissionTypeIdRaw, arg2: CharacterId): Mission @Reserves a new mission of the given type for the specified NPC. Returns the new mission.
@@ -1966,7 +1984,7 @@ function MutationCategoryTraitId.new() end
 ---@field can_move_to fun(self: Npc, arg2: Tripoint, arg3: boolean): boolean
 ---@field can_open_door fun(self: Npc, arg2: Tripoint, arg3: boolean): boolean
 ---@field complain fun(self: Npc): boolean
----@field complain_about fun(self: Npc, arg2: string, arg3: TimeDuration, arg4: string, arg5: boolean): boolean
+---@field complain_about fun(self: Npc, arg2: string, arg3: TimeDuration, arg4: string, arg5: boolean?): boolean
 ---@field current_ally fun(self: Npc): Creature
 ---@field current_target fun(self: Npc): Creature
 ---@field danger_assessment fun(self: Npc): number
@@ -2028,9 +2046,9 @@ function NpcPersonality.new() end
 ---@class OmtFindParams
 ---@field exclude_types (string, OtMatchType)[] @Vector of (terrain_type, match_type) pairs to exclude from search.
 ---@field existing_only boolean @If true, restricts search to existing overmaps only.
----@field explored boolean @If set, filters by terrain explored status (true = explored only, false = unexplored only).
----@field max_results integer @If set, limits the number of results returned.
----@field seen boolean @If set, filters by terrain seen status (true = seen only, false = unseen only).
+---@field explored boolean? @If set, filters by terrain explored status (true = explored only, false = unexplored only).
+---@field max_results integer? @If set, limits the number of results returned.
+---@field seen boolean? @If set, filters by terrain seen status (true = seen only, false = unseen only).
 ---@field types (string, OtMatchType)[] @Vector of (terrain_type, match_type) pairs to search for.
 ---@field add_exclude_type fun(self: OmtFindParams, arg2: string, arg3: OtMatchType) @Helper method to add a terrain type to exclude from search.
 ---@field add_type fun(self: OmtFindParams, arg2: string, arg3: OtMatchType) @Helper method to add a terrain type to search for.
@@ -2271,9 +2289,9 @@ function Spell.new() end
 ---@field id SpellTypeId
 ---@field level integer
 ---@field trigger_once_in integer @Used for enchantments; the spell's *chance* to trigger every turn.
----@field cast fun(self: SpellSimple, arg2: Creature, arg3: Tripoint, arg4: integer)
+---@field cast fun(self: SpellSimple, arg2: Creature, arg3: Tripoint, arg4: integer?)
 ---@field max_level fun(self: SpellSimple): integer @Returns the defined maximum level of this SpellSimple instance, if defined. Otherwise, returns 0.
----@field prompt_cast fun(arg1: SpellTypeId, arg2: Tripoint, arg3: integer): SpellSimple @Static function: Creates and immediately casts a SimpleSpell, then returns the new spell for potential reuse. If the given tripoint is the player's location, the spell will be locked to the player. (This does not necessarily cause friendly fire!) If an integer is specified, the spell will be cast at that level.
+---@field prompt_cast fun(arg1: SpellTypeId, arg2: Tripoint, arg3: integer?): SpellSimple @Static function: Creates and immediately casts a SimpleSpell, then returns the new spell for potential reuse. If the given tripoint is the player's location, the spell will be locked to the player. (This does not necessarily cause friendly fire!) If an integer is specified, the spell will be cast at that level.
 ---@field __tostring fun(self: SpellSimple): string
 SpellSimple = {}
 ---@return SpellSimple
@@ -2608,10 +2626,10 @@ const = {}
 ---@field ms_to_om fun(arg1: Tripoint): (Point,Tripoint)
 ---@field ms_to_omt fun(arg1: Tripoint): (Tripoint,Point)
 ---@field ms_to_sm fun(arg1: Tripoint): (Tripoint,Point)
----@field om_to_ms fun(arg1: Point, arg2: Tripoint): Tripoint
----@field omt_to_ms fun(arg1: Tripoint, arg2: Point): Tripoint
+---@field om_to_ms fun(arg1: Point, arg2: Tripoint?): Tripoint
+---@field omt_to_ms fun(arg1: Tripoint, arg2: Point?): Tripoint
 ---@field rl_dist fun(arg1: Tripoint, arg2: Tripoint): integer | fun(arg1: Point, arg2: Point): integer
----@field sm_to_ms fun(arg1: Tripoint, arg2: Point): Tripoint
+---@field sm_to_ms fun(arg1: Tripoint, arg2: Point?): Tripoint
 ---@field square_dist fun(arg1: Tripoint, arg2: Tripoint): integer | fun(arg1: Point, arg2: Point): integer
 ---@field trig_dist fun(arg1: Tripoint, arg2: Tripoint): number | fun(arg1: Point, arg2: Point): number
 coords = {}
@@ -2622,18 +2640,18 @@ coords = {}
 ---@field add_npc_follower fun(arg1: Npc)
 ---@field add_on_every_x_hook fun(arg1: TimeDuration, arg2: function)
 ---@field before_time_starts fun(): TimePoint
----@field choose_adjacent fun(arg1: string, arg2: boolean): Tripoint
----@field choose_direction fun(arg1: string, arg2: boolean): Tripoint
+---@field choose_adjacent fun(arg1: string, arg2: boolean?): Tripoint?
+---@field choose_direction fun(arg1: string, arg2: boolean?): Tripoint?
 ---@field create_item fun(arg1: ItypeId, arg2: integer): Detached<Item> @Spawns a new item. Same as Item::spawn 
 ---@field current_turn fun(): TimePoint
 ---@field get_avatar fun(): Avatar
----@field get_character_at fun(arg1: Tripoint, arg2: boolean): Character
----@field get_creature_at fun(arg1: Tripoint, arg2: boolean): Creature
+---@field get_character_at fun(arg1: Tripoint, arg2: boolean?): Character
+---@field get_creature_at fun(arg1: Tripoint, arg2: boolean?): Creature
 ---@field get_distribution_grid_tracker fun(): DistributionGridTracker
 ---@field get_map fun(): Map
----@field get_monster_at fun(arg1: Tripoint, arg2: boolean): Monster
----@field get_npc_at fun(arg1: Tripoint, arg2: boolean): Npc
----@field look_around fun(): Tripoint
+---@field get_monster_at fun(arg1: Tripoint, arg2: boolean?): Monster
+---@field get_npc_at fun(arg1: Tripoint, arg2: boolean?): Npc
+---@field look_around fun(): Tripoint?
 ---@field place_monster_around fun(arg1: MonsterTypeId, arg2: Tripoint, arg3: integer): Monster
 ---@field place_monster_at fun(arg1: MonsterTypeId, arg2: Tripoint): Monster
 ---@field place_player_local_at fun(arg1: Tripoint) @Teleports player to local coordinates within active map
@@ -2693,11 +2711,11 @@ locale = {}
 ---@class overmapbuffer
 ---@field check_ot fun(arg1: string, arg2: OtMatchType, arg3: Tripoint): boolean @Check if the terrain at the given position matches the type and match mode. Returns boolean.
 ---@field find_all fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint[] @Find all overmap terrain tiles matching the given parameters. Returns a vector of tripoints.
----@field find_closest fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint @Find the closest overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
----@field find_random fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint @Find a random overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
+---@field find_closest fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint? @Find the closest overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
+---@field find_random fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint? @Find a random overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
 ---@field is_explored fun(arg1: Tripoint): boolean @Check if the terrain at the given position has been explored by the player. Returns boolean.
 ---@field seen fun(arg1: Tripoint): boolean @Check if the terrain at the given position has been seen by the player. Returns boolean.
----@field set_seen fun(arg1: Tripoint, arg2: boolean) @Set the seen status of terrain at the given position.
+---@field set_seen fun(arg1: Tripoint, arg2: boolean?) @Set the seen status of terrain at the given position.
 ---@field ter fun(arg1: Tripoint): OterIntId @Get the overmap terrain type at the given position. Returns an oter_id.
 overmapbuffer = {}
 

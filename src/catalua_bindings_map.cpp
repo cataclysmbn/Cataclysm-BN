@@ -166,6 +166,17 @@ void cata::detail::reg_map( sol::state &lua )
             return items;
         } );
 
+        DOC( "Returns all points within a radius from the center point. `radiusz` defaults to 0." );
+        luna::set_fx( ut, "points_in_radius", []( const map & m, const tripoint & center,
+        int radius, sol::optional<int> radiusz ) -> std::vector<tripoint> {
+            std::vector<tripoint> points;
+            for( const auto pt : m.points_in_radius( center, radius, radiusz.value_or( 0 ) ) )
+            {
+                points.push_back( pt );
+            }
+            return points;
+        } );
+
         DOC( "Moves an item from one position to another, preserving all item state including contents." );
         luna::set_fx( ut, "move_item_to", []( map & m, const tripoint & from, item * it,
         const tripoint & to ) -> void {
@@ -196,6 +207,11 @@ void cata::detail::reg_map( sol::state &lua )
             return m.add_field( p, fid, intensity, age );
         } );
         luna::set_fx( ut, "remove_field_at", &map::remove_field );
+        luna::set_fx( ut, "get_field_name_at", []( map & m, const tripoint & p,
+        const field_type_id & fid ) -> std::string {
+            field_entry *fe = m.get_field( p, fid );
+            return fe ? fe->name() : std::string();
+        } );
         luna::set_fx( ut, "get_trap_at", []( map & m, const tripoint & p ) -> trap_id { return m.tr_at( p ).loadid; } );
         DOC( "Set a trap at a position on the map. It can also replace existing trap, even with `trap_null`." );
         luna::set_fx( ut, "set_trap_at", &map::trap_set );

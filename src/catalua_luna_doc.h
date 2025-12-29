@@ -96,6 +96,7 @@ struct quality;
 struct resistances;
 struct armor_portion_data;
 class vitamin;
+struct explosion_data;
 
 namespace units
 {
@@ -206,7 +207,7 @@ LUNA_VAL( common_ranged_data, "RangedData" );
 LUNA_VAL( resistances, "Resistances" );
 LUNA_VAL( armor_portion_data, "ArmorPortionData" );
 LUNA_VAL( effect, "Effect" );
-
+LUNA_VAL( explosion_data, "ExplosionData" );
 
 // Ids for in-game objects
 LUNA_ID( ammunition_type, "AmmunitionType" )

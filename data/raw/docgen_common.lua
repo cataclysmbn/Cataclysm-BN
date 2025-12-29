@@ -222,7 +222,7 @@ function map_cpp_type_to_lua(cpp_type, keep_cppval)
       clean_type = string.gsub(
         clean_type,
         "^Opt%((%S+)%)$",
-        function(k) return ("%s"):format(map_cpp_type_to_lua(k, keep_cppval)) end
+        function(k) return ("%s?"):format(map_cpp_type_to_lua(k, keep_cppval)) end
       )
     elseif string.match(clean_type, "^Pair%(%S+,%S+%)$") then
       clean_type = string.gsub(

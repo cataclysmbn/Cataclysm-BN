@@ -261,6 +261,13 @@ on_creature_melee_attacked = {}
 ---@field when TimePoint
 on_mapgen_postprocess = {}
 
+---@class OnExplodeParams
+---@field pos Tripoint
+---@field damage integer
+---@field radius integer
+---@field fire boolean
+on_explosion_start = {}
+
 ]]
 
   ---@diagnostic disable-next-line: undefined-global

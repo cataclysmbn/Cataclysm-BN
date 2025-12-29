@@ -24,7 +24,8 @@
       [ "SHOTGUNS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "install_time": "30 m",
     "dispersion_modifier": -100
@@ -115,7 +116,8 @@
       [ "SHOTGUNS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "install_time": "10 m",
     "flags": [ "WATERPROOF_GUN" ]

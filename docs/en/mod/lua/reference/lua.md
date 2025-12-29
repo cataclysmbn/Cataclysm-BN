@@ -866,7 +866,7 @@ No constructors.
 
 #### remove_worn {#sol::Character::remove_worn}
 
-🇲 Method --> <code>( [Item](#sol::Item) ) -> Detached<[Item](#sol::Item)></code>
+🇲 Method --> <code>( [Item](#sol::Item) ) -> Detached<[Item](#sol::Item)>?</code>
 
 > Attempts to remove the worn `<code>[Item](#sol::Item)</code>` from character.
 
@@ -1696,7 +1696,7 @@ No constructors.
 
 #### get_hp {#sol::Creature::get_hp}
 
-🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
+🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId)? ) -> integer</code>
 
 #### get_speed_bonus {#sol::Creature::get_speed_bonus}
 
@@ -1760,7 +1760,7 @@ No constructors.
 
 #### get_hp_max {#sol::Creature::get_hp_max}
 
-🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
+🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId)? ) -> integer</code>
 
 #### mod_part_hp_max {#sol::Creature::mod_part_hp_max}
 
@@ -1900,27 +1900,27 @@ No constructors.
 
 #### get_effect_dur {#sol::Creature::get_effect_dur}
 
-🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId) ) -> [TimeDuration](#sol::TimeDuration)</code>
+🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> [TimeDuration](#sol::TimeDuration)</code>
 
 #### get_effect_int {#sol::Creature::get_effect_int}
 
-🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId) ) -> integer</code>
+🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> integer</code>
 
 #### has_effect_with_flag {#sol::Creature::has_effect_with_flag}
 
-🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId), [BodyPartTypeId](#sol::BodyPartTypeId) ) -> boolean</code>
+🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> boolean</code>
 
 #### get_effect {#sol::Creature::get_effect}
 
-🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId) ) -> [Effect](#sol::Effect)</code>
+🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> [Effect](#sol::Effect)</code>
 
 #### has_effect {#sol::Creature::has_effect}
 
-🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId) ) -> boolean</code>
+🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> boolean</code>
 
 #### add_effect {#sol::Creature::add_effect}
 
-🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [TimeDuration](#sol::TimeDuration), [BodyPartTypeId](#sol::BodyPartTypeId), integer )</code>
+🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [TimeDuration](#sol::TimeDuration), [BodyPartTypeId](#sol::BodyPartTypeId)?, integer? )</code>
 
 > <code>[Effect](#sol::Effect)</code> type, duration, bodypart and intensity
 
@@ -1930,7 +1930,7 @@ No constructors.
 
 #### remove_effect {#sol::Creature::remove_effect}
 
-🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId) ) -> boolean</code>
+🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> boolean</code>
 
 #### remove_value {#sol::Creature::remove_value}
 
@@ -2416,6 +2416,42 @@ No constructors.
 
 🇲 Method --> <code>( ) -> integer</code>
 
+## ExplosionData {#sol::ExplosionData}
+
+### Bases {#sol::ExplosionData::@bases}
+
+No base classes.
+
+### Constructors {#sol::ExplosionData::@ctors}
+
+No constructors.
+
+### Members {#sol::ExplosionData::@members}
+
+#### damage {#sol::ExplosionData::damage}
+
+🇻 Variable --> <code>integer</code>
+
+> Damage dealt by the explosion
+
+#### fire {#sol::ExplosionData::fire}
+
+🇻 Variable --> <code>boolean</code>
+
+> Whether the explosion creates fire
+
+#### radius {#sol::ExplosionData::radius}
+
+🇻 Variable --> <code>number</code>
+
+> Radius of the explosion
+
+#### safe_range {#sol::ExplosionData::safe_range}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+> Returns the safe range of the explosion
+
 ## FactionId {#sol::FactionId}
 
 ### Bases {#sol::FactionId::@bases}
@@ -2792,7 +2828,7 @@ No constructors.
 
 #### force_stat_display {#sol::IslotAmmo::force_stat_display}
 
-🇻 Variable --> <code>boolean</code>
+🇻 Variable --> <code>boolean?</code>
 
 #### loudness {#sol::IslotAmmo::loudness}
 
@@ -2834,7 +2870,7 @@ No constructors.
 
 #### casing_id {#sol::IslotAmmo::casing_id}
 
-🇻 Variable --> <code>[ItypeId](#sol::ItypeId)</code>
+🇻 Variable --> <code>[ItypeId](#sol::ItypeId)?</code>
 
 > Type id of casings, if any
 
@@ -3698,7 +3734,7 @@ No constructors.
 
 #### linkage {#sol::IslotMagazine::linkage}
 
-🇻 Variable --> <code>[ItypeId](#sol::ItypeId)</code>
+🇻 Variable --> <code>[ItypeId](#sol::ItypeId)?</code>
 
 > For ammo belts one linkage (of given type) is dropped for each unit of ammo consumed
 
@@ -3890,7 +3926,7 @@ No constructors.
 
 #### revert_to {#sol::IslotTool::revert_to}
 
-🇻 Variable --> <code>[ItypeId](#sol::ItypeId)</code>
+🇻 Variable --> <code>[ItypeId](#sol::ItypeId)?</code>
 
 #### revert_msg {#sol::IslotTool::revert_msg}
 
@@ -4381,13 +4417,13 @@ No constructors.
 
 #### weight {#sol::Item::weight}
 
-🇲 Method --> <code>( boolean, boolean ) -> [Mass](#sol::Mass)</code>
+🇲 Method --> <code>( boolean?, boolean? ) -> [Mass](#sol::Mass)</code>
 
 > Weight of the item. The first `bool` is whether including contents, second `bool` is whether it is `integral_weight`.
 
 #### volume {#sol::Item::volume}
 
-🇲 Method --> <code>( boolean ) -> [Volume](#sol::Volume)</code>
+🇲 Method --> <code>( boolean? ) -> [Volume](#sol::Volume)</code>
 
 > <code>[Volume](#sol::Volume)</code> of the item. `bool` is whether it is `integral_volume`.
 
@@ -4756,7 +4792,7 @@ No constructors.
 
 #### explosion_data {#sol::ItypeRaw::explosion_data}
 
-🇻 Variable --> <code>CppVal&lt;explosion_data&gt;</code>
+🇻 Variable --> <code>[ExplosionData](#sol::ExplosionData)</code>
 
 #### integral_volume {#sol::ItypeRaw::integral_volume}
 
@@ -4772,7 +4808,7 @@ No constructors.
 
 #### default_container {#sol::ItypeRaw::default_container}
 
-🇻 Variable --> <code>[ItypeId](#sol::ItypeId)</code>
+🇻 Variable --> <code>[ItypeId](#sol::ItypeId)?</code>
 
 #### explode_in_fire {#sol::ItypeRaw::explode_in_fire}
 
@@ -5116,6 +5152,10 @@ No constructors.
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), integer ) -> integer</code>
 
+#### mod_field_age_at {#sol::Map::mod_field_age_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), [TimeDuration](#sol::TimeDuration) ) -> [TimeDuration](#sol::TimeDuration)</code>
+
 #### get_field_int_at {#sol::Map::get_field_int_at}
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) ) -> integer</code>
@@ -5132,13 +5172,13 @@ No constructors.
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [FurnIntId](#sol::FurnIntId)</code>
 
-#### mod_field_age_at {#sol::Map::mod_field_age_at}
+#### set_field_int_at {#sol::Map::set_field_int_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), [TimeDuration](#sol::TimeDuration) ) -> [TimeDuration](#sol::TimeDuration)</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), integer, boolean ) -> integer</code>
 
-#### set_field_age_at {#sol::Map::set_field_age_at}
+#### add_field_at {#sol::Map::add_field_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), [TimeDuration](#sol::TimeDuration), boolean ) -> [TimeDuration](#sol::TimeDuration)</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), integer, [TimeDuration](#sol::TimeDuration) ) -> boolean</code>
 
 #### set_trap_at {#sol::Map::set_trap_at}
 
@@ -5146,21 +5186,21 @@ No constructors.
 
 > Set a trap at a position on the map. It can also replace existing trap, even with `trap_null`.
 
-#### set_field_int_at {#sol::Map::set_field_int_at}
+#### set_field_age_at {#sol::Map::set_field_age_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), integer, boolean ) -> integer</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), [TimeDuration](#sol::TimeDuration), boolean ) -> [TimeDuration](#sol::TimeDuration)</code>
 
 #### get_trap_at {#sol::Map::get_trap_at}
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [TrapIntId](#sol::TrapIntId)</code>
 
-#### add_field_at {#sol::Map::add_field_at}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), integer, [TimeDuration](#sol::TimeDuration) ) -> boolean</code>
-
 #### remove_field_at {#sol::Map::remove_field_at}
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) )</code>
+
+#### get_field_name_at {#sol::Map::get_field_name_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) ) -> string</code>
 
 #### disarm_trap_at {#sol::Map::disarm_trap_at}
 
@@ -5186,9 +5226,13 @@ No constructors.
 
 #### create_corpse_at {#sol::Map::create_corpse_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [MonsterTypeId](#sol::MonsterTypeId), [TimePoint](#sol::TimePoint), string, integer )</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [MonsterTypeId](#sol::MonsterTypeId)?, [TimePoint](#sol::TimePoint)?, string?, integer? )</code>
 
 > Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `<code>[TimePoint](#sol::TimePoint)</code>` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag.
+
+#### has_items_at {#sol::Map::has_items_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
 
 #### get_map_size {#sol::Map::get_map_size}
 
@@ -5210,9 +5254,21 @@ No constructors.
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [TerIntId](#sol::TerIntId)</code>
 
-#### has_items_at {#sol::Map::has_items_at}
+#### remove_item_at {#sol::Map::remove_item_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [Item](#sol::Item) )</code>
+
+#### add_item {#sol::Map::add_item}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), Detached<[Item](#sol::Item)> ) -> Detached<[Item](#sol::Item)></code>
+
+> Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed.
+
+#### points_in_radius {#sol::Map::points_in_radius}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), integer, integer? ) -> [Tripoint](#sol::Tripoint)[]</code>
+
+> Returns all points within a radius from the center point. `radiusz` defaults to 0.
 
 #### detach_item_at {#sol::Map::detach_item_at}
 
@@ -5224,23 +5280,13 @@ No constructors.
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint), integer ) -> [MapStack](#sol::MapStack)[]</code>
 
-#### remove_item_at {#sol::Map::remove_item_at}
+#### clear_items_at {#sol::Map::clear_items_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [Item](#sol::Item) )</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) )</code>
 
 #### get_items_at {#sol::Map::get_items_at}
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [MapStack](#sol::MapStack)</code>
-
-#### add_item {#sol::Map::add_item}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), Detached<[Item](#sol::Item)> ) -> Detached<[Item](#sol::Item)></code>
-
-> Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed.
-
-#### clear_items_at {#sol::Map::clear_items_at}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint) )</code>
 
 #### remove_trap_at {#sol::Map::remove_trap_at}
 
@@ -5628,7 +5674,7 @@ No base classes.
 
 #### is_complete {#sol::Mission::is_complete}
 
-🇲 Method --> <code>( [CharacterId](#sol::CharacterId) ) -> boolean</code>
+🇲 Method --> <code>( [CharacterId](#sol::CharacterId)? ) -> boolean</code>
 
 > Returns true if the mission goal has been completed (optionally checked against given NPC ID).
 
@@ -6829,7 +6875,7 @@ No constructors.
 
 #### complain_about {#sol::Npc::complain_about}
 
-🇲 Method --> <code>( string, [TimeDuration](#sol::TimeDuration), string, boolean ) -> boolean</code>
+🇲 Method --> <code>( string, [TimeDuration](#sol::TimeDuration), string, boolean? ) -> boolean</code>
 
 #### evaluate_enemy {#sol::Npc::evaluate_enemy}
 
@@ -7032,13 +7078,13 @@ No base classes.
 
 #### max_results {#sol::OmtFindParams::max_results}
 
-🇻 Variable --> <code>integer</code>
+🇻 Variable --> <code>integer?</code>
 
 > If set, limits the number of results returned.
 
 #### explored {#sol::OmtFindParams::explored}
 
-🇻 Variable --> <code>boolean</code>
+🇻 Variable --> <code>boolean?</code>
 
 > If set, filters by terrain explored status (true = explored only, false = unexplored only).
 
@@ -7056,7 +7102,7 @@ No base classes.
 
 #### seen {#sol::OmtFindParams::seen}
 
-🇻 Variable --> <code>boolean</code>
+🇻 Variable --> <code>boolean?</code>
 
 > If set, filters by terrain seen status (true = seen only, false = unseen only).
 
@@ -7745,7 +7791,7 @@ No base classes.
 
 #### prompt_cast {#sol::SpellSimple::prompt_cast}
 
-🇫 Function --> <code>( [SpellTypeId](#sol::SpellTypeId), [Tripoint](#sol::Tripoint), integer ) -> [SpellSimple](#sol::SpellSimple)</code>
+🇫 Function --> <code>( [SpellTypeId](#sol::SpellTypeId), [Tripoint](#sol::Tripoint), integer? ) -> [SpellSimple](#sol::SpellSimple)</code>
 
 > Static function: Creates and immediately casts a SimpleSpell, then returns the new spell for potential reuse. If the given tripoint is the player's location, the spell will be locked to the player. (This does not necessarily cause friendly fire!) If an integer is specified, the spell will be cast at that level.
 
@@ -7757,7 +7803,7 @@ No base classes.
 
 #### cast {#sol::SpellSimple::cast}
 
-🇲 Method --> <code>( [Creature](#sol::Creature), [Tripoint](#sol::Tripoint), integer )</code>
+🇲 Method --> <code>( [Creature](#sol::Creature), [Tripoint](#sol::Tripoint), integer? )</code>
 
 ## SpellTypeId {#sol::SpellTypeId}
 
@@ -9331,7 +9377,7 @@ Methods for manipulating coord systems and calculating distance
 
 #### om_to_ms {#sol::nil::om_to_ms}
 
-🇫 Function --> <code>( [Point](#sol::Point), [Tripoint](#sol::Tripoint) ) -> [Tripoint](#sol::Tripoint)</code>
+🇫 Function --> <code>( [Point](#sol::Point), [Tripoint](#sol::Tripoint)? ) -> [Tripoint](#sol::Tripoint)</code>
 
 #### rl_dist {#sol::nil::rl_dist}
 
@@ -9345,7 +9391,7 @@ Methods for manipulating coord systems and calculating distance
 
 #### omt_to_ms {#sol::nil::omt_to_ms}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [Point](#sol::Point) ) -> [Tripoint](#sol::Tripoint)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [Point](#sol::Point)? ) -> [Tripoint](#sol::Tripoint)</code>
 
 #### ms_to_om {#sol::nil::ms_to_om}
 
@@ -9353,7 +9399,7 @@ Methods for manipulating coord systems and calculating distance
 
 #### sm_to_ms {#sol::nil::sm_to_ms}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [Point](#sol::Point) ) -> [Tripoint](#sol::Tripoint)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [Point](#sol::Point)? ) -> [Tripoint](#sol::Tripoint)</code>
 
 #### ms_to_omt {#sol::nil::ms_to_omt}
 
@@ -9376,11 +9422,11 @@ Global game methods
 
 #### get_character_at {#sol::nil::get_character_at}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean ) -> [Character](#sol::Character)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Character](#sol::Character)</code>
 
 #### get_npc_at {#sol::nil::get_npc_at}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean ) -> [Npc](#sol::Npc)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Npc](#sol::Npc)</code>
 
 #### place_monster_around {#sol::nil::place_monster_around}
 
@@ -9392,19 +9438,19 @@ Global game methods
 
 #### get_monster_at {#sol::nil::get_monster_at}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean ) -> [Monster](#sol::Monster)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Monster](#sol::Monster)</code>
 
 #### choose_adjacent {#sol::nil::choose_adjacent}
 
-🇫 Function --> <code>( string, boolean ) -> [Tripoint](#sol::Tripoint)</code>
+🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
 
 #### look_around {#sol::nil::look_around}
 
-🇫 Function --> <code>( ) -> [Tripoint](#sol::Tripoint)</code>
+🇫 Function --> <code>( ) -> [Tripoint](#sol::Tripoint)?</code>
 
 #### choose_direction {#sol::nil::choose_direction}
 
-🇫 Function --> <code>( string, boolean ) -> [Tripoint](#sol::Tripoint)</code>
+🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
 
 #### play_ambient_variant_sound {#sol::nil::play_ambient_variant_sound}
 
@@ -9421,7 +9467,7 @@ Global game methods
 
 #### get_creature_at {#sol::nil::get_creature_at}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean ) -> [Creature](#sol::Creature)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Creature](#sol::Creature)</code>
 
 #### add_on_every_x_hook {#sol::nil::add_on_every_x_hook}
 
@@ -9788,7 +9834,7 @@ Global overmap buffer interface for finding and inspecting overmap terrain.
 
 #### set_seen {#sol::nil::set_seen}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean )</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? )</code>
 
 > Set the seen status of terrain at the given position.
 
@@ -9800,13 +9846,13 @@ Global overmap buffer interface for finding and inspecting overmap terrain.
 
 #### find_closest {#sol::nil::find_closest}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [OmtFindParams](#sol::OmtFindParams) ) -> [Tripoint](#sol::Tripoint)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [OmtFindParams](#sol::OmtFindParams) ) -> [Tripoint](#sol::Tripoint)?</code>
 
 > Find the closest overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
 
 #### find_random {#sol::nil::find_random}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [OmtFindParams](#sol::OmtFindParams) ) -> [Tripoint](#sol::Tripoint)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [OmtFindParams](#sol::OmtFindParams) ) -> [Tripoint](#sol::Tripoint)?</code>
 
 > Find a random overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
 

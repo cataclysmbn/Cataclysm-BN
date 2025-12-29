@@ -347,5 +347,37 @@
       { "count": [ 4, 6 ], "item": "scrap" }
     ],
     "damage_reduction": { "all": 25 }
+  },
+  {
+    "id": "turret_autoloader",
+    "type": "vehicle_part",
+    "name": { "str": "turret autoloader" },
+    "description": "An automated ammunition feeding system installed alongside a vehicle turret. It searches all vehicle cargo for compatible ammunition and reloads the turret. Must be installed on the same tile as a turret. The mechanical feeding system requires electrical power to operate.",
+    "item": "turret_autoloader",
+    "durability": 120,
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 30 },
+    "color": "light_gray",
+    "symbol": "=",
+    "broken_color": "dark_gray",
+    "broken_symbol": "x",
+    "size": "10 L",
+    "epower": -50,
+    "flags": [ "COVERED", "ENABLED_DRAINS_EPOWER", "AUTOLOADER" ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 5 ], [ "electronics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 6 ] ],
+        "time": "45 m",
+        "using": [ [ "welding_standard", 4 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 3, 5 ] },
+      { "item": "steel_chunk", "count": [ 4, 6 ] },
+      { "item": "scrap", "count": [ 6, 10 ] },
+      { "item": "cable", "charges": [ 10, 20 ] }
+    ]
   }
 ]
