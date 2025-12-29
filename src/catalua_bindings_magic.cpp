@@ -234,17 +234,14 @@ void cata::detail::reg_known_magic( sol::state &lua )
         luna::set_fx( ut, "knows_spell",
                       sol::overload(
         []( const UT_CLASS & km, const spell_id & sp ) -> bool { return km.knows_spell( sp ); },
-        []( const UT_CLASS & km ) -> bool { return km.knows_spell(); }
-                      )
-                    );
+        []( const UT_CLASS & km ) -> bool { return km.knows_spell(); } ) );
 
         DOC( "Learn a new spell. Requires a Character reference and spell_id. Optional force(boolean) parameter bypasses restrictions." );
         luna::set_fx( ut, "learn_spell",
                       []( UT_CLASS & km, const spell_id & sp, Character & guy, sol::optional<bool> force )
         {
             km.learn_spell( sp, guy, force.value_or( false ) );
-        }
-                    );
+        } );
 
         DOC( "Forget a known spell by spell_id." );
         SET_FX_T( forget_spell, void( const spell_id & ) );
@@ -281,10 +278,7 @@ void cata::detail::reg_known_magic( sol::state &lua )
 
         DOC( "Calculate the time in moves required for the character to memorize/learn a spell." );
         luna::set_fx( ut, "time_to_learn_spell",
-        []( const UT_CLASS & km, const Character & guy, const spell_id & sp ) -> int {
-            return km.time_to_learn_spell( guy, sp );
-        }
-                    );
+        []( const UT_CLASS & km, const Character & guy, const spell_id & sp ) -> int { return km.time_to_learn_spell( guy, sp ); } );
 
         DOC( "Whether casting ignores all distractions. Can be read and written." );
         SET_MEMB( casting_ignore );
