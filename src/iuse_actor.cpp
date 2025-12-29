@@ -5507,13 +5507,19 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
 
     uilist specimen_menu;
     specimen_menu.text = _( "Select specimen sample:" );
+    bool has_complete_sample = false;
     for( size_t z = 0; z < genome_drives.size(); z++ ) {
         const int progress = genome_drives[z]->get_var( "specimen_sample_progress", 0 );
         const int size = genome_drives[z]->get_var( "specimen_size", 0 );
         if( progress >= size ) {
+            has_complete_sample = true;
             specimen_menu.addentry( z, true, MENU_AUTOASSIGN, string_format( "%s",
                                     genome_drives[z]->display_name() ) );
         }
+    }
+    if( !has_complete_sample ) {
+        popup( "You have no valid genome drives." );
+        return 0;
     }
     specimen_menu.query();
     const int choice = specimen_menu.ret;

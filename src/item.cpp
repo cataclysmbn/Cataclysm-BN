@@ -5030,7 +5030,14 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
 
 
     if( has_var( "specimen_sample" ) ) {
-        tagtext += string_format( " (%s)", get_var( "specimen_name" ) );
+        const std::string specimen_name = get_var( "specimen_name" );
+        const int progress = get_var( "specimen_sample_progress", 0 );
+        const int size = get_var( "specimen_size", 0 );
+        if( size > 0 && progress < size ) {
+            tagtext += string_format( " (%s [%d/%d])", specimen_name, progress, size );
+        } else {
+            tagtext += string_format( " (%s)", specimen_name );
+        }
     }
 
     if( has_var( "place_monster_override" ) ) {
