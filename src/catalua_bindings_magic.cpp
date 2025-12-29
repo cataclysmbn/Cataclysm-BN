@@ -227,9 +227,7 @@ void cata::detail::reg_known_magic( sol::state &lua )
         luna::new_usertype<UT_CLASS>(
             lua,
             luna::no_bases,
-            luna::constructors <
-            UT_CLASS()
-            > ()
+            luna::no_constructor
         );
 
         DOC( "Check if the character knows a specific spell by spell_id." );

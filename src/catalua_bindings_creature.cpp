@@ -20,6 +20,7 @@
 #include "flag.h"
 #include "flag_trait.h"
 #include "inventory.h"
+#include "magic.h"
 #include "map.h"
 #include "monfaction.h"
 #include "monster.h"
@@ -377,6 +378,12 @@ void cata::detail::reg_character( sol::state &lua )
         SET_MEMB( follower_ids );
 
         SET_MEMB( mutation_category_level );
+
+        // Magic system
+        DOC( "Access the character's spellbook and mana pool." );
+        luna::set_fx( ut, "get_magic", []( UT_CLASS & c ) -> known_magic& {
+            return *c.magic;
+        } );
 
         // Methods
         SET_FX_T( getID, character_id() const );
