@@ -925,8 +925,8 @@ void show_bionics_ui( Character &who )
                     continue;
                 } else {
                     popup( _( "You can not activate %s!\n"
-                              "To read a description of %s, press '%s'" ), bio_data.name,
-                           bio_data.name, ctxt.get_desc( "TOGGLE_EXAMINE" ) );
+                              "To read a description of %s, press '%s', then '%c'." ), bio_data.name,
+                           bio_data.name, ctxt.get_desc( "TOGGLE_EXAMINE" ), tmp->invlet );
                 }
             } else if( menu_mode == EXAMINING ) {
                 // Describing bionics, allow user to jump to description key

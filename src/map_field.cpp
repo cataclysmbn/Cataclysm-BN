@@ -56,7 +56,6 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
-#include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
@@ -1577,10 +1576,6 @@ void map::creature_in_field( Creature &critter )
                 if( const optional_vpart_position vp = veh_at( u->pos() ) ) {
                     if( vp->is_inside() ) {
                         inside_vehicle = true;
-                    }
-                    if( vp->part_with_feature( VPFLAG_NOFIELDS, true ) ) {
-                        // Same as just skipping each time in the loop below
-                        return;
                     }
                 }
             }

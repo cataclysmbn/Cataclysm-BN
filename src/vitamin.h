@@ -7,14 +7,13 @@
 #include <vector>
 
 #include "calendar.h"
-#include "catalua_type_operators.h"
 #include "translations.h"
 #include "type_id.h"
 
 class JsonObject;
 template <typename T> struct enum_traits;
 
-enum vitamin_type : int {
+enum vitamin_type {
     VITAMIN,
     TOXIN,
     DRUG,
@@ -107,8 +106,6 @@ class vitamin
         std::vector<std::pair<int, int>> disease_;
         std::vector<std::pair<int, int>> disease_excess_;
         std::set<std::string> flags_;
-    public:
-        LUA_TYPE_OPS( vitamin, id_ );
 };
 
 

@@ -223,7 +223,7 @@
   {
     "id": "uncovered_wagon",
     "type": "vehicle",
-    "name": "Uncovered Wagon",
+    "name": "Wagon",
     "blueprint": [
       [ "H H" ],
       [ "###" ],
@@ -236,7 +236,6 @@
       { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "wood box" ] },
       { "x": 0, "y": -1, "parts": [ "frame_wood_cross", "wood box" ] },
       { "x": 1, "y": 0, "parts": [ "frame_wood_cross", "seat_wood", "reins_tackle" ] },
-      { "x": 1, "y": 0, "part": "foot_pedals" },
       { "x": 1, "y": 1, "parts": [ "frame_wood_cross", "seat_wood", "wheel_wood_b" ] },
       { "x": 1, "y": -1, "parts": [ "frame_wood_cross", "seat_wood", "wheel_wood_b" ] },
       { "x": 2, "y": 1, "part": "yoke_harness" },
@@ -247,47 +246,6 @@
       { "x": -2, "y": 0, "parts": [ "frame_wood_cross", "wooden_aisle_vertical" ] },
       { "x": -2, "y": 1, "parts": [ "frame_wood_cross", "wood box", "wheel_wood_b" ] },
       { "x": -2, "y": -1, "parts": [ "frame_wood_cross", "wood box", "wheel_wood_b" ] }
-    ]
-  },
-  {
-    "id": "covered_wagon",
-    "type": "vehicle",
-    "name": "Covered Wagon",
-    "blueprint": [
-      [ "H H" ],
-      [ "###" ],
-      [ "oHo" ],
-      [ "oHo" ],
-      [ "oHo" ]
-    ],
-    "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "wooden_aisle_vertical" ] },
-      { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "wood box" ] },
-      { "x": 0, "y": -1, "parts": [ "frame_wood_cross", "wood box" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_wood_cross", "seat_wood", "reins_tackle" ] },
-      { "x": 1, "y": 1, "parts": [ "frame_wood_cross", "seat_wood", "wheel_wood_b" ] },
-      { "x": 1, "y": -1, "parts": [ "frame_wood_cross", "seat_wood", "wheel_wood_b" ] },
-      { "x": 2, "y": 1, "part": "yoke_harness" },
-      { "x": 2, "y": -1, "part": "yoke_harness" },
-      { "x": -1, "y": 0, "parts": [ "frame_wood_cross", "wooden_aisle_vertical" ] },
-      { "x": -1, "y": 1, "parts": [ "frame_wood_cross", "wood box" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_wood_cross", "wood box" ] },
-      { "x": -2, "y": 0, "parts": [ "frame_wood_cross", "wooden_aisle_vertical" ] },
-      { "x": -2, "y": 1, "parts": [ "frame_wood_cross", "wood box", "wheel_wood_b" ] },
-      { "x": -2, "y": -1, "parts": [ "frame_wood_cross", "wood box", "wheel_wood_b" ] },
-      { "x": 1, "y": 1, "part": "roof_cloth" },
-      { "x": 0, "y": 1, "part": "roof_cloth" },
-      { "x": -1, "y": 1, "part": "roof_cloth" },
-      { "x": -2, "y": 1, "part": "roof_cloth" },
-      { "x": -2, "y": 0, "part": "roof_cloth" },
-      { "x": -2, "y": -1, "part": "roof_cloth" },
-      { "x": -1, "y": -1, "part": "roof_cloth" },
-      { "x": -1, "y": 0, "part": "roof_cloth" },
-      { "x": 0, "y": 0, "part": "roof_cloth" },
-      { "x": 1, "y": 0, "part": "roof_cloth" },
-      { "x": 1, "y": -1, "part": "roof_cloth" },
-      { "x": 0, "y": -1, "part": "roof_cloth" },
-      { "x": 1, "y": 0, "part": "foot_pedals" }
     ]
   }
 ]

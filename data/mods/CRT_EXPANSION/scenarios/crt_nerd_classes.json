@@ -1,0 +1,131 @@
+[
+  {
+    "type": "profession",
+    "id": "crt_tech",
+    "name": "C.R.I.T. Technician",
+    "description": "You were the team's electronics nerd.  A technician trained to operate all the new laser equipment.  You were left behind by you team as repaired a turret. Forced to flee, will you have what it takes to survive or will you join the horde to haunt them for their cardinal sin?",
+    "points": 4,
+    "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
+    "skills": [
+      { "level": 1, "name": "gun" },
+      { "level": 1, "name": "pistol" },
+      { "level": 2, "name": "computer" },
+      { "level": 4, "name": "fabrication" },
+      { "level": 2, "name": "electronics" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "crt_helmet",
+          "crt_helmet_liner",
+          "crt_jacket",
+          "crt_sarmor",
+          "crt_pants",
+          "crt_gloves",
+          "crt_gloves_liner",
+          "crt_canteen",
+          "crt_med_kit",
+          "crt_legrig",
+          "socks",
+          "crt_la_boots"
+        ],
+        "entries": [
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "crt_solarpack", "contents-item": [ "crt_laser_pistol_brk", "knife_crt" ] },
+          { "item": "sleeping_bag_roll", "custom-flags": [ "no_auto_equip" ] }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "crt_medic",
+    "name": "C.R.I.T. Combat Medic",
+    "description": "You were the team nerd.  A combat medic taught on how to engage strange anomalies.  However, your main focus was  keeping your squadmates in one piece.  For weeks, you slogged through hell and back and ensured that everyone made it.  Caught in between a tide of the undead and the crossfire of apparently rogue government robots, you were left stranded as a distraction.  Forced to flee, will you have what it takes to survive or will you join the horde to haunt them for their cardinal sin?",
+    "points": 4,
+    "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
+    "skills": [
+      { "level": 1, "name": "gun" },
+      { "level": 1, "name": "pistol" },
+      { "level": 3, "name": "firstaid" },
+      { "level": 2, "name": "speech" },
+      { "level": 1, "name": "survival" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "helmet_army",
+          "crt_helmet_liner",
+          "crt_aarmor",
+          "gloves_tactical",
+          "crt_gloves_liner",
+          "crt_canteen",
+          "crt_med_kit",
+          "crt_legrig",
+          "socks",
+          "mre_veggy_box",
+          "crt_la_boots",
+          "two_way_radio",
+          "1st_aid",
+          "bandages"
+        ],
+        "entries": [
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "sleeping_bag_roll", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "crt_solarpack", "contents-item": [ "crt_laser_pistol_brk", "knife_crt" ] }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "crt_engineer",
+    "name": "C.R.I.T. Engineer",
+    "description": "You were scheduled to fix the several of the lab facilities in New England and show other researchers the new weapons you were working on.  When the Cataclysm broke out, it made it so testing was easier to do, but then again nothing seems to making that much sense.  Time to bug-out!",
+    "traits": [ "MARTIAL_CRT" ],
+    "points": 12,
+    "skills": [
+      { "level": 5, "name": "electronics" },
+      { "level": 5, "name": "computer" },
+      { "level": 5, "name": "fabrication" },
+      { "level": 1, "name": "melee" },
+      { "level": 1, "name": "gun" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "rucksack",
+          "ds_armor",
+          "ds_monitor",
+          "army_top",
+          "crt_rec_gloves",
+          "crt_canteen",
+          "crt_belt",
+          "socks",
+          "ds_plasma_cutter",
+          "ds_rivet_gun",
+          "toolbox",
+          "mre_veggy_box",
+          "lighter",
+          "UPS_off",
+          "id_military",
+          "id_science"
+        ],
+        "entries": [
+          { "item": "water_clean", "container-item": "canteen" },
+          { "item": "plasma", "charges": 13 },
+          { "item": "nail", "charges": 75 }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  }
+]

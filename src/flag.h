@@ -104,8 +104,6 @@ extern const flag_id flag_EFFECT_HEAT_IMMUNE;
 extern const flag_id flag_EFFECT_IMPEDING;
 extern const flag_id flag_EFFECT_INVISIBLE;
 extern const flag_id flag_EFFECT_LIGHT_IMMUNE;
-extern const flag_id flag_EFFECT_LUA_ON_ADDED;
-extern const flag_id flag_EFFECT_LUA_ON_TICK;
 extern const flag_id flag_EFFECT_NIGHT_VISION;
 extern const flag_id flag_EFFECT_PSI_IMMUNE;
 extern const flag_id flag_EFFECT_STAB_IMMUNE;

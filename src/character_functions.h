@@ -38,9 +38,6 @@ bool can_noclip( const Character &ch );
 
 bool can_fly( Character &ch );
 
-auto is_driving( const Character &p ) -> bool;
-
-
 /** Checks for trait interactions that affect both get_book_fun_for and is_fun_to_read */
 bool is_book_morale_boosted( const Character &ch, const item &book );
 

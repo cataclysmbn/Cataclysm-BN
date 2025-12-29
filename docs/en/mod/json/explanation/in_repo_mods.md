@@ -23,7 +23,7 @@ The benefits of having mods in the repository include:
 - The ability to use the BN issue tracker to report problems, as well as manage pull requests for
   adding to or fixing mods in the repository
 - Mods in the BN repository that demonstrate usage of a game feature which exists only for mods
-  (i.e. not used by the core BN game itself) help ensure that feature stays present in the game.
+  (i.e. not used by the core DDA game itself) help ensure that feature stays present in the game.
 
 There are however things that might be expected but are not guaranteed:
 

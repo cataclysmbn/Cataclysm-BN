@@ -8,7 +8,6 @@
     "capacity": "500 kJ",
     "learned_spells": [ [ "overcharge_eyes", 4 ] ],
     "enchantments": [ "ench_bio_sneeze_beam" ],
-    "points": 4,
     "flags": [ "BIONIC_SHOCKPROOF" ]
   }
 ]

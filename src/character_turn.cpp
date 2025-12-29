@@ -552,20 +552,6 @@ void Character::process_one_effect( effect &it, bool is_new )
     }
 
     // Speed and stats are handled in recalc_speed_bonus and reset_stats respectively
-
-    if( is_new && it.has_flag( flag_EFFECT_LUA_ON_ADDED ) ) {
-        cata::run_hooks( "on_character_effect_added", [ &, this ]( auto & params ) {
-            params["char"] = this;
-            params["effect"] = &it;
-        } );
-    }
-
-    if( it.has_flag( flag_EFFECT_LUA_ON_TICK ) ) {
-        cata::run_hooks( "on_character_effect", [ &, this ]( auto & params ) {
-            params["char"] = this;
-            params["effect"] = &it;
-        } );
-    }
 }
 
 void Character::process_effects_internal()
@@ -917,7 +903,6 @@ void Character::process_items()
     }
     if( update_required ) {
         reset_encumbrance();
-        set_check_encumbrance( false );
     }
     if( has_active_bionic( bionic_id( "bio_ups" ) ) ) {
         ch_UPS += std::min( units::to_kilojoule( get_power_level() ), 10 );

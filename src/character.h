@@ -299,8 +299,6 @@ class Character : public Creature, public location_visitable<Character>
 
         /** Returns true if the character should be dead */
         auto is_dead_state() const -> bool override;
-        /** Invalidates the cached dead state, forcing recomputation on next is_dead_state() call */
-        void reset_cached_dead_state();
 
     protected:
         mutable std::optional<bool> cached_dead_state;
@@ -796,8 +794,6 @@ class Character : public Creature, public location_visitable<Character>
 
         /** Toggles a trait on the player and in their mutation list */
         void toggle_trait( const trait_id & );
-        /** Toggles a bionic on the player */
-        void toggle_bionic( const bionic_id & );
         /** Add or removes a mutation on the player, but does not trigger mutation loss/gain effects. */
         void set_mutation( const trait_id & );
         void unset_mutation( const trait_id & );
@@ -1577,10 +1573,6 @@ class Character : public Creature, public location_visitable<Character>
         const item *item_worn_with_id( const itype_id &item_id,
                                        const bodypart_id &bp = bodypart_str_id::NULL_ID() ) const;
 
-        struct overlay_entry {
-            std::string id;
-            std::variant<std::monostate, const effect *, const item *, const mutation *, const bionic *> entry;
-        };
         // drawing related stuff
         /**
          * Returns a list of the IDs of overlays on this character,
@@ -1588,7 +1580,7 @@ class Character : public Creature, public location_visitable<Character>
          *
          * Only required for rendering.
          */
-        std::vector<overlay_entry> get_overlay_ids() const;
+        std::vector<std::string> get_overlay_ids() const;
 
         // --------------- Skill Stuff ---------------
         int get_skill_level( const skill_id &ident ) const;
@@ -1716,11 +1708,6 @@ class Character : public Creature, public location_visitable<Character>
         std::string name; // Pre-cataclysm name, invariable
         bool male = true;
 
-        // Threshold category if crossed
-        mutation_category_id thresh_category = mutation_category_id::NULL_ID();
-        // Threshold tier reached
-        unsigned short thresh_tier = 0;
-
         location_vector<item> worn;
         // Means player sit inside vehicle on the tile he is now
         bool in_vehicle = false;
@@ -1788,7 +1775,7 @@ class Character : public Creature, public location_visitable<Character>
         const item *get_item_with_id( const itype_id &item_id, bool need_charges = false ) const;
 
         // Adds item(s) to inventory
-        item &add_item_with_id( const itype_id &itype, int count = 1 );
+        void add_item_with_id( const itype_id &itype, int count = 1 );
 
         // Has a weapon, inventory item or worn item with id
         bool has_item_with_id( const itype_id &item_id, bool need_charges = false ) const;

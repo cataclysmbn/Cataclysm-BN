@@ -21,5 +21,3 @@ scripts:
 
 lua:
   - "**/*.lua"
-  - src/catalua*.cpp
-  - src/catalua*.h

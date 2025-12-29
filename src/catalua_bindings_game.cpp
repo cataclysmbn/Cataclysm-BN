@@ -62,10 +62,7 @@ void cata::detail::reg_game_api( sol::state &lua )
         hooks.push_back( on_every_x_hooks{ interval, vec } );
     } );
 
-    DOC( "Spawns a new item. Same as Item::spawn " );
-    luna::set_fx( lib, "create_item", []( const itype_id & itype, int count ) -> detached_ptr<item> {
-        return item::spawn( itype, calendar::turn, count );
-    } );
+    luna::set_fx( lib, "create_item", []( const itype_id & itype, int count ) -> std::unique_ptr<item> { return std::make_unique<item>( itype, calendar::turn, count ); } );
 
     luna::set_fx( lib, "get_creature_at",
                   []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> Creature * { return g->critter_at<Creature>( p, allow_hallucination.value_or( false ) ); } );

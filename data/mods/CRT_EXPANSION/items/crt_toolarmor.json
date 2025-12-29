@@ -358,34 +358,5 @@
     },
     "armor_data": { "covers": [ "leg_either" ], "coverage": 5, "encumbrance": 2, "material_thickness": 2 },
     "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
-  },
-  {
-    "id": "crt_good_med_kit",
-    "type": "TOOL_ARMOR",
-    "looks_like": "1st_aid",
-    "name": "Advanced C.R.I.T. med kit",
-    "description": "C.R.I.T. special-issue med kit designed for repeated use. Uses photosynthesis to slowly regenerate the integrated antiseptic based on cattail jelly.",
-    "weight": "500 g",
-    "volume": "750 ml",
-    "price": "2500 USD",
-    "price_postapoc": "250 USD",
-    "to_hit": -1,
-    "bashing": 2,
-    "material": [ "superalloy", "ceramic" ],
-    "symbol": ";",
-    "color": "green",
-    "initial_charges": 0,
-    "max_charges": 42,
-    "charges_per_use": 1,
-    "relic_data": { "recharge_scheme": [ { "type": "solar", "interval": "2 h", "rate": 1 } ] },
-    "use_action": {
-      "type": "heal",
-      "disinfectant_power": 3,
-      "bite": 0.5,
-      "move_cost": 100,
-      "effects": [ { "id": "pkill1", "duration": 720 } ]
-    },
-    "armor_data": { "covers": [ "leg_either" ], "coverage": 5, "encumbrance": 2, "material_thickness": 2 },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
   }
 ]

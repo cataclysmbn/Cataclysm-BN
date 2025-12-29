@@ -188,10 +188,14 @@ class wish_mutate_callback: public uilist_callback
                     }
                 }
 
-                if( mdata.threshold_tier != 0 ) {
+                if( !mdata.threshreq.empty() ) {
                     line2++;
-                    mvwprintz( menu->window, point( startx, line2 ), c_light_gray, _( "Threshold tier: %d" ),
-                               mdata.threshold_tier );
+                    mvwprintz( menu->window, point( startx, line2 ), c_light_gray, _( "Thresholds required:" ) );
+                    for( const trait_id &j : mdata.threshreq ) {
+                        mvwprintz( menu->window, point( startx + 21, line2 ), mcolor( j ),
+                                   mutation_branch::get_name( j ) );
+                        line2++;
+                    }
                 }
 
                 if( !mdata.cancels.empty() ) {
@@ -538,9 +542,8 @@ class wish_monster_callback: public uilist_callback
             if( valid_entnum ) {
                 tmp->print_info( w_info, 2, 5, 1 );
 
-                std::string header = string_format( "#%d: %s (%d)%s%s", entnum, tmp->type->nname(),
-                                                    group, friendly ? _( " (friendly)" ) : "",
-                                                    hallucination ? _( " (hallucination)" ) : "" );
+                std::string header = string_format( "#%d: %s (%d)%s", entnum, tmp->type->nname(),
+                                                    group, hallucination ? _( " (hallucination)" ) : "" );
                 mvwprintz( w_info, point( ( getmaxx( w_info ) - utf8_width( header ) ) / 2, 0 ), c_cyan, header );
             }
 

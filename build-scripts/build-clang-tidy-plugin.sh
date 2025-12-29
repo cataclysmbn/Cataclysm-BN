@@ -19,8 +19,6 @@ cmake \
   -DBACKTRACE=ON \
   -DCMAKE_C_COMPILER=/usr/bin/clang \
   -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
-  -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-  -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
   -DLLVM_ROOT=$(llvm-config --prefix) \
   -DLLVM_DIR=$(llvm-config --cmakedir) \
   -DCMAKE_PREFIX_PATH=$(llvm-config --prefix) \

@@ -15,21 +15,6 @@
     "components": [ [ [ "sheet_metal_small", 1 ] ] ]
   },
   {
-    "result": "USAS10mag",
-    "type": "recipe",
-    "category": "CC_WEAPON",
-    "subcategory": "CSC_WEAPON_MAGAZINES",
-    "autolearn": false,
-    "skill_used": "fabrication",
-    "book_learn": [ [ "mag_guns", 5 ] ],
-    "difficulty": 5,
-    "time": "120 m",
-    "reversible": true,
-    "decomp_learn": 3,
-    "using": [ [ "magazine_standard", 5 ] ],
-    "components": [ [ [ "scrap", 10 ] ], [ [ "plastic_chunk", 5 ] ] ]
-  },
-  {
     "result": "762x39_clip",
     "type": "recipe",
     "category": "CC_WEAPON",

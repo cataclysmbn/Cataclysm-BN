@@ -2740,8 +2740,7 @@
     "material": "plastic",
     "weight": "6 g",
     "volume": "5 ml",
-    "to_hit": -3,
-    "flags": [ "MISSION_ITEM" ]
+    "to_hit": -3
   },
   {
     "id": "gasdiscount_silver",

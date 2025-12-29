@@ -421,7 +421,6 @@
       [ "vehicle_controls", 3 ],
       [ "horn_car", 10 ],
       [ "horn_big", 8 ],
-      [ "horn_ship", 1 ],
       [ "horn_bicycle", 8 ],
       [ "v8_combustion", 10 ],
       [ "weldrig", 1 ],

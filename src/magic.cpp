@@ -98,7 +98,6 @@ std::string enum_to_string<spell_flag>( spell_flag data )
         case spell_flag::CONCENTRATE: return "CONCENTRATE";
         case spell_flag::RANDOM_AOE: return "RANDOM_AOE";
         case spell_flag::RANDOM_DAMAGE: return "RANDOM_DAMAGE";
-        case spell_flag::DIVIDE_DAMAGE: return "DIVIDE_DAMAGE";
         case spell_flag::RANDOM_DURATION: return "RANDOM_DURATION";
         case spell_flag::RANDOM_TARGET: return "RANDOM_TARGET";
         case spell_flag::MUTATE_TRAIT: return "MUTATE_TRAIT";
@@ -597,7 +596,7 @@ std::string spell::damage_string( const Character &guy ) const
             } else if( !type->melee_dam.empty() ) {
                 // Don't bother trying to display each individual bit of damage
                 // Important part is that the user knows they'll get out more damage than it says
-                return string_format( "%d + melee dam", dmg );
+                return string_format( "%d + relevant melee damage", dmg );
             }
             return string_format( "%d", dmg );
         } else {
@@ -1912,9 +1911,6 @@ static std::string enumerate_spell_data( const spell &sp )
     }
     if( sp.has_flag( spell_flag::ADD_MELEE_DAM ) ) {
         spell_data.emplace_back( _( "can be augmented by melee weapon damage" ) );
-    }
-    if( sp.has_flag( spell_flag::DIVIDE_DAMAGE ) ) {
-        spell_data.emplace_back( _( "divides damage evenly among its targets" ) );
     }
     if( !sp.type->melee_dam.empty() ) {
         std::string damage_names;

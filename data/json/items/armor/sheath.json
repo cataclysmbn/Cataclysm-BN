@@ -81,7 +81,7 @@
       "draw_cost": 150,
       "flags": [ "SHEATH_KNIFE" ]
     },
-    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY", "ALLOWS_HOOVES" ]
+    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY" ]
   },
   {
     "id": "wristsheath",

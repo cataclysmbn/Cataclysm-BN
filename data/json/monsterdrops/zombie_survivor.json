@@ -103,7 +103,6 @@
     "type": "item_group",
     "items": [
       [ "bat_metal", 5 ],
-      [ "bat_metal_bolted", 2 ],
       [ "bwirebat", 20 ],
       [ "crowbar", 5 ],
       [ "homewrecker", 5 ],

@@ -2302,15 +2302,6 @@
     "components": [ [ [ "e_scrap", 4 ] ], [ [ "amplifier", 2 ] ], [ [ "scrap", 4 ] ] ]
   },
   {
-    "result": "horn_ship",
-    "type": "uncraft",
-    "skill_used": "electronics",
-    "difficulty": 4,
-    "time": "15 m",
-    "qualities": [ { "id": "SCREW", "level": 2 } ],
-    "components": [ [ [ "e_scrap", 6 ] ], [ [ "amplifier", 4 ] ], [ [ "scrap", 8 ] ] ]
-  },
-  {
     "result": "horn_car",
     "type": "uncraft",
     "skill_used": "electronics",

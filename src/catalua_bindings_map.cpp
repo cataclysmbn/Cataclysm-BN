@@ -6,9 +6,7 @@
 #include "distribution_grid.h"
 #include "field.h"
 #include "map.h"
-#include "map_iterator.h"
 #include "trap.h"
-#include "detached_ptr.h"
 
 namespace sol
 {
@@ -17,9 +15,6 @@ struct is_container<item_stack> : std::false_type {};
 template <>
 struct is_container<map_stack> : std::false_type {};
 } // namespace sol
-
-namespace
-{
 
 struct item_stack_lua_it_state {
     item_stack *stack;
@@ -63,6 +58,10 @@ item_stack_lua_next(
     return r;
 }
 
+
+namespace
+{
+
 auto item_stack_lua_pairs( item_stack &stk )
 {
     // pairs expects 3 returns:
@@ -79,23 +78,6 @@ auto item_stack_lua_pairs( item_stack &stk )
     return std::make_tuple( &item_stack_lua_next,
                             sol::user<item_stack_lua_it_state>( std::move( it_state ) ),
                             sol::lua_nil );
-}
-
-auto item_stack_lua_length( const item_stack &stk )
-{
-    return stk.size();
-}
-
-
-item *item_stack_lua_index( item_stack &stk, int i )
-{
-    --i;
-    if( i < 0 || i >= static_cast<int>( stk.size() ) ) {
-        return nullptr;
-    }
-    auto it = stk.begin();
-    std::advance( it, i );
-    return *it;
 }
 
 } // namespace
@@ -118,9 +100,9 @@ void cata::detail::reg_map( sol::state &lua )
 
         DOC( "Creates a new item(s) at a position on the map." );
         luna::set_fx( ut, "create_item_at", []( map & m, const tripoint & p, const itype_id & itype,
-        int count ) -> item* {
+        int count ) -> void {
             detached_ptr<item> new_item = item::spawn( itype, calendar::turn, count );
-            return m.add_item_or_charges( p, std::move( new_item ) ).get();
+            m.add_item_or_charges( p, std::move( new_item ) );
         } );
 
         DOC( "Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag." );
@@ -138,43 +120,10 @@ void cata::detail::reg_map( sol::state &lua )
         } );
 
         luna::set_fx( ut, "has_items_at", &map::has_items );
+        luna::set_fx( ut, "get_items_at", []( map & m, const tripoint & p ) -> std::unique_ptr<map_stack> { return std::make_unique<map_stack>( m.i_at( p ) ); } );
         luna::set_fx( ut, "remove_item_at", []( map & m, const tripoint & p, item * it ) -> void { m.i_rem( p, it ); } );
-
-        DOC( "Removes an item from the map and returns it as a detached_ptr. The item is now owned by Lua - store it in a table to keep it alive, or let it be GC'd to destroy it. Use add_item to place it back on a map." );
-        luna::set_fx( ut, "detach_item_at", []( map & m, const tripoint & p,
-        item * it ) -> detached_ptr<item> {
-            return m.i_rem( p, it );
-        } );
-
-        DOC( "Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed." );
-        luna::set_fx( ut, "add_item", []( map & m, const tripoint & p,
-        detached_ptr<item> &it ) -> detached_ptr<item> {
-            return m.add_item_or_charges( p, std::move( it ) );
-        } );
         luna::set_fx( ut, "clear_items_at", []( map & m, const tripoint & p ) -> void { m.i_clear( p ); } );
 
-        luna::set_fx( ut, "get_items_at", []( map & m, const tripoint & p ) {
-            return m.i_at( p );
-        } );
-        luna::set_fx( ut, "get_items_in_radius", []( map & m, const tripoint & p,
-        int radius ) -> std::vector<map_stack> {
-            std::vector<map_stack> items;
-            for( const auto pt : m.points_in_radius( p, radius ) )
-            {
-                items.push_back( m.i_at( pt ) );
-            }
-            return items;
-        } );
-
-        DOC( "Moves an item from one position to another, preserving all item state including contents." );
-        luna::set_fx( ut, "move_item_to", []( map & m, const tripoint & from, item * it,
-        const tripoint & to ) -> void {
-            detached_ptr<item> detached = m.i_rem( from, it );
-            if( detached )
-            {
-                m.add_item_or_charges( to, std::move( detached ) );
-            }
-        } );
 
         luna::set_fx( ut, "get_ter_at", sol::resolve<ter_id( const tripoint & )const>( &map::ter ) );
         luna::set_fx( ut, "set_ter_at",
@@ -211,38 +160,13 @@ void cata::detail::reg_map( sol::state &lua )
     }
 
     // Register 'item_stack' class to be used in Lua
-#define UT_CLASS item_stack
     {
-        DOC( "Iterate over this using pairs() for reading. Can also be indexed." );
+        DOC( "Iterate over this using pairs()" );
         sol::usertype<item_stack> ut = luna::new_usertype<item_stack>( lua, luna::no_bases,
                                        luna::no_constructor );
 
         luna::set_fx( ut, sol::meta_function::pairs, item_stack_lua_pairs );
-        luna::set_fx( ut, sol::meta_function::length, item_stack_lua_length );
-        luna::set_fx( ut, sol::meta_function::index, item_stack_lua_index );
-
-        DOC( "Modifying the stack while iterating may cause problems. This returns a frozen copy of the items in the stack for safe modification of the stack (eg. removing items while iterating)." );
-        luna::set_fx( ut, "items", []( UT_CLASS & c ) {
-            std::vector<item *> ret{};
-            std::ranges::copy( c, std::back_inserter( ret ) );
-            return ret;
-        } );
-        SET_FX( remove );
-        luna::set_fx( ut, "insert", []( UT_CLASS & c, detached_ptr<item> &i ) {
-            c.insert( std::move( i ) );
-        } );
-        SET_FX( clear );
-        SET_FX_N( size, "count" );
-        SET_FX( amount_can_fit );
-        SET_FX( count_limit );
-        SET_FX( free_volume );
-        SET_FX( stored_volume );
-        SET_FX( max_volume );
-        SET_FX( move_all_to );
-        SET_FX( only_item );
-        SET_FX_T( stacks_with, item * ( const item & ) );
     }
-#undef UT_CLASS
 
     // Register 'map_stack' class to be used in Lua
     {
@@ -250,10 +174,6 @@ void cata::detail::reg_map( sol::state &lua )
                                       luna::no_constructor );
 
         luna::set_fx( ut, "as_item_stack", []( map_stack & ref ) -> item_stack& { return ref; } );
-
-        luna::set_fx( ut, sol::meta_function::pairs, item_stack_lua_pairs );
-        luna::set_fx( ut, sol::meta_function::length, item_stack_lua_length );
-        luna::set_fx( ut, sol::meta_function::index, item_stack_lua_index );
     }
 }
 

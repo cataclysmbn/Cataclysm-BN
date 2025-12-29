@@ -1,4 +1,126 @@
-require("docgen_common")
+---@generic T
+---@param t T[]
+---@param f? fun(a: T, b: T):boolean
+---@return T[]
+function sort_by(t, f)
+  if not f then f = sort_by_tostring end
+  table.sort(t, f)
+  return t
+end
+
+---@param a any
+---@param b any
+---@return boolean
+function sort_by_tostring(a, b)
+  if a.k and b.k then return tostring(a.k) < tostring(b.k) end
+  return tostring(a) < tostring(b)
+end
+
+--- wraps sol2 table/map proxies so it can be sorted.
+---@generic T
+---@param t? T[]
+---@return { k: string, v: T }[]
+function wrapped(t)
+  local res = {}
+  for k, v in pairs(t or {}) do
+    table.insert(res, { k = k, v = v })
+  end
+  return res
+end
+
+--[[
+    Removes internal arguments like "<this_state>"
+  ]]
+---@param arg_list string[]
+---@return string[]
+local remove_hidden_args = function(arg_list)
+  local ret = {}
+  for _, arg in ipairs(arg_list) do
+    if not string.match(arg, "^<.+>$") then table.insert(ret, arg) end
+  end
+  return ret
+end
+
+-- Rudimentary mapping from C++/sol types to LuaLS types.
+---@param cpp_type string
+---@return string
+local map_cpp_type_to_lua = function(cpp_type)
+  -- NOTE: This mapping might need refinement based on actual types used
+  if not cpp_type then return "any" end -- Handle nil input gracefully
+  cpp_type = string.gsub(cpp_type, "const%s+", "") -- Remove const
+  cpp_type = string.gsub(cpp_type, "%s+&", "") -- Remove references
+  cpp_type = string.gsub(cpp_type, "%s+%*", "") -- Remove pointers (basic)
+  cpp_type = string.gsub(cpp_type, "%s+$", "") -- Trim trailing space
+
+  if cpp_type == "std::string" or cpp_type == "string" then
+    return "string"
+  elseif
+    cpp_type == "int"
+    or cpp_type == "unsigned int"
+    or cpp_type == "long"
+    or cpp_type == "unsigned long"
+    or cpp_type == "long long"
+    or cpp_type == "unsigned long long"
+    or cpp_type == "short"
+    or cpp_type == "unsigned short"
+    or cpp_type == "int8_t"
+    or cpp_type == "uint8_t"
+    or cpp_type == "int16_t"
+    or cpp_type == "uint16_t"
+    or cpp_type == "int32_t"
+    or cpp_type == "uint32_t"
+    or cpp_type == "int64_t"
+    or cpp_type == "uint64_t"
+    or cpp_type == "size_t"
+    or cpp_type == "char"
+    or cpp_type == "signed char"
+    or cpp_type == "unsigned char"
+  then
+    return "integer" -- Lua 5.3+ distinguishes integers
+  elseif cpp_type == "double" or cpp_type == "float" then
+    return "number"
+  elseif cpp_type == "bool" then
+    return "boolean"
+  elseif cpp_type == "sol::table" or cpp_type == "table" then
+    return "table"
+  elseif cpp_type == "sol::function" or cpp_type == "function" or cpp_type == "std::function" then
+    return "function"
+  elseif
+    cpp_type == "sol::object"
+    or cpp_type == "sol::lua_value"
+    or cpp_type == "sol::stack_object"
+    or cpp_type == "sol::protected_function"
+    or cpp_type == "sol::unsafe_function"
+  then
+    return "any"
+  elseif cpp_type == "void" or cpp_type == "nil" or cpp_type == "sol::nil_t" then
+    return "nil"
+  else
+    -- Clean up namespaces and templates for class names
+    local clean_type = string.gsub(cpp_type, "::", "_")
+    -- Clean spaces
+    clean_type = string.gsub(clean_type, "%s+", "")
+    -- Try to extract the core type name, handling basic templates roughly
+    clean_type = string.match(clean_type, "^[%w_]+%s*<?([%w_]+)?>?$") or clean_type
+    clean_type = string.match(clean_type, "[%w_]+$") or clean_type -- Get the last part
+
+    if clean_type == "..." or string.match(clean_type, "<cppval:") then
+      clean_type = "any"
+    elseif string.match(clean_type, "^Vector%(%w+%)$") then
+      clean_type = string.gsub(clean_type, "^Vector%((%w+)%)$", "%1[]")
+    elseif string.match(clean_type, "^Set%(%w+%)$") then
+      clean_type = string.gsub(clean_type, "^Set%((%w+)%)$", "%1[]")
+    elseif string.match(clean_type, "^Array%((%w+),(%d+)%)$") then
+      clean_type = string.gsub(clean_type, "^Array%((%w+),(%d+)%)$", "%1[]")
+    elseif string.match(clean_type, "^Map%((%w+),(%w+)%)$") then
+      clean_type = string.gsub(clean_type, "^Map%((%w+),(%w+)%)$", "table<%1, %2>")
+    elseif string.match(clean_type, "^Opt%((%w+)%)$") then
+      clean_type = string.gsub(clean_type, "^Opt%((%w+)%)$", "%1?")
+    end
+
+    return clean_type or "any" -- Fallback to 'any' if nothing matches
+  end
+end
 
 --[[
     Formats the base class list for a LuaLS class annotation.
@@ -14,45 +136,56 @@ local fmt_bases_luals = function(bases)
   else
     local mapped_bases = {}
     for _, base_name in ipairs(bases) do
-      table.insert(mapped_bases, map_cpp_type_to_lua(base_name, false))
+      table.insert(mapped_bases, map_cpp_type_to_lua(base_name))
     end
     return " : " .. table.concat(mapped_bases, ", ")
   end
 end
 
 --[[
+    Formats --- comment annotations
+    Input: comment string
+    Output: Multiline string --- comments or ""
+  ]]
+---@param comment? string
+---@return string
+local fmt_comment_annotation = function(comment)
+  if not comment or comment == "" then return "" end
+  local comment_lines = {}
+  for line in string.gmatch(comment .. "\n", "([^\n]*)\n") do
+    table.insert(comment_lines, "--- " .. line)
+  end
+  return table.concat(comment_lines, "\n")
+end
+
+--[[
     Formats a single function signature string like "fun(param: type, ...): ret_type".
   ]]
----@param arg_list string[] List of types
----@param ret_type string return type
+---@param arg_list string[] List of "name:type" or "type"
+---@param ret_type string C++ return type name
 ---@param class_name string The name of the owning class/library
----@param meta string Member metadata
+---@param is_method boolean True if it's a method requiring 'self'
 ---@return string
-local fmt_function_signature = function(arg_list, ret_type, class_name, meta)
+local fmt_function_signature = function(arg_list, ret_type, class_name, is_method)
   local params = {}
+  local mapped_class_name = map_cpp_type_to_lua(class_name)
+
+  if is_method then table.insert(params, "self: " .. mapped_class_name) end
 
   local clean_arg_list = remove_hidden_args(arg_list)
-  local meta_args = get_meta_params(meta)
-  local state = nil
-
   for i, arg_str in ipairs(clean_arg_list) do
-    local lua_type = map_cpp_type_to_lua(arg_str, false)
-    local arg_name
-    if i == 1 and arg_str == class_name then
-      arg_name = "self"
-    else
-      state, arg_name = next(meta_args, state)
-      if not arg_name then
-        arg_name = "arg" .. i -- Generate placeholder name if needed
-      else
-        arg_name = string.gsub(arg_name, "[^%w_]", "_")
-      end
+    local name, type = string.match(arg_str, "^([^:]+):(.+)$")
+    if not name then
+      type = arg_str
+      name = "arg" .. i -- Generate placeholder name if needed
     end
-    table.insert(params, arg_name .. ": " .. lua_type)
+    local safe_name = string.gsub(name, "[^%w_]", "_")
+    local lua_type = map_cpp_type_to_lua(type)
+    table.insert(params, safe_name .. ": " .. lua_type)
   end
 
   local params_str = table.concat(params, ", ")
-  local lua_ret_type = map_cpp_type_to_lua(ret_type, false)
+  local lua_ret_type = map_cpp_type_to_lua(ret_type)
   local ret_str = ""
   if lua_ret_type ~= "nil" then ret_str = ": " .. lua_ret_type end
 
@@ -71,12 +204,10 @@ local fmt_variable_field = function(member, is_static)
   if not string.match(member_name, "^[%a_][%w_]*$") then
     member_name = "['" .. member_name .. "']" -- Quote non-identifier names
   end
-  local lua_type = map_cpp_type_to_lua(member.vartype, false)
+  local lua_type = map_cpp_type_to_lua(member.vartype)
 
   ret = ret .. "---@field " .. member_name .. " " .. lua_type
-  if member.comment and member.comment ~= "" then
-    ret = ret .. " @" .. string_concat_matches(member.comment, "([^\r\n]+)", "<br />")
-  end
+  if member.comment and member.comment ~= "" then ret = ret .. " @" .. member.comment end
   if member.hasval then
     -- Avoid overly long or complex value representations
     local val_str = tostring(member.varval)
@@ -91,8 +222,9 @@ end
   ]]
 ---@param member table {name:string, comment?:string, overloads:table[]}
 ---@param class_name string The name of the owning class/library
+---@param is_method boolean True if it's a method (defined with ':')
 ---@return string
-local fmt_function_field = function(member, class_name)
+local fmt_function_field = function(member, class_name, is_method)
   local ret = ""
   local member_name = tostring(member.name)
   if not string.match(member_name, "^[%a_][%w_]*$") then
@@ -102,7 +234,7 @@ local fmt_function_field = function(member, class_name)
   local signatures = {}
   if member.overloads and #member.overloads > 0 then
     for _, overload in ipairs(member.overloads) do
-      table.insert(signatures, fmt_function_signature(overload.args, overload.retval, class_name, member.comment))
+      table.insert(signatures, fmt_function_signature(overload.args, overload.retval, class_name, is_method))
     end
   else
     -- Fallback if no overload data? Maybe treat as any function?
@@ -120,16 +252,7 @@ local fmt_function_field = function(member, class_name)
 
   local signature_union = table.concat(signatures, " | ")
   ret = ret .. "---@field " .. member_name .. " " .. signature_union
-  if member.comment and member.comment ~= "" then
-    local op = function(m)
-      if string.match(m, "^@param") then
-        return nil
-      else
-        return m
-      end
-    end
-    ret = ret .. " @" .. string_concat_matches(member.comment, "([^\r\n]+)", "<br />", op)
-  end
+  if member.comment and member.comment ~= "" then ret = ret .. " @" .. member.comment end
   return ret .. "\n"
 end
 
@@ -137,13 +260,13 @@ end
     Formats ---@overload annotations and function stub for constructors ('new' function).
   ]]
 ---@param typename string Class name (C++ name, e.g., "TypeId")
----@param ctors string[][] @ List of constructor argument lists (C++ types).
---- Each inner table is a list of C++ type strings for one constructor.
---- An empty inner table {} signifies a constructor with no arguments.
---- If ctors is nil or an empty table, only the basic new() stub and @return are generated.
+---@param ctors string[][] List of constructor argument lists (C++ types).
+--                      Each inner table is a list of C++ type strings for one constructor.
+--                      An empty inner table {} signifies a constructor with no arguments.
+--                      If ctors is nil or an empty table, only the basic new() stub and @return are generated.
 ---@return string EmmyLua annotation string for the constructor.
 local fmt_constructor_field = function(typename, ctors)
-  local type = map_cpp_type_to_lua(typename, true)
+  local type = map_cpp_type_to_lua(typename)
 
   ---@type string[]
   local lines = {}
@@ -151,12 +274,23 @@ local fmt_constructor_field = function(typename, ctors)
   table.insert(lines, "---@return " .. type)
   for _, cpp_arg_list in ipairs(ctors) do
     if cpp_arg_list and #cpp_arg_list > 0 then
-      table.insert(lines, "---@overload " .. fmt_function_signature(cpp_arg_list, typename, typename, nil))
+      table.insert(lines, "---@overload " .. fmt_function_signature(cpp_arg_list, typename, typename, false))
     end
   end
   table.insert(lines, "function " .. type .. ".new() end")
 
   return table.concat(lines, "\n") .. "\n"
+end
+
+---@param member { name: string, type: "var" | "func" }
+function field_sort_order(member)
+  if member.name == "NULL_ID" then return -1 end
+
+  if string.match(member.name, "^__") then return 4 end -- metamethods
+  if member.name == "deserialize" then return 3 end
+  if member.name == "serialize" then return 2 end
+  if member.type == "func" then return 1 end
+  return 0
 end
 
 ---@diagnostic disable-next-line: undefined-global
@@ -182,85 +316,16 @@ game = {}
 ---@field character Character
 on_character_reset_stats = {}
 
----@class OnCharacterEffectAddedParams
----@field character Character
----@field effect Effect
-on_character_effect_added = {}
-
----@class OnCharacterEffectParams
----@field character Character
----@field effect Effect
-on_character_effect = {}
-
----@class OnMonEffectAddedParams
----@field mon Monster
----@field effect Effect
-on_mon_effect_added = {}
-
----@class OnMonEffectParams
----@field mon Monster
----@field effect Effect
-on_mon_effect = {}
-
----@class OnMonDeathParams
----@field mon Monster
----@field killer Creature?
-on_mon_death = {}
-
----@class OnCharacterDeathParams
----@field character Character
----@field killer Creature?
-on_character_death = {}
-
----@class OnShootParams
----@field shooter Character
----@field target_pos Tripoint
----@field shots integer
----@field gun Item
----@field ammo Item?
-on_shoot = {}
-
----@class OnThrowParams
----@field thrower Character
----@field target_pos Tripoint
----@field throw_from_pos Tripoint
----@field item Item
-on_throw = {}
-
----@class OnCreatureDodgedParams
----@field char Character || Creature
----@field source Creature?
----@field difficulty integer
-on_creature_dodged = {}
-
----@class OnCreatureBlockedParams
----@field char Character
----@field source Creature?
----@field bodypart_id BodyPartTypeId
----@field damage_instance DamageInstance
----@field damage_blocked number
-on_creature_blocked = {}
-
----@class OnCreaturePerformedTechniqueParams
----@field char Character
----@field technique MartialArtsTechniqueRaw
----@field target Creature
----@field damage_instance DamageInstance
----@field move_cost integer
-on_creature_performed_technique = {}
-
----@class OnCreatureMeleeAttackedParams
----@field char Character || Monster
----@field target Creature
----@field success boolean
-on_creature_melee_attacked = {}
-
 ---@class OnMapgenPostprocessParams
 ---@field map Map
 ---@field omt Tripoint
 ---@field when TimePoint
 on_mapgen_postprocess = {}
 
+---@class OnMonDeathParams
+---@field mon Monster
+---@field killer Character
+on_mon_death = {}
 ]]
 
   ---@diagnostic disable-next-line: undefined-global
@@ -288,7 +353,7 @@ on_mapgen_postprocess = {}
 
       -- Class/Lib Annotation Start
       local bases_str = is_class and fmt_bases_luals(bases) or ""
-      local comment_annot = string_concat_matches(comment, "([^\r\n]+)", "\n", function(m) return "--- " .. m end)
+      local comment_annot = fmt_comment_annotation(comment)
       if comment_annot ~= "" then ret = ret .. comment_annot .. "\n" end
       ret = ret .. "---@class " .. name .. bases_str .. "\n"
 
@@ -310,7 +375,7 @@ on_mapgen_postprocess = {}
         elseif member.type == "func" then
           -- Libraries expose functions statically (.), classes expose methods dynamically (:) by default in sol2
           -- Pass 'is_class' to fmt_function_field to decide if 'self' should be added.
-          table.insert(formatted, { member = member, value = fmt_function_field(member, name) })
+          table.insert(formatted, { member = member, value = fmt_function_field(member, name, false) })
         else
           -- Fallback
           table.insert(formatted, {
@@ -353,9 +418,9 @@ on_mapgen_postprocess = {}
   for _, item in ipairs(enums_sorted) do
     local enumname = item.k
     local dt_enum = item.v or {}
-    local comment = dt_enum.enum_comment
+    local enum_comment = dt_enum.enum_comment
 
-    local comment_annot = string_concat_matches(comment, "([^\r\n]+)", "\n", function(m) return "--- " .. m end)
+    local comment_annot = fmt_comment_annotation(enum_comment)
     if comment_annot ~= "" then full_ret = full_ret .. comment_annot .. "\n" end
 
     full_ret = full_ret .. "---@enum " .. enumname .. "\n"

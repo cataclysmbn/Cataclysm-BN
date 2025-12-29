@@ -191,7 +191,7 @@ mod.ebook_scan = function(user, device)
               if count2 >= dev_limit then break end
             end
             gapi.add_msg(MsgType.good, string.format(locale.gettext("You scanned %d book(s)."), dev_limit))
-            return dev_limit * 10
+            return dev_limit
           else --selected NO
             return -1
           end
@@ -200,7 +200,7 @@ mod.ebook_scan = function(user, device)
             mod.insert_lib2(device, t_str)
           end
           gapi.add_msg(MsgType.good, string.format(locale.gettext("You scanned %d book(s)."), num_found))
-          return num_found * 10
+          return num_found
         end
       else --selected Cancel or pressed ESC
         return -1

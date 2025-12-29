@@ -22,7 +22,7 @@
     "category": "weapons",
     "weapon_category": [ "BIONIC_WEAPONRY", "BIONIC_SWORDS" ],
     "name": { "str": "monomolecular blade" },
-    "description": "A 30cm-long blade made from high-tech alloy and edged with bonded nanocrystals.",
+    "description": "A foot-long blade made from high-tech alloy and edged with bonded nanocrystals.",
     "weight": "100 g",
     "to_hit": 3,
     "color": "dark_gray",

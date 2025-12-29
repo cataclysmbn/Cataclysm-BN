@@ -358,22 +358,6 @@
     "color": "light_gray"
   },
   {
-    "id": "horn_ship",
-    "type": "GENERIC",
-    "category": "veh_parts",
-    "name": { "str": "ship air horn" },
-    "description": "An enormous ship air horn, extremely loud and deafening.  Usually found on large vessels.",
-    "weight": "5 kg",
-    "volume": "6 L",
-    "price": "120 USD",
-    "price_postapoc": "10 cent",
-    "to_hit": -1,
-    "bashing": 4,
-    "material": [ "steel", "plastic" ],
-    "symbol": ";",
-    "color": "light_gray"
-  },
-  {
     "id": "horn_car",
     "type": "GENERIC",
     "category": "veh_parts",

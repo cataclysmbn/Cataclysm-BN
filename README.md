@@ -40,17 +40,13 @@ While many of the dependencies that the game depends on are likely installed by 
 
 Here are the commands for some of the most popular distro families:
 
-- Ubuntu / Debian: `sudo apt install libsdl2-image-2.0-0 libsdl2-ttf-2.0-0 libsdl2-mixer-2.0-0 libfreetype6 zip libsqlite3-0`
+- Ubuntu / Debian: `sudo apt install libsdl2-image-2.0.0 libsdl2-ttf-2.0.0 libsdl2-mixer-2.0.0 libfreetype6 zip libsqlite3-0`
 - Fedora: `sudo dnf install SDL2 SDL2_image SDL2_ttf SDL2_mixer freetype zip sqlite`
 - Arch: `sudo pacman -S sdl2 sdl2_image sdl2_ttf sdl2_mixer zip sqlite`
 
 ### Launchers
 
 The primary supported launcher is [Catapult](https://github.com/qrrk/Catapult), which can handle both BN and DDA (it defaults to DDA, so be sure to change it in the top menu!)
-
-### Third Party Mods
-
-Bright Nights uses a [mod registry](https://mods.cataclysmbn.org/) for easier discovery of mods not shipped with the main game.
 
 ### Source Code
 

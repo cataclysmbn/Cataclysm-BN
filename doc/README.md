@@ -1,10 +1,9 @@
 # Documentation Site
 
-> [!CAUTION]
+> [!DANGER]
 >
-> This documentation site is now obsoleted and only serves as an archive.
+> This documentation site is now deprecated and only serves as an archive.
 > This directory will be removed in the future.
-> Do not edit the contents inside.
 
 ![image](https://github.com/cataclysmbnteam/Cataclysm-BN/assets/54838975/b96a856a-9937-4f45-a508-b27766e2004b)
 

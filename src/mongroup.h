@@ -72,8 +72,6 @@ struct MonsterGroup {
     time_duration monster_group_time = 0_turns;
     bool is_safe = false; /// Used for @ref mongroup::is_safe()
     int freq_total = 0; // Default 1000 unless specified - max number to roll for spawns
-
-    LUA_TYPE_OPS( MonsterGroup, name );
 };
 
 struct mongroup {
@@ -164,8 +162,7 @@ class MonsterGroupManager
         static void LoadMonsterBlacklist( const JsonObject &jo );
         static void LoadMonsterWhitelist( const JsonObject &jo );
         static void FinalizeMonsterGroups();
-        static MonsterGroupResult GetResultFromGroup( const mongroup_id &group, int *quantity = nullptr,
-                bool use_pack_size = false );
+        static MonsterGroupResult GetResultFromGroup( const mongroup_id &group, int *quantity = nullptr );
         static bool IsMonsterInGroup( const mongroup_id &group, const mtype_id &monster );
         static bool isValidMonsterGroup( const mongroup_id &group );
         static const mongroup_id &Monster2Group( const mtype_id &monster );

@@ -690,7 +690,6 @@ ifeq ($(TILES), 1)
   endif
 
   DEFINES += -DTILES
-  DEFINES += -DDYNAMIC_ATLAS
 
   ifeq ($(TARGETSYSTEM),WINDOWS)
     ifndef DYNAMIC_LINKING

@@ -749,8 +749,7 @@ class game
         // create vehicle nearby, for example; for a profession vehicle.
         vehicle *place_vehicle_nearby(
             const vproto_id &id, const point_abs_omt &origin, int min_distance,
-            int max_distance, const std::vector<std::string> &omt_search_types = {},
-            bool notwater = false );
+            int max_distance, const std::vector<std::string> &omt_search_types = {} );
         // V Menu Functions and helpers:
         void list_items_monsters(); // Called when you invoke the `V`-menu
 
@@ -904,7 +903,6 @@ class game
         void display_lighting(); // Displays lighting conditions heat map
         void display_radiation(); // Displays radiation map
         void display_transparency(); // Displays transparency map
-        void display_tiles_no_vfx(); // Disables tileset visual effects
 
         // prints the IRL time in ms of the last full in-game hour
         class debug_hour_timer

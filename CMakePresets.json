@@ -18,13 +18,11 @@
         "VCPKG_TARGET_TRIPLET": "x64-windows-static",
         "DYNAMIC_LINKING": "False",
         "CMAKE_CONFIGURATION_TYPES": "Debug;RelWithDebInfo;Release",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CURSES": "False",
         "LOCALIZE": "True",
         "TILES": "True",
         "SOUND": "True",
         "TESTS": "True",
-        "JSON_FORMAT": "ON",
         "CMAKE_INSTALL_MESSAGE": "NEVER"
       }
     },
@@ -40,8 +38,6 @@
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_AR": "llvm-ar",
-        "CMAKE_RANLIB": "llvm-ranlib",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CURSES": "OFF",
         "TILES": "ON",
@@ -64,8 +60,6 @@
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_AR": "llvm-ar",
-        "CMAKE_RANLIB": "llvm-ranlib",
         "CMAKE_INSTALL_PREFIX": "$env{XDG_DATA_HOME}",
         "JSON_FORMAT": "ON",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
@@ -85,128 +79,9 @@
         "TRACY_ON_DEMAND": "ON",
         "TRACY_ONLY_IPV4": "ON"
       }
-    },
-    {
-      "name": "dist-tiles",
-      "binaryDir": "${sourceDir}/build",
-      "displayName": "Linux Distribution (Tiles, Sounds, Languages)",
-      "description": "For creating portable distribution packages with tiles and sound.",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CATA_CCACHE": "ON",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CURSES": "OFF",
-        "TILES": "ON",
-        "SOUND": "ON",
-        "LANGUAGES": "all",
-        "BACKTRACE": "ON",
-        "LIBBACKTRACE": "ON",
-        "JSON_FORMAT": "ON",
-        "LINKER": "mold",
-        "USE_PREFIX_DATA_DIR": "OFF"
-      }
-    },
-    {
-      "name": "dist-curses",
-      "binaryDir": "${sourceDir}/build",
-      "displayName": "Linux Distribution (Curses, Languages)",
-      "description": "For creating portable distribution packages with curses.",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CATA_CCACHE": "ON",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CURSES": "ON",
-        "TILES": "OFF",
-        "SOUND": "OFF",
-        "LANGUAGES": "all",
-        "BACKTRACE": "ON",
-        "LIBBACKTRACE": "ON",
-        "JSON_FORMAT": "ON",
-        "LINKER": "mold",
-        "USE_PREFIX_DATA_DIR": "OFF"
-      }
-    },
-    {
-      "name": "lint",
-      "binaryDir": "${sourceDir}/build",
-      "displayName": "Lint and Format Only",
-      "description": "Minimal build for running formatting targets (astyle, style-json).",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CATA_CCACHE": "ON",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CURSES": "OFF",
-        "TILES": "OFF",
-        "SOUND": "OFF",
-        "TESTS": "OFF",
-        "JSON_FORMAT": "ON"
-      }
-    },
-    {
-      "name": "ci-curses",
-      "binaryDir": "${sourceDir}/build",
-      "displayName": "CI Build (Curses)",
-      "description": "CI build configuration for curses with GCC.",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "gcc-14",
-        "CMAKE_CXX_COMPILER": "g++-14",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "TILES": "OFF",
-        "CURSES": "ON",
-        "SOUND": "OFF",
-        "LOCALIZE": "OFF",
-        "BACKTRACE": "ON",
-        "LIBBACKTRACE": "ON",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "JSON_FORMAT": "ON",
-        "TESTS": "ON",
-        "LINKER": "mold"
-      }
-    },
-    {
-      "name": "ci-tiles",
-      "binaryDir": "${sourceDir}/build",
-      "displayName": "CI Build (Tiles, Sound)",
-      "description": "CI build configuration for tiles and sound with GCC.",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "gcc-14",
-        "CMAKE_CXX_COMPILER": "g++-14",
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "TILES": "ON",
-        "CURSES": "OFF",
-        "SOUND": "ON",
-        "LOCALIZE": "ON",
-        "LANGUAGES": "all",
-        "BACKTRACE": "ON",
-        "LIBBACKTRACE": "OFF",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "JSON_FORMAT": "OFF",
-        "TESTS": "ON",
-        "LINKER": "mold"
-      }
     }
   ],
   "buildPresets": [
-    {
-      "name": "windows-msvc-build",
-      "configurePreset": "windows-tiles-sounds-x64-msvc",
-      "targets": ["cataclysm-bn-tiles", "cata_test-tiles", "json_formatter", "translations"],
-      "description": "Build for Windows with tiles and sounds using MSVC."
-    },
     {
       "name": "linux-slim",
       "configurePreset": "linux-slim",
@@ -216,36 +91,6 @@
       "name": "linux-full",
       "configurePreset": "linux-full",
       "description": "The canonical build preset for Linux. This is the one used by the devteam."
-    },
-    {
-      "name": "dist-tiles",
-      "configurePreset": "dist-tiles",
-      "targets": ["cataclysm-bn-tiles", "json_formatter", "translations"],
-      "description": "Build for tiles distribution."
-    },
-    {
-      "name": "dist-curses",
-      "configurePreset": "dist-curses",
-      "targets": ["cataclysm-bn", "json_formatter", "translations"],
-      "description": "Build for curses distribution."
-    },
-    {
-      "name": "lint",
-      "configurePreset": "lint",
-      "targets": ["json_formatter"],
-      "description": "Build formatting tools only."
-    },
-    {
-      "name": "ci-curses",
-      "configurePreset": "ci-curses",
-      "targets": ["cataclysm-bn", "cata_test"],
-      "description": "CI build for curses."
-    },
-    {
-      "name": "ci-tiles",
-      "configurePreset": "ci-tiles",
-      "targets": ["cataclysm-bn-tiles", "cata_test-tiles"],
-      "description": "CI build for tiles and sound."
     }
   ]
 }

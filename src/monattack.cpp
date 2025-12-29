@@ -24,7 +24,6 @@
 #include "character_id.h"
 #include "character_martial_arts.h"
 #include "creature.h"
-#include "creature_functions.h"
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
@@ -320,7 +319,6 @@ static std::unique_ptr<npc> make_fake_npc( monster *z, int str, int dex, int int
     tmp->per_cur = per;
     if( z->friendly != 0 ) {
         tmp->set_attitude( NPCATT_FOLLOW );
-        tmp->set_fac( faction_id( "your_followers" ) );
     } else {
         tmp->set_attitude( NPCATT_KILL );
     }
@@ -3782,12 +3780,11 @@ bool mattack::flamethrower( monster *z )
     // TODO: that is always false!
     if( z->friendly != 0 ) {
         // Attacking monsters, not the player!
-        // Flamethrower leaves dangerous trail
-        auto res = creature_functions::auto_find_hostile_target( *z, { .range = 5, .trail = true, .area = 0 } );
+        int boo_hoo;
+        Creature *target = z->auto_find_hostile_target( 5, boo_hoo );
         // Couldn't find any targets!
-        if( !res ) {
+        if( target == nullptr ) {
             // Because that stupid oaf was in the way!
-            const int boo_hoo = res.error();
             if( boo_hoo > 0 && g->u.sees( *z ) ) {
                 add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
                                               "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
@@ -3797,7 +3794,7 @@ bool mattack::flamethrower( monster *z )
             // Did reset before refactor, changed to match other turret behaviors
             return false;
         }
-        flame( z, &res.value().get() );
+        flame( z, target );
         return true;
     }
 
@@ -3943,6 +3940,7 @@ bool mattack::copbot( monster *z )
 bool mattack::chickenbot( monster *z )
 {
     int mode = 0;
+    int boo_hoo = 0;
     Creature *target;
     if( z->friendly == 0 ) {
         target = z->attack_target();
@@ -3950,10 +3948,8 @@ bool mattack::chickenbot( monster *z )
             return false;
         }
     } else {
-        // Chickenbot uses M4 and 40mm grenades - bullets don't leave trail
-        auto res = creature_functions::auto_find_hostile_target( *z, { .range = 38, .trail = false, .area = 0 } );
-        if( !res ) {
-            const int boo_hoo = res.error();
+        target = z->auto_find_hostile_target( 38, boo_hoo );
+        if( target == nullptr ) {
             if( boo_hoo > 0 && g->u.sees( *z ) ) { // because that stupid oaf was in the way!
                 add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
                                               "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
@@ -3962,7 +3958,6 @@ bool mattack::chickenbot( monster *z )
             }
             return false;
         }
-        target = &res.value().get();
     }
 
     int cap = target->power_rating() - 1;
@@ -4027,6 +4022,7 @@ bool mattack::chickenbot( monster *z )
 bool mattack::multi_robot( monster *z )
 {
     int mode = 0;
+    int boo_hoo = 0;
     Creature *target;
     if( z->friendly == 0 ) {
         target = z->attack_target();
@@ -4034,9 +4030,8 @@ bool mattack::multi_robot( monster *z )
             return false;
         }
     } else {
-        auto res = creature_functions::auto_find_hostile_target( *z, { .range = 48, .trail = true, .area = 0 } );
-        if( !res ) {
-            const int boo_hoo = res.error();
+        target = z->auto_find_hostile_target( 48, boo_hoo );
+        if( target == nullptr ) {
             if( boo_hoo > 0 && g->u.sees( *z ) ) { // because that stupid oaf was in the way!
                 add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
                                               "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
@@ -4045,7 +4040,6 @@ bool mattack::multi_robot( monster *z )
             }
             return false;
         }
-        target = &res.value().get();
     }
 
     int cap = target->power_rating();

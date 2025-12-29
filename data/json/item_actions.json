@@ -456,12 +456,12 @@
   },
   {
     "type": "item_action",
-    "id": "DEBUG_GRENADE",
+    "id": "GRANADE",
     "name": { "str": "Activate" }
   },
   {
     "type": "item_action",
-    "id": "DEBUG_GRENADE_ACT",
+    "id": "GRANADE_ACT",
     "name": { "str": "Activate" }
   },
   {

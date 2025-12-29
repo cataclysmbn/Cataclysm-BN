@@ -12,14 +12,10 @@ Vehicle prototypes do not currently accept copy-from
 "id": "sample_vehicle",                    // Unique ID. Must be one continuous word,
                                            // use underscores if necessary.
 "name": "Sample Vehicle",                  // In-game name displayed
-"blueprint": [                             // Preview of vehicle; Can be used as documentation
-    "o#o",                                 // Or with palette to be a way to define parts
-    "o#o"                                  // Partial definition with palette is also fine
+"blueprint": [                             // Preview of vehicle - ignored by the code,
+    "o#o",                                 // so use only as documentation
+    "o#o"
 ],
-"blueprint_origin": { "x": 10, "y": 3 }    // Used by palettes to locate the offset
-"palette": {                               // Palette used by blueprint to set parts on a tile
-  "O": [ "airship_balloon_external" ]      // Can only be an array of strings, no part objects
-}
 "parts": [                                 // Parts list
     { "x": 0, "y": 0, "part": "frame" },   // Part definition, positive x direction is up,
     { "x": 0, "y": 0, "part": "seat" },    // positive y is to the right

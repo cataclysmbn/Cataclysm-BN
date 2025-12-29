@@ -509,15 +509,15 @@
     "type": "mission_definition",
     "name": { "str": "Clear Back Bay" },
     "description": "Clear out the barricaded back area in the refugee center and lay the former leader of the Free Merchants to rest, in exchange for the local currency: Free Merchant certified notes.",
-    "goal": "MGOAL_KILL_MONSTERS",
+    "goal": "MGOAL_KILL_MONSTER",
     "difficulty": 2,
     "value": 50000,
     "start": {
       "assign_mission_target": { "om_terrain": "evac_center_9", "reveal_radius": 1 },
       "update_mapgen": {
         "om_terrain": "evac_center_9",
-        "place_monster": [ { "group": "GROUP_REFUGEE_BOSS_ZOMBIE", "x": [ 10, 10 ], "y": [ 10, 10 ], "target": true } ],
-        "place_monsters": [ { "monster": "GROUP_REFUGEE_CENTER_BACK_ROOM", "x": [ 2, 15 ], "y": [ 4, 20 ], "density": 0.6, "target": true } ]
+        "place_monster": [ { "group": "GROUP_REFUGEE_BOSS_ZOMBIE", "x": 10, "y": 10, "target": true } ],
+        "place_monsters": [ { "monster": "GROUP_REFUGEE_CENTER_BACK_ROOM", "x": [ 2, 15 ], "y": [ 4, 20 ], "density": 0.6 } ]
       }
     },
     "end": {

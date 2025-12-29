@@ -1562,17 +1562,6 @@
   },
   {
     "type": "effect_type",
-    "id": "well_fed",
-    "name": [ "Well Fed" ],
-    "desc": [
-      "This animal has been fed quality food and is healthier and more productive. It matures 30% faster, produces 30% more offspring per birth, and generates 30% more milk. They also will heal injuries twice as quickly."
-    ],
-    "rating": "good",
-    "max_duration": "24 h",
-    "show_in_info": true
-  },
-  {
-    "type": "effect_type",
     "id": "contacts",
     "name": [ "Contact Lenses" ],
     "desc": [ "You are wearing contact lenses." ],

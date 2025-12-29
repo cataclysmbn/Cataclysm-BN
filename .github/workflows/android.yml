@@ -49,22 +49,8 @@ jobs:
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: android-pr-${{ github.ref_name }}
-          restore-keys: |
-            android-pr-${{ github.ref_name }}
-            android-pr-main
-            android-pr-
-          max-size: 500M
-          verbose: 2
-          save: ${{ github.event_name != 'pull_request' }}
-
       - name: Build
         working-directory: ./android
-        env:
-          NDK_CCACHE: ccache
         run: |
           chmod +x gradlew
           ./gradlew -Pj=$((`nproc`+0)) -Pabi_arm_32=false assembleExperimentalRelease

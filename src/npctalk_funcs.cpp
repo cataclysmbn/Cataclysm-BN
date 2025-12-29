@@ -372,11 +372,6 @@ void talk_function::wake_up( npc &p )
     // TODO: Get mad at player for waking us up unless we're in danger
 }
 
-void talk_function::control_npc( npc &p )
-{
-    get_avatar().control_npc( p );
-}
-
 void talk_function::reveal_stats( npc &p )
 {
     character_display::disp_info( p );

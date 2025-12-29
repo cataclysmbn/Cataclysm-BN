@@ -44,13 +44,11 @@ struct ammo_effect {
 
     public:
         // Used by generic_factory
-        ammo_effect_str_id id;
+        string_id<ammo_effect> id;
         bool was_loaded = false;
 
     public:
         static size_t count();
-
-        LUA_TYPE_OPS( ammo_effect, id );
 };
 
 namespace ammo_effects

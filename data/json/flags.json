@@ -2415,24 +2415,6 @@
     "context": [  ]
   },
   {
-    "id": "TINT_NO_FG",
-    "type": "json_flag",
-    "//": "Do not apply tint to background",
-    "context": [  ]
-  },
-  {
-    "id": "TINT_NO_BG",
-    "type": "json_flag",
-    "//": "Do not apply tint to foreground",
-    "context": [  ]
-  },
-  {
-    "id": "TINT_NONE",
-    "type": "json_flag",
-    "//": "Do not apply tint",
-    "context": [  ]
-  },
-  {
     "id": "VEHICLE_UNLOCKED",
     "type": "json_flag",
     "//": "Marks a vehicle to always spawn unlocked, but possibly requiring hotwiring",
@@ -2460,18 +2442,6 @@
     "id": "VEHICLE_NO_HOTWIRE",
     "type": "json_flag",
     "//": "Marks a vehicle to never require hotwiring controls (e.g bycicles)",
-    "context": [  ]
-  },
-  {
-    "id": "EFFECT_LUA_ON_ADDED",
-    "type": "json_flag",
-    "//": "",
-    "context": [  ]
-  },
-  {
-    "id": "EFFECT_LUA_ON_TICK",
-    "type": "json_flag",
-    "//": "",
     "context": [  ]
   }
 ]

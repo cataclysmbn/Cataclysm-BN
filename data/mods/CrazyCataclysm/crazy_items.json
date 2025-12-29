@@ -1,11 +1,10 @@
 [
   {
-    "id": "debug_grenade",
+    "id": "granade",
     "type": "TOOL",
     "category": "weapons",
-    "name": { "str": "debug grenade" },
-    "looks_like": "grenade",
-    "description": "Attached to this grenade is a tag with 'debug' written on it.  Does not seem to work like a grenade, handle with care.",
+    "name": { "str": "Granade" },
+    "description": "Attached to this grenade is a name tag with the name Kevin written on it.  Does not seem to work like a grenade, handle with care.",
     "weight": "180 g",
     "volume": "250 ml",
     "price": "400 USD",
@@ -14,15 +13,14 @@
     "material": [ "steel", "plastic" ],
     "symbol": "*",
     "color": "green",
-    "use_action": "DEBUG_GRENADE"
+    "use_action": "GRANADE"
   },
   {
-    "id": "debug_grenade_act",
+    "id": "granade_act",
     "type": "TOOL",
     "category": "weapons",
-    "looks_like": "grenade_act",
-    "name": { "str": "active debug grenade" },
-    "description": "Attached to this grenade is a tag with 'debug' written on it.  Does not seem to work like a grenade, handle with care.  Better throw it!",
+    "name": { "str": "active Granade" },
+    "description": "Attached to this grenade is a name tag with the name Kevin written on it.  Does not seem to work like a grenade, handle with care.  Better throw it!",
     "weight": "180 g",
     "volume": "250 ml",
     "price": "0 cent",
@@ -34,7 +32,7 @@
     "initial_charges": 5,
     "max_charges": 5,
     "turns_per_charge": 1,
-    "use_action": "DEBUG_GRENADE_ACT",
+    "use_action": "GRANADE_ACT",
     "flags": [ "TRADER_AVOID" ]
   },
   {

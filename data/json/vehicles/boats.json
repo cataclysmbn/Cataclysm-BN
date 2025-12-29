@@ -812,17 +812,7 @@
       {
         "x": 0,
         "y": 0,
-        "parts": [
-          "frame_cross",
-          "seat",
-          "seatbelt",
-          "controls",
-          "dashboard",
-          "vehicle_clock",
-          "horn_ship",
-          "hdroof",
-          "metal_boat_hull"
-        ]
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls", "dashboard", "vehicle_clock", "horn_big", "hdroof", "metal_boat_hull" ]
       },
       { "x": 1, "y": 0, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
       { "x": 2, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },

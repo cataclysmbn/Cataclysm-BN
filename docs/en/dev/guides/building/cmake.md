@@ -202,71 +202,6 @@ To install CataclysmBN after building (as root using su or sudo if necessary):
 cmake --install build
 ```
 
-### Creating Distribution Packages
-
-Use the `dist-tiles` or `dist-curses` presets to create portable distribution packages:
-
-```sh
-# Configure for tiles distribution
-cmake --preset dist-tiles
-
-# Build the game and tools
-cmake --build --preset dist-tiles
-
-# Create distribution package
-cmake --install build --prefix cataclysmbn-linux-tiles
-```
-
-For curses-only builds:
-
-```sh
-cmake --preset dist-curses
-cmake --build --preset dist-curses
-cmake --install build --prefix cataclysmbn-linux-curses
-```
-
-This creates a self-contained directory with the following structure:
-
-```
-cataclysmbn-linux-tiles/
-├── cataclysm-bn-tiles     # Game executable
-├── cataclysm-launcher     # Launcher script
-├── json_formatter         # JSON formatting tool
-├── data/                  # Game data files
-├── gfx/                   # Tilesets
-├── lang/                  # Translations
-├── doc/                   # Documentation
-├── README.md
-├── LICENSE.txt
-└── VERSION.txt
-```
-
-To create a tarball for distribution:
-
-```sh
-tar -czvf cataclysmbn-linux-tiles.tar.gz cataclysmbn-linux-tiles
-```
-
-> [!TIP]
-> The `cataclysm-launcher` script sets up the correct working directory and library paths.
-> Use it to run the game from any location.
-
-#### Distribution Presets
-
-| Preset        | Description                             |
-| ------------- | --------------------------------------- |
-| `dist-tiles`  | Tiles + Sound + Languages               |
-| `dist-curses` | Curses + Languages                      |
-| `lint`        | Minimal build for formatting tools only |
-
-#### Portable vs System Install
-
-| Option          | `USE_PREFIX_DATA_DIR=OFF` | `USE_PREFIX_DATA_DIR=ON`   |
-| --------------- | ------------------------- | -------------------------- |
-| Data location   | `./data/`                 | `/usr/share/cataclysm-bn/` |
-| Config location | `./config/`               | `~/.config/cataclysm-bn/`  |
-| Best for        | Portable/release builds   | System packages (deb/rpm)  |
-
 To change build options, you can either pass the options on the command line:
 
 ```sh
@@ -460,11 +395,6 @@ Use XDG directories for save and config files.
 - TESTS=`<boolean>`
 
 Whether to build tests.
-
-- JSON_FORMAT=`<boolean>`
-
-Build the `json_formatter` tool and enable `style-json` / `style-json-parallel` targets for
-formatting JSON files. See [Formatting & Linting](../formatting.md) for usage.
 
 So a CMake command for building Cataclysm-BN in release mode with tiles and sound support will look
 as follows, provided it is run in build directory located in the project.

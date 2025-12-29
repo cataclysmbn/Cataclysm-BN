@@ -19,7 +19,7 @@
     "use_action": {
       "type": "bandolier",
       "capacity": 40,
-      "ammo": [ "32", "38", "357mag", "357sig", "380", "40", "10mm", "44", "45", "45colt", "9mm" ],
+      "ammo": [ "32", "38", "357mag", "357sig", "380", "40", "10mm", "44", "45", "45colt", "46", "57", "9mm" ],
       "draw_cost": 20
     },
     "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE", "FANCY" ]

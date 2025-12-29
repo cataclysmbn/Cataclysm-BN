@@ -1599,15 +1599,5 @@
       "SpiRAAAAAAALS!",
       "Rotate!"
     ]
-  },
-  {
-    "type": "snippet",
-    "category": "<ally_rule_move_own_pace_true_text>",
-    "text": "<mypronoun> will move at their own pace when following."
-  },
-  {
-    "type": "snippet",
-    "category": "<ally_rule_move_own_pace_false_text>",
-    "text": "<mypronoun> will follow your movement speed when following."
   }
 ]

@@ -123,7 +123,7 @@
     "description": "A small chemistry station, including a hotplate and electrolysis setup powered by the vehicle's batteries.  'e'xamine the tile with the chemistry lab to access the water faucet or to heat up food with the hotplate.  If you attempt to craft an item that needs one of the chemistry lab's functions, it will automatically be selected as a tool.",
     "durability": 80,
     "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "FAUCET", "COVERED" ],
-    "integrated_tools": [ "chemistry_set", "electrolysis_kit", "hotplate" ],
+    "integrated_tools": [ "chemistry_set", "electrolysis_kit" ],
     "item": "chemlab",
     "location": "center",
     "looks_like": "f_workbench",

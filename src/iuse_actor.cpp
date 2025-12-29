@@ -334,7 +334,7 @@ int iuse_transform::use( player &p, item &it, bool t, const tripoint &pos ) cons
             } else if( !it.ammo_current().is_null() ) {
                 it.ammo_set( it.ammo_current(), qty );
             } else {
-                it.set_charges( qty );
+                it.set_countdown( qty );
             }
             // If we're setting target charges then check for integral mods too.
             if( it.type->gun ) {
@@ -362,8 +362,8 @@ int iuse_transform::use( player &p, item &it, bool t, const tripoint &pos ) cons
     p.inv_update_invlet_cache_with_item( it );
     // Update luminosity as object is "added"
     get_map().update_lum( it, true );
-    ( active || countdown ) ? it.activate() : it.deactivate();
-    it.set_counter( countdown > 0 ? countdown : it.type->countdown_interval );
+    it.item_counter = countdown > 0 ? countdown : it.type->countdown_interval;
+    ( active || it.item_counter ) ? it.activate() : it.deactivate();
     // Check for gaining or losing night vision, eye encumbrance effects, clairvoyance from transforming relics, etc.
     p.recalc_sight_limits();
 
@@ -519,8 +519,8 @@ int countdown_actor::use( player &p, item &it, bool t, const tripoint &pos ) con
         p.add_msg_if_player( m_neutral, _( message ), it.tname() );
     }
 
+    it.item_counter = interval > 0 ? interval : it.type->countdown_interval;
     it.activate();
-    it.set_counter( interval > 0 ? interval : it.type->countdown_interval );
     return 0;
 }
 
@@ -929,9 +929,8 @@ int consume_drug_iuse::use( player &p, item &it, bool, const tripoint & ) const
         cig = item::spawn( lit_item, calendar::turn );
         time_duration converted_time = time_duration::from_minutes( smoking_duration );
 
+        cig->item_counter = to_turns<int>( converted_time );
         cig->activate();
-        cig->set_counter( to_turns<int>( converted_time ) );
-
         p.i_add( std::move( cig ) );
     }
 
@@ -2695,13 +2694,7 @@ int cast_spell_actor::use( player &p, item &it, bool, const tripoint & ) const
     cast_spell->name = casting.id().c_str();
     if( it.has_flag( flag_USE_PLAYER_ENERGY ) ) {
         // [2] this value overrides the mana cost if set to 0
-        // Have to check whether the player actually has enough energy or not
-        if( p.magic->has_enough_energy( p, casting ) ) {
-            cast_spell->values.emplace_back( 1 );
-        } else {
-            p.add_msg_if_player( m_info, _( "You lack the energy to cast %s." ), casting.name() );
-            return 0;
-        }
+        cast_spell->values.emplace_back( 1 );
     } else {
         // [2]
         cast_spell->values.emplace_back( 0 );
@@ -4625,7 +4618,6 @@ std::unique_ptr<iuse_actor> mutagen_iv_actor::clone() const
 void mutagen_iv_actor::load( const JsonObject &obj )
 {
     mutation_category = mutation_category_id( obj.get_string( "mutation_category", "ANY" ) );
-    tier = obj.get_int( "tier", 1 ); // fallback of 1 because IV mutagen usually is used for thresholds
 }
 
 int mutagen_iv_actor::use( player &p, item &it, bool, const tripoint & ) const
@@ -4647,7 +4639,7 @@ int mutagen_iv_actor::use( player &p, item &it, bool, const tripoint & ) const
     }
 
     // try to cross the threshold to be able to get post-threshold mutations this iv.
-    test_crossing_threshold( p, m_category, tier );
+    test_crossing_threshold( p, m_category );
 
     // TODO: Remove the "is_player" part, implement NPC screams
     if( p.is_player() && !( p.has_trait( trait_NOPAIN ) ) && m_category.iv_sound ) {
@@ -4688,7 +4680,7 @@ int mutagen_iv_actor::use( player &p, item &it, bool, const tripoint & ) const
     }
 
     // try crossing again after getting new in-category mutations.
-    test_crossing_threshold( p, m_category, tier );
+    test_crossing_threshold( p, m_category );
 
     return it.type->charges_to_use();
 }
@@ -6195,7 +6187,7 @@ auto iuse_flowerpot_plant::on_use_harvest( player &p, item &i, const tripoint & 
 
 auto iuse_flowerpot_plant::on_tick( player &, item &i, const tripoint & ) const -> int
 {
-    if( i.get_counter() != 0 ) {
+    if( i.item_counter != 0 ) {
         return 0;
     }
 
@@ -6208,7 +6200,7 @@ void iuse_flowerpot_plant::update( item &i ) const
     const auto info = get_info( i );
     if( !info.seed_id.is_valid() ) {
         clear_growing_plant( i );
-        i.set_counter( 0 );
+        i.item_counter = 0;
         i.convert( stages[0] );
         i.erase_var( "item_label" );
         i.deactivate();
@@ -6219,16 +6211,16 @@ void iuse_flowerpot_plant::update( item &i ) const
     i.set_var( "item_label", string_format( "%s (%s)", stages[0]->nname( 1 ), info.plant_name() ) );
     switch( info.stage() ) {
         case 0:
+            i.item_counter = 0;
             i.deactivate();
-            i.set_counter( 0 );
             break;
         case 4:
+            i.item_counter = 0;
             i.deactivate();
-            i.set_counter( 0 );
             break;
         default:
+            i.item_counter = to_turns<int>( std::min( info.remaining_time(), 1_hours ) );
             i.activate();
-            i.set_counter( to_turns<int>( std::min( info.remaining_time(), 1_hours ) ) );
             break;
     }
 }

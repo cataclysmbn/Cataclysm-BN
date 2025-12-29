@@ -116,12 +116,11 @@
     "//": "Stuff you would find in an average wizard's workshop or other place where someone stores magical goodies.",
     "subtype": "collection",
     "items": [
-      { "group": "tools_common", "prob": 40 },
+      { "group": "tools_common", "prob": 60 },
       { "group": "jewelry_safe", "prob": 10 },
       { "group": "jewelry_front", "prob": 8 },
       { "group": "potions_common", "prob": 15 },
       { "group": "magical_reagents", "prob": 20 },
-      { "group": "magic_recipe_basic", "prob": 20 },
       {
         "distribution": [
           { "group": "enchanted_wands_lesser", "prob": 15 },
@@ -133,6 +132,7 @@
         ],
         "prob": 15
       },
+      { "item": "bone_human", "prob": 60, "count-min": 1, "count-max": 5 },
       [ "toolbox", 10 ]
     ]
   },
@@ -278,7 +278,7 @@
     "id": "enchanted_rings_common",
     "type": "item_group",
     "//": "all the common enchanted rings",
-    "subtype": "distribution",
+    "subtype": "collection",
     "items": [
       { "item": "mring_blades_lesser", "prob": 5 },
       { "item": "mring_strength_1", "prob": 10 },
@@ -293,7 +293,7 @@
     "id": "enchanted_rings_uncommon",
     "type": "item_group",
     "//": "all the uncommon enchanted rings",
-    "subtype": "distribution",
+    "subtype": "collection",
     "items": [
       { "item": "mring_strength_2", "prob": 10 },
       { "item": "mring_dexterity_2", "prob": 10 },
@@ -308,7 +308,7 @@
     "id": "enchanted_rings_unusual",
     "type": "item_group",
     "//": "all the unusual enchanted rings",
-    "subtype": "distribution",
+    "subtype": "collection",
     "items": [
       { "item": "mring_strength_3", "prob": 10 },
       { "item": "mring_dexterity_3", "prob": 10 },

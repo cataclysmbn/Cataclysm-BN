@@ -46,19 +46,18 @@ class basic_animation
             delay( static_cast<size_t>( get_option<int>( "ANIMATION_DELAY" ) ) * scale * 1000000L ) {
         }
 
-        void popup() const {
+        void draw() const {
             static_popup popup;
             popup
             .wait_message( "%s", _( "Hang on a bit…" ) )
             .on_top( true );
-        }
-        void draw() const {
+
             g->invalidate_main_ui_adaptor();
             ui_manager::redraw_invalidated();
             refresh_display();
         }
-        void progress( bool draw_popup = true ) const {
-            if( draw_popup ) { popup(); }
+
+        void progress() const {
             draw();
 
             // NOLINTNEXTLINE(cata-no-long): timespec uses long int
@@ -258,48 +257,6 @@ void draw_custom_explosion_curses( game &g,
         }
     }
 }
-
-auto get_bullet_dir( const std::vector<tripoint> &trajectory, size_t i ) -> direction
-{
-    return i == 0 && trajectory.size() > 1 ?
-           direction_from( trajectory[i], trajectory[i + 1] ) :
-           ( i >= 1 && i < trajectory.size() ) ?
-           direction_from( trajectory[i - 1], trajectory[i] ) :
-           direction::NORTH;
-}
-
-struct bullet_visual {
-    std::string id;
-    int rotation; //< 0: UP, 1: LEFT, 2: DOWN, 3: RIGHT
-};
-auto get_bullet_visual( direction dir, const std::string &bullet_0deg,
-                        const std::optional<std::string> &bullet_45deg ) -> bullet_visual
-{
-    const auto &id = bullet_0deg;
-    const auto &id_45 = bullet_45deg.value_or( bullet_0deg );
-
-    switch( dir ) {
-        case direction::NORTH:
-            return { .id = id,    .rotation = 0 };
-        case direction::NORTHEAST:
-            return { .id = id_45, .rotation = 0 };
-        case direction::EAST:
-            return { .id = id,    .rotation = 3 };
-        case direction::SOUTHEAST:
-            return { .id = id_45, .rotation = 3 };
-        case direction::SOUTH:
-            return { .id = id,    .rotation = 2 };
-        case direction::SOUTHWEST:
-            return { .id = id_45, .rotation = 2 };
-        case direction::WEST:
-            return { .id = id,    .rotation = 1 };
-        case direction::NORTHWEST:
-            return { .id = id_45, .rotation = 1 };
-        default:
-            return { .id = id,    .rotation = 0 };
-    }
-}
-
 } // namespace
 
 #if defined(TILES)
@@ -544,22 +501,72 @@ void game::draw_bullet( const tripoint &t, const int i,
     static const std::string bullet_flame    {"animation_bullet_flame"};
     static const std::string bullet_shrapnel {"animation_bullet_shrapnel"};
 
-    std::string sprite_0 = bullet_unknown;
-    std::optional<std::string> sprite_45 = std::nullopt;
+    // to send to
+    enum rotation_impl : unsigned {
+        UP = 0,
+        DOWN = 2,
+        LEFT = 1,
+        RIGHT = 3,
+    };
 
-    if( bullet == '*' ) {
-        sprite_0 = bullet_normal_0deg;
-        sprite_45 = bullet_normal_45deg;
-    } else if( bullet == '#' ) {
-        sprite_0 = bullet_flame;
-    } else if( bullet == '`' ) {
-        sprite_0 = bullet_shrapnel;
-    }
+    const auto get_bullet_normal_sprite = [&]( direction dir ) {
+        switch( dir ) {
+            case direction::NORTH:
+            case direction::EAST:
+            case direction::SOUTH:
+            case direction::WEST:
+            default:
+                return bullet_normal_0deg;
+            case direction::NORTHEAST:
+            case direction::SOUTHEAST:
+            case direction::SOUTHWEST:
+            case direction::NORTHWEST:
+                return bullet_normal_45deg;
+        }
+    };
 
-    const auto visual = get_bullet_visual( get_bullet_dir( trajectory, static_cast<size_t>( i ) ),
-                                           sprite_0, sprite_45 );
+    // converts direction into cata_tiles compatible rotation value
+    static const auto get_rotation = []( direction dir ) {
+        switch( dir ) {
+            default:
+            case direction::NORTH:
+            case direction::NORTHEAST:
+                return rotation_impl::UP;
+            case direction::SOUTH:
+            case direction::SOUTHWEST:
+                return rotation_impl::DOWN;
+            case direction::WEST: // for some reason it's counter-clockwise
+            case direction::NORTHWEST:
+                return rotation_impl::LEFT;
+            case direction::EAST:
+            case direction::SOUTHEAST:
+                return rotation_impl::RIGHT;
+        }
+    };
+    const auto get_dir = [&]( ) -> direction {
+        if( i == 0 && trajectory.size() > 1 )
+        {
+            return direction_from( t, trajectory[1] );
+        } else if( i >= 1 )
+        {
+            return direction_from( trajectory[i - 1], t );
+        } else
+        {
+            return direction::NORTH;
+        }
+    };
+
+    const direction dir = get_dir();
+    const rotation_impl rotation = get_rotation( dir );
+
+    const std::string &bullet_type =
+        bullet == '*' ? get_bullet_normal_sprite( dir )
+        : bullet == '#' ? bullet_flame
+        : bullet == '`' ? bullet_shrapnel
+        : bullet_unknown;
+
     shared_ptr_fast<draw_callback_t> bullet_cb = make_shared_fast<draw_callback_t>( [&]() {
-        tilecontext->init_draw_bullet( t, visual.id, visual.rotation );
+        tilecontext->init_draw_bullet( t, bullet_type, rotation );
     } );
     add_draw_callback( bullet_cb );
 
@@ -753,39 +760,6 @@ void draw_line_curses( game &g, const std::vector<tripoint> &points )
 } //namespace
 
 #if defined(TILES)
-void draw_line_of( const draw_sprite_line_options &options )
-{
-    if( !use_tiles ) {
-        draw_line_curses( *g, options.points );
-        return;
-    }
-    std::vector<tripoint> ps;
-    std::vector<std::string> ids;
-    std::vector<int> rots;
-
-    ps.reserve( options.points.size() );
-    ids.reserve( options.points.size() );
-    rots.reserve( options.points.size() );
-
-    for( size_t i = 0; i < options.points.size(); ++i ) {
-        if( !is_point_visible( options.points[i] ) ) { continue; }
-
-        auto visual = get_bullet_visual( get_bullet_dir( options.points, i ),
-                                         options.bullet_0deg, options.bullet_45deg );
-
-        ps.push_back( options.points[i] );
-        ids.push_back( visual.id );
-        rots.push_back( visual.rotation );
-    }
-    if( ps.empty() ) { return; }
-
-    auto bullets_cb = make_shared_fast<game::draw_callback_t>( [&] {
-        tilecontext->init_draw_bullets( ps, ids, rots );
-    } );
-    g->add_draw_callback( bullets_cb );
-    bullet_animation().progress( false );
-    tilecontext->void_bullet();
-}
 void game::draw_line( const tripoint &p, const std::vector<tripoint> &points )
 {
     draw_line_curses( *this, points );
@@ -797,10 +771,6 @@ void game::draw_line( const tripoint &p, const std::vector<tripoint> &points )
     tilecontext->init_draw_line( p, points, "line_trail", false );
 }
 #else
-void draw_line_of( const draw_sprite_line_options &options )
-{
-    g->draw_line( options.p, options.points );
-}
 void game::draw_line( const tripoint &/*p*/, const std::vector<tripoint> &points )
 {
     draw_line_curses( *this, points );

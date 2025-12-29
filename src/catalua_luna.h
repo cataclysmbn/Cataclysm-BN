@@ -9,12 +9,10 @@
 #include <utility>
 #include <vector>
 
-#include "catalua_readonly.h"
 #include "catalua_sol.h"
+#include "catalua_readonly.h"
 #include "debug.h"
 #include "string_formatter.h"
-
-#include <ranges>
 
 #define LUNA_VAL( Class, Name )                         \
     namespace luna::detail {                            \
@@ -33,11 +31,6 @@
     LUNA_VAL( int_id<Class>, Name "IntId" )
 
 #define LUNA_ENUM( Class, Name ) LUNA_VAL( Class, Name )
-
-#define LUNA_PTR_VAL( Class, Name ) \
-    LUNA_VAL( Class, Name ) \
-    LUNA_VAL( detached_ptr<Class>, "Detached<" Name ">" ) \
-    LUNA_VAL( std::unique_ptr<Class>, "Unique<" Name ">" )
 
 namespace luna
 {
@@ -89,7 +82,7 @@ struct luna_traits {
     constexpr static std::string_view name = "<value>";
 };
 
-extern std::vector<std::string> current_comment;
+extern std::string_view current_comment;
 
 template<typename T>
 using remove_cv_ref_t = std::remove_cv_t<std::remove_reference_t<T>>;
@@ -100,30 +93,13 @@ using fx_traits = sol::meta::meta_detail::fx_traits<Signature>;
 inline void add_comment( sol::table &dt, std::string_view key )
 {
     if( !current_comment.empty() ) {
-        std::string c{};
-        bool first = true;
-        for( const auto &cc : current_comment ) {
-            if( cc.empty() ) {
-                continue;
-            }
-            if( !first ) {
-                c += "\n";
-            }
-            c += cc;
-            first = false;
-        }
-        current_comment.clear();
-        dt[key] = c;
+        dt[key] = current_comment;
+        current_comment = "";
     }
 }
 
-
-
 template<typename Val>
-struct doc_typename;
-
-template<typename Val>
-std::string doc_typename_impl()
+std::string doc_value_impl()
 {
     //static_assert(luna_traits<Val>::impl, "Type must implement luna_traits" );
     if constexpr( luna_traits<Val>::impl ) {
@@ -134,138 +110,102 @@ std::string doc_typename_impl()
         if constexpr( luna_traits<ValBare>::impl ) {
             return std::string( luna_traits<ValBare>::name );
         } else {
-            const std::string &str = sol::detail::demangle<Val>();
-            return std::string( "CppVal<" ) + str + ">";
+            return std::string( "<cppval: " ) + typeid( ValBare ).name() + " >";
         }
     }
 }
 
 template<typename Val>
-struct doc_typename {
-    std::string operator()() const {
-        auto str = doc_typename_impl<Val>();
-        return str;
-    }
-};
-
-template<typename Val>
-std::string doc_type()
-{
-    return doc_typename<std::remove_cvref_t<Val>> {}();
-}
-
-template<typename T, typename U>
-struct doc_typename<std::pair<T, U>> {
-    std::string operator()() const {
-        std::string ret = "Pair( ";
-        ret += doc_type<T>();
-        ret += ", ";
-        ret += doc_type<U>();
-        return ret + " )";
-    }
-};
+std::string doc_value( sol::types<Val> );
 
 template<typename ...Args>
-struct doc_typename<std::tuple<Args...>> {
-    std::string operator()() const {
-        std::string ret = "(";
-        bool is_first = true;
-        ( [&]() {
-            if( is_first ) {
-                is_first = false;
-            } else {
-                ret += ",";
-            }
-            ret += " ";
-            ret += doc_type<Args>();
+std::string doc_value( sol::types<std::tuple<Args...>> )
+{
+    std::string ret = "(";
+    bool is_first = true;
+    ( [&]() {
+        if( is_first ) {
+            is_first = false;
+        } else {
+            ret += ",";
         }
-        (), ... );
-        if( !is_first ) {
-            ret += " ";
-        }
-        return ret + ")";
+        ret += " ";
+        ret += doc_value( sol::types<Args>() );
     }
-};
+    (), ... );
+    if( !is_first ) {
+        ret += " ";
+    }
+    return ret + ")";
+}
 
 template<typename Val>
-struct doc_typename<sol::optional<Val>> {
-    std::string operator()() const {
-        std::string ret = "Opt( ";
-        ret += doc_type<Val>();
-        return ret + " )";
-    }
-};
-
-template<typename Val>
-struct doc_typename<std::optional<Val>> : doc_typename<sol::optional<Val>> {};
+std::string doc_value( sol::types<sol::optional<Val>> )
+{
+    std::string ret = "Opt( ";
+    ret += doc_value( sol::types<Val>() );
+    return ret + " )";
+}
 
 template<typename Val, std::size_t N>
-struct doc_typename<std::array<Val, N>> {
-    std::string operator()() const {
-        std::string ret = "Array( ";
-        ret += doc_type<Val>();
-        ret += ", ";
-        ret += std::to_string( N );
-        return ret + " )";
-    }
-};
+std::string doc_value( sol::types<std::array<Val, N>> )
+{
+    std::string ret = "Array( ";
+    ret += doc_value( sol::types<Val>() );
+    ret += ", ";
+    ret += std::to_string( N );
+    return ret + " )";
+}
 
 template<typename Val>
-struct doc_typename< std::vector<Val> > {
-    std::string operator()() const {
-        std::string ret = "Vector( ";
-        ret += doc_type<Val>();
-        return ret + " )";
-    }
-};
+std::string doc_value( sol::types<std::vector<Val>> )
+{
+    std::string ret = "Vector( ";
+    ret += doc_value( sol::types<Val>() );
+    return ret + " )";
+}
 
 template<typename Val>
-struct doc_typename<std::set<Val>> {
-    std::string operator()() const {
-        std::string ret = "Set( ";
-        ret += doc_type<Val>();
-        return ret + " )";
-    }
-};
+std::string doc_value( sol::types<std::set<Val>> )
+{
+    std::string ret = "Set( ";
+    ret += doc_value( sol::types<Val>() );
+    return ret + " )";
+}
 
 template<typename Key, typename Val>
-struct doc_typename<std::map<Key, Val>> {
-    std::string operator()() const {
-        std::string ret = "Dict( ";
-        ret += doc_type<Key>();
-        ret += ", ";
-        ret += doc_type<Val>();
-        return ret + " )";
-    }
-};
+std::string doc_value( sol::types<std::map<Key, Val>> )
+{
+    std::string ret = "Map( ";
+    ret += doc_value( sol::types<Key>() );
+    ret += ", ";
+    ret += doc_value( sol::types<Val>() );
+    return ret + " )";
+}
 
-template<typename Ret, typename ...Args>
-struct doc_typename<std::function<Ret( Args... )>> {
-    std::string operator()() const {
-        std::string ret = "Func";
-        ret += doc_type<std::tuple<Args...>>();
-        if constexpr( !std::is_same_v<Ret, void> ) {
-            ret += " -> ";
-            ret += doc_type<Ret>();
-        }
-        return ret;
-    }
-};
+template<typename Val>
+std::string doc_value( sol::types<Val> )
+{
+    return doc_value_impl<Val>();
+}
 
 template<typename ...Args>
-std::vector<std::string> doc_type_list()
+std::vector<std::string> doc_arg_list()
 {
     std::vector<std::string> ret;
+
     ( (
-          ret.push_back( doc_type<Args>() )
+          ret.push_back(
+              doc_value( sol::types<Args>() ) )
       ), ... );
+
     return ret;
 }
 
 template<typename RetVal, typename ...Args>
 std::vector<std::string> doc_one_constructor( std::function<RetVal( Args... )> )
 {
-    return doc_type_list<Args...>();
+    return doc_arg_list<Args...>();
 }
 
 template<typename ...Args>
@@ -292,7 +232,7 @@ void doc_bases( sol::table &dt, const sol::bases<Args...> & )
     std::vector<std::string> bases;
 
     ( (
-          bases.push_back( doc_type<Args>() )
+          bases.push_back( doc_value( sol::types<Args>() ) )
       ), ... );
 
     dt[KEY_BASES] = bases;
@@ -342,7 +282,7 @@ void doc_member( sol::table &dt, sol::types<Value Class::*> && )
 {
     dt[KEY_MEMBER_TYPE] = MEMBER_IS_VAR;
     add_comment( dt, KEY_MEMBER_COMMENT );
-    dt[KEY_MEMBER_VARIABLE_TYPE] = doc_type<Value>();
+    dt[KEY_MEMBER_VARIABLE_TYPE] = doc_value( sol::types<Value>() );
 }
 
 // Olanti! Curse thee for what I must do!
@@ -361,7 +301,7 @@ void doc_member( sol::table &dt,
      * help avert it for certain types, but I would much prefer the root problem
      * solved.
      */
-    dt[KEY_MEMBER_VARIABLE_TYPE] = doc_type<GetVal>();
+    dt[KEY_MEMBER_VARIABLE_TYPE] = doc_value( sol::types<std::remove_const<GetVal>>() );
 }
 
 template<typename Class, typename Value>
@@ -369,17 +309,17 @@ void doc_member( sol::table &dt, sol::types<sol::readonly_wrapper<Value Class::*
 {
     dt[KEY_MEMBER_TYPE] = MEMBER_IS_VAR;
     add_comment( dt, KEY_MEMBER_COMMENT );
-    dt[KEY_MEMBER_VARIABLE_TYPE] = doc_type<Value>();
+    dt[KEY_MEMBER_VARIABLE_TYPE] = doc_value( sol::types<Value>() );
 }
 
 template<typename Class, bool add_self_arg, typename RetVal, typename ...Args>
 void doc_member_fx_impl2( sol::table &dt, sol::types<RetVal> &&, sol::types<Args...> && )
 {
-    dt[KEY_MEMBER_RETVAL] = doc_type<RetVal>();
+    dt[KEY_MEMBER_RETVAL] = doc_value( sol::types<RetVal>() );
     if constexpr( add_self_arg ) {
-        dt[KEY_MEMBER_ARGS] = doc_type_list<Class, Args...>();
+        dt[KEY_MEMBER_ARGS] = doc_arg_list<Class, Args...>();
     } else {
-        dt[KEY_MEMBER_ARGS] = doc_type_list<Args...>();
+        dt[KEY_MEMBER_ARGS] = doc_arg_list<Args...>();
     }
 }
 
@@ -426,7 +366,7 @@ void doc_free( sol::table &dt, Value val )
 {
     dt[KEY_MEMBER_TYPE] = MEMBER_IS_VAR;
     add_comment( dt, KEY_MEMBER_COMMENT );
-    dt[KEY_MEMBER_VARIABLE_TYPE] = doc_type<Value>();
+    dt[KEY_MEMBER_VARIABLE_TYPE] = doc_value( sol::types<Value>() );
     dt[KEY_MEMBER_VARIABLE_HAS_VALUE] = true;
     dt[KEY_MEMBER_VARIABLE_VALUE] = val;
 }
@@ -434,8 +374,8 @@ void doc_free( sol::table &dt, Value val )
 template<typename RetVal, typename ...Args>
 void doc_free_fx_impl2( sol::table &dt, sol::types<RetVal> &&, sol::types<Args...> && )
 {
-    dt[KEY_MEMBER_RETVAL] = doc_type<RetVal>();
-    dt[KEY_MEMBER_ARGS] = doc_type_list<Args...>();
+    dt[KEY_MEMBER_RETVAL] = doc_value( sol::types<RetVal>() );
+    dt[KEY_MEMBER_ARGS] = doc_arg_list<Args...>();
 }
 
 template<typename Function>
@@ -720,19 +660,9 @@ inline void finalize_lib(
     lib.finalized = true;
 }
 
-inline void doc( const std::string &doc )
+inline void doc( std::string_view doc )
 {
-    detail::current_comment.push_back( doc );
-}
-
-template<typename ... Ts>
-inline void doc_params( const Ts &... args )
-{
-    auto cc = []<typename T>( const T & t ) {
-        auto com = std::format( "@param {}", t );
-        detail::current_comment.push_back( com );
-    };
-    ( cc( args ), ... );
+    detail::current_comment = doc;
 }
 
 } // namespace luna

@@ -10,30 +10,23 @@ The official location for translating Cataclysm: BN is the
 Some of the currently supported languages are:
 
 - Arabic
-- Chinese (China)
-- Chinese (Taiwan)
-- Danish
+- Bulgarian
+- Chinese (Simplified)
+- Chinese (Traditional)
 - Dutch
+- Esperanto
 - French
 - German
-- Greek
-- Hungarian
-- Icelandic
-- Indonesian
 - Italian (Italy)
 - Japanese
 - Korean
-- Norwegian Bokmål
-- Polish (Poland)
+- Polish
 - Portuguese (Brazil)
-- Russian (Russia)
+- Russian
 - Serbian
-- Slovak (Slovakia)
 - Spanish (Argentina)
 - Spanish (Spain)
 - Turkish
-- Ukrainian
-- Ukrainian (Ukraine)
 
 Don't see your language in the list above? You can add it into the project at Transifex!
 

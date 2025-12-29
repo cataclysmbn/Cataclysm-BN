@@ -1,7 +1,5 @@
 #pragma once
 
-#include "catalua_type_operators.h"
-
 #include <map>
 #include <set>
 #include <string>
@@ -54,8 +52,6 @@ struct quality {
 
     static void reset();
     static void load_static( const JsonObject &jo, const std::string &src );
-
-    LUA_TYPE_OPS( quality, id );
 };
 
 struct component {

@@ -14,7 +14,6 @@
 #include <ranges>
 #include <type_traits>
 #include <vector>
-#include <ranges>
 
 #include "action.h"
 #include "activity_actor_definitions.h"
@@ -471,9 +470,6 @@ void Character::swap_character( Character &other, Character &tmp )
     tmp = std::move( other );
     other = std::move( *this );
     *this = std::move( tmp );
-    // Reset the dead state cache for both characters since HP values were swapped
-    reset_cached_dead_state();
-    other.reset_cached_dead_state();
 }
 
 void Character::move_operator_common( Character &&source ) noexcept
@@ -670,11 +666,6 @@ auto Character::is_dead_state() const -> bool
         return bp->essential && get_part_hp_cur( bp ) <= 0;
     } );
     return cached_dead_state.value();
-}
-
-void Character::reset_cached_dead_state()
-{
-    cached_dead_state.reset();
 }
 
 void Character::set_part_hp_cur( const bodypart_id &id, int set )
@@ -3846,39 +3837,30 @@ static auto get_enchantment_mut_active(
     return mut->activated && mut->starts_active;
 }
 
-std::vector<Character::overlay_entry> Character::get_overlay_ids() const
+std::vector<std::string> Character::get_overlay_ids() const
 {
-    std::vector<overlay_entry> rval;
-    std::multimap<int, overlay_entry> mutation_sorting;
+    std::vector<std::string> rval;
+    std::multimap<int, std::string> mutation_sorting;
     int order;
     std::string overlay_id;
 
     // first get effects
-    for( const auto &[eff_type, eff_by_part] : *effects ) {
-        const auto eff = eff_by_part.begin()->second;
-        if( !eff.is_removed() ) {
-            const std::string &looks_like = eff_type.obj().get_looks_like();
+    for( const auto &eff_pr : *effects ) {
+        if( !eff_pr.second.begin()->second.is_removed() ) {
+            const std::string &looks_like = eff_pr.first.obj().get_looks_like();
 
-            const overlay_entry ent {
-                "effect_" + ( looks_like.empty() ? eff_type.str() : looks_like ),
-                &eff
-            };
-            rval.emplace_back( ent );
+            rval.emplace_back( "effect_" + ( looks_like.empty() ? eff_pr.first.str() : looks_like ) );
         }
     }
 
     // then get mutations
-    for( const mutation &mut : my_mutations ) {
+    for( const std::pair<const trait_id, char_trait_data> &mut : my_mutations ) {
         if( !mut.second.show_sprite ) {
             continue;
         }
         overlay_id = ( mut.second.powered ? "active_" : "" ) + mut.first.str();
         order = get_overlay_order_of_mutation( overlay_id );
-        const overlay_entry ent {
-            overlay_id,
-            &mut
-        };
-        mutation_sorting.insert( std::make_pair( order, ent ) );
+        mutation_sorting.insert( std::pair<int, std::string>( order, overlay_id ) );
     }
 
     // then get bionics
@@ -3888,11 +3870,7 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
         }
         overlay_id = ( bio.powered ? "active_" : "" ) + bio.id.str();
         order = get_overlay_order_of_mutation( overlay_id );
-        const overlay_entry ent {
-            overlay_id,
-            &bio
-        };
-        mutation_sorting.insert( std::make_pair( order, ent ) );
+        mutation_sorting.insert( std::pair<int, std::string>( order, overlay_id ) );
     }
 
     // and enchantments mutations
@@ -3906,23 +3884,12 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
 
             overlay_id = ( active ? "active_" : "" ) + mut.str();
             order = get_overlay_order_of_mutation( overlay_id );
-
-            // Maybe don't inherit colors from source (entry = std::nullopt)?
-            const overlay_entry ent {
-                overlay_id,
-                static_variant_cast<decltype( overlay_entry::entry )>( src )
-            };
-
-            mutation_sorting.insert( std::make_pair( order, ent ) );
+            mutation_sorting.insert( std::pair<int, std::string>( order, overlay_id ) );
         }
     }
 
-    for( const auto &[id, ent] : mutation_sorting | std::views::values ) {
-        const overlay_entry actual_ent {
-            "mutation_" + id,
-            ent
-        };
-        rval.push_back( actual_ent );
+    for( auto &mutorder : mutation_sorting ) {
+        rval.push_back( "mutation_" + mutorder.second );
     }
 
     // next clothing
@@ -3931,30 +3898,18 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
         if( worn_item->has_flag( flag_id( "HIDDEN" ) ) ) {
             continue;
         }
-        const overlay_entry ent {
-            "worn_" + worn_item->typeId().str(),
-            worn_item
-        };
-        rval.push_back( ent );
+        rval.push_back( "worn_" + worn_item->typeId().str() );
     }
 
     // last weapon
     // TODO: might there be clothing that covers the weapon?
     const item &weapon = primary_weapon();
     if( is_armed() ) {
-        const overlay_entry ent {
-            "wielded_" + weapon.typeId().str(),
-            &weapon
-        };
-        rval.push_back( ent );
+        rval.push_back( "wielded_" + weapon.typeId().str() );
     }
 
     if( move_mode != CMM_WALK ) {
-        const overlay_entry ent {
-            io::enum_to_string( move_mode ),
-            std::monostate{}
-        };
-        rval.push_back( ent );
+        rval.push_back( io::enum_to_string( move_mode ) );
     }
     return rval;
 }
@@ -4104,9 +4059,6 @@ void Character::practice( const skill_id &id, int amount, int cap, bool suppress
         int newLevel = get_skill_level( id );
         if( newLevel > oldLevel ) {
             g->events().send<event_type::gains_skill_level>( getID(), id, newLevel );
-            // Athletics (swimming) skill modifies encumbrance, so make sure encumbrance is updated.
-            // No harm updating it for any skill level-up in general.
-            reset_encumbrance();
         }
         if( is_player() && newLevel > oldLevel ) {
             add_msg( m_good, _( "Your skill in %s has increased to %d!" ), skill_name, newLevel );
@@ -4200,7 +4152,7 @@ void Character::die( Creature *nkiller )
     }
     mission::on_creature_death( *this );
 
-    cata::run_hooks( "on_character_death", [ &, this]( auto & params ) {
+    cata::run_hooks( "on_char_death", [ &, this]( auto & params ) {
         params["char"] = this;
         params["killer"] = get_killer();
     } );
@@ -4276,9 +4228,6 @@ void Character::do_skill_rust()
         const int newSkill = skill_level_obj.level();
         if( newSkill < oldSkillLevel ) {
             add_msg_if_player( m_bad, _( "Your skill in %s has reduced to %d!" ), aSkill.name(), newSkill );
-            // Athletics (swimming) skill modifies encumbrance, so make sure encumbrance is updated.
-            // No harm updating it for any skill rust in general.
-            reset_encumbrance();
         }
     }
 }
@@ -6441,105 +6390,18 @@ float Character::get_hit_base() const
     return get_dex() / 4.0f;
 }
 
-
-namespace
-{
-
-struct healable_bp {
-    mutable bool allowed;
-    bodypart_id bp;
-    std::string name; // Translated name as it appears in the menu.
-    int bonus;
-};
-
-auto get_best_selection_index( const Character &c, const std::vector<healable_bp> &parts,
-                               float bandage_power, float disinfectant_power ) -> int
-{
-    int best_selection_index = -1;
-    int max_priority = -1;
-
-    const bool is_disinfectant = disinfectant_power > 0.0f;
-    const bool is_bandage = bandage_power > 0.0f;
-
-    for( size_t i = 0; i < parts.size(); ++i ) {
-        if( !parts[i].allowed ) {
-            continue;
-        }
-
-        const bodypart_id &bp = parts[i].bp;
-        const bodypart_str_id &bp_str_id = bp.id();
-        int current_priority = 0;
-
-        // Calculate damage deficit for tie-breaking/general priority
-        const int cur_hp = c.get_part_hp_cur( bp );
-        const int max_hp = c.get_part_hp_max( bp );
-        const int cur_dmg = max_hp - cur_hp;
-
-        // Bandaging Priority Check (Highest priority overall)
-        if( is_bandage ) {
-            if( c.has_effect( effect_bleed, bp_str_id ) ) {
-                current_priority = 2000; // PRIORITY 1: Bleeding
-            } else if( !c.has_effect( effect_bandaged, bp_str_id ) ) {
-                // PRIORITY 2: Max Damage, not bandaged yet.
-                current_priority = 500 + cur_dmg;
-            } else {
-                // PRIORITY 3: Bandaged, but can be improved
-                const int b_power = c.get_effect_int( effect_bandaged, bp_str_id );
-                int new_b_power = static_cast<int>( std::floor( bandage_power ) );
-                if( new_b_power > b_power ) {
-                    current_priority = 100 + ( new_b_power - b_power );
-                }
-            }
-        }
-
-        // Disinfectant Priority Check (Secondary/Fallback priority)
-        if( is_disinfectant && !c.has_effect( effect_bleed, bp_str_id ) ) {
-            if( c.has_effect( effect_bite, bp_str_id ) ) {
-                // Check if this priority (1000) is higher than any non-bleeding bandaging priority (max 500+dmg)
-                if( current_priority < 1000 ) {
-                    current_priority = 1000; // PRIORITY 1: Deep Bite
-                }
-            } else if( !c.has_effect( effect_disinfected, bp_str_id ) ) {
-                // PRIORITY 2: Max Damage, not disinfected yet.
-                if( current_priority < 500 + cur_dmg ) {
-                    current_priority = 500 + cur_dmg;
-                }
-            } else {
-                // PRIORITY 3: Disinfected, but could benefit from quality improvement
-                const int d_power = c.get_effect_int( effect_disinfected, bp_str_id );
-                int new_d_power = static_cast<int>( std::floor( disinfectant_power ) );
-                if( new_d_power > d_power ) {
-                    int potential_priority = 100 + ( new_d_power - d_power );
-                    if( current_priority < potential_priority ) {
-                        current_priority = potential_priority;
-                    }
-                }
-            }
-        }
-
-        // General update
-        if( current_priority > max_priority ) {
-            max_priority = current_priority;
-            best_selection_index = i;
-        }
-    }
-
-    // PRIORITY 4: Fallback to the first item (index 0 / Head)
-    // This is "nothing will benefit from an item" path
-    if( best_selection_index == -1 ) {
-        return 0;
-    } else {
-        return best_selection_index;
-    }
-}
-
-} // namespace
-
 bodypart_str_id Character::body_window( const std::string &menu_header,
                                         bool show_all, bool precise,
                                         int normal_bonus, int head_bonus, int torso_bonus,
                                         float bleed, float bite, float infect, float bandage_power, float disinfectant_power ) const
 {
+    struct healable_bp {
+        mutable bool allowed;
+        bodypart_id bp;
+        std::string name; // Translated name as it appears in the menu.
+        int bonus;
+    };
+
     std::vector<healable_bp> parts;
     for( const bodypart_id &bp : get_all_body_parts( true ) ) {
         // Ugly!
@@ -6717,10 +6579,6 @@ bodypart_str_id Character::body_window( const std::string &menu_header,
         bmenu.desc_enabled = false;
         bmenu.text = _( "No limb would benefit from it." );
         bmenu.addentry( parts.size(), true, 'q', "%s", _( "Cancel" ) );
-    } else {
-        const int preferred_index = get_best_selection_index( *this, parts, bandage_power,
-                                    disinfectant_power );
-        bmenu.selected = preferred_index;
     }
 
     bmenu.query();
@@ -9593,11 +9451,6 @@ void Character::on_hurt( Creature *source, bool disturb /*= true*/ )
 
 bool Character::crossed_threshold() const
 {
-    // If the thresh category is set, we have to have crossed the threshold
-    // This implicitly also checks thresh_tier >= 1 because they get changed at the same time
-    if( thresh_category ) {
-        return true;
-    }
     for( const trait_id &mut : get_mutations() ) {
         if( mut->threshold ) {
             return true;
@@ -10517,10 +10370,10 @@ const item *Character::get_item_with_id( const itype_id &item_id, bool need_char
     return ret;
 }
 
-item &Character::add_item_with_id( const itype_id &item_id, int count )
+void Character::add_item_with_id( const itype_id &item_id, int count )
 {
     detached_ptr<item> new_item = item::spawn( item_id, calendar::turn, count );
-    return i_add( std::move( new_item ), true );
+    i_add( std::move( new_item ), true );
 }
 
 bool Character::has_item_with_id( const itype_id &item_id, bool need_charges ) const
@@ -11443,7 +11296,6 @@ Attitude Character::attitude_to( const Creature &other ) const
             case MATT_ATTACK:
                 return Attitude::A_HOSTILE;
             case MATT_NULL:
-            case MATT_UNKNOWN:
             case NUM_MONSTER_ATTITUDES:
                 break;
         }

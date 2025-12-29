@@ -10,7 +10,6 @@
 #include <utility>
 #include <vector>
 
-#include "animation.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -61,10 +60,7 @@ static const efftype_id effect_bounced( "bounced" );
 static const std::string flag_LIQUID( "LIQUID" );
 static const std::string flag_THIN_OBSTACLE( "THIN_OBSTACLE" );
 
-namespace
-{
-
-void drop_or_embed_projectile( dealt_projectile_attack &attack )
+static void drop_or_embed_projectile( dealt_projectile_attack &attack )
 {
     auto &proj = attack.proj;
     detached_ptr<item> drop = proj.unset_drop();
@@ -107,10 +103,10 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
         return;
     }
 
-    auto *mon = dynamic_cast<monster *>( attack.hit_critter );
+    monster *mon = dynamic_cast<monster *>( attack.hit_critter );
 
     // We can only embed in monsters
-    const bool mon_there = mon != nullptr && !mon->is_dead_state();
+    bool mon_there = mon != nullptr && !mon->is_dead_state();
     // And if we actually want to embed
     bool embed = mon_there && !proj.has_effect( ammo_effect_NO_EMBED ) &&
                  !proj.has_effect( ammo_effect_TANGLE );
@@ -168,7 +164,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
     }
 }
 
-auto blood_trail_len( int damage ) -> size_t
+static size_t blood_trail_len( int damage )
 {
     if( damage > 50 ) {
         return 3;
@@ -179,11 +175,9 @@ auto blood_trail_len( int damage ) -> size_t
     }
     return 0;
 }
-} // namespace
 
-
-auto projectile_attack_roll( const dispersion_sources &dispersion, double range,
-                             double target_size ) -> projectile_attack_aim
+projectile_attack_aim projectile_attack_roll( const dispersion_sources &dispersion, double range,
+        double target_size )
 {
     projectile_attack_aim aim;
 
@@ -209,9 +203,9 @@ auto projectile_attack_roll( const dispersion_sources &dispersion, double range,
     return aim;
 }
 
-auto projectile_attack( const projectile &proj_arg, const tripoint &source,
-                        const tripoint &target_arg, const dispersion_sources &dispersion,
-                        Creature *origin, item *source_weapon, const vehicle *in_veh ) -> dealt_projectile_attack
+dealt_projectile_attack projectile_attack( const projectile &proj_arg, const tripoint &source,
+        const tripoint &target_arg, const dispersion_sources &dispersion,
+        Creature *origin, item *source_weapon, const vehicle *in_veh )
 {
     const bool do_animation = get_option<bool>( "ANIMATION_PROJECTILES" );
 
@@ -219,19 +213,15 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 
     Creature *target_critter = g->critter_at( target_arg );
     map &here = get_map();
-    const double target_size = target_critter != nullptr ?
-                               target_critter->ranged_target_size() :
-                               here.ranged_target_size( target_arg );
-    projectile_attack_aim const aim = projectile_attack_roll( dispersion, range, target_size );
+    double target_size = target_critter != nullptr ?
+                         target_critter->ranged_target_size() :
+                         here.ranged_target_size( target_arg );
+    projectile_attack_aim aim = projectile_attack_roll( dispersion, range, target_size );
 
     // TODO: move to-hit roll back in here
 
-    auto attack = dealt_projectile_attack {
-        .proj = proj_arg,
-        .hit_critter = nullptr,
-        .dealt_dam = dealt_damage_instance(),
-        .end_point = source,
-        .missed_by = aim.missed_by,
+    dealt_projectile_attack attack {
+        proj_arg, nullptr, dealt_damage_instance(), source, aim.missed_by
     };
 
     // No suicidal shots
@@ -268,12 +258,12 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 
     if( aim.missed_by_tiles >= 1.0 ) {
         // We missed enough to target a different tile
-        const double dx = target_arg.x - source.x;
-        const double dy = target_arg.y - source.y;
+        double dx = target_arg.x - source.x;
+        double dy = target_arg.y - source.y;
         units::angle rad = units::atan2( dy, dx );
 
         // cap wild misses at +/- 30 degrees
-        const auto dispersion_angle =
+        units::angle dispersion_angle =
             std::min( units::from_arcmin( aim.dispersion ), 30_degrees );
         rad += ( one_in( 2 ) ? 1 : -1 ) * dispersion_angle;
 
@@ -318,7 +308,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
     // Add the first point to the trajectory
     trajectory.insert( trajectory.begin(), source );
 
-    static const emit_id muzzle_smoke( "emit_smaller_smoke_plume" );
+    static emit_id muzzle_smoke( "emit_smaller_smoke_plume" );
     if( proj.has_effect( ammo_effect_MUZZLE_SMOKE ) ) {
         here.emit_field( trajectory.front(), muzzle_smoke );
     }
@@ -412,14 +402,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             critter = nullptr;
         }
 
-        // Skip friendly creatures within 1 tile of shooter to prevent adjacent friendly fire
-        if( critter != nullptr && origin != nullptr &&
-            origin->attitude_to( *critter ) == Attitude::A_FRIENDLY &&
-            rl_dist( source, tp ) <= 1 ) {
-            critter = nullptr;
-        }
-
-        auto *mon = dynamic_cast<monster *>( critter );
+        monster *mon = dynamic_cast<monster *>( critter );
         // ignore non-point-blank digging targets (since they are underground)
         if( mon != nullptr && mon->digging() &&
             rl_dist( source, tp ) > 1 ) {
@@ -530,12 +513,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
     if( do_animation && do_draw_line && traj_len > 2 ) {
         trajectory.erase( trajectory.begin() );
         trajectory.resize( traj_len-- );
-        draw_line_of( {
-            .p = tp,
-            .points = trajectory,
-            .bullet_0deg = "animation_bullet_normal_0deg",
-            .bullet_45deg = "animation_bullet_normal_45deg",
-        } );
+        g->draw_line( tp, trajectory );
+        g->draw_bullet( tp, static_cast<int>( traj_len-- ), trajectory, bullet );
     }
 
     if( here.impassable( tp ) ) {
@@ -577,7 +556,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
         }
     }
     explosion_handler::get_explosion_queue().execute();
-    const size_t num_hit = hit_monsters.size();
+    size_t num_hit = hit_monsters.size();
     for( size_t i = 0; i < num_hit; ++i ) {
         auto nextattack = hit_monsters[i];
         monster attackedmon = nextattack.first;
@@ -591,19 +570,19 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 namespace ranged
 {
 
-auto hit_chance( const dispersion_sources &dispersion, double range, double target_size,
-                 double missed_by ) -> double
+double hit_chance( const dispersion_sources &dispersion, double range, double target_size,
+                   double missed_by )
 {
     if( range <= 0 ) {
         return 1.0;
     }
 
-    const double missed_by_tiles = missed_by * target_size;
+    double missed_by_tiles = missed_by * target_size;
 
     //          T = (2*D**2 * (1 - cos V)) ** 0.5   (from iso_tangent)
     //      cos V = 1 - T**2 / (2*D**2)
-    const double cosV = 1 - missed_by_tiles * missed_by_tiles / ( 2 * range * range );
-    const double needed_dispersion = ( cosV < -1.0 ? M_PI : acos( cosV ) ) * 180 * 60 / M_PI;
+    double cosV = 1 - missed_by_tiles * missed_by_tiles / ( 2 * range * range );
+    double needed_dispersion = ( cosV < -1.0 ? M_PI : acos( cosV ) ) * 180 * 60 / M_PI;
 
     return normal_cdf( needed_dispersion, dispersion.avg(), dispersion.avg() / 2 );
 }

@@ -12,19 +12,5 @@
     "category": "MESSAGE_LOG",
     "name": "Toggle full height display",
     "bindings": [ { "input_method": "keyboard", "key": "h" } ]
-  },
-  {
-    "id": "COPY_MESSAGE",
-    "type": "keybinding",
-    "category": "MESSAGE_LOG",
-    "name": "Copy visible messages to clipboard",
-    "bindings": [ { "input_method": "keyboard", "key": "c" }, { "input_method": "keyboard", "key": "C" } ]
-  },
-  {
-    "id": "ERASE_HISTORY",
-    "type": "keybinding",
-    "category": "MESSAGE_LOG",
-    "name": "Erase message history",
-    "bindings": [ { "input_method": "keyboard", "key": "x" }, { "input_method": "keyboard", "key": "X" } ]
   }
 ]

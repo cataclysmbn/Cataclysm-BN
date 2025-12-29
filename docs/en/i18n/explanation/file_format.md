@@ -58,15 +58,15 @@ Just fill it in as best you are able.
 The header will look something like:
 
 ```
-# French translations for Cataclysm-BN package.
-# Copyright (C) 2013 CleverRaven and Cataclysm-BN contributors.
-# This file is distributed under the same license as the Cataclysm-BN package.
+# French translations for Cataclysm-DDA package.
+# Copyright (C) 2013 CleverRaven and Cataclysm-DDA contributors.
+# This file is distributed under the same license as the Cataclysm-DDA package.
 # Administrator <EMAIL@ADDRESS>, 2013.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.7-git\n"
-"Report-Msgid-Bugs-To: http://github.com/CleverRaven/Cataclysm-BN\n"
+"Report-Msgid-Bugs-To: http://github.com/CleverRaven/Cataclysm-DDA\n"
 "POT-Creation-Date: 2013-08-01 13:44+0800\n"
 "PO-Revision-Date: 2013-08-01 14:02+0800\n"
 "Last-Translator: YOUR NAME <your@email.address>\n"

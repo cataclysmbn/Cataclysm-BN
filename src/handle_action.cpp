@@ -1835,14 +1835,9 @@ bool game::handle_action()
                 break;
             case ACTION_MOVE_DOWN:
                 if( u.is_mounted() ) {
-                    const monster *mon = u.mounted_creature.get();
-
-                    const bool can_use_stairs =
-                        !mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
-                        mon->has_flag( MF_FLIES );
-
-                    if( !can_use_stairs ) {
-                        add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
+                    auto mon = u.mounted_creature.get();
+                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                        add_msg( m_info, _( "You can't go down stairs while you're riding." ) );
                         break;
                     }
                 }
@@ -1878,14 +1873,9 @@ bool game::handle_action()
 
             case ACTION_MOVE_UP:
                 if( u.is_mounted() ) {
-                    const monster *mon = u.mounted_creature.get();
-
-                    const bool can_use_stairs =
-                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
-                        mon->has_flag( MF_FLIES );
-
-                    if( !can_use_stairs ) {
-                        add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
+                    auto mon = u.mounted_creature.get();
+                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                        add_msg( m_info, _( "You can't go down stairs while you're riding." ) );
                         break;
                     }
                 }

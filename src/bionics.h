@@ -145,9 +145,6 @@ struct bionic_data {
     bool can_uninstall = true;
     std::string no_uninstall_reason;
 
-    bool starting_bionic = false;
-    int points = 0;
-
     std::set<flag_id> flags;
     bool has_flag( const flag_id &flag ) const;
 
@@ -158,7 +155,6 @@ struct bionic_data {
     static void load_bionic( const JsonObject &jo, const std::string &src );
     static void check_consistency();
     static void finalize_all();
-    static std::vector<bionic_data> get_all();
     static void reset();
 
     bool was_loaded = false;

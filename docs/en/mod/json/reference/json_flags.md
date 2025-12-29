@@ -29,8 +29,8 @@ override flag inheritance, but will not delete flags that are part of the item t
 
 These are handled through `ammo_types.json`. You can tag a weapon with these to have it chamber
 existing ammo, or make your own ammo there. The first column in this list is the tag's "id", the
-internal identifier BN uses to track the tag, and the second is a brief description of the ammo
-tagged. Use the id to search for ammo listings, as ids are constant throughout BN's code. Happy
+internal identifier DDA uses to track the tag, and the second is a brief description of the ammo
+tagged. Use the id to search for ammo listings, as ids are constant throughout DDA's code. Happy
 chambering! :-)
 
 - `120mm` 120mm HEAT
@@ -740,7 +740,6 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `LEAK_DAM` ... Leaks when damaged (may be combined with "RADIOACTIVE").
 - `NEEDS_UNFOLD` ... Has an additional time penalty upon wielding. For melee weapons and guns this
   is offset by the relevant skill. Stacks with "SLOW_WIELD".
-- `MISSION_ITEM` ... will always spawn as loot regardless item spawn rate settings.
 - `NO_PACKED` ... This item is not protected against contamination and won't stay sterile. Only
   applies to CBMs.
 - `NO_REPAIR` ... Prevents repairing of this item even if otherwise suitable tools exist.
@@ -1439,7 +1438,6 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `LONE_START` If starting NPC spawn option is switched to "Scenario-based", this scenario won't
   spawn a fellow NPC on game start.
 - `SCEN_ONLY` Profession can be chosen only as part of the appropriate scenario.
-- `VEH_GROUNDED` Profession vehicle is forced to be on the ground even if it can float
 
 #### Season Flags
 
@@ -1640,7 +1638,6 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `DIFFICULTY_REMOVE`
 - `DOME_LIGHT`
 - `DOOR_MOTOR` Can only be installed on a part with `OPENABLE` flag.
-- `DROPPER` Allows cargo to be dropped out of the adjacent cargo space
 - `E_ALTERNATOR` Is an engine that can power an alternator.
 - `E_COLD_START` Is an engine that starts much slower in cold weather.
 - `E_COMBUSTION` Is an engine that burns its fuel and can backfire or explode when damaged.
@@ -1691,7 +1688,6 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `NEEDS_WINDOW` Can only be installed on a part with `WINDOW` flag.
 - `NO_JACK`
 - `NOINSTALL` Cannot be installed.
-- `NOFIELDS` Prevents fields ( smoke radiation etc ) from affecting anything on the same tile
 - `NOREMOVE_SECURITY` Cannot be uninstalled if the vehicle has a working security system.
 - `NOREMOVE_OPEN` Cannot be uninstalled if there's an open `OPENABLE` part in the same tile.
 - `NOREMOVE_CLOSED` Cannot be uninstalled if there's a closed `OPENABLE` part in the same tile.

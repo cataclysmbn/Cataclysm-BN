@@ -147,11 +147,6 @@ void mission::on_creature_death( Creature &poor_dead_dude )
         if( type->goal == MGOAL_KILL_MONSTER ) {
             mission->step_complete( 1 );
         }
-        if( type->goal == MGOAL_KILL_MONSTERS ) {
-            if( --mission->monster_kill_goal <= 0 ) {
-                mission->step_complete( 1 );
-            }
-        }
         return;
     }
     npc *p = dynamic_cast<npc *>( &poor_dead_dude );
@@ -271,7 +266,6 @@ void mission::step_complete( const int _step )
         case MGOAL_FIND_MONSTER:
         case MGOAL_ASSASSINATE:
         case MGOAL_KILL_MONSTER:
-        case MGOAL_KILL_MONSTERS:
         case MGOAL_COMPUTER_TOGGLE:
         case MGOAL_TALK_TO_NPC:
             // Go back and report.
@@ -432,7 +426,6 @@ bool mission::is_complete( const character_id &_npc_id ) const
         case MGOAL_TALK_TO_NPC:
         case MGOAL_ASSASSINATE:
         case MGOAL_KILL_MONSTER:
-        case MGOAL_KILL_MONSTERS:
         case MGOAL_COMPUTER_TOGGLE:
             return step >= 1;
 
@@ -700,11 +693,6 @@ mission::mission()
     bad_fac_id = -1;
     step = 0;
     player_id = character_id();
-}
-
-void mission::register_kill_needed()
-{
-    monster_kill_goal++;
 }
 
 namespace io

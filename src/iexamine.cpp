@@ -5632,8 +5632,8 @@ static void mill_activate( player &p, const tripoint &examp )
     }
     here.furn_set( examp, next_mill_type );
     detached_ptr<item> result = item::spawn( "fake_milling_item", calendar::turn );
+    result->item_counter = to_turns<int>( milling_time );
     result->activate();
-    result->set_counter( to_turns<int>( milling_time ) );
     here.add_item( examp, std::move( result ) );
     add_msg( _( "You remove the brake on the millstone and it slowly starts to turn." ) );
 }
@@ -5737,8 +5737,8 @@ static void smoker_activate( player &p, const tripoint &examp )
         charcoal->charges -= char_charges;
     }
     detached_ptr<item> result = item::spawn( "fake_smoke_plume", calendar::turn );
+    result->item_counter = to_turns<int>( 6_hours );
     result->activate();
-    result->set_counter( to_turns<int>( 6_hours ) );
     here.add_item( examp, std::move( result ) );
     add_msg( _( "You light a small fire under the rack and it starts to smoke." ) );
 }
@@ -6147,7 +6147,7 @@ void iexamine::quern_examine( player &p, const tripoint &examp )
             f_volume += it->volume();
         }
         if( active && it->typeId() == itype_fake_milling_item ) {
-            time_left = time_duration::from_turns( it->get_counter() );
+            time_left = time_duration::from_turns( it->item_counter );
         }
     }
 
@@ -6315,7 +6315,7 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
             f_volume += it->volume();
         }
         if( active && it->typeId() == itype_fake_smoke_plume ) {
-            time_left = time_duration::from_turns( it->get_counter() );
+            time_left = time_duration::from_turns( it->item_counter );
             hours_left = to_hours<int>( time_left );
             minutes_left = to_minutes<int>( time_left ) + 1;
         }

@@ -106,7 +106,7 @@
             <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
             <AdditionalOptions>/bigobj /utf-8 %(AdditionalOptions)</AdditionalOptions>
             <PreprocessorDefinitions>
-                _SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_WINDOWS;SDL_SOUND;TILES;DYNAMIC_ATLAS;LUA;USE_VCPKG;USE_WINMAIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+                _SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_WINDOWS;SDL_SOUND;TILES;LUA;USE_VCPKG;USE_WINMAIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
             <LanguageStandard>stdcpp23</LanguageStandard>
         </ClCompile>
         <Link>

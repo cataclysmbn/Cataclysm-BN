@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include "memory_fast.h"
 
 class JsonIn;

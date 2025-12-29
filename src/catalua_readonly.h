@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include "catalua_sol_fwd.h"
 
 namespace cata

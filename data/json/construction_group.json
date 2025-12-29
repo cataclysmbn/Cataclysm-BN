@@ -1051,11 +1051,6 @@
   },
   {
     "type": "construction_group",
-    "id": "install_foldable_solar_panel",
-    "name": "Install Foldable Solar Panel"
-  },
-  {
-    "type": "construction_group",
     "id": "install_storage_battery",
     "name": "Install Large Storage Battery"
   },

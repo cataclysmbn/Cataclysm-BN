@@ -271,26 +271,5 @@
     "category": "VEHICLE",
     "name": "Set turret targeting modes",
     "bindings": [ { "input_method": "keyboard", "key": "t" } ]
-  },
-  {
-    "id": "DROPPER_ALL",
-    "type": "keybinding",
-    "category": "VEHICLE",
-    "name": "Use all bombers",
-    "bindings": [ { "input_method": "keyboard", "key": "," } ]
-  },
-  {
-    "id": "DROPPER_SINGLE_ALL",
-    "type": "keybinding",
-    "category": "VEHICLE",
-    "name": "Bomber single tile multiple bombs",
-    "bindings": [ { "input_method": "keyboard", "key": "." } ]
-  },
-  {
-    "id": "DROPPER_SINGLE",
-    "type": "keybinding",
-    "category": "VEHICLE",
-    "name": "Bomber single tile & bomb",
-    "bindings": [ { "input_method": "keyboard", "key": "?" } ]
   }
 ]

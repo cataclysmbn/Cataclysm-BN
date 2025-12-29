@@ -108,7 +108,7 @@
     "armor_electric": 72,
     "vision_day": 50,
     "revert_to_itype": "bot_tankbot",
-    "starting_ammo": { "556": 1000, "40x46mm_m433": 20 },
+    "starting_ammo": { "556": 3000, "40x46mm_m433": 200 },
     "path_settings": { "max_dist": 20 },
     "special_attacks": [ [ "MULTI_ROBOT", 3 ] ],
     "death_function": [ "BROKEN" ],
@@ -153,7 +153,7 @@
     "armor_fire": 12,
     "path_settings": { "max_dist": 5 },
     "revert_to_itype": "bot_tripod",
-    "starting_ammo": { "napalm": 1000 },
+    "starting_ammo": { "napalm": 10000 },
     "special_attacks": [
       {
         "type": "gun",
@@ -458,7 +458,7 @@
     "name": "security robot",
     "description": "An automated riot control robot still active due to its internal power source.  This one is equipped with an electric prod and an integrated shotgun.",
     "melee_damage": [ { "damage_type": "electric", "amount": 6 } ],
-    "starting_ammo": { "shot_beanbag": 100 },
+    "starting_ammo": { "shot_beanbag": 400 },
     "special_attacks": [
       {
         "type": "gun",
@@ -515,7 +515,7 @@
     "description": "A military robot still operating due to its internal power core.  This one is armed with an electric prod and an integrated 5.56mm firearm.",
     "diff": 20,
     "melee_damage": [ { "damage_type": "electric", "amount": 6 } ],
-    "starting_ammo": { "556": 180 },
+    "starting_ammo": { "556": 1600 },
     "special_attacks": [
       {
         "type": "gun",
@@ -546,7 +546,7 @@
     "description": "A military robot still operating due to its internal power core.  This one is armed with an electric prod and an integrated 7.62x51mm firearm.",
     "diff": 20,
     "melee_damage": [ { "damage_type": "electric", "amount": 6 } ],
-    "starting_ammo": { "762_51": 100 },
+    "starting_ammo": { "762_51": 1000 },
     "revert_to_itype": "bot_milbot_308",
     "special_attacks": [
       {
@@ -578,7 +578,7 @@
     "description": "A military robot still operating due to its internal power core.  This one is armed with an electric prod and an integrated 8mm firearm.",
     "diff": 20,
     "melee_damage": [ { "damage_type": "electric", "amount": 6 } ],
-    "starting_ammo": { "8mm_caseless": 125 },
+    "starting_ammo": { "8mm_caseless": 1200 },
     "special_attacks": [
       {
         "type": "gun",
@@ -609,7 +609,7 @@
     "description": "A military robot still operating due to its internal power core.  This one is armed with an electric prod and an integrated 5x50mm flechette gun.",
     "diff": 15,
     "melee_damage": [ { "damage_type": "electric", "amount": 6 } ],
-    "starting_ammo": { "5x50dart": 100 },
+    "starting_ammo": { "5x50dart": 1000 },
     "special_attacks": [
       {
         "type": "gun",
@@ -641,7 +641,7 @@
     "diff": 20,
     "melee_damage": [ { "damage_type": "electric", "amount": 6 } ],
     "color": "dark_gray_red",
-    "starting_ammo": { "40x46mm_m433": 20 },
+    "starting_ammo": { "40x46mm_m433": 100 },
     "special_attacks": [
       {
         "type": "gun",

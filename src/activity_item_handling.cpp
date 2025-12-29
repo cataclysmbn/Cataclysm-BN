@@ -735,8 +735,6 @@ void drop_activity_actor::do_turn( player_activity &, Character &who )
     put_into_vehicle_or_drop( who, item_drop_reason::deliberate,
                               dropped, pos, force_ground );
 
-    get_map().process_falling();
-
     if( items.empty() ) {
         who.cancel_activity();
     }

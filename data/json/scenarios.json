@@ -230,13 +230,14 @@
   {
     "type": "scenario",
     "id": "medieval",
-    "name": "Challenge - Temporal Anomaly",
-    "points": 0,
-    "description": "A temporal distortion has hurled you into this collapsing world. You arrive carrying only the few items that mattered most to you - the things tied to who you are, or who you were meant to become.",
+    "name": "Challenge - Medieval Peasant",
+    "points": -7,
+    "description": "Som nigromancie hath brought yow hidder!  Ye have only the hoose on youre legges and the knyf at youre syde and youre prayeres to Marie moder of God.",
     "start_name": "Wilderness",
     "allowed_locs": [ "sloc_forest", "sloc_field" ],
-    "professions": [ "churl", "prospector", "knight", "frontiersman", "dogsledder" ],
-    "forbids_bionics": true,
+    "professions": [ "churl" ],
+    "forced_traits": [ "ILLITERATE", "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH", "SPIRITUAL" ],
+    "forbidden_traits": [ "FASTREADER", "SLOWREADER" ],
     "flags": [ "CHALLENGE", "LONE_START" ]
   },
   {
@@ -359,8 +360,7 @@
       "SMALL",
       "LARGE"
     ],
-    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
-    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
+    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ]
   },
   {
     "type": "scenario",
@@ -381,8 +381,7 @@
       "military_saboteur"
     ],
     "allowed_locs": [ "sloc_lab_random", "sloc_lab_escape_cells", "sloc_lab_finale", "sloc_ice_lab_stairs", "sloc_ice_lab_finale" ],
-    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
-    "bionics": [ "bio_surgical_razor", "bio_metabolics", "bio_torsionratchet", "bio_tools", "bio_memory", "bio_geiger" ]
+    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ]
   },
   {
     "type": "scenario",
@@ -618,8 +617,7 @@
       "SMALL",
       "LARGE"
     ],
-    "flags": [ "LONE_START" ],
-    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
+    "flags": [ "LONE_START" ]
   },
   {
     "type": "scenario",
@@ -685,18 +683,7 @@
       "mili_pilot"
     ],
     "map_extra": "mx_helicopter",
-    "flags": [ "HELI_CRASH", "LONE_START" ],
-    "bionics": [
-      "bio_metabolics",
-      "bio_ethanol",
-      "bio_ups",
-      "bio_targeting",
-      "bio_geiger",
-      "bio_power_armor_interface",
-      "bio_cqb",
-      "bio_blade",
-      "bio_weight"
-    ]
+    "flags": [ "HELI_CRASH", "LONE_START" ]
   },
   {
     "type": "scenario",
@@ -760,10 +747,7 @@
       "medic_pilot",
       "gyro_pilot",
       "bird_pilot",
-      "mili_pilot_blackhawk",
-      "airship_pilot",
-      "airboat_pilot",
-      "aircanoe_pilot"
+      "mili_pilot_blackhawk"
     ],
     "flags": [ "LONE_START" ]
   },
@@ -791,17 +775,6 @@
       "bionic_prepper",
       "bionic_installer",
       "bionic_labtech"
-    ],
-    "bionics": [
-      "bn_bio_solar",
-      "bio_climate",
-      "bio_evap",
-      "bio_metabolics",
-      "bio_recycler",
-      "bio_shock_absorber",
-      "bio_tools",
-      "bio_torsionratchet",
-      "bio_weight"
     ]
   },
   {
@@ -832,18 +805,7 @@
       "medic",
       "mili_pilot"
     ],
-    "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
-    "bionics": [
-      "bio_metabolics",
-      "bio_ethanol",
-      "bio_ups",
-      "bio_targeting",
-      "bio_geiger",
-      "bio_power_armor_interface",
-      "bio_cqb",
-      "bio_blade",
-      "bio_weight"
-    ]
+    "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ]
   },
   {
     "type": "scenario",
@@ -897,17 +859,6 @@
       "mili_pilot",
       "prof_combat_engineer"
     ],
-    "flags": [ "CHALLENGE", "LONE_START" ],
-    "bionics": [
-      "bio_metabolics",
-      "bio_ethanol",
-      "bio_ups",
-      "bio_targeting",
-      "bio_geiger",
-      "bio_power_armor_interface",
-      "bio_cqb",
-      "bio_blade",
-      "bio_weight"
-    ]
+    "flags": [ "CHALLENGE", "LONE_START" ]
   }
 ]

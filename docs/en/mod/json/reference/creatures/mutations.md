@@ -29,10 +29,10 @@
 "profession": true, //Trait is a starting profession special trait. (default: false)
 "debug": false,     //Trait is for debug purposes (default: false)
 "player_display": true, //Trait is displayed in the `@` player display menu
-"category": ["BIRD", "INSECT"], // Categories containing this mutation
+"category": ["MUTCAT_BIRD", "MUTCAT_INSECT"], // Categories containing this mutation
 "prereqs": ["SKIN_ROUGH"], // Needs these mutations before you can mutate toward this mutation
 "prereqs2": ["LEAVES"], //Also need these mutations before you can mutate towards this mutation. When both set creates 2 different mutation paths, random from one is picked. Only use together with "prereqs"
-"threshold_tier": 1, //Required tier of one of the categories' thresholds to mutate
+"threshreq": ["THRESH_SPIDER"], //Required threshold for this mutation to be possible
 "cancels": ["ROT1", "ROT2", "ROT3"], // Cancels these mutations when mutating
 "prevents": ["ROT1", "ROT2", "ROT3"], // Prevents you from recieving these mutations when mutating
 "changes_to": ["FASTHEALER2"], // Can change into these mutations when mutating further

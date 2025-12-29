@@ -167,7 +167,7 @@
     "coverage": 75,
     "required_str": -1,
     "looks_like": "f_boulder_large",
-    "flags": [ "TRANSPARENT", "EMITTER", "MINEABLE" ],
+    "flags": [ "TRANSPARENT", "EMITTER" ],
     "emissions": [ "emit_glimmer" ],
     "light_emitted": 12,
     "bash": {

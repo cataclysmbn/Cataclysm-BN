@@ -51,7 +51,6 @@ class explosion_queue
 {
     private:
         std::deque<queued_explosion> elems;
-        int explosion_count = 0;
 
     public:
         void add( queued_explosion &&exp ) {
@@ -60,9 +59,9 @@ class explosion_queue
 
         void execute();
 
-        void clear() { elems.clear(); }
-
-        auto get_count() const -> int { return explosion_count; }
+        void clear() {
+            elems.clear();
+        }
 };
 
 explosion_queue &get_explosion_queue();

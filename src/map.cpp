@@ -68,7 +68,6 @@
 #include "math_defines.h"
 #include "memory_fast.h"
 #include "messages.h"
-#include "mission.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "morale_types.h"
@@ -8200,13 +8199,6 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
         for( int j = 0; j < i.count; j++ ) {
             monster tmp( i.type );
             tmp.mission_id = i.mission_id;
-            if( i.mission_id != -1 ) {
-                mission *found_mission = mission::find( i.mission_id );
-                if( found_mission != nullptr &&
-                    found_mission->get_type().goal == MGOAL_KILL_MONSTERS ) {
-                    found_mission->register_kill_needed();
-                }
-            }
             if( i.name != "NONE" ) {
                 tmp.unique_name = i.name;
             }

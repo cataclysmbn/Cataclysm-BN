@@ -1,5 +1,4 @@
 #include "vehicle.h"
-#include "detached_ptr.h"
 #include "units_mass.h"
 #include "vehicle_part.h" // IWYU pragma: associated
 #include "vpart_position.h" // IWYU pragma: associated
@@ -71,7 +70,7 @@
 #include "units_utility.h"
 #include "veh_type.h"
 #include "weather.h"
-#include "ui.h"
+
 /*
  * Speed up all those if ( blarg == "structure" ) statements that are used everywhere;
  *   assemble "structure" once here instead of repeatedly later.
@@ -300,7 +299,6 @@ void vehicle::copy_static_from( const vehicle &source )
     propellers = source.propellers;
     wings = source.wings;
     balloons = source.balloons;
-    droppers = source.droppers;
     rail_wheelcache = source.rail_wheelcache;
     steering = source.steering;
     speciality = source.speciality;
@@ -2361,8 +2359,7 @@ bool vehicle::remove_carried_vehicle( const std::vector<int> &carried_parts )
                  to_degrees( face.dir() ), to_degrees( new_dir ) );
         return false;
     }
-    new_vehicle->owner = owner;
-    new_vehicle->old_owner = old_owner;
+
     std::vector<point> new_mounts;
     new_vehicle->name = veh_record.substr( vehicle_part::name_offset );
     for( auto carried_part : carried_parts ) {
@@ -2575,8 +2572,6 @@ bool vehicle::split_vehicles( const std::vector<std::vector <int>> &new_vehs,
                 // the split part was out of the map bounds.
                 continue;
             }
-            new_vehicle->owner = owner;
-            new_vehicle->old_owner = old_owner;
             new_vehicle->name = name;
             new_vehicle->move = move;
             new_vehicle->turn_dir = turn_dir;
@@ -6275,7 +6270,6 @@ void vehicle::refresh()
     rotors.clear();
     wings.clear();
     propellers.clear();
-    droppers.clear();
     balloons.clear();
     steering.clear();
     speciality.clear();
@@ -6351,10 +6345,6 @@ void vehicle::refresh()
         }
         if( vpi.has_flag( VPFLAG_BALLOON ) ) {
             balloons.push_back( p );
-        }
-
-        if( vpi.has_flag( VPFLAG_DROPPER ) ) {
-            droppers.push_back( p );
         }
         if( vpi.has_flag( "WIND_TURBINE" ) ) {
             wind_turbines.push_back( p );
@@ -7910,114 +7900,4 @@ int vehicle::get_part_id_hack( int id )
     }
     debugmsg( "Could not find part id via hack id" );
     return -1;
-}
-
-// The mythical invokation to summon the cargo part on the same tile
-vehicle_part *vehicle::get_cargo_part( vehicle_part *part )
-{
-    vehicle_part *vp;
-    int vpr = part_with_feature( part->mount, "CARGO", false );
-    if( vpr != -1 ) {
-        vp = &parts[ vpr ];
-    }
-    return vp;
-}
-bool vehicle::has_item_stored( vehicle_part *part )
-{
-    vehicle_part *vp = get_cargo_part( part );
-    if( vp ) {
-        return stored_volume( index_of_part( vp ) ) > 0_ml;
-    }
-    return false;
-}
-
-void vehicle::item_dropper_drop( std::vector<vehicle_part *> droppers, bool single )
-{
-    if( single ) {
-        vehicle_part *part = get_cargo_part( droppers[0] );
-        std::vector<std::string> option_names;
-        std::vector<item *> options;
-        for( item *it : part->items ) {
-            option_names.push_back( it->display_name() );
-            options.push_back( it );
-        }
-        const int idx = uilist( _( "Drop which item?" ), option_names );
-        if( idx < 0 ) {
-            return;
-        }
-        map &here = get_map();
-        tripoint pos = global_part_pos3( index_of_part( part ) );
-        while( here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, pos ) ) {
-            pos.z -= 1;
-        }
-        item *dropper = options[idx];
-        if( dropper->get_use( "transform" ) ) {
-            g->u.invoke_item( dropper, "transform" );
-        }
-        g->m.add_item_or_charges( pos, part->remove_item( *dropper ) );
-    } else {
-        for( vehicle_part *d : droppers ) {
-            vehicle_part *part = get_cargo_part( d );
-            map &here = get_map();
-            if( part ) {
-                tripoint pos = global_part_pos3( index_of_part( part ) );
-                while( here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, pos ) ) {
-                    pos.z -= 1;
-                }
-                // DANGER: DO NOT PUT THIS IN THE FOR LOOP
-                const std::vector<item *> items = part->get_items();
-                for( item *it : items ) {
-                    if( it->get_use( "transform" ) ) {
-                        g->u.invoke_item( it, "transform" );
-                    }
-                    g->m.add_item_or_charges( pos, part->remove_item( *it ) );
-                }
-            }
-        }
-    }
-}
-
-void vehicle::item_dropper_drop_single( bool single )
-{
-    std::vector<std::string> option_names;
-    std::vector<vehicle_part *> options;
-
-    // Find all droppers that are loaded
-    for( int idx : droppers ) {
-        vehicle_part *d = &parts[ idx ];
-        if( has_item_stored( d ) ) {
-            option_names.push_back( d->name() );
-            options.push_back( d );
-        }
-    }
-
-    // Select one
-    if( options.empty() ) {
-        add_msg( m_warning, _( "None of the droppers are loaded." ) );
-        return;
-    }
-    const int idx = uilist( _( "Drop from which dropper?" ), option_names );
-    if( idx < 0 ) {
-        return;
-    }
-    vehicle_part *dropper = options[idx];
-
-    std::vector<vehicle_part *> droppers;
-    droppers.push_back( dropper );
-    item_dropper_drop( droppers, single );
-}
-
-void vehicle::item_dropper_drop_all( )
-{
-    std::vector<vehicle_part *> ret;
-
-    // Find all droppers that are loaded
-    for( int idx : droppers ) {
-        vehicle_part *d = &parts[ idx ];
-        if( has_item_stored( d ) ) {
-            ret.push_back( d );
-        }
-    }
-
-    item_dropper_drop( ret, false );
 }

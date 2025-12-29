@@ -33,7 +33,6 @@ scopes:
   - mods/No_Acid_Zombies
   - mods/No_Anthills
   - mods/No_Blobs
-  - mods/No_Cockroaches
   - mods/No_Explosive_Zombies
   - mods/No_Ferals
   - mods/No_Fungi
@@ -70,10 +69,8 @@ scopes:
   - mods/novitamins
   - mods/pathfinding_stockfish
   - mods/pride_flags
-  - mods/resurrection_tech
   - mods/rpg_system
   - mods/saveload_lua_test
-  - mods/skyisland_lua_bindings_test
   - mods/smart_house_remote_mod
   - mods/speedydex
   - mods/stats_through_kills
@@ -82,6 +79,5 @@ scopes:
   - mods/test_data
   - mods/test_lua_hooks
   - mods/udp_redux
-  - mods/underground_dynamic_temperature
   - mods/weather_variants
   - mods
