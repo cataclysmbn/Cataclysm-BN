@@ -152,6 +152,7 @@ static const itype_id itype_rad_badge( "rad_badge" );
 static const itype_id itype_tuned_mechanism( "tuned_mechanism" );
 static const itype_id itype_stock_small( "stock_small" );
 static const itype_id itype_UPS( "UPS" );
+static const itype_id itype_genome_drive( "genome_drive" );
 static const itype_id itype_bio_armor( "bio_armor" );
 static const itype_id itype_waterproof_gunmod( "waterproof_gunmod" );
 static const itype_id itype_water( "water" );
@@ -5033,7 +5034,7 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         const std::string specimen_name = get_var( "specimen_name" );
         const int progress = get_var( "specimen_sample_progress", 0 );
         const int size = get_var( "specimen_size", 0 );
-        if( size > 0 && progress < size ) {
+        if( typeId() == itype_genome_drive && size > 0 && progress < size ) {
             tagtext += string_format( " (%s [%d/%d])", specimen_name, progress, size );
         } else {
             tagtext += string_format( " (%s)", specimen_name );
