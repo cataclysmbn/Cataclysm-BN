@@ -44,6 +44,8 @@ auto values = xs
   | std::views::transform( []( const auto & v ) { return v.get_value(); } )
   | std::ranges::to<std::vector>(); //< **ALWAYS** use `std::ranges` over for loops for collections.
 
+namespace { // **ALWAYS** use anonymous namespace for internal linkage over `static`.
+
 // **ALWAYS** use options struct for functions with >3 parameters
 struct button_options {
   point pos;
@@ -54,6 +56,8 @@ struct button_options {
   bool enabled = true;
 };
 auto print_button( const catacurses::window &w, const button_options &opts ) -> void;
+
+} // namespace
 ```
 
 - **NEVER** modify existing headers with >10 usages. Create new header with pure functions.
