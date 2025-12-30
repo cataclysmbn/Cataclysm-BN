@@ -176,17 +176,27 @@ static auto pixel_to_cell( point pixel_pos ) -> point
     return point{ pixel_pos.x / fontwidth, pixel_pos.y / fontheight };
 }
 
-static auto get_cell_callback( point cell_pos, bool click ) -> mouse_callback_ptr
+static auto get_cell_callback_from_buffer( const std::vector<curseline> &framebuffer,
+        point cell_pos, bool click ) -> mouse_callback_ptr
 {
-    if( cell_pos.y < 0 || cell_pos.y >= static_cast<int>( terminal_framebuffer.size() ) ) {
+    if( cell_pos.y < 0 || cell_pos.y >= static_cast<int>( framebuffer.size() ) ) {
         return nullptr;
     }
-    const auto &line = terminal_framebuffer[cell_pos.y];
+    const auto &line = framebuffer[cell_pos.y];
     if( cell_pos.x < 0 || cell_pos.x >= static_cast<int>( line.chars.size() ) ) {
         return nullptr;
     }
     const auto &cell = line.chars[cell_pos.x];
     return click ? cell.on_click : cell.on_hover;
+}
+
+static auto get_cell_callback( point cell_pos, bool click ) -> mouse_callback_ptr
+{
+    auto callback = get_cell_callback_from_buffer( terminal_framebuffer, cell_pos, click );
+    if( callback ) {
+        return callback;
+    }
+    return get_cell_callback_from_buffer( oversized_framebuffer, cell_pos, click );
 }
 
 static auto build_mouse_event( point pixel_pos, point cell_pos, mouse_button button,
