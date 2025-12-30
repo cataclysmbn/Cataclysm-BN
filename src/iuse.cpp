@@ -6090,7 +6090,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint &pos )
 
                 const auto &recipe = *candidate_recipes.back();
                 if( recipe ) {
-                    rmenu.addentry( k++, true, -1, recipe.result_name() );
+                    rmenu.addentry( k++, true, -1, recipe.result_name( /*decorated=*/true ) );
                 }
             }
 
@@ -9014,4 +9014,3 @@ int iuse::bullet_vibe_on( player *p, item *it, bool t, const tripoint & )
     }
     return it->type->charges_to_use();
 }
-
