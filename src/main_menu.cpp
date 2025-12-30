@@ -52,6 +52,20 @@
 #include "worldfactory.h"
 #include "game_info.h"
 
+#if defined(TILES)
+extern int fontwidth;
+extern int fontheight;
+#endif
+
+static auto pixel_to_cell( point pixel_pos ) -> point
+{
+#if defined(TILES)
+    return point { pixel_pos.x / fontwidth, pixel_pos.y / fontheight };
+#else
+    return pixel_pos;
+#endif
+}
+
 enum class main_menu_opts : int {
     MOTD = 0,
     NEWCHAR = 1,
@@ -522,22 +536,37 @@ void main_menu::display_text( const std::string &text, const std::string &title,
     const int b_height = FULL_SCREEN_HEIGHT - clamp( ( FULL_SCREEN_HEIGHT - w_open_height ) + 4, 0, 4 );
     const int vert_off = clamp( ( w_open_height - FULL_SCREEN_HEIGHT ) / 2, getbegy( w_open ), TERMY );
 
+    auto border_x = clamp( ( TERMX - FULL_SCREEN_WIDTH ) / 2, 0, TERMX );
     catacurses::window w_border = catacurses::newwin( b_height, FULL_SCREEN_WIDTH,
-                                  point( clamp( ( TERMX - FULL_SCREEN_WIDTH ) / 2, 0, TERMX ), vert_off ) );
+                                  point( border_x, vert_off ) );
 
     catacurses::window w_text = catacurses::newwin( b_height - 2, FULL_SCREEN_WIDTH - 2,
-                                point( 1 + clamp( ( TERMX - FULL_SCREEN_WIDTH ) / 2, 0, TERMX ), 1 + vert_off ) );
+                                point( 1 + border_x, 1 + vert_off ) );
 
     draw_border( w_border, BORDER_COLOR, title );
 
-    int width = FULL_SCREEN_WIDTH - 2;
-    int height = b_height - 2;
+    auto width = FULL_SCREEN_WIDTH - 2;
+    auto height = b_height - 2;
     const auto vFolded = foldstring( text, width );
-    int iLines = vFolded.size();
+    auto iLines = static_cast<int>( vFolded.size() );
 
     fold_and_print_from( w_text, point_zero, width, selected, c_light_gray, text );
 
     draw_scrollbar( w_border, selected, height, iLines, point_south, BORDER_COLOR, true );
+
+    if( iLines > height ) {
+        auto scrollbar_x = border_x + point_south.x;
+        auto scrollbar_y = vert_off + point_south.y;
+        this->text_scrollbar_region = inclusive_rectangle<point>(
+                                          point( scrollbar_x, scrollbar_y ),
+                                          point( scrollbar_x, scrollbar_y + height - 1 )
+                                      );
+        this->text_scroll_max = iLines - height;
+    } else {
+        this->text_scrollbar_region = std::nullopt;
+        this->text_scroll_max = 0;
+    }
+
     wnoutrefresh( w_border );
     wnoutrefresh( w_text );
 }
@@ -622,8 +651,12 @@ bool main_menu::opening_screen()
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "PAGE_UP" );
     ctxt.register_action( "PAGE_DOWN" );
+    ctxt.register_action( "SCROLL_UP" );
+    ctxt.register_action( "SCROLL_DOWN" );
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
+    ctxt.register_action( "SELECT" );
+    ctxt.register_action( "MOUSE_MOVE" );
 
     // for the menu shortcuts
     ctxt.register_action( "ANY_INPUT" );
@@ -697,7 +730,54 @@ bool main_menu::opening_screen()
             }
         }
 
-        // also check special keys
+        if( action == "MOUSE_MOVE" || action == "SELECT" ) {
+            auto mouse_pos = pixel_to_cell( sInput.mouse_pos );
+
+            if( auto sub_hit = get_sub_menu_item_at( mouse_pos ) ) {
+                if( sub_hit->first == sel1 && sel2 != sub_hit->second ) {
+                    sel2 = sub_hit->second;
+                    on_move();
+                }
+                if( action == "SELECT" ) {
+                    action = "CONFIRM";
+                }
+            } else if( auto main_hit = get_main_menu_item_at( mouse_pos ); main_hit >= 0 ) {
+                if( sel1 != main_hit ) {
+                    sel1 = main_hit;
+                    sel2 = main_hit == getopt( main_menu_opts::LOADCHAR ) ? last_world_pos : 0;
+                    sel_line = 0;
+                    on_move();
+                }
+                if( action == "SELECT" ) {
+                    if( main_hit == getopt( main_menu_opts::HELP ) ||
+                        main_hit == getopt( main_menu_opts::QUIT ) ) {
+                        action = "CONFIRM";
+                    }
+                }
+            } else if( action == "SELECT" && text_scrollbar_region.has_value() &&
+                       text_scrollbar_region->contains( mouse_pos ) ) {
+                auto opt = static_cast<main_menu_opts>( sel1 );
+                if( opt == main_menu_opts::MOTD || opt == main_menu_opts::CREDITS ) {
+                    auto relative_y = mouse_pos.y - text_scrollbar_region->p_min.y;
+                    auto scrollbar_height = text_scrollbar_region->p_max.y - text_scrollbar_region->p_min.y + 1;
+
+                    if( relative_y == 0 ) {
+                        if( sel_line > 0 ) {
+                            sel_line--;
+                        }
+                    } else if( relative_y == scrollbar_height - 1 ) {
+                        if( sel_line < text_scroll_max ) {
+                            sel_line++;
+                        }
+                    } else {
+                        auto slot_height = scrollbar_height - 2;
+                        auto slot_pos = relative_y - 1;
+                        auto new_sel_line = ( slot_pos * text_scroll_max ) / slot_height;
+                        sel_line = std::clamp( new_sel_line, 0, text_scroll_max );
+                    }
+                }
+            }
+        }
         if( action == "QUIT" ) {
             ui_manager::redraw();
             if( query_yn( _( "Really quit?" ) ) ) {
@@ -1152,4 +1232,20 @@ std::string main_menu::halloween_graves()
         ";   ;  |     | ,'---',"; // NOLINT(cata-text-style)
 
     return graves;
+}
+
+auto main_menu::get_main_menu_item_at( point p ) const -> int
+{
+    auto it = std::ranges::find_if( main_menu_button_map,
+    [&p]( const auto & entry ) { return entry.first.contains( p ); } );
+    return it != main_menu_button_map.end() ? it->second : -1;
+}
+
+auto main_menu::get_sub_menu_item_at( point p ) const -> std::optional<std::pair<int, int>>
+{
+    auto it = std::ranges::find_if( main_menu_sub_button_map,
+    [&p]( const auto & entry ) { return entry.first.contains( p ); } );
+    return it != main_menu_sub_button_map.end()
+           ? std::make_optional( it->second )
+           : std::nullopt;
 }

@@ -76,6 +76,8 @@ class main_menu
         std::vector<save_t> savegames;
         std::vector<std::pair<inclusive_rectangle<point>, std::pair<int, int>>> main_menu_sub_button_map;
         std::vector<std::pair<inclusive_rectangle<point>, int>> main_menu_button_map;
+        std::optional<inclusive_rectangle<point>> text_scrollbar_region;
+        int text_scroll_max = 0;
 
         /**
          * Prints a horizontal list of options
@@ -113,6 +115,9 @@ class main_menu
 
         static std::string halloween_spider();
         std::string halloween_graves();
+
+        auto get_main_menu_item_at( point p ) const -> int;
+        auto get_sub_menu_item_at( point p ) const -> std::optional<std::pair<int, int>>;
 };
 
 
