@@ -62,6 +62,7 @@ render_ui( win, {
 ```
 
 Benefits:
+
 - Self-documenting call sites via designated initializers
 - Easy to add/remove parameters without breaking existing code
 - Optional parameters get sensible defaults

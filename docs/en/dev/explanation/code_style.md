@@ -116,6 +116,7 @@ These are less generic guidelines and more pain points we've stumbled across ove
 ## Function Parameters
 
 When a function has **more than 3 parameters**, use an options struct instead of a long parameter list. This improves:
+
 - **Readability**: Named fields are self-documenting
 - **Maintainability**: Adding/removing parameters doesn't break all call sites
 - **Usability**: Designated initializers make call sites clear

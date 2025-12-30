@@ -424,15 +424,15 @@ void show_menu() {
 
 ## Troubleshooting
 
-| Problem                      | Solution                                                          |
-| ---------------------------- | ----------------------------------------------------------------- |
-| Clicks offset by 12-16 cells | Add `pixel_to_cell()` conversion                                  |
-| Callbacks not firing         | Check `input_context` has `"MOUSE_MOVE"` or `"SELECT"` registered |
-| **Mouse wheel not working**  | **Register `"SCROLL_UP"` and `"SCROLL_DOWN"` actions in input_context** |
+| Problem                      | Solution                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------- |
+| Clicks offset by 12-16 cells | Add `pixel_to_cell()` conversion                                                |
+| Callbacks not firing         | Check `input_context` has `"MOUSE_MOVE"` or `"SELECT"` registered               |
+| **Mouse wheel not working**  | **Register `"SCROLL_UP"` and `"SCROLL_DOWN"` actions in input_context**         |
 | Scrollbar clicks not working | Track scrollbar region and handle in `"SELECT"` action (see Scrollable Content) |
-| Wrong button clicked         | Check both `ev.button` and `ev.type` (down vs up)                 |
-| Hover not working            | Ensure `on_hover` is set in `mouse_callback_options`              |
-| Overlapping regions          | Hit-test in reverse drawing order (last drawn = topmost)          |
+| Wrong button clicked         | Check both `ev.button` and `ev.type` (down vs up)                               |
+| Hover not working            | Ensure `on_hover` is set in `mouse_callback_options`                            |
+| Overlapping regions          | Hit-test in reverse drawing order (last drawn = topmost)                        |
 
 ## Code References
 
