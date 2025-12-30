@@ -266,7 +266,12 @@ inline cata_cursesport::cursecell *cur_cell( cata_cursesport::WINDOW *win )
     return &win->line[win->cursor.y].chars[win->cursor.x];
 }
 
-//The core printing function, prints characters to the array, and sets colors
+inline void apply_cell_callbacks( cata_cursesport::cursecell *cell, cata_cursesport::WINDOW *win )
+{
+    cell->on_click = win->current_on_click;
+    cell->on_hover = win->current_on_hover;
+}
+
 inline void printstring( cata_cursesport::WINDOW *win, const std::string &text )
 {
     using cata_cursesport::cursecell;
@@ -276,8 +281,6 @@ inline void printstring( cata_cursesport::WINDOW *win, const std::string &text )
         return;
     }
     const char *fmt = text.c_str();
-    // avoid having an invalid cursorx, so that cur_cell will only return nullptr
-    // when the bottom of the window has been reached.
     if( win->cursor.x >= win->width ) {
         if( newline( win ) == 0 ) {
             return;
@@ -287,7 +290,6 @@ inline void printstring( cata_cursesport::WINDOW *win, const std::string &text )
         return;
     }
     if( win->cursor.x > 0 && win->line[win->cursor.y].chars[win->cursor.x].ch.empty() ) {
-        // start inside a wide character, erase it for good
         win->line[win->cursor.y].chars[win->cursor.x - 1].ch.assign( " " );
     }
     while( len > 0 ) {
@@ -307,37 +309,28 @@ inline void printstring( cata_cursesport::WINDOW *win, const std::string &text )
         if( dlen >= 1 ) {
             curcell->FG = win->FG;
             curcell->BG = win->BG;
+            apply_cell_callbacks( curcell, win );
             addedchar( win );
         }
         if( dlen == 1 ) {
-            // a wide character was converted to a narrow character leaving a null in the
-            // following cell ~> clear it
             cursecell *seccell = cur_cell( win );
             if( seccell && seccell->ch.empty() ) {
                 seccell->ch.assign( ' ', 1 );
             }
         } else if( dlen == 2 ) {
-            // the second cell, per definition must be empty
             cursecell *seccell = cur_cell( win );
             if( seccell == nullptr ) {
-                // the previous cell was valid, this one is outside of the window
-                // --> the previous was the last cell of the last line
-                // --> there should not be a two-cell width character in the last cell
                 curcell->ch.assign( ' ', 1 );
                 return;
             }
             seccell->FG = win->FG;
             seccell->BG = win->BG;
+            apply_cell_callbacks( seccell, win );
             seccell->ch.erase();
             addedchar( win );
-            // Have just written a wide-character into the last cell, it would not
-            // display correctly if it was the last *cell* of a line
             if( win->cursor.x == 1 ) {
-                // So make that last cell a space, move the width
-                // character in the first cell of the line
                 seccell->ch = curcell->ch;
                 curcell->ch.assign( 1, ' ' );
-                // and make the second cell on the new line empty.
                 addedchar( win );
                 cursecell *thicell = cur_cell( win );
                 if( thicell != nullptr ) {
