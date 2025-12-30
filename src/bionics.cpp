@@ -2873,12 +2873,16 @@ void Character::remove_bionic( const bionic_id &b )
     std::set<bionic_id> removed_bionics;
     for( bionic &i : *my_bionics ) {
         if( b == i.id && !removed_bionics.contains( i.id ) ) {
+            const units::energy pow_up = i.id->capacity;
+            mod_max_power_level( -1 * pow_up );
             removed_bionics.emplace( i.id );
             continue;
         }
 
         // Linked bionics: if either is removed, the other is removed as well.
         if( ( b->is_included( i.id ) || i.id->is_included( b ) ) && !removed_bionics.contains( i.id ) ) {
+            const units::energy pow_up = i.id->capacity;
+            mod_max_power_level( -1 * pow_up );
             removed_bionics.emplace( i.id );
             continue;
         }
