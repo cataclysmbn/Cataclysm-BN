@@ -87,7 +87,7 @@ clear_mouse_callback( window );
     scoped_mouse_callback guard( window, mouse_callback_options{
         .on_click = []( const mouse_event &ev ) { do_action(); }
     } );
-    
+
     mvwprintw( window, point( 10, 5 ), "Click Me" );
 }  // Callbacks cleared automatically
 ```
@@ -125,7 +125,7 @@ auto action = ctxt.handle_input();
 
 if( action == "SELECT" || action == "MOUSE_MOVE" ) {
     auto mouse_pos = pixel_to_cell( ctxt.get_raw_input().mouse_pos );
-    
+
     for( const auto &btn : buttons ) {
         if( btn.area.contains( mouse_pos ) ) {
             if( action == "SELECT" ) {
@@ -212,7 +212,7 @@ std::vector<list_item_region> item_regions;
 for( size_t i = 0; i < items.size(); ++i ) {
     auto item_pos = point( list_x, list_y + i );
     mvwprintw( window, item_pos, items[i].name );
-    
+
     item_regions.push_back( list_item_region{
         .area = inclusive_rectangle<point>(
             item_pos,
@@ -225,7 +225,7 @@ for( size_t i = 0; i < items.size(); ++i ) {
 // In input handler:
 if( action == "SELECT" ) {
     auto mouse_pos = pixel_to_cell( ctxt.get_raw_input().mouse_pos );
-    
+
     for( const auto &region : item_regions ) {
         if( region.area.contains( mouse_pos ) ) {
             select_item( region.item_index );
@@ -339,7 +339,7 @@ auto action = ctxt.handle_input();
 
 if( action == "MOUSE_MOVE" ) {
     auto mouse_pos = pixel_to_cell( ctxt.get_raw_input().mouse_pos );
-    
+
     for( const auto &[area, item_id] : button_map ) {
         if( area.contains( mouse_pos ) ) {
             highlight_menu_item( item_id );
@@ -350,7 +350,7 @@ if( action == "MOUSE_MOVE" ) {
 
 if( action == "SELECT" ) {
     auto mouse_pos = pixel_to_cell( ctxt.get_raw_input().mouse_pos );
-    
+
     for( const auto &[area, item_id] : button_map ) {
         if( area.contains( mouse_pos ) ) {
             activate_menu_item( item_id );
