@@ -43,7 +43,7 @@
     "difficulty": 2,
     "time": "30 m",
     "autolearn": true,
-    "components": [ [ [ "balloon", 20 ], [ "condom", 20 ] ], [ [ "rope_natural_short", 1 ] ] ]
+    "components": [ [ [ "balloon", 20 ], [ "condom", 20 ] ], [ [ "rope_natural_short", 1, "LIST" ] ] ]
   },
   {
     "id": "bundle_of_balloons_external",
