@@ -158,6 +158,10 @@ static std::vector<curseline> terminal_framebuffer;
 static std::weak_ptr<void> winBuffer; //tracking last drawn window to fix the framebuffer
 static int fontScaleBuffer; //tracking zoom levels to fix framebuffer w/tiles
 
+// Mouse callback dispatch state
+static point last_hovered_cell{ -1, -1 };
+static mouse_callback_ptr last_hover_callback;
+
 //***********************************
 //Non-curses, Window functions      *
 //***********************************
@@ -165,6 +169,100 @@ static int fontScaleBuffer; //tracking zoom levels to fix framebuffer w/tiles
 static bool operator==( const cata_cursesport::WINDOW *const lhs, const catacurses::window &rhs )
 {
     return lhs == rhs.get();
+}
+
+static auto pixel_to_cell( point pixel_pos ) -> point
+{
+    return point{ pixel_pos.x / fontwidth, pixel_pos.y / fontheight };
+}
+
+static auto get_cell_callback( point cell_pos, bool click ) -> mouse_callback_ptr
+{
+    if( cell_pos.y < 0 || cell_pos.y >= static_cast<int>( terminal_framebuffer.size() ) ) {
+        return nullptr;
+    }
+    const auto &line = terminal_framebuffer[cell_pos.y];
+    if( cell_pos.x < 0 || cell_pos.x >= static_cast<int>( line.chars.size() ) ) {
+        return nullptr;
+    }
+    const auto &cell = line.chars[cell_pos.x];
+    return click ? cell.on_click : cell.on_hover;
+}
+
+static auto build_mouse_event( point pixel_pos, point cell_pos, mouse_button button,
+                               mouse_event_type type ) -> mouse_event
+{
+    auto mod_state = SDL_GetModState();
+    auto mouse_state = SDL_GetMouseState( nullptr, nullptr );
+    return mouse_event{
+        .pos = pixel_pos,
+        .local_pos = cell_pos,
+        .button = button,
+        .type = type,
+        .shift_held = ( mod_state & KMOD_SHIFT ) != 0,
+        .ctrl_held = ( mod_state & KMOD_CTRL ) != 0,
+        .alt_held = ( mod_state & KMOD_ALT ) != 0,
+        .left_held = ( mouse_state & SDL_BUTTON( SDL_BUTTON_LEFT ) ) != 0,
+        .right_held = ( mouse_state & SDL_BUTTON( SDL_BUTTON_RIGHT ) ) != 0,
+        .middle_held = ( mouse_state & SDL_BUTTON( SDL_BUTTON_MIDDLE ) ) != 0,
+    };
+}
+
+static auto sdl_button_to_mouse_button( int sdl_button ) -> mouse_button
+{
+    switch( sdl_button ) {
+        case SDL_BUTTON_LEFT:
+            return mouse_button::left;
+        case SDL_BUTTON_RIGHT:
+            return mouse_button::right;
+        case SDL_BUTTON_MIDDLE:
+            return mouse_button::middle;
+        case SDL_BUTTON_X1:
+            return mouse_button::back;
+        case SDL_BUTTON_X2:
+            return mouse_button::forward;
+        default:
+            return mouse_button::none;
+    }
+}
+
+static auto dispatch_mouse_click( point pixel_pos, mouse_button button, bool is_down ) -> bool
+{
+    auto cell_pos = pixel_to_cell( pixel_pos );
+    auto callback = get_cell_callback( cell_pos, true );
+    if( callback && *callback ) {
+        auto type = is_down ? mouse_event_type::click_down : mouse_event_type::click_up;
+        auto event = build_mouse_event( pixel_pos, cell_pos, button, type );
+        ( *callback )( event );
+        return true;
+    }
+    return false;
+}
+
+static auto dispatch_mouse_hover( point pixel_pos ) -> void
+{
+    auto cell_pos = pixel_to_cell( pixel_pos );
+    if( cell_pos == last_hovered_cell ) {
+        auto callback = get_cell_callback( cell_pos, false );
+        if( callback && *callback ) {
+            auto event = build_mouse_event( pixel_pos, cell_pos, mouse_button::none,
+                                            mouse_event_type::hover_move );
+            ( *callback )( event );
+        }
+        return;
+    }
+    if( last_hover_callback && *last_hover_callback ) {
+        auto event = build_mouse_event( pixel_pos, last_hovered_cell, mouse_button::none,
+                                        mouse_event_type::hover_exit );
+        ( *last_hover_callback )( event );
+    }
+    last_hovered_cell = cell_pos;
+    last_hover_callback = get_cell_callback( cell_pos, false );
+    if( last_hover_callback && *last_hover_callback ) {
+        auto event = build_mouse_event( pixel_pos, cell_pos, mouse_button::none,
+                                        mouse_event_type::hover_enter );
+        ( *last_hover_callback )( event );
+    }
 }
 
 static void ClearScreen()
@@ -3245,19 +3343,28 @@ static void CheckMessages()
                 // on gamepads, the axes are the analog sticks
                 // TODO: somehow get the "digipad" values from the axes
                 break;
-            case SDL_MOUSEMOTION:
+            case SDL_MOUSEMOTION: {
                 if( get_option<std::string>( "HIDE_CURSOR" ) == "show" ||
                     get_option<std::string>( "HIDE_CURSOR" ) == "hidekb" ) {
                     if( !SDL_ShowCursor( -1 ) ) {
                         SDL_ShowCursor( SDL_ENABLE );
                     }
 
-                    // Only monitor motion when cursor is visible
                     last_input = input_event( MOUSE_MOVE, input_event_t::mouse );
                 }
-                break;
+                dispatch_mouse_hover( point{ ev.motion.x, ev.motion.y } );
+            }
+            break;
 
-            case SDL_MOUSEBUTTONUP:
+            case SDL_MOUSEBUTTONDOWN: {
+                auto button = sdl_button_to_mouse_button( ev.button.button );
+                dispatch_mouse_click( point{ ev.button.x, ev.button.y }, button, true );
+            }
+            break;
+
+            case SDL_MOUSEBUTTONUP: {
+                auto button = sdl_button_to_mouse_button( ev.button.button );
+                dispatch_mouse_click( point{ ev.button.x, ev.button.y }, button, false );
                 switch( ev.button.button ) {
                     case SDL_BUTTON_LEFT:
                         last_input = input_event( MOUSE_BUTTON_LEFT, input_event_t::mouse );
@@ -3266,15 +3373,22 @@ static void CheckMessages()
                         last_input = input_event( MOUSE_BUTTON_RIGHT, input_event_t::mouse );
                         break;
                 }
-                break;
+            }
+            break;
 
-            case SDL_MOUSEWHEEL:
+            case SDL_MOUSEWHEEL: {
+                auto button = ev.wheel.y > 0 ? mouse_button::scroll_up : mouse_button::scroll_down;
+                int mouse_x = 0;
+                int mouse_y = 0;
+                SDL_GetMouseState( &mouse_x, &mouse_y );
+                dispatch_mouse_click( point{ mouse_x, mouse_y }, button, true );
                 if( ev.wheel.y > 0 ) {
                     last_input = input_event( SCROLLWHEEL_UP, input_event_t::mouse );
                 } else if( ev.wheel.y < 0 ) {
                     last_input = input_event( SCROLLWHEEL_DOWN, input_event_t::mouse );
                 }
-                break;
+            }
+            break;
 
 #if defined(__ANDROID__)
             case SDL_FINGERMOTION:
