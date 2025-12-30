@@ -1539,19 +1539,23 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
     const std::vector<int> parts_in_square = parts_at_relative( dp, false );
 
     //New Subpath for balloon type structures when on the edge
-    if( parts_in_square.empty() && part.has_flag( "EXTENDABLE" ) ) {
-        // There needs to be parts for these
-        if( !parts.empty() ) {
-            if( !has_structural_or_extendable_part( dp ) &&
-                !has_structural_or_extendable_part( dp + point_east ) &&
-                !has_structural_or_extendable_part( dp + point_south ) &&
-                !has_structural_or_extendable_part( dp + point_west ) &&
-                !has_structural_or_extendable_part( dp + point_north ) ) {
-                return false;
+    if( part.has_flag( "EXTENDABLE" ) ) {
+        if( parts_in_square.empty() ) {
+            // There needs to be parts for these
+            if( !parts.empty() ) {
+                if( !has_structural_or_extendable_part( dp ) &&
+                    !has_structural_or_extendable_part( dp + point_east ) &&
+                    !has_structural_or_extendable_part( dp + point_south ) &&
+                    !has_structural_or_extendable_part( dp + point_west ) &&
+                    !has_structural_or_extendable_part( dp + point_north ) ) {
+                    return false;
+                }
+                return true;
             }
-            return true;
+            // If there are no parts, we go on our merry day
+        } else {
+            return false;
         }
-        // If there are no parts, we go on our merry day
     }
     //First part in an empty square MUST be a structural part
     if( parts_in_square.empty() && part.location != part_location_structure ) {
