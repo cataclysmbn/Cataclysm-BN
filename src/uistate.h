@@ -117,6 +117,7 @@ class uistatedata
 
         // V Menu Stuff
         int list_item_sort = 0;
+        std::set<itype_id> read_items;
         std::string list_item_filter;
         std::string list_item_downvote;
         std::string list_item_priority;
@@ -169,4 +170,3 @@ class uistatedata
         void deserialize( const JsonObject &jo );
 };
 extern uistatedata uistate;
-

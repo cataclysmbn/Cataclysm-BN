@@ -1861,6 +1861,10 @@ void options_manager::add_options_interface()
          translate_marker( "Highlight unread recipes to allow tracking of newly learned recipes." ),
          true
        );
+    add( "HIGHLIGHT_UNREAD_ITEMS", interface, translate_marker( "Highlight unread items" ),
+         translate_marker( "Highlight unread items to allow tracking of newly discovered items." ),
+         true
+       );
     add( "AMMO_IN_NAMES", interface, translate_marker( "Add ammo to weapon/magazine names" ),
          translate_marker( "If true, the default ammo is added to weapon and magazine names.  For example \"Mosin-Nagant M44 (4/5)\" becomes \"Mosin-Nagant M44 (4/5 7.62x54mm)\"." ),
          true
