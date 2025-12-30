@@ -530,6 +530,49 @@ void mvwputch_hi( const catacurses::window &w, point p, nc_color FG, const std::
     wattroff( w, HC );
 }
 
+void set_mouse_callback( const catacurses::window &w, const mouse_callback_options &opts )
+{
+#if defined( TILES ) || defined( _WIN32 )
+    auto *const win = w.get<cata_cursesport::WINDOW>();
+    if( win != nullptr ) {
+        win->current_on_click = opts.on_click
+                                ? std::make_shared<mouse_callback_t>( opts.on_click )
+                                : nullptr;
+        win->current_on_hover = opts.on_hover
+                                ? std::make_shared<mouse_callback_t>( *opts.on_hover )
+                                : nullptr;
+    }
+#else
+    ( void )w;
+    ( void )opts;
+#endif
+}
+
+void clear_mouse_callback( const catacurses::window &w )
+{
+#if defined( TILES ) || defined( _WIN32 )
+    auto *const win = w.get<cata_cursesport::WINDOW>();
+    if( win != nullptr ) {
+        win->current_on_click = nullptr;
+        win->current_on_hover = nullptr;
+    }
+#else
+    ( void )w;
+#endif
+}
+
+scoped_mouse_callback::scoped_mouse_callback( const catacurses::window &w,
+        const mouse_callback_options &opts )
+    : win( w )
+{
+    set_mouse_callback( w, opts );
+}
+
+scoped_mouse_callback::~scoped_mouse_callback()
+{
+    clear_mouse_callback( win );
+}
+
 void draw_custom_border(
     const catacurses::window &w, const catacurses::chtype ls, const catacurses::chtype rs,
     const catacurses::chtype ts, const catacurses::chtype bs, const catacurses::chtype tl,
