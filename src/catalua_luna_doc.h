@@ -100,6 +100,7 @@ class vitamin;
 struct explosion_data;
 struct requirement_data;
 class inventory;
+class known_magic;
 
 namespace units
 {
@@ -196,6 +197,7 @@ LUNA_VAL( SkillLevelMap, "SkillLevelMap" );
 LUNA_VAL( SkillLevel, "SkillLevel" );
 LUNA_VAL( fake_spell, "SpellSimple" )
 LUNA_VAL( spell, "Spell" )
+LUNA_VAL( known_magic, "KnownMagic" )
 LUNA_VAL( time_duration, "TimeDuration" );
 LUNA_VAL( time_point, "TimePoint" );
 LUNA_VAL( tinymap, "Tinymap" );
