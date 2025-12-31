@@ -255,6 +255,10 @@ void cata::detail::reg_creature( sol::state &lua )
         SET_FX_T( mod_all_parts_hp_cur, void( int ) );
         SET_FX_T( set_all_parts_hp_to_max, void() );
 
+        SET_FX_T( set_armor_bash_bonus, void( int ) );
+        SET_FX_T( set_armor_cut_bonus, void( int ) );
+        SET_FX_T( set_armor_bullet_bonus, void( int ) );
+
         SET_FX_T( get_speed_base, int() const );
         SET_FX_T( get_speed_bonus, int() const );
         SET_FX_T( get_speed_mult, float() const );
