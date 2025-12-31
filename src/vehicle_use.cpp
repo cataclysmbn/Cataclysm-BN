@@ -21,6 +21,7 @@
 #include "avatar_functions.h"
 #include "bodypart.h"
 #include "clzones.h"
+#include "catacharset.h"
 #include "character_functions.h"
 #include "color.h"
 #include "debug.h"
@@ -985,8 +986,20 @@ bool vehicle::fold_up()
         folding_veh_item->set_var( "weight", to_milligram( total_mass() ) );
         folding_veh_item->set_var( "volume", total_folded_volume() / units::legacy_volume_factor );
         // remove "folded" from name to allow for more flexibility with folded vehicle names. also lowers first character
-        folding_veh_item->set_var( "name", string_format( _( "%s" ), ( name.empty() ? name : std::string( 1,
-                                   std::tolower( name[0] ) ) + name.substr( 1 ) ) ) );
+        std::string folded_name = name;
+        if( !name.empty() ) {
+            // Use UTF-8 aware string handling to avoid corrupting multibyte characters
+            utf8_wrapper utf8_name( name );
+            if( utf8_name.size() > 0 ) {
+                uint32_t first_char = utf8_name.at( 0 );
+                // Only lowercase ASCII to avoid complexity of Unicode case conversion
+                if( first_char < 128 && std::isupper( static_cast<char>( first_char ) ) ) {
+                    char lowered = std::tolower( static_cast<char>( first_char ) );
+                    folded_name = std::string( 1, lowered ) + utf8_name.substr( 1 ).str();
+                }
+            }
+        }
+        folding_veh_item->set_var( "name", string_format( _( "%s" ), folded_name ) );
         folding_veh_item->set_var( "vehicle_name", name );
         // TODO: a better description?
         folding_veh_item->set_var( "description", string_format( _( "A folded %s." ), name ) );
