@@ -61,6 +61,7 @@ class veh_interact
         item *target = nullptr;
 
         point dd = point_zero;
+        tripoint stored_view_offset;
         /* starting offset for vehicle parts description display and max offset for scrolling */
         int start_at = 0;
         int start_limit = 0;
