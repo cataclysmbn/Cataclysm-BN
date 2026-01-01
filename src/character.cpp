@@ -2265,6 +2265,9 @@ void Character::mod_power_level( const units::energy &npower )
 void Character::mod_max_power_level( const units::energy &npower_max )
 {
     max_power_level += npower_max;
+    if( power_level > max_power_level ) {
+        set_power_level( max_power_level );
+    }
 }
 
 bool Character::is_max_power() const
