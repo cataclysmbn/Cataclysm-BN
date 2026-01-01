@@ -112,3 +112,53 @@ These are less generic guidelines and more pain points we've stumbled across ove
   +     return c.prof->description( c.male );
   + }
   ```
+
+## Function Parameters
+
+When a function has **more than 3 parameters**, use an options struct instead of a long parameter list. This improves:
+
+- **Readability**: Named fields are self-documenting
+- **Maintainability**: Adding/removing parameters doesn't break all call sites
+- **Usability**: Designated initializers make call sites clear
+
+### Before (Bad - Too many parameters)
+
+```cpp
+void print_button( const catacurses::window &w, point pos, 
+                   const std::string &text, nc_color fg, nc_color bg,
+                   std::function<void()> on_click, bool enabled );
+
+// Call site is unclear
+print_button( win, point( 10, 5 ), "OK", c_green, c_black, 
+              []{ do_action(); }, true );
+```
+
+### After (Good - Options struct)
+
+```cpp
+struct button_options {
+    point pos;
+    std::string text;
+    nc_color fg = c_white;
+    nc_color bg = c_black;
+    std::function<void()> on_click;
+    bool enabled = true;
+};
+
+auto print_button( const catacurses::window &w, const button_options &opts ) -> void;
+
+// Call site is self-documenting with designated initializers
+print_button( win, {
+    .pos = point( 10, 5 ),
+    .text = "OK",
+    .fg = c_green,
+    .on_click = []{ do_action(); }
+} );
+```
+
+### Guidelines
+
+- **Required parameters** (no default): Put first in struct, no default value
+- **Optional parameters**: Provide sensible defaults
+- **Pass by const reference**: `const options_struct &opts` to avoid copies
+- **Naming**: Use `<function_name>_options` or `<feature>_config` for the struct name

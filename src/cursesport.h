@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "mouse_input.h"
 #include "point.h"
 
 namespace catacurses
@@ -31,16 +32,17 @@ struct pairs {
     base_color BG;
 };
 
-//Individual lines, so that we can track changed lines
 struct cursecell {
     std::string ch;
     base_color FG = static_cast<base_color>( 0 );
     base_color BG = static_cast<base_color>( 0 );
+    mouse_callback_ptr on_click;
+    mouse_callback_ptr on_hover;
 
     cursecell( std::string ch ) : ch( std::move( ch ) ) { }
     cursecell() : cursecell( std::string( 1, ' ' ) ) { }
 
-    bool operator==( const cursecell &b ) const {
+    auto operator==( const cursecell &b ) const -> bool {
         return FG == b.FG && BG == b.BG && ch == b.ch;
     }
 };
@@ -50,22 +52,18 @@ struct curseline {
     std::vector<cursecell> chars;
 };
 
-// The curses window struct
 struct WINDOW {
-    // Top-left corner of window
     point pos;
     int width;
     int height;
-    // Current foreground color from attron
     base_color FG;
-    // Current background color from attron
     base_color BG;
-    // Does this window actually exist?
     bool inuse;
-    // Tracks if the window text has been changed
     bool draw;
     point cursor;
     std::vector<curseline> line;
+    mouse_callback_ptr current_on_click;
+    mouse_callback_ptr current_on_hover;
 };
 
 extern std::array<pairs, 100> colorpairs;

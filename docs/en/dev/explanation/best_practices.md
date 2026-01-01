@@ -31,6 +31,42 @@ Good names:
 - Avoid using `std::pair` and `std::tuple` in headers, instead create a named struct
 - Avoid using `int` or `std::string` where an `enum class` would work
 
+## Function Parameters
+
+For functions with **more than 3 parameters**, use an options struct:
+
+```cpp
+// Bad: Long parameter list
+void render_ui( const catacurses::window &w, point pos, point size,
+                const std::string &title, nc_color title_color,
+                bool show_border, border_style style );
+
+// Good: Options struct with designated initializers
+struct ui_render_options {
+    point pos;
+    point size;
+    std::string title;
+    nc_color title_color = c_white;
+    bool show_border = true;
+    border_style style = border_style::solid;
+};
+
+auto render_ui( const catacurses::window &w, const ui_render_options &opts ) -> void;
+
+// Usage is clear and maintainable
+render_ui( win, {
+    .pos = point_zero,
+    .size = point( 50, 20 ),
+    .title = "Inventory"
+} );
+```
+
+Benefits:
+
+- Self-documenting call sites via designated initializers
+- Easy to add/remove parameters without breaking existing code
+- Optional parameters get sensible defaults
+
 ## File organization
 
 Try to avoid including headers from other headers. This negatively impacts compilation times (both

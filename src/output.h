@@ -15,9 +15,11 @@
 
 #include "catacharset.h"
 #include "color.h"
+#include "cursesdef.h"
 #include "debug.h"
 #include "enums.h"
 #include "line.h"
+#include "mouse_input.h"
 #include "point.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -355,6 +357,27 @@ inline void wprintz( const catacurses::window &w, const nc_color &FG, const char
 {
     wprintz( w, FG, string_format( mes, std::forward<Args>( args )... ) );
 }
+
+struct mouse_callback_options {
+    mouse_callback_t on_click;
+    std::optional<mouse_callback_t> on_hover = std::nullopt;
+};
+
+void set_mouse_callback( const catacurses::window &w, const mouse_callback_options &opts );
+void clear_mouse_callback( const catacurses::window &w );
+
+class scoped_mouse_callback
+{
+    public:
+        scoped_mouse_callback( const catacurses::window &w, const mouse_callback_options &opts );
+        ~scoped_mouse_callback();
+        scoped_mouse_callback( const scoped_mouse_callback & ) = delete;
+        auto operator=( const scoped_mouse_callback & ) -> scoped_mouse_callback & = delete;
+        scoped_mouse_callback( scoped_mouse_callback && ) = delete;
+        auto operator=( scoped_mouse_callback && ) -> scoped_mouse_callback & = delete;
+    private:
+        catacurses::window win;
+};
 
 void draw_custom_border(
     const catacurses::window &w, catacurses::chtype ls = 1, catacurses::chtype rs = 1,
