@@ -1489,7 +1489,7 @@ void lockpick_activity_actor::start( player_activity &/*act*/, Character & )
 
     if( furn_type != f_null && !furn_type->lockpick_result.is_null() ) {
         progress.emplace( furn_type->name(), moves_total );
-    } else if( veh && door_lock) {
+    } else if( veh && door_lock ) {
         progress.emplace( veh->vehicle().name, moves_total );
     } else {
         if( ter_type->lockpick_result.is_null() ) {
