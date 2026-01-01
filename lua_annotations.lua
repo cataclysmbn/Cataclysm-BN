@@ -2844,7 +2844,7 @@ AddictionType = {
 	DIAZEPAM = 10,
 	MARLOSS_R = 11,
 	MARLOSS_B = 12,
-	MARLOSS_Y = 13
+	MARLOSS_Y = 13,
 }
 
 ---@enum ArtifactCharge
@@ -2855,7 +2855,7 @@ ArtifactCharge = {
 	ARTC_PAIN = 3,
 	ARTC_HP = 4,
 	ARTC_FATIGUE = 5,
-	ARTC_PORTAL = 6
+	ARTC_PORTAL = 6,
 }
 
 ---@enum ArtifactChargeReq
@@ -2866,7 +2866,7 @@ ArtifactChargeReq = {
 	ACR_SLEEP = 3,
 	ACR_RAD = 4,
 	ACR_WET = 5,
-	ACR_SKY = 6
+	ACR_SKY = 6,
 }
 
 ---@enum ArtifactEffectActive
@@ -2910,7 +2910,7 @@ ArtifactEffectActive = {
 	AEP_MOVEMENT_NOISE = 36,
 	AEP_BAD_WEATHER = 37,
 	AEP_SICK = 38,
-	AEP_CLAIRVOYANCE_PLUS = 39
+	AEP_CLAIRVOYANCE_PLUS = 39,
 }
 
 ---@enum ArtifactEffectPassive
@@ -2947,7 +2947,7 @@ ArtifactEffectPassive = {
 	AEA_FLASH = 29,
 	AEA_VOMIT = 30,
 	AEA_SHADOWS = 31,
-	AEA_STAMINA_EMPTY = 32
+	AEA_STAMINA_EMPTY = 32,
 }
 
 ---@enum Attitude
@@ -2955,7 +2955,7 @@ Attitude = {
 	Hostile = 0,
 	Neutral = 1,
 	Friendly = 2,
-	Any = 3
+	Any = 3,
 }
 
 ---@enum BodyPart
@@ -2971,14 +2971,14 @@ BodyPart = {
 	LEG_L = 8,
 	LEG_R = 9,
 	FOOT_L = 10,
-	FOOT_R = 11
+	FOOT_R = 11,
 }
 
 ---@enum CharacterMoveMode
 CharacterMoveMode = {
 	walk = 0,
 	run = 1,
-	crouch = 2
+	crouch = 2,
 }
 
 ---@enum Color
@@ -3127,7 +3127,7 @@ Color = {
 	c_magenta_cyan = 141,
 	c_pink_cyan = 142,
 	c_cyan_cyan = 143,
-	c_light_cyan_cyan = 144
+	c_light_cyan_cyan = 144,
 }
 
 ---@enum DamageType
@@ -3145,7 +3145,7 @@ DamageType = {
 	DT_LIGHT = 10,
 	DT_PSI = 11,
 	DT_ELECTRIC = 12,
-	DT_BULLET = 13
+	DT_BULLET = 13,
 }
 
 ---@enum MissionGoal
@@ -3167,7 +3167,7 @@ MissionGoal = {
 	MGOAL_KILL_MONSTER_SPEC = 14,
 	MGOAL_TALK_TO_NPC = 15,
 	MGOAL_CONDITION = 16,
-	MGOAL_KILL_MONSTERS = 17
+	MGOAL_KILL_MONSTERS = 17,
 }
 
 ---@enum MissionOrigin
@@ -3177,7 +3177,7 @@ MissionOrigin = {
 	ORIGIN_OPENER_NPC = 2,
 	ORIGIN_ANY_NPC = 3,
 	ORIGIN_SECONDARY = 4,
-	ORIGIN_COMPUTER = 5
+	ORIGIN_COMPUTER = 5,
 }
 
 ---@enum MonsterAttitude
@@ -3190,7 +3190,7 @@ MonsterAttitude = {
 	MATT_FOLLOW = 5,
 	MATT_ATTACK = 6,
 	MATT_ZLAVE = 7,
-	MATT_UNKNOWN = 8
+	MATT_UNKNOWN = 8,
 }
 
 ---@enum MonsterFactionAttitude
@@ -3198,7 +3198,7 @@ MonsterFactionAttitude = {
 	ByMood = 0,
 	Neutral = 1,
 	Friendly = 2,
-	Hate = 3
+	Hate = 3,
 }
 
 ---@enum MonsterFlag
@@ -3333,7 +3333,7 @@ MonsterFlag = {
 	CANT_CLONE = 127,
 	MOUNTABLE_STAIRS = 128,
 	MOUNTABLE_OBSTACLES = 129,
-	FACTION_MEMORY = 130
+	FACTION_MEMORY = 130,
 }
 
 ---@enum MonsterSize
@@ -3342,7 +3342,7 @@ MonsterSize = {
 	SMALL = 1,
 	MEDIUM = 2,
 	LARGE = 3,
-	HUGE = 4
+	HUGE = 4,
 }
 
 ---@enum MsgType
@@ -3356,7 +3356,7 @@ MsgType = {
 	debug = 6,
 	headshot = 7,
 	critical = 8,
-	grazing = 9
+	grazing = 9,
 }
 
 ---@enum NpcAttitude
@@ -3379,7 +3379,7 @@ NpcAttitude = {
 	NPCATT_LEGACY_5 = 15,
 	NPCATT_ACTIVITY = 16,
 	NPCATT_FLEE_TEMP = 17,
-	NPCATT_RECOVER_GOODS = 18
+	NPCATT_RECOVER_GOODS = 18,
 }
 
 ---@enum NpcNeed
@@ -3390,7 +3390,7 @@ NpcNeed = {
 	need_gun = 3,
 	need_food = 4,
 	need_drink = 5,
-	need_safety = 6
+	need_safety = 6,
 }
 
 ---@enum OtMatchType
@@ -3398,7 +3398,7 @@ OtMatchType = {
 	EXACT = 0,
 	TYPE = 1,
 	PREFIX = 2,
-	CONTAINS = 3
+	CONTAINS = 3,
 }
 
 ---@enum SfxChannel
@@ -3427,7 +3427,7 @@ SfxChannel = {
 	player_activities = 21,
 	exterior_engine_sound = 22,
 	interior_engine_sound = 23,
-	radio = 24
+	radio = 24,
 }
 
 ---@enum VitaminType
@@ -3435,6 +3435,6 @@ VitaminType = {
 	vitamin = 0,
 	toxin = 1,
 	drug = 2,
-	counter = 3
+	counter = 3,
 }
 

@@ -408,7 +408,7 @@ on_explosion_start = {}
       table.insert(table_entries, "\t" .. key_str .. " = " .. value_str)
     end
 
-    full_ret = full_ret .. table.concat(table_entries, ",\n") .. "\n"
+    full_ret = full_ret .. table.concat(table_entries, ",\n") .. ",\n"
     full_ret = full_ret .. "}\n\n"
   end
 
