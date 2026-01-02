@@ -3350,8 +3350,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         if( !you.prof->spells().empty() ) {
             for( const std::pair<spell_id, int> spell_pair : you.prof->spells() ) {
                 trim_and_print( w_bionics, point( 0, pos ), getmaxx( w_bionics ) - 1,
-                                c_white, "\t" + string_format( _( "%s level %d" ), spell_pair.first->name,
-                                        spell_pair.second ) + "\n" );
+                                c_white, "\t" + string_format( _( "%s level %d" ), spell_pair.first->name, spell_pair.second ) );
                 pos++;
             }
         } else {
