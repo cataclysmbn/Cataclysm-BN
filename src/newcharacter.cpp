@@ -2288,7 +2288,7 @@ tab_direction set_profession( avatar &u, points_left &points,
             if( !sorted_profs[cur_id]->spells().empty() ) {
                 buffer += colorize( _( "Spells:" ), c_light_blue ) + "\n";
                 for( const std::pair<spell_id, int> spell_pair : sorted_profs[cur_id]->spells() ) {
-                    buffer += string_format( _( "%s level %d" ), spell_pair.first->name, spell_pair.second );
+                    buffer += string_format( _( "%s level %d" ), spell_pair.first->name, spell_pair.second ) + "\n";
                 }
             }
 
@@ -3319,6 +3319,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         wnoutrefresh( w_traits );
 
         mvwprintz( w_bionics, point_zero, COL_HEADER, _( "Bionics: " ) );
+
         std::vector<bionic_id> current_bionics;
         for( auto id : you.prof->CBMs() ) {
             current_bionics.push_back( id );
@@ -3326,19 +3327,37 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         for( auto bio : you.get_bionic_collection() ) {
             current_bionics.push_back( bio.id );
         }
+
         std::sort( current_bionics.begin(), current_bionics.end(), []( const bionic_id & a,
         const bionic_id & b ) {
             return localized_compare( a->name.translated(), b->name.translated() );
         } );
+
+        pos = 1;
         if( current_bionics.empty() ) {
-            wprintz( w_traits, c_light_red, _( "None!" ) );
+            wprintz( w_bionics, c_light_red, _( "None!" ) );
         } else {
             for( size_t i = 0; i < current_bionics.size(); i++ ) {
                 const auto current_bionic = current_bionics[i];
-                trim_and_print( w_bionics, point( 0, i + 1 ), getmaxx( w_traits ) - 1,
+                trim_and_print( w_bionics, point( 0, pos ), getmaxx( w_bionics ) - 1,
                                 c_white, "\t" + current_bionic->name.translated() );
+                pos++;
             }
         }
+
+        mvwprintz( w_bionics, point( 0, pos ), COL_HEADER, _( "Spells: " ) );
+        pos++;
+        if( !you.prof->spells().empty() ) {
+            for( const std::pair<spell_id, int> spell_pair : you.prof->spells() ) {
+                trim_and_print( w_bionics, point( 0, pos ), getmaxx( w_bionics ) - 1,
+                                c_white, "\t" + string_format( _( "%s level %d" ), spell_pair.first->name,
+                                        spell_pair.second ) + "\n" );
+                pos++;
+            }
+        } else {
+            wprintz( w_bionics, c_light_red, _( "None!" ) );
+        }
+
 
         wnoutrefresh( w_bionics );
 
