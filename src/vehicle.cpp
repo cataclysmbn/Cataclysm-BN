@@ -5343,7 +5343,8 @@ int vehicle::total_water_wheel_epower_w() const
 int vehicle::net_battery_charge_rate_w() const
 {
     return total_engine_epower_w() + total_alternator_epower_w() + total_accessory_epower_w() +
-           total_solar_epower_w() + total_wind_epower_w() + total_water_wheel_epower_w();
+           total_solar_epower_w() + total_wind_epower_w() + total_water_wheel_epower_w() +
+           max_reactor_epower_w();
 }
 
 int vehicle::max_reactor_epower_w() const
