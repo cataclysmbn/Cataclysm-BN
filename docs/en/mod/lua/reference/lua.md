@@ -7838,7 +7838,7 @@ No constructors.
 
 #### result_name {#sol::RecipeRaw::result_name}
 
-🇲 Method --> <code>( ) -> string</code>
+🇲 Method --> <code>( boolean ) -> string</code>
 
 #### get_from_skill_used {#sol::RecipeRaw::get_from_skill_used}
 
@@ -10048,6 +10048,16 @@ Documentation for hooks
 > - `char` (<code>[Character](#sol::Character)</code>)
 > - `killer` (<code>[Creature](#sol::Creature)</code>)
 
+#### on_character_effect_removed {#sol::nil::on_character_effect_removed}
+
+🇫 Function --> <code>( params: table )</code>
+
+> Called when character loses the effect which has `EFFECT_LUA_ON_REMOVED` flag.\
+> The hook receives a table with keys:
+>
+> - `char` (<code>[Character](#sol::Character)</code>)
+> - `effect` (<code>[Effect](#sol::Effect)</code>)
+
 #### on_character_effect {#sol::nil::on_character_effect}
 
 🇫 Function --> <code>( params: table )</code>
@@ -10056,16 +10066,6 @@ Documentation for hooks
 > The hook receives a table with keys:
 >
 > - `character` (<code>[Character](#sol::Character)</code>)
-> - `effect` (<code>[Effect](#sol::Effect)</code>)
-
-#### on_character_effect_added {#sol::nil::on_character_effect_added}
-
-🇫 Function --> <code>( params: table )</code>
-
-> Called when character gets the effect which has `EFFECT_LUA_ON_ADDED` flag.\
-> The hook receives a table with keys:
->
-> - `char` (<code>[Character](#sol::Character)</code>)
 > - `effect` (<code>[Effect](#sol::Effect)</code>)
 
 #### on_throw {#sol::nil::on_throw}
@@ -10110,45 +10110,31 @@ Documentation for hooks
 > - `mon` (<code>[Monster](#sol::Monster)</code>)
 > - `killer` (<code>[Creature](#sol::Creature)</code>)
 
+#### on_mon_effect_removed {#sol::nil::on_mon_effect_removed}
+
+🇫 Function --> <code>( params: table )</code>
+
+> Called when monster loses the effect which has `EFFECT_LUA_ON_REMOVED` flag.\
+> The hook receives a table with keys:
+>
+> - `mon` (<code>[Monster](#sol::Monster)</code>)
+> - `effect` (<code>[Effect](#sol::Effect)</code>)
+
 #### on_every_x {#sol::nil::on_every_x}
 
 🇫 Function --> <code>( table )</code>
 
 > Called every in-game period
 
-#### on_character_reset_stats {#sol::nil::on_character_reset_stats}
+#### on_character_effect_added {#sol::nil::on_character_effect_added}
 
 🇫 Function --> <code>( params: table )</code>
 
-> Called when character stat gets reset.\
-> The hook receives a table with keys:
->
-> - `character` (<code>[Character](#sol::Character)</code>)
-
-#### on_creature_performed_technique {#sol::nil::on_creature_performed_technique}
-
-🇫 Function --> <code>( params: table )</code>
-
-> Called when a character has performed a technique.\
+> Called when character gets the effect which has `EFFECT_LUA_ON_ADDED` flag.\
 > The hook receives a table with keys:
 >
 > - `char` (<code>[Character](#sol::Character)</code>)
-> - `technique` (<code>[MartialArtsTechniqueRaw](#sol::MartialArtsTechniqueRaw)</code>)
-> - `target` (<code>[Creature](#sol::Creature)</code>)
-> - `damage_instance` (<code>[DamageInstance](#sol::DamageInstance)</code>)
-> - `move_cost` (integer)
-
-#### on_game_started {#sol::nil::on_game_started}
-
-🇫 Function --> <code>( )</code>
-
-> Called when the game has first started.
-
-#### on_game_load {#sol::nil::on_game_load}
-
-🇫 Function --> <code>( )</code>
-
-> Called right after game has loaded.
+> - `effect` (<code>[Effect](#sol::Effect)</code>)
 
 #### on_creature_melee_attacked {#sol::nil::on_creature_melee_attacked}
 
@@ -10178,16 +10164,26 @@ Documentation for hooks
 > - `pressure` (float): Atmospheric pressure
 > - `is_sheltered` (boolean): Whether player is sheltered
 
-#### on_creature_dodged {#sol::nil::on_creature_dodged}
+#### on_game_started {#sol::nil::on_game_started}
+
+🇫 Function --> <code>( )</code>
+
+> Called when the game has first started.
+
+#### on_game_load {#sol::nil::on_game_load}
+
+🇫 Function --> <code>( )</code>
+
+> Called right after game has loaded.
+
+#### on_character_reset_stats {#sol::nil::on_character_reset_stats}
 
 🇫 Function --> <code>( params: table )</code>
 
-> Called when a character or monster successfully dodges.\
+> Called when character stat gets reset.\
 > The hook receives a table with keys:
 >
-> - `char` (<code>[Character](#sol::Character)</code>)
-> - `source` (<code>[Creature](#sol::Creature)</code>)
-> - `difficulty` (integer)
+> - `character` (<code>[Character](#sol::Character)</code>)
 
 #### on_weather_updated {#sol::nil::on_weather_updated}
 
@@ -10217,6 +10213,30 @@ Documentation for hooks
 > - `bodypart_id` (<code>[BodyPartTypeId](#sol::BodyPartTypeId)</code>)
 > - `damage_instance` (<code>[DamageInstance](#sol::DamageInstance)</code>)
 > - `damage_blocked` (float)
+
+#### on_creature_dodged {#sol::nil::on_creature_dodged}
+
+🇫 Function --> <code>( params: table )</code>
+
+> Called when a character or monster successfully dodges.\
+> The hook receives a table with keys:
+>
+> - `char` (<code>[Character](#sol::Character)</code>)
+> - `source` (<code>[Creature](#sol::Creature)</code>)
+> - `difficulty` (integer)
+
+#### on_creature_performed_technique {#sol::nil::on_creature_performed_technique}
+
+🇫 Function --> <code>( params: table )</code>
+
+> Called when a character has performed a technique.\
+> The hook receives a table with keys:
+>
+> - `char` (<code>[Character](#sol::Character)</code>)
+> - `technique` (<code>[MartialArtsTechniqueRaw](#sol::MartialArtsTechniqueRaw)</code>)
+> - `target` (<code>[Creature](#sol::Creature)</code>)
+> - `damage_instance` (<code>[DamageInstance](#sol::DamageInstance)</code>)
+> - `move_cost` (integer)
 
 #### on_mapgen_postprocess {#sol::nil::on_mapgen_postprocess}
 
