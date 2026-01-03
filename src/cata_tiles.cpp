@@ -1879,7 +1879,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                       "SDL_RenderSetClipRect failed" );
 
         //fill render area with black to prevent artifacts where no new pixels are drawn
-        geometry->rect( renderer, clipRect, SDL_Color() );
+        geometry->rect( renderer, clipRect, SDL_Color{ 0, 0, 0, 255 } );
     }
 
     point s;
@@ -2167,6 +2167,9 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
                 bool in_map_bounds = here.inbounds( pos );
 
+                const bool stop_on_memory = z != center.z && has_memory_at( pos ) &&
+                                            ( !in_map_bounds || here.ter( pos ) != t_open_air );
+
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
                     ll = ch.visibility_cache[x][y];
                     if( !would_apply_vision_effects( here.get_visibility( ch.visibility_cache[x][y], cache ) ) ) {
@@ -2177,7 +2180,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const auto low_override = draw_below_override.find( pos );
                 const bool low_overridden = low_override != draw_below_override.end();
                 if( low_overridden ? !low_override->second :
-                    ( in_map_bounds && ( here.dont_draw_lower_floor( pos ) || has_memory_at( pos ) ) )
+                    ( in_map_bounds && ( here.dont_draw_lower_floor( pos ) || stop_on_memory ) )
                     || ( !in_map_bounds && ( has_memory_at( pos ) || pos.z <= 0 ) ) ) {
                     // invisible to normal eyes
                     bool invisible[5];
@@ -3380,21 +3383,32 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
             // do something to get other terrain orientation values
         }
         const std::string &tname = t.id().str();
-        if( here.check_seen_cache( p ) && !t->has_flag( TFLAG_NO_MEMORY ) &&
-            !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
-            g->u.memorize_tile( here.getabs( p ), tname, subtile, rotation );
+        if( here.check_seen_cache( p ) ) {
+            if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
+                g->u.memorize_tile( here.getabs( p ), tname, subtile, rotation );
+            } else {
+                g->u.clear_memorized_tile( here.getabs( p ) );
+            }
         }
         // draw the actual terrain if there's no override
         if( !neighborhood_overridden ) {
-            //If it's open air just draw a flat color
+            // Open air is used for holes / sky. Drawing a cyan marker here can bleed through
+            // semi-transparent sprites (e.g. explosion smoke) and look like stuck artifacts.
+            // If a tileset provides an explicit tile for it, use that; otherwise draw nothing.
             if( t == t_open_air ) {
-                return draw_block( p, curses_color_to_SDL( c_cyan ), 4 );
-            } else {
-                const tile_search_params tile { tname, C_TERRAIN, empty_string, subtile, rotation };
-                return draw_from_id_string(
-                           tile, p, bgCol, fgCol,
-                           ll, true, z_drop, false, height_3d );
+                if( tileset_ptr && tileset_ptr->find_tile_type( tname ) ) {
+                    const auto tile = tile_search_params{ tname, C_TERRAIN, empty_string, 0, 0 };
+                    return draw_from_id_string(
+                               tile, p, bgCol, fgCol,
+                               ll, true, z_drop, false, height_3d );
+                }
+                return true;
             }
+
+            const auto tile = tile_search_params{ .id = tname, .category = C_TERRAIN, .subcategory = empty_string, .subtile = subtile, .rota = rotation };
+            return draw_from_id_string(
+                       tile, p, bgCol, fgCol,
+                       ll, true, z_drop, false, height_3d );
         }
     }
     if( invisible[0] ? overridden : neighborhood_overridden ) {
