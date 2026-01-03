@@ -3750,6 +3750,16 @@ bash_results map::bash_ter_furn( const tripoint &p, const bash_params &params )
             sounds::sound( p, sound_volume, sounds::sound_t::combat, bash->sound_fail, false,
                            "smash_fail", soundfxvariant );
         }
+
+        if( !smash_ter && smax > 0 ) {
+            const auto flipped_version = get_furn_transforms_into( p );
+            if( flipped_version != furn_str_id::NULL_ID() ) {
+                const int damage_percent = ( params.strength * 100 ) / smax;
+                if( rng( 1, 100 ) <= damage_percent ) {
+                    furn_set( p, flipped_version );
+                }
+            }
+        }
     } else {
         if( smash_ter ) {
             result |= bash_ter_success( p, params );
