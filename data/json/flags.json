@@ -2478,5 +2478,11 @@
     "type": "json_flag",
     "//": "",
     "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_REMOVED",
+    "type": "json_flag",
+    "//": "",
+    "context": [  ]
   }
 ]

@@ -609,6 +609,12 @@ void Character::process_effects_internal()
             if( !_effect_it.second.is_removed() ) {
                 process_one_effect( _effect_it.second, false );
             }
+            else if( _effect_it.second.has_flag( flag_EFFECT_LUA_ON_REMOVED ) ) {
+                cata::run_hooks( "on_character_effect_removed", [ &, this ]( auto & params ) {
+                    params["char"] = this;
+                    params["effect"] = &_effect_it.second;
+                } );
+            }
         }
     }
 }
