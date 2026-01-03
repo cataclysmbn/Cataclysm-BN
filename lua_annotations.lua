@@ -632,6 +632,9 @@ function CharacterId.new() end
 ---@field sees fun(self: Creature, arg2: Creature): boolean
 ---@field set_all_parts_hp_cur fun(self: Creature, arg2: integer)
 ---@field set_all_parts_hp_to_max fun(self: Creature)
+---@field set_armor_bash_bonus fun(self: Creature, arg2: integer)
+---@field set_armor_bullet_bonus fun(self: Creature, arg2: integer)
+---@field set_armor_cut_bonus fun(self: Creature, arg2: integer)
 ---@field set_moves fun(self: Creature, arg2: integer)
 ---@field set_pain fun(self: Creature, arg2: integer)
 ---@field set_part_hp_cur fun(self: Creature, arg2: BodyPartTypeIntId, arg3: integer)
@@ -2269,7 +2272,7 @@ function RecipeId.new() end
 ---@field ident fun(self: RecipeRaw): RecipeId @DEPRECATED: use recipe_id instead
 ---@field recipe_id fun(self: RecipeRaw): RecipeId
 ---@field result fun(self: RecipeRaw): ItypeId
----@field result_name fun(self: RecipeRaw): string
+---@field result_name fun(self: RecipeRaw, arg2: boolean): string
 RecipeRaw = {}
 ---@return RecipeRaw
 function RecipeRaw.new() end

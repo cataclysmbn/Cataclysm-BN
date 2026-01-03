@@ -1624,37 +1624,29 @@ No constructors.
 
 🇲 Method --> <code>( ) -> string</code>
 
-#### get_armor_bullet_base {#sol::Creature::get_armor_bullet_base}
+#### get_armor_cut_bonus {#sol::Creature::get_armor_cut_bonus}
 
-🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
+🇲 Method --> <code>( ) -> integer</code>
+
+#### get_armor_bullet_bonus {#sol::Creature::get_armor_bullet_bonus}
+
+🇲 Method --> <code>( ) -> integer</code>
 
 #### get_armor_bash_bonus {#sol::Creature::get_armor_bash_bonus}
 
 🇲 Method --> <code>( ) -> integer</code>
 
+#### get_armor_bullet_base {#sol::Creature::get_armor_bullet_base}
+
+🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
+
 #### get_armor_cut_base {#sol::Creature::get_armor_cut_base}
 
 🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
 
-#### get_armor_bash_base {#sol::Creature::get_armor_bash_base}
-
-🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
-
-#### get_armor_bullet {#sol::Creature::get_armor_bullet}
-
-🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
-
-#### get_armor_cut_bonus {#sol::Creature::get_armor_cut_bonus}
-
-🇲 Method --> <code>( ) -> integer</code>
-
 #### get_armor_type {#sol::Creature::get_armor_type}
 
 🇲 Method --> <code>( [DamageType](#sol::DamageType), [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
-
-#### get_armor_bullet_bonus {#sol::Creature::get_armor_bullet_bonus}
-
-🇲 Method --> <code>( ) -> integer</code>
 
 #### get_melee {#sol::Creature::get_melee}
 
@@ -1664,35 +1656,23 @@ No constructors.
 
 🇲 Method --> <code>( ) -> number</code>
 
+#### get_speed {#sol::Creature::get_speed}
+
+🇲 Method --> <code>( ) -> integer</code>
+
 #### get_hit {#sol::Creature::get_hit}
 
 🇲 Method --> <code>( ) -> number</code>
 
+#### get_size {#sol::Creature::get_size}
+
+🇲 Method --> <code>( ) -> [MonsterSize](#sol::MonsterSize)</code>
+
+#### get_armor_bash_base {#sol::Creature::get_armor_bash_base}
+
+🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
+
 #### get_armor_cut {#sol::Creature::get_armor_cut}
-
-🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
-
-#### get_env_resist {#sol::Creature::get_env_resist}
-
-🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
-
-#### get_pain {#sol::Creature::get_pain}
-
-🇲 Method --> <code>( ) -> integer</code>
-
-#### get_perceived_pain {#sol::Creature::get_perceived_pain}
-
-🇲 Method --> <code>( ) -> integer</code>
-
-#### set_pain {#sol::Creature::set_pain}
-
-🇲 Method --> <code>( integer )</code>
-
-#### mod_pain_noresist {#sol::Creature::mod_pain_noresist}
-
-🇲 Method --> <code>( integer )</code>
-
-#### get_armor_bash {#sol::Creature::get_armor_bash}
 
 🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
 
@@ -1700,11 +1680,23 @@ No constructors.
 
 🇲 Method --> <code>( ) -> integer</code>
 
-#### set_moves {#sol::Creature::set_moves}
+#### mod_moves {#sol::Creature::mod_moves}
 
 🇲 Method --> <code>( integer )</code>
 
-#### mod_moves {#sol::Creature::mod_moves}
+#### get_perceived_pain {#sol::Creature::get_perceived_pain}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+#### get_pain {#sol::Creature::get_pain}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+#### get_armor_bullet {#sol::Creature::get_armor_bullet}
+
+🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
+
+#### set_moves {#sol::Creature::set_moves}
 
 🇲 Method --> <code>( integer )</code>
 
@@ -1716,17 +1708,25 @@ No constructors.
 
 🇲 Method --> <code>( ) -> integer</code>
 
-#### mod_pain {#sol::Creature::mod_pain}
+#### get_armor_bash {#sol::Creature::get_armor_bash}
+
+🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
+
+#### get_env_resist {#sol::Creature::get_env_resist}
+
+🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
+
+#### set_pain {#sol::Creature::set_pain}
 
 🇲 Method --> <code>( integer )</code>
-
-#### get_speed {#sol::Creature::get_speed}
-
-🇲 Method --> <code>( ) -> integer</code>
 
 #### get_hp {#sol::Creature::get_hp}
 
 🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId)? ) -> integer</code>
+
+#### hp_percentage {#sol::Creature::hp_percentage}
+
+🇲 Method --> <code>( ) -> integer</code>
 
 #### get_speed_bonus {#sol::Creature::get_speed_bonus}
 
@@ -1740,11 +1740,11 @@ No constructors.
 
 🇲 Method --> <code>( ) -> integer</code>
 
-#### set_all_parts_hp_to_max {#sol::Creature::set_all_parts_hp_to_max}
+#### set_armor_bullet_bonus {#sol::Creature::set_armor_bullet_bonus}
 
-🇲 Method --> <code>( )</code>
+🇲 Method --> <code>( integer )</code>
 
-#### mod_all_parts_hp_cur {#sol::Creature::mod_all_parts_hp_cur}
+#### set_armor_cut_bonus {#sol::Creature::set_armor_cut_bonus}
 
 🇲 Method --> <code>( integer )</code>
 
@@ -1768,35 +1768,19 @@ No constructors.
 
 🇲 Method --> <code>( ) -> number</code>
 
-#### get_size {#sol::Creature::get_size}
-
-🇲 Method --> <code>( ) -> [MonsterSize](#sol::MonsterSize)</code>
-
-#### set_all_parts_hp_cur {#sol::Creature::set_all_parts_hp_cur}
-
-🇲 Method --> <code>( integer )</code>
-
-#### mod_part_hp_cur {#sol::Creature::mod_part_hp_cur}
-
-🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId), integer )</code>
-
-#### has_flag {#sol::Creature::has_flag}
-
-🇲 Method --> <code>( [MonsterFlag](#sol::MonsterFlag) ) -> boolean</code>
-
-#### hp_percentage {#sol::Creature::hp_percentage}
-
-🇲 Method --> <code>( ) -> integer</code>
-
 #### get_hp_max {#sol::Creature::get_hp_max}
 
 🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId)? ) -> integer</code>
 
-#### mod_part_hp_max {#sol::Creature::mod_part_hp_max}
+#### set_armor_bash_bonus {#sol::Creature::set_armor_bash_bonus}
 
-🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId), integer )</code>
+🇲 Method --> <code>( integer )</code>
 
-#### get_part_hp_cur {#sol::Creature::get_part_hp_cur}
+#### mod_all_parts_hp_cur {#sol::Creature::mod_all_parts_hp_cur}
+
+🇲 Method --> <code>( integer )</code>
+
+#### get_part_hp_max {#sol::Creature::get_part_hp_max}
 
 🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
 
@@ -1804,15 +1788,35 @@ No constructors.
 
 🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
 
-#### get_part_hp_max {#sol::Creature::get_part_hp_max}
+#### get_part_hp_cur {#sol::Creature::get_part_hp_cur}
 
 🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> integer</code>
+
+#### has_flag {#sol::Creature::has_flag}
+
+🇲 Method --> <code>( [MonsterFlag](#sol::MonsterFlag) ) -> boolean</code>
+
+#### set_all_parts_hp_to_max {#sol::Creature::set_all_parts_hp_to_max}
+
+🇲 Method --> <code>( )</code>
+
+#### set_part_hp_cur {#sol::Creature::set_part_hp_cur}
+
+🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId), integer )</code>
+
+#### mod_part_hp_cur {#sol::Creature::mod_part_hp_cur}
+
+🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId), integer )</code>
 
 #### set_part_hp_max {#sol::Creature::set_part_hp_max}
 
 🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId), integer )</code>
 
-#### set_part_hp_cur {#sol::Creature::set_part_hp_cur}
+#### set_all_parts_hp_cur {#sol::Creature::set_all_parts_hp_cur}
+
+🇲 Method --> <code>( integer )</code>
+
+#### mod_part_hp_max {#sol::Creature::mod_part_hp_max}
 
 🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId), integer )</code>
 
@@ -1820,21 +1824,25 @@ No constructors.
 
 🇲 Method --> <code>( ) -> boolean</code>
 
+#### mod_pain_noresist {#sol::Creature::mod_pain_noresist}
+
+🇲 Method --> <code>( integer )</code>
+
 #### has_trait {#sol::Creature::has_trait}
 
 🇲 Method --> <code>( [MutationBranchId](#sol::MutationBranchId) ) -> boolean</code>
 
-#### get_value {#sol::Creature::get_value}
+#### power_rating {#sol::Creature::power_rating}
 
-🇲 Method --> <code>( string ) -> string</code>
+🇲 Method --> <code>( ) -> number</code>
+
+#### speed_rating {#sol::Creature::speed_rating}
+
+🇲 Method --> <code>( ) -> number</code>
 
 #### sight_range {#sol::Creature::sight_range}
 
 🇲 Method --> <code>( integer ) -> integer</code>
-
-#### power_rating {#sol::Creature::power_rating}
-
-🇲 Method --> <code>( ) -> number</code>
 
 #### sees {#sol::Creature::sees}
 
@@ -1844,45 +1852,45 @@ No constructors.
 
 🇲 Method --> <code>( [Creature](#sol::Creature) ) -> [Attitude](#sol::Attitude)</code>
 
-#### stability_roll {#sol::Creature::stability_roll}
-
-🇲 Method --> <code>( ) -> number</code>
-
-#### speed_rating {#sol::Creature::speed_rating}
-
-🇲 Method --> <code>( ) -> number</code>
-
-#### knock_back_to {#sol::Creature::knock_back_to}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint) )</code>
-
 #### ranged_target_size {#sol::Creature::ranged_target_size}
 
 🇲 Method --> <code>( ) -> number</code>
-
-#### apply_damage {#sol::Creature::apply_damage}
-
-🇲 Method --> <code>( [Creature](#sol::Creature), [BodyPartTypeIntId](#sol::BodyPartTypeIntId), integer, boolean )</code>
 
 #### deal_damage {#sol::Creature::deal_damage}
 
 🇲 Method --> <code>( [Creature](#sol::Creature), [BodyPartTypeIntId](#sol::BodyPartTypeIntId), [DamageInstance](#sol::DamageInstance) ) -> [DealtDamageInstance](#sol::DealtDamageInstance)</code>
 
+#### knock_back_to {#sol::Creature::knock_back_to}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) )</code>
+
 #### size_melee_penalty {#sol::Creature::size_melee_penalty}
 
 🇲 Method --> <code>( ) -> integer</code>
 
-#### dodge_roll {#sol::Creature::dodge_roll}
+#### apply_damage {#sol::Creature::apply_damage}
+
+🇲 Method --> <code>( [Creature](#sol::Creature), [BodyPartTypeIntId](#sol::BodyPartTypeIntId), integer, boolean )</code>
+
+#### digging {#sol::Creature::digging}
+
+🇲 Method --> <code>( ) -> boolean</code>
+
+#### stability_roll {#sol::Creature::stability_roll}
 
 🇲 Method --> <code>( ) -> number</code>
 
-#### as_character {#sol::Creature::as_character}
+#### as_avatar {#sol::Creature::as_avatar}
 
-🇲 Method --> <code>( ) -> [Character](#sol::Character)</code>
+🇲 Method --> <code>( ) -> [Avatar](#sol::Avatar)</code>
 
 #### get_grammatical_genders {#sol::Creature::get_grammatical_genders}
 
 🇲 Method --> <code>( ) -> string[]</code>
+
+#### is_avatar {#sol::Creature::is_avatar}
+
+🇲 Method --> <code>( ) -> boolean</code>
 
 #### skin_name {#sol::Creature::skin_name}
 
@@ -1892,61 +1900,41 @@ No constructors.
 
 🇲 Method --> <code>( possessive: boolean, capitalize_first: boolean ) -> string</code>
 
-#### as_avatar {#sol::Creature::as_avatar}
+#### dodge_roll {#sol::Creature::dodge_roll}
 
-🇲 Method --> <code>( ) -> [Avatar](#sol::Avatar)</code>
-
-#### is_avatar {#sol::Creature::is_avatar}
-
-🇲 Method --> <code>( ) -> boolean</code>
-
-#### is_monster {#sol::Creature::is_monster}
-
-🇲 Method --> <code>( ) -> boolean</code>
+🇲 Method --> <code>( ) -> number</code>
 
 #### is_npc {#sol::Creature::is_npc}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### as_npc {#sol::Creature::as_npc}
-
-🇲 Method --> <code>( ) -> [Npc](#sol::Npc)</code>
-
 #### as_monster {#sol::Creature::as_monster}
 
 🇲 Method --> <code>( ) -> [Monster](#sol::Monster)</code>
 
-#### get_weight {#sol::Creature::get_weight}
-
-🇲 Method --> <code>( ) -> [Mass](#sol::Mass)</code>
-
-#### digging {#sol::Creature::digging}
+#### is_monster {#sol::Creature::is_monster}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### is_underwater {#sol::Creature::is_underwater}
+#### as_character {#sol::Creature::as_character}
+
+🇲 Method --> <code>( ) -> [Character](#sol::Character)</code>
+
+#### as_npc {#sol::Creature::as_npc}
+
+🇲 Method --> <code>( ) -> [Npc](#sol::Npc)</code>
+
+#### mod_pain {#sol::Creature::mod_pain}
+
+🇲 Method --> <code>( integer )</code>
+
+#### is_on_ground {#sol::Creature::is_on_ground}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### get_effect_dur {#sol::Creature::get_effect_dur}
+#### set_underwater {#sol::Creature::set_underwater}
 
-🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> [TimeDuration](#sol::TimeDuration)</code>
-
-#### get_effect_int {#sol::Creature::get_effect_int}
-
-🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> integer</code>
-
-#### has_effect_with_flag {#sol::Creature::has_effect_with_flag}
-
-🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> boolean</code>
-
-#### get_effect {#sol::Creature::get_effect}
-
-🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> [Effect](#sol::Effect)</code>
-
-#### has_effect {#sol::Creature::has_effect}
-
-🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> boolean</code>
+🇲 Method --> <code>( boolean )</code>
 
 #### add_effect {#sol::Creature::add_effect}
 
@@ -1954,13 +1942,25 @@ No constructors.
 
 > <code>[Effect](#sol::Effect)</code> type, duration, bodypart and intensity
 
-#### clear_effects {#sol::Creature::clear_effects}
-
-🇲 Method --> <code>( )</code>
-
 #### remove_effect {#sol::Creature::remove_effect}
 
 🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> boolean</code>
+
+#### get_effect_int {#sol::Creature::get_effect_int}
+
+🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> integer</code>
+
+#### get_effect_dur {#sol::Creature::get_effect_dur}
+
+🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> [TimeDuration](#sol::TimeDuration)</code>
+
+#### has_effect_with_flag {#sol::Creature::has_effect_with_flag}
+
+🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> boolean</code>
+
+#### clear_effects {#sol::Creature::clear_effects}
+
+🇲 Method --> <code>( )</code>
 
 #### remove_value {#sol::Creature::remove_value}
 
@@ -1970,17 +1970,33 @@ No constructors.
 
 🇲 Method --> <code>( string, string )</code>
 
-#### is_on_ground {#sol::Creature::is_on_ground}
+#### get_weight {#sol::Creature::get_weight}
+
+🇲 Method --> <code>( ) -> [Mass](#sol::Mass)</code>
+
+#### get_value {#sol::Creature::get_value}
+
+🇲 Method --> <code>( string ) -> string</code>
+
+#### is_underwater {#sol::Creature::is_underwater}
 
 🇲 Method --> <code>( ) -> boolean</code>
+
+#### get_effect {#sol::Creature::get_effect}
+
+🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> [Effect](#sol::Effect)</code>
 
 #### set_pos_ms {#sol::Creature::set_pos_ms}
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint) )</code>
 
-#### is_immune_damage {#sol::Creature::is_immune_damage}
+#### has_weapon {#sol::Creature::has_weapon}
 
-🇲 Method --> <code>( [DamageType](#sol::DamageType) ) -> boolean</code>
+🇲 Method --> <code>( ) -> boolean</code>
+
+#### is_hallucination {#sol::Creature::is_hallucination}
+
+🇲 Method --> <code>( ) -> boolean</code>
 
 #### in_species {#sol::Creature::in_species}
 
@@ -1990,23 +2006,11 @@ No constructors.
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### set_underwater {#sol::Creature::set_underwater}
+#### has_effect {#sol::Creature::has_effect}
 
-🇲 Method --> <code>( boolean )</code>
-
-#### get_pos_ms {#sol::Creature::get_pos_ms}
-
-🇲 Method --> <code>( ) -> [Tripoint](#sol::Tripoint)</code>
-
-#### has_weapon {#sol::Creature::has_weapon}
-
-🇲 Method --> <code>( ) -> boolean</code>
+🇲 Method --> <code>( [EffectTypeId](#sol::EffectTypeId), [BodyPartTypeId](#sol::BodyPartTypeId)? ) -> boolean</code>
 
 #### is_dead {#sol::Creature::is_dead}
-
-🇲 Method --> <code>( ) -> boolean</code>
-
-#### is_hallucination {#sol::Creature::is_hallucination}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
@@ -2017,6 +2021,14 @@ No constructors.
 #### is_elec_immune {#sol::Creature::is_elec_immune}
 
 🇲 Method --> <code>( ) -> boolean</code>
+
+#### get_pos_ms {#sol::Creature::get_pos_ms}
+
+🇲 Method --> <code>( ) -> [Tripoint](#sol::Tripoint)</code>
+
+#### is_immune_damage {#sol::Creature::is_immune_damage}
+
+🇲 Method --> <code>( [DamageType](#sol::DamageType) ) -> boolean</code>
 
 #### get_weight_capacity {#sol::Creature::get_weight_capacity}
 
@@ -7838,7 +7850,7 @@ No constructors.
 
 #### result_name {#sol::RecipeRaw::result_name}
 
-🇲 Method --> <code>( ) -> string</code>
+🇲 Method --> <code>( boolean ) -> string</code>
 
 #### get_from_skill_used {#sol::RecipeRaw::get_from_skill_used}
 
