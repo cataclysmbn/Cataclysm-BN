@@ -245,18 +245,38 @@ void main_menu::display_sub_menu( int sel, const point &bottom_left, int sel_lin
         return;
     }
 
-    const point top_left( bottom_left + point( 0, -( sub_opts.size() + 1 ) ) );
-    catacurses::window w_sub = catacurses::newwin( sub_opts.size() + 2, xlen + 4, top_left );
+    const auto max_visible = std::max( 0, bottom_left.y - 1 );
+    if( max_visible == 0 ) {
+        return;
+    }
+
+    const auto visible_count = std::min<int>( static_cast<int>( sub_opts.size() ), max_visible );
+
+    const auto start = std::clamp(
+                           std::max( 0, sel2 - visible_count + 1 ),
+                           0,
+                           static_cast<int>( sub_opts.size() ) - visible_count
+                       );
+    const auto win_width = std::min( xlen + 4, TERMX );
+    const auto content_width = win_width - 2;
+
+    auto top_left = bottom_left + point( 0, -( visible_count + 1 ) );
+    top_left.x = clamp( top_left.x, 0, TERMX - win_width );
+    auto w_sub = catacurses::newwin( visible_count + 2, win_width, top_left );
     werase( w_sub );
     draw_border( w_sub, c_light_gray );
-    for( int y = 0; static_cast<size_t>( y ) < sub_opts.size(); y++ ) {
-        std::string opt = ( sel2 == y ? "» " : "  " ) + sub_opts[y];
-        int padding = ( xlen + 2 ) - utf8_width( opt, true );
-        opt.append( padding, ' ' );
-        nc_color clr = sel2 == y ? hilite( c_light_gray ) : c_light_gray;
-        trim_and_print( w_sub, point( 1, y + 1 ), xlen + 2, clr, opt );
-        inclusive_rectangle<point> rec( top_left + point( 1, y + 1 ), top_left + point( xlen + 2, y + 1 ) );
-        main_menu_sub_button_map.emplace_back( rec, std::pair<int, int> { sel, y } );
+
+    for( int y = 0; y < visible_count; y++ ) {
+        const auto opt_index = start + y;
+        auto opt = ( sel2 == opt_index ? "» " : "  " ) + sub_opts[opt_index];
+        const auto padding = content_width - utf8_width( opt, true );
+        if( padding > 0 ) {
+            opt.append( padding, ' ' );
+        }
+        const auto color = sel2 == opt_index ? hilite( c_light_gray ) : c_light_gray;
+        trim_and_print( w_sub, point( 1, y + 1 ), content_width, color, opt );
+        auto rec = inclusive_rectangle<point> { top_left + point( 1, y + 1 ), top_left + point( content_width, y + 1 ) };
+        main_menu_sub_button_map.emplace_back( rec, std::pair<int, int> { sel, opt_index } );
     }
     wnoutrefresh( w_sub );
 }
