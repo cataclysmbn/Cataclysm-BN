@@ -1594,6 +1594,7 @@
       { "point": [ 9, 6, -1 ], "connection": "sewer_tunnel", "from": [ 8, 6, -1 ] }
     ],
     "locations": [ "wilderness" ],
+    "city_sizes": [ 1, -1 ],
     "city_distance": [ 12, -1 ],
     "occurrences": [ 30, 100 ],
     "flags": [ "UNIQUE" ]
