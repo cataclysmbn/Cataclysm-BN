@@ -170,12 +170,14 @@ void draw_zone_overlay( const draw_zone_overlay_options &opt )
     SDL_Color color = opt.color;
     color.a = static_cast<Uint8>( opt.alpha );
 
-    SDL_BlendMode old_blend_mode;
-    GetRenderDrawBlendMode( opt.renderer, old_blend_mode );
+    constexpr auto flags = sdl_render_state_flags::draw_color | sdl_render_state_flags::blend_mode;
+    const auto state = sdl_save_render_state<flags>( opt.renderer.get() );
+
     SetRenderDrawBlendMode( opt.renderer, SDL_BLENDMODE_BLEND );
     SetRenderDrawColor( opt.renderer, color.r, color.g, color.b, color.a );
     RenderFillRect( opt.renderer, &opt.rect );
-    SetRenderDrawBlendMode( opt.renderer, old_blend_mode );
+
+    sdl_restore_render_state( opt.renderer.get(), state );
 
     if( opt.draw_label && !opt.name.empty() ) {
         const point center( opt.rect.x + opt.rect.w / 2, opt.rect.y + opt.rect.h / 2 );
