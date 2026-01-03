@@ -536,7 +536,7 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
 
     DOC( "Called when character loses the effect which has `EFFECT_LUA_ON_REMOVED` flag.  " );
     DOC( "The hook receives a table with keys:  " );
-    DOC( "* `char` (Character)  " );
+    DOC( "* `character` (Character)  " );
     DOC( "* `effect` (Effect)  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_character_effect_removed", []( const sol::table & ) {} );

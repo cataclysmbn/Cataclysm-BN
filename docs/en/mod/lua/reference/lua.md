@@ -10055,7 +10055,7 @@ Documentation for hooks
 > Called when character loses the effect which has `EFFECT_LUA_ON_REMOVED` flag.\
 > The hook receives a table with keys:
 >
-> - `char` (<code>[Character](#sol::Character)</code>)
+> - `character` (<code>[Character](#sol::Character)</code>)
 > - `effect` (<code>[Effect](#sol::Effect)</code>)
 
 #### on_character_effect {#sol::nil::on_character_effect}

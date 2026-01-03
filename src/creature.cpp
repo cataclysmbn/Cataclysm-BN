@@ -22,6 +22,7 @@
 #include "event.h"
 #include "event_bus.h"
 #include "field.h"
+#include "flag.h"
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
@@ -1454,6 +1455,20 @@ bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &b
         g->events().send<event_type::character_loses_effect>( ch->getID(), eff_id );
     }
 
+    if( type.has_flag( flag_EFFECT_LUA_ON_REMOVED ) ) {
+        if( ch != nullptr ) {
+            cata::run_hooks( "on_character_effect_removed", [ & ]( auto & params ) {
+                params["character"] = ch;
+                params["effect"] = get_effect( eff_id );
+            } );
+        } else {
+            cata::run_hooks( "on_mon_effect_removed", [ &, this ]( auto & params ) {
+                params["mon"] = this;
+                params["effect"] = get_effect( eff_id );
+            } );
+        }
+    }
+
     // null bp means remove all of a given effect id
     if( !bp ) {
         for( auto &it : ( *effects )[eff_id] ) {
@@ -1473,6 +1488,7 @@ bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &b
     if( ch != nullptr && eff_id == effect_sleep ) {
         ch->wake_up();
     }
+
     return true;
 }
 bool Creature::has_effect( const efftype_id &eff_id ) const
