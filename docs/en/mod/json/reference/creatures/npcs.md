@@ -727,13 +727,12 @@ These conditions can be tested for the player using the `"u_"` form, and for the
 
 #### Player Only conditions
 
-`"u_has_mission"` | string | `true` if the mission is assigned to the player character.
-`"u_has_ecash"` | int | `true` if the player character has at least `u_has_ecash` ecash available in
-his pre-cataclysm bank account. NPCs should **not** deal in e-cash, only personal debts and items
-(including faction currency). `"u_are_owed"` | int | `true` if the NPC's op_of_u.owed is at least
-`u_are_owed`. Can be used to check if the player can buy something from the NPC without needing to
-barter anything. `"u_has_camp"` | simple string | `true` is the player has one or more active base
-camps.
+| Condition         | Type          | Description                                                                                                                                                                                                  |
+| ----------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `"u_has_mission"` | string        | `true` if the mission is assigned to the player character.                                                                                                                                                   |
+| `"u_has_ecash"`   | int           | `true` if the player character has at least `u_has_ecash` ecash available in his pre-cataclysm bank account. NPCs should **not** deal in e-cash, only personal debts and items (including faction currency). |
+| `"u_are_owed"`    | int           | `true` if the NPC's op_of_u.owed is at least `u_are_owed`. Can be used to check if the player can buy something from the NPC without needing to barter anything.                                             |
+| `"u_has_camp"`    | simple string | `true` is the player has one or more active base camps.                                                                                                                                                      |
 
 #### Player and NPC interaction conditions
 
