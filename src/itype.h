@@ -1075,6 +1075,10 @@ struct itype {
          */
         float solar_efficiency = 0;
 
+        // Sets repair difficulty for items
+        // Overrides recipe difficulty
+        int repair_difficulty = -1;
+
         FlagsSetType item_tags;
 
         std::string get_item_type_string() const;

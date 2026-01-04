@@ -71,6 +71,7 @@
     }
   }
 },
+"repair_difficulty": 2                       // Overrites recipe difficulty being used for repair difficulty
 ```
 
 #### damage_instance
