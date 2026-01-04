@@ -30,14 +30,14 @@ The format is this:
 
 ```json
 {
-    "type": "item_group",
-    "subtype": "<subtype>",
-    "id": "<some name>",
-    "ammo": <some number>,
-    "magazine": <some number>,
-    "purge": <true/false>,
-    "delete": [ ... ],
-    "entries": [ ... ]
+  "type": "item_group",
+  "subtype": "<subtype>",
+  "id": "<some name>",
+  "ammo": "<some number>",
+  "magazine": "<some number>",
+  "purge": "<true/false>",
+  "delete": ["..."],
+  "entries": ["..."]
 }
 ```
 
