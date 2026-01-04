@@ -6,7 +6,9 @@
 #include "distribution_grid.h"
 #include "field.h"
 #include "map.h"
+#include "map_iterator.h"
 #include "trap.h"
+#include "detached_ptr.h"
 
 namespace sol
 {
@@ -15,6 +17,9 @@ struct is_container<item_stack> : std::false_type {};
 template <>
 struct is_container<map_stack> : std::false_type {};
 } // namespace sol
+
+namespace
+{
 
 struct item_stack_lua_it_state {
     item_stack *stack;
@@ -58,10 +63,6 @@ item_stack_lua_next(
     return r;
 }
 
-
-namespace
-{
-
 auto item_stack_lua_pairs( item_stack &stk )
 {
     // pairs expects 3 returns:
@@ -78,6 +79,23 @@ auto item_stack_lua_pairs( item_stack &stk )
     return std::make_tuple( &item_stack_lua_next,
                             sol::user<item_stack_lua_it_state>( std::move( it_state ) ),
                             sol::lua_nil );
+}
+
+auto item_stack_lua_length( const item_stack &stk )
+{
+    return stk.size();
+}
+
+
+item *item_stack_lua_index( item_stack &stk, int i )
+{
+    --i;
+    if( i < 0 || i >= static_cast<int>( stk.size() ) ) {
+        return nullptr;
+    }
+    auto it = stk.begin();
+    std::advance( it, i );
+    return *it;
 }
 
 } // namespace
@@ -100,9 +118,9 @@ void cata::detail::reg_map( sol::state &lua )
 
         DOC( "Creates a new item(s) at a position on the map." );
         luna::set_fx( ut, "create_item_at", []( map & m, const tripoint & p, const itype_id & itype,
-        int count ) -> void {
+        int count ) -> item* {
             detached_ptr<item> new_item = item::spawn( itype, calendar::turn, count );
-            m.add_item_or_charges( p, std::move( new_item ) );
+            return m.add_item_or_charges( p, std::move( new_item ) ).get();
         } );
 
         DOC( "Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag." );
@@ -120,10 +138,54 @@ void cata::detail::reg_map( sol::state &lua )
         } );
 
         luna::set_fx( ut, "has_items_at", &map::has_items );
-        luna::set_fx( ut, "get_items_at", []( map & m, const tripoint & p ) -> std::unique_ptr<map_stack> { return std::make_unique<map_stack>( m.i_at( p ) ); } );
         luna::set_fx( ut, "remove_item_at", []( map & m, const tripoint & p, item * it ) -> void { m.i_rem( p, it ); } );
+
+        DOC( "Removes an item from the map and returns it as a detached_ptr. The item is now owned by Lua - store it in a table to keep it alive, or let it be GC'd to destroy it. Use add_item to place it back on a map." );
+        luna::set_fx( ut, "detach_item_at", []( map & m, const tripoint & p,
+        item * it ) -> detached_ptr<item> {
+            return m.i_rem( p, it );
+        } );
+
+        DOC( "Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed." );
+        luna::set_fx( ut, "add_item", []( map & m, const tripoint & p,
+        detached_ptr<item> &it ) -> detached_ptr<item> {
+            return m.add_item_or_charges( p, std::move( it ) );
+        } );
         luna::set_fx( ut, "clear_items_at", []( map & m, const tripoint & p ) -> void { m.i_clear( p ); } );
 
+        luna::set_fx( ut, "get_items_at", []( map & m, const tripoint & p ) {
+            return m.i_at( p );
+        } );
+        luna::set_fx( ut, "get_items_in_radius", []( map & m, const tripoint & p,
+        int radius ) -> std::vector<map_stack> {
+            std::vector<map_stack> items;
+            for( const auto pt : m.points_in_radius( p, radius ) )
+            {
+                items.push_back( m.i_at( pt ) );
+            }
+            return items;
+        } );
+
+        DOC( "Returns all points within a radius from the center point. `radiusz` defaults to 0." );
+        luna::set_fx( ut, "points_in_radius", []( const map & m, const tripoint & center,
+        int radius, sol::optional<int> radiusz ) -> std::vector<tripoint> {
+            std::vector<tripoint> points;
+            for( const auto pt : m.points_in_radius( center, radius, radiusz.value_or( 0 ) ) )
+            {
+                points.push_back( pt );
+            }
+            return points;
+        } );
+
+        DOC( "Moves an item from one position to another, preserving all item state including contents." );
+        luna::set_fx( ut, "move_item_to", []( map & m, const tripoint & from, item * it,
+        const tripoint & to ) -> void {
+            detached_ptr<item> detached = m.i_rem( from, it );
+            if( detached )
+            {
+                m.add_item_or_charges( to, std::move( detached ) );
+            }
+        } );
 
         luna::set_fx( ut, "get_ter_at", sol::resolve<ter_id( const tripoint & )const>( &map::ter ) );
         luna::set_fx( ut, "set_ter_at",
@@ -145,6 +207,11 @@ void cata::detail::reg_map( sol::state &lua )
             return m.add_field( p, fid, intensity, age );
         } );
         luna::set_fx( ut, "remove_field_at", &map::remove_field );
+        luna::set_fx( ut, "get_field_name_at", []( map & m, const tripoint & p,
+        const field_type_id & fid ) -> std::string {
+            field_entry *fe = m.get_field( p, fid );
+            return fe ? fe->name() : std::string();
+        } );
         luna::set_fx( ut, "get_trap_at", []( map & m, const tripoint & p ) -> trap_id { return m.tr_at( p ).loadid; } );
         DOC( "Set a trap at a position on the map. It can also replace existing trap, even with `trap_null`." );
         luna::set_fx( ut, "set_trap_at", &map::trap_set );
@@ -160,13 +227,38 @@ void cata::detail::reg_map( sol::state &lua )
     }
 
     // Register 'item_stack' class to be used in Lua
+#define UT_CLASS item_stack
     {
-        DOC( "Iterate over this using pairs()" );
+        DOC( "Iterate over this using pairs() for reading. Can also be indexed." );
         sol::usertype<item_stack> ut = luna::new_usertype<item_stack>( lua, luna::no_bases,
                                        luna::no_constructor );
 
         luna::set_fx( ut, sol::meta_function::pairs, item_stack_lua_pairs );
+        luna::set_fx( ut, sol::meta_function::length, item_stack_lua_length );
+        luna::set_fx( ut, sol::meta_function::index, item_stack_lua_index );
+
+        DOC( "Modifying the stack while iterating may cause problems. This returns a frozen copy of the items in the stack for safe modification of the stack (eg. removing items while iterating)." );
+        luna::set_fx( ut, "items", []( UT_CLASS & c ) {
+            std::vector<item *> ret{};
+            std::ranges::copy( c, std::back_inserter( ret ) );
+            return ret;
+        } );
+        SET_FX( remove );
+        luna::set_fx( ut, "insert", []( UT_CLASS & c, detached_ptr<item> &i ) {
+            c.insert( std::move( i ) );
+        } );
+        SET_FX( clear );
+        SET_FX_N( size, "count" );
+        SET_FX( amount_can_fit );
+        SET_FX( count_limit );
+        SET_FX( free_volume );
+        SET_FX( stored_volume );
+        SET_FX( max_volume );
+        SET_FX( move_all_to );
+        SET_FX( only_item );
+        SET_FX_T( stacks_with, item * ( const item & ) );
     }
+#undef UT_CLASS
 
     // Register 'map_stack' class to be used in Lua
     {
@@ -174,12 +266,36 @@ void cata::detail::reg_map( sol::state &lua )
                                       luna::no_constructor );
 
         luna::set_fx( ut, "as_item_stack", []( map_stack & ref ) -> item_stack& { return ref; } );
+
+        luna::set_fx( ut, sol::meta_function::pairs, item_stack_lua_pairs );
+        luna::set_fx( ut, sol::meta_function::length, item_stack_lua_length );
+        luna::set_fx( ut, sol::meta_function::index, item_stack_lua_index );
     }
 }
 
 void cata::detail::reg_distribution_grid( sol::state &lua )
 {
     {
+        DOC( "Power generation and consumption statistics for a grid" );
+        sol::usertype<power_stat> ut =
+            luna::new_usertype<power_stat>(
+                lua,
+                luna::no_bases,
+                luna::no_constructor
+            );
+
+        DOC( "Power generation in watts" );
+        luna::set( ut, "gen_w", &power_stat::gen_w );
+        DOC( "Power consumption in watts" );
+        luna::set( ut, "use_w", &power_stat::use_w );
+        DOC( "Net power (generation - consumption) in watts" );
+        luna::set_fx( ut, "net_w", &power_stat::net_w );
+
+        luna::set_fx( ut, sol::meta_function::addition, &power_stat::operator+ );
+    }
+
+    {
+        DOC( "A grid that organizes producers, storage and consumers of a resource like electricity" );
         sol::usertype<distribution_grid> ut =
             luna::new_usertype<distribution_grid>(
                 lua,
@@ -187,13 +303,27 @@ void cata::detail::reg_distribution_grid( sol::state &lua )
                 luna::no_constructor
             );
 
-        DOC( "Boolean argument controls recursive behavior" );
-        luna::set_fx( ut, "get_resource", &distribution_grid::get_resource );
-        DOC( "Boolean argument controls recursive behavior" );
-        luna::set_fx( ut, "mod_resource", &distribution_grid::mod_resource );
+        DOC( "Check if grid is empty" );
+        luna::set_fx( ut, "empty", &distribution_grid::empty );
+        DOC( "Check if grid is valid" );
+        luna::set_fx( ut, "is_valid",
+                      []( const distribution_grid & g ) -> bool { return static_cast<bool>( g ); } );
+        DOC( "Update the grid to the given time point" );
+        luna::set_fx( ut, "update", &distribution_grid::update );
+        DOC( "Modify resource amount. First argument is amount, second (optional) controls recursive behavior (default true)" );
+        luna::set_fx( ut, "get_resource",
+        []( const distribution_grid & g, sol::optional<bool> recurse ) { return g.get_resource( recurse.value_or( true ) ); } );
+        luna::set_fx( ut, "mod_resource",
+        []( distribution_grid & g, int amt, sol::optional<bool> recurse ) { return g.mod_resource( amt, recurse.value_or( true ) ); } );
+        DOC( "Get current resource amount. Boolean argument (optional) controls recursive behavior (default true)" );
+        DOC( "Get vector of absolute map square coordinates of grid contents" );
+        luna::set_fx( ut, "get_contents", &distribution_grid::get_contents );
+        DOC( "Get power generation and consumption statistics for the grid" );
+        luna::set_fx( ut, "get_power_stat", &distribution_grid::get_power_stat );
     }
 
     {
+        DOC( "Manages all active distribution grids" );
         sol::usertype<distribution_grid_tracker> ut =
             luna::new_usertype<distribution_grid_tracker>(
                 lua,
@@ -201,8 +331,28 @@ void cata::detail::reg_distribution_grid( sol::state &lua )
                 luna::no_constructor
             );
 
-        luna::set_fx( ut, "get_grid_at_abs_ms",
-                      []( distribution_grid_tracker & tr, const tripoint & p ) -> distribution_grid& { return tr.grid_at( tripoint_abs_ms( p ) ); } );
+        DOC( "Get grid at absolute map square position" );
+        luna::set_fx( ut, "grid_at",
+                      sol::overload(
+                          []( distribution_grid_tracker & tr, const tripoint & p ) -> distribution_grid& { return tr.grid_at( tripoint_abs_ms( p ) ); }, // *NOPAD*
+                          []( const distribution_grid_tracker & tr, const tripoint & p ) -> const distribution_grid& { return tr.grid_at( tripoint_abs_ms( p ) ); } // *NOPAD*
+                      ) );
+        DOC( "Get unique identifier for grid at given overmap tile (for debug purposes, returns 0 if no grid)" );
+        luna::set_fx( ut, "debug_grid_id",
+                      []( const distribution_grid_tracker & tr, const tripoint & omt_pos ) -> std::uintptr_t { return tr.debug_grid_id( tripoint_abs_omt( omt_pos ) ); } );
+        DOC( "Update all grids to the given time point" );
+        luna::set_fx( ut, "update", &distribution_grid_tracker::update );
+        DOC( "Load grids for the given map" );
+        luna::set_fx( ut, "load", sol::resolve<void( const map & )>( &distribution_grid_tracker::load ) );
+        DOC( "Notify tracker that a tile at the given position has changed" );
+        luna::set_fx( ut, "on_changed",
+        []( distribution_grid_tracker & tr, const tripoint & p ) {
+            tr.on_changed( tripoint_abs_ms( p ) );
+        } );
+        DOC( "Notify tracker that the game has been saved" );
+        luna::set_fx( ut, "on_saved", &distribution_grid_tracker::on_saved );
+        DOC( "Notify tracker that game options have changed" );
+        luna::set_fx( ut, "on_options_changed", &distribution_grid_tracker::on_options_changed );
     }
 
 }

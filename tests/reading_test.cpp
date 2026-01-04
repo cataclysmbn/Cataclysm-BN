@@ -375,7 +375,7 @@ TEST_CASE( "Learning recipes from books", "[reading][book][recipe]" )
     REQUIRE( alpha.type->book );
     const auto book_recipes = alpha.type->book->recipes;
     bool book_has_recipe = std::find_if( book_recipes.begin(),
-    book_recipes.end(), [rec]( const islot_book::recipe_with_description_t &rec_d ) {
+    book_recipes.end(), [rec]( const book_recipe & rec_d ) {
         return rec_d.recipe == rec;
     } ) != book_recipes.end();
     REQUIRE( book_has_recipe );
@@ -417,10 +417,10 @@ TEST_CASE( "Book recipe entries expose translations", "[reading][book][translati
     const item &alpha = *det;
 
     REQUIRE( alpha.type->book );
-    const islot_book::recipe_list_t &book_recipes = alpha.type->book->recipes;
+    const auto &book_recipes = alpha.type->book->recipes;
 
     REQUIRE_FALSE( book_recipes.empty() );
-    const islot_book::recipe_with_description_t &entry = *book_recipes.begin();
+    const auto &entry = *book_recipes.begin();
 
     CHECK_FALSE( entry.name.translated().empty() );
 }

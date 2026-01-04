@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: sudo apt-get install astyle
+      - run: sudo apt-get install astyle ninja-build gettext ccache
 
       - uses: denoland/setup-deno@v2
         with: { cache: true }
@@ -40,8 +40,11 @@ jobs:
           path: ${{ env.DENO_DIR }}
           key: deno-${{ hashFiles('deno.lock') }}
 
+      - name: configure cmake for formatting
+        run: cmake --preset lint
+
       - name: format C++ files
-        run: make astyle
+        run: cmake --build build --target astyle
 
       - name: format Markdown and TypeScript files
         run: deno fmt
@@ -50,7 +53,7 @@ jobs:
         run: deno task dprint fmt
 
       - name: format JSON
-        run: make style-all-json-parallel RELEASE=1
+        run: cmake --build build --target style-json-parallel
 
       # autofix.ci cannot edit .github directory due to security reasons
       - name: unstage .github

@@ -1,10 +1,23 @@
 # 기여하기
 
-> [!TIP]
->
-> #### 새 이슈를 열고 싶으신가요?
->
-> [이슈 여는 법](./issues)을 참고해주세요.
+## 도움을 주고 싶으신가요?
+
+다음과 같은 도움을 환영합니다:
+
+- 버그 제보. DDA에서 물려받은 버그도 포함됩니다.
+- 버그는 아니지만 문제가 있는 것들을 찾아주세요. 오해의 소지가 있는 설명, 비슷한 경우와 비교했을 때
+  명백히 이상한 수치, 문법 오류, 명확한 해결 방법이 있는 UI 문제 등이 있습니다.
+- 쓸모없는 것들을 유용하게 만들거나 블랙리스트에 추가하기. 분해 레시피가 있어야 하는데 없는 것들에
+  분해 레시피 추가하기, 스폰 목록에서 완전히 중복되는 아이템을 일반 버전으로 교체하기 (예: "작은 표시된
+  병"을 "작은 병"으로) 등이 있습니다.
+- 타일셋 작업. 전기 그리드 요소 같은 새 오브젝트들이 추가되고 있는데, 새 타일이 필요합니다.
+- 밸런스 분석. 깊이 있는 분석이나 "명백히 올바른" 분석을 환영합니다. "명백히 올바른"은 이런 것들을
+  말합니다: "무기 x는 무기 y보다 스탯이 엄격히 우수한데, y는 더 희귀한 재료가 필요하고 다른 요구사항은
+  동일합니다."
+- 프로파일러로 성능 병목 지점 찾기.
+- 코드 품질 개선.
+
+## 방법
 
 카타클리즘: 밝은 밤에 기여하는 것은 쉽습니다.
 
@@ -63,6 +76,13 @@
 }
 ```
 
+### Lua
+
+Lua 파일은 [`dprint`](https://dprint.dev)의 내장 포매터를 사용해 포매팅하고 있습니다.
+[`deno task dprint fmt`](https://dprint.dev/plugins/lua)를 실행해 Lua 파일을 자동으로
+포매팅하세요. 자세한 내용은 [Lua Style Guide](./../mod/lua/explanation/lua_style.md)를
+참고해주세요.
+
 ## 번역
 
 카타클리즘: 밝은 밤의 번역은 Transifex에서 진행중입니다.
@@ -80,7 +100,7 @@
     <img src="/docs/en/contributing/img/contributing-doxy2.png" width="48%">
 </p> -->
 
-자동 생성된 문서를 [깃허브 페이지](https://cataclysmbnteam.github.io/Cataclysm-BN)에서 읽을 수
+자동 생성된 문서를 [깃허브 페이지](https://cataclysmbn.github.io/Cataclysm-BN)에서 읽을 수
 있습니다.
 
 ### 독시젠(Doxygen) 주석
@@ -161,7 +181,7 @@ $ git config --local commit.template .gitmessage
 ```sh
 $ cd Cataclysm-BN
 # 현재 작업 디렉토리를 새로 복제한 "Cataclysm-BN" 디렉토리로 변경합니다.
-$ git remote add -f upstream https://github.com/cataclysmbnteam/Cataclysm-BN.git
+$ git remote add -f upstream https://github.com/cataclysmbn/Cataclysm-BN.git
 # "upstream"이라는 원격 저장소를 추가합니다.
 ```
 
@@ -328,7 +348,7 @@ Branch new_feature_2 set up to track remote branch main from upstream.
 
 ```sh
 $ git push
-error: The requested URL returned error: 403 while accessing https://github.com/cataclysmbnteam/Cataclysm-BN.git
+error: The requested URL returned error: 403 while accessing https://github.com/cataclysmbn/Cataclysm-BN.git
 fatal: HTTP request failed
 $ git push origin
 ....
@@ -380,7 +400,7 @@ The test took 41.772 seconds
 ```
 
 위 명령어들을 사용해서 변경사항을 테스트할 수 있습니다.
-[DDA 위키](http://cddawiki.chezzo.com/cdda_wiki/index.php)에도 디버그 메뉴에 대한 정보가 있습니다.
+[BN 위키](https://cbn-guide.pages.dev/)에도 디버그 메뉴에 대한 정보가 있습니다.
 
 ## 자주 묻는 질문
 
@@ -393,7 +413,7 @@ The test took 41.772 seconds
 
 ```sh
 $ git pull --ff-only upstream main
-From https://github.com/cataclysmbnteam/Cataclysm-BN
+From https://github.com/cataclysmbn/Cataclysm-BN
  * branch            main     -> FETCH_HEAD
 fatal: Not possible to fast-forward, aborting.
 $ git branch new_branch main          # 현재 커밋 내역을 임시 브랜치에 백업합니다

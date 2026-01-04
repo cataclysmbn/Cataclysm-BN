@@ -140,6 +140,11 @@ bool can_fly( Character &ch )
         }
     }
 
+    Creature *mc = ch.mounted_creature.get();
+    if( mc && mc->has_flag( MF_FLIES ) ) {
+        return true;
+    }
+
     for( const trait_id &mid : ch.get_mutations() ) {
         auto it = ch.my_mutations.find( mid->id );
         if( it != ch.my_mutations.end() ) {

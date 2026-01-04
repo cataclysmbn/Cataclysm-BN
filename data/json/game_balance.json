@@ -243,5 +243,19 @@
     "info": "The percentage bonus (or malus) that each point away from the base 8 should get you (i.e. 10 is 10%).",
     "stype": "int",
     "value": 10
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "UNDERGROUND_TEMPERATURE_INFLUENCED_BY_SURFACE",
+    "info": "If true, underground temperatures are influenced by surface weather conditions. At z=-1 (50% influence), z=-2 (25%), z<=-3 (0%, annual average only).",
+    "stype": "bool",
+    "value": false
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "AVATAR_LEVEL_XP_COEFF",
+    "info": "An integer coefficient for determining the XP thresholds for leveling up in STK and similar",
+    "stype": "int",
+    "value": 400
   }
 ]

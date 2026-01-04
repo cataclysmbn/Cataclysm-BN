@@ -1921,8 +1921,8 @@ class jmapgen_item_group : public jmapgen_piece
             repeat = jmapgen_int( jsi, "repeat", 1, 1 );
         }
         void check( const std::string &context, const mapgen_parameters & ) const override {
-            if( !group_id.is_valid() ) {
-                debugmsg( "Invalid item_group_id \"%s\" in %s", group_id.str(), context );
+            if( !group_id.is_valid() && !itype_id( group_id.str() ).is_valid() ) {
+                debugmsg( "Invalid item_group_id / itype_id \"%s\" in %s", group_id.str(), context );
             }
         }
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
@@ -1985,6 +1985,7 @@ class jmapgen_loot : public jmapgen_piece
  * "monster": id of the monster group.
  * "chance": see @ref map::place_spawns
  * "density": see @ref map::place_spawns
+ * "target": if true, monsters are tagged with the mission id for MGOAL_KILL_MONSTERS
  */
 class jmapgen_monster_group : public jmapgen_piece
 {
@@ -1992,10 +1993,12 @@ class jmapgen_monster_group : public jmapgen_piece
         mapgen_value<mongroup_id> id;
         float density;
         jmapgen_int chance;
+        bool target;
         jmapgen_monster_group( const JsonObject &jsi ) :
             id( jsi.get_member( "monster" ) )
             , density( jsi.get_float( "density", -1.0f ) )
-            , chance( jsi, "chance", 1, 1 ) {
+            , chance( jsi, "chance", 1, 1 )
+            , target( jsi.get_bool( "target", false ) ) {
         }
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
@@ -2003,9 +2006,14 @@ class jmapgen_monster_group : public jmapgen_piece
             if( chosen_id.is_null() ) {
                 return;
             }
+            int mission_id = -1;
+            if( dat.mission() && target ) {
+                mission_id = dat.mission()->get_id();
+            }
             dat.m.place_spawns( chosen_id, chance.get(), point( x.val, y.val ),
                                 point( x.valmax, y.valmax ),
-                                density == -1.0f ? dat.monster_density() : density );
+                                density == -1.0f ? dat.monster_density() : density,
+                                false, false, "NONE", mission_id );
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters
@@ -2036,6 +2044,7 @@ class jmapgen_monster : public jmapgen_piece
         bool friendly;
         std::string name;
         bool target;
+        bool use_pack_size;
         jmapgen_monster( const JsonObject &jsi ) :
             chance( jsi, "chance", 100, 100 )
             , pack_size( jsi, "pack_size", 1, 1 )
@@ -2043,7 +2052,8 @@ class jmapgen_monster : public jmapgen_piece
                                          !( jsi.has_member( "repeat" ) || jsi.has_member( "pack_size" ) ) ) )
             , friendly( jsi.get_bool( "friendly", false ) )
             , name( jsi.get_string( "name", "NONE" ) )
-            , target( jsi.get_bool( "target", false ) ) {
+            , target( jsi.get_bool( "target", false ) )
+            , use_pack_size( jsi.get_bool( "use_pack_size", false ) ) {
             if( jsi.has_member( "group" ) ) {
                 jsi.read( "group", m_id );
             } else if( jsi.has_array( "monster" ) ) {
@@ -2099,7 +2109,7 @@ class jmapgen_monster : public jmapgen_piece
             mongroup_id chosen_group = m_id.get( dat );
             if( !chosen_group.is_null() ) {
                 MonsterGroupResult spawn_details =
-                    MonsterGroupManager::GetResultFromGroup( chosen_group );
+                    MonsterGroupManager::GetResultFromGroup( chosen_group, nullptr, use_pack_size );
                 dat.m.add_spawn( spawn_details.name, spawn_count * pack_size.get(),
                 { x.get(), y.get(), dat.m.get_abs_sub().z },
                 friendly, -1, mission_id, name );
@@ -6180,7 +6190,7 @@ void map::place_gas_pump( const point &p, int charges, const itype_id &fuel_type
 {
     detached_ptr<item> fuel = item::spawn( fuel_type, calendar::start_of_cataclysm );
     fuel->charges = charges;
-    ter_set( p, ter_id( fuel->fuel_pump_terrain() ) );
+    ter_set( p, fuel->fuel_pump_terrain() );
     add_item( p, std::move( fuel ) );
 }
 
@@ -6256,18 +6266,23 @@ std::vector<item *> map::place_items( const item_group_id &loc, const int chance
 {
     // TODO: implement for 3D
     std::vector<item *> res;
-
+    itype_id it;
+    bool is_type = false;
     if( chance > 100 || chance <= 0 ) {
         debugmsg( "map::place_items() called with an invalid chance (%d)", chance );
         return res;
     }
     if( !item_group::group_is_defined( loc ) ) {
-        // TODO: fix point types
-        const tripoint_abs_omt omt( sm_to_omt_copy( get_abs_sub() ) );
-        const oter_id &oid = overmap_buffer.ter( omt );
-        debugmsg( "place_items: invalid item group '%s', om_terrain = '%s' (%s)",
-                  loc.c_str(), oid.id().c_str(), oid->get_mapgen_id().c_str() );
-        return res;
+        it = itype_id( loc.str() );
+        if( !it.is_valid() ) {
+            // TODO: fix point types
+            const tripoint_abs_omt omt( sm_to_omt_copy( get_abs_sub() ) );
+            const oter_id &oid = overmap_buffer.ter( omt );
+            debugmsg( "place_items: invalid item group / item '%s', om_terrain = '%s' (%s)",
+                      loc.c_str(), oid.id().c_str(), oid->get_mapgen_id().c_str() );
+            return res;
+        }
+        is_type = true;
     }
 
     const float spawn_rate = get_option<float>( "ITEM_SPAWNRATE" );
@@ -6292,6 +6307,13 @@ std::vector<item *> map::place_items( const item_group_id &loc, const int chance
         } while( is_valid_terrain( p ) && tries < 20 );
 
         if( tries < 20 ) {
+            if( is_type ) {
+                detached_ptr<item> placed = add_item_or_charges( p, item::spawn( it ) );
+                if( placed ) {
+                    res.push_back( std::move( &*placed ) );
+                }
+                return res;
+            }
             std::vector<detached_ptr<item>> initial = item_group::items_from( loc, turn );
 
             for( detached_ptr<item> &itm : initial ) {
@@ -6935,7 +6957,7 @@ void science_room( map *m, const point &p1, const point &p2, int z, int rotate )
             for( int x = p1.x + 1; x <= p2.x - 1; x++ ) {
                 for( int y = p1.y + 1; y <= p2.y - 1; y++ ) {
                     if( x % 3 == 0 && y % 3 == 0 ) {
-                        m->ter_set( point( x, y ), t_vat );
+                        m->furn_set( point( x, y ), furn_str_id( "f_cloning_vat" ) );
                         m->place_items( item_group_id( "cloning_vat" ), 20, point( x, y ), point( x, y ), false,
                                         calendar::start_of_cataclysm );
                     }

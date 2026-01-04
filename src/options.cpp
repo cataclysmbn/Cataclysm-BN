@@ -1568,7 +1568,7 @@ void options_manager::add_options_interface()
 
     add( "HHG_URL", interface, translate_marker( "Hitchhiker's Guide URL" ),
          translate_marker( "The URL opened by pressing the open HHG keybind." ),
-         "https://next.cbn-guide.pages.dev", 60
+         "https://cbn-guide.pages.dev", 60
        );
 
     add_empty_line();
@@ -1857,6 +1857,14 @@ void options_manager::add_options_interface()
          translate_marker( "If true, show item symbols in inventory and pick up menu." ),
          false
        );
+    add( "HIGHLIGHT_UNREAD_RECIPES", interface, translate_marker( "Highlight unread recipes" ),
+         translate_marker( "Highlight unread recipes to allow tracking of newly learned recipes." ),
+         true
+       );
+    add( "HIGHLIGHT_UNREAD_ITEMS", interface, translate_marker( "Highlight unread items" ),
+         translate_marker( "Highlight unread items to allow tracking of newly discovered items." ),
+         true
+       );
     add( "AMMO_IN_NAMES", interface, translate_marker( "Add ammo to weapon/magazine names" ),
          translate_marker( "If true, the default ammo is added to weapon and magazine names.  For example \"Mosin-Nagant M44 (4/5)\" becomes \"Mosin-Nagant M44 (4/5 7.62x54mm)\"." ),
          true
@@ -1947,7 +1955,7 @@ void options_manager::add_options_graphics()
 
     add( "BULLETS_AS_LASERS", graphics, translate_marker( "Draw bullets as lines" ),
          translate_marker( "If true, bullets are drawn as lines of images, and the animation lasts only one frame." ),
-         false
+         true
        );
 
     add( "BLINK_SPEED", graphics, translate_marker( "Blinking effects speed" ),
@@ -2040,6 +2048,13 @@ void options_manager::add_options_graphics()
        ); // populate the options dynamically
 
     get_option( "OVERMAP_TILES" ).setPrerequisite( "USE_TILES_OVERMAP" );
+
+    add( "VEHICLE_EDIT_TILES", graphics, translate_marker( "Graphical vehicle display" ),
+         translate_marker( "If true, the vehicle interaction screen will display vehicle parts using graphical tiles instead of ASCII symbols." ),
+         true, COPT_CURSES_HIDE
+       );
+
+    get_option( "VEHICLE_EDIT_TILES" ).setPrerequisite( "USE_TILES" );
 
     add( "USE_CHARACTER_PREVIEW", graphics, translate_marker( "Enable character preview window" ),
          translate_marker( "If true, shows character preview window in traits tab on character creation.  "

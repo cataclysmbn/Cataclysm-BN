@@ -109,6 +109,17 @@
     "price_postapoc": "1750 cent"
   },
   {
+    "id": "bat_metal_bolted",
+    "type": "GENERIC",
+    "copy-from": "bat_metal",
+    "name": { "str": "bolted bat" },
+    "description": "An aluminum baseball bat with several large bolts driven through it, making it a brutal melee weapon.",
+    "weight": "850 g",
+    "relative": { "to_hit": -1, "bashing": 7 },
+    "extend": { "techniques": [ "BRUTAL" ] },
+    "price_postapoc": "2500 cent"
+  },
+  {
     "id": "baton",
     "type": "GENERIC",
     "category": "weapons",

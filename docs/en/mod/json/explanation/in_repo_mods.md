@@ -9,7 +9,7 @@ sidebar:
 > [!CAUTION]
 >
 > Current guideline is in favor of removing
-> [in-repo mods](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3026). This page is kept for
+> [in-repo mods](https://github.com/cataclysmbn/Cataclysm-BN/pull/3026). This page is kept for
 > historical purposes.
 
 BN is not only moddable, but ships with a number of mods available for users to select from even
@@ -23,7 +23,7 @@ The benefits of having mods in the repository include:
 - The ability to use the BN issue tracker to report problems, as well as manage pull requests for
   adding to or fixing mods in the repository
 - Mods in the BN repository that demonstrate usage of a game feature which exists only for mods
-  (i.e. not used by the core DDA game itself) help ensure that feature stays present in the game.
+  (i.e. not used by the core BN game itself) help ensure that feature stays present in the game.
 
 There are however things that might be expected but are not guaranteed:
 

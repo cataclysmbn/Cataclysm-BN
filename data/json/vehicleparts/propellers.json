@@ -48,6 +48,8 @@
     "damage_modifier": 80,
     "breaks_into": [ { "item": "scrap", "count": [ 8, 15 ] }, { "item": "splinter", "count": [ 5, 10 ] } ],
     "damage_reduction": { "all": 15 },
+    "extend": { "flags": [ "FOLDABLE" ] },
+    "folded_volume": "20 L",
     "color": "brown"
   }
 ]

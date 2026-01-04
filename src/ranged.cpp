@@ -1,6 +1,7 @@
 #include "ranged.h"
 
 #include <algorithm>
+#include <numeric>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -20,6 +21,7 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua_hooks.h"
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
@@ -1060,6 +1062,13 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
     int practice_units = aoe_attack ? curshot : hits;
     who.as_player()->practice( gun.gun_skill(), ( practice_units + 1 ) * 5 );
 
+    cata::run_hooks( "on_shoot", [ & ]( auto & params ) {
+        params["shooter"] = &who;
+        params["target_pos"] = &target;
+        params["shots"] = curshot;
+        params["gun"] = &gun;
+        params["ammo"] = ammo;
+    } );
     return curshot;
 }
 
@@ -1449,6 +1458,12 @@ dealt_projectile_attack throw_item( Character &who, const tripoint &target,
     who.last_target_pos = std::nullopt;
     who.recoil = MAX_RECOIL;
 
+    cata::run_hooks( "on_throw", [ & ]( auto & params ) {
+        params["thrower"] = &who;
+        params["target_pos"] = &target;
+        params["throw_from_pos"] = &throw_from;
+        params["thrown"] = &thrown;
+    } );
     return dealt_attack;
 }
 
@@ -2891,8 +2906,14 @@ void target_ui::update_target_list()
         targets = ranged::targetable_creatures( *you, range );
     }
 
-    std::sort( targets.begin(), targets.end(), [&]( const Creature * lhs, const Creature * rhs ) {
-        return rl_dist_exact( lhs->pos(), you->pos() ) < rl_dist_exact( rhs->pos(), you->pos() );
+    map &here = get_map();
+    const auto player_pos = you->pos();
+
+    std::ranges::sort( targets, {}, [&]( const Creature * c ) -> std::tuple<bool, bool, int> {
+        const auto target_pos = c->pos();
+        const bool same_z = player_pos.z == target_pos.z;
+        const bool has_los = here.sees( player_pos, target_pos, range );
+        return { !has_los, !same_z, rl_dist_exact( target_pos, player_pos ) };
     } );
 }
 

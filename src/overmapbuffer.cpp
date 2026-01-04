@@ -1147,7 +1147,7 @@ std::vector<tripoint_abs_omt> overmapbuffer::find_all( const tripoint_abs_omt &o
         const omt_find_params &params )
 {
     const auto concurrency = std::max( 1u, std::thread::hardware_concurrency() - 1 );
-    if( concurrency == 1 ) {
+    if( params.force_sync || concurrency == 1 ) {
         return find_all_sync( origin, params );
     } else {
         return find_all_async( origin, params );
@@ -1281,6 +1281,7 @@ std::vector<tripoint_abs_omt> overmapbuffer::find_all_async( const tripoint_abs_
             continue;
         }
 
+        //auto task_func = [params, this]( point_abs_om l,
         auto task_func = [&]( point_abs_om l,
         std::vector<std::pair<tripoint_abs_omt, tripoint_om_omt>> locals ) {
             std::vector<tripoint_abs_omt> result;

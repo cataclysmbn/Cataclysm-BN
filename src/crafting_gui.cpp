@@ -25,6 +25,7 @@
 #include "item_contents.h"
 #include "itype.h"
 #include "json.h"
+#include "options.h"
 #include "mod_manager.h"
 #include "output.h"
 #include "player.h"
@@ -60,10 +61,12 @@ static bool query_is_yes( const std::string &query );
 static void draw_hidden_amount( const catacurses::window &w, int amount, int num_recipe );
 static void draw_can_craft_indicator( const catacurses::window &w, const recipe &rec );
 static void draw_recipe_tabs( const catacurses::window &w, const std::string &tab,
-                              TAB_MODE mode = NORMAL );
+                              TAB_MODE mode, const bool filtered_unread,
+                              std::map<std::string, bool> &unread );
 static void draw_recipe_subtabs( const catacurses::window &w, const std::string &tab,
                                  const std::string &subtab,
-                                 const recipe_subset &available_recipes, TAB_MODE mode = NORMAL );
+                                 const recipe_subset &available_recipes, TAB_MODE mode,
+                                 std::map<std::string, bool> &unread );
 
 std::string peek_related_recipe( const recipe *current, const recipe_subset &available );
 int related_menu_fill( uilist &rmenu,
@@ -294,6 +297,35 @@ static std::vector<std::string> recipe_info(
     return result;
 }
 
+static input_context make_crafting_context( bool highlight_unread_recipes )
+{
+    input_context ctxt( "CRAFTING" );
+    ctxt.register_cardinal();
+    ctxt.register_action( "QUIT" );
+    ctxt.register_action( "CONFIRM" );
+    ctxt.register_action( "SCROLL_RECIPE_INFO_UP" );
+    ctxt.register_action( "SCROLL_RECIPE_INFO_DOWN" );
+    ctxt.register_action( "PAGE_UP", to_translation( "Fast scroll up" ) );
+    ctxt.register_action( "PAGE_DOWN", to_translation( "Fast scroll down" ) );
+    ctxt.register_action( "PREV_TAB" );
+    ctxt.register_action( "NEXT_TAB" );
+    ctxt.register_action( "FILTER" );
+    ctxt.register_action( "RESET_FILTER" );
+    ctxt.register_action( "TOGGLE_FAVORITE" );
+    ctxt.register_action( "HELP_RECIPE" );
+    ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "CYCLE_BATCH" );
+    ctxt.register_action( "RELATED_RECIPES" );
+    ctxt.register_action( "HIDE_SHOW_RECIPE" );
+    ctxt.register_action( "TOGGLE_UNAVAILABLE" );
+    if( highlight_unread_recipes ) {
+        ctxt.register_action( "TOGGLE_RECIPE_UNREAD" );
+        ctxt.register_action( "MARK_ALL_RECIPES_READ" );
+        ctxt.register_action( "TOGGLE_UNREAD_RECIPES_FIRST" );
+    }
+    return ctxt;
+}
+
 const recipe *select_crafting_recipe( int &batch_size_out )
 {
     struct {
@@ -368,26 +400,9 @@ const recipe *select_crafting_recipe( int &batch_size_out )
     int dataHalfLines = 0;
     int dataHeight = 0;
     int item_info_width = 0;
+    const bool highlight_unread_recipes = get_option<bool>( "HIGHLIGHT_UNREAD_RECIPES" );
 
-    input_context ctxt( "CRAFTING" );
-    ctxt.register_cardinal();
-    ctxt.register_action( "QUIT" );
-    ctxt.register_action( "CONFIRM" );
-    ctxt.register_action( "SCROLL_RECIPE_INFO_UP" );
-    ctxt.register_action( "SCROLL_RECIPE_INFO_DOWN" );
-    ctxt.register_action( "PAGE_UP", to_translation( "Fast scroll up" ) );
-    ctxt.register_action( "PAGE_DOWN", to_translation( "Fast scroll down" ) );
-    ctxt.register_action( "PREV_TAB" );
-    ctxt.register_action( "NEXT_TAB" );
-    ctxt.register_action( "FILTER" );
-    ctxt.register_action( "RESET_FILTER" );
-    ctxt.register_action( "TOGGLE_FAVORITE" );
-    ctxt.register_action( "HELP_RECIPE" );
-    ctxt.register_action( "HELP_KEYBINDINGS" );
-    ctxt.register_action( "CYCLE_BATCH" );
-    ctxt.register_action( "RELATED_RECIPES" );
-    ctxt.register_action( "HIDE_SHOW_RECIPE" );
-    ctxt.register_action( "TOGGLE_UNAVAILABLE" );
+    input_context ctxt = make_crafting_context( highlight_unread_recipes );
 
     catacurses::window w_head;
     catacurses::window w_subhead;
@@ -423,6 +438,12 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         add_action_desc( "HELP_RECIPE", pgettext( "crafting gui", "Describe" ) );
         add_action_desc( "FILTER", pgettext( "crafting gui", "Filter" ) );
         add_action_desc( "RESET_FILTER", pgettext( "crafting gui", "Reset filter" ) );
+        if( highlight_unread_recipes ) {
+            add_action_desc( "TOGGLE_RECIPE_UNREAD", pgettext( "crafting gui", "Read/unread" ) );
+            add_action_desc( "MARK_ALL_RECIPES_READ", pgettext( "crafting gui", "Mark all as read" ) );
+            add_action_desc( "TOGGLE_UNREAD_RECIPES_FIRST",
+                             pgettext( "crafting gui", "Show unread recipes first" ) );
+        }
         add_action_desc( "HIDE_SHOW_RECIPE", pgettext( "crafting gui", "Show/hide" ) );
         add_action_desc( "RELATED_RECIPES", pgettext( "crafting gui", "Related" ) );
         add_action_desc( "TOGGLE_FAVORITE", pgettext( "crafting gui", "Favorite" ) );
@@ -464,7 +485,10 @@ const recipe *select_crafting_recipe( int &batch_size_out )
     std::vector<const recipe *> current;
     std::vector<availability> available;
     int line = 0;
+    bool unread_recipes_first = false;
+    bool user_moved_line = false;
     bool recalc = true;
+    bool recalc_unread = highlight_unread_recipes;
     bool keepline = false;
     bool done = false;
     bool batch = false;
@@ -482,6 +506,27 @@ const recipe *select_crafting_recipe( int &batch_size_out )
     const auto &available_recipes = u.get_available_recipes( crafting_inv, &helpers );
     std::unordered_map<const recipe *, availability> availability_cache( available_recipes.size() );
 
+    const std::string new_recipe_str = pgettext( "crafting gui", "NEW!" );
+    const nc_color new_recipe_str_col = c_light_green;
+    const int new_recipe_str_width = utf8_width( new_recipe_str );
+
+    bool is_filtered_unread = false;
+    std::map<std::string, bool> is_cat_unread;
+    std::map<std::string, std::map<std::string, bool>> is_subcat_unread;
+
+    const auto recipes_from_cat = []( const recipe_subset & recipes, const std::string & cat,
+    const std::string & subcat ) {
+        if( subcat == "CSC_*_FAVORITE" ) {
+            return std::make_pair( recipes.favorite(), false );
+        } else if( subcat == "CSC_*_RECENT" ) {
+            return std::make_pair( recipes.recent(), false );
+        } else if( subcat == "CSC_*_HIDDEN" ) {
+            return std::make_pair( recipes.hidden(), true );
+        } else {
+            return std::make_pair( recipes.in_category( cat, subcat != "CSC_ALL" ? subcat : "" ), false );
+        }
+    };
+
     std::vector<const recipe *> all_recipes_flat;
     for( const auto &pr : recipe_dict ) {
         all_recipes_flat.emplace_back( &pr.second );
@@ -491,9 +536,10 @@ const recipe *select_crafting_recipe( int &batch_size_out )
     int recipe_scroll_window_min = 0;
     ui.on_redraw( [&]( ui_adaptor & ui ) {
         const TAB_MODE m = ( batch ) ? BATCH : ( filterstring.empty() ) ? NORMAL : FILTERED;
-        draw_recipe_tabs( w_head, tab.cur(), m );
+        draw_recipe_tabs( w_head, tab.cur(), m, is_filtered_unread, is_cat_unread );
         const auto &shown_recipes = show_unavailable ? all_recipes : available_recipes;
-        draw_recipe_subtabs( w_subhead, tab.cur(), subtab.cur(), shown_recipes, m );
+        draw_recipe_subtabs( w_subhead, tab.cur(), subtab.cur(), shown_recipes, m,
+                             is_subcat_unread[tab.cur()] );
 
         if( !show_hidden ) {
             draw_hidden_amount( w_head, num_hidden, num_recipe );
@@ -528,17 +574,27 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         int recipe_scroll_window_max = std::min( recmax, recipe_scroll_window_min + dataLines );
 
         for( int i = recipe_scroll_window_min; i < recipe_scroll_window_max; ++i ) {
-            std::string tmp_name = current[i]->result_name();
+            std::string tmp_name = current[i]->result_name( /*decorated=*/true );
             if( batch ) {
                 tmp_name = string_format( _( "%2dx %s" ), i + 1, tmp_name );
             }
+            const bool rcp_known = available_recipes.contains( *current[i] );
+            const bool rcp_read = !highlight_unread_recipes ||
+                                  !rcp_known ||
+                                  uistate.read_recipes.count( current[i]->ident() );
             const point print_from( 2, i - recipe_scroll_window_min );
             const bool highlight = i == line;
             const nc_color col = highlight ? available[i].selected_color() : available[i].color();
             if( highlight ) {
                 ui.set_cursor( w_data, print_from );
             }
-            trim_and_print( w_data, print_from, max_recipe_name_width, col, tmp_name );
+            int rcp_name_trim_width = max_recipe_name_width;
+            if( !rcp_read ) {
+                const point offset( max_recipe_name_width - new_recipe_str_width, 0 );
+                mvwprintz( w_data, print_from + offset, new_recipe_str_col, "%s", new_recipe_str );
+                rcp_name_trim_width -= new_recipe_str_width + 1;
+            }
+            trim_and_print( w_data, print_from, rcp_name_trim_width, col, tmp_name );
         }
 
         const int batch_size = batch ? line + 1 : 1;
@@ -601,10 +657,9 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         if( recalc ) {
             // When we switch tabs, redraw the header
             recalc = false;
-            if( !keepline ) {
-                line = 0;
-            } else {
-                keepline = false;
+            const recipe *prev_rcp = nullptr;
+            if( keepline && line >= 0 && static_cast<size_t>( line ) < current.size() ) {
+                prev_rcp = current[line];
             }
 
             show_hidden = false;
@@ -689,15 +744,15 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                         qry_begin = qry_end + 1;
                     } while( qry_end != std::string::npos );
                     picking.insert( picking.end(), filtered_recipes.begin(), filtered_recipes.end() );
-                } else if( subtab.cur() == "CSC_*_FAVORITE" ) {
-                    picking = shown_recipes.favorite();
-                } else if( subtab.cur() == "CSC_*_RECENT" ) {
-                    picking = shown_recipes.recent();
-                } else if( subtab.cur() == "CSC_*_HIDDEN" ) {
-                    current = shown_recipes.hidden();
-                    show_hidden = true;
                 } else {
-                    picking = shown_recipes.in_category( tab.cur(), subtab.cur() != "CSC_ALL" ? subtab.cur() : "" );
+                    const std::pair<std::vector<const recipe *>, bool> result = recipes_from_cat(
+                                shown_recipes, tab.cur(), subtab.cur() );
+                    show_hidden = result.second;
+                    if( show_hidden ) {
+                        current = result.first;
+                    } else {
+                        picking = result.first;
+                    }
                 }
 
                 if( !show_hidden ) {
@@ -721,15 +776,34 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                 }
 
                 if( subtab.cur() != "CSC_*_RECENT" ) {
-                    std::ranges::stable_sort( current,
-                    []( const recipe * a, const recipe * b ) {
-                        return b->difficulty < a->difficulty;
-                    } );
-
-                    std::ranges::stable_sort( current,
-                    [&]( const recipe * a, const recipe * b ) {
-                        return availability_cache.at( a ).can_craft &&
-                               !availability_cache.at( b ).can_craft;
+                    std::ranges::stable_sort( current, [
+                                                  &u, &availability_cache, &available_recipes, unread_recipes_first,
+                                                  highlight_unread_recipes
+                    ]( const recipe * const a, const recipe * const b ) {
+                        if( highlight_unread_recipes && unread_recipes_first ) {
+                            const bool a_known = available_recipes.contains( *a );
+                            const bool b_known = available_recipes.contains( *b );
+                            const bool a_read = !a_known || uistate.read_recipes.count( a->ident() );
+                            const bool b_read = !b_known || uistate.read_recipes.count( b->ident() );
+                            if( a_read != b_read ) {
+                                return !a_read;
+                            }
+                        }
+                        const bool can_craft_a = availability_cache.at( a ).can_craft;
+                        const bool can_craft_b = availability_cache.at( b ).can_craft;
+                        if( can_craft_a != can_craft_b ) {
+                            return can_craft_a;
+                        }
+                        if( b->difficulty != a->difficulty ) {
+                            return b->difficulty < a->difficulty;
+                        }
+                        const std::string a_name = a->result_name();
+                        const std::string b_name = b->result_name();
+                        if( a_name != b_name ) {
+                            return localized_compare( a_name, b_name );
+                        }
+                        return u.expected_time_to_craft( *b ) <
+                               u.expected_time_to_craft( *a );
                     } );
                 }
 
@@ -739,12 +813,72 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                 } );
             }
 
-            // current/available have been rebuilt, make sure our cursor is still in range
-            if( current.empty() ) {
-                line = 0;
-            } else {
-                line = std::min( line, static_cast<int>( current.size() ) - 1 );
+            line = 0;
+            if( keepline && prev_rcp ) {
+                // point to previously selected recipe
+                int rcp_idx = 0;
+                for( const recipe *const rcp : current ) {
+                    if( rcp == prev_rcp ) {
+                        line = rcp_idx;
+                        break;
+                    }
+                    ++rcp_idx;
+                }
             }
+        }
+        keepline = false;
+
+        if( highlight_unread_recipes && !current.empty() && user_moved_line ) {
+            // Only automatically mark as read when moving cursor by one line.
+            user_moved_line = false;
+            if( available_recipes.contains( *current[line] ) ) {
+                uistate.read_recipes.insert( current[line]->ident() );
+                recalc_unread = true;
+            }
+        }
+
+        if( highlight_unread_recipes && recalc_unread ) {
+            if( filterstring.empty() ) {
+                for( const std::string &cat : craft_cat_list ) {
+                    is_cat_unread[cat] = false;
+                    for( const std::string &subcat : craft_subcat_list[cat] ) {
+                        is_subcat_unread[cat][subcat] = false;
+                        const std::pair<std::vector<const recipe *>, bool> result = recipes_from_cat(
+                                    available_recipes, cat, subcat );
+                        const std::vector<const recipe *> &recipes = result.first;
+                        const bool include_hidden = result.second;
+                        for( const recipe *const rcp : recipes ) {
+                            const recipe_id &rcp_id = rcp->ident();
+                            if( !include_hidden && uistate.hidden_recipes.contains( rcp_id ) ) {
+                                continue;
+                            }
+                            if( uistate.read_recipes.count( rcp_id ) ) {
+                                continue;
+                            }
+                            is_cat_unread[cat] = true;
+                            is_subcat_unread[cat][subcat] = true;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                is_filtered_unread = false;
+                for( const recipe *const rcp : current ) {
+                    const recipe_id &rcp_id = rcp->ident();
+                    if( !available_recipes.contains( *rcp ) ) {
+                        continue;
+                    }
+                    if( uistate.hidden_recipes.contains( rcp_id ) ) {
+                        continue;
+                    }
+                    if( uistate.read_recipes.count( rcp_id ) ) {
+                        continue;
+                    }
+                    is_filtered_unread = true;
+                    break;
+                }
+            }
+            recalc_unread = false;
         }
 
         ui_manager::redraw();
@@ -763,6 +897,9 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             recipe_info_scroll += scroll_recipe_info_lines;
             item_info_scroll += scroll_recipe_info_lines;
         } else if( action == "LEFT" ) {
+            if( batch || !filterstring.empty() ) {
+                continue;
+            }
             std::string start = subtab.cur();
             do {
                 subtab.prev();
@@ -775,6 +912,9 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             subtab = list_circularizer<std::string>( craft_subcat_list[tab.cur()] );
             recalc = true;
         } else if( action == "RIGHT" ) {
+            if( batch || !filterstring.empty() ) {
+                continue;
+            }
             std::string start = subtab.cur();
             do {
                 subtab.next();
@@ -788,8 +928,10 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             recalc = true;
         } else if( action == "DOWN" ) {
             line++;
+            user_moved_line = highlight_unread_recipes;
         } else if( action == "UP" ) {
             line--;
+            user_moved_line = highlight_unread_recipes;
         } else if( action == "CONFIRM" ) {
             if( available.empty() || !available[line].can_craft ) {
                 popup( _( "You can't do that!  Press [<color_yellow>ESC</color>]!" ) );
@@ -800,6 +942,10 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                 chosen = current[line];
                 batch_size_out = ( batch ) ? line + 1 : 1;
                 done = true;
+                if( highlight_unread_recipes && available_recipes.contains( *chosen ) ) {
+                    uistate.read_recipes.insert( chosen->ident() );
+                    recalc_unread = true;
+                }
             }
         } else if( action == "HELP_RECIPE" ) {
             if( current.empty() ) {
@@ -875,12 +1021,14 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             .hist_use_uilist( true )
             .edit( filterstring );
             recalc = true;
+            recalc_unread = highlight_unread_recipes;
         } else if( action == "QUIT" ) {
             chosen = nullptr;
             done = true;
         } else if( action == "RESET_FILTER" ) {
             filterstring.clear();
             recalc = true;
+            recalc_unread = highlight_unread_recipes;
         } else if( action == "CYCLE_BATCH" ) {
             if( current.empty() ) {
                 popup( _( "Nothing selected!  Press [<color_yellow>ESC</color>]!" ) );
@@ -891,23 +1039,34 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             if( batch ) {
                 batch_line = line;
                 chosen = current[batch_line];
+                if( highlight_unread_recipes && available_recipes.contains( *chosen ) ) {
+                    uistate.read_recipes.insert( chosen->ident() );
+                    recalc_unread = true;
+                }
             } else {
-                line = batch_line;
                 keepline = true;
             }
             recalc = true;
         } else if( action == "TOGGLE_FAVORITE" ) {
             keepline = true;
-            recalc = true;
+            recalc = filterstring.empty() && subtab.cur() == "CSC_*_FAVORITE";
             if( current.empty() ) {
                 popup( _( "Nothing selected!  Press [<color_yellow>ESC</color>]!" ) );
                 continue;
             }
             if( uistate.favorite_recipes.contains( current[line]->ident() ) ) {
                 uistate.favorite_recipes.erase( current[line]->ident() );
+                if( recalc ) {
+                    if( static_cast<size_t>( line + 1 ) < current.size() ) {
+                        line++;
+                    } else {
+                        line--;
+                    }
+                }
             } else {
                 uistate.favorite_recipes.insert( current[line]->ident() );
             }
+            recalc_unread = highlight_unread_recipes;
         } else if( action == "HIDE_SHOW_RECIPE" ) {
             if( current.empty() ) {
                 popup( _( "Nothing selected!  Press [<color_yellow>ESC</color>]!" ) );
@@ -921,6 +1080,71 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             }
 
             recalc = true;
+            recalc_unread = highlight_unread_recipes;
+            keepline = true;
+            if( static_cast<size_t>( line + 1 ) < current.size() ) {
+                line++;
+            } else {
+                line--;
+            }
+        } else if( action == "TOGGLE_RECIPE_UNREAD" ) {
+            if( current.empty() ) {
+                continue;
+            }
+            if( !available_recipes.contains( *current[line] ) ) {
+                continue;
+            }
+            const recipe_id rcp = current[line]->ident();
+            if( uistate.read_recipes.count( rcp ) ) {
+                uistate.read_recipes.erase( rcp );
+            } else {
+                uistate.read_recipes.insert( rcp );
+            }
+            recalc_unread = highlight_unread_recipes;
+        } else if( action == "MARK_ALL_RECIPES_READ" ) {
+            bool current_list_has_unread = false;
+            for( const recipe *const rcp : current ) {
+                if( !available_recipes.contains( *rcp ) ) {
+                    continue;
+                }
+                if( !uistate.read_recipes.count( rcp->ident() ) ) {
+                    current_list_has_unread = true;
+                    break;
+                }
+            }
+            std::string query_str;
+            if( !current_list_has_unread ) {
+                query_str = _( "<color_yellow>/!\\</color> Mark all recipes as read?  "
+                               // NOLINTNEXTLINE(cata-text-style): single spaced for symmetry
+                               "This cannot be undone. <color_yellow>/!\\</color>" );
+            } else if( filterstring.empty() ) {
+                query_str = string_format( _( "Mark recipes in this tab as read?  This cannot be undone.  "
+                                              "You can mark all recipes by choosing yes and pressing %s again." ),
+                                           ctxt.get_desc( "MARK_ALL_RECIPES_READ" ) );
+            } else {
+                query_str = string_format( _( "Mark filtered recipes as read?  This cannot be undone.  "
+                                              "You can mark all recipes by choosing yes and pressing %s again." ),
+                                           ctxt.get_desc( "MARK_ALL_RECIPES_READ" ) );
+            }
+            if( query_yn( query_str ) ) {
+                if( current_list_has_unread ) {
+                    for( const recipe *const rcp : current ) {
+                        if( !available_recipes.contains( *rcp ) ) {
+                            continue;
+                        }
+                        uistate.read_recipes.insert( rcp->ident() );
+                    }
+                } else {
+                    for( const recipe *const rcp : available_recipes ) {
+                        uistate.read_recipes.insert( rcp->ident() );
+                    }
+                }
+            }
+            recalc_unread = highlight_unread_recipes;
+        } else if( action == "TOGGLE_UNREAD_RECIPES_FIRST" ) {
+            unread_recipes_first = !unread_recipes_first;
+            recalc = true;
+            keepline = true;
         } else if( action == "RELATED_RECIPES" ) {
             if( current.empty() ) {
                 popup( _( "Nothing selected!  Press [<color_yellow>ESC</color>]!" ) );
@@ -932,6 +1156,7 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                 keepline = true;
             } else {
                 filterstring = recipe_name;
+                recalc_unread = highlight_unread_recipes;
             }
 
             recalc = true;
@@ -943,6 +1168,7 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             show_unavailable = !show_unavailable;
 
             recalc = true;
+            recalc_unread = highlight_unread_recipes;
         }
         if( line < 0 ) {
             line = current.size() - 1;
@@ -985,7 +1211,7 @@ std::string peek_related_recipe( const recipe *current, const recipe_subset &ava
     const std::set<const recipe *> &known_recipes = u.get_learned_recipes().of_component( tid );
     for( const auto *b : known_recipes ) {
         if( available.contains( *b ) ) {
-            related_results.emplace_back( b->result(), b->result_name() );
+            related_results.emplace_back( b->result(), b->result_name( /*decorated=*/true ) );
         }
     }
     std::ranges::stable_sort( related_results, compare_second );
@@ -1040,7 +1266,7 @@ int related_menu_fill( uilist &rmenu,
 
             // 1st pass: check if we need to add group
             for( size_t recipe_n = 0; recipe_n < current_part.size(); recipe_n++ ) {
-                if( current_part[recipe_n]->result_name() != recipe_name ) {
+                if( current_part[recipe_n]->result_name( /*decorated=*/true ) != recipe_name ) {
                     // add group
                     rmenu.addentry( ++np_last, false, -1, recipe_name );
                     defferent_recipes = true;
@@ -1055,7 +1281,7 @@ int related_menu_fill( uilist &rmenu,
                 std::string prev_item_name;
                 // 2nd pass: add defferent recipes
                 for( size_t recipe_n = 0; recipe_n < current_part.size(); recipe_n++ ) {
-                    std::string cur_item_name = current_part[recipe_n]->result_name();
+                    std::string cur_item_name = current_part[recipe_n]->result_name( /*decorated=*/true );
                     if( cur_item_name != prev_item_name ) {
                         std::string sym = recipe_n == current_part.size() - 1 ? "└ " : "├ ";
                         rmenu.addentry( ++np_last, true, -1, sym + cur_item_name );
@@ -1110,21 +1336,34 @@ static void draw_can_craft_indicator( const catacurses::window &w, const recipe 
     }
 }
 
-static void draw_recipe_tabs( const catacurses::window &w, const std::string &tab, TAB_MODE mode )
+static void draw_recipe_tabs( const catacurses::window &w, const std::string &tab, TAB_MODE mode,
+                              const bool filtered_unread, std::map<std::string, bool> &unread )
 {
     werase( w );
 
     switch( mode ) {
         case NORMAL: {
             draw_tabs( w, normalized_names, craft_cat_list, tab );
+            int pos_x = 2;
+            for( const std::string &cat : craft_cat_list ) {
+                pos_x += utf8_width( normalized_names[cat] ) + 3;
+                if( unread[cat] ) {
+                    mvwprintz( w, point( pos_x - 2, 1 ), c_light_green, "⁺" );
+                }
+            }
             break;
         }
-        case FILTERED:
+        case FILTERED: {
             mvwhline( w, point( 0, getmaxy( w ) - 1 ), LINE_OXOX, getmaxx( w ) - 1 );
             mvwputch( w, point( 0, getmaxy( w ) - 1 ), BORDER_COLOR, LINE_OXXO ); // |^
             mvwputch( w, point( getmaxx( w ) - 1, getmaxy( w ) - 1 ), BORDER_COLOR, LINE_OOXX ); // ^|
-            draw_tab( w, 2, _( "Searched" ), true );
+            const std::string tab_name = _( "Searched" );
+            draw_tab( w, 2, tab_name, true );
+            if( filtered_unread ) {
+                mvwprintz( w, point( 3 + utf8_width( tab_name ), 1 ), c_light_green, "⁺" );
+            }
             break;
+        }
         case BATCH:
             mvwhline( w, point( 0, getmaxy( w ) - 1 ), LINE_OXOX, getmaxx( w ) - 1 );
             mvwputch( w, point( 0, getmaxy( w ) - 1 ), BORDER_COLOR, LINE_OXXO ); // |^
@@ -1138,7 +1377,8 @@ static void draw_recipe_tabs( const catacurses::window &w, const std::string &ta
 
 static void draw_recipe_subtabs( const catacurses::window &w, const std::string &tab,
                                  const std::string &subtab,
-                                 const recipe_subset &available_recipes, TAB_MODE mode )
+                                 const recipe_subset &available_recipes, TAB_MODE mode,
+                                 std::map<std::string, bool> &unread )
 {
     werase( w );
     int width = getmaxx( w );
@@ -1165,8 +1405,12 @@ static void draw_recipe_subtabs( const catacurses::window &w, const std::string 
             int tab_step = 3;
             for( const auto &stt : craft_subcat_list[tab] ) {
                 bool empty = available_recipes.empty_category( tab, stt != "CSC_ALL" ? stt : "" );
-                draw_subtab( w, pos_x, normalized_names[stt], subtab == stt, true, empty );
-                pos_x += utf8_width( normalized_names[stt] ) + tab_step;
+                const std::string subtab_name = normalized_names[stt];
+                draw_subtab( w, pos_x, subtab_name, subtab == stt, true, empty );
+                pos_x += utf8_width( subtab_name ) + tab_step;
+                if( unread[stt] ) {
+                    mvwprintz( w, point( pos_x - 2, 0 ), c_light_green, "⁺" );
+                }
             }
             break;
         }

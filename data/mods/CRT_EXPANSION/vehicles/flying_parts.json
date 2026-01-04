@@ -1,0 +1,52 @@
+[
+  {
+    "id": "crt_airship_balloon",
+    "copy-from": "balloon",
+    "looks_like": "airship_balloon",
+    "type": "vehicle_part",
+    "name": "C.R.I.T. airship balloon",
+    "description": "A balloon interspaced with solar cells that provides lift, but requires aircraft propellers for horizontal momentum. While weaker then solar panels, they make up for it in quantity",
+    "item": "crt_airship_balloon_item",
+    "height": 90,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural_short", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [  ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "adhesive", 1 ], [ "plastics", 1 ] ] }
+    },
+    "durability": 30,
+    "damage_modifier": 10,
+    "//": "Todo: should explode if damaged or destroyed by bullets, fire, or electric damage.",
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 10, 20 ] }, { "item": "solar_cell", "count": [ 1, 4 ] } ],
+    "epower": 10,
+    "flags": [ "BALLOON", "SHOCK_IMMUNE", "SOLAR_PANEL" ],
+    "damage_reduction": { "bash": 10 }
+  },
+  {
+    "id": "crt_airship_balloon_external",
+    "copy-from": "crt_airship_balloon",
+    "type": "vehicle_part",
+    "name": "external C.R.I.T. airship balloon",
+    "location": "structural",
+    "//": "Overhead, so don't affect movement but don't board.",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF" ] }
+  },
+  {
+    "type": "GENERIC",
+    "id": "crt_airship_balloon_item",
+    "symbol": "o",
+    "color": "light_gray",
+    "name": { "str": "crt_airship balloon" },
+    "description": "A big plastic airbag lined with solar panels and filled with hydrogen gas.  Provides lift if installed on a vehicle, but you'll need a propeller to do anything more than float up and down.",
+    "price": "5 USD",
+    "price_postapoc": "25 cent",
+    "material": [ "plastic" ],
+    "weight": "3 kg",
+    "//": "Realistically, each kg of lift would take about a cubic meter but that's literally the tile volume limit and we'd need 30 of those, so stick to a value actually allowed to exist.",
+    "volume": "200 L",
+    "bashing": 4,
+    "to_hit": -3,
+    "category": "veh_parts",
+    "explosion": { "damage": 100, "radius": 2 },
+    "explode_in_fire": true
+  }
+]

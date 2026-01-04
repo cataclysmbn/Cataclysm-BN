@@ -34,7 +34,7 @@
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
-// TODO (https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1612):
+// TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that include after implementing repair_activity_actor.
 #include "distribution_grid.h"
 #include "enums.h"
@@ -2370,7 +2370,7 @@ void activity_handlers::cracking_finish( player_activity *act, player *p )
     act->set_to_null();
 }
 
-// TODO (https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1612):
+// TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that repair code after repair_activity_actor.
 
 enum repeat_type : int {
@@ -3765,7 +3765,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
 
     // item_counter represents the percent progress relative to the base batch time
     // stored precise to 5 decimal places ( e.g. 67.32 percent would be stored as 6'732'000 )
-    const int old_counter = craft->item_counter;
+    const int old_counter = craft->get_counter();
 
     // Base moves for batch size with no speed modifier or assistants
     // Must ensure >= 1 so we don't divide by 0;
@@ -3778,37 +3778,37 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
                                   ? p->get_moves() * base_total_moves / cur_total_moves
                                   : 0;
     // Current progress in moves
-    const double current_progress = craft->item_counter * base_total_moves / 10'000'000.0 +
-                                    delta_progress;
+    const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
     // Current progress as a percent of base_total_moves to 2 decimal places
-    craft->item_counter = std::round( current_progress / base_total_moves * 10'000'000.0 );
+    const auto new_counter_f = current_progress / base_total_moves * 10'000'000.0;
+    // This is to ensure we don't over count skill steps
+    const auto new_counter = std::min( static_cast<int>( std::round( new_counter_f ) ), 10'000'000 );
+    craft->set_counter( new_counter );
+
     p->set_moves( 0 );
 
-    // This is to ensure we don't over count skill steps
-    craft->item_counter = std::min( craft->item_counter, 10'000'000 );
-
     // Skill and tools are gained/consumed after every 5% progress
-    int five_percent_steps = craft->item_counter / 500'000 - old_counter / 500'000;
+    int five_percent_steps = craft->get_counter() / 500'000 - old_counter / 500'000;
     if( five_percent_steps > 0 ) {
         p->craft_skill_gain( *craft, five_percent_steps );
     }
 
     // Unlike skill, tools are consumed once at the start and should not be consumed at the end
-    if( craft->item_counter >= 10'000'000 ) {
+    if( craft->get_counter() >= 10'000'000 ) {
         --five_percent_steps;
     }
 
     if( five_percent_steps > 0 ) {
         if( !p->craft_consume_tools( *craft, five_percent_steps, false ) ) {
             // So we don't skip over any tool comsuption
-            craft->item_counter -= craft->item_counter % 500000 + 1;
+            craft->set_counter( craft->get_counter() - ( craft->get_counter() % 500'000 + 1 ) );
             p->cancel_activity();
             return;
         }
     }
 
     // if item_counter has reached 100% or more
-    if( craft->item_counter >= 10'000'000 ) {
+    if( craft->get_counter() >= 10'000'000 ) {
         //TODO!: CHEEKY check
         item *craft_copy = craft;
         p->cancel_activity();
@@ -3819,7 +3819,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
                 p->last_craft->execute( bench_pos );
             }
         }
-    } else if( craft->item_counter >= craft->get_next_failure_point() ) {
+    } else if( craft->get_counter() >= craft->get_next_failure_point() ) {
         bool destroy = craft->handle_craft_failure( *p );
         // If the craft needs to be destroyed, do it and stop crafting.
         if( destroy ) {

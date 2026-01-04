@@ -162,6 +162,7 @@ static const efftype_id effect_corroding( "corroding" );
 static const efftype_id effect_crushed( "crushed" );
 static const efftype_id effect_datura( "datura" );
 static const efftype_id effect_dazed( "dazed" );
+static const efftype_id effect_well_fed( "well_fed" );
 static const efftype_id effect_dermatik( "dermatik" );
 static const efftype_id effect_docile( "docile" );
 static const efftype_id effect_downed( "downed" );
@@ -243,7 +244,7 @@ static const itype_id itype_firecracker_act( "firecracker_act" );
 static const itype_id itype_firecracker_pack_act( "firecracker_pack_act" );
 static const itype_id itype_geiger_off( "geiger_off" );
 static const itype_id itype_geiger_on( "geiger_on" );
-static const itype_id itype_granade_act( "granade_act" );
+static const itype_id itype_debug_grenade_act( "debug_grenade_act" );
 static const itype_id itype_handrolled_cig( "handrolled_cig" );
 static const itype_id itype_hygrometer( "hygrometer" );
 static const itype_id itype_joint( "joint" );
@@ -984,9 +985,8 @@ static void do_purify( player &p )
             //Looks for active mutation
             bool threshlocked = false;
             for( auto cat : traits_iter.category ) {
-                if( ( cat == thresh ) && p.crossed_threshold() ) {
+                if( ( cat == thresh ) && p.crossed_threshold() && ( p.thresh_tier > traits_iter.threshold_tier ) ) {
                     // We shouldn't be able to get rid of mutations that we have a threshold from
-                    // Mostly applies to pre-thresh in vanilla because most post-thresh aren't purifiable anyway
                     threshlocked = true;
                     break;
                 }
@@ -1041,9 +1041,9 @@ int iuse::purify_iv( player *p, item *it, bool, const tripoint & )
             //Looks for active mutation
             bool threshlocked = false;
             for( auto cat : traits_iter.category ) {
-                if( ( cat == thresh ) && p->crossed_threshold() ) {
+                if( ( cat == thresh ) && p->crossed_threshold() &&
+                    ( p->thresh_tier > traits_iter.threshold_tier ) ) {
                     // We shouldn't be able to get rid of mutations that we have a threshold from
-                    // Mostly applies to pre-thresh in vanilla because most post-thresh aren't purifiable anyway
                     threshlocked = true;
                     break;
                 }
@@ -1101,9 +1101,9 @@ int iuse::purify_smart( player *p, item *it, bool, const tripoint & )
             //Looks for active mutation
             bool threshlocked = false;
             for( auto cat : traits_iter.category ) {
-                if( ( cat == thresh ) && p->crossed_threshold() ) {
+                if( ( cat == thresh ) && p->crossed_threshold() &&
+                    ( p->thresh_tier > traits_iter.threshold_tier ) ) {
                     // We shouldn't be able to get rid of mutations that we have a threshold from
-                    // Mostly applies to pre-thresh in vanilla because most post-thresh aren't purifiable anyway
                     threshlocked = true;
                     break;
                 }
@@ -1543,6 +1543,23 @@ int iuse::petfood( player *p, item *it, bool, const tripoint & )
         }
 
         mon.make_pet();
+
+        // Apply well_fed effect to improve monster productivity
+        // This effect increases reproduction rate, milk production, growth speed, and HP recovery
+        // Duration: 24 hours (one full day cycle)
+        const time_duration well_fed_duration = 24_hours;
+
+        if( mon.has_effect( effect_well_fed ) ) {
+            // Refresh duration if already well-fed
+            mon.add_effect( effect_well_fed, well_fed_duration );
+        } else {
+            // Apply new well-fed effect
+            mon.add_effect( effect_well_fed, well_fed_duration );
+            p->add_msg_if_player( m_good,
+                                  _( "The %s looks healthier and more productive." ),
+                                  mon.get_name() );
+        }
+
         p->consume_charges( *it, 1 );
         return 0;
     }
@@ -1624,6 +1641,9 @@ int iuse::remove_all_mods( player *p, item *, bool, const tripoint & )
             if( !it->is_irremovable() ) {
                 return true;
             }
+        }
+        if( e.has_flag( flag_RADIO_MOD ) ) {
+            return true;
         }
         return false;
     },
@@ -3198,16 +3218,16 @@ int iuse::throwable_extinguisher_act( player *, item *it, bool, const tripoint &
     return 0;
 }
 
-int iuse::granade( player *p, item *it, bool, const tripoint & )
+int iuse::debug_grenade( player *p, item *it, bool, const tripoint & )
 {
-    p->add_msg_if_player( _( "You pull the pin on the Granade." ) );
-    it->convert( itype_granade_act );
+    p->add_msg_if_player( _( "You pull the pin on the %s." ), it->tname() );
+    it->convert( itype_debug_grenade_act );
     it->charges = 5;
     it->activate();
     return it->type->charges_to_use();
 }
 
-int iuse::granade_act( player *p, item *it, bool t, const tripoint &pos )
+int iuse::debug_grenade_act( player *p, item *it, bool t, const tripoint &pos )
 {
     if( pos.x == -999 || pos.y == -999 ) {
         return 0;
@@ -5103,7 +5123,7 @@ int iuse::towel_common( player *p, item *it, bool t )
 
         towelUsed = true;
         if( it ) {
-            it->item_counter = to_turns<int>( 30_minutes );
+            it->set_counter( to_turns<int>( 30_minutes ) );
         }
 
         // default message
@@ -6073,7 +6093,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint &pos )
 
                 const auto &recipe = *candidate_recipes.back();
                 if( recipe ) {
-                    rmenu.addentry( k++, true, -1, recipe.result_name() );
+                    rmenu.addentry( k++, true, -1, recipe.result_name( /*decorated=*/true ) );
                 }
             }
 
@@ -8786,12 +8806,30 @@ int iuse::toggle_ups_charging( player *p, item *it, bool, const tripoint & )
 
 int iuse::report_grid_charge( player *p, item *, bool, const tripoint &pos )
 {
-    tripoint_abs_ms pos_abs( get_map().getabs( pos ) );
+    const tripoint_abs_ms pos_abs( get_map().getabs( pos ) );
     const distribution_grid &gr = get_distribution_grid_tracker().grid_at( pos_abs );
+    const int amt = gr.get_resource();
+    const auto stat = gr.get_power_stat();
 
-    int amt = gr.get_resource();
-    p->add_msg_if_player( _( "This electric grid stores %d kJ of electric power." ), amt );
+    std::string msg = string_format( _( "This electric grid stores %d kJ of electric power." ), amt );
 
+    // format in MW/kW with three-point precision
+    auto display_watt = []( int64_t watts = 0 ) {
+        if( std::abs( watts ) >= 1'000'000 ) {
+            return string_format( "%.3f MW", watts / 1'000'000.0 );
+        } else if( std::abs( watts ) >= 1'000 ) {
+            return string_format( "%.3f kW", watts / 1'000.0 );
+        } else {
+            return string_format( "%d W", watts );
+        }
+    };
+
+    if( stat.gen_w > 0 || stat.use_w > 0 ) {
+        msg += string_format( _( "\nGeneration: %s" ), display_watt( stat.gen_w ) );
+        msg += string_format( _( "\nConsumption: %s" ), display_watt( stat.use_w ) );
+        msg += string_format( _( "\nNet: %s" ), display_watt( stat.net_w() ) );
+    }
+    p->add_msg_if_player( "%s", msg );
     return 0;
 }
 
@@ -8997,4 +9035,3 @@ int iuse::bullet_vibe_on( player *p, item *it, bool t, const tripoint & )
     }
     return it->type->charges_to_use();
 }
-

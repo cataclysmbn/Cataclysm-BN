@@ -1552,6 +1552,11 @@
     "context": [  ]
   },
   {
+    "id": "FAKE_CLONING_VAT",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "FAKE_SMOKE",
     "type": "json_flag",
     "context": [  ]
@@ -2460,6 +2465,24 @@
     "id": "VEHICLE_NO_HOTWIRE",
     "type": "json_flag",
     "//": "Marks a vehicle to never require hotwiring controls (e.g bycicles)",
+    "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_ADDED",
+    "type": "json_flag",
+    "//": "",
+    "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_TICK",
+    "type": "json_flag",
+    "//": "",
+    "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_REMOVED",
+    "type": "json_flag",
+    "//": "",
     "context": [  ]
   }
 ]

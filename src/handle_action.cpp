@@ -1835,9 +1835,14 @@ bool game::handle_action()
                 break;
             case ACTION_MOVE_DOWN:
                 if( u.is_mounted() ) {
-                    auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                        add_msg( m_info, _( "You can't go down stairs while you're riding." ) );
+                    const monster *mon = u.mounted_creature.get();
+
+                    const bool can_use_stairs =
+                        !mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                        mon->has_flag( MF_FLIES );
+
+                    if( !can_use_stairs ) {
+                        add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
                         break;
                     }
                 }
@@ -1873,9 +1878,14 @@ bool game::handle_action()
 
             case ACTION_MOVE_UP:
                 if( u.is_mounted() ) {
-                    auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                        add_msg( m_info, _( "You can't go down stairs while you're riding." ) );
+                    const monster *mon = u.mounted_creature.get();
+
+                    const bool can_use_stairs =
+                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                        mon->has_flag( MF_FLIES );
+
+                    if( !can_use_stairs ) {
+                        add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
                         break;
                     }
                 }
@@ -2615,6 +2625,10 @@ bool game::handle_action()
 
             case ACTION_DISPLAY_SUBMAP_GRID:
                 g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
+                break;
+
+            case ACTION_TOGGLE_ZONE_OVERLAY:
+                g->show_zone_overlay = !g->show_zone_overlay;
                 break;
 
             case ACTION_TOGGLE_HOUR_TIMER:

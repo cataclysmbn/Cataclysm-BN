@@ -48,6 +48,17 @@ auto generate_lua_docs( const std::filesystem::path &script_path,
 {
     sol::state lua = make_lua_state();
     lua.globals()["doc_gen_func"] = lua.create_table();
+    lua.globals()["print"] = [&]( const sol::variadic_args & va ) {
+        for( auto it : va ) {
+            std::string str = lua["tostring"]( it );
+            std::cout << str;
+        }
+        std::cout << std::endl;
+    };
+    lua.globals()["package"]["path"] = string_format(
+                                           "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
+                                           PATH_INFO::datadir() + "/lua", PATH_INFO::datadir() + "/raw"
+                                       );
 
     try {
         run_lua_script( lua, script_path.string() );
@@ -306,14 +317,39 @@ void reg_lua_iuse_actors( lua_state &state, Item_factory &ifactory )
 {
     sol::state &lua = state.lua;
 
-    sol::table funcs = lua.globals()["game"]["iuse_functions"];
+    const sol::table funcs = lua.globals()["game"]["iuse_functions"];
 
     for( auto &ref : funcs ) {
         std::string key;
         try {
             key = ref.first.as<std::string>();
-            sol::protected_function func = ref.second;
-            ifactory.add_actor( std::make_unique<lua_iuse_actor>( key, std::move( func ) ) );
+
+            switch( ref.second.get_type() ) {
+                case sol::type::function: {
+                    auto func =  ref.second.as<sol::function>();
+                    ifactory.add_actor( std::make_unique<lua_iuse_actor>(
+                                            key,
+                                            std::move( func ),
+                                            sol::lua_nil,
+                                            sol::lua_nil ) );
+                    break;
+                }
+                case sol::type::table: {
+                    auto tbl = ref.second.as<sol::table>();
+                    auto use_fn = tbl.get<sol::function>( "use" );
+                    auto can_use_fn = tbl.get_or<sol::function>( "can_use", sol::lua_nil );
+                    auto tick_fn = tbl.get_or<sol::function>( "tick", sol::lua_nil );
+                    ifactory.add_actor( std::make_unique<lua_iuse_actor>(
+                                            key,
+                                            std::move( use_fn ),
+                                            std::move( can_use_fn ),
+                                            std::move( tick_fn ) ) );
+                    break;
+                }
+                default: {
+                    throw std::runtime_error( "invalid iuse object type, expected table or function" );
+                }
+            }
         } catch( std::runtime_error &e ) {
             debugmsg( "Failed to extract iuse_functions k='%s': %s", key, e.what() );
             break;

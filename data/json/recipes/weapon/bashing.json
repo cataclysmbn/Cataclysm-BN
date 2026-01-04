@@ -123,6 +123,18 @@
   },
   {
     "type": "recipe",
+    "result": "bat_metal_bolted",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_BASHING",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "15 m",
+    "autolearn": true,
+    "qualities": [ { "id": "DRILL", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
+    "components": [ [ [ "bat_metal", 1 ] ], [ [ "scrap", 4 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "sword_wood",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_BASHING",
@@ -281,9 +293,10 @@
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_BASHING",
     "skill_used": "fabrication",
-    "difficulty": 7,
+    "difficulty": 4,
     "time": "5 h 40 m",
-    "book_learn": [ [ "textbook_weapeast", 6 ] ],
+    "book_learn": [ [ "textbook_weapeast", 3 ] ],
+    "autolearn": true,
     "qualities": [ { "id": "SAW_W", "level": 1 }, { "id": "CUT", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "//": "Bokken is a single piece of wood, and the heavy stick just isn't large enough.",
     "components": [

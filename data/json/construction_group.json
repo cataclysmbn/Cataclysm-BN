@@ -981,6 +981,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_cloning_vat",
+    "name": "Plug In Cloning Vat"
+  },
+  {
+    "type": "construction_group",
     "id": "install_oven",
     "name": "Plug In Oven"
   },

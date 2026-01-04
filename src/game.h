@@ -749,7 +749,8 @@ class game
         // create vehicle nearby, for example; for a profession vehicle.
         vehicle *place_vehicle_nearby(
             const vproto_id &id, const point_abs_omt &origin, int min_distance,
-            int max_distance, const std::vector<std::string> &omt_search_types = {} );
+            int max_distance, const std::vector<std::string> &omt_search_types = {},
+            bool notwater = false );
         // V Menu Functions and helpers:
         void list_items_monsters(); // Called when you invoke the `V`-menu
 
@@ -980,6 +981,7 @@ class game
 
         bool debug_pathfinding = false; // show NPC pathfinding on overmap ui
         bool debug_submap_grid_overlay = false;
+        bool show_zone_overlay = true;
 
         /* tile overlays */
         // Toggle all other overlays off and flip the given overlay on/off.

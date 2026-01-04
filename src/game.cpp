@@ -21,6 +21,7 @@
 #include <memory>
 #include <numeric>
 #include <queue>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <string>
@@ -682,7 +683,8 @@ bool game::start_game()
 
         // Place vehicles spawned by scenario or profession, has to be placed very early to avoid bugs.
         if( u.starting_vehicle ) {
-            auto veh = place_vehicle_nearby( u.starting_vehicle, omtstart.xy(), 0, 30, std::vector<std::string> {} );
+            auto veh = place_vehicle_nearby( u.starting_vehicle, omtstart.xy(), 0, 30, std::vector<std::string> {},
+                                             u.prof->has_flag( "VEH_GROUNDED" ) );
             if( veh ) {
                 veh->set_owner( u );
             } else if( query_gen_failed() ) {
@@ -888,12 +890,13 @@ bool game::start_game()
 
 vehicle *game::place_vehicle_nearby(
     const vproto_id &id, const point_abs_omt &origin, int min_distance,
-    int max_distance, const std::vector<std::string> &omt_search_types )
+    int max_distance, const std::vector<std::string> &omt_search_types,
+    bool notwater )
 {
     std::vector<std::string> search_types = omt_search_types;
     if( search_types.empty() ) {
         vehicle veh( id );
-        if( veh.can_float() && veh.has_part( VPFLAG_FLOATS ) ) {
+        if( !notwater && veh.can_float() && veh.has_part( VPFLAG_FLOATS ) ) {
             search_types.emplace_back( "river_shore" );
             search_types.emplace_back( "lake_shore" );
             search_types.emplace_back( "lake_surface" );
@@ -2372,6 +2375,7 @@ input_context get_default_mode_input_context()
 #endif
 #if defined(TILES)
     ctxt.register_action( "toggle_pixel_minimap" );
+    ctxt.register_action( "toggle_zone_overlay" );
 #endif // TILES
     ctxt.register_action( "toggle_panel_adm" );
     ctxt.register_action( "reload_tileset" );
@@ -2544,6 +2548,28 @@ bool game::is_game_over()
                 _( "Your character is dead, do you accept this?\n\nSelect Yes to abandon the character to their fate, select No to try again." ) ) ) {
             g->quickload();
             return false;
+        }
+
+        auto followers = get_follower_list()
+        | std::views::transform( [&]( const auto & elem ) { return overmap_buffer.find_npc( elem ); } )
+        | std::views::filter( []( const auto & follower ) { return follower && !follower->is_dead_state(); } )
+        | std::ranges::to<std::vector>();
+
+        if( !followers.empty() ) {
+            uilist charmenu;
+            charmenu.text = _( "Continue as one of your followers?" );
+            int charnum = 0;
+            for( const auto &follower : followers ) {
+                charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, follower->get_name() );
+            }
+            charmenu.addentry( charnum, true, 'q', _( "No, end the game" ) );
+            charmenu.query();
+            if( charmenu.ret >= 0 && static_cast<size_t>( charmenu.ret ) < followers.size() ) {
+                if( u.in_vehicle ) { m.unboard_vehicle( u.pos() ); }
+                uquit = QUIT_NO;
+                get_avatar().control_npc( *followers.at( charmenu.ret ) );
+                return false;
+            }
         }
 
         Messages::deactivate();
@@ -3201,6 +3227,7 @@ static shared_ptr_fast<game::draw_callback_t> create_zone_callback(
     const bool &is_moving_zone = false
 )
 {
+    ( void ) zone_blink;
     return make_shared_fast<game::draw_callback_t>(
     [&]() {
         if( zone_cursor ) {
@@ -3214,7 +3241,7 @@ static shared_ptr_fast<game::draw_callback_t> create_zone_callback(
                 }
             }
         }
-        if( zone_blink && zone_start && zone_end ) {
+        if( zone_start && zone_end ) {
             const point offset2( g->u.view_offset.xy() + point( g->u.posx() - getmaxx( g->w_terrain ) / 2,
                                  g->u.posy() - getmaxy( g->w_terrain ) / 2 ) );
 
@@ -6339,7 +6366,6 @@ void game::zones_manager()
     auto &mgr = zone_manager::get_manager();
     int start_index = 0;
     int active_index = 0;
-    bool blink = false;
     bool stuff_changed = false;
     bool show_all_zones = false;
     int zone_cnt = 0;
@@ -6548,8 +6574,6 @@ void game::zones_manager()
 
                 stuff_changed = true;
             } while( false );
-
-            blink = false;
         } else if( action == "SHOW_ALL_ZONES" ) {
             show_all_zones = !show_all_zones;
             zones = get_zones();
@@ -6560,24 +6584,19 @@ void game::zones_manager()
                 if( active_index < 0 ) {
                     active_index = zone_cnt - 1;
                 }
-                blink = false;
             } else if( action == "DOWN" ) {
                 active_index++;
                 if( active_index >= zone_cnt ) {
                     active_index = 0;
                 }
-                blink = false;
             } else if( action == "REMOVE_ZONE" ) {
                 if( active_index < zone_cnt ) {
                     mgr.remove( zones[active_index] );
                     zones = get_zones();
                     active_index--;
 
-                    if( active_index < 0 ) {
-                        active_index = 0;
-                    }
+                    active_index = std::max( active_index, 0 );
                 }
-                blink = false;
                 stuff_changed = true;
 
             } else if( action == "CONFIRM" ) {
@@ -6657,14 +6676,12 @@ void game::zones_manager()
                         break;
                 }
 
-                blink = false;
             } else if( action == "MOVE_ZONE_UP" && zone_cnt > 1 ) {
                 if( active_index < zone_cnt - 1 ) {
                     mgr.swap( zones[active_index], zones[active_index + 1] );
                     zones = get_zones();
                     active_index++;
                 }
-                blink = false;
                 stuff_changed = true;
 
             } else if( action == "MOVE_ZONE_DOWN" && zone_cnt > 1 ) {
@@ -6673,7 +6690,6 @@ void game::zones_manager()
                     zones = get_zones();
                     active_index--;
                 }
-                blink = false;
                 stuff_changed = true;
 
             } else if( action == "SHOW_ZONE_ON_MAP" ) {
@@ -6696,21 +6712,17 @@ void game::zones_manager()
         }
 
         if( zone_cnt > 0 ) {
-            blink = !blink;
             const auto &zone = zones[active_index].get();
             zone_start = m.getlocal( zone.get_start_point() );
             zone_end = m.getlocal( zone.get_end_point() );
-            ctxt.set_timeout( get_option<int>( "BLINK_SPEED" ) );
         } else {
-            blink = false;
             zone_start = zone_end = std::nullopt;
-            ctxt.reset_timeout();
         }
 
         // Actually accessed from the terrain overlay callback `zone_cb` in the
         // call to `ui_manager::redraw`.
         //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
-        zone_blink = blink;
+        zone_blink = zone_cnt > 0;
         invalidate_main_ui_adaptor();
 
         ui_manager::redraw();
@@ -6855,6 +6867,7 @@ look_around_result game::look_around( bool show_window, tripoint &center,
     }
 #if defined(TILES)
     ctxt.register_action( "toggle_pixel_minimap" );
+    ctxt.register_action( "toggle_zone_overlay" );
 #endif // TILES
 
     const int old_levz = get_levz();
@@ -6866,7 +6879,6 @@ look_around_result game::look_around( bool show_window, tripoint &center,
     m.update_visibility_cache( old_levz );
     const visibility_variables &cache = m.get_visibility_variables_cache();
 
-    bool blink = true;
     look_around_result result;
 
     shared_ptr_fast<draw_callback_t> ter_indicator_cb;
@@ -6941,25 +6953,16 @@ look_around_result game::look_around( bool show_window, tripoint &center,
                 zone_start = lp;
                 zone_end = std::nullopt;
             }
-            // Actually accessed from the terrain overlay callback `zone_cb` in the
-            // call to `ui_manager::redraw`.
-            //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
-            zone_blink = blink;
+            zone_blink = zone_start.has_value();
         }
 
         if( is_moving_zone ) {
             zone_start = lp - ( start_point + end_point ) / 2 + start_point;
             zone_end = lp - ( start_point + end_point ) / 2 + end_point;
-            // Actually accessed from the terrain overlay callback `zone_cb` in the
-            // call to `ui_manager::redraw`.
-            //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
-            zone_blink = blink;
+            zone_blink = true;
         }
         invalidate_main_ui_adaptor();
         ui_manager::redraw();
-        if( ( select_zone && has_first_point ) || is_moving_zone ) {
-            ctxt.set_timeout( get_option<int>( "BLINK_SPEED" ) );
-        }
 
         if( pixel_minimap_option ) {
             ctxt.set_timeout( 125 );
@@ -6976,12 +6979,7 @@ look_around_result game::look_around( bool show_window, tripoint &center,
         } else {
             action = ctxt.handle_input();
         }
-        if( ( action == "LEVEL_UP" || action == "LEVEL_DOWN" || action == "MOUSE_MOVE" ||
-              ctxt.get_direction( action ) ) && ( ( select_zone && has_first_point ) || is_moving_zone ) ) {
-            blink = true; // Always draw blink symbols when moving cursor
-        } else if( action == "TIMEOUT" ) {
-            blink = !blink;
-        }
+        ( void ) zone_blink; // kept for callback signature
         if( action == "LIST_ITEMS" ) {
             list_items_monsters();
         } else if( action == "TOGGLE_FAST_SCROLL" ) {
@@ -6992,6 +6990,8 @@ look_around_result game::look_around( bool show_window, tripoint &center,
             if( show_window && ui ) {
                 ui->mark_resize();
             }
+        } else if( action == "toggle_zone_overlay" ) {
+            g->show_zone_overlay = !g->show_zone_overlay;
         } else if( action == "LEVEL_UP" || action == "LEVEL_DOWN" ) {
             if( !allow_zlev_move ) {
                 continue;
@@ -7446,6 +7446,7 @@ void game::reset_item_list_state( const catacurses::window &window, int height,
     tokens.emplace_back( _( "<C>ompare" ) );
     tokens.emplace_back( _( "<F>ilter" ) );
     tokens.emplace_back( _( "<+/->Priority" ) );
+    tokens.emplace_back( _( "<T>ravel to" ) );
 
     int gaps = tokens.size() + 1;
     letters = 0;
@@ -7520,15 +7521,24 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
     int iInfoHeight = 0;
     int iMaxRows = 0;
     int width = 0;
+    int width_nob = 0;
     int max_name_width = 0;
+
+    const bool highlight_unread_items = get_option<bool>( "HIGHLIGHT_UNREAD_ITEMS" );
+    const nc_color item_new_col = c_light_green;
+    const std::string item_new_str = pgettext( "list items", "NEW!" );
+    const int item_new_str_width = utf8_width( item_new_str );
+    const int left_padding = 1;
+    const int right_padding = 2 + 1 + 2 + 1;
+    const int padding = left_padding + right_padding;
 
     //find max length of item name and resize window width
     for( const map_item_stack &cur_item : ground_items ) {
-        const int item_len = utf8_width( remove_color_tags( cur_item.example->display_name() ) ) + 15;
-        if( item_len > max_name_width ) {
-            max_name_width = item_len;
-        }
+        max_name_width = std::max( max_name_width,
+                                   utf8_width( remove_color_tags( cur_item.example->display_name() ) ) );
     }
+    max_name_width = max_name_width + padding + 6 +
+                     ( highlight_unread_items ? item_new_str_width : 0 );
 
     tripoint active_pos;
     map_item_stack *activeItem = nullptr;
@@ -7543,11 +7553,12 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
         iMaxRows = TERMY - iInfoHeight - 2;
 
         width = clamp( max_name_width, 45, TERMX / 3 );
+        width_nob = width - 2;
 
         const int offsetX = TERMX - width;
 
         w_items = catacurses::newwin( TERMY - 2 - iInfoHeight,
-                                      width - 2, point( offsetX + 1, 1 ) );
+                                      width_nob, point( offsetX + 1, 1 ) );
         w_items_border = catacurses::newwin( TERMY - iInfoHeight,
                                              width, point( offsetX, 0 ) );
         w_item_info = catacurses::newwin( iInfoHeight, width,
@@ -7631,8 +7642,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             werase( w_items );
             calcStartPos( iStartPos, iActive, iMaxRows, iItemNum );
             int iNum = 0;
-            bool high = false;
-            bool low = false;
+            // ITEM LIST
             int index = 0;
             int iCatSortOffset = 0;
 
@@ -7641,60 +7651,55 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
                     iNum++;
                 }
             }
-            for( auto iter = filtered_items.begin(); iter != filtered_items.end(); ++index ) {
-                if( highPEnd > 0 && index < highPEnd + iCatSortOffset ) {
-                    high = true;
-                    low = false;
-                } else if( index >= lowPStart + iCatSortOffset ) {
-                    high = false;
-                    low = true;
-                } else {
-                    high = false;
-                    low = false;
-                }
-
-                if( iNum >= iStartPos && iNum < iStartPos + ( iMaxRows > iItemNum ? iItemNum : iMaxRows ) ) {
-                    int iThisPage = 0;
-                    if( !mSortCategory[iNum].empty() ) {
-                        iCatSortOffset++;
-                        mvwprintz( w_items, point( 1, iNum - iStartPos ), c_magenta, mSortCategory[iNum] );
-                    } else {
-                        if( iNum == iActive ) {
-                            iThisPage = page_num;
-                        }
-                        std::string sText;
-                        if( iter->vIG.size() > 1 ) {
-                            sText += string_format( "[%d/%d] (%d) ", iThisPage + 1, iter->vIG.size(), iter->totalcount );
-                        }
-                        sText += iter->example->tname();
-                        if( iter->vIG[iThisPage].count > 1 ) {
-                            sText += string_format( "[%d]", iter->vIG[iThisPage].count );
-                        }
-
-                        nc_color col = c_light_gray;
-                        if( iNum == iActive ) {
-                            col = hilite( c_white );
-                        } else if( high ) {
-                            col = c_yellow;
-                        } else if( low ) {
-                            col = c_red;
-                        } else {
-                            col = iter->example->color_in_inventory();
-                        }
-                        trim_and_print( w_items, point( 1, iNum - iStartPos ), width - 9, col, sText );
-                        const int numw = iItemNum > 9 ? 2 : 1;
-                        const int x = iter->vIG[iThisPage].pos.x;
-                        const int y = iter->vIG[iThisPage].pos.y;
-                        mvwprintz( w_items, point( width - 6 - numw, iNum - iStartPos ),
-                                   iNum == iActive ? c_light_green : c_light_gray,
-                                   "%*d %s", numw, rl_dist( point_zero, point( x, y ) ),
-                                   direction_name_short( direction_from( point_zero, point( x, y ) ) ) );
-                        ++iter;
-                    }
-                } else {
+            for( auto iter = filtered_items.begin(); iter != filtered_items.end(); ++index, iNum++ ) {
+                if( iNum < iStartPos || iNum >= iStartPos + std::min( iMaxRows, iItemNum ) ) {
                     ++iter;
+                    continue;
                 }
-                iNum++;
+                int iThisPage = 0;
+                if( !mSortCategory[iNum].empty() ) {
+                    iCatSortOffset++;
+                    mvwprintz( w_items, point( 1, iNum - iStartPos ), c_magenta, mSortCategory[iNum] );
+                    continue;
+                }
+                if( iNum == iActive ) {
+                    iThisPage = page_num;
+                }
+                std::string sText;
+                if( iter->vIG.size() > 1 ) {
+                    sText += string_format( "[%d/%d] (%d) ", iThisPage + 1, iter->vIG.size(), iter->totalcount );
+                }
+                sText += iter->example->tname();
+                if( iter->vIG[iThisPage].count > 1 ) {
+                    sText += string_format( "[%d]", iter->vIG[iThisPage].count );
+                }
+
+                nc_color col = c_light_gray;
+                if( iNum == iActive ) {
+                    col = hilite( c_white );
+                } else if( highPEnd > 0 && index < highPEnd + iCatSortOffset ) {
+                    col = c_yellow;
+                } else if( index >= lowPStart + iCatSortOffset ) {
+                    col = c_red;
+                } else {
+                    col = iter->example->color_in_inventory();
+                }
+                const bool print_new = highlight_unread_items &&
+                                       !uistate.read_items.contains( iter->example->typeId() );
+                const int new_width = print_new ? item_new_str_width + 1 : 1;
+                trim_and_print( w_items, point( 1, iNum - iStartPos ),
+                                width_nob - padding - new_width, col, sText );
+                const point p( iter->vIG[iThisPage].pos.xy() );
+                if( print_new ) {
+                    mvwprintz( w_items,
+                               point( width_nob - right_padding - new_width + 1, iNum - iStartPos ),
+                               item_new_col, item_new_str );
+                }
+                mvwprintz( w_items, point( width_nob - right_padding, iNum - iStartPos ),
+                           iNum == iActive ? c_light_green : c_light_gray,
+                           "%2d %s", rl_dist( point_zero, p ),
+                           direction_name_short( direction_from( point_zero, p ) ) );
+                ++iter;
             }
             iNum = 0;
             for( int i = 0; i < iActive; i++ ) {
@@ -7752,8 +7757,10 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
     add_draw_callback( trail_cb );
 
     do {
+        bool recalc_unread = false;
         if( action == "COMPARE" && activeItem ) {
             game_menus::inv::compare( u, active_pos );
+            recalc_unread = highlight_unread_items;
         } else if( action == "FILTER" ) {
             filter_type = item_filter_type::FILTER;
             ui.invalidate_ui();
@@ -7788,6 +7795,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             draw_item_info( [&]() -> catacurses::window {
                 return catacurses::newwin( TERMY, width - 5, point_zero );
             }, info_data );
+            recalc_unread = highlight_unread_items;
         } else if( action == "PRIORITY_INCREASE" ) {
             filter_type = item_filter_type::HIGH_PRIORITY;
             ui.invalidate_ui();
@@ -7842,6 +7850,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             if( route.size() > 1 ) {
                 route.pop_back();
                 u.set_destination( route );
+                recalc_unread = highlight_unread_items;
                 break;
             } else {
                 add_msg( m_info, _( "You can't travel there." ) );
@@ -7899,6 +7908,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             if( iActive < 0 ) {
                 iActive = iItemNum - 1;
             }
+            recalc_unread = highlight_unread_items;
         } else if( action == "DOWN" ) {
             do {
                 iActive++;
@@ -7909,14 +7919,17 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             if( iActive >= iItemNum ) {
                 iActive = mSortCategory[0].empty() ? 0 : 1;
             }
+            recalc_unread = highlight_unread_items;
         } else if( action == "RIGHT" ) {
             if( !filtered_items.empty() && activeItem ) {
                 if( ++page_num >= static_cast<int>( activeItem->vIG.size() ) ) {
                     page_num = activeItem->vIG.size() - 1;
                 }
             }
+            recalc_unread = highlight_unread_items;
         } else if( action == "LEFT" ) {
             page_num = std::max( 0, page_num - 1 );
+            recalc_unread = highlight_unread_items;
         } else if( action == "PAGE_UP" ) {
             iScrollPos--;
         } else if( action == "PAGE_DOWN" ) {
@@ -7950,6 +7963,9 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             // call to `ui_manager::redraw`.
             //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
             trail_end_x = true;
+            if( recalc_unread ) {
+                uistate.read_items.insert( activeItem->example->typeId() );
+            }
         } else {
             u.view_offset = stored_view_offset;
             trail_start = trail_end = std::nullopt;
@@ -8925,7 +8941,13 @@ bool game::prompt_dangerous_tile( const tripoint &dest_loc ) const
         }
         ledge_examine( u, dest_loc );
         return false;
+    } else {
+        auto crit = u.mounted_creature.get();
+        if( crit->has_flag( MF_RIDEABLE_MECH ) ) {
+            return true; // mount can climb down ledges
+        }
     }
+
 
     add_msg( m_warning, _( "Your %s refuses to move over that ledge!" ),
              u.mounted_creature->get_name() );
@@ -9144,7 +9166,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     const int previous_moves = u.moves;
     if( u.is_mounted() ) {
         auto crit = u.mounted_creature.get();
-        if( !crit->has_flag( MF_RIDEABLE_MECH ) &&
+        if( !crit->has_flag( MF_MOUNTABLE_OBSTACLES ) &&
             ( m.has_flag_ter_or_furn( "MOUNTABLE", dest_loc ) ||
               m.has_flag_ter_or_furn( "BARRICADABLE_DOOR", dest_loc ) ||
               m.has_flag_ter_or_furn( "OPENCLOSE_INSIDE", dest_loc ) ||

@@ -299,6 +299,8 @@ class Character : public Creature, public location_visitable<Character>
 
         /** Returns true if the character should be dead */
         auto is_dead_state() const -> bool override;
+        /** Invalidates the cached dead state, forcing recomputation on next is_dead_state() call */
+        void reset_cached_dead_state();
 
     protected:
         mutable std::optional<bool> cached_dead_state;
@@ -794,6 +796,8 @@ class Character : public Creature, public location_visitable<Character>
 
         /** Toggles a trait on the player and in their mutation list */
         void toggle_trait( const trait_id & );
+        /** Toggles a bionic on the player */
+        void toggle_bionic( const bionic_id & );
         /** Add or removes a mutation on the player, but does not trigger mutation loss/gain effects. */
         void set_mutation( const trait_id & );
         void unset_mutation( const trait_id & );
@@ -1714,6 +1718,8 @@ class Character : public Creature, public location_visitable<Character>
 
         // Threshold category if crossed
         mutation_category_id thresh_category = mutation_category_id::NULL_ID();
+        // Threshold tier reached
+        unsigned short thresh_tier = 0;
 
         location_vector<item> worn;
         // Means player sit inside vehicle on the tile he is now
@@ -1782,7 +1788,7 @@ class Character : public Creature, public location_visitable<Character>
         const item *get_item_with_id( const itype_id &item_id, bool need_charges = false ) const;
 
         // Adds item(s) to inventory
-        void add_item_with_id( const itype_id &itype, int count = 1 );
+        item &add_item_with_id( const itype_id &itype, int count = 1 );
 
         // Has a weapon, inventory item or worn item with id
         bool has_item_with_id( const itype_id &item_id, bool need_charges = false ) const;

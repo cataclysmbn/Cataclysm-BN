@@ -10,6 +10,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <numeric>
 
 #include "action.h"
 #include "activity_actor_definitions.h"
@@ -443,9 +444,13 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
         return true;
     }
 
-    // Ladder
+    // Ladder - only try to climb up if:
+    // 1. Standing on a ladder
+    // 2. The destination at current z-level is impassable (blocked by something)
+    // 3. There's a valid destination above
     if( !is_riding
         && m.has_flag( flag_LADDER, you.pos() )
+        && !m.passable( dest_loc )
         && g->walk_move( dest_loc + tripoint_above ) ) {
         return true;
     }

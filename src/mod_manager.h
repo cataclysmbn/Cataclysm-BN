@@ -1,5 +1,7 @@
 #pragma once
 
+#include "catalua_type_operators.h"
+
 #include <cstddef>
 #include <map>
 #include <optional>
@@ -96,6 +98,8 @@ struct MOD_INFORMATION {
         bool obsolete = false;
 
         std::pair<int, std::string> category = { -1, "" };
+
+        LUA_TYPE_OPS( MOD_INFORMATION, ident );
 };
 
 namespace mod_management

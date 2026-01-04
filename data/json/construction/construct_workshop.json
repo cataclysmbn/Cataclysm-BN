@@ -843,5 +843,16 @@
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
     "post_furniture": "f_recycler"
+  },
+  {
+    "type": "construction",
+    "id": "constr_gridcloning_vat",
+    "group": "install_cloning_vat",
+    "category": "WORKSHOP",
+    "time": "10 m",
+    "components": [ [ [ "cloning_vat", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_cloning_vat"
   }
 ]

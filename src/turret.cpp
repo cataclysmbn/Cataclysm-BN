@@ -4,10 +4,13 @@
 #include <algorithm>
 #include <memory>
 
+#include "ammo_effect.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "creature.h"
+#include "creature_functions.h"
 #include "debug.h"
+#include "field_type.h"
 #include "enums.h"
 #include "game.h"
 #include "gun_mode.h"
@@ -23,6 +26,7 @@
 #include "ui.h"
 #include "value_ptr.h"
 #include "veh_type.h"
+#include "vehicle_functions.h"
 #include "vehicle_selector.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
@@ -554,6 +558,7 @@ std::unique_ptr<npc> vehicle::get_targeting_npc( const vehicle_part &pt )
     cpu->setpos( global_part_pos3( pt ) );
     // Assume vehicle turrets are friendly to the player.
     cpu->set_attitude( NPCATT_FOLLOW );
+    cpu->set_fac( faction_id( "your_followers" ) );
     cpu->set_fac( get_owner() );
     return cpu;
 }
@@ -563,6 +568,13 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
     turret_data gun = turret_query( pt );
 
     int shots = 0;
+
+    // Try to automatically reload if out of ammo and autoloader is present
+    if( gun.query() == turret_data::status::no_ammo ) {
+        vehicle_funcs::try_autoload_turret( *this, pt );
+        // Refresh turret data after potential reload
+        gun = turret_query( pt );
+    }
 
     if( gun.query() != turret_data::status::ready ) {
         return shots;
@@ -589,13 +601,20 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
         // BEWARE: Calling turret_data.fire on tripoint min coordinates starts a crash
         //      triggered at `trajectory.insert( trajectory.begin(), source )` at ranged.cpp:236
         pt.reset_target( pos );
-        int boo_hoo;
 
         // TODO: calculate chance to hit and cap range based upon this
         int max_range = 20;
         int range = std::min( gun.range(), max_range );
-        Creature *auto_target = cpu->auto_find_hostile_target( range, boo_hoo, area );
-        if( auto_target == nullptr ) {
+
+        // Check if weapon leaves dangerous trail (e.g., lasers)
+        const auto ammo_fx = gun.ammo_effects();
+        const bool has_trail = std::ranges::any_of( ammo_fx, []( const ammo_effect_str_id & ae ) {
+            return ae->trail_field_type && ae->trail_field_type != fd_null;
+        } );
+
+        auto res = creature_functions::auto_find_hostile_target( *cpu, { .range = range, .trail = has_trail, .area = area } );
+        if( !res ) {
+            const int boo_hoo = res.error();
             if( boo_hoo ) {
                 cpu->name = string_format( pgettext( "vehicle turret", "The %s" ), pt.name() );
                 // check if the player can see or hear then print chooses a message accordingly
@@ -615,7 +634,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
             return shots;
         }
 
-        target.second = auto_target->pos();
+        target.second = res.value().get().pos();
 
     } else {
         // Target is already set, make sure we didn't move after aiming (it's a bug if we did).

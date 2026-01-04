@@ -49,6 +49,44 @@
   },
   {
     "type": "recipe",
+    "result": "embryo_empty",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "electronics", 5 ], [ "firstaid", 3 ], [ "computer", 2 ] ],
+    "difficulty": 6,
+    "time": "1 h 30 m",
+    "reversible": true,
+    "autolearn": false,
+    "qualities": [
+      { "id": "SAW_M_FINE", "level": 1 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "SCREW", "level": 1 }
+    ],
+    "book_learn": [ [ "recipe_lab_elec", 4 ] ],
+    "using": [
+      [ "welding_standard", 10 ],
+      [ "soldering_standard", 20 ],
+      [ "coding_standard", 120 ],
+      [ "utility_software_standard", -1 ]
+    ],
+    "components": [
+      [ [ "metal_tank_little", 1 ] ],
+      [ [ "filter_liquid", 1 ] ],
+      [ [ "sheet_metal_small", 20 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "hose", 4 ] ],
+      [ [ "plut_cell", 1 ] ],
+      [ [ "glass_sheet", 2 ] ],
+      [ [ "pouch_autoclave", 1 ] ],
+      [ [ "superglue", 5 ] ],
+      [ [ "water_clean", 10 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "pump_complex",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
@@ -1097,6 +1135,46 @@
   },
   {
     "type": "recipe",
+    "result": "bomber_controls",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "electronics",
+    "skills_required": [ [ "computer", 4 ], [ "mechanics", 3 ] ],
+    "difficulty": 5,
+    "time": "2 h",
+    "autolearn": true,
+    "using": [ [ "soldering_standard", 10 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 } ],
+    "tools": [ [ [ "laptop", -1 ] ] ],
+    "components": [
+      [ [ "ai_module", 1 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "robot_controls", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "turret_autoloader",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "skills_required": [ [ "mechanics", 3 ], [ "electronics", 1 ] ],
+    "difficulty": 4,
+    "time": "2 h",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 5 ], [ "steel_standard", 4 ], [ "soldering_standard", 10 ] ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "WRENCH", "level": 1 },
+      { "id": "SCREW", "level": 1 }
+    ],
+    "components": [ [ [ "spring", 4 ] ], [ [ "motor_small", 4 ] ], [ [ "motor_tiny", 4 ] ], [ [ "cable", 5 ] ], [ [ "scrap", 10 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "basket",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
@@ -1325,6 +1403,120 @@
     "autolearn": true,
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_W", "level": 1 } ],
     "components": [ [ [ "2x4", 5 ] ], [ [ "nail_glue", 30, "LIST" ] ], [ [ "scrap", 5 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "wheel",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "forging_standard", 4 ] ],
+    "qualities": [
+      { "id": "CHEM", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 }
+    ],
+    "tools": [ [ [ "pipe", -1 ] ] ],
+    "components": [ [ [ "steel_lump", 6 ] ], [ [ "chunk_rubber", 15 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "wheel_wide",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "forging_standard", 4 ] ],
+    "qualities": [
+      { "id": "CHEM", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 }
+    ],
+    "tools": [ [ [ "pipe", -1 ] ] ],
+    "components": [ [ [ "steel_lump", 15 ] ], [ [ "chunk_rubber", 15 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "wheel_bicycle",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "forging_standard", 4 ] ],
+    "qualities": [
+      { "id": "CHEM", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 }
+    ],
+    "tools": [ [ [ "pipe", -1 ] ] ],
+    "components": [ [ [ "steel_chunk", 6 ] ], [ [ "chunk_rubber", 6 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "wheel_bicycle_or",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "1 h 30m",
+    "autolearn": true,
+    "using": [ [ "forging_standard", 4 ] ],
+    "qualities": [
+      { "id": "CHEM", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 }
+    ],
+    "tools": [ [ [ "pipe", -1 ] ] ],
+    "components": [ [ [ "steel_chunk", 6 ] ], [ [ "chunk_rubber", 6 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "wheel_motorbike",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "forging_standard", 4 ] ],
+    "qualities": [
+      { "id": "CHEM", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 }
+    ],
+    "tools": [ [ [ "pipe", -1 ] ] ],
+    "components": [ [ [ "steel_lump", 3 ] ], [ [ "chunk_rubber", 6 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "wheel_motorbike_or",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "time": "1 h 30m",
+    "autolearn": true,
+    "using": [ [ "forging_standard", 4 ] ],
+    "qualities": [
+      { "id": "CHEM", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 }
+    ],
+    "tools": [ [ [ "pipe", -1 ] ] ],
+    "components": [ [ [ "steel_lump", 3 ] ], [ [ "chunk_rubber", 6 ] ] ]
   },
   {
     "type": "recipe",

@@ -207,6 +207,7 @@ enum npc_chat_menu {
     NPC_CHAT_GUARD,
     NPC_CHAT_FOLLOW,
     NPC_CHAT_MOVE_TO_POS,
+    NPC_CHAT_CONTROL,
     NPC_CHAT_AWAKE,
     NPC_CHAT_MOUNT,
     NPC_CHAT_DISMOUNT,
@@ -514,6 +515,9 @@ void game::chat()
                       );
     }
     if( !followers.empty() ) {
+        nmenu.addentry( NPC_CHAT_CONTROL, true, 'C',
+                        follower_count == 1 ? string_format( _( "Control %s" ),
+                                followers.front()->get_name() ) : _( "Control someone…" ) );
         nmenu.addentry( NPC_CHAT_GUARD, true, 'g', follower_count == 1 ?
                         string_format( _( "Tell %s to guard" ), followers.front()->name ) :
                         _( "Tell someone to guard…" )
@@ -530,7 +534,6 @@ void game::chat()
                         _( "Tell everyone on your team to relax (Clear Overrides)" ) );
         nmenu.addentry( NPC_CHAT_ORDERS, true, 'o', _( "Tell everyone on your team to temporarily…" ) );
     }
-    std::string message;
     std::string yell_msg;
     std::string monologue_msg;
     bool is_order = true;
@@ -725,6 +728,12 @@ void game::chat()
                 yell_msg = string_format( _( "Move there, %s!" ), followers[npcselect]->get_name() );
             }
             break;
+        }
+        case NPC_CHAT_CONTROL: {
+            const int npcselect = npc_select_menu( followers, _( "Who do you want to control?" ), false );
+            if( npcselect < 0 ) { return; }
+            get_avatar().control_npc( *followers[npcselect] );
+            return;
         }
         case NPC_CHAT_FOLLOW: {
             const int npcselect = npc_select_menu( guards, _( "Who should follow you?" ) );
@@ -2968,6 +2977,7 @@ void talk_effect_t::parse_string_effect( const std::string &effect_id, const Jso
             WRAP( buy_chicken ),
             WRAP( buy_horse ),
             WRAP( wake_up ),
+            WRAP( control_npc ),
             WRAP( reveal_stats ),
             WRAP( end_conversation ),
             WRAP( insult_combat ),

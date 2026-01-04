@@ -60,7 +60,7 @@
     "flags": [ "TRADER_AVOID", "USES_BIONIC_POWER" ],
     "max_charges": 10000,
     "qualities": [ [ "VOLT_MEASURE", 1 ] ],
-    "use_action": [ "REPORT_GRID_CHARGE", "REPORT_GRID_CONNECTIONS", "MODIFY_GRID_CONNECTIONS" ]
+    "use_action": [ "VOLTMETER" ]
   },
   {
     "id": "fake_goggles",
@@ -154,6 +154,15 @@
     "name": { "str_sp": "semi ground grains" },
     "description": "A paste of half-finished milled grains, not yet flour.",
     "flags": [ "TRADER_AVOID", "FAKE_MILL" ]
+  },
+  {
+    "id": "fake_cloning_vat_item",
+    "copy-from": "fake_item",
+    "type": "GENERIC",
+    "name": { "str_sp": "growing embryo" },
+    "looks_like": "fetus",
+    "description": "A growing embryo.",
+    "flags": [ "TRADER_AVOID", "FAKE_CLONING_VAT" ]
   },
   {
     "id": "fake_smoke_plume",

@@ -1,6 +1,7 @@
 #include "item.h"
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <cassert>
 #include <cctype>
@@ -152,6 +153,7 @@ static const itype_id itype_rad_badge( "rad_badge" );
 static const itype_id itype_tuned_mechanism( "tuned_mechanism" );
 static const itype_id itype_stock_small( "stock_small" );
 static const itype_id itype_UPS( "UPS" );
+static const itype_id itype_genome_drive( "genome_drive" );
 static const itype_id itype_bio_armor( "bio_armor" );
 static const itype_id itype_waterproof_gunmod( "waterproof_gunmod" );
 static const itype_id itype_water( "water" );
@@ -612,7 +614,7 @@ void item::activate()
     }
 
     if( type->countdown_interval > 0 ) {
-        item_counter = type->countdown_interval;
+        set_counter( type->countdown_interval );
     }
 
     active = true;
@@ -3155,7 +3157,7 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
     }
 
     std::vector<std::string> recipe_list;
-    for( const islot_book::recipe_with_description_t &elem : book.recipes ) {
+    for( const book_recipe &elem : book.recipes ) {
         const bool knows_it = you.knows_recipe( elem.recipe );
         const bool can_learn = you.get_skill_level( elem.recipe->skill_used )  >= elem.skill_level;
         // If the player knows it, they recognize it even if it's not clearly stated.
@@ -3165,7 +3167,7 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
         if( knows_it ) {
             // In case the recipe is known, but has a different name in the book, use the
             // real name to avoid confusing the player.
-            const std::string name = elem.recipe->result_name();
+            const std::string name = elem.recipe->result_name( /*decorated=*/true );
             recipe_list.push_back( "<bold>" + name + "</bold>" );
         } else if( !can_learn ) {
             recipe_list.push_back( "<color_brown>" + elem.name.translated() + "</color>" );
@@ -4219,7 +4221,7 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
                 [&crafting_inv]( const recipe * r ) {
                     bool can_make = r->deduped_requirements().can_make_with_inventory(
                                         crafting_inv, r->get_component_filter() );
-                    return std::make_pair( r->result_name(), can_make );
+                    return std::make_pair( r->result_name( /*decorated=*/true ), can_make );
                 } );
                 std::ranges::sort( result_names, localized_compare );
                 const std::string recipes =
@@ -5026,6 +5028,22 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
     }
     if( is_tool() && has_flag( flag_HEATS_FOOD ) ) {
         tagtext += _( " (heats)" );
+    }
+
+
+    if( has_var( "specimen_sample" ) ) {
+        const std::string specimen_name = get_var( "specimen_name" );
+        const int progress = get_var( "specimen_sample_progress", 0 );
+        const int size = get_var( "specimen_size", 0 );
+        if( typeId() == itype_genome_drive && size > 0 && progress < size ) {
+            tagtext += string_format( " (%s [%d/%d])", specimen_name, progress, size );
+        } else {
+            tagtext += string_format( " (%s)", specimen_name );
+        }
+    }
+
+    if( has_var( "place_monster_override" ) ) {
+        tagtext += string_format( " (%s)", get_var( "place_monster_override_name" ) );
     }
 
     if( has_var( "NANOFAB_GROUP_ID" ) ) {
@@ -6159,7 +6177,7 @@ namespace
  * further acceleration at 40C.
  *
  * Original formula:
- * @see https://github.com/cataclysmbnteam/Cataclysm-BN/blob/033901af4b52ad0bfcfd6abfe06bca4e403d44b1/src/item.cpp#L5612-L5640
+ * @see https://github.com/cataclysmbn/Cataclysm-BN/blob/033901af4b52ad0bfcfd6abfe06bca4e403d44b1/src/item.cpp#L5612-L5640
  */
 constexpr auto rot_chart = std::array<int, 44>
 {
@@ -7455,9 +7473,9 @@ float item::fuel_energy() const
     return is_fuel() ? type->fuel->energy : 0.0f;
 }
 
-std::string item::fuel_pump_terrain() const
+ter_id item::fuel_pump_terrain() const
 {
-    return is_fuel() ? type->fuel->pump_terrain : "t_null";
+    return is_fuel() ? type->fuel->pump_terrain : t_null;
 }
 
 bool item::has_explosion_data() const
@@ -7746,7 +7764,7 @@ std::vector<std::pair<const recipe *, int>> item::get_available_recipes( const C
 {
     std::vector<std::pair<const recipe *, int>> recipe_entries;
     if( is_book() ) {
-        for( const islot_book::recipe_with_description_t &elem : type->book->recipes ) {
+        for( const book_recipe &elem : type->book->recipes ) {
             if( u.get_skill_level( elem.recipe->skill_used ) >= elem.skill_level ) {
                 recipe_entries.emplace_back( elem.recipe, elem.skill_level );
             }
@@ -9334,17 +9352,27 @@ detached_ptr<item> item::fill_with( detached_ptr<item> &&liquid, int amount )
     return detached_ptr<item>();
 }
 
-void item::set_countdown( int num_turns )
+void item::set_counter( const int value )
 {
-    if( num_turns < 0 ) {
-        debugmsg( "Tried to set a negative countdown value %d.", num_turns );
+    item_counter = value;
+}
+
+int item::get_counter() const
+{
+    return item_counter;
+}
+
+void item::set_charges( int value )
+{
+    if( value < 0 ) {
+        debugmsg( "Tried to set a negative charges value %d.", value );
         return;
     }
     if( !ammo_types().empty() ) {
-        debugmsg( "Tried to set countdown on an item with ammo." );
+        debugmsg( "Tried to set charges on an item with ammo." );
         return;
     }
-    charges = num_turns;
+    charges = value;
 }
 
 detached_ptr<item> item::use_charges( detached_ptr<item> &&self, const itype_id &what, int &qty,
@@ -9920,13 +9948,33 @@ detached_ptr<item> item::process_fake_mill( detached_ptr<item> &&self, player * 
     map &here = get_map();
     if( here.furn( pos ) != furn_str_id( "f_wind_mill_active" ) &&
         here.furn( pos ) != furn_str_id( "f_water_mill_active" ) ) {
-        self->item_counter = 0;
+        self->set_counter( 0 );
         return detached_ptr<item>(); //destroy fake mill
     }
     if( self->age() >= 6_hours || self->item_counter == 0 ) {
         iexamine::mill_finalize( get_avatar(), pos,
                                  self->birthday() ); //activate effects when timers goes to zero
         return detached_ptr<item>(); //destroy fake mill item
+    }
+
+    return std::move( self );
+}
+
+detached_ptr<item> item::process_fake_cloning_vat( detached_ptr<item> &&self, player * /*carrier*/,
+        const tripoint &pos )
+{
+    if( !self ) {
+        return std::move( self );
+    }
+    map &here = get_map();
+    if( here.furn( pos ) != furn_str_id( "f_cloning_vat_active" ) ) {
+        self->item_counter = 0;
+        return detached_ptr<item>(); //destroy fake smoke
+    }
+
+    if( self->item_counter == 0 ) {
+        iexamine::cloning_vat_finalize( pos, self->birthday() ); //activate effects when timers goes to zero
+        return detached_ptr<item>(); //destroy fake smoke when it 'burns out'
     }
 
     return std::move( self );
@@ -9941,7 +9989,7 @@ detached_ptr<item> item::process_fake_smoke( detached_ptr<item> &&self, player *
     map &here = get_map();
     if( here.furn( pos ) != furn_str_id( "f_smoking_rack_active" ) &&
         here.furn( pos ) != furn_str_id( "f_metal_smoking_rack_active" ) ) {
-        self->item_counter = 0;
+        self->set_counter( 0 );
         return detached_ptr<item>(); //destroy fake smoke
     }
 
@@ -10535,6 +10583,12 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
 
     if( self->has_flag( flag_FAKE_SMOKE ) ) {
         self = process_fake_smoke( std::move( self ), carrier, pos );
+        if( !self ) {
+            return std::move( self );
+        }
+    }
+    if( self->has_flag( flag_FAKE_CLONING_VAT ) ) {
+        self = process_fake_cloning_vat( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }

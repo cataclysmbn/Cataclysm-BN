@@ -6,6 +6,7 @@
 #include <climits>
 #include <cstdlib>
 #include <cstring>
+#include <ranges>
 #include <limits>
 #include <optional>
 #include <ostream>
@@ -68,6 +69,7 @@
 #include "math_defines.h"
 #include "memory_fast.h"
 #include "messages.h"
+#include "mission.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "morale_types.h"
@@ -1517,7 +1519,11 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
     if( ( old_t.has_flag( TFLAG_NO_FLOOR ) != new_t.has_flag( TFLAG_NO_FLOOR ) ) ||
         ( old_t.has_flag( TFLAG_Z_TRANSPARENT ) != new_t.has_flag( TFLAG_Z_TRANSPARENT ) ) ) {
         set_floor_cache_dirty( p.z );
-        set_seen_cache_dirty( p );
+        // Changes to floor / z-transparency can reveal (or hide) tiles on the z-level below.
+        // Invalidate seen caches unconditionally for both affected levels so tiles drawing
+        // does not render stale BLANK visibility after events like explosions.
+        set_seen_cache_dirty( p.z );
+        set_seen_cache_dirty( p.z - 1 );
     }
 
     if( old_t.has_flag( TFLAG_SUN_ROOF_ABOVE ) != new_t.has_flag( TFLAG_SUN_ROOF_ABOVE ) ) {
@@ -1849,12 +1855,16 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
         set_floor_cache_dirty( p.z );
         // It's a set, not a flag
         support_cache_dirty.insert( p );
-        set_seen_cache_dirty( p );
+        // Opening/closing a floor affects visibility on this and the level below.
+        set_seen_cache_dirty( p.z );
+        set_seen_cache_dirty( p.z - 1 );
     }
 
     if( new_t.has_flag( TFLAG_Z_TRANSPARENT ) != old_t.has_flag( TFLAG_Z_TRANSPARENT ) ) {
         set_floor_cache_dirty( p.z );
-        set_seen_cache_dirty( p );
+        // Changing z-transparency affects visibility between this z-level and the one below.
+        set_seen_cache_dirty( p.z );
+        set_seen_cache_dirty( p.z - 1 );
     }
 
     if( new_t.has_flag( TFLAG_SUSPENDED ) != old_t.has_flag( TFLAG_SUSPENDED ) ) {
@@ -6047,7 +6057,7 @@ void map::update_visibility_cache( const int zlev )
     int sm_squares_seen[MAPSIZE][MAPSIZE];
     std::memset( sm_squares_seen, 0, sizeof( sm_squares_seen ) );
 
-    int min_z = fov_3d ? -OVERMAP_DEPTH : zlev;
+    int min_z = fov_3d ? -OVERMAP_DEPTH : ( zlevels ? std::max( zlev - 1, -OVERMAP_DEPTH ) : zlev );
     int max_z = fov_3d ? OVERMAP_HEIGHT : zlev;
 
     for( int z = min_z; z <= max_z; z++ ) {
@@ -8199,6 +8209,13 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
         for( int j = 0; j < i.count; j++ ) {
             monster tmp( i.type );
             tmp.mission_id = i.mission_id;
+            if( i.mission_id != -1 ) {
+                mission *found_mission = mission::find( i.mission_id );
+                if( found_mission != nullptr &&
+                    found_mission->get_type().goal == MGOAL_KILL_MONSTERS ) {
+                    found_mission->register_kill_needed();
+                }
+            }
             if( i.name != "NONE" ) {
                 tmp.unique_name = i.name;
             }
@@ -8757,6 +8774,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     const int minz = zlevels ? -OVERMAP_DEPTH : zlev;
     const int maxz = zlevels ? OVERMAP_HEIGHT : zlev;
     bool seen_cache_dirty = false;
+    std::vector<int> dirty_seen_cache_levels;
     for( int z = minz; z <= maxz; z++ ) {
         // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
         const bool affects_seen_cache =  z == zlev || fov_3d;
@@ -8764,7 +8782,11 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         build_transparency_cache( z );
         update_suspension_cache( z );
         seen_cache_dirty |= ( build_floor_cache( z ) && affects_seen_cache );
-        seen_cache_dirty |= get_cache( z ).seen_cache_dirty && affects_seen_cache;
+        const bool level_seen_dirty = get_cache( z ).seen_cache_dirty;
+        seen_cache_dirty |= level_seen_dirty;
+        if( level_seen_dirty ) {
+            dirty_seen_cache_levels.push_back( z );
+        }
         diagonal_blocks fill = {false, false};
         std::uninitialized_fill_n( &( get_cache( z ).vehicle_obscured_cache[0][0] ), MAPSIZE_X * MAPSIZE_Y,
                                    fill );
@@ -8790,7 +8812,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         player_prev_pos = p;
     }
     if( !skip_lightmap ) {
-        generate_lightmap( zlev );
+        dirty_seen_cache_levels.push_back( zlev );
+        std::ranges::sort( dirty_seen_cache_levels );
+        dirty_seen_cache_levels.erase( std::ranges::unique( dirty_seen_cache_levels ).begin(),
+                                       dirty_seen_cache_levels.end() );
+        for( const int level : dirty_seen_cache_levels ) {
+            generate_lightmap( level );
+        }
     }
 }
 

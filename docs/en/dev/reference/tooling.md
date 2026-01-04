@@ -80,7 +80,7 @@ manager and then configure it the same way.
 1. Go to `Tools` - `Options` - `AStyle Formatter` - `General`.
 
 2. Import
-   `https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/msvc-full-features/AStyleExtension-Cataclysm-BN.cfg`
+   `https://github.com/cataclysmbn/Cataclysm-BN/blob/main/msvc-full-features/AStyleExtension-Cataclysm-BN.cfg`
    on `Export/Import` tab using `Import` button:
 
 ![image](./img/VS_Astyle_Step_1.png)
@@ -115,7 +115,7 @@ rule in the `Makefile` to do this for you; just run `make ctags` or `make etags`
 ## clang-tidy
 
 Cataclysm has a
-[clang-tidy configuration file](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/.clang-tidy)
+[clang-tidy configuration file](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/.clang-tidy)
 and if you have `clang-tidy` available you can run it to perform static analysis of the codebase. We
 test with `clang-tidy` from LLVM 18 with CI, so for the most consistent results, you might want to
 use that version.
@@ -142,7 +142,7 @@ command-line.
 ## Custom clang-tidy plugin
 
 We have written our own clang-tidy checks in a custom plugin. refer to
-[clang-tidy.yml](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/.github/workflows/clang-tidy.yml)
+[clang-tidy.yml](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/.github/workflows/clang-tidy.yml)
 for the exact steps to build the plugin on ubuntu 24.04.
 
 ### Build plugin on Ubuntu 24.04

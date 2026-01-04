@@ -393,6 +393,19 @@ class effect
          */
         void set_permanent();
 
+        // Copied from item.h and edited.
+        inline bool operator<( const effect &other ) const {
+            return this < &other;
+        };
+
+        /** LUA: We need this operator defined for Lua bindings to compile. */
+        inline bool operator==( const effect &rhs ) const {
+            return this == &rhs;
+        };
+        /** LUA: We need this operator defined for Lua bindings to compile. */
+        inline bool operator<=( const effect &other ) const {
+            return operator<( other ) || operator==( other );
+        }
 };
 
 void load_effect_type( const JsonObject &jo );

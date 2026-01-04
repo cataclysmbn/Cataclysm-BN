@@ -723,9 +723,16 @@ class item : public location_visitable<item>, public game_object<item>
         int reach_range( const Character &guy ) const;
 
         /**
-         * Sets time until activation for an item that will self-activate in the future.
+         * Sets item charges.
          **/
-        void set_countdown( int num_turns );
+        void set_charges( int value );
+
+        /**
+         * Sets a generic counter to be used with item flags
+         * Also used by countdown activation and crafting progress
+         **/
+        void set_counter( int value );
+        int get_counter() const;
 
         /**
          * Consumes specified charges (or fewer) from this and any contained items
@@ -1304,8 +1311,8 @@ class item : public location_visitable<item>, public game_object<item>
 
         /** Returns energy of one charge of this item as fuel for an engine. */
         float fuel_energy() const;
-        /** Returns the string of the id of the terrain that pumps this fuel, if any. */
-        std::string fuel_pump_terrain() const;
+        /** Returns the id of the terrain that pumps this fuel, if any. */
+        ter_id fuel_pump_terrain() const;
         bool has_explosion_data() const;
         struct fuel_explosion get_explosion_data();
         float get_kcal_mult() const;
@@ -2356,6 +2363,8 @@ class item : public location_visitable<item>, public game_object<item>
         // Place conditions that should remove fake smoke item in this sub-function
         static detached_ptr<item> process_fake_smoke( detached_ptr<item> &&self, player *carrier,
                 const tripoint &pos );
+        static detached_ptr<item> process_fake_cloning_vat( detached_ptr<item> &&self, player *carrier,
+                const tripoint &pos );
         static detached_ptr<item> process_fake_mill( detached_ptr<item> &&self, player *carrier,
                 const tripoint &pos );
         static detached_ptr<item> process_cable( detached_ptr<item> &&self, player *carrier,
@@ -2425,7 +2434,7 @@ class item : public location_visitable<item>, public game_object<item>
         int frequency = 0;         // Radio frequency
         snippet_id snip_id = snippet_id::NULL_ID(); // Associated dynamic text snippet id.
         int irradiation = 0;       // Tracks radiation dosage.
-        int item_counter = 0;      // generic counter to be used with item flags
+
         int mission_id = -1;       // Refers to a mission in game's master list
         int player_id = -1;        // Only give a mission to the right player!
 
@@ -2435,6 +2444,8 @@ class item : public location_visitable<item>, public game_object<item>
         bool encumbrance_update_ = false;
 
     private:
+        // generic counter to be used with item flags
+        int item_counter = 0;
         /**
          * Accumulated rot, expressed as time the item has been in standard temperature.
          * It is compared to shelf life (@ref islot_comestible::spoils) to decide if

@@ -68,7 +68,7 @@ struct item_penalties {
 
 // Figure out encumbrance penalties this clothing is involved in
 item_penalties get_item_penalties( const location_vector<item>::const_iterator &worn_item_it,
-                                   const Character &c, const bodypart_id &_bp )
+                                   const Character &c, const bodypart_id & )
 {
     item *const &worn_item = *worn_item_it;
     layer_level layer = worn_item->get_layer();

@@ -138,6 +138,7 @@ struct omt_find_params {
     std::optional<overmap_special_id> om_special = std::nullopt;
     shared_ptr_fast<throbber_popup> popup = nullptr;
     std::optional<int> max_results = std::nullopt;
+    bool force_sync = false;
 };
 
 constexpr const std::pair<int, int> omt_find_all_layers = { -OVERMAP_DEPTH, OVERMAP_HEIGHT };

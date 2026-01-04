@@ -19,6 +19,7 @@
 #include "animation.h"
 #include "avatar.h"
 #include "ballistics.h"
+#include "catalua_hooks.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -1431,6 +1432,13 @@ void explosion_funcs::regular( const queued_explosion &qe )
     const tripoint &p = qe.pos;
     const explosion_data &ex = qe.exp_data;
     auto &shr = ex.fragment;
+
+    cata::run_hooks( "on_explosion_start", [&]( sol::table & params ) {
+        params["pos"] = p;
+        params["damage"] = ex.damage;
+        params["radius"] = static_cast<int>( ex.radius );
+        params["fire"] = ex.fire;
+    } );
 
     int base_noise = ex.damage;
     if( shr ) {

@@ -83,7 +83,7 @@ testing, you should probably add `--depth=1` (~350MB).
 
 ```bash
 cd /cygdrive/c/dev
-git clone https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 
