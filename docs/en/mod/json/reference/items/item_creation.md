@@ -633,7 +633,7 @@ can be planted:
     "grow" : 91 // A time duration: how long it takes for a plant to fully mature. Based around a 91 day season length (roughly a real world season) to give better accuracy for longer season lengths
                 // Note that growing time is later converted based upon the season_length option, basing it around 91 is just for accuracy purposes
                 // A value 91 means 3 full seasons, a value of 30 would mean 1 season.
-    "required_terrain_flag" : "PLANTABLE" // A tag that terrain and furniture would need to have in order for the seed to be plantable there.
+    "required_terrain_flag": "PLANTABLE" // A tag that terrain and furniture would need to have in order for the seed to be plantable there.
 					 // Default is "PLANTABLE", and using this will cause any terain the plant is wrown on to turn into dirt once the plant is planted, unless furniture is used.
 					 // Using any other tag will not turn the terrain into dirt.
 }
