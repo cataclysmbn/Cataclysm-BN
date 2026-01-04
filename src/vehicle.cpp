@@ -5811,8 +5811,7 @@ void vehicle::idle( bool on_map )
             Also consider adding a hover efficiency field
         */
         if( is_rotorcraft() && is_flying_in_air() ) {
-            // Dont deduct wing lift as that needs the horizontal acceleration
-            double rotor_newtons = std::max( 0.0, to_newton( total_mass() ) - total_balloon_lift() );
+            double rotor_newtons = std::max( 0.0, to_newton( total_mass() ) - total_balloon_lift() - total_wing_lift() );
             double rotor_capacity = rotor_newtons / thrust_of_rotorcraft( true );
             idle_rate = std::max( 10, int( std::floor( 100 * rotor_capacity ) ) );
             no_electric_power = false;
