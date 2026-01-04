@@ -477,8 +477,6 @@ class inventory_selector
         void add_item( inventory_column &target_column,
                        item *location,
                        const item_category *custom_category = nullptr );
-        void add_fake_item( inventory_column &target_column, detached_ptr<item> &&i,
-                            const item_category *custom_category = nullptr );
 
     protected:
         player &u;

@@ -328,7 +328,7 @@ game::game() :
     tileset_zoom( DEFAULT_TILESET_ZOOM ),
     seed( 0 ),
     last_mouse_edge_scroll( std::chrono::steady_clock::now() ),
-    fake_items( new fake_item_location( ) )
+    fake_items( new temp_item_location( ) )
 {
     first_redraw_since_waiting_started = true;
     reset_light_level();
@@ -12519,13 +12519,13 @@ bool game::slip_down()
 }
 item *game::add_fake_item( detached_ptr<item> &&it )
 {
-    fake_items.insert( fake_items.end(), std::move( it ) );
-    return *fake_items.end();
+    fake_items.push_back( std::move( it ) );
+    return fake_items.back();
 }
 
-void game::remove_fake_item( item &it )
+void game::remove_fake_item( item *it )
 {
-    fake_items.remove( &it );
+    fake_items.remove( it );
 }
 namespace cata_event_dispatch
 {

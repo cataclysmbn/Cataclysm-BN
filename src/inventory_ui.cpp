@@ -1181,11 +1181,6 @@ void inventory_selector::add_item( inventory_column &target_column,
                custom_category );
 }
 
-void inventory_selector::add_fake_item( inventory_column &target_column, detached_ptr<item> &&i,
-                                        const item_category *custom_category )
-{
-    add_entry( target_column, std::vector<item *>( 1, &*i ), custom_category );
-}
 
 void inventory_selector::add_items( inventory_column &target_column,
                                     const std::function<item*( item * )> &locator,
@@ -1277,13 +1272,12 @@ void inventory_selector::add_nearby_items( int radius )
 
 void inventory_selector::add_bionics_items( Character &character )
 {
-    const item_category bio_cat( "BIONICS", no_translation( "BIONICS" ), 0 );
     for( bionic bio : character.get_bionic_collection() ) {
         const itype_id fake = bio.info().fake_item;
         if( !fake.is_null() && fake.str() != "" ) {
-            detached_ptr<item> real_fake = item::spawn( fake );
-            item *realrealfake = g->add_fake_item( std::move( real_fake ) );
-            add_entry( own_gear_column, std::vector<item *>( 1, realrealfake ), &bio_cat );
+            item *fakeitem = g->add_fake_item( item::spawn( fake ) );
+            add_entry( own_gear_column, std::vector<item *>( 1, fakeitem ),
+                       &item_category_id( "BIONICS" ).obj() );
         }
     }
 }

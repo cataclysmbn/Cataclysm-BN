@@ -202,7 +202,9 @@ bool activity_type::call_finish( player_activity *act, player *p ) const
         pair->second( act, p );
         // kill activity sounds at finish
         sfx::end_activity_sounds();
-        g->remove_fake_item( *( act->tools.front() ) );
+        if( !act->tools.empty() ) {
+            g->remove_fake_item( &*act->tools.front() );
+        }
         return true;
     }
     return false;

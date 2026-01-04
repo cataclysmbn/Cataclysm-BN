@@ -1085,7 +1085,7 @@ class game
         location_vector<item> fake_items;
     public:
         item *add_fake_item( detached_ptr<item> &&fake );
-        void remove_fake_item( item &it );
+        void remove_fake_item( item *it );
 };
 
 // Returns temperature modifier from direct heat radiation of nearby sources
