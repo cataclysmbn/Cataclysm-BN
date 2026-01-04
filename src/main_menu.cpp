@@ -69,6 +69,12 @@ static int getopt( main_menu_opts o )
     return static_cast<int>( o );
 }
 
+namespace
+{
+point prev_submenu_top_left;
+point prev_submenu_size;
+} // namespace
+
 void main_menu::on_move() const
 {
     sfx::play_variant_sound( "menu_move", "default", 100 );
@@ -262,6 +268,10 @@ void main_menu::display_sub_menu( int sel, const point &bottom_left, int sel_lin
 
     auto top_left = bottom_left + point( 0, -( visible_count + 1 ) );
     top_left.x = clamp( top_left.x, 0, TERMX - win_width );
+
+    prev_submenu_top_left = top_left;
+    prev_submenu_size = point( win_width, visible_count + 2 );
+
     auto w_sub = catacurses::newwin( visible_count + 2, win_width, top_left );
     werase( w_sub );
     draw_border( w_sub, c_light_gray );
@@ -285,6 +295,24 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
                             int sel_line )
 {
     main_menu_button_map.clear();
+
+    // If a submenu was drawn on a previous frame, clear it *before* drawing the main menu.
+    // This ensures the title/logo background is repainted instead of leaving a black rectangle.
+    if( prev_submenu_size.x > 0 && prev_submenu_size.y > 0 ) {
+        point tl = prev_submenu_top_left;
+        tl.x = clamp( tl.x, 0, TERMX - 1 );
+        tl.y = clamp( tl.y, 0, TERMY - 1 );
+
+        const int w = clamp( prev_submenu_size.x, 0, TERMX - tl.x );
+        const int h = clamp( prev_submenu_size.y, 0, TERMY - tl.y );
+        if( w > 0 && h > 0 ) {
+            auto w_clear = catacurses::newwin( h, w, tl );
+            werase( w_clear );
+            wnoutrefresh( w_clear );
+        }
+        prev_submenu_top_left = point_zero;
+        prev_submenu_size = point_zero;
+    }
 
     // Clear Lines
     werase( w_open );
