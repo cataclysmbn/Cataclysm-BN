@@ -14,10 +14,10 @@
                             // Total chance to learn a style from a single read of the book is equal to one in (10 + learn_difficulty - primary_skill)
 "arm_block" : 99,           // Unarmed skill level at which arm blocking is unlocked
 "leg_block" : 99,           // Unarmed skill level at which arm blocking is unlocked
-"static_buffs" : [          // List of buffs that are automatically applied every turn
+"static_buffs" : {          // List of buffs that are automatically applied every turn
     "id" : "debug_elem_resist",
     "heat_arm_per" : 1.0
-],
+},
 "ondodge_buffs" : [],        // List of buffs that are automatically applied on successful dodge
 "onattack_buffs" : [],       // List of buffs that are automatically applied after any attack, hit or miss
 "onhit_buffs" : [],          // List of buffs that are automatically applied on successful hit
