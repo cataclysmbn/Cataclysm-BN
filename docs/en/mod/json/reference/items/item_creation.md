@@ -65,8 +65,8 @@
   "fragment": {                              // Projectile data of "shrapnel". This projectile will hit every target in its range and field of view exactly once.
     "damage": {                              // Damage data of the shrapnel projectile.  Uses damage_instance syntax (see below)
       "damage_type": "acid",                 // Type of damage dealt.
-      "amount": 10                           // Amount of damage dealt.
-      "armor_penetration": 4                 // Amount of armor ignored. Applied per armor piece, not in total.
+      "amount": 10,                           // Amount of damage dealt.
+      "armor_penetration": 4,                 // Amount of armor ignored. Applied per armor piece, not in total.
       "armor_multiplier": 2.5                // Multiplies remaining damage reduction from armor, applied after armor penetration (if present). Higher numbers make armor stop fragments from this explosion more effectively, lower numbers act as a percentage reduction in remaining armor.
     }
   }
@@ -491,9 +491,9 @@ Alternately, every item (book, tool, armor, even food) can be used as gun if it 
 "type": "TOOL",      // Or any other item type
 ...                   // same entries as for the type (e.g. same entries as for any tool),
 "gun_data" : {        // additionally the same gun data like above
-    "skill": ...,
-    "recoil": ...,
-    ...
+    "skill": "",
+    "recoil": 0,
+    
 }
 ```
 
@@ -570,9 +570,8 @@ gunmod_data:
 "type": "TOOL",       // Or any other item type
 ...                   // same entries as for the type (e.g. same entries as for any tool),
 "gunmod_data" : {
-    "location": ...,
-    "mod_targets": ...,
-    ...
+    "location": "",
+    "mod_targets": [""]
 }
 ```
 
@@ -872,7 +871,7 @@ more structured function.
     "tools_needed" : { "apparatus" : -1 }, // Tool needed to use the drug.
     "fake_item" : "fake_ecig", // Item used to fake addiction and copy other consumption effects from.
     "lightweight_mod" : 1.2, // Drug duration modifier if the user has LIGHTWEIGHT trait.
-    "tolerance_mod" : .8, // Drug duration modifier if the user has a tolerance.
+    "tolerance_mod" : 0.8, // Drug duration modifier if the user has a tolerance.
     "tolerance_lightweight_effected": true, // Should this drugs time duration be effected by tolerance/lightweight?
     "too_much_threshold": 10, // Number of minutes to use for the too much calculation.
     "addiction_type_too_much": [["cig", "nicotine"]], // Link an effect to an addiction. Used for 'you feel gross... too much' message
