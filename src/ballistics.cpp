@@ -62,6 +62,8 @@ static const efftype_id effect_bounced( "bounced" );
 static const std::string flag_LIQUID( "LIQUID" );
 static const std::string flag_THIN_OBSTACLE( "THIN_OBSTACLE" );
 
+static const flag_id flag_FLY_STRAIGHT( "FLY_STRAIGHT" );
+
 namespace
 {
 
@@ -535,11 +537,13 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
         const auto *thrown_item = proj.get_drop();
         const auto sprite = is_thrown && thrown_item ?
                             thrown_item->typeId().str() : "animation_bullet_normal_0deg";
+        const bool should_rotate = is_thrown && thrown_item &&
+                                   !thrown_item->has_flag( flag_FLY_STRAIGHT );
         draw_line_of( {
             .p = tp,
             .points = trajectory,
             .sprite = sprite,
-            .rotate = is_thrown,
+            .rotate = should_rotate,
         } );
     }
 
