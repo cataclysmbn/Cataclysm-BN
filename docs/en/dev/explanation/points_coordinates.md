@@ -40,7 +40,7 @@ saving/loading submaps and you are unlikely to encounter them.
 As well as absolute and local coordinates, sometimes we need to use coordinates relative so some
 larger scale. For example, when performing mapgen for a single overmap, we want to work with
 coordinates within that overmap. This will be an overmap terrain-scale point relative to the corner
-of its containing overmap, and so typically take `x` and `y` values in the range [0,180).
+of its containing overmap, and so typically take `x` and `y` values in the range [0,180].
 
 ## Vertical coordinates
 
