@@ -414,16 +414,16 @@ otherwise.
 ```json
 "effects_on_remove": [
     {
-        "intensity_requirement": 0, - Defaults to 0
-        "effect_type": "cold",      - (Mandatory) Effect that will be applied
-        "allow_on_decay": false,    - Defaults to true
-        "allow_on_remove" true,     - Defaults to false
-        "intensity": 5,             - Defaults to 0
-        "inherit_intensity": false, - Defaults to false
-        "duration": "10 s",         - Defaults to 0
-        "inherit_duration": true,   - Defaults to true
-        "body_part": "hand_r,       - Defaults to null
-        "inherit_body_part": false  - Defaults to true
+        "intensity_requirement": 0, // Defaults to 0
+        "effect_type": "cold",      // (Mandatory) Effect that will be applied
+        "allow_on_decay": false,    // Defaults to true
+        "allow_on_remove": true,    // Defaults to false
+        "intensity": 5,             // Defaults to 0
+        "inherit_intensity": false, // Defaults to false
+        "duration": "10 s",         // Defaults to 0
+        "inherit_duration": true,   // Defaults to true
+        "body_part": "hand_r",      // Defaults to null
+        "inherit_body_part": false  // Defaults to true
     }
 ]
 ```
