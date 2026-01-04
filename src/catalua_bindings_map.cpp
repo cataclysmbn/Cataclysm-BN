@@ -3,6 +3,7 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "game.h"
 #include "distribution_grid.h"
 #include "field.h"
 #include "map.h"
@@ -219,6 +220,12 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "disarm_trap_at", &map::disarm_trap );
         DOC( "Simpler version of `set_trap_at` with `trap_null`." );
         luna::set_fx( ut, "remove_trap_at", &map::remove_trap );
+
+        luna::set_fx( ut, "is_outside", sol::resolve<bool( const tripoint & ) const>( &map::is_outside ) );
+
+        luna::set_fx( ut, "is_sheltered", []( tripoint & pos ) { g->is_sheltered( pos ); } );
+
+        luna::set_fx( ut, "is_in_sunlight", []( tripoint & pos ) { g->is_in_sunlight( pos ); } );
     }
 
     // Register 'tinymap' class to be used in Lua
