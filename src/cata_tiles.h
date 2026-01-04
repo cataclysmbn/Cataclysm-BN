@@ -491,10 +491,6 @@ class cata_tiles
 
         std::optional<tile_lookup_res> find_tile_with_season( const std::string &id ) const;
 
-        std::optional<tile_lookup_res>
-        find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
-                              int looks_like_jumps_limit = 10 ) const;
-
         // this templated method is used only from it's own cpp file, so it's ok to declare it here
         template<typename T>
         std::optional<tile_lookup_res>
@@ -726,6 +722,9 @@ class cata_tiles
         bool draw_item_highlight( const tripoint &pos );
 
     public:
+        auto find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
+                                   int looks_like_jumps_limit = 10 ) const -> std::optional<tile_lookup_res>;
+
         // Animation layers
         void init_explosion( const tripoint &p, int radius, const std::string &name );
         void draw_explosion_frame();

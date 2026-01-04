@@ -2634,9 +2634,8 @@ cata_tiles::find_tile_looks_like_by_string_id( const std::string &id, TILE_CATEG
     return find_tile_looks_like( obj.looks_like, category, looks_like_jumps_limit - 1 );
 }
 
-std::optional<tile_lookup_res>
-cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
-                                  const int looks_like_jumps_limit ) const
+auto cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
+                                       const int looks_like_jumps_limit ) const -> std::optional<tile_lookup_res>
 {
     if( id.empty() || looks_like_jumps_limit <= 0 ) {
         return std::nullopt;
