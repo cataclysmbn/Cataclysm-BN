@@ -244,7 +244,8 @@ void vehicle::thrust( int thd, int z )
     }
     // rotorcraft need to spend +5% (in addition to idle) of load to fly, +20% (in addition to idle) to ascend
     if( is_aircraft() && ( z > 0 || is_flying_in_air() ) ) {
-        double rotor_newtons = std::max( 0.0, to_newton( total_mass() ) - total_balloon_lift() - total_wing_lift() );
+        double rotor_newtons = std::max( 0.0,
+                                         to_newton( total_mass() ) - total_balloon_lift() - total_wing_lift() );
         double rotor_capacity = rotor_newtons / thrust_of_rotorcraft( true );
         if( is_rotorcraft() ) {
             thrusting = true;
