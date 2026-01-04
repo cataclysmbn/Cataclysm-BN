@@ -2384,12 +2384,16 @@ void options_manager::add_options_debug()
     add( "MADE_OF_EXPLODIUM", debug, translate_marker( "Made of explodium" ),
          translate_marker( "Explosive items and traps will detonate when hit by damage exceeding the threshold.  A higher number means more damage is required to detonate.  Set to 0 to disable." ),
          0, 1000, 30 );
+    add( "ITEM_DAMAGE_ON_FLYING_IMPACT", debug, translate_marker( "Item damage on flying impact" ),
+         translate_marker( "If true, items flung by explosions will deal (lethal) damage to whatever they hit." ),
+         true );
 
     add( "OLD_EXPLOSIONS", debug, translate_marker( "Old explosions system" ),
          translate_marker( "If true, disables new raycasting based explosive system in favor of old system.  With new system obstacles (impassable terrain, furniture or vehicle parts) will block shrapnel, while blast will bash obstacles and throw creatures outward.  If obstacles are destroyed, blast continues outward." ),
          false );
 
     get_option( "MADE_OF_EXPLODIUM" ).setPrerequisite( "OLD_EXPLOSIONS", "false" );
+    get_option( "ITEM_DAMAGE_ON_FLYING_IMPACT" ).setPrerequisite( "OLD_EXPLOSIONS", "false" );
 
     add( "CHRONIC_PAIN", debug, translate_marker( "Chronic pain" ),
          translate_marker( "If true, injuries cause persistent pain until they are healed." ), false );
