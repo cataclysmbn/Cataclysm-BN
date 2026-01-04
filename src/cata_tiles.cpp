@@ -1211,6 +1211,12 @@ std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_searc
         } else if( category == C_OVERMAP_NOTE ) {
             sym = id[5];
             col = color_from_string( id.substr( 7, id.length() - 1 ) );
+        } else if( category == C_BULLET ) {
+            static const auto default_bullet = std::string{ "animation_bullet_normal_0deg" };
+            auto res = find_tile_with_season( default_bullet );
+            if( res ) {
+                return tile_search_result{ .tt = &res->tile(), .found_id = res->id() };
+            }
         }
         // Special cases for walls
         switch( sym ) {
@@ -2708,6 +2714,20 @@ auto cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY cate
                 return std::nullopt;
             }
             return find_tile_looks_like( iid->looks_like.str(), category, looks_like_jumps_limit - 1 );
+        }
+
+        case C_BULLET: {
+            auto ammo_name = id;
+            replace_first( ammo_name, "animation_bullet_", "" );
+            auto iid = itype_id( ammo_name );
+            if( !iid.is_valid() ) {
+                return std::nullopt;
+            }
+            if( !iid->looks_like.is_empty() ) {
+                return find_tile_looks_like( "animation_bullet_" + iid->looks_like.str(), category,
+                                             looks_like_jumps_limit - 1 );
+            }
+            return std::nullopt;
         }
 
         default:
@@ -4537,11 +4557,9 @@ void cata_tiles::void_cone_aoe()
 
 void cata_tiles::draw_bullet_frame()
 {
-    static const std::string bullet_fallback {"animation_bullet_normal"};
     for( size_t i = 0; i < bul_pos.size(); ++i ) {
-        const auto supports_directional = find_tile_looks_like( bul_id[i], C_BULLET );
         const auto tile = tile_search_params{
-            .id = supports_directional ? bul_id[i] : bullet_fallback,
+            .id = bul_id[i],
             .category = C_BULLET,
             .subcategory = empty_string,
             .subtile = 0,

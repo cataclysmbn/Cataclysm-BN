@@ -517,10 +517,9 @@ void draw_bullet_curses( map &m, const tripoint &t, const char bullet, const tri
 } // namespace
 
 #if defined(TILES)
-/* Bullet Animation -- Maybe change this to animate the ammo itself flying through the air?*/
-// need to have a version where there is no player defined, possibly. That way shrapnel works as intended
 void game::draw_bullet( const tripoint &t, const int i,
-                        const std::vector<tripoint> &trajectory, const char bullet )
+                        const std::vector<tripoint> &trajectory, const char bullet,
+                        const std::string &custom_sprite )
 {
     if( !use_tiles ) {
         draw_bullet_curses( m, t, bullet, nullptr );
@@ -531,27 +530,20 @@ void game::draw_bullet( const tripoint &t, const int i,
         return;
     }
 
-    static const std::string bullet_unknown  {};
-    static const std::string bullet_normal_0deg {"animation_bullet_normal_0deg"};
-    static const std::string bullet_normal_45deg {"animation_bullet_normal_45deg"};
-    static const std::string bullet_flame    {"animation_bullet_flame"};
-    static const std::string bullet_shrapnel {"animation_bullet_shrapnel"};
-
-    std::string sprite_0 = bullet_unknown;
-    std::optional<std::string> sprite_45 = std::nullopt;
-
-    if( bullet == '*' ) {
-        sprite_0 = bullet_normal_0deg;
-        sprite_45 = bullet_normal_45deg;
+    auto sprite = std::string{};
+    if( !custom_sprite.empty() ) {
+        sprite = custom_sprite;
+    } else if( bullet == '*' ) {
+        sprite = "animation_bullet_normal_0deg";
     } else if( bullet == '#' ) {
-        sprite_0 = bullet_flame;
+        sprite = "animation_bullet_flame";
     } else if( bullet == '`' ) {
-        sprite_0 = bullet_shrapnel;
+        sprite = "animation_bullet_shrapnel";
     }
 
-    const int rotation = get_bullet_rotation( get_bullet_dir( trajectory, static_cast<size_t>( i ) ) );
-    shared_ptr_fast<draw_callback_t> bullet_cb = make_shared_fast<draw_callback_t>( [&]() {
-        tilecontext->init_draw_bullet( t, sprite_0, rotation );
+    const auto rotation = get_bullet_rotation( get_bullet_dir( trajectory, static_cast<size_t>( i ) ) );
+    auto bullet_cb = make_shared_fast<draw_callback_t>( [&]() {
+        tilecontext->init_draw_bullet( t, sprite, rotation );
     } );
     add_draw_callback( bullet_cb );
 
@@ -560,7 +552,7 @@ void game::draw_bullet( const tripoint &t, const int i,
 }
 #else
 void game::draw_bullet( const tripoint &t, const int i, const std::vector<tripoint> &trajectory,
-                        const char bullet )
+                        const char bullet, const std::string & )
 {
     draw_bullet_curses( m, t, bullet, &trajectory[i] );
 }
