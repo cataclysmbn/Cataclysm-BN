@@ -3158,6 +3158,43 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
             case 4:
                 // flip horizontally
                 ret = render( 0, SDL_FLIP_HORIZONTAL );
+                break;
+            case 5:
+                // 45 degrees
+                if( !tile_iso ) {
+                    // never rotate isometric tiles
+                    ret = render( 45, SDL_FLIP_NONE );
+                } else {
+                    ret = render( 0, SDL_FLIP_NONE );
+                }
+                break;
+            case 6:
+                // 315 degrees
+                if( !tile_iso ) {
+                    // never rotate isometric tiles
+                    ret = render( -45, SDL_FLIP_NONE );
+                } else {
+                    ret = render( 0, SDL_FLIP_NONE );
+                }
+                break;
+            case 7:
+                // 225 degrees
+                if( !tile_iso ) {
+                    // never rotate isometric tiles
+                    ret = render( -135, SDL_FLIP_NONE );
+                } else {
+                    ret = render( 0, SDL_FLIP_NONE );
+                }
+                break;
+            case 8:
+                // 135 degrees
+                if( !tile_iso ) {
+                    // never rotate isometric tiles
+                    ret = render( 135, SDL_FLIP_NONE );
+                } else {
+                    ret = render( 0, SDL_FLIP_NONE );
+                }
+                break;
         }
     } else {
         // don't rotate, same as case 0 above

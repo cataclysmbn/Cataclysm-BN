@@ -55,6 +55,7 @@ static const ammo_effect_str_id ammo_effect_SHATTER_SELF( "SHATTER_SELF" );
 static const ammo_effect_str_id ammo_effect_STREAM( "STREAM" );
 static const ammo_effect_str_id ammo_effect_STREAM_BIG( "STREAM_BIG" );
 static const ammo_effect_str_id ammo_effect_TANGLE( "TANGLE" );
+static const ammo_effect_str_id ammo_effect_THROWN( "THROWN" );
 
 static const efftype_id effect_bounced( "bounced" );
 
@@ -530,11 +531,15 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
     if( do_animation && do_draw_line && traj_len > 2 ) {
         trajectory.erase( trajectory.begin() );
         trajectory.resize( traj_len-- );
+        const bool is_thrown = proj.has_effect( ammo_effect_THROWN );
+        const auto *thrown_item = proj.get_drop();
+        const auto sprite = is_thrown && thrown_item ?
+                            thrown_item->typeId().str() : "animation_bullet_normal_0deg";
         draw_line_of( {
             .p = tp,
             .points = trajectory,
-            .bullet_0deg = "animation_bullet_normal_0deg",
-            .bullet_45deg = "animation_bullet_normal_45deg",
+            .sprite = sprite,
+            .rotate = is_thrown,
         } );
     }
 
