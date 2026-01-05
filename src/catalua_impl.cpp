@@ -1,6 +1,7 @@
 #include "catalua_impl.h"
 
 #include "catalua_bindings.h"
+#include "catalua_loader.h"
 #include "catalua_log.h"
 #include "catalua_sol.h"
 #include "debug.h"
@@ -24,6 +25,9 @@ sol::state make_lua_state()
         sol::lib::table
     );
 
+    // Register custom module loader for relative/absolute imports
+    cata::lua_loader::register_searcher( lua.lua_state() );
+
     cata::reg_all_bindings( lua );
 
     return lua;
@@ -31,9 +35,13 @@ sol::state make_lua_state()
 
 void run_lua_script( sol::state &lua, const std::string &script_name )
 {
+    // Bootstrap loading stack for relative imports
+    cata::lua_loader::loading_stack.push_back( script_name );
+
     sol::load_result load_res = lua.load_file( script_name );
 
     if( !load_res.valid() ) {
+        cata::lua_loader::loading_stack.pop_back();
         sol::error err = load_res;
         throw std::runtime_error(
             string_format( "Failed to load script %s: %s", script_name, err.what() )
@@ -49,6 +57,8 @@ void run_lua_script( sol::state &lua, const std::string &script_name )
     sol::set_environment( my_env, exec );
 
     sol::protected_function_result exec_res = exec();
+
+    cata::lua_loader::loading_stack.pop_back();
 
     if( !exec_res.valid() ) {
         sol::error err = exec_res;
