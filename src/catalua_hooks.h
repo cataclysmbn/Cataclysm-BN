@@ -15,6 +15,8 @@ namespace cata
 /// @param state Lua state to run hooks in. Defaults to the global state.
 /// @param hooks_table Name of the hooks table to run. e.g "on_game_load".
 /// @param init Function to initialize parameter table for the hook.
+/// @param default_result boolean value to return by default after hook runs
+/// @return the boolean result of hook return value
 auto run_hooks( lua_state &state, std::string_view hook_name,
                 std::function < auto( sol::table &params ) -> void > init,
                 bool default_result = false ) -> bool;
