@@ -112,6 +112,75 @@ prevent potential bugs:
   collisions between function names and variable names. You still can define global variables and
   functions, but they will be visible to your mod only.
 
+### Module loading with `require`
+
+The `require` function supports multiple import patterns for organizing your mod code:
+
+#### Relative imports
+
+Load modules relative to the current file:
+
+```lua
+-- In data/mods/my_mod/main.lua
+local utils = require("./lib/utils")          -- loads lib/utils.lua
+local config = require("./config")            -- loads config.lua in same dir
+
+-- In data/mods/my_mod/lib/foo.lua
+local helper = require("./helper")            -- loads lib/helper.lua
+local parent_mod = require("../parent")       -- loads parent.lua from mod root
+```
+
+#### Absolute imports from data/lua
+
+Load shared libraries from the global `data/lua/` directory:
+
+```lua
+-- Assuming penlight is installed in data/lua/pl/
+local pl_utils = require("pl.utils")          -- loads data/lua/pl/utils.lua
+local pl_path = require("pl.path")            -- loads data/lua/pl/path.lua
+```
+
+#### Dotted notation
+
+Module names use dot notation which maps to directory structure:
+
+```lua
+require("foo.bar.baz")  -- searches for:
+                        -- 1. <mod>/foo/bar/baz.lua
+                        -- 2. <mod>/foo/bar/baz/init.lua
+                        -- 3. data/lua/foo/bar/baz.lua
+                        -- 4. data/lua/foo/bar/baz/init.lua
+```
+
+#### Search order
+
+Modules are searched in this order:
+
+1. Current mod directory (relative or dotted paths)
+2. Global `data/lua/` directory (absolute paths only)
+
+#### Module structure
+
+Modules should return a table:
+
+```lua
+-- lib/math_helper.lua
+local M = {}
+
+M.add = function(a, b)
+  return a + b
+end
+
+return M
+```
+
+Then use in other files:
+
+```lua
+local math_helper = require("./lib/math_helper")
+local result = math_helper.add(2, 3)
+```
+
 ### Lua libraries and functions
 
 When script is called, it comes with some standard Lua libraries pre-loaded:
@@ -158,14 +227,15 @@ folder.
 
 Some functions have been globally overriden to improve integration with the game.
 
-| Function   | Description                                                    |
-| ---------- | -------------------------------------------------------------- |
-| print      | Print as `INFO LUA` to debug.log (overrides default Lua print) |
-| package    | loads from `data/lua/`, `data/mods/<mod_id>/`                  |
-| dofile     | Disabled                                                       |
-| loadfile   | Disabled                                                       |
-| load       | Disabled                                                       |
-| loadstring | Disabled                                                       |
+| Function   | Description                                                                        |
+| ---------- | ---------------------------------------------------------------------------------- |
+| print      | Print as `INFO LUA` to debug.log (overrides default Lua print)                     |
+| require    | Supports relative (`./foo`, `../bar`) and absolute (`pl.utils`) imports            |
+| package    | Custom searcher loads from `data/lua/`, `data/mods/<mod_id>/` with security checks |
+| dofile     | Disabled                                                                           |
+| loadfile   | Disabled                                                                           |
+| load       | Disabled                                                                           |
+| loadstring | Disabled                                                                           |
 
 TODO: alternatives for dofile and such
 
