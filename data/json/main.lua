@@ -43,9 +43,7 @@ local effect_fearparalyze = EffectTypeId.new("fearparalyze")
 ---@field via_ramp boolean
 
 ---@return number
-local function nyctophobia_threshold()
-  return gapi.light_ambient_lit() - 3.0
-end
+local function nyctophobia_threshold() return gapi.light_ambient_lit() - 3.0 end
 
 ---@param duration TimeDuration
 ---@return boolean
@@ -84,7 +82,9 @@ mod.on_character_try_move = function(params)
   if ch:is_avatar() then
     gapi.add_msg(
       MsgType.bad,
-      locale.gettext("It's so dark and scary in there!  You can't force yourself to walk into this tile.  Switch to running movement mode to move there.")
+      locale.gettext(
+        "It's so dark and scary in there!  You can't force yourself to walk into this tile.  Switch to running movement mode to move there."
+      )
     )
   end
   return false
@@ -103,9 +103,7 @@ mod.on_nyctophobia_tick = function()
   local dark_places = {}
 
   for _, pt in ipairs(here:points_in_radius(pos, 5)) do
-    if you:sees(pt) and here:ambient_light_at(pt) < threshold then
-      table.insert(dark_places, pt)
-    end
+    if you:sees(pt) and here:ambient_light_at(pt) < threshold then table.insert(dark_places, pt) end
   end
 
   local in_darkness = here:ambient_light_at(pos) < threshold
@@ -113,9 +111,7 @@ mod.on_nyctophobia_tick = function()
 
   if #dark_places > 0 and gapi.rng(1, chance) == 1 then
     local target = random_entry(dark_places)
-    if target then
-      gapi.spawn_hallucination(target)
-    end
+    if target then gapi.spawn_hallucination(target) end
   end
 
   if not in_darkness then return end
@@ -124,15 +120,15 @@ mod.on_nyctophobia_tick = function()
     gapi.add_msg(MsgType.bad, locale.gettext("You feel a twinge of panic as darkness engulfs you."))
   end
 
-  if gapi.rng(1, 2) == 1 and one_turn_in(TimeDuration.from_seconds(30)) then
-    you:sound_hallu()
-  end
+  if gapi.rng(1, 2) == 1 and one_turn_in(TimeDuration.from_seconds(30)) then you:sound_hallu() end
 
   if gapi.rng(1, 50) == 1 and not you:is_on_ground() then
     if you:is_avatar() then
       gapi.add_msg(
         MsgType.bad,
-        locale.gettext("Your fear of the dark is so intense that your trembling legs fail you, and you fall to the ground.")
+        locale.gettext(
+          "Your fear of the dark is so intense that your trembling legs fail you, and you fall to the ground."
+        )
       )
     end
     you:add_effect(effect_downed, TimeDuration.from_minutes(gapi.rng(1, 2)))
@@ -152,7 +148,9 @@ mod.on_nyctophobia_tick = function()
     if you:is_avatar() then
       gapi.add_msg(
         MsgType.bad,
-        locale.gettext("Your fear of the dark is so intense that you start breathing rapidly, and you feel like your heart is ready to jump out of the chest.")
+        locale.gettext(
+          "Your fear of the dark is so intense that you start breathing rapidly, and you feel like your heart is ready to jump out of the chest."
+        )
       )
     end
     you:mod_stamina(-500 * gapi.rng(1, 3))
