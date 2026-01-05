@@ -73,11 +73,9 @@ Bright Nights uses a [mod registry](https://mods.cataclysmbn.org/) for easier di
 
 ## Building
 
-- [with cmake](docs/en/dev/guides/building/cmake.md)
-- [with makefile](docs/en/dev/guides/building/makefile.md): supports Linux, macOS,
-  and BSD.
-- [with MSYS2](docs/en/dev/guides/building/msys.md)
-- [with vcpkg](docs/en/dev/guides/building/vs_vcpkg.md)
+All platforms now use CMake as the primary build system:
+
+- [with CMake](docs/en/dev/guides/building/cmake.md) (recommended for all platforms)
 
 Please read the [official docs](https://docs.cataclysmbn.org/dev/guides/building/cmake/) for
 details.
