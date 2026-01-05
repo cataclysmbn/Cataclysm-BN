@@ -77,7 +77,7 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl2 sdl2_image sdl2_ttf sdl2_mixer gettext parallel llvm@20 astyle sqlite3 zlib
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl2 sdl2_image sdl2_ttf sdl2_mixer gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
@@ -94,12 +94,15 @@ jobs:
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
-      - name: Check Clang OK
-        run: |
-          echo "Clang++ version:"
-          $(brew --prefix llvm@20)/bin/clang++ --version  # Ensure clang++ is installed and working
-
-      - name: Build
+      - name: Configure and Build with CMake
         run: |
           source ./venv/bin/activate
-          make -j3 CCACHE=1 TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LANGUAGES=all USE_HOME_DIR=1 OSX_MIN=11 PCH=0 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist
+          export CC=$(brew --prefix llvm@20)/bin/clang
+          export CXX=$(brew --prefix llvm@20)/bin/clang++
+          cmake --preset ${{ matrix.tiles == 1 && 'osx-tiles' || 'osx-curses' }} -DRELEASE=ON
+          cmake --build --preset ${{ matrix.tiles == 1 && 'osx-tiles' || 'osx-curses' }}
+
+      - name: Create DMG
+        run: |
+          source ./venv/bin/activate
+          cmake --build build --target osx-dmg
