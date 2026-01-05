@@ -130,34 +130,36 @@ local helper = require("./helper")            -- loads lib/helper.lua
 local parent_mod = require("../parent")       -- loads parent.lua from mod root
 ```
 
-#### Absolute imports from data/lua
+#### Standard library imports
 
-Load shared libraries from the global `data/lua/` directory:
+Load shared libraries from `data/lua/lib/` using `lib.` or `bn.lib.` prefix:
 
 ```lua
--- Assuming penlight is installed in data/lua/pl/
-local pl_utils = require("pl.utils")          -- loads data/lua/pl/utils.lua
-local pl_path = require("pl.path")            -- loads data/lua/pl/path.lua
+-- Assuming penlight is installed in data/lua/lib/pl/
+local pl_utils = require("lib.pl.utils")      -- loads data/lua/lib/pl/utils.lua
+local pl_path = require("bn.lib.pl.path")     -- same, bn.lib. prefix also works
 ```
 
-#### Dotted notation
+#### Mod-local absolute imports
 
-Module names use dot notation which maps to directory structure:
+Load modules from your mod directory using dotted notation (no prefix):
 
 ```lua
+-- In data/mods/my_mod/main.lua
 require("foo.bar.baz")  -- searches for:
                         -- 1. <mod>/foo/bar/baz.lua
                         -- 2. <mod>/foo/bar/baz/init.lua
-                        -- 3. data/lua/foo/bar/baz.lua
-                        -- 4. data/lua/foo/bar/baz/init.lua
 ```
 
 #### Search order
 
-Modules are searched in this order:
+- **Relative (`./`, `../`)**: Current file's directory
+- **Standard library (`lib.*`, `bn.lib.*`)**: `data/lua/lib/` only
+- **Mod-local (no prefix)**: Current mod directory only
 
-1. Current mod directory (relative or dotted paths)
-2. Global `data/lua/` directory (absolute paths only)
+> [!CAUTION]
+> Avoid naming mod modules with reserved prefixes (`lib`, `bn`) to prevent namespace conflicts.
+> Use descriptive mod-specific names instead (e.g., `mymod.core`, `utils`).
 
 #### Module structure
 

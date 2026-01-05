@@ -1,6 +1,6 @@
 -- Test module: lib/ui_wrapper.lua
--- Tests absolute import from data/lua
-local ui = require("ui")
+-- Tests absolute import from data/lua/lib
+local ui = require("lib.ui")
 
 local ui_wrapper = {}
 

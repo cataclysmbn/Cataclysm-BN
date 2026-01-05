@@ -1,6 +1,4 @@
 #pragma once
-#ifndef CATA_SRC_CATALUA_LOADER_H
-#define CATA_SRC_CATALUA_LOADER_H
 
 #include <filesystem>
 #include <string>
@@ -19,5 +17,3 @@ inline thread_local std::vector<std::filesystem::path> loading_stack;
 auto register_searcher( lua_State *L ) -> void;
 
 } // namespace cata::lua_loader
-
-#endif // CATA_SRC_CATALUA_LOADER_H
