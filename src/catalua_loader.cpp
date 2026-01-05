@@ -52,8 +52,10 @@ auto resolve_relative_path( std::string_view modname ) -> std::optional<fs::path
 auto is_within_allowed_paths( fs::path const &resolved ) -> bool
 {
     auto const data_dir = fs::path{ PATH_INFO::datadir() }.lexically_normal();
+    auto const base_dir = fs::path{ PATH_INFO::base_path() }.lexically_normal();
     auto const resolved_norm = resolved.lexically_normal().string();
-    return resolved_norm.starts_with( data_dir.string() );
+    return resolved_norm.starts_with( data_dir.string() ) ||
+           resolved_norm.starts_with( base_dir.string() );
 }
 
 auto search_module( lua_State *L, std::string_view modname ) -> std::optional<fs::path>
@@ -81,9 +83,10 @@ auto search_module( lua_State *L, std::string_view modname ) -> std::optional<fs
     auto const mod_path = mod_path_str.empty() ? fs::path{} :
                           fs::path{ mod_path_str };
     auto const data_lua = fs::path{ PATH_INFO::datadir() } / "lua";
+    auto const base_path = fs::path{ PATH_INFO::base_path() };
 
-    // Search order: mod-local first, then data/lua
-    for( auto const &base : { mod_path, data_lua } ) {
+    // Search order: mod-local first, then data/lua, then base_path (for tests)
+    for( auto const &base : { mod_path, data_lua, base_path } ) {
         if( base.empty() ) {
             continue;
         }
