@@ -35,23 +35,39 @@ local effect_downed = EffectTypeId.new("downed")
 local effect_shakes = EffectTypeId.new("shakes")
 local effect_fearparalyze = EffectTypeId.new("fearparalyze")
 
+---@class NyctophobiaMoveParams
+---@field char Character
+---@field from Tripoint
+---@field to Tripoint
+---@field movement_mode CharacterMoveMode
+---@field via_ramp boolean
+
+---@return number
 local function nyctophobia_threshold()
   return gapi.light_ambient_lit() - 3.0
 end
 
+---@param duration TimeDuration
+---@return boolean
 local function one_turn_in(duration)
   local turns = duration:to_turns()
   if turns <= 0 then return false end
   return gapi.rng(1, turns) == 1
 end
 
+---@generic T
+---@param list T[]
+---@return T|nil
 local function random_entry(list)
   if #list == 0 then return nil end
   local idx = gapi.rng(1, #list)
   return list[idx]
 end
 
+---@param params NyctophobiaMoveParams
+---@return boolean
 mod.on_character_try_move = function(params)
+  ---@type Character
   local ch = params.char
   if not ch then return true end
   if not ch:has_trait(trait_nyctophobia) then return true end
@@ -74,7 +90,9 @@ mod.on_character_try_move = function(params)
   return false
 end
 
+---@return nil
 mod.on_nyctophobia_tick = function()
+  ---@type Avatar
   local you = gapi.get_avatar()
   if not you:has_trait(trait_nyctophobia) then return end
   if you:has_effect(effect_took_xanax) then return end
