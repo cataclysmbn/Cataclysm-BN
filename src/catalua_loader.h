@@ -1,17 +1,27 @@
 #pragma once
 
 #include <filesystem>
-#include <string>
-#include <vector>
 
 struct lua_State;
 
 namespace cata::lua_loader
 {
 
-// Stack of files currently being loaded (for relative path resolution)
-// Managed automatically by the loader - no manual intervention needed
-inline thread_local std::vector<std::filesystem::path> loading_stack;
+// RAII guard for managing script loading context
+// Automatically pushes/pops the current script path to/from the loading stack
+// Ensures exception safety during module loading
+class script_context_guard
+{
+    public:
+        explicit script_context_guard( std::filesystem::path path );
+        ~script_context_guard();
+
+        // Delete copy/move to prevent stack corruption
+        script_context_guard( script_context_guard const & ) = delete;
+        script_context_guard( script_context_guard && ) = delete;
+        auto operator=( script_context_guard const & ) -> script_context_guard & = delete;
+        auto operator=( script_context_guard && ) -> script_context_guard & = delete;
+};
 
 // Register custom searcher - call once during lua state init
 auto register_searcher( lua_State *L ) -> void;

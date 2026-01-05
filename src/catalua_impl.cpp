@@ -35,13 +35,12 @@ sol::state make_lua_state()
 
 void run_lua_script( sol::state &lua, const std::string &script_name )
 {
-    // Bootstrap loading stack for relative imports
-    cata::lua_loader::loading_stack.push_back( script_name );
+    // RAII guard ensures stack cleanup even if exception occurs
+    const auto guard = cata::lua_loader::script_context_guard{ script_name };
 
     sol::load_result load_res = lua.load_file( script_name );
 
     if( !load_res.valid() ) {
-        cata::lua_loader::loading_stack.pop_back();
         sol::error err = load_res;
         throw std::runtime_error(
             string_format( "Failed to load script %s: %s", script_name, err.what() )
@@ -57,8 +56,6 @@ void run_lua_script( sol::state &lua, const std::string &script_name )
     sol::set_environment( my_env, exec );
 
     sol::protected_function_result exec_res = exec();
-
-    cata::lua_loader::loading_stack.pop_back();
 
     if( !exec_res.valid() ) {
         sol::error err = exec_res;
