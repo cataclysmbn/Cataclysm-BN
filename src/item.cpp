@@ -284,6 +284,10 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
     contents( this ),
     components( new component_item_location( this ) ), bday( turn )
 {
+    item_vars = type->item_vars;
+    if( item_vars.contains( "test" ) ) {
+        std::cout << "success!";
+    }
     corpse = has_flag( flag_CORPSE ) ? &mtype_id::NULL_ID().obj() : nullptr;
     item_counter = type->countdown_interval;
 

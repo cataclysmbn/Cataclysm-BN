@@ -57,6 +57,9 @@
   "into": "flour",                           // The item id of the product. Product MUST be something that uses charges.
   "conversion_rate": 4                       // Number of products per item consumed. At a conversion_rate of 4, 1 item is milled into 4 product. Only accepts integers.
 },
+"item_vars": {                               // Prepopulate Item Vars; Currently used by nothing other then mods and in game logic
+  "test": "test"                             // Predominately lua mods will find this useful
+}
 "explode_in_fire": true,                     // Should the item explode if set on fire
 "explosion": {                               // Physical explosion data
   "damage": 10,                              // Damage the explosion deals to player at epicenter. Damage is halved above 50% radius.
