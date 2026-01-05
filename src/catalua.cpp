@@ -312,6 +312,46 @@ void run_hooks( lua_state &state, std::string_view hook_name,
     }
 }
 
+bool run_hooks_bool( std::string_view hook_name,
+                     std::function < auto( sol::table &params ) -> void > init,
+                     bool default_result )
+{
+    lua_state &state = *DynamicDataLoader::get_instance().lua;
+    return run_hooks_bool( state, hook_name, init, default_result );
+}
+
+bool run_hooks_bool( lua_state &state, std::string_view hook_name,
+                     std::function < auto( sol::table &params ) -> void > init,
+                     bool default_result )
+{
+    sol::state &lua = state.lua;
+    sol::table hooks = lua.globals()["game"]["hooks"][hook_name];
+
+    auto params = lua.create_table();
+    init( params );
+
+    for( auto &ref : hooks ) {
+        int idx = -1;
+        try {
+            idx = ref.first.as<int>();
+            sol::protected_function func = ref.second;
+            sol::protected_function_result res = func( params );
+            check_func_result( res );
+            if( res.valid() ) {
+                sol::object result = res.get<sol::object>();
+                if( result.is<bool>() && !result.as<bool>() ) {
+                    return false;
+                }
+            }
+        } catch( std::runtime_error &e ) {
+            debugmsg( "Failed to run hook %s[%d]: %s", hook_name, idx, e.what() );
+            return default_result;
+        }
+    }
+
+    return default_result;
+}
+
 
 void reg_lua_iuse_actors( lua_state &state, Item_factory &ifactory )
 {

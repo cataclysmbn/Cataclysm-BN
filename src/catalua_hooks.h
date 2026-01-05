@@ -21,6 +21,12 @@ void run_hooks( std::string_view hook_name,
                 std::function < auto( sol::table &params ) -> void > init );
 void run_hooks( lua_state &state, std::string_view hook_name );
 void run_hooks( std::string_view hook_name );
+bool run_hooks_bool( lua_state &state, std::string_view hook_name,
+                     std::function < auto( sol::table &params ) -> void > init,
+                     bool default_result = true );
+bool run_hooks_bool( std::string_view hook_name,
+                     std::function < auto( sol::table &params ) -> void > init,
+                     bool default_result = true );
 
 /// Define all hooks that are used in the game.
 void define_hooks( lua_state &state );
