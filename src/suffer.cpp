@@ -31,8 +31,10 @@
 #include "int_id.h"
 #include "inventory.h"
 #include "item.h"
+#include "lightmap.h"
 #include "magic_enchantment.h"
 #include "map.h"
+#include "map_iterator.h"
 #include "messages.h"
 #include "monster.h"
 #include "morale_types.h"
@@ -88,6 +90,7 @@ static const efftype_id effect_datura( "datura" );
 static const efftype_id effect_deaf( "deaf" );
 static const efftype_id effect_disabled( "disabled" );
 static const efftype_id effect_downed( "downed" );
+static const efftype_id effect_fearparalyze( "fearparalyze" );
 static const efftype_id effect_feral_killed_recently( "feral_killed_recently" );
 static const efftype_id effect_formication( "formication" );
 static const efftype_id effect_glowy_led( "glowy_led" );
@@ -104,6 +107,7 @@ static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_took_antiasthmatic( "took_antiasthmatic" );
 static const efftype_id effect_took_thorazine( "took_thorazine" );
 static const efftype_id effect_took_antinarcoleptic( "took_antinarcoleptic" );
+static const efftype_id effect_took_xanax( "took_xanax" );
 static const efftype_id effect_valium( "valium" );
 static const efftype_id effect_visuals( "visuals" );
 
@@ -136,6 +140,7 @@ static const trait_id trait_MOODSWINGS( "MOODSWINGS" );
 static const trait_id trait_NARCOLEPTIC( "NARCOLEPTIC" );
 static const trait_id trait_NONADDICTIVE( "NONADDICTIVE" );
 static const trait_id trait_NOPAIN( "NOPAIN" );
+static const trait_id trait_NYCTOPHOBIA( "NYCTOPHOBIA" );
 static const trait_id trait_PER_SLIME( "PER_SLIME" );
 static const trait_id trait_PROF_FERAL( "PROF_FERAL" );
 static const trait_id trait_PYROMANIA( "PYROMANIA" );
@@ -320,6 +325,9 @@ void Character::suffer_while_awake( const int current_stim )
     }
     if( has_trait( trait_CHEMIMBALANCE ) ) {
         suffer_from_chemimbalance();
+    }
+    if( has_trait( trait_NYCTOPHOBIA ) && !has_effect( effect_took_xanax ) ) {
+        suffer_from_nyctophobia();
     }
     if( ( has_trait( trait_SCHIZOPHRENIC ) || has_artifact_with( AEP_SCHIZO ) ) &&
         !has_effect( effect_took_thorazine ) && !has_effect( effect_feral_killed_recently ) ) {
@@ -626,6 +634,62 @@ void Character::suffer_from_schizophrenia()
         if( does_talk ) {
             add_msg_if_player( _( "%1$s says: \"%2$s\"" ), i_name_w, i_talk_w );
             return;
+        }
+    }
+}
+
+void Character::suffer_from_nyctophobia()
+{
+    std::vector<tripoint> dark_places;
+    const float nyctophobia_threshold = LIGHT_AMBIENT_LIT - 3.0f;
+    map &here = get_map();
+
+    for( const tripoint &dark_place : here.points_in_radius( pos(), 5 ) ) {
+        if( !sees( dark_place ) || here.ambient_light_at( dark_place ) >= nyctophobia_threshold ) {
+            continue;
+        }
+        dark_places.push_back( dark_place );
+    }
+
+    const bool in_darkness = here.ambient_light_at( pos() ) < nyctophobia_threshold;
+    const int chance = in_darkness ? 10 : 50;
+
+    if( !dark_places.empty() && one_in( chance ) ) {
+        g->spawn_hallucination( random_entry( dark_places ) );
+    }
+
+    if( in_darkness ) {
+        if( one_turn_in( 5_minutes ) ) {
+            add_msg_if_player( m_bad, _( "You feel a twinge of panic as darkness engulfs you." ) );
+        }
+
+        if( one_in( 2 ) && one_turn_in( 30_seconds ) ) {
+            sound_hallu();
+        }
+
+        if( one_in( 50 ) && !is_on_ground() ) {
+            add_msg_if_player( m_bad,
+                               _( "Your fear of the dark is so intense that your trembling legs fail you, and you fall to the ground." ) );
+            add_effect( effect_downed, rng( 1_minutes, 2_minutes ) );
+        }
+
+        if( one_in( 50 ) && !has_effect( effect_shakes ) ) {
+            add_msg_if_player( m_bad,
+                               _( "Your fear of the dark is so intense that your hands start shaking uncontrollably." ) );
+            add_effect( effect_shakes, rng( 1_minutes, 2_minutes ) );
+        }
+
+        if( one_in( 50 ) ) {
+            add_msg_if_player( m_bad,
+                               _( "Your fear of the dark is so intense that you start breathing rapidly, and you feel like your heart is ready to jump out of the chest." ) );
+            mod_stamina( -500 * rng( 1, 3 ) );
+        }
+
+        if( one_in( 50 ) && !has_effect( effect_fearparalyze ) ) {
+            add_msg_if_player( m_bad,
+                               _( "Your fear of the dark is so intense that you stand paralyzed." ) );
+            add_effect( effect_fearparalyze, 5_turns );
+            mod_moves( -4 * get_speed() );
         }
     }
 }

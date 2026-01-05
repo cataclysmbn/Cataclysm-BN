@@ -2402,6 +2402,7 @@ class Character : public Creature, public location_visitable<Character>
         void suffer_while_awake( int current_stim );
         void suffer_from_chemimbalance();
         void suffer_from_schizophrenia();
+        void suffer_from_nyctophobia();
         void suffer_from_asthma( int current_stim );
         void suffer_feral_kill_withdrawl();
         void suffer_in_sunlight();
@@ -2652,4 +2653,3 @@ nc_color bodytemp_color( const Character &c, const bodypart_str_id &bp );
 
 /** Returns true if the player has a psyshield artifact, or sometimes if wearing tinfoil */
 bool has_psy_protection( const Character &c, int partial_chance );
-

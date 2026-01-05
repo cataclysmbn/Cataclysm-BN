@@ -246,6 +246,7 @@ static const efftype_id effect_riding( "riding" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_tied( "tied" );
+static const efftype_id effect_took_xanax( "took_xanax" );
 static const efftype_id dashing_effect( "dashing" );
 
 static const bionic_id bio_remote( "bio_remote" );
@@ -265,6 +266,7 @@ static const trait_id trait_BADKNEES( "BADKNEES" );
 static const trait_id trait_ILLITERATE( "ILLITERATE" );
 static const trait_id trait_LEG_TENT_BRACE( "LEG_TENT_BRACE" );
 static const trait_id trait_M_IMMUNE( "M_IMMUNE" );
+static const trait_id trait_NYCTOPHOBIA( "NYCTOPHOBIA" );
 static const trait_id trait_PROF_FERAL( "PROF_FERAL" );
 static const trait_id trait_VINES2( "VINES2" );
 static const trait_id trait_VINES3( "VINES3" );
@@ -9137,6 +9139,14 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
             warn_msg( _( "Run into it if you wish to enter anyway." ) );
             return true;
         }
+    }
+    const float dest_light_level = m.ambient_light_at( dest_loc );
+    const float nyctophobia_threshold = LIGHT_AMBIENT_LIT - 3.0f;
+    if( u.has_trait( trait_NYCTOPHOBIA ) && !u.has_effect( effect_took_xanax ) &&
+        !u.movement_mode_is( CMM_RUN ) && dest_light_level < nyctophobia_threshold ) {
+        add_msg( m_bad,
+                 _( "It's so dark and scary in there!  You can't force yourself to walk into this tile.  Switch to running movement mode to move there." ) );
+        return false;
     }
     // Used to decide whether to print a 'moving is slow message
     const int mcost_from = m.move_cost( u.pos() ); //calculate this _before_ calling grabbed_move
