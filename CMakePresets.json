@@ -222,6 +222,50 @@
         "TESTS": "ON",
         "LINKER": "mold"
       }
+    },
+    {
+      "name": "osx-tiles",
+      "binaryDir": "${sourceDir}/build",
+      "displayName": "macOS Distribution (Tiles, Sounds, Languages)",
+      "description": "For creating macOS distribution packages with tiles and sound.",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CURSES": "OFF",
+        "TILES": "ON",
+        "SOUND": "ON",
+        "LANGUAGES": "all",
+        "BACKTRACE": "OFF",
+        "JSON_FORMAT": "ON",
+        "USE_HOME_DIR": "ON",
+        "OSX_MIN": "11"
+      }
+    },
+    {
+      "name": "osx-curses",
+      "binaryDir": "${sourceDir}/build",
+      "displayName": "macOS Distribution (Curses, Languages)",
+      "description": "For creating macOS distribution packages with curses.",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CURSES": "ON",
+        "TILES": "OFF",
+        "SOUND": "OFF",
+        "LANGUAGES": "all",
+        "BACKTRACE": "OFF",
+        "JSON_FORMAT": "ON",
+        "USE_HOME_DIR": "ON",
+        "OSX_MIN": "11"
+      }
     }
   ],
   "buildPresets": [
@@ -275,6 +319,18 @@
       "configurePreset": "ci-tiles",
       "targets": ["cataclysm-bn-tiles", "cata_test-tiles"],
       "description": "CI build for tiles and sound."
+    },
+    {
+      "name": "osx-tiles",
+      "configurePreset": "osx-tiles",
+      "targets": ["cataclysm-bn-tiles", "json_formatter", "translations"],
+      "description": "Build for macOS tiles distribution."
+    },
+    {
+      "name": "osx-curses",
+      "configurePreset": "osx-curses",
+      "targets": ["cataclysm-bn", "json_formatter", "translations"],
+      "description": "Build for macOS curses distribution."
     }
   ]
 }

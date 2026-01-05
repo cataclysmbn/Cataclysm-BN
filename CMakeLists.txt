@@ -10,6 +10,9 @@ if (NOT VCPKG_MANIFEST_MODE)
 endif()
 
 include(AstyleFormatSource)
+if(APPLE)
+    include(MacOSXBundle)
+endif()
 
 set(CMAKE_TLS_VERIFY ON)
 
@@ -576,6 +579,15 @@ configure_file(
 add_custom_target(uninstall
         "${CMAKE_COMMAND}"
         -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+
+# Create macOS app bundle and DMG if on macOS
+if(APPLE AND RELEASE)
+    if(TILES)
+        create_macosx_bundle(cataclysm-bn-tiles)
+    else()
+        create_macosx_bundle(cataclysm-bn)
+    endif()
+endif()
 
 if (USE_UNITY_BUILD)
     set_property(GLOBAL PROPERTY UNITY_BUILD ON)
