@@ -981,7 +981,7 @@ class game
 
         bool debug_pathfinding = false; // show NPC pathfinding on overmap ui
         bool debug_submap_grid_overlay = false;
-        bool show_zone_overlay = true;
+        bool show_zone_overlay = false;
 
         /* tile overlays */
         // Toggle all other overlays off and flip the given overlay on/off.
