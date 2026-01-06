@@ -180,6 +180,7 @@
     "name": { "str": "bionic firestarter" },
     "flags": [ "FIRESTARTER", "BIONIC_TOOLS", "USES_BIONIC_POWER" ],
     "max_charges": 10000,
+    "ammo": "battery",
     "charges_per_use": 1,
     "use_action": { "type": "firestarter", "moves": 200 }
   },
