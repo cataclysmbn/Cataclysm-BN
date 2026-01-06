@@ -12519,6 +12519,7 @@ bool game::slip_down()
 }
 item *game::add_fake_item( detached_ptr<item> &&it )
 {
+    it->set_flag( flag_TEMPORARY_ITEM );
     fake_items.push_back( std::move( it ) );
     return fake_items.back();
 }

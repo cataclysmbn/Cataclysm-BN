@@ -6,6 +6,7 @@
 #include "character.h"
 #include "debug.h"
 #include "detached_ptr.h"
+#include "flag.h"
 #include "game.h"
 #include "ime.h"
 #include "inventory.h"
@@ -1274,7 +1275,7 @@ void inventory_selector::add_bionics_items( Character &character )
 {
     for( bionic bio : character.get_bionic_collection() ) {
         const itype_id fake = bio.info().fake_item;
-        if( !fake.is_null() && fake.str() != "" ) {
+        if( bio.info().has_flag( flag_BIONIC_TOOLS ) && !fake.is_null() && fake.str() != "" ) {
             item *fakeitem = g->add_fake_item( item::spawn( fake ) );
             add_entry( own_gear_column, std::vector<item *>( 1, fakeitem ),
                        &item_category_id( "BIONICS" ).obj() );

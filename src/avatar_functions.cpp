@@ -589,7 +589,7 @@ void use_item( avatar &you, item &used )
             add_msg( _( "You can't do anything interesting with your %s." ), used.tname() );
             return;
         }
-        if( used.has_flag( flag_BIONIC_TOOLS ) ) {
+        if( used.has_flag( flag_TEMPORARY_ITEM ) ) {
             you.invoke_item( &used );
         } else {
             you.invoke_item( &used, used.position() );

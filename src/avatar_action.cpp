@@ -1025,7 +1025,7 @@ void avatar_action::use_item( avatar &you, item *loc )
 
         if( !loc->has_flag( flag_ALLOWS_REMOTE_USE ) ) {
             const int obtain_cost = loc->obtain_cost( you );
-            if( !loc->has_flag( flag_BIONIC_TOOLS ) ) {
+            if( !loc->has_flag( flag_TEMPORARY_ITEM ) ) {
                 loc->obtain( you );
             }
 
