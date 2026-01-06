@@ -735,9 +735,6 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
                                _( "Your %s issues a low humidity warning.  Efficiency will be reduced." ),
                                bio.info().name );
         }
-    } else if( bio.info().has_flag( flag_BIONIC_TOOLS ) ) {
-        add_msg_activate();
-        invalidate_crafting_inventory();
     } else if( bio.id == bio_cqb ) {
         add_msg_activate();
         const avatar *you = as_avatar();
@@ -1153,6 +1150,9 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         item *vtm;
         vtm = item::spawn_temporary( "voltmeter_bionic", calendar::start_of_cataclysm );
         invoke_item( vtm );
+    } else if( bio.info().has_flag( flag_BIONIC_TOOLS ) ) {
+        add_msg_activate();
+        invalidate_crafting_inventory();
     } else {
         add_msg_activate();
     }
