@@ -235,7 +235,9 @@
             "rotates": true
           },
           { "id": "bat_metal_bolted", "fg": 173 },
-          { "id": "overlay_wielded_bat_metal_bolted", "fg": 174 }
+          { "id": "overlay_wielded_bat_metal_bolted", "fg": 174 },
+          { "id": "ar10", "fg": 176 },
+          { "id": "overlay_wielded_ar10", "fg": 177 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
