@@ -7973,6 +7973,12 @@ void vehicle::item_dropper_drop( std::vector<vehicle_part *> droppers, bool sing
             g->u.invoke_item( dropper, "transform" );
         }
         g->m.add_item_or_charges( pos, part->remove_item( *dropper ) );
+        item *it2 = get_last_dropped_item( pos );
+        if( it2->get_use( "place_monster" ) ) {
+            // Needed for stupid reasons
+            it2->activate();
+            g->u.invoke_item( it2, "place_monster", pos );
+        }
     } else {
         for( vehicle_part *d : droppers ) {
             vehicle_part *part = get_cargo_part( d );
@@ -7985,12 +7991,13 @@ void vehicle::item_dropper_drop( std::vector<vehicle_part *> droppers, bool sing
                 // DANGER: DO NOT PUT THIS IN THE FOR LOOP
                 const std::vector<item *> items = part->get_items();
                 for( item *it : items ) {
+                    if( it->get_use( "transform" ) ) {
+                        g->u.invoke_item( it, "transform" );
+                    }
                     g->m.add_item_or_charges( pos, part->remove_item( *it ) );
                     item *it2 = get_last_dropped_item( pos );
-                    if( it2->get_use( "transform" ) ) {
-                        g->u.invoke_item( it2, "transform" );
-                    }
                     if( it2->get_use( "place_monster" ) ) {
+                        // Needed for stupid reasons
                         it2->activate();
                         g->u.invoke_item( it2, "place_monster", pos );
                     }
