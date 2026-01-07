@@ -68,6 +68,7 @@
 #include "stomach.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "trap.h"
 #include "units.h"
@@ -444,9 +445,7 @@ void drop_on_map( Character &c, item_drop_reason reason,
         | std::ranges::to<std::vector>();
 
         if( !all_favorited_names.empty() ) {
-            auto note_text = all_favorited_names
-                             | std::views::join_with( std::string_view( "; " ) )
-                             | std::ranges::to<std::string>();
+            const auto note_text = join( all_favorited_names, "; " );
 
             if( !overmap_buffer.has_note( your_pos ) ) {
                 overmap_buffer.add_note( your_pos, note_text );
