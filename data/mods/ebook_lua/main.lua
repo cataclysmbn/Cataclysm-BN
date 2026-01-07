@@ -586,7 +586,7 @@ mod.ebook_ui = function(who, item, pos)
   uilist:add_w_desc(
     -1,
     locale.gettext("Scan book(s)"),
-    locale.gettext("Scans all the book you have. It will progress instantly.")
+    locale.gettext("Scan all the books you have. It will progress instantly.")
   )
   uilist:add_w_desc(
     -1,
