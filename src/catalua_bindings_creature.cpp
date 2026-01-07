@@ -76,7 +76,10 @@ void cata::detail::reg_creature( sol::state &lua )
 
         SET_FX_T( attitude_to, Attitude( const Creature & ) const );
 
-        SET_FX_T( sees, bool( const Creature & ) const );
+        luna::set_fx( ut, "sees", sol::overload(
+                          sol::resolve<bool( const Creature & ) const>( &Creature::sees ),
+        []( const Creature & cr, const tripoint & t ) -> bool { return cr.sees( t ); }
+                      ) );
 
         SET_FX_T( sight_range, int( int ) const );
 
@@ -866,6 +869,8 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( get_stamina_max, int() const );
         SET_FX_T( set_stamina, void( int ) );
         SET_FX_T( mod_stamina, void( int ) );
+
+        SET_FX_T( sound_hallu, void() );
 
         SET_FX_T( wake_up, void() );
 

@@ -9434,6 +9434,16 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     }
     u.set_underwater( false );
 
+    if( !cata::run_hooks( "on_character_try_move", [ &, this]( sol::table & params ) {
+    params["char"] = &u;
+        params["from"] = u.pos();
+        params["to"] = dest_loc;
+        params["movement_mode"] = u.get_movement_mode();
+        params["via_ramp"] = via_ramp;
+    }, true ) ) {
+        return false;
+    }
+
     if( !shifting_furniture && !pushing && is_dangerous_tile( dest_loc ) ) {
         std::vector<std::string> harmful_stuff = get_dangerous_tile( dest_loc );
         const auto dangerous_terrain_opt = get_option<std::string>( "DANGEROUS_TERRAIN_WARNING_PROMPT" );
