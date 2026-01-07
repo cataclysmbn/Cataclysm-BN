@@ -579,7 +579,7 @@ mod.ebook_ui = function(who, item, pos)
   uilist:desc_enabled(true)
   uilist:text(
     string.format(
-      locale.gettext("Welcome to e-book library!\nThis device currently holds %d book(s).\nNetwork sync unavilable."),
+      locale.gettext("Welcome to e-book library!\nThis device currently holds %d book(s).\nNetwork sync unavailable."),
       var_count
     )
   )
