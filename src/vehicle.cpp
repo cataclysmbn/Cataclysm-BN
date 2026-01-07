@@ -7942,6 +7942,13 @@ bool vehicle::has_item_stored( vehicle_part *part )
     return false;
 }
 
+static item *get_last_dropped_item( tripoint &p )
+{
+    point l;
+    submap *const current_submap = g->m.get_submap_at( p, l );
+    return *( current_submap->get_items( l ).end() - 1 );
+}
+
 void vehicle::item_dropper_drop( std::vector<vehicle_part *> droppers, bool single )
 {
     if( single ) {
@@ -7982,6 +7989,10 @@ void vehicle::item_dropper_drop( std::vector<vehicle_part *> droppers, bool sing
                         g->u.invoke_item( it, "transform" );
                     }
                     g->m.add_item_or_charges( pos, part->remove_item( *it ) );
+                    it = get_last_dropped_item( pos );
+                    if( it->get_use( "place_monster" ) ) {
+                        g->u.invoke_item( it, "place_monster" );
+                    }
                 }
             }
         }
