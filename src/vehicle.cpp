@@ -7985,13 +7985,14 @@ void vehicle::item_dropper_drop( std::vector<vehicle_part *> droppers, bool sing
                 // DANGER: DO NOT PUT THIS IN THE FOR LOOP
                 const std::vector<item *> items = part->get_items();
                 for( item *it : items ) {
-                    if( it->get_use( "transform" ) ) {
-                        g->u.invoke_item( it, "transform" );
-                    }
                     g->m.add_item_or_charges( pos, part->remove_item( *it ) );
-                    it = get_last_dropped_item( pos );
-                    if( it->get_use( "place_monster" ) ) {
-                        g->u.invoke_item( it, "place_monster" );
+                    item *it2 = get_last_dropped_item( pos );
+                    if( it2->get_use( "transform" ) ) {
+                        g->u.invoke_item( it2, "transform" );
+                    }
+                    if( it2->get_use( "place_monster" ) ) {
+                        it2->activate();
+                        g->u.invoke_item( it2, "place_monster", pos );
                     }
                 }
             }
