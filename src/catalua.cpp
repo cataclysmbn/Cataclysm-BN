@@ -283,23 +283,25 @@ void run_mod_main_script( lua_state &state, const mod_id &mod )
     run_lua_script( state.lua, script_path );
 }
 
-void run_hooks( std::string_view hook_name )
+auto run_hooks( std::string_view hook_name ) -> bool
 {
     lua_state &state = *DynamicDataLoader::get_instance().lua;
-    run_hooks( state, hook_name, []( sol::table & ) {} );
+    return run_hooks( state, hook_name, []( sol::table & ) {}, false );
 }
-void run_hooks( lua_state &state, std::string_view hook_name )
+auto run_hooks( lua_state &state, std::string_view hook_name ) -> bool
 {
-    run_hooks( state, hook_name, []( sol::table & ) {} );
+    return run_hooks( state, hook_name, []( sol::table & ) {}, false );
 }
-void run_hooks( std::string_view hook_name,
-                std::function < auto( sol::table &params ) -> void > init )
+auto run_hooks( std::string_view hook_name,
+                std::function < auto( sol::table &params ) -> void > init,
+                bool default_result ) -> bool
 {
     lua_state &state = *DynamicDataLoader::get_instance().lua;
-    run_hooks( state, hook_name, init );
+    return run_hooks( state, hook_name, init, default_result );
 }
-void run_hooks( lua_state &state, std::string_view hook_name,
-                std::function < auto( sol::table &params ) -> void > init )
+auto run_hooks( lua_state &state, std::string_view hook_name,
+                std::function < auto( sol::table &params ) -> void > init,
+                bool default_result ) -> bool
 {
     sol::state &lua = state.lua;
     sol::table hooks = lua.globals()["game"]["hooks"][hook_name];
@@ -314,11 +316,18 @@ void run_hooks( lua_state &state, std::string_view hook_name,
             sol::protected_function func = ref.second;
             sol::protected_function_result res = func( params );
             check_func_result( res );
+            if( res.valid() ) {
+                sol::object result = res.get<sol::object>();
+                if( result.is<bool>() && !result.as<bool>() ) {
+                    return false;
+                }
+            }
         } catch( std::runtime_error &e ) {
             debugmsg( "Failed to run hook %s[%d]: %s", hook_name, idx, e.what() );
-            break;
+            return default_result;
         }
     }
+    return default_result;
 }
 
 
