@@ -99,5 +99,4 @@ jobs:
 
     steps:
       - uses: docker://ghcr.io/scarf005/conventional-prs:main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
