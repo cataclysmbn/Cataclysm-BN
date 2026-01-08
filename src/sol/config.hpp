@@ -58,19 +58,13 @@ the build system, or the command line options of your compiler.
 #endif
 
 // Be helpful and verbose, even at the cost of speed
-// Keep sol safety checks for debug builds, but turn them off for release builds
-// to avoid extra template instantiations and reduce compile times.
-#if defined(NDEBUG)
-#  define SOL_ALL_SAFETIES_ON 0
-#else
-#  define SOL_ALL_SAFETIES_ON 1
-#endif
+#define SOL_ALL_SAFETIES_ON 1
 
 // According to a comment in Sol2, nil is an Objective C/C++ Keyword that's found in OSX SDK.
 // We're not using Objective C/C++, so we should be okay.
 // Still, Sol2 disables it by default on OSX, so here we forcefully re-enable it back.
 #if defined(nil)
-static_assert( false, "Sol's nil conflicts with existing nil define in some C++ include!" )
+     static_assert(false, "Sol's nil conflicts with existing nil define in some C++ include!")
 #endif
 #define SOL_NO_NIL 0
 
