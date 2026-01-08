@@ -2,6 +2,8 @@
 
 #include "debug.h"
 
+#include <clocale>
+
 constexpr int LUA_API_VERSION = 2;
 
 #include "catalua_sol.h"
@@ -46,6 +48,11 @@ void startup_lua_test()
 auto generate_lua_docs( const std::filesystem::path &script_path,
                         const std::filesystem::path &to ) -> bool
 {
+    // Force C locale for consistent string sorting in Lua (strcoll dependency)
+    const auto *prev_locale_ptr = std::setlocale( LC_ALL, nullptr );
+    const auto prev_locale = std::string{ prev_locale_ptr ? prev_locale_ptr : "" };
+    std::setlocale( LC_ALL, "C" );
+
     sol::state lua = make_lua_state();
     lua.globals()["doc_gen_func"] = lua.create_table();
     lua.globals()["print"] = [&]( const sol::variadic_args & va ) {
@@ -71,8 +78,10 @@ auto generate_lua_docs( const std::filesystem::path &script_path,
         } );
     } catch( std::runtime_error &e ) {
         cata_printf( "%s\n", e.what() );
+        std::setlocale( LC_ALL, prev_locale.c_str() );
         return false;
     }
+    std::setlocale( LC_ALL, prev_locale.c_str() );
     return true;
 }
 
