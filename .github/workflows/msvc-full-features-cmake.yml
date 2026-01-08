@@ -49,6 +49,8 @@ env:
   VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
   ZSTD_CLEVEL: 17
   CMAKE_BUILD_DIR: out/build/windows-tiles-sounds-x64-msvc-tests
+  CMAKE_PRESET: windows-tiles-sounds-x64-msvc
+  BUILD_CONFIG: ${{ github.event_name == 'pull_request' && 'Debug' || 'RelWithDebInfo' }}
 
 jobs:
   build_catatclysm:
@@ -132,7 +134,7 @@ jobs:
           cmake -G Ninja `
             -S "${{ github.workspace }}" `
             -B "${{ github.workspace }}/${{ env.CMAKE_BUILD_DIR }}" `
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_CONFIG }} `
             -DCMAKE_PROJECT_INCLUDE_BEFORE="${{ github.workspace }}/build-scripts/windows-tiles-sounds-x64-msvc.cmake" `
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build-scripts/MSVC.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows-static `
@@ -169,3 +171,22 @@ jobs:
       - name: Run tests
         run: |
           & "${{ github.workspace }}/${{ env.CMAKE_BUILD_DIR }}/tests/cata_test-tiles.exe" --rng-seed time
+
+      - name: Create PR debug distribution zip
+        if: ${{ github.event_name == 'pull_request' && success() }}
+        shell: pwsh
+        run: |
+          $suffix = "pr-${{ github.event.pull_request.number }}-$($env:GITHUB_SHA.Substring(0,7))"
+          $distDir = "cataclysmbn-$suffix"
+
+          cmake --install "${{ github.workspace }}/${{ env.CMAKE_BUILD_DIR }}" --prefix "$distDir"
+          Compress-Archive -Force -Path "$distDir/*" -DestinationPath "cbn-windows-tiles-debug-$suffix.zip"
+
+      - name: Upload PR debug distribution zip
+        if: ${{ github.event_name == 'pull_request' && success() }}
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: cbn-windows-tiles-debug-pr-${{ github.event.pull_request.number }}
+          path: cbn-windows-tiles-debug-*.zip
+          if-no-files-found: error
+          retention-days: 14
