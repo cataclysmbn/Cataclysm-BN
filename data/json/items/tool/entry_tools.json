@@ -114,7 +114,7 @@
     "id": "pseudo_bio_picklock",
     "type": "TOOL",
     "category": "tools",
-    "name": { "str": "bio lockpick" },
+    "name": { "str": "bionic lockpick" },
     "description": "this a pseudo item",
     "volume": "0 ml",
     "price": "0 cent",

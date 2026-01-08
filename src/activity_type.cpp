@@ -14,7 +14,9 @@
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
-
+#include "game.h"
+#include "player_activity.h"
+#include "item.h"
 // activity_type functions
 static std::map< activity_id, activity_type > activity_type_all;
 
@@ -200,6 +202,9 @@ bool activity_type::call_finish( player_activity *act, player *p ) const
         pair->second( act, p );
         // kill activity sounds at finish
         sfx::end_activity_sounds();
+        if( !act->tools.empty() ) {
+            g->remove_fake_item( &*act->tools.front() );
+        }
         return true;
     }
     return false;

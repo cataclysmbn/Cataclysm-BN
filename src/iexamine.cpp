@@ -1831,6 +1831,7 @@ void iexamine::transform( player &p, const tripoint &pos )
                 }
                 g->m.ter_set( pos, g->m.get_ter_transforms_into( pos ) );
             }
+            p.moves -= to_moves<int>( 2_seconds );
             return;
         }
         case 2: {

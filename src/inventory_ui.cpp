@@ -5,9 +5,12 @@
 #include "catacharset.h"
 #include "character.h"
 #include "debug.h"
+#include "detached_ptr.h"
+#include "flag.h"
 #include "game.h"
 #include "ime.h"
 #include "inventory.h"
+#include "itype.h"
 #include "item.h"
 #include "item_category.h"
 #include "item_search.h"
@@ -1179,6 +1182,7 @@ void inventory_selector::add_item( inventory_column &target_column,
                custom_category );
 }
 
+
 void inventory_selector::add_items( inventory_column &target_column,
                                     const std::function<item*( item * )> &locator,
                                     const std::vector<std::list<item *>> &stacks,
@@ -1263,6 +1267,18 @@ void inventory_selector::add_nearby_items( int radius )
             }
             add_map_items( pos );
             add_vehicle_items( pos );
+        }
+    }
+}
+
+void inventory_selector::add_bionics_items( Character &character )
+{
+    for( bionic bio : character.get_bionic_collection() ) {
+        const itype_id fake = bio.info().fake_item;
+        if( bio.info().has_flag( flag_BIONIC_TOOLS ) && !fake.is_null() && fake.str() != "" ) {
+            item *fakeitem = g->add_fake_item( item::spawn( fake ) );
+            add_entry( own_gear_column, std::vector<item *>( 1, fakeitem ),
+                       &item_category_id( "BIONICS" ).obj() );
         }
     }
 }

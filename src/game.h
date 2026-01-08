@@ -28,6 +28,7 @@
 #include "pimpl.h"
 #include "point.h"
 #include "type_id.h"
+#include "location_vector.h"
 
 class Character;
 class Creature_tracker;
@@ -981,6 +982,7 @@ class game
 
         bool debug_pathfinding = false; // show NPC pathfinding on overmap ui
         bool debug_submap_grid_overlay = false;
+        bool show_zone_overlay = false;
 
         /* tile overlays */
         // Toggle all other overlays off and flip the given overlay on/off.
@@ -1079,6 +1081,11 @@ class game
         @return whether player has slipped down
         */
         bool slip_down();
+    private:
+        location_vector<item> fake_items;
+    public:
+        item *add_fake_item( detached_ptr<item> &&fake );
+        void remove_fake_item( item *it );
 };
 
 // Returns temperature modifier from direct heat radiation of nearby sources

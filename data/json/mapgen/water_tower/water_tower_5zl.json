@@ -16,10 +16,10 @@
         "...                  ...",
         "...                  ...",
         "...                  ...",
-        "...                  ...",
         "...        sc        ...",
         "...                  ...",
         "...        >>        ...",
+        "...                  ...",
         "...                  ...",
         "...                  ...",
         "...                  ...",
@@ -33,7 +33,7 @@
         "........................"
       ],
       "palettes": [ "water_tower" ],
-      "terrain": { " ": "t_od_metal_floor", ".": "t_open_air" },
+      "terrain": { " ": "t_od_metal_floor", ".": "t_open_air", ">": "t_stairs_down_no_roof" },
       "furniture": { "s": "f_small_satelitte_dish", "c": "f_cellphone_booster" }
     }
   }

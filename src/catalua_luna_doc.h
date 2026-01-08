@@ -36,6 +36,7 @@ class avatar;
 class Character;
 class character_id;
 class Creature;
+struct power_stat;
 class distribution_grid;
 class distribution_grid_tracker;
 class effect;
@@ -97,6 +98,9 @@ struct resistances;
 struct armor_portion_data;
 class vitamin;
 struct explosion_data;
+struct requirement_data;
+class inventory;
+class known_magic;
 
 namespace units
 {
@@ -171,6 +175,7 @@ LUNA_VAL( damage_instance, "DamageInstance" );
 LUNA_VAL( damage_unit, "DamageUnit" );
 LUNA_VAL( dealt_damage_instance, "DealtDamageInstance" );
 LUNA_VAL( distribution_grid, "DistributionGrid" );
+LUNA_VAL( power_stat, "PowerStat" );
 LUNA_VAL( distribution_grid_tracker, "DistributionGridTracker" );
 LUNA_PTR_VAL( item, "Item" );
 LUNA_VAL( item_stack, "ItemStack" );
@@ -183,6 +188,7 @@ LUNA_VAL( npc, "Npc" );
 LUNA_VAL( npc_opinion, "NpcOpinion" );
 LUNA_VAL( npc_personality, "NpcPersonality" );
 LUNA_VAL( omt_find_params, "OmtFindParams" );
+LUNA_VAL( overmapbuffer, "OvermapBuffer" );
 LUNA_VAL( player, "Player" );
 LUNA_VAL( point, "Point" );
 LUNA_VAL( string_input_popup, "PopupInputStr" );
@@ -191,6 +197,7 @@ LUNA_VAL( SkillLevelMap, "SkillLevelMap" );
 LUNA_VAL( SkillLevel, "SkillLevel" );
 LUNA_VAL( fake_spell, "SpellSimple" )
 LUNA_VAL( spell, "Spell" )
+LUNA_VAL( known_magic, "KnownMagic" )
 LUNA_VAL( time_duration, "TimeDuration" );
 LUNA_VAL( time_point, "TimePoint" );
 LUNA_VAL( tinymap, "Tinymap" );
@@ -208,6 +215,8 @@ LUNA_VAL( resistances, "Resistances" );
 LUNA_VAL( armor_portion_data, "ArmorPortionData" );
 LUNA_VAL( effect, "Effect" );
 LUNA_VAL( explosion_data, "ExplosionData" );
+LUNA_VAL( requirement_data, "RequirementData" );
+LUNA_VAL( inventory, "Inventory" );
 
 // Ids for in-game objects
 LUNA_ID( ammunition_type, "AmmunitionType" )

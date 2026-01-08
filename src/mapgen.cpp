@@ -2162,7 +2162,15 @@ class jmapgen_vehicle : public jmapgen_piece
         }
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
-            if( !x_in_y( chance.get(), 100 ) ) {
+            const auto raw_chance = chance.get();
+            if( raw_chance != 100 ) {
+                const auto vehicle_spawn_rate = get_option<float>( "VEHICLE_SPAWNRATE" );
+                const auto scaled_chance =
+                    std::clamp( static_cast<int>( std::lround( raw_chance * vehicle_spawn_rate ) ), 0, 100 );
+                if( !x_in_y( scaled_chance, 100 ) ) {
+                    return;
+                }
+            } else if( !x_in_y( raw_chance, 100 ) ) {
                 return;
             }
             vgroup_id chosen_id = type.get( dat );

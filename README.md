@@ -133,7 +133,7 @@ you wish to assign to that action.
 
 #### There is no music (or sound) in the game. How can I add it?
 
-Third-party launchers, such as [Catapult](https://github.com/qrrk/Catapult), allow you to install sound packs (and mods) from the launcher menu. You can also do it manually. To add a sound pack, download and unzip it to `<Game Folder>\data\sound\`, select it from the settings, and then restart the game. The recommended one is [Otopack](https://github.com/RoyalFox2140/Otopack-2-BN).
+Third-party launchers, such as [Catapult](https://github.com/qrrk/Catapult), allow you to install sound packs (and mods) from the launcher menu. You can also do it manually. To add a sound pack, download and unzip it to `<Game Folder>\data\sound\`, select it from the settings, and then restart the game. The recommended one is [Otopack](https://github.com/NarandBD/Otopack-BN-Mk-2).
 
 #### Where should I put 3rd-party mods?
 

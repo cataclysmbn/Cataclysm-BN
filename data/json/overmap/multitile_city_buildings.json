@@ -4996,8 +4996,8 @@
     ],
     "connections": [
       { "point": [ 0, -1, 0 ], "connection": "local_road" },
-      { "point": [ 0, 2, -2 ], "connection": "subway_tunnel" },
-      { "point": [ 1, 2, -2 ], "connection": "subway_tunnel" }
+      { "point": [ 0, 1, -1 ], "connection": "sewer_tunnel", "from": [ 0, 0, -1 ] },
+      { "point": [ 0, 2, -2 ], "connection": "subway_tunnel", "from": [ 0, 1, -2 ] }
     ],
     "locations": [ "land" ],
     "city_distance": [ -1, 2 ],

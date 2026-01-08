@@ -259,6 +259,7 @@ void draw_custom_explosion_curses( game &g,
     }
 }
 
+[[maybe_unused]]
 auto get_bullet_dir( const std::vector<tripoint> &trajectory, size_t i ) -> direction
 {
     return i == 0 && trajectory.size() > 1 ?
@@ -268,10 +269,12 @@ auto get_bullet_dir( const std::vector<tripoint> &trajectory, size_t i ) -> dire
            direction::NORTH;
 }
 
-struct bullet_visual {
+struct [[maybe_unused]] bullet_visual {
     std::string id;
     int rotation; //< 0: UP, 1: LEFT, 2: DOWN, 3: RIGHT
 };
+
+[[maybe_unused]]
 auto get_bullet_visual( direction dir, const std::string &bullet_0deg,
                         const std::optional<std::string> &bullet_45deg ) -> bullet_visual
 {

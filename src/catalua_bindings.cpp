@@ -534,6 +534,13 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_character_effect", []( const sol::table & ) {} );
 
+    DOC( "Called when character loses the effect which has `EFFECT_LUA_ON_REMOVED` flag.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `character` (Character)  " );
+    DOC( "* `effect` (Effect)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_effect_removed", []( const sol::table & ) {} );
+
     DOC( "Called when a character is dead.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `char` (Character)  " );
@@ -573,6 +580,13 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `effect` (Effect)  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_mon_effect", []( const sol::table & ) {} );
+
+    DOC( "Called when monster loses the effect which has `EFFECT_LUA_ON_REMOVED` flag.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `mon` (Monster)  " );
+    DOC( "* `effect` (Effect)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_mon_effect_removed", []( const sol::table & ) {} );
 
     DOC( "Called when a monster is dead.  " );
     DOC( "The hook receives a table with keys:  " );
@@ -741,4 +755,6 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_time_types( lua );
     reg_effect( lua );
     reg_testing_library( lua );
+    reg_requirement( lua );
+    reg_inventory( lua );
 }

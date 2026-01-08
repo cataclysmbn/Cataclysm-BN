@@ -713,7 +713,8 @@
     "fake_item": "fake_firestarter",
     "act_cost": "1 kJ",
     "starting_bionic": true,
-    "points": 1
+    "points": 1,
+    "flags": [ "BIONIC_TOOLS" ]
   },
   {
     "id": "bio_lockpick",
@@ -723,7 +724,8 @@
     "occupied_bodyparts": [ [ "hand_r", 2 ] ],
     "fake_item": "pseudo_bio_picklock",
     "act_cost": "50 J",
-    "points": 2
+    "points": 2,
+    "flags": [ "BIONIC_TOOLS" ]
   },
   {
     "id": "bio_magnet",
@@ -1217,7 +1219,7 @@
     "description": "Extend or withdraw your integrated toolset to cut metal, pry things, or other stuff.  This takes up your hands.",
     "fake_item": "toolset_extended",
     "included": true,
-    "flags": [ "BIONIC_TOGGLED", "BIONIC_WEAPON" ]
+    "flags": [ "BIONIC_TOGGLED", "BIONIC_WEAPON", "BIONIC_TOOLS" ]
   },
   {
     "id": "bio_torsionratchet",
@@ -1502,7 +1504,8 @@
     "description": "Using this bionic allows you to check the status of any local grid connections or battery charge in your surroundings, as well as make modifications to grid connections.",
     "act_cost": "10 J",
     "fake_item": "voltmeter_bionic",
-    "included": true
+    "included": true,
+    "flags": [ "BIONIC_TOOLS" ]
   },
   {
     "id": "bio_electrosense_bscanner",

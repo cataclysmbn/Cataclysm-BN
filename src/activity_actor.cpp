@@ -1487,17 +1487,9 @@ void lockpick_activity_actor::start( player_activity &/*act*/, Character & )
     const optional_vpart_position veh = get_map().veh_at( target );
     const auto door_lock = veh.part_with_feature( "DOOR_LOCKING", true );
 
-    if( furn_type != f_null ) {
-        if( furn_type->lockpick_result.is_null() ) {
-            debugmsg( "%s lockpick_result is null", furn_type.id().str() );
-            return;
-        }
+    if( furn_type != f_null && !furn_type->lockpick_result.is_null() ) {
         progress.emplace( furn_type->name(), moves_total );
-    } else if( veh ) {
-        if( !door_lock ) {
-            debugmsg( "%s has no pickable part", furn_type.id().str() );
-            return;
-        }
+    } else if( veh && door_lock ) {
         progress.emplace( veh->vehicle().name, moves_total );
     } else {
         if( ter_type->lockpick_result.is_null() ) {

@@ -23,6 +23,7 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "cata_algo.h"
 #include "color.h"
 #include "creature.h"
 #include "damage.h"
@@ -65,6 +66,8 @@
 #include "type_id.h"
 #include "units.h"
 #include "ui_manager.h"
+#include "units_mass.h"
+#include "units_volume.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
@@ -243,7 +246,7 @@ class ExplosionEvent
 
             rl_vec2d position;
             float angle;
-            float velocity;
+            float velocity; //< more of a number of tiles it can fly
 
             float cur_relative_time;
         };
@@ -964,6 +967,116 @@ void ExplosionProcess::move_entity( const tripoint position,
             std::get<Creature *>( cur_target )->setpos( new_position );
         } else {
             item *target = &*std::get<safe_reference<item>>( cur_target );
+
+            if( get_option<bool>( "ITEM_DAMAGE_ON_FLYING_IMPACT" ) ) {
+                const auto weight = target->weight();
+                const auto vol = target->volume();
+                const auto total_vol_ml = units::to_milliliter( vol );
+                const auto unit_vol_ml =
+                    units::to_milliliter( vol ) / static_cast<double>( std::max( 1, target->count() ) );
+
+                const auto mass_kg = weight / 1000.0_gram;
+
+                const auto max_hardness = ( target->made_of()
+                | std::views::transform( []( const auto & x ) { return x.obj().bash_resist(); } )
+                | cata::ranges::max() ).value_or( 0 );
+
+                const auto acts_as_shrapnel = max_hardness >= 3 && unit_vol_ml < 50.0;
+                const auto effective_velocity_ms = new_velocity * ( acts_as_shrapnel ? 10.0 : 3.0 );
+                const auto kinetic_energy = 0.5 * mass_kg * std::pow( effective_velocity_ms, 2 );
+
+                // add_msg( "name: %s, ke: %.4f, vel: %.4f, mass: %.4fkg, vol: %dml, hard: %d, shrap: %d",
+                //          target->tname(), kinetic_energy, effective_velocity_ms,
+                //          mass_kg, units::to_milliliter( vol ),
+                //          max_hardness, static_cast<int>( acts_as_shrapnel ) );
+                damage_instance dmg;
+
+                const auto damage_per_joule = acts_as_shrapnel ? 0.15 : 0.1;
+                if( acts_as_shrapnel ) {
+                    const auto penetration_factor = 1.0 + ( 15.0 / ( total_vol_ml + 1.0 ) );
+                    const auto hardness_factor = 1.0 + ( max_hardness * 0.1 );
+
+                    const auto base_damage = kinetic_energy * penetration_factor * hardness_factor * damage_per_joule;
+                    const auto velocity_damage = effective_velocity_ms * 0.05;
+
+                    auto final_damage = static_cast<int>( base_damage + velocity_damage );
+                    if( effective_velocity_ms > 20 && final_damage < 1 ) { final_damage = 1; }
+
+                    // add_msg( m_debug, "SHRAPNEL: %s | KE: %.1f | Base: %.1f | VelDmg: %.1f | Final: %d",
+                    //          target->tname(), kinetic_energy, base_damage, velocity_damage, final_damage );
+
+                    const auto ap_val = static_cast<int>( final_damage * 0.8 );
+
+                    const damage_instance &thrown_dmg = target->base_damage_thrown();
+                    auto dt = DT_BASH;
+                    auto max_dmg = 0.0f;
+                    for( const damage_unit &du : thrown_dmg.damage_units ) {
+                        if( du.amount > max_dmg ) {
+                            max_dmg = du.amount;
+                            dt = du.type;
+                        }
+                    }
+                    dmg.add_damage( dt, final_damage, ap_val );
+                } else {
+                    auto dispersion =
+                        vol > 500_ml ? 500.0 / units::to_milliliter( vol ) : 1.0;
+                    if( max_hardness < 2 ) { dispersion *= 0.1; }
+
+                    const auto base_damage = kinetic_energy * dispersion * damage_per_joule;
+                    const auto momentum_damage = mass_kg * effective_velocity_ms * 0.5;
+                    const auto bash_damage = base_damage + momentum_damage;
+                    // add_msg( "BLUNT: %s | Mass: %.1f | Vel: %.1f | KE: %.1f | Mom: %.1f | Dmg: %f",
+                    //          target->tname(), mass_kg, effective_velocity_ms, kinetic_energy,
+                    //          momentum_damage, bash_damage );
+                    dmg.add_damage( DT_BASH, bash_damage, 0.0f, 3.0f );
+                }
+
+                if( !target->base_damage_thrown().empty() && new_velocity > 15 ) {
+                    dmg.add( target->base_damage_thrown() );
+                }
+
+                const auto to_next = [&] {
+                    new_velocity *= ExplosionConstants::RESTITUTION_COEFF;
+                    do_next = new_velocity >= 1;
+                };
+                const auto total_dmg = dmg.total_damage();
+                auto *hit_creature = g->critter_at( new_position );
+                if( total_dmg >= 1 && hit_creature ) {
+                    auto hit_part = bodypart_id( "torso" );
+                    if( one_in( 3 ) ) {
+                        hit_part = bodypart_id( "head" );
+                    } else if( one_in( 4 ) ) {
+                        hit_part = one_in( 2 ) ? bodypart_id( "arm_l" ) : bodypart_id( "arm_r" );
+                    } else if( one_in( 4 ) ) {
+                        hit_part = one_in( 2 ) ? bodypart_id( "leg_l" ) : bodypart_id( "leg_r" );
+                    }
+
+                    auto *attacker = emitter.has_value() ? emitter.value() : nullptr;
+                    auto dealt_damage = hit_creature->deal_damage( attacker, hit_part, dmg ).total_damage();
+
+                    if( get_avatar().sees( *hit_creature ) ) {
+                        if( dealt_damage > 0 ) {
+                            //~ %1$s: entity dealing damage, %2$s: target creature name, %3$d: damage value
+                            add_msg( _( "%1$s flies and hits %2$s for %3$d damage!" ),
+                                     target->tname(), hit_creature->disp_name(), dealt_damage );
+                        } else {
+                            //~ %1$s: entity dealing damage, %2$s: target creature name
+                            add_msg( _( "%1$s flies and hits %2$s but deals no damage." ),
+                                     target->tname(), hit_creature->disp_name() );
+                        }
+                    }
+                    to_next();
+                } else if( total_dmg >= 1 ) {
+                    const auto bash_str = static_cast<int>( std::lerp( std::sqrt( total_dmg ), total_dmg, 0.6 ) );
+                    const auto bash_result = here.bash( new_position, bash_str );
+
+                    if( bash_result.did_bash && bash_result.success && get_avatar().sees( new_position ) ) {
+                        //~ %1$s: item name
+                        add_msg( _( "%1$s flies and smashes into something!" ), target->tname() );
+                    }
+                    if( bash_result.did_bash ) { to_next(); }
+                }
+            }
 
             detached_ptr<item> detached = target->detach();
 

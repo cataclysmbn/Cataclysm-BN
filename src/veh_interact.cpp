@@ -221,6 +221,9 @@ struct veh_interact::install_info_t {
 veh_interact::veh_interact( vehicle &veh, point p )
     : dd( p ), veh( &veh ), main_context( "VEH_INTERACT" )
 {
+    stored_view_offset = get_avatar().view_offset;
+    get_avatar().view_offset = tripoint_zero;
+
     // Only build the shapes map and the wheel list once
     for( const auto &e : vpart_info::all() ) {
         const vpart_info &vp = e.second;
@@ -266,7 +269,10 @@ veh_interact::veh_interact( vehicle &veh, point p )
     move_cursor( point_zero );
 }
 
-veh_interact::~veh_interact() = default;
+veh_interact::~veh_interact()
+{
+    get_avatar().view_offset = stored_view_offset;
+}
 
 void veh_interact::allocate_windows()
 {

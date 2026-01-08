@@ -8,11 +8,11 @@ ui.query_any_key = function(str)
   popup:query()
 end
 
----@type fun(str: string): string
+---@type fun(str: string): boolean
 ui.query_yn = function(str)
   local popup = QueryPopup.new()
   popup:message(str)
-  return popup:query_yn()
+  return popup:query_yn() == "YES"
 end
 
 return ui
