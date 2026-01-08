@@ -72,7 +72,8 @@ void cata::detail::reg_game_api( sol::state &lua )
         auto category_id = opts.get_or( "category", std::string{ "misc" } );
         auto hotkey = opts.get<sol::optional<std::string>>( "hotkey" );
         auto hotkey_value = std::optional<std::string>{};
-        if( hotkey ) {
+        if( hotkey )
+        {
             hotkey_value = std::move( *hotkey );
         }
         auto callback = opts.get_or<sol::protected_function>( "callback", sol::lua_nil );
