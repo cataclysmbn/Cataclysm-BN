@@ -3,7 +3,7 @@
 #include <functional>
 #include <string_view>
 
-#include "catalua_sol.h"
+#include "catalua_sol_fwd.h"
 #include "catalua.h"
 
 namespace cata

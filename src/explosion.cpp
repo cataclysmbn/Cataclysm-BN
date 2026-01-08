@@ -20,6 +20,7 @@
 #include "avatar.h"
 #include "ballistics.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
