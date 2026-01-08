@@ -1866,7 +1866,7 @@ class bionic_install_preset: public inventory_selector_preset
                        !pa.has_bionic( bid->upgraded_bionic ) &&
                        it->is_upgrade() ) {
                 return _( "No base version installed" );
-            } else if( pa.has_upgraded_bionic( bid ) ) {
+            } else if( character_funcs::has_upgraded_bionic( pa, bid ) ) {
                 return _( "Superior version installed" );
             } else if( pa.is_npc() && !bid->has_flag( flag_BIONIC_NPC_USABLE ) ) {
                 return _( "CBM not usable by NPC's" );

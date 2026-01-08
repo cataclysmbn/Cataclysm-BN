@@ -2145,16 +2145,6 @@ bool Character::has_active_bionic_with_fake( const itype_id &it ) const
     return false;
 }
 
-bool Character::has_upgraded_bionic( const bionic_id &b ) const
-{
-    for( bionic_id bio : b->available_upgrades ) {
-        if( this->has_bionic( bio ) ) {
-            return true;
-        }
-    }
-    return false;
-}
-
 int Character::count_bionic_of_type( const bionic_id &bio ) const
 {
     int i = 0;
