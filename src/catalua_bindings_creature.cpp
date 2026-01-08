@@ -19,6 +19,8 @@
 #include "field_type.h"
 #include "flag.h"
 #include "flag_trait.h"
+#include "inventory.h"
+#include "magic.h"
 #include "map.h"
 #include "monfaction.h"
 #include "monster.h"
@@ -29,6 +31,7 @@
 #include "player.h"
 #include "pldata.h"
 #include "recipe.h"
+#include "requirements.h"
 #include "skill.h"
 #include "type_id.h"
 
@@ -172,8 +175,11 @@ void cata::detail::reg_creature( sol::state &lua )
 
         SET_FX_T( clear_effects, void() );
 
+        DOC( "Sets an arbitrary key : value pair for the creature.NPC dialogue system uses this, with the format(\"npctalk_var\" + \"_\" + type_var + \"_\" + var_context + \"_\" + var_base_name) used for the key, skipping type or context if empty." );
         SET_FX_T( set_value, void( const std::string &, const std::string & ) );
+        DOC( "Removes an arbitrary entry using the same key format as set_value." );
         SET_FX_T( remove_value, void( const std::string & ) );
+        DOC( "Retrieves an arbitrary entry using the same key format as set_value." );
         SET_FX_T( get_value, std::string( const std::string & ) const );
 
         SET_FX_T( get_weight, units::mass() const );
@@ -251,6 +257,10 @@ void cata::detail::reg_creature( sol::state &lua )
         SET_FX_T( set_all_parts_hp_cur, void( int ) );
         SET_FX_T( mod_all_parts_hp_cur, void( int ) );
         SET_FX_T( set_all_parts_hp_to_max, void() );
+
+        SET_FX_T( set_armor_bash_bonus, void( int ) );
+        SET_FX_T( set_armor_cut_bonus, void( int ) );
+        SET_FX_T( set_armor_bullet_bonus, void( int ) );
 
         SET_FX_T( get_speed_base, int() const );
         SET_FX_T( get_speed_bonus, int() const );
@@ -375,6 +385,12 @@ void cata::detail::reg_character( sol::state &lua )
         SET_MEMB( follower_ids );
 
         SET_MEMB( mutation_category_level );
+
+        // Magic system
+        DOC( "Access the character's spellbook and mana pool." );
+        luna::set_fx( ut, "get_magic", []( UT_CLASS & c ) -> known_magic& {
+            return *c.magic;
+        } );
 
         // Methods
         SET_FX_T( getID, character_id() const );
@@ -927,6 +943,24 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX( use_charges );
         SET_FX( use_charges_if_avail );
+
+        DOC( "Returns the crafting inventory for this character (includes nearby items)" );
+        luna::set_fx( ut, "crafting_inventory", []( UT_CLASS & ch ) -> const inventory & {
+            return ch.crafting_inventory( tripoint_zero, PICKUP_RANGE, true );
+        } );
+
+        DOC( "Invalidates the cached crafting inventory" );
+        SET_FX_T( invalidate_crafting_inventory, void() );
+
+        DOC( "Consumes items from inventory based on item component list" );
+        luna::set_fx( ut, "consume_items", []( UT_CLASS & ch, const std::vector<item_comp> &components ) -> void {
+            ch.consume_items( components );
+        } );
+
+        DOC( "Consumes tool charges from inventory based on tool component list" );
+        luna::set_fx( ut, "consume_tools", []( UT_CLASS & ch, const std::vector<tool_comp> &tools ) -> void {
+            ch.consume_tools( tools );
+        } );
 
     }
 #undef UT_CLASS // #define UT_CLASS Character

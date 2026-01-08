@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -16,6 +17,45 @@
 
 void cata::detail::reg_overmap( sol::state &lua )
 {
+    // Register overmapbuffer class
+    {
+        DOC( "Global overmap buffer that manages all overmap data" );
+        sol::usertype<overmapbuffer> ut =
+            luna::new_usertype<overmapbuffer>(
+                lua,
+                luna::no_bases,
+                luna::no_constructor
+            );
+
+        DOC( "Get all overmap tiles belonging to the electric grid at the given position" );
+        luna::set_fx( ut, "electric_grid_at",
+        []( overmapbuffer & buf, const tripoint & p ) -> std::vector<tripoint> {
+            return buf.electric_grid_at( tripoint_abs_omt( p ) )
+            | std::views::transform( []( const auto & p ) { return p.raw(); } )
+            | std::ranges::to<std::vector<tripoint>>();
+        } );
+
+        DOC( "Get all electric grid connections from the given position" );
+        luna::set_fx( ut, "electric_grid_connectivity_at",
+        []( overmapbuffer & buf, const tripoint & p ) -> std::vector<tripoint> {
+            return buf.electric_grid_connectivity_at( tripoint_abs_omt( p ) )
+            | std::views::transform( []( const auto & p ) { return p.raw(); } )
+            | std::ranges::to<std::vector<tripoint>>();
+        } );
+
+        DOC( "Add an electric grid connection between two positions" );
+        luna::set_fx( ut, "add_grid_connection",
+        []( overmapbuffer & buf, const tripoint & lhs, const tripoint & rhs ) -> bool {
+            return buf.add_grid_connection( tripoint_abs_omt( lhs ), tripoint_abs_omt( rhs ) );
+        } );
+
+        DOC( "Remove an electric grid connection between two positions" );
+        luna::set_fx( ut, "remove_grid_connection",
+        []( overmapbuffer & buf, const tripoint & lhs, const tripoint & rhs ) -> bool {
+            return buf.remove_grid_connection( tripoint_abs_omt( lhs ), tripoint_abs_omt( rhs ) );
+        } );
+    }
+
     // Register omt_find_params struct
 #define UT_CLASS omt_find_params
     {
@@ -79,14 +119,9 @@ void cata::detail::reg_overmap( sol::state &lua )
     luna::set_fx( lib, "find_all",
     []( const tripoint & origin, omt_find_params params ) -> std::vector<tripoint> {
         params.force_sync = true;
-        auto results = overmap_buffer.find_all( tripoint_abs_omt( origin ), params );
-        std::vector<tripoint> lua_results;
-        lua_results.reserve( results.size() );
-        for( const auto &r : results )
-        {
-            lua_results.push_back( r.raw() );
-        }
-        return lua_results;
+        return overmap_buffer.find_all( tripoint_abs_omt( origin ), params )
+        | std::views::transform( []( const auto & p ) { return p.raw(); } )
+        | std::ranges::to<std::vector<tripoint>>();
     } );
 
     DOC( "Find the closest overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found." );
@@ -116,9 +151,7 @@ void cata::detail::reg_overmap( sol::state &lua )
     // Terrain inspection methods
     DOC( "Get the overmap terrain type at the given position. Returns an oter_id." );
     luna::set_fx( lib, "ter",
-    []( const tripoint & p ) -> oter_id {
-        return overmap_buffer.ter( tripoint_abs_omt( p ) );
-    } );
+                  []( const tripoint & p ) -> oter_id { return overmap_buffer.ter( tripoint_abs_omt( p ) ); } );
 
     DOC( "Check if the terrain at the given position matches the type and match mode. Returns boolean." );
     luna::set_fx( lib, "check_ot",
@@ -143,6 +176,35 @@ void cata::detail::reg_overmap( sol::state &lua )
     luna::set_fx( lib, "is_explored",
     []( const tripoint & p ) -> bool {
         return overmap_buffer.is_explored( tripoint_abs_omt( p ) );
+    } );
+
+    // Electric grid methods
+    DOC( "Get all overmap tiles belonging to the electric grid at the given position. Returns vector of tripoints." );
+    luna::set_fx( lib, "electric_grid_at",
+    []( const tripoint & p ) -> std::vector<tripoint> {
+        return overmap_buffer.electric_grid_at( tripoint_abs_omt( p ) )
+        | std::views::transform( []( const auto & p ) { return p.raw(); } )
+        | std::ranges::to<std::vector<tripoint>>();
+    } );
+
+    DOC( "Get all electric grid connections from the given position. Returns vector of relative tripoint offsets." );
+    luna::set_fx( lib, "electric_grid_connectivity_at",
+    []( const tripoint & p ) -> std::vector<tripoint> {
+        return overmap_buffer.electric_grid_connectivity_at( tripoint_abs_omt( p ) )
+        | std::views::transform( []( const auto & p ) { return p.raw(); } )
+        | std::ranges::to<std::vector<tripoint>>();
+    } );
+
+    DOC( "Add an electric grid connection between two positions. Returns true on success." );
+    luna::set_fx( lib, "add_grid_connection",
+    []( const tripoint & lhs, const tripoint & rhs ) -> bool {
+        return overmap_buffer.add_grid_connection( tripoint_abs_omt( lhs ), tripoint_abs_omt( rhs ) );
+    } );
+
+    DOC( "Remove an electric grid connection between two positions. Returns true on success." );
+    luna::set_fx( lib, "remove_grid_connection",
+    []( const tripoint & lhs, const tripoint & rhs ) -> bool {
+        return overmap_buffer.remove_grid_connection( tripoint_abs_omt( lhs ), tripoint_abs_omt( rhs ) );
     } );
 
     luna::finalize_lib( lib );

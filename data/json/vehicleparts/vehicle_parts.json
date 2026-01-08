@@ -1108,7 +1108,7 @@
     "type": "vehicle_part",
     "id": "gas_sac_buoyancy_cell",
     "name": { "str": "gas sac buoyancy cell" },
-    "description": "Hydrogen-filled bags tied together.  Not light enough to provide lift for an airship, but can help a boat float.",
+    "description": "Hydrogen-filled bags tied together.  Can help a boat float or provide limited lift for an airship.",
     "symbol": "o",
     "looks_like": "t_wall_log",
     "color": "brown",
@@ -1123,10 +1123,19 @@
       "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "qualities": [ { "id": "CUT", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "rope_natural_short", 1 ] ] }
     },
-    "flags": [ "FLOATS", "SHOCK_IMMUNE" ],
+    "flags": [ "BALLOON", "FLOATS", "SHOCK_IMMUNE" ],
+    "height": 10,
     "//": "Todo: Should explode if destroyed by fire damage.",
     "breaks_into": [ { "item": "plastic_chunk", "count": [ 5, 10 ] } ],
     "damage_reduction": { "all": 5 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "gas_sac_buoyancy_cell_external",
+    "copy-from": "gas_sac_buoyancy_cell",
+    "name": { "str": "external gas sac buoyancy cell" },
+    "location": "under",
+    "extend": { "flags": [ "PROTUSION", "BOARDABLE", "EXTENDABLE", "AISLE", "ROOF" ] }
   },
   {
     "type": "vehicle_part",

@@ -1,4 +1,5 @@
 #include "character.h"
+#include "units_mass.h"
 #include "vehicle.h"
 #include "vehicle_part.h" // IWYU pragma: associated
 #include "units_temperature.h"
@@ -721,7 +722,8 @@ void vehicle::use_controls( const tripoint &pos )
         return;
     }
 
-    if( has_part( "ENGINE" ) && !( is_flying && has_part( VPFLAG_ROTOR ) ) ) {
+    if( has_part( "ENGINE" ) && !( is_flying &&
+                                   units::to_newton( total_mass() ) >= total_balloon_lift() && has_part( VPFLAG_ROTOR ) ) ) {
         if( you.controlling_vehicle || ( remote && engine_on ) ) {
             options.emplace_back( _( "Stop driving" ), keybind( "TOGGLE_ENGINE" ) );
             actions.emplace_back( [&] {

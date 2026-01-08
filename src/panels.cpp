@@ -2194,6 +2194,15 @@ static void draw_mana_wide( const player &u, const catacurses::window &w )
 
 static bool spell_panel()
 {
+    // If a mod says to always show it, then return early
+    if( get_option<bool>( "ALWAYS_SHOW_MANA" ) ) {
+        return true;
+    }
+    // Also return early if we're below our maximum capacity
+    if( get_avatar().magic->available_mana() < get_avatar().magic->max_mana( get_avatar() ) ) {
+        return true;
+    }
+    // Determine if any of the spells the player has take mana to cast
     std::vector<spell_id> spells = get_avatar().magic->spells();
     bool has_manacasting = false;
     for( spell_id sp : spells ) {

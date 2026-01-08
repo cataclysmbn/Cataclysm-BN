@@ -68,6 +68,8 @@ struct vehicle_preview_window {
         static constexpr int MAX_ZOOM = 64;
         static constexpr int DEFAULT_ZOOM = 16;
         int zoom = DEFAULT_ZOOM;
+        bool saved_original_zoom = false;
+        float original_zoom = DEFAULT_ZOOM;
 
         /**
          * Draw a single vehicle part at the given pixel position.

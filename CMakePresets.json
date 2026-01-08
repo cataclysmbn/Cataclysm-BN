@@ -29,6 +29,30 @@
       }
     },
     {
+      "name": "linux-curses",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "displayName": "Linux Slim Build (Curses)",
+      "description": "Target Linux.",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_AR": "llvm-ar",
+        "CMAKE_RANLIB": "llvm-ranlib",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CURSES": "ON",
+        "TILES": "OFF",
+        "SOUND": "OFF",
+        "USE_PREFIX_DATA_DIR": "OFF",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "LINKER": "mold",
+        "USE_TRACY": "OFF"
+      }
+    },
+    {
       "name": "linux-slim",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "displayName": "Linux Slim Build (Tiles, Sounds)",
@@ -206,6 +230,11 @@
       "configurePreset": "windows-tiles-sounds-x64-msvc",
       "targets": ["cataclysm-bn-tiles", "cata_test-tiles", "json_formatter", "translations"],
       "description": "Build for Windows with tiles and sounds using MSVC."
+    },
+    {
+      "name": "linux-curses",
+      "configurePreset": "linux-curses",
+      "description": "The minimal curses build preset for Linux."
     },
     {
       "name": "linux-slim",

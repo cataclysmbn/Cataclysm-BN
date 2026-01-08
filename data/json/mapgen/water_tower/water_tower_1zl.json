@@ -33,7 +33,7 @@
         "........................"
       ],
       "palettes": [ "water_tower" ],
-      "terrain": { " ": "t_metal_floor", ",": "t_open_air_rooved", ".": "t_open_air" }
+      "terrain": { " ": "t_bridge", ",": "t_open_air_rooved", ".": "t_open_air" }
     }
   }
 ]

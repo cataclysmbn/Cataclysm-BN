@@ -1564,9 +1564,26 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
                     continue;
                 }
 
-                // TODO: draw with outline / BG color for better readability
                 const uint32_t ch = text.at( i );
-                map_font->OutputChar( renderer, geometry, utf32_to_utf8( ch ), point( x, y ), ft.color );
+                const auto glyph = utf32_to_utf8( ch );
+                const bool outlined_white = ft.color == catacurses::white ||
+                                            ft.color == catacurses::white + 8;
+
+                if( outlined_white ) {
+                    static constexpr std::array<point, 4> outline_offsets = {
+                        point_east,
+                        point_north,
+                        point_west,
+                        point_south,
+                    };
+                    for( const point &offset : outline_offsets ) {
+                        map_font->OutputChar( renderer, geometry, glyph,
+                                              point( x + offset.x, y + offset.y ),
+                                              catacurses::black );
+                    }
+                }
+
+                map_font->OutputChar( renderer, geometry, glyph, point( x, y ), ft.color );
                 width += mk_wcwidth( ch );
             }
 

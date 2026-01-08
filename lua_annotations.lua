@@ -261,10 +261,10 @@ function BookRecipe.new() end
 ---@field activate_mutation fun(self: Character, arg2: MutationBranchId)
 ---@field add_addiction fun(self: Character, arg2: AddictionType, arg3: integer)
 ---@field add_bionic fun(self: Character, arg2: BionicDataId)
----@field addiction_level fun(self: Character, arg2: AddictionType): integer
 ---@field add_item fun(self: Character, arg2: Detached<Item>) @Adds a detached item to the player inventory
 ---@field add_item_with_id fun(self: Character, arg2: ItypeId, arg3: integer): Item @DEPRECATED: use create_item instead
 ---@field add_morale fun(self: Character, arg2: MoraleTypeDataId, arg3: integer, arg4: integer, arg5: TimeDuration, arg6: TimeDuration, arg7: boolean, arg8: ItypeRaw)
+---@field addiction_level fun(self: Character, arg2: AddictionType): integer
 ---@field age fun(self: Character): integer
 ---@field all_items fun(self: Character, arg2: boolean): Item[] @Gets all items
 ---@field all_items_with_flag fun(self: Character, arg2: JsonFlagId, arg3: boolean): Item[] @Gets all items with the given flag
@@ -277,7 +277,6 @@ function BookRecipe.new() end
 ---@field blossoms fun(self: Character)
 ---@field bodypart_exposure fun(self: Character): table<BodyPartTypeIntId, number>
 ---@field bodyweight fun(self: Character): Mass
----@field cancel_activity fun(self: Character)
 ---@field can_hear fun(self: Character, arg2: Tripoint, arg3: integer): boolean
 ---@field can_mount fun(self: Character, arg2: Monster): boolean
 ---@field can_pick_volume fun(self: Character, arg2: Volume): boolean
@@ -287,13 +286,17 @@ function BookRecipe.new() end
 ---@field can_unwield fun(self: Character, arg2: Item): boolean
 ---@field can_wear fun(self: Character, arg2: Item, arg3: boolean): boolean @Checks if creature can wear a given item. If boolean parameter is true, ignores already worn items
 ---@field can_wield fun(self: Character, arg2: Item): boolean
+---@field cancel_activity fun(self: Character)
 ---@field check_mount_is_spooked fun(self: Character): boolean
 ---@field check_mount_will_move fun(self: Character, arg2: Tripoint): boolean
 ---@field clear_bionics fun(self: Character)
 ---@field clear_morale fun(self: Character)
 ---@field clear_mutations fun(self: Character)
 ---@field clear_skills fun(self: Character)
+---@field consume_items fun(self: Character, arg2: any[]) @Consumes items from inventory based on item component list
+---@field consume_tools fun(self: Character, arg2: any[]) @Consumes tool charges from inventory based on tool component list
 ---@field cough fun(self: Character, arg2: boolean, arg3: integer)
+---@field crafting_inventory fun(self: Character): Inventory @Returns the crafting inventory for this character (includes nearby items)
 ---@field create_item fun(self: Character, arg2: ItypeId, arg3: integer): Item @Creates and an item with the given id and amount to the player inventory
 ---@field crossed_threshold fun(self: Character): boolean
 ---@field deactivate_mutation fun(self: Character, arg2: MutationBranchId)
@@ -318,13 +321,13 @@ function BookRecipe.new() end
 ---@field get_healthy_mod fun(self: Character): number
 ---@field get_highest_category fun(self: Character): MutationCategoryTraitId
 ---@field get_hostile_creatures fun(self: Character, arg2: integer): Creature[]
----@field getID fun(self: Character): CharacterId
 ---@field get_int fun(self: Character): integer
 ---@field get_int_base fun(self: Character): integer
 ---@field get_int_bonus fun(self: Character): integer
 ---@field get_item_with_id fun(self: Character, arg2: ItypeId, arg3: boolean): Item @Gets the first occurrence of an item with the given id
 ---@field get_kcal_percent fun(self: Character): number
 ---@field get_lowest_hp fun(self: Character): integer
+---@field get_magic fun(self: Character): KnownMagic @Access the character's spellbook and mana pool.
 ---@field get_max_power_level fun(self: Character): Energy
 ---@field get_melee_stamina_cost fun(self: Character, arg2: Item): integer
 ---@field get_morale fun(self: Character, arg2: MoraleTypeDataId): integer
@@ -359,6 +362,7 @@ function BookRecipe.new() end
 ---@field get_working_arm_count fun(self: Character): integer
 ---@field get_working_leg_count fun(self: Character): integer
 ---@field get_worn_items fun(self: Character): Item[]
+---@field getID fun(self: Character): CharacterId
 ---@field global_sm_location fun(self: Character): Tripoint
 ---@field global_square_location fun(self: Character): Tripoint
 ---@field has_active_bionic fun(self: Character, arg2: BionicDataId): boolean
@@ -393,6 +397,7 @@ function BookRecipe.new() end
 ---@field hurtall fun(self: Character, arg2: integer, arg3: Creature, arg4: boolean)
 ---@field in_climate_control fun(self: Character): boolean
 ---@field inv_remove_item fun(self: Character, arg2: Item): Detached<Item> @DEPRECATED: use remove_item instead
+---@field invalidate_crafting_inventory fun(self: Character) @Invalidates the cached crafting inventory
 ---@field irradiate fun(self: Character, arg2: number, arg3: boolean): boolean
 ---@field is_armed fun(self: Character): boolean
 ---@field is_blind fun(self: Character): boolean
@@ -416,9 +421,9 @@ function BookRecipe.new() end
 ---@field is_wearing_power_armor fun(self: Character, arg2: boolean): boolean
 ---@field is_wielding fun(self: Character, arg2: Item): boolean
 ---@field is_worn fun(self: Character, arg2: Item): boolean
----@field items_with fun(self: Character, arg2: bool): Item[] @Filters items
 ---@field item_worn_with_flag fun(self: Character, arg2: JsonFlagId, arg3: BodyPartTypeIntId): Item
 ---@field item_worn_with_id fun(self: Character, arg2: ItypeId, arg3: BodyPartTypeIntId): Item
+---@field items_with fun(self: Character, arg2: bool): Item[] @Filters items
 ---@field knows_recipe fun(self: Character, arg2: RecipeId): boolean
 ---@field learn_recipe fun(self: Character, arg2: RecipeId)
 ---@field mabuff_armor_bonus fun(self: Character, arg2: DamageType): integer
@@ -456,9 +461,9 @@ function BookRecipe.new() end
 ---@field mount_creature fun(self: Character, arg2: Monster)
 ---@field mutate fun(self: Character)
 ---@field mutate_category fun(self: Character, arg2: MutationCategoryTraitId)
----@field mutate_towards fun(self: Character, arg2: MutationBranchId[], arg3: integer): boolean
----@field mutate_towards fun(self: Character, arg2: MutationBranchId[], arg3: integer): boolean | fun(self: Character, arg2: MutationBranchId): boolean
 ---@field mutate_towards fun(self: Character, arg2: MutationBranchId): boolean
+---@field mutate_towards fun(self: Character, arg2: MutationBranchId[], arg3: integer): boolean | fun(self: Character, arg2: MutationBranchId): boolean
+---@field mutate_towards fun(self: Character, arg2: MutationBranchId[], arg3: integer): boolean
 ---@field mutation_armor fun(self: Character, arg2: BodyPartTypeIntId, arg3: DamageType): number
 ---@field mutation_effect fun(self: Character, arg2: MutationBranchId)
 ---@field mutation_loss_effect fun(self: Character, arg2: MutationBranchId)
@@ -475,8 +480,8 @@ function BookRecipe.new() end
 ---@field remove_worn fun(self: Character, arg2: Item): Detached<Item>? @Attempts to remove the worn `Item` from character.
 ---@field reset fun(self: Character)
 ---@field reset_encumbrance fun(self: Character)
----@field restore_scent fun(self: Character)
 ---@field rest_quality fun(self: Character): number
+---@field restore_scent fun(self: Character)
 ---@field rooted fun(self: Character)
 ---@field rust_rate fun(self: Character): integer
 ---@field set_base_age fun(self: Character, arg2: integer)
@@ -486,7 +491,6 @@ function BookRecipe.new() end
 ---@field set_fatigue fun(self: Character, arg2: integer)
 ---@field set_healthy fun(self: Character, arg2: number)
 ---@field set_healthy_mod fun(self: Character, arg2: number)
----@field setID fun(self: Character, arg2: CharacterId, arg3: boolean)
 ---@field set_int_bonus fun(self: Character, arg2: integer)
 ---@field set_max_power_level fun(self: Character, arg2: Energy)
 ---@field set_movement_mode fun(self: Character, arg2: CharacterMoveMode)
@@ -505,6 +509,7 @@ function BookRecipe.new() end
 ---@field set_str_bonus fun(self: Character, arg2: integer)
 ---@field set_temp_btu fun(self: Character, arg2: integer) @Sets ALL body parts on a creature to the given temperature (in Body Temperature Units).
 ---@field set_thirst fun(self: Character, arg2: integer)
+---@field setID fun(self: Character, arg2: CharacterId, arg3: boolean)
 ---@field shout fun(self: Character, arg2: string, arg3: boolean)
 ---@field sight_impaired fun(self: Character): boolean
 ---@field spores fun(self: Character)
@@ -591,7 +596,7 @@ function CharacterId.new() end
 ---@field get_speed_base fun(self: Creature): integer
 ---@field get_speed_bonus fun(self: Creature): integer
 ---@field get_speed_mult fun(self: Creature): number
----@field get_value fun(self: Creature, arg2: string): string
+---@field get_value fun(self: Creature, arg2: string): string @Retrieves an arbitrary entry using the same key format as set_value.
 ---@field get_weight fun(self: Creature): Mass
 ---@field get_weight_capacity fun(self: Creature): integer
 ---@field has_effect fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId?): boolean
@@ -623,17 +628,20 @@ function CharacterId.new() end
 ---@field power_rating fun(self: Creature): number
 ---@field ranged_target_size fun(self: Creature): number
 ---@field remove_effect fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId?): boolean
----@field remove_value fun(self: Creature, arg2: string)
+---@field remove_value fun(self: Creature, arg2: string) @Removes an arbitrary entry using the same key format as set_value.
 ---@field sees fun(self: Creature, arg2: Creature): boolean
 ---@field set_all_parts_hp_cur fun(self: Creature, arg2: integer)
 ---@field set_all_parts_hp_to_max fun(self: Creature)
+---@field set_armor_bash_bonus fun(self: Creature, arg2: integer)
+---@field set_armor_bullet_bonus fun(self: Creature, arg2: integer)
+---@field set_armor_cut_bonus fun(self: Creature, arg2: integer)
 ---@field set_moves fun(self: Creature, arg2: integer)
 ---@field set_pain fun(self: Creature, arg2: integer)
 ---@field set_part_hp_cur fun(self: Creature, arg2: BodyPartTypeIntId, arg3: integer)
 ---@field set_part_hp_max fun(self: Creature, arg2: BodyPartTypeIntId, arg3: integer)
 ---@field set_pos_ms fun(self: Creature, arg2: Tripoint)
 ---@field set_underwater fun(self: Creature, arg2: boolean)
----@field set_value fun(self: Creature, arg2: string, arg3: string)
+---@field set_value fun(self: Creature, arg2: string, arg3: string) @Sets an arbitrary key : value pair for the creature.NPC dialogue system uses this, with the format("npctalk_var" + "_" + type_var + "_" + var_context + "_" + var_base_name) used for the key, skipping type or context if empty.
 ---@field sight_range fun(self: Creature, arg2: integer): integer
 ---@field size_melee_penalty fun(self: Creature): integer
 ---@field skin_name fun(self: Creature): string
@@ -703,15 +711,28 @@ DiseaseTypeId = {}
 ---@overload fun(arg1: string): DiseaseTypeId
 function DiseaseTypeId.new() end
 
+--- A grid that organizes producers, storage and consumers of a resource like electricity
 ---@class DistributionGrid
----@field get_resource fun(self: DistributionGrid, arg2: boolean): integer @Boolean argument controls recursive behavior
----@field mod_resource fun(self: DistributionGrid, arg2: integer, arg3: boolean): integer @Boolean argument controls recursive behavior
+---@field empty fun(self: DistributionGrid): boolean @Check if grid is empty
+---@field get_contents fun(self: DistributionGrid): any[] @Get current resource amount. Boolean argument (optional) controls recursive behavior (default true)<br />Get vector of absolute map square coordinates of grid contents
+---@field get_power_stat fun(self: DistributionGrid): PowerStat @Get power generation and consumption statistics for the grid
+---@field get_resource fun(self: DistributionGrid, arg2: boolean?): integer @Modify resource amount. First argument is amount, second (optional) controls recursive behavior (default true)
+---@field is_valid fun(self: DistributionGrid): boolean @Check if grid is valid
+---@field mod_resource fun(self: DistributionGrid, arg2: integer, arg3: boolean?): integer
+---@field update fun(self: DistributionGrid, arg2: TimePoint) @Update the grid to the given time point
 DistributionGrid = {}
 ---@return DistributionGrid
 function DistributionGrid.new() end
 
+--- Manages all active distribution grids
 ---@class DistributionGridTracker
----@field get_grid_at_abs_ms fun(self: DistributionGridTracker, arg2: Tripoint): DistributionGrid
+---@field debug_grid_id fun(self: DistributionGridTracker, arg2: Tripoint): integer @Get unique identifier for grid at given overmap tile (for debug purposes, returns 0 if no grid)
+---@field grid_at fun(self: DistributionGridTracker, arg2: Tripoint): DistributionGrid | fun(self: DistributionGridTracker, arg2: Tripoint): DistributionGrid @Get grid at absolute map square position
+---@field load fun(self: DistributionGridTracker, arg2: Map) @Load grids for the given map
+---@field on_changed fun(self: DistributionGridTracker, arg2: Tripoint) @Notify tracker that a tile at the given position has changed
+---@field on_options_changed fun(self: DistributionGridTracker) @Notify tracker that game options have changed
+---@field on_saved fun(self: DistributionGridTracker) @Notify tracker that the game has been saved
+---@field update fun(self: DistributionGridTracker, arg2: TimePoint) @Update all grids to the given time point
 DistributionGridTracker = {}
 ---@return DistributionGridTracker
 function DistributionGridTracker.new() end
@@ -931,6 +952,23 @@ function FurnIntId.new() end
 FurnRaw = {}
 ---@return FurnRaw
 function FurnRaw.new() end
+
+--- Look up requirement_data by ID string. Returns nil if not found.
+--- Represents a character's inventory
+---@class Inventory
+---@field clear fun(self: Inventory) @Clear all items from the inventory
+---@field count_item fun(self: Inventory, arg2: ItypeId): integer @Count items of a specific type
+---@field find_item fun(self: Inventory, arg2: integer): Item @Find item at position
+---@field has_charges fun(self: Inventory, arg2: ItypeId, arg3: integer): boolean @Check if inventory has the specified charges
+---@field has_components fun(self: Inventory, arg2: ItypeId, arg3: integer): boolean @Check if inventory has the specified components
+---@field has_tools fun(self: Inventory, arg2: ItypeId, arg3: integer): boolean @Check if inventory has the specified tool
+---@field position_by_type fun(self: Inventory, arg2: ItypeId): integer @Get item position by type
+---@field size fun(self: Inventory): integer @Get the number of item stacks in the inventory
+---@field volume fun(self: Inventory): Volume @Get the total volume of the inventory
+---@field weight fun(self: Inventory): Mass @Get the total weight of the inventory
+Inventory = {}
+---@return Inventory
+function Inventory.new() end
 
 ---@class IslotAmmo : RangedData
 ---@field ammo_effects AmmunitionEffectId[]
@@ -1183,8 +1221,8 @@ function IslotSeed.new() end
 ---@field ammo_id AmmunitionTypeId[]
 ---@field charge_factor integer
 ---@field charges_per_use integer
----@field default_ammo ItypeId
 ---@field def_charges integer
+---@field default_ammo ItypeId
 ---@field max_charges integer
 ---@field power_draw integer
 ---@field rand_charges integer[]
@@ -1360,7 +1398,7 @@ function Item.new() end
 ---@field stored_volume fun(self: ItemStack): Volume
 ---@field __index fun(self: ItemStack, arg2: integer): Item
 ---@field __len fun(self: ItemStack): integer
----@field __pairs fun(self: ItemStack): (CppVal<std_tuple<sol_basic_object<sol_basic_reference<false>>,sol_basic_object<sol_basic_reference<false>>>(*)(sol_user<_item_stack_lua_it_state>,sol_this_state)>,CppVal<sol_user<_item_stack_lua_it_state>>,nil)
+---@field __pairs fun(self: ItemStack): (CppVal<std_tuple<sol_basic_object<sol_basic_reference<0>>,sol_basic_object<sol_basic_reference<0>>>(__cdecl)(sol_user<_item_stack_lua_it_state>,sol_this_state)>,CppVal<sol_user<_item_stack_lua_it_state>>,nil)
 ItemStack = {}
 ---@return ItemStack
 function ItemStack.new() end
@@ -1496,6 +1534,27 @@ JsonTraitFlagId = {}
 ---@overload fun(arg1: string): JsonTraitFlagId
 function JsonTraitFlagId.new() end
 
+--- Represents a character's spellbook and mana pool. Manages all spells known by a character, their mana, and spell learning/forgetting.
+---@class KnownMagic
+---@field casting_ignore boolean @Whether casting ignores all distractions. Can be read and written.
+---@field available_mana fun(self: KnownMagic): integer @Get the current available mana.
+---@field can_learn_spell fun(self: KnownMagic, arg2: Character, arg3: SpellTypeId): boolean @Check if the character can learn a specific spell, considering traits and other restrictions.
+---@field forget_spell fun(self: KnownMagic, arg2: SpellTypeId) @Forget a known spell by spell_id.
+---@field get_spell fun(self: KnownMagic, arg2: SpellTypeId): Spell @Get a reference to a known spell for editing. Returns the spell associated with the given spell_id.
+---@field get_spells fun(self: KnownMagic): Spell[] @Get all known spells as a vector of spell pointers.
+---@field has_enough_energy fun(self: KnownMagic, arg2: Character, arg3: Spell): boolean @Check if the character has enough energy (of the appropriate type) to cast the given spell.
+---@field knows_spell fun(self: KnownMagic, arg2: SpellTypeId): boolean | fun(self: KnownMagic): boolean @Check if the character knows a specific spell by spell_id.
+---@field learn_spell fun(self: KnownMagic, arg2: SpellTypeId, arg3: Character, arg4: boolean?) @Learn a new spell. Requires a Character reference and spell_id. Optional force(boolean) parameter bypasses restrictions.
+---@field mana_regen_rate fun(self: KnownMagic, arg2: Character): number @Get the mana regeneration rate in units per turn for the given character.
+---@field max_mana fun(self: KnownMagic, arg2: Character): integer @Get the maximum mana for the given character.
+---@field mod_mana fun(self: KnownMagic, arg2: Character, arg3: integer) @Modify the current mana by adding or subtracting an amount.
+---@field set_mana fun(self: KnownMagic, arg2: integer) @Set the current mana to a specific value.
+---@field spells fun(self: KnownMagic): SpellTypeId[] @Get a vector of all known spell IDs.
+---@field time_to_learn_spell fun(self: KnownMagic, arg2: Character, arg3: SpellTypeId): integer @Calculate the time in moves required for the character to memorize/learn a spell.
+KnownMagic = {}
+---@return KnownMagic
+function KnownMagic.new() end
+
 ---@class Map
 ---@field add_field_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId, arg4: integer, arg5: TimeDuration): boolean
 ---@field add_item fun(self: Map, arg2: Tripoint, arg3: Detached<Item>): Detached<Item> @Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed.
@@ -1538,7 +1597,7 @@ function Map.new() end
 ---@field as_item_stack fun(self: MapStack): ItemStack
 ---@field __index fun(arg1: ItemStack, arg2: integer): Item
 ---@field __len fun(arg1: ItemStack): integer
----@field __pairs fun(arg1: ItemStack): (CppVal<std_tuple<sol_basic_object<sol_basic_reference<false>>,sol_basic_object<sol_basic_reference<false>>>(*)(sol_user<_item_stack_lua_it_state>,sol_this_state)>,CppVal<sol_user<_item_stack_lua_it_state>>,nil)
+---@field __pairs fun(arg1: ItemStack): (CppVal<std_tuple<sol_basic_object<sol_basic_reference<0>>,sol_basic_object<sol_basic_reference<0>>>(__cdecl)(sol_user<_item_stack_lua_it_state>,sol_this_state)>,CppVal<sol_user<_item_stack_lua_it_state>>,nil)
 MapStack = {}
 ---@return MapStack
 function MapStack.new() end
@@ -2087,6 +2146,16 @@ OterIntId = {}
 ---@overload fun(arg1: OterId): OterIntId
 function OterIntId.new() end
 
+--- Global overmap buffer that manages all overmap data
+---@class OvermapBuffer
+---@field add_grid_connection fun(self: OvermapBuffer, arg2: Tripoint, arg3: Tripoint): boolean @Add an electric grid connection between two positions
+---@field electric_grid_at fun(self: OvermapBuffer, arg2: Tripoint): Tripoint[] @Get all overmap tiles belonging to the electric grid at the given position
+---@field electric_grid_connectivity_at fun(self: OvermapBuffer, arg2: Tripoint): Tripoint[] @Get all electric grid connections from the given position
+---@field remove_grid_connection fun(self: OvermapBuffer, arg2: Tripoint, arg3: Tripoint): boolean @Remove an electric grid connection between two positions
+OvermapBuffer = {}
+---@return OvermapBuffer
+function OvermapBuffer.new() end
+
 ---@class Player : Character, Creature
 Player = {}
 ---@return Player
@@ -2122,6 +2191,16 @@ function Point.new() end
 PopupInputStr = {}
 ---@return PopupInputStr
 function PopupInputStr.new() end
+
+--- Power generation and consumption statistics for a grid
+---@class PowerStat
+---@field gen_w integer @Power generation in watts
+---@field use_w integer @Power consumption in watts
+---@field net_w fun(self: PowerStat): integer @Net power (generation - consumption) in watts
+---@field __add fun(self: PowerStat, arg2: PowerStat): PowerStat
+PowerStat = {}
+---@return PowerStat
+function PowerStat.new() end
 
 ---@class QualityId
 ---@field NULL_ID fun(): QualityId
@@ -2193,7 +2272,7 @@ function RecipeId.new() end
 ---@field ident fun(self: RecipeRaw): RecipeId @DEPRECATED: use recipe_id instead
 ---@field recipe_id fun(self: RecipeRaw): RecipeId
 ---@field result fun(self: RecipeRaw): ItypeId
----@field result_name fun(self: RecipeRaw): string
+---@field result_name fun(self: RecipeRaw, arg2: boolean): string
 RecipeRaw = {}
 ---@return RecipeRaw
 function RecipeRaw.new() end
@@ -2206,6 +2285,24 @@ function RecipeRaw.new() end
 Relic = {}
 ---@return Relic
 function Relic.new() end
+
+--- Represents crafting requirements (tools, components, qualities)
+---@class RequirementData
+---@field can_make_with_inventory fun(self: RequirementData, arg2: Inventory): boolean @Check if requirements can be made with given inventory
+---@field get_components fun(self: RequirementData): any[][] @Get list of all required components
+---@field get_qualities fun(self: RequirementData): any[][] @Get list of all required qualities
+---@field get_tools fun(self: RequirementData): any[][] @Get list of all required tools
+---@field id fun(self: RequirementData): string @Get the requirement ID as string
+---@field is_blacklisted fun(self: RequirementData): boolean @Check if this requirement is blacklisted
+---@field is_empty fun(self: RequirementData): boolean @Check if this requirement is empty
+---@field is_null fun(self: RequirementData): boolean @Check if this is a null requirement
+---@field list_all fun(self: RequirementData): string @Get a formatted list of all requirements
+---@field list_missing fun(self: RequirementData): string @Get a formatted list of missing requirements
+---@field serialize fun(self: RequirementData, arg2: any) @Multiply requirements by a scalar (e.g. for batch crafting)
+---@field deserialize fun(self: RequirementData, arg2: any)
+RequirementData = {}
+---@return RequirementData
+function RequirementData.new() end
 
 ---@class Resistances
 ---@field get_all_resist fun(self: Resistances): table<DamageType, number>
@@ -2644,6 +2741,8 @@ coords = {}
 ---@field choose_direction fun(arg1: string, arg2: boolean?): Tripoint?
 ---@field create_item fun(arg1: ItypeId, arg2: integer): Detached<Item> @Spawns a new item. Same as Item::spawn 
 ---@field current_turn fun(): TimePoint
+---@field direction_from fun(arg1: Tripoint): any @Get direction from a tripoint delta
+---@field direction_name fun(arg1: any): string @Get direction name from direction enum
 ---@field get_avatar fun(): Avatar
 ---@field get_character_at fun(arg1: Tripoint, arg2: boolean?): Character
 ---@field get_creature_at fun(arg1: Tripoint, arg2: boolean?): Creature
@@ -2651,6 +2750,7 @@ coords = {}
 ---@field get_map fun(): Map
 ---@field get_monster_at fun(arg1: Tripoint, arg2: boolean?): Monster
 ---@field get_npc_at fun(arg1: Tripoint, arg2: boolean?): Npc
+---@field get_overmap_buffer fun(): OvermapBuffer @Get the global overmap buffer
 ---@field look_around fun(): Tripoint?
 ---@field place_monster_around fun(arg1: MonsterTypeId, arg2: Tripoint, arg3: integer): Monster
 ---@field place_monster_at fun(arg1: MonsterTypeId, arg2: Tripoint): Monster
@@ -2660,6 +2760,7 @@ coords = {}
 ---@field play_variant_sound fun(arg1: string, arg2: string, arg3: integer) | fun(arg1: string, arg2: string, arg3: integer, arg4: Angle, arg5: number, arg6: number)
 ---@field remove_npc_follower fun(arg1: Npc)
 ---@field rng fun(arg1: integer, arg2: integer): integer
+---@field six_cardinal_directions fun(): Tripoint[] @Get the six cardinal directions (N, S, E, W, Up, Down)
 ---@field turn_zero fun(): TimePoint
 gapi = {}
 
@@ -2680,6 +2781,7 @@ gdebug = {}
 ---@field on_character_death fun(params: table) @Called when a character is dead.  <br />The hook receives a table with keys:  <br />* `char` (Character)  <br />* `killer` (Creature)  
 ---@field on_character_effect fun(params: table) @Called when character is on the effect which has `EFFECT_LUA_ON_TICK` flag.  <br />The hook receives a table with keys:  <br />* `character` (Character)  <br />* `effect` (Effect)  
 ---@field on_character_effect_added fun(params: table) @Called when character gets the effect which has `EFFECT_LUA_ON_ADDED` flag.  <br />The hook receives a table with keys:  <br />* `char` (Character)  <br />* `effect` (Effect)  
+---@field on_character_effect_removed fun(params: table) @Called when character loses the effect which has `EFFECT_LUA_ON_REMOVED` flag.  <br />The hook receives a table with keys:  <br />* `character` (Character)  <br />* `effect` (Effect)  
 ---@field on_character_reset_stats fun(params: table) @Called when character stat gets reset.  <br />The hook receives a table with keys:  <br />* `character` (Character)  
 ---@field on_creature_blocked fun(params: table) @Called when a character successfully blocks.  <br />The hook receives a table with keys:  <br />* `char` (Character)  <br />* `source` (Creature)  <br />* `bodypart_id` (BodyPartTypeId)  <br />* `damage_instance` (DamageInstance)  <br />* `damage_blocked` (float)  
 ---@field on_creature_dodged fun(params: table) @Called when a character or monster successfully dodges.  <br />The hook receives a table with keys:  <br />* `char` (Character)  <br />* `source` (Creature)  <br />* `difficulty` (integer)  
@@ -2693,6 +2795,7 @@ gdebug = {}
 ---@field on_mon_death fun(params: table) @Called when a monster is dead.  <br />The hook receives a table with keys:  <br />* `mon` (Monster)  <br />* `killer` (Creature)  
 ---@field on_mon_effect fun(params: table) @Called when character is on the effect which has `EFFECT_LUA_ON_TICK` flag.  <br />The hook receives a table with keys:  <br />* `mon` (Monster)  <br />* `effect` (Effect)  
 ---@field on_mon_effect_added fun(params: table) @Called when monster gets the effect which has `EFFECT_LUA_ON_ADDED` flag.  <br />The hook receives a table with keys:  <br />* `mon` (Monster)  <br />* `effect` (Effect)  
+---@field on_mon_effect_removed fun(params: table) @Called when monster loses the effect which has `EFFECT_LUA_ON_REMOVED` flag.  <br />The hook receives a table with keys:  <br />* `mon` (Monster)  <br />* `effect` (Effect)  
 ---@field on_shoot fun(params: table) @Called when shot(s) is fired from a gun.  <br />The hook receives a table with keys:  <br />* `shooter` (Character)  <br />* `target_pos` (Tripoint)  <br />* `shots` (int)  <br />* `gun` (item)  <br />* `ammo` (item): For `RELOAD_AND_SHOOT` guns like a bow. On the others, it returns `nil` value.  
 ---@field on_throw fun(params: table) @Called when an item is thrown.  <br />The hook receives a table with keys:  <br />* `thrower` (Character)  <br />* `target_pos` (Tripoint)  <br />* `throw_from_pos` (Tripoint)  <br />* `thrown` (item)  
 ---@field on_weather_changed fun(params: table) @Called when the weather has changed.  <br />The hook receives a table with keys:  <br />* `weather_id` (string): Current weather ID  <br />* `old_weather_id` (string): Previous weather ID  <br />* `temperature` (float): Current temperature in Celsius  <br />* `temperature_f` (float): Current temperature in Fahrenheit  <br />* `windspeed` (float): Wind speed  <br />* `winddirection` (integer): Wind direction in degrees  <br />* `humidity` (float): Humidity percentage  <br />* `pressure` (float): Atmospheric pressure  <br />* `is_sheltered` (boolean): Whether player is sheltered  
@@ -2709,11 +2812,15 @@ locale = {}
 
 --- Global overmap buffer interface for finding and inspecting overmap terrain.
 ---@class overmapbuffer
+---@field add_grid_connection fun(arg1: Tripoint, arg2: Tripoint): boolean @Add an electric grid connection between two positions. Returns true on success.
 ---@field check_ot fun(arg1: string, arg2: OtMatchType, arg3: Tripoint): boolean @Check if the terrain at the given position matches the type and match mode. Returns boolean.
+---@field electric_grid_at fun(arg1: Tripoint): Tripoint[] @Get all overmap tiles belonging to the electric grid at the given position. Returns vector of tripoints.
+---@field electric_grid_connectivity_at fun(arg1: Tripoint): Tripoint[] @Get all electric grid connections from the given position. Returns vector of relative tripoint offsets.
 ---@field find_all fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint[] @Find all overmap terrain tiles matching the given parameters. Returns a vector of tripoints.
 ---@field find_closest fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint? @Find the closest overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
 ---@field find_random fun(arg1: Tripoint, arg2: OmtFindParams): Tripoint? @Find a random overmap terrain tile matching the given parameters. Returns a tripoint or nil if not found.
 ---@field is_explored fun(arg1: Tripoint): boolean @Check if the terrain at the given position has been explored by the player. Returns boolean.
+---@field remove_grid_connection fun(arg1: Tripoint, arg2: Tripoint): boolean @Remove an electric grid connection between two positions. Returns true on success.
 ---@field seen fun(arg1: Tripoint): boolean @Check if the terrain at the given position has been seen by the player. Returns boolean.
 ---@field set_seen fun(arg1: Tripoint, arg2: boolean?) @Set the seen status of terrain at the given position.
 ---@field ter fun(arg1: Tripoint): OterIntId @Get the overmap terrain type at the given position. Returns an oter_id.
@@ -2742,7 +2849,7 @@ AddictionType = {
 	DIAZEPAM = 10,
 	MARLOSS_R = 11,
 	MARLOSS_B = 12,
-	MARLOSS_Y = 13
+	MARLOSS_Y = 13,
 }
 
 ---@enum ArtifactCharge
@@ -2753,7 +2860,7 @@ ArtifactCharge = {
 	ARTC_PAIN = 3,
 	ARTC_HP = 4,
 	ARTC_FATIGUE = 5,
-	ARTC_PORTAL = 6
+	ARTC_PORTAL = 6,
 }
 
 ---@enum ArtifactChargeReq
@@ -2764,7 +2871,7 @@ ArtifactChargeReq = {
 	ACR_SLEEP = 3,
 	ACR_RAD = 4,
 	ACR_WET = 5,
-	ACR_SKY = 6
+	ACR_SKY = 6,
 }
 
 ---@enum ArtifactEffectActive
@@ -2808,7 +2915,7 @@ ArtifactEffectActive = {
 	AEP_MOVEMENT_NOISE = 36,
 	AEP_BAD_WEATHER = 37,
 	AEP_SICK = 38,
-	AEP_CLAIRVOYANCE_PLUS = 39
+	AEP_CLAIRVOYANCE_PLUS = 39,
 }
 
 ---@enum ArtifactEffectPassive
@@ -2845,7 +2952,7 @@ ArtifactEffectPassive = {
 	AEA_FLASH = 29,
 	AEA_VOMIT = 30,
 	AEA_SHADOWS = 31,
-	AEA_STAMINA_EMPTY = 32
+	AEA_STAMINA_EMPTY = 32,
 }
 
 ---@enum Attitude
@@ -2853,7 +2960,7 @@ Attitude = {
 	Hostile = 0,
 	Neutral = 1,
 	Friendly = 2,
-	Any = 3
+	Any = 3,
 }
 
 ---@enum BodyPart
@@ -2869,14 +2976,14 @@ BodyPart = {
 	LEG_L = 8,
 	LEG_R = 9,
 	FOOT_L = 10,
-	FOOT_R = 11
+	FOOT_R = 11,
 }
 
 ---@enum CharacterMoveMode
 CharacterMoveMode = {
 	walk = 0,
 	run = 1,
-	crouch = 2
+	crouch = 2,
 }
 
 ---@enum Color
@@ -3025,7 +3132,7 @@ Color = {
 	c_magenta_cyan = 141,
 	c_pink_cyan = 142,
 	c_cyan_cyan = 143,
-	c_light_cyan_cyan = 144
+	c_light_cyan_cyan = 144,
 }
 
 ---@enum DamageType
@@ -3043,7 +3150,7 @@ DamageType = {
 	DT_LIGHT = 10,
 	DT_PSI = 11,
 	DT_ELECTRIC = 12,
-	DT_BULLET = 13
+	DT_BULLET = 13,
 }
 
 ---@enum MissionGoal
@@ -3065,7 +3172,7 @@ MissionGoal = {
 	MGOAL_KILL_MONSTER_SPEC = 14,
 	MGOAL_TALK_TO_NPC = 15,
 	MGOAL_CONDITION = 16,
-	MGOAL_KILL_MONSTERS = 17
+	MGOAL_KILL_MONSTERS = 17,
 }
 
 ---@enum MissionOrigin
@@ -3075,7 +3182,7 @@ MissionOrigin = {
 	ORIGIN_OPENER_NPC = 2,
 	ORIGIN_ANY_NPC = 3,
 	ORIGIN_SECONDARY = 4,
-	ORIGIN_COMPUTER = 5
+	ORIGIN_COMPUTER = 5,
 }
 
 ---@enum MonsterAttitude
@@ -3088,7 +3195,7 @@ MonsterAttitude = {
 	MATT_FOLLOW = 5,
 	MATT_ATTACK = 6,
 	MATT_ZLAVE = 7,
-	MATT_UNKNOWN = 8
+	MATT_UNKNOWN = 8,
 }
 
 ---@enum MonsterFactionAttitude
@@ -3096,7 +3203,7 @@ MonsterFactionAttitude = {
 	ByMood = 0,
 	Neutral = 1,
 	Friendly = 2,
-	Hate = 3
+	Hate = 3,
 }
 
 ---@enum MonsterFlag
@@ -3228,9 +3335,10 @@ MonsterFlag = {
 	PROJECTILE_RESISTANT_3 = 124,
 	PROJECTILE_RESISTANT_4 = 125,
 	VOLATILE = 126,
-	MOUNTABLE_STAIRS = 127,
-	MOUNTABLE_OBSTACLES = 128,
-	FACTION_MEMORY = 129
+	CANT_CLONE = 127,
+	MOUNTABLE_STAIRS = 128,
+	MOUNTABLE_OBSTACLES = 129,
+	FACTION_MEMORY = 130,
 }
 
 ---@enum MonsterSize
@@ -3239,7 +3347,7 @@ MonsterSize = {
 	SMALL = 1,
 	MEDIUM = 2,
 	LARGE = 3,
-	HUGE = 4
+	HUGE = 4,
 }
 
 ---@enum MsgType
@@ -3253,7 +3361,7 @@ MsgType = {
 	debug = 6,
 	headshot = 7,
 	critical = 8,
-	grazing = 9
+	grazing = 9,
 }
 
 ---@enum NpcAttitude
@@ -3276,7 +3384,7 @@ NpcAttitude = {
 	NPCATT_LEGACY_5 = 15,
 	NPCATT_ACTIVITY = 16,
 	NPCATT_FLEE_TEMP = 17,
-	NPCATT_RECOVER_GOODS = 18
+	NPCATT_RECOVER_GOODS = 18,
 }
 
 ---@enum NpcNeed
@@ -3287,7 +3395,7 @@ NpcNeed = {
 	need_gun = 3,
 	need_food = 4,
 	need_drink = 5,
-	need_safety = 6
+	need_safety = 6,
 }
 
 ---@enum OtMatchType
@@ -3295,7 +3403,7 @@ OtMatchType = {
 	EXACT = 0,
 	TYPE = 1,
 	PREFIX = 2,
-	CONTAINS = 3
+	CONTAINS = 3,
 }
 
 ---@enum SfxChannel
@@ -3324,7 +3432,7 @@ SfxChannel = {
 	player_activities = 21,
 	exterior_engine_sound = 22,
 	interior_engine_sound = 23,
-	radio = 24
+	radio = 24,
 }
 
 ---@enum VitaminType
@@ -3332,6 +3440,6 @@ VitaminType = {
 	vitamin = 0,
 	toxin = 1,
 	drug = 2,
-	counter = 3
+	counter = 3,
 }
 

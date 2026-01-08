@@ -1758,7 +1758,8 @@
     "price_postapoc": "5 cent",
     "material": [ "plastic" ],
     "weight": "4 g",
-    "flags": [ "FANCY" ]
+    "flags": [ "FANCY" ],
+    "repair_difficulty": 2
   },
   {
     "id": "towel",

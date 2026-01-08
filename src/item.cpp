@@ -105,6 +105,7 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "units_energy.h"
 #include "units_utility.h"
 #include "value_ptr.h"
 #include "vehicle.h"
@@ -3166,7 +3167,7 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
         if( knows_it ) {
             // In case the recipe is known, but has a different name in the book, use the
             // real name to avoid confusing the player.
-            const std::string name = elem.recipe->result_name();
+            const std::string name = elem.recipe->result_name( /*decorated=*/true );
             recipe_list.push_back( "<bold>" + name + "</bold>" );
         } else if( !can_learn ) {
             recipe_list.push_back( "<color_brown>" + elem.name.translated() + "</color>" );
@@ -4220,7 +4221,7 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
                 [&crafting_inv]( const recipe * r ) {
                     bool can_make = r->deduped_requirements().can_make_with_inventory(
                                         crafting_inv, r->get_component_filter() );
-                    return std::make_pair( r->result_name(), can_make );
+                    return std::make_pair( r->result_name( /*decorated=*/true ), can_make );
                 } );
                 std::ranges::sort( result_names, localized_compare );
                 const std::string recipes =
@@ -8107,6 +8108,11 @@ int item::ammo_capacity( bool potential_capacity ) const
     int res = 0;
 
     const item *mag = magazine_current();
+
+    if( has_flag( flag_USES_BIONIC_POWER ) ) {
+        avatar &you = get_avatar();
+        return you.get_max_power_level() / 1_kJ;
+    }
     if( mag ) {
         return mag->ammo_capacity();
     }
