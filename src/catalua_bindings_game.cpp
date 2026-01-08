@@ -13,6 +13,7 @@
 #include "monster.h"
 #include "overmapbuffer.h"
 #include "line.h"
+#include "lua_action_menu.h"
 
 namespace
 {
@@ -62,6 +63,26 @@ void cata::detail::reg_game_api( sol::state &lua )
         std::vector<sol::protected_function> vec;
         vec.push_back( f );
         hooks.push_back( on_every_x_hooks{ interval, vec } );
+    } );
+
+    DOC( "Register a Lua-defined action menu entry in the in-game action menu." );
+    luna::set_fx( lib, "register_action_menu_entry", []( sol::table opts ) -> void {
+        auto id = opts.get_or( "id", std::string{} );
+        auto name = opts.get_or( "name", std::string{} );
+        auto category_id = opts.get_or( "category", std::string{ "misc" } );
+        auto hotkey = opts.get<sol::optional<std::string>>( "hotkey" );
+        auto hotkey_value = std::optional<std::string>{};
+        if( hotkey ) {
+            hotkey_value = std::move( *hotkey );
+        }
+        auto callback = opts.get_or<sol::protected_function>( "callback", sol::lua_nil );
+        cata::lua_action_menu::register_entry( {
+            .id = std::move( id ),
+            .name = std::move( name ),
+            .category_id = std::move( category_id ),
+            .hotkey = std::move( hotkey_value ),
+            .callback = std::move( callback ),
+        } );
     } );
 
     DOC( "Spawns a new item. Same as Item::spawn " );
