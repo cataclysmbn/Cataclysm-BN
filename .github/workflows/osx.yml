@@ -31,30 +31,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: osx-curses-x64
-            os: macos-15-intel
-            tiles: 0
-            artifact: osx-curses-x64
-            ext: dmg
-            content: application/x-apple-diskimage
-          - name: osx-tiles-x64
-            os: macos-15-intel
-            tiles: 1
-            artifact: osx-tiles-x64
-            ext: dmg
-            content: application/x-apple-diskimage
-          - name: osx-curses-arm
-            os: macos-15
-            tiles: 0
-            artifact: osx-curses-arm
-            ext: dmg
-            content: application/x-apple-diskimage
           - name: osx-tiles-arm
             os: macos-15
             tiles: 1
             artifact: osx-tiles-arm
-            ext: dmg
-            content: application/x-apple-diskimage
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
@@ -99,7 +79,23 @@ jobs:
           echo "Clang++ version:"
           $(brew --prefix llvm@20)/bin/clang++ --version  # Ensure clang++ is installed and working
 
-      - name: Build
+      - name: Build (Debug)
+        shell: bash
         run: |
           source ./venv/bin/activate
-          make -j3 CCACHE=1 TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LANGUAGES=all USE_HOME_DIR=1 OSX_MIN=11 PCH=0 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist
+          make -j3 CCACHE=1 TILES=1 SOUND=1 RELEASE=0 DEBUG_SYMBOLS=1 LOCALIZE=1 LANGUAGES=all \
+            USE_HOME_DIR=1 OSX_MIN=11 PCH=0 FRAMEWORK=1 COMPILER=$(brew --prefix llvm@20)/bin/clang++ app
+
+      - name: Create PR debug distribution zip
+        shell: bash
+        run: |
+          artifact_suffix="pr-${{ github.event.pull_request.number }}-${GITHUB_SHA::7}"
+          ditto -c -k --sequesterRsrc --keepParent Cataclysm.app "cbn-osx-tiles-debug-${artifact_suffix}.zip"
+
+      - name: Upload PR debug distribution zip
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: cbn-osx-tiles-debug-pr-${{ github.event.pull_request.number }}
+          path: cbn-osx-tiles-debug-*.zip
+          if-no-files-found: error
+          retention-days: 14

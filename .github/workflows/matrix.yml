@@ -86,7 +86,7 @@ jobs:
       - name: install SDL2 dependencies (ubuntu)
         if: ${{ env.SKIP == 'false' && matrix.tiles == 1 }}
         run: |
-          sudo apt-get install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer-dev libpulse-dev libflac-dev
+          sudo apt-get install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer-dev libpulse-dev libflac-dev zip
 
       # problem matchers are only ran on GCC to reduce error spam
       - name: add problem matcher
@@ -121,8 +121,17 @@ jobs:
         run: |
           build-scripts/lint-json.sh
 
+      - name: Configure and Build with CMake (PR Debug, tiles)
+        if: ${{ env.SKIP == 'false' && github.event_name == 'pull_request' && matrix.tiles == 1 }}
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: ${{ matrix.preset }}
+          buildPreset: ${{ matrix.preset }}
+          configurePresetAdditionalArgs: "['-DCMAKE_BUILD_TYPE=RelWithDebInfo']"
+          buildPresetAdditionalArgs: "['-j', '2']"
+
       - name: Configure and Build with CMake
-        if: ${{ env.SKIP == 'false' }}
+        if: ${{ env.SKIP == 'false' && !( github.event_name == 'pull_request' && matrix.tiles == 1 ) }}
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
@@ -136,7 +145,7 @@ jobs:
           tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
 
       - name: run tests
-        if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
+        if: ${{ github.ref_name != 'main' && env.SKIP == 'false' && !( github.event_name == 'pull_request' && matrix.tiles == 1 ) }}
         run: |
           # Run tests using parallel execution
           test_bin="build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}"
@@ -155,12 +164,27 @@ jobs:
               done
           fi
 
-      - name: emit success artifact
-        if: ${{ success() && matrix.upload-artifact == 'true' }}
+      - name: Create PR debug distribution zip (tiles)
+        if: ${{ success() && env.SKIP == 'false' && github.event_name == 'pull_request' && matrix.tiles == 1 }}
+        shell: bash
+        run: |
+          cmake --build build --target translations
+
+          artifact_suffix="pr-${{ github.event.pull_request.number }}-${GITHUB_SHA::7}"
+          dist_dir_name="cataclysmbn-${artifact_suffix}"
+          dist_dir_path="${GITHUB_WORKSPACE}/${dist_dir_name}"
+
+          cmake --install build --prefix "${dist_dir_path}"
+          ( cd "${GITHUB_WORKSPACE}" && zip -r "cbn-linux-tiles-debug-${artifact_suffix}.zip" "${dist_dir_name}" )
+
+      - name: Upload PR debug distribution zip (tiles)
+        if: ${{ success() && env.SKIP == 'false' && github.event_name == 'pull_request' && matrix.tiles == 1 }}
         uses: actions/upload-artifact@v4.6.0
         with:
-          name: ${{ github.event.number }}
-          path: ${{ github.event.number }}
+          name: cbn-linux-tiles-debug-pr-${{ github.event.pull_request.number }}
+          path: cbn-linux-tiles-debug-*.zip
+          if-no-files-found: error
+          retention-days: 14
 
       - name: upload artifacts if failed
         uses: actions/upload-artifact@v4.6.0
