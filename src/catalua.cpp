@@ -186,6 +186,7 @@ std::unique_ptr<lua_state, lua_state_deleter> make_wrapped_state()
 void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modlist )
 {
     sol::state &lua = state.lua;
+    cata::lua_action_menu::clear_entries();
 
     sol::table active_mods = lua.create_table();
     sol::table mod_runtime = lua.create_table();
