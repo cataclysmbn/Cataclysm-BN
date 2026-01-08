@@ -415,6 +415,57 @@ Note that language files are only compiled automatically when building the `RELE
 other build types, you need to add the `translations_compile` target to the `make` command, for
 example `make all translations_compile`.
 
+### Building with Translations Locally
+
+Starting from 2026, translation files (`.po` files) are no longer stored in the repository. They are pulled from Transifex during CI builds and packaged as artifacts. This reduces repository size and ensures translations are always up-to-date in releases.
+
+For local development builds, you have two options:
+
+#### Option 1: Build Without Translations (Fastest)
+
+Skip translation compilation entirely:
+
+```sh
+cmake --preset linux-full -DLANGUAGES=none
+cmake --build --preset linux-full
+```
+
+#### Option 2: Pull Translations from Transifex
+
+If you need to test translations locally:
+
+1. Install Transifex CLI:
+
+```sh
+curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd64.tar.gz | sudo tar zxvf - -C /usr/bin tx
+```
+
+2. Pull translations (requires Transifex access):
+
+```sh
+tx pull --force
+```
+
+3. Build with translations:
+
+```sh
+cmake --preset linux-full -DLANGUAGES=all
+cmake --build --preset linux-full
+```
+
+#### Option 3: Download Pre-built Translations from CI
+
+Download translation artifacts from a recent release or nightly build:
+
+1. Go to [Releases](https://github.com/cataclysmbn/Cataclysm-BN/releases)
+2. Extract `lang/po` and `lang/mo` directories from the release archive
+3. Place them in your local repository
+4. Build normally with `-DLANGUAGES=all`
+
+> [!NOTE]
+> For contributors: You don't need translations for code development. Use `-DLANGUAGES=none` to speed up builds.
+> Translation updates happen automatically in CI and are included in release builds.
+
 - DYNAMIC_LINKING=`<boolean>`
 
 Use dynamic linking. Or use static to remove MinGW dependency instead.
