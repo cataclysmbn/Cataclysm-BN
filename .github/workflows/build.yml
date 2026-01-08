@@ -267,13 +267,17 @@ jobs:
           cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix cataclysmbn-${{ inputs.version-label }} --config Release
           Compress-Archive -Force -Path cataclysmbn-${{ inputs.version-label }}/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
-      # Build with Make (macOS) - TODO: migrate to CMake once dmgdist target is implemented
-      - name: Build CBN (osx)
+      # Build with CMake (macOS)
+      - name: Configure and Build CBN (osx)
         if: runner.os == 'macOS'
         run: |
           source ./venv/bin/activate
-          make -j3 CCACHE=1 TILES=${{ matrix.tiles && '1' || '0' }} SOUND=${{ matrix.sound && '1' || '0' }} RELEASE=1 LOCALIZE=1 LANGUAGES=all BACKTRACE=0 PCH=0 USE_HOME_DIR=1 OSX_MIN=11 FRAMEWORK=1 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist
-          mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
+          export CC=$(brew --prefix llvm@20)/bin/clang
+          export CXX=$(brew --prefix llvm@20)/bin/clang++
+          cmake --preset ${{ matrix.tiles && 'osx-tiles' || 'osx-curses' }} -DRELEASE=ON
+          cmake --build --preset ${{ matrix.tiles && 'osx-tiles' || 'osx-curses' }}
+          cmake --build build --target osx-dmg
+          mv build/CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
 
       # Android builds
       - name: Set up JDK 11 (android)
