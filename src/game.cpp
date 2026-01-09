@@ -444,6 +444,7 @@ void game::reload_tileset( [[maybe_unused]] const std::function<void( std::strin
     ui_adaptor ui( ui_adaptor::disable_uis_below {} );
     const auto tilesName = get_option<std::string>( "TILES" );
     const auto omTilesName = get_option<std::string>( "OVERMAP_TILES" );
+    const auto saved_zoom = g->get_zoom();
     try {
         tilecontext->reinit();
         std::vector<mod_id> dummy;
@@ -476,7 +477,10 @@ void game::reload_tileset( [[maybe_unused]] const std::function<void( std::strin
             popup( _( "Loading the overmap tileset failed: %s" ), err.what() );
         }
     }
-    g->reset_zoom();
+    // Reload resets the tile context scale to its default; reapply the previous zoom explicitly
+    // even when the numeric zoom value did not change.
+    tileset_zoom = saved_zoom;
+    rescale_tileset( tileset_zoom );
     g->mark_main_ui_adaptor_resize();
 #endif // TILES
 }
