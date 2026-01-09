@@ -51,7 +51,11 @@
       "str_max": 50,
       "sound": "smash!",
       "sound_fail": "whump.",
-      "items": [ { "item": "stick", "count": [ 3, 6 ] }, { "item": "splinter", "count": [ 4, 8 ] }, { "item": "pointy_stick", "count": [ 0, 1 ] } ],
+      "items": [
+        { "item": "stick", "count": [ 3, 6 ] },
+        { "item": "splinter", "count": [ 4, 8 ] },
+        { "item": "pointy_stick", "count": [ 0, 1 ] }
+      ],
       "ranged": { "reduction": [ 10, 10 ], "destroy_threshold": 50, "block_unaimed_chance": "50%" }
     }
   },
