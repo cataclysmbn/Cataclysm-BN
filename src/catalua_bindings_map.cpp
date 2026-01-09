@@ -223,9 +223,9 @@ void cata::detail::reg_map( sol::state &lua )
 
         luna::set_fx( ut, "is_outside", sol::resolve<bool( const tripoint & ) const>( &map::is_outside ) );
 
-        luna::set_fx( ut, "is_sheltered", []( tripoint & pos ) { g->is_sheltered( pos ); } );
+        luna::set_fx( ut, "is_sheltered", []( tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
 
-        luna::set_fx( ut, "is_in_sunlight", []( tripoint & pos ) { g->is_in_sunlight( pos ); } );
+        luna::set_fx( ut, "is_in_sunlight", []( tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
     }
 
     // Register 'tinymap' class to be used in Lua
