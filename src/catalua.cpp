@@ -317,7 +317,7 @@ auto run_hooks( lua_state &state, std::string_view hook_name,
             sol::protected_function_result res = func( params );
             check_func_result( res );
             if( res.valid() ) {
-                sol::object result = res.get<sol::object>();
+                auto result = res.get<sol::object>();
                 if( result.is<bool>() && !result.as<bool>() ) {
                     return false;
                 }
