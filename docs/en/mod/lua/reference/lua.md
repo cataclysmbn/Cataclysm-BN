@@ -2220,7 +2220,7 @@ No constructors.
 
 #### get_contents {#sol::DistributionGrid::get_contents}
 
-🇲 Method --> <code>( ) -> CppVal&lt;coords_coord_point&lt;tripoint,1,0&gt;&gt;[]</code>
+🇲 Method --> <code>( ) -> CppVal&lt;coords_coord_point&lt;tripoint,coords_origin_abs,coords_scale_map_square&gt;&gt;[]</code>
 
 > Get current resource amount. Boolean argument (optional) controls recursive behavior (default true)
 > Get vector of absolute map square coordinates of grid contents
@@ -3819,13 +3819,13 @@ No constructors.
 
 #### usable_category {#sol::IslotGunmod::usable_category}
 
-🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;weapon_category&gt;,std_hash&lt;string_id&lt;weapon_category&gt;&gt;,std_equal_to&lt;string_id&lt;weapon_category&gt;&gt;,std_allocator&lt;string_id&lt;weapon_category&gt;&gt;&gt;&gt;[]</code>
+🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;weapon_category&gt;&gt;&gt;[]</code>
 
 > What category of weapons this gunmod can be used with
 
 #### usable {#sol::IslotGunmod::usable}
 
-🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;itype&gt;,std_hash&lt;string_id&lt;itype&gt;&gt;,std_equal_to&lt;string_id&lt;itype&gt;&gt;,std_allocator&lt;string_id&lt;itype&gt;&gt;&gt;&gt;</code>
+🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;itype&gt;&gt;&gt;</code>
 
 > What kind of weapons this gunmod can be used with
 
@@ -3837,7 +3837,7 @@ No constructors.
 
 #### exclusion {#sol::IslotGunmod::exclusion}
 
-🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;itype&gt;,std_hash&lt;string_id&lt;itype&gt;&gt;,std_equal_to&lt;string_id&lt;itype&gt;&gt;,std_allocator&lt;string_id&lt;itype&gt;&gt;&gt;&gt;</code>
+🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;itype&gt;&gt;&gt;</code>
 
 > What kind of weapons this gunmod can't be used with
 
@@ -3849,7 +3849,7 @@ No constructors.
 
 #### exclusion_category {#sol::IslotGunmod::exclusion_category}
 
-🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;weapon_category&gt;,std_hash&lt;string_id&lt;weapon_category&gt;&gt;,std_equal_to&lt;string_id&lt;weapon_category&gt;&gt;,std_allocator&lt;string_id&lt;weapon_category&gt;&gt;&gt;&gt;[]</code>
+🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;weapon_category&gt;&gt;&gt;[]</code>
 
 > What category of weapons this gunmod can't be used with
 
@@ -4947,7 +4947,7 @@ No constructors.
 
 #### layer {#sol::ItypeRaw::layer}
 
-🇻 Variable --> <code>CppVal&lt;enumlayer_level&gt;</code>
+🇻 Variable --> <code>CppVal&lt;layer_level&gt;</code>
 
 #### item_tags {#sol::ItypeRaw::item_tags}
 
@@ -5444,63 +5444,59 @@ No constructors.
 
 > Convert local ms -> absolute ms
 
-#### get_field_age_at {#sol::Map::get_field_age_at}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) ) -> [TimeDuration](#sol::TimeDuration)</code>
-
-#### mod_field_int_at {#sol::Map::mod_field_int_at}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), integer ) -> integer</code>
-
 #### mod_field_age_at {#sol::Map::mod_field_age_at}
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), [TimeDuration](#sol::TimeDuration) ) -> [TimeDuration](#sol::TimeDuration)</code>
-
-#### get_field_int_at {#sol::Map::get_field_int_at}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) ) -> integer</code>
-
-#### set_furn_at {#sol::Map::set_furn_at}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FurnIntId](#sol::FurnIntId) )</code>
-
-#### has_field_at {#sol::Map::has_field_at}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) ) -> boolean</code>
-
-#### get_furn_at {#sol::Map::get_furn_at}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [FurnIntId](#sol::FurnIntId)</code>
 
 #### set_field_int_at {#sol::Map::set_field_int_at}
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), integer, boolean ) -> integer</code>
 
-#### add_field_at {#sol::Map::add_field_at}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), integer, [TimeDuration](#sol::TimeDuration) ) -> boolean</code>
-
-#### set_trap_at {#sol::Map::set_trap_at}
-
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [TrapIntId](#sol::TrapIntId) )</code>
-
-> Set a trap at a position on the map. It can also replace existing trap, even with `trap_null`.
-
 #### set_field_age_at {#sol::Map::set_field_age_at}
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), [TimeDuration](#sol::TimeDuration), boolean ) -> [TimeDuration](#sol::TimeDuration)</code>
 
-#### get_trap_at {#sol::Map::get_trap_at}
+#### mod_field_int_at {#sol::Map::mod_field_int_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [TrapIntId](#sol::TrapIntId)</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), integer ) -> integer</code>
 
-#### remove_field_at {#sol::Map::remove_field_at}
+#### get_field_int_at {#sol::Map::get_field_int_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) )</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) ) -> integer</code>
+
+#### get_field_age_at {#sol::Map::get_field_age_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) ) -> [TimeDuration](#sol::TimeDuration)</code>
+
+#### has_field_at {#sol::Map::has_field_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) ) -> boolean</code>
+
+#### set_furn_at {#sol::Map::set_furn_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FurnIntId](#sol::FurnIntId) )</code>
+
+#### add_field_at {#sol::Map::add_field_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId), integer, [TimeDuration](#sol::TimeDuration) ) -> boolean</code>
 
 #### get_field_name_at {#sol::Map::get_field_name_at}
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) ) -> string</code>
+
+#### remove_trap_at {#sol::Map::remove_trap_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) )</code>
+
+> Simpler version of `set_trap_at` with `trap_null`.
+
+#### is_outside {#sol::Map::is_outside}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
+
+#### remove_field_at {#sol::Map::remove_field_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [FieldTypeIntId](#sol::FieldTypeIntId) )</code>
 
 #### disarm_trap_at {#sol::Map::disarm_trap_at}
 
@@ -5508,15 +5504,27 @@ No constructors.
 
 > Disarms a trap using your skills and stats, with consequences depending on success or failure.
 
-#### set_ter_at {#sol::Map::set_ter_at}
+#### get_trap_at {#sol::Map::get_trap_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [TerIntId](#sol::TerIntId) ) -> boolean</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [TrapIntId](#sol::TrapIntId)</code>
 
-#### move_item_to {#sol::Map::move_item_to}
+#### set_trap_at {#sol::Map::set_trap_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [Item](#sol::Item), [Tripoint](#sol::Tripoint) )</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [TrapIntId](#sol::TrapIntId) )</code>
 
-> Moves an item from one position to another, preserving all item state including contents.
+> Set a trap at a position on the map. It can also replace existing trap, even with `trap_null`.
+
+#### is_sheltered {#sol::Map::is_sheltered}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
+
+#### get_furn_at {#sol::Map::get_furn_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [FurnIntId](#sol::FurnIntId)</code>
+
+#### get_ter_at {#sol::Map::get_ter_at}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [TerIntId](#sol::TerIntId)</code>
 
 #### create_item_at {#sol::Map::create_item_at}
 
@@ -5550,9 +5558,9 @@ No constructors.
 
 🇲 Method --> <code>( ) -> integer</code>
 
-#### get_ter_at {#sol::Map::get_ter_at}
+#### set_ter_at {#sol::Map::set_ter_at}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [TerIntId](#sol::TerIntId)</code>
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [TerIntId](#sol::TerIntId) ) -> boolean</code>
 
 #### remove_item_at {#sol::Map::remove_item_at}
 
@@ -5569,6 +5577,12 @@ No constructors.
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint), integer, integer? ) -> [Tripoint](#sol::Tripoint)[]</code>
 
 > Returns all points within a radius from the center point. `radiusz` defaults to 0.
+
+#### move_item_to {#sol::Map::move_item_to}
+
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint), [Item](#sol::Item), [Tripoint](#sol::Tripoint) )</code>
+
+> Moves an item from one position to another, preserving all item state including contents.
 
 #### detach_item_at {#sol::Map::detach_item_at}
 
@@ -5588,11 +5602,9 @@ No constructors.
 
 🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> [MapStack](#sol::MapStack)</code>
 
-#### remove_trap_at {#sol::Map::remove_trap_at}
+#### is_in_sunlight {#sol::Map::is_in_sunlight}
 
-🇲 Method --> <code>( [Tripoint](#sol::Tripoint) )</code>
-
-> Simpler version of `set_trap_at` with `trap_null`.
+🇲 Method --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
 
 ## MapStack {#sol::MapStack}
 
@@ -8687,9 +8699,13 @@ No base classes.
 
 🇫 Function --> <code>( integer ) -> [TimePoint](#sol::TimePoint)</code>
 
-#### second_of_minute {#sol::TimePoint::second_of_minute}
+#### season {#sol::TimePoint::season}
 
-🇲 Method --> <code>( ) -> integer</code>
+🇲 Method --> <code>( ) -> string</code>
+
+#### moon_phase {#sol::TimePoint::moon_phase}
+
+🇲 Method --> <code>( ) -> [MoonPhase](#sol::MoonPhase)</code>
 
 #### minute_of_hour {#sol::TimePoint::minute_of_hour}
 
@@ -8699,11 +8715,27 @@ No base classes.
 
 🇲 Method --> <code>( ) -> string</code>
 
+#### hour_of_day {#sol::TimePoint::hour_of_day}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+#### sunset {#sol::TimePoint::sunset}
+
+🇲 Method --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
+
+#### second_of_minute {#sol::TimePoint::second_of_minute}
+
+🇲 Method --> <code>( ) -> integer</code>
+
 #### is_dawn {#sol::TimePoint::is_dawn}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### hour_of_day {#sol::TimePoint::hour_of_day}
+#### is_night {#sol::TimePoint::is_night}
+
+🇲 Method --> <code>( ) -> boolean</code>
+
+#### to_turn {#sol::TimePoint::to_turn}
 
 🇲 Method --> <code>( ) -> integer</code>
 
@@ -8715,13 +8747,9 @@ No base classes.
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### to_turn {#sol::TimePoint::to_turn}
+#### sunrise {#sol::TimePoint::sunrise}
 
-🇲 Method --> <code>( ) -> integer</code>
-
-#### is_night {#sol::TimePoint::is_night}
-
-🇲 Method --> <code>( ) -> boolean</code>
+🇲 Method --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
 
 ## Tinymap {#sol::Tinymap}
 
@@ -9679,6 +9707,19 @@ No base classes.
 - `LARGE` = `3`
 - `HUGE` = `4`
 
+## MoonPhase {#sol::MoonPhase}
+
+### Entries
+
+- `MOON_NEW` = `0`
+- `MOON_WAXING_CRESCENT` = `1`
+- `MOON_HALF_MOON_WAXING` = `2`
+- `MOON_WAXING_GIBBOUS` = `3`
+- `MOON_FULL` = `4`
+- `MOON_WANING_GIBBOUS` = `5`
+- `MOON_HALF_MOON_WANING` = `6`
+- `MOON_WANING_CRESCENT` = `7`
+
 ## MsgType {#sol::MsgType}
 
 ### Entries
@@ -9900,7 +9941,7 @@ Global game methods
 
 #### direction_from {#sol::nil::direction_from}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> CppVal&lt;enumdirection&gt;</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> CppVal&lt;direction&gt;</code>
 
 > Get direction from a tripoint delta
 
@@ -9920,7 +9961,7 @@ Global game methods
 
 #### direction_name {#sol::nil::direction_name}
 
-🇫 Function --> <code>( CppVal&lt;enumdirection&gt; ) -> string</code>
+🇫 Function --> <code>( CppVal&lt;direction&gt; ) -> string</code>
 
 > Get direction name from direction enum
 
