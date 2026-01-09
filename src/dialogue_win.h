@@ -26,7 +26,7 @@ class dialogue_window
 
         void clear_window_texts();
         void handle_scrolling( int ch );
-        void display_responses( const std::vector<talk_data> &responses );
+        void display_responses( const std::vector<talk_data> &responses, size_t selected_response );
         void refresh_response_display();
         /** Adds message to history. It must be already translated. */
         void add_to_history( const std::string &msg );
@@ -61,5 +61,4 @@ class dialogue_window
 
         std::string npc_name;
 };
-
 
