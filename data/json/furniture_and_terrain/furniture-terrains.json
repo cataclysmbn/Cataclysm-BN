@@ -1374,5 +1374,5 @@
       "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "cordage_6", "count": 6 }, { "item": "leather_tarp", "count": 1 } ]
     },
     "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "THIN_OBSTACLE", "INDOORS", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
-  },
+  }
 ]
