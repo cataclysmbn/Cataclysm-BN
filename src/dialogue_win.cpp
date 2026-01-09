@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -75,6 +76,7 @@ void dialogue_window::print_history()
 struct page_entry {
     nc_color col;
     std::vector<std::string> lines;
+    size_t response_index = 0;
 };
 
 struct page {
@@ -88,14 +90,16 @@ static std::vector<page> split_to_pages( const std::vector<talk_data> &responses
     std::vector<page> ret;
     int fold_width = page_w - 3;
     int this_h = 0;
-    for( const talk_data &resp : responses ) {
+    for( auto response_index : std::views::iota( size_t{ 0 }, responses.size() ) ) {
+        const auto &resp = responses[response_index];
         // Assemble single entry for printing
         const std::vector<std::string> folded = foldstring( resp.text, fold_width );
         page_entry this_entry;
         this_entry.col = resp.col;
+        this_entry.response_index = response_index;
         if( !folded.empty() ) {
             this_entry.lines.push_back( string_format( "%c: %s", resp.letter, folded[0] ) );
-            for( size_t i = 1; i < folded.size(); i++ ) {
+            for( auto i : std::views::iota( size_t{ 1 }, folded.size() ) ) {
                 this_entry.lines.push_back( string_format( "   %s", folded[i] ) );
             }
         }
@@ -115,7 +119,8 @@ static std::vector<page> split_to_pages( const std::vector<talk_data> &responses
     return ret;
 }
 
-static void print_responses( const catacurses::window &w, const page &responses )
+static void print_responses( const catacurses::window &w, const page &responses,
+                             size_t selected_response )
 {
     // Responses go on the right side of the window, add 2 for border + space
     const size_t x_start = getmaxx( w ) / 2 + 2;
@@ -123,10 +128,12 @@ static void print_responses( const catacurses::window &w, const page &responses 
     const int y_start = 2 + 1;
 
     int curr_y = y_start;
-    for( const page_entry &entry : responses.entries ) {
-        const nc_color col = entry.col;
-        for( const std::string &line : entry.lines ) {
-            mvwprintz( w, point( x_start, curr_y ), col, line );
+    for( auto entry_index : std::views::iota( size_t{ 0 }, responses.entries.size() ) ) {
+        const auto &entry = responses.entries[entry_index];
+        const auto selected = entry.response_index == selected_response;
+        const auto col = selected ? hilite( entry.col ) : entry.col;
+        for( auto line_index : std::views::iota( size_t{ 0 }, entry.lines.size() ) ) {
+            mvwprintz( w, point( x_start, curr_y ), col, entry.lines[line_index] );
             curr_y += 1;
         }
     }
@@ -179,7 +186,8 @@ void dialogue_window::handle_scrolling( const int ch )
     }
 }
 
-void dialogue_window::display_responses( const std::vector<talk_data> &responses )
+void dialogue_window::display_responses( const std::vector<talk_data> &responses,
+        size_t selected_response )
 {
     const int win_maxy = getmaxy( d_win );
     clear_window_texts();
@@ -191,10 +199,28 @@ void dialogue_window::display_responses( const std::vector<talk_data> &responses
     const int page_w = getmaxx( d_win ) / 2 - 4; // -4 for borders + padding
     const std::vector<page> pages = split_to_pages( responses, page_w, page_h );
     if( !pages.empty() ) {
+        auto selected_page = pages.size();
+        for( auto page_index : std::views::iota( size_t{ 0 }, pages.size() ) ) {
+            const auto &page = pages[page_index];
+            for( auto entry_index : std::views::iota( size_t{ 0 }, page.entries.size() ) ) {
+                if( page.entries[entry_index].response_index == selected_response ) {
+                    selected_page = page_index;
+                    break;
+                }
+            }
+            if( selected_page != pages.size() ) {
+                break;
+            }
+        }
+        if( selected_page != pages.size() ) {
+            curr_page = selected_page;
+        }
+    }
+    if( !pages.empty() ) {
         if( curr_page >= pages.size() ) {
             curr_page = pages.size() - 1;
         }
-        print_responses( d_win, pages[curr_page] );
+        print_responses( d_win, pages[curr_page], selected_response );
     }
     print_keybindings( d_win );
     can_scroll_up = curr_page > 0;
