@@ -9,6 +9,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "action.h"
@@ -42,6 +43,7 @@
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
+#include "overmap_ui.h"
 #include "overmapbuffer.h"
 #include "path_info.h"
 #include "panels_utility.h"
@@ -156,55 +158,9 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
 
                 const std::string &note_text = overmap_buffer.note( omp );
 
-                ter_color = c_yellow;
-                ter_sym = "N";
-
-                int symbolIndex = note_text.find( ':' );
-                int colorIndex = note_text.find( ';' );
-
-                const bool symbolFirst = symbolIndex < colorIndex;
-
-                if( colorIndex > -1 && symbolIndex > -1 ) {
-                    if( symbolFirst ) {
-                        if( colorIndex > 4 ) {
-                            colorIndex = -1;
-                        }
-                        if( symbolIndex > 1 ) {
-                            symbolIndex = -1;
-                            colorIndex = -1;
-                        }
-                    } else {
-                        if( symbolIndex > 4 ) {
-                            symbolIndex = -1;
-                        }
-                        if( colorIndex > 2 ) {
-                            colorIndex = -1;
-                        }
-                    }
-                } else if( colorIndex > 2 ) {
-                    colorIndex = -1;
-                } else if( symbolIndex > 1 ) {
-                    symbolIndex = -1;
-                }
-
-                if( symbolIndex > -1 ) {
-                    int symbolStart = 0;
-                    if( colorIndex > -1 && !symbolFirst ) {
-                        symbolStart = colorIndex + 1;
-                    }
-                    ter_sym = note_text.substr( symbolStart, symbolIndex - symbolStart );
-                }
-
-                if( colorIndex > -1 ) {
-                    int colorStart = 0;
-                    if( symbolIndex > -1 && symbolFirst ) {
-                        colorStart = symbolIndex + 1;
-                    }
-
-                    std::string sym = note_text.substr( colorStart, colorIndex - colorStart );
-
-                    ter_color = get_note_color( sym );
-                }
+                const auto note_info = overmap_ui::get_note_display_info( note_text );
+                ter_color = std::get<1>( note_info );
+                ter_sym = std::string( 1, std::get<0>( note_info ) );
             } else if( !seen ) {
                 ter_sym = " ";
                 ter_color = c_black;

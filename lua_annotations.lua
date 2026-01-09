@@ -306,6 +306,7 @@ function BookRecipe.new() end
 ---@field expose_to_disease fun(self: Character, arg2: DiseaseTypeId)
 ---@field fall_asleep fun(self: Character) | fun(self: Character, arg2: TimeDuration)
 ---@field forced_dismount fun(self: Character)
+---@field getID fun(self: Character): CharacterId
 ---@field get_all_skills fun(self: Character): SkillLevelMap
 ---@field get_armor_acid fun(self: Character, arg2: BodyPartTypeIntId): integer
 ---@field get_base_traits fun(self: Character): MutationBranchId[]
@@ -362,7 +363,6 @@ function BookRecipe.new() end
 ---@field get_working_arm_count fun(self: Character): integer
 ---@field get_working_leg_count fun(self: Character): integer
 ---@field get_worn_items fun(self: Character): Item[]
----@field getID fun(self: Character): CharacterId
 ---@field global_sm_location fun(self: Character): Tripoint
 ---@field global_square_location fun(self: Character): Tripoint
 ---@field has_active_bionic fun(self: Character, arg2: BionicDataId): boolean
@@ -462,8 +462,8 @@ function BookRecipe.new() end
 ---@field mutate fun(self: Character)
 ---@field mutate_category fun(self: Character, arg2: MutationCategoryTraitId)
 ---@field mutate_towards fun(self: Character, arg2: MutationBranchId): boolean
----@field mutate_towards fun(self: Character, arg2: MutationBranchId[], arg3: integer): boolean | fun(self: Character, arg2: MutationBranchId): boolean
 ---@field mutate_towards fun(self: Character, arg2: MutationBranchId[], arg3: integer): boolean
+---@field mutate_towards fun(self: Character, arg2: MutationBranchId[], arg3: integer): boolean | fun(self: Character, arg2: MutationBranchId): boolean
 ---@field mutation_armor fun(self: Character, arg2: BodyPartTypeIntId, arg3: DamageType): number
 ---@field mutation_effect fun(self: Character, arg2: MutationBranchId)
 ---@field mutation_loss_effect fun(self: Character, arg2: MutationBranchId)
@@ -484,6 +484,7 @@ function BookRecipe.new() end
 ---@field restore_scent fun(self: Character)
 ---@field rooted fun(self: Character)
 ---@field rust_rate fun(self: Character): integer
+---@field setID fun(self: Character, arg2: CharacterId, arg3: boolean)
 ---@field set_base_age fun(self: Character, arg2: integer)
 ---@field set_base_height fun(self: Character, arg2: integer)
 ---@field set_dex_bonus fun(self: Character, arg2: integer)
@@ -509,7 +510,6 @@ function BookRecipe.new() end
 ---@field set_str_bonus fun(self: Character, arg2: integer)
 ---@field set_temp_btu fun(self: Character, arg2: integer) @Sets ALL body parts on a creature to the given temperature (in Body Temperature Units).
 ---@field set_thirst fun(self: Character, arg2: integer)
----@field setID fun(self: Character, arg2: CharacterId, arg3: boolean)
 ---@field shout fun(self: Character, arg2: string, arg3: boolean)
 ---@field sight_impaired fun(self: Character): boolean
 ---@field spores fun(self: Character)
@@ -1398,7 +1398,7 @@ function Item.new() end
 ---@field stored_volume fun(self: ItemStack): Volume
 ---@field __index fun(self: ItemStack, arg2: integer): Item
 ---@field __len fun(self: ItemStack): integer
----@field __pairs fun(self: ItemStack): (CppVal<std_tuple<sol_basic_object<sol_basic_reference<0>>,sol_basic_object<sol_basic_reference<0>>>(__cdecl)(sol_user<_item_stack_lua_it_state>,sol_this_state)>,CppVal<sol_user<_item_stack_lua_it_state>>,nil)
+---@field __pairs fun(self: ItemStack): (CppVal<std_tuple<sol_basic_object<sol_basic_reference<false>>,sol_basic_object<sol_basic_reference<false>>>(*)(sol_user<_item_stack_lua_it_state>,sol_this_state)>,CppVal<sol_user<_item_stack_lua_it_state>>,nil)
 ItemStack = {}
 ---@return ItemStack
 function ItemStack.new() end
@@ -1597,7 +1597,7 @@ function Map.new() end
 ---@field as_item_stack fun(self: MapStack): ItemStack
 ---@field __index fun(arg1: ItemStack, arg2: integer): Item
 ---@field __len fun(arg1: ItemStack): integer
----@field __pairs fun(arg1: ItemStack): (CppVal<std_tuple<sol_basic_object<sol_basic_reference<0>>,sol_basic_object<sol_basic_reference<0>>>(__cdecl)(sol_user<_item_stack_lua_it_state>,sol_this_state)>,CppVal<sol_user<_item_stack_lua_it_state>>,nil)
+---@field __pairs fun(arg1: ItemStack): (CppVal<std_tuple<sol_basic_object<sol_basic_reference<false>>,sol_basic_object<sol_basic_reference<false>>>(*)(sol_user<_item_stack_lua_it_state>,sol_this_state)>,CppVal<sol_user<_item_stack_lua_it_state>>,nil)
 MapStack = {}
 ---@return MapStack
 function MapStack.new() end
@@ -2710,11 +2710,11 @@ function WeaponCategoryId.new() end
 
 --- Various game constants
 ---@class const
+---@field OMT_MS_SIZE integer # value: 24
+---@field OMT_SM_SIZE integer # value: 2
 ---@field OM_MS_SIZE integer # value: 4320
 ---@field OM_OMT_SIZE integer # value: 180
 ---@field OM_SM_SIZE integer # value: 360
----@field OMT_MS_SIZE integer # value: 24
----@field OMT_SM_SIZE integer # value: 2
 ---@field SM_MS_SIZE integer # value: 12
 const = {}
 
