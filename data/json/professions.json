@@ -836,19 +836,10 @@
     "traits": [ "ILLITERATE", "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH" ],
     "items": {
       "both": {
-        "items": [
-          "loincloth_fur",
-          "cloak_fur",
-          "backpack_leather",
-          "boots_fur",
-          "waterskin",
-          "atlatl",
-          "hand_axe",
-          "clay_pot",
-          "fire_drill"
-        ],
+        "items": [ "loincloth_fur", "cloak_fur", "backpack_leather", "boots_fur", "waterskin", "clay_pot", "fire_drill" ],
         "entries": [
-          { "item": "spear_stone", "custom-flags": [ "auto_wield" ] },
+          { "item": "atlatl", "custom-flags": [ "auto_wield" ] },
+          { "item": "spear_stone", "container-item": "spearsling" },
           { "item": "primitive_knife", "container-item": "sheath" },
           { "item": "quiver_atlatl", "contents-group": "quiver_javelin_prehistoric" }
         ]
