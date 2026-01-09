@@ -244,9 +244,12 @@ void vehicle::thrust( int thd, int z )
     }
     // rotorcraft need to spend +5% (in addition to idle) of load to fly, +20% (in addition to idle) to ascend
     if( is_aircraft() && ( z > 0 || is_flying_in_air() ) ) {
+        const auto rotor_newtons = std::max( 0.0,
+                                             to_newton( total_mass() ) - total_balloon_lift() - total_wing_lift() );
+        const auto rotor_capacity = rotor_newtons / thrust_of_rotorcraft( true );
         if( is_rotorcraft() ) {
             thrusting = true;
-            load = std::max( load, z > 0 ? 200 : 50 );
+            load = std::max( load, int( std::floor( ( z > 0 ? 200 : 50 ) * rotor_capacity ) ) );
         } else {
             thrusting = true;
         }
@@ -279,7 +282,7 @@ void vehicle::thrust( int thd, int z )
                 const float skill = get_player_character().get_skill_level( skill_driving );
                 const float skill_cost = std::max( 0.75f, ( 100.0f - ( skill * 2.5f ) ) / 100.0f );
                 // Up to 25% reduction at max skill, cap at idle rate.
-                const int load_cap = is_rotorcraft() ? 100 : 10;
+                const int load_cap = 10;
                 load = std::max( static_cast<int>( load * skill_cost ), load_cap );
             }
             //make noise and consume fuel

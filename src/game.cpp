@@ -109,6 +109,7 @@
 #include "line.h"
 #include "live_view.h"
 #include "loading_ui.h"
+#include "locations.h"
 #include "npc.h"
 #include "magic.h"
 #include "map.h"
@@ -175,6 +176,7 @@
 #include "ui_manager.h"
 #include "uistate.h"
 #include "units.h"
+#include "units_utility.h"
 #include "value_ptr.h"
 #include "veh_interact.h"
 #include "veh_type.h"
@@ -185,7 +187,7 @@
 #include "wcwidth.h"
 #include "weather.h"
 #include "worldfactory.h"
-
+#include "location_vector.h"
 class computer;
 
 #if defined(TILES)
@@ -326,7 +328,8 @@ game::game() :
     user_action_counter( 0 ),
     tileset_zoom( DEFAULT_TILESET_ZOOM ),
     seed( 0 ),
-    last_mouse_edge_scroll( std::chrono::steady_clock::now() )
+    last_mouse_edge_scroll( std::chrono::steady_clock::now() ),
+    fake_items( new temp_item_location( ) )
 {
     first_redraw_since_waiting_started = true;
     reset_light_level();
@@ -3512,90 +3515,9 @@ void game::draw_minimap()
 
                 const std::string &note_text = overmap_buffer.note( omp );
 
-                ter_color = c_yellow;
-                ter_sym = "N";
-
-                int symbolIndex = note_text.find( ':' );
-                int colorIndex = note_text.find( ';' );
-
-                bool symbolFirst = symbolIndex < colorIndex;
-
-                if( colorIndex > -1 && symbolIndex > -1 ) {
-                    if( symbolFirst ) {
-                        if( colorIndex > 4 ) {
-                            colorIndex = -1;
-                        }
-                        if( symbolIndex > 1 ) {
-                            symbolIndex = -1;
-                            colorIndex = -1;
-                        }
-                    } else {
-                        if( symbolIndex > 4 ) {
-                            symbolIndex = -1;
-                        }
-                        if( colorIndex > 2 ) {
-                            colorIndex = -1;
-                        }
-                    }
-                } else if( colorIndex > 2 ) {
-                    colorIndex = -1;
-                } else if( symbolIndex > 1 ) {
-                    symbolIndex = -1;
-                }
-
-                if( symbolIndex > -1 ) {
-                    int symbolStart = 0;
-                    if( colorIndex > -1 && !symbolFirst ) {
-                        symbolStart = colorIndex + 1;
-                    }
-                    ter_sym = note_text.substr( symbolStart, symbolIndex - symbolStart ).c_str()[0];
-                }
-
-                if( colorIndex > -1 ) {
-
-                    int colorStart = 0;
-
-                    if( symbolIndex > -1 && symbolFirst ) {
-                        colorStart = symbolIndex + 1;
-                    }
-
-                    std::string sym = note_text.substr( colorStart, colorIndex - colorStart );
-
-                    if( sym.length() == 2 ) {
-                        if( sym == "br" ) {
-                            ter_color = c_brown;
-                        } else if( sym == "lg" ) {
-                            ter_color = c_light_gray;
-                        } else if( sym == "dg" ) {
-                            ter_color = c_dark_gray;
-                        }
-                    } else {
-                        char colorID = sym.c_str()[0];
-                        if( colorID == 'r' ) {
-                            ter_color = c_light_red;
-                        } else if( colorID == 'R' ) {
-                            ter_color = c_red;
-                        } else if( colorID == 'g' ) {
-                            ter_color = c_light_green;
-                        } else if( colorID == 'G' ) {
-                            ter_color = c_green;
-                        } else if( colorID == 'b' ) {
-                            ter_color = c_light_blue;
-                        } else if( colorID == 'B' ) {
-                            ter_color = c_blue;
-                        } else if( colorID == 'W' ) {
-                            ter_color = c_white;
-                        } else if( colorID == 'C' ) {
-                            ter_color = c_cyan;
-                        } else if( colorID == 'c' ) {
-                            ter_color = c_light_cyan;
-                        } else if( colorID == 'P' ) {
-                            ter_color = c_pink;
-                        } else if( colorID == 'm' ) {
-                            ter_color = c_magenta;
-                        }
-                    }
-                }
+                const auto note_info = overmap_ui::get_note_display_info( note_text );
+                ter_color = std::get<1>( note_info );
+                ter_sym = std::string( 1, std::get<0>( note_info ) );
             } else if( !seen ) {
                 ter_sym = " ";
                 ter_color = c_black;
@@ -6236,25 +6158,30 @@ bool game::is_zones_manager_open() const
     return zones_manager_open;
 }
 
-static void zones_manager_shortcuts( const catacurses::window &w_info )
+static void zones_manager_shortcuts( const catacurses::window &w_info, const bool overlay_enabled )
 {
     werase( w_info );
 
     int tmpx = 1;
-    tmpx += shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<A>dd" ) ) + 2;
-    tmpx += shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<R>emove" ) ) + 2;
-    tmpx += shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<E>nable" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<D>isable" ) );
+    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<A>dd" ) ) + 2;
+    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<R>emove" ) ) + 2;
+    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<E>nable" ) ) + 2;
+    shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<D>isable" ) );
+
+    tmpx = 1;
+    tmpx += shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green,
+                            _( "<+-> Move up/down" ) ) + 2;
+    shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<Enter>-Edit" ) );
 
     tmpx = 1;
     tmpx += shortcut_print( w_info, point( tmpx, 2 ), c_white, c_light_green,
-                            _( "<+-> Move up/down" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 2 ), c_white, c_light_green, _( "<Enter>-Edit" ) );
+                            _( "<S>how all / hide distant" ) ) + 2;
+    shortcut_print( w_info, point( tmpx, 2 ), c_white, c_light_green, _( "<M>ap" ) );
 
     tmpx = 1;
-    tmpx += shortcut_print( w_info, point( tmpx, 3 ), c_white, c_light_green,
-                            _( "<S>how all / hide distant" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 3 ), c_white, c_light_green, _( "<M>ap" ) );
+    const nc_color overlay_color = overlay_enabled ? c_light_green : c_white;
+    shortcut_print( w_info, point( tmpx, 3 ), c_white, overlay_color,
+                    _( "<O> - Toggle Overlays" ) );
 
     wnoutrefresh( w_info );
 }
@@ -6361,6 +6288,7 @@ void game::zones_manager()
     ctxt.register_action( "ENABLE_ZONE" );
     ctxt.register_action( "DISABLE_ZONE" );
     ctxt.register_action( "SHOW_ALL_ZONES" );
+    ctxt.register_action( "TOGGLE_ZONE_OVERLAY" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
     auto &mgr = zone_manager::get_manager();
@@ -6474,7 +6402,7 @@ void game::zones_manager()
             return;
         }
         zones_manager_draw_borders( w_zones_border, w_zones_info_border, zone_ui_height, width );
-        zones_manager_shortcuts( w_zones_info );
+        zones_manager_shortcuts( w_zones_info, g->show_zone_overlay );
 
         if( zone_cnt == 0 ) {
             werase( w_zones );
@@ -6578,6 +6506,8 @@ void game::zones_manager()
             show_all_zones = !show_all_zones;
             zones = get_zones();
             active_index = 0;
+        } else if( action == "TOGGLE_ZONE_OVERLAY" ) {
+            g->show_zone_overlay = !g->show_zone_overlay;
         } else if( zone_cnt > 0 ) {
             if( action == "UP" ) {
                 active_index--;
@@ -6723,7 +6653,7 @@ void game::zones_manager()
         // call to `ui_manager::redraw`.
         //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         zone_blink = zone_cnt > 0;
-        invalidate_main_ui_adaptor();
+        g->invalidate_main_ui_adaptor();
 
         ui_manager::redraw();
 
@@ -6961,7 +6891,7 @@ look_around_result game::look_around( bool show_window, tripoint &center,
             zone_end = lp - ( start_point + end_point ) / 2 + end_point;
             zone_blink = true;
         }
-        invalidate_main_ui_adaptor();
+        g->invalidate_main_ui_adaptor();
         ui_manager::redraw();
 
         if( pixel_minimap_option ) {
@@ -7466,14 +7396,370 @@ void game::reset_item_list_state( const catacurses::window &window, int height,
     }
 }
 
+struct nearby_vehicle_entry {
+    vehicle *veh = nullptr;
+    tripoint pos = tripoint_zero;
+    int dist = 0;
+};
+
+using vehicle_list_t = std::vector<nearby_vehicle_entry>;
+
+enum class vehicle_menu_ret : int {
+    CHANGE_TAB,
+    QUIT,
+};
+
+static int vmenu_tab_delta = 1;
+
+static auto find_visible_vehicles( avatar &viewer, map &here, int radius ) -> vehicle_list_t
+{
+    vehicle_list_t vehicles;
+    if( viewer.is_blind() && viewer.clairvoyance() < 1 ) {
+        return vehicles;
+    }
+
+    for( wrapped_vehicle &wrapped : here.get_vehicles() ) {
+        vehicle *veh = wrapped.v;
+        if( veh == nullptr ) {
+            continue;
+        }
+
+        int best_dist = INT_MAX;
+        std::optional<tripoint> best_pos;
+        for( const vpart_reference &vpr : veh->get_all_parts() ) {
+            if( vpr.part().removed ) {
+                continue;
+            }
+            const tripoint part_pos = veh->global_part_pos3( vpr.part() );
+            const int dist = rl_dist( viewer.pos(), part_pos );
+            if( dist > radius || !viewer.sees( part_pos ) ) {
+                continue;
+            }
+            if( dist < best_dist ) {
+                best_dist = dist;
+                best_pos = part_pos;
+                if( dist == 0 ) {
+                    break;
+                }
+            }
+        }
+
+        if( best_pos ) {
+            vehicles.push_back( { veh, *best_pos, best_dist } );
+        }
+    }
+
+    std::sort( vehicles.begin(), vehicles.end(),
+    []( const nearby_vehicle_entry & lhs, const nearby_vehicle_entry & rhs ) {
+        if( lhs.dist != rhs.dist ) {
+            return lhs.dist < rhs.dist;
+        }
+        return lhs.veh->name < rhs.veh->name;
+    } );
+
+    return vehicles;
+}
+
+static auto vehicle_damage_summary( const vehicle &veh ) -> std::pair<std::string, nc_color>
+{
+    const vehicle_part_range vpr = veh.get_all_parts();
+    const int total_damage = std::accumulate( vpr.begin(), vpr.end(), 0,
+    []( int lhs, const vpart_reference & rhs ) {
+        return lhs + std::max( rhs.part().damage(), 0 );
+    } );
+    const int total_max = std::accumulate( vpr.begin(), vpr.end(), 0,
+    []( int lhs, const vpart_reference & rhs ) {
+        return lhs + rhs.part().max_damage();
+    } );
+    const int pct = total_max ? 100 * total_damage / total_max : 0;
+
+    if( pct < 5 ) {
+        return { _( "like new" ), c_light_green };
+    } else if( pct < 33 ) {
+        return { _( "dented" ), c_yellow };
+    } else if( pct < 66 ) {
+        return { _( "battered" ), c_magenta };
+    } else if( pct < 100 ) {
+        return { _( "wrecked" ), c_red };
+    }
+    return { _( "destroyed" ), c_dark_gray };
+}
+
+static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_ret
+{
+    avatar &viewer = get_avatar();
+    int iInfoHeight = 0;
+    const int width = 45;
+    int offsetX = 0;
+    int iMaxRows = 0;
+
+    catacurses::window w_vehicles;
+    catacurses::window w_vehicles_border;
+    catacurses::window w_vehicle_info;
+    catacurses::window w_vehicle_info_border;
+
+    vehicle *cur_vehicle = nullptr;
+    tripoint active_pos = tripoint_zero;
+    bool hide_ui = false;
+
+    ui_adaptor ui;
+    ui.on_screen_resize( [&]( ui_adaptor & ui ) {
+        if( hide_ui ) {
+            ui.position( point_zero, point_zero );
+        } else {
+            constexpr int info_lines = 9;
+            const int desired_info_height = info_lines + 2;
+            offsetX = TERMX - width;
+            iInfoHeight = std::min( desired_info_height, TERMY - 3 );
+            iMaxRows = TERMY - iInfoHeight - 1;
+
+            w_vehicles = catacurses::newwin( iMaxRows, width - 2, point( offsetX + 1, 1 ) );
+            w_vehicles_border = catacurses::newwin( iMaxRows + 1, width, point( offsetX, 0 ) );
+            w_vehicle_info = catacurses::newwin( iInfoHeight - 2, width - 2,
+                                                 point( offsetX + 1, TERMY - iInfoHeight + 1 ) );
+            w_vehicle_info_border = catacurses::newwin( iInfoHeight, width, point( offsetX,
+                                    TERMY - iInfoHeight ) );
+
+            if( cur_vehicle ) {
+                centerlistview( active_pos, width );
+            }
+
+            ui.position( point( offsetX, 0 ), point( width, TERMY ) );
+        }
+    } );
+    ui.mark_resize();
+
+    const tripoint stored_view_offset = viewer.view_offset;
+    viewer.view_offset = tripoint_zero;
+
+    int iActive = 0;
+    std::string action;
+    input_context ctxt( "LIST_VEHICLES" );
+    ctxt.register_action( "UP", to_translation( "Move cursor up" ) );
+    ctxt.register_action( "DOWN", to_translation( "Move cursor down" ) );
+    ctxt.register_action( "NEXT_TAB" );
+    ctxt.register_action( "PREV_TAB" );
+    ctxt.register_action( "QUIT" );
+    ctxt.register_action( "HELP_KEYBINDINGS" );
+
+    ui.on_redraw( [&]( ui_adaptor & ui ) {
+        if( hide_ui ) {
+            return;
+        }
+
+        draw_custom_border( w_vehicles_border, true, true, true, true, true, true, LINE_XOXO, LINE_XOXO );
+        draw_custom_border( w_vehicle_info_border, true, true, true, true, LINE_XXXO, LINE_XOXX, true,
+                            true );
+
+        mvwprintz( w_vehicles_border, point( 2, 0 ), c_light_green, "<Tab> " );
+        wprintz( w_vehicles_border, c_white, _( "Vehicles" ) );
+
+        if( vehicle_list.empty() ) {
+            werase( w_vehicles );
+            mvwprintz( w_vehicles, point( 2, iMaxRows / 3 ), c_white,
+                       _( "You don't see any vehicles around you!" ) );
+        } else {
+            werase( w_vehicles );
+
+            const int iNumVehicles = vehicle_list.size();
+            const int numw = iNumVehicles > 999 ? 4 :
+                             iNumVehicles > 99 ? 3 :
+                             iNumVehicles > 9 ? 2 : 1;
+
+            int iStartPos = 0;
+            calcStartPos( iStartPos, iActive, iMaxRows - 1, iNumVehicles );
+
+            const int endY = std::min( iMaxRows - 1, iNumVehicles );
+            for( int y = 0; y < endY; ++y ) {
+                const int idx = iStartPos + y;
+                const nearby_vehicle_entry &entry = vehicle_list[idx];
+                const bool selected = idx == iActive;
+                nc_color name_color = selected ? hilite( c_light_gray ) : c_light_gray;
+
+                trim_and_print( w_vehicles, point( 1, y ), width - 18, name_color,
+                                entry.veh->name );
+
+                const int dist = entry.dist;
+                const int numd = dist > 999 ? 4 :
+                                 dist > 99 ? 3 :
+                                 dist > 9 ? 2 : 1;
+                trim_and_print( w_vehicles, point( width - ( 8 + numd ), y ), 6 + numd,
+                                selected ? c_light_green : c_light_gray, "%*d %s",
+                                numd, dist,
+                                direction_name_short( direction_from( viewer.pos(), entry.pos ) ) );
+            }
+
+            mvwprintz( w_vehicles_border, point( ( width / 2 ) - numw - 2, 0 ), c_light_green, " %*d",
+                       numw, iActive + 1 );
+            wprintz( w_vehicles_border, c_white, " / %*d ", numw, static_cast<int>( vehicle_list.size() ) );
+
+            werase( w_vehicle_info );
+            if( cur_vehicle ) {
+                const int speed = static_cast<int>( convert_velocity( cur_vehicle->velocity, VU_VEHICLE ) );
+                const bool moving = cur_vehicle->is_moving();
+                const std::string speed_text = string_format( _( "%d %s" ), speed,
+                                               velocity_units( VU_VEHICLE ) );
+                const std::string engine_text = string_format( _( "Engine: %s" ),
+                                                cur_vehicle->engine_on ? _( "on" ) : _( "off" ) );
+                const std::string moving_text = string_format( _( "Moving: %s" ),
+                                                moving ? _( "yes" ) : _( "no" ) );
+                const std::string id_text = string_format( "[%s]", cur_vehicle->type.str() );
+                const bool wheels_ok = cur_vehicle->sufficient_wheel_config();
+                const std::string wheels_text = wheels_ok ?
+                                                _( "This vehicle has enough wheels." ) :
+                                                _( "This vehicle does not have enough wheels." );
+                const int info_width = getmaxx( w_vehicle_info );
+                const bool is_boat = !cur_vehicle->floating.empty();
+                const auto [status_text, status_color] = vehicle_damage_summary( *cur_vehicle );
+                units::volume total_cargo = 0_ml;
+                units::volume free_cargo = 0_ml;
+                for( const vpart_reference &vp : cur_vehicle->get_any_parts( "CARGO" ) ) {
+                    const size_t p = vp.part_index();
+                    total_cargo += cur_vehicle->max_volume( p );
+                    free_cargo += cur_vehicle->free_volume( p );
+                }
+                static const itype_id fuel_type_battery( "battery" );
+                bool leaking_fuel = false;
+                for( const vpart_reference &vpr : cur_vehicle->get_all_parts() ) {
+                    const vehicle_part &part = vpr.part();
+                    if( !part.is_leaking() || part.ammo_remaining() <= 0 ) {
+                        continue;
+                    }
+                    const itype_id fuel = part.ammo_current();
+                    if( fuel == fuel_type_battery ) {
+                        continue;
+                    }
+                    leaking_fuel = true;
+                    break;
+                }
+                const std::string cargo_value = string_format( _( "%s / %s %s" ),
+                                                format_volume( total_cargo - free_cargo ),
+                                                format_volume( total_cargo ),
+                                                volume_units_abbr() );
+                const std::string leak_text = _( "This vehicle is leaking fuel." );
+                const bool can_float = cur_vehicle->can_float();
+                const std::string float_text = string_format( _( "Floats: %s" ),
+                                               can_float ? _( "yes" ) : _( "no" ) );
+
+                int line = 0;
+                trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4, c_light_gray,
+                                cur_vehicle->name );
+                trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4, c_light_blue, id_text );
+                mvwprintz( w_vehicle_info, point( 1, line ), c_light_gray, _( "Speed: " ) );
+                const int speed_label_width = utf8_width( _( "Speed: " ) );
+                trim_and_print( w_vehicle_info, point( 1 + speed_label_width, line ),
+                                info_width - 2 - speed_label_width, c_light_green, speed_text );
+                line++;
+                mvwprintz( w_vehicle_info, point( 1, line ), c_light_gray, _( "Engine: " ) );
+                wprintz( w_vehicle_info, cur_vehicle->engine_on ? c_light_green : c_light_red,
+                         cur_vehicle->engine_on ? _( "on" ) : _( "off" ) );
+                line++;
+                trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4,
+                                wheels_ok ? c_light_green : c_light_red, wheels_text );
+                mvwprintz( w_vehicle_info, point( 1, line ), c_light_gray, _( "Status: " ) );
+                wprintz( w_vehicle_info, status_color, status_text );
+                line++;
+                mvwprintz( w_vehicle_info, point( 1, line ), c_light_gray, _( "Cargo: " ) );
+                const int cargo_label_width = utf8_width( _( "Cargo: " ) );
+                trim_and_print( w_vehicle_info, point( 1 + cargo_label_width, line ),
+                                info_width - 2 - cargo_label_width, c_yellow, cargo_value );
+                line++;
+                if( leaking_fuel ) {
+                    trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4,
+                                    c_light_red, leak_text );
+                }
+                if( is_boat ) {
+                    const std::string float_text = can_float ?
+                                                   _( "This vehicle can float." ) :
+                                                   _( "This vehicle can't float." );
+                    trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4,
+                                    can_float ? c_light_green : c_light_red, float_text );
+                }
+            }
+
+            draw_custom_border( w_vehicle_info_border, true, true, true, true, LINE_XXXO, LINE_XOXX, true,
+                                true );
+
+            draw_scrollbar( w_vehicles_border, iActive, iMaxRows, static_cast<int>( vehicle_list.size() ),
+                            point_south );
+
+            if( iNumVehicles > 0 ) {
+                ui.set_cursor( w_vehicles, point( 1, iActive - iStartPos ) );
+            }
+        }
+
+        wnoutrefresh( w_vehicles_border );
+        wnoutrefresh( w_vehicle_info_border );
+        wnoutrefresh( w_vehicles );
+        wnoutrefresh( w_vehicle_info );
+    } );
+
+    std::optional<tripoint> trail_start;
+    std::optional<tripoint> trail_end;
+    bool trail_end_x = false;
+    shared_ptr_fast<game::draw_callback_t> trail_cb = create_trail_callback( trail_start, trail_end,
+            trail_end_x );
+    g->add_draw_callback( trail_cb );
+
+    do {
+        if( action == "UP" ) {
+            iActive--;
+            if( iActive < 0 ) {
+                iActive = vehicle_list.empty() ? 0 : static_cast<int>( vehicle_list.size() ) - 1;
+            }
+        } else if( action == "DOWN" ) {
+            iActive++;
+            if( iActive >= static_cast<int>( vehicle_list.size() ) ) {
+                iActive = 0;
+            }
+        } else if( action == "NEXT_TAB" || action == "PREV_TAB" ) {
+            vmenu_tab_delta = action == "NEXT_TAB" ? 1 : -1;
+            viewer.view_offset = stored_view_offset;
+            return vehicle_menu_ret::CHANGE_TAB;
+        }
+
+        if( iActive >= 0 && static_cast<size_t>( iActive ) < vehicle_list.size() ) {
+            cur_vehicle = vehicle_list[iActive].veh;
+            active_pos = vehicle_list[iActive].pos - viewer.pos();
+            centerlistview( active_pos, width );
+            trail_start = viewer.pos();
+            trail_end = vehicle_list[iActive].pos;
+            // Actually accessed from the terrain overlay callback `trail_cb` in the
+            // call to `ui_manager::redraw`.
+            //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
+            trail_end_x = false;
+        } else {
+            cur_vehicle = nullptr;
+            active_pos = tripoint_zero;
+            viewer.view_offset = stored_view_offset;
+            trail_start = trail_end = std::nullopt;
+        }
+        g->invalidate_main_ui_adaptor();
+
+        ui_manager::redraw();
+        action = ctxt.handle_input();
+    } while( action != "QUIT" );
+
+    viewer.view_offset = stored_view_offset;
+    return vehicle_menu_ret::QUIT;
+}
+
 void game::list_items_monsters()
 {
+    static int vmenu_tab = [] {
+        return uistate.vmenu_show_items ? 0 : 1;
+    }();
+
+    avatar &viewer = get_avatar();
+    map &here = get_map();
+
     std::vector<Creature *> mons = u.get_visible_creatures( current_daylight_level( calendar::turn ) );
     // whole reality bubble
     const std::vector<map_item_stack> items = find_nearby_items( 60 );
+    const vehicle_list_t vehicles = find_visible_vehicles( viewer, here, 60 );
 
-    if( mons.empty() && items.empty() ) {
-        add_msg( m_info, _( "You don't see any items or monsters around you!" ) );
+    if( mons.empty() && items.empty() && vehicles.empty() ) {
+        add_msg( m_info, _( "You don't see any items, monsters, or vehicles around you!" ) );
         return;
     }
 
@@ -7489,21 +7775,52 @@ void game::list_items_monsters()
         }
     } );
 
-    // If the current list is empty, switch to the non-empty list
-    if( uistate.vmenu_show_items ) {
-        if( items.empty() ) {
-            uistate.vmenu_show_items = false;
+    const auto tab_empty = [&]( int tab ) {
+        if( tab == 0 ) {
+            return items.empty();
+        } else if( tab == 1 ) {
+            return mons.empty();
         }
-    } else if( mons.empty() ) {
-        uistate.vmenu_show_items = true;
+        return vehicles.empty();
+    };
+
+    if( vmenu_tab < 0 || vmenu_tab > 2 ) {
+        vmenu_tab = 0;
+    }
+    if( tab_empty( vmenu_tab ) ) {
+        for( int tab = 0; tab < 3; ++tab ) {
+            if( !tab_empty( tab ) ) {
+                vmenu_tab = tab;
+                break;
+            }
+        }
     }
 
     temp_exit_fullscreen();
     game::vmenu_ret ret;
     while( true ) {
-        ret = uistate.vmenu_show_items ? list_items( items ) : list_monsters( mons );
+        if( vmenu_tab == 0 ) {
+            ret = list_items( items );
+        } else if( vmenu_tab == 1 ) {
+            ret = list_monsters( mons );
+        } else {
+            ret = list_vehicles( vehicles ) == vehicle_menu_ret::CHANGE_TAB ?
+                  game::vmenu_ret::CHANGE_TAB : game::vmenu_ret::QUIT;
+        }
         if( ret == game::vmenu_ret::CHANGE_TAB ) {
-            uistate.vmenu_show_items = !uistate.vmenu_show_items;
+            int next_tab = vmenu_tab;
+            for( int i = 0; i < 3; ++i ) {
+                next_tab = ( next_tab + vmenu_tab_delta + 3 ) % 3;
+                if( !tab_empty( next_tab ) ) {
+                    vmenu_tab = next_tab;
+                    break;
+                }
+            }
+            if( vmenu_tab == 0 ) {
+                uistate.vmenu_show_items = true;
+            } else if( vmenu_tab == 1 ) {
+                uistate.vmenu_show_items = false;
+            }
         } else {
             break;
         }
@@ -7935,6 +8252,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
         } else if( action == "PAGE_DOWN" ) {
             iScrollPos++;
         } else if( action == "NEXT_TAB" || action == "PREV_TAB" ) {
+            vmenu_tab_delta = action == "NEXT_TAB" ? 1 : -1;
             u.view_offset = stored_view_offset;
             return game::vmenu_ret::CHANGE_TAB;
         }
@@ -8250,6 +8568,7 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
                 iActive = 0;
             }
         } else if( action == "NEXT_TAB" || action == "PREV_TAB" ) {
+            vmenu_tab_delta = action == "NEXT_TAB" ? 1 : -1;
             u.view_offset = stored_view_offset;
             return game::vmenu_ret::CHANGE_TAB;
         } else if( action == "SAFEMODE_BLACKLIST_REMOVE" ) {
@@ -12515,7 +12834,17 @@ bool game::slip_down()
     }
     return false;
 }
+item *game::add_fake_item( detached_ptr<item> &&it )
+{
+    it->set_flag( flag_TEMPORARY_ITEM );
+    fake_items.push_back( std::move( it ) );
+    return fake_items.back();
+}
 
+void game::remove_fake_item( item *it )
+{
+    fake_items.remove( it );
+}
 namespace cata_event_dispatch
 {
 void avatar_moves( const avatar &u, const map &m, const tripoint &p )

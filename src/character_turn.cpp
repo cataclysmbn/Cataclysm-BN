@@ -4,6 +4,7 @@
 #include "bionics.h"
 #include "calendar.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_effects.h"
 #include "character_functions.h"
 #include "character_stat.h"

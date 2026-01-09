@@ -1966,9 +1966,13 @@ No constructors.
 
 🇲 Method --> <code>( string )</code>
 
+> Removes an arbitrary entry using the same key format as set_value.
+
 #### set_value {#sol::Creature::set_value}
 
 🇲 Method --> <code>( string, string )</code>
+
+> Sets an arbitrary key : value pair for the creature.NPC dialogue system uses this, with the format("npctalk_var" + "_" + type_var + "_" + var_context + "_" + var_base_name) used for the key, skipping type or context if empty.
 
 #### get_weight {#sol::Creature::get_weight}
 
@@ -1977,6 +1981,8 @@ No constructors.
 #### get_value {#sol::Creature::get_value}
 
 🇲 Method --> <code>( string ) -> string</code>
+
+> Retrieves an arbitrary entry using the same key format as set_value.
 
 #### is_underwater {#sol::Creature::is_underwater}
 
@@ -2214,7 +2220,7 @@ No constructors.
 
 #### get_contents {#sol::DistributionGrid::get_contents}
 
-🇲 Method --> <code>( ) -> CppVal&lt;coords_coord_point&lt;tripoint,coords_origin_abs,coords_scale_map_square&gt;&gt;[]</code>
+🇲 Method --> <code>( ) -> CppVal&lt;coords_coord_point&lt;tripoint,1,0&gt;&gt;[]</code>
 
 > Get current resource amount. Boolean argument (optional) controls recursive behavior (default true)
 > Get vector of absolute map square coordinates of grid contents
@@ -3813,13 +3819,13 @@ No constructors.
 
 #### usable_category {#sol::IslotGunmod::usable_category}
 
-🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;weapon_category&gt;&gt;&gt;[]</code>
+🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;weapon_category&gt;,std_hash&lt;string_id&lt;weapon_category&gt;&gt;,std_equal_to&lt;string_id&lt;weapon_category&gt;&gt;,std_allocator&lt;string_id&lt;weapon_category&gt;&gt;&gt;&gt;[]</code>
 
 > What category of weapons this gunmod can be used with
 
 #### usable {#sol::IslotGunmod::usable}
 
-🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;itype&gt;&gt;&gt;</code>
+🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;itype&gt;,std_hash&lt;string_id&lt;itype&gt;&gt;,std_equal_to&lt;string_id&lt;itype&gt;&gt;,std_allocator&lt;string_id&lt;itype&gt;&gt;&gt;&gt;</code>
 
 > What kind of weapons this gunmod can be used with
 
@@ -3831,7 +3837,7 @@ No constructors.
 
 #### exclusion {#sol::IslotGunmod::exclusion}
 
-🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;itype&gt;&gt;&gt;</code>
+🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;itype&gt;,std_hash&lt;string_id&lt;itype&gt;&gt;,std_equal_to&lt;string_id&lt;itype&gt;&gt;,std_allocator&lt;string_id&lt;itype&gt;&gt;&gt;&gt;</code>
 
 > What kind of weapons this gunmod can't be used with
 
@@ -3843,7 +3849,7 @@ No constructors.
 
 #### exclusion_category {#sol::IslotGunmod::exclusion_category}
 
-🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;weapon_category&gt;&gt;&gt;[]</code>
+🇻 Variable --> <code>CppVal&lt;std_unordered_set&lt;string_id&lt;weapon_category&gt;,std_hash&lt;string_id&lt;weapon_category&gt;&gt;,std_equal_to&lt;string_id&lt;weapon_category&gt;&gt;,std_allocator&lt;string_id&lt;weapon_category&gt;&gt;&gt;&gt;[]</code>
 
 > What category of weapons this gunmod can't be used with
 
@@ -4941,7 +4947,7 @@ No constructors.
 
 #### layer {#sol::ItypeRaw::layer}
 
-🇻 Variable --> <code>CppVal&lt;layer_level&gt;</code>
+🇻 Variable --> <code>CppVal&lt;enumlayer_level&gt;</code>
 
 #### item_tags {#sol::ItypeRaw::item_tags}
 
@@ -9894,7 +9900,7 @@ Global game methods
 
 #### direction_from {#sol::nil::direction_from}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> CppVal&lt;direction&gt;</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> CppVal&lt;enumdirection&gt;</code>
 
 > Get direction from a tripoint delta
 
@@ -9914,7 +9920,7 @@ Global game methods
 
 #### direction_name {#sol::nil::direction_name}
 
-🇫 Function --> <code>( CppVal&lt;direction&gt; ) -> string</code>
+🇫 Function --> <code>( CppVal&lt;enumdirection&gt; ) -> string</code>
 
 > Get direction name from direction enum
 

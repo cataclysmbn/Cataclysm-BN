@@ -31,7 +31,7 @@
   "unstable": ["raw-imports", "fmt-component", "temporal"],
   "fmt": {
     "exclude": ["doc"],
-    "include": ["scripts", "doc", "docs", "*.md", ".github"],
+    "include": ["scripts", "doc", "docs", "*.md", ".github", ".claude"],
     "semiColons": false,
     "lineWidth": 100,
     "proseWrap": "preserve"

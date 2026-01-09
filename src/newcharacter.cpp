@@ -4124,6 +4124,7 @@ void reset_scenario( avatar &u, const scenario *scen )
     u.clear_mutations();
     u.recalc_hp();
     u.clear_skills();
+    u.clear_bionics();
     newcharacter::add_traits( u );
 }
 

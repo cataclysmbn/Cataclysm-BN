@@ -105,6 +105,7 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "units_energy.h"
 #include "units_utility.h"
 #include "value_ptr.h"
 #include "vehicle.h"
@@ -8107,6 +8108,11 @@ int item::ammo_capacity( bool potential_capacity ) const
     int res = 0;
 
     const item *mag = magazine_current();
+
+    if( has_flag( flag_USES_BIONIC_POWER ) ) {
+        avatar &you = get_avatar();
+        return you.get_max_power_level() / 1_kJ;
+    }
     if( mag ) {
         return mag->ammo_capacity();
     }

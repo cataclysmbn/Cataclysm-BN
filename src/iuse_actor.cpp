@@ -3300,7 +3300,10 @@ bool repair_item_actor::handle_components( player &pl, const item &fix,
 static int find_repair_difficulty( const player &pl, const itype_id &id, bool training )
 {
     // If the recipe is not found, this will remain unchanged
-    int min = -1;
+    int min = id->repair_difficulty;
+    if( min != -1 ) {
+        return min;
+    }
     for( const auto &e : recipe_dict ) {
         const auto r = e.second;
         if( id != r.result() ) {

@@ -5343,7 +5343,8 @@ int vehicle::total_water_wheel_epower_w() const
 int vehicle::net_battery_charge_rate_w() const
 {
     return total_engine_epower_w() + total_alternator_epower_w() + total_accessory_epower_w() +
-           total_solar_epower_w() + total_wind_epower_w() + total_water_wheel_epower_w();
+           total_solar_epower_w() + total_wind_epower_w() + total_water_wheel_epower_w() +
+           max_reactor_epower_w();
 }
 
 int vehicle::max_reactor_epower_w() const
@@ -5811,7 +5812,10 @@ void vehicle::idle( bool on_map )
             Also consider adding a hover efficiency field
         */
         if( is_rotorcraft() && is_flying_in_air() ) {
-            idle_rate = 100;
+            const auto rotor_newtons = std::max( 0.0,
+                                                 to_newton( total_mass() ) - total_balloon_lift() - total_wing_lift() );
+            const auto rotor_capacity = rotor_newtons / thrust_of_rotorcraft( true );
+            idle_rate = std::max( 10, int( std::floor( 100 * rotor_capacity ) ) );
             no_electric_power = false;
         }
         if( has_engine_type_not( fuel_type_muscle, true ) ) {

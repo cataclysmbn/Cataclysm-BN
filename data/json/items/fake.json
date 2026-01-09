@@ -27,7 +27,7 @@
     "copy-from": "fake_item",
     "type": "TOOL",
     "name": { "str": "integrated toolset" },
-    "flags": [ "TRADER_AVOID", "BIONIC_TOOLS" ],
+    "flags": [ "TRADER_AVOID", "BIONIC_TOOLS", "USES_BIONIC_POWER" ],
     "max_charges": 10000,
     "use_action": [ "HAMMER", "CROWBAR" ],
     "qualities": [
@@ -178,7 +178,10 @@
     "copy-from": "fake_item",
     "type": "TOOL",
     "name": { "str": "bionic firestarter" },
-    "flags": [ "FIRESTARTER" ],
+    "flags": [ "FIRESTARTER", "BIONIC_TOOLS", "USES_BIONIC_POWER" ],
+    "max_charges": 10000,
+    "ammo": "battery",
+    "charges_per_use": 1,
     "use_action": { "type": "firestarter", "moves": 200 }
   },
   {

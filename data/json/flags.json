@@ -2420,6 +2420,12 @@
     "context": [  ]
   },
   {
+    "id": "TEMPORARY_ITEM",
+    "type": "json_flag",
+    "//": "Set in game on fake items for their special processing",
+    "context": [  ]
+  },
+  {
     "id": "TINT_NO_FG",
     "type": "json_flag",
     "//": "Do not apply tint to background",
