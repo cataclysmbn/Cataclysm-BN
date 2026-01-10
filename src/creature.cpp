@@ -12,6 +12,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "color.h"
 #include "cursesdef.h"

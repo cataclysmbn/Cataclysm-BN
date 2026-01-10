@@ -239,6 +239,8 @@ int ammo_count_for( const Character &who, const item &gun );
 /** This shows warning to the player that their current activity will not give them xp */
 void show_skill_capped_notice( const Character &who, const skill_id &id );
 
+/** Returns true if the character has a bionic listed in the entered bionic id's available_upgrades field **/
+auto has_upgraded_bionic( const Character &c, const bionic_id &b ) -> bool;
 } // namespace character_funcs
 
 

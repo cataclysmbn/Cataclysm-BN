@@ -27,6 +27,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"

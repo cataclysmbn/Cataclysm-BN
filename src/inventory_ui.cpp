@@ -1718,10 +1718,10 @@ inventory_selector::inventory_selector( player &u, const inventory_selector_pres
     : u( u )
     , preset( preset )
     , ctxt( "INVENTORY" )
+    , own_gear_column( preset )
     , active_column_index( 0 )
     , mode( navigation_mode::ITEM )
     , own_inv_column( preset )
-    , own_gear_column( preset )
     , map_column( preset )
 {
     ctxt.register_action( "DOWN", to_translation( "Next item" ) );

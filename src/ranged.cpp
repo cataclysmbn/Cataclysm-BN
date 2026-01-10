@@ -22,6 +22,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"

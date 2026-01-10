@@ -1211,6 +1211,12 @@ std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_searc
         } else if( category == C_OVERMAP_NOTE ) {
             sym = id[5];
             col = color_from_string( id.substr( 7, id.length() - 1 ) );
+        } else if( category == C_BULLET ) {
+            static const auto default_bullet = std::string{ "animation_bullet_normal_0deg" };
+            auto res = find_tile_with_season( default_bullet );
+            if( res ) {
+                return tile_search_result{ .tt = &res->tile(), .found_id = res->id() };
+            }
         }
         // Special cases for walls
         switch( sym ) {
@@ -2634,9 +2640,8 @@ cata_tiles::find_tile_looks_like_by_string_id( const std::string &id, TILE_CATEG
     return find_tile_looks_like( obj.looks_like, category, looks_like_jumps_limit - 1 );
 }
 
-std::optional<tile_lookup_res>
-cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
-                                  const int looks_like_jumps_limit ) const
+auto cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
+                                       const int looks_like_jumps_limit ) const -> std::optional<tile_lookup_res>
 {
     if( id.empty() || looks_like_jumps_limit <= 0 ) {
         return std::nullopt;
@@ -2709,6 +2714,20 @@ cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
                 return std::nullopt;
             }
             return find_tile_looks_like( iid->looks_like.str(), category, looks_like_jumps_limit - 1 );
+        }
+
+        case C_BULLET: {
+            auto ammo_name = id;
+            replace_first( ammo_name, "animation_bullet_", "" );
+            auto iid = itype_id( ammo_name );
+            if( !iid.is_valid() ) {
+                return std::nullopt;
+            }
+            if( !iid->looks_like.is_empty() ) {
+                return find_tile_looks_like( "animation_bullet_" + iid->looks_like.str(), category,
+                                             looks_like_jumps_limit - 1 );
+            }
+            return std::nullopt;
         }
 
         default:
@@ -3158,6 +3177,43 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
             case 4:
                 // flip horizontally
                 ret = render( 0, SDL_FLIP_HORIZONTAL );
+                break;
+            case 5:
+                // 45 degrees
+                if( !tile_iso ) {
+                    // never rotate isometric tiles
+                    ret = render( 45, SDL_FLIP_NONE );
+                } else {
+                    ret = render( 0, SDL_FLIP_NONE );
+                }
+                break;
+            case 6:
+                // 315 degrees
+                if( !tile_iso ) {
+                    // never rotate isometric tiles
+                    ret = render( -45, SDL_FLIP_NONE );
+                } else {
+                    ret = render( 0, SDL_FLIP_NONE );
+                }
+                break;
+            case 7:
+                // 225 degrees
+                if( !tile_iso ) {
+                    // never rotate isometric tiles
+                    ret = render( -135, SDL_FLIP_NONE );
+                } else {
+                    ret = render( 0, SDL_FLIP_NONE );
+                }
+                break;
+            case 8:
+                // 135 degrees
+                if( !tile_iso ) {
+                    // never rotate isometric tiles
+                    ret = render( 135, SDL_FLIP_NONE );
+                } else {
+                    ret = render( 0, SDL_FLIP_NONE );
+                }
+                break;
         }
     } else {
         // don't rotate, same as case 0 above
@@ -4501,11 +4557,9 @@ void cata_tiles::void_cone_aoe()
 
 void cata_tiles::draw_bullet_frame()
 {
-    static const std::string bullet_fallback {"animation_bullet_normal"};
     for( size_t i = 0; i < bul_pos.size(); ++i ) {
-        const auto supports_directional = find_tile_looks_like( bul_id[i], C_BULLET );
         const auto tile = tile_search_params{
-            .id = supports_directional ? bul_id[i] : bullet_fallback,
+            .id = bul_id[i],
             .category = C_BULLET,
             .subcategory = empty_string,
             .subtile = 0,

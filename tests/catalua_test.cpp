@@ -771,3 +771,41 @@ TEST_CASE( "lua_units_functions", "[lua]" )
     REQUIRE( lua_mass_grams == units::to_gram( units::from_kilogram( mass_kilograms ) ) );
     REQUIRE( lua_volume_milliliters == units::to_milliliter( units::from_liter( volume_liters ) ) );
 }
+
+TEST_CASE( "lua_require_relative", "[lua]" )
+{
+    sol::state lua = make_lua_state();
+
+    // Create global table for test
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    // Run Lua script that uses relative require
+    run_lua_test_script( lua, "require_test_relative.lua" );
+
+    // Check results
+    int result_add = test_data["result_add"];
+    int result_mul = test_data["result_mul"];
+
+    REQUIRE( result_add == 5 );   // 2 + 3
+    REQUIRE( result_mul == 20 );  // 4 * 5
+}
+
+TEST_CASE( "lua_require_dotted", "[lua]" )
+{
+    sol::state lua = make_lua_state();
+
+    // Create global table for test
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    // Run Lua script that uses dotted require
+    run_lua_test_script( lua, "require_test_dotted.lua" );
+
+    // Check results
+    int result_add = test_data["result_add"];
+    int result_mul = test_data["result_mul"];
+
+    REQUIRE( result_add == 30 );  // 10 + 20
+    REQUIRE( result_mul == 21 );  // 3 * 7
+}
