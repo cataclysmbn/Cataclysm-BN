@@ -1254,15 +1254,15 @@
   {
     "type": "vehicle_part",
     "id": "aluminium_boat_hull",
-    "name": { "str": "aluminium boat hull" },
-    "description": "A rigid aluminium sheet that keeps water out of your boat.",
+    "name": { "str": "aluminum boat hull" },
+    "description": "A rigid aluminum sheet that keeps water out of your boat.",
     "symbol": "o",
     "color": "light_blue",
     "looks_like": "boat_board",
     "broken_symbol": "x",
     "broken_color": "light_gray",
     "damage_modifier": 50,
-    "durability": 120,
+    "durability": 200,
     "item": "aluminium_boat_hull",
     "location": "under",
     "requirements": {
@@ -1275,8 +1275,8 @@
       }
     },
     "flags": [ "FLOATS" ],
-    "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 4, 8 ] } ],
-    "damage_reduction": { "all": 12, "stab": 4, "cut": 4 }
+    "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
+    "damage_reduction": { "all": 20 }
   },
   {
     "type": "vehicle_part",
