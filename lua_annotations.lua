@@ -1274,13 +1274,18 @@ function IslotWheel.new() end
 ---@field get_counter fun(self: Item): integer
 ---@field get_damage fun(self: Item): integer @Get current item damage value (durability). Higher values mean more damaged. Default range is -1000 (min) to 4000 (max), configurable via 'damage_states' in JSON.
 ---@field get_damage_level fun(self: Item): integer | fun(self: Item, arg2: integer): integer @Get item damage as a level from 0 to max. Used for UI display and damage thresholds.
+---@field get_dispersion_bonus fun(self: Item): integer
 ---@field get_kcal fun(self: Item): integer
 ---@field get_max_damage fun(self: Item): integer @Get maximum possible damage value before item is destroyed. Default is 4000, configurable via 'damage_states' in JSON.
+---@field get_melee_damage_bonus fun(self: Item): DamageInstance
 ---@field get_min_damage fun(self: Item): integer @Get minimum possible damage value (can be negative for reinforced items). Default is -1000, configurable via 'damage_states' in JSON.
 ---@field get_mtype fun(self: Item): MonsterTypeId @Almost for a corpse.
 ---@field get_owner fun(self: Item): FactionId @Gets the faction id that owns this item
 ---@field get_owner_name fun(self: Item): string
 ---@field get_quench fun(self: Item): integer
+---@field get_range_bonus fun(self: Item): integer
+---@field get_ranged_damage_bonus fun(self: Item): DamageInstance
+---@field get_recoil_bonus fun(self: Item): integer
 ---@field get_relative_health fun(self: Item): number @Get relative health as ratio 0.0-1.0, where 1.0 is undamaged and 0.0 is destroyed
 ---@field get_reload_time fun(self: Item): integer
 ---@field get_rot fun(self: Item): TimeDuration @Gets the TimeDuration until this item rots
@@ -1363,10 +1368,15 @@ function IslotWheel.new() end
 ---@field set_charges fun(self: Item, arg2: integer)
 ---@field set_counter fun(self: Item, arg2: integer)
 ---@field set_damage fun(self: Item, arg2: integer) @Set item damage to specified value. Clamped between min_damage and max_damage.
+---@field set_dispersion_bonus fun(self: Item, arg2: integer)
 ---@field set_flag fun(self: Item, arg2: JsonFlagId)
 ---@field set_flag_recursive fun(self: Item, arg2: JsonFlagId)
+---@field set_melee_damage_bonus fun(self: Item, arg2: DamageInstance)
 ---@field set_owner fun(self: Item, arg2: Character) @Sets the ownership of this item to a character
 ---@field set_owner fun(self: Item, arg2: FactionId) @Sets the ownership of this item to a faction
+---@field set_range_bonus fun(self: Item, arg2: integer)
+---@field set_ranged_damage_bonus fun(self: Item, arg2: DamageInstance)
+---@field set_recoil_bonus fun(self: Item, arg2: integer)
 ---@field set_var_num fun(self: Item, arg2: string, arg3: number)
 ---@field set_var_str fun(self: Item, arg2: string, arg3: string)
 ---@field set_var_tri fun(self: Item, arg2: string, arg3: Tripoint)

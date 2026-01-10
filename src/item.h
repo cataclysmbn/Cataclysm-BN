@@ -2397,6 +2397,8 @@ class item : public location_visitable<item>, public game_object<item>
         const mtype *get_corpse_mon() const;
         auto get_melee_damage_bonus() const -> const damage_instance &;
         auto set_melee_damage_bonus( const damage_instance &bonus ) -> void;
+        auto get_melee_hit_bonus() const -> int;
+        auto set_melee_hit_bonus( int bonus ) -> void;
         auto get_ranged_damage_bonus() const -> const damage_instance &;
         auto set_ranged_damage_bonus( const damage_instance &bonus ) -> void;
         auto get_range_bonus() const -> int;
@@ -2414,6 +2416,7 @@ class item : public location_visitable<item>, public game_object<item>
         std::set<matec_id> techniques; // item specific techniques
 
         damage_instance melee_damage_bonus;
+        int melee_hit_bonus = 0;
         damage_instance ranged_damage_bonus;
         int range_bonus = 0;
         int dispersion_bonus = 0;

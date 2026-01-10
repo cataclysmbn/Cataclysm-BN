@@ -323,12 +323,14 @@ void reg_item( sol::state &lua )
                       ) );
 
         SET_FX( get_melee_damage_bonus );
+        SET_FX( get_melee_hit_bonus );
         SET_FX( get_ranged_damage_bonus );
         SET_FX( get_range_bonus );
         SET_FX( get_dispersion_bonus );
         SET_FX( get_recoil_bonus );
 
         SET_FX( set_melee_damage_bonus );
+        SET_FX( set_melee_hit_bonus );
         SET_FX( set_ranged_damage_bonus );
         SET_FX( set_range_bonus );
         SET_FX( set_dispersion_bonus );

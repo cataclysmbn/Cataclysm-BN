@@ -3613,7 +3613,7 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
         if( dmg_bash || dmg_cut || dmg_stab ) {
             if( parts->test( iteminfo_parts::BASE_TOHIT ) ) {
                 info.emplace_back( "BASE", space + _( "To-hit bonus: " ), "",
-                                   iteminfo::show_plus, type->m_to_hit );
+                                   iteminfo::show_plus, type->m_to_hit + get_melee_hit_bonus() );
             }
 
             if( parts->test( iteminfo_parts::BASE_MOVES ) ) {
@@ -3654,7 +3654,7 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
 
             if( parts->test( iteminfo_parts::BASE_TOHIT ) ) {
                 info.emplace_back( "BASE", _( "To-hit bonus: " ), "",
-                                   iteminfo::show_plus, attack.to_hit );
+                                   iteminfo::show_plus, attack.to_hit + get_melee_hit_bonus() );
             }
 
             if( parts->test( iteminfo_parts::BASE_MOVES ) ) {
@@ -5643,9 +5643,7 @@ int item::damage_melee( const attack_statblock &attack, damage_type dt ) const
     }
     // Apply melee damage bonus
     const auto &bonus = get_melee_damage_bonus();
-    if( bonus.has_damage_type( dt ) ) {
-        res += bonus.type_damage( dt );
-    }
+    res += bonus.type_damage( dt );
 
     return std::max( res, 0 );
 }
@@ -5741,9 +5739,7 @@ std::map<std::string, attack_statblock> item::get_attacks() const
                     break;
             }
             // Apply melee damage bonus
-            if( bonus.has_damage_type( du.type ) ) {
-                du.amount += bonus.type_damage( du.type );
-            }
+            du.amount += bonus.type_damage( du.type );
         }
         result[attack.first] = modified_attack;
 
@@ -5799,9 +5795,19 @@ auto item::get_melee_damage_bonus( ) const -> const damage_instance &
     return melee_damage_bonus;
 }
 
-auto item::set_melee_damage_bonus( const damage_instance &damages ) -> void
+auto item::set_melee_damage_bonus( const damage_instance &bonus ) -> void
 {
-    melee_damage_bonus = damages;
+    melee_damage_bonus = bonus;
+}
+
+auto item::get_melee_hit_bonus() const -> int
+{
+    return melee_hit_bonus;
+}
+
+auto item::set_melee_hit_bonus( int bonus ) -> void
+{
+    melee_hit_bonus = bonus;
 }
 
 auto item::get_ranged_damage_bonus( ) const -> const damage_instance &
