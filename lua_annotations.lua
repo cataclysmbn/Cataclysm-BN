@@ -1278,6 +1278,7 @@ function IslotWheel.new() end
 ---@field get_kcal fun(self: Item): integer
 ---@field get_max_damage fun(self: Item): integer @Get maximum possible damage value before item is destroyed. Default is 4000, configurable via 'damage_states' in JSON.
 ---@field get_melee_damage_bonus fun(self: Item): DamageInstance
+---@field get_melee_hit_bonus fun(self: Item): integer
 ---@field get_min_damage fun(self: Item): integer @Get minimum possible damage value (can be negative for reinforced items). Default is -1000, configurable via 'damage_states' in JSON.
 ---@field get_mtype fun(self: Item): MonsterTypeId @Almost for a corpse.
 ---@field get_owner fun(self: Item): FactionId @Gets the faction id that owns this item
@@ -1372,6 +1373,7 @@ function IslotWheel.new() end
 ---@field set_flag fun(self: Item, arg2: JsonFlagId)
 ---@field set_flag_recursive fun(self: Item, arg2: JsonFlagId)
 ---@field set_melee_damage_bonus fun(self: Item, arg2: DamageInstance)
+---@field set_melee_hit_bonus fun(self: Item, arg2: integer)
 ---@field set_owner fun(self: Item, arg2: Character) @Sets the ownership of this item to a character
 ---@field set_owner fun(self: Item, arg2: FactionId) @Sets the ownership of this item to a faction
 ---@field set_range_bonus fun(self: Item, arg2: integer)

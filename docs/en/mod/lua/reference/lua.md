@@ -4220,45 +4220,15 @@ No constructors.
 
 🇻 Variable --> <code>integer</code>
 
-#### get_type {#sol::Item::get_type}
-
-🇲 Method --> <code>( ) -> [ItypeId](#sol::ItypeId)</code>
-
-#### remove_technique {#sol::Item::remove_technique}
-
-🇲 Method --> <code>( [MartialArtsTechniqueId](#sol::MartialArtsTechniqueId) )</code>
-
-> Removes the additional technique. Doesn't affect originial techniques.
-
-#### can_contain {#sol::Item::can_contain}
-
-🇲 Method --> <code>( [Item](#sol::Item) ) -> boolean</code>
-
-> Checks if this item can contain another
-
 #### remaining_capacity_for_id {#sol::Item::remaining_capacity_for_id}
 
 🇲 Method --> <code>( [ItypeId](#sol::ItypeId), boolean ) -> integer</code>
 
 > Gets the remaining space available for a type of liquid
 
-#### add_technique {#sol::Item::add_technique}
+#### get_type {#sol::Item::get_type}
 
-🇲 Method --> <code>( [MartialArtsTechniqueId](#sol::MartialArtsTechniqueId) )</code>
-
-> Adds the technique. It isn't treated original, but additional.
-
-#### has_technique {#sol::Item::has_technique}
-
-🇲 Method --> <code>( [MartialArtsTechniqueId](#sol::MartialArtsTechniqueId) ) -> boolean</code>
-
-> Checks if this item has the technique as an addition. Doesn't check original techniques.
-
-#### get_techniques {#sol::Item::get_techniques}
-
-🇲 Method --> <code>( ) -> [MartialArtsTechniqueId](#sol::MartialArtsTechniqueId)[]</code>
-
-> Gets all techniques. Including original techniques.
+🇲 Method --> <code>( ) -> [ItypeId](#sol::ItypeId)</code>
 
 #### total_capacity {#sol::Item::total_capacity}
 
@@ -4272,29 +4242,29 @@ No constructors.
 
 > Gets the current magazine
 
+#### can_contain {#sol::Item::can_contain}
+
+🇲 Method --> <code>( [Item](#sol::Item) ) -> boolean</code>
+
+> Checks if this item can contain another
+
+#### add_technique {#sol::Item::add_technique}
+
+🇲 Method --> <code>( [MartialArtsTechniqueId](#sol::MartialArtsTechniqueId) )</code>
+
+> Adds the technique. It isn't treated original, but additional.
+
+#### remove_technique {#sol::Item::remove_technique}
+
+🇲 Method --> <code>( [MartialArtsTechniqueId](#sol::MartialArtsTechniqueId) )</code>
+
+> Removes the additional technique. Doesn't affect originial techniques.
+
 #### ammo_capacity {#sol::Item::ammo_capacity}
 
 🇲 Method --> <code>( boolean ) -> integer</code>
 
 > Gets the maximum capacity of a magazine
-
-#### ammo_current {#sol::Item::ammo_current}
-
-🇲 Method --> <code>( ) -> [ItypeId](#sol::ItypeId)</code>
-
-#### ammo_consume {#sol::Item::ammo_consume}
-
-🇲 Method --> <code>( integer, [Tripoint](#sol::Tripoint) ) -> integer</code>
-
-#### is_owned_by {#sol::Item::is_owned_by}
-
-🇲 Method --> <code>( [Character](#sol::Character), boolean ) -> boolean</code>
-
-> Checks if this item owned by a character
-
-#### ammo_required {#sol::Item::ammo_required}
-
-🇲 Method --> <code>( ) -> integer</code>
 
 #### ammo_remaining {#sol::Item::ammo_remaining}
 
@@ -4310,19 +4280,43 @@ No constructors.
 
 🇲 Method --> <code>( [ItypeId](#sol::ItypeId), integer )</code>
 
+#### ammo_unset {#sol::Item::ammo_unset}
+
+🇲 Method --> <code>( )</code>
+
+#### get_techniques {#sol::Item::get_techniques}
+
+🇲 Method --> <code>( ) -> [MartialArtsTechniqueId](#sol::MartialArtsTechniqueId)[]</code>
+
+> Gets all techniques. Including original techniques.
+
+#### ammo_consume {#sol::Item::ammo_consume}
+
+🇲 Method --> <code>( integer, [Tripoint](#sol::Tripoint) ) -> integer</code>
+
+#### ammo_required {#sol::Item::ammo_required}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+#### ammo_current {#sol::Item::ammo_current}
+
+🇲 Method --> <code>( ) -> [ItypeId](#sol::ItypeId)</code>
+
+#### has_technique {#sol::Item::has_technique}
+
+🇲 Method --> <code>( [MartialArtsTechniqueId](#sol::MartialArtsTechniqueId) ) -> boolean</code>
+
+> Checks if this item has the technique as an addition. Doesn't check original techniques.
+
+#### is_owned_by {#sol::Item::is_owned_by}
+
+🇲 Method --> <code>( [Character](#sol::Character), boolean ) -> boolean</code>
+
+> Checks if this item owned by a character
+
 #### get_owner_name {#sol::Item::get_owner_name}
 
 🇲 Method --> <code>( ) -> string</code>
-
-#### set_owner {#sol::Item::set_owner}
-
-🇲 Method --> <code>( [FactionId](#sol::FactionId) )</code>
-
-> Sets the ownership of this item to a faction
-
-#### has_infinite_charges {#sol::Item::has_infinite_charges}
-
-🇲 Method --> <code>( ) -> boolean</code>
 
 #### mod_charges {#sol::Item::mod_charges}
 
@@ -4332,11 +4326,11 @@ No constructors.
 
 🇲 Method --> <code>( ) -> [MaterialTypeId](#sol::MaterialTypeId)[]</code>
 
-#### energy_remaining {#sol::Item::energy_remaining}
+#### is_made_of {#sol::Item::is_made_of}
 
-🇲 Method --> <code>( ) -> [Energy](#sol::Energy)</code>
+🇲 Method --> <code>( [MaterialTypeId](#sol::MaterialTypeId) ) -> boolean</code>
 
-#### conductive {#sol::Item::conductive}
+#### has_infinite_charges {#sol::Item::has_infinite_charges}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
@@ -4344,15 +4338,33 @@ No constructors.
 
 🇲 Method --> <code>( ) -> boolean</code>
 
+#### energy_remaining {#sol::Item::energy_remaining}
+
+🇲 Method --> <code>( ) -> [Energy](#sol::Energy)</code>
+
+#### get_reload_time {#sol::Item::get_reload_time}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+#### get_kcal {#sol::Item::get_kcal}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+#### get_comestible_fun {#sol::Item::get_comestible_fun}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+#### set_owner {#sol::Item::set_owner}
+
+🇲 Method --> <code>( [FactionId](#sol::FactionId) )</code>
+
+> Sets the ownership of this item to a faction
+
 #### set_owner {#sol::Item::set_owner}
 
 🇲 Method --> <code>( [Character](#sol::Character) )</code>
 
 > Sets the ownership of this item to a character
-
-#### is_made_of {#sol::Item::is_made_of}
-
-🇲 Method --> <code>( [MaterialTypeId](#sol::MaterialTypeId) ) -> boolean</code>
 
 #### get_quench {#sol::Item::get_quench}
 
@@ -4364,9 +4376,11 @@ No constructors.
 
 > Gets the faction id that owns this item
 
-#### get_kcal {#sol::Item::get_kcal}
+#### get_rot {#sol::Item::get_rot}
 
-🇲 Method --> <code>( ) -> integer</code>
+🇲 Method --> <code>( ) -> [TimeDuration](#sol::TimeDuration)</code>
+
+> Gets the <code>[TimeDuration](#sol::TimeDuration)</code> until this item rots
 
 #### get_category_id {#sol::Item::get_category_id}
 
@@ -4374,19 +4388,9 @@ No constructors.
 
 > Gets the category id this item is in
 
-#### get_comestible_fun {#sol::Item::get_comestible_fun}
+#### conductive {#sol::Item::conductive}
 
-🇲 Method --> <code>( ) -> integer</code>
-
-#### get_rot {#sol::Item::get_rot}
-
-🇲 Method --> <code>( ) -> [TimeDuration](#sol::TimeDuration)</code>
-
-> Gets the <code>[TimeDuration](#sol::TimeDuration)</code> until this item rots
-
-#### ammo_unset {#sol::Item::ammo_unset}
-
-🇲 Method --> <code>( )</code>
+🇲 Method --> <code>( ) -> boolean</code>
 
 #### add_item_with_id {#sol::Item::add_item_with_id}
 
@@ -4394,17 +4398,11 @@ No constructors.
 
 > Adds an item(s) to contents
 
-#### get_relative_health {#sol::Item::get_relative_health}
+#### covers {#sol::Item::covers}
 
-🇲 Method --> <code>( ) -> number</code>
+🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> boolean</code>
 
-> Get relative health as ratio 0.0-1.0, where 1.0 is undamaged and 0.0 is destroyed
-
-#### set_damage {#sol::Item::set_damage}
-
-🇲 Method --> <code>( integer )</code>
-
-> Set item damage to specified value. Clamped between min_damage and max_damage.
+> Checks if the item covers a bodypart
 
 #### mod_damage {#sol::Item::mod_damage}
 
@@ -4413,18 +4411,31 @@ No constructors.
 
 > Modify item damage by given amount. Returns true if item should be destroyed.
 
+#### get_melee_damage_bonus {#sol::Item::get_melee_damage_bonus}
+
+🇲 Method --> <code>( ) -> [DamageInstance](#sol::DamageInstance)</code>
+
+#### get_melee_hit_bonus {#sol::Item::get_melee_hit_bonus}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+#### set_damage {#sol::Item::set_damage}
+
+🇲 Method --> <code>( integer )</code>
+
+> Set item damage to specified value. Clamped between min_damage and max_damage.
+
 #### get_max_damage {#sol::Item::get_max_damage}
 
 🇲 Method --> <code>( ) -> integer</code>
 
 > Get maximum possible damage value before item is destroyed. Default is 4000, configurable via 'damage_states' in JSON.
 
-#### get_damage_level {#sol::Item::get_damage_level}
+#### get_relative_health {#sol::Item::get_relative_health}
 
-🇲 Method --> <code>( ) -> integer</code>\
-🇲 Method --> <code>( integer ) -> integer</code>
+🇲 Method --> <code>( ) -> number</code>
 
-> Get item damage as a level from 0 to max. Used for UI display and damage thresholds.
+> Get relative health as ratio 0.0-1.0, where 1.0 is undamaged and 0.0 is destroyed
 
 #### get_min_damage {#sol::Item::get_min_damage}
 
@@ -4432,17 +4443,11 @@ No constructors.
 
 > Get minimum possible damage value (can be negative for reinforced items). Default is -1000, configurable via 'damage_states' in JSON.
 
-#### get_damage {#sol::Item::get_damage}
-
-🇲 Method --> <code>( ) -> integer</code>
-
-> Get current item damage value (durability). Higher values mean more damaged. Default range is -1000 (min) to 4000 (max), configurable via 'damage_states' in JSON.
-
-#### get_melee_damage_bonus {#sol::Item::get_melee_damage_bonus}
+#### get_ranged_damage_bonus {#sol::Item::get_ranged_damage_bonus}
 
 🇲 Method --> <code>( ) -> [DamageInstance](#sol::DamageInstance)</code>
 
-#### get_range_bonus {#sol::Item::get_range_bonus}
+#### get_dispersion_bonus {#sol::Item::get_dispersion_bonus}
 
 🇲 Method --> <code>( ) -> integer</code>
 
@@ -4454,49 +4459,21 @@ No constructors.
 
 🇲 Method --> <code>( integer )</code>
 
-#### get_ranged_damage_bonus {#sol::Item::get_ranged_damage_bonus}
-
-🇲 Method --> <code>( ) -> [DamageInstance](#sol::DamageInstance)</code>
-
-#### set_melee_damage_bonus {#sol::Item::set_melee_damage_bonus}
-
-🇲 Method --> <code>( [DamageInstance](#sol::DamageInstance) )</code>
-
-#### get_dispersion_bonus {#sol::Item::get_dispersion_bonus}
+#### get_range_bonus {#sol::Item::get_range_bonus}
 
 🇲 Method --> <code>( ) -> integer</code>
+
+#### set_melee_hit_bonus {#sol::Item::set_melee_hit_bonus}
+
+🇲 Method --> <code>( integer )</code>
 
 #### get_recoil_bonus {#sol::Item::get_recoil_bonus}
 
 🇲 Method --> <code>( ) -> integer</code>
 
-#### get_reload_time {#sol::Item::get_reload_time}
+#### set_melee_damage_bonus {#sol::Item::set_melee_damage_bonus}
 
-🇲 Method --> <code>( ) -> integer</code>
-
-#### stamina_cost {#sol::Item::stamina_cost}
-
-🇲 Method --> <code>( ) -> integer</code>
-
-#### set_var_tri {#sol::Item::set_var_tri}
-
-🇲 Method --> <code>( string, [Tripoint](#sol::Tripoint) )</code>
-
-#### unset_flag {#sol::Item::unset_flag}
-
-🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId) )</code>
-
-#### has_flag {#sol::Item::has_flag}
-
-🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId) ) -> boolean</code>
-
-#### has_own_flag {#sol::Item::has_own_flag}
-
-🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId) ) -> boolean</code>
-
-#### set_flag {#sol::Item::set_flag}
-
-🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId) )</code>
+🇲 Method --> <code>( [DamageInstance](#sol::DamageInstance) )</code>
 
 #### has_item_with_id {#sol::Item::has_item_with_id}
 
@@ -4504,19 +4481,46 @@ No constructors.
 
 > Checks item contents for a given item id
 
-#### covers {#sol::Item::covers}
+#### get_damage_level {#sol::Item::get_damage_level}
 
-🇲 Method --> <code>( [BodyPartTypeIntId](#sol::BodyPartTypeIntId) ) -> boolean</code>
+🇲 Method --> <code>( ) -> integer</code>\
+🇲 Method --> <code>( integer ) -> integer</code>
 
-> Checks if the item covers a bodypart
+> Get item damage as a level from 0 to max. Used for UI display and damage thresholds.
 
-#### attack_cost {#sol::Item::attack_cost}
+#### stamina_cost {#sol::Item::stamina_cost}
 
 🇲 Method --> <code>( ) -> integer</code>
+
+#### has_own_flag {#sol::Item::has_own_flag}
+
+🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId) ) -> boolean</code>
 
 #### set_flag_recursive {#sol::Item::set_flag_recursive}
 
 🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId) )</code>
+
+#### unset_flags {#sol::Item::unset_flags}
+
+🇲 Method --> <code>( )</code>
+
+#### has_flag {#sol::Item::has_flag}
+
+🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId) ) -> boolean</code>
+
+#### set_flag {#sol::Item::set_flag}
+
+🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId) )</code>
+
+#### unset_flag {#sol::Item::unset_flag}
+
+🇲 Method --> <code>( [JsonFlagId](#sol::JsonFlagId) )</code>
+
+#### get_damage {#sol::Item::get_damage}
+
+🇲 Method --> <code>( ) -> integer</code>
+
+> Get current item damage value (durability). Higher values mean more damaged. Default range is -1000 (min) to 4000 (max), configurable via 'damage_states' in JSON.
 
 #### convert {#sol::Item::convert}
 
@@ -4524,23 +4528,19 @@ No constructors.
 
 > Converts the item as given `<code>[ItypeId](#sol::ItypeId)</code>`.
 
-#### set_var_str {#sol::Item::set_var_str}
+#### get_var_num {#sol::Item::get_var_num}
 
-🇲 Method --> <code>( string, string )</code>
+🇲 Method --> <code>( string, number ) -> number</code>
 
-#### set_var_num {#sol::Item::set_var_num}
+> Get variable as float number
 
-🇲 Method --> <code>( string, number )</code>
+#### set_var_tri {#sol::Item::set_var_tri}
 
-#### unset_flags {#sol::Item::unset_flags}
+🇲 Method --> <code>( string, [Tripoint](#sol::Tripoint) )</code>
 
-🇲 Method --> <code>( )</code>
+#### attack_cost {#sol::Item::attack_cost}
 
-#### get_var_tri {#sol::Item::get_var_tri}
-
-🇲 Method --> <code>( string, [Tripoint](#sol::Tripoint) ) -> [Tripoint](#sol::Tripoint)</code>
-
-> Get variable as tripoint
+🇲 Method --> <code>( ) -> integer</code>
 
 #### get_var_str {#sol::Item::get_var_str}
 
@@ -4548,25 +4548,29 @@ No constructors.
 
 > Get variable as string
 
-#### get_var_num {#sol::Item::get_var_num}
+#### set_var_num {#sol::Item::set_var_num}
 
-🇲 Method --> <code>( string, number ) -> number</code>
+🇲 Method --> <code>( string, number )</code>
 
-> Get variable as float number
+#### get_var_tri {#sol::Item::get_var_tri}
+
+🇲 Method --> <code>( string, [Tripoint](#sol::Tripoint) ) -> [Tripoint](#sol::Tripoint)</code>
+
+> Get variable as tripoint
+
+#### set_var_str {#sol::Item::set_var_str}
+
+🇲 Method --> <code>( string, string )</code>
 
 #### set_dispersion_bonus {#sol::Item::set_dispersion_bonus}
 
 🇲 Method --> <code>( integer )</code>
 
-#### is_magazine {#sol::Item::is_magazine}
+#### is_melee {#sol::Item::is_melee}
 
-🇲 Method --> <code>( ) -> boolean</code>
+🇲 Method --> <code>( [DamageType](#sol::DamageType) ) -> boolean</code>
 
-> Is this a magazine? (batteries are magazines)
-
-#### get_counter {#sol::Item::get_counter}
-
-🇲 Method --> <code>( ) -> integer</code>
+> Is this item an effective melee weapon for the given damage type?
 
 #### is_bandolier {#sol::Item::is_bandolier}
 
@@ -4720,21 +4724,17 @@ No constructors.
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### is_melee {#sol::Item::is_melee}
+#### is_magazine {#sol::Item::is_magazine}
 
-🇲 Method --> <code>( [DamageType](#sol::DamageType) ) -> boolean</code>
+🇲 Method --> <code>( ) -> boolean</code>
 
-> Is this item an effective melee weapon for the given damage type?
+> Is this a magazine? (batteries are magazines)
 
 #### is_book {#sol::Item::is_book}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
 #### is_container {#sol::Item::is_container}
-
-🇲 Method --> <code>( ) -> boolean</code>
-
-#### is_dangerous {#sol::Item::is_dangerous}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
@@ -4746,6 +4746,18 @@ No constructors.
 
 🇲 Method --> <code>( ) -> boolean</code>
 
+#### is_reloadable {#sol::Item::is_reloadable}
+
+🇲 Method --> <code>( ) -> boolean</code>
+
+#### is_dangerous {#sol::Item::is_dangerous}
+
+🇲 Method --> <code>( ) -> boolean</code>
+
+#### is_relic {#sol::Item::is_relic}
+
+🇲 Method --> <code>( ) -> boolean</code>
+
 #### is_seed {#sol::Item::is_seed}
 
 🇲 Method --> <code>( ) -> boolean</code>
@@ -4754,17 +4766,17 @@ No constructors.
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### is_relic {#sol::Item::is_relic}
+#### is_upgrade {#sol::Item::is_upgrade}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### is_transformable {#sol::Item::is_transformable}
+#### set_counter {#sol::Item::set_counter}
 
-🇲 Method --> <code>( ) -> boolean</code>
+🇲 Method --> <code>( integer )</code>
 
-#### is_reloadable {#sol::Item::is_reloadable}
+#### get_counter {#sol::Item::get_counter}
 
-🇲 Method --> <code>( ) -> boolean</code>
+🇲 Method --> <code>( ) -> integer</code>
 
 #### is_active {#sol::Item::is_active}
 
@@ -4774,19 +4786,11 @@ No constructors.
 
 🇲 Method --> <code>( integer )</code>
 
-#### set_counter {#sol::Item::set_counter}
-
-🇲 Method --> <code>( integer )</code>
-
-#### deactivate {#sol::Item::deactivate}
+#### activate {#sol::Item::activate}
 
 🇲 Method --> <code>( )</code>
 
-#### is_upgrade {#sol::Item::is_upgrade}
-
-🇲 Method --> <code>( ) -> boolean</code>
-
-#### activate {#sol::Item::activate}
+#### deactivate {#sol::Item::deactivate}
 
 🇲 Method --> <code>( )</code>
 
@@ -4794,11 +4798,11 @@ No constructors.
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### is_tool {#sol::Item::is_tool}
+#### is_transformable {#sol::Item::is_transformable}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### is_emissive {#sol::Item::is_emissive}
+#### is_deployable {#sol::Item::is_deployable}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
@@ -4826,7 +4830,7 @@ No constructors.
 
 🇲 Method --> <code>( ) -> boolean</code>
 
-#### is_deployable {#sol::Item::is_deployable}
+#### is_tool {#sol::Item::is_tool}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
@@ -4839,6 +4843,10 @@ No constructors.
 🇲 Method --> <code>( ) -> boolean</code>
 
 #### is_craft {#sol::Item::is_craft}
+
+🇲 Method --> <code>( ) -> boolean</code>
+
+#### is_emissive {#sol::Item::is_emissive}
 
 🇲 Method --> <code>( ) -> boolean</code>
 
