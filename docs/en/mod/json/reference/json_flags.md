@@ -732,6 +732,8 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
   item::process_fake_smoke, where conditions for its removal are set.
 - `FIREWOOD` ... This item can serve as a firewood. Items with this flag are sorted out to "Loot:
   Wood" zone
+- `FLY_STRAIGHT` ... This thrown item flies straight without rotating in the air, maintaining its
+  aerodynamic orientation. Typically used for javelins, spears, and darts.
 - `FRAGILE_MELEE` ... Fragile items that fall apart easily when used as a weapon due to poor
   construction quality and will break into components when broken.
 - `GAS_DISCOUNT` ... Discount cards for the automated gas stations.
