@@ -90,16 +90,17 @@ static std::vector<page> split_to_pages( const std::vector<talk_data> &responses
     std::vector<page> ret;
     int fold_width = page_w - 3;
     int this_h = 0;
-    for( auto response_index : std::views::iota( size_t{ 0 }, responses.size() ) ) {
-        const auto &resp = responses[response_index];
+    size_t response_index = 0;
+    for( const talk_data &resp : responses ) {
         // Assemble single entry for printing
         const std::vector<std::string> folded = foldstring( resp.text, fold_width );
         page_entry this_entry;
         this_entry.col = resp.col;
         this_entry.response_index = response_index;
+        response_index++;
         if( !folded.empty() ) {
             this_entry.lines.push_back( string_format( "%c: %s", resp.letter, folded[0] ) );
-            for( auto i : std::views::iota( size_t{ 1 }, folded.size() ) ) {
+            for(  size_t i = 1; i < folded.size(); i++ ) {
                 this_entry.lines.push_back( string_format( "   %s", folded[i] ) );
             }
         }
@@ -128,12 +129,11 @@ static void print_responses( const catacurses::window &w, const page &responses,
     const int y_start = 2 + 1;
 
     int curr_y = y_start;
-    for( auto entry_index : std::views::iota( size_t{ 0 }, responses.entries.size() ) ) {
-        const auto &entry = responses.entries[entry_index];
+    for( const page_entry &entry : responses.entries ) {
         const auto selected = entry.response_index == selected_response;
         const auto col = selected ? hilite( entry.col ) : entry.col;
-        for( auto line_index : std::views::iota( size_t{ 0 }, entry.lines.size() ) ) {
-            mvwprintz( w, point( x_start, curr_y ), col, entry.lines[line_index] );
+        for( const std::string &line : entry.lines ) {
+            mvwprintz( w, point( x_start, curr_y ), col, line );
             curr_y += 1;
         }
     }
