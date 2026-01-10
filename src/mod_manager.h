@@ -35,9 +35,9 @@ struct translatable_mod_info {
     public:
         translatable_mod_info();
         translatable_mod_info( std::string name, std::string description, std::string path );
-        std::string name();
-        std::string name_raw() const;
-        std::string description();
+        auto name() -> std::string;
+        auto name_raw() const -> std::string;
+        auto description() -> std::string;
 };
 
 struct MOD_INFORMATION {
@@ -45,9 +45,9 @@ struct MOD_INFORMATION {
         mutable translatable_mod_info translatable_info;
 
     public:
-        std::string name() const;
-        std::string name_raw() const;
-        std::string description() const;
+        auto name() const -> std::string;
+        auto name_raw() const -> std::string;
+        auto description() const -> std::string;
 
         void set_translatable_info( translatable_mod_info &&tmi ) {
             translatable_info = std::move( tmi );

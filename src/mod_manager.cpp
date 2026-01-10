@@ -41,7 +41,7 @@ bool string_id<MOD_INFORMATION>::is_valid() const
     return world_generator->get_mod_manager().mod_map.contains( *this );
 }
 
-std::string MOD_INFORMATION::name() const
+auto MOD_INFORMATION::name() const -> std::string
 {
     if( translatable_info.name().empty() ) {
         // "No name" gets confusing if many mods have no name
@@ -52,7 +52,7 @@ std::string MOD_INFORMATION::name() const
     }
 }
 
-std::string MOD_INFORMATION::name_raw() const
+auto MOD_INFORMATION::name_raw() const -> std::string
 {
     if( translatable_info.name_raw().empty() ) {
         return string_format( "No name (%s)", ident.c_str() );
@@ -61,7 +61,7 @@ std::string MOD_INFORMATION::name_raw() const
     }
 }
 
-std::string MOD_INFORMATION::description() const
+auto MOD_INFORMATION::description() const -> std::string
 {
     return translatable_info.description();
 }
@@ -528,7 +528,7 @@ translatable_mod_info::translatable_mod_info( std::string name,
     language_version = INVALID_LANGUAGE_VERSION;
 }
 
-std::string translatable_mod_info::name()
+auto translatable_mod_info::name() -> std::string
 {
     if( name_raw_.empty() ) {
         return "";
@@ -539,12 +539,12 @@ std::string translatable_mod_info::name()
     return name_tr;
 }
 
-std::string translatable_mod_info::name_raw() const
+auto translatable_mod_info::name_raw() const -> std::string
 {
     return name_raw_;
 }
 
-std::string translatable_mod_info::description()
+auto translatable_mod_info::description() -> std::string
 {
     if( description_raw.empty() ) {
         return "";
