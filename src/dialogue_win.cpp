@@ -100,7 +100,7 @@ static std::vector<page> split_to_pages( const std::vector<talk_data> &responses
         response_index++;
         if( !folded.empty() ) {
             this_entry.lines.push_back( string_format( "%c: %s", resp.letter, folded[0] ) );
-            for(  size_t i = 1; i < folded.size(); i++ ) {
+            for( size_t i = 1; i < folded.size(); i++ ) {
                 this_entry.lines.push_back( string_format( "   %s", folded[i] ) );
             }
         }
