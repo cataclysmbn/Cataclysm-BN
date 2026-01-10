@@ -7,6 +7,7 @@
 #include "avatar.h"
 #include "distribution_grid.h"
 #include "game.h"
+#include "lightmap.h"
 #include "map.h"
 #include "messages.h"
 #include "npc.h"
@@ -38,6 +39,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "get_avatar", &get_avatar );
     luna::set_fx( lib, "get_map", &get_map );
     luna::set_fx( lib, "get_distribution_grid_tracker", &get_distribution_grid_tracker );
+    luna::set_fx( lib, "light_ambient_lit", []() -> float { return LIGHT_AMBIENT_LIT; } );
     luna::set_fx( lib, "add_msg", sol::overload(
     add_msg_lua, []( sol::variadic_args va ) { add_msg_lua( game_message_type::m_neutral, va ); }
                   ) );
@@ -76,6 +78,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "place_monster_at", []( const mtype_id & id, const tripoint & p ) { return g->place_critter_at( id, p ); } );
     luna::set_fx( lib, "place_monster_around", []( const mtype_id & id, const tripoint & p,
     const int radius ) { return g->place_critter_around( id, p, radius ); } );
+    luna::set_fx( lib, "spawn_hallucination", []( const tripoint & p ) -> bool { return g->spawn_hallucination( p ); } );
     luna::set_fx( lib, "get_character_at",
                   []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> Character * { return g->critter_at<Character>( p, allow_hallucination.value_or( false ) ); } );
     luna::set_fx( lib, "get_npc_at",

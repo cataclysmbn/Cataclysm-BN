@@ -49,6 +49,7 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "catacharset.h"
 #include "character.h"
 #include "character_display.h"
@@ -444,6 +445,7 @@ void game::reload_tileset( [[maybe_unused]] const std::function<void( std::strin
     ui_adaptor ui( ui_adaptor::disable_uis_below {} );
     const auto tilesName = get_option<std::string>( "TILES" );
     const auto omTilesName = get_option<std::string>( "OVERMAP_TILES" );
+    const auto saved_zoom = g->get_zoom();
     try {
         tilecontext->reinit();
         std::vector<mod_id> dummy;
@@ -476,7 +478,10 @@ void game::reload_tileset( [[maybe_unused]] const std::function<void( std::strin
             popup( _( "Loading the overmap tileset failed: %s" ), err.what() );
         }
     }
-    g->reset_zoom();
+    // Reload resets the tile context scale to its default; reapply the previous zoom explicitly
+    // even when the numeric zoom value did not change.
+    tileset_zoom = saved_zoom;
+    rescale_tileset( tileset_zoom );
     g->mark_main_ui_adaptor_resize();
 #endif // TILES
 }
@@ -9429,6 +9434,16 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
         return false;
     }
     u.set_underwater( false );
+
+    if( !cata::run_hooks( "on_character_try_move", [ &, this]( sol::table & params ) {
+    params["char"] = &u;
+        params["from"] = u.pos();
+        params["to"] = dest_loc;
+        params["movement_mode"] = u.get_movement_mode();
+        params["via_ramp"] = via_ramp;
+    }, true ) ) {
+        return false;
+    }
 
     if( !shifting_furniture && !pushing && is_dangerous_tile( dest_loc ) ) {
         std::vector<std::string> harmful_stuff = get_dangerous_tile( dest_loc );
