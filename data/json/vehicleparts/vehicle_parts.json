@@ -1268,7 +1268,11 @@
     "requirements": {
       "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "soldering_standard", 5 ], [ "vehicle_repair_aluminium", 1 ] ] }
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "soldering_standard", 5 ], [ "vehicle_repair_aluminium", 1 ] ]
+      }
     },
     "flags": [ "FLOATS" ],
     "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 4, 8 ] } ],
