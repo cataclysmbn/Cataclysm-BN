@@ -514,6 +514,17 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_creature_melee_attacked", []( const sol::table & ) {} );
 
+    DOC( "Called when a character attempts to move.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `char` (Character)  " );
+    DOC( "* `from` (Tripoint)  " );
+    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `movement_mode` (CharacterMoveMode)  " );
+    DOC( "* `via_ramp` (bool)  " );
+    DOC( "Return false to block the move." );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_try_move", []( const sol::table & ) {} );
+
     DOC( "Called when character stat gets reset.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `character` (Character)  " );

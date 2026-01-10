@@ -115,6 +115,7 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
         DOC( "In map squares" );
         luna::set_fx( ut, "get_map_size", []( const map & m ) -> int { return m.getmapsize() * SEEX; } );
+        luna::set_fx( ut, "ambient_light_at", &map::ambient_light_at );
 
         DOC( "Creates a new item(s) at a position on the map." );
         luna::set_fx( ut, "create_item_at", []( map & m, const tripoint & p, const itype_id & itype,
