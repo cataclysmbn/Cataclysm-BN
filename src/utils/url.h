@@ -11,7 +11,7 @@
  * @param url the URL to open.
  * @return void
  */
-void open_url( const std::string &url );
+auto open_url(const std::string& url) -> void;
 
 /**
  * @brief encode a string into URL encoding.
@@ -21,6 +21,4 @@ void open_url( const std::string &url );
  * @param text the string to encode.
  * @return URL encoded string.
  */
-std::string encode_url( const std::string &text );
-
-
+auto encode_url(const std::string& text) -> std::string;
