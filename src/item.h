@@ -13,6 +13,7 @@
 
 #include "calendar.h"
 #include "coordinates.h"
+#include "damage.h"
 #include "detached_ptr.h"
 #include "enums.h"
 #include "flat_set.h"
