@@ -512,6 +512,7 @@ function BookRecipe.new() end
 ---@field set_thirst fun(self: Character, arg2: integer)
 ---@field shout fun(self: Character, arg2: string, arg3: boolean)
 ---@field sight_impaired fun(self: Character): boolean
+---@field sound_hallu fun(self: Character)
 ---@field spores fun(self: Character)
 ---@field suffer fun(self: Character)
 ---@field takeoff fun(self: Character, arg2: Item): boolean @Attempts to take off the worn `Item` from character.
@@ -629,7 +630,7 @@ function CharacterId.new() end
 ---@field ranged_target_size fun(self: Creature): number
 ---@field remove_effect fun(self: Creature, arg2: EffectTypeId, arg3: BodyPartTypeId?): boolean
 ---@field remove_value fun(self: Creature, arg2: string) @Removes an arbitrary entry using the same key format as set_value.
----@field sees fun(self: Creature, arg2: Creature): boolean
+---@field sees fun(self: Creature, arg2: Creature): boolean | fun(self: Creature, arg2: Tripoint): boolean
 ---@field set_all_parts_hp_cur fun(self: Creature, arg2: integer)
 ---@field set_all_parts_hp_to_max fun(self: Creature)
 ---@field set_armor_bash_bonus fun(self: Creature, arg2: integer)
@@ -1558,6 +1559,7 @@ function KnownMagic.new() end
 ---@class Map
 ---@field add_field_at fun(self: Map, arg2: Tripoint, arg3: FieldTypeIntId, arg4: integer, arg5: TimeDuration): boolean
 ---@field add_item fun(self: Map, arg2: Tripoint, arg3: Detached<Item>): Detached<Item> @Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed.
+---@field ambient_light_at fun(self: Map, arg2: Tripoint): number
 ---@field clear_items_at fun(self: Map, arg2: Tripoint)
 ---@field create_corpse_at fun(self: Map, arg2: Tripoint, arg3: MonsterTypeId?, arg4: TimePoint?, arg5: string?, arg6: integer?) @Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag.
 ---@field create_item_at fun(self: Map, arg2: Tripoint, arg3: ItypeId, arg4: integer): Item @Creates a new item(s) at a position on the map.
@@ -2751,6 +2753,7 @@ coords = {}
 ---@field get_monster_at fun(arg1: Tripoint, arg2: boolean?): Monster
 ---@field get_npc_at fun(arg1: Tripoint, arg2: boolean?): Npc
 ---@field get_overmap_buffer fun(): OvermapBuffer @Get the global overmap buffer
+---@field light_ambient_lit fun(): number
 ---@field look_around fun(): Tripoint?
 ---@field place_monster_around fun(arg1: MonsterTypeId, arg2: Tripoint, arg3: integer): Monster
 ---@field place_monster_at fun(arg1: MonsterTypeId, arg2: Tripoint): Monster
@@ -2761,6 +2764,7 @@ coords = {}
 ---@field remove_npc_follower fun(arg1: Npc)
 ---@field rng fun(arg1: integer, arg2: integer): integer
 ---@field six_cardinal_directions fun(): Tripoint[] @Get the six cardinal directions (N, S, E, W, Up, Down)
+---@field spawn_hallucination fun(arg1: Tripoint): boolean
 ---@field turn_zero fun(): TimePoint
 gapi = {}
 
@@ -2783,6 +2787,7 @@ gdebug = {}
 ---@field on_character_effect_added fun(params: table) @Called when character gets the effect which has `EFFECT_LUA_ON_ADDED` flag.  <br />The hook receives a table with keys:  <br />* `char` (Character)  <br />* `effect` (Effect)  
 ---@field on_character_effect_removed fun(params: table) @Called when character loses the effect which has `EFFECT_LUA_ON_REMOVED` flag.  <br />The hook receives a table with keys:  <br />* `character` (Character)  <br />* `effect` (Effect)  
 ---@field on_character_reset_stats fun(params: table) @Called when character stat gets reset.  <br />The hook receives a table with keys:  <br />* `character` (Character)  
+---@field on_character_try_move fun(params: table) @Called when a character attempts to move.  <br />The hook receives a table with keys:  <br />* `char` (Character)  <br />* `from` (Tripoint)  <br />* `to` (Tripoint)  <br />* `movement_mode` (CharacterMoveMode)  <br />* `via_ramp` (bool)  <br />Return false to block the move.
 ---@field on_creature_blocked fun(params: table) @Called when a character successfully blocks.  <br />The hook receives a table with keys:  <br />* `char` (Character)  <br />* `source` (Creature)  <br />* `bodypart_id` (BodyPartTypeId)  <br />* `damage_instance` (DamageInstance)  <br />* `damage_blocked` (float)  
 ---@field on_creature_dodged fun(params: table) @Called when a character or monster successfully dodges.  <br />The hook receives a table with keys:  <br />* `char` (Character)  <br />* `source` (Creature)  <br />* `difficulty` (integer)  
 ---@field on_creature_melee_attacked fun(params: table) @Called after a character or monster has attacked in melee.  <br />The hook receives a table with keys:  <br />* `char` (Character)  <br />* `target` (Creature)  <br />* `success` (bool)  
