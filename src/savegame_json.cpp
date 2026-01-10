@@ -2290,6 +2290,11 @@ void item::io( Archive &archive )
     archive.io( "rot", rot, 0_turns );
     archive.io( "last_rot_check", last_rot_check, calendar::start_of_cataclysm );
     archive.io( "techniques", techniques, io::empty_default_tag() );
+    archive.io( "melee_damage_bonus", melee_damage_bonus, damage_instance() );
+    archive.io( "ranged_damage_bonus", ranged_damage_bonus, damage_instance() );
+    archive.io( "range_bonus", range_bonus, 0 );
+    archive.io( "dispersion_bonus", dispersion_bonus, 0 );
+    archive.io( "recoil_bonus", recoil_bonus, 0 );
     archive.io( "faults", faults, io::empty_default_tag() );
     archive.io( "item_tags", item_tags, io::empty_default_tag() );
     archive.io( "components", components, io::empty_default_tag() );
