@@ -506,6 +506,12 @@ load_mapgen_function( const JsonObject &jio, point offset, point total )
         jo.allow_omitted_members();
         return std::make_shared<mapgen_function_json>(
                    jsrc, mgweight, offset, total );
+    } else if( mgtype == "lua" ) {
+        if( !jio.has_string( "luamethod" ) ) {
+            jio.throw_error( R"(mapgen with method "lua" must define string "luamethod")" )
+        }
+        std::string luamethod = jio.get_string( "luamethod" );
+        return std::make_shared<mapgen_function_lua>( luamethod );
     } else {
         jio.throw_error( R"(invalid value: must be "builtin" or "json")", "method" );
     }

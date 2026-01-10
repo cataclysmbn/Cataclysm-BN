@@ -877,6 +877,8 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
 
     cata::reg_lua_iuse_actors( *loader.lua, *item_controller );
 
+    cata::reg_lua_mapgen( *loader.lua , *item_controller );
+
     for( const mod_id &mod : available ) {
         loader.load_data_from_path( mod->path, mod.str(), ui );
         ui.proceed();
