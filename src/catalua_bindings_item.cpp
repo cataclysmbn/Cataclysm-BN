@@ -25,13 +25,16 @@
 #include "emit.h"
 #include "fault.h"
 #include "recipe.h"
+#include "explosion.h"
 
+static void reg_explosion_data( sol::state &lua );
 static void reg_islot( sol::state &lua );
 static void reg_itype( sol::state &lua );
 static void reg_item( sol::state &lua );
 
 void cata::detail::reg_item( sol::state &lua )
 {
+    ::reg_explosion_data( lua );
     ::reg_itype( lua );
     ::reg_islot( lua );
     ::reg_item( lua );
@@ -1076,6 +1079,27 @@ void reg_islot( sol::state &lua )
         SET_FX( get_recharge_scheme );
         SET_FX( get_spells );
 
+    }
+#undef UT_CLASS
+}
+
+void reg_explosion_data( sol::state &lua )
+{
+#define UT_CLASS explosion_data
+    {
+        sol::usertype<UT_CLASS> ut = luna::new_usertype<UT_CLASS>( lua, luna::no_bases, luna::no_constructor );
+
+        DOC( "Damage dealt by the explosion" );
+        SET_MEMB_RO( damage );
+
+        DOC( "Radius of the explosion" );
+        SET_MEMB_RO( radius );
+
+        DOC( "Whether the explosion creates fire" );
+        SET_MEMB_RO( fire );
+
+        DOC( "Returns the safe range of the explosion" );
+        SET_FX( safe_range );
     }
 #undef UT_CLASS
 }

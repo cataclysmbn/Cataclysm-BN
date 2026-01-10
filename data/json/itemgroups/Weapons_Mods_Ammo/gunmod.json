@@ -178,6 +178,12 @@
     "type": "item_group",
     "id": "auto_sears",
     "//": "Gunmods that enable full-auto fire, mainly in gunsmithing stores or rare registered examples, but could also spawn as contraband.",
-    "items": [ [ "dias", 25 ], [ "llink", 25 ], [ "glockswitch", 50 ] ]
+    "items": [
+      [ "dias", 25 ],
+      [ "llink", 25 ],
+      [ "glockswitch", 50 ],
+      [ "universal_autolink", 10 ],
+      [ "universal_auto_conversion_kit", 5 ]
+    ]
   }
 ]

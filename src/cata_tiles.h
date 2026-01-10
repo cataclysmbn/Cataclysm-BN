@@ -775,7 +775,7 @@ class cata_tiles
         void void_sct();
 
         void init_draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset );
-        void draw_zones_frame();
+        void draw_zones_frame( std::multimap<point, formatted_text> &overlay_strings );
         void void_zones();
 
         void init_draw_radiation_override( const tripoint &p, int rad );

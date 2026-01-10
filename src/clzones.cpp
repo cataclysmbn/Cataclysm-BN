@@ -65,42 +65,6 @@ zone_manager::zone_manager()
     for( const zone_type &zone : zone_type::get_all() ) {
         types.emplace( zone.id, zone );
     }
-
-    types.emplace( zone_type_id( "SOURCE_FIREWOOD" ),
-                   zone_type( translate_marker( "Source: Firewood" ),
-                              translate_marker( "Source for firewood or other flammable materials in this zone may be used to automatically refuel fires.  "
-                                      "This will be done to maintain light during long-running tasks such as crafting, reading or waiting." ) ) );
-    types.emplace( zone_CONSTRUCTION_BLUEPRINT,
-                   zone_type( translate_marker( "Construction: Blueprint" ),
-                              translate_marker( "Designate a blueprint zone for construction." ) ) );
-    types.emplace( zone_FARM_PLOT,
-                   zone_type( translate_marker( "Farm: Plot" ),
-                              translate_marker( "Designate a farm plot for tilling and planting." ) ) );
-    types.emplace( zone_type_id( "CHOP_TREES" ),
-                   zone_type( translate_marker( "Chop Trees" ),
-                              translate_marker( "Designate an area to chop down trees." ) ) );
-    types.emplace( zone_type_id( "FISHING_SPOT" ),
-                   zone_type( translate_marker( "Fishing Spot" ),
-                              translate_marker( "Designate an area to fish from." ) ) );
-    types.emplace( zone_type_id( "MINING" ),
-                   zone_type( translate_marker( "Mine Terrain" ),
-                              translate_marker( "Designate an area to mine." ) ) );
-    types.emplace( zone_type_id( "VEHICLE_DECONSTRUCT" ),
-                   zone_type( translate_marker( "Vehicle Deconstruct Zone" ),
-                              translate_marker( "Any vehicles in this area are marked for deconstruction." ) ) );
-    types.emplace( zone_type_id( "VEHICLE_REPAIR" ),
-                   zone_type( translate_marker( "Vehicle Repair Zone" ),
-                              translate_marker( "Any vehicles in this area are marked for repair work." ) ) );
-    types.emplace( zone_type_id( "VEHICLE_PATROL" ),
-                   zone_type( translate_marker( "Vehicle Patrol Zone" ),
-                              translate_marker( "Vehicles with an autopilot will patrol in this zone." ) ) );
-    types.emplace( zone_type_id( "AUTO_EAT" ),
-                   zone_type( translate_marker( "Auto Eat" ),
-                              translate_marker( "Items in this zone will be automatically eaten during a long activity if you get hungry." ) ) );
-    types.emplace( zone_type_id( "AUTO_DRINK" ),
-                   zone_type( translate_marker( "Auto Drink" ),
-                              translate_marker( "Items in this zone will be automatically consumed during a long activity if you get thirsty." ) ) );
-
 }
 
 zone_manager &zone_manager::get_manager()
@@ -123,6 +87,8 @@ std::string zone_type::desc() const
 {
     return _( desc_ );
 }
+
+auto zone_type::color() const -> nc_color { return color_; }
 
 namespace
 {
@@ -161,6 +127,7 @@ void zone_type::load( const JsonObject &jo, const std::string & )
     mandatory( jo, was_loaded, "name", name_ );
     mandatory( jo, was_loaded, "id", id );
     optional( jo, was_loaded, "description", desc_, "" );
+    optional( jo, was_loaded, "color", color_, c_white );
 }
 
 shared_ptr_fast<zone_options> zone_options::create( const zone_type_id &type )

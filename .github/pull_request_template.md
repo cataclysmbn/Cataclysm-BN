@@ -54,7 +54,7 @@ NOTE: Please read your emails. Anyone mentioned on Github with an @ will receive
 - [ ] This is a PR that removes JSON entities.
   - [ ] The removed JSON entities have new entries in `data/json/obsoletion/` folder or use some other migration process for existing saves.
 - [ ] This PR adds/removes a mod.
-  - [ ] I have added [`mod` scope](https://docs.cataclysmbn.org/contribute/changelog_guidelines/#mods-or-mods%2F<mod_id>%3A-mods) to the PR title.
+  - [ ] I have added [`mods` scope](https://docs.cataclysmbn.org/contribute/changelog_guidelines/#mods-or-mods%2F<mod_id>%3A-mods) to the PR title.
   - [ ] The `mod_name` in `data/mods/<mod_name>` matches `id` in `modinfo.json`.
   - [ ] I have committed the output of `deno task semantic`.
 - [ ] This PR modifies lua scripts or the lua API.

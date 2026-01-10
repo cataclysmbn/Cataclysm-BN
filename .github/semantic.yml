@@ -68,12 +68,12 @@ scopes:
   - mods/no_reviving_zombies
   - mods/no_zombify
   - mods/novitamins
+  - mods/nuclear_tear
   - mods/pathfinding_stockfish
   - mods/pride_flags
   - mods/resurrection_tech
   - mods/rpg_system
   - mods/saveload_lua_test
-  - mods/skyisland_lua_bindings_test
   - mods/smart_house_remote_mod
   - mods/speedydex
   - mods/stats_through_kills

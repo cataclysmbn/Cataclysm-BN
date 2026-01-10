@@ -11,6 +11,8 @@
 #include "messages.h"
 #include "npc.h"
 #include "monster.h"
+#include "overmapbuffer.h"
+#include "line.h"
 
 namespace
 {
@@ -117,6 +119,23 @@ void cata::detail::reg_game_api( sol::state &lua )
 
     luna::set_fx( lib, "add_npc_follower", []( npc & p ) { g->add_npc_follower( p.getID() ); } );
     luna::set_fx( lib, "remove_npc_follower", []( npc & p ) { g->remove_npc_follower( p.getID() ); } );
+
+    DOC( "Get the global overmap buffer" );
+    luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return overmap_buffer; } );
+
+    DOC( "Get direction from a tripoint delta" );
+    luna::set_fx( lib, "direction_from", []( const tripoint & delta ) -> direction { return direction_from( delta ); } );
+
+    DOC( "Get direction name from direction enum" );
+    luna::set_fx( lib, "direction_name", []( direction dir ) -> std::string { return direction_name( dir ); } );
+
+    DOC( "Get the six cardinal directions (N, S, E, W, Up, Down)" );
+    luna::set_fx( lib, "six_cardinal_directions", []() -> std::vector<tripoint> {
+        return std::vector<tripoint>{
+            tripoint_north, tripoint_south, tripoint_east,
+            tripoint_west, tripoint_above, tripoint_below
+        };
+    } );
 
     luna::finalize_lib( lib );
 }

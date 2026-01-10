@@ -69,6 +69,12 @@ static int getopt( main_menu_opts o )
     return static_cast<int>( o );
 }
 
+namespace
+{
+point prev_submenu_top_left;
+point prev_submenu_size;
+} // namespace
+
 void main_menu::on_move() const
 {
     sfx::play_variant_sound( "menu_move", "default", 100 );
@@ -245,18 +251,42 @@ void main_menu::display_sub_menu( int sel, const point &bottom_left, int sel_lin
         return;
     }
 
-    const point top_left( bottom_left + point( 0, -( sub_opts.size() + 1 ) ) );
-    catacurses::window w_sub = catacurses::newwin( sub_opts.size() + 2, xlen + 4, top_left );
+    const auto max_visible = std::max( 0, bottom_left.y - 1 );
+    if( max_visible == 0 ) {
+        return;
+    }
+
+    const auto visible_count = std::min<int>( static_cast<int>( sub_opts.size() ), max_visible );
+
+    const auto start = std::clamp(
+                           std::max( 0, sel2 - visible_count + 1 ),
+                           0,
+                           static_cast<int>( sub_opts.size() ) - visible_count
+                       );
+    const auto win_width = std::min( xlen + 4, TERMX );
+    const auto content_width = win_width - 2;
+
+    auto top_left = bottom_left + point( 0, -( visible_count + 1 ) );
+    top_left.x = clamp( top_left.x, 0, TERMX - win_width );
+
+    prev_submenu_top_left = top_left;
+    prev_submenu_size = point( win_width, visible_count + 2 );
+
+    auto w_sub = catacurses::newwin( visible_count + 2, win_width, top_left );
     werase( w_sub );
     draw_border( w_sub, c_light_gray );
-    for( int y = 0; static_cast<size_t>( y ) < sub_opts.size(); y++ ) {
-        std::string opt = ( sel2 == y ? "» " : "  " ) + sub_opts[y];
-        int padding = ( xlen + 2 ) - utf8_width( opt, true );
-        opt.append( padding, ' ' );
-        nc_color clr = sel2 == y ? hilite( c_light_gray ) : c_light_gray;
-        trim_and_print( w_sub, point( 1, y + 1 ), xlen + 2, clr, opt );
-        inclusive_rectangle<point> rec( top_left + point( 1, y + 1 ), top_left + point( xlen + 2, y + 1 ) );
-        main_menu_sub_button_map.emplace_back( rec, std::pair<int, int> { sel, y } );
+
+    for( int y = 0; y < visible_count; y++ ) {
+        const auto opt_index = start + y;
+        auto opt = ( sel2 == opt_index ? "» " : "  " ) + sub_opts[opt_index];
+        const auto padding = content_width - utf8_width( opt, true );
+        if( padding > 0 ) {
+            opt.append( padding, ' ' );
+        }
+        const auto color = sel2 == opt_index ? hilite( c_light_gray ) : c_light_gray;
+        trim_and_print( w_sub, point( 1, y + 1 ), content_width, color, opt );
+        auto rec = inclusive_rectangle<point> { top_left + point( 1, y + 1 ), top_left + point( content_width, y + 1 ) };
+        main_menu_sub_button_map.emplace_back( rec, std::pair<int, int> { sel, opt_index } );
     }
     wnoutrefresh( w_sub );
 }
@@ -265,6 +295,24 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
                             int sel_line )
 {
     main_menu_button_map.clear();
+
+    // If a submenu was drawn on a previous frame, clear it *before* drawing the main menu.
+    // This ensures the title/logo background is repainted instead of leaving a black rectangle.
+    if( prev_submenu_size.x > 0 && prev_submenu_size.y > 0 ) {
+        point tl = prev_submenu_top_left;
+        tl.x = clamp( tl.x, 0, TERMX - 1 );
+        tl.y = clamp( tl.y, 0, TERMY - 1 );
+
+        const int w = clamp( prev_submenu_size.x, 0, TERMX - tl.x );
+        const int h = clamp( prev_submenu_size.y, 0, TERMY - tl.y );
+        if( w > 0 && h > 0 ) {
+            auto w_clear = catacurses::newwin( h, w, tl );
+            werase( w_clear );
+            wnoutrefresh( w_clear );
+        }
+        prev_submenu_top_left = point_zero;
+        prev_submenu_size = point_zero;
+    }
 
     // Clear Lines
     werase( w_open );

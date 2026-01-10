@@ -1,5 +1,8 @@
 #include <unordered_set>
+#include <algorithm>
+#include <ranges>
 
+#include "cata_algo.h"
 #include "character.h"
 #include "debug.h"
 #include "distribution_grid.h"
@@ -169,6 +172,38 @@ int distribution_grid::get_resource( bool recurse ) const
     }
 
     return res;
+}
+
+auto distribution_grid::get_power_stat() const -> power_stat
+{
+    constexpr auto to_stat = []( int net ) {
+        return ( net > 0 ? power_stat{ .gen_w = net, .use_w = 0 } : power_stat{ .gen_w = 0, .use_w = -net } );
+    };
+
+    auto get_vehicle_stats = [&]( const vehicle_connector_tile * connector ) -> power_stat {
+        return connector->connected_vehicles
+        | std::views::transform( []( const auto & pos ) { return vehicle::find_vehicle( pos ); } )
+        | std::views::filter( []( auto * v ) { return v; } )
+        | std::views::transform( [&]( auto * veh ) { return to_stat( veh->net_battery_charge_rate_w() ); } )
+        | cata::ranges::fold_left( power_stat{}, std::plus<>{} );
+    };
+
+    auto get_loc_stats = [&]( const tile_location & loc ) -> power_stat {
+        const auto &pos = loc.absolute;
+
+        if( auto *s = active_tiles::furn_at<solar_tile>( pos ) ) { return to_stat( s->get_power_w() ); }
+        if( auto *c = active_tiles::furn_at<charger_tile>( pos ) ) { return to_stat( -c->power ); }
+        if( auto *sc = active_tiles::furn_at<steady_consumer_tile>( pos ) ) { return to_stat( -sc->power ); }
+        if( auto *vc = active_tiles::furn_at<vehicle_connector_tile>( pos ) ) { return get_vehicle_stats( vc ); }
+
+        return power_stat{};
+    };
+
+    return contents
+           | std::views::values
+           | std::views::join
+           | std::views::transform( get_loc_stats )
+           | cata::ranges::fold_left( power_stat{}, std::plus<> {} );
 }
 
 distribution_grid_tracker::distribution_grid_tracker()

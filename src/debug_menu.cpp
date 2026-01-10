@@ -244,6 +244,10 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_DISPLAY_TRANSPARENCY, true, 'p', _( "Toggle display transparency" ) ) },
             { uilist_entry( DEBUG_DISPLAY_RADIATION, true, 'R', _( "Toggle display radiation" ) ) },
             { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ) },
+#if defined(TILES)
+            { uilist_entry( ACTION_TOGGLE_ZONE_OVERLAY, true, 'z', _( "Toggle zone overlay" ) ) },
+#endif
+            { uilist_entry( DEBUG_SET_AUTOMOVE, true, 'A', _( "Set automove target" ) ) },
             { uilist_entry( DEBUG_SHOW_MUT_CAT, true, 'm', _( "Show mutation category levels" ) ) },
             { uilist_entry( DEBUG_SHOW_MUT_CHANCES, true, 'u', _( "Show mutation trait chances" ) ) },
             { uilist_entry( DEBUG_BENCHMARK, true, 'b', _( "Draw benchmark" ) ) },
@@ -634,7 +638,7 @@ void character_edit_menu( Character &c )
         pick, desc, skills, stats, items, delete_items, item_worn,
         hp, stamina, morale, clear_morale, pain, needs, healthy, status, mission_add, mission_edit,
         tele, mutate, bionics, npc_class, attitude, opinion, effects,
-        learn_ma, unlock_recipes, learn_spells, level_spells
+        learn_ma, unlock_recipes, forget_items, learn_spells, level_spells
     };
 
     // Maybe TODO: this could actually be static if not for translations
@@ -660,7 +664,8 @@ void character_edit_menu( Character &c )
             uilist_entry( edit_character::mission_edit, true, 'M',  _( "Edit [M]issions (WARNING: Unstable!)" ) ),
             uilist_entry( edit_character::effects, true, 'E',  _( "Edit [E]ffects" ) ),
             uilist_entry( edit_character::learn_ma, true, 'l', _( "[l]earn all melee styles" ) ),
-            uilist_entry( edit_character::unlock_recipes, true, 'r', _( "Unlock all [r]ecipes" ) )
+            uilist_entry( edit_character::unlock_recipes, true, 'r', _( "Unlock all [r]ecipes" ) ),
+            uilist_entry( edit_character::forget_items, true, 'F', _( "[F]orget all items" ) )
         }
     };
 
@@ -1158,6 +1163,11 @@ void character_edit_menu( Character &c )
             add_msg( m_good, _( "You know how to craft that now." ) );
         }
         break;
+        case edit_character::forget_items:
+            add_msg( m_info, _( "Item debug." ) );
+            uistate.read_items.clear();
+            add_msg( m_bad, _( "You don't know about any items anymore." ) );
+            break;
         case edit_character::learn_spells:
             if( spell_type::get_all().empty() ) {
                 add_msg( m_bad, _( "There are no spells to learn.  You must install a mod that adds some." ) );
@@ -1942,6 +1952,9 @@ void debug()
             break;
         case DEBUG_DISPLAY_SUBMAP_GRID:
             g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
+            break;
+        case ACTION_TOGGLE_ZONE_OVERLAY:
+            g->show_zone_overlay = !g->show_zone_overlay;
             break;
         case DEBUG_HOUR_TIMER:
             g->toggle_debug_hour_timer();

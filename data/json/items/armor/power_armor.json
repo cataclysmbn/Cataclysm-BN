@@ -96,6 +96,7 @@
     "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 1500000,
     "revert_to": "power_armor_basic",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,
@@ -156,6 +157,7 @@
     "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 2250000,
     "revert_to": "power_armor_heavy",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 6 } ] } ] },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,
@@ -215,6 +217,7 @@
     "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 750000,
     "revert_to": "power_armor_light",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 4 } ] } ] },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,

@@ -1422,4 +1422,10 @@ void show_skill_capped_notice( const Character &who, const skill_id &id )
              skill_name, curLevel );
 }
 
+/// Returns true if the character has a bionic listed in the entered bionic id's available_upgrades field
+auto has_upgraded_bionic( const Character &c, const bionic_id &b ) -> bool
+{
+    return std::ranges::any_of( b->available_upgrades, [&]( const auto & bio ) { return c.has_bionic( bio ); } );
+}
+
 } // namespace character_funcs

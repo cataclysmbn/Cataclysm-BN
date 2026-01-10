@@ -1197,7 +1197,7 @@
     "weight": "226 g",
     "bashing": 3,
     "cutting": 5,
-    "flags": [ "NO_UNWIELD", "UNBREAKABLE_MELEE", "TRADER_AVOID", "USES_BIONIC_POWER" ],
+    "flags": [ "NO_UNWIELD", "UNBREAKABLE_MELEE", "TRADER_AVOID", "USES_BIONIC_POWER", "BIONIC_TOOLS" ],
     "max_charges": 1000,
     "//": "Charges will exceed max charges since they're always equal to the player's bionic power, but this has no adverse effects.",
     "charges_per_use": 1,

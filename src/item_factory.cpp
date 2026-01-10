@@ -1097,6 +1097,8 @@ void Item_factory::init()
     add_actor( std::make_unique<deploy_furn_actor>() );
     add_actor( std::make_unique<place_monster_iuse>() );
     add_actor( std::make_unique<change_scent_iuse>() );
+    add_actor( std::make_unique<cloning_syringe_iuse>() );
+    add_actor( std::make_unique<dna_editor_iuse>() );
     add_actor( std::make_unique<place_npc_iuse>() );
     add_actor( std::make_unique<reveal_map_actor>() );
     add_actor( std::make_unique<unfold_vehicle_iuse>() );
@@ -2634,6 +2636,7 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
     assign( jo, "magazine_well", def.magazine_well );
     assign( jo, "explode_in_fire", def.explode_in_fire );
     assign( jo, "solar_efficiency", def.solar_efficiency );
+    assign( jo, "repair_difficulty", def.repair_difficulty );
     assign( jo, "ascii_picture", def.picture_id );
 
     if( jo.has_member( "thrown_damage" ) ) {

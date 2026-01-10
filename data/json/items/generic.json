@@ -546,6 +546,22 @@
   },
   {
     "type": "GENERIC",
+    "id": "genome_drive",
+    "looks_like": "usb_drive",
+    "symbol": ",",
+    "color": "white",
+    "name": { "str": "genome drive" },
+    "description": "A USB thumb drive labeled with tape.  Stores genetic information that can be used in a genome workstation, to create DNA samples for cloning.",
+    "price": "100 USD",
+    "price_postapoc": "10 cent",
+    "material": "plastic",
+    "weight": "18 g",
+    "volume": "5 ml",
+    "to_hit": -3,
+    "category": "valuables"
+  },
+  {
+    "type": "GENERIC",
     "id": "blank_card",
     "symbol": ",",
     "color": "white",

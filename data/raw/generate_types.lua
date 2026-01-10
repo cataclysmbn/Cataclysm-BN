@@ -261,6 +261,13 @@ on_creature_melee_attacked = {}
 ---@field when TimePoint
 on_mapgen_postprocess = {}
 
+---@class OnExplodeParams
+---@field pos Tripoint
+---@field damage integer
+---@field radius integer
+---@field fire boolean
+on_explosion_start = {}
+
 ]]
 
   ---@diagnostic disable-next-line: undefined-global
@@ -401,7 +408,7 @@ on_mapgen_postprocess = {}
       table.insert(table_entries, "\t" .. key_str .. " = " .. value_str)
     end
 
-    full_ret = full_ret .. table.concat(table_entries, ",\n") .. "\n"
+    full_ret = full_ret .. table.concat(table_entries, ",\n") .. ",\n"
     full_ret = full_ret .. "}\n\n"
   end
 

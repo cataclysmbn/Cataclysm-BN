@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <ranges>
 
 #include "bionics.h"
 #include "calendar.h"
@@ -431,35 +432,51 @@ void debug_menu::wishbionics( Character &c )
                 break;
             }
             case 3: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in kJ)?  Currently: %s" ),
-                               units::display( power_max ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in kJ)?  Currently: %s" ),
+                                                  units::display( power_max ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_max_power_level( units::from_kilojoule( new_value ) );
                     c.set_power_level( c.get_power_level() );
                 }
                 break;
             }
             case 4: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in J)?  Currently: %s" ),
-                               units::display( power_max ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in J)?  Currently: %s" ),
+                                                  units::display( power_max ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_max_power_level( units::from_joule( new_value ) );
                     c.set_power_level( c.get_power_level() );
                 }
                 break;
             }
             case 5: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in kJ)?  Currently: %s" ),
-                               units::display( power_level ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in kJ)?  Currently: %s" ),
+                                                  units::display( power_level ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_power_level( units::from_kilojoule( new_value ) );
                 }
                 break;
             }
             case 6: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in J)?  Currently: %s" ),
-                               units::display( power_level ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in J)?  Currently: %s" ),
+                                                  units::display( power_level ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_power_level( units::from_joule( new_value ) );
                 }
                 break;

@@ -64,6 +64,10 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 
+#if defined(TILES)
+#include "vehicle_preview.h"
+#endif
+
 static const itype_id fuel_type_battery( "battery" );
 
 static const itype_id itype_battery( "battery" );
@@ -217,6 +221,9 @@ struct veh_interact::install_info_t {
 veh_interact::veh_interact( vehicle &veh, point p )
     : dd( p ), veh( &veh ), main_context( "VEH_INTERACT" )
 {
+    stored_view_offset = get_avatar().view_offset;
+    get_avatar().view_offset = tripoint_zero;
+
     // Only build the shapes map and the wheel list once
     for( const auto &e : vpart_info::all() ) {
         const vpart_info &vp = e.second;
@@ -247,9 +254,13 @@ veh_interact::veh_interact( vehicle &veh, point p )
     main_context.register_action( "FUEL_LIST_UP" );
     main_context.register_action( "DESC_LIST_DOWN" );
     main_context.register_action( "DESC_LIST_UP" );
+    main_context.register_action( "PARTS_LIST_DOWN" );
+    main_context.register_action( "PARTS_LIST_UP" );
     main_context.register_action( "CONFIRM" );
     main_context.register_action( "HELP_KEYBINDINGS" );
     main_context.register_action( "FILTER" );
+    main_context.register_action( "ZOOM_IN" );
+    main_context.register_action( "ZOOM_OUT" );
     main_context.register_action( "ANY_INPUT" );
 
     count_durability();
@@ -258,7 +269,10 @@ veh_interact::veh_interact( vehicle &veh, point p )
     move_cursor( point_zero );
 }
 
-veh_interact::~veh_interact() = default;
+veh_interact::~veh_interact()
+{
+    get_avatar().view_offset = stored_view_offset;
+}
 
 void veh_interact::allocate_windows()
 {
@@ -277,7 +291,13 @@ void veh_interact::allocate_windows()
     const int pane_w = ( grid_w / 3 ) - 1;
 
     const int disp_w = grid_w - ( pane_w * 2 ) - 2;
+#if defined(TILES)
+    // Larger display area when using graphical tiles mode
+    const bool use_tiles_layout = get_option<bool>( "VEHICLE_EDIT_TILES" ) && is_draw_tiles_mode();
+    const int disp_h = page_size * ( use_tiles_layout ? 0.65 : 0.45 );
+#else
     const int disp_h = page_size * 0.45;
+#endif
     const int parts_h = page_size - disp_h;
     const int parts_y = pane_y + disp_h;
 
@@ -370,7 +390,7 @@ shared_ptr_fast<ui_adaptor> veh_interact::create_or_get_ui_adaptor()
 
             werase( w_parts );
             veh->print_part_list( w_parts, 0, getmaxy( w_parts ) - 1, getmaxx( w_parts ), cpart, highlight_part,
-                                  true );
+                                  true, parts_list_offset );
             wnoutrefresh( w_parts );
 
             werase( w_msg );
@@ -500,6 +520,24 @@ void veh_interact::do_main_loop()
             move_cursor( point_zero, 1 );
         } else if( action == "DESC_LIST_UP" ) {
             move_cursor( point_zero, -1 );
+        } else if( action == "PARTS_LIST_DOWN" ) {
+            if( cpart >= 0 && parts_list_offset < static_cast<int>( parts_here.size() ) - 1 ) {
+                parts_list_offset++;
+            }
+        } else if( action == "PARTS_LIST_UP" ) {
+            if( parts_list_offset > 0 ) {
+                parts_list_offset--;
+            }
+#if defined(TILES)
+        } else if( action == "ZOOM_IN" ) {
+            if( tile_preview ) {
+                tile_preview->zoom_in();
+            }
+        } else if( action == "ZOOM_OUT" ) {
+            if( tile_preview ) {
+                tile_preview->zoom_out();
+            }
+#endif
         }
         if( sel_cmd != ' ' ) {
             finish = true;
@@ -2182,6 +2220,7 @@ void veh_interact::move_cursor( point d, int dstart_at )
     dd += d.rotate( 3 );
     if( d != point_zero ) {
         start_limit = 0;
+        parts_list_offset = 0;
     } else {
         start_at += dstart_at;
     }
@@ -2304,6 +2343,13 @@ void veh_interact::display_grid()
  */
 void veh_interact::display_veh()
 {
+#if defined(TILES)
+    if( get_option<bool>( "VEHICLE_EDIT_TILES" ) && is_draw_tiles_mode() ) {
+        display_veh_tiles();
+        return;
+    }
+#endif
+
     werase( w_disp );
     const point h_size = point( getmaxx( w_disp ), getmaxy( w_disp ) ) / 2;
 
@@ -2394,6 +2440,30 @@ void veh_interact::display_veh()
               special_symbol( sym ) );
     wnoutrefresh( w_disp );
 }
+
+#if defined(TILES)
+/**
+ * Draws the viewport with the vehicle using graphical tiles.
+ */
+void veh_interact::display_veh_tiles()
+{
+    // Initialize tile preview if needed
+    if( !tile_preview ) {
+        tile_preview = std::make_unique<vehicle_preview_window>();
+    }
+
+    // Prepare the preview window with current display window bounds
+    tile_preview->prepare( w_disp );
+
+    // Clear the window first (for the border/background)
+    werase( w_disp );
+    wnoutrefresh( w_disp );
+
+    // Draw the vehicle with tiles
+    // dd is the cursor offset (negative), so we pass it directly
+    tile_preview->display( *veh, dd, cpart );
+}
+#endif // TILES
 
 static std::string wheel_state_description( const vehicle &veh )
 {

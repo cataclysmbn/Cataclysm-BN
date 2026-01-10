@@ -21,6 +21,7 @@
 #include "cached_options.h"
 #include "calendar.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_functions.h"

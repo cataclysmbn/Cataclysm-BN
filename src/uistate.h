@@ -9,6 +9,7 @@
 
 #include "calendar.h"
 #include "enums.h"
+#include "flat_set.h"
 #include "om_direction.h"
 #include "type_id.h"
 
@@ -116,6 +117,7 @@ class uistatedata
 
         // V Menu Stuff
         int list_item_sort = 0;
+        std::set<itype_id> read_items;
         std::string list_item_filter;
         std::string list_item_downvote;
         std::string list_item_priority;
@@ -137,6 +139,7 @@ class uistatedata
 
         std::set<recipe_id> hidden_recipes;
         std::set<recipe_id> favorite_recipes;
+        cata::flat_set<recipe_id> read_recipes;
         std::vector<recipe_id> recent_recipes;
 
         std::set<construction_group_str_id> favorite_construct_recipes;
@@ -167,5 +170,3 @@ class uistatedata
         void deserialize( const JsonObject &jo );
 };
 extern uistatedata uistate;
-
-

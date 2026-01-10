@@ -38,6 +38,8 @@ end
 ---@param a any
 ---@param b any
 ---@return boolean
+-- NOTE: String comparison in Lua is locale-dependent (uses strcoll).
+-- C locale is forced in generate_lua_docs() (catalua.cpp) for consistent ordering.
 local function default_sort_fn(a, b)
   if a.k and b.k then return tostring(a.k) < tostring(b.k) end
   return tostring(a) < tostring(b)
@@ -222,7 +224,7 @@ function map_cpp_type_to_lua(cpp_type, keep_cppval)
       clean_type = string.gsub(
         clean_type,
         "^Opt%((%S+)%)$",
-        function(k) return ("%s"):format(map_cpp_type_to_lua(k, keep_cppval)) end
+        function(k) return ("%s?"):format(map_cpp_type_to_lua(k, keep_cppval)) end
       )
     elseif string.match(clean_type, "^Pair%(%S+,%S+%)$") then
       clean_type = string.gsub(

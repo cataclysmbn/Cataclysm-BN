@@ -27,6 +27,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
@@ -2265,6 +2266,9 @@ void Character::mod_power_level( const units::energy &npower )
 void Character::mod_max_power_level( const units::energy &npower_max )
 {
     max_power_level += npower_max;
+    if( power_level > max_power_level ) {
+        set_power_level( max_power_level );
+    }
 }
 
 bool Character::is_max_power() const

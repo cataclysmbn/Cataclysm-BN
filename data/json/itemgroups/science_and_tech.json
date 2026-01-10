@@ -133,7 +133,9 @@
       [ "bionic_scanner", 5 ],
       [ "recipe_mininuke_launch", 10 ],
       { "item": "c_hydrogen_gas", "prob": 5, "container-item": "metal_tank_little", "charges": [ 10, 20 ] },
-      { "item": "carbon_fiber_filament", "prob": 10, "count": [ 25, 50 ] }
+      { "item": "carbon_fiber_filament", "prob": 10, "count": [ 25, 50 ] },
+      [ "genome_sampler", 5 ],
+      { "item": "embryo_empty", "prob": 5, "count": [ 2, 3 ] }
     ]
   },
   {
@@ -235,6 +237,7 @@
       { "group": "supplies_reagents_lab", "prob": 20 },
       [ "gelbox", 3 ],
       [ "microcentrifuge", 3 ],
+      [ "dna_editor", 1 ],
       [ "beaker", 5 ],
       [ "gradcylinder", 5 ],
       [ "flask_glass", 2 ],

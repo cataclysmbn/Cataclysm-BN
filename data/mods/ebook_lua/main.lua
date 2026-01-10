@@ -1,4 +1,4 @@
-local ui = require("ui")
+local ui = require("lib.ui")
 
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
@@ -183,7 +183,7 @@ mod.ebook_scan = function(user, device)
       if sel_scan == 0 then
         if hit_end then
           local YN = ui.query_yn(locale.gettext("WARNING: Not enough battery to scan all books.\nProceed anyway?"))
-          if YN == "YES" then
+          if YN then
             local count2 = 0
             for t_str, _ in pairs(found) do
               mod.insert_lib2(device, t_str)
@@ -485,9 +485,9 @@ mod.mc_io = function(reader, device)
                 that_mc:tname(1, false, 0)
               )
             )
-            if yn1 == "YES" then
+            if yn1 then
               local yn2 = ui.query_yn(locale.gettext("Are you sure to delete book data in the card?"))
-              if yn2 == "YES" then
+              if yn2 then
                 that_mc:erase_var("name")
                 that_mc:erase_var("book_data")
                 ui.query_any_key(locale.gettext("The memory card is reset successfully."))
@@ -579,14 +579,14 @@ mod.ebook_ui = function(who, item, pos)
   uilist:desc_enabled(true)
   uilist:text(
     string.format(
-      locale.gettext("Welcome to e-book library!\nThis device currently holds %d book(s).\nNetwork sync unavilable."),
+      locale.gettext("Welcome to e-book library!\nThis device currently holds %d book(s).\nNetwork sync unavailable."),
       var_count
     )
   )
   uilist:add_w_desc(
     -1,
     locale.gettext("Scan book(s)"),
-    locale.gettext("Scans all the book you have. It will progress instantly.")
+    locale.gettext("Scan all the books you have. It will progress instantly.")
   )
   uilist:add_w_desc(
     -1,

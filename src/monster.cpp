@@ -11,6 +11,7 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "coordinate_conversions.h"
 #include "creature_tracker.h"
