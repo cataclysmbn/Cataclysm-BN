@@ -83,22 +83,6 @@
   },
   {
     "type": "GENERIC",
-    "id": "aluminium_boat_hull",
-    "symbol": "o",
-    "color": "brown",
-    "name": { "str": "aluminum boat hull" },
-    "description": "A rigid aluminum sheet that keeps the boat afloat.  Add boat hulls to a vehicle until it floats.  Then attach oars or a motor to get the boat to move.",
-    "price": "160 USD",
-    "price_postapoc": "250 cent",
-    "material": [ "aluminum" ],
-    "weight": "1500 g",
-    "volume": "12500 ml",
-    "bashing": 8,
-    "to_hit": -1,
-    "category": "veh_parts"
-  },
-  {
-    "type": "GENERIC",
     "id": "hand_paddles",
     "name": { "str_sp": "oars" },
     "description": "Oars for a boat.",

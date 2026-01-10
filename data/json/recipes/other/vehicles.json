@@ -2123,7 +2123,7 @@
   },
   {
     "type": "recipe",
-    "result": "aluminium_boat_hull",
+    "result": "aluminium_sheet",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
     "skill_used": "fabrication",

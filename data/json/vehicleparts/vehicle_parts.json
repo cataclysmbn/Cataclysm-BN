@@ -1263,7 +1263,7 @@
     "broken_color": "light_gray",
     "damage_modifier": 50,
     "durability": 200,
-    "item": "aluminium_boat_hull",
+    "item": "aluminium_sheet",
     "location": "under",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
