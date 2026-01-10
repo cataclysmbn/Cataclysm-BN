@@ -219,6 +219,7 @@ class unfold_vehicle_iuse : public iuse_actor
         int moves = 0;
         std::map<itype_id, int> tools_needed;
         bool allow_edit = false;
+        bool full_fuel = false;
 
         unfold_vehicle_iuse( const std::string &type = "unfold_vehicle" ) : iuse_actor( type ) {}
 

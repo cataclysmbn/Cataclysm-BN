@@ -182,6 +182,7 @@
     "use_action": {
       "type": "unfold_vehicle",
       "vehicle_name": "rc_car",
+      "full_fuel": true,
       "unfold_msg": "You lay the RC car down on the ground.",
       "moves": 0
     },

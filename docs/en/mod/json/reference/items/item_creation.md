@@ -861,6 +861,7 @@ more structured function.
     "type": "unfold_vehicle", // Transforms the item into a vehicle.
     "vehicle_name": "bicycle", // Vehicle name to create.
     "unfold_msg": "You painstakingly unfold the bicycle and make it ready to ride.", // Message to display when transforming.
+    "full_fuel": false, // If true, spawn the vehicle with full tanks and batteries.  (Default: false)
     "moves": 500 // Number of moves required in the process.
 },
 "use_action" : {
