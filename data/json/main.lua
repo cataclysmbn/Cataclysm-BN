@@ -32,7 +32,6 @@ mod.voltmeter_menu = function(who, item, pos)
   return 0
 end
 
-
 ---@type fun(who: Character, item: Item, pos: Tripoint): string
 mod.get_grid_charge_info = function(who, item, pos)
   local pos_abs = gapi.get_map():get_abs_ms(pos)
