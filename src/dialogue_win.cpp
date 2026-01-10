@@ -200,10 +200,10 @@ void dialogue_window::display_responses( const std::vector<talk_data> &responses
     const std::vector<page> pages = split_to_pages( responses, page_w, page_h );
     if( !pages.empty() ) {
         auto selected_page = pages.size();
-        for( auto page_index : std::views::iota( size_t{ 0 }, pages.size() ) ) {
-            const auto &page = pages[page_index];
-            for( auto entry_index : std::views::iota( size_t{ 0 }, page.entries.size() ) ) {
-                if( page.entries[entry_index].response_index == selected_response ) {
+        size_t page_index = 0;
+        for( const page &page : pages ) {
+            for( const page_entry &entry : page.entries ) {
+                if( entry.response_index == selected_response ) {
                     selected_page = page_index;
                     break;
                 }
@@ -211,6 +211,7 @@ void dialogue_window::display_responses( const std::vector<talk_data> &responses
             if( selected_page != pages.size() ) {
                 break;
             }
+            page_index++;
         }
         if( selected_page != pages.size() ) {
             curr_page = selected_page;
