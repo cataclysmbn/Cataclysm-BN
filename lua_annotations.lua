@@ -2761,6 +2761,7 @@ coords = {}
 ---@field place_player_overmap_at fun(arg1: Tripoint) @Teleports player to absolute coordinate in overmap
 ---@field play_ambient_variant_sound fun(arg1: string, arg2: string, arg3: integer, arg4: SfxChannel, arg5: integer, arg6: number, arg7: integer)
 ---@field play_variant_sound fun(arg1: string, arg2: string, arg3: integer) | fun(arg1: string, arg2: string, arg3: integer, arg4: Angle, arg5: number, arg6: number)
+---@field register_action_menu_entry fun(arg1: table) @Register a Lua-defined action menu entry in the in-game action menu.
 ---@field remove_npc_follower fun(arg1: Npc)
 ---@field rng fun(arg1: integer, arg2: integer): integer
 ---@field six_cardinal_directions fun(): Tripoint[] @Get the six cardinal directions (N, S, E, W, Up, Down)
