@@ -87,7 +87,7 @@ struct panel_layout_entry {
 
 auto saved_panel_layouts() -> std::map<std::string, std::vector<panel_layout_entry>> & // *NOPAD*
 {
-    static auto layouts = std::map<std::string, std::vector<panel_layout_entry>>{};
+    static auto layouts = std::map<std::string, std::vector<panel_layout_entry>> {};
     return layouts;
 }
 
@@ -112,7 +112,7 @@ auto apply_saved_layout_entries( std::vector<window_panel> &layout,
                                  const std::map<std::string, std::string> &lua_name_by_id ) -> void
 {
     auto it = layout.begin();
-    std::ranges::for_each( entries, [&]( const panel_layout_entry &entry ) {
+    std::ranges::for_each( entries, [&]( const panel_layout_entry & entry ) {
         const auto resolved_name = resolve_layout_entry_name( entry, lua_name_by_id );
         if( !resolved_name ) {
             return;
@@ -2648,7 +2648,7 @@ void panel_manager::init()
 auto panel_manager::sync_lua_panels() -> void
 {
     const auto &widgets = cata::lua_sidebar_widgets::get_widgets();
-    auto lua_name_by_id = std::map<std::string, std::string>{};
+    auto lua_name_by_id = std::map<std::string, std::string> {};
     auto next_names = std::set<std::string> {};
     std::ranges::for_each( widgets, [&]( const cata::lua_sidebar_widgets::widget_entry & widget ) {
         const auto panel_name = lua_panel_name( widget );
@@ -2661,23 +2661,25 @@ auto panel_manager::sync_lua_panels() -> void
     auto &saved_layouts = saved_panel_layouts();
 
     auto find_saved_entry = [&]( const std::vector<panel_layout_entry> &entries,
-                                 const std::string &widget_id ) {
-        return std::ranges::find_if( entries, [&]( const panel_layout_entry &entry ) {
+    const std::string & widget_id ) {
+        return std::ranges::find_if( entries, [&]( const panel_layout_entry & entry ) {
             return entry.lua_id && *entry.lua_id == widget_id;
         } );
     };
 
     auto compute_insert_index = [&]( const std::vector<panel_layout_entry> &entries,
-                                     const std::string &widget_id,
-                                     const std::vector<window_panel> &layout ) -> std::optional<int> {
+                                     const std::string & widget_id,
+    const std::vector<window_panel> &layout ) -> std::optional<int> {
         const auto entry_it = find_saved_entry( entries, widget_id );
-        if( entry_it == entries.end() ) {
+        if( entry_it == entries.end() )
+        {
             return std::nullopt;
         }
         const auto entry_index = static_cast<size_t>(
-                                     std::ranges::distance( entries.begin(), entry_it ) );
+            std::ranges::distance( entries.begin(), entry_it ) );
         auto before_view = entries | std::views::take( entry_index );
-        const auto insert_index = std::ranges::count_if( before_view, [&]( const panel_layout_entry &entry ) {
+        const auto insert_index = std::ranges::count_if( before_view, [&]( const panel_layout_entry & entry )
+        {
             const auto resolved_name = resolve_layout_entry_name( entry, lua_name_by_id );
             if( !resolved_name ) {
                 return false;
@@ -2688,7 +2690,7 @@ auto panel_manager::sync_lua_panels() -> void
         return static_cast<int>( insert_index );
     };
 
-    auto sync_layout = [&]( const std::string &layout_id, std::vector<window_panel> &layout ) {
+    auto sync_layout = [&]( const std::string & layout_id, std::vector<window_panel> &layout ) {
         std::erase_if( layout, [&]( const window_panel & panel ) {
             const auto name = panel.get_name();
             return previous_names.contains( name ) && !next_names.contains( name );
@@ -2829,7 +2831,7 @@ void panel_manager::deserialize( JsonIn &jsin )
             return;
         }
         auto &layout = layout_iter->second;
-        auto entries = std::vector<panel_layout_entry>{};
+        auto entries = std::vector<panel_layout_entry> {};
         const auto panels_array = joLayout.get_array( "panels" );
         const auto panels_count = panels_array.size();
         auto panel_indices = std::views::iota( size_t{ 0 }, panels_count );
@@ -2847,7 +2849,7 @@ void panel_manager::deserialize( JsonIn &jsin )
                 .toggle = toggle,
             } );
         } );
-        apply_saved_layout_entries( layout, entries, std::map<std::string, std::string>{} );
+        apply_saved_layout_entries( layout, entries, std::map<std::string, std::string> {} );
         saved_layouts[layout_id] = std::move( entries );
     } );
     jsin.end_array();
