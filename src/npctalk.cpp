@@ -2072,7 +2072,7 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
             }
             if( ch == KEY_PPAGE || ch == KEY_NPAGE ) {
                 const auto scroll_entry_index = d_win.handle_scrolling( ch );
-                if ( scroll_entry_index ) {
+                if( scroll_entry_index ) {
                     selected_response = *scroll_entry_index;
                 }
                 continue;
