@@ -81,7 +81,8 @@ void cata::detail::reg_game_api( sol::state &lua )
         const auto take = std::min( static_cast<size_t>( clamped ), entries.size() );
         auto indices = std::views::iota( size_t{ 0 }, take );
         const auto level_name = []( const cata::LuaLogLevel level ) -> std::string {
-            switch( level ) {
+            switch( level )
+            {
                 case cata::LuaLogLevel::Input:
                     return "input";
                 case cata::LuaLogLevel::Info:

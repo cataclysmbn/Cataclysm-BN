@@ -84,10 +84,11 @@ struct lua_widget_line {
     nc_color color = c_light_gray;
 };
 
-auto split_widget_lines( const std::string &text, const nc_color color ) -> std::vector<lua_widget_line>
+auto split_widget_lines( const std::string &text,
+                         const nc_color color ) -> std::vector<lua_widget_line>
 {
     auto parts = text | std::views::split( '\n' )
-                 | std::views::transform( [color]( const auto &part ) {
+    | std::views::transform( [color]( const auto & part ) {
         return lua_widget_line{
             .text = std::ranges::to<std::string>( part ),
             .color = color,
@@ -264,7 +265,7 @@ auto make_lua_widget_panel( const cata::lua_sidebar_widgets::widget_entry &widge
 {
     const auto panel_name = lua_panel_name( widget );
     const auto widget_id = widget.id;
-    auto draw_func = [widget_id]( avatar &, const catacurses::window &w ) {
+    auto draw_func = [widget_id]( avatar &, const catacurses::window & w ) {
         const auto *entry = cata::lua_sidebar_widgets::find_widget( widget_id );
         if( entry == nullptr ) {
             werase( w );
@@ -275,7 +276,8 @@ auto make_lua_widget_panel( const cata::lua_sidebar_widgets::widget_entry &widge
     };
     auto render_func = [widget_id]() -> bool {
         const auto *entry = cata::lua_sidebar_widgets::find_widget( widget_id );
-        if( entry == nullptr ) {
+        if( entry == nullptr )
+        {
             return false;
         }
         return should_render_lua_widget( *entry );
@@ -2594,7 +2596,7 @@ auto panel_manager::sync_lua_panels() -> void
 {
     const auto &widgets = cata::lua_sidebar_widgets::get_widgets();
     auto next_names = std::set<std::string> {};
-    std::ranges::for_each( widgets, [&]( const cata::lua_sidebar_widgets::widget_entry &widget ) {
+    std::ranges::for_each( widgets, [&]( const cata::lua_sidebar_widgets::widget_entry & widget ) {
         next_names.insert( lua_panel_name( widget ) );
     } );
 
@@ -2602,13 +2604,13 @@ auto panel_manager::sync_lua_panels() -> void
     lua_panel_names = next_names;
 
     auto sync_layout = [&]( std::vector<window_panel> &layout ) {
-        std::erase_if( layout, [&]( const window_panel &panel ) {
+        std::erase_if( layout, [&]( const window_panel & panel ) {
             const auto name = panel.get_name();
             return previous_names.contains( name ) && !next_names.contains( name );
         } );
 
         const auto layout_width = layout.empty() ? 0 : layout.front().get_width();
-        std::ranges::for_each( widgets, [&]( const cata::lua_sidebar_widgets::widget_entry &widget ) {
+        std::ranges::for_each( widgets, [&]( const cata::lua_sidebar_widgets::widget_entry & widget ) {
             const auto panel_name = lua_panel_name( widget );
             auto existing = std::ranges::find( layout, panel_name, &window_panel::get_name );
             if( existing == layout.end() ) {
@@ -2632,7 +2634,7 @@ auto panel_manager::sync_lua_panels() -> void
         } );
     };
 
-    std::ranges::for_each( layouts, [&]( auto &entry ) {
+    std::ranges::for_each( layouts, [&]( auto & entry ) {
         sync_layout( entry.second );
     } );
 }
@@ -2668,11 +2670,11 @@ void panel_manager::serialize( JsonOut &json )
 
     json.start_array();
 
-    const auto panel_is_serializable = [&]( const window_panel &panel ) -> bool {
+    const auto panel_is_serializable = [&]( const window_panel & panel ) -> bool {
         return !lua_panel_names.contains( panel.get_name() );
     };
 
-    std::ranges::for_each( layouts, [&]( const auto &kv ) {
+    std::ranges::for_each( layouts, [&]( const auto & kv ) {
         json.start_object();
 
         json.member( "layout_id", kv.first );
@@ -2681,7 +2683,7 @@ void panel_manager::serialize( JsonOut &json )
         json.start_array();
 
         auto panels_view = kv.second | std::views::filter( panel_is_serializable );
-        std::ranges::for_each( panels_view, [&]( const window_panel &panel ) {
+        std::ranges::for_each( panels_view, [&]( const window_panel & panel ) {
             json.start_object();
 
             json.member( "name", panel.get_name() );
