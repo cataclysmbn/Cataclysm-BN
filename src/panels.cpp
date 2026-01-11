@@ -79,6 +79,59 @@ static const flag_id json_flag_SPLINT( "SPLINT" );
 
 namespace
 {
+struct panel_layout_entry {
+    std::string name;
+    std::optional<std::string> lua_id;
+    bool toggle = true;
+};
+
+auto saved_panel_layouts() -> std::map<std::string, std::vector<panel_layout_entry>> & // *NOPAD*
+{
+    static auto layouts = std::map<std::string, std::vector<panel_layout_entry>>{};
+    return layouts;
+}
+
+auto resolve_layout_entry_name( const panel_layout_entry &entry,
+                                const std::map<std::string, std::string> &lua_name_by_id ) -> std::optional<std::string>
+{
+    if( entry.lua_id ) {
+        const auto it = lua_name_by_id.find( *entry.lua_id );
+        if( it == lua_name_by_id.end() ) {
+            return std::nullopt;
+        }
+        return it->second;
+    }
+    if( entry.name.empty() ) {
+        return std::nullopt;
+    }
+    return entry.name;
+}
+
+auto apply_saved_layout_entries( std::vector<window_panel> &layout,
+                                 const std::vector<panel_layout_entry> &entries,
+                                 const std::map<std::string, std::string> &lua_name_by_id ) -> void
+{
+    auto it = layout.begin();
+    std::ranges::for_each( entries, [&]( const panel_layout_entry &entry ) {
+        const auto resolved_name = resolve_layout_entry_name( entry, lua_name_by_id );
+        if( !resolved_name ) {
+            return;
+        }
+        auto search_range = std::ranges::subrange( it, layout.end() );
+        auto match = std::ranges::find( search_range, *resolved_name, &window_panel::get_name );
+        if( match == search_range.end() ) {
+            return;
+        }
+        if( it != match ) {
+            auto panel = *match;
+            layout.erase( match );
+            it = layout.insert( it, std::move( panel ) );
+        }
+        it->toggle = entry.toggle;
+        ++it;
+    } );
+}
+
 struct lua_widget_line {
     std::string text;
     nc_color color = c_light_gray;
@@ -2595,27 +2648,75 @@ void panel_manager::init()
 auto panel_manager::sync_lua_panels() -> void
 {
     const auto &widgets = cata::lua_sidebar_widgets::get_widgets();
+    auto lua_name_by_id = std::map<std::string, std::string>{};
     auto next_names = std::set<std::string> {};
     std::ranges::for_each( widgets, [&]( const cata::lua_sidebar_widgets::widget_entry & widget ) {
-        next_names.insert( lua_panel_name( widget ) );
+        const auto panel_name = lua_panel_name( widget );
+        lua_name_by_id.insert_or_assign( widget.id, panel_name );
+        next_names.insert( panel_name );
     } );
 
     const auto previous_names = lua_panel_names;
     lua_panel_names = next_names;
+    auto &saved_layouts = saved_panel_layouts();
 
-    auto sync_layout = [&]( std::vector<window_panel> &layout ) {
+    auto find_saved_entry = [&]( const std::vector<panel_layout_entry> &entries,
+                                 const std::string &widget_id ) {
+        return std::ranges::find_if( entries, [&]( const panel_layout_entry &entry ) {
+            return entry.lua_id && *entry.lua_id == widget_id;
+        } );
+    };
+
+    auto compute_insert_index = [&]( const std::vector<panel_layout_entry> &entries,
+                                     const std::string &widget_id,
+                                     const std::vector<window_panel> &layout ) -> std::optional<int> {
+        const auto entry_it = find_saved_entry( entries, widget_id );
+        if( entry_it == entries.end() ) {
+            return std::nullopt;
+        }
+        const auto entry_index = static_cast<size_t>(
+                                     std::ranges::distance( entries.begin(), entry_it ) );
+        auto before_view = entries | std::views::take( entry_index );
+        const auto insert_index = std::ranges::count_if( before_view, [&]( const panel_layout_entry &entry ) {
+            const auto resolved_name = resolve_layout_entry_name( entry, lua_name_by_id );
+            if( !resolved_name ) {
+                return false;
+            }
+            const auto match = std::ranges::find( layout, *resolved_name, &window_panel::get_name );
+            return match != layout.end();
+        } );
+        return static_cast<int>( insert_index );
+    };
+
+    auto sync_layout = [&]( const std::string &layout_id, std::vector<window_panel> &layout ) {
         std::erase_if( layout, [&]( const window_panel & panel ) {
             const auto name = panel.get_name();
             return previous_names.contains( name ) && !next_names.contains( name );
         } );
 
         const auto layout_width = layout.empty() ? 0 : layout.front().get_width();
+        const auto saved_iter = saved_layouts.find( layout_id );
+        const auto *saved_entries = saved_iter == saved_layouts.end() ? nullptr : &saved_iter->second;
         std::ranges::for_each( widgets, [&]( const cata::lua_sidebar_widgets::widget_entry & widget ) {
             const auto panel_name = lua_panel_name( widget );
             auto existing = std::ranges::find( layout, panel_name, &window_panel::get_name );
             if( existing == layout.end() ) {
                 auto new_panel = make_lua_widget_panel( widget, layout_width );
-                if( widget.order ) {
+                auto saved_index = std::optional<int> {};
+                if( saved_entries != nullptr ) {
+                    const auto entry_it = find_saved_entry( *saved_entries, widget.id );
+                    if( entry_it != saved_entries->end() ) {
+                        new_panel.toggle = entry_it->toggle;
+                        saved_index = compute_insert_index( *saved_entries, widget.id, layout );
+                    }
+                }
+                if( saved_index ) {
+                    const auto max_index = static_cast<int>( layout.size() );
+                    const auto insert_at = std::clamp( *saved_index, 0, max_index );
+                    auto it = layout.begin();
+                    std::ranges::advance( it, insert_at );
+                    layout.insert( it, std::move( new_panel ) );
+                } else if( widget.order ) {
                     const auto max_index = static_cast<int>( layout.size() );
                     const auto desired_index = std::max( 0, *widget.order - 1 );
                     const auto insert_at = std::clamp( desired_index, 0, max_index );
@@ -2635,7 +2736,7 @@ auto panel_manager::sync_lua_panels() -> void
     };
 
     std::ranges::for_each( layouts, [&]( auto & entry ) {
-        sync_layout( entry.second );
+        sync_layout( entry.first, entry.second );
     } );
 }
 
@@ -2669,10 +2770,12 @@ void panel_manager::serialize( JsonOut &json )
     json.member( "layouts" );
 
     json.start_array();
-
-    const auto panel_is_serializable = [&]( const window_panel & panel ) -> bool {
-        return !lua_panel_names.contains( panel.get_name() );
-    };
+    const auto &widgets = cata::lua_sidebar_widgets::get_widgets();
+    auto lua_id_by_name = std::map<std::string, std::string> {};
+    std::ranges::for_each( widgets, [&]( const cata::lua_sidebar_widgets::widget_entry & widget ) {
+        const auto panel_name = lua_panel_name( widget );
+        lua_id_by_name.insert_or_assign( panel_name, widget.id );
+    } );
 
     std::ranges::for_each( layouts, [&]( const auto & kv ) {
         json.start_object();
@@ -2682,12 +2785,17 @@ void panel_manager::serialize( JsonOut &json )
 
         json.start_array();
 
-        auto panels_view = kv.second | std::views::filter( panel_is_serializable );
-        std::ranges::for_each( panels_view, [&]( const window_panel & panel ) {
+        std::ranges::for_each( kv.second, [&]( const window_panel & panel ) {
             json.start_object();
 
             json.member( "name", panel.get_name() );
             json.member( "toggle", panel.toggle );
+            if( lua_panel_names.contains( panel.get_name() ) ) {
+                const auto it = lua_id_by_name.find( panel.get_name() );
+                if( it != lua_id_by_name.end() ) {
+                    json.member( "lua_id", it->second );
+                }
+            }
 
             json.end_object();
         } );
@@ -2708,33 +2816,40 @@ void panel_manager::deserialize( JsonIn &jsin )
     JsonObject joLayouts( jsin.get_object() );
 
     current_layout_id = joLayouts.get_string( "current_layout_id" );
-    for( JsonObject joLayout : joLayouts.get_array( "layouts" ) ) {
-        std::string layout_id = joLayout.get_string( "layout_id" );
+    auto &saved_layouts = saved_panel_layouts();
+    saved_layouts.clear();
+    const auto layouts_array = joLayouts.get_array( "layouts" );
+    const auto layouts_count = layouts_array.size();
+    auto layout_indices = std::views::iota( size_t{ 0 }, layouts_count );
+    std::ranges::for_each( layout_indices, [&]( const size_t layout_index ) {
+        const auto joLayout = layouts_array.get_object( layout_index );
+        const auto layout_id = joLayout.get_string( "layout_id" );
         auto layout_iter = layouts.find( layout_id );
         if( layout_iter == layouts.end() ) {
-            continue;
+            return;
         }
         auto &layout = layout_iter->second;
-        auto it = layout.begin();
-
-        for( JsonObject joPanel : joLayout.get_array( "panels" ) ) {
-            std::string name = joPanel.get_string( "name" );
-            bool toggle = joPanel.get_bool( "toggle" );
-
-            for( auto it2 = layout.begin() + std::distance( layout.begin(), it ); it2 != layout.end(); ++it2 ) {
-                if( it2->get_name() == name ) {
-                    if( it->get_name() != name ) {
-                        window_panel panel = *it2;
-                        layout.erase( it2 );
-                        it = layout.insert( it, panel );
-                    }
-                    it->toggle = toggle;
-                    ++it;
-                    break;
-                }
+        auto entries = std::vector<panel_layout_entry>{};
+        const auto panels_array = joLayout.get_array( "panels" );
+        const auto panels_count = panels_array.size();
+        auto panel_indices = std::views::iota( size_t{ 0 }, panels_count );
+        std::ranges::for_each( panel_indices, [&]( const size_t panel_index ) {
+            const auto joPanel = panels_array.get_object( panel_index );
+            auto name = joPanel.get_string( "name" );
+            const auto toggle = joPanel.get_bool( "toggle", true );
+            auto lua_id = std::optional<std::string> {};
+            if( joPanel.has_member( "lua_id" ) ) {
+                lua_id = joPanel.get_string( "lua_id" );
             }
-        }
-    }
+            entries.emplace_back( panel_layout_entry{
+                .name = std::move( name ),
+                .lua_id = std::move( lua_id ),
+                .toggle = toggle,
+            } );
+        } );
+        apply_saved_layout_entries( layout, entries, std::map<std::string, std::string>{} );
+        saved_layouts[layout_id] = std::move( entries );
+    } );
     jsin.end_array();
 }
 
