@@ -35,7 +35,7 @@
     "cutting": 11,
     "thrown_damage": [ { "damage_type": "bash", "amount": 3 }, { "damage_type": "stab", "amount": 9 } ],
     "price_postapoc": "10 cent",
-    "flags": [ "STAB", "JAVELIN" ],
+    "flags": [ "STAB", "JAVELIN", "FLY_STRAIGHT" ],
     "techniques": [ "WBLOCK_1" ],
     "qualities": [ [ "COOK", 1 ] ]
   },
@@ -443,7 +443,7 @@
     "volume": "1 L",
     "cutting": 11,
     "thrown_damage": [ { "damage_type": "bash", "amount": 5 }, { "damage_type": "stab", "amount": 11 } ],
-    "flags": [ "SHEATH_SPEAR", "JAVELIN", "STAB" ],
+    "flags": [ "SHEATH_SPEAR", "JAVELIN", "STAB", "FLY_STRAIGHT" ],
     "price": "40 USD",
     "price_postapoc": "250 cent",
     "qualities": [ [ "COOK", 1 ] ]
@@ -460,7 +460,7 @@
     "bashing": 5,
     "cutting": 19,
     "thrown_damage": [ { "damage_type": "bash", "amount": 5 }, { "damage_type": "stab", "amount": 17 } ],
-    "flags": [ "NONCONDUCTIVE", "SHEATH_SPEAR", "JAVELIN", "STAB" ],
+    "flags": [ "NONCONDUCTIVE", "SHEATH_SPEAR", "JAVELIN", "STAB", "FLY_STRAIGHT" ],
     "price": "90 USD",
     "price_postapoc": "5 USD"
   },

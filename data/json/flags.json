@@ -2298,6 +2298,12 @@
     "context": [  ]
   },
   {
+    "id": "FLY_STRAIGHT",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "info": "This thrown item <info>flies straight</info> without rotating in the air, maintaining its aerodynamic orientation."
+  },
+  {
     "id": "LEAK_ALWAYS",
     "type": "json_flag",
     "context": [  ]

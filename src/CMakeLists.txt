@@ -6,6 +6,18 @@ file(GLOB CATACLYSM_BN_SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
 list(REMOVE_ITEM CATACLYSM_BN_SOURCES ${MAIN_CPP} ${MESSAGES_CPP})
 
+# Lua binding translation units are template-heavy and primarily run at startup;
+# compile them with no optimization to reduce build times.
+file(GLOB CATALUA_BINDINGS_SOURCES ${CMAKE_SOURCE_DIR}/src/catalua_bindings*.cpp)
+if (MSVC)
+    set(CATALUA_BINDINGS_COMPILE_OPTIONS /Od)
+else ()
+    set(CATALUA_BINDINGS_COMPILE_OPTIONS -O0 -g0)
+endif ()
+foreach (catalua_src IN LISTS CATALUA_BINDINGS_SOURCES)
+    set_source_files_properties(${catalua_src} PROPERTIES COMPILE_OPTIONS "${CATALUA_BINDINGS_COMPILE_OPTIONS}")
+endforeach ()
+
 file(GLOB CATACLYSM_BN_HEADERS ${CMAKE_SOURCE_DIR}/src/*.h)
 
 add_subdirectory(lua)

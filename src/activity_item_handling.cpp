@@ -68,6 +68,7 @@
 #include "stomach.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "trap.h"
 #include "units.h"
@@ -325,6 +326,22 @@ static void stash_on_pet( std::vector<detached_ptr<item>> &items, monster &pet,
     }
 }
 
+// Helper function to collect names of all favorited items (including contents)
+static auto collect_favorited_item_names( const item &it ) -> std::vector<std::string>
+{
+    std::vector<std::string> favorited_names;
+    if( it.is_favorite ) {
+        favorited_names.push_back( it.display_name() );
+    }
+
+    auto favorited_contents = it.contents.all_items_ptr()
+    | std::views::filter( []( const item * i ) { return i->is_favorite; } )
+    | std::views::transform( []( const item * i ) { return i->display_name(); } );
+
+    std::ranges::copy( favorited_contents, std::back_inserter( favorited_names ) );
+    return favorited_names;
+}
+
 void drop_on_map( Character &c, item_drop_reason reason,
                   detached_ptr<item> &&it,
                   const tripoint &where )
@@ -397,8 +414,9 @@ void drop_on_map( Character &c, item_drop_reason reason,
 
         if( get_option<bool>( "AUTO_NOTES_DROPPED_FAVORITES" ) && it->is_favorite ) {
             const tripoint_abs_omt your_pos = c.global_omt_location();
+            const std::string sprite_prefix = "SPRITE:" + it->typeId().str() + ";";
             if( !overmap_buffer.has_note( your_pos ) ) {
-                overmap_buffer.add_note( your_pos, it->display_name() );
+                overmap_buffer.add_note( your_pos, sprite_prefix + it->display_name() );
             } else {
                 overmap_buffer.add_note( your_pos, overmap_buffer.note( your_pos ) + "; " + it->display_name() );
             }
@@ -428,6 +446,24 @@ void drop_on_map( Character &c, item_drop_reason reason,
                 break;
         }
     }
+    if( get_option<bool>( "AUTO_NOTES_DROPPED_FAVORITES" ) ) {
+        const tripoint_abs_omt your_pos = c.global_omt_location();
+
+        auto all_favorited_names = items
+        | cata::ranges::flat_map( []( const auto & it ) { return collect_favorited_item_names( *it ); } )
+        | std::ranges::to<std::vector>();
+
+        if( !all_favorited_names.empty() ) {
+            const auto note_text = join( all_favorited_names, "; " );
+
+            if( !overmap_buffer.has_note( your_pos ) ) {
+                overmap_buffer.add_note( your_pos, note_text );
+            } else {
+                overmap_buffer.add_note( your_pos, overmap_buffer.note( your_pos ) + "; " + note_text );
+            }
+        }
+    }
+
     for( auto &it : items ) {
         item &obj = *it;
         here.add_item_or_charges( where, std::move( it ) );

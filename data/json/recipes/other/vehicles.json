@@ -2122,6 +2122,18 @@
     "components": [ [ [ "carbon_fiber_filament", 100 ] ] ]
   },
   {
+    "type": "recipe",
+    "result": "aluminium_sheet",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "45 m",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 12 ] ],
+    "components": [ [ [ "material_aluminium_ingot", 6 ] ] ]
+  },
+  {
     "result": "frame_plastic",
     "type": "recipe",
     "id_suffix": "printed",
