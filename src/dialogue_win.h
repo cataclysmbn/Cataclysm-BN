@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <optional>
 
 #include "color.h"
 #include "cursesdef.h"
@@ -25,7 +26,7 @@ class dialogue_window
         void print_header( const std::string &name );
 
         void clear_window_texts();
-        void handle_scrolling( int ch );
+        std::optional<size_t> handle_scrolling( int ch );
         void display_responses( const std::vector<talk_data> &responses, size_t selected_response );
         void refresh_response_display();
         /** Adds message to history. It must be already translated. */
@@ -48,6 +49,9 @@ class dialogue_window
         size_t curr_page = 0;
         bool can_scroll_up = false;
         bool can_scroll_down = false;
+        /* Page start indices for selecting first entry of page when paging up/down */
+        size_t next_page_start = 0;
+        size_t prev_page_start = 0;
 
         // Prints history. Automatically highlighting last message.
         void print_history();

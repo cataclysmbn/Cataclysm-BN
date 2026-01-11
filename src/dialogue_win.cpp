@@ -165,24 +165,15 @@ void dialogue_window::refresh_response_display()
     can_scroll_up = false;
 }
 
-void dialogue_window::handle_scrolling( const int ch )
+std::optional<size_t> dialogue_window::handle_scrolling( const int ch )
 {
-    switch( ch ) {
-        case KEY_DOWN:
-        case KEY_NPAGE:
-            if( can_scroll_down ) {
-                curr_page += 1;
-            }
-            break;
-        case KEY_UP:
-        case KEY_PPAGE:
-            if( can_scroll_up ) {
-                curr_page -= 1;
-            }
-            break;
-        default:
-            break;
+    if( ch == KEY_NPAGE && can_scroll_down ) {
+        return next_page_start;
     }
+    if( ch == KEY_PPAGE && can_scroll_up ) {
+        return prev_page_start;
+    }
+    return std::nullopt;
 }
 
 void dialogue_window::display_responses( const std::vector<talk_data> &responses,
@@ -228,9 +219,11 @@ void dialogue_window::display_responses( const std::vector<talk_data> &responses
 
     if( can_scroll_up ) {
         mvwprintz( d_win, point( getmaxx( d_win ) - 2 - 2, 2 ), c_green, "^^" );
+        prev_page_start = pages[curr_page - 1].entries.front().response_index;
     }
     if( can_scroll_down ) {
         mvwprintz( d_win, point( FULL_SCREEN_WIDTH - 2 - 2, win_maxy - 2 ), c_green, "vv" );
+        next_page_start = pages[curr_page + 1].entries.front().response_index;
     }
     wnoutrefresh( d_win );
 }

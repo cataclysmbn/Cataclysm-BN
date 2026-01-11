@@ -2054,24 +2054,32 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
         do {
             ui_manager::redraw();
             ch = inp_mngr.get_input_event().get_first_input();
-            auto st = special_talk( ch );
-            if( st.id != "TALK_NONE" ) {
-                return st;
-            }
             if( ch == KEY_UP ) {
                 if( selected_response > 0 ) {
                     selected_response -= 1;
+                } else {
+                    selected_response = response_count - 1;
                 }
                 continue;
             }
             if( ch == KEY_DOWN ) {
                 if( selected_response + 1 < response_count ) {
                     selected_response += 1;
+                } else {
+                    selected_response = 0;
                 }
                 continue;
             }
             if( ch == KEY_PPAGE || ch == KEY_NPAGE ) {
+                const auto scroll_entry_index = d_win.handle_scrolling( ch );
+                if ( scroll_entry_index ) {
+                    selected_response = *scroll_entry_index;
+                }
                 continue;
+            }
+            auto st = special_talk( ch );
+            if( st.id != "TALK_NONE" ) {
+                return st;
             }
             if( ch == KEY_ENTER || ch == '\n' || ch == '\r' ) {
                 ch = static_cast<int>( selected_response );
