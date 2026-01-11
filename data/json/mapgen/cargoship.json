@@ -175,7 +175,6 @@
         "S": "f_shower",
         "&": "f_toilet"
       },
-
       "place_monster": [ { "group": "GROUP_MIL_STRONG", "x": [ 5, 15 ], "y": [ 35, 43 ], "repeat": [ 15, 20 ] } ],
       "place_nested": [ { "chunks": [ "CargoShipNested_military" ], "x": 6, "y": 3 } ],
       "items": {
@@ -245,4 +244,3 @@
     }
   }
 ]
-
