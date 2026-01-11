@@ -19,6 +19,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "fstream_utils.h"
 #include "init.h"
 #include "item_factory.h"
+#include "lua_sidebar_widgets.h"
 #include "lua_action_menu.h"
 #include "map.h"
 #include "messages.h"

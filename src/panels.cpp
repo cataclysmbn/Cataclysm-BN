@@ -1,5 +1,6 @@
 #include "panels.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -8,6 +9,8 @@
 #include <iterator>
 #include <list>
 #include <memory>
+#include <optional>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -18,6 +21,7 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "catalua_impl.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
@@ -36,6 +40,7 @@
 #include "input.h"
 #include "item.h"
 #include "json.h"
+#include "lua_sidebar_widgets.h"
 #include "magic.h"
 #include "map.h"
 #include "messages.h"
@@ -71,6 +76,214 @@ static const efftype_id effect_got_checked( "got_checked" );
 
 static const flag_id json_flag_THERMOMETER( "THERMOMETER" );
 static const flag_id json_flag_SPLINT( "SPLINT" );
+
+namespace
+{
+struct lua_widget_line {
+    std::string text;
+    nc_color color = c_light_gray;
+};
+
+auto split_widget_lines( const std::string &text, const nc_color color ) -> std::vector<lua_widget_line>
+{
+    auto parts = text | std::views::split( '\n' )
+                 | std::views::transform( [color]( const auto &part ) {
+        return lua_widget_line{
+            .text = std::ranges::to<std::string>( part ),
+            .color = color,
+        };
+    } );
+    return std::ranges::to<std::vector<lua_widget_line>>( parts );
+}
+
+auto append_widget_lines( std::vector<lua_widget_line> &out,
+                          std::vector<lua_widget_line> &&more ) -> void
+{
+    std::ranges::move( more, std::back_inserter( out ) );
+}
+
+auto lua_panel_name( const cata::lua_sidebar_widgets::widget_entry &widget ) -> std::string
+{
+    return widget.name.empty() ? widget.id : widget.name;
+}
+
+auto resolve_widget_color( const sol::object &obj ) -> std::optional<nc_color>
+{
+    if( !obj.valid() || obj == sol::lua_nil ) {
+        return std::nullopt;
+    }
+    if( obj.is<color_id>() ) {
+        return get_all_colors().get( obj.as<color_id>() );
+    }
+    if( obj.is<std::string>() ) {
+        const auto id = get_all_colors().name_to_id( obj.as<std::string>(),
+                        report_color_error::no );
+        return get_all_colors().get( id );
+    }
+    return std::nullopt;
+}
+
+auto to_widget_lines( const sol::object &value ) -> std::vector<lua_widget_line>
+{
+    if( !value.valid() || value == sol::lua_nil ) {
+        return {};
+    }
+    if( value.is<std::string>() ) {
+        return split_widget_lines( value.as<std::string>(), c_light_gray );
+    }
+    if( !value.is<sol::table>() ) {
+        return {};
+    }
+
+    auto lines = std::vector<lua_widget_line> {};
+    auto table = value.as<sol::table>();
+    const auto count = static_cast<size_t>( table.size() );
+    auto indices = std::views::iota( size_t{ 1 }, count + 1 );
+    std::ranges::for_each( indices, [&]( const size_t idx ) {
+        auto entry = table.get<sol::object>( idx );
+        if( !entry.valid() || entry == sol::lua_nil ) {
+            return;
+        }
+        if( entry.is<std::string>() ) {
+            append_widget_lines( lines,
+                                 split_widget_lines( entry.as<std::string>(), c_light_gray ) );
+            return;
+        }
+        if( !entry.is<sol::table>() ) {
+            return;
+        }
+        auto entry_tbl = entry.as<sol::table>();
+        auto text = entry_tbl.get_or<std::string>( "text", "" );
+        if( text.empty() ) {
+            return;
+        }
+        auto color_obj = entry_tbl.get<sol::object>( "color" );
+        auto color = resolve_widget_color( color_obj ).value_or( c_light_gray );
+        append_widget_lines( lines, split_widget_lines( text, color ) );
+    } );
+    return lines;
+}
+
+auto get_lua_widget_lines( const cata::lua_sidebar_widgets::widget_entry &widget,
+                           const int width, const int height ) -> std::vector<lua_widget_line>
+{
+    try {
+        auto res = widget.draw( width, height );
+        check_func_result( res );
+        const auto return_count = res.return_count();
+        if( return_count == 0 ) {
+            return {};
+        }
+        auto lines = std::vector<lua_widget_line> {};
+        auto indices = std::views::iota( 0, return_count );
+        std::ranges::for_each( indices, [&]( const int idx ) {
+            auto value = res.get<sol::object>( idx );
+            append_widget_lines( lines, to_widget_lines( value ) );
+        } );
+        return lines;
+    } catch( const std::runtime_error &err ) {
+        debugmsg( "Failed to draw Lua sidebar widget '%s': %s", widget.id, err.what() );
+    }
+    return {};
+}
+
+auto should_render_lua_widget( const cata::lua_sidebar_widgets::widget_entry &widget ) -> bool
+{
+    if( widget.panel_visible_fn ) {
+        try {
+            auto res = ( *widget.panel_visible_fn )();
+            check_func_result( res );
+            if( res.return_count() == 0 ) {
+                return true;
+            }
+            auto obj = res.get<sol::object>();
+            if( !obj.valid() || obj == sol::lua_nil ) {
+                return true;
+            }
+            if( obj.is<bool>() ) {
+                return obj.as<bool>();
+            }
+        } catch( const std::runtime_error &err ) {
+            debugmsg( "Failed to get Lua sidebar widget '%s' visibility: %s", widget.id, err.what() );
+        }
+        return true;
+    }
+    if( widget.panel_visible_value.has_value() && !*widget.panel_visible_value ) {
+        return false;
+    }
+    if( !widget.render ) {
+        return true;
+    }
+    try {
+        auto res = ( *widget.render )();
+        check_func_result( res );
+        if( res.return_count() == 0 ) {
+            return true;
+        }
+        if( res.return_count() == 0 ) {
+            return true;
+        }
+        auto obj = res.get<sol::object>();
+        if( !obj.valid() || obj == sol::lua_nil ) {
+            return true;
+        }
+        if( obj.is<bool>() ) {
+            return obj.as<bool>();
+        }
+        return true;
+    } catch( const std::runtime_error &err ) {
+        debugmsg( "Failed to render-check Lua sidebar widget '%s': %s", widget.id, err.what() );
+    }
+    return true;
+}
+
+auto draw_lua_widget_panel( const cata::lua_sidebar_widgets::widget_entry &widget,
+                            const catacurses::window &w ) -> void
+{
+    werase( w );
+    const auto window_height = getmaxy( w );
+    const auto window_width = getmaxx( w );
+    const auto lines = get_lua_widget_lines( widget, window_width, window_height );
+    const auto layout_id = panel_manager::get_manager().get_current_layout_id();
+    const auto add_leading_space = layout_id == "labels" || layout_id == "labels-narrow";
+    const auto max_lines = static_cast<size_t>( window_height );
+    const auto count = std::min( lines.size(), max_lines );
+    auto indices = std::views::iota( size_t{ 0 }, count );
+    std::ranges::for_each( indices, [&]( const size_t idx ) {
+        const auto &line = lines[idx];
+        auto cur_color = line.color;
+        const auto display_text = add_leading_space ? " " + line.text : line.text;
+        print_colored_text( w, point( 0, static_cast<int>( idx ) ), cur_color, line.color,
+                            display_text, report_color_error::no );
+    } );
+    wnoutrefresh( w );
+}
+
+auto make_lua_widget_panel( const cata::lua_sidebar_widgets::widget_entry &widget,
+                            const int width ) -> window_panel
+{
+    const auto panel_name = lua_panel_name( widget );
+    const auto widget_id = widget.id;
+    auto draw_func = [widget_id]( avatar &, const catacurses::window &w ) {
+        const auto *entry = cata::lua_sidebar_widgets::find_widget( widget_id );
+        if( entry == nullptr ) {
+            werase( w );
+            wnoutrefresh( w );
+            return;
+        }
+        draw_lua_widget_panel( *entry, w );
+    };
+    auto render_func = [widget_id]() -> bool {
+        const auto *entry = cata::lua_sidebar_widgets::find_widget( widget_id );
+        if( entry == nullptr ) {
+            return false;
+        }
+        return should_render_lua_widget( *entry );
+    };
+    return window_panel( draw_func, panel_name, widget.height, width, widget.default_toggle,
+                         render_func, widget.redraw_every_frame );
+}
+} // namespace
 
 // constructor
 window_panel::window_panel( std::function<void( avatar &, const catacurses::window & )>
@@ -2377,6 +2590,53 @@ void panel_manager::init()
     update_offsets( get_current_layout().begin()->get_width() );
 }
 
+auto panel_manager::sync_lua_panels() -> void
+{
+    const auto &widgets = cata::lua_sidebar_widgets::get_widgets();
+    auto next_names = std::set<std::string> {};
+    std::ranges::for_each( widgets, [&]( const cata::lua_sidebar_widgets::widget_entry &widget ) {
+        next_names.insert( lua_panel_name( widget ) );
+    } );
+
+    const auto previous_names = lua_panel_names;
+    lua_panel_names = next_names;
+
+    auto sync_layout = [&]( std::vector<window_panel> &layout ) {
+        std::erase_if( layout, [&]( const window_panel &panel ) {
+            const auto name = panel.get_name();
+            return previous_names.contains( name ) && !next_names.contains( name );
+        } );
+
+        const auto layout_width = layout.empty() ? 0 : layout.front().get_width();
+        std::ranges::for_each( widgets, [&]( const cata::lua_sidebar_widgets::widget_entry &widget ) {
+            const auto panel_name = lua_panel_name( widget );
+            auto existing = std::ranges::find( layout, panel_name, &window_panel::get_name );
+            if( existing == layout.end() ) {
+                auto new_panel = make_lua_widget_panel( widget, layout_width );
+                if( widget.order ) {
+                    const auto max_index = static_cast<int>( layout.size() );
+                    const auto desired_index = std::max( 0, *widget.order - 1 );
+                    const auto insert_at = std::clamp( desired_index, 0, max_index );
+                    auto it = layout.begin();
+                    std::ranges::advance( it, insert_at );
+                    layout.insert( it, std::move( new_panel ) );
+                } else {
+                    layout.emplace_back( std::move( new_panel ) );
+                }
+                return;
+            }
+            const auto was_toggle = existing->toggle;
+            auto updated = make_lua_widget_panel( widget, layout_width );
+            updated.toggle = was_toggle;
+            *existing = std::move( updated );
+        } );
+    };
+
+    std::ranges::for_each( layouts, [&]( auto &entry ) {
+        sync_layout( entry.second );
+    } );
+}
+
 void panel_manager::update_offsets( int x )
 {
     width_right = x;
@@ -2408,7 +2668,11 @@ void panel_manager::serialize( JsonOut &json )
 
     json.start_array();
 
-    for( const auto &kv : layouts ) {
+    const auto panel_is_serializable = [&]( const window_panel &panel ) -> bool {
+        return !lua_panel_names.contains( panel.get_name() );
+    };
+
+    std::ranges::for_each( layouts, [&]( const auto &kv ) {
         json.start_object();
 
         json.member( "layout_id", kv.first );
@@ -2416,18 +2680,19 @@ void panel_manager::serialize( JsonOut &json )
 
         json.start_array();
 
-        for( const auto &panel : kv.second ) {
+        auto panels_view = kv.second | std::views::filter( panel_is_serializable );
+        std::ranges::for_each( panels_view, [&]( const window_panel &panel ) {
             json.start_object();
 
             json.member( "name", panel.get_name() );
             json.member( "toggle", panel.toggle );
 
             json.end_object();
-        }
+        } );
 
         json.end_array();
         json.end_object();
-    }
+    } );
 
     json.end_array();
 
@@ -2443,7 +2708,11 @@ void panel_manager::deserialize( JsonIn &jsin )
     current_layout_id = joLayouts.get_string( "current_layout_id" );
     for( JsonObject joLayout : joLayouts.get_array( "layouts" ) ) {
         std::string layout_id = joLayout.get_string( "layout_id" );
-        auto &layout = layouts.find( layout_id )->second;
+        auto layout_iter = layouts.find( layout_id );
+        if( layout_iter == layouts.end() ) {
+            continue;
+        }
+        auto &layout = layout_iter->second;
         auto it = layout.begin();
 
         for( JsonObject joPanel : joLayout.get_array( "panels" ) ) {
@@ -2500,8 +2769,12 @@ void panel_manager::show_adm()
 
     ui_adaptor ui;
     ui.on_screen_resize( [&]( ui_adaptor & ui ) {
-        w = catacurses::newwin( 20, 75,
-                                point( ( TERMX / 2 ) - 38, ( TERMY / 2 ) - 10 ) );
+        const auto panel_rows = static_cast<int>( layouts[current_layout_id].size() );
+        const auto layout_rows = static_cast<int>( layouts.size() );
+        const auto desired_rows = std::max( panel_rows, layout_rows );
+        const auto window_height = std::clamp( desired_rows + 1, 21, TERMY - 2 );
+        w = catacurses::newwin( window_height, 75,
+                                point( ( TERMX / 2 ) - 38, ( TERMY / 2 ) - ( window_height / 2 ) ) );
 
         ui.position_from_window( w );
     } );
@@ -2543,8 +2816,9 @@ void panel_manager::show_adm()
             col_offset += column_widths[i];
         }
         mvwprintz( w, point( 1 + ( col_offset ), current_row + 1 ), c_yellow, ">>" );
-        mvwvline( w, point( column_widths[0], 1 ), 0, 18 );
-        mvwvline( w, point( column_widths[0] + column_widths[1], 1 ), 0, 18 );
+        const auto divider_height = getmaxy( w ) - 2;
+        mvwvline( w, point( column_widths[0], 1 ), 0, divider_height );
+        mvwvline( w, point( column_widths[0] + column_widths[1], 1 ), 0, divider_height );
 
         col_offset = column_widths[0] + 2;
         int col_width = column_widths[1] - 4;

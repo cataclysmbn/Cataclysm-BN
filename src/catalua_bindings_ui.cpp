@@ -1,8 +1,12 @@
 #include "catalua_bindings.h"
+
+#include <optional>
 #include "catalua_bindings_utils.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "lua_sidebar_widgets.h"
+#include "panels.h"
 #include "ui.h"
 #include "popup.h"
 #include "string_input_popup.h"
@@ -131,5 +135,76 @@ void cata::detail::reg_ui_elements( sol::state &lua )
             sipop.only_digits( true );
             return sipop.query_int();
         } );
+    }
+
+    {
+        DOC( "Sidebar utility functions." );
+        luna::userlib lib = luna::begin_lib( lua, "sidebar" );
+        DOC( "Register a Lua sidebar widget. Options: id(string), name(string), height(int, use -2 to fill remaining space), order(int, 1-based), draw(function), " );
+        DOC( "default_toggle(bool), redraw_every_frame(bool), panel_visible(bool|function), render(function). " );
+        DOC( "draw(width, height) returns an array of entries: each entry is string or table { text=string, color=Color|string }." );
+        DOC( "text may include color tags like <color_red>text</color> for multi-color lines." );
+        luna::set_fx( lib, "register_widget", []( const sol::table &opts ) {
+            auto get_opt_int = [&]( const char *key, const int fallback ) -> int {
+                auto obj = opts.get<sol::object>( key );
+                if( !obj.valid() || obj == sol::lua_nil ) {
+                    return fallback;
+                }
+                return obj.as<int>();
+            };
+            auto get_opt_bool = [&]( const char *key, const bool fallback ) -> bool {
+                auto obj = opts.get<sol::object>( key );
+                if( !obj.valid() || obj == sol::lua_nil ) {
+                    return fallback;
+                }
+                return obj.as<bool>();
+            };
+            auto get_opt_optional_int = [&]( const char *key ) -> std::optional<int> {
+                auto obj = opts.get<sol::object>( key );
+                if( !obj.valid() || obj == sol::lua_nil ) {
+                    return std::nullopt;
+                }
+                return obj.as<int>();
+            };
+            auto panel_visible_value = std::optional<bool>{};
+            auto panel_visible_fn = std::optional<sol::protected_function>{};
+            auto panel_visible_obj = opts.get<sol::object>( "panel_visible" );
+            if( panel_visible_obj.valid() && panel_visible_obj != sol::lua_nil ) {
+                if( panel_visible_obj.is<sol::function>() ) {
+                    panel_visible_fn = panel_visible_obj.as<sol::protected_function>();
+                } else if( panel_visible_obj.is<bool>() ) {
+                    panel_visible_value = panel_visible_obj.as<bool>();
+                }
+            }
+            auto draw_fn = opts.get_or<sol::protected_function>( "draw", sol::lua_nil );
+            auto render_fn = opts.get_or<sol::protected_function>( "render", sol::lua_nil );
+            auto render_opt = render_fn == sol::lua_nil ?
+                              std::optional<sol::protected_function>{} :
+                              std::optional<sol::protected_function>{ render_fn };
+            auto widget_opts = cata::lua_sidebar_widgets::widget_options{
+                .id = opts.get_or<std::string>( "id", "" ),
+                .name = opts.get_or<std::string>( "name", "" ),
+                .height = get_opt_int( "height", 1 ),
+                .order = get_opt_optional_int( "order" ),
+                .default_toggle = get_opt_bool( "default_toggle", true ),
+                .redraw_every_frame = get_opt_bool( "redraw_every_frame", false ),
+                .panel_visible_value = panel_visible_value,
+                .panel_visible_fn = panel_visible_fn,
+                .draw = draw_fn,
+                .render = render_opt,
+            };
+            cata::lua_sidebar_widgets::register_widget( widget_opts );
+            panel_manager::get_manager().sync_lua_panels();
+        } );
+        DOC( "Clear all registered Lua sidebar widgets." );
+        luna::set_fx( lib, "clear_widgets", []() {
+            cata::lua_sidebar_widgets::clear_widgets();
+            panel_manager::get_manager().sync_lua_panels();
+        } );
+        DOC( "Returns current sidebar layout id (e.g. classic, compact, labels)." );
+        luna::set_fx( lib, "get_layout_id", []() {
+            return panel_manager::get_manager().get_current_layout_id();
+        } );
+        luna::finalize_lib( lib );
     }
 }
