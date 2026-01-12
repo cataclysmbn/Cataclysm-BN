@@ -26,7 +26,7 @@ struct enum_traits<season_type> {
 };
 
 /** Phases of the moon */
-enum moon_phase {
+enum moon_phase : int {
     /** New (completely dark) moon */
     MOON_NEW = 0,
     /** One quarter of moon lit, amount lit is increasing every day */
@@ -45,6 +45,11 @@ enum moon_phase {
     MOON_WANING_CRESCENT,
     /** Not a valid moon phase, but can be used for iterating through enum */
     MOON_PHASE_MAX
+};
+
+template<>
+struct enum_traits<moon_phase> {
+    static constexpr moon_phase last = moon_phase::MOON_PHASE_MAX;
 };
 
 /**

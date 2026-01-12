@@ -3613,7 +3613,7 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
         if( dmg_bash || dmg_cut || dmg_stab ) {
             if( parts->test( iteminfo_parts::BASE_TOHIT ) ) {
                 info.emplace_back( "BASE", space + _( "To-hit bonus: " ), "",
-                                   iteminfo::show_plus, type->m_to_hit );
+                                   iteminfo::show_plus, type->m_to_hit + get_melee_hit_bonus() );
             }
 
             if( parts->test( iteminfo_parts::BASE_MOVES ) ) {
@@ -3654,7 +3654,7 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
 
             if( parts->test( iteminfo_parts::BASE_TOHIT ) ) {
                 info.emplace_back( "BASE", _( "To-hit bonus: " ), "",
-                                   iteminfo::show_plus, attack.to_hit );
+                                   iteminfo::show_plus, attack.to_hit + get_melee_hit_bonus() );
             }
 
             if( parts->test( iteminfo_parts::BASE_MOVES ) ) {
@@ -5641,6 +5641,9 @@ int item::damage_melee( const attack_statblock &attack, damage_type dt ) const
         default:
             break;
     }
+    // Apply melee damage bonus
+    const auto &bonus = get_melee_damage_bonus();
+    res += bonus.type_damage( dt );
 
     return std::max( res, 0 );
 }
@@ -5656,6 +5659,7 @@ std::map<std::string, attack_statblock> item::get_attacks() const
     // TODO: Cache
     for( const auto &attack : type->attacks ) {
         attack_statblock modified_attack = attack.second;
+        const auto &bonus = get_melee_damage_bonus();
         for( damage_unit &du : modified_attack.damage.damage_units ) {
             // effectiveness is reduced by 10% per damage level
             du.amount -= du.amount * std::max( damage_level( 4 ), 0 ) * 0.1;
@@ -5734,6 +5738,8 @@ std::map<std::string, attack_statblock> item::get_attacks() const
                 default:
                     break;
             }
+            // Apply melee damage bonus
+            du.amount += bonus.type_damage( du.type );
         }
         result[attack.first] = modified_attack;
 
@@ -5782,6 +5788,66 @@ std::map<std::string, attack_statblock> item::get_attacks() const
     }
 
     return result;
+}
+
+auto item::get_melee_damage_bonus( ) const -> const damage_instance &
+{
+    return melee_damage_bonus;
+}
+
+auto item::set_melee_damage_bonus( const damage_instance &bonus ) -> void
+{
+    melee_damage_bonus = bonus;
+}
+
+auto item::get_melee_hit_bonus() const -> int
+{
+    return melee_hit_bonus;
+}
+
+auto item::set_melee_hit_bonus( int bonus ) -> void
+{
+    melee_hit_bonus = bonus;
+}
+
+auto item::get_ranged_damage_bonus( ) const -> const damage_instance &
+{
+    return ranged_damage_bonus;
+}
+
+auto item::set_ranged_damage_bonus( const damage_instance &damages ) -> void
+{
+    ranged_damage_bonus = damages;
+}
+
+auto item::get_range_bonus() const -> int
+{
+    return range_bonus;
+}
+
+auto item::set_range_bonus( int bonus ) -> void
+{
+    range_bonus = bonus;
+}
+
+auto item::get_dispersion_bonus() const -> int
+{
+    return dispersion_bonus;
+}
+
+auto item::set_dispersion_bonus( int bonus ) -> void
+{
+    dispersion_bonus = bonus;
+}
+
+auto item::get_recoil_bonus() const -> int
+{
+    return recoil_bonus;
+}
+
+auto item::set_recoil_bonus( int bonus ) -> void
+{
+    recoil_bonus = bonus;
 }
 
 damage_instance item::base_damage_melee() const
@@ -7876,6 +7942,7 @@ int item::gun_dispersion( bool with_ammo, bool with_scaling ) const
     for( const item *mod : gunmods() ) {
         dispersion_sum += mod->type->gunmod->dispersion;
     }
+    dispersion_sum += get_dispersion_bonus();
     int dispPerDamage = get_option< int >( "DISPERSION_PER_GUN_DAMAGE" );
     dispersion_sum += damage_level( 4 ) * dispPerDamage;
     dispersion_sum = std::max( dispersion_sum, 0 );
@@ -7929,6 +7996,8 @@ damage_instance item::gun_damage( bool with_ammo ) const
         ret.add( ammo_data()->ammo->damage );
     }
 
+    ret.add( get_ranged_damage_bonus() );
+
     int item_damage = damage_level( 4 );
     if( item_damage > 0 ) {
         // TODO: This isn't a good solution for multi-damage guns/ammos
@@ -7974,6 +8043,8 @@ int item::gun_recoil( bool bipod ) const
         qty += ammo_data()->ammo->recoil;
     }
 
+    qty += get_recoil_bonus();
+
     return qty * gun_recoil_multiplier( bipod );
 }
 
@@ -8000,6 +8071,7 @@ int item::gun_range( bool with_ammo ) const
             ret += std::max( ammo_data()->ammo->range, ret_thrown );
         }
     }
+    ret += get_range_bonus();
     return std::min( std::max( 0, ret ), RANGE_HARD_CAP );
 }
 

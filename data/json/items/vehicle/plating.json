@@ -39,6 +39,7 @@
     "id": "aluminium_sheet",
     "symbol": "o",
     "color": "brown",
+    "looks_like": "sheet_metal",
     "name": { "str": "aluminum sheet" },
     "description": "A thin sheet of aluminum, usable for lightweight car body panels or to keep a boat afloat.",
     "price": "160 USD",

@@ -44,7 +44,7 @@ jobs:
         run: cmake --preset lint
 
       - name: format C++ files
-        run: cmake --build build --target astyle
+        run: cmake --build build --target format
 
       - name: format Markdown and TypeScript files
         run: deno fmt
@@ -91,11 +91,3 @@ jobs:
           # deno lint
           deno test --allow-read
           deno run --allow-read --allow-write scripts/semantic.ts
-
-  validate-pr-title:
-    runs-on: ubuntu-latest
-    permissions: { issues: write, pull-requests: write }
-    steps:
-      - uses: docker://ghcr.io/scarf005/conventional-prs:main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
