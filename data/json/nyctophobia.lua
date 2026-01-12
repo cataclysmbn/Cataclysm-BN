@@ -3,7 +3,7 @@ local nyctophobia = {}
 ---@param mod table
 function nyctophobia.register(mod)
   local trait_nyctophobia = MutationBranchId.new("NYCTOPHOBIA")
-  local effect_took_xanax = EffectTypeId.new("took_xanax")
+  local effect_depressants = EffectTypeId.new("depressants")
   local effect_downed = EffectTypeId.new("downed")
   local effect_shakes = EffectTypeId.new("shakes")
 
@@ -52,7 +52,7 @@ function nyctophobia.register(mod)
     local ch = params.char
     if not ch then return true end
     if not ch:has_trait(trait_nyctophobia) then return true end
-    if ch:has_effect(effect_took_xanax) then return true end
+    if ch:get_effect_int(effect_depressants) > 3 then return true end
     if params.movement_mode == CharacterMoveMode.run then return true end
 
     local dest = params.to
@@ -78,7 +78,7 @@ function nyctophobia.register(mod)
     ---@type Avatar
     local you = gapi.get_avatar()
     if not you:has_trait(trait_nyctophobia) then return end
-    if you:has_effect(effect_took_xanax) then return end
+    if you:get_effect_int(effect_depressants) > 3 then return end
 
     local here = gapi.get_map()
     local pos = you:get_pos_ms()
