@@ -461,6 +461,9 @@ bool vehicle::collision( std::vector<veh_collision> &colls,
             continue;
         }
         if( info.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            if( coll.type == veh_coll_veh ) {
+                g->m.add_vehicle_to_cache( static_cast<vehicle *>( coll.target ) );
+            }
             continue;
         }
 
