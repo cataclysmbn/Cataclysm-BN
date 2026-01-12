@@ -461,7 +461,7 @@ bool vehicle::collision( std::vector<veh_collision> &colls,
             continue;
         }
         if( info.has_flag( VPFLAG_NOCOLLIDE ) ) {
-            if( coll.type == veh_coll_veh ) {
+            if( coll.type == veh_coll_veh_nocollide ) {
                 g->m.add_vehicle_to_cache( static_cast<vehicle *>( coll.target ) );
             }
             continue;
@@ -552,8 +552,9 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
         const vpart_info info = ovp->vehicle().part_info( ovp->part_index() );
         if( info.has_flag( VPFLAG_NOCOLLIDE ) ) {
             veh_collision ret;
-            ret.type = veh_coll_nothing;
+            ret.type = veh_coll_veh_nocollide;
             ret.part = part;
+            ret.target = &ovp->vehicle();
             return ret;
         }
     }

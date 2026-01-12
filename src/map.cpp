@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <variant>
+#include <vector>
 
 #include "active_item_cache.h"
 #include "ammo.h"
@@ -648,6 +649,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
     int impulse = 0;
 
     std::vector<veh_collision> collisions;
+    std::vector<vehicle *> passthrough;
 
     // Find collisions
     // Velocity of car before collision
@@ -686,6 +688,10 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
         // Non-vehicle collisions
         for( const auto &coll : collisions ) {
             if( coll.type == veh_coll_veh ) {
+                continue;
+            }
+            if( coll.type == veh_coll_veh_nocollide ) {
+                passthrough.push_back( static_cast<vehicle *>( coll.target ) );
                 continue;
             }
             if( coll.part > veh.part_count() ||
@@ -790,8 +796,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
         veh.on_move();
         // Actually change position
         displace_vehicle( veh, dp1 );
-        veh.shift_zlevel();
-    } else if( !vertical ) {
+        veh.shift_zlevel    } else if( !vertical ) {
         veh.stop();
     }
     veh.check_falling_or_floating();
@@ -845,6 +850,12 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
                      veh.tow_data.get_towed()->disp_name() );
             veh.tow_data.get_towed()->invalidate_towing( true );
         }
+    }
+    std::vector<vehicle*> oldcollided = veh.collided_vehs.clear();
+    for( vehicle *colveh)
+    for( vehicle *veh : passthrough ) {
+        oldcollided.remove( veh) 
+        g->m.add_vehicle_to_cache( veh );
     }
     // Redraw scene, but only if the player is not engaged in an activity and
     // the vehicle was seen before or after the move.

@@ -99,6 +99,7 @@ enum veh_coll_type : int {
     veh_coll_veh,      // 2 - vehicle
     veh_coll_bashable, // 3 - bashable
     veh_coll_other,    // 4 - other
+    veh_coll_veh_nocollide, // 5 - vehicle NOCOLLIDE
     num_veh_coll_types
 };
 
@@ -1593,6 +1594,9 @@ class vehicle
 
         // Cached points occupied by the vehicle
         std::set<tripoint> occupied_points;
+
+        // Vehicles with nocollide flags that are currently collided with
+        std::vector<vehicle*> collided_vehs;
 
         std::vector<vehicle_part> parts;   // Parts which occupy different tiles
     public:
