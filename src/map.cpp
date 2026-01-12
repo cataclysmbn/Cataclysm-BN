@@ -359,8 +359,9 @@ void map::add_vehicle_to_cache( vehicle *veh )
         const tripoint p = veh->global_part_pos3( vpr.part() );
         level_cache &ch = get_cache( p.z );
         ch.veh_in_active_range = true;
-        if( ch.veh_cached_parts.find( p ) == ch.veh_cached_parts.end() ||
-            !vpr.part().has_flag( VPFLAG_NOCOLLIDE ) ) {
+        // I KNOW THIS WORKS RIGHT
+        if( !ch.veh_cached_parts.contains( p ) ||
+            ( !vpr.part().has_flag( VPFLAG_NOCOLLIDE ) ) ) {
             ch.veh_cached_parts[p] = std::make_pair( veh,  static_cast<int>( vpr.part_index() ) );
         }
         if( inbounds( p ) ) {
@@ -380,6 +381,7 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint &pt )
 
     level_cache &ch = get_cache( pt.z );
     auto it = ch.veh_cached_parts.find( pt );
+    // This fine fella is probably what doesn't work right...
     if( it != ch.veh_cached_parts.end() && it->second.first == veh ) {
         if( inbounds( pt ) ) {
             ch.veh_exists_at[pt.x][pt.y] = false;

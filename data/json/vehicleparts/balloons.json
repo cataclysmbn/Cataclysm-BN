@@ -7,7 +7,7 @@
     "color": "light_blue",
     "looks_like": "inflatable_airbag",
     "broken_symbol": "O",
-    "flags": [ "PROTUSION", "EXTENDABLE", "BALLOON", "SHOCK_IMMUNE", "NOCOLLIDE" ],
+    "flags": [ "PROTUSION", "EXTENDABLE", "BALLOON", "SHOCK_IMMUNE" ],
     "description": "A balloon that provides lift, but requires aircraft propellers for horizontal momentum."
   },
   {
