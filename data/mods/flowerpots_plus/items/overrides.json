@@ -1,0 +1,23 @@
+[
+  {
+    "id": "fertilizer",
+    "type": "GENERIC",
+    "name": { "str": "fertilizer" },
+    "copy-from": "fertilizer",
+    "stackable": true
+  },
+  {
+    "type": "AMMO",
+    "id": "fertilizer_liquid",
+    "name": { "str_sp": "liquid fertilizer" },
+    "copy-from": "fertilizer_liquid",
+    "ammo_type": "plant_fertilizer"
+  },
+  {
+    "type": "AMMO",
+    "id": "fertilizer_commercial",
+    "copy-from": "fertilizer_commercial",
+    "name": { "str_sp": "commercial fertilizer" },
+    "ammo_type": "plant_fertilizer"
+  }
+]

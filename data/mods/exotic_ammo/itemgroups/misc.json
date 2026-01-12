@@ -24,6 +24,12 @@
   },
   {
     "type": "item_group",
+    "id": "defense_caravan_ranged",
+    "subtype": "collection",
+    "items": [ { "item": "fn_p90" } ]
+  },
+  {
+    "type": "item_group",
     "id": "npc_misc",
     "ammo": 75,
     "magazine": 50,
@@ -47,5 +53,11 @@
     "id": "NC_BANDIT_smg",
     "subtype": "distribution",
     "entries": [ { "item": "ppsh", "prob": 4 }, { "item": "skorpion_82", "prob": 3 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_SCAVENGER_pistols",
+    "subtype": "distribution",
+    "entries": [ { "item": "makarov", "prob": 5 } ]
   }
 ]

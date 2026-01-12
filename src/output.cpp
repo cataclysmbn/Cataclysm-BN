@@ -65,6 +65,14 @@ int OVERMAP_LEGEND_WIDTH;
 
 scrollingcombattext SCT;
 
+// These are not chars, they are multibyte utf-8 codepoints
+static const std::vector<std::string> fancy_bar_ver = {
+    "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"
+};
+static const std::vector<std::string> fancy_bar_hor = {
+    "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"
+};
+
 // utf8 version
 std::vector<std::string> foldstring( const std::string &str, int width, const char split )
 {
@@ -1587,6 +1595,34 @@ std::string shortcut_text( nc_color shortcut_color, const std::string &fmt )
 }
 
 std::pair<std::string, nc_color>
+get_bar_custom( const std::vector<std::string> &segments, float cur, float max,
+                int width, bool extra_resolution,
+                const std::vector<nc_color> &colors )
+{
+    std::string result;
+    float status = cur / max;
+    status = std::clamp( status, 0.0f, 1.0f );
+    const float sw = status * width;
+
+    nc_color col = colors[static_cast<int>( ( 1 - status ) * colors.size() )];
+    if( status == 0 ) {
+        col = colors.back();
+    } else {
+        const auto iPart = static_cast<int>( sw );
+        const auto fPart = sw - iPart;
+        for( int i = 0; i < iPart; i++ ) {
+            result += segments.back();
+        }
+        if( extra_resolution && iPart < width ) {
+            const auto index = static_cast<int>( fPart * segments.size() );
+            result += segments[index];
+        }
+    }
+
+    return std::make_pair( result, col );
+}
+
+std::pair<std::string, nc_color>
 get_bar( float cur, float max, int width, bool extra_resolution,
          const std::vector<nc_color> &colors )
 {
@@ -1617,7 +1653,14 @@ std::pair<std::string, nc_color> get_hp_bar( const int cur_hp, const int max_hp,
     if( cur_hp == 0 ) {
         return std::make_pair( "-----", c_light_gray );
     }
-    return get_bar( cur_hp, max_hp, 5, !is_mon );
+    const auto bar_style = get_option<std::string>( "HEALTH_STYLE" );
+    if( bar_style == "bar_ascii" || is_mon ) {
+        return get_bar( cur_hp, max_hp, 5, !is_mon );
+    } else if( bar_style == "bar_alt" ) {
+        return get_bar_custom( fancy_bar_hor, cur_hp, max_hp, 5, !is_mon );
+    } else {
+        return get_bar_custom( fancy_bar_ver, cur_hp, max_hp, 5, !is_mon );
+    }
 }
 
 std::pair<std::string, nc_color> get_stamina_bar( int cur_stam, int max_stam )
@@ -1625,7 +1668,19 @@ std::pair<std::string, nc_color> get_stamina_bar( int cur_stam, int max_stam )
     if( cur_stam == 0 ) {
         return std::make_pair( "-----", c_light_gray );
     }
-    return get_bar( cur_stam, max_stam, 5, true, { c_cyan, c_light_cyan, c_yellow, c_light_red, c_red } );
+    const auto colors = { c_cyan, c_light_cyan, c_yellow, c_light_red, c_red };
+
+    const auto bar_style = get_option<std::string>( "HEALTH_STYLE" );
+    if( bar_style == "bar_ascii" ) {
+        return get_bar(
+                   cur_stam, max_stam, 5, true, colors );
+    } else if( bar_style == "bar_alt" ) {
+        return get_bar_custom(
+                   fancy_bar_hor, cur_stam, max_stam, 5, true, colors );
+    } else {
+        return get_bar_custom(
+                   fancy_bar_ver, cur_stam, max_stam, 5, true, colors );
+    }
 }
 
 std::pair<std::string, nc_color> get_light_level( const float light )

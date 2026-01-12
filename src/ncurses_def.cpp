@@ -27,6 +27,40 @@
 #include "output.h"
 #include "ui_manager.h"
 
+#include "ncurses_def.h"
+
+struct pairs {
+    catacurses::base_color FG;
+    catacurses::base_color BG;
+};
+
+template<>
+RGBColor color_loader<RGBColor>::from_rgb( const int r, const int g, const int b )
+{
+    RGBColor result;
+    result.b = b;       //Blue
+    result.g = g;       //Green
+    result.r = r;       //Red
+    result.a = 0xFF;    // Opaque
+    return result;
+}
+
+static std::array<RGBColor, color_loader<RGBColor>::COLOR_NAMES_COUNT> windowsPalette;
+static std::array<pairs, 100> colorpairs;
+
+auto ncurses::color_to_RGB( const nc_color &color ) -> RGBColor
+{
+    const int pair_id = color.to_color_pair_index();
+    const auto pair = colorpairs[pair_id];
+
+    int palette_index = pair.FG != 0 ? pair.FG : pair.BG;
+
+    if( color.is_bold() ) {
+        palette_index += color_loader<RGBColor>::COLOR_NAMES_COUNT / 2;
+    }
+    return windowsPalette[palette_index];
+}
+
 static void curses_check_result( const int result, const int expected, const char *const /*name*/ )
 {
     if( result != expected ) {
@@ -235,6 +269,8 @@ static_assert( catacurses::white == COLOR_WHITE,
 
 void catacurses::init_pair( const short pair, const base_color f, const base_color b )
 {
+    colorpairs[pair].FG = f;
+    colorpairs[pair].BG = b;
     return curses_check_result( ::init_pair( pair, static_cast<short>( f ), static_cast<short>( b ) ),
                                 OK, "init_pair" );
 }
@@ -278,6 +314,7 @@ void catacurses::init_interface()
     set_escdelay( 10 ); // Make Escape actually responsive
     // TODO: error checking
     start_color();
+    color_loader<RGBColor>().load( windowsPalette );
     init_colors();
 }
 

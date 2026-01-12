@@ -400,6 +400,7 @@ class vehicle
         int break_off( int p, int dmg );
         // Returns if it did actually explode
         bool explode_fuel( int p, damage_type type );
+        std::pair<int, int> get_controls_and_security() const;
         //damages vehicle controls and security system
         void smash_security_system();
         // get vpart powerinfo for part number, accounting for variable-sized parts and hps.
@@ -469,7 +470,8 @@ class vehicle
             return find_vehicle( where.raw() );
         }
 
-        vehicle( const vproto_id &type_id, int init_veh_fuel = -1, int init_veh_status = -1 );
+        vehicle( const vproto_id &type_id, int init_veh_fuel = -1, int init_veh_status = -1,
+                 std::optional<bool> locked = std::nullopt, std::optional<bool> has_keys = std::nullopt );
         vehicle();
         ~vehicle();
 
@@ -516,7 +518,9 @@ class vehicle
         bool remote_controlled( const Character &who ) const;
 
         // init parts state for randomly generated vehicle
-        void init_state( int init_veh_fuel, int init_veh_status );
+        void init_state( int init_veh_fuel, int init_veh_status,
+                         std::optional<bool> locked,
+                         std::optional<bool> has_keys );
 
         // damages all parts of a vehicle by a random amount
         void smash( map &m, float hp_percent_loss_min = 0.1f, float hp_percent_loss_max = 1.2f,
@@ -526,7 +530,7 @@ class vehicle
         void deserialize( JsonIn &jsin );
         // Vehicle parts list - all the parts on a single tile
         int print_part_list( const catacurses::window &win, int y1, int max_y, int width, int p,
-                             int hl = -1, bool detail = false ) const;
+                             int hl = -1, bool detail = false, int start_at = 0 ) const;
 
         // Vehicle parts descriptions - descriptions for all the parts on a single tile
         void print_vparts_descs( const catacurses::window &win, int max_y, int width, int p,
@@ -546,38 +550,22 @@ class vehicle
         bool is_owned_by( const Character &c, bool available_to_take = false ) const;
         bool is_old_owner( const Character &c, bool available_to_take = false ) const;
         std::string get_owner_name() const;
-        void set_old_owner( const faction_id &temp_owner ) {
-            theft_time = calendar::turn;
-            old_owner = temp_owner;
-        }
-        void remove_old_owner() {
-            theft_time = std::nullopt;
-            old_owner = faction_id::NULL_ID();
-        }
-        void set_owner( const faction_id &new_owner ) {
-            owner = new_owner;
-        }
+        void set_old_owner( const faction_id &temp_owner );
+        void remove_old_owner();
+        void set_owner( const faction_id &new_owner );
         void set_owner( const Character &c );
-        void remove_owner() {
-            owner = faction_id::NULL_ID();
-        }
-        faction_id get_owner() const {
-            return owner;
-        }
-        faction_id get_old_owner() const {
-            return old_owner;
-        }
-        bool has_owner() const {
-            return !owner.is_null();
-        }
-        bool has_old_owner() const {
-            return !old_owner.is_null();
-        }
+        void remove_owner();
+        faction_id get_owner() const;
+        faction_id get_old_owner() const;
+        bool has_owner() const;
+        bool has_old_owner() const;
         /**
          * Handle potential vehicle theft.
          * @param you Avatar to check against
-         * @param check_only If true, won't prompt to steal and instead will refure to interact
-         * @param prompt Whether to prompt confirmation or proceed with the theft without prompt
+         * @param check_only If true, won't prompt to steal and instead will
+         * refure to interact
+         * @param prompt Whether to prompt confirmation or proceed with the
+         * theft without prompt
          * @return whether the avatar is willing to interact with the vehicle
          */
         bool handle_potential_theft( avatar &you, bool check_only = false, bool prompt = true );
@@ -587,9 +575,7 @@ class vehicle
         void autopilot_patrol();
         units::angle get_angle_from_targ( const tripoint &targ );
         void drive_to_local_target( const tripoint &target, bool follow_protocol );
-        tripoint get_autodrive_target() {
-            return autodrive_local_target;
-        }
+        tripoint get_autodrive_target();
         // Drive automatically towards some destination for one turn.
         autodrive_result do_autodrive( Character &driver );
         // Stop any kind of automatic vehicle control and apply the brakes.
@@ -1407,6 +1393,20 @@ class vehicle
         // Be aware this will not consider damage to more outside parts such as inner parts protected by an outer wall, only armor effects are considered
         unsigned int hits_to_destroy( int p, int dmg, damage_type type ) const;
 
+        /**
+         * @name Vehicle Droppers
+         *
+         *@{*/
+
+        vehicle_part *get_cargo_part( vehicle_part *part );
+
+        bool has_item_stored( vehicle_part *part );
+
+        void item_dropper_drop( std::vector<vehicle_part *> droppers, bool single );
+
+        void item_dropper_drop_all();
+
+        void item_dropper_drop_single( bool single );
     private:
         /*
          * Find all turrets that are ready to fire.
@@ -1578,12 +1578,12 @@ class vehicle
         // Process vehicle emitters
         void process_emitters();
 
+    private:
         // The faction that owns this vehicle.
         faction_id owner = faction_id::NULL_ID();
         // The faction that previously owned this vehicle
         faction_id old_owner = faction_id::NULL_ID();
 
-    private:
         mutable double coefficient_air_resistance = 1;
         mutable double coefficient_rolling_resistance = 1;
         mutable double coefficient_water_resistance = 1;
@@ -1622,11 +1622,12 @@ class vehicle
         std::vector<int> loose_parts;      // List of UNMOUNT_ON_MOVE parts
         std::vector<int> wheelcache;       // List of wheels
         std::vector<int> rotors;           // List of rotors
-        std::vector<int> balloons;         // List of repulsors
+        std::vector<int> balloons;         // List of balloons
         std::vector<int> wings;            // List of wings
         std::vector<int> propellers;       // List of propellerrs
         std::vector<int> rail_wheelcache;  // List of rail wheels
         std::vector<int> steering;         // List of STEERABLE parts
+        std::vector<int> droppers;         // List of droppers
         // List of parts that will not be on a vehicle very often, or which only one will be present
         std::vector<int> speciality;
         std::vector<int> floating;         // List of parts that provide buoyancy to boats

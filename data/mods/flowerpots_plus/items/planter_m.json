@@ -1,0 +1,66 @@
+[
+  {
+    "id": "portable_planter_m",
+    "type": "TOOL",
+    "name": { "str": "advanced planter" },
+    "description": "An advanced planter for your indoors growing needs, comes with a built-in growing lamp.  Powered by the magic of nuclear decay and low-energy LEDs.\nConsumes up to 3 seeds and 3 units of fertilizer per use.",
+    "category": "tools_farming",
+    "weight": "10 kg",
+    "volume": "15 L",
+    "price": "100 USD",
+    "price_postapoc": "100 USD",
+    "material": [ "plastic", "steel" ],
+    "flags": [ "NO_SALVAGE", "LEAK_DAM", "RADIOACTIVE", "ALLOWS_REMOTE_USE" ],
+    "symbol": ")",
+    "color": "yellow",
+    "ammo": [ "plant_fertilizer" ],
+    "looks_like": "plastic_pot_flower",
+    "initial_charges": 0,
+    "max_charges": 30,
+    "use_action": {
+      "type": "flowerpot_plant",
+      "growth_rate": 1.2,
+      "harvest_mult": 1.5,
+      "seeds_per_use": [ 1, 3 ],
+      "fert_per_use": [ 0, 3 ],
+      "fert_boost": 0.1,
+      "terrain": [ "PLANTABLE", "SHALLOW_WATER", "MUSHROOM_PLANTABLE" ],
+      "stages": [
+        "portable_planter_m",
+        "portable_planter_m_seed",
+        "portable_planter_m_seedling",
+        "portable_planter_m_mature",
+        "portable_planter_m_harvest"
+      ]
+    }
+  },
+  {
+    "id": "portable_planter_m_seed",
+    "type": "TOOL",
+    "name": { "str": "advanced planter (seed)" },
+    "description": "An advanced planter for your indoors growing needs, comes with a built-in growing lamp.  Powered by the magic of nuclear decay and low-energy LEDs.\nThis one has a seed in it.",
+    "copy-from": "portable_planter_m",
+    "extend": { "flags": [ "LIGHT_8" ] }
+  },
+  {
+    "id": "portable_planter_m_seedling",
+    "type": "TOOL",
+    "name": { "str": "advanced planter (seedling)" },
+    "description": "An advanced planter for your indoors growing needs, comes with a built-in growing lamp.  Powered by the magic of nuclear decay and low-energy LEDs.\nThe seed is sprouting.",
+    "copy-from": "portable_planter_m_seed"
+  },
+  {
+    "id": "portable_planter_m_mature",
+    "type": "TOOL",
+    "name": { "str": "advanced planter (mature)" },
+    "description": "An advanced planter for your indoors growing needs, comes with a built-in growing lamp.  Powered by the magic of nuclear decay and low-energy LEDs.\nShould bear fruit soon.",
+    "copy-from": "portable_planter_m_seedling"
+  },
+  {
+    "id": "portable_planter_m_harvest",
+    "type": "TOOL",
+    "name": { "str": "advanced planter (harvest)" },
+    "description": "An advanced planter for your indoors growing needs, comes with a built-in growing lamp.  Powered by the magic of nuclear decay and low-energy LEDs.\nFresh produce right at your fingertips.",
+    "copy-from": "portable_planter_m_mature"
+  }
+]

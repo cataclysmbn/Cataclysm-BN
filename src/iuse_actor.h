@@ -449,6 +449,37 @@ class change_scent_iuse : public iuse_actor
         std::unique_ptr<iuse_actor> clone() const override;
 };
 
+class cloning_syringe_iuse : public iuse_actor
+{
+    public:
+        /** How many move points this action takes. */
+        int moves = 100;
+        /** How many move points this action takes. */
+        int charges_to_use = 10;
+
+        cloning_syringe_iuse() : iuse_actor( "cloning_syringe" ) { }
+        ~cloning_syringe_iuse() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
+
+class dna_editor_iuse : public iuse_actor
+{
+    public:
+        /** How many move points this action takes. */
+        int moves = 100;
+        /** How many move points this action takes. */
+        int charges_to_use = 10;
+
+        dna_editor_iuse() : iuse_actor( "dna_editor" ) { }
+        ~dna_editor_iuse() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
 /**
  * This iuse contains the logic to summon an npc on the map.
  */
@@ -1160,6 +1191,7 @@ class mutagen_iv_actor : public iuse_actor
 {
     public:
         mutation_category_id mutation_category;
+        unsigned short tier;
 
         mutagen_iv_actor() : iuse_actor( "mutagen_iv" ) {}
 
@@ -1383,4 +1415,89 @@ class iuse_reveal_contents : public iuse_actor
         void load( const JsonObject &obj ) override;
         int use( player &, item &, bool, const tripoint & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
+};
+
+class iuse_flowerpot_collect;
+
+class iuse_flowerpot_plant final : public iuse_actor
+{
+        friend iuse_flowerpot_collect;
+    public:
+        constexpr static auto VAR_SEED_TYPE = "flowerpot_seed";
+        constexpr static auto VAR_PLANTED_DATE = "flowerpot_date";
+        constexpr static auto VAR_FERT_AMT = "flowerpot_fert_amt";
+        constexpr static auto VAR_SEED_AMT = "flowerpot_seed_amt";
+        constexpr static auto IUSE_ACTOR = "flowerpot_plant";
+
+        iuse_flowerpot_plant( const std::string &type = IUSE_ACTOR ) : iuse_actor( type ) {}
+        ~iuse_flowerpot_plant() override = default;
+        void load( const JsonObject &jo ) override;
+        int use( player &who, item &i, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &, bool, const tripoint & ) const override;
+        void info( const item &, std::vector<iteminfo> & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+    private:
+        enum growth_stage : int {
+            empty,
+            seed,
+            seedling,
+            mature,
+            harvest
+        };
+        struct growth_info {
+            itype_id seed_id;
+            time_point planted_time;
+            time_duration epoch;
+            float harvest_mult;
+            int fert_amt;
+            int seed_amt;
+            auto elapsed_time() const -> time_duration;
+            auto remaining_time() const -> time_duration;
+            auto stage() const -> growth_stage;
+            auto plant_name() const -> std::string;
+            double progress() const;
+        };
+
+        static bool empty_pot_selector( const item &it );
+        static bool full_pot_selector( const item &it );
+        static void set_growing_plant( item &i, itype_id seed, time_point planted_time, int seeds,
+                                       int fertilizer );
+        static void clear_growing_plant( item &i );
+        static auto query_adjacent_pot( const player &, bool empty = true ) -> std::optional<item *>;
+
+        auto get_info( const item & ) const -> growth_info;
+        auto calculate_growth_time( const itype_id &, int used_fert ) const -> time_duration;
+        void update( item & ) const;
+
+        auto on_use_add_fertilizer( player &, item &, const tripoint & ) const -> int;
+        auto on_use_plant( player &, item &, const tripoint & ) const -> int;
+        auto on_use_harvest( player &, item &, const tripoint & ) const -> int;
+        auto on_tick( player &, item &, const tripoint & ) const -> int;
+
+        std::array<itype_id, 5> stages;
+        std::pair<int, int> seeds_per_use = {1, 4};
+        std::pair<int, int> fert_per_use = {0, 3};
+        float harvest_mult = 1;
+        float growth_rate = 1;
+        float fert_boost = 0.25;
+        std::set<std::string> terrain = { "PLANTABLE" };
+};
+
+class iuse_flowerpot_collect final : public iuse_actor
+{
+        friend iuse_flowerpot_plant;
+    public:
+        iuse_flowerpot_collect( const std::string &type = "flowerpot_collect" ) : iuse_actor(
+                type ) {}
+        ~iuse_flowerpot_collect() override = default;
+        void load( const JsonObject &obj ) override;
+        auto use( player &who, item &i, bool, const tripoint & ) const -> int override;
+        auto can_use( const Character &, const item &, bool,
+                      const tripoint & ) const -> ret_val<bool> override;
+        auto clone() const -> std::unique_ptr<iuse_actor> override;
+    private:
+        static void transfer_map_to_flowerpot( const tripoint &map_pos,
+                                               item &flowerpot,
+                                               const iuse_flowerpot_plant *actor,
+                                               const itype_id &seed_type );
 };

@@ -529,39 +529,14 @@ static void open()
     const tripoint openp = *openp_;
     map &here = get_map();
 
-    u.moves -= 100;
-
     if( const optional_vpart_position vp = here.veh_at( openp ) ) {
-        vehicle *const veh = &vp->vehicle();
-        int openable = veh->next_part_to_open( vp->part_index() );
+        const vehicle *const veh = &vp->vehicle();
+        const int openable = veh->next_part_to_open( vp->part_index() );
         if( openable >= 0 ) {
             const vehicle *player_veh = veh_pointer_or_null( here.veh_at( u.pos() ) );
-            bool outside = !player_veh || player_veh != veh;
-            if( !outside ) {
-                if( !veh->handle_potential_theft( get_avatar() ) ) {
-                    u.moves += 100;
-                    return;
-                } else {
-                    veh->open( openable );
-                }
-            } else {
-                // Outside means we check if there's anything in that tile outside-openable.
-                // If there is, we open everything on tile. This means opening a closed,
-                // curtained door from outside is possible, but it will magically open the
-                // curtains as well.
-                int outside_openable = veh->next_part_to_open( vp->part_index(), true );
-                if( outside_openable == -1 ) {
-                    const std::string name = veh->part_info( openable ).name();
-                    add_msg( m_info, _( "That %s can only opened from the inside." ), name );
-                    u.moves += 100;
-                } else {
-                    if( !veh->handle_potential_theft( get_avatar() ) ) {
-                        u.moves += 100;
-                        return;
-                    } else {
-                        veh->open_all_at( openable );
-                    }
-                }
+            const bool outside = !player_veh || player_veh != veh;
+            if( here.open_door_veh( &get_avatar(), vp, openp, !outside ) ) {
+                u.moves -= 100;
             }
         } else {
             // If there are any OPENABLE parts here, they must be already open
@@ -570,14 +545,10 @@ static void open()
                 const std::string name = already_open->info().name();
                 add_msg( m_info, _( "That %s is already open." ), name );
             }
-            u.moves += 100;
         }
-        return;
-    }
-
-    bool didit = here.open_door( openp, !here.is_outside( u.pos() ) );
-
-    if( !didit ) {
+    } else if( here.open_door( &u, openp, !here.is_outside( u.pos() ) ) ) {
+        u.moves -= 100;
+    } else {
         const ter_str_id tid = here.ter( openp ).id();
 
         if( here.has_flag( flag_LOCKED, openp ) ) {
@@ -586,11 +557,9 @@ static void open()
         } else if( tid.obj().close ) {
             // if the following message appears unexpectedly, the prior check was for t_door_o
             add_msg( m_info, _( "That door is already open." ) );
-            u.moves += 100;
             return;
         }
         add_msg( m_info, _( "No door there." ) );
-        u.moves += 100;
     }
 }
 
@@ -1866,9 +1835,14 @@ bool game::handle_action()
                 break;
             case ACTION_MOVE_DOWN:
                 if( u.is_mounted() ) {
-                    auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                        add_msg( m_info, _( "You can't go down stairs while you're riding." ) );
+                    const monster *mon = u.mounted_creature.get();
+
+                    const bool can_use_stairs =
+                        !mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                        mon->has_flag( MF_FLIES );
+
+                    if( !can_use_stairs ) {
+                        add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
                         break;
                     }
                 }
@@ -1876,19 +1850,65 @@ bool game::handle_action()
                     vertical_move( -1, false );
                 } else if( veh_ctrl && vp->vehicle().is_aircraft() ) {
                     pldrive( tripoint_below );
+                } else {
+                    [[maybe_unused]] bool moved = false;
+                    map &here = get_map();
+                    const optional_vpart_position vp = here.veh_at( u.pos() );
+                    if( vp ) {
+                        const vpart_info info = vp->vehicle().part_info( vp->part_index() );
+                        if( vp && info.has_flag( "LADDER" ) ) {
+                            tripoint where = u.pos();
+                            tripoint below = where;
+                            below.z--;
+                            // Keep going down until we find a tile that is NOT open air
+                            while( get_map().ter( below ).id().str() == "t_open_air" ) {
+                                where.z--;
+                                below.z--;
+                            }
+                            const int dist = u.pos().z - below.z;
+                            if( info.ladder_length() >= dist ) {
+                                get_map().unboard_vehicle( u.pos() );
+                                vertical_move( -dist, true );
+                                moved = true;
+                            }
+                        }
+                    }
                 }
                 break;
 
             case ACTION_MOVE_UP:
                 if( u.is_mounted() ) {
-                    auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                        add_msg( m_info, _( "You can't go down stairs while you're riding." ) );
+                    const monster *mon = u.mounted_creature.get();
+
+                    const bool can_use_stairs =
+                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                        mon->has_flag( MF_FLIES );
+
+                    if( !can_use_stairs ) {
+                        add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
                         break;
                     }
                 }
                 if( !u.in_vehicle ) {
-                    vertical_move( 1, false );
+                    bool moved = false;
+                    point xy = u.pos().xy();
+                    map &here = get_map();
+                    for( int i = u.pos().z; i <= 10; i++ ) {
+                        const optional_vpart_position vp = here.veh_at( tripoint( xy, i ) );
+                        const int dist = i - u.pos().z;
+                        if( vp ) {
+                            const vpart_info info = vp->vehicle().part_info( vp->part_index() );
+                            if( info.has_flag( "LADDER" ) && info.ladder_length() >= dist ) {
+                                vertical_move( dist, true );
+                                here.board_vehicle( u.pos(), u.as_character() );
+                                moved = true;
+                                break;
+                            }
+                        }
+                    }
+                    if( !moved ) {
+                        vertical_move( 1, false );
+                    }
                 } else if( veh_ctrl && vp->vehicle().is_aircraft() ) {
                     pldrive( tripoint_above );
                 } else if( veh_ctrl && ( vp->vehicle().has_part( "ROTOR" ) ||
@@ -2605,6 +2625,10 @@ bool game::handle_action()
 
             case ACTION_DISPLAY_SUBMAP_GRID:
                 g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
+                break;
+
+            case ACTION_TOGGLE_ZONE_OVERLAY:
+                g->show_zone_overlay = !g->show_zone_overlay;
                 break;
 
             case ACTION_TOGGLE_HOUR_TIMER:

@@ -269,6 +269,11 @@ void bionic_data::finalize_all()
     }
 }
 
+std::vector<bionic_data> bionic_data::get_all()
+{
+    return bionic_factory.get_all();
+}
+
 void bionic_data::reset()
 {
     bionic_factory.reset();
@@ -320,6 +325,8 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
     assign( jsobj, "flags", flags, strict );
     assign( jsobj, "can_uninstall", can_uninstall, strict );
     assign( jsobj, "no_uninstall_reason", no_uninstall_reason, strict );
+    assign( jsobj, "starting_bionic", starting_bionic, strict );
+    assign( jsobj, "points", points, strict );
 
 
     activated = has_flag( flag_BIONIC_TOGGLED ) ||
@@ -728,9 +735,6 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
                                _( "Your %s issues a low humidity warning.  Efficiency will be reduced." ),
                                bio.info().name );
         }
-    } else if( bio.info().has_flag( flag_BIONIC_TOOLS ) ) {
-        add_msg_activate();
-        invalidate_crafting_inventory();
     } else if( bio.id == bio_cqb ) {
         add_msg_activate();
         const avatar *you = as_avatar();
@@ -1146,6 +1150,9 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         item *vtm;
         vtm = item::spawn_temporary( "voltmeter_bionic", calendar::start_of_cataclysm );
         invoke_item( vtm );
+    } else if( bio.info().has_flag( flag_BIONIC_TOOLS ) ) {
+        add_msg_activate();
+        invalidate_crafting_inventory();
     } else {
         add_msg_activate();
     }
@@ -2763,7 +2770,10 @@ std::map<bodypart_id, int> Character::bionic_installation_issues( const bionic_i
         return issues;
     }
     for( const std::pair<const bodypart_str_id, int> &elem : bioid->occupied_bodyparts ) {
-        const int lacked_slots = elem.second - get_free_bionics_slots( elem.first );
+        int lacked_slots = elem.second - get_free_bionics_slots( elem.first );
+        if( bioid->upgraded_bionic ) {
+            lacked_slots -= bioid->upgraded_bionic->occupied_bodyparts.at( elem.first );
+        }
         if( lacked_slots > 0 ) {
             issues.emplace( elem.first, lacked_slots );
         }
@@ -2819,7 +2829,8 @@ void Character::add_bionic( const bionic_id &b )
                            units::to_kilojoule( pow_up ) );
     }
 
-    my_bionics->push_back( bionic( b, get_free_invlet( *my_bionics ) ) );
+    const auto invlet = b.obj().activated ? get_free_invlet( *my_bionics ) : ' ';
+    my_bionics->push_back( bionic( b, invlet ) );
     if( b->has_flag( flag_INITIALLY_ACTIVATE ) ) {
         activate_bionic( my_bionics->back() );
     }
@@ -2865,12 +2876,16 @@ void Character::remove_bionic( const bionic_id &b )
     std::set<bionic_id> removed_bionics;
     for( bionic &i : *my_bionics ) {
         if( b == i.id && !removed_bionics.contains( i.id ) ) {
+            const units::energy pow_up = i.id->capacity;
+            mod_max_power_level( -1 * pow_up );
             removed_bionics.emplace( i.id );
             continue;
         }
 
         // Linked bionics: if either is removed, the other is removed as well.
         if( ( b->is_included( i.id ) || i.id->is_included( b ) ) && !removed_bionics.contains( i.id ) ) {
+            const units::energy pow_up = i.id->capacity;
+            mod_max_power_level( -1 * pow_up );
             removed_bionics.emplace( i.id );
             continue;
         }
@@ -3137,5 +3152,15 @@ void Character::introduce_into_anesthesia( const time_duration &duration, Charac
     } else {
         add_effect( effect_narcosis, duration );
         fall_asleep( duration );
+    }
+}
+// NOTE: Not toggling in the sense of activation
+// Instead toggling in the sense of having it
+void Character::toggle_bionic( const bionic_id &bio )
+{
+    if( has_bionic( bio ) ) {
+        remove_bionic( bio );
+    } else {
+        add_bionic( bio );
     }
 }

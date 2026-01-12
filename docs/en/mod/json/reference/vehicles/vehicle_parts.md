@@ -30,6 +30,7 @@ Vehicle components when installed on a vehicle.
 "wheel_type":                 // (Optional: standard, off-road)
 "contact_area":               // (Optional) Affects vehicle ground pressure
 "cargo_weight_modifier": 33,  // (Optional, default = 100) Modifies cargo weight by set percentage
+"weight_modifier": 33,        // (Optional, default = 100) Modifies base part weight by set percentage
 "fuel_type": "NULL",          // (Optional, default = "NULL") Type of fuel/ammo the part consumes, as an item id
 
 "item": "wheel",              // The item used to install this part, and the item obtained when removing this part
@@ -60,6 +61,7 @@ Vehicle components when installed on a vehicle.
 "height": 5,                  // Optional field, height of balloons in meters ( aka multiplie of their lift )
 "lift_coff": 0.5,             // Optional field, multiplier of wing effectiveness
 "propeller_diameter": 0.5,    // Optional field, diameter of propeller
+"length": 3,                  // Optional field, z-level length of ladder
 ```
 
 ### Integrated Tools

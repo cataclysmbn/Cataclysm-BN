@@ -1,4 +1,4 @@
-<!-- for small documentation fixes, it's okay to ignore the template -->
+<!-- for small, obvious fixes (e.g docs), it's okay to ignore this template -->
 
 ## Purpose of change (The Why)
 
@@ -33,29 +33,31 @@ NOTE: Please read your emails. Anyone mentioned on Github with an @ will receive
 - [ ] I linked any relevant issues using [github keyword syntax](https://docs.cataclysmbn.org/contribute/contributing/#pull-request-notes) like `closes #1234` in [Summary of the PR](#purpose-of-change-the-why) so it can be closed automatically.
 - [ ] I've [committed my changes to new branch that isn't `main`](https://docs.cataclysmbn.org/contribute/contributing/#make-your-changes) so it won't cause conflict when updating `main` branch later.
 
-<!--
-please remove sections irrelevant to this PR.
-
 ### Optional
 
+<!-- please remove checkboxes unrelated to this PR. -->
+
 - [ ] This PR ports commits from DDA or other cataclysm forks.
+  - [ ] I have added [`port` scope](https://docs.cataclysmbn.org/contribute/changelog_guidelines/#port%3A-ports-from-dda-or-other-forks) to the PR title.
   - [ ] I have attributed original authors in the commit messages adding [`Co-Authored-By`](https://docs.github.com/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors) in the commit message.
   - [ ] I have linked the URL of original PR(s) in the description.
 - [ ] This is a C++ PR that modifies JSON loading or behavior.
-  - [ ] I have documented the changes in the appropriate location in the `doc/` folder.
+  - [ ] I have documented the changes in the appropriate location in the `docs/` folder.
   - [ ] If documentation for this feature does not exist, please write it or at least note its lack in PR description.
   - [ ] New localizable fields need to be added to the `lang/bn_extract_json_strings.sh` script if it does not support them yet.
   - [ ] If applicable, add checks on game load that would validate the loaded data.
   - [ ] If it modifies format of save files, please add migration from the old format.
 - [ ] This is a PR that modifies build process or code organization.
-  - [ ] Please document the changes in the appropriate location in the `doc/` folder.
+  - [ ] Please document the changes in the appropriate location in the `docs/` folder.
   - [ ] If documentation for this feature or process does not exist, please write it.
   - [ ] If the change alters versions of software required to build or work with the game, please document it.
 - [ ] This is a PR that removes JSON entities.
   - [ ] The removed JSON entities have new entries in `data/json/obsoletion/` folder or use some other migration process for existing saves.
 - [ ] This PR adds/removes a mod.
+  - [ ] I have added [`mods` scope](https://docs.cataclysmbn.org/contribute/changelog_guidelines/#mods-or-mods%2F<mod_id>%3A-mods) to the PR title.
+  - [ ] The `mod_name` in `data/mods/<mod_name>` matches `id` in `modinfo.json`.
   - [ ] I have committed the output of `deno task semantic`.
-- [ ] This PR modifies BN's lua API.
+- [ ] This PR modifies lua scripts or the lua API.
+  - [ ] I have added [`lua` scope](https://docs.cataclysmbn.org/contribute/changelog_guidelines/#lua%3A-changes-to-lua-api) to the PR title.
+  - [ ] I have added [type annotations](https://emmylua.github.io/annotation.html) to functions so that it's safe and easy to maintain.
   - [ ] I have committed the output of `deno task docs:gen` so the Lua API documentation is updated.
-  - [ ] I have added `lua` scope to the PR title.
--->

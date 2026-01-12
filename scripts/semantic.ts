@@ -91,7 +91,7 @@ export const scopes = {
 const config: Partial<Config> = {
   enabled: true,
   titleOnly: true,
-  targetUrl: "https://docs.cataclysmbn.org/en/contribute/changelog_guidelines/",
+  targetUrl: "https://docs.cataclysmbn.org/contribute/changelog_guidelines/",
 
   types,
   scopes: Object.values(scopes).flat(),

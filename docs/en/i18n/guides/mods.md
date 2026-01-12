@@ -242,6 +242,6 @@ object (see [here](../reference/translation) for which fields support translatio
 
 ### PR that implements mod translations, for reference
 
-https://github.com/cataclysmbnteam/Cataclysm-BN/pull/505
+https://github.com/cataclysmbn/Cataclysm-BN/pull/505
 
 ### [Example of the mod translation](https://github.com/Kenan2000/Bright-Nights-Kenan-Mod-Pack/pull/36)

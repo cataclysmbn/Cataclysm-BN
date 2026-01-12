@@ -1552,6 +1552,11 @@
     "context": [  ]
   },
   {
+    "id": "FAKE_CLONING_VAT",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "FAKE_SMOKE",
     "type": "json_flag",
     "context": [  ]
@@ -2293,6 +2298,12 @@
     "context": [  ]
   },
   {
+    "id": "FLY_STRAIGHT",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "info": "This thrown item <info>flies straight</info> without rotating in the air, maintaining its aerodynamic orientation."
+  },
+  {
     "id": "LEAK_ALWAYS",
     "type": "json_flag",
     "context": [  ]
@@ -2412,6 +2423,78 @@
     "id": "MULTIINSTALL",
     "type": "json_flag",
     "//": "Lets you install multiple copies of this bionic",
+    "context": [  ]
+  },
+  {
+    "id": "TEMPORARY_ITEM",
+    "type": "json_flag",
+    "//": "Set in game on fake items for their special processing",
+    "context": [  ]
+  },
+  {
+    "id": "TINT_NO_FG",
+    "type": "json_flag",
+    "//": "Do not apply tint to background",
+    "context": [  ]
+  },
+  {
+    "id": "TINT_NO_BG",
+    "type": "json_flag",
+    "//": "Do not apply tint to foreground",
+    "context": [  ]
+  },
+  {
+    "id": "TINT_NONE",
+    "type": "json_flag",
+    "//": "Do not apply tint",
+    "context": [  ]
+  },
+  {
+    "id": "VEHICLE_UNLOCKED",
+    "type": "json_flag",
+    "//": "Marks a vehicle to always spawn unlocked, but possibly requiring hotwiring",
+    "context": [  ]
+  },
+  {
+    "id": "VEHICLE_LOCKED",
+    "type": "json_flag",
+    "//": "Marks a vehicle to always spawn locked, and possibly requiring hotwiring",
+    "context": [  ]
+  },
+  {
+    "id": "VEHICLE_NO_LOCKS",
+    "type": "json_flag",
+    "//": "Marks a vehicle to not get locks installed automatically",
+    "context": [  ]
+  },
+  {
+    "id": "VEHICLE_HOTWIRE",
+    "type": "json_flag",
+    "//": "Marks a vehicle to always requiring hotwiring controls",
+    "context": [  ]
+  },
+  {
+    "id": "VEHICLE_NO_HOTWIRE",
+    "type": "json_flag",
+    "//": "Marks a vehicle to never require hotwiring controls (e.g bycicles)",
+    "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_ADDED",
+    "type": "json_flag",
+    "//": "",
+    "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_TICK",
+    "type": "json_flag",
+    "//": "",
+    "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_REMOVED",
+    "type": "json_flag",
+    "//": "",
     "context": [  ]
   }
 ]

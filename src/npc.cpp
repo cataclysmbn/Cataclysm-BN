@@ -129,6 +129,8 @@ static const trait_id trait_PSYCHOPATH( "PSYCHOPATH" );
 static const trait_id trait_SAPIOVORE( "SAPIOVORE" );
 static const trait_id trait_SCHIZOPHRENIC( "SCHIZOPHRENIC" );
 static const trait_id trait_TERRIFYING( "TERRIFYING" );
+static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
+
 
 class monfaction;
 
@@ -2209,6 +2211,7 @@ Attitude npc::attitude_to( const Creature &other ) const
         case MATT_ATTACK:
             return Attitude::A_HOSTILE;
         case MATT_NULL:
+        case MATT_UNKNOWN:
         case NUM_MONSTER_ATTITUDES:
             break;
     }
@@ -2316,16 +2319,19 @@ int npc::follow_distance() const
 
 nc_color npc::basic_symbol_color() const
 {
-    if( attitude == NPCATT_KILL ) {
-        return c_red;
-    } else if( attitude == NPCATT_FLEE || attitude == NPCATT_FLEE_TEMP ) {
-        return c_light_red;
-    } else if( is_player_ally() ) {
-        return c_green;
-    } else if( is_walking_with() ) {
-        return c_light_green;
-    } else if( guaranteed_hostile() ) {
-        return c_red;
+    const avatar &ply = get_avatar();
+    if( !ply.has_trait( trait_INATTENTIVE ) ) {
+        if( attitude == NPCATT_KILL ) {
+            return c_red;
+        } else if( attitude == NPCATT_FLEE || attitude == NPCATT_FLEE_TEMP ) {
+            return c_light_red;
+        } else if( is_player_ally() ) {
+            return c_green;
+        } else if( is_walking_with() ) {
+            return c_light_green;
+        } else if( guaranteed_hostile() ) {
+            return c_red;
+        }
     }
     return c_pink;
 }
@@ -2341,11 +2347,13 @@ int npc::print_info( const catacurses::window &w, int line, int vLines, int colu
     mvwprintz( w, point( column, line++ ), c_white, _( "NPC: " ) );
     wprintz( w, basic_symbol_color(), name );
 
+    const bool player_knows = !g->u.has_trait( trait_INATTENTIVE );
+
     if( display_object_ids ) {
         mvwprintz( w, point( column, line++ ), c_light_blue, string_format( "[%s]", myclass ) );
     }
 
-    if( sees( g->u ) ) {
+    if( sees( g->u ) && player_knows )  {
         mvwprintz( w, point( column, line++ ), c_yellow, _( "Aware of your presence!" ) );
     }
 
@@ -2663,53 +2671,57 @@ std::string io::enum_to_string<npc_attitude>( npc_attitude att )
 
 std::string npc_attitude_name( npc_attitude att )
 {
-    switch( att ) {
-        // Don't care/ignoring player
-        case NPCATT_NULL:
-            return _( "Ignoring" );
-        // Move to and talk to player
-        case NPCATT_TALK:
-            return _( "Wants to talk" );
-        // Follow the player
-        case NPCATT_FOLLOW:
-            return _( "Following" );
-        // Lead the player, wait for them if they're behind
-        case NPCATT_LEAD:
-            return _( "Leading" );
-        // Waiting for the player
-        case NPCATT_WAIT:
-            return _( "Waiting for you" );
-        // Mug the player
-        case NPCATT_MUG:
-            return _( "Mugging you" );
-        // Attack the player if our patience runs out
-        case NPCATT_WAIT_FOR_LEAVE:
-            return _( "Waiting for you to leave" );
-        // Kill the player
-        case NPCATT_KILL:
-            return _( "Attacking to kill" );
-        // Get away from the player
-        case NPCATT_FLEE:
-        case NPCATT_FLEE_TEMP:
-            return _( "Fleeing" );
-        // Get to the player and heal them
-        case NPCATT_HEAL:
-            return _( "Healing you" );
-        case NPCATT_ACTIVITY:
-            return _( "Performing a task" );
-        case NPCATT_RECOVER_GOODS:
-            return _( "Trying to recover stolen goods" );
-        case NPCATT_LEGACY_1:
-        case NPCATT_LEGACY_2:
-        case NPCATT_LEGACY_3:
-        case NPCATT_LEGACY_4:
-        case NPCATT_LEGACY_5:
-        case NPCATT_LEGACY_6:
-            return _( "NPC Legacy Attitude" );
-        default:
-            break;
+    const avatar &ply = get_avatar();
+    if( ply.has_trait( trait_INATTENTIVE ) ) {
+        return _( "" );
+    } else {
+        switch( att ) {
+            // Don't care/ignoring player
+            case NPCATT_NULL:
+                return _( "Ignoring" );
+            // Move to and talk to player
+            case NPCATT_TALK:
+                return _( "Wants to talk" );
+            // Follow the player
+            case NPCATT_FOLLOW:
+                return _( "Following" );
+            // Lead the player, wait for them if they're behind
+            case NPCATT_LEAD:
+                return _( "Leading" );
+            // Waiting for the player
+            case NPCATT_WAIT:
+                return _( "Waiting for you" );
+            // Mug the player
+            case NPCATT_MUG:
+                return _( "Mugging you" );
+            // Attack the player if our patience runs out
+            case NPCATT_WAIT_FOR_LEAVE:
+                return _( "Waiting for you to leave" );
+            // Kill the player
+            case NPCATT_KILL:
+                return _( "Attacking to kill" );
+            // Get away from the player
+            case NPCATT_FLEE:
+            case NPCATT_FLEE_TEMP:
+                return _( "Fleeing" );
+            // Get to the player and heal them
+            case NPCATT_HEAL:
+                return _( "Healing you" );
+            case NPCATT_ACTIVITY:
+                return _( "Performing a task" );
+            case NPCATT_RECOVER_GOODS:
+                return _( "Trying to recover stolen goods" );
+            case NPCATT_LEGACY_1:
+            case NPCATT_LEGACY_2:
+            case NPCATT_LEGACY_3:
+            case NPCATT_LEGACY_4:
+            case NPCATT_LEGACY_5:
+            case NPCATT_LEGACY_6:
+                return _( "NPC Legacy Attitude" );
+            default:
+                break;
+        }
     }
-
     debugmsg( "Invalid attitude: %d", att );
     return _( "Unknown attitude" );
 }
@@ -3078,7 +3090,7 @@ std::set<tripoint> npc::get_legacy_path_avoid() const
     }
     if( rules.has_flag( ally_rule::avoid_doors ) ) {
         for( const tripoint &p : g->m.points_in_radius( pos(), 30 ) ) {
-            if( g->m.open_door( p, true, true ) ) {
+            if( g->m.can_open_door( this, p, true ) ) {
                 ret.insert( p );
             }
         }
@@ -3161,24 +3173,30 @@ mfaction_id npc::get_monster_faction() const
 std::string npc::extended_description() const
 {
     std::string ss;
+    const avatar &ply = get_avatar();
+
     // For some reason setting it using str or constructor doesn't work
     ss += Character::extended_description();
 
     ss += "\n--\n";
-    if( attitude == NPCATT_KILL ) {
-        ss += _( "Is trying to kill you." );
-    } else if( attitude == NPCATT_FLEE || attitude == NPCATT_FLEE_TEMP ) {
-        ss += _( "Is trying to flee from you." );
-    } else if( is_player_ally() ) {
-        ss += _( "Is your friend." );
-    } else if( is_following() ) {
-        ss += _( "Is following you." );
-    } else if( is_leader() ) {
-        ss += _( "Is guiding you." );
-    } else if( guaranteed_hostile() ) {
-        ss += _( "Will try to kill you or flee from you if you reveal yourself." );
+    if( !ply.has_trait( trait_INATTENTIVE ) ) {
+        if( attitude == NPCATT_KILL ) {
+            ss += _( "Is trying to kill you." );
+        } else if( attitude == NPCATT_FLEE || attitude == NPCATT_FLEE_TEMP ) {
+            ss += _( "Is trying to flee from you." );
+        } else if( is_player_ally() ) {
+            ss += _( "Is your friend." );
+        } else if( is_following() ) {
+            ss += _( "Is following you." );
+        } else if( is_leader() ) {
+            ss += _( "Is guiding you." );
+        } else if( guaranteed_hostile() ) {
+            ss += _( "Will try to kill you or flee from you if you reveal yourself." );
+        } else {
+            ss += _( "Is neutral." );
+        }
     } else {
-        ss += _( "Is neutral." );
+        ss += _( "It is a person." );
     }
 
     if( display_object_ids ) {

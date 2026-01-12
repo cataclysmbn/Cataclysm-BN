@@ -80,13 +80,13 @@ ${commitsSection(commits)}
 ## Links
 
 - **Previous changelog:** https://www.reddit.com/r/cataclysmbn/comments/17t44xk/cbn_changelog_november_11_2023_item_identity/
-- **Changes so far:** https://github.com/cataclysmbnteam/Cataclysm-BN/wiki/Changes-so-far
-- **Download:** https://github.com/cataclysmbnteam/Cataclysm-BN/releases
-- **Bugs and suggestions can be posted here:** https://github.com/cataclysmbnteam/Cataclysm-BN/issues
+- **Changes so far:** https://github.com/cataclysmbn/Cataclysm-BN/wiki/Changes-so-far
+- **Download:** https://github.com/cataclysmbn/Cataclysm-BN/releases
+- **Bugs and suggestions can be posted here:** https://github.com/cataclysmbn/Cataclysm-BN/issues
 
 ## How to help:
 
-https://docs.cataclysmbn.org/en/contribute/contributing/
+https://docs.cataclysmbn.org/contribute/contributing/
 
 - **Translations!** https://www.transifex.com/bn-team/cataclysm-bright-nights/
 - **Contributing via code changes.**

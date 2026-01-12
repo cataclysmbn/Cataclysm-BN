@@ -32,7 +32,19 @@ configure_file(
     @ONLY
 )
 
-# Ninja is provided by Microsoft but not in the Path
-if (CMAKE_GENERATOR MATCHES "^Ninja")
-    set(CMAKE_MAKE_PROGRAM $ENV{DevEnvDir}\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe CACHE PATH "")
+# ccache integration for MSVC with Visual Studio generator
+# Ref: https://github.com/ccache/ccache/wiki/MS-Visual-Studio#usage-with-cmake
+find_program(CCACHE_EXE ccache)
+if(CCACHE_EXE)
+    file(COPY_FILE
+        ${CCACHE_EXE} ${CMAKE_BINARY_DIR}/cl.exe
+        ONLY_IF_DIFFERENT)
+
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+
+    set(CMAKE_VS_GLOBALS
+        "CLToolExe=cl.exe"
+        "CLToolPath=${CMAKE_BINARY_DIR}"
+        "UseMultiToolTask=true"
+    )
 endif()

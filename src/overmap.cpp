@@ -5979,6 +5979,7 @@ void overmap::place_specials( overmap_special_batch &enabled_specials )
         }
 
         zone current = special.has_flag( "LAKE" ) ? zone::lake :
+                       special.has_flag( "RIVER" ) ? zone::river :
                        this_locs.count( water ) ? zone::river :
                        this_area.surface ? zone::land : zone::land_under;
 

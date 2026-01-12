@@ -98,15 +98,37 @@ jobs:
         run: |
           vcpkg integrate install
 
-      - uses: ammaraskar/msvc-problem-matcher@master
-      - name: Configure
-        run: |
-          cmake -DTESTS=ON --preset $env:CMAKE_PRESET
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable("ACTIONS_CACHE_URL", process.env.ACTIONS_CACHE_URL || "")
+            core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env.ACTIONS_RUNTIME_TOKEN || "")
 
-      - uses: ammaraskar/msvc-problem-matcher@master
-      - name: Build
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: msvc-cmake-${{ env.CMAKE_PRESET }}-${{ github.ref_name }}
+          restore-keys: |
+            msvc-cmake-${{ env.CMAKE_PRESET }}-${{ github.ref_name }}
+            msvc-cmake-${{ env.CMAKE_PRESET }}-main
+            msvc-cmake-${{ env.CMAKE_PRESET }}-
+          max-size: 500M
+          verbose: 2
+          save: ${{ github.event_name != 'pull_request' }}
+
+      - name: Configure ccache for MSVC
         run: |
-          cmake --build out/build/$env:CMAKE_PRESET --config RelWithDebInfo
+          echo "CCACHE_BASEDIR=${{ github.workspace }}" >> $env:GITHUB_ENV
+          echo "CCACHE_SLOPPINESS=include_file_ctime,include_file_mtime,time_macros,pch_defines" >> $env:GITHUB_ENV
+          echo "CCACHE_NOHASHDIR=1" >> $env:GITHUB_ENV
+
+      - name: Configure and Build
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: ${{ env.CMAKE_PRESET }}
+          buildPreset: windows-msvc-build
+          buildPresetAdditionalArgs: "['--config', 'RelWithDebInfo']"
 
       - name: Dump logs if build failed
         if: failure()
@@ -119,6 +141,10 @@ jobs:
         run: |
           cmake --build out/build/$env:CMAKE_PRESET --target translations_compile --config RelWithDebInfo
 
+      - name: ccache stats
+        run: |
+          ccache -s -vv
+
       - name: Run tests
         run: |
-          .\RelWithDebInfo\cata_test-tiles.exe --rng-seed time
+          & "out/build/$env:CMAKE_PRESET/tests/RelWithDebInfo/cata_test-tiles.exe" --rng-seed time

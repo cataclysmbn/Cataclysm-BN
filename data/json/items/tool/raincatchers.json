@@ -126,7 +126,7 @@
     "type": "GENERIC",
     "category": "deployables",
     "name": { "str": "tarp raincatcher" },
-    "description": "Some sticks and string with a tarpaulin to set up an improvised raincatcher.",
+    "description": "Some sticks and string with a tarp to set up an improvised raincatcher.",
     "weight": "3980 g",
     "volume": "4 L",
     "price": "60 USD",

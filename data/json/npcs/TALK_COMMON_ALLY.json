@@ -173,6 +173,7 @@
       },
       { "text": "Tell me about giving you orders (NPC TUTORIAL).", "topic": "TALK_ALLY_TUTORIAL" },
       { "text": "I'm going to go my own way for a while.", "topic": "TALK_LEAVE" },
+      { "text": "If I were in your shoes... (Control this NPC)", "topic": "TALK_DONE", "effect": "control_npc" },
       { "text": "Let's go.", "topic": "TALK_DONE" }
     ]
   },
@@ -700,6 +701,16 @@
               "no": "<ally_rule_forbid_engage_false_text>"
             }
           ]
+        },
+        {
+          "and": [
+            { "npc_override": "move_own_pace", "yes": "  OVERRIDE: ", "no": "  " },
+            {
+              "npc_rule": "move_own_pace",
+              "yes": "<ally_rule_move_own_pace_true_text>",
+              "no": "<ally_rule_move_own_pace_false_text>"
+            }
+          ]
         }
       ]
     },
@@ -757,6 +768,15 @@
         },
         "topic": "TALK_MISC_RULES",
         "effect": { "toggle_npc_rule": "ignore_noise" }
+      },
+      {
+        "truefalsetext": {
+          "condition": { "npc_rule": "move_own_pace" },
+          "true": "Match my movement speed when following.",
+          "false": "Move at your own pace."
+        },
+        "topic": "TALK_MISC_RULES",
+        "effect": { "toggle_npc_rule": "move_own_pace" }
       },
       { "text": "Set up pickup rules.", "topic": "TALK_MISC_RULES", "effect": "set_npc_pickup" },
       { "text": "Clear all overrides.", "topic": "TALK_MISC_RULES", "effect": "clear_overrides" },

@@ -274,6 +274,18 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "quiver_crossbow_wanderer",
+    "entries": [ { "item": "bolt_wood", "charges": 20 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "quiver_javelin_prehistoric",
+    "entries": [ { "item": "atlatl_dart_stone", "charges": 10 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "flintlock_pouch_reenactor",
     "entries": [ { "item": "flintlock_ammo", "charges": 20 } ]
   },
@@ -783,8 +795,9 @@
     "type": "profession",
     "id": "churl",
     "name": "Churl",
+    "starting_cash": 0,
     "description": "What the deuyl?  Ye ne wist noo thing of this straunge plaas nor what wycked enchauntment brought ye hidder.  Wyth this accoustrement ye must needs underfongen to find newe lyflode in the most hidous Cataclysm man hath witnessed sithen that deluge Noe rood out in his greet schippe.",
-    "points": 1,
+    "points": -7,
     "items": {
       "both": {
         "items": [ "footrags", "loincloth", "cloak_wool", "ragpouch", "small_relic", "gloves_wraps", "tunic_rag" ],
@@ -801,7 +814,155 @@
       { "level": 1, "name": "fabrication" },
       { "level": 1, "name": "tailor" }
     ],
-    "traits": [ "PROF_CHURL" ]
+    "forbids_bionics": true,
+    "traits": [ "PROF_CHURL", "ILLITERATE", "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH", "SPIRITUAL" ]
+  },
+  {
+    "type": "profession",
+    "id": "caveman",
+    "name": "Prehistoric Hunter",
+    "description": "An out-of-place living relic of prehistory, stranded in an unfamiliar and terrifying world.  Life as a hunter-gatherer was hard, but at least you didn't have to fight the living dead, and you had your kin to stand beside you.  Here, you're on your own.",
+    "points": -4,
+    "skills": [
+      { "level": 1, "name": "survival" },
+      { "level": 1, "name": "fabrication" },
+      { "level": 1, "name": "cooking" },
+      { "level": 3, "name": "gun" },
+      { "level": 2, "name": "throw" },
+      { "level": 3, "name": "melee" },
+      { "level": 2, "name": "stabbing" },
+      { "level": 1, "name": "dodge" }
+    ],
+    "traits": [ "ILLITERATE", "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH" ],
+    "items": {
+      "both": {
+        "items": [ "loincloth_fur", "cloak_fur", "backpack_leather", "boots_fur", "waterskin", "clay_pot", "fire_drill" ],
+        "entries": [
+          { "item": "atlatl", "custom-flags": [ "auto_wield" ] },
+          { "item": "spear_stone", "container-item": "spearsling" },
+          { "item": "primitive_knife", "container-item": "sheath" },
+          { "item": "quiver_atlatl", "contents-group": "quiver_javelin_prehistoric" }
+        ]
+      }
+    }
+  },
+  {
+    "type": "profession",
+    "id": "prospector",
+    "name": "Prospector",
+    "description": "Yee haw!  Ye've struck it rich in the Cataclysm, findin' yerself a whole new world to pan fer gold in.  Just be sure to watch out fer them thar zombies and other varmints lookin' to make a meal outta ya!",
+    "points": 4,
+    "starting_cash": 0,
+    "//": "one point for the skills, three points for the survival gear and useful items",
+    "items": {
+      "both": {
+        "items": [
+          "oil_lamp",
+          "coffee_raw",
+          "jerky",
+          "hardtack",
+          "dynamite",
+          "fire_drill",
+          "shelter_kit",
+          "pickaxe",
+          "propick_alpha",
+          "makeshift_hammer",
+          "shovel_short",
+          "socks_wool",
+          "mocassins",
+          "bandana",
+          "technician_pants_gray",
+          "bindle",
+          "jacket_flannel",
+          "backpack_leather",
+          "straw_hat"
+        ]
+      }
+    },
+    "skills": [ { "level": 3, "name": "survival" }, { "level": 2, "name": "swimming" }, { "level": 1, "name": "cooking" } ],
+    "traits": [ "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH" ]
+  },
+  {
+    "type": "profession",
+    "id": "frontiersman",
+    "name": "Frontiersman",
+    "starting_cash": 0,
+    "description": "You set out on your first real frontier trail expecting nothing more than hard miles and open sky. Instead, a moment of blinding light stole the world you knew. Now you stand in a future ravaged by the Cataclysm, your gear outdated, your instincts untested, and your only choice to adapt fast or perish.",
+    "points": 4,
+    "//": "one point for the skills, three points for the survival gear and useful items, two for the vehicle and pets",
+    "items": {
+      "both": {
+        "items": [
+          "oil_lamp",
+          "canteen",
+          "meat_smoked",
+          "hardtack",
+          "fire_drill",
+          "jacket_flannel",
+          "hatchet",
+          "socks_wool",
+          "mocassins",
+          "bandana",
+          "duster_fur",
+          "hat_fur",
+          "pants_fur",
+          "backpack_leather"
+        ],
+        "entries": [
+          { "item": "longrifle_flintlock", "ammo-item": "flintlock_ammo", "charges": 1, "contents-item": "shoulder_strap" },
+          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_reenactor" }
+        ]
+      }
+    },
+    "vehicle": "covered_wagon",
+    "pets": [ { "name": "mon_cow", "amount": 2 } ],
+    "skills": [ { "level": 2, "name": "survival" }, { "level": 1, "name": "swimming" }, { "level": 2, "name": "cooking" } ],
+    "traits": [ "NOMAD", "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH" ]
+  },
+  {
+    "type": "profession",
+    "id": "dogsledder",
+    "name": "Dogsledder",
+    "starting_cash": 0,
+    "description": "Fresh to the long northern trails, you began your first season guiding a small team through snowbound silence and bitter wind. You expected hard lessons, frozen fingers, and the slow rhythm of life on the ice—nothing more. But one night, a burst of impossible light swallowed the horizon, and the world you knew vanished beneath it. Now you stand in a future shattered by the Cataclysm, your dogs restless at your side, your skills untested, and the cold no longer the only danger you face.",
+    "points": 5,
+    "//": "one point for the skills, three points for the survival gear and useful items, two for the vehicle and pets",
+    "items": {
+      "both": {
+        "items": [
+          "oil_lamp",
+          "canteen",
+          "pemmican",
+          "hardtack",
+          "jacket_flannel",
+          "meat_smoked",
+          "fire_drill",
+          "hatchet",
+          "socks_wool",
+          "mocassins",
+          "shelter_kit",
+          "hat_fur",
+          "pants_fur",
+          "cloak_fur",
+          "fur_rollmat",
+          "scarf_fur",
+          "dog_whistle",
+          "knife_hunting",
+          "dogfood",
+          "boxpack"
+        ]
+      }
+    },
+    "vehicle": "dogsled",
+    "pets": [ { "name": "mon_dog", "amount": 4 } ],
+    "skills": [
+      { "level": 2, "name": "survival" },
+      { "level": 3, "name": "traps" },
+      { "level": 2, "name": "fabrication" },
+      { "level": 1, "name": "cooking" }
+    ],
+    "traits": [ "OUTDOORSMAN", "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH" ],
+    "flags": [ "VEH_GROUNDED" ]
   },
   {
     "type": "profession",
@@ -4884,6 +5045,43 @@
   },
   {
     "type": "profession",
+    "id": "wanderer",
+    "name": "Wanderer",
+    "description": "You always preferred the comfort of the open sky, far from the complexities of modern life.  Though from the looks of it, things have changed since last time you've been anywhere near civilization.",
+    "points": 5,
+    "skills": [
+      { "level": 3, "name": "survival" },
+      { "level": 3, "name": "fabrication" },
+      { "level": 1, "name": "tailor" },
+      { "level": 3, "name": "gun" },
+      { "level": 2, "name": "rifle" },
+      { "level": 2, "name": "cooking" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "loincloth_fur",
+          "cloak_fur",
+          "backpack_leather",
+          "boots_fur",
+          "gloves_fur",
+          "scarf_fur",
+          "pot_makeshift",
+          "waterskin",
+          "flint_steel"
+        ],
+        "entries": [
+          { "item": "crossbow_makeshift", "ammo-item": "bolt_wood", "custom-flags": [ "auto_wield" ] },
+          { "item": "copper_knife", "container-item": "sheath" },
+          { "item": "quiver", "contents-group": "quiver_crossbow_wanderer" },
+          { "item": "tinderbox", "charges": [ 10, 20 ] }
+        ]
+      }
+    }
+  },
+  {
+    "type": "profession",
     "id": "castaway",
     "name": "Castaway",
     "description": "You were shipwrecked out on an island in the lake.  No one sent a search party, so after weeks of trying to signal for help you salvaged every scrap of clothing you could to set sail on a makeshift raft.  Where is everyone, and why do the sharks look so hungry?",
@@ -6988,5 +7186,65 @@
       "male": { "entries": [ { "item": "boxer_shorts" } ] },
       "female": { "entries": [ { "item": "sports_bra" }, { "item": "boxer_shorts" } ] }
     }
+  },
+  {
+    "type": "profession",
+    "id": "knight",
+    "name": "Knight",
+    "description": "Chivalry! Daring! Honor! All traits that are useless in the Cataclysm. But you know how to fight with a sword and you have this armor so it could be worse.",
+    "points": 4,
+    "skills": [ { "level": 2, "name": "melee" }, { "level": 2, "name": "cutting" } ],
+    "traits": [ "PROF_KNIGHT", "ANTIJUNK" ],
+    "items": {
+      "both": {
+        "items": [ "breeches", "chainmail_hauberk", "socks", "chainmail_feet", "helmet_plate", "chainmail_hands", "shield_leather" ],
+        "entries": [ { "item": "longsword", "container-item": "scabbard" } ]
+      },
+      "female": [ "chestwrap" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "airship_pilot",
+    "name": "Airship Pilot",
+    "description": "You once led a crew of skyfarers, traveling the skies for fame, bricks and sand. Now you are on your own, and the ground is swarming with zombies.  At least this world has ground...",
+    "skills": [
+      { "level": 4, "name": "driving" },
+      { "level": 2, "name": "mechanics" },
+      { "level": 2, "name": "speech" },
+      { "level": 1, "name": "melee" },
+      { "level": 1, "name": "cutting" }
+    ],
+    "items": {
+      "both": {
+        "items": [ "cowboy_hat", "bandana", "jacket_leather", "dress_shirt", "pants_cargo", "boots_larmor", "gloves_leather", "socks" ],
+        "entries": [ { "item": "arming_sword", "container-item": "scabbard" } ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    },
+    "vehicle": "airship",
+    "points": 7,
+    "flags": [ "SCEN_ONLY", "VEH_GROUNDED" ]
+  },
+  {
+    "type": "profession",
+    "id": "airboat_pilot",
+    "name": "Airboat Pilot",
+    "description": "You once led a crew of skyfarers, traveling the skies for fame, bricks and sand. Now you are on your own, and the ground is swarming with zombies.  At least this world has ground...",
+    "copy-from": "airship_pilot",
+    "vehicle": "airboat",
+    "points": 6,
+    "flags": [ "SCEN_ONLY", "VEH_GROUNDED" ]
+  },
+  {
+    "type": "profession",
+    "id": "aircanoe_pilot",
+    "name": "Aircanoe Pilot",
+    "description": "You once led a crew of skyfarers, traveling the skies for fame, bricks and sand. Now you are on your own, and the ground is swarming with zombies.  At least this world has ground...",
+    "copy-from": "airship_pilot",
+    "vehicle": "aircanoe",
+    "points": 5,
+    "flags": [ "SCEN_ONLY", "VEH_GROUNDED" ]
   }
 ]

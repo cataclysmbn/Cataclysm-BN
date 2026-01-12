@@ -86,7 +86,7 @@
             <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
             <AdditionalOptions>/bigobj /utf-8 %(AdditionalOptions)</AdditionalOptions>
             <PreprocessorDefinitions>
-                _SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_CONSOLE;SDL_SOUND;TILES;LUA;SDL_MAIN_HANDLED;USE_VCPKG;CATCH_CONFIG_ENABLE_BENCHMARKING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+                _SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;_CONSOLE;SDL_SOUND;TILES;DYNAMIC_ATLAS;LUA;SDL_MAIN_HANDLED;USE_VCPKG;CATCH_CONFIG_ENABLE_BENCHMARKING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
             <LanguageStandard>stdcpp23</LanguageStandard>
             <AdditionalIncludeDirectories>..\src;..\src\lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
         </ClCompile>

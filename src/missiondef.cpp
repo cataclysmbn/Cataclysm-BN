@@ -183,6 +183,7 @@ std::string enum_to_string<mission_goal>( mission_goal data )
         case MGOAL_COMPUTER_TOGGLE: return "MGOAL_COMPUTER_TOGGLE";
         case MGOAL_TALK_TO_NPC: return "MGOAL_TALK_TO_NPC";
         case MGOAL_CONDITION: return "MGOAL_CONDITION";
+        case MGOAL_KILL_MONSTERS: return "MGOAL_KILL_MONSTERS";
         // *INDENT-ON*
         case mission_goal::NUM_MGOAL:
             break;

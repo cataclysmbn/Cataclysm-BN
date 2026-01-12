@@ -10,6 +10,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <numeric>
 
 #include "action.h"
 #include "activity_actor_definitions.h"
@@ -331,29 +332,29 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     }
 
     // GRAB: pre-action checking.
-    int dpart = -1;
-    const optional_vpart_position vp0 = m.veh_at( you.pos() );
-    vehicle *const veh0 = veh_pointer_or_null( vp0 );
-    const optional_vpart_position vp1 = m.veh_at( dest_loc );
-    vehicle *const veh1 = veh_pointer_or_null( vp1 );
+    int door_part = -1;
+    const optional_vpart_position vp_src = m.veh_at( you.pos() );
+    const optional_vpart_position vp_dst = m.veh_at( dest_loc );
+    vehicle *const src_veh = veh_pointer_or_null( vp_src );
+    vehicle *const dst_veh = veh_pointer_or_null( vp_dst );
 
     bool veh_closed_door = false;
-    bool outside_vehicle = ( veh0 == nullptr || veh0 != veh1 );
-    if( veh1 != nullptr ) {
-        dpart = veh1->next_part_to_open( vp1->part_index(), outside_vehicle );
-        veh_closed_door = dpart >= 0 && !veh1->part( dpart ).open;
+    bool outside_vehicle = ( src_veh == nullptr || src_veh != dst_veh );
+    if( dst_veh != nullptr ) {
+        door_part = dst_veh->next_part_to_open( vp_dst->part_index(), outside_vehicle );
+        veh_closed_door = door_part >= 0 && !dst_veh->part( door_part ).open;
     }
 
-    if( veh0 != nullptr && std::abs( veh0->velocity ) > 100 ) {
-        if( veh1 == nullptr ) {
+    if( src_veh != nullptr && std::abs( src_veh->velocity ) > 100 ) {
+        if( dst_veh == nullptr ) {
             if( query_yn( _( "Dive from moving vehicle?" ) ) ) {
                 g->moving_vehicle_dismount( dest_loc );
             }
             return false;
-        } else if( veh1 != veh0 ) {
+        } else if( dst_veh != src_veh ) {
             add_msg( m_info, _( "There is another vehicle in the way." ) );
             return false;
-        } else if( !vp1.part_with_feature( "BOARDABLE", true ) ) {
+        } else if( !vp_dst.part_with_feature( "BOARDABLE", true ) ) {
             add_msg( m_info, _( "That part of the vehicle is currently unsafe." ) );
             return false;
         }
@@ -362,8 +363,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
     bool toDeepWater = m.has_flag( TFLAG_DEEP_WATER, dest_loc );
     bool fromSwimmable = m.has_flag( flag_SWIMMABLE, you.pos() );
     bool fromDeepWater = m.has_flag( TFLAG_DEEP_WATER, you.pos() );
-    bool fromBoat = veh0 != nullptr;
-    bool toBoat = veh1 != nullptr;
+    bool fromBoat = src_veh != nullptr;
+    bool toBoat = dst_veh != nullptr;
     if( is_riding ) {
         if( !you.check_mount_will_move( dest_loc ) ) {
             if( you.is_auto_moving() ) {
@@ -396,12 +397,34 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
         return true;
     }
 
-    //Wooden Fence Gate (or equivalently walkable doors):
+    // Vehicle Openable
+    if( dst_veh ) {
+        if( veh_closed_door ) {
+            if( !m.open_door( &you, dest_loc, !outside_vehicle ) ) {
+                return false;
+            }
+
+            add_msg( _( "You open the %1$s's %2$s." ), dst_veh->name,
+                     dst_veh->part_info( door_part ).name() );
+            you.moves -= 100;
+            // if auto-move is on, continue moving next turn
+            if( you.is_auto_moving() ) {
+                you.defer_move( dest_loc );
+            }
+            return true;
+        }
+
+        if( g->walk_move( dest_loc, via_ramp ) ) {
+            return true;
+        }
+    }
+
+    // Wooden Fence Gate (or equivalently walkable doors):
     // open it if we are walking
     // vault over it if we are running
     if( m.passable_ter_furn( dest_loc )
         && you.movement_mode_is( CMM_WALK )
-        && m.open_door( dest_loc, !m.is_outside( you.pos() ) ) ) {
+        && m.open_door( &you, dest_loc, !m.is_outside( you.pos() ) ) ) {
         you.moves -= 100;
         // if auto-move is on, continue moving next turn
         if( you.is_auto_moving() ) {
@@ -409,50 +432,31 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
         }
         return true;
     }
+
+    // Openable furniture (wardrobes, etc)
+    if( m.furn( dest_loc ) != f_safe_c
+        && m.open_door( &you, dest_loc, !m.is_outside( you.pos() ) ) ) {
+        you.moves -= 100;
+        // if auto-move is on, continue moving next turn
+        if( you.is_auto_moving() ) {
+            you.defer_move( dest_loc );
+        }
+        return true;
+    }
+
+    // Ladder - only try to climb up if:
+    // 1. Standing on a ladder
+    // 2. The destination at current z-level is impassable (blocked by something)
+    // 3. There's a valid destination above
+    if( !is_riding
+        && m.has_flag( flag_LADDER, you.pos() )
+        && !m.passable( dest_loc )
+        && g->walk_move( dest_loc + tripoint_above ) ) {
+        return true;
+    }
+
+    // Regular Move
     if( g->walk_move( dest_loc, via_ramp ) ) {
-        return true;
-    }
-
-    if( veh_closed_door ) {
-        if( !veh1->handle_potential_theft( you ) ) {
-            return true;
-        } else {
-            // This check must be present in both avatar_action::move and map::open_door for vehiclepart doors specifically,
-            // having it in just one does not prevent opening doors on horseback, for some insane reason.
-            if( you.is_mounted() ) {
-                auto mon = you.mounted_creature.get();
-                if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                    // Message is printed by the other check in map::open_door
-                    return false;
-                }
-            }
-            if( outside_vehicle ) {
-                veh1->open_all_at( dpart );
-            } else {
-                veh1->open( dpart );
-                add_msg( _( "You open the %1$s's %2$s." ), veh1->name,
-                         veh1->part_info( dpart ).name() );
-            }
-        }
-        you.moves -= 100;
-        // if auto-move is on, continue moving next turn
-        if( you.is_auto_moving() ) {
-            you.defer_move( dest_loc );
-        }
-        return true;
-    }
-
-    if( m.furn( dest_loc ) != f_safe_c && m.open_door( dest_loc, !m.is_outside( you.pos() ) ) ) {
-        you.moves -= 100;
-        // if auto-move is on, continue moving next turn
-        if( you.is_auto_moving() ) {
-            you.defer_move( dest_loc );
-        }
-        return true;
-    }
-
-    if( !is_riding && m.has_flag( flag_LADDER, you.pos() ) &&
-        g->walk_move( dest_loc + tripoint_above ) ) {
         return true;
     }
 
@@ -1021,7 +1025,9 @@ void avatar_action::use_item( avatar &you, item *loc )
 
         if( !loc->has_flag( flag_ALLOWS_REMOTE_USE ) ) {
             const int obtain_cost = loc->obtain_cost( you );
-            loc->obtain( you );
+            if( !loc->has_flag( flag_TEMPORARY_ITEM ) ) {
+                loc->obtain( you );
+            }
 
             // TODO: the following comment is inaccurate and this mechanic needs to be rexamined
             // This method only handles items in the inventory, so refund the obtain cost.

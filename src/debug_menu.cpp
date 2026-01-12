@@ -3,6 +3,7 @@
 // IWYU pragma: no_include <cxxabi.h>
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <chrono>
 #include <csignal>
@@ -117,6 +118,9 @@ extern std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_j
 
 #if defined(TILES)
 #include "sdl_wrappers.h"
+#include "cata_tiles.h"
+#include "dynamic_atlas.h"
+#include "sdltiles.h"
 #endif
 
 namespace debug_menu
@@ -194,6 +198,8 @@ enum debug_menu_index {
     DEBUG_RESET_IGNORED_MESSAGES,
     DEBUG_RELOAD_TILES,
     DEBUG_SWAP_CHAR,
+    DEBUG_DUMP_TILES,
+    DEBUG_DISPLAY_TILESET_NO_VFX
 };
 
 class mission_debug
@@ -238,6 +244,10 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_DISPLAY_TRANSPARENCY, true, 'p', _( "Toggle display transparency" ) ) },
             { uilist_entry( DEBUG_DISPLAY_RADIATION, true, 'R', _( "Toggle display radiation" ) ) },
             { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ) },
+#if defined(TILES)
+            { uilist_entry( ACTION_TOGGLE_ZONE_OVERLAY, true, 'z', _( "Toggle zone overlay" ) ) },
+#endif
+            { uilist_entry( DEBUG_SET_AUTOMOVE, true, 'A', _( "Set automove target" ) ) },
             { uilist_entry( DEBUG_SHOW_MUT_CAT, true, 'm', _( "Show mutation category levels" ) ) },
             { uilist_entry( DEBUG_SHOW_MUT_CHANCES, true, 'u', _( "Show mutation trait chances" ) ) },
             { uilist_entry( DEBUG_BENCHMARK, true, 'b', _( "Draw benchmark" ) ) },
@@ -256,6 +266,10 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_SWAP_CHAR, true, 'x', _( "Control NPC follower" ) ) },
 #if defined(TILES)
             { uilist_entry( DEBUG_RELOAD_TILES, true, 'D', _( "Reload tileset and show missing tiles" ) ) },
+#endif
+#if defined(TILES) && defined(DYNAMIC_ATLAS)
+            { uilist_entry( DEBUG_DUMP_TILES, true, 'F', _( "Dump dynamic tile atlas" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_TILESET_NO_VFX, true, 'j', _( "Toggle tileset visual effects" ) ) },
 #endif
         };
         uilist_initializer.insert( uilist_initializer.begin(), debug_only_options.begin(),
@@ -624,7 +638,7 @@ void character_edit_menu( Character &c )
         pick, desc, skills, stats, items, delete_items, item_worn,
         hp, stamina, morale, clear_morale, pain, needs, healthy, status, mission_add, mission_edit,
         tele, mutate, bionics, npc_class, attitude, opinion, effects,
-        learn_ma, unlock_recipes, learn_spells, level_spells
+        learn_ma, unlock_recipes, forget_items, learn_spells, level_spells
     };
 
     // Maybe TODO: this could actually be static if not for translations
@@ -650,7 +664,8 @@ void character_edit_menu( Character &c )
             uilist_entry( edit_character::mission_edit, true, 'M',  _( "Edit [M]issions (WARNING: Unstable!)" ) ),
             uilist_entry( edit_character::effects, true, 'E',  _( "Edit [E]ffects" ) ),
             uilist_entry( edit_character::learn_ma, true, 'l', _( "[l]earn all melee styles" ) ),
-            uilist_entry( edit_character::unlock_recipes, true, 'r', _( "Unlock all [r]ecipes" ) )
+            uilist_entry( edit_character::unlock_recipes, true, 'r', _( "Unlock all [r]ecipes" ) ),
+            uilist_entry( edit_character::forget_items, true, 'F', _( "[F]orget all items" ) )
         }
     };
 
@@ -1148,6 +1163,11 @@ void character_edit_menu( Character &c )
             add_msg( m_good, _( "You know how to craft that now." ) );
         }
         break;
+        case edit_character::forget_items:
+            add_msg( m_info, _( "Item debug." ) );
+            uistate.read_items.clear();
+            add_msg( m_bad, _( "You don't know about any items anymore." ) );
+            break;
         case edit_character::learn_spells:
             if( spell_type::get_all().empty() ) {
                 add_msg( m_bad, _( "There are no spells to learn.  You must install a mod that adds some." ) );
@@ -1689,8 +1709,12 @@ void debug()
                         if( query_int( dir, -90, _( "Vehicle direction (in degrees): " ) ) ) {
                             vehicle *veh = m.add_vehicle( selected_opt, dest,
                                                           normalize( units::from_degrees( dir ) ),
-                                                          100, veh_cond_menu.ret - 1 );
+                                                          100, veh_cond_menu.ret - 1,
+                                                          true,
+                                                          false,
+                                                          true );
                             if( veh != nullptr ) {
+                                veh->set_owner( u );
                                 m.board_vehicle( dest, &u );
                             }
                         }
@@ -1929,6 +1953,9 @@ void debug()
         case DEBUG_DISPLAY_SUBMAP_GRID:
             g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
             break;
+        case ACTION_TOGGLE_ZONE_OVERLAY:
+            g->show_zone_overlay = !g->show_zone_overlay;
+            break;
         case DEBUG_HOUR_TIMER:
             g->toggle_debug_hour_timer();
             break;
@@ -2156,7 +2183,7 @@ void debug()
 
         case DEBUG_BUG_REPORT: {
             constexpr const char *const bug_report_url =
-                "https://github.com/cataclysmbnteam/Cataclysm-BN/issues/new"
+                "https://github.com/cataclysmbn/Cataclysm-BN/issues/new"
                 "?labels=bug"
                 "&template=bug_report.yml"
                 "&versions-and-configuration=";
@@ -2248,13 +2275,27 @@ void debug()
         case DEBUG_RESET_IGNORED_MESSAGES:
             debug_reset_ignored_messages();
             break;
-        case DEBUG_RELOAD_TILES:
+        case DEBUG_RELOAD_TILES: {
             std::ostringstream ss;
             g->reload_tileset( [&ss]( const std::string & str ) {
                 ss << str << '\n';
             } );
             add_msg( ss.str() );
             break;
+        }
+        case DEBUG_DUMP_TILES: {
+#if defined(TILES) && defined(DYNAMIC_ATLAS)
+            tilecontext->current_tileset()->texture_atlas()->readback_load();
+            tilecontext->current_tileset()->texture_atlas()->readback_dump( PATH_INFO::config_dir() );
+            tilecontext->current_tileset()->texture_atlas()->readback_clear();
+#endif
+            break;
+        }
+        case DEBUG_DISPLAY_TILESET_NO_VFX: {
+            g->display_toggle_overlay( ACTION_DISPLAY_TILES_NO_VFX );
+            break;
+        }
+
     }
     m.invalidate_map_cache( g->get_levz() );
 }

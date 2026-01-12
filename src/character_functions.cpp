@@ -140,6 +140,11 @@ bool can_fly( Character &ch )
         }
     }
 
+    Creature *mc = ch.mounted_creature.get();
+    if( mc && mc->has_flag( MF_FLIES ) ) {
+        return true;
+    }
+
     for( const trait_id &mid : ch.get_mutations() ) {
         auto it = ch.my_mutations.find( mid->id );
         if( it != ch.my_mutations.end() ) {
@@ -161,6 +166,12 @@ bool can_fly( Character &ch )
     }
 
     return false;
+}
+
+auto is_driving( const Character &p ) -> bool
+{
+    const optional_vpart_position vp = get_map().veh_at( p.pos() );
+    return vp && vp->vehicle().is_moving() && vp->vehicle().player_in_control( p );
 }
 
 bool is_book_morale_boosted( const Character &ch, const item &book )
@@ -1409,6 +1420,12 @@ void show_skill_capped_notice( const Character &who, const skill_id &id )
 
     add_msg( m_info, _( "This task is too simple to train your %s beyond %d." ),
              skill_name, curLevel );
+}
+
+/// Returns true if the character has a bionic listed in the entered bionic id's available_upgrades field
+auto has_upgraded_bionic( const Character &c, const bionic_id &b ) -> bool
+{
+    return std::ranges::any_of( b->available_upgrades, [&]( const auto & bio ) { return c.has_bionic( bio ); } );
 }
 
 } // namespace character_funcs

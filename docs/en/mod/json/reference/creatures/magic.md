@@ -128,6 +128,8 @@ experience you need to get to a level is below:
 - `RANDOM_DAMAGE` - picks random number between min+increment\*level and max instead of normal
   behavior
 
+- `DIVIDE_DAMAGE` - divides the spell's damage among all the creatures it hits evenly
+
 - `RANDOM_DURATION` - picks random number between min+increment\*level and max instead of normal
   behavior
 
@@ -310,7 +312,7 @@ than using it. Examples of all three are shown below:
 {
   "id": "DEBUG_spellbook",
   "type": "GENERIC",
-  "name": "A Technomancer's Guide to Debugging C:DDA",
+  "name": "A Technomancer's Guide to Debugging C:BN",
   "description": "static std::string description( spell sp ) const;",
   "weight": 1,
   "volume": "1 ml",

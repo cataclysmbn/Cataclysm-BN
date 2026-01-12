@@ -34,6 +34,8 @@
 #include "type_id.h"
 #include "units.h"
 
+#include <variant>
+
 enum class spawn_disposition;
 struct scent_block;
 template <typename T> class string_id;
@@ -383,6 +385,9 @@ class map
         friend class location_visitable<map_cursor>;
 
     public:
+        using interacting_entity = std::variant<monster *, Character *>;
+        using const_interacting_entity = std::variant<const monster *, const Character *>;
+
         // Constructors & Initialization
         map( int mapsize = MAPSIZE, bool zlev = true );
         explicit map( bool zlev ) : map( MAPSIZE, zlev ) { }
@@ -1090,7 +1095,33 @@ class map
         void translate_radius( const ter_id &from, const ter_id &to, float radi, const tripoint &p,
                                bool same_submap = false, bool toggle_between = false );
         bool close_door( const tripoint &p, bool inside, bool check_only );
-        bool open_door( const tripoint &p, bool inside, bool check_only = false );
+
+        bool can_open_door( const const_interacting_entity &, const tripoint &p, bool inside ) const;
+        bool open_door(
+            const interacting_entity &,
+            const tripoint &p, bool inside );
+
+        bool can_open_door_ter(
+            const const_interacting_entity &, const ter_t &ter,
+            const tripoint &p, bool inside ) const;
+        bool open_door_ter(
+            const interacting_entity &, const ter_t &ter,
+            const tripoint &p, bool inside );
+
+        bool can_open_door_furn(
+            const const_interacting_entity &, const furn_t &furn,
+            const tripoint &p, bool inside ) const;
+        bool open_door_furn(
+            const interacting_entity &, const furn_t &furn,
+            const tripoint &p, bool inside );
+
+        bool can_open_door_veh(
+            const const_interacting_entity &, const optional_vpart_position &vp,
+            const tripoint &p, bool inside ) const;
+        bool open_door_veh(
+            const interacting_entity &, const optional_vpart_position &vp,
+            const tripoint &p, bool inside );
+
         // Destruction
         /** bash a square for a set number of times at set power.  Does not destroy */
         void batter( const tripoint &p, int power, int tries = 1, bool silent = false );
@@ -1137,6 +1168,24 @@ class map
         bool hit_with_fire( const tripoint &p );
 
         /**
+         * Returns true if there is an item for which filter returns true in the tile at p.
+         * Pass return_true<item> to detect all items.
+         * @param p the location to check at
+         * @param filter what to filter the item by.
+         */
+        bool has_item_with( const tripoint &p,
+                            const std::function<bool( const item & )> &filter );
+
+        /**
+         * Returns true if there is an item for which filter returns true in a 1 tile radius of p.
+         * Pass return_true<item> to detect all adjacent items.
+         * @param p the location to check at
+         * @param filter what to filter the item by.
+         */
+        bool has_adjacent_item_with( const tripoint &p,
+                                     const std::function<bool( const item & )> &filter );
+
+        /**
          * Returns true if there is furniture for which filter returns true in a 1 tile radius of p.
          * Pass return_true<furn_t> to detect all adjacent furniture.
          * @param p the location to check at
@@ -1144,6 +1193,16 @@ class map
          */
         bool has_adjacent_furniture_with( const tripoint &p,
                                           const std::function<bool( const furn_t & )> &filter );
+
+        /**
+         * Returns true if there is terrain for which filter returns true in a 1 tile radius of p.
+         * Pass return_true<ter_t> to detect all adjacent terrain.
+         * @param p the location to check at
+         * @param filter what to filter the terrain by.
+         */
+        bool has_adjacent_terrain_with( const tripoint &p,
+                                        const std::function<bool( const ter_t & )> &filter );
+
         /**
          * Remove moppable fields/items at this location
          *  @param p the location
@@ -1589,18 +1648,13 @@ class map
         void build_obstacle_cache( const tripoint &start, const tripoint &end,
                                    float( &obstacle_cache )[MAPSIZE_X][MAPSIZE_Y] );
 
-        vehicle *add_vehicle( const vgroup_id &type, const tripoint &p, units::angle dir,
-                              int init_veh_fuel = -1, int init_veh_status = -1,
-                              bool merge_wrecks = true );
-        vehicle *add_vehicle( const vgroup_id &type, point p, units::angle dir,
-                              int init_veh_fuel = -1, int init_veh_status = -1,
-                              bool merge_wrecks = true );
-        vehicle *add_vehicle( const vproto_id &type, const tripoint &p, units::angle dir,
-                              int init_veh_fuel = -1, int init_veh_status = -1,
-                              bool merge_wrecks = true );
-        vehicle *add_vehicle( const vproto_id &type, point p, units::angle dir,
-                              int init_veh_fuel = -1, int init_veh_status = -1,
-                              bool merge_wrecks = true );
+        vehicle *add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
+                              const std::variant<tripoint, point> &p_,
+                              units::angle dir, int init_veh_fuel = -1,
+                              int init_veh_status = -1, bool merge_wrecks = true,
+                              std::optional<bool> locked = std::nullopt,
+                              std::optional<bool> has_keys = std::nullopt );
+
         // Light/transparency
         float light_transparency( const tripoint &p ) const;
         // Assumes 0,0 is light map center

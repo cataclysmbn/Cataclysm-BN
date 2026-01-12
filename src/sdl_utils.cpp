@@ -13,6 +13,7 @@
 
 color_pixel_function_map builtin_color_pixel_functions = {
     { "color_pixel_none", nullptr },
+    { "color_pixel_copy", color_pixel_copy },
     { "color_pixel_darken", color_pixel_darken },
     { "color_pixel_sepia", color_pixel_sepia },
     { "color_pixel_grayscale", color_pixel_grayscale },
@@ -137,6 +138,8 @@ SDL_Color color_pixel_underwater_dark( const SDL_Color &color )
         color.a
     };
 }
+
+SDL_Color color_pixel_copy( const SDL_Color &color ) { return color; }
 
 SDL_Color color_pixel_darken( const SDL_Color &color )
 {

@@ -1424,6 +1424,7 @@ void construct::done_vehicle( const tripoint &p )
         return;
     }
     veh->name = name;
+    veh->set_owner( u );
     if( u.has_trait( trait_DEBUG_HS ) ) {
         // TODO: Allow DEBUG_HS to consume items that don't exist
         veh->install_part( point_zero, vpart_id( "frame_vertical_2" ) );

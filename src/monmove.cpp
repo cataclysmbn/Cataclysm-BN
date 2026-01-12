@@ -366,7 +366,11 @@ void monster::plan()
         fleeing = fleeing || is_fleeing( g->u );
         target = &g->u;
         if( dist <= 5 ) {
-            anger += angers_hostile_near;
+            if( has_flag( MF_FACTION_MEMORY ) ) {
+                add_faction_anger( mfaction_id( "player" ), angers_hostile_near );
+            } else {
+                anger += angers_hostile_near;
+            }
             if( angers_hostile_near ) {
                 trigger_character_aggro_chance( anger, "proximity" );
             }
@@ -384,7 +388,11 @@ void monster::plan()
                     }
                 }
                 if( mating_angry ) {
-                    anger += angers_mating_season;
+                    if( has_flag( MF_FACTION_MEMORY ) ) {
+                        add_faction_anger( mfaction_id( "player" ), angers_mating_season );
+                    } else {
+                        anger += angers_mating_season;
+                    }
                     trigger_character_aggro_chance( anger, "mating season" );
                 }
             }
@@ -396,7 +404,11 @@ void monster::plan()
                     dist = tmp.rate_target( g->u, dist, smart_planning );
                     if( dist <= 3 ) {
                         //proximity to baby; monster gets furious and less likely to flee
-                        anger += angers_cub_threatened;
+                        if( has_flag( MF_FACTION_MEMORY ) ) {
+                            add_faction_anger( mfaction_id( "player" ), angers_cub_threatened );
+                        } else {
+                            anger += angers_cub_threatened;
+                        }
                         morale += angers_cub_threatened / 2;
                         trigger_character_aggro( "threatening cub" );
                     }
@@ -446,7 +458,12 @@ void monster::plan()
         }
         fleeing = fleeing || fleeing_from;
         if( rating <= 5 ) {
-            anger += angers_hostile_near;
+            // NPCs are part of the player faction for anger tracking purposes
+            if( has_flag( MF_FACTION_MEMORY ) ) {
+                add_faction_anger( mfaction_id( "player" ), angers_hostile_near );
+            } else {
+                anger += angers_hostile_near;
+            }
             morale -= fears_hostile_near;
             if( angers_mating_season > 0 ) {
                 bool mating_angry = false;
@@ -461,7 +478,11 @@ void monster::plan()
                     }
                 }
                 if( mating_angry ) {
-                    anger += angers_mating_season;
+                    if( has_flag( MF_FACTION_MEMORY ) ) {
+                        add_faction_anger( mfaction_id( "player" ), angers_mating_season );
+                    } else {
+                        anger += angers_mating_season;
+                    }
                     trigger_character_aggro_chance( anger, "mating season" );
                 }
             }
@@ -495,7 +516,11 @@ void monster::plan()
                     valid_targets = 1;
                 }
                 if( rating <= 5 ) {
-                    anger += angers_hostile_near;
+                    if( has_flag( MF_FACTION_MEMORY ) ) {
+                        add_faction_anger( mon.faction, angers_hostile_near );
+                    } else {
+                        anger += angers_hostile_near;
+                    }
                     morale -= fears_hostile_near;
                 }
             }
@@ -604,7 +629,18 @@ void monster::plan()
         if( angers_hostile_weak && att_to_target != Attitude::A_FRIENDLY ) {
             int hp_per = target->hp_percentage();
             if( hp_per <= 70 ) {
-                anger += 10 - ( hp_per / 10 );
+                int anger_amount = 10 - ( hp_per / 10 );
+                if( has_flag( MF_FACTION_MEMORY ) ) {
+                    // Determine target's faction
+                    const monster *target_mon = target->as_monster();
+                    if( target_mon != nullptr ) {
+                        add_faction_anger( target_mon->faction, anger_amount );
+                    } else if( target->is_player() || target->is_npc() ) {
+                        add_faction_anger( mfaction_id( "player" ), anger_amount );
+                    }
+                } else {
+                    anger += anger_amount;
+                }
                 if( anger <= 40 ) {
                     trigger_character_aggro_chance( anger, "weakness" );
                 }
@@ -635,7 +671,8 @@ void monster::plan()
                 if( morale != type->morale ) {
                     morale += ( morale < type->morale ) ? 1 : -1;
                 }
-                if( anger != type->agro ) {
+                // Don't restore global anger for FACTION_MEMORY monsters
+                if( !has_flag( MF_FACTION_MEMORY ) && anger != type->agro ) {
                     anger += ( anger < type->agro ) ? 1 : -1;
                 }
             }
@@ -1079,7 +1116,7 @@ void monster::move()
             map &here = g->m;
             // is there an openable door?
             if( can_open_doors &&
-                here.open_door( candidate, !here.is_outside( pos() ), true ) ) {
+                here.can_open_door( this, candidate, !here.is_outside( pos() ) ) ) {
                 next_step = candidate;
                 has_next_step = true;
                 continue;
@@ -1133,7 +1170,7 @@ void monster::move()
     if( has_next_step ) { // Actual effects of moving to the square we've chosen
         const bool did_something =
             ( !pacified && attack_at( next_step ) ) ||
-            ( !pacified && can_open_doors && g->m.open_door( next_step, !g->m.is_outside( pos() ) ) ) ||
+            ( !pacified && can_open_doors && g->m.open_door( this, next_step, !g->m.is_outside( pos() ) ) ) ||
             ( !pacified && bash_at( next_step ) ) ||
             ( !pacified && push_to( next_step, 0, 0 ) ) ||
             move_to( next_step, false, false, get_stagger_adjust( pos(), destination, next_step ) );

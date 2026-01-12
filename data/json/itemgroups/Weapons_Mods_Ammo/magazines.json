@@ -18,8 +18,6 @@
       [ "8x40_250_mag", 5 ],
       [ "8x40_500_mag", 5 ],
       [ "hk_g80mag", 40 ],
-      [ "hk46mag", 15 ],
-      [ "hk46bigmag", 5 ],
       [ "m107a1mag", 50 ],
       [ "tac50mag", 20 ],
       [ "m2010mag", 10 ],
@@ -68,7 +66,6 @@
     "items": [
       [ "glockmag", 40 ],
       [ "glock40mag", 30 ],
-      [ "hk46mag", 5 ],
       [ "m9mag", 5 ],
       [ "mp5mag", 10 ],
       [ "sig40mag", 20 ],
@@ -90,7 +87,6 @@
       { "group": "mags_cop", "prob": 50 },
       [ "glockbigmag", 10 ],
       [ "glock40bigmag", 10 ],
-      [ "hk46bigmag", 5 ],
       [ "m9bigmag", 10 ],
       [ "mp5bigmag", 20 ],
       [ "stanag30", 20 ],
@@ -214,15 +210,7 @@
     "type": "item_group",
     "id": "mags_smg_rare",
     "//": "Aftermarket or otherwise uncommon SMG magazines excluding milspec.",
-    "items": [
-      [ "calicomag", 30 ],
-      [ "hk46bigmag", 5 ],
-      [ "hk46mag", 55 ],
-      [ "mp5bigmag", 100 ],
-      [ "thompson_bigmag", 100 ],
-      [ "thompson_drum", 200 ],
-      [ "ump45mag", 30 ]
-    ]
+    "items": [ [ "calicomag", 30 ], [ "mp5bigmag", 100 ], [ "thompson_bigmag", 100 ], [ "thompson_drum", 200 ], [ "ump45mag", 30 ] ]
   },
   {
     "type": "item_group",
@@ -365,7 +353,6 @@
       [ "g3mag", 35 ],
       [ "m1918mag", 20 ],
       [ "m1918bigmag", 10 ],
-      [ "rpk74mag", 10 ],
       [ "saiga10mag", 15 ],
       [ "saiga30mag", 5 ],
       [ "saiga410mag_10rd", 30 ],

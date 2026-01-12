@@ -261,8 +261,7 @@
           { "item": "colt_navy", "prob": 50 },
           { "item": "colt_saa", "prob": 60 },
           { "item": "draco", "prob": 30 },
-          { "item": "lemat_revolver", "prob": 50 },
-          { "item": "makarov", "prob": 50 }
+          { "item": "lemat_revolver", "prob": 50 }
         ],
         "prob": 10
       },

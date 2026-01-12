@@ -353,5 +353,33 @@
       { "x": 0, "y": 0, "chance": 40, "item_groups": [ "pants" ] },
       { "x": 0, "y": 0, "chance": 20, "item_groups": [ "underwear" ] }
     ]
+  },
+  {
+    "id": "dogsled",
+    "type": "vehicle",
+    "name": "Dogsled",
+    "parts": [
+      { "x": 0, "y": 0, "part": "frame_wood_light_vertical" },
+      { "x": -1, "y": 0, "parts": [ "frame_wood_light_vertical", "wood box" ] },
+      { "x": 1, "y": 0, "part": "frame_wood_light_cover" },
+      { "x": 1, "y": -1, "part": "frame_wood_light_sw" },
+      { "x": 1, "y": 0, "part": "seat_wood_light" },
+      { "x": 1, "y": 1, "part": "makeshift_sled_runner_part" },
+      { "x": 0, "y": 0, "part": "wood box" },
+      { "x": -1, "y": -1, "parts": [ "frame_wood_light_vertical", "makeshift_sled_runner_part" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_wood_light_vertical", "makeshift_sled_runner_part" ] },
+      { "x": 1, "y": 0, "part": "foot_pedals" },
+      { "x": 1, "y": -1, "part": "makeshift_sled_runner_part" },
+      { "x": 2, "y": -1, "part": "yoke_harness" },
+      { "x": 3, "y": -1, "part": "yoke_harness" },
+      { "x": 3, "y": 1, "part": "yoke_harness" },
+      { "x": 0, "y": -1, "part": "frame_wood_light_vertical" },
+      { "x": 0, "y": 1, "part": "makeshift_sled_runner_part" },
+      { "x": 0, "y": -1, "part": "makeshift_sled_runner_part" },
+      { "x": 2, "y": 1, "part": "yoke_harness" },
+      { "x": 3, "y": 0, "part": "folding_wooden_frame" },
+      { "x": 1, "y": 1, "part": "frame_wood_light_se" },
+      { "x": 0, "y": 1, "part": "frame_wood_light_vertical" }
+    ]
   }
 ]

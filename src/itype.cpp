@@ -10,6 +10,7 @@
 #include "translations.h"
 #include "relic.h"
 #include "skill.h"
+#include "options.h"
 
 struct tripoint;
 
@@ -231,4 +232,20 @@ bool itype::can_have_charges() const
 bool itype::is_seed() const
 {
     return !!seed;
+}
+
+
+time_duration islot_seed::get_plant_epoch() const
+{
+    const int scaling = get_option<int>( "GROWTH_SCALING" );
+    // incorporate growth time scaling option
+    if( scaling == 0 ) {
+        // If scaling factor is not set, scale growth time based on
+        // current season length relative to the default of 14 days
+        return grow * calendar::season_ratio() / 3;
+    }
+    // Otherwise apply the explicitly set scaling value
+    // Also note that seed->grow is the time it takes from seeding to harvest, this is
+    // divided by 3 to get the time it takes from one plant state to the next.
+    return grow * scaling / 300.0;
 }

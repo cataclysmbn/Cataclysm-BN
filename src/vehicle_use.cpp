@@ -1,9 +1,11 @@
 #include "character.h"
+#include "units_mass.h"
 #include "vehicle.h"
 #include "vehicle_part.h" // IWYU pragma: associated
 #include "units_temperature.h"
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <cmath>
 #include <cstdlib>
@@ -279,6 +281,8 @@ void vehicle::set_electronics_menu_options( std::vector<uilist_entry> &options,
     };
     add_toggle( pgettext( "electronics menu option", "reactor" ),
                 keybind( "TOGGLE_REACTOR" ), "REACTOR" );
+    add_toggle( pgettext( "electronics menu option", "door locks" ),
+                keybind( "TOGGLE_DOOR_LOCKS" ), "DOOR_LOCKING" );
     add_toggle( pgettext( "electronics menu option", "headlights" ),
                 keybind( "TOGGLE_HEADLIGHT" ), "CONE_LIGHT" );
     add_toggle( pgettext( "electronics menu option", "wide angle headlights" ),
@@ -545,19 +549,25 @@ bool vehicle::interact_vehicle_locked()
     return !( is_locked );
 }
 
-void vehicle::smash_security_system()
+std::pair<int, int> vehicle::get_controls_and_security() const
 {
-
-    //get security and controls location
     int s = -1;
     int c = -1;
-    for( int p : speciality ) {
-        if( part_flag( p, "SECURITY" ) && !parts[ p ].is_broken() ) {
+    for( const int p : speciality ) {
+        if( part_flag( p, "SECURITY" ) && parts[ p ].is_available( false ) ) {
             s = p;
             c = part_with_feature( s, "CONTROLS", true );
             break;
         }
     }
+    return std::make_pair( c, s );
+}
+
+void vehicle::smash_security_system()
+{
+    //get security and controls location
+    auto [c, s] = get_controls_and_security();
+
     //controls and security must both be valid
     if( c >= 0 && s >= 0 ) {
         ///\EFFECT_MECHANICS reduces chance of damaging controls when smashing security system
@@ -712,7 +722,8 @@ void vehicle::use_controls( const tripoint &pos )
         return;
     }
 
-    if( has_part( "ENGINE" ) && !( is_flying && has_part( VPFLAG_ROTOR ) ) ) {
+    if( has_part( "ENGINE" ) && !( is_flying &&
+                                   units::to_newton( total_mass() ) >= total_balloon_lift() && has_part( VPFLAG_ROTOR ) ) ) {
         if( you.controlling_vehicle || ( remote && engine_on ) ) {
             options.emplace_back( _( "Stop driving" ), keybind( "TOGGLE_ENGINE" ) );
             actions.emplace_back( [&] {
@@ -866,6 +877,27 @@ void vehicle::use_controls( const tripoint &pos )
 
     }
 
+    if( has_part( "DROPPER" ) ) {
+        std::vector<vehicle_part *> droppers;
+        for( auto &p : parts ) {
+            if( p.has_flag( VPFLAG_DROPPER ) && !p.removed ) {
+                droppers.push_back( &p );
+            }
+        }
+        if( !droppers.empty() ) {
+            options.emplace_back( _( "Activate all item droppers (Drop Everything)" ),
+                                  keybind( "DROPPER_ALL" ) );
+            actions.emplace_back( [&] { item_dropper_drop_all(); refresh(); } );
+
+            options.emplace_back( _( "Activate one item dropper (Drop Everything)" ),
+                                  keybind( "DROPPER_SINGLE_ALL" ) );
+            actions.emplace_back( [&] { item_dropper_drop_single( false ); refresh(); } );
+
+            options.emplace_back( _( "Activate one item dropper (Drop One Thing)" ),
+                                  keybind( "DROPPER_SINGLE" ) );
+            actions.emplace_back( [&] { item_dropper_drop_single( true ); refresh(); } );
+        }
+    }
     uilist menu;
     menu.text = _( "Vehicle controls" );
     menu.entries = options;
@@ -1858,16 +1890,21 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     const bool has_harness = harness_part >= 0;
     const bool has_bike_rack = bike_rack_part >= 0;
     const bool has_planter = avail_part_with_feature( interact_part, "PLANTER", true ) >= 0;
+    const int door_lock_part = avail_part_with_feature( interact_part, "DOOR_LOCKING", true );
+    const bool has_door_lock = door_lock_part >= 0;
 
     enum {
         EXAMINE, TRACK, HANDBRAKE, CONTROL, CONTROL_ELECTRONICS, GET_ITEMS, GET_ITEMS_ON_GROUND, FOLD_VEHICLE, UNLOAD_TURRET,
         RELOAD_TURRET, USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_CRAFTER, USE_PURIFIER, PURIFY_TANK, USE_AUTOCLAVE, USE_AUTODOC,
-        USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, USE_TOWEL, PEEK_CURTAIN,
+        USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, USE_TOWEL, PEEK_CURTAIN, PICK_LOCK
     };
     uilist selectmenu;
 
     selectmenu.addentry( EXAMINE, true, 'e', _( "Examine vehicle" ) );
     selectmenu.addentry( TRACK, true, keybind( "TOGGLE_TRACKING" ), tracking_toggle_string() );
+    if( has_door_lock && parts[door_lock_part].enabled ) {
+        selectmenu.addentry( PICK_LOCK, true, 'e', _( "Pick the lock" ) );
+    }
     if( has_controls ) {
         selectmenu.addentry( HANDBRAKE, true, 'h', _( "Pull handbrake" ) );
         selectmenu.addentry( CONTROL, true, 'v', _( "Control vehicle" ) );
@@ -2124,6 +2161,10 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
         }
         case RELOAD_PLANTER: {
             reload_seeds( pos );
+            return;
+        }
+        case PICK_LOCK: {
+            iexamine::locked_object_pickable( get_avatar(), pos );
             return;
         }
     }

@@ -1,0 +1,48 @@
+[
+  {
+    "type": "mapgen",
+    "om_terrain": "water_tower_0zl",
+    "weight": 1000,
+    "method": "json",
+    "object": {
+      "fill_ter": "t_region_groundcover",
+      "rows": [
+        "...........ww...........",
+        ".ffffffffffFFffffffffff.",
+        ".f.........ww.........f.",
+        ".f.........ww.........f.",
+        ".f..MM.....ww.....MM..f.",
+        ".f..MM.....ww.....MM..f.",
+        ".f....wwwwwww.........f.",
+        ".f....wwwwwww.........f.",
+        ".f....wwMMMMMMMM......f.",
+        ".f....wwMMMMMMMM......f.",
+        ".f....wwMM,,,,MM......f.",
+        ".f....wwMM,<<,MM......f.",
+        ".f....wwMM,>>,MM......f.",
+        ".f....w7MM,,,,MM......f.",
+        ".f....wwMMM  MMM......f.",
+        ".f....wwMMMmmMMM......f.",
+        ".f....wwwwwww&........f.",
+        ".f....wwwwwww.........f.",
+        ".f..MM............MM..f.",
+        ".f..MM............MM..f.",
+        ".f....................f.",
+        ".f....................f.",
+        ".ffffffffffffffffffffff.",
+        "........................"
+      ],
+      "palettes": [ "water_tower" ],
+      "terrain": {
+        "=": "t_concrete_wall",
+        ".": "t_region_groundcover",
+        "w": "t_sidewalk",
+        " ": "t_metal_floor",
+        ",": "t_strconc_floor",
+        "m": "t_door_metal_locked",
+        "&": "t_gates_control_metal",
+        "7": "t_water_pump"
+      }
+    }
+  }
+]

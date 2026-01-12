@@ -8,7 +8,7 @@
     "attitude": 0,
     "mission": 7,
     "chat": "TALK_SCAVENGER_MERC",
-    "faction": "no_faction"
+    "faction": "wasteland_scavengers"
   },
   {
     "type": "npc_class",

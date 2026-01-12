@@ -166,7 +166,7 @@
     "type": "tool_quality",
     "id": "DIG",
     "name": { "str": "digging" },
-    "usages": [ [ 1, [ "MAKEMOUND", "DIG", "FILL_PIT", "DIG_CHANNEL" ] ], [ 2, [ "CLEAR_RUBBLE" ] ] ]
+    "usages": [ [ 1, [ "MAKEMOUND", "DIG", "FILL_PIT", "DIG_CHANNEL", "flowerpot_collect" ] ], [ 2, [ "CLEAR_RUBBLE" ] ] ]
   },
   {
     "type": "tool_quality",

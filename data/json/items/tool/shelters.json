@@ -28,7 +28,7 @@
     "price_postapoc": "15 USD",
     "to_hit": -3,
     "bashing": 6,
-    "material": [ "plastic", "aluminum" ],
+    "material": [ "cotton", "wood" ],
     "symbol": ";",
     "color": "green",
     "use_action": {
@@ -81,7 +81,7 @@
     "price_postapoc": "10 USD",
     "to_hit": -3,
     "bashing": 4,
-    "material": [ "plastic", "aluminum" ],
+    "material": [ "cotton", "wood" ],
     "symbol": ";",
     "color": "green",
     "use_action": {

@@ -242,6 +242,12 @@
     "requires_flag": "LOCKABLE_CARGO"
   },
   {
+    "id": "DOOR_LOCKING",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "requires_flag": "OPENABLE"
+  },
+  {
     "id": "DOOR_MOTOR",
     "type": "json_flag",
     "context": [ "vehicle_part" ],

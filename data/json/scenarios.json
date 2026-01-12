@@ -230,14 +230,13 @@
   {
     "type": "scenario",
     "id": "medieval",
-    "name": "Challenge - Medieval Peasant",
-    "points": -7,
-    "description": "Som nigromancie hath brought yow hidder!  Ye have only the hoose on youre legges and the knyf at youre syde and youre prayeres to Marie moder of God.",
+    "name": "Challenge - Temporal Anomaly",
+    "points": 0,
+    "description": "A temporal distortion has hurled you into this collapsing world. You arrive carrying only the few items that mattered most to you - the things tied to who you are, or who you were meant to become.",
     "start_name": "Wilderness",
-    "allowed_locs": [ "sloc_forest", "sloc_field" ],
-    "professions": [ "churl" ],
-    "forced_traits": [ "ILLITERATE", "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH", "SPIRITUAL" ],
-    "forbidden_traits": [ "FASTREADER", "SLOWREADER" ],
+    "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
+    "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder" ],
+    "forbids_bionics": true,
     "flags": [ "CHALLENGE", "LONE_START" ]
   },
   {
@@ -360,7 +359,8 @@
       "SMALL",
       "LARGE"
     ],
-    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ]
+    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
+    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
   },
   {
     "type": "scenario",
@@ -381,7 +381,8 @@
       "military_saboteur"
     ],
     "allowed_locs": [ "sloc_lab_random", "sloc_lab_escape_cells", "sloc_lab_finale", "sloc_ice_lab_stairs", "sloc_ice_lab_finale" ],
-    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ]
+    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
+    "bionics": [ "bio_surgical_razor", "bio_metabolics", "bio_torsionratchet", "bio_tools", "bio_memory", "bio_geiger" ]
   },
   {
     "type": "scenario",
@@ -402,6 +403,7 @@
     "allowed_locs": [
       "sloc_field",
       "sloc_forest",
+      "sloc_swamp",
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
@@ -438,6 +440,7 @@
     "allowed_locs": [
       "sloc_field",
       "sloc_forest",
+      "sloc_swamp",
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
@@ -562,7 +565,7 @@
     "points": 2,
     "description": "Since birth, your sole purpose in life has been the advancement of genetic science, willingly or not.  Once the Cataclysm struck, you left the lab, and wandered aimlessly, ending up in a forest.",
     "start_name": "Wilderness",
-    "allowed_locs": [ "sloc_forest", "sloc_field" ],
+    "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
     "professions": [ "unemployed", "mutant_patient", "mutant_volunteer", "broken_cyborg", "faulty_bionic", "cykotic", "convict_political" ],
     "traits": [
       "ELFAEYES",
@@ -617,7 +620,8 @@
       "SMALL",
       "LARGE"
     ],
-    "flags": [ "LONE_START" ]
+    "flags": [ "LONE_START" ],
+    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
   },
   {
     "type": "scenario",
@@ -650,7 +654,7 @@
     "points": 0,
     "description": "You find yourself amongst trees.  The screaming and the moaning is fainter this far from civilization, but you'd better know what you're doing out here.",
     "start_name": "Wilderness",
-    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_campsite", "sloc_campground", "sloc_deserted_island" ],
+    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_swamp", "sloc_campsite", "sloc_campground", "sloc_deserted_island" ],
     "flags": [ "LONE_START" ]
   },
   {
@@ -660,7 +664,7 @@
     "points": -5,
     "description": "While being transported to a different military base, the pilot lost control of the helicopter and crashed in the middle of nowhere.  Hopefully some of the soldiers that were with you also survived the accident.",
     "start_name": "Crash site",
-    "allowed_locs": [ "sloc_field", "sloc_forest" ],
+    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_swamp" ],
     "professions": [
       "soldier",
       "mil_auto_rifleman",
@@ -683,7 +687,18 @@
       "mili_pilot"
     ],
     "map_extra": "mx_helicopter",
-    "flags": [ "HELI_CRASH", "LONE_START" ]
+    "flags": [ "HELI_CRASH", "LONE_START" ],
+    "bionics": [
+      "bio_metabolics",
+      "bio_ethanol",
+      "bio_ups",
+      "bio_targeting",
+      "bio_geiger",
+      "bio_power_armor_interface",
+      "bio_cqb",
+      "bio_blade",
+      "bio_weight"
+    ]
   },
   {
     "type": "scenario",
@@ -738,7 +753,7 @@
     "points": 2,
     "description": "Once it became clear that the world was ending you took to the skies, hoping that your flying skills could lead you to safety.  With no safe landing zones, knowing fuel will soon be a concern, you made a quick landing to plan your next move.",
     "start_name": "Emergency Landing Site",
-    "allowed_locs": [ "sloc_field", "sloc_forest" ],
+    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_swamp" ],
     "missions": [ "MISSION_HELICOPTER_REFUEL" ],
     "professions": [
       "heli_pilot_scenario",
@@ -747,7 +762,10 @@
       "medic_pilot",
       "gyro_pilot",
       "bird_pilot",
-      "mili_pilot_blackhawk"
+      "mili_pilot_blackhawk",
+      "airship_pilot",
+      "airboat_pilot",
+      "aircanoe_pilot"
     ],
     "flags": [ "LONE_START" ]
   },
@@ -775,6 +793,17 @@
       "bionic_prepper",
       "bionic_installer",
       "bionic_labtech"
+    ],
+    "bionics": [
+      "bn_bio_solar",
+      "bio_climate",
+      "bio_evap",
+      "bio_metabolics",
+      "bio_recycler",
+      "bio_shock_absorber",
+      "bio_tools",
+      "bio_torsionratchet",
+      "bio_weight"
     ]
   },
   {
@@ -805,7 +834,18 @@
       "medic",
       "mili_pilot"
     ],
-    "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ]
+    "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
+    "bionics": [
+      "bio_metabolics",
+      "bio_ethanol",
+      "bio_ups",
+      "bio_targeting",
+      "bio_geiger",
+      "bio_power_armor_interface",
+      "bio_cqb",
+      "bio_blade",
+      "bio_weight"
+    ]
   },
   {
     "type": "scenario",
@@ -859,6 +899,17 @@
       "mili_pilot",
       "prof_combat_engineer"
     ],
-    "flags": [ "CHALLENGE", "LONE_START" ]
+    "flags": [ "CHALLENGE", "LONE_START" ],
+    "bionics": [
+      "bio_metabolics",
+      "bio_ethanol",
+      "bio_ups",
+      "bio_targeting",
+      "bio_geiger",
+      "bio_power_armor_interface",
+      "bio_cqb",
+      "bio_blade",
+      "bio_weight"
+    ]
   }
 ]

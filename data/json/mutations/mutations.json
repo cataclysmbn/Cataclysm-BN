@@ -67,6 +67,16 @@
   },
   {
     "type": "mutation",
+    "id": "INATTENTIVE",
+    "name": { "str": "Inattentive" },
+    "points": -4,
+    "starting_trait": true,
+    "description": "You never paid attention to your surroundings and specifically to people around you.  You can't judge intent of critters you see.",
+    "purifiable": false,
+    "valid": false
+  },
+  {
+    "type": "mutation",
     "id": "OUTDOORSMAN",
     "name": { "str": "Outdoorsman" },
     "points": 1,
@@ -6834,5 +6844,16 @@
     "purifiable": false,
     "profession": true,
     "scent_type": "sc_fetid"
+  },
+  {
+    "type": "mutation",
+    "id": "PROF_KNIGHT",
+    "name": { "str": "Swordsman" },
+    "points": 0,
+    "description": "You have trained in the ways of the European nobility. Mostly useless even before the Cataclysm, now the only thing worth anything is the swordsmanship.",
+    "valid": false,
+    "initial_ma_styles": [ "style_swordsmanship" ],
+    "purifiable": false,
+    "profession": true
   }
 ]

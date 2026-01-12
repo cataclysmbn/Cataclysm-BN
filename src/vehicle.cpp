@@ -1,4 +1,5 @@
 #include "vehicle.h"
+#include "detached_ptr.h"
 #include "units_mass.h"
 #include "vehicle_part.h" // IWYU pragma: associated
 #include "vpart_position.h" // IWYU pragma: associated
@@ -69,7 +70,9 @@
 #include "translations.h"
 #include "units_utility.h"
 #include "veh_type.h"
+#include "vehicle_functions.h"
 #include "weather.h"
+#include "ui.h"
 /*
  * Speed up all those if ( blarg == "structure" ) statements that are used everywhere;
  *   assemble "structure" once here instead of repeatedly later.
@@ -100,6 +103,23 @@ static const itype_id itype_plut_cell( "plut_cell" );
 static const itype_id itype_water( "water" );
 static const itype_id itype_water_clean( "water_clean" );
 static const itype_id itype_water_purifier( "water_purifier" );
+static const vpart_id vp_door_lock( "door_lock" );
+
+static const flag_id f_VEHICLE_UNLOCKED( "VEHICLE_UNLOCKED" );
+static const flag_id f_VEHICLE_LOCKED( "VEHICLE_LOCKED" );
+static const flag_id f_VEHICLE_NO_LOCKS( "VEHICLE_NO_LOCKS" );
+
+static const flag_id f_VEHICLE_NO_HOTWIRE( "VEHICLE_NO_HOTWIRE" );
+static const flag_id f_VEHICLE_HOTWIRE( "VEHICLE_HOTWIRE" );
+
+static const std::string str_DOOR_LOCKING( "DOOR_LOCKING" );
+static const std::string str_OPENCLOSE_INSIDE( "OPENCLOSE_INSIDE" );
+
+static const std::vector<std::string> vs_NO_HOTWIRING = {
+    "MUSCLE_LEGS",
+    "MUSCLE_ARMS",
+    "ANIMAL_CTRL",
+};
 
 static bool is_sm_tile_outside( const tripoint &real_global_pos );
 static bool is_sm_tile_over_water( const tripoint &real_global_pos );
@@ -281,6 +301,7 @@ void vehicle::copy_static_from( const vehicle &source )
     propellers = source.propellers;
     wings = source.wings;
     balloons = source.balloons;
+    droppers = source.droppers;
     rail_wheelcache = source.rail_wheelcache;
     steering = source.steering;
     speciality = source.speciality;
@@ -361,8 +382,10 @@ void vehicle::copy_static_from( const vehicle &source )
     vehicle_noise = source.vehicle_noise;
 }
 
-vehicle::vehicle( const vproto_id &type_id, int init_veh_fuel,
-                  int init_veh_status ): type( type_id )
+vehicle::vehicle(
+    const vproto_id &type_id, int init_veh_fuel, int init_veh_status, std::optional<bool> locked,
+    std::optional<bool> has_keys )
+    : type( type_id )
 {
     turn_dir = 0_degrees;
     face.init( 0_degrees );
@@ -378,7 +401,7 @@ vehicle::vehicle( const vproto_id &type_id, int init_veh_fuel,
             parts.emplace_back( part, this );
         }
         refresh_locations_hack();
-        init_state( init_veh_fuel, init_veh_status );
+        init_state( init_veh_fuel, init_veh_status, locked, has_keys );
     }
     precalc_mounts( 0, pivot_rotation[0], pivot_anchor[0] );
     refresh();
@@ -501,7 +524,9 @@ void vehicle::add_steerable_wheels()
     }
 }
 
-void vehicle::init_state( int init_veh_fuel, int init_veh_status )
+void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
+                          const std::optional<bool> locked,
+                          const std::optional<bool> has_keys )
 {
     // vehicle parts excluding engines are by default turned off
     for( auto &pt : parts ) {
@@ -515,8 +540,12 @@ void vehicle::init_state( int init_veh_fuel, int init_veh_status )
     bool destroyTires = false;
     bool blood_covered = false;
     bool blood_inside = false;
-    bool has_no_key = false;
+    bool lockDoors = false;
+    bool needsHotwire = false;
     bool destroyAlarm = false;
+
+    remove_old_owner();
+    remove_owner();
 
     // More realistically it should be -5 days old
     last_update = calendar::start_of_cataclysm;
@@ -535,43 +564,87 @@ void vehicle::init_state( int init_veh_fuel, int init_veh_status )
     // -1 = light damage (DEFAULT)
     //  0 = undamaged
     //  1 = disabled, destroyed tires OR engine
-    int veh_status = -1;
+    const int veh_status = init_veh_status;
     if( init_veh_status == 0 ) {
-        veh_status = 0;
-    }
-    if( init_veh_status == 1 ) {
-        int rand = rng( 1, 100 );
-        veh_status = 1;
+        // vehicle locked 100%
+        lockDoors = needsHotwire = true;
+    } else if( init_veh_status == -1 ) {
+        // vehicle locked 67%
+        lockDoors = needsHotwire = rng( 1, 100 ) <= 67;
 
-        if( rand <= 5 ) {          //  seats are destroyed 5%
-            destroySeats = true;
-        } else if( rand <= 15 ) {  // controls are destroyed 10%
-            destroyControls = true;
-            veh_fuel_mult += rng( 0, 7 );   // add 0-7% more fuel if controls are destroyed
-        } else if( rand <= 23 ) {  // battery, minireactor or gasoline tank are destroyed 8%
-            destroyTank = true;
-        } else if( rand <= 29 ) {  // engine are destroyed 6%
-            destroyEngine = true;
+        // if locked, 16% chance something damaged
+        if( one_in( 6 ) && ( needsHotwire || lockDoors ) ) {
+            if( one_in( 3 ) ) {
+                destroyTank = true;
+            } else if( one_in( 2 ) ) {
+                destroyEngine = true;
+            } else {
+                destroyTires = true;
+            }
+        }
+    } else if( init_veh_status == 1 ) {
+        //  seats are destroyed 5%
+        destroySeats = rng( 1, 100 ) <= 5;
+        // controls are destroyed 10%
+        destroyControls = rng( 1, 100 ) <= 10;
+        // battery, minireactor or gasoline tank are destroyed 8%
+        destroyTank = rng( 1, 100 ) <= 8;
+        // engine are destroyed 6%
+        destroyEngine = rng( 1, 100 ) <= 6;
+        // tires are destroyed 37%
+        destroyTires = rng( 1, 100 ) <= 37;
+        // locked 34%
+        lockDoors = needsHotwire = rng( 1, 100 ) <= 34;
+
+        if( destroyEngine ) {
             veh_fuel_mult += rng( 3, 12 );  // add 3-12% more fuel if engine is destroyed
-        } else if( rand <= 66 ) {  // tires are destroyed 37%
-            destroyTires = true;
+        }
+        if( destroyControls ) {
+            veh_fuel_mult += rng( 0, 7 );   // add 0-7% more fuel if controls are destroyed
+        }
+        if( destroyTires ) {
             veh_fuel_mult += rng( 0, 18 );  // add 0-18% more fuel if tires are destroyed
-        } else {                   // vehicle locked 34%
-            has_no_key = true;
         }
     }
-    // if locked, 16% chance something damaged
-    if( one_in( 6 ) && has_no_key ) {
-        if( one_in( 3 ) ) {
-            destroyTank = true;
-        } else if( one_in( 2 ) ) {
-            destroyEngine = true;
-        } else {
-            destroyTires = true;
-        }
-    } else if( !one_in( 3 ) ) {
-        //most cars should have a destroyed alarm
+
+    //most cars should have a destroyed alarm
+    if( !one_in( 3 ) ) {
         destroyAlarm = true;
+    }
+
+    // Check Prototype Flags
+    if( get_avail_parts( VPFLAG_CONTROLS ).part_count() > 0 ) {
+        const auto &proto_flags = type.obj().flags;
+        if( has_keys.has_value() ) {
+            needsHotwire = !has_keys.value();
+        } else if( proto_flags.contains( f_VEHICLE_HOTWIRE ) ) {
+            needsHotwire = true;
+        } else if( proto_flags.contains( f_VEHICLE_NO_HOTWIRE ) ) {
+            needsHotwire = false;
+        } else  {
+            // No horse-wiring
+            for( const auto &vp : get_all_parts() ) {
+                if( std::ranges::any_of( vs_NO_HOTWIRING, [&]( const std::string & flag ) { return vp.has_feature( flag );} ) ) {
+                    needsHotwire = false;
+                    break;
+                }
+            }
+        }
+    } else {
+        needsHotwire = false;
+    }
+
+    is_locked = needsHotwire;
+
+    const auto &proto_flags = type.obj().flags;
+    if( locked.has_value() ) {
+        lockDoors = locked.value();
+    } else if( proto_flags.contains( f_VEHICLE_UNLOCKED ) ) {
+        lockDoors = false;
+    } else if( proto_flags.contains( f_VEHICLE_LOCKED ) ) {
+        lockDoors = true;
+    } else {
+        lockDoors = lockDoors && get_option<bool>( "VEHICLE_LOCKS" );
     }
 
     //Provide some variety to non-mint vehicles
@@ -580,7 +653,7 @@ void vehicle::init_state( int init_veh_fuel, int init_veh_status )
         //chance decays from 1 in 4 vehicles on day 0 to 1 in (day + 4) in the future.
         int current_day = std::max( to_days<int>( calendar::turn - calendar::turn_zero ), 0 );
         if( veh_fuel_mult > 0 && !empty( get_avail_parts( "ENGINE" ) ) &&
-            one_in( current_day + 4 ) && !destroyEngine && !has_no_key &&
+            one_in( current_day + 4 ) && !destroyEngine && !needsHotwire &&
             has_engine_type_not( fuel_type_muscle, true ) ) {
             engine_on = true;
         }
@@ -635,6 +708,34 @@ void vehicle::init_state( int init_veh_fuel, int init_veh_status )
         }
     }
 
+    // Install Locks
+    if( !proto_flags.contains( f_VEHICLE_NO_LOCKS ) ) {
+        std::set<point> doors;
+        for( const vpart_reference &vp : get_all_parts() ) {
+            if( vp.has_feature( "OPENABLE" ) && vp.has_feature( "BOARDABLE" ) &&
+                !vp.has_feature( "CURTAIN" ) ) {
+                doors.emplace( vp.mount() );
+            }
+        }
+
+        for( const auto &door : doors ) {
+            const auto idx = install_part( door, vp_door_lock );
+            if( idx >= 0 ) {
+                // Newly installed part
+                parts[idx].enabled = lockDoors;
+            } else {
+                // Already installed from blueprint
+                const auto lock = part_with_feature( door, str_DOOR_LOCKING, true );
+                if( idx >= 0 ) {
+                    parts[lock].enabled = lockDoors;
+                } else {
+                    // Already installed from blueprint
+                    debugmsg( "Failed to install door locks on vehicle" );
+                }
+            }
+        }
+    }
+
     std::optional<point> blood_inside_pos;
     for( const vpart_reference &vp : get_all_parts() ) {
         const size_t p = vp.part_index();
@@ -682,6 +783,10 @@ void vehicle::init_state( int init_veh_fuel, int init_veh_status )
         if( vp.has_feature( "OPENABLE" ) ) { // doors are closed
             if( !pt.open && one_in( 4 ) ) {
                 open( p );
+                const auto lock = vp.part_with_feature( str_DOOR_LOCKING, true );
+                if( lock ) {
+                    lock->part().enabled = false;
+                }
             }
         }
         if( vp.has_feature( "BOARDABLE" ) ) {   // no passengers
@@ -776,16 +881,13 @@ void vehicle::init_state( int init_veh_fuel, int init_veh_status )
                 set_hp( parts[random_entry( wheelcache )], 0 );
             }
         }
-        //sets the vehicle to locked, if there is no key and an alarm part exists
-        if( vp.has_feature( "SECURITY" ) && has_no_key && pt.is_available() ) {
-            is_locked = true;
-
-            if( one_in( 2 ) ) {
-                // if vehicle has immobilizer 50% chance to add additional fault
-                pt.fault_set( fault_immobiliser );
-            }
+        // if there is no key and an alarm part exists
+        // and vehicle has immobilizer 50% chance to add additional fault
+        if( vp.has_feature( "SECURITY" ) && needsHotwire && pt.is_available() && one_in( 2 ) ) {
+            pt.fault_set( fault_immobiliser );
         }
     }
+
     // destroy a random number of tires, vehicles with more wheels are more likely to survive
     if( destroyTires && !wheelcache.empty() ) {
         int tries = 0;
@@ -1047,6 +1149,11 @@ void vehicle::drive_to_local_target( const tripoint &target, bool follow_protoco
     selfdrive( point( turn_x, accel_y ) );
 }
 
+tripoint vehicle::get_autodrive_target()
+{
+    return autodrive_local_target;
+}
+
 units::angle vehicle::get_angle_from_targ( const tripoint &targ )
 {
     tripoint vehpos = global_square_location().raw();
@@ -1249,12 +1356,8 @@ bool vehicle::has_security_working() const
 {
     bool found_security = false;
     if( fuel_left( fuel_type_battery ) > 0 ) {
-        for( int s : speciality ) {
-            if( part_flag( s, "SECURITY" ) && parts[ s ].is_available() ) {
-                found_security = true;
-                break;
-            }
-        }
+        const auto [c, s] = get_controls_and_security();
+        found_security = s >= 0;
     }
     return found_security;
 }
@@ -1436,19 +1539,23 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
     const std::vector<int> parts_in_square = parts_at_relative( dp, false );
 
     //New Subpath for balloon type structures when on the edge
-    if( parts_in_square.empty() && part.has_flag( "EXTENDABLE" ) ) {
-        // There needs to be parts for these
-        if( !parts.empty() ) {
-            if( !has_structural_or_extendable_part( dp ) &&
-                !has_structural_or_extendable_part( dp + point_east ) &&
-                !has_structural_or_extendable_part( dp + point_south ) &&
-                !has_structural_or_extendable_part( dp + point_west ) &&
-                !has_structural_or_extendable_part( dp + point_north ) ) {
-                return false;
+    if( part.has_flag( "EXTENDABLE" ) ) {
+        if( parts_in_square.empty() ) {
+            // There needs to be parts for these
+            if( !parts.empty() ) {
+                if( !has_structural_or_extendable_part( dp ) &&
+                    !has_structural_or_extendable_part( dp + point_east ) &&
+                    !has_structural_or_extendable_part( dp + point_south ) &&
+                    !has_structural_or_extendable_part( dp + point_west ) &&
+                    !has_structural_or_extendable_part( dp + point_north ) ) {
+                    return false;
+                }
+                return true;
             }
-            return true;
+            // If there are no parts, we go on our merry day
+        } else {
+            return false;
         }
-        // If there are no parts, we go on our merry day
     }
     //First part in an empty square MUST be a structural part
     if( parts_in_square.empty() && part.location != part_location_structure ) {
@@ -1571,9 +1678,30 @@ bool vehicle::can_unmount( const int p, std::string &reason ) const
     const point pt = parts[p].mount;
     std::vector<int> parts_here = parts_at_relative( pt, false );
 
-    for( auto &elem : parts_here ) {
+    if( part_info( p ).has_flag( "NOREMOVE_SECURITY" ) ) {
+        const auto [c, s] = get_controls_and_security();
+        if( s >= 0 ) {
+            reason = string_format( _( "Remove the %1$s %2$s first." ), name, part_info( s ).name() );
+            return false;
+        }
+    }
+
+    const auto no_remove_closed = part_info( p ).has_flag( "NOREMOVE_CLOSED" );
+    const auto no_remove_open =  part_info( p ).has_flag( "NOREMOVE_OPEN" );
+    for( const auto &elem : parts_here ) {
+        const auto is_openable = part_info( elem ).has_flag( "OPENABLE" );
+        if( no_remove_closed && is_openable && !parts[elem].open ) {
+            reason = string_format( _( "Open the attached %s first." ), part_info( elem ).name() );
+            return false;
+        }
+        if( no_remove_open && is_openable &&  parts[elem].open ) {
+            reason = string_format( _( "Close the attached %s first." ), part_info( elem ).name() );
+            return false;
+        }
+
         for( const std::string &flag : part_info( elem ).get_flags() ) {
-            if( part_info( p ).has_flag( json_flag::get( flag ).requires_flag() ) ) {
+            const auto require_flag = json_flag::get( flag ).requires_flag();
+            if( !require_flag.empty() && part_info( p ).has_flag( require_flag ) ) {
                 reason = string_format( _( "Remove the attached %s first." ), part_info( elem ).name() );
                 return false;
             }
@@ -2238,7 +2366,8 @@ bool vehicle::remove_carried_vehicle( const std::vector<int> &carried_parts )
                  to_degrees( face.dir() ), to_degrees( new_dir ) );
         return false;
     }
-
+    new_vehicle->owner = owner;
+    new_vehicle->old_owner = old_owner;
     std::vector<point> new_mounts;
     new_vehicle->name = veh_record.substr( vehicle_part::name_offset );
     for( auto carried_part : carried_parts ) {
@@ -2451,6 +2580,8 @@ bool vehicle::split_vehicles( const std::vector<std::vector <int>> &new_vehs,
                 // the split part was out of the map bounds.
                 continue;
             }
+            new_vehicle->owner = owner;
+            new_vehicle->old_owner = old_owner;
             new_vehicle->name = name;
             new_vehicle->move = move;
             new_vehicle->turn_dir = turn_dir;
@@ -4774,13 +4905,57 @@ std::string vehicle::get_owner_name() const
     return _( g->faction_manager_ptr->get( owner )->name );
 }
 
+bool vehicle::has_owner() const
+{
+    return !owner.is_null();
+}
+
+faction_id vehicle::get_owner() const
+{
+    return owner;
+}
+
 void vehicle::set_owner( const Character &c )
 {
-    if( !c.get_faction() ) {
-        debugmsg( "vehicle::set_owner() player %s has no valid faction", c.disp_name() );
+    const auto faction = c.get_faction();
+    if( !faction ) {
+        debugmsg( "vehicle::set_owner() player %s has no valid faction",
+                  c.disp_name() );
         return;
     }
-    owner = c.get_faction()->id;
+    owner = faction->id;
+}
+
+void vehicle::set_owner( const faction_id &new_owner )
+{
+    owner = new_owner;
+}
+
+void vehicle::remove_owner()
+{
+    owner = faction_id::NULL_ID();
+}
+
+bool vehicle::has_old_owner() const
+{
+    return !old_owner.is_null();
+}
+
+faction_id vehicle::get_old_owner() const
+{
+    return old_owner;
+}
+
+void vehicle::set_old_owner( const faction_id &temp_owner )
+{
+    theft_time = calendar::turn;
+    old_owner = temp_owner;
+}
+
+void vehicle::remove_old_owner()
+{
+    theft_time = std::nullopt;
+    old_owner = faction_id::NULL_ID();
 }
 
 bool vehicle::handle_potential_theft( avatar &you, bool check_only, bool prompt )
@@ -4797,28 +4972,33 @@ bool vehicle::handle_potential_theft( avatar &you, bool check_only, bool prompt 
         return true;
         // if There is no owner
         // handle transfer of ownership
-    } else if( !has_owner() ) {
+    }
+
+    // if we are just checking if we could continue without problems, then the rest is assumed false
+    if( check_only ) {
+        return false;
+    }
+
+    if( !has_owner() ) {
         set_owner( you.get_faction()->id );
         remove_old_owner();
         return true;
         // if there is a marker for having been stolen, but 15 minutes have passed, then officially transfer ownership
-    } else if( has_witnesses && has_old_owner() && !is_old_owner( you ) && theft_time &&
-               calendar::turn - *theft_time > 15_minutes ) {
-        set_owner( you.get_faction()->id );
-        remove_old_owner();
+    }
+
+    if( !has_witnesses && has_old_owner() ) {
+        if( !is_old_owner( you ) && theft_time && calendar::turn - *theft_time > 15_minutes ) {
+            set_owner( you.get_faction()->id );
+            remove_old_owner();
+        }
         return true;
         // No witnesses? then don't need to prompt, we assume the player is in process of stealing it.
         // Ownership transfer checking is handled above, and warnings handled below.
         // This is just to perform interaction with the vehicle without a prompt.
         // It will prompt first-time, even with no witnesses, to inform player it is owned by someone else
         // subsequently, no further prompts, the player should know by then.
-    } else if( has_witnesses && old_owner ) {
-        return true;
     }
-    // if we are just checking if we could continue without problems, then the rest is assumed false
-    if( check_only ) {
-        return false;
-    }
+
     // if we got here, there's some theft occurring
     if( prompt ) {
         if( !query_yn(
@@ -5163,7 +5343,8 @@ int vehicle::total_water_wheel_epower_w() const
 int vehicle::net_battery_charge_rate_w() const
 {
     return total_engine_epower_w() + total_alternator_epower_w() + total_accessory_epower_w() +
-           total_solar_epower_w() + total_wind_epower_w() + total_water_wheel_epower_w();
+           total_solar_epower_w() + total_wind_epower_w() + total_water_wheel_epower_w() +
+           max_reactor_epower_w();
 }
 
 int vehicle::max_reactor_epower_w() const
@@ -5631,7 +5812,10 @@ void vehicle::idle( bool on_map )
             Also consider adding a hover efficiency field
         */
         if( is_rotorcraft() && is_flying_in_air() ) {
-            idle_rate = 100;
+            const auto rotor_newtons = std::max( 0.0,
+                                                 to_newton( total_mass() ) - total_balloon_lift() - total_wing_lift() );
+            const auto rotor_capacity = rotor_newtons / thrust_of_rotorcraft( true );
+            idle_rate = std::max( 10, int( std::floor( 100 * rotor_capacity ) ) );
             no_electric_power = false;
         }
         if( has_engine_type_not( fuel_type_muscle, true ) ) {
@@ -5683,6 +5867,8 @@ void vehicle::idle( bool on_map )
     if( is_alarm_on ) {
         alarm();
     }
+
+    vehicle_funcs::process_autoloaders( *this );
 }
 
 void vehicle::on_move()
@@ -6100,6 +6286,7 @@ void vehicle::refresh()
     rotors.clear();
     wings.clear();
     propellers.clear();
+    droppers.clear();
     balloons.clear();
     steering.clear();
     speciality.clear();
@@ -6175,6 +6362,10 @@ void vehicle::refresh()
         }
         if( vpi.has_flag( VPFLAG_BALLOON ) ) {
             balloons.push_back( p );
+        }
+
+        if( vpi.has_flag( VPFLAG_DROPPER ) ) {
+            droppers.push_back( p );
         }
         if( vpi.has_flag( "WIND_TURBINE" ) ) {
             wind_turbines.push_back( p );
@@ -7522,11 +7713,16 @@ void vehicle::calc_mass_center( bool use_precalc ) const
         units::mass m_part = 0_gram;
         units::mass m_part_items = 0_gram;
         m_part += vp.part().base->weight();
+        const int weight_modifier = vp.part().info().weight_modifier;
+        const int cargo_weight_modifier = vp.part().info().cargo_weight_modifier;
+        if( weight_modifier != 100 ) {
+            m_part *= static_cast<float>( weight_modifier ) / 100.0f;
+        }
         for( const auto &j : get_items( i ) ) {
             m_part_items += j->weight();
         }
-        if( vp.part().info().cargo_weight_modifier != 100 ) {
-            m_part_items *= static_cast<float>( vp.part().info().cargo_weight_modifier ) / 100.0f;
+        if( cargo_weight_modifier != 100 ) {
+            m_part_items *= static_cast<float>( cargo_weight_modifier ) / 100.0f;
         }
         m_part += m_part_items;
 
@@ -7725,4 +7921,114 @@ int vehicle::get_part_id_hack( int id )
     }
     debugmsg( "Could not find part id via hack id" );
     return -1;
+}
+
+// The mythical invokation to summon the cargo part on the same tile
+vehicle_part *vehicle::get_cargo_part( vehicle_part *part )
+{
+    vehicle_part *vp = nullptr;
+    int vpr = part_with_feature( part->mount, "CARGO", false );
+    if( vpr != -1 ) {
+        vp = &parts[ vpr ];
+    }
+    return vp;
+}
+bool vehicle::has_item_stored( vehicle_part *part )
+{
+    vehicle_part *vp = get_cargo_part( part );
+    if( vp ) {
+        return stored_volume( index_of_part( vp ) ) > 0_ml;
+    }
+    return false;
+}
+
+void vehicle::item_dropper_drop( std::vector<vehicle_part *> droppers, bool single )
+{
+    if( single ) {
+        vehicle_part *part = get_cargo_part( droppers[0] );
+        std::vector<std::string> option_names;
+        std::vector<item *> options;
+        for( item *it : part->items ) {
+            option_names.push_back( it->display_name() );
+            options.push_back( it );
+        }
+        const int idx = uilist( _( "Drop which item?" ), option_names );
+        if( idx < 0 ) {
+            return;
+        }
+        map &here = get_map();
+        tripoint pos = global_part_pos3( index_of_part( part ) );
+        while( here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, pos ) ) {
+            pos.z -= 1;
+        }
+        item *dropper = options[idx];
+        if( dropper->get_use( "transform" ) ) {
+            g->u.invoke_item( dropper, "transform" );
+        }
+        g->m.add_item_or_charges( pos, part->remove_item( *dropper ) );
+    } else {
+        for( vehicle_part *d : droppers ) {
+            vehicle_part *part = get_cargo_part( d );
+            map &here = get_map();
+            if( part ) {
+                tripoint pos = global_part_pos3( index_of_part( part ) );
+                while( here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, pos ) ) {
+                    pos.z -= 1;
+                }
+                // DANGER: DO NOT PUT THIS IN THE FOR LOOP
+                const std::vector<item *> items = part->get_items();
+                for( item *it : items ) {
+                    if( it->get_use( "transform" ) ) {
+                        g->u.invoke_item( it, "transform" );
+                    }
+                    g->m.add_item_or_charges( pos, part->remove_item( *it ) );
+                }
+            }
+        }
+    }
+}
+
+void vehicle::item_dropper_drop_single( bool single )
+{
+    std::vector<std::string> option_names;
+    std::vector<vehicle_part *> options;
+
+    // Find all droppers that are loaded
+    for( int idx : droppers ) {
+        vehicle_part *d = &parts[ idx ];
+        if( has_item_stored( d ) ) {
+            option_names.push_back( d->name() );
+            options.push_back( d );
+        }
+    }
+
+    // Select one
+    if( options.empty() ) {
+        add_msg( m_warning, _( "None of the droppers are loaded." ) );
+        return;
+    }
+    const int idx = uilist( _( "Drop from which dropper?" ), option_names );
+    if( idx < 0 ) {
+        return;
+    }
+    vehicle_part *dropper = options[idx];
+
+    std::vector<vehicle_part *> droppers;
+    droppers.push_back( dropper );
+    item_dropper_drop( droppers, single );
+}
+
+void vehicle::item_dropper_drop_all( )
+{
+    std::vector<vehicle_part *> ret;
+
+    // Find all droppers that are loaded
+    for( int idx : droppers ) {
+        vehicle_part *d = &parts[ idx ];
+        if( has_item_stored( d ) ) {
+            ret.push_back( d );
+        }
+    }
+
+    item_dropper_drop( ret, false );
 }

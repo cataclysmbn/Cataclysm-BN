@@ -1,0 +1,117 @@
+[
+  {
+    "type": "profession",
+    "id": "crt_guard_t3",
+    "name": "C.R.I.T. Bionic Enforcer",
+    "description": "STR 10 recommended.  You were a granted the authority of a U.S Marshal. While hired as a guard, with some others joking that you were nothing more than a mall cop with a fancy badge, you eventually got promoted. From mearly a guard to a highly augmented melee fighter. You were sent in to retake a city, but with most of the others failing, mission parameters have expanded quite a bit.",
+    "traits": [ "MARTIAL_CRT", "PROF_FED", "PROF_MILITARY", "LARGE_OK" ],
+    "CBMs": [ "bio_razors", "bio_sunglasses", "bio_ears", "bio_speed", "bio_str_enhancer", "bio_heat_absorb", "bio_weight" ],
+    "points": 15,
+    "skills": [
+      { "level": 4, "name": "bashing" },
+      { "level": 6, "name": "dodge" },
+      { "level": 8, "name": "melee" },
+      { "level": 6, "name": "unarmed" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "crt_mask",
+          "crt_earmor",
+          "crt_sarmor",
+          "army_top",
+          "crt_gloves_liner",
+          "crt_gloves",
+          "crt_belt",
+          "crt_legrig",
+          "socks",
+          "crt_earmor_boots",
+          "two_way_radio",
+          "crt_nstick",
+          "badge_marshal",
+          "lighter"
+        ],
+        "entries": [ { "item": "water_clean", "container-item": "crt_canteen" }, { "item": "knife_crt", "container-item": "sheath" } ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "crt_guard_t2",
+    "name": "C.R.I.T. Enforcer",
+    "description": "STR 10 recommended.  You were a granted the authority of a U.S Marshal.  As a guard, others joked that you were nothing more than a mall cop with a fancy badge.  Knowingly, you laughed it off as the you donned your equipment and deployed.  While you mainly spent time at base, you honed your skills and received special implants to do your job easier at the low low cost of serving as a \"guard\" forever.  Time to do your job, mission parameters look like they've expanded quite a bit though.",
+    "traits": [ "MARTIAL_CRT", "PROF_FED", "LARGE_OK" ],
+    "CBMs": [ "bio_razors", "bio_sunglasses", "bio_ears", "bio_speed", "bio_str_enhancer" ],
+    "points": 8,
+    "skills": [
+      { "level": 4, "name": "bashing" },
+      { "level": 2, "name": "dodge" },
+      { "level": 4, "name": "melee" },
+      { "level": 2, "name": "unarmed" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "crt_mask",
+          "crt_earmor",
+          "crt_sarmor",
+          "army_top",
+          "crt_gloves_liner",
+          "crt_gloves",
+          "crt_belt",
+          "crt_legrig",
+          "socks",
+          "crt_earmor_boots",
+          "two_way_radio",
+          "crt_nstick",
+          "badge_marshal",
+          "lighter"
+        ],
+        "entries": [ { "item": "water_clean", "container-item": "crt_canteen" }, { "item": "knife_crt", "container-item": "sheath" } ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "crt_guard_t1",
+    "name": "C.R.I.T. Guard",
+    "description": "STR 10 recommended. You were once regarded as the world's leading bodyguard; Until you were hired to guard a C.R.I.T. base. As a guard, others joked that you were nothing more than a mall cop with a fancy badge.  Knowingly, you laughed it off as the you donned your equipment and deployed. While new to your job, you at least recieved the new equipment given to all enforcers. Time to do your job of being a guard, first by retaking the territory to guard",
+    "traits": [ "MARTIAL_CRT", "PROF_MILITARY", "LARGE_OK" ],
+    "points": 4,
+    "skills": [
+      { "level": 4, "name": "bashing" },
+      { "level": 2, "name": "dodge" },
+      { "level": 4, "name": "melee" },
+      { "level": 2, "name": "unarmed" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "crt_mask",
+          "crt_earmor",
+          "crt_sarmor",
+          "army_top",
+          "crt_gloves_liner",
+          "crt_gloves",
+          "crt_belt",
+          "crt_legrig",
+          "socks",
+          "crt_earmor_boots",
+          "two_way_radio",
+          "crt_nstick",
+          "lighter"
+        ],
+        "entries": [ { "item": "water_clean", "container-item": "crt_canteen" }, { "item": "knife_crt", "container-item": "sheath" } ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  }
+]

@@ -11,6 +11,7 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "coordinate_conversions.h"
 #include "creature_tracker.h"
@@ -108,6 +109,7 @@ static const efftype_id effect_supercharged( "supercharged" );
 static const efftype_id effect_teargas( "teargas" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_webbed( "webbed" );
+static const efftype_id effect_well_fed( "well_fed" );
 
 static const itype_id itype_corpse( "corpse" );
 static const itype_id itype_milk( "milk" );
@@ -128,6 +130,7 @@ static const trait_id trait_ANIMALEMPATH( "ANIMALEMPATH" );
 static const trait_id trait_ANIMALEMPATH2( "ANIMALEMPATH2" );
 static const trait_id trait_BEE( "BEE" );
 static const trait_id trait_FLOWERS( "FLOWERS" );
+static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
 static const trait_id trait_KILLER( "KILLER" );
 static const trait_id trait_MYCUS_FRIEND( "MYCUS_FRIEND" );
 static const trait_id trait_PACIFIST( "PACIFIST" );
@@ -162,6 +165,7 @@ static const std::map<monster_attitude, std::pair<std::string, color_id>> attitu
     {monster_attitude::MATT_IGNORE, {translate_marker( "Ignoring." ), def_c_light_gray}},
     {monster_attitude::MATT_ZLAVE, {translate_marker( "Zombie slave." ), def_c_green}},
     {monster_attitude::MATT_ATTACK, {translate_marker( "Hostile!" ), def_c_red}},
+    {monster_attitude::MATT_UNKNOWN, { "", def_h_white}}, //Should only be used for UI.
     {monster_attitude::MATT_NULL, {translate_marker( "BUG: Behavior unnamed." ), def_h_red}},
 };
 
@@ -383,7 +387,14 @@ void monster::hasten_upgrade()
     }
 
     const int scaled_half_life = type->half_life * get_option<float>( "MONSTER_UPGRADE_FACTOR" );
-    upgrade_time -= rng( 1, scaled_half_life );
+    int reduction = rng( 1, scaled_half_life );
+
+    // Well-fed animals mature 30% faster
+    if( has_effect( effect_well_fed ) ) {
+        reduction = static_cast<int>( reduction * 1.3 );
+    }
+
+    upgrade_time -= reduction;
     if( upgrade_time < 0 ) {
         upgrade_time = 0;
     }
@@ -449,7 +460,16 @@ void monster::try_upgrade( bool pin_time )
     // This is so that late into game new monsters can 'catch up' with all that half-life
     // upgrades they'd get if we were simulating whole world.
     while( true ) {
-        if( upgrade_time > current_day ) {
+        int effective_upgrade_time = upgrade_time;
+
+        // Well-fed animals mature 30% faster (check remaining time)
+        if( has_effect( effect_well_fed ) ) {
+            const int original_grow_time = next_upgrade_time();
+            const int accelerated_grow_time = static_cast<int>( original_grow_time * 0.7 );
+            effective_upgrade_time = ( upgrade_time - original_grow_time ) + accelerated_grow_time;
+        }
+
+        if( effective_upgrade_time > current_day ) {
             // not yet
             return;
         }
@@ -538,7 +558,20 @@ void monster::reproduce()
         return;
     }
 
-    const int spawn_cnt = rng( 1, type->baby_count );
+    // Well-fed animals produce more offspring (30% increase)
+    // Use probabilistic rounding: fractional part becomes probability of +1
+    // e.g., 2.6 babies → 60% chance of 3, 40% chance of 2
+    int max_babies = type->baby_count;
+    if( has_effect( effect_well_fed ) ) {
+        const float exact_babies = max_babies * 1.3f;
+        max_babies = static_cast<int>( exact_babies );
+        const int fractional_percent = static_cast<int>( ( exact_babies - max_babies ) * 100 );
+        if( x_in_y( fractional_percent, 100 ) ) {
+            max_babies++;
+        }
+    }
+
+    const int spawn_cnt = rng( 1, max_babies );
     const auto birth = baby_timer && ( *baby_timer <= calendar::turn ) ? *baby_timer : calendar::turn;
 
     // wildlife creatures that are pets of the player will spawn pet offspring
@@ -577,16 +610,33 @@ void monster::refill_udders()
             ammo[itype_milk_raw] = current_milk->second;
             // Erase old key-value from map
             ammo.erase( current_milk );
+            current_milk = ammo.find( itype_milk_raw );
         }
     }
-    // if we got here, we got milk.
+
+    // If no milk found, use the first starting_ammo type (e.g., gasoline for hell goats)
+    if( current_milk == ammo.end() ) {
+        current_milk = ammo.find( type->starting_ammo.begin()->first );
+        if( current_milk == ammo.end() ) {
+            // This shouldn't happen since we initialized ammo above, but be safe
+            return;
+        }
+    }
+
     if( current_milk->second == type->starting_ammo.begin()->second ) {
         // already full up
         return;
     }
     if( calendar::turn - udder_timer > 1_days ) {
         // no point granularizing this really, you milk once a day.
-        ammo.begin()->second = type->starting_ammo.begin()->second;
+        int milk_amount = type->starting_ammo.begin()->second;
+
+        // Well-fed animals produce 30% more milk per day
+        if( has_effect( effect_well_fed ) ) {
+            milk_amount = static_cast<int>( std::ceil( milk_amount * 1.3 ) );
+        }
+
+        ammo.begin()->second = milk_amount;
         udder_timer = calendar::turn;
     }
 }
@@ -667,37 +717,45 @@ void monster::get_HP_Bar( nc_color &color, std::string &text ) const
 
 std::pair<std::string, nc_color> monster::get_attitude() const
 {
-    const auto att = attitude_names.at( attitude( &g->u ) );
+    const avatar &ply = get_avatar();
+    const auto att = attitude_names.at( ply.has_trait( trait_INATTENTIVE ) ? MATT_UNKNOWN : attitude(
+                                            &g->u ) );
     return {
         _( att.first ),
         all_colors.get( att.second )
     };
+
 }
 
 static std::pair<std::string, nc_color> hp_description( int cur_hp, int max_hp )
 {
+    const avatar &ply = get_avatar();
     std::string damage_info;
     nc_color col;
-    if( cur_hp >= max_hp ) {
-        damage_info = _( "It is uninjured." );
+    if( ply.has_trait( trait_INATTENTIVE ) ) {
+        damage_info = _( "It looks fine." );
         col = c_green;
-    } else if( cur_hp >= max_hp * 0.8 ) {
-        damage_info = _( "It is lightly injured." );
-        col = c_light_green;
-    } else if( cur_hp >= max_hp * 0.6 ) {
-        damage_info = _( "It is moderately injured." );
-        col = c_yellow;
-    } else if( cur_hp >= max_hp * 0.3 ) {
-        damage_info = _( "It is heavily injured." );
-        col = c_yellow;
-    } else if( cur_hp >= max_hp * 0.1 ) {
-        damage_info = _( "It is severely injured." );
-        col = c_light_red;
     } else {
-        damage_info = _( "It is nearly dead!" );
-        col = c_red;
+        if( cur_hp >= max_hp ) {
+            damage_info = _( "It is uninjured." );
+            col = c_green;
+        } else if( cur_hp >= max_hp * 0.8 ) {
+            damage_info = _( "It is lightly injured." );
+            col = c_light_green;
+        } else if( cur_hp >= max_hp * 0.6 ) {
+            damage_info = _( "It is moderately injured." );
+            col = c_yellow;
+        } else if( cur_hp >= max_hp * 0.3 ) {
+            damage_info = _( "It is heavily injured." );
+            col = c_yellow;
+        } else if( cur_hp >= max_hp * 0.1 ) {
+            damage_info = _( "It is severely injured." );
+            col = c_light_red;
+        } else {
+            damage_info = _( "It is nearly dead!" );
+            col = c_red;
+        }
     }
-
     // show exact monster HP if in debug mode
     if( debug_mode ) {
         damage_info += " ";
@@ -727,20 +785,25 @@ static std::pair<std::string, nc_color> speed_description( float mon_speed_ratin
     };
 
     const avatar &ply = get_avatar();
-    float player_runcost = ply.run_cost( 100 );
-    if( player_runcost == 0 ) {
-        player_runcost = 1.0f;
-    }
-
-    // determine tiles per turn (tpt)
-    const float player_tpt = ply.get_speed() / player_runcost;
-    const float ratio = player_tpt == 0 ?
-                        2.00f : mon_speed_rating / player_tpt;
-
-    for( const std::tuple<float, nc_color, std::string> &speed_case : cases ) {
-        if( ratio >= std::get<0>( speed_case ) ) {
-            return std::make_pair( std::get<2>( speed_case ), std::get<1>( speed_case ) );
+    const bool player_knows = !ply.has_trait( trait_INATTENTIVE );
+    if( player_knows ) {
+        float player_runcost = ply.run_cost( 100 );
+        if( player_runcost == 0 ) {
+            player_runcost = 1.0f;
         }
+
+        // determine tiles per turn (tpt)
+        const float player_tpt = ply.get_speed() / player_runcost;
+        const float ratio = player_tpt == 0 ?
+                            2.00f : mon_speed_rating / player_tpt;
+
+        for( const std::tuple<float, nc_color, std::string> &speed_case : cases ) {
+            if( ratio >= std::get<0>( speed_case ) ) {
+                return std::make_pair( std::get<2>( speed_case ), std::get<1>( speed_case ) );
+            }
+        }
+    } else {
+        return std::make_pair( _( "It is a creature." ), c_white );
     }
 
     debugmsg( "speed_description: no ratio value matched" );
@@ -751,10 +814,11 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
 {
     const int vEnd = vStart + vLines;
 
+    const bool player_knows = !g->u.has_trait( trait_INATTENTIVE );
+
     mvwprintz( w, point( column, vStart ), basic_symbol_color(), name() );
     wprintw( w, " " );
     const auto att = get_attitude();
-    wprintz( w, att.second, att.first );
 
     if( debug_mode ) {
         wprintz( w, c_light_gray, _( " Difficulty " ) + std::to_string( type->difficulty ) );
@@ -772,12 +836,13 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
         mvwprintz( w, point( column, ++vStart ), c_light_blue, string_format( "[%s]", type->id.str() ) );
     }
 
-    if( sees( g->u ) ) {
+    if( sees( g->u ) && player_knows ) {
         mvwprintz( w, point( column, ++vStart ), c_yellow, _( "Aware of your presence!" ) );
     }
 
     const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
     mvwprintz( w, point( column, ++vStart ), speed_desc.second, speed_desc.first );
+
 
     std::string effects = get_effect_status();
     if( !effects.empty() ) {
@@ -949,6 +1014,12 @@ std::string monster::extended_description() const
     if( debug_mode ) {
         ss += string_format( _( "Current Speed: %1$d" ), get_speed() ) + "\n";
         ss += string_format( _( "Anger: %1$d" ), anger ) + "\n";
+        if( !faction_anger.empty() ) {
+            ss += string_format( _( "Anger by faction:" ) ) + "\n";
+            for( const auto &[id, anger] : faction_anger ) {
+                ss += string_format( _( "  %1$s: %2$d" ), id.id().str(), anger ) + "\n";
+            }
+        }
         ss += string_format( _( "Friendly: %1$d" ), friendly ) + "\n";
         ss += string_format( _( "Morale: %1$d" ), morale ) + "\n";
 
@@ -1323,12 +1394,19 @@ Attitude monster::attitude_to( const Creature &other ) const
         } else if( ( friendly == 0 && m->friendly == 0 && faction_att == MFA_HATE ) ) {
             // Stuff that hates a specific faction will always attack that faction
             return Attitude::A_HOSTILE;
-        } else if( ( friendly == 0 && m->friendly == 0 && faction_att == MFA_NEUTRAL ) ||
-                   morale < 0 || anger < 10 ) {
-            // Stuff that won't attack is neutral to everything
-            return Attitude::A_NEUTRAL;
         } else {
-            return Attitude::A_HOSTILE;
+            int effective_anger = anger;
+            if( has_flag( MF_FACTION_MEMORY ) ) {
+                effective_anger = get_faction_anger( m->faction );
+            }
+
+            if( ( friendly == 0 && m->friendly == 0 && faction_att == MFA_NEUTRAL ) ||
+                morale < 0 || effective_anger < 10 ) {
+                // Stuff that won't attack is neutral to everything
+                return Attitude::A_NEUTRAL;
+            } else {
+                return Attitude::A_HOSTILE;
+            }
         }
     } else if( p != nullptr ) {
         switch( attitude( const_cast<player *>( p ) ) ) {
@@ -1343,6 +1421,7 @@ Attitude monster::attitude_to( const Creature &other ) const
             case MATT_ATTACK:
                 return Attitude::A_HOSTILE;
             case MATT_NULL:
+            case MATT_UNKNOWN:
             case NUM_MONSTER_ATTITUDES:
                 break;
         }
@@ -1371,6 +1450,8 @@ std::string io::enum_to_string<monster_attitude>( monster_attitude att )
             return "MATT_ATTACK";
         case MATT_ZLAVE:
             return "MATT_ZLAVE";
+        case MATT_UNKNOWN:
+            return "MATT_UNKNOWN";
         case NUM_MONSTER_ATTITUDES:
             break;
     }
@@ -1378,7 +1459,7 @@ std::string io::enum_to_string<monster_attitude>( monster_attitude att )
     abort();
 }
 
-monster_attitude monster::attitude( const Character *u ) const
+auto monster::attitude( const Character *u ) const -> monster_attitude
 {
     if( friendly != 0 ) {
         if( has_effect( effect_docile ) ) {
@@ -1407,6 +1488,15 @@ monster_attitude monster::attitude( const Character *u ) const
     int effective_morale = morale;
 
     if( u != nullptr ) {
+        if( has_flag( MF_FACTION_MEMORY ) ) {
+            const monster *u_as_monster = u->as_monster();
+            if( u_as_monster != nullptr ) {
+                effective_anger = get_faction_anger( u_as_monster->faction );
+            } else if( u->is_player() || u->is_npc() ) {
+                effective_anger = get_faction_anger( mfaction_id( "player" ) );
+            }
+        }
+
         // Those are checked quite often, so avoiding string construction is a good idea
         static const string_id<monfaction> faction_bee( "bee" );
         if( faction == faction_bee ) {
@@ -1553,7 +1643,8 @@ void monster::process_triggers()
         }
     }
 
-    if( anger != type->agro && one_in( 10 ) ) {
+    // Don't restore global anger for FACTION_MEMORY monsters - they only use faction-specific anger
+    if( !has_flag( MF_FACTION_MEMORY ) && anger != type->agro && one_in( 10 ) ) {
         if( anger < type->agro ) {
             anger++;
         } else {
@@ -1575,27 +1666,55 @@ void monster::process_triggers()
 // This adjusts anger/morale levels given a single trigger.
 void monster::process_trigger( mon_trigger trig, int amount )
 {
+    process_trigger( trig, amount, mfaction_id() );
+}
+
+void monster::process_trigger( mon_trigger trig,
+                               const std::function < auto() -> int > &amount_func )
+{
+    process_trigger( trig, amount_func, mfaction_id() );
+}
+
+void monster::process_trigger( mon_trigger trig, int amount, mfaction_id target_faction )
+{
     if( type->has_anger_trigger( trig ) ) {
-        anger += amount;
+        if( has_flag( MF_FACTION_MEMORY ) && target_faction.is_valid() ) {
+            add_faction_anger( target_faction, amount );
+        } else {
+            anger += amount;
+        }
     }
     if( type->has_fear_trigger( trig ) ) {
         morale -= amount;
     }
     if( type->has_placate_trigger( trig ) ) {
-        anger -= amount;
+        if( has_flag( MF_FACTION_MEMORY ) && target_faction.is_valid() ) {
+            add_faction_anger( target_faction, -amount );
+        } else {
+            anger -= amount;
+        }
     }
 }
 
-void monster::process_trigger( mon_trigger trig, const std::function<int()> &amount_func )
+void monster::process_trigger( mon_trigger trig, const std::function < auto() -> int > &amount_func,
+                               mfaction_id target_faction )
 {
     if( type->has_anger_trigger( trig ) ) {
-        anger += amount_func();
+        if( has_flag( MF_FACTION_MEMORY ) && target_faction.is_valid() ) {
+            add_faction_anger( target_faction, amount_func() );
+        } else {
+            anger += amount_func();
+        }
     }
     if( type->has_fear_trigger( trig ) ) {
         morale -= amount_func();
     }
     if( type->has_placate_trigger( trig ) ) {
-        anger -= amount_func();
+        if( has_flag( MF_FACTION_MEMORY ) && target_faction.is_valid() ) {
+            add_faction_anger( target_faction, -amount_func() );
+        } else {
+            anger -= amount_func();
+        }
     }
 }
 
@@ -2045,8 +2164,19 @@ void monster::apply_damage( Creature *source, item *source_weapon, item *source_
             source_projectile->add_monster_kill( type->id );
         }
     } else if( dam > 0 ) {
-        process_trigger( mon_trigger::HURT, 1 + ( dam / 3 ) );
-        // Get angry at characters if hurt by one
+        mfaction_id attacker_faction;
+        if( source != nullptr ) {
+            const monster *source_monster = source->as_monster();
+            if( source_monster != nullptr ) {
+                attacker_faction = source_monster->faction;
+            } else if( ( source->is_player() || source->is_npc() ) && !source->is_fake() ) {
+                // Only attribute to player faction if it's a real player/NPC, not a fake NPC from a monster turret
+                attacker_faction = mfaction_id( "player" );
+            }
+        }
+
+        process_trigger( mon_trigger::HURT, 1 + ( dam / 3 ), attacker_faction );
+
         if( source != nullptr && !aggro_character && !source->is_monster() && !source->is_fake() ) {
             trigger_character_aggro( "hurt" );
         }
@@ -2055,12 +2185,12 @@ void monster::apply_damage( Creature *source, item *source_weapon, item *source_
 void monster::apply_damage( Creature *source, item *source_weapon, bodypart_id bp, int dam,
                             const bool bypass_med )
 {
-    return apply_damage( source, source_weapon, nullptr, bp, dam, bypass_med );
+    apply_damage( source, source_weapon, nullptr, bp, dam, bypass_med );
 }
 void monster::apply_damage( Creature *source, bodypart_id bp, int dam,
                             const bool bypass_med )
 {
-    return apply_damage( source, nullptr, nullptr, bp, dam, bypass_med );
+    apply_damage( source, nullptr, nullptr, bp, dam, bypass_med );
 }
 
 void monster::die_in_explosion( Creature *source )
@@ -2783,6 +2913,18 @@ void monster::die( Creature *nkiller )
         deathfunction( *this );
     }
 
+    // Determine killer's faction
+    mfaction_id killer_faction;
+    if( nkiller != nullptr ) {
+        const monster *killer_monster = nkiller->as_monster();
+        if( killer_monster != nullptr ) {
+            killer_faction = killer_monster->faction;
+        } else if( ( nkiller->is_player() || nkiller->is_npc() ) && !nkiller->is_fake() ) {
+            // Only attribute to player faction if it's a real player/NPC, not a fake NPC from a monster turret
+            killer_faction = mfaction_id( "player" );
+        }
+    }
+
     // If our species fears seeing one of our own die, process that
     int anger_adjust = 0;
     int morale_adjust = 0;
@@ -2803,13 +2945,18 @@ void monster::die( Creature *nkiller )
     if( anger_adjust != 0 || morale_adjust != 0 ) {
         int light = g->light_level( posz() );
         for( monster &critter : g->all_monsters() ) {
-            if( !critter.type->same_species( *type ) ) {
+            if( critter.faction != this->faction ) {
                 continue;
             }
 
             if( g->m.sees( critter.pos(), pos(), light ) ) {
                 critter.morale += morale_adjust;
-                critter.anger += anger_adjust;
+
+                if( critter.has_flag( MF_FACTION_MEMORY ) && killer_faction.is_valid() ) {
+                    critter.add_faction_anger( killer_faction, anger_adjust );
+                } else {
+                    critter.anger += anger_adjust;
+                }
             }
         }
     }
@@ -2893,8 +3040,8 @@ void monster::drop_items_on_death()
     if( spawn_rate < 1 ) {
         // Temporary vector, to remember which items will be dropped
         std::vector<detached_ptr<item>> remaining;
-        for( detached_ptr<item> &it : items ) {
-            if( rng_float( 0, 1 ) < spawn_rate ) {
+        for( auto &it : items ) {
+            if( it->has_flag( flag_MISSION_ITEM ) || rng_float( 0, 1 ) < spawn_rate ) {
                 remaining.push_back( std::move( it ) );
             }
         }
@@ -2958,6 +3105,20 @@ void monster::process_one_effect( effect &it, bool is_new )
     } else if( id == effect_command_buff ) {
         effect_cache[PATHFINDING_OVERRIDE] = true;
     }
+
+    if( is_new && it.has_flag( flag_EFFECT_LUA_ON_ADDED ) ) {
+        cata::run_hooks( "on_mon_effect_added", [ &, this ]( auto & params ) {
+            params["mon"] = this;
+            params["effect"] = &it;
+        } );
+    }
+
+    if( it.has_flag( flag_EFFECT_LUA_ON_TICK ) ) {
+        cata::run_hooks( "on_mon_effect", [ &, this ]( auto & params ) {
+            params["mon"] = this;
+            params["effect"] = &it;
+        } );
+    }
 }
 
 void monster::process_effects_internal()
@@ -3013,18 +3174,23 @@ void monster::process_effects_internal()
     if( type->regen_morale && hp >= type->hp ) {
         if( is_fleeing( g->u ) ) {
             morale = type->morale;
-            anger = type->agro;
+            // Don't restore global anger for FACTION_MEMORY monsters
+            if( !has_flag( MF_FACTION_MEMORY ) ) {
+                anger = type->agro;
+            }
         }
         if( morale <= type->morale ) {
             morale += 1;
         }
-        if( anger <= type->agro ) {
+        // Don't restore global anger for FACTION_MEMORY monsters
+        if( !has_flag( MF_FACTION_MEMORY ) && anger <= type->agro ) {
             anger += 1;
         }
         if( morale < 0 ) {
             morale += 5;
         }
-        if( anger < 0 ) {
+        // Don't restore global anger for FACTION_MEMORY monsters
+        if( !has_flag( MF_FACTION_MEMORY ) && anger < 0 ) {
             anger += 5;
         }
     }
@@ -3287,6 +3453,18 @@ void monster::on_hit( Creature *source, bodypart_id, dealt_projectile_attack con
         type->sp_defense( *this, source, proj );
     }
 
+    // Determine attacker's faction
+    mfaction_id attacker_faction;
+    if( source != nullptr ) {
+        const monster *source_monster = source->as_monster();
+        if( source_monster != nullptr ) {
+            attacker_faction = source_monster->faction;
+        } else if( ( source->is_player() || source->is_npc() ) && !source->is_fake() ) {
+            // Only attribute to player faction if it's a real player/NPC, not a fake NPC from a monster turret
+            attacker_faction = mfaction_id( "player" );
+        }
+    }
+
     // Adjust anger/morale of same-species monsters, if appropriate
     int anger_adjust = 0;
     int morale_adjust = 0;
@@ -3307,13 +3485,18 @@ void monster::on_hit( Creature *source, bodypart_id, dealt_projectile_attack con
     if( anger_adjust != 0 || morale_adjust != 0 ) {
         int light = g->light_level( posz() );
         for( monster &critter : g->all_monsters() ) {
-            if( !critter.type->same_species( *type ) ) {
+            if( critter.faction != this->faction ) {
                 continue;
             }
 
             if( g->m.sees( critter.pos(), pos(), light ) ) {
                 critter.morale += morale_adjust;
-                critter.anger += anger_adjust;
+
+                if( critter.has_flag( MF_FACTION_MEMORY ) && attacker_faction.is_valid() ) {
+                    critter.add_faction_anger( attacker_faction, anger_adjust );
+                } else {
+                    critter.anger += anger_adjust;
+                }
             }
         }
     }
@@ -3463,7 +3646,8 @@ void monster::on_load()
         return;
     }
 
-    if( anger != type->agro ) {
+    // Don't restore global anger for FACTION_MEMORY monsters
+    if( !has_flag( MF_FACTION_MEMORY ) && anger != type->agro ) {
         int dt_left_a = to_turns<int>( dt );
 
         if( std::abs( anger - type->agro ) > 15 ) {
@@ -3500,6 +3684,9 @@ void monster::on_load()
             // Most living stuff here
             regen = 0.25f / to_turns<int>( 1_hours );
         }
+    }
+    if( has_effect( effect_well_fed ) ) {
+        regen *= 2.0f;
     }
     const int heal_amount = roll_remainder( regen * to_turns<int>( dt ) );
     const int healed = heal( heal_amount );
@@ -3606,4 +3793,30 @@ detached_ptr<item> monster::remove_corpse_component( item &it )
 std::vector<detached_ptr<item>> monster::remove_corpse_components()
 {
     return corpse_components.clear();
+}
+
+void monster::add_faction_anger( mfaction_id target_faction, int amount )
+{
+    if( !has_flag( MF_FACTION_MEMORY ) ) {
+        anger += amount;
+        return;
+    }
+
+    // Don't get angry at own faction (prevents friendly fire loops)
+    if( target_faction == this->faction ) { return; }
+
+    // Don't track anger for invalid factions
+    if( !target_faction.is_valid() ) { return; }
+
+    faction_anger[target_faction] += amount;
+}
+
+auto monster::get_faction_anger( mfaction_id target_faction ) const -> int
+{
+    if( !has_flag( MF_FACTION_MEMORY ) ) {
+        return anger;
+    }
+
+    auto it = faction_anger.find( target_faction );
+    return ( it != faction_anger.end() ) ? it->second : 0;
 }

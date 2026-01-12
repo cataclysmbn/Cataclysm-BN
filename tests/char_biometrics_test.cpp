@@ -69,8 +69,8 @@ TEST_CASE( "character height and body size mutations", "[biometrics][height][mut
             set_single_trait( dummy, "SMALL" );
             REQUIRE( dummy.get_size() == creature_size::small );
 
-            THEN( "they are 50cm shorter" ) {
-                CHECK( dummy.height() == init_height - 50 );
+            THEN( "they are 25% shorter" ) {
+                CHECK( dummy.height() == 131 );
             }
         }
 
@@ -78,8 +78,8 @@ TEST_CASE( "character height and body size mutations", "[biometrics][height][mut
             set_single_trait( dummy, "LARGE" );
             REQUIRE( dummy.get_size() == creature_size::large );
 
-            THEN( "they are 50cm taller" ) {
-                CHECK( dummy.height() == init_height + 50 );
+            THEN( "they are 50% taller" ) {
+                CHECK( dummy.height() == 262 );
             }
         }
 
@@ -87,8 +87,8 @@ TEST_CASE( "character height and body size mutations", "[biometrics][height][mut
             set_single_trait( dummy, "HUGE" );
             REQUIRE( dummy.get_size() == creature_size::huge );
 
-            THEN( "they are 100cm taler" ) {
-                CHECK( dummy.height() == init_height + 100 );
+            THEN( "they are doubled in height" ) {
+                CHECK( dummy.height() == 350 );
             }
         }
     }
@@ -98,17 +98,17 @@ TEST_CASE( "character height and body size mutations", "[biometrics][height][mut
     GIVEN( "character height strarted at 160cm" ) {
         CHECK( height_with_base_and_size( dummy, 160, "MEDIUM" ) == 160 );
         // Always 30 cm shorter than max for each size class
-        CHECK( height_with_base_and_size( dummy, 160, "SMALL" ) == 110 );
-        CHECK( height_with_base_and_size( dummy, 160, "LARGE" ) == 210 );
-        CHECK( height_with_base_and_size( dummy, 160, "HUGE" ) == 260 );
+        CHECK( height_with_base_and_size( dummy, 160, "SMALL" ) == 120 );
+        CHECK( height_with_base_and_size( dummy, 160, "LARGE" ) == 240 );
+        CHECK( height_with_base_and_size( dummy, 160, "HUGE" ) == 320 );
     }
 
     SECTION( "character height started at 190cm" ) {
         CHECK( height_with_base_and_size( dummy, 190, "MEDIUM" ) == 190 );
         // Always at maximum height for each size class
-        CHECK( height_with_base_and_size( dummy, 190, "SMALL" ) == 140 );
-        CHECK( height_with_base_and_size( dummy, 190, "LARGE" ) == 240 );
-        CHECK( height_with_base_and_size( dummy, 190, "HUGE" ) == 290 );
+        CHECK( height_with_base_and_size( dummy, 190, "SMALL" ) == 142 );
+        CHECK( height_with_base_and_size( dummy, 190, "LARGE" ) == 285 );
+        CHECK( height_with_base_and_size( dummy, 190, "HUGE" ) == 380 );
     }
 }
 

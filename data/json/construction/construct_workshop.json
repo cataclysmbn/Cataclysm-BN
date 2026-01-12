@@ -113,6 +113,25 @@
   },
   {
     "type": "construction",
+    "id": "constr_foldable_solar_unit",
+    "group": "install_foldable_solar_panel",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 4 ], [ "electronics", 1 ] ],
+    "time": "20 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ] ],
+    "using": [ [ "soldering_standard", 20 ] ],
+    "components": [
+      [ [ "steel_standard", 1, "LIST" ] ],
+      [ [ "plastic_chunk", 2 ] ],
+      [ [ "pipe", 2 ] ],
+      [ [ "foldable_solar_panel", 1 ] ]
+    ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_foldable_solar_unit"
+  },
+  {
+    "type": "construction",
     "id": "constr_battery",
     "group": "install_battery",
     "category": "WORKSHOP",
@@ -824,5 +843,16 @@
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
     "post_furniture": "f_recycler"
+  },
+  {
+    "type": "construction",
+    "id": "constr_gridcloning_vat",
+    "group": "install_cloning_vat",
+    "category": "WORKSHOP",
+    "time": "10 m",
+    "components": [ [ [ "cloning_vat", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_cloning_vat"
   }
 ]

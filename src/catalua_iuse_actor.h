@@ -8,10 +8,15 @@
 class lua_iuse_actor : public iuse_actor
 {
     private:
-        sol::protected_function luafunc;
+        sol::protected_function use_func;
+        sol::protected_function can_use_func;
+        sol::protected_function tick_func;
 
     public:
-        lua_iuse_actor( const std::string &type, sol::protected_function &&luafunc );
+        lua_iuse_actor( const std::string &type,
+                        sol::protected_function &&use_func,
+                        sol::protected_function &&can_use_func,
+                        sol::protected_function &&tick_func );
         ~lua_iuse_actor() override;
         void load( const JsonObject &obj ) override;
         int use( player &who, item &itm, bool tick, const tripoint &pos ) const override;

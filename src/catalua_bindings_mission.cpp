@@ -78,6 +78,11 @@ void cata::detail::reg_mission( sol::state &lua )
         SET_FX( in_progress );
         DOC( "Marks a mission step as complete, taking an integer step index." );
         SET_FX( step_complete );
+        DOC( "Returns true if the mission goal has been completed (optionally checked against given NPC ID)." );
+        luna::set_fx( ut, "is_complete",
+        []( const mission & m, sol::optional<character_id> npc_id ) -> bool {
+            return m.is_complete( npc_id.value_or( character_id() ) );
+        } );
 
         DOC( "Assigns this mission to the given avatar." );
         luna::set_fx( ut, "assign",

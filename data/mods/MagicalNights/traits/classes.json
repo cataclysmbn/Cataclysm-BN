@@ -8,7 +8,7 @@
     "starting_trait": false,
     "purifiable": false,
     "valid": false,
-    "spells_learned": [ [ "create_rune_magus", 1 ] ],
+    "spells_learned": [ [ "create_rune_magus", 1 ], [ "crystallize_mana", 1 ] ],
     "mana_modifier": 500,
     "mana_regen_multiplier": 1.2
   },
@@ -21,7 +21,7 @@
     "starting_trait": false,
     "purifiable": false,
     "valid": false,
-    "spells_learned": [ [ "create_rune_animist", 1 ] ],
+    "spells_learned": [ [ "create_rune_animist", 1 ], [ "crystallize_mana", 1 ] ],
     "mana_modifier": 500,
     "mana_regen_multiplier": 1.2
   },
@@ -34,7 +34,7 @@
     "starting_trait": false,
     "purifiable": false,
     "valid": false,
-    "spells_learned": [ [ "create_rune_kelvinist", 1 ] ],
+    "spells_learned": [ [ "create_rune_kelvinist", 1 ], [ "crystallize_mana", 1 ] ],
     "mana_modifier": 500,
     "mana_regen_multiplier": 1.2
   },
@@ -47,7 +47,7 @@
     "starting_trait": false,
     "purifiable": false,
     "valid": false,
-    "spells_learned": [ [ "create_rune_stormshaper", 1 ] ],
+    "spells_learned": [ [ "create_rune_stormshaper", 1 ], [ "crystallize_mana", 1 ] ],
     "mana_modifier": 500,
     "mana_regen_multiplier": 1.2
   },
@@ -60,7 +60,7 @@
     "starting_trait": false,
     "purifiable": false,
     "valid": false,
-    "spells_learned": [ [ "create_rune_technomancer", 1 ] ],
+    "spells_learned": [ [ "create_rune_technomancer", 1 ], [ "crystallize_mana", 1 ] ],
     "mana_modifier": 500,
     "mana_regen_multiplier": 1.2
   },
@@ -73,7 +73,7 @@
     "starting_trait": false,
     "purifiable": false,
     "valid": false,
-    "spells_learned": [ [ "create_rune_earthshaper", 1 ] ],
+    "spells_learned": [ [ "create_rune_earthshaper", 1 ], [ "crystallize_mana", 1 ] ],
     "mana_modifier": 500,
     "mana_regen_multiplier": 1.2
   },
@@ -86,7 +86,7 @@
     "starting_trait": false,
     "purifiable": false,
     "valid": false,
-    "spells_learned": [ [ "create_rune_biomancer", 1 ] ],
+    "spells_learned": [ [ "create_rune_biomancer", 1 ], [ "crystallize_mana", 1 ] ],
     "mana_modifier": 500,
     "mana_regen_multiplier": 1.2
   },
@@ -99,7 +99,7 @@
     "starting_trait": false,
     "purifiable": false,
     "valid": false,
-    "spells_learned": [ [ "create_rune_druid", 1 ] ],
+    "spells_learned": [ [ "create_rune_druid", 1 ], [ "crystallize_mana", 1 ] ],
     "mana_modifier": 500,
     "mana_regen_multiplier": 1.2
   },
@@ -114,5 +114,18 @@
     "valid": false,
     "max_stamina_modifier": 1.15,
     "movecost_modifier": 0.9
+  },
+  {
+    "type": "mutation",
+    "id": "BLADEMASTER",
+    "name": "Blademaster",
+    "points": 0,
+    "description": "Blademasters have studied the art of the blade extensively, honing their ability to strike fast and strike true.  Now you can look like your favorite anime character as you slay Zombies.",
+    "starting_trait": false,
+    "purifiable": false,
+    "valid": false,
+    "dodge_modifier": 1,
+    "movecost_modifier": 0.95,
+    "attackcost_modifier": 0.9
   }
 ]

@@ -1230,6 +1230,19 @@
   },
   {
     "type": "construction",
+    "id": "constr_wood_barricade_simple",
+    "group": "build_simple_wood_barricade",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 1 } ] ],
+    "components": [ [ [ "wood_structural", 4, "LIST" ] ], [ [ "pointy_stick", 2 ] ] ],
+    "pre_note": "Can be deconstructed without tools.",
+    "needs_diggable": true,
+    "post_furniture": "f_barricade_windbreak"
+  },
+  {
+    "type": "construction",
     "id": "constr_pontoon_dp",
     "group": "build_pontoon_bridge",
     "//": "Set up pontoon bridge",
@@ -1708,11 +1721,25 @@
     "required_skills": [ [ "fabrication", 1 ] ],
     "time": "50m",
     "qualities": [ { "id": "HAMMER", "level": 1 } ],
-    "components": [ [ [ "pointy_stick", 4 ] ], [ [ "string_36", 1 ], [ "string_6", 4 ] ], [ [ "tarp", 1 ], [ "plastic_sheet", 1 ] ] ],
+    "components": [ [ [ "pointy_stick", 4 ] ], [ [ "cordage_short", 4, "LIST" ] ], [ [ "tarp", 1 ], [ "plastic_sheet", 1 ] ] ],
     "pre_note": "Can be deconstructed without tools.",
     "pre_flags": [ "FLAT" ],
     "needs_diggable": true,
-    "post_terrain": "t_tarptent"
+    "post_furniture": "f_tarptent_leather"
+  },
+  {
+    "type": "construction",
+    "id": "constr_leather_tarptent",
+    "group": "build_tarp_lean_to_leather",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "survival", 1 ] ],
+    "time": "50 m",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "pointy_stick", 4 ] ], [ [ "cordage_short", 4, "LIST" ] ], [ [ "leather_tarp", 1 ] ] ],
+    "pre_note": "Can be deconstructed without tools.",
+    "pre_flags": [ "FLAT" ],
+    "needs_diggable": true,
+    "post_furniture": "f_tarptent_leather"
   },
   {
     "type": "construction",
@@ -2069,5 +2096,93 @@
     "components": [ [ [ "concrete", 8 ] ], [ [ "wood_structural", 12, "LIST" ] ], [ [ "water", 8 ], [ "water_clean", 8 ] ] ],
     "pre_terrain": "t_rock",
     "post_terrain": "t_sconc_wall"
+  },
+  {
+    "type": "construction",
+    "id": "constr_canvas_floor",
+    "group": "build_canvas_floor",
+    "category": "CONSTRUCT",
+    "//": "Step 1: Makes a canvas roof, for tent interiors.",
+    "required_skills": [ [ "tailor", 2 ] ],
+    "time": "15 m",
+    "qualities": [ [ { "id": "CUT", "level": 1 } ], [ { "id": "SEW", "level": 2 } ] ],
+    "components": [ [ [ "sheet", 1 ] ], [ [ "filament", 25, "LIST" ] ] ],
+    "pre_special": "check_empty",
+    "post_furniture": "f_canvas_floor"
+  },
+  {
+    "type": "construction",
+    "id": "constr_skylight_canvas_floor",
+    "group": "build_canvas_floor",
+    "category": "CONSTRUCT",
+    "//": "Step 2: Makes a skylight canvas roof, for tent interiors.",
+    "required_skills": [ [ "tailor", 2 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "CUT", "level": 1 } ], [ { "id": "SEW", "level": 2 } ] ],
+    "components": [ [ [ "plastic_sheet", 1 ] ] ],
+    "pre_furniture": "f_canvas_floor",
+    "post_furniture": "f_skylight_canvas_floor"
+  },
+  {
+    "type": "construction",
+    "id": "constr_canvas_wall",
+    "group": "build_canvas_wall",
+    "category": "CONSTRUCT",
+    "//": "Step 1: Makes a simple canvas wall, for tent interiors.",
+    "required_skills": [ [ "tailor", 2 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "CUT", "level": 1 } ], [ { "id": "SEW", "level": 2 } ] ],
+    "components": [
+      [ [ "sheet", 1 ] ],
+      [ [ "stick_long", 1 ], [ "pointy_stick_long", 1 ] ],
+      [ [ "adhesive", 1, "LIST" ] ],
+      [ [ "filament", 25, "LIST" ] ]
+    ],
+    "pre_special": "check_empty",
+    "post_furniture": "f_canvas_wall"
+  },
+  {
+    "type": "construction",
+    "id": "constr_large_canvas_wall",
+    "group": "build_canvas_wall",
+    "category": "CONSTRUCT",
+    "//": "Step 2: Makes a heavy duty canvas wall, for tent interiors.",
+    "required_skills": [ [ "tailor", 2 ] ],
+    "time": "15 m",
+    "qualities": [ [ { "id": "CUT", "level": 1 } ], [ { "id": "SCREW", "level": 1 } ], [ { "id": "SEW", "level": 2 } ] ],
+    "components": [
+      [ [ "plastic_sheet", 1 ] ],
+      [ [ "stick_long", 1 ], [ "pointy_stick_long", 1 ] ],
+      [ [ "adhesive", 1, "LIST" ] ],
+      [ [ "filament", 25, "LIST" ] ]
+    ],
+    "pre_furniture": "f_canvas_wall",
+    "post_furniture": "f_large_canvas_wall"
+  },
+  {
+    "type": "construction",
+    "id": "constr_canvas_door",
+    "group": "build_canvas_door",
+    "category": "CONSTRUCT",
+    "//": "Step 1: Makes a canvas door, for tent interiors.",
+    "required_skills": [ [ "tailor", 2 ] ],
+    "time": "15 m",
+    "qualities": [ [ { "id": "CUT", "level": 1 } ], [ { "id": "SEW", "level": 2 } ] ],
+    "components": [ [ [ "sheet", 1 ] ], [ [ "filament", 25, "LIST" ] ] ],
+    "pre_special": "check_empty",
+    "post_furniture": "f_canvas_door"
+  },
+  {
+    "type": "construction",
+    "id": "constr_large_canvas_door",
+    "group": "build_canvas_door",
+    "category": "CONSTRUCT",
+    "//": "Step 2: Makes a heavy duty canvas door, for tent interiors.",
+    "required_skills": [ [ "tailor", 2 ] ],
+    "time": "15 m",
+    "qualities": [ [ { "id": "CUT", "level": 1 } ], [ { "id": "SEW", "level": 2 } ] ],
+    "components": [ [ [ "sheet", 1 ] ], [ [ "stick_long", 1 ], [ "pointy_stick_long", 1 ] ], [ [ "filament", 25, "LIST" ] ] ],
+    "pre_furniture": "f_canvas_door",
+    "post_furniture": "f_large_canvas_door"
   }
 ]

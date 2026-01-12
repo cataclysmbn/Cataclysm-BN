@@ -3,12 +3,17 @@
     "id": "martialmanual_tier_0",
     "type": "item_group",
     "//": "These are martial manuals that a beginner would have, or scrolls that would have this tier or one tier higher of spells.",
-    "items": [ [ "adventurer_physical_book", 30 ], [ "adventurer_natural_tech_book", 30 ] ]
+    "items": [
+      [ "adventurer_physical_book", 30 ],
+      [ "adventurer_natural_tech_book", 30 ],
+      [ "blademaster_weeaboo_stories", 30 ],
+      [ "blademaster_strength_book", 30 ]
+    ]
   },
   {
     "id": "martialmanual_tier_1",
     "type": "item_group",
-    "items": [ [ "adventurer_poultice_book", 50 ] ]
+    "items": [ [ "adventurer_poultice_book", 50 ], [ "blademaster_fast_moves_book", 50 ] ]
   },
   {
     "id": "martial_note_tier_0",
@@ -17,7 +22,11 @@
       [ "martial_note_sprint", 20 ],
       [ "martial_note_swift_strike", 30 ],
       [ "martial_note_pocket_sand", 40 ],
-      [ "martial_note_survival_wooden_javelins", 20 ]
+      [ "martial_note_survival_wooden_javelins", 20 ],
+      [ "martial_note_sparrows_strike", 20 ],
+      [ "martial_note_treechopping_cut", 25 ],
+      [ "martial_note_traveling_strike", 25 ],
+      [ "martial_note_iaido", 25 ]
     ]
   },
   {
@@ -27,7 +36,10 @@
       [ "martial_note_whirlwind_blade", 20 ],
       [ "martial_note_adventurers_cure", 20 ],
       [ "martial_note_adventurers_relief", 20 ],
-      [ "martial_note_adventurers_remedy", 20 ]
+      [ "martial_note_adventurers_remedy", 20 ],
+      [ "martial_note_hornets_stinger", 30 ],
+      [ "martial_note_execution_flurry", 20 ],
+      [ "martial_note_blademasters_repose", 25 ]
     ]
   }
 ]

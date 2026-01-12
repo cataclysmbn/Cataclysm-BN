@@ -36056,7 +36056,29 @@
         { "id": [ "stadium_0_4" ], "fg": [ 19597 ], "rotates": true },
         { "id": [ "stadium_1_4" ], "fg": [ 19598 ], "rotates": true },
         { "id": [ "stadium_2_4" ], "fg": [ 19599 ], "rotates": true },
-        { "id": [ "stadium_3_4" ], "fg": [ 19600 ], "rotates": true }
+        { "id": [ "stadium_3_4" ], "fg": [ 19600 ], "rotates": true },
+        {
+          "id": [ "billboard_0" ],
+          "fg": [ { "weight": 25, "sprite": 19601 }, { "weight": 25, "sprite": 19603 }, { "weight": 25, "sprite": 19605 }, { "weight": 25, "sprite": 19607 } ],
+          "rotates": false
+        },
+        {
+          "id": [ "billboard_1", "billboard_2" ],
+          "fg": [ { "weight": 25, "sprite": 19602 }, { "weight": 25, "sprite": 19604 }, { "weight": 25, "sprite": 19606 }, { "weight": 25, "sprite": 19608 } ],
+          "rotates": false,
+          "has_om_transparency": true 
+        },
+        {
+          "id": [ "water_tower_0zl" ],
+          "fg": [ 19609 ],
+          "rotates": false
+        },
+        {
+          "id": [ "water_tower_1zl", "water_tower_2zl", "water_tower_3zl", "water_tower_4zl", "water_tower_5zl" ],
+          "fg": [ 19610 ],
+          "rotates": false,
+          "has_om_transparency": true 
+        }
       ],
       "//": "range 19337 to 19636"
     },

@@ -24,11 +24,14 @@
     "affected-files": "deno run -RWEN --allow-run scripts/affected_files.ts"
   },
   "test": { "include": ["scripts"] },
-  "lint": { "include": ["scripts"] },
+  "lint": {
+    "include": ["scripts"],
+    "rules": { "exclude": ["no-unversioned-import", "no-import-prefix"] }
+  },
   "unstable": ["raw-imports", "fmt-component", "temporal"],
   "fmt": {
     "exclude": ["doc"],
-    "include": ["scripts", "doc", "docs", "*.md", ".github"],
+    "include": ["scripts", "doc", "docs", "*.md", ".github", ".claude"],
     "semiColons": false,
     "lineWidth": 100,
     "proseWrap": "preserve"

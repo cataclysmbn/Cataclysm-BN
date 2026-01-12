@@ -1167,6 +1167,9 @@ void npc::execute_action( npc_action action )
         }
         case npc_follow_player:
             update_path( player_character.pos() );
+            move_mode = rules.has_flag( ally_rule::move_own_pace ) ?
+                        ( ( static_cast<int>( path.size() ) > follow_distance() * 4 ) ? CMM_RUN : CMM_WALK ) :
+                        player_character.get_movement_mode();
             if( static_cast<int>( path.size() ) <= follow_distance() &&
                 player_character.posz() == posz() ) { // We're close enough to u.
                 move_pause();
@@ -1180,6 +1183,9 @@ void npc::execute_action( npc_action action )
             break;
 
         case npc_follow_embarked: {
+            move_mode = rules.has_flag( ally_rule::move_own_pace ) ?
+                        ( ( static_cast<int>( path.size() ) > follow_distance() * 4 ) ? CMM_RUN : CMM_WALK ) :
+                        player_character.get_movement_mode();
             const optional_vpart_position vp = here.veh_at( player_character.pos() );
 
             if( !vp ) {
@@ -1418,7 +1424,7 @@ npc_action npc::method_of_attack()
 
     gun_mode g_mode = cbm_active.is_null() ? primary_weapon().gun_current_mode() :
                       cbm_fake_active->gun_current_mode();
-    if( !can_use_gun || dist <= 1 ||
+    if( !can_use_gun || dist == 0 ||
         ( g_mode && ( ( use_silent && !g_mode->is_silent() ) ||
                       ( item_funcs::shots_remaining( *this, *g_mode ) < g_mode.qty ) ) ) ) {
         g_mode = gun_mode();
@@ -1788,33 +1794,33 @@ healing_options npc::patient_assessment( const Character &c )
     healing_options try_to_fix;
     try_to_fix.clear_all();
 
-    for( const std::pair<const bodypart_str_id, bodypart> &elem : c.get_body() ) {
-
-        if( c.has_effect( effect_bleed, elem.first ) ) {
+    for( const auto &part : c.get_all_body_parts( true ) ) {
+        const auto &bp = c.get_part( part );
+        if( c.has_effect( effect_bleed, part.id() ) ) {
             try_to_fix.bleed = true;
         }
 
-        if( c.has_effect( effect_bite, elem.first ) ) {
+        if( c.has_effect( effect_bite, part.id() ) ) {
             try_to_fix.bite = true;
         }
 
-        if( c.has_effect( effect_infected, elem.first ) ) {
+        if( c.has_effect( effect_infected, part.id() ) ) {
             try_to_fix.infect = true;
         }
         int part_threshold = 75;
-        if( elem.first == bodypart_str_id( "head" ) ) {
+        if( part == bodypart_str_id( "head" ) ) {
             part_threshold += 20;
-        } else if( elem.first == bodypart_str_id( "torso" ) ) {
+        } else if( part == bodypart_str_id( "torso" ) ) {
             part_threshold += 10;
         }
         part_threshold = std::min( 80, part_threshold );
-        part_threshold = part_threshold * elem.second.get_hp_max() / 100;
+        part_threshold = part_threshold * bp.get_hp_max() / 100;
 
-        if( elem.second.get_hp_cur() <= part_threshold ) {
-            if( !c.has_effect( effect_bandaged, elem.first ) ) {
+        if( bp.get_hp_cur() <= part_threshold ) {
+            if( !c.has_effect( effect_bandaged, part.id() ) ) {
                 try_to_fix.bandage = true;
             }
-            if( !c.has_effect( effect_disinfected, elem.first ) ) {
+            if( !c.has_effect( effect_disinfected, part.id() ) ) {
                 try_to_fix.disinfect = true;
             }
         }
@@ -2199,6 +2205,10 @@ bool npc::wont_hit_friend( const tripoint &tar, const item &it, bool throwing ) 
         // TODO: Extract common functions with turret target selection
         units::angle safe_angle_ally = safe_angle;
         int ally_dist = rl_dist( pos(), ally.pos() );
+        // Skip adjacent allies - ballistics code now protects them
+        if( ally_dist <= 1 ) {
+            continue;
+        }
         if( ally_dist < 3 ) {
             safe_angle_ally += ( 3 - ally_dist ) * 30_degrees;
         }
@@ -2311,7 +2321,7 @@ bool npc::update_path( const tripoint &p, const bool no_bashing, bool force )
 
 bool npc::can_open_door( const tripoint &p, const bool inside ) const
 {
-    return !rules.has_flag( ally_rule::avoid_doors ) && get_map().open_door( p, inside, true );
+    return !rules.has_flag( ally_rule::avoid_doors ) && get_map().can_open_door( this, p, inside );
 }
 
 bool npc::can_move_to( const tripoint &p, bool no_bashing ) const
@@ -2482,9 +2492,9 @@ void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomo
             moves -= run_cost( here.combined_movecost( pos(), p ), diag );
         }
         moved = true;
-    } else if( here.open_door( p, !here.is_outside( pos() ), true ) ) {
+    } else if( here.can_open_door( this, p, !here.is_outside( pos() ) ) ) {
         if( !is_hallucination() ) { // hallucinations don't open doors
-            here.open_door( p, !here.is_outside( pos() ) );
+            here.open_door( this, p, !here.is_outside( pos() ) );
             moves -= 100;
         } else { // hallucinations teleport through doors
             moves -= 100;
@@ -3433,8 +3443,7 @@ bool npc::wield_better_weapon()
 
     const auto compare_weapon =
     [this, &best, &best_dps, can_use_gun, use_silent, dist, &mode_pairs ]( const item & it ) {
-        // If dist is 1 then we're in melee range, so disallow shooting guns.
-        bool gun_usable = can_use_gun && ( dist > 1 || dist == -1 ) && ( !use_silent || it.is_silent() );
+        bool gun_usable = can_use_gun && dist != 0 && ( !use_silent || it.is_silent() );
         double dps = 0.0f;
         auto [mode_id, mode_] = npc_ai::best_mode_for_range( *this, it, dist );
 

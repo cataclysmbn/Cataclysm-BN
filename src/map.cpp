@@ -6,12 +6,14 @@
 #include <climits>
 #include <cstdlib>
 #include <cstring>
+#include <ranges>
 #include <limits>
 #include <optional>
 #include <ostream>
 #include <queue>
 #include <type_traits>
 #include <unordered_map>
+#include <variant>
 
 #include "active_item_cache.h"
 #include "ammo.h"
@@ -67,6 +69,7 @@
 #include "math_defines.h"
 #include "memory_fast.h"
 #include "messages.h"
+#include "mission.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "morale_types.h"
@@ -140,6 +143,9 @@ static const ter_str_id t_rock_floor_no_roof( "t_rock_floor_no_roof" );
 
 // Conversion constant for 100ths of miles per hour to meters per second
 constexpr float velocity_constant = 0.0044704;
+
+static const std::string str_DOOR_LOCKING( "DOOR_LOCKING" );
+static const std::string str_OPENCLOSE_INSIDE( "OPENCLOSE_INSIDE" );
 
 #define dbg(x) DebugLog((x),DC::Map)
 
@@ -1516,7 +1522,11 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
     if( ( old_t.has_flag( TFLAG_NO_FLOOR ) != new_t.has_flag( TFLAG_NO_FLOOR ) ) ||
         ( old_t.has_flag( TFLAG_Z_TRANSPARENT ) != new_t.has_flag( TFLAG_Z_TRANSPARENT ) ) ) {
         set_floor_cache_dirty( p.z );
-        set_seen_cache_dirty( p );
+        // Changes to floor / z-transparency can reveal (or hide) tiles on the z-level below.
+        // Invalidate seen caches unconditionally for both affected levels so tiles drawing
+        // does not render stale BLANK visibility after events like explosions.
+        set_seen_cache_dirty( p.z );
+        set_seen_cache_dirty( p.z - 1 );
     }
 
     if( old_t.has_flag( TFLAG_SUN_ROOF_ABOVE ) != new_t.has_flag( TFLAG_SUN_ROOF_ABOVE ) ) {
@@ -1848,12 +1858,16 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
         set_floor_cache_dirty( p.z );
         // It's a set, not a flag
         support_cache_dirty.insert( p );
-        set_seen_cache_dirty( p );
+        // Opening/closing a floor affects visibility on this and the level below.
+        set_seen_cache_dirty( p.z );
+        set_seen_cache_dirty( p.z - 1 );
     }
 
     if( new_t.has_flag( TFLAG_Z_TRANSPARENT ) != old_t.has_flag( TFLAG_Z_TRANSPARENT ) ) {
         set_floor_cache_dirty( p.z );
-        set_seen_cache_dirty( p );
+        // Changing z-transparency affects visibility between this z-level and the one below.
+        set_seen_cache_dirty( p.z );
+        set_seen_cache_dirty( p.z - 1 );
     }
 
     if( new_t.has_flag( TFLAG_SUSPENDED ) != old_t.has_flag( TFLAG_SUSPENDED ) ) {
@@ -2911,11 +2925,50 @@ point map::random_outdoor_tile()
     return random_entry( options, point_north_west );
 }
 
+bool map::has_item_with( const tripoint &p, const std::function<bool( const item & )> &filter )
+{
+    for( const item *it : i_at( p ) ) {
+        if( filter( *it ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool map::has_adjacent_item_with( const tripoint &p,
+                                  const std::function<bool( const item & )> &filter )
+{
+    for( const tripoint &adj : points_in_radius( p, 1 ) ) {
+        if( !has_items( adj ) ) {
+            continue;
+        }
+
+        for( const item *it : i_at( adj ) ) {
+            if( filter( *it ) ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool map::has_adjacent_furniture_with( const tripoint &p,
                                        const std::function<bool( const furn_t & )> &filter )
 {
     for( const tripoint &adj : points_in_radius( p, 1 ) ) {
         if( has_furn( adj ) && filter( furn( adj ).obj() ) ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool map::has_adjacent_terrain_with( const tripoint &p,
+                                     const std::function<bool( const ter_t & )> &filter )
+{
+    for( const tripoint &adj : points_in_radius( p, 1 ) ) {
+        if( filter( ter( adj ).obj() ) ) {
             return true;
         }
     }
@@ -3709,6 +3762,16 @@ bash_results map::bash_ter_furn( const tripoint &p, const bash_params &params )
             sounds::sound( p, sound_volume, sounds::sound_t::combat, bash->sound_fail, false,
                            "smash_fail", soundfxvariant );
         }
+
+        if( !smash_ter && smax > 0 ) {
+            const auto flipped_version = get_furn_transforms_into( p );
+            if( flipped_version != furn_str_id::NULL_ID() ) {
+                const int damage_percent = ( params.strength * 100 ) / smax;
+                if( rng( 1, 100 ) <= damage_percent ) {
+                    furn_set( p, flipped_version );
+                }
+            }
+        }
     } else {
         if( smash_ter ) {
             result |= bash_ter_success( p, params );
@@ -4170,79 +4233,235 @@ bool map::hit_with_fire( const tripoint &p )
     return true;
 }
 
-bool map::open_door( const tripoint &p, const bool inside, const bool check_only )
+bool map::can_open_door(
+    const const_interacting_entity &who, const tripoint &p, bool inside
+) const
 {
-    avatar &you = get_avatar();
+
     const auto &ter = this->ter( p ).obj();
-    const auto &furn = this->furn( p ).obj();
-
     if( ter.open ) {
-        if( has_flag( "OPENCLOSE_INSIDE", p ) && !inside ) {
-            return false;
-        }
-        if( you.is_mounted() ) {
-            auto mon = you.mounted_creature.get();
-            if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                add_msg( m_info, _( "You can't open things while you're riding." ) );
-                return false;
-            }
-        }
-        if( !check_only ) {
-            sounds::sound( p, 6, sounds::sound_t::movement, _( "swish" ), true,
-                           "open_door", ter.id.str() );
-            ter_set( p, ter.open );
+        return can_open_door_ter( who, ter, p, inside );
+    }
 
-            if( ( you.has_trait( trait_id( "SCHIZOPHRENIC" ) ) || you.has_artifact_with( AEP_SCHIZO ) )
-                && one_in( 50 ) && !ter.has_flag( "TRANSPARENT" ) ) {
-                tripoint mp = p + -2 * you.pos().xy() + tripoint( 2 * p.x, 2 * p.y, p.z );
-                g->spawn_hallucination( mp );
-            }
-        }
+    const auto &furn = this->furn( p ).obj();
+    if( furn.open ) {
+        return can_open_door_furn( who, furn, p, inside );
+    }
 
-        return true;
-    } else if( furn.open ) {
-        if( has_flag( "OPENCLOSE_INSIDE", p ) && !inside ) {
-            return false;
-        }
-        if( you.is_mounted() ) {
-            auto mon = you.mounted_creature.get();
-            if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                add_msg( m_info, _( "You can't open things while you're riding." ) );
-                return false;
-            }
-        }
+    const optional_vpart_position vp = veh_at( p );
+    if( vp ) {
+        return can_open_door_veh( who, vp, p, inside );
+    }
 
-        if( !check_only ) {
-            sounds::sound( p, 6, sounds::sound_t::movement, _( "swish" ), true,
-                           "open_door", furn.id.str() );
-            furn_set( p, furn.open );
-        }
+    return false;
 
-        return true;
-    } else if( const optional_vpart_position vp = veh_at( p ) ) {
-        int openable = vp->vehicle().next_part_to_open( vp->part_index(), true );
-        if( openable >= 0 ) {
-            if( you.is_mounted() ) {
-                auto mon = you.mounted_creature.get();
+}
+
+
+bool map::open_door(
+    const interacting_entity &who,  const tripoint &p, const bool inside
+)
+{
+    const auto &ter = this->ter( p ).obj();
+    if( ter.open ) {
+        return open_door_ter( who, ter, p, inside );
+    }
+
+    const auto &furn = this->furn( p ).obj();
+    if( furn.open ) {
+        return open_door_furn( who, furn, p, inside );
+    }
+
+    const optional_vpart_position vp = veh_at( p );
+    if( vp ) {
+        return open_door_veh( who, vp, p, inside );
+    }
+
+    return false;
+}
+
+struct can_open_while_mounted {
+    template<typename T>
+    auto operator()( T u ) -> bool {
+        constexpr auto is_const_char = std::is_same_v<Character *, T>;
+        constexpr auto is_char = std::is_same_v<const Character *, T>;
+        if constexpr( is_const_char || is_char ) {
+            if( u->is_mounted() ) {
+                auto mon = u->mounted_creature.get();
                 if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                    add_msg( m_info, _( "You can't open things while you're riding." ) );
+                    u->add_msg_if_player( m_info, _( "You can't open things while you're riding." ) );
                     return false;
                 }
             }
-            if( !check_only ) {
-                if( !vp->vehicle().handle_potential_theft( you ) ) {
-                    return false;
-                }
-                vp->vehicle().open_all_at( openable );
-            }
-
-            return true;
         }
+        return true;
+    };
+};
+
+bool map::can_open_door_ter(
+    const const_interacting_entity &who, const ter_t &,
+    const tripoint &p, bool inside
+) const
+{
+
+    if( has_flag( str_OPENCLOSE_INSIDE, p ) && !inside ) {
+        return false;
+    }
+
+    if( !std::visit( can_open_while_mounted{}, who ) ) {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool map::open_door_ter(
+    const interacting_entity &who, const ter_t &ter,
+    const tripoint &p, const bool inside
+)
+{
+    if( !can_open_door_ter( static_variant_cast<const_interacting_entity>( who ), ter, p, inside ) ) {
+        return false;
+    }
+
+    sounds::sound(
+        p, 6, sounds::sound_t::movement, _( "swish" ),
+        true, "open_door", ter.id.str() );
+    ter_set( p, ter.open );
+
+    const auto is_schizo = std::visit( []<typename T>( T u ) -> bool {
+        if constexpr( std::is_same_v<T, Character *> )
+        {
+            return u->has_trait( trait_id( "SCHIZOPHRENIC" ) ) || u->has_artifact_with( AEP_SCHIZO );
+        }
+        return false;
+    }, who );
+
+    const tripoint you_pos = std::visit( []<typename T>( T u ) { return u->pos(); }, who );
+
+    if( is_schizo
+        && one_in( 50 )
+        && !ter.has_flag( "TRANSPARENT" ) ) {
+        const tripoint mp =
+            p + -2 * you_pos.xy() + tripoint( 2 * p.x, 2 * p.y, p.z );
+        g->spawn_hallucination( mp );
+    }
+
+    return true;
+
+}
+
+bool map::can_open_door_furn(
+    const const_interacting_entity &who, const furn_t &,
+    const tripoint &p, bool inside
+) const
+{
+
+    if( has_flag( str_OPENCLOSE_INSIDE, p ) && !inside ) {
+        return false;
+    }
+
+    if( !std::visit( can_open_while_mounted{}, who ) ) {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool map::open_door_furn(
+    const interacting_entity &who, const furn_t &furn,
+    const tripoint &p, const bool inside
+)
+{
+    if( !can_open_door_furn( static_variant_cast<const_interacting_entity>( who ), furn, p, inside ) ) {
+        return false;
+    }
+
+    sounds::sound(
+        p, 6, sounds::sound_t::movement, _( "swish" ),
+        true, "open_door", furn.id.str() );
+    furn_set( p, furn.open );
+    return true;
+
+}
+
+bool map::can_open_door_veh(
+    const const_interacting_entity &who, const optional_vpart_position &vp,
+    const tripoint &, bool inside
+) const
+{
+
+    const int openable = vp->vehicle().next_part_to_open( vp->part_index(), !inside );
+    if( openable < 0 ) {
+        const int openable_other_way = vp->vehicle().next_part_to_open( vp->part_index(), !inside );
+        if( openable_other_way >= 0 ) {
+            const auto you = std::visit( []( auto &&v ) { return static_cast<const Creature *>( v );}, who );
+            if( inside ) {
+                you->add_msg_if_player( _( "The %1$s's %2$s can only be opened from outside." ), vp->vehicle().name,
+                                        vp->vehicle().part_info( vp->part_index() ).name() );
+            } else {
+                you->add_msg_if_player( _( "The %1$s's %2$s can only be opened from inside." ), vp->vehicle().name,
+                                        vp->vehicle().part_info( vp->part_index() ).name() );
+            }
+        }
+        return false;
+    }
+
+    if( !std::visit( can_open_while_mounted{}, who ) ) {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool map::open_door_veh(
+    const interacting_entity &who, const optional_vpart_position &vp,
+    const tripoint &p, bool inside
+)
+{
+    if( !can_open_door_veh( static_variant_cast<const_interacting_entity>( who ), vp, p, inside ) ) {
+        return false;
+    }
+
+    if( std::holds_alternative<Character *>( who ) ) {
+        auto &you = *std::get<Character *>( who );
+        if( you.is_avatar() &&
+            !vp->vehicle().handle_potential_theft( *you.as_avatar() ) ) {
+            return false;
+        }
+    }
+
+    const auto is_owner = std::visit(
+    [&]<typename T>( T u ) -> bool {
+        if constexpr( std::is_same_v<T, Character *> )
+        {
+            return vp->vehicle().is_owned_by( *u );
+        }
+        return false;
+    },
+    who );
+
+    const auto lock_part = vp.part_with_feature( str_DOOR_LOCKING, true );
+    const bool has_locked_door = lock_part.has_value() && lock_part.value().part().enabled;
+    // vehicle::is_locked = you have no keys / vehicle has not been hotwired yet
+    // unrelated to the door lock itself
+    if( has_locked_door && ( !is_owner || vp->vehicle().is_locked ) ) {
+
+        const auto &veh = vp->vehicle();
+        const auto you = std::visit( []( auto &&v ) { return static_cast<const Creature *>( v );}, who );
+        const auto dpart = veh.next_part_to_open( vp->part_index(), !inside );
+        you->add_msg_if_player( _( "The %1$s's %2$s is locked." ), veh.name,
+                                veh.part_info( dpart ).name() );
 
         return false;
     }
 
-    return false;
+    const int openable = vp->vehicle().next_part_to_open( vp->part_index(), !inside );
+    vp->vehicle().open_all_at( openable );
+    return true;
 }
 
 void map::translate( const ter_id &from, const ter_id &to )
@@ -4288,7 +4507,7 @@ void map::translate_radius( const ter_id &from, const ter_id &to, float radi, co
 
 bool map::close_door( const tripoint &p, const bool inside, const bool check_only )
 {
-    if( has_flag( "OPENCLOSE_INSIDE", p ) && !inside ) {
+    if( has_flag( str_OPENCLOSE_INSIDE, p ) && !inside ) {
         return false;
     }
 
@@ -5851,7 +6070,7 @@ void map::update_visibility_cache( const int zlev )
     int sm_squares_seen[MAPSIZE][MAPSIZE];
     std::memset( sm_squares_seen, 0, sizeof( sm_squares_seen ) );
 
-    int min_z = fov_3d ? -OVERMAP_DEPTH : zlev;
+    int min_z = fov_3d ? -OVERMAP_DEPTH : ( zlevels ? std::max( zlev - 1, -OVERMAP_DEPTH ) : zlev );
     int max_z = fov_3d ? OVERMAP_HEIGHT : zlev;
 
     for( int z = min_z; z <= max_z; z++ ) {
@@ -8003,6 +8222,13 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
         for( int j = 0; j < i.count; j++ ) {
             monster tmp( i.type );
             tmp.mission_id = i.mission_id;
+            if( i.mission_id != -1 ) {
+                mission *found_mission = mission::find( i.mission_id );
+                if( found_mission != nullptr &&
+                    found_mission->get_type().goal == MGOAL_KILL_MONSTERS ) {
+                    found_mission->register_kill_needed();
+                }
+            }
             if( i.name != "NONE" ) {
                 tmp.unique_name = i.name;
             }
@@ -8561,6 +8787,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     const int minz = zlevels ? -OVERMAP_DEPTH : zlev;
     const int maxz = zlevels ? OVERMAP_HEIGHT : zlev;
     bool seen_cache_dirty = false;
+    std::vector<int> dirty_seen_cache_levels;
     for( int z = minz; z <= maxz; z++ ) {
         // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
         const bool affects_seen_cache =  z == zlev || fov_3d;
@@ -8568,7 +8795,11 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         build_transparency_cache( z );
         update_suspension_cache( z );
         seen_cache_dirty |= ( build_floor_cache( z ) && affects_seen_cache );
-        seen_cache_dirty |= get_cache( z ).seen_cache_dirty && affects_seen_cache;
+        const bool level_seen_dirty = get_cache( z ).seen_cache_dirty;
+        seen_cache_dirty |= level_seen_dirty;
+        if( level_seen_dirty ) {
+            dirty_seen_cache_levels.push_back( z );
+        }
         diagonal_blocks fill = {false, false};
         std::uninitialized_fill_n( &( get_cache( z ).vehicle_obscured_cache[0][0] ), MAPSIZE_X * MAPSIZE_Y,
                                    fill );
@@ -8594,7 +8825,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         player_prev_pos = p;
     }
     if( !skip_lightmap ) {
-        generate_lightmap( zlev );
+        dirty_seen_cache_levels.push_back( zlev );
+        std::ranges::sort( dirty_seen_cache_levels );
+        dirty_seen_cache_levels.erase( std::ranges::unique( dirty_seen_cache_levels ).begin(),
+                                       dirty_seen_cache_levels.end() );
+        for( const int level : dirty_seen_cache_levels ) {
+            generate_lightmap( level );
+        }
     }
 }
 

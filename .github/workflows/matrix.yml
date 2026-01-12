@@ -37,52 +37,32 @@ jobs:
     needs: skip-duplicates
     strategy:
       fail-fast: ${{ github.ref_name == 'main' }}
-      max-parallel: ${{ github.ref_name == 'main' && 20 || 1 }}
+      max-parallel: ${{ github.ref_name == 'main' && 20 || 2 }}
       matrix:
         include:
-          - title: GCC, Ubuntu, Curses
-            compiler: g++
+          - title: GCC, Ubuntu, Curses, CMake
+            preset: ci-curses
             os: ubuntu-latest
             tiles: 0
-            sound: 0
             test-stage: 1
-            libbacktrace: 1
-            native: linux64
             ccache_limit: 2G
-            ccache_key: linux-gcc
+            ccache_key: linux-gcc-curses
             always-run: true
 
           - title: GCC, Ubuntu, Tiles, Sound, CMake, Languages
-            compiler: g++
+            preset: ci-tiles
             os: ubuntu-latest
             tiles: 1
-            sound: 1
-            languages: all
-            native: linux64
             ccache_limit: 2G
-            ccache_key: linux-gcc-cmake-tiles
+            ccache_key: linux-gcc-tiles
             upload-artifact: true
 
     name: ${{ matrix.title }}
     runs-on: ${{ matrix.os }}
     env:
-      ZSTD_CLEVEL: 17
-      CMAKE: 1
-      COMPILER: ${{ matrix.compiler }}
-      OS: ${{ matrix.os }}
+      ZSTD_CLEVEL: 3
       TILES: ${{ matrix.tiles }}
-      SOUND: ${{ matrix.sound }}
       TEST_STAGE: ${{ matrix.test-stage }}
-      LANGUAGES: ${{ matrix.languages }}
-      LIBBACKTRACE: ${{ matrix.libbacktrace }}
-      NATIVE: ${{ matrix.native }}
-      RELEASE: 1
-
-      CCACHE_LIMIT: ${{ matrix.ccache_limit }}
-      CCACHE_FILECLONE: true
-      CCACHE_HARDLINK: true
-      CCACHE_NOCOMPRESS: true
-
       SKIP: ${{ matrix.always-run != true && ( github.event.pull_request.draft == true || needs.skip-duplicates.outputs.should_skip_code == true || needs.skip-duplicates.outputs.should_skip_data == true ) }}
 
     steps:
@@ -96,7 +76,7 @@ jobs:
         if: ${{ env.SKIP == 'false' }}
         run: |
           sudo apt-get update
-          sudo apt-get install gcc-14 libncursesw5-dev ccache gettext parallel libsqlite3-dev zlib1g-dev
+          sudo apt-get install gcc-14 libncursesw5-dev mold gettext parallel libsqlite3-dev zlib1g-dev ninja-build
           sudo locale-gen en_US.UTF-8 fr_FR.UTF-8 ru_RU.UTF-8
 
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
@@ -121,50 +101,59 @@ jobs:
         if: ${{ env.SKIP == 'false' }}
         run: bash ./build-scripts/requirements.sh
 
-      - name: Get ccache vars
-        id: get-ccache-vars
+      - name: Setup ccache
         if: ${{ env.SKIP == 'false' }}
-        shell: bash
-        run: |
-          echo "datetime=$(/bin/date -u "+%Y%m%d%H%M")" >> $GITHUB_OUTPUT
-
-      - name: ccache cache files
-        if: ${{ env.SKIP == 'false' }}
-        uses: actions/cache@v3
-        id: cache
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          path: "~/.cache/ccache"
-          # double-dash after compiler is not a typo, it is to disambiguate between g++-<date> and g++-11-<date> for restore key prefix matching
-          key: ccache-${{ github.ref_name }}-${{ matrix.ccache_key }}--${{ steps.get-ccache-vars.outputs.datetime }}
-          restore-keys: ccache-main-${{ matrix.ccache_key }}--
-
-      - name: ccache info
-        if: ${{ env.SKIP == 'false' && steps.cache.outputs.cache-hit != 'true' }}
-        run: |
-          echo CCache failed to restore from cache, emmiting stats
-          ccache --show-stats --verbose
+          key: ${{ matrix.ccache_key }}-${{ github.ref_name }}
+          restore-keys: |
+            ${{ matrix.ccache_key }}-${{ github.ref_name }}
+            ${{ matrix.ccache_key }}-main
+            ${{ matrix.ccache_key }}-
+          max-size: ${{ matrix.ccache_limit }}
+          verbose: 2
+          save: ${{ github.event_name != 'pull_request' }}
 
       - uses: ammaraskar/gcc-problem-matcher@master
 
-      - name: build
-        if: ${{ env.SKIP == 'false' }}
-        run: bash ./build-scripts/gha_compile_only.sh
-
-      - name: post-build ccache stats and cleanup
-        if: ${{ env.SKIP == 'false' && !failure() }}
+      - name: run JSON syntax validation (test-stage only)
+        if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}
         run: |
-          ccache --show-stats --verbose
-          ccache --max-size ${{ env.CCACHE_LIMIT }}
-          ccache --cleanup
-          ccache --show-stats --verbose
+          build-scripts/lint-json.sh
 
-      - name: clear ccache on PRs
-        if: ${{ github.ref_name != 'main' && env.SKIP == 'false' && !failure() }}
-        run: ccache --clear
+      - name: Configure and Build with CMake
+        if: ${{ env.SKIP == 'false' }}
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: ${{ matrix.preset }}
+          buildPreset: ${{ matrix.preset }}
+          buildPresetAdditionalArgs: "['-j', '2']"
+
+      - name: run JSON formatting check (test-stage only)
+        if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}
+        run: |
+          cmake --build build --target style-json-parallel
+          tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
 
       - name: run tests
         if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
-        run: bash ./build-scripts/gha_test_only.sh
+        run: |
+          # Run tests using parallel execution
+          test_bin="build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}"
+          test_opts="--min-duration 20 --use-colour yes --rng-seed time --error-format=github-action"
+
+          parallel --verbose --linebuffer \
+            "$test_bin $test_opts --user-dir=test_user_dir_{#} {}" \
+            ::: "[slow] ~starting_items" "~[slow] ~[.],starting_items"
+
+          # Run test with all mods (test-stage only)
+          if [ "${{ env.TEST_STAGE }}" = "1" ]; then
+            blacklist=build-scripts/mod_test_blacklist
+            ./build-scripts/get_all_mods.py $blacklist | \
+              while read -r mods; do
+                $test_bin $test_opts '~*' --user-dir=all_modded --mods="${mods}"
+              done
+          fi
 
       - name: emit success artifact
         if: ${{ success() && matrix.upload-artifact == 'true' }}
@@ -177,6 +166,6 @@ jobs:
         uses: actions/upload-artifact@v4.6.0
         if: failure()
         with:
-          name: cata_test
-          path: tests/cata_test
+          name: cata_test-${{ matrix.tiles == 1 && 'tiles' || 'curses' }}
+          path: build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}
           if-no-files-found: ignore

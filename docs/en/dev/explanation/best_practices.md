@@ -3,7 +3,7 @@
 List of conventions used in the project, plus just plain good practices. Not rules per se, most of
 the codebase doesn't meet those standards.
 
-# Naming
+## Naming
 
 Good names:
 
@@ -15,7 +15,7 @@ Good names:
 
 `snake_case` is preferred for consistency with most of the project's code.
 
-# Classes
+## Classes
 
 - Don't add methods where a regular function in a namespace would work -
   `crafting::consume_tools(tool_list,Character &)`, not `Character.consume_tools(tool_list)`
@@ -25,13 +25,13 @@ Good names:
 - Use `private` where possible, `public` when not, `protected` only when there's a clear reason for
   it
 
-# Types
+## Types
 
 - Avoid pointers, instead use references, `std::optional` or even a function overload where possible
 - Avoid using `std::pair` and `std::tuple` in headers, instead create a named struct
 - Avoid using `int` or `std::string` where an `enum class` would work
 
-# File organization
+## File organization
 
 Try to avoid including headers from other headers. This negatively impacts compilation times (both
 clean and partial builds), especially when the header in question is already big and widely used

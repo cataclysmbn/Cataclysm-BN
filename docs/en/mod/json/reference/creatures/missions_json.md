@@ -88,6 +88,7 @@ Must be included, and must be one of these strings:
 | `MGOAL_KILL_MONSTER`      | Kill a specific hostile monster                                         |
 | `MGOAL_KILL_MONSTER_TYPE` | Kill some number of a specific monster type                             |
 | `MGOAL_KILL_MONSTER_SPEC` | Kill some number of monsters from a specific species                    |
+| `MGOAL_KILL_MONSTERS`     | Kill specific mission-tagged monsters spawned at mission start          |
 | `MGOAL_CONDITION`         | Satisfy the dynamically created condition and talk to the mission giver |
 
 ### monster_species

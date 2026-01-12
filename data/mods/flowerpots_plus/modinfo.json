@@ -1,0 +1,12 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "flowerpots_plus",
+    "name": "FlowerPots++",
+    "authors": [ "Usagirei" ],
+    "description": "Adds flower pots to grow plants on the go.",
+    "category": "content",
+    "dependencies": [ "bn" ],
+    "obsolete": false
+  }
+]

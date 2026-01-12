@@ -166,6 +166,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_char_purifier",
+    "name": "Build Charcoal Purifier"
+  },
+  {
+    "type": "construction_group",
     "id": "build_coat_rack",
     "name": "Build Coat Rack"
   },
@@ -561,6 +566,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_simple_wood_barricade",
+    "name": "Build Simple Wooden Barricade"
+  },
+  {
+    "type": "construction_group",
     "id": "build_rock_forge",
     "name": "Build Rock Forge"
   },
@@ -698,6 +708,11 @@
     "type": "construction_group",
     "id": "build_tarp_lean_to",
     "name": "Build Tarp Lean-To"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_tarp_lean_to_leather",
+    "name": "Build Leather Tarp Lean-To"
   },
   {
     "type": "construction_group",
@@ -981,6 +996,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_cloning_vat",
+    "name": "Plug In Cloning Vat"
+  },
+  {
+    "type": "construction_group",
     "id": "install_oven",
     "name": "Plug In Oven"
   },
@@ -1048,6 +1068,11 @@
     "type": "construction_group",
     "id": "install_solar_panel",
     "name": "Install Solar Panel"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_foldable_solar_panel",
+    "name": "Install Foldable Solar Panel"
   },
   {
     "type": "construction_group",
@@ -1623,5 +1648,20 @@
     "type": "construction_group",
     "id": "add_grass",
     "name": "Plant Grass"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_canvas_floor",
+    "name": "Build canvas flooring"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_canvas_wall",
+    "name": "Build canvas wall"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_canvas_door",
+    "name": "Build canvas door"
   }
 ]

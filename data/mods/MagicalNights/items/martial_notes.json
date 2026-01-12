@@ -83,5 +83,68 @@
     "name": { "str": "Note on Adventurer's Relief", "str_pl": "Notes on Adventurer's Relief" },
     "description": "Adventuring tends to result in a good amount of small cuts and bruises that might not be life-threatening, but boy do they hurt like hell!",
     "use_action": { "type": "learn_spell", "spells": [ "adventurers_relief" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_sparrows_strike",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Sparrow's Strike", "str_pl": "Notes on Sparrow's Strike" },
+    "description": "You must strike like a sparrow and attack before your enemy may react",
+    "use_action": { "type": "learn_spell", "spells": [ "sparrows_strike" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_treechopping_cut",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Treechopping Cut", "str_pl": "Notes on Treechopping Cut" },
+    "description": "Ever wanted to chop down a tree in a single strike? Now you can!",
+    "use_action": { "type": "learn_spell", "spells": [ "treechopping_cut" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_hornets_stinger",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Hornet's Stinger", "str_pl": "Notes on Hornet's Stinger" },
+    "description": "Much like a hornet's stinger stabs right through your skin, you must stab right through your enemies.",
+    "use_action": { "type": "learn_spell", "spells": [ "hornets_stinger" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_traveling_strike",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Traveling Strike", "str_pl": "Notes on Traveling Strike" },
+    "description": "A technique for when you're on the move and you don't want to stop in place and cut your enemy down",
+    "use_action": { "type": "learn_spell", "spells": [ "traveling_strike" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_execution_flurry",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Execution Flurry", "str_pl": "Notes on Execution Flurry" },
+    "description": "You are a storm that is approaching, preparing to devastate your enemies.",
+    "use_action": { "type": "learn_spell", "spells": [ "execution_flurry" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_iaido",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Iaido", "str_pl": "Notes on Iaido" },
+    "description": "Attacking your enemy in the same breath that you draw your sword is a recipe for efficient combat.",
+    "use_action": { "type": "learn_spell", "spells": [ "iaido" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_blademasters_repose",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Blademaster's Repose", "str_pl": "Notes on Blademaster's Repose" },
+    "description": "When your reflexes and your blade are what stands between you and death, you must make sure that both are razor-sharp.",
+    "use_action": { "type": "learn_spell", "spells": [ "blademasters_repose" ] }
   }
 ]

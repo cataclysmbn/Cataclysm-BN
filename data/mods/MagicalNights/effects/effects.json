@@ -350,5 +350,15 @@
     "desc": [ "You're protected against common poisons and other adventuring threats." ],
     "remove_message": "You feel the anti-poison poultice wearing down in effect.",
     "removes_effects": [ "poison", "venom_dmg", "venom_weaken", "spores", "dermatik", "foodpoison" ]
+  },
+  {
+    "type": "effect_type",
+    "id": "blademaster_repose",
+    "name": [ "Blademaster's Repose" ],
+    "desc": [ "Your reflexes are razor-sharp!" ],
+    "apply_message": "As you finish your meditation, you feel your reflexes heighten!",
+    "remove_message": "Your reflexes return to normal.",
+    "rating": "good",
+    "base_mods": { "dex_mod": [ 2 ] }
   }
 ]

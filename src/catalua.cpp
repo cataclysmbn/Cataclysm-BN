@@ -2,6 +2,8 @@
 
 #include "debug.h"
 
+#include <clocale>
+
 constexpr int LUA_API_VERSION = 2;
 
 #include "catalua_sol.h"
@@ -46,8 +48,24 @@ void startup_lua_test()
 auto generate_lua_docs( const std::filesystem::path &script_path,
                         const std::filesystem::path &to ) -> bool
 {
+    // Force C locale for consistent string sorting in Lua (strcoll dependency)
+    const auto *prev_locale_ptr = std::setlocale( LC_ALL, nullptr );
+    const auto prev_locale = std::string{ prev_locale_ptr ? prev_locale_ptr : "" };
+    std::setlocale( LC_ALL, "C" );
+
     sol::state lua = make_lua_state();
     lua.globals()["doc_gen_func"] = lua.create_table();
+    lua.globals()["print"] = [&]( const sol::variadic_args & va ) {
+        for( auto it : va ) {
+            std::string str = lua["tostring"]( it );
+            std::cout << str;
+        }
+        std::cout << std::endl;
+    };
+    lua.globals()["package"]["path"] = string_format(
+                                           "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
+                                           PATH_INFO::datadir() + "/lua", PATH_INFO::datadir() + "/raw"
+                                       );
 
     try {
         run_lua_script( lua, script_path.string() );
@@ -60,8 +78,10 @@ auto generate_lua_docs( const std::filesystem::path &script_path,
         } );
     } catch( std::runtime_error &e ) {
         cata_printf( "%s\n", e.what() );
+        std::setlocale( LC_ALL, prev_locale.c_str() );
         return false;
     }
+    std::setlocale( LC_ALL, prev_locale.c_str() );
     return true;
 }
 
@@ -263,23 +283,25 @@ void run_mod_main_script( lua_state &state, const mod_id &mod )
     run_lua_script( state.lua, script_path );
 }
 
-void run_hooks( std::string_view hook_name )
+auto run_hooks( std::string_view hook_name ) -> bool
 {
     lua_state &state = *DynamicDataLoader::get_instance().lua;
-    run_hooks( state, hook_name, []( sol::table & ) {} );
+    return run_hooks( state, hook_name, []( sol::table & ) {}, false );
 }
-void run_hooks( lua_state &state, std::string_view hook_name )
+auto run_hooks( lua_state &state, std::string_view hook_name ) -> bool
 {
-    run_hooks( state, hook_name, []( sol::table & ) {} );
+    return run_hooks( state, hook_name, []( sol::table & ) {}, false );
 }
-void run_hooks( std::string_view hook_name,
-                std::function < auto( sol::table &params ) -> void > init )
+auto run_hooks( std::string_view hook_name,
+                std::function < auto( sol::table &params ) -> void > init,
+                bool default_result ) -> bool
 {
     lua_state &state = *DynamicDataLoader::get_instance().lua;
-    run_hooks( state, hook_name, init );
+    return run_hooks( state, hook_name, init, default_result );
 }
-void run_hooks( lua_state &state, std::string_view hook_name,
-                std::function < auto( sol::table &params ) -> void > init )
+auto run_hooks( lua_state &state, std::string_view hook_name,
+                std::function < auto( sol::table &params ) -> void > init,
+                bool default_result ) -> bool
 {
     sol::state &lua = state.lua;
     sol::table hooks = lua.globals()["game"]["hooks"][hook_name];
@@ -294,11 +316,18 @@ void run_hooks( lua_state &state, std::string_view hook_name,
             sol::protected_function func = ref.second;
             sol::protected_function_result res = func( params );
             check_func_result( res );
+            if( res.valid() ) {
+                auto result = res.get<sol::object>();
+                if( result.is<bool>() && !result.as<bool>() ) {
+                    return false;
+                }
+            }
         } catch( std::runtime_error &e ) {
             debugmsg( "Failed to run hook %s[%d]: %s", hook_name, idx, e.what() );
-            break;
+            return default_result;
         }
     }
+    return default_result;
 }
 
 
@@ -306,14 +335,39 @@ void reg_lua_iuse_actors( lua_state &state, Item_factory &ifactory )
 {
     sol::state &lua = state.lua;
 
-    sol::table funcs = lua.globals()["game"]["iuse_functions"];
+    const sol::table funcs = lua.globals()["game"]["iuse_functions"];
 
     for( auto &ref : funcs ) {
         std::string key;
         try {
             key = ref.first.as<std::string>();
-            sol::protected_function func = ref.second;
-            ifactory.add_actor( std::make_unique<lua_iuse_actor>( key, std::move( func ) ) );
+
+            switch( ref.second.get_type() ) {
+                case sol::type::function: {
+                    auto func =  ref.second.as<sol::function>();
+                    ifactory.add_actor( std::make_unique<lua_iuse_actor>(
+                                            key,
+                                            std::move( func ),
+                                            sol::lua_nil,
+                                            sol::lua_nil ) );
+                    break;
+                }
+                case sol::type::table: {
+                    auto tbl = ref.second.as<sol::table>();
+                    auto use_fn = tbl.get<sol::function>( "use" );
+                    auto can_use_fn = tbl.get_or<sol::function>( "can_use", sol::lua_nil );
+                    auto tick_fn = tbl.get_or<sol::function>( "tick", sol::lua_nil );
+                    ifactory.add_actor( std::make_unique<lua_iuse_actor>(
+                                            key,
+                                            std::move( use_fn ),
+                                            std::move( can_use_fn ),
+                                            std::move( tick_fn ) ) );
+                    break;
+                }
+                default: {
+                    throw std::runtime_error( "invalid iuse object type, expected table or function" );
+                }
+            }
         } catch( std::runtime_error &e ) {
             debugmsg( "Failed to extract iuse_functions k='%s': %s", key, e.what() );
             break;

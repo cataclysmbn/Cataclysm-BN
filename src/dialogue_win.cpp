@@ -75,6 +75,7 @@ void dialogue_window::print_history()
 struct page_entry {
     nc_color col;
     std::vector<std::string> lines;
+    size_t response_index = 0;
 };
 
 struct page {
@@ -88,11 +89,14 @@ static std::vector<page> split_to_pages( const std::vector<talk_data> &responses
     std::vector<page> ret;
     int fold_width = page_w - 3;
     int this_h = 0;
+    size_t response_index = 0;
     for( const talk_data &resp : responses ) {
         // Assemble single entry for printing
         const std::vector<std::string> folded = foldstring( resp.text, fold_width );
         page_entry this_entry;
         this_entry.col = resp.col;
+        this_entry.response_index = response_index;
+        response_index++;
         if( !folded.empty() ) {
             this_entry.lines.push_back( string_format( "%c: %s", resp.letter, folded[0] ) );
             for( size_t i = 1; i < folded.size(); i++ ) {
@@ -115,7 +119,8 @@ static std::vector<page> split_to_pages( const std::vector<talk_data> &responses
     return ret;
 }
 
-static void print_responses( const catacurses::window &w, const page &responses )
+static void print_responses( const catacurses::window &w, const page &responses,
+                             size_t selected_response )
 {
     // Responses go on the right side of the window, add 2 for border + space
     const size_t x_start = getmaxx( w ) / 2 + 2;
@@ -124,7 +129,8 @@ static void print_responses( const catacurses::window &w, const page &responses 
 
     int curr_y = y_start;
     for( const page_entry &entry : responses.entries ) {
-        const nc_color col = entry.col;
+        const auto selected = entry.response_index == selected_response;
+        const auto col = selected ? hilite( entry.col ) : entry.col;
         for( const std::string &line : entry.lines ) {
             mvwprintz( w, point( x_start, curr_y ), col, line );
             curr_y += 1;
@@ -159,27 +165,19 @@ void dialogue_window::refresh_response_display()
     can_scroll_up = false;
 }
 
-void dialogue_window::handle_scrolling( const int ch )
+std::optional<size_t> dialogue_window::handle_scrolling( const int ch )
 {
-    switch( ch ) {
-        case KEY_DOWN:
-        case KEY_NPAGE:
-            if( can_scroll_down ) {
-                curr_page += 1;
-            }
-            break;
-        case KEY_UP:
-        case KEY_PPAGE:
-            if( can_scroll_up ) {
-                curr_page -= 1;
-            }
-            break;
-        default:
-            break;
+    if( ch == KEY_NPAGE && can_scroll_down ) {
+        return next_page_start;
     }
+    if( ch == KEY_PPAGE && can_scroll_up ) {
+        return prev_page_start;
+    }
+    return std::nullopt;
 }
 
-void dialogue_window::display_responses( const std::vector<talk_data> &responses )
+void dialogue_window::display_responses( const std::vector<talk_data> &responses,
+        size_t selected_response )
 {
     const int win_maxy = getmaxy( d_win );
     clear_window_texts();
@@ -191,10 +189,29 @@ void dialogue_window::display_responses( const std::vector<talk_data> &responses
     const int page_w = getmaxx( d_win ) / 2 - 4; // -4 for borders + padding
     const std::vector<page> pages = split_to_pages( responses, page_w, page_h );
     if( !pages.empty() ) {
+        auto selected_page = pages.size();
+        size_t page_index = 0;
+        for( const page &page : pages ) {
+            for( const page_entry &entry : page.entries ) {
+                if( entry.response_index == selected_response ) {
+                    selected_page = page_index;
+                    break;
+                }
+            }
+            if( selected_page != pages.size() ) {
+                break;
+            }
+            page_index++;
+        }
+        if( selected_page != pages.size() ) {
+            curr_page = selected_page;
+        }
+    }
+    if( !pages.empty() ) {
         if( curr_page >= pages.size() ) {
             curr_page = pages.size() - 1;
         }
-        print_responses( d_win, pages[curr_page] );
+        print_responses( d_win, pages[curr_page], selected_response );
     }
     print_keybindings( d_win );
     can_scroll_up = curr_page > 0;
@@ -202,9 +219,11 @@ void dialogue_window::display_responses( const std::vector<talk_data> &responses
 
     if( can_scroll_up ) {
         mvwprintz( d_win, point( getmaxx( d_win ) - 2 - 2, 2 ), c_green, "^^" );
+        prev_page_start = pages[curr_page - 1].entries.front().response_index;
     }
     if( can_scroll_down ) {
         mvwprintz( d_win, point( FULL_SCREEN_WIDTH - 2 - 2, win_maxy - 2 ), c_green, "vv" );
+        next_page_start = pages[curr_page + 1].entries.front().response_index;
     }
     wnoutrefresh( d_win );
 }

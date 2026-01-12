@@ -7,7 +7,7 @@
     "description": "Want a little crazy in your Cataclysm?  Try this one.",
     "category": "misc_additions",
     "dependencies": [ "bn" ],
-    "obsolete": true
+    "obsolete": false
   },
   {
     "type": "MONSTER_WHITELIST",

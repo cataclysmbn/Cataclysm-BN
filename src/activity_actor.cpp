@@ -52,6 +52,7 @@
 #include "translations.h"
 #include "uistate.h"
 #include "vehicle.h"
+#include "vehicle_part.h"
 #include "vpart_position.h"
 
 #define dbg(x) DebugLog((x),DC::Game)
@@ -1483,13 +1484,13 @@ void lockpick_activity_actor::start( player_activity &/*act*/, Character & )
     const tripoint target = get_map().getlocal( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
+    const optional_vpart_position veh = get_map().veh_at( target );
+    const auto door_lock = veh.part_with_feature( "DOOR_LOCKING", true );
 
-    if( furn_type != f_null ) {
-        if( furn_type->lockpick_result.is_null() ) {
-            debugmsg( "%s lockpick_result is null", furn_type.id().str() );
-            return;
-        }
+    if( furn_type != f_null && !furn_type->lockpick_result.is_null() ) {
         progress.emplace( furn_type->name(), moves_total );
+    } else if( veh && door_lock ) {
+        progress.emplace( veh->vehicle().name, moves_total );
     } else {
         if( ter_type->lockpick_result.is_null() ) {
             debugmsg( "%s lockpick_result is null", ter_type.id().str() );
@@ -1526,6 +1527,9 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     const tripoint target = get_map().getlocal( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
+    const optional_vpart_position veh = get_map().veh_at( target );
+    const auto door_lock = veh.part_with_feature( "DOOR_LOCKING", true );
+
     ter_id new_ter_type = t_null;
     furn_id new_furn_type = f_null;
     std::string open_message = _( "The lock opens…" );
@@ -1539,6 +1543,11 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         new_furn_type = furn_type->lockpick_result;
         if( !furn_type->lockpick_message.empty() ) {
             open_message = furn_type->lockpick_message.translated();
+        }
+    } else if( veh ) {
+        if( !door_lock ) {
+            debugmsg( "%s has no pickable part", furn_type.id().str() );
+            return;
         }
     } else {
         if( ter_type->lockpick_result.is_null() ) {
@@ -1565,9 +1574,15 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     int xp_gain = 0;
     if( perfect || ( pick_roll >= lock_roll ) ) {
         xp_gain += lock_roll;
-        get_map().has_furn( target ) ?
-        get_map().furn_set( target, new_furn_type ) :
-        static_cast<void>( get_map().ter_set( target, new_ter_type ) );
+
+        if( furn_type != f_null ) {
+            get_map().furn_set( target, new_furn_type );
+        } else if( door_lock ) {
+            door_lock->part().enabled = false;
+        } else {
+            get_map().ter_set( target, new_ter_type );
+        }
+
         who.add_msg_if_player( m_good, open_message );
     } else if( lock_roll > ( 1.5 * pick_roll ) ) {
         if( it->inc_damage() ) {
@@ -1588,13 +1603,18 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     }
     who.practice( skill_mechanics, xp_gain );
 
-    if( !perfect && get_map().has_flag( "ALARMED", target ) &&
-        ( lock_roll + dice( 1, 30 ) ) > pick_roll ) {
-        sounds::sound( who.pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ),
-                       true, "environment", "alarm" );
-        if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
-            g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                                 who.global_sm_location() );
+    if( !perfect
+        && ( lock_roll + dice( 1, 30 ) ) > pick_roll ) {
+
+        if( get_map().has_flag( "ALARMED", target ) ) {
+            sounds::sound( who.pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ),
+                           true, "environment", "alarm" );
+            if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
+                g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
+                                     who.global_sm_location() );
+            }
+        } else if( veh && veh->vehicle().has_security_working() ) {
+            veh->vehicle().is_alarm_on = true;
         }
     }
 
@@ -1605,8 +1625,21 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
 
 bool lockpick_activity_actor::is_pickable( const tripoint &p )
 {
-    return get_map().has_furn( p ) ? !get_map().furn( p )->lockpick_result.is_null() :
-           !get_map().ter( p )->lockpick_result.is_null();
+    const ter_id ter_type = get_map().ter( p );
+    const furn_id furn_type = get_map().furn( p );
+    const optional_vpart_position veh = get_map().veh_at( p );
+    const auto door_lock = veh.part_with_feature( "DOOR_LOCKING", true );
+
+    bool result;
+    if( furn_type != f_null ) {
+        result = !furn_type->lockpick_result.is_null();
+    } else if( door_lock ) {
+        result = door_lock.value().part().enabled;
+    } else {
+        result = !ter_type->lockpick_result.is_null();
+    }
+
+    return result;
 }
 
 std::optional<tripoint> lockpick_activity_actor::select_location( avatar &you )

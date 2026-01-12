@@ -43,5 +43,50 @@
     "looks_like": "pocket_survival",
     "color": "green",
     "use_action": { "type": "learn_spell", "spells": [ "pocket_sand", "survival_wooden_javelins" ] }
+  },
+  {
+    "id": "blademaster_weeaboo_stories",
+    "type": "GENERIC",
+    "category": "spellbooks",
+    "name": { "str": "Studying the Blade", "str_pl": "copies of Studying the Blade" },
+    "//": "3 Blademaster techniques",
+    "description": "Interspersed with weeaboo stories that would make a 5chan board sarcastically clap, you find some surprisingly detailed notes on a few specific techniques. But there's no chance they work... right?",
+    "weight": "585 g",
+    "volume": "250 ml",
+    "price": "50 USD",
+    "symbol": "?",
+    "looks_like": "manual_swordsmanship",
+    "color": "light_red",
+    "use_action": { "type": "learn_spell", "spells": [ "sparrows_strike", "treechopping_cut", "execution_flurry" ] }
+  },
+  {
+    "id": "blademaster_fast_moves_book",
+    "type": "GENERIC",
+    "category": "spellbooks",
+    "name": { "str": "Swiftly Slashing", "str_pl": "copies of Swiftly Slashing" },
+    "//": "4 Blademaster techniques",
+    "description": "A collection of haikus detailing the importance of swiftness when wielding a blade, as well as how to apply the philosophy more generally. Just as the descriptions of the techniques are concise, so must your strikes be.",
+    "weight": "585 g",
+    "volume": "250 ml",
+    "price": "50 USD",
+    "symbol": "?",
+    "looks_like": "manual_swordsmanship",
+    "color": "light_blue",
+    "use_action": { "type": "learn_spell", "spells": [ "sparrows_strike", "traveling_strike", "iaido", "hornets_stinger" ] }
+  },
+  {
+    "id": "blademaster_strength_book",
+    "type": "GENERIC",
+    "category": "spellbooks",
+    "name": { "str": "Strong like Steel", "str_pl": "copies of Strong like Steel" },
+    "//": "2 Blademaster techniques",
+    "description": "A historical text on the importance of the swordsman being just as strong and sturdy as his blade, complete with illustrations and proverbs.",
+    "weight": "585 g",
+    "volume": "250 ml",
+    "price": "50 USD",
+    "symbol": "?",
+    "looks_like": "manual_swordsmanship",
+    "color": "red",
+    "use_action": { "type": "learn_spell", "spells": [ "treechopping_cut", "blademasters_repose" ] }
   }
 ]

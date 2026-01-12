@@ -312,7 +312,7 @@ static int rate_location( map &m, const tripoint &p, const bool must_be_inside,
 
         if( m.passable( pt ) ||
             m.bash_resistance( pt ) <= bash_str ||
-            m.open_door( pt, !m.is_outside( from ), true ) ) {
+            m.can_open_door( &get_avatar(), pt, !m.is_outside( from ) ) ) {
             st.push_back( pt );
         }
     };

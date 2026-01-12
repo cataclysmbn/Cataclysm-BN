@@ -68,33 +68,17 @@
         "|,hth,|-+|6...|,,|,hth,|",
         "|,,,,,|,,--LL--,,|,,,,,|",
         "|--+---,,,%,,,,,,---+--|",
-        "|]a,,,,,,,,,,,,,,,,,,a]|",
-        "|]a,,,hxtxh,,hxtxh,,,a]|",
-        "|]a,,,,,,,,,,,,,,,,,,a]|",
-        "|]aa]]aa]]a,,a]]aa]]aa]|",
-        "|]aa]]aa]]a,,a]]aa]]aa]|",
-        "|]aa]]aa]]a,,a]]aa]]aa]|",
-        "|]aa]]aa]]a,,a]]aa]]aa]|",
+        "|],,,,,,,,,,,,,,,,,,,,]|",
+        "|],,,,hxtxh,,hxtxh,,,,]|",
+        "|],,,,,,,,,,,,,,,,,,,,]|",
+        "|],,]],,]],,,,]],,]],,]|",
+        "|],,]],,]],,,,]],,]],,]|",
+        "|],,]],,]],,,,]],,]],,]|",
+        "|],,]],,]],,,,]],,]],,]|",
         "|----------------------|"
       ],
       "palettes": [ "lab_palette" ],
       "vendingmachines": { "1": { "item_group": "vending_drink" }, "2": { "item_group": "vending_food" } },
-      "furniture": {
-        "a": [
-          "f_stool",
-          "f_null",
-          "f_null",
-          "f_null",
-          "f_null",
-          "f_null",
-          "f_null",
-          "f_null",
-          "f_null",
-          "f_null",
-          "f_null",
-          "f_null"
-        ]
-      },
       "mapping": {
         "]": { "items": [ { "item": "manuals", "chance": 15 }, { "item": "textbooks", "chance": 15 } ] },
         "t": {

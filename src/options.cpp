@@ -1551,8 +1551,12 @@ void options_manager::add_options_interface()
     add_empty_line();
 
     add( "HEALTH_STYLE", interface, translate_marker( "Health Display Style" ),
-         translate_marker( "Switch health-related display styling such as HP and hunger" ),
-    {{ "number", translate_marker( "Numerical" )}, {"bar", translate_marker( "Bar" )}},
+    translate_marker( "Switch health-related display styling such as HP and hunger" ), {
+        {"number", translate_marker( "Numerical" ) },
+        {"bar", translate_marker( "Bar" ) },
+        {"bar_alt", translate_marker( "Bar (Alt)" ) },
+        {"bar_ascii", translate_marker( "Bar (Old)" ) },
+    },
     "bar" );
 
     add_empty_line();
@@ -1564,7 +1568,7 @@ void options_manager::add_options_interface()
 
     add( "HHG_URL", interface, translate_marker( "Hitchhiker's Guide URL" ),
          translate_marker( "The URL opened by pressing the open HHG keybind." ),
-         "https://next.cbn-guide.pages.dev", 60
+         "https://cbn-guide.pages.dev", 60
        );
 
     add_empty_line();
@@ -1853,6 +1857,14 @@ void options_manager::add_options_interface()
          translate_marker( "If true, show item symbols in inventory and pick up menu." ),
          false
        );
+    add( "HIGHLIGHT_UNREAD_RECIPES", interface, translate_marker( "Highlight unread recipes" ),
+         translate_marker( "Highlight unread recipes to allow tracking of newly learned recipes." ),
+         true
+       );
+    add( "HIGHLIGHT_UNREAD_ITEMS", interface, translate_marker( "Highlight unread items" ),
+         translate_marker( "Highlight unread items to allow tracking of newly discovered items." ),
+         true
+       );
     add( "AMMO_IN_NAMES", interface, translate_marker( "Add ammo to weapon/magazine names" ),
          translate_marker( "If true, the default ammo is added to weapon and magazine names.  For example \"Mosin-Nagant M44 (4/5)\" becomes \"Mosin-Nagant M44 (4/5 7.62x54mm)\"." ),
          true
@@ -1933,9 +1945,17 @@ void options_manager::add_options_graphics()
 
     get_option( "ANIMATION_DELAY" ).setPrerequisite( "ANIMATIONS" );
 
+    add( "SKIP_EXPLOSION_ANIMATION_AFTER", graphics,
+         translate_marker( "Maximum rendered explosions per turn" ),
+         translate_marker( "Skip rendering explosions after this many count per turn to prevent softlocks from chain reactions. Set to 0 to disable." ),
+         0, 100, 10
+       );
+
+    get_option( "SKIP_EXPLOSION_ANIMATION_AFTER" ).setPrerequisite( "ANIMATIONS" );
+
     add( "BULLETS_AS_LASERS", graphics, translate_marker( "Draw bullets as lines" ),
          translate_marker( "If true, bullets are drawn as lines of images, and the animation lasts only one frame." ),
-         false
+         true
        );
 
     add( "BLINK_SPEED", graphics, translate_marker( "Blinking effects speed" ),
@@ -2028,6 +2048,13 @@ void options_manager::add_options_graphics()
        ); // populate the options dynamically
 
     get_option( "OVERMAP_TILES" ).setPrerequisite( "USE_TILES_OVERMAP" );
+
+    add( "VEHICLE_EDIT_TILES", graphics, translate_marker( "Graphical vehicle display" ),
+         translate_marker( "If true, the vehicle interaction screen will display vehicle parts using graphical tiles instead of ASCII symbols." ),
+         true, COPT_CURSES_HIDE
+       );
+
+    get_option( "VEHICLE_EDIT_TILES" ).setPrerequisite( "USE_TILES" );
 
     add( "USE_CHARACTER_PREVIEW", graphics, translate_marker( "Enable character preview window" ),
          translate_marker( "If true, shows character preview window in traits tab on character creation.  "
@@ -2221,6 +2248,22 @@ void options_manager::add_options_debug()
         this->add_empty_line( debug );
     };
 
+    add_option_group( debug, Group( "rem_act_perf", to_translation( "Performance" ),
+                                    to_translation( "Configure performance settings that can detract from the game." ) ),
+    [&]( auto & page_id ) {
+        add( "SLEEP_SKIP_VEH", page_id, translate_marker( "Sleep Boost: Skip Vehicle Movement" ),
+             translate_marker( "Turns off vehicle movement and autodrive while sleeping" ),
+             true );
+        add( "SLEEP_SKIP_SOUND", page_id, translate_marker( "Sleep Boost: Skip Sound Processing On Sleep" ),
+             translate_marker( "Sounds are not processed while sleeping" ),
+             false );
+        add( "SLEEP_SKIP_MON", page_id, translate_marker( "Sleep Boost: Skip Monster Movement" ),
+             translate_marker( "Monsters do not move while sleeping" ),
+             false );
+    } );
+
+    add_empty_line();
+
     add( "STRICT_JSON_CHECKS", debug, translate_marker( "Strict JSON checks" ),
          translate_marker( "If true, will show additional warnings for JSON data correctness." ),
          true
@@ -2341,12 +2384,16 @@ void options_manager::add_options_debug()
     add( "MADE_OF_EXPLODIUM", debug, translate_marker( "Made of explodium" ),
          translate_marker( "Explosive items and traps will detonate when hit by damage exceeding the threshold.  A higher number means more damage is required to detonate.  Set to 0 to disable." ),
          0, 1000, 30 );
+    add( "ITEM_DAMAGE_ON_FLYING_IMPACT", debug, translate_marker( "Item damage on flying impact" ),
+         translate_marker( "If true, items flung by explosions will deal (lethal) damage to whatever they hit." ),
+         true );
 
     add( "OLD_EXPLOSIONS", debug, translate_marker( "Old explosions system" ),
          translate_marker( "If true, disables new raycasting based explosive system in favor of old system.  With new system obstacles (impassable terrain, furniture or vehicle parts) will block shrapnel, while blast will bash obstacles and throw creatures outward.  If obstacles are destroyed, blast continues outward." ),
          false );
 
     get_option( "MADE_OF_EXPLODIUM" ).setPrerequisite( "OLD_EXPLOSIONS", "false" );
+    get_option( "ITEM_DAMAGE_ON_FLYING_IMPACT" ).setPrerequisite( "OLD_EXPLOSIONS", "false" );
 
     add( "CHRONIC_PAIN", debug, translate_marker( "Chronic pain" ),
          translate_marker( "If true, injuries cause persistent pain until they are healed." ), false );
@@ -2413,6 +2460,15 @@ void options_manager::add_options_world_default()
     add( "VEHICLE_DAMAGE", world_default, translate_marker( "Vehicle damage scaling factor" ),
          translate_marker( "A scaling factor that determines how damaged vehicles are." ),
          0.0, 10.0, 1, 0.1
+       );
+
+    add( "VEHICLE_LOCKS", world_default, translate_marker( "Vehicle door locks" ),
+         translate_marker( "Determines if new vehicles can spawn with locked doors." ), true
+       );
+
+    add( "VEHICLE_SPAWNRATE", world_default, translate_marker( "Vehicle spawn rate scaling factor" ),
+         translate_marker( "A scaling factor that determines density of vehicle spawns." ),
+         0.0, 5.0, 1.0, 0.01
        );
 
     add( "SPAWN_DENSITY", world_default, translate_marker( "Spawn rate scaling factor" ),

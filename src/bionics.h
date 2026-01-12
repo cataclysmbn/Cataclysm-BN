@@ -15,6 +15,8 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "enums.h"
+#include "color.h"
 
 class JsonIn;
 class JsonObject;
@@ -143,6 +145,9 @@ struct bionic_data {
     bool can_uninstall = true;
     std::string no_uninstall_reason;
 
+    bool starting_bionic = false;
+    int points = 0;
+
     std::set<flag_id> flags;
     bool has_flag( const flag_id &flag ) const;
 
@@ -153,6 +158,7 @@ struct bionic_data {
     static void load_bionic( const JsonObject &jo, const std::string &src );
     static void check_consistency();
     static void finalize_all();
+    static std::vector<bionic_data> get_all();
     static void reset();
 
     bool was_loaded = false;
@@ -208,6 +214,15 @@ struct bionic {
         // generic bionic specific flags
         cata::flat_set<std::string> bionic_tags;
         float auto_start_threshold = -1.0;
+};
+
+nc_color get_bionic_text_color( const bionic &bio, const bool isHighlightedBionic );
+struct bionic_sort_less {
+    bionic_ui_sort_mode mode = bionic_ui_sort_mode::NONE;
+    bool operator()( const bionic &lhs, const bionic &rhs ) const;
+    bool operator()( const bionic *lhs, const bionic *rhs ) const {
+        return lhs && rhs && operator()( *lhs, *rhs );
+    }
 };
 
 // A simpler wrapper to allow forward declarations of it. std::vector can not

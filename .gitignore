@@ -11,6 +11,7 @@
 /bindist/
 build.*
 build
+!build.yml
 !build-scripts
 !build-data
 test_user_dir*

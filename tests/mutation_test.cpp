@@ -27,14 +27,17 @@ static void give_all_mutations( player &p, const mutation_category_trait &catego
 {
     const std::vector<trait_id> category_mutations = mutations_category[category.id];
 
-    // Add the threshold mutation first
-    if( include_postthresh && !category.threshold_mut.is_empty() ) {
-        p.set_mutation( category.threshold_mut );
+    // Add the threshold mutations first
+    if( include_postthresh && !category.threshold_muts.empty() ) {
+        for( unsigned int i = 1; i < category.threshold_muts.size();
+             i++ ) { // starts at 1 because 0 is NULL for aligning tier to index
+            p.set_mutation( category.threshold_muts[i] );
+        }
     }
 
     for( auto &m : category_mutations ) {
         const auto &mdata = m.obj();
-        if( include_postthresh || ( !mdata.threshold && mdata.threshreq.empty() ) ) {
+        if( include_postthresh || ( !mdata.threshold && mdata.threshold_tier == 0 ) ) {
             int mutation_attempts = 10;
             while( mutation_attempts > 0 && p.mutation_ok( m, false, false ) ) {
                 INFO( "Current mutations: " << get_mutations_as_string( p ) );

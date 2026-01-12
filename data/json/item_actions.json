@@ -456,12 +456,12 @@
   },
   {
     "type": "item_action",
-    "id": "GRANADE",
+    "id": "DEBUG_GRENADE",
     "name": { "str": "Activate" }
   },
   {
     "type": "item_action",
-    "id": "GRANADE_ACT",
+    "id": "DEBUG_GRENADE_ACT",
     "name": { "str": "Activate" }
   },
   {
@@ -583,6 +583,16 @@
     "type": "item_action",
     "id": "DIVE_TANK",
     "name": { "str": "Use regulator" }
+  },
+  {
+    "type": "item_action",
+    "id": "cloning_syringe",
+    "name": { "str": "Take specimen sample" }
+  },
+  {
+    "type": "item_action",
+    "id": "dna_editor",
+    "name": { "str": "Inspect genome drive" }
   },
   {
     "type": "item_action",
@@ -801,6 +811,11 @@
   },
   {
     "type": "item_action",
+    "id": "VOLTMETER",
+    "name": { "str": "Measure grid power" }
+  },
+  {
+    "type": "item_action",
     "id": "TOWEL",
     "name": { "str": "Dry/clean yourself" }
   },
@@ -1013,5 +1028,15 @@
     "type": "item_action",
     "id": "music_player",
     "name": { "str": "Listen to music" }
+  },
+  {
+    "type": "item_action",
+    "id": "flowerpot_plant",
+    "name": { "str": "Use the planter" }
+  },
+  {
+    "type": "item_action",
+    "id": "flowerpot_collect",
+    "name": { "str": "Collect a plant" }
   }
 ]

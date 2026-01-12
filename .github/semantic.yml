@@ -6,7 +6,7 @@
 # Validate the PR title, and ignore all commit messages
 enabled: true
 titleOnly: true
-targetUrl: "https://docs.cataclysmbn.org/en/contribute/changelog_guidelines/"
+targetUrl: "https://docs.cataclysmbn.org/contribute/changelog_guidelines/"
 types:
   - feat
   - fix
@@ -33,6 +33,7 @@ scopes:
   - mods/No_Acid_Zombies
   - mods/No_Anthills
   - mods/No_Blobs
+  - mods/No_Cockroaches
   - mods/No_Explosive_Zombies
   - mods/No_Ferals
   - mods/No_Fungi
@@ -54,6 +55,7 @@ scopes:
   - mods/desertpack
   - mods/disable_lifting
   - mods/exotic_ammo
+  - mods/flowerpots_plus
   - mods/fuji_mpp
   - mods/innawoods
   - mods/jump_pad
@@ -66,8 +68,10 @@ scopes:
   - mods/no_reviving_zombies
   - mods/no_zombify
   - mods/novitamins
+  - mods/nuclear_tear
   - mods/pathfinding_stockfish
   - mods/pride_flags
+  - mods/resurrection_tech
   - mods/rpg_system
   - mods/saveload_lua_test
   - mods/smart_house_remote_mod
@@ -78,5 +82,6 @@ scopes:
   - mods/test_data
   - mods/test_lua_hooks
   - mods/udp_redux
+  - mods/underground_dynamic_temperature
   - mods/weather_variants
   - mods

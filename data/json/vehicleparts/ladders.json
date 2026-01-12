@@ -1,0 +1,26 @@
+[
+  {
+    "abstract": "ladder",
+    "type": "vehicle_part",
+    "location": "under",
+    "symbol": "|",
+    "color": "light_blue",
+    "broken_symbol": "O",
+    "flags": [ "LADDER", "SHOCK_IMMUNE", "BOARDABLE" ],
+    "description": "A ladder that lets you down from heights."
+  },
+  {
+    "id": "ladder_3",
+    "copy-from": "ladder",
+    "type": "vehicle_part",
+    "name": "3-story rope ladder",
+    "item": "rope_30",
+    "//": "treats a z-level as being about 3 meters tall.",
+    "length": 3,
+    "requirements": { "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [  ] } },
+    "durability": 60,
+    "damage_modifier": 80,
+    "breaks_into": [ { "item": "string_6", "count": [ 10, 20 ] } ],
+    "damage_reduction": { "bash": 10 }
+  }
+]

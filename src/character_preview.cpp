@@ -34,6 +34,7 @@ class char_preview_adapter : public cata_tiles
             return static_cast<char_preview_adapter *>( ct );
         }
 
+        // TODO: Find a way, if any, to get tint colors for preview
         // This will need to stay in sync with cata_tiles::draw_entity_with_overlays
         void display_avatar_preview_with_overlays( const avatar &ch, const point &p, bool with_clothing ) {
             // ch is never an npc so we can set ent_name directly
@@ -43,11 +44,15 @@ class char_preview_adapter : public cata_tiles
             int prev_height_3d = 0;
             // depending on the toggle flip sprite left or right
             if( ch.facing == FD_RIGHT ) {
-                draw_from_id_string( ent_name, C_NONE, "", tripoint( p, 0 ), corner, 0, lit_level::BRIGHT, false,
-                                     height_3d, 0, true );
+                const tile_search_params tile { ent_name, C_NONE, "", corner, 0 };
+                draw_from_id_string(
+                    tile, tripoint( p, 0 ), std::nullopt, std::nullopt,
+                    lit_level::BRIGHT, false, 0, true, height_3d );
             } else if( ch.facing == FD_LEFT ) {
-                draw_from_id_string( ent_name, C_NONE, "", tripoint( p, 0 ), corner, 4, lit_level::BRIGHT, false,
-                                     height_3d, 0, true );
+                const tile_search_params tile { ent_name, C_NONE, "", corner, 4 };
+                draw_from_id_string(
+                    tile, tripoint( p, 0 ), std::nullopt, std::nullopt,
+                    lit_level::BRIGHT, false, 0, true, height_3d );
             }
 
             // next up, draw all the overlays, need to construct them locally
@@ -57,13 +62,15 @@ class char_preview_adapter : public cata_tiles
                 if( find_overlay_looks_like( ch.male, overlay, draw_id ) ) {
                     int overlay_height_3d = prev_height_3d;
                     if( ch.facing == FD_RIGHT ) {
-                        draw_from_id_string( draw_id, C_NONE, "", tripoint( p, 0 ), corner, /*rota*/ 0, lit_level::BRIGHT,
-                                             false, overlay_height_3d, 0,
-                                             true );
+                        const tile_search_params tile { draw_id, C_NONE, "", corner, /*rota*/ 0 };
+                        draw_from_id_string(
+                            tile, tripoint( p, 0 ), std::nullopt, std::nullopt,
+                            lit_level::BRIGHT, false, 0, true, overlay_height_3d );
                     } else if( ch.facing == FD_LEFT ) {
-                        draw_from_id_string( draw_id, C_NONE, "", tripoint( p, 0 ), corner, /*rota*/ 4, lit_level::BRIGHT,
-                                             false, overlay_height_3d, 0,
-                                             true );
+                        const tile_search_params tile { draw_id, C_NONE, "", corner, /*rota*/ 4 };
+                        draw_from_id_string(
+                            tile, tripoint( p, 0 ), std::nullopt, std::nullopt,
+                            lit_level::BRIGHT, false, 0, true, overlay_height_3d );
                     }
                     // the tallest height-having overlay is the one that counts
                     height_3d = std::max( height_3d, overlay_height_3d );
@@ -93,6 +100,11 @@ class char_preview_adapter : public cata_tiles
             for( const bionic_id &bio : av.prof->CBMs() ) {
                 t_av.add_bionic( bio );
             }
+            for( const bionic &bio : *av.my_bionics ) {
+                if( !bio.id->included ) {
+                    t_av.add_bionic( bio.id );
+                }
+            }
             for( const bionic &bio : *t_av.my_bionics ) {
                 std::string overlay_id = ( bio.powered ? "active_" : "" ) + bio.id.str();
                 int order = get_overlay_order_of_mutation( overlay_id );
@@ -105,13 +117,20 @@ class char_preview_adapter : public cata_tiles
 
             // now that we have bionics applied we can see what clothing we can wear
             if( with_clothing ) {
+                static const flag_id json_flag_auto_wield( "auto_wield" );
+                std::vector<itype_id> wielded_items;
                 for( const auto &it : av.prof->items( av.male, av.get_mutations() ) ) {
-                    if( it->is_armor() && av.can_wear( *it ).success() ) {
+                    if( it->has_flag( json_flag_auto_wield ) ) {
+                        wielded_items.push_back( it->typeId() );
+                    } else if( it->is_armor() && av.can_wear( *it ).success() ) {
                         t_av.wear_item( item::spawn( *std::move( it ) ), false );
                     }
                 }
                 for( const item * const &worn_item : t_av.worn ) {
                     rval.push_back( "worn_" + worn_item->typeId().str() );
+                }
+                for( const itype_id &wielded : wielded_items ) {
+                    rval.push_back( "wielded_" + wielded.str() );
                 }
             }
             return rval;

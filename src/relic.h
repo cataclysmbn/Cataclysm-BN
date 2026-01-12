@@ -126,6 +126,9 @@ class relic
         void add_active_effect( const fake_spell &sp );
         void add_recharge_scheme( const relic_recharge &r );
 
+        const std::vector<fake_spell> &get_spells() const {
+            return active_effects;
+        }
         const std::vector<enchantment> &get_enchantments() const {
             return passive_effects;
         }

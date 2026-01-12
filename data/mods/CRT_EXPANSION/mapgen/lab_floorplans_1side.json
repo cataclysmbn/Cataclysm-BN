@@ -53,7 +53,8 @@
             { "item": "tools_science", "chance": 10 },
             { "item": "robots", "chance": 10 },
             { "item": "science", "chance": 10 },
-            { "item": "mut_lab", "chance": 2 }
+            { "item": "mut_lab", "chance": 2 },
+            { "item": "crt_airship_balloon_item", "chance": 5 }
           ]
         }
       },

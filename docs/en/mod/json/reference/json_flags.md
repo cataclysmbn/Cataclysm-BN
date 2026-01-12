@@ -29,8 +29,8 @@ override flag inheritance, but will not delete flags that are part of the item t
 
 These are handled through `ammo_types.json`. You can tag a weapon with these to have it chamber
 existing ammo, or make your own ammo there. The first column in this list is the tag's "id", the
-internal identifier DDA uses to track the tag, and the second is a brief description of the ammo
-tagged. Use the id to search for ammo listings, as ids are constant throughout DDA's code. Happy
+internal identifier BN uses to track the tag, and the second is a brief description of the ammo
+tagged. Use the id to search for ammo listings, as ids are constant throughout BN's code. Happy
 chambering! :-)
 
 - `120mm` 120mm HEAT
@@ -732,6 +732,8 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
   item::process_fake_smoke, where conditions for its removal are set.
 - `FIREWOOD` ... This item can serve as a firewood. Items with this flag are sorted out to "Loot:
   Wood" zone
+- `FLY_STRAIGHT` ... This thrown item flies straight without rotating in the air, maintaining its
+  aerodynamic orientation. Typically used for javelins, spears, and darts.
 - `FRAGILE_MELEE` ... Fragile items that fall apart easily when used as a weapon due to poor
   construction quality and will break into components when broken.
 - `GAS_DISCOUNT` ... Discount cards for the automated gas stations.
@@ -740,6 +742,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `LEAK_DAM` ... Leaks when damaged (may be combined with "RADIOACTIVE").
 - `NEEDS_UNFOLD` ... Has an additional time penalty upon wielding. For melee weapons and guns this
   is offset by the relevant skill. Stacks with "SLOW_WIELD".
+- `MISSION_ITEM` ... will always spawn as loot regardless item spawn rate settings.
 - `NO_PACKED` ... This item is not protected against contamination and won't stay sterile. Only
   applies to CBMs.
 - `NO_REPAIR` ... Prevents repairing of this item even if otherwise suitable tools exist.
@@ -1061,7 +1064,6 @@ Multiple death functions can be used. Not all combinations make sense.
 - `CBM_TECH` May produce a CBM or two from 'bionics_tech' item group and a power CBM when butchered.
 - `CHITIN` May produce chitin when butchered.
 - `CLIMBS` Can climb.
-- `COLDROOF` Immune to cold damage.
 - `CURRENT` this water is flowing.
 - `DESTROYS` Bashes down walls and more. (2.5x bash multiplier, where base is the critter's max
   melee bashing)
@@ -1138,6 +1140,8 @@ Multiple death functions can be used. Not all combinations make sense.
 - `VERMIN` Obsolete flag for inconsequential monsters, now prevents loading.
 - `VOLATILE` Hitting this with fire damage always ignites it and has a high chance to deal massive damage,
   bullet and electric damage also have a chance to deal increased damage and set this monster on fire.
+- `FACTION_MEMORY` Calculate anger against factions separately, so that anger against one faction (e.g zombie)
+  doesn't spill into another (e.g player). In other words, truly neutral towards players until attacked. Use case: making extremely dangerous monsters spawned in streets to prevent crushing newbie players into pulp.
 - `WARM` Warm blooded.
 - `WEBWALK` Doesn't destroy webs.
 - `WOOL` May produce wool when butchered.
@@ -1345,6 +1349,8 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `TRIFFID` Location is related to triffids. Used to classify location.
 - `LAKE` Location is is placed on a lake and will be ignored for placement if the overmap doesn't
   contain any lake terrain.
+- `RIVER` Location is is placed on a lake and will be ignored for placement if the overmap doesn't
+  contain any lake terrain.
 - `UNIQUE` Location is unique and will only occur once per overmap. `occurrences` is overridden to
   define a percent chance (e.g. `"occurrences" : [75, 100]` is 75%)
 - `ENDGAME` Location will have highest priority during special placement, and won't be affected by
@@ -1439,6 +1445,7 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `LONE_START` If starting NPC spawn option is switched to "Scenario-based", this scenario won't
   spawn a fellow NPC on game start.
 - `SCEN_ONLY` Profession can be chosen only as part of the appropriate scenario.
+- `VEH_GROUNDED` Profession vehicle is forced to be on the ground even if it can float
 
 #### Season Flags
 
@@ -1581,6 +1588,16 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `WARM` A hidden flag used to track an item's journey to/from hot, buffers between HOT and cold.
 - `WET` Item is wet and will slowly dry off (e.g. towel).
 
+## Vehicle Prototypes
+
+### Flags
+
+- `VEHICLE_HOTWIRE` Marks a vehicle to always requiring hotwiring controls
+- `VEHICLE_NO_HOTWIRE` Marks a vehicle to never require hotwiring controls (e.g bycicles)
+- `VEHICLE_UNLOCKED` Marks a vehicle to always spawn unlocked, but possibly requiring hotwiring
+- `VEHICLE_LOCKED` Marks a vehicle to always spawn locked, and possibly requiring hotwiring
+- `VEHICLE_NO_LOCKS` Marks a vehicle to not get locks installed automatically
+
 ## Vehicle Parts
 
 ### Flags
@@ -1610,6 +1627,8 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `CAPTURE_MOSNTER_VEH` Can be used to capture monsters when mounted on a vehicle.
 - `CARGO_LOCKING` This cargo area is inaccessible to NPCs. Can only be installed on a part with
   `LOCKABLE_CARGO` flag.
+- `DOOR_LOCKING` This part is unopenable to non-faction NPCs and monsters if enabled from the electronics menu. Can only be
+  installed on a part with `OPENABLE` flag.
 - `CARGO` Cargo holding area.
 - `CHIMES` Generates continuous noise when used.
 - `CIRCLE_LIGHT` Projects a circular radius of light when turned on.
@@ -1627,6 +1646,7 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `DIFFICULTY_REMOVE`
 - `DOME_LIGHT`
 - `DOOR_MOTOR` Can only be installed on a part with `OPENABLE` flag.
+- `DROPPER` Allows cargo to be dropped out of the adjacent cargo space
 - `E_ALTERNATOR` Is an engine that can power an alternator.
 - `E_COLD_START` Is an engine that starts much slower in cold weather.
 - `E_COMBUSTION` Is an engine that burns its fuel and can backfire or explode when damaged.
@@ -1660,6 +1680,7 @@ Those flags are added by the game code to specific items (that specific welder, 
   items of parts with this flag are automatically added as component to the vehicle start
   construction.
 - `INTERNAL` Can only be installed on a part with `CARGO` flag.
+- `LADDER` Ladder to get down from a flying vehicle
 - `LIGHT`
 - `LOCKABLE_CARGO` Cargo containers that are able to have a lock installed.
 - `MOUNTABLE` Player can fire mounted weapons from here.
@@ -1678,6 +1699,12 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `NOCOLLIDE`
 - `NOSMASH`
 - `NOINSTALL` Cannot be installed.
+- `NOFIELDS` Prevents fields ( smoke radiation etc ) from affecting anything on the same tile
+- `NOREMOVE_SECURITY` Cannot be uninstalled if the vehicle has a working security system.
+- `NOREMOVE_OPEN` Cannot be uninstalled if there's an open `OPENABLE` part in the same tile.
+- `NOREMOVE_CLOSED` Cannot be uninstalled if there's a closed `OPENABLE` part in the same tile.
+- `NOREMOVE_INSIDE` Cannot be uninstalled from inside the vehicle.
+- `NOREMOVE_OUTSIDE` Cannot be uninstalled from outside the vehicle.
 - `OBSTACLE` Cannot walk through part, unless the part is also `OPENABLE`.
 - `ODDTURN` Only on during odd turns.
 - `ON_CONTROLS` Can only be installed on a part with `CONTROLS` flag.

@@ -113,6 +113,8 @@ static const bionic_id bio_voice( "bio_voice" );
 
 static const trait_id trait_DEBUG_MIND_CONTROL( "DEBUG_MIND_CONTROL" );
 static const trait_id trait_PROF_FOODP( "PROF_FOODP" );
+static const trait_id trait_SHOUT2( "SHOUT2" );
+static const trait_id trait_SHOUT3( "SHOUT3" );
 
 static std::map<std::string, json_talk_topic> json_talk_topics;
 
@@ -205,6 +207,7 @@ enum npc_chat_menu {
     NPC_CHAT_GUARD,
     NPC_CHAT_FOLLOW,
     NPC_CHAT_MOVE_TO_POS,
+    NPC_CHAT_CONTROL,
     NPC_CHAT_AWAKE,
     NPC_CHAT_MOUNT,
     NPC_CHAT_DISMOUNT,
@@ -483,7 +486,9 @@ void game::chat()
                         _( "Talk to…" )
                       );
     }
-    nmenu.addentry( NPC_CHAT_YELL, true, 'a', _( "Yell" ) );
+    nmenu.addentry( NPC_CHAT_YELL, true, 'a',
+                    u.has_trait( trait_SHOUT2 ) ? _( "Scream" ) : u.has_trait( trait_SHOUT3 ) ? _( "Howl" ) :
+                    _( "Yell" ) );
     nmenu.addentry( NPC_CHAT_SENTENCE, true, 'b', _( "Yell a sentence" ) );
     nmenu.addentry( NPC_CHAT_MONOLOGUE, true, 'O', _( "Monologue" ) );
     nmenu.addentry( NPC_CHAT_EMOTE_OVERLAY, true, 'E', _( "Emote" ) );
@@ -510,6 +515,9 @@ void game::chat()
                       );
     }
     if( !followers.empty() ) {
+        nmenu.addentry( NPC_CHAT_CONTROL, true, 'C',
+                        follower_count == 1 ? string_format( _( "Control %s" ),
+                                followers.front()->get_name() ) : _( "Control someone…" ) );
         nmenu.addentry( NPC_CHAT_GUARD, true, 'g', follower_count == 1 ?
                         string_format( _( "Tell %s to guard" ), followers.front()->name ) :
                         _( "Tell someone to guard…" )
@@ -526,10 +534,10 @@ void game::chat()
                         _( "Tell everyone on your team to relax (Clear Overrides)" ) );
         nmenu.addentry( NPC_CHAT_ORDERS, true, 'o', _( "Tell everyone on your team to temporarily…" ) );
     }
-    std::string message;
     std::string yell_msg;
     std::string monologue_msg;
     bool is_order = true;
+    bool is_yell = true;
     nmenu.query();
 
     if( nmenu.ret < 0 ) {
@@ -538,6 +546,8 @@ void game::chat()
 
     switch( nmenu.ret ) {
         case NPC_CHAT_TALK: {
+            is_yell = false;
+
             const int npcselect = npc_select_menu( available, _( "Talk to whom?" ), false );
             if( npcselect < 0 ) {
                 return;
@@ -546,6 +556,8 @@ void game::chat()
             break;
         }
         case NPC_CHAT_EMOTE_OVERLAY: {
+            is_yell = false;
+
             uilist emenu;
             emenu.text = std::string( _( "Emote what status effect?" ) );
 
@@ -600,10 +612,10 @@ void game::chat()
 
             break;
         }
-        case NPC_CHAT_YELL:
+        case NPC_CHAT_YELL: {
             is_order = false;
-            message = _( "loudly." );
             break;
+        }
         case NPC_CHAT_SENTENCE: {
             std::string popupdesc = _( "Enter a sentence to yell" );
             string_input_popup popup;
@@ -618,6 +630,8 @@ void game::chat()
             break;
         }
         case NPC_CHAT_MONOLOGUE: {
+            is_yell = false;
+
             // Build help text
             const auto &help_fmt = _(
                                        "<color_light_gray>You can add a prefix to your monologue to set the tone or emotion."
@@ -715,6 +729,12 @@ void game::chat()
             }
             break;
         }
+        case NPC_CHAT_CONTROL: {
+            const int npcselect = npc_select_menu( followers, _( "Who do you want to control?" ), false );
+            if( npcselect < 0 ) { return; }
+            get_avatar().control_npc( *followers[npcselect] );
+            return;
+        }
         case NPC_CHAT_FOLLOW: {
             const int npcselect = npc_select_menu( guards, _( "Who should follow you?" ) );
             if( npcselect < 0 ) {
@@ -731,13 +751,14 @@ void game::chat()
             }
             break;
         }
-        case NPC_CHAT_AWAKE:
+        case NPC_CHAT_AWAKE: {
             for( npc *them : followers ) {
                 talk_function::wake_up( *them );
             }
             yell_msg = _( "Stay awake!" );
             break;
-        case NPC_CHAT_MOUNT:
+        }
+        case NPC_CHAT_MOUNT: {
             for( npc *them : followers ) {
                 if( them->has_effect( effect_riding ) ) {
                     continue;
@@ -746,7 +767,8 @@ void game::chat()
             }
             yell_msg = _( "Mount up!" );
             break;
-        case NPC_CHAT_DISMOUNT:
+        }
+        case NPC_CHAT_DISMOUNT: {
             for( npc *them : followers ) {
                 if( them->has_effect( effect_riding ) ) {
                     them->npc_dismount();
@@ -754,44 +776,53 @@ void game::chat()
             }
             yell_msg = _( "Dismount!" );
             break;
-        case NPC_CHAT_DANGER:
+        }
+        case NPC_CHAT_DANGER: {
             for( npc *them : followers ) {
                 them->rules.set_danger_overrides();
             }
             yell_msg = _( "We're in danger.  Stay awake, stay close, don't go wandering off, "
                           "and don't open any doors." );
             break;
-        case NPC_CHAT_CLEAR_OVERRIDES:
+        }
+        case NPC_CHAT_CLEAR_OVERRIDES: {
             for( npc *p : followers ) {
                 talk_function::clear_overrides( *p );
             }
             yell_msg = _( "As you were." );
             break;
-        case NPC_CHAT_ORDERS:
+        }
+        case NPC_CHAT_ORDERS: {
+            is_yell = false;
             npc_temp_orders_menu( followers );
             break;
-        case NPC_CHAT_ANIMAL_VEHICLE_FOLLOW:
+        }
+        case NPC_CHAT_ANIMAL_VEHICLE_FOLLOW: {
+            is_yell = false;
             assign_veh_to_follow();
             break;
-        case NPC_CHAT_ANIMAL_VEHICLE_STOP_FOLLOW:
+        }
+        case NPC_CHAT_ANIMAL_VEHICLE_STOP_FOLLOW: {
+            is_yell = false;
             tell_veh_stop_following();
             break;
-        case NPC_CHAT_COMMAND_MAGIC_VEHICLE_FOLLOW:
+        }
+        case NPC_CHAT_COMMAND_MAGIC_VEHICLE_FOLLOW: {
+            is_yell = false;
             tell_magic_veh_to_follow();
             break;
-        case NPC_CHAT_COMMAND_MAGIC_VEHICLE_STOP_FOLLOW:
+        }
+        case NPC_CHAT_COMMAND_MAGIC_VEHICLE_STOP_FOLLOW: {
+            is_yell = false;
             tell_magic_veh_stop_following();
             break;
+        }
         default:
             return;
     }
 
-    if( !yell_msg.empty() ) {
-        message = string_format( "\"%s\"", yell_msg );
-    }
-    if( !message.empty() ) {
-        add_msg( _( "You yell %s" ), message );
-        u.shout( string_format( _( "%s yelling %s" ), u.disp_name(), message ), is_order );
+    if( is_yell ) {
+        u.shout( yell_msg, is_order );
     }
     if( !monologue_msg.empty() ) {
         // Normalize input for case-insensitive matching
@@ -833,7 +864,6 @@ void game::chat()
             add_msg( _( "%s" ), monologue_msg );
         }
     }
-
 
     u.moves -= 100;
 }
@@ -1992,6 +2022,7 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     for( size_t i = 0; i < responses.size(); i++ ) {
         response_lines.push_back( responses[i].create_option_line( *this, 'a' + i ) );
     }
+    auto selected_response = size_t{ 0 };
 
 #if defined(__ANDROID__)
     input_context ctxt( "DIALOGUE_CHOOSE_RESPONSE" );
@@ -2012,33 +2043,50 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         d_win.print_header( npc_name );
-        d_win.display_responses( response_lines );
+        d_win.display_responses( response_lines, selected_response );
     } );
 
     int ch;
     bool okay;
+    const auto response_count = responses.size();
     do {
         d_win.refresh_response_display();
         do {
             ui_manager::redraw();
             ch = inp_mngr.get_input_event().get_first_input();
-            d_win.handle_scrolling( ch );
+            if( ch == KEY_UP ) {
+                if( selected_response > 0 ) {
+                    selected_response -= 1;
+                } else {
+                    selected_response = response_count - 1;
+                }
+                continue;
+            }
+            if( ch == KEY_DOWN ) {
+                if( selected_response + 1 < response_count ) {
+                    selected_response += 1;
+                } else {
+                    selected_response = 0;
+                }
+                continue;
+            }
+            if( ch == KEY_PPAGE || ch == KEY_NPAGE ) {
+                const auto scroll_entry_index = d_win.handle_scrolling( ch );
+                if( scroll_entry_index ) {
+                    selected_response = *scroll_entry_index;
+                }
+                continue;
+            }
             auto st = special_talk( ch );
             if( st.id != "TALK_NONE" ) {
                 return st;
             }
-            switch( ch ) {
-                case KEY_DOWN:
-                case KEY_NPAGE:
-                case KEY_UP:
-                case KEY_PPAGE:
-                    ch = -1;
-                    break;
-                default:
-                    ch -= 'a';
-                    break;
+            if( ch == KEY_ENTER || ch == '\n' || ch == '\r' ) {
+                ch = static_cast<int>( selected_response );
+            } else {
+                ch -= 'a';
             }
-        } while( ( ch < 0 || ch >= static_cast<int>( responses.size() ) ) );
+        } while( ( ch < 0 || ch >= static_cast<int>( response_count ) ) );
         okay = true;
         std::set<dialogue_consequence> consequences = responses[ch].get_consequences( *this );
         if( consequences.contains( dialogue_consequence::hostile ) ) {
@@ -2947,6 +2995,7 @@ void talk_effect_t::parse_string_effect( const std::string &effect_id, const Jso
             WRAP( buy_chicken ),
             WRAP( buy_horse ),
             WRAP( wake_up ),
+            WRAP( control_npc ),
             WRAP( reveal_stats ),
             WRAP( end_conversation ),
             WRAP( insult_combat ),
