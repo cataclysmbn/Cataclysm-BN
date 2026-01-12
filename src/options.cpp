@@ -3182,6 +3182,10 @@ void options_manager::add_options_world_default()
         { "full", translate_marker( "Full (Everything)" ) }
     },
     "off" );
+    add( "ZLEVELS", world_default, translate_marker( "Z-levels" ),
+         translate_marker( "If true, enables several features related to vertical movement, such as hauling items up stairs, climbing downspouts, flying aircraft and ramps.  May cause problems if toggled mid-game." ),
+         true
+       );
 
     add_empty_line();
 

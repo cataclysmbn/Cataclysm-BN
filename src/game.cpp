@@ -596,6 +596,7 @@ void game::setup( bool load_world_modfiles )
     }
 
     init_bubble_config();
+    m = map( get_option<bool>( "ZLEVELS" ) );
     m.resize( g_mapsize );
 
     next_npc_id = character_id( 1 );
