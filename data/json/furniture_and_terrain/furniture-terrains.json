@@ -1320,5 +1320,57 @@
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 4, 8 ], "destroy_threshold": 30, "block_unaimed_chance": "75%" }
     }
+  },
+  {
+    "id": "f_tarptent",
+    "type": "furniture",
+    "name": "tarp lean-to",
+    "description": "A small shelter covered by waterproof tarp, that can be used to take refuge from the elements.",
+    "symbol": ";",
+    "looks_like": "t_tarptent",
+    "color": [ "light_blue" ],
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "bash": {
+      "str_min": 6,
+      "str_max": 12,
+      "sound": "crash!",
+      "sound_fail": "whack!",
+      "items": [
+        { "item": "stick", "count": [ 1, 2 ] },
+        { "item": "splinter", "count": [ 1, 4 ] },
+        { "item": "plastic_chunk", "count": [ 4, 8 ] }
+      ]
+    },
+    "deconstruct": {
+      "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "string_6", "count": 4 }, { "item": "tarp", "count": 1 } ]
+    },
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "THIN_OBSTACLE", "INDOORS", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
+  },
+  {
+    "id": "f_tarptent_leather",
+    "type": "furniture",
+    "name": "leather tarp lean-to",
+    "description": "A makeshift shelter made from a lather tarp and stakes driven into the ground.",
+    "symbol": ";",
+    "looks_like": "f_skin_door",
+    "color": [ "brown" ],
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "bash": {
+      "str_min": 6,
+      "str_max": 12,
+      "sound": "crash!",
+      "sound_fail": "whack!",
+      "items": [
+        { "item": "stick", "count": [ 1, 2 ] },
+        { "item": "splinter", "count": [ 1, 4 ] },
+        { "item": "leather", "count": [ 4, 8 ] }
+      ]
+    },
+    "deconstruct": {
+      "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "cordage_6", "count": 6 }, { "item": "leather_tarp", "count": 1 } ]
+    },
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "THIN_OBSTACLE", "INDOORS", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
   }
 ]

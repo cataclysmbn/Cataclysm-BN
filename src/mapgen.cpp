@@ -3422,9 +3422,8 @@ bool mapgen_function_json_nested::setup_internal( const JsonObject &jo )
     if( jo.has_array( "mapgensize" ) ) {
         JsonArray jarr = jo.get_array( "mapgensize" );
         mapgensize = point( jarr.get_int( 0 ), jarr.get_int( 1 ) );
-        if( mapgensize.x == 0 || mapgensize.x != mapgensize.y ) {
-            // Non-square sizes not implemented yet
-            jo.throw_error( "\"mapgensize\" must be an array of two identical, positive numbers" );
+        if( mapgensize.x <= 0 || mapgensize.y <= 0 ) {
+            jo.throw_error( "\"mapgensize\" must be an array of two positive numbers" );
         }
         total_size = mapgensize;
     } else {

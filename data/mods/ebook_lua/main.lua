@@ -1,4 +1,4 @@
-local ui = require("ui")
+local ui = require("lib.ui")
 
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]

@@ -54,6 +54,12 @@
     "default": "arrow_wood"
   },
   {
+    "id": "atlatl",
+    "name": "atlatl dart",
+    "default": "atlatl_dart_wood",
+    "type": "ammunition_type"
+  },
+  {
     "type": "ammunition_type",
     "id": "pebble",
     "name": "pebbles",

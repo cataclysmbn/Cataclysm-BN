@@ -238,7 +238,33 @@
           { "id": "overlay_wielded_bat_metal_bolted", "fg": 174 },
           { "id": "ar10", "fg": 176 },
           { "id": "overlay_wielded_ar10", "fg": 177 },
-          { "id": [ "overlay_wielded_saiga_12", "overlay_wielded_saiga_410" ], "fg": 179 }
+          { "id": [ "overlay_wielded_saiga_12", "overlay_wielded_saiga_410" ], "fg": 179 },
+          {
+            "id": [
+              "vp_wing_wood_horizontal",
+              "vp_lit_wing_wood_horizontal",
+              "vp_wing_wood_external_horizontal",
+              "vp_lit_wing_wood_external_horizontal"
+            ],
+            "fg": 180,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 181 } ]
+          },
+          {
+            "id": [ "vp_wing_wood_left", "vp_lit_wing_wood_left", "vp_wing_wood_external_left", "vp_lit_wing_wood_external_left" ],
+            "fg": 182,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 183 } ]
+          },
+          {
+            "id": [ "vp_wing_wood_right", "vp_lit_wing_wood_right", "vp_wing_wood_external_right", "vp_lit_wing_wood_external_right" ],
+            "fg": 184,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 185 } ]
+          }
         ],
         "sprite_width": 32,
         "sprite_height": 32
