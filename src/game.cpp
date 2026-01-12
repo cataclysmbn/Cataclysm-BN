@@ -518,7 +518,7 @@ void game::setup( bool load_world_modfiles )
         init::load_world_modfiles( ui, get_active_world(), SAVE_ARTIFACTS );
     }
 
-    m = map();
+    m = map( get_option<bool>( "ZLEVELS" ) );
 
     next_npc_id = character_id( 1 );
     next_mission_id = 1;
