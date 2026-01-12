@@ -50,7 +50,7 @@ void dialogue_window::print_header( const std::string &name )
     // Header text in top-left of header panel
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( d_win, point( 1, 1 ), c_white, _( "Dialogue:" ) );
-    mvwprintz( d_win, point( 11, 1 ), c_pink, name );
+    mvwprintz( d_win, point( 11, 1 ), c_light_green, name );
 
     // Right panel label just below header
     mvwprintz( d_win, point( win_midx + 3, header_height + 1 ), c_white, _( "Your response:" ) );
@@ -77,13 +77,14 @@ void dialogue_window::print_history()
     }
     int curline = getmaxy( d_win ) - 2;
     int curindex = draw_cache.size() - 1;
-    // Highligh last message
-    size_t msg_to_highlight = history.size() - 1;
+    // Highligh last two messages: indicates the most recent exchange betwen player and NPC
+    size_t first_msg_to_highlight = history.size() - 2;
     // Print at line 2 and below, line 1 contains the header, line 0 the border
     while( curindex >= 0 && curline >= header_height + 1 ) {
         const std::pair<std::string, size_t> &msg = draw_cache[curindex];
-        const nc_color col = ( msg.second == msg_to_highlight ) ? c_white : c_light_gray;
-        mvwprintz( d_win, point( 1, curline ), col, draw_cache[curindex].first );
+        const nc_color col = ( msg.second >= first_msg_to_highlight ) ? c_white : c_light_gray;
+        auto cur_col = col;
+        print_colored_text( d_win, point( 1, curline ), cur_col, col, draw_cache[curindex].first );
         curline--;
         curindex--;
     }
