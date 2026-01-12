@@ -76,6 +76,7 @@ struct page_entry {
     nc_color col;
     std::vector<std::string> lines;
     size_t response_index = 0;
+    char letter = '\0';
 };
 
 struct page {
@@ -98,7 +99,8 @@ static std::vector<page> split_to_pages( const std::vector<talk_data> &responses
         this_entry.response_index = response_index;
         response_index++;
         if( !folded.empty() ) {
-            this_entry.lines.push_back( string_format( "%c: %s", resp.letter, folded[0] ) );
+            this_entry.lines.push_back( string_format( "%s", folded[0] ) );
+            this_entry.letter = resp.letter;
             for( size_t i = 1; i < folded.size(); i++ ) {
                 this_entry.lines.push_back( string_format( "   %s", folded[i] ) );
             }
@@ -131,8 +133,17 @@ static void print_responses( const catacurses::window &w, const page &responses,
     for( const page_entry &entry : responses.entries ) {
         const auto selected = entry.response_index == selected_response;
         const auto col = selected ? hilite( entry.col ) : entry.col;
+        const auto letter_col = selected ? hilite( entry.col ) : c_light_green;
+        bool first_line = true;
         for( const std::string &line : entry.lines ) {
-            mvwprintz( w, point( x_start, curr_y ), col, line );
+            // add letter and space to only first line
+            if( first_line && entry.letter != '\0' ) {
+                mvwprintz( w, point( x_start, curr_y ), letter_col, string_format( " %c ", entry.letter ) );
+                mvwprintz( w, point( x_start + 3, curr_y ), col, line );
+                first_line = false;
+            } else {
+                mvwprintz( w, point( x_start, curr_y ), col, line );
+            }
             curr_y += 1;
         }
     }
