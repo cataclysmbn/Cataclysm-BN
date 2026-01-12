@@ -104,18 +104,18 @@
       { "x": -1, "y": 1, "parts": [ "frame_se", "windshield" ] },
       { "x": -1, "y": -1, "parts": [ "frame_sw", "windshield" ] },
       { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield", "small_storage_battery" ] },
-      { "x": -4, "y": 0, "parts": [ "frame_vertical", "halfboard_vertical" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_vertical", "aluminum_halfboard_vertical" ] },
       { "x": 1, "y": 1, "parts": [ "frame_ne", "xlhalfboard_ne" ] },
       {
         "x": -3,
         "y": 0,
-        "parts": [ "frame_vertical", "halfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
+        "parts": [ "frame_vertical", "aluminum_halfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
       },
-      { "x": -4, "y": -1, "parts": [ "frame_cover", "halfboard_cover" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_cover", "aluminum_halfboard_cover" ] },
       {
         "x": -2,
         "y": 0,
-        "parts": [ "frame_vertical", "halfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
+        "parts": [ "frame_vertical", "aluminum_halfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
       },
       { "x": 0, "y": 0, "parts": [ "frame_cross", "seat", "dashboard", "controls", "seatbelt", "roof" ] },
       {
@@ -123,7 +123,7 @@
         "y": 0,
         "parts": [ "frame_cross", "door_sliding", "engine_turbine_small", "alternator_car", "small_civilian_rotors" ]
       },
-      { "x": -4, "y": 1, "parts": [ "frame_cover", "halfboard_cover" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_cover", "aluminum_halfboard_cover" ] },
       { "x": 0, "y": 1, "parts": [ "frame_vertical", "windshield" ] },
       { "x": 0, "y": -1, "parts": [ "frame_vertical", "windshield" ] },
       { "x": 1, "y": -1, "parts": [ "frame_nw", "xlhalfboard_nw" ] }
@@ -193,12 +193,12 @@
     "parts": [
       { "x": -1, "y": 1, "parts": [ "frame_se" ] },
       { "x": 2, "y": -1, "parts": [ "frame_nw", "xlhalfboard_nw" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_sw", "board_sw" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_sw", "aluminum_board_sw" ] },
       { "x": 1, "y": 0, "parts": [ "frame_cross", "seat", "controls", "dashboard", "seatbelt", "roof" ] },
-      { "x": -4, "y": 0, "parts": [ "frame_vertical", "halfboard_vertical" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_vertical", "aluminum_halfboard_vertical" ] },
       { "x": 1, "y": 1, "parts": [ "frame_cross" ] },
       { "x": -3, "y": 0, "parts": [ "frame_vertical" ] },
-      { "x": -4, "y": -1, "parts": [ "frame_cover", "halfboard_cover" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_cover", "aluminum_halfboard_cover" ] },
       { "x": -2, "y": 0, "parts": [ "frame_vertical" ] },
       { "x": 0, "y": 0, "parts": [ "frame_cross", "roof", "small_storage_battery" ] },
       { "x": 2, "y": 0, "parts": [ "frame_cover" ] },
@@ -207,7 +207,7 @@
         "y": 0,
         "parts": [ "frame_cross", "engine_turbine_small", { "part": "tank_55gal_drum", "fuel": "jp8" }, "stowboard_horizontal" ]
       },
-      { "x": -4, "y": 1, "parts": [ "frame_cover", "halfboard_cover" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_cover", "aluminum_halfboard_cover" ] },
       { "x": 0, "y": 1, "parts": [ "frame_vertical" ] },
       { "x": 0, "y": -1, "parts": [ "frame_vertical", "door_sliding" ] },
       { "x": 2, "y": 1, "parts": [ "frame_horizontal" ] },
@@ -229,22 +229,22 @@
     "name": "Small helicopter",
     "blueprint": [  ],
     "parts": [
-      { "x": -1, "y": 1, "parts": [ "frame_se", "board_se" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_se", "aluminum_board_se" ] },
       { "x": 2, "y": -1, "parts": [ "frame_nw", "xlhalfboard_nw" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_sw", "board_sw" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_sw", "aluminum_board_sw" ] },
       { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield" ] },
-      { "x": -4, "y": 0, "parts": [ "frame_vertical", "halfboard_vertical" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_vertical", "aluminum_halfboard_vertical" ] },
       { "x": 1, "y": 1, "parts": [ "frame_ne", "windshield" ] },
       {
         "x": -3,
         "y": 0,
-        "parts": [ "frame_vertical", "halfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
+        "parts": [ "frame_vertical", "aluminum_halfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
       },
-      { "x": -4, "y": -1, "parts": [ "frame_cover", "halfboard_cover" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_cover", "aluminum_halfboard_cover" ] },
       {
         "x": -2,
         "y": 0,
-        "parts": [ "frame_vertical", "halfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
+        "parts": [ "frame_vertical", "aluminum_halfboard_vertical", { "part": "tank_55gal_drum", "fuel": "jp8" } ]
       },
       {
         "x": 0,
