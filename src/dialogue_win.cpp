@@ -26,8 +26,9 @@ void dialogue_window::resize_dialogue( ui_adaptor &ui )
     }
 }
 
-namespace {
-    constexpr int header_height = 3;
+namespace
+{
+constexpr int header_height = 3;
 }
 
 void dialogue_window::print_header( const std::string &name )
@@ -177,9 +178,9 @@ static void print_keybindings( const catacurses::window &w )
     const std::string col3 = _( "O: Check opinion" );
 
     const int col0_width = std::max( static_cast<int>( col0.size() ),
-                           static_cast<int>( col2.size() ) );
+                                     static_cast<int>( col2.size() ) );
     const int col1_width = std::max( static_cast<int>( col1.size() ),
-                           static_cast<int>( col3.size() ) );
+                                     static_cast<int>( col3.size() ) );
 
     const int grid_width = col0_width + 2 + col1_width;
     const int x = std::max( 1, winx - 1 - grid_width );
