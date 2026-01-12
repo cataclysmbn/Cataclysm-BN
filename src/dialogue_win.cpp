@@ -26,17 +26,34 @@ void dialogue_window::resize_dialogue( ui_adaptor &ui )
     }
 }
 
+namespace {
+    constexpr int header_height = 3;
+}
+
 void dialogue_window::print_header( const std::string &name )
 {
     draw_border( d_win );
-    int win_midx = getmaxx( d_win ) / 2;
-    int winy = getmaxy( d_win );
-    mvwvline( d_win, point( win_midx + 1, 1 ), LINE_XOXO, winy - 1 );
-    mvwputch( d_win, point( win_midx + 1, 0 ), BORDER_COLOR, LINE_OXXX );
+    const int win_midx = getmaxx( d_win ) / 2;
+    const int winy = getmaxy( d_win );
+    const int winx = getmaxx( d_win );
+
+    // Header separator (full width, inside border)
+    mvwhline( d_win, point( 1, header_height ), LINE_OXOX, winx - 2 );
+
+    // Left/right divider starts below header
+    mvwvline( d_win, point( win_midx + 1, header_height + 1 ), LINE_XOXO, winy - header_height - 2 );
+
+    // Restore border tees for the divider
+    mvwputch( d_win, point( win_midx + 1, header_height ), BORDER_COLOR, LINE_OXXX );
     mvwputch( d_win, point( win_midx + 1, winy - 1 ), BORDER_COLOR, LINE_XXOX );
+
+    // Header text in top-left of header panel
     // NOLINTNEXTLINE(cata-use-named-point-constants)
-    mvwprintz( d_win, point( 1, 1 ), c_white, _( "Dialogue: %s" ), name );
-    mvwprintz( d_win, point( win_midx + 3, 1 ), c_white, _( "Your response:" ) );
+    mvwprintz( d_win, point( 1, 1 ), c_white, _( "Dialogue:" ) );
+    mvwprintz( d_win, point( 11, 1 ), c_pink, name );
+
+    // Right panel label just below header
+    mvwprintz( d_win, point( win_midx + 3, header_height + 1 ), c_white, _( "Your response:" ) );
     npc_name = name;
 }
 
@@ -63,7 +80,7 @@ void dialogue_window::print_history()
     // Highligh last message
     size_t msg_to_highlight = history.size() - 1;
     // Print at line 2 and below, line 1 contains the header, line 0 the border
-    while( curindex >= 0 && curline >= 2 ) {
+    while( curindex >= 0 && curline >= header_height + 1 ) {
         const std::pair<std::string, size_t> &msg = draw_cache[curindex];
         const nc_color col = ( msg.second == msg_to_highlight ) ? c_white : c_light_gray;
         mvwprintz( d_win, point( 1, curline ), col, draw_cache[curindex].first );
@@ -127,7 +144,7 @@ static void print_responses( const catacurses::window &w, const page &responses,
     // Responses go on the right side of the window, add 2 for border + space
     const size_t x_start = getmaxx( w ) / 2 + 2;
     // First line we can print on, +1 for border, +2 for your name + newline
-    const int y_start = 2 + 1;
+    const int y_start = 2 + 1 + header_height;
 
     int curr_y = y_start;
     for( const page_entry &entry : responses.entries ) {
@@ -151,13 +168,26 @@ static void print_responses( const catacurses::window &w, const page &responses,
 
 static void print_keybindings( const catacurses::window &w )
 {
-    // Responses go on the right side of the window, add 2 for border + space
-    const size_t x = getmaxx( w ) / 2 + 2;
-    const size_t y = getmaxy( w ) - 5;
-    mvwprintz( w, point( x, y ), c_magenta, _( "Shift+L: Look at" ) );
-    mvwprintz( w, point( x, y + 1 ), c_magenta, _( "Shift+S: Size up stats" ) );
-    mvwprintz( w, point( x, y + 2 ), c_magenta, _( "Shift+Y: Yell" ) );
-    mvwprintz( w, point( x, y + 3 ), c_magenta, _( "Shift+O: Check opinion" ) );
+    const int winx = getmaxx( w );
+
+    const std::string col0 = _( "L: Look at" );
+    const std::string col1 = _( "S: Size up stats" );
+    const std::string col2 = _( "Y: Yell" );
+    const std::string col3 = _( "O: Check opinion" );
+
+    const int col0_width = std::max( static_cast<int>( col0.size() ),
+                           static_cast<int>( col2.size() ) );
+    const int col1_width = std::max( static_cast<int>( col1.size() ),
+                           static_cast<int>( col3.size() ) );
+
+    const int grid_width = col0_width + 2 + col1_width;
+    const int x = std::max( 1, winx - 1 - grid_width );
+    const int y = 1;
+
+    mvwprintz( w, point( x, y ), c_magenta, col0 );
+    mvwprintz( w, point( x + col0_width + 2, y ), c_magenta, col1 );
+    mvwprintz( w, point( x, y + 1 ), c_magenta, col2 );
+    mvwprintz( w, point( x + col0_width + 2, y + 1 ), c_magenta, col3 );
 }
 
 void dialogue_window::cache_msg( const std::string &msg, size_t idx )
@@ -229,7 +259,7 @@ void dialogue_window::display_responses( const std::vector<talk_data> &responses
     can_scroll_down = curr_page + 1 < pages.size();
 
     if( can_scroll_up ) {
-        mvwprintz( d_win, point( getmaxx( d_win ) - 2 - 2, 2 ), c_green, "^^" );
+        mvwprintz( d_win, point( getmaxx( d_win ) - 2 - 2, header_height + 2 ), c_green, "^^" );
         prev_page_start = pages[curr_page - 1].entries.front().response_index;
     }
     if( can_scroll_down ) {
