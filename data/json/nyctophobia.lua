@@ -6,7 +6,6 @@ function nyctophobia.register(mod)
   local effect_took_xanax = EffectTypeId.new("took_xanax")
   local effect_downed = EffectTypeId.new("downed")
   local effect_shakes = EffectTypeId.new("shakes")
-  local effect_fearparalyze = EffectTypeId.new("fearparalyze")
 
   ---@class NyctophobiaMoveParams
   ---@field char Character
@@ -33,6 +32,17 @@ function nyctophobia.register(mod)
     if #list == 0 then return nil end
     local idx = gapi.rng(1, #list)
     return list[idx]
+  end
+
+  ---@param map Map
+  ---@param pt Tripoint
+  ---@return boolean
+  local function is_passable(map, pt)
+    local ter = map:get_ter_at(pt):obj()
+    if ter:has_flag("IMPASSABLE") or ter:get_movecost() <= 0 then return false end
+    local furn = map:get_furn_at(pt):obj()
+    if furn:has_flag("IMPASSABLE") then return false end
+    return true
   end
 
   ---@param params NyctophobiaMoveParams
@@ -76,7 +86,9 @@ function nyctophobia.register(mod)
     local dark_places = {}
 
     for _, pt in ipairs(here:points_in_radius(pos, 5)) do
-      if you:sees(pt) and here:ambient_light_at(pt) < threshold then table.insert(dark_places, pt) end
+      if you:sees(pt) and here:ambient_light_at(pt) < threshold and is_passable(here, pt) then
+        table.insert(dark_places, pt)
+      end
     end
 
     local in_darkness = here:ambient_light_at(pos) < threshold
@@ -126,15 +138,6 @@ function nyctophobia.register(mod)
           )
         )
       end
-      you:mod_stamina(-500 * gapi.rng(1, 3))
-    end
-
-    if gapi.rng(1, 50) == 1 and not you:has_effect(effect_fearparalyze) then
-      if you:is_avatar() then
-        gapi.add_msg(MsgType.bad, locale.gettext("Your fear of the dark is so intense that you stand paralyzed."))
-      end
-      you:add_effect(effect_fearparalyze, TimeDuration.from_turns(5))
-      you:mod_moves(-4 * you:get_speed())
     end
   end
 end
