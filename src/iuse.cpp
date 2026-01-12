@@ -5563,8 +5563,8 @@ auto get_hackable_friendly_monsters( game &game_ref ) -> std::vector<shared_ptr_
 {
     auto monsters = game_ref.all_monsters();
     auto &items = monsters.items;
-    auto results = std::vector<shared_ptr_fast<monster>>{};
-    std::ranges::for_each( items, [&]( const auto &weak_monster ) {
+    auto results = std::vector<shared_ptr_fast<monster>> {};
+    std::ranges::for_each( items, [&]( const auto & weak_monster ) {
         auto current = weak_monster.lock();
         if( !current || current->is_dead() ) {
             return;
