@@ -801,8 +801,10 @@ ifeq ($(MSYS2),1)
 endif
 
 # Enumerations of all the source files and headers.
-SOURCES := $(wildcard $(SRC_DIR)/*.cpp)
-HEADERS := $(wildcard $(SRC_DIR)/*.h)
+SOURCES := $(shell find $(SRC_DIR) -type f -name "*.cpp" \
+  -not -path "$(LUA_SRC_DIR)/*" -not -path "$(SRC_DIR)/sol/*")
+HEADERS := $(shell find $(SRC_DIR) -type f -name "*.h" \
+  -not -path "$(LUA_SRC_DIR)/*" -not -path "$(SRC_DIR)/sol/*")
 TESTSRC := $(wildcard tests/*.cpp)
 TESTHDR := $(wildcard tests/*.h)
 JSON_FORMATTER_SOURCES := tools/format/format.cpp src/json.cpp
@@ -940,6 +942,7 @@ $(shell mkdir -p $(ODIR))
 $(shell mkdir -p $(ODIRLUA))
 
 $(ODIR)/%.o: $(SRC_DIR)/%.cpp $(PCH_P)
+	@mkdir -p $(dir $@)
 ifeq ($(VERBOSE), 1)
 	$(CXX) $(CPPFLAGS) $(DEFINES) $(CXXFLAGS) $(PCHFLAGS) -c $< -o $@
 else
@@ -948,6 +951,7 @@ else
 endif
 
 $(ODIR)/%.o: $(SRC_DIR)/%.rc
+	@mkdir -p $(dir $@)
 ifeq ($(VERBOSE), 1)
 	$(RC) $(RFLAGS) $< -o $@
 else
@@ -956,6 +960,7 @@ else
 endif
 
 $(ODIRLUA)/%.o: $(LUA_SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
 ifeq ($(VERBOSE), 1)
 	$(CXX) -xc -std=c11 -c $< -o $@
 else

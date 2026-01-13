@@ -11,7 +11,8 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include $(LOCAL_PATH)/lua
 LOCAL_CPP_FEATURES := exceptions rtti
 
 # Add your application source files here...
-FILE_LIST := $(wildcard $(LOCAL_PATH)/*.cpp)
+FILE_LIST := $(shell find $(LOCAL_PATH) -type f -name "*.cpp" \
+	-not -path "$(LOCAL_PATH)/lua/*" -not -path "$(LOCAL_PATH)/sol/*")
 LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
 
 FILE_LIST_LUA := $(wildcard $(LOCAL_PATH)/lua/*.c)
