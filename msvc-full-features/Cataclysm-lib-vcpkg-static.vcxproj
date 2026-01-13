@@ -146,6 +146,7 @@
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\utils\url.cpp" />
     <ClCompile Include="..\src\**\*.cpp" Exclude="..\src\main.cpp;..\src\messages.cpp;..\src\lua\**;..\src\sol\**" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
