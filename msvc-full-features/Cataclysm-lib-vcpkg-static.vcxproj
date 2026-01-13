@@ -142,15 +142,11 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\*.h" />
+    <ClInclude Include="..\src\*.h" Exclude ="..src\message.h" />
     <ClInclude Include="..\src\utils\*.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\utils\url.cpp">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <ForcedIncludeFiles></ForcedIncludeFiles>
-    </ClCompile>
     <ClCompile Include="..\src\*.cpp" Exclude="..\src\main.cpp;..\src\messages.cpp" />
     <ClCompile Include="..\src\utils\*.cpp" />
     <ClCompile Include="stdafx.cpp">
