@@ -81,7 +81,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 
 ```sh
 # Format C++ code
-cmake --build build --target format
+cmake --build build --target astyle
 # Format JSON files
 cmake --build build --target style-json-parallel
 # Format scripts

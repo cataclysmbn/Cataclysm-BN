@@ -86,7 +86,7 @@
 #include "translations.h"
 #include "ui.h"
 #include "ui_manager.h"
-#include "utils/url.h"
+#include "url_utility.h"
 #include "units.h"
 #include "veh_type.h"
 #include "vehicle.h"
