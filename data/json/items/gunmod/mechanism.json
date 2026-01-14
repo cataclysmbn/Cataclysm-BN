@@ -310,7 +310,7 @@
     "color": "red",
     "location": "mechanism",
     "mod_target_category": [ [ "PISTOLS" ] ],
-    "mod_exclusion_category": [ [ "1SHOT" ], [ "MANUAL_ACTION" ] ]
+    "mod_exclusion_category": [ [ "1SHOT" ], [ "MANUAL_ACTION" ] ],
     "dispersion_modifier": 60,
     "loudness_modifier": 2,
     "mode_modifier": [ [ "AUTO", "auto", 3 ] ],
