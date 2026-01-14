@@ -220,7 +220,8 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "JSON_FORMAT": "OFF",
         "TESTS": "ON",
-        "LINKER": "mold"
+        "LINKER": "mold",
+        "USE_PREFIX_DATA_DIR": "OFF"
       }
     }
   ],
