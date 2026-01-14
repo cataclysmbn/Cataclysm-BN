@@ -1525,12 +1525,12 @@ bool vehicle::is_structural_part_removed() const
  */
 bool vehicle::can_mount( point dp, const vpart_id &id ) const
 {
-    //The part has to actually exist.
+    // The part has to actually exist.
     if( !id.is_valid() ) {
         return false;
     }
 
-    //It also has to be a real part, not the null part
+    // It also has to be a real part, not the null part
     const vpart_info &part = id.obj();
     if( part.has_flag( "NOINSTALL" ) ) {
         return false;
@@ -1538,7 +1538,7 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
 
     const std::vector<int> parts_in_square = parts_at_relative( dp, false );
 
-    //New Subpath for balloon type structures when on the edge
+    // New Subpath for balloon type structures when on the edge
     if( part.has_flag( "EXTENDABLE" ) ) {
         if( parts_in_square.empty() ) {
             // There needs to be parts for these
@@ -1557,7 +1557,7 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
             return false;
         }
     }
-    //First part in an empty square MUST be a structural part
+    // First part in an empty square MUST be a structural part
     if( parts_in_square.empty() && part.location != part_location_structure ) {
         return false;
     }
@@ -1565,8 +1565,12 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
     if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "ANIMAL_CTRL" ) ) {
         return false;
     }
-    //No other part can be placed on a protrusion
+    // No other part can be placed on a protrusion
     if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "PROTRUSION" ) ) {
+        return false;
+    }
+    // NOCOLLIDE parts can not have other parts on the same tile
+    if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "NOCOLLIDE" ) ) {
         return false;
     }
 

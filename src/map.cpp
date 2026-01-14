@@ -852,12 +852,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
             veh.tow_data.get_towed()->invalidate_towing( true );
         }
     }
-    for( vehicle *colveh : veh.collided_vehs ) {
-        g->m.add_vehicle_to_cache( colveh );
-    }
-    veh.collided_vehs.clear();
     for( vehicle *colveh : passthrough ) {
-        veh.collided_vehs.push_back( colveh );
         g->m.add_vehicle_to_cache( colveh );
     }
     // Redraw scene, but only if the player is not engaged in an activity and

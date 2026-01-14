@@ -1597,9 +1597,6 @@ class vehicle
 
         std::vector<vehicle_part> parts;   // Parts which occupy different tiles
     public:
-        // Vehicles with nocollide flags that are currently collided with
-        std::vector<vehicle *> collided_vehs;
-
         // Number of parts contained in this vehicle
         int part_count() const;
         // Returns the vehicle_part with the given part number

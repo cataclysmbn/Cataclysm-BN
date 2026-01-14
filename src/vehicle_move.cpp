@@ -1140,7 +1140,7 @@ bool vehicle::check_heli_descend( Character &who )
         const optional_vpart_position ovp = here.veh_at( below );
         if( ovp ) {
             const vpart_info info = ovp->vehicle().part_info( ovp->part_index() );
-            if( info.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            if( info.has_flag( VPFLAG_NOCOLLIDEABOVE ) ) {
                 continue;
             }
         }

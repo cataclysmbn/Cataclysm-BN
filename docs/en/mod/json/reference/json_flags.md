@@ -591,7 +591,8 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `LIQUID` Blocks movement, but isn't a wall (lava, water, etc.)
 - `MINEABLE` Can be mined with a pickaxe/jackhammer.
 - `MOUNTABLE` Suitable for guns with the `MOUNTED_GUN` flag.
-- `NOCOLLIDE` Feature that simply doesn't collide with vehicles at all.
+- `NOCOLLIDE` Feature that simply doesn't collide with vehicles at all on the same z-level.
+- `NOCOLLIDEABOVE` Feature that simply doesn't collide with vehicles at all when going down a z-level, requires NOCOLLIDE.
 - `NOITEM` Items cannot be added here but may overflow to adjacent tiles. See also `DESTROY_ITEM`
 - `NO_FLOOR` Things should fall when placed on this tile
 - `NO_SIGHT` Creature on this tile have their sight reduced to one tile
