@@ -32,10 +32,10 @@ CataclysmBN을 빌드하려면 다음 라이브러리와 개발 헤더가 설치
 
 ## 빌드 환경
 
-[git](https://github.com/cataclysmbnteam/Cataclysm-BN)에서 최신 버전의 소스 코드 tarball을 얻을 수 있습니다.
+[git](https://github.com/cataclysmbn/Cataclysm-BN)에서 최신 버전의 소스 코드 tarball을 얻을 수 있습니다.
 
 ```sh
-git clone --filter=blob:none https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone --filter=blob:none https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 

@@ -81,7 +81,7 @@ Für weitere Informationen:
 ![](./img/contributing-doxy2.png)
 
 Automatisch generierte Dokumentation wird auf
-[GitHub Pages](https://cataclysmbnteam.github.io/Cataclysm-BN) gehostet. -->
+[GitHub Pages](https://cataclysmbn.github.io/Cataclysm-BN) gehostet. -->
 
 ### Doxygen-Kommentare
 
@@ -159,7 +159,7 @@ $ git config --local commit.template .gitmessage
 ```sh
 $ cd Cataclysm-BN
 # Wechselt das aktive Verzeichnis im Prompt in das neu geklonte "Cataclysm-BN" Verzeichnis
-$ git remote add -f upstream https://github.com/cataclysmbnteam/Cataclysm-BN.git
+$ git remote add -f upstream https://github.com/cataclysmbn/Cataclysm-BN.git
 # Weist das ursprüngliche Repository einem Remote namens "upstream" zu
 ```
 
@@ -185,8 +185,8 @@ $ git remote -v
 
 origin  git@github.com:DEIN_BENUTZERNAME/Cataclysm-BN.git (fetch)
 origin  git@github.com:DEIN_BENUTZERNAME/Cataclysm-BN.git (push)
-upstream        https://github.com/cataclysmbnteam/Cataclysm-BN.git (fetch)
-upstream        https://github.com/cataclysmbnteam/Cataclysm-BN.git (push)
+upstream        https://github.com/cataclysmbn/Cataclysm-BN.git (fetch)
+upstream        https://github.com/cataclysmbn/Cataclysm-BN.git (push)
 ```
 
 und wenn du `git branch -vv` eingibst, solltest du `[upstream/main]` neben dem `main` Branch sehen, wie:
@@ -327,7 +327,7 @@ Branch new_feature_2 set up to track remote branch main from upstream.
 
 ```sh
 $ git push
-error: The requested URL returned error: 403 while accessing https://github.com/cataclysmbnteam/Cataclysm-BN.git
+error: The requested URL returned error: 403 while accessing https://github.com/cataclysmbn/Cataclysm-BN.git
 fatal: HTTP request failed
 $ git push origin
 ....
@@ -381,7 +381,7 @@ Wenn `git pull --ff-only` einen Fehler anzeigt, bedeutet das, dass du direkt in 
 
 ```sh
 $ git pull --ff-only upstream main
-From https://github.com/cataclysmbnteam/Cataclysm-BN
+From https://github.com/cataclysmbn/Cataclysm-BN
  * branch            main     -> FETCH_HEAD
 fatal: Not possible to fast-forward, aborting.
 $ git branch new_branch main          # markiere den aktuellen Commit mit einem tmp Branch

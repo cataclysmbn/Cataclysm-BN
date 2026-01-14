@@ -1318,18 +1318,18 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
                         ctxt.get_desc( "PICK_RANDOM_WORLDNAME" ) );
 
         if( world->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-            mvwprintz( w_confirmation, point( 2, 6 ), c_cyan,
-                       _( "Save Format: Experimental V2 save format" ) );
-        } else {
             mvwprintz( w_confirmation, point( 2, 6 ), c_white,
-                       _( "Save Format: Standard (V1) save format" ) );
+                       _( "Save Format: V2 (Current)" ) );
+        } else {
+            mvwprintz( w_confirmation, point( 2, 6 ), c_light_gray,
+                       _( "Save Format: V1 (Legacy)" ) );
         }
 
         fold_and_print( w_confirmation, point( 2, 8 ), getmaxx( w_confirmation ) - 2, c_light_gray,
-                        _( "<color_cyan>[Experimental]</color> Press [<color_yellow>%s</color>] to toggle save format.\n"
-                           "<color_light_blue>The new format shrinks save files and reduces save corruption, at the cost of "
-                           "slightly slower saves. You can opt into this later by converting an existing world to V2"
-                           " from the main menu. V2 worlds cannot currently be converted back to V1.</color>" ),
+                        _( "Press [<color_yellow>%s</color>] to toggle save format.\n"
+                           "<color_light_blue>V2 format shrinks save files and reduces save corruption. "
+                           "V1 is the legacy format. You can convert existing V1 worlds to V2 from the main menu. "
+                           "V2 worlds cannot currently be converted back to V1.</color>" ),
                         ctxt.get_desc( "TOGGLE_V2_SAVE_FORMAT" ) );
 
         fold_and_print( w_confirmation, point( 2, TERMY / 2 - 2 ), getmaxx( w_confirmation ) - 2,

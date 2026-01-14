@@ -993,7 +993,7 @@
     "reversible": true,
     "decomp_learn": 5,
     "book_learn": [ [ "recipe_lab_elec", 4 ], [ "textbook_electronics", 5 ] ],
-    "using": [ [ "soldering_standard", 20 ] ],
+    "using": [ [ "soldering_standard", 20 ], [ "coding_standard", 120 ], [ "utility_software_standard", -1 ] ],
     "qualities": [ { "id": "SCREW_FINE", "level": 1 } ],
     "components": [
       [ [ "plastic_chunk", 4 ] ],
@@ -1002,6 +1002,101 @@
       [ [ "small_lcd_screen", 1 ] ],
       [ [ "ai_module_basic", 1 ], [ "ai_module", 1 ], [ "ai_module_advanced", 1 ] ],
       [ [ "omnicamera", 1 ], [ "sensor_module", 1 ], [ "camera", 1 ], [ "camera_pro", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "genome_sampler",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "computer", 4 ], [ "firstaid", 8 ] ],
+    "difficulty": 8,
+    "time": "2 h",
+    "reversible": true,
+    "book_learn": [ [ "recipe_lab_elec", 4 ] ],
+    "using": [
+      [ "soldering_standard", 20 ],
+      [ "coding_standard", 120 ],
+      [ "medical_software_standard", -1 ],
+      [ "utility_software_standard", -1 ]
+    ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 } ],
+    "components": [
+      [ [ "plastic_chunk", 4 ] ],
+      [ [ "superglue", 3 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "small_lcd_screen", 1 ] ],
+      [ [ "ai_module", 1 ], [ "ai_module_advanced", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "syringe", 1 ] ],
+      [ [ "vac_sealer", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "dna_editor",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "computer", 4 ], [ "firstaid", 8 ] ],
+    "difficulty": 8,
+    "time": "2 h",
+    "reversible": true,
+    "book_learn": [ [ "recipe_lab_elec", 4 ] ],
+    "using": [
+      [ "soldering_standard", 20 ],
+      [ "coding_standard", 120 ],
+      [ "medical_software_standard", -1 ],
+      [ "utility_software_standard", -1 ]
+    ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 } ],
+    "components": [
+      [ [ "microcentrifuge", 1 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "small_lcd_screen", 1 ] ],
+      [ [ "ai_module", 1 ], [ "ai_module_advanced", 1 ] ],
+      [ [ "hose", 2 ] ],
+      [ [ "sensor_module", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "bot_tankbot",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "mechanics", 9 ], [ "computer", 8 ] ],
+    "reversible": true,
+    "decomp_learn": 8,
+    "book_learn": [ [ "schematics_tankbot", 9 ] ],
+    "difficulty": 9,
+    "time": "1 h 15 m",
+    "using": [ [ "soldering_standard", 30 ], [ "welding_standard", 20 ] ],
+    "qualities": [
+      { "id": "SCREW", "level": 1 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "WRENCH", "level": 2 },
+      { "id": "WRENCH_FINE", "level": 1 }
+    ],
+    "components": [
+      [ [ "ai_module", 1 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "memory_module", 1 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "tank_tread", 1 ] ],
+      [ [ "tankbot_chassis", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "gun_module", 3 ] ],
+      [ [ "flamethrower", 1 ] ],
+      [ [ "tazer", 1 ] ],
+      [ [ "m4a1", 1 ] ],
+      [ [ "power_supply", 20 ] ],
+      [ [ "storage_battery", 1 ] ],
+      [ [ "plut_cell", 4 ] ],
+      [ [ "mil_plate", 2 ] ]
     ]
   }
 ]

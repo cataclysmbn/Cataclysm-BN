@@ -13,59 +13,59 @@ covers divergences in content were, by nessecity, a different sprite is a better
 
 Links to relevant pull requests, for content covered below:
 
-- Patchwork Skin port from DDA: [#1298](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/1298)
-- Bullet animations: [#1861](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/1681)
-- Steam turbine: [#2815](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/2815)
+- Patchwork Skin port from DDA: [#1298](https://github.com/cataclysmbn/Cataclysm-BN/pull/1298)
+- Bullet animations: [#1861](https://github.com/cataclysmbn/Cataclysm-BN/pull/1681)
+- Steam turbine: [#2815](https://github.com/cataclysmbn/Cataclysm-BN/pull/2815)
 - Wooden shields, riot shields, and ballistic shields:
-  [#2851](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/2851)
-- Lead sling bullet: [#2709](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/2709)
-- Leather and banded shields: [#2856](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/2856)
+  [#2851](https://github.com/cataclysmbn/Cataclysm-BN/pull/2851)
+- Lead sling bullet: [#2709](https://github.com/cataclysmbn/Cataclysm-BN/pull/2709)
+- Leather and banded shields: [#2856](https://github.com/cataclysmbn/Cataclysm-BN/pull/2856)
 - Edits to blueberry bushes, strawberry bushes, and cherry trees:
-  [#2861](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/2861)
+  [#2861](https://github.com/cataclysmbn/Cataclysm-BN/pull/2861)
 - De-obsoleted wooden greatbow, reflavored compound/composite greatbow:
-  [#2862](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/2862)
-- Katar and sai: [#2715](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/2715)
+  [#2862](https://github.com/cataclysmbn/Cataclysm-BN/pull/2862)
+- Katar and sai: [#2715](https://github.com/cataclysmbn/Cataclysm-BN/pull/2715)
 - Utility light can be switched off:
-  [#1003](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/1003)
-- Mi-go nerve cluster: [#1962](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/1962)
-- Scaled bear: [#1371](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/1371)
-- Buckler and welded shield: [#2878](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/2878)
+  [#1003](https://github.com/cataclysmbn/Cataclysm-BN/pull/1003)
+- Mi-go nerve cluster: [#1962](https://github.com/cataclysmbn/Cataclysm-BN/pull/1962)
+- Scaled bear: [#1371](https://github.com/cataclysmbn/Cataclysm-BN/pull/1371)
+- Buckler and welded shield: [#2878](https://github.com/cataclysmbn/Cataclysm-BN/pull/2878)
 - Battle masks and bronze arm guards:
-  [#3221](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3221)
-- Rewired street lights: [#3273](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3273)
-- Alternative ear/tail mutation: [#3340](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3340)
-- Iron ore from bog iron: [#3506](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3506)
-- New trees: [#3626](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3626)
-- Alternative sign sprite: [#3670](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3670)
-- M1874 Gatling gun: [#3815](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3815)
-- New traps: [#3939](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3939)
-- New monster: [#4182](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/4182)
+  [#3221](https://github.com/cataclysmbn/Cataclysm-BN/pull/3221)
+- Rewired street lights: [#3273](https://github.com/cataclysmbn/Cataclysm-BN/pull/3273)
+- Alternative ear/tail mutation: [#3340](https://github.com/cataclysmbn/Cataclysm-BN/pull/3340)
+- Iron ore from bog iron: [#3506](https://github.com/cataclysmbn/Cataclysm-BN/pull/3506)
+- New trees: [#3626](https://github.com/cataclysmbn/Cataclysm-BN/pull/3626)
+- Alternative sign sprite: [#3670](https://github.com/cataclysmbn/Cataclysm-BN/pull/3670)
+- M1874 Gatling gun: [#3815](https://github.com/cataclysmbn/Cataclysm-BN/pull/3815)
+- New traps: [#3939](https://github.com/cataclysmbn/Cataclysm-BN/pull/3939)
+- New monster: [#4182](https://github.com/cataclysmbn/Cataclysm-BN/pull/4182)
 - Furniture form of utility light:
-  [#4780](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/4780)
+  [#4780](https://github.com/cataclysmbn/Cataclysm-BN/pull/4780)
 - Knocked-down version of steel target:
-  [#5361](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5361)
-- Flagpoles: [#5363](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5363)
-- Vehicle-mounted Flags: [#5372](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5372)
-- Pirate Flag: [#5375](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5375)
+  [#5361](https://github.com/cataclysmbn/Cataclysm-BN/pull/5361)
+- Flagpoles: [#5363](https://github.com/cataclysmbn/Cataclysm-BN/pull/5363)
+- Vehicle-mounted Flags: [#5372](https://github.com/cataclysmbn/Cataclysm-BN/pull/5372)
+- Pirate Flag: [#5375](https://github.com/cataclysmbn/Cataclysm-BN/pull/5375)
 - Makeshift cannons and canister shot:
-  [#5398](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5398)
-- Harvested cattails: [#5445](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5445)
-- Niter beds: [#5446](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5446)
+  [#5398](https://github.com/cataclysmbn/Cataclysm-BN/pull/5398)
+- Harvested cattails: [#5445](https://github.com/cataclysmbn/Cataclysm-BN/pull/5445)
+- Niter beds: [#5446](https://github.com/cataclysmbn/Cataclysm-BN/pull/5446)
 - Scaleskin armor, tooth and bone weapons:
-  [#5466](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5466)
-- Reimplemented bone armor: [#5646](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5646)
+  [#5466](https://github.com/cataclysmbn/Cataclysm-BN/pull/5466)
+- Reimplemented bone armor: [#5646](https://github.com/cataclysmbn/Cataclysm-BN/pull/5646)
 - More tooth and bone weapons, triffid weapons:
-  [#5712](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5712)
-- Treetops ported from DDA: [#5167](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/5167)
-- Skateboards ported from DDA: [#5849](hhttps://github.com/cataclysmbnteam/Cataclysm-BN/pull/5849)
-- Ability to weld shut doors: [#6182](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6182)
-- Scouting visor: [#6687](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6687)
-- Skeletal lich and master ported from DDA: [#6831](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6831)
-- New elite zombies: [#6854](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6854)
-- Flipping tables/benches for cover: [#6857](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6857)
-- Arrow slits/fortifications: [#6864](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6864)
-- Adobe flooring: [#6864](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6885)
-- Lakebed content: [#6903](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6903)
+  [#5712](https://github.com/cataclysmbn/Cataclysm-BN/pull/5712)
+- Treetops ported from DDA: [#5167](https://github.com/cataclysmbn/Cataclysm-BN/pull/5167)
+- Skateboards ported from DDA: [#5849](hhttps://github.com/cataclysmbn/Cataclysm-BN/pull/5849)
+- Ability to weld shut doors: [#6182](https://github.com/cataclysmbn/Cataclysm-BN/pull/6182)
+- Scouting visor: [#6687](https://github.com/cataclysmbn/Cataclysm-BN/pull/6687)
+- Skeletal lich and master ported from DDA: [#6831](https://github.com/cataclysmbn/Cataclysm-BN/pull/6831)
+- New elite zombies: [#6854](https://github.com/cataclysmbn/Cataclysm-BN/pull/6854)
+- Flipping tables/benches for cover: [#6857](https://github.com/cataclysmbn/Cataclysm-BN/pull/6857)
+- Arrow slits/fortifications: [#6864](https://github.com/cataclysmbn/Cataclysm-BN/pull/6864)
+- Adobe flooring: [#6864](https://github.com/cataclysmbn/Cataclysm-BN/pull/6885)
+- Lakebed content: [#6903](https://github.com/cataclysmbn/Cataclysm-BN/pull/6903)
 
 ## Undead People
 
@@ -123,6 +123,7 @@ Ultica are planned for the future.
 - Skateboard, item and vehicleparts. Port from DDA lacking sprites in UDP.
 - Sea scooter, item and vehiclepart. Item unique to BN.
 - Skeletal lich and skeletal master. Port from DDA that UDP lacked a sprite for.
+- AR-10.
 
 ### External_Tileset_DP_terrain_normal.png
 

@@ -6,7 +6,7 @@
 > This directory will be removed in the future.
 > Do not edit the contents inside.
 
-![image](https://github.com/cataclysmbnteam/Cataclysm-BN/assets/54838975/b96a856a-9937-4f45-a508-b27766e2004b)
+![image](https://github.com/cataclysmbn/Cataclysm-BN/assets/54838975/b96a856a-9937-4f45-a508-b27766e2004b)
 
 Visit <docs.cataclysmbn.org/> to see the deployed version of this site.
 

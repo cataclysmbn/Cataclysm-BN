@@ -105,7 +105,7 @@ Changes to the Lua API, such as:
 
 - [adding new bindings](../mod/lua/guides/binding.md)
 - improving lua documentation/API generation
-- [migrating hardcoded C++ features to lua](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6901)
+- [migrating hardcoded C++ features to lua](https://github.com/cataclysmbn/Cataclysm-BN/pull/6901)
 
 Example PR title:
 

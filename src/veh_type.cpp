@@ -106,6 +106,7 @@ static const std::unordered_map<std::string, vpart_bitflags> vpart_bitflag_map =
     { "REACTOR", VPFLAG_REACTOR },
     { "RAIL", VPFLAG_RAIL },
     { "TURRET_CONTROLS", VPFLAG_TURRET_CONTROLS },
+    { "AUTOLOADER", VPFLAG_AUTOLOADER },
     { "ROOF", VPFLAG_ROOF },
     { "BALLOON", VPFLAG_BALLOON },
     { "WING", VPFLAG_WING },

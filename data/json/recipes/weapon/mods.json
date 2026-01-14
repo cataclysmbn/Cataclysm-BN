@@ -369,6 +369,41 @@
   },
   {
     "type": "recipe",
+    "result": "universal_autolink",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "rifle", 4 ] ],
+    "difficulty": 5,
+    "time": "2 h",
+    "book_learn": [ [ "manual_rifle", 7 ], [ "textbook_anarch", 4 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "tools": [ [ [ "small_repairkit", 60 ], [ "large_repairkit", 60 ] ] ],
+    "components": [ [ [ "sheet_metal_small", 3 ] ], [ [ "spring", 2 ] ], [ [ "bearing", 12 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "universal_auto_conversion_kit",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "rifle", 5 ], [ "mechanics", 4 ] ],
+    "difficulty": 7,
+    "time": "6 h",
+    "book_learn": [ [ "manual_rifle", 8 ], [ "textbook_anarch", 6 ] ],
+    "using": [ [ "welding_standard", 15 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "DRILL", "level": 1 } ],
+    "tools": [ [ [ "small_repairkit", 120 ], [ "large_repairkit", 120 ] ] ],
+    "components": [
+      [ [ "steel_plate", 2 ], [ "steel_lump", 6 ] ],
+      [ [ "sheet_metal_small", 6 ] ],
+      [ [ "spring", 4 ] ],
+      [ [ "bearing", 25 ] ],
+      [ [ "scrap", 6 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "glockswitch",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_MODS",

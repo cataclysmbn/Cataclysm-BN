@@ -1552,6 +1552,11 @@
     "context": [  ]
   },
   {
+    "id": "FAKE_CLONING_VAT",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "FAKE_SMOKE",
     "type": "json_flag",
     "context": [  ]
@@ -2293,6 +2298,12 @@
     "context": [  ]
   },
   {
+    "id": "FLY_STRAIGHT",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "info": "This thrown item <info>flies straight</info> without rotating in the air, maintaining its aerodynamic orientation."
+  },
+  {
     "id": "LEAK_ALWAYS",
     "type": "json_flag",
     "context": [  ]
@@ -2415,6 +2426,12 @@
     "context": [  ]
   },
   {
+    "id": "TEMPORARY_ITEM",
+    "type": "json_flag",
+    "//": "Set in game on fake items for their special processing",
+    "context": [  ]
+  },
+  {
     "id": "TINT_NO_FG",
     "type": "json_flag",
     "//": "Do not apply tint to background",
@@ -2470,6 +2487,12 @@
   },
   {
     "id": "EFFECT_LUA_ON_TICK",
+    "type": "json_flag",
+    "//": "",
+    "context": [  ]
+  },
+  {
+    "id": "EFFECT_LUA_ON_REMOVED",
     "type": "json_flag",
     "//": "",
     "context": [  ]

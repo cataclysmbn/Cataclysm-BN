@@ -102,7 +102,7 @@ feat(port): game store
 
 - [добавление новых привязок](../mod/lua/guides/binding.md)
 - улучшение документации lua/генерации API
-- [миграция жестко закодированных функций C++ в lua](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6901)
+- [миграция жестко закодированных функций C++ в lua](https://github.com/cataclysmbn/Cataclysm-BN/pull/6901)
 
 Пример заголовка PR:
 

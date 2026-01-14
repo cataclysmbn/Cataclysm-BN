@@ -497,6 +497,7 @@
       [ "wire", 40 ],
       { "item": "sheet_metal", "prob": 5 },
       { "item": "sheet_metal_small", "prob": 5, "count": [ 2, 4 ] },
+      { "item": "aluminium_sheet", "prob": 5 },
       { "item": "material_aluminium_ingot", "prob": 10, "count": [ 1, 10 ] }
     ]
   },
@@ -800,6 +801,7 @@
       [ "can_drink_unsealed", 130 ],
       [ "keg", 15 ],
       { "item": "material_aluminium_ingot", "prob": 25, "count": [ 2, 3 ] },
+      [ "aluminium_sheet", 15 ],
       [ "xlframe", 10 ],
       [ "survival_kit_box", 1 ],
       [ "wearable_light", 5 ],

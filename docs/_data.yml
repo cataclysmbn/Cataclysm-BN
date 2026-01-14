@@ -1,6 +1,6 @@
 menu_links:
   - text: Github Repository
-    href: https://github.com/cataclysmbnteam/Cataclysm-BN
+    href: https://github.com/cataclysmbn/Cataclysm-BN
     icon: github-logo
   - text: BN Item Guide
     href: https://cbn-guide.pages.dev/
@@ -13,7 +13,7 @@ menu_links:
     icon: reddit-logo
 
 repo:
-  url: https://github.com/cataclysmbnteam/Cataclysm-BN
+  url: https://github.com/cataclysmbn/Cataclysm-BN
   path: /docs
 
 extra_head: |

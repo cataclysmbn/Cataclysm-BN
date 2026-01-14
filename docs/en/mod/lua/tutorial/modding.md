@@ -112,6 +112,77 @@ prevent potential bugs:
   collisions between function names and variable names. You still can define global variables and
   functions, but they will be visible to your mod only.
 
+### Module loading with `require`
+
+The `require` function supports multiple import patterns for organizing your mod code:
+
+#### Relative imports
+
+Load modules relative to the current file:
+
+```lua
+-- In data/mods/my_mod/main.lua
+local utils = require("./lib/utils")          -- loads lib/utils.lua
+local config = require("./config")            -- loads config.lua in same dir
+
+-- In data/mods/my_mod/lib/foo.lua
+local helper = require("./helper")            -- loads lib/helper.lua
+local parent_mod = require("../parent")       -- loads parent.lua from mod root
+```
+
+#### Standard library imports
+
+Load shared libraries from `data/lua/lib/` using `lib.` or `bn.lib.` prefix:
+
+```lua
+-- Assuming penlight is installed in data/lua/lib/pl/
+local pl_utils = require("lib.pl.utils")      -- loads data/lua/lib/pl/utils.lua
+local pl_path = require("bn.lib.pl.path")     -- same, bn.lib. prefix also works
+```
+
+#### Mod-local absolute imports
+
+Load modules from your mod directory using dotted notation (no prefix):
+
+```lua
+-- In data/mods/my_mod/main.lua
+require("foo.bar.baz")  -- searches for:
+                        -- 1. <mod>/foo/bar/baz.lua
+                        -- 2. <mod>/foo/bar/baz/init.lua
+```
+
+#### Search order
+
+- **Relative (`./`, `../`)**: Current file's directory
+- **Standard library (`lib.*`, `bn.lib.*`)**: `data/lua/lib/` only
+- **Mod-local (no prefix)**: Current mod directory only
+
+> [!CAUTION]
+> Avoid naming mod modules with reserved prefixes (`lib`, `bn`) to prevent namespace conflicts.
+> Use descriptive mod-specific names instead (e.g., `mymod.core`, `utils`).
+
+#### Module structure
+
+Modules should return a table:
+
+```lua
+-- lib/math_helper.lua
+local M = {}
+
+M.add = function(a, b)
+  return a + b
+end
+
+return M
+```
+
+Then use in other files:
+
+```lua
+local math_helper = require("./lib/math_helper")
+local result = math_helper.add(2, 3)
+```
+
 ### Lua libraries and functions
 
 When script is called, it comes with some standard Lua libraries pre-loaded:
@@ -158,14 +229,15 @@ folder.
 
 Some functions have been globally overriden to improve integration with the game.
 
-| Function   | Description                                                    |
-| ---------- | -------------------------------------------------------------- |
-| print      | Print as `INFO LUA` to debug.log (overrides default Lua print) |
-| package    | loads from `data/lua/`, `data/mods/<mod_id>/`                  |
-| dofile     | Disabled                                                       |
-| loadfile   | Disabled                                                       |
-| load       | Disabled                                                       |
-| loadstring | Disabled                                                       |
+| Function   | Description                                                                        |
+| ---------- | ---------------------------------------------------------------------------------- |
+| print      | Print as `INFO LUA` to debug.log (overrides default Lua print)                     |
+| require    | Supports relative (`./foo`, `../bar`) and absolute (`pl.utils`) imports            |
+| package    | Custom searcher loads from `data/lua/`, `data/mods/<mod_id>/` with security checks |
+| dofile     | Disabled                                                                           |
+| loadfile   | Disabled                                                                           |
+| load       | Disabled                                                                           |
+| loadstring | Disabled                                                                           |
 
 TODO: alternatives for dofile and such
 

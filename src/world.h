@@ -36,10 +36,10 @@ class save_t
 };
 
 enum save_format : int {
-    /** Original save layout; uncompressed JSON as loose files */
+    /** Legacy save layout; uncompressed JSON as loose files */
     V1 = 0,
 
-    /** V2 format - compressed tuples in SQLite3 */
+    /** Current save format - compressed tuples in SQLite3 */
     V2_COMPRESSED_SQLITE3 = 1,
 };
 

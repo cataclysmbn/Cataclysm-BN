@@ -2,7 +2,7 @@
 
 # Do
 
-0. Get the game from https://github.com/cataclysmbnteam/Cataclysm-BN/releases
+0. Get the game from https://github.com/cataclysmbn/Cataclysm-BN/releases
 1. Unpack the game
 2. Copy `save` and `config` from old game directory to the new directory
 3. (Optional) Copy the `mods` from the old game dir

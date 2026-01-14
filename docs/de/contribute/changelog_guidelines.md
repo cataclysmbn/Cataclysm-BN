@@ -102,7 +102,7 @@ feat(port): game store
 
 - [Hinzufügen neuer Bindings](../mod/lua/guides/binding.md)
 - Verbesserung der Lua-Dokumentation/API-Generierung
-- [Migration von hardcodierten C++-Funktionen nach Lua](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6901)
+- [Migration von hardcodierten C++-Funktionen nach Lua](https://github.com/cataclysmbn/Cataclysm-BN/pull/6901)
 
 Beispiel PR-Titel:
 

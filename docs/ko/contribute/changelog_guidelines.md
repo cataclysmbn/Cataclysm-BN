@@ -100,7 +100,7 @@ Lua API 변경 사항, 예:
 
 - [새로운 바인딩 추가](../mod/lua/guides/binding.md)
 - lua 문서/API 생성 개선
-- [하드코딩된 C++ 기능을 lua로 마이그레이션](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6901)
+- [하드코딩된 C++ 기능을 lua로 마이그레이션](https://github.com/cataclysmbn/Cataclysm-BN/pull/6901)
 
 PR 제목 예시:
 

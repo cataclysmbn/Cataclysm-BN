@@ -26,6 +26,13 @@ struct tile_location {
     {}
 };
 
+struct power_stat {
+    int64_t gen_w = 0; //< generation in watts
+    int64_t use_w = 0; //< comsumption in watts
+    auto operator+( const power_stat &other ) const -> power_stat { return { .gen_w = gen_w + other.gen_w, .use_w = use_w + other.use_w }; }
+    auto net_w() const { return gen_w - use_w; }
+};
+
 /**
  * A cache that organizes producers, storage and consumers
  * of some resource, like electricity.
@@ -58,6 +65,8 @@ class distribution_grid
         const std::vector<tripoint_abs_ms> &get_contents() const {
             return flat_contents;
         }
+        /// Calculate total power generation (W) and consumption (W) in the grid
+        auto get_power_stat() const -> power_stat;
 };
 
 class distribution_grid_tracker;

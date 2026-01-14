@@ -14,7 +14,7 @@ const env = loadEnv("", envPath, "CUSTOM")
 const { CUSTOM_SITE_URL, CUSTOM_REPO_URL } = env
 
 const site = CUSTOM_SITE_URL || "https://docs.cataclysmbn.org"
-const github = CUSTOM_REPO_URL || "https://github.com/cataclysmbnteam/Cataclysm-BN"
+const github = CUSTOM_REPO_URL || "https://github.com/cataclysmbn/Cataclysm-BN"
 const itemGuide = "https://cbn-guide.pages.dev/"
 const discord = "https://discord.gg/XW7XhXuZ89"
 

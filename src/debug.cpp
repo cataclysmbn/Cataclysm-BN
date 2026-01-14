@@ -258,7 +258,7 @@ static void debug_error_prompt(
 
     std::string formatted_report = [&]() {
         const char *repetition_string =
-            _( "Excessive error repetition detected.  Please file a bug report at https://github.com/cataclysmbnteam/Cataclysm-BN/issues" );
+            _( "Excessive error repetition detected.  Please file a bug report at https://github.com/cataclysmbn/Cataclysm-BN/issues" );
         // try to prepend repetition string if we are forcing the display. Right now that's the only reason for this prompt to display.
         std::string pre = force ? string_format(
                               "            %s\n",

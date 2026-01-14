@@ -81,7 +81,7 @@ Lua файлы форматируются с использованием вст
 ![](./img/contributing-doxy2.png)
 
 Автоматически сгенерированная документация размещена на
-[GitHub Pages](https://cataclysmbnteam.github.io/Cataclysm-BN). -->
+[GitHub Pages](https://cataclysmbn.github.io/Cataclysm-BN). -->
 
 ### Комментарии Doxygen
 
@@ -159,7 +159,7 @@ $ git config --local commit.template .gitmessage
 ```sh
 $ cd Cataclysm-BN
 # Меняет активную директорию на только что клонированную директорию "Cataclysm-BN"
-$ git remote add -f upstream https://github.com/cataclysmbnteam/Cataclysm-BN.git
+$ git remote add -f upstream https://github.com/cataclysmbn/Cataclysm-BN.git
 # Назначает оригинальный репозиторий удаленному репозиторию с именем "upstream"
 ```
 
@@ -185,8 +185,8 @@ $ git remote -v
 
 origin  git@github.com:YOUR_USERNAME/Cataclysm-BN.git (fetch)
 origin  git@github.com:YOUR_USERNAME/Cataclysm-BN.git (push)
-upstream        https://github.com/cataclysmbnteam/Cataclysm-BN.git (fetch)
-upstream        https://github.com/cataclysmbnteam/Cataclysm-BN.git (push)
+upstream        https://github.com/cataclysmbn/Cataclysm-BN.git (fetch)
+upstream        https://github.com/cataclysmbn/Cataclysm-BN.git (push)
 ```
 
 и когда вы введете `git branch -vv`, вы должны увидеть `[upstream/main]` рядом с веткой `main`, например:
@@ -326,7 +326,7 @@ Branch new_feature_2 set up to track remote branch main from upstream.
 
 ```sh
 $ git push
-error: The requested URL returned error: 403 while accessing https://github.com/cataclysmbnteam/Cataclysm-BN.git
+error: The requested URL returned error: 403 while accessing https://github.com/cataclysmbn/Cataclysm-BN.git
 fatal: HTTP request failed
 $ git push origin
 ....
@@ -380,7 +380,7 @@ The test took 41.772 seconds
 
 ```sh
 $ git pull --ff-only upstream main
-From https://github.com/cataclysmbnteam/Cataclysm-BN
+From https://github.com/cataclysmbn/Cataclysm-BN
  * branch            main     -> FETCH_HEAD
 fatal: Not possible to fast-forward, aborting.
 $ git branch new_branch main          # помечаем текущий коммит временной веткой

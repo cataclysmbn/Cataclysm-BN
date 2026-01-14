@@ -2627,6 +2627,10 @@ bool game::handle_action()
                 g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
                 break;
 
+            case ACTION_TOGGLE_ZONE_OVERLAY:
+                g->show_zone_overlay = !g->show_zone_overlay;
+                break;
+
             case ACTION_TOGGLE_HOUR_TIMER:
                 toggle_debug_hour_timer();
                 break;

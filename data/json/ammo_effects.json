@@ -182,16 +182,16 @@
       "field_type": "fd_nuke_gas",
       "intensity_min": 3,
       "intensity_max": 3,
-      "radius": 18,
+      "radius": 24,
       "size": 1,
       "check_passable": true,
       "check_sees": true,
       "check_sees_radius": 3
     },
     "explosion": {
-      "damage": 300,
+      "damage": 3000,
       "radius": 20,
-      "fragment": { "impact": { "damage_type": "heat", "amount": 300, "armor_multiplier": 2 }, "range": 24 }
+      "fragment": { "impact": { "damage_type": "heat", "amount": 3000, "armor_multiplier": 2 }, "range": 24 }
     }
   },
   {

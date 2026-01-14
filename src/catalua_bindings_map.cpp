@@ -3,6 +3,7 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "game.h"
 #include "distribution_grid.h"
 #include "field.h"
 #include "map.h"
@@ -115,6 +116,7 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
         DOC( "In map squares" );
         luna::set_fx( ut, "get_map_size", []( const map & m ) -> int { return m.getmapsize() * SEEX; } );
+        luna::set_fx( ut, "ambient_light_at", &map::ambient_light_at );
 
         DOC( "Creates a new item(s) at a position on the map." );
         luna::set_fx( ut, "create_item_at", []( map & m, const tripoint & p, const itype_id & itype,
@@ -166,6 +168,17 @@ void cata::detail::reg_map( sol::state &lua )
             return items;
         } );
 
+        DOC( "Returns all points within a radius from the center point. `radiusz` defaults to 0." );
+        luna::set_fx( ut, "points_in_radius", []( const map & m, const tripoint & center,
+        int radius, sol::optional<int> radiusz ) -> std::vector<tripoint> {
+            std::vector<tripoint> points;
+            for( const auto pt : m.points_in_radius( center, radius, radiusz.value_or( 0 ) ) )
+            {
+                points.push_back( pt );
+            }
+            return points;
+        } );
+
         DOC( "Moves an item from one position to another, preserving all item state including contents." );
         luna::set_fx( ut, "move_item_to", []( map & m, const tripoint & from, item * it,
         const tripoint & to ) -> void {
@@ -196,6 +209,11 @@ void cata::detail::reg_map( sol::state &lua )
             return m.add_field( p, fid, intensity, age );
         } );
         luna::set_fx( ut, "remove_field_at", &map::remove_field );
+        luna::set_fx( ut, "get_field_name_at", []( map & m, const tripoint & p,
+        const field_type_id & fid ) -> std::string {
+            field_entry *fe = m.get_field( p, fid );
+            return fe ? fe->name() : std::string();
+        } );
         luna::set_fx( ut, "get_trap_at", []( map & m, const tripoint & p ) -> trap_id { return m.tr_at( p ).loadid; } );
         DOC( "Set a trap at a position on the map. It can also replace existing trap, even with `trap_null`." );
         luna::set_fx( ut, "set_trap_at", &map::trap_set );
@@ -203,6 +221,12 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "disarm_trap_at", &map::disarm_trap );
         DOC( "Simpler version of `set_trap_at` with `trap_null`." );
         luna::set_fx( ut, "remove_trap_at", &map::remove_trap );
+
+        luna::set_fx( ut, "is_outside", sol::resolve<bool( const tripoint & ) const>( &map::is_outside ) );
+        // Actually sheltered or in sunlight doesn't need map, but it's convenient to have it here
+        luna::set_fx( ut, "is_sheltered", []( map & m, tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
+
+        luna::set_fx( ut, "is_in_sunlight", []( map & m, tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
     }
 
     // Register 'tinymap' class to be used in Lua
@@ -260,6 +284,26 @@ void cata::detail::reg_map( sol::state &lua )
 void cata::detail::reg_distribution_grid( sol::state &lua )
 {
     {
+        DOC( "Power generation and consumption statistics for a grid" );
+        sol::usertype<power_stat> ut =
+            luna::new_usertype<power_stat>(
+                lua,
+                luna::no_bases,
+                luna::no_constructor
+            );
+
+        DOC( "Power generation in watts" );
+        luna::set( ut, "gen_w", &power_stat::gen_w );
+        DOC( "Power consumption in watts" );
+        luna::set( ut, "use_w", &power_stat::use_w );
+        DOC( "Net power (generation - consumption) in watts" );
+        luna::set_fx( ut, "net_w", &power_stat::net_w );
+
+        luna::set_fx( ut, sol::meta_function::addition, &power_stat::operator+ );
+    }
+
+    {
+        DOC( "A grid that organizes producers, storage and consumers of a resource like electricity" );
         sol::usertype<distribution_grid> ut =
             luna::new_usertype<distribution_grid>(
                 lua,
@@ -267,13 +311,27 @@ void cata::detail::reg_distribution_grid( sol::state &lua )
                 luna::no_constructor
             );
 
-        DOC( "Boolean argument controls recursive behavior" );
-        luna::set_fx( ut, "get_resource", &distribution_grid::get_resource );
-        DOC( "Boolean argument controls recursive behavior" );
-        luna::set_fx( ut, "mod_resource", &distribution_grid::mod_resource );
+        DOC( "Check if grid is empty" );
+        luna::set_fx( ut, "empty", &distribution_grid::empty );
+        DOC( "Check if grid is valid" );
+        luna::set_fx( ut, "is_valid",
+                      []( const distribution_grid & g ) -> bool { return static_cast<bool>( g ); } );
+        DOC( "Update the grid to the given time point" );
+        luna::set_fx( ut, "update", &distribution_grid::update );
+        DOC( "Modify resource amount. First argument is amount, second (optional) controls recursive behavior (default true)" );
+        luna::set_fx( ut, "get_resource",
+        []( const distribution_grid & g, sol::optional<bool> recurse ) { return g.get_resource( recurse.value_or( true ) ); } );
+        luna::set_fx( ut, "mod_resource",
+        []( distribution_grid & g, int amt, sol::optional<bool> recurse ) { return g.mod_resource( amt, recurse.value_or( true ) ); } );
+        DOC( "Get current resource amount. Boolean argument (optional) controls recursive behavior (default true)" );
+        DOC( "Get vector of absolute map square coordinates of grid contents" );
+        luna::set_fx( ut, "get_contents", &distribution_grid::get_contents );
+        DOC( "Get power generation and consumption statistics for the grid" );
+        luna::set_fx( ut, "get_power_stat", &distribution_grid::get_power_stat );
     }
 
     {
+        DOC( "Manages all active distribution grids" );
         sol::usertype<distribution_grid_tracker> ut =
             luna::new_usertype<distribution_grid_tracker>(
                 lua,
@@ -281,8 +339,28 @@ void cata::detail::reg_distribution_grid( sol::state &lua )
                 luna::no_constructor
             );
 
-        luna::set_fx( ut, "get_grid_at_abs_ms",
-                      []( distribution_grid_tracker & tr, const tripoint & p ) -> distribution_grid& { return tr.grid_at( tripoint_abs_ms( p ) ); } );
+        DOC( "Get grid at absolute map square position" );
+        luna::set_fx( ut, "grid_at",
+                      sol::overload(
+                          []( distribution_grid_tracker & tr, const tripoint & p ) -> distribution_grid& { return tr.grid_at( tripoint_abs_ms( p ) ); }, // *NOPAD*
+                          []( const distribution_grid_tracker & tr, const tripoint & p ) -> const distribution_grid& { return tr.grid_at( tripoint_abs_ms( p ) ); } // *NOPAD*
+                      ) );
+        DOC( "Get unique identifier for grid at given overmap tile (for debug purposes, returns 0 if no grid)" );
+        luna::set_fx( ut, "debug_grid_id",
+                      []( const distribution_grid_tracker & tr, const tripoint & omt_pos ) -> std::uintptr_t { return tr.debug_grid_id( tripoint_abs_omt( omt_pos ) ); } );
+        DOC( "Update all grids to the given time point" );
+        luna::set_fx( ut, "update", &distribution_grid_tracker::update );
+        DOC( "Load grids for the given map" );
+        luna::set_fx( ut, "load", sol::resolve<void( const map & )>( &distribution_grid_tracker::load ) );
+        DOC( "Notify tracker that a tile at the given position has changed" );
+        luna::set_fx( ut, "on_changed",
+        []( distribution_grid_tracker & tr, const tripoint & p ) {
+            tr.on_changed( tripoint_abs_ms( p ) );
+        } );
+        DOC( "Notify tracker that the game has been saved" );
+        luna::set_fx( ut, "on_saved", &distribution_grid_tracker::on_saved );
+        DOC( "Notify tracker that game options have changed" );
+        luna::set_fx( ut, "on_options_changed", &distribution_grid_tracker::on_options_changed );
     }
 
 }

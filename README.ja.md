@@ -53,17 +53,17 @@ Bright Nightsは、メインゲームに同梱されていないModを簡単に�
 
 [![Source Code][source-badge]][source] [![Zip Archive][clone-badge]][clone]
 
-[stable-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases/latest "安定版の実行ファイルをダウンロード"
-[stable-releases-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=success&label=stable
-[all-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases?q=prerelease%3Atrue&expanded=true
-[all-releases-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=important&label=Latest%20Release&include_prereleases&sort=date
-[experimental-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases/tag/experimental
-[experimental-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=salmon&label=Experimental%20Release&include_prereleases&sort=date
+[stable-releases]: https://github.com/cataclysmbn/Cataclysm-BN/releases/latest "安定版の実行ファイルをダウンロード"
+[stable-releases-badge]: https://img.shields.io/github/v/release/cataclysmbn/Cataclysm-BN?style=for-the-badge&color=success&label=stable
+[all-releases]: https://github.com/cataclysmbn/Cataclysm-BN/releases?q=prerelease%3Atrue&expanded=true
+[all-releases-badge]: https://img.shields.io/github/v/release/cataclysmbn/Cataclysm-BN?style=for-the-badge&color=important&label=Latest%20Release&include_prereleases&sort=date
+[experimental-releases]: https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/experimental
+[experimental-badge]: https://img.shields.io/github/v/release/cataclysmbn/Cataclysm-BN?style=for-the-badge&color=salmon&label=Experimental%20Release&include_prereleases&sort=date
 [flathub-releases]: https://flathub.org/apps/org.cataclysmbn.CataclysmBN
 [flathub-badge]: https://img.shields.io/flathub/v/org.cataclysmbn.CataclysmBN?style=for-the-badge&color=success
-[source]: https://github.com/cataclysmbnteam/Cataclysm-BN/archive/master.zip "ソースコードは.zip形式のアーカイブとしてダウンロードできます"
+[source]: https://github.com/cataclysmbn/Cataclysm-BN/archive/master.zip "ソースコードは.zip形式のアーカイブとしてダウンロードできます"
 [source-badge]: https://img.shields.io/badge/Zip%20Archive-black?style=for-the-badge&logo=github
-[clone]: https://github.com/cataclysmbnteam/Cataclysm-BN/ "GitHubリポジトリからクローンする"
+[clone]: https://github.com/cataclysmbn/Cataclysm-BN/ "GitHubリポジトリからクローンする"
 [clone-badge]: https://img.shields.io/badge/Clone%20From%20Repo-black?style=for-the-badge&logo=github
 
 ## ビルド方法
@@ -99,7 +99,7 @@ Bright Nightsは、メインゲームに同梱されていないModを簡単に�
 [![Discord](https://img.shields.io/discord/830879262763909202?style=for-the-badge&logo=discord)][discord]
 [![Discussions](https://img.shields.io/badge/CDDA%20Modding-green?style=for-the-badge&logo=discord)][modding]
 
-[discussion]: https://github.com/cataclysmbnteam/Cataclysm-BN/discussions
+[discussion]: https://github.com/cataclysmbn/Cataclysm-BN/discussions
 [discord]: https://discord.gg/XW7XhXuZ89
 [modding]: https://discord.gg/B5q4XCa "非公式のDDAモッディングコミュニティDiscordにはBNチャンネルがあります"
 [docs]: https://docs.cataclysmbn.org "公式BNドキュメント"
@@ -120,7 +120,7 @@ Bright Nightsは、メインゲームに同梱されていないModを簡単に�
 
 #### ゲームに音楽(または音)がありません。どうすれば追加できますか?
 
-[Catapult](https://github.com/qrrk/Catapult)などのサードパーティランチャーを使用すると、ランチャーメニューからサウンドパック(およびMod)をインストールできます。手動でも可能です。サウンドパックを追加するには、ダウンロードして`<Game Folder>\data\sound\`に解凍し、設定から選択して、ゲームを再起動します。推奨されるのは[Otopack](https://github.com/RoyalFox2140/Otopack-2-BN)です。
+[Catapult](https://github.com/qrrk/Catapult)などのサードパーティランチャーを使用すると、ランチャーメニューからサウンドパック(およびMod)をインストールできます。手動でも可能です。サウンドパックを追加するには、ダウンロードして`<Game Folder>\data\sound\`に解凍し、設定から選択して、ゲームを再起動します。推奨されるのは[Otopack](https://github.com/NarandBD/Otopack-BN-Mk-2)です。
 
 #### サードパーティModはどこに置けばよいですか?
 
@@ -144,7 +144,7 @@ savesフォルダ、memorial、graveyardなどは削除しないでください!
 
 #### バグを見つけました。どうすればよいですか?
 
-[バグレポート](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/new?template=bug_report.yml)は、デバッグメニューから送信できます。
+[バグレポート](https://github.com/cataclysmbn/Cataclysm-BN/issues/new?template=bug_report.yml)は、デバッグメニューから送信できます。
 
 ゲーム内で`GitHubでバグ報告を提出する` を実行して問題を送信してください。
 
@@ -159,8 +159,8 @@ savesフォルダ、memorial、graveyardなどは削除しないでください!
 #### 提案をしたいのですが、どうすればよいですか?
 
 - シンプルなアイデアの場合
-  [Discussionsページ](https://github.com/cataclysmbnteam/Cataclysm-BN/discussions/categories/ideas)
+  [Discussionsページ](https://github.com/cataclysmbn/Cataclysm-BN/discussions/categories/ideas)
   をご覧ください。新機能、移植リクエスト、Modアイデア、その他何でも構いません。
-- [GitHubページ](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/)で
-  [新機能リクエストフォーム](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/new?
+- [GitHubページ](https://github.com/cataclysmbn/Cataclysm-BN/issues/)で
+  [新機能リクエストフォーム](https://github.com/cataclysmbn/Cataclysm-BN/issues/new?
   template=feature_request.yml)を使用して問題を送信してください。

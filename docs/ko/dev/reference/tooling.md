@@ -61,7 +61,7 @@ VS2019의 단계를 따라 소스에서 컴파일할 수 있지만 Visual Studio
 
 1. `Tools` - `Options` - `AStyle Formatter` - `General`로 이동합니다.
 
-2. `Export/Import` 탭에서 `Import` 버튼을 사용하여 `https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/msvc-full-features/AStyleExtension-Cataclysm-BN.cfg`를 가져옵니다:
+2. `Export/Import` 탭에서 `Import` 버튼을 사용하여 `https://github.com/cataclysmbn/Cataclysm-BN/blob/main/msvc-full-features/AStyleExtension-Cataclysm-BN.cfg`를 가져옵니다:
 
 ![image](./img/VS_Astyle_Step_1.png)
 
@@ -87,7 +87,7 @@ _참고:_ `Tools` - `Options` - `Environment` - `Keybindings` 메뉴에서 언�
 
 ## clang-tidy
 
-Cataclysm에는 [clang-tidy 구성 파일](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/.clang-tidy)이 있으며 `clang-tidy`가 사용 가능하면 실행하여 코드베이스의 정적 분석을 수행할 수 있습니다. CI로 LLVM 18의 `clang-tidy`로 테스트하므로 가장 일관된 결과를 위해 해당 버전을 사용할 수 있습니다.
+Cataclysm에는 [clang-tidy 구성 파일](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/.clang-tidy)이 있으며 `clang-tidy`가 사용 가능하면 실행하여 코드베이스의 정적 분석을 수행할 수 있습니다. CI로 LLVM 18의 `clang-tidy`로 테스트하므로 가장 일관된 결과를 위해 해당 버전을 사용할 수 있습니다.
 
 실행하려면 몇 가지 옵션이 있습니다.
 
@@ -108,7 +108,7 @@ grep '"file": "' build/compile_commands.json | \
 
 ## 커스텀 clang-tidy 플러그인
 
-커스텀 플러그인에 자체 clang-tidy 검사를 작성했습니다. Ubuntu 24.04에서 플러그인을 빌드하는 정확한 단계는 [clang-tidy.yml](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/.github/workflows/clang-tidy.yml)을 참조하세요.
+커스텀 플러그인에 자체 clang-tidy 검사를 작성했습니다. Ubuntu 24.04에서 플러그인을 빌드하는 정확한 단계는 [clang-tidy.yml](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/.github/workflows/clang-tidy.yml)을 참조하세요.
 
 ### Ubuntu 24.04에서 플러그인 빌드
 

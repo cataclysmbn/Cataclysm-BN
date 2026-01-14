@@ -75,20 +75,23 @@ struct sdl_render_state {
     using tDC = std::conditional_t<has_draw_color, std::tuple<SDL_Color>, std::tuple<>>;
     using tBM = std::conditional_t<has_blend_mode, std::tuple<SDL_BlendMode>, std::tuple<>>;
 
-    constexpr static size_t render_target_idx = 0;
-    constexpr static size_t clip_rect_idx =
+    constexpr static ptrdiff_t render_target_idx =
+        has_render_target
+        ? 0
+        : -1;
+    constexpr static ptrdiff_t clip_rect_idx =
         has_clip_rect
         ? ( render_target_idx + 1 )
         : render_target_idx;
-    constexpr static size_t viewport_idx =
+    constexpr static ptrdiff_t viewport_idx =
         has_viewport
         ? ( clip_rect_idx + 1 )
         : clip_rect_idx;
-    constexpr static size_t draw_color_idx =
+    constexpr static ptrdiff_t draw_color_idx =
         has_draw_color
         ? ( viewport_idx + 1 )
         : viewport_idx;
-    constexpr static size_t blend_mode_idx =
+    constexpr static ptrdiff_t blend_mode_idx =
         has_blend_mode
         ? ( draw_color_idx + 1 )
         : draw_color_idx;

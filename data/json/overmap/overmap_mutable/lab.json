@@ -96,8 +96,8 @@
     "subtype": "mutable",
     "locations": [ "subterranean_empty" ],
     "city_distance": [ 10, -1 ],
-    "occurrences": [ 50, 0 ],
-    "flags": [ "LAB", "UNIQUE" ],
+    "occurrences": [ 1, 10 ],
+    "flags": [ "LAB" ],
     "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road" } ],
     "check_for_locations": [
       [ [ 0, 0, 0 ], [ "wilderness" ] ],

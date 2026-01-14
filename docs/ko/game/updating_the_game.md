@@ -2,7 +2,7 @@
 
 # 올바른 방법
 
-0. https://github.com/cataclysmbnteam/Cataclysm-BN/releases 에서 게임 받기
+0. https://github.com/cataclysmbn/Cataclysm-BN/releases 에서 게임 받기
 1. 게임 압축 풀기
 2. 이전 게임 디렉토리에서 새 디렉토리로 `save`와 `config` 복사
 3. (선택사항) 이전 게임 디렉토리에서 `mods` 복사

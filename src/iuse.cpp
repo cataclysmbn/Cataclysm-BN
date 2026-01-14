@@ -330,7 +330,6 @@ static const requirement_id requirement_add_grid_connection =
 static const species_id FUNGUS( "FUNGUS" );
 static const species_id HALLUCINATION( "HALLUCINATION" );
 static const species_id INSECT( "INSECT" );
-static const species_id ROBOT( "ROBOT" );
 static const species_id ZOMBIE( "ZOMBIE" );
 
 static const mongroup_id GROUP_FISH( "GROUP_FISH" );
@@ -1641,6 +1640,9 @@ int iuse::remove_all_mods( player *p, item *, bool, const tripoint & )
             if( !it->is_irremovable() ) {
                 return true;
             }
+        }
+        if( e.has_flag( flag_RADIO_MOD ) ) {
+            return true;
         }
         return false;
     },
@@ -5549,10 +5551,37 @@ int iuse::seed( player *p, item *it, bool, const tripoint & )
     return 0;
 }
 
+namespace
+{
+auto is_hackable_robot( const monster &mon ) -> bool
+{
+    // HackPRO targets electronic robots regardless of species naming.
+    return mon.has_flag( MF_ELECTRONIC );
+}
+
+auto get_hackable_friendly_monsters( game &game_ref ) -> std::vector<shared_ptr_fast<monster>>
+{
+    auto monsters = game_ref.all_monsters();
+    auto &items = monsters.items;
+    auto results = std::vector<shared_ptr_fast<monster>> {};
+    std::ranges::for_each( items, [&]( const auto & weak_monster ) {
+        auto current = weak_monster.lock();
+        if( !current || current->is_dead() ) {
+            return;
+        }
+        if( current->friendly == 0 || !is_hackable_robot( *current ) ) {
+            return;
+        }
+        results.push_back( std::move( current ) );
+    } );
+    return results;
+}
+} // namespace
+
 bool iuse::robotcontrol_can_target( player *p, const monster &m )
 {
     return !m.is_dead()
-           && m.type->in_species( ROBOT )
+           && is_hackable_robot( m )
            && m.friendly == 0
            && rl_dist( p->pos(), m.pos() ) <= 10;
 }
@@ -5632,15 +5661,13 @@ int iuse::robotcontrol( player *p, item *it, bool, const tripoint & )
         }
         case 1: { //make all friendly robots stop their purposeless extermination of (un)life.
             p->moves -= to_moves<int>( 1_seconds );
-            int f = 0; //flag to check if you have robotic allies
-            for( monster &critter : g->all_monsters() ) {
-                if( critter.friendly != 0 && critter.type->in_species( ROBOT ) ) {
-                    p->add_msg_if_player( _( "A following %s goes into passive mode." ),
-                                          critter.name() );
-                    critter.add_effect( effect_docile, 1_turns );
-                    f = 1;
-                }
-            }
+            auto hackables = get_hackable_friendly_monsters( *g );
+            const auto f = hackables.empty() ? 0 : 1;
+            std::ranges::for_each( hackables, [&]( const shared_ptr_fast<monster> &critter ) {
+                p->add_msg_if_player( _( "A following %s goes into passive mode." ),
+                                      critter->name() );
+                critter->add_effect( effect_docile, 1_turns );
+            } );
             if( f == 0 ) {
                 p->add_msg_if_player( _( "You are not commanding any robots." ) );
                 return 0;
@@ -5649,15 +5676,13 @@ int iuse::robotcontrol( player *p, item *it, bool, const tripoint & )
         }
         case 2: { //make all friendly robots terminate (un)life with extreme prejudice
             p->moves -= to_moves<int>( 1_seconds );
-            int f = 0; //flag to check if you have robotic allies
-            for( monster &critter : g->all_monsters() ) {
-                if( critter.friendly != 0 && critter.has_flag( MF_ELECTRONIC ) ) {
-                    p->add_msg_if_player( _( "A following %s goes into combat mode." ),
-                                          critter.name() );
-                    critter.remove_effect( effect_docile );
-                    f = 1;
-                }
-            }
+            auto hackables = get_hackable_friendly_monsters( *g );
+            const auto f = hackables.empty() ? 0 : 1;
+            std::ranges::for_each( hackables, [&]( const shared_ptr_fast<monster> &critter ) {
+                p->add_msg_if_player( _( "A following %s goes into combat mode." ),
+                                      critter->name() );
+                critter->remove_effect( effect_docile );
+            } );
             if( f == 0 ) {
                 p->add_msg_if_player( _( "You are not commanding any robots." ) );
                 return 0;
@@ -6090,7 +6115,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint &pos )
 
                 const auto &recipe = *candidate_recipes.back();
                 if( recipe ) {
-                    rmenu.addentry( k++, true, -1, recipe.result_name() );
+                    rmenu.addentry( k++, true, -1, recipe.result_name( /*decorated=*/true ) );
                 }
             }
 
@@ -8803,12 +8828,30 @@ int iuse::toggle_ups_charging( player *p, item *it, bool, const tripoint & )
 
 int iuse::report_grid_charge( player *p, item *, bool, const tripoint &pos )
 {
-    tripoint_abs_ms pos_abs( get_map().getabs( pos ) );
+    const tripoint_abs_ms pos_abs( get_map().getabs( pos ) );
     const distribution_grid &gr = get_distribution_grid_tracker().grid_at( pos_abs );
+    const int amt = gr.get_resource();
+    const auto stat = gr.get_power_stat();
 
-    int amt = gr.get_resource();
-    p->add_msg_if_player( _( "This electric grid stores %d kJ of electric power." ), amt );
+    std::string msg = string_format( _( "This electric grid stores %d kJ of electric power." ), amt );
 
+    // format in MW/kW with three-point precision
+    auto display_watt = []( int64_t watts = 0 ) {
+        if( std::abs( watts ) >= 1'000'000 ) {
+            return string_format( "%.3f MW", watts / 1'000'000.0 );
+        } else if( std::abs( watts ) >= 1'000 ) {
+            return string_format( "%.3f kW", watts / 1'000.0 );
+        } else {
+            return string_format( "%d W", watts );
+        }
+    };
+
+    if( stat.gen_w > 0 || stat.use_w > 0 ) {
+        msg += string_format( _( "\nGeneration: %s" ), display_watt( stat.gen_w ) );
+        msg += string_format( _( "\nConsumption: %s" ), display_watt( stat.use_w ) );
+        msg += string_format( _( "\nNet: %s" ), display_watt( stat.net_w() ) );
+    }
+    p->add_msg_if_player( "%s", msg );
     return 0;
 }
 
@@ -9014,4 +9057,3 @@ int iuse::bullet_vibe_on( player *p, item *it, bool t, const tripoint & )
     }
     return it->type->charges_to_use();
 }
-

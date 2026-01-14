@@ -154,6 +154,23 @@
   },
   {
     "type": "GENERIC",
+    "id": "cloning_vat",
+    "name": { "str": "cloning vat" },
+    "looks_like": "t_vat",
+    "description": "A vessel designed to grow and sustain living beings.  If constructed and provided with sufficient power, it can take a sterile artificial womb and a DNA sample and create a viable clone.",
+    "weight": "200 kg",
+    "to_hit": -8,
+    "color": "light_blue",
+    "symbol": "V",
+    "material": "steel",
+    "volume": "200 L",
+    "bashing": 8,
+    "category": "veh_parts",
+    "price": "100 kUSD",
+    "price_postapoc": "500 USD"
+  },
+  {
+    "type": "GENERIC",
     "id": "vh_autoclave",
     "name": { "str": "mountable autoclave" },
     "description": "This autoclave has been rigged to run off a vehicle power grid.",

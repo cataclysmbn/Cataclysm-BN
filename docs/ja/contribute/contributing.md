@@ -80,7 +80,7 @@ Cataclysm: BNの翻訳はTransifexを使用して行われます。サポート�
 ![](./img/contributing-doxy1.png)
 ![](./img/contributing-doxy2.png)
 
-自動生成されたドキュメントは [GitHub Pages](https://cataclysmbnteam.github.io/Cataclysm-BN) で公開されています。 -->
+自動生成されたドキュメントは [GitHub Pages](https://cataclysmbn.github.io/Cataclysm-BN) で公開されています。 -->
 
 ### Doxygenコメント
 
@@ -158,7 +158,7 @@ $ git config --local commit.template .gitmessage
 ```sh
 $ cd Cataclysm-BN
 # プロンプトのアクティブディレクトリを新しくクローンした "Cataclysm-BN" ディレクトリに変更します
-$ git remote add -f upstream https://github.com/cataclysmbnteam/Cataclysm-BN.git
+$ git remote add -f upstream https://github.com/cataclysmbn/Cataclysm-BN.git
 # 元のリポジトリを "upstream" という名前のリモートに割り当てます
 ```
 
@@ -184,8 +184,8 @@ $ git remote -v
 
 origin  git@github.com:YOUR_USERNAME/Cataclysm-BN.git (fetch)
 origin  git@github.com:YOUR_USERNAME/Cataclysm-BN.git (push)
-upstream        https://github.com/cataclysmbnteam/Cataclysm-BN.git (fetch)
-upstream        https://github.com/cataclysmbnteam/Cataclysm-BN.git (push)
+upstream        https://github.com/cataclysmbn/Cataclysm-BN.git (fetch)
+upstream        https://github.com/cataclysmbn/Cataclysm-BN.git (push)
 ```
 
 そして `git branch -vv` と入力すると、`main` ブランチの横に `[upstream/main]` が表示されるはずです：
@@ -325,7 +325,7 @@ Branch new_feature_2 set up to track remote branch main from upstream.
 
 ```sh
 $ git push
-error: The requested URL returned error: 403 while accessing https://github.com/cataclysmbnteam/Cataclysm-BN.git
+error: The requested URL returned error: 403 while accessing https://github.com/cataclysmbn/Cataclysm-BN.git
 fatal: HTTP request failed
 $ git push origin
 ....
@@ -379,7 +379,7 @@ The test took 41.772 seconds
 
 ```sh
 $ git pull --ff-only upstream main
-From https://github.com/cataclysmbnteam/Cataclysm-BN
+From https://github.com/cataclysmbn/Cataclysm-BN
  * branch            main     -> FETCH_HEAD
 fatal: Not possible to fast-forward, aborting.
 $ git branch new_branch main          # 現在のコミットを一時ブランチでマーク

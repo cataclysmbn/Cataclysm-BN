@@ -1027,6 +1027,9 @@ struct itype {
         // If non-rigid volume (and if worn encumbrance) increases proportional to contents
         bool rigid = true;
 
+        // Default item vars for the resulting item
+        std::map<std::string, std::string> item_vars;
+
         /** Damage output in melee for zero or more damage types */
         std::array<int, NUM_DT> melee;
         /**
@@ -1074,6 +1077,10 @@ struct itype {
          * Efficiency of solar energy conversion for solarpacks.
          */
         float solar_efficiency = 0;
+
+        // Sets repair difficulty for items
+        // Overrides recipe difficulty
+        int repair_difficulty = -1;
 
         FlagsSetType item_tags;
 

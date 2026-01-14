@@ -34,10 +34,10 @@ In order to compile localization files, you'll also need `gettext` package.
 ## Build Environment
 
 You can obtain the source code tarball for the latest version from
-[git](https://github.com/cataclysmbnteam/Cataclysm-BN).
+[git](https://github.com/cataclysmbn/Cataclysm-BN).
 
 ```sh
-git clone --filter=blob:none https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone --filter=blob:none https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 
