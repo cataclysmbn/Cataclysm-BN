@@ -331,8 +331,8 @@
     "color": "green",
     "location": "magazine",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
-    "acceptable_ammo": [ "223", "308", "50" ],
-    "magazine_adaptor": [ [ "223", [ "belt223" ] ], [ "308", [ "belt308" ] ], [ "50", [ "belt50" ] ] ],
+    "acceptable_ammo": [ "223", "308", "50", "shot" ],
+    "magazine_adaptor": [ [ "223", [ "belt223" ] ], [ "308", [ "belt308" ] ], [ "50", [ "belt50" ] ], [ "shot", [ "shotbelt_20" ] ] ],
     "min_skills": [ [ "weapon", 4 ], [ "mechanics", 3 ] ],
     "flags": [ "INSTALL_DIFFICULT", "IRREMOVABLE" ]
   },
