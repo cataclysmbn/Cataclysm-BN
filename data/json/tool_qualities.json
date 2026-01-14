@@ -380,7 +380,7 @@
   {
     "type": "tool_quality",
     "id": "CASING_PRESSING",
-    "name": { "str": "casing pressing" }
+    "name": { "str": "Ammunition reloading" }
   },
   {
     "type": "tool_quality",

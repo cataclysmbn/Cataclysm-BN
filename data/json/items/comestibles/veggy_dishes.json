@@ -914,6 +914,7 @@
   {
     "type": "COMESTIBLE",
     "id": "veggy_sausage",
+    "looks_like": "sausage",
     "name": "smoked veggy sausage",
     "weight": "148 g",
     "comestible_type": "FOOD",
