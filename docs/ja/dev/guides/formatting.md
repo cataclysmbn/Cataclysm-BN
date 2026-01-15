@@ -8,7 +8,7 @@ title: Formatting & Linting
 
 | ファイル形式    | ツール         | コマンド                                           |
 | --------------- | -------------- | -------------------------------------------------- |
-| C++ (`.cpp/.h`) | astyle         | `cmake --build build --target format`              |
+| C++ (`.cpp/.h`) | astyle         | `cmake --build build --target astyle`              |
 | JSON            | json_formatter | `cmake --build build --target style-json-parallel` |
 | Markdown        | deno fmt       | `deno fmt`                                         |
 | TypeScript      | deno fmt       | `deno fmt`                                         |
@@ -46,7 +46,7 @@ brew install astyle
 cmake --preset lint
 
 # すべてのC++ファイルをフォーマット
-cmake --build build --target format
+cmake --build build --target astyle
 ```
 
 スタイルの設定は、リポジトリのルートにある `.astylerc` に記述されています。
@@ -120,7 +120,7 @@ tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*
 cmake --preset lint
 
 # すべてのコードをフォーマット
-cmake --build build --target format           # C++
+cmake --build build --target astyle           # C++
 cmake --build build --target style-json-parallel  # JSON
 deno fmt                                       # Markdown/TypeScript
 deno task dprint fmt                           # Lua
