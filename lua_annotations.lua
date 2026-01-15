@@ -2770,7 +2770,9 @@ coords = {}
 ---@field get_character_at fun(arg1: Tripoint, arg2: boolean?): Character
 ---@field get_creature_at fun(arg1: Tripoint, arg2: boolean?): Creature
 ---@field get_distribution_grid_tracker fun(): DistributionGridTracker
+---@field get_lua_log fun(arg1: integer): table @Get recent Lua console log entries. Returns array of { level=string, text=string, from_user=bool }.
 ---@field get_map fun(): Map
+---@field get_messages fun(arg1: integer): table @Get recent player message log entries. Returns array of { time=string, text=string }.
 ---@field get_monster_at fun(arg1: Tripoint, arg2: boolean?): Monster
 ---@field get_npc_at fun(arg1: Tripoint, arg2: boolean?): Npc
 ---@field get_overmap_buffer fun(): OvermapBuffer @Get the global overmap buffer
@@ -2782,6 +2784,7 @@ coords = {}
 ---@field place_player_overmap_at fun(arg1: Tripoint) @Teleports player to absolute coordinate in overmap
 ---@field play_ambient_variant_sound fun(arg1: string, arg2: string, arg3: integer, arg4: SfxChannel, arg5: integer, arg6: number, arg7: integer)
 ---@field play_variant_sound fun(arg1: string, arg2: string, arg3: integer) | fun(arg1: string, arg2: string, arg3: integer, arg4: Angle, arg5: number, arg6: number)
+---@field register_action_menu_entry fun(arg1: table) @Register a Lua-defined action menu entry in the in-game action menu.
 ---@field remove_npc_follower fun(arg1: Npc)
 ---@field rng fun(arg1: integer, arg2: integer): integer
 ---@field six_cardinal_directions fun(): Tripoint[] @Get the six cardinal directions (N, S, E, W, Up, Down)
@@ -2851,6 +2854,13 @@ locale = {}
 ---@field set_seen fun(arg1: Tripoint, arg2: boolean?) @Set the seen status of terrain at the given position.
 ---@field ter fun(arg1: Tripoint): OterIntId @Get the overmap terrain type at the given position. Returns an oter_id.
 overmapbuffer = {}
+
+--- Sidebar utility functions.
+---@class sidebar
+---@field clear_widgets fun() @Clear all registered Lua sidebar widgets.
+---@field get_layout_id fun(): string @Returns current sidebar layout id (e.g. classic, compact, labels).
+---@field register_widget fun(arg1: table) @Register a Lua sidebar widget. Options: id(string), name(string), height(int, use -2 to fill remaining space), order(int, 1-based), draw(function), <br />default_toggle(bool), redraw_every_frame(bool), panel_visible(bool|function), render(function). <br />draw(width, height) returns an array of entries: each entry is string or table { text=string, color=Color|string }.<br />text may include color tags like <color_red>text</color> for multi-color lines.
+sidebar = {}
 
 --- Library for testing purposes
 ---@class tests_lib
@@ -3480,4 +3490,3 @@ VitaminType = {
 	drug = 2,
 	counter = 3,
 }
-

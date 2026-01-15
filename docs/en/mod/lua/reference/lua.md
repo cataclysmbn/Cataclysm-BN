@@ -9955,43 +9955,37 @@ Global game methods
 
 🇫 Function --> <code>( ) -> [Avatar](#sol::Avatar)</code>
 
-#### choose_adjacent {#sol::nil::choose_adjacent}
+#### get_character_at {#sol::nil::get_character_at}
 
-🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
-
-#### choose_direction {#sol::nil::choose_direction}
-
-🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Character](#sol::Character)</code>
 
 #### get_npc_at {#sol::nil::get_npc_at}
 
 🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Npc](#sol::Npc)</code>
 
+#### choose_adjacent {#sol::nil::choose_adjacent}
+
+🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
+
 #### spawn_hallucination {#sol::nil::spawn_hallucination}
 
 🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
 
-#### get_character_at {#sol::nil::get_character_at}
+#### place_monster_at {#sol::nil::place_monster_at}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Character](#sol::Character)</code>
+🇫 Function --> <code>( [MonsterTypeId](#sol::MonsterTypeId), [Tripoint](#sol::Tripoint) ) -> [Monster](#sol::Monster)</code>
 
 #### place_monster_around {#sol::nil::place_monster_around}
 
 🇫 Function --> <code>( [MonsterTypeId](#sol::MonsterTypeId), [Tripoint](#sol::Tripoint), integer ) -> [Monster](#sol::Monster)</code>
 
-#### look_around {#sol::nil::look_around}
+#### get_monster_at {#sol::nil::get_monster_at}
 
-🇫 Function --> <code>( ) -> [Tripoint](#sol::Tripoint)?</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Monster](#sol::Monster)</code>
 
-#### play_ambient_variant_sound {#sol::nil::play_ambient_variant_sound}
+#### choose_direction {#sol::nil::choose_direction}
 
-🇫 Function --> <code>( string, string, integer, [SfxChannel](#sol::SfxChannel), integer, number, integer )</code>
-
-#### direction_from {#sol::nil::direction_from}
-
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> CppVal&lt;direction&gt;</code>
-
-> Get direction from a tripoint delta
+🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
 
 #### play_variant_sound {#sol::nil::play_variant_sound}
 
@@ -10004,11 +9998,25 @@ Global game methods
 
 > Get the global overmap buffer
 
-#### add_npc_follower {#sol::nil::add_npc_follower}
+#### direction_from {#sol::nil::direction_from}
+
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> CppVal&lt;direction&gt;</code>
+
+> Get direction from a tripoint delta
+
+#### look_around {#sol::nil::look_around}
+
+🇫 Function --> <code>( ) -> [Tripoint](#sol::Tripoint)?</code>
+
+#### remove_npc_follower {#sol::nil::remove_npc_follower}
 
 🇫 Function --> <code>( [Npc](#sol::Npc) )</code>
 
-#### remove_npc_follower {#sol::nil::remove_npc_follower}
+#### play_ambient_variant_sound {#sol::nil::play_ambient_variant_sound}
+
+🇫 Function --> <code>( string, string, integer, [SfxChannel](#sol::SfxChannel), integer, number, integer )</code>
+
+#### add_npc_follower {#sol::nil::add_npc_follower}
 
 🇫 Function --> <code>( [Npc](#sol::Npc) )</code>
 
@@ -10018,13 +10026,15 @@ Global game methods
 
 > Get direction name from direction enum
 
-#### place_monster_at {#sol::nil::place_monster_at}
-
-🇫 Function --> <code>( [MonsterTypeId](#sol::MonsterTypeId), [Tripoint](#sol::Tripoint) ) -> [Monster](#sol::Monster)</code>
-
 #### get_creature_at {#sol::nil::get_creature_at}
 
 🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Creature](#sol::Creature)</code>
+
+#### register_action_menu_entry {#sol::nil::register_action_menu_entry}
+
+🇫 Function --> <code>( table )</code>
+
+> Register a Lua-defined action menu entry in the in-game action menu.
 
 #### add_msg {#sol::nil::add_msg}
 
@@ -10036,6 +10046,12 @@ Global game methods
 🇫 Function --> <code>( [Tripoint](#sol::Tripoint) )</code>
 
 > Teleports player to absolute coordinate in overmap
+
+#### place_player_local_at {#sol::nil::place_player_local_at}
+
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint) )</code>
+
+> Teleports player to local coordinates within active map
 
 #### light_ambient_lit {#sol::nil::light_ambient_lit}
 
@@ -10049,20 +10065,6 @@ Global game methods
 
 🇫 Function --> <code>( ) -> [DistributionGridTracker](#sol::DistributionGridTracker)</code>
 
-#### get_monster_at {#sol::nil::get_monster_at}
-
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Monster](#sol::Monster)</code>
-
-#### place_player_local_at {#sol::nil::place_player_local_at}
-
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint) )</code>
-
-> Teleports player to local coordinates within active map
-
-#### turn_zero {#sol::nil::turn_zero}
-
-🇫 Function --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
-
 #### create_item {#sol::nil::create_item}
 
 🇫 Function --> <code>( [ItypeId](#sol::ItypeId), integer ) -> Detached<[Item](#sol::Item)></code>
@@ -10073,17 +10075,33 @@ Global game methods
 
 🇫 Function --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
 
-#### add_on_every_x_hook {#sol::nil::add_on_every_x_hook}
-
-🇫 Function --> <code>( [TimeDuration](#sol::TimeDuration), function )</code>
-
 #### before_time_starts {#sol::nil::before_time_starts}
 
 🇫 Function --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
 
+#### add_on_every_x_hook {#sol::nil::add_on_every_x_hook}
+
+🇫 Function --> <code>( [TimeDuration](#sol::TimeDuration), function )</code>
+
+#### turn_zero {#sol::nil::turn_zero}
+
+🇫 Function --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
+
+#### get_lua_log {#sol::nil::get_lua_log}
+
+🇫 Function --> <code>( integer ) -> table</code>
+
+> Get recent Lua console log entries. Returns array of { level=string, text=string, from_user=bool }.
+
 #### rng {#sol::nil::rng}
 
 🇫 Function --> <code>( integer, integer ) -> integer</code>
+
+#### get_messages {#sol::nil::get_messages}
+
+🇫 Function --> <code>( integer ) -> table</code>
+
+> Get recent player message log entries. Returns array of { time=string, text=string }.
 
 #### six_cardinal_directions {#sol::nil::six_cardinal_directions}
 
@@ -10486,6 +10504,33 @@ Global overmap buffer interface for finding and inspecting overmap terrain.
 🇫 Function --> <code>( [Tripoint](#sol::Tripoint), [Tripoint](#sol::Tripoint) ) -> boolean</code>
 
 > Remove an electric grid connection between two positions. Returns true on success.
+
+## sidebar {#sol::sidebar}
+
+Sidebar utility functions.
+
+### Members
+
+#### register_widget {#sol::nil::register_widget}
+
+🇫 Function --> <code>( table )</code>
+
+> Register a Lua sidebar widget. Options: id(string), name(string), height(int, use -2 to fill remaining space), order(int, 1-based), draw(function),
+> default_toggle(bool), redraw_every_frame(bool), panel_visible(bool|function), render(function).
+> draw(width, height) returns an array of entries: each entry is string or table { text=string, color=<code>[Color](#sol::Color)</code>|string }.
+> text may include color tags like <color_red>text</color> for multi-color lines.
+
+#### clear_widgets {#sol::nil::clear_widgets}
+
+🇫 Function --> <code>( )</code>
+
+> Clear all registered Lua sidebar widgets.
+
+#### get_layout_id {#sol::nil::get_layout_id}
+
+🇫 Function --> <code>( ) -> string</code>
+
+> Returns current sidebar layout id (e.g. classic, compact, labels).
 
 ## tests_lib {#sol::tests_lib}
 
