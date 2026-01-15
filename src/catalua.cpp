@@ -331,72 +331,71 @@ auto run_hooks( lua_state &state, std::string_view hook_name,
 }
 template <typename T>
 
-T run_hooks(std::string_view hook_name)
+T run_hooks( std::string_view hook_name )
 {
-    lua_state& state = *DynamicDataLoader::get_instance().lua;
-    return run_hooks<T>(state, hook_name, [](sol::table&) {});
+    lua_state &state = *DynamicDataLoader::get_instance().lua;
+    return run_hooks<T>( state, hook_name, []( sol::table & ) {} );
 }
-template std::string run_hooks<std::string>(std::string_view hook_name);
-template int run_hooks<int>(std::string_view hook_name);
-template double run_hooks<double>(std::string_view hook_name);
+template std::string run_hooks<std::string>( std::string_view hook_name );
+template int run_hooks<int>( std::string_view hook_name );
+template double run_hooks<double>( std::string_view hook_name );
 template <typename T>
-T run_hooks(lua_state& state, std::string_view hook_name)
+T run_hooks( lua_state &state, std::string_view hook_name )
 {
-    return run_hooks<T>(state, hook_name, [](sol::table&) {});
+    return run_hooks<T>( state, hook_name, []( sol::table & ) {} );
 }
-template std::string run_hooks<std::string>(lua_state& state, std::string_view hook_name);
-template int run_hooks<int>(lua_state& state, std::string_view hook_name);
-template double run_hooks<double>(lua_state& state, std::string_view hook_name);
+template std::string run_hooks<std::string>( lua_state &state, std::string_view hook_name );
+template int run_hooks<int>( lua_state &state, std::string_view hook_name );
+template double run_hooks<double>( lua_state &state, std::string_view hook_name );
 template <typename T>
-T run_hooks(std::string_view hook_name,
-    std::function < auto(sol::table& params) -> void > init)
+T run_hooks( std::string_view hook_name,
+             std::function < auto( sol::table &params ) -> void > init )
 {
-    lua_state& state = *DynamicDataLoader::get_instance().lua;
-    return run_hooks<T>(state, hook_name, init);
+    lua_state &state = *DynamicDataLoader::get_instance().lua;
+    return run_hooks<T>( state, hook_name, init );
 }
-template std::string run_hooks<std::string>(std::string_view hook_name,
-    std::function < auto(sol::table& params) -> void > init);
-template int run_hooks<int>(std::string_view hook_name,
-    std::function < auto(sol::table& params) -> void > init);
-template double run_hooks<double>(std::string_view hook_name,
-    std::function < auto(sol::table& params) -> void > init);
+template std::string run_hooks<std::string>( std::string_view hook_name,
+        std::function < auto( sol::table &params ) -> void > init );
+template int run_hooks<int>( std::string_view hook_name,
+                             std::function < auto( sol::table &params ) -> void > init );
+template double run_hooks<double>( std::string_view hook_name,
+                                   std::function < auto( sol::table &params ) -> void > init );
 template <typename T>
-T run_hooks(lua_state& state, std::string_view hook_name,
-    std::function < auto(sol::table& params) -> void > init)
+T run_hooks( lua_state &state, std::string_view hook_name,
+             std::function < auto( sol::table &params ) -> void > init )
 {
-    sol::state& lua = state.lua;
+    sol::state &lua = state.lua;
     sol::table hooks = lua.globals()["game"]["hooks"][hook_name];
 
     auto params = lua.create_table();
-    init(params);
+    init( params );
 
-    for (auto& ref : hooks) {
+    for( auto &ref : hooks ) {
         int idx = -1;
         try {
             idx = ref.first.as<int>();
             sol::protected_function func = ref.second;
-            sol::protected_function_result res = func(params);
-            check_func_result(res);
-            if (res.valid()) {
+            sol::protected_function_result res = func( params );
+            check_func_result( res );
+            if( res.valid() ) {
                 auto result = res.get<sol::object>();
-                if (result.is<T>()) {
+                if( result.is<T>() ) {
                     return result.as<T>();
                 }
             }
-        }
-        catch (std::runtime_error& e) {
-            debugmsg("Failed to run hook %s[%d]: %s", hook_name, idx, e.what());
+        } catch( std::runtime_error &e ) {
+            debugmsg( "Failed to run hook %s[%d]: %s", hook_name, idx, e.what() );
             return T();
         }
     }
     return T();
 }
-template std::string run_hooks<std::string>(lua_state& state, std::string_view hook_name,
-    std::function < auto(sol::table& params) -> void > init);
-template int run_hooks<int>(lua_state& state, std::string_view hook_name,
-    std::function < auto(sol::table& params) -> void > init);
-template double run_hooks<double>(lua_state& state, std::string_view hook_name,
-    std::function < auto(sol::table& params) -> void > init);
+template std::string run_hooks<std::string>( lua_state &state, std::string_view hook_name,
+        std::function < auto( sol::table &params ) -> void > init );
+template int run_hooks<int>( lua_state &state, std::string_view hook_name,
+                             std::function < auto( sol::table &params ) -> void > init );
+template double run_hooks<double>( lua_state &state, std::string_view hook_name,
+                                   std::function < auto( sol::table &params ) -> void > init );
 
 
 void reg_lua_iuse_actors( lua_state &state, Item_factory &ifactory )

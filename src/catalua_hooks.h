@@ -29,15 +29,15 @@ auto run_hooks( std::string_view hook_name ) -> bool;
 /// Hooks for returning arbitrary values
 /// @return the result of hook return value as type T
 template <typename T>
-T run_hooks(lua_state& state, std::string_view hook_name,
-    std::function < auto(sol::table& params) -> void > init);
+T run_hooks( lua_state &state, std::string_view hook_name,
+             std::function < auto( sol::table &params ) -> void > init );
 template <typename T>
-T run_hooks(std::string_view hook_name,
-    std::function < auto(sol::table& params) -> void > init);
+T run_hooks( std::string_view hook_name,
+             std::function < auto( sol::table &params ) -> void > init );
 template <typename T>
-T run_hooks(lua_state& state, std::string_view hook_name);
+T run_hooks( lua_state &state, std::string_view hook_name );
 template <typename T>
-T run_hooks(std::string_view hook_name);
+T run_hooks( std::string_view hook_name );
 
 /// Define all hooks that are used in the game.
 void define_hooks( lua_state &state );

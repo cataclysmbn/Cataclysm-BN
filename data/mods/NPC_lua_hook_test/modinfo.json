@@ -3,7 +3,7 @@
     "type": "MOD_INFO",
     "id": "npc_lua_hook_test",
     "name": "NPC lua hook testing",
-	"//": "Thank you NappingOcean for saving me a few seconds of setup.",
+    "//": "Thank you NappingOcean for saving me a few seconds of setup.",
     "authors": [ "Azmodius X" ],
     "description": "Testing npc hooks. It should be obsolete after testing!",
     "category": "content",

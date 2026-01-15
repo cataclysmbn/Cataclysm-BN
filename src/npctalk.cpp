@@ -1093,10 +1093,11 @@ void npc::talk_to_u( bool radio_contact )
 
     decide_needs();
 
-    std::string hook_result = cata::run_hooks<std::string>("on_dialogue_start", [&, this](auto& params) {
+    std::string hook_result = cata::run_hooks<std::string>( "on_dialogue_start", [ &,
+    this]( auto & params ) {
         params["npc"] = this;
         params["next_topic"] = d.topic_stack.back().id;
-        });
+    } );
 
     if( !hook_result.empty() ) {
         d.add_topic( hook_result );
@@ -1121,13 +1122,13 @@ void npc::talk_to_u( bool radio_contact )
         }
         talk_topic next = d.opt( d_win, name, d.topic_stack.back() );
 
-        hook_result = cata::run_hooks<std::string>("on_dialogue_option", [&, this](auto& params) {
+        hook_result = cata::run_hooks<std::string>( "on_dialogue_option", [ &, this]( auto & params ) {
             params["npc"] = this;
             params["next_topic"] = next.id;
-            });
+        } );
 
-        if (!hook_result.empty()) {
-            d.add_topic(hook_result);
+        if( !hook_result.empty() ) {
+            d.add_topic( hook_result );
             next = d.topic_stack.back();
         }
 
@@ -1145,9 +1146,9 @@ void npc::talk_to_u( bool radio_contact )
         }
     } while( !d.done );
 
-    cata::run_hooks("on_dialogue_end", [&, this](auto& params) {
+    cata::run_hooks( "on_dialogue_end", [ &, this]( auto & params ) {
         params["npc"] = this;
-        });
+    } );
 
     if( you.activity->id() == ACT_AIM && !you.has_weapon() ) {
         you.cancel_activity();

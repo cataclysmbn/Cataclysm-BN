@@ -485,7 +485,7 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `next_topic` (string): The topic that will be shown first  " );
     DOC( "Return a new talk_topic id to add it as the next topic.  " );
     DOC_PARAMS( "params" );
-    luna::set_fx(lib, "on_dialogue_start", [](const sol::table&) {});
+    luna::set_fx( lib, "on_dialogue_start", []( const sol::table & ) {} );
 
     DOC( "Called when a dialogue option is selected.  " );
     DOC( "The hook receives a table with keys:  " );
@@ -493,13 +493,13 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `next_topic` (string): The topic that was selected  " );
     DOC( "Return a new talk_topic id to add it as the next topic.  " );
     DOC_PARAMS( "params" );
-    luna::set_fx(lib, "on_dialogue_option", [](const sol::table&) {});
+    luna::set_fx( lib, "on_dialogue_option", []( const sol::table & ) {} );
 
     DOC( "Called when the dialogue window closes.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `npc` (NPC): The NPC speaking  " );
     DOC_PARAMS( "params" );
-    luna::set_fx(lib, "on_dialogue_end", [](const sol::table&) {});
+    luna::set_fx( lib, "on_dialogue_end", []( const sol::table & ) {} );
 
     DOC( "Called when a character or monster successfully dodges.  " );
     DOC( "The hook receives a table with keys:  " );
