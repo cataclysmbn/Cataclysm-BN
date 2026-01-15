@@ -499,23 +499,23 @@ These are hard-coded to be dynamically filled in.
 
 |
 |----------------------------------------------------------------| ---------------------------------------------------------------------------------------------------------------- |
-| '<yrwp>'                                                       | Name of your primary weapon, with 'none' as default if none found.                                               |
-| '<mywp>'                                                       | Name of the npcs' primary weapon, with 'fists' as default if none found.                                         |
-| '<ammo>'                                                       | Name of your primary weapons' ammo, with 'BADAMMO' as default if not a gun.                                      |
-| '<current_activity>'                                           | Npcs' current activity as a verb, with 'doing this and that' if not doing anything.                              |
-| '<mypronoun>'                                                  | Npcs' pronoun, uppercase. eg. 'He' / 'She'                                                                       |
-| '<topic_item>'                                                 | Item from a repeat response.                                                                                     |
-| '<topic_item_price>'                                           | Price of item from a repeat response.                                                                            |
-| '<topic_item_my_total_price>'                                  | Price of all items of this type from a repeat response, using the npcs' inventory.                               |
-| '<topic_item_your_total_price>'                                | Price of all items of this type from a repeat response, using the players' inventory.                            |
-| '<interval>'                                                   | The time until this npc restocks their item shop                                                                 |
-
+| '<yrwp>' | Name of your primary weapon, with 'none' as default if none found. |
+| '<mywp>' | Name of the npcs' primary weapon, with 'fists' as default if none found. |
+| '<ammo>' | Name of your primary weapons' ammo, with 'BADAMMO' as default if not a gun. |
+| '<current_activity>' | Npcs' current activity as a verb, with 'doing this and that' if not doing anything. |
+| '<mypronoun>' | Npcs' pronoun, uppercase. eg. 'He' / 'She' |
+| '<topic_item>' | Item from a repeat response. |
+| '<topic_item_price>' | Price of item from a repeat response. |
+| '<topic_item_my_total_price>' | Price of all items of this type from a repeat response, using the npcs' inventory. |
+| '<topic_item_your_total_price>' | Price of all items of this type from a repeat response, using the players' inventory. |
+| '<interval>' | The time until this npc restocks their item shop |
 
 ### Snippets
 
 These are lists of phrases that can be chosen at random. Examples of these are in talk_tags.json
 
 Here's an example taken from that file:
+
 ```json
 {
 	"type": "snippet",
@@ -547,6 +547,7 @@ Remember that for the purposes of lua, you'll need to have 'npctalk_var_' prepen
 In dialogue, all one must do is call the set_var functions as applicable.
 
 Here's an example:
+
 ```json
 {
 	"effect": [
@@ -555,6 +556,7 @@ Here's an example:
 	],
 },
 ```
+
 You could display those later using '<utalk_var_player_val>' and '<npctalk_var_npc_test_var>', displaying 'testing string' and 'npc testing string' respectively.
 
 ---
