@@ -9955,6 +9955,10 @@ Global game methods
 
 🇫 Function --> <code>( ) -> [Avatar](#sol::Avatar)</code>
 
+#### get_npc_at {#sol::nil::get_npc_at}
+
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Npc](#sol::Npc)</code>
+
 #### choose_adjacent {#sol::nil::choose_adjacent}
 
 🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
@@ -9963,14 +9967,6 @@ Global game methods
 
 🇫 Function --> <code>( string, boolean? ) -> [Tripoint](#sol::Tripoint)?</code>
 
-#### get_npc_at {#sol::nil::get_npc_at}
-
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Npc](#sol::Npc)</code>
-
-#### spawn_hallucination {#sol::nil::spawn_hallucination}
-
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
-
 #### get_character_at {#sol::nil::get_character_at}
 
 🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Character](#sol::Character)</code>
@@ -9978,6 +9974,14 @@ Global game methods
 #### place_monster_around {#sol::nil::place_monster_around}
 
 🇫 Function --> <code>( [MonsterTypeId](#sol::MonsterTypeId), [Tripoint](#sol::Tripoint), integer ) -> [Monster](#sol::Monster)</code>
+
+#### spawn_hallucination {#sol::nil::spawn_hallucination}
+
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint) ) -> boolean</code>
+
+#### place_monster_at {#sol::nil::place_monster_at}
+
+🇫 Function --> <code>( [MonsterTypeId](#sol::MonsterTypeId), [Tripoint](#sol::Tripoint) ) -> [Monster](#sol::Monster)</code>
 
 #### look_around {#sol::nil::look_around}
 
@@ -10018,13 +10022,15 @@ Global game methods
 
 > Get direction name from direction enum
 
-#### place_monster_at {#sol::nil::place_monster_at}
+#### get_monster_at {#sol::nil::get_monster_at}
 
-🇫 Function --> <code>( [MonsterTypeId](#sol::MonsterTypeId), [Tripoint](#sol::Tripoint) ) -> [Monster](#sol::Monster)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Monster](#sol::Monster)</code>
 
-#### get_creature_at {#sol::nil::get_creature_at}
+#### create_item {#sol::nil::create_item}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Creature](#sol::Creature)</code>
+🇫 Function --> <code>( [ItypeId](#sol::ItypeId), integer ) -> Detached<[Item](#sol::Item)></code>
+
+> Spawns a new item. Same as <code>[Item](#sol::Item)</code>::spawn
 
 #### add_msg {#sol::nil::add_msg}
 
@@ -10049,9 +10055,9 @@ Global game methods
 
 🇫 Function --> <code>( ) -> [DistributionGridTracker](#sol::DistributionGridTracker)</code>
 
-#### get_monster_at {#sol::nil::get_monster_at}
+#### get_creature_at {#sol::nil::get_creature_at}
 
-🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Monster](#sol::Monster)</code>
+🇫 Function --> <code>( [Tripoint](#sol::Tripoint), boolean? ) -> [Creature](#sol::Creature)</code>
 
 #### place_player_local_at {#sol::nil::place_player_local_at}
 
@@ -10063,11 +10069,11 @@ Global game methods
 
 🇫 Function --> <code>( ) -> [TimePoint](#sol::TimePoint)</code>
 
-#### create_item {#sol::nil::create_item}
+#### register_action_menu_entry {#sol::nil::register_action_menu_entry}
 
-🇫 Function --> <code>( [ItypeId](#sol::ItypeId), integer ) -> Detached<[Item](#sol::Item)></code>
+🇫 Function --> <code>( table )</code>
 
-> Spawns a new item. Same as <code>[Item](#sol::Item)</code>::spawn
+> Register a Lua-defined action menu entry in the in-game action menu.
 
 #### current_turn {#sol::nil::current_turn}
 
