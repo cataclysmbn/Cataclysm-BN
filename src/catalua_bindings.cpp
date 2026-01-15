@@ -483,7 +483,6 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `npc` (NPC): The NPC speaking  " );
     DOC( "* `next_topic` (string): The topic that will be shown first  " );
-    DOC( "* `talk_topics` (string)[]: All topics in the topic stack  " );
     DOC( "Return a new talk_topic id to add it as the next topic.  " );
     DOC_PARAMS( "params" );
     luna::set_fx(lib, "on_dialogue_start", [](const sol::table&) {});

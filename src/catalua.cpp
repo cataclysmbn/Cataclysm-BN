@@ -346,7 +346,7 @@ T run_hooks(std::string_view hook_name,
     std::function < auto(sol::table& params) -> void > init)
 {
     lua_state& state = *DynamicDataLoader::get_instance().lua;
-    return run_hooks<T>(state, hook_name, init, default_result);
+    return run_hooks<T>(state, hook_name, init);
 }
 template <typename T>
 T run_hooks(lua_state& state, std::string_view hook_name,
