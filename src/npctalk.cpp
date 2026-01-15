@@ -1840,8 +1840,34 @@ void parse_tags( std::string &phrase, const Character &u, const Character &me,
             return;
         }
 
+        if (tag.size() > 12 && tag.substr(0, 11) == "<utalk_var_") {
+            std::string u_var = tag.substr(2, tag.size() - 3);
+            u_var = "npc" + u_var;
+            tag = u_var;
+            u_var = u.get_value(u_var);
+            if (u_var.empty()) {
+                debugmsg("Player talk variable not found.  '%s'  (%d - %d)", tag.c_str(), fa, fb);
+                phrase.replace(fa, fb - fa + 1, "????");
+            }
+            else {
+                phrase.replace(fa, l, u_var);
+            }
+        }
+        else if (tag.size() > 14 && tag.substr(0, 13) == "<npctalk_var_") {
+            std::string npc_var = tag.substr(1, tag.size() - 2);
+            tag = npc_var;
+            npc_var = me.get_value(npc_var);
+            if (npc_var.empty()) {
+                debugmsg("NPC talk variable not found.  '%s'  (%d - %d)", tag.c_str(), fa, fb);
+                phrase.replace(fa, fb - fa + 1, "????");
+            }
+            else {
+                phrase.replace(fa, l, npc_var);
+            }
+        }
+
         // Special, dynamic tags go here
-        if( tag == "<yrwp>" ) {
+        else if( tag == "<yrwp>" ) {
             phrase.replace( fa, l, remove_color_tags( u.primary_weapon().tname() ) );
         } else if( tag == "<mywp>" ) {
             if( !me.is_armed() ) {

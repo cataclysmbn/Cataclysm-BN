@@ -489,6 +489,76 @@ included in the list of possible responses. For possible content see Dialogue Co
 
 ---
 
+## Talk Tags
+
+Talk tags are special strings held between '<' and '>' characters that get dynamically replaced. There are three kinds:
+
+### Special
+
+These are hard-coded to be dynamically filled in.
+
+|
+|----------------------------------------------------------------| ---------------------------------------------------------------------------------------------------------------- |
+| '<yrwp>'                                                       | Name of your primary weapon, with 'none' as default if none found.                                               |
+| '<mywp>'                                                       | Name of the npcs' primary weapon, with 'fists' as default if none found.                                         |
+| '<ammo>'                                                       | Name of your primary weapons' ammo, with 'BADAMMO' as default if not a gun.                                      |
+| '<current_activity>'                                           | Npcs' current activity as a verb, with 'doing this and that' if not doing anything.                              |
+| '<mypronoun>'                                                  | Npcs' pronoun, uppercase. eg. 'He' / 'She'                                                                       |
+| '<topic_item>'                                                 | Item from a repeat response.                                                                                     |
+| '<topic_item_price>'                                           | Price of item from a repeat response.                                                                            |
+| '<topic_item_my_total_price>'                                  | Price of all items of this type from a repeat response, using the npcs' inventory.                               |
+| '<topic_item_your_total_price>'                                | Price of all items of this type from a repeat response, using the players' inventory.                            |
+| '<interval>'                                                   | The time until this npc restocks their item shop                                                                 |
+
+
+### Snippets
+
+These are lists of phrases that can be chosen at random. Examples of these are in talk_tags.json
+
+Here's an example taken from that file:
+```json
+{
+	"type": "snippet",
+	"category": "<lets_talk>",
+	"//": "NPCs shout these things while approaching the avatar for the first time",
+	"text": [
+		"Wait up, let's talk!",
+		"Hey, I <really> want to talk to you!",
+		"Come on, talk to me!",
+		"Hey <name_g>, let's talk!",
+		"<name_g>, we <really> need to talk!",
+		"Hey, we should talk, <okay>?",
+		"Hey, can we talk for a bit?",
+		"<name_g>!  Wait up!",
+		"Wait up, <okay>?",
+		"Let's talk, <name_g>!",
+		"Look, <name_g><punc> let's talk!",
+		"Hey, what's the rush?  Let's chat a tad."
+	]
+},
+```
+
+As can be seen, it can even reverence other talk tags, since the function loops over the string until no tags remain. Ensure you do not create loops!
+
+### Talk Variables
+
+These are defined either by using lua, or by setting variables via the dialogue system itself.
+Remember that for the purposes of lua, you'll need to have 'npctalk_var_' prepend the key for compatibility.
+In dialogue, all one must do is call the set_var functions as applicable.
+
+Here's an example:
+```json
+{
+	"effect": [
+		{ "u_add_var": "player_val", "value": "testing string" },
+		{ "npc_add_var": "npc_test_var", "value": "npc testing string" },
+	],
+},
+```
+You could display those later using '<utalk_var_player_val>' and '<npctalk_var_npc_test_var>', displaying 'testing string' and 'npc testing string' respectively.
+
+---
+
 ## Repeat Responses
 
 Repeat responses are responses that should be added to the response list multiple times, once for
