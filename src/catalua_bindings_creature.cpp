@@ -1059,7 +1059,7 @@ void cata::detail::reg_npc( sol::state &lua )
 
         SET_FX_T( is_travelling, bool() const );
 
-        DOC("Returns true if the npc is a player ally and their op_of_u.trust is >= 5." );
+        DOC( "Returns true if the npc is a player ally and their op_of_u.trust is >= 5." );
 
         SET_FX_T( is_minion, bool() const );
 
@@ -1097,11 +1097,11 @@ void cata::detail::reg_npc( sol::state &lua )
 
         DOC( "Returns the first topic of the npc's chatbin." );
 
-        luna::set_fx(ut, "get_first_topic", []( UT_CLASS & npchar) -> std::string { return npchar.chatbin.first_topic; });
+        luna::set_fx( ut, "get_first_topic", []( UT_CLASS & npchar ) -> std::string { return npchar.chatbin.first_topic; } );
 
         DOC( "Sets the first topic of the npc's chatbin. Note that some circumstances may cause this to not be the first topic used, such as player allies." );
 
-        luna::set_fx(ut, "set_first_topic", []( UT_CLASS & npchar, const std::string & str ) -> void { npchar.chatbin.first_topic = str; });
+        luna::set_fx( ut, "set_first_topic", []( UT_CLASS & npchar, const std::string & str ) -> void { npchar.chatbin.first_topic = str; } );
 
         DOC( "Has the npc say the given string in the sidebar." );
 
@@ -1127,7 +1127,7 @@ void cata::detail::reg_npc( sol::state &lua )
 
         SET_FX_T( complain, bool() );
 
-        DOC("Rates how dangerous a target is from 0 (harmless) to 1 (max danger).");
+        DOC( "Rates how dangerous a target is from 0 (harmless) to 1 (max danger)." );
 
         SET_FX_T( evaluate_enemy, float( const Creature & ) const );
 
