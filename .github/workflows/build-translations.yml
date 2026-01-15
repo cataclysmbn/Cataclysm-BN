@@ -42,13 +42,11 @@ jobs:
           name: "translations"
           path: |
             lang/po
-            lang/mo
             src/lang_stats.inc
 
       - name: Add summary
         run: |
           echo "## Translation Build Complete" >> "$GITHUB_STEP_SUMMARY"
           echo "Artifact includes:" >> "$GITHUB_STEP_SUMMARY"
-          echo "- \`lang/po/\` - Translation files" >> "$GITHUB_STEP_SUMMARY"
-          echo "- \`lang/mo/\` - Compiled translations" >> "$GITHUB_STEP_SUMMARY"
+          echo "- \`lang/po/\` - Translation files (.po)" >> "$GITHUB_STEP_SUMMARY"
           echo "- \`src/lang_stats.inc\` - Translation statistics" >> "$GITHUB_STEP_SUMMARY"
