@@ -1042,11 +1042,22 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 std::tie( ter_sym, ter_color, std::ignore ) =
                     overmap_ui::get_note_display_info( overmap_buffer.note( omp ) );
 
-                std::string note_name = "note_" + ter_sym + "_" + string_from_color( ter_color );
-                const tile_search_params tile { note_name, C_OVERMAP_NOTE, "overmap_note", 0, 0 };
-                draw_from_id_string(
-                    tile, omp.raw(), std::nullopt, std::nullopt,
-                    lit_level::LIT, false, 0, false );
+                bool drew_note_sprite = false;
+                const std::optional<std::string> note_sprite =
+                    overmap_ui::get_note_sprite_id( overmap_buffer.note( omp ) );
+                if( note_sprite ) {
+                    const tile_search_params sprite_tile { *note_sprite, C_NONE, empty_string, 0, 0 };
+                    drew_note_sprite = draw_from_id_string(
+                                           sprite_tile, omp.raw(), std::nullopt, std::nullopt,
+                                           lit_level::LIT, false, 0, false );
+                }
+                if( !drew_note_sprite ) {
+                    std::string note_name = "note_" + ter_sym + "_" + string_from_color( ter_color );
+                    const tile_search_params tile { note_name, C_OVERMAP_NOTE, "overmap_note", 0, 0 };
+                    draw_from_id_string(
+                        tile, omp.raw(), std::nullopt, std::nullopt,
+                        lit_level::LIT, false, 0, false );
+                }
             }
         }
     }

@@ -435,6 +435,7 @@ void cata::detail::reg_enums( sol::state &lua )
     reg_enum<art_effect_active>( lua );
     reg_enum<art_effect_passive>( lua );
     reg_enum<vitamin_type>( lua );
+    reg_enum<moon_phase>( lua );
 }
 
 void cata::detail::reg_hooks_examples( sol::state &lua )
@@ -513,6 +514,17 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `success` (bool)  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_creature_melee_attacked", []( const sol::table & ) {} );
+
+    DOC( "Called when a character attempts to move.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `char` (Character)  " );
+    DOC( "* `from` (Tripoint)  " );
+    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `movement_mode` (CharacterMoveMode)  " );
+    DOC( "* `via_ramp` (bool)  " );
+    DOC( "Return false to block the move." );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_try_move", []( const sol::table & ) {} );
 
     DOC( "Called when character stat gets reset.  " );
     DOC( "The hook receives a table with keys:  " );
@@ -632,6 +644,11 @@ void cata::detail::reg_time_types( sol::state &lua )
         luna::set_fx( ut, "is_day", &is_day );
         luna::set_fx( ut, "is_dusk", &is_dusk );
         luna::set_fx( ut, "is_dawn", &is_dawn );
+        luna::set_fx( ut, "sunrise", &sunrise );
+        luna::set_fx( ut, "sunset", &sunset );
+        luna::set_fx( ut, "moon_phase", &get_moon_phase );
+        luna::set_fx( ut, "season", []( const time_point & tp ) { return calendar::name_season( season_of_year( tp ) ); } );
+
 
         luna::set_fx( ut, "second_of_minute", []( const time_point & tp ) -> int { return to_turn<int>( tp ) % 60; } );
         luna::set_fx( ut, "minute_of_hour", []( const time_point & tp ) -> int { return minute_of_hour<int>( tp ); } );

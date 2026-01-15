@@ -3,6 +3,7 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "game.h"
 #include "distribution_grid.h"
 #include "field.h"
 #include "map.h"
@@ -115,6 +116,7 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
         DOC( "In map squares" );
         luna::set_fx( ut, "get_map_size", []( const map & m ) -> int { return m.getmapsize() * SEEX; } );
+        luna::set_fx( ut, "ambient_light_at", &map::ambient_light_at );
 
         DOC( "Creates a new item(s) at a position on the map." );
         luna::set_fx( ut, "create_item_at", []( map & m, const tripoint & p, const itype_id & itype,
@@ -219,6 +221,12 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "disarm_trap_at", &map::disarm_trap );
         DOC( "Simpler version of `set_trap_at` with `trap_null`." );
         luna::set_fx( ut, "remove_trap_at", &map::remove_trap );
+
+        luna::set_fx( ut, "is_outside", sol::resolve<bool( const tripoint & ) const>( &map::is_outside ) );
+        // Actually sheltered or in sunlight doesn't need map, but it's convenient to have it here
+        luna::set_fx( ut, "is_sheltered", []( map & m, tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
+
+        luna::set_fx( ut, "is_in_sunlight", []( map & m, tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
     }
 
     // Register 'tinymap' class to be used in Lua

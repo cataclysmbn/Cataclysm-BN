@@ -732,6 +732,8 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
   item::process_fake_smoke, where conditions for its removal are set.
 - `FIREWOOD` ... This item can serve as a firewood. Items with this flag are sorted out to "Loot:
   Wood" zone
+- `FLY_STRAIGHT` ... This thrown item flies straight without rotating in the air, maintaining its
+  aerodynamic orientation. Typically used for javelins, spears, and darts.
 - `FRAGILE_MELEE` ... Fragile items that fall apart easily when used as a weapon due to poor
   construction quality and will break into components when broken.
 - `GAS_DISCOUNT` ... Discount cards for the automated gas stations.
@@ -1346,6 +1348,8 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `FUNGAL` Location is related to fungi. Used to classify location.
 - `TRIFFID` Location is related to triffids. Used to classify location.
 - `LAKE` Location is is placed on a lake and will be ignored for placement if the overmap doesn't
+  contain any lake terrain.
+- `RIVER` Location is is placed on a lake and will be ignored for placement if the overmap doesn't
   contain any lake terrain.
 - `UNIQUE` Location is unique and will only occur once per overmap. `occurrences` is overridden to
   define a percent chance (e.g. `"occurrences" : [75, 100]` is 75%)

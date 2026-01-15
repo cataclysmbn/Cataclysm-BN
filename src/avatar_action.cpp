@@ -1025,7 +1025,9 @@ void avatar_action::use_item( avatar &you, item *loc )
 
         if( !loc->has_flag( flag_ALLOWS_REMOTE_USE ) ) {
             const int obtain_cost = loc->obtain_cost( you );
-            loc->obtain( you );
+            if( !loc->has_flag( flag_TEMPORARY_ITEM ) ) {
+                loc->obtain( you );
+            }
 
             // TODO: the following comment is inaccurate and this mechanic needs to be rexamined
             // This method only handles items in the inventory, so refund the obtain cost.

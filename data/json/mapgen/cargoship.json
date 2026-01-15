@@ -1,0 +1,246 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ [ "Cargoship1_0_0" ], [ "Cargoship1_1_0" ] ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_deck_coating_no_roof",
+      "rows": [
+        "ππππππππππππππππππππππππ",
+        "ππππππππππ----ππππππππππ",
+        "ππππππππ---ξξ---ππππππππ",
+        "ππππππ---ξξξξξξ---ππππππ",
+        "ππππ---ξξξξξξξξξξ---ππππ",
+        "ππππ-ξξ5555555555ξξ-ππππ",
+        "ππππ-ξξ5;;;55;;;5ξξ-ππππ",
+        "ππππ-ξξ5;;;55;;;5ξξ-ππππ",
+        "πππ--ξξ5;;;55;;;5ξξ--πππ",
+        "πππ-ξξξ5;;;55;;;5ξξξ-πππ",
+        "πππ-ξξξ5;;;55;;;5ξξξ-πππ",
+        "πππ-ξξξ5555555555ξξξ-πππ",
+        "πππ-ξξξξξξξ<<ξξξξξξξ-πππ",
+        "πππ-5555555<<5555555-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5555555ξξ5555555-πππ",
+        "πππ-ξξξξξξξξξξξξξξξξ-πππ",
+        "πππ-5555555ξξ5555555-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5555555ξξ5555555-πππ",
+        "πππ-ξξξξξξξξξξξξξξξξ-πππ",
+        "πππ-5555555ξξ5555555-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5555555ξξ5555555-πππ",
+        "πππ-ξξξξξξξξξξξξξξξξ-πππ",
+        "πππ-ξξ555¥¥¥¥¥¥555ξξ-πππ",
+        "πππ-ξξo¬t¬tttt¬t¬oξξ-πππ",
+        "πππ-ξξ5¬h¬¬hh¬¬h¬5ξξ-πππ",
+        "πππ-ξξ5¬t¬¬<<¬¬t¬5ξξ-πππ",
+        "πππ-ξξ5¬h¬¬¬¬¬¬h¬5ξξ-πππ",
+        "πππ-ξξ5¬¬¬¬¬¬¬¬¬¬5ξξ-πππ",
+        "πππ-ξξ5¬¬¬¬¬¬¬¬¬¬5ξξ-πππ",
+        "πππ-ξξ55+555555+55ξξ-πππ",
+        "πππ-OξξξξξξξξξξξξξξO-πππ",
+        "πππ---ξξξξξξξξξξξξ---πππ",
+        "πππππ--------------πππππ",
+        "ππππππππππππππππππππππππ",
+        "ππππππππππππππππππππππππ"
+      ],
+      "terrain": {
+        "5": "t_wall_metal",
+        "π": "t_open_air",
+        "¥": "t_reinforced_glass",
+        "-": "t_metal_railing",
+        "ξ": "t_deck_coating_no_roof",
+        ";": "t_metal_floor",
+        "¬": "t_metal_floor",
+        "<": "t_stairs_down",
+        "t": "t_console_broken",
+        "+": "t_door_metal_c"
+      },
+      "furniture": { "o": "f_air_conditioner", "h": "f_chair", "O": "f_standing_tank" },
+      "place_graffiti": [
+        {
+          "text": "Due to repeated theft of government property, the sealed Hermex 3000™ containers have replaced all normal containers. Unless you bring heavy duty tools, don't even think about stealing another minireactor or a bag of peanuts.",
+          "x": 8,
+          "y": 35
+        }
+      ],
+      "mapping": { ";": { "items": [ { "item": "military_patrol_food", "chance": 70 } ] } },
+      "place_loot": [
+        { "group": "military_patrol_food", "chance": 80, "x": [ 6, 8 ], "y": [ 6, 10 ] },
+        { "group": "military_patrol_food", "chance": 80, "x": [ 15, 17 ], "y": [ 6, 10 ] },
+        { "group": "military_patrol_food", "chance": 80, "x": [ 5, 9 ], "y": [ 14, 16 ] },
+        { "group": "military_patrol_food", "chance": 80, "x": [ 14, 18 ], "y": [ 14, 16 ] },
+        { "group": "military_patrol_food", "chance": 80, "x": [ 5, 9 ], "y": [ 20, 22 ] },
+        { "group": "military_patrol_food", "chance": 80, "x": [ 14, 18 ], "y": [ 20, 22 ] },
+        { "group": "military_patrol_food", "chance": 80, "x": [ 5, 9 ], "y": [ 26, 32 ] },
+        { "group": "military_patrol_food", "chance": 80, "x": [ 14, 18 ], "y": [ 26, 32 ] },
+        { "group": "military_patrol_food", "chance": 80, "x": [ 6, 17 ], "y": [ 37, 41 ] }
+      ],
+      "place_monster": [
+        { "group": "GROUP_MIL_STRONG", "x": [ 6, 16 ], "y": [ 25, 40 ], "repeat": [ 15, 20 ] },
+        { "group": "GROUP_MIL_STRONG", "x": [ 6, 16 ], "y": [ 6, 23 ], "repeat": [ 15, 20 ] }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ [ "Cargoshipu_0_0" ], [ "Cargoshipu_1_0" ] ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "                        ",
+        "          5555          ",
+        "        55555555        ",
+        "      555ωωωωωω555      ",
+        "    555ωωωωωωωωωω555    ",
+        "    5 -ωωωωωωωωωω- 5    ",
+        "    5 -ωωωωωωωωωω- 5    ",
+        "    5 -ωωωωωωωωωω- 5    ",
+        "   55 -ωωωωωωωωωω- 55   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωω>>ωωωωω- 5   ",
+        "   5 -ωωωωω>>ωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   555555555555555555   ",
+        "   5Ω;+;bdfccfdb;+;Ω5   ",
+        "   5Ω;5;;;;;;;;;;5;Ω5   ",
+        "   5Ω;5;;;;;;;;;;5;Ω5   ",
+        "   5ΩΩ5D;;;;;;;;D5ΩΩ5   ",
+        "   55555555++55555555   ",
+        "   5;h;;;;;;;;;;;;h;5   ",
+        "   5h);h)h;;;;h)h;)h5   ",
+        "   5h);h)h;;;;h)h;)h5   ",
+        "   5h);h)h;;;;h)h;)h5   ",
+        "   5;;;h)h;;;;h)h;;;5   ",
+        "   5D;;;;;;;;;;;;;;D5   ",
+        "   55+555555555555+55   ",
+        "   5;;;;;;;;;;;;;;;;5   ",
+        "   5;;;;;;;;;;;;;;;;5   ",
+        "   55+5;%;;;;;;%;5+55   ",
+        "   5B;5;;;;;;;;;;5;B5   ",
+        "   5B;5;%;;>>;;%;5;B5   ",
+        "   5B;5;;;;;;;;;;5;B5   ",
+        "   5;;5;%;;;;;;%;5;;5   ",
+        "   5B;5;;;;;;;;;;5;B5   ",
+        "   5B;55+555555+55;B5   ",
+        "   5B;5;;;;55;;;;5;B5   ",
+        "   5555SSS&55&SSS5555   ",
+        "     55555555555555     ",
+        "                        ",
+        "                        "
+      ],
+      "terrain": {
+        "5": "t_wall_metal",
+        " ": "t_water_moving_dp",
+        "-": "t_metal_railing",
+        "ω": "t_metal_floor",
+        ">": "t_stairs_up",
+        ";": "t_metal_floor",
+        "+": "t_door_metal_c"
+      },
+      "furniture": {
+        "Ω": "f_crate_c",
+        "ω": "f_crate_c",
+        "b": "f_oven",
+        "d": "f_counter",
+        "f": "f_sink",
+        "c": "f_fridge",
+        "D": "f_trashcan",
+        "h": "f_chair",
+        ")": "f_table",
+        "%": "f_exercise",
+        "B": "f_triple_bunkbed",
+        "S": "f_shower",
+        "&": "f_toilet"
+      },
+      "place_monster": [ { "group": "GROUP_MIL_STRONG", "x": [ 5, 15 ], "y": [ 35, 43 ], "repeat": [ 15, 20 ] } ],
+      "place_nested": [ { "chunks": [ "CargoShipNested_military" ], "x": 6, "y": 3 } ],
+      "items": {
+        "Ω": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [
+              { "group": "military_patrol_food", "prob": 90, "count": [ 3, 5 ] },
+              { "group": "mil_food", "prob": 40, "count": [ 1, 5 ] }
+            ]
+          },
+          "chance": 80
+        },
+        "ω": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [
+              { "group": "military_patrol_food", "prob": 90, "count": [ 3, 5 ] },
+              { "group": "mil_food", "prob": 40, "count": [ 1, 5 ] }
+            ]
+          },
+          "chance": 80
+        },
+        "B": { "item": "army_bed", "chance": 90, "repeat": 2 },
+        "c": { "item": "SUS_fridge", "chance": 90, "repeat": 2 },
+        "b": { "item": "SUS_oven", "chance": 75 }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "CargoShipNested_military",
+    "object": {
+      "mapgensize": [ 12, 18 ],
+      "rows": [
+        "555ωωωωωω555",
+        "5ωωωωωωωωωω5",
+        "-ωωωωωωωωωω-",
+        "-ωωωωωωωωωω-",
+        "-ωωωωωωωωωω-",
+        "-ωωωωωωωωωω-",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωω>>ωωωωω",
+        "ωωωωω>>ωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω"
+      ],
+      "terrain": { "5": "t_wall_metal", " ": "t_water_moving_dp", "-": "t_metal_railing", "ω": "t_metal_floor", ">": "t_stairs_up" },
+      "furniture": { "ω": "f_crate_c" },
+      "items": {
+        "ω": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [ { "group": "SUS_fridge", "prob": 90, "count": [ 3, 5 ] }, { "group": "SUS_fridge", "prob": 40, "count": [ 1, 5 ] } ]
+          },
+          "chance": 80
+        }
+      }
+    }
+  }
+]

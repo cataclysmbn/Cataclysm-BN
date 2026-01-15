@@ -376,6 +376,7 @@ const flag_id flag_WINDMETER( "WINDMETER" );
 const flag_id flag_INITIALLY_ACTIVATE( "INITIALLY_ACTIVATE" );
 const flag_id flag_MULTIINSTALL( "MULTIINSTALL" );
 const flag_id flag_BIONIC_TOOLS( "BIONIC_TOOLS" );
+const flag_id flag_TEMPORARY_ITEM( "TEMPORARY_ITEM" );
 
 namespace
 {

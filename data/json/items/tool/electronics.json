@@ -185,6 +185,7 @@
   {
     "type": "TOOL_ARMOR",
     "id": "wrist_comp_budget",
+    "looks_like": "game_watch",
     "//": "mainlined from tefnut expansion",
     "name": { "str": "wrist computer" },
     "category": "clothing",
@@ -574,7 +575,6 @@
     "use_action": [
       "EINKTABLETPC",
       "PORTABLE_GAME",
-      "ROBOTCONTROL",
       {
         "//": "40 xp/hr.  Tier 1, 0-3 skill, higher-tier EXP since requires power.",
         "type": "train_skill",

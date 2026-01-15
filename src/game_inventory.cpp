@@ -36,6 +36,7 @@
 #include "itype.h"
 #include "iuse.h"
 #include "iuse_actor.h"
+#include "item_category.h"
 #include "map.h"
 #include "npc.h"
 #include "options.h"
@@ -137,7 +138,8 @@ bool inventory_filter_preset::is_shown( const item *location ) const
 static item *inv_internal( player &u, const inventory_selector_preset &preset,
                            const std::string &title, int radius,
                            const std::string &none_message,
-                           const std::string &hint = std::string() )
+                           const std::string &hint = std::string(),
+                           bool include_fake_bionics = false )
 {
     inventory_pick_selector inv_s( u, preset );
 
@@ -173,6 +175,9 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
         inv_s.add_character_items( u );
         inv_s.add_nearby_items( radius );
 
+        if( include_fake_bionics ) {
+            inv_s.add_bionics_items( u );
+        }
         if( has_init_filter ) {
             inv_s.set_filter( init_filter );
             has_init_filter = false;
@@ -888,7 +893,8 @@ item *game_menus::inv::use( avatar &you )
 {
     return inv_internal( you, activatable_inventory_preset( you ),
                          _( "Use item" ), 1,
-                         _( "You don't have any items you can use." ) );
+                         _( "You don't have any items you can use." ),
+                         std::string(), true );
 }
 
 class gunmod_inventory_preset : public inventory_selector_preset
@@ -1860,10 +1866,7 @@ class bionic_install_preset: public inventory_selector_preset
                        !pa.has_bionic( bid->upgraded_bionic ) &&
                        it->is_upgrade() ) {
                 return _( "No base version installed" );
-            } else if( std::any_of( bid->available_upgrades.begin(),
-                                    bid->available_upgrades.end(),
-                                    std::bind( &player::has_bionic, &pa,
-                                               std::placeholders::_1 ) ) ) {
+            } else if( character_funcs::has_upgraded_bionic( pa, bid ) ) {
                 return _( "Superior version installed" );
             } else if( pa.is_npc() && !bid->has_flag( flag_BIONIC_NPC_USABLE ) ) {
                 return _( "CBM not usable by NPC's" );

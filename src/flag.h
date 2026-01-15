@@ -378,6 +378,7 @@ extern const flag_id flag_WINDMETER;
 extern const flag_id flag_INITIALLY_ACTIVATE;
 extern const flag_id flag_MULTIINSTALL;
 extern const flag_id flag_BIONIC_TOOLS;
+extern const flag_id flag_TEMPORARY_ITEM;
 /**
  * Flags: json entity with "type": "json_flag", defined in flags.json, vp_flags.json
  * Currently used by:

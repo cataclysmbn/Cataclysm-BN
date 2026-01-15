@@ -521,6 +521,8 @@ class monster : public Creature, public location_visitable<monster>
         bool death_drops = true;
         bool is_dead() const;
         bool made_footstep;
+        // Returns true if this is a nemesis monster from the hunted scenario.
+        bool is_nemesis() const;
         // If we're unique
         std::string unique_name;
         bool hallucination;
@@ -666,5 +668,4 @@ class monster : public Creature, public location_visitable<monster>
         /** Processes monster-specific effects of an effect. */
         void process_one_effect( effect &it, bool is_new ) override;
 };
-
 

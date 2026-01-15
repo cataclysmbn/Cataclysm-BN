@@ -2233,6 +2233,69 @@ static void migrate( std::vector<detached_ptr<item>> &stack )
     }
 }
 } // namespace to_cbc_migration
+namespace damage_instance_serialization
+{
+
+struct serialized_damage_unit {
+    int type = 0;
+    float amount = 0.0f;
+    float res_pen = 0.0f;
+    float res_mult = 1.0f;
+    float damage_multiplier = 1.0f;
+
+    auto serialize( JsonOut &jsout ) const -> void {
+        jsout.start_array();
+        jsout.write( type );
+        jsout.write( amount );
+        jsout.write( res_pen );
+        jsout.write( res_mult );
+        jsout.write( damage_multiplier );
+        jsout.end_array();
+    }
+
+    auto deserialize( JsonIn &jsin ) -> void {
+        jsin.start_array();
+        jsin.read( type );
+        jsin.read( amount );
+        jsin.read( res_pen );
+        jsin.read( res_mult );
+        jsin.read( damage_multiplier );
+        jsin.end_array();
+    }
+};
+
+auto serialize_damage_instance( const damage_instance &dmg ) -> std::vector<serialized_damage_unit>
+{
+    auto result = std::vector<serialized_damage_unit> {};
+    for( const auto &du : dmg.damage_units ) {
+        result.push_back( {
+            static_cast<int>( du.type ),
+            du.amount,
+            du.res_pen,
+            du.res_mult,
+            du.damage_multiplier
+        } );
+    }
+    return result;
+}
+
+auto deserialize_damage_instance( const std::vector<serialized_damage_unit> &serialized ) ->
+damage_instance
+{
+    auto result = damage_instance{};
+    for( const auto &sdu : serialized ) {
+        result.damage_units.emplace_back(
+            static_cast<damage_type>( sdu.type ),
+            sdu.amount,
+            sdu.res_pen,
+            sdu.res_mult,
+            sdu.damage_multiplier
+        );
+    }
+    return result;
+}
+
+} // namespace damage_instance_serialization
 
 template<typename Archive>
 void item::io( Archive &archive )
@@ -2290,6 +2353,24 @@ void item::io( Archive &archive )
     archive.io( "rot", rot, 0_turns );
     archive.io( "last_rot_check", last_rot_check, calendar::start_of_cataclysm );
     archive.io( "techniques", techniques, io::empty_default_tag() );
+    {
+        auto serialized_melee = std::vector<damage_instance_serialization::serialized_damage_unit> {};
+        auto serialized_ranged = std::vector<damage_instance_serialization::serialized_damage_unit> {};
+
+        archive.io( "melee_damage_bonus", serialized_melee );
+        archive.io( "ranged_damage_bonus", serialized_ranged );
+
+        // 로드 시에만 역직렬화
+        if( !serialized_melee.empty() ) {
+            melee_damage_bonus = deserialize_damage_instance( serialized_melee );
+        }
+        if( !serialized_ranged.empty() ) {
+            ranged_damage_bonus = deserialize_damage_instance( serialized_ranged );
+        }
+    }
+    archive.io( "range_bonus", range_bonus, 0 );
+    archive.io( "dispersion_bonus", dispersion_bonus, 0 );
+    archive.io( "recoil_bonus", recoil_bonus, 0 );
     archive.io( "faults", faults, io::empty_default_tag() );
     archive.io( "item_tags", item_tags, io::empty_default_tag() );
     archive.io( "components", components, io::empty_default_tag() );
@@ -2454,6 +2535,17 @@ void item::serialize( JsonOut &json ) const
 {
     io::JsonObjectOutputArchive archive( json );
     const_cast<item *>( this )->io( archive );
+
+    if( !melee_damage_bonus.damage_units.empty() ) {
+        json.member( "melee_damage_bonus",
+                     damage_instance_serialization::serialize_damage_instance( melee_damage_bonus ) );
+    }
+
+    if( !ranged_damage_bonus.damage_units.empty() ) {
+        json.member( "ranged_damage_bonus",
+                     damage_instance_serialization::serialize_damage_instance( ranged_damage_bonus ) );
+    }
+
     if( !contents.empty() ) {
         json.member( "contents", contents );
     }

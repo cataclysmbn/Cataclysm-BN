@@ -4504,13 +4504,8 @@ ret_val<bool> install_bionic_actor::can_use( const Character &p, const item &it,
         return ret_val<bool>::make_failure( _( "You have already installed this bionic." ) );
     } else if( bid->upgraded_bionic && !p.has_bionic( bid->upgraded_bionic ) ) {
         return ret_val<bool>::make_failure( _( "There is nothing to upgrade." ) );
-    } else {
-        const bool downgrade = std::any_of( bid->available_upgrades.begin(), bid->available_upgrades.end(),
-                                            std::bind( &player::has_bionic, &p, std::placeholders::_1 ) );
-
-        if( downgrade ) {
-            return ret_val<bool>::make_failure( _( "You have a superior version installed." ) );
-        }
+    } else if( character_funcs::has_upgraded_bionic( p, bid ) ) {
+        return ret_val<bool>::make_failure( _( "You have a superior version installed." ) );
     }
 
     return ret_val<bool>::make_success();

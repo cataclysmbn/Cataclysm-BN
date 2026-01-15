@@ -27,6 +27,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
@@ -8497,6 +8498,13 @@ void Character::shout( std::string msg, bool order )
 
     sounds::sound( pos(), noise, order ? sounds::sound_t::order : sounds::sound_t::alert, msg, false,
                    "shout", shout );
+}
+
+void Character::signal_nemesis()
+{
+    const tripoint_abs_omt ompos = global_omt_location();
+    const tripoint_abs_sm smpos = project_to<coords::sm>( ompos );
+    overmap_buffer.signal_nemesis( smpos );
 }
 
 void Character::vomit()

@@ -166,6 +166,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_char_purifier",
+    "name": "Build Charcoal Purifier"
+  },
+  {
+    "type": "construction_group",
     "id": "build_coat_rack",
     "name": "Build Coat Rack"
   },
@@ -561,6 +566,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_simple_wood_barricade",
+    "name": "Build Simple Wooden Barricade"
+  },
+  {
+    "type": "construction_group",
     "id": "build_rock_forge",
     "name": "Build Rock Forge"
   },
@@ -698,6 +708,11 @@
     "type": "construction_group",
     "id": "build_tarp_lean_to",
     "name": "Build Tarp Lean-To"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_tarp_lean_to_leather",
+    "name": "Build Leather Tarp Lean-To"
   },
   {
     "type": "construction_group",
