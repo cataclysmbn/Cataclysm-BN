@@ -28,25 +28,26 @@ void dialogue_window::resize_dialogue( ui_adaptor &ui )
 
 namespace
 {
-constexpr int header_height = 3;
+constexpr auto header_height = 3;
+auto dialogue_divider_x( const catacurses::window &w ) -> int { const auto winx = getmaxx( w ); const auto inner_w = winx - 2; return 1 + inner_w * 3 / 5; }
 }
 
 void dialogue_window::print_header( const std::string &name )
 {
     draw_border( d_win );
-    const int win_midx = getmaxx( d_win ) / 2;
-    const int winy = getmaxy( d_win );
-    const int winx = getmaxx( d_win );
+    const auto winy = getmaxy( d_win );
+    const auto winx = getmaxx( d_win );
+    const auto divider_x = dialogue_divider_x( d_win );
 
     // Header separator (full width, inside border)
     mvwhline( d_win, point( 1, header_height ), LINE_OXOX, winx - 2 );
 
     // Left/right divider starts below header
-    mvwvline( d_win, point( win_midx + 1, header_height + 1 ), LINE_XOXO, winy - header_height - 2 );
+    mvwvline( d_win, point( divider_x, header_height + 1 ), LINE_XOXO, winy - header_height - 2 );
 
     // Restore border tees for the divider
-    mvwputch( d_win, point( win_midx + 1, header_height ), BORDER_COLOR, LINE_OXXX );
-    mvwputch( d_win, point( win_midx + 1, winy - 1 ), BORDER_COLOR, LINE_XXOX );
+    mvwputch( d_win, point( divider_x, header_height ), BORDER_COLOR, LINE_OXXX );
+    mvwputch( d_win, point( divider_x, winy - 1 ), BORDER_COLOR, LINE_XXOX );
 
     // Header text in top-left of header panel
     // NOLINTNEXTLINE(cata-use-named-point-constants)
@@ -54,7 +55,7 @@ void dialogue_window::print_header( const std::string &name )
     mvwprintz( d_win, point( 11, 1 ), c_light_green, name );
 
     // Right panel label just below header
-    mvwprintz( d_win, point( win_midx + 3, header_height + 1 ), c_white, _( "Your response:" ) );
+    mvwprintz( d_win, point( divider_x + 2, header_height + 1 ), c_white, _( "Your response:" ) );
     npc_name = name;
 }
 
@@ -144,9 +145,10 @@ static void print_responses( const catacurses::window &w, const page &responses,
                              size_t selected_response )
 {
     // Responses go on the right side of the window, add 2 for border + space
-    const size_t x_start = getmaxx( w ) / 2 + 2;
+    const auto divider_x = dialogue_divider_x( w );
+    const auto x_start = divider_x + 1;
     // First line we can print on, +1 for border, +2 for your name + newline
-    const int y_start = 2 + 1 + header_height;
+    const auto y_start = 2 + 1 + header_height;
 
     int curr_y = y_start;
     for( const page_entry &entry : responses.entries ) {
@@ -194,7 +196,8 @@ static void print_keybindings( const catacurses::window &w )
 
 void dialogue_window::cache_msg( const std::string &msg, size_t idx )
 {
-    const std::vector<std::string> folded = foldstring( msg, getmaxx( d_win ) / 2 );
+    const auto divider_x = dialogue_divider_x( d_win );
+    const auto folded = foldstring( msg, divider_x - 1 );
     draw_cache.emplace_back( "", idx );
     for( const std::string &fs : folded ) {
         draw_cache.emplace_back( fs, idx );
@@ -228,8 +231,9 @@ void dialogue_window::display_responses( const std::vector<talk_data> &responses
 
     // TODO: cache paged entries
     // -2 for borders, -2 for your name + newline, -4 for keybindings
-    const int page_h = getmaxy( d_win ) - 2 - 2 - 4;
-    const int page_w = getmaxx( d_win ) / 2 - 4; // -4 for borders + padding
+    const auto page_h = getmaxy( d_win ) - 2 - 2 - 4;
+    const auto divider_x = dialogue_divider_x( d_win );
+    const auto page_w = getmaxx( d_win ) - divider_x - 2; // -2 for borders
     const std::vector<page> pages = split_to_pages( responses, page_w, page_h );
     if( !pages.empty() ) {
         auto selected_page = pages.size();
