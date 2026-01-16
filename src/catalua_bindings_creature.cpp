@@ -1025,6 +1025,8 @@ void cata::detail::reg_npc( sol::state &lua )
         // Methods
         SET_FX_N_T( set_fac, "set_faction_id", void( const faction_id & id ) );
 
+        SET_FX_T( erase, void());
+
         SET_FX_T( turned_hostile, bool() const );
 
         SET_FX_T( hostile_anger_level, int() const );

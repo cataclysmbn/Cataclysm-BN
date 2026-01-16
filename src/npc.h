@@ -953,6 +953,10 @@ class npc : public player
         void decide_needs();
         void reboot();
         void die( Creature *killer ) override;
+        /**
+        * Deletes the npc without any death notifications.
+        */
+        void erase();
         bool is_dead() const;
         // How well we smash terrain (not corpses!)
         int smash_ability() const;
