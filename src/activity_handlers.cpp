@@ -2048,7 +2048,7 @@ void activity_handlers::reload_finish( player_activity *act, player *p )
             sounds::ambient_sound( p->pos(), reloadable.type->gun->reload_noise_volume,
                                    sounds::sound_t::activity, reloadable.type->gun->reload_noise );
         }
-    } else if( reloadable.is_watertight_container() ) {
+    } else if( reloadable.is_container() ) {
         msg = _( "You refill the %s." );
     }
     add_msg( m_neutral, msg, reloadable.tname(), ammo_name );
