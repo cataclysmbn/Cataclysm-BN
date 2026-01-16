@@ -41,7 +41,10 @@ static const flag_id json_flag_NO_UNWIELD( "NO_UNWIELD" );
 
 namespace
 {
-constexpr auto trade_header_rows = 3;
+constexpr auto trade_head_height = 6;
+constexpr auto trade_header_rows = 4;
+constexpr auto trade_header_separator_rows = 0;
+constexpr auto trade_total_header_rows = trade_header_rows + trade_header_separator_rows;
 } // namespace
 
 void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
@@ -224,10 +227,13 @@ void item_pricing::adjust_values( const double adjust, const faction *fac )
 void trading_window::setup_win( ui_adaptor &ui )
 {
     const int win_they_w = TERMX / 2;
-    entries_per_page = std::min( TERMY - 7 - trade_header_rows, 2 + ( 'z' - 'a' ) + ( 'Z' - 'A' ) );
-    w_head = catacurses::newwin( 4, TERMX, point_zero );
-    w_them = catacurses::newwin( TERMY - 4, win_they_w, point( 0, 4 ) );
-    w_you = catacurses::newwin( TERMY - 4, TERMX - win_they_w, point( win_they_w, 4 ) );
+    entries_per_page = std::min( TERMY - trade_head_height - 3 - trade_total_header_rows,
+                                 2 + ( 'z' - 'a' ) + ( 'Z' - 'A' ) );
+    w_head = catacurses::newwin( trade_head_height, TERMX, point_zero );
+    w_them = catacurses::newwin( TERMY - trade_head_height, win_they_w,
+                                 point( 0, trade_head_height ) );
+    w_you = catacurses::newwin( TERMY - trade_head_height, TERMX - win_they_w,
+                                point( win_they_w, trade_head_height ) );
     ui.position( point_zero, point( TERMX, TERMY ) );
 }
 
@@ -280,32 +286,17 @@ void trading_window::update_win( npc &np, const std::string &deal )
     input_context ctxt( "NPC_TRADE" );
 
     werase( w_head );
-    fold_and_print( w_head, point_zero, getmaxx( w_head ), c_white,
-                    _( "Trading with %s.\n"
-                       "[<color_yellow>%s</color>] to switch lists, letters to pick items, "
-                       "[<color_yellow>%s</color>] and [<color_yellow>%s</color>] to move, "
-                       "[<color_yellow>%s</color>] to add, [<color_yellow>%s</color>] to remove, "
-                       "numbers + add to set amount, "
-                       "[<color_yellow>%s</color>] and [<color_yellow>%s</color>] to switch pages, "
-                       "[<color_yellow>%s</color>] to finalize, [<color_yellow>%s</color>] to quit, "
-                       "[<color_yellow>%s</color>] to get information on an item." ),
-                    np.disp_name(),
-                    ctxt.get_desc( "SWITCH_LISTS" ),
-                    ctxt.get_desc( "UP" ),
-                    ctxt.get_desc( "DOWN" ),
-                    ctxt.get_desc( "RIGHT" ),
-                    ctxt.get_desc( "LEFT" ),
-                    ctxt.get_desc( "PAGE_UP" ),
-                    ctxt.get_desc( "PAGE_DOWN" ),
-                    ctxt.get_desc( "CONFIRM" ),
-                    ctxt.get_desc( "QUIT" ),
-                    ctxt.get_desc( "EXAMINE" ) );
-
-    // Set up line drawings
-    for( int i = 0; i < TERMX; i++ ) {
-        mvwputch( w_head, point( i, 3 ), c_white, LINE_OXOX );
-    }
-    // End of line drawings
+    draw_border( w_head );
+    const auto head_inner_w = getmaxx( w_head ) - 2;
+    const auto head_title_y = 1;
+    const auto head_separator_y = 2;
+    const auto head_hints_y = 3;
+    const auto head_hints_y2 = 4;
+    const auto title_label = _( "Trading:" );
+    mvwprintz( w_head, point( 1, head_title_y ), c_white, title_label );
+    mvwprintz( w_head, point( 1 + utf8_width( title_label ) + 1, head_title_y ),
+               c_light_green, np.disp_name() );
+    mvwhline( w_head, point( 1, head_separator_y ), LINE_OXOX, head_inner_w );
 
     std::string cost_str = _( "Exchange" );
     if( !np.will_exchange_items_freely() ) {
@@ -313,18 +304,48 @@ void trading_window::update_win( npc &np, const std::string &deal )
                                   format_money( std::abs( your_balance ) ) );
     }
 
-    mvwprintz( w_head, point( TERMX / 2 + ( TERMX / 2 - utf8_width( cost_str ) ) / 2, 3 ),
-               trade_color, cost_str );
+    const auto cost_x = 1 + head_inner_w - utf8_width( cost_str );
+    mvwprintz( w_head, point( cost_x, head_title_y ), trade_color, cost_str );
 
     if( !deal.empty() ) {
-        mvwprintz( w_head, point( ( TERMX - utf8_width( deal ) ) / 2, 3 ),
+        const auto deal_w = utf8_width( deal );
+        const auto deal_x = 1 + ( head_inner_w - deal_w ) / 2;
+        mvwprintz( w_head, point( deal_x, head_title_y ),
                    trade_color_light, deal );
     }
+    const auto hint_line = string_format(
+                               _( "[<color_yellow>%s</color>] switch lists, letters pick items, "
+                                  "[<color_yellow>%s</color>]/[<color_yellow>%s</color>] move, "
+                                  "[<color_yellow>%s</color>] add, [<color_yellow>%s</color>] remove" ),
+                               ctxt.get_desc( "SWITCH_LISTS" ),
+                               ctxt.get_desc( "UP" ),
+                               ctxt.get_desc( "DOWN" ),
+                               ctxt.get_desc( "RIGHT" ),
+                               ctxt.get_desc( "LEFT" ) );
+    const auto hint_line2 = string_format(
+                                _( "numbers + add amount, "
+                                   "[<color_yellow>%s</color>]/[<color_yellow>%s</color>] pages, "
+                                   "[<color_yellow>%s</color>] finalize, "
+                                   "[<color_yellow>%s</color>] quit, "
+                                   "[<color_yellow>%s</color>] examine" ),
+                                ctxt.get_desc( "PAGE_UP" ),
+                                ctxt.get_desc( "PAGE_DOWN" ),
+                                ctxt.get_desc( "CONFIRM" ),
+                                ctxt.get_desc( "QUIT" ),
+                                ctxt.get_desc( "EXAMINE" ) );
+    auto hint_color = c_white;
+    print_colored_text( w_head, point( 1, head_hints_y ), hint_color, c_white, hint_line );
+    hint_color = c_white;
+    print_colored_text( w_head, point( 1, head_hints_y2 ), hint_color, c_white, hint_line2 );
     draw_border( w_them, ( focus_them ? c_yellow : BORDER_COLOR ) );
     draw_border( w_you, ( !focus_them ? c_yellow : BORDER_COLOR ) );
 
-    mvwprintz( w_them, point( 2, 1 ), c_light_green, np.name );
-    mvwprintz( w_you,  point( 2, 1 ), c_light_green, _( "You" ) );
+    mvwprintz( w_them, point( 2, 1 ), c_white, _( "Inventory:" ) );
+    mvwprintz( w_them, point( 2 + utf8_width( _( "Inventory:" ) ) + 1, 1 ), c_light_green,
+               np.name );
+    mvwprintz( w_you,  point( 2, 1 ), c_white, _( "Inventory:" ) );
+    mvwprintz( w_you,  point( 2 + utf8_width( _( "Inventory:" ) ) + 1, 1 ), c_light_green,
+               _( "You" ) );
 
     const auto selected_amount = []( const item_pricing &ip, bool is_theirs ) -> int {
         if( ip.charges > 0 ) {
@@ -428,7 +449,8 @@ void trading_window::update_win( npc &np, const std::string &deal )
         const auto name_x = 1 + name_indent;
         const auto name_w = std::max( qty_x - 2 - name_indent, 1 );
         const auto stats_y = 2;
-        const auto header_y = 3;
+        const auto separator_y = 3;
+        const auto header_y = 4;
         const auto header_color = c_light_gray;
         const auto pane_free_volume = they ? volume_left : player_free_volume;
         const auto pane_free_weight = they ? weight_left : player_free_weight;
@@ -462,6 +484,7 @@ void trading_window::update_win( npc &np, const std::string &deal )
         x += utf8_width( vol_used_str );
         mvwprintz( w_whose, point( x, stats_y ), header_color, vol_str );
         x += utf8_width( vol_str ) + 2;
+        mvwhline( w_whose, point( 1, separator_y ), LINE_OXOX, win_w );
         mvwprintz( w_whose, point( name_x + 3, header_y ), header_color,
                    trim_by_length( _( "Name (charges)" ), name_w ) );
         mvwprintz( w_whose, point( qty_x, header_y ), header_color,
@@ -480,10 +503,10 @@ void trading_window::update_win( npc &np, const std::string &deal )
             const auto category_id = it->get_category().get_id();
             if( !last_category || *last_category != category_id ) {
                 const auto category_label = to_upper_case( it->get_category().name() );
-                const auto category_y = static_cast<int>( row + 1 + trade_header_rows );
-                mvwprintz( w_whose, point( 1, category_y ), c_magenta,
-                           trim_by_length( category_label, win_w ) );
-                row++;
+            const auto category_y = static_cast<int>( row + 1 + trade_total_header_rows );
+                mvwprintz( w_whose, point( 2, category_y ), c_magenta,
+                           trim_by_length( category_label, win_w - 1 ) );
+            row++;
                 if( row >= entries_per_page ) {
                     break;
                 }
@@ -491,7 +514,7 @@ void trading_window::update_win( npc &np, const std::string &deal )
             auto color = it == &person.primary_weapon() ? c_yellow : c_light_gray;
             const auto is_cursor = ( they && focus_them && i == them_cursor ) ||
                                    ( !they && !focus_them && i == you_cursor );
-            const auto row_y = static_cast<int>( row + 1 + trade_header_rows );
+            const auto row_y = static_cast<int>( row + 1 + trade_total_header_rows );
             const int &owner_sells = they ? ip.u_has : ip.npc_has;
             const int &owner_sells_charge = they ? ip.u_charges : ip.npc_charges;
             int amount = ip.charges > 0 ? ip.charges : 1;
@@ -582,11 +605,12 @@ void trading_window::update_win( npc &np, const std::string &deal )
             last_category = category_id;
             row++;
         }
+        const auto paging_y = static_cast<int>( trade_total_header_rows + entries_per_page + 1 );
         if( offset > 0 ) {
-            mvwprintw( w_whose, point( 1, entries_per_page + 2 ), _( "< Back" ) );
+            mvwprintw( w_whose, point( 1, paging_y ), _( "< Back" ) );
         }
         if( offset + entries_per_page < list.size() ) {
-            mvwprintw( w_whose, point( 9, entries_per_page + 2 ), _( "More >" ) );
+            mvwprintw( w_whose, point( 9, paging_y ), _( "More >" ) );
         }
     }
     wnoutrefresh( w_head );
