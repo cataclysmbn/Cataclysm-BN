@@ -462,7 +462,13 @@ std::vector<detached_ptr<item>> profession::items( bool male,
     std::vector<itype_id> bonus = item_substitutions.get_bonus_items( traits );
     for( const itype_id &elem : bonus ) {
         if( elem != no_bonus ) {
-            result.push_back( item::spawn( elem, advanced_spawn_time(), item::default_charges_tag {} ) );
+            auto bonus_item = item::spawn( elem, advanced_spawn_time(), item::default_charges_tag {} );
+            if( !bonus_item->magazine_current() &&
+                bonus_item->magazine_default() != itype_id::NULL_ID() ) {
+                bonus_item->put_in( item::spawn( bonus_item->magazine_default(),
+                                                 bonus_item->birthday() ) );
+            }
+            result.push_back( std::move( bonus_item ) );
         }
     }
     for( auto iter = result.begin(); iter != result.end(); ) {
