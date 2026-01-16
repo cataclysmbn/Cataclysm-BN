@@ -7,6 +7,7 @@
     "points": 12,
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 4, "name": "gun" },
       { "level": 4, "name": "pistol" },
       { "level": 9, "name": "firstaid" },
@@ -51,6 +52,7 @@
     "points": 6,
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 3, "name": "gun" },
       { "level": 3, "name": "pistol" },
       { "level": 6, "name": "firstaid" },
@@ -92,6 +94,7 @@
     "points": 3,
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 1, "name": "gun" },
       { "level": 1, "name": "pistol" },
       { "level": 3, "name": "firstaid" },

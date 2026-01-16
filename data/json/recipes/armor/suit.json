@@ -823,7 +823,7 @@
     "book_learn": [ [ "textbook_tailor", 4 ], [ "manual_tailor", 5 ], [ "tailor_portfolio", 4 ] ],
     "using": [ [ "sewing_standard", 50 ] ],
     "tools": [ [ [ "soldering_standard", 20, "LIST" ], [ "surface_heat", 20, "LIST" ] ] ],
-    "components": [ [ [ "neoprene", 12 ] ], [ [ "rag", 12 ] ] ]
+    "components": [ [ [ "neoprene", 12 ] ], [ [ "nylon", 12 ] ] ]
   },
   {
     "result": "wetsuit_spring",
@@ -837,7 +837,7 @@
     "book_learn": [ [ "textbook_tailor", 3 ], [ "manual_tailor", 4 ], [ "tailor_portfolio", 3 ] ],
     "using": [ [ "sewing_standard", 40 ] ],
     "tools": [ [ [ "soldering_standard", 15, "LIST" ], [ "surface_heat", 15, "LIST" ] ] ],
-    "components": [ [ [ "neoprene", 8 ] ], [ [ "rag", 8 ] ] ]
+    "components": [ [ [ "neoprene", 8 ] ], [ [ "nylon", 8 ] ] ]
   },
   {
     "result": "wool_suit",

@@ -114,7 +114,7 @@
     "price": "110 USD",
     "price_postapoc": "50 cent",
     "to_hit": -3,
-    "material": [ "cotton", "plastic" ],
+    "material": [ "cotton", "nylon" ],
     "symbol": "[",
     "looks_like": "jumpsuit",
     "color": "yellow",

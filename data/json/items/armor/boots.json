@@ -1133,7 +1133,7 @@
     "volume": "1 L",
     "price": "68 USD",
     "price_postapoc": "250 cent",
-    "material": [ "neoprene", "cotton" ],
+    "material": [ "neoprene", "nylon" ],
     "symbol": "[",
     "looks_like": "boots_rubber",
     "color": "dark_gray",
