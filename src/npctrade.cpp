@@ -41,7 +41,7 @@ static const flag_id json_flag_NO_UNWIELD( "NO_UNWIELD" );
 
 namespace
 {
-constexpr auto trade_header_rows = 2;
+constexpr auto trade_header_rows = 3;
 } // namespace
 
 void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
@@ -323,8 +323,8 @@ void trading_window::update_win( npc &np, const std::string &deal )
     draw_border( w_them, ( focus_them ? c_yellow : BORDER_COLOR ) );
     draw_border( w_you, ( !focus_them ? c_yellow : BORDER_COLOR ) );
 
-    mvwprintz( w_them, point( 2, 0 ), trade_color, np.name );
-    mvwprintz( w_you,  point( 2, 0 ), trade_color, _( "You" ) );
+    mvwprintz( w_them, point( 2, 1 ), c_light_green, np.name );
+    mvwprintz( w_you,  point( 2, 1 ), c_light_green, _( "You" ) );
 
     const auto selected_amount = []( const item_pricing &ip, bool is_theirs ) -> int {
         if( ip.charges > 0 ) {
@@ -427,8 +427,8 @@ void trading_window::update_win( npc &np, const std::string &deal )
         const auto name_indent = 2;
         const auto name_x = 1 + name_indent;
         const auto name_w = std::max( qty_x - 2 - name_indent, 1 );
-        const auto stats_y = 1;
-        const auto header_y = 2;
+        const auto stats_y = 2;
+        const auto header_y = 3;
         const auto header_color = c_light_gray;
         const auto pane_free_volume = they ? volume_left : player_free_volume;
         const auto pane_free_weight = they ? weight_left : player_free_weight;
