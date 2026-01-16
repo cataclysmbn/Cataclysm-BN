@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -273,11 +274,18 @@ void trading_window::update_win( npc &np, const std::string &deal )
     fold_and_print( w_head, point_zero, getmaxx( w_head ), c_white,
                     _( "Trading with %s.\n"
                        "[<color_yellow>%s</color>] to switch lists, letters to pick items, "
+                       "[<color_yellow>%s</color>] and [<color_yellow>%s</color>] to move, "
+                       "[<color_yellow>%s</color>] to add, [<color_yellow>%s</color>] to remove, "
+                       "numbers + add to set amount, "
                        "[<color_yellow>%s</color>] and [<color_yellow>%s</color>] to switch pages, "
                        "[<color_yellow>%s</color>] to finalize, [<color_yellow>%s</color>] to quit, "
                        "[<color_yellow>%s</color>] to get information on an item." ),
                     np.disp_name(),
                     ctxt.get_desc( "SWITCH_LISTS" ),
+                    ctxt.get_desc( "UP" ),
+                    ctxt.get_desc( "DOWN" ),
+                    ctxt.get_desc( "RIGHT" ),
+                    ctxt.get_desc( "LEFT" ),
                     ctxt.get_desc( "PAGE_UP" ),
                     ctxt.get_desc( "PAGE_DOWN" ),
                     ctxt.get_desc( "CONFIRM" ),
@@ -329,6 +337,8 @@ void trading_window::update_win( npc &np, const std::string &deal )
             const item_pricing &ip = list[i];
             const item *it = ip.locs.front();
             auto color = it == &person.primary_weapon() ? c_yellow : c_light_gray;
+            const auto is_cursor = ( they && focus_them && i == them_cursor ) ||
+                                   ( !they && !focus_them && i == you_cursor );
             const int &owner_sells = they ? ip.u_has : ip.npc_has;
             const int &owner_sells_charge = they ? ip.u_charges : ip.npc_charges;
             int amount = ip.charges > 0 ? ip.charges : 1;
@@ -340,14 +350,12 @@ void trading_window::update_win( npc &np, const std::string &deal )
             }
 
             if( ip.charges > 0 && owner_sells_charge > 0 ) {
-                itname += string_format( _( ": trading %d" ), owner_sells_charge );
                 amount = owner_sells_charge;
             } else {
                 if( ip.count > 1 ) {
                     itname += string_format( _( " (%d)" ), ip.count );
                 }
                 if( owner_sells ) {
-                    itname += string_format( _( ": trading %d" ), owner_sells );
                     amount = owner_sells;
                 }
             }
@@ -355,20 +363,35 @@ void trading_window::update_win( npc &np, const std::string &deal )
             if( ip.selected ) {
                 color = c_white;
             }
+            auto line_color = color;
+            if( is_cursor ) {
+                line_color = hilite( line_color );
+            }
 
             int keychar = i - offset + 'a';
             if( keychar > 'z' ) {
                 keychar = keychar - 'z' - 1 + 'A';
             }
-            trim_and_print( w_whose, point( 1, i - offset + 1 ), win_w, color, "%c %c %s",
-                            static_cast<char>( keychar ), ip.selected ? '+' : '-', itname );
+            const auto total_amount = ip.charges > 0 ? ip.charges : std::max( ip.count, 1 );
+            const auto selected_amount = ip.charges > 0 ? owner_sells_charge : owner_sells;
+            auto selection_mark = '-';
+            if( selected_amount >= total_amount && total_amount > 0 ) {
+                selection_mark = '+';
+            } else if( selected_amount > 0 ) {
+                selection_mark = '#';
+            }
+            trim_and_print( w_whose, point( 1, i - offset + 1 ), win_w, line_color, "%c %c %s",
+                            static_cast<char>( keychar ), selection_mark, itname );
 #if defined(__ANDROID__)
             ctxt.register_manual_key( keychar, itname );
 #endif
 
             std::string price_str = format_money( ip.price * amount );
-            nc_color price_color = np.will_exchange_items_freely() ? c_dark_gray : ( ip.selected ? c_white :
-                                   c_light_gray );
+            auto price_color = np.will_exchange_items_freely() ? c_dark_gray : ( ip.selected ? c_white :
+                               c_light_gray );
+            if( is_cursor ) {
+                price_color = hilite( price_color );
+            }
             mvwprintz( w_whose, point( win_w - utf8_width( price_str ), i - offset + 1 ),
                        price_color, price_str );
         }
@@ -490,6 +513,10 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
 
     input_context ctxt( "NPC_TRADE" );
     ctxt.register_action( "SWITCH_LISTS" );
+    ctxt.register_action( "UP" );
+    ctxt.register_action( "DOWN" );
+    ctxt.register_action( "LEFT" );
+    ctxt.register_action( "RIGHT" );
     ctxt.register_action( "PAGE_UP" );
     ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "EXAMINE" );
@@ -510,23 +537,105 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
 
     bool confirm = false;
     bool exit = false;
+    std::optional<int> pending_count;
+
+    const auto clamp_cursor_to_list = [&]( const std::vector<item_pricing> &list,
+                                           size_t &cursor,
+                                           size_t &offset ) -> void {
+        if( entries_per_page == 0 ) {
+            cursor = list.empty() ? 0 : std::min( cursor, list.size() - 1 );
+            offset = 0;
+            return;
+        }
+        if( list.empty() ) {
+            cursor = 0;
+            offset = 0;
+            return;
+        }
+        cursor = std::min( cursor, list.size() - 1 );
+        if( list.size() <= entries_per_page ) {
+            offset = 0;
+            return;
+        }
+        if( cursor < offset ) {
+            offset = cursor;
+        } else if( cursor >= offset + entries_per_page ) {
+            offset = cursor - entries_per_page + 1;
+        }
+        if( offset + entries_per_page > list.size() ) {
+            offset = list.size() - entries_per_page;
+        }
+    };
+
+    const auto apply_trade_change = [&]( item_pricing &ip, int new_amount ) -> void {
+        auto &owner_sells = focus_them ? ip.u_has : ip.npc_has;
+        auto &owner_sells_charge = focus_them ? ip.u_charges : ip.npc_charges;
+        const auto has_charges = ip.charges > 0;
+        auto *current_amount = has_charges ? &owner_sells_charge : &owner_sells;
+        const auto max_amount = has_charges ? ip.charges : std::max( ip.count, 1 );
+        const auto clamped_amount = std::clamp( new_amount, 0, max_amount );
+        if( clamped_amount == *current_amount ) {
+            return;
+        }
+        const auto delta_amount = clamped_amount - *current_amount;
+        *current_amount = clamped_amount;
+        ip.selected = clamped_amount > 0;
+
+        const auto signed_amount = focus_them ? delta_amount : -delta_amount;
+        const auto delta_price = static_cast<int>( ip.price * signed_amount );
+        if( !np.will_exchange_items_freely() ) {
+            your_balance -= delta_price;
+        }
+        if( ip.locs.front()->where() == item_location_type::character ) {
+            volume_left += ip.vol * signed_amount;
+            weight_left += ip.weight * signed_amount;
+        }
+    };
     while( !exit ) {
+        auto &target_list = focus_them ? theirs : yours;
+        auto &offset = focus_them ? them_off : you_off;
+        auto &cursor = focus_them ? them_cursor : you_cursor;
+        clamp_cursor_to_list( target_list, cursor, offset );
         ui_manager::redraw();
 
-        std::vector<item_pricing> &target_list = focus_them ? theirs : yours;
-        size_t &offset = focus_them ? them_off : you_off;
         const std::string action = ctxt.handle_input();
         if( action == "SWITCH_LISTS" ) {
             focus_them = !focus_them;
+        } else if( action == "UP" ) {
+            if( !target_list.empty() && cursor > 0 ) {
+                cursor--;
+            }
+        } else if( action == "DOWN" ) {
+            if( !target_list.empty() && cursor + 1 < target_list.size() ) {
+                cursor++;
+            }
+        } else if( action == "RIGHT" || action == "LEFT" ) {
+            if( !target_list.empty() ) {
+                auto &ip = target_list[cursor];
+                if( action == "RIGHT" ) {
+                    const auto max_amount = ip.charges > 0 ? ip.charges : std::max( ip.count, 1 );
+                    const auto requested_amount = pending_count.value_or( max_amount );
+                    apply_trade_change( ip, requested_amount );
+                } else {
+                    apply_trade_change( ip, 0 );
+                }
+            }
+            pending_count.reset();
         } else if( action == "PAGE_UP" ) {
             if( offset > entries_per_page ) {
                 offset -= entries_per_page;
             } else {
                 offset = 0;
             }
+            if( !target_list.empty() ) {
+                cursor = offset;
+            }
         } else if( action == "PAGE_DOWN" ) {
             if( offset + entries_per_page < target_list.size() ) {
                 offset += entries_per_page;
+            }
+            if( !target_list.empty() ) {
+                cursor = offset;
             }
         } else if( action == "EXAMINE" ) {
             show_item_data( offset, target_list );
@@ -569,7 +678,18 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
             if( evt.type != input_event_t::keyboard || evt.sequence.empty() ) {
                 continue;
             }
-            size_t ch = evt.get_first_input();
+            auto ch = evt.get_first_input();
+            if( ch >= '0' && ch <= '9' ) {
+                const auto digit = static_cast<int>( ch - '0' );
+                if( !pending_count ) {
+                    pending_count.emplace( 0 );
+                }
+                *pending_count = *pending_count * 10 + digit;
+                if( *pending_count <= 0 ) {
+                    pending_count.reset();
+                }
+                continue;
+            }
             // Letters & such
             if( ch >= 'a' && ch <= 'z' ) {
                 ch -= 'a';
@@ -579,9 +699,10 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
                 continue;
             }
 
-            ch += offset;
-            if( ch < target_list.size() ) {
-                item_pricing &ip = target_list[ch];
+            auto ch_index = static_cast<size_t>( ch );
+            ch_index += offset;
+            if( ch_index < target_list.size() ) {
+                item_pricing &ip = target_list[ch_index];
                 int change_amount = 1;
                 int &owner_sells = focus_them ? ip.u_has : ip.npc_has;
                 int &owner_sells_charge = focus_them ? ip.u_charges : ip.npc_charges;

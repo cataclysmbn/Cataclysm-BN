@@ -3261,17 +3261,45 @@
     "name": "Describe terrain",
     "bindings": [ { "input_method": "keyboard", "key": "t" } ]
   },
-  {
-    "type": "keybinding",
-    "id": "SWITCH_LISTS",
-    "category": "NPC_TRADE",
-    "name": "Switch lists",
-    "bindings": [ { "input_method": "keyboard", "key": "TAB" } ]
-  },
-  {
-    "type": "keybinding",
-    "id": "PAGE_UP",
-    "category": "NPC_TRADE",
+    {
+      "type": "keybinding",
+      "id": "SWITCH_LISTS",
+      "category": "NPC_TRADE",
+      "name": "Switch lists",
+      "bindings": [ { "input_method": "keyboard", "key": "TAB" } ]
+    },
+    {
+      "type": "keybinding",
+      "id": "UP",
+      "category": "NPC_TRADE",
+      "name": "Move cursor up",
+      "bindings": [ { "input_method": "keyboard", "key": "UP" }, { "input_method": "gamepad", "key": "JOY_UP" } ]
+    },
+    {
+      "type": "keybinding",
+      "id": "DOWN",
+      "category": "NPC_TRADE",
+      "name": "Move cursor down",
+      "bindings": [ { "input_method": "keyboard", "key": "DOWN" }, { "input_method": "gamepad", "key": "JOY_DOWN" } ]
+    },
+    {
+      "type": "keybinding",
+      "id": "RIGHT",
+      "category": "NPC_TRADE",
+      "name": "Add item to trade",
+      "bindings": [ { "input_method": "keyboard", "key": "RIGHT" }, { "input_method": "gamepad", "key": "JOY_RIGHT" } ]
+    },
+    {
+      "type": "keybinding",
+      "id": "LEFT",
+      "category": "NPC_TRADE",
+      "name": "Remove item from trade",
+      "bindings": [ { "input_method": "keyboard", "key": "LEFT" }, { "input_method": "gamepad", "key": "JOY_LEFT" } ]
+    },
+    {
+      "type": "keybinding",
+      "id": "PAGE_UP",
+      "category": "NPC_TRADE",
     "name": "Back",
     "bindings": [ { "input_method": "keyboard", "key": "PPAGE" }, { "input_method": "keyboard", "key": "<" } ]
   },

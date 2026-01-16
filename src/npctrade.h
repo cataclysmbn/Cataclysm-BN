@@ -68,6 +68,8 @@ class trading_window
         size_t entries_per_page = 0;
         bool focus_them = true; // Is the focus on them?
         size_t them_off = 0, you_off = 0; // Offset from the start of the list
+        size_t them_cursor = 0;
+        size_t you_cursor = 0;
 
         inventory temp;
         units::volume volume_left;
@@ -92,5 +94,4 @@ bool trade( npc &p, int cost, const std::string &deal );
 std::vector<item_pricing> init_selling( npc &p );
 std::vector<item_pricing> init_buying( Character &buyer, Character &seller, bool is_npc );
 } // namespace npc_trading
-
 
