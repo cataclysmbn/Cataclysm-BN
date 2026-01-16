@@ -88,7 +88,7 @@ end
 その後、フックを関数に一度だけ接続します。
 
 ```lua
-table.insert(game.hooks.on_creature_performed_technique, function(...) return on_creature_performed_technique(...) end)
+game.add_hook("on_creature_performed_technique", function(...) return on_creature_performed_technique(...) end)
 ```
 
 <details>
@@ -146,8 +146,8 @@ new_npc:erase()
 
 ```lua
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_weather_changed, function(...) mod.weather_changed_alert(...) end)
-table.insert(game.hooks.on_weather_updated, function(...) mod.weather_report(...) end)
+game.add_hook("on_weather_changed", function(...) mod.weather_changed_alert(...) end)
+game.add_hook("on_weather_updated", function(...) mod.weather_report(...) end)
 ```
 
 次に、main.lua でハンドラーを定義します:
@@ -186,8 +186,8 @@ end
 
 ```lua
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_shoot, function(...) return mod.on_shoot_fun(...) end)
-table.insert(game.hooks.on_throw, function(...) return mod.on_throw_fun(...) end)
+game.add_hook("on_shoot", function(...) return mod.on_shoot_fun(...) end)
+game.add_hook("on_throw", function(...) return mod.on_throw_fun(...) end)
 ```
 
 次に、main.lua でハンドラーを定義します:
@@ -252,7 +252,7 @@ gapi.get_map():move_item_at(source_pos, dest_pos)
 ```lua
 -- preload.lua 内
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_mon_death, function(...) return mod.on_mon_death(...) end)
+game.add_hook("on_mon_death", function(...) return mod.on_mon_death(...) end)
 ```
 
 ```lua
@@ -275,7 +275,7 @@ end
 ```lua
 -- preload.lua 内
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_char_death, function(...) return mod.on_char_death(...) end)
+game.add_hook("on_char_death", function(...) return mod.on_char_death(...) end)
 ```
 
 ```lua
@@ -359,10 +359,10 @@ item:set_countdown(100)  -- 100ターンティック
 ```lua
 -- preload.lua 内
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_creature_dodged, function(...) return mod.on_creature_dodged(...) end)
-table.insert(game.hooks.on_creature_blocked, function(...) return mod.on_creature_blocked(...) end)
-table.insert(game.hooks.on_creature_performed_technique, function(...) return mod.on_creature_performed_technique(...) end)
-table.insert(game.hooks.on_creature_melee_attacked, function(...) return mod.on_creature_melee_attacked(...) end)
+game.add_hook("on_creature_dodged", function(...) return mod.on_creature_dodged(...) end)
+game.add_hook("on_creature_blocked", function(...) return mod.on_creature_blocked(...) end)
+game.add_hook("on_creature_performed_technique", function(...) return mod.on_creature_performed_technique(...) end)
+game.add_hook("on_creature_melee_attacked", function(...) return mod.on_creature_melee_attacked(...) end)
 ```
 
 ```lua

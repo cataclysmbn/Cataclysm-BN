@@ -9442,13 +9442,18 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     }
     u.set_underwater( false );
 
-    if( !cata::run_hooks( "on_character_try_move", [ &, this]( sol::table & params ) {
-    params["char"] = &u;
+    const auto hook_results = cata::run_hooks(
+                                  "on_character_try_move",
+    [ &, this]( sol::table & params ) {
+        params["char"] = &u;
         params["from"] = u.pos();
         params["to"] = dest_loc;
         params["movement_mode"] = u.get_movement_mode();
         params["via_ramp"] = via_ramp;
-    }, true ) ) {
+    },
+    cata::hook_opts{ .exit_early = true } );
+    const auto can_move = hook_results.get_or( "allowed", true );
+    if( !can_move ) {
         return false;
     }
 

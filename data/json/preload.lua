@@ -9,4 +9,4 @@ game.iuse_functions["VOLTMETER"] = function(...) return mod.voltmeter.menu(...) 
 
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...) return mod.on_nyctophobia_tick(...) end)
 
-table.insert(game.hooks.on_character_try_move, function(...) return mod.on_character_try_move(...) end)
+game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)
