@@ -11,6 +11,7 @@ import { autoId } from "./plugins/auto_id.ts"
 import { translationFallback } from "./plugins/translation_fallback.ts"
 import "./plugins/prism.ts"
 import { languages } from "./plugins/languages.ts"
+import { warn_outdated_translations } from "./plugins/warn_outdated_translations.ts"
 
 const site = lume()
 
@@ -20,6 +21,7 @@ site
   .use(autoId({ languages }))
   .use(wiki({ languages }))
   .use(translationFallback({ languages }))
+  .use(warn_outdated_translations({ languages, source_language: "en" }))
   .use(redirects())
   .use(date({
     locales: { ko },
