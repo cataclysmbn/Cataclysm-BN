@@ -32,6 +32,7 @@ jobs:
             docs
 
       - name: Download Lua reference/annotations from latest main build
+        working-directory: .
         id: download-lua-docs
         env:
           GH_TOKEN: ${{ github.token }}
@@ -60,6 +61,7 @@ jobs:
           fi
 
       - name: Summary of Lua docs download
+        working-directory: .
         if: steps.download-lua-docs.outputs.downloaded == 'true'
         run: |
           echo "## 📥 Lua Documentation Downloaded" >> $GITHUB_STEP_SUMMARY
