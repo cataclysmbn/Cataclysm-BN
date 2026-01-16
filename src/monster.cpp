@@ -2033,10 +2033,13 @@ void monster::melee_attack( Creature &target, float accuracy )
 
     target.check_dead_state();
 
-    cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
-        params["char"] = this;
-        params["target"] = &target;
-        params["success"] = attack_success;
+    cata::run_hooks( "on_creature_melee_attacked", {
+        .init = [ &, this]( auto & params )
+        {
+            params["char"] = this;
+            params["target"] = &target;
+            params["success"] = attack_success;
+        },
     } );
 
     if( is_hallucination() ) {
@@ -2960,9 +2963,12 @@ void monster::die( Creature *nkiller )
             }
         }
     }
-    cata::run_hooks( "on_mon_death", [ &, this]( auto & params ) {
-        params["mon"] = this;
-        params["killer"] = get_killer();
+    cata::run_hooks( "on_mon_death", {
+        .init = [ &, this]( auto & params )
+        {
+            params["mon"] = this;
+            params["killer"] = get_killer();
+        },
     } );
 }
 
@@ -3107,16 +3113,22 @@ void monster::process_one_effect( effect &it, bool is_new )
     }
 
     if( is_new && it.has_flag( flag_EFFECT_LUA_ON_ADDED ) ) {
-        cata::run_hooks( "on_mon_effect_added", [ &, this ]( auto & params ) {
-            params["mon"] = this;
-            params["effect"] = &it;
+        cata::run_hooks( "on_mon_effect_added", {
+            .init = [ &, this ]( auto & params )
+            {
+                params["mon"] = this;
+                params["effect"] = &it;
+            },
         } );
     }
 
     if( it.has_flag( flag_EFFECT_LUA_ON_TICK ) ) {
-        cata::run_hooks( "on_mon_effect", [ &, this ]( auto & params ) {
-            params["mon"] = this;
-            params["effect"] = &it;
+        cata::run_hooks( "on_mon_effect", {
+            .init = [ &, this ]( auto & params )
+            {
+                params["mon"] = this;
+                params["effect"] = &it;
+            },
         } );
     }
 }

@@ -2,7 +2,10 @@
 
 #include "debug.h"
 
+#include <algorithm>
 #include <clocale>
+#include <optional>
+#include <ranges>
 
 constexpr int LUA_API_VERSION = 2;
 
@@ -283,51 +286,78 @@ void run_mod_main_script( lua_state &state, const mod_id &mod )
     run_lua_script( state.lua, script_path );
 }
 
-auto run_hooks( std::string_view hook_name ) -> bool
+namespace lua_hooks_detail
 {
-    lua_state &state = *DynamicDataLoader::get_instance().lua;
-    return run_hooks( state, hook_name, []( sol::table & ) {}, false );
-}
-auto run_hooks( lua_state &state, std::string_view hook_name ) -> bool
+
+auto run_hooks( std::string_view hook_name, const hook_opts &opts,
+                const std::function < auto( const sol::object &res ) -> bool > &on_result ) -> bool
 {
-    return run_hooks( state, hook_name, []( sol::table & ) {}, false );
-}
-auto run_hooks( std::string_view hook_name,
-                std::function < auto( sol::table &params ) -> void > init,
-                bool default_result ) -> bool
-{
-    lua_state &state = *DynamicDataLoader::get_instance().lua;
-    return run_hooks( state, hook_name, init, default_result );
-}
-auto run_hooks( lua_state &state, std::string_view hook_name,
-                std::function < auto( sol::table &params ) -> void > init,
-                bool default_result ) -> bool
-{
+    lua_state &state = opts.state != nullptr ? *opts.state : *DynamicDataLoader::get_instance().lua;
     sol::state &lua = state.lua;
-    sol::table hooks = lua.globals()["game"]["hooks"][hook_name];
+
+    auto maybe_hooks = lua.globals()["game"]["hooks"][hook_name].get<sol::optional<sol::table>>();
+    if( !maybe_hooks ) {
+        return false;
+    }
+
+    sol::table hooks = *maybe_hooks;
 
     auto params = lua.create_table();
-    init( params );
+    if( opts.init ) {
+        opts.init( params );
+    }
 
-    for( auto &ref : hooks ) {
-        int idx = -1;
-        try {
-            idx = ref.first.as<int>();
-            sol::protected_function func = ref.second;
-            sol::protected_function_result res = func( params );
+    auto error = std::optional<std::string> {};
+    auto error_idx = -1;
+
+    const auto stopped = std::ranges::any_of( hooks, [&]( const auto & ref ) -> bool {
+        auto idx = -1;
+        try
+        {
+            idx = ref.first.template as<int>();
+            auto func = ref.second.template as<sol::protected_function>();
+            auto res = func( params );
             check_func_result( res );
             if( res.valid() ) {
-                auto result = res.get<sol::object>();
-                if( result.is<bool>() && !result.as<bool>() ) {
-                    return false;
-                }
+                auto result = res.template get<sol::object>();
+                return on_result( result );
             }
-        } catch( std::runtime_error &e ) {
-            debugmsg( "Failed to run hook %s[%d]: %s", hook_name, idx, e.what() );
-            return default_result;
+        } catch( const std::runtime_error &e )
+        {
+            error = e.what();
+            error_idx = idx;
+            return true;
         }
+        return false;
+    } );
+
+    if( error ) {
+        debugmsg( "Failed to run hook %s[%d]: %s", hook_name, error_idx, error->c_str() );
+        return true;
     }
-    return default_result;
+
+    return stopped;
+}
+
+} // namespace lua_hooks_detail
+
+auto run_hooks( std::string_view hook_name, hook_opts opts ) -> std::optional<bool>
+{
+    auto vetoed = false;
+    lua_hooks_detail::run_hooks( hook_name, opts, [&]( const sol::object & res ) -> bool {
+        if( res.is<bool>() && !res.as<bool>() )
+        {
+            vetoed = true;
+            return true;
+        }
+        return false;
+    } );
+
+    if( vetoed ) {
+        return false;
+    }
+
+    return std::nullopt;
 }
 
 
@@ -422,21 +452,25 @@ void lua_state_deleter::operator()( lua_state *state ) const
 
 void run_on_game_save_hooks( lua_state &state )
 {
-    run_hooks( state, "on_game_save" );
+    run_hooks( "on_game_save", { .state = &state } );
 }
 
 void run_on_game_load_hooks( lua_state &state )
 {
-    run_hooks( state, "on_game_load" );
+    run_hooks( "on_game_load", { .state = &state } );
 }
 
 void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &p,
                                       const time_point &when )
 {
-    run_hooks( state, "on_mapgen_postprocess", [&]( sol::table & params ) {
-        params["map"] = &m;
-        params["omt"] = p;
-        params["when"] = when;
+    run_hooks( "on_mapgen_postprocess", {
+        .state = &state,
+        .init = [&]( sol::table & params )
+        {
+            params["map"] = &m;
+            params["omt"] = p;
+            params["when"] = when;
+        },
     } );
 }
 
