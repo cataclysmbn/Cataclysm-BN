@@ -1122,7 +1122,7 @@ bool avatar::is_dead_state() const
 
     if( Character::is_dead_state() ) {
         auto &state = *DynamicDataLoader::get_instance().lua;;
-        cata::run_hooks( "on_character_death", { .state = &state } );
+        cata::run_hooks( "on_character_death", nullptr, { .state = &state } );
         cached_dead_state.reset();
     }
 

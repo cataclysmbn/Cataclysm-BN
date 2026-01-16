@@ -1547,14 +1547,11 @@ void explosion_funcs::regular( const queued_explosion &qe )
     const explosion_data &ex = qe.exp_data;
     auto &shr = ex.fragment;
 
-    cata::run_hooks( "on_explosion_start", {
-        .init = [&]( sol::table & params )
-        {
-            params["pos"] = p;
-            params["damage"] = ex.damage;
-            params["radius"] = static_cast<int>( ex.radius );
-            params["fire"] = ex.fire;
-        },
+    cata::run_hooks( "on_explosion_start", [&]( sol::table & params ) {
+        params["pos"] = p;
+        params["damage"] = ex.damage;
+        params["radius"] = static_cast<int>( ex.radius );
+        params["fire"] = ex.fire;
     } );
 
     int base_noise = ex.damage;

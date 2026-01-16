@@ -1242,13 +1242,10 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
 
 void Creature::on_dodge( Creature *source, int difficulty )
 {
-    cata::run_hooks( "on_creature_dodged", {
-        .init = [ &, this]( auto & params )
-        {
-            params["char"] = this;
-            params["source"] = source;
-            params["difficulty"] = difficulty;
-        },
+    cata::run_hooks( "on_creature_dodged", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["source"] = source;
+        params["difficulty"] = difficulty;
     } );
 }
 
@@ -1461,20 +1458,14 @@ bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &b
 
     if( type.has_flag( flag_EFFECT_LUA_ON_REMOVED ) ) {
         if( ch != nullptr ) {
-            cata::run_hooks( "on_character_effect_removed", {
-                .init = [ & ]( auto & params )
-                {
-                    params["character"] = ch;
-                    params["effect"] = get_effect( eff_id );
-                },
+            cata::run_hooks( "on_character_effect_removed", [ & ]( auto & params ) {
+                params["character"] = ch;
+                params["effect"] = get_effect( eff_id );
             } );
         } else {
-            cata::run_hooks( "on_mon_effect_removed", {
-                .init = [ &, this ]( auto & params )
-                {
-                    params["mon"] = this;
-                    params["effect"] = get_effect( eff_id );
-                },
+            cata::run_hooks( "on_mon_effect_removed", [ &, this ]( auto & params ) {
+                params["mon"] = this;
+                params["effect"] = get_effect( eff_id );
             } );
         }
     }

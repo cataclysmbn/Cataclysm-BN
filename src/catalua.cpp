@@ -290,6 +290,7 @@ namespace lua_hooks_detail
 {
 
 auto run_hooks( std::string_view hook_name, const hook_opts &opts,
+                const std::function < auto( sol::table &params ) -> void > &init,
                 const std::function < auto( const sol::object &res ) -> bool > &on_result ) -> bool
 {
     lua_state &state = opts.state != nullptr ? *opts.state : *DynamicDataLoader::get_instance().lua;
@@ -303,8 +304,8 @@ auto run_hooks( std::string_view hook_name, const hook_opts &opts,
     sol::table hooks = *maybe_hooks;
 
     auto params = lua.create_table();
-    if( opts.init ) {
-        opts.init( params );
+    if( init ) {
+        init( params );
     }
 
     auto error = std::optional<std::string> {};
@@ -341,10 +342,12 @@ auto run_hooks( std::string_view hook_name, const hook_opts &opts,
 
 } // namespace lua_hooks_detail
 
-auto run_hooks( std::string_view hook_name, hook_opts opts ) -> std::optional<bool>
+auto run_hooks( std::string_view hook_name,
+                std::function < auto( sol::table &params ) -> void > init,
+                hook_opts opts ) -> std::optional<bool>
 {
     auto vetoed = false;
-    lua_hooks_detail::run_hooks( hook_name, opts, [&]( const sol::object & res ) -> bool {
+    lua_hooks_detail::run_hooks( hook_name, opts, init, [&]( const sol::object & res ) -> bool {
         if( res.is<bool>() && !res.as<bool>() )
         {
             vetoed = true;
@@ -452,26 +455,22 @@ void lua_state_deleter::operator()( lua_state *state ) const
 
 void run_on_game_save_hooks( lua_state &state )
 {
-    run_hooks( "on_game_save", { .state = &state } );
+    run_hooks( "on_game_save", nullptr, { .state = &state } );
 }
 
 void run_on_game_load_hooks( lua_state &state )
 {
-    run_hooks( "on_game_load", { .state = &state } );
+    run_hooks( "on_game_load", nullptr, { .state = &state } );
 }
 
 void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &p,
                                       const time_point &when )
 {
-    run_hooks( "on_mapgen_postprocess", {
-        .state = &state,
-        .init = [&]( sol::table & params )
-        {
-            params["map"] = &m;
-            params["omt"] = p;
-            params["when"] = when;
-        },
-    } );
+    run_hooks( "on_mapgen_postprocess", [&]( sol::table & params ) {
+        params["map"] = &m;
+        params["omt"] = p;
+        params["when"] = when;
+    }, { .state = &state } );
 }
 
 } // namespace cata

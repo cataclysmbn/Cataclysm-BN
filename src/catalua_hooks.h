@@ -13,12 +13,12 @@ struct lua_state;
 
 struct hook_opts {
     lua_state *state = nullptr;
-    std::function < auto( sol::table &params ) -> void > init = nullptr;
 };
 
 namespace lua_hooks_detail
 {
 auto run_hooks( std::string_view hook_name, const hook_opts &opts,
+                const std::function < auto( sol::table &params ) -> void > &init,
                 const std::function < auto( const sol::object &res ) -> bool > &on_result ) -> bool;
 } // namespace lua_hooks_detail
 
@@ -28,7 +28,9 @@ auto run_hooks( std::string_view hook_name, const hook_opts &opts,
 /// Hook return values are interpreted as "veto" results:
 /// - If any hook returns a boolean false, the result will be `false`.
 /// - If no hook returns a boolean false, the result will be `std::nullopt`.
-auto run_hooks( std::string_view hook_name, hook_opts opts = {} ) -> std::optional<bool>;
+auto run_hooks( std::string_view hook_name,
+                std::function < auto( sol::table &params ) -> void > init = nullptr,
+hook_opts opts = {} ) -> std::optional<bool>;
 
 /// Define all hooks that are used in the game.
 void define_hooks( lua_state &state );

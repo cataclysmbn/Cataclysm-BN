@@ -681,13 +681,10 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         t.as_character()->on_hit( this, bodypart_str_id::NULL_ID().id(), &dp );
     }
 
-    cata::run_hooks( "on_creature_melee_attacked", {
-        .init = [ &, this]( auto & params )
-        {
-            params["char"] = this;
-            params["target"] = &t;
-            params["success"] = attack_hit;
-        },
+    cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["target"] = &t;
+        params["success"] = attack_hit;
     } );
 
 }
@@ -1653,15 +1650,12 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         }
     }
 
-    cata::run_hooks( "on_creature_performed_technique", {
-        .init = [ &, this]( auto & params )
-        {
-            params["char"] = this;
-            params["technique"] = &technique;
-            params["target"] = &t;
-            params["damage_instance"] = &di;
-            params["move_cost"] = move_cost;
-        },
+    cata::run_hooks( "on_creature_performed_technique", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["technique"] = &technique;
+        params["target"] = &t;
+        params["damage_instance"] = &di;
+        params["move_cost"] = move_cost;
     } );
 }
 
@@ -1948,15 +1942,12 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
         }
     }
 
-    cata::run_hooks( "on_creature_blocked", {
-        .init = [ &, this]( auto & params )
-        {
-            params["char"] = this;
-            params["source"] = source;
-            params["bodypart_id"] = bp_hit;
-            params["damage_instance"] = dam;
-            params["damage_blocked"] = damage_blocked;
-        },
+    cata::run_hooks( "on_creature_blocked", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["source"] = source;
+        params["bodypart_id"] = bp_hit;
+        params["damage_instance"] = dam;
+        params["damage_blocked"] = damage_blocked;
     } );
 
     return true;

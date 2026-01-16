@@ -4204,12 +4204,9 @@ void Character::die( Creature *nkiller )
     }
     mission::on_creature_death( *this );
 
-    cata::run_hooks( "on_character_death", {
-        .init = [ &, this]( auto & params )
-        {
-            params["char"] = this;
-            params["killer"] = get_killer();
-        },
+    cata::run_hooks( "on_character_death", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["killer"] = get_killer();
     } );
 }
 
@@ -9157,13 +9154,10 @@ void Character::on_dodge( Creature *source, int difficulty )
             }
         }
     }
-    cata::run_hooks( "on_creature_dodged", {
-        .init = [ &, this]( auto & params )
-        {
-            params["char"] = this;
-            params["source"] = source;
-            params["difficulty"] = difficulty;
-        },
+    cata::run_hooks( "on_creature_dodged", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["source"] = source;
+        params["difficulty"] = difficulty;
     } );
 }
 
