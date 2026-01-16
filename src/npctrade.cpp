@@ -555,7 +555,29 @@ void trading_window::update_win( npc &np, const std::string &deal )
                        align_left( weight_str, weight_w ) );
             mvwprintz( w_whose, point( vol_x, row_y ), line_color,
                        align_left( vol_str, vol_w ) );
-            mvwprintz( w_whose, point( price_x, row_y ), line_color,
+            auto price_color = c_light_gray;
+            if( !np.will_exchange_items_freely() ) {
+                const auto base_price = it->price( true );
+                if( base_price > 0 ) {
+                    const auto ratio = ip.price / base_price;
+                    const auto neutral_low = 0.95;
+                    const auto neutral_high = 1.05;
+                    if( ratio < neutral_low ) {
+                        price_color = they ? c_light_green : c_light_red;
+                    } else if( ratio > neutral_high ) {
+                        price_color = they ? c_light_red : c_light_green;
+                    } else {
+                        price_color = c_light_gray;
+                    }
+                }
+            } else {
+                price_color = c_dark_gray;
+                price_str.clear();
+            }
+            if( is_cursor ) {
+                price_color = hilite( price_color );
+            }
+            mvwprintz( w_whose, point( price_x, row_y ), price_color,
                        align_left( price_str, price_w ) );
             last_category = category_id;
             row++;
