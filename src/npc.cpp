@@ -2629,32 +2629,32 @@ void npc::die( Creature *nkiller )
 
 void npc::erase()
 {
-    if (dead) {
+    if( dead ) {
         return;
     }
-    if (in_vehicle) {
-        g->m.unboard_vehicle(pos(), true);
+    if( in_vehicle ) {
+        g->m.unboard_vehicle( pos(), true );
     }
-    if (is_mounted()) {
-        monster* critter = mounted_creature.get();
-        critter->remove_effect(effect_ridden);
+    if( is_mounted() ) {
+        monster *critter = mounted_creature.get();
+        critter->remove_effect( effect_ridden );
         critter->mounted_player = nullptr;
         critter->mounted_player_id = character_id();
     }
-    if (my_fac) {
-        if (!is_fake() && !is_hallucination()) {
-            if (my_fac->members.size() == 1) {
-                for (auto elem : inv_dump()) {
+    if( my_fac ) {
+        if( !is_fake() && !is_hallucination() ) {
+            if( my_fac->members.size() == 1 ) {
+                for( auto elem : inv_dump() ) {
                     elem->remove_owner();
                     elem->remove_old_owner();
                 }
             }
-            my_fac->remove_member(getID());
+            my_fac->remove_member( getID() );
         }
     }
     dead = true;
-    g->remove_npc_follower(getID());
-    overmap_buffer.remove_npc(getID());
+    g->remove_npc_follower( getID() );
+    overmap_buffer.remove_npc( getID() );
     g->cleanup_dead();
 }
 
