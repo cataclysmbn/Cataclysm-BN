@@ -51,6 +51,10 @@ cataclysmdda-*
 debug.log
 logg.txt
 
+# Generated Lua docs (see `deno task docs:gen`)
+/docs/en/mod/lua/reference/lua.md
+/lua_annotations.lua
+
 # Visual Studio files
 *.code-workspace
 *.ilk

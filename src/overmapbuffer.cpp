@@ -186,6 +186,33 @@ void overmapbuffer::fix_mongroups( overmap &new_overmap )
     }
 }
 
+void overmapbuffer::fix_nemesis( overmap &new_overmap )
+{
+    for( auto it = new_overmap.zg.begin(); it != new_overmap.zg.end(); ) {
+        mongroup &mg = it->second;
+
+        if( mg.horde_behaviour != "nemesis" ) {
+            ++it;
+            continue;
+        }
+
+        if( project_to<coords::om>( mg.abs_pos.xy() ) == new_overmap.pos() ) {
+            ++it;
+            continue;
+        }
+
+        point_abs_om omp;
+        point_om_sm sm_rem;
+        std::tie( omp, sm_rem ) = project_remain<coords::om>( mg.abs_pos.xy() );
+
+        overmap &om = get( omp );
+        mg.pos = tripoint_om_sm( sm_rem, mg.pos.z() );
+        om.add_mon_group( mg );
+        new_overmap.zg.erase( it++ );
+        break;
+    }
+}
+
 void overmapbuffer::fix_npcs( overmap &new_overmap )
 {
     // First step: move all npcs that are located outside of the given overmap
@@ -543,6 +570,13 @@ void overmapbuffer::signal_hordes( const tripoint_abs_sm &center, const int sig_
     }
 }
 
+void overmapbuffer::signal_nemesis( const tripoint_abs_sm p )
+{
+    for( std::pair<const point_abs_om, std::unique_ptr<overmap>> &omp : overmaps ) {
+        omp.second->signal_nemesis( p );
+    }
+}
+
 void overmapbuffer::process_mongroups()
 {
     ZoneScoped;
@@ -565,6 +599,31 @@ void overmapbuffer::move_hordes()
     const tripoint_abs_sm center( get_player_character().global_sm_location() );
     for( auto &om : get_overmaps_near( center, radius ) ) {
         om->move_hordes();
+    }
+}
+
+void overmapbuffer::add_nemesis( const tripoint_abs_omt &p )
+{
+    const tripoint_abs_om loc = project_to<coords::om>( p );
+    overmap &om = get( loc.xy() );
+    om.place_nemesis( p );
+}
+
+void overmapbuffer::move_nemesis()
+{
+    for( std::pair<const point_abs_om, std::unique_ptr<overmap>> &omp : overmaps ) {
+        omp.second->move_nemesis();
+        fix_nemesis( *omp.second );
+    }
+}
+
+void overmapbuffer::remove_nemesis()
+{
+    for( std::pair<const point_abs_om, std::unique_ptr<overmap>> &omp : overmaps ) {
+        const bool nemesis_removed = omp.second->remove_nemesis();
+        if( nemesis_removed ) {
+            break;
+        }
     }
 }
 
@@ -1736,7 +1795,12 @@ void overmapbuffer::despawn_monster( const monster &critter )
     std::tie( omp, sm ) = project_remain<coords::om>( abs_sm );
     overmap &om = get( omp );
     // Store the monster using coordinates local to the overmap.
-    om.monster_map->insert( std::make_pair( sm, critter ) );
+    if( critter.is_nemesis() ) {
+        tripoint_abs_omt abs_omt( ms_to_omt_copy( get_map().getabs( critter.pos() ) ) );
+        om.place_nemesis( abs_omt );
+    } else {
+        om.monster_map->insert( std::make_pair( sm, critter ) );
+    }
 }
 
 overmapbuffer::t_notes_vector overmapbuffer::get_notes( int z, const std::string *pattern )

@@ -80,6 +80,7 @@
 static const activity_id ACT_TRAVELLING( "ACT_TRAVELLING" );
 
 static const mongroup_id GROUP_FOREST( "GROUP_FOREST" );
+static const mongroup_id GROUP_NEMESIS( "GROUP_NEMESIS" );
 
 static const trait_id trait_DEBUG_NIGHTVISION( "DEBUG_NIGHTVISION" );
 
@@ -1093,6 +1094,12 @@ static void draw_ascii( ui_adaptor &ui,
                         if( mgp->type == GROUP_FOREST ) {
                             // Don't flood the map with forest creatures.
                             continue;
+                        }
+                        if( mgp->type == GROUP_NEMESIS ) {
+                            // Nemesis horde shows as &
+                            ter_sym = "&";
+                            ter_color = c_red;
+                            break;
                         }
                         if( mgp->horde ) {
                             // Hordes show as +

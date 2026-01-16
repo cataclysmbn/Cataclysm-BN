@@ -128,6 +128,22 @@ void mission_start::kill_horde_master( mission *miss )
     tile.save();
 }
 
+void mission_start::kill_nemesis( mission * )
+{
+    const tripoint_abs_omt center = get_player_character().global_omt_location();
+    omt_find_params params{};
+    params.types.emplace_back( "field", ot_match_type::type );
+    params.search_range = { 0, rng( 40, 80 ) };
+    params.search_layers = omt_find_above_ground_layer;
+
+    const tripoint_abs_omt site = overmap_buffer.find_random( center, params );
+    if( site == overmap::invalid_tripoint ) {
+        return;
+    }
+
+    overmap_buffer.add_nemesis( site );
+}
+
 /*
  * Find a location to place a computer.  In order, prefer:
  * 1) Broken consoles.
