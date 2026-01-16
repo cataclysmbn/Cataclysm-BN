@@ -347,21 +347,24 @@ void trading_window::update_win( npc &np, const std::string &deal )
     mvwprintz( w_you,  point( 2 + utf8_width( _( "Inventory:" ) ) + 1, 1 ), c_light_green,
                _( "You" ) );
 
-    const auto selected_amount = []( const item_pricing &ip, bool is_theirs ) -> int {
-        if( ip.charges > 0 ) {
+    const auto selected_amount = []( const item_pricing & ip, bool is_theirs ) -> int {
+        if( ip.charges > 0 )
+        {
             return is_theirs ? ip.u_charges : ip.npc_charges;
         }
         return is_theirs ? ip.u_has : ip.npc_has;
     };
     const auto sum_selected = [&]( const std::vector<item_pricing> &list,
-                                   bool is_theirs ) -> selection_totals {
-        return std::ranges::fold_left( list | std::views::transform( [&]( const item_pricing &ip ) {
+    bool is_theirs ) -> selection_totals {
+        return std::ranges::fold_left( list | std::views::transform( [&]( const item_pricing & ip )
+        {
             const auto amount = selected_amount( ip, is_theirs );
             return selection_totals{ .volume = ip.vol * amount, .weight = ip.weight * amount };
         } ), selection_totals{},
-        []( const selection_totals &acc, const selection_totals &value ) -> selection_totals {
-            return selection_totals{ .volume = acc.volume + value.volume,
-                                     .weight = acc.weight + value.weight };
+        []( const selection_totals & acc, const selection_totals & value ) -> selection_totals {
+            return selection_totals{
+                .volume = acc.volume + value.volume,
+                .weight = acc.weight + value.weight };
         } );
     };
     const auto your_selected = sum_selected( yours, false );
@@ -384,12 +387,14 @@ void trading_window::update_win( npc &np, const std::string &deal )
         win_w -= 2;
         const auto end = std::min( list.size(), offset + entries_per_page );
         const auto visible = std::views::iota( offset, end );
-        const auto calc_amount = [&]( const item_pricing &ip, int owner_sells,
-                                      int owner_sells_charge ) -> int {
+        const auto calc_amount = [&]( const item_pricing & ip, int owner_sells,
+        int owner_sells_charge ) -> int {
             auto amount = ip.charges > 0 ? ip.charges : 1;
-            if( ip.charges > 0 && owner_sells_charge > 0 ) {
+            if( ip.charges > 0 && owner_sells_charge > 0 )
+            {
                 amount = owner_sells_charge;
-            } else if( owner_sells > 0 ) {
+            } else if( owner_sells > 0 )
+            {
                 amount = owner_sells;
             }
             return amount;
@@ -437,7 +442,7 @@ void trading_window::update_win( npc &np, const std::string &deal )
         vol_w = std::max( vol_w, utf8_width( vol_label ) );
         weight_w = std::max( weight_w, utf8_width( weight_label ) );
         price_w = std::max( price_w, utf8_width( price_label ) );
-        const auto align_left = [&]( const std::string &text, int width ) -> std::string {
+        const auto align_left = [&]( const std::string & text, int width ) -> std::string {
             const auto pad = std::max( width - utf8_width( text ), 0 );
             return text + std::string( pad, ' ' );
         };
@@ -459,12 +464,12 @@ void trading_window::update_win( npc &np, const std::string &deal )
         const auto pane_used_volume = pane_max_volume - pane_free_volume;
         const auto pane_used_weight = pane_max_weight - pane_free_weight;
         const auto weight_used_str = string_format( "%.2f",
-                                                    convert_weight( pane_used_weight ) );
+                                     convert_weight( pane_used_weight ) );
         const auto weight_max_str = string_format( "%.2f",
-                                                   convert_weight( pane_max_weight ) );
+                                    convert_weight( pane_max_weight ) );
         const auto weight_str = string_format( _( "/%s %s" ), weight_max_str, weight_units() );
         const auto vol_used_str = string_format( "%.2f",
-                                                 convert_volume( to_milliliter( pane_used_volume ) ) );
+                                  convert_volume( to_milliliter( pane_used_volume ) ) );
         const auto vol_max_str = string_format( "%.2f",
                                                 convert_volume( to_milliliter( pane_max_volume ) ) );
         const auto vol_str = string_format( _( "/%s %s" ), vol_max_str, volume_units_abbr() );
@@ -708,40 +713,47 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
 
     const auto clamp_cursor_to_list = [&]( const std::vector<item_pricing> &list,
                                            size_t &cursor,
-                                           size_t &offset ) -> void {
-        if( entries_per_page == 0 ) {
+    size_t &offset ) -> void {
+        if( entries_per_page == 0 )
+        {
             cursor = list.empty() ? 0 : std::min( cursor, list.size() - 1 );
             offset = 0;
             return;
         }
-        if( list.empty() ) {
+        if( list.empty() )
+        {
             cursor = 0;
             offset = 0;
             return;
         }
         cursor = std::min( cursor, list.size() - 1 );
-        if( list.size() <= entries_per_page ) {
+        if( list.size() <= entries_per_page )
+        {
             offset = 0;
             return;
         }
-        if( cursor < offset ) {
+        if( cursor < offset )
+        {
             offset = cursor;
-        } else if( cursor >= offset + entries_per_page ) {
+        } else if( cursor >= offset + entries_per_page )
+        {
             offset = cursor - entries_per_page + 1;
         }
-        if( offset + entries_per_page > list.size() ) {
+        if( offset + entries_per_page > list.size() )
+        {
             offset = list.size() - entries_per_page;
         }
     };
 
-    const auto apply_trade_change = [&]( item_pricing &ip, int new_amount ) -> void {
+    const auto apply_trade_change = [&]( item_pricing & ip, int new_amount ) -> void {
         auto &owner_sells = focus_them ? ip.u_has : ip.npc_has;
         auto &owner_sells_charge = focus_them ? ip.u_charges : ip.npc_charges;
         const auto has_charges = ip.charges > 0;
-        auto *current_amount = has_charges ? &owner_sells_charge : &owner_sells;
+        auto *current_amount = has_charges ? &owner_sells_charge :&owner_sells;
         const auto max_amount = has_charges ? ip.charges : std::max( ip.count, 1 );
         const auto clamped_amount = std::clamp( new_amount, 0, max_amount );
-        if( clamped_amount == *current_amount ) {
+        if( clamped_amount == *current_amount )
+        {
             return;
         }
         const auto delta_amount = clamped_amount - *current_amount;
@@ -750,10 +762,12 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
 
         const auto signed_amount = focus_them ? delta_amount : -delta_amount;
         const auto delta_price = static_cast<int>( ip.price * signed_amount );
-        if( !np.will_exchange_items_freely() ) {
+        if( !np.will_exchange_items_freely() )
+        {
             your_balance -= delta_price;
         }
-        if( ip.locs.front()->where() == item_location_type::character ) {
+        if( ip.locs.front()->where() == item_location_type::character )
+        {
             volume_left += ip.vol * signed_amount;
             weight_left += ip.weight * signed_amount;
         }
