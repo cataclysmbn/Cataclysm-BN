@@ -419,5 +419,15 @@
     "type": "morale_type",
     "text": "Debug Morale",
     "permanent": true
+  },
+  {
+    "id": "morale_sunrise",
+    "type": "morale_type",
+    "text": "Watched the Sunrise"
+  },
+  {
+    "id": "morale_sunset",
+    "type": "morale_type",
+    "text": "Watched the Sunset"
   }
 ]
