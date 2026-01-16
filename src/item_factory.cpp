@@ -1091,6 +1091,8 @@ void Item_factory::init()
     add_actor( std::make_unique<unpack_actor>() );
     add_actor( std::make_unique<countdown_actor>() );
     add_actor( std::make_unique<manualnoise_actor>() );
+    add_actor( std::make_unique<radio_signal_actor>() );
+    add_actor( std::make_unique<remoteveh_actor>() );
     add_actor( std::make_unique<musical_instrument_actor>() );
     add_actor( std::make_unique<deploy_furn_actor>() );
     add_actor( std::make_unique<place_monster_iuse>() );

@@ -37,7 +37,17 @@
     "charges_per_use": 1,
     "turns_per_charge": 5,
     "proportional": { "weight": 0.21, "volume": 0.25, "price": 0.2 },
-    "use_action": "RADIOCONTROL",
+    "use_action": [
+      { "type": "REMOTEVEH", "advanced": false },
+      {
+        "type": "radio_signal",
+        "signals": [
+          { "signal": 1, "menu_text": "Press red button" },
+          { "signal": 2, "menu_text": "Press blue button" },
+          { "signal": 3, "menu_text": "Press green button" }
+        ]
+      }
+    ],
     "magazines": [
       [
         "battery",
@@ -192,7 +202,7 @@
     "ammo": "battery",
     "charges_per_use": 1,
     "turns_per_charge": 10,
-    "use_action": "REMOTEVEH",
+    "use_action": { "type": "REMOTEVEH", "advanced": true },
     "magazines": [
       [
         "battery",
