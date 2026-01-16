@@ -1509,6 +1509,10 @@ class vehicle
         //mark engine as on or off
         void toggle_specific_engine( int e, bool on );
         void toggle_specific_part( int p, bool on );
+        // muscle engine validation
+        bool can_enable_muscle_engine( int e, std::string &failure_reason ) const;
+        bool has_muscle_engine_operator( int e ) const;
+        void validate_muscle_engines();
         //true if an engine exists with specified type
         //If enabled true, this engine must be enabled to return true
         bool has_engine_type( const itype_id &ft, bool enabled ) const;
