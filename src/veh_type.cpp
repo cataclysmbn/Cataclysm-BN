@@ -112,6 +112,10 @@ static const std::unordered_map<std::string, vpart_bitflags> vpart_bitflag_map =
     { "WING", VPFLAG_WING },
     { "PROPELLER", VPFLAG_PROPELLER },
     { "EXTENDABLE", VPFLAG_EXTENDABLE },
+    { "NOCOLLIDE", VPFLAG_NOCOLLIDE },
+    { "NOCOLLIDEABOVE", VPFLAG_NOCOLLIDEABOVE },
+    { "NOCOLLIDEBELOW", VPFLAG_NOCOLLIDEBELOW },
+    { "NOSMASH", VPFLAG_NOSMASH },
     { "NOFIELDS", VPFLAG_NOFIELDS },
     { "DROPPER", VPFLAG_DROPPER }
 };
@@ -756,6 +760,14 @@ void vpart_info::check()
         }
         if( part.has_flag( VPFLAG_ENABLED_DRAINS_EPOWER ) && part.epower == 0 ) {
             debugmsg( "%s is set to drain epower, but has epower == 0", part.id.c_str() );
+        }
+        if( part.has_flag( VPFLAG_NOCOLLIDEABOVE ) && !part.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            debugmsg( "%s has flag NOCOLLIDEABOVE, but does not have the prerequisite flag NOCOLLIDE",
+                      part.id.c_str() );
+        }
+        if( part.has_flag( VPFLAG_NOCOLLIDEBELOW ) && !part.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            debugmsg( "%s has flag NOCOLLIDEBELOW, but does not have the prerequisite flag NOCOLLIDE",
+                      part.id.c_str() );
         }
         // Parts with non-zero epower must have a flag that affects epower usage
         static const std::vector<std::string> handled = {{

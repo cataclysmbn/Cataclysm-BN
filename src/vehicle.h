@@ -99,6 +99,7 @@ enum veh_coll_type : int {
     veh_coll_veh,      // 2 - vehicle
     veh_coll_bashable, // 3 - bashable
     veh_coll_other,    // 4 - other
+    veh_coll_veh_nocollide, // 5 - vehicle NOCOLLIDE
     num_veh_coll_types
 };
 
