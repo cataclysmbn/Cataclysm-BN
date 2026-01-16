@@ -981,6 +981,7 @@ class JsonObject
         double get_float( const std::string &name, double fallback ) const;
         std::string get_string( const std::string &name ) const;
         std::string get_string( const std::string &name, const std::string &fallback ) const;
+        std::optional<std::string> get_string_maybe( const std::string &name ) const;
 
         template<typename E>
         E get_enum_value( const std::string &name,
