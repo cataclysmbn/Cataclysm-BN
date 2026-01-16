@@ -28,6 +28,7 @@
 #include "skill.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "type_id.h"
 #include "ui_manager.h"
@@ -40,7 +41,7 @@ static const flag_id json_flag_NO_UNWIELD( "NO_UNWIELD" );
 
 namespace
 {
-constexpr auto trade_header_rows = 1;
+constexpr auto trade_header_rows = 2;
 } // namespace
 
 void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
@@ -268,11 +269,13 @@ void trading_window::update_win( npc &np, const std::string &deal )
         }
     }
 
-    bool npc_out_of_space = volume_left < 0_ml || weight_left < 0_gram;
-
     // Colors for hinting if the trade will be accepted or not.
     const nc_color trade_color       = npc_will_accept_trade( np ) ? c_green : c_red;
     const nc_color trade_color_light = npc_will_accept_trade( np ) ? c_light_green : c_light_red;
+    struct selection_totals {
+        units::volume volume = 0_ml;
+        units::mass weight = 0_gram;
+    };
 
     input_context ctxt( "NPC_TRADE" );
 
@@ -304,11 +307,6 @@ void trading_window::update_win( npc &np, const std::string &deal )
     }
     // End of line drawings
 
-    mvwprintz( w_head, point( 2, 3 ),  npc_out_of_space ?  c_red : c_green,
-               _( "Volume: %s %s, Weight: %.1f %s" ),
-               format_volume( volume_left ), volume_units_abbr(),
-               convert_weight( weight_left ), weight_units() );
-
     std::string cost_str = _( "Exchange" );
     if( !np.will_exchange_items_freely() ) {
         cost_str = string_format( your_balance >= 0 ? _( "Credit %s" ) : _( "Debt %s" ),
@@ -327,6 +325,30 @@ void trading_window::update_win( npc &np, const std::string &deal )
 
     mvwprintz( w_them, point( 2, 0 ), trade_color, np.name );
     mvwprintz( w_you,  point( 2, 0 ), trade_color, _( "You" ) );
+
+    const auto selected_amount = []( const item_pricing &ip, bool is_theirs ) -> int {
+        if( ip.charges > 0 ) {
+            return is_theirs ? ip.u_charges : ip.npc_charges;
+        }
+        return is_theirs ? ip.u_has : ip.npc_has;
+    };
+    const auto sum_selected = [&]( const std::vector<item_pricing> &list,
+                                   bool is_theirs ) -> selection_totals {
+        return std::ranges::fold_left( list | std::views::transform( [&]( const item_pricing &ip ) {
+            const auto amount = selected_amount( ip, is_theirs );
+            return selection_totals{ .volume = ip.vol * amount, .weight = ip.weight * amount };
+        } ), selection_totals{},
+        []( const selection_totals &acc, const selection_totals &value ) -> selection_totals {
+            return selection_totals{ .volume = acc.volume + value.volume,
+                                     .weight = acc.weight + value.weight };
+        } );
+    };
+    const auto your_selected = sum_selected( yours, false );
+    const auto their_selected = sum_selected( theirs, true );
+    const auto player_free_volume = g->u.volume_capacity() - g->u.volume_carried() +
+                                    your_selected.volume - their_selected.volume;
+    const auto player_free_weight = g->u.weight_capacity() - g->u.weight_carried() +
+                                    your_selected.weight - their_selected.weight;
 
     // Draw lists of items, starting from offset
     for( size_t whose = 0; whose <= 1; whose++ ) {
@@ -402,10 +424,45 @@ void trading_window::update_win( npc &np, const std::string &deal )
         const auto vol_x = price_x - 1 - vol_w;
         const auto weight_x = vol_x - 1 - weight_w;
         const auto qty_x = weight_x - 1 - qty_w;
-        const auto name_w = std::max( qty_x - 2, 1 );
-        const auto header_y = 1;
+        const auto name_indent = 2;
+        const auto name_x = 1 + name_indent;
+        const auto name_w = std::max( qty_x - 2 - name_indent, 1 );
+        const auto stats_y = 1;
+        const auto header_y = 2;
         const auto header_color = c_light_gray;
-        mvwprintz( w_whose, point( 5, header_y ), header_color,
+        const auto pane_free_volume = they ? volume_left : player_free_volume;
+        const auto pane_free_weight = they ? weight_left : player_free_weight;
+        const auto pane_max_volume = they ? np.volume_capacity() : g->u.volume_capacity();
+        const auto pane_max_weight = they ? np.weight_capacity() : g->u.weight_capacity();
+        const auto pane_used_volume = pane_max_volume - pane_free_volume;
+        const auto pane_used_weight = pane_max_weight - pane_free_weight;
+        const auto weight_used_str = string_format( "%.2f",
+                                                    convert_weight( pane_used_weight ) );
+        const auto weight_max_str = string_format( "%.2f",
+                                                   convert_weight( pane_max_weight ) );
+        const auto weight_str = string_format( _( "/%s %s" ), weight_max_str, weight_units() );
+        const auto vol_used_str = string_format( "%.2f",
+                                                 convert_volume( to_milliliter( pane_used_volume ) ) );
+        const auto vol_max_str = string_format( "%.2f",
+                                                convert_volume( to_milliliter( pane_max_volume ) ) );
+        const auto vol_str = string_format( _( "/%s %s" ), vol_max_str, volume_units_abbr() );
+        const auto weight_color = pane_used_weight > pane_max_weight ? c_light_red : c_light_green;
+        const auto vol_color = pane_used_volume > pane_max_volume ? c_light_red : c_light_green;
+        mvwprintz( w_whose, point( 1, stats_y ), header_color, std::string( win_w, ' ' ) );
+        const auto stats_width = utf8_width( weight_used_str ) +
+                                 utf8_width( weight_str ) + 2 +
+                                 utf8_width( vol_used_str ) +
+                                 utf8_width( vol_str );
+        auto x = std::max( win_w - stats_width, 1 );
+        mvwprintz( w_whose, point( x, stats_y ), weight_color, weight_used_str );
+        x += utf8_width( weight_used_str );
+        mvwprintz( w_whose, point( x, stats_y ), header_color, weight_str );
+        x += utf8_width( weight_str ) + 2;
+        mvwprintz( w_whose, point( x, stats_y ), vol_color, vol_used_str );
+        x += utf8_width( vol_used_str );
+        mvwprintz( w_whose, point( x, stats_y ), header_color, vol_str );
+        x += utf8_width( vol_str ) + 2;
+        mvwprintz( w_whose, point( name_x + 3, header_y ), header_color,
                    trim_by_length( _( "Name (charges)" ), name_w ) );
         mvwprintz( w_whose, point( qty_x, header_y ), header_color,
                    align_left( qty_label, qty_w ) );
@@ -415,13 +472,26 @@ void trading_window::update_win( npc &np, const std::string &deal )
                    align_left( vol_label, vol_w ) );
         mvwprintz( w_whose, point( price_x, header_y ), header_color,
                    align_left( price_label, price_w ) );
-        for( size_t i = offset; i < list.size() && i < entries_per_page + offset; i++ ) {
+        std::optional<item_category_id> last_category;
+        size_t row = 0;
+        for( size_t i = offset; i < list.size() && row < entries_per_page; i++ ) {
             const item_pricing &ip = list[i];
             const item *it = ip.locs.front();
+            const auto category_id = it->get_category().get_id();
+            if( !last_category || *last_category != category_id ) {
+                const auto category_label = to_upper_case( it->get_category().name() );
+                const auto category_y = static_cast<int>( row + 1 + trade_header_rows );
+                mvwprintz( w_whose, point( 1, category_y ), c_magenta,
+                           trim_by_length( category_label, win_w ) );
+                row++;
+                if( row >= entries_per_page ) {
+                    break;
+                }
+            }
             auto color = it == &person.primary_weapon() ? c_yellow : c_light_gray;
             const auto is_cursor = ( they && focus_them && i == them_cursor ) ||
                                    ( !they && !focus_them && i == you_cursor );
-            const auto row_y = static_cast<int>( i - offset + 1 + trade_header_rows );
+            const auto row_y = static_cast<int>( row + 1 + trade_header_rows );
             const int &owner_sells = they ? ip.u_has : ip.npc_has;
             const int &owner_sells_charge = they ? ip.u_charges : ip.npc_charges;
             int amount = ip.charges > 0 ? ip.charges : 1;
@@ -467,7 +537,7 @@ void trading_window::update_win( npc &np, const std::string &deal )
             } else if( selected_amount > 0 ) {
                 selection_mark = '#';
             }
-            trim_and_print( w_whose, point( 1, row_y ), name_w, line_color, "%c %c %s",
+            trim_and_print( w_whose, point( name_x, row_y ), name_w, line_color, "%c %c %s",
                             static_cast<char>( keychar ), selection_mark, itname );
 #if defined(__ANDROID__)
             ctxt.register_manual_key( keychar, itname );
@@ -487,6 +557,8 @@ void trading_window::update_win( npc &np, const std::string &deal )
                        align_left( vol_str, vol_w ) );
             mvwprintz( w_whose, point( price_x, row_y ), line_color,
                        align_left( price_str, price_w ) );
+            last_category = category_id;
+            row++;
         }
         if( offset > 0 ) {
             mvwprintw( w_whose, point( 1, entries_per_page + 2 ), _( "< Back" ) );
