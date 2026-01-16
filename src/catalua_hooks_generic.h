@@ -15,10 +15,10 @@ namespace cata
 template<typename T = bool>
 auto run_hooks( std::string_view hook_name,
                 std::function < auto( sol::table &params ) -> void > init = nullptr,
-hook_opts opts = {} ) -> std::optional<T> {
+const hook_opts &opts = {} ) -> std::optional<T> {
     if constexpr( std::is_same_v<T, bool> )
     {
-        return cata::run_hooks( hook_name, std::move( init ), std::move( opts ) );
+        return cata::run_hooks( hook_name, init, opts );
     } else
     {
         auto result = std::optional<T> {};

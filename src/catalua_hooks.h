@@ -30,7 +30,7 @@ auto run_hooks( std::string_view hook_name, const hook_opts &opts,
 /// - If no hook returns a boolean false, the result will be `std::nullopt`.
 auto run_hooks( std::string_view hook_name,
                 std::function < auto( sol::table &params ) -> void > init = nullptr,
-hook_opts opts = {} ) -> std::optional<bool>;
+const hook_opts &opts = {} ) -> std::optional<bool>;
 
 /// Define all hooks that are used in the game.
 void define_hooks( lua_state &state );

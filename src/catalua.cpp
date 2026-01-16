@@ -344,7 +344,7 @@ auto run_hooks( std::string_view hook_name, const hook_opts &opts,
 
 auto run_hooks( std::string_view hook_name,
                 std::function < auto( sol::table &params ) -> void > init,
-                hook_opts opts ) -> std::optional<bool>
+                const hook_opts &opts ) -> std::optional<bool>
 {
     auto vetoed = false;
     lua_hooks_detail::run_hooks( hook_name, opts, init, [&]( const sol::object & res ) -> bool {
