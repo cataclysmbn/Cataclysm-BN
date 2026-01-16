@@ -1128,7 +1128,7 @@ bool vehicle::check_heli_descend( Character &who )
     map &here = get_map();
     for( const tripoint &pt : get_points( true ) ) {
         const int idx = part_at( ( pt - global_pos3() ).xy() );
-        if( part_info( idx ).has_flag( VPFLAG_NOCOLLIDE ) ) {
+        if( part_info( idx ).has_flag( VPFLAG_NOCOLLIDEBELOW ) ) {
             continue;
         }
         tripoint below( pt.xy(), pt.z - 1 );
@@ -1174,9 +1174,16 @@ bool vehicle::check_heli_ascend( Character &who )
             who.add_msg_if_player( m_bad, _( "It would be unsafe to try and ascend further." ) );
             return false;
         }
+        if( part_info( part_at( ( pt - global_pos3() ).xy() ) ).has_flag( VPFLAG_NOCOLLIDEABOVE ) ) {
+            continue;
+        }
         bool has_ceiling = !here.has_flag_ter( TFLAG_NO_FLOOR, above );
         bool has_blocking_ter_furn = here.impassable_ter_furn( above );
-        bool has_veh = here.veh_at( above ).has_value();
+        auto veh = here.veh_at( above );
+        bool has_veh = veh.has_value();
+        if( has_veh ) {
+            has_veh = !veh->vehicle().part_info( veh->part_index() ).has_flag( VPFLAG_NOCOLLIDEBELOW );
+        }
         bool has_critter = g->critter_at( above );
         if( has_ceiling || has_blocking_ter_furn || has_veh || has_critter ) {
             direction obstacle_direction = direction_from( ( pt - who.pos() ).xy() );

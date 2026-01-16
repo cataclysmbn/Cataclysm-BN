@@ -591,8 +591,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `LIQUID` Blocks movement, but isn't a wall (lava, water, etc.)
 - `MINEABLE` Can be mined with a pickaxe/jackhammer.
 - `MOUNTABLE` Suitable for guns with the `MOUNTED_GUN` flag.
-- `NOCOLLIDE` Feature that simply doesn't collide with vehicles at all on the same z-level.
-- `NOCOLLIDEABOVE` Feature that simply doesn't collide with vehicles at all when going down a z-level, requires NOCOLLIDE.
+- `NOCOLLIDE` Feature that simply doesn't collide with vehicles at all.
 - `NOITEM` Items cannot be added here but may overflow to adjacent tiles. See also `DESTROY_ITEM`
 - `NO_FLOOR` Things should fall when placed on this tile
 - `NO_SIGHT` Creature on this tile have their sight reduced to one tile
@@ -1698,6 +1697,8 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `NEEDS_WINDOW` Can only be installed on a part with `WINDOW` flag.
 - `NO_JACK`
 - `NOCOLLIDE`
+- `NOCOLLIDEABOVE` Feature that simply doesn't collide when going up a z-level, or something goes down onto it, requires NOCOLLIDE.
+- `NOCOLLIDEABOVE` Feature that simply doesn't collide when going down a z-level, or something goes up onto it, requires NOCOLLIDE.
 - `NOSMASH`
 - `NOINSTALL` Cannot be installed.
 - `NOFIELDS` Prevents fields ( smoke radiation etc ) from affecting anything on the same tile
