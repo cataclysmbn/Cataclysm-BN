@@ -9448,7 +9448,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
         params["to"] = dest_loc;
         params["movement_mode"] = u.get_movement_mode();
         params["via_ramp"] = via_ramp;
-    }, true ) ) {
+    } ).value_or( true ) ) {
         return false;
     }
 
