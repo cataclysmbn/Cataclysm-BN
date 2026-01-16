@@ -508,10 +508,10 @@ void trading_window::update_win( npc &np, const std::string &deal )
             const auto category_id = it->get_category().get_id();
             if( !last_category || *last_category != category_id ) {
                 const auto category_label = to_upper_case( it->get_category().name() );
-            const auto category_y = static_cast<int>( row + 1 + trade_total_header_rows );
+                const auto category_y = static_cast<int>( row + 1 + trade_total_header_rows );
                 mvwprintz( w_whose, point( 2, category_y ), c_magenta,
                            trim_by_length( category_label, win_w - 1 ) );
-            row++;
+                row++;
                 if( row >= entries_per_page ) {
                     break;
                 }
