@@ -1124,12 +1124,22 @@ void npc::execute_action( npc_action action )
                 debugmsg( "NPC tried to shoot %s without valid mode.", error_weapon );
             }
 
+            item &gun = cbm_active.is_null() ? primary_weapon() : *cbm_fake_active;
+            const auto ammo_per_shot = std::max( 1, gun.ammo_required() );
+            const auto max_shots = gun.ammo_remaining() / ammo_per_shot;
+            auto shots_to_fire = mode.qty > 0 ? mode.qty : 1;
+            if( max_shots <= 0 ) {
+                do_reload( gun );
+                break;
+            }
+            shots_to_fire = std::min( shots_to_fire, max_shots );
+
             aim();
             if( is_hallucination() ) {
-                pretend_fire( this, mode.qty, *mode );
+                pretend_fire( this, shots_to_fire, *mode );
             } else {
                 add_msg( m_debug, "%s recoil on firing: %s", name, recoil );
-                ranged::fire_gun( *this, tar, mode.qty, *mode, nullptr );
+                ranged::fire_gun( *this, tar, shots_to_fire, *mode, nullptr );
                 // Clear the ranged cbm entry and item so next turn a new comparison is made.
                 if( !cbm_active.is_null() ) {
                     discharge_cbm_weapon();
@@ -4620,6 +4630,14 @@ void npc::do_reload( item &it )
     // Maybe TODO: allow reload functions to understand such reloads instead of const casts
     item &target = ( *reload_opt.target );
     item *usable_ammo = reload_opt.ammo;
+
+    if( target.is_gun() && !target.magazine_integral() && usable_ammo->is_magazine() ) {
+        while( target.magazine_current() != nullptr ) {
+            if( !dispose_item( *target.magazine_current(), std::string() ) ) {
+                break;
+            }
+        }
+    }
 
     // If in danger, don't spend multiple turns reloading a weapon to full one by one.
     // Get enough to shoot the enemy once, then unload it on them.
