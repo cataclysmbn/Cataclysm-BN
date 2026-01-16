@@ -1698,7 +1698,7 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `NO_JACK`
 - `NOCOLLIDE`
 - `NOCOLLIDEABOVE` Feature that simply doesn't collide when going up a z-level, or something goes down onto it, requires NOCOLLIDE.
-- `NOCOLLIDEABOVE` Feature that simply doesn't collide when going down a z-level, or something goes up onto it, requires NOCOLLIDE.
+- `NOCOLLIDEBELOW` Feature that simply doesn't collide when going down a z-level, or something goes up onto it, requires NOCOLLIDE.
 - `NOSMASH`
 - `NOINSTALL` Cannot be installed.
 - `NOFIELDS` Prevents fields ( smoke radiation etc ) from affecting anything on the same tile
