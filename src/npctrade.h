@@ -60,7 +60,7 @@ class trading_window
     private:
         void setup_win( ui_adaptor &ui );
         void update_win( npc &np, const std::string &deal );
-        void show_item_data( size_t offset, std::vector<item_pricing> &target_list );
+        auto show_item_data( size_t index, bool target_is_theirs ) -> void;
 
         catacurses::window w_head;
         catacurses::window w_them;
@@ -94,4 +94,3 @@ bool trade( npc &p, int cost, const std::string &deal );
 std::vector<item_pricing> init_selling( npc &p );
 std::vector<item_pricing> init_buying( Character &buyer, Character &seller, bool is_npc );
 } // namespace npc_trading
-

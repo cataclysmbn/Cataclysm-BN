@@ -3310,13 +3310,13 @@
     "name": "More",
     "bindings": [ { "input_method": "keyboard", "key": "NPAGE" }, { "input_method": "keyboard", "key": ">" } ]
   },
-  {
-    "type": "keybinding",
-    "id": "EXAMINE",
-    "category": "NPC_TRADE",
-    "name": "Examine item",
-    "bindings": [ { "input_method": "keyboard", "key": "/" } ]
-  },
+    {
+      "type": "keybinding",
+      "id": "EXAMINE",
+      "category": "NPC_TRADE",
+      "name": "Examine item",
+      "bindings": [ { "input_method": "keyboard", "key": "E" } ]
+    },
   {
     "type": "keybinding",
     "id": "QUIT",

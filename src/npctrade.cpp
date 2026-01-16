@@ -594,71 +594,27 @@ void trading_window::update_win( npc &np, const std::string &deal )
     wnoutrefresh( w_you );
 }
 
-void trading_window::show_item_data( size_t offset,
-                                     std::vector<item_pricing> &target_list )
+auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> void
 {
-    catacurses::window w_tmp;
-    ui_adaptor ui;
-    ui.on_screen_resize( [&]( ui_adaptor & ui ) {
-        w_tmp = catacurses::newwin( 3, 21,
-                                    point( 30 + ( TERMX - FULL_SCREEN_WIDTH ) / 2,
-                                           1 + ( TERMY - FULL_SCREEN_HEIGHT ) / 2 ) );
-        ui.position_from_window( w_tmp );
-    } );
-    ui.mark_resize();
-
-    ui.on_redraw( [&]( const ui_adaptor & ) {
-        werase( w_tmp );
-        // NOLINTNEXTLINE(cata-use-named-point-constants)
-        mvwprintz( w_tmp, point( 1, 1 ), c_red, _( "Examine which item?" ) );
-        draw_border( w_tmp );
-        wnoutrefresh( w_tmp );
-    } );
-
-    input_context ctxt( "NPC_TRADE" );
-    ctxt.register_action( "QUIT" );
-    ctxt.register_action( "ANY_INPUT" );
-    ctxt.register_action( "HELP_KEYBINDINGS" );
-
-    bool exit = false;
-    while( !exit ) {
-        ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
-        if( action == "QUIT" ) {
-            exit = true;
-        } else if( action == "ANY_INPUT" ) {
-            const input_event evt = ctxt.get_raw_input();
-            if( evt.type != input_event_t::keyboard || evt.sequence.empty() ) {
-                continue;
-            }
-            size_t help = evt.get_first_input();
-            if( help >= 'a' && help <= 'z' ) {
-                help -= 'a';
-            } else if( help >= 'A' && help <= 'Z' ) {
-                help = help - 'A' + 26;
-            } else {
-                continue;
-            }
-
-            help += offset;
-            if( help < target_list.size() ) {
-                const item &itm = *target_list[help].locs.front();
-                std::vector<iteminfo> info = itm.info();
-
-                item_info_data data( itm.tname(),
-                                     itm.type_name(),
-                                     info, {} );
-                data.handle_scrolling = true;
-                data.any_input = false;
-                draw_item_info( []() -> catacurses::window {
-                    const int width = std::min( TERMX, FULL_SCREEN_WIDTH );
-                    const int height = std::min( TERMY, FULL_SCREEN_HEIGHT );
-                    return catacurses::newwin( height, width, point( ( TERMX - width ) / 2, ( TERMY - height ) / 2 ) );
-                }, data );
-                exit = true;
-            }
-        }
+    auto &target_list = target_is_theirs ? theirs : yours;
+    if( index >= target_list.size() ) {
+        return;
     }
+
+    const auto &info_win = target_is_theirs ? w_you : w_them;
+    const auto width = getmaxx( info_win );
+    const auto height = getmaxy( info_win );
+    const auto pos = point( getbegx( info_win ), getbegy( info_win ) );
+
+    const item &itm = *target_list[index].locs.front();
+    auto info = itm.info();
+
+    auto data = item_info_data( itm.tname(), itm.type_name(), info, {} );
+    data.handle_scrolling = true;
+    data.any_input = false;
+    draw_item_info( [width, height, pos]() -> catacurses::window {
+        return catacurses::newwin( height, width, pos );
+    }, data );
 }
 
 int trading_window::get_var_trade( const item &it, int total_count, int amount_hint )
@@ -825,7 +781,7 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
                 cursor = offset;
             }
         } else if( action == "EXAMINE" ) {
-            show_item_data( offset, target_list );
+            show_item_data( cursor, focus_them );
         } else if( action == "CONFIRM" ) {
             if( !npc_will_accept_trade( np ) ) {
 
