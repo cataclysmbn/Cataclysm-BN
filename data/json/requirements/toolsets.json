@@ -18,7 +18,7 @@
     "type": "requirement",
     "//": "Forging of steel items (per steel chunk), charcoal forge is already a substitute for forge",
     "qualities": [ { "id": "ANVIL", "level": 2 } ],
-    "tools": [ [ [ "forging_standard", 2, "LIST" ] ], [ [ "large_repairkit", 5 ] ] ]
+    "tools": [ [ [ "forging_standard", 20, "LIST" ] ], [ [ "large_repairkit", 5 ] ] ]
   },
   {
     "id": "shot_forming",
@@ -130,7 +130,7 @@
       { "id": "DRILL", "level": 2 },
       { "id": "PULL_FINE", "level": 2 }
     ],
-    "components": [ [ [ "link_sheet", 1 ] ], [ [ "chain_link", 25 ] ], [ [ "rag", 2 ] ] ]
+    "components": [ [ [ "link_sheet", 1 ] ], [ [ "chain_link", 25 ] ] ]
   },
   {
     "id": "soldering_standard",
