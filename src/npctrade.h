@@ -69,7 +69,7 @@ class trading_window
         };
         auto show_item_data( size_t index, bool target_is_theirs ) -> info_popup_result;
         auto build_filtered_indices( const std::vector<item_pricing> &list,
-                                      const std::string &filter ) const -> std::vector<size_t>;
+                                     const std::string &filter ) const -> std::vector<size_t>;
 
         catacurses::window w_head;
         catacurses::window w_them;
