@@ -441,25 +441,12 @@
           { "item": "armor_plarmor", "prob": 25, "damage": [ 1, 4 ] },
           { "item": "armor_blarmor", "prob": 25, "damage": [ 1, 4 ] },
           {
-            "distribution": [
-              { "item": "chainmail_suit", "prob": 10, "damage": [ 1, 4 ] },
-              {
-                "collection": [
-                  { "item": "chainmail_hauberk", "prob": 80, "damage": [ 1, 4 ] },
-                  { "item": "chainmail_hood", "prob": 60, "damage": [ 1, 4 ] }
-                ],
-                "prob": 30
-              },
-              {
-                "collection": [
-                  { "item": "gambeson", "prob": 80, "damage": [ 1, 4 ] },
-                  { "item": "chainmail_vest", "prob": 70, "damage": [ 1, 4 ] },
-                  { "item": "chainmail_hood", "prob": 60, "damage": [ 1, 4 ] },
-                  { "item": "chainmail_arms", "prob": 60, "damage": [ 1, 4 ] },
-                  { "item": "chainmail_legs", "prob": 60, "damage": [ 1, 4 ] }
-                ],
-                "prob": 60
-              }
+            "collection": [
+              { "item": "gambeson", "prob": 80, "damage": [ 1, 4 ] },
+              { "item": "chainmail_vest", "prob": 70, "damage": [ 1, 4 ] },
+              { "item": "chainmail_hood", "prob": 60, "damage": [ 1, 4 ] },
+              { "item": "chainmail_arms", "prob": 60, "damage": [ 1, 4 ] },
+              { "item": "chainmail_legs", "prob": 60, "damage": [ 1, 4 ] }
             ],
             "prob": 50
           }
