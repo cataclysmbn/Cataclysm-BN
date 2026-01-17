@@ -590,7 +590,7 @@ task_reason veh_interact::cant_do( char mode )
     bool has_skill = true;
     bool enough_light = true;
     const vehicle_part_range vpr = veh->get_all_parts();
-    if( cpart != -1 ) {
+    if( cpart != -1 || cpart > veh->part_count() ) {
         const vehicle_part *pt = &veh->part( cpart );
         if( pt ) {
             const tripoint q = veh->mount_to_tripoint( pt->mount );
