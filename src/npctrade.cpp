@@ -27,7 +27,7 @@ static const flag_id json_flag_NO_UNWIELD( "NO_UNWIELD" );
 void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
                                   Character &receiver, bool npc_gives )
 {
-    std::ranges::for_each( stuff, [&]( auto &ip ) {
+    std::ranges::for_each( stuff, [&]( auto & ip ) {
         if( !ip.selected ) {
             return;
         }
@@ -42,7 +42,7 @@ void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
             receiver.i_add( std::move( to_give ) );
         } else {
             gift.set_owner( receiver );
-            std::ranges::for_each( ip.locs, [&]( auto *it ) {
+            std::ranges::for_each( ip.locs, [&]( auto * it ) {
                 receiver.i_add( it->detach() );
             } );
         }
@@ -51,9 +51,9 @@ void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
 
 std::vector<item_pricing> npc_trading::init_selling( npc &np )
 {
-    auto result = std::vector<item_pricing>{};
+    auto result = std::vector<item_pricing> {};
     const auto slice = np.inv_const_slice();
-    std::ranges::for_each( slice, [&]( const auto &i ) {
+    std::ranges::for_each( slice, [&]( const auto & i ) {
         auto &it = *i->front();
 
         const auto price = it.price( true );
@@ -64,7 +64,7 @@ std::vector<item_pricing> npc_trading::init_selling( npc &np )
     } );
 
     if( np.will_exchange_items_freely() ) {
-        std::ranges::for_each( np.wielded_items(), [&]( auto *weapon ) {
+        std::ranges::for_each( np.wielded_items(), [&]( auto * weapon ) {
             if( !weapon->has_flag( json_flag_NO_UNWIELD ) ) {
                 result.emplace_back( std::vector<item *> { weapon }, np.value( *weapon ), 0 );
             }
@@ -138,7 +138,7 @@ std::vector<item_pricing> npc_trading::init_buying( Character &buyer, Character 
     };
 
     const_invslice slice = seller.inv_const_slice();
-    std::ranges::for_each( slice, [&]( const auto &i ) {
+    std::ranges::for_each( slice, [&]( const auto & i ) {
         check_item( *i, i->size() );
     } );
 
@@ -150,7 +150,7 @@ std::vector<item_pricing> npc_trading::init_buying( Character &buyer, Character 
     //the trade window if the NPC is also a shopkeeper
     if( np.is_shopkeeper() ) {
         std::ranges::for_each( map_selector( seller.pos(), PICKUP_RANGE ),
-        [&]( auto &cursor ) {
+        [&]( auto & cursor ) {
             cursor.visit_items( [&check_item]( item * node ) {
                 check_item( {node}, 1 );
                 return VisitResponse::SKIP;
@@ -158,7 +158,7 @@ std::vector<item_pricing> npc_trading::init_buying( Character &buyer, Character 
         } );
     }
 
-    std::ranges::for_each( vehicle_selector( seller.pos(), 1 ), [&]( auto &cursor ) {
+    std::ranges::for_each( vehicle_selector( seller.pos(), 1 ), [&]( auto & cursor ) {
         cursor.visit_items( [&check_item]( item * node ) {
             check_item( {node}, 1 );
             return VisitResponse::SKIP;

@@ -48,7 +48,7 @@ struct category_range {
 auto build_category_ranges( const std::vector<item_pricing> &list,
                             const std::vector<size_t> &filtered ) -> std::vector<category_range>
 {
-    auto ranges = std::vector<category_range>{};
+    auto ranges = std::vector<category_range> {};
     std::ranges::for_each( std::views::iota( size_t{0}, filtered.size() ),
     [&]( size_t idx ) {
         const auto list_index = filtered[idx];
@@ -350,7 +350,7 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
         const auto name_x = 1 + name_indent;
         const auto name_w = std::max( qty_x - 2 - name_indent, 1 );
         const auto item_hotkeys = ctxt.get_available_single_char_hotkeys(
-                                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
+                                      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
         const auto stats_y = 2;
         const auto separator_y = 3;
         const auto header_y = 4;
@@ -416,7 +416,7 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
         const auto is_editing_here = filter_edit && ( filter_edit_theirs == they );
         if( is_editing_here || !( they ? them_filter : you_filter ).empty() ) {
             const auto filter_label_free = std::max( win_w - filter_label_width -
-                                                     utf8_width( filter_input_sep ), 0 );
+                                           utf8_width( filter_input_sep ), 0 );
             const auto &pane_filter = they ? them_filter : you_filter;
             const auto &active_text = is_editing_here && filter_popup ? filter_popup->text() :
                                       pane_filter;
@@ -438,10 +438,10 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
             }
             continue;
         }
-        auto last_category = std::optional<item_category_id>{};
+        auto last_category = std::optional<item_category_id> {};
         const auto is_focused_pane = ( they && focus_them ) || ( !they && !focus_them );
         const auto category_ranges = build_category_ranges( list, filtered );
-        auto active_category_id = std::optional<item_category_id>{};
+        auto active_category_id = std::optional<item_category_id> {};
         if( category_mode && is_focused_pane && !category_ranges.empty() ) {
             const auto &category_cursor = they ? them_category_cursor : you_category_cursor;
             if( category_cursor < category_ranges.size() ) {
@@ -744,7 +744,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
 
     auto confirm = false;
     auto exit = false;
-    auto pending_count = std::optional<int>{};
+    auto pending_count = std::optional<int> {};
     category_mode = false;
     them_category_cursor = 0;
     you_category_cursor = 0;
@@ -786,7 +786,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         auto &owner_sells = focus_them ? ip.u_has : ip.npc_has;
         auto &owner_sells_charge = focus_them ? ip.u_charges : ip.npc_charges;
         const auto has_charges = ip.charges > 0;
-        auto *current_amount = has_charges ? &owner_sells_charge : &owner_sells;
+        auto *current_amount = has_charges ? &owner_sells_charge :&owner_sells;
         const auto max_amount = has_charges ? ip.charges : std::max( ip.count, 1 );
         const auto clamped_amount = std::clamp( new_amount, 0, max_amount );
         if( clamped_amount == *current_amount )
@@ -816,7 +816,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         auto &cursor = focus_them ? them_cursor : you_cursor;
         auto &category_cursor = focus_them ? them_category_cursor : you_category_cursor;
         const auto item_hotkeys = ctxt.get_available_single_char_hotkeys(
-                                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
+                                      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
         ui_manager::redraw();
         clamp_cursor_to_list( filtered.size(), cursor, offset );
         const auto category_ranges = build_category_ranges( target_list, filtered );
@@ -852,11 +852,13 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 if( !category_ranges.empty() ) {
                     const auto &range = category_ranges[category_cursor];
                     const auto apply_amount = [&]( item_pricing & ip ) -> void {
-                        if( action == "RIGHT" ) {
+                        if( action == "RIGHT" )
+                        {
                             const auto max_amount = ip.charges > 0 ? ip.charges :
-                                                    std::max( ip.count, 1 );
+                            std::max( ip.count, 1 );
                             apply_trade_change( ip, max_amount );
-                        } else {
+                        } else
+                        {
                             apply_trade_change( ip, 0 );
                         }
                     };
