@@ -3270,6 +3270,13 @@
   },
   {
     "type": "keybinding",
+    "id": "FILTER",
+    "category": "NPC_TRADE",
+    "name": "Filter",
+    "bindings": [ { "input_method": "keyboard", "key": "/" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "UP",
     "category": "NPC_TRADE",
     "name": "Move cursor up",

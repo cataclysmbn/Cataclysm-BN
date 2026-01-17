@@ -6,6 +6,7 @@
 #include <utility>
 #include <algorithm>
 #include <list>
+#include <memory>
 
 #include "inventory.h"
 #include "output.h"
@@ -18,6 +19,7 @@ class faction;
 class item;
 class npc;
 class player;
+class string_input_popup;
 class ui_adaptor;
 
 class item_pricing
@@ -60,16 +62,31 @@ class trading_window
     private:
         void setup_win( ui_adaptor &ui );
         void update_win( npc &np, const std::string &deal );
-        auto show_item_data( size_t index, bool target_is_theirs ) -> void;
+        enum class info_popup_result {
+            none,
+            move_up,
+            move_down
+        };
+        auto show_item_data( size_t index, bool target_is_theirs ) -> info_popup_result;
+        auto build_filtered_indices( const std::vector<item_pricing> &list,
+                                      const std::string &filter ) const -> std::vector<size_t>;
 
         catacurses::window w_head;
         catacurses::window w_them;
         catacurses::window w_you;
+        catacurses::window w_info;
         size_t entries_per_page = 0;
         bool focus_them = true; // Is the focus on them?
         size_t them_off = 0, you_off = 0; // Offset from the start of the list
         size_t them_cursor = 0;
         size_t you_cursor = 0;
+        std::vector<size_t> them_filtered;
+        std::vector<size_t> you_filtered;
+        std::string them_filter;
+        std::string you_filter;
+        bool filter_edit = false;
+        bool filter_edit_theirs = false;
+        std::unique_ptr<string_input_popup> filter_popup;
 
         inventory temp;
         units::volume volume_left;
