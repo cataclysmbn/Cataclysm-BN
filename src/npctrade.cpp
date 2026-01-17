@@ -341,7 +341,7 @@ void trading_window::update_win( npc &np, const std::string &deal )
     mvwprintz( w_you,  point( 2 + utf8_width( _( "Inventory:" ) ) + 1, 1 ), c_light_green,
                _( "You" ) );
 
-    const auto selected_amount = []( const item_pricing &ip, bool is_theirs ) -> int {
+    const auto selected_amount = []( const item_pricing & ip, bool is_theirs ) -> int {
         if( ip.charges > 0 )
         {
             return is_theirs ? ip.u_charges : ip.npc_charges;
@@ -706,17 +706,17 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
 }
 
 auto trading_window::build_filtered_indices( const std::vector<item_pricing> &list,
-                                             const std::string &filter ) const -> std::vector<size_t>
+        const std::string &filter ) const -> std::vector<size_t>
 {
     if( filter.empty() ) {
         return std::views::iota( size_t{0}, list.size() ) | std::ranges::to<std::vector>();
     }
     const auto filter_fn = item_filter_from_string( filter );
     return std::views::iota( size_t{0}, list.size() )
-           | std::views::filter( [&]( size_t idx ) {
-               return filter_fn( *list[idx].locs.front() );
-           } )
-           | std::ranges::to<std::vector>();
+    | std::views::filter( [&]( size_t idx ) {
+        return filter_fn( *list[idx].locs.front() );
+    } )
+    | std::ranges::to<std::vector>();
 }
 
 int trading_window::get_var_trade( const item &it, int total_count, int amount_hint )
@@ -786,7 +786,7 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
     std::optional<int> pending_count;
 
     const auto clamp_cursor_to_list = [&]( size_t list_size, size_t &cursor,
-                                           size_t &offset ) -> void {
+    size_t &offset ) -> void {
         if( entries_per_page == 0 )
         {
             cursor = list_size == 0 ? 0 : std::min( cursor, list_size - 1 );
