@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <clocale>
 #include <optional>
-#include <ranges>
 
 constexpr int LUA_API_VERSION = 2;
 
@@ -289,52 +288,144 @@ void run_mod_main_script( lua_state &state, const mod_id &mod )
 namespace lua_hooks_detail
 {
 
-auto run_hooks(std::string_view hook_name, const hook_opts& opts,
-               const std::function < auto(sol::table& params) -> void >& init,
-               const std::function < auto(const sol::object& res) -> bool >& on_result) -> bool
+auto run_hooks( std::string_view hook_name, const hook_opts &opts,
+                const std::function<void( sol::table &params )> &init,
+                const hook_result_handler &on_result ) -> bool
 {
-    lua_state& state = opts.state != nullptr ? *opts.state : *DynamicDataLoader::get_instance().lua;
+    lua_state &state = opts.state != nullptr ? *opts.state : *DynamicDataLoader::get_instance().lua;
     sol::state &lua = state.lua;
-    auto maybe_hooks = lua.globals()["game"]["hooks"][hook_name].get<sol::optional<sol::table>>();
-    if (!maybe_hooks) {
-        return false;
-    }
 
-    sol::table hooks = *maybe_hooks;
+    sol::table hooks_table = lua.globals()["game"]["hooks"][hook_name];
 
+    // Create params table
     auto params = lua.create_table();
-    if (init) {
-        init(params);
+    if( init ) {
+        init( params );
     }
 
-    auto error = std::optional<std::string> {};
-    auto error_idx = -1;
+    std::optional<std::string> error;
+    int error_idx = -1;
+    std::string error_mod_id;
+    bool stopped = false;
 
-    const auto stopped = std::ranges::any_of( hooks, [&]( const auto & ref ) -> bool {
-        auto idx = -1;
-        try
-        {
-            idx = ref.first.template as<int>();
-            auto func = ref.second.template as<sol::protected_function>();
-            auto res = func( params );
-            check_func_result( res );
-            if( res.valid() ) {
-                auto result = res.template get<sol::object>();
-                return on_result(result);
+    // Track current result for chaining
+    sol::object current_return = sol::nil;
+    std::string previous_returning_mod_id;
+
+    // First pass: collect entries with their metadata for sorting
+    // We store indices and metadata, but call functions in second pass
+    struct hook_ref {
+        int table_index;
+        int priority;
+        std::string mod_id;
+        bool is_new_format;
+    };
+    std::vector<hook_ref> hook_refs;
+
+    int table_idx = 0;
+    for( auto &ref : hooks_table ) {
+        ++table_idx;
+        sol::object entry = ref.second;
+        sol::type entry_type = entry.get_type();
+
+        hook_ref hr;
+        hr.table_index = table_idx;
+        hr.priority = 0;
+        hr.mod_id = "";
+        hr.is_new_format = false;
+
+        if( entry_type == sol::type::table ) {
+            // New format: {func, mod_id, priority}
+            sol::table t = entry.as<sol::table>();
+            sol::object func_obj = t["func"];
+            if( func_obj.get_type() != sol::type::function ) {
+                continue;
             }
+            hr.priority = t.get_or( "priority", 0 );
+            hr.mod_id = t.get_or<std::string>( "mod_id", "" );
+            hr.is_new_format = true;
+        } else if( entry_type != sol::type::function ) {
+            continue;
         }
-        catch (const std::runtime_error& e)
-        {
-            error = e.what();
-            error_idx = idx;
-            return true;
-        }
-        return false;
-    });
 
-    if (error) {
-        debugmsg("Failed to run hook %s[%d]: %s", hook_name, error_idx, error->c_str());
-        return true;
+        hook_refs.push_back( hr );
+    }
+
+    if( hook_refs.empty() ) {
+        return false;
+    }
+
+    // Sort by priority (stable sort preserves registration order for same priority)
+    std::stable_sort( hook_refs.begin(), hook_refs.end(),
+    []( const hook_ref & a, const hook_ref & b ) {
+        return a.priority < b.priority;
+    } );
+
+    // Second pass: execute hooks in priority order
+    for( size_t idx = 0; idx < hook_refs.size(); ++idx ) {
+        const hook_ref &hr = hook_refs[idx];
+
+        try {
+            // If chaining is enabled, inject current state into params
+            if( opts.chain_results ) {
+                params["current_return"] = current_return;
+                params["previous_returning_mod_id"] = previous_returning_mod_id;
+            }
+
+            // Get the function from the table - use the exact pattern from old code
+            sol::object entry = hooks_table[hr.table_index];
+            sol::protected_function func;
+
+            if( hr.is_new_format ) {
+                sol::table t = entry.as<sol::table>();
+                func = t["func"];
+            } else {
+                // Old format: direct function assignment like original code
+                func = entry;
+            }
+
+            sol::protected_function_result res = func( params );
+            check_func_result( res );
+
+            if( res.valid() ) {
+                sol::object result_value = res.get<sol::object>();
+
+                hook_result result;
+                result.value = result_value;
+                result.mod_id = hr.mod_id;
+                result.has_value = ( result_value.get_type() != sol::type::nil );
+
+                // Update chain state if this hook returned a value
+                if( result.has_value ) {
+                    current_return = result_value;
+                    previous_returning_mod_id = hr.mod_id;
+                }
+
+                // Call result handler if provided
+                if( on_result ) {
+                    bool should_stop = on_result( result, params );
+                    if( should_stop && opts.stop_on_result ) {
+                        stopped = true;
+                        break;
+                    }
+                }
+            }
+        } catch( const std::runtime_error &e ) {
+            error = e.what();
+            error_idx = hr.table_index;
+            error_mod_id = hr.mod_id;
+            stopped = true;
+            break;
+        }
+    }
+
+    if( error ) {
+        if( error_mod_id.empty() ) {
+            debugmsg( "Failed to run hook %s[%d]: %s", hook_name, error_idx, error->c_str() );
+        } else {
+            debugmsg( "Failed to run hook %s[%d] (mod: %s): %s", hook_name, error_idx,
+                      error_mod_id.c_str(), error->c_str() );
+        }
     }
 
     return stopped;
@@ -342,25 +433,46 @@ auto run_hooks(std::string_view hook_name, const hook_opts& opts,
 
 } // namespace lua_hooks_detail
 
-auto run_hooks(std::string_view hook_name,
-               std::function < auto(sol::table& params) -> void > init,
-               const hook_opts& opts) -> std::optional<bool>
+auto run_hooks( std::string_view hook_name,
+                std::function<void( sol::table &params )> init,
+                const hook_opts &opts ) -> std::optional<bool>
 {
-    auto vetoed = false;
-    lua_hooks_detail::run_hooks(hook_name, opts, init, [&](const sol::object& res) -> bool {
-        if (res.is<bool>() && !res.as<bool>())
+    bool vetoed = false;
+
+    lua_hooks_detail::run_hooks( hook_name, opts, init,
+    [&]( const hook_result & res, sol::table & ) -> bool {
+        // Veto semantics: if hook returns boolean false, it's a veto
+        if( res.value.is<bool>() && !res.value.as<bool>() )
         {
             vetoed = true;
-            return true;
+            return true;  // Stop iteration
         }
-        return false;
-    });
+        return false;  // Continue
+    } );
 
-    if (vetoed) {
+    if( vetoed ) {
         return false;
     }
-
     return std::nullopt;
+}
+
+auto run_hooks_collect( std::string_view hook_name,
+                        std::function<void( sol::table &params )> init,
+                        hook_opts opts ) -> std::vector<hook_result>
+{
+    opts.stop_on_result = false;  // Force iteration through all hooks
+
+    std::vector<hook_result> results;
+
+    lua_hooks_detail::run_hooks( hook_name, opts, init,
+    [&]( const hook_result & res, sol::table & ) -> bool {
+        if( res.has_value ) {
+            results.push_back( res );
+        }
+        return false;  // Never stop
+    } );
+
+    return results;
 }
 
 
