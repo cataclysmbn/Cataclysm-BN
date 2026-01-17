@@ -901,7 +901,7 @@ void avatar::do_read( item *loc )
         }
 
         if( skill && learner->get_skill_level( skill ) < reading->level &&
-                learner->get_skill_level_object( skill ).can_train() ) {
+            learner->get_skill_level_object( skill ).can_train() ) {
             SkillLevel &skill_level = learner->get_skill_level_object( skill );
             const int originalSkillLevel = skill_level.level();
 
@@ -1011,22 +1011,22 @@ void avatar::do_read( item *loc )
             if( activity->index == getID().get_value() ) {
                 continuous = true;
                 switch( rng( 1, 5 ) ) {
-                case 1:
-                    add_msg( m_info,
-                             _( "You train the moves according to the book, but can't get a grasp of the style, so you start from the beginning." ) );
-                    break;
-                case 2:
-                    add_msg( m_info,
-                             _( "This martial art is not easy to grasp.  You start training the moves from the beginning." ) );
-                    break;
-                case 3:
-                    add_msg( m_info,
-                             _( "You decide to read the manual and train even more.  In martial arts, patience leads to mastery." ) );
-                    break;
-                case 4:
-                case 5:
-                    add_msg( m_info, _( "You try again.  This training will finally pay off." ) );
-                    break;
+                    case 1:
+                        add_msg( m_info,
+                                 _( "You train the moves according to the book, but can't get a grasp of the style, so you start from the beginning." ) );
+                        break;
+                    case 2:
+                        add_msg( m_info,
+                                 _( "This martial art is not easy to grasp.  You start training the moves from the beginning." ) );
+                        break;
+                    case 3:
+                        add_msg( m_info,
+                                 _( "You decide to read the manual and train even more.  In martial arts, patience leads to mastery." ) );
+                        break;
+                    case 4:
+                    case 5:
+                        add_msg( m_info, _( "You try again.  This training will finally pay off." ) );
+                        break;
                 }
             } else {
                 add_msg( m_info, _( "You train for a while." ) );
@@ -1122,7 +1122,7 @@ bool avatar::is_dead_state() const
 
     if( Character::is_dead_state() ) {
         auto &state = *DynamicDataLoader::get_instance().lua;;
-        cata::run_hooks("on_character_death", nullptr, { .state = &state });
+        cata::run_hooks( "on_character_death", nullptr, { .state = &state } );
         cached_dead_state.reset();
     }
 
@@ -1204,21 +1204,21 @@ int avatar::kill_xp_for_next_point() const
 void avatar::upgrade_stat( character_stat stat )
 {
     switch( stat ) {
-    case character_stat::STRENGTH:
-        str_upgrade++;
-        break;
-    case character_stat::DEXTERITY:
-        dex_upgrade++;
-        break;
-    case character_stat::INTELLIGENCE:
-        int_upgrade++;
-        break;
-    case character_stat::PERCEPTION:
-        per_upgrade++;
-        break;
-    case character_stat::DUMMY_STAT:
-        debugmsg( "Tried to use invalid stat" );
-        break;
+        case character_stat::STRENGTH:
+            str_upgrade++;
+            break;
+        case character_stat::DEXTERITY:
+            dex_upgrade++;
+            break;
+        case character_stat::INTELLIGENCE:
+            int_upgrade++;
+            break;
+        case character_stat::PERCEPTION:
+            per_upgrade++;
+            break;
+        case character_stat::DUMMY_STAT:
+            debugmsg( "Tried to use invalid stat" );
+            break;
     }
     recalc_hp();
 }
@@ -1231,79 +1231,79 @@ faction *avatar::get_faction() const
 void avatar::set_movement_mode( character_movemode new_mode )
 {
     switch( new_mode ) {
-    case CMM_WALK: {
-        if( is_mounted() ) {
-            if( mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
-                add_msg( _( "You set your mech's leg power to a loping fast walk." ) );
-            } else {
-                add_msg( _( "You nudge your steed into a steady trot." ) );
-            }
-        } else {
-            // Spend moves to stand up if crouched, otherwise just stop running.
-            if( move_mode == CMM_CROUCH ) {
-                mod_moves( -100 );
-                recoil = MAX_RECOIL;
-                add_msg( _( "You stand up." ) );
-            } else {
-                add_msg( _( "You start walking." ) );
-            }
-        }
-        break;
-    }
-    case CMM_RUN: {
-        if( can_run() ) {
-            if( is_hauling() ) {
-                stop_hauling();
-            }
+        case CMM_WALK: {
             if( is_mounted() ) {
                 if( mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
-                    add_msg( _( "You set the power of your mech's leg servos to maximum." ) );
+                    add_msg( _( "You set your mech's leg power to a loping fast walk." ) );
                 } else {
-                    add_msg( _( "You spur your steed into a gallop." ) );
+                    add_msg( _( "You nudge your steed into a steady trot." ) );
                 }
             } else {
                 // Spend moves to stand up if crouched, otherwise just stop running.
                 if( move_mode == CMM_CROUCH ) {
                     mod_moves( -100 );
                     recoil = MAX_RECOIL;
-                    add_msg( _( "You stand up and start running." ) );
+                    add_msg( _( "You stand up." ) );
                 } else {
-                    add_msg( _( "You start running." ) );
+                    add_msg( _( "You start walking." ) );
                 }
             }
-        } else {
-            if( is_mounted() ) {
-                // mounts don't currently have stamina, but may do in future.
-                add_msg( m_bad, _( "Your steed is too tired to go faster." ) );
-            } else if( get_working_leg_count() < 2 ) {
-                add_msg( m_bad, _( "You need two functional legs to run." ) );
+            break;
+        }
+        case CMM_RUN: {
+            if( can_run() ) {
+                if( is_hauling() ) {
+                    stop_hauling();
+                }
+                if( is_mounted() ) {
+                    if( mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
+                        add_msg( _( "You set the power of your mech's leg servos to maximum." ) );
+                    } else {
+                        add_msg( _( "You spur your steed into a gallop." ) );
+                    }
+                } else {
+                    // Spend moves to stand up if crouched, otherwise just stop running.
+                    if( move_mode == CMM_CROUCH ) {
+                        mod_moves( -100 );
+                        recoil = MAX_RECOIL;
+                        add_msg( _( "You stand up and start running." ) );
+                    } else {
+                        add_msg( _( "You start running." ) );
+                    }
+                }
             } else {
-                add_msg( m_bad, _( "You're too tired to run." ) );
+                if( is_mounted() ) {
+                    // mounts don't currently have stamina, but may do in future.
+                    add_msg( m_bad, _( "Your steed is too tired to go faster." ) );
+                } else if( get_working_leg_count() < 2 ) {
+                    add_msg( m_bad, _( "You need two functional legs to run." ) );
+                } else {
+                    add_msg( m_bad, _( "You're too tired to run." ) );
+                }
+                return;
             }
+            break;
+        }
+        case CMM_CROUCH: {
+            if( is_mounted() ) {
+                if( mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
+                    add_msg( _( "You reduce the power of your mech's leg servos to minimum." ) );
+                } else {
+                    add_msg( _( "You slow your steed to a walk." ) );
+                }
+            } else {
+                // Don't spend moves if we were already crouching.
+                if( move_mode != CMM_CROUCH ) {
+                    recoil = MAX_RECOIL;
+                    mod_moves( -100 );
+                }
+                add_msg( _( "You start crouching." ) );
+            }
+            break;
+        }
+        default: {
             return;
         }
-        break;
-    }
-    case CMM_CROUCH: {
-        if( is_mounted() ) {
-            if( mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
-                add_msg( _( "You reduce the power of your mech's leg servos to minimum." ) );
-            } else {
-                add_msg( _( "You slow your steed to a walk." ) );
-            }
-        } else {
-            // Don't spend moves if we were already crouching.
-            if( move_mode != CMM_CROUCH ) {
-                recoil = MAX_RECOIL;
-                mod_moves( -100 );
-            }
-            add_msg( _( "You start crouching." ) );
-        }
-        break;
-    }
-    default: {
-        return;
-    }
     }
     if( move_mode == CMM_CROUCH || new_mode == CMM_CROUCH ) {
         // crouching affects visibility

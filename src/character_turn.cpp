@@ -285,7 +285,7 @@ void Character::process_turn()
     // Update time spent conscious in this overmap tile for the Nomad traits.
     if( !is_npc() && ( has_trait( trait_NOMAD ) || has_trait( trait_NOMAD2 ) ||
                        has_trait( trait_NOMAD3 ) ) &&
-            !has_effect( effect_sleep ) && !has_effect( effect_narcosis ) ) {
+        !has_effect( effect_sleep ) && !has_effect( effect_narcosis ) ) {
         const tripoint_abs_omt ompos = global_omt_location();
         const point_abs_omt pos = ompos.xy();
         if( !overmap_time.contains( pos ) ) {
@@ -512,7 +512,7 @@ void Character::process_one_effect( effect &it, bool is_new )
     if( val != 0 ) {
         mod = 1;
         if( ( is_new || it.activated( calendar::turn, "SLEEP", val, reduced, mod ) ) &&
-                !has_effect( efftype_id( "sleep" ) ) ) {
+            !has_effect( efftype_id( "sleep" ) ) ) {
             add_msg_if_player( _( "You pass out!" ) );
             fall_asleep( time_duration::from_turns( val ) );
         }
@@ -824,9 +824,9 @@ void Character::reset_stats()
     recalc_sight_limits();
     recalc_speed_bonus();
 
-    cata::run_hooks("on_character_reset_stats", [this](auto& params) {
+    cata::run_hooks( "on_character_reset_stats", [this]( auto & params ) {
         params["character"] = this;
-    });
+    } );
 }
 
 void Character::environmental_revert_effect()
@@ -999,12 +999,12 @@ void update_body_wetness( Character &who, const w_point &weather )
     delay = std::max( 0.1, delay );
     // Fur/slime retains moisture
     if( who.has_trait( trait_LIGHTFUR ) ||
-            who.has_trait( trait_FUR ) ||
-            who.has_trait( trait_FELINE_FUR ) ||
-            who.has_trait( trait_LUPINE_FUR ) ||
-            who.has_trait( trait_CHITIN_FUR ) ||
-            who.has_trait( trait_CHITIN_FUR2 ) ||
-            who.has_trait( trait_CHITIN_FUR3 ) ) {
+        who.has_trait( trait_FUR ) ||
+        who.has_trait( trait_FELINE_FUR ) ||
+        who.has_trait( trait_LUPINE_FUR ) ||
+        who.has_trait( trait_CHITIN_FUR ) ||
+        who.has_trait( trait_CHITIN_FUR2 ) ||
+        who.has_trait( trait_CHITIN_FUR3 ) ) {
         delay = delay * 6 / 5;
     }
     if( who.has_trait( trait_URSINE_FUR ) || who.has_trait( trait_SLIMY ) ) {
@@ -1176,8 +1176,8 @@ void search_surroundings( Character &who )
             continue;
         }
         if( who.has_active_bionic( bio_ground_sonar ) && !who.knows_trap( tp ) &&
-                ( tr.loadid == tr_beartrap_buried ||
-                  tr.loadid == tr_landmine_buried || tr.loadid == tr_sinkhole ) ) {
+            ( tr.loadid == tr_beartrap_buried ||
+              tr.loadid == tr_landmine_buried || tr.loadid == tr_sinkhole ) ) {
             const std::string direction = direction_name( direction_from( who.pos(), tp ) );
             who.add_msg_if_player( m_warning, _( "Your ground sonar detected a %1$s to the %2$s!" ),
                                    tr.name(), direction );

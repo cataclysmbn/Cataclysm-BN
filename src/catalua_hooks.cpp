@@ -116,14 +116,16 @@ void define_hooks( lua_state &state )
         // Get the hooks table for this hook name
         sol::table hooks_table = lua_view.globals()["game"]["hooks"];
         sol::optional<sol::table> maybe_hook_table = hooks_table[hook_name].get<sol::optional<sol::table>>();
-        if( !maybe_hook_table ) {
+        if( !maybe_hook_table )
+        {
             return false;
         }
 
         sol::table hook_table = *maybe_hook_table;
 
         // Find and remove the matching callback
-        for( size_t i = 1; ; ++i ) {
+        for( size_t i = 1; ; ++i )
+        {
             sol::object entry_obj = hook_table[i];
             if( entry_obj.get_type() == sol::type::nil ) {
                 break;
