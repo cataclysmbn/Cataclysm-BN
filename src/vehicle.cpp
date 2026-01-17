@@ -6599,8 +6599,8 @@ void vehicle::do_towing_move()
     const tripoint tower_tow_point = g->m.getabs( global_part_pos3( tow_index ) );
     const tripoint towed_tow_point = g->m.getabs( towed_veh->global_part_pos3( other_tow_index ) );
     // same as above, but where the pulling vehicle is pulling from
-    units::angle towing_veh_angle = towed_veh->get_angle_from_targ( tower_tow_point );
-    const bool reverse = towed_veh->tow_data.tow_direction == TOW_BACK;
+    const auto towing_veh_angle = towed_veh->get_angle_from_targ( tower_tow_point );
+    const auto reverse = towing_veh_angle > 90_degrees || towing_veh_angle < -90_degrees;
     int accel_y = 0;
     tripoint vehpos = global_square_location().raw();
     int turn_x = get_turn_from_angle( towing_veh_angle, vehpos, tower_tow_point, reverse );
