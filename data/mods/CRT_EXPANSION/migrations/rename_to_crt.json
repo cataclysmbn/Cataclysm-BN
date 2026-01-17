@@ -11,8 +11,8 @@
   },
   {
     "type": "MIGRATION",
-    "id": "hp_pellet",
-    "replace": "crt_hp_pellet"
+    "id": "dhp_pellet",
+    "replace": "crt_dhp_pellet"
   },
   {
     "type": "MIGRATION",
