@@ -55,7 +55,7 @@
     "price": "5012 cent",
     "price_postapoc": "25 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel", "leather" ],
     "symbol": "[",
     "color": "light_red",
     "covers": [ "hands" ],
