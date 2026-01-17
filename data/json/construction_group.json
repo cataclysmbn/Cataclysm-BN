@@ -1663,5 +1663,35 @@
     "type": "construction_group",
     "id": "build_canvas_door",
     "name": "Build canvas door"
+  },
+  {
+    "type": "construction_group",
+    "id": "set_wire_snare",
+    "name": "Set Wire Snare"
+  },
+  {
+    "type": "construction_group",
+    "id": "set_rattrap",
+    "name": "Set Rattrap"
+  },
+  {
+    "type": "construction_group",
+    "id": "",
+    "name": ""
+  },
+  {
+    "type": "construction_group",
+    "id": "",
+    "name": ""
+  },
+  {
+    "type": "construction_group",
+    "id": "",
+    "name": ""
+  },
+  {
+    "type": "construction_group",
+    "id": "",
+    "name": ""
   }
 ]

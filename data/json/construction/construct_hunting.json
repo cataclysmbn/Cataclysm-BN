@@ -1,0 +1,15 @@
+[
+  {
+    "type": "construction",
+    "id": "constr_wire_snare",
+    "group": "set_wire_snare",
+    "category": "SNARE",
+    "required_skills": [ [ "traps", 2 ], [ "survival", 1 ] ],
+    "time": "3 m",
+    "qualities": [ [ { "id": "CUT", "level": 1 } ] ],
+    "components": [ [ [ "wire", 4 ], [ "cable", 8 ] ], [ [ "stick", 1 ] ] ],
+    "pre_note": "Requires open ground.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_wire_snare_empty"
+  }
+]

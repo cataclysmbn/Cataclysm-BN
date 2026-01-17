@@ -1,0 +1,109 @@
+[
+  {
+    "type": "hunting_data",
+    "id": "default_hunting",
+    "used_for": [  ],
+    "habitats": {
+      "forest": {
+        "SMALL_GAME_HERBIVORE": [
+          { "prey": "mon_squirrel", "weight": 100 },
+          { "prey": "mon_rabbit", "weight": 80 },
+          { "prey": "mon_chipmunk", "weight": 60 }
+        ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 20 }, { "prey": "mon_fox_red", "weight": 30 }, { "prey": "none", "weight": 50 } ]
+      },
+      "cropland": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 120 }, { "prey": "mon_groundhog", "weight": 80 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 50 } ]
+      },
+      "pasture": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 100 }, { "prey": "mon_groundhog", "weight": 70 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 40 } ]
+      },
+      "wetland": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_muskrat", "weight": 100 }, { "prey": "mon_otter", "weight": 60 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 70 } ]
+      },
+      "wetland_forest": {
+        "SMALL_GAME_HERBIVORE": [
+          { "prey": "mon_muskrat", "weight": 80 },
+          { "prey": "mon_rabbit", "weight": 60 },
+          { "prey": "mon_squirrel", "weight": 50 }
+        ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 60 }, { "prey": "mon_deer", "weight": 30 } ]
+      },
+      "open_land": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 90 }, { "prey": "mon_groundhog", "weight": 60 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 30 } ]
+      },
+      "brushland": {
+        "SMALL_GAME_HERBIVORE": [
+          { "prey": "mon_rabbit", "weight": 110 },
+          { "prey": "mon_groundhog", "weight": 70 },
+          { "prey": "mon_squirrel", "weight": 50 }
+        ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 35 } ]
+      }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_wire_snare",
+    "habitats": {
+      "forest": {
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 80 },
+          { "prey": "mon_chipmunk", "weight": 60 },
+          { "prey": "mon_squirrel", "weight": 40 },
+          { "prey": "mon_groundhog", "weight": 20 }
+        ]
+      },
+      "open_land": {
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "none", "weight": 100 },
+          { "prey": "mon_black_rat", "weight": 80 },
+          { "prey": "mon_groundhog", "weight": 20 }
+        ]
+      }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_rattrap",
+    "copy-from": "f_wire_snare"
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_big_rattrap",
+    "copy-from": "f_wire_snare"
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_deadfall",
+    "habitats": {
+      "forest": {
+        "SMALL_GAME_HERBIVORE": [
+          { "prey": "mon_squirrel", "weight": 100 },
+          { "prey": "mon_rabbit", "weight": 80 },
+          { "prey": "mon_chipmunk", "weight": 60 }
+        ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 30 }, { "prey": "mon_fox_red", "weight": 40 }, { "prey": "none", "weight": 30 } ]
+      },
+      "brushland": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 110 }, { "prey": "mon_groundhog", "weight": 70 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 40 } ]
+      }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_beartrap_hunting",
+    "habitats": {
+      "forest": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 100 }, { "prey": "mon_fox_red", "weight": 50 }, { "prey": "none", "weight": 20 } ]
+      },
+      "brushland": { "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 120 }, { "prey": "none", "weight": 30 } ] },
+      "wetland_forest": { "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 80 }, { "prey": "mon_deer", "weight": 60 } ] }
+    }
+  }
+]

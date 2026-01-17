@@ -2485,6 +2485,12 @@ void options_manager::add_options_world_default()
          0.0, 10.0, 1.0, 0.01, COPT_NO_HIDE
        );
 
+    add( "SNARING_RATE", world_default,
+         translate_marker( "Snaring animal success rate scaling factor" ),
+         translate_marker( "A scaling factor that determines how often snaring animals with traps is successful." ),
+         0.0, 10.0, 2.0, 0.01
+       );
+
     add( "NPC_DENSITY", world_default, translate_marker( "NPC spawn rate scaling factor" ),
          translate_marker( "A scaling factor that determines density of dynamic NPC spawns." ),
          0.0, 100.0, 0.1, 0.01

@@ -1,0 +1,220 @@
+[
+  {
+    "type": "furniture",
+    "id": "f_wire_snare_empty",
+    "name": "empty wire snare",
+    "description": "A wire snare ready to be baited.",
+    "symbol": "^",
+    "color": "light_gray",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "wire", "count": 4 }, { "item": "stick", "count": 1 } ] },
+    "bash": {
+      "str_min": 4,
+      "str_max": 12,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "wire", "count": [ 1, 2 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_wire_snare_set",
+    "name": "baited wire snare",
+    "description": "A wire snare with bait, waiting for prey.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 4,
+      "str_max": 12,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_wire_snare_closed",
+    "name": "triggered wire snare",
+    "description": "A wire snare that has been triggered. Check it to see what you caught.",
+    "symbol": "^",
+    "color": "green",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 4,
+      "str_max": 12,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_rattrap_empty",
+    "name": "empty rat trap",
+    "description": "A small spring-loaded trap designed to catch rats.",
+    "symbol": "^",
+    "color": "brown",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "TINY" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "rattrap", "count": 1 } ] },
+    "bash": {
+      "str_min": 2,
+      "str_max": 8,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 0, 1 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_rattrap_set",
+    "name": "baited rattrap",
+    "description": "A rattrap with bait, waiting for a rat to spring it.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 2,
+      "str_max": 8,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 0, 1 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_rattrap_closed",
+    "name": "triggered rattrap",
+    "description": "A rattrap that has been triggered. Check it to see what you caught.",
+    "symbol": "^",
+    "color": "green",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 2,
+      "str_max": 8,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 0, 1 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_big_rattrap_empty",
+    "name": "empty large rat trap",
+    "description": "Larger version of a rattrap, designed to catch bigger rodents or other small animals.",
+    "symbol": "^",
+    "color": "brown",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "TINY" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "large_rattrap", "count": 1 } ] },
+    "bash": {
+      "str_min": 3,
+      "str_max": 10,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 1, 2 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_big_rattrap_set",
+    "name": "baited large rattrap",
+    "description": "A large rattrap with bait, waiting for prey.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 3,
+      "str_max": 10,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 1, 2 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_big_rattrap_closed",
+    "name": "triggered large rattrap",
+    "description": "A large rattrap that has been triggered. Check it to see what you caught.",
+    "symbol": "^",
+    "color": "green",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 3,
+      "str_max": 10,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 1, 2 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_deadfall_empty",
+    "name": "empty deadfall trap",
+    "description": "A trap made from a small boulder balanced to fall and crush prey when triggered.",
+    "symbol": "^",
+    "color": "light_gray",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": {
+      "items": [ { "item": "stick", "count": 2 }, { "item": "string_6", "count": 2 } ],
+      "furn_set": "f_boulder_small_harvested"
+    },
+    "bash": {
+      "str_min": 0,
+      "str_max": 0,
+      "sound": "crash!",
+      "sound_fail": "thud!",
+      "furn_set": "f_boulder_small_harvested",
+      "items": [ { "item": "splinter", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_beartrap_hunting_empty",
+    "name": "empty hunting bear trap",
+    "description": "A large spring-loaded trap adjusted to break the neck of bigger prey. Designed for deers or boars, not bears sadly.",
+    "symbol": "^",
+    "color": "dark_gray",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "TINY" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "beartrap_hunting", "count": 1 } ] },
+    "bash": {
+      "str_min": 6,
+      "str_max": 14,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "beartrap_hunting", "count": 1 } ]
+    }
+  }
+]

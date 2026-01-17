@@ -110,6 +110,9 @@ void cloning_vat_finalize( const tripoint &examp, const time_point &start_time )
 void cloning_vat_examine( player &p, const tripoint &examp );
 void quern_examine( player &p, const tripoint &examp );
 void smoker_options( player &p, const tripoint &examp );
+void hunting_snare( player &p, const tripoint &examp );
+void bait_snare( player &p, const tripoint &examp );
+void harvest_snare( player &p, const tripoint &examp );
 void open_safe( player &p, const tripoint &examp );
 void workbench( player &p, const tripoint &examp );
 void dimensional_portal( player &p, const tripoint &examp );

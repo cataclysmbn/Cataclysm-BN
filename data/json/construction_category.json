@@ -27,6 +27,11 @@
   },
   {
     "type": "construction_category",
+    "id": "SNARE",
+    "name": "Hunting Snares"
+  },
+  {
+    "type": "construction_category",
     "id": "REPAIR",
     "name": "Repairing"
   },
