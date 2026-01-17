@@ -2520,6 +2520,12 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
+    add( "canmutprofmut", world_default, "Starting Trait Cancelling",
+         "Allow starting traits to be cancelled and effected by purifiers?",
+         false );
+
+    add_empty_line();
+
     add( "ITEM_SPAWNRATE", world_default,
          "Item spawn scaling factor",
          "A scaling factor that determines density of item spawns. A higher number means more items.",
