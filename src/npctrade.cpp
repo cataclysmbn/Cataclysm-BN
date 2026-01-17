@@ -59,7 +59,7 @@ struct category_range {
 auto build_category_ranges( const std::vector<item_pricing> &list,
                             const std::vector<size_t> &filtered ) -> std::vector<category_range>
 {
-    auto ranges = std::vector<category_range>{};
+    auto ranges = std::vector<category_range> {};
     std::ranges::for_each( std::views::iota( size_t{0}, filtered.size() ),
     [&]( size_t idx ) {
         const auto list_index = filtered[idx];
@@ -564,7 +564,7 @@ void trading_window::update_win( npc &np, const std::string &deal )
         const auto name_x = 1 + name_indent;
         const auto name_w = std::max( qty_x - 2 - name_indent, 1 );
         const auto item_hotkeys = ctxt.get_available_single_char_hotkeys(
-                                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
+                                      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
         const auto stats_y = 2;
         const auto separator_y = 3;
         const auto header_y = 4;
@@ -630,7 +630,7 @@ void trading_window::update_win( npc &np, const std::string &deal )
         const auto is_editing_here = filter_edit && ( filter_edit_theirs == they );
         if( is_editing_here || !( they ? them_filter : you_filter ).empty() ) {
             const auto filter_label_free = std::max( win_w - filter_label_width -
-                                                     utf8_width( filter_input_sep ), 0 );
+                                           utf8_width( filter_input_sep ), 0 );
             const auto &pane_filter = they ? them_filter : you_filter;
             const auto &active_text = is_editing_here && filter_popup ? filter_popup->text() :
                                       pane_filter;
@@ -1029,7 +1029,7 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
         auto &category_cursor = focus_them ? them_category_cursor : you_category_cursor;
         const auto category_ranges = build_category_ranges( target_list, filtered );
         const auto item_hotkeys = ctxt.get_available_single_char_hotkeys(
-                                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
+                                      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
         clamp_cursor_to_list( filtered.size(), cursor, offset );
         if( category_cursor >= category_ranges.size() ) {
             category_cursor = category_ranges.empty() ? 0 : category_ranges.size() - 1;
@@ -1064,11 +1064,13 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
                 if( !category_ranges.empty() ) {
                     const auto &range = category_ranges[category_cursor];
                     const auto apply_amount = [&]( item_pricing & ip ) -> void {
-                        if( action == "RIGHT" ) {
+                        if( action == "RIGHT" )
+                        {
                             const auto max_amount = ip.charges > 0 ? ip.charges :
-                                                    std::max( ip.count, 1 );
+                            std::max( ip.count, 1 );
                             apply_trade_change( ip, max_amount );
-                        } else {
+                        } else
+                        {
                             apply_trade_change( ip, 0 );
                         }
                     };
