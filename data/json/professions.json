@@ -6919,7 +6919,16 @@
     ],
     "items": {
       "both": {
-        "items": [ "chainmail_hauberk", "socks", "boots_plate", "gloves_plate", "helmet_barbute", "leather_pouch", "shield_leather" ],
+        "items": [
+          "gambeson",
+          "chainmail_suit",
+          "socks",
+          "boots_plate",
+          "gloves_plate",
+          "helmet_barbute",
+          "leather_pouch",
+          "shield_leather"
+        ],
         "entries": [ { "item": "mace", "custom-flags": [ "auto_wield" ] } ]
       },
       "male": [ "boxer_shorts" ],
