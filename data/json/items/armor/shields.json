@@ -131,7 +131,7 @@
     "price_postapoc": "10 USD",
     "to_hit": -1,
     "bashing": 8,
-    "material": [ "wood", "iron" ],
+    "material": [ "wood", "steel" ],
     "looks_like": "shield_wooden",
     "symbol": "[",
     "color": "light_gray",
@@ -287,7 +287,8 @@
     "to_hit": -2,
     "bashing": 10,
     "cutting": 10,
-    "encumbrance": 30
+    "encumbrance": 30,
+    "techniques": [ "WBLOCK_3" ]
   },
   {
     "id": "shield_bronze",
