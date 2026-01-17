@@ -80,6 +80,9 @@ class trading_window
         size_t them_off = 0, you_off = 0; // Offset from the start of the list
         size_t them_cursor = 0;
         size_t you_cursor = 0;
+        bool category_mode = false;
+        size_t them_category_cursor = 0;
+        size_t you_category_cursor = 0;
         std::vector<size_t> them_filtered;
         std::vector<size_t> you_filtered;
         std::string them_filter;

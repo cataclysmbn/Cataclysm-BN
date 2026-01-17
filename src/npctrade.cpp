@@ -44,11 +44,59 @@ static const flag_id json_flag_NO_UNWIELD( "NO_UNWIELD" );
 
 namespace
 {
-constexpr auto trade_head_height = 6;
+constexpr auto trade_head_height = 4;
 constexpr auto trade_info_height = 4;
 constexpr auto trade_header_rows = 4;
 constexpr auto trade_header_separator_rows = 0;
 constexpr auto trade_total_header_rows = trade_header_rows + trade_header_separator_rows;
+
+struct category_range {
+    item_category_id id;
+    size_t start = 0;
+    size_t end = 0;
+};
+
+auto build_category_ranges( const std::vector<item_pricing> &list,
+                            const std::vector<size_t> &filtered ) -> std::vector<category_range>
+{
+    auto ranges = std::vector<category_range>{};
+    std::ranges::for_each( std::views::iota( size_t{0}, filtered.size() ),
+    [&]( size_t idx ) {
+        const auto list_index = filtered[idx];
+        const auto &ip = list[list_index];
+        const auto category_id = ip.locs.front()->get_category().get_id();
+        if( ranges.empty() || ranges.back().id != category_id ) {
+            if( !ranges.empty() ) {
+                ranges.back().end = idx;
+            }
+            ranges.push_back( category_range{ .id = category_id, .start = idx, .end = idx + 1 } );
+        } else {
+            ranges.back().end = idx + 1;
+        }
+    } );
+    return ranges;
+}
+
+auto register_trade_actions( input_context &ctxt, bool include_any_input ) -> void
+{
+    ctxt.register_action( "SWITCH_LISTS" );
+    ctxt.register_action( "UP" );
+    ctxt.register_action( "DOWN" );
+    ctxt.register_action( "LEFT" );
+    ctxt.register_action( "RIGHT" );
+    ctxt.register_action( "FILTER" );
+    ctxt.register_action( "RESET_FILTER" );
+    ctxt.register_action( "CATEGORY_SELECTION" );
+    ctxt.register_action( "PAGE_UP" );
+    ctxt.register_action( "PAGE_DOWN" );
+    ctxt.register_action( "EXAMINE" );
+    ctxt.register_action( "CONFIRM" );
+    ctxt.register_action( "QUIT" );
+    ctxt.register_action( "HELP_KEYBINDINGS" );
+    if( include_any_input ) {
+        ctxt.register_action( "ANY_INPUT" );
+    }
+}
 } // namespace
 
 void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
@@ -264,6 +312,7 @@ void trading_window::setup_trade( int cost, npc &np )
 
 void trading_window::update_win( npc &np, const std::string &deal )
 {
+    ( void )deal;
     // Draw borders, one of which is highlighted
     werase( w_them );
     werase( w_you );
@@ -284,14 +333,27 @@ void trading_window::update_win( npc &np, const std::string &deal )
     }
 
     // Colors for hinting if the trade will be accepted or not.
-    const nc_color trade_color       = npc_will_accept_trade( np ) ? c_green : c_red;
-    const nc_color trade_color_light = npc_will_accept_trade( np ) ? c_light_green : c_light_red;
+    const nc_color trade_color = npc_will_accept_trade( np ) ? c_green : c_red;
     struct selection_totals {
         units::volume volume = 0_ml;
         units::mass weight = 0_gram;
     };
 
     input_context ctxt( "NPC_TRADE" );
+    register_trade_actions( ctxt, false );
+    ctxt.register_action( "SWITCH_LISTS" );
+    ctxt.register_action( "UP" );
+    ctxt.register_action( "DOWN" );
+    ctxt.register_action( "LEFT" );
+    ctxt.register_action( "RIGHT" );
+    ctxt.register_action( "FILTER" );
+    ctxt.register_action( "RESET_FILTER" );
+    ctxt.register_action( "PAGE_UP" );
+    ctxt.register_action( "PAGE_DOWN" );
+    ctxt.register_action( "EXAMINE" );
+    ctxt.register_action( "CONFIRM" );
+    ctxt.register_action( "QUIT" );
+    ctxt.register_action( "HELP_KEYBINDINGS" );
 
     werase( w_head );
     draw_border( w_head );
@@ -301,10 +363,64 @@ void trading_window::update_win( npc &np, const std::string &deal )
     const auto head_keybinds_label_middle = _( "] keybindings >" );
     const auto head_keybinds_label_width = utf8_width( head_keybinds_label_prefix ) +
                                            1 + utf8_width( head_keybinds_label_middle );
-    const auto title_label = _( "Trading:" );
+    const auto title_label = _( "Trading with" );
     mvwprintz( w_head, point( 1, head_title_y ), c_white, title_label );
     mvwprintz( w_head, point( 1 + utf8_width( title_label ) + 1, head_title_y ),
                c_light_green, np.disp_name() );
+    const auto examine_key = to_lower_case( ctxt.get_desc( "EXAMINE", 1 ) );
+    const auto switch_key = ctxt.get_desc( "SWITCH_LISTS", 1 );
+    const auto confirm_key = ctxt.get_desc( "CONFIRM", 1 );
+    const auto category_key = ctxt.get_desc( "CATEGORY_SELECTION", 1 );
+    const auto confirm_label = _( "confirm trade" );
+    const auto examine_label = _( "examine item" );
+    const auto switch_label = _( "switch panes" );
+    const auto category_label = _( "category select" );
+    const auto category_state_on = _( "ON" );
+    const auto category_state_off = _( "OFF" );
+    const auto state_on_color = category_mode ? c_light_green : c_dark_gray;
+    const auto state_off_color = category_mode ? c_dark_gray : c_light_green;
+    const auto state_sep = _( "|" );
+    const auto hint_sep = "  ";
+    const auto hint_width = [&]( const std::string & key, const std::string & label ) -> int {
+        return 2 + utf8_width( key ) + 2 + utf8_width( label );
+    };
+    const auto state_width = 2 + utf8_width( category_state_on ) + utf8_width( state_sep ) +
+                             utf8_width( category_state_off ) + 1;
+    const auto total_hints_w = hint_width( examine_key, examine_label ) +
+                               utf8_width( hint_sep ) +
+                               hint_width( switch_key, switch_label ) +
+                               utf8_width( hint_sep ) +
+                               hint_width( confirm_key, confirm_label ) +
+                               utf8_width( hint_sep ) +
+                               hint_width( category_key, category_label ) +
+                               1 + state_width;
+    auto key_hints_x = 1 + std::max( head_inner_w - total_hints_w, 0 );
+    const auto draw_hint = [&]( const std::string & key, const std::string & label ) -> void {
+        mvwprintz( w_head, point( key_hints_x, head_title_y ), c_white, "[" );
+        key_hints_x += 1;
+        mvwprintz( w_head, point( key_hints_x, head_title_y ), c_yellow, key );
+        key_hints_x += utf8_width( key );
+        mvwprintz( w_head, point( key_hints_x, head_title_y ), c_white, "] " );
+        key_hints_x += 2;
+        mvwprintz( w_head, point( key_hints_x, head_title_y ), c_white, label );
+        key_hints_x += utf8_width( label );
+    };
+    draw_hint( examine_key, examine_label );
+    key_hints_x += utf8_width( hint_sep );
+    draw_hint( switch_key, switch_label );
+    key_hints_x += utf8_width( hint_sep );
+    draw_hint( confirm_key, confirm_label );
+    key_hints_x += utf8_width( hint_sep );
+    draw_hint( category_key, category_label );
+    mvwprintz( w_head, point( key_hints_x, head_title_y ), c_white, " [" );
+    key_hints_x += 2;
+    mvwprintz( w_head, point( key_hints_x, head_title_y ), state_on_color, category_state_on );
+    key_hints_x += utf8_width( category_state_on );
+    mvwprintz( w_head, point( key_hints_x, head_title_y ), c_white, state_sep );
+    key_hints_x += utf8_width( state_sep );
+    mvwprintz( w_head, point( key_hints_x, head_title_y ), state_off_color, category_state_off );
+    key_hints_x += utf8_width( category_state_off );
+    mvwprintz( w_head, point( key_hints_x, head_title_y ), c_white, "]" );
 
     std::string cost_str = _( "Exchange" );
     if( !np.will_exchange_items_freely() ) {
@@ -318,12 +434,6 @@ void trading_window::update_win( npc &np, const std::string &deal )
     const auto cost_x = 1 + ( head_inner_w - cost_w ) / 2;
     mvwprintz( w_head, point( cost_x, head_bottom_y ), trade_color, cost_tag );
 
-    if( !deal.empty() ) {
-        const auto deal_w = utf8_width( deal );
-        const auto deal_x = 1 + ( head_inner_w - deal_w ) / 2;
-        mvwprintz( w_head, point( deal_x, head_title_y ),
-                   trade_color_light, deal );
-    }
     auto keybinds_x = 1 + head_inner_w - head_keybinds_label_width;
     mvwprintz( w_head, point( keybinds_x, 0 ), c_white, head_keybinds_label_prefix );
     keybinds_x += utf8_width( head_keybinds_label_prefix );
@@ -453,6 +563,8 @@ void trading_window::update_win( npc &np, const std::string &deal )
         const auto name_indent = 2;
         const auto name_x = 1 + name_indent;
         const auto name_w = std::max( qty_x - 2 - name_indent, 1 );
+        const auto item_hotkeys = ctxt.get_available_single_char_hotkeys(
+                                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
         const auto stats_y = 2;
         const auto separator_y = 3;
         const auto header_y = 4;
@@ -500,6 +612,36 @@ void trading_window::update_win( npc &np, const std::string &deal )
                    align_left( vol_label, vol_w ) );
         mvwprintz( w_whose, point( price_x, header_y ), header_color,
                    align_left( price_label, price_w ) );
+        const auto filter_prefix = _( "< [" );
+        const auto filter_middle = _( "] filter" );
+        const auto filter_suffix = _( " >" );
+        const auto filter_input_sep = _( ": " );
+        const auto filter_label_width = utf8_width( filter_prefix ) + 1 +
+                                        utf8_width( filter_middle ) +
+                                        utf8_width( filter_suffix );
+        const auto filter_y = getmaxy( w_whose ) - 1;
+        auto filter_x = 1;
+        mvwprintz( w_whose, point( filter_x, filter_y ), c_white, filter_prefix );
+        filter_x += utf8_width( filter_prefix );
+        mvwprintz( w_whose, point( filter_x, filter_y ), c_yellow, "/" );
+        filter_x += 1;
+        mvwprintz( w_whose, point( filter_x, filter_y ), c_white, filter_middle );
+        filter_x += utf8_width( filter_middle );
+        const auto is_editing_here = filter_edit && ( filter_edit_theirs == they );
+        if( is_editing_here || !( they ? them_filter : you_filter ).empty() ) {
+            const auto filter_label_free = std::max( win_w - filter_label_width -
+                                                     utf8_width( filter_input_sep ), 0 );
+            const auto &pane_filter = they ? them_filter : you_filter;
+            const auto &active_text = is_editing_here && filter_popup ? filter_popup->text() :
+                                      pane_filter;
+            const auto filter_text = trim_by_length( active_text, filter_label_free );
+            mvwprintz( w_whose, point( filter_x, filter_y ), c_white, filter_input_sep );
+            filter_x += utf8_width( filter_input_sep );
+            const auto filter_color = is_editing_here ? c_white : c_magenta;
+            mvwprintz( w_whose, point( filter_x, filter_y ), filter_color, filter_text );
+            filter_x += utf8_width( filter_text );
+        }
+        mvwprintz( w_whose, point( filter_x, filter_y ), c_white, filter_suffix );
         const auto draw_filter_help = show_filter_help && ( they == help_on_theirs );
         if( draw_filter_help ) {
             const auto help_start_y = trade_total_header_rows + 1;
@@ -511,6 +653,15 @@ void trading_window::update_win( npc &np, const std::string &deal )
             continue;
         }
         std::optional<item_category_id> last_category;
+        const auto is_focused_pane = ( they && focus_them ) || ( !they && !focus_them );
+        const auto category_ranges = build_category_ranges( list, filtered );
+        std::optional<item_category_id> active_category_id;
+        if( category_mode && is_focused_pane && !category_ranges.empty() ) {
+            const auto &category_cursor = they ? them_category_cursor : you_category_cursor;
+            if( category_cursor < category_ranges.size() ) {
+                active_category_id = category_ranges[category_cursor].id;
+            }
+        }
         size_t row = 0;
         for( size_t i = offset; i < filtered.size() && row < entries_per_page; i++ ) {
             const auto list_index = filtered[i];
@@ -555,19 +706,18 @@ void trading_window::update_win( npc &np, const std::string &deal )
             if( ip.selected ) {
                 color = c_white;
             }
-            auto line_color = color;
-            if( is_cursor ) {
-                line_color = hilite( c_white );
-            }
-            if( is_cursor ) {
+            const auto is_category_selected = active_category_id &&
+                                              *active_category_id == category_id;
+            const auto should_hilite = is_cursor || is_category_selected;
+            auto line_color = should_hilite ? hilite( c_white ) : color;
+            if( should_hilite ) {
                 const auto fill = std::string( win_w, ' ' );
                 mvwprintz( w_whose, point( 1, row_y ), line_color, fill );
             }
 
-            int keychar = i - offset + 'a';
-            if( keychar > 'z' ) {
-                keychar = keychar - 'z' - 1 + 'A';
-            }
+            const auto hotkey_index = i - offset;
+            const auto keychar = hotkey_index < item_hotkeys.size() ?
+                                 item_hotkeys[hotkey_index] : ' ';
             const auto total_amount = ip.charges > 0 ? ip.charges : std::max( ip.count, 1 );
             const auto selected_amount = ip.charges > 0 ? owner_sells_charge : owner_sells;
             auto selection_mark = '-';
@@ -577,9 +727,11 @@ void trading_window::update_win( npc &np, const std::string &deal )
                 selection_mark = '#';
             }
             trim_and_print( w_whose, point( name_x, row_y ), name_w, line_color, "%c %c %s",
-                            static_cast<char>( keychar ), selection_mark, itname );
+                            keychar, selection_mark, itname );
 #if defined(__ANDROID__)
-            ctxt.register_manual_key( keychar, itname );
+            if( keychar != ' ' ) {
+                ctxt.register_manual_key( keychar, itname );
+            }
 #endif
 
             std::string price_str = format_money( ip.price * amount );
@@ -613,7 +765,7 @@ void trading_window::update_win( npc &np, const std::string &deal )
                 price_color = c_dark_gray;
                 price_str.clear();
             }
-            if( is_cursor ) {
+            if( should_hilite ) {
                 price_color = hilite( price_color );
             }
             mvwprintz( w_whose, point( price_x, row_y ), price_color,
@@ -660,9 +812,10 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
     const auto &info_win = target_is_theirs ? w_you : w_them;
     ui_adaptor ui;
     catacurses::window w_popup;
+    size_t scroll_pos = 0;
     ui.on_screen_resize( [&]( ui_adaptor & ui ) {
-        const auto width = getmaxx( info_win );
-        const auto height = getmaxy( info_win );
+        const auto width = std::max( getmaxx( info_win ), 1 );
+        const auto height = std::max( getmaxy( info_win ), 1 );
         const auto pos = point( getbegx( info_win ), getbegy( info_win ) );
         w_popup = catacurses::newwin( height, width, pos );
         ui.position_from_window( w_popup );
@@ -676,13 +829,34 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
         werase( w_popup );
         draw_border( w_popup );
         const auto inner_w = getmaxx( w_popup ) - 2;
-        fold_and_print( w_popup, point( 1, 1 ), inner_w, c_white, info_text );
+        const auto inner_h = getmaxy( w_popup ) - 2;
+        const auto folded = foldstring( info_text, inner_w );
+        const auto max_scroll = folded.size() > static_cast<size_t>( inner_h ) ?
+                                folded.size() - static_cast<size_t>( inner_h ) : 0;
+        scroll_pos = std::min( scroll_pos, max_scroll );
+        nc_color cur_color = c_white;
+        for( size_t i = 0; i < static_cast<size_t>( inner_h ) && i + scroll_pos < folded.size(); i++ ) {
+            print_colored_text( w_popup, point( 1, 1 + static_cast<int>( i ) ), cur_color,
+                                c_white, folded[i + scroll_pos] );
+        }
+        if( folded.size() > static_cast<size_t>( inner_h ) ) {
+            scrollbar()
+            .offset_x( getmaxx( w_popup ) - 1 )
+            .offset_y( 1 )
+            .content_size( static_cast<int>( folded.size() ) )
+            .viewport_pos( static_cast<int>( scroll_pos ) )
+            .viewport_size( inner_h )
+            .scroll_to_last( false )
+            .apply( w_popup );
+        }
         wnoutrefresh( w_popup );
     } );
 
     input_context ctxt( "NPC_TRADE" );
     ctxt.register_action( "UP" );
     ctxt.register_action( "DOWN" );
+    ctxt.register_action( "PAGE_UP" );
+    ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
@@ -698,6 +872,17 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
         } else if( action == "DOWN" ) {
             result = info_popup_result::move_down;
             exit = true;
+        } else if( action == "PAGE_UP" || action == "PAGE_DOWN" ) {
+            const auto inner_h = std::max( getmaxy( w_popup ) - 2, 1 );
+            const auto folded = foldstring( info_text, std::max( getmaxx( w_popup ) - 2, 1 ) );
+            const auto max_scroll = folded.size() > static_cast<size_t>( inner_h ) ?
+                                    folded.size() - static_cast<size_t>( inner_h ) : 0;
+            const auto page_rem = static_cast<size_t>( inner_h );
+            if( action == "PAGE_UP" ) {
+                scroll_pos = scroll_pos > page_rem ? scroll_pos - page_rem : 0;
+            } else {
+                scroll_pos = std::min( scroll_pos + page_rem, max_scroll );
+            }
         } else if( action == "CONFIRM" || action == "QUIT" ) {
             exit = true;
         }
@@ -757,19 +942,7 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
     }
 
     input_context ctxt( "NPC_TRADE" );
-    ctxt.register_action( "SWITCH_LISTS" );
-    ctxt.register_action( "UP" );
-    ctxt.register_action( "DOWN" );
-    ctxt.register_action( "LEFT" );
-    ctxt.register_action( "RIGHT" );
-    ctxt.register_action( "FILTER" );
-    ctxt.register_action( "PAGE_UP" );
-    ctxt.register_action( "PAGE_DOWN" );
-    ctxt.register_action( "EXAMINE" );
-    ctxt.register_action( "CONFIRM" );
-    ctxt.register_action( "QUIT" );
-    ctxt.register_action( "HELP_KEYBINDINGS" );
-    ctxt.register_action( "ANY_INPUT" );
+    register_trade_actions( ctxt, true );
 
     ui_adaptor ui;
     ui.on_screen_resize( [this]( ui_adaptor & ui ) {
@@ -784,6 +957,9 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
     bool confirm = false;
     bool exit = false;
     std::optional<int> pending_count;
+    category_mode = false;
+    them_category_cursor = 0;
+    you_category_cursor = 0;
 
     const auto clamp_cursor_to_list = [&]( size_t list_size, size_t &cursor,
                                            size_t &offset ) -> void {
@@ -850,22 +1026,58 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
         auto &filtered = focus_them ? them_filtered : you_filtered;
         auto &offset = focus_them ? them_off : you_off;
         auto &cursor = focus_them ? them_cursor : you_cursor;
+        auto &category_cursor = focus_them ? them_category_cursor : you_category_cursor;
+        const auto category_ranges = build_category_ranges( target_list, filtered );
+        const auto item_hotkeys = ctxt.get_available_single_char_hotkeys(
+                                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
         clamp_cursor_to_list( filtered.size(), cursor, offset );
+        if( category_cursor >= category_ranges.size() ) {
+            category_cursor = category_ranges.empty() ? 0 : category_ranges.size() - 1;
+        }
         ui_manager::redraw();
 
         const std::string action = ctxt.handle_input();
         if( action == "SWITCH_LISTS" ) {
             focus_them = !focus_them;
         } else if( action == "UP" ) {
-            if( !filtered.empty() ) {
+            if( category_mode ) {
+                if( !category_ranges.empty() ) {
+                    category_cursor = category_cursor > 0 ? category_cursor - 1 :
+                                      category_ranges.size() - 1;
+                    cursor = category_ranges[category_cursor].start;
+                }
+            } else if( !filtered.empty() ) {
                 cursor = cursor > 0 ? cursor - 1 : filtered.size() - 1;
             }
         } else if( action == "DOWN" ) {
-            if( !filtered.empty() ) {
+            if( category_mode ) {
+                if( !category_ranges.empty() ) {
+                    category_cursor = ( category_cursor + 1 ) < category_ranges.size() ?
+                                      category_cursor + 1 : 0;
+                    cursor = category_ranges[category_cursor].start;
+                }
+            } else if( !filtered.empty() ) {
                 cursor = ( cursor + 1 ) < filtered.size() ? cursor + 1 : 0;
             }
         } else if( action == "RIGHT" || action == "LEFT" ) {
-            if( !filtered.empty() ) {
+            if( category_mode ) {
+                if( !category_ranges.empty() ) {
+                    const auto &range = category_ranges[category_cursor];
+                    const auto apply_amount = [&]( item_pricing & ip ) -> void {
+                        if( action == "RIGHT" ) {
+                            const auto max_amount = ip.charges > 0 ? ip.charges :
+                                                    std::max( ip.count, 1 );
+                            apply_trade_change( ip, max_amount );
+                        } else {
+                            apply_trade_change( ip, 0 );
+                        }
+                    };
+                    std::ranges::for_each( std::views::iota( range.start, range.end ),
+                    [&]( size_t idx ) {
+                        apply_amount( target_list[filtered[idx]] );
+                    } );
+                }
+            } else if( !filtered.empty() ) {
                 auto &ip = target_list[filtered[cursor]];
                 if( action == "RIGHT" ) {
                     const auto max_amount = ip.charges > 0 ? ip.charges : std::max( ip.count, 1 );
@@ -876,25 +1088,66 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
                 }
             }
             pending_count.reset();
+        } else if( action == "CATEGORY_SELECTION" ) {
+            category_mode = !category_mode;
+            if( category_mode && !category_ranges.empty() && !filtered.empty() ) {
+                const auto cursor_category = target_list[filtered[cursor]]
+                                             .locs.front()->get_category().get_id();
+                const auto match = std::ranges::find_if( category_ranges,
+                [&]( const category_range & entry ) {
+                    return entry.id == cursor_category;
+                } );
+                if( match != category_ranges.end() ) {
+                    category_cursor = static_cast<size_t>(
+                                          std::distance( category_ranges.begin(), match ) );
+                }
+                cursor = category_ranges[category_cursor].start;
+                clamp_cursor_to_list( filtered.size(), cursor, offset );
+            }
         } else if( action == "FILTER" ) {
             auto &active_filter = focus_them ? them_filter : you_filter;
             const auto original_filter = active_filter;
             filter_edit = true;
             filter_edit_theirs = focus_them;
+            const auto &filter_win = focus_them ? w_them : w_you;
             filter_popup = std::make_unique<string_input_popup>();
-            filter_popup->max_length( 256 ).text( active_filter ).identifier( "npc_trade" );
+            const auto filter_prefix = _( "< [" );
+            const auto filter_middle = _( "] filter" );
+            const auto filter_suffix = _( " >" );
+            const auto filter_input_sep = _( ": " );
+            const auto filter_input_x = 1 + utf8_width( filter_prefix ) + 1 +
+                                        utf8_width( filter_middle ) +
+                                        utf8_width( filter_input_sep );
+            const auto filter_input_end = std::max(
+                                              getmaxx( filter_win ) - 2 -
+                                              utf8_width( filter_suffix ),
+                                              filter_input_x );
+            const auto filter_input_y = getmaxy( filter_win ) - 1;
+            filter_popup->max_length( 256 )
+            .text( active_filter )
+            .identifier( "npc_trade" )
+            .window( filter_win, point( filter_input_x, filter_input_y ), filter_input_end );
             ime_sentry sentry;
             do {
                 ui_manager::redraw();
-                const auto new_filter = filter_popup->query_string( false );
-                if( filter_popup->canceled() ) {
-                    active_filter = original_filter;
-                } else {
-                    active_filter = new_filter;
-                }
+                filter_popup->query_string( false );
             } while( !filter_popup->canceled() && !filter_popup->confirmed() );
+            const auto filter_confirmed = filter_popup->confirmed();
+            const auto filter_text = std::string( filter_popup->text() );
             filter_edit = false;
             filter_popup = nullptr;
+            if( filter_confirmed ) {
+                active_filter = filter_text;
+                auto &active_list = focus_them ? theirs : yours;
+                auto &active_filtered = focus_them ? them_filtered : you_filtered;
+                active_filtered = build_filtered_indices( active_list, active_filter );
+                clamp_cursor_to_list( active_filtered.size(), cursor, offset );
+            } else {
+                active_filter = original_filter;
+            }
+        } else if( action == "RESET_FILTER" ) {
+            auto &active_filter = focus_them ? them_filter : you_filter;
+            active_filter.clear();
             auto &active_list = focus_them ? theirs : yours;
             auto &active_filtered = focus_them ? them_filtered : you_filtered;
             active_filtered = build_filtered_indices( active_list, active_filter );
@@ -975,16 +1228,11 @@ bool trading_window::perform_trade( npc &np, const std::string &deal )
                 }
                 continue;
             }
-            // Letters & such
-            if( ch >= 'a' && ch <= 'z' ) {
-                ch -= 'a';
-            } else if( ch >= 'A' && ch <= 'Z' ) {
-                ch = ch - 'A' + ( 'z' - 'a' ) + 1;
-            } else {
+            const auto hotkey_pos = item_hotkeys.find( static_cast<char>( ch ) );
+            if( hotkey_pos == std::string::npos ) {
                 continue;
             }
-
-            auto ch_index = static_cast<size_t>( ch );
+            auto ch_index = static_cast<size_t>( hotkey_pos );
             ch_index += offset;
             if( ch_index < filtered.size() ) {
                 item_pricing &ip = target_list[filtered[ch_index]];

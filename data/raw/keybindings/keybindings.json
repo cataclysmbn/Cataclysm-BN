@@ -3277,6 +3277,20 @@
   },
   {
     "type": "keybinding",
+    "id": "RESET_FILTER",
+    "category": "NPC_TRADE",
+    "name": "Reset filter",
+    "bindings": [ { "input_method": "keyboard", "key": "r" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "CATEGORY_SELECTION",
+    "category": "NPC_TRADE",
+    "name": "Toggle category select",
+    "bindings": [ { "input_method": "keyboard", "key": ";" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "UP",
     "category": "NPC_TRADE",
     "name": "Move cursor up",
@@ -3322,7 +3336,7 @@
     "id": "EXAMINE",
     "category": "NPC_TRADE",
     "name": "Examine item",
-    "bindings": [ { "input_method": "keyboard", "key": "E" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "e" } ]
   },
   {
     "type": "keybinding",
