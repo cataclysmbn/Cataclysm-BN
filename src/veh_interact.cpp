@@ -590,12 +590,14 @@ task_reason veh_interact::cant_do( char mode )
     bool has_skill = true;
     bool enough_light = true;
     const vehicle_part_range vpr = veh->get_all_parts();
-    const vehicle_part *pt = &veh->part( cpart );
-    if( pt ) {
-        const tripoint q = veh->mount_to_tripoint( pt->mount );
-        const vehicle *cacheveh = &g->m.veh_at( q )->vehicle();
-        if( veh != cacheveh ) {
-            return DOUBLE_STACK;
+    if( cpart != -1 ) {
+        const vehicle_part *pt = &veh->part( cpart );
+        if( pt ) {
+            const tripoint q = veh->mount_to_tripoint( pt->mount );
+            const vehicle *cacheveh = &g->m.veh_at( q )->vehicle();
+            if( veh != cacheveh ) {
+                return DOUBLE_STACK;
+            }
         }
     }
     switch( mode ) {
