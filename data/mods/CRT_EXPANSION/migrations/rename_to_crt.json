@@ -16,6 +16,11 @@
   },
   {
     "type": "MIGRATION",
+    "id": "hp_pellet",
+    "replace": "crt_hp_pellet"
+  },
+  {
+    "type": "MIGRATION",
     "id": "alloy_pellet",
     "replace": "crt_alloy_pellet"
   }
