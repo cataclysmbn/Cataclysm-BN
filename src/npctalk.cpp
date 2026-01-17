@@ -20,6 +20,8 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_effects.h"
@@ -1091,6 +1093,16 @@ void npc::talk_to_u( bool radio_contact )
 
     decide_needs();
 
+    std::string hook_result = cata::run_hooks<std::string>( "on_dialogue_start", [ &,
+    this]( auto & params ) {
+        params["npc"] = this;
+        params["next_topic"] = d.topic_stack.back().id;
+    } );
+
+    if( !hook_result.empty() ) {
+        d.add_topic( hook_result );
+    }
+
     dialogue_window d_win;
     // Main dialogue loop
     do {
@@ -1108,7 +1120,18 @@ void npc::talk_to_u( bool radio_contact )
                 chatbin.mission_selected = d.missions_assigned.front();
             }
         }
-        const talk_topic next = d.opt( d_win, name, d.topic_stack.back() );
+        talk_topic next = d.opt( d_win, name, d.topic_stack.back() );
+
+        hook_result = cata::run_hooks<std::string>( "on_dialogue_option", [ &, this]( auto & params ) {
+            params["npc"] = this;
+            params["next_topic"] = next.id;
+        } );
+
+        if( !hook_result.empty() ) {
+            d.add_topic( hook_result );
+            next = d.topic_stack.back();
+        }
+
         if( next.id == "TALK_NONE" ) {
             int cat = topic_category( d.topic_stack.back() );
             do {
@@ -1122,6 +1145,10 @@ void npc::talk_to_u( bool radio_contact )
             d.add_topic( next );
         }
     } while( !d.done );
+
+    cata::run_hooks( "on_dialogue_end", [ &, this]( auto & params ) {
+        params["npc"] = this;
+    } );
 
     if( you.activity->id() == ACT_AIM && !you.has_weapon() ) {
         you.cancel_activity();
