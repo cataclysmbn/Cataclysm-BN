@@ -1349,6 +1349,8 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `TRIFFID` Location is related to triffids. Used to classify location.
 - `LAKE` Location is is placed on a lake and will be ignored for placement if the overmap doesn't
   contain any lake terrain.
+- `RIVER` Location is is placed on a lake and will be ignored for placement if the overmap doesn't
+  contain any lake terrain.
 - `UNIQUE` Location is unique and will only occur once per overmap. `occurrences` is overridden to
   define a percent chance (e.g. `"occurrences" : [75, 100]` is 75%)
 - `ENDGAME` Location will have highest priority during special placement, and won't be affected by

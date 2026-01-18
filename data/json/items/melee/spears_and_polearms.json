@@ -465,6 +465,34 @@
     "price_postapoc": "5 USD"
   },
   {
+    "id": "javelin_stone",
+    "copy-from": "javelin",
+    "type": "GENERIC",
+    "name": { "str": "stone javelin" },
+    "description": "A throwing spear with a stone spearhead.",
+    "material": [ "wood", "stone" ],
+    "weight": "700 g",
+    "color": "light_gray",
+    "cutting": 13,
+    "thrown_damage": [ { "damage_type": "bash", "amount": 5 }, { "damage_type": "stab", "amount": 14 } ],
+    "price": "20 USD",
+    "price_postapoc": "275 cent"
+  },
+  {
+    "id": "javelin_copper",
+    "copy-from": "javelin_iron",
+    "type": "GENERIC",
+    "name": { "str": "copper javelin" },
+    "description": "A copper-tipped throwing spear.",
+    "material": [ "wood", "copper" ],
+    "weight": "1100 g",
+    "color": "light_red",
+    "cutting": 16,
+    "thrown_damage": [ { "damage_type": "bash", "amount": 5 }, { "damage_type": "stab", "amount": 16 } ],
+    "price": "90 USD",
+    "price_postapoc": "5 USD"
+  },
+  {
     "id": "pike_wood",
     "type": "GENERIC",
     "copy-from": "pike",

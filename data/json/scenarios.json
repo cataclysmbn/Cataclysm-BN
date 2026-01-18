@@ -166,6 +166,39 @@
   },
   {
     "type": "scenario",
+    "id": "hunted_start",
+    "name": "Challenge - Hunted",
+    "points": -2,
+    "forced_traits": [ "HAS_NEMESIS" ],
+    "description": "Since the start of the Cataclysm, something has been hunting you relentlessly.  You can outrun it, but it always seems to find you eventually.  The only escape is for one of you to die.",
+    "allowed_locs": [
+      "sloc_house",
+      "sloc_house_boarded",
+      "sloc_school",
+      "sloc_grocery_store",
+      "sloc_gun_store",
+      "sloc_garage",
+      "sloc_pawn_shop",
+      "sloc_bank",
+      "sloc_military_surplus",
+      "sloc_furniture_store",
+      "sloc_library",
+      "sloc_bookstore",
+      "sloc_zoo_giftshop",
+      "sloc_zoo_cages",
+      "sloc_golfcourse_mid_course",
+      "sloc_golfcourse_clubhouse",
+      "sloc_church",
+      "sloc_cemetery",
+      "sloc_apartments_rooftop",
+      "sloc_hospital"
+    ],
+    "start_name": "In Town",
+    "flags": [ "CHALLENGE", "LONE_START" ],
+    "missions": [ "MISSION_KILL_NEMESIS" ]
+  },
+  {
+    "type": "scenario",
     "name": "Burning Building",
     "description": "The building you had chosen to reside in has suddenly caught fire!  You might want to leave.",
     "flags": [ "FIRE_START", "CITY_START" ],
@@ -234,8 +267,8 @@
     "points": 0,
     "description": "A temporal distortion has hurled you into this collapsing world. You arrive carrying only the few items that mattered most to you - the things tied to who you are, or who you were meant to become.",
     "start_name": "Wilderness",
-    "allowed_locs": [ "sloc_forest", "sloc_field" ],
-    "professions": [ "churl", "prospector", "knight", "frontiersman", "dogsledder" ],
+    "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
+    "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder" ],
     "forbids_bionics": true,
     "flags": [ "CHALLENGE", "LONE_START" ]
   },
@@ -403,6 +436,7 @@
     "allowed_locs": [
       "sloc_field",
       "sloc_forest",
+      "sloc_swamp",
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
@@ -439,6 +473,7 @@
     "allowed_locs": [
       "sloc_field",
       "sloc_forest",
+      "sloc_swamp",
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
@@ -563,7 +598,7 @@
     "points": 2,
     "description": "Since birth, your sole purpose in life has been the advancement of genetic science, willingly or not.  Once the Cataclysm struck, you left the lab, and wandered aimlessly, ending up in a forest.",
     "start_name": "Wilderness",
-    "allowed_locs": [ "sloc_forest", "sloc_field" ],
+    "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
     "professions": [ "unemployed", "mutant_patient", "mutant_volunteer", "broken_cyborg", "faulty_bionic", "cykotic", "convict_political" ],
     "traits": [
       "ELFAEYES",
@@ -652,7 +687,7 @@
     "points": 0,
     "description": "You find yourself amongst trees.  The screaming and the moaning is fainter this far from civilization, but you'd better know what you're doing out here.",
     "start_name": "Wilderness",
-    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_campsite", "sloc_campground", "sloc_deserted_island" ],
+    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_swamp", "sloc_campsite", "sloc_campground", "sloc_deserted_island" ],
     "flags": [ "LONE_START" ]
   },
   {
@@ -662,7 +697,7 @@
     "points": -5,
     "description": "While being transported to a different military base, the pilot lost control of the helicopter and crashed in the middle of nowhere.  Hopefully some of the soldiers that were with you also survived the accident.",
     "start_name": "Crash site",
-    "allowed_locs": [ "sloc_field", "sloc_forest" ],
+    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_swamp" ],
     "professions": [
       "soldier",
       "mil_auto_rifleman",
@@ -751,7 +786,7 @@
     "points": 2,
     "description": "Once it became clear that the world was ending you took to the skies, hoping that your flying skills could lead you to safety.  With no safe landing zones, knowing fuel will soon be a concern, you made a quick landing to plan your next move.",
     "start_name": "Emergency Landing Site",
-    "allowed_locs": [ "sloc_field", "sloc_forest" ],
+    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_swamp" ],
     "missions": [ "MISSION_HELICOPTER_REFUEL" ],
     "professions": [
       "heli_pilot_scenario",

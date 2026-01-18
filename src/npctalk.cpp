@@ -2007,10 +2007,12 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
         // No name prepended!
         challenge = challenge.substr( 1 );
     } else if( challenge[0] == '*' ) {
-        challenge = string_format( pgettext( "npc does something", "%s %s" ), beta->name,
+        challenge = string_format( pgettext( "npc does something", "%s %s" ), colorize( beta->name,
+                                   c_light_green ),
                                    challenge.substr( 1 ) );
     } else {
-        challenge = string_format( pgettext( "npc says something", "%s: %s" ), beta->name,
+        challenge = string_format( pgettext( "npc says something", "%s: %s" ), colorize( beta->name,
+                                   c_light_green ),
                                    challenge );
     }
 
@@ -2022,6 +2024,7 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     for( size_t i = 0; i < responses.size(); i++ ) {
         response_lines.push_back( responses[i].create_option_line( *this, 'a' + i ) );
     }
+    auto selected_response = size_t{ 0 };
 
 #if defined(__ANDROID__)
     input_context ctxt( "DIALOGUE_CHOOSE_RESPONSE" );
@@ -2042,33 +2045,50 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         d_win.print_header( npc_name );
-        d_win.display_responses( response_lines );
+        d_win.display_responses( response_lines, selected_response );
     } );
 
     int ch;
     bool okay;
+    const auto response_count = responses.size();
     do {
         d_win.refresh_response_display();
         do {
             ui_manager::redraw();
             ch = inp_mngr.get_input_event().get_first_input();
-            d_win.handle_scrolling( ch );
+            if( ch == KEY_UP ) {
+                if( selected_response > 0 ) {
+                    selected_response -= 1;
+                } else {
+                    selected_response = response_count - 1;
+                }
+                continue;
+            }
+            if( ch == KEY_DOWN ) {
+                if( selected_response + 1 < response_count ) {
+                    selected_response += 1;
+                } else {
+                    selected_response = 0;
+                }
+                continue;
+            }
+            if( ch == KEY_PPAGE || ch == KEY_NPAGE ) {
+                const auto scroll_entry_index = d_win.handle_scrolling( ch );
+                if( scroll_entry_index ) {
+                    selected_response = *scroll_entry_index;
+                }
+                continue;
+            }
             auto st = special_talk( ch );
             if( st.id != "TALK_NONE" ) {
                 return st;
             }
-            switch( ch ) {
-                case KEY_DOWN:
-                case KEY_NPAGE:
-                case KEY_UP:
-                case KEY_PPAGE:
-                    ch = -1;
-                    break;
-                default:
-                    ch -= 'a';
-                    break;
+            if( ch == KEY_ENTER || ch == '\n' || ch == '\r' ) {
+                ch = static_cast<int>( selected_response );
+            } else {
+                ch -= 'a';
             }
-        } while( ( ch < 0 || ch >= static_cast<int>( responses.size() ) ) );
+        } while( ( ch < 0 || ch >= static_cast<int>( response_count ) ) );
         okay = true;
         std::set<dialogue_consequence> consequences = responses[ch].get_consequences( *this );
         if( consequences.contains( dialogue_consequence::hostile ) ) {
@@ -2079,7 +2099,8 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     } while( !okay );
 
     talk_response chosen = responses[ch];
-    std::string response_printed = string_format( pgettext( "you say something", "You: %s" ),
+    std::string response_printed = string_format( pgettext( "you say something", "%s: %s" ),
+                                   colorize( _( "You" ), c_green ),
                                    response_lines[ch].text );
     d_win.add_to_history( response_printed );
 

@@ -13,6 +13,7 @@
 
 #include "calendar.h"
 #include "coordinates.h"
+#include "damage.h"
 #include "detached_ptr.h"
 #include "enums.h"
 #include "flat_set.h"
@@ -2394,6 +2395,18 @@ class item : public location_visitable<item>, public game_object<item>
         const location_vector<item> &get_components() const;
         location_vector<item> &get_components();
         const mtype *get_corpse_mon() const;
+        auto get_melee_damage_bonus() const -> const damage_instance &;
+        auto set_melee_damage_bonus( const damage_instance &bonus ) -> void;
+        auto get_melee_hit_bonus() const -> int;
+        auto set_melee_hit_bonus( int bonus ) -> void;
+        auto get_ranged_damage_bonus() const -> const damage_instance &;
+        auto set_ranged_damage_bonus( const damage_instance &bonus ) -> void;
+        auto get_range_bonus() const -> int;
+        auto set_range_bonus( int bonus ) -> void;
+        auto get_dispersion_bonus() const -> int;
+        auto set_dispersion_bonus( int bonus ) -> void;
+        auto get_recoil_bonus() const -> int;
+        auto set_recoil_bonus( int bonus ) -> void;
     private:
         location_vector<item> components;
         const itype *curammo = nullptr;
@@ -2401,6 +2414,14 @@ class item : public location_visitable<item>, public game_object<item>
         const mtype *corpse = nullptr;
         std::string corpse_name;       // Name of the late lamented
         std::set<matec_id> techniques; // item specific techniques
+
+        damage_instance melee_damage_bonus;
+        int melee_hit_bonus = 0;
+        damage_instance ranged_damage_bonus;
+        int range_bonus = 0;
+        int dispersion_bonus = 0;
+        int recoil_bonus = 0;
+
 
         /**
          * Data for items that represent in-progress crafts.

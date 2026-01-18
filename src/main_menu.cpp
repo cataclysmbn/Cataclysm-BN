@@ -1073,13 +1073,17 @@ void main_menu::world_tab( const std::string &worldname )
         return;
     }
 
+    auto *world = world_generator->get_world( worldname );
+    const auto is_v2_world = world->world_save_format == save_format::V2_COMPRESSED_SQLITE3;
+
     uilist mmenu( string_format( _( "Manage world \"%s\"" ), worldname ), {} );
     mmenu.border_color = c_light_gray;
     mmenu.hotkey_color = c_yellow;
     sound_on_move_uilist_callback cb( this );
     mmenu.callback = &cb;
     for( size_t i = 0; i < vWorldSubItems.size(); i++ ) {
-        mmenu.entries.emplace_back( static_cast<int>( i ), true, vWorldHotkeys[i], vWorldSubItems[i] );
+        const auto enabled = !( i == 6 && is_v2_world );
+        mmenu.entries.emplace_back( static_cast<int>( i ), enabled, vWorldHotkeys[i], vWorldSubItems[i] );
     }
     mmenu.query();
     int opt_val = mmenu.ret;
@@ -1133,7 +1137,6 @@ void main_menu::world_tab( const std::string &worldname )
                               "If you have just started playing, consider creating new world instead.\n"
                               "Proceed?"
                           ) ) ) {
-                WORLDINFO *world = world_generator->get_world( worldname );
                 world_generator->edit_active_world_mods( world );
             }
             break;
