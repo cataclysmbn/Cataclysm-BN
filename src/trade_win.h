@@ -54,5 +54,6 @@ class trading_window
         std::string you_filter;
         bool filter_edit = false;
         bool filter_edit_theirs = false;
+        bool show_item_info = false;
         std::unique_ptr<string_input_popup> filter_popup;
 };

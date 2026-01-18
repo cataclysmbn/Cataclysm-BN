@@ -3282,17 +3282,31 @@
     "name": "Reset filter",
     "bindings": [ { "input_method": "keyboard", "key": "r" } ]
   },
-  {
-    "type": "keybinding",
-    "id": "CATEGORY_SELECTION",
-    "category": "NPC_TRADE",
-    "name": "Toggle category select",
-    "bindings": [ { "input_method": "keyboard", "key": ";" } ]
-  },
-  {
-    "type": "keybinding",
-    "id": "UP",
-    "category": "NPC_TRADE",
+    {
+      "type": "keybinding",
+      "id": "CATEGORY_SELECTION",
+      "category": "NPC_TRADE",
+      "name": "Toggle category select",
+      "bindings": [ { "input_method": "keyboard", "key": ";" } ]
+    },
+    {
+      "type": "keybinding",
+      "id": "AUTOBALANCE",
+      "category": "NPC_TRADE",
+      "name": "Autobalance trade",
+      "bindings": [ { "input_method": "keyboard", "key": "=" } ]
+    },
+    {
+      "type": "keybinding",
+      "id": "TOGGLE_ITEM_INFO",
+      "category": "NPC_TRADE",
+      "name": "Toggle item description",
+      "bindings": [ { "input_method": "keyboard", "key": "+" } ]
+    },
+    {
+      "type": "keybinding",
+      "id": "UP",
+      "category": "NPC_TRADE",
     "name": "Move cursor up",
     "bindings": [ { "input_method": "keyboard", "key": "UP" }, { "input_method": "gamepad", "key": "JOY_UP" } ]
   },
