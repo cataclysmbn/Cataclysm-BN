@@ -331,20 +331,21 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_N_T( is_wandering, "is_wandering", bool() );
 
         SET_FX_T( wander_to, void( const tripoint & p, int f ) );
-        luna::set_fx( ut, "set_move_target", []( monster &mon, const tripoint &p ) -> void {
+        luna::set_fx( ut, "set_move_target", []( monster & mon, const tripoint & p ) -> void {
             mon.set_dest( p );
         } );
-        luna::set_fx( ut, "clear_move_target", []( monster &mon ) -> void {
+        luna::set_fx( ut, "clear_move_target", []( monster & mon ) -> void {
             mon.unset_dest();
         } );
         SET_FX_T( move_to, bool( const tripoint & p, bool force, bool step_on_critter,
                                  float stagger_adjustment ) );
 
         SET_FX_T( attitude, monster_attitude( const Character * ) const );
-        luna::set_fx( ut, "set_attitude", []( monster &mon, monster_attitude att ) -> void {
+        luna::set_fx( ut, "set_attitude", []( monster & mon, monster_attitude att ) -> void {
             static const auto effect_docile = efftype_id( "docile" );
             static const auto effect_pacified = efftype_id( "pacified" );
-            switch( att ) {
+            switch( att )
+            {
                 case MATT_FLEE:
                     mon.anger = 0;
                     mon.morale = -100;
@@ -1144,7 +1145,7 @@ void cata::detail::reg_npc( sol::state &lua )
         SET_FX_T( can_open_door, bool( const tripoint &, bool ) const );
         SET_FX_T( can_move_to, bool( const tripoint &, bool ) const );
 
-        luna::set_fx( ut, "set_move_target", []( npc &npchar, const tripoint &p,
+        luna::set_fx( ut, "set_move_target", []( npc & npchar, const tripoint & p,
         sol::optional<bool> no_bashing, sol::optional<bool> force ) -> bool {
             return npchar.update_path( p, no_bashing.value_or( false ), force.value_or( true ) );
         } );

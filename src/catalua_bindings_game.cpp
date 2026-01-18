@@ -147,11 +147,11 @@ void cata::detail::reg_game_api( sol::state &lua )
         auto all_monsters = g->all_monsters();
         auto &monsters = all_monsters.items;
         return monsters
-               | std::views::transform( []( const auto &entry ) { return entry.lock(); } )
-               | std::views::filter( []( const auto &entry ) { return entry && !entry->is_dead(); } )
-               | std::views::filter( []( const auto &entry ) { return entry->is_pet(); } )
-               | std::views::transform( []( const auto &entry ) { return entry.get(); } )
-               | std::ranges::to<std::vector<monster *>>();
+        | std::views::transform( []( const auto & entry ) { return entry.lock(); } )
+        | std::views::filter( []( const auto & entry ) { return entry && !entry->is_dead(); } )
+        | std::views::filter( []( const auto & entry ) { return entry->is_pet(); } )
+        | std::views::transform( []( const auto & entry ) { return entry.get(); } )
+        | std::ranges::to<std::vector<monster *>>();
     } );
 
     DOC( "Get all current monsters on the map" );
@@ -159,10 +159,10 @@ void cata::detail::reg_game_api( sol::state &lua )
         auto all_monsters = g->all_monsters();
         auto &monsters = all_monsters.items;
         return monsters
-               | std::views::transform( []( const auto &entry ) { return entry.lock(); } )
-               | std::views::filter( []( const auto &entry ) { return entry && !entry->is_dead(); } )
-               | std::views::transform( []( const auto &entry ) { return entry.get(); } )
-               | std::ranges::to<std::vector<monster *>>();
+        | std::views::transform( []( const auto & entry ) { return entry.lock(); } )
+        | std::views::filter( []( const auto & entry ) { return entry && !entry->is_dead(); } )
+        | std::views::transform( []( const auto & entry ) { return entry.get(); } )
+        | std::ranges::to<std::vector<monster *>>();
     } );
 
     luna::finalize_lib( lib );
