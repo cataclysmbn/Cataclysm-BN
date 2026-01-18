@@ -6,6 +6,7 @@ function nyctophobia.register(mod)
   local effect_depressants = EffectTypeId.new("depressants")
   local effect_downed = EffectTypeId.new("downed")
   local effect_shakes = EffectTypeId.new("shakes")
+  local in_darkness_alert = false
 
   ---@class NyctophobiaMoveParams
   ---@field char Character
@@ -92,22 +93,29 @@ function nyctophobia.register(mod)
     end
 
     local in_darkness = here:ambient_light_at(pos) < threshold
-    local chance = in_darkness and 10 or 50
+    local chance = in_darkness and 50 or 200
 
-    if #dark_places > 0 and gapi.rng(1, chance) == 1 then
+    if #dark_places > 0 and gapi.rng(1, chance) == 1 and one_turn_in(TimeDuration.from_hours(1))  then
       local target = random_entry(dark_places)
       if target then gapi.spawn_hallucination(target) end
     end
 
-    if not in_darkness then return end
-
-    if one_turn_in(TimeDuration.from_minutes(5)) and you:is_avatar() then
-      gapi.add_msg(MsgType.bad, locale.gettext("You feel a twinge of panic as darkness engulfs you."))
+    if not in_darkness then 
+      if in_darkness_alert and you:is_avatar() then
+        gapi.add_msg(MsgType.good, locale.gettext("You feel relief as you step back into the light."))
+      end
+      in_darkness_alert = false
+      return 
     end
 
-    if gapi.rng(1, 2) == 1 and one_turn_in(TimeDuration.from_seconds(30)) then you:sound_hallu() end
+    if you:is_avatar() and not in_darkness_alert then
+      gapi.add_msg(MsgType.bad, locale.gettext("You feel a twinge of panic as darkness engulfs you."))
+      in_darkness_alert = true
+    end
 
-    if gapi.rng(1, 50) == 1 and not you:is_on_ground() then
+    if gapi.rng(1, 2) == 1 and one_turn_in(TimeDuration.from_hours(1)) then you:sound_hallu() end
+
+    if gapi.rng(1, 200) == 1  and one_turn_in(TimeDuration.from_hours(1)) and not you:is_on_ground() then
       if you:is_avatar() then
         gapi.add_msg(
           MsgType.bad,
@@ -119,7 +127,7 @@ function nyctophobia.register(mod)
       you:add_effect(effect_downed, TimeDuration.from_minutes(gapi.rng(1, 2)))
     end
 
-    if gapi.rng(1, 50) == 1 and not you:has_effect(effect_shakes) then
+    if gapi.rng(1, 200) == 1 and one_turn_in(TimeDuration.from_hours(1)) and not you:has_effect(effect_shakes) then
       if you:is_avatar() then
         gapi.add_msg(
           MsgType.bad,
@@ -129,7 +137,7 @@ function nyctophobia.register(mod)
       you:add_effect(effect_shakes, TimeDuration.from_minutes(gapi.rng(1, 2)))
     end
 
-    if gapi.rng(1, 50) == 1 then
+    if gapi.rng(1, 200) == 1 and one_turn_in(TimeDuration.from_hours(1)) then
       if you:is_avatar() then
         gapi.add_msg(
           MsgType.bad,
