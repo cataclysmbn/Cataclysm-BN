@@ -852,6 +852,30 @@
     "components": [ [ [ "felt_patch", 24 ] ] ]
   },
   {
+    "result": "wolfsuit",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 7,
+    "time": "5 h",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 200 ] ],
+    "components": [ [ [ "faux_fur", 30 ] ] ]
+  },
+  {
+    "result": "dinosuit",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 7,
+    "time": "5 h",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 200 ] ],
+    "components": [ [ [ "faux_fur", 30 ] ] ]
+  },
+  {
     "result": "wsurvivor_suit",
     "type": "recipe",
     "category": "CC_ARMOR",
