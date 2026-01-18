@@ -136,8 +136,8 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "spawn_natural_artifact_at", []( map & m, const tripoint & p,
         sol::optional<std::string> property ) -> void {
             const auto prop = property && !property->empty()
-                              ? io::string_to_enum<artifact_natural_property>( *property )
-                              : ARTPROP_NULL;
+            ? io::string_to_enum<artifact_natural_property>( *property )
+            : ARTPROP_NULL;
             m.spawn_natural_artifact( p, prop );
         } );
 
