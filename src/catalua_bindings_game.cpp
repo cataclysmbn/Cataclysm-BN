@@ -4,6 +4,8 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include <ranges>
+
 #include "avatar.h"
 #include "distribution_grid.h"
 #include "game.h"
@@ -138,6 +140,29 @@ void cata::detail::reg_game_api( sol::state &lua )
             tripoint_north, tripoint_south, tripoint_east,
             tripoint_west, tripoint_above, tripoint_below
         };
+    } );
+
+    DOC( "Get the player's pet monsters" );
+    luna::set_fx( lib, "get_player_pets", []() -> std::vector<monster *> {
+        auto all_monsters = g->all_monsters();
+        auto &monsters = all_monsters.items;
+        return monsters
+               | std::views::transform( []( const auto &entry ) { return entry.lock(); } )
+               | std::views::filter( []( const auto &entry ) { return entry && !entry->is_dead(); } )
+               | std::views::filter( []( const auto &entry ) { return entry->is_pet(); } )
+               | std::views::transform( []( const auto &entry ) { return entry.get(); } )
+               | std::ranges::to<std::vector<monster *>>();
+    } );
+
+    DOC( "Get all current monsters on the map" );
+    luna::set_fx( lib, "get_all_monsters", []() -> std::vector<monster *> {
+        auto all_monsters = g->all_monsters();
+        auto &monsters = all_monsters.items;
+        return monsters
+               | std::views::transform( []( const auto &entry ) { return entry.lock(); } )
+               | std::views::filter( []( const auto &entry ) { return entry && !entry->is_dead(); } )
+               | std::views::transform( []( const auto &entry ) { return entry.get(); } )
+               | std::ranges::to<std::vector<monster *>>();
     } );
 
     luna::finalize_lib( lib );
