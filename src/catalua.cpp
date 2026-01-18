@@ -292,8 +292,7 @@ auto run_hooks( std::string_view hook_name, const hook_opts &opts,
                 const std::function<void( sol::table &params )> &init,
                 const hook_result_handler &on_result ) -> bool
 {
-    lua_state &state = opts.state != nullptr ? *opts.state : *DynamicDataLoader::get_instance().lua;
-    sol::state &lua = state.lua;
+    sol::state& lua = DynamicDataLoader::get_instance().lua.get()->lua;
 
     auto maybe_hooks = lua.globals()["game"]["hooks"][hook_name].get<sol::optional<sol::table>>();
     if( !maybe_hooks ) {
@@ -494,30 +493,30 @@ void reg_lua_iuse_actors( lua_state &state, Item_factory &ifactory )
             key = ref.first.as<std::string>();
 
             switch( ref.second.get_type() ) {
-                case sol::type::function: {
-                    auto func =  ref.second.as<sol::function>();
-                    ifactory.add_actor( std::make_unique<lua_iuse_actor>(
-                                            key,
-                                            std::move( func ),
-                                            sol::lua_nil,
-                                            sol::lua_nil ) );
-                    break;
-                }
-                case sol::type::table: {
-                    auto tbl = ref.second.as<sol::table>();
-                    auto use_fn = tbl.get<sol::function>( "use" );
-                    auto can_use_fn = tbl.get_or<sol::function>( "can_use", sol::lua_nil );
-                    auto tick_fn = tbl.get_or<sol::function>( "tick", sol::lua_nil );
-                    ifactory.add_actor( std::make_unique<lua_iuse_actor>(
-                                            key,
-                                            std::move( use_fn ),
-                                            std::move( can_use_fn ),
-                                            std::move( tick_fn ) ) );
-                    break;
-                }
-                default: {
-                    throw std::runtime_error( "invalid iuse object type, expected table or function" );
-                }
+            case sol::type::function: {
+                auto func =  ref.second.as<sol::function>();
+                ifactory.add_actor( std::make_unique<lua_iuse_actor>(
+                                        key,
+                                        std::move( func ),
+                                        sol::lua_nil,
+                                        sol::lua_nil ) );
+                break;
+            }
+            case sol::type::table: {
+                auto tbl = ref.second.as<sol::table>();
+                auto use_fn = tbl.get<sol::function>( "use" );
+                auto can_use_fn = tbl.get_or<sol::function>( "can_use", sol::lua_nil );
+                auto tick_fn = tbl.get_or<sol::function>( "tick", sol::lua_nil );
+                ifactory.add_actor( std::make_unique<lua_iuse_actor>(
+                                        key,
+                                        std::move( use_fn ),
+                                        std::move( can_use_fn ),
+                                        std::move( tick_fn ) ) );
+                break;
+            }
+            default: {
+                throw std::runtime_error( "invalid iuse object type, expected table or function" );
+            }
             }
         } catch( std::runtime_error &e ) {
             debugmsg( "Failed to extract iuse_functions k='%s': %s", key, e.what() );
@@ -573,12 +572,12 @@ void lua_state_deleter::operator()( lua_state *state ) const
 
 void run_on_game_save_hooks( lua_state &state )
 {
-    run_hooks( "on_game_save", nullptr, { .state = &state } );
+    run_hooks( "on_game_save");
 }
 
 void run_on_game_load_hooks( lua_state &state )
 {
-    run_hooks( "on_game_load", nullptr, { .state = &state } );
+    run_hooks( "on_game_load");
 }
 
 void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &p,
@@ -588,7 +587,7 @@ void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &
         params["map"] = &m;
         params["omt"] = p;
         params["when"] = when;
-    }, { .state = &state } );
+    });
 }
 
 } // namespace cata

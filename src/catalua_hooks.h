@@ -22,9 +22,6 @@ struct hook_result {
 
 /// Options for running hooks
 struct hook_opts {
-    /// Optional: specific lua_state to use. If nullptr, uses global state.
-    lua_state *state = nullptr;
-
     /// If true, stop iterating after first veto or first on_result returning true.
     /// If false, iterate all hooks regardless of results.
     /// Default: true (stop on first veto/stopping result)
