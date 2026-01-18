@@ -6027,7 +6027,9 @@ int train_skill_actor::use( player &p, item &i, bool, const tripoint & ) const
     p.set_value( "training_iuse_skill_xp_chance", std::to_string( training_skill_xp_chance ) );
     p.assign_activity( ACT_TRAIN_SKILL, hours * 360000, -1, 0, "training" );
     p.activity->str_values.emplace_back( i.typeId() );
-    p.activity->tools.emplace_back( i );
+    if( !i.has_flag( flag_PSEUDO ) ) {
+        p.activity->tools.emplace_back( i );
+    }
 
     return 0;
 }
