@@ -95,17 +95,17 @@ function nyctophobia.register(mod)
     local in_darkness = here:ambient_light_at(pos) < threshold
     local chance = in_darkness and 50 or 200
 
-    if #dark_places > 0 and gapi.rng(1, chance) == 1 and one_turn_in(TimeDuration.from_hours(1))  then
+    if #dark_places > 0 and gapi.rng(1, chance) == 1 and one_turn_in(TimeDuration.from_hours(1)) then
       local target = random_entry(dark_places)
       if target then gapi.spawn_hallucination(target) end
     end
 
-    if not in_darkness then 
+    if not in_darkness then
       if in_darkness_alert and you:is_avatar() then
         gapi.add_msg(MsgType.good, locale.gettext("You feel relief as you step back into the light."))
       end
       in_darkness_alert = false
-      return 
+      return
     end
 
     if you:is_avatar() and not in_darkness_alert then
@@ -115,7 +115,7 @@ function nyctophobia.register(mod)
 
     if gapi.rng(1, 2) == 1 and one_turn_in(TimeDuration.from_hours(1)) then you:sound_hallu() end
 
-    if gapi.rng(1, 200) == 1  and one_turn_in(TimeDuration.from_hours(1)) and not you:is_on_ground() then
+    if gapi.rng(1, 200) == 1 and one_turn_in(TimeDuration.from_hours(1)) and not you:is_on_ground() then
       if you:is_avatar() then
         gapi.add_msg(
           MsgType.bad,
