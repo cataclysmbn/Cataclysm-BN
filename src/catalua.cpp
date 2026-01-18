@@ -296,7 +296,7 @@ auto run_hooks( std::string_view hook_name, const hook_opts &opts,
     sol::state &lua = state.lua;
 
     auto maybe_hooks = lua.globals()["game"]["hooks"][hook_name].get<sol::optional<sol::table>>();
-    if (!maybe_hooks) {
+    if( !maybe_hooks ) {
         return false;
     }
 
@@ -494,30 +494,30 @@ void reg_lua_iuse_actors( lua_state &state, Item_factory &ifactory )
             key = ref.first.as<std::string>();
 
             switch( ref.second.get_type() ) {
-            case sol::type::function: {
-                auto func =  ref.second.as<sol::function>();
-                ifactory.add_actor( std::make_unique<lua_iuse_actor>(
-                                        key,
-                                        std::move( func ),
-                                        sol::lua_nil,
-                                        sol::lua_nil ) );
-                break;
-            }
-            case sol::type::table: {
-                auto tbl = ref.second.as<sol::table>();
-                auto use_fn = tbl.get<sol::function>( "use" );
-                auto can_use_fn = tbl.get_or<sol::function>( "can_use", sol::lua_nil );
-                auto tick_fn = tbl.get_or<sol::function>( "tick", sol::lua_nil );
-                ifactory.add_actor( std::make_unique<lua_iuse_actor>(
-                                        key,
-                                        std::move( use_fn ),
-                                        std::move( can_use_fn ),
-                                        std::move( tick_fn ) ) );
-                break;
-            }
-            default: {
-                throw std::runtime_error( "invalid iuse object type, expected table or function" );
-            }
+                case sol::type::function: {
+                    auto func =  ref.second.as<sol::function>();
+                    ifactory.add_actor( std::make_unique<lua_iuse_actor>(
+                                            key,
+                                            std::move( func ),
+                                            sol::lua_nil,
+                                            sol::lua_nil ) );
+                    break;
+                }
+                case sol::type::table: {
+                    auto tbl = ref.second.as<sol::table>();
+                    auto use_fn = tbl.get<sol::function>( "use" );
+                    auto can_use_fn = tbl.get_or<sol::function>( "can_use", sol::lua_nil );
+                    auto tick_fn = tbl.get_or<sol::function>( "tick", sol::lua_nil );
+                    ifactory.add_actor( std::make_unique<lua_iuse_actor>(
+                                            key,
+                                            std::move( use_fn ),
+                                            std::move( can_use_fn ),
+                                            std::move( tick_fn ) ) );
+                    break;
+                }
+                default: {
+                    throw std::runtime_error( "invalid iuse object type, expected table or function" );
+                }
             }
         } catch( std::runtime_error &e ) {
             debugmsg( "Failed to extract iuse_functions k='%s': %s", key, e.what() );
