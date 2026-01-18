@@ -668,4 +668,3 @@ class monster : public Creature, public location_visitable<monster>
         /** Processes monster-specific effects of an effect. */
         void process_one_effect( effect &it, bool is_new ) override;
 };
-

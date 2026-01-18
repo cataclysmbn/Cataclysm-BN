@@ -8,8 +8,11 @@
 #include <cstdlib>
 #include <iterator>
 #include <list>
+#include <limits>
 #include <memory>
+#include <optional>
 #include <ostream>
+#include <ranges>
 #include <unordered_map>
 
 #include "avatar.h"
@@ -78,6 +81,11 @@ static const species_id SPIDER( "SPIDER" );
 static const species_id ZOMBIE( "ZOMBIE" );
 
 static const std::string flag_AUTODOC_COUCH( "AUTODOC_COUCH" );
+
+namespace
+{
+
+} // namespace
 static const std::string flag_LIQUID( "LIQUID" );
 
 enum {
@@ -651,8 +659,9 @@ void monster::plan()
         friendly--;
         // if no target, and friendly pet sees the player
     } else if( friendly < 0 && sees( g->u ) ) {
+        const bool allow_follow_player = is_wandering();
         // eg dogs
-        if( !has_flag( MF_PET_WONT_FOLLOW ) ) {
+        if( allow_follow_player && !has_flag( MF_PET_WONT_FOLLOW ) ) {
             // if too far from the player, go to him
             if( rl_dist( pos(), g->u.pos() ) > 2 ) {
                 set_dest( g->u.pos() );
@@ -660,7 +669,7 @@ void monster::plan()
                 unset_dest();
             }
             // eg cows, horses
-        } else {
+        } else if( allow_follow_player ) {
             unset_dest();
         }
         // when the players is close to their pet, it calms them
@@ -919,8 +928,10 @@ void monster::move()
         }
     }
 
-    if( current_attitude == MATT_IGNORE ||
-        ( current_attitude == MATT_FOLLOW && rl_dist( pos(), goal ) <= MONSTER_FOLLOW_DIST ) ) {
+    const bool allow_manual_goal = !is_wandering();
+    if( ( current_attitude == MATT_IGNORE && !allow_manual_goal ) ||
+        ( current_attitude == MATT_FOLLOW && !allow_manual_goal &&
+          rl_dist( pos(), goal ) <= MONSTER_FOLLOW_DIST ) ) {
         moves -= 100;
         stumble();
         return;
