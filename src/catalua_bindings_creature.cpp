@@ -34,6 +34,7 @@
 #include "requirements.h"
 #include "skill.h"
 #include "type_id.h"
+#include "trap.h"
 
 void cata::detail::reg_creature_family( sol::state &lua )
 {
@@ -924,6 +925,16 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( irradiate, bool( float rads, bool bypass ) );
 
+        DOC( "Whether the character knows about the trap at the given tripoint." );
+        SET_FX( knows_trap );
+
+        DOC( "Character learns that the given trap is on the given tripoint. If the trap is null, the character learns that there is no trap there." );
+        SET_FX( add_known_trap );
+        luna::set_fx( ut, "add_known_trap", []( UT_CLASS & c, const tripoint & p, const trap_id & tr )
+        {
+            c.add_known_trap( p, tr.obj() );
+        } );
+
         SET_FX_T( can_hear, bool( const tripoint & source, int volume ) const );
 
         SET_FX_T( hearing_ability, float() const );
@@ -1024,6 +1035,8 @@ void cata::detail::reg_npc( sol::state &lua )
 
         // Methods
         SET_FX_N_T( set_fac, "set_faction_id", void( const faction_id & id ) );
+
+        SET_FX_T( erase, void() );
 
         SET_FX_T( turned_hostile, bool() const );
 

@@ -8,6 +8,7 @@
 #include "field.h"
 #include "map.h"
 #include "map_iterator.h"
+#include "npc.h"
 #include "trap.h"
 #include "detached_ptr.h"
 
@@ -117,6 +118,12 @@ void cata::detail::reg_map( sol::state &lua )
         DOC( "In map squares" );
         luna::set_fx( ut, "get_map_size", []( const map & m ) -> int { return m.getmapsize() * SEEX; } );
         luna::set_fx( ut, "ambient_light_at", &map::ambient_light_at );
+
+        DOC( "Forcibly places an npc using a template at a position on the map. Returns the npc." );
+        luna::set_fx( ut, "place_npc", []( map & m, point p, std::string id_str ) -> npc * {
+            character_id char_id = m.place_npc( p, string_id<npc_template>( id_str ), true );
+            return g->find_npc( char_id );
+        } );
 
         DOC( "Creates a new item(s) at a position on the map." );
         luna::set_fx( ut, "create_item_at", []( map & m, const tripoint & p, const itype_id & itype,
