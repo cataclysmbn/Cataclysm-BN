@@ -21,6 +21,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "character_state_provider.h"
 #include "catacharset.h"
 #include "character.h"
 #include "character_id.h"
@@ -193,23 +194,23 @@ static int msgtype_to_tilecolor( const game_message_type type, const bool bOldMs
     const int iBold = bOldMsg ? 0 : 8;
 
     switch( type ) {
-        case m_good:
-            return iBold + catacurses::green;
-        case m_bad:
-            return iBold + catacurses::red;
-        case m_mixed:
-        case m_headshot:
-            return iBold + catacurses::magenta;
-        case m_neutral:
-            return iBold + catacurses::white;
-        case m_warning:
-        case m_critical:
-            return iBold + catacurses::yellow;
-        case m_info:
-        case m_grazing:
-            return iBold + catacurses::blue;
-        default:
-            break;
+    case m_good:
+        return iBold + catacurses::green;
+    case m_bad:
+        return iBold + catacurses::red;
+    case m_mixed:
+    case m_headshot:
+        return iBold + catacurses::magenta;
+    case m_neutral:
+        return iBold + catacurses::white;
+    case m_warning:
+    case m_critical:
+        return iBold + catacurses::yellow;
+    case m_info:
+    case m_grazing:
+        return iBold + catacurses::blue;
+    default:
+        break;
     }
 
     return -1;
@@ -220,19 +221,19 @@ formatted_text::formatted_text( const std::string &text, const int color,
     : text( text ), color( color )
 {
     switch( text_direction ) {
-        case direction::NORTHWEST:
-        case direction::WEST:
-        case direction::SOUTHWEST:
-            alignment = text_alignment::right;
-            break;
-        case direction::NORTH:
-        case direction::CENTER:
-        case direction::SOUTH:
-            alignment = text_alignment::center;
-            break;
-        default:
-            alignment = text_alignment::left;
-            break;
+    case direction::NORTHWEST:
+    case direction::WEST:
+    case direction::SOUTHWEST:
+        alignment = text_alignment::right;
+        break;
+    case direction::NORTH:
+    case direction::CENTER:
+    case direction::SOUTH:
+        alignment = text_alignment::center;
+        break;
+    default:
+        alignment = text_alignment::left;
+        break;
     }
 }
 
@@ -386,9 +387,9 @@ void cata_tiles::load_tileset(
 )
 {
     if( !force && tileset_ptr &&
-        !get_option<bool>( "FORCE_TILESET_RELOAD" ) &&
-        tileset_ptr->get_tileset_id() == tileset_id &&
-        tileset_mod_list_stamp == mod_list
+            !get_option<bool>( "FORCE_TILESET_RELOAD" ) &&
+            tileset_ptr->get_tileset_id() == tileset_id &&
+            tileset_mod_list_stamp == mod_list
       ) {
         return;
     }
@@ -630,6 +631,464 @@ static bool is_contained( const SDL_Rect &smaller, const SDL_Rect &larger )
            smaller.y + smaller.h <= larger.y + larger.h;
 }
 
+// Helper to get a pixel's RGBA bytes from a surface at (x, y)
+// Uses SDL's format information to correctly interpret pixel data
+static void get_pixel_rgba( SDL_Surface *surface, int x, int y,
+                            Uint8 &r, Uint8 &g, Uint8 &b, Uint8 &a )
+{
+    auto *pixels = static_cast<Uint8 *>( surface->pixels );
+    Uint8 *p = pixels + y * surface->pitch + x * surface->format->BytesPerPixel;
+
+    Uint32 pixel;
+    switch( surface->format->BytesPerPixel ) {
+    case 4:
+        pixel = *reinterpret_cast<Uint32 *>( p );
+        break;
+    case 3:
+        // 24-bit surfaces (rare)
+        if( SDL_BYTEORDER == SDL_BIG_ENDIAN ) {
+            pixel = p[0] << 16 | p[1] << 8 | p[2];
+        } else {
+            pixel = p[0] | p[1] << 8 | p[2] << 16;
+        }
+        break;
+    default:
+        pixel = 0;
+        break;
+    }
+
+    SDL_GetRGBA( pixel, surface->format, &r, &g, &b, &a );
+}
+
+// Helper to set a pixel's RGBA bytes on a surface at (x, y)
+// Uses SDL's format information to correctly write pixel data
+static void set_pixel_rgba( SDL_Surface *surface, int x, int y,
+                            Uint8 r, Uint8 g, Uint8 b, Uint8 a )
+{
+    Uint32 pixel = SDL_MapRGBA( surface->format, r, g, b, a );
+
+    auto *pixels = static_cast<Uint8 *>( surface->pixels );
+    Uint8 *p = pixels + y * surface->pitch + x * surface->format->BytesPerPixel;
+
+    switch( surface->format->BytesPerPixel ) {
+    case 4:
+        *reinterpret_cast<Uint32 *>( p ) = pixel;
+        break;
+    case 3:
+        // 24-bit surfaces (rare)
+        if( SDL_BYTEORDER == SDL_BIG_ENDIAN ) {
+            p[0] = ( pixel >> 16 ) & 0xff;
+            p[1] = ( pixel >> 8 ) & 0xff;
+            p[2] = pixel & 0xff;
+        } else {
+            p[0] = pixel & 0xff;
+            p[1] = ( pixel >> 8 ) & 0xff;
+            p[2] = ( pixel >> 16 ) & 0xff;
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+/**
+ * Creates an identity UV surface for the given dimensions.
+ * In offset mode, all pixels are (127, 127) meaning no displacement.
+ * In normalized mode, pixels map directly to their own coordinates.
+ */
+static SDL_Surface_Ptr create_identity_uv_surface( int w, int h, bool offset_mode )
+{
+    SDL_Surface_Ptr surf = create_surface_32( w, h );
+    if( !surf ) {
+        return nullptr;
+    }
+
+    if( SDL_MUSTLOCK( surf.get() ) ) {
+        SDL_LockSurface( surf.get() );
+    }
+
+    for( int y = 0; y < h; ++y ) {
+        for( int x = 0; x < w; ++x ) {
+            Uint8 r, g;
+            if( offset_mode ) {
+                // 127,127 = no offset (neutral)
+                r = 127;
+                g = 127;
+            } else {
+                // Normalized: map coordinates directly
+                // Green is inverted so traditional UV gradients (0,0 at bottom-left) work correctly
+                // UV encoding: uv = pixel * 256 / size (so pixel 0 = uv 0, pixel size-1 maps near 255)
+                r = static_cast<Uint8>( w > 0 ? x * 256 / w : 0 );
+                g = static_cast<Uint8>( h > 0 ? 255 - ( y * 256 / h ) : 255 );
+            }
+            set_pixel_rgba( surf.get(), x, y, r, g, 0, 255 );
+        }
+    }
+
+    if( SDL_MUSTLOCK( surf.get() ) ) {
+        SDL_UnlockSurface( surf.get() );
+    }
+
+    return surf;
+}
+
+/**
+ * Chains a UV modifier onto an existing composite.
+ * In offset mode, offsets are added together.
+ * In normalized mode, the modifier is used to look up coordinates in the composite.
+ */
+static void chain_uv_modifier(
+    SDL_Surface *composite,
+    SDL_Surface *modifier,
+    bool offset_mode )
+{
+    if( !composite || !modifier ) {
+        return;
+    }
+
+    const int w = std::min( composite->w, modifier->w );
+    const int h = std::min( composite->h, modifier->h );
+
+    if( SDL_MUSTLOCK( composite ) ) {
+        SDL_LockSurface( composite );
+    }
+    if( SDL_MUSTLOCK( modifier ) ) {
+        SDL_LockSurface( modifier );
+    }
+
+    // We need a temporary copy to avoid reading modified values
+    // Store as raw RGBA values (r, g used for UV, b unused, a=255)
+    struct uv_pixel {
+        Uint8 r, g;
+    };
+    std::vector<uv_pixel> temp_pixels( w * h );
+
+    for( int y = 0; y < h; ++y ) {
+        for( int x = 0; x < w; ++x ) {
+            // Read composite pixel
+            Uint8 comp_r, comp_g, comp_b, comp_a;
+            get_pixel_rgba( composite, x, y, comp_r, comp_g, comp_b, comp_a );
+
+            // Read modifier pixel
+            Uint8 mod_r, mod_g, mod_b, mod_a;
+            get_pixel_rgba( modifier, x, y, mod_r, mod_g, mod_b, mod_a );
+
+            uv_pixel &result = temp_pixels[y * w + x];
+
+            if( offset_mode ) {
+                // Add offsets together (can temporarily exceed bounds)
+                int new_r = static_cast<int>( comp_r ) + ( static_cast<int>( mod_r ) - 127 );
+                int new_g = static_cast<int>( comp_g ) + ( static_cast<int>( mod_g ) - 127 );
+                result.r = static_cast<Uint8>( std::clamp( new_r, 0, 255 ) );
+                result.g = static_cast<Uint8>( std::clamp( new_g, 0, 255 ) );
+            } else {
+                // Normalized: sample composite at position indicated by modifier
+                // Green channel is inverted so traditional UV gradients (0,0 at bottom-left) work correctly
+                // UV encoding: uv = pixel * 256 / size, so pixel = uv * size / 256
+                int sample_x = mod_r * composite->w / 256;
+                int sample_y = ( 255 - mod_g ) * composite->h / 256;
+                sample_x = std::clamp( sample_x, 0, composite->w - 1 );
+                sample_y = std::clamp( sample_y, 0, composite->h - 1 );
+
+                Uint8 sampled_r, sampled_g, sampled_b, sampled_a;
+                get_pixel_rgba( composite, sample_x, sample_y, sampled_r, sampled_g, sampled_b, sampled_a );
+
+                result.r = sampled_r;
+                result.g = sampled_g;
+            }
+        }
+    }
+
+    // Copy results back to composite
+    for( int y = 0; y < h; ++y ) {
+        for( int x = 0; x < w; ++x ) {
+            const uv_pixel &p = temp_pixels[y * w + x];
+            set_pixel_rgba( composite, x, y, p.r, p.g, 0, 255 );
+        }
+    }
+
+    if( SDL_MUSTLOCK( composite ) ) {
+        SDL_UnlockSurface( composite );
+    }
+    if( SDL_MUSTLOCK( modifier ) ) {
+        SDL_UnlockSurface( modifier );
+    }
+}
+
+/**
+ * Chains a UV modifier onto an existing composite at a specific position.
+ * Similar to chain_uv_modifier but allows placing the modifier at an offset.
+ * @param dst_x X position in composite where modifier starts
+ * @param dst_y Y position in composite where modifier starts
+ */
+static void chain_uv_modifier_at(
+    SDL_Surface *composite,
+    SDL_Surface *modifier,
+    bool offset_mode,
+    int dst_x,
+    int dst_y )
+{
+    if( !composite || !modifier ) {
+        return;
+    }
+
+    if( SDL_MUSTLOCK( composite ) ) {
+        SDL_LockSurface( composite );
+    }
+    if( SDL_MUSTLOCK( modifier ) ) {
+        SDL_LockSurface( modifier );
+    }
+
+    // Calculate the overlap region
+    const int start_x = std::max( 0, dst_x );
+    const int start_y = std::max( 0, dst_y );
+    const int end_x = std::min( composite->w, dst_x + modifier->w );
+    const int end_y = std::min( composite->h, dst_y + modifier->h );
+
+    if( start_x >= end_x || start_y >= end_y ) {
+        // No overlap
+        if( SDL_MUSTLOCK( composite ) ) {
+            SDL_UnlockSurface( composite );
+        }
+        if( SDL_MUSTLOCK( modifier ) ) {
+            SDL_UnlockSurface( modifier );
+        }
+        return;
+    }
+
+    const int overlap_w = end_x - start_x;
+    const int overlap_h = end_y - start_y;
+
+    // We need a temporary copy to avoid reading modified values
+    struct uv_pixel {
+        Uint8 r, g, a;
+    };
+    std::vector<uv_pixel> temp_pixels( overlap_w * overlap_h );
+
+    for( int y = 0; y < overlap_h; ++y ) {
+        for( int x = 0; x < overlap_w; ++x ) {
+            const int comp_x = start_x + x;
+            const int comp_y = start_y + y;
+            const int mod_x = comp_x - dst_x;
+            const int mod_y = comp_y - dst_y;
+
+            // Read composite pixel
+            Uint8 comp_r, comp_g, comp_b, comp_a;
+            get_pixel_rgba( composite, comp_x, comp_y, comp_r, comp_g, comp_b, comp_a );
+
+            // Read modifier pixel
+            Uint8 mod_r, mod_g, mod_b, mod_a;
+            get_pixel_rgba( modifier, mod_x, mod_y, mod_r, mod_g, mod_b, mod_a );
+
+            uv_pixel &result = temp_pixels[y * overlap_w + x];
+
+            // If modifier alpha is 0, discard
+            if( mod_a == 0 ) {
+                result.r = 0;
+                result.g = 0;
+                result.a = 0;
+                continue;
+            }
+
+            if( offset_mode ) {
+                // Add offsets together
+                int new_r = static_cast<int>( comp_r ) + ( static_cast<int>( mod_r ) - 127 );
+                int new_g = static_cast<int>( comp_g ) + ( static_cast<int>( mod_g ) - 127 );
+                result.r = static_cast<Uint8>( std::clamp( new_r, 0, 255 ) );
+                result.g = static_cast<Uint8>( std::clamp( new_g, 0, 255 ) );
+                result.a = 255;
+            } else {
+                // Normalized: sample composite at position indicated by modifier
+                int sample_x = mod_r * composite->w / 256;
+                int sample_y = ( 255 - mod_g ) * composite->h / 256;
+                sample_x = std::clamp( sample_x, 0, composite->w - 1 );
+                sample_y = std::clamp( sample_y, 0, composite->h - 1 );
+
+                Uint8 sampled_r, sampled_g, sampled_b, sampled_a;
+                get_pixel_rgba( composite, sample_x, sample_y, sampled_r, sampled_g, sampled_b, sampled_a );
+
+                result.r = sampled_r;
+                result.g = sampled_g;
+                result.a = 255;
+            }
+        }
+    }
+
+    // Copy results back to composite
+    for( int y = 0; y < overlap_h; ++y ) {
+        for( int x = 0; x < overlap_w; ++x ) {
+            const int comp_x = start_x + x;
+            const int comp_y = start_y + y;
+            const uv_pixel &p = temp_pixels[y * overlap_w + x];
+            set_pixel_rgba( composite, comp_x, comp_y, p.r, p.g, 0, p.a );
+        }
+    }
+
+    if( SDL_MUSTLOCK( composite ) ) {
+        SDL_UnlockSurface( composite );
+    }
+    if( SDL_MUSTLOCK( modifier ) ) {
+        SDL_UnlockSurface( modifier );
+    }
+}
+
+/**
+ * Applies a UV modifier to a source surface, producing a remapped result.
+ * Each pixel in the destination is sampled from a location in the source
+ * determined by the UV modifier.
+ *
+ * @param dst Destination surface to write remapped pixels to
+ * @param dstRect Region in destination to write to
+ * @param src Source surface (readback from atlas)
+ * @param srcRect Region in source containing the sprite
+ * @param uv_modifier UV modifier surface (may be larger than standard tile if oversized)
+ * @param uv_modifier_offset Offset of UV modifier relative to standard tile origin
+ * @param offset_mode true for offset mode (127=neutral), false for normalized UV
+ * @param sprite_offset Offset of the sprite relative to standard tile position
+ * @param std_tile_w Standard tile width
+ * @param std_tile_h Standard tile height
+ * @param color_func Optional color transformation function (for visual effects like night vision)
+ */
+static void apply_uv_remap(
+    SDL_Surface *dst, const SDL_Rect &dstRect,
+    SDL_Surface *src, const SDL_Rect &srcRect,
+    SDL_Surface *uv_modifier,
+    point uv_modifier_offset,
+    bool offset_mode,
+    point sprite_offset,
+    int std_tile_w,
+    int std_tile_h,
+    color_pixel_function_pointer color_func = nullptr )
+{
+    if( !dst || !src || !uv_modifier ) {
+        return;
+    }
+
+    // Copy the source sprite region to a temporary surface in our known format.
+    // This ensures proper format conversion and avoids issues with readback formats.
+    SDL_Surface_Ptr src_copy = create_surface_32( srcRect.w, srcRect.h );
+    if( !src_copy ) {
+        return;
+    }
+    SDL_SetSurfaceBlendMode( src, SDL_BLENDMODE_NONE );
+    SDL_Rect src_copy_rect = { 0, 0, srcRect.w, srcRect.h };
+    SDL_BlitSurface( src, const_cast<SDL_Rect *>( &srcRect ), src_copy.get(), &src_copy_rect );
+
+    if( SDL_MUSTLOCK( dst ) ) {
+        SDL_LockSurface( dst );
+    }
+    if( SDL_MUSTLOCK( src_copy.get() ) ) {
+        SDL_LockSurface( src_copy.get() );
+    }
+    if( SDL_MUSTLOCK( uv_modifier ) ) {
+        SDL_LockSurface( uv_modifier );
+    }
+
+    // Calculate where the standard tile region starts within the sprite
+    // sprite_offset is typically negative (e.g., -16 means sprite extends 16px before the tile origin)
+    // So the standard tile region starts at (-sprite_offset.x, -sprite_offset.y) in sprite coords
+    const int tile_start_x = -sprite_offset.x;
+    const int tile_start_y = -sprite_offset.y;
+
+    // Process all pixels in the destination/source sprite
+    for( int y = 0; y < srcRect.h; ++y ) {
+        for( int x = 0; x < srcRect.w; ++x ) {
+            // Calculate position relative to standard tile origin (0,0 is standard tile top-left)
+            const int rel_x = x + sprite_offset.x;
+            const int rel_y = y + sprite_offset.y;
+
+            // Calculate position within the UV modifier surface
+            // UV modifier offset tells us where the UV surface starts relative to standard tile origin
+            const int uv_x = rel_x - uv_modifier_offset.x;
+            const int uv_y = rel_y - uv_modifier_offset.y;
+
+            // Check if this pixel is within the UV modifier bounds
+            const bool in_uv_bounds = uv_x >= 0 && uv_x < uv_modifier->w &&
+                                      uv_y >= 0 && uv_y < uv_modifier->h;
+
+            if( !in_uv_bounds ) {
+                // Outside UV modifier bounds: pass-through (copy original pixel as-is)
+                Uint8 sr, sg, sb, sa;
+                get_pixel_rgba( src_copy.get(), x, y, sr, sg, sb, sa );
+                if( color_func && sa > 0 ) {
+                    SDL_Color c = color_func( SDL_Color{ sr, sg, sb, sa } );
+                    sr = c.r;
+                    sg = c.g;
+                    sb = c.b;
+                    sa = c.a;
+                }
+                set_pixel_rgba( dst, x + dstRect.x, y + dstRect.y, sr, sg, sb, sa );
+                continue;
+            }
+
+            // Read UV value from the modifier
+            Uint8 uv_r, uv_g, uv_b, uv_a;
+            get_pixel_rgba( uv_modifier, uv_x, uv_y, uv_r, uv_g, uv_b, uv_a );
+
+            // Alpha=0 within bounds means render transparent (no pixel)
+            if( uv_a == 0 ) {
+                set_pixel_rgba( dst, x + dstRect.x, y + dstRect.y, 0, 0, 0, 0 );
+                continue;
+            }
+
+            int src_x, src_y;
+            if( offset_mode ) {
+                // Offset mode: 127 = no change, <127 = negative, >127 = positive
+                src_x = x + ( static_cast<int>( uv_r ) - 127 );
+                src_y = y + ( static_cast<int>( uv_g ) - 127 );
+            } else {
+                // Normalized mode: UV values specify a position within the UV modifier's own bounds.
+                // We need to transform this to source sprite coordinates.
+                //
+                // UV values (0-255) map to UV modifier pixels (0 to uv_modifier->w/h).
+                // Green channel is inverted: G=0 means bottom (max Y), G=255 means top (min Y).
+                //
+                // Step 1: Convert UV values to position within UV modifier bounds
+                int uv_target_x = uv_r * uv_modifier->w / 256;
+                int uv_target_y = ( 255 - uv_g ) * uv_modifier->h / 256;
+
+                // Step 2: Convert UV modifier position to position relative to standard tile origin
+                // UV modifier starts at uv_modifier_offset, so:
+                int target_rel_x = uv_modifier_offset.x + uv_target_x;
+                int target_rel_y = uv_modifier_offset.y + uv_target_y;
+
+                // Step 3: Convert from standard-tile-relative to source sprite coordinates
+                // Source sprite starts at sprite_offset relative to standard tile origin
+                src_x = target_rel_x - sprite_offset.x;
+                src_y = target_rel_y - sprite_offset.y;
+            }
+
+            // Bounds check - out of bounds = transparent
+            if( src_x < 0 || src_x >= srcRect.w || src_y < 0 || src_y >= srcRect.h ) {
+                set_pixel_rgba( dst, x + dstRect.x, y + dstRect.y, 0, 0, 0, 0 );
+            } else {
+                // Read source pixel from the converted copy
+                Uint8 sr, sg, sb, sa;
+                get_pixel_rgba( src_copy.get(), src_x, src_y, sr, sg, sb, sa );
+                // Apply color transformation (for visual effects like night vision)
+                if( color_func && sa > 0 ) {
+                    SDL_Color c = color_func( SDL_Color{ sr, sg, sb, sa } );
+                    sr = c.r;
+                    sg = c.g;
+                    sb = c.b;
+                    sa = c.a;
+                }
+                set_pixel_rgba( dst, x + dstRect.x, y + dstRect.y, sr, sg, sb, sa );
+            }
+        }
+    }
+
+    if( SDL_MUSTLOCK( dst ) ) {
+        SDL_UnlockSurface( dst );
+    }
+    if( SDL_MUSTLOCK( src_copy.get() ) ) {
+        SDL_UnlockSurface( src_copy.get() );
+    }
+    if( SDL_MUSTLOCK( uv_modifier ) ) {
+        SDL_UnlockSurface( uv_modifier );
+    }
+}
+
 bool tileset_loader::copy_surface_to_texture( const SDL_Surface_Ptr &surf, const point offset,
         std::vector<texture> &target ) const
 {
@@ -722,30 +1181,30 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
 static color_pixel_function_pointer get_pixel_function( const tileset_fx_type &type )
 {
     switch( type ) {
-        case tileset_fx_type::shadow:
-            return get_color_pixel_function( "color_pixel_grayscale" );
-            break;
-        case tileset_fx_type::night:
-            return get_color_pixel_function( "color_pixel_nightvision" );
-            break;
-        case tileset_fx_type::overexposed:
-            return get_color_pixel_function( "color_pixel_overexposed" );
-            break;
-        case tileset_fx_type::underwater:
-            return get_color_pixel_function( "color_pixel_underwater" );
-            break;
-        case tileset_fx_type::underwater_dark:
-            return get_color_pixel_function( "color_pixel_underwater_dark" );
-            break;
-        case tileset_fx_type::memory:
-            return get_color_pixel_function( tilecontext->memory_map_mode );
-            break;
-        case tileset_fx_type::z_overlay:
-            return get_color_pixel_function( "color_pixel_zoverlay" );
-            break;
-        default:
-            return get_color_pixel_function( "color_pixel_copy" );
-            break;
+    case tileset_fx_type::shadow:
+        return get_color_pixel_function( "color_pixel_grayscale" );
+        break;
+    case tileset_fx_type::night:
+        return get_color_pixel_function( "color_pixel_nightvision" );
+        break;
+    case tileset_fx_type::overexposed:
+        return get_color_pixel_function( "color_pixel_overexposed" );
+        break;
+    case tileset_fx_type::underwater:
+        return get_color_pixel_function( "color_pixel_underwater" );
+        break;
+    case tileset_fx_type::underwater_dark:
+        return get_color_pixel_function( "color_pixel_underwater_dark" );
+        break;
+    case tileset_fx_type::memory:
+        return get_color_pixel_function( tilecontext->memory_map_mode );
+        break;
+    case tileset_fx_type::z_overlay:
+        return get_color_pixel_function( "color_pixel_zoverlay" );
+        break;
+    default:
+        return get_color_pixel_function( "color_pixel_copy" );
+        break;
     }
 }
 
@@ -919,33 +1378,59 @@ const texture *tileset::get_or_default( const int sprite_index,
     }
 
     switch( type ) {
-        case tileset_fx_type::shadow:
-            return &shadow_tile_values[sprite_index];
-            break;
-        case tileset_fx_type::night:
-            return &night_tile_values[sprite_index];
-            break;
-        case tileset_fx_type::overexposed:
-            return &overexposed_tile_values[sprite_index];
-            break;
-        case tileset_fx_type::underwater:
-            return &underwater_tile_values[sprite_index];
-            break;
-        case tileset_fx_type::underwater_dark:
-            return &underwater_dark_tile_values[sprite_index];
-            break;
-        case tileset_fx_type::memory:
-            return &memory_tile_values[sprite_index];
-            break;
-        case tileset_fx_type::z_overlay:
-            return &z_overlay_values[sprite_index];
-            break;
-        default:
-            return &tile_values[sprite_index];
-            break;
+    case tileset_fx_type::shadow:
+        return &shadow_tile_values[sprite_index];
+        break;
+    case tileset_fx_type::night:
+        return &night_tile_values[sprite_index];
+        break;
+    case tileset_fx_type::overexposed:
+        return &overexposed_tile_values[sprite_index];
+        break;
+    case tileset_fx_type::underwater:
+        return &underwater_tile_values[sprite_index];
+        break;
+    case tileset_fx_type::underwater_dark:
+        return &underwater_dark_tile_values[sprite_index];
+        break;
+    case tileset_fx_type::memory:
+        return &memory_tile_values[sprite_index];
+        break;
+    case tileset_fx_type::z_overlay:
+        return &z_overlay_values[sprite_index];
+        break;
+    default:
+        return &tile_values[sprite_index];
+        break;
     }
 #endif
 }
+
+#if defined(DYNAMIC_ATLAS)
+std::tuple<bool, SDL_Surface *, SDL_Rect> tileset::get_sprite_surface( int sprite_index ) const
+{
+    const auto base_tex_key = tileset_lookup_key{
+        sprite_index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR
+    };
+
+    const auto tex_it = tile_lookup.find( base_tex_key );
+    if( tex_it == tile_lookup.end() ) {
+        return std::make_tuple( false, nullptr, SDL_Rect{} );
+    }
+
+    // Note: Caller must ensure readback_load() has been called on the atlas
+    // before calling this function. This is done once per character in
+    // draw_entity_with_overlays to avoid repeated GPU->CPU transfers.
+    return tileset_atlas->readback_find( tex_it->second );
+}
+
+void tileset::ensure_readback_loaded() const
+{
+    if( tileset_atlas ) {
+        tileset_atlas->readback_load();
+    }
+}
+#endif
 
 bool tileset_loader::create_textures_from_tile_atlas( const SDL_Surface_Ptr &tile_atlas,
         point offset )
@@ -1220,53 +1705,53 @@ std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_searc
         }
         // Special cases for walls
         switch( sym ) {
-            case LINE_XOXO:
-            case LINE_XOXO_UNICODE:
-                sym = LINE_XOXO_C;
-                break;
-            case LINE_OXOX:
-            case LINE_OXOX_UNICODE:
-                sym = LINE_OXOX_C;
-                break;
-            case LINE_XXOO:
-            case LINE_XXOO_UNICODE:
-                sym = LINE_XXOO_C;
-                break;
-            case LINE_OXXO:
-            case LINE_OXXO_UNICODE:
-                sym = LINE_OXXO_C;
-                break;
-            case LINE_OOXX:
-            case LINE_OOXX_UNICODE:
-                sym = LINE_OOXX_C;
-                break;
-            case LINE_XOOX:
-            case LINE_XOOX_UNICODE:
-                sym = LINE_XOOX_C;
-                break;
-            case LINE_XXXO:
-            case LINE_XXXO_UNICODE:
-                sym = LINE_XXXO_C;
-                break;
-            case LINE_XXOX:
-            case LINE_XXOX_UNICODE:
-                sym = LINE_XXOX_C;
-                break;
-            case LINE_XOXX:
-            case LINE_XOXX_UNICODE:
-                sym = LINE_XOXX_C;
-                break;
-            case LINE_OXXX:
-            case LINE_OXXX_UNICODE:
-                sym = LINE_OXXX_C;
-                break;
-            case LINE_XXXX:
-            case LINE_XXXX_UNICODE:
-                sym = LINE_XXXX_C;
-                break;
-            default:
-                // sym goes unchanged
-                break;
+        case LINE_XOXO:
+        case LINE_XOXO_UNICODE:
+            sym = LINE_XOXO_C;
+            break;
+        case LINE_OXOX:
+        case LINE_OXOX_UNICODE:
+            sym = LINE_OXOX_C;
+            break;
+        case LINE_XXOO:
+        case LINE_XXOO_UNICODE:
+            sym = LINE_XXOO_C;
+            break;
+        case LINE_OXXO:
+        case LINE_OXXO_UNICODE:
+            sym = LINE_OXXO_C;
+            break;
+        case LINE_OOXX:
+        case LINE_OOXX_UNICODE:
+            sym = LINE_OOXX_C;
+            break;
+        case LINE_XOOX:
+        case LINE_XOOX_UNICODE:
+            sym = LINE_XOOX_C;
+            break;
+        case LINE_XXXO:
+        case LINE_XXXO_UNICODE:
+            sym = LINE_XXXO_C;
+            break;
+        case LINE_XXOX:
+        case LINE_XXOX_UNICODE:
+            sym = LINE_XXOX_C;
+            break;
+        case LINE_XOXX:
+        case LINE_XOXX_UNICODE:
+            sym = LINE_XOXX_C;
+            break;
+        case LINE_OXXX:
+        case LINE_OXXX_UNICODE:
+            sym = LINE_OXXX_C;
+            break;
+        case LINE_XXXX:
+        case LINE_XXXX_UNICODE:
+            sym = LINE_XXXX_C;
+            break;
+        default:
+            // sym goes unchanged
+            break;
         }
 
         if( sym != 0 && sym < 256 ) {
@@ -1486,6 +1971,10 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
             if( tile_part_def.has_member( "ascii" ) ) {
                 load_ascii( tile_part_def );
             }
+            // Load state-based UV modifiers (opt-in feature for character rendering)
+            if( tile_part_def.has_array( "state-modifiers" ) ) {
+                load_state_modifiers( tile_part_def );
+            }
             // Make sure the tile definitions of the next tileset image don't
             // override the current ones.
             offset += size;
@@ -1621,50 +2110,50 @@ void tileset_loader::load_ascii_set( const JsonObject &entry )
         curr_tile.masks.tint.fg.add( std::vector<int>( {TILESET_NO_MASK} ), 1 );
         auto &sprites = *( curr_tile.sprite.fg.add( std::vector<int>( {index_in_image + offset} ), 1 ) );
         switch( ascii_char ) {
-            // box bottom/top side (horizontal line)
-            case LINE_OXOX_C:
-                sprites[0] = 205 + base_offset;
-                break;
-            // box left/right side (vertical line)
-            case LINE_XOXO_C:
-                sprites[0] = 186 + base_offset;
-                break;
-            // box top left
-            case LINE_OXXO_C:
-                sprites[0] = 201 + base_offset;
-                break;
-            // box top right
-            case LINE_OOXX_C:
-                sprites[0] = 187 + base_offset;
-                break;
-            // box bottom right
-            case LINE_XOOX_C:
-                sprites[0] = 188 + base_offset;
-                break;
-            // box bottom left
-            case LINE_XXOO_C:
-                sprites[0] = 200 + base_offset;
-                break;
-            // box bottom north T (left, right, up)
-            case LINE_XXOX_C:
-                sprites[0] = 202 + base_offset;
-                break;
-            // box bottom east T (up, right, down)
-            case LINE_XXXO_C:
-                sprites[0] = 208 + base_offset;
-                break;
-            // box bottom south T (left, right, down)
-            case LINE_OXXX_C:
-                sprites[0] = 203 + base_offset;
-                break;
-            // box X (left down up right)
-            case LINE_XXXX_C:
-                sprites[0] = 206 + base_offset;
-                break;
-            // box bottom east T (left, down, up)
-            case LINE_XOXX_C:
-                sprites[0] = 184 + base_offset;
-                break;
+        // box bottom/top side (horizontal line)
+        case LINE_OXOX_C:
+            sprites[0] = 205 + base_offset;
+            break;
+        // box left/right side (vertical line)
+        case LINE_XOXO_C:
+            sprites[0] = 186 + base_offset;
+            break;
+        // box top left
+        case LINE_OXXO_C:
+            sprites[0] = 201 + base_offset;
+            break;
+        // box top right
+        case LINE_OOXX_C:
+            sprites[0] = 187 + base_offset;
+            break;
+        // box bottom right
+        case LINE_XOOX_C:
+            sprites[0] = 188 + base_offset;
+            break;
+        // box bottom left
+        case LINE_XXOO_C:
+            sprites[0] = 200 + base_offset;
+            break;
+        // box bottom north T (left, right, up)
+        case LINE_XXOX_C:
+            sprites[0] = 202 + base_offset;
+            break;
+        // box bottom east T (up, right, down)
+        case LINE_XXXO_C:
+            sprites[0] = 208 + base_offset;
+            break;
+        // box bottom south T (left, right, down)
+        case LINE_OXXX_C:
+            sprites[0] = 203 + base_offset;
+            break;
+        // box X (left down up right)
+        case LINE_XXXX_C:
+            sprites[0] = 206 + base_offset;
+            break;
+        // box bottom east T (left, down, up)
+        case LINE_XOXX_C:
+            sprites[0] = 184 + base_offset;
+            break;
         }
         if( ascii_char == LINE_XOXO_C || ascii_char == LINE_OXOX_C ) {
             curr_tile.rotates = false;
@@ -1836,8 +2325,8 @@ void tileset_loader::load_tile_spritelists( const JsonObject &entry,
                     }
                 }
                 if( v.size() != 1 &&
-                    v.size() != 2 &&
-                    v.size() != 4 ) {
+                        v.size() != 2 &&
+                        v.size() != 4 ) {
                     vo.throw_error( "Invalid number of sprites (not 1, 2, or 4)", objname );
                 }
                 vs.add( v, weight );
@@ -1848,6 +2337,68 @@ void tileset_loader::load_tile_spritelists( const JsonObject &entry,
     else if( entry.has_int( objname ) && entry.get_int( objname ) >= 0 ) {
         vs.add( std::vector<int>( {entry.get_int( objname ) + sprite_id_offset} ), 1 );
     }
+}
+
+void tileset_loader::load_state_modifiers( const JsonObject &config )
+{
+    if( !config.has_array( "state-modifiers" ) ) {
+        return;
+    }
+
+    for( const JsonObject &mod_group : config.get_array( "state-modifiers" ) ) {
+        state_modifier_group group;
+        group.group_id = mod_group.get_string( "id" );
+        group.override_lower = mod_group.get_bool( "override", false );
+        group.use_offset_mode = mod_group.get_bool( "use_offset", true );
+
+        if( !mod_group.has_array( "tiles" ) ) {
+            mod_group.throw_error( "state-modifier group must have a 'tiles' array" );
+        }
+
+        for( const JsonObject &tile_entry : mod_group.get_array( "tiles" ) ) {
+            state_modifier_tile tile;
+            tile.state_id = tile_entry.get_string( "id" );
+
+            if( tile_entry.has_null( "fg" ) ) {
+                // Null/identity modifier - no pixel modification
+                tile.fg_sprite = std::nullopt;
+            } else if( tile_entry.has_int( "fg" ) ) {
+                const int fg_val = tile_entry.get_int( "fg" );
+                if( fg_val >= 0 ) {
+                    tile.fg_sprite = fg_val + sprite_id_offset;
+                } else {
+                    tile.fg_sprite = std::nullopt;
+                }
+            } else {
+                // No fg specified - treat as null/identity
+                tile.fg_sprite = std::nullopt;
+            }
+
+            // Load optional offset for oversized UV modifier sprites
+            // Default to sprite_offset from the tileset config, but allow per-tile override
+            tile.offset.x = tile_entry.get_int( "offset_x", sprite_offset.x );
+            tile.offset.y = tile_entry.get_int( "offset_y", sprite_offset.y );
+
+            group.tiles[tile.state_id] = std::move( tile );
+        }
+
+        // Check if a group with this ID already exists (from base tileset or earlier mod)
+        // If so, replace it; otherwise add as new. This allows mod tilesets to override
+        // state modifiers from the base tileset.
+        auto existing = std::find_if( ts.state_modifiers.begin(), ts.state_modifiers.end(),
+        [&group]( const state_modifier_group & g ) {
+            return g.group_id == group.group_id;
+        } );
+
+        if( existing != ts.state_modifiers.end() ) {
+            *existing = std::move( group );
+            dbg( DL::Info ) << "Replaced state modifier group: " << existing->group_id;
+        } else {
+            ts.state_modifiers.push_back( std::move( group ) );
+        }
+    }
+
+    dbg( DL::Info ) << "Total state modifier groups: " << ts.state_modifiers.size();
 }
 
 static int divide_round_down( int a, int b )
@@ -2106,7 +2657,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             }
 
             if( g->display_overlay_state( ACTION_DISPLAY_VISIBILITY ) &&
-                g->displaying_visibility_creature && !invis ) {
+                    g->displaying_visibility_creature && !invis ) {
                 const bool visibility = g->displaying_visibility_creature->sees( {temp_x, temp_y, center.z} );
 
                 // color overlay.
@@ -2186,8 +2737,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const auto low_override = draw_below_override.find( pos );
                 const bool low_overridden = low_override != draw_below_override.end();
                 if( low_overridden ? !low_override->second :
-                    ( in_map_bounds && ( here.dont_draw_lower_floor( pos ) || stop_on_memory ) )
-                    || ( !in_map_bounds && ( has_memory_at( pos ) || pos.z <= 0 ) ) ) {
+                        ( in_map_bounds && ( here.dont_draw_lower_floor( pos ) || stop_on_memory ) )
+                        || ( !in_map_bounds && ( has_memory_at( pos ) || pos.z <= 0 ) ) ) {
                     // invisible to normal eyes
                     bool invisible[5];
                     invisible[0] = false;
@@ -2281,7 +2832,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 if( show_zones_overlay ) {
                     for( const zone_render_data &zone : zones_to_draw ) {
                         if( p.pos.x < zone.min_local.x || p.pos.x > zone.max_local.x ||
-                            p.pos.y < zone.min_local.y || p.pos.y > zone.max_local.y ) {
+                                p.pos.y < zone.min_local.y || p.pos.y > zone.max_local.y ) {
                             continue;
                         }
                         draw_zone_overlay( {
@@ -2660,78 +3211,78 @@ auto cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY cate
     }
 
     switch( category ) {
-        case C_FURNITURE:
-            return find_tile_looks_like_by_string_id<furn_t>( id, category, looks_like_jumps_limit );
-        case C_TERRAIN:
-            return find_tile_looks_like_by_string_id<ter_t>( id, category, looks_like_jumps_limit );
-        case C_TRAP:
-            return find_tile_looks_like_by_string_id<trap>( id, category, looks_like_jumps_limit );
-        case C_FIELD:
-            return find_tile_looks_like_by_string_id<field_type>( id, category, looks_like_jumps_limit );
-        case C_MONSTER:
-            return find_tile_looks_like_by_string_id<mtype>( id, category, looks_like_jumps_limit );
-        case C_OVERMAP_TERRAIN: {
-            std::optional<tile_lookup_res> ret;
-            const oter_type_str_id type_tmp( id );
-            if( !type_tmp.is_valid() ) {
-                return ret;
-            }
-
-            int jump_limit = looks_like_jumps_limit;
-            for( const std::string &looks_like : type_tmp.obj().looks_like ) {
-
-                ret = find_tile_looks_like( looks_like, category, jump_limit - 1 );
-                if( ret.has_value() ) {
-                    return ret;
-                }
-
-                jump_limit--;
-                if( jump_limit <= 0 ) {
-                    return ret;
-                }
-            }
-
+    case C_FURNITURE:
+        return find_tile_looks_like_by_string_id<furn_t>( id, category, looks_like_jumps_limit );
+    case C_TERRAIN:
+        return find_tile_looks_like_by_string_id<ter_t>( id, category, looks_like_jumps_limit );
+    case C_TRAP:
+        return find_tile_looks_like_by_string_id<trap>( id, category, looks_like_jumps_limit );
+    case C_FIELD:
+        return find_tile_looks_like_by_string_id<field_type>( id, category, looks_like_jumps_limit );
+    case C_MONSTER:
+        return find_tile_looks_like_by_string_id<mtype>( id, category, looks_like_jumps_limit );
+    case C_OVERMAP_TERRAIN: {
+        std::optional<tile_lookup_res> ret;
+        const oter_type_str_id type_tmp( id );
+        if( !type_tmp.is_valid() ) {
             return ret;
         }
 
-        case C_VEHICLE_PART: {
-            // vehicle parts start with vp_ for their tiles, but not their IDs
-            const vpart_id base_vpid( id.substr( 3 ) );
-            if( !base_vpid.is_valid() ) {
-                return std::nullopt;
+        int jump_limit = looks_like_jumps_limit;
+        for( const std::string &looks_like : type_tmp.obj().looks_like ) {
+
+            ret = find_tile_looks_like( looks_like, category, jump_limit - 1 );
+            if( ret.has_value() ) {
+                return ret;
             }
-            return find_tile_looks_like( "vp_" + base_vpid.obj().looks_like, category,
+
+            jump_limit--;
+            if( jump_limit <= 0 ) {
+                return ret;
+            }
+        }
+
+        return ret;
+    }
+
+    case C_VEHICLE_PART: {
+        // vehicle parts start with vp_ for their tiles, but not their IDs
+        const vpart_id base_vpid( id.substr( 3 ) );
+        if( !base_vpid.is_valid() ) {
+            return std::nullopt;
+        }
+        return find_tile_looks_like( "vp_" + base_vpid.obj().looks_like, category,
+                                     looks_like_jumps_limit - 1 );
+    }
+    case C_ITEM: {
+        itype_id iid = itype_id( id );
+        if( !iid.is_valid() ) {
+            if( id.starts_with( "corpse_" ) ) {
+                return find_tile_looks_like(
+                           itype_corpse.str(), category, looks_like_jumps_limit - 1
+                       );
+            }
+            return std::nullopt;
+        }
+        return find_tile_looks_like( iid->looks_like.str(), category, looks_like_jumps_limit - 1 );
+    }
+
+    case C_BULLET: {
+        auto ammo_name = id;
+        replace_first( ammo_name, "animation_bullet_", "" );
+        auto iid = itype_id( ammo_name );
+        if( !iid.is_valid() ) {
+            return std::nullopt;
+        }
+        if( !iid->looks_like.is_empty() ) {
+            return find_tile_looks_like( "animation_bullet_" + iid->looks_like.str(), category,
                                          looks_like_jumps_limit - 1 );
         }
-        case C_ITEM: {
-            itype_id iid = itype_id( id );
-            if( !iid.is_valid() ) {
-                if( id.starts_with( "corpse_" ) ) {
-                    return find_tile_looks_like(
-                               itype_corpse.str(), category, looks_like_jumps_limit - 1
-                           );
-                }
-                return std::nullopt;
-            }
-            return find_tile_looks_like( iid->looks_like.str(), category, looks_like_jumps_limit - 1 );
-        }
+        return std::nullopt;
+    }
 
-        case C_BULLET: {
-            auto ammo_name = id;
-            replace_first( ammo_name, "animation_bullet_", "" );
-            auto iid = itype_id( ammo_name );
-            if( !iid.is_valid() ) {
-                return std::nullopt;
-            }
-            if( !iid->looks_like.is_empty() ) {
-                return find_tile_looks_like( "animation_bullet_" + iid->looks_like.str(), category,
-                                             looks_like_jumps_limit - 1 );
-            }
-            return std::nullopt;
-        }
-
-        default:
-            return std::nullopt;
+    default:
+        return std::nullopt;
     }
 }
 
@@ -2792,8 +3343,8 @@ bool cata_tiles::draw_from_id_string(
 
     half_open_rectangle<point> screen_bounds( o, o + point( screentile_width, screentile_height ) );
     if( !as_independent_entity &&
-        !tile_iso &&
-        !screen_bounds.contains( pos.xy() ) ) {
+            !tile_iso &&
+            !screen_bounds.contains( pos.xy() ) ) {
         return false;
     }
 
@@ -2844,95 +3395,95 @@ bool cata_tiles::draw_from_id_string(
     map &here = get_map();
     // TODO: determine ways other than category to differentiate more types of sprites
     switch( tile.category ) {
-        case C_TERRAIN:
-        case C_FIELD:
-        case C_LIGHTING:
-            // stationary map tiles, seed based on map coordinates
+    case C_TERRAIN:
+    case C_FIELD:
+    case C_LIGHTING:
+        // stationary map tiles, seed based on map coordinates
+        seed_from_map_coords = true;
+        break;
+    case C_VEHICLE_PART:
+        // vehicle parts, seed based on coordinates within the vehicle
+        // TODO: also use some vehicle id, for less predictability
+    {
+        // new scope for variable declarations
+        const auto vp_override = vpart_override.find( pos );
+        const bool vp_overridden = vp_override != vpart_override.end();
+        if( vp_overridden ) {
+            const vpart_id &vp_id = std::get<0>( vp_override->second );
+            if( vp_id ) {
+                point mount = std::get<4>( vp_override->second );
+                seed = simple_point_hash( mount );
+            }
+        } else {
+            const optional_vpart_position vp = here.veh_at( pos );
+            if( vp ) {
+                seed = simple_point_hash( vp->mount() );
+            }
+        }
+
+        // convert vehicle 360-degree direction (0=E,45=SE, etc) to 4-way tile
+        // rotation (0=N,1=W,etc)
+        tileray face = tileray( units::from_degrees( true_rota ) );
+        true_rota = 3 - face.dir4();
+
+    }
+    break;
+    case C_FURNITURE: {
+        // If the furniture is not movable, we'll allow seeding by the position
+        // since we won't get the behavior that occurs where the tile constantly
+        // changes when the player grabs the furniture and drags it, causing the
+        // seed to change.
+        const furn_str_id fid( found_id );
+        if( fid.is_valid() ) {
+            const furn_t &f = fid.obj();
+            if( !f.is_movable() ) {
+                seed = simple_point_hash( here.getabs( pos ) );
+            }
+        }
+    }
+    break;
+    case C_ITEM:
+    case C_TRAP:
+        if( seed_for_animation ) {
             seed_from_map_coords = true;
-            break;
-        case C_VEHICLE_PART:
-            // vehicle parts, seed based on coordinates within the vehicle
-            // TODO: also use some vehicle id, for less predictability
-        {
-            // new scope for variable declarations
-            const auto vp_override = vpart_override.find( pos );
-            const bool vp_overridden = vp_override != vpart_override.end();
-            if( vp_overridden ) {
-                const vpart_id &vp_id = std::get<0>( vp_override->second );
-                if( vp_id ) {
-                    point mount = std::get<4>( vp_override->second );
-                    seed = simple_point_hash( mount );
-                }
-            } else {
-                const optional_vpart_position vp = here.veh_at( pos );
-                if( vp ) {
-                    seed = simple_point_hash( vp->mount() );
-                }
-            }
-
-            // convert vehicle 360-degree direction (0=E,45=SE, etc) to 4-way tile
-            // rotation (0=N,1=W,etc)
-            tileray face = tileray( units::from_degrees( true_rota ) );
-            true_rota = 3 - face.dir4();
-
+        }
+        // TODO: come up with ways to make random sprites consistent for these types
+        break;
+    case C_OVERMAP_TERRAIN:
+        seed = simple_point_hash( pos );
+        break;
+    case C_NONE:
+    case C_BULLET:
+    case C_HIT_ENTITY:
+    case C_WEATHER:
+        // TODO: come up with ways to make random sprites consistent for these types
+        break;
+    case C_MONSTER:
+        // FIXME: add persistent id to Creature type, instead of using monster pointer address
+        if( !monster_override.contains( pos ) ) {
+            seed = reinterpret_cast<uintptr_t>( g->critter_at<monster>( pos ) );
         }
         break;
-        case C_FURNITURE: {
-            // If the furniture is not movable, we'll allow seeding by the position
-            // since we won't get the behavior that occurs where the tile constantly
-            // changes when the player grabs the furniture and drags it, causing the
-            // seed to change.
-            const furn_str_id fid( found_id );
-            if( fid.is_valid() ) {
-                const furn_t &f = fid.obj();
-                if( !f.is_movable() ) {
-                    seed = simple_point_hash( here.getabs( pos ) );
-                }
-            }
+    default:
+        // player
+        if( found_id.starts_with( "player_" ) ) {
+            seed = g->u.name[0];
+            break;
         }
-        break;
-        case C_ITEM:
-        case C_TRAP:
-            if( seed_for_animation ) {
-                seed_from_map_coords = true;
-            }
-            // TODO: come up with ways to make random sprites consistent for these types
-            break;
-        case C_OVERMAP_TERRAIN:
-            seed = simple_point_hash( pos );
-            break;
-        case C_NONE:
-        case C_BULLET:
-        case C_HIT_ENTITY:
-        case C_WEATHER:
-            // TODO: come up with ways to make random sprites consistent for these types
-            break;
-        case C_MONSTER:
-            // FIXME: add persistent id to Creature type, instead of using monster pointer address
-            if( !monster_override.contains( pos ) ) {
-                seed = reinterpret_cast<uintptr_t>( g->critter_at<monster>( pos ) );
-            }
-            break;
-        default:
-            // player
-            if( found_id.starts_with( "player_" ) ) {
-                seed = g->u.name[0];
+        // NPC
+        if( found_id.starts_with( "npc_" ) ) {
+            if( npc *const guy = g->critter_at<npc>( pos ) ) {
+                seed = guy->getID().get_value();
                 break;
             }
-            // NPC
-            if( found_id.starts_with( "npc_" ) ) {
-                if( npc *const guy = g->critter_at<npc>( pos ) ) {
-                    seed = guy->getID().get_value();
-                    break;
-                }
-            }
+        }
     }
 
     // make sure we aren't going to rotate the tile if it shouldn't be rotated
     if( !display_tile.rotates
-        && tile.category != C_NONE
-        && tile.category != C_MONSTER
-        && tile.category != C_BULLET ) {
+            && tile.category != C_NONE
+            && tile.category != C_MONSTER
+            && tile.category != C_BULLET ) {
         true_rota = 0;
     }
 
@@ -2988,8 +3539,8 @@ bool cata_tiles::draw_from_id_string(
     //Let's branch transparent overmaps early if tranparency overlays are enabled
     //Because if tranparency is enabled then backgrounds should not be drawn
     if( tile.category == C_OVERMAP_TERRAIN
-        && display_tile.has_om_transparency
-        && overmap_transparency ) {
+            && display_tile.has_om_transparency
+            && overmap_transparency ) {
         draw_sprite_at( display_tile, screen_pos, loc_rand, /*fg:*/ true,
                         true_rota, fg_color, ll, apply_visual_effects,
                         base_overlay_alpha * overlay_count, height_3d );
@@ -3125,8 +3676,65 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
     destination.h = height * tile_height / tileset_ptr->get_tile_height();
 
     auto render = [&]( const int rotation, const SDL_RendererFlip flip ) {
-        sprite_tex->set_alpha_mod( 255 );
-        const int ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+        int ret = 0;
+
+#if defined(DYNAMIC_ATLAS)
+        // Apply UV modifier if one is active (opt-in tileset feature)
+        if( active_uv_modifier != nullptr ) {
+            // Check cache first
+            auto cache_it = uv_remapped_cache.find( tile_idx );
+            if( cache_it != uv_remapped_cache.end() && cache_it->second ) {
+                // Use cached texture
+                ret = SDL_RenderCopyEx( renderer.get(), cache_it->second.get(),
+                                        nullptr, &destination, rotation, nullptr, flip );
+            } else {
+                // Get the sprite surface for UV remapping
+                auto [found, src_surf, src_rect] = tileset_ptr->get_sprite_surface( tile_idx );
+                if( found && src_surf ) {
+                    // Create a destination surface for the remapped sprite
+                    SDL_Surface_Ptr remapped = create_surface_32( src_rect.w, src_rect.h );
+                    if( remapped ) {
+                        SDL_Rect dst_rect = { 0, 0, src_rect.w, src_rect.h };
+
+                        // Get the color transformation function for visual effects (night vision, etc.)
+                        color_pixel_function_pointer color_func = get_pixel_function( fx_type );
+
+                        // Apply UV remapping with sprite offset for oversized tiles
+                        apply_uv_remap( remapped.get(), dst_rect,
+                                        src_surf, src_rect,
+                                        active_uv_modifier,
+                                        active_uv_modifier_offset,
+                                        active_uv_offset_mode,
+                                        tile.offset,
+                                        tileset_ptr->get_tile_width(),
+                                        tileset_ptr->get_tile_height(),
+                                        color_func );
+
+                        // Create texture and cache it
+                        SDL_Texture_Ptr temp_tex( SDL_CreateTextureFromSurface(
+                                                      renderer.get(), remapped.get() ) );
+                        if( temp_tex ) {
+                            SDL_SetTextureBlendMode( temp_tex.get(), SDL_BLENDMODE_BLEND );
+                            ret = SDL_RenderCopyEx( renderer.get(), temp_tex.get(),
+                                                    nullptr, &destination, rotation, nullptr, flip );
+                            // Cache the texture for reuse within this character's rendering
+                            uv_remapped_cache[tile_idx] = std::move( temp_tex );
+                        }
+                    }
+                } else {
+                    // Fallback to normal rendering if sprite surface not available
+                    sprite_tex->set_alpha_mod( 255 );
+                    ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+                }
+            }
+        } else
+#endif
+        {
+            // Normal rendering path (no UV modifier)
+            sprite_tex->set_alpha_mod( 255 );
+            ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+        }
+
         if( !static_z_effect && overlay_count > 0 ) {
             const auto overlay =
                 tileset_ptr->get_or_default(
@@ -3142,78 +3750,78 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
     int ret = 0;
     if( rotate_sprite ) {
         switch( rota ) {
-            default:
-            case 0:
-                // unrotated (and 180, with just two sprites)
+        default:
+        case 0:
+            // unrotated (and 180, with just two sprites)
+            ret = render( 0, SDL_FLIP_NONE );
+            break;
+        case 1:
+            // 90 degrees (and 270, with just two sprites)
+            if( !tile_iso ) {
+                // never rotate isometric tiles
+                ret = render( -90, SDL_FLIP_NONE );
+            } else {
                 ret = render( 0, SDL_FLIP_NONE );
-                break;
-            case 1:
-                // 90 degrees (and 270, with just two sprites)
-                if( !tile_iso ) {
-                    // never rotate isometric tiles
-                    ret = render( -90, SDL_FLIP_NONE );
-                } else {
-                    ret = render( 0, SDL_FLIP_NONE );
-                }
-                break;
-            case 2:
-                // 180 degrees, implemented with flips instead of rotation
-                if( !tile_iso ) {
-                    // never flip isometric tiles vertically
-                    ret = render( 0, static_cast<SDL_RendererFlip>( SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL ) );
-                } else {
-                    ret = render( 0, SDL_FLIP_NONE );
-                }
-                break;
-            case 3:
-                // 270 degrees
-                if( !tile_iso ) {
-                    // never rotate isometric tiles
-                    ret = render( 90, SDL_FLIP_NONE );
-                } else {
-                    ret = render( 0, SDL_FLIP_NONE );
-                }
-                break;
-            case 4:
-                // flip horizontally
-                ret = render( 0, SDL_FLIP_HORIZONTAL );
-                break;
-            case 5:
-                // 45 degrees
-                if( !tile_iso ) {
-                    // never rotate isometric tiles
-                    ret = render( 45, SDL_FLIP_NONE );
-                } else {
-                    ret = render( 0, SDL_FLIP_NONE );
-                }
-                break;
-            case 6:
-                // 315 degrees
-                if( !tile_iso ) {
-                    // never rotate isometric tiles
-                    ret = render( -45, SDL_FLIP_NONE );
-                } else {
-                    ret = render( 0, SDL_FLIP_NONE );
-                }
-                break;
-            case 7:
-                // 225 degrees
-                if( !tile_iso ) {
-                    // never rotate isometric tiles
-                    ret = render( -135, SDL_FLIP_NONE );
-                } else {
-                    ret = render( 0, SDL_FLIP_NONE );
-                }
-                break;
-            case 8:
-                // 135 degrees
-                if( !tile_iso ) {
-                    // never rotate isometric tiles
-                    ret = render( 135, SDL_FLIP_NONE );
-                } else {
-                    ret = render( 0, SDL_FLIP_NONE );
-                }
-                break;
+            }
+            break;
+        case 2:
+            // 180 degrees, implemented with flips instead of rotation
+            if( !tile_iso ) {
+                // never flip isometric tiles vertically
+                ret = render( 0, static_cast<SDL_RendererFlip>( SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL ) );
+            } else {
+                ret = render( 0, SDL_FLIP_NONE );
+            }
+            break;
+        case 3:
+            // 270 degrees
+            if( !tile_iso ) {
+                // never rotate isometric tiles
+                ret = render( 90, SDL_FLIP_NONE );
+            } else {
+                ret = render( 0, SDL_FLIP_NONE );
+            }
+            break;
+        case 4:
+            // flip horizontally
+            ret = render( 0, SDL_FLIP_HORIZONTAL );
+            break;
+        case 5:
+            // 45 degrees
+            if( !tile_iso ) {
+                // never rotate isometric tiles
+                ret = render( 45, SDL_FLIP_NONE );
+            } else {
+                ret = render( 0, SDL_FLIP_NONE );
+            }
+            break;
+        case 6:
+            // 315 degrees
+            if( !tile_iso ) {
+                // never rotate isometric tiles
+                ret = render( -45, SDL_FLIP_NONE );
+            } else {
+                ret = render( 0, SDL_FLIP_NONE );
+            }
+            break;
+        case 7:
+            // 225 degrees
+            if( !tile_iso ) {
+                // never rotate isometric tiles
+                ret = render( -135, SDL_FLIP_NONE );
+            } else {
+                ret = render( 0, SDL_FLIP_NONE );
+            }
+            break;
+        case 8:
+            // 135 degrees
+            if( !tile_iso ) {
+                // never rotate isometric tiles
+                ret = render( 135, SDL_FLIP_NONE );
+            } else {
+                ret = render( 0, SDL_FLIP_NONE );
+            }
+            break;
         }
     } else {
         // don't rotate, same as case 0 above
@@ -3273,29 +3881,29 @@ bool cata_tiles::apply_vision_effects( const tripoint &pos,
     }
     const std::string *light_name = nullptr;
     switch( visibility ) {
-        case VIS_HIDDEN: {
-            light_name = &STATIC( std::string( "lighting_hidden" ) );
-            break;
-        }
-        case VIS_LIT: {
-            light_name = &STATIC( std::string( "lighting_lowlight_light" ) );
-            break;
-        }
-        case VIS_BOOMER: {
-            light_name = &STATIC( std::string( "lighting_boomered_light" ) );
-            break;
-        }
-        case VIS_BOOMER_DARK: {
-            light_name = &STATIC( std::string( "lighting_boomered_dark" ) );
-            break;
-        }
-        case VIS_DARK: {
-            light_name = &STATIC( std::string( "lighting_lowlight_dark" ) );
-            break;
-        }
-        case VIS_CLEAR:
-            // should never happen
-            break;
+    case VIS_HIDDEN: {
+        light_name = &STATIC( std::string( "lighting_hidden" ) );
+        break;
+    }
+    case VIS_LIT: {
+        light_name = &STATIC( std::string( "lighting_lowlight_light" ) );
+        break;
+    }
+    case VIS_BOOMER: {
+        light_name = &STATIC( std::string( "lighting_boomered_light" ) );
+        break;
+    }
+    case VIS_BOOMER_DARK: {
+        light_name = &STATIC( std::string( "lighting_boomered_dark" ) );
+        break;
+    }
+    case VIS_DARK: {
+        light_name = &STATIC( std::string( "lighting_lowlight_dark" ) );
+        break;
+    }
+    case VIS_CLEAR:
+        // should never happen
+        break;
     }
 
     // lighting is never rotated, though, could possibly add in random rotation?
@@ -3831,7 +4439,7 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
         const std::string vpname = "vp_" + vp_id.str();
         avatar &you = get_avatar();
         if( !veh.forward_velocity() && !veh.player_in_control( you ) &&
-            here.check_seen_cache( p ) ) {
+                here.check_seen_cache( p ) ) {
             you.memorize_tile( here.getabs( p ), vpname, subtile, rotation );
         }
         if( !overridden ) {
@@ -4050,7 +4658,7 @@ bool cata_tiles::draw_zombie_revival_indicators( const tripoint &pos, const lit_
 {
     map &here = get_map();
     if( tileset_ptr->find_tile_type( ZOMBIE_REVIVAL_INDICATOR ) && !invisible[0] &&
-        !item_override.contains( pos ) && here.could_see_items( pos, g->u ) ) {
+            !item_override.contains( pos ) && here.could_see_items( pos, g->u ) ) {
         for( auto &i : here.i_at( pos ) ) {
             if( i->is_corpse() ) {
                 if( i->can_revive() || ( i->get_mtype()->zombify_into && !i->has_flag( flag_PULPED ) ) ) {
@@ -4065,6 +4673,126 @@ bool cata_tiles::draw_zombie_revival_indicators( const tripoint &pos, const lit_
     return false;
 }
 
+std::tuple<SDL_Surface_Ptr, point> cata_tiles::build_composite_uv_modifier( const Character &ch,
+        int width, int height )
+{
+#if !defined(DYNAMIC_ATLAS)
+    // UV modifier system requires dynamic atlas for sprite surface access
+    ( void )ch;
+    ( void )width;
+    ( void )height;
+    return std::make_tuple( nullptr, point_zero );
+#else
+    const auto &state_modifiers = tileset_ptr->get_state_modifiers();
+    if( state_modifiers.empty() ) {
+        return std::make_tuple( nullptr, point_zero );
+    }
+
+    SDL_Surface_Ptr composite = nullptr;
+    point composite_offset = point_zero;
+    bool use_offset_mode = true;  // Track the mode used by first non-null modifier
+
+    // First pass: determine the bounds needed for the composite
+    // We need to find the largest UV modifier and its offset
+    int min_x = 0, min_y = 0, max_x = width, max_y = height;
+
+    for( const auto &group : state_modifiers ) {
+        std::optional<std::string> current_state = get_character_state_for_group( ch, group.group_id );
+        if( !current_state ) {
+            continue;
+        }
+
+        auto it = group.tiles.find( *current_state );
+        if( it == group.tiles.end() || !it->second.fg_sprite ) {
+            continue;
+        }
+
+        const state_modifier_tile &tile = it->second;
+        auto [found, mod_surf, mod_rect] = tileset_ptr->get_sprite_surface( *tile.fg_sprite );
+        if( !found || !mod_surf ) {
+            continue;
+        }
+
+        // Calculate bounds of this UV modifier relative to standard tile origin
+        min_x = std::min( min_x, tile.offset.x );
+        min_y = std::min( min_y, tile.offset.y );
+        max_x = std::max( max_x, tile.offset.x + mod_rect.w );
+        max_y = std::max( max_y, tile.offset.y + mod_rect.h );
+    }
+
+    // Calculate composite size and offset
+    const int comp_width = max_x - min_x;
+    const int comp_height = max_y - min_y;
+    composite_offset = point( min_x, min_y );
+
+    // Iterate modifiers in priority order (index 0 = highest priority)
+    for( const auto &group : state_modifiers ) {
+        std::optional<std::string> current_state = get_character_state_for_group( ch, group.group_id );
+        if( !current_state ) {
+            // This group_id is not recognized by the game code - skip it
+            continue;
+        }
+
+        auto it = group.tiles.find( *current_state );
+        if( it == group.tiles.end() ) {
+            // Current state not defined in this group - skip
+            continue;
+        }
+
+        const state_modifier_tile &tile = it->second;
+
+        if( !tile.fg_sprite ) {
+            // Null tile - no modification, but check override
+            if( group.override_lower ) {
+                break;  // Stop processing lower priority modifiers
+            }
+            continue;
+        }
+
+        // Get the modifier sprite surface from the tileset
+        auto [found, mod_surf, mod_rect] = tileset_ptr->get_sprite_surface( *tile.fg_sprite );
+        if( !found || !mod_surf ) {
+            // Sprite not found in atlas
+            if( group.override_lower ) {
+                break;
+            }
+            continue;
+        }
+
+        if( !composite ) {
+            // First modifier - create identity surface at computed size
+            use_offset_mode = group.use_offset_mode;
+            composite = create_identity_uv_surface( comp_width, comp_height, use_offset_mode );
+            if( !composite ) {
+                return std::make_tuple( nullptr, point_zero );
+            }
+        }
+
+        // Create a temporary surface from the modifier sprite region
+        SDL_Surface_Ptr mod_temp = create_surface_32( mod_rect.w, mod_rect.h );
+        if( mod_temp ) {
+            // Ensure source uses NONE blend mode so we copy pixels directly, not blend
+            SDL_SetSurfaceBlendMode( mod_surf, SDL_BLENDMODE_NONE );
+            SDL_Rect src_rect = mod_rect;
+            SDL_Rect dst_rect = { 0, 0, mod_rect.w, mod_rect.h };
+            SDL_BlitSurface( mod_surf, &src_rect, mod_temp.get(), &dst_rect );
+
+            // Chain this modifier onto the composite at the correct position
+            // The UV modifier's position in the composite is its offset minus the composite offset
+            const int dst_x = tile.offset.x - composite_offset.x;
+            const int dst_y = tile.offset.y - composite_offset.y;
+            chain_uv_modifier_at( composite.get(), mod_temp.get(), use_offset_mode, dst_x, dst_y );
+        }
+
+        if( group.override_lower ) {
+            break;  // Stop processing lower priority modifiers
+        }
+    }
+
+    return std::make_tuple( std::move( composite ), composite_offset );
+#endif
+}
+
 void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint &p, lit_level ll,
         int &height_3d, const bool as_independent_entity )
 {
@@ -4075,6 +4803,32 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
     } else {
         ent_name = ch.male ? "player_male" : "player_female";
     }
+
+    // Build composite UV modifier for this character's current state (opt-in feature)
+    // This is only computed if the tileset defines state-modifiers
+    SDL_Surface_Ptr uv_modifier_owner;
+    if( !tileset_ptr->get_state_modifiers().empty() ) {
+#if defined(DYNAMIC_ATLAS)
+        // Pre-load readback surfaces once for all sprite lookups in this character
+        tileset_ptr->ensure_readback_loaded();
+#endif
+        auto [uv_surface, uv_offset] = build_composite_uv_modifier(
+                                           ch, tileset_ptr->get_tile_width(), tileset_ptr->get_tile_height() );
+        uv_modifier_owner = std::move( uv_surface );
+        if( uv_modifier_owner ) {
+            active_uv_modifier = uv_modifier_owner.get();
+            active_uv_modifier_offset = uv_offset;
+            // Determine offset mode from first state modifier group that applies
+            for( const auto &group : tileset_ptr->get_state_modifiers() ) {
+                auto state = get_character_state_for_group( ch, group.group_id );
+                if( state && group.tiles.count( *state ) ) {
+                    active_uv_offset_mode = group.use_offset_mode;
+                    break;
+                }
+            }
+        }
+    }
+
     // first draw the character itself(i guess this means a tileset that
     // takes this seriously needs a naked sprite)
     int prev_height_3d = height_3d;
@@ -4132,6 +4886,10 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
             height_3d = std::max( height_3d, overlay_height_3d );
         }
     }
+
+    // Clear the UV modifier and cache after drawing is complete
+    active_uv_modifier = nullptr;
+    uv_remapped_cache.clear();
 }
 
 bool cata_tiles::draw_item_highlight( const tripoint &pos )
@@ -4472,51 +5230,51 @@ void cata_tiles::draw_custom_explosion_frame()
         const explosion_neighbors ngh = pr.second.neighborhood;
 
         switch( ngh ) {
-            case N_NORTH:
-            case N_SOUTH:
-                subtile = edge;
-                rotation = 1;
-                break;
-            case N_WEST:
-            case N_EAST:
-                subtile = edge;
-                rotation = 0;
-                break;
-            case N_NORTH | N_SOUTH:
-            case N_NORTH | N_SOUTH | N_WEST:
-            case N_NORTH | N_SOUTH | N_EAST:
-                subtile = edge;
-                rotation = 1;
-                break;
-            case N_WEST | N_EAST:
-            case N_WEST | N_EAST | N_NORTH:
-            case N_WEST | N_EAST | N_SOUTH:
-                subtile = edge;
-                rotation = 0;
-                break;
-            case N_SOUTH | N_EAST:
-                subtile = corner;
-                rotation = 0;
-                break;
-            case N_NORTH | N_EAST:
-                subtile = corner;
-                rotation = 1;
-                break;
-            case N_NORTH | N_WEST:
-                subtile = corner;
-                rotation = 2;
-                break;
-            case N_SOUTH | N_WEST:
-                subtile = corner;
-                rotation = 3;
-                break;
-            case N_NO_NEIGHBORS:
-                subtile = edge;
-                break;
-            case N_WEST | N_EAST | N_NORTH | N_SOUTH:
-                // Needs some special tile
-                subtile = edge;
-                break;
+        case N_NORTH:
+        case N_SOUTH:
+            subtile = edge;
+            rotation = 1;
+            break;
+        case N_WEST:
+        case N_EAST:
+            subtile = edge;
+            rotation = 0;
+            break;
+        case N_NORTH | N_SOUTH:
+        case N_NORTH | N_SOUTH | N_WEST:
+        case N_NORTH | N_SOUTH | N_EAST:
+            subtile = edge;
+            rotation = 1;
+            break;
+        case N_WEST | N_EAST:
+        case N_WEST | N_EAST | N_NORTH:
+        case N_WEST | N_EAST | N_SOUTH:
+            subtile = edge;
+            rotation = 0;
+            break;
+        case N_SOUTH | N_EAST:
+            subtile = corner;
+            rotation = 0;
+            break;
+        case N_NORTH | N_EAST:
+            subtile = corner;
+            rotation = 1;
+            break;
+        case N_NORTH | N_WEST:
+            subtile = corner;
+            rotation = 2;
+            break;
+        case N_SOUTH | N_WEST:
+            subtile = corner;
+            rotation = 3;
+            break;
+        case N_NO_NEIGHBORS:
+            subtile = edge;
+            break;
+        case N_WEST | N_EAST | N_NORTH | N_SOUTH:
+            // Needs some special tile
+            subtile = edge;
+            break;
         }
 
         const tripoint &p = pr.first;
@@ -4792,76 +5550,76 @@ void cata_tiles::get_terrain_orientation( const tripoint &p, int &rota, int &sub
 void cata_tiles::get_rotation_and_subtile( const char val, int &rotation, int &subtile )
 {
     switch( val ) {
-        // no connections
-        case 0:
-            subtile = unconnected;
-            rotation = 0;
-            break;
-        // all connections
-        case 15:
-            subtile = center;
-            rotation = 0;
-            break;
-        // end pieces
-        case 8:
-            subtile = end_piece;
-            rotation = 2;
-            break;
-        case 4:
-            subtile = end_piece;
-            rotation = 3;
-            break;
-        case 2:
-            subtile = end_piece;
-            rotation = 1;
-            break;
-        case 1:
-            subtile = end_piece;
-            rotation = 0;
-            break;
-        // edges
-        case 9:
-            subtile = edge;
-            rotation = 0;
-            break;
-        case 6:
-            subtile = edge;
-            rotation = 1;
-            break;
-        // corners
-        case 12:
-            subtile = corner;
-            rotation = 2;
-            break;
-        case 10:
-            subtile = corner;
-            rotation = 1;
-            break;
-        case 3:
-            subtile = corner;
-            rotation = 0;
-            break;
-        case 5:
-            subtile = corner;
-            rotation = 3;
-            break;
-        // all t_connections
-        case 14:
-            subtile = t_connection;
-            rotation = 2;
-            break;
-        case 11:
-            subtile = t_connection;
-            rotation = 1;
-            break;
-        case 7:
-            subtile = t_connection;
-            rotation = 0;
-            break;
-        case 13:
-            subtile = t_connection;
-            rotation = 3;
-            break;
+    // no connections
+    case 0:
+        subtile = unconnected;
+        rotation = 0;
+        break;
+    // all connections
+    case 15:
+        subtile = center;
+        rotation = 0;
+        break;
+    // end pieces
+    case 8:
+        subtile = end_piece;
+        rotation = 2;
+        break;
+    case 4:
+        subtile = end_piece;
+        rotation = 3;
+        break;
+    case 2:
+        subtile = end_piece;
+        rotation = 1;
+        break;
+    case 1:
+        subtile = end_piece;
+        rotation = 0;
+        break;
+    // edges
+    case 9:
+        subtile = edge;
+        rotation = 0;
+        break;
+    case 6:
+        subtile = edge;
+        rotation = 1;
+        break;
+    // corners
+    case 12:
+        subtile = corner;
+        rotation = 2;
+        break;
+    case 10:
+        subtile = corner;
+        rotation = 1;
+        break;
+    case 3:
+        subtile = corner;
+        rotation = 0;
+        break;
+    case 5:
+        subtile = corner;
+        rotation = 3;
+        break;
+    // all t_connections
+    case 14:
+        subtile = t_connection;
+        rotation = 2;
+        break;
+    case 11:
+        subtile = t_connection;
+        rotation = 1;
+        break;
+    case 7:
+        subtile = t_connection;
+        rotation = 0;
+        break;
+    case 13:
+        subtile = t_connection;
+        rotation = 3;
+        break;
     }
 }
 
@@ -4918,38 +5676,38 @@ void cata_tiles::get_tile_values_with_ter( const tripoint &p, const int t, const
             for( int i = 0; i < 4; ++i ) {
                 const tripoint &pt = p + four_adjacent_offsets[i];
                 if( here.has_flag( "WALL", pt ) || here.has_flag( "WINDOW", pt ) ||
-                    here.has_flag( "DOOR", pt ) ) {
+                        here.has_flag( "DOOR", pt ) ) {
                     val += 1 << i;
                 }
             }
         }
 
         switch( val ) {
-            case 4:    // south wall
-            case 14:   // north opening T
-                rotation = 2;
-                break;
-            case 2:    // east wall
-            case 6:    // southeast corner
-            case 5:    // E/W corridor
-            case 7:    // east opening T
-                rotation = 1;
-                break;
-            case 8:    // west wall
-            case 12:   // southwest corner
-            case 13:   // west opening T
-                rotation = 3;
-                break;
-            case 0:    // no walls
-            case 1:    // north wall
-            case 3:    // northeast corner
-            case 9:    // northwest corner
-            case 10:   // N/S corridor
-            case 11:   // south opening T
-            case 15:   // surrounded
-            default:   // just in case
-                rotation = 0;
-                break;
+        case 4:    // south wall
+        case 14:   // north opening T
+            rotation = 2;
+            break;
+        case 2:    // east wall
+        case 6:    // southeast corner
+        case 5:    // E/W corridor
+        case 7:    // east opening T
+            rotation = 1;
+            break;
+        case 8:    // west wall
+        case 12:   // southwest corner
+        case 13:   // west opening T
+            rotation = 3;
+            break;
+        case 0:    // no walls
+        case 1:    // north wall
+        case 3:    // northeast corner
+        case 9:    // northwest corner
+        case 10:   // N/S corridor
+        case 11:   // south opening T
+        case 15:   // surrounded
+        default:   // just in case
+            rotation = 0;
+            break;
         };
 
         //
@@ -5014,7 +5772,7 @@ void cata_tiles::lr_generic( Iter begin, Iter end, Func id_func, TILE_CATEGORY c
         const std::string id_string = id_func( begin );
 
         if( !tileset_ptr->find_tile_type( prefix + id_string ) &&
-            !find_tile_looks_like( id_string, category ) ) {
+                !find_tile_looks_like( id_string, category ) ) {
             missing_list.append( id_string + " " );
         } else if( !tileset_ptr->find_tile_type( prefix + id_string ) ) {
             missing_with_looks_like_list.append( id_string + " " );

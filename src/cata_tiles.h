@@ -68,6 +68,27 @@ struct tile_type {
     std::optional<SDL_Color> default_tint;
 };
 
+/**
+ * Represents a single state within a modifier group (e.g., "crouch" within "movement_mode").
+ * Used for UV remapping based on character states.
+ */
+struct state_modifier_tile {
+    std::string state_id;           // e.g., "crouch", "run", "walk"
+    std::optional<int> fg_sprite;   // nullopt = identity (no modification)
+    point offset;                   // Offset of UV modifier sprite (for oversized UV modifiers)
+};
+
+/**
+ * Represents a modifier group (e.g., "movement_mode" containing walk/run/crouch).
+ * Modifier groups are processed in priority order during rendering.
+ */
+struct state_modifier_group {
+    std::string group_id;           // e.g., "movement_mode", "downed"
+    bool override_lower = false;    // If true, skip lower priority groups when this state is active
+    bool use_offset_mode = true;    // true = offset mode (127,127 neutral), false = normalized UV
+    std::unordered_map<std::string, state_modifier_tile> tiles;  // state_id -> tile
+};
+
 // Make sure to change TILE_CATEGORY_IDS if this changes!
 enum TILE_CATEGORY {
     C_NONE,
@@ -241,6 +262,10 @@ class tileset
         std::unordered_map<std::string, season_tile_value>
         tile_ids_by_season[season_type::NUM_SEASONS];
 
+        // State-based UV modifiers for character rendering (opt-in feature)
+        // Ordered by priority: index 0 = highest priority
+        std::vector<state_modifier_group> state_modifiers;
+
         friend class tileset_loader;
 
     public:
@@ -281,6 +306,29 @@ class tileset
          */
         std::optional<tile_lookup_res> find_tile_type_by_season( const std::string &id,
                 season_type season ) const;
+
+        /** Returns the state modifiers for UV remapping (empty if tileset doesn't define any) */
+        const std::vector<state_modifier_group> &get_state_modifiers() const {
+            return state_modifiers;
+        }
+
+#if defined(DYNAMIC_ATLAS)
+        /**
+         * Retrieves the sprite surface data for a given sprite index.
+         * Used by the UV modifier system to access sprite pixel data.
+         * Note: Caller must call ensure_readback_loaded() first.
+         * @param sprite_index The sprite index to look up
+         * @return Tuple of (success, surface pointer, source rect within surface)
+         */
+        std::tuple<bool, SDL_Surface *, SDL_Rect> get_sprite_surface( int sprite_index ) const;
+
+        /**
+         * Ensures atlas readback surfaces are loaded (GPU->CPU transfer).
+         * Call this once before multiple get_sprite_surface() calls to avoid
+         * repeated expensive transfers.
+         */
+        void ensure_readback_loaded() const;
+#endif
 };
 
 class tileset_loader
@@ -347,6 +395,14 @@ class tileset_loader
          * @throw std::exception On any error.
          */
         void load_tilejson_from_file( const JsonObject &config );
+
+        /**
+         * Load state-based UV modifiers from the "state-modifiers" JSON array.
+         * This is an opt-in feature for tileset authors to define UV remapping
+         * based on character states (crouch, run, walk, downed, etc.).
+         */
+        void load_state_modifiers( const JsonObject &config );
+
         /**
          * Helper function called by load.
          * @param pump_events Handle window events and refresh the screen when necessary.
@@ -719,6 +775,15 @@ class cata_tiles
         void draw_entity_with_overlays( const Character &ch, const tripoint &p, lit_level ll,
                                         int &height_3d, bool as_independent_entity = false );
 
+        /**
+         * Builds a composite UV modifier surface for the given character based on
+         * their current states (movement mode, downed, lying down, etc.).
+         * Returns tuple of (surface, offset) where offset is relative to standard tile origin.
+         * Surface is nullptr if no state modifiers are defined in the tileset.
+         */
+        std::tuple<SDL_Surface_Ptr, point> build_composite_uv_modifier( const Character &ch,
+                int width, int height );
+
         bool draw_item_highlight( const tripoint &pos );
 
     public:
@@ -968,6 +1033,22 @@ class cata_tiles
          * Allows usage of night vision tilesets during sprite rendering.
          */
         bool nv_goggles_activated = false;
+
+        /**
+         * Current UV modifier surface for character rendering.
+         * Set by draw_entity_with_overlays when state modifiers are active.
+         * Reset to nullptr after character drawing is complete.
+         */
+        SDL_Surface *active_uv_modifier = nullptr;
+        bool active_uv_offset_mode = true;
+        point active_uv_modifier_offset;  // Offset of UV modifier relative to standard tile origin
+
+        /**
+         * Cache for UV-remapped textures to avoid recreating them every frame.
+         * Cleared at the end of each character's rendering.
+         * Key: sprite_index, Value: remapped texture
+         */
+        std::unordered_map<int, SDL_Texture_Ptr> uv_remapped_cache;
 
         pimpl<pixel_minimap> minimap;
 
