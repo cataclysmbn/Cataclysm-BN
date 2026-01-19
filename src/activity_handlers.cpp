@@ -730,7 +730,7 @@ static void set_up_butchery_activity( player_activity &act, player &u, const but
     }
 
     print_reasons();
-    act.tools.clear();
+    act.get_tools_mut().clear();
     act.speed.calc_all_moves( u );
     act.moves_left = setup.move_cost;
     act.moves_total = setup.move_cost;
@@ -1886,8 +1886,8 @@ void activity_handlers::pickaxe_finish( player_activity *act, player *p )
     } else {
         here.destroy( pos, true );
     }
-    if( !act->tools.empty() ) {
-        item &it = *act->tools.front();
+    if( !act->get_tools().empty() ) {
+        item &it = *act->get_tools().front();
         p->consume_charges( it, it.ammo_required() );
     } else {
         debugmsg( "pickaxe activity has no tool" );
@@ -2058,7 +2058,7 @@ void activity_handlers::start_fire_finish( player_activity *act, player *p )
 {
     static const std::string iuse_name_string( "firestarter" );
 
-    item &it = *act->tools.front();
+    item &it = *act->get_tools().front();
     item *used_tool = it.get_usable_item( iuse_name_string );
     if( used_tool == nullptr ) {
         debugmsg( "Lost tool used for starting fire" );
@@ -2090,7 +2090,7 @@ void activity_handlers::start_fire_finish( player_activity *act, player *p )
 void activity_handlers::start_fire_do_turn( player_activity *act, player *p )
 {
     map &here = get_map();
-    item &firestarter = *act->tools.front();
+    item &firestarter = *act->get_tools().front();
     // Try fueling the fire if we don't already have fuel, OR if the tool needs to look for tinder to work
     if( !here.is_flammable( act->placement ) || ( firestarter.has_flag( flag_REQUIRES_TINDER ) &&
             !here.tinder_at( act->placement ) ) ) {
@@ -2235,7 +2235,7 @@ void activity_handlers::hand_crank_do_turn( player_activity *act, player *p )
     // to 10 watt (suspicious claims from some manufacturers) sustained output.
     // It takes 2.4 minutes to produce 1kj at just slightly under 7 watts (25 kj per hour)
     // time-based instead of speed based because it's a sustained activity
-    item &hand_crank_item = *act->tools.front();
+    item &hand_crank_item = *act->get_tools().front();
 
     if( calendar::once_every( 144_seconds ) ) {
         p->mod_fatigue( 1 );
@@ -2258,7 +2258,7 @@ void activity_handlers::vibe_do_turn( player_activity *act, player *p )
     //Using a vibrator takes time (10 minutes), not speed
     //Linear increase in morale during action with a small boost at end
     //Deduct 1 battery charge for every minute in use, or vibrator is much less effective
-    item &vibrator_item = *act->tools.front();
+    item &vibrator_item = *act->get_tools().front();
 
     if( p->encumb( body_part_mouth ) >= 30 ) {
         act->moves_left = 0;
@@ -2607,7 +2607,7 @@ void activity_handlers::train_skill_do_turn( player_activity *act, player *p )
             hack_original_charges = main_tool ? main_tool->charges : 0;
         }
     } else {
-        main_tool = &*act->tools.front();
+        main_tool = &*act->get_tools().front();
     }
     if( main_tool == nullptr ) {
         debugmsg( "train skill tools array and hack values are empty. this would have caused invalid safe reference error" );
@@ -2991,11 +2991,11 @@ void activity_handlers::gunmod_add_finish( player_activity *act, player *p )
 void activity_handlers::toolmod_add_finish( player_activity *act, player *p )
 {
     act->set_to_null();
-    if( act->targets.size() != 1 || !act->tools[0] || !act->targets[0] ) {
+    if( act->targets.size() != 1 || !act->get_tools()[0] || !act->targets[0] ) {
         debugmsg( "Incompatible arguments to ACT_TOOLMOD_ADD" );
         return;
     }
-    item &tool = *act->tools[0];
+    item &tool = *act->get_tools()[0];
     item &mod = *act->targets[0];
     p->add_msg_if_player( m_good, _( "You successfully attached the %1$s to your %2$s." ),
                           mod.tname(), tool.tname() );
@@ -3164,7 +3164,7 @@ void activity_handlers::fish_do_turn( player_activity *act, player *p )
         }
         return;
     }
-    item &rod = *act->tools.front();
+    item &rod = *act->get_tools().front();
     int fish_chance = 1;
     int survival_mod = p->get_skill_level( skill_survival );
     if( rod.has_flag( flag_FISH_POOR ) ) {
@@ -3970,13 +3970,13 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
     act->set_to_null();
 
     // Quality of tool used and assistants can together both reduce intensity of work.
-    if( act->tools.empty() ) {
+    if( act->get_tools().empty() ) {
         debugmsg( "woodcutting item location not set" );
         resume_for_multi_activities( *p );
         return;
     }
 
-    safe_reference<item> &loc = act->tools[ 0 ];
+    safe_reference<item> &loc = act->get_tools_mut()[ 0 ];
     if( !loc ) {
         debugmsg( "woodcutting item location lost" );
         resume_for_multi_activities( *p );
@@ -4039,7 +4039,7 @@ void activity_handlers::chop_logs_finish( player_activity *act, player *p )
 
     // Quality of tool used and assistants can together both reduce intensity of work.
 
-    safe_reference<item> &loc = act->tools[ 0 ];
+    safe_reference<item> &loc = act->get_tools_mut()[ 0 ];
     if( !loc ) {
         debugmsg( "woodcutting item location lost" );
         return;
@@ -4121,8 +4121,8 @@ void activity_handlers::jackhammer_finish( player_activity *act, player *p )
                               _( "You finish drilling." ),
                               _( "<npcname> finishes drilling." ) );
     act->set_to_null();
-    if( !act->tools.empty() ) {
-        item &it = *act->tools.front();
+    if( !act->get_tools().empty() ) {
+        item &it = *act->get_tools().front();
         p->consume_charges( it, it.ammo_required() );
     } else {
         debugmsg( "unable to find tool" );

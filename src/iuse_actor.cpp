@@ -1846,7 +1846,7 @@ int firestarter_actor::use( player &p, item &it, bool t, const tripoint &spos ) 
         moves_modifier + moves_cost_fast / 100.0 + 2;
     p.assign_activity( ACT_START_FIRE, moves, potential_skill_gain,
                        0, it.tname() );
-    p.activity->tools.emplace_back( &it );
+    p.activity->add_tool( &it );
     p.activity->values.push_back( g->natural_light_level( pos.z ) );
     p.activity->placement = pos;
     // charges to use are handled by the activity
@@ -6027,9 +6027,7 @@ int train_skill_actor::use( player &p, item &i, bool, const tripoint & ) const
     p.set_value( "training_iuse_skill_xp_chance", std::to_string( training_skill_xp_chance ) );
     p.assign_activity( ACT_TRAIN_SKILL, hours * 360000, -1, 0, "training" );
     p.activity->str_values.emplace_back( i.typeId() );
-    if( !i.has_flag( flag_PSEUDO ) ) {
-        p.activity->tools.emplace_back( i );
-    }
+    p.activity->add_tool( &i );
 
     return 0;
 }
@@ -6049,7 +6047,7 @@ int sex_toy_actor::use( player &p, item &i, bool, const tripoint & ) const
                              i.tname() );
     }
     p.assign_activity( ACT_VIBE, moves, -1, 0, "de-stressing" );
-    p.activity->tools.emplace_back( i );
+    p.activity->add_tool( &i );
 
     return i.type->charges_to_use();
 }
