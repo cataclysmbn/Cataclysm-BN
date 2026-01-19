@@ -264,9 +264,9 @@ std::string PATH_INFO::user_keybindings()
 std::string PATH_INFO::user_moddir()
 {
 #if defined(__ANDROID__)
-    assure_dir_exist( "/storage/self/primary/Documents/cataclysm-bn/" );
-    assure_dir_exist( "/storage/self/primary/Documents/cataclysm-bn/mods/" );
-    return "/storage/self/primary/cataclysm-bn/mods/";
+    assure_dir_exist( "/storage/self/primary/Documents/cataclysm-bn/");
+    assure_dir_exist( "/storage/self/primary/Documents/cataclysm-bn/mods/");
+    return "/storage/self/primary/Documents/cataclysm-bn/mods/";
 #else
     return user_dir_value + "mods/";
 #endif
