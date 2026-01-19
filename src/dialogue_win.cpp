@@ -155,7 +155,7 @@ static void print_responses( const catacurses::window &w, const page &responses,
         const auto selected = entry.response_index == selected_response;
         const auto base_col = entry.col == c_white ? c_light_gray : entry.col;
         const auto col = selected ? hilite( entry.col ) : base_col;
-        const auto letter_col = selected ? hilite(entry.col) : c_light_green;
+        const auto letter_col = selected ? hilite( entry.col ) : c_light_green;
         bool first_line = true;
         for( const std::string &line : entry.lines ) {
             // add letter and space to only first line
