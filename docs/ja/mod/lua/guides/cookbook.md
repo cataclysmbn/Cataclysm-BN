@@ -407,6 +407,36 @@ mod.on_creature_melee_attacked = function(params)
 end
 ```
 
+## キャラクターのトラップ認識
+
+### トラップの確認と記憶
+
+まず、位置にトラップを設定します:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+-- tr_landmine_buried は可視性が 20 です。見つけるのが非常に難しいです。
+local mine = TrapId.new("tr_landmine_buried"):int_id()
+m:set_trap_at(pos4x, mine)
+print(tostring(u:knows_trap(pos4x)))
+```
+
+次に、キャラクターがトラップを認識するようにします:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+u:add_known_trap(pos4x, m:get_trap_at(pos4x))
+print(tostring(u:knows_trap(pos4x)))
+```
+
+2番目のスクリプトを実行した後、トラップを踏まずにその位置を見ることができます。
+
 ## アイテムタイプ情報
 
 ### ItypeId 経由のアイテムタイププロパティのクエリ
@@ -424,7 +454,7 @@ if itype_raw:slot_ammo() then
     print("弾薬射程: " .. ammo_data.range)
 end
 
--- コンテナの場合
+-- コンテイナの場合
 if itype_raw:slot_container() then
     local container_data = itype_raw:slot_container()
     print("容量: " .. container_data.capacity)
