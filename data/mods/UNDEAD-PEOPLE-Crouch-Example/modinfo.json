@@ -3,9 +3,9 @@
     "type": "MOD_INFO",
     "id": "sample-crouch-uv-mod",
     "name": "Undead People Crouch Mod",
-    "authors": ["Azmodius X"],
+    "authors": [ "Azmodius X" ],
     "description": "UV tiles mod that visualizes crouching.",
     "category": "graphical",
-    "dependencies": ["bn"],
+    "dependencies": [ "bn" ]
   }
 ]

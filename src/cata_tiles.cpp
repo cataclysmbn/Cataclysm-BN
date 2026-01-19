@@ -979,7 +979,10 @@ static void apply_uv_remap(
                 get_pixel_rgba( src_copy.get(), x, y, sr, sg, sb, sa );
                 if( color_func && sa > 0 ) {
                     SDL_Color c = color_func( SDL_Color{ sr, sg, sb, sa } );
-                    sr = c.r; sg = c.g; sb = c.b; sa = c.a;
+                    sr = c.r;
+                    sg = c.g;
+                    sb = c.b;
+                    sa = c.a;
                 }
                 set_pixel_rgba( dst, x + dstRect.x, y + dstRect.y, sr, sg, sb, sa );
                 continue;
@@ -1016,7 +1019,10 @@ static void apply_uv_remap(
                 get_pixel_rgba( src_copy.get(), src_x, src_y, sr, sg, sb, sa );
                 if( color_func && sa > 0 ) {
                     SDL_Color c = color_func( SDL_Color{ sr, sg, sb, sa } );
-                    sr = c.r; sg = c.g; sb = c.b; sa = c.a;
+                    sr = c.r;
+                    sg = c.g;
+                    sb = c.b;
+                    sa = c.a;
                 }
                 set_pixel_rgba( dst, x + dstRect.x, y + dstRect.y, sr, sg, sb, sa );
             }
