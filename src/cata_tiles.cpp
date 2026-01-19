@@ -780,9 +780,10 @@ static void chain_uv_modifier(
                 result.r = static_cast<Uint8>( std::clamp( new_r, 0, 255 ) );
                 result.g = static_cast<Uint8>( std::clamp( new_g, 0, 255 ) );
             } else {
-                // Normalized: sample composite at position indicated by modifier (G inverted)
-                int sample_x = mod_r * composite->w / 256;
-                int sample_y = ( 255 - mod_g ) * composite->h / 256;
+                // Normalized: the modifier's UV encodes positions relative to its own
+                // dimensions. Convert to composite space (here at origin, so dst=0).
+                int sample_x = mod_r * modifier->w / 256;
+                int sample_y = ( 255 - mod_g ) * modifier->h / 256;
                 sample_x = std::clamp( sample_x, 0, composite->w - 1 );
                 sample_y = std::clamp( sample_y, 0, composite->h - 1 );
 
@@ -888,9 +889,13 @@ static void chain_uv_modifier_at(
                 result.g = static_cast<Uint8>( std::clamp( new_g, 0, 255 ) );
                 result.a = 255;
             } else {
-                // Normalized: sample composite at position indicated by modifier
-                int sample_x = mod_r * composite->w / 256;
-                int sample_y = ( 255 - mod_g ) * composite->h / 256;
+                // Normalized: the modifier's UV encodes target positions relative to the
+                // modifier's own coordinate space. Convert to composite space by adding
+                // the destination offset.
+                int sample_x_in_mod = mod_r * modifier->w / 256;
+                int sample_y_in_mod = ( 255 - mod_g ) * modifier->h / 256;
+                int sample_x = dst_x + sample_x_in_mod;
+                int sample_y = dst_y + sample_y_in_mod;
                 sample_x = std::clamp( sample_x, 0, composite->w - 1 );
                 sample_y = std::clamp( sample_y, 0, composite->h - 1 );
 
@@ -4703,18 +4708,16 @@ std::tuple<SDL_Surface_Ptr, point> cata_tiles::build_composite_uv_modifier( cons
 
         const state_modifier_tile &tile = it->second;
 
+        // If fg_sprite is null, this state is an identity (no modification).
+        // Skip to next group - override_lower only takes effect when we actually
+        // apply a UV modification.
         if( !tile.fg_sprite ) {
-            if( group.override_lower ) {
-                break;
-            }
             continue;
         }
 
         auto [found, mod_surf, mod_rect] = tileset_ptr->get_sprite_surface( *tile.fg_sprite );
         if( !found || !mod_surf ) {
-            if( group.override_lower ) {
-                break;
-            }
+            // Sprite not found - skip this group, don't let it block others
             continue;
         }
 
