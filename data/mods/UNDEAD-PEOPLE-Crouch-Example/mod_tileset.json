@@ -28,6 +28,7 @@
             "id": "movement_mode",
             "override": false,
             "use_offset": false,
+			"blacklist": ["wielded_"],
             "tiles": [ { "id": "walk", "fg": 1 }, { "id": "crouch", "fg": 2 }, { "id": "run", "fg": null } ]
           }
         ]

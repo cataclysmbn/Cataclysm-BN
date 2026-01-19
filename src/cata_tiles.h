@@ -81,6 +81,8 @@ struct state_modifier_group {
     bool override_lower = false;   // Skip lower priority groups when active
     bool use_offset_mode = true;   // true = offset mode, false = normalized UV
     std::unordered_map<std::string, state_modifier_tile> tiles;
+    std::vector<std::string> whitelist;  // Prefix filter: only apply to matching overlays (e.g., "wielded_", "worn_")
+    std::vector<std::string> blacklist;  // Prefix filter: never apply to matching overlays
 };
 
 // Make sure to change TILE_CATEGORY_IDS if this changes!
@@ -267,6 +269,9 @@ class tileset
 
         // State-based UV modifiers (index 0 = highest priority)
         std::vector<state_modifier_group> state_modifiers;
+        // Global overlay filters for UV warping (used when group has no filters)
+        std::vector<std::string> global_warp_whitelist;
+        std::vector<std::string> global_warp_blacklist;
 
 #if defined(DYNAMIC_ATLAS)
         // Cached warp (UV modifier) surfaces, keyed by content hash
@@ -324,6 +329,12 @@ class tileset
 
         const std::vector<state_modifier_group> &get_state_modifiers() const {
             return state_modifiers;
+        }
+        const std::vector<std::string> &get_global_warp_whitelist() const {
+            return global_warp_whitelist;
+        }
+        const std::vector<std::string> &get_global_warp_blacklist() const {
+            return global_warp_blacklist;
         }
 
 #if defined(DYNAMIC_ATLAS)
@@ -770,7 +781,11 @@ class cata_tiles
         void draw_entity_with_overlays( const Character &ch, const tripoint &p, lit_level ll,
                                         int &height_3d, bool as_independent_entity = false );
 
-        /** Builds composite UV modifier for character's current states. Returns (surface, offset). */
+        /** Builds composite UV modifier for character's current states. Returns (surface, offset).
+         *  @param group_filter Optional filter: if non-empty, only include groups where filter[i] is true.
+         */
+        std::tuple<SDL_Surface_Ptr, point> build_composite_uv_modifier( const Character &ch,
+                int width, int height, const std::vector<bool> &group_filter );
         std::tuple<SDL_Surface_Ptr, point> build_composite_uv_modifier( const Character &ch,
                 int width, int height );
 
