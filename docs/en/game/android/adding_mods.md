@@ -1,6 +1,14 @@
 
 # Adding Third Party Mods on Android
 
+## Adding Permissions
+
+- Go to settings app
+- Go to apps category
+- Navigate to Cataclysm-BN
+- Click on Permissions
+- Files and Media
+
 ## MUST
 
 Give Manage All Storage permissions
