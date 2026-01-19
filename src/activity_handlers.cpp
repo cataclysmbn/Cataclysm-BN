@@ -2617,9 +2617,20 @@ void activity_handlers::train_skill_do_turn( player_activity *act, player *p )
     item &skill_training_item = *main_tool;
     int training_skill_interval = atoi( p->get_value( "training_iuse_skill_interval" ).c_str() );
 
+    if( training_skill_interval <= 0 ) {
+        debugmsg( "training_iuse_skill_interval is invalid ( %d )", training_skill_interval );
+        act->moves_left = 0;
+        return;
+    }
+
     if( calendar::once_every( 1_minutes * training_skill_interval ) ) {
         // pull metadata. this is probably the easiest way to get this data from the JSON definition
         std::string training_skill = p->get_value( "training_iuse_skill" );
+        if( training_skill.empty() ) {
+            debugmsg( "training_iuse_skill is empty" );
+            act->moves_left = 0;
+            return;
+        }
         int training_skill_xp = atoi( p->get_value( "training_iuse_skill_xp" ).c_str() );
         int training_skill_max_level = atoi( p->get_value( "training_iuse_skill_xp_max_level" ).c_str() );
         int training_skill_xp_chance = atoi( p->get_value( "training_iuse_skill_xp_chance" ).c_str() );
