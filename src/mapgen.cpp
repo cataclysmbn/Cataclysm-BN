@@ -21,6 +21,7 @@
 #include "calendar.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "catalua_mapgen.h"
 #include "character_id.h"
 #include "clzones.h"
 #include "numeric_interval.h"
@@ -508,10 +509,10 @@ load_mapgen_function( const JsonObject &jio, point offset, point total )
                    jsrc, mgweight, offset, total );
     } else if( mgtype == "lua" ) {
         if( !jio.has_string( "luamethod" ) ) {
-            jio.throw_error( R"(mapgen with method "lua" must define string "luamethod")" )
+            jio.throw_error( R"(mapgen with method "lua" must define string "luamethod")" );
         }
         std::string luamethod = jio.get_string( "luamethod" );
-        return std::make_shared<mapgen_function_lua>( luamethod );
+        return std::make_shared<mapgen_function_lua>( luamethod, mgweight );
     } else {
         jio.throw_error( R"(invalid value: must be "builtin" or "json")", "method" );
     }
@@ -3457,8 +3458,9 @@ bool mapgen_function_json_nested::setup_internal( const JsonObject &jo )
     if( jo.has_array( "mapgensize" ) ) {
         JsonArray jarr = jo.get_array( "mapgensize" );
         mapgensize = point( jarr.get_int( 0 ), jarr.get_int( 1 ) );
-        if( mapgensize.x <= 0 || mapgensize.y <= 0 ) {
-            jo.throw_error( "\"mapgensize\" must be an array of two positive numbers" );
+        if( mapgensize.x == 0 || mapgensize.x != mapgensize.y ) {
+            // Non-square sizes not implemented yet
+            jo.throw_error( "\"mapgensize\" must be an array of two identical, positive numbers" );
         }
         total_size = mapgensize;
     } else {
