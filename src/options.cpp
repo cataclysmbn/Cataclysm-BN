@@ -2084,6 +2084,13 @@ void options_manager::add_options_graphics()
          true, COPT_CURSES_HIDE
        );
 
+    add( "STATE_MODIFIERS", graphics, translate_marker( "Character state modifiers" ),
+         translate_marker( "If true, enables tileset-defined character sprite modifications based on movement state (crouching, running, etc.)." ),
+         true, COPT_CURSES_HIDE
+       );
+
+    get_option( "STATE_MODIFIERS" ).setPrerequisite( "USE_TILES" );
+
     add_empty_line();
 
     add( "PIXEL_MINIMAP", graphics, translate_marker( "Pixel minimap" ),
