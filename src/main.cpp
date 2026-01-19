@@ -216,6 +216,7 @@ int main( int argc, char *argv[] )
     // On Android first launch, we copy all data files from the APK into the app's writeable folder so std::io stuff works.
     // Use the external storage so it's publicly modifiable data (so users can mess with installed data, save games etc.)
     std::string external_storage_path( SDL_AndroidGetExternalStoragePath() );
+    external_storage_path += "/Documents/";
 
     PATH_INFO::init_base_path( external_storage_path );
 #else
