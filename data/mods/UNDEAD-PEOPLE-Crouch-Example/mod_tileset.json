@@ -13,11 +13,23 @@
         "tiles": [  ],
         "state-modifiers": [
           {
+            "id": "downed",
+            "override": true,
+            "use_offset": false,
+            "tiles": [ { "id": "normal", "fg": null }, { "id": "downed", "fg": 4 } ]
+          },
+          {
+            "id": "lying_down",
+            "override": true,
+            "use_offset": false,
+            "tiles": [ { "id": "normal", "fg": null }, { "id": "lying", "fg": 5 } ]
+          },
+          {
             "id": "movement_mode",
             "override": false,
             "use_offset": false,
-            "tiles": [ { "id": "walk", "fg": 1 }, { "id": "crouch", "fg": 2 }, { "id": "run", "fg": 3 } ]
-          }
+            "tiles": [ { "id": "walk", "fg": null }, { "id": "crouch", "fg": 2 }, { "id": "run", "fg": 3 } ]
+          },
         ]
       }
     ]

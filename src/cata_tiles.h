@@ -184,17 +184,23 @@ enum class tileset_fx_type {
     z_overlay
 };
 
+constexpr size_t TILESET_NO_WARP = 0;  // 0 hash means no warp
+
 struct tileset_lookup_key {
     int sprite_index;
     int mask_index;
     tileset_fx_type effect;
     SDL_Color color;
+    size_t warp_hash;  // Hash of warp surface content, or TILESET_NO_WARP (0)
+    point sprite_offset;  // Tile offset for UV warp coordinate mapping
 
     bool operator==( const tileset_lookup_key &other ) const {
         return sprite_index == other.sprite_index
                && mask_index == other.mask_index
                && effect == other.effect
-               && color == other.color;
+               && color == other.color
+               && warp_hash == other.warp_hash
+               && sprite_offset == other.sprite_offset;
     }
 };
 
@@ -210,6 +216,9 @@ struct std::hash<tileset_lookup_key> {
             uint32_t val;
         } color = { v.color };
         cata::hash_combine( seed, color.val );
+        cata::hash_combine( seed, v.warp_hash );
+        cata::hash_combine( seed, v.sprite_offset.x );
+        cata::hash_combine( seed, v.sprite_offset.y );
         return seed;
     }
 };
@@ -259,6 +268,17 @@ class tileset
         // State-based UV modifiers (index 0 = highest priority)
         std::vector<state_modifier_group> state_modifiers;
 
+#if defined(DYNAMIC_ATLAS)
+        // Cached warp (UV modifier) surfaces, keyed by content hash
+        // Each entry contains: surface, offset (for oversized modifiers), and offset_mode flag
+        struct warp_cache_entry {
+            SDL_Surface_Ptr surface;
+            point offset;
+            bool offset_mode;
+        };
+        mutable std::unordered_map<size_t, warp_cache_entry> warp_cache;
+#endif
+
         friend class tileset_loader;
 
     public:
@@ -277,7 +297,9 @@ class tileset
 
         const texture *get_or_default( int sprite_index, int mask_index,
                                        const tileset_fx_type &type,
-                                       const SDL_Color &color ) const;
+                                       const SDL_Color &color,
+                                       size_t warp_hash = TILESET_NO_WARP,
+                                       point sprite_offset = point_zero ) const;
 
 
         tile_type &create_tile_type( const std::string &id, tile_type &&new_tile_type );
@@ -310,6 +332,22 @@ class tileset
 
         /** Ensures atlas readback surfaces are loaded. Call before get_sprite_surface(). */
         void ensure_readback_loaded() const;
+
+        /**
+         * Register a warp (UV modifier) surface and return its content hash.
+         * The surface is moved into the cache and owned by the tileset.
+         * @param surface The UV modifier surface to register
+         * @param offset The offset for oversized modifier sprites
+         * @param offset_mode True for offset mode, false for normalized mode
+         * @return The warp_hash to use with get_or_default()
+         */
+        size_t register_warp_surface( SDL_Surface_Ptr surface, point offset, bool offset_mode ) const;
+
+        /** Get a registered warp surface by hash. Returns nullptr if not found. */
+        std::tuple<SDL_Surface *, point, bool> get_warp_surface( size_t warp_hash ) const;
+
+        /** Clear all cached warp surfaces (call at start of new character render). */
+        void clear_warp_cache() const;
 #endif
 };
 
@@ -601,28 +639,6 @@ class cata_tiles
                                        int subtile, int base_z_offset );
 
         /**
-         * @brief draw_sprite_at() without height_3d
-         *
-         * @param tile Tile to draw.
-         * @param p Point to draw the tile at.
-         * @param loc_rand picked random int
-         * @param is_fg is foreground layer
-         * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
-         * @param color
-         * @param ll light level
-         * @param apply_visual_effects use night vision and underwater colors?
-         * @param overlay_count how blue the tile looks for lower z levels
-         */
-        bool draw_sprite_at( const tile_type &tile, point p,
-                             unsigned int loc_rand, bool is_fg, int rota,
-                             std::optional<SDL_Color> color, lit_level ll,
-                             bool apply_visual_effects, int overlay_count ) {
-            int discard = 0;
-            return draw_sprite_at( tile, p, loc_rand, is_fg, rota, color, ll,
-                                   apply_visual_effects, overlay_count, discard );
-        }
-
-        /**
          * @brief Try to draw either foreground or background using the given reference.
          *
          * @param tile Tile to draw.
@@ -634,14 +650,15 @@ class cata_tiles
          * @param ll light level
          * @param apply_visual_effects use night vision and underwater colors?
          * @param overlay_count how blue the tile looks for lower z levels
-         * @param height_3d return parameter for height of the sprite
+         * @param height_3d return parameter for height of the sprite (use nullptr to discard)
+         * @param warp_hash UV warp surface hash, or TILESET_NO_WARP
          * @return always true.
          */
         bool draw_sprite_at( const tile_type &tile, point p,
                              unsigned int loc_rand, bool is_fg, int rota,
                              std::optional<SDL_Color> color, lit_level ll,
                              bool apply_visual_effects, int overlay_count,
-                             int &height_3d );
+                             int *height_3d, size_t warp_hash = TILESET_NO_WARP );
 
         /**
          * @brief Calls draw_sprite_at() twice each for foreground and background.
@@ -1007,13 +1024,8 @@ class cata_tiles
          */
         bool nv_goggles_activated = false;
 
-        // Active UV modifier state (set during character rendering, cleared after)
-        SDL_Surface *active_uv_modifier = nullptr;
-        bool active_uv_offset_mode = true;
-        point active_uv_modifier_offset;
-
-        // Cache for UV-remapped textures (cleared per character)
-        std::unordered_map<int, SDL_Texture_Ptr> uv_remapped_cache;
+        // Active warp hash for character rendering (0 if none)
+        size_t active_warp_hash = TILESET_NO_WARP;
 
         pimpl<pixel_minimap> minimap;
 
