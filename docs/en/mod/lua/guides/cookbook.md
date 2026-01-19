@@ -123,6 +123,21 @@ local scraps = gapi.create_item(ItypeId.new("scrap"), 3)
 target_monster:as_monster():add_item(scraps)
 ```
 
+## NPCs
+
+### Spawning and erasing NPCs
+
+```lua
+local player = gapi.get_avatar()
+local map = gapi.get_map()
+local player_pos = player:get_pos_ms()
+local place_point = player_pos:xy() + Point.new(0, 2)
+local new_npc = map:place_npc(place_point, "thug")
+
+-- Later, you can erase the NPC silently
+new_npc:erase()
+```
+
 ## Weather Hooks
 
 ### Reacting to weather changes

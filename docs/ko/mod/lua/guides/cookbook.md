@@ -123,6 +123,21 @@ local scraps = gapi.create_item(ItypeId.new("scrap"), 3)
 target_monster:as_monster():add_item(scraps)
 ```
 
+## NPC
+
+### NPC 생성 및 삭제
+
+```lua
+local player = gapi.get_avatar()
+local map = gapi.get_map()
+local player_pos = player:get_pos_ms()
+local place_point = player_pos:xy() + Point.new(0, 2)
+local new_npc = map:place_npc(place_point, "thug")
+
+-- 나중에 NPC를 조용히 삭제할 수 있습니다
+new_npc:erase()
+```
+
 ## 날씨 훅
 
 ### 날씨 변화에 반응하기
