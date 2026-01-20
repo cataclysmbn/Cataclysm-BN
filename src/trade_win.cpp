@@ -7,6 +7,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "avatar.h"
@@ -443,9 +444,14 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
         mvwprintz( w_whose, point( filter_x, filter_y ), c_white, filter_suffix );
         const auto draw_filter_help = show_filter_help && ( they == help_on_theirs );
         if( draw_filter_help ) {
-            const auto help_start_y = trade_total_header_rows + 1;
-            const auto help_height = std::max( getmaxy( w_whose ) - help_start_y - 1, 0 );
+            const auto help_start_y = 1;
+            const auto help_height = std::max( getmaxy( w_whose ) - 2, 0 );
             if( help_height > 0 ) {
+                const auto clear_width = std::string( win_w, ' ' );
+                std::ranges::for_each( std::views::iota( help_start_y,
+                help_start_y + help_height ), [&]( int y ) {
+                    mvwprintz( w_whose, point( 1, y ), c_white, clear_width );
+                } );
                 draw_item_filter_rules( w_whose, help_start_y, help_height,
                                         item_filter_type::FILTER );
             }
@@ -831,6 +837,140 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
     const auto get_max_amount = [&]( const item_pricing & ip ) -> int {
         return ip.charges > 0 ? ip.charges : std::max( ip.count, 1 );
     };
+    struct balance_item_entry {
+        size_t list_index = 0;
+        int current_amount = 0;
+        int max_amount = 0;
+        int unit_balance_delta = 0;
+    };
+    struct balance_choice {
+        int prev_balance = 0;
+        int amount = 0;
+    };
+    using balance_map = std::unordered_map<int, balance_choice>;
+    const auto calc_category_autobalance_plan = [&]( const std::vector<item_pricing> &list,
+    const std::vector<size_t> &filtered_indices,
+    const category_range &range ) -> std::unordered_map<size_t, int> {
+        auto plan = std::unordered_map<size_t, int> {};
+        auto entries = std::vector<balance_item_entry> {};
+        std::ranges::for_each( std::views::iota( range.start, range.end ),
+        [&]( size_t idx ) {
+            const auto list_index = filtered_indices[idx];
+            const auto &ip = list[list_index];
+            const auto current_amount = get_current_amount( ip );
+            plan.emplace( list_index, current_amount );
+            const auto unit_balance_delta = ( focus_them ? -1 : 1 ) *
+                                            static_cast<int>( ip.price );
+            const auto max_amount = get_max_amount( ip );
+            if( unit_balance_delta == 0 || max_amount == 0 )
+            {
+                return;
+            }
+            entries.push_back( balance_item_entry{
+                .list_index = list_index,
+                .current_amount = current_amount,
+                .max_amount = max_amount,
+                .unit_balance_delta = unit_balance_delta
+            } );
+        } );
+        if( entries.empty() ) {
+            return plan;
+        }
+
+        auto min_balance = state.your_balance;
+        auto max_balance = state.your_balance;
+        std::ranges::for_each( entries, [&]( const balance_item_entry & entry ) {
+            const auto delta_at_min = entry.unit_balance_delta * ( 0 - entry.current_amount );
+            const auto delta_at_max = entry.unit_balance_delta *
+                                      ( entry.max_amount - entry.current_amount );
+            min_balance += std::min( delta_at_min, delta_at_max );
+            max_balance += std::max( delta_at_min, delta_at_max );
+        } );
+
+        auto dp = balance_map{ { state.your_balance, balance_choice{
+                                    .prev_balance = state.your_balance,
+                                    .amount = 0 } } };
+        auto decisions = std::vector<balance_map> {};
+        decisions.reserve( entries.size() );
+
+        std::ranges::for_each( entries, [&]( const balance_item_entry & entry ) {
+            auto next = balance_map {};
+            auto item_decisions = balance_map {};
+            std::ranges::for_each( dp, [&]( const auto & entry_pair ) {
+                const auto prev_balance = entry_pair.first;
+                const auto unit = entry.unit_balance_delta;
+                const auto current_amount = entry.current_amount;
+                const auto max_amount = entry.max_amount;
+                const auto lower = ( static_cast<double>( min_balance - prev_balance ) /
+                                     static_cast<double>( unit ) ) + current_amount;
+                const auto upper = ( static_cast<double>( max_balance - prev_balance ) /
+                                     static_cast<double>( unit ) ) + current_amount;
+                const auto min_amount = std::clamp(
+                                            static_cast<int>( std::ceil( std::min( lower, upper ) ) ),
+                                            0, max_amount );
+                const auto max_amount_bound = std::clamp(
+                                                  static_cast<int>( std::floor( std::max( lower, upper ) ) ),
+                                                  0, max_amount );
+                if( min_amount > max_amount_bound ) {
+                    return;
+                }
+                std::ranges::for_each( std::views::iota( min_amount, max_amount_bound + 1 ),
+                [&]( int amount ) {
+                    const auto new_balance = prev_balance +
+                                             unit * ( amount - current_amount );
+                    const auto inserted = next.emplace( new_balance, balance_choice{
+                                                            .prev_balance = prev_balance,
+                                                            .amount = amount } ).second;
+                    if( inserted ) {
+                        item_decisions.emplace( new_balance, balance_choice{
+                                                    .prev_balance = prev_balance,
+                                                    .amount = amount } );
+                    }
+                } );
+            } );
+            dp = std::move( next );
+            decisions.push_back( std::move( item_decisions ) );
+        } );
+
+        if( dp.empty() ) {
+            return plan;
+        }
+
+        auto best_balance = std::optional<int> {};
+        std::ranges::for_each( dp, [&]( const auto & entry_pair ) {
+            const auto balance = entry_pair.first;
+            if( balance >= 0 ) {
+                if( !best_balance || balance < *best_balance ) {
+                    best_balance = balance;
+                }
+            }
+        } );
+        if( !best_balance ) {
+            std::ranges::for_each( dp, [&]( const auto & entry_pair ) {
+                const auto balance = entry_pair.first;
+                if( !best_balance || balance > *best_balance ) {
+                    best_balance = balance;
+                }
+            } );
+        }
+        if( !best_balance ) {
+            return plan;
+        }
+
+        auto balance = *best_balance;
+        for( auto i = static_cast<int>( entries.size() ); i-- > 0; ) {
+            const auto index = static_cast<size_t>( i );
+            const auto &entry = entries[index];
+            auto &item_decisions = decisions[index];
+            const auto found = item_decisions.find( balance );
+            if( found == item_decisions.end() ) {
+                break;
+            }
+            plan[entry.list_index] = found->second.amount;
+            balance = found->second.prev_balance;
+        }
+        return plan;
+    };
     const auto calc_autobalance_amount = [&]( const item_pricing & ip ) -> int {
         const auto unit_balance_delta = ( focus_them ? -1 : 1 ) * static_cast<int>( ip.price );
         if( unit_balance_delta == 0 )
@@ -899,6 +1039,22 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         const auto action = ctxt.handle_input();
         if( action == "SWITCH_LISTS" ) {
             focus_them = !focus_them;
+            if( category_mode ) {
+                auto &new_target_list = focus_them ? state.theirs : state.yours;
+                auto &new_filtered = focus_them ? them_filtered : you_filtered;
+                auto &new_offset = focus_them ? them_off : you_off;
+                auto &new_cursor = focus_them ? them_cursor : you_cursor;
+                auto &new_category_cursor = focus_them ? them_category_cursor : you_category_cursor;
+                const auto new_category_ranges = build_category_ranges( new_target_list,
+                                                  new_filtered );
+                if( !new_category_ranges.empty() ) {
+                    if( new_category_cursor >= new_category_ranges.size() ) {
+                        new_category_cursor = new_category_ranges.size() - 1;
+                    }
+                    new_cursor = new_category_ranges[new_category_cursor].start;
+                    clamp_cursor_to_list( new_filtered.size(), new_cursor, new_offset );
+                }
+            }
         } else if( action == "UP" ) {
             if( category_mode ) {
                 if( !category_ranges.empty() ) {
@@ -959,11 +1115,15 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                     continue;
                 }
                 const auto &range = category_ranges[category_cursor];
+                const auto plan = calc_category_autobalance_plan( target_list, filtered, range );
                 std::ranges::for_each( std::views::iota( range.start, range.end ),
                 [&]( size_t idx ) {
-                    auto &ip = target_list[filtered[idx]];
-                    const auto best_amount = calc_autobalance_amount( ip );
-                    apply_trade_change( ip, best_amount );
+                    const auto list_index = filtered[idx];
+                    auto &ip = target_list[list_index];
+                    const auto plan_it = plan.find( list_index );
+                    if( plan_it != plan.end() ) {
+                        apply_trade_change( ip, plan_it->second );
+                    }
                 } );
             } else {
                 auto &ip = target_list[filtered[cursor]];
