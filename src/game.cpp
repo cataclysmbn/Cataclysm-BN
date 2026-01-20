@@ -5505,8 +5505,7 @@ bool game::npc_menu( npc &who )
         avatar_funcs::try_steal_from_npc( u, who );
     } else if( choice == control ) {
         get_avatar().control_npc( who );
-    }
-    else if( choice == tutorial ) {
+    } else if( choice == tutorial ) {
         enum tutorial_opts : int {
             tut_mutiny = 0,
             tut_instructions,
@@ -5527,59 +5526,59 @@ bool game::npc_menu( npc &who )
         };
 
         bool show_tutorial = true;
-        while (show_tutorial) {
+        while( show_tutorial ) {
             uilist tutorial_menu;
             tutorial_menu.text = _( "NPC Ally Tutorial" );
             tutorial_menu.desc_enabled = true;
 
             tutorial_menu.addentry_desc( tut_mutiny, true, 'u',
-                _( "Mutiny" ),
-                _( "How to keep your allies happy and prevent mutiny." ) );
+                                         _( "Mutiny" ),
+                                         _( "How to keep your allies happy and prevent mutiny." ) );
             tutorial_menu.addentry_desc( tut_instructions, true, 'i',
-                _( "Giving Instructions" ),
-                _( "How to communicate with allies through conversation." ) );
+                                         _( "Giving Instructions" ),
+                                         _( "How to communicate with allies through conversation." ) );
             tutorial_menu.addentry_desc( tut_radio, true, 'r',
-                _( "Radio Communication" ),
-                _( "Using two-way radios to contact allies remotely." ) );
+                                         _( "Radio Communication" ),
+                                         _( "Using two-way radios to contact allies remotely." ) );
             tutorial_menu.addentry_desc( tut_shout, true, 's',
-                _( "Shouted Commands" ),
-                _( "Quick orders you can shout during emergencies." ) );
+                                         _( "Shouted Commands" ),
+                                         _( "Quick orders you can shout during emergencies." ) );
             tutorial_menu.addentry_desc( tut_combat, true, 'c',
-                _( "Combat" ),
-                _( "How allies behave in combat and weapon usage rules." ) );
+                                         _( "Combat" ),
+                                         _( "How allies behave in combat and weapon usage rules." ) );
             tutorial_menu.addentry_desc( tut_training, true, 't',
-                _( "Training and Learning" ),
-                _( "Teaching and learning skills." ) );
+                                         _( "Training and Learning" ),
+                                         _( "Teaching and learning skills." ) );
             tutorial_menu.addentry_desc( tut_inventory, true, 'n',
-                _( "Inventory and Equipment" ),
-                _( "How allies carry items and manage their gear." ) );
+                                         _( "Inventory and Equipment" ),
+                                         _( "How allies carry items and manage their gear." ) );
             tutorial_menu.addentry_desc( tut_medic, true, 'm',
-                _( "First Aid" ),
-                _( "How allies perform medical treatment." ) );
+                                         _( "First Aid" ),
+                                         _( "How allies perform medical treatment." ) );
             tutorial_menu.addentry_desc( tut_activities, true, 'a',
-                _( "Work Activities" ),
-                _( "Tasks allies can perform: farming, construction, etc." ) );
+                                         _( "Work Activities" ),
+                                         _( "Tasks allies can perform: farming, construction, etc." ) );
             tutorial_menu.addentry_desc( tut_movement, true, 'v',
-                _( "Movement and Travel" ),
-                _( "Ordering allies to travel to distant locations." ) );
-            tutorial_menu.addentry_desc(tut_horses, true, 'h',
-                _("Riding Horses"),
-                _("Mounting and riding horses for faster travel."));
+                                         _( "Movement and Travel" ),
+                                         _( "Ordering allies to travel to distant locations." ) );
+            tutorial_menu.addentry_desc( tut_horses, true, 'h',
+                                         _( "Riding Horses" ),
+                                         _( "Mounting and riding horses for faster travel." ) );
             tutorial_menu.addentry_desc( tut_guard, true, 'g',
-                _( "Guard Duty" ),
-                _( "How allies guard areas and investigate noises." ) );
+                                         _( "Guard Duty" ),
+                                         _( "How allies guard areas and investigate noises." ) );
             tutorial_menu.addentry_desc( tut_bionics, true, 'b',
-                _( "Bionics" ),
-                _( "Installing and using bionic augmentations." ) );
+                                         _( "Bionics" ),
+                                         _( "Installing and using bionic augmentations." ) );
             tutorial_menu.addentry_desc( tut_social, true, 'S',
-                _( "Social Interaction" ),
-                _( "Chatting, morale, and asking for advice." ) );
+                                         _( "Social Interaction" ),
+                                         _( "Chatting, morale, and asking for advice." ) );
             tutorial_menu.addentry_desc( tut_misc, true, 'M',
-                _( "Miscellaneous Rules" ),
-                _( "Doors, item pickup, vehicle seats, and other settings." ) );
+                                         _( "Miscellaneous Rules" ),
+                                         _( "Doors, item pickup, vehicle seats, and other settings." ) );
             tutorial_menu.addentry_desc( tut_factions, true, 'f',
-                _( "Other Survivors and Factions" ),
-                _( "Information about other survivors and faction dynamics." ) );
+                                         _( "Other Survivors and Factions" ),
+                                         _( "Information about other survivors and faction dynamics." ) );
 
             tutorial_menu.query();
 
@@ -5590,241 +5589,241 @@ bool game::npc_menu( npc &who )
                 case tut_mutiny:
                     info_title = _( "Mutiny" );
                     info_text = _(
-                        "Allies follow you to improve their chances of survival, but they have limits. "
-                        "Mistreating allies or failing to keep them cared for will lower their opinion of you. "
-                        "If it gets too bad, they may mutiny.\n\n"
-                        "When an ally mutinies, they will leave your group. If you have other followers, "
-                        "they may convince some to join them. A mutinied ally becomes hostile and may "
-                        "fight you for resources. "
-                        "You can prevent this by keeping them fed and hydrated, avoiding suicidal orders, "
-                        "and keeping them in safe areas while you're away.");
+                                    "Allies follow you to improve their chances of survival, but they have limits. "
+                                    "Mistreating allies or failing to keep them cared for will lower their opinion of you. "
+                                    "If it gets too bad, they may mutiny.\n\n"
+                                    "When an ally mutinies, they will leave your group. If you have other followers, "
+                                    "they may convince some to join them. A mutinied ally becomes hostile and may "
+                                    "fight you for resources. "
+                                    "You can prevent this by keeping them fed and hydrated, avoiding suicidal orders, "
+                                    "and keeping them in safe areas while you're away." );
                     break;
 
                 case tut_instructions:
                     info_title = _( "Giving Instructions" );
                     info_text = _(
-                        "DIRECT CONVERSATION:\n"
-                        "Walk into an adjacent ally to start talking. Through conversation you can give "
-                        "detailed instructions about combat, sleep, activities, and more.\n\n"
-                        "SHOUTING (Chat Command):\n"
-                        "Use the Chat command (default: 'C') to shout orders to allies who aren't adjacent. "
-                        "They must be able to hear you.\n\n"
-                        "RADIO:\n"
-                        "If both you and an ally have two-way radios, use the Faction Manager\n"
-                        " (default: '#') to contact them at greater distances.\n\n"
-                        "INSTRUCTION OVERRIDES:\n"
-                        "Some shouted commands create temporary overrides to standing instructions. "
-                        "Allies will inform you which instructions are currently overridden. "
-                        "You can clear overrides through conversation or by shouting the appropriate command." );
+                                    "DIRECT CONVERSATION:\n"
+                                    "Walk into an adjacent ally to start talking. Through conversation you can give "
+                                    "detailed instructions about combat, sleep, activities, and more.\n\n"
+                                    "SHOUTING (Chat Command):\n"
+                                    "Use the Chat command (default: 'C') to shout orders to allies who aren't adjacent. "
+                                    "They must be able to hear you.\n\n"
+                                    "RADIO:\n"
+                                    "If both you and an ally have two-way radios, use the Faction Manager\n"
+                                    " (default: '#') to contact them at greater distances.\n\n"
+                                    "INSTRUCTION OVERRIDES:\n"
+                                    "Some shouted commands create temporary overrides to standing instructions. "
+                                    "Allies will inform you which instructions are currently overridden. "
+                                    "You can clear overrides through conversation or by shouting the appropriate command." );
                     break;
 
                 case tut_radio:
                     info_title = _( "Radio Communication" );
                     info_text = _(
-                        "REQUIREMENTS:\n"
-                        "You must have a two-way radio\n"
-                        "The ally must have a two-way radio\n"
-                        "The ally must be within radio range\n"
-                        "The signal must not be blocked by terrain\n\n"
-                        "Open the Faction Manager (default keybind: '#') to contact allies by radio.\n"
-                        "While you can have normal conversations via radio, you cannot trade items, "
-                        "receive training, or transfer physical items. "
-                        "Radio is particularly useful for ordering distant allies to travel to your location." );
+                                    "REQUIREMENTS:\n"
+                                    "You must have a two-way radio\n"
+                                    "The ally must have a two-way radio\n"
+                                    "The ally must be within radio range\n"
+                                    "The signal must not be blocked by terrain\n\n"
+                                    "Open the Faction Manager (default keybind: '#') to contact allies by radio.\n"
+                                    "While you can have normal conversations via radio, you cannot trade items, "
+                                    "receive training, or transfer physical items. "
+                                    "Radio is particularly useful for ordering distant allies to travel to your location." );
                     break;
 
                 case tut_shout:
                     info_title = _( "Shouted Commands" );
                     info_text = _(
-                        "The Chat command (default: 'C') allows you to shout quick orders. "
-                        "All allies who hear you will respond to the command. You can also "
-                        "use it to chat at a distance.\n\n"
-                        "Some shouted commands create temporary overrides to standing instructions. "
-                        "For example, telling allies to prepare for danger will override their normal "
-                        "door, sleep, and retreat behaviors until you tell them to relax.\n"
-                        "NOTE: Shouting may attract unwanted attention from nearby enemies." );
+                                    "The Chat command (default: 'C') allows you to shout quick orders. "
+                                    "All allies who hear you will respond to the command. You can also "
+                                    "use it to chat at a distance.\n\n"
+                                    "Some shouted commands create temporary overrides to standing instructions. "
+                                    "For example, telling allies to prepare for danger will override their normal "
+                                    "door, sleep, and retreat behaviors until you tell them to relax.\n"
+                                    "NOTE: Shouting may attract unwanted attention from nearby enemies." );
                     break;
 
                 case tut_combat:
                     info_title = _( "Combat" );
                     info_text = _(
-                        "Allies will fight to survive and to protect you. "
-                        "If the situation becomes too dangerous, allies will flee. You cannot prevent this, "
-                        "but you can designate retreat points using the Zone Manager (default: 'Y').\n"
-                        "Allies will flee toward the nearest designated safe zone. "
-                        "Zones can be set on vehicles, so allies can retreat to your car.\n\n"
-                        "If you're fleeing but an ally thinks it's safe, they may stay and fight. "
-                        "You can order them to flee with you, and they'll try to stick close.\n\n"
-                        "You can set rules for combat through dialogue. This includes:\n"
-                        "When, how, and what enemies to engage\n"
-                        "How much they care about aiming accuracy\n"
-                        "How close they stick to you\n"
-                        "Grenade usage\n"
-                        "If they try to avoid hitting allies with ranged weapons (unreliable) "
-                        "To hold a chokepoint, but they may leave to fight threats elsewhere\n\n");
+                                    "Allies will fight to survive and to protect you. "
+                                    "If the situation becomes too dangerous, allies will flee. You cannot prevent this, "
+                                    "but you can designate retreat points using the Zone Manager (default: 'Y').\n"
+                                    "Allies will flee toward the nearest designated safe zone. "
+                                    "Zones can be set on vehicles, so allies can retreat to your car.\n\n"
+                                    "If you're fleeing but an ally thinks it's safe, they may stay and fight. "
+                                    "You can order them to flee with you, and they'll try to stick close.\n\n"
+                                    "You can set rules for combat through dialogue. This includes:\n"
+                                    "When, how, and what enemies to engage\n"
+                                    "How much they care about aiming accuracy\n"
+                                    "How close they stick to you\n"
+                                    "Grenade usage\n"
+                                    "If they try to avoid hitting allies with ranged weapons (unreliable) "
+                                    "To hold a chokepoint, but they may leave to fight threats elsewhere\n\n" );
                     break;
 
                 case tut_training:
                     info_title = _( "Training and Learning" );
                     info_text = _(
-                        "If an ally has higher skill than you, they can teach you. Teaching is tedious, "
-                        "so they won't do it often. They won't teach during danger, hunger, tiredness, "
-                        "or while driving\n\n"
-                        "When you read a skill book in a safe location, nearby allies without that skill "
-                        "will listen and learn. You can even read books for skills you already have.\n\n"
-                        "You can give an ally a skill book appropriate for their level, then talk to them "
-                        "about their current activity and tell them to read it. They'll study on their own.\n"
-                        "Note: While reading, they won't follow you - ensure they're in a safe location.\n"
-                        "Allies cannot learn or teach martial arts styles." );
+                                    "If an ally has higher skill than you, they can teach you. Teaching is tedious, "
+                                    "so they won't do it often. They won't teach during danger, hunger, tiredness, "
+                                    "or while driving\n\n"
+                                    "When you read a skill book in a safe location, nearby allies without that skill "
+                                    "will listen and learn. You can even read books for skills you already have.\n\n"
+                                    "You can give an ally a skill book appropriate for their level, then talk to them "
+                                    "about their current activity and tell them to read it. They'll study on their own.\n"
+                                    "Note: While reading, they won't follow you - ensure they're in a safe location.\n"
+                                    "Allies cannot learn or teach martial arts styles." );
                     break;
 
                 case tut_inventory:
                     info_title = _( "Inventory and Equipment" );
                     info_text = _(
-                        "Allies can carry items and manage their own equipment.\n"
-                        "Give items to allies and they'll carry them. They have limited pocket space "
-                        "and strength - items that are too heavy or bulky will be dropped.\n\n"
-                        "Allies choose what to wear themselves. If they're wearing something inappropriate, "
-                        "bump into them and use 'Sort armor' to help them adjust. "
-                        "Allies dislike wearing bulky or ill-fitting gear and may remove such items.\n\n"
-                        "Friendly allies will give you any item they're carrying without question. "
-                        "Be careful what you give allies food or drink; They may eat or drink it. "
-                        "Allies with bionics will consume bionic fuel they're carrying" );
+                                    "Allies can carry items and manage their own equipment.\n"
+                                    "Give items to allies and they'll carry them. They have limited pocket space "
+                                    "and strength - items that are too heavy or bulky will be dropped.\n\n"
+                                    "Allies choose what to wear themselves. If they're wearing something inappropriate, "
+                                    "bump into them and use 'Sort armor' to help them adjust. "
+                                    "Allies dislike wearing bulky or ill-fitting gear and may remove such items.\n\n"
+                                    "Friendly allies will give you any item they're carrying without question. "
+                                    "Be careful what you give allies food or drink; They may eat or drink it. "
+                                    "Allies with bionics will consume bionic fuel they're carrying" );
                     break;
 
                 case tut_medic:
                     info_title = _( "First Aid" );
                     info_text = _(
-                        "Allies can perform first aid if supply them with bandages or antiseptic. "
-                        "Give these supplies to an ally and they'll use them to treat wounds.\n"
-                        "Allies prioritize treatment in the order of themselves, you, and other allies.\n"
-                        "Allies with medical training will be more effective at treating injuries. "
-                        "Check an ally's skills through conversation to see their first aid ability." );
+                                    "Allies can perform first aid if supply them with bandages or antiseptic. "
+                                    "Give these supplies to an ally and they'll use them to treat wounds.\n"
+                                    "Allies prioritize treatment in the order of themselves, you, and other allies.\n"
+                                    "Allies with medical training will be more effective at treating injuries. "
+                                    "Check an ally's skills through conversation to see their first aid ability." );
                     break;
 
                 case tut_activities:
                     info_title = _( "Work Activities" );
                     info_text = _(
-                        "Allies can perform various tasks when you designate work areas in "
-                        "the zone manager. (default: 'Y')\n"
-                        "Use the Zone Manager to designate loot sorting zones, construction blueprints, "
-                        "farming areas, tree cutting areas, vehicle disassembly/repair zones, and fishing spots.\n"
-                        "You can assign tasks to allies by talking to them about their current activity. "
-                        "Leave required tools in a loot zone near the work area. "
-                        "Allies will return tools to an unsorted loot zone when finished.\n"
-                        "They can do the following tasks:\n"
-                        "Sort loot\n"
-                        "Building structures\n"
-                        "Cutting down trees (needs axes)\n"
-                        "Repairing or dismantling vehicles (needs wrenches, hacksaws, or toolboxes)\n"
-                        "Farming (needs shovels, seeds, and fertilizer)\n"
-                        "Fishing" );
+                                    "Allies can perform various tasks when you designate work areas in "
+                                    "the zone manager. (default: 'Y')\n"
+                                    "Use the Zone Manager to designate loot sorting zones, construction blueprints, "
+                                    "farming areas, tree cutting areas, vehicle disassembly/repair zones, and fishing spots.\n"
+                                    "You can assign tasks to allies by talking to them about their current activity. "
+                                    "Leave required tools in a loot zone near the work area. "
+                                    "Allies will return tools to an unsorted loot zone when finished.\n"
+                                    "They can do the following tasks:\n"
+                                    "Sort loot\n"
+                                    "Building structures\n"
+                                    "Cutting down trees (needs axes)\n"
+                                    "Repairing or dismantling vehicles (needs wrenches, hacksaws, or toolboxes)\n"
+                                    "Farming (needs shovels, seeds, and fertilizer)\n"
+                                    "Fishing" );
                     break;
                 case tut_movement:
                     info_title = _( "Movement and Travel" );
                     info_text = _(
-                        "Allies can travel to distant locations on command.\n"
-                        "You can contact an ally by radio and tell them to come to you. "
-                        "They'll walk to your location and then guard the area. "
-                        "Travel takes time depending on distance. Allies avoid dangers along the way. "
-                        "Allies on horseback will travel faster.\n\n"
-                        "By default, allies follow you. Use 'Guard' commands to make them stay in place, "
-                        "and 'Follow' commands to resume following." );
+                                    "Allies can travel to distant locations on command.\n"
+                                    "You can contact an ally by radio and tell them to come to you. "
+                                    "They'll walk to your location and then guard the area. "
+                                    "Travel takes time depending on distance. Allies avoid dangers along the way. "
+                                    "Allies on horseback will travel faster.\n\n"
+                                    "By default, allies follow you. Use 'Guard' commands to make them stay in place, "
+                                    "and 'Follow' commands to resume following." );
                     break;
 
                 case tut_horses:
-                    info_title = _("Riding Horses");
+                    info_title = _( "Riding Horses" );
                     info_text = _(
-                        "Allies can ride horses for faster travel. They need a friendly horse (tamed) with "
-                        "a saddle installed on it.\n\n"
-                        "Feed a feral horse cattlefodder to make it friendly.\n"
-                        "Examine (default: 'e') the horse while you have a saddle in your inventory to install it.\n\n"
-                        "Tell an ally to mount up and they'll find a nearby saddled, friendly horse.\n"
-                        "Tell an ally to dismount, or they can use vehicle controls.\n"
-                        "You can dismount yourself using the vehicle control key (default: '^'). "
-                        "While mounted, you and allies move normally but much faster than on foot.");
+                                    "Allies can ride horses for faster travel. They need a friendly horse (tamed) with "
+                                    "a saddle installed on it.\n\n"
+                                    "Feed a feral horse cattlefodder to make it friendly.\n"
+                                    "Examine (default: 'e') the horse while you have a saddle in your inventory to install it.\n\n"
+                                    "Tell an ally to mount up and they'll find a nearby saddled, friendly horse.\n"
+                                    "Tell an ally to dismount, or they can use vehicle controls.\n"
+                                    "You can dismount yourself using the vehicle control key (default: '^'). "
+                                    "While mounted, you and allies move normally but much faster than on foot." );
                     break;
 
 
                 case tut_guard:
                     info_title = _( "Guard Duty" );
                     info_text = _(
-                        "Allies can guard locations and protect your belongings. "
-                        "Tell an ally to guard and they'll stay at their current position. "
-                        "If in a vehicle, they'll stay with the vehicle. "
-                        "Guards deter other survivors from stealing your stuff.\n\n"
-                        "Guards who hear suspicious noises will investigate unless told not to. "
-                        "This can be dangerous as they might find enemies, but they won't get ambushed in the dark.\n\n"
-                        "Use zones to control noise investigation.\n"
-                        "NO-INVESTIGATE ZONE: Allies ignore noises from this area\n"
-                        "INVESTIGATE-ONLY ZONE: Allies only investigate noises from this area\n"
-                        "No-investigate zones take priority over investigate-only zones.\n"
-                        "WARNING: If you set an investigate-only zone anywhere, allies won't investigate "
-                        "noises from outside that zone, even if it's far away. Use carefully." );
+                                    "Allies can guard locations and protect your belongings. "
+                                    "Tell an ally to guard and they'll stay at their current position. "
+                                    "If in a vehicle, they'll stay with the vehicle. "
+                                    "Guards deter other survivors from stealing your stuff.\n\n"
+                                    "Guards who hear suspicious noises will investigate unless told not to. "
+                                    "This can be dangerous as they might find enemies, but they won't get ambushed in the dark.\n\n"
+                                    "Use zones to control noise investigation.\n"
+                                    "NO-INVESTIGATE ZONE: Allies ignore noises from this area\n"
+                                    "INVESTIGATE-ONLY ZONE: Allies only investigate noises from this area\n"
+                                    "No-investigate zones take priority over investigate-only zones.\n"
+                                    "WARNING: If you set an investigate-only zone anywhere, allies won't investigate "
+                                    "noises from outside that zone, even if it's far away. Use carefully." );
                     break;
 
                 case tut_bionics:
                     info_title = _( "Bionics" );
                     info_text = _(
-                        "Examine a CBM to see if an ally can use it. Allies can use most passive bionics, but "
-                        "only some active bionics will be used.\n"
-                        "To install buonics in an ally, follow these steps:\n"
-                        "  1. Find a programmable surgical installer or autodoc\n"
-                        "  2. Position the ally on the operating couch\n"
-                        "  3. Activate the installer and select the CBM to install\n"
-                        "If the ally has better installation skill, they'll do the procedure themselves."
-                        "Similarly, skilled allies can install CBMs into you.\n\n"
-                        "Allies use active bionics sensibly in normal situations. "
-                        "In danger, they'll activate anything that gives an edge. "
-                        "Allies use bionic weapons if they're better than carried weapons. "
-                        "You can set an energy reserve level if you want them to save power for defense/healing. "
-                        "Allies try to keep bionic energy topped off. You can tell them to stop recharging "
-                        "when not full if supplies are low. They'll warn you if they're low on energy or fuel." );
+                                    "Examine a CBM to see if an ally can use it. Allies can use most passive bionics, but "
+                                    "only some active bionics will be used.\n"
+                                    "To install buonics in an ally, follow these steps:\n"
+                                    "  1. Find a programmable surgical installer or autodoc\n"
+                                    "  2. Position the ally on the operating couch\n"
+                                    "  3. Activate the installer and select the CBM to install\n"
+                                    "If the ally has better installation skill, they'll do the procedure themselves."
+                                    "Similarly, skilled allies can install CBMs into you.\n\n"
+                                    "Allies use active bionics sensibly in normal situations. "
+                                    "In danger, they'll activate anything that gives an edge. "
+                                    "Allies use bionic weapons if they're better than carried weapons. "
+                                    "You can set an energy reserve level if you want them to save power for defense/healing. "
+                                    "Allies try to keep bionic energy topped off. You can tell them to stop recharging "
+                                    "when not full if supplies are low. They'll warn you if they're low on energy or fuel." );
                     break;
 
                 case tut_social:
                     info_title = _( "Social Interaction" );
                     info_text = _(
-                        "Allies are social beings who benefit from interaction. "
-                        "Light conversation improves morale. However, allies don't want to chat constantly. "
-                        "If you've talked recently, they may not want to chat again right away.\n\n"
-                        "You can ask allies about their background, but some may not want to discuss it.\n"
-                        "You can allies for advice. They may share survival tips they've picked up.\n"
-                        "Note: Advice may not always be relevant to your current situation." );
+                                    "Allies are social beings who benefit from interaction. "
+                                    "Light conversation improves morale. However, allies don't want to chat constantly. "
+                                    "If you've talked recently, they may not want to chat again right away.\n\n"
+                                    "You can ask allies about their background, but some may not want to discuss it.\n"
+                                    "You can allies for advice. They may share survival tips they've picked up.\n"
+                                    "Note: Advice may not always be relevant to your current situation." );
                     break;
 
                 case tut_misc:
                     info_title = _( "Miscellaneous Rules" );
                     info_text = _(
-                        "You can configure various rules for allies that control their behavior.\n\n"
-                        "Allies report danger, injuries, hunger, and other important information.\n"
-                        "You can tell them to be quiet if you don't want these notifications.\n\n"
-                        "Allies can pulp zombie corpses to prevent revival. Most prefer to do this.\n\n"
-                        "Allies investigate suspicious noises by default. You can disable this.\n\n"
-                        "You can decide if they leave doors open while passing through them or not,"
-                        "and if they go through closed doors.\n\n"
-                        "Allies can pick up items automatically.  You can specify what types to collect.\n"
-                        "Tip: If allies have bows or crossbows, tell them to pick up ammunition.\n\n"
-                        "Examine a vehicle and use the crew 'w' command to assign allies to specific seats.\n" );
+                                    "You can configure various rules for allies that control their behavior.\n\n"
+                                    "Allies report danger, injuries, hunger, and other important information.\n"
+                                    "You can tell them to be quiet if you don't want these notifications.\n\n"
+                                    "Allies can pulp zombie corpses to prevent revival. Most prefer to do this.\n\n"
+                                    "Allies investigate suspicious noises by default. You can disable this.\n\n"
+                                    "You can decide if they leave doors open while passing through them or not,"
+                                    "and if they go through closed doors.\n\n"
+                                    "Allies can pick up items automatically.  You can specify what types to collect.\n"
+                                    "Tip: If allies have bows or crossbows, tell them to pick up ammunition.\n\n"
+                                    "Examine a vehicle and use the crew 'w' command to assign allies to specific seats.\n" );
                     break;
 
                 case tut_factions:
                     info_title = _( "Other Survivors and Factions" );
                     info_text = _(
-                        "You're not the only survivor out there.\n"
-                        "Other survivors scavenge just like you. Unattended loot looks like fair game to them. "
-                        "If you or an ally isn't around to claim your stuff, other survivors may take it. "
-                        "A solution is to have someone guard your base or vehicle.\n\n"
-                        "Survivors form groups for better survival chances. Your group is one such faction.\n\n"
-                        "In the faction manager (default: '#') you can view a list of all your allies, "
-                        "and all factions you've encountered.\n"
-                        "Some factions are lone survivors, others have many members and fortified bases." );
+                                    "You're not the only survivor out there.\n"
+                                    "Other survivors scavenge just like you. Unattended loot looks like fair game to them. "
+                                    "If you or an ally isn't around to claim your stuff, other survivors may take it. "
+                                    "A solution is to have someone guard your base or vehicle.\n\n"
+                                    "Survivors form groups for better survival chances. Your group is one such faction.\n\n"
+                                    "In the faction manager (default: '#') you can view a list of all your allies, "
+                                    "and all factions you've encountered.\n"
+                                    "Some factions are lone survivors, others have many members and fortified bases." );
                     break;
                 default:
                     show_tutorial = false;
                     break;
             }
 
-            if(show_tutorial && !info_text.empty() ) {
+            if( show_tutorial && !info_text.empty() ) {
                 full_screen_popup( "%s\n\n%s", info_title, info_text );
             }
         }
