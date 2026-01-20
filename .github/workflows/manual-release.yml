@@ -11,7 +11,7 @@ on:
         { description: SemVer patch, required: true, type: number, default: 0 }
 
 env:
-  VERSION: "v${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}"
+  VERSION: "${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}"
 
 jobs:
   release:
@@ -44,7 +44,7 @@ jobs:
     needs: release
     uses: ./.github/workflows/build.yml
     with:
-      version-label: "v${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}"
+      version-label: "${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}"
       upload-to-release: true
-      release-tag: "v${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}"
+      release-tag: "${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}"
     secrets: inherit
