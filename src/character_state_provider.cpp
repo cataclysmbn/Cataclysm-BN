@@ -2,6 +2,8 @@
 
 #include "character.h"
 #include "effect.h"
+#include "npc.h"
+#include "player_activity.h"
 #include "type_id.h"
 
 static const efftype_id effect_downed( "downed" );
@@ -33,11 +35,23 @@ std::optional<std::string> get_character_state_for_group(
         return ch.has_effect( effect_lying_down ) ? "lying" : "normal";
     }
 
+    if( group_id == "activity" ) {
+        if( ch.is_npc() ) {
+            const npc *guy = dynamic_cast<const npc *>( &ch );
+            if( guy && guy->current_activity_id ) {
+                return guy->current_activity_id.str();
+            }
+        } else if( ch.activity ) {
+            return ch.activity->id().str();
+        }
+        return "none";
+    }
+
     // Unknown group_id - return nullopt to indicate it's not supported
     return std::nullopt;
 }
 
 std::vector<std::string> get_supported_modifier_groups()
 {
-    return { "movement_mode", "downed", "lying_down" };
+    return { "movement_mode", "downed", "lying_down", "activity" };
 }

@@ -471,6 +471,7 @@ Each entry in `tiles`:
 | `movement_mode` | `walk`, `run`, `crouch` | Character movement stance                        |
 | `downed`        | `normal`, `downed`      | Whether character is knocked down                |
 | `lying_down`    | `normal`, `lying`       | Whether character is lying down (sleeping, etc.) |
+| `activity`      | `none`, activity IDs    | Current activity (e.g., `ACT_CRAFT`, `ACT_READ`) |
 
 ### Priority and Overrides
 
