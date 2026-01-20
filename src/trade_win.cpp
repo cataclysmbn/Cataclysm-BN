@@ -849,12 +849,13 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
     };
     using balance_map = std::unordered_map<int, balance_choice>;
     const auto calc_category_autobalance_plan = [&]( const std::vector<item_pricing> &list,
-    const std::vector<size_t> &filtered_indices,
-    const category_range &range ) -> std::unordered_map<size_t, int> {
+            const std::vector<size_t> &filtered_indices,
+    const category_range & range ) -> std::unordered_map<size_t, int> {
         auto plan = std::unordered_map<size_t, int> {};
         auto entries = std::vector<balance_item_entry> {};
         std::ranges::for_each( std::views::iota( range.start, range.end ),
-        [&]( size_t idx ) {
+                               [&]( size_t idx )
+        {
             const auto list_index = filtered_indices[idx];
             const auto &ip = list[list_index];
             const auto current_amount = get_current_amount( ip );
@@ -862,8 +863,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
             const auto unit_balance_delta = ( focus_them ? -1 : 1 ) *
                                             static_cast<int>( ip.price );
             const auto max_amount = get_max_amount( ip );
-            if( unit_balance_delta == 0 || max_amount == 0 )
-            {
+            if( unit_balance_delta == 0 || max_amount == 0 ) {
                 return;
             }
             entries.push_back( balance_item_entry{
@@ -873,13 +873,15 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 .unit_balance_delta = unit_balance_delta
             } );
         } );
-        if( entries.empty() ) {
+        if( entries.empty() )
+        {
             return plan;
         }
 
         auto min_balance = state.your_balance;
         auto max_balance = state.your_balance;
-        std::ranges::for_each( entries, [&]( const balance_item_entry & entry ) {
+        std::ranges::for_each( entries, [&]( const balance_item_entry & entry )
+        {
             const auto delta_at_min = entry.unit_balance_delta * ( 0 - entry.current_amount );
             const auto delta_at_max = entry.unit_balance_delta *
                                       ( entry.max_amount - entry.current_amount );
@@ -887,13 +889,16 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
             max_balance += std::max( delta_at_min, delta_at_max );
         } );
 
-        auto dp = balance_map{ { state.your_balance, balance_choice{
-                                    .prev_balance = state.your_balance,
-                                    .amount = 0 } } };
+        auto dp = balance_map{ {
+                state.your_balance, balance_choice{
+                    .prev_balance = state.your_balance,
+                    .amount = 0 }
+            } };
         auto decisions = std::vector<balance_map> {};
         decisions.reserve( entries.size() );
 
-        std::ranges::for_each( entries, [&]( const balance_item_entry & entry ) {
+        std::ranges::for_each( entries, [&]( const balance_item_entry & entry )
+        {
             auto next = balance_map {};
             auto item_decisions = balance_map {};
             std::ranges::for_each( dp, [&]( const auto & entry_pair ) {
@@ -919,12 +924,12 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                     const auto new_balance = prev_balance +
                                              unit * ( amount - current_amount );
                     const auto inserted = next.emplace( new_balance, balance_choice{
-                                                            .prev_balance = prev_balance,
-                                                            .amount = amount } ).second;
+                        .prev_balance = prev_balance,
+                        .amount = amount } ).second;
                     if( inserted ) {
                         item_decisions.emplace( new_balance, balance_choice{
-                                                    .prev_balance = prev_balance,
-                                                    .amount = amount } );
+                            .prev_balance = prev_balance,
+                            .amount = amount } );
                     }
                 } );
             } );
@@ -932,12 +937,14 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
             decisions.push_back( std::move( item_decisions ) );
         } );
 
-        if( dp.empty() ) {
+        if( dp.empty() )
+        {
             return plan;
         }
 
         auto best_balance = std::optional<int> {};
-        std::ranges::for_each( dp, [&]( const auto & entry_pair ) {
+        std::ranges::for_each( dp, [&]( const auto & entry_pair )
+        {
             const auto balance = entry_pair.first;
             if( balance >= 0 ) {
                 if( !best_balance || balance < *best_balance ) {
@@ -945,7 +952,8 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 }
             }
         } );
-        if( !best_balance ) {
+        if( !best_balance )
+        {
             std::ranges::for_each( dp, [&]( const auto & entry_pair ) {
                 const auto balance = entry_pair.first;
                 if( !best_balance || balance > *best_balance ) {
@@ -953,12 +961,14 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 }
             } );
         }
-        if( !best_balance ) {
+        if( !best_balance )
+        {
             return plan;
         }
 
         auto balance = *best_balance;
-        for( auto i = static_cast<int>( entries.size() ); i-- > 0; ) {
+        for( auto i = static_cast<int>( entries.size() ); i-- > 0; )
+        {
             const auto index = static_cast<size_t>( i );
             const auto &entry = entries[index];
             auto &item_decisions = decisions[index];
@@ -1046,7 +1056,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 auto &new_cursor = focus_them ? them_cursor : you_cursor;
                 auto &new_category_cursor = focus_them ? them_category_cursor : you_category_cursor;
                 const auto new_category_ranges = build_category_ranges( new_target_list,
-                                                  new_filtered );
+                                                 new_filtered );
                 if( !new_category_ranges.empty() ) {
                     if( new_category_cursor >= new_category_ranges.size() ) {
                         new_category_cursor = new_category_ranges.size() - 1;
