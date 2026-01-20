@@ -3762,6 +3762,20 @@
     "flags": [ "BLIND_EASY" ]
   },
   {
+    "result": "urbexmap",
+    "type": "uncraft",
+    "time": "30 s",
+    "components": [ [ [ "paper", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "satellitemap",
+    "type": "uncraft",
+    "time": "30 s",
+    "components": [ [ [ "paper", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
     "result": "spectrophotometer",
     "type": "uncraft",
     "skill_used": "electronics",
