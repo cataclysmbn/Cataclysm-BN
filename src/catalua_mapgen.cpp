@@ -16,5 +16,5 @@ mapgen_function_lua::mapgen_function_lua( const std::string &func, int weight ) 
 
 void mapgen_function_lua::generate( mapgendata &dat )
 {
-    generate_func( )
+    generate_func( dat, g->m );
 }
