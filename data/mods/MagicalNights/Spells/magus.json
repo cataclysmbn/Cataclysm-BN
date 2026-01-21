@@ -142,6 +142,27 @@
     "duration_increment": 6000
   },
   {
+    "id": "magus_slow",
+    "type": "SPELL",
+    "name": { "str": "Slow" },
+    "description": "This spell weakens your target, resulting in a decrease of speed lasting a short period of time.",
+    "valid_targets": [ "ally", "hostile" ],
+    "flags": [ "LOUD", "SOMATIC", "NO_EXPLOSION_VFX", "NO_HANDS" ],
+    "effect": "target_attack",
+    "effect_str": "magic_slowed",
+    "spell_class": "MAGUS",
+    "energy_source": "MANA",
+    "difficulty": 6,
+    "base_casting_time": 200,
+    "base_energy_cost": 750,
+    "final_energy_cost": 600,
+    "energy_increment": -10,
+    "max_level": 15,
+    "min_duration": 96000,
+    "max_duration": 186000,
+    "duration_increment": 6000
+  },
+  {
     "id": "magus_mana_beam",
     "type": "SPELL",
     "name": { "str": "Mana Beam" },
