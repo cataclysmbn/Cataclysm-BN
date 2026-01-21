@@ -50,33 +50,33 @@ void PATH_INFO::init_base_path( std::string path )
 // And points the user directory to it for android
 void PATH_INFO::init_user_dir( std::string dir )
 {
-    JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
-    jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
+    JNIEnv *env = static_cast<JNIEnv *>( SDL_AndroidGetJNIEnv() );
+    jobject activity = static_cast<jobject>( SDL_AndroidGetActivity() );
 
-    jclass clazz = env->GetObjectClass(activity);
+    jclass clazz = env->GetObjectClass( activity );
 
     // Method signature:
     // ()Ljava/lang/String;
     jmethodID method_id = env->GetMethodID(
-        clazz,
-        "getDocumentsDirectory",
-        "()Ljava/lang/String;"
-    );
+                              clazz,
+                              "getDocumentsDirectory",
+                              "()Ljava/lang/String;"
+                          );
 
-    jstring jpath = (jstring)env->CallObjectMethod(activity, method_id);
+    jstring jpath = ( jstring )env->CallObjectMethod( activity, method_id );
 
     // Convert jstring → std::string
-    const char* chars = env->GetStringUTFChars(jpath, nullptr);
-    std::string path(chars);
+    const char *chars = env->GetStringUTFChars( jpath, nullptr );
+    std::string path( chars );
     dir = path + "/cataclysm-bn/";
     user_dir_value = as_norm_dir( dir );
 
-    env->ReleaseStringUTFChars(jpath, chars);
+    env->ReleaseStringUTFChars( jpath, chars );
 
     // Cleanup local refs
-    env->DeleteLocalRef(jpath);
-    env->DeleteLocalRef(clazz);
-    env->DeleteLocalRef(activity);
+    env->DeleteLocalRef( jpath );
+    env->DeleteLocalRef( clazz );
+    env->DeleteLocalRef( activity );
 }
 #endif
 #if !defined(__ANDROID__)

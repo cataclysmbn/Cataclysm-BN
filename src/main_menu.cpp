@@ -610,8 +610,8 @@ bool main_menu::opening_screen()
 {
 #if defined(__ANDROID__)
     // if( !SDL_AndroidRequestPermission( "MANAGE_EXTERNAL_STORAGE" ) ) {
-        // popup( _( "The game needs the permission to save files in user accessible storage, it only accesses Documents/cataclysm-bn") );
-        //return false;
+    // popup( _( "The game needs the permission to save files in user accessible storage, it only accesses Documents/cataclysm-bn") );
+    //return false;
     // }
 #endif
     // set holiday based on local system time
