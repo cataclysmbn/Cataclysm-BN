@@ -11,7 +11,10 @@
 #if defined(_WIN32)
 #include <windows.h>
 #endif
-
+#if defined(__ANDROID__)
+#include <jni.h>
+#include <SDL_system.h>
+#endif
 /**
  * Return a locale specific path, or if there is no path for the current
  * locale, return the default path.
@@ -41,6 +44,39 @@ void PATH_INFO::init_base_path( std::string path )
     base_path_value = as_norm_dir( path );
 }
 
+#if defined(__ANDROID__)
+void PATH_INFO::init_user_dir( std::string dir )
+{
+    JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
+    jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
+
+    jclass clazz = env->GetObjectClass(activity);
+
+    // Method signature:
+    // ()Ljava/lang/String;
+    jmethodID method_id = env->GetMethodID(
+        clazz,
+        "getDocumentsDirectory",
+        "()Ljava/lang/String;"
+    );
+
+    jstring jpath = (jstring)env->CallObjectMethod(activity, method_id);
+
+    // Convert jstring → std::string
+    const char* chars = env->GetStringUTFChars(jpath, nullptr);
+    std::string path(chars);
+    dir = path + "/cataclysm-bn/";
+    user_dir_value = as_norm_dir( dir );
+
+    env->ReleaseStringUTFChars(jpath, chars);
+
+    // Cleanup local refs
+    env->DeleteLocalRef(jpath);
+    env->DeleteLocalRef(clazz);
+    env->DeleteLocalRef(activity);
+}
+#endif
+#if !defined(__ANDROID__)
 void PATH_INFO::init_user_dir( std::string dir )
 {
     if( dir.empty() ) {
@@ -68,7 +104,7 @@ void PATH_INFO::init_user_dir( std::string dir )
 
     user_dir_value = as_norm_dir( dir );
 }
-
+#endif
 void PATH_INFO::set_standard_filenames()
 {
     // Special: data_dir and gfx_dir
@@ -263,13 +299,7 @@ std::string PATH_INFO::user_keybindings()
 }
 std::string PATH_INFO::user_moddir()
 {
-#if defined(__ANDROID__)
-    assure_dir_exist( "/storage/self/primary/Documents/cataclysm-bn/" );
-    assure_dir_exist( "/storage/self/primary/Documents/cataclysm-bn/mods/" );
-    return "/storage/self/primary/Documents/cataclysm-bn/mods/";
-#else
     return user_dir_value + "mods/";
-#endif
 }
 std::string PATH_INFO::user_sound()
 {
