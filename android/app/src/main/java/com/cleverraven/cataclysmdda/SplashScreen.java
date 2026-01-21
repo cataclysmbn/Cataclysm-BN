@@ -103,7 +103,7 @@ public class SplashScreen extends Activity {
                 startActivity(intent);
                 finish();
             }
-            if( Environment.isExternalStorageManager() ) {
+            if( Build.VERSION.SDK_INT >= 30 && Environment.isExternalStorageManager() ) {
                 Intent intent = new Intent(SplashScreen.this, CataclysmDDA.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
                 startActivity(intent);
