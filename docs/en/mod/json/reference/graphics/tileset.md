@@ -466,13 +466,13 @@ Each entry in `tiles`:
 
 ### Supported Modifier Groups
 
-| Group ID        | States                                      | Description                                      |
-| --------------- | ------------------------------------------- | ------------------------------------------------ |
-| `movement_mode` | `walk`, `run`, `crouch`                     | Character movement stance                        |
-| `downed`        | `normal`, `downed`                          | Whether character is knocked down                |
-| `lying_down`    | `normal`, `lying`                           | Whether character is lying down (sleeping, etc.) |
-| `activity`      | `none`, activity IDs                        | Current activity (e.g., `ACT_CRAFT`, `ACT_READ`) |
-| `body_size`     | `tiny`, `small`, `medium`, `large`, `huge`  | Size of character (changed by mutations)         |
+| Group ID        | States                                     | Description                                      |
+| --------------- | ------------------------------------------ | ------------------------------------------------ |
+| `movement_mode` | `walk`, `run`, `crouch`                    | Character movement stance                        |
+| `downed`        | `normal`, `downed`                         | Whether character is knocked down                |
+| `lying_down`    | `normal`, `lying`                          | Whether character is lying down (sleeping, etc.) |
+| `activity`      | `none`, activity IDs                       | Current activity (e.g., `ACT_CRAFT`, `ACT_READ`) |
+| `body_size`     | `tiny`, `small`, `medium`, `large`, `huge` | Size of character (changed by mutations)         |
 
 ### Priority and Overrides
 

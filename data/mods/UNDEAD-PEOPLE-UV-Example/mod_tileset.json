@@ -16,7 +16,13 @@
             "id": "body_size",
             "override": false,
             "use_offset": false,
-            "tiles": [ { "id": "tiny", "fg": 7 }, { "id": "small", "fg": 6 }, { "id": "medium", "fg": null }, { "id": "large", "fg": 8 }, { "id": "huge", "fg": 9 } ]
+            "tiles": [
+              { "id": "tiny", "fg": 7 },
+              { "id": "small", "fg": 6 },
+              { "id": "medium", "fg": null },
+              { "id": "large", "fg": 8 },
+              { "id": "huge", "fg": 9 }
+            ]
           },
           {
             "id": "downed",
@@ -29,7 +35,6 @@
             "override": true,
             "use_offset": false,
             "tiles": [ { "id": "normal", "fg": null }, { "id": "lying", "fg": 5 } ]
-
           },
           {
             "id": "movement_mode",
