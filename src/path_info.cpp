@@ -45,6 +45,9 @@ void PATH_INFO::init_base_path( std::string path )
 }
 
 #if defined(__ANDROID__)
+// Okay so this fine function right here
+// Gets Documents/cataclysm-bn
+// And points the user directory to it for android
 void PATH_INFO::init_user_dir( std::string dir )
 {
     JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
