@@ -95,7 +95,7 @@ public class SplashScreen extends Activity {
     private final class StartGameRunnable implements Runnable {
         @Override
         public void run() {
-            if( !Environment.isExternalStorageManager() ) {
+            if( Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager() ) {
                 Intent intent = new Intent(
                     Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, 
                     Uri.parse("package:" + getPackageName())
