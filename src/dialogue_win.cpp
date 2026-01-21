@@ -153,7 +153,8 @@ static void print_responses( const catacurses::window &w, const page &responses,
     int curr_y = y_start;
     for( const page_entry &entry : responses.entries ) {
         const auto selected = entry.response_index == selected_response;
-        const auto col = selected ? hilite( entry.col ) : entry.col;
+        const auto base_col = entry.col == c_white ? c_light_gray : entry.col;
+        const auto col = selected ? hilite( entry.col ) : base_col;
         const auto letter_col = selected ? hilite( entry.col ) : c_light_green;
         bool first_line = true;
         for( const std::string &line : entry.lines ) {
@@ -174,10 +175,10 @@ static void print_keybindings( const catacurses::window &w )
 {
     const int winx = getmaxx( w );
 
-    const std::string col0 = _( "L: Look at" );
-    const std::string col1 = _( "S: Size up stats" );
-    const std::string col2 = _( "Y: Yell" );
-    const std::string col3 = _( "O: Check opinion" );
+    const std::string col0 = _( "[L] Look at" );
+    const std::string col1 = _( "[S] Size up stats" );
+    const std::string col2 = _( "[Y] Yell" );
+    const std::string col3 = _( "[O] Check opinion" );
 
     const int col0_width = std::max( static_cast<int>( col0.size() ),
                                      static_cast<int>( col2.size() ) );
@@ -188,10 +189,10 @@ static void print_keybindings( const catacurses::window &w )
     const int x = std::max( 1, winx - 1 - grid_width );
     const int y = 1;
 
-    mvwprintz( w, point( x, y ), c_magenta, col0 );
-    mvwprintz( w, point( x + col0_width + 2, y ), c_magenta, col1 );
-    mvwprintz( w, point( x, y + 1 ), c_magenta, col2 );
-    mvwprintz( w, point( x + col0_width + 2, y + 1 ), c_magenta, col3 );
+    mvwprintz( w, point( x, y ), c_light_gray, col0 );
+    mvwprintz( w, point( x + col0_width + 2, y ), c_light_gray, col1 );
+    mvwprintz( w, point( x, y + 1 ), c_light_gray, col2 );
+    mvwprintz( w, point( x + col0_width + 2, y + 1 ), c_light_gray, col3 );
 }
 
 void dialogue_window::cache_msg( const std::string &msg, size_t idx )
@@ -265,12 +266,16 @@ void dialogue_window::display_responses( const std::vector<talk_data> &responses
     can_scroll_down = curr_page + 1 < pages.size();
 
     if( can_scroll_up ) {
-        mvwprintz( d_win, point( getmaxx( d_win ) - 2 - 2, header_height + 2 ), c_green, "^^" );
         prev_page_start = pages[curr_page - 1].entries.front().response_index;
     }
     if( can_scroll_down ) {
-        mvwprintz( d_win, point( FULL_SCREEN_WIDTH - 2 - 2, win_maxy - 2 ), c_green, "vv" );
         next_page_start = pages[curr_page + 1].entries.front().response_index;
+    }
+    if( !pages.empty() ) {
+        const auto indicator = string_format( "< Page %zu/%zu >", curr_page + 1, pages.size() );
+        const auto indicator_x = std::max( 1,
+                                           getmaxx( d_win ) - 1 - static_cast<int>( indicator.size() ) );
+        mvwprintz( d_win, point( indicator_x, win_maxy - 1 ), c_light_gray, indicator );
     }
     wnoutrefresh( d_win );
 }

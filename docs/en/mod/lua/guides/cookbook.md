@@ -123,6 +123,21 @@ local scraps = gapi.create_item(ItypeId.new("scrap"), 3)
 target_monster:as_monster():add_item(scraps)
 ```
 
+## NPCs
+
+### Spawning and erasing NPCs
+
+```lua
+local player = gapi.get_avatar()
+local map = gapi.get_map()
+local player_pos = player:get_pos_ms()
+local place_point = player_pos:xy() + Point.new(0, 2)
+local new_npc = map:place_npc(place_point, "thug")
+
+-- Later, you can erase the NPC silently
+new_npc:erase()
+```
+
 ## Weather Hooks
 
 ### Reacting to weather changes
@@ -445,6 +460,36 @@ if itype_raw:slot_tool() then
     print("Tool quality: " .. tool_data.quality)
 end
 ```
+
+## Character Trap Awareness
+
+### Checking and remembering traps
+
+First, set a trap at a location:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+-- tr_landmine_buried has visibility 20. very hard to find.
+local mine = TrapId.new("tr_landmine_buried"):int_id()
+m:set_trap_at(pos4x, mine)
+print(tostring(u:knows_trap(pos4x)))
+```
+
+Then, make the character aware of the trap:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+u:add_known_trap(pos4x, m:get_trap_at(pos4x))
+print(tostring(u:knows_trap(pos4x)))
+```
+
+After running the second script, you can see where the trap is located instead of stepping on it.
 
 ## Time and Space
 

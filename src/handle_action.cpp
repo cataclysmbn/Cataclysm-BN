@@ -1838,7 +1838,8 @@ bool game::handle_action()
                     const monster *mon = u.mounted_creature.get();
 
                     const bool can_use_stairs =
-                        !mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                        mon->has_flag( MF_RIDEABLE_MECH ) ||
+                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
                         mon->has_flag( MF_FLIES );
 
                     if( !can_use_stairs ) {
@@ -1881,6 +1882,7 @@ bool game::handle_action()
                     const monster *mon = u.mounted_creature.get();
 
                     const bool can_use_stairs =
+                        mon->has_flag( MF_RIDEABLE_MECH ) ||
                         mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
                         mon->has_flag( MF_FLIES );
 
