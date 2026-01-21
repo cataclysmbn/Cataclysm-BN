@@ -51,7 +51,9 @@
 #include "wcwidth.h"
 #include "worldfactory.h"
 #include "game_info.h"
-
+#if defined(__ANDROID__)
+#    include <SDL_system.h>
+#endif
 enum class main_menu_opts : int {
     MOTD = 0,
     NEWCHAR = 1,
@@ -606,6 +608,12 @@ void main_menu::load_char_templates()
 
 bool main_menu::opening_screen()
 {
+#if defined(__ANDROID__)
+    // if( !SDL_AndroidRequestPermission( "MANAGE_EXTERNAL_STORAGE" ) ) {
+        // popup( _( "The game needs the permission to save files in user accessible storage, it only accesses Documents/cataclysm-bn") );
+        //return false;
+    // }
+#endif
     // set holiday based on local system time
     current_holiday = get_holiday_from_time();
 
