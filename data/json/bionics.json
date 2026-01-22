@@ -576,10 +576,7 @@
     "type": "bionic",
     "name": { "str": "Heat Drain" },
     "description": "While fighting unarmed against a warm-blooded opponent, there is a chance that a successful hit will drain body heat, inflicting a small amount of extra damage, and increasing your power reserves slightly.",
-    "occupied_bodyparts": [
-      [ "hand_l", 2 ],
-      [ "hand_r", 2 ]
-    ],
+    "occupied_bodyparts": [ [ "hand_l", 2 ], [ "hand_r", 2 ] ],
     "points": 3,
     "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE", "COMBAT_NPC_USE" ],
     "trigger_cost": "3 kJ"
@@ -1335,7 +1332,7 @@
     "id": "bio_reactor",
     "type": "bionic",
     "name": { "str": "Atomic Battery" },
-    "description": "This stripped down mini-reactor slowly generates indefinite amounts of bionic power.  The integrated plutonium fuel cell can freely produce 50J of power a turn when enabled.",    
+    "description": "This stripped down mini-reactor slowly generates indefinite amounts of bionic power.  The integrated plutonium fuel cell can freely produce 50J of power a turn when enabled.",
     "fuel_efficiency": 0.005,
     "time": 1,
     "occupied_bodyparts": [ [ "torso", 5 ] ],
