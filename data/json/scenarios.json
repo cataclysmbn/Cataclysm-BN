@@ -415,7 +415,7 @@
     ],
     "allowed_locs": [ "sloc_lab_random", "sloc_lab_escape_cells", "sloc_lab_finale", "sloc_ice_lab_stairs", "sloc_ice_lab_finale" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
-    "bionics": [ "bio_surgical_razor", "bio_metabolics", "bio_torsionratchet", "bio_tools", "bio_memory", "bio_geiger" ]
+    "bionics": [ "bio_reactor", "bio_surgical_razor", "bio_metabolics", "bio_torsionratchet", "bio_tools", "bio_memory", "bio_geiger" ]
   },
   {
     "type": "scenario",
@@ -828,6 +828,7 @@
       "bionic_labtech"
     ],
     "bionics": [
+      "bio_reactor",
       "bn_bio_solar",
       "bio_climate",
       "bio_evap",

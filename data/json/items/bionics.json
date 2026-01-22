@@ -822,8 +822,9 @@
     "id": "bio_reactor",
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
-    "name": { "str": "Internal Microreactor CBM" },
+    "name": { "str": "Atomic Battery CBM" },
     "description": "This stripped down mini-reactor will generate impressive amounts of bionic power, but may not be the safest thing to install.  1 plutonium fuel cell provides 1000 charges producing 10kJ of power a turn, while not active & fueled provides a constant 50J of power.",
+    "description": "This stripped down mini-reactor will slowly generate indefinite amounts of bionic power, with an integrated plutonium fuel cell producing 50J of power a turn when enabled.",
     "price": "9 kUSD",
     "difficulty": 11
   },
@@ -831,18 +832,8 @@
     "id": "bio_advreactor",
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
-    "name": { "str": "Advanced Microreactor CBM" },
-    "description": "This module upgrades a pre-installed microreactor with enhanced maximum yield and limited automatic radiation scrubbing capabilities.  1 plutonium fuel cell provides 1500 charges producing 10kJ of power a turn, while not active & fueled provides a constant 75J of power.",
-    "price": "9 kUSD",
-    "difficulty": 13
-  },
-  {
-    "id": "bio_reactoroverride",
-    "copy-from": "bionic_general_npc_usable",
-    "looks_like": "bio_reactor",
-    "type": "BIONIC_ITEM",
-    "name": { "str": "Micro Reactor Safety Override CBM" },
-    "description": "Disables the radiation safety protocols allowing for much higher energy production.  While active produces 40kJ of power a turn and 1 irradiated stack every 20 turns.",
+    "name": { "str": "Advanced Atomic Battery CBM" },
+    "description": "This module's miniature internal radiothermal generator has been upgraded with a highly experimental modification utilizing exotic matter.  Twice as effective as older models, it will producing 100J of power a turn when enabled.",
     "price": "9 kUSD",
     "difficulty": 13
   },
@@ -851,8 +842,8 @@
     "bionic_id": "bio_advreactor",
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
-    "name": { "str": "Microreactor Upgrade CBM" },
-    "description": "A kit for upgrading a pre-installed microreactor with enhanced maximum yield and limited automatic radiation scrubbing capabilities.",
+    "name": { "str": "Atomic Battery Upgrade CBM" },
+    "description": "A kit for upgrading a pre-installed microreactor with an experimental modification, which doubles the amount of power it can safely produce.",
     "price": "2500 USD",
     "difficulty": 11,
     "is_upgrade": true
