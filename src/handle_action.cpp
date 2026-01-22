@@ -1463,10 +1463,11 @@ static void cast_spell()
         }
     }
 
-    if( u.is_armed() && !sp.has_flag( spell_flag::NO_HANDS ) &&
+    if( u.is_armed() && !( sp.has_flag( spell_flag::NO_HANDS ) ||
+                           sp.has_flag( spell_flag::PHYSICAL ) ) &&
         !u.primary_weapon().has_flag( flag_MAGIC_FOCUS ) && u.primary_weapon().is_two_handed( u ) ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 _( "You need your hands free to cast this spell!" ) );
+                 _( "You need at least one hand free to cast this spell!" ) );
         return;
     }
 
