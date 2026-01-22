@@ -823,7 +823,6 @@
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
     "name": { "str": "Atomic Battery CBM" },
-    "description": "This stripped down mini-reactor will generate impressive amounts of bionic power, but may not be the safest thing to install.  1 plutonium fuel cell provides 1000 charges producing 10kJ of power a turn, while not active & fueled provides a constant 50J of power.",
     "description": "This stripped down mini-reactor will slowly generate indefinite amounts of bionic power, with an integrated plutonium fuel cell producing 50J of power a turn when enabled.",
     "price": "9 kUSD",
     "difficulty": 11
