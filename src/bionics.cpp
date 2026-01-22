@@ -147,7 +147,6 @@ static const skill_id skill_firstaid( "firstaid" );
 static const skill_id skill_mechanics( "mechanics" );
 
 static const bionic_id bio_adrenaline( "bio_adrenaline" );
-static const bionic_id bio_advreactor( "bio_advreactor" );
 static const bionic_id bio_ads( "bio_ads" );
 static const bionic_id bio_blood_anal( "bio_blood_anal" );
 static const bionic_id bio_blood_filter( "bio_blood_filter" );
@@ -173,7 +172,6 @@ static const bionic_id bio_nanobots( "bio_nanobots" );
 static const bionic_id bio_painkiller( "bio_painkiller" );
 static const bionic_id bio_probability_travel( "bio_probability_travel" );
 static const bionic_id bio_radscrubber( "bio_radscrubber" );
-static const bionic_id bio_reactor( "bio_reactor" );
 static const bionic_id bio_remote( "bio_remote" );
 static const bionic_id bio_resonator( "bio_resonator" );
 static const bionic_id bio_shockwave( "bio_shockwave" );
@@ -2141,13 +2139,6 @@ bool Character::can_uninstall_bionic( const bionic_id &b_id, Character &installe
     if( !has_bionic( b_id ) ) {
         popup( _( "%s don't have this bionic installed." ), disp_name() );
         return false;
-    }
-
-    if( ( b_id == bio_reactor ) || ( b_id == bio_advreactor ) ) {
-        if( !g->u.query_yn(
-                _( "WARNING: Removing a reactor may leave radioactive material!  Remove anyway?" ) ) ) {
-            return false;
-        }
     }
 
     for( const bionic &i : get_bionic_collection() ) {
