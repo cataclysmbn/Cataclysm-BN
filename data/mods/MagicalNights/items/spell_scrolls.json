@@ -1001,7 +1001,7 @@
     "id": "spell_scroll_magus_slow",
     "//": "Magus spell",
     "name": { "str": "Scroll of Slow", "str_pl": "Scrolls of Slow" },
-    "description": "You become wily like a fox.",
+    "description": "This spell slows timeflow around your target, resulting in a decrease of speed lasting a short period of time.",
     "use_action": { "type": "learn_spell", "spells": [ "magus_slow" ] }
   },
   {
@@ -1010,7 +1010,7 @@
     "id": "spell_scroll_force_push",
     "//": "Magus spell",
     "name": { "str": "Scroll of Force Push", "str_pl": "Scrolls of Force Push" },
-    "description": "You become wily like a fox.",
+    "description": "Pushes nearby creature away from you.",
     "use_action": { "type": "learn_spell", "spells": [ "force_push" ] }
   },
   {
@@ -1019,7 +1019,7 @@
     "id": "spell_scroll_force_pull",
     "//": "Magus spell",
     "name": { "str": "Scroll of Force Pull", "str_pl": "Scrolls of Force Pull" },
-    "description": "You become wily like a fox.",
+    "description": "Pulls nearby creature towards you.",
     "use_action": { "type": "learn_spell", "spells": [ "force_pull" ] }
   }
 ]
