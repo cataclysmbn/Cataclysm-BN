@@ -560,6 +560,13 @@
   },
   {
     "type": "keybinding",
+    "id": "COMPARE",
+    "category": "CRAFTING",
+    "name": "Compare",
+    "bindings": [ { "input_method": "keyboard", "key": "I" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "HIDE_SHOW_RECIPE",
     "category": "CRAFTING",
     "name": "Hide/show recipe",

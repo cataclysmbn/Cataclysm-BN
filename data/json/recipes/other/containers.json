@@ -216,6 +216,18 @@
   },
   {
     "type": "recipe",
+    "result": "can_food_unsealed",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_CONTAINERS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "20 m",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_intermediate", 1 ] ],
+    "components": [ [ [ "scrap", 3 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "can_medium_unsealed",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_CONTAINERS",
@@ -224,6 +236,17 @@
     "time": "30 m",
     "autolearn": true,
     "using": [ [ "blacksmithing_intermediate", 1 ], [ "steel_tiny", 1 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "can_food_big_unsealed",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_CONTAINERS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "40 m",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_intermediate", 2 ], [ "steel_tiny", 2 ] ]
   },
   {
     "type": "recipe",

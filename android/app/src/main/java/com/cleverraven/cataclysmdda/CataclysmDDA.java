@@ -2,10 +2,11 @@ package com.cleverraven.cataclysmdda;
 
 import org.libsdl.app.SDLActivity;
 
+import java.io.File;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.content.Context;
-import android.os.Vibrator;
+import android.os.*;
 import android.view.View;
 import android.widget.Toast;
 import android.content.res.Configuration;
@@ -13,6 +14,12 @@ import android.content.res.Configuration;
 public class CataclysmDDA extends SDLActivity {
     private static final String TAG = "CDDA";
 
+    public String getDocumentsDirectory() {
+        File file = Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_DOCUMENTS
+        );
+        return file.getAbsolutePath();
+    }
     public void vibrate(int duration) {
         try {
             Vibrator v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
