@@ -25,6 +25,7 @@
 #include "monfaction.h"
 #include "monster.h"
 #include "mtype.h"
+#include "name.h"
 #include "npc.h"
 #include "player.h"
 #include "rng.h"
@@ -438,6 +439,38 @@ void cata::detail::reg_enums( sol::state &lua )
     reg_enum<moon_phase>( lua );
 }
 
+
+
+void cata::detail::reg_names(sol::state& lua)
+{
+    luna::userlib lib = luna::begin_lib( lua, "name" );
+    DOC( "Generates a random full name with an optional boolean for gender, or a random name part using a list of search flags." );
+    DOC( "The loaded name is one of usage with optional gender." );
+    DOC( "The combinations used in names files are as follows:" );
+    DOC( "" );
+    DOC( "Backer | (Female|Male|Unisex)" );
+    DOC( "Given  | (Female|Male)        // unisex names are duplicated in each group" );
+    DOC( "Family | Unisex" );
+    DOC( "Nick" );
+    DOC( "City" );
+    DOC( "World" );
+    luna::set_fx(lib, "generate", sol::overload(
+        []() -> std::string { return Name::generate( one_in( 2 ) ); },
+        []( const bool male ) -> std::string { return Name::generate( male ); },
+        []( sol::variadic_args va ) -> std::string {
+            if ( va.size() == 0 || !va[0].is<std::string>() ) { return std::string(); };
+            nameFlags flags = static_cast<nameFlags>( 0 );
+            // Only 9 flags exist.
+            for (int i = 0; i < std::min((int)va.size(), 10); i++) {
+                flags = flags | Name::usage_flag(va[i].as<std::string>()) | Name::gender_flag(va[i].as<std::string>());
+            }
+            return Name::get(flags);
+        }
+    ));
+
+    luna::finalize_lib(lib);
+}
+
 void cata::detail::reg_hooks_examples( sol::state &lua )
 {
     DOC( "Documentation for hooks" );
@@ -760,6 +793,7 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_game_ids( lua );
     mod_mutation_branch( lua );
     reg_magic( lua );
+    reg_names(lua);
     reg_mission( lua );
     reg_mission_type( lua );
     reg_recipe( lua );
