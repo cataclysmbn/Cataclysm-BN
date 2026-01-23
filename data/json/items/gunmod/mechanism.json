@@ -364,5 +364,26 @@
     "loudness_modifier": -1,
     "min_skills": [ [ "weapon", 4 ], [ "mechanics", 3 ], [ "gun", 2 ] ],
     "flags": [ "NEVER_JAMS", "INSTALL_DIFFICULT", "IRREMOVABLE" ]
+  },
+  {
+    "id": "revolverCylinderExp",
+    "type": "GUNMOD",
+    "name": { "str": "cylinder extension" },
+    "description": "A thicker revolver cylinder which increases the ammo capacity of revolvers.",
+    "weight": "120 g",
+    "volume": "250 ml",
+    "integral_volume": "50 ml",
+    "price": "15 USD",
+    "price_postapoc": "5 USD",
+    "material": [ "steel", "superalloy" ],
+    "symbol": ":",
+    "color": "dark_gray",
+    "location": "mechanism",
+    "mod_target_category": [
+      [ "REVOLVERS" ]
+    ],
+    "install_time": "3 m",
+    "weight_multiplier": 1.4,
+    "capacity_multiplier": 1.4
   }
 ]
