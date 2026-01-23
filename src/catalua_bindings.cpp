@@ -339,19 +339,20 @@ void cata::detail::reg_debug_api( sol::state &lua )
     luna::finalize_lib( lib );
 }
 
-static tm* local_time_impl() {
-    const time_t timestamp = time(nullptr);
-    return localtime(&timestamp);
+static tm *local_time_impl()
+{
+    const time_t timestamp = time( nullptr );
+    return localtime( &timestamp );
 }
 
 // This is from weather.cpp, but requires calandar.h.
 // I don't want to include that here since that's fairly awkward.
 static const std::array<std::string, 7> weekday_names = { {
-            translate_marker( "Sunday" ), translate_marker( "Monday" ),
-            translate_marker( "Tuesday" ), translate_marker( "Wednesday" ),
-            translate_marker( "Thursday" ), translate_marker( "Friday" ),
-            translate_marker( "Saturday" )
-        }
+        translate_marker( "Sunday" ), translate_marker( "Monday" ),
+        translate_marker( "Tuesday" ), translate_marker( "Wednesday" ),
+        translate_marker( "Thursday" ), translate_marker( "Friday" ),
+        translate_marker( "Saturday" )
+    }
 };
 
 void cata::detail::reg_date_time_api( sol::state &lua )
