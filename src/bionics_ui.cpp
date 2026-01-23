@@ -357,7 +357,8 @@ static std::string format_bionic_bonuses( const bionic_bonuses &bonuses )
     std::vector<std::string> bonus_list;
 
     // Helper lambda to add a bonus to the list if it's non-default
-    auto add_float_bonus = [&]( const char *name, float value, float default_val, bool is_percent = false ) {
+    auto add_float_bonus = [&]( const char *name, float value, float default_val,
+    bool is_percent = false ) {
         if( std::abs( value - default_val ) > 0.001f ) {
             if( is_percent ) {
                 bonus_list.push_back( string_format( "%s: %+.0f%%", name, ( value - default_val ) * 100.0f ) );
