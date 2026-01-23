@@ -342,7 +342,7 @@ void vehicle::turrets_aim_and_fire_single( avatar &you )
         return;
     }
     vehicle_part *turret = options[idx];
-    if( !avatar_action::will_fire_turret( you, turret_query(*turret) ) ) {
+    if( !avatar_action::will_fire_turret( you, turret_query( *turret ) ) ) {
         return;
     }
 
@@ -353,7 +353,7 @@ void vehicle::turrets_aim_and_fire_single( avatar &you )
 
 bool vehicle::turrets_aim_and_fire_mult( avatar &you, const turret_filter_types turret_filter,
         const bool show_msg )
-{ 
+{
     std::vector<vehicle_part *> turrets = find_all_ready_turrets( turret_filter );
 
     if( turrets.empty() ) {
@@ -374,8 +374,8 @@ bool vehicle::turrets_aim_and_fire_mult( avatar &you, const turret_filter_types 
         }
         return false;
     }
-    
-    for ( auto turret : turrets ) {
+
+    for( auto turret : turrets ) {
         if( !avatar_action::will_fire_turret( you, turret_query( *turret ) ) ) {
             return false;
         }

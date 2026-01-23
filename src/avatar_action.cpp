@@ -690,7 +690,7 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
     if( you.has_trait( trait_BRAWLER ) ) {
         add_msg( m_good, _( "You refuse to use this ranged weapon." ) );
         return false;
-    } else if ( you.has_trait( trait_GUNSHY ) && weapon.is_firearm() ) {
+    } else if( you.has_trait( trait_GUNSHY ) && weapon.is_firearm() ) {
         add_msg( m_good, _( "You refuse to use this gun." ) );
         return false;
     }
@@ -727,7 +727,7 @@ bool avatar_action::will_fire_turret( avatar &you, const turret_data &turret )
     if( you.has_trait( trait_BRAWLER ) ) {
         add_msg( m_bad, _( "You refuse to use this ranged weapon" ) );
         return false;
-    } else if ( you.has_trait( trait_GUNSHY ) && turret.base().is_firearm() ) {
+    } else if( you.has_trait( trait_GUNSHY ) && turret.base().is_firearm() ) {
         add_msg( m_bad, _( "You refuse to use this gun turret" ) );
         return false;
     }
