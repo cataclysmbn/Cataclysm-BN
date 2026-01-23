@@ -379,9 +379,7 @@
     "symbol": ":",
     "color": "dark_gray",
     "location": "mechanism",
-    "mod_target_category": [
-      [ "REVOLVERS" ]
-    ],
+    "mod_target_category": [ [ "REVOLVERS" ] ],
     "install_time": "3 m",
     "weight_multiplier": 1.4,
     "capacity_multiplier": 1.4
