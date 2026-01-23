@@ -2456,7 +2456,7 @@ static bool mine_activity( player &p, const tripoint &src_loc )
         moves /= 2;
     }
     p.assign_activity( powered ? ACT_JACKHAMMER : ACT_PICKAXE, moves );
-    p.activity->tools.emplace_back( chosen_item );
+    p.activity->add_tool( chosen_item );
     p.activity->placement = here.getabs( src_loc );
     return true;
 
@@ -2476,12 +2476,12 @@ static bool chop_tree_activity( player &p, const tripoint &src_loc )
     const ter_id ter = here.ter( src_loc );
     if( here.has_flag( flag_TREE, src_loc ) ) {
         p.assign_activity( ACT_CHOP_TREE, moves, -1, p.get_item_position( best_qual ) );
-        p.activity->tools.emplace_back( best_qual );
+        p.activity->add_tool( best_qual );
         p.activity->placement = here.getabs( src_loc );
         return true;
     } else if( ter == t_trunk || ter == t_stump ) {
         p.assign_activity( ACT_CHOP_LOGS, moves, -1, p.get_item_position( best_qual ) );
-        p.activity->tools.emplace_back( best_qual );
+        p.activity->add_tool( best_qual );
         p.activity->placement = here.getabs( src_loc );
         return true;
     }
@@ -2956,7 +2956,7 @@ static bool generic_multi_activity_do( player &p, const activity_id &act_id,
         item *best_rod = p.best_quality_item( qual_FISHING );
         p.assign_activity( std::make_unique<player_activity>( ACT_FISH, to_moves<int>( 5_hours ), 0,
                            0, best_rod->tname() ) );
-        p.activity->tools.emplace_back( best_rod );
+        p.activity->add_tool( best_rod );
         p.activity->coord_set = g->get_fishable_locations( ACTIVITY_SEARCH_DISTANCE, src_loc );
         return false;
     } else if( reason == do_activity_reason::NEEDS_MINING ) {
@@ -3316,7 +3316,7 @@ void try_fuel_fire( player_activity &act, player &p, const bool starting_fire )
         // If we specifically need tinder to start this fire, grab it the instant it's found and ignore any other fuel
         if( starting_fire ) {
             // Only track firestarter if we have an activity assigned to light a new fire, or it will implode.
-            item &firestarter = *act.tools.front();
+            item &firestarter = *act.get_tools().front();
             if( firestarter.has_flag( flag_REQUIRES_TINDER ) ) {
                 if( it->has_flag( flag_TINDER ) ) {
                     move_item( p, *it, 1, *refuel_spot, *best_fire );

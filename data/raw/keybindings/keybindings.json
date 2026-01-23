@@ -3270,6 +3270,69 @@
   },
   {
     "type": "keybinding",
+    "id": "FILTER",
+    "category": "NPC_TRADE",
+    "name": "Filter",
+    "bindings": [ { "input_method": "keyboard", "key": "/" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RESET_FILTER",
+    "category": "NPC_TRADE",
+    "name": "Reset filter",
+    "bindings": [ { "input_method": "keyboard", "key": "r" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "CATEGORY_SELECTION",
+    "category": "NPC_TRADE",
+    "name": "Toggle category select",
+    "bindings": [ { "input_method": "keyboard", "key": ";" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "AUTOBALANCE",
+    "category": "NPC_TRADE",
+    "name": "Autobalance trade",
+    "bindings": [ { "input_method": "keyboard", "key": "=" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "TOGGLE_ITEM_INFO",
+    "category": "NPC_TRADE",
+    "name": "Toggle item description",
+    "bindings": [ { "input_method": "keyboard", "key": "+" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "UP",
+    "category": "NPC_TRADE",
+    "name": "Move cursor up",
+    "bindings": [ { "input_method": "keyboard", "key": "UP" }, { "input_method": "gamepad", "key": "JOY_UP" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "DOWN",
+    "category": "NPC_TRADE",
+    "name": "Move cursor down",
+    "bindings": [ { "input_method": "keyboard", "key": "DOWN" }, { "input_method": "gamepad", "key": "JOY_DOWN" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RIGHT",
+    "category": "NPC_TRADE",
+    "name": "Add item to trade",
+    "bindings": [ { "input_method": "keyboard", "key": "RIGHT" }, { "input_method": "gamepad", "key": "JOY_RIGHT" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "LEFT",
+    "category": "NPC_TRADE",
+    "name": "Remove item from trade",
+    "bindings": [ { "input_method": "keyboard", "key": "LEFT" }, { "input_method": "gamepad", "key": "JOY_LEFT" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "PAGE_UP",
     "category": "NPC_TRADE",
     "name": "Back",
@@ -3287,7 +3350,7 @@
     "id": "EXAMINE",
     "category": "NPC_TRADE",
     "name": "Examine item",
-    "bindings": [ { "input_method": "keyboard", "key": "/" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "e" } ]
   },
   {
     "type": "keybinding",

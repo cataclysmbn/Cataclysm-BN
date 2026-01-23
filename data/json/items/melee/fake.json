@@ -20,7 +20,7 @@
     "id": "bio_blade_weapon",
     "type": "GENERIC",
     "category": "weapons",
-    "weapon_category": [ "BIONIC_WEAPONRY", "BIONIC_SWORDS" ],
+    "weapon_category": [ "BIONIC_WEAPONRY", "BIONIC_SWORDS", "FIST_WEAPONS", "SHORT_SWORDS" ],
     "name": { "str": "monomolecular blade" },
     "description": "A 30cm-long blade made from high-tech alloy and edged with bonded nanocrystals.",
     "weight": "100 g",

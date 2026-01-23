@@ -35,7 +35,7 @@
     "id": "crt_airship_balloon_item",
     "symbol": "o",
     "color": "light_gray",
-    "name": { "str": "crt_airship balloon" },
+    "name": { "str": "C.R.I.T. airship balloon" },
     "description": "A big plastic airbag lined with solar panels and filled with hydrogen gas.  Provides lift if installed on a vehicle, but you'll need a propeller to do anything more than float up and down.",
     "price": "5 USD",
     "price_postapoc": "25 cent",

@@ -209,7 +209,7 @@ void player_activity::serialize( JsonOut &json ) const
         json.member( "str_values", str_values );
         json.member( "auto_resume", auto_resume );
         json.member( "monsters", monsters );
-        json.member( "tools", tools );
+        json.member( "tools", tools_ );
         json.member( "moves_total", moves_total );
         json.member( "moves_left", moves_left );
         json.member( "assistants_ids", assistants_ids_ );
@@ -272,7 +272,7 @@ void player_activity::deserialize( JsonIn &jsin )
     str_values = data.get_string_array( "str_values" );
     data.read( "auto_resume", auto_resume );
     data.read( "monsters", monsters );
-    data.read( "tools", tools );
+    data.read( "tools", tools_ );
     data.read( "assistants_ids", assistants_ids_ );
 
 }

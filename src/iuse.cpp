@@ -1752,7 +1752,7 @@ int iuse::fishing_rod( player *p, item *it, bool, const tripoint & )
     }
     p->add_msg_if_player( _( "You cast your line and wait to hook something…" ) );
     p->assign_activity( ACT_FISH, to_moves<int>( 5_hours ), 0, 0, it->tname() );
-    p->activity->tools.emplace_back( it );
+    p->activity->add_tool( it );
     p->activity->placement = *found;
     p->activity->coord_set = g->get_fishable_locations( 60, *found );
     return 0;
@@ -2881,7 +2881,7 @@ int iuse::jackhammer( player *p, item *it, bool, const tripoint &pos )
     moves = moves * ( 10 - helpers.size() ) / 10;
 
     p->assign_activity( ACT_JACKHAMMER, moves );
-    p->activity->tools.emplace_back( it );
+    p->activity->add_tool( it );
     p->activity->placement = g->m.getabs( pnt );
     p->add_msg_if_player( _( "You start drilling into the %1$s with your %2$s." ),
                           g->m.tername( pnt ), it->tname() );
@@ -2973,7 +2973,7 @@ int iuse::pickaxe( player *p, item *it, bool, const tripoint &pos )
     moves = moves * ( 10 - helpers.size() ) / 10;
 
     p->assign_activity( ACT_PICKAXE, moves, -1 );
-    p->activity->tools.emplace_back( it );
+    p->activity->add_tool( it );
     p->activity->placement = g->m.getabs( pnt );
     p->add_msg_if_player( _( "You strike the %1$s with your %2$s." ),
                           g->m.tername( pnt ), it->tname() );
@@ -4078,7 +4078,7 @@ int iuse::hand_crank( player *p, item *it, bool, const tripoint & )
             p->add_msg_if_player( _( "You start cranking the %s to charge its %s." ), it->tname(),
                                   it->magazine_current()->tname() );
             p->assign_activity( ACT_HAND_CRANK, moves, -1, 0, "hand-cranking" );
-            p->activity->tools.emplace_back( it );
+            p->activity->add_tool( it );
         } else {
             p->add_msg_if_player( _( "You could use the %s to charge its %s, but it's already charged." ),
                                   it->tname(), magazine->tname() );
@@ -4125,7 +4125,7 @@ int iuse::vibe( player *p, item *it, bool, const tripoint & )
                                   it->tname() );
         }
         p->assign_activity( ACT_VIBE, moves, -1, 0, "de-stressing" );
-        p->activity->tools.emplace_back( it );
+        p->activity->add_tool( it );
     }
     return it->type->charges_to_use();
 }
@@ -4450,7 +4450,7 @@ int iuse::chop_tree( player *p, item *it, bool t, const tripoint & )
     moves = moves * ( 10 - helpers.size() ) / 10;
 
     p->assign_activity( ACT_CHOP_TREE, moves, -1, p->get_item_position( it ) );
-    p->activity->tools.emplace_back( it );
+    p->activity->add_tool( it );
     p->activity->placement = g->m.getabs( pnt );
 
     return it->type->charges_to_use();
@@ -4497,7 +4497,7 @@ int iuse::chop_logs( player *p, item *it, bool t, const tripoint & )
 
     p->assign_activity( ACT_CHOP_LOGS, moves, -1, p->get_item_position( it ) );
     p->activity->placement = g->m.getabs( pnt );
-    p->activity->tools.emplace_back( it );
+    p->activity->add_tool( it );
 
     return it->type->charges_to_use();
 }
