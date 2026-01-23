@@ -6797,7 +6797,7 @@
     "points": -4,
     "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it. Other ranged weapons, however, are totally fine.",
     "starting_trait": true,
-    "cancels": [ "BRAWLER" ]
+    "cancels": [ "BRAWLER" ],
     "valid": false
   },
   {
