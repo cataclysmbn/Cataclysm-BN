@@ -913,4 +913,5 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_testing_library( lua );
     reg_requirement( lua );
     reg_inventory( lua );
+    reg_mapgendata( lua );
 }
