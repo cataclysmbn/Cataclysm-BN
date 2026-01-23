@@ -333,7 +333,6 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
 
     activated = has_flag( flag_BIONIC_TOGGLED ) ||
                 has_flag( flag_BIONIC_POWER_SOURCE );
-    is_integral = has_flag( flag_BIONIC_INTEGRAL );
 }
 
 void bionic_data::finalize() const
