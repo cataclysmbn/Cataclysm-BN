@@ -6792,6 +6792,15 @@
   },
   {
     "type": "mutation",
+    "id": "GUNSHY",
+    "name": { "str": "Gun Shy" },
+    "points": -4,
+    "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it. Other ranged weapons, however, are totally fine.",
+    "starting_trait": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
     "id": "NOMAD",
     "name": { "str": "Nomad" },
     "points": -1,
