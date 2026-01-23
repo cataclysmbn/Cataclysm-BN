@@ -17,9 +17,9 @@ enum nameFlags {
 namespace Name
 {
 
-nameFlags usage_flag( const std::string& usage );
+nameFlags usage_flag( const std::string &usage );
 
-nameFlags gender_flag( const std::string& gender );
+nameFlags gender_flag( const std::string &gender );
 
 /// Load names from given json file to use for generation
 void load_from_file( const std::string &filename );
