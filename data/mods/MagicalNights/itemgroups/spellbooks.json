@@ -30,7 +30,9 @@
       [ "spell_scroll_biomancer_paralytic_dart", 40 ],
       [ "spell_scroll_biomancer_visceral_projection", 40 ],
       [ "spell_scroll_summon_wisps", 30 ],
-      [ "spell_scroll_stormshaper_wall_of_fog", 35 ]
+      [ "spell_scroll_stormshaper_wall_of_fog", 35 ],
+      [ "spell_scroll_force_push", 50 ],
+      [ "spell_scroll_force_pull", 50 ]
     ]
   },
   {
@@ -93,6 +95,7 @@
       [ "spell_scroll_gravity_well", 35 ],
       [ "spell_scroll_magus_mana_bolt", 35 ],
       [ "spell_scroll_magus_haste", 50 ],
+      [ "spell_scroll_magus_slow", 50 ],
       [ "spell_scroll_magus_mana_beam", 35 ],
       [ "spell_scroll_magus_escape", 50 ],
       [ "spell_scroll_cats_grace", 50 ],
