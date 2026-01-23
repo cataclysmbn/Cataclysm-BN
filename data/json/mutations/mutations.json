@@ -6788,6 +6788,7 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
+    "cancels": [ "GUNSHY" ],
     "valid": false
   },
   {
@@ -6795,7 +6796,7 @@
     "id": "GUNSHY",
     "name": { "str": "Gun Shy" },
     "points": -4,
-    "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it. Other ranged weapons, however, are totally fine.",
+    "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
     "starting_trait": true,
     "cancels": [ "BRAWLER" ],
     "valid": false
