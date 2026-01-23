@@ -2460,6 +2460,47 @@ int Character::get_mod_stat_from_bionic( const character_stat &Stat ) const
     return ret;
 }
 
+const bionic_bonuses &Character::get_bionic_effective_bonuses( const bionic &bio ) const
+{
+    const bionic_id &bid = bio.id;
+    if( bid->activated ) {
+        // Active bionic: use active_bonuses if powered, passive_bonuses if not
+        return bio.powered ? bid->active_bonuses : bid->passive_bonuses;
+    }
+    // Passive bionic: always use passive_bonuses
+    return bid->passive_bonuses;
+}
+
+float Character::get_bionic_bonus_additive( float bionic_bonuses::*member ) const
+{
+    float ret = 0.0f;
+    for( const bionic &bio : get_bionic_collection() ) {
+        const bionic_bonuses &bonuses = get_bionic_effective_bonuses( bio );
+        ret += bonuses.*member;
+    }
+    return ret;
+}
+
+float Character::get_bionic_bonus_multiplicative( float bionic_bonuses::*member ) const
+{
+    float ret = 1.0f;
+    for( const bionic &bio : get_bionic_collection() ) {
+        const bionic_bonuses &bonuses = get_bionic_effective_bonuses( bio );
+        ret *= bonuses.*member;
+    }
+    return ret;
+}
+
+int Character::get_bionic_bonus_additive( int bionic_bonuses::*member ) const
+{
+    int ret = 0;
+    for( const bionic &bio : get_bionic_collection() ) {
+        const bionic_bonuses &bonuses = get_bionic_effective_bonuses( bio );
+        ret += bonuses.*member;
+    }
+    return ret;
+}
+
 detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
         bool interactive, std::optional<location_vector<item>::iterator> position )
 {
@@ -5326,12 +5367,20 @@ void Character::update_health( int external_modifiers )
         set_healthy_mod( -200 );
     }
 
-    // Active leukocyte breeder will keep your health near 100
+    // Calculate effective healthy mod with bionic modifiers
     float effective_healthy_mod = get_healthy_mod();
-    if( has_active_bionic( bio_leukocyte ) ) {
-        // Side effect: dependency
-        mod_healthy_mod( -50, -200 );
-        effective_healthy_mod = 100;
+
+    // Apply bionic healthy_rate as a multiplier to the target health level
+    // healthy_rate > 1.0 boosts health toward max, < 1.0 reduces it toward negative
+    float bionic_healthy_rate = get_bionic_bonus_multiplicative( &bionic_bonuses::healthy_rate );
+    if( bionic_healthy_rate > 1.0f ) {
+        // Positive effect: push effective_healthy_mod toward get_max_healthy()
+        effective_healthy_mod = effective_healthy_mod +
+                                ( get_max_healthy() - effective_healthy_mod ) * ( bionic_healthy_rate - 1.0f );
+    } else if( bionic_healthy_rate < 1.0f ) {
+        // Negative effect: push effective_healthy_mod toward -200
+        effective_healthy_mod = effective_healthy_mod +
+                                ( -200.0f - effective_healthy_mod ) * ( 1.0f - bionic_healthy_rate );
     }
 
     // Health tends toward healthy_mod.

@@ -759,6 +759,7 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_enums( lua );
     reg_game_ids( lua );
     mod_mutation_branch( lua );
+    mod_bionic_data( lua );
     reg_magic( lua );
     reg_mission( lua );
     reg_mission_type( lua );

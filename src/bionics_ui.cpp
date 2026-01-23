@@ -351,6 +351,101 @@ static std::string build_bionic_powerdesc_string( const bionic &bio )
     return power_desc;
 }
 
+// Formats bionic bonuses for display in the UI
+static std::string format_bionic_bonuses( const bionic_bonuses &bonuses )
+{
+    std::vector<std::string> bonus_list;
+
+    // Helper lambda to add a bonus to the list if it's non-default
+    auto add_float_bonus = [&]( const char *name, float value, float default_val, bool is_percent = false ) {
+        if( std::abs( value - default_val ) > 0.001f ) {
+            if( is_percent ) {
+                bonus_list.push_back( string_format( "%s: %+.0f%%", name, ( value - default_val ) * 100.0f ) );
+            } else {
+                bonus_list.push_back( string_format( "%s: %+.1f", name, value ) );
+            }
+        }
+    };
+    auto add_int_bonus = [&]( const char *name, int value ) {
+        if( value != 0 ) {
+            bonus_list.push_back( string_format( "%s: %+d", name, value ) );
+        }
+    };
+
+    // Stat modifiers
+    add_float_bonus( _( "STR" ), bonuses.str_modifier, 0.0f );
+
+    // Health & Healing
+    add_float_bonus( _( "Pain Recovery" ), bonuses.pain_recovery, 0.0f );
+    add_float_bonus( _( "Healing (Awake)" ), bonuses.healing_awake, 0.0f );
+    add_float_bonus( _( "Healing (Rest)" ), bonuses.healing_resting, 0.0f );
+    add_float_bonus( _( "Mending" ), bonuses.mending_modifier, 0.0f, true );
+    add_float_bonus( _( "HP" ), bonuses.hp_modifier, 0.0f, true );
+    add_float_bonus( _( "HP Adjust" ), bonuses.hp_adjustment, 0.0f );
+    add_float_bonus( _( "Health Rate" ), bonuses.healthy_rate, 1.0f, true );
+    add_float_bonus( _( "Bleed Resist" ), bonuses.bleed_resist, 0.0f, true );
+
+    // Combat bonuses
+    add_int_bonus( _( "Cut Dmg" ), bonuses.cut_dmg_bonus );
+    add_float_bonus( _( "Pierce Dmg" ), bonuses.pierce_dmg_bonus, 0.0f );
+    add_int_bonus( _( "Bash Dmg" ), bonuses.bash_dmg_bonus );
+
+    // Movement & Speed
+    add_float_bonus( _( "Dodge" ), bonuses.dodge_modifier, 0.0f );
+    add_float_bonus( _( "Speed" ), bonuses.speed_modifier, 1.0f, true );
+    add_float_bonus( _( "Move Cost" ), bonuses.movecost_modifier, 1.0f, true );
+    add_float_bonus( _( "Attack Cost" ), bonuses.attackcost_modifier, 1.0f, true );
+
+    // Physical capabilities
+    add_float_bonus( _( "Fall Dmg" ), bonuses.falling_damage_multiplier, 1.0f, true );
+    add_float_bonus( _( "Max Stamina" ), bonuses.max_stamina_modifier, 1.0f, true );
+    add_float_bonus( _( "Stamina Regen" ), bonuses.stamina_regen_modifier, 0.0f, true );
+    add_float_bonus( _( "Weight Capacity" ), bonuses.weight_capacity_modifier, 1.0f, true );
+
+    // Perception & Stealth
+    add_float_bonus( _( "Hearing" ), bonuses.hearing_modifier, 1.0f, true );
+    add_float_bonus( _( "Noise" ), bonuses.noise_modifier, 1.0f, true );
+    add_float_bonus( _( "Stealth" ), bonuses.stealth_modifier, 0.0f );
+    add_float_bonus( _( "Night Vision" ), bonuses.night_vision_range, 0.0f );
+
+    // Environment
+    if( bonuses.bodytemp_min != 0 ) {
+        bonus_list.push_back( string_format( _( "Body Temp Min: %+d" ), bonuses.bodytemp_min ) );
+    }
+    if( bonuses.bodytemp_max != 0 ) {
+        bonus_list.push_back( string_format( _( "Body Temp Max: %+d" ), bonuses.bodytemp_max ) );
+    }
+    add_float_bonus( _( "Scent" ), bonuses.scent_modifier, 1.0f, true );
+
+    // Resource consumption
+    add_float_bonus( _( "Metabolism" ), bonuses.metabolism_modifier, 0.0f, true );
+    add_float_bonus( _( "Thirst" ), bonuses.thirst_modifier, 0.0f, true );
+    add_float_bonus( _( "Fatigue" ), bonuses.fatigue_modifier, 0.0f, true );
+    add_float_bonus( _( "Fatigue Regen" ), bonuses.fatigue_regen_modifier, 0.0f, true );
+
+    // Skills & Crafting
+    add_float_bonus( _( "Reading Speed" ), bonuses.reading_speed_multiplier, 1.0f, true );
+    add_float_bonus( _( "Skill Rust" ), bonuses.skill_rust_multiplier, 1.0f, true );
+    add_float_bonus( _( "Crafting Speed" ), bonuses.crafting_speed_modifier, 1.0f, true );
+    add_float_bonus( _( "Construction Speed" ), bonuses.construction_speed_modifier, 1.0f, true );
+    add_float_bonus( _( "Packmule" ), bonuses.packmule_modifier, 1.0f, true );
+
+    // Overmap
+    add_float_bonus( _( "Overmap Sight" ), bonuses.overmap_sight, 0.0f );
+    add_float_bonus( _( "Overmap Mult" ), bonuses.overmap_multiplier, 1.0f, true );
+
+    // Mana
+    add_float_bonus( _( "Mana" ), bonuses.mana_modifier, 0.0f, true );
+    add_float_bonus( _( "Mana Mult" ), bonuses.mana_multiplier, 1.0f, true );
+    add_float_bonus( _( "Mana Regen" ), bonuses.mana_regen_multiplier, 1.0f, true );
+
+    if( bonus_list.empty() ) {
+        return std::string();
+    }
+
+    return enumerate_as_string( bonus_list, enumeration_conjunction::none );
+}
+
 static void draw_bionics_tabs( const catacurses::window &win, const size_t active_num,
                                const size_t passive_num, const bionic_tab_mode current_mode )
 {
@@ -391,6 +486,28 @@ static void draw_description( const catacurses::window &win, const bionic &bio,
                                 _( "Power usage: %s" ), poweronly_string );
     }
     ypos += 1 + fold_and_print( win, point( 0, ypos ), width, c_light_blue, "%s", bio.id->description );
+
+    // Display bionic bonuses
+    const bionic_bonuses &effective_bonuses = who.get_bionic_effective_bonuses( bio );
+    std::string bonus_str = format_bionic_bonuses( effective_bonuses );
+    if( !bonus_str.empty() ) {
+        std::string bonus_label;
+        if( bio.id->activated ) {
+            bonus_label = bio.powered ? _( "Active bonuses: " ) : _( "Passive bonuses: " );
+        } else {
+            bonus_label = _( "Bonuses: " );
+        }
+        ypos += fold_and_print( win, point( 0, ypos ), width, c_green, "%s%s", bonus_label, bonus_str );
+    }
+    // If this is an activated bionic that's not powered, also show what active bonuses it would give
+    if( bio.id->activated && !bio.powered && bio.id->active_bonuses.has_any() ) {
+        std::string active_str = format_bionic_bonuses( bio.id->active_bonuses );
+        if( !active_str.empty() ) {
+            ypos += fold_and_print( win, point( 0, ypos ), width, c_light_green,
+                                    _( "When activated: %s" ), active_str );
+        }
+    }
+
     if( !bio.info().activated && bio.info().power_over_time > 0_kJ &&
         bio.is_this_fuel_powered( STATIC( itype_id( "metabolism" ) ) ) ) {
         ypos += fold_and_print( win, point( 0, ypos ), width, c_light_blue,
@@ -399,8 +516,8 @@ static void draw_description( const catacurses::window &win, const bionic &bio,
     if( bio.info().has_flag( flag_MULTIINSTALL ) ) {
         int count = who.count_bionic_of_type( bio.id );
         if( count != 1 ) {
-            fold_and_print( win, point( 0, ypos ), width, c_magenta,
-                            "You have %s instances of this bionic installed.", count );
+            ypos += fold_and_print( win, point( 0, ypos ), width, c_magenta,
+                                    "You have %s instances of this bionic installed.", count );
         }
     }
     // TODO: Unhide when enforcing limits

@@ -6,7 +6,6 @@
     "name": { "str": "Bionic Stomach CBM" },
     "looks_like": "bio_digestion",
     "description": "A simple stomach replacement. It takes up significantly less room than a biologic stomach, but prevents the use of other digestive bionics and requires minor upkeep.",
-    "flags": [ "BIONIC_INTEGRAL" ],
     "price": "1200 USD",
     "difficulty": 5
   }

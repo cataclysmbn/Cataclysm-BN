@@ -99,7 +99,6 @@ static const skill_id skill_swimming( "swimming" );
 static const skill_id skill_traps( "traps" );
 
 static const bionic_id bio_ground_sonar( "bio_ground_sonar" );
-static const bionic_id bio_hydraulics( "bio_hydraulics" );
 static const bionic_id bio_speed( "bio_speed" );
 
 static const itype_id itype_UPS( "UPS" );
@@ -776,14 +775,17 @@ void Character::reset_stats()
     }
 
     // Bionic buffs
-    if( has_active_bionic( bio_hydraulics ) ) {
-        mod_str_bonus( 20 );
-    }
-
     mod_str_bonus( get_mod_stat_from_bionic( character_stat::STRENGTH ) );
     mod_dex_bonus( get_mod_stat_from_bionic( character_stat::DEXTERITY ) );
     mod_per_bonus( get_mod_stat_from_bionic( character_stat::PERCEPTION ) );
     mod_int_bonus( get_mod_stat_from_bionic( character_stat::INTELLIGENCE ) );
+
+    // Bionic bonus modifiers (replaces hardcoded bio_hydraulics and others)
+    mod_str_bonus( std::floor( get_bionic_bonus_additive( &bionic_bonuses::str_modifier ) ) );
+    mod_dex_bonus( std::floor( get_bionic_bonus_additive( &bionic_bonuses::dex_modifier ) ) );
+    mod_per_bonus( std::floor( get_bionic_bonus_additive( &bionic_bonuses::per_modifier ) ) );
+    mod_int_bonus( std::floor( get_bionic_bonus_additive( &bionic_bonuses::int_modifier ) ) );
+    mod_dodge_bonus( std::floor( get_bionic_bonus_additive( &bionic_bonuses::dodge_modifier ) ) );
 
     // Trait / mutation buffs
     mod_str_bonus( std::floor( mutation_value( "str_modifier" ) ) );
@@ -824,7 +826,9 @@ void Character::reset_stats()
     recalc_sight_limits();
     recalc_speed_bonus();
 
-    cata::run_hooks( "on_character_reset_stats", [this]( auto & params ) { params["character"] = this; } );
+    cata::run_hooks( "on_character_reset_stats", [this]( auto & params ) {
+        params["character"] = this;
+    } );
 }
 
 void Character::environmental_revert_effect()

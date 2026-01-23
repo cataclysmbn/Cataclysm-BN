@@ -35,6 +35,7 @@ void reg_mission( sol::state &lua );
 void reg_mission_type( sol::state &lua );
 void reg_monster( sol::state &lua );
 void mod_mutation_branch( sol::state &lua );
+void mod_bionic_data( sol::state &lua );
 void reg_magic( sol::state &lua );
 void reg_npc( sol::state &lua );
 void reg_overmap( sol::state &lua );

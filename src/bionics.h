@@ -12,6 +12,7 @@
 #include "calendar.h"
 #include "catalua_type_operators.h"
 #include "flat_set.h"
+#include "pldata.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
@@ -25,6 +26,94 @@ class Character;
 class player;
 
 enum class character_stat : char;
+
+/**
+ * Bonus modifiers that can be applied by bionics.
+ * Mirrors many fields from mutation_branch for consistency.
+ * Used for both passive_bonuses and active_bonuses in bionic_data.
+ */
+struct bionic_bonuses {
+    // Stat modifiers (replicates mutation pattern)
+    float str_modifier = 0.0f;
+    float dex_modifier = 0.0f;
+    float int_modifier = 0.0f;
+    float per_modifier = 0.0f;
+
+    // Health & Healing
+    float pain_recovery = 0.0f;
+    float healing_awake = 0.0f;
+    float healing_resting = 0.0f;
+    float mending_modifier = 0.0f;
+    float hp_modifier = 0.0f;
+    float hp_modifier_secondary = 0.0f;
+    float hp_adjustment = 0.0f;
+    float healthy_rate = 1.0f;
+    float bleed_resist = 0.0f;
+
+    // Combat bonuses
+    int cut_dmg_bonus = 0;
+    float pierce_dmg_bonus = 0.0f;
+    int bash_dmg_bonus = 0;
+
+    // Movement & Speed
+    float dodge_modifier = 0.0f;
+    float speed_modifier = 1.0f;
+    float movecost_modifier = 1.0f;
+    float movecost_flatground_modifier = 1.0f;
+    float movecost_obstacle_modifier = 1.0f;
+    float movecost_swim_modifier = 1.0f;
+    float attackcost_modifier = 1.0f;
+
+    // Physical capabilities
+    float falling_damage_multiplier = 1.0f;
+    float max_stamina_modifier = 1.0f;
+    float stamina_regen_modifier = 0.0f;
+    float weight_capacity_modifier = 1.0f;
+
+    // Perception & Stealth
+    float hearing_modifier = 1.0f;
+    float noise_modifier = 1.0f;
+    float stealth_modifier = 0.0f;
+    float night_vision_range = 0.0f;
+
+    // Environment
+    int bodytemp_min = 0;
+    int bodytemp_max = 0;
+    int bodytemp_sleep = 0;
+    float temperature_speed_modifier = 0.0f;
+    float scent_modifier = 1.0f;
+
+    // Resource consumption
+    float metabolism_modifier = 0.0f;
+    float thirst_modifier = 0.0f;
+    float fatigue_modifier = 0.0f;
+    float fatigue_regen_modifier = 0.0f;
+
+    // Skills & Crafting
+    float reading_speed_multiplier = 1.0f;
+    float skill_rust_multiplier = 1.0f;
+    float crafting_speed_modifier = 1.0f;
+    float construction_speed_modifier = 1.0f;
+    float packmule_modifier = 1.0f;
+    std::map<skill_id, int> craft_skill_bonus;
+
+    // Overmap
+    float overmap_sight = 0.0f;
+    float overmap_multiplier = 1.0f;
+
+    // Social (infrastructure for future bio_face_mask, bio_voice, bio_deformity conversion)
+    social_modifiers social_mods;
+
+    // Mana
+    float mana_modifier = 0.0f;
+    float mana_multiplier = 1.0f;
+    float mana_regen_multiplier = 1.0f;
+
+    /** Returns true if any field differs from its default value */
+    bool has_any() const;
+
+    void load( const JsonObject &jo, bool strict );
+};
 
 struct bionic_data {
     bionic_data();
@@ -62,6 +151,10 @@ struct bionic_data {
     units::mass weight_capacity_bonus = 0_gram;
     /**Map of stats and their corresponding bonuses passively granted by a bionic*/
     std::map<character_stat, int> stat_bonus;
+    /**Bonuses applied when bionic is passive, or when activatable bionic is NOT powered*/
+    bionic_bonuses passive_bonuses;
+    /**Bonuses applied when activatable bionic IS powered (replaces passive_bonuses)*/
+    bionic_bonuses active_bonuses;
     /**This bionic draws power through a cable*/
     bool is_remote_fueled = false;
     /**This bionic draws power through a cable*/
@@ -155,6 +248,12 @@ struct bionic_data {
 
     std::set<flag_id> flags;
     bool has_flag( const flag_id &flag ) const;
+
+    // Helper methods for bionic type checking
+    bool is_power_source() const;
+    bool is_toggled() const;
+    bool is_gun() const;
+    bool is_weapon() const;
 
     itype_id itype() const;
 

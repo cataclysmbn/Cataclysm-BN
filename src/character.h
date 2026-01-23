@@ -1073,6 +1073,25 @@ class Character : public Creature, public location_visitable<Character>
         void update_fuel_storage( const itype_id &fuel );
         /**Get stat bonus from bionic*/
         int get_mod_stat_from_bionic( const character_stat &Stat ) const;
+
+        /**
+         * Get the effective bionic_bonuses for a specific bionic based on its power state.
+         * For passive bionics, always returns passive_bonuses.
+         * For activatable bionics, returns active_bonuses if powered, passive_bonuses otherwise.
+         */
+        const bionic_bonuses &get_bionic_effective_bonuses( const bionic &bio ) const;
+
+        /**
+         * Aggregate a specific bonus field from all installed bionics.
+         * Respects active/passive state of each bionic.
+         * @param member Pointer-to-member for the field to aggregate
+         * For additive bonuses (damage, flat stats), values are summed.
+         * For multiplicative bonuses (speed, modifiers), values are multiplied.
+         */
+        float get_bionic_bonus_additive( float bionic_bonuses::*member ) const;
+        float get_bionic_bonus_multiplicative( float bionic_bonuses::*member ) const;
+        int get_bionic_bonus_additive( int bionic_bonuses::*member ) const;
+
         /** Handles bionic effects over time of the entered bionic */
         void process_bionic( bionic &bio );
         /** Handles bionic deactivation effects of the entered bionic, returns if anything

@@ -989,6 +989,9 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
                                  weap.is_null();
         if( left_empty || right_empty ) {
             float per_hand = 0.0f;
+            // Add bionic bash damage bonuses
+            per_hand += c.get_bionic_bonus_additive( &bionic_bonuses::bash_dmg_bonus );
+
             for( const trait_id &mut : c.get_mutations() ) {
                 if( mut->flags.contains( trait_flag_NEED_ACTIVE_TO_MELEE ) &&
                     !c.has_active_mutation( mut ) ) {
@@ -1081,9 +1084,8 @@ void melee::roll_cut_damage( const Character &c, bool crit, damage_instance &di,
                                  weap.is_null();
         if( left_empty || right_empty ) {
             float per_hand = 0.0f;
-            if( c.has_bionic( bionic_id( "bio_razors" ) ) ) {
-                per_hand += 2;
-            }
+            // Add bionic cut damage bonuses
+            per_hand += c.get_bionic_bonus_additive( &bionic_bonuses::cut_dmg_bonus );
 
             for( const trait_id &mut : c.get_mutations() ) {
                 if( mut->flags.contains( trait_flag_NEED_ACTIVE_TO_MELEE ) &&
