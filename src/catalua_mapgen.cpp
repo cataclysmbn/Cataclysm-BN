@@ -3,8 +3,11 @@
 #include "catalua_impl.h"
 #include "init.h"
 #include "player.h"
+#include "game.h"
+#include "mapgendata.h"
 
-mapgen_function_lua::mapgen_function_lua( const std::string &func, int weight ) : mapgen_function( weight )
+mapgen_function_lua::mapgen_function_lua( const std::string &func,
+        int weight ) : mapgen_function( weight )
 {
     sol::state &lua = DynamicDataLoader::get_instance().lua->lua;
     sol::object ref = lua.globals()["game"]["mapgen_functions"][func];
