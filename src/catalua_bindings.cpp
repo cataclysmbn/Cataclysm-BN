@@ -1,5 +1,7 @@
-#include "catalua_bindings.h"
+#include <ctime>
+#include <chrono>
 
+#include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
 #include "catalua.h"
 #include "catalua_log.h"
@@ -333,6 +335,28 @@ void cata::detail::reg_debug_api( sol::state &lua )
     luna::set_fx( lib, "set_log_capacity", []( int v ) { cata::get_lua_log_instance().set_log_capacity( v ); } );
     luna::set_fx( lib, "reload_lua_code", &cata::reload_lua_code );
     luna::set_fx( lib, "save_game", []() -> bool { return g->save( false ); } );
+
+    luna::finalize_lib( lib );
+}
+
+void cata::detail::reg_date_time_api(sol::state& lua)
+{
+    DOC( "System date and time API." );
+    luna::userlib lib = luna::begin_lib( lua, "date_time" ) ;
+
+    const time_t timestamp = time( nullptr );
+    const tm* loc = localtime( &timestamp );
+
+    luna::set_fx( lib, "year", loc->tm_year + 1900 );
+    luna::set_fx( lib, "month", loc->tm_mon + 1 );
+    luna::set_fx( lib, "day", loc->tm_mday );
+    luna::set_fx( lib, "hour", loc->tm_hour );
+    luna::set_fx( lib, "minute", loc->tm_min );
+    luna::set_fx( lib, "second", loc->tm_sec );
+    luna::set_fx( lib, "milliseconds", []() -> int {
+        auto now = std::chrono::system_clock::now().time_since_epoch();
+        return std::chrono::duration_cast<std::chrono::milliseconds>( now ).count() % 1000;
+    });
 
     luna::finalize_lib( lib );
 }
