@@ -439,7 +439,8 @@ void cata::detail::reg_enums( sol::state &lua )
     reg_enum<moon_phase>( lua );
 }
 
-static const auto lowercase = []( std::string t ) {
+static const auto lowercase = []( std::string t )
+{
     if( !t.empty() ) {
         t.front() = std::tolower( t.front() );
     }
@@ -448,18 +449,17 @@ static const auto lowercase = []( std::string t ) {
 
 namespace Name
 {
-    std::string string_search(sol::variadic_args va)
-    {
-        nameFlags flags = static_cast<nameFlags>(0);
-        // Only 9 flags exist, so cap
-        for (int i = 0; i < std::min(static_cast<int>(va.size()), 10); i++)
-        {
-            if (!va[i].is<std::string>()) { continue; }
-            auto in = lowercase(va.get<std::string>(i));
-            flags = flags | usage_flag(in) | gender_flag(in);
-        }
-        return get(flags);
+std::string string_search( sol::variadic_args va )
+{
+    nameFlags flags = static_cast<nameFlags>( 0 );
+    // Only 9 flags exist, so cap
+    for( int i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
+        if( !va[i].is<std::string>() ) { continue; }
+        auto in = lowercase( va.get<std::string>( i ) );
+        flags = flags | usage_flag( in ) | gender_flag( in );
     }
+    return get( flags );
+}
 }
 void cata::detail::reg_names( sol::state &lua )
 {
@@ -475,14 +475,14 @@ void cata::detail::reg_names( sol::state &lua )
     DOC( "City" );
     DOC( "World" );
     luna::set_fx( lib, "generate", []( const sol::optional<bool> male ) -> std::string {
-        if ( male.has_value() ) { return Name::generate( male.value() ); }
+        if( male.has_value() ) { return Name::generate( male.value() ); }
         return Name::generate( one_in( 2 ) );
-    });
-    DOC("Generates a single name using any combination of search flags.");
-    luna::set_fx(lib, "pick", []( sol::variadic_args va ) -> std::string {
-        if ( va.size() < 1 || !va[0].is<std::string>() ) { return std::string(); };
+    } );
+    DOC( "Generates a single name using any combination of search flags." );
+    luna::set_fx( lib, "pick", []( sol::variadic_args va ) -> std::string {
+        if( va.size() < 1 || !va[0].is<std::string>() ) { return std::string(); };
         return Name::string_search( va );
-    });
+    } );
 
     luna::finalize_lib( lib );
 }
