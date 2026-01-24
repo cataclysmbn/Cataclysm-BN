@@ -221,10 +221,6 @@ std::string PATH_INFO::moddir()
 {
     return datadir_value + "mods/";
 }
-std::string PATH_INFO::externalmoddir()
-{
-    return base_path_value + "mods/";
-}
 std::string PATH_INFO::options()
 {
     return options_value;

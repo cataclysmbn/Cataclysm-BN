@@ -156,7 +156,6 @@ void mod_manager::refresh_mod_list()
     clear();
 
     add_mods( mod_management::load_mods_from( PATH_INFO::moddir() ) );
-    add_mods( mod_management::load_mods_from( PATH_INFO::externalmoddir() ) );
     add_mods( mod_management::load_mods_from( PATH_INFO::user_moddir() ) );
 
     std::optional<t_mod_list> default_list = mod_management::load_mod_list(
