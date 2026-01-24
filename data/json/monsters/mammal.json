@@ -100,7 +100,7 @@
     "melee_cut": 2,
     "dodge": 2,
     "harvest": "mammal_fur",
-    "special_attacks": [ [ "EAT_FOOD", 60 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 7200 ] ],
     "upgrades": { "age_grow": 480, "into": "mon_bear" },
     "petfood": {
       "food": [ "DOGFOOD" ],
@@ -146,7 +146,7 @@
     "reproduction": { "baby_monster": "mon_bear_cub", "baby_count": 1, "baby_timer": 700 },
     "//": "220 days gestation period, the mother and cubs remain together for 16-17 months.",
     "baby_flags": [ "SPRING" ],
-    "special_attacks": [ [ "EAT_FOOD", 20 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 2400 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "BASHES", "ATTACKMON" ],
     "upgrades": { "half_life": 42, "into": "mon_bear_armored" }
   },
@@ -210,7 +210,7 @@
     "anger_triggers": [ "PLAYER_WEAK" ],
     "fear_triggers": [ "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 120 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 14400 ] ],
     "flags": [ "SEES", "SMELLS", "HEARS", "WARM", "SWIMS", "ANIMAL", "STUMBLES", "PATH_AVOID_DANGER_1" ]
   },
   {
@@ -244,7 +244,7 @@
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
     "upgrades": { "age_grow": 38, "into": "mon_boar_wild" },
-    "special_attacks": [ [ "EAT_FOOD", 40 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 4800 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ],
     "petfood": { "food": [ "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s squeals happily at you." }
   },
@@ -284,7 +284,7 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 20 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 2400 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ],
     "petfood": { "food": [ "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s squeals happily at you." }
   },
@@ -707,7 +707,7 @@
     "death_function": [ "NORMAL" ],
     "harvest": "mammal_large_leather",
     "upgrades": { "age_grow": 180, "into": "mon_cow" },
-    "special_attacks": [ [ "EAT_CROP", 60 ] ],
+    "special_attacks": [ [ "EAT_CROP", 7200 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "PET_WONT_FOLLOW" ]
   },
@@ -746,7 +746,7 @@
     "harvest": "mammal_large_leather",
     "reproduction": { "baby_monster": "mon_cow_calf", "baby_count": 1, "baby_timer": 343 },
     "baby_flags": [ "SPRING", "SUMMER", "AUTUMN" ],
-    "special_attacks": [ [ "EAT_CROP", 40 ] ],
+    "special_attacks": [ [ "EAT_CROP", 4800 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "PET_WONT_FOLLOW", "MILKABLE" ]
   },
@@ -887,7 +887,7 @@
     "reproduction": { "baby_monster": "mon_deer_fawn", "baby_count": 1, "baby_timer": 330 },
     "//": " 201 days gestation period. The fawn will stay with its mother for approximately one year, suckling for three to four months.",
     "baby_flags": [ "SPRING", "SUMMER" ],
-    "special_attacks": [ [ "EAT_CROP", 60 ] ],
+    "special_attacks": [ [ "EAT_CROP", 7200 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM" ],
     "petfood": {
       "food": [ "CATTLEFOOD" ],
@@ -1030,7 +1030,7 @@
     "path_settings": { "max_dist": 10 },
     "upgrades": { "age_grow": 42, "into": "mon_dog_bull" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1103,7 +1103,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_pitbullmix" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1178,7 +1178,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_beagle" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1250,7 +1250,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_bcollie" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1307,7 +1307,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_boxer" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1394,7 +1394,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_chihuahua" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1469,7 +1469,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_dachshund" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1529,7 +1529,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_gshepherd" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1605,7 +1605,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_gpyrenees" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1681,7 +1681,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_rottweiler" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1755,7 +1755,7 @@
     "upgrades": { "age_grow": 42, "into": "mon_dog_auscattle" },
     "fear_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 100 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 12000 ] ],
     "petfood": {
       "food": [ "DOGFOOD" ],
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
@@ -1910,7 +1910,7 @@
     "placate_triggers": [ "PLAYER_WEAK" ],
     "harvest": "mammal_large_leather",
     "upgrades": { "age_grow": 450, "into": "mon_horse" },
-    "special_attacks": [ [ "EAT_CROP", 100 ] ],
+    "special_attacks": [ [ "EAT_CROP", 12000 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PET_WONT_FOLLOW", "PATH_AVOID_DANGER_1", "WARM", "NO_BREED" ]
   },
@@ -1944,7 +1944,7 @@
     "harvest": "mammal_large_leather",
     "reproduction": { "baby_monster": "mon_horse_foal", "baby_count": 1, "baby_timer": 360 },
     "baby_flags": [ "SPRING", "SUMMER", "AUTUMN" ],
-    "special_attacks": [ [ "EAT_CROP", 60 ] ],
+    "special_attacks": [ [ "EAT_CROP", 7200 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PET_WONT_FOLLOW", "PET_MOUNTABLE", "PATH_AVOID_DANGER_1", "WARM" ]
   },
@@ -2038,7 +2038,7 @@
     "baby_flags": [ "AUTUMN" ],
     "//": "Baby moose don't actually exist (yet), but autumn is their mating season so baby_flags is defined so that they get angry then",
     "harvest": "mammal_large_fur",
-    "special_attacks": [ [ "EAT_CROP", 60 ] ],
+    "special_attacks": [ [ "EAT_CROP", 7200 ] ],
     "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "BLEED", "ATTACKMON" ]
   },
   {
@@ -2195,7 +2195,7 @@
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
     "upgrades": { "age_grow": 38, "into": "mon_pig" },
-    "special_attacks": [ [ "EAT_FOOD", 40 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 4800 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "PET_WONT_FOLLOW", "WARM", "KEENNOSE", "BLEED" ]
   },
@@ -2232,7 +2232,7 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_FOOD", 20 ] ],
+    "special_attacks": [ [ "EAT_FOOD", 2400 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ]
   },
@@ -2412,7 +2412,7 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE", "FRIEND_ATTACKED" ],
     "placate_triggers": [ "PLAYER_WEAK" ],
     "death_function": [ "NORMAL" ],
-    "special_attacks": [ [ "EAT_CROP", 120 ] ],
+    "special_attacks": [ [ "EAT_CROP", 14400 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "SHEARABLE", "PATH_AVOID_DANGER_1", "WARM", "PET_WONT_FOLLOW", "MILKABLE" ]
   },
