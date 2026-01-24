@@ -344,9 +344,9 @@
     "color": "light_gray",
     "covers": [ "feet" ],
     "coverage": 100,
-    "encumbrance": 27,
+    "encumbrance": 25,
     "warmth": 20,
-    "material_thickness": 4,
+    "material_thickness": 5,
     "environmental_protection": 1,
     "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
   },

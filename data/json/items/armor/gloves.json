@@ -60,7 +60,7 @@
     "color": "light_red",
     "covers": [ "hands" ],
     "coverage": 100,
-    "encumbrance": 30,
+    "encumbrance": 20,
     "material_thickness": 4,
     "flags": [ "VARSIZE", "STURDY" ]
   },
@@ -555,9 +555,9 @@
     "color": "light_gray",
     "covers": [ "hands" ],
     "coverage": 100,
-    "encumbrance": 20,
+    "encumbrance": 25,
     "warmth": 20,
-    "material_thickness": 4,
+    "material_thickness": 5,
     "environmental_protection": 1,
     "flags": [ "VARSIZE", "STURDY" ]
   },
