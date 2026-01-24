@@ -51,6 +51,7 @@
 #include "wcwidth.h"
 #include "worldfactory.h"
 #include "game_info.h"
+
 enum class main_menu_opts : int {
     MOTD = 0,
     NEWCHAR = 1,
