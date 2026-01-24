@@ -34,6 +34,7 @@ std::string main_menu_tips();
 std::string lastworld();
 std::string memorialdir();
 std::string moddir();
+std::string externalmoddir();
 std::string options();
 std::string panel_options();
 std::string safemode();
