@@ -522,6 +522,11 @@
   },
   {
     "type": "profession_item_substitutions",
+    "item": "reading_light",
+    "bonus": { "present": [ "NYCTOPHOBIA" ] }
+  },
+  {
+    "type": "profession_item_substitutions",
     "item": "inhaler",
     "bonus": { "present": [ "ASTHMA" ] }
   },

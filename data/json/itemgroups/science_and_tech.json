@@ -516,7 +516,7 @@
       { "item": "bio_reactor", "prob": 10 },
       { "item": "bio_advreactor", "prob": 10 },
       { "item": "bio_reactor_upgrade", "prob": 5 },
-      { "item": "huge_atomic_battery_cell", "prob": 25 }
+      { "item": "huge_atomic_battery_cell", "prob": 25, "charges": [ 50000, 100000 ] }
     ]
   }
 ]

@@ -628,7 +628,7 @@
     "required_str": 4,
     "flags": [ "TRANSPARENT", "FLAMMABLE", "PLACE_ITEM", "BLOCKSDOOR", "MOUNTABLE" ],
     "deconstruct": { "items": [ { "item": "nail", "charges": 8 }, { "item": "2x4", "count": 3 } ] },
-    "max_volume": "30 L",
+    "max_volume": "100 L",
     "bash": {
       "str_min": 6,
       "str_max": 30,

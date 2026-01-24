@@ -123,6 +123,21 @@ local scraps = gapi.create_item(ItypeId.new("scrap"), 3)
 target_monster:as_monster():add_item(scraps)
 ```
 
+## NPC
+
+### NPC 생성 및 삭제
+
+```lua
+local player = gapi.get_avatar()
+local map = gapi.get_map()
+local player_pos = player:get_pos_ms()
+local place_point = player_pos:xy() + Point.new(0, 2)
+local new_npc = map:place_npc(place_point, "thug")
+
+-- 나중에 NPC를 조용히 삭제할 수 있습니다
+new_npc:erase()
+```
+
 ## 날씨 훅
 
 ### 날씨 변화에 반응하기
@@ -391,6 +406,36 @@ mod.on_creature_melee_attacked = function(params)
     end
 end
 ```
+
+## 캐릭터 함정 인식
+
+### 함정 확인 및 기억하기
+
+먼저 함정을 설치합니다:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+-- tr_landmine_buried는 가시성이 20입니다. 찾기 매우 어렵습니다.
+local mine = TrapId.new("tr_landmine_buried"):int_id()
+m:set_trap_at(pos4x, mine)
+print(tostring(u:knows_trap(pos4x)))
+```
+
+그 다음 캐릭터가 함정을 인식하도록 합니다:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+u:add_known_trap(pos4x, m:get_trap_at(pos4x))
+print(tostring(u:knows_trap(pos4x)))
+```
+
+두 번째 스크립트를 실행한 후에는 함정을 밟지 않고도 함정이 설치된 위치를 볼 수 있습니다.
 
 ## 아이템 타입 정보
 
