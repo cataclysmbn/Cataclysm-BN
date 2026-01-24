@@ -368,7 +368,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 4 ], [ "advanced_electronics", 4 ], [ "textbook_electronics", 4 ] ],
     "flags": [ "NO_RESIZE" ],
-    "components": [ [ [ "chainmail_suit", 1 ] ], [ [ "cable", 200 ] ] ]
+    "components": [ [ [ "chainmail_suit", 1 ] ], [ [ "chainmail_hands", 1 ] ], [ [ "chainmail_feet", 1 ] ], [ [ "cable", 200 ] ] ]
   },
   {
     "result": "cloak",
