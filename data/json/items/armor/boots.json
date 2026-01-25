@@ -358,7 +358,7 @@
     "description": "A set of armor plated boots, made with lightweight superalloy.",
     "material": [ "superalloy", "leather" ],
     "color": "light_cyan",
-    "encumbrance": 23,
+    "encumbrance": 20,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
