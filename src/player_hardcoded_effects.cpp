@@ -1072,7 +1072,7 @@ void Character::hardcoded_effects( effect &it )
             set_fatigue( 25 ); //Prevent us from waking up naturally while under anesthesia
         }
 
-        if( get_fatigue() <= 10 && !has_effect( effect_narcosis ) && !is_hibernating() ) {
+        if( get_fatigue() <= 25 && !has_effect( effect_narcosis ) && !is_hibernating() ) {
             // Mycus folks upgrade once per night of sleep.
             if( has_trait( trait_THRESH_MYCUS ) ) {
                 mutate_category( mutation_category_id( "MYCUS" ) );
