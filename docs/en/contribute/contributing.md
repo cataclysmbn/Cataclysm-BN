@@ -417,7 +417,7 @@ you should see something like this:
 ```
 
 With these commands, you should be able to recreate the proper conditions to test your changes. The
-[BN wiki](https://cbn-guide.pages.dev/) may have useful informations regarding
+[BN wiki](https://cataclysmbn-guide.com/) may have useful informations regarding
 debug menu.
 
 ## Frequently Asked Questions

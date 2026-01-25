@@ -88,7 +88,7 @@ end
 その後、フックを関数に一度だけ接続します。
 
 ```lua
-table.insert(game.hooks.on_creature_performed_technique, function(...) return on_creature_performed_technique(...) end)
+game.add_hook("on_creature_performed_technique", function(...) return on_creature_performed_technique(...) end)
 ```
 
 <details>
@@ -123,6 +123,21 @@ local scraps = gapi.create_item(ItypeId.new("scrap"), 3)
 target_monster:as_monster():add_item(scraps)
 ```
 
+## NPC
+
+### NPCの生成と削除
+
+```lua
+local player = gapi.get_avatar()
+local map = gapi.get_map()
+local player_pos = player:get_pos_ms()
+local place_point = player_pos:xy() + Point.new(0, 2)
+local new_npc = map:place_npc(place_point, "thug")
+
+-- 後でNPCを静かに削除できます
+new_npc:erase()
+```
+
 ## 天気フック
 
 ### 天気の変化に反応する
@@ -131,8 +146,8 @@ target_monster:as_monster():add_item(scraps)
 
 ```lua
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_weather_changed, function(...) mod.weather_changed_alert(...) end)
-table.insert(game.hooks.on_weather_updated, function(...) mod.weather_report(...) end)
+game.add_hook("on_weather_changed", function(...) mod.weather_changed_alert(...) end)
+game.add_hook("on_weather_updated", function(...) mod.weather_report(...) end)
 ```
 
 次に、main.lua でハンドラーを定義します:
@@ -171,8 +186,8 @@ end
 
 ```lua
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_shoot, function(...) return mod.on_shoot_fun(...) end)
-table.insert(game.hooks.on_throw, function(...) return mod.on_throw_fun(...) end)
+game.add_hook("on_shoot", function(...) return mod.on_shoot_fun(...) end)
+game.add_hook("on_throw", function(...) return mod.on_throw_fun(...) end)
 ```
 
 次に、main.lua でハンドラーを定義します:
@@ -237,7 +252,7 @@ gapi.get_map():move_item_at(source_pos, dest_pos)
 ```lua
 -- preload.lua 内
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_mon_death, function(...) return mod.on_mon_death(...) end)
+game.add_hook("on_mon_death", function(...) return mod.on_mon_death(...) end)
 ```
 
 ```lua
@@ -260,7 +275,7 @@ end
 ```lua
 -- preload.lua 内
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_char_death, function(...) return mod.on_char_death(...) end)
+game.add_hook("on_char_death", function(...) return mod.on_char_death(...) end)
 ```
 
 ```lua
@@ -344,10 +359,10 @@ item:set_countdown(100)  -- 100ターンティック
 ```lua
 -- preload.lua 内
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_creature_dodged, function(...) return mod.on_creature_dodged(...) end)
-table.insert(game.hooks.on_creature_blocked, function(...) return mod.on_creature_blocked(...) end)
-table.insert(game.hooks.on_creature_performed_technique, function(...) return mod.on_creature_performed_technique(...) end)
-table.insert(game.hooks.on_creature_melee_attacked, function(...) return mod.on_creature_melee_attacked(...) end)
+game.add_hook("on_creature_dodged", function(...) return mod.on_creature_dodged(...) end)
+game.add_hook("on_creature_blocked", function(...) return mod.on_creature_blocked(...) end)
+game.add_hook("on_creature_performed_technique", function(...) return mod.on_creature_performed_technique(...) end)
+game.add_hook("on_creature_melee_attacked", function(...) return mod.on_creature_melee_attacked(...) end)
 ```
 
 ```lua
@@ -392,6 +407,36 @@ mod.on_creature_melee_attacked = function(params)
 end
 ```
 
+## キャラクターのトラップ認識
+
+### トラップの確認と記憶
+
+まず、位置にトラップを設定します:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+-- tr_landmine_buried は可視性が 20 です。見つけるのが非常に難しいです。
+local mine = TrapId.new("tr_landmine_buried"):int_id()
+m:set_trap_at(pos4x, mine)
+print(tostring(u:knows_trap(pos4x)))
+```
+
+次に、キャラクターがトラップを認識するようにします:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+u:add_known_trap(pos4x, m:get_trap_at(pos4x))
+print(tostring(u:knows_trap(pos4x)))
+```
+
+2番目のスクリプトを実行した後、トラップを踏まずにその位置を見ることができます。
+
 ## アイテムタイプ情報
 
 ### ItypeId 経由のアイテムタイププロパティのクエリ
@@ -409,7 +454,7 @@ if itype_raw:slot_ammo() then
     print("弾薬射程: " .. ammo_data.range)
 end
 
--- コンテナの場合
+-- コンテイナの場合
 if itype_raw:slot_container() then
     local container_data = itype_raw:slot_container()
     print("容量: " .. container_data.capacity)

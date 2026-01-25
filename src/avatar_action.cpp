@@ -82,6 +82,7 @@ static const itype_id itype_underbrush( "underbrush" );
 static const skill_id skill_swimming( "swimming" );
 
 static const trait_id trait_BRAWLER( "BRAWLER" );
+static const trait_id trait_GUNSHY( "GUNSHY" );
 static const trait_id trait_BURROW( "BURROW" );
 static const trait_id trait_GRAZER( "GRAZER" );
 static const trait_id trait_RUMINANT( "RUMINANT" );
@@ -689,6 +690,9 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
     if( you.has_trait( trait_BRAWLER ) ) {
         add_msg( m_good, _( "You refuse to use this ranged weapon." ) );
         return false;
+    } else if( you.has_trait( trait_GUNSHY ) && weapon.is_firearm() ) {
+        add_msg( m_good, _( "You refuse to use this gun." ) );
+        return false;
     }
 
     if( you.has_effect( effect_relax_gas ) ) {
@@ -718,10 +722,13 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
     return false;
 }
 
-bool avatar_action::will_fire_turret( avatar &you )
+bool avatar_action::will_fire_turret( avatar &you, const turret_data &turret )
 {
     if( you.has_trait( trait_BRAWLER ) ) {
         add_msg( m_bad, _( "You refuse to use this ranged weapon" ) );
+        return false;
+    } else if( you.has_trait( trait_GUNSHY ) && turret.base().is_firearm() ) {
+        add_msg( m_bad, _( "You refuse to use this gun turret" ) );
         return false;
     }
 
@@ -745,7 +752,7 @@ bool avatar_action::can_fire_turret( avatar &you, const map &m, const turret_dat
         return false;
     }
 
-    if( !will_fire_turret( you ) ) {
+    if( !will_fire_turret( you, turret ) ) {
         return false;
     }
 

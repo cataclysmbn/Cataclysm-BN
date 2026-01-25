@@ -344,9 +344,9 @@
     "color": "light_gray",
     "covers": [ "feet" ],
     "coverage": 100,
-    "encumbrance": 27,
+    "encumbrance": 25,
     "warmth": 20,
-    "material_thickness": 4,
+    "material_thickness": 5,
     "environmental_protection": 1,
     "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
   },
@@ -358,7 +358,7 @@
     "description": "A set of armor plated boots, made with lightweight superalloy.",
     "material": [ "superalloy", "leather" ],
     "color": "light_cyan",
-    "encumbrance": 23,
+    "encumbrance": 20,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -1198,7 +1198,7 @@
     "price": "5012 cent",
     "price_postapoc": "20 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel", "leather" ],
     "symbol": "[",
     "color": "light_red",
     "covers": [ "feet" ],

@@ -243,6 +243,35 @@ jobs:
           configurePreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
           buildPreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
 
+      - name: Setup Deno (Lua docs)
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
+        uses: denoland/setup-deno@v2
+        with: { cache: true }
+
+      - name: Generate Lua reference/annotations
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
+        run: |
+          ln -sf build/src/cataclysm-bn-tiles ./cataclysm-bn-tiles
+          deno task docs:gen
+
+      - name: Upload Lua reference/annotations artifact
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lua-docs
+          if-no-files-found: error
+          path: |
+            docs/en/mod/lua/reference/lua.md
+            lua_annotations.lua
+
+      - name: Summary of Lua docs artifact
+        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64' && inputs.version-label == 'experimental'
+        run: |
+          echo "## 📦 Lua Documentation Artifact Uploaded" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- \`lua_annotations.lua\`: $(wc -l < lua_annotations.lua) lines" >> $GITHUB_STEP_SUMMARY
+          echo "- \`docs/en/mod/lua/reference/lua.md\`: $(wc -l < docs/en/mod/lua/reference/lua.md) lines" >> $GITHUB_STEP_SUMMARY
+
       - name: Create distribution package (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
         run: |

@@ -368,7 +368,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 4 ], [ "advanced_electronics", 4 ], [ "textbook_electronics", 4 ] ],
     "flags": [ "NO_RESIZE" ],
-    "components": [ [ [ "chainmail_suit", 1 ] ], [ [ "cable", 200 ] ] ]
+    "components": [ [ [ "chainmail_suit", 1 ] ], [ [ "chainmail_hands", 1 ] ], [ [ "chainmail_feet", 1 ] ], [ [ "cable", 200 ] ] ]
   },
   {
     "result": "cloak",
@@ -850,6 +850,30 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 150 ] ],
     "components": [ [ [ "felt_patch", 24 ] ] ]
+  },
+  {
+    "result": "wolfsuit",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 7,
+    "time": "5 h",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 200 ] ],
+    "components": [ [ [ "faux_fur", 30 ] ] ]
+  },
+  {
+    "result": "dinosuit",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 7,
+    "time": "5 h",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 200 ] ],
+    "components": [ [ [ "faux_fur", 30 ] ] ]
   },
   {
     "result": "wsurvivor_suit",

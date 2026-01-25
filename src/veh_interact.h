@@ -28,7 +28,8 @@ enum task_reason {
     LACK_SKILL, //Player doesn't have high enough mechanics skill
     MOVING_VEHICLE, // vehicle is moving, no modifications allowed
     LOW_MORALE, // Player has too low morale (for operations that require it)
-    LOW_LIGHT // Player cannot see enough to work (for operations that require it)
+    LOW_LIGHT, // Player cannot see enough to work (for operations that require it)
+    DOUBLE_STACK // Player cannot interact with a vehicle that is blocked off by another vehicle
 };
 
 class ui_adaptor;

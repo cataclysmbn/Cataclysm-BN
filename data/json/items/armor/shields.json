@@ -124,7 +124,7 @@
     "id": "shield_banded",
     "type": "ARMOR",
     "name": { "str": "banded shield" },
-    "description": "A simple round shield made of wood with bands of steel reinforcing it.  Stronger than a simple wooden shield, but also more encumbering.",
+    "description": "A simple round shield made of wood with bands of iron reinforcing it.  Stronger than a simple wooden shield, but also more encumbering.",
     "weight": "3400 g",
     "volume": "3 L",
     "price": "100 USD",
@@ -164,7 +164,7 @@
     "looks_like": "shield_wooden_large",
     "type": "ARMOR",
     "name": { "str": "large banded shield" },
-    "description": "A large shield made of wood with steel bands reinforcing it.  Stronger than a simple wooden shield, but also more encumbering.",
+    "description": "A large shield made of wood with iron bands reinforcing it.  Stronger than a simple wooden shield, but also more encumbering.",
     "volume": "5 L",
     "weight": "5400 g",
     "price": "120 USD",
@@ -287,7 +287,8 @@
     "to_hit": -2,
     "bashing": 10,
     "cutting": 10,
-    "encumbrance": 30
+    "encumbrance": 30,
+    "techniques": [ "WBLOCK_3" ]
   },
   {
     "id": "shield_bronze",

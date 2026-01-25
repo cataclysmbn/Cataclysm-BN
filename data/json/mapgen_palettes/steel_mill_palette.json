@@ -47,6 +47,7 @@
       "g": "t_generator_broken",
       "G": "t_grate",
       "2": "t_sai_box",
+      "3": "t_conveyor",
       "5": "t_switchgear_l",
       "`": "t_thconc_y"
     },
@@ -71,6 +72,7 @@
       "f": "f_fridge",
       "D": "f_vending_c",
       "V": "f_vending_c",
+      "3": "f_hydraulic_press",
       "7": "f_filing_cabinet",
       "L": "f_laser_cutter"
     },

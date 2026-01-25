@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
     paths: [docs/**]
+  workflow_run:
+    workflows: ["Experimental Release"]
+    branches: [main]
+    types: [completed]
   workflow_dispatch:
 
 defaults:
@@ -17,6 +21,7 @@ permissions:
 
 jobs:
   build:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -25,6 +30,48 @@ jobs:
         with:
           sparse-checkout: |
             docs
+
+      - name: Download Lua reference/annotations from latest main build
+        working-directory: .
+        id: download-lua-docs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh run list \
+            --workflow=experimental-release.yml \
+            --branch=main \
+            --status=completed \
+            --limit=20 \
+            --json conclusion,databaseId \
+            --jq '.[] | select(.conclusion != "cancelled") | .databaseId' \
+            | head -1)
+
+          if [ -z "$run_id" ]; then
+            echo "::warning::No experimental release run found for branch main, skipping lua docs"
+            echo "downloaded=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if gh run download "$run_id" --name lua-docs --dir .; then
+            echo "downloaded=true" >> $GITHUB_OUTPUT
+            echo "run_id=$run_id" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::Failed to download lua-docs artifact, continuing without it"
+            echo "downloaded=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Summary of Lua docs download
+        working-directory: .
+        if: steps.download-lua-docs.outputs.downloaded == 'true'
+        run: |
+          echo "## 📥 Lua Documentation Downloaded" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "From [run #${{ steps.download-lua-docs.outputs.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ steps.download-lua-docs.outputs.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f lua_annotations.lua ] && [ -f docs/en/mod/lua/reference/lua.md ]; then
+            echo "- \`lua_annotations.lua\`: $(wc -l < lua_annotations.lua) lines" >> $GITHUB_STEP_SUMMARY
+            echo "- \`docs/en/mod/lua/reference/lua.md\`: $(wc -l < docs/en/mod/lua/reference/lua.md) lines" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Setup Deno environment
         uses: denoland/setup-deno@v2
