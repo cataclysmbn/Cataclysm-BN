@@ -1208,18 +1208,8 @@
     "description": "Surgically implanted in your hands and fingers is a set of tools - screwdriver, hammer, wrench, hacksaw, drill, welder, and heating elements.  You can use this in place of many tools when crafting.",
     "occupied_bodyparts": [ [ "hand_l", 3 ], [ "hand_r", 3 ] ],
     "fake_item": "toolset",
-    "included_bionics": [ "bio_tools_extend" ],
     "points": 4,
     "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE", "BIONIC_TOOLS", "INITIALLY_ACTIVATE" ]
-  },
-  {
-    "id": "bio_tools_extend",
-    "type": "bionic",
-    "name": { "str": "Extended Toolset" },
-    "description": "Extend or withdraw your integrated toolset to cut metal, pry things, or other stuff.  This takes up your hands.",
-    "fake_item": "toolset_extended",
-    "included": true,
-    "flags": [ "BIONIC_TOGGLED", "BIONIC_WEAPON", "BIONIC_TOOLS" ]
   },
   {
     "id": "bio_torsionratchet",
