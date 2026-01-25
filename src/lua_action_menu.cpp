@@ -46,8 +46,8 @@ auto register_entry( const entry_options &opts ) -> void
         debugmsg( "Lua action menu entry id must not be empty." );
         return;
     }
-    if( opts.callback == sol::lua_nil ) {
-        debugmsg( "Lua action menu entry '%s' has no callback.", opts.id );
+    if( opts.fn == sol::lua_nil ) {
+        debugmsg( "Lua action menu entry '%s' has no fn.", opts.id );
         return;
     }
 
@@ -57,7 +57,7 @@ auto register_entry( const entry_options &opts ) -> void
         .name = std::move( entry_name ),
         .category_id = normalize_category( opts.category_id ),
         .hotkey = parse_hotkey( opts.hotkey ),
-        .callback = opts.callback,
+        .fn = opts.fn,
     };
 
     auto &entries = entries_storage();
@@ -89,7 +89,7 @@ auto run_entry( const std::string &id ) -> bool
     }
 
     try {
-        auto res = match->callback();
+        auto res = match->fn();
         check_func_result( res );
     } catch( const std::runtime_error &err ) {
         debugmsg( "Failed to run lua action menu entry '%s': %s", id, err.what() );

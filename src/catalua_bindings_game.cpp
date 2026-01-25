@@ -78,13 +78,13 @@ void cata::detail::reg_game_api( sol::state &lua )
         {
             hotkey_value = std::move( *hotkey );
         }
-        auto callback = opts.get_or<sol::protected_function>( "callback", sol::lua_nil );
+        auto fn = opts.get_or<sol::protected_function>( "fn", sol::lua_nil );
         cata::lua_action_menu::register_entry( {
             .id = std::move( id ),
             .name = std::move( name ),
             .category_id = std::move( category_id ),
             .hotkey = std::move( hotkey_value ),
-            .callback = std::move( callback ),
+            .fn = std::move( fn ),
         } );
     } );
 
