@@ -66,6 +66,7 @@
     "coverage": 45,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "CONTAINER", "PLACE_ITEM", "MOUNTABLE" ],
+    "examine_action": "plumbing_sink",
     "connects_to": "COUNTER",
     "bash": {
       "str_min": 8,

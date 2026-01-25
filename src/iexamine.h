@@ -28,6 +28,7 @@ void gaspump( player &p, const tripoint &examp );
 void atm( player &p, const tripoint &examp );
 void vending( player &p, const tripoint &examp );
 void toilet( player &p, const tripoint &examp );
+auto plumbing_sink( player &p, const tripoint &examp ) -> void;
 void elevator( player &p, const tripoint &examp );
 void nanofab( player &p, const tripoint &examp );
 void toggle_lights( player &p, const tripoint &examp );
@@ -143,5 +144,3 @@ void practice_survival_while_foraging( player *p );
 
 using iexamine_function = void ( * )( player &, const tripoint & );
 iexamine_function iexamine_function_from_string( const std::string &function_name );
-
-
