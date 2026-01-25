@@ -1093,14 +1093,17 @@ void npc::talk_to_u( bool radio_contact )
 
     decide_needs();
 
-    std::string hook_result = cata::run_hooks<std::string>( "on_dialogue_start", [ &,
-    this]( auto & params ) {
+    const auto hook_results = cata::run_hooks( "on_dialogue_start", [ &,
+    this]( sol::table & params ) {
         params["npc"] = this;
         params["next_topic"] = d.topic_stack.back().id;
     } );
-
-    if( !hook_result.empty() ) {
-        d.add_topic( hook_result );
+    for ( const auto &result : hook_results ) {
+        if ( !result.second.is<sol::table>() ) { continue; };
+        auto new_topic = result.second.as<sol::table>().get<std::string>( "result" );
+        if ( !new_topic.empty() && new_topic != d.topic_stack.back().id ) {
+            d.add_topic( new_topic );
+        }
     }
 
     dialogue_window d_win;
@@ -1122,14 +1125,21 @@ void npc::talk_to_u( bool radio_contact )
         }
         talk_topic next = d.opt( d_win, name, d.topic_stack.back() );
 
-        hook_result = cata::run_hooks<std::string>( "on_dialogue_option", [ &, this]( auto & params ) {
+        const auto hook_results = cata::run_hooks( "on_dialogue_option", [ &,
+        this]( sol::table & params ) {
             params["npc"] = this;
             params["next_topic"] = next.id;
         } );
-
-        if( !hook_result.empty() ) {
-            d.add_topic( hook_result );
-            next = d.topic_stack.back();
+        auto final_result = d.topic_stack.back().id;
+        for ( const auto& result : hook_results ) {
+            if ( !result.second.is<sol::table>() ) { continue; };
+            final_result = result.second.as<sol::table>().get_or<std::string>( "result", final_result );
+            // Allow higher priority topics to veto, but still trigger subsequent calls?
+            // auto allowed = result.second.as<sol::table>().get<sol::object>( "allowed" );
+            // if ( allowed.is<bool>() && !allowed.as<bool>() ) { break; };
+        }
+        if( !final_result.empty() && final_result != d.topic_stack.back().id ) {
+            next = talk_topic( final_result );
         }
 
         if( next.id == "TALK_NONE" ) {
