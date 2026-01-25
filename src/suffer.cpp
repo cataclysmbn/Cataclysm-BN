@@ -68,9 +68,6 @@ static const bionic_id bio_itchy( "bio_itchy" );
 static const bionic_id bio_leaky( "bio_leaky" );
 static const bionic_id bio_noise( "bio_noise" );
 static const bionic_id bio_power_weakness( "bio_power_weakness" );
-static const bionic_id bio_reactor( "bio_reactor" );
-static const bionic_id bio_advreactor( "bio_advreactor" );
-static const bionic_id bio_reactoroverride( "bio_reactoroverride" );
 static const bionic_id bio_shakes( "bio_shakes" );
 static const bionic_id bio_sleepy( "bio_sleepy" );
 static const bionic_id bio_spasm( "bio_spasm" );
@@ -1258,50 +1255,6 @@ void Character::suffer_from_radiation()
     if( get_rad() > 200 && calendar::once_every( 10_minutes ) && x_in_y( get_rad(), 1000 ) ) {
         hurtall( 1, nullptr );
         mod_rad( -5 );
-    }
-
-    // Microreactor CBM
-    if( get_fuel_type_available( itype_plut_cell ) > 0 ) {
-        if( calendar::once_every( 60_minutes ) ) {
-            int rad_mod = 0;
-            rad_mod += has_bionic( bio_reactor ) ? 3 : 0;
-
-            if( rad_mod > 1 ) {
-                mod_rad( rad_mod );
-            }
-        }
-
-        bool powered_reactor = false;
-
-        if( has_bionic( bio_reactor ) ) {
-            if( get_bionic_state( bio_reactor ).powered ) {
-                powered_reactor = true;
-            } else {
-                mod_power_level( 50_J );
-            }
-        }
-
-        if( has_bionic( bio_advreactor ) ) {
-            if( get_bionic_state( bio_advreactor ).powered ) {
-                powered_reactor = true;
-            } else {
-                mod_power_level( 75_J );
-            }
-        }
-
-        if( has_bionic( bio_reactoroverride ) && powered_reactor ) {
-            if( get_bionic_state( bio_reactoroverride ).powered ) {
-                int current_fuel_stock = std::stoi( get_value( itype_plut_cell.str() ) );
-
-                current_fuel_stock -= 50;
-
-                set_value( itype_plut_cell.str(), std::to_string( current_fuel_stock ) );
-                update_fuel_storage( itype_plut_cell );
-
-                mod_power_level( 40_kJ );
-                mod_rad( 2 );
-            }
-        }
     }
 }
 

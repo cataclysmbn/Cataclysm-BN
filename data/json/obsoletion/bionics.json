@@ -18,5 +18,11 @@
     "type": "bionic",
     "name": { "str": "Obsolete Bionic" },
     "description": "The effects of this bionic in the code have been replaced with Bionic Infolink.  It can be uninstalled at minimum difficulty."
+  },
+  {
+    "id": "bio_reactoroverride",
+    "type": "bionic",
+    "name": { "str": "Obsolete Bionic" },
+    "description": "The effects of this bionic in the code have been removed from the Micro Reactor.  It can be uninstalled at minimum difficulty."
   }
 ]

@@ -4152,5 +4152,15 @@
       "shrapnel": { "casing_mass": 200, "fragment_mass": 1, "recovery": 0 }
     },
     "explode_in_fire": true
+  },
+  {
+    "id": "bio_reactoroverride",
+    "copy-from": "bionic_general_npc_usable",
+    "looks_like": "bio_reactor",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Micro Reactor Safety Override CBM" },
+    "description": "Disables the radiation safety protocols allowing for much higher energy production.  While active produces 40kJ of power a turn and 1 irradiated stack every 20 turns.",
+    "price": "9 kUSD",
+    "difficulty": 13
   }
 ]

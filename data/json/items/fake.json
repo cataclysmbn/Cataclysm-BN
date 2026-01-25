@@ -797,5 +797,18 @@
     "type": "TOOL",
     "name": { "str_sp": "local gateway" },
     "use_action": { "type": "cast_spell", "spell_id": "translocation_caster_spell", "no_fail": true, "level": 0 }
+  },
+  {
+    "type": "GENERIC",
+    "//": "pseudo item, used as fuel type for atomic battery CBM",
+    "id": "bio_reactor_power",
+    "symbol": "?",
+    "color": "white",
+    "name": { "str": "Alphavoltaic Power", "str_pl": "none" },
+    "description": "seeing this is a bug",
+    "stackable": true,
+    "volume": "0 ml",
+    "flags": [ "PSEUDO", "PERPETUAL" ],
+    "fuel": { "energy": 1 }
   }
 ]

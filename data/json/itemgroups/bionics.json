@@ -224,6 +224,7 @@
       [ "bio_shotgun", 10 ],
       [ "bio_blaster", 5 ],
       [ "afs_bio_dopamine_stimulators", 10 ],
+      [ "bio_reactor", 5 ],
       [ "bio_electrosense", 10 ]
     ]
   },
@@ -323,6 +324,7 @@
       [ "bn_bio_solar", 15 ],
       [ "afs_bio_missiles", 10 ],
       [ "afs_bio_dopamine_stimulators", 10 ],
+      [ "bio_reactor", 5 ],
       [ "bio_electrosense", 10 ]
     ]
   },
@@ -389,6 +391,7 @@
       [ "bio_speed", 10 ],
       [ "bio_ups", 10 ],
       [ "bio_weight", 10 ],
+      [ "bio_reactor", 10 ],
       [ "bio_electrosense", 10 ]
     ]
   },
