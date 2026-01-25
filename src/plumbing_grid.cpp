@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <memory>
 #include <optional>
 #include <queue>
 #include <ranges>
@@ -26,6 +27,11 @@ namespace
 
 using connection_store = std::map<point_abs_om, plumbing_grid::connection_map>;
 using storage_store = std::map<point_abs_om, std::map<tripoint_om_omt, plumbing_grid::water_storage_state>>;
+using grid_member_set = std::set<tripoint_om_omt>;
+using grid_member_ptr = shared_ptr_fast<grid_member_set>;
+using grid_member_map = std::map<tripoint_om_omt, grid_member_ptr>;
+using grid_member_cache_store = std::map<point_abs_om, grid_member_map>;
+using submap_capacity_cache_store = std::map<tripoint_abs_sm, units::volume>;
 static const auto furn_standing_tank_plumbed_str = furn_str_id( "f_standing_tank_plumbed" );
 static const itype_id itype_water( "water" );
 static const itype_id itype_water_clean( "water_clean" );
@@ -58,6 +64,18 @@ auto empty_bitset() -> const plumbing_grid::connection_bitset &
 {
     static const auto empty = plumbing_grid::connection_bitset{};
     return empty;
+}
+
+auto grid_members_cache() -> grid_member_cache_store &
+{
+    static auto cache = grid_member_cache_store{};
+    return cache;
+}
+
+auto submap_capacity_cache() -> submap_capacity_cache_store &
+{
+    static auto cache = submap_capacity_cache_store{};
+    return cache;
 }
 
 auto volume_from_charges( const itype_id &liquid_type, int charges ) -> units::volume
@@ -143,6 +161,22 @@ auto collect_storage_for_grid( const tripoint_abs_omt &anchor_abs,
     return total;
 }
 
+auto invalidate_grid_members_cache( const point_abs_om &om_pos ) -> void
+{
+    grid_members_cache().erase( om_pos );
+}
+
+auto invalidate_grid_members_cache_at( const tripoint_abs_omt &p ) -> void
+{
+    const auto omc = overmap_buffer.get_om_global( p );
+    invalidate_grid_members_cache( omc.om->pos() );
+}
+
+auto invalidate_submap_capacity_cache_at( const tripoint_abs_sm &p ) -> void
+{
+    submap_capacity_cache().erase( p );
+}
+
 auto storage_state_for_grid( const std::set<tripoint_abs_omt> &grid ) -> plumbing_grid::water_storage_state
 {
     if( grid.empty() ) {
@@ -156,6 +190,86 @@ auto storage_state_for_grid( const std::set<tripoint_abs_omt> &grid ) -> plumbin
         return {};
     }
     return iter->second;
+}
+
+auto connection_bitset_at( const overmap &om, const tripoint_om_omt &p ) -> const plumbing_grid::connection_bitset &
+{
+    const auto &connections = plumbing_grid::connections_for( om );
+    const auto iter = connections.find( p );
+    if( iter == connections.end() ) {
+        return empty_bitset();
+    }
+    return iter->second;
+}
+
+auto build_grid_members( const overmap &om, const tripoint_om_omt &p ) -> grid_member_set
+{
+    auto result = grid_member_set{};
+    auto open = std::queue<tripoint_om_omt>{};
+    open.emplace( p );
+
+    while( !open.empty() ) {
+        const auto elem = open.front();
+        result.emplace( elem );
+        const auto &connections_bitset = connection_bitset_at( om, elem );
+        std::ranges::for_each( std::views::iota( size_t{ 0 }, six_cardinal_directions.size() ),
+        [&]( size_t i ) {
+            if( connections_bitset.test( i ) ) {
+                const auto other = elem + six_cardinal_directions[i];
+                if( !result.contains( other ) ) {
+                    open.emplace( other );
+                }
+            }
+        } );
+        open.pop();
+    }
+
+    return result;
+}
+
+auto grid_members_for( const tripoint_abs_omt &p ) -> const grid_member_set &
+{
+    const auto omc = overmap_buffer.get_om_global( p );
+    auto &cache = grid_members_cache()[omc.om->pos()];
+    const auto iter = cache.find( omc.local );
+    if( iter != cache.end() ) {
+        return *iter->second;
+    }
+
+    auto members = build_grid_members( *omc.om, omc.local );
+    auto members_ptr = make_shared_fast<grid_member_set>( std::move( members ) );
+    std::ranges::for_each( *members_ptr, [&]( const tripoint_om_omt &entry ) {
+        cache[entry] = members_ptr;
+    } );
+
+    return *members_ptr;
+}
+
+auto submap_capacity_at( const tripoint_abs_sm &sm_coord, mapbuffer &mb ) -> units::volume
+{
+    auto &cache = submap_capacity_cache();
+    const auto iter = cache.find( sm_coord );
+    if( iter != cache.end() ) {
+        return iter->second;
+    }
+
+    auto *sm = mb.lookup_submap( sm_coord );
+    if( sm == nullptr ) {
+        return 0_ml;
+    }
+
+    auto total = 0_ml;
+    std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
+        std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
+            const auto pos = point( x, y );
+            if( sm->get_furn( pos ).id() == furn_standing_tank_plumbed_str ) {
+                total += sm->get_furn( pos ).obj().keg_capacity;
+            }
+        } );
+    } );
+
+    cache.emplace( sm_coord, total );
+    return total;
 }
 
 auto calculate_capacity_for_grid( const std::set<tripoint_abs_omt> &grid,
@@ -172,19 +286,7 @@ auto calculate_capacity_for_grid( const std::set<tripoint_abs_omt> &grid,
 
     auto total = 0_ml;
     std::ranges::for_each( submap_positions, [&]( const tripoint_abs_sm &sm_coord ) {
-        auto *sm = mb.lookup_submap( sm_coord );
-        if( sm == nullptr ) {
-            return;
-        }
-
-        std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
-            std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
-                const auto pos = point( x, y );
-                if( sm->get_furn( pos ).id() == furn_standing_tank_plumbed_str ) {
-                    total += sm->get_furn( pos ).obj().keg_capacity;
-                }
-            } );
-        } );
+        total += submap_capacity_at( sm_coord, mb );
     } );
 
     return total;
@@ -391,19 +493,7 @@ class plumbing_storage_grid
         {
             auto total = 0_ml;
             std::ranges::for_each( submap_coords, [&]( const tripoint_abs_sm &sm_coord ) {
-                auto *sm = mb.lookup_submap( sm_coord );
-                if( sm == nullptr ) {
-                    return;
-                }
-
-                std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
-                    std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
-                        const auto pos = point( x, y );
-                        if( sm->get_furn( pos ).id() == furn_standing_tank_plumbed_str ) {
-                            total += sm->get_furn( pos ).obj().keg_capacity;
-                        }
-                    } );
-                } );
+                total += submap_capacity_at( sm_coord, mb );
             } );
             return total;
         }
@@ -492,6 +582,7 @@ class plumbing_grid_tracker
         auto rebuild_at( const tripoint_abs_ms &p ) -> void
         {
             const auto sm_pos = project_to<coords::sm>( p );
+            invalidate_submap_capacity_cache_at( sm_pos );
             make_storage_grid_at( sm_pos );
         }
 
@@ -584,25 +675,12 @@ auto storage_for( const overmap &om ) -> const std::map<tripoint_om_omt, water_s
 
 auto grid_at( const tripoint_abs_omt &p ) -> std::set<tripoint_abs_omt>
 {
+    const auto omc = overmap_buffer.get_om_global( p );
+    const auto &grid_members = grid_members_for( p );
     auto result = std::set<tripoint_abs_omt>{};
-    auto open = std::queue<tripoint_abs_omt>{};
-    open.emplace( p );
-
-    while( !open.empty() ) {
-        const auto &elem = open.front();
-        result.emplace( elem );
-        const auto &connections_bitset = connection_bitset_at( elem );
-        std::ranges::for_each( std::views::iota( size_t{ 0 }, six_cardinal_directions.size() ),
-        [&]( size_t i ) {
-            if( connections_bitset.test( i ) ) {
-                const auto other = elem + six_cardinal_directions[i];
-                if( !result.contains( other ) ) {
-                    open.emplace( other );
-                }
-            }
-        } );
-        open.pop();
-    }
+    std::ranges::for_each( grid_members, [&]( const tripoint_om_omt &member ) {
+        result.emplace( project_combine( omc.om->pos(), member ) );
+    } );
 
     return result;
 }
@@ -652,6 +730,8 @@ auto on_contents_changed( const tripoint_abs_ms &p ) -> void
 
 auto on_structure_changed( const tripoint_abs_ms &p ) -> void
 {
+    const auto omt_pos = project_to<coords::omt>( p );
+    invalidate_grid_members_cache_at( omt_pos );
     get_plumbing_grid_tracker().rebuild_at( p );
 }
 
@@ -700,6 +780,7 @@ auto add_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &r
     rhs_bitset[rhs_i] = true;
 
     if( !same_grid ) {
+        invalidate_grid_members_cache_at( lhs );
         const auto merged_grid = grid_at( lhs );
         const auto new_anchor = anchor_for_grid( merged_grid );
         auto new_omc = overmap_buffer.get_om_global( new_anchor );
@@ -750,6 +831,7 @@ auto remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt
     lhs_bitset[lhs_i] = false;
     rhs_bitset[rhs_i] = false;
 
+    invalidate_grid_members_cache_at( lhs );
     const auto lhs_grid = grid_at( lhs );
     if( !lhs_grid.contains( rhs ) ) {
         const auto rhs_grid = grid_at( rhs );
@@ -775,6 +857,8 @@ auto clear() -> void
     plumbing_grid_store().clear();
     plumbing_storage_store().clear();
     get_plumbing_grid_tracker().clear();
+    grid_members_cache().clear();
+    submap_capacity_cache().clear();
 }
 
 } // namespace plumbing_grid
