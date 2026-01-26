@@ -610,13 +610,55 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_creature_melee_attacked", []( const sol::table & ) {} );
 
-    DOC( "Called when a character attempts to move.  " );
+    DOC( "Called when the player attempts to move.  " );
+    DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `player` (Player)  " );
+    DOC( "* `from` (Tripoint)  " );
+    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `movement_mode` (CharacterMoveMode)  " );
+    DOC( "* `via_ramp` (bool)  " );
+    DOC( "* `mounted` (bool)  " );
+    DOC( "* `mount` (Creature, if mounted)  " );
+    DOC( "Return false to block the move." );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_player_try_move", []( const sol::table & ) {} );
+
+    DOC( "Called when an NPC attempts to move.  " );
+    DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (Npc)  " );
+    DOC( "* `from` (Tripoint)  " );
+    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `movement_mode` (CharacterMoveMode)  " );
+    DOC( "* `via_ramp` (bool)  " );
+    DOC( "* `mounted` (bool)  " );
+    DOC( "* `mount` (Creature, if mounted)  " );
+    DOC( "Return false to block the move." );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_npc_try_move", []( const sol::table & ) {} );
+
+    DOC( "Called when a monster attempts to move.  " );
+    DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster)  " );
+    DOC( "* `from` (Tripoint)  " );
+    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `force` (bool)  " );
+    DOC( "Return false to block the move." );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_monster_try_move", []( const sol::table & ) {} );
+
+    DOC( "Called after on_player_try_move or on_npc_try_move regardless of whether the specific hook vetoed.  " );
+    DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `char` (Character)  " );
     DOC( "* `from` (Tripoint)  " );
     DOC( "* `to` (Tripoint)  " );
     DOC( "* `movement_mode` (CharacterMoveMode)  " );
     DOC( "* `via_ramp` (bool)  " );
+    DOC( "* `mounted` (bool)  " );
+    DOC( "* `mount` (Creature, if mounted)  " );
     DOC( "Return false to block the move." );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_character_try_move", []( const sol::table & ) {} );

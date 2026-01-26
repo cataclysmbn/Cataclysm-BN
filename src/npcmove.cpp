@@ -16,6 +16,8 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "cata_algo.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_turn.h"
@@ -2338,6 +2340,44 @@ bool npc::can_move_to( const tripoint &p, bool no_bashing ) const
 void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomove )
 {
     tripoint p = pt;
+
+    const auto hook_results = cata::run_hooks(
+                                  "on_npc_try_move",
+    [ &, this]( sol::table & params ) {
+        params["npc"] = this;
+        params["from"] = pos();
+        params["to"] = p;
+        params["movement_mode"] = get_movement_mode();
+        params["via_ramp"] = false;
+        if( is_mounted() ) {
+            params["mounted"] = true;
+            params["mount"] = mounted_creature.get();
+        } else {
+            params["mounted"] = false;
+        }
+    } );
+
+    const auto char_hook_results = cata::run_hooks(
+                                       "on_character_try_move",
+    [ &, this]( sol::table & params ) {
+        params["char"] = static_cast<Character *>( this );
+        params["from"] = pos();
+        params["to"] = p;
+        params["movement_mode"] = get_movement_mode();
+        params["via_ramp"] = false;
+        if( is_mounted() ) {
+            params["mounted"] = true;
+            params["mount"] = mounted_creature.get();
+        } else {
+            params["mounted"] = false;
+        }
+    } );
+
+    if( !hook_results.get_or( "allowed", true ) ||
+        !char_hook_results.get_or( "allowed", true ) ) {
+        return;
+    }
+
     map &here = get_map();
     bool ceiling_blocking_climb = !here.has_floor_or_support( pos() ) ||
                                   here.has_floor_or_support( p + tripoint_above );
