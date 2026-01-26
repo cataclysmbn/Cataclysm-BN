@@ -644,7 +644,7 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `monster` (Monster)  " );
     DOC( "* `from` (Tripoint)  " );
     DOC( "* `to` (Tripoint)  " );
-    DOC( "* `force` (bool)  " );
+    DOC( "* `force` (bool): If the monster move call was forced  " );
     DOC( "Return false to block the move." );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_monster_try_move", []( const sol::table & ) {} );
