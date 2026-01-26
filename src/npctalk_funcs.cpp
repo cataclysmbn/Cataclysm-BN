@@ -838,6 +838,11 @@ void talk_function::lead_to_safety( npc &p )
 
 bool npc_trading::pay_npc( npc &np, int cost )
 {
+    // Free items should never trigger trading
+    if( cost <= 0 ) {
+        return true;
+    }
+
     if( np.op_of_u.owed >= cost ) {
         np.op_of_u.owed -= cost;
         return true;
