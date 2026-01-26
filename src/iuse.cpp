@@ -8890,9 +8890,9 @@ auto iuse::report_plumbing_connections( player *p, item *, bool, const tripoint 
     const auto connections = plumbing_grid::grid_connectivity_at( pos_abs );
     const auto water_stats = plumbing_grid::water_storage_at( pos_abs );
 
-    auto connection_names = std::vector<std::string>{};
+    auto connection_names = std::vector<std::string> {};
     connection_names.reserve( connections.size() );
-    std::ranges::for_each( connections, [&]( const tripoint_rel_omt &delta ) {
+    std::ranges::for_each( connections, [&]( const tripoint_rel_omt & delta ) {
         connection_names.push_back( direction_name( direction_from( delta.raw() ) ) );
     } );
 
@@ -9015,11 +9015,12 @@ auto iuse::modify_plumbing_connections( player *p, item *it, bool, const tripoin
 
     uilist ui;
 
-    auto connection_present = std::bitset<six_cardinal_directions.size()>{};
+    auto connection_present = std::bitset<six_cardinal_directions.size()> {};
     std::ranges::for_each( std::views::iota( size_t{ 0 }, six_cardinal_directions.size() ),
     [&]( size_t i ) {
         const auto &delta = six_cardinal_directions[i];
-        connection_present[i] = std::ranges::find( connections, tripoint_rel_omt( delta ) ) != connections.end();
+        connection_present[i] = std::ranges::find( connections,
+                                tripoint_rel_omt( delta ) ) != connections.end();
         const auto name = direction_name( direction_from( delta ) );
         const auto i_int = static_cast<int>( i );
         const auto format = connection_present[i]
@@ -9084,10 +9085,10 @@ auto iuse::modify_plumbing_connections( player *p, item *it, bool, const tripoin
             return 0;
         }
 
-        std::ranges::for_each( reqs.get_components(), [&]( const auto &e ) {
+        std::ranges::for_each( reqs.get_components(), [&]( const auto & e ) {
             p->consume_items( e );
         } );
-        std::ranges::for_each( reqs.get_tools(), [&]( const auto &e ) {
+        std::ranges::for_each( reqs.get_tools(), [&]( const auto & e ) {
             p->consume_tools( e );
         } );
         p->invalidate_crafting_inventory();

@@ -1080,7 +1080,7 @@ void overmap::serialize( std::ostream &fout ) const
     const auto &plumbing_connections = plumbing_grid::connections_for( *this );
     json.member( "plumbing_grid_connections" );
     json.start_array();
-    std::ranges::for_each( plumbing_connections, [&]( const auto &conn ) {
+    std::ranges::for_each( plumbing_connections, [&]( const auto & conn ) {
         json.start_array();
         json.write( conn.first );
         std::ranges::for_each( std::views::iota( size_t{ 0 }, six_cardinal_directions.size() ),
@@ -1096,7 +1096,7 @@ void overmap::serialize( std::ostream &fout ) const
     const auto &plumbing_storage = plumbing_grid::storage_for( *this );
     json.member( "plumbing_grid_storage" );
     json.start_array();
-    std::ranges::for_each( plumbing_storage, [&]( const auto &entry ) {
+    std::ranges::for_each( plumbing_storage, [&]( const auto & entry ) {
         json.start_array();
         json.write( entry.first );
         json.write( units::to_milliliter<int>( entry.second.capacity ) );

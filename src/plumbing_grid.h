@@ -28,8 +28,7 @@ struct water_storage_state {
     units::volume stored_dirty = 0_ml;
     units::volume capacity = 0_ml;
 
-    auto stored_total() const -> units::volume
-    {
+    auto stored_total() const -> units::volume {
         return stored_clean + stored_dirty;
     }
 };
