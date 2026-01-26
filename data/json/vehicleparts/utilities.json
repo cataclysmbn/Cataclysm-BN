@@ -188,7 +188,7 @@
     "damage_reduction": { "all": 30 },
     "description": "Combining a fixed-up dissector, workbench and advanced electronics, this is a marvel capable of butchering, dissecting and cutting like nothing else!",
     "durability": 80,
-    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "TRANSPARENT", "FLAT_SURF" ],
+    "flags": [ "CARGO", "OBSTACLE", "BUTCHER_EQ", "CRAFTER", "TRANSPARENT", "FLAT_SURF" ],
     "integrated_tools": [ "fake_adv_butchery" ],
     "item": "adv_butchery",
     "location": "center",

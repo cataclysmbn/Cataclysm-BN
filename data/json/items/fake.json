@@ -779,7 +779,8 @@
     "copy-from": "fake_item",
     "type": "TOOL",
     "name": { "str": "installed advanced butchering station" },
-    "qualities": [ [ "BUTCHER", 50 ], [ "CUT", 3 ], [ "CUT_FINE", 5 ] ]
+    "qualities": [ [ "BUTCHER", 50 ], [ "CUT", 3 ], [ "CUT_FINE", 5 ] ],
+    "flags": [ "FLAT_SURFACE" ]
   },
   {
     "id": "translocation_caster_spell",
