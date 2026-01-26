@@ -504,7 +504,7 @@ class plumbing_grid_tracker
         std::map<tripoint_abs_sm, shared_ptr_fast<plumbing_storage_grid>> parent_storage_grids;
         mapbuffer &mb;
 
-        auto make_storage_grid_at( const tripoint_abs_sm &sm_pos ) -> plumbing_storage_grid & {
+        auto make_storage_grid_at( const tripoint_abs_sm &sm_pos ) -> plumbing_storage_grid& {
             const auto overmap_positions = plumbing_grid::grid_at( project_to<coords::omt>( sm_pos ) );
             auto submap_positions = std::vector<tripoint_abs_sm> {};
             submap_positions.reserve( overmap_positions.size() * 4 );
@@ -550,7 +550,7 @@ class plumbing_grid_tracker
 
         explicit plumbing_grid_tracker( mapbuffer &buffer ) : mb( buffer ) {}
 
-        auto storage_at( const tripoint_abs_omt &p ) -> plumbing_storage_grid & {
+        auto storage_at( const tripoint_abs_omt &p ) -> plumbing_storage_grid& {
             const auto sm_pos = project_to<coords::sm>( p );
             const auto iter = parent_storage_grids.find( sm_pos );
             if( iter != parent_storage_grids.end() ) {
