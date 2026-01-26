@@ -286,6 +286,30 @@ on_mapgen_postprocess = {}
 ---@field fire boolean
 on_explosion_start = {}
 
+---@class OnCreatureSpawnParams
+---@field creature Creature
+on_creature_spawn = {}
+
+---@class OnMonsterSpawnParams
+---@field monster Monster
+on_monster_spawn = {}
+
+---@class OnNpcSpawnParams
+---@field npc Npc
+on_npc_spawn = {}
+
+---@class OnCreatureLoadedParams
+---@field creature Creature
+on_creature_loaded = {}
+
+---@class OnMonsterLoadedParams
+---@field monster Monster
+on_monster_loaded = {}
+
+---@class OnNpcLoadedParams
+---@field npc Npc
+on_npc_loaded = {}
+
 ]]
 
   ---@diagnostic disable-next-line: undefined-global

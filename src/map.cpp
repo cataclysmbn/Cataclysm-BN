@@ -23,6 +23,8 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_id.h"
@@ -8258,7 +8260,12 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
                 monster *const placed = g->place_critter_at( make_shared_fast<monster>( tmp ), p );
                 if( placed ) {
                     placed->on_load();
-                    placed->on_spawn_hook();
+                    cata::run_hooks( "on_creature_spawn", [&]( sol::table &params ) {
+                        params["creature"] = placed;
+                    } );
+                    cata::run_hooks( "on_monster_spawn", [&]( sol::table &params ) {
+                        params["monster"] = placed;
+                    } );
                     if( i.disposition == spawn_disposition::SpawnDisp_Pet ) {
                         placed->make_pet();
                     }

@@ -32,6 +32,8 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "character_display.h"
 #include "character_id.h"
@@ -1550,7 +1552,12 @@ void debug()
             faction *new_solo_fac = g->faction_manager_ptr->add_new_faction( temp->name,
                                     faction_id( new_fac_id ), faction_id( "no_faction" ) );
             temp->set_fac( new_solo_fac ? new_solo_fac->id : faction_id( "no_faction" ) );
-            temp->on_spawn_hook();
+            cata::run_hooks( "on_creature_spawn", [&]( sol::table &params ) {
+                params["creature"] = temp.get();
+            } );
+            cata::run_hooks( "on_npc_spawn", [&]( sol::table &params ) {
+                params["npc"] = temp.get();
+            } );
             g->load_npcs();
         }
         break;

@@ -567,8 +567,6 @@ class monster : public Creature, public location_visitable<monster>
         void init_from_item( const item &itm );
 
         time_point last_updated = calendar::turn_zero;
-        void on_spawn_hook();
-        void on_loaded_hook();
         /**
          * Do some cleanup and caching as monster is being unloaded from map.
          */
