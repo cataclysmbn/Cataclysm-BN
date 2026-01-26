@@ -1301,6 +1301,8 @@ class npc : public player
         // Dummy point that indicates that the goal is invalid.
         static constexpr tripoint_abs_omt no_goal_point{ tripoint_min };
         time_point last_updated;
+        void on_spawn_hook();
+        void on_loaded_hook();
         /**
          * Do some cleanup and caching as npc is being unloaded from map.
          */

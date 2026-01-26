@@ -6274,6 +6274,7 @@ character_id map::place_npc( point p, const string_id<npc_template> &type, bool 
     temp->spawn_at_precise( { abs_sub.xy() }, { p, abs_sub.z } );
     temp->toggle_trait( trait_NPC_STATIC_NPC );
     overmap_buffer.insert_npc( temp );
+    temp->on_spawn_hook();
     return temp->getID();
 }
 

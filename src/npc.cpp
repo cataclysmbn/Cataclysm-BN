@@ -16,6 +16,8 @@
 #include "character_id.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "clzones.h"
 #include "coordinate_conversions.h"
 #include "damage.h"
@@ -342,6 +344,22 @@ void npc::load_npc_template( const string_id<npc_template> &ident )
 }
 
 npc::~npc() = default;
+
+void npc::on_spawn_hook() {
+    Creature::on_spawn_hook();
+    cata::run_hooks( "on_npc_spawn", [&,
+        this]( sol::table& params ) {
+            params["npc"] = this;
+        } );
+}
+
+void npc::on_loaded_hook() {
+    Creature::on_loaded_hook();
+    cata::run_hooks( "on_npc_loaded", [&,
+        this]( sol::table& params ) {
+            params["npc"] = this;
+        } );
+}
 
 void npc::randomize( const npc_class_id &type )
 {
@@ -2887,6 +2905,8 @@ void npc::on_load()
     if( has_trait( trait_HALLUCINATION ) ) {
         hallucination = true;
     }
+
+    on_loaded_hook();
 }
 
 void npc_chatbin::add_new_mission( mission *miss )

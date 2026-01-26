@@ -1226,6 +1226,7 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
         newmon.no_extra_death_drops = true;
         it.deactivate();
     }
+    newmon.on_spawn_hook();
     if( place_random ) {
         // place_critter_around returns the same pointer as its parameter (or null)
         // Allow position to be different from the player for tossed or launched items
