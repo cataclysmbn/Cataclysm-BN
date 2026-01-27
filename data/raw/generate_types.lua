@@ -245,6 +245,20 @@ on_shoot = {}
 ---@field item Item
 on_throw = {}
 
+---@class OnDialogueStartParams
+---@field npc NPC
+---@field next_topic string
+on_dialogue_start = {}
+
+---@class OnDialogueOptionParams
+---@field npc NPC
+---@field next_topic string
+on_dialogue_option = {}
+
+---@class OnDialogueEndParams
+---@field npc NPC
+on_dialogue_end = {}
+
 ---@class OnCreatureDodgedParams
 ---@field char Character | Creature
 ---@field source Creature?
