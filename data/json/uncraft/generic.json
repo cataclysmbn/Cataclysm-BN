@@ -5895,5 +5895,125 @@
       [ [ "scrap", 2 ] ],
       [ [ "plut_cell", 1 ] ]
     ]
+  },
+  {
+    "result": "weightbench",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "time": "10 m",
+    "qualities": [ { "id": "WRENCH", "level": 1 } ],
+    "components": [ [ [ "pipe", 1 ] ], [ [ "steel_chunk", 1 ] ], [ [ "scrap", 6 ] ], [ [ "lead", 2000 ] ] ]
+  },
+  {
+    "result": "ballmachine",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "time": "10 m",
+    "qualities": [ { "id": "WRENCH", "level": 1 } ],
+    "components": [ [ [ "scrap", 10 ] ], [ [ "steel_chunk", 1 ] ], [ [ "pipe", 1 ] ] ]
+  },
+  {
+    "result": "table_pool",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "time": "10 m",
+    "qualities": [ { "id": "PRY", "level": 1 } ],
+    "components": [ [ [ "2x4", 4 ] ], [ [ "felt_patch", 4 ] ], [ [ "wood_panel", 1 ] ], [ [ "nail", 10 ] ] ]
+  },
+  {
+    "result": "arcade",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "time": "10 m",
+    "qualities": [ { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "television", 1 ] ],
+      [ [ "plastic_chunk", 6 ] ],
+      [ [ "circuit", 6 ] ],
+      [ [ "2x4", 8 ] ],
+      [ [ "nail", 16 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "power_supply", 2 ] ],
+      [ [ "RAM", 4 ] ]
+    ]
+  },
+  {
+    "result": "pinball",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "time": "10 m",
+    "qualities": [ { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "scrap", 6 ] ],
+      [ [ "plastic_chunk", 5 ] ],
+      [ [ "circuit", 1 ] ],
+      [ [ "2x4", 4 ] ],
+      [ [ "nail", 12 ] ],
+      [ [ "cable", 15 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "pipe", 2 ] ],
+      [ [ "glass_sheet", 1 ] ],
+      [ [ "bearing", 16 ] ]
+    ]
+  },
+  {
+    "result": "ergometer",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "time": "10 m",
+    "qualities": [ { "id": "WRENCH", "level": 1 } ],
+    "components": [
+      [ [ "foot_crank", 1 ] ],
+      [ [ "plastic_chunk", 10 ] ],
+      [ [ "scrap", 4 ] ],
+      [ [ "chain", 1 ] ],
+      [ [ "pipe", 5 ] ],
+      [ [ "saddle", 1 ] ],
+      [ [ "wheel_small", 1 ] ],
+      [ [ "small_lcd_screen", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "nail", 8 ] ]
+    ]
+  },
+  {
+    "result": "treadmill",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "time": "10 m",
+    "qualities": [ { "id": "WRENCH", "level": 1 } ],
+    "components": [
+      [ [ "plastic_chunk", 14 ] ],
+      [ [ "scrap", 5 ] ],
+      [ [ "pipe", 4 ] ],
+      [ [ "small_lcd_screen", 1 ] ],
+      [ [ "RAM", 1 ] ],
+      [ [ "nail", 8 ] ]
+    ]
+  },
+  {
+    "result": "heavybag",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "time": "10 m",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "chain", 3 ] ], [ [ "leather", 15 ] ], [ [ "rag", 20 ] ] ]
+  },
+  {
+    "result": "strippole",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "time": "10 m",
+    "qualities": [ { "id": "WRENCH", "level": 1 } ],
+    "components": [ [ [ "scrap", 2 ] ], [ [ "nail", 8 ] ], [ [ "pipe", 2 ] ] ]
+  },
+  {
+    "result": "table_roul",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "time": "10 m",
+    "qualities": [ { "id": "PRY", "level": 1 } ],
+    "components": [ [ [ "2x4", 4 ] ], [ [ "felt_patch", 4 ] ], [ [ "wood_panel", 1 ] ], [ [ "nail", 10 ] ], [ [ "scrap", 2 ] ] ]
   }
 ]
