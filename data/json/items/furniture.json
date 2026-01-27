@@ -151,7 +151,7 @@
     "id": "table_pool",
     "type": "GENERIC",
     "looks_like": "f_pool_table",
-	"name": "pool table",
+    "name": "pool table",
     "description": "A good-looking pool table.  You wish you learned how to play.",
     "weight": "10 kg",
     "volume": "40 L",
@@ -217,7 +217,7 @@
     "symbol": "{",
     "color": "light_cyan"
   },
-   {
+  {
     "id": "heavybag",
     "type": "GENERIC",
     "looks_like": "f_punching_bag",
@@ -231,7 +231,7 @@
     "symbol": "{",
     "color": "light_cyan"
   },
-   {
+  {
     "id": "strippole",
     "type": "GENERIC",
     "looks_like": "f_dancing_pole",
@@ -245,7 +245,7 @@
     "symbol": "{",
     "color": "light_cyan"
   },
-   {
+  {
     "id": "table_roul",
     "type": "GENERIC",
     "looks_like": "f_roulette_table",

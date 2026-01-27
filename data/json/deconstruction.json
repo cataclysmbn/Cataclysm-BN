@@ -1284,11 +1284,7 @@
     "flags": [ "TRANSPARENT", "MINEABLE" ],
     "crafting_pseudo_item": "fake_training_exercise_machine",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "weightbench", "count": 1 },
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "weightbench", "count": 1 } ] },
     "bash": {
       "str_min": 18,
       "str_max": 60,
@@ -1316,11 +1312,7 @@
     "flags": [ "TRANSPARENT", "MINEABLE" ],
     "crafting_pseudo_item": "fake_training_ball_machine",
     "examine_action": "use_furn_fake_item",
-	 "deconstruct": {
-      "items": [
-        { "item": "ballmachine", "count": 1 },
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "ballmachine", "count": 1 } ] },
     "bash": {
       "str_min": 18,
       "str_max": 60,
@@ -1342,11 +1334,7 @@
     "crafting_pseudo_item": "fake_pool_table",
     "examine_action": "use_furn_fake_item",
     "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
-    "deconstruct": {
-      "items": [
-        { "item": "table_pool", "count": 1 },
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "table_pool", "count": 1 } ] },
     "bash": {
       "str_min": 12,
       "str_max": 50,
@@ -1374,11 +1362,7 @@
     "crafting_pseudo_item": "fake_arcade_machine",
     "examine_action": "use_furn_fake_item",
     "flags": [ "BLOCKSDOOR", "TRANSPARENT" ],
-    "deconstruct": {
-      "items": [
-        { "item": "arcade", "count": 1 },
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "arcade", "count": 1 } ] },
     "bash": {
       "str_min": 6,
       "str_max": 35,
@@ -1411,11 +1395,7 @@
     "flags": [ "BLOCKSDOOR", "TRANSPARENT" ],
     "crafting_pseudo_item": "fake_pinball_machine",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "pinball", "count": 1 },    
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "pinball", "count": 1 } ] },
     "bash": {
       "str_min": 8,
       "str_max": 40,
@@ -1451,11 +1431,7 @@
     "flags": [ "BLOCKSDOOR", "TRANSPARENT", "MOUNTABLE" ],
     "crafting_pseudo_item": "fake_training_ergometer",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "ergometer", "count": 1 },
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "ergometer", "count": 1 } ] },
     "bash": {
       "str_min": 6,
       "str_max": 25,
@@ -1488,11 +1464,7 @@
     "flags": [ "BLOCKSDOOR", "TRANSPARENT", "MOUNTABLE" ],
     "crafting_pseudo_item": "fake_training_treadmill",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "treadmill", "count": 1 },
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "treadmill", "count": 1 } ] },
     "bash": {
       "str_min": 12,
       "str_max": 40,
@@ -1523,11 +1495,7 @@
     "flags": [ "BASHABLE", "BLOCKSDOOR", "PLACE_ITEM", "ORGANIC" ],
     "crafting_pseudo_item": "fake_training_punching_bag",
     "examine_action": "use_furn_fake_item",
-	 "deconstruct": {
-      "items": [
-        { "item": "heavybag", "count": 1 },
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "heavybag", "count": 1 } ] },
     "bash": {
       "str_min": 15,
       "str_max": 20,
@@ -1541,7 +1509,7 @@
       "ranged": { "reduction": [ 15, 15 ], "destroy_threshold": 20, "block_unaimed_chance": "50%" }
     }
   },
-   {
+  {
     "type": "furniture",
     "id": "f_dancing_pole",
     "name": "dancing pole",
@@ -1554,11 +1522,7 @@
     "flags": [ "TRANSPARENT", "THIN_OBSTACLE" ],
     "crafting_pseudo_item": "fake_training_dancing_pole",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [ 
-	  { "item": "strippole", "count": 1 }
-	  ]
-    },
+    "deconstruct": { "items": [ { "item": "strippole", "count": 1 } ] },
     "bash": {
       "str_min": 8,
       "str_max": 20,
@@ -1584,11 +1548,7 @@
     "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
     "crafting_pseudo_item": "fake_roulette_table",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "table_roul", "count": 1 }
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "table_roul", "count": 1 } ] },
     "bash": {
       "str_min": 12,
       "str_max": 50,
