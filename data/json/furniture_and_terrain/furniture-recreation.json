@@ -12,14 +12,7 @@
     "flags": [ "TRANSPARENT", "MINEABLE" ],
     "crafting_pseudo_item": "fake_training_exercise_machine",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "pipe", "count": 1 },
-        { "item": "steel_chunk", "count": 1 },
-        { "item": "scrap", "count": [ 2, 6 ] },
-        { "item": "lead", "charges": [ 1000, 2000 ] }
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "weightbench", "count": 1 } ] },
     "bash": {
       "str_min": 18,
       "str_max": 60,
@@ -46,6 +39,7 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "MINEABLE" ],
     "crafting_pseudo_item": "fake_training_ball_machine",
+    "deconstruct": { "items": [ { "item": "ballmachine", "count": 1 } ] },
     "examine_action": "use_furn_fake_item",
     "bash": {
       "str_min": 18,
@@ -68,14 +62,7 @@
     "crafting_pseudo_item": "fake_pool_table",
     "examine_action": "use_furn_fake_item",
     "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
-    "deconstruct": {
-      "items": [
-        { "item": "2x4", "count": 4 },
-        { "item": "felt_patch", "count": 4 },
-        { "item": "wood_panel", "count": 1 },
-        { "item": "nail", "charges": [ 6, 10 ] }
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "table_pool", "count": 1 } ] },
     "bash": {
       "str_min": 12,
       "str_max": 50,
@@ -172,18 +159,7 @@
     "crafting_pseudo_item": "fake_arcade_machine",
     "examine_action": "use_furn_fake_item",
     "flags": [ "BLOCKSDOOR", "TRANSPARENT" ],
-    "deconstruct": {
-      "items": [
-        { "item": "television", "count": 1 },
-        { "item": "plastic_chunk", "count": [ 3, 6 ] },
-        { "item": "circuit", "count": [ 4, 6 ] },
-        { "item": "2x4", "count": 8 },
-        { "item": "nail", "charges": [ 10, 16 ] },
-        { "item": "cable", "charges": [ 14, 20 ] },
-        { "item": "power_supply", "count": [ 1, 2 ] },
-        { "item": "RAM", "count": [ 2, 4 ] }
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "arcade", "count": 1 } ] },
     "bash": {
       "str_min": 6,
       "str_max": 35,
@@ -216,21 +192,7 @@
     "flags": [ "BLOCKSDOOR", "TRANSPARENT" ],
     "crafting_pseudo_item": "fake_pinball_machine",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "scrap", "count": [ 4, 6 ] },
-        { "item": "plastic_chunk", "count": [ 3, 5 ] },
-        { "item": "circuit", "count": 1 },
-        { "item": "2x4", "count": 4 },
-        { "item": "nail", "charges": [ 10, 12 ] },
-        { "item": "cable", "charges": [ 10, 15 ] },
-        { "item": "power_supply", "prob": 50 },
-        { "item": "RAM", "count": 1 },
-        { "item": "pipe", "count": 2 },
-        { "item": "glass_sheet", "count": 1 },
-        { "item": "bearing", "charges": [ 10, 16 ] }
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "pinball", "count": 1 } ] },
     "bash": {
       "str_min": 8,
       "str_max": 40,
@@ -266,21 +228,7 @@
     "flags": [ "BLOCKSDOOR", "TRANSPARENT", "MOUNTABLE" ],
     "crafting_pseudo_item": "fake_training_ergometer",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "foot_crank", "count": [ 1, 1 ] },
-        { "item": "plastic_chunk", "count": [ 8, 10 ] },
-        { "item": "scrap", "count": [ 2, 4 ] },
-        { "item": "chain", "count": 1 },
-        { "item": "pipe", "count": [ 4, 5 ] },
-        { "item": "saddle", "count": [ 1, 1 ] },
-        { "item": "wheel_small", "count": [ 1, 1 ] },
-        { "item": "small_lcd_screen", "count": 1 },
-        { "item": "processor", "count": 1 },
-        { "item": "RAM", "count": 1 },
-        { "item": "nail", "charges": [ 6, 8 ] }
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "ergometer", "count": 1 } ] },
     "bash": {
       "str_min": 6,
       "str_max": 25,
@@ -313,16 +261,7 @@
     "flags": [ "BLOCKSDOOR", "TRANSPARENT", "MOUNTABLE" ],
     "crafting_pseudo_item": "fake_training_treadmill",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "plastic_chunk", "count": [ 10, 14 ] },
-        { "item": "scrap", "count": [ 2, 5 ] },
-        { "item": "pipe", "count": [ 4, 3 ] },
-        { "item": "small_lcd_screen", "count": 1 },
-        { "item": "RAM", "count": 1 },
-        { "item": "nail", "charges": [ 6, 8 ] }
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "treadmill", "count": 1 } ] },
     "bash": {
       "str_min": 12,
       "str_max": 40,
@@ -353,6 +292,7 @@
     "flags": [ "BASHABLE", "BLOCKSDOOR", "PLACE_ITEM", "ORGANIC" ],
     "crafting_pseudo_item": "fake_training_punching_bag",
     "examine_action": "use_furn_fake_item",
+    "deconstruct": { "items": [ { "item": "heavybag", "count": 1 } ] },
     "bash": {
       "str_min": 15,
       "str_max": 20,
@@ -457,9 +397,7 @@
     "flags": [ "TRANSPARENT", "THIN_OBSTACLE" ],
     "crafting_pseudo_item": "fake_training_dancing_pole",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [ { "item": "scrap", "count": [ 1, 2 ] }, { "item": "nail", "charges": [ 4, 8 ] }, { "item": "pipe", "count": 2 } ]
-    },
+    "deconstruct": { "items": [ { "item": "strippole", "count": 1 } ] },
     "bash": {
       "str_min": 8,
       "str_max": 20,
@@ -485,15 +423,7 @@
     "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
     "crafting_pseudo_item": "fake_roulette_table",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "2x4", "count": 4 },
-        { "item": "felt_patch", "count": 4 },
-        { "item": "wood_panel", "count": 1 },
-        { "item": "nail", "charges": [ 6, 10 ] },
-        { "item": "scrap", "count": [ 1, 2 ] }
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "table_roul", "count": 1 } ] },
     "bash": {
       "str_min": 12,
       "str_max": 50,
@@ -550,125 +480,5 @@
       ],
       "ranged": { "reduction": [ 16, 16 ], "destroy_threshold": 40 }
     }
-  },
-  {
-    "type": "construction",
-    "id": "constr_place_weights",
-    "group": "place_ebench",
-    "category": "RECREATION",
-    "required_skills": [ [ "fabrication", 0 ] ],
-    "time": "1 m",
-    "components": [ [ [ "weightbench", 1 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_exercise"
-  },
-  {
-    "type": "construction",
-    "id": "constr_place_ballm",
-    "group": "place_bmachine",
-    "category": "RECREATION",
-    "required_skills": [ [ "fabrication", 0 ] ],
-    "time": "1 m",
-    "components": [ [ [ "ballmachine", 1 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_ball_mach"
-  },
-  {
-    "type": "construction",
-    "id": "constr_place_poolt",
-    "group": "place_ptable",
-    "category": "RECREATION",
-    "required_skills": [ [ "fabrication", 0 ] ],
-    "time": "1 m",
-    "components": [ [ [ "table_pool", 1 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_pool_table"
-  },
-  {
-    "type": "construction",
-    "id": "constr_place_arcade",
-    "group": "place_arcade",
-    "category": "RECREATION",
-    "required_skills": [ [ "fabrication", 0 ] ],
-    "time": "1 m",
-    "components": [ [ [ "arcade", 1 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_arcade_machine"
-  },
-  {
-    "type": "construction",
-    "id": "constr_place_pinball",
-    "group": "place_pinball",
-    "category": "RECREATION",
-    "required_skills": [ [ "fabrication", 0 ] ],
-    "time": "1 m",
-    "components": [ [ [ "pinball", 1 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_pinball_machine"
-  },
-  {
-    "type": "construction",
-    "id": "constr_place_rower",
-    "group": "place_ergo",
-    "category": "RECREATION",
-    "required_skills": [ [ "fabrication", 0 ] ],
-    "time": "1 m",
-    "components": [ [ [ "ergometer", 1 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_ergometer"
-  },
-  {
-    "type": "construction",
-    "id": "constr_place_treadmill",
-    "group": "place_treadmill",
-    "category": "RECREATION",
-    "required_skills": [ [ "fabrication", 0 ] ],
-    "time": "1 m",
-    "components": [ [ [ "treadmill", 1 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_treadmill"
-  },
-  {
-    "type": "construction",
-    "id": "constr_place_pbag",
-    "group": "place_pbag",
-    "category": "RECREATION",
-    "required_skills": [ [ "fabrication", 0 ] ],
-    "time": "1 m",
-    "components": [ [ [ "heavybag", 1 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_punching_bag"
-  },
-  {
-    "type": "construction",
-    "id": "constr_place_spole",
-    "group": "place_spole",
-    "category": "RECREATION",
-    "required_skills": [ [ "fabrication", 0 ] ],
-    "time": "1 m",
-    "components": [ [ [ "strippole", 1 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_dancing_pole"
-  },
-  {
-    "type": "construction",
-    "id": "constr_place_roulette",
-    "group": "place_roulette",
-    "category": "RECREATION",
-    "required_skills": [ [ "fabrication", 0 ] ],
-    "time": "1 m",
-    "components": [ [ [ "table_roul", 1 ] ] ],
-    "pre_special": "check_empty",
-    "dark_craftable": true,
-    "post_furniture": "f_roulette_table"
   }
 ]
