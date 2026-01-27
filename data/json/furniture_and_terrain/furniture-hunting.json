@@ -1,0 +1,570 @@
+[
+  {
+    "type": "furniture",
+    "id": "f_wire_snare_empty",
+    "name": "empty wire snare",
+    "description": "A simple loop of wire anchored to a bent sapling, designed to tighten around an animal's neck or leg when triggered.  Lightweight and effective, but you'll need to add bait to lure your prey in.",
+    "symbol": "^",
+    "color": "light_gray",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "wire", "count": 4 }, { "item": "stick", "count": 1 } ] },
+    "bash": {
+      "str_min": 4,
+      "str_max": 12,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "wire", "count": [ 1, 2 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_wire_snare_set",
+    "name": "baited wire snare",
+    "description": "A wire loop snare primed with bait.  The slightest tug on the trigger will snap the noose tight.  Now it's just a waiting game - assuming some scavenger doesn't steal your bait first.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 4,
+      "str_max": 12,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_rattrap_empty",
+    "name": "empty rat trap",
+    "description": "A classic spring-loaded bar trap, ready to snap shut with bone-crushing force on anything small enough to trigger it.  Perfect for catching rats, chipmunks, and unwary fingers.",
+    "symbol": "^",
+    "color": "brown",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "TINY", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "rattrap", "count": 1 } ] },
+    "bash": {
+      "str_min": 2,
+      "str_max": 8,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 0, 1 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_rattrap_set",
+    "name": "baited rattrap",
+    "description": "A rattrap with bait secured to the pressure plate.  The spring is cocked and ready to snap shut with a satisfying *crack* when something tries to steal the bait.  Watch your fingers.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 2,
+      "str_max": 8,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 0, 1 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_big_rattrap_empty",
+    "name": "empty large rat trap",
+    "description": "An oversized rattrap with a reinforced spring mechanism strong enough to break the neck of a groundhog or squirrel.  The bar looks thick enough to snap a broomstick.  You really don't want to test it on your hand.",
+    "symbol": "^",
+    "color": "brown",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "TINY", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "big_rattrap", "count": 1 } ] },
+    "bash": {
+      "str_min": 3,
+      "str_max": 10,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 1, 2 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_big_rattrap_set",
+    "name": "baited large rattrap",
+    "description": "A heavy-duty rattrap loaded with bait and cocked for action.  The powerful spring is under enough tension to crack bone.  Hopefully it'll be an animal's bone, not yours.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 3,
+      "str_max": 10,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "scrap", "count": [ 1, 2 ] }, { "item": "splinter", "count": 2 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_deadfall_empty",
+    "name": "empty deadfall trap",
+    "description": "A primitive but brutally effective trap consisting of a heavy rock balanced on a precarious trigger mechanism.  One wrong move and gravity does the dirty work.  Just add bait and wait for something to get pancaked.",
+    "symbol": "^",
+    "color": "light_gray",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "TINY" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": {
+      "items": [ { "item": "stick", "count": 2 }, { "item": "string_6", "count": 2 } ],
+      "furn_set": "f_boulder_small_harvested"
+    },
+    "bash": {
+      "str_min": 0,
+      "str_max": 0,
+      "sound": "crash!",
+      "sound_fail": "thud!",
+      "furn_set": "f_boulder_small_harvested",
+      "items": [ { "item": "splinter", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_deadfall_set",
+    "name": "baited deadfall trap",
+    "description": "A deadfall trap set and baited, with a large rock poised to crush anything that disturbs the trigger.  The setup looks questionable, but if it works, it works.  Gravity never misses.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 0,
+      "str_max": 0,
+      "sound": "crash!",
+      "sound_fail": "thud!",
+      "furn_set": "f_boulder_small_harvested",
+      "items": [ { "item": "splinter", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_deadfall_closed",
+    "name": "triggered deadfall trap",
+    "description": "The rock has fallen, and something is definitely underneath it.  Time to see if you caught dinner or just flattened a stick.  Either way, the trap did its job.",
+    "symbol": "^",
+    "color": "green",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 0,
+      "str_max": 0,
+      "sound": "crash!",
+      "sound_fail": "thud!",
+      "furn_set": "f_boulder_small_harvested",
+      "items": [ { "item": "splinter", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_spiked_pit_trap_empty",
+    "name": "empty spiked pit trap",
+    "description": "A pit lined with sharpened stakes and covered with a sheet to create a false surface.  Camouflaged with local debris, it's designed to impale anything heavy enough to break through.  Remember where you put this - falling into your own spike pit would be embarrassing and fatal.",
+    "symbol": "^",
+    "color": "light_gray",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "TINY" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "sheet", "count": 1 } ] },
+    "bash": {
+      "str_min": 2,
+      "str_max": 8,
+      "sound": "tear!",
+      "sound_fail": "tear!",
+      "items": [ { "item": "rag", "count": [ 2, 4 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_spiked_pit_trap_set",
+    "name": "baited spiked pit trap",
+    "description": "A camouflaged spike pit with bait positioned to lure prey onto the false cover.  One wrong step and they'll learn the hard way what's beneath the sheet.  Just remember: you know it's here.  They don't.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 2,
+      "str_max": 8,
+      "sound": "tear!",
+      "sound_fail": "tear!",
+      "items": [ { "item": "rag", "count": [ 2, 4 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_spiked_pit_trap_closed",
+    "name": "triggered spiked pit trap",
+    "description": "The cover has given way and something has fallen into the spike-filled pit below.  The results are probably messy.  Time to check your catch and salvage what you can.",
+    "symbol": "^",
+    "color": "green",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 2,
+      "str_max": 8,
+      "sound": "tear!",
+      "sound_fail": "tear!",
+      "items": [ { "item": "rag", "count": [ 2, 4 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_beartrap_hunting_empty",
+    "name": "empty hunting bear trap",
+    "description": "A heavy-duty steel trap with serrated jaws powerful enough to break the neck of a deer or boar on impact.  Despite the name, it won't stop a bear - but it'll definitely ruin a deer's day.  The spring mechanism is serious business.",
+    "symbol": "^",
+    "color": "dark_gray",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "TINY", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "beartrap_hunting", "count": 1 } ] },
+    "bash": {
+      "str_min": 6,
+      "str_max": 14,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "beartrap_hunting", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_beartrap_hunting_set",
+    "name": "baited hunting bear trap",
+    "description": "A massive steel bear trap loaded with bait and set to snap shut with lethal force.  The jaws are designed to kill large game instantly - a mercy compared to the old leg-hold variety.  Circle around it carefully.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "TINY", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 6,
+      "str_max": 14,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "beartrap_hunting", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_crossbow_snare_vbox_empty",
+    "name": "empty crossbow snare",
+    "description": "A crossbow mounted in a sturdy vehicle frame, aimed at a trigger mechanism.  When an animal goes for the bait, it'll take a bolt to vital areas at point-blank range.  Efficient, silent, and reusable - assuming you can recover the bolt.",
+    "symbol": "^",
+    "color": "light_gray",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "CONTAINER" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "crossbow_trap", "count": 1 }, { "item": "frame", "count": 1 } ] },
+    "bash": {
+      "str_min": 5,
+      "str_max": 15,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "crossbow_trap", "count": [ 0, 1 ] }, { "item": "frame", "count": [ 0, 1 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_crossbow_snare_vbox_set",
+    "name": "baited crossbow snare",
+    "description": "A loaded crossbow aimed at a baited trigger.  The bolt is ready to fly the moment something disturbs the mechanism.  Clean, efficient, and remarkably cruel if you think about it too much.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 5,
+      "str_max": 15,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "crossbow_trap", "count": [ 0, 1 ] }, { "item": "frame", "count": [ 0, 1 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_crossbow_snare_vbox_closed",
+    "name": "triggered crossbow snare",
+    "description": "The crossbow has fired and the string hangs slack.  Something took the bait and paid the price.  Time to see what you bagged and reload for the next catch.",
+    "symbol": "^",
+    "color": "green",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 5,
+      "str_max": 15,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "crossbow_trap", "count": [ 0, 1 ] }, { "item": "frame", "count": [ 0, 1 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_crossbow_snare_wbox_empty",
+    "name": "empty wooden crossbow snare",
+    "description": "A crossbow mounted in a wooden frame, aimed at a trigger point.  Less sturdy than the metal version, but it'll still put a bolt through an animal's vitals just fine.  Wood's cheaper than steel, and dead is dead.",
+    "symbol": "^",
+    "color": "light_gray",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "CONTAINER" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "crossbow_trap", "count": 1 }, { "item": "frame_wood", "count": 1 } ] },
+    "bash": {
+      "str_min": 4,
+      "str_max": 12,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "crossbow_trap", "count": [ 0, 1 ] }, { "item": "2x4", "count": [ 2, 4 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_crossbow_snare_wbox_set",
+    "name": "baited wooden crossbow snare",
+    "description": "A crossbow in a wooden frame, loaded and aimed at the baited trigger.  The frame might be improvised, but the crossbow doesn't care - it'll still send a bolt through your dinner with mechanical precision.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 4,
+      "str_max": 12,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "crossbow_trap", "count": [ 0, 1 ] }, { "item": "2x4", "count": [ 2, 4 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_crossbow_snare_wbox_closed",
+    "name": "triggered wooden crossbow snare",
+    "description": "The crossbow has discharged and the wooden frame is still intact.  Something triggered it and took a bolt for its curiosity.  Time to collect your kill and reset the trap.",
+    "symbol": "^",
+    "color": "green",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 4,
+      "str_max": 12,
+      "sound": "snap!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "crossbow_trap", "count": [ 0, 1 ] }, { "item": "2x4", "count": [ 2, 4 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_shotgun_snare_empty",
+    "name": "empty shotgun snare",
+    "description": "A pipe shotgun rigged to fire when the bait is disturbed, mounted in a vehicle frame for stability.  Aimed at head height for small to medium game.  It's loud, messy, and wastes a shell - but it gets the job done with authority.",
+    "symbol": "^",
+    "color": "light_gray",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "CONTAINER" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": { "items": [ { "item": "pipe_shotgun", "count": 1 }, { "item": "wire", "count": 2 }, { "item": "frame", "count": 1 } ] },
+    "bash": {
+      "str_min": 6,
+      "str_max": 18,
+      "sound": "crash!",
+      "sound_fail": "whack!",
+      "items": [
+        { "item": "pipe_shotgun", "count": [ 0, 1 ] },
+        { "item": "wire", "count": [ 0, 2 ] },
+        { "item": "scrap", "count": [ 2, 4 ] }
+      ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_shotgun_snare_set",
+    "name": "baited shotgun snare",
+    "description": "A loaded pipe shotgun aimed at the baited trigger.  One shell, point-blank range, aimed at the kill zone.  When it goes off, you'll hear it - and so will everything else in a half-mile radius.  Hope it's worth the noise.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 6,
+      "str_max": 18,
+      "sound": "crash!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "pipe_shotgun", "count": [ 0, 1 ] }, { "item": "scrap", "count": [ 2, 4 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_shotgun_snare_closed",
+    "name": "triggered shotgun snare",
+    "description": "The shotgun has fired and the smell of gunpowder lingers.  Something took a load of shot at point-blank range - probably not much left to identify.  Better check what's left and reload.",
+    "symbol": "^",
+    "color": "green",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 6,
+      "str_max": 18,
+      "sound": "crash!",
+      "sound_fail": "whack!",
+      "items": [ { "item": "pipe_shotgun", "count": [ 0, 1 ] }, { "item": "scrap", "count": [ 2, 4 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_spear_snare_spring_empty",
+    "name": "empty spring spear snare",
+    "description": "A spring-loaded spear launcher designed to exploit animal behavior.  When prey reaches for bait inside, their claws catch an internal lever - triggering the spear to punch through the armpit of their extended foreleg, straight into vital organs.  Brutal efficiency powered by compressed springs.",
+    "symbol": "^",
+    "color": "light_gray",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": {
+      "items": [
+        { "item": "spear_pipe", "count": 1 },
+        { "item": "metal_tank", "count": 1 },
+        { "item": "pipe", "count": 2 },
+        { "item": "wire", "count": 2 },
+        { "item": "spring", "count": 4 }
+      ]
+    },
+    "bash": {
+      "str_min": 8,
+      "str_max": 20,
+      "sound": "crash!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "spear_pipe", "count": [ 0, 1 ] },
+        { "item": "pipe", "count": [ 1, 2 ] },
+        { "item": "spring", "count": [ 2, 4 ] },
+        { "item": "scrap", "count": [ 3, 6 ] }
+      ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_spear_snare_spring_set",
+    "name": "baited spring spear snare",
+    "description": "A cocked spear trap with bait placed to lure animals into reaching inside.  One tug on the internal lever and the compressed springs release, driving the spear up through the foreleg armpit into the chest cavity.  It's designed to turn the animal's own curiosity into a fatal mistake.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 8,
+      "str_max": 20,
+      "sound": "crash!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "spear_pipe", "count": [ 0, 1 ] },
+        { "item": "pipe", "count": [ 1, 2 ] },
+        { "item": "scrap", "count": [ 3, 6 ] }
+      ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_spear_snare_pneumatic_empty",
+    "name": "empty pneumatic spear snare",
+    "description": "A pneumatic upgrade to the spring-loaded design, using compressed air for even greater force.  When prey extends a paw for the bait and trips the internal lever, pressurized air launches the spear through their foreleg armpit into vital organs.  More power, same cruel logic.",
+    "symbol": "^",
+    "color": "light_gray",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT", "CONTAINER", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "deconstruct": {
+      "items": [
+        { "item": "spear_pipe", "count": 1 },
+        { "item": "metal_tank", "count": 1 },
+        { "item": "pipe", "count": 2 },
+        { "item": "wire", "count": 2 },
+        { "item": "rubber", "count": 2 }
+      ]
+    },
+    "bash": {
+      "str_min": 8,
+      "str_max": 20,
+      "sound": "crash!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "spear_pipe", "count": [ 0, 1 ] },
+        { "item": "pipe", "count": [ 1, 2 ] },
+        { "item": "rubber", "count": [ 1, 2 ] },
+        { "item": "scrap", "count": [ 3, 6 ] }
+      ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_spear_snare_pneumatic_set",
+    "name": "baited pneumatic spear snare",
+    "description": "A pressurized spear trap ready to fire.  Bait is positioned to make prey reach inside, where their claws will trigger the release valve.  The pneumatic system delivers enough force to drive the spear through foreleg, ribcage, and out the other side.  Overkill? Maybe.  Effective? Absolutely.",
+    "symbol": "^",
+    "color": "yellow",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "CONTAINER", "SEALED", "NOITEM", "OPEN_SNARE" ],
+    "examine_action": "hunting_snare",
+    "bash": {
+      "str_min": 8,
+      "str_max": 20,
+      "sound": "crash!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "spear_pipe", "count": [ 0, 1 ] },
+        { "item": "pipe", "count": [ 1, 2 ] },
+        { "item": "scrap", "count": [ 3, 6 ] }
+      ]
+    }
+  }
+]

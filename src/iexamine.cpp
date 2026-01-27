@@ -55,6 +55,7 @@
 #include "game_inventory.h"
 #include "handle_liquid.h"
 #include "harvest.h"
+#include "hunting_data.h"
 #include "input.h"
 #include "int_id.h"
 #include "inventory.h"
@@ -178,6 +179,7 @@ static const skill_id skill_fabrication( "fabrication" );
 static const skill_id skill_firstaid( "firstaid" );
 static const skill_id skill_mechanics( "mechanics" );
 static const skill_id skill_survival( "survival" );
+static const skill_id skill_trapping( "trapping" );
 
 static const ter_str_id t_dimensional_portal( "t_dimensional_portal" );
 static const ter_str_id t_web_bridge( "t_web_bridge" );
@@ -6749,6 +6751,288 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
     }
 }
 
+void iexamine::hunting_snare( player &p, const tripoint &examp )
+{
+    map &here = get_map();
+    const furn_id furn_at_pos = here.furn( examp );
+    const std::string furn_str = furn_at_pos.id().str();
+
+    if( furn_str.ends_with( "_empty" ) ) {
+        bait_snare( p, examp );
+    } else if( furn_str.ends_with( "_set" ) ) {
+        // Menu for baited trap
+        uilist amenu;
+        amenu.text = _( "Baited trap options:" );
+        amenu.addentry( 0, true, 'r', _( "Remove bait and reset trap" ) );
+        amenu.addentry( 1, true, 'c', _( "Cancel" ) );
+        amenu.query();
+
+        if( amenu.ret == 0 ) {
+            // Remove bait and convert to _empty
+            std::string base_name = furn_str.substr( 0, furn_str.length() - 4 ); // Remove "_set"
+
+            // Return bait to player
+            map_stack items = here.i_at( examp );
+            for( auto it = items.begin(); it != items.end(); ) {
+                item &current_item = **it;
+
+                // Skip the fake tracker item
+                if( current_item.typeId().str() == "fake_snare_bait" ) {
+                    ++it;
+                    continue;
+                }
+
+                // Check if this is actual bait (has BAIT_ flag)
+                bool is_bait = false;
+                for( const flag_id &flag : current_item.type->get_flags() ) {
+                    if( flag.str().starts_with( "BAIT_" ) ) {
+                        is_bait = true;
+                        break;
+                    }
+                }
+
+                if( is_bait ) {
+                    add_msg( m_info, _( "You retrieve the %s." ), current_item.tname() );
+                    detached_ptr<item> det;
+                    it = here.i_rem( examp, it, &det );
+                    p.i_add( std::move( det ) );
+                } else {
+                    ++it;
+                }
+            }
+
+            // Remove all items from trap (including fake tracker)
+            here.i_clear( examp );
+
+            // Convert to empty trap
+            here.furn_set( examp, furn_str_id( base_name + "_empty" ) );
+            add_msg( m_good, _( "You reset the trap." ) );
+            p.mod_moves( -to_moves<int>( 5_seconds ) );
+        }
+    } else if( furn_str.ends_with( "_closed" ) ) {
+        harvest_snare( p, examp );
+    } else {
+        debugmsg( "hunting_snare called on unexpected furniture: %s", furn_str );
+    }
+}
+
+void iexamine::bait_snare( player &p, const tripoint &examp )
+{
+    map &here = get_map();
+    const furn_id furn_at = here.furn( examp );
+    std::string furn_str = furn_at.id().str();
+
+    // Verify this is an empty snare
+    if( furn_str.length() < 6 || furn_str.substr( furn_str.length() - 6 ) != "_empty" ) {
+        add_msg( m_info, _( "There's no empty trap here." ) );
+        return;
+    }
+
+    // Menu for options
+    uilist amenu;
+    amenu.text = _( "Snare options:" );
+    amenu.addentry( 0, true, 'b', _( "Add bait" ) );
+    amenu.addentry( 1, true, 't', _( "Take down the snare" ) );
+    amenu.query();
+
+    if( amenu.ret == 1 ) {
+        // Take down option - deconstruct the furniture
+        add_msg( m_info, _( "You dismantle the snare." ) );
+        here.furn_set( examp, f_null );
+        // Drop components
+        if( !furn_at->deconstruct.drop_group.is_empty() ) {
+            here.spawn_items( examp, item_group::items_from( furn_at->deconstruct.drop_group,
+                              calendar::turn ) );
+        }
+        p.mod_moves( -to_moves<int>( 10_seconds ) );
+        return;
+    }
+
+    if( amenu.ret != 0 ) {
+        return;
+    }
+
+    // Find bait in inventory (any item with BAIT_ prefix flag)
+    std::vector<item *> bait_items;
+
+    for( item *it : p.inv_dump() ) {
+        bool has_bait = false;
+        for( const flag_id &flag : it->type->get_flags() ) {
+            if( flag.str().starts_with( "BAIT_" ) ) {
+                has_bait = true;
+                break;
+            }
+        }
+        if( has_bait ) {
+            bait_items.push_back( it );
+        }
+    }
+
+    if( bait_items.empty() ) {
+        add_msg( m_info, _( "You don't have any bait." ) );
+        return;
+    }
+    // Simple selection - just use first available bait
+    item *selected_bait = bait_items[0];
+    std::string bait_name = selected_bait->tname();
+    uilist bmenu;
+    bmenu.text = _( "Select bait to use:" );
+    for( auto bait_item : bait_items ) {
+        // TODO: invlet is 0 ALWAYS. Should use another one.
+        bmenu.addentry( -1, true, -1, bait_item->tname() );
+    }
+    bmenu.query();
+    if( bmenu.ret < 0 || static_cast<size_t>( bmenu.ret ) >= bait_items.size() ) {
+        add_msg( m_info, _( "Never mind." ) );
+        return;
+    } else {
+        selected_bait = bait_items[bmenu.ret];
+        bait_name = selected_bait->tname();
+    }
+
+    // Get base furniture name
+    std::string base_name = furn_str.substr( 0, furn_str.length() - 6 );
+
+    // Check for setup requirements (besides bait)
+    const hunting::snaring_hunting_data *hd = hunting::find_hunting_data_for_furniture( examp );
+    if( hd && hd->req_id_for_setup.has_value() ) {
+        const requirement_data &reqs = hd->req_id_for_setup.value().obj();
+
+        // Check if player can fulfill requirements
+        if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
+            std::string missing = reqs.list_missing();
+            add_msg( m_info, _( "You need the following to set this trap:\n%s" ), missing );
+            return;
+        }
+
+        // Consume requirements
+        for( const auto &comp_list : reqs.get_components() ) {
+            p.consume_items( comp_list, 1, is_crafting_component );
+        }
+        for( const auto &tool_list : reqs.get_tools() ) {
+            p.consume_tools( tool_list, 1 );
+        }
+    }
+
+    // Create fake tracker item (for time tracking only)
+    detached_ptr<item> fake = item::spawn( "fake_snare_bait", calendar::turn );
+    const int bait_counter = to_turns<int>( time_duration::from_hours( rng( 4, 8 ) ) );
+    fake->activate();
+    fake->set_counter( bait_counter );
+    fake->set_var( "base_furn", base_name );
+    fake->set_var( "bait_counter", bait_counter );
+
+    std::vector<detached_ptr<item>> bait_copy;
+    // Consume one unit of bait
+    if( selected_bait -> count_by_charges() ) {
+        bait_copy = p.use_charges( selected_bait->typeId(), 1 );
+    } else {
+        bait_copy = p.use_amount( selected_bait->typeId(), 1 );
+    }
+    // Move actual bait to trap location (don't delete it)
+    // Add both items to trap location
+    here.add_item( examp, std::move( fake ) );
+    here.add_item( examp, std::move( bait_copy.front() ) );
+    here.furn_set( examp, furn_str_id( base_name + "_set" ) );
+
+    add_msg( m_good, _( "You bait the snare with %s." ), bait_name );
+    p.mod_moves( -to_moves<int>( 5_seconds ) );
+}
+
+void iexamine::harvest_snare( player &p, const tripoint &examp )
+{
+    map &here = get_map();
+    const furn_id furn_at = here.furn( examp );
+
+    // Check if this is a triggered trap (must end with "_closed")
+    std::string furn_str = furn_at.id().str();
+    if( furn_str.length() < 7 || furn_str.substr( furn_str.length() - 7 ) != "_closed" ) {
+        add_msg( m_info, _( "This trap hasn't been triggered." ) );
+        return;
+    }
+
+    map_stack items_here = here.i_at( examp );
+
+    // Find item with stored hunting data (bait with vars set by process_fake_snare)
+    item *data_item = nullptr;
+    for( item * const &it : items_here ) {
+        if( !hunting::extract_bait_types( it ).empty() && it->has_var( "base_furn" ) ) {
+            data_item = it;
+            break;
+        }
+    }
+
+    // If no data found, trap triggered but process_fake_snare didn't run
+    // (shouldn't happen, but handle gracefully)
+    if( !data_item ) {
+        add_msg( m_neutral, _( "The snare is empty. Nothing was caught." ) );
+        std::string base = furn_str.substr( 0, furn_str.length() - 7 );
+        here.furn_set( examp, furn_str_id( base + "_empty" ) );
+        items_here.clear();
+        p.mod_moves( -to_moves<int>( 5_seconds ) );
+        return;
+    }
+
+    // Extract stored data
+    std::string base_furn = data_item->get_var( "base_furn", "f_wire_snare" );
+    int proximity_penalty = data_item->get_var( "proximity_penalty", 0 );
+    time_point snared_time = time_point::from_turn( data_item->get_var( "snared_time",
+                             to_turn<int>( calendar::turn ) ) );
+    std::vector<std::string> bait_flags_str = hunting::extract_bait_types( data_item );
+
+    // Get hunting_data for after_trigger handling
+    const hunting::snaring_hunting_data *hd = hunting::find_hunting_data_for_furniture( examp );
+
+    // Process snare catch (check + generate corpse)
+    hunting::snare_catch_result catch_result = hunting::process_snare_catch( examp, bait_flags_str,
+            p, proximity_penalty, snared_time );
+
+    // Remove all items (bait consumed)
+    items_here.clear();
+
+    // Check skill to determine if trap gets damaged - applies to ALL traps
+    int const skill_level = p.get_skill_level( skill_trapping );
+    int const damage_chance = rng( 0, 5 );
+    bool trap_destroyed = false;
+
+    if( damage_chance > skill_level + 2 ) {
+        // Try to bash the trap (may or may not succeed in destroying it)
+        bash_params params{
+            p.get_str(), false, false, false,
+            static_cast<float>( rng_float( 0, 1.0f ) ), false
+        };
+        bash_results results = here.bash_ter_furn( examp, params );
+
+        if( results.success ) {
+            // Trap was actually destroyed
+            add_msg( m_bad, _( "You damaged the snare while harvesting it, and it breaks." ) );
+            trap_destroyed = true;
+        } else {
+            // Bash failed, trap survives but player nearly broke it
+            add_msg( m_warning, _( "You nearly damaged the snare, but managed to recover it." ) );
+        }
+    }
+
+    // Reset furniture and spawn items - DO THIS FIRST to remove NOITEM flag
+    // Only if trap wasn't destroyed by skill check
+    if( !trap_destroyed ) {
+        hunting::apply_after_trigger( examp, hd, base_furn );
+    }
+
+    // NOW process results and spawn corpse after furniture has been changed
+    if( catch_result.hunt_result.success && catch_result.corpse ) {
+        add_msg( m_good, catch_result.hunt_result.message );
+        here.add_item_or_charges( examp, std::move( catch_result.corpse ) );
+        p.practice( skill_trapping, 25 );
+        p.practice( skill_survival, 12 );
+    } else {
+        add_msg( m_neutral, catch_result.hunt_result.message );
+        p.practice( skill_trapping, 5 );
+        p.practice( skill_survival, 2 );
+    }
+    p.mod_moves( -to_moves<int>( 5_seconds ) );
+}
+
 void iexamine::open_safe( player &, const tripoint &examp )
 {
     add_msg( m_info, _( "You open the unlocked safe." ) );
@@ -6930,6 +7214,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "quern_examine", &iexamine::quern_examine },
             { "cloning_vat_examine", &iexamine::cloning_vat_examine },
             { "smoker_options", &iexamine::smoker_options },
+            { "hunting_snare", &iexamine::hunting_snare },
             { "open_safe", &iexamine::open_safe },
             { "workbench", &iexamine::workbench },
             { "dimensional_portal", &iexamine::dimensional_portal },

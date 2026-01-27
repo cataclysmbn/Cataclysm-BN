@@ -1,0 +1,112 @@
+[
+  {
+    "type": "construction",
+    "id": "constr_wire_snare",
+    "group": "set_wire_snare",
+    "category": "SNARE",
+    "required_skills": [ [ "traps", 1 ], [ "survival", 1 ] ],
+    "time": "3 m",
+    "qualities": [ [ { "id": "CUT", "level": 1 } ] ],
+    "components": [ [ [ "wire", 4 ], [ "cable", 8 ] ], [ [ "stick", 1 ] ] ],
+    "pre_note": "Requires a young tree to tie the snare to.",
+    "pre_terrain": "t_tree_young",
+    "post_furniture": "f_wire_snare_empty"
+  },
+  {
+    "type": "construction",
+    "id": "constr_deadfall",
+    "group": "set_deadfall",
+    "category": "SNARE",
+    "required_skills": [ [ "traps", 1 ], [ "survival", 1 ] ],
+    "time": "2 m",
+    "components": [ [ [ "stick", 2 ] ], [ [ "string_6", 2 ] ] ],
+    "pre_furniture": "f_boulder_small",
+    "pre_note": "Requires a small boulder.",
+    "post_furniture": "f_deadfall_empty"
+  },
+  {
+    "type": "construction",
+    "id": "constr_deadfall_again",
+    "group": "set_deadfall",
+    "category": "SNARE",
+    "required_skills": [ [ "traps", 1 ], [ "survival", 1 ] ],
+    "time": "2 m",
+    "components": [ [ [ "stick", 2 ] ], [ [ "string_6", 2 ] ] ],
+    "pre_furniture": "f_boulder_small_harvested",
+    "pre_note": "Requires a small boulder.",
+    "post_furniture": "f_deadfall_empty"
+  },
+  {
+    "type": "construction",
+    "id": "constr_spiked_pit_trap",
+    "group": "set_spiked_pit_trap",
+    "category": "SNARE",
+    "required_skills": [ [ "traps", 1 ] ],
+    "time": "1 m",
+    "components": [ [ [ "sheet", 1 ] ] ],
+    "pre_terrain": "t_pit_spiked",
+    "pre_note": "Requires a spiked pit trap.",
+    "post_furniture": "f_spiked_pit_trap_empty"
+  },
+  {
+    "type": "construction",
+    "id": "constr_crossbow_snare_vbox",
+    "group": "set_crossbow_snare",
+    "category": "SNARE",
+    "required_skills": [ [ "traps", 4 ], [ "mechanics", 2 ] ],
+    "time": "15 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ] ],
+    "components": [ [ [ "crossbow", 1 ] ], [ [ "wire", 2 ] ], [ [ "frame", 1 ] ] ],
+    "pre_special": "check_empty",
+    "post_furniture": "f_crossbow_snare_vbox_empty"
+  },
+  {
+    "type": "construction",
+    "id": "constr_crossbow_snare_wbox",
+    "group": "set_crossbow_snare",
+    "category": "SNARE",
+    "required_skills": [ [ "traps", 4 ], [ "mechanics", 2 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ] ],
+    "components": [ [ [ "crossbow", 1 ] ], [ [ "wire", 2 ] ], [ [ "frame_wood", 1 ] ] ],
+    "pre_special": "check_empty",
+    "post_furniture": "f_crossbow_snare_wbox_empty"
+  },
+  {
+    "type": "construction",
+    "id": "constr_shotgun_snare",
+    "group": "set_shotgun_snare",
+    "category": "SNARE",
+    "required_skills": [ [ "traps", 4 ], [ "mechanics", 2 ] ],
+    "time": "10 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ] ],
+    "components": [ [ [ "pipe_shotgun", 1 ] ], [ [ "wire", 2 ] ], [ [ "frame", 1 ] ] ],
+    "pre_special": "check_empty",
+    "post_furniture": "f_shotgun_snare_empty"
+  },
+  {
+    "type": "construction",
+    "id": "constr_spear_snare_spring",
+    "group": "set_spear_snare",
+    "category": "SNARE",
+    "required_skills": [ [ "traps", 4 ], [ "mechanics", 3 ] ],
+    "time": "8 m",
+    "qualities": [ [ { "id": "SAW_M", "level": 1 } ] ],
+    "components": [ [ [ "spear_pipe", 1 ] ], [ [ "metal_tank", 1 ] ], [ [ "pipe", 2 ] ], [ [ "wire", 2 ] ], [ [ "spring", 4 ] ] ],
+    "pre_flags": "PIT_SHALLOW",
+    "post_furniture": "f_spear_snare_spring_empty"
+  },
+  {
+    "type": "construction",
+    "id": "constr_spear_snare_pneumatic",
+    "group": "set_spear_snare",
+    "category": "SNARE",
+    "required_skills": [ [ "traps", 4 ], [ "mechanics", 3 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SAW_M", "level": 1 } ] ],
+    "tools": [ [ [ "soldering_iron", 10 ], [ "soldering_ethanol", 100 ], [ "toolset", 10 ] ] ],
+    "components": [ [ [ "spear_pipe", 1 ] ], [ [ "metal_tank", 1 ] ], [ [ "pipe", 2 ] ], [ [ "wire", 2 ] ], [ [ "rubber", 2 ] ] ],
+    "pre_flags": "PIT_SHALLOW",
+    "post_furniture": "f_spear_snare_pneumatic_empty"
+  }
+]

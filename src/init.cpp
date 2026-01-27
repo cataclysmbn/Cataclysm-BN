@@ -49,6 +49,7 @@
 #include "flag_trait.h"
 #include "gates.h"
 #include "harvest.h"
+#include "hunting_data.h"
 #include "item_action.h"
 #include "item_category.h"
 #include "item_factory.h"
@@ -273,6 +274,7 @@ void DynamicDataLoader::initialize()
     add( "mutation", &mutation_branch::load_trait );
     add( "furniture", &load_furniture );
     add( "terrain", &load_terrain );
+    add( "hunting_data", &hunting::snaring_hunting_data::load_hunting_data );
     add( "monstergroup", &MonsterGroupManager::LoadMonsterGroup );
     add( "MONSTER_BLACKLIST", &MonsterGroupManager::LoadMonsterBlacklist );
     add( "MONSTER_WHITELIST", &MonsterGroupManager::LoadMonsterWhitelist );
@@ -574,6 +576,7 @@ void DynamicDataLoader::unload_data()
     field_types::reset();
     gates::reset();
     harvest_list::reset();
+    hunting::snaring_hunting_data::reset();
     item_action_generator::generator().reset();
     item_controller->reset();
     json_flag::reset();
@@ -747,6 +750,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Vitamins" ), &vitamin::check_consistency },
             { _( "Weather types" ), &weather_types::check_consistency },
             { _( "Field types" ), &field_types::check_consistency },
+            { _( "Hunting data" ), &hunting::snaring_hunting_data::check_consistency },
             { _( "Ammo effects" ), &ammo_effects::check_consistency },
             { _( "Emissions" ), &emit::check_consistency },
             { _( "Activities" ), &activity_type::check_consistency },

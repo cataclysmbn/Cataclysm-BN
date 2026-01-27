@@ -614,7 +614,7 @@
     "vitamins": [ [ "vitA", 20 ], [ "vitC", 45 ], [ "calcium", 5 ], [ "iron", 5 ], [ "veggy_allergen", 1 ] ],
     "fun": 5,
     "color": "brown",
-    "flags": [ "INEDIBLE", "CATTLE", "NO_COOKING_BUFF" ],
+    "flags": [ "INEDIBLE", "CATTLE", "NO_COOKING_BUFF", "BAIT_SMALL_GAME_HERBIVORE", "BAIT_LARGE_GAME_HERBIVORE" ],
     "use_action": [ "PETFOOD" ],
     "petfood": [ "CATTLEFOOD", "DINOFOOD_C" ]
   },
@@ -637,7 +637,7 @@
     "vitamins": [ [ "calcium", 1 ], [ "iron", 7 ], [ "veggy_allergen", 1 ] ],
     "fun": 5,
     "color": "brown",
-    "flags": [ "INEDIBLE", "BIRD", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "INEDIBLE", "BIRD", "NUTRIENT_OVERRIDE", "BAIT_SMALL_GAME_OMNIVORE" ],
     "use_action": [ "PETFOOD" ],
     "petfood": [ "BIRDFOOD" ]
   },
@@ -663,7 +663,13 @@
     "vitamins": [ [ "vitC", 4 ], [ "iron", 17 ], [ "vitB", 187 ], [ "calcium", 0 ], [ "meat_allergen", 1 ] ],
     "fun": -15,
     "color": "brown",
-    "flags": [ "LUPINE" ],
+    "flags": [
+      "LUPINE",
+      "BAIT_SMALL_GAME_CARNIVORE",
+      "BAIT_LARGE_GAME_CARNIVORE",
+      "BAIT_SMALL_GAME_OMNIVORE",
+      "BAIT_LARGE_GAME_OMNIVORE"
+    ],
     "use_action": [ "PETFOOD" ],
     "petfood": [ "DOGFOOD", "DINOFOOD_A" ]
   },
@@ -689,7 +695,13 @@
     "vitamins": [ [ "vitC", 4 ], [ "iron", 17 ], [ "vitB", 187 ], [ "calcium", 0 ], [ "meat_allergen", 1 ] ],
     "fun": -15,
     "color": "brown",
-    "flags": [ "FELINE" ],
+    "flags": [
+      "FELINE",
+      "BAIT_SMALL_GAME_CARNIVORE",
+      "BAIT_LARGE_GAME_CARNIVORE",
+      "BAIT_SMALL_GAME_OMNIVORE",
+      "BAIT_LARGE_GAME_OMNIVORE"
+    ],
     "use_action": [ "PETFOOD" ],
     "petfood": [ "CATFOOD", "DINOFOOD_B" ]
   },
@@ -709,7 +721,7 @@
     "symbol": ";",
     "color": "red",
     "calories": 100,
-    "flags": [ "INEDIBLE", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "INEDIBLE", "NUTRIENT_OVERRIDE", "BAIT_SMALL_GAME_CARNIVORE", "BAIT_SMALL_GAME_OMNIVORE" ],
     "use_action": [ "PETFOOD" ],
     "petfood": [ "BATFOOD" ]
   },

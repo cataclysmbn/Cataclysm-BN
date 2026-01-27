@@ -97,6 +97,7 @@ ignorable = {
     "event_statistic",
     "EXTERNAL_OPTION",
     "hit_range",
+    "hunting_data",
     "ITEM_BLACKLIST",
     "item_group",
     "MIGRATION",

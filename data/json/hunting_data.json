@@ -1,0 +1,416 @@
+[
+  {
+    "type": "hunting_data",
+    "id": "default_hunting",
+    "//": "Fallback hunting data for traps without specific data",
+    "habitats": {
+      "forest": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 80 }, { "prey": "mon_hare", "weight": 60 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 50 }, { "prey": "none", "weight": 50 } ]
+      },
+      "cropland": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 120 }, { "prey": "mon_hare", "weight": 40 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 50 } ]
+      },
+      "pasture": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 100 }, { "prey": "mon_hare", "weight": 30 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 40 } ]
+      },
+      "wetland": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_otter", "weight": 60 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 70 } ]
+      },
+      "wetland_forest": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 60 }, { "prey": "mon_hare", "weight": 50 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 60 }, { "prey": "mon_deer", "weight": 30 } ]
+      },
+      "open_land": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 90 }, { "prey": "mon_hare", "weight": 70 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 30 } ]
+      },
+      "brushland": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 110 }, { "prey": "mon_hare", "weight": 80 } ],
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 35 } ]
+      }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_wire_snare",
+    "//": "Wire snare - good for small omnivores like rats and squirrels",
+    "trigger_sound": "*snap*",
+    "trigger_volume": 3,
+    "after_trigger": { "furniture": "f_null", "items": [ [ { "item": "wire", "count": [ 1, 2 ] }, { "item": "stick", "count": 1 } ] ] },
+    "habitats": {
+      "forest": {
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 100 },
+          { "prey": "mon_squirrel", "weight": 80 },
+          { "prey": "mon_chipmunk", "weight": 70 },
+          { "prey": "none", "weight": 700 }
+        ],
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 90 }, { "prey": "none", "weight": 350 } ],
+        "SMALL_GAME_CARNIVORE": [ { "prey": "mon_fox_red", "weight": 40 }, { "prey": "mon_fox_gray", "weight": 30 }, { "prey": "none", "weight": 250 } ]
+      },
+      "open_land": {
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 80 },
+          { "prey": "mon_groundhog", "weight": 60 },
+          { "prey": "none", "weight": 550 }
+        ],
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 90 }, { "prey": "mon_hare", "weight": 75 }, { "prey": "none", "weight": 400 } ],
+        "SMALL_GAME_CARNIVORE": [
+          { "prey": "mon_coyote", "weight": 30 },
+          { "prey": "mon_dog_beagle", "weight": 25 },
+          { "prey": "mon_dog_dachshund", "weight": 20 },
+          { "prey": "mon_dog_chihuahua", "weight": 15 },
+          { "prey": "none", "weight": 300 }
+        ]
+      },
+      "brushland": {
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 90 },
+          { "prey": "mon_squirrel", "weight": 70 },
+          { "prey": "mon_groundhog", "weight": 60 },
+          { "prey": "none", "weight": 750 }
+        ],
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 100 }, { "prey": "mon_hare", "weight": 85 }, { "prey": "none", "weight": 450 } ],
+        "SMALL_GAME_CARNIVORE": [ { "prey": "mon_fox_red", "weight": 50 }, { "prey": "mon_coyote", "weight": 35 }, { "prey": "none", "weight": 300 } ]
+      }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_rattrap",
+    "//": "Small rattrap - specialized for catching rats and small rodents (TINY flag)",
+    "trigger_sound": "snap!",
+    "trigger_volume": 5,
+    "after_trigger": { "furniture": "f_null", "items": [ [ { "item": "rattrap", "count": 1 } ] ] },
+    "habitats": {
+      "forest": {
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 120 },
+          { "prey": "mon_chipmunk", "weight": 70 },
+          { "prey": "none", "weight": 650 }
+        ]
+      },
+      "open_land": { "SMALL_GAME_OMNIVORE": [ { "prey": "mon_black_rat", "weight": 100 }, { "prey": "none", "weight": 350 } ] },
+      "brushland": { "SMALL_GAME_OMNIVORE": [ { "prey": "mon_black_rat", "weight": 110 }, { "prey": "none", "weight": 400 } ] }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_big_rattrap",
+    "//": "Large rattrap - catches bigger rodents and small game (TINY flag)",
+    "trigger_sound": "SNAP!",
+    "trigger_volume": 10,
+    "after_trigger": { "furniture": "f_null", "items": [ [ { "item": "big_rattrap", "count": 1 } ] ] },
+    "habitats": {
+      "forest": {
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 80 },
+          { "prey": "mon_squirrel", "weight": 70 },
+          { "prey": "mon_chipmunk", "weight": 60 },
+          { "prey": "mon_groundhog", "weight": 50 },
+          { "prey": "none", "weight": 800 }
+        ]
+      },
+      "open_land": {
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 70 },
+          { "prey": "mon_groundhog", "weight": 55 },
+          { "prey": "none", "weight": 550 }
+        ]
+      },
+      "brushland": {
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 90 },
+          { "prey": "mon_squirrel", "weight": 70 },
+          { "prey": "mon_groundhog", "weight": 60 },
+          { "prey": "none", "weight": 850 }
+        ]
+      },
+      "wetland": { "SMALL_GAME_OMNIVORE": [ { "prey": "mon_muskrat", "weight": 80 }, { "prey": "none", "weight": 400 } ] }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_deadfall",
+    "//": "Deadfall trap using small boulder - effective for small game only (boulder_small: required_str 10, TINY flag)",
+    "trigger_sound": "thud!",
+    "trigger_volume": 12,
+    "after_trigger": {
+      "furniture": "f_boulder_small_harvested",
+      "items": [ [ { "item": "stick", "count": [ 1, 2 ] } ], [ { "item": "string_6", "count": [ 1, 2 ] } ] ]
+    },
+    "habitats": {
+      "forest": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 120 }, { "prey": "mon_hare", "weight": 90 }, { "prey": "none", "weight": 600 } ],
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 80 },
+          { "prey": "mon_squirrel", "weight": 70 },
+          { "prey": "mon_chipmunk", "weight": 60 },
+          { "prey": "none", "weight": 700 }
+        ],
+        "SMALL_GAME_CARNIVORE": [ { "prey": "mon_fox_red", "weight": 50 }, { "prey": "mon_fox_gray", "weight": 35 }, { "prey": "none", "weight": 300 } ]
+      },
+      "brushland": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 140 }, { "prey": "mon_hare", "weight": 110 }, { "prey": "none", "weight": 650 } ],
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 70 },
+          { "prey": "mon_squirrel", "weight": 60 },
+          { "prey": "mon_groundhog", "weight": 55 },
+          { "prey": "none", "weight": 750 }
+        ],
+        "SMALL_GAME_CARNIVORE": [ { "prey": "mon_fox_red", "weight": 60 }, { "prey": "mon_coyote", "weight": 40 }, { "prey": "none", "weight": 350 } ]
+      },
+      "open_land": {
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 110 }, { "prey": "mon_hare", "weight": 90 }, { "prey": "none", "weight": 550 } ],
+        "SMALL_GAME_OMNIVORE": [
+          { "prey": "mon_black_rat", "weight": 60 },
+          { "prey": "mon_groundhog", "weight": 50 },
+          { "prey": "none", "weight": 600 }
+        ],
+        "SMALL_GAME_CARNIVORE": [
+          { "prey": "mon_coyote", "weight": 40 },
+          { "prey": "mon_dog_beagle", "weight": 30 },
+          { "prey": "mon_dog_dachshund", "weight": 25 },
+          { "prey": "none", "weight": 350 }
+        ]
+      }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_spiked_pit_trap",
+    "//": "Spiked pit trap - dangerous trap for medium to large game (TINY flag for instant processing)",
+    "trigger_sound": "crash!",
+    "trigger_volume": 15,
+    "after_trigger": {
+      "furniture": "f_null",
+      "terrain": "t_pit",
+      "items": [ [ { "item": "pointy_stick", "count": [ 1, 4 ] } ], [ { "item": "rag", "count": [ 4, 16 ] } ] ]
+    },
+    "habitats": {
+      "forest": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 80 }, { "prey": "none", "weight": 350 } ],
+        "LARGE_GAME_CARNIVORE": [
+          { "prey": "mon_wolf", "weight": 50 },
+          { "prey": "mon_dog", "weight": 45 },
+          { "prey": "mon_dog_gshepherd", "weight": 43 },
+          { "prey": "mon_cougar", "weight": 40 },
+          { "prey": "mon_dog_rottweiler", "weight": 38 },
+          { "prey": "mon_fox_red", "weight": 35 },
+          { "prey": "none", "weight": 800 }
+        ]
+      },
+      "brushland": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 100 }, { "prey": "none", "weight": 350 } ],
+        "LARGE_GAME_CARNIVORE": [
+          { "prey": "mon_wolf", "weight": 60 },
+          { "prey": "mon_dog", "weight": 55 },
+          { "prey": "mon_dog_gshepherd", "weight": 53 },
+          { "prey": "mon_cougar", "weight": 50 },
+          { "prey": "mon_dog_rottweiler", "weight": 48 },
+          { "prey": "none", "weight": 800 }
+        ]
+      },
+      "open_land": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 60 }, { "prey": "none", "weight": 250 } ],
+        "LARGE_GAME_CARNIVORE": [
+          { "prey": "mon_wolf", "weight": 40 },
+          { "prey": "mon_dog", "weight": 35 },
+          { "prey": "mon_dog_gshepherd", "weight": 33 },
+          { "prey": "mon_coyote", "weight": 30 },
+          { "prey": "none", "weight": 450 }
+        ]
+      },
+      "wetland_forest": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 70 }, { "prey": "mon_deer", "weight": 50 }, { "prey": "none", "weight": 400 } ]
+      }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_beartrap_hunting",
+    "//": "Bear trap for hunting - specialized for large game (TINY flag)",
+    "trigger_sound": "CLANG!",
+    "trigger_volume": 20,
+    "habitats": {
+      "forest": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 120 }, { "prey": "none", "weight": 450 } ],
+        "LARGE_GAME_CARNIVORE": [
+          { "prey": "mon_wolf", "weight": 80 },
+          { "prey": "mon_dog", "weight": 60 },
+          { "prey": "mon_dog_gshepherd", "weight": 58 },
+          { "prey": "mon_dog_rottweiler", "weight": 56 },
+          { "prey": "mon_dog_pitbullmix", "weight": 54 },
+          { "prey": "mon_fox_red", "weight": 50 },
+          { "prey": "mon_cougar", "weight": 40 },
+          { "prey": "none", "weight": 1250 }
+        ]
+      },
+      "brushland": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 140 }, { "prey": "none", "weight": 450 } ],
+        "LARGE_GAME_CARNIVORE": [
+          { "prey": "mon_wolf", "weight": 90 },
+          { "prey": "mon_dog", "weight": 70 },
+          { "prey": "mon_dog_gshepherd", "weight": 68 },
+          { "prey": "mon_dog_rottweiler", "weight": 66 },
+          { "prey": "mon_dog_pitbullmix", "weight": 64 },
+          { "prey": "mon_cougar", "weight": 50 },
+          { "prey": "none", "weight": 1300 }
+        ]
+      },
+      "wetland_forest": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 100 }, { "prey": "mon_deer", "weight": 80 }, { "prey": "none", "weight": 550 } ]
+      },
+      "wetland": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 120 }, { "prey": "mon_otter", "weight": 40 }, { "prey": "none", "weight": 500 } ]
+      },
+      "open_land": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 80 }, { "prey": "none", "weight": 300 } ],
+        "LARGE_GAME_CARNIVORE": [
+          { "prey": "mon_wolf", "weight": 60 },
+          { "prey": "mon_dog", "weight": 50 },
+          { "prey": "mon_dog_gshepherd", "weight": 48 },
+          { "prey": "mon_coyote", "weight": 40 },
+          { "prey": "none", "weight": 650 }
+        ]
+      }
+    }
+  },
+  {
+    "type": "requirement",
+    "id": "req_crossbow_snare",
+    "components": [ [ [ "bolt_metal", 1 ] ] ]
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_crossbow_snare_vbox",
+    "//": "Crossbow snare - precision trap for medium to large game",
+    "trigger_sound": "twang!",
+    "trigger_volume": 15,
+    "req_id_for_setup": "req_crossbow_snare",
+    "after_trigger": { "items": [ [ { "item": "bolt_metal", "count": 1 } ] ] },
+    "habitats": {
+      "forest": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 100 }, { "prey": "none", "weight": 400 } ],
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 80 }, { "prey": "mon_hare", "weight": 65 }, { "prey": "none", "weight": 400 } ],
+        "LARGE_GAME_CARNIVORE": [
+          { "prey": "mon_wolf", "weight": 60 },
+          { "prey": "mon_dog", "weight": 50 },
+          { "prey": "mon_dog_gshepherd", "weight": 48 },
+          { "prey": "mon_dog_bcollie", "weight": 45 },
+          { "prey": "mon_fox_red", "weight": 40 },
+          { "prey": "mon_cougar", "weight": 35 },
+          { "prey": "none", "weight": 850 }
+        ]
+      },
+      "brushland": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 120 }, { "prey": "none", "weight": 400 } ],
+        "SMALL_GAME_HERBIVORE": [ { "prey": "mon_rabbit", "weight": 100 }, { "prey": "mon_hare", "weight": 85 }, { "prey": "none", "weight": 450 } ],
+        "LARGE_GAME_CARNIVORE": [
+          { "prey": "mon_wolf", "weight": 70 },
+          { "prey": "mon_dog", "weight": 60 },
+          { "prey": "mon_dog_gshepherd", "weight": 58 },
+          { "prey": "mon_dog_bcollie", "weight": 55 },
+          { "prey": "mon_cougar", "weight": 40 },
+          { "prey": "none", "weight": 900 }
+        ]
+      },
+      "wetland_forest": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 90 }, { "prey": "mon_deer", "weight": 60 }, { "prey": "none", "weight": 500 } ]
+      }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_crossbow_snare_wbox",
+    "copy-from": "f_crossbow_snare_vbox"
+  },
+  {
+    "type": "requirement",
+    "id": "req_shotgun_snare",
+    "components": [ [ [ "shot_00", 1 ], [ "shot_slug", 1 ], [ "shot_flechette", 1 ] ] ]
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_shotgun_snare",
+    "//": "Shotgun snare - high-power trap for large game, very effective but loud",
+    "trigger_sound": "bang!",
+    "trigger_volume": 40,
+    "req_id_for_setup": "req_shotgun_snare",
+    "after_trigger": { "items": [ [ { "item": "shot_hull", "count": 1 } ] ] },
+    "habitats": {
+      "forest": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 140 }, { "prey": "none", "weight": 500 } ],
+        "LARGE_GAME_CARNIVORE": [
+          { "prey": "mon_wolf", "weight": 90 },
+          { "prey": "mon_dog", "weight": 80 },
+          { "prey": "mon_dog_gshepherd", "weight": 78 },
+          { "prey": "mon_dog_rottweiler", "weight": 76 },
+          { "prey": "mon_cougar", "weight": 70 },
+          { "prey": "mon_fox_red", "weight": 50 },
+          { "prey": "none", "weight": 1450 }
+        ]
+      },
+      "brushland": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_deer", "weight": 150 }, { "prey": "none", "weight": 500 } ],
+        "LARGE_GAME_CARNIVORE": [
+          { "prey": "mon_wolf", "weight": 100 },
+          { "prey": "mon_dog", "weight": 90 },
+          { "prey": "mon_dog_gshepherd", "weight": 88 },
+          { "prey": "mon_dog_rottweiler", "weight": 86 },
+          { "prey": "mon_cougar", "weight": 80 },
+          { "prey": "none", "weight": 1500 }
+        ]
+      },
+      "wetland_forest": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 110 }, { "prey": "mon_deer", "weight": 90 }, { "prey": "none", "weight": 650 } ]
+      },
+      "wetland": {
+        "LARGE_GAME_HERBIVORE": [ { "prey": "mon_beaver", "weight": 130 }, { "prey": "mon_otter", "weight": 50 }, { "prey": "none", "weight": 600 } ]
+      }
+    }
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_spear_snare_spring",
+    "//": "Spring spear snare - targets carnivores that reach with front paws (bears, cougars)",
+    "trigger_sound": "thunk!",
+    "trigger_volume": 10,
+    "habitats": {
+      "forest": {
+        "LARGE_GAME_CARNIVORE": [ { "prey": "mon_bear", "weight": 100 }, { "prey": "mon_cougar", "weight": 90 }, { "prey": "none", "weight": 650 } ]
+      },
+      "brushland": {
+        "LARGE_GAME_CARNIVORE": [ { "prey": "mon_bear", "weight": 90 }, { "prey": "mon_cougar", "weight": 110 }, { "prey": "none", "weight": 700 } ]
+      },
+      "wetland_forest": { "LARGE_GAME_CARNIVORE": [ { "prey": "mon_bear", "weight": 100 }, { "prey": "none", "weight": 400 } ] }
+    }
+  },
+  {
+    "type": "requirement",
+    "id": "req_spear_snare_pneumatic",
+    "qualities": [ { "id": "PRESSURIZATION", "level": 1 } ]
+  },
+  {
+    "type": "hunting_data",
+    "id": "f_spear_snare_pneumatic",
+    "//": "Pneumatic spear snare - more powerful than spring version, targets paw-using carnivores",
+    "trigger_sound": "whoosh!",
+    "trigger_volume": 12,
+    "req_id_for_setup": "req_spear_snare_pneumatic",
+    "habitats": {
+      "forest": {
+        "LARGE_GAME_CARNIVORE": [ { "prey": "mon_bear", "weight": 120 }, { "prey": "mon_cougar", "weight": 100 }, { "prey": "none", "weight": 700 } ]
+      },
+      "brushland": {
+        "LARGE_GAME_CARNIVORE": [ { "prey": "mon_bear", "weight": 110 }, { "prey": "mon_cougar", "weight": 125 }, { "prey": "none", "weight": 750 } ]
+      },
+      "wetland_forest": { "LARGE_GAME_CARNIVORE": [ { "prey": "mon_bear", "weight": 110 }, { "prey": "none", "weight": 400 } ] },
+      "wetland": { "LARGE_GAME_CARNIVORE": [ { "prey": "mon_bear", "weight": 80 }, { "prey": "none", "weight": 300 } ] }
+    }
+  }
+]

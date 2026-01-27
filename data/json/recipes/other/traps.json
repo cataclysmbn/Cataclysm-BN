@@ -250,5 +250,48 @@
     "reversible": true,
     "autolearn": true,
     "components": [ [ [ "glass_shard", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "beartrap_hunting",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TRAPS",
+    "skill_used": "traps",
+    "skills_required": [ "mechanics", 2 ],
+    "difficulty": 2,
+    "time": "30 m",
+    "reversible": true,
+    "decomp_learn": 2,
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SCREW", "level": 1 } ],
+    "components": [ [ [ "beartrap", 1 ] ], [ [ "spring", 1 ] ], [ [ "sheet_metal_small", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "rattrap",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TRAPS",
+    "skill_used": "traps",
+    "difficulty": 2,
+    "time": "30 m",
+    "reversible": true,
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "2x4", 1 ] ], [ [ "spring", 1 ] ], [ [ "scrap", 4 ] ], [ [ "nail", 4 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "big_rattrap",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TRAPS",
+    "skill_used": "traps",
+    "skills_required": [ "mechanics", 1 ],
+    "difficulty": 3,
+    "time": "1 h",
+    "reversible": true,
+    "decomp_learn": 2,
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "components": [ [ [ "2x4", 2 ] ], [ [ "spring", 2 ] ], [ [ "steel_chunk", 2 ] ] ]
   }
 ]
