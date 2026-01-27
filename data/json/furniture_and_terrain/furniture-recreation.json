@@ -9,7 +9,7 @@
     "move_cost_mod": 1,
     "coverage": 35,
     "required_str": 8,
-    "flags": [ "TRANSPARENT", "MINEABLE" ],
+    "flags": [ "TRANSPARENT", "MINEABLE", "EASY_DECONSTRUCT" ],
     "crafting_pseudo_item": "fake_training_exercise_machine",
     "examine_action": "use_furn_fake_item",
     "deconstruct": { "items": [ { "item": "weightbench", "count": 1 } ] },
@@ -37,7 +37,7 @@
     "color": "dark_gray",
     "move_cost_mod": 1,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "MINEABLE" ],
+    "flags": [ "TRANSPARENT", "MINEABLE", "EASY_DECONSTRUCT" ],
     "crafting_pseudo_item": "fake_training_ball_machine",
     "deconstruct": { "items": [ { "item": "ballmachine", "count": 1 } ] },
     "examine_action": "use_furn_fake_item",
@@ -61,7 +61,7 @@
     "required_str": -1,
     "crafting_pseudo_item": "fake_pool_table",
     "examine_action": "use_furn_fake_item",
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF", "EASY_DECONSTRUCT" ],
     "deconstruct": { "items": [ { "item": "table_pool", "count": 1 } ] },
     "bash": {
       "str_min": 12,
@@ -158,7 +158,7 @@
     "required_str": 12,
     "crafting_pseudo_item": "fake_arcade_machine",
     "examine_action": "use_furn_fake_item",
-    "flags": [ "BLOCKSDOOR", "TRANSPARENT" ],
+    "flags": [ "BLOCKSDOOR", "TRANSPARENT", "EASY_DECONSTRUCT" ],
     "deconstruct": { "items": [ { "item": "arcade", "count": 1 } ] },
     "bash": {
       "str_min": 6,
@@ -189,7 +189,7 @@
     "move_cost_mod": -1,
     "coverage": 75,
     "required_str": 8,
-    "flags": [ "BLOCKSDOOR", "TRANSPARENT" ],
+    "flags": [ "BLOCKSDOOR", "TRANSPARENT", "EASY_DECONSTRUCT" ],
     "crafting_pseudo_item": "fake_pinball_machine",
     "examine_action": "use_furn_fake_item",
     "deconstruct": { "items": [ { "item": "pinball", "count": 1 } ] },
@@ -225,7 +225,7 @@
     "color": "dark_gray",
     "move_cost_mod": 2,
     "required_str": 8,
-    "flags": [ "BLOCKSDOOR", "TRANSPARENT", "MOUNTABLE" ],
+    "flags": [ "BLOCKSDOOR", "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
     "crafting_pseudo_item": "fake_training_ergometer",
     "examine_action": "use_furn_fake_item",
     "deconstruct": { "items": [ { "item": "ergometer", "count": 1 } ] },
@@ -244,8 +244,7 @@
         { "item": "wheel_small", "prob": 50 },
         { "item": "small_lcd_screen", "prob": 50 },
         { "item": "processor", "prob": 50 },
-        { "item": "RAM", "prob": 50 },
-        { "item": "nail", "charges": [ 2, 6 ] }
+        { "item": "RAM", "prob": 50 }
       ]
     }
   },
@@ -258,7 +257,7 @@
     "color": "dark_gray",
     "move_cost_mod": 1,
     "required_str": 12,
-    "flags": [ "BLOCKSDOOR", "TRANSPARENT", "MOUNTABLE" ],
+    "flags": [ "BLOCKSDOOR", "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
     "crafting_pseudo_item": "fake_training_treadmill",
     "examine_action": "use_furn_fake_item",
     "deconstruct": { "items": [ { "item": "treadmill", "count": 1 } ] },
@@ -269,11 +268,11 @@
       "sound_fail": "thump!",
       "items": [
         { "item": "plastic_chunk", "count": [ 4, 10 ] },
+        { "item": "chunk_rubber", "count": [ 6, 12 ] },
         { "item": "scrap", "count": [ 0, 3 ] },
         { "item": "pipe", "count": [ 0, 4 ] },
         { "item": "small_lcd_screen", "prob": 50 },
-        { "item": "RAM", "count": [ 0, 1 ] },
-        { "item": "nail", "charges": [ 2, 6 ] }
+        { "item": "RAM", "count": [ 0, 1 ] }
       ]
     }
   },
@@ -289,7 +288,7 @@
     "move_cost_mod": -1,
     "coverage": 65,
     "required_str": 10,
-    "flags": [ "BASHABLE", "BLOCKSDOOR", "PLACE_ITEM", "ORGANIC" ],
+    "flags": [ "BASHABLE", "BLOCKSDOOR", "PLACE_ITEM", "ORGANIC", "EASY_DECONSTRUCT" ],
     "crafting_pseudo_item": "fake_training_punching_bag",
     "examine_action": "use_furn_fake_item",
     "deconstruct": { "items": [ { "item": "heavybag", "count": 1 } ] },
@@ -302,6 +301,7 @@
         { "item": "chain", "count": [ 1, 3 ] },
         { "item": "leather", "count": [ 4, 12 ] },
         { "item": "rag", "count": [ 4, 18 ] }
+        { "item": "material_sand", "charges": [ 900, 1800 ] }
       ],
       "ranged": { "reduction": [ 15, 15 ], "destroy_threshold": 20, "block_unaimed_chance": "50%" }
     }
@@ -394,7 +394,7 @@
     "move_cost_mod": -1,
     "coverage": 5,
     "required_str": 8,
-    "flags": [ "TRANSPARENT", "THIN_OBSTACLE" ],
+    "flags": [ "TRANSPARENT", "THIN_OBSTACLE", "EASY_DECONSTRUCT" ],
     "crafting_pseudo_item": "fake_training_dancing_pole",
     "examine_action": "use_furn_fake_item",
     "deconstruct": { "items": [ { "item": "strippole", "count": 1 } ] },
@@ -420,7 +420,7 @@
     "move_cost_mod": 2,
     "coverage": 50,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF", "EASY_DECONSTRUCT" ],
     "crafting_pseudo_item": "fake_roulette_table",
     "examine_action": "use_furn_fake_item",
     "deconstruct": { "items": [ { "item": "table_roul", "count": 1 } ] },

@@ -5973,8 +5973,7 @@
       [ [ "wheel_small", 1 ] ],
       [ [ "small_lcd_screen", 1 ] ],
       [ [ "processor", 1 ] ],
-      [ [ "RAM", 1 ] ],
-      [ [ "nail", 8 ] ]
+      [ [ "RAM", 1 ] ]
     ]
   },
   {
@@ -5985,11 +5984,11 @@
     "qualities": [ { "id": "WRENCH", "level": 1 } ],
     "components": [
       [ [ "plastic_chunk", 14 ] ],
+      [ [ "chunk_rubber", 20 ] ],
       [ [ "scrap", 5 ] ],
       [ [ "pipe", 4 ] ],
       [ [ "small_lcd_screen", 1 ] ],
       [ [ "RAM", 1 ] ],
-      [ [ "nail", 8 ] ]
     ]
   },
   {
@@ -5998,7 +5997,7 @@
     "skill_used": "fabrication",
     "time": "10 m",
     "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "chain", 3 ] ], [ [ "leather", 15 ] ], [ [ "rag", 20 ] ] ]
+    "components": [ [ [ "chain", 3 ] ], [ [ "leather", 15 ] ], [ [ "rag", 20 ] ], [ [ "material_sand", 2000 ] ] ]
   },
   {
     "result": "strippole",
