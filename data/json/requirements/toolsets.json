@@ -130,7 +130,7 @@
       { "id": "DRILL", "level": 2 },
       { "id": "PULL_FINE", "level": 2 }
     ],
-    "components": [ [ [ "link_sheet", 1 ] ], [ [ "chain_link", 25 ] ], [ [ "rag", 2 ] ] ]
+    "components": [ [ [ "link_sheet", 1 ] ], [ [ "chain_link", 25 ] ] ]
   },
   {
     "id": "soldering_standard",

@@ -55,12 +55,12 @@
     "price": "5012 cent",
     "price_postapoc": "25 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel", "leather" ],
     "symbol": "[",
     "color": "light_red",
     "covers": [ "hands" ],
     "coverage": 100,
-    "encumbrance": 30,
+    "encumbrance": 20,
     "material_thickness": 4,
     "flags": [ "VARSIZE", "STURDY" ]
   },
@@ -555,9 +555,9 @@
     "color": "light_gray",
     "covers": [ "hands" ],
     "coverage": 100,
-    "encumbrance": 20,
+    "encumbrance": 25,
     "warmth": 20,
-    "material_thickness": 4,
+    "material_thickness": 5,
     "environmental_protection": 1,
     "flags": [ "VARSIZE", "STURDY" ]
   },
@@ -569,7 +569,7 @@
     "description": "An set of armor-plated leather gloves, made with lightweight superalloy.",
     "material": [ "superalloy", "leather" ],
     "color": "light_cyan",
-    "encumbrance": 15,
+    "encumbrance": 20,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {

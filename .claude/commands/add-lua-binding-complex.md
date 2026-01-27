@@ -303,7 +303,7 @@ derived:base_method()  -- Should work if inheritance correct
 cmake --build --preset linux-full --target cataclysm-bn-tiles cata_test-tiles
 
 # Format
-cmake --build build --target format
+cmake --build build --target astyle
 
 # Test
 ./out/build/linux-full/tests/cata_test-tiles "[lua]"

@@ -102,7 +102,7 @@ After adding bindings, you'll modify:
 All skills include testing instructions:
 
 1. Build: `cmake --build --preset linux-full --target cataclysm-bn-tiles`
-2. Format: `cmake --build build --target format`
+2. Format: `cmake --build build --target astyle`
 3. Test in Lua console (Debug menu)
 
 ## Project Context

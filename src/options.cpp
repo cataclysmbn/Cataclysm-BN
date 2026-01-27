@@ -1568,7 +1568,7 @@ void options_manager::add_options_interface()
 
     add( "HHG_URL", interface, translate_marker( "Hitchhiker's Guide URL" ),
          translate_marker( "The URL opened by pressing the open HHG keybind." ),
-         "https://cbn-guide.pages.dev", 60
+         "https://cataclysmbn-guide.com", 60
        );
 
     add_empty_line();

@@ -1,5 +1,7 @@
-#include "catalua_bindings.h"
+#include <ctime>
+#include <chrono>
 
+#include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
 #include "catalua.h"
 #include "catalua_log.h"
@@ -25,6 +27,7 @@
 #include "monfaction.h"
 #include "monster.h"
 #include "mtype.h"
+#include "name.h"
 #include "npc.h"
 #include "player.h"
 #include "rng.h"
@@ -337,6 +340,50 @@ void cata::detail::reg_debug_api( sol::state &lua )
     luna::finalize_lib( lib );
 }
 
+static tm *local_time_impl()
+{
+    const time_t timestamp = time( nullptr );
+    return localtime( &timestamp );
+}
+
+// This is from weather.cpp, but requires calandar.h.
+// I don't want to include that here since that's fairly awkward.
+static const std::array<std::string, 7> weekday_names = { {
+        translate_marker( "Sunday" ), translate_marker( "Monday" ),
+        translate_marker( "Tuesday" ), translate_marker( "Wednesday" ),
+        translate_marker( "Thursday" ), translate_marker( "Friday" ),
+        translate_marker( "Saturday" )
+    }
+};
+
+void cata::detail::reg_date_time_api( sol::state &lua )
+{
+    DOC( "System date and time API." );
+    luna::userlib lib = luna::begin_lib( lua, "date_time" ) ;
+
+    const time_t timestamp = time( nullptr );
+    const tm *loc = localtime( &timestamp );
+
+    luna::set_fx( lib, "year", []() { return local_time_impl()->tm_year + 1900; } );
+    // It makes sense to start month at 1, not 0
+    luna::set_fx( lib, "month", []() { return local_time_impl()->tm_mon + 1; } );
+    DOC( "Days since Saturday." );
+    luna::set_fx( lib, "weekday", []() { return local_time_impl()->tm_wday; } );
+    luna::set_fx( lib, "weekday_str", []() { return weekday_names[local_time_impl()->tm_wday]; } );
+    luna::set_fx( lib, "day", []() { return local_time_impl()->tm_mday; } );
+    // Hour is different, since digital clocks wrap around at 24
+    DOC( "0 -> 23" );
+    luna::set_fx( lib, "hour", []() { return local_time_impl()->tm_hour; } );
+    luna::set_fx( lib, "minute", []() { return local_time_impl()->tm_min; } );
+    luna::set_fx( lib, "second", []() { return local_time_impl()->tm_sec; } );
+    luna::set_fx( lib, "millisecond", []() -> int {
+        auto now = std::chrono::system_clock::now().time_since_epoch();
+        return std::chrono::duration_cast<std::chrono::milliseconds>( now ).count() % 1000;
+    } );
+
+    luna::finalize_lib( lib );
+}
+
 void cata::detail::override_default_print( sol::state &lua )
 {
     lua.globals()["print"] = &lua_log_info_impl;
@@ -436,6 +483,54 @@ void cata::detail::reg_enums( sol::state &lua )
     reg_enum<art_effect_passive>( lua );
     reg_enum<vitamin_type>( lua );
     reg_enum<moon_phase>( lua );
+}
+
+static const auto lowercase = []( std::string t )
+{
+    if( !t.empty() ) {
+        t.front() = std::tolower( t.front() );
+    }
+    return t;
+};
+
+namespace Name
+{
+std::string string_search( sol::variadic_args va )
+{
+    nameFlags flags = static_cast<nameFlags>( 0 );
+    // Only 9 flags exist, so cap
+    for( int i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
+        if( !va[i].is<std::string>() ) { continue; }
+        auto in = lowercase( va.get<std::string>( i ) );
+        flags = flags | usage_flag( in ) | gender_flag( in );
+    }
+    return get( flags );
+}
+}
+void cata::detail::reg_names( sol::state &lua )
+{
+    luna::userlib lib = luna::begin_lib( lua, "ch_names" );
+    DOC( "Generates a random full name with an optional boolean for gender." );
+    DOC( "The loaded name is one of usage with optional gender." );
+    DOC( "The combinations used in names files are as follows:" );
+    DOC( "" );
+    DOC( "Backer | (Female|Male|Unisex)" );
+    DOC( "Given  | (Female|Male)        // unisex names are duplicated in each group" );
+    DOC( "Family | Unisex" );
+    DOC( "Nick" );
+    DOC( "City" );
+    DOC( "World" );
+    luna::set_fx( lib, "generate", []( const sol::optional<bool> male ) -> std::string {
+        if( male.has_value() ) { return Name::generate( male.value() ); }
+        return Name::generate( one_in( 2 ) );
+    } );
+    DOC( "Generates a single name using any combination of search flags." );
+    luna::set_fx( lib, "pick", []( sol::variadic_args va ) -> std::string {
+        if( va.size() < 1 || !va[0].is<std::string>() ) { return std::string(); };
+        return Name::string_search( va );
+    } );
+
+    luna::finalize_lib( lib );
 }
 
 void cata::detail::reg_hooks_examples( sol::state &lua )
@@ -746,6 +841,7 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_debug_api( lua );
     reg_game_api( lua );
     reg_locale_api( lua );
+    reg_date_time_api( lua );
     reg_units( lua );
     reg_skill_level_map( lua );
     reg_damage_instance( lua );
@@ -760,6 +856,7 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_game_ids( lua );
     mod_mutation_branch( lua );
     reg_magic( lua );
+    reg_names( lua );
     reg_mission( lua );
     reg_mission_type( lua );
     reg_recipe( lua );

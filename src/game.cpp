@@ -275,6 +275,7 @@ static const trait_id trait_THICKSKIN( "THICKSKIN" );
 static const trait_id trait_WEB_ROPE( "WEB_ROPE" );
 static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
 static const trait_id trait_WAYFARER( "WAYFARER" );
+static const trait_id trait_HAS_NEMESIS( "HAS_NEMESIS" );
 
 static const trait_flag_str_id trait_flag_MUTATION_FLIGHT( "MUTATION_FLIGHT" );
 static const trait_flag_str_id trait_flag_TAIL_FIN( "TAIL_FIN" );
@@ -1085,6 +1086,9 @@ bool game::cleanup_at_end()
         for( monster &critter : all_monsters() ) {
             despawn_monster( critter );
         }
+        if( u.has_trait( trait_HAS_NEMESIS ) ) {
+            overmap_buffer.remove_nemesis();
+        }
         // Reset NPC factions and disposition
         reset_npc_dispositions();
         // Save the factions', missions and set the NPC's overmap coordinates
@@ -1540,6 +1544,9 @@ bool game::do_turn()
     // Move hordes every 2.5 min
     if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
         overmap_buffer.move_hordes();
+        if( u.has_trait( trait_HAS_NEMESIS ) ) {
+            overmap_buffer.move_nemesis();
+        }
         // Hordes that reached the reality bubble need to spawn,
         // make them spawn in invisible areas only.
         m.spawn_monsters( false );
@@ -2736,9 +2743,13 @@ bool game::load( const save_t &name )
             std::bind( &game::unserialize, this, _1 ) ) ) {
         return false;
     }
-    // This needs to be here for some reason for quickload() to work
-    ui_manager::redraw();
-    refresh_display();
+    // This needs to be here for some reason for quickload() to work.
+    // Prevent underlying game UI from drawing while we're still in the loading popup.
+    {
+        ui_adaptor ui( ui_adaptor::disable_uis_below {} );
+        ui_manager::redraw();
+        refresh_display();
+    }
     u.load_map_memory();
     u.get_avatar_diary()->load();
 
@@ -2807,6 +2818,13 @@ bool game::load( const save_t &name )
     cata::load_world_lua_state( get_active_world(), "lua_state.json" );
 
     cata::run_on_game_load_hooks( *DynamicDataLoader::get_instance().lua );
+
+    // Build caches once so any immediate post-load draws don't use uninitialized lighting/visibility,
+    // then re-invalidate so the first real in-game draw rebuilds everything again.
+    m.invalidate_map_cache( get_levz() );
+    m.build_map_cache( get_levz() );
+    m.update_visibility_cache( get_levz() );
+    m.invalidate_map_cache( get_levz() );
 
     return true;
 }
@@ -3297,8 +3315,13 @@ void game::draw( ui_adaptor &ui )
 
     //temporary fix for updating visibility for minimap
     ter_view_p.z = ( u.pos() + u.view_offset ).z;
-    m.build_map_cache( ter_view_p.z );
-    m.update_visibility_cache( ter_view_p.z );
+    if( is_looking && ter_view_p.z != u.posz() ) {
+        // Keep visibility calculations based on the player position while still building the viewed z-level cache.
+        m.build_map_cache( ter_view_p.z );
+    }
+    const auto cache_z = is_looking ? u.posz() : ter_view_p.z;
+    m.build_map_cache( cache_z );
+    m.update_visibility_cache( cache_z );
 
     werase( w_terrain );
     draw_ter();
@@ -9435,13 +9458,18 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     }
     u.set_underwater( false );
 
-    if( !cata::run_hooks( "on_character_try_move", [ &, this]( sol::table & params ) {
-    params["char"] = &u;
+    const auto hook_results = cata::run_hooks(
+                                  "on_character_try_move",
+    [ &, this]( sol::table & params ) {
+        params["char"] = &u;
         params["from"] = u.pos();
         params["to"] = dest_loc;
         params["movement_mode"] = u.get_movement_mode();
         params["via_ramp"] = via_ramp;
-    }, true ) ) {
+    },
+    cata::hook_opts{ .exit_early = true } );
+    const auto can_move = hook_results.get_or( "allowed", true );
+    if( !can_move ) {
         return false;
     }
 
@@ -9500,7 +9528,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     const int previous_moves = u.moves;
     if( u.is_mounted() ) {
         auto crit = u.mounted_creature.get();
-        if( !crit->has_flag( MF_MOUNTABLE_OBSTACLES ) &&
+        if( !crit->has_flag( MF_RIDEABLE_MECH ) && !crit->has_flag( MF_MOUNTABLE_OBSTACLES ) &&
             ( m.has_flag_ter_or_furn( "MOUNTABLE", dest_loc ) ||
               m.has_flag_ter_or_furn( "BARRICADABLE_DOOR", dest_loc ) ||
               m.has_flag_ter_or_furn( "OPENCLOSE_INSIDE", dest_loc ) ||

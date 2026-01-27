@@ -590,6 +590,16 @@ task_reason veh_interact::cant_do( char mode )
     bool has_skill = true;
     bool enough_light = true;
     const vehicle_part_range vpr = veh->get_all_parts();
+    if( cpart != -1 || cpart > veh->part_count() ) {
+        const vehicle_part *pt = &veh->part( cpart );
+        if( pt ) {
+            const tripoint q = veh->mount_to_tripoint( pt->mount );
+            const vehicle *cacheveh = &g->m.veh_at( q )->vehicle();
+            if( veh != cacheveh ) {
+                return DOUBLE_STACK;
+            }
+        }
+    }
     switch( mode ) {
         case 'i':
             // install mode
@@ -1122,6 +1132,9 @@ void veh_interact::do_install()
         if( action == "INSTALL" || action == "CONFIRM" ) {
             if( can_install ) {
                 switch( reason ) {
+                    case DOUBLE_STACK:
+                        msg = _( "It's too hard to reach the vehicle with the other vehicle in the way" );
+                        return;
                     case LOW_MORALE:
                         msg = _( "Your morale is too low to construct…" );
                         return;
@@ -1233,6 +1246,9 @@ void veh_interact::do_repair()
 
     auto can_repair = [this, &reason]() {
         switch( reason ) {
+            case DOUBLE_STACK:
+                msg = _( "It's too hard to reach the vehicle with the other vehicle in the way" );
+                return false;
             case LOW_MORALE:
                 msg = _( "Your morale is too low to repair…" );
                 return false;
@@ -1321,6 +1337,9 @@ void veh_interact::do_repair()
 void veh_interact::do_mend()
 {
     switch( cant_do( 'm' ) ) {
+        case DOUBLE_STACK:
+            msg = _( "It's too hard to reach the vehicle with the other vehicle in the way" );
+            return;
         case LOW_MORALE:
             msg = _( "Your morale is too low to mend…" );
             return;
@@ -1361,6 +1380,10 @@ void veh_interact::do_mend()
 void veh_interact::do_refill()
 {
     switch( cant_do( 'f' ) ) {
+        case DOUBLE_STACK:
+            msg = _( "You can't refill that fuel tank, it's too hard to reach with the other vehicle in the way" );
+            return;
+
         case MOVING_VEHICLE:
             msg = _( "You can't refill a moving vehicle." );
             return;
@@ -1962,6 +1985,9 @@ void veh_interact::do_remove()
         msg.reset();
         if( can_remove && ( action == "REMOVE" || action == "CONFIRM" ) ) {
             switch( reason ) {
+                case DOUBLE_STACK:
+                    msg = _( "It's too hard to reach the vehicle with the other vehicle in the way" );
+                    return;
                 case LOW_MORALE:
                     msg = _( "Your morale is too low to construct…" );
                     return;
@@ -1994,6 +2020,10 @@ void veh_interact::do_remove()
 void veh_interact::do_siphon()
 {
     switch( cant_do( 's' ) ) {
+        case DOUBLE_STACK:
+            msg = _( "It's too hard to siphon from the vehicle with the other vehicle in the way" );
+            return;
+
         case INVALID_TARGET:
             msg = _( "The vehicle has no liquid fuel left to siphon." );
             return;
@@ -2033,6 +2063,10 @@ void veh_interact::do_siphon()
 bool veh_interact::do_unload()
 {
     switch( cant_do( 'd' ) ) {
+        case DOUBLE_STACK:
+            msg = _( "You cant unloade with the other vehicle in the way" );
+            return false;
+
         case INVALID_TARGET:
             msg = _( "The vehicle has no solid fuel left to remove." );
             return false;

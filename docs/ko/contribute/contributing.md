@@ -400,7 +400,7 @@ The test took 41.772 seconds
 ```
 
 위 명령어들을 사용해서 변경사항을 테스트할 수 있습니다.
-[BN 위키](https://cbn-guide.pages.dev/)에도 디버그 메뉴에 대한 정보가 있습니다.
+[BN 위키](https://cataclysmbn-guide.com/)에도 디버그 메뉴에 대한 정보가 있습니다.
 
 ## 자주 묻는 질문
 

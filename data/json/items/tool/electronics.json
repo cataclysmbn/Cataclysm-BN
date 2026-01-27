@@ -185,6 +185,7 @@
   {
     "type": "TOOL_ARMOR",
     "id": "wrist_comp_budget",
+    "looks_like": "game_watch",
     "//": "mainlined from tefnut expansion",
     "name": { "str": "wrist computer" },
     "category": "clothing",

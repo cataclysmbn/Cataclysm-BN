@@ -202,6 +202,7 @@
     "description": "You are an uplifted elephant hybrid, a precisely engineered enforcer creature created by combining human, elephant and mastodon DNA.  Unlike most of your war-minded kin, you sought a peaceful retirement after completing your compulsive service period, and even earned the right to be considered a full citizen.  Now, with the end of the world in the horizon, it seems that your combat skills might come useful once again.",
     "points": 7,
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 6, "name": "gun" },
       { "level": 4, "name": "shotgun" },
       { "level": 2, "name": "pistol" },
@@ -247,6 +248,7 @@
       "afs_bio_cranialbomb"
     ],
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 5, "name": "gun" },
       { "level": 4, "name": "rifle" },
       { "level": 2, "name": "pistol" },

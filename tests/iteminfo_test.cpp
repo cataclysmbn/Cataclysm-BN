@@ -871,11 +871,11 @@ TEST_CASE( "repairable and with what tools", "[item][iteminfo][repair]" )
 
     test_info_contains(
         *item::spawn( "test_halligan" ), q,
-        "<color_c_white>Repair</color> using advanced 3D printer, charcoal forge, Advanced Grid 3D Printer, grid forge, grid welder, electric forge, extended toolset, arc welder, or makeshift arc welder.\n" );
+        "<color_c_white>Repair</color> using advanced 3D printer, charcoal forge, Advanced Grid 3D Printer, grid forge, grid welder, electric forge, integrated toolset, arc welder, or makeshift arc welder.\n" );
 
     test_info_contains(
         *item::spawn( "test_hazmat_suit" ), q,
-        "<color_c_white>Repair</color> using advanced 3D printer, 3D printer, Grid 3D Printer, Advanced Grid 3D Printer, grid soldering iron, alcohol-fueled soldering iron, electric soldering iron, TEST soldering iron, or extended toolset.\n" );
+        "<color_c_white>Repair</color> using advanced 3D printer, 3D printer, Grid 3D Printer, Advanced Grid 3D Printer, grid soldering iron, alcohol-fueled soldering iron, electric soldering iron, TEST soldering iron, or integrated toolset.\n" );
 
     test_info_contains(
         *item::spawn( "test_rock" ), q, "* This item is <color_c_red>not repairable</color>.\n" );
