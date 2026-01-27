@@ -12,11 +12,7 @@
     "flags": [ "TRANSPARENT", "MINEABLE" ],
     "crafting_pseudo_item": "fake_training_exercise_machine",
     "examine_action": "use_furn_fake_item",
-    "deconstruct": {
-      "items": [
-        { "item": "weightbench", "count": 1 }
-      ]
-    },
+    "deconstruct": { "items": [ { "item": "weightbench", "count": 1 } ] },
     "bash": {
       "str_min": 18,
       "str_max": 60,
