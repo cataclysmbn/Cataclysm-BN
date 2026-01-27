@@ -6,6 +6,7 @@
     "symbol": "<",
     "color": "brown",
     "broken_symbol": "O",
+    "looks_like": "f_rope_up",
     "flags": [ "LADDER", "SHOCK_IMMUNE", "BOARDABLE" ],
     "description": "A ladder that lets you down from heights."
   },
