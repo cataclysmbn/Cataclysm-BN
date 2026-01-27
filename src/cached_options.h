@@ -85,6 +85,8 @@ extern int PICKUP_RANGE;
  */
 extern bool dont_debugmsg;
 
+/** Should night vision be green or overexposed? **/
+extern bool green_night_vision;
 
 /* Options related to fungal activity */
 struct FungalOptions {
