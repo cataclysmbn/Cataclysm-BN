@@ -324,6 +324,7 @@
     "flags": [ "SOMATIC", "NO_LEGS", "SILENT" ],
     "scale_int": true,
     "min_damage": 10,
+    "max_damage": 10,
     "min_range": 1,
     "range_increment": 1,
     "max_range": 16,
