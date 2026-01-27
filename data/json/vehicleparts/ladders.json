@@ -4,7 +4,7 @@
     "type": "vehicle_part",
     "location": "under",
     "symbol": "<",
-    "color": "black",
+    "color": "brown",
     "broken_symbol": "O",
     "flags": [ "LADDER", "SHOCK_IMMUNE", "BOARDABLE" ],
     "description": "A ladder that lets you down from heights."
