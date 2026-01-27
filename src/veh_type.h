@@ -78,6 +78,7 @@ enum vpart_bitflags : int {
     VPFLAG_EXTENDABLE,
     VPFLAG_NOFIELDS,
     VPFLAG_DROPPER,
+    VPFLAG_LADDER,
 
     NUM_VPFLAGS
 };

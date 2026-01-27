@@ -3883,6 +3883,28 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
                        tile, p, bgCol, fgCol,
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
         }
+    } else if( here.has_rope_at( p ) ) {
+        auto veh_pair = here.get_rope_at( p.xy() );
+        vehicle *veh = veh_pair.first;
+        int veh_part = veh_pair.second;
+
+        // Gets the visible part, should work fine once tileset vp_ids are updated to work with the vehicle part json ids
+        // get the vpart_id
+        char part_mod = 0;
+        const vpart_id &vp_id = veh->part( veh_part ).info().get_id();
+        const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
+        const int rotation = std::round( to_degrees( veh->face.dir() ) );
+        const std::string vpname = "vp_" + vp_id.str();
+        avatar &you = get_avatar();
+        if( here.check_seen_cache( p ) ) {
+            you.memorize_tile( here.getabs( p ), vpname, subtile, rotation );
+        }
+        const tile_search_params tile = {vpname, C_VEHICLE_PART, empty_string, subtile, rotation};
+        const bool ret = draw_from_id_string(
+                             tile, p, bgCol, fgCol,
+                             ll, true, z_drop, false, height_3d );
+        return ret;
+
     }
     return false;
 }

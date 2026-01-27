@@ -357,6 +357,10 @@ void map::add_vehicle_to_cache( vehicle *veh )
             continue;
         }
         const tripoint p = veh->global_part_pos3( vpr.part() );
+        int part = veh->part_with_feature( vpr.part_index(), VPFLAG_LADDER, true );
+        if( part != -1 ) {
+            cached_veh_rope[p.xy()] = std::make_pair( veh, static_cast<int>( part ) );
+        }
         level_cache &ch = get_cache( p.z );
         ch.veh_in_active_range = true;
         ch.veh_cached_parts[p] = std::make_pair( veh,  static_cast<int>( vpr.part_index() ) );
@@ -402,6 +406,7 @@ void map::clear_vehicle_cache( )
         }
         ch.veh_in_active_range = false;
     }
+    cached_veh_rope.clear();
 }
 
 void map::clear_vehicle_list( const int zlev )
@@ -9335,6 +9340,21 @@ std::list<Creature *> map::get_creatures_in_radius( const tripoint &center, size
 
     }
     return creatures;
+}
+
+bool map::has_rope_at( tripoint pt ) const
+{
+    if( cached_veh_rope.contains( pt.xy() ) ) {
+        auto veh_pair = get_rope_at( pt.xy() );
+        vehicle *veh = veh_pair.first;
+        int veh_part = veh_pair.second;
+        return veh->part( veh_part ).info().ladder_length() >= veh->global_pos3().z - pt.z;
+    }
+    return false;
+}
+std::pair<vehicle *, int> map::get_rope_at( point pt ) const
+{
+    return cached_veh_rope.at( pt );
 }
 
 level_cache &map::access_cache( int zlev )

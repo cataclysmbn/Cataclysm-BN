@@ -2066,6 +2066,7 @@ class map
          */
         VehicleList last_full_vehicle_list;
         bool last_full_vehicle_list_dirty = true;
+        std::map<point, std::pair<vehicle *, int> > cached_veh_rope;
 
         // Note: no bounds check
         level_cache &get_cache( int zlev ) const {
@@ -2081,6 +2082,9 @@ class map
         std::optional<std::pair<tripoint, int>> max_populated_zlev = std::nullopt;
 
     public:
+        bool has_rope_at( tripoint pt ) const;
+        std::pair<vehicle *, int> get_rope_at( point pt ) const;
+
         const level_cache &get_cache_ref( int zlev ) const {
             return *caches[zlev + OVERMAP_DEPTH];
         }
