@@ -716,7 +716,7 @@ class game
         bool load( const std::string &world );
 
         /** Returns true if the menu handled stuff and player shouldn't do anything else */
-        bool npc_menu( npc &who, const bool& force = false );
+        bool npc_menu( npc &who, const bool &force = false );
 
         // Handle phasing through walls, returns true if it handled the move
         bool phasing_move( const tripoint &dest, bool via_ramp = false );

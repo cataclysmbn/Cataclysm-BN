@@ -1092,7 +1092,7 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
     }
 
     decide_needs();
-    
+
     const auto hook_results = cata::run_hooks( "on_dialogue_start", [ &,
     this]( sol::table & params ) {
         params["npc"] = this;
