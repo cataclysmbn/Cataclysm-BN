@@ -5770,7 +5770,7 @@ bool game::npc_menu( npc &who )
                                     "  1. Find a programmable surgical installer or autodoc\n"
                                     "  2. Position the ally on the operating couch\n"
                                     "  3. Activate the installer and select the CBM to install\n"
-                                    "If the ally has better installation skill, they'll do the procedure themselves."
+                                    "If the ally has better installation skill, they'll do the procedure themselves. "
                                     "Similarly, skilled allies can install CBMs into you.\n\n"
                                     "Allies use active bionics sensibly in normal situations. "
                                     "In danger, they'll activate anything that gives an edge. "
