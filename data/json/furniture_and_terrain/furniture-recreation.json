@@ -550,5 +550,125 @@
       ],
       "ranged": { "reduction": [ 16, 16 ], "destroy_threshold": 40 }
     }
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_weights",
+    "group": "place_ebench",
+    "category": "RECREATION",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "weightbench", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_exercise"
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_ballm",
+    "group": "place_bmachine",
+    "category": "RECREATION",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "ballmachine", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_ball_mach"
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_poolt",
+    "group": "place_ptable",
+    "category": "RECREATION",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "table_pool", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_pool_table"
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_arcade",
+    "group": "place_arcade",
+    "category": "RECREATION",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "arcade", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_arcade_machine"
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_pinball",
+    "group": "place_pinball",
+    "category": "RECREATION",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "pinball", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_pinball_machine"
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_rower",
+    "group": "place_ergo",
+    "category": "RECREATION",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "ergometer", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_ergometer"
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_treadmill",
+    "group": "place_treadmill",
+    "category": "RECREATION",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "treadmill", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_treadmill"
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_pbag",
+    "group": "place_pbag",
+    "category": "RECREATION",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "heavybag", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_punching_bag"
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_spole",
+    "group": "place_spole",
+    "category": "RECREATION",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "strippole", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_dancing_pole"
+  },
+  {
+    "type": "construction",
+    "id": "constr_place_roulette",
+    "group": "place_roulette",
+    "category": "RECREATION",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "1 m",
+    "components": [ [ [ "table_roul", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_roulette_table"
   }
 ]
