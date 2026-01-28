@@ -13,6 +13,7 @@
 #include <unordered_set>
 
 #include "addiction.h"
+#include "catalua_icallback_actor.h"
 #include "ammo.h"
 #include "artifact.h"
 #include "assign.h"
@@ -709,6 +710,9 @@ void Item_factory::finalize()
         finalize_pre( *e.second );
         finalize_post( *e.second );
     }
+
+    // Wire Lua callback actor pointers onto itype objects
+    resolve_lua_callbacks();
 
     // for each item register all (non-obsolete) potential recipes
     for( const std::pair<const recipe_id, recipe> &p : recipe_dict ) {
@@ -3019,7 +3023,102 @@ void Item_factory::clear()
     migrated_magazines.clear();
     migrations.clear();
 
+    iwieldable_actors.clear();
+    iwearable_actors.clear();
+    iequippable_actors.clear();
+    istate_actors.clear();
+    imelee_actors.clear();
+    iranged_actors.clear();
+
     frozen = false;
+}
+
+void Item_factory::add_iwieldable_actor( const itype_id &id,
+                                         std::unique_ptr<lua_iwieldable_actor> actor )
+{
+    iwieldable_actors[id] = std::move( actor );
+}
+
+void Item_factory::add_iwearable_actor( const itype_id &id,
+                                        std::unique_ptr<lua_iwearable_actor> actor )
+{
+    iwearable_actors[id] = std::move( actor );
+}
+
+void Item_factory::add_iequippable_actor( const itype_id &id,
+        std::unique_ptr<lua_iequippable_actor> actor )
+{
+    iequippable_actors[id] = std::move( actor );
+}
+
+void Item_factory::add_istate_actor( const itype_id &id,
+                                     std::unique_ptr<lua_istate_actor> actor )
+{
+    istate_actors[id] = std::move( actor );
+}
+
+void Item_factory::add_imelee_actor( const itype_id &id,
+                                     std::unique_ptr<lua_imelee_actor> actor )
+{
+    imelee_actors[id] = std::move( actor );
+}
+
+void Item_factory::add_iranged_actor( const itype_id &id,
+                                      std::unique_ptr<lua_iranged_actor> actor )
+{
+    iranged_actors[id] = std::move( actor );
+}
+
+void Item_factory::resolve_lua_callbacks()
+{
+    for( auto &[id, actor] : iwieldable_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.iwieldable_callbacks = actor.get();
+        } else {
+            debugmsg( "iwieldable_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
+    for( auto &[id, actor] : iwearable_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.iwearable_callbacks = actor.get();
+        } else {
+            debugmsg( "iwearable_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
+    for( auto &[id, actor] : iequippable_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.iequippable_callbacks = actor.get();
+        } else {
+            debugmsg( "iequippable_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
+    for( auto &[id, actor] : istate_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.istate_callbacks = actor.get();
+        } else {
+            debugmsg( "istate_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
+    for( auto &[id, actor] : imelee_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.imelee_callbacks = actor.get();
+        } else {
+            debugmsg( "imelee_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
+    for( auto &[id, actor] : iranged_actors ) {
+        auto it = m_templates.find( id );
+        if( it != m_templates.end() ) {
+            it->second.iranged_callbacks = actor.get();
+        } else {
+            debugmsg( "iranged_functions refers to unknown item type '%s'", id.c_str() );
+        }
+    }
 }
 
 static std::string to_string( Item_group::Type t )

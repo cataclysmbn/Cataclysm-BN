@@ -27,6 +27,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
@@ -2474,6 +2475,13 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
         return std::move( wear );
     }
 
+    // Lua iwearable can_wear callback
+    if( const auto *iwear_cb = to_wear.type->iwearable_callbacks ) {
+        if( !iwear_cb->call_can_wear( *this, to_wear ) ) {
+            return std::move( wear );
+        }
+    }
+
     const bool was_deaf = is_deaf();
     const bool supertinymouse = get_size() == creature_size::tiny;
     last_item = to_wear.typeId();
@@ -3506,6 +3514,13 @@ bool Character::takeoff( item &it, std::vector<detached_ptr<item>> *res )
         return false;
     }
 
+    // Lua iwearable can_takeoff callback
+    if( const auto *iwear_cb = it.type->iwearable_callbacks ) {
+        if( !iwear_cb->call_can_takeoff( *this, it ) ) {
+            return false;
+        }
+    }
+
     auto iter = std::ranges::find_if( worn, [ &it ]( item * wit ) {
         return &it == wit;
     } );
@@ -3601,6 +3616,15 @@ bool Character::unwield()
     if( !can_unwield( primary_weapon() ).success() ) {
         return false;
     }
+
+    // Lua iwieldable can_unwield callback
+    if( const auto *iwield_cb = primary_weapon().type->iwieldable_callbacks ) {
+        if( !iwield_cb->call_can_unwield( *this, primary_weapon() ) ) {
+            return false;
+        }
+    }
+
+    primary_weapon().on_unwield( *this );
 
     const std::string query = string_format( _( "Stop wielding %s?" ), primary_weapon().tname() );
 

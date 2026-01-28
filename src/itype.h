@@ -32,6 +32,12 @@ class Item_factory;
 class item;
 class JsonObject;
 class JsonIn;
+class lua_iwieldable_actor;
+class lua_iwearable_actor;
+class lua_iequippable_actor;
+class lua_istate_actor;
+class lua_imelee_actor;
+class lua_iranged_actor;
 class player;
 class relic;
 struct tripoint;
@@ -963,6 +969,14 @@ struct itype {
 
         /** Action to take BEFORE the item is placed on map. If it returns non-zero, item won't be placed. */
         use_function drop_action;
+
+        /** Lua callback actors (non-owning, owned by Item_factory) */
+        const lua_iwieldable_actor *iwieldable_callbacks = nullptr;
+        const lua_iwearable_actor *iwearable_callbacks = nullptr;
+        const lua_iequippable_actor *iequippable_callbacks = nullptr;
+        const lua_istate_actor *istate_callbacks = nullptr;
+        const lua_imelee_actor *imelee_callbacks = nullptr;
+        const lua_iranged_actor *iranged_callbacks = nullptr;
 
         /** Fields to emit when item is in active state */
         std::set<emit_id> emits;

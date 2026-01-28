@@ -1442,6 +1442,11 @@ class item : public location_visitable<item>, public game_object<item>
          */
         void on_wield( player &p, int mv = 0 );
         /**
+         * Callback when a player stops wielding the item.
+         * @param who character that has stopped wielding item
+         */
+        void on_unwield( Character &who );
+        /**
          * Callback when a player starts carrying the item. The item is already in the inventory
          * and is called from there. This is not called when the item is added to the inventory
          * from worn vector or weapon slot. The item is considered already carried.

@@ -44,7 +44,7 @@ void run_on_game_save_hooks( lua_state &state );
 void run_on_every_x_hooks( lua_state &state );
 void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &p,
                                       const time_point &when );
-void reg_lua_iuse_actors( lua_state &state, Item_factory &ifactory );
+void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory );
 
 } // namespace cata
 
