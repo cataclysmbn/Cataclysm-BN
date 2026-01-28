@@ -38,6 +38,15 @@
 #include "item_group.h"
 #include "iuse_actor.h"
 #include "json.h"
+#include "point.h"
+
+class player;
+
+namespace iuse
+{
+auto report_plumbing_connections( player *, item *, bool, const tripoint & ) -> int;
+auto modify_plumbing_connections( player *, item *, bool, const tripoint & ) -> int;
+} // namespace iuse
 #include "material.h"
 #include "options.h"
 #include "recipe.h"
@@ -1033,6 +1042,8 @@ void Item_factory::init()
     add_iuse( "REPORT_GRID_CHARGE", &iuse::report_grid_charge );
     add_iuse( "REPORT_GRID_CONNECTIONS", &iuse::report_grid_connections );
     add_iuse( "MODIFY_GRID_CONNECTIONS", &iuse::modify_grid_connections );
+    add_iuse( "REPORT_PLUMBING_CONNECTIONS", &iuse::report_plumbing_connections );
+    add_iuse( "MODIFY_PLUMBING_CONNECTIONS", &iuse::modify_plumbing_connections );
     add_iuse( "ROBOTCONTROL", &iuse::robotcontrol );
     add_iuse( "SEED", &iuse::seed );
     add_iuse( "SEWAGE", &iuse::sewage );

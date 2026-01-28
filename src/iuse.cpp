@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bitset>
 #include <climits>
 #include <cmath>
 #include <cstdlib>
@@ -11,6 +12,7 @@
 #include <list>
 #include <map>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <unordered_map>
@@ -79,6 +81,7 @@
 #include "monattack.h"
 #include "mongroup.h"
 #include "monster.h"
+#include "plumbing_grid.h"
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -326,6 +329,8 @@ static const quality_id qual_LOCKPICK( "LOCKPICK" );
 
 static const requirement_id requirement_add_grid_connection =
     requirement_id( "add_grid_connection" );
+static const auto requirement_add_plumbing_grid_connection =
+    requirement_id( "add_plumbing_grid_connection" );
 
 static const species_id FUNGUS( "FUNGUS" );
 static const species_id HALLUCINATION( "HALLUCINATION" );
@@ -8881,6 +8886,34 @@ int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos 
     return 0;
 }
 
+auto iuse::report_plumbing_connections( player *p, item *, bool, const tripoint &pos ) -> int
+{
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
+    const auto connections = plumbing_grid::grid_connectivity_at( pos_abs );
+    const auto water_stats = plumbing_grid::water_storage_at( pos_abs );
+
+    auto connection_names = std::vector<std::string> {};
+    connection_names.reserve( connections.size() );
+    std::ranges::for_each( connections, [&]( const tripoint_rel_omt & delta ) {
+        connection_names.push_back( direction_name( direction_from( delta.raw() ) ) );
+    } );
+
+    auto msg = std::string{};
+    if( connection_names.empty() ) {
+        msg = _( "This plumbing grid has no connections." );
+    } else {
+        msg = string_format( _( "This plumbing grid has connections: %s." ),
+                             enumerate_as_string( connection_names ) );
+    }
+    p->add_msg_if_player( msg );
+    p->add_msg_if_player( string_format( _( "Water stored: %1$s/%2$s %3$s." ),
+                                         format_volume( water_stats.stored ),
+                                         format_volume( water_stats.capacity ),
+                                         volume_units_abbr() ) );
+
+    return 0;
+}
+
 int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &pos )
 {
     tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
@@ -8969,6 +9002,100 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
         p->invalidate_crafting_inventory();
 
         bool success = overmap_buffer.add_grid_connection( pos_abs, destination_pos_abs );
+        if( success ) {
+            return it->type->charges_to_use();
+        }
+    }
+
+    return 0;
+}
+
+auto iuse::modify_plumbing_connections( player *p, item *it, bool, const tripoint &pos ) -> int
+{
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
+    const auto connections = plumbing_grid::grid_connectivity_at( pos_abs );
+
+    uilist ui;
+
+    auto connection_present = std::bitset<six_cardinal_directions.size()> {};
+    std::ranges::for_each( std::views::iota( size_t{ 0 }, six_cardinal_directions.size() ),
+    [&]( size_t i ) {
+        const auto &delta = six_cardinal_directions[i];
+        connection_present[i] = std::ranges::find( connections,
+                                tripoint_rel_omt( delta ) ) != connections.end();
+        const auto name = direction_name( direction_from( delta ) );
+        const auto i_int = static_cast<int>( i );
+        const auto format = connection_present[i]
+                            ? _( "Remove plumbing connection in direction: %s" )
+                            : _( "Add plumbing connection in direction: %s" );
+        const auto new_z = pos.z + delta.z;
+        const auto enabled = new_z >= -10 && new_z <= 10;
+        ui.addentry( i_int, enabled, i_int, format, name.c_str() );
+    } );
+
+    ui.query();
+    if( ui.ret < 0 ) {
+        return 0;
+    }
+
+    const auto ret = static_cast<size_t>( ui.ret );
+    const auto destination_pos_abs =
+        pos_abs + tripoint_rel_omt( six_cardinal_directions[ret] );
+    if( connection_present[ret] ) {
+        plumbing_grid::remove_grid_connection( pos_abs, destination_pos_abs );
+    } else {
+        const auto lhs_locations = plumbing_grid::grid_at( pos_abs );
+        const auto rhs_locations = plumbing_grid::grid_at( destination_pos_abs );
+        auto cost_mult = 0;
+        if( lhs_locations != rhs_locations ) {
+            cost_mult = static_cast<int>( lhs_locations.size() + rhs_locations.size() );
+        }
+        const auto &reqs = *requirement_add_plumbing_grid_connection * cost_mult;
+        const auto &crafting_inv = p->crafting_inventory();
+        auto grid_connection_string = std::string{};
+        if( cost_mult == 0 ) {
+            grid_connection_string = string_format(
+                                         _( "You are connecting two locations in the same grid, with %lu elements." ),
+                                         std::max( lhs_locations.size(), rhs_locations.size() ) );
+        } else if( lhs_locations.size() == 1 || rhs_locations.size() == 1 ) {
+            grid_connection_string = string_format(
+                                         _( "You are extending a grid with %lu elements." ),
+                                         std::max( lhs_locations.size(), rhs_locations.size() ) );
+        } else {
+            grid_connection_string = string_format(
+                                         _( "You are connecting a grid with %lu elements to a grid with %lu elements." ),
+                                         lhs_locations.size(),
+                                         rhs_locations.size() );
+        }
+
+        if( !requirement_add_plumbing_grid_connection->can_make_with_inventory( crafting_inv,
+                is_crafting_component ) ) {
+            popup( string_format( _( "%s\n%s\n%s" ),
+                                  grid_connection_string,
+                                  reqs.list_missing(),
+                                  reqs.list_all() ) );
+            return 0;
+        }
+
+        if( ( cost_mult == 0 &&
+              query_yn( string_format( _( "%s\nThis action will not consume any resources.\nAre you sure?" ),
+                                       grid_connection_string ) ) ) ||
+            query_yn( string_format( std::string( "%s\n%s\n" ) + _( "Are you sure?" ),
+                                     grid_connection_string,
+                                     reqs.list_all() ) ) )
+        {} else {
+            return 0;
+        }
+
+        std::ranges::for_each( reqs.get_components(), [&]( const auto & e ) {
+            p->consume_items( e );
+        } );
+        std::ranges::for_each( reqs.get_tools(), [&]( const auto & e ) {
+            p->consume_tools( e );
+        } );
+        p->invalidate_crafting_inventory();
+
+        const auto success = plumbing_grid::add_grid_connection( pos_abs, destination_pos_abs );
         if( success ) {
             return it->type->charges_to_use();
         }

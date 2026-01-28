@@ -5,5 +5,12 @@
     "//": "Connect two grid tiles. Cost is multiplied by number of elements in resulting grid.",
     "components": [ [ [ "cable", 2 ] ] ],
     "tools": [ [ [ "soldering_iron", 3 ], [ "soldering_ethanol", 30 ], [ "toolset", 1 ] ] ]
+  },
+  {
+    "id": "add_plumbing_grid_connection",
+    "type": "requirement",
+    "//": "Connect two plumbing grid tiles. Cost is multiplied by number of elements in resulting grid.",
+    "components": [ [ [ "hose", 2 ] ] ],
+    "tools": [ [ [ "soldering_iron", 3 ], [ "soldering_ethanol", 30 ], [ "toolset", 1 ] ] ]
   }
 ]

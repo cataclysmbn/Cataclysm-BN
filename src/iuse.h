@@ -172,6 +172,8 @@ int toggle_ups_charging( player *, item *, bool, const tripoint & );
 int report_grid_charge( player *, item *, bool, const tripoint & );
 int report_grid_connections( player *, item *, bool, const tripoint & );
 int modify_grid_connections( player *, item *, bool, const tripoint & );
+int report_plumbing_connections( player *, item *, bool, const tripoint & );
+int modify_plumbing_connections( player *, item *, bool, const tripoint & );
 int bullet_vibe_on( player *, item *, bool, const tripoint & );
 
 // MACGUFFINS
@@ -292,5 +294,4 @@ struct use_function {
         /** @return Used by @ref item::info to get description of the actor */
         void dump_info( const item &, std::vector<iteminfo> & ) const;
 };
-
 

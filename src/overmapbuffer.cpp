@@ -47,6 +47,7 @@
 #include "vehicle_part.h"
 #include "profile.h"
 #include "world.h"
+#include "plumbing_grid.h"
 
 class map_extra;
 
@@ -282,6 +283,7 @@ void overmapbuffer::clear()
     overmaps.clear();
     known_non_existing.clear();
     placed_unique_specials.clear();
+    plumbing_grid::clear();
 }
 
 const regional_settings &overmapbuffer::get_settings( const tripoint_abs_omt &p )

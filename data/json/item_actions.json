@@ -806,8 +806,18 @@
   },
   {
     "type": "item_action",
+    "id": "REPORT_PLUMBING_CONNECTIONS",
+    "name": { "str": "Check plumbing connections" }
+  },
+  {
+    "type": "item_action",
     "id": "MODIFY_GRID_CONNECTIONS",
     "name": { "str": "Modify grid connections" }
+  },
+  {
+    "type": "item_action",
+    "id": "MODIFY_PLUMBING_CONNECTIONS",
+    "name": { "str": "Modify plumbing connections" }
   },
   {
     "type": "item_action",

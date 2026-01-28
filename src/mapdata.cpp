@@ -47,6 +47,72 @@ bool is_json_check_strict( const std::string &src )
     return json_report_strict || is_strict_enabled( src );
 }
 
+auto plumbing_plumbed_variants() -> std::map<furn_str_id, furn_str_id> &
+{
+    static auto variants = std::map<furn_str_id, furn_str_id> {};
+    return variants;
+}
+
+auto plumbing_unplumbed_variants() -> std::map<furn_str_id, furn_str_id> &
+{
+    static auto variants = std::map<furn_str_id, furn_str_id> {};
+    return variants;
+}
+
+auto add_plumbing_variant( std::map<furn_str_id, furn_str_id> &variants,
+                           const furn_str_id &from,
+                           const furn_str_id &to,
+                           const char *label ) -> void
+{
+    const auto iter = variants.find( from );
+    if( iter != variants.end() && iter->second != to ) {
+        debugmsg( "plumbing %s variant conflict for %s: %s vs %s",
+                  label, from.c_str(), iter->second.c_str(), to.c_str() );
+        return;
+    }
+    variants[from] = to;
+}
+
+auto build_plumbing_variant_maps() -> void
+{
+    auto &plumbed = plumbing_plumbed_variants();
+    auto &unplumbed = plumbing_unplumbed_variants();
+    plumbed.clear();
+    unplumbed.clear();
+
+    std::ranges::for_each( furniture_data.get_all(), [&]( const furn_t &furn ) {
+        if( !furn.plumbing || furn.plumbing->role != plumbing_role::tank ) {
+            return;
+        }
+        if( furn.plumbing->plumbed_variant ) {
+            add_plumbing_variant( plumbed, furn.id, *furn.plumbing->plumbed_variant, "plumbed" );
+        }
+        if( furn.plumbing->unplumbed_variant ) {
+            add_plumbing_variant( unplumbed, furn.id, *furn.plumbing->unplumbed_variant, "unplumbed" );
+        }
+    } );
+
+    std::ranges::for_each( plumbed, [&]( const auto & entry ) {
+        add_plumbing_variant( unplumbed, entry.second, entry.first, "unplumbed" );
+    } );
+    std::ranges::for_each( unplumbed, [&]( const auto & entry ) {
+        add_plumbing_variant( plumbed, entry.second, entry.first, "plumbed" );
+    } );
+}
+
+auto parse_plumbing_role( const std::string &role ) -> std::optional<plumbing_role>
+{
+    static const auto role_map = std::unordered_map<std::string, plumbing_role> {
+        { "tank", plumbing_role::tank },
+        { "fixture", plumbing_role::fixture }
+    };
+    const auto iter = role_map.find( role );
+    if( iter == role_map.end() ) {
+        return std::nullopt;
+    }
+    return iter->second;
+}
+
 } // namespace
 
 /** @relates int_id */
@@ -1573,6 +1639,33 @@ void furn_t::load( const JsonObject &jo, const std::string &src )
     optional( jo, was_loaded, "provides_liquids", provides_liquids );
     optional( jo, was_loaded, "bonus_fire_warmth_feet", bonus_fire_warmth_feet, 300 );
     optional( jo, was_loaded, "keg_capacity", keg_capacity, legacy_volume_reader, 0_ml );
+    if( jo.has_member( "plumbing" ) ) {
+        auto plumbing_obj = jo.get_object( "plumbing" );
+        auto plumbing_entry = plumbing_data{};
+        auto role_str = std::string{};
+        mandatory( plumbing_obj, was_loaded, "role", role_str );
+        const auto role = parse_plumbing_role( role_str );
+        if( !role ) {
+            debugmsg( "invalid plumbing role %s for furniture %s", role_str.c_str(), id.c_str() );
+        } else {
+            plumbing_entry.role = *role;
+            mandatory( plumbing_obj, was_loaded, "allow_input", plumbing_entry.allow_input );
+            mandatory( plumbing_obj, was_loaded, "allow_output", plumbing_entry.allow_output );
+            mandatory( plumbing_obj, was_loaded, "allowed_liquids", plumbing_entry.allowed_liquids );
+            optional( plumbing_obj, was_loaded, "use_keg_capacity", plumbing_entry.use_keg_capacity, false );
+            if( plumbing_obj.has_member( "capacity" ) ) {
+                const auto raw_capacity = plumbing_obj.get_int( "capacity" );
+                plumbing_entry.capacity = raw_capacity * units::legacy_volume_factor;
+            }
+            if( plumbing_obj.has_member( "plumbed_variant" ) ) {
+                plumbing_entry.plumbed_variant = furn_str_id( plumbing_obj.get_string( "plumbed_variant" ) );
+            }
+            if( plumbing_obj.has_member( "unplumbed_variant" ) ) {
+                plumbing_entry.unplumbed_variant = furn_str_id( plumbing_obj.get_string( "unplumbed_variant" ) );
+            }
+            plumbing = plumbing_entry;
+        }
+    }
     mandatory( jo, was_loaded, "required_str", move_str_req );
     optional( jo, was_loaded, "max_volume", max_volume, volume_reader(), DEFAULT_MAX_VOLUME_IN_SQUARE );
     optional( jo, was_loaded, "deployed_item", deployed_item );
@@ -1661,11 +1754,76 @@ void furn_t::check() const
             }
         }
     }
+    if( plumbing ) {
+        const auto &plumbing_data = *plumbing;
+        if( plumbing_data.allowed_liquids.empty() ) {
+            debugmsg( "furn %s has plumbing but no allowed_liquids set", id.c_str() );
+        }
+        const auto invalid_liquid = std::ranges::find_if(
+                                        plumbing_data.allowed_liquids,
+        []( const itype_id & liquid ) {
+            return !liquid.is_valid();
+        } );
+        if( invalid_liquid != plumbing_data.allowed_liquids.end() ) {
+            debugmsg( "furn %s has plumbing with invalid liquid %s", id.c_str(),
+                      invalid_liquid->c_str() );
+        }
+        if( plumbing_data.role == plumbing_role::tank ) {
+            if( !plumbing_data.capacity && !plumbing_data.use_keg_capacity ) {
+                debugmsg( "furn %s has plumbing tank role but no capacity configured", id.c_str() );
+            }
+            if( plumbing_data.capacity && *plumbing_data.capacity <= 0_ml ) {
+                debugmsg( "furn %s has plumbing tank role but non-positive capacity", id.c_str() );
+            }
+            if( plumbing_data.use_keg_capacity && keg_capacity <= 0_ml ) {
+                debugmsg( "furn %s has plumbing tank role but no keg_capacity set", id.c_str() );
+            }
+            if( plumbing_data.capacity && plumbing_data.use_keg_capacity ) {
+                debugmsg( "furn %s has both plumbing capacity and use_keg_capacity set", id.c_str() );
+            }
+            if( !plumbing_data.plumbed_variant && !plumbing_data.unplumbed_variant ) {
+                debugmsg( "furn %s has plumbing tank role but no plumbed/unplumbed variant configured",
+                          id.c_str() );
+            }
+        } else {
+            if( plumbing_data.capacity || plumbing_data.use_keg_capacity ) {
+                debugmsg( "furn %s has plumbing fixture role with capacity configured", id.c_str() );
+            }
+        }
+        if( plumbing_data.plumbed_variant && !plumbing_data.plumbed_variant->is_valid() ) {
+            debugmsg( "furn %s has invalid plumbing plumbed_variant %s", id.c_str(),
+                      plumbing_data.plumbed_variant->c_str() );
+        }
+        if( plumbing_data.unplumbed_variant && !plumbing_data.unplumbed_variant->is_valid() ) {
+            debugmsg( "furn %s has invalid plumbing unplumbed_variant %s", id.c_str(),
+                      plumbing_data.unplumbed_variant->c_str() );
+        }
+    }
 }
 
 const std::vector<furn_t> &furn_t::get_all()
 {
     return furniture_data.get_all();
+}
+
+auto plumbing_plumbed_variant( const furn_id &id ) -> std::optional<furn_id>
+{
+    const auto &plumbed = plumbing_plumbed_variants();
+    const auto iter = plumbed.find( id.obj().id );
+    if( iter == plumbed.end() || !iter->second.is_valid() ) {
+        return std::nullopt;
+    }
+    return furn_id( iter->second );
+}
+
+auto plumbing_unplumbed_variant( const furn_id &id ) -> std::optional<furn_id>
+{
+    const auto &unplumbed = plumbing_unplumbed_variants();
+    const auto iter = unplumbed.find( id.obj().id );
+    if( iter == unplumbed.end() || !iter->second.is_valid() ) {
+        return std::nullopt;
+    }
+    return furn_id( iter->second );
 }
 
 void finalize_furn()
@@ -1682,6 +1840,7 @@ void finalize_furn()
             }
         }
     }
+    build_plumbing_variant_maps();
 
 }
 

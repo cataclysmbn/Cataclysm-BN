@@ -594,6 +594,22 @@ void reset_furn_ter();
  * The terrain list contains the master list of  information and metadata for a given type of terrain.
  */
 
+enum class plumbing_role {
+    tank,
+    fixture
+};
+
+struct plumbing_data {
+    plumbing_role role = plumbing_role::tank;
+    bool allow_input = false;
+    bool allow_output = false;
+    std::set<itype_id> allowed_liquids;
+    std::optional<units::volume> capacity;
+    bool use_keg_capacity = false;
+    std::optional<furn_str_id> plumbed_variant;
+    std::optional<furn_str_id> unplumbed_variant;
+};
+
 struct furn_t : map_data_common_t {
 
     std::vector<std::pair<furn_str_id, mod_id>> src;
@@ -629,6 +645,7 @@ struct furn_t : map_data_common_t {
     std::optional<float> surgery_skill_multiplier;
 
     cata::poly_serialized<active_tile_data> active;
+    std::optional<plumbing_data> plumbing;
 
     std::vector<itype> crafting_pseudo_item_types() const;
     std::vector<itype> crafting_ammo_item_types() const;
@@ -651,6 +668,8 @@ void load_terrain( const JsonObject &jo, const std::string &src );
 
 void verify_furniture();
 void verify_terrain();
+auto plumbing_plumbed_variant( const furn_id &id ) -> std::optional<furn_id>;
+auto plumbing_unplumbed_variant( const furn_id &id ) -> std::optional<furn_id>;
 
 /*
 runtime index: ter_id
@@ -828,5 +847,3 @@ extern furn_id f_null,
 
 // consistency checking of terlist & furnlist.
 void check_furniture_and_terrain();
-
-
