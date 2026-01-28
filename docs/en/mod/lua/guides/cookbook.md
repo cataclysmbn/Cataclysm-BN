@@ -342,10 +342,20 @@ print( km:knows_spell(ex_sp) ) -- check again
 
 ## Dynamic Item Actions
 
-### Creating custom item use functions
+All item, bionic, and mutation callback tables are keyed by string id and take a
+table of optional callback functions. Every callback receives a single `params`
+table with named fields.
+
+### game.iuse_functions
+
+| Callbacks | params fields         |
+| --------- | --------------------- |
+| `use`     | `user`, `item`, `pos` |
+| `can_use` | `user`, `item`, `pos` |
+
+`use` returns an `int` (time cost in moves). `can_use` returns `bool`.
 
 ```lua
--- Define an item's use behavior with use and can_use functions
 game.iuse_functions["my_custom_item"] = {
     use = function(params)
         local user = params.user
@@ -357,25 +367,13 @@ game.iuse_functions["my_custom_item"] = {
     can_use = function(params)
         -- Return true to allow use, false to prevent
         return true
-    end,
-    tick = function(params)
-        -- Called periodically while item is active
-        if params.item:get_countdown() == 0 then
-            gdebug.log_info("Item countdown finished!")
-        end
     end
 }
 ```
 
-> **Note:** `iuse_functions` supports a legacy `tick` callback, which is invoked
-> periodically while the item is active. New per-item tick behavior defined with
-> `game.istate_functions` (see below) takes priority.
-
 ### Item lifecycle callbacks
 
-Several additional callback tables let you react to item events. Each table is
-keyed by item type string id and takes a table of optional callback functions.
-All callbacks receive a single `params` table with named fields.
+Several additional callback tables let you react to item events.
 
 ### game.iwieldable_functions
 
@@ -400,10 +398,10 @@ All callbacks receive a single `params` table with named fields.
 
 ---
 ### game.istate_functions
-| Callbacks | params fields |
-|-----------|---------------|
+| Callbacks            | params fields         |
+|--------------------- | --------------------- |
 | `on_tick`, `on_drop` | `user`, `item`, `pos` |
-| `on_pickup` | `user`, `item` |
+| `on_pickup`          | `user`, `item`        |
 ---
 
 ### game.imelee_functions
@@ -417,10 +415,10 @@ All callbacks receive a single `params` table with named fields.
 
 ---
 ### game.iranged_functions
-| Callbacks | params fields |
-|-----------|---------------|
-| `on_fire` | `user`, `item`, `target_pos`, `shots` |
-| `on_reload`, `can_fire`, `can_reload` | `user`, `item` |
+| Callbacks                             | params fields                         |
+| ------------------------------------- | ------------------------------------- |
+| `on_fire`                             | `user`, `item`, `target_pos`, `shots` |
+| `on_reload`, `can_fire`, `can_reload` | `user`, `item`                        |
 ---
 
 `can_*` callbacks return `bool` — return `false` to block the action.

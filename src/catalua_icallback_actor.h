@@ -20,7 +20,6 @@ class lua_iuse_actor : public iuse_actor
     private:
         sol::protected_function use_func;
         sol::protected_function can_use_func;
-        sol::protected_function tick_func;
 
     public:
         lua_iuse_actor( const std::string &type,
