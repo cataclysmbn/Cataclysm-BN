@@ -379,11 +379,11 @@ All callbacks receive a single `params` table with named fields.
 
 ### game.iwieldable_functions
 
+| Callbacks                                | params fields               |
+| ---------------------------------------- | --------------------------- |
+| `on_wield`                               | `user`, `item`, `move_cost` |
+| `on_unwield`, `can_wield`, `can_unwield` | `user`, `item`              |
 
-| Callbacks | params fields |
-|-----------|---------------|
-| `on_wield` | `user`, `item`, `move_cost` |
-| `on_unwield`, `can_wield`, `can_unwield` | `user`, `item` |
 ---
 ### game.iwearable_functions
 | Callbacks | params fields |
@@ -393,11 +393,11 @@ All callbacks receive a single `params` table with named fields.
 
 ### game.iequippable_functions
 
+| Callbacks               | params fields                              |
+| ----------------------- | ------------------------------------------ |
+| `on_durability_change`  | `user`, `item`, `old_damage`, `new_damage` |
+| `on_repair`, `on_break` | `user`, `item`                             |
 
-| Callbacks | params fields |
-|-----------|---------------|
-| `on_durability_change` | `user`, `item`, `old_damage`, `new_damage` |
-| `on_repair`, `on_break` | `user`, `item` |
 ---
 ### game.istate_functions
 | Callbacks | params fields |
@@ -408,12 +408,13 @@ All callbacks receive a single `params` table with named fields.
 
 ### game.imelee_functions
 
-| Callbacks | params fields |
-|-----------|---------------|
-| `on_melee_attack` | `user`, `target`, `item` |
-| `on_hit` | `user`, `target`, `item`, `damage_instance` |
-| `on_block` | `user`, `source`, `item`, `damage_blocked` |
-| `on_miss` | `user`, `item` |
+| Callbacks         | params fields                               |
+| ----------------- | ------------------------------------------- |
+| `on_melee_attack` | `user`, `target`, `item`                    |
+| `on_hit`          | `user`, `target`, `item`, `damage_instance` |
+| `on_block`        | `user`, `source`, `item`, `damage_blocked`  |
+| `on_miss`         | `user`, `item`                              |
+
 ---
 ### game.iranged_functions
 | Callbacks | params fields |
@@ -441,12 +442,12 @@ game.iwieldable_functions["cursed_sword"] = {
 `game.bionic_functions` is keyed by bionic string id. Each callback receives
 a single `params` table.
 
-| Callback | params fields | When fired |
-|----------|---------------|------------|
-| `on_activate` | `user`, `bionic` | After bionic is activated |
-| `on_deactivate` | `user`, `bionic` | After bionic is deactivated |
-| `on_installed` | `user`, `bionic_id` | After bionic is installed |
-| `on_removed` | `user`, `bionic_id` | After bionic is removed |
+| Callback        | params fields       | When fired                  |
+| --------------- | ------------------- | --------------------------- |
+| `on_activate`   | `user`, `bionic`    | After bionic is activated   |
+| `on_deactivate` | `user`, `bionic`    | After bionic is deactivated |
+| `on_installed`  | `user`, `bionic_id` | After bionic is installed   |
+| `on_removed`    | `user`, `bionic_id` | After bionic is removed     |
 
 ```lua
 game.bionic_functions["bio_laser"] = {
@@ -463,12 +464,12 @@ game.bionic_functions["bio_laser"] = {
 
 `game.mutation_functions` is keyed by trait string id.
 
-| Callback | params fields | When fired |
-|----------|---------------|------------|
-| `on_activate` | `user`, `trait_id` | After mutation is toggled on |
+| Callback        | params fields      | When fired                    |
+| --------------- | ------------------ | ----------------------------- |
+| `on_activate`   | `user`, `trait_id` | After mutation is toggled on  |
 | `on_deactivate` | `user`, `trait_id` | After mutation is toggled off |
-| `on_gain` | `user`, `trait_id` | After mutation is gained |
-| `on_loss` | `user`, `trait_id` | After mutation is lost |
+| `on_gain`       | `user`, `trait_id` | After mutation is gained      |
+| `on_loss`       | `user`, `trait_id` | After mutation is lost        |
 
 ```lua
 game.mutation_functions["TRAIT_QUICK"] = {
