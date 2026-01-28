@@ -3618,7 +3618,6 @@
     "durability": 50,
     "item": "bomber_controls",
     "description": "A motor and attached linkage that can activate and drop items, such as explosives, from within the attached storage space.  Activating it from vehicle controls will let you select which items to arm, then release them underneath the vehicle.",
-    "location": "on_cargo",
     "folded_volume": "750 ml",
     "flags": [ "DROPPER", "SHOCK_RESISTANT" ],
     "requirements": {
