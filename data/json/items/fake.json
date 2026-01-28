@@ -29,7 +29,20 @@
     "name": { "str": "integrated toolset" },
     "flags": [ "TRADER_AVOID", "BIONIC_TOOLS", "USES_BIONIC_POWER" ],
     "max_charges": 10000,
-    "use_action": [ "HAMMER", "CROWBAR" ],
+    "charges_per_use": 1,
+    "use_action": [
+      "HAMMER",
+      "CROWBAR",
+      {
+        "type": "repair_item",
+        "item_action_type": "repair_metal",
+        "materials": [ "kevlar", "plastic", "iron", "steel", "budget_steel", "hardsteel", "aluminum", "copper", "silver", "gold", "glass" ],
+        "skill": "mechanics",
+        "cost_scaling": 0.1,
+        "move_cost": 1000
+      },
+      { "flame": false, "type": "cauterize" }
+    ],
     "qualities": [
       [ "HOSE", 1 ],
       [ "HAMMER", 3 ],
@@ -779,7 +792,8 @@
     "copy-from": "fake_item",
     "type": "TOOL",
     "name": { "str": "installed advanced butchering station" },
-    "qualities": [ [ "BUTCHER", 50 ], [ "CUT", 3 ], [ "CUT_FINE", 5 ] ]
+    "qualities": [ [ "BUTCHER", 50 ], [ "CUT", 3 ], [ "CUT_FINE", 5 ] ],
+    "flags": [ "FLAT_SURFACE" ]
   },
   {
     "id": "translocation_caster_spell",

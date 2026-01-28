@@ -51,7 +51,6 @@
 #include "wcwidth.h"
 #include "worldfactory.h"
 #include "game_info.h"
-
 enum class main_menu_opts : int {
     MOTD = 0,
     NEWCHAR = 1,
@@ -620,6 +619,11 @@ bool main_menu::opening_screen()
 
     if( !assure_dir_exist( PATH_INFO::config_dir() ) ) {
         popup( _( "Unable to make config directory.  Check permissions." ) );
+        return false;
+    }
+
+    if( !assure_dir_exist( PATH_INFO::user_moddir() ) ) {
+        popup( _( "Unable to make user mods directory.  Check permissions." ) );
         return false;
     }
 

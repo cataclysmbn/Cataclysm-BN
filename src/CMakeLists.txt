@@ -2,7 +2,7 @@ set(MAIN_CPP ${CMAKE_SOURCE_DIR}/src/main.cpp)
 set(MESSAGES_CPP ${CMAKE_SOURCE_DIR}/src/messages.cpp)
 set(RESOURCE_RC ${CMAKE_SOURCE_DIR}/src/resource.rc)
 
-file(GLOB_RECURSE CATACLYSM_BN_SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
+file(GLOB CATACLYSM_BN_SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
 list(REMOVE_ITEM CATACLYSM_BN_SOURCES ${MAIN_CPP} ${MESSAGES_CPP})
 
@@ -18,7 +18,7 @@ foreach (catalua_src IN LISTS CATALUA_BINDINGS_SOURCES)
     set_source_files_properties(${catalua_src} PROPERTIES COMPILE_OPTIONS "${CATALUA_BINDINGS_COMPILE_OPTIONS}")
 endforeach ()
 
-file(GLOB_RECURSE CATACLYSM_BN_HEADERS ${CMAKE_SOURCE_DIR}/src/*.h)
+file(GLOB CATACLYSM_BN_HEADERS ${CMAKE_SOURCE_DIR}/src/*.h)
 
 add_subdirectory(lua)
 add_subdirectory(sol)
@@ -172,6 +172,16 @@ if (TILES)
     endif ()
 
     set_target_properties(cataclysm-bn-tiles PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+
+    if( LUA_DOCS_ON_BUILD AND DENO_BINARY )
+        add_custom_command(
+            TARGET cataclysm-bn-tiles POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E env --unset=LD_LIBRARY_PATH ${DENO_BINARY} task docs:gen
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Generating Lua reference/annotations (deno task docs:gen)"
+            VERBATIM
+        )
+    endif()
 endif ()
 
 # Build curses version if requested

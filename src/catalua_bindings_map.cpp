@@ -4,10 +4,13 @@
 #include "catalua_luna_doc.h"
 
 #include "game.h"
+#include "artifact_enum_traits.h"
+#include "enum_conversions.h"
 #include "distribution_grid.h"
 #include "field.h"
 #include "map.h"
 #include "map_iterator.h"
+#include "npc.h"
 #include "trap.h"
 #include "detached_ptr.h"
 
@@ -118,11 +121,31 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "get_map_size", []( const map & m ) -> int { return m.getmapsize() * SEEX; } );
         luna::set_fx( ut, "ambient_light_at", &map::ambient_light_at );
 
+        DOC( "Forcibly places an npc using a template at a position on the map. Returns the npc." );
+        luna::set_fx( ut, "place_npc", []( map & m, point p, std::string id_str ) -> npc * {
+            character_id char_id = m.place_npc( p, string_id<npc_template>( id_str ), true );
+            return g->find_npc( char_id );
+        } );
+
         DOC( "Creates a new item(s) at a position on the map." );
         luna::set_fx( ut, "create_item_at", []( map & m, const tripoint & p, const itype_id & itype,
         int count ) -> item* {
             detached_ptr<item> new_item = item::spawn( itype, calendar::turn, count );
             return m.add_item_or_charges( p, std::move( new_item ) ).get();
+        } );
+
+        DOC( "Spawns a random artifact at a position on the map." );
+        luna::set_fx( ut, "spawn_artifact_at", []( map & m, const tripoint & p ) -> void {
+            m.spawn_artifact( p );
+        } );
+
+        DOC( "Spawns a natural artifact at a position on the map. Omit `property` to choose one at random." );
+        luna::set_fx( ut, "spawn_natural_artifact_at", []( map & m, const tripoint & p,
+        sol::optional<std::string> property ) -> void {
+            const auto prop = property && !property->empty()
+            ? io::string_to_enum<artifact_natural_property>( *property )
+            : ARTPROP_NULL;
+            m.spawn_natural_artifact( p, prop );
         } );
 
         DOC( "Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag." );

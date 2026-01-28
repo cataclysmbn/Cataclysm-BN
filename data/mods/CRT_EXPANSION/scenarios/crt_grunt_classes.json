@@ -37,6 +37,7 @@
     "points": 8,
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 2, "name": "gun" },
       { "level": 2, "name": "rifle" },
       { "level": 1, "name": "melee" },
@@ -81,7 +82,13 @@
     "description": "You were part of the infantry; first to hit the ground running, clear a FOB and then come back to relax with your squad.  Those days ended when the cataclysm reared its ugly head.  Your lines were torn through like wet paper when the otherworldly abominations arrived.  Now fleeing for your life, will you have what it takes to survive or is this hellish landscape your resting place?",
     "points": 6,
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
-    "skills": [ { "level": 3, "name": "gun" }, { "level": 3, "name": "rifle" }, { "level": 1, "name": "stabbing" } ],
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "rifle" },
+      { "level": 1, "name": "stabbing" }
+    ],
     "items": {
       "both": {
         "ammo": 100,
@@ -121,7 +128,13 @@
     "description": "You were assigned the billet of specializing in creating dead zones and providing support fire.  When the cataclysm struck, your trusty LMG couldn't keep the veritable tide of undead from overtaking your squad.  Now running with all the strength your body can muster, will you have what it takes to survive or is this hellish landscape something you just can't suppress?",
     "points": 8,
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
-    "skills": [ { "level": 3, "name": "gun" }, { "level": 3, "name": "rifle" }, { "level": 1, "name": "pistol" } ],
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "rifle" },
+      { "level": 1, "name": "pistol" }
+    ],
     "items": {
       "both": {
         "ammo": 100,
@@ -161,6 +174,7 @@
     "points": 8,
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 2, "name": "gun" },
       { "level": 2, "name": "pistol" },
       { "level": 4, "name": "speech" },
@@ -204,6 +218,8 @@
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "points": 4,
     "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
       { "level": 1, "name": "stabbing" },
       { "level": 1, "name": "bashing" },
       { "level": 1, "name": "cutting" },

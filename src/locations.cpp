@@ -105,7 +105,7 @@ item_location_type temp_item_location::where() const
 
 int temp_item_location::obtain_cost( const Character &, int, const item * ) const
 {
-    return -100;
+    return 100;
 }
 
 detached_ptr<item> character_item_location::detach( item *it )

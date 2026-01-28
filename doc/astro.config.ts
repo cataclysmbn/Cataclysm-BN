@@ -15,7 +15,7 @@ const { CUSTOM_SITE_URL, CUSTOM_REPO_URL } = env
 
 const site = CUSTOM_SITE_URL || "https://docs.cataclysmbn.org"
 const github = CUSTOM_REPO_URL || "https://github.com/cataclysmbn/Cataclysm-BN"
-const itemGuide = "https://cbn-guide.pages.dev/"
+const itemGuide = "https://cataclysmbn-guide.com/"
 const discord = "https://discord.gg/XW7XhXuZ89"
 
 const docModes = (dir: string) => [

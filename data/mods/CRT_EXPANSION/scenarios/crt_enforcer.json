@@ -8,6 +8,8 @@
     "CBMs": [ "bio_razors", "bio_sunglasses", "bio_ears", "bio_speed", "bio_str_enhancer", "bio_heat_absorb", "bio_weight" ],
     "points": 15,
     "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
       { "level": 4, "name": "bashing" },
       { "level": 6, "name": "dodge" },
       { "level": 8, "name": "melee" },
@@ -47,6 +49,8 @@
     "CBMs": [ "bio_razors", "bio_sunglasses", "bio_ears", "bio_speed", "bio_str_enhancer" ],
     "points": 8,
     "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
       { "level": 4, "name": "bashing" },
       { "level": 2, "name": "dodge" },
       { "level": 4, "name": "melee" },
@@ -85,6 +89,8 @@
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY", "LARGE_OK" ],
     "points": 4,
     "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
       { "level": 4, "name": "bashing" },
       { "level": 2, "name": "dodge" },
       { "level": 4, "name": "melee" },

@@ -19,6 +19,7 @@
 #include "construction_partial.h"
 #include "crafting.h"
 #include "distraction_manager.h"
+#include "flag.h"
 #include "game.h"
 #include "item.h"
 #include "itype.h"
@@ -753,4 +754,11 @@ void activity_ptr::serialize( JsonOut &json ) const
 void activity_ptr::deserialize( JsonIn &jsin )
 {
     act->deserialize( jsin );
+}
+
+auto player_activity::add_tool( item *it ) -> void
+{
+    if( it && !it->has_flag( flag_PSEUDO ) ) {
+        tools_.emplace_back( it );
+    }
 }

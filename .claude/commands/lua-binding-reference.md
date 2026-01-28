@@ -402,7 +402,7 @@ src/
 cmake --build --preset linux-full --target cataclysm-bn-tiles
 
 # Format C++
-cmake --build build --target format
+cmake --build build --target astyle
 
 # Test in Lua console
 # Debug menu -> Lua console

@@ -44,7 +44,7 @@ jobs:
         run: cmake --preset lint
 
       - name: format C++ files
-        run: cmake --build build --target format
+        run: cmake --build build --target astyle
 
       - name: format Markdown and TypeScript files
         run: deno fmt

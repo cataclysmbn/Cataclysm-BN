@@ -8,7 +8,7 @@ This guide explains how to format and lint code in Cataclysm: Bright Nights.
 
 | File Type       | Tool           | Command                                            |
 | --------------- | -------------- | -------------------------------------------------- |
-| C++ (`.cpp/.h`) | astyle         | `cmake --build build --target format`              |
+| C++ (`.cpp/.h`) | astyle         | `cmake --build build --target astyle`              |
 | JSON            | json_formatter | `cmake --build build --target style-json-parallel` |
 | Markdown        | deno fmt       | `deno fmt`                                         |
 | TypeScript      | deno fmt       | `deno fmt`                                         |
@@ -47,7 +47,7 @@ brew install astyle
 cmake --preset lint
 
 # Format all C++ files
-cmake --build build --target format
+cmake --build build --target astyle
 ```
 
 The style configuration is in `.astylerc` at the repository root.
@@ -121,7 +121,7 @@ Before committing, run these checks:
 cmake --preset lint
 
 # Format all code
-cmake --build build --target format           # C++
+cmake --build build --target astyle           # C++
 cmake --build build --target style-json-parallel  # JSON
 deno fmt                                       # Markdown/TypeScript
 deno task dprint fmt                           # Lua

@@ -8,7 +8,7 @@ Cataclysm: Bright Nights에서 코드를 포맷하고 린트하는 방법을 설
 
 | 파일 타입       | 도구           | 명령어                                             |
 | --------------- | -------------- | -------------------------------------------------- |
-| C++ (`.cpp/.h`) | astyle         | `cmake --build build --target format`              |
+| C++ (`.cpp/.h`) | astyle         | `cmake --build build --target astyle`              |
 | JSON            | json_formatter | `cmake --build build --target style-json-parallel` |
 | Markdown        | deno fmt       | `deno fmt`                                         |
 | TypeScript      | deno fmt       | `deno fmt`                                         |
@@ -46,7 +46,7 @@ brew install astyle
 cmake --preset lint
 
 # 모든 C++ 파일 포맷
-cmake --build build --target format
+cmake --build build --target astyle
 ```
 
 스타일 설정은 저장소 루트의 `.astylerc`에 있습니다.
@@ -119,7 +119,7 @@ tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*
 cmake --preset lint
 
 # 모든 코드 포맷
-cmake --build build --target format           # C++
+cmake --build build --target astyle           # C++
 cmake --build build --target style-json-parallel  # JSON
 deno fmt                                       # Markdown/TypeScript
 deno task dprint fmt                           # Lua

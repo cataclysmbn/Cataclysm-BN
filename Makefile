@@ -79,14 +79,10 @@
 #  make MSYS2=1
 # Turn off all optimizations, even debug-friendly optimizations
 #  make NOOPT=1
-# Astyle all top-level source files.
+# Astyle all source files.
 #  make astyle
-# Check if top-level source files are styled properly.
+# Check if source files are styled properly.
 #  make astyle-check
-# Clang-format all source files in subdirectories (excluding lua and sol).
-#  make clang-format
-# Check if source files in subdirectories are formatted properly.
-#  make clang-format-check
 # Style the whitelisted json files (maintain the current level of styling).
 #  make style-json
 # Style all json files using the current rules (don't PR this, it's too many changes at once).
@@ -1175,20 +1171,6 @@ ifdef ASTYLE_CHECK
 else
 	@echo Cannot run an astyle check, your system either does not have astyle, or it is too old.
 endif
-
-clang-format:
-	find src -mindepth 2 -type f \( -name "*.cpp" -o -name "*.h" \) \
-		-not -path "src/lua/*" -not -path "src/sol/*" | \
-	while IFS="" read -r file; do \
-		[ -n "$$file" ] && clang-format -i "$$file"; \
-	done
-
-clang-format-check:
-	find src -mindepth 2 -type f \( -name "*.cpp" -o -name "*.h" \) \
-		-not -path "src/lua/*" -not -path "src/sol/*" | \
-	while IFS="" read -r file; do \
-		[ -n "$$file" ] && clang-format --dry-run -Werror "$$file" || exit 1; \
-	done
 
 style-json: json_blacklist $(JSON_FORMATTER_BIN)
 ifndef CROSS

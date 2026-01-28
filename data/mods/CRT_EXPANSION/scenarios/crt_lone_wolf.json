@@ -28,6 +28,8 @@
     ],
     "points": 20,
     "skills": [
+      { "level": 2, "name": "swimming" },
+      { "level": 2, "name": "firstaid" },
       { "level": 10, "name": "gun" },
       { "level": 8, "name": "pistol" },
       { "level": 8, "name": "rifle" },
@@ -75,6 +77,8 @@
     "CBMs": [ "bio_weight", "bio_eye_optic", "bio_targeting", "bio_eye_enhancer" ],
     "points": 10,
     "skills": [
+      { "level": 2, "name": "swimming" },
+      { "level": 2, "name": "firstaid" },
       { "level": 6, "name": "gun" },
       { "level": 4, "name": "pistol" },
       { "level": 4, "name": "rifle" },
@@ -117,7 +121,13 @@
     "description": "You were recently recruited into the CRIT Lone Wolf training program. While you are barely trained at all, they still sent you out there just like the rest of the team. Maybe you stand a chance though, a better chance then the medics that is.",
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "points": 5,
-    "skills": [ { "level": 4, "name": "gun" }, { "level": 2, "name": "pistol" }, { "level": 2, "name": "rifle" } ],
+    "skills": [
+      { "level": 2, "name": "swimming" },
+      { "level": 2, "name": "firstaid" },
+      { "level": 4, "name": "gun" },
+      { "level": 2, "name": "pistol" },
+      { "level": 2, "name": "rifle" }
+    ],
     "items": {
       "both": {
         "ammo": 100,

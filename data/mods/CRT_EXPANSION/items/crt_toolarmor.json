@@ -30,6 +30,7 @@
     "coverage": 100,
     "encumbrance": 50,
     "warmth": 20,
+    "ammo": "battery",
     "relic_data": {
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
@@ -84,6 +85,7 @@
     "coverage": 100,
     "encumbrance": 5,
     "warmth": 75,
+    "ammo": "battery",
     "relic_data": {
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [

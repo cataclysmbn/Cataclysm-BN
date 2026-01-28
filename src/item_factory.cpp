@@ -2636,6 +2636,7 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
     assign( jo, "solar_efficiency", def.solar_efficiency );
     assign( jo, "repair_difficulty", def.repair_difficulty );
     assign( jo, "ascii_picture", def.picture_id );
+    assign( jo, "item_vars", def.item_vars );
 
     if( jo.has_member( "thrown_damage" ) ) {
         def.thrown_damage = load_damage_instance( jo.get_array( "thrown_damage" ) );

@@ -2007,10 +2007,12 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
         // No name prepended!
         challenge = challenge.substr( 1 );
     } else if( challenge[0] == '*' ) {
-        challenge = string_format( pgettext( "npc does something", "%s %s" ), beta->name,
+        challenge = string_format( pgettext( "npc does something", "%s %s" ), colorize( beta->name,
+                                   c_light_green ),
                                    challenge.substr( 1 ) );
     } else {
-        challenge = string_format( pgettext( "npc says something", "%s: %s" ), beta->name,
+        challenge = string_format( pgettext( "npc says something", "%s: %s" ), colorize( beta->name,
+                                   c_light_green ),
                                    challenge );
     }
 
@@ -2097,7 +2099,8 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     } while( !okay );
 
     talk_response chosen = responses[ch];
-    std::string response_printed = string_format( pgettext( "you say something", "You: %s" ),
+    std::string response_printed = string_format( pgettext( "you say something", "%s: %s" ),
+                                   colorize( _( "You" ), c_green ),
                                    response_lines[ch].text );
     d_win.add_to_history( response_printed );
 

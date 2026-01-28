@@ -54,7 +54,6 @@ class player_activity
         bool interruptable_with_kb = true;
 
         activity_speed speed;
-        std::vector<safe_reference<item>> tools;
 
         // The members in the following block are deprecated, prefer creating a new
         // activity_actor.
@@ -212,6 +211,16 @@ class player_activity
         void ignore_distraction( distraction_type type );
         void allow_distractions();
         void inherit_distractions( const player_activity & );
+
+        /// Add a tool to the activity. PSEUDO items (fake/temporary items) are automatically skipped.
+        void add_tool( item *it );
+        /// Get the tools vector (read-only access)
+        auto get_tools() const -> const std::vector<safe_reference<item>>& { return tools_; } // *NOPAD*
+        /// Get the tools vector (read-write access for internal use)
+        auto get_tools_mut() -> std::vector<safe_reference<item>>& { return tools_; } // *NOPAD*
+
+    private:
+        std::vector<safe_reference<item>> tools_;
 };
 
 

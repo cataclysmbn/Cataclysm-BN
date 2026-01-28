@@ -88,7 +88,7 @@ end
 Then connect the hook to the function ONLY ONCE.
 
 ```lua
-table.insert(game.hooks.on_creature_performed_technique, function(...) return on_creature_performed_technique(...) end)
+game.add_hook("on_creature_performed_technique", function(...) return on_creature_performed_technique(...) end)
 ```
 
 <details>
@@ -123,6 +123,21 @@ local scraps = gapi.create_item(ItypeId.new("scrap"), 3)
 target_monster:as_monster():add_item(scraps)
 ```
 
+## NPCs
+
+### Spawning and erasing NPCs
+
+```lua
+local player = gapi.get_avatar()
+local map = gapi.get_map()
+local player_pos = player:get_pos_ms()
+local place_point = player_pos:xy() + Point.new(0, 2)
+local new_npc = map:place_npc(place_point, "thug")
+
+-- Later, you can erase the NPC silently
+new_npc:erase()
+```
+
 ## Weather Hooks
 
 ### Reacting to weather changes
@@ -131,8 +146,8 @@ First, set up the hook in your preload.lua:
 
 ```lua
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_weather_changed, function(...) mod.weather_changed_alert(...) end)
-table.insert(game.hooks.on_weather_updated, function(...) mod.weather_report(...) end)
+game.add_hook("on_weather_changed", function(...) mod.weather_changed_alert(...) end)
+game.add_hook("on_weather_updated", function(...) mod.weather_report(...) end)
 ```
 
 Then define the handlers in your main.lua:
@@ -171,8 +186,8 @@ First, set up the hooks in your preload.lua:
 
 ```lua
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_shoot, function(...) return mod.on_shoot_fun(...) end)
-table.insert(game.hooks.on_throw, function(...) return mod.on_throw_fun(...) end)
+game.add_hook("on_shoot", function(...) return mod.on_shoot_fun(...) end)
+game.add_hook("on_throw", function(...) return mod.on_throw_fun(...) end)
 ```
 
 Then define the handlers in your main.lua:
@@ -237,7 +252,7 @@ gapi.get_map():move_item_at(source_pos, dest_pos)
 ```lua
 -- In preload.lua
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_mon_death, function(...) return mod.on_mon_death(...) end)
+game.add_hook("on_mon_death", function(...) return mod.on_mon_death(...) end)
 ```
 
 ```lua
@@ -260,7 +275,7 @@ end
 ```lua
 -- In preload.lua
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_char_death, function(...) return mod.on_char_death(...) end)
+game.add_hook("on_char_death", function(...) return mod.on_char_death(...) end)
 ```
 
 ```lua
@@ -368,10 +383,10 @@ item:set_countdown(100)  -- Ticks for 100 turns
 ```lua
 -- In preload.lua
 local mod = game.mod_runtime[game.current_mod]
-table.insert(game.hooks.on_creature_dodged, function(...) return mod.on_creature_dodged(...) end)
-table.insert(game.hooks.on_creature_blocked, function(...) return mod.on_creature_blocked(...) end)
-table.insert(game.hooks.on_creature_performed_technique, function(...) return mod.on_creature_performed_technique(...) end)
-table.insert(game.hooks.on_creature_melee_attacked, function(...) return mod.on_creature_melee_attacked(...) end)
+game.add_hook("on_creature_dodged", function(...) return mod.on_creature_dodged(...) end)
+game.add_hook("on_creature_blocked", function(...) return mod.on_creature_blocked(...) end)
+game.add_hook("on_creature_performed_technique", function(...) return mod.on_creature_performed_technique(...) end)
+game.add_hook("on_creature_melee_attacked", function(...) return mod.on_creature_melee_attacked(...) end)
 ```
 
 ```lua
@@ -445,6 +460,36 @@ if itype_raw:slot_tool() then
     print("Tool quality: " .. tool_data.quality)
 end
 ```
+
+## Character Trap Awareness
+
+### Checking and remembering traps
+
+First, set a trap at a location:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+-- tr_landmine_buried has visibility 20. very hard to find.
+local mine = TrapId.new("tr_landmine_buried"):int_id()
+m:set_trap_at(pos4x, mine)
+print(tostring(u:knows_trap(pos4x)))
+```
+
+Then, make the character aware of the trap:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+u:add_known_trap(pos4x, m:get_trap_at(pos4x))
+print(tostring(u:knows_trap(pos4x)))
+```
+
+After running the second script, you can see where the trap is located instead of stepping on it.
 
 ## Time and Space
 
