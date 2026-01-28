@@ -3789,6 +3789,23 @@ bash_results map::bash_ter_furn( const tripoint &p, const bash_params &params )
                 }
             }
         }
+        // Hard impacts have a chance to dislodge targets perching above
+        if( params.strength >= rng( 1, smin ) ) {
+            tripoint above( p.xy(), p.z + 1 );
+            Character *character = g->critter_at<Character>( above );
+            if( has_flag( TFLAG_UNSTABLE, above ) && character != nullptr ) {
+                character->add_msg_if_player( m_warning,
+                                              _( "You feel the ground beneath you shake from the impact!" ) );
+
+                if( character->stability_roll() < rng( 1, params.strength - ( smin / 2 ) ) ) {
+                    character->add_msg_player_or_npc( m_bad, _( "You lose your balance!" ),
+                                                      _( "<npcname> loses their balance!" ) );
+
+                    g->fling_creature( character, rng_float( 0_degrees, 360_degrees ), 10 );
+                }
+
+            }
+        }
     } else {
         if( smash_ter ) {
             result |= bash_ter_success( p, params );

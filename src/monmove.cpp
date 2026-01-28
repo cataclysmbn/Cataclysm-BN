@@ -1137,7 +1137,7 @@ void monster::move()
                 if( is_wandering() && destination == wander_pos ) {
                     continue;
                 }
-                const int estimate = here.bash_rating( bash_estimate(), candidate );
+                const int estimate = here.bash_rating( bash_estimate( candidate ), candidate );
                 if( estimate <= 0 ) {
                     continue;
                 }
@@ -1401,7 +1401,7 @@ tripoint monster::scent_move()
             ( !has_flag( MF_AQUATIC ) || g->m.is_divable( dest ) ) &&
             ( ( can_move_to( dest ) && !get_map().obstructed_by_vehicle_rotation( pos(), dest ) ) ||
               ( dest == g->u.pos() ) ||
-              ( can_bash && g->m.bash_rating( bash_estimate(), dest ) > 0 ) ) ) {
+              ( can_bash && g->m.bash_rating( bash_estimate( dest ), dest ) > 0 ) ) ) {
             if( ( !fleeing && smell > bestsmell ) || ( fleeing && smell < bestsmell ) ) {
                 smoves.clear();
                 smoves.push_back( dest );
@@ -1576,15 +1576,9 @@ bool monster::bash_at( const tripoint &p )
     return true;
 }
 
-int monster::bash_estimate()
+int monster::bash_estimate( const tripoint &target )
 {
-    int estimate = bash_skill();
-    if( has_flag( MF_GROUP_BASH ) ) {
-        // Right now just give them a boost so they try to bash a lot of stuff.
-        // TODO: base it on number of nearby friendlies.
-        estimate *= 2;
-    }
-    return estimate;
+    return group_bash_skill( target );
 }
 
 int monster::bash_skill()
