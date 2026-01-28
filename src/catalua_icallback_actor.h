@@ -3,12 +3,14 @@
 #include "iuse.h"
 #include "catalua_sol.h"
 #include "ret_val.h"
+#include "type_id.h"
 
 #include <string>
 
 class Character;
 class Creature;
 class item;
+struct bionic;
 struct dealt_damage_instance;
 struct tripoint;
 
@@ -181,4 +183,50 @@ class lua_iranged_actor : public lua_icallback_actor_base
         bool call_can_fire( const Character &who, const item &gun ) const;
         /** Returns false to block reloading. */
         bool call_can_reload( const Character &who, const item &it ) const;
+};
+
+/** Lua callbacks for per-bionic events. */
+class lua_bionic_callback_actor
+{
+    private:
+        std::string bionic_str_id;
+        sol::protected_function on_activate_func;
+        sol::protected_function on_deactivate_func;
+        sol::protected_function on_installed_func;
+        sol::protected_function on_removed_func;
+
+    public:
+        lua_bionic_callback_actor( const std::string &bionic_str_id,
+                                   sol::protected_function &&on_activate,
+                                   sol::protected_function &&on_deactivate,
+                                   sol::protected_function &&on_installed,
+                                   sol::protected_function &&on_removed );
+
+        void call_on_activate( Character &who, bionic &bio ) const;
+        void call_on_deactivate( Character &who, bionic &bio ) const;
+        void call_on_installed( Character &who, const bionic_id &bid ) const;
+        void call_on_removed( Character &who, const bionic_id &bid ) const;
+};
+
+/** Lua callbacks for per-mutation events. */
+class lua_mutation_callback_actor
+{
+    private:
+        std::string trait_str_id;
+        sol::protected_function on_activate_func;
+        sol::protected_function on_deactivate_func;
+        sol::protected_function on_gain_func;
+        sol::protected_function on_loss_func;
+
+    public:
+        lua_mutation_callback_actor( const std::string &trait_str_id,
+                                     sol::protected_function &&on_activate,
+                                     sol::protected_function &&on_deactivate,
+                                     sol::protected_function &&on_gain,
+                                     sol::protected_function &&on_loss );
+
+        void call_on_activate( Character &who, const trait_id &tid ) const;
+        void call_on_deactivate( Character &who, const trait_id &tid ) const;
+        void call_on_gain( Character &who, const trait_id &tid ) const;
+        void call_on_loss( Character &who, const trait_id &tid ) const;
 };

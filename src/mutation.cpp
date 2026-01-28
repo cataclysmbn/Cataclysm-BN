@@ -11,6 +11,7 @@
 
 #include "avatar_action.h"
 #include "bionics.h"
+#include "catalua_icallback_actor.h"
 #include "character.h"
 #include "color.h"
 #include "creature.h"
@@ -354,6 +355,10 @@ void Character::mutation_effect( const trait_id &mut )
     }
 
     on_mutation_gain( mut );
+
+    if( const auto *lcb = mut.obj().lua_callbacks ) {
+        lcb->call_on_gain( *this, mut );
+    }
 }
 
 void Character::mutation_loss_effect( const trait_id &mut )
@@ -398,6 +403,10 @@ void Character::mutation_loss_effect( const trait_id &mut )
     }
 
     on_mutation_loss( mut );
+
+    if( const auto *lcb = mut.obj().lua_callbacks ) {
+        lcb->call_on_loss( *this, mut );
+    }
 }
 
 bool Character::has_active_mutation( const trait_id &b ) const
@@ -519,6 +528,10 @@ void Character::activate_mutation( const trait_id &mut )
     }
     mutation_spend_resources( mut );
     tdata.powered = true;
+
+    if( const auto *lcb = mdata.lua_callbacks ) {
+        lcb->call_on_activate( *this, mut );
+    }
 
     if( !mut->enchantments.empty() ) {
         recalculate_enchantment_cache();
@@ -657,6 +670,10 @@ void Character::deactivate_mutation( const trait_id &mut )
 
     if( !mut->enchantments.empty() ) {
         recalculate_enchantment_cache();
+    }
+
+    if( const auto *lcb = mut.obj().lua_callbacks ) {
+        lcb->call_on_deactivate( *this, mut );
     }
 }
 

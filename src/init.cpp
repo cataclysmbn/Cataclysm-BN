@@ -884,6 +884,8 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
 
     loader.finalize_loaded_data( ui );
 
+    cata::resolve_lua_bionic_and_mutation_callbacks();
+
     for( const mod_id &mod : available ) {
         if( mod->lua_api_version ) {
             cata::set_mod_being_loaded( *loader.lua, mod );

@@ -661,6 +661,17 @@ const std::vector<mutation_branch> &mutation_branch::get_all()
     return trait_factory.get_all();
 }
 
+void mutation_branch::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> &actors )
+{
+    for( const mutation_branch &mb : trait_factory.get_all() ) {
+        auto it = actors.find( mb.id.str() );
+        if( it != actors.end() ) {
+            mb.lua_callbacks = it->second.get();
+        }
+    }
+}
+
 void mutation_branch::reset_all()
 {
     mutations_category.clear();

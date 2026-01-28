@@ -14,6 +14,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "catalua_sol.h"
 
 #include "avatar.h"
+#include "bionics.h"
 #include "catalua_console.h"
 #include "catalua_hooks.h"
 #include "catalua_impl.h"
@@ -27,6 +28,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "map.h"
 #include "messages.h"
 #include "mod_manager.h"
+#include "mutation.h"
 #include "path_info.h"
 #include "point.h"
 #include "worldfactory.h"
@@ -238,6 +240,10 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     gt["imelee_functions"] = lua.create_table();
     gt["iranged_functions"] = lua.create_table();
 
+    // bionic/mutation functions
+    gt["bionic_functions"] = lua.create_table();
+    gt["mutation_functions"] = lua.create_table();
+
     // hooks
     cata::define_hooks( state );
 
@@ -345,6 +351,14 @@ void run_mod_main_script( lua_state &state, const mod_id &mod )
 
     run_lua_script( state.lua, script_path );
 }
+
+namespace
+{
+// Owning storage for bionic/mutation Lua callback actors.
+// Populated during reg_lua_icallback_actors(), resolved during resolve_lua_bionic_and_mutation_callbacks().
+std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> bionic_callback_actors;
+std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> mutation_callback_actors;
+} // namespace
 
 namespace
 {
@@ -758,6 +772,68 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
             ++it;
         }
     }
+
+    // --- bionic callback registration ---
+    const sol::table bionic_funcs = lua.globals()["game"]["bionic_functions"];
+    {
+        auto it = bionic_funcs.begin();
+        while( it != bionic_funcs.end() ) {
+            const auto ref = *it;
+            std::string key;
+            try {
+                key = ref.first.as<std::string>();
+                if( ref.second.get_type() != sol::type::table ) {
+                    throw std::runtime_error( "bionic_functions entry must be a table" );
+                }
+                const auto tbl = ref.second.as<sol::table>();
+                auto on_activate = tbl.get_or<sol::function>( "on_activate", sol::lua_nil );
+                auto on_deactivate = tbl.get_or<sol::function>( "on_deactivate", sol::lua_nil );
+                auto on_installed = tbl.get_or<sol::function>( "on_installed", sol::lua_nil );
+                auto on_removed = tbl.get_or<sol::function>( "on_removed", sol::lua_nil );
+                bionic_callback_actors[key] = std::make_unique<lua_bionic_callback_actor>(
+                                                  key, std::move( on_activate ), std::move( on_deactivate ),
+                                                  std::move( on_installed ), std::move( on_removed ) );
+            } catch( std::runtime_error &e ) {
+                debugmsg( "Failed to extract bionic_functions k='%s': %s", key, e.what() );
+                break;
+            }
+            ++it;
+        }
+    }
+
+    // --- mutation callback registration ---
+    const sol::table mutation_funcs = lua.globals()["game"]["mutation_functions"];
+    {
+        auto it = mutation_funcs.begin();
+        while( it != mutation_funcs.end() ) {
+            const auto ref = *it;
+            std::string key;
+            try {
+                key = ref.first.as<std::string>();
+                if( ref.second.get_type() != sol::type::table ) {
+                    throw std::runtime_error( "mutation_functions entry must be a table" );
+                }
+                const auto tbl = ref.second.as<sol::table>();
+                auto on_activate = tbl.get_or<sol::function>( "on_activate", sol::lua_nil );
+                auto on_deactivate = tbl.get_or<sol::function>( "on_deactivate", sol::lua_nil );
+                auto on_gain = tbl.get_or<sol::function>( "on_gain", sol::lua_nil );
+                auto on_loss = tbl.get_or<sol::function>( "on_loss", sol::lua_nil );
+                mutation_callback_actors[key] = std::make_unique<lua_mutation_callback_actor>(
+                                                    key, std::move( on_activate ), std::move( on_deactivate ),
+                                                    std::move( on_gain ), std::move( on_loss ) );
+            } catch( std::runtime_error &e ) {
+                debugmsg( "Failed to extract mutation_functions k='%s': %s", key, e.what() );
+                break;
+            }
+            ++it;
+        }
+    }
+}
+
+void resolve_lua_bionic_and_mutation_callbacks()
+{
+    bionic_data::resolve_lua_callbacks( bionic_callback_actors );
+    mutation_branch::resolve_lua_callbacks( mutation_callback_actors );
 }
 
 void run_on_every_x_hooks( lua_state &state )

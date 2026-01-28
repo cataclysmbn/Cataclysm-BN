@@ -1,5 +1,6 @@
 #include "catalua_icallback_actor.h"
 
+#include "bionics.h"
 #include "catalua_impl.h"
 #include "character.h"
 #include "creature.h"
@@ -468,4 +469,134 @@ bool lua_iranged_actor::call_can_reload( const Character &who, const item &it ) 
         debugmsg( "Failed to run iranged can_reload for '%s': %s", item_id, e.what() );
     }
     return true;
+}
+
+// --- lua_bionic_callback_actor ---
+
+lua_bionic_callback_actor::lua_bionic_callback_actor( const std::string &bionic_str_id,
+        sol::protected_function &&on_activate,
+        sol::protected_function &&on_deactivate,
+        sol::protected_function &&on_installed,
+        sol::protected_function &&on_removed )
+    : bionic_str_id( bionic_str_id ),
+      on_activate_func( std::move( on_activate ) ),
+      on_deactivate_func( std::move( on_deactivate ) ),
+      on_installed_func( std::move( on_installed ) ),
+      on_removed_func( std::move( on_removed ) ) {}
+
+void lua_bionic_callback_actor::call_on_activate( Character &who, bionic &bio ) const
+{
+    if( on_activate_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::protected_function_result res = on_activate_func( who, bio );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run bionic on_activate for '%s': %s", bionic_str_id, e.what() );
+    }
+}
+
+void lua_bionic_callback_actor::call_on_deactivate( Character &who, bionic &bio ) const
+{
+    if( on_deactivate_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::protected_function_result res = on_deactivate_func( who, bio );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run bionic on_deactivate for '%s': %s", bionic_str_id, e.what() );
+    }
+}
+
+void lua_bionic_callback_actor::call_on_installed( Character &who, const bionic_id &bid ) const
+{
+    if( on_installed_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::protected_function_result res = on_installed_func( who, bid );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run bionic on_installed for '%s': %s", bionic_str_id, e.what() );
+    }
+}
+
+void lua_bionic_callback_actor::call_on_removed( Character &who, const bionic_id &bid ) const
+{
+    if( on_removed_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::protected_function_result res = on_removed_func( who, bid );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run bionic on_removed for '%s': %s", bionic_str_id, e.what() );
+    }
+}
+
+// --- lua_mutation_callback_actor ---
+
+lua_mutation_callback_actor::lua_mutation_callback_actor( const std::string &trait_str_id,
+        sol::protected_function &&on_activate,
+        sol::protected_function &&on_deactivate,
+        sol::protected_function &&on_gain,
+        sol::protected_function &&on_loss )
+    : trait_str_id( trait_str_id ),
+      on_activate_func( std::move( on_activate ) ),
+      on_deactivate_func( std::move( on_deactivate ) ),
+      on_gain_func( std::move( on_gain ) ),
+      on_loss_func( std::move( on_loss ) ) {}
+
+void lua_mutation_callback_actor::call_on_activate( Character &who, const trait_id &tid ) const
+{
+    if( on_activate_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::protected_function_result res = on_activate_func( who, tid );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run mutation on_activate for '%s': %s", trait_str_id, e.what() );
+    }
+}
+
+void lua_mutation_callback_actor::call_on_deactivate( Character &who, const trait_id &tid ) const
+{
+    if( on_deactivate_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::protected_function_result res = on_deactivate_func( who, tid );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run mutation on_deactivate for '%s': %s", trait_str_id, e.what() );
+    }
+}
+
+void lua_mutation_callback_actor::call_on_gain( Character &who, const trait_id &tid ) const
+{
+    if( on_gain_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::protected_function_result res = on_gain_func( who, tid );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run mutation on_gain for '%s': %s", trait_str_id, e.what() );
+    }
+}
+
+void lua_mutation_callback_actor::call_on_loss( Character &who, const trait_id &tid ) const
+{
+    if( on_loss_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::protected_function_result res = on_loss_func( who, tid );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run mutation on_loss for '%s': %s", trait_str_id, e.what() );
+    }
 }
