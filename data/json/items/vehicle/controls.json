@@ -149,8 +149,8 @@
   {
     "type": "GENERIC",
     "id": "bomber_controls",
-    "name": { "str": "bomber control unit" },
-    "description": "A set of motors and various electronic modules banded together to allow for activation and dropping of select items from cargo spaces.",
+    "name": { "str": "bomb bay" },
+    "description": "A set of motors and various mechanical linkages banded together to allow for activation and dropping of select items from cargo spaces.",
     "weight": "4000 g",
     "color": "white",
     "symbol": "&",

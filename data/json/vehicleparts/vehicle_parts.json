@@ -3609,7 +3609,7 @@
     "type": "vehicle_part",
     "id": "bomber controls",
     "looks_like": "turret_controls",
-    "name": { "str": "bomber control unit" },
+    "name": { "str": "bomb bay" },
     "symbol": "$",
     "color": "yellow",
     "broken_symbol": "$",
@@ -3617,7 +3617,8 @@
     "damage_modifier": 10,
     "durability": 50,
     "item": "bomber_controls",
-    "description": "A set of motors and an AI unit which allows for automatically activating and dropping standard items to attack foes from a connected cargo bay.",
+    "description": "A motor and attached linkage that can activate and drop items, such as explosives, from within the attached storage space.  Activating it from vehicle controls will let you select which items to arm, then release them underneath the vehicle.",
+    "location": "on_cargo",
     "folded_volume": "750 ml",
     "flags": [ "DROPPER", "SHOCK_RESISTANT" ],
     "requirements": {
