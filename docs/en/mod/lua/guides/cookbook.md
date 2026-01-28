@@ -347,18 +347,20 @@ print( km:knows_spell(ex_sp) ) -- check again
 ```lua
 -- Define an item's use behavior with use and can_use functions
 game.iuse_functions["my_custom_item"] = {
-    use = function(user, item, position)
+    use = function(params)
+        local user = params.user
+        local item = params.item
         gdebug.log_info("Using: " .. item:tname(1))
         return 0  -- Return time cost in moves
     end,
 
-    can_use = function(user, item, position)
+    can_use = function(params)
         -- Return true to allow use, false to prevent
         return true
     end,
-    tick = function(user, item, position)
+    tick = function(params)
         -- Called periodically while item is active
-        if item:get_countdown() == 0 then
+        if params.item:get_countdown() == 0 then
             gdebug.log_info("Item countdown finished!")
         end
     end
@@ -373,62 +375,61 @@ game.iuse_functions["my_custom_item"] = {
 
 Several additional callback tables let you react to item events. Each table is
 keyed by item type string id and takes a table of optional callback functions.
-All callbacks receive positional arguments (not a params table).
+All callbacks receive a single `params` table with named fields.
 
 ### game.iwieldable_functions
 
-| Callbacks                                | Signature                 |
-| ---------------------------------------- | ------------------------- |
-| `on_wield`                               | `(user, item, move_cost)` |
-| `on_unwield`, `can_wield`, `can_unwield` | `(user, item)`            |
 
+| Callbacks | params fields |
+|-----------|---------------|
+| `on_wield` | `user`, `item`, `move_cost` |
+| `on_unwield`, `can_wield`, `can_unwield` | `user`, `item` |
 ---
 ### game.iwearable_functions
-| Callbacks | Signature |
-|-----------|-----------|
-| `on_wear`, `on_takeoff`, `can_wear`, `can_takeoff` | `(user, item)` |
+| Callbacks | params fields |
+|-----------|---------------|
+| `on_wear`, `on_takeoff`, `can_wear`, `can_takeoff` | `user`, `item` |
 ---
 
 ### game.iequippable_functions
 
-| Callbacks               | Signature                              |
-| ----------------------- | -------------------------------------- |
-| `on_durability_change`  | `(user, item, old_damage, new_damage)` |
-| `on_repair`, `on_break` | `(user, item)`                         |
 
+| Callbacks | params fields |
+|-----------|---------------|
+| `on_durability_change` | `user`, `item`, `old_damage`, `new_damage` |
+| `on_repair`, `on_break` | `user`, `item` |
 ---
 ### game.istate_functions
-| Callbacks | Signature |
-|-----------|-----------|
-| `on_tick`, `on_drop` | `(user, item, pos)` |
-| `on_pickup` | `(user, item)` |
+| Callbacks | params fields |
+|-----------|---------------|
+| `on_tick`, `on_drop` | `user`, `item`, `pos` |
+| `on_pickup` | `user`, `item` |
 ---
 
 ### game.imelee_functions
 
-| Callbacks         | Signature                               |
-| ----------------- | --------------------------------------- |
-| `on_melee_attack` | `(user, target, item)`                  |
-| `on_hit`          | `(user, target, item, damage_instance)` |
-| `on_block`        | `(user, source, item, damage_blocked)`  |
-| `on_miss`         | `(user, item)`                          |
-
+| Callbacks | params fields |
+|-----------|---------------|
+| `on_melee_attack` | `user`, `target`, `item` |
+| `on_hit` | `user`, `target`, `item`, `damage_instance` |
+| `on_block` | `user`, `source`, `item`, `damage_blocked` |
+| `on_miss` | `user`, `item` |
 ---
 ### game.iranged_functions
-| Callbacks | Signature |
-|-----------|-----------|
-| `on_fire` | `(user, item, target_pos, shots)` |
-| `on_reload`, `can_fire`, `can_reload` | `(user, item)` |
+| Callbacks | params fields |
+|-----------|---------------|
+| `on_fire` | `user`, `item`, `target_pos`, `shots` |
+| `on_reload`, `can_fire`, `can_reload` | `user`, `item` |
 ---
 
 `can_*` callbacks return `bool` — return `false` to block the action.
 
 ```lua
 game.iwieldable_functions["cursed_sword"] = {
-    on_wield = function(who, item, mv)
-        gdebug.log_info(who:get_name() .. " draws " .. item:tname(1))
+    on_wield = function(params)
+        gdebug.log_info(params.user:get_name() .. " draws " .. params.item:tname(1))
     end,
-    can_unwield = function(who, item)
+    can_unwield = function(params)
         -- Cursed sword can't be put down
         return false
     end
@@ -438,22 +439,22 @@ game.iwieldable_functions["cursed_sword"] = {
 ### Bionic callbacks
 
 `game.bionic_functions` is keyed by bionic string id. Each callback receives
-positional arguments directly.
+a single `params` table.
 
-| Callback        | Arguments          | When fired                  |
-| --------------- | ------------------ | --------------------------- |
-| `on_activate`   | `(who, bionic)`    | After bionic is activated   |
-| `on_deactivate` | `(who, bionic)`    | After bionic is deactivated |
-| `on_installed`  | `(who, bionic_id)` | After bionic is installed   |
-| `on_removed`    | `(who, bionic_id)` | After bionic is removed     |
+| Callback | params fields | When fired |
+|----------|---------------|------------|
+| `on_activate` | `user`, `bionic` | After bionic is activated |
+| `on_deactivate` | `user`, `bionic` | After bionic is deactivated |
+| `on_installed` | `user`, `bionic_id` | After bionic is installed |
+| `on_removed` | `user`, `bionic_id` | After bionic is removed |
 
 ```lua
 game.bionic_functions["bio_laser"] = {
-    on_activate = function(who, bio)
-        gdebug.log_info(who:get_name() .. " activated bio_laser")
+    on_activate = function(params)
+        gdebug.log_info(params.user:get_name() .. " activated bio_laser")
     end,
-    on_installed = function(who, bid)
-        gdebug.log_info("Installed: " .. tostring(bid))
+    on_installed = function(params)
+        gdebug.log_info("Installed: " .. tostring(params.bionic_id))
     end
 }
 ```
@@ -462,20 +463,20 @@ game.bionic_functions["bio_laser"] = {
 
 `game.mutation_functions` is keyed by trait string id.
 
-| Callback        | Arguments         | When fired                    |
-| --------------- | ----------------- | ----------------------------- |
-| `on_activate`   | `(who, trait_id)` | After mutation is toggled on  |
-| `on_deactivate` | `(who, trait_id)` | After mutation is toggled off |
-| `on_gain`       | `(who, trait_id)` | After mutation is gained      |
-| `on_loss`       | `(who, trait_id)` | After mutation is lost        |
+| Callback | params fields | When fired |
+|----------|---------------|------------|
+| `on_activate` | `user`, `trait_id` | After mutation is toggled on |
+| `on_deactivate` | `user`, `trait_id` | After mutation is toggled off |
+| `on_gain` | `user`, `trait_id` | After mutation is gained |
+| `on_loss` | `user`, `trait_id` | After mutation is lost |
 
 ```lua
 game.mutation_functions["TRAIT_QUICK"] = {
-    on_gain = function(who, tid)
-        gdebug.log_info(who:get_name() .. " gained " .. tostring(tid))
+    on_gain = function(params)
+        gdebug.log_info(params.user:get_name() .. " gained " .. tostring(params.trait_id))
     end,
-    on_loss = function(who, tid)
-        gdebug.log_info(who:get_name() .. " lost " .. tostring(tid))
+    on_loss = function(params)
+        gdebug.log_info(params.user:get_name() .. " lost " .. tostring(params.trait_id))
     end
 }
 ```

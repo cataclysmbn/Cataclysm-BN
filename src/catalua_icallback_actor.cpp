@@ -30,12 +30,22 @@ int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint &pos 
 {
     try {
         if( !tick ) {
-            sol::protected_function_result res = use_func( who.as_character(), itm, pos );
+            sol::state_view lua( use_func.lua_state() );
+            auto params = lua.create_table();
+            params["user"] = &who.as_character();
+            params["item"] = &itm;
+            params["pos"] = pos;
+            sol::protected_function_result res = use_func( params );
             check_func_result( res );
             int ret = res;
             return ret;
         } else if( tick_func != sol::lua_nil ) {
-            sol::protected_function_result res = tick_func( who.as_character(), itm, pos );
+            sol::state_view lua( tick_func.lua_state() );
+            auto params = lua.create_table();
+            params["user"] = &who.as_character();
+            params["item"] = &itm;
+            params["pos"] = pos;
+            sol::protected_function_result res = tick_func( params );
             check_func_result( res );
             int ret = res;
             return ret;
@@ -50,7 +60,12 @@ ret_val<bool> lua_iuse_actor::can_use( const Character &who, const item &item, b
                                        const tripoint &pos ) const
 {
     if( can_use_func != sol::lua_nil ) {
-        sol::protected_function_result res = can_use_func( who.as_character(), item, pos );
+        sol::state_view lua( can_use_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who.as_character();
+        params["item"] = &item;
+        params["pos"] = pos;
+        sol::protected_function_result res = can_use_func( params );
         check_func_result( res );
         const bool ret = res;
         return ret
@@ -89,7 +104,12 @@ void lua_iwieldable_actor::call_on_wield( Character &who, item &it, int mv ) con
         return;
     }
     try {
-        sol::protected_function_result res = on_wield_func( who, it, mv );
+        sol::state_view lua( on_wield_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        params["move_cost"] = mv;
+        sol::protected_function_result res = on_wield_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run iwieldable on_wield for '%s': %s", item_id, e.what() );
@@ -102,7 +122,11 @@ void lua_iwieldable_actor::call_on_unwield( Character &who, item &it ) const
         return;
     }
     try {
-        sol::protected_function_result res = on_unwield_func( who, it );
+        sol::state_view lua( on_unwield_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = on_unwield_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run iwieldable on_unwield for '%s': %s", item_id, e.what() );
@@ -115,7 +139,11 @@ bool lua_iwieldable_actor::call_can_wield( const Character &who, const item &it 
         return true;
     }
     try {
-        sol::protected_function_result res = can_wield_func( who, it );
+        sol::state_view lua( can_wield_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = can_wield_func( params );
         check_func_result( res );
         bool ret = res;
         return ret;
@@ -131,7 +159,11 @@ bool lua_iwieldable_actor::call_can_unwield( const Character &who, const item &i
         return true;
     }
     try {
-        sol::protected_function_result res = can_unwield_func( who, it );
+        sol::state_view lua( can_unwield_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = can_unwield_func( params );
         check_func_result( res );
         bool ret = res;
         return ret;
@@ -160,7 +192,11 @@ void lua_iwearable_actor::call_on_wear( Character &who, item &it ) const
         return;
     }
     try {
-        sol::protected_function_result res = on_wear_func( who, it );
+        sol::state_view lua( on_wear_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = on_wear_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run iwearable on_wear for '%s': %s", item_id, e.what() );
@@ -173,7 +209,11 @@ void lua_iwearable_actor::call_on_takeoff( Character &who, item &it ) const
         return;
     }
     try {
-        sol::protected_function_result res = on_takeoff_func( who, it );
+        sol::state_view lua( on_takeoff_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = on_takeoff_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run iwearable on_takeoff for '%s': %s", item_id, e.what() );
@@ -186,7 +226,11 @@ bool lua_iwearable_actor::call_can_wear( const Character &who, const item &it ) 
         return true;
     }
     try {
-        sol::protected_function_result res = can_wear_func( who, it );
+        sol::state_view lua( can_wear_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = can_wear_func( params );
         check_func_result( res );
         bool ret = res;
         return ret;
@@ -202,7 +246,11 @@ bool lua_iwearable_actor::call_can_takeoff( const Character &who, const item &it
         return true;
     }
     try {
-        sol::protected_function_result res = can_takeoff_func( who, it );
+        sol::state_view lua( can_takeoff_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = can_takeoff_func( params );
         check_func_result( res );
         bool ret = res;
         return ret;
@@ -230,8 +278,13 @@ void lua_iequippable_actor::call_on_durability_change( Character &who, item &it,
         return;
     }
     try {
-        sol::protected_function_result res = on_durability_change_func( who, it, old_damage,
-                                             new_damage );
+        sol::state_view lua( on_durability_change_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        params["old_damage"] = old_damage;
+        params["new_damage"] = new_damage;
+        sol::protected_function_result res = on_durability_change_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run iequippable on_durability_change for '%s': %s", item_id, e.what() );
@@ -244,7 +297,11 @@ void lua_iequippable_actor::call_on_repair( Character &who, item &it ) const
         return;
     }
     try {
-        sol::protected_function_result res = on_repair_func( who, it );
+        sol::state_view lua( on_repair_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = on_repair_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run iequippable on_repair for '%s': %s", item_id, e.what() );
@@ -257,7 +314,11 @@ void lua_iequippable_actor::call_on_break( Character &who, item &it ) const
         return;
     }
     try {
-        sol::protected_function_result res = on_break_func( who, it );
+        sol::state_view lua( on_break_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = on_break_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run iequippable on_break for '%s': %s", item_id, e.what() );
@@ -286,7 +347,12 @@ int lua_istate_actor::call_on_tick( Character &who, item &it, const tripoint &po
         return 0;
     }
     try {
-        sol::protected_function_result res = on_tick_func( who, it, pos );
+        sol::state_view lua( on_tick_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        params["pos"] = pos;
+        sol::protected_function_result res = on_tick_func( params );
         check_func_result( res );
         int ret = res;
         return ret;
@@ -302,7 +368,11 @@ void lua_istate_actor::call_on_pickup( Character &who, item &it ) const
         return;
     }
     try {
-        sol::protected_function_result res = on_pickup_func( who, it );
+        sol::state_view lua( on_pickup_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = on_pickup_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run istate on_pickup for '%s': %s", item_id, e.what() );
@@ -315,7 +385,12 @@ bool lua_istate_actor::call_on_drop( Character &who, item &it, const tripoint &p
         return false;
     }
     try {
-        sol::protected_function_result res = on_drop_func( who, it, pos );
+        sol::state_view lua( on_drop_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        params["pos"] = pos;
+        sol::protected_function_result res = on_drop_func( params );
         check_func_result( res );
         bool ret = res;
         return ret;
@@ -345,7 +420,12 @@ bool lua_imelee_actor::call_on_melee_attack( Character &who, Creature &target,
         return true;
     }
     try {
-        sol::protected_function_result res = on_melee_attack_func( who, target, it );
+        sol::state_view lua( on_melee_attack_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["target"] = &target;
+        params["item"] = &it;
+        sol::protected_function_result res = on_melee_attack_func( params );
         check_func_result( res );
         bool ret = res;
         return ret;
@@ -362,7 +442,13 @@ void lua_imelee_actor::call_on_hit( Character &who, Creature &target, item &it,
         return;
     }
     try {
-        sol::protected_function_result res = on_hit_func( who, target, it, dealt );
+        sol::state_view lua( on_hit_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["target"] = &target;
+        params["item"] = &it;
+        params["damage_instance"] = dealt;
+        sol::protected_function_result res = on_hit_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run imelee on_hit for '%s': %s", item_id, e.what() );
@@ -376,7 +462,13 @@ void lua_imelee_actor::call_on_block( Character &who, Creature &source, item &it
         return;
     }
     try {
-        sol::protected_function_result res = on_block_func( who, source, it, damage_blocked );
+        sol::state_view lua( on_block_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["source"] = &source;
+        params["item"] = &it;
+        params["damage_blocked"] = damage_blocked;
+        sol::protected_function_result res = on_block_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run imelee on_block for '%s': %s", item_id, e.what() );
@@ -389,7 +481,11 @@ void lua_imelee_actor::call_on_miss( Character &who, item &it ) const
         return;
     }
     try {
-        sol::protected_function_result res = on_miss_func( who, it );
+        sol::state_view lua( on_miss_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = on_miss_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run imelee on_miss for '%s': %s", item_id, e.what() );
@@ -416,7 +512,13 @@ bool lua_iranged_actor::call_on_fire( Character &who, item &gun,
         return true;
     }
     try {
-        sol::protected_function_result res = on_fire_func( who, gun, target, shots );
+        sol::state_view lua( on_fire_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &gun;
+        params["target_pos"] = target;
+        params["shots"] = shots;
+        sol::protected_function_result res = on_fire_func( params );
         check_func_result( res );
         bool ret = res;
         return ret;
@@ -432,7 +534,11 @@ void lua_iranged_actor::call_on_reload( Character &who, item &it ) const
         return;
     }
     try {
-        sol::protected_function_result res = on_reload_func( who, it );
+        sol::state_view lua( on_reload_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = on_reload_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run iranged on_reload for '%s': %s", item_id, e.what() );
@@ -445,7 +551,11 @@ bool lua_iranged_actor::call_can_fire( const Character &who, const item &gun ) c
         return true;
     }
     try {
-        sol::protected_function_result res = can_fire_func( who, gun );
+        sol::state_view lua( can_fire_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &gun;
+        sol::protected_function_result res = can_fire_func( params );
         check_func_result( res );
         bool ret = res;
         return ret;
@@ -461,7 +571,11 @@ bool lua_iranged_actor::call_can_reload( const Character &who, const item &it ) 
         return true;
     }
     try {
-        sol::protected_function_result res = can_reload_func( who, it );
+        sol::state_view lua( can_reload_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = can_reload_func( params );
         check_func_result( res );
         bool ret = res;
         return ret;
@@ -490,7 +604,11 @@ void lua_bionic_callback_actor::call_on_activate( Character &who, bionic &bio ) 
         return;
     }
     try {
-        sol::protected_function_result res = on_activate_func( who, bio );
+        sol::state_view lua( on_activate_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["bionic"] = &bio;
+        sol::protected_function_result res = on_activate_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run bionic on_activate for '%s': %s", bionic_str_id, e.what() );
@@ -503,7 +621,11 @@ void lua_bionic_callback_actor::call_on_deactivate( Character &who, bionic &bio 
         return;
     }
     try {
-        sol::protected_function_result res = on_deactivate_func( who, bio );
+        sol::state_view lua( on_deactivate_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["bionic"] = &bio;
+        sol::protected_function_result res = on_deactivate_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run bionic on_deactivate for '%s': %s", bionic_str_id, e.what() );
@@ -516,7 +638,11 @@ void lua_bionic_callback_actor::call_on_installed( Character &who, const bionic_
         return;
     }
     try {
-        sol::protected_function_result res = on_installed_func( who, bid );
+        sol::state_view lua( on_installed_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["bionic_id"] = bid;
+        sol::protected_function_result res = on_installed_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run bionic on_installed for '%s': %s", bionic_str_id, e.what() );
@@ -529,7 +655,11 @@ void lua_bionic_callback_actor::call_on_removed( Character &who, const bionic_id
         return;
     }
     try {
-        sol::protected_function_result res = on_removed_func( who, bid );
+        sol::state_view lua( on_removed_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["bionic_id"] = bid;
+        sol::protected_function_result res = on_removed_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run bionic on_removed for '%s': %s", bionic_str_id, e.what() );
@@ -555,7 +685,11 @@ void lua_mutation_callback_actor::call_on_activate( Character &who, const trait_
         return;
     }
     try {
-        sol::protected_function_result res = on_activate_func( who, tid );
+        sol::state_view lua( on_activate_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["trait_id"] = tid;
+        sol::protected_function_result res = on_activate_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run mutation on_activate for '%s': %s", trait_str_id, e.what() );
@@ -568,7 +702,11 @@ void lua_mutation_callback_actor::call_on_deactivate( Character &who, const trai
         return;
     }
     try {
-        sol::protected_function_result res = on_deactivate_func( who, tid );
+        sol::state_view lua( on_deactivate_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["trait_id"] = tid;
+        sol::protected_function_result res = on_deactivate_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run mutation on_deactivate for '%s': %s", trait_str_id, e.what() );
@@ -581,7 +719,11 @@ void lua_mutation_callback_actor::call_on_gain( Character &who, const trait_id &
         return;
     }
     try {
-        sol::protected_function_result res = on_gain_func( who, tid );
+        sol::state_view lua( on_gain_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["trait_id"] = tid;
+        sol::protected_function_result res = on_gain_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run mutation on_gain for '%s': %s", trait_str_id, e.what() );
@@ -594,7 +736,11 @@ void lua_mutation_callback_actor::call_on_loss( Character &who, const trait_id &
         return;
     }
     try {
-        sol::protected_function_result res = on_loss_func( who, tid );
+        sol::state_view lua( on_loss_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["trait_id"] = tid;
+        sol::protected_function_result res = on_loss_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run mutation on_loss for '%s': %s", trait_str_id, e.what() );
