@@ -376,21 +376,26 @@ keyed by item type string id and takes a table of optional callback functions.
 All callbacks receive positional arguments (not a params table).
 
 ### game.iwieldable_functions
-| Callbacks | Signature |
-|-----------|-----------|
-| `on_wield` | `(user, item, move_cost)` |
-| `on_unwield`, `can_wield`, `can_unwield` | `(user, item)` |
+
+| Callbacks                                | Signature                 |
+| ---------------------------------------- | ------------------------- |
+| `on_wield`                               | `(user, item, move_cost)` |
+| `on_unwield`, `can_wield`, `can_unwield` | `(user, item)`            |
+
 ---
 ### game.iwearable_functions
 | Callbacks | Signature |
 |-----------|-----------|
 | `on_wear`, `on_takeoff`, `can_wear`, `can_takeoff` | `(user, item)` |
 ---
+
 ### game.iequippable_functions
-| Callbacks | Signature |
-|-----------|-----------|
-| `on_durability_change` | `(user, item, old_damage, new_damage)` |
-| `on_repair`, `on_break` | `(user, item)` |
+
+| Callbacks               | Signature                              |
+| ----------------------- | -------------------------------------- |
+| `on_durability_change`  | `(user, item, old_damage, new_damage)` |
+| `on_repair`, `on_break` | `(user, item)`                         |
+
 ---
 ### game.istate_functions
 | Callbacks | Signature |
@@ -398,13 +403,16 @@ All callbacks receive positional arguments (not a params table).
 | `on_tick`, `on_drop` | `(user, item, pos)` |
 | `on_pickup` | `(user, item)` |
 ---
+
 ### game.imelee_functions
-| Callbacks | Signature |
-|-----------|-----------|
-| `on_melee_attack` | `(user, target, item)` |
-| `on_hit` | `(user, target, item, damage_instance)` |
-| `on_block` | `(user, source, item, damage_blocked)` |
-| `on_miss` | `(user, item)` |
+
+| Callbacks         | Signature                               |
+| ----------------- | --------------------------------------- |
+| `on_melee_attack` | `(user, target, item)`                  |
+| `on_hit`          | `(user, target, item, damage_instance)` |
+| `on_block`        | `(user, source, item, damage_blocked)`  |
+| `on_miss`         | `(user, item)`                          |
+
 ---
 ### game.iranged_functions
 | Callbacks | Signature |
@@ -432,12 +440,12 @@ game.iwieldable_functions["cursed_sword"] = {
 `game.bionic_functions` is keyed by bionic string id. Each callback receives
 positional arguments directly.
 
-| Callback | Arguments | When fired |
-|----------|-----------|------------|
-| `on_activate` | `(who, bionic)` | After bionic is activated |
-| `on_deactivate` | `(who, bionic)` | After bionic is deactivated |
-| `on_installed` | `(who, bionic_id)` | After bionic is installed |
-| `on_removed` | `(who, bionic_id)` | After bionic is removed |
+| Callback        | Arguments          | When fired                  |
+| --------------- | ------------------ | --------------------------- |
+| `on_activate`   | `(who, bionic)`    | After bionic is activated   |
+| `on_deactivate` | `(who, bionic)`    | After bionic is deactivated |
+| `on_installed`  | `(who, bionic_id)` | After bionic is installed   |
+| `on_removed`    | `(who, bionic_id)` | After bionic is removed     |
 
 ```lua
 game.bionic_functions["bio_laser"] = {
@@ -454,12 +462,12 @@ game.bionic_functions["bio_laser"] = {
 
 `game.mutation_functions` is keyed by trait string id.
 
-| Callback | Arguments | When fired |
-|----------|-----------|------------|
-| `on_activate` | `(who, trait_id)` | After mutation is toggled on |
+| Callback        | Arguments         | When fired                    |
+| --------------- | ----------------- | ----------------------------- |
+| `on_activate`   | `(who, trait_id)` | After mutation is toggled on  |
 | `on_deactivate` | `(who, trait_id)` | After mutation is toggled off |
-| `on_gain` | `(who, trait_id)` | After mutation is gained |
-| `on_loss` | `(who, trait_id)` | After mutation is lost |
+| `on_gain`       | `(who, trait_id)` | After mutation is gained      |
+| `on_loss`       | `(who, trait_id)` | After mutation is lost        |
 
 ```lua
 game.mutation_functions["TRAIT_QUICK"] = {

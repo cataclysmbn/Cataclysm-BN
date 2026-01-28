@@ -3034,7 +3034,7 @@ void Item_factory::clear()
 }
 
 void Item_factory::add_iwieldable_actor( const itype_id &id,
-                                         std::unique_ptr<lua_iwieldable_actor> actor )
+        std::unique_ptr<lua_iwieldable_actor> actor )
 {
     iwieldable_actors[id] = std::move( actor );
 }
