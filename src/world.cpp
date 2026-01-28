@@ -125,8 +125,11 @@ void WORLDINFO::load_options( JsonIn &jsin )
         const std::string value = opts.migrateOptionValue( jo.get_string( "name" ),
                                   jo.get_string( "value" ) );
 
-        if( opts.has_option( name ) && opts.get_option( name ).getPage() == "world_default" ) {
-            WORLD_OPTIONS[ name ].setValue( value );
+        if( opts.has_option( name ) ) {
+            const auto &page = opts.get_option( name ).getPage();
+            if( page == "world_default" || page == "mod_settings" ) {
+                WORLD_OPTIONS[ name ].setValue( value );
+            }
         }
     }
 }
@@ -141,14 +144,17 @@ void WORLDINFO::load_legacy_options( std::istream &fin )
         getline( fin, sLine );
         if( !sLine.empty() && sLine[0] != '#' && std::count( sLine.begin(), sLine.end(), ' ' ) == 1 ) {
             size_t ipos = sLine.find( ' ' );
-            // make sure that the option being loaded is part of the world_default page in OPTIONS
+            // make sure that the option being loaded is part of the world_default or mod_settings page in OPTIONS
             // In 0.C some lines consisted of a space and nothing else
             const std::string name = opts.migrateOptionName( sLine.substr( 0, ipos ) );
             const std::string value = opts.migrateOptionValue( sLine.substr( 0, ipos ), sLine.substr( ipos + 1,
                                       sLine.length() ) );
 
-            if( ipos != 0 && opts.get_option( name ).getPage() == "world_default" ) {
-                WORLD_OPTIONS[name].setValue( value );
+            if( ipos != 0 ) {
+                const auto &page = opts.get_option( name ).getPage();
+                if( page == "world_default" || page == "mod_settings" ) {
+                    WORLD_OPTIONS[name].setValue( value );
+                }
             }
         }
     }
