@@ -34,7 +34,7 @@ int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint &pos 
     try {
         sol::state_view lua( use_func.lua_state() );
         auto params = lua.create_table();
-        params["user"] = &who.as_character();
+        params["user"] = who.as_character();
         params["item"] = &itm;
         params["pos"] = pos;
         sol::protected_function_result res = use_func( params );
@@ -53,7 +53,7 @@ ret_val<bool> lua_iuse_actor::can_use( const Character &who, const item &item, b
     if( can_use_func != sol::lua_nil ) {
         sol::state_view lua( can_use_func.lua_state() );
         auto params = lua.create_table();
-        params["user"] = &who.as_character();
+        params["user"] = who.as_character();
         params["item"] = &item;
         params["pos"] = pos;
         sol::protected_function_result res = can_use_func( params );
