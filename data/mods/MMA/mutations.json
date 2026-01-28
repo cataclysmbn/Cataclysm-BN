@@ -7,7 +7,8 @@
     "description": "You are a pupil of the Venom Clan.  You start with one of the five deadly venoms: Centipede, Viper, Scorpion, Lizard, or Toad.",
     "starting_trait": true,
     "initial_ma_styles": [ "style_centipede", "style_venom_snake", "style_scorpion", "style_lizard", "style_toad" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -17,7 +18,8 @@
     "description": "You have lingering memories of training to fight cyborgs and war machines in zero gravity using the obscure Panzer Kunst.",
     "starting_trait": true,
     "initial_ma_styles": [ "style_mma_panzer" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -37,7 +39,8 @@
     "description": "You have studied the deeds and legends of ancient heroes.  From your research, you have learned an ancient form of combat called Hylian Swordsmanship.",
     "starting_trait": true,
     "initial_ma_styles": [ "style_mma_hylian" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -53,7 +56,8 @@
     "description": "You are trained in the ways of the Jedi.  Your knowledge allows you to utilize a form of lightsaber combat.",
     "starting_trait": true,
     "initial_ma_styles": [ "style_mma_shii_cho" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -63,7 +67,8 @@
     "description": "You are well versed in the monsterous Pocket Fist martial art.  Train well, because it is your destiny to be a master.",
     "starting_trait": true,
     "initial_ma_styles": [ "style_mma_pokken" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -80,6 +85,7 @@
       "style_mma_stone_dragon",
       "style_mma_tiger_claw"
     ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   }
 ]
