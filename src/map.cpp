@@ -3790,7 +3790,7 @@ bash_results map::bash_ter_furn( const tripoint &p, const bash_params &params )
             }
         }
         // Hard impacts have a chance to dislodge targets perching above
-        if( params.strength >= rng( 1, smin ) ) {
+        if( params.strength >= smin / 2 && one_in( smin / 2 ) ) {
             tripoint above( p.xy(), p.z + 1 );
             Character *character = g->critter_at<Character>( above );
             if( has_flag( TFLAG_UNSTABLE, above ) && character != nullptr ) {
