@@ -277,6 +277,11 @@ void mutation_branch::load_trait( const JsonObject &jo, const std::string &src )
     trait_factory.load( jo, src );
 }
 
+void mutation_branch::register_lua_mutation( mutation_branch mut )
+{
+    trait_factory.insert( mut );
+}
+
 mut_transform::mut_transform() : active( false ), moves( 0 ) {}
 
 bool mut_transform::load( const JsonObject &jsobj, const std::string &member )

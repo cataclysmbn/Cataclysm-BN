@@ -156,6 +156,8 @@ struct bionic_data {
     bool is_included( const bionic_id &id ) const;
 
     static void load_bionic( const JsonObject &jo, const std::string &src );
+    /** Register a Lua-defined bionic. */
+    static void register_lua_bionic( bionic_data bio );
     static void check_consistency();
     static void finalize_all();
     static std::vector<bionic_data> get_all();

@@ -24,6 +24,7 @@
 #include "bodypart.h"
 #include "catalua.h"
 #include "cata_utility.h"
+#include "catalua_data_reg.h"
 #include "catalua_impl.h"
 #include "clothing_mod.h"
 #include "clzones.h"
@@ -877,6 +878,9 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
 
     cata::reg_lua_iuse_actors( *loader.lua, *item_controller );
 
+    // Register Lua-defined data from preload phase (game.define.*)
+    cata::reg_lua_data_definitions( *loader.lua );
+
     for( const mod_id &mod : available ) {
         loader.load_data_from_path( mod->path, mod.str(), ui );
         ui.proceed();
@@ -890,6 +894,9 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
             cata::run_mod_finalize_script( *loader.lua, mod );
         }
     }
+
+    // Register Lua-defined data from finalize phase (game.define.finalize_*)
+    cata::reg_lua_finalize_definitions( *loader.lua );
 
     loader.check_consistency( ui );
 

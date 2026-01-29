@@ -9,6 +9,7 @@
 
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_sol_fwd.h"
 #include "catalua_type_operators.h"
 #include "flat_set.h"
 #include "hash_utils.h"
@@ -80,6 +81,8 @@ struct caused_effect {
 class effect_type
 {
         friend void load_effect_type( const JsonObject &jo );
+        friend void register_lua_effect_type( effect_type eff );
+        friend effect_type lua_table_to_effect_type( const std::string &id, const sol::table &def );
         friend class effect;
     public:
         effect_type() = default;
@@ -410,6 +413,9 @@ class effect
 
 void load_effect_type( const JsonObject &jo );
 void reset_effect_types();
+
+/** Register a Lua-defined effect type. */
+void register_lua_effect_type( effect_type eff );
 
 std::vector<efftype_id> find_all_effect_types();
 

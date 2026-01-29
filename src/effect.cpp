@@ -1446,6 +1446,11 @@ void reset_effect_types()
     effect_types.clear();
 }
 
+void register_lua_effect_type( effect_type eff )
+{
+    effect_types[eff.id] = std::move( eff );
+}
+
 void effect_type::register_ma_buff_effect( const effect_type &eff )
 {
     if( eff.id.is_valid() ) {

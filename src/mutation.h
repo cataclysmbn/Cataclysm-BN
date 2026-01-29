@@ -300,6 +300,12 @@ struct mutation_branch {
     public:
         std::string name() const;
         std::string desc() const;
+        void set_name( const translation &t ) {
+            raw_name = t;
+        }
+        void set_description( const translation &t ) {
+            raw_desc = t;
+        }
 
         /**
          * Returns the color to display the mutation name with.
@@ -328,6 +334,8 @@ struct mutation_branch {
         // For init.cpp: load mutation data from json
         void load( const JsonObject &jo, const std::string &src );
         static void load_trait( const JsonObject &jo, const std::string &src );
+        /** Register a Lua-defined mutation. */
+        static void register_lua_mutation( mutation_branch mut );
         // For init.cpp: check internal consistency (valid ids etc.) of all mutations
         static void check_consistency();
 

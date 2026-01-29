@@ -3553,6 +3553,11 @@ void load_talk_topic( const JsonObject &jo )
     }
 }
 
+void register_lua_talk_topic( const std::string &id, json_talk_topic topic )
+{
+    json_talk_topics[id] = std::move( topic );
+}
+
 std::string npc::pick_talk_topic( const Character & )
 {
     if( personality.aggression > 0 ) {

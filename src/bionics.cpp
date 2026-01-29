@@ -255,6 +255,11 @@ void bionic_data::load_bionic( const JsonObject &jo, const std::string &src )
     bionic_factory.load( jo, src );
 }
 
+void bionic_data::register_lua_bionic( bionic_data bio )
+{
+    bionic_factory.insert( bio );
+}
+
 void bionic_data::check_consistency()
 {
     bionic_factory.check();

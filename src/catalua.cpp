@@ -18,6 +18,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "catalua_hooks.h"
 #include "catalua_impl.h"
 #include "catalua_iuse_actor.h"
+#include "catalua_data_reg.h"
 #include "catalua_readonly.h"
 #include "catalua_serde.h"
 #include "filesystem.h"
@@ -231,6 +232,9 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
 
     // iuse functions
     gt["iuse_functions"] = lua.create_table();
+
+    // Data definition tables (game.define.*)
+    cata::init_data_definition_tables( lua );
 
     // hooks
     cata::define_hooks( state );
