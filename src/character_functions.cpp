@@ -1234,7 +1234,7 @@ void find_ammo_helper( T &src, const item &obj, bool empty, Output out, bool nes
                 if( node->is_container() && !node->is_container_empty() &&
                     node->contents.front().typeId() == contents_id ) {
                     out = node;
-                } else if( !node->is_container() && node->made_of( SOLID ) &&
+                } else if( !node->is_container() && !node->is_in_container() && node->made_of( SOLID ) &&
                            node->typeId() == contents_id ) {
                     out = node;
                 }
