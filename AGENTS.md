@@ -59,7 +59,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 } // namespace
 ```
 
-- **MUST NOT** modify existing headers with >10 usages. Create new header with pure functions.
+- **SHOULD NOT** modify existing headers with >10 usages. Create new header with pure functions.
 - **MUST** use modern C++23 features.
 - **MUST** use options struct for functions with more than 3 parameters. Use designated initializers at call sites.
 - **SHOULD** search for existing solution because it's a large, legacy codebase.
