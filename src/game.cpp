@@ -13222,8 +13222,10 @@ bool game::slip_down()
 {
     ///\EFFECT_DEX decreases chances of slipping while climbing
     int climb = u.dex_cur;
-    if( u.has_trait( trait_BADKNEES ) ) {
-        climb = climb / 2;
+    // Parkour and Bad Knees affect it too, avoid division by zero
+    if( u.mutation_value( "movecost_obstacle_modifier" ) != 0.0f ) {
+        climb = climb / u.mutation_value( "movecost_obstacle_modifier" );
+        add_msg( m_info, _( "We modified climb, it's %s now" ), climb );
     }
     if( one_in( climb ) ) {
         add_msg( m_bad, _( "You slip while climbing and fall down again." ) );
