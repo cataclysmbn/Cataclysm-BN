@@ -11679,8 +11679,8 @@ float Character::stability_roll() const
 
     /** @EFFECT_DEX slightly improves player stability roll */
 
-    /** @EFFECT_MELEE improves player stability roll */
-    return get_melee() + get_str() + ( get_per() / 3.0f ) + ( get_dex() / 4.0f );
+    /** @EFFECT_DODGE improves player stability roll */
+    return get_dodge() + get_str() + ( get_per() / 3.0f ) + ( get_dex() / 4.0f );
 }
 
 bool Character::uncanny_dodge()
