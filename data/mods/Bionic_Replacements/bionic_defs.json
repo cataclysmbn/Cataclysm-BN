@@ -1,0 +1,17 @@
+[
+  {
+    "id": "bio_stomach_replacement",
+    "type": "bionic",
+    "name": { "str": "Bionic Stomach" },
+    "description": "A simple stomach replacement. It takes up significantly less room than a biologic stomach, but prevents the use of other digestive bionics and requires minor upkeep.",
+    "starting_bionic": true,
+    "occupied_bodyparts": [ [ "torso", -25 ] ],
+    "conflicting_bionics": [ "bio_digestion" ],
+    "fuel_options": [ "metabolism" ],
+    "fuel_efficiency": 0.25,
+    "flags": [ "BIONIC_SLEEP_FRIENDLY", "BIONIC_NPC_USABLE" ],
+    "can_uninstall": false,
+    "react_cost": "1 J",
+    "time": 10
+  }
+]
