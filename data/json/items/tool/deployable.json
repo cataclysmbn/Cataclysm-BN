@@ -164,6 +164,31 @@
     "flags": [ "ALLOWS_REMOTE_USE", "DESTROY_ON_DECHARGE" ]
   },
   {
+    "id": "folding_rc_car",
+    "type": "TOOL",
+    "category": "deployables",
+    "name": { "str": "RC car" },
+    "looks_like": "rc_car_body",
+    "description": "This is an RC car.",
+    "weight": "10 kg",
+    "volume": "5L",
+    "price": "350 USD",
+    "price_postapoc": "20 USD",
+    "to_hit": -5,
+    "bashing": 10,
+    "material": "aluminum",
+    "symbol": "0",
+    "color": "light_gray",
+    "use_action": {
+      "type": "unfold_vehicle",
+      "vehicle_name": "rc_car",
+      "full_fuel": true,
+      "unfold_msg": "You lay the RC car down on the ground.",
+      "moves": 0
+    },
+    "flags": [ "ALLOWS_REMOTE_USE", "DESTROY_ON_DECHARGE" ]
+  },
+  {
     "id": "folding_wagon",
     "type": "TOOL",
     "category": "deployables",

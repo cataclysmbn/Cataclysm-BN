@@ -121,6 +121,19 @@
   },
   {
     "type": "GENERIC",
+    "id": "rc_car_controls",
+    "name": { "str": "RC car controls", "str_pl": "sets of RC car controls" },
+    "description": "Simple electronic RC vehicle control system.  This only works on small vehicles.  You could control it remotely if you had proper tools.",
+    "weight": "500 g",
+    "color": "red",
+    "volume": "500 ml",
+    "bashing": 1,
+    "price": "50 USD",
+    "price_postapoc": "5 USD",
+    "copy-from": "drive_by_wire_controls"
+  },
+  {
+    "type": "GENERIC",
     "id": "robot_controls",
     "name": { "str": "robot driving unit" },
     "description": "A set of servos, microcontrollers and other devices, together capable of driving an unmanned vehicle.  Its AI is not functional, but it should still have some sort of maintenance mode.",
