@@ -7370,7 +7370,9 @@ bool item::is_non_resealable_container() const
 
 bool item::is_in_container() const
 {
-    return static_cast<item_location *>( &*loc )->where() == item_location_type::container;
+    auto location = static_cast<item_location *>( &*loc );
+    return location->where() == item_location_type::container || ( parent_item() &&
+            parent_item()->is_container() );
 }
 
 bool item::is_bucket() const
@@ -7496,8 +7498,12 @@ bool item::is_container_full( bool allow_bucket ) const
     }
     if( is_watertight_container() ) {
         return get_remaining_capacity_for_liquid( contents.front(), allow_bucket ) == 0;
+    } else if( !is_reloadable_with( contents.front().typeId() ) ) {
+        return true;
     } else {
-        return ( ammo_capacity() - ammo_remaining() ) <= 0;
+        int ammo = contents.front().charges_per_volume( get_container_capacity() ) -
+                   contents.front().charges;
+        return ammo <= 0;
     }
 }
 
