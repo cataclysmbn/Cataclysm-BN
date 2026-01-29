@@ -305,6 +305,9 @@ end
 
 -- Main iuse function. Returns amount of charges consumed from item.
 mod.iuse_function = function(who, item, pos)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   local user_pos = gapi.get_map():get_abs_ms(pos)
 
   -- Uncomment this so on activation the remote reconfigures itself to work in user's omt
