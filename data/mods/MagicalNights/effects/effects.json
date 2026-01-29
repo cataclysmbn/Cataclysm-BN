@@ -115,7 +115,19 @@
     "apply_message": "Your speed is boosted to superhuman levels!",
     "remove_message": "You return to your normal speed.",
     "rating": "good",
+    "removes_effects": [ "magic_slowed" ],
     "base_mods": { "dex_mod": [ 2 ], "speed_mod": [ 150 ] }
+  },
+  {
+    "type": "effect_type",
+    "id": "magic_slowed",
+    "name": [ "Slowed" ],
+    "desc": [ "Your speed is magically inhibited." ],
+    "apply_message": "Everyone else suddenly seems to speed up!",
+    "remove_message": "You return to your normal speed.",
+    "rating": "bad",
+    "removes_effects": [ "haste" ],
+    "base_mods": { "speed_mod": [ -50 ] }
   },
   {
     "type": "effect_type",
