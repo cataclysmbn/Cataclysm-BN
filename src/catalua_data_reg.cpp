@@ -393,7 +393,7 @@ std::map<character_stat, int> get_stat_bonus_map( const sol::table &def, const s
  * Complex structure helpers
  */
 std::vector<std::pair<std::string, int>> get_miss_messages( const sol::table &def,
-        const std::string &key )
+                                      const std::string &key )
 {
     std::vector<std::pair<std::string, int>> result;
     sol::optional<sol::table> tbl = def[key];
@@ -778,7 +778,8 @@ social_modifiers get_social_modifiers( const sol::table &def, const std::string 
     return result;
 }
 
-std::map<vitamin_id, time_duration> get_vitamin_rates( const sol::table &def, const std::string &key )
+std::map<vitamin_id, time_duration> get_vitamin_rates( const sol::table &def,
+        const std::string &key )
 {
     std::map<vitamin_id, time_duration> result;
     sol::optional<sol::table> tbl = def[key];
@@ -1558,7 +1559,7 @@ mutation_branch lua_table_to_mutation( const std::string &id, const sol::table &
     sol::object weight_capacity_modifier = def["weight_capacity_modifier"];
     if( weight_capacity_modifier.valid() ) {
         mut.weight_capacity_modifier = get_float( def, "weight_capacity_modifier",
-                                        mut.weight_capacity_modifier );
+                                       mut.weight_capacity_modifier );
     }
 
     sol::object hearing_modifier = def["hearing_modifier"];
