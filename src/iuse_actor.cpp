@@ -29,6 +29,7 @@
 #include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catalua_icallback_actor.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_id.h"
@@ -3603,6 +3604,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                 pl.add_msg_if_player( m_good, _( "You repair your %s completely!  ( %s-> %s)" ), fix.tname( 1,
                                       false ), startdurability, resultdurability );
             }
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
 
@@ -3617,6 +3622,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                 fix.set_flag( flag_FIT );
             }
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
 
@@ -3630,6 +3639,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                                   fix.tname().c_str() );
             fix.set_flag( flag_UNDERSIZE );
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
         return AS_RETRY;
@@ -3642,6 +3655,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                                   fix.tname().c_str() );
             fix.unset_flag( flag_UNDERSIZE );
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
         return AS_RETRY;
@@ -3658,6 +3675,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
             pl.add_msg_if_player( m_good, _( "You make your %s extra sturdy." ), fix.tname() );
             fix.mod_damage( -itype::damage_scale );
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
 

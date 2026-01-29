@@ -21,6 +21,7 @@
 #include "cached_options.h"
 #include "calendar.h"
 #include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
@@ -484,8 +485,18 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
     }
     item &cur_weapon = allow_unarmed ? used_weapon() : primary_weapon();
     const attack_statblock &attack = melee::pick_attack( *this, cur_weapon, t );
+
+    // Lua imelee on_melee_attack callback: fires before hit resolution.
+    // Returning false from Lua forces a miss.
+    bool lua_force_miss = false;
+    if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
+        if( !imelee_cb->call_on_melee_attack( *this, t, cur_weapon ) ) {
+            lua_force_miss = true;
+        }
+    }
+
     int hit_spread = t.deal_melee_attack( this, hit_roll( cur_weapon, attack ) );
-    const bool attack_hit = hit_spread >= 0;
+    const bool attack_hit = !lua_force_miss && hit_spread >= 0;
 
     if( cur_weapon.attack_cost() > attack_cost( cur_weapon ) * 20 ) {
         add_msg( m_bad, _( "This weapon is too unwieldy to attack with!" ) );
@@ -495,6 +506,11 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
     int move_cost = attack_cost( cur_weapon );
 
     if( !attack_hit ) {
+        // Lua imelee on_miss callback
+        if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
+            imelee_cb->call_on_miss( *this, cur_weapon );
+        }
+
         int stumble_pen = stumble( *this, cur_weapon );
         sfx::generate_melee_sound( pos(), t.pos(), false, false );
         if( is_player() ) { // Only display messages if this is the player
@@ -600,6 +616,12 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
                 perform_special_attacks( t, dealt_special_dam );
             }
             t.deal_melee_hit( this, &cur_weapon, hit_spread, critical_hit, d, dealt_dam );
+
+            // Lua imelee on_hit callback
+            if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
+                imelee_cb->call_on_hit( *this, t, cur_weapon, dealt_dam );
+            }
+
             if( dealt_special_dam.type_damage( DT_CUT ) > 0 ||
                 dealt_special_dam.type_damage( DT_STAB ) > 0 ||
                 ( cur_weapon.is_null() && ( dealt_dam.type_damage( DT_CUT ) > 0 ||
@@ -1940,6 +1962,12 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
         } else {
             melee_attack( *source, false, &tec );
         }
+    }
+
+    // Lua imelee on_block callback (fires for the blocking item)
+    if( const auto *imelee_cb = shield.type->imelee_callbacks ) {
+        imelee_cb->call_on_block( *this, *source, shield,
+                                  static_cast<int>( damage_blocked ) );
     }
 
     cata::run_hooks( "on_creature_blocked", [ &, this]( auto & params ) {

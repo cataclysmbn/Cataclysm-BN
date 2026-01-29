@@ -88,7 +88,10 @@ mod.add_anchor_to_list = function(pos)
   mod.save_anchor_omt()
 end
 
-mod.iuse_function_anchor = function(who, item, pos)
+mod.iuse_function_anchor = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   local f_anchor = FurnId.new("resurrection_anchor_deployed"):int_id()
   local f_null = FurnId.new("f_null"):int_id()
 

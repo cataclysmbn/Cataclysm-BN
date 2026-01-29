@@ -22,6 +22,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
@@ -915,6 +916,13 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
         debugmsg( "Attempted to fire zero or negative shots using %s", gun.tname() );
     }
 
+    // Lua iranged can_fire callback: blocks firing before any ammo is consumed
+    if( const auto *iranged_cb = gun.type->iranged_callbacks ) {
+        if( !iranged_cb->call_can_fire( who, gun ) ) {
+            return 0;
+        }
+    }
+
     std::optional<shape_factory> shape = ranged::get_shape_factory( gun );
 
     map &here = get_map();
@@ -1062,6 +1070,13 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
     // launchers train weapon skill for both hits and misses.
     int practice_units = aoe_attack ? curshot : hits;
     who.as_player()->practice( gun.gun_skill(), ( practice_units + 1 ) * 5 );
+
+    // Lua iranged on_fire callback: returns false to zero out hits (force miss)
+    if( const auto *iranged_cb = gun.type->iranged_callbacks ) {
+        if( !iranged_cb->call_on_fire( who, gun, target, curshot ) ) {
+            hits = 0;
+        }
+    }
 
     cata::run_hooks( "on_shoot", [ & ]( auto & params ) {
         params["shooter"] = &who;

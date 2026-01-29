@@ -7,7 +7,10 @@ local mod = game.mod_runtime[game.current_mod]
 -- who: Character object, representing the user (usually the player)
 -- item: Item object, representing the item being used (e.g., scissors)
 -- pos: Tripoint object, representing the location of use
-mod.change_hairstyle_function = function(who, item, pos)
+mod.change_hairstyle_function = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   -- === Step 1: Find the player's current hairstyle (using the new method) ===
   local current_hairstyle_id = nil
   local current_mutations = who:get_mutations(true) -- Get all of the player's mutations
