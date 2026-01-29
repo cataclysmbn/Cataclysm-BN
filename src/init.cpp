@@ -48,6 +48,7 @@
 #include "flag.h"
 #include "flag_trait.h"
 #include "gates.h"
+#include "lua_mod_options.h"
 #include "harvest.h"
 #include "item_action.h"
 #include "item_category.h"
@@ -76,6 +77,7 @@
 #include "npc.h"
 #include "npc_class.h"
 #include "omdata.h"
+#include "options.h"
 #include "overlay_ordering.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
@@ -858,6 +860,10 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
     loader.lua = cata::make_wrapped_state();
 
     cata::init_global_state_tables( *loader.lua, available );
+
+    // Clear any previously registered Lua mod options and ensure page exists
+    cata::clear_lua_options();
+    get_options().ensure_mod_settings_page();
 
     ui.show();
     for( const mod_id &mod : available ) {

@@ -55,6 +55,7 @@ void reg_time_types( sol::state &lua );
 void reg_types( sol::state &lua );
 void reg_ui_elements( sol::state &lua );
 void reg_units( sol::state &lua );
+void reg_options_api( sol::state &lua );
 
 } // namespace detail
 

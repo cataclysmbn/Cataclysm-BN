@@ -218,6 +218,12 @@ class options_manager
 
         cOpt &get_option( const std::string &name );
 
+        /** Clear all Lua mod options. Called when reloading mods. */
+        void clear_lua_options();
+
+        /** Ensure the mod_settings page exists. Called before Lua mods register options. */
+        void ensure_mod_settings_page();
+
         //add hidden external option with value
         void add_external( const std::string &sNameIn, const std::string &sPageIn, const std::string &sType,
                            const std::string &sMenuTextIn, const std::string &sTooltipIn );
