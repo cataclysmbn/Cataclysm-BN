@@ -161,7 +161,7 @@ static void init_global_game_state( const std::vector<mod_id> &mods,
     g->u = avatar();
     g->u.create( character_type::NOW );
 
-    g->m = map();
+    g->m = map( get_option<bool>( "ZLEVELS" ) );
     disable_mapgen = true;
 
     g->m.load( tripoint( g->get_levx(), g->get_levy(), g->get_levz() ), false );
