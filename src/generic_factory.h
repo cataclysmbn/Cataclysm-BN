@@ -8,6 +8,7 @@
 
 #include "assign.h"
 #include "catacharset.h"
+#include "data_reader.h"
 #include "debug.h"
 #include "enum_bitset.h"
 #include "generic_readers.h"
@@ -832,6 +833,176 @@ inline void optional( const JsonObject &jo, const bool was_loaded, const std::st
                       MemberType &member, const ReaderType &reader, const DefaultType &default_value )
 {
     if( !reader( jo, name, member, was_loaded ) ) {
+        if( !was_loaded ) {
+            member = default_value;
+        }
+    }
+}
+/**@}*/
+
+/** @name DataReader-generic versions of mandatory and optional.
+ *
+ * These template overloads allow mandatory()/optional() to work with any type
+ * satisfying the DataReader concept, including LuaTableWrapper. This enables
+ * unified loading code that works with both JSON and Lua data sources.
+ *
+ * Usage:
+ *   template<DataReader Reader>
+ *   void MyType::load(const Reader& reader, const std::string& src) {
+ *       mandatory(reader, was_loaded, "name", name);
+ *       optional(reader, was_loaded, "value", value, 0);
+ *   }
+ */
+/**@{*/
+
+// Generic handle_proportional for any DataReader
+template<DataReader Reader, typename MemberType> requires( !SupportsProportional<MemberType> )
+inline bool handle_proportional( const Reader &reader, const std::string &name, MemberType & )
+{
+    if( reader.has_object( "proportional" ) ) {
+        Reader proportional = reader.get_object( "proportional" );
+        proportional.allow_omitted_members();
+        if( proportional.has_member( name ) ) {
+            debugmsg( "Member %s of type %s does not support proportional", name,
+                      demangle( typeid( MemberType ).name() ) );
+        }
+    }
+    return false;
+}
+
+template<DataReader Reader, SupportsProportional MemberType>
+inline bool handle_proportional( const Reader &reader, const std::string &name, MemberType &member )
+{
+    if( reader.has_object( "proportional" ) ) {
+        Reader proportional = reader.get_object( "proportional" );
+        proportional.allow_omitted_members();
+        if( !proportional.has_member( name ) ) {
+            return false;
+        }
+        if( proportional.has_float( name ) ) {
+            double scalar = proportional.get_float( name );
+            if( scalar <= 0 || scalar == 1 ) {
+                debugmsg( "Invalid scalar %g for %s", scalar, name );
+                return false;
+            }
+            member *= scalar;
+            return true;
+        } else {
+            reader.throw_error( "Invalid scalar", name );
+        }
+    }
+    return false;
+}
+
+// Generic handle_relative for any DataReader
+template<DataReader Reader, typename MemberType> requires( !SupportsRelative<MemberType> )
+inline bool handle_relative( const Reader &reader, const std::string &name, MemberType & )
+{
+    if( reader.has_object( "relative" ) ) {
+        Reader relative = reader.get_object( "relative" );
+        relative.allow_omitted_members();
+        if( relative.has_member( name ) ) {
+            debugmsg( "Member %s of type %s does not support relative", name,
+                      demangle( typeid( MemberType ).name() ) );
+        }
+    }
+    return false;
+}
+
+template<DataReader Reader, SupportsRelative MemberType>
+inline bool handle_relative( const Reader &reader, const std::string &name, MemberType &member )
+{
+    if( reader.has_object( "relative" ) ) {
+        Reader relative = reader.get_object( "relative" );
+        relative.allow_omitted_members();
+        if( !relative.has_member( name ) ) {
+            return false;
+        }
+        MemberType adder;
+        if( relative.read( name, adder ) ) {
+            member += adder;
+            return true;
+        } else {
+            reader.throw_error( "Invalid adder", name );
+        }
+    }
+    return false;
+}
+
+// Generic mandatory for any DataReader
+template<DataReader Reader, typename MemberType>
+inline void mandatory( const Reader &reader, const bool was_loaded, const std::string &name,
+                       MemberType &member )
+{
+    if( !reader.read( name, member ) ) {
+        if( !was_loaded ) {
+            if( reader.has_member( name ) ) {
+                reader.throw_error( "failed to read mandatory member \"" + name + "\"" );
+            } else {
+                reader.throw_error( "missing mandatory member \"" + name + "\"" );
+            }
+        }
+    }
+}
+
+template<DataReader Reader, typename MemberType, typename ReaderType>
+inline void mandatory( const Reader &reader, const bool was_loaded, const std::string &name,
+                       MemberType &member, const ReaderType &type_reader )
+{
+    if( !type_reader( reader, name, member, was_loaded ) ) {
+        if( !was_loaded ) {
+            if( reader.has_member( name ) ) {
+                reader.throw_error( "failed to read mandatory member \"" + name + "\"" );
+            } else {
+                reader.throw_error( "missing mandatory member \"" + name + "\"" );
+            }
+        }
+    }
+}
+
+// Generic optional for any DataReader
+template<DataReader Reader, typename MemberType>
+inline void optional( const Reader &reader, const bool was_loaded, const std::string &name,
+                      MemberType &member )
+{
+    if( !reader.read( name, member ) && !handle_proportional( reader, name, member ) &&
+        !handle_relative( reader, name, member ) ) {
+        if( !was_loaded ) {
+            member = MemberType();
+        }
+    }
+}
+
+template<DataReader Reader, typename MemberType, typename DefaultType = MemberType>
+requires( std::is_constructible_v<MemberType, const DefaultType &> )
+inline void optional( const Reader &reader, const bool was_loaded, const std::string &name,
+                      MemberType &member, const DefaultType &default_value )
+{
+    if( !reader.read( name, member ) && !handle_proportional( reader, name, member ) &&
+        !handle_relative( reader, name, member ) ) {
+        if( !was_loaded ) {
+            member = default_value;
+        }
+    }
+}
+
+template<DataReader Reader, typename MemberType, typename ReaderType>
+requires( !std::is_constructible_v<MemberType, const ReaderType &> )
+inline void optional( const Reader &reader, const bool was_loaded, const std::string &name,
+                      MemberType &member, const ReaderType &type_reader )
+{
+    if( !type_reader( reader, name, member, was_loaded ) ) {
+        if( !was_loaded ) {
+            member = MemberType();
+        }
+    }
+}
+
+template<DataReader Reader, typename MemberType, typename ReaderType, typename DefaultType = MemberType>
+inline void optional( const Reader &reader, const bool was_loaded, const std::string &name,
+                      MemberType &member, const ReaderType &type_reader, const DefaultType &default_value )
+{
+    if( !type_reader( reader, name, member, was_loaded ) ) {
         if( !was_loaded ) {
             member = default_value;
         }

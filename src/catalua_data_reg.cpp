@@ -11,7 +11,9 @@
 #include "emit.h"
 #include "enums.h"
 #include "flag.h"
+#include "generic_factory.h"
 #include "json.h"
+#include "lua_table_wrapper.h"
 #include "magic.h"
 #include "magic_enchantment.h"
 #include "martialarts.h"
@@ -896,165 +898,74 @@ using namespace lua_data_helpers;
 
 /**
  * Convert Lua table to effect_type.
+ * Uses LuaTableWrapper to leverage the unified DataReader abstraction.
  * Declared outside anonymous namespace so it can be friended by effect_type.
  */
 effect_type lua_table_to_effect_type( const std::string &id, const sol::table &def )
 {
     effect_type eff;
+    LuaTableWrapper reader( def );
 
-    // Handle copy_from - accepts EffectTypeId or string
-    sol::object copy_from = def["copy_from"];
-    if( copy_from.valid() && !copy_from.is<sol::lua_nil_t>() ) {
-        efftype_id base_id;
-        if( copy_from.is<efftype_id>() ) {
-            base_id = copy_from.as<efftype_id>();
-        } else if( copy_from.is<std::string>() ) {
-            base_id = efftype_id( copy_from.as<std::string>() );
-        }
+    // Handle copy_from - inherits from existing effect type
+    if( reader.has_member( "copy_from" ) ) {
+        std::string copy_from_str = reader.get_string( "copy_from" );
+        efftype_id base_id( copy_from_str );
         if( base_id.is_valid() ) {
             eff = base_id.obj();
         } else {
-            throw std::runtime_error( "copy_from target not found: " + base_id.str() );
+            reader.throw_error( "copy_from target not found: " + copy_from_str, "copy_from" );
         }
     }
 
+    // Mark as loaded if we copied from something (affects how optional handles defaults)
+    const bool was_loaded = reader.has_member( "copy_from" );
+
     eff.id = efftype_id( id );
 
-    sol::optional<sol::table> name_tbl = def["name"];
-    if( name_tbl ) {
-        eff.name = get_translation_array( def, "name" );
+    // Basic string fields
+    optional( reader, was_loaded, "apply_message", eff.apply_message );
+    optional( reader, was_loaded, "remove_message", eff.remove_message );
+    optional( reader, was_loaded, "apply_memorial_log", eff.apply_memorial_log );
+    optional( reader, was_loaded, "remove_memorial_log", eff.remove_memorial_log );
+    optional( reader, was_loaded, "blood_analysis_description", eff.blood_analysis_description );
+    optional( reader, was_loaded, "looks_like", eff.looks_like );
+    optional( reader, was_loaded, "speed_name", eff.speed_mod_name );
+
+    // Integer fields
+    optional( reader, was_loaded, "max_intensity", eff.max_intensity );
+    optional( reader, was_loaded, "max_effective_intensity", eff.max_effective_intensity );
+    optional( reader, was_loaded, "dur_add_perc", eff.dur_add_perc );
+    optional( reader, was_loaded, "int_add_val", eff.int_add_val );
+    optional( reader, was_loaded, "int_decay_step", eff.int_decay_step );
+    optional( reader, was_loaded, "int_decay_tick", eff.int_decay_tick );
+
+    // Boolean fields
+    optional( reader, was_loaded, "part_descs", eff.part_descs );
+    optional( reader, was_loaded, "main_parts_only", eff.main_parts_only );
+    optional( reader, was_loaded, "show_in_info", eff.show_in_info );
+    optional( reader, was_loaded, "permanent", eff.permanent );
+    optional( reader, was_loaded, "pkill_addict_reduces", eff.pkill_addict_reduces );
+    optional( reader, was_loaded, "pain_sizing", eff.pain_sizing );
+    optional( reader, was_loaded, "hurt_sizing", eff.hurt_sizing );
+    optional( reader, was_loaded, "harmful_cough", eff.harmful_cough );
+
+    // Duration fields (handled via LuaTableWrapper::read specialization)
+    optional( reader, was_loaded, "max_duration", eff.max_duration );
+    optional( reader, was_loaded, "int_dur_factor", eff.int_dur_factor );
+
+    // Translation arrays
+    optional( reader, was_loaded, "name", eff.name );
+    optional( reader, was_loaded, "desc", eff.desc );
+    optional( reader, was_loaded, "reduced_desc", eff.reduced_desc );
+
+    // Rating enum - custom handling
+    if( reader.has_member( "rating" ) ) {
+        std::string rating_str = reader.get_string( "rating" );
+        eff.rating = parse_effect_rating( rating_str );
     }
 
-    sol::optional<sol::table> desc_tbl = def["desc"];
-    if( desc_tbl ) {
-        eff.desc = get_string_array( def, "desc" );
-    }
-
-    sol::optional<sol::table> reduced_desc_tbl = def["reduced_desc"];
-    if( reduced_desc_tbl ) {
-        eff.reduced_desc = get_string_array( def, "reduced_desc" );
-    }
-
-    sol::object rating_obj = def["rating"];
-    if( rating_obj.valid() && rating_obj.is<std::string>() ) {
-        eff.rating = parse_effect_rating( rating_obj.as<std::string>() );
-    }
-
-    sol::object apply_message = def["apply_message"];
-    if( apply_message.valid() && apply_message.is<std::string>() ) {
-        eff.apply_message = apply_message.as<std::string>();
-    }
-
-    sol::object remove_message = def["remove_message"];
-    if( remove_message.valid() && remove_message.is<std::string>() ) {
-        eff.remove_message = remove_message.as<std::string>();
-    }
-
-    sol::object apply_memorial_log = def["apply_memorial_log"];
-    if( apply_memorial_log.valid() && apply_memorial_log.is<std::string>() ) {
-        eff.apply_memorial_log = apply_memorial_log.as<std::string>();
-    }
-
-    sol::object remove_memorial_log = def["remove_memorial_log"];
-    if( remove_memorial_log.valid() && remove_memorial_log.is<std::string>() ) {
-        eff.remove_memorial_log = remove_memorial_log.as<std::string>();
-    }
-
-    sol::object blood_analysis = def["blood_analysis_description"];
-    if( blood_analysis.valid() && blood_analysis.is<std::string>() ) {
-        eff.blood_analysis_description = blood_analysis.as<std::string>();
-    }
-
-    sol::object looks_like = def["looks_like"];
-    if( looks_like.valid() && looks_like.is<std::string>() ) {
-        eff.looks_like = looks_like.as<std::string>();
-    }
-
-    sol::object speed_name = def["speed_name"];
-    if( speed_name.valid() && speed_name.is<std::string>() ) {
-        eff.speed_mod_name = speed_name.as<std::string>();
-    }
-
-    sol::object max_duration_obj = def["max_duration"];
-    if( max_duration_obj.valid() && !max_duration_obj.is<sol::lua_nil_t>() ) {
-        eff.max_duration = get_duration( def, "max_duration", eff.max_duration );
-    }
-
-    sol::object int_dur_factor_obj = def["int_dur_factor"];
-    if( int_dur_factor_obj.valid() && !int_dur_factor_obj.is<sol::lua_nil_t>() ) {
-        eff.int_dur_factor = get_duration( def, "int_dur_factor", eff.int_dur_factor );
-    }
-
-    sol::object max_intensity = def["max_intensity"];
-    if( max_intensity.valid() && max_intensity.is<int>() ) {
-        eff.max_intensity = max_intensity.as<int>();
-    }
-
-    sol::object max_eff_int = def["max_effective_intensity"];
-    if( max_eff_int.valid() && max_eff_int.is<int>() ) {
-        eff.max_effective_intensity = max_eff_int.as<int>();
-    }
-
-    sol::object dur_add_perc = def["dur_add_perc"];
-    if( dur_add_perc.valid() && dur_add_perc.is<int>() ) {
-        eff.dur_add_perc = dur_add_perc.as<int>();
-    }
-
-    sol::object int_add_val = def["int_add_val"];
-    if( int_add_val.valid() && int_add_val.is<int>() ) {
-        eff.int_add_val = int_add_val.as<int>();
-    }
-
-    sol::object int_decay_step = def["int_decay_step"];
-    if( int_decay_step.valid() && int_decay_step.is<int>() ) {
-        eff.int_decay_step = int_decay_step.as<int>();
-    }
-
-    sol::object int_decay_tick = def["int_decay_tick"];
-    if( int_decay_tick.valid() && int_decay_tick.is<int>() ) {
-        eff.int_decay_tick = int_decay_tick.as<int>();
-    }
-
-    sol::object part_descs = def["part_descs"];
-    if( part_descs.valid() && part_descs.is<bool>() ) {
-        eff.part_descs = part_descs.as<bool>();
-    }
-
-    sol::object main_parts_only = def["main_parts_only"];
-    if( main_parts_only.valid() && main_parts_only.is<bool>() ) {
-        eff.main_parts_only = main_parts_only.as<bool>();
-    }
-
-    sol::object show_in_info = def["show_in_info"];
-    if( show_in_info.valid() && show_in_info.is<bool>() ) {
-        eff.show_in_info = show_in_info.as<bool>();
-    }
-
-    sol::object permanent = def["permanent"];
-    if( permanent.valid() && permanent.is<bool>() ) {
-        eff.permanent = permanent.as<bool>();
-    }
-
-    sol::object pkill_addict = def["pkill_addict_reduces"];
-    if( pkill_addict.valid() && pkill_addict.is<bool>() ) {
-        eff.pkill_addict_reduces = pkill_addict.as<bool>();
-    }
-
-    sol::object pain_sizing = def["pain_sizing"];
-    if( pain_sizing.valid() && pain_sizing.is<bool>() ) {
-        eff.pain_sizing = pain_sizing.as<bool>();
-    }
-
-    sol::object hurt_sizing = def["hurt_sizing"];
-    if( hurt_sizing.valid() && hurt_sizing.is<bool>() ) {
-        eff.hurt_sizing = hurt_sizing.as<bool>();
-    }
-
-    sol::object harmful_cough = def["harmful_cough"];
-    if( harmful_cough.valid() && harmful_cough.is<bool>() ) {
-        eff.harmful_cough = harmful_cough.as<bool>();
-    }
-
+    // String ID arrays - still use helper functions for now
+    // (these need sol::table access for the complex type handling)
     sol::optional<sol::table> resist_traits_tbl = def["resist_traits"];
     if( resist_traits_tbl ) {
         eff.resist_traits = get_string_id_array<mutation_branch>( def, "resist_traits" );
@@ -1075,6 +986,7 @@ effect_type lua_table_to_effect_type( const std::string &id, const sol::table &d
         eff.blocks_effects = get_string_id_array<effect_type>( def, "blocks_effects" );
     }
 
+    // Flags - complex handling for string_id conversion
     sol::optional<sol::table> flags_tbl = def["flags"];
     if( flags_tbl ) {
         eff.flags.clear();
@@ -1087,6 +999,7 @@ effect_type lua_table_to_effect_type( const std::string &id, const sol::table &d
         }
     }
 
+    // Mod data - complex structured data
     sol::optional<sol::table> base_mods = def["base_mods"];
     if( base_mods ) {
         load_lua_mod_data( def, "base_mods", eff.mod_data );
@@ -1097,6 +1010,7 @@ effect_type lua_table_to_effect_type( const std::string &id, const sol::table &d
         load_lua_mod_data( def, "scaling_mods", eff.mod_data );
     }
 
+    // Messages - complex structured data
     sol::optional<sol::table> miss_msgs_tbl = def["miss_messages"];
     if( miss_msgs_tbl ) {
         eff.miss_msgs = get_miss_messages( def, "miss_messages" );
@@ -1107,6 +1021,7 @@ effect_type lua_table_to_effect_type( const std::string &id, const sol::table &d
         eff.decay_msgs = get_decay_messages( def, "decay_messages" );
     }
 
+    // Morale type
     sol::object morale_obj = def["morale"];
     if( morale_obj.valid() && !morale_obj.is<sol::lua_nil_t>() ) {
         if( morale_obj.is<morale_type>() ) {
@@ -1116,12 +1031,410 @@ effect_type lua_table_to_effect_type( const std::string &id, const sol::table &d
         }
     }
 
+    // Effects on remove
     sol::optional<sol::table> effects_remove_tbl = def["effects_on_remove"];
     if( effects_remove_tbl ) {
         eff.effects_on_remove = get_effects_on_remove( def, "effects_on_remove" );
     }
 
+    // Allow unvisited members (for forward compatibility and lua-specific fields)
+    reader.allow_omitted_members();
+
     return eff;
+}
+
+mutation_branch lua_table_to_mutation(const std::string& id, const sol::table& def)
+{
+    mutation_branch mut;
+    LuaTableWrapper reader(def);
+
+    // Handle copy_from
+    if (reader.has_member("copy_from")) {
+        std::string copy_from_str = reader.get_string("copy_from");
+        trait_id base_id(copy_from_str);
+        if (base_id.is_valid()) {
+            mut = base_id.obj();
+        }
+        else {
+            reader.throw_error("copy_from target not found: " + copy_from_str, "copy_from");
+        }
+    }
+
+    const bool was_loaded = reader.has_member("copy_from");
+    mut.id = trait_id(id);
+    mut.was_loaded = true;
+
+    // Name and description - use translation
+    if (reader.has_member("name")) {
+        translation name_t;
+        reader.read("name", name_t);
+        mut.set_name(name_t);
+    }
+    if (reader.has_member("description")) {
+        translation desc_t;
+        reader.read("description", desc_t);
+        mut.set_description(desc_t);
+    }
+
+    // Integer fields
+    optional(reader, was_loaded, "points", mut.points);
+    optional(reader, was_loaded, "visibility", mut.visibility);
+    optional(reader, was_loaded, "ugliness", mut.ugliness);
+    optional(reader, was_loaded, "cost", mut.cost);
+    optional(reader, was_loaded, "cooldown", mut.cooldown);
+    optional(reader, was_loaded, "bodytemp_min", mut.bodytemp_min);
+    optional(reader, was_loaded, "bodytemp_max", mut.bodytemp_max);
+    optional(reader, was_loaded, "bodytemp_sleep", mut.bodytemp_sleep);
+
+    // Boolean fields
+    optional(reader, was_loaded, "valid", mut.valid);
+    optional(reader, was_loaded, "purifiable", mut.purifiable);
+    optional(reader, was_loaded, "threshold", mut.threshold);
+    optional(reader, was_loaded, "profession", mut.profession);
+    optional(reader, was_loaded, "debug", mut.debug);
+    optional(reader, was_loaded, "player_display", mut.player_display);
+    optional(reader, was_loaded, "mixed_effect", mut.mixed_effect);
+    optional(reader, was_loaded, "starting_trait", mut.startingtrait);
+    optional(reader, was_loaded, "activated", mut.activated);
+    optional(reader, was_loaded, "starts_active", mut.starts_active);
+    optional(reader, was_loaded, "allow_soft_gear", mut.allow_soft_gear);
+    optional(reader, was_loaded, "allowed_items_only", mut.allowed_items_only);
+
+    // Float fields
+    optional(reader, was_loaded, "hp_modifier", mut.hp_modifier);
+    optional(reader, was_loaded, "hp_modifier_secondary", mut.hp_modifier_secondary);
+    optional(reader, was_loaded, "hp_adjustment", mut.hp_adjustment);
+    optional(reader, was_loaded, "str_modifier", mut.str_modifier);
+    optional(reader, was_loaded, "dodge_modifier", mut.dodge_modifier);
+    optional(reader, was_loaded, "speed_modifier", mut.speed_modifier);
+    optional(reader, was_loaded, "movecost_modifier", mut.movecost_modifier);
+    optional(reader, was_loaded, "attackcost_modifier", mut.attackcost_modifier);
+    optional(reader, was_loaded, "pain_recovery", mut.pain_recovery);
+    optional(reader, was_loaded, "healing_awake", mut.healing_awake);
+    optional(reader, was_loaded, "healing_resting", mut.healing_resting);
+    optional(reader, was_loaded, "mending_modifier", mut.mending_modifier);
+    optional(reader, was_loaded, "weight_capacity_modifier", mut.weight_capacity_modifier);
+    optional(reader, was_loaded, "hearing_modifier", mut.hearing_modifier);
+    optional(reader, was_loaded, "stealth_modifier", mut.stealth_modifier);
+    optional(reader, was_loaded, "night_vision_range", mut.night_vision_range);
+    optional(reader, was_loaded, "metabolism_modifier", mut.metabolism_modifier);
+    optional(reader, was_loaded, "thirst_modifier", mut.thirst_modifier);
+    optional(reader, was_loaded, "fatigue_modifier", mut.fatigue_modifier);
+    optional(reader, was_loaded, "stamina_regen_modifier", mut.stamina_regen_modifier);
+
+    // String ID arrays - still use helper functions for complex types
+    sol::optional<sol::table> prereqs = def["prereqs"];
+    if (prereqs) {
+        mut.prereqs = get_string_id_array<mutation_branch>(def, "prereqs");
+    }
+
+    sol::optional<sol::table> prereqs2 = def["prereqs2"];
+    if (prereqs2) {
+        mut.prereqs2 = get_string_id_array<mutation_branch>(def, "prereqs2");
+    }
+
+    sol::optional<sol::table> cancels = def["cancels"];
+    if (cancels) {
+        mut.cancels = get_string_id_array<mutation_branch>(def, "cancels");
+    }
+
+    sol::optional<sol::table> changes_to = def["changes_to"];
+    if (changes_to) {
+        mut.replacements = get_string_id_array<mutation_branch>(def, "changes_to");
+    }
+
+    sol::optional<sol::table> leads_to = def["leads_to"];
+    if (leads_to) {
+        mut.additions = get_string_id_array<mutation_branch>(def, "leads_to");
+    }
+
+    sol::optional<sol::table> category = def["category"];
+    if (category) {
+        mut.category = get_string_id_array<mutation_category_trait>(def, "category");
+    }
+
+    sol::optional<sol::table> types = def["types"];
+    if (types) {
+        mut.types = get_string_set(def, "types");
+    }
+
+    // Flags
+    sol::optional<sol::table> flags_tbl = def["flags"];
+    if (flags_tbl) {
+        mut.flags.clear();
+        for (auto& pair : *flags_tbl) {
+            if (pair.second.is<trait_flag_str_id>()) {
+                mut.flags.insert(pair.second.as<trait_flag_str_id>());
+            }
+            else if (pair.second.is<std::string>()) {
+                mut.flags.insert(trait_flag_str_id(pair.second.as<std::string>()));
+            }
+        }
+    }
+
+    // Complex structured data
+    sol::optional<sol::table> armor = def["armor"];
+    if (armor) {
+        mut.armor = get_mutation_armor(def, "armor");
+    }
+
+    sol::optional<sol::table> enchantments = def["enchantments"];
+    if (enchantments) {
+        mut.enchantments = get_string_id_array<enchantment>(def, "enchantments");
+    }
+
+    sol::optional<sol::table> lumination = def["lumination"];
+    if (lumination) {
+        mut.lumination = get_bodypart_float_map(def, "lumination");
+    }
+
+    sol::optional<sol::table> encumbrance_always = def["encumbrance_always"];
+    if (encumbrance_always) {
+        mut.encumbrance_always = get_bodypart_int_map_bp(def, "encumbrance_always");
+    }
+
+    sol::optional<sol::table> encumbrance_covered = def["encumbrance_covered"];
+    if (encumbrance_covered) {
+        mut.encumbrance_covered = get_bodypart_int_map_bp(def, "encumbrance_covered");
+    }
+
+    sol::optional<sol::table> restricts_gear = def["restricts_gear"];
+    if (restricts_gear) {
+        mut.restricts_gear = get_bodypart_set(def, "restricts_gear");
+    }
+
+    sol::optional<sol::table> allowed_items = def["allowed_items"];
+    if (allowed_items) {
+        mut.allowed_items = get_flag_id_set(def, "allowed_items");
+    }
+
+    // Item IDs
+    sol::object spawn_item = def["spawn_item"];
+    if (spawn_item.valid() && !spawn_item.is<sol::lua_nil_t>()) {
+        if (spawn_item.is<itype_id>()) {
+            mut.spawn_item = spawn_item.as<itype_id>();
+        }
+        else if (spawn_item.is<std::string>()) {
+            mut.spawn_item = itype_id(spawn_item.as<std::string>());
+        }
+    }
+
+    sol::object ranged_mutation = def["ranged_mutation"];
+    if (ranged_mutation.valid() && !ranged_mutation.is<sol::lua_nil_t>()) {
+        if (ranged_mutation.is<itype_id>()) {
+            mut.ranged_mutation = ranged_mutation.as<itype_id>();
+        }
+        else if (ranged_mutation.is<std::string>()) {
+            mut.ranged_mutation = itype_id(ranged_mutation.as<std::string>());
+        }
+    }
+
+    sol::optional<sol::table> initial_ma_styles = def["initial_ma_styles"];
+    if (initial_ma_styles) {
+        mut.initial_ma_styles = get_string_id_array<martialart>(def, "initial_ma_styles");
+    }
+
+    sol::optional<sol::table> vitamin_rates = def["vitamin_rates"];
+    if (vitamin_rates) {
+        mut.vitamin_rates = get_vitamin_rates(def, "vitamin_rates");
+    }
+
+    sol::optional<sol::table> spells_learned = def["spells_learned"];
+    if (spells_learned) {
+        mut.spells_learned = get_id_int_map<spell_type>(def, "spells_learned");
+    }
+
+    sol::optional<sol::table> craft_skill_bonus = def["craft_skill_bonus"];
+    if (craft_skill_bonus) {
+        mut.craft_skill_bonus = get_id_int_map<Skill>(def, "craft_skill_bonus");
+    }
+
+    sol::optional<sol::table> social_mods = def["social_modifiers"];
+    if (social_mods) {
+        mut.social_mods = get_social_modifiers(def, "social_modifiers");
+    }
+
+    // Allow unvisited members
+    reader.allow_omitted_members();
+
+    return mut;
+}
+
+bionic_data lua_table_to_bionic(const std::string& id, const sol::table& def)
+{
+    bionic_data bio;
+    LuaTableWrapper reader(def);
+
+    // Handle copy_from
+    if (reader.has_member("copy_from")) {
+        std::string copy_from_str = reader.get_string("copy_from");
+        bionic_id base_id(copy_from_str);
+        if (base_id.is_valid()) {
+            bio = base_id.obj();
+        }
+        else {
+            reader.throw_error("copy_from target not found: " + copy_from_str, "copy_from");
+        }
+    }
+
+    const bool was_loaded = reader.has_member("copy_from");
+    bio.id = bionic_id(id);
+
+    // Name and description - use translation
+    optional(reader, was_loaded, "name", bio.name);
+    optional(reader, was_loaded, "description", bio.description);
+
+    // Energy fields
+    optional(reader, was_loaded, "power_activate", bio.power_activate);
+    optional(reader, was_loaded, "power_deactivate", bio.power_deactivate);
+    optional(reader, was_loaded, "power_over_time", bio.power_over_time);
+    optional(reader, was_loaded, "power_trigger", bio.power_trigger);
+    optional(reader, was_loaded, "capacity", bio.capacity);
+    optional(reader, was_loaded, "remote_fuel_draw", bio.remote_fuel_draw);
+
+    // Integer fields
+    optional(reader, was_loaded, "charge_time", bio.charge_time);
+    optional(reader, was_loaded, "kcal_trigger", bio.kcal_trigger);
+    optional(reader, was_loaded, "fuel_capacity", bio.fuel_capacity);
+    optional(reader, was_loaded, "fuel_multiplier", bio.fuel_multiplier);
+
+    // Boolean fields
+    optional(reader, was_loaded, "activated", bio.activated);
+    optional(reader, was_loaded, "included", bio.included);
+    optional(reader, was_loaded, "is_remote_fueled", bio.is_remote_fueled);
+    optional(reader, was_loaded, "exothermic_power_gen", bio.exothermic_power_gen);
+
+    // Float fields
+    optional(reader, was_loaded, "weight_capacity_modifier", bio.weight_capacity_modifier);
+    optional(reader, was_loaded, "fuel_efficiency", bio.fuel_efficiency);
+    optional(reader, was_loaded, "passive_fuel_efficiency", bio.passive_fuel_efficiency);
+
+    // Mass field
+    optional(reader, was_loaded, "weight_capacity_bonus", bio.weight_capacity_bonus);
+
+    // Complex structured data - still use helper functions
+    sol::optional<sol::table> occupied = def["occupied_bodyparts"];
+    if (occupied) {
+        bio.occupied_bodyparts = get_bodypart_int_map(def, "occupied_bodyparts");
+    }
+
+    sol::optional<sol::table> encumbrance = def["encumbrance"];
+    if (encumbrance) {
+        bio.encumbrance = get_bodypart_int_map(def, "encumbrance");
+    }
+
+    sol::optional<sol::table> env_protec = def["env_protec"];
+    if (env_protec) {
+        bio.env_protec = get_bodypart_int_map(def, "env_protec");
+    }
+
+    sol::optional<sol::table> bash_protec = def["bash_protec"];
+    if (bash_protec) {
+        bio.bash_protec = get_bodypart_int_map(def, "bash_protec");
+    }
+
+    sol::optional<sol::table> cut_protec = def["cut_protec"];
+    if (cut_protec) {
+        bio.cut_protec = get_bodypart_int_map(def, "cut_protec");
+    }
+
+    sol::optional<sol::table> bullet_protec = def["bullet_protec"];
+    if (bullet_protec) {
+        bio.bullet_protec = get_bodypart_int_map(def, "bullet_protec");
+    }
+
+    sol::optional<sol::table> canceled_muts = def["canceled_mutations"];
+    if (canceled_muts) {
+        bio.canceled_mutations = get_string_id_array<mutation_branch>(def, "canceled_mutations");
+    }
+
+    sol::optional<sol::table> fuel_opts = def["fuel_opts"];
+    if (fuel_opts) {
+        bio.fuel_opts.clear();
+        for (auto& pair : *fuel_opts) {
+            if (pair.second.is<itype_id>()) {
+                bio.fuel_opts.push_back(pair.second.as<itype_id>());
+            }
+            else if (pair.second.is<std::string>()) {
+                bio.fuel_opts.push_back(itype_id(pair.second.as<std::string>()));
+            }
+        }
+    }
+
+    sol::object fake_item = def["fake_item"];
+    if (fake_item.valid()) {
+        if (fake_item.is<itype_id>()) {
+            bio.fake_item = fake_item.as<itype_id>();
+        }
+        else if (fake_item.is<std::string>()) {
+            bio.fake_item = itype_id(fake_item.as<std::string>());
+        }
+    }
+
+    sol::optional<sol::table> stat_bonus = def["stat_bonus"];
+    if (stat_bonus) {
+        bio.stat_bonus = get_stat_bonus_map(def, "stat_bonus");
+    }
+
+    sol::optional<sol::table> enchantments = def["enchantments"];
+    if (enchantments) {
+        bio.enchantments = get_string_id_array<enchantment>(def, "enchantments");
+    }
+
+    sol::optional<sol::table> learned_spells = def["learned_spells"];
+    if (learned_spells) {
+        bio.learned_spells = get_id_int_map<spell_type>(def, "learned_spells");
+    }
+
+    sol::optional<sol::table> included_bionics = def["included_bionics"];
+    if (included_bionics) {
+        bio.included_bionics = get_string_id_array<bionic_data>(def, "included_bionics");
+    }
+
+    sol::object upgraded_bionic = def["upgraded_bionic"];
+    if (upgraded_bionic.valid() && !upgraded_bionic.is<sol::lua_nil_t>()) {
+        if (upgraded_bionic.is<bionic_id>()) {
+            bio.upgraded_bionic = upgraded_bionic.as<bionic_id>();
+        }
+        else if (upgraded_bionic.is<std::string>()) {
+            bio.upgraded_bionic = bionic_id(upgraded_bionic.as<std::string>());
+        }
+    }
+
+    sol::optional<sol::table> available_upgrades = def["available_upgrades"];
+    if (available_upgrades) {
+        bio.available_upgrades = get_string_id_set<bionic_data>(def, "available_upgrades");
+    }
+
+    sol::optional<sol::table> required_bionics = def["required_bionics"];
+    if (required_bionics) {
+        bio.required_bionics = get_string_id_array<bionic_data>(def, "required_bionics");
+    }
+
+    sol::optional<sol::table> flags = def["flags"];
+    if (flags) {
+        bio.flags = get_flag_id_set(def, "flags");
+    }
+
+    sol::object power_gen_emission = def["power_gen_emission"];
+    if (power_gen_emission.valid() && !power_gen_emission.is<sol::lua_nil_t>()) {
+        if (power_gen_emission.is<emit_id>()) {
+            bio.power_gen_emission = power_gen_emission.as<emit_id>();
+        }
+        else if (power_gen_emission.is<std::string>()) {
+            bio.power_gen_emission = emit_id(power_gen_emission.as<std::string>());
+        }
+    }
+
+    sol::object coverage_penalty = def["coverage_power_gen_penalty"];
+    if (coverage_penalty.valid() && !coverage_penalty.is<sol::lua_nil_t>()) {
+        bio.coverage_power_gen_penalty = get_optional_float(def, "coverage_power_gen_penalty");
+    }
+
+    // Allow unvisited members
+    reader.allow_omitted_members();
+
+    return bio;
 }
 
 namespace
@@ -1237,612 +1550,6 @@ json_talk_topic lua_table_to_talk_topic( const std::string &/*id*/, const sol::t
     topic.load( jo );
 
     return topic;
-}
-
-mutation_branch lua_table_to_mutation( const std::string &id, const sol::table &def )
-{
-    mutation_branch mut;
-
-    sol::object copy_from = def["copy_from"];
-    if( copy_from.valid() && !copy_from.is<sol::lua_nil_t>() ) {
-        trait_id base_id;
-        if( copy_from.is<trait_id>() ) {
-            base_id = copy_from.as<trait_id>();
-        } else if( copy_from.is<std::string>() ) {
-            base_id = trait_id( copy_from.as<std::string>() );
-        }
-        if( base_id.is_valid() ) {
-            mut = base_id.obj();
-        } else {
-            throw std::runtime_error( "copy_from target not found: " + base_id.str() );
-        }
-    }
-
-    mut.id = trait_id( id );
-    mut.was_loaded = true;
-
-    sol::object name = def["name"];
-    if( name.valid() && name.is<std::string>() ) {
-        mut.set_name( translation::no_translation( name.as<std::string>() ) );
-    }
-
-    sol::object description = def["description"];
-    if( description.valid() && description.is<std::string>() ) {
-        mut.set_description( translation::no_translation( description.as<std::string>() ) );
-    }
-
-    sol::object points = def["points"];
-    if( points.valid() && points.is<int>() ) {
-        mut.points = points.as<int>();
-    }
-
-    sol::object visibility = def["visibility"];
-    if( visibility.valid() && visibility.is<int>() ) {
-        mut.visibility = visibility.as<int>();
-    }
-
-    sol::object ugliness = def["ugliness"];
-    if( ugliness.valid() && ugliness.is<int>() ) {
-        mut.ugliness = ugliness.as<int>();
-    }
-
-    sol::object valid = def["valid"];
-    if( valid.valid() && valid.is<bool>() ) {
-        mut.valid = valid.as<bool>();
-    }
-
-    sol::object purifiable = def["purifiable"];
-    if( purifiable.valid() && purifiable.is<bool>() ) {
-        mut.purifiable = purifiable.as<bool>();
-    }
-
-    sol::object threshold = def["threshold"];
-    if( threshold.valid() && threshold.is<bool>() ) {
-        mut.threshold = threshold.as<bool>();
-    }
-
-    sol::object profession = def["profession"];
-    if( profession.valid() && profession.is<bool>() ) {
-        mut.profession = profession.as<bool>();
-    }
-
-    sol::object debug = def["debug"];
-    if( debug.valid() && debug.is<bool>() ) {
-        mut.debug = debug.as<bool>();
-    }
-
-    sol::object player_display = def["player_display"];
-    if( player_display.valid() && player_display.is<bool>() ) {
-        mut.player_display = player_display.as<bool>();
-    }
-
-    sol::object mixed_effect = def["mixed_effect"];
-    if( mixed_effect.valid() && mixed_effect.is<bool>() ) {
-        mut.mixed_effect = mixed_effect.as<bool>();
-    }
-
-    sol::object startingtrait = def["starting_trait"];
-    if( startingtrait.valid() && startingtrait.is<bool>() ) {
-        mut.startingtrait = startingtrait.as<bool>();
-    }
-
-    sol::object activated = def["activated"];
-    if( activated.valid() && activated.is<bool>() ) {
-        mut.activated = activated.as<bool>();
-    }
-
-    sol::object starts_active = def["starts_active"];
-    if( starts_active.valid() && starts_active.is<bool>() ) {
-        mut.starts_active = starts_active.as<bool>();
-    }
-
-    sol::object cost = def["cost"];
-    if( cost.valid() && cost.is<int>() ) {
-        mut.cost = cost.as<int>();
-    }
-
-    sol::object cooldown = def["cooldown"];
-    if( cooldown.valid() && cooldown.is<int>() ) {
-        mut.cooldown = cooldown.as<int>();
-    }
-
-    sol::object hp_modifier = def["hp_modifier"];
-    if( hp_modifier.valid() ) {
-        mut.hp_modifier = get_float( def, "hp_modifier", mut.hp_modifier );
-    }
-
-    sol::object hp_modifier_secondary = def["hp_modifier_secondary"];
-    if( hp_modifier_secondary.valid() ) {
-        mut.hp_modifier_secondary = get_float( def, "hp_modifier_secondary", mut.hp_modifier_secondary );
-    }
-
-    sol::object hp_adjustment = def["hp_adjustment"];
-    if( hp_adjustment.valid() ) {
-        mut.hp_adjustment = get_float( def, "hp_adjustment", mut.hp_adjustment );
-    }
-
-    sol::object str_modifier = def["str_modifier"];
-    if( str_modifier.valid() ) {
-        mut.str_modifier = get_float( def, "str_modifier", mut.str_modifier );
-    }
-
-    sol::object dodge_modifier = def["dodge_modifier"];
-    if( dodge_modifier.valid() ) {
-        mut.dodge_modifier = get_float( def, "dodge_modifier", mut.dodge_modifier );
-    }
-
-    sol::object speed_modifier = def["speed_modifier"];
-    if( speed_modifier.valid() ) {
-        mut.speed_modifier = get_float( def, "speed_modifier", mut.speed_modifier );
-    }
-
-    sol::object movecost_modifier = def["movecost_modifier"];
-    if( movecost_modifier.valid() ) {
-        mut.movecost_modifier = get_float( def, "movecost_modifier", mut.movecost_modifier );
-    }
-
-    sol::object attackcost_modifier = def["attackcost_modifier"];
-    if( attackcost_modifier.valid() ) {
-        mut.attackcost_modifier = get_float( def, "attackcost_modifier", mut.attackcost_modifier );
-    }
-
-    sol::object pain_recovery = def["pain_recovery"];
-    if( pain_recovery.valid() ) {
-        mut.pain_recovery = get_float( def, "pain_recovery", mut.pain_recovery );
-    }
-
-    sol::object healing_awake = def["healing_awake"];
-    if( healing_awake.valid() ) {
-        mut.healing_awake = get_float( def, "healing_awake", mut.healing_awake );
-    }
-
-    sol::object healing_resting = def["healing_resting"];
-    if( healing_resting.valid() ) {
-        mut.healing_resting = get_float( def, "healing_resting", mut.healing_resting );
-    }
-
-    sol::object mending_modifier = def["mending_modifier"];
-    if( mending_modifier.valid() ) {
-        mut.mending_modifier = get_float( def, "mending_modifier", mut.mending_modifier );
-    }
-
-    sol::object bodytemp_min = def["bodytemp_min"];
-    if( bodytemp_min.valid() && bodytemp_min.is<int>() ) {
-        mut.bodytemp_min = bodytemp_min.as<int>();
-    }
-
-    sol::object bodytemp_max = def["bodytemp_max"];
-    if( bodytemp_max.valid() && bodytemp_max.is<int>() ) {
-        mut.bodytemp_max = bodytemp_max.as<int>();
-    }
-
-    sol::object bodytemp_sleep = def["bodytemp_sleep"];
-    if( bodytemp_sleep.valid() && bodytemp_sleep.is<int>() ) {
-        mut.bodytemp_sleep = bodytemp_sleep.as<int>();
-    }
-
-    sol::optional<sol::table> prereqs = def["prereqs"];
-    if( prereqs ) {
-        mut.prereqs = get_string_id_array<mutation_branch>( def, "prereqs" );
-    }
-
-    sol::optional<sol::table> prereqs2 = def["prereqs2"];
-    if( prereqs2 ) {
-        mut.prereqs2 = get_string_id_array<mutation_branch>( def, "prereqs2" );
-    }
-
-    sol::optional<sol::table> cancels = def["cancels"];
-    if( cancels ) {
-        mut.cancels = get_string_id_array<mutation_branch>( def, "cancels" );
-    }
-
-    sol::optional<sol::table> changes_to = def["changes_to"];
-    if( changes_to ) {
-        mut.replacements = get_string_id_array<mutation_branch>( def, "changes_to" );
-    }
-
-    sol::optional<sol::table> leads_to = def["leads_to"];
-    if( leads_to ) {
-        mut.additions = get_string_id_array<mutation_branch>( def, "leads_to" );
-    }
-
-    sol::optional<sol::table> category = def["category"];
-    if( category ) {
-        mut.category = get_string_id_array<mutation_category_trait>( def, "category" );
-    }
-
-    sol::optional<sol::table> types = def["types"];
-    if( types ) {
-        mut.types = get_string_set( def, "types" );
-    }
-
-    sol::optional<sol::table> flags_tbl = def["flags"];
-    if( flags_tbl ) {
-        mut.flags.clear();
-        for( auto &pair : *flags_tbl ) {
-            if( pair.second.is<trait_flag_str_id>() ) {
-                mut.flags.insert( pair.second.as<trait_flag_str_id>() );
-            } else if( pair.second.is<std::string>() ) {
-                mut.flags.insert( trait_flag_str_id( pair.second.as<std::string>() ) );
-            }
-        }
-    }
-
-    sol::optional<sol::table> armor = def["armor"];
-    if( armor ) {
-        mut.armor = get_mutation_armor( def, "armor" );
-    }
-
-    sol::optional<sol::table> enchantments = def["enchantments"];
-    if( enchantments ) {
-        mut.enchantments = get_string_id_array<enchantment>( def, "enchantments" );
-    }
-
-    sol::optional<sol::table> lumination = def["lumination"];
-    if( lumination ) {
-        mut.lumination = get_bodypart_float_map( def, "lumination" );
-    }
-
-    sol::optional<sol::table> encumbrance_always = def["encumbrance_always"];
-    if( encumbrance_always ) {
-        mut.encumbrance_always = get_bodypart_int_map_bp( def, "encumbrance_always" );
-    }
-
-    sol::optional<sol::table> encumbrance_covered = def["encumbrance_covered"];
-    if( encumbrance_covered ) {
-        mut.encumbrance_covered = get_bodypart_int_map_bp( def, "encumbrance_covered" );
-    }
-
-    sol::optional<sol::table> restricts_gear = def["restricts_gear"];
-    if( restricts_gear ) {
-        mut.restricts_gear = get_bodypart_set( def, "restricts_gear" );
-    }
-
-    sol::optional<sol::table> allowed_items = def["allowed_items"];
-    if( allowed_items ) {
-        mut.allowed_items = get_flag_id_set( def, "allowed_items" );
-    }
-
-    sol::object spawn_item = def["spawn_item"];
-    if( spawn_item.valid() && !spawn_item.is<sol::lua_nil_t>() ) {
-        if( spawn_item.is<itype_id>() ) {
-            mut.spawn_item = spawn_item.as<itype_id>();
-        } else if( spawn_item.is<std::string>() ) {
-            mut.spawn_item = itype_id( spawn_item.as<std::string>() );
-        }
-    }
-
-    sol::object ranged_mutation = def["ranged_mutation"];
-    if( ranged_mutation.valid() && !ranged_mutation.is<sol::lua_nil_t>() ) {
-        if( ranged_mutation.is<itype_id>() ) {
-            mut.ranged_mutation = ranged_mutation.as<itype_id>();
-        } else if( ranged_mutation.is<std::string>() ) {
-            mut.ranged_mutation = itype_id( ranged_mutation.as<std::string>() );
-        }
-    }
-
-    sol::optional<sol::table> initial_ma_styles = def["initial_ma_styles"];
-    if( initial_ma_styles ) {
-        mut.initial_ma_styles = get_string_id_array<martialart>( def, "initial_ma_styles" );
-    }
-
-    sol::optional<sol::table> vitamin_rates = def["vitamin_rates"];
-    if( vitamin_rates ) {
-        mut.vitamin_rates = get_vitamin_rates( def, "vitamin_rates" );
-    }
-
-    sol::optional<sol::table> spells_learned = def["spells_learned"];
-    if( spells_learned ) {
-        mut.spells_learned = get_id_int_map<spell_type>( def, "spells_learned" );
-    }
-
-    sol::optional<sol::table> craft_skill_bonus = def["craft_skill_bonus"];
-    if( craft_skill_bonus ) {
-        mut.craft_skill_bonus = get_id_int_map<Skill>( def, "craft_skill_bonus" );
-    }
-
-    sol::optional<sol::table> social_mods = def["social_modifiers"];
-    if( social_mods ) {
-        mut.social_mods = get_social_modifiers( def, "social_modifiers" );
-    }
-
-    sol::object allow_soft_gear = def["allow_soft_gear"];
-    if( allow_soft_gear.valid() && allow_soft_gear.is<bool>() ) {
-        mut.allow_soft_gear = allow_soft_gear.as<bool>();
-    }
-
-    sol::object allowed_items_only = def["allowed_items_only"];
-    if( allowed_items_only.valid() && allowed_items_only.is<bool>() ) {
-        mut.allowed_items_only = allowed_items_only.as<bool>();
-    }
-
-    sol::object weight_capacity_modifier = def["weight_capacity_modifier"];
-    if( weight_capacity_modifier.valid() ) {
-        mut.weight_capacity_modifier = get_float( def, "weight_capacity_modifier",
-                                       mut.weight_capacity_modifier );
-    }
-
-    sol::object hearing_modifier = def["hearing_modifier"];
-    if( hearing_modifier.valid() ) {
-        mut.hearing_modifier = get_float( def, "hearing_modifier", mut.hearing_modifier );
-    }
-
-    sol::object stealth_modifier = def["stealth_modifier"];
-    if( stealth_modifier.valid() ) {
-        mut.stealth_modifier = get_float( def, "stealth_modifier", mut.stealth_modifier );
-    }
-
-    sol::object night_vision_range = def["night_vision_range"];
-    if( night_vision_range.valid() ) {
-        mut.night_vision_range = get_float( def, "night_vision_range", mut.night_vision_range );
-    }
-
-    sol::object metabolism_modifier = def["metabolism_modifier"];
-    if( metabolism_modifier.valid() ) {
-        mut.metabolism_modifier = get_float( def, "metabolism_modifier", mut.metabolism_modifier );
-    }
-
-    sol::object thirst_modifier = def["thirst_modifier"];
-    if( thirst_modifier.valid() ) {
-        mut.thirst_modifier = get_float( def, "thirst_modifier", mut.thirst_modifier );
-    }
-
-    sol::object fatigue_modifier = def["fatigue_modifier"];
-    if( fatigue_modifier.valid() ) {
-        mut.fatigue_modifier = get_float( def, "fatigue_modifier", mut.fatigue_modifier );
-    }
-
-    sol::object stamina_regen_modifier = def["stamina_regen_modifier"];
-    if( stamina_regen_modifier.valid() ) {
-        mut.stamina_regen_modifier = get_float( def, "stamina_regen_modifier",
-                                                mut.stamina_regen_modifier );
-    }
-
-    return mut;
-}
-
-bionic_data lua_table_to_bionic( const std::string &id, const sol::table &def )
-{
-    bionic_data bio;
-
-    sol::object copy_from = def["copy_from"];
-    if( copy_from.valid() && !copy_from.is<sol::lua_nil_t>() ) {
-        bionic_id base_id;
-        if( copy_from.is<bionic_id>() ) {
-            base_id = copy_from.as<bionic_id>();
-        } else if( copy_from.is<std::string>() ) {
-            base_id = bionic_id( copy_from.as<std::string>() );
-        }
-        if( base_id.is_valid() ) {
-            bio = base_id.obj();
-        } else {
-            throw std::runtime_error( "copy_from target not found: " + base_id.str() );
-        }
-    }
-
-    bio.id = bionic_id( id );
-
-    sol::object name = def["name"];
-    if( name.valid() && name.is<std::string>() ) {
-        bio.name = translation::no_translation( name.as<std::string>() );
-    }
-
-    sol::object description = def["description"];
-    if( description.valid() && description.is<std::string>() ) {
-        bio.description = translation::no_translation( description.as<std::string>() );
-    }
-
-    sol::object power_activate = def["power_activate"];
-    if( power_activate.valid() && !power_activate.is<sol::lua_nil_t>() ) {
-        bio.power_activate = get_energy( def, "power_activate", bio.power_activate );
-    }
-
-    sol::object power_deactivate = def["power_deactivate"];
-    if( power_deactivate.valid() && !power_deactivate.is<sol::lua_nil_t>() ) {
-        bio.power_deactivate = get_energy( def, "power_deactivate", bio.power_deactivate );
-    }
-
-    sol::object power_over_time = def["power_over_time"];
-    if( power_over_time.valid() && !power_over_time.is<sol::lua_nil_t>() ) {
-        bio.power_over_time = get_energy( def, "power_over_time", bio.power_over_time );
-    }
-
-    sol::object power_trigger = def["power_trigger"];
-    if( power_trigger.valid() && !power_trigger.is<sol::lua_nil_t>() ) {
-        bio.power_trigger = get_energy( def, "power_trigger", bio.power_trigger );
-    }
-
-    sol::object capacity = def["capacity"];
-    if( capacity.valid() && !capacity.is<sol::lua_nil_t>() ) {
-        bio.capacity = get_energy( def, "capacity", bio.capacity );
-    }
-
-    sol::object remote_fuel_draw = def["remote_fuel_draw"];
-    if( remote_fuel_draw.valid() && !remote_fuel_draw.is<sol::lua_nil_t>() ) {
-        bio.remote_fuel_draw = get_energy( def, "remote_fuel_draw", bio.remote_fuel_draw );
-    }
-
-    sol::object charge_time = def["charge_time"];
-    if( charge_time.valid() ) {
-        if( charge_time.is<int>() ) {
-            bio.charge_time = charge_time.as<int>();
-        } else if( charge_time.is<time_duration>() ) {
-            bio.charge_time = to_turns<int>( charge_time.as<time_duration>() );
-        }
-    }
-
-    sol::object kcal_trigger = def["kcal_trigger"];
-    if( kcal_trigger.valid() && kcal_trigger.is<int>() ) {
-        bio.kcal_trigger = kcal_trigger.as<int>();
-    }
-
-    sol::object activated = def["activated"];
-    if( activated.valid() && activated.is<bool>() ) {
-        bio.activated = activated.as<bool>();
-    }
-
-    sol::object included = def["included"];
-    if( included.valid() && included.is<bool>() ) {
-        bio.included = included.as<bool>();
-    }
-
-    sol::object is_remote_fueled = def["is_remote_fueled"];
-    if( is_remote_fueled.valid() && is_remote_fueled.is<bool>() ) {
-        bio.is_remote_fueled = is_remote_fueled.as<bool>();
-    }
-
-    sol::object exothermic = def["exothermic_power_gen"];
-    if( exothermic.valid() && exothermic.is<bool>() ) {
-        bio.exothermic_power_gen = exothermic.as<bool>();
-    }
-
-    sol::object weight_cap_mod = def["weight_capacity_modifier"];
-    if( weight_cap_mod.valid() ) {
-        bio.weight_capacity_modifier = get_float( def, "weight_capacity_modifier",
-                                       bio.weight_capacity_modifier );
-    }
-
-    sol::object weight_cap_bonus = def["weight_capacity_bonus"];
-    if( weight_cap_bonus.valid() && !weight_cap_bonus.is<sol::lua_nil_t>() ) {
-        bio.weight_capacity_bonus = get_mass( def, "weight_capacity_bonus", bio.weight_capacity_bonus );
-    }
-
-    sol::object fuel_capacity = def["fuel_capacity"];
-    if( fuel_capacity.valid() && fuel_capacity.is<int>() ) {
-        bio.fuel_capacity = fuel_capacity.as<int>();
-    }
-
-    sol::object fuel_efficiency = def["fuel_efficiency"];
-    if( fuel_efficiency.valid() ) {
-        bio.fuel_efficiency = get_float( def, "fuel_efficiency", bio.fuel_efficiency );
-    }
-
-    sol::object fuel_multiplier = def["fuel_multiplier"];
-    if( fuel_multiplier.valid() && fuel_multiplier.is<int>() ) {
-        bio.fuel_multiplier = fuel_multiplier.as<int>();
-    }
-
-    sol::object passive_fuel_efficiency = def["passive_fuel_efficiency"];
-    if( passive_fuel_efficiency.valid() ) {
-        bio.passive_fuel_efficiency = get_float( def, "passive_fuel_efficiency",
-                                      bio.passive_fuel_efficiency );
-    }
-
-    sol::optional<sol::table> occupied = def["occupied_bodyparts"];
-    if( occupied ) {
-        bio.occupied_bodyparts = get_bodypart_int_map( def, "occupied_bodyparts" );
-    }
-
-    sol::optional<sol::table> encumbrance = def["encumbrance"];
-    if( encumbrance ) {
-        bio.encumbrance = get_bodypart_int_map( def, "encumbrance" );
-    }
-
-    sol::optional<sol::table> env_protec = def["env_protec"];
-    if( env_protec ) {
-        bio.env_protec = get_bodypart_int_map( def, "env_protec" );
-    }
-
-    sol::optional<sol::table> bash_protec = def["bash_protec"];
-    if( bash_protec ) {
-        bio.bash_protec = get_bodypart_int_map( def, "bash_protec" );
-    }
-
-    sol::optional<sol::table> cut_protec = def["cut_protec"];
-    if( cut_protec ) {
-        bio.cut_protec = get_bodypart_int_map( def, "cut_protec" );
-    }
-
-    sol::optional<sol::table> bullet_protec = def["bullet_protec"];
-    if( bullet_protec ) {
-        bio.bullet_protec = get_bodypart_int_map( def, "bullet_protec" );
-    }
-
-    sol::optional<sol::table> canceled_muts = def["canceled_mutations"];
-    if( canceled_muts ) {
-        bio.canceled_mutations = get_string_id_array<mutation_branch>( def, "canceled_mutations" );
-    }
-
-    sol::optional<sol::table> fuel_opts = def["fuel_opts"];
-    if( fuel_opts ) {
-        bio.fuel_opts.clear();
-        for( auto &pair : *fuel_opts ) {
-            if( pair.second.is<itype_id>() ) {
-                bio.fuel_opts.push_back( pair.second.as<itype_id>() );
-            } else if( pair.second.is<std::string>() ) {
-                bio.fuel_opts.push_back( itype_id( pair.second.as<std::string>() ) );
-            }
-        }
-    }
-
-    sol::object fake_item = def["fake_item"];
-    if( fake_item.valid() ) {
-        if( fake_item.is<itype_id>() ) {
-            bio.fake_item = fake_item.as<itype_id>();
-        } else if( fake_item.is<std::string>() ) {
-            bio.fake_item = itype_id( fake_item.as<std::string>() );
-        }
-    }
-
-    sol::optional<sol::table> stat_bonus = def["stat_bonus"];
-    if( stat_bonus ) {
-        bio.stat_bonus = get_stat_bonus_map( def, "stat_bonus" );
-    }
-
-    sol::optional<sol::table> enchantments = def["enchantments"];
-    if( enchantments ) {
-        bio.enchantments = get_string_id_array<enchantment>( def, "enchantments" );
-    }
-
-    sol::optional<sol::table> learned_spells = def["learned_spells"];
-    if( learned_spells ) {
-        bio.learned_spells = get_id_int_map<spell_type>( def, "learned_spells" );
-    }
-
-    sol::optional<sol::table> included_bionics = def["included_bionics"];
-    if( included_bionics ) {
-        bio.included_bionics = get_string_id_array<bionic_data>( def, "included_bionics" );
-    }
-
-    sol::object upgraded_bionic = def["upgraded_bionic"];
-    if( upgraded_bionic.valid() && !upgraded_bionic.is<sol::lua_nil_t>() ) {
-        if( upgraded_bionic.is<bionic_id>() ) {
-            bio.upgraded_bionic = upgraded_bionic.as<bionic_id>();
-        } else if( upgraded_bionic.is<std::string>() ) {
-            bio.upgraded_bionic = bionic_id( upgraded_bionic.as<std::string>() );
-        }
-    }
-
-    sol::optional<sol::table> available_upgrades = def["available_upgrades"];
-    if( available_upgrades ) {
-        bio.available_upgrades = get_string_id_set<bionic_data>( def, "available_upgrades" );
-    }
-
-    sol::optional<sol::table> required_bionics = def["required_bionics"];
-    if( required_bionics ) {
-        bio.required_bionics = get_string_id_array<bionic_data>( def, "required_bionics" );
-    }
-
-    sol::optional<sol::table> flags = def["flags"];
-    if( flags ) {
-        bio.flags = get_flag_id_set( def, "flags" );
-    }
-
-    sol::object power_gen_emission = def["power_gen_emission"];
-    if( power_gen_emission.valid() && !power_gen_emission.is<sol::lua_nil_t>() ) {
-        if( power_gen_emission.is<emit_id>() ) {
-            bio.power_gen_emission = power_gen_emission.as<emit_id>();
-        } else if( power_gen_emission.is<std::string>() ) {
-            bio.power_gen_emission = emit_id( power_gen_emission.as<std::string>() );
-        }
-    }
-
-    sol::object coverage_penalty = def["coverage_power_gen_penalty"];
-    if( coverage_penalty.valid() && !coverage_penalty.is<sol::lua_nil_t>() ) {
-        bio.coverage_power_gen_penalty = get_optional_float( def, "coverage_power_gen_penalty" );
-    }
-
-    return bio;
 }
 
 /**

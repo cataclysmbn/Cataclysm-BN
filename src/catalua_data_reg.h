@@ -4,6 +4,13 @@
 
 #include "catalua_sol_fwd.h"
 
+#include <string>
+
+// Forward declarations for data types
+class effect_type;
+struct bionic_data;
+struct mutation_branch;
+
 namespace cata
 {
 struct lua_state;
@@ -27,5 +34,14 @@ void reg_lua_data_definitions( lua_state &state );
 void reg_lua_finalize_definitions( lua_state &state );
 
 } // namespace cata
+
+/**
+ * Converter functions for Lua tables to game data types.
+ * These are declared at global scope to match their definitions in catalua_data_reg.cpp
+ * and are used by lua_data_modifier.cpp for runtime modifications.
+ */
+effect_type lua_table_to_effect_type( const std::string &id, const sol::table &def );
+mutation_branch lua_table_to_mutation( const std::string &id, const sol::table &def );
+bionic_data lua_table_to_bionic( const std::string &id, const sol::table &def );
 
 #endif // CATA_SRC_CATALUA_DATA_REG_H

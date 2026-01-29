@@ -21,6 +21,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "catalua_data_reg.h"
 #include "catalua_readonly.h"
 #include "catalua_serde.h"
+#include "lua_data_modifier.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "init.h"
@@ -235,6 +236,9 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
 
     // Data definition tables (game.define.*)
     cata::init_data_definition_tables( lua );
+
+    // Data modification API (game.modify.*)
+    cata::register_data_modification_api( lua );
 
     // hooks
     cata::define_hooks( state );
