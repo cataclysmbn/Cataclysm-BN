@@ -7497,7 +7497,7 @@ bool item::is_container_full( bool allow_bucket ) const
     if( is_watertight_container() ) {
         return get_remaining_capacity_for_liquid( contents.front(), allow_bucket ) == 0;
     } else {
-        return ( contents.front().charges_per_volume( get_container_capacity() ) - ammo_remaining() ) <= 0;
+        return ( ammo_capacity() - ammo_remaining() ) <= 0;
     }
 }
 
@@ -8776,12 +8776,12 @@ int item_reload_option::moves() const
 
 void item_reload_option::qty( int val )
 {
-    bool ammo_in_container = ammo->is_ammo_container();
-    bool ammo_in_liquid_container = ammo->is_watertight_container();
-    item &ammo_obj = ( ammo_in_container || ammo_in_liquid_container ) ?
+    bool ammo_in_ammo_container = ammo->is_ammo_container();
+    bool ammo_in_container = ammo->is_container();
+    item &ammo_obj = ( ammo_in_ammo_container || ammo_in_container ) ?
                      ammo->contents.front() : *ammo;
 
-    if( ammo_in_container && !ammo_obj.is_ammo() ) {
+    if( ammo_in_ammo_container && !ammo_obj.is_ammo() ) {
         debugmsg( "Invalid reload option: %s", ammo_obj.tname() );
         return;
     }
@@ -8809,7 +8809,7 @@ void item_reload_option::qty( int val )
         }
     }
 
-    bool ammo_by_charges = ammo_obj.is_ammo() || ammo_in_liquid_container || ammo->is_comestible();
+    bool ammo_by_charges = ammo_obj.is_ammo() || ammo_in_container || ammo->is_comestible();
     int available_ammo = ammo_by_charges ? ammo_obj.charges : ammo_obj.ammo_remaining();
     // constrain by available ammo, target capacity and other external factors (max_qty)
     // @ref max_qty is currently set when reloading ammo belts and limits to available linkages
