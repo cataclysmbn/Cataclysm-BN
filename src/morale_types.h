@@ -113,5 +113,7 @@ extern const morale_type MORALE_FUNERAL;
 extern const morale_type MORALE_TREE_COMMUNION;
 extern const morale_type MORALE_ACCOMPLISHMENT;
 extern const morale_type MORALE_FAILURE;
+extern const morale_type MORALE_SUNRISE;
+extern const morale_type MORALE_SUNSET;
 
 
