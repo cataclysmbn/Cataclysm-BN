@@ -49,7 +49,6 @@ struct vehicle_part {
         /** Check this instance is non-null (not default constructed) */
         explicit operator bool() const;
 
-        // TODO: Make all of those use the above enum
         bool has_flag( const vp_state_flag flag ) const noexcept {
             return flag & flags;
         }
