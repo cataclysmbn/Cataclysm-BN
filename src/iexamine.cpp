@@ -3465,6 +3465,30 @@ static auto is_plumbing_tank( const furn_t &furn ) -> bool
     return plumbing_tank_capacity( furn ).has_value();
 }
 
+static auto confirm_plumbing_contamination( const tripoint_abs_omt &pos_abs_omt,
+                                            const itype_id &liquid_type ) -> bool
+{
+    if( !plumbing_grid::would_contaminate( pos_abs_omt, liquid_type ) ) {
+        return true;
+    }
+    return query_yn( string_format(
+                         _( "Adding %s will contaminate the plumbing grid's water supply.  Continue?" ),
+                         item::nname( liquid_type ) ) );
+}
+
+static auto confirm_plumbing_contamination_for_items( const tripoint_abs_omt &pos_abs_omt,
+                                                      const map_stack &items ) -> bool
+{
+    const auto contaminating = std::ranges::find_if( items, [&]( const item *it ) {
+        return it != nullptr && it->made_of( LIQUID ) &&
+               plumbing_grid::would_contaminate( pos_abs_omt, it->typeId() );
+    } );
+    if( contaminating == items.end() ) {
+        return true;
+    }
+    return confirm_plumbing_contamination( pos_abs_omt, ( *contaminating )->typeId() );
+}
+
 static auto get_keg_capacity( const tripoint &pos ) -> units::volume
 {
     const furn_t &furn = get_map().furn( pos ).obj();
@@ -3698,6 +3722,9 @@ void iexamine::keg( player &p, const tripoint &examp )
 
                 const auto drink_type = drink_types[ drink_index ];
                 const auto charges_held = p.charges_of( drink_type );
+                if( !confirm_plumbing_contamination( pos_abs_omt, drink_type ) ) {
+                    return;
+                }
                 const auto added = plumbing_grid::add_liquid_charges( pos_abs_omt, drink_type, charges_held );
                 if( added <= 0 ) {
                     add_msg( m_info, _( "The %s cannot hold any more water." ), keg_name );
@@ -3766,6 +3793,10 @@ void iexamine::keg( player &p, const tripoint &examp )
                 }
                 displace_items_except_one_liquid( examp );
                 if( !plumbed_variant ) {
+                    return;
+                }
+                const auto pos_abs_omt = project_to<coords::omt>( here.getglobal( examp ) );
+                if( !confirm_plumbing_contamination_for_items( pos_abs_omt, here.i_at( examp ) ) ) {
                     return;
                 }
                 here.furn_set( examp, *plumbed_variant );
@@ -3889,6 +3920,7 @@ void iexamine::keg( player &p, const tripoint &examp )
         selectmenu.text = _( "Select an action" );
         selectmenu.query();
 
+        const auto pos_abs_omt = project_to<coords::omt>( here.getglobal( examp ) );
         switch( selectmenu.ret ) {
             case DISPENSE:
                 if( liquid_handler::handle_liquid( **items.begin() ) ) {
@@ -3938,7 +3970,7 @@ void iexamine::keg( player &p, const tripoint &examp )
                 return;
             }
 
-            case ADD_TO_PLUMBING_GRID:
+            case ADD_TO_PLUMBING_GRID: {
                 if( !tank_contains_only_water( examp ) ) {
                     return;
                 }
@@ -3946,11 +3978,15 @@ void iexamine::keg( player &p, const tripoint &examp )
                 if( !plumbed_variant ) {
                     return;
                 }
+                if( !confirm_plumbing_contamination_for_items( pos_abs_omt, here.i_at( examp ) ) ) {
+                    return;
+                }
                 here.furn_set( examp, *plumbed_variant );
                 plumbing_grid::on_structure_changed( here.getglobal( examp ) );
                 transfer_tank_liquid_to_grid( examp );
                 add_msg( m_info, _( "You connect the %s to the plumbing grid." ), keg_name );
                 return;
+            }
 
             case DISCONNECT_FROM_PLUMBING_GRID:
                 plumbing_grid::disconnect_tank( here.getglobal( examp ) );
@@ -3995,6 +4031,9 @@ detached_ptr<item> iexamine::pour_into_keg( const tripoint &pos, detached_ptr<it
             return std::move( liquid );
         }
         const auto pos_abs_omt = project_to<coords::omt>( here.getglobal( pos ) );
+        if( !confirm_plumbing_contamination( pos_abs_omt, liquid->typeId() ) ) {
+            return std::move( liquid );
+        }
         const auto added = plumbing_grid::add_liquid_charges( pos_abs_omt, liquid->typeId(),
                            liquid->charges );
         if( added > 0 ) {

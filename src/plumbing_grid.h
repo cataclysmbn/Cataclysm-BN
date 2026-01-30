@@ -42,6 +42,7 @@ auto grid_at( const tripoint_abs_omt &p ) -> std::set<tripoint_abs_omt>;
 auto grid_connectivity_at( const tripoint_abs_omt &p ) -> std::vector<tripoint_rel_omt>;
 auto water_storage_at( const tripoint_abs_omt &p ) -> water_storage_stats;
 auto liquid_charges_at( const tripoint_abs_omt &p, const itype_id &liquid_type ) -> int;
+auto would_contaminate( const tripoint_abs_omt &p, const itype_id &liquid_type ) -> bool;
 auto add_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,
                          int charges ) -> int;
 auto drain_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,

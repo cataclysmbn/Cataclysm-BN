@@ -460,6 +460,11 @@ class plumbing_storage_grid
                 return 0;
             }
 
+            if( state.stored_clean > 0_ml && state.stored_dirty > 0_ml ) {
+                state.stored_dirty += state.stored_clean;
+                state.stored_clean = 0_ml;
+            }
+
             const auto available_volume = state.capacity - state.stored_total();
             if( available_volume <= 0_ml ) {
                 return 0;
@@ -471,8 +476,15 @@ class plumbing_storage_grid
                 return 0;
             }
 
+            if( liquid_type == itype_water && state.stored_clean > 0_ml ) {
+                state.stored_dirty += state.stored_clean;
+                state.stored_clean = 0_ml;
+            }
+
             const auto added_volume = volume_from_charges( liquid_type, added );
-            if( liquid_type == itype_water_clean ) {
+            const auto store_as_clean = liquid_type == itype_water_clean &&
+                                        state.stored_dirty <= 0_ml;
+            if( store_as_clean ) {
                 state.stored_clean += added_volume;
             } else {
                 state.stored_dirty += added_volume;
@@ -717,6 +729,18 @@ auto water_storage_at( const tripoint_abs_omt &p ) -> water_storage_stats
 auto liquid_charges_at( const tripoint_abs_omt &p, const itype_id &liquid_type ) -> int
 {
     return get_plumbing_grid_tracker().storage_at( p ).total_charges( liquid_type );
+}
+
+auto would_contaminate( const tripoint_abs_omt &p, const itype_id &liquid_type ) -> bool
+{
+    if( liquid_type != itype_water && liquid_type != itype_water_clean ) {
+        return false;
+    }
+    const auto state = get_plumbing_grid_tracker().storage_at( p ).get_state();
+    if( liquid_type == itype_water_clean ) {
+        return state.stored_dirty > 0_ml;
+    }
+    return state.stored_clean > 0_ml;
 }
 
 auto add_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,

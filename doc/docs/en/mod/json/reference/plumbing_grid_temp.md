@@ -30,6 +30,9 @@ what liquids it can accept.
 - Typically, only the plumbed variant needs the `plumbing` object. Define
   `unplumbed_variant` on the plumbed furniture and leave the unplumbed furniture without
   `plumbing` so it does not contribute to grid storage until connected.
+- Plumbing grids store only one water quality at a time. Adding any dirty water contaminates the
+  entire stored supply, and clean water added to a dirty grid becomes dirty. A grid becomes clean
+  only after all dirty water is drained and clean water is added.
 
 ### Examples
 
