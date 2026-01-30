@@ -393,6 +393,7 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint &pt )
             ch.veh_exists_at[pt.x][pt.y] = false;
         }
         ch.veh_cached_parts.erase( it );
+        cached_veh_rope.erase( pt.xy() );
     }
 
 }
