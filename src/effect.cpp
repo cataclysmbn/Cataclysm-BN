@@ -10,11 +10,14 @@
 #include "color.h"
 #include "debug.h"
 #include "enums.h"
+#include "generic_factory.h"
 #include "json.h"
+#include "lua_table_wrapper.h"
 #include "messages.h"
 #include "output.h"
 #include "player.h"
 #include "rng.h"
+#include "schema.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "units.h"
@@ -1277,10 +1280,52 @@ static const std::unordered_set<efftype_id> hardcoded_movement_impairing = {{
     }
 };
 
+// Unified field loading for effect_type - works with JSON and Lua
+SCHEMA_FIELDS_BEGIN( effect_type )
+{
+    // String fields
+    SCHEMA_FIELD_OPTIONAL( "apply_message", apply_message, std::string() )
+    SCHEMA_FIELD_OPTIONAL( "remove_message", remove_message, std::string() )
+    SCHEMA_FIELD_OPTIONAL( "apply_memorial_log", apply_memorial_log, std::string() )
+    SCHEMA_FIELD_OPTIONAL( "remove_memorial_log", remove_memorial_log, std::string() )
+    SCHEMA_FIELD_OPTIONAL( "blood_analysis_description", blood_analysis_description, std::string() )
+    SCHEMA_FIELD_OPTIONAL( "looks_like", looks_like, std::string() )
+    SCHEMA_FIELD_OPTIONAL( "speed_name", speed_mod_name, std::string() )
+
+    // Integer fields
+    SCHEMA_FIELD_OPTIONAL( "max_intensity", max_intensity, 1 )
+    SCHEMA_FIELD_OPTIONAL( "max_effective_intensity", max_effective_intensity, 0 )
+    SCHEMA_FIELD_OPTIONAL( "dur_add_perc", dur_add_perc, 100 )
+    SCHEMA_FIELD_OPTIONAL( "int_add_val", int_add_val, 0 )
+    SCHEMA_FIELD_OPTIONAL( "int_decay_step", int_decay_step, -1 )
+    SCHEMA_FIELD_OPTIONAL( "int_decay_tick", int_decay_tick, 0 )
+
+    // Boolean fields
+    SCHEMA_FIELD_OPTIONAL( "part_descs", part_descs, false )
+    SCHEMA_FIELD_OPTIONAL( "main_parts_only", main_parts_only, false )
+    SCHEMA_FIELD_OPTIONAL( "show_in_info", show_in_info, false )
+    SCHEMA_FIELD_OPTIONAL( "permanent", permanent, false )
+    SCHEMA_FIELD_OPTIONAL( "pkill_addict_reduces", pkill_addict_reduces, false )
+    SCHEMA_FIELD_OPTIONAL( "pain_sizing", pain_sizing, false )
+    SCHEMA_FIELD_OPTIONAL( "hurt_sizing", hurt_sizing, false )
+    SCHEMA_FIELD_OPTIONAL( "harmful_cough", harmful_cough, false )
+
+    // Duration fields (time_duration)
+    SCHEMA_FIELD_OPTIONAL( "max_duration", max_duration, 0_turns )
+    SCHEMA_FIELD_OPTIONAL( "int_dur_factor", int_dur_factor, 0_turns )
+    SCHEMA_FIELDS_END()
+}
+
+// Explicit template instantiations for JSON and Lua loading
+template void effect_type::load_fields<JsonObject>( const JsonObject &, bool );
+template void effect_type::load_fields<LuaTableWrapper>( const LuaTableWrapper &, bool );
+
 void load_effect_type( const JsonObject &jo )
 {
     effect_type new_etype;
     new_etype.id = efftype_id( jo.get_string( "id" ) );
+
+    new_etype.load_fields( jo, new_etype.was_loaded );
 
     if( jo.has_member( "name" ) ) {
         for( const JsonValue entry : jo.get_array( "name" ) ) {
@@ -1293,8 +1338,8 @@ void load_effect_type( const JsonObject &jo )
     } else {
         new_etype.name.emplace_back();
     }
-    new_etype.speed_mod_name = jo.get_string( "speed_name", "" );
 
+    // Description arrays with cross-reference defaults
     if( jo.has_member( "desc" ) ) {
         for( const std::string line : jo.get_array( "desc" ) ) {
             new_etype.desc.push_back( line );
@@ -1309,9 +1354,6 @@ void load_effect_type( const JsonObject &jo )
     } else {
         new_etype.reduced_desc = new_etype.desc;
     }
-    new_etype.looks_like = jo.get_string( "looks_like", "" );
-
-    new_etype.part_descs = jo.get_bool( "part_descs", false );
 
     if( jo.has_member( "rating" ) ) {
         std::string r = jo.get_string( "rating" );
@@ -1329,12 +1371,6 @@ void load_effect_type( const JsonObject &jo )
     } else {
         new_etype.rating = e_neutral;
     }
-    new_etype.apply_message = jo.get_string( "apply_message", "" );
-    new_etype.remove_message = jo.get_string( "remove_message", "" );
-    new_etype.apply_memorial_log = jo.get_string( "apply_memorial_log", "" );
-    new_etype.remove_memorial_log = jo.get_string( "remove_memorial_log", "" );
-
-    new_etype.blood_analysis_description = jo.get_string( "blood_analysis_description", "" );
 
     for( auto &&f : jo.get_string_array( "resist_traits" ) ) { // *NOPAD*
         new_etype.resist_traits.emplace_back( f );
@@ -1349,39 +1385,8 @@ void load_effect_type( const JsonObject &jo )
         new_etype.blocks_effects.emplace_back( f );
     }
 
-    if( jo.has_string( "max_duration" ) ) {
-        new_etype.max_duration = read_from_json_string<time_duration>( *jo.get_raw( "max_duration" ),
-                                 time_duration::units );
-    } else {
-        new_etype.max_duration = time_duration::from_turns( jo.get_int( "max_duration", 0 ) );
-    }
-
-    if( jo.has_string( "int_dur_factor" ) ) {
-        new_etype.int_dur_factor = read_from_json_string<time_duration>( *jo.get_raw( "int_dur_factor" ),
-                                   time_duration::units );
-    } else {
-        new_etype.int_dur_factor = time_duration::from_turns( jo.get_int( "int_dur_factor", 0 ) );
-    }
-
-    new_etype.max_intensity = jo.get_int( "max_intensity", 1 );
-    new_etype.dur_add_perc = jo.get_int( "dur_add_perc", 100 );
-    new_etype.int_add_val = jo.get_int( "int_add_val", 0 );
-    new_etype.int_decay_step = jo.get_int( "int_decay_step", -1 );
-    new_etype.int_decay_tick = jo.get_int( "int_decay_tick", 0 );
-
     new_etype.load_miss_msgs( jo, "miss_messages" );
     new_etype.load_decay_msgs( jo, "decay_messages" );
-
-    new_etype.main_parts_only = jo.get_bool( "main_parts_only", false );
-    new_etype.show_in_info = jo.get_bool( "show_in_info", false );
-    new_etype.permanent = jo.get_bool( "permanent", false );
-    new_etype.pkill_addict_reduces = jo.get_bool( "pkill_addict_reduces", false );
-
-    new_etype.pain_sizing = jo.get_bool( "pain_sizing", false );
-    new_etype.hurt_sizing = jo.get_bool( "hurt_sizing", false );
-    new_etype.harmful_cough = jo.get_bool( "harmful_cough", false );
-
-    new_etype.max_effective_intensity = jo.get_int( "max_effective_intensity", 0 );
 
     new_etype.load_mod_data( jo, "base_mods" );
     new_etype.load_mod_data( jo, "scaling_mods" );

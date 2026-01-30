@@ -14,9 +14,11 @@
 #include "debug.h"
 #include "generic_factory.h"
 #include "json.h"
+#include "lua_table_wrapper.h"
 #include "magic_enchantment.h"
 #include "memory_fast.h"
 #include "rng.h"
+#include "schema.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "trait_group.h"
@@ -296,34 +298,130 @@ bool mut_transform::load( const JsonObject &jsobj, const std::string &member )
     return true;
 }
 
+// Unified field loading for mutation_branch - works with JSON and Lua
+SCHEMA_FIELDS_BEGIN( mutation_branch )
+{
+    // Mandatory fields
+    SCHEMA_FIELD_MANDATORY( "id", id )
+    SCHEMA_FIELD_MANDATORY( "name", raw_name )
+    SCHEMA_FIELD_MANDATORY( "description", raw_desc )
+    SCHEMA_FIELD_MANDATORY( "points", points )
+
+    // Boolean fields
+    SCHEMA_FIELD_OPTIONAL( "visibility", visibility, 0 )
+    SCHEMA_FIELD_OPTIONAL( "ugliness", ugliness, 0 )
+    SCHEMA_FIELD_OPTIONAL( "starting_trait", startingtrait, false )
+    SCHEMA_FIELD_OPTIONAL( "mixed_effect", mixed_effect, false )
+    SCHEMA_FIELD_OPTIONAL( "active", activated, false )
+    SCHEMA_FIELD_OPTIONAL( "starts_active", starts_active, false )
+    SCHEMA_FIELD_OPTIONAL( "allow_soft_gear", allow_soft_gear, false )
+    SCHEMA_FIELD_OPTIONAL( "allowed_items_only", allowed_items_only, false )
+    SCHEMA_FIELD_OPTIONAL( "cost", cost, 0 )
+    SCHEMA_FIELD_OPTIONAL( "time", cooldown, 0 )
+    SCHEMA_FIELD_OPTIONAL( "hunger", hunger, false )
+    SCHEMA_FIELD_OPTIONAL( "bionic", bionic, false )
+    SCHEMA_FIELD_OPTIONAL( "thirst", thirst, false )
+    SCHEMA_FIELD_OPTIONAL( "fatigue", fatigue, false )
+    SCHEMA_FIELD_OPTIONAL( "stamina", stamina, false )
+    SCHEMA_FIELD_OPTIONAL( "mana", mana, false )
+    SCHEMA_FIELD_OPTIONAL( "health", health, false )
+    SCHEMA_FIELD_OPTIONAL( "pain", pain, false )
+    SCHEMA_FIELD_OPTIONAL( "valid", valid, true )
+    SCHEMA_FIELD_OPTIONAL( "purifiable", purifiable, true )
+    SCHEMA_FIELD_OPTIONAL( "bodytemp_sleep", bodytemp_sleep, 0 )
+    SCHEMA_FIELD_OPTIONAL( "threshold", threshold, false )
+    SCHEMA_FIELD_OPTIONAL( "profession", profession, false )
+    SCHEMA_FIELD_OPTIONAL( "debug", debug, false )
+    SCHEMA_FIELD_OPTIONAL( "player_display", player_display, true )
+
+    // Float fields
+    SCHEMA_FIELD_OPTIONAL( "pain_recovery", pain_recovery, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "healing_awake", healing_awake, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "healing_resting", healing_resting, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "mending_modifier", mending_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "hp_modifier", hp_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "hp_modifier_secondary", hp_modifier_secondary, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "hp_adjustment", hp_adjustment, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "stealth_modifier", stealth_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "str_modifier", str_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "dodge_modifier", dodge_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "speed_modifier", speed_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "movecost_modifier", movecost_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "movecost_flatground_modifier", movecost_flatground_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "movecost_obstacle_modifier", movecost_obstacle_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "movecost_swim_modifier", movecost_swim_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "attackcost_modifier", attackcost_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "falling_damage_multiplier", falling_damage_multiplier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "max_stamina_modifier", max_stamina_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "weight_capacity_modifier", weight_capacity_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "hearing_modifier", hearing_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "noise_modifier", noise_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "temperature_speed_modifier", temperature_speed_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "metabolism_modifier", metabolism_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "thirst_modifier", thirst_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "fatigue_modifier", fatigue_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "fatigue_regen_modifier", fatigue_regen_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "stamina_regen_modifier", stamina_regen_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "overmap_sight", overmap_sight, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "overmap_multiplier", overmap_multiplier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "night_vision_range", night_vision_range, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "reading_speed_multiplier", reading_speed_multiplier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "skill_rust_multiplier", skill_rust_multiplier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "packmule_modifier", packmule_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "crafting_speed_modifier", crafting_speed_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "construction_speed_modifier", construction_speed_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "scent_modifier", scent_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "healthy_rate", healthy_rate, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "mana_modifier", mana_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "mana_multiplier", mana_multiplier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "mana_regen_multiplier", mana_regen_multiplier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "mutagen_target_modifier", mutagen_target_modifier, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "pierce_dmg_bonus", pierce_dmg_bonus, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "bleed_resist", bleed_resist, 0.0f )
+
+    // Integer fields
+    SCHEMA_FIELD_OPTIONAL( "cut_dmg_bonus", cut_dmg_bonus, 0 )
+    SCHEMA_FIELD_OPTIONAL( "bash_dmg_bonus", bash_dmg_bonus, 0 )
+    SCHEMA_FIELD_OPTIONAL( "butchering_quality", butchering_quality, 0 )
+    SCHEMA_FIELD_OPTIONAL( "weakness_to_water", weakness_to_water, 0 )
+
+    // Optional fields (default-constructed)
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "scent_intensity", scent_intensity )
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "scent_mask", scent_mask )
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "scent_type", scent_typeid )
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "body_size", body_size )
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "allowed_category", allowed_category )
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "can_only_eat", can_only_eat )
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "can_only_heal_with", can_only_heal_with )
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "can_heal_with", can_heal_with )
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "ignored_by", ignored_by )
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "initial_ma_styles", initial_ma_styles )
+    SCHEMA_FIELD_OPTIONAL_NOVAL( "enchantments", enchantments )
+
+    // Fields with custom readers
+    SCHEMA_FIELD_OPTIONAL_READER( "prereqs", prereqs, trait_reader{} )
+    SCHEMA_FIELD_OPTIONAL_READER( "prereqs2", prereqs2, trait_reader{} )
+    SCHEMA_FIELD_OPTIONAL_READER( "cancels", cancels, trait_reader{} )
+    SCHEMA_FIELD_OPTIONAL_READER( "prevents", prevents, auto_flags_reader<trait_id>{} )
+    SCHEMA_FIELD_OPTIONAL_READER( "changes_to", replacements, trait_reader{} )
+    SCHEMA_FIELD_OPTIONAL_READER( "leads_to", additions, trait_reader{} )
+    SCHEMA_FIELD_OPTIONAL_READER( "flags", flags, auto_flags_reader<trait_flag_str_id>{} )
+    SCHEMA_FIELD_OPTIONAL_READER( "types", types, string_reader{} )
+    SCHEMA_FIELD_OPTIONAL_READER( "category", category, string_id_reader<mutation_category_trait>{} )
+    SCHEMA_FIELD_OPTIONAL_READER( "no_cbm_on_bp", no_cbm_on_bp, auto_flags_reader<bodypart_str_id>{} )
+    SCHEMA_FIELDS_END()
+}
+
+// Explicit template instantiations for JSON and Lua loading
+template void mutation_branch::load_fields<JsonObject>( const JsonObject &, bool );
+template void mutation_branch::load_fields<LuaTableWrapper>( const LuaTableWrapper &, bool );
+
 void mutation_branch::load( const JsonObject &jo, const std::string & )
 {
-    mandatory( jo, was_loaded, "id", id );
-    mandatory( jo, was_loaded, "name", raw_name );
-    mandatory( jo, was_loaded, "description", raw_desc );
-    mandatory( jo, was_loaded, "points", points );
+    load_fields( jo, was_loaded );
 
-    optional( jo, was_loaded, "visibility", visibility, 0 );
-    optional( jo, was_loaded, "ugliness", ugliness, 0 );
-    optional( jo, was_loaded, "starting_trait", startingtrait, false );
-    optional( jo, was_loaded, "mixed_effect", mixed_effect, false );
-    optional( jo, was_loaded, "active", activated, false );
-    optional( jo, was_loaded, "starts_active", starts_active, false );
-    optional( jo, was_loaded, "allow_soft_gear", allow_soft_gear, false );
-    optional( jo, was_loaded, "allowed_items_only", allowed_items_only, false );
-    optional( jo, was_loaded, "cost", cost, 0 );
-    optional( jo, was_loaded, "time", cooldown, 0 );
-    optional( jo, was_loaded, "hunger", hunger, false );
-    optional( jo, was_loaded, "bionic", bionic, false );
-    optional( jo, was_loaded, "thirst", thirst, false );
-    optional( jo, was_loaded, "fatigue", fatigue, false );
-    optional( jo, was_loaded, "stamina", stamina, false );
-    optional( jo, was_loaded, "mana", mana, false );
-    optional( jo, was_loaded, "health", health, false );
-    optional( jo, was_loaded, "pain", pain, false );
-    optional( jo, was_loaded, "valid", valid, true );
-    optional( jo, was_loaded, "purifiable", purifiable, true );
 
+    // Nested object fields
     if( jo.has_object( "spawn_item" ) ) {
         auto si = jo.get_object( "spawn_item" );
         optional( si, was_loaded, "type", spawn_item );
@@ -338,8 +436,8 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
         transform = cata::make_value<mut_transform>();
         transform->load( jo, "transform" );
     }
-    optional( jo, was_loaded, "initial_ma_styles", initial_ma_styles );
 
+    // Array with special two-element format [min, max]
     if( jo.has_array( "bodytemp_modifiers" ) ) {
         auto bodytemp_array = jo.get_array( "bodytemp_modifiers" );
         bodytemp_min = bodytemp_array.get_int( 0 );
@@ -351,8 +449,7 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
         }
     }
 
-    optional( jo, was_loaded, "bodytemp_sleep", bodytemp_sleep, 0 );
-    optional( jo, was_loaded, "threshold", threshold, false );
+    // Conditional default based on other fields
     unsigned short tier_default;
     if( jo.has_array( "threshreq" ) ) {
         tier_default = !( jo.get_array( "threshreq" ).empty() ) ? 1 : 0;
@@ -362,85 +459,23 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
         tier_default = 0;
     }
     optional( jo, was_loaded, "threshold_tier", threshold_tier, tier_default );
-    optional( jo, was_loaded, "profession", profession, false );
-    optional( jo, was_loaded, "debug", debug, false );
-    optional( jo, was_loaded, "player_display", player_display, true );
 
+    // Array of pairs with special parsing
     for( JsonArray pair : jo.get_array( "vitamin_rates" ) ) {
         vitamin_rates.emplace( vitamin_id( pair.get_string( 0 ) ),
                                time_duration::from_turns( pair.get_int( 1 ) ) );
     }
 
+    // Nested array structure
     for( JsonArray pair : jo.get_array( "vitamins_absorb_multi" ) ) {
         std::map<vitamin_id, double> vit;
-        // fill the inner map with vitamins
         for( JsonArray vitamins : pair.get_array( 1 ) ) {
             vit.emplace( vitamin_id( vitamins.get_string( 0 ) ), vitamins.get_float( 1 ) );
         }
-        // assign the inner vitamin map to the material_id key
         vitamin_absorb_multi.emplace( material_id( pair.get_string( 0 ) ), vit );
     }
 
-    optional( jo, was_loaded, "pain_recovery", pain_recovery, 0.0f );
-    optional( jo, was_loaded, "healing_awake", healing_awake, 0.0f );
-    optional( jo, was_loaded, "healing_resting", healing_resting, 0.0f );
-    optional( jo, was_loaded, "mending_modifier", mending_modifier, 0.0f );
-    optional( jo, was_loaded, "hp_modifier", hp_modifier, 0.0f );
-    optional( jo, was_loaded, "hp_modifier_secondary", hp_modifier_secondary, 0.0f );
-    optional( jo, was_loaded, "hp_adjustment", hp_adjustment, 0.0f );
-    optional( jo, was_loaded, "stealth_modifier", stealth_modifier, 0.0f );
-    optional( jo, was_loaded, "str_modifier", str_modifier, 0.0f );
-    optional( jo, was_loaded, "cut_dmg_bonus", cut_dmg_bonus, 0 );
-    optional( jo, was_loaded, "pierce_dmg_bonus", pierce_dmg_bonus, 0.0f );
-    optional( jo, was_loaded, "bash_dmg_bonus", bash_dmg_bonus, 0 );
-    optional( jo, was_loaded, "dodge_modifier", dodge_modifier, 0.0f );
-    optional( jo, was_loaded, "speed_modifier", speed_modifier, 1.0f );
-    optional( jo, was_loaded, "movecost_modifier", movecost_modifier, 1.0f );
-    optional( jo, was_loaded, "movecost_flatground_modifier", movecost_flatground_modifier, 1.0f );
-    optional( jo, was_loaded, "movecost_obstacle_modifier", movecost_obstacle_modifier, 1.0f );
-    optional( jo, was_loaded, "movecost_swim_modifier", movecost_swim_modifier, 1.0f );
-    optional( jo, was_loaded, "attackcost_modifier", attackcost_modifier, 1.0f );
-    optional( jo, was_loaded, "falling_damage_multiplier", falling_damage_multiplier, 1.0f );
-    optional( jo, was_loaded, "max_stamina_modifier", max_stamina_modifier, 1.0f );
-    optional( jo, was_loaded, "weight_capacity_modifier", weight_capacity_modifier, 1.0f );
-    optional( jo, was_loaded, "hearing_modifier", hearing_modifier, 1.0f );
-    optional( jo, was_loaded, "noise_modifier", noise_modifier, 1.0f );
-    optional( jo, was_loaded, "temperature_speed_modifier", temperature_speed_modifier, 0.0f );
-    optional( jo, was_loaded, "metabolism_modifier", metabolism_modifier, 0.0f );
-    optional( jo, was_loaded, "thirst_modifier", thirst_modifier, 0.0f );
-    optional( jo, was_loaded, "fatigue_modifier", fatigue_modifier, 0.0f );
-    optional( jo, was_loaded, "fatigue_regen_modifier", fatigue_regen_modifier, 0.0f );
-    optional( jo, was_loaded, "stamina_regen_modifier", stamina_regen_modifier, 0.0f );
-    optional( jo, was_loaded, "overmap_sight", overmap_sight, 0.0f );
-    optional( jo, was_loaded, "overmap_multiplier", overmap_multiplier, 1.0f );
-    optional( jo, was_loaded, "night_vision_range", night_vision_range, 0.0f );
-    optional( jo, was_loaded, "reading_speed_multiplier", reading_speed_multiplier, 1.0f );
-    optional( jo, was_loaded, "skill_rust_multiplier", skill_rust_multiplier, 1.0f );
-    optional( jo, was_loaded, "packmule_modifier", packmule_modifier, 1.0f );
-    optional( jo, was_loaded, "crafting_speed_modifier", crafting_speed_modifier, 1.0f );
-    optional( jo, was_loaded, "construction_speed_modifier", construction_speed_modifier, 1.0f );
-    optional( jo, was_loaded, "scent_modifier", scent_modifier, 1.0f );
-    optional( jo, was_loaded, "scent_intensity", scent_intensity, std::nullopt );
-    optional( jo, was_loaded, "scent_mask", scent_mask, std::nullopt );
-    optional( jo, was_loaded, "scent_type", scent_typeid, std::nullopt );
-    optional( jo, was_loaded, "bleed_resist", bleed_resist, 0 );
-    optional( jo, was_loaded, "healthy_rate", healthy_rate, 1.0f );
-    optional( jo, was_loaded, "weakness_to_water", weakness_to_water, 0 );
-    optional( jo, was_loaded, "ignored_by", ignored_by );
-    optional( jo, was_loaded, "can_only_eat", can_only_eat );
-    optional( jo, was_loaded, "can_only_heal_with", can_only_heal_with );
-    optional( jo, was_loaded, "can_heal_with", can_heal_with );
-
-    optional( jo, was_loaded, "butchering_quality", butchering_quality, 0 );
-
-    optional( jo, was_loaded, "allowed_category", allowed_category );
-
-    optional( jo, was_loaded, "mana_modifier", mana_modifier, 0 );
-    optional( jo, was_loaded, "mana_multiplier", mana_multiplier, 1.0f );
-    optional( jo, was_loaded, "mana_regen_multiplier", mana_regen_multiplier, 1.0f );
-
-    optional( jo, was_loaded, "mutagen_target_modifier", mutagen_target_modifier, 0 );
-
+    // Nested objects with min/max
     if( jo.has_object( "rand_cut_bonus" ) ) {
         JsonObject sm = jo.get_object( "rand_cut_bonus" );
         rand_cut_bonus.first = sm.get_int( "min" );
@@ -458,28 +493,10 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
         social_mods = load_mutation_social_mods( sm );
     }
 
+    // Custom loader function
     load_mutation_mods( jo, "passive_mods", mods );
-    /* Not currently supported due to inability to save active mutation state
-    load_mutation_mods(jsobj, "active_mods", new_mut.mods); */
 
-    optional( jo, was_loaded, "prereqs", prereqs, trait_reader{} );
-    optional( jo, was_loaded, "prereqs2", prereqs2, trait_reader{} );
-    optional( jo, was_loaded, "cancels", cancels, trait_reader{} );
-    optional( jo, was_loaded, "prevents", prevents, trait_reader{} );
-    optional( jo, was_loaded, "changes_to", replacements, trait_reader{} );
-    optional( jo, was_loaded, "leads_to", additions, trait_reader{} );
-    optional( jo, was_loaded, "flags", flags, auto_flags_reader<trait_flag_str_id> {} );
-    optional( jo, was_loaded, "types", types, string_reader{} );
-    optional( jo, was_loaded, "enchantments", enchantments );
-
-    for( const std::string s : jo.get_array( "no_cbm_on_bp" ) ) {
-        no_cbm_on_bp.emplace( s );
-    }
-
-    optional( jo, was_loaded, "body_size", body_size );
-
-    optional( jo, was_loaded, "category", category, string_id_reader<mutation_category_trait> {} );
-
+    // Array of [id, value] pairs
     for( JsonArray ja : jo.get_array( "spells_learned" ) ) {
         const spell_id sp( ja.next_string() );
         spells_learned.emplace( sp, ja.next_int() );
@@ -494,6 +511,7 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
         }
     }
 
+    // Array of [bodypart, value] pairs
     for( JsonArray ja : jo.get_array( "lumination" ) ) {
         const body_part bp = get_body_part_token( ja.next_string() );
         lumination.emplace( bp, static_cast<float>( ja.next_float() ) );
@@ -502,9 +520,9 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     for( JsonArray ja : jo.get_array( "anger_relations" ) ) {
         const species_id spe = species_id( ja.next_string() );
         anger_relations.emplace( spe, ja.next_int() );
-
     }
 
+    // Complex nested objects
     for( JsonObject wp : jo.get_array( "wet_protection" ) ) {
         std::string part_id = wp.get_string( "part" );
         int ignored = wp.get_int( "ignored", 0 );
@@ -534,12 +552,12 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
         allowed_items.insert( flag_id( line ) );
     }
 
+    // Complex armor loading with special "ALL" handling
     for( JsonObject ao : jo.get_array( "armor" ) ) {
         auto parts = ao.get_tags( "parts" );
         std::set<body_part> bps;
         for( const std::string &part_string : parts ) {
             if( part_string == "ALL" ) {
-                // Shorthand, since many mutations protect whole body
                 bps.insert( all_body_parts.begin(), all_body_parts.end() );
             } else {
                 bps.insert( get_body_part_token( part_string ) );

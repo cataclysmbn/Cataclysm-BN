@@ -4,11 +4,18 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <type_traits>
 #include <vector>
 
+#include "calendar.h"
 #include "catalua_sol.h"
 #include "data_reader.h"
 #include "translations.h"
+#include "units.h"
+
+// Forward declarations for type detection
+template<typename T> class string_id;
+template<typename T> class int_id;
 
 class JsonOut;
 class LuaArrayWrapper;
@@ -109,6 +116,25 @@ class LuaTableWrapper
         // throw_on_error controls behavior when member exists but is wrong type
         template<typename T>
         bool read( const std::string &name, T &value, bool throw_on_error = true ) const;
+
+        // Non-template overloads for basic types (defined in lua_table_wrapper.cpp)
+        // These are preferred over the template for exact type matches
+        bool read( const std::string &name, bool &value, bool throw_on_error = true ) const;
+        bool read( const std::string &name, int &value, bool throw_on_error = true ) const;
+        bool read( const std::string &name, double &value, bool throw_on_error = true ) const;
+        bool read( const std::string &name, float &value, bool throw_on_error = true ) const;
+        bool read( const std::string &name, std::string &value, bool throw_on_error = true ) const;
+        bool read( const std::string &name, translation &value, bool throw_on_error = true ) const;
+        bool read( const std::string &name, std::vector<std::string> &value,
+                   bool throw_on_error = true ) const;
+        bool read( const std::string &name, std::vector<translation> &value,
+                   bool throw_on_error = true ) const;
+        bool read( const std::string &name, time_duration &value,
+                   bool throw_on_error = true ) const;
+        bool read( const std::string &name, units::energy &value,
+                   bool throw_on_error = true ) const;
+        bool read( const std::string &name, units::mass &value,
+                   bool throw_on_error = true ) const;
 
         // Error handling - mirrors JsonObject interface
         [[noreturn]] void throw_error( const std::string &err ) const;
@@ -233,3 +259,284 @@ class LuaArrayWrapper::const_iterator
  * Used by data dumper to serialize Lua values.
  */
 void write_lua_value_as_json( JsonOut &jsout, const sol::object &val );
+
+// ============================================================================
+// Template implementations for LuaTableWrapper::read()
+// These must be in the header so they can be instantiated in other translation units.
+// Explicit specializations for basic types (bool, int, double, float, std::string,
+// time_duration, units::energy, units::mass, translation) are in lua_table_wrapper.cpp.
+// ============================================================================
+
+// Type trait to detect if T has a .str() method (like string_id types)
+template<typename T, typename = void>
+struct has_str_method : std::false_type {};
+
+template<typename T>
+struct has_str_method<T, std::void_t<decltype( std::declval<T>().str() )>> : std::true_type {};
+
+template<typename T>
+inline constexpr bool has_str_method_v = has_str_method<T>::value;
+
+// Type trait to detect string_id<X> types
+template<typename T>
+struct is_string_id : std::false_type {};
+
+template<typename T>
+struct is_string_id<string_id<T>> : std::true_type {};
+
+template<typename T>
+inline constexpr bool is_string_id_v = is_string_id<T>::value;
+
+// Type trait to detect int_id<X> types
+template<typename T>
+struct is_int_id : std::false_type {};
+
+template<typename T>
+struct is_int_id<int_id<T>> : std::true_type {};
+
+template<typename T>
+inline constexpr bool is_int_id_v = is_int_id<T>::value;
+
+// Type trait to detect std::optional<X> types
+// Note: Named lua_is_optional to avoid conflict with is_optional in assign.h
+template<typename T>
+struct lua_is_optional : std::false_type {};
+
+template<typename T>
+struct lua_is_optional<std::optional<T>> : std::true_type {};
+
+template<typename T>
+inline constexpr bool lua_is_optional_v = lua_is_optional<T>::value;
+
+// Type trait to extract inner type from std::optional
+template<typename T>
+struct optional_inner_type {};
+
+template<typename T>
+struct optional_inner_type<std::optional<T>> {
+    using type = T;
+};
+
+template<typename T>
+using optional_inner_type_t = typename optional_inner_type<T>::type;
+
+// Type trait to detect std::vector<X> types
+template<typename T>
+struct is_std_vector : std::false_type {};
+
+template<typename T, typename A>
+struct is_std_vector<std::vector<T, A>> : std::true_type {};
+
+template<typename T>
+inline constexpr bool is_std_vector_v = is_std_vector<T>::value;
+
+// Type trait to detect std::set<X> types
+template<typename T>
+struct is_std_set : std::false_type {};
+
+template<typename T, typename C, typename A>
+struct is_std_set<std::set<T, C, A>> : std::true_type {};
+
+template<typename T>
+inline constexpr bool is_std_set_v = is_std_set<T>::value;
+
+// Note: LuaTableWrapper has non-template overloads of read() for basic types
+// (bool, int, double, float, std::string, time_duration, units::energy, units::mass,
+// translation, std::vector<std::string>, std::vector<translation>) defined in
+// lua_table_wrapper.cpp. C++ overload resolution will prefer these over the template
+// when the types match exactly.
+
+// General template implementation for LuaTableWrapper::read()
+// This handles types not covered by explicit specializations.
+template<typename T>
+bool LuaTableWrapper::read( const std::string &name, T &value, bool throw_on_error ) const
+{
+    if( !has_member( name ) ) {
+        return false;
+    }
+    mark_visited( name );
+    sol::object obj = table_[name];
+
+    // Handle string_id types (e.g., trait_id, bionic_id) - construct from string
+    if constexpr( is_string_id_v<T> || ( has_str_method_v<T> && !std::is_same_v<T, std::string> ) ) {
+        if( obj.is<std::string>() ) {
+            value = T( obj.as<std::string>() );
+            return true;
+        }
+        if( throw_on_error ) {
+            throw_error( "expected string for string_id type", name );
+        }
+        return false;
+    }
+    // Handle int_id types - construct from string
+    else if constexpr( is_int_id_v<T> ) {
+        if( obj.is<std::string>() ) {
+            value = T( obj.as<std::string>() );
+            return true;
+        }
+        if( throw_on_error ) {
+            throw_error( "expected string for int_id type", name );
+        }
+        return false;
+    }
+    // Handle std::optional<X> types
+    else if constexpr( lua_is_optional_v<T> ) {
+        using InnerType = optional_inner_type_t<T>;
+        // If the value is nil, return nullopt
+        if( obj.is<sol::lua_nil_t>() ) {
+            value = std::nullopt;
+            return true;
+        }
+        // Try to read the inner value using the same read logic
+        // We already marked this as visited, so we can try to parse the value directly
+        InnerType inner_value{};
+        // For basic types, do direct conversion
+        if constexpr( std::is_same_v<InnerType, int> ) {
+            if( obj.is<int>() ) {
+                value = obj.as<int>();
+                return true;
+            }
+            if( obj.is<double>() ) {
+                value = static_cast<int>( obj.as<double>() );
+                return true;
+            }
+        } else if constexpr( std::is_same_v<InnerType, double> || std::is_same_v<InnerType, float> ) {
+            if( obj.is<double>() || obj.is<int>() ) {
+                value = static_cast<InnerType>( obj.is<double>() ? obj.as<double>() :
+                                                static_cast<double>( obj.as<int>() ) );
+                return true;
+            }
+        } else if constexpr( std::is_same_v<InnerType, std::string> ) {
+            if( obj.is<std::string>() ) {
+                value = obj.as<std::string>();
+                return true;
+            }
+        } else if constexpr( std::is_same_v<InnerType, bool> ) {
+            if( obj.is<bool>() ) {
+                value = obj.as<bool>();
+                return true;
+            }
+        } else if constexpr( is_string_id_v<InnerType> || has_str_method_v<InnerType> ) {
+            if( obj.is<std::string>() ) {
+                value = InnerType( obj.as<std::string>() );
+                return true;
+            }
+        }
+        // Fallback: try direct sol conversion
+        if( obj.is<InnerType>() ) {
+            value = obj.as<InnerType>();
+            return true;
+        }
+        if( throw_on_error ) {
+            throw_error( "failed to read optional value", name );
+        }
+        return false;
+    }
+    // Handle std::vector<X> types
+    else if constexpr( is_std_vector_v<T> ) {
+        using ValueType = typename T::value_type;
+        if( obj.is<sol::table>() ) {
+            sol::table tbl = obj.as<sol::table>();
+            value.clear();
+            for( auto &pair : tbl ) {
+                // Try to read each element
+                if constexpr( std::is_same_v<ValueType, std::string> ) {
+                    if( pair.second.is<std::string>() ) {
+                        value.push_back( pair.second.template as<std::string>() );
+                    }
+                } else if constexpr( std::is_same_v<ValueType, int> ) {
+                    if( pair.second.is<int>() ) {
+                        value.push_back( pair.second.template as<int>() );
+                    } else if( pair.second.is<double>() ) {
+                        value.push_back( static_cast<int>( pair.second.template as<double>() ) );
+                    }
+                } else if constexpr( is_string_id_v<ValueType> || has_str_method_v<ValueType> ) {
+                    if( pair.second.is<std::string>() ) {
+                        value.push_back( ValueType( pair.second.template as<std::string>() ) );
+                    }
+                } else if constexpr( std::is_same_v<ValueType, translation> ) {
+                    if( pair.second.is<std::string>() ) {
+                        value.push_back( translation::to_translation( pair.second.template as<std::string>() ) );
+                    }
+                }
+                // Add more element types as needed
+            }
+            return true;
+        }
+        // Single value -> single-element vector
+        if constexpr( is_string_id_v<ValueType> || has_str_method_v<ValueType> ) {
+            if( obj.is<std::string>() ) {
+                value.clear();
+                value.push_back( ValueType( obj.as<std::string>() ) );
+                return true;
+            }
+        }
+        if( throw_on_error ) {
+            throw_error( "expected array", name );
+        }
+        return false;
+    }
+    // Handle std::set<X> types
+    else if constexpr( is_std_set_v<T> ) {
+        using ValueType = typename T::value_type;
+        if( obj.is<sol::table>() ) {
+            sol::table tbl = obj.as<sol::table>();
+            value.clear();
+            for( auto &pair : tbl ) {
+                if constexpr( std::is_same_v<ValueType, std::string> ) {
+                    if( pair.second.is<std::string>() ) {
+                        value.insert( pair.second.template as<std::string>() );
+                    }
+                } else if constexpr( is_string_id_v<ValueType> || has_str_method_v<ValueType> ) {
+                    if( pair.second.is<std::string>() ) {
+                        value.insert( ValueType( pair.second.template as<std::string>() ) );
+                    }
+                }
+                // Add more element types as needed
+            }
+            return true;
+        }
+        // Single value -> single-element set
+        if constexpr( is_string_id_v<ValueType> || has_str_method_v<ValueType> ) {
+            if( obj.is<std::string>() ) {
+                value.clear();
+                value.insert( ValueType( obj.as<std::string>() ) );
+                return true;
+            }
+        }
+        if( throw_on_error ) {
+            throw_error( "expected array for set", name );
+        }
+        return false;
+    }
+    // Handle enum types - read as string and convert
+    else if constexpr( std::is_enum_v<T> ) {
+        if( obj.is<std::string>() ) {
+            // This requires io::string_to_enum to be available
+            // For now, try direct conversion from int if it's an int
+            if( throw_on_error ) {
+                throw_error( "enum reading from Lua not yet fully supported", name );
+            }
+            return false;
+        }
+        if( obj.is<int>() ) {
+            value = static_cast<T>( obj.as<int>() );
+            return true;
+        }
+        if( throw_on_error ) {
+            throw_error( "expected int or string for enum", name );
+        }
+        return false;
+    }
+    // Try direct sol conversion as last resort
+    else {
+        if( obj.is<T>() ) {
+            value = obj.as<T>();
+            return true;
+        }
+        if( throw_on_error ) {
+            throw_error( "failed to read value (type mismatch)", name );
+        }
+        return false;
+    }
+}

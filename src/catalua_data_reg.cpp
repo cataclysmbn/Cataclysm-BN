@@ -922,38 +922,7 @@ effect_type lua_table_to_effect_type( const std::string &id, const sol::table &d
 
     eff.id = efftype_id( id );
 
-    // Basic string fields
-    optional( reader, was_loaded, "apply_message", eff.apply_message );
-    optional( reader, was_loaded, "remove_message", eff.remove_message );
-    optional( reader, was_loaded, "apply_memorial_log", eff.apply_memorial_log );
-    optional( reader, was_loaded, "remove_memorial_log", eff.remove_memorial_log );
-    optional( reader, was_loaded, "blood_analysis_description", eff.blood_analysis_description );
-    optional( reader, was_loaded, "looks_like", eff.looks_like );
-    optional( reader, was_loaded, "speed_name", eff.speed_mod_name );
-
-    // Integer fields
-    optional( reader, was_loaded, "max_intensity", eff.max_intensity );
-    optional( reader, was_loaded, "max_effective_intensity", eff.max_effective_intensity );
-    optional( reader, was_loaded, "dur_add_perc", eff.dur_add_perc );
-    optional( reader, was_loaded, "int_add_val", eff.int_add_val );
-    optional( reader, was_loaded, "int_decay_step", eff.int_decay_step );
-    optional( reader, was_loaded, "int_decay_tick", eff.int_decay_tick );
-
-    // Boolean fields
-    optional( reader, was_loaded, "part_descs", eff.part_descs );
-    optional( reader, was_loaded, "main_parts_only", eff.main_parts_only );
-    optional( reader, was_loaded, "show_in_info", eff.show_in_info );
-    optional( reader, was_loaded, "permanent", eff.permanent );
-    optional( reader, was_loaded, "pkill_addict_reduces", eff.pkill_addict_reduces );
-    optional( reader, was_loaded, "pain_sizing", eff.pain_sizing );
-    optional( reader, was_loaded, "hurt_sizing", eff.hurt_sizing );
-    optional( reader, was_loaded, "harmful_cough", eff.harmful_cough );
-
-    // Duration fields (handled via LuaTableWrapper::read specialization)
-    optional( reader, was_loaded, "max_duration", eff.max_duration );
-    optional( reader, was_loaded, "int_dur_factor", eff.int_dur_factor );
-
-    // Translation arrays
+    eff.load_fields( reader, was_loaded );
     optional( reader, was_loaded, "name", eff.name );
     optional( reader, was_loaded, "desc", eff.desc );
     optional( reader, was_loaded, "reduced_desc", eff.reduced_desc );
@@ -964,8 +933,6 @@ effect_type lua_table_to_effect_type( const std::string &id, const sol::table &d
         eff.rating = parse_effect_rating( rating_str );
     }
 
-    // String ID arrays - still use helper functions for now
-    // (these need sol::table access for the complex type handling)
     sol::optional<sol::table> resist_traits_tbl = def["resist_traits"];
     if( resist_traits_tbl ) {
         eff.resist_traits = get_string_id_array<mutation_branch>( def, "resist_traits" );
@@ -1048,7 +1015,6 @@ mutation_branch lua_table_to_mutation(const std::string& id, const sol::table& d
     mutation_branch mut;
     LuaTableWrapper reader(def);
 
-    // Handle copy_from
     if (reader.has_member("copy_from")) {
         std::string copy_from_str = reader.get_string("copy_from");
         trait_id base_id(copy_from_str);
@@ -1064,123 +1030,12 @@ mutation_branch lua_table_to_mutation(const std::string& id, const sol::table& d
     mut.id = trait_id(id);
     mut.was_loaded = true;
 
-    // Name and description - use translation
-    if (reader.has_member("name")) {
-        translation name_t;
-        reader.read("name", name_t);
-        mut.set_name(name_t);
-    }
-    if (reader.has_member("description")) {
-        translation desc_t;
-        reader.read("description", desc_t);
-        mut.set_description(desc_t);
-    }
+    mut.load_fields(reader, was_loaded);
 
-    // Integer fields
-    optional(reader, was_loaded, "points", mut.points);
-    optional(reader, was_loaded, "visibility", mut.visibility);
-    optional(reader, was_loaded, "ugliness", mut.ugliness);
-    optional(reader, was_loaded, "cost", mut.cost);
-    optional(reader, was_loaded, "cooldown", mut.cooldown);
-    optional(reader, was_loaded, "bodytemp_min", mut.bodytemp_min);
-    optional(reader, was_loaded, "bodytemp_max", mut.bodytemp_max);
-    optional(reader, was_loaded, "bodytemp_sleep", mut.bodytemp_sleep);
-
-    // Boolean fields
-    optional(reader, was_loaded, "valid", mut.valid);
-    optional(reader, was_loaded, "purifiable", mut.purifiable);
-    optional(reader, was_loaded, "threshold", mut.threshold);
-    optional(reader, was_loaded, "profession", mut.profession);
-    optional(reader, was_loaded, "debug", mut.debug);
-    optional(reader, was_loaded, "player_display", mut.player_display);
-    optional(reader, was_loaded, "mixed_effect", mut.mixed_effect);
-    optional(reader, was_loaded, "starting_trait", mut.startingtrait);
-    optional(reader, was_loaded, "activated", mut.activated);
-    optional(reader, was_loaded, "starts_active", mut.starts_active);
-    optional(reader, was_loaded, "allow_soft_gear", mut.allow_soft_gear);
-    optional(reader, was_loaded, "allowed_items_only", mut.allowed_items_only);
-
-    // Float fields
-    optional(reader, was_loaded, "hp_modifier", mut.hp_modifier);
-    optional(reader, was_loaded, "hp_modifier_secondary", mut.hp_modifier_secondary);
-    optional(reader, was_loaded, "hp_adjustment", mut.hp_adjustment);
-    optional(reader, was_loaded, "str_modifier", mut.str_modifier);
-    optional(reader, was_loaded, "dodge_modifier", mut.dodge_modifier);
-    optional(reader, was_loaded, "speed_modifier", mut.speed_modifier);
-    optional(reader, was_loaded, "movecost_modifier", mut.movecost_modifier);
-    optional(reader, was_loaded, "attackcost_modifier", mut.attackcost_modifier);
-    optional(reader, was_loaded, "pain_recovery", mut.pain_recovery);
-    optional(reader, was_loaded, "healing_awake", mut.healing_awake);
-    optional(reader, was_loaded, "healing_resting", mut.healing_resting);
-    optional(reader, was_loaded, "mending_modifier", mut.mending_modifier);
-    optional(reader, was_loaded, "weight_capacity_modifier", mut.weight_capacity_modifier);
-    optional(reader, was_loaded, "hearing_modifier", mut.hearing_modifier);
-    optional(reader, was_loaded, "stealth_modifier", mut.stealth_modifier);
-    optional(reader, was_loaded, "night_vision_range", mut.night_vision_range);
-    optional(reader, was_loaded, "metabolism_modifier", mut.metabolism_modifier);
-    optional(reader, was_loaded, "thirst_modifier", mut.thirst_modifier);
-    optional(reader, was_loaded, "fatigue_modifier", mut.fatigue_modifier);
-    optional(reader, was_loaded, "stamina_regen_modifier", mut.stamina_regen_modifier);
-
-    // String ID arrays - still use helper functions for complex types
-    sol::optional<sol::table> prereqs = def["prereqs"];
-    if (prereqs) {
-        mut.prereqs = get_string_id_array<mutation_branch>(def, "prereqs");
-    }
-
-    sol::optional<sol::table> prereqs2 = def["prereqs2"];
-    if (prereqs2) {
-        mut.prereqs2 = get_string_id_array<mutation_branch>(def, "prereqs2");
-    }
-
-    sol::optional<sol::table> cancels = def["cancels"];
-    if (cancels) {
-        mut.cancels = get_string_id_array<mutation_branch>(def, "cancels");
-    }
-
-    sol::optional<sol::table> changes_to = def["changes_to"];
-    if (changes_to) {
-        mut.replacements = get_string_id_array<mutation_branch>(def, "changes_to");
-    }
-
-    sol::optional<sol::table> leads_to = def["leads_to"];
-    if (leads_to) {
-        mut.additions = get_string_id_array<mutation_branch>(def, "leads_to");
-    }
-
-    sol::optional<sol::table> category = def["category"];
-    if (category) {
-        mut.category = get_string_id_array<mutation_category_trait>(def, "category");
-    }
-
-    sol::optional<sol::table> types = def["types"];
-    if (types) {
-        mut.types = get_string_set(def, "types");
-    }
-
-    // Flags
-    sol::optional<sol::table> flags_tbl = def["flags"];
-    if (flags_tbl) {
-        mut.flags.clear();
-        for (auto& pair : *flags_tbl) {
-            if (pair.second.is<trait_flag_str_id>()) {
-                mut.flags.insert(pair.second.as<trait_flag_str_id>());
-            }
-            else if (pair.second.is<std::string>()) {
-                mut.flags.insert(trait_flag_str_id(pair.second.as<std::string>()));
-            }
-        }
-    }
-
-    // Complex structured data
+    // Complex structured data using Lua-specific helpers
     sol::optional<sol::table> armor = def["armor"];
     if (armor) {
         mut.armor = get_mutation_armor(def, "armor");
-    }
-
-    sol::optional<sol::table> enchantments = def["enchantments"];
-    if (enchantments) {
-        mut.enchantments = get_string_id_array<enchantment>(def, "enchantments");
     }
 
     sol::optional<sol::table> lumination = def["lumination"];
@@ -1203,12 +1058,12 @@ mutation_branch lua_table_to_mutation(const std::string& id, const sol::table& d
         mut.restricts_gear = get_bodypart_set(def, "restricts_gear");
     }
 
-    sol::optional<sol::table> allowed_items = def["allowed_items"];
-    if (allowed_items) {
+    sol::optional<sol::table> allowed_items_tbl = def["allowed_items"];
+    if (allowed_items_tbl) {
         mut.allowed_items = get_flag_id_set(def, "allowed_items");
     }
 
-    // Item IDs
+    // Item IDs (special handling for string/ID type flexibility)
     sol::object spawn_item = def["spawn_item"];
     if (spawn_item.valid() && !spawn_item.is<sol::lua_nil_t>()) {
         if (spawn_item.is<itype_id>()) {
@@ -1227,11 +1082,6 @@ mutation_branch lua_table_to_mutation(const std::string& id, const sol::table& d
         else if (ranged_mutation.is<std::string>()) {
             mut.ranged_mutation = itype_id(ranged_mutation.as<std::string>());
         }
-    }
-
-    sol::optional<sol::table> initial_ma_styles = def["initial_ma_styles"];
-    if (initial_ma_styles) {
-        mut.initial_ma_styles = get_string_id_array<martialart>(def, "initial_ma_styles");
     }
 
     sol::optional<sol::table> vitamin_rates = def["vitamin_rates"];
@@ -1254,7 +1104,7 @@ mutation_branch lua_table_to_mutation(const std::string& id, const sol::table& d
         mut.social_mods = get_social_modifiers(def, "social_modifiers");
     }
 
-    // Allow unvisited members
+    // Allow unvisited members (for forward compatibility)
     reader.allow_omitted_members();
 
     return mut;
@@ -1280,39 +1130,10 @@ bionic_data lua_table_to_bionic(const std::string& id, const sol::table& def)
     const bool was_loaded = reader.has_member("copy_from");
     bio.id = bionic_id(id);
 
-    // Name and description - use translation
-    optional(reader, was_loaded, "name", bio.name);
-    optional(reader, was_loaded, "description", bio.description);
+    bio.load_fields( reader, was_loaded );
 
-    // Energy fields
-    optional(reader, was_loaded, "power_activate", bio.power_activate);
-    optional(reader, was_loaded, "power_deactivate", bio.power_deactivate);
-    optional(reader, was_loaded, "power_over_time", bio.power_over_time);
-    optional(reader, was_loaded, "power_trigger", bio.power_trigger);
-    optional(reader, was_loaded, "capacity", bio.capacity);
-    optional(reader, was_loaded, "remote_fuel_draw", bio.remote_fuel_draw);
+    bio.is_remote_fueled = bio.remote_fuel_draw > 0_J;
 
-    // Integer fields
-    optional(reader, was_loaded, "charge_time", bio.charge_time);
-    optional(reader, was_loaded, "kcal_trigger", bio.kcal_trigger);
-    optional(reader, was_loaded, "fuel_capacity", bio.fuel_capacity);
-    optional(reader, was_loaded, "fuel_multiplier", bio.fuel_multiplier);
-
-    // Boolean fields
-    optional(reader, was_loaded, "activated", bio.activated);
-    optional(reader, was_loaded, "included", bio.included);
-    optional(reader, was_loaded, "is_remote_fueled", bio.is_remote_fueled);
-    optional(reader, was_loaded, "exothermic_power_gen", bio.exothermic_power_gen);
-
-    // Float fields
-    optional(reader, was_loaded, "weight_capacity_modifier", bio.weight_capacity_modifier);
-    optional(reader, was_loaded, "fuel_efficiency", bio.fuel_efficiency);
-    optional(reader, was_loaded, "passive_fuel_efficiency", bio.passive_fuel_efficiency);
-
-    // Mass field
-    optional(reader, was_loaded, "weight_capacity_bonus", bio.weight_capacity_bonus);
-
-    // Complex structured data - still use helper functions
     sol::optional<sol::table> occupied = def["occupied_bodyparts"];
     if (occupied) {
         bio.occupied_bodyparts = get_bodypart_int_map(def, "occupied_bodyparts");
@@ -1348,10 +1169,10 @@ bionic_data lua_table_to_bionic(const std::string& id, const sol::table& def)
         bio.canceled_mutations = get_string_id_array<mutation_branch>(def, "canceled_mutations");
     }
 
-    sol::optional<sol::table> fuel_opts = def["fuel_opts"];
-    if (fuel_opts) {
+    sol::optional<sol::table> fuel_opts_tbl = def["fuel_options"];
+    if (fuel_opts_tbl) {
         bio.fuel_opts.clear();
-        for (auto& pair : *fuel_opts) {
+        for (auto& pair : *fuel_opts_tbl) {
             if (pair.second.is<itype_id>()) {
                 bio.fuel_opts.push_back(pair.second.as<itype_id>());
             }
@@ -1362,7 +1183,7 @@ bionic_data lua_table_to_bionic(const std::string& id, const sol::table& def)
     }
 
     sol::object fake_item = def["fake_item"];
-    if (fake_item.valid()) {
+    if (fake_item.valid() && !fake_item.is<sol::lua_nil_t>()) {
         if (fake_item.is<itype_id>()) {
             bio.fake_item = fake_item.as<itype_id>();
         }
@@ -1430,6 +1251,11 @@ bionic_data lua_table_to_bionic(const std::string& id, const sol::table& def)
     if (coverage_penalty.valid() && !coverage_penalty.is<sol::lua_nil_t>()) {
         bio.coverage_power_gen_penalty = get_optional_float(def, "coverage_power_gen_penalty");
     }
+
+    // Computed activation state (same logic as JSON loading)
+    bio.activated = bio.has_flag( flag_id( "BIONIC_TOGGLED" ) ) ||
+                    bio.power_activate > 0_kJ ||
+                    bio.charge_time > 0;
 
     // Allow unvisited members
     reader.allow_omitted_members();

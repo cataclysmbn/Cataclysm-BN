@@ -17,6 +17,12 @@ void volume::serialize( JsonOut &jsout ) const
 }
 
 template<>
+void volume::deserialize( JsonIn &jsin )
+{
+    *this = read_from_json_string( jsin, units::volume_units );
+}
+
+template<>
 void mass::serialize( JsonOut &jsout ) const
 {
     if( value_ % 1000000 == 0 ) {
@@ -26,6 +32,12 @@ void mass::serialize( JsonOut &jsout ) const
     } else {
         jsout.write( string_format( "%d mg", value_ ) );
     }
+}
+
+template<>
+void mass::deserialize( JsonIn &jsin )
+{
+    *this = read_from_json_string( jsin, units::mass_units );
 }
 
 template<>

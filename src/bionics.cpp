@@ -79,6 +79,8 @@
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
+#include "lua_table_wrapper.h"
+#include "schema.h"
 #include "value_ptr.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -284,40 +286,76 @@ void bionic_data::reset()
     faulty_bionics.clear();
 }
 
+SCHEMA_FIELDS_BEGIN( bionic_data )
+{
+    // Mandatory fields
+    SCHEMA_FIELD_MANDATORY( "name", name )
+    SCHEMA_FIELD_MANDATORY( "description", description )
+
+    // Energy fields (JSON uses abbreviated names)
+    SCHEMA_FIELD_OPTIONAL( "act_cost", power_activate, 0_kJ )
+    SCHEMA_FIELD_OPTIONAL( "deact_cost", power_deactivate, 0_kJ )
+    SCHEMA_FIELD_OPTIONAL( "react_cost", power_over_time, 0_kJ )
+    SCHEMA_FIELD_OPTIONAL( "trigger_cost", power_trigger, 0_kJ )
+    SCHEMA_FIELD_OPTIONAL( "capacity", capacity, 0_kJ )
+    SCHEMA_FIELD_OPTIONAL( "remote_fuel_draw", remote_fuel_draw, 0_J )
+
+    // Integer fields
+    SCHEMA_FIELD_OPTIONAL( "kcal_trigger_cost", kcal_trigger, 0 )
+    SCHEMA_FIELD_OPTIONAL( "time", charge_time, 0 )
+    SCHEMA_FIELD_OPTIONAL( "fuel_capacity", fuel_capacity, 0 )
+    SCHEMA_FIELD_OPTIONAL( "fuel_multiplier", fuel_multiplier, 1 )
+    SCHEMA_FIELD_OPTIONAL( "points", points, 0 )
+
+    // Boolean fields
+    SCHEMA_FIELD_OPTIONAL( "included", included, false )
+    SCHEMA_FIELD_OPTIONAL( "exothermic_power_gen", exothermic_power_gen, false )
+    SCHEMA_FIELD_OPTIONAL( "can_uninstall", can_uninstall, true )
+    SCHEMA_FIELD_OPTIONAL( "starting_bionic", starting_bionic, false )
+
+    // Float fields
+    SCHEMA_FIELD_OPTIONAL( "weight_capacity_modifier", weight_capacity_modifier, 1.0f )
+    SCHEMA_FIELD_OPTIONAL( "fuel_efficiency", fuel_efficiency, 0.0f )
+    SCHEMA_FIELD_OPTIONAL( "passive_fuel_efficiency", passive_fuel_efficiency, 0.0f )
+
+    // Mass field
+    SCHEMA_FIELD_OPTIONAL( "weight_capacity_bonus", weight_capacity_bonus, 0_gram )
+
+    // String fields
+    SCHEMA_FIELD_OPTIONAL( "no_uninstall_reason", no_uninstall_reason, std::string() )
+    SCHEMA_FIELDS_END()
+}
+
+// Explicit template instantiations for JSON and Lua loading
+template void bionic_data::load_fields<JsonObject>( const JsonObject &, bool );
+template void bionic_data::load_fields<LuaTableWrapper>( const LuaTableWrapper &, bool );
+
 void bionic_data::load( const JsonObject &jsobj, const std::string &src )
 {
     const bool strict = is_strict_enabled( src );
 
-    mandatory( jsobj, was_loaded, "name", name );
-    mandatory( jsobj, was_loaded, "description", description );
+    load_fields( jsobj, was_loaded );
 
-    assign( jsobj, "act_cost", power_activate, strict, 0_kJ );
-    assign( jsobj, "deact_cost", power_deactivate, strict, 0_kJ );
-    assign( jsobj, "react_cost", power_over_time, strict, 0_kJ );
-    assign( jsobj, "trigger_cost", power_trigger, strict, 0_kJ );
-    assign( jsobj, "kcal_trigger_cost", kcal_trigger, strict, 0 );
-    assign( jsobj, "time", charge_time, strict, 0 );
-    assign( jsobj, "capacity", capacity, strict, 0_kJ );
-    assign( jsobj, "included", included, strict );
-    assign( jsobj, "weight_capacity_modifier", weight_capacity_modifier, strict, 1.0f );
-    assign( jsobj, "weight_capacity_bonus", weight_capacity_bonus, strict, 0_gram );
+    // Stat bonus map from array
     assign_map_from_array( jsobj, "stat_bonus", stat_bonus, strict );
-    assign( jsobj, "remote_fuel_draw", remote_fuel_draw, strict, 0_J );
+
+    // Computed field based on loaded value
     is_remote_fueled = remote_fuel_draw > 0_J;
+
+    // Fuel-related fields with assign for copy-from support
     assign( jsobj, "fuel_options", fuel_opts, strict );
-    assign( jsobj, "fuel_capacity", fuel_capacity, strict, 0 );
-    assign( jsobj, "fuel_efficiency", fuel_efficiency, strict, 0.0f );
-    assign( jsobj, "fuel_multiplier", fuel_multiplier, strict, 0 );
-    assign( jsobj, "passive_fuel_efficiency", passive_fuel_efficiency, strict, 0.0f );
     assign( jsobj, "coverage_power_gen_penalty", coverage_power_gen_penalty, strict );
-    assign( jsobj, "exothermic_power_gen", exothermic_power_gen, strict );
     assign( jsobj, "power_gen_emission", power_gen_emission, strict );
+
+    // Bodypart protection maps
     assign_map_from_array( jsobj, "env_protec", env_protec, strict );
     assign_map_from_array( jsobj, "bash_protec", bash_protec, strict );
     assign_map_from_array( jsobj, "cut_protec", cut_protec, strict );
     assign_map_from_array( jsobj, "bullet_protec", bullet_protec, strict );
     assign_map_from_array( jsobj, "occupied_bodyparts", occupied_bodyparts, strict );
     assign_map_from_array( jsobj, "encumbrance", encumbrance, strict );
+
+    // ID-based fields
     assign( jsobj, "fake_item", fake_item, strict );
     assign( jsobj, "canceled_mutations", canceled_mutations, strict );
     assign( jsobj, "enchantments", enchantments, strict );
@@ -327,12 +365,8 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
     assign( jsobj, "upgraded_bionic", upgraded_bionic, strict );
     assign( jsobj, "available_upgrades", available_upgrades, strict );
     assign( jsobj, "flags", flags, strict );
-    assign( jsobj, "can_uninstall", can_uninstall, strict );
-    assign( jsobj, "no_uninstall_reason", no_uninstall_reason, strict );
-    assign( jsobj, "starting_bionic", starting_bionic, strict );
-    assign( jsobj, "points", points, strict );
 
-
+    // Computed activation state
     activated = has_flag( flag_BIONIC_TOGGLED ) ||
                 power_activate > 0_kJ ||
                 charge_time > 0;

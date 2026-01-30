@@ -860,7 +860,8 @@ template<DataReader Reader, typename MemberType> requires( !SupportsProportional
 inline bool handle_proportional( const Reader &reader, const std::string &name, MemberType & )
 {
     if( reader.has_object( "proportional" ) ) {
-        Reader proportional = reader.get_object( "proportional" );
+        // Use auto to allow move semantics for types with deleted copy constructors
+        auto proportional = reader.get_object( "proportional" );
         proportional.allow_omitted_members();
         if( proportional.has_member( name ) ) {
             debugmsg( "Member %s of type %s does not support proportional", name,
@@ -874,7 +875,8 @@ template<DataReader Reader, SupportsProportional MemberType>
 inline bool handle_proportional( const Reader &reader, const std::string &name, MemberType &member )
 {
     if( reader.has_object( "proportional" ) ) {
-        Reader proportional = reader.get_object( "proportional" );
+        // Use auto to allow move semantics for types with deleted copy constructors
+        auto proportional = reader.get_object( "proportional" );
         proportional.allow_omitted_members();
         if( !proportional.has_member( name ) ) {
             return false;
@@ -899,7 +901,8 @@ template<DataReader Reader, typename MemberType> requires( !SupportsRelative<Mem
 inline bool handle_relative( const Reader &reader, const std::string &name, MemberType & )
 {
     if( reader.has_object( "relative" ) ) {
-        Reader relative = reader.get_object( "relative" );
+        // Use auto to allow move semantics for types with deleted copy constructors
+        auto relative = reader.get_object( "relative" );
         relative.allow_omitted_members();
         if( relative.has_member( name ) ) {
             debugmsg( "Member %s of type %s does not support relative", name,
@@ -913,7 +916,8 @@ template<DataReader Reader, SupportsRelative MemberType>
 inline bool handle_relative( const Reader &reader, const std::string &name, MemberType &member )
 {
     if( reader.has_object( "relative" ) ) {
-        Reader relative = reader.get_object( "relative" );
+        // Use auto to allow move semantics for types with deleted copy constructors
+        auto relative = reader.get_object( "relative" );
         relative.allow_omitted_members();
         if( !relative.has_member( name ) ) {
             return false;

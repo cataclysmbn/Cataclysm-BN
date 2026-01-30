@@ -415,10 +415,11 @@ std::set<std::string> LuaTableWrapper::get_tags<std::string, std::set<std::strin
 }
 
 // ============================================================================
-// Templated read() implementation
+// Non-template read() overloads for basic types
+// These are declared as non-template overloads in the header, so they must
+// be defined here without template<>.
 // ============================================================================
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, bool &value, bool throw_on_error ) const
 {
     if( !has_member( name ) ) {
@@ -436,7 +437,6 @@ bool LuaTableWrapper::read( const std::string &name, bool &value, bool throw_on_
     return false;
 }
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, int &value, bool throw_on_error ) const
 {
     if( !has_member( name ) ) {
@@ -458,7 +458,6 @@ bool LuaTableWrapper::read( const std::string &name, int &value, bool throw_on_e
     return false;
 }
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, double &value, bool throw_on_error ) const
 {
     if( !has_member( name ) ) {
@@ -480,7 +479,6 @@ bool LuaTableWrapper::read( const std::string &name, double &value, bool throw_o
     return false;
 }
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, float &value, bool throw_on_error ) const
 {
     double d;
@@ -491,7 +489,6 @@ bool LuaTableWrapper::read( const std::string &name, float &value, bool throw_on
     return false;
 }
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, std::string &value,
                             bool throw_on_error ) const
 {
@@ -510,7 +507,6 @@ bool LuaTableWrapper::read( const std::string &name, std::string &value,
     return false;
 }
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, time_duration &value,
                             bool throw_on_error ) const
 {
@@ -553,7 +549,6 @@ bool LuaTableWrapper::read( const std::string &name, time_duration &value,
     return false;
 }
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, units::energy &value,
                             bool throw_on_error ) const
 {
@@ -590,7 +585,6 @@ bool LuaTableWrapper::read( const std::string &name, units::energy &value,
     return false;
 }
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, units::mass &value,
                             bool throw_on_error ) const
 {
@@ -627,7 +621,6 @@ bool LuaTableWrapper::read( const std::string &name, units::mass &value,
     return false;
 }
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, translation &value,
                             bool throw_on_error ) const
 {
@@ -680,7 +673,6 @@ bool LuaTableWrapper::read( const std::string &name, translation &value,
     return false;
 }
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, std::vector<std::string> &value,
                             bool throw_on_error ) const
 {
@@ -714,7 +706,6 @@ bool LuaTableWrapper::read( const std::string &name, std::vector<std::string> &v
     return false;
 }
 
-template<>
 bool LuaTableWrapper::read( const std::string &name, std::vector<translation> &value,
                             bool throw_on_error ) const
 {
