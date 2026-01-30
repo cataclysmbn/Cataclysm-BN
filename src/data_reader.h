@@ -45,22 +45,35 @@ class LuaArrayWrapper;
  * with either JSON or Lua data sources without code duplication.
  */
 template<typename T>
-concept DataReader = requires( const T &reader, const std::string &name ) {
+concept DataReader = requires( const T &reader, const std::string &name )
+{
     // Member existence checking
-    { reader.has_member( name ) } -> std::convertible_to<bool>;
-    { reader.has_bool( name ) } -> std::convertible_to<bool>;
-    { reader.has_int( name ) } -> std::convertible_to<bool>;
-    { reader.has_float( name ) } -> std::convertible_to<bool>;
-    { reader.has_number( name ) } -> std::convertible_to<bool>;
-    { reader.has_string( name ) } -> std::convertible_to<bool>;
-    { reader.has_array( name ) } -> std::convertible_to<bool>;
-    { reader.has_object( name ) } -> std::convertible_to<bool>;
+    { reader.has_member( name ) }
+    -> std::convertible_to<bool>;
+    { reader.has_bool( name ) }
+    -> std::convertible_to<bool>;
+    { reader.has_int( name ) }
+    -> std::convertible_to<bool>;
+    { reader.has_float( name ) }
+    -> std::convertible_to<bool>;
+    { reader.has_number( name ) }
+    -> std::convertible_to<bool>;
+    { reader.has_string( name ) }
+    -> std::convertible_to<bool>;
+    { reader.has_array( name ) }
+    -> std::convertible_to<bool>;
+    { reader.has_object( name ) }
+    -> std::convertible_to<bool>;
 
     // Value reading with defaults
-    { reader.get_bool( name, true ) } -> std::convertible_to<bool>;
-    { reader.get_int( name, 0 ) } -> std::convertible_to<int>;
-    { reader.get_float( name, 0.0 ) } -> std::convertible_to<double>;
-    { reader.get_string( name, std::string{} ) } -> std::convertible_to<std::string>;
+    { reader.get_bool( name, true ) }
+    -> std::convertible_to<bool>;
+    { reader.get_int( name, 0 ) }
+    -> std::convertible_to<int>;
+    { reader.get_float( name, 0.0 ) }
+    -> std::convertible_to<double>;
+    { reader.get_string( name, std::string{} ) }
+    -> std::convertible_to<std::string>;
 
     // Error handling
     { reader.throw_error( std::string{} ) };
@@ -74,10 +87,14 @@ concept DataReader = requires( const T &reader, const std::string &name ) {
  * Concept for array readers (JsonArray and LuaArrayWrapper).
  */
 template<typename T>
-concept DataArray = requires( const T &arr ) {
-    { arr.size() } -> std::convertible_to<size_t>;
-    { arr.empty() } -> std::convertible_to<bool>;
-    { arr.has_more() } -> std::convertible_to<bool>;
+concept DataArray = requires( const T &arr )
+{
+    { arr.size() }
+    -> std::convertible_to<size_t>;
+    { arr.empty() }
+    -> std::convertible_to<bool>;
+    { arr.has_more() }
+    -> std::convertible_to<bool>;
 };
 
 /**

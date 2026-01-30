@@ -301,7 +301,7 @@ class generic_typed_reader
          * Only enabled for types that are NOT JsonObject (to avoid ambiguity).
          */
         template<DataReader Reader, typename C>
-        requires( reader_detail::handler<C>::is_container && !std::is_same_v<Reader, JsonObject> )
+        requires( reader_detail::handler<C>::is_container&& !std::is_same_v<Reader, JsonObject> )
         bool operator()( const Reader &reader, const std::string &member_name,
                          C &container, bool was_loaded ) const {
             const Derived &derived = static_cast<const Derived &>( *this );
@@ -331,7 +331,7 @@ class generic_typed_reader
          * Only enabled for types that are NOT JsonObject (to avoid ambiguity).
          */
         template<DataReader Reader, typename C>
-        requires( !reader_detail::handler<C>::is_container && !std::is_same_v<Reader, JsonObject> )
+        requires( !reader_detail::handler<C>::is_container&& !std::is_same_v<Reader, JsonObject> )
         bool operator()( const Reader &reader, const std::string &member_name,
                          C &member, bool /*was_loaded*/ ) const {
             const Derived &derived = static_cast<const Derived &>( *this );

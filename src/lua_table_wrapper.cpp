@@ -394,7 +394,7 @@ std::vector<std::string> LuaTableWrapper::get_string_array( const std::string &n
 
 template<>
 std::set<std::string> LuaTableWrapper::get_tags<std::string, std::set<std::string>>(
-    const std::string &name ) const
+            const std::string &name ) const
 {
     std::set<std::string> result;
     if( !has_member( name ) ) {
@@ -861,25 +861,22 @@ void write_lua_value_as_json( JsonOut &jsout, const sol::object &val )
                 jsout.write( to_string( val.as<time_duration>() ) );
             } else if( *luna_type == "units::energy" || *luna_type == "Energy" ) {
                 auto e_val = val.as<units::energy>();
-                auto i_val = units::to_kilojoule(e_val);
-                if ( ( i_val * 10 ) % 1 == 0 ) {
+                auto i_val = units::to_kilojoule( e_val );
+                if( ( i_val * 10 ) % 1 == 0 ) {
                     jsout.write( _( "%s kJ", i_val ) );
-                }
-                else {
+                } else {
                     jsout.write( _( "%s J", units::to_joule( e_val ) ) );
                 }
             } else if( *luna_type == "units::mass" || *luna_type == "Mass" ) {
                 units::mass m_val = val.as<units::mass>();
-                auto i_val = units::to_kilogram(m_val);
-                if ( ( i_val * 10 ) % 1 == 0 ) {
+                auto i_val = units::to_kilogram( m_val );
+                if( ( i_val * 10 ) % 1 == 0 ) {
                     jsout.write( _( "%s kg", i_val ) );
-                }
-                else {
-                    i_val = units::to_gram(m_val);
-                    if ( ( i_val * 10 ) % 1 == 0 ) {
+                } else {
+                    i_val = units::to_gram( m_val );
+                    if( ( i_val * 10 ) % 1 == 0 ) {
                         jsout.write( _( "%s g", i_val ) );
-                    }
-                    else {
+                    } else {
                         jsout.write( _( "%s mg", units::to_milligram( m_val ) ) );
                     }
                 }

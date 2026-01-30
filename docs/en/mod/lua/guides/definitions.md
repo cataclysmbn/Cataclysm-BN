@@ -5,6 +5,7 @@ This document describes how to define and modify game data (effects, mutations, 
 ## Overview
 
 Lua data definitions allow mods to programmatically create and modify game content. This is useful for:
+
 - Dynamic content generation
 - Conditional data based on other loaded mods
 - Computed values that would be tedious in JSON
@@ -18,6 +19,7 @@ Data definitions are processed in two phases:
 ### Preload Phase (`game.define.*`)
 
 Tables in the `game.define` namespace are processed **before** JSON data is loaded. Use this for:
+
 - Defining new content that doesn't depend on existing JSON data
 - Content that other mods may want to extend via `copy_from`
 
@@ -34,6 +36,7 @@ game.define.effect_type["my_new_effect"] = {
 ### Finalize Phase (`game.define.finalize_*`)
 
 Tables in the `game.define.finalize_*` namespace are processed **after** all JSON data is loaded. Use this for:
+
 - Extending existing JSON-defined content via `copy_from`
 - Content that references JSON-defined data
 
@@ -73,6 +76,7 @@ game.modify.bionic("bio_power_storage", {
 ### When to Use
 
 Runtime modifications are ideal for:
+
 - Hooks that need to adjust game balance dynamically
 - Callbacks that modify content based on game state
 - Conditional changes based on player choices or world state
@@ -93,6 +97,7 @@ end)
 ### How It Works
 
 When you call `game.modify.effect_type("id", {...})`:
+
 1. The existing object with that ID is looked up
 2. Your modification table is treated as if it had `copy_from = "id"`
 3. A new object is created inheriting from the original
@@ -100,6 +105,7 @@ When you call `game.modify.effect_type("id", {...})`:
 5. The modified object replaces the original
 
 This means you get full support for:
+
 - `proportional` - multiply numeric values
 - `relative` - add to numeric values
 - `extend` - add to arrays/sets
@@ -329,16 +335,18 @@ game.define.finalize_effect_type["stronger_poison"] = {
 ## Complete Example
 
 **modinfo.json:**
+
 ```json
 {
-    "type": "MOD_INFO",
-    "id": "lua_example",
-    "name": "Lua Example Mod",
-    "lua_api_version": 1
+  "type": "MOD_INFO",
+  "id": "lua_example",
+  "name": "Lua Example Mod",
+  "lua_api_version": 1
 }
 ```
 
 **preload.lua:**
+
 ```lua
 -- Define a new effect
 game.define.effect_type["lua_energized"] = {
@@ -364,6 +372,7 @@ game.define.mutation["LUA_QUICK_LEARNER"] = {
 ```
 
 **finalize.lua:**
+
 ```lua
 -- Extend an existing bionic
 game.define.finalize_bionic["bio_power_storage_mkIII"] = {
@@ -375,6 +384,7 @@ game.define.finalize_bionic["bio_power_storage_mkIII"] = {
 ```
 
 **main.lua:**
+
 ```lua
 -- Runtime modification example
 game.add_hook("on_game_load", function()

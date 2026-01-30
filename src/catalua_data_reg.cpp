@@ -1010,98 +1010,95 @@ effect_type lua_table_to_effect_type( const std::string &id, const sol::table &d
     return eff;
 }
 
-mutation_branch lua_table_to_mutation(const std::string& id, const sol::table& def)
+mutation_branch lua_table_to_mutation( const std::string &id, const sol::table &def )
 {
     mutation_branch mut;
-    LuaTableWrapper reader(def);
+    LuaTableWrapper reader( def );
 
-    if (reader.has_member("copy_from")) {
-        std::string copy_from_str = reader.get_string("copy_from");
-        trait_id base_id(copy_from_str);
-        if (base_id.is_valid()) {
+    if( reader.has_member( "copy_from" ) ) {
+        std::string copy_from_str = reader.get_string( "copy_from" );
+        trait_id base_id( copy_from_str );
+        if( base_id.is_valid() ) {
             mut = base_id.obj();
-        }
-        else {
-            reader.throw_error("copy_from target not found: " + copy_from_str, "copy_from");
+        } else {
+            reader.throw_error( "copy_from target not found: " + copy_from_str, "copy_from" );
         }
     }
 
-    const bool was_loaded = reader.has_member("copy_from");
-    mut.id = trait_id(id);
+    const bool was_loaded = reader.has_member( "copy_from" );
+    mut.id = trait_id( id );
     mut.was_loaded = true;
 
-    mut.load_fields(reader, was_loaded);
+    mut.load_fields( reader, was_loaded );
 
     // Complex structured data using Lua-specific helpers
     sol::optional<sol::table> armor = def["armor"];
-    if (armor) {
-        mut.armor = get_mutation_armor(def, "armor");
+    if( armor ) {
+        mut.armor = get_mutation_armor( def, "armor" );
     }
 
     sol::optional<sol::table> lumination = def["lumination"];
-    if (lumination) {
-        mut.lumination = get_bodypart_float_map(def, "lumination");
+    if( lumination ) {
+        mut.lumination = get_bodypart_float_map( def, "lumination" );
     }
 
     sol::optional<sol::table> encumbrance_always = def["encumbrance_always"];
-    if (encumbrance_always) {
-        mut.encumbrance_always = get_bodypart_int_map_bp(def, "encumbrance_always");
+    if( encumbrance_always ) {
+        mut.encumbrance_always = get_bodypart_int_map_bp( def, "encumbrance_always" );
     }
 
     sol::optional<sol::table> encumbrance_covered = def["encumbrance_covered"];
-    if (encumbrance_covered) {
-        mut.encumbrance_covered = get_bodypart_int_map_bp(def, "encumbrance_covered");
+    if( encumbrance_covered ) {
+        mut.encumbrance_covered = get_bodypart_int_map_bp( def, "encumbrance_covered" );
     }
 
     sol::optional<sol::table> restricts_gear = def["restricts_gear"];
-    if (restricts_gear) {
-        mut.restricts_gear = get_bodypart_set(def, "restricts_gear");
+    if( restricts_gear ) {
+        mut.restricts_gear = get_bodypart_set( def, "restricts_gear" );
     }
 
     sol::optional<sol::table> allowed_items_tbl = def["allowed_items"];
-    if (allowed_items_tbl) {
-        mut.allowed_items = get_flag_id_set(def, "allowed_items");
+    if( allowed_items_tbl ) {
+        mut.allowed_items = get_flag_id_set( def, "allowed_items" );
     }
 
     // Item IDs (special handling for string/ID type flexibility)
     sol::object spawn_item = def["spawn_item"];
-    if (spawn_item.valid() && !spawn_item.is<sol::lua_nil_t>()) {
-        if (spawn_item.is<itype_id>()) {
+    if( spawn_item.valid() && !spawn_item.is<sol::lua_nil_t>() ) {
+        if( spawn_item.is<itype_id>() ) {
             mut.spawn_item = spawn_item.as<itype_id>();
-        }
-        else if (spawn_item.is<std::string>()) {
-            mut.spawn_item = itype_id(spawn_item.as<std::string>());
+        } else if( spawn_item.is<std::string>() ) {
+            mut.spawn_item = itype_id( spawn_item.as<std::string>() );
         }
     }
 
     sol::object ranged_mutation = def["ranged_mutation"];
-    if (ranged_mutation.valid() && !ranged_mutation.is<sol::lua_nil_t>()) {
-        if (ranged_mutation.is<itype_id>()) {
+    if( ranged_mutation.valid() && !ranged_mutation.is<sol::lua_nil_t>() ) {
+        if( ranged_mutation.is<itype_id>() ) {
             mut.ranged_mutation = ranged_mutation.as<itype_id>();
-        }
-        else if (ranged_mutation.is<std::string>()) {
-            mut.ranged_mutation = itype_id(ranged_mutation.as<std::string>());
+        } else if( ranged_mutation.is<std::string>() ) {
+            mut.ranged_mutation = itype_id( ranged_mutation.as<std::string>() );
         }
     }
 
     sol::optional<sol::table> vitamin_rates = def["vitamin_rates"];
-    if (vitamin_rates) {
-        mut.vitamin_rates = get_vitamin_rates(def, "vitamin_rates");
+    if( vitamin_rates ) {
+        mut.vitamin_rates = get_vitamin_rates( def, "vitamin_rates" );
     }
 
     sol::optional<sol::table> spells_learned = def["spells_learned"];
-    if (spells_learned) {
-        mut.spells_learned = get_id_int_map<spell_type>(def, "spells_learned");
+    if( spells_learned ) {
+        mut.spells_learned = get_id_int_map<spell_type>( def, "spells_learned" );
     }
 
     sol::optional<sol::table> craft_skill_bonus = def["craft_skill_bonus"];
-    if (craft_skill_bonus) {
-        mut.craft_skill_bonus = get_id_int_map<Skill>(def, "craft_skill_bonus");
+    if( craft_skill_bonus ) {
+        mut.craft_skill_bonus = get_id_int_map<Skill>( def, "craft_skill_bonus" );
     }
 
     sol::optional<sol::table> social_mods = def["social_modifiers"];
-    if (social_mods) {
-        mut.social_mods = get_social_modifiers(def, "social_modifiers");
+    if( social_mods ) {
+        mut.social_mods = get_social_modifiers( def, "social_modifiers" );
     }
 
     // Allow unvisited members (for forward compatibility)
@@ -1110,146 +1107,141 @@ mutation_branch lua_table_to_mutation(const std::string& id, const sol::table& d
     return mut;
 }
 
-bionic_data lua_table_to_bionic(const std::string& id, const sol::table& def)
+bionic_data lua_table_to_bionic( const std::string &id, const sol::table &def )
 {
     bionic_data bio;
-    LuaTableWrapper reader(def);
+    LuaTableWrapper reader( def );
 
     // Handle copy_from
-    if (reader.has_member("copy_from")) {
-        std::string copy_from_str = reader.get_string("copy_from");
-        bionic_id base_id(copy_from_str);
-        if (base_id.is_valid()) {
+    if( reader.has_member( "copy_from" ) ) {
+        std::string copy_from_str = reader.get_string( "copy_from" );
+        bionic_id base_id( copy_from_str );
+        if( base_id.is_valid() ) {
             bio = base_id.obj();
-        }
-        else {
-            reader.throw_error("copy_from target not found: " + copy_from_str, "copy_from");
+        } else {
+            reader.throw_error( "copy_from target not found: " + copy_from_str, "copy_from" );
         }
     }
 
-    const bool was_loaded = reader.has_member("copy_from");
-    bio.id = bionic_id(id);
+    const bool was_loaded = reader.has_member( "copy_from" );
+    bio.id = bionic_id( id );
 
     bio.load_fields( reader, was_loaded );
 
     bio.is_remote_fueled = bio.remote_fuel_draw > 0_J;
 
     sol::optional<sol::table> occupied = def["occupied_bodyparts"];
-    if (occupied) {
-        bio.occupied_bodyparts = get_bodypart_int_map(def, "occupied_bodyparts");
+    if( occupied ) {
+        bio.occupied_bodyparts = get_bodypart_int_map( def, "occupied_bodyparts" );
     }
 
     sol::optional<sol::table> encumbrance = def["encumbrance"];
-    if (encumbrance) {
-        bio.encumbrance = get_bodypart_int_map(def, "encumbrance");
+    if( encumbrance ) {
+        bio.encumbrance = get_bodypart_int_map( def, "encumbrance" );
     }
 
     sol::optional<sol::table> env_protec = def["env_protec"];
-    if (env_protec) {
-        bio.env_protec = get_bodypart_int_map(def, "env_protec");
+    if( env_protec ) {
+        bio.env_protec = get_bodypart_int_map( def, "env_protec" );
     }
 
     sol::optional<sol::table> bash_protec = def["bash_protec"];
-    if (bash_protec) {
-        bio.bash_protec = get_bodypart_int_map(def, "bash_protec");
+    if( bash_protec ) {
+        bio.bash_protec = get_bodypart_int_map( def, "bash_protec" );
     }
 
     sol::optional<sol::table> cut_protec = def["cut_protec"];
-    if (cut_protec) {
-        bio.cut_protec = get_bodypart_int_map(def, "cut_protec");
+    if( cut_protec ) {
+        bio.cut_protec = get_bodypart_int_map( def, "cut_protec" );
     }
 
     sol::optional<sol::table> bullet_protec = def["bullet_protec"];
-    if (bullet_protec) {
-        bio.bullet_protec = get_bodypart_int_map(def, "bullet_protec");
+    if( bullet_protec ) {
+        bio.bullet_protec = get_bodypart_int_map( def, "bullet_protec" );
     }
 
     sol::optional<sol::table> canceled_muts = def["canceled_mutations"];
-    if (canceled_muts) {
-        bio.canceled_mutations = get_string_id_array<mutation_branch>(def, "canceled_mutations");
+    if( canceled_muts ) {
+        bio.canceled_mutations = get_string_id_array<mutation_branch>( def, "canceled_mutations" );
     }
 
     sol::optional<sol::table> fuel_opts_tbl = def["fuel_options"];
-    if (fuel_opts_tbl) {
+    if( fuel_opts_tbl ) {
         bio.fuel_opts.clear();
-        for (auto& pair : *fuel_opts_tbl) {
-            if (pair.second.is<itype_id>()) {
-                bio.fuel_opts.push_back(pair.second.as<itype_id>());
-            }
-            else if (pair.second.is<std::string>()) {
-                bio.fuel_opts.push_back(itype_id(pair.second.as<std::string>()));
+        for( auto &pair : *fuel_opts_tbl ) {
+            if( pair.second.is<itype_id>() ) {
+                bio.fuel_opts.push_back( pair.second.as<itype_id>() );
+            } else if( pair.second.is<std::string>() ) {
+                bio.fuel_opts.push_back( itype_id( pair.second.as<std::string>() ) );
             }
         }
     }
 
     sol::object fake_item = def["fake_item"];
-    if (fake_item.valid() && !fake_item.is<sol::lua_nil_t>()) {
-        if (fake_item.is<itype_id>()) {
+    if( fake_item.valid() && !fake_item.is<sol::lua_nil_t>() ) {
+        if( fake_item.is<itype_id>() ) {
             bio.fake_item = fake_item.as<itype_id>();
-        }
-        else if (fake_item.is<std::string>()) {
-            bio.fake_item = itype_id(fake_item.as<std::string>());
+        } else if( fake_item.is<std::string>() ) {
+            bio.fake_item = itype_id( fake_item.as<std::string>() );
         }
     }
 
     sol::optional<sol::table> stat_bonus = def["stat_bonus"];
-    if (stat_bonus) {
-        bio.stat_bonus = get_stat_bonus_map(def, "stat_bonus");
+    if( stat_bonus ) {
+        bio.stat_bonus = get_stat_bonus_map( def, "stat_bonus" );
     }
 
     sol::optional<sol::table> enchantments = def["enchantments"];
-    if (enchantments) {
-        bio.enchantments = get_string_id_array<enchantment>(def, "enchantments");
+    if( enchantments ) {
+        bio.enchantments = get_string_id_array<enchantment>( def, "enchantments" );
     }
 
     sol::optional<sol::table> learned_spells = def["learned_spells"];
-    if (learned_spells) {
-        bio.learned_spells = get_id_int_map<spell_type>(def, "learned_spells");
+    if( learned_spells ) {
+        bio.learned_spells = get_id_int_map<spell_type>( def, "learned_spells" );
     }
 
     sol::optional<sol::table> included_bionics = def["included_bionics"];
-    if (included_bionics) {
-        bio.included_bionics = get_string_id_array<bionic_data>(def, "included_bionics");
+    if( included_bionics ) {
+        bio.included_bionics = get_string_id_array<bionic_data>( def, "included_bionics" );
     }
 
     sol::object upgraded_bionic = def["upgraded_bionic"];
-    if (upgraded_bionic.valid() && !upgraded_bionic.is<sol::lua_nil_t>()) {
-        if (upgraded_bionic.is<bionic_id>()) {
+    if( upgraded_bionic.valid() && !upgraded_bionic.is<sol::lua_nil_t>() ) {
+        if( upgraded_bionic.is<bionic_id>() ) {
             bio.upgraded_bionic = upgraded_bionic.as<bionic_id>();
-        }
-        else if (upgraded_bionic.is<std::string>()) {
-            bio.upgraded_bionic = bionic_id(upgraded_bionic.as<std::string>());
+        } else if( upgraded_bionic.is<std::string>() ) {
+            bio.upgraded_bionic = bionic_id( upgraded_bionic.as<std::string>() );
         }
     }
 
     sol::optional<sol::table> available_upgrades = def["available_upgrades"];
-    if (available_upgrades) {
-        bio.available_upgrades = get_string_id_set<bionic_data>(def, "available_upgrades");
+    if( available_upgrades ) {
+        bio.available_upgrades = get_string_id_set<bionic_data>( def, "available_upgrades" );
     }
 
     sol::optional<sol::table> required_bionics = def["required_bionics"];
-    if (required_bionics) {
-        bio.required_bionics = get_string_id_array<bionic_data>(def, "required_bionics");
+    if( required_bionics ) {
+        bio.required_bionics = get_string_id_array<bionic_data>( def, "required_bionics" );
     }
 
     sol::optional<sol::table> flags = def["flags"];
-    if (flags) {
-        bio.flags = get_flag_id_set(def, "flags");
+    if( flags ) {
+        bio.flags = get_flag_id_set( def, "flags" );
     }
 
     sol::object power_gen_emission = def["power_gen_emission"];
-    if (power_gen_emission.valid() && !power_gen_emission.is<sol::lua_nil_t>()) {
-        if (power_gen_emission.is<emit_id>()) {
+    if( power_gen_emission.valid() && !power_gen_emission.is<sol::lua_nil_t>() ) {
+        if( power_gen_emission.is<emit_id>() ) {
             bio.power_gen_emission = power_gen_emission.as<emit_id>();
-        }
-        else if (power_gen_emission.is<std::string>()) {
-            bio.power_gen_emission = emit_id(power_gen_emission.as<std::string>());
+        } else if( power_gen_emission.is<std::string>() ) {
+            bio.power_gen_emission = emit_id( power_gen_emission.as<std::string>() );
         }
     }
 
     sol::object coverage_penalty = def["coverage_power_gen_penalty"];
-    if (coverage_penalty.valid() && !coverage_penalty.is<sol::lua_nil_t>()) {
-        bio.coverage_power_gen_penalty = get_optional_float(def, "coverage_power_gen_penalty");
+    if( coverage_penalty.valid() && !coverage_penalty.is<sol::lua_nil_t>() ) {
+        bio.coverage_power_gen_penalty = get_optional_float( def, "coverage_power_gen_penalty" );
     }
 
     // Computed activation state (same logic as JSON loading)
