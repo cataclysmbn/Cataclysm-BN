@@ -848,6 +848,9 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         opts.offset = page_starts[page_index];
     };
 
+    const auto affects_npc_capacity = [&]( const item &it ) -> bool {
+        return it.where() == item_location_type::character && &it != &np.primary_weapon();
+    };
     const auto apply_trade_change = [&]( item_pricing & ip, int new_amount ) -> void {
         auto &owner_sells = focus_them ? ip.u_has : ip.npc_has;
         auto &owner_sells_charge = focus_them ? ip.u_charges : ip.npc_charges;
@@ -869,7 +872,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         {
             state.your_balance -= delta_price;
         }
-        if( ip.locs.front()->where() == item_location_type::character )
+        if( affects_npc_capacity( *ip.locs.front() ) )
         {
             state.volume_left += ip.vol * signed_amount;
             state.weight_left += ip.weight * signed_amount;
@@ -1462,7 +1465,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 if( !np.will_exchange_items_freely() ) {
                     state.your_balance -= delta_price;
                 }
-                if( ip.locs.front()->where() == item_location_type::character ) {
+                if( affects_npc_capacity( *ip.locs.front() ) ) {
                     state.volume_left += ip.vol * change_amount;
                     state.weight_left += ip.weight * change_amount;
                 }
