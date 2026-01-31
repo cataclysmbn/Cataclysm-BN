@@ -172,6 +172,24 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "sheltered_militia_1911",
+    "entries": [
+      { "item": "m1911mag", "ammo-item": "45_acp", "charges": 7 },
+      { "item": "m1911mag", "ammo-item": "45_acp", "charges": 7 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "sheltered_militia_garand",
+    "entries": [
+      { "item": "garandclip", "ammo-item": "3006", "charges": 8 },
+      { "item": "garandclip", "ammo-item": "3006", "charges": 8 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "mags_waste_ranger",
     "entries": [ { "item": "blrmag", "ammo-item": "3006", "charges": 4 }, { "item": "blrmag", "ammo-item": "3006", "charges": 4 } ]
   },
@@ -301,6 +319,30 @@
       { "item": "pistol_flintlock", "ammo-item": "flintlock_ammo", "charges": 1 },
       { "item": "pistol_flintlock", "ammo-item": "flintlock_ammo", "charges": 1 }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mags_skyfarer",
+    "entries": [
+      { "item": "fn1910mag", "ammo-item": "380_p", "charges": 6 },
+      { "item": "fn1910mag", "ammo-item": "380_p", "charges": 6 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mags_rifle_skyfarer",
+    "entries": [
+      { "item": "762R_clip", "ammo-item": "762_54R", "charges": 5 },
+      { "item": "762R_clip", "ammo-item": "762_54R", "charges": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "flintlock_pouch_skyfarer",
+    "entries": [ { "item": "36navy", "charges": 16 } ]
   },
   {
     "type": "item_group",
@@ -753,10 +795,10 @@
           { "group": "charged_two_way_radio" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "m1911", "ammo-item": "45_acp", "charges": 7, "container-item": "holster" },
-          { "item": "45_acp", "charges": 23 },
-          { "item": "garand", "ammo-item": "3006", "charges": 8, "contents-item": "shoulder_strap" },
-          { "item": "3006", "charges": 8, "container-item": "garandclip" },
-          { "item": "3006", "charges": 4 }
+          { "item": "45_acp", "charges": 9 },
+          { "item": "chestrig", "contents-group": "sheltered_militia_garand" },
+          { "item": "legpouch_large", "contents-group": "sheltered_militia_1911" },
+          { "item": "garand", "ammo-item": "3006", "charges": 8, "contents-item": "shoulder_strap" }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -830,6 +872,7 @@
     "name": "Prehistoric Hunter",
     "description": "An out-of-place living relic of prehistory, stranded in an unfamiliar and terrifying world.  Life as a hunter-gatherer was hard, but at least you didn't have to fight the living dead, and you had your kin to stand beside you.  Here, you're on your own.",
     "points": -4,
+    "starting_cash": 0,
     "skills": [
       { "level": 2, "name": "swimming" },
       { "level": 1, "name": "survival" },
@@ -1587,7 +1630,7 @@
           { "item": "goggles_welding", "custom-flags": [ "no_auto_equip" ] },
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "m4a1", "ammo-item": "556", "charges": 30, "contents-item": [ "shoulder_strap", "holo_sight" ] },
-          { "item": "c4", "count": 4 }
+          { "item": "grenadebandolier", "contents-item": [ "c4", "c4", "c4", "c4" ] }
         ]
       },
       "male": [ "boxer_shorts" ],
@@ -2330,7 +2373,7 @@
     "type": "profession",
     "id": "fashion_model",
     "name": "Fashion Model",
-    "description": "Once worshipped for looks, not survival skills. Now that the world has leveled the playing field, glamour won’t save you.",
+    "description": "Once worshiped for looks, not survival skills. Now that the world has leveled the playing field, glamour won’t save you.",
     "traits": [ "PRETTY" ],
     "//": "based on stylish morale bonuses",
     "points": 1,
@@ -3686,6 +3729,7 @@
     "name": "Bionic Assassin",
     "description": "The product of millions of dollars of clandestine research, you are a bionic sleeper agent capable of silently engaging your target while maintaining an innocuous appearance.",
     "points": 8,
+    "starting_cash": 2000000,
     "CBMs": [
       "bio_cqb",
       "bio_blade",
@@ -4796,6 +4840,7 @@
     "description": "You lived by your wheels during the first few months of the apocalypse, now you're running low on ammo and fuel, and your situation is dire.  You've been reduced to a scavenger, living off the corpse of the old world.",
     "points": 6,
     "vehicle": "car_roadwarrior",
+    "pets": [ { "name": "mon_dog_auscattle", "amount": 1 } ],
     "skills": [
       { "level": 1, "name": "swimming" },
       { "level": 3, "name": "driving" },
@@ -4861,9 +4906,8 @@
       "both": {
         "ammo": 100,
         "items": [
-          "sheriffshirt",
+          "swat_armor",
           "duster_survivor",
-          "pants_survivor",
           "boots_lsurvivor",
           "gloves_lsurvivor",
           "mask_gas",
@@ -5811,7 +5855,7 @@
     "type": "profession",
     "id": "rv_camper",
     "name": "RV Camper",
-    "description": "You always enjoyed life on the road, driving across the country to see the wonders of nature.  Now nature seems a lot less hostile, and it's a lot harder to get your RV hooked up to shore power.",
+    "description": "You always enjoyed life on the road, driving across the country to see the wonders of nature.  Now nature seems a lot more hostile, and it's a lot harder to get your RV hooked up to shore power.",
     "points": 5,
     "vehicle": "rv",
     "skills": [
@@ -5854,7 +5898,7 @@
     "type": "profession",
     "id": "miner",
     "name": "Miner",
-    "description": "You're a miner, not a minor!  Your canteen is dry, your jackhammer is out of gas, and you're on your last pair of batteries for your mining helmet…",
+    "description": "You're a miner, not a minor!  Your jackhammer may be gassed up, but your canteen is dry, and you're on your last pair of batteries for your mining helmet…",
     "points": 2,
     "skills": [ { "level": 1, "name": "swimming" } ],
     "items": {
@@ -5908,11 +5952,7 @@
           "smart_phone",
           "matches"
         ],
-        "entries": [
-          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "dynamite", "count": 8 },
-          { "item": "dynamite", "count": 4 }
-        ]
+        "entries": [ { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] }, { "item": "dynamite", "count": 12 } ]
       },
       "male": [ "boxer_shorts" ],
       "female": [ "boy_shorts", "sports_bra" ]
@@ -6080,7 +6120,7 @@
     "type": "profession",
     "id": "golfer",
     "name": "Golfer",
-    "description": "You decided to get away from the family for the day to do a little golfing by yourself.",
+    "description": "You decided to get away from the family for the day to do a little golfing by yourself.  You were almost done playing the back nine when you called to check on them and realized you couldn't get a signal.",
     "points": 1,
     "skills": [ { "level": 2, "name": "bashing" }, { "level": 1, "name": "melee" }, { "level": 1, "name": "driving" } ],
     "items": {
@@ -6398,6 +6438,7 @@
     "name": { "male": "Hitman", "female": "Hitwoman" },
     "description": "You were a killer for hire, trained and equipped to efficiently eliminate your target while keeping a low profile.  No one's hiring now that the world's ended, but your skills may prove useful for staying alive.",
     "points": 5,
+    "starting_cash": 2000000,
     "skills": [
       { "level": 3, "name": "dodge" },
       { "level": 1, "name": "melee" },
@@ -7258,7 +7299,7 @@
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "flamethrower", "charges": 3000, "custom-flags": [ "auto_wield" ] },
           { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
-          { "item": "p320mag_17rd_9x19mm", "ammo-item": "9mm", "charges": 17 },
+          { "item": "legpouch_large", "contents-group": "army_mags_m17" },
           { "item": "knife_combat", "container-item": "sheath" }
         ]
       },
@@ -7301,7 +7342,7 @@
           { "item": "id_military" },
           { "item": "water_clean", "container-item": "canteen" },
           { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
-          { "item": "p320mag_17rd_9x19mm", "ammo-item": "9mm", "charges": 17, "count": 2 },
+          { "item": "legpouch_large", "contents-group": "army_mags_m17" },
           { "item": "militarymap" }
         ]
       },
@@ -7315,6 +7356,7 @@
     "name": "Knight",
     "description": "Chivalry! Daring! Honor! All traits that are useless in the Cataclysm. But you know how to fight with a sword and you have this armor so it could be worse.",
     "points": 4,
+    "starting_cash": 0,
     "skills": [ { "level": 1, "name": "swimming" }, { "level": 2, "name": "melee" }, { "level": 2, "name": "cutting" } ],
     "traits": [ "PROF_KNIGHT", "ANTIJUNK" ],
     "items": {
@@ -7328,22 +7370,42 @@
   {
     "type": "profession",
     "id": "airship_pilot",
-    "name": "Airship Pilot",
-    "description": "You once led a crew of skyfarers, traveling the skies for fame, bricks and sand. Now you are on your own, and the ground is swarming with zombies.  At least this world has ground...",
+    "name": "Airship Captain",
+    "description": "You once led a crew of skyfarers, traveling the skies for fame, bricks and sand.  Now you are on your own, and the ground is swarming with zombies.  At least this world has ground…",
+    "starting_cash": 0,
     "skills": [
       { "level": 4, "name": "driving" },
       { "level": 2, "name": "mechanics" },
+      { "level": 2, "name": "barter" },
       { "level": 2, "name": "speech" },
+      { "level": 1, "name": "gun" },
+      { "level": 1, "name": "pistol" },
       { "level": 1, "name": "melee" },
       { "level": 1, "name": "cutting" }
     ],
     "items": {
       "both": {
-        "items": [ "cowboy_hat", "bandana", "jacket_leather", "dress_shirt", "pants_cargo", "boots_larmor", "gloves_leather", "socks" ],
-        "entries": [ { "item": "arming_sword", "container-item": "scabbard" } ]
+        "items": [
+          "fedora",
+          "knit_scarf",
+          "dress_shirt",
+          "jacket_leather",
+          "pants",
+          "socks",
+          "knee_high_boots",
+          "gloves_leather",
+          "mbag",
+          "pocketwatch"
+        ],
+        "entries": [
+          { "item": "legpouch_large", "contents-group": "mags_skyfarer" },
+          { "item": "380_p", "charges": 7 },
+          { "item": "fn1910", "ammo-item": "380_p", "charges": 6, "container-item": "sholster" },
+          { "item": "cavalry_sabre", "container-item": "scabbard" }
+        ]
       },
       "male": [ "boxer_shorts" ],
-      "female": [ "sports_bra", "boxer_shorts" ]
+      "female": [ "sports_bra", "boy_shorts" ]
     },
     "vehicle": "airship",
     "points": 7,
@@ -7352,21 +7414,65 @@
   {
     "type": "profession",
     "id": "airboat_pilot",
-    "name": "Airboat Pilot",
-    "description": "You once led a crew of skyfarers, traveling the skies for fame, bricks and sand. Now you are on your own, and the ground is swarming with zombies.  At least this world has ground...",
+    "name": "Airboat Commander",
+    "description": "You were part of a squadron of skyfarers, plying the vastness to protect trade routes from nefarious air pirates.  Now you're adrift and alone, one vessel against an alien world swarming with the undead…",
     "copy-from": "airship_pilot",
     "vehicle": "airboat",
     "points": 6,
+    "skills": [
+      { "level": 4, "name": "driving" },
+      { "level": 2, "name": "mechanics" },
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 1, "name": "gun" },
+      { "level": 1, "name": "rifle" },
+      { "level": 1, "name": "melee" },
+      { "level": 1, "name": "stabbing" }
+    ],
+    "items": {
+      "both": {
+        "items": [ "beret", "trenchcoat_leather", "striped_shirt", "pants_leather", "boots_larmor", "gauntlets_larmor", "socks" ],
+        "entries": [
+          { "item": "legpouch_large", "contents-group": "mags_rifle_skyfarer" },
+          { "item": "762_54R", "charges": 5 },
+          { "item": "mosin91_30", "ammo-item": "762_54R", "charges": 5, "contents-item": "shoulder_strap" },
+          { "item": "knife_trench", "container-item": "sheath" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boy_shorts" ]
+    },
     "flags": [ "SCEN_ONLY", "VEH_GROUNDED" ]
   },
   {
     "type": "profession",
     "id": "aircanoe_pilot",
     "name": "Aircanoe Pilot",
-    "description": "You once led a crew of skyfarers, traveling the skies for fame, bricks and sand. Now you are on your own, and the ground is swarming with zombies.  At least this world has ground...",
+    "description": "You're a lone skyfarer, scouting the endless blue for new routes across the sky.  Now you've caught sight of more land than you've seen in a lifetime, an unfamiliar land of monsters…",
     "copy-from": "airship_pilot",
     "vehicle": "aircanoe",
     "points": 5,
+    "skills": [
+      { "level": 4, "name": "driving" },
+      { "level": 2, "name": "mechanics" },
+      { "level": 2, "name": "survival" },
+      { "level": 1, "name": "gun" },
+      { "level": 1, "name": "pistol" },
+      { "level": 1, "name": "melee" },
+      { "level": 1, "name": "cutting" }
+    ],
+    "items": {
+      "both": {
+        "items": [ "cowboy_hat", "bandana", "duster_leather", "longshirt", "pants", "socks", "boots_western", "gloves_fingerless" ],
+        "entries": [
+          { "item": "flintlock_pouch", "contents-group": "flintlock_pouch_skyfarer" },
+          { "item": "colt_navy", "ammo-item": "36navy", "charges": 6, "container-item": "holster" },
+          { "item": "tomahawk_copper", "container-item": "axe_ring" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boy_shorts" ]
+    },
     "flags": [ "SCEN_ONLY", "VEH_GROUNDED" ]
   }
 ]
