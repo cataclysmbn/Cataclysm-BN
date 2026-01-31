@@ -666,19 +666,19 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
         auto light_overh = one_in( 4 );
         auto light_atom  = one_in( 2 );
         for( auto &pt : parts ) {
-            if( pt.has_flag( VPFLAG_CONE_LIGHT ) ) {
+            if( pt.info().has_flag( VPFLAG_CONE_LIGHT ) ) {
                 pt.enabled = light_head;
-            } else if( pt.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
                 pt.enabled = light_whead;
-            } else if( pt.has_flag( VPFLAG_DOME_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_DOME_LIGHT ) ) {
                 pt.enabled = light_dome;
-            } else if( pt.has_flag( VPFLAG_AISLE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_AISLE_LIGHT ) ) {
                 pt.enabled = light_aisle;
-            } else if( pt.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
                 pt.enabled = light_hoverh;
-            } else if( pt.has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
                 pt.enabled = light_overh;
-            } else if( pt.has_flag( VPFLAG_ATOMIC_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_ATOMIC_LIGHT ) ) {
                 pt.enabled = light_atom;
             }
         }
@@ -1179,7 +1179,7 @@ void vehicle::smash( map &m, float hp_percent_loss_min, float hp_percent_loss_ma
 {
     for( auto &part : parts ) {
         //Skip any parts already mashed up or removed.
-        if( part.is_broken() || part.removed || part.has_flag( VPFLAG_NOSMASH ) ) {
+        if( part.is_broken() || part.removed || part.info().has_flag( VPFLAG_NOSMASH ) ) {
             continue;
         }
 

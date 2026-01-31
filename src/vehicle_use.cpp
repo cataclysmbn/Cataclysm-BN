@@ -877,26 +877,18 @@ void vehicle::use_controls( const tripoint &pos )
 
     }
 
-    if( has_part( "DROPPER" ) ) {
-        std::vector<vehicle_part *> droppers;
-        for( auto &p : parts ) {
-            if( p.has_flag( VPFLAG_DROPPER ) && !p.removed ) {
-                droppers.push_back( &p );
-            }
-        }
-        if( !droppers.empty() ) {
-            options.emplace_back( _( "Activate all item droppers (Drop Everything)" ),
-                                  keybind( "DROPPER_ALL" ) );
-            actions.emplace_back( [&] { item_dropper_drop_all(); refresh(); } );
+    if( !droppers.empty() ) {
+        options.emplace_back( _( "Activate all item droppers (Drop Everything)" ),
+                              keybind( "DROPPER_ALL" ) );
+        actions.emplace_back( [&] { item_dropper_drop_all(); refresh(); } );
 
-            options.emplace_back( _( "Activate one item dropper (Drop Everything)" ),
-                                  keybind( "DROPPER_SINGLE_ALL" ) );
-            actions.emplace_back( [&] { item_dropper_drop_single( false ); refresh(); } );
+        options.emplace_back( _( "Activate one item dropper (Drop Everything)" ),
+                              keybind( "DROPPER_SINGLE_ALL" ) );
+        actions.emplace_back( [&] { item_dropper_drop_single( false ); refresh(); } );
 
-            options.emplace_back( _( "Activate one item dropper (Drop One Thing)" ),
-                                  keybind( "DROPPER_SINGLE" ) );
-            actions.emplace_back( [&] { item_dropper_drop_single( true ); refresh(); } );
-        }
+        options.emplace_back( _( "Activate one item dropper (Drop One Thing)" ),
+                              keybind( "DROPPER_SINGLE" ) );
+        actions.emplace_back( [&] { item_dropper_drop_single( true ); refresh(); } );
     }
     uilist menu;
     menu.text = _( "Vehicle controls" );
