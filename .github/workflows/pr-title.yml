@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - uses: docker://ghcr.io/scarf005/conventional-prs:main
         env:
