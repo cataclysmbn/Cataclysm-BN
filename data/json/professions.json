@@ -3743,7 +3743,7 @@
     ],
     "skills": [ { "level": 3, "name": "dodge" } ],
     "items": {
-      "both": [ "dress_shoes", "dress_shirt", "knit_scarf", "wristwatch", "blazer", "wristwatch", "smart_phone" ],
+      "both": [ "dress_shoes", "dress_shirt", "knit_scarf", "blazer", "wristwatch", "smart_phone" ],
       "male": [ "briefs", "socks", "pants" ],
       "female": [ "bra", "panties", "stockings", "skirt" ]
     }
