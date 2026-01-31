@@ -346,24 +346,30 @@
     "name": "aircanoe",
     "blueprint": [ [ "<OO>" ] ],
     "parts": [
-      {
-        "x": 0,
-        "y": 0,
-        "parts": [ "frame_wood_horizontal", "seat_wood_light", "hand_paddles", "propeller_wood", "airship_balloon" ]
-      },
-      { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "airship_balloon" ] },
-      { "x": 2, "y": 0, "parts": [ "frame_wood_horizontal", "airship_balloon" ] },
-      { "x": -1, "y": 0, "parts": [ "frame_wood_horizontal", "airship_balloon" ] },
+      { "x": 0, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "sail_large", "airship_balloon" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "wood box", "airship_balloon" ] },
+      { "x": 2, "y": 0, "parts": [ "propeller_wood" ] },
       { "x": 3, "y": 0, "parts": [ "airship_balloon_external" ] },
+      { "x": 4, "y": 0, "parts": [ "airship_balloon_external" ] },
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [ "frame_wood_horizontal", "wooden_aisle_horizontal", "ladder_3", "airship_balloon" ]
+      },
       { "x": -2, "y": 0, "parts": [ "airship_balloon_external" ] },
+      { "x": -3, "y": 0, "parts": [ "airship_balloon_external" ] },
+      { "x": -2, "y": 1, "parts": [ "airship_balloon_external" ] },
       { "x": -1, "y": 1, "parts": [ "airship_balloon_external" ] },
       { "x": 0, "y": 1, "parts": [ "airship_balloon_external" ] },
       { "x": 1, "y": 1, "parts": [ "airship_balloon_external" ] },
       { "x": 2, "y": 1, "parts": [ "airship_balloon_external" ] },
+      { "x": 3, "y": 1, "parts": [ "airship_balloon_external" ] },
+      { "x": -2, "y": -1, "parts": [ "airship_balloon_external" ] },
       { "x": -1, "y": -1, "parts": [ "airship_balloon_external" ] },
       { "x": 0, "y": -1, "parts": [ "airship_balloon_external" ] },
       { "x": 1, "y": -1, "parts": [ "airship_balloon_external" ] },
-      { "x": 2, "y": -1, "parts": [ "airship_balloon_external" ] }
+      { "x": 2, "y": -1, "parts": [ "airship_balloon_external" ] },
+      { "x": 3, "y": -1, "parts": [ "airship_balloon_external" ] }
     ]
   }
 ]
