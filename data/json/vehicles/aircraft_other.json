@@ -286,15 +286,15 @@
     "id": "airboat",
     "name": "airboat",
     "blueprint": [
-      " OOOOOOO  ",
-      "OO1-+-7OO ",
-      "OO|o_^37OO",
-      "OOE>__t|PO",
-      "OO|o_T19OO",
-      "OO3-+-9OO ",
-      " OOOOOOO  "
+      "  OOOOOOOO  ",
+      " OO1-+-7OOO ",
+      "OOO|o_^37OOO",
+      "OOOE>__t|POO",
+      "OOO|o_T19OOO",
+      " OO3-+-9OOO ",
+      "  OOOOOOOO  "
     ],
-    "blueprint_origin": { "x": 5, "y": 2 },
+    "blueprint_origin": { "x": 6, "y": 2 },
     "palette": {
       "^": [ "frame_wood_cross", "seat_wood", "controls", "airship_balloon" ],
       "_": [ "frame_wood_cross", "wooden_aisle_vertical", "airship_balloon" ],
