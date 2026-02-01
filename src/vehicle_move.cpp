@@ -22,6 +22,7 @@
 #include "int_id.h"
 #include "item.h"
 #include "itype.h"
+#include "layer.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "mapdata.h"
@@ -1132,7 +1133,9 @@ bool vehicle::check_heli_descend( Character &who )
             continue;
         }
         tripoint below( pt.xy(), pt.z - 1 );
-        if( here.has_zlevels() && ( pt.z < -OVERMAP_DEPTH ||
+        // Check if we're at the bottom of the current layer (can't descend further)
+        const int layer_min_z = get_layer_min_z( get_layer( pt.z ) );
+        if( here.has_zlevels() && ( pt.z <= layer_min_z ||
                                     !here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, pt ) ) ) {
             who.add_msg_if_player( _( "You are already landed!" ) );
             return false;

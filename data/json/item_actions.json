@@ -1038,5 +1038,10 @@
     "type": "item_action",
     "id": "flowerpot_collect",
     "name": { "str": "Collect a plant" }
+  },
+  {
+    "type": "item_action",
+    "id": "POCKET_DIMENSION_TOGGLE",
+    "name": { "str": "Access a pocket dimension" }
   }
 ]

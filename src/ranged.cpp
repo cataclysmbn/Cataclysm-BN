@@ -38,6 +38,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "gun_mode.h"
+#include "layer.h"
 #include "input.h"
 #include "item.h"
 #include "item_functions.h"
@@ -2770,7 +2771,10 @@ bool target_ui::set_cursor_pos( const tripoint &new_pos )
     map &here = get_map();
     if( new_pos != src ) {
         // On Z axis, make sure we do not exceed map boundaries
-        valid_pos.z = clamp( valid_pos.z, -OVERMAP_DEPTH, OVERMAP_HEIGHT );
+        const world_layer layer = get_layer( src.z );
+        const int z_min = get_layer_min_z( layer );
+        const int z_max = get_layer_max_z( layer );
+        valid_pos.z = clamp( valid_pos.z, z_min, z_max );
         // Or current view range
         valid_pos.z = clamp( valid_pos.z - src.z, -fov_3d_z_range, fov_3d_z_range ) + src.z;
 
@@ -3135,8 +3139,12 @@ void target_ui::cycle_targets( int direction )
 
 void target_ui::set_view_offset( const tripoint &new_offset )
 {
+    const world_layer layer = get_layer( src.z );
+    const int z_min = get_layer_min_z( layer );
+    const int z_max = get_layer_max_z( layer );
+
     tripoint new_( new_offset.xy(), clamp( new_offset.z, -fov_3d_z_range, fov_3d_z_range ) );
-    new_.z = clamp( new_.z + src.z, -OVERMAP_DEPTH, OVERMAP_HEIGHT ) - src.z;
+    new_.z = clamp( new_.z + src.z, z_min, z_max ) - src.z;
 
     bool changed_z = you->view_offset.z != new_.z;
     you->view_offset = new_;

@@ -30,6 +30,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
+#include "layer.h"
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
@@ -145,8 +146,14 @@ void map::process_fields()
 {
     ZoneScoped;
 
-    const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
-    const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
+    int minz, maxz;
+    if( !zlevels ) {
+        minz = maxz = abs_sub.z;
+    } else {
+        const world_layer layer = get_layer( abs_sub.z );
+        minz = get_layer_min_z( layer );
+        maxz = get_layer_max_z( layer );
+    }
     for( int z = minz; z <= maxz; z++ ) {
         auto &field_cache = get_cache( z ).field_cache;
         for( int x = 0; x < my_MAPSIZE; x++ ) {
@@ -292,7 +299,8 @@ void map::spread_gas( field_entry &cur, const tripoint &p, int percent_spread,
 
     // First check if we can fall
     // TODO: Make fall and rise chances parameters to enable heavy/light gas
-    if( zlevels && p.z > -OVERMAP_DEPTH ) {
+    const int layer_min_z = get_layer_min_z( get_layer( p.z ) );
+    if( zlevels && p.z > layer_min_z ) {
         const tripoint down{ p.xy(), p.z - 1 };
         if( gas_can_spread_to( cur, p, down ) && valid_move( p, down, true, true ) ) {
             maptile down_tile = maptile_at_internal( down );
@@ -347,7 +355,7 @@ void map::spread_gas( field_entry &cur, const tripoint &p, int percent_spread,
                 gas_spread_to( cur, n.second, n.first );
             }
         }
-    } else if( zlevels && p.z < OVERMAP_HEIGHT ) {
+    } else if( zlevels && p.z < get_layer_max_z( get_layer( p.z ) ) ) {
         const tripoint up{ p.xy(), p.z + 1 };
         if( gas_can_spread_to( cur, p, up ) && valid_move( p, up, true, true ) ) {
             maptile up_tile = maptile_at_internal( up );
@@ -490,7 +498,7 @@ void map::process_fields_in_submap( submap *const current_submap,
                 }
                 if( cur_fd_type_id == fd_acid ) {
                     // Try to fall by a z-level
-                    if( zlevels && p.z > -OVERMAP_DEPTH ) {
+                    if( zlevels && p.z > get_layer_min_z( get_layer( p.z ) ) ) {
                         tripoint dst{ p.xy(), p.z - 1 };
                         if( valid_move( p, dst, true, true ) ) {
                             field_entry *acid_there = field_at( dst ).find_field( fd_acid );
@@ -643,7 +651,7 @@ void map::process_fields_in_submap( submap *const current_submap,
                         }
                     }
 
-                    if( ter.has_flag( TFLAG_NO_FLOOR ) && zlevels && p.z > -OVERMAP_DEPTH ) {
+                    if( ter.has_flag( TFLAG_NO_FLOOR ) && zlevels && p.z > get_layer_min_z( get_layer( p.z ) ) ) {
                         // We're hanging in the air - let's fall down
                         tripoint dst{ p.xy(), p.z - 1 };
                         if( valid_move( p, dst, true, true ) ) {
@@ -684,7 +692,7 @@ void map::process_fields_in_submap( submap *const current_submap,
 
                     // Allow raging fires (and only raging fires) to spread up
                     // Spreading down is achieved by wrecking the walls/floor and then falling
-                    if( zlevels && cur.get_field_intensity() == 3 && p.z < OVERMAP_HEIGHT ) {
+                    if( zlevels && cur.get_field_intensity() == 3 && p.z < get_layer_max_z( get_layer( p.z ) ) ) {
                         const tripoint dst_p = tripoint( p.xy(), p.z + 1 );
                         // Let it burn through the floor
                         maptile dst = maptile_at_internal( dst_p );
@@ -1196,8 +1204,14 @@ void map::process_fields_in_submap( submap *const current_submap,
             }
         }
     }
-    const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
-    const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
+    int minz, maxz;
+    if( !zlevels ) {
+        minz = maxz = abs_sub.z;
+    } else {
+        const world_layer layer = get_layer( submap.z );
+        minz = get_layer_min_z( layer );
+        maxz = get_layer_max_z( layer );
+    }
     for( int z = std::max( submap.z - 1, minz ); z <= std::min( submap.z + 1, maxz ); ++z ) {
         auto &field_cache = get_cache( z ).field_cache;
         for( int y = std::max( submap.y - 1, 0 ); y <= std::min( submap.y + 1, MAPSIZE - 1 ); ++y ) {

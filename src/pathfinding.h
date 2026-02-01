@@ -10,10 +10,14 @@
 #include <unordered_set>
 #include <vector>
 
+#include "cuboid_rectangle.h"
 #include "game_constants.h"
+#include "layer.h"
 #include "point.h"
 #include "rng.h"
 
+// Forward declarations
+class map;
 
 // A struct defining abilities of the actor and how to respond to various terrain features
 struct PathfindingSettings {
@@ -173,6 +177,25 @@ struct RouteSettings {
 
 class Pathfinding
 {
+    public:
+        // Location we can change our Z level with
+        // (Public to allow static file-scope variables in pathfinding.cpp for non-overworld layers)
+        struct ZLevelChange {
+            enum class Type {
+                STAIRS,
+                RAMP,
+                OPEN_AIR
+            };
+
+            tripoint from;
+            tripoint to;
+            Type type;
+        };
+        struct ZLevelChangeOpenAirPair {
+            std::optional<ZLevelChange> reach_from_below;
+            std::optional<ZLevelChange> reach_from_above;
+        };
+
     private:
         using val_pair = std::pair<float, point>;
 
@@ -193,23 +216,6 @@ class Pathfinding
             PATH_NOT_FOUND, // The map has not been explored fully, but a path may still exist with a wider search area
             NO_PATH_EXISTS, // Map explored fully, no path exists
             UNSET // Internal use
-        };
-
-        // Location we can change our Z level with
-        struct ZLevelChange {
-            enum class Type {
-                STAIRS,
-                RAMP,
-                OPEN_AIR
-            };
-
-            tripoint from;
-            tripoint to;
-            Type type;
-        };
-        struct ZLevelChangeOpenAirPair {
-            std::optional<ZLevelChange> reach_from_below;
-            std::optional<ZLevelChange> reach_from_above;
         };
 
         // Global state: allocated dijikstra d_maps. Pull to `d_maps` from here.
@@ -234,11 +240,17 @@ class Pathfinding
         // and points that are only in 2 will be scanned for new Z-changes.
         static point z_area;
 
-        // Global state: Z-level transitions for each z-level (does not include OPEN_AIR due to being numerous, requiring a different approach)
+        // Global state: Z-level transitions for overworld z-levels (does not include OPEN_AIR due to being numerous, requiring a different approach)
         static std::array<std::vector<ZLevelChange>, OVERMAP_LAYERS> z_caches;
-        // Global state: OPEN_AIR type z-level transitions for each z-level
+        // Global state: OPEN_AIR type z-level transitions for overworld z-levels
         static std::array<std::unordered_map<point, ZLevelChangeOpenAirPair>, OVERMAP_LAYERS>
         z_caches_open_air;
+        // Global state: Z-level transitions for non-overworld z-levels (keyed by absolute z-level)
+        static std::map<int, std::vector<ZLevelChange>> non_overworld_z_caches;
+        // Global state: OPEN_AIR type z-level transitions for non-overworld z-levels (keyed by absolute z-level)
+        static std::map<int, std::unordered_map<point, ZLevelChangeOpenAirPair>> non_overworld_z_caches_open_air;
+        // Global state: area covered by last Z-scan for non-overworld layers (keyed by layer type)
+        static std::map<world_layer, point> non_overworld_z_areas;
         // Global state: We cache `z_path` information taken to prevent multiple iterations for the same target
         static std::map<std::tuple<bool, int, tripoint>, ZLevelChange> cached_closest_z_changes;
 
@@ -278,6 +290,12 @@ class Pathfinding
         // Only process OPEN_AIR changes if `update_open_air` is true. OPEN_AIR tiles are numerous on higher Z levels
         //   so they're expensive to go over and update. Do only for fliers.
         static void update_z_caches( bool update_open_air );
+
+        // Helper to update z-caches for a specific z-level range
+        static void update_z_caches_for_range( const map &here, int min_z, int max_z,
+                                               const point &anti_shift,
+                                               const half_open_cuboid<tripoint> &prev_z_volume_local,
+                                               bool update_open_air );
 
         // Get a reference to ZCache for this level
         static std::vector<ZLevelChange> &get_z_cache( const int z );

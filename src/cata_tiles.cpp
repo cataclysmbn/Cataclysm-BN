@@ -46,6 +46,7 @@
 #include "item_factory.h"
 #include "itype.h"
 #include "json.h"
+#include "layer.h"
 #include "make_static.h"
 #include "map.h"
 #include "map_memory.h"
@@ -2014,7 +2015,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     }
 
     std::vector<tile_render_info> &draw_points = *draw_points_cache;
-    int min_z = OVERMAP_HEIGHT;
+    int min_z = get_layer_max_z( get_layer( center.z ) );
 
     for( int row = min_row; row < max_row; row ++ ) {
 
@@ -2161,7 +2162,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
             lit_level ll = lit_level::BLANK;
             int last_vis = center.z + 1;
-            for( int z = center.z; z >= -OVERMAP_DEPTH; z-- ) {
+            const int layer_min_z = get_layer_min_z( get_layer( center.z ) );
+            for( int z = center.z; z >= layer_min_z; z-- ) {
                 const auto &ch = here.access_cache( z );
 
                 const tripoint pos( temp_x, temp_y, z );
@@ -2402,8 +2404,9 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
             lit_level lighting = here.access_cache( center.z ).visibility_cache[mem_x][mem_y];
 
+            const int mem_layer_min_z = get_layer_min_z( get_layer( center.z ) );
             int z = center.z;
-            for( ;  z > -OVERMAP_DEPTH; z-- ) {
+            for( ;  z > mem_layer_min_z; z-- ) {
                 const auto low_override = draw_below_override.find( {mem_x, mem_y, z} );
                 const bool low_overridden = low_override != draw_below_override.end();
                 if( low_overridden ? !low_override->second : ( here.dont_draw_lower_floor( {mem_x, mem_y, z} )

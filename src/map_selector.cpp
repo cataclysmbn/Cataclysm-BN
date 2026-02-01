@@ -8,6 +8,7 @@
 
 #include "game.h"
 #include "game_constants.h"
+#include "layer.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "rng.h"
@@ -25,9 +26,12 @@ tripoint_range<tripoint> points_in_range( const map &m )
 {
     const int z = m.get_abs_sub().z;
     const bool hasz = m.has_zlevels();
+    const world_layer layer = get_layer( z );
+    const int minz = hasz ? get_layer_min_z( layer ) : z;
+    const int maxz = hasz ? get_layer_max_z( layer ) : z;
     return tripoint_range<tripoint>(
-               tripoint( 0, 0, hasz ? -OVERMAP_DEPTH : z ),
-               tripoint( SEEX * m.getmapsize() - 1, SEEY * m.getmapsize() - 1, hasz ? OVERMAP_HEIGHT : z ) );
+               tripoint( 0, 0, minz ),
+               tripoint( SEEX * m.getmapsize() - 1, SEEY * m.getmapsize() - 1, maxz ) );
 }
 
 std::optional<tripoint> random_point( const map &m,

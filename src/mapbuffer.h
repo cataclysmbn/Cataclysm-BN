@@ -71,6 +71,15 @@ class mapbuffer
             return submaps.contains( p );
         }
 
+        /** Safely remove a submap from the buffer.
+         *
+         * This is intended for pocket dimension cleanup.
+         * Will not remove submaps that are currently loaded in the active map.
+         * @param addr The submap coordinates to remove.
+         * @return true if removed, false if not found or currently in use.
+         */
+        bool remove_submap_safe( const tripoint &addr );
+
     private:
         // There's a very good reason this is private,
         // if not handled carefully, this can erase in-use submaps and crash the game.

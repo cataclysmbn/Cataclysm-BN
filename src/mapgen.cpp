@@ -6744,10 +6744,16 @@ void map::rotate( int turns, const bool setpos_safe )
     // 2,2 <-> 1,1
     // 1,1
     //
+    // Use tripoint version to properly handle non-overworld z-levels
     auto swap_submaps = [&]( const point & p1, const point & p2 ) {
 
-        submap *sm1 = get_submap_at_grid( p1 );
-        submap *sm2 = get_submap_at_grid( p2 );
+        submap *sm1 = get_submap_at_grid( tripoint( p1, abs_sub.z ) );
+        submap *sm2 = get_submap_at_grid( tripoint( p2, abs_sub.z ) );
+        if( sm1 == nullptr || sm2 == nullptr ) {
+            debugmsg( "swap_submaps: null submap at (%d,%d,%d) or (%d,%d,%d)",
+                      p1.x, p1.y, abs_sub.z, p2.x, p2.y, abs_sub.z );
+            return;
+        }
         submap::swap( *sm1, *sm2 );
 
     };
@@ -6770,7 +6776,12 @@ void map::rotate( int turns, const bool setpos_safe )
     for( int j = 0; j < 2; ++j ) {
         for( int i = 0; i < 2; ++i ) {
             point p( i, j );
-            auto sm = get_submap_at_grid( p );
+            submap *sm = get_submap_at_grid( tripoint( p, abs_sub.z ) );
+
+            if( sm == nullptr ) {
+                debugmsg( "rotate submaps: null submap at (%d,%d,%d)", p.x, p.y, abs_sub.z );
+                continue;
+            }
 
             sm->rotate( turns );
 

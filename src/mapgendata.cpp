@@ -13,7 +13,21 @@
 #include "point.h"
 #include "regional_settings.h"
 
-static const regional_settings dummy_regional_settings;
+// Create a valid regional_settings for dummy/boundary section mapgen
+// This ensures mapgen functions have proper groundcover settings
+static regional_settings create_dummy_regional_settings()
+{
+    regional_settings settings;
+    settings.id = "dummy";
+    settings.default_oter = oter_str_id( "field" );
+    // Clear the default t_null entry and add valid groundcover
+    settings.default_groundcover.clear();
+    settings.default_groundcover.add( t_grass, 4 );
+    settings.default_groundcover.add( t_dirt, 1 );
+    return settings;
+}
+
+static const regional_settings dummy_regional_settings = create_dummy_regional_settings();
 
 void mapgen_arguments::merge( const mapgen_arguments &other )
 {

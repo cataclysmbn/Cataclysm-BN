@@ -29,6 +29,7 @@
 #include "lru_cache.h"
 #include "mapdata.h"
 #include "memory_fast.h"
+#include "layer.h"
 #include "point.h"
 #include "shadowcasting.h"
 #include "type_id.h"
@@ -824,6 +825,9 @@ class map
         ter_id ter( point p ) const {
             return ter( tripoint( p, abs_sub.z ) );
         }
+
+        // Check if position is in a pocket dimension border zone (virtual terrain)
+        bool is_pocket_dimension_border( const tripoint &p ) const;
 
         // Return a bitfield of the adjacent tiles which connect to the given
         // connect_group.  From least-significant bit the order is south, east,
@@ -1711,7 +1715,7 @@ class map
         }
 
         bool inbounds_z( const int z ) const {
-            return z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT;
+            return is_valid_layer_z( z );
         }
 
         /** Clips the coordinates of p to fit the map bounds */
@@ -1767,21 +1771,9 @@ class map
     protected:
         void saven( const tripoint &grid );
         void loadn( const tripoint &grid, bool update_vehicles );
-        void loadn( point grid, bool update_vehicles ) {
-            if( zlevels ) {
-                for( int gridz = -OVERMAP_DEPTH; gridz <= OVERMAP_HEIGHT; gridz++ ) {
-                    loadn( tripoint( grid, gridz ), update_vehicles );
-                }
-
-                // Note: we want it in a separate loop! It is a post-load cleanup
-                // Since we're adding roofs, we want it to go up (from lowest to highest)
-                for( int gridz = -OVERMAP_DEPTH; gridz <= OVERMAP_HEIGHT; gridz++ ) {
-                    add_roofs( tripoint( grid, gridz ) );
-                }
-            } else {
-                loadn( tripoint( grid, abs_sub.z ), update_vehicles );
-            }
-        }
+        void loadn( point grid, bool update_vehicles );
+        // Helper to get z-range for loading submaps at a given grid position
+        std::pair<int, int> get_loadn_z_range( point grid ) const;
         /**
          * Fast forward a submap that has just been loading into this map.
          * This is used to rot and remove rotten items, grow plants, fill funnels etc.
@@ -2050,7 +2042,20 @@ class map
          */
         std::array< std::unique_ptr<level_cache>, OVERMAP_LAYERS > caches;
 
+        /**
+         * Holds caches for non-overworld z-levels (pocket dimensions, etc.)
+         * These are created on-demand when accessing non-overworld z-levels.
+         * Key is the absolute z-level.
+         */
+        mutable std::map<int, std::unique_ptr<level_cache>> layer_caches;
+
         mutable std::array< std::unique_ptr<pathfinding_cache>, OVERMAP_LAYERS > pathfinding_caches;
+
+        /**
+         * Holds pathfinding caches for non-overworld z-levels.
+         * Key is the absolute z-level.
+         */
+        mutable std::map<int, std::unique_ptr<pathfinding_cache>> layer_pathfinding_caches;
         /**
          * Set of submaps that contain active items in absolute coordinates.
          */
@@ -2068,10 +2073,21 @@ class map
         bool last_full_vehicle_list_dirty = true;
         std::map<point, std::pair<vehicle *, int> > cached_veh_rope;
 
-        // Note: no bounds check
         level_cache &get_cache( int zlev ) const {
-            return *caches[zlev + OVERMAP_DEPTH];
+            if( is_overworld_z( zlev ) ) {
+                return *caches[zlev + OVERMAP_DEPTH];
+            }
+            auto it = layer_caches.find( zlev );
+            if( it == layer_caches.end() ) {
+                // Create new cache on demand
+                auto [inserted_it, success] = layer_caches.emplace( zlev, std::make_unique<level_cache>() );
+                return *inserted_it->second;
+            }
+            return *it->second;
         }
+        // Get the dummy null cache for out-of-range z-levels (kept for compatibility)
+        static level_cache &get_null_cache();
+        static pathfinding_cache &get_null_pathfinding_cache();
 
         pathfinding_cache &get_pathfinding_cache( int zlev ) const;
 
@@ -2086,7 +2102,16 @@ class map
         std::pair<vehicle *, int> get_rope_at( point pt ) const;
 
         const level_cache &get_cache_ref( int zlev ) const {
-            return *caches[zlev + OVERMAP_DEPTH];
+            if( is_overworld_z( zlev ) ) {
+                return *caches[zlev + OVERMAP_DEPTH];
+            }
+            auto it = layer_caches.find( zlev );
+            if( it == layer_caches.end() ) {
+                // Create new cache on demand (layer_caches is mutable)
+                auto [inserted_it, success] = layer_caches.emplace( zlev, std::make_unique<level_cache>() );
+                return *inserted_it->second;
+            }
+            return *it->second;
         }
 
         const pathfinding_cache &get_pathfinding_cache_ref( int zlev ) const;

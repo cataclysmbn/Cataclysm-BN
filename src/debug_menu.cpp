@@ -1523,6 +1523,7 @@ void debug()
             break;
 
         case DEBUG_REVEAL_MAP: {
+            // Overmaps only exist for the overworld layer, so we use overworld z-range
             auto &cur_om = g->get_cur_om();
             for( int i = 0; i < OMAPX; i++ ) {
                 for( int j = 0; j < OMAPY; j++ ) {

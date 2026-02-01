@@ -78,6 +78,7 @@
 #include "mtype.h"
 #include "npc.h"
 #include "options.h"
+#include "pocket_dimension.h"
 #include "output.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
@@ -542,6 +543,12 @@ void item::on_destroy()
     //These are getting left out until it can be deferred better
     //components.on_destroy();
     //contents.on_destroy();
+
+    // Clean up any pocket dimension owned by this item
+    int pd_id = get_var( "pocket_dimension_id", -1 );
+    if( pd_id >= 0 ) {
+        pocket_dimension_manager::instance().destroy( pocket_dimension_id{ pd_id } );
+    }
 }
 
 

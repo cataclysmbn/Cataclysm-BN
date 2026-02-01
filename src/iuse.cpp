@@ -86,6 +86,7 @@
 #include "omdata.h"
 #include "options.h"
 #include "output.h"
+#include "pocket_dimension.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
 #include "pimpl.h"
@@ -9061,4 +9062,36 @@ int iuse::bullet_vibe_on( player *p, item *it, bool t, const tripoint & )
 
     }
     return it->type->charges_to_use();
+}
+
+int iuse::pocket_dimension_toggle( player *p, item *it, bool, const tripoint & )
+{
+    auto &manager = pocket_dimension_manager::instance();
+
+    if( manager.player_in_pocket_dimension() ) {
+        // Exit the pocket dimension
+        manager.exit_current();
+        return 0;
+    }
+
+    // Enter the pocket dimension
+    int pd_id = it->get_var( "pocket_dimension_id", -1 );
+    if( pd_id < 0 ) {
+        // First use - create the dimension
+        // Get overmap_special from item var, defaulting to "Cave"
+        std::string special_str = it->get_var( "pocket_special", "Cave" );
+        overmap_special_id special_id( special_str );
+
+        pocket_dimension_id new_id = manager.create( *it, special_id );
+        if( !new_id.is_valid() ) {
+            p->add_msg_if_player( m_bad, _( "Failed to create pocket dimension." ) );
+            return 0;
+        }
+        it->set_var( "pocket_dimension_id", new_id.value );
+        pd_id = new_id.value;
+    }
+
+    tripoint_abs_omt return_loc = p->global_omt_location();
+    manager.enter( pocket_dimension_id{ pd_id }, return_loc );
+    return 0;
 }

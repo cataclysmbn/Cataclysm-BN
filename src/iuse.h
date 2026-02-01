@@ -208,6 +208,9 @@ int chop_moves( Character &ch, item &tool );
 // LEGACY
 int cauterize_hotplate( player *, item *, bool, const tripoint & );
 
+// POCKET DIMENSIONS
+int pocket_dimension_toggle( player *, item *, bool, const tripoint & );
+
 } // namespace iuse
 
 void remove_radio_mod( item &it, player &p );

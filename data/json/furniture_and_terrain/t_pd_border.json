@@ -1,0 +1,21 @@
+[
+  {
+    "type": "terrain",
+    "id": "t_pd_border",
+    "name": "dimensional boundary",
+    "description": "An impenetrable barrier marking the edge of a pocket dimension.  The space beyond seems to shimmer and distort, as if reality itself is uncertain about what lies there.",
+    "symbol": "#",
+    "color": "magenta",
+    "move_cost": 0,
+    "flags": [ "NOITEM", "NO_SIGHT", "BLOCK_WIND", "MINEABLE", "FLAT", "INDOORS" ],
+    "bash": {
+      "str_min": -1,
+      "str_max": -1,
+      "sound": "The dimensional boundary absorbs the impact without effect.",
+      "sound_fail": "The dimensional boundary absorbs the impact without effect.",
+      "sound_vol": 2,
+      "sound_fail_vol": 2
+    },
+    "//": "str_min and str_max of -1 means this terrain cannot be bashed"
+  }
+]

@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "boundary_section.h"
 #include "calendar.h"
 #include "cata_unreachable.h"
 #include "cata_utility.h"
@@ -21,6 +22,7 @@
 #include "game.h"
 #include "int_id.h"
 #include "item.h"
+#include "layer.h"
 #include "item_stack.h"
 #include "line.h"
 #include "map.h"
@@ -136,6 +138,10 @@ bool map::build_transparency_cache( const int zlev )
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto cur_submap = get_submap_at_grid( {smx, smy, zlev} );
 
+            if( cur_submap == nullptr ) {
+                continue;
+            }
+
             const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
 
             if( !rebuild_all && !map_cache.transparency_cache_dirty[smx * MAPSIZE + smy] ) {
@@ -144,9 +150,17 @@ bool map::build_transparency_cache( const int zlev )
 
             // calculates transparency of a single tile
             // x,y - coords in map local coords
-            auto calc_transp = [&]( point  p ) {
+            auto calc_transp = [&, this]( point  p ) {
                 const point sp = p - sm_offset;
                 float value = LIGHT_TRANSPARENCY_OPEN_AIR;
+
+                // Border zones in bounded layers are opaque
+                if( !is_overworld_z( zlev ) ) {
+                    tripoint_abs_ms abs_pos = getglobal( tripoint( p, zlev ) );
+                    if( boundary_section_manager::instance().is_in_any_border( abs_pos ) ) {
+                        return LIGHT_TRANSPARENCY_SOLID;
+                    }
+                }
 
                 if( !( cur_submap->get_ter( sp ).obj().transparent &&
                        cur_submap->get_furn( sp ).obj().transparent ) ) {
@@ -285,14 +299,20 @@ void map::apply_character_light( Character &p )
 // Once this is complete, additional operations add more dynamic lighting.
 void map::build_sunlight_cache( int pzlev )
 {
-    const int zlev_min = zlevels ? -OVERMAP_DEPTH : pzlev;
-    // Start at the topmost populated zlevel to avoid unnecessary raycasting
-    // Plus one zlevel to prevent clipping inside structures
-    const int zlev_max = zlevels
-                         ? clamp( calc_max_populated_zlev() + 1,
-                                  std::min( OVERMAP_HEIGHT, pzlev + 1 ),
-                                  OVERMAP_HEIGHT )
-                         : pzlev;
+    int zlev_min, zlev_max;
+    if( !zlevels ) {
+        zlev_min = zlev_max = pzlev;
+    } else if( !is_overworld_z( pzlev ) ) {
+        // Non-overworld layers don't have sunlight
+        zlev_min = zlev_max = pzlev;
+    } else {
+        zlev_min = -OVERMAP_DEPTH;
+        // Start at the topmost populated zlevel to avoid unnecessary raycasting
+        // Plus one zlevel to prevent clipping inside structures
+        zlev_max = clamp( calc_max_populated_zlev() + 1,
+                          std::min( OVERMAP_HEIGHT, pzlev + 1 ),
+                          OVERMAP_HEIGHT );
+    }
 
     // true if all previous z-levels are fully transparent to light (no floors, transparency >= air)
     bool fully_outside = true;
@@ -441,8 +461,15 @@ void map::generate_lightmap( const int zlev )
     auto &lm = map_cache.lm;
     auto &sm = map_cache.sm;
     auto &outside_cache = map_cache.outside_cache;
-    auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).floor_cache;
-    bool top_floor = zlev == OVERMAP_DEPTH;
+
+    int max_z;
+    if( is_overworld_z( zlev ) ) {
+        max_z = OVERMAP_HEIGHT;
+    } else {
+        max_z = zlev;
+    }
+    auto &prev_floor_cache = get_cache( std::min( zlev + 1, max_z ) ).floor_cache;
+    bool top_floor = zlev >= max_z;
     std::memset( lm, 0, sizeof( lm ) );
     std::memset( sm, 0, sizeof( sm ) );
 
@@ -483,6 +510,10 @@ void map::generate_lightmap( const int zlev )
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto cur_submap = get_submap_at_grid( { smx, smy, zlev } );
+
+            if( cur_submap == nullptr ) {
+                continue;
+            }
 
             for( int sx = 0; sx < SEEX; ++sx ) {
                 for( int sy = 0; sy < SEEY; ++sy ) {
@@ -1610,9 +1641,17 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
                                          blocked_restore_cache );
     }
 
-    if( !fov_3d ) {
+    int minz, maxz;
+    if( is_overworld_z( target_z ) ) {
+        minz = -OVERMAP_DEPTH;
+        maxz = OVERMAP_HEIGHT;
+    } else {
+        minz = maxz = target_z;
+    }
+
+    if( !fov_3d || !is_overworld_z( target_z ) ) {
         std::vector<int> levels_to_build;
-        for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+        for( int z = minz; z <= maxz; z++ ) {
             auto &cur_cache = get_cache( z );
             if( z == target_z || cur_cache.seen_cache_dirty ) {
                 std::uninitialized_fill_n(
@@ -1636,7 +1675,6 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
             ( level_seen_cache, level_transparency_cache, level_blocked_cache, origin.xy(), 0 );
         }
     } else {
-        // Cache the caches (pointers to them)
         array_of_grids_of<const float> transparency_caches;
         array_of_grids_of<float> seen_caches;
         array_of_grids_of<const bool> floor_caches;

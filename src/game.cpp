@@ -106,6 +106,7 @@
 #include "iuse_actor.h"
 #include "json.h"
 #include "kill_tracker.h"
+#include "layer.h"
 #include "lightmap.h"
 #include "line.h"
 #include "live_view.h"
@@ -140,6 +141,7 @@
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
 #include "panels.h"
+#include "pocket_dimension.h"
 #include "path_info.h"
 #include "pathfinding.h"
 #include "pickup.h"
@@ -6266,9 +6268,12 @@ void game::print_all_tile_info( const tripoint &lp, const catacurses::window &w_
     if( !this_sound.empty() ) {
         mvwprintw( w_look, point( 1, ++line ), _( "You heard %s from here." ), this_sound );
     } else {
-        // Check other z-levels
+        // Check other z-levels within the same layer
         tripoint tmp = lp;
-        for( tmp.z = -OVERMAP_DEPTH; tmp.z <= OVERMAP_HEIGHT; tmp.z++ ) {
+        const world_layer cur_layer = get_layer( lp.z );
+        const int min_z = get_layer_min_z( cur_layer );
+        const int max_z = get_layer_max_z( cur_layer );
+        for( tmp.z = min_z; tmp.z <= max_z; tmp.z++ ) {
             if( tmp.z == lp.z ) {
                 continue;
             }
@@ -10416,17 +10421,17 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
     }
 
     m.clear_vehicle_cache( );
-    const int minz = m.has_zlevels() ? -OVERMAP_DEPTH : get_levz();
-    const int maxz = m.has_zlevels() ? OVERMAP_HEIGHT : get_levz();
+    const tripoint map_sm_pos(
+        project_to<coords::sm>( om_dest ).raw() + point( -HALF_MAPSIZE, -HALF_MAPSIZE ) );
+    const world_layer dest_layer = get_layer( map_sm_pos.z );
+    const int minz = m.has_zlevels() ? get_layer_min_z( dest_layer ) : get_levz();
+    const int maxz = m.has_zlevels() ? get_layer_max_z( dest_layer ) : get_levz();
     for( int z = minz; z <= maxz; z++ ) {
         m.clear_vehicle_list( z );
     }
     m.access_cache( get_levz() ).map_memory_seen_cache.reset();
     // offset because load_map expects the coordinates of the top left corner, but the
     // player will be centered in the middle of the map.
-    // TODO: fix point types
-    const tripoint map_sm_pos(
-        project_to<coords::sm>( om_dest ).raw() + point( -HALF_MAPSIZE, -HALF_MAPSIZE ) );
     const tripoint player_pos( u.pos().xy(), map_sm_pos.z );
     load_map( map_sm_pos );
     load_npcs();
@@ -11136,7 +11141,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
     // This caches the z-level we start the movement on (current) and the level we're want to end.
     const int z_before = get_levz();
     const int z_after = get_levz() + movez;
-    if( z_after < -OVERMAP_DEPTH || z_after > OVERMAP_HEIGHT ) {
+    if( !is_valid_layer_z( z_after ) ) {
         debugmsg( "Tried to move outside allowed range of z-levels" );
         return;
     }
@@ -11739,9 +11744,8 @@ std::optional<tripoint> game::find_or_make_stairs( map &mp, const int z_after, b
 
 void game::vertical_shift( const int z_after )
 {
-    if( z_after < -OVERMAP_DEPTH || z_after > OVERMAP_HEIGHT ) {
-        debugmsg( "Tried to get z-level %d outside allowed range of %d-%d",
-                  z_after, -OVERMAP_DEPTH, OVERMAP_HEIGHT );
+    if( !is_valid_layer_z( z_after ) ) {
+        debugmsg( "Tried to get z-level %d outside allowed layer range", z_after );
         return;
     }
 
@@ -11897,7 +11901,10 @@ point game::update_map( int &x, int &y )
 
     // Make sure map cache is consistent since it may have shifted.
     if( m.has_zlevels() ) {
-        for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; ++zlev ) {
+        const world_layer cur_layer = get_layer( get_levz() );
+        const int min_z = get_layer_min_z( cur_layer );
+        const int max_z = get_layer_max_z( cur_layer );
+        for( int zlev = min_z; zlev <= max_z; ++zlev ) {
             m.invalidate_map_cache( zlev );
         }
     } else {
@@ -11917,6 +11924,12 @@ point game::update_map( int &x, int &y )
 
 void game::update_overmap_seen()
 {
+    // Don't update overmap visibility when in pocket dimensions
+    // This prevents the high Z-level from revealing the entire overmap
+    if( is_pocket_dimension_z( u.posz() ) ) {
+        return;
+    }
+
     const tripoint_abs_omt ompos = u.global_omt_location();
     const int dist = u.overmap_sight_range( light_level( u.posz() ) );
     const int dist_squared = dist * dist;

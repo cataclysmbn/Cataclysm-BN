@@ -6,7 +6,10 @@
 #include <queue>
 #include <vector>
 
+#include "avatar.h"
+#include "boundary_section.h"
 #include "game.h"
+#include "layer.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "point.h"
@@ -33,6 +36,9 @@ decltype( Pathfinding::d_maps ) Pathfinding::d_maps = {};
 decltype( Pathfinding::z_area ) Pathfinding::z_area = {};
 decltype( Pathfinding::z_caches ) Pathfinding::z_caches = {};
 decltype( Pathfinding::z_caches_open_air ) Pathfinding::z_caches_open_air = {};
+decltype( Pathfinding::non_overworld_z_caches ) Pathfinding::non_overworld_z_caches = {};
+decltype( Pathfinding::non_overworld_z_caches_open_air ) Pathfinding::non_overworld_z_caches_open_air = {};
+decltype( Pathfinding::non_overworld_z_areas ) Pathfinding::non_overworld_z_areas = {};
 decltype( Pathfinding::cached_closest_z_changes ) Pathfinding::cached_closest_z_changes = {};
 
 // Thanks for nothing, MVSC
@@ -253,35 +259,30 @@ void Pathfinding::reset_tile_state()
 std::unordered_map<point, Pathfinding::ZLevelChangeOpenAirPair>
 &Pathfinding::get_z_cache_open_air( const int z )
 {
-    assert( -OVERMAP_DEPTH <= z && z <= OVERMAP_HEIGHT );
+    // For overworld z-levels, use the fixed-size array
+    if( is_overworld_z( z ) ) {
+        return Pathfinding::z_caches_open_air[z + OVERMAP_DEPTH];
+    }
 
-    return Pathfinding::z_caches_open_air[z + OVERMAP_DEPTH];
+    return Pathfinding::non_overworld_z_caches_open_air[z];
 }
 std::vector<Pathfinding::ZLevelChange> &Pathfinding::get_z_cache( const int z )
 {
-    assert( -OVERMAP_DEPTH <= z && z <= OVERMAP_HEIGHT );
-
-    return Pathfinding::z_caches[z + OVERMAP_DEPTH];
-}
-void Pathfinding::update_z_caches( bool update_open_air )
-{
-    const map &here = get_map();
-
-    point cur_z_area = here.get_abs_sub().xy();
-    sm_to_ms( cur_z_area );
-
-    if( cur_z_area == Pathfinding::z_area ) {
-        return;
+    if( is_overworld_z( z ) ) {
+        return Pathfinding::z_caches[z + OVERMAP_DEPTH];
     }
 
-    const point anti_shift = Pathfinding::z_area - cur_z_area;
-    // This cuboid will contain negative values, it's fine
-    half_open_cuboid<tripoint> prev_z_volume_local(
-        tripoint( here.getlocal( Pathfinding::z_area ), -OVERMAP_DEPTH ),
-        tripoint( here.getlocal( Pathfinding::z_area + point( MAPSIZE_X, MAPSIZE_Y ) ), OVERMAP_HEIGHT + 1 )
-    );
-
-    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+    return Pathfinding::non_overworld_z_caches[z];
+}
+// Helper to update z-caches for a specific z-level range
+// min_z and max_z are inclusive absolute z-levels
+void Pathfinding::update_z_caches_for_range( const map &here, int min_z, int max_z,
+        const point &anti_shift,
+        const half_open_cuboid<tripoint> &prev_z_volume_local,
+        bool update_open_air )
+{
+    // First pass: shift existing z-changes and remove out-of-bounds ones
+    for( int z = min_z; z <= max_z; z++ ) {
         std::vector<Pathfinding::ZLevelChange> &target = Pathfinding::get_z_cache( z );
 
         // Shift Z-changes to match new coordinate system
@@ -320,8 +321,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
         }
     }
 
-    // Finally, append newly loaded points
-    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+    // Second pass: scan newly loaded points for z-level changes
+    for( int z = min_z; z <= max_z; z++ ) {
         for( const tripoint &cur : here.points_on_zlevel( z ) ) {
             if( prev_z_volume_local.contains( cur ) ) {
                 continue;
@@ -336,7 +337,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 // Open air
                 const tripoint below_us = cur + tripoint_below;
 
-                if( !here.inbounds_z( below_us.z ) ) {
+                // Check if below is within the same layer's z-range
+                if( below_us.z < min_z ) {
                     continue;
                 }
 
@@ -345,8 +347,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 };
                 // We won't do vehicle checks for simplicity
 
-                const ZLevelChange going_to_below = ZLevelChange{ .from = cur, .to = below_us, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
-                const ZLevelChange reach_from_below = ZLevelChange{ .from = below_us, .to = cur, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
+                const Pathfinding::ZLevelChange going_to_below = Pathfinding::ZLevelChange{ .from = cur, .to = below_us, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
+                const Pathfinding::ZLevelChange reach_from_below = Pathfinding::ZLevelChange{ .from = below_us, .to = cur, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
 
                 // This is stored separately from other changes because it requires a different type of processing
                 Pathfinding::get_z_cache_open_air( z ).emplace( cur_point, Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
@@ -361,7 +363,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 // Stair bullshitery
                 const tripoint above_us = cur + tripoint_above;
 
-                if( !here.inbounds_z( above_us.z ) ) {
+                // Check if above is within the same layer's z-range
+                if( above_us.z > max_z ) {
                     continue;
                 }
 
@@ -372,8 +375,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
                     const auto &maybe_stair_ter = maybe_stairs_tile.get_ter_t();
 
                     if( maybe_stair_ter.has_flag( TFLAG_GOES_DOWN ) ) {
-                        const ZLevelChange stairs_up = ZLevelChange{ .from = cur, .to = maybe_stairs_p, .type = Pathfinding::ZLevelChange::Type::STAIRS };
-                        const ZLevelChange stairs_down = ZLevelChange{ .from = maybe_stairs_p, .to = cur, .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                        const Pathfinding::ZLevelChange stairs_up = Pathfinding::ZLevelChange{ .from = cur, .to = maybe_stairs_p, .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                        const Pathfinding::ZLevelChange stairs_down = Pathfinding::ZLevelChange{ .from = maybe_stairs_p, .to = cur, .type = Pathfinding::ZLevelChange::Type::STAIRS };
                         Pathfinding::get_z_cache( z ).push_back( stairs_down );
                         Pathfinding::get_z_cache( z + 1 ).push_back( stairs_up );
                         break;
@@ -383,7 +386,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 // Ditto
                 const tripoint below_us = cur + tripoint_below;
 
-                if( !here.inbounds_z( below_us.z ) ) {
+                // Check if below is within the same layer's z-range
+                if( below_us.z < min_z ) {
                     continue;
                 }
 
@@ -394,8 +398,8 @@ void Pathfinding::update_z_caches( bool update_open_air )
                     const auto &maybe_stairs_ter = maybe_stairs_tile.get_ter_t();
 
                     if( maybe_stairs_ter.has_flag( TFLAG_GOES_UP ) ) {
-                        const ZLevelChange stairs_down = ZLevelChange{ .from = cur, .to = maybe_stairs_p, .type = Pathfinding::ZLevelChange::Type::STAIRS };
-                        const ZLevelChange stairs_up = ZLevelChange{ .from = maybe_stairs_p, .to = cur, .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                        const Pathfinding::ZLevelChange stairs_down = Pathfinding::ZLevelChange{ .from = cur, .to = maybe_stairs_p, .type = Pathfinding::ZLevelChange::Type::STAIRS };
+                        const Pathfinding::ZLevelChange stairs_up = Pathfinding::ZLevelChange{ .from = maybe_stairs_p, .to = cur, .type = Pathfinding::ZLevelChange::Type::STAIRS };
                         Pathfinding::get_z_cache( z ).push_back( stairs_up );
                         Pathfinding::get_z_cache( z - 1 ).push_back( stairs_down );
                         break;
@@ -404,26 +408,78 @@ void Pathfinding::update_z_caches( bool update_open_air )
             } else if( cur_ter.has_flag( TFLAG_RAMP_UP ) ) {
                 const tripoint above_us = cur + tripoint_above;
 
-                if( !here.inbounds_z( above_us.z ) ) {
+                // Check if above is within the same layer's z-range
+                if( above_us.z > max_z ) {
                     continue;
                 }
 
-                const ZLevelChange ramp_up = ZLevelChange{ .from = cur, .to = above_us, .type = Pathfinding::ZLevelChange::Type::RAMP };
+                const Pathfinding::ZLevelChange ramp_up = Pathfinding::ZLevelChange{ .from = cur, .to = above_us, .type = Pathfinding::ZLevelChange::Type::RAMP };
                 Pathfinding::get_z_cache( z + 1 ).push_back( ramp_up );
             } else if( cur_ter.has_flag( TFLAG_RAMP_DOWN ) ) {
                 const tripoint below_us = cur + tripoint_below;
 
-                if( !here.inbounds_z( below_us.z ) ) {
+                // Check if below is within the same layer's z-range
+                if( below_us.z < min_z ) {
                     continue;
                 }
 
-                const ZLevelChange ramp_down = ZLevelChange{ .from = cur, .to = below_us, .type = Pathfinding::ZLevelChange::Type::RAMP };
+                const Pathfinding::ZLevelChange ramp_down = Pathfinding::ZLevelChange{ .from = cur, .to = below_us, .type = Pathfinding::ZLevelChange::Type::RAMP };
                 Pathfinding::get_z_cache( z - 1 ).push_back( ramp_down );
             }
         }
     }
+}
 
-    Pathfinding::z_area = cur_z_area;
+void Pathfinding::update_z_caches( bool update_open_air )
+{
+    const map &here = get_map();
+
+    point cur_z_area = here.get_abs_sub().xy();
+    sm_to_ms( cur_z_area );
+
+    // Determine current layer from player's z position
+    const int player_z = g->u.posz();
+    const world_layer current_layer = get_layer( player_z );
+
+    if( current_layer == world_layer::OVERWORLD ) {
+        // Update overworld z-caches (original behavior)
+        if( cur_z_area == Pathfinding::z_area ) {
+            return;
+        }
+
+        const point anti_shift = Pathfinding::z_area - cur_z_area;
+        // This cuboid will contain negative values, it's fine
+        half_open_cuboid<tripoint> prev_z_volume_local(
+            tripoint( here.getlocal( Pathfinding::z_area ), -OVERMAP_DEPTH ),
+            tripoint( here.getlocal( Pathfinding::z_area + point( MAPSIZE_X, MAPSIZE_Y ) ), OVERMAP_HEIGHT + 1 )
+        );
+
+        update_z_caches_for_range( here, -OVERMAP_DEPTH, OVERMAP_HEIGHT, anti_shift,
+                                   prev_z_volume_local, update_open_air );
+
+        Pathfinding::z_area = cur_z_area;
+    } else {
+        // Update non-overworld layer z-caches
+        point &layer_z_area = Pathfinding::non_overworld_z_areas[current_layer];
+
+        if( cur_z_area == layer_z_area ) {
+            return;
+        }
+
+        const point anti_shift = layer_z_area - cur_z_area;
+        const int layer_min_z = get_layer_min_z( current_layer );
+        const int layer_max_z = get_layer_max_z( current_layer );
+
+        half_open_cuboid<tripoint> prev_z_volume_local(
+            tripoint( here.getlocal( layer_z_area ), layer_min_z ),
+            tripoint( here.getlocal( layer_z_area + point( MAPSIZE_X, MAPSIZE_Y ) ), layer_max_z + 1 )
+        );
+
+        update_z_caches_for_range( here, layer_min_z, layer_max_z, anti_shift,
+                                   prev_z_volume_local, update_open_air );
+
+        layer_z_area = cur_z_area;
+    }
 }
 /// Pathfinding: main loops
 void Pathfinding::detect_culled_frontier(
@@ -580,6 +636,16 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
 
             if( !this->in_bounds( cur_point ) ) {
                 continue;
+            }
+
+            // Check for impassable border zones in bounded layers
+            if( !is_overworld_z( this->z ) ) {
+                tripoint_abs_ms abs_pos = here.getglobal( cur_point_with_z );
+                if( boundary_section_manager::instance().is_in_any_border( abs_pos ) ) {
+                    this->tile_state_at( cur_point ) = Pathfinding::State::INACCESSIBLE;
+                    this->tile_state_modify_set.push_back( cur_point );
+                    continue;
+                }
             }
 
             if( this->tile_state_at( cur_point ) != Pathfinding::State::UNVISITED ) {
@@ -904,6 +970,12 @@ std::vector<tripoint> Pathfinding::get_route_3d(
     const PathfindingSettings path_settings,
     const RouteSettings route_settings )
 {
+    // Cross-layer pathfinding is not allowed
+    // Paths must stay within the same layer (overworld to overworld, pocket dim to same pocket dim)
+    if( get_layer( from.z ) != get_layer( to.z ) ) {
+        return {};
+    }
+
     // We won't bother with complicated Z-level paths because that vastly, vastly increases the pathfinding cost
     // Instead, we will **only** consider taking z_changes that bring us closer to target's Z level.
     const bool we_go_up = to.z > from.z;
@@ -1095,6 +1167,11 @@ std::vector<tripoint> Pathfinding::route(
     here.clip_to_bounds( from );
     here.clip_to_bounds( to );
 
+    // Cross-layer pathfinding is not allowed
+    if( get_layer( from.z ) != get_layer( to.z ) ) {
+        return {};
+    }
+
     PathfindingSettings path_settings = maybe_path_settings.has_value() ? *maybe_path_settings :
                                         PathfindingSettings();
     RouteSettings route_settings = maybe_route_settings.has_value() ? *maybe_route_settings :
@@ -1110,3 +1187,23 @@ std::vector<tripoint> Pathfinding::route(
     }
     return Pathfinding::get_route_3d( from, to, path_settings, route_settings );
 };
+
+void Pathfinding::mark_dirty_z_cache()
+{
+    // Clear overworld z-caches
+    for( auto &cache : z_caches ) {
+        cache.clear();
+    }
+    for( auto &cache : z_caches_open_air ) {
+        cache.clear();
+    }
+    z_area = point_zero;
+
+    // Clear non-overworld z-caches
+    non_overworld_z_caches.clear();
+    non_overworld_z_caches_open_air.clear();
+    non_overworld_z_areas.clear();
+
+    // Clear cached z-path information
+    cached_closest_z_changes.clear();
+}

@@ -35,6 +35,7 @@
 #include "overmap.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
+#include "pocket_dimension.h"
 #include "popup.h"
 #include "regional_settings.h"
 #include "scent_map.h"
@@ -118,6 +119,9 @@ void game::serialize( std::ostream &fout )
     json.member( "items" );
     safe_reference<item>::serialize_global( json );
     json.end_object();
+
+    json.member( "pocket_dimensions" );
+    pocket_dimension_manager::instance().serialize( json );
 
     json.member( "player", u );
     Messages::serialize( json );
@@ -263,6 +267,12 @@ void game::unserialize( std::istream &fin )
                     safe_reference<item>::deserialize_global( member.get_array() );
                 }
             }
+        }
+
+        if( data.has_object( "pocket_dimensions" ) ) {
+            data.read( "pocket_dimensions", pocket_dimension_manager::instance() );
+        } else {
+            pocket_dimension_manager::instance().clear();
         }
 
         data.read( "player", u );

@@ -20,6 +20,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
+#include "layer.h"
 #include "item_contents.h"
 #include "map.h"
 #include "math_defines.h"
@@ -1124,6 +1125,7 @@ void weather_manager::update_weather()
 
     if( weather_id->sight_penalty !=
         old_weather->sight_penalty ) {
+        // Weather affects overworld z-levels (pocket dimensions don't have weather)
         for( int i = -OVERMAP_DEPTH; i <= OVERMAP_HEIGHT; i++ ) {
             get_map().set_transparency_cache_dirty( i );
         }

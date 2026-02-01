@@ -6,6 +6,7 @@
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "game.h"
+#include "layer.h"
 #include "line.h"
 #include "translations.h"
 #include "map.h"
@@ -130,12 +131,14 @@ bool map_memory::prepare_region( const tripoint &p1, const tripoint &p2 )
 
     dbg( DL::Info ) << "Preparing memory map for area: pos: " << sm_pos << " size: " << sm_size;
 
-
-    int minz = z_levels ? -OVERMAP_DEPTH : p1.z;
-    int maxz = z_levels ? OVERMAP_HEIGHT : p1.z;
+    // Determine z-level range based on the layer of the requested z-level
+    const world_layer layer = get_layer( p1.z );
+    int minz = z_levels ? get_layer_min_z( layer ) : p1.z;
+    int maxz = z_levels ? get_layer_max_z( layer ) : p1.z;
 
     cache_pos = sm_pos;
     cache_size = sm_size;
+    cache_minz = minz;  // Store for use in get_submap
 
     cached.clear();
     cached.reserve( cache_size.x * cache_size.y * ( maxz - minz + 1 ) );
@@ -266,12 +269,17 @@ mm_submap &map_memory::get_submap( const tripoint &sm_pos )
     // First, try fetching from cache.
     // If it's not in cache (or cache is absent), go the long way.
     if( cache_pos != tripoint_min ) {
+        // Use cache_minz (set during prepare_region) instead of OVERMAP_DEPTH
+        // This correctly handles pocket dimensions where z >= 90
         int zoffset = get_map().has_zlevels()
-                      ? ( sm_pos.z + OVERMAP_DEPTH ) * cache_size.y * cache_size.x
+                      ? ( sm_pos.z - cache_minz ) * cache_size.y * cache_size.x
                       : 0;
         const point idx = ( sm_pos - cache_pos ).xy();
-        if( idx.x > 0 && idx.y > 0 && idx.x < cache_size.x && idx.y < cache_size.y ) {
-            return *cached[idx.y * cache_size.x + idx.x + zoffset];
+        if( idx.x > 0 && idx.y > 0 && idx.x < cache_size.x && idx.y < cache_size.y && zoffset >= 0 ) {
+            const size_t cache_idx = idx.y * cache_size.x + idx.x + zoffset;
+            if( cache_idx < cached.size() ) {
+                return *cached[cache_idx];
+            }
         }
     }
     return *fetch_submap( sm_pos );
@@ -363,4 +371,5 @@ void map_memory::clear_cache()
     cached.clear();
     cache_pos = tripoint_min;
     cache_size = point_zero;
+    cache_minz = 0;
 }

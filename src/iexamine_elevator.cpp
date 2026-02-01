@@ -4,6 +4,7 @@
 #include "cata_algo.h"
 #include "game.h"
 #include "iexamine.h"
+#include "layer.h"
 #include "mapdata.h"
 #include "flood_fill.h"
 #include "output.h"
@@ -81,7 +82,10 @@ auto choose_floor( const tripoint &examp, const tripoint_abs_omt &this_omt,
 
     uilist choice;
     choice.title = _( "Please select destination floor" );
-    for( int z = OVERMAP_HEIGHT; z >= -OVERMAP_DEPTH; z-- ) {
+    const world_layer layer = get_layer( examp.z );
+    const int max_z = get_layer_max_z( layer );
+    const int min_z = get_layer_min_z( layer );
+    for( int z = max_z; z >= min_z; z-- ) {
         const tripoint_abs_omt that_omt{ this_omt.xy(), z };
         const int turns = get_rot_turns( this_omt, that_omt );
         const tripoint zp =
@@ -243,7 +247,7 @@ void iexamine::elevator( player &p, const tripoint &examp )
     }
 
     const int movez = elevator::choose_floor( examp, this_omt, sm_orig );
-    if( movez < -OVERMAP_DEPTH ) {
+    if( !is_valid_layer_z( movez ) ) {
         return;
     }
 

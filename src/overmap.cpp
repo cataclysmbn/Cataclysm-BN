@@ -37,6 +37,7 @@
 #include "game.h"
 #include "generic_factory.h"
 #include "json.h"
+#include "layer.h"
 #include "line.h"
 #include "map.h"
 #include "map_iterator.h"
@@ -3106,7 +3107,8 @@ std::vector<shared_ptr_fast<npc>> overmap::get_npcs( const
 
 bool overmap::has_note( const tripoint_om_omt &p ) const
 {
-    if( p.z() < -OVERMAP_DEPTH || p.z() > OVERMAP_HEIGHT ) {
+    // Overmap notes only exist for overworld z-levels
+    if( !is_overworld_z( p.z() ) ) {
         return false;
     }
 
@@ -3120,7 +3122,8 @@ bool overmap::has_note( const tripoint_om_omt &p ) const
 
 std::optional<int> overmap::has_note_with_danger_radius( const tripoint_om_omt &p ) const
 {
-    if( p.z() < -OVERMAP_DEPTH || p.z() > OVERMAP_HEIGHT ) {
+    // Overmap notes only exist for overworld z-levels
+    if( !is_overworld_z( p.z() ) ) {
         return std::nullopt;
     }
 
@@ -3164,7 +3167,8 @@ const std::vector<om_note> &overmap::all_notes( int z ) const
 {
     static const std::vector<om_note> fallback;
 
-    if( z < -OVERMAP_DEPTH || z > OVERMAP_HEIGHT ) {
+    // Overmap notes only exist for overworld z-levels
+    if( !is_overworld_z( z ) ) {
         return fallback;
     }
 
@@ -3185,8 +3189,9 @@ const std::string &overmap::note( const tripoint_om_omt &p ) const
 
 void overmap::add_note( const tripoint_om_omt &p, std::string message )
 {
-    if( p.z() < -OVERMAP_DEPTH || p.z() > OVERMAP_HEIGHT ) {
-        debugmsg( "Attempting to add not to overmap for blank layer %d", p.z() );
+    // Overmap notes only exist for overworld z-levels
+    if( !is_overworld_z( p.z() ) ) {
+        debugmsg( "Attempting to add note to overmap for non-overworld layer %d", p.z() );
         return;
     }
 
@@ -3234,7 +3239,8 @@ std::vector<point_abs_omt> overmap::find_notes( const int z, const std::string &
 
 bool overmap::has_extra( const tripoint_om_omt &p ) const
 {
-    if( p.z() < -OVERMAP_DEPTH || p.z() > OVERMAP_HEIGHT ) {
+    // Overmap extras only exist for overworld z-levels
+    if( !is_overworld_z( p.z() ) ) {
         return false;
     }
 
@@ -3250,7 +3256,8 @@ const string_id<map_extra> &overmap::extra( const tripoint_om_omt &p ) const
 {
     static const string_id<map_extra> fallback{};
 
-    if( p.z() < -OVERMAP_DEPTH || p.z() > OVERMAP_HEIGHT ) {
+    // Overmap extras only exist for overworld z-levels
+    if( !is_overworld_z( p.z() ) ) {
         return fallback;
     }
 
@@ -3265,8 +3272,9 @@ const string_id<map_extra> &overmap::extra( const tripoint_om_omt &p ) const
 
 void overmap::add_extra( const tripoint_om_omt &p, const string_id<map_extra> &id )
 {
-    if( p.z() < -OVERMAP_DEPTH || p.z() > OVERMAP_HEIGHT ) {
-        debugmsg( "Attempting to add not to overmap for blank layer %d", p.z() );
+    // Overmap extras only exist for overworld z-levels
+    if( !is_overworld_z( p.z() ) ) {
+        debugmsg( "Attempting to add extra to overmap for non-overworld layer %d", p.z() );
         return;
     }
 

@@ -1,0 +1,20 @@
+[
+  {
+    "type": "TOOL",
+    "id": "pocket_house_key",
+    "name": { "str": "pocket house key" },
+    "description": "A strange key that glows with an otherworldly light.  When activated, it opens a door to a pocket dimension containing a small extradimensional space.  The pocket dimension is tied to this key - if the key is destroyed, the dimension collapses.",
+    "weight": "50 g",
+    "volume": "10 ml",
+    "price": 100000,
+    "price_postapoc": 50000,
+    "material": [ "steel", "glass" ],
+    "symbol": "%",
+    "color": "magenta",
+    "use_action": "POCKET_DIMENSION_TOGGLE",
+    "flags": [ "UNBREAKABLE" ],
+	"item_vars": {
+	  "pocket_special": "Cave",
+	},
+  }
+]

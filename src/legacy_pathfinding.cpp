@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <algorithm>
+#include <map>
 #include <optional>
 #include <queue>
 #include <set>
@@ -11,9 +12,11 @@
 #include <utility>
 #include <vector>
 
+#include "boundary_section.h"
 #include "cata_utility.h"
 #include "coordinates.h"
 #include "debug.h"
+#include "layer.h"
 #include "map.h"
 #include "mapdata.h"
 #include "submap.h"
@@ -67,8 +70,18 @@ struct pathfinder {
     std::priority_queue< std::pair<int, tripoint>, std::vector< std::pair<int, tripoint> >, pair_greater_cmp_first >
     open;
     std::array< std::unique_ptr< path_data_layer >, OVERMAP_LAYERS > path_data;
+    std::map< int, std::unique_ptr< path_data_layer > > non_overworld_path_data;
 
     path_data_layer &get_layer( const int z ) {
+        if( !is_overworld_z( z ) ) {
+            auto &ptr = non_overworld_path_data[z];
+            if( ptr == nullptr ) {
+                ptr = std::make_unique<path_data_layer>();
+                ptr->init( min, max );
+            }
+            return *ptr;
+        }
+
         std::unique_ptr< path_data_layer > &ptr = path_data[z + OVERMAP_DEPTH];
         if( ptr != nullptr ) {
             return *ptr;
@@ -202,6 +215,11 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
      */
     std::vector<tripoint> ret;
 
+    // Cross-layer pathfinding is not allowed
+    if( get_layer( f.z ) != get_layer( t.z ) ) {
+        return ret;
+    }
+
     if( f == t || !inbounds( f ) ) {
         return ret;
     }
@@ -311,6 +329,15 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
             // TODO: Remove this and instead have sentinels at the edges
             if( p.x < minx || p.x >= maxx || p.y < miny || p.y >= maxy ) {
                 continue;
+            }
+
+            // Check for impassable border zones in bounded layers
+            if( !is_overworld_z( p.z ) ) {
+                tripoint_abs_ms abs_pos = getglobal( p );
+                if( boundary_section_manager::instance().is_in_any_border( abs_pos ) ) {
+                    layer.state[index] = ASL_CLOSED;
+                    continue;
+                }
             }
 
             if( layer.state[index] == ASL_CLOSED ) {

@@ -182,6 +182,7 @@ class map_memory
         std::vector<shared_ptr_fast<mm_submap>> cached;
         tripoint cache_pos;
         point cache_size;
+        int cache_minz = 0;  // Minimum z-level in cache (for layer support)
 
         /** Find, load or allocate a submap. May be slow. @returns the submap. */
         shared_ptr_fast<mm_submap> fetch_submap( const tripoint &sm_pos );

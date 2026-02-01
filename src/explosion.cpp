@@ -37,6 +37,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
+#include "layer.h"
 #include "item.h"
 #include "item_factory.h"
 #include "itype.h"
@@ -1132,7 +1133,10 @@ void ExplosionProcess::run()
     }
 
     // Remove temporary flags
-    for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+    const world_layer layer = get_layer( here.get_abs_sub().z );
+    const int minz = get_layer_min_z( layer );
+    const int maxz = get_layer_max_z( layer );
+    for( int z = minz; z <= maxz; z++ ) {
         for( const auto &pos : here.points_on_zlevel( z ) ) {
             for( auto &it : here.i_at( pos ) ) {
                 it->unset_flag( flag_EXPLOSION_SMASHED );

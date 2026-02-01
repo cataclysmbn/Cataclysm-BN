@@ -12,6 +12,7 @@
 #include <future>
 
 #include "avatar.h"
+#include "boundary_section.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "character_id.h"
@@ -26,6 +27,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
+#include "layer.h"
 #include "line.h"
 #include "map.h"
 #include "memory_fast.h"
@@ -738,6 +740,11 @@ void overmapbuffer::add_vehicle( vehicle *veh )
 
 bool overmapbuffer::seen( const tripoint_abs_omt &p )
 {
+    // Non-overworld positions in boundary sections are always "seen"
+    if( !is_overworld_z( p.z() ) ) {
+        return boundary_section_manager::instance().get_at( p ) != nullptr;
+    }
+
     if( const overmap_with_local_coords om_loc = get_existing_om_global( p ) ) {
         return om_loc.om->seen( om_loc.local );
     }
@@ -756,6 +763,13 @@ void overmapbuffer::set_seen( const tripoint_abs_omt &p, bool seen )
 
 const oter_id &overmapbuffer::ter( const tripoint_abs_omt &p )
 {
+    if( !is_overworld_z( p.z() ) ) {
+        // Use thread-local static to allow returning a reference
+        static thread_local oter_id cached_oter;
+        cached_oter = boundary_section_manager::instance().get_oter_at( p );
+        return cached_oter;
+    }
+
     const overmap_with_local_coords om_loc = get_om_global( p );
     return om_loc.om->ter( om_loc.local );
 }

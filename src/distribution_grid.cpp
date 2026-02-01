@@ -261,6 +261,7 @@ void distribution_grid_tracker::on_saved()
         world_generator->active_world == nullptr ) {
         return;
     }
+    // Electric grids only exist for overworld layer - pocket dimensions have no grid connectivity
     tripoint_abs_sm min_bounds( bounds.p_min, -OVERMAP_DEPTH );
     tripoint_abs_sm max_bounds( bounds.p_max, OVERMAP_HEIGHT );
     tripoint_range<tripoint_abs_sm> bounds_range( min_bounds, max_bounds );

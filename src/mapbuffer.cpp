@@ -69,6 +69,33 @@ void mapbuffer::remove_submap( tripoint addr )
     submaps.erase( m_target );
 }
 
+bool mapbuffer::remove_submap_safe( const tripoint &addr )
+{
+    // Check if submap exists
+    auto m_target = submaps.find( addr );
+    if( m_target == submaps.end() ) {
+        return false;
+    }
+
+    // Check if this submap is currently loaded in the active map
+    // If so, don't remove it to avoid crashes
+    if( g != nullptr ) {
+        map &here = get_map();
+        // Check if the submap is within the current reality bubble
+        const tripoint map_origin = here.get_abs_sub();
+        const int map_size = MAPSIZE;
+        if( addr.x >= map_origin.x && addr.x < map_origin.x + map_size &&
+            addr.y >= map_origin.y && addr.y < map_origin.y + map_size &&
+            ( here.has_zlevels() || addr.z == map_origin.z ) ) {
+            // This submap might be in active use, don't remove
+            return false;
+        }
+    }
+
+    submaps.erase( m_target );
+    return true;
+}
+
 submap *mapbuffer::lookup_submap( const tripoint &p )
 {
     const auto iter = submaps.find( p );

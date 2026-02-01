@@ -1067,6 +1067,9 @@ void Item_factory::init()
     add_iuse( "XANAX", &iuse::xanax );
     add_iuse( "BULLET_VIBE_ON", &iuse::bullet_vibe_on );
 
+    // Pocket dimensions
+    add_iuse( "POCKET_DIMENSION_TOGGLE", &iuse::pocket_dimension_toggle );
+
     // Obsolete - just dummies, won't be called
     add_iuse( "HOTPLATE", &iuse::toggle_heats_food );
     add_iuse( "HEAT_FOOD", &iuse::toggle_heats_food );

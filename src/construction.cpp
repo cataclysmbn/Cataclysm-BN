@@ -28,6 +28,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "generic_factory.h"
+#include "layer.h"
 #include "input.h"
 #include "int_id.h"
 #include "item.h"
@@ -1284,14 +1285,16 @@ bool construct::check_empty_up_OK( const tripoint &p )
 
 bool construct::check_up_OK( const tripoint & )
 {
-    // You're not going above +OVERMAP_HEIGHT.
-    return ( g->get_levz() < OVERMAP_HEIGHT );
+    // You're not going above the max z-level of the current layer.
+    const int current_z = g->get_levz();
+    return ( current_z < get_layer_max_z( get_layer( current_z ) ) );
 }
 
 bool construct::check_down_OK( const tripoint & )
 {
-    // You're not going below -OVERMAP_DEPTH.
-    return ( g->get_levz() > -OVERMAP_DEPTH );
+    // You're not going below the min z-level of the current layer.
+    const int current_z = g->get_levz();
+    return ( current_z > get_layer_min_z( get_layer( current_z ) ) );
 }
 
 bool construct::check_no_trap( const tripoint &p )

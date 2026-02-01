@@ -122,6 +122,7 @@ building_gen_pointer get_mapgen_cfunction( const std::string &ident )
             { "empty_rock", &mapgen_rock },
             // Old rock behavior, for compatibility and near caverns and slime pits
             { "rock", &mapgen_rock_partial },
+            { "pd_border", &mapgen_pd_border },
 
             { "subway_straight",    &mapgen_subway },
             { "subway_curved",      &mapgen_subway },
@@ -1920,6 +1921,11 @@ void mapgen_rock_partial( mapgendata &dat )
 void mapgen_rock( mapgendata &dat )
 {
     fill_background( &dat.m, t_rock );
+}
+
+void mapgen_pd_border(mapgendata& dat)
+{
+    fill_background(&dat.m, t_pd_border);
 }
 
 void mapgen_open_air( mapgendata &dat )

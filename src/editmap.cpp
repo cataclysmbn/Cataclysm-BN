@@ -27,6 +27,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "input.h"
+#include "layer.h"
 #include "int_id.h"
 #include "item.h"
 #include "line.h"
@@ -56,11 +57,13 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
-static constexpr tripoint editmap_boundary_min( 0, 0, -OVERMAP_DEPTH );
-static constexpr tripoint editmap_boundary_max( MAPSIZE_X, MAPSIZE_Y, OVERMAP_HEIGHT + 1 );
-
-static constexpr half_open_cuboid<tripoint> editmap_boundaries(
-    editmap_boundary_min, editmap_boundary_max );
+static bool editmap_inbounds( const tripoint &p )
+{
+    if( p.x < 0 || p.x >= MAPSIZE_X || p.y < 0 || p.y >= MAPSIZE_Y ) {
+        return false;
+    }
+    return is_valid_layer_z( p.z );
+}
 
 static const ter_id undefined_ter_id( -1 );
 
@@ -1541,7 +1544,7 @@ void editmap::recalc_target( shapetype shape )
             map &here = get_map();
             for( const tripoint &p : here.points_in_radius( origin, radius ) ) {
                 if( rl_dist( p, origin ) <= radius ) {
-                    if( editmap_boundaries.contains( p ) ) {
+                    if( editmap_inbounds( p ) ) {
                         target_list.push_back( p );
                     }
                 }
@@ -1572,7 +1575,7 @@ void editmap::recalc_target( shapetype shape )
                 for( int y = sy; y <= ey; y++ ) {
                     if( shape == editmap_rect_filled || x == sx || x == ex || y == sy || y == ey ) {
                         const tripoint p( x, y, z );
-                        if( editmap_boundaries.contains( p ) ) {
+                        if( editmap_inbounds( p ) ) {
                             target_list.push_back( p );
                         }
                     }
@@ -1611,9 +1614,13 @@ bool editmap::move_target( const std::string &action, int moveorigin )
     bool move_origin = moveorigin == 1 ? true :
                        moveorigin == 0 ? false : moveall;
     if( eget_direction( mp, action ) ) {
+        const world_layer layer = get_layer( target.z );
+        const int z_min = get_layer_min_z( layer );
+        const int z_max = get_layer_max_z( layer ) + 1;
+
         target.x = limited_shift( target.x, mp.x, 0, MAPSIZE_X );
         target.y = limited_shift( target.y, mp.y, 0, MAPSIZE_Y );
-        target.z = limited_shift( target.z, mp.z, -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
+        target.z = limited_shift( target.z, mp.z, z_min, z_max );
         if( move_origin ) {
             origin += mp;
         }
@@ -2040,8 +2047,8 @@ void editmap::mapgen_retarget()
         if( const std::optional<tripoint> vec = ctxt.get_direction( action ) ) {
             point vec_ms = omt_to_ms_copy( vec->xy() );
             tripoint ptarget = target + vec_ms;
-            if( editmap_boundaries.contains( ptarget ) &&
-                editmap_boundaries.contains( ptarget + point( SEEX, SEEY ) ) ) {
+            if( editmap_inbounds( ptarget ) &&
+                editmap_inbounds( ptarget + point( SEEX, SEEY ) ) ) {
                 target = ptarget;
 
                 target_list.clear();
