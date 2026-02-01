@@ -8,7 +8,7 @@ C++ 타입이 문서 생성기에 등록되지 않았다면 `<cppval: **gibberis
 
 먼저 바인딩 시스템에 새 타입을 등록해야 합니다. 문서 생성기가 이해하고, 런타임이 해당 타입을 포함하는 Lua 테이블을 JSON에서 역직렬화할 수 있도록 하는 등 여러 이유로 필요합니다. 이를 하지 않으면 `Type must implement luna_traits<T>` 컴파일 오류가 발생합니다.
 
-1. `catala_luna_doc.h`에 타입 선언을 추가합니다. 예를 들어, 가상의 `horde` 타입(`struct`)을 바인딩한다면 파일 상단 근처에 한 줄만 추가하면 됩니다:
+1. `catalua_luna_doc.h`에 타입 선언을 추가합니다. 예를 들어, 가상의 `horde` 타입(`struct`)을 바인딩한다면 파일 상단 근처에 한 줄만 추가하면 됩니다:
    ```cpp
    struct horde;
    ```

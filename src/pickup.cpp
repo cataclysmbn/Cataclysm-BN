@@ -20,6 +20,8 @@
 #include "catacharset.h"
 #include "character.h"
 #include "color.h"
+#include "coordinates.h"
+#include "coordinate_conversions.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "drop_token.h"
@@ -41,6 +43,7 @@
 #include "messages.h"
 #include "options.h"
 #include "output.h"
+#include "overmapbuffer.h"
 #include "panels.h"
 #include "pickup_token.h"
 #include "player.h"
@@ -51,6 +54,7 @@
 #include "rot.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
@@ -68,6 +72,9 @@ using item_count = std::pair<item *, int>;
 using pickup_map = std::map<std::string, item_count>;
 
 static void show_pickup_message( const pickup_map &mapPickup );
+static std::optional<tripoint_abs_omt> get_note_pos_from_item( const item &it );
+static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,
+        const std::string &item_name );
 
 struct pickup_count {
     bool pick = false;
@@ -245,6 +252,11 @@ static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water
 
     // We already checked in do_pickup if this was a nullptr
     item *loc = &*selection.target;
+    const bool note_item_favorite = loc->is_favorite;
+    const std::string note_item_name = loc->display_name();
+    const std::optional<tripoint_abs_omt> note_item_pos = note_item_favorite
+            ? get_note_pos_from_item( *loc )
+            : std::nullopt;
 
     const std::optional<int> &quantity = selection.quantity;
     // If the faction would murder you on sight, we no longer care about stealing from them since it can't make things worse
@@ -388,13 +400,24 @@ static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water
         if( option != EMPTY ) {
             for( safe_reference<item> &child_loc : children ) {
                 item &added = *child_loc;
+                const bool child_favorite = added.is_favorite;
+                const std::string child_note_name = added.display_name();
+                const std::optional<tripoint_abs_omt> child_note_pos = child_favorite
+                        ? get_note_pos_from_item( added )
+                        : std::nullopt;
                 auto &pickup_entry = map_pickup[added.tname()];
                 pickup_entry.first = &added;
                 pickup_entry.second += added.count();
                 u.i_add( added.detach() );
+                if( child_favorite && child_note_pos ) {
+                    maybe_remove_favorite_drop_note( *child_note_pos, child_note_name );
+                }
             }
         }
         u.moves -= moves_taken;
+        if( note_item_favorite && note_item_pos ) {
+            maybe_remove_favorite_drop_note( *note_item_pos, note_item_name );
+        }
     }
 
     return picked_up || !did_prompt;
@@ -1232,6 +1255,56 @@ void show_pickup_message( const pickup_map &mapPickup )
                      entry.second.first->display_name( entry.second.second ) );
         }
     }
+}
+
+static std::optional<tripoint_abs_omt> get_note_pos_from_item( const item &it )
+{
+    if( !it.has_position() ) {
+        return std::nullopt;
+    }
+    const map &here = get_map();
+    const tripoint abs_ms = here.getabs( it.position() );
+    return tripoint_abs_omt( ms_to_omt_copy( abs_ms ) );
+}
+
+static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,
+        const std::string &item_name )
+{
+    if( !get_option<bool>( "AUTO_NOTES_DROPPED_FAVORITES" ) ) {
+        return;
+    }
+    if( !overmap_buffer.has_note( note_pos ) ) {
+        return;
+    }
+    const std::string note_text = overmap_buffer.note( note_pos );
+    std::vector<std::string> tokens = string_split( note_text, ';' );
+    std::vector<std::string> kept;
+    kept.reserve( tokens.size() );
+    bool removed = false;
+    for( std::string &token : tokens ) {
+        std::string trimmed = trim_whitespaces( token );
+        if( trimmed.empty() ) {
+            continue;
+        }
+        if( trimmed == item_name ) {
+            removed = true;
+            continue;
+        }
+        kept.push_back( std::move( trimmed ) );
+    }
+    if( !removed ) {
+        return;
+    }
+    if( kept.empty() || ( kept.size() == 1 && kept.front().starts_with( "SPRITE:" ) ) ) {
+        overmap_buffer.delete_note( note_pos );
+        return;
+    }
+    std::string updated = kept.front();
+    for( size_t i = 1; i < kept.size(); ++i ) {
+        updated += "; ";
+        updated += kept[i];
+    }
+    overmap_buffer.add_note( note_pos, updated );
 }
 
 detached_ptr<item> pickup::handle_spillable_contents( Character &c, detached_ptr<item> &&it,

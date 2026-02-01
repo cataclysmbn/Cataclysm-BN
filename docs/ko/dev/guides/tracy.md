@@ -6,7 +6,7 @@
 
 > [!CAUTION]
 >
-> 게임과 프로파일러는 동일한 버전의 tracy로 빌드되어야 제대로 작동합니다. [여러 문제](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3253#discussion_r1545267113)로 인해 Windows 버전은 [`v0.10`](https://github.com/wolfpld/tracy/releases/tag/v0.10)을 사용하고 Linux 버전은 [`6d1deb5640ed11da01995fb1791115cfebe54dbf`](https://github.com/wolfpld/tracy/commit/6d1deb5640ed11da01995fb1791115cfebe54dbf)를 사용합니다.
+> 게임과 프로파일러는 동일한 버전의 tracy로 빌드되어야 제대로 작동합니다. [여러 문제](https://github.com/cataclysmbn/Cataclysm-BN/pull/3253#discussion_r1545267113)로 인해 Windows 버전은 [`v0.10`](https://github.com/wolfpld/tracy/releases/tag/v0.10)을 사용하고 Linux 버전은 [`6d1deb5640ed11da01995fb1791115cfebe54dbf`](https://github.com/wolfpld/tracy/commit/6d1deb5640ed11da01995fb1791115cfebe54dbf)를 사용합니다.
 
 ### Linux
 
@@ -90,7 +90,7 @@ $ cmake --build profiler/build --config Release --parallel $(nproc)
 
 ### Windows
 
-![image](https://github.com/cataclysmbnteam/Cataclysm-BN/assets/54838975/b6f73c09-969c-4305-b8fb-070d14fb834a)
+![image](https://github.com/cataclysmbn/Cataclysm-BN/assets/54838975/b6f73c09-969c-4305-b8fb-070d14fb834a)
 
 <https://github.com/wolfpld/tracy/releases>에서 미리 컴파일된 실행 파일을 다운로드합니다.
 

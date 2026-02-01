@@ -25,7 +25,11 @@
       {
         "y": 1,
         "x": 3,
-        "parts": [ "turret_mount", { "ammo_types": [ "40x53mm_m430a1" ], "part": "mounted_mk19", "ammo": 60, "ammo_qty": [ 1, 25 ] } ]
+        "parts": [
+          "turret_mount",
+          { "ammo_types": [ "40x53mm_m430a1" ], "part": "mounted_mk19", "ammo": 60, "ammo_qty": [ 1, 25 ] },
+          "turret_autoloader"
+        ]
       },
       { "y": 1, "x": 3, "parts": [ "seat", "seatbelt_heavyduty" ] },
       { "y": 0, "x": 3, "parts": [ "hdframe_vertical_2", "stowboard_vertical", "hdroof" ] },
@@ -113,7 +117,7 @@
       {
         "y": 1,
         "x": 3,
-        "parts": [ "turret_mount", { "part": "mounted_browning", "ammo": 60, "ammo_qty": [ 10, 100 ] } ]
+        "parts": [ "turret_mount", { "part": "mounted_browning", "ammo": 60, "ammo_qty": [ 10, 100 ] }, "turret_autoloader" ]
       },
       { "y": 1, "x": 3, "parts": [ "seat", "seatbelt_heavyduty" ] },
       { "y": 0, "x": 3, "parts": [ "hdframe_vertical_2", "stowboard_vertical", "hdroof" ] },
@@ -201,7 +205,7 @@
       {
         "y": 1,
         "x": 3,
-        "parts": [ "turret_mount", { "part": "mounted_browning", "ammo": 60, "ammo_qty": [ 10, 100 ] } ]
+        "parts": [ "turret_mount", { "part": "mounted_browning", "ammo": 60, "ammo_qty": [ 10, 100 ] }, "turret_autoloader" ]
       },
       { "y": 1, "x": 3, "parts": [ "seat", "seatbelt_heavyduty" ] },
       { "y": 0, "x": 3, "parts": [ "hdframe_vertical_2", "stowboard_vertical", "hdroof" ] },
@@ -274,7 +278,11 @@
       {
         "y": 1,
         "x": 3,
-        "parts": [ "turret_mount", { "ammo_types": [ "40x53mm_m430a1" ], "part": "mounted_mk19", "ammo": 60, "ammo_qty": [ 1, 25 ] } ]
+        "parts": [
+          "turret_mount",
+          { "ammo_types": [ "40x53mm_m430a1" ], "part": "mounted_mk19", "ammo": 60, "ammo_qty": [ 1, 25 ] },
+          "turret_autoloader"
+        ]
       },
       { "y": 1, "x": 3, "parts": [ "seat", "seatbelt_heavyduty" ] },
       { "y": 0, "x": 3, "parts": [ "hdframe_vertical_2", "stowboard_vertical", "hdroof" ] },
@@ -365,7 +373,11 @@
       {
         "y": 1,
         "x": -1,
-        "parts": [ "turret_mount", { "ammo_types": [ "762_51" ], "part": "mounted_m240", "ammo": 60, "ammo_qty": [ 10, 100 ] } ]
+        "parts": [
+          "turret_mount",
+          { "ammo_types": [ "762_51" ], "part": "mounted_m240", "ammo": 60, "ammo_qty": [ 10, 100 ] },
+          "turret_autoloader"
+        ]
       },
       { "y": 0, "x": -1, "parts": [ "hdframe_horizontal_2", "seat", "seatbelt", "hdroof" ] },
       { "y": -1, "x": -1, "parts": [ "hdframe_vertical", "hddoor_left" ] },
@@ -440,7 +452,11 @@
       {
         "y": 1,
         "x": -1,
-        "parts": [ "turret_mount", { "ammo_types": [ "40x53mm_m430a1" ], "part": "mounted_mk19", "ammo": 60, "ammo_qty": [ 1, 25 ] } ]
+        "parts": [
+          "turret_mount",
+          { "ammo_types": [ "40x53mm_m430a1" ], "part": "mounted_mk19", "ammo": 60, "ammo_qty": [ 1, 25 ] },
+          "turret_autoloader"
+        ]
       },
       { "y": 0, "x": -1, "parts": [ "hdframe_horizontal_2", "seat", "seatbelt", "hdroof" ] },
       { "y": -1, "x": -1, "parts": [ "hdframe_vertical", "hddoor_left" ] },
@@ -515,7 +531,11 @@
       {
         "y": 1,
         "x": -1,
-        "parts": [ "turret_mount", { "ammo_types": [ "atgm_heat" ], "part": "tow_launcher", "ammo": 60, "ammo_qty": [ 1, 1 ] } ]
+        "parts": [
+          "turret_mount",
+          { "ammo_types": [ "atgm_heat" ], "part": "tow_launcher", "ammo": 60, "ammo_qty": [ 1, 1 ] },
+          "turret_autoloader"
+        ]
       },
       { "y": 0, "x": -1, "parts": [ "hdframe_horizontal_2", "seat", "seatbelt", "hdroof" ] },
       { "y": -1, "x": -1, "parts": [ "hdframe_vertical", "hddoor_left" ] },

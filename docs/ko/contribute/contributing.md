@@ -100,7 +100,7 @@ Lua 파일은 [`dprint`](https://dprint.dev)의 내장 포매터를 사용해 �
     <img src="/docs/en/contributing/img/contributing-doxy2.png" width="48%">
 </p> -->
 
-자동 생성된 문서를 [깃허브 페이지](https://cataclysmbnteam.github.io/Cataclysm-BN)에서 읽을 수
+자동 생성된 문서를 [깃허브 페이지](https://cataclysmbn.github.io/Cataclysm-BN)에서 읽을 수
 있습니다.
 
 ### 독시젠(Doxygen) 주석
@@ -181,7 +181,7 @@ $ git config --local commit.template .gitmessage
 ```sh
 $ cd Cataclysm-BN
 # 현재 작업 디렉토리를 새로 복제한 "Cataclysm-BN" 디렉토리로 변경합니다.
-$ git remote add -f upstream https://github.com/cataclysmbnteam/Cataclysm-BN.git
+$ git remote add -f upstream https://github.com/cataclysmbn/Cataclysm-BN.git
 # "upstream"이라는 원격 저장소를 추가합니다.
 ```
 
@@ -348,7 +348,7 @@ Branch new_feature_2 set up to track remote branch main from upstream.
 
 ```sh
 $ git push
-error: The requested URL returned error: 403 while accessing https://github.com/cataclysmbnteam/Cataclysm-BN.git
+error: The requested URL returned error: 403 while accessing https://github.com/cataclysmbn/Cataclysm-BN.git
 fatal: HTTP request failed
 $ git push origin
 ....
@@ -400,7 +400,7 @@ The test took 41.772 seconds
 ```
 
 위 명령어들을 사용해서 변경사항을 테스트할 수 있습니다.
-[BN 위키](https://cbn-guide.pages.dev/)에도 디버그 메뉴에 대한 정보가 있습니다.
+[BN 위키](https://cataclysmbn-guide.com/)에도 디버그 메뉴에 대한 정보가 있습니다.
 
 ## 자주 묻는 질문
 
@@ -413,7 +413,7 @@ The test took 41.772 seconds
 
 ```sh
 $ git pull --ff-only upstream main
-From https://github.com/cataclysmbnteam/Cataclysm-BN
+From https://github.com/cataclysmbn/Cataclysm-BN
  * branch            main     -> FETCH_HEAD
 fatal: Not possible to fast-forward, aborting.
 $ git branch new_branch main          # 현재 커밋 내역을 임시 브랜치에 백업합니다

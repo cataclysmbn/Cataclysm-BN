@@ -2,7 +2,7 @@
 
 # Empfohlen
 
-0. Lade das Spiel von https://github.com/cataclysmbnteam/Cataclysm-BN/releases herunter
+0. Lade das Spiel von https://github.com/cataclysmbn/Cataclysm-BN/releases herunter
 1. Entpacke das Spiel
 2. Kopiere `save` und `config` aus dem alten Spielverzeichnis in das neue Verzeichnis
 3. (Optional) Kopiere `mods` aus dem alten Spielverzeichnis

@@ -509,6 +509,28 @@
   },
   {
     "type": "furniture",
+    "id": "f_char_purifier",
+    "name": "charcoal purifier",
+    "description": "A makeshift filter constructed to hold a supply of charcoal, for purifying water.",
+    "symbol": "=",
+    "looks_like": "char_purifier",
+    "bgcolor": "brown",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "SEALED", "CONTAINER", "NOITEM", "EASY_DECONSTRUCT" ],
+    "crafting_pseudo_item": "char_purifier_fake",
+    "examine_action": "reload_furniture",
+    "deconstruct": { "items": [ { "item": "withered", "count": 24 }, { "item": "stick", "count": 6 } ] },
+    "bash": {
+      "str_min": 8,
+      "str_max": 30,
+      "sound": "crunch!",
+      "sound_fail": "whump!",
+      "items": [ { "item": "withered", "count": [ 1, 4 ] }, { "item": "stick", "count": [ 2, 4 ] } ]
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_ladder",
     "name": "stepladder",
     "looks_like": "t_ladder_up",

@@ -125,6 +125,90 @@
   },
   {
     "type": "construction",
+    "id": "constr_mine_upstair_ore_iron",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_iron"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_banded_iron",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_banded_iron"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_copper",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_copper"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_tetrahedrite",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_tetrahedrite"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_chalcopyrite",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_chalcopyrite"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_lead",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_lead"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_galena",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_galena"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_galenau",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_galenau"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_tin",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_tin"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_coppin",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_coppin"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_bronzium",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_bronzium"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_silver",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_silver"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_gold",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_gold"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_electrumite",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_electrumite"
+  },
+  {
+    "type": "construction",
     "id": "constr_concrete_ramp_low",
     "group": "build_low_end_of_a_concrete_ramp",
     "//": "Builds a low end of a concrete ramp going up on this level and down on the level above.",

@@ -106,6 +106,7 @@ extern const flag_id flag_EFFECT_INVISIBLE;
 extern const flag_id flag_EFFECT_LIGHT_IMMUNE;
 extern const flag_id flag_EFFECT_LUA_ON_ADDED;
 extern const flag_id flag_EFFECT_LUA_ON_TICK;
+extern const flag_id flag_EFFECT_LUA_ON_REMOVED;
 extern const flag_id flag_EFFECT_NIGHT_VISION;
 extern const flag_id flag_EFFECT_PSI_IMMUNE;
 extern const flag_id flag_EFFECT_STAB_IMMUNE;
@@ -115,6 +116,7 @@ extern const flag_id flag_ETHEREAL_ITEM;
 extern const flag_id flag_EXPLOSION_SMASHED;
 extern const flag_id flag_EXPLOSION_PROPELLED;
 extern const flag_id flag_FAKE_MILL;
+extern const flag_id flag_FAKE_CLONING_VAT;
 extern const flag_id flag_FAKE_SMOKE;
 extern const flag_id flag_FANCY;
 extern const flag_id flag_FELINE;
@@ -376,6 +378,7 @@ extern const flag_id flag_WINDMETER;
 extern const flag_id flag_INITIALLY_ACTIVATE;
 extern const flag_id flag_MULTIINSTALL;
 extern const flag_id flag_BIONIC_TOOLS;
+extern const flag_id flag_TEMPORARY_ITEM;
 /**
  * Flags: json entity with "type": "json_flag", defined in flags.json, vp_flags.json
  * Currently used by:

@@ -82,6 +82,56 @@
   },
   {
     "type": "item_group",
+    "id": "tripod",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "flamethrower", "prob": 1, "charges-min": 0, "charges-max": 3000 },
+      { "item": "kevlar_plate", "prob": 10 },
+      { "item": "ceramic_armor", "prob": 15 },
+      { "item": "alloy_plate", "prob": 10 },
+      { "item": "robot_controls", "prob": 3 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "chickenbot",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "robot_controls", "prob": 5 },
+      { "item": "ai_module", "prob": 5 },
+      { "item": "sensor_module", "prob": 5 },
+      { "item": "memory_module", "prob": 5 },
+      { "item": "pathfinding_module", "prob": 5 },
+      { "item": "identification_module", "prob": 5 },
+      { "item": "reverse_jointed_legs", "prob": 40 },
+      { "item": "chickenbot_chassis", "prob": 40 },
+      { "item": "targeting_module", "prob": 5 },
+      { "item": "gun_module", "prob": 30 },
+      { "item": "mark19", "prob": 5 },
+      { "item": "tazer", "prob": 5 },
+      { "item": "m249", "prob": 5 },
+      { "item": "storage_battery", "prob": 5 },
+      { "item": "plut_cell", "prob": 5 },
+      { "item": "mil_plate", "prob": 2 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "tankbot",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "tazer", "prob": 3 },
+      { "item": "flamethrower", "prob": 1, "charges-min": 0, "charges-max": 3000 },
+      { "item": "556", "prob": 8 },
+      { "item": "alloy_plate", "prob": 10 },
+      { "item": "kevlar_plate", "prob": 10 },
+      { "item": "ceramic_armor", "prob": 10 },
+      { "item": "hard_plate", "prob": 30 },
+      { "item": "robot_controls", "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "turret",
     "subtype": "distribution",
     "entries": [ { "item": "9mm", "prob": 8 } ]
@@ -367,6 +417,21 @@
         ],
         "prob": 40
       }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "tankbot",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "tazer", "prob": 3 },
+      { "item": "flamethrower", "prob": 1, "charges-min": 0, "charges-max": 3000 },
+      { "item": "556", "prob": 8 },
+      { "item": "alloy_plate", "prob": 10 },
+      { "item": "kevlar_plate", "prob": 10 },
+      { "item": "ceramic_armor", "prob": 10 },
+      { "item": "hard_plate", "prob": 30 },
+      { "item": "robot_controls", "prob": 5 }
     ]
   }
 ]

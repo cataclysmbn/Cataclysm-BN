@@ -586,6 +586,16 @@
   },
   {
     "type": "item_action",
+    "id": "cloning_syringe",
+    "name": { "str": "Take specimen sample" }
+  },
+  {
+    "type": "item_action",
+    "id": "dna_editor",
+    "name": { "str": "Inspect genome drive" }
+  },
+  {
+    "type": "item_action",
     "id": "SOLARPACK",
     "name": { "str": "Unfold" }
   },
@@ -798,6 +808,11 @@
     "type": "item_action",
     "id": "MODIFY_GRID_CONNECTIONS",
     "name": { "str": "Modify grid connections" }
+  },
+  {
+    "type": "item_action",
+    "id": "VOLTMETER",
+    "name": { "str": "Measure grid power" }
   },
   {
     "type": "item_action",

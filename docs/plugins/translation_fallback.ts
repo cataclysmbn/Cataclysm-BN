@@ -37,12 +37,12 @@ export const translationFallback = (options: { languages: string[] }) => {
         if (!enPage) continue
         enPage.data.oldUrl = [...(enPage.data.oldUrl ?? []), ...missingLangPaths]
         redirectCount += missingLangPaths.length
-        console.log(
-          `[translation-fallback] Adding redirects for ${pathWithoutLang}:`,
-          missingLangPaths,
-        )
+        // console.log(
+        //   `[translation-fallback] Adding redirects for ${pathWithoutLang}:`,
+        //   missingLangPaths,
+        // )
       }
-      console.log(`[translation-fallback] Added ${redirectCount} redirects to pages`)
+      //   console.log(`[translation-fallback] Added ${redirectCount} redirects to pages`)
     })
   }
 }

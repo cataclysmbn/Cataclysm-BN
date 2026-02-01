@@ -42,7 +42,7 @@ vcpkg integrate install
 **참고:** 전체 CBN 저장소, 3GB 이상의 데이터를 다운로드합니다. 테스트만 하는 경우 `--depth=1`을 추가하세요.
 
 ```cmd
-git clone https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 

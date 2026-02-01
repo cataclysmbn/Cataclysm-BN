@@ -2,7 +2,7 @@
 
 # Что нужно делать
 
-0. Скачайте игру с https://github.com/cataclysmbnteam/Cataclysm-BN/releases
+0. Скачайте игру с https://github.com/cataclysmbn/Cataclysm-BN/releases
 1. Распакуйте архив с игрой
 2. Скопируйте папки `save` и `config` из старой директории игры в новую
 3. (Опционально) Скопируйте папку `mods` из старой директории

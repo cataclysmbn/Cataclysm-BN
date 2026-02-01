@@ -1030,7 +1030,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_electronics", 6 ], [ "advanced_electronics", 6 ] ],
     "using": [ [ "soldering_standard", 10 ], [ "welding_standard", 5 ] ],
-    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SCREW_FINE", "level": 2 }, { "id": "SAW_M_FINE", "level": 2 } ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
     "components": [
       [ [ "motor_small", 1 ] ],
       [ [ "sheet_metal_small", 2 ] ],

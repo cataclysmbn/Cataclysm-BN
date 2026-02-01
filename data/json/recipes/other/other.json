@@ -637,6 +637,7 @@
     "skill_used": "computer",
     "skills_required": [ "firstaid", 8 ],
     "reversible": true,
+    "contained": true,
     "difficulty": 6,
     "autolearn": true,
     "time": "6 h",
@@ -651,6 +652,7 @@
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "computer",
     "reversible": true,
+    "contained": true,
     "difficulty": 8,
     "autolearn": true,
     "//": "weird to use cooking here, but it represents science skill",
@@ -668,6 +670,7 @@
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "computer",
     "reversible": true,
+    "contained": true,
     "difficulty": 3,
     "autolearn": true,
     "time": "1 h",
@@ -890,5 +893,27 @@
     "reversible": true,
     "autolearn": true,
     "components": [ [ [ "money_bundle", 10 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "biomaterial",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_OTHER",
+    "skill_used": "cooking",
+    "//": "high first aid since we're already simplifying DNA extraction and the nutrients such",
+    "skills_required": [ [ "firstaid", 8 ] ],
+    "difficulty": 8,
+    "time": "2 h",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 1 ],
+    "qualities": [
+      { "id": "CONCENTRATE", "level": 1 },
+      { "id": "SEPARATE", "level": 1 },
+      { "id": "ANALYSIS", "level": 1 },
+      { "id": "DISTILL", "level": 1 },
+      { "id": "CHEM", "level": 3 }
+    ],
+    "tools": [ [ [ "surface_heat", 30, "LIST" ] ] ],
+    "components": [ [ [ "meat_red", 1, "LIST" ] ], [ [ "veggy_any", 1, "LIST" ] ], [ [ "saline", 7 ] ], [ [ "chem_peptone_broth", 1 ] ] ]
   }
 ]

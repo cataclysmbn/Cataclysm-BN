@@ -266,6 +266,28 @@
   },
   {
     "type": "overmap_terrain",
+    "id": [ "Cargoship1_0_0", "Cargoship1_1_0" ],
+    "name": "Cargoship1",
+    "sym": "H",
+    "color": "red",
+    "see_cost": 5,
+    "extras": "build",
+    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY", "LAKE" ],
+    "mondensity": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "Cargoshipu_0_0", "Cargoshipu_1_0" ],
+    "name": "Cargoshipunder",
+    "sym": "H",
+    "color": "red",
+    "see_cost": 5,
+    "extras": "build",
+    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY", "LAKE" ],
+    "mondensity": 2
+  },
+  {
+    "type": "overmap_terrain",
     "id": [
       "radio_tower",
       "radio_tower_even",

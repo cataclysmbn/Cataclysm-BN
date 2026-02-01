@@ -80,6 +80,7 @@
 static const activity_id ACT_TRAVELLING( "ACT_TRAVELLING" );
 
 static const mongroup_id GROUP_FOREST( "GROUP_FOREST" );
+static const mongroup_id GROUP_NEMESIS( "GROUP_NEMESIS" );
 
 static const trait_id trait_DEBUG_NIGHTVISION( "DEBUG_NIGHTVISION" );
 
@@ -200,15 +201,22 @@ auto fmt_omt_coords( const tripoint_abs_omt &coord ) -> std::string
 
 static void create_note( const tripoint_abs_omt &curs );
 
-// {note symbol, note color, offset to text}
-std::tuple<char, nc_color, size_t> get_note_display_info( const std::string &note )
+struct note_display_info {
+    char symbol = 'N';
+    nc_color color = c_yellow;
+    size_t text_offset = 0;
+    std::optional<std::string> sprite_id;
+};
+
+static note_display_info get_note_display_info_full( const std::string &note )
 {
-    std::tuple<char, nc_color, size_t> result {'N', c_yellow, 0};
-    bool set_color  = false;
+    note_display_info result;
+    bool set_color = false;
     bool set_symbol = false;
+    bool set_sprite = false;
 
     size_t pos = 0;
-    for( int i = 0; i < 2; ++i ) {
+    for( int i = 0; i < 4; ++i ) {
         // find the first non-whitespace non-delimiter
         pos = note.find_first_not_of( " :;", pos, 3 );
         if( pos == std::string::npos ) {
@@ -222,20 +230,60 @@ std::tuple<char, nc_color, size_t> get_note_display_info( const std::string &not
         }
 
         // set color or symbol
-        if( !set_symbol && note[end] == ':' ) {
-            std::get<0>( result ) = note[end - 1];
-            std::get<2>( result ) = end + 1;
+        const char delimiter = note[end];
+        const std::string token = note.substr( pos, end - pos );
+        if( !set_sprite && delimiter == ':' && token == "SPRITE" ) {
+            size_t sprite_start = end + 1;
+            if( sprite_start >= note.size() ) {
+                result.text_offset = sprite_start;
+                return result;
+            }
+            size_t sprite_end = note.find_first_of( " :;", sprite_start, 3 );
+            if( sprite_end == std::string::npos ) {
+                sprite_end = note.size();
+            }
+            std::string sprite_id = note.substr( sprite_start, sprite_end - sprite_start );
+            if( !sprite_id.empty() ) {
+                result.sprite_id = sprite_id;
+                set_sprite = true;
+            }
+            if( sprite_end >= note.size() ) {
+                result.text_offset = sprite_end;
+                return result;
+            }
+            pos = sprite_end + 1;
+            result.text_offset = pos;
+            continue;
+        } else if( !set_symbol && delimiter == ':' && token != "SPRITE" ) {
+            result.symbol = note[end - 1];
+            result.text_offset = end + 1;
             set_symbol = true;
-        } else if( !set_color && note[end] == ';' ) {
-            std::get<1>( result ) = get_note_color( note.substr( pos, end - pos ) );
-            std::get<2>( result ) = end + 1;
+        } else if( !set_color && delimiter == ';' ) {
+            result.color = get_note_color( note.substr( pos, end - pos ) );
+            result.text_offset = end + 1;
             set_color = true;
+        } else if( !set_color && !set_symbol && !set_sprite ) {
+            return result;
+        } else {
+            return result;
         }
 
         pos = end + 1;
     }
 
     return result;
+}
+
+// {note symbol, note color, offset to text}
+std::tuple<char, nc_color, size_t> get_note_display_info( const std::string &note )
+{
+    const note_display_info result = get_note_display_info_full( note );
+    return std::make_tuple( result.symbol, result.color, result.text_offset );
+}
+
+std::optional<std::string> get_note_sprite_id( const std::string &note )
+{
+    return get_note_display_info_full( note ).sprite_id;
 }
 
 static std::array<std::pair<nc_color, std::string>, npm_width *npm_height> get_overmap_neighbors(
@@ -285,7 +333,7 @@ static void update_note_preview( const std::string &note,
     wnoutrefresh( *w_preview );
 
     werase( *w_preview_title );
-    nc_color default_color = c_unset;
+    nc_color default_color = note_color;
     print_colored_text( *w_preview_title, point_zero, default_color, note_color, note_text,
                         report_color_error::no );
     int note_text_width = utf8_width( note_text );
@@ -1047,6 +1095,12 @@ static void draw_ascii( ui_adaptor &ui,
                             // Don't flood the map with forest creatures.
                             continue;
                         }
+                        if( mgp->type == GROUP_NEMESIS ) {
+                            // Nemesis horde shows as &
+                            ter_sym = "&";
+                            ter_color = c_red;
+                            break;
+                        }
                         if( mgp->horde ) {
                             // Hordes show as +
                             ter_sym = "+";
@@ -1203,7 +1257,7 @@ static void draw_ascii( ui_adaptor &ui,
             // clear line, print line, print vertical line on each side.
             mvwputch( w, point( 1, i + 2 ), c_white, LINE_XOXO );
             mvwprintz( w, point( 2, i + 2 ), c_yellow, spacer );
-            nc_color default_color = c_unset;
+            nc_color default_color = pr.first;
             print_colored_text( w, point( 2, i + 2 ), default_color, pr.first, pr.second,
                                 report_color_error::no );
             mvwputch( w, point( maxlen + 2, i + 2 ), c_white, LINE_XOXO );
@@ -1473,11 +1527,12 @@ static void create_note( const tripoint_abs_omt &curs )
                                       _( color_pair.second ), replace_all( color_pair.second, " ", "_" ) );
     }
 
-    std::string helper_text = string_format( ".\n\n%s\n%s\n%s\n",
+    std::string helper_text = string_format( ".\n\n%s\n%s\n%s\n%s\n",
                               _( "Type GLYPH:TEXT to set a custom glyph." ),
                               _( "Type COLOR;TEXT to set a custom color." ),
+                              _( "Type SPRITE:TILE_ID to set a custom sprite." ),
                               // NOLINTNEXTLINE(cata-text-style): literal exclaimation mark
-                              _( "Examples: B:Base | g;Loot | !:R;Minefield" ) );
+                              _( "Examples: B:Base | g;Loot | SPRITE:toolbox;g;Tools" ) );
     color_notes = color_notes.replace( color_notes.end() - 2, color_notes.end(), helper_text );
     std::string title = _( "Note:" );
 

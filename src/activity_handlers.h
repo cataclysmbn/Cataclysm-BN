@@ -15,7 +15,7 @@ class item;
 class player;
 class player_activity;
 struct tripoint;
-// TODO (https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1612):
+// TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that forward declaration after repair_activity_actor.
 class vehicle;
 
@@ -292,7 +292,7 @@ finish_functions;
 // from vehicles or furniture until
 // `repair_activity_actor` would be implemented.
 //
-// TODO (https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1612):
+// TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that repair code after repair_activity_actor.
 namespace repair_activity_hack
 {

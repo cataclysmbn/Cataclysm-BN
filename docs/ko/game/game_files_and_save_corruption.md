@@ -60,7 +60,7 @@
 
 ### 일반적인 원인 및 방지법
 
-이것들은 게임 버그이고 피해야 할 게 아니라 수정되어야 합니다. 우리가 모르는 건 고칠 수 없으므로 버그를 보고해야 합니다 - GitHub에 [버그 보고서](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/new/choose)를 만들거나 (GitHub 계정을 만드는 데 작동하는 이메일 주소만 필요하며, 그렇게 어렵지 않습니다) [디스코드 서버](https://discord.gg/XW7XhXuZ89)에 가입해서 `#development` 채널에 불평하면 - 거기서 더 빠른 응답을 받을 가능성이 높습니다. 어떻게 수정하는지 알거나 (시도해보고 싶다면) - 도움은 항상 감사합니다.
+이것들은 게임 버그이고 피해야 할 게 아니라 수정되어야 합니다. 우리가 모르는 건 고칠 수 없으므로 버그를 보고해야 합니다 - GitHub에 [버그 보고서](https://github.com/cataclysmbn/Cataclysm-BN/issues/new/choose)를 만들거나 (GitHub 계정을 만드는 데 작동하는 이메일 주소만 필요하며, 그렇게 어렵지 않습니다) [디스코드 서버](https://discord.gg/XW7XhXuZ89)에 가입해서 `#development` 채널에 불평하면 - 거기서 더 빠른 응답을 받을 가능성이 높습니다. 어떻게 수정하는지 알거나 (시도해보고 싶다면) - 도움은 항상 감사합니다.
 
 ### 손상 수정
 

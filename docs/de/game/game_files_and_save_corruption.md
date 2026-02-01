@@ -59,7 +59,7 @@ Auch hier können wir nicht viel tun. Versuche, die Launcher-Leute um eine Lösu
 
 ### Häufige Ursachen und Möglichkeiten zur Vermeidung
 
-Dies sind Spielfehler und sollten behoben, nicht vermieden werden. Wir können nicht beheben, was wir nicht wissen, also müssen Fehler gemeldet werden - entweder auf GitHub durch Erstellen eines [Fehlerberichts](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/new/choose) (du brauchst nur eine funktionierende E-Mail-Adresse, um ein GitHub-Konto zu erstellen, es ist nicht _so_ schwer) oder indem du unserem [Discord-Server](https://discord.gg/XW7XhXuZ89) beitrittst und dich im `#development` Kanal beschwerst - dort wirst du höchstwahrscheinlich eine schnellere Antwort erhalten. Wenn du weißt, wie man es behebt (oder es versuchen willst) - Hilfe wird immer geschätzt.
+Dies sind Spielfehler und sollten behoben, nicht vermieden werden. Wir können nicht beheben, was wir nicht wissen, also müssen Fehler gemeldet werden - entweder auf GitHub durch Erstellen eines [Fehlerberichts](https://github.com/cataclysmbn/Cataclysm-BN/issues/new/choose) (du brauchst nur eine funktionierende E-Mail-Adresse, um ein GitHub-Konto zu erstellen, es ist nicht _so_ schwer) oder indem du unserem [Discord-Server](https://discord.gg/XW7XhXuZ89) beitrittst und dich im `#development` Kanal beschwerst - dort wirst du höchstwahrscheinlich eine schnellere Antwort erhalten. Wenn du weißt, wie man es behebt (oder es versuchen willst) - Hilfe wird immer geschätzt.
 
 ### Behebung der Beschädigung
 

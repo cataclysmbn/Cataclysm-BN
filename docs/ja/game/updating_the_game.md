@@ -2,7 +2,7 @@
 
 # 推奨事項
 
-0. https://github.com/cataclysmbnteam/Cataclysm-BN/releases からゲームを入手する
+0. https://github.com/cataclysmbn/Cataclysm-BN/releases からゲームを入手する
 1. ゲームを解凍する
 2. 古いゲームディレクトリから新しいディレクトリへ `save` と `config` をコピーする
 3. (任意) 古いゲームディレクトリから `mods` をコピーする

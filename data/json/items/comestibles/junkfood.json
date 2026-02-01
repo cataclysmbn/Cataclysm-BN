@@ -99,11 +99,11 @@
     "description": "Dried kernels from a particular type of corn.  Practically inedible raw, they can be cooked to make a tasty snack.",
     "price": "1 USD",
     "price_postapoc": "4 USD",
-    "material": [ "junk" ],
+    "material": [ "veggy" ],
     "volume": "250 ml",
     "charges": 8,
     "fun": -6,
-    "vitamins": [ [ "junk_allergen", 1 ] ]
+    "vitamins": [ [ "iron", 4 ], [ "veggy_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",

@@ -69,7 +69,7 @@
     </content_rating>
     <releases>
         <release version="0.9.1" date="2025-11-14">
-            <url type="details">https://github.com/cataclysmbnteam/Cataclysm-BN/releases/tag/v0.9.1</url>
+            <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.9.1</url>
             <description>
                 <p>Notable Changes</p>
                 <ul>
@@ -80,7 +80,7 @@
             </description>
         </release>
         <release version="0.9.0" date="2025-11-13">
-            <url type="details">https://github.com/cataclysmbnteam/Cataclysm-BN/releases/tag/v0.9.0</url>
+            <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.9.0</url>
             <description>
                 <p>Notable Changes</p>
                 <ul>
@@ -97,7 +97,7 @@
             </description>
         </release>
         <release version="0.8.0" date="2025-04-28">
-            <url type="details">https://github.com/cataclysmbnteam/Cataclysm-BN/releases/tag/v0.8.0</url>
+            <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.8.0</url>
             <description>
                 <p>Notable Changes</p>
                 <ul>
@@ -114,7 +114,7 @@
             </description>
         </release>
         <release version="0.7.1" date="2025-03-18">
-            <url type="details">https://github.com/cataclysmbnteam/Cataclysm-BN/releases/tag/v0.7.1</url>
+            <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.7.1</url>
             <description>
                 <p>Notable Changes</p>
                 <ul>
@@ -130,7 +130,7 @@
             </description>
         </release>
         <release version="0.7" date="2025-01-18">
-            <url type="details">https://github.com/cataclysmbnteam/Cataclysm-BN/releases/tag/v0.7.0</url>
+            <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.7.0</url>
             <description>
                 <p>Notable Changes</p>
                 <ul>
@@ -151,16 +151,16 @@
         https://www.cataclysmbn.org
     </url>
     <url type="bugtracker">
-        https://github.com/cataclysmbnteam/Cataclysm-BN/issues
+        https://github.com/cataclysmbn/Cataclysm-BN/issues
     </url>
     <url type="vcs-browser">
-        https://github.com/cataclysmbnteam/Cataclysm-BN
+        https://github.com/cataclysmbn/Cataclysm-BN
     </url>
     <launchable type="desktop-id">org.cataclysmbn.CataclysmBN.desktop</launchable>
     <screenshots>
         <screenshot type="default" xml:lang="en">
             <caption>Screenshots from the playthroughs of (clock-wise order) Chaosvolt x2, ExecutorBill, and Scarf005.</caption>
-            <image>https://raw.githubusercontent.com/cataclysmbnteam/Cataclysm-BN/cb3a3769dc76a3cfd730c190a068f329fc8de2e9/doc/src/content/docs/en/contribute/img/readme-title.png</image>
+            <image>https://raw.githubusercontent.com/cataclysmbn/Cataclysm-BN/cb3a3769dc76a3cfd730c190a068f329fc8de2e9/doc/src/content/docs/en/contribute/img/readme-title.png</image>
         </screenshot>
     </screenshots>
 </component>

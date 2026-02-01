@@ -154,7 +154,7 @@ sudo apt-get install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer
 2.0.22
 ```
 
-이전 버전의 SDL을 사용하면 [IME가 작동하지 않을 수 있습니다](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1497).
+이전 버전의 SDL을 사용하면 [IME가 작동하지 않을 수 있습니다](https://github.com/cataclysmbn/Cataclysm-BN/issues/1497).
 
 ### 빌드
 
@@ -258,7 +258,7 @@ make -j$((`nproc`+0)) CROSS="${PLATFORM_64}" TILES=1 SOUND=1 RELEASE=1 BACKTRACE
 
 절차는 Linux에서 Windows로 크로스 컴파일하는 것과 매우 유사합니다. Ubuntu 14.04 LTS에서 테스트되었지만 다른 배포판에서도 작동해야 합니다.
 
-역사적 어려움으로 인해 런타임 최적화는 Mac OS X 대상으로 크로스 컴파일할 때 비활성화되어 있습니다. (컴파일 플래그로 `-O0`이 지정됩니다.) 자세한 내용은 [Pull Request #26564](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/26564)를 참조하세요.
+역사적 어려움으로 인해 런타임 최적화는 Mac OS X 대상으로 크로스 컴파일할 때 비활성화되어 있습니다. (컴파일 플래그로 `-O0`이 지정됩니다.) 자세한 내용은 [Pull Request #26564](https://github.com/cataclysmbn/Cataclysm-BN/pull/26564)를 참조하세요.
 
 ### 의존성
 
@@ -335,7 +335,7 @@ Gradle 프로젝트는 저장소의 `android/` 아래에 있습니다. 명령줄
 - SDL2_mixer (2.0.2로 테스트됨)
 - SDL2_image (2.0.3로 테스트됨)
 
-Gradle 빌드 프로세스는 [deps.zip](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/android/app/deps.zip)에서 의존성을 자동으로 설치합니다.
+Gradle 빌드 프로세스는 [deps.zip](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/android/app/deps.zip)에서 의존성을 자동으로 설치합니다.
 
 ### 설정
 

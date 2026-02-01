@@ -70,6 +70,7 @@
 #include "translations.h"
 #include "units_utility.h"
 #include "veh_type.h"
+#include "vehicle_functions.h"
 #include "weather.h"
 #include "ui.h"
 /*
@@ -665,19 +666,19 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
         auto light_overh = one_in( 4 );
         auto light_atom  = one_in( 2 );
         for( auto &pt : parts ) {
-            if( pt.has_flag( VPFLAG_CONE_LIGHT ) ) {
+            if( pt.info().has_flag( VPFLAG_CONE_LIGHT ) ) {
                 pt.enabled = light_head;
-            } else if( pt.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
                 pt.enabled = light_whead;
-            } else if( pt.has_flag( VPFLAG_DOME_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_DOME_LIGHT ) ) {
                 pt.enabled = light_dome;
-            } else if( pt.has_flag( VPFLAG_AISLE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_AISLE_LIGHT ) ) {
                 pt.enabled = light_aisle;
-            } else if( pt.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
                 pt.enabled = light_hoverh;
-            } else if( pt.has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
                 pt.enabled = light_overh;
-            } else if( pt.has_flag( VPFLAG_ATOMIC_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_ATOMIC_LIGHT ) ) {
                 pt.enabled = light_atom;
             }
         }
@@ -1178,7 +1179,7 @@ void vehicle::smash( map &m, float hp_percent_loss_min, float hp_percent_loss_ma
 {
     for( auto &part : parts ) {
         //Skip any parts already mashed up or removed.
-        if( part.is_broken() || part.removed ) {
+        if( part.is_broken() || part.removed || part.info().has_flag( VPFLAG_NOSMASH ) ) {
             continue;
         }
 
@@ -1524,12 +1525,12 @@ bool vehicle::is_structural_part_removed() const
  */
 bool vehicle::can_mount( point dp, const vpart_id &id ) const
 {
-    //The part has to actually exist.
+    // The part has to actually exist.
     if( !id.is_valid() ) {
         return false;
     }
 
-    //It also has to be a real part, not the null part
+    // It also has to be a real part, not the null part
     const vpart_info &part = id.obj();
     if( part.has_flag( "NOINSTALL" ) ) {
         return false;
@@ -1537,22 +1538,26 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
 
     const std::vector<int> parts_in_square = parts_at_relative( dp, false );
 
-    //New Subpath for balloon type structures when on the edge
-    if( parts_in_square.empty() && part.has_flag( "EXTENDABLE" ) ) {
-        // There needs to be parts for these
-        if( !parts.empty() ) {
-            if( !has_structural_or_extendable_part( dp ) &&
-                !has_structural_or_extendable_part( dp + point_east ) &&
-                !has_structural_or_extendable_part( dp + point_south ) &&
-                !has_structural_or_extendable_part( dp + point_west ) &&
-                !has_structural_or_extendable_part( dp + point_north ) ) {
-                return false;
+    // New Subpath for balloon type structures when on the edge
+    if( part.has_flag( "EXTENDABLE" ) ) {
+        if( parts_in_square.empty() ) {
+            // There needs to be parts for these
+            if( !parts.empty() ) {
+                if( !has_structural_or_extendable_part( dp ) &&
+                    !has_structural_or_extendable_part( dp + point_east ) &&
+                    !has_structural_or_extendable_part( dp + point_south ) &&
+                    !has_structural_or_extendable_part( dp + point_west ) &&
+                    !has_structural_or_extendable_part( dp + point_north ) ) {
+                    return false;
+                }
+                return true;
             }
-            return true;
+            // If there are no parts, we go on our merry day
+        } else {
+            return false;
         }
-        // If there are no parts, we go on our merry day
     }
-    //First part in an empty square MUST be a structural part
+    // First part in an empty square MUST be a structural part
     if( parts_in_square.empty() && part.location != part_location_structure ) {
         return false;
     }
@@ -1560,8 +1565,12 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
     if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "ANIMAL_CTRL" ) ) {
         return false;
     }
-    //No other part can be placed on a protrusion
+    // No other part can be placed on a protrusion
     if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "PROTRUSION" ) ) {
+        return false;
+    }
+    // NOCOLLIDE parts can not have other parts on the same tile
+    if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "NOCOLLIDE" ) ) {
         return false;
     }
 
@@ -5338,7 +5347,8 @@ int vehicle::total_water_wheel_epower_w() const
 int vehicle::net_battery_charge_rate_w() const
 {
     return total_engine_epower_w() + total_alternator_epower_w() + total_accessory_epower_w() +
-           total_solar_epower_w() + total_wind_epower_w() + total_water_wheel_epower_w();
+           total_solar_epower_w() + total_wind_epower_w() + total_water_wheel_epower_w() +
+           max_reactor_epower_w();
 }
 
 int vehicle::max_reactor_epower_w() const
@@ -5806,7 +5816,10 @@ void vehicle::idle( bool on_map )
             Also consider adding a hover efficiency field
         */
         if( is_rotorcraft() && is_flying_in_air() ) {
-            idle_rate = 100;
+            const auto rotor_newtons = std::max( 0.0,
+                                                 to_newton( total_mass() ) - total_balloon_lift() - total_wing_lift() );
+            const auto rotor_capacity = rotor_newtons / thrust_of_rotorcraft( true );
+            idle_rate = std::max( 10, int( std::floor( 100 * rotor_capacity ) ) );
             no_electric_power = false;
         }
         if( has_engine_type_not( fuel_type_muscle, true ) ) {
@@ -5858,6 +5871,8 @@ void vehicle::idle( bool on_map )
     if( is_alarm_on ) {
         alarm();
     }
+
+    vehicle_funcs::process_autoloaders( *this );
 }
 
 void vehicle::on_move()
@@ -7915,7 +7930,7 @@ int vehicle::get_part_id_hack( int id )
 // The mythical invokation to summon the cargo part on the same tile
 vehicle_part *vehicle::get_cargo_part( vehicle_part *part )
 {
-    vehicle_part *vp;
+    vehicle_part *vp = nullptr;
     int vpr = part_with_feature( part->mount, "CARGO", false );
     if( vpr != -1 ) {
         vp = &parts[ vpr ];

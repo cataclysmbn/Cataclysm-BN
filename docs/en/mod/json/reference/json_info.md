@@ -360,7 +360,7 @@ When you sort your inventory by category, these are the categories that are disp
 ### Scores and Achievements
 
 Scores are defined in two or three steps based on _events_. To see what events exist and what data
-they contain, read [`event.h`](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/src/event.h).
+they contain, read [`event.h`](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/src/event.h).
 
 Each event contains a certain set of fields. Each field has a string key and a `cata_variant` value.
 The fields should provide all the relevant information about the event.
@@ -409,7 +409,7 @@ Any or all of the following alterations can be made to the event stream:
 
 - Add new fields to each event based on event field transformations. The event field transformations
   can be found in
-  [`event_field_transformation.cpp`](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/src/event_field_transformations.cpp).
+  [`event_field_transformation.cpp`](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/src/event_field_transformations.cpp).
 - Filter events based on the values they contain to produce a stream containing some subset of the
   input stream.
 - Drop some fields which are not of interest in the output stream.

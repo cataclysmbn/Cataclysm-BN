@@ -70,6 +70,7 @@ class solar_tile : public active_tile_data
         const std::string &get_type() const override;
         void store( JsonOut &jsout ) const override;
         void load( JsonObject &jo ) override;
+        auto get_power_w() const -> int;
 };
 
 class steady_consumer_tile : public active_tile_data

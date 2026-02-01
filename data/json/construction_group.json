@@ -166,6 +166,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_char_purifier",
+    "name": "Build Charcoal Purifier"
+  },
+  {
+    "type": "construction_group",
     "id": "build_coat_rack",
     "name": "Build Coat Rack"
   },
@@ -561,6 +566,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_simple_wood_barricade",
+    "name": "Build Simple Wooden Barricade"
+  },
+  {
+    "type": "construction_group",
     "id": "build_rock_forge",
     "name": "Build Rock Forge"
   },
@@ -698,6 +708,11 @@
     "type": "construction_group",
     "id": "build_tarp_lean_to",
     "name": "Build Tarp Lean-To"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_tarp_lean_to_leather",
+    "name": "Build Leather Tarp Lean-To"
   },
   {
     "type": "construction_group",
@@ -978,6 +993,11 @@
     "type": "construction_group",
     "id": "install_minifreezer",
     "name": "Plug In Minifreezer"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_cloning_vat",
+    "name": "Plug In Cloning Vat"
   },
   {
     "type": "construction_group",
@@ -1643,5 +1663,55 @@
     "type": "construction_group",
     "id": "build_canvas_door",
     "name": "Build canvas door"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_ebench",
+    "name": "Place Exercise Bench"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_bmachine",
+    "name": "Place Ball Machine"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_ptable",
+    "name": "Place Pool Table"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_arcade",
+    "name": "Place Arcade Machine"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_pinball",
+    "name": "Place Pinball Machine"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_ergo",
+    "name": "Place Ergometer"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_treadmill",
+    "name": "Place Treadmill"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_pbag",
+    "name": "Place Punching Bag"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_spole",
+    "name": "Place Dancing Pole"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_roulette",
+    "name": "Place Roulette Table"
   }
 ]

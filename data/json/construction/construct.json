@@ -1230,6 +1230,19 @@
   },
   {
     "type": "construction",
+    "id": "constr_wood_barricade_simple",
+    "group": "build_simple_wood_barricade",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 1 } ] ],
+    "components": [ [ [ "wood_structural", 4, "LIST" ] ], [ [ "pointy_stick", 2 ] ] ],
+    "pre_note": "Can be deconstructed without tools.",
+    "needs_diggable": true,
+    "post_furniture": "f_barricade_windbreak"
+  },
+  {
+    "type": "construction",
     "id": "constr_pontoon_dp",
     "group": "build_pontoon_bridge",
     "//": "Set up pontoon bridge",
@@ -1708,11 +1721,25 @@
     "required_skills": [ [ "fabrication", 1 ] ],
     "time": "50m",
     "qualities": [ { "id": "HAMMER", "level": 1 } ],
-    "components": [ [ [ "pointy_stick", 4 ] ], [ [ "string_36", 1 ], [ "string_6", 4 ] ], [ [ "tarp", 1 ], [ "plastic_sheet", 1 ] ] ],
+    "components": [ [ [ "pointy_stick", 4 ] ], [ [ "cordage_short", 4, "LIST" ] ], [ [ "tarp", 1 ], [ "plastic_sheet", 1 ] ] ],
     "pre_note": "Can be deconstructed without tools.",
     "pre_flags": [ "FLAT" ],
     "needs_diggable": true,
-    "post_terrain": "t_tarptent"
+    "post_furniture": "f_tarptent_leather"
+  },
+  {
+    "type": "construction",
+    "id": "constr_leather_tarptent",
+    "group": "build_tarp_lean_to_leather",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "survival", 1 ] ],
+    "time": "50 m",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "pointy_stick", 4 ] ], [ [ "cordage_short", 4, "LIST" ] ], [ [ "leather_tarp", 1 ] ] ],
+    "pre_note": "Can be deconstructed without tools.",
+    "pre_flags": [ "FLAT" ],
+    "needs_diggable": true,
+    "post_furniture": "f_tarptent_leather"
   },
   {
     "type": "construction",

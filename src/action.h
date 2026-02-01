@@ -334,6 +334,8 @@ enum action_id : int {
     ACTION_DISPLAY_TRANSPARENCY,
     /** Toggle submap grid overlay */
     ACTION_DISPLAY_SUBMAP_GRID,
+    /** Toggle zone overlay */
+    ACTION_TOGGLE_ZONE_OVERLAY,
     /** Toggle visual effect rendering */
     ACTION_DISPLAY_TILES_NO_VFX,
     /** Toggle timing of the game hours */

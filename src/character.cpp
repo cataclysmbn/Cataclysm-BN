@@ -27,6 +27,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
@@ -195,6 +196,7 @@ static const efftype_id effect_riding( "riding" );
 static const efftype_id effect_saddled( "monster_saddled" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_slept_through_alarm( "slept_through_alarm" );
+static const efftype_id effect_spores( "spores" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_took_prozac( "took_prozac" );
@@ -2265,6 +2267,9 @@ void Character::mod_power_level( const units::energy &npower )
 void Character::mod_max_power_level( const units::energy &npower_max )
 {
     max_power_level += npower_max;
+    if( power_level > max_power_level ) {
+        set_power_level( max_power_level );
+    }
 }
 
 bool Character::is_max_power() const
@@ -6915,6 +6920,8 @@ bool Character::is_immune_effect( const efftype_id &eff ) const
         return is_immune_damage( DT_ACID ) || has_trait( trait_SLIMY ) || has_trait( trait_VISCOUS );
     } else if( eff == effect_nausea ) {
         return has_trait( trait_STRONGSTOMACH );
+    } else if( eff == effect_spores || eff == effect_fungus ) {
+        return has_trait( trait_M_IMMUNE );
     } else if( eff == effect_bleed ) {
         // Ugly, it was badly implemented and should be a flag
         return mutation_value( "bleed_resist" ) > 0.0f;
@@ -8494,6 +8501,13 @@ void Character::shout( std::string msg, bool order )
 
     sounds::sound( pos(), noise, order ? sounds::sound_t::order : sounds::sound_t::alert, msg, false,
                    "shout", shout );
+}
+
+void Character::signal_nemesis()
+{
+    const tripoint_abs_omt ompos = global_omt_location();
+    const tripoint_abs_sm smpos = project_to<coords::sm>( ompos );
+    overmap_buffer.signal_nemesis( smpos );
 }
 
 void Character::vomit()

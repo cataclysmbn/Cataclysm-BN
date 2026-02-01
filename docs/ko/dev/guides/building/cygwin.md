@@ -69,7 +69,7 @@ apt-cyg install astyle ccache gcc-g++ intltool git libSDL2_image-devel libSDL2_m
 
 ```bash
 cd /cygdrive/c/dev
-git clone https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 
