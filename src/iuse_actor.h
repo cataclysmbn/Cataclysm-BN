@@ -1508,8 +1508,6 @@ class iuse_dimension_travel : public iuse_actor
     public:
         std::string destination = "default";
         int travel_radius = 1;
-        bool allow_npcs = false;
-        bool allow_vehicles = false;
         int need_charges = 1;
         std::string fail_message;
         std::string success_message;

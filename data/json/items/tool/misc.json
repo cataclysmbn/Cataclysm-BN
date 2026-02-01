@@ -945,8 +945,6 @@
         "destination": "desert_test",
         "travel_radius": 5,
         "need_charges": 0,
-        "allow_npcs": true,
-        "allow_vehicles": true,
         "fail_message": "The watch vibrates but nothing happens.",
         "success_message": "You feel a wrenching sensation as you are pulled through space and time."
       },
@@ -975,8 +973,6 @@
         "destination": "default",
         "travel_radius": 5,
         "need_charges": 0,
-        "allow_npcs": true,
-        "allow_vehicles": true,
         "fail_message": "The watch vibrates but nothing happens.",
         "success_message": "You feel reality snap back into place."
       },
