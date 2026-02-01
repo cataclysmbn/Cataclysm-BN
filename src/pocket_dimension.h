@@ -79,8 +79,14 @@ class pocket_dimension
         // Get the full bounds including border (via boundary_section_manager)
         const boundary_bounds *get_bounds() const;
 
-        // Get the entry point within the pocket dimension (center of interior, ground level)
+        // Get the entry point within the pocket dimension
+        // Uses entry_offset if set, otherwise defaults to center of interior at ground level
         tripoint_abs_ms get_entry_point() const;
+
+        // Entry offset from interior origin (in OMT units for omt_offset, tile units for local_offset)
+        // These are optional overrides - if not set, defaults to center of interior
+        std::optional<tripoint> entry_omt_offset;   // Offset in OMT coordinates within interior
+        std::optional<point> entry_local_offset;    // Offset in tiles within the target OMT
 
         // Get usable interior bounds (excludes border)
         boundary_bounds get_interior() const;
@@ -119,6 +125,10 @@ class pocket_dimension_manager
         void destroy( pocket_dimension_id id );
 
         // Teleport player (and companions) into a pocket dimension
+        // Entry position is determined by:
+        // 1. entry_omt_offset and entry_local_offset in the pocket_dimension (from item vars)
+        // 2. Falls back to center of interior if not specified
+        // 3. If the target tile is not safe/passable, searches for the closest safe tile
         void enter( pocket_dimension_id id, const tripoint_abs_omt &return_loc );
 
         // Exit the current pocket dimension and return to the real world

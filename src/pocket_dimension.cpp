@@ -3,6 +3,7 @@
 #include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "debug.h"
+#include "field.h"
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
@@ -10,6 +11,8 @@
 #include "map.h"
 #include "messages.h"
 #include "overmap_special.h"
+#include "point.h"
+#include "trap.h"
 
 void pocket_dimension_id::serialize( JsonOut &json ) const
 {
@@ -53,22 +56,45 @@ const boundary_bounds *pocket_dimension::get_bounds() const
 
 tripoint_abs_ms pocket_dimension::get_entry_point() const
 {
-    // Return the center of the interior at the lowest Z level
     boundary_bounds interior_bounds = get_interior();
 
-    // Calculate center of interior in OMT coordinates
-    int center_x = ( interior_bounds.min.x() + interior_bounds.max.x() ) / 2;
-    int center_y = ( interior_bounds.min.y() + interior_bounds.max.y() ) / 2;
-    int entry_z = interior_bounds.min.z();  // Ground floor of pocket dimension
+    // Determine the target OMT within the interior
+    tripoint_abs_omt target_omt;
+    if( entry_omt_offset ) {
+        // Use the specified OMT offset from interior origin
+        target_omt = interior_bounds.min + *entry_omt_offset;
+        // Clamp to interior bounds
+        target_omt = tripoint_abs_omt(
+                         clamp( target_omt.x(), interior_bounds.min.x(), interior_bounds.max.x() - 1 ),
+                         clamp( target_omt.y(), interior_bounds.min.y(), interior_bounds.max.y() - 1 ),
+                         clamp( target_omt.z(), interior_bounds.min.z(), interior_bounds.max.z() - 1 )
+                     );
+    } else {
+        // Default to center of interior at lowest Z level
+        int center_x = ( interior_bounds.min.x() + interior_bounds.max.x() ) / 2;
+        int center_y = ( interior_bounds.min.y() + interior_bounds.max.y() ) / 2;
+        int entry_z = interior_bounds.min.z();
+        target_omt = tripoint_abs_omt( center_x, center_y, entry_z );
+    }
 
-    tripoint_abs_omt center_omt( center_x, center_y, entry_z );
+    // Convert OMT to map squares
+    tripoint_abs_ms corner_ms = project_to<coords::ms>( target_omt );
 
-    // Convert OMT to map squares using proper projection
-    tripoint_abs_ms corner_ms = project_to<coords::ms>( center_omt );
+    // Determine position within the OMT
+    point local_pos;
+    if( entry_local_offset ) {
+        // Use the specified local offset within the OMT
+        // Clamp to valid range (0 to SEEX*2-1, 0 to SEEY*2-1)
+        local_pos = point(
+                        clamp( entry_local_offset->x, 0, SEEX * 2 - 1 ),
+                        clamp( entry_local_offset->y, 0, SEEY * 2 - 1 )
+                    );
+    } else {
+        // Default to center of the OMT
+        local_pos = point( SEEX, SEEY );
+    }
 
-    // Add offset to center of the OMT (OMT is 24x24 tiles, so center is at +12, +12)
-    tripoint_abs_ms result = corner_ms + tripoint( SEEX, SEEY, 0 );
-    return result;
+    return corner_ms + tripoint( local_pos, 0 );
 }
 
 boundary_bounds pocket_dimension::get_interior() const
@@ -94,6 +120,12 @@ void pocket_dimension::serialize( JsonOut &json ) const
     json.member( "section_id", section_id );
     json.member( "owner", owner );
     json.member( "return_location", return_location );
+    if( entry_omt_offset ) {
+        json.member( "entry_omt_offset", *entry_omt_offset );
+    }
+    if( entry_local_offset ) {
+        json.member( "entry_local_offset", *entry_local_offset );
+    }
     json.end_object();
 }
 
@@ -104,6 +136,16 @@ void pocket_dimension::deserialize( JsonIn &jsin )
     data.read( "section_id", section_id );
     data.read( "owner", owner );
     data.read( "return_location", return_location );
+    if( data.has_member( "entry_omt_offset" ) ) {
+        tripoint offset;
+        data.read( "entry_omt_offset", offset );
+        entry_omt_offset = offset;
+    }
+    if( data.has_member( "entry_local_offset" ) ) {
+        point offset;
+        data.read( "entry_local_offset", offset );
+        entry_local_offset = offset;
+    }
 }
 
 pocket_dimension_manager &pocket_dimension_manager::instance()
@@ -219,6 +261,46 @@ void pocket_dimension_manager::destroy( pocket_dimension_id id )
     dimensions.erase( it );
 }
 
+// Check if a tile is safe for player spawning
+// A tile is safe if it's passable, has no dangerous fields, and no harmful traps
+static bool is_tile_safe( map &here, const tripoint &p )
+{
+    if( !here.passable( p ) ) {
+        return false;
+    }
+
+    const trap &tr = here.tr_at( p );
+    if( !tr.is_null() && !tr.is_benign() ) {
+        return false;
+    }
+
+    if( here.dangerous_field_at( p ) ) {
+        return false;
+    }
+
+    return true;
+}
+
+// Find the closest safe tile to the target position within the loaded map
+// Returns the target if it's already safe, otherwise searches in a spiral pattern
+static tripoint find_closest_safe_tile( map &here, const tripoint &target,
+                                        int max_radius = SEEX * 2 )
+{
+    if( is_tile_safe( here, target ) ) {
+        return target;
+    }
+
+    // Search in a spiral pattern for the closest safe tile
+    for( const tripoint &p : closest_points_first( target, 1, max_radius ) ) {
+        if( here.inbounds( p ) && is_tile_safe( here, p ) ) {
+            return p;
+        }
+    }
+
+    // No safe tile found, return the original target as fallback
+    return target;
+}
+
 void pocket_dimension_manager::enter( pocket_dimension_id id,
                                       const tripoint_abs_omt &return_loc )
 {
@@ -234,22 +316,24 @@ void pocket_dimension_manager::enter( pocket_dimension_id id,
     // Generate map if not already done (delegates to boundary_section_manager)
     boundary_section_manager::instance().generate_section_terrain( pd->section_id );
 
-    // Calculate destination OMT (center of interior)
-    boundary_bounds interior = pd->get_interior();
-    int center_x = ( interior.min.x() + interior.max.x() ) / 2;
-    int center_y = ( interior.min.y() + interior.max.y() ) / 2;
-    tripoint_abs_omt dest_omt( center_x, center_y, interior.min.z() );
+    // Get the entry point (uses offsets if set, otherwise defaults to center)
+    tripoint_abs_ms entry = pd->get_entry_point();
+
+    // Calculate destination OMT from entry point
+    tripoint_abs_omt dest_omt = project_to<coords::omt>( entry );
 
     // Mark that we're now in a pocket dimension
     current_dimension = id;
 
-    // Use existing teleportation infrastructure
+    // Use existing teleportation infrastructure to load the map
     g->place_player_overmap( dest_omt );
 
-    // Position player at entry point
-    tripoint_abs_ms entry = pd->get_entry_point();
-    tripoint local_entry = get_map().getlocal( entry.raw() );
-    g->place_player( local_entry );
+    // Convert entry point to local coordinates and find the closest safe tile
+    map &here = get_map();
+    tripoint local_entry = here.getlocal( entry.raw() );
+    tripoint safe_entry = find_closest_safe_tile( here, local_entry );
+
+    g->place_player( safe_entry );
 
     add_msg( m_info, _( "You enter the pocket dimension." ) );
 }

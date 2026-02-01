@@ -9092,6 +9092,34 @@ int iuse::pocket_dimension_toggle( player *p, item *it, bool, const tripoint & )
         }
         it->set_var( "pocket_dimension_id", new_id.value );
         pd_id = new_id.value;
+
+        // Set entry offsets from item vars if specified
+        pocket_dimension *pd = manager.get( new_id );
+        if( pd ) {
+            // OMT offset (x, y, z within the pocket dimension interior)
+            int omt_x = it->get_var( "pocket_entry_omt_x", -1 );
+            int omt_y = it->get_var( "pocket_entry_omt_y", -1 );
+            int omt_z = it->get_var( "pocket_entry_omt_z", -1 );
+            if( omt_x >= 0 || omt_y >= 0 || omt_z >= 0 ) {
+                // Use 0 as default for unspecified coordinates
+                pd->entry_omt_offset = tripoint(
+                                           omt_x >= 0 ? omt_x : 0,
+                                           omt_y >= 0 ? omt_y : 0,
+                                           omt_z >= 0 ? omt_z : 0
+                                       );
+            }
+
+            // Local offset (x, y within the target OMT, in tiles)
+            int local_x = it->get_var( "pocket_entry_local_x", -1 );
+            int local_y = it->get_var( "pocket_entry_local_y", -1 );
+            if( local_x >= 0 || local_y >= 0 ) {
+                // Use center (SEEX, SEEY) as default for unspecified coordinates
+                pd->entry_local_offset = point(
+                                             local_x >= 0 ? local_x : SEEX,
+                                             local_y >= 0 ? local_y : SEEY
+                                         );
+            }
+        }
     }
 
     tripoint_abs_omt return_loc = p->global_omt_location();
