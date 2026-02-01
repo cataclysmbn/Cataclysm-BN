@@ -280,7 +280,7 @@ std::string PATH_INFO::savedir()
 {
 #if defined(__ANDROID__)
     if( get_option<bool>( "LOAD_FROM_EXTERNAL" ) ) {
-        return base_path_value + "/cataclysm-bn/" + "save/";
+        return base_path_value + "/save/";
     } else {
         return savedir_value;
     }
