@@ -1710,8 +1710,9 @@ void vehicle::check_falling_or_floating()
     for( const tripoint &p : pts ) {
         if( is_falling ) {
             tripoint below( p.xy(), p.z - 1 );
+            const int layer_min_z = get_layer_min_z( get_layer( p.z ) );
             is_falling &= here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, p ) &&
-                          ( p.z > -OVERMAP_DEPTH ) && !here.supports_above( below );
+                          ( p.z > layer_min_z ) && !here.supports_above( below );
         }
         deep_water_tiles += here.has_flag( TFLAG_DEEP_WATER, p ) ? 1 : 0;
         water_tiles += here.has_flag( TFLAG_SWIMMABLE, p ) ? 1 : 0;

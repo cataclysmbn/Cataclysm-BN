@@ -3647,8 +3647,8 @@ void game::draw_minimap()
 
 float game::natural_light_level( const int zlev ) const
 {
-    // ignore while underground or above limits
-    if( zlev > OVERMAP_HEIGHT || zlev < 0 ) {
+    // Only overworld surface z-levels have natural light from sun/moon
+    if( !is_overworld_z( zlev ) || zlev < 0 ) {
         return LIGHT_AMBIENT_MINIMAL;
     }
 
@@ -6366,7 +6366,8 @@ void game::print_terrain_info( const tripoint &lp, const catacurses::window &w_l
                         u.has_trait( trait_ILLITERATE ) ? _( "Sign: ???" ) : _( "Sign: %s" ), signage );
     }
 
-    if( m.has_zlevels() && lp.z > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
+    const int layer_min_z = get_layer_min_z( get_layer( lp.z ) );
+    if( m.has_zlevels() && lp.z > layer_min_z && !m.has_floor( lp ) ) {
         // Print info about stuff below
         tripoint below( lp.xy(), lp.z - 1 );
         std::string tile_below = fmt_tile_info( below );
@@ -7158,10 +7159,13 @@ look_around_result game::look_around( bool show_window, tripoint &center,
 #endif // TILES
 
     const int old_levz = get_levz();
-    const int min_levz = force_3d ? -OVERMAP_DEPTH : std::max( old_levz - fov_3d_z_range,
-                         -OVERMAP_DEPTH );
-    const int max_levz = force_3d ? OVERMAP_HEIGHT : std::min( old_levz + fov_3d_z_range,
-                         OVERMAP_HEIGHT );
+    const world_layer current_layer = get_layer( old_levz );
+    const int layer_min_z = get_layer_min_z( current_layer );
+    const int layer_max_z = get_layer_max_z( current_layer );
+    const int min_levz = force_3d ? layer_min_z : std::max( old_levz - fov_3d_z_range,
+                         layer_min_z );
+    const int max_levz = force_3d ? layer_max_z : std::min( old_levz + fov_3d_z_range,
+                         layer_max_z );
 
     m.update_visibility_cache( old_levz );
     const visibility_variables &cache = m.get_visibility_variables_cache();

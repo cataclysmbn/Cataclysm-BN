@@ -6527,6 +6527,11 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
 
     if( placed_vehicle != nullptr ) {
         submap *place_on_submap = get_submap_at_grid( placed_vehicle->sm_pos );
+        if( place_on_submap == nullptr ) {
+            debugmsg( "add_vehicle: null submap at (%d,%d,%d)",
+                      placed_vehicle->sm_pos.x, placed_vehicle->sm_pos.y, placed_vehicle->sm_pos.z );
+            return nullptr;
+        }
         place_on_submap->vehicles.push_back( std::move( placed_vehicle_up ) );
         place_on_submap->is_uniform = false;
         invalidate_max_populated_zlev( p.z );
@@ -6668,6 +6673,10 @@ computer *map::add_computer( const tripoint &p, const std::string &name, int sec
     ter_set( p, t_console );
     point l;
     submap *const place_on_submap = get_submap_at( p, l );
+    if( place_on_submap == nullptr ) {
+        debugmsg( "add_computer: null submap at (%d,%d,%d)", p.x, p.y, p.z );
+        return nullptr;
+    }
     place_on_submap->set_computer( l, computer( name, security ) );
     return place_on_submap->get_computer( l );
 }

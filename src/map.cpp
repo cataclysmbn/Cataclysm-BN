@@ -309,6 +309,11 @@ maptile map::maptile_at_internal( const tripoint &p ) const
 {
     point l;
     submap *const sm = get_submap_at( p, l );
+    if( sm == nullptr ) {
+        // Return a safe null tile for out-of-bounds access (e.g., at layer z-boundaries)
+        static submap null_submap_internal( tripoint_zero );
+        return maptile( &null_submap_internal, point_zero );
+    }
 
     return maptile( sm, l );
 }
@@ -317,6 +322,11 @@ maptile map::maptile_at_internal( const tripoint &p )
 {
     point l;
     submap *const sm = get_submap_at( p, l );
+    if( sm == nullptr ) {
+        // Return a safe null tile for out-of-bounds access (e.g., at layer z-boundaries)
+        static submap null_submap_internal( tripoint_zero );
+        return maptile( &null_submap_internal, point_zero );
+    }
 
     return maptile( sm, l );
 }
@@ -2941,6 +2951,10 @@ void map::decay_fields_and_scent( const time_duration &amount )
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto cur_submap = get_submap_at_grid( { smx, smy, smz } );
+            if( cur_submap == nullptr ) {
+                get_cache( smz ).field_cache.reset( smx + ( smy * MAPSIZE ) );
+                continue;
+            }
             int to_proc = cur_submap->field_count;
             if( to_proc < 1 ) {
                 if( to_proc < 0 ) {
@@ -3158,9 +3172,10 @@ int map::collapse_check( const tripoint &p )
     const bool collapses = has_flag( TFLAG_COLLAPSES, p );
     const bool supports_roof = has_flag( TFLAG_SUPPORTS_ROOF, p );
 
-    int num_supports = p.z == -OVERMAP_DEPTH ? 0 : -5;
+    const int layer_min_z = get_layer_min_z( get_layer( p.z ) );
+    int num_supports = p.z == layer_min_z ? 0 : -5;
     // if there's support below, things are less likely to collapse
-    if( p.z > -OVERMAP_DEPTH ) {
+    if( p.z > layer_min_z ) {
         const tripoint &pbelow = tripoint( p.xy(), p.z - 1 );
         for( const tripoint &tbelow : points_in_radius( pbelow, 1 ) ) {
             if( has_flag( TFLAG_SUPPORTS_ROOF, pbelow ) ) {
@@ -3437,7 +3452,8 @@ ter_id map::get_roof( const tripoint &p, const bool allow_air ) const
     // Just use t_dirt instead
     assert( zlevels );
 
-    if( p.z <= -OVERMAP_DEPTH ) {
+    const int layer_min_z = get_layer_min_z( get_layer( p.z ) );
+    if( p.z <= layer_min_z ) {
         // Could be magma/"void" instead
         return t_rock_floor;
     }
@@ -3448,7 +3464,8 @@ ter_id map::get_roof( const tripoint &p, const bool allow_air ) const
         // No roof
         if( !allow_air ) {
             // TODO: Biomes? By setting? Forbid and treat as bug?
-            if( p.z < 0 ) {
+            const int normalized_z = normalize_z( p.z );
+            if( normalized_z < 0 ) {
                 return t_rock_floor_no_roof;
             }
 
@@ -5199,11 +5216,16 @@ static void process_vehicle_items( vehicle &cur_veh, int part )
 std::vector<tripoint> map::check_submap_active_item_consistency()
 {
     std::vector<tripoint> result;
-    for( int z = -OVERMAP_DEPTH; z < OVERMAP_HEIGHT; ++z ) {
+    const int layer_min_z = get_layer_min_z( get_layer( abs_sub.z ) );
+    const int layer_max_z = get_layer_max_z( get_layer( abs_sub.z ) );
+    for( int z = layer_min_z; z <= layer_max_z; ++z ) {
         for( int x = 0; x < MAPSIZE; ++x ) {
             for( int y = 0; y < MAPSIZE; ++y ) {
                 tripoint p( x, y, z );
                 submap *s = get_submap_at_grid( p );
+                if( s == nullptr ) {
+                    continue;  // Skip null submaps (shouldn't happen but be safe)
+                }
                 bool has_active_items = !s->active_items.get().empty();
                 bool map_has_active_items = submaps_with_active_items.contains( p + abs_sub.xy() );
                 if( has_active_items != map_has_active_items ) {
@@ -5224,8 +5246,8 @@ std::vector<tripoint> map::check_submap_active_item_consistency()
 
 void map::process_items()
 {
-    const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
-    const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
+    const int minz = zlevels ? get_layer_min_z( get_layer( abs_sub.z ) ) : abs_sub.z;
+    const int maxz = zlevels ? get_layer_max_z( get_layer( abs_sub.z ) ) : abs_sub.z;
     for( int gz = minz; gz <= maxz; ++gz ) {
         level_cache &cache = access_cache( gz );
         std::set<tripoint> submaps_with_vehicles;
@@ -5235,6 +5257,9 @@ void map::process_items()
         }
         for( const tripoint &pos : submaps_with_vehicles ) {
             submap *const current_submap = get_submap_at_grid( pos );
+            if( current_submap == nullptr ) {
+                continue;
+            }
             // Vehicles first in case they get blown up and drop active items on the map.
             process_items_in_vehicles( *current_submap );
         }
@@ -5244,6 +5269,9 @@ void map::process_items()
     for( const tripoint &abs_pos : submaps_with_active_items_copy ) {
         const tripoint local_pos = abs_pos - abs_sub.xy();
         submap *const current_submap = get_submap_at_grid( local_pos );
+        if( current_submap == nullptr ) {
+            continue;
+        }
         if( !current_submap->active_items.empty() ) {
             process_items_in_submap( *current_submap, local_pos );
         }
@@ -6409,7 +6437,8 @@ void map::drawsq( const catacurses::window &w, const tripoint &p,
 // a check to see if the lower floor needs to be rendered in tiles
 bool map::dont_draw_lower_floor( const tripoint &p )
 {
-    return !zlevels || p.z <= -OVERMAP_DEPTH ||
+    const int layer_min_z = get_layer_min_z( get_layer( p.z ) );
+    return !zlevels || p.z <= layer_min_z ||
            !( has_flag( TFLAG_NO_FLOOR, p ) || has_flag( TFLAG_Z_TRANSPARENT, p ) );
 }
 
@@ -6584,7 +6613,8 @@ bool map::draw_maptile( const catacurses::window &w, const tripoint &p,
     }
 
     if( item_sym.empty() && sym == ' ' ) {
-        if( !zlevels || p.z <= -OVERMAP_DEPTH || !curr_ter.has_flag( TFLAG_NO_FLOOR ) ) {
+        const int layer_min_z = get_layer_min_z( get_layer( p.z ) );
+        if( !zlevels || p.z <= layer_min_z || !curr_ter.has_flag( TFLAG_NO_FLOOR ) ) {
             // Print filler symbol
             sym = ' ';
             tercol = c_black;
@@ -8393,6 +8423,10 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
     }
 
     submap *const current_submap = get_submap_at_grid( gp );
+    if( current_submap == nullptr ) {
+        // Submap doesn't exist (e.g., ungenerated area in bounded layer)
+        return;
+    }
     const tripoint gp_ms = sm_to_ms_copy( gp );
 
     for( auto &i : current_submap->spawns ) {
@@ -8446,8 +8480,8 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
 
 void map::spawn_monsters( bool ignore_sight )
 {
-    const int zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
-    const int zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
+    const int zmin = zlevels ? get_layer_min_z( get_layer( abs_sub.z ) ) : abs_sub.z;
+    const int zmax = zlevels ? get_layer_max_z( get_layer( abs_sub.z ) ) : abs_sub.z;
     tripoint gp;
     int &gx = gp.x;
     int &gy = gp.y;
@@ -8705,6 +8739,18 @@ void map::build_obstacle_cache( const tripoint &start, const tripoint &end,
     for( int smx = min_submap.x; smx <= max_submap.x; ++smx ) {
         for( int smy = min_submap.y; smy <= max_submap.y; ++smy ) {
             const auto cur_submap = get_submap_at_grid( { smx, smy, start.z } );
+
+            if( cur_submap == nullptr ) {
+                // Treat missing submap as impassable
+                for( int sx = 0; sx < SEEX; ++sx ) {
+                    for( int sy = 0; sy < SEEY; ++sy ) {
+                        const int x = sx + smx * SEEX;
+                        const int y = sy + smy * SEEY;
+                        obstacle_cache[x][y] = 1000.0f;
+                    }
+                }
+                continue;
+            }
 
             // TODO: Init indices to prevent iterating over unused submap sections.
             for( int sx = 0; sx < SEEX; ++sx ) {
@@ -9302,11 +9348,14 @@ void map::function_over( const tripoint &start, const tripoint &end, Functor fun
 {
     // start and end are just two points, end can be "before" start
     // Also clip the area to map area
+    const int input_z = std::min( start.z, end.z );
+    const int layer_min_z = get_layer_min_z( get_layer( input_z ) );
+    const int layer_max_z = get_layer_max_z( get_layer( input_z ) );
     const tripoint min( std::max( std::min( start.x, end.x ), 0 ), std::max( std::min( start.y, end.y ),
-                        0 ), std::max( std::min( start.z, end.z ), -OVERMAP_DEPTH ) );
+                        0 ), std::max( std::min( start.z, end.z ), layer_min_z ) );
     const tripoint max( std::min( std::max( start.x, end.x ), SEEX * my_MAPSIZE - 1 ),
                         std::min( std::max( start.y, end.y ), SEEY * my_MAPSIZE - 1 ), std::min( std::max( start.z, end.z ),
-                                OVERMAP_HEIGHT ) );
+                                layer_max_z ) );
 
     // Submaps that contain the bounding points
     const point min_sm( min.x / SEEX, min.y / SEEY );
@@ -9320,6 +9369,10 @@ void map::function_over( const tripoint &start, const tripoint &end, Functor fun
         for( smx = min_sm.x; smx <= max_sm.x; smx++ ) {
             for( smy = min_sm.y; smy <= max_sm.y; smy++ ) {
                 submap const *cur_submap = get_submap_at_grid( { smx, smy, z } );
+                if( cur_submap == nullptr ) {
+                    // Skip ungenerated submaps (e.g., in pocket dimensions)
+                    continue;
+                }
                 // Bounds on the submap coordinates
                 const point sm_min( smx > min_sm.x ? 0 : min.x % SEEX, smy > min_sm.y ? 0 : min.y % SEEY );
                 const point sm_max( smx < max_sm.x ? SEEX - 1 : max.x % SEEX,
@@ -9817,10 +9870,12 @@ void map::clip_to_bounds( int &x, int &y ) const
 void map::clip_to_bounds( int &x, int &y, int &z ) const
 {
     clip_to_bounds( x, y );
-    if( z < -OVERMAP_DEPTH ) {
-        z = -OVERMAP_DEPTH;
-    } else if( z > OVERMAP_HEIGHT ) {
-        z = OVERMAP_HEIGHT;
+    const int layer_min_z = get_layer_min_z( get_layer( z ) );
+    const int layer_max_z = get_layer_max_z( get_layer( z ) );
+    if( z < layer_min_z ) {
+        z = layer_min_z;
+    } else if( z > layer_max_z ) {
+        z = layer_max_z;
     }
 }
 
@@ -9863,15 +9918,19 @@ int map::calc_max_populated_zlev()
         return max_populated_zlev->second;
     }
 
-    // We'll assume ground level is populated
-    int max_z = 0;
+    const world_layer current_layer = get_layer( abs_sub.z );
+    const int layer_base_z = get_layer_base_z( current_layer );
+    const int layer_max_z = get_layer_max_z( current_layer );
 
-    for( int sz = 1; sz <= OVERMAP_HEIGHT; sz++ ) {
+    // We'll assume ground level (layer base) is populated
+    int max_z = layer_base_z;
+
+    for( int sz = layer_base_z + 1; sz <= layer_max_z; sz++ ) {
         bool level_done = false;
         for( int sx = 0; sx < my_MAPSIZE; sx++ ) {
             for( int sy = 0; sy < my_MAPSIZE; sy++ ) {
                 const submap *sm = get_submap_at_grid( tripoint( sx, sy, sz ) );
-                if( !sm->is_uniform ) {
+                if( sm != nullptr && !sm->is_uniform ) {
                     max_z = sz;
                     level_done = true;
                     break;

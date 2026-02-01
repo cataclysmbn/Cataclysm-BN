@@ -827,6 +827,10 @@ void location_visitable<map_cursor>::remove_items_with( const
     // fetch the appropriate item stack
     point offset;
     submap *sub = here.get_submap_at( *cur, offset );
+    if( sub == nullptr ) {
+        debugmsg( "cannot remove items from map: null submap" );
+        return;
+    }
 
     visit_internal( [&filter, sub, offset]( detached_ptr<item> &&e ) {
         item &obj = *e;

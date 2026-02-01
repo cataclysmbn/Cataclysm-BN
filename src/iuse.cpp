@@ -87,6 +87,7 @@
 #include "options.h"
 #include "output.h"
 #include "pocket_dimension.h"
+#include "layer.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
 #include "pimpl.h"
@@ -7572,8 +7573,10 @@ static void emit_radio_signal( player &p, const flag_id &signal )
         return VisitResponse::NEXT;
     };
 
-    int z_min = g->m.has_zlevels() ? -OVERMAP_DEPTH : 0;
-    int z_max = g->m.has_zlevels() ? OVERMAP_HEIGHT : 0;
+    const int player_z = p.posz();
+    const world_layer current_layer = get_layer( player_z );
+    int z_min = g->m.has_zlevels() ? get_layer_min_z( current_layer ) : player_z;
+    int z_max = g->m.has_zlevels() ? get_layer_max_z( current_layer ) : player_z;
     for( int zlev = z_min; zlev <= z_max; zlev++ ) {
         for( tripoint loc : g->m.points_on_zlevel( zlev ) ) {
             // Items on ground

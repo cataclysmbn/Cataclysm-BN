@@ -160,6 +160,10 @@ void map::process_fields()
             for( int y = 0; y < my_MAPSIZE; y++ ) {
                 if( field_cache[ x + y * MAPSIZE ] ) {
                     submap *const current_submap = get_submap_at_grid( { x, y, z } );
+                    if( current_submap == nullptr ) {
+                        field_cache.reset( x + y * MAPSIZE );
+                        continue;
+                    }
                     process_fields_in_submap( current_submap, tripoint( x, y, z ) );
                 }
             }
@@ -1216,7 +1220,8 @@ void map::process_fields_in_submap( submap *const current_submap,
         auto &field_cache = get_cache( z ).field_cache;
         for( int y = std::max( submap.y - 1, 0 ); y <= std::min( submap.y + 1, MAPSIZE - 1 ); ++y ) {
             for( int x = std::max( submap.x - 1, 0 ); x <= std::min( submap.x + 1, MAPSIZE - 1 ); ++x ) {
-                if( get_submap_at_grid( { x, y, z } )->field_count > 0 ) {
+                const auto *sm = get_submap_at_grid( { x, y, z } );
+                if( sm != nullptr && sm->field_count > 0 ) {
                     field_cache.set( x + y * MAPSIZE );
                 } else {
                     field_cache.reset( x + y * MAPSIZE );

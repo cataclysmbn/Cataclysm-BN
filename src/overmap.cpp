@@ -5857,6 +5857,13 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
                 submap *destsm = MAPBUFFER.lookup_submap( dest_pos );
                 submap *srcsm = tmp.get_submap_at_grid( src_pos );
 
+                if( destsm == nullptr || srcsm == nullptr ) {
+                    debugmsg( "null submap during mapgen swap: dest=%p src=%p at (%d,%d,%d)",
+                              static_cast<void *>( destsm ), static_cast<void *>( srcsm ),
+                              dest_pos.x, dest_pos.y, dest_pos.z );
+                    continue;
+                }
+
                 submap::swap( *destsm,  *srcsm );
 
                 for( auto &veh : destsm->vehicles ) {
@@ -5874,7 +5881,9 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
             for( int y = 0; y < here.getmapsize(); y++ ) {
                 const tripoint dest_pos = tripoint( x, y, p.z() );
                 const submap *destsm = here.get_submap_at_grid( dest_pos );
-                here.update_vehicle_list( destsm, p.z() ); // update real map's vcaches
+                if( destsm != nullptr ) {
+                    here.update_vehicle_list( destsm, p.z() ); // update real map's vcaches
+                }
             }
         }
 

@@ -37,6 +37,7 @@
 #include "enums.h"
 #include "game.h"
 #include "game_constants.h"
+#include "layer.h"
 #include "game_ui.h"
 #include "hash_utils.h"
 #include "ime.h"
@@ -2104,10 +2105,16 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
             curs += mouse_pos->xy();
         } else if( action == "CENTER" ) {
             curs = orig;
-        } else if( action == "LEVEL_DOWN" && curs.z() > -OVERMAP_DEPTH ) {
-            curs.z() -= 1;
-        } else if( action == "LEVEL_UP" && curs.z() < OVERMAP_HEIGHT ) {
-            curs.z() += 1;
+        } else if( action == "LEVEL_DOWN" ) {
+            const int layer_min_z = get_layer_min_z( get_layer( curs.z() ) );
+            if( curs.z() > layer_min_z ) {
+                curs.z() -= 1;
+            }
+        } else if( action == "LEVEL_UP" ) {
+            const int layer_max_z = get_layer_max_z( get_layer( curs.z() ) );
+            if( curs.z() < layer_max_z ) {
+                curs.z() += 1;
+            }
         } else if( action == "ZOOM_OUT" ) {
             g->zoom_out_overmap();
             ui.mark_resize();
