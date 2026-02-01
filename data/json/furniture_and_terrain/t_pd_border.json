@@ -7,7 +7,7 @@
     "symbol": "#",
     "color": "magenta",
     "move_cost": 0,
-    "flags": [ "NOITEM", "NO_SIGHT", "BLOCK_WIND", "MINEABLE", "FLAT", "INDOORS" ],
+    "flags": [ "NOITEM", "NO_SIGHT", "BLOCK_WIND", "FLAT", "INDOORS" ],
     "bash": {
       "str_min": -1,
       "str_max": -1,
