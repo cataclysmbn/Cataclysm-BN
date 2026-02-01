@@ -2,6 +2,7 @@
 
 #include <limits>
 
+#include "calendar.h"
 #include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "debug.h"
@@ -532,6 +533,9 @@ void boundary_section_manager::create_base_submaps( const boundary_section &sect
                         sm->set_ter( point( sx, sy ), t_pd_border );
                     }
                 }
+
+                // Set last_touched to current turn to avoid season comparison issues on save
+                sm->last_touched = calendar::turn;
 
                 MAPBUFFER.add_submap( sm_pos, sm );
             }

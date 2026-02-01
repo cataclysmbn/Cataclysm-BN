@@ -563,6 +563,10 @@ void game::setup( bool load_world_modfiles )
     remoteveh_cache = nullptr;
 
     token_provider_ptr->clear();
+
+    // Clear pocket dimensions and boundary sections from previous game
+    pocket_dimension_manager::instance().clear();
+    boundary_section_manager::instance().clear();
     // back to menu for save loading, new game etc
 }
 
@@ -1363,6 +1367,10 @@ bool game::cleanup_at_end()
 
     MAPBUFFER.clear();
     overmap_buffer.clear();
+
+    // Clear pocket dimensions before cleanup_references() since they hold safe_reference<item>
+    pocket_dimension_manager::instance().clear();
+    boundary_section_manager::instance().clear();
 
     avatar &player_character = get_avatar();
     player_character = avatar();
@@ -3991,8 +3999,11 @@ void game::mon_info_update( )
     const tripoint view = u.pos() + u.view_offset;
     new_seen_mon.clear();
 
-    // TODO: no reason to have it static here
-    static time_point previous_turn = calendar::start_of_cataclysm;
+    // Track the previous turn for safe mode timing
+    // Note: Using calendar::turn_zero instead of calendar::start_of_cataclysm because
+    // start_of_cataclysm is a reference that may change between games, and static
+    // variables are only initialized once.
+    static time_point previous_turn = calendar::turn_zero;
     const time_duration sm_ignored_time = time_duration::from_turns(
             get_option<int>( "SAFEMODEIGNORETURNS" ) );
 
