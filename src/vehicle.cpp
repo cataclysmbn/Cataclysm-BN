@@ -4074,7 +4074,7 @@ int vehicle::current_acceleration( const bool fueled ) const
 int vehicle::max_ground_velocity( const bool fueled, const bool ideal ) const
 {
     int total_engine_w = ( ideal ? ideal_engine_power() : total_power_w( fueled ) );
-    double c_rolling_drag = coeff_rolling_drag() * get_lift_percent();
+    double c_rolling_drag = coeff_rolling_drag();
     double max_in_mps = simple_cubic_solution( coeff_air_drag(), c_rolling_drag,
                         c_rolling_drag * vehicles::rolling_constant_to_variable,
                         -total_engine_w );
@@ -4096,7 +4096,7 @@ int vehicle::max_ground_velocity( const bool fueled, const bool ideal ) const
 int vehicle::max_water_velocity( const bool fueled, const bool ideal ) const
 {
     int total_engine_w = ( ideal ? ideal_engine_power() : total_power_w( fueled ) );
-    double total_drag = coeff_water_drag() * get_lift_percent() + coeff_air_drag();
+    double total_drag = coeff_water_drag() + coeff_air_drag();
     double max_in_mps = std::cbrt( total_engine_w / total_drag );
     add_msg( m_debug, "%s: power %d, c_air %3.2f, c_water %3.2f, water max_in_mps %3.2f",
              name, total_engine_w, coeff_air_drag(), coeff_water_drag(), max_in_mps );
@@ -4157,7 +4157,7 @@ int vehicle::safe_ground_velocity( const bool fueled, const bool ideal ) const
         }
     }
     int effective_engine_w = ( ideal ? ideal_engine_power( true ) : total_power_w( fueled, true ) );
-    double c_rolling_drag = coeff_rolling_drag() * get_lift_percent();
+    double c_rolling_drag = coeff_rolling_drag();
     double safe_in_mps = simple_cubic_solution( coeff_air_drag(), c_rolling_drag,
                          c_rolling_drag * vehicles::rolling_constant_to_variable,
                          -effective_engine_w );
@@ -4177,7 +4177,7 @@ int vehicle::safe_aircraft_velocity( const bool fueled, const bool ideal ) const
 int vehicle::safe_water_velocity( const bool fueled, const bool ideal ) const
 {
     int total_engine_w = ( ideal ? ideal_engine_power( true ) : total_power_w( fueled, true ) );
-    double total_drag = coeff_water_drag() * get_lift_percent() + coeff_air_drag();
+    double total_drag = coeff_water_drag() + coeff_air_drag();
     double safe_in_mps = std::cbrt( total_engine_w / total_drag );
     return mps_to_vmiph( safe_in_mps );
 }
@@ -4548,7 +4548,8 @@ double vehicle::coeff_rolling_drag() const
         wheel_factor *= wheel_ratio /
                         ( base_wheels * wheel_ratio - base_wheels + wheelcache.size() );
     }
-    coefficient_rolling_resistance = newton_ratio * wheel_factor * to_kilogram( total_mass() );
+    coefficient_rolling_resistance = newton_ratio * wheel_factor * to_kilogram(
+                                         total_mass() ) * get_lift_percent( true );
     coeff_rolling_dirty = false;
     return coefficient_rolling_resistance;
 }
@@ -4680,9 +4681,14 @@ double vehicle::total_thrust( const bool fuelled, const bool safe, const bool id
 }
 
 // get sum of lift from all lifting parts
-double vehicle::total_lift( const bool fuelled, const bool safe, const bool ideal ) const
+double vehicle::total_lift( const bool fuelled, const bool safe, const bool ideal,
+                            const bool unpowered ) const
 {
-    return thrust_of_rotorcraft( fuelled, safe, ideal ) + total_balloon_lift() + total_wing_lift();
+    if( unpowered ) {
+        return total_balloon_lift() + total_wing_lift();
+    } else {
+        return thrust_of_rotorcraft( fuelled, safe, ideal ) + total_balloon_lift() + total_wing_lift();
+    }
 }
 
 int vehicle::get_takeoff_speed() const
@@ -4716,14 +4722,15 @@ bool vehicle::has_lift() const
     return has_part( VPFLAG_ROTOR ) || has_part( VPFLAG_BALLOON ) || has_part( VPFLAG_WING );
 }
 
-bool vehicle::has_sufficient_lift() const
+bool vehicle::has_sufficient_lift( const bool unpowered ) const
 {
-    return total_lift( true ) > to_newton( total_mass() );
+    return total_lift( true, false, false, unpowered ) > to_newton( total_mass() );
 }
 
-double vehicle::get_lift_percent() const
+double vehicle::get_lift_percent( const bool unpowered ) const
 {
-    return std::max( 0.0, 1 - ( total_lift( true ) / to_newton( total_mass() ) ) );
+    return std::max( 0.0, 1 - ( total_lift( true, false, false,
+                                            unpowered ) / to_newton( total_mass() ) ) );
 }
 
 bool vehicle::is_rotorcraft() const
@@ -4801,7 +4808,7 @@ double vehicle::coeff_water_drag() const
     // water_mass = vehicle_mass
     // area * depth = vehicle_mass / water_density
     // depth = vehicle_mass / water_density / area
-    draft_m = to_kilogram( total_mass() ) / water_density / hull_area;
+    draft_m = to_kilogram( total_mass() ) / water_density / hull_area * get_lift_percent( true );
     // increase the streamlining as more of the boat is covered in boat boards
     double c_water_drag = 1.25 - hull_coverage;
     // hull height starts at 0.3m and goes up as you add more boat boards
@@ -5047,7 +5054,7 @@ bool vehicle::balanced_wheel_config() const
 
 bool vehicle::valid_wheel_config() const
 {
-    return sufficient_wheel_config() && balanced_wheel_config();
+    return ( sufficient_wheel_config() && balanced_wheel_config() ) || has_sufficient_lift( true );
 }
 
 float vehicle::steering_effectiveness() const
@@ -5056,7 +5063,7 @@ float vehicle::steering_effectiveness() const
         // I'M ON A BOAT
         return can_float() ? 1.0f : 0.0f;
     }
-    if( is_flying ) {
+    if( is_flying || has_sufficient_lift( true ) ) {
         // I'M IN THE AIR
         // May need to add a separate check for planes, if/when they happen
         return is_aircraft() ? 1.0f : 0.0f;
