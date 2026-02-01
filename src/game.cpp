@@ -12199,48 +12199,19 @@ void game::vertical_move( int movez, bool force, bool peeking )
 }
 
 bool game::travel_to_dimension( const std::string &new_prefix,
-                                const std::string &region_type,
-                                const std::vector<npc *> &npc_travellers,
-                                vehicle *veh )
+                                const std::string &region_type )
 {
     map &here = get_map();
     avatar &player = get_avatar();
 
-    if( !npc_travellers.empty() ) {
-        int traveller_count = npc_travellers.size();
-        for( auto it = active_npc.begin(); it != active_npc.end(); ) {
-            // skip unloading a traveller
-            bool skip = false;
-            if( traveller_count > 0 ) {
-                for( npc *guy : npc_travellers ) {
-                    if( guy->getID() == ( *it )->getID() ) {
-                        skip = true;
-                        traveller_count--;
-                        break;
-                    }
-                }
-            }
-            if( !skip ) {
-                ( *it )->on_unload();
-                it = active_npc.erase( it );
-            } else {
-                it++;
-            }
-        }
-    } else {
-        unload_npcs();
-    }
+    // Unload all NPCs (they don't travel between dimensions)
+    unload_npcs();
 
     for( monster &critter : all_monsters() ) {
         despawn_monster( critter );
     }
-    bool controlling_vehicle = player.controlling_vehicle;
     if( player.in_vehicle ) {
         here.unboard_vehicle( player.pos() );
-    }
-    std::unique_ptr<vehicle> vehicle_ref;
-    if( veh != nullptr ) {
-        vehicle_ref = here.detach_vehicle( veh );
     }
 
     // Save current dimension's data BEFORE changing dimension_prefix
@@ -12260,7 +12231,11 @@ bool game::travel_to_dimension( const std::string &new_prefix,
 
     add_msg( m_debug, "[DIM] Saved maps, overmaps, and dimension data" );
 
+    // Save current dimension's map memory BEFORE changing dimension_prefix
     player.save_map_memory();
+
+    add_msg( m_debug, "[DIM] Saved current dimension map memory" );
+
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
         here.clear_vehicle_list( z );
     }
@@ -12268,20 +12243,35 @@ bool game::travel_to_dimension( const std::string &new_prefix,
 
     add_msg( m_debug, "[DIM] Reset vehicle cache" );
 
-    // Clear all buffers BEFORE changing dimension_prefix
-    // This ensures they're cleared with the current dimension's context
-    overmap_buffer.clear();
-    MAPBUFFER.clear();
-    grid_tracker_ptr->clear();
-
-    // NOW change dimension_prefix
-    // After this point, all file operations will use the new dimension's paths
+    // Store old dimension prefix for reference
     std::string old_prefix = dimension_prefix;
+
+    // CRITICAL: Change dimension_prefix BEFORE clearing buffers
+    // This way, when load_map() is called, it will load from the new dimension's files
+    // instead of trying to use the old dimension's cleared data
     if( new_prefix != "default" ) {
         dimension_prefix = new_prefix;
     } else {
         dimension_prefix.clear();
     }
+
+    add_msg( m_debug, "[DIM] Changed dimension prefix from '%s' to '%s'",
+             old_prefix.empty() ? "default" : old_prefix.c_str(),
+             dimension_prefix.empty() ? "default" : dimension_prefix.c_str() );
+
+    // Store current absolute submap position BEFORE clearing anything
+    tripoint_abs_sm current_abs_sm( here.get_abs_sub() );
+
+    // Save current dimension's map to disk before clearing
+    here.save();
+
+    // Clear all buffers in correct order
+    // dimension_prefix is already changed, so new loads will use new dimension
+    overmap_buffer.clear();
+    MAPBUFFER.clear();
+    grid_tracker_ptr->clear();
+
+    add_msg( m_debug, "[DIM] Cleared all buffers" );
 
     // hack to prevent crashes from temperature checks
     // This returns to false in 'on_turn()' so it should be fine?
@@ -12299,62 +12289,38 @@ bool game::travel_to_dimension( const std::string &new_prefix,
     // This will override current_region_type if dimension data file exists
     load_dimension_data();
 
-    // clear map memory from the previous dimension
-    player.clear_map_memory();
-    // Load map memory in new dimension, if there is any
-    player.load_map_memory();
-
-    // Store current absolute submap position before reloading
-    tripoint_abs_sm current_abs_sm( here.get_abs_sub() );
-
-    // Reload the map completely using load_map
-    // This ensures all grid pointers are properly refreshed
+    // Load the new dimension's map
+    // dimension_prefix was already changed, so this loads from new dimension files
+    // MAPBUFFER was cleared, so loadn() will generate/load new submaps
+    // This is safe: loadn() only writes to grid via setsubmap(), never reads from it
     load_map( current_abs_sm, false );
 
-    // Invalidate visibility and other caches for all z-levels
+    add_msg( m_debug, "[DIM] Loaded new dimension map" );
+
+    // CRITICAL: Clear old dimension's map memory and load new dimension's memory
+    // This must happen BEFORE building caches, so the cache reflects the correct memory state
+    player.clear_map_memory();
+    player.load_map_memory();
+
+    add_msg( m_debug, "[DIM] Loaded dimension map memory" );
+
+    // Reset the map memory seen cache so tiles can be re-memorized in this dimension
+    // This is critical for allowing memory updates after dimension travel
     int const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z;
     int const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z;
+    for( int z = zmin; z <= zmax; z++ ) {
+        here.access_cache( z ).map_memory_seen_cache.reset();
+    }
+
+    add_msg( m_debug, "[DIM] Reset map memory seen cache" );
+
+    // Now invalidate and rebuild caches WITH the correct map memory loaded
     for( int z = zmin; z <= zmax; z++ ) {
         here.invalidate_map_cache( z );
     }
 
-    // Rebuild the map cache to ensure everything is consistent
+    // Rebuild the map cache - this will update based on loaded map memory
     here.build_map_cache( here.get_abs_sub().z );
-
-    bool undo_shift = false;
-    if( vehicle_ref ) {
-        // Place the vehicle back on the map
-        // Check for collision while placing
-        bool collision = false;
-        tripoint const vehicle_origin = vehicle_ref->global_pos3();
-        for( const auto &mount_point : vehicle_ref->relative_parts ) {
-            tripoint const part_pos = vehicle_origin + mount_point.first;
-            if( here.impassable( part_pos ) ) {
-                collision = true;
-                break;
-            }
-        }
-
-        // Get the target submap and place the vehicle
-        point const sm_pos_xy = vehicle_ref->sm_pos.xy() - here.get_abs_sub().xy();
-        submap *place_on_submap = here.get_submap_at_grid( sm_pos_xy );
-        if( place_on_submap == nullptr ) {
-            debugmsg( "Tried to add vehicle at %d,%d,%d but the submap is not loaded",
-                      vehicle_ref->sm_pos.x, vehicle_ref->sm_pos.y, vehicle_ref->sm_pos.z );
-        } else {
-            place_on_submap->vehicles.push_back( std::move( vehicle_ref ) );
-            // Immediately add to cache after placing in submap
-            vehicle *placed_veh = place_on_submap->vehicles.back().get();
-            here.add_vehicle_to_cache( placed_veh );
-        }
-        undo_shift = collision;
-    }
-
-    // Handle player boarding vehicle if one exists at their position
-    if( here.veh_at( player.pos() ) ) {
-        here.board_vehicle( player.pos(), &player );
-        player.controlling_vehicle = controlling_vehicle;
-    }
 
     load_npcs();
 
@@ -12370,14 +12336,6 @@ bool game::travel_to_dimension( const std::string &new_prefix,
     // Save dimension data to persist the new region_type
     if( !save_dimension_data() ) {
         debugmsg( "Failed to save dimension data after dimension travel" );
-    }
-
-    if( undo_shift ) {
-        add_msg( m_warning, "Collision detected during dimension travel, reverting..." );
-        // Recursive call to revert the dimension travel
-        // Note: This might cause issues if collision persists
-        travel_to_dimension( old_prefix, region_type, npc_travellers, nullptr );
-        return false;
     }
 
     return true;

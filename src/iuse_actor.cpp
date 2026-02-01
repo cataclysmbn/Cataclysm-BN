@@ -7039,8 +7039,6 @@ void iuse_dimension_travel::load( const JsonObject &obj )
 {
     obj.read( "destination", destination );
     obj.read( "travel_radius", travel_radius );
-    obj.read( "allow_npcs", allow_npcs );
-    obj.read( "allow_vehicles", allow_vehicles );
     obj.read( "need_charges", need_charges );
     obj.read( "fail_message", fail_message );
     obj.read( "success_message", success_message );
@@ -7089,7 +7087,6 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
         return;
     }
 
-    map &here = get_map();
     avatar &u = get_avatar();
 
     // Check if avatar is within travel radius
@@ -7103,37 +7100,6 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
         return;
     }
 
-    // Collect NPCs within radius
-    std::vector<npc *> npc_travellers;
-    if( allow_npcs ) {
-        for( npc &guy : g->all_npcs() ) {
-            if( rl_dist( pos, guy.pos() ) <= travel_radius && !guy.is_dead() ) {
-                npc_travellers.push_back( &guy );
-            }
-        }
-    }
-
-    // Find vehicle to transport (only if completely within radius)
-    vehicle *veh = nullptr;
-    if( allow_vehicles ) {
-        const optional_vpart_position vp = here.veh_at( pos );
-        if( vp ) {
-            vehicle *candidate = &vp->vehicle();
-            bool all_parts_in_radius = true;
-
-            for( const vpart_reference &vpr : candidate->get_all_parts() ) {
-                if( rl_dist( pos, vpr.pos() ) > travel_radius ) {
-                    all_parts_in_radius = false;
-                    break;
-                }
-            }
-
-            if( all_parts_in_radius ) {
-                veh = candidate;
-            }
-        }
-    }
-
     if( success_message.empty() ) {
         p.add_msg_if_player( m_good, _( "You travel to another dimension!" ) );
     } else {
@@ -7143,5 +7109,6 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint 
     // Use destination as both the dimension prefix and region type
     // The dimension prefix determines which save folder to use
     // The region type determines the world generation parameters
-    g->travel_to_dimension( destination, destination, npc_travellers, veh );
+    // NPCs and vehicles do not travel between dimensions
+    g->travel_to_dimension( destination, destination );
 }
