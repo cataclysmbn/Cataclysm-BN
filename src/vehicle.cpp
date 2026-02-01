@@ -4550,7 +4550,7 @@ double vehicle::coeff_rolling_drag() const
     }
     coefficient_rolling_resistance = newton_ratio * wheel_factor * to_kilogram(
                                          total_mass() ) * get_lift_percent( true );
-    coefficient_rolling_resistance = std::max( draft_m, 0.0 );
+    coefficient_rolling_resistance = std::max( coefficient_rolling_resistance, 0.0 );
     coeff_rolling_dirty = false;
     return coefficient_rolling_resistance;
 }
