@@ -12,7 +12,7 @@
 
 class overmap;
 
-namespace plumbing_grid
+namespace fluid_grid
 {
 
 using connection_bitset = std::bitset<six_cardinal_directions.size()>;
@@ -55,4 +55,4 @@ auto add_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &r
 auto remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &rhs ) -> bool;
 auto clear() -> void;
 
-} // namespace plumbing_grid
+} // namespace fluid_grid

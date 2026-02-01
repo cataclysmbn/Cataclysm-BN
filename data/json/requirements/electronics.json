@@ -7,9 +7,9 @@
     "tools": [ [ [ "soldering_iron", 3 ], [ "soldering_ethanol", 30 ], [ "toolset", 1 ] ] ]
   },
   {
-    "id": "add_plumbing_grid_connection",
+    "id": "add_fluid_grid_connection",
     "type": "requirement",
-    "//": "Connect two plumbing grid tiles. Cost is multiplied by number of elements in resulting grid.",
+    "//": "Connect two fluid grid tiles. Cost is multiplied by number of elements in resulting grid.",
     "components": [ [ [ "pipe", 1 ] ], [ [ "hose", 2 ] ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 } ]
   }

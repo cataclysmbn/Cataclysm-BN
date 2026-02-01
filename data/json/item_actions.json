@@ -806,8 +806,8 @@
   },
   {
     "type": "item_action",
-    "id": "REPORT_PLUMBING_CONNECTIONS",
-    "name": { "str": "Check plumbing connections" }
+    "id": "REPORT_FLUID_GRID_CONNECTIONS",
+    "name": { "str": "Check fluid grid connections" }
   },
   {
     "type": "item_action",
@@ -816,8 +816,8 @@
   },
   {
     "type": "item_action",
-    "id": "MODIFY_PLUMBING_CONNECTIONS",
-    "name": { "str": "Modify plumbing connections" }
+    "id": "MODIFY_FLUID_GRID_CONNECTIONS",
+    "name": { "str": "Modify fluid grid connections" }
   },
   {
     "type": "item_action",

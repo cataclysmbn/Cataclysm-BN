@@ -1,4 +1,4 @@
-#include "plumbing_grid.h"
+#include "fluid_grid.h"
 
 #include <algorithm>
 #include <cmath>
@@ -25,9 +25,9 @@
 namespace
 {
 
-using connection_store = std::map<point_abs_om, plumbing_grid::connection_map>;
+using connection_store = std::map<point_abs_om, fluid_grid::connection_map>;
 using storage_store =
-    std::map<point_abs_om, std::map<tripoint_om_omt, plumbing_grid::water_storage_state>>;
+    std::map<point_abs_om, std::map<tripoint_om_omt, fluid_grid::water_storage_state>>;
 using grid_member_set = std::set<tripoint_om_omt>;
 using grid_member_ptr = shared_ptr_fast<grid_member_set>;
 using grid_member_map = std::map<tripoint_om_omt, grid_member_ptr>;
@@ -38,50 +38,50 @@ static const itype_id itype_water_clean( "water_clean" );
 
 auto tank_capacity_for_furn( const furn_t &furn ) -> std::optional<units::volume>
 {
-    if( !furn.plumbing ) {
+    if( !furn.fluid_grid ) {
         return std::nullopt;
     }
-    const auto &plumbing = *furn.plumbing;
-    if( plumbing.role != plumbing_role::tank ) {
+    const auto &fluid_grid = *furn.fluid_grid;
+    if( fluid_grid.role != fluid_grid_role::tank ) {
         return std::nullopt;
     }
-    if( plumbing.capacity ) {
-        return plumbing.capacity;
+    if( fluid_grid.capacity ) {
+        return fluid_grid.capacity;
     }
-    if( plumbing.use_keg_capacity ) {
+    if( fluid_grid.use_keg_capacity ) {
         return furn.keg_capacity;
     }
     return std::nullopt;
 }
 
-auto plumbing_grid_store() -> connection_store & // *NOPAD*
+auto fluid_grid_store() -> connection_store & // *NOPAD*
 {
     static auto store = connection_store{};
     return store;
 }
 
-auto empty_connections() -> const plumbing_grid::connection_map & // *NOPAD*
+auto empty_connections() -> const fluid_grid::connection_map & // *NOPAD*
 {
-    static const auto empty = plumbing_grid::connection_map{};
+    static const auto empty = fluid_grid::connection_map{};
     return empty;
 }
 
-auto plumbing_storage_store() -> storage_store & // *NOPAD*
+auto fluid_storage_store() -> storage_store & // *NOPAD*
 {
     static auto store = storage_store{};
     return store;
 }
 
-auto empty_storage() -> const std::map<tripoint_om_omt, plumbing_grid::water_storage_state>
+auto empty_storage() -> const std::map<tripoint_om_omt, fluid_grid::water_storage_state>
 & // *NOPAD*
 {
-    static const auto empty = std::map<tripoint_om_omt, plumbing_grid::water_storage_state> {};
+    static const auto empty = std::map<tripoint_om_omt, fluid_grid::water_storage_state> {};
     return empty;
 }
 
-auto empty_bitset() -> const plumbing_grid::connection_bitset & // *NOPAD*
+auto empty_bitset() -> const fluid_grid::connection_bitset & // *NOPAD*
 {
-    static const auto empty = plumbing_grid::connection_bitset{};
+    static const auto empty = fluid_grid::connection_bitset{};
     return empty;
 }
 
@@ -115,11 +115,11 @@ auto charges_from_volume( const itype_id &liquid_type, units::volume volume ) ->
     return liquid->charges_per_volume( volume );
 }
 
-auto reduce_storage( plumbing_grid::water_storage_state &state,
-                     units::volume volume ) -> plumbing_grid::water_storage_state
+auto reduce_storage( fluid_grid::water_storage_state &state,
+                     units::volume volume ) -> fluid_grid::water_storage_state
 {
     auto remaining = volume;
-    auto removed = plumbing_grid::water_storage_state{};
+    auto removed = fluid_grid::water_storage_state{};
 
     if( remaining <= 0_ml ) {
         return removed;
@@ -153,15 +153,15 @@ auto anchor_for_grid( const std::set<tripoint_abs_omt> &grid ) -> tripoint_abs_o
 }
 
 auto collect_storage_for_grid( const tripoint_abs_omt &anchor_abs,
-                               const std::set<tripoint_abs_omt> &grid ) -> plumbing_grid::water_storage_state
+                               const std::set<tripoint_abs_omt> &grid ) -> fluid_grid::water_storage_state
 {
-    auto total = plumbing_grid::water_storage_state{};
+    auto total = fluid_grid::water_storage_state{};
     if( grid.empty() ) {
         return total;
     }
 
     auto omc = overmap_buffer.get_om_global( anchor_abs );
-    auto &storage = plumbing_grid::storage_for( *omc.om );
+    auto &storage = fluid_grid::storage_for( *omc.om );
     auto to_erase = std::vector<tripoint_om_omt> {};
 
     std::ranges::for_each( storage, [&]( const auto & entry ) {
@@ -197,14 +197,14 @@ auto invalidate_submap_capacity_cache_at( const tripoint_abs_sm &p ) -> void
 }
 
 auto storage_state_for_grid( const std::set<tripoint_abs_omt> &grid ) ->
-plumbing_grid::water_storage_state
+fluid_grid::water_storage_state
 {
     if( grid.empty() ) {
         return {};
     }
     const auto anchor_abs = anchor_for_grid( grid );
     const auto omc = overmap_buffer.get_om_global( anchor_abs );
-    const auto &storage = plumbing_grid::storage_for( *omc.om );
+    const auto &storage = fluid_grid::storage_for( *omc.om );
     const auto iter = storage.find( omc.local );
     if( iter == storage.end() ) {
         return {};
@@ -213,9 +213,9 @@ plumbing_grid::water_storage_state
 }
 
 auto connection_bitset_at( const overmap &om,
-                           const tripoint_om_omt &p ) -> const plumbing_grid::connection_bitset & // *NOPAD*
+                           const tripoint_om_omt &p ) -> const fluid_grid::connection_bitset & // *NOPAD*
 {
-    const auto &connections = plumbing_grid::connections_for( om );
+    const auto &connections = fluid_grid::connections_for( om );
     const auto iter = connections.find( p );
     if( iter == connections.end() ) {
         return empty_bitset();
@@ -316,16 +316,16 @@ auto calculate_capacity_for_grid( const std::set<tripoint_abs_omt> &grid,
 }
 
 struct split_storage_result {
-    plumbing_grid::water_storage_state lhs;
-    plumbing_grid::water_storage_state rhs;
+    fluid_grid::water_storage_state lhs;
+    fluid_grid::water_storage_state rhs;
 };
 
-auto split_storage_state( const plumbing_grid::water_storage_state &state,
+auto split_storage_state( const fluid_grid::water_storage_state &state,
                           units::volume lhs_capacity,
                           units::volume rhs_capacity ) -> split_storage_result
 {
-    auto lhs_state = plumbing_grid::water_storage_state{ .capacity = lhs_capacity };
-    auto rhs_state = plumbing_grid::water_storage_state{ .capacity = rhs_capacity };
+    auto lhs_state = fluid_grid::water_storage_state{ .capacity = lhs_capacity };
+    auto rhs_state = fluid_grid::water_storage_state{ .capacity = rhs_capacity };
 
     const auto total_capacity = lhs_capacity + rhs_capacity;
     if( total_capacity <= 0_ml ) {
@@ -351,11 +351,11 @@ auto split_storage_state( const plumbing_grid::water_storage_state &state,
     return { .lhs = lhs_state, .rhs = rhs_state };
 }
 
-auto connection_bitset_at( const tripoint_abs_omt &p ) -> const plumbing_grid::connection_bitset
+auto connection_bitset_at( const tripoint_abs_omt &p ) -> const fluid_grid::connection_bitset
 & // *NOPAD*
 {
     const auto omc = overmap_buffer.get_om_global( p );
-    const auto &connections = plumbing_grid::connections_for( *omc.om );
+    const auto &connections = fluid_grid::connections_for( *omc.om );
     const auto iter = connections.find( omc.local );
     if( iter == connections.end() ) {
         return empty_bitset();
@@ -364,31 +364,31 @@ auto connection_bitset_at( const tripoint_abs_omt &p ) -> const plumbing_grid::c
 }
 
 auto connection_bitset_at( overmap &om,
-                           const tripoint_om_omt &p ) -> plumbing_grid::connection_bitset & // *NOPAD*
+                           const tripoint_om_omt &p ) -> fluid_grid::connection_bitset & // *NOPAD*
 {
-    auto &connections = plumbing_grid::connections_for( om );
+    auto &connections = fluid_grid::connections_for( om );
     return connections[p];
 }
 
-class plumbing_storage_grid
+class fluid_storage_grid
 {
     private:
         std::vector<tripoint_abs_sm> submap_coords;
         tripoint_abs_omt anchor_abs;
-        plumbing_grid::water_storage_state state;
-        mutable std::optional<plumbing_grid::water_storage_stats> cached_stats;
+        fluid_grid::water_storage_state state;
+        mutable std::optional<fluid_grid::water_storage_stats> cached_stats;
 
         mapbuffer &mb;
 
     public:
-        struct plumbing_storage_grid_options {
+        struct fluid_storage_grid_options {
             const std::vector<tripoint_abs_sm> *submap_coords = nullptr;
             tripoint_abs_omt anchor = tripoint_abs_omt{ tripoint_zero };
-            plumbing_grid::water_storage_state initial_state;
+            fluid_grid::water_storage_state initial_state;
             mapbuffer *buffer = nullptr;
         };
 
-        explicit plumbing_storage_grid( const plumbing_storage_grid_options &opts ) :
+        explicit fluid_storage_grid( const fluid_storage_grid_options &opts ) :
             submap_coords( *opts.submap_coords ),
             anchor_abs( opts.anchor ),
             state( opts.initial_state ),
@@ -408,12 +408,12 @@ class plumbing_storage_grid
             cached_stats.reset();
         }
 
-        auto get_stats() const -> plumbing_grid::water_storage_stats {
+        auto get_stats() const -> fluid_grid::water_storage_stats {
             if( cached_stats ) {
                 return *cached_stats;
             }
 
-            auto stats = plumbing_grid::water_storage_stats{
+            auto stats = fluid_grid::water_storage_stats{
                 .stored = std::min( state.stored_total(), state.capacity ),
                 .capacity = state.capacity
             };
@@ -496,11 +496,11 @@ class plumbing_storage_grid
             return added;
         }
 
-        auto get_state() const -> plumbing_grid::water_storage_state {
+        auto get_state() const -> fluid_grid::water_storage_state {
             return state;
         }
 
-        auto set_state( const plumbing_grid::water_storage_state &new_state ) -> void {
+        auto set_state( const fluid_grid::water_storage_state &new_state ) -> void {
             state = new_state;
             cached_stats.reset();
             sync_storage();
@@ -526,19 +526,19 @@ class plumbing_storage_grid
 
         auto sync_storage() -> void {
             auto omc = overmap_buffer.get_om_global( anchor_abs );
-            auto &storage = plumbing_grid::storage_for( *omc.om );
+            auto &storage = fluid_grid::storage_for( *omc.om );
             storage[omc.local] = state;
         }
 };
 
-class plumbing_grid_tracker
+class fluid_grid_tracker
 {
     private:
-        std::map<tripoint_abs_sm, shared_ptr_fast<plumbing_storage_grid>> parent_storage_grids;
+        std::map<tripoint_abs_sm, shared_ptr_fast<fluid_storage_grid>> parent_storage_grids;
         mapbuffer &mb;
 
-        auto make_storage_grid_at( const tripoint_abs_sm &sm_pos ) -> plumbing_storage_grid& { // *NOPAD*
-            const auto overmap_positions = plumbing_grid::grid_at( project_to<coords::omt>( sm_pos ) );
+        auto make_storage_grid_at( const tripoint_abs_sm &sm_pos ) -> fluid_storage_grid& { // *NOPAD*
+            const auto overmap_positions = fluid_grid::grid_at( project_to<coords::omt>( sm_pos ) );
             auto submap_positions = std::vector<tripoint_abs_sm> {};
             submap_positions.reserve( overmap_positions.size() * 4 );
 
@@ -552,25 +552,25 @@ class plumbing_grid_tracker
 
             if( submap_positions.empty() ) {
                 static const auto empty_submaps = std::vector<tripoint_abs_sm> {};
-                static const auto empty_options = plumbing_storage_grid::plumbing_storage_grid_options{
+                static const auto empty_options = fluid_storage_grid::fluid_storage_grid_options{
                     .submap_coords = &empty_submaps,
                     .anchor = tripoint_abs_omt{ tripoint_zero },
-                    .initial_state = plumbing_grid::water_storage_state{},
+                    .initial_state = fluid_grid::water_storage_state{},
                     .buffer = &MAPBUFFER
                 };
-                static auto empty_storage_grid = plumbing_storage_grid( empty_options );
+                static auto empty_storage_grid = fluid_storage_grid( empty_options );
                 return empty_storage_grid;
             }
 
             const auto anchor_abs = anchor_for_grid( overmap_positions );
             const auto initial_state = collect_storage_for_grid( anchor_abs, overmap_positions );
-            auto options = plumbing_storage_grid::plumbing_storage_grid_options{
+            auto options = fluid_storage_grid::fluid_storage_grid_options{
                 .submap_coords = &submap_positions,
                 .anchor = anchor_abs,
                 .initial_state = initial_state,
                 .buffer = &mb
             };
-            auto storage_grid = make_shared_fast<plumbing_storage_grid>( options );
+            auto storage_grid = make_shared_fast<fluid_storage_grid>( options );
             std::ranges::for_each( submap_positions, [&]( const tripoint_abs_sm & smp ) {
                 parent_storage_grids[smp] = storage_grid;
             } );
@@ -579,11 +579,11 @@ class plumbing_grid_tracker
         }
 
     public:
-        plumbing_grid_tracker() : plumbing_grid_tracker( MAPBUFFER ) {}
+        fluid_grid_tracker() : fluid_grid_tracker( MAPBUFFER ) {}
 
-        explicit plumbing_grid_tracker( mapbuffer &buffer ) : mb( buffer ) {}
+        explicit fluid_grid_tracker( mapbuffer &buffer ) : mb( buffer ) {}
 
-        auto storage_at( const tripoint_abs_omt &p ) -> plumbing_storage_grid& { // *NOPAD*
+        auto storage_at( const tripoint_abs_omt &p ) -> fluid_storage_grid& { // *NOPAD*
             const auto sm_pos = project_to<coords::sm>( p );
             const auto iter = parent_storage_grids.find( sm_pos );
             if( iter != parent_storage_grids.end() ) {
@@ -654,25 +654,25 @@ class plumbing_grid_tracker
         }
 };
 
-auto get_plumbing_grid_tracker() -> plumbing_grid_tracker & // *NOPAD*
+auto get_fluid_grid_tracker() -> fluid_grid_tracker & // *NOPAD*
 {
-    static auto tracker = plumbing_grid_tracker{};
+    static auto tracker = fluid_grid_tracker{};
     return tracker;
 }
 
 } // namespace
 
-namespace plumbing_grid
+namespace fluid_grid
 {
 
 auto connections_for( overmap &om ) -> connection_map & // *NOPAD*
 {
-    return plumbing_grid_store()[om.pos()];
+    return fluid_grid_store()[om.pos()];
 }
 
 auto connections_for( const overmap &om ) -> const connection_map & // *NOPAD*
 {
-    const auto &store = plumbing_grid_store();
+    const auto &store = fluid_grid_store();
     const auto iter = store.find( om.pos() );
     if( iter == store.end() ) {
         return empty_connections();
@@ -682,13 +682,13 @@ auto connections_for( const overmap &om ) -> const connection_map & // *NOPAD*
 
 auto storage_for( overmap &om ) -> std::map<tripoint_om_omt, water_storage_state> & // *NOPAD*
 {
-    return plumbing_storage_store()[om.pos()];
+    return fluid_storage_store()[om.pos()];
 }
 
 auto storage_for( const overmap &om ) -> const std::map<tripoint_om_omt, water_storage_state>
 & // *NOPAD*
 {
-    const auto &store = plumbing_storage_store();
+    const auto &store = fluid_storage_store();
     const auto iter = store.find( om.pos() );
     if( iter == store.end() ) {
         return empty_storage();
@@ -726,12 +726,12 @@ auto grid_connectivity_at( const tripoint_abs_omt &p ) -> std::vector<tripoint_r
 
 auto water_storage_at( const tripoint_abs_omt &p ) -> water_storage_stats
 {
-    return get_plumbing_grid_tracker().storage_at( p ).get_stats();
+    return get_fluid_grid_tracker().storage_at( p ).get_stats();
 }
 
 auto liquid_charges_at( const tripoint_abs_omt &p, const itype_id &liquid_type ) -> int
 {
-    return get_plumbing_grid_tracker().storage_at( p ).total_charges( liquid_type );
+    return get_fluid_grid_tracker().storage_at( p ).total_charges( liquid_type );
 }
 
 auto would_contaminate( const tripoint_abs_omt &p, const itype_id &liquid_type ) -> bool
@@ -739,7 +739,7 @@ auto would_contaminate( const tripoint_abs_omt &p, const itype_id &liquid_type )
     if( liquid_type != itype_water && liquid_type != itype_water_clean ) {
         return false;
     }
-    const auto state = get_plumbing_grid_tracker().storage_at( p ).get_state();
+    const auto state = get_fluid_grid_tracker().storage_at( p ).get_state();
     if( liquid_type == itype_water_clean ) {
         return state.stored_dirty > 0_ml;
     }
@@ -749,36 +749,36 @@ auto would_contaminate( const tripoint_abs_omt &p, const itype_id &liquid_type )
 auto add_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,
                          int charges ) -> int
 {
-    return get_plumbing_grid_tracker().storage_at( p ).add_charges( liquid_type, charges );
+    return get_fluid_grid_tracker().storage_at( p ).add_charges( liquid_type, charges );
 }
 
 auto drain_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,
                            int charges ) -> int
 {
-    return get_plumbing_grid_tracker().storage_at( p ).drain_charges( liquid_type, charges );
+    return get_fluid_grid_tracker().storage_at( p ).drain_charges( liquid_type, charges );
 }
 
 auto on_contents_changed( const tripoint_abs_ms &p ) -> void
 {
-    get_plumbing_grid_tracker().invalidate_at( p );
+    get_fluid_grid_tracker().invalidate_at( p );
 }
 
 auto on_structure_changed( const tripoint_abs_ms &p ) -> void
 {
     const auto omt_pos = project_to<coords::omt>( p );
     invalidate_grid_members_cache_at( omt_pos );
-    get_plumbing_grid_tracker().rebuild_at( p );
+    get_fluid_grid_tracker().rebuild_at( p );
 }
 
 auto disconnect_tank( const tripoint_abs_ms &p ) -> void
 {
-    get_plumbing_grid_tracker().disconnect_tank_at( p );
+    get_fluid_grid_tracker().disconnect_tank_at( p );
 }
 
 auto add_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &rhs ) -> bool
 {
     if( project_to<coords::om>( lhs ).xy() != project_to<coords::om>( rhs ).xy() ) {
-        debugmsg( "Connecting plumbing grids on different overmaps is not supported yet" );
+        debugmsg( "Connecting fluid grids on different overmaps is not supported yet" );
         return false;
     }
 
@@ -801,7 +801,7 @@ auto add_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &r
     auto &rhs_bitset = connection_bitset_at( *rhs_omc.om, rhs_omc.local );
 
     if( lhs_bitset[lhs_i] && rhs_bitset[rhs_i] ) {
-        debugmsg( "Tried to connect to plumbing grid two points that are connected to each other" );
+        debugmsg( "Tried to connect to fluid grid two points that are connected to each other" );
         return false;
     }
 
@@ -819,10 +819,10 @@ auto add_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &r
         const auto merged_grid = grid_at( lhs );
         const auto new_anchor = anchor_for_grid( merged_grid );
         auto new_omc = overmap_buffer.get_om_global( new_anchor );
-        auto &storage = plumbing_grid::storage_for( *new_omc.om );
+        auto &storage = fluid_grid::storage_for( *new_omc.om );
         storage.erase( overmap_buffer.get_om_global( anchor_for_grid( lhs_grid ) ).local );
         storage.erase( overmap_buffer.get_om_global( anchor_for_grid( rhs_grid ) ).local );
-        storage[new_omc.local] = plumbing_grid::water_storage_state{
+        storage[new_omc.local] = fluid_grid::water_storage_state{
             .stored_clean = lhs_state.stored_clean + rhs_state.stored_clean,
             .stored_dirty = lhs_state.stored_dirty + rhs_state.stored_dirty,
             .capacity = lhs_state.capacity + rhs_state.capacity
@@ -855,7 +855,7 @@ auto remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt
     auto &rhs_bitset = connection_bitset_at( *rhs_omc.om, rhs_omc.local );
 
     if( !lhs_bitset[lhs_i] && !rhs_bitset[rhs_i] ) {
-        debugmsg( "Tried to disconnect from plumbing grid two points with no connection to each other" );
+        debugmsg( "Tried to disconnect from fluid grid two points with no connection to each other" );
         return false;
     }
 
@@ -874,7 +874,7 @@ auto remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt
         const auto rhs_capacity = calculate_capacity_for_grid( rhs_grid, MAPBUFFER );
         const auto split_state = split_storage_state( old_state, lhs_capacity, rhs_capacity );
 
-        auto &storage = plumbing_grid::storage_for( *lhs_omc.om );
+        auto &storage = fluid_grid::storage_for( *lhs_omc.om );
         storage.erase( overmap_buffer.get_om_global( old_anchor ).local );
         const auto lhs_anchor = anchor_for_grid( lhs_grid );
         const auto rhs_anchor = anchor_for_grid( rhs_grid );
@@ -889,11 +889,11 @@ auto remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt
 
 auto clear() -> void
 {
-    plumbing_grid_store().clear();
-    plumbing_storage_store().clear();
-    get_plumbing_grid_tracker().clear();
+    fluid_grid_store().clear();
+    fluid_storage_store().clear();
+    get_fluid_grid_tracker().clear();
     grid_members_cache().clear();
     submap_capacity_cache().clear();
 }
 
-} // namespace plumbing_grid
+} // namespace fluid_grid

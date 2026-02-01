@@ -28,7 +28,7 @@ void gaspump( player &p, const tripoint &examp );
 void atm( player &p, const tripoint &examp );
 void vending( player &p, const tripoint &examp );
 void toilet( player &p, const tripoint &examp );
-auto plumbing_fixture( player &p, const tripoint &examp ) -> void;
+auto fluid_grid_fixture( player &p, const tripoint &examp ) -> void;
 void elevator( player &p, const tripoint &examp );
 void nanofab( player &p, const tripoint &examp );
 void toggle_lights( player &p, const tripoint &examp );

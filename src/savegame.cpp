@@ -36,7 +36,7 @@
 #include "overmap.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
-#include "plumbing_grid.h"
+#include "fluid_grid.h"
 #include "popup.h"
 #include "regional_settings.h"
 #include "scent_map.h"
@@ -476,14 +476,14 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
                     }
                 }
             }
-        } else if( name == "plumbing_grid_connections" ) {
-            auto &plumbing_connections = plumbing_grid::connections_for( *this );
+        } else if( name == "fluid_grid_connections" ) {
+            auto &fluid_connections = fluid_grid::connections_for( *this );
             jsin.start_array();
             while( !jsin.end_array() ) {
                 jsin.start_array();
                 auto origin = tripoint_om_omt{};
                 jsin.read( origin );
-                auto &conn = plumbing_connections[origin];
+                auto &conn = fluid_connections[origin];
                 while( !jsin.end_array() ) {
                     auto offset = tripoint{};
                     jsin.read( offset );
@@ -494,8 +494,8 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
                     }
                 }
             }
-        } else if( name == "plumbing_grid_storage" ) {
-            auto &storage = plumbing_grid::storage_for( *this );
+        } else if( name == "fluid_grid_storage" ) {
+            auto &storage = fluid_grid::storage_for( *this );
             jsin.start_array();
             while( !jsin.end_array() ) {
                 jsin.start_array();
@@ -507,7 +507,7 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
                 jsin.read( capacity_ml );
                 jsin.read( clean_ml );
                 jsin.read( dirty_ml );
-                storage[origin] = plumbing_grid::water_storage_state{
+                storage[origin] = fluid_grid::water_storage_state{
                     .stored_clean = units::from_milliliter( clean_ml ),
                     .stored_dirty = units::from_milliliter( dirty_ml ),
                     .capacity = units::from_milliliter( capacity_ml )
@@ -1078,10 +1078,10 @@ void overmap::serialize( std::ostream &fout ) const
     }
     json.end_array();
 
-    const auto &plumbing_connections = plumbing_grid::connections_for( *this );
-    json.member( "plumbing_grid_connections" );
+    const auto &fluid_connections = fluid_grid::connections_for( *this );
+    json.member( "fluid_grid_connections" );
     json.start_array();
-    std::ranges::for_each( plumbing_connections, [&]( const auto & conn ) {
+    std::ranges::for_each( fluid_connections, [&]( const auto & conn ) {
         json.start_array();
         json.write( conn.first );
         std::ranges::for_each( std::views::iota( size_t{ 0 }, six_cardinal_directions.size() ),
@@ -1094,10 +1094,10 @@ void overmap::serialize( std::ostream &fout ) const
     } );
     json.end_array();
 
-    const auto &plumbing_storage = plumbing_grid::storage_for( *this );
-    json.member( "plumbing_grid_storage" );
+    const auto &fluid_storage = fluid_grid::storage_for( *this );
+    json.member( "fluid_grid_storage" );
     json.start_array();
-    std::ranges::for_each( plumbing_storage, [&]( const auto & entry ) {
+    std::ranges::for_each( fluid_storage, [&]( const auto & entry ) {
         json.start_array();
         json.write( entry.first );
         json.write( units::to_milliliter<int>( entry.second.capacity ) );

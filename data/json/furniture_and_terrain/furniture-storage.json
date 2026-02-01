@@ -1062,16 +1062,16 @@
     "id": "f_standing_tank_plumbed",
     "copy-from": "f_standing_tank",
     "name": "standing tank (plumbed)",
-    "description": "A large freestanding metal tank hooked into a plumbing grid.",
+    "description": "A large freestanding metal tank hooked into a fluid grid.",
     "symbol": "O",
     "color": "light_gray",
     "keg_capacity": 1200,
-    "plumbing": {
+    "fluid_grid": {
       "role": "tank",
       "allow_input": true,
       "allow_output": true,
       "allowed_liquids": [ "water", "water_clean" ],
-      "unplumbed_variant": "f_standing_tank",
+      "disconnected_variant": "f_standing_tank",
       "use_keg_capacity": true
     }
   },

@@ -81,7 +81,7 @@
 #include "monattack.h"
 #include "mongroup.h"
 #include "monster.h"
-#include "plumbing_grid.h"
+#include "fluid_grid.h"
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -329,8 +329,8 @@ static const quality_id qual_LOCKPICK( "LOCKPICK" );
 
 static const requirement_id requirement_add_grid_connection =
     requirement_id( "add_grid_connection" );
-static const auto requirement_add_plumbing_grid_connection =
-    requirement_id( "add_plumbing_grid_connection" );
+static const auto requirement_add_fluid_grid_connection =
+    requirement_id( "add_fluid_grid_connection" );
 
 static const species_id FUNGUS( "FUNGUS" );
 static const species_id HALLUCINATION( "HALLUCINATION" );
@@ -8884,11 +8884,11 @@ int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos 
     return 0;
 }
 
-auto iuse::report_plumbing_connections( player *p, item *, bool, const tripoint &pos ) -> int
+auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoint &pos ) -> int
 {
     const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
-    const auto connections = plumbing_grid::grid_connectivity_at( pos_abs );
-    const auto water_stats = plumbing_grid::water_storage_at( pos_abs );
+    const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
+    const auto water_stats = fluid_grid::water_storage_at( pos_abs );
 
     auto connection_names = std::vector<std::string> {};
     connection_names.reserve( connections.size() );
@@ -8898,9 +8898,9 @@ auto iuse::report_plumbing_connections( player *p, item *, bool, const tripoint 
 
     auto msg = std::string{};
     if( connection_names.empty() ) {
-        msg = _( "This plumbing grid has no connections." );
+        msg = _( "This fluid grid has no connections." );
     } else {
-        msg = string_format( _( "This plumbing grid has connections: %s." ),
+        msg = string_format( _( "This fluid grid has connections: %s." ),
                              enumerate_as_string( connection_names ) );
     }
     p->add_msg_if_player( msg );
@@ -8909,9 +8909,9 @@ auto iuse::report_plumbing_connections( player *p, item *, bool, const tripoint 
                                          format_volume( water_stats.capacity ),
                                          volume_units_abbr() ) );
     const auto clean_available =
-        plumbing_grid::liquid_charges_at( pos_abs, itype_id( "water_clean" ) ) > 0;
+        fluid_grid::liquid_charges_at( pos_abs, itype_id( "water_clean" ) ) > 0;
     const auto dirty_available =
-        plumbing_grid::liquid_charges_at( pos_abs, itype_id( "water" ) ) > 0;
+        fluid_grid::liquid_charges_at( pos_abs, itype_id( "water" ) ) > 0;
     const auto quality = clean_available ? _( "clean" )
                          : dirty_available ? _( "tainted" )
                          : _( "empty" );
@@ -9016,10 +9016,10 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
     return 0;
 }
 
-auto iuse::modify_plumbing_connections( player *p, item *it, bool, const tripoint &pos ) -> int
+auto iuse::modify_fluid_grid_connections( player *p, item *it, bool, const tripoint &pos ) -> int
 {
     const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
-    const auto connections = plumbing_grid::grid_connectivity_at( pos_abs );
+    const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
 
     uilist ui;
 
@@ -9032,8 +9032,8 @@ auto iuse::modify_plumbing_connections( player *p, item *it, bool, const tripoin
         const auto name = direction_name( direction_from( delta ) );
         const auto i_int = static_cast<int>( i );
         const auto format = connection_present[i]
-                            ? _( "Remove plumbing connection in direction: %s" )
-                            : _( "Add plumbing connection in direction: %s" );
+                            ? _( "Remove fluid grid connection in direction: %s" )
+                            : _( "Add fluid grid connection in direction: %s" );
         const auto new_z = pos.z + delta.z;
         const auto enabled = new_z >= -10 && new_z <= 10;
         ui.addentry( i_int, enabled, i_int, format, name.c_str() );
@@ -9048,15 +9048,15 @@ auto iuse::modify_plumbing_connections( player *p, item *it, bool, const tripoin
     const auto destination_pos_abs =
         pos_abs + tripoint_rel_omt( six_cardinal_directions[ret] );
     if( connection_present[ret] ) {
-        plumbing_grid::remove_grid_connection( pos_abs, destination_pos_abs );
+        fluid_grid::remove_grid_connection( pos_abs, destination_pos_abs );
     } else {
-        const auto lhs_locations = plumbing_grid::grid_at( pos_abs );
-        const auto rhs_locations = plumbing_grid::grid_at( destination_pos_abs );
+        const auto lhs_locations = fluid_grid::grid_at( pos_abs );
+        const auto rhs_locations = fluid_grid::grid_at( destination_pos_abs );
         auto cost_mult = 0;
         if( lhs_locations != rhs_locations ) {
             cost_mult = static_cast<int>( lhs_locations.size() + rhs_locations.size() );
         }
-        const auto &reqs = *requirement_add_plumbing_grid_connection * cost_mult;
+        const auto &reqs = *requirement_add_fluid_grid_connection * cost_mult;
         const auto &crafting_inv = p->crafting_inventory();
         auto grid_connection_string = std::string{};
         if( cost_mult == 0 ) {
@@ -9100,7 +9100,7 @@ auto iuse::modify_plumbing_connections( player *p, item *it, bool, const tripoin
         } );
         p->invalidate_crafting_inventory();
 
-        const auto success = plumbing_grid::add_grid_connection( pos_abs, destination_pos_abs );
+        const auto success = fluid_grid::add_grid_connection( pos_abs, destination_pos_abs );
         if( success ) {
             return it->type->charges_to_use();
         }
