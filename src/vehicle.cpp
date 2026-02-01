@@ -4550,6 +4550,7 @@ double vehicle::coeff_rolling_drag() const
     }
     coefficient_rolling_resistance = newton_ratio * wheel_factor * to_kilogram(
                                          total_mass() ) * get_lift_percent( true );
+    coefficient_rolling_resistance = std::max( draft_m, 0.0 );
     coeff_rolling_dirty = false;
     return coefficient_rolling_resistance;
 }
@@ -4809,6 +4810,7 @@ double vehicle::coeff_water_drag() const
     // area * depth = vehicle_mass / water_density
     // depth = vehicle_mass / water_density / area
     draft_m = to_kilogram( total_mass() ) / water_density / hull_area * get_lift_percent( true );
+    draft_m = std::max( draft_m, 0.0 );
     // increase the streamlining as more of the boat is covered in boat boards
     double c_water_drag = 1.25 - hull_coverage;
     // hull height starts at 0.3m and goes up as you add more boat boards
