@@ -2498,7 +2498,7 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
             // but it's consistent with how ranged.cpp applies enchantments
             int ench_dispersion_bonus = you.bonus_from_enchantments( effective_dispersion,
                                         enchant_vals::mod::RANGED_DISPERSION, true );
-            
+
             if( ench_dispersion_bonus != 0 ) {
                 info.emplace_back( "GUN", "ench_dispersion", _( " (enchanted: <num>)" ),
                                    iteminfo::lower_is_better | iteminfo::no_name | iteminfo::show_plus,
