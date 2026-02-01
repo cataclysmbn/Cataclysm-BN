@@ -47,6 +47,23 @@
     "flags": [ "WATCH", "ALARMCLOCK" ]
   },
   {
+    "id": "door_key",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "building door key" },
+    "description": "A replacement kit for door's lock cylinder and a matching key.  Use it to allow locking and unlocking a door.",
+    "weight": "10 g",
+    "volume": "10 ml",
+    "price": "10 USD",
+    "price_postapoc": "50 cent",
+    "to_hit": -1,
+    "bashing": 1,
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "light_gray",
+    "use_action": [ "DOOR_KEY" ]
+  },
+  {
     "id": "cow_bell",
     "type": "GENERIC",
     "category": "tools",

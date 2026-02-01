@@ -248,6 +248,12 @@
     "tools": [ [ [ "angle_grinder", 200 ], [ "oxy_torch", 20 ] ] ]
   },
   {
+    "id": "copy_key_fine_sawing",
+    "type": "requirement",
+    "//": "Tools for copying a key",
+    "qualities": [ { "id": "SAW_M_FINE", "level": 1 } ]
+  },
+  {
     "id": "object_deconstruction_advanced",
     "type": "requirement",
     "//": "Tools for doing advanced deconstruction",

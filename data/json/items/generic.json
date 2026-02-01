@@ -3070,6 +3070,7 @@
     "material": "steel",
     "weight": "5 g",
     "volume": "250 ml",
+    "use_action": [ "SET_LOCK", "COPY_KEY" ],
     "bashing": 1
   },
   {
@@ -3492,6 +3493,7 @@
     "weight": "500 g",
     "volume": "250 ml",
     "price": "8 USD",
+    "use_action": [ "SET_LOCK", "COPY_KEY" ],
     "price_postapoc": "50 cent"
   }
 ]
