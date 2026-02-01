@@ -72,7 +72,7 @@ auto get_effective_wheels( vehicle *veh ) -> int
 {
     const auto &wheels = veh->wheelcache;
 
-    return ( wheels.size() > 4 || wheels.size() == 1 ) ? 4 : wheels.size();
+    return ( wheels.size() > 4 || wheels.size() == 1 || wheels.size() == 0 ) ? 4 : wheels.size();
 }
 
 // very strong humans can move about 2,000 kg in a wheelbarrow.
