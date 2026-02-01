@@ -2338,7 +2338,7 @@
     "skill_used": "cooking",
     "difficulty": 3,
     "time": "3 h",
-    "charges": 4,
+    "charges": 20,
     "batch_time_factors": [ 30, 5 ],
     "skills_required": [ "survival", 2 ],
     "autolearn": true,
