@@ -150,7 +150,7 @@ bool map::build_transparency_cache( const int zlev )
 
             // calculates transparency of a single tile
             // x,y - coords in map local coords
-            auto calc_transp = [&, this]( point  p ) {
+            auto calc_transp = [ &, this]( point  p ) {
                 const point sp = p - sm_offset;
                 float value = LIGHT_TRANSPARENCY_OPEN_AIR;
 

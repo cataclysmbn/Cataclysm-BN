@@ -13,8 +13,6 @@
     "color": "magenta",
     "use_action": "POCKET_DIMENSION_TOGGLE",
     "flags": [ "UNBREAKABLE" ],
-	"item_vars": {
-	  "pocket_special": "Cave",
-	},
+    "item_vars": { "pocket_special": "Cave" }
   }
 ]

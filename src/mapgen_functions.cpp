@@ -1923,9 +1923,9 @@ void mapgen_rock( mapgendata &dat )
     fill_background( &dat.m, t_rock );
 }
 
-void mapgen_pd_border(mapgendata& dat)
+void mapgen_pd_border( mapgendata &dat )
 {
-    fill_background(&dat.m, t_pd_border);
+    fill_background( &dat.m, t_pd_border );
 }
 
 void mapgen_open_air( mapgendata &dat )

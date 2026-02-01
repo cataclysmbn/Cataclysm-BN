@@ -37,7 +37,8 @@ decltype( Pathfinding::z_area ) Pathfinding::z_area = {};
 decltype( Pathfinding::z_caches ) Pathfinding::z_caches = {};
 decltype( Pathfinding::z_caches_open_air ) Pathfinding::z_caches_open_air = {};
 decltype( Pathfinding::non_overworld_z_caches ) Pathfinding::non_overworld_z_caches = {};
-decltype( Pathfinding::non_overworld_z_caches_open_air ) Pathfinding::non_overworld_z_caches_open_air = {};
+decltype( Pathfinding::non_overworld_z_caches_open_air )
+Pathfinding::non_overworld_z_caches_open_air = {};
 decltype( Pathfinding::non_overworld_z_areas ) Pathfinding::non_overworld_z_areas = {};
 decltype( Pathfinding::cached_closest_z_changes ) Pathfinding::cached_closest_z_changes = {};
 

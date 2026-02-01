@@ -248,7 +248,8 @@ class Pathfinding
         // Global state: Z-level transitions for non-overworld z-levels (keyed by absolute z-level)
         static std::map<int, std::vector<ZLevelChange>> non_overworld_z_caches;
         // Global state: OPEN_AIR type z-level transitions for non-overworld z-levels (keyed by absolute z-level)
-        static std::map<int, std::unordered_map<point, ZLevelChangeOpenAirPair>> non_overworld_z_caches_open_air;
+        static std::map<int, std::unordered_map<point, ZLevelChangeOpenAirPair>>
+                non_overworld_z_caches_open_air;
         // Global state: area covered by last Z-scan for non-overworld layers (keyed by layer type)
         static std::map<world_layer, point> non_overworld_z_areas;
         // Global state: We cache `z_path` information taken to prevent multiple iterations for the same target

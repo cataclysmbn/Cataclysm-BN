@@ -156,7 +156,8 @@ static location_vector<item> nulitems( new
                                        fake_item_location() );       // Returned when &i_at() is asked for an OOB value
 static field              nulfield;          // Returned when &field_at() is asked for an OOB value
 static level_cache        nullcache;         // Dummy cache for z-levels outside bounds
-static pathfinding_cache  null_pathfinding_cache;  // Dummy pathfinding cache for z-levels outside bounds
+static pathfinding_cache
+null_pathfinding_cache;  // Dummy pathfinding cache for z-levels outside bounds
 
 level_cache &map::get_null_cache()
 {
