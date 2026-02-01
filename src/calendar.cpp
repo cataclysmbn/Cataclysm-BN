@@ -552,8 +552,12 @@ const std::vector<std::pair<std::string, time_duration>> time_duration::units = 
 season_type season_of_year( const time_point &p )
 {
     // TODO: Explain why is it cached, make the cache explicit, or get rid of caching
+    // Cache to avoid recalculating season for the same turn repeatedly.
+    // Note: prev_season is initialized to SPRING (not calendar::initial_season) because
+    // calendar::initial_season is a reference that may not be valid during static initialization,
+    // and the value will be properly set on first use anyway.
     static time_point prev_turn = calendar::before_time_starts;
-    static season_type prev_season = calendar::initial_season;
+    static season_type prev_season = SPRING;
 
     if( p != prev_turn ) {
         prev_turn = p;

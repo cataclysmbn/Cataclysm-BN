@@ -226,7 +226,10 @@ class submap : maptile_soa<SEEX, SEEY>
         active_item_cache active_items;
 
         int field_count = 0;
-        time_point last_touched = calendar::turn_zero;
+        // Note: Using default constructor (turn 0) instead of calendar::turn_zero to avoid
+        // static initialization order issues - calendar::turn_zero may not be initialized
+        // when submap objects are created during early startup or in other translation units.
+        time_point last_touched;
         std::vector<spawn_point> spawns;
         /**
          * Vehicles on this submap (their (0,0) point is on this submap).

@@ -7543,6 +7543,12 @@ void map::saven( const tripoint &grid )
     submap *submap_to_save;
     if( !is_overworld_z( grid.z ) ) {
         submap_to_save = MAPBUFFER.lookup_submap( abs );
+        if( submap_to_save == nullptr ) {
+            // Submap not loaded - this can happen for pocket dimensions or other
+            // non-overworld z-levels that haven't been visited yet
+            dbg( DL::Debug ) << "map::saven skipping unloaded submap at " << abs;
+            return;
+        }
     } else {
         const int gridn = get_nonant( grid );
         submap_to_save = getsubmap( gridn );
