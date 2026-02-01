@@ -77,7 +77,7 @@ enum class mod : int {
     ITEM_ARMOR_ACID,
     ITEM_ARMOR_BIO,
     ITEM_ATTACK_COST,
-    // effects for ranged weapons when wielded
+    // effects for ranged bonuses
     RANGED_DISPERSION,
     RANGED_DAMAGE_BULLET,
     RANGED_ARMOR_PENETRATION,
