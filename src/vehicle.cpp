@@ -5056,7 +5056,7 @@ bool vehicle::balanced_wheel_config() const
 
 bool vehicle::valid_wheel_config() const
 {
-    return ( sufficient_wheel_config() && balanced_wheel_config() ) || has_sufficient_lift( true );
+    return sufficient_wheel_config() && balanced_wheel_config();
 }
 
 float vehicle::steering_effectiveness() const

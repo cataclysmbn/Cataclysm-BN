@@ -168,7 +168,7 @@ void vehicle::thrust( int thd, int z )
             add_msg( _( "The %s is too leaky!" ), name );
         }
         return;
-    } else if( !valid_wheel_config()  && z == 0 ) {
+    } else if( !valid_wheel_config() && z == 0 && !has_sufficient_lift( true ) ) {
         stop();
         if( pl_ctrl ) {
             add_msg( _( "The %s doesn't have enough wheels to move!" ), name );
@@ -549,12 +549,20 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
     // TODO: More elegant code
     const bool is_veh_collision = !bash_floor && ovp && &ovp->vehicle() != this;
     if( is_veh_collision ) {
-        const vpart_info info = ovp->vehicle().part_info( ovp->part_index() );
+        vpart_info info = ovp->vehicle().part_info( ovp->part_index() );
         if( info.has_flag( VPFLAG_NOCOLLIDE ) ) {
             veh_collision ret;
             ret.type = veh_coll_veh_nocollide;
             ret.part = part;
             ret.target = &ovp->vehicle();
+            return ret;
+        }
+    } else {
+        const vpart_info info = part_info( part );
+        if( info.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            veh_collision ret;
+            ret.type = veh_coll_nothing;
+            ret.part = part;
             return ret;
         }
     }
