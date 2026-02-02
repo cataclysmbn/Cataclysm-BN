@@ -180,6 +180,9 @@ void boundary_section::serialize( JsonOut &json ) const
     json.member( "bounds", bounds );
     json.member( "mapgen", mapgen );
     json.member( "generated", generated );
+    if( border_terrain.is_valid() ) {
+        json.member( "border_terrain", border_terrain.str() );
+    }
     json.end_object();
 }
 
@@ -194,6 +197,9 @@ void boundary_section::deserialize( JsonIn &jsin )
         data.read( "mapgen", mapgen );
     }
     generated = data.get_bool( "generated", false );
+    if( data.has_string( "border_terrain" ) ) {
+        border_terrain = ter_str_id( data.get_string( "border_terrain" ) );
+    }
 }
 
 boundary_section_manager &boundary_section_manager::instance()
@@ -204,7 +210,8 @@ boundary_section_manager &boundary_section_manager::instance()
 
 boundary_section_id boundary_section_manager::register_section( world_layer layer,
         const boundary_bounds &bounds,
-        const boundary_section_mapgen &mapgen_config )
+        const boundary_section_mapgen &mapgen_config,
+        const ter_str_id &border_terrain )
 {
     boundary_section_id id{ next_id++ };
 
@@ -214,6 +221,7 @@ boundary_section_id boundary_section_manager::register_section( world_layer laye
     section.bounds = bounds;
     section.mapgen = mapgen_config;
     section.generated = false;
+    section.border_terrain = border_terrain;
 
     sections[id] = std::move( section );
 
@@ -380,6 +388,9 @@ void boundary_section_manager::deserialize( JsonIn &jsin )
             jo.read( "mapgen", section.mapgen );
         }
         section.generated = jo.get_bool( "generated", false );
+        if( jo.has_string( "border_terrain" ) ) {
+            section.border_terrain = ter_str_id( jo.get_string( "border_terrain" ) );
+        }
         sections[section.id] = std::move( section );
     }
 }
@@ -510,6 +521,12 @@ void boundary_section_manager::create_base_submaps( const boundary_section &sect
     tripoint_abs_sm gen_min_sm = full_min_sm - tripoint( buffer_submaps, buffer_submaps, 0 );
     tripoint_abs_sm gen_max_sm = full_max_sm + tripoint( buffer_submaps, buffer_submaps, 0 );
 
+    // Determine border terrain - use custom if set, otherwise default to t_pd_border
+    ter_id border_ter = t_pd_border;
+    if( section.border_terrain.is_valid() ) {
+        border_ter = section.border_terrain.id();
+    }
+
     // Create ALL submaps filled with pd_border terrain.
     // The mapgen functions (apply_special_mapgen) will overwrite the terrain
     // for OMTs that are part of the overmap_special. Any OMT not covered by
@@ -527,10 +544,10 @@ void boundary_section_manager::create_base_submaps( const boundary_section &sect
                 tripoint abs_ms = sm_to_ms_copy( sm_pos );
                 auto sm = std::make_unique<submap>( abs_ms );
 
-                // Fill all tiles with pd_border - mapgen will overwrite as needed
+                // Fill all tiles with border terrain - mapgen will overwrite as needed
                 for( int sy = 0; sy < SEEY; sy++ ) {
                     for( int sx = 0; sx < SEEX; sx++ ) {
-                        sm->set_ter( point( sx, sy ), t_pd_border );
+                        sm->set_ter( point( sx, sy ), border_ter );
                     }
                 }
 

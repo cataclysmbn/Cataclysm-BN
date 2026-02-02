@@ -126,6 +126,9 @@ void pocket_dimension::serialize( JsonOut &json ) const
     if( entry_local_offset ) {
         json.member( "entry_local_offset", *entry_local_offset );
     }
+    if( border_terrain.is_valid() ) {
+        json.member( "border_terrain", border_terrain.str() );
+    }
     json.end_object();
 }
 
@@ -146,6 +149,9 @@ void pocket_dimension::deserialize( JsonIn &jsin )
         data.read( "entry_local_offset", offset );
         entry_local_offset = offset;
     }
+    if( data.has_string( "border_terrain" ) ) {
+        border_terrain = ter_str_id( data.get_string( "border_terrain" ) );
+    }
 }
 
 pocket_dimension_manager &pocket_dimension_manager::instance()
@@ -155,7 +161,8 @@ pocket_dimension_manager &pocket_dimension_manager::instance()
 }
 
 pocket_dimension_id pocket_dimension_manager::create( item &owner_item,
-        const overmap_special_id &special_id_param )
+        const overmap_special_id &special_id_param,
+        const ter_str_id &border_terrain )
 {
     // Default to "Cave" if not provided or invalid
     overmap_special_id actual_special_id = special_id_param;
@@ -209,15 +216,16 @@ pocket_dimension_id pocket_dimension_manager::create( item &owner_item,
     bounds.max = origin + total_size;
     bounds.border_width_omt = border;
 
-    // Register the boundary section with mapgen config
+    // Register the boundary section with mapgen config and border terrain
     boundary_section_id section_id = boundary_section_manager::instance().register_section(
-                                         world_layer::POCKET_DIMENSION, bounds, mapgen_config );
+                                         world_layer::POCKET_DIMENSION, bounds, mapgen_config, border_terrain );
 
     // Create the pocket dimension
     pocket_dimension pd;
     pd.id = id;
     pd.section_id = section_id;
     pd.owner = pocket_owner_item{ safe_reference<item>( owner_item ) };
+    pd.border_terrain = border_terrain;
 
     dimensions[id] = std::move( pd );
 

@@ -9085,7 +9085,11 @@ int iuse::pocket_dimension_toggle( player *p, item *it, bool, const tripoint & )
         std::string special_str = it->get_var( "pocket_special", "Cave" );
         overmap_special_id special_id( special_str );
 
-        pocket_dimension_id new_id = manager.create( *it, special_id );
+        // Get border terrain from item var
+        std::string border_str = it->get_var( "pocket_border_terrain", "t_pd_border" );
+        ter_str_id border_terrain = ter_str_id( border_str );
+
+        pocket_dimension_id new_id = manager.create( *it, special_id, border_terrain );
         if( !new_id.is_valid() ) {
             p->add_msg_if_player( m_bad, _( "Failed to create pocket dimension." ) );
             return 0;

@@ -2930,6 +2930,12 @@ oter_id overmap::get_default_terrain( int z ) const
 {
     if( z == 0 ) {
         return settings->default_oter.id();
+    } else if ( z > OVERMAP_LAYERS ) {
+        if ( is_valid_layer_z( z ) ) {
+            return get_default_layer_terrain(get_layer(z));
+        } else {
+            return oter_str_id("pd_border");
+        }
     } else {
         // // TODO: Get rid of the hard-coded ids.
         static const oter_str_id open_air( "open_air" );

@@ -14,6 +14,6 @@
     "stackable": false,
     "use_action": "POCKET_DIMENSION_TOGGLE",
     "flags": [ "UNBREAKABLE" ],
-    "item_vars": { "pocket_special": "Cave" }
+    "item_vars": { "pocket_special": "Cave", "pocket_border_terrain": "t_rock_border" }
   }
 ]

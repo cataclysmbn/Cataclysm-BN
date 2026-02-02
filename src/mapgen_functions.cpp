@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "boundary_section.h"
 #include "calendar.h"
 #include "character_id.h"
 #include "debug.h"
@@ -1925,7 +1926,10 @@ void mapgen_rock( mapgendata &dat )
 
 void mapgen_pd_border( mapgendata &dat )
 {
-    fill_background( &dat.m, t_pd_border );
+    auto &border_terrain = t_pd_border;
+    boundary_section* const section = boundary_section_manager::instance().get_at( dat.pos );
+    if ( section != nullptr ) { border_terrain = section->border_terrain; }
+    fill_background( &dat.m, border_terrain );
 }
 
 void mapgen_open_air( mapgendata &dat )

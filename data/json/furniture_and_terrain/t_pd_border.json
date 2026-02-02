@@ -7,7 +7,9 @@
     "symbol": "#",
     "color": "magenta",
     "move_cost": 0,
-    "flags": [ "NOITEM", "NO_SIGHT", "BLOCK_WIND", "FLAT", "INDOORS" ],
+    "coverage": 100,
+    "flags": [ "NOITEM", "NO_SIGHT", "NO_SCENT", "BLOCK_WIND", "FLAT", "INDOORS" ],
+    "connects_to": "WALL",
     "bash": {
       "str_min": -1,
       "str_max": -1,
@@ -17,5 +19,26 @@
       "sound_fail_vol": 2
     },
     "//": "str_min and str_max of -1 means this terrain cannot be bashed"
-  }
+  },
+  {
+    "type": "terrain",
+	"looks_like": "t_rock",
+	"id": "t_rock_border",
+    "name": "stone wall",
+    "description": "It's solid rock.",
+    "symbol": "#",
+    "color": "white",
+    "move_cost": 0,
+    "coverage": 100,
+    "flags": [ "NOITEM", "NO_SIGHT", "NO_SCENT", "BLOCK_WIND", "FLAT", "INDOORS" ],
+    "connects_to": "WALL",
+    "bash": {
+      "str_min": -1,
+      "str_max": -1,
+      "sound":  "whump!",
+      "sound_fail": "whump!",
+      "sound_vol": 2,
+      "sound_fail_vol": 2
+    },
+  },
 ]

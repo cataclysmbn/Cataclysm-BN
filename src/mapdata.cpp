@@ -762,7 +762,8 @@ ter_id t_null,
        t_railroad_track_d2,
        t_railroad_track_on_tie, t_railroad_track_h_on_tie, t_railroad_track_v_on_tie,
        t_railroad_track_d_on_tie,
-       t_pd_border;
+       t_pd_border,
+       t_rock_border;
 
 // TODO: Put this crap into an inclusion, which should be generated automatically using JSON data
 
@@ -1073,12 +1074,8 @@ void set_ter_ids()
     t_railroad_track_h_on_tie = ter_id( "t_railroad_track_h_on_tie" );
     t_railroad_track_v_on_tie = ter_id( "t_railroad_track_v_on_tie" );
     t_railroad_track_d_on_tie = ter_id( "t_railroad_track_d_on_tie" );
-
-    // Pocket dimension border - use t_rock as fallback if t_pd_border isn't defined in JSON
     t_pd_border = ter_id( "t_pd_border" );
-    if( !t_pd_border.is_valid() ) {
-        t_pd_border = t_rock;
-    }
+    t_rock_border = ter_id( "t_rock_border" );
 
     for( auto &elem : terrain_data.get_all() ) {
         ter_t &ter = const_cast<ter_t &>( elem );

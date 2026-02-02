@@ -125,6 +125,7 @@ struct boundary_section {
     boundary_bounds bounds;
     boundary_section_mapgen mapgen;  // How to generate terrain for this section
     bool generated = false;          // Has the terrain been generated?
+    ter_str_id border_terrain;       // Terrain type for the border (default: t_pd_border)
 
     // Check if a point is within this section (including border)
     bool contains( const tripoint_abs_omt &p ) const;
@@ -159,7 +160,8 @@ class boundary_section_manager
         // Register a new boundary section with optional mapgen configuration
         // Returns the assigned section ID
         boundary_section_id register_section( world_layer layer, const boundary_bounds &bounds,
-                                              const boundary_section_mapgen &mapgen = {} );
+                                              const boundary_section_mapgen &mapgen = {},
+                                              const ter_str_id &border_terrain = ter_str_id() );
 
         // Unregister a boundary section (e.g., when pocket dimension is destroyed)
         void unregister_section( boundary_section_id id );

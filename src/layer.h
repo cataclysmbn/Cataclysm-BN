@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game_constants.h"
+#include "type_id.h"
 
 /**
  * Layer System for Multi-Dimensional Map Support
@@ -126,6 +127,8 @@ constexpr bool is_bounded_layer( world_layer layer )
             return false;
     }
 }
+
+oter_id get_default_terrain( world_layer layer, int relative_z = 0 );
 
 /**
  * Check if an absolute z-level falls within any valid layer's z-range.

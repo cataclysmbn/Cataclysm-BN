@@ -1693,7 +1693,9 @@ ter_id map::ter( const tripoint &p ) const
 
     // Check for pocket dimension border (virtual terrain, not stored)
     if( is_pocket_dimension_border( p ) ) {
-        return t_pd_border;
+        tripoint_abs_ms abs_pos = getglobal( p );
+        auto *const section = boundary_section_manager::instance().get_at( abs_pos );
+        return section->border_terrain;
     }
 
     point l;
@@ -7658,11 +7660,14 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
         if( is_non_overworld ) {
             debugmsg( "Missing non-overworld submap at %s, creating placeholder",
                       grid_abs_sub.to_string() );
+            auto &border_terrain = t_pd_border;
+            auto* const section = boundary_section_manager::instance().get_at( getglobal( grid_abs_sub ) );
+            if ( section != nullptr ) { border_terrain = section->border_terrain; }
             tripoint abs_ms = sm_to_ms_copy( grid_abs_sub );
             auto sm = std::make_unique<submap>( abs_ms );
             for( int sy = 0; sy < SEEY; sy++ ) {
                 for( int sx = 0; sx < SEEX; sx++ ) {
-                    sm->set_ter( point( sx, sy ), t_pd_border );
+                    sm->set_ter( point( sx, sy ), border_terrain );
                 }
             }
             MAPBUFFER.add_submap( grid_abs_sub, sm );

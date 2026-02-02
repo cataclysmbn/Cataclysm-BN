@@ -88,6 +88,8 @@ class pocket_dimension
         std::optional<tripoint> entry_omt_offset;   // Offset in OMT coordinates within interior
         std::optional<point> entry_local_offset;    // Offset in tiles within the target OMT
 
+        ter_str_id border_terrain;
+
         // Get usable interior bounds (excludes border)
         boundary_bounds get_interior() const;
 
@@ -111,11 +113,13 @@ class pocket_dimension_manager
 
         // Create a new pocket dimension from an overmap_special.
         // The size is calculated from the special's terrain layout.
-        // Any tiles not covered by the special's terrain are filled with pd_boundary.
+        // Any tiles not covered by the special's terrain are filled with border_terrain
+        // (defaults to t_pd_border if not specified).
         // If special_id is not provided, defaults to "Cave".
         // Returns invalid ID on failure.
         pocket_dimension_id create( item &owner_item,
-                                    const overmap_special_id &special_id = overmap_special_id( "Cave" ) );
+                                    const overmap_special_id &special_id = overmap_special_id( "Cave" ),
+                                    const ter_str_id &border_terrain = ter_str_id() );
 
         // Get pocket dimension by ID (nullptr if not found)
         pocket_dimension *get( pocket_dimension_id id );
