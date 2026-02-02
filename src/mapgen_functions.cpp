@@ -1927,8 +1927,8 @@ void mapgen_rock( mapgendata &dat )
 void mapgen_pd_border( mapgendata &dat )
 {
     auto &border_terrain = t_pd_border;
-    boundary_section* const section = boundary_section_manager::instance().get_at( dat.pos );
-    if ( section != nullptr ) { border_terrain = section->border_terrain; }
+    boundary_section *const section = boundary_section_manager::instance().get_at( dat.pos );
+    if( section != nullptr ) { border_terrain = section->border_terrain; }
     fill_background( &dat.m, border_terrain );
 }
 

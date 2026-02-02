@@ -7661,8 +7661,8 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
             debugmsg( "Missing non-overworld submap at %s, creating placeholder",
                       grid_abs_sub.to_string() );
             auto &border_terrain = t_pd_border;
-            auto* const section = boundary_section_manager::instance().get_at( getglobal( grid_abs_sub ) );
-            if ( section != nullptr ) { border_terrain = section->border_terrain; }
+            auto *const section = boundary_section_manager::instance().get_at( getglobal( grid_abs_sub ) );
+            if( section != nullptr ) { border_terrain = section->border_terrain; }
             tripoint abs_ms = sm_to_ms_copy( grid_abs_sub );
             auto sm = std::make_unique<submap>( abs_ms );
             for( int sy = 0; sy < SEEY; sy++ ) {
