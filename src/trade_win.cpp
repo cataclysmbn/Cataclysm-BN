@@ -46,6 +46,64 @@ struct category_range {
     size_t end = 0;
 };
 
+auto build_page_starts( const std::vector<item_pricing> &list,
+                        const std::vector<size_t> &filtered,
+                        size_t rows_per_page ) -> std::vector<size_t>
+{
+    auto starts = std::vector<size_t> {};
+    if( rows_per_page <= 1 ) {
+        starts = std::views::iota( size_t{0}, filtered.size() )
+                 | std::ranges::to<std::vector>();
+        if( starts.empty() ) {
+            starts.push_back( 0 );
+        }
+        return starts;
+    }
+    if( filtered.empty() ) {
+        starts.push_back( 0 );
+        return starts;
+    }
+    auto index = size_t{0};
+    while( index < filtered.size() ) {
+        starts.push_back( index );
+        auto row = size_t{0};
+        auto last_category = std::optional<item_category_id> {};
+        while( index < filtered.size() ) {
+            const auto &ip = list[filtered[index]];
+            const auto category_id = ip.locs.front()->get_category().get_id();
+            if( !last_category || *last_category != category_id ) {
+                if( row + 2 > rows_per_page && row > 0 ) {
+                    break;
+                }
+                row += 1;
+            }
+            if( row + 1 > rows_per_page ) {
+                break;
+            }
+            row += 1;
+            last_category = category_id;
+            index++;
+            if( row >= rows_per_page ) {
+                break;
+            }
+        }
+    }
+    return starts;
+}
+
+auto page_index_for_offset( const std::vector<size_t> &page_starts,
+                            size_t offset ) -> size_t
+{
+    if( page_starts.empty() ) {
+        return 0;
+    }
+    const auto it = std::ranges::upper_bound( page_starts, offset );
+    if( it == page_starts.begin() ) {
+        return 0;
+    }
+    return static_cast<size_t>( std::distance( page_starts.begin(), it ) - 1 );
+}
+
 auto build_category_ranges( const std::vector<item_pricing> &list,
                             const std::vector<size_t> &filtered ) -> std::vector<category_range>
 {
@@ -70,6 +128,8 @@ auto build_category_ranges( const std::vector<item_pricing> &list,
 auto register_trade_actions( input_context &ctxt, bool include_any_input ) -> void
 {
     ctxt.register_action( "SWITCH_LISTS" );
+    ctxt.register_action( "PAGE_UP" );
+    ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "UP" );
     ctxt.register_action( "DOWN" );
     ctxt.register_action( "LEFT" );
@@ -77,8 +137,6 @@ auto register_trade_actions( input_context &ctxt, bool include_any_input ) -> vo
     ctxt.register_action( "FILTER" );
     ctxt.register_action( "RESET_FILTER" );
     ctxt.register_action( "CATEGORY_SELECTION" );
-    ctxt.register_action( "PAGE_UP" );
-    ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "EXAMINE" );
     ctxt.register_action( "AUTOBALANCE" );
     ctxt.register_action( "TOGGLE_ITEM_INFO" );
@@ -131,14 +189,14 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
     auto ctxt = input_context( "NPC_TRADE" );
     register_trade_actions( ctxt, false );
     ctxt.register_action( "SWITCH_LISTS" );
+    ctxt.register_action( "PAGE_UP" );
+    ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "UP" );
     ctxt.register_action( "DOWN" );
     ctxt.register_action( "LEFT" );
     ctxt.register_action( "RIGHT" );
     ctxt.register_action( "FILTER" );
     ctxt.register_action( "RESET_FILTER" );
-    ctxt.register_action( "PAGE_UP" );
-    ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "EXAMINE" );
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
@@ -369,38 +427,39 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
         const auto separator_y = 3;
         const auto header_y = 4;
         const auto header_color = c_light_gray;
-        const auto pane_free_volume = they ? state.volume_left : player_free_volume;
-        const auto pane_free_weight = they ? state.weight_left : player_free_weight;
-        const auto pane_max_volume = they ? np.volume_capacity() : g->u.volume_capacity();
-        const auto pane_max_weight = they ? np.weight_capacity() : g->u.weight_capacity();
-        const auto pane_used_volume = pane_max_volume - pane_free_volume;
-        const auto pane_used_weight = pane_max_weight - pane_free_weight;
-        const auto weight_used_str = string_format( "%.2f",
-                                     convert_weight( pane_used_weight ) );
-        const auto weight_max_str = string_format( "%.2f",
-                                    convert_weight( pane_max_weight ) );
-        const auto weight_str = string_format( _( "/%s %s" ), weight_max_str, weight_units() );
-        const auto vol_used_str = string_format( "%.2f",
-                                  convert_volume( to_milliliter( pane_used_volume ) ) );
-        const auto vol_max_str = string_format( "%.2f",
-                                                convert_volume( to_milliliter( pane_max_volume ) ) );
-        const auto vol_str = string_format( _( "/%s %s" ), vol_max_str, volume_units_abbr() );
-        const auto weight_color = pane_used_weight > pane_max_weight ? c_light_red : c_light_green;
-        const auto vol_color = pane_used_volume > pane_max_volume ? c_light_red : c_light_green;
         mvwprintz( w_whose, point( 1, stats_y ), header_color, std::string( win_w, ' ' ) );
-        const auto stats_width = utf8_width( weight_used_str ) +
-                                 utf8_width( weight_str ) + 2 +
-                                 utf8_width( vol_used_str ) +
-                                 utf8_width( vol_str );
-        auto x = std::max( win_w - stats_width, 1 );
-        mvwprintz( w_whose, point( x, stats_y ), weight_color, weight_used_str );
-        x += utf8_width( weight_used_str );
-        mvwprintz( w_whose, point( x, stats_y ), header_color, weight_str );
-        x += utf8_width( weight_str ) + 2;
-        mvwprintz( w_whose, point( x, stats_y ), vol_color, vol_used_str );
-        x += utf8_width( vol_used_str );
-        mvwprintz( w_whose, point( x, stats_y ), header_color, vol_str );
-        x += utf8_width( vol_str ) + 2;
+        if( !they || !np.is_shopkeeper() ) {
+            const auto pane_free_volume = they ? state.volume_left : player_free_volume;
+            const auto pane_free_weight = they ? state.weight_left : player_free_weight;
+            const auto pane_max_volume = they ? np.volume_capacity() : g->u.volume_capacity();
+            const auto pane_max_weight = they ? np.weight_capacity() : g->u.weight_capacity();
+            const auto pane_used_volume = pane_max_volume - pane_free_volume;
+            const auto pane_used_weight = pane_max_weight - pane_free_weight;
+            const auto weight_used_str = string_format( "%.2f",
+                                         convert_weight( pane_used_weight ) );
+            const auto weight_max_str = string_format( "%.2f",
+                                        convert_weight( pane_max_weight ) );
+            const auto weight_str = string_format( _( "/%s %s" ), weight_max_str, weight_units() );
+            const auto vol_used_str = string_format( "%.2f",
+                                      convert_volume( to_milliliter( pane_used_volume ) ) );
+            const auto vol_max_str = string_format( "%.2f",
+                                                    convert_volume( to_milliliter( pane_max_volume ) ) );
+            const auto vol_str = string_format( _( "/%s %s" ), vol_max_str, volume_units_abbr() );
+            const auto weight_color = pane_used_weight > pane_max_weight ? c_light_red : c_light_green;
+            const auto vol_color = pane_used_volume > pane_max_volume ? c_light_red : c_light_green;
+            const auto stats_width = utf8_width( weight_used_str ) +
+                                     utf8_width( weight_str ) + 2 +
+                                     utf8_width( vol_used_str ) +
+                                     utf8_width( vol_str );
+            auto x = std::max( win_w - stats_width, 1 );
+            mvwprintz( w_whose, point( x, stats_y ), weight_color, weight_used_str );
+            x += utf8_width( weight_used_str );
+            mvwprintz( w_whose, point( x, stats_y ), header_color, weight_str );
+            x += utf8_width( weight_str ) + 2;
+            mvwprintz( w_whose, point( x, stats_y ), vol_color, vol_used_str );
+            x += utf8_width( vol_used_str );
+            mvwprintz( w_whose, point( x, stats_y ), header_color, vol_str );
+        }
         mvwhline( w_whose, point( 1, separator_y ), LINE_OXOX, win_w );
         mvwprintz( w_whose, point( name_x + 3, header_y ), header_color,
                    trim_by_length( _( "Name (charges)" ), name_w ) );
@@ -572,12 +631,9 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
             row++;
         }
         const auto paging_y = getmaxy( w_whose ) - 1;
-        const auto total_pages = entries_per_page > 0 ?
-                                 std::max( ( filtered.size() + entries_per_page - 1 ) /
-                                           entries_per_page, size_t{1} ) :
-                                 size_t{1};
-        const auto raw_page = entries_per_page > 0 ? ( offset / entries_per_page ) + 1 : size_t{1};
-        const auto current_page = std::min( raw_page, total_pages );
+        const auto page_starts = build_page_starts( list, filtered, entries_per_page );
+        const auto total_pages = std::max( page_starts.size(), size_t{1} );
+        const auto current_page = page_index_for_offset( page_starts, offset ) + 1;
         const auto page_label = string_format( _( "< Page %d/%d >" ),
                                                static_cast<int>( current_page ),
                                                static_cast<int>( total_pages ) );
@@ -670,7 +726,7 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
     auto exit = false;
     while( !exit ) {
         ui_manager::redraw();
-        const auto action = ctxt.handle_input();
+        auto action = ctxt.handle_input();
         if( action == "UP" ) {
             result = info_popup_result::move_up;
             exit = true;
@@ -766,40 +822,37 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
     category_mode = false;
     them_category_cursor = 0;
     you_category_cursor = 0;
+    them_filtered = build_filtered_indices( state.theirs, them_filter );
+    you_filtered = build_filtered_indices( state.yours, you_filter );
+    ui_manager::redraw();
 
-    const auto clamp_cursor_to_list = [&]( size_t list_size, size_t &cursor,
-    size_t &offset ) -> void {
+    struct clamp_cursor_options {
+        const std::vector<item_pricing> &list;
+        const std::vector<size_t> &filtered;
+        size_t &cursor;
+        size_t &offset;
+    };
+    const auto clamp_cursor_to_list = [&]( const clamp_cursor_options & opts ) -> void {
+        if( opts.filtered.empty() )
+        {
+            opts.cursor = 0;
+            opts.offset = 0;
+            return;
+        }
+        opts.cursor = std::min( opts.cursor, opts.filtered.size() - 1 );
         if( entries_per_page == 0 )
         {
-            cursor = list_size == 0 ? 0 : std::min( cursor, list_size - 1 );
-            offset = 0;
+            opts.offset = 0;
             return;
         }
-        if( list_size == 0 )
-        {
-            cursor = 0;
-            offset = 0;
-            return;
-        }
-        cursor = std::min( cursor, list_size - 1 );
-        if( list_size <= entries_per_page )
-        {
-            offset = 0;
-            return;
-        }
-        if( cursor < offset )
-        {
-            offset = cursor;
-        } else if( cursor >= offset + entries_per_page )
-        {
-            offset = cursor - entries_per_page + 1;
-        }
-        if( offset + entries_per_page > list_size )
-        {
-            offset = list_size - entries_per_page;
-        }
+        const auto page_starts = build_page_starts( opts.list, opts.filtered, entries_per_page );
+        const auto page_index = page_index_for_offset( page_starts, opts.cursor );
+        opts.offset = page_starts[page_index];
     };
 
+    const auto affects_npc_capacity = [&]( const item & it ) -> bool {
+        return it.where() == item_location_type::character && &it != &np.primary_weapon();
+    };
     const auto apply_trade_change = [&]( item_pricing & ip, int new_amount ) -> void {
         auto &owner_sells = focus_them ? ip.u_has : ip.npc_has;
         auto &owner_sells_charge = focus_them ? ip.u_charges : ip.npc_charges;
@@ -821,10 +874,32 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         {
             state.your_balance -= delta_price;
         }
-        if( ip.locs.front()->where() == item_location_type::character )
+        if( affects_npc_capacity( *ip.locs.front() ) )
         {
             state.volume_left += ip.vol * signed_amount;
             state.weight_left += ip.weight * signed_amount;
+        }
+    };
+    const auto sync_category_cursor = [&]( const std::vector<item_pricing> &list,
+                                           const std::vector<size_t> &filtered_indices,
+                                           const std::vector<category_range> &category_ranges,
+                                           size_t &category_cursor,
+    size_t cursor ) -> void {
+        if( category_ranges.empty() || filtered_indices.empty() )
+        {
+            return;
+        }
+        const auto cursor_category = list[filtered_indices[cursor]]
+        .locs.front()->get_category().get_id();
+        const auto match = std::ranges::find_if( category_ranges,
+                [&]( const category_range & entry )
+        {
+            return entry.id == cursor_category;
+        } );
+        if( match != category_ranges.end() )
+        {
+            category_cursor = static_cast<size_t>(
+                std::distance( category_ranges.begin(), match ) );
         }
     };
     const auto get_current_amount = [&]( const item_pricing & ip ) -> int {
@@ -1039,12 +1114,18 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         auto &category_cursor = focus_them ? them_category_cursor : you_category_cursor;
         const auto item_hotkeys = ctxt.get_available_single_char_hotkeys(
                                       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
-        ui_manager::redraw();
-        clamp_cursor_to_list( filtered.size(), cursor, offset );
+        clamp_cursor_to_list( clamp_cursor_options{
+            .list = target_list,
+            .filtered = filtered,
+            .cursor = cursor,
+            .offset = offset
+        } );
         const auto category_ranges = build_category_ranges( target_list, filtered );
+        const auto page_starts = build_page_starts( target_list, filtered, entries_per_page );
         if( category_cursor >= category_ranges.size() ) {
             category_cursor = category_ranges.empty() ? 0 : category_ranges.size() - 1;
         }
+        ui_manager::redraw();
 
         const auto action = ctxt.handle_input();
         if( action == "SWITCH_LISTS" ) {
@@ -1062,7 +1143,12 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                         new_category_cursor = new_category_ranges.size() - 1;
                     }
                     new_cursor = new_category_ranges[new_category_cursor].start;
-                    clamp_cursor_to_list( new_filtered.size(), new_cursor, new_offset );
+                    clamp_cursor_to_list( clamp_cursor_options{
+                        .list = new_target_list,
+                        .filtered = new_filtered,
+                        .cursor = new_cursor,
+                        .offset = new_offset
+                    } );
                 }
             }
         } else if( action == "UP" ) {
@@ -1147,18 +1233,15 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         } else if( action == "CATEGORY_SELECTION" ) {
             category_mode = !category_mode;
             if( category_mode && !category_ranges.empty() && !filtered.empty() ) {
-                const auto cursor_category = target_list[filtered[cursor]]
-                                             .locs.front()->get_category().get_id();
-                const auto match = std::ranges::find_if( category_ranges,
-                [&]( const category_range & entry ) {
-                    return entry.id == cursor_category;
-                } );
-                if( match != category_ranges.end() ) {
-                    category_cursor = static_cast<size_t>(
-                                          std::distance( category_ranges.begin(), match ) );
-                }
+                sync_category_cursor( target_list, filtered, category_ranges, category_cursor,
+                                      cursor );
                 cursor = category_ranges[category_cursor].start;
-                clamp_cursor_to_list( filtered.size(), cursor, offset );
+                clamp_cursor_to_list( clamp_cursor_options{
+                    .list = target_list,
+                    .filtered = filtered,
+                    .cursor = cursor,
+                    .offset = offset
+                } );
             }
         } else if( action == "FILTER" ) {
             auto &active_filter = focus_them ? them_filter : you_filter;
@@ -1197,7 +1280,12 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 auto &active_list = focus_them ? state.theirs : state.yours;
                 auto &active_filtered = focus_them ? them_filtered : you_filtered;
                 active_filtered = build_filtered_indices( active_list, active_filter );
-                clamp_cursor_to_list( active_filtered.size(), cursor, offset );
+                clamp_cursor_to_list( clamp_cursor_options{
+                    .list = active_list,
+                    .filtered = active_filtered,
+                    .cursor = cursor,
+                    .offset = offset
+                } );
             } else {
                 active_filter = original_filter;
             }
@@ -1207,22 +1295,39 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
             auto &active_list = focus_them ? state.theirs : state.yours;
             auto &active_filtered = focus_them ? them_filtered : you_filtered;
             active_filtered = build_filtered_indices( active_list, active_filter );
-            clamp_cursor_to_list( active_filtered.size(), cursor, offset );
+            clamp_cursor_to_list( clamp_cursor_options{
+                .list = active_list,
+                .filtered = active_filtered,
+                .cursor = cursor,
+                .offset = offset
+            } );
         } else if( action == "PAGE_UP" ) {
-            if( offset > entries_per_page ) {
-                offset -= entries_per_page;
+            const auto page_index = page_index_for_offset( page_starts, offset );
+            if( page_index > 0 ) {
+                offset = page_starts[page_index - 1];
             } else {
-                offset = 0;
-            }
-            if( !target_list.empty() ) {
-                cursor = offset;
-            }
-        } else if( action == "PAGE_DOWN" ) {
-            if( offset + entries_per_page < filtered.size() ) {
-                offset += entries_per_page;
+                offset = page_starts.front();
             }
             if( !filtered.empty() ) {
                 cursor = offset;
+                if( category_mode && !category_ranges.empty() ) {
+                    sync_category_cursor( target_list, filtered, category_ranges, category_cursor,
+                                          cursor );
+                }
+            }
+        } else if( action == "PAGE_DOWN" ) {
+            const auto page_index = page_index_for_offset( page_starts, offset );
+            if( ( page_index + 1 ) < page_starts.size() ) {
+                offset = page_starts[page_index + 1];
+            } else {
+                offset = page_starts.back();
+            }
+            if( !filtered.empty() ) {
+                cursor = offset;
+                if( category_mode && !category_ranges.empty() ) {
+                    sync_category_cursor( target_list, filtered, category_ranges, category_cursor,
+                                          cursor );
+                }
             }
         } else if( action == "EXAMINE" ) {
             if( category_mode ) {
@@ -1295,7 +1400,12 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
             ch_index += offset;
             if( ch_index < filtered.size() ) {
                 cursor = ch_index;
-                clamp_cursor_to_list( filtered.size(), cursor, offset );
+                clamp_cursor_to_list( clamp_cursor_options{
+                    .list = target_list,
+                    .filtered = filtered,
+                    .cursor = cursor,
+                    .offset = offset
+                } );
                 if( category_mode && !category_ranges.empty() ) {
                     const auto cursor_category = target_list[filtered[cursor]]
                                                  .locs.front()->get_category().get_id();
@@ -1360,7 +1470,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 if( !np.will_exchange_items_freely() ) {
                     state.your_balance -= delta_price;
                 }
-                if( ip.locs.front()->where() == item_location_type::character ) {
+                if( affects_npc_capacity( *ip.locs.front() ) ) {
                     state.volume_left += ip.vol * change_amount;
                     state.weight_left += ip.weight * change_amount;
                 }

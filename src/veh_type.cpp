@@ -117,7 +117,8 @@ static const std::unordered_map<std::string, vpart_bitflags> vpart_bitflag_map =
     { "NOCOLLIDEBELOW", VPFLAG_NOCOLLIDEBELOW },
     { "NOSMASH", VPFLAG_NOSMASH },
     { "NOFIELDS", VPFLAG_NOFIELDS },
-    { "DROPPER", VPFLAG_DROPPER }
+    { "DROPPER", VPFLAG_DROPPER },
+    { "LADDER", VPFLAG_LADDER }
 };
 
 static const std::vector<std::pair<std::string, int>> standard_terrain_mod = {{

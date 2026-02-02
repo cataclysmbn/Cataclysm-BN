@@ -2260,6 +2260,11 @@ void options_manager::add_options_debug()
         add( "SLEEP_SKIP_MON", page_id, translate_marker( "Sleep Boost: Skip Monster Movement" ),
              translate_marker( "Monsters do not move while sleeping" ),
              false );
+#if defined(__ANDROID__)
+        add( "LOAD_FROM_EXTERNAL", page_id, translate_marker( "External Storage Saving" ),
+             translate_marker( "Save in data/catalcysm... instead of Documents/..." ),
+             false );
+#endif
     } );
 
     add_empty_line();
@@ -2517,6 +2522,12 @@ void options_manager::add_options_world_default()
              true );
     }
                     );
+
+    add_empty_line();
+
+    add( "canmutprofmut", world_default, "Starting Trait Cancelling",
+         "Allow starting traits to be cancelled and effected by purifiers?",
+         false );
 
     add_empty_line();
 

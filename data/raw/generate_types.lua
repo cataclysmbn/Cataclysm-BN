@@ -196,6 +196,35 @@ doc_gen_func.impl = function()
 ---@field add_hook fun(hook_name: string, entry: HookEntry) @Registers a hook.
 game = {}
 
+---@class OnPlayerTryMoveParams
+---@field player Avatar
+---@field from Tripoint
+---@field to Tripoint
+---@field movement_mode CharacterMoveMode
+---@field via_ramp boolean
+---@field is_mounted boolean
+---@field mount Creature?
+on_player_try_move = {}
+
+---@class OnNPCTryMoveParams
+---@field npc NPC
+---@field from Tripoint
+---@field to Tripoint
+---@field movement_mode CharacterMoveMode
+---@field via_ramp boolean
+---@field is_mounted boolean
+---@field mount Creature?
+on_npc_try_move = {}
+
+---@class OnMonsterTryMoveParams
+---@field monster Monster
+---@field from Tripoint
+---@field to Tripoint
+---@field movement_mode CharacterMoveMode
+---@field via_ramp boolean
+---@field force boolean
+on_monster_try_move = {}
+
 ---@class OnCharacterResetStatsParams
 ---@field character Character
 on_character_reset_stats = {}
