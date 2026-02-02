@@ -84,6 +84,10 @@ void scenario::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "traits", _allowed_traits, auto_flags_reader<trait_id> {} );
     optional( jo, was_loaded, "forced_traits", _forced_traits, auto_flags_reader<trait_id> {} );
     optional( jo, was_loaded, "forbidden_traits", _forbidden_traits, auto_flags_reader<trait_id> {} );
+    optional( jo, was_loaded, "bionics", _allowed_bionics, auto_flags_reader<bionic_id> {} );
+    optional( jo, was_loaded, "forced_bionics", _forced_bionics, auto_flags_reader<bionic_id> {} );
+    optional( jo, was_loaded, "forbidden_bionics", _forbidden_bionics, auto_flags_reader<bionic_id> {} );
+    optional( jo, was_loaded, "forbids_bionics", _forbids_bionics );
     optional( jo, was_loaded, "allowed_locs", _allowed_locs, auto_flags_reader<start_location_id> {} );
     if( _allowed_locs.empty() ) {
         jo.throw_error( "at least one starting location (member \"allowed_locs\") must be defined" );
@@ -153,6 +157,15 @@ static void check_traits( const std::set<trait_id> &traits, const string_id<scen
     }
 }
 
+static void check_bionics( const std::set<bionic_id> &bionics, const string_id<scenario> &ident )
+{
+    for( auto &t : bionics ) {
+        if( !t.is_valid() ) {
+            debugmsg( "bionic %s for scenario %s does not exist", t.c_str(), ident.c_str() );
+        }
+    }
+}
+
 void scenario::check_definition() const
 {
     for( auto &p : professions ) {
@@ -183,8 +196,12 @@ void scenario::check_definition() const
     check_traits( _allowed_traits, id );
     check_traits( _forced_traits, id );
     check_traits( _forbidden_traits, id );
+    check_bionics( _allowed_bionics, id );
+    check_bionics( _forced_bionics, id );
+    check_bionics( _forbidden_bionics, id );
     MapExtras::get_function( _map_extra ); // triggers a debug message upon invalid input
 
+    check_bionics( _forbidden_bionics, id );
     for( auto &m : _missions ) {
         if( !m.is_valid() ) {
             debugmsg( "starting mission %s for scenario %s does not exist", m.c_str(), id.c_str() );
@@ -425,6 +442,12 @@ bool scenario::traitquery( const trait_id &trait ) const
            ( !is_forbidden_trait( trait ) && trait->startingtrait );
 }
 
+bool scenario::bionicquery( const bionic_id &bionic ) const
+{
+    return _allowed_bionics.contains( bionic ) || is_locked_bionic( bionic ) ||
+           ( !is_forbidden_bionic( bionic ) && bionic->starting_bionic );
+}
+
 std::set<trait_id> scenario::get_locked_traits() const
 {
     return _forced_traits;
@@ -435,9 +458,24 @@ bool scenario::is_locked_trait( const trait_id &trait ) const
     return _forced_traits.contains( trait );
 }
 
+bool scenario::is_locked_bionic( const bionic_id &bionic ) const
+{
+    return _forced_bionics.contains( bionic );
+}
+
 bool scenario::is_forbidden_trait( const trait_id &trait ) const
 {
     return _forbidden_traits.contains( trait );
+}
+
+bool scenario::is_forbidden_bionic( const bionic_id &bionic ) const
+{
+    return _forbidden_bionics.contains( bionic );
+}
+
+bool scenario::forbids_bionics() const
+{
+    return _forbids_bionics;
 }
 
 bool scenario::has_flag( const std::string &flag ) const

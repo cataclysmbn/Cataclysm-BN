@@ -161,7 +161,8 @@
       "removal": { "skills": [ [ "mechanics", 3 ] ], "using": [ [ "vehicle_nail_removal", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "10 m", "using": [ [ "sewing_standard", 1 ], [ "fabric_standard", 1 ] ] }
     },
-    "flags": [ "WING", "SHOCK_RESISTANT" ],
+    "flags": [ "WING", "SHOCK_RESISTANT", "FOLDABLE" ],
+    "folded_volume": "15 L",
     "damage_reduction": { "all": 28 }
   },
   {

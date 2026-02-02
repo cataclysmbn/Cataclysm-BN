@@ -43,8 +43,10 @@ MAKE_CLASS_NULL_ID( VehicleGroup, "null" )
 MAKE_CLASS_NULL_ID( vpart_info, "null" )
 MAKE_CLASS_NULL_ID( zone_type, "null" )
 MAKE_CLASS_NULL_ID( profession, "" )
-
-
+MAKE_CLASS_NULL_ID( vitamin, "" )
+MAKE_CLASS_NULL_ID( gun_mode, "" )
+MAKE_CLASS_NULL_ID( fault, "null" )
+MAKE_CLASS_NULL_ID( weapon_category, "" )
 
 #define MAKE_STRUCT_NULL_ID( type, ... ) \
     struct type; \
@@ -76,3 +78,5 @@ MAKE_STRUCT_NULL_ID( ter_t, "t_null" )
 MAKE_STRUCT_NULL_ID( trap, "tr_null" )
 MAKE_STRUCT_NULL_ID( vehicle_prototype, "null" )
 MAKE_STRUCT_NULL_ID( weather_type, "null" )
+MAKE_STRUCT_NULL_ID( MOD_INFORMATION, "" )
+MAKE_STRUCT_NULL_ID( quality, "" )

@@ -233,6 +233,13 @@
   },
   {
     "type": "start_location",
+    "id": "sloc_swamp",
+    "name": "Swamp",
+    "terrain": [ "forest_water" ],
+    "flags": [ "ALLOW_OUTSIDE" ]
+  },
+  {
+    "type": "start_location",
     "id": "sloc_deserted_island",
     "name": "Deserted Island",
     "terrain": [ "island_sand", "island_forest", "island_forest_thick", "island_forest_water", "island_field" ],

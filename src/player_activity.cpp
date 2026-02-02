@@ -19,6 +19,7 @@
 #include "construction_partial.h"
 #include "crafting.h"
 #include "distraction_manager.h"
+#include "flag.h"
 #include "game.h"
 #include "item.h"
 #include "itype.h"
@@ -224,7 +225,7 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     const float total_mult = light_mult * bench_mult * morale_mult * assist_mult * speed_mult *
                              mutation_mult * game_opt_mult;
 
-    const double remaining_percentage = 1.0 - craft->item_counter / 10'000'000.0;
+    const double remaining_percentage = 1.0 - craft->get_counter() / 10'000'000.0;
     int remaining_turns = remaining_percentage * base_total_moves / 100 / std::max( 0.01f, total_mult );
     std::string time_desc = string_format( _( "Time left: %s" ),
                                            to_string( time_duration::from_turns( remaining_turns ) ) );
@@ -753,4 +754,11 @@ void activity_ptr::serialize( JsonOut &json ) const
 void activity_ptr::deserialize( JsonIn &jsin )
 {
     act->deserialize( jsin );
+}
+
+auto player_activity::add_tool( item *it ) -> void
+{
+    if( it && !it->has_flag( flag_PSEUDO ) ) {
+        tools_.emplace_back( it );
+    }
 }

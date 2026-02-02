@@ -133,10 +133,12 @@
     "energy_source": "MANA",
     "difficulty": 4,
     "base_casting_time": 200,
-    "base_energy_cost": 300,
+    "base_energy_cost": 750,
+    "final_energy_cost": 600,
+    "energy_increment": -10,
     "max_level": 15,
-    "min_duration": 48000,
-    "max_duration": 138000,
+    "min_duration": 96000,
+    "max_duration": 186000,
     "duration_increment": 6000
   },
   {

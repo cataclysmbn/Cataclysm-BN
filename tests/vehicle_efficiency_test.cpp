@@ -449,8 +449,8 @@ TEST_CASE( "vehicle_efficiency", "[vehicle] [engine]" )
     test_vehicle( "fire_truck", 6319523, 410700, 83850, 19080, 4063 );
     test_vehicle( "truck_swat", 5906166, 674453, 134446, 29610, 7604 );
     test_vehicle( "tractor_plow", 725658, 681200, 681200, 132400, 132400 );
-    test_vehicle( "apc", 5772694, 2091626, 2091626, 110600, 110657 );
-    test_vehicle( "humvee", 5491216, 751665, 557240, 25620, 18343 );
+    test_vehicle( "apc", 5797694, 2091626, 2091626, 110600, 110657 );
+    test_vehicle( "humvee", 5516216, 768000, 565000, 25620, 17450 );
     test_vehicle( "road_roller", 8831804, 602500, 147100, 22760, 6925 );
     test_vehicle( "golf_cart", 319630, 49585, 47185, 22700, 12745 );
 
@@ -469,8 +469,8 @@ TEST_CASE( "vehicle_efficiency", "[vehicle] [engine]" )
     test_vehicle( "fire_truck", 6319523, 58480, 58640, 18600, 4471, 0, 0, true );
     test_vehicle( "truck_swat", 5906166, 129300, 130100, 29350, 7668, 0, 0, true );
     test_vehicle( "tractor_plow", 725658, 72240, 72240, 53610, 53610, 0, 0, true );
-    test_vehicle( "apc", 5805459, 418700, 419400, 107300, 74330, 0, 0, true );
-    test_vehicle( "humvee", 5506381, 89940, 89940, 25780, 9086, 0, 0, true );
+    test_vehicle( "apc", 5830459, 418700, 419400, 107300, 74330, 0, 0, true );
+    test_vehicle( "humvee", 5531381, 89940, 89940, 25780, 9086, 0, 0, true );
     test_vehicle( "road_roller", 8831804, 97490, 97690, 22880, 6606, 0, 0, true );
     test_vehicle( "golf_cart", 319630, 37140, 11510, 14110, 4450, 0, 0, true );
 }

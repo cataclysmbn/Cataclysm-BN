@@ -10,6 +10,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <numeric>
 
 #include "action.h"
 #include "activity_actor_definitions.h"
@@ -81,6 +82,7 @@ static const itype_id itype_underbrush( "underbrush" );
 static const skill_id skill_swimming( "swimming" );
 
 static const trait_id trait_BRAWLER( "BRAWLER" );
+static const trait_id trait_GUNSHY( "GUNSHY" );
 static const trait_id trait_BURROW( "BURROW" );
 static const trait_id trait_GRAZER( "GRAZER" );
 static const trait_id trait_RUMINANT( "RUMINANT" );
@@ -443,9 +445,13 @@ bool avatar_action::move( avatar &you, map &m, const tripoint &d )
         return true;
     }
 
-    // Ladder
+    // Ladder - only try to climb up if:
+    // 1. Standing on a ladder
+    // 2. The destination at current z-level is impassable (blocked by something)
+    // 3. There's a valid destination above
     if( !is_riding
         && m.has_flag( flag_LADDER, you.pos() )
+        && !m.passable( dest_loc )
         && g->walk_move( dest_loc + tripoint_above ) ) {
         return true;
     }
@@ -684,6 +690,9 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
     if( you.has_trait( trait_BRAWLER ) ) {
         add_msg( m_good, _( "You refuse to use this ranged weapon." ) );
         return false;
+    } else if( you.has_trait( trait_GUNSHY ) && weapon.is_firearm() ) {
+        add_msg( m_good, _( "You refuse to use this gun." ) );
+        return false;
     }
 
     if( you.has_effect( effect_relax_gas ) ) {
@@ -713,10 +722,13 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
     return false;
 }
 
-bool avatar_action::will_fire_turret( avatar &you )
+bool avatar_action::will_fire_turret( avatar &you, const turret_data &turret )
 {
     if( you.has_trait( trait_BRAWLER ) ) {
         add_msg( m_bad, _( "You refuse to use this ranged weapon" ) );
+        return false;
+    } else if( you.has_trait( trait_GUNSHY ) && turret.base().is_firearm() ) {
+        add_msg( m_bad, _( "You refuse to use this gun turret" ) );
         return false;
     }
 
@@ -740,7 +752,7 @@ bool avatar_action::can_fire_turret( avatar &you, const map &m, const turret_dat
         return false;
     }
 
-    if( !will_fire_turret( you ) ) {
+    if( !will_fire_turret( you, turret ) ) {
         return false;
     }
 
@@ -1020,7 +1032,9 @@ void avatar_action::use_item( avatar &you, item *loc )
 
         if( !loc->has_flag( flag_ALLOWS_REMOTE_USE ) ) {
             const int obtain_cost = loc->obtain_cost( you );
-            loc->obtain( you );
+            if( !loc->has_flag( flag_TEMPORARY_ITEM ) ) {
+                loc->obtain( you );
+            }
 
             // TODO: the following comment is inaccurate and this mechanic needs to be rexamined
             // This method only handles items in the inventory, so refund the obtain cost.

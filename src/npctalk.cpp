@@ -207,6 +207,7 @@ enum npc_chat_menu {
     NPC_CHAT_GUARD,
     NPC_CHAT_FOLLOW,
     NPC_CHAT_MOVE_TO_POS,
+    NPC_CHAT_CONTROL,
     NPC_CHAT_AWAKE,
     NPC_CHAT_MOUNT,
     NPC_CHAT_DISMOUNT,
@@ -514,6 +515,9 @@ void game::chat()
                       );
     }
     if( !followers.empty() ) {
+        nmenu.addentry( NPC_CHAT_CONTROL, true, 'C',
+                        follower_count == 1 ? string_format( _( "Control %s" ),
+                                followers.front()->get_name() ) : _( "Control someone…" ) );
         nmenu.addentry( NPC_CHAT_GUARD, true, 'g', follower_count == 1 ?
                         string_format( _( "Tell %s to guard" ), followers.front()->name ) :
                         _( "Tell someone to guard…" )
@@ -530,7 +534,6 @@ void game::chat()
                         _( "Tell everyone on your team to relax (Clear Overrides)" ) );
         nmenu.addentry( NPC_CHAT_ORDERS, true, 'o', _( "Tell everyone on your team to temporarily…" ) );
     }
-    std::string message;
     std::string yell_msg;
     std::string monologue_msg;
     bool is_order = true;
@@ -725,6 +728,12 @@ void game::chat()
                 yell_msg = string_format( _( "Move there, %s!" ), followers[npcselect]->get_name() );
             }
             break;
+        }
+        case NPC_CHAT_CONTROL: {
+            const int npcselect = npc_select_menu( followers, _( "Who do you want to control?" ), false );
+            if( npcselect < 0 ) { return; }
+            get_avatar().control_npc( *followers[npcselect] );
+            return;
         }
         case NPC_CHAT_FOLLOW: {
             const int npcselect = npc_select_menu( guards, _( "Who should follow you?" ) );
@@ -1831,8 +1840,31 @@ void parse_tags( std::string &phrase, const Character &u, const Character &me,
             return;
         }
 
+        if( tag.size() > 12 && tag.substr( 0, 11 ) == "<utalk_var_" ) {
+            std::string u_var = tag.substr( 2, tag.size() - 3 );
+            u_var = "npc" + u_var;
+            tag = u_var;
+            u_var = u.get_value( u_var );
+            if( u_var.empty() ) {
+                debugmsg( "Player talk variable not found.  '%s'  (%d - %d)", tag.c_str(), fa, fb );
+                phrase.replace( fa, fb - fa + 1, "????" );
+            } else {
+                phrase.replace( fa, l, u_var );
+            }
+        } else if( tag.size() > 14 && tag.substr( 0, 13 ) == "<npctalk_var_" ) {
+            std::string npc_var = tag.substr( 1, tag.size() - 2 );
+            tag = npc_var;
+            npc_var = me.get_value( npc_var );
+            if( npc_var.empty() ) {
+                debugmsg( "NPC talk variable not found.  '%s'  (%d - %d)", tag.c_str(), fa, fb );
+                phrase.replace( fa, fb - fa + 1, "????" );
+            } else {
+                phrase.replace( fa, l, npc_var );
+            }
+        }
+
         // Special, dynamic tags go here
-        if( tag == "<yrwp>" ) {
+        else if( tag == "<yrwp>" ) {
             phrase.replace( fa, l, remove_color_tags( u.primary_weapon().tname() ) );
         } else if( tag == "<mywp>" ) {
             if( !me.is_armed() ) {
@@ -1998,10 +2030,12 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
         // No name prepended!
         challenge = challenge.substr( 1 );
     } else if( challenge[0] == '*' ) {
-        challenge = string_format( pgettext( "npc does something", "%s %s" ), beta->name,
+        challenge = string_format( pgettext( "npc does something", "%s %s" ), colorize( beta->name,
+                                   c_light_green ),
                                    challenge.substr( 1 ) );
     } else {
-        challenge = string_format( pgettext( "npc says something", "%s: %s" ), beta->name,
+        challenge = string_format( pgettext( "npc says something", "%s: %s" ), colorize( beta->name,
+                                   c_light_green ),
                                    challenge );
     }
 
@@ -2013,6 +2047,7 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     for( size_t i = 0; i < responses.size(); i++ ) {
         response_lines.push_back( responses[i].create_option_line( *this, 'a' + i ) );
     }
+    auto selected_response = size_t{ 0 };
 
 #if defined(__ANDROID__)
     input_context ctxt( "DIALOGUE_CHOOSE_RESPONSE" );
@@ -2033,33 +2068,50 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         d_win.print_header( npc_name );
-        d_win.display_responses( response_lines );
+        d_win.display_responses( response_lines, selected_response );
     } );
 
     int ch;
     bool okay;
+    const auto response_count = responses.size();
     do {
         d_win.refresh_response_display();
         do {
             ui_manager::redraw();
             ch = inp_mngr.get_input_event().get_first_input();
-            d_win.handle_scrolling( ch );
+            if( ch == KEY_UP ) {
+                if( selected_response > 0 ) {
+                    selected_response -= 1;
+                } else {
+                    selected_response = response_count - 1;
+                }
+                continue;
+            }
+            if( ch == KEY_DOWN ) {
+                if( selected_response + 1 < response_count ) {
+                    selected_response += 1;
+                } else {
+                    selected_response = 0;
+                }
+                continue;
+            }
+            if( ch == KEY_PPAGE || ch == KEY_NPAGE ) {
+                const auto scroll_entry_index = d_win.handle_scrolling( ch );
+                if( scroll_entry_index ) {
+                    selected_response = *scroll_entry_index;
+                }
+                continue;
+            }
             auto st = special_talk( ch );
             if( st.id != "TALK_NONE" ) {
                 return st;
             }
-            switch( ch ) {
-                case KEY_DOWN:
-                case KEY_NPAGE:
-                case KEY_UP:
-                case KEY_PPAGE:
-                    ch = -1;
-                    break;
-                default:
-                    ch -= 'a';
-                    break;
+            if( ch == KEY_ENTER || ch == '\n' || ch == '\r' ) {
+                ch = static_cast<int>( selected_response );
+            } else {
+                ch -= 'a';
             }
-        } while( ( ch < 0 || ch >= static_cast<int>( responses.size() ) ) );
+        } while( ( ch < 0 || ch >= static_cast<int>( response_count ) ) );
         okay = true;
         std::set<dialogue_consequence> consequences = responses[ch].get_consequences( *this );
         if( consequences.contains( dialogue_consequence::hostile ) ) {
@@ -2070,7 +2122,8 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     } while( !okay );
 
     talk_response chosen = responses[ch];
-    std::string response_printed = string_format( pgettext( "you say something", "You: %s" ),
+    std::string response_printed = string_format( pgettext( "you say something", "%s: %s" ),
+                                   colorize( _( "You" ), c_green ),
                                    response_lines[ch].text );
     d_win.add_to_history( response_printed );
 
@@ -2968,6 +3021,7 @@ void talk_effect_t::parse_string_effect( const std::string &effect_id, const Jso
             WRAP( buy_chicken ),
             WRAP( buy_horse ),
             WRAP( wake_up ),
+            WRAP( control_npc ),
             WRAP( reveal_stats ),
             WRAP( end_conversation ),
             WRAP( insult_combat ),

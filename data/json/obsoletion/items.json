@@ -114,27 +114,6 @@
     "flags": [ "INSTALL_DIFFICULT", "IRREMOVABLE" ]
   },
   {
-    "id": "autofire",
-    "type": "GUNMOD",
-    "name": { "str": "auto-fire mechanism" },
-    "description": "A simple mechanism that converts a pistol to a selective fire weapon with a burst size of three rounds.  However it reduces accuracy and increases noise.",
-    "weight": "113 g",
-    "volume": "250 ml",
-    "integral_volume": "0 ml",
-    "price": "650 USD",
-    "material": [ "steel", "plastic" ],
-    "symbol": ":",
-    "color": "red",
-    "location": "mechanism",
-    "mod_target_category": [ [ "PISTOLS" ] ],
-    "acceptable_ammo": [ "22", "9mm", "38", "40" ],
-    "dispersion_modifier": 60,
-    "loudness_modifier": 2,
-    "mode_modifier": [ [ "AUTO", "auto", 3 ] ],
-    "min_skills": [ [ "weapon", 4 ], [ "mechanics", 3 ] ],
-    "flags": [ "INSTALL_DIFFICULT", "IRREMOVABLE" ]
-  },
-  {
     "id": "retool_22",
     "type": "GUNMOD",
     "name": { "str": ".22 caliber conversion kit" },
@@ -213,54 +192,6 @@
     "ammo_modifier": "9mm",
     "min_skills": [ [ "weapon", 3 ], [ "mechanics", 2 ] ],
     "flags": [ "INSTALL_DIFFICULT", "IRREMOVABLE" ]
-  },
-  {
-    "id": "beltfeed",
-    "type": "GUNMOD",
-    "name": { "str": "belt feed adapter" },
-    "description": "A kit providing the necessary parts for permanently converting a firearm from magazine to belt-feed.  Guaranteed to void your warranty.",
-    "weight": "950 g",
-    "volume": "750 ml",
-    "integral_volume": "250 ml",
-    "price": "320 USD",
-    "material": "steel",
-    "symbol": ":",
-    "color": "green",
-    "location": "magazine",
-    "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
-    "acceptable_ammo": [ "223", "308", "50" ],
-    "magazine_adaptor": [ [ "223", [ "belt223" ] ], [ "308", [ "belt308" ] ], [ "50", [ "belt50" ] ] ],
-    "min_skills": [ [ "weapon", 4 ], [ "mechanics", 3 ] ],
-    "flags": [ "INSTALL_DIFFICULT", "IRREMOVABLE" ]
-  },
-  {
-    "id": "tuned_mechanism",
-    "type": "GUNMOD",
-    "name": { "str": "tuned mechanism" },
-    "description": "A set of finely tuned internal components which increase the precision and reliably of a firearm.",
-    "weight": "120 g",
-    "volume": "250 ml",
-    "integral_volume": "0 ml",
-    "price": "25 USD",
-    "material": [ "steel", "superalloy" ],
-    "symbol": ":",
-    "color": "dark_gray",
-    "location": "mechanism",
-    "mod_target_category": [
-      [ "PISTOLS" ],
-      [ "SUBMACHINE_GUNS" ],
-      [ "RIFLES" ],
-      [ "MACHINE_GUNS" ],
-      [ "GATLING_GUNS" ],
-      [ "SHOTGUNS" ],
-      [ "GRENADE_LAUNCHERS" ],
-      [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
-    ],
-    "dispersion_modifier": -15,
-    "loudness_modifier": -1,
-    "min_skills": [ [ "weapon", 4 ], [ "mechanics", 3 ], [ "gun", 2 ] ],
-    "flags": [ "NEVER_JAMS", "INSTALL_DIFFICULT", "IRREMOVABLE" ]
   },
   {
     "type": "effect_type",
@@ -734,13 +665,6 @@
     "copy-from": "schematics_generic"
   },
   {
-    "id": "schematics_tankbot",
-    "type": "BOOK",
-    "name": { "str_sp": "tank drone schematics" },
-    "description": "Bearing the logo of Northrop, those are assembly plans, design specs, and technical drawings for the tank drone.  Most of this is useless to you, but you could use the assembly plans to re-assemble the robot from salvaged parts.",
-    "copy-from": "schematics_generic"
-  },
-  {
     "id": "schematics_tripod",
     "type": "BOOK",
     "name": { "str_sp": "tripod schematics" },
@@ -768,32 +692,6 @@
       "//": "Milspec, but was deployed in active service implying a reliable IFF",
       "difficulty": 9,
       "moves": 250,
-      "skills": [ "electronics", "computer" ]
-    }
-  },
-  {
-    "id": "bot_tankbot",
-    "looks_like": "broken_tankbot",
-    "type": "TOOL",
-    "name": { "str": "inactive tank drone" },
-    "description": "This is an inactive Beagle Mini-Tank UGV.  Using this item involves placing it on the ground, loading the unit with the factory-loaded 5.56 rounds and 40mm cartridge grenades in your inventory (if you wish to divide your ammunition, set aside whatever ammunition you do NOT want to give the robot) and turning it on.  If reprogrammed and rewired successfully the tank drone will then identify you as a friendly, roam around or follow you, and attack all enemies with a built-in firearm and grenade launcher.",
-    "weight": "200000 g",
-    "//": "cheating a bit with the volume due to lack of proper vehicle storage options",
-    "volume": "250 L",
-    "price": "1000 kUSD",
-    "to_hit": -3,
-    "bashing": 8,
-    "material": [ "steel" ],
-    "symbol": ";",
-    "color": "light_green",
-    "use_action": {
-      "type": "place_monster",
-      "monster_id": "mon_tankbot",
-      "friendly_msg": "The tank drone rolls out and begins acquiring targets.",
-      "hostile_msg": "The tank drone swivels its turret and aims directly at you. Don your brown pants!",
-      "//": "Milspec, clearly designed with little concern for collateral damage. What did you expect of a robo-tank?",
-      "difficulty": 10,
-      "moves": 500,
       "skills": [ "electronics", "computer" ]
     }
   },
@@ -868,23 +766,6 @@
   },
   {
     "type": "GENERIC",
-    "id": "broken_tankbot",
-    "symbol": ",",
-    "color": "green",
-    "name": { "str": "broken tank drone" },
-    "category": "other",
-    "description": "A broken tank drone.  Still looks intimidating despite being permanently inoperative, possibly due to the sheer size and mass.  Could be gutted for parts.",
-    "price": "10 USD",
-    "material": [ "steel", "plastic" ],
-    "weight": "1223850 g",
-    "volume": "875 L",
-    "bashing": 20,
-    "cutting": 15,
-    "to_hit": -3,
-    "flags": [ "TRADER_AVOID", "NO_REPAIR" ]
-  },
-  {
-    "type": "GENERIC",
     "id": "tripod_chassis",
     "name": { "str_sp": "tripod chassis" },
     "description": "What's left when you remove all moving parts and electronics.  It's the skeleton and armor of the tripod.",
@@ -906,19 +787,6 @@
     "weight": "60000 g",
     "volume": "80000 ml",
     "price": "3 kUSD",
-    "material": [ "steel" ],
-    "category": "spare_parts"
-  },
-  {
-    "type": "GENERIC",
-    "id": "tankbot_chassis",
-    "name": { "str_sp": "Beagle chassis" },
-    "description": "What's left when you remove all moving parts and electronics.  It's the skeleton and armor of the Beagle tank.",
-    "symbol": "c",
-    "color": "light_gray",
-    "weight": "150000 g",
-    "volume": "575000 ml",
-    "price": "10 kUSD",
     "material": [ "steel" ],
     "category": "spare_parts"
   },
@@ -4284,5 +4152,37 @@
       "shrapnel": { "casing_mass": 200, "fragment_mass": 1, "recovery": 0 }
     },
     "explode_in_fire": true
+  },
+  {
+    "id": "toolset_extended",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "extended toolset" },
+    "description": "Your toolset, protruding from your hands.  It can slice, dice, and make everything nice.",
+    "symbol": "#",
+    "color": "white",
+    "weight": "226 g",
+    "bashing": 3,
+    "cutting": 5,
+    "flags": [ "NO_UNWIELD", "UNBREAKABLE_MELEE", "TRADER_AVOID", "USES_BIONIC_POWER", "BIONIC_TOOLS" ],
+    "max_charges": 1000,
+    "charges_per_use": 1,
+    "qualities": [
+      [ "HAMMER", 3 ],
+      [ "HAMMER_FINE", 1 ],
+      [ "SAW_W", 1 ],
+      [ "SAW_M", 2 ],
+      [ "SAW_M_FINE", 1 ],
+      [ "WRENCH", 2 ],
+      [ "WRENCH_FINE", 1 ],
+      [ "SCREW", 1 ],
+      [ "SCREW_FINE", 1 ],
+      [ "CUT", 2 ],
+      [ "PRY", 1 ],
+      [ "DRILL", 3 ],
+      [ "BUTCHER", -38 ],
+      [ "FILE", 2 ],
+      [ "REAM", 1 ]
+    ]
   }
 ]

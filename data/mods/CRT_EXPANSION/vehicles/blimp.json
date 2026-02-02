@@ -1,0 +1,43 @@
+[
+  {
+    "id": "crt_medblimp",
+    "type": "vehicle",
+    "name": "CRIT Evac Blimp",
+    "blueprint": [
+      "  O<----^^--->P  ",
+      " OO<BFCsFFsCB>OO ",
+      "OOO<AaFFLLFFS>OOO",
+      " OO<BFCsFFsCB>OO ",
+      "  O<____vv___>P  "
+    ],
+    "blueprint_origin": { "x": 11, "y": 2 },
+    "palette": {
+      "O": [ "crt_airship_balloon_external" ],
+      "_": [ "frame_carbon_vertical", "board_vertical_right", "crt_airship_balloon" ],
+      "-": [ "frame_carbon_vertical", "board_vertical_left", "crt_airship_balloon" ],
+      "F": [ "frame_carbon_cross", "aisle_vertical", "roof", "crt_airship_balloon" ],
+      "B": [ "frame_carbon_cross", "aisle_vertical", "roof", "large_storage_battery", "crt_airship_balloon" ],
+      "C": [ "frame_carbon_cross", "cargo_space_carbon", "roof", "crt_airship_balloon" ],
+      "L": [ "frame_carbon_cross", "aisle_vertical", "ladder_3", "roof", "crt_airship_balloon" ],
+      "^": [ "frame_carbon_vertical", "door_carbon", "crt_airship_balloon" ],
+      "v": [ "frame_carbon_vertical", "door_carbon", "crt_airship_balloon" ],
+      "<": [ "frame_carbon_horizontal", "windshield_horizontal_rear", "crt_airship_balloon" ],
+      ">": [ "frame_carbon_horizontal", "windshield_horizontal_front", "crt_airship_balloon" ],
+      "s": [ "frame_carbon_cross", "seat", "seatbelt", "roof", "crt_airship_balloon" ],
+      "S": [
+        "frame_carbon_cross",
+        "seat",
+        "seatbelt",
+        "controls",
+        "dashboard",
+        "black_box",
+        "roof",
+        "engine_electric_large",
+        "crt_airship_balloon"
+      ],
+      "A": [ "frame_carbon_cross", "autodoc", "roof", "crt_airship_balloon" ],
+      "a": [ "frame_carbon_cross", "autodoc_couch", "roof", "crt_airship_balloon" ],
+      "P": [ "propeller_metal" ]
+    }
+  }
+]

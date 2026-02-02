@@ -1593,16 +1593,14 @@ template void castLightAllWithLookup<float, four_quadrants, sight_calc, sight_ch
  */
 void map::build_seen_cache( const tripoint &origin, const int target_z )
 {
-    auto &map_cache = get_cache( target_z );
-    float ( &transparency_cache )[MAPSIZE_X][MAPSIZE_Y] = map_cache.transparency_cache;
-    float ( &seen_cache )[MAPSIZE_X][MAPSIZE_Y] = map_cache.seen_cache;
-    float ( &camera_cache )[MAPSIZE_X][MAPSIZE_Y] = map_cache.camera_cache;
-    diagonal_blocks( &blocked_cache )[MAPSIZE_X][MAPSIZE_Y] = map_cache.vehicle_obscured_cache;
+    auto &target_cache = get_cache( target_z );
+    float ( &target_seen_cache )[MAPSIZE_X][MAPSIZE_Y] = target_cache.seen_cache;
+    float ( &target_camera_cache )[MAPSIZE_X][MAPSIZE_Y] = target_cache.camera_cache;
 
     constexpr float light_transparency_solid = LIGHT_TRANSPARENCY_SOLID;
     constexpr int map_dimensions = MAPSIZE_X * MAPSIZE_Y;
-    std::uninitialized_fill_n(
-        &camera_cache[0][0], map_dimensions, light_transparency_solid );
+
+    std::uninitialized_fill_n( &target_camera_cache[0][0], map_dimensions, light_transparency_solid );
 
     float vision_restore_cache [9] = {0};
     bool blocked_restore_cache[8] = {false};
@@ -1613,19 +1611,29 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
     }
 
     if( !fov_3d ) {
+        std::vector<int> levels_to_build;
         for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
             auto &cur_cache = get_cache( z );
             if( z == target_z || cur_cache.seen_cache_dirty ) {
                 std::uninitialized_fill_n(
                     &cur_cache.seen_cache[0][0], map_dimensions, light_transparency_solid );
+                std::uninitialized_fill_n(
+                    &cur_cache.camera_cache[0][0], map_dimensions, light_transparency_solid );
                 cur_cache.seen_cache_dirty = false;
+                levels_to_build.push_back( z );
             }
+        }
 
-            if( z == target_z ) {
-                seen_cache[origin.x][origin.y] = VISIBILITY_FULL;
-                castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>
-                ( seen_cache, transparency_cache, blocked_cache, origin.xy(), 0 );
-            }
+        for( const int level : levels_to_build ) {
+            auto &level_cache = get_cache( level );
+            float ( &level_seen_cache )[MAPSIZE_X][MAPSIZE_Y] = level_cache.seen_cache;
+            const float ( &level_transparency_cache )[MAPSIZE_X][MAPSIZE_Y] = level_cache.transparency_cache;
+            const diagonal_blocks( &level_blocked_cache )[MAPSIZE_X][MAPSIZE_Y] =
+                level_cache.vehicle_obscured_cache;
+
+            level_seen_cache[origin.x][origin.y] = VISIBILITY_FULL;
+            castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>
+            ( level_seen_cache, level_transparency_cache, level_blocked_cache, origin.xy(), 0 );
         }
     } else {
         // Cache the caches (pointers to them)
@@ -1672,7 +1680,7 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         // We can utilize the current state of the seen cache to determine
         // if the player can see the mirror from their position.
         if( !vp.info().has_flag( "CAMERA" ) &&
-            seen_cache[mirror_pos.x][mirror_pos.y] < LIGHT_TRANSPARENCY_SOLID + 0.1 ) {
+            target_seen_cache[mirror_pos.x][mirror_pos.y] < LIGHT_TRANSPARENCY_SOLID + 0.1 ) {
             continue;
         } else if( !vp.info().has_flag( "CAMERA_CONTROL" ) ) {
             mirrors.emplace_back( static_cast<int>( vp.part_index() ) );
@@ -1699,7 +1707,7 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         } else {
             offsetDistance = 60 - veh->part_info( mirror ).bonus *
                              veh->part( mirror ).hp() / veh->part_info( mirror ).durability;
-            camera_cache[mirror_pos.x][mirror_pos.y] = LIGHT_TRANSPARENCY_OPEN_AIR;
+            target_camera_cache[mirror_pos.x][mirror_pos.y] = LIGHT_TRANSPARENCY_OPEN_AIR;
         }
 
         // TODO: Factor in the mirror facing and only cast in the
@@ -1709,7 +1717,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         // at an offset appears to give reasonable results though.
         castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>
         (
-            camera_cache, transparency_cache, blocked_cache, mirror_pos.xy(), offsetDistance );
+            target_camera_cache, target_cache.transparency_cache, target_cache.vehicle_obscured_cache,
+            mirror_pos.xy(), offsetDistance );
     }
 }
 

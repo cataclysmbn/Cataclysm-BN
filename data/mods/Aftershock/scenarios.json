@@ -25,8 +25,17 @@
   {
     "copy-from": "lab_chal",
     "type": "scenario",
-    "extend": { "professions": [ "afs_vatgrown_bodyguard", "afs_cryosleep_survivor", "afs_holo_fighter", "afs_mastadon_swat" ] },
+    "extend": {
+      "professions": [ "afs_vatgrown_bodyguard", "afs_cryosleep_survivor", "afs_holo_fighter", "afs_mastadon_swat" ],
+      "bionics": [ "afs_bio_wind_turbine" ]
+    },
     "id": "lab_chal"
+  },
+  {
+    "copy-from": "cyberpunk",
+    "type": "scenario",
+    "extend": { "bionics": [ "afs_bio_skullgun" ] },
+    "id": "cyberpunk"
   },
   {
     "copy-from": "lab_staff",

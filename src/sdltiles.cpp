@@ -1042,11 +1042,22 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 std::tie( ter_sym, ter_color, std::ignore ) =
                     overmap_ui::get_note_display_info( overmap_buffer.note( omp ) );
 
-                std::string note_name = "note_" + ter_sym + "_" + string_from_color( ter_color );
-                const tile_search_params tile { note_name, C_OVERMAP_NOTE, "overmap_note", 0, 0 };
-                draw_from_id_string(
-                    tile, omp.raw(), std::nullopt, std::nullopt,
-                    lit_level::LIT, false, 0, false );
+                bool drew_note_sprite = false;
+                const std::optional<std::string> note_sprite =
+                    overmap_ui::get_note_sprite_id( overmap_buffer.note( omp ) );
+                if( note_sprite ) {
+                    const tile_search_params sprite_tile { *note_sprite, C_NONE, empty_string, 0, 0 };
+                    drew_note_sprite = draw_from_id_string(
+                                           sprite_tile, omp.raw(), std::nullopt, std::nullopt,
+                                           lit_level::LIT, false, 0, false );
+                }
+                if( !drew_note_sprite ) {
+                    std::string note_name = "note_" + ter_sym + "_" + string_from_color( ter_color );
+                    const tile_search_params tile { note_name, C_OVERMAP_NOTE, "overmap_note", 0, 0 };
+                    draw_from_id_string(
+                        tile, omp.raw(), std::nullopt, std::nullopt,
+                        lit_level::LIT, false, 0, false );
+                }
             }
         }
     }
@@ -1564,9 +1575,26 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
                     continue;
                 }
 
-                // TODO: draw with outline / BG color for better readability
                 const uint32_t ch = text.at( i );
-                map_font->OutputChar( renderer, geometry, utf32_to_utf8( ch ), point( x, y ), ft.color );
+                const auto glyph = utf32_to_utf8( ch );
+                const bool outlined_white = ft.color == catacurses::white ||
+                                            ft.color == catacurses::white + 8;
+
+                if( outlined_white ) {
+                    static constexpr std::array<point, 4> outline_offsets = {
+                        point_east,
+                        point_north,
+                        point_west,
+                        point_south,
+                    };
+                    for( const point &offset : outline_offsets ) {
+                        map_font->OutputChar( renderer, geometry, glyph,
+                                              point( x + offset.x, y + offset.y ),
+                                              catacurses::black );
+                    }
+                }
+
+                map_font->OutputChar( renderer, geometry, glyph, point( x, y ), ft.color );
                 width += mk_wcwidth( ch );
             }
 

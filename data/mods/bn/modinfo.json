@@ -6,6 +6,7 @@
     "description": "Core content for Cataclysm-BN",
     "category": "core",
     "core": true,
+    "lua_api_version": 2,
     "path": "../../json"
   }
 ]

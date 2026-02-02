@@ -67,7 +67,7 @@ document was written. Pick whichever one applies best to your mod when writing y
 
 The `dependencies` attribute is used to tell Cataclysm that your mod is dependent on something
 present in another mod. If you have no dependencies outside of the core game, then just including
-`dda` in the list is good enough. If your mod depends on another one to work properly, adding that
+`bn` in the list is good enough. If your mod depends on another one to work properly, adding that
 mod's `id` attribute to the array causes Cataclysm to force that mod to load before yours.
 
 For more details on `MOD_INFO` object, see [JSON_INFO.md](./../reference/mod_info).

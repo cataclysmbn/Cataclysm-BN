@@ -2,6 +2,7 @@
 
 #if defined(TILES)
 
+#include <string>
 #include <optional>
 #include <vector>
 

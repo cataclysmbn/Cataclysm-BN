@@ -1,9 +1,11 @@
 #include "character.h"
+#include "units_mass.h"
 #include "vehicle.h"
 #include "vehicle_part.h" // IWYU pragma: associated
 #include "units_temperature.h"
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <cmath>
 #include <cstdlib>
@@ -720,7 +722,8 @@ void vehicle::use_controls( const tripoint &pos )
         return;
     }
 
-    if( has_part( "ENGINE" ) && !( is_flying && has_part( VPFLAG_ROTOR ) ) ) {
+    if( has_part( "ENGINE" ) && !( is_flying &&
+                                   units::to_newton( total_mass() ) >= total_balloon_lift() && has_part( VPFLAG_ROTOR ) ) ) {
         if( you.controlling_vehicle || ( remote && engine_on ) ) {
             options.emplace_back( _( "Stop driving" ), keybind( "TOGGLE_ENGINE" ) );
             actions.emplace_back( [&] {
@@ -874,6 +877,19 @@ void vehicle::use_controls( const tripoint &pos )
 
     }
 
+    if( !droppers.empty() ) {
+        options.emplace_back( _( "Activate all item droppers (Drop Everything)" ),
+                              keybind( "DROPPER_ALL" ) );
+        actions.emplace_back( [&] { item_dropper_drop_all(); refresh(); } );
+
+        options.emplace_back( _( "Activate one item dropper (Drop Everything)" ),
+                              keybind( "DROPPER_SINGLE_ALL" ) );
+        actions.emplace_back( [&] { item_dropper_drop_single( false ); refresh(); } );
+
+        options.emplace_back( _( "Activate one item dropper (Drop One Thing)" ),
+                              keybind( "DROPPER_SINGLE" ) );
+        actions.emplace_back( [&] { item_dropper_drop_single( true ); refresh(); } );
+    }
     uilist menu;
     menu.text = _( "Vehicle controls" );
     menu.entries = options;

@@ -77,7 +77,7 @@ backups.
 
 These are game bugs and should be fixed, not avoided. We can't fix what we don't know about, so bugs
 need to be reported - either on GitHub via creating a
-[Bug Report](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/new/choose) (you only need a
+[Bug Report](https://github.com/cataclysmbn/Cataclysm-BN/issues/new/choose) (you only need a
 working email address to make a GitHub account, it's not _that_ hard) or by joining
 [our Discord server](https://discord.gg/XW7XhXuZ89) and complaining in `#development` channel -
 you'll most likely get a faster response there. If you know how to fix it (or want to take a stab at

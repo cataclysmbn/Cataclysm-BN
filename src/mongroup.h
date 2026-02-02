@@ -72,6 +72,8 @@ struct MonsterGroup {
     time_duration monster_group_time = 0_turns;
     bool is_safe = false; /// Used for @ref mongroup::is_safe()
     int freq_total = 0; // Default 1000 unless specified - max number to roll for spawns
+
+    LUA_TYPE_OPS( MonsterGroup, name );
 };
 
 struct mongroup {
@@ -79,9 +81,11 @@ struct mongroup {
     // Note: position is not saved as such in the json
     // Instead, a vector of positions is saved for
     tripoint_om_sm pos;
+    tripoint_abs_sm abs_pos; // position of the mongroup in absolute submap coordinates
     unsigned int radius = 1;
     unsigned int population = 1;
     tripoint_om_sm target; // location the horde is interested in.
+    tripoint_abs_sm nemesis_target; // abs target for nemesis hordes
     int interest = 0; //interest to target in percents
     bool dying = false;
     bool horde = false;
@@ -121,6 +125,10 @@ struct mongroup {
     void set_target( const point_om_sm &p ) {
         target.x() = p.x();
         target.y() = p.y();
+    }
+    void set_nemesis_target( const tripoint_abs_sm &p ) {
+        nemesis_target.x() = p.x();
+        nemesis_target.y() = p.y();
     }
     void wander( const overmap & );
     void inc_interest( int inc ) {
@@ -162,7 +170,8 @@ class MonsterGroupManager
         static void LoadMonsterBlacklist( const JsonObject &jo );
         static void LoadMonsterWhitelist( const JsonObject &jo );
         static void FinalizeMonsterGroups();
-        static MonsterGroupResult GetResultFromGroup( const mongroup_id &group, int *quantity = nullptr );
+        static MonsterGroupResult GetResultFromGroup( const mongroup_id &group, int *quantity = nullptr,
+                bool use_pack_size = false );
         static bool IsMonsterInGroup( const mongroup_id &group, const mtype_id &monster );
         static bool isValidMonsterGroup( const mongroup_id &group );
         static const mongroup_id &Monster2Group( const mtype_id &monster );
@@ -191,5 +200,4 @@ class MonsterGroupManager
         static t_string_set monster_categories_blacklist;
         static t_string_set monster_categories_whitelist;
 };
-
 

@@ -18,6 +18,15 @@ set(CATACLYSM_DATA_FILES
         cataicon.ico)
 
 if (RELEASE)
-    install(DIRECTORY ${CATACLYSM_DATA_DIRS} TYPE DATA)
-    install(FILES ${CATACLYSM_DATA_FILES} TYPE DATA)
+    if (USE_PREFIX_DATA_DIR)
+        install(DIRECTORY ${CATACLYSM_DATA_DIRS} TYPE DATA
+                PATTERN "external_tileset/README.md" EXCLUDE
+                PATTERN "mapgen/lab/README.md" EXCLUDE)
+        install(FILES ${CATACLYSM_DATA_FILES} TYPE DATA)
+    else()
+        install(DIRECTORY ${CATACLYSM_DATA_DIRS} DESTINATION data
+                PATTERN "external_tileset/README.md" EXCLUDE
+                PATTERN "mapgen/lab/README.md" EXCLUDE)
+        install(FILES ${CATACLYSM_DATA_FILES} DESTINATION data)
+    endif()
 endif ()

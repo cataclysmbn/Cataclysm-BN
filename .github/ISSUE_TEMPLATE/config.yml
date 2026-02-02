@@ -1,7 +1,7 @@
 blank_issues_enabled: true
 contact_links:
   - name: Discussions
-    url: https://github.com/cataclysmbnteam/Cataclysm-BN/discussions/
+    url: https://github.com/cataclysmbn/Cataclysm-BN/discussions/
     about: Questions, simple suggestions, porting DDA features, and more.
   - name: Official Discord
     url: https://discord.gg/B5q4XCa

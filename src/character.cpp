@@ -27,6 +27,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
@@ -195,6 +196,7 @@ static const efftype_id effect_riding( "riding" );
 static const efftype_id effect_saddled( "monster_saddled" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_slept_through_alarm( "slept_through_alarm" );
+static const efftype_id effect_spores( "spores" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_took_prozac( "took_prozac" );
@@ -471,6 +473,9 @@ void Character::swap_character( Character &other, Character &tmp )
     tmp = std::move( other );
     other = std::move( *this );
     *this = std::move( tmp );
+    // Reset the dead state cache for both characters since HP values were swapped
+    reset_cached_dead_state();
+    other.reset_cached_dead_state();
 }
 
 void Character::move_operator_common( Character &&source ) noexcept
@@ -667,6 +672,11 @@ auto Character::is_dead_state() const -> bool
         return bp->essential && get_part_hp_cur( bp ) <= 0;
     } );
     return cached_dead_state.value();
+}
+
+void Character::reset_cached_dead_state()
+{
+    cached_dead_state.reset();
 }
 
 void Character::set_part_hp_cur( const bodypart_id &id, int set )
@@ -2257,6 +2267,9 @@ void Character::mod_power_level( const units::energy &npower )
 void Character::mod_max_power_level( const units::energy &npower_max )
 {
     max_power_level += npower_max;
+    if( power_level > max_power_level ) {
+        set_power_level( max_power_level );
+    }
 }
 
 bool Character::is_max_power() const
@@ -4192,7 +4205,7 @@ void Character::die( Creature *nkiller )
     }
     mission::on_creature_death( *this );
 
-    cata::run_hooks( "on_char_death", [ &, this]( auto & params ) {
+    cata::run_hooks( "on_character_death", [ &, this]( auto & params ) {
         params["char"] = this;
         params["killer"] = get_killer();
     } );
@@ -6907,6 +6920,8 @@ bool Character::is_immune_effect( const efftype_id &eff ) const
         return is_immune_damage( DT_ACID ) || has_trait( trait_SLIMY ) || has_trait( trait_VISCOUS );
     } else if( eff == effect_nausea ) {
         return has_trait( trait_STRONGSTOMACH );
+    } else if( eff == effect_spores || eff == effect_fungus ) {
+        return has_trait( trait_M_IMMUNE );
     } else if( eff == effect_bleed ) {
         // Ugly, it was badly implemented and should be a flag
         return mutation_value( "bleed_resist" ) > 0.0f;
@@ -8488,6 +8503,13 @@ void Character::shout( std::string msg, bool order )
                    "shout", shout );
 }
 
+void Character::signal_nemesis()
+{
+    const tripoint_abs_omt ompos = global_omt_location();
+    const tripoint_abs_sm smpos = project_to<coords::sm>( ompos );
+    overmap_buffer.signal_nemesis( smpos );
+}
+
 void Character::vomit()
 {
     g->events().send<event_type::throws_up>( getID() );
@@ -9585,6 +9607,11 @@ void Character::on_hurt( Creature *source, bool disturb /*= true*/ )
 
 bool Character::crossed_threshold() const
 {
+    // If the thresh category is set, we have to have crossed the threshold
+    // This implicitly also checks thresh_tier >= 1 because they get changed at the same time
+    if( thresh_category ) {
+        return true;
+    }
     for( const trait_id &mut : get_mutations() ) {
         if( mut->threshold ) {
             return true;
@@ -10504,10 +10531,10 @@ const item *Character::get_item_with_id( const itype_id &item_id, bool need_char
     return ret;
 }
 
-void Character::add_item_with_id( const itype_id &item_id, int count )
+item &Character::add_item_with_id( const itype_id &item_id, int count )
 {
     detached_ptr<item> new_item = item::spawn( item_id, calendar::turn, count );
-    i_add( std::move( new_item ), true );
+    return i_add( std::move( new_item ), true );
 }
 
 bool Character::has_item_with_id( const itype_id &item_id, bool need_charges ) const
@@ -11430,6 +11457,7 @@ Attitude Character::attitude_to( const Creature &other ) const
             case MATT_ATTACK:
                 return Attitude::A_HOSTILE;
             case MATT_NULL:
+            case MATT_UNKNOWN:
             case NUM_MONSTER_ATTITUDES:
                 break;
         }

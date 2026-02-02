@@ -491,10 +491,6 @@ class cata_tiles
 
         std::optional<tile_lookup_res> find_tile_with_season( const std::string &id ) const;
 
-        std::optional<tile_lookup_res>
-        find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
-                              int looks_like_jumps_limit = 10 ) const;
-
         // this templated method is used only from it's own cpp file, so it's ok to declare it here
         template<typename T>
         std::optional<tile_lookup_res>
@@ -726,6 +722,9 @@ class cata_tiles
         bool draw_item_highlight( const tripoint &pos );
 
     public:
+        auto find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
+                                   int looks_like_jumps_limit = 10 ) const -> std::optional<tile_lookup_res>;
+
         // Animation layers
         void init_explosion( const tripoint &p, int radius, const std::string &name );
         void draw_explosion_frame();
@@ -741,6 +740,8 @@ class cata_tiles
         void void_cone_aoe();
 
         void init_draw_bullet( const tripoint &p, std::string name, int rotation );
+        void init_draw_bullets( const std::vector<tripoint> &ps, const std::vector<std::string> &names,
+                                const std::vector<int> &rotations );
         void draw_bullet_frame();
         void void_bullet();
 
@@ -773,7 +774,7 @@ class cata_tiles
         void void_sct();
 
         void init_draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset );
-        void draw_zones_frame();
+        void draw_zones_frame( std::multimap<point, formatted_text> &overlay_strings );
         void void_zones();
 
         void init_draw_radiation_override( const tripoint &p, int rad );
@@ -918,9 +919,9 @@ class cata_tiles
         tripoint cone_aoe_origin;
         one_bucket cone_aoe_layer;
 
-        tripoint bul_pos;
-        std::string bul_id;
-        int bul_rotation = 0;
+        std::vector<tripoint> bul_pos;
+        std::vector<std::string> bul_id;
+        std::vector<int> bul_rotation;
 
         tripoint hit_pos;
         std::string hit_entity_id;

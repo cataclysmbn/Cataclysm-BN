@@ -571,6 +571,28 @@ Example:
 | chance | (optional) One-in-N chance to spawn item.                                                                                                                                |
 | repeat | (optional) Value: `[ n1, n2 ]`. Spawn item randomly between `n1` and `n2` times. Only makes sense if the coordinates are random. Example: `[ 1, 3 ]` - repeat 1-3 times. |
 
+## Spawn artifacts with a "place_artifact" array
+
+**optional** A list of artifacts to spawn. Use `natural: true` with an optional `property` to spawn
+a natural artifact, otherwise a random artifact is created. For mapping-style usage, the special
+type is `artifact` (or `artifacts`).
+
+Example:
+
+```json
+"place_artifact": [
+    { "x": 12, "y": 10 },
+    { "x": [ 4, 18 ], "y": [ 4, 18 ], "repeat": [ 1, 2 ], "natural": true, "property": "ARTPROP_GLOWING" }
+]
+```
+
+| Field    | Description                                                                                                                                                                   |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| x, y     | (required) Spawn coordinates. Value from `0-23`, or range `[ 0-23, 0-23 ]` for a random value in that range.                                                                  |
+| repeat   | (optional) Value: `[ n1, n2 ]`. Spawn artifacts randomly between `n1` and `n2` times. Only makes sense if the coordinates are random. Example: `[ 1, 3 ]` - repeat 1-3 times. |
+| natural  | (optional) If true, spawn a natural artifact.                                                                                                                                 |
+| property | (optional) `ARTPROP_*` value for the natural artifact property. If omitted, a random property is chosen.                                                                      |
+
 ## Extra map features with specials
 
 **optional** Special map features that do more than just placing furniture / terrain.
@@ -763,7 +785,7 @@ Places a gas pump with gasoline (or sometimes diesel) in it.
 
 | Field  | Description                                                                                                                                                                                                                                                                                                                   |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| item   | (required, string or itemgroup object) the item group to use.                                                                                                                                                                                                                                                                 |
+| item   | (required, string or itemgroup object) the item group / itype_id to use.                                                                                                                                                                                                                                                      |
 | chance | (optional, integer or min/max array) x in 100 chance that a loop will continue to spawn items from the group (which itself may spawn multiple items or not depending on its type, see `ITEM_SPAWN.md`), unless the chance is 100, in which case it will trigger the item group spawn exactly 1 time (see `map::place_items`). |
 | repeat | (optional, integer or min/max array) the number of times to repeat this placement, default is 1.                                                                                                                                                                                                                              |
 

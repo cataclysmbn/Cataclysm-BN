@@ -80,6 +80,8 @@ struct mutation_branch {
         bool purifiable = false;
         // True if it's a threshold itself, and shouldn't be obtained *easily* (False by default).
         bool threshold = false;
+        // The tier of threshold that this mutation belongs to (0 for not being post-thresh)
+        unsigned short threshold_tier = 0;
         // True if this is a trait associated with professional training/experience, so profession/quest ONLY.
         bool profession = false;
         // True if the mutation is obtained through the debug menu
@@ -271,7 +273,6 @@ struct mutation_branch {
 
         std::vector<trait_id> prereqs; // Prerequisites; Only one is required
         std::vector<trait_id> prereqs2; // Prerequisites; need one from here too
-        std::vector<trait_id> threshreq; // Prerequisites; dedicated slot to needing thresholds
         std::set<std::string> types; // Mutation types, you can't have two mutations that share a type
         std::vector<trait_id> cancels; // Mutations that conflict with this one
         std::set<trait_id> prevents; // Mutations that cannot be added with this one
@@ -447,8 +448,9 @@ struct mutation_category_trait {
 
         // Mutation category i.e "BIRD", "CHIMERA"
         mutation_category_id id;
-        // The trait that you gain when you break the threshold for this category
-        trait_id threshold_mut;
+        // The traits that you gain when you break the thresholds for this category
+        // NULL ID is put there so that index = tier instead of tier - 1
+        std::vector<trait_id> threshold_muts = {trait_id::NULL_ID()};
 
         // These are defaults
         int mutagen_hunger  = 10;
@@ -537,6 +539,7 @@ struct mutagen_attempt {
 mutagen_attempt mutagen_common_checks( Character &guy, const item &it, bool strong,
                                        mutagen_technique technique );
 
-void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category );
+void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category,
+                              const unsigned short tier );
 
 

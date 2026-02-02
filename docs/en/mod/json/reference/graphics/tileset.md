@@ -340,3 +340,47 @@ ordering provided in `mutation_ordering.json`. Example:
   ]
 }
 ```
+
+## Projectile Sprites
+
+Custom sprites can be defined for projectiles (bullets and thrown items) using specific naming conventions:
+
+> [!NOTE]
+> included sprite must face upwards (0 degrees) for correct orientation.
+
+### Bullets (fired from guns)
+
+Use `animation_bullet_{ammo_type}` where `{ammo_type}` is the ammo's item ID:
+
+```json
+{ "id": "animation_bullet_9mm", "fg": 123, "rotates": true }
+{ "id": "animation_bullet_556", "fg": 124, "rotates": true }
+{ "id": "animation_bullet_762", "fg": 125, "rotates": true }
+```
+
+The system follows the ammo's `looks_like` chain. If `animation_bullet_556` doesn't exist but the `556` ammo has `looks_like: "223"`, it will automatically use `animation_bullet_223` if available.
+
+### Thrown Items
+
+Use `animation_bullet_{item_type}` where `{item_type}` is the thrown item's ID:
+
+```json
+{ "id": "animation_bullet_javelin", "fg": 126, "rotates": true }
+{ "id": "animation_bullet_throwing_axe", "fg": 127, "rotates": true }
+{ "id": "animation_bullet_throwing_knife", "fg": 128, "rotates": true }
+```
+
+The system also follows the item's `looks_like` chain for thrown items.
+
+### Fallback Behavior
+
+If no custom projectile sprite is found:
+
+1. **Thrown items**: Falls back to the item's own sprite (e.g., `javelin`)
+2. **Bullets**: Falls back to `animation_bullet_normal_0deg`
+
+### Rotation
+
+- Items with the `FLY_STRAIGHT` flag (like javelins and spears) maintain their orientation during flight
+- Other thrown items (axes, knives, etc.) will rotate during flight
+- Set `"rotates": true` in the tile definition to enable directional sprite support

@@ -5,19 +5,19 @@ on:
   schedule:
     - cron: "0 21 * * *"
 
+concurrency:
+  group: pull_translations
+  cancel-in-progress: true
+
 jobs:
   pull-translations:
-    if: github.repository == 'cataclysmbnteam/Cataclysm-BN'
+    if: github.repository == 'cataclysmbn/Cataclysm-BN'
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
 
     steps:
-      - name: "Install Transifex CLI"
-        run: |
-          curl -sL https://github.com/transifex/cli/releases/download/v1.6.7/tx-linux-amd64.tar.gz | sudo tar zxvf - -C /usr/bin tx
-
       - name: "Checkout"
         uses: actions/checkout@v4
         with:
@@ -29,9 +29,10 @@ jobs:
         run: echo "time=$(date -u "+%F")" >> $GITHUB_OUTPUT
 
       - name: "Pull translations"
-        run: tx pull --force
-        env:
-          TX_TOKEN: ${{ secrets.TX_TOKEN }}
+        uses: transifex/cli-action@v2
+        with:
+          token: ${{ secrets.TX_TOKEN }}
+          args: pull --force
 
       - name: Show Changes
         run: |

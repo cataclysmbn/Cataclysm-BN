@@ -372,6 +372,11 @@ void talk_function::wake_up( npc &p )
     // TODO: Get mad at player for waking us up unless we're in danger
 }
 
+void talk_function::control_npc( npc &p )
+{
+    get_avatar().control_npc( p );
+}
+
 void talk_function::reveal_stats( npc &p )
 {
     character_display::disp_info( p );
@@ -833,6 +838,11 @@ void talk_function::lead_to_safety( npc &p )
 
 bool npc_trading::pay_npc( npc &np, int cost )
 {
+    // Free items should never trigger trading
+    if( cost <= 0 ) {
+        return true;
+    }
+
     if( np.op_of_u.owed >= cost ) {
         np.op_of_u.owed -= cost;
         return true;

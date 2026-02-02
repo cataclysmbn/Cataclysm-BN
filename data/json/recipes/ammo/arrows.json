@@ -569,5 +569,71 @@
     "book_learn": [ [ "textbook_computer", 2 ], [ "advanced_electronics", 2 ], [ "reference_fabrication1", 2 ] ],
     "using": [ [ "3d_printing_standard", 3 ], [ "blacksmithing_standard", 1 ] ],
     "components": [ [ [ "carbon_fiber_filament", 30 ] ], [ [ "steel_tiny", 1, "LIST" ], [ "scrap_bronze", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "atlatl_dart_wood",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_ARROWS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "survival", 2 ], [ "throw", 1 ] ],
+    "difficulty": 2,
+    "time": "10 m",
+    "autolearn": true,
+    "charges": 5,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "fire", -1 ] ] ],
+    "components": [ [ [ "stick", 1 ], [ "2x4", 1 ], [ "broom", 1 ], [ "pool_cue", 1 ], [ "pointy_stick", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "atlatl_dart_iron",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_ARROWS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "survival", 2 ], [ "throw", 1 ] ],
+    "difficulty": 4,
+    "time": "15 m",
+    "autolearn": true,
+    "charges": 5,
+    "using": [ [ "blacksmithing_intermediate", 1 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "stick", 1 ], [ "2x4", 1 ], [ "broom", 1 ], [ "pool_cue", 1 ], [ "pointy_stick", 1 ] ], [ [ "scrap", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "atlatl_dart_stone",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_ARROWS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "survival", 2 ], [ "throw", 1 ] ],
+    "difficulty": 3,
+    "time": "10 m",
+    "charges": 5,
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CUT", "level": 1 } ],
+    "book_learn": [ [ "manual_survival", 2 ], [ "textbook_survival", 2 ], [ "survival_book", 2 ] ],
+    "autolearn": [ [ "fabrication", 3 ], [ "survival", 3 ] ],
+    "components": [
+      [ [ "stick", 1 ], [ "2x4", 1 ], [ "broom", 1 ], [ "pool_cue", 1 ], [ "pointy_stick", 1 ] ],
+      [ [ "rock", 1 ], [ "ceramic_shard", 1 ], [ "sharp_rock", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "atlatl_dart_copper",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_ARROWS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "survival", 2 ], [ "throw", 1 ] ],
+    "difficulty": 3,
+    "time": "15 m",
+    "autolearn": true,
+    "charges": 5,
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 5, "LIST" ] ] ],
+    "components": [
+      [ [ "stick", 1 ], [ "2x4", 1 ], [ "broom", 1 ], [ "pool_cue", 1 ], [ "pointy_stick", 1 ] ],
+      [ [ "copper_scrap_equivalent", 1, "LIST" ] ]
+    ]
   }
 ]

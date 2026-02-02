@@ -151,7 +151,7 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Monomolecular Blade CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "A deadly foot-long blade made of advanced material that is installed inside the forearm, capable of being extended through the back of the user's wrist at the cost of a small amount of power.  Though exceptionally sharp, it will prevent the user from holding anything else while extended.",
+    "description": "A deadly 30cm-long blade made of advanced material that is installed inside the forearm, capable of being extended through the back of the user's wrist at the cost of a small amount of power.  Though exceptionally sharp, it will prevent the user from holding anything else while extended.",
     "price": "80 USD",
     "weight": "250 g",
     "difficulty": 8

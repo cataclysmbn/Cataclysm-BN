@@ -323,12 +323,12 @@
     "color": "cyan",
     "covers": [ "torso", "legs", "arms" ],
     "coverage": 90,
-    "encumbrance": 35,
+    "encumbrance": 30,
     "warmth": 20,
     "storage": "1750 ml",
     "material_thickness": 5,
     "environmental_protection": 5,
-    "flags": [ "VARSIZE", "STURDY", "BELTED" ]
+    "flags": [ "VARSIZE", "STURDY", "BELTED", "OVERSIZE" ]
   },
   {
     "id": "crt_earmor_boots",
@@ -387,9 +387,9 @@
     "color": "light_green",
     "covers": [ "torso", "legs", "arms" ],
     "coverage": 100,
-    "encumbrance": 40,
+    "encumbrance": 35,
     "warmth": 25,
-    "storage": "4 L",
+    "storage": "14 L",
     "material_thickness": 5,
     "environmental_protection": 10,
     "use_action": { "type": "holster", "max_volume": "3750 ml", "draw_cost": 155, "skills": [ "smg", "shotgun", "rifle", "launcher" ] },

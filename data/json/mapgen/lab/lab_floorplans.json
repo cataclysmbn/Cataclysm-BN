@@ -312,10 +312,10 @@
     "object": {
       "mapgensize": [ 24, 24 ],
       "set": [
-        { "point": "terrain", "id": "t_vat", "x": 3, "y": 11 },
-        { "point": "terrain", "id": "t_vat", "x": 3, "y": 12 },
-        { "point": "terrain", "id": "t_vat", "x": 8, "y": 11 },
-        { "point": "terrain", "id": "t_vat", "x": 8, "y": 12 },
+        { "point": "furniture", "id": "f_cloning_vat", "x": 3, "y": 11 },
+        { "point": "furniture", "id": "f_cloning_vat", "x": 3, "y": 12 },
+        { "point": "furniture", "id": "f_cloning_vat", "x": 8, "y": 11 },
+        { "point": "furniture", "id": "f_cloning_vat", "x": 8, "y": 12 },
         { "point": "furniture", "id": "f_null", "x": 3, "y": 11 },
         { "point": "furniture", "id": "f_null", "x": 8, "y": 11 }
       ],

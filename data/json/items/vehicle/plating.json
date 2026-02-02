@@ -36,6 +36,23 @@
   },
   {
     "type": "GENERIC",
+    "id": "aluminium_sheet",
+    "symbol": "o",
+    "color": "brown",
+    "looks_like": "sheet_metal",
+    "name": { "str": "aluminum sheet" },
+    "description": "A thin sheet of aluminum, usable for lightweight car body panels or to keep a boat afloat.",
+    "price": "160 USD",
+    "price_postapoc": "250 cent",
+    "material": [ "aluminum" ],
+    "weight": "1500 g",
+    "volume": "12500 ml",
+    "bashing": 8,
+    "to_hit": -1,
+    "category": "veh_parts"
+  },
+  {
+    "type": "GENERIC",
     "id": "wood_plate",
     "name": { "str": "wooden armor kit" },
     "description": "A bundle of two by fours prepared to be used as vehicle armor.",

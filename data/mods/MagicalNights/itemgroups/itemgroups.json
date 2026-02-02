@@ -278,7 +278,7 @@
     "id": "enchanted_rings_common",
     "type": "item_group",
     "//": "all the common enchanted rings",
-    "subtype": "collection",
+    "subtype": "distribution",
     "items": [
       { "item": "mring_blades_lesser", "prob": 5 },
       { "item": "mring_strength_1", "prob": 10 },
@@ -293,7 +293,7 @@
     "id": "enchanted_rings_uncommon",
     "type": "item_group",
     "//": "all the uncommon enchanted rings",
-    "subtype": "collection",
+    "subtype": "distribution",
     "items": [
       { "item": "mring_strength_2", "prob": 10 },
       { "item": "mring_dexterity_2", "prob": 10 },
@@ -308,7 +308,7 @@
     "id": "enchanted_rings_unusual",
     "type": "item_group",
     "//": "all the unusual enchanted rings",
-    "subtype": "collection",
+    "subtype": "distribution",
     "items": [
       { "item": "mring_strength_3", "prob": 10 },
       { "item": "mring_dexterity_3", "prob": 10 },

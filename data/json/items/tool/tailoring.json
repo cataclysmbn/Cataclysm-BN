@@ -76,7 +76,7 @@
       "cost_scaling": 0.1,
       "move_cost": 1300
     },
-    "flags": [ "STAB", "ALLOWS_REMOTE_USE" ]
+    "flags": [ "STAB", "ALLOWS_REMOTE_USE", "NO_SALVAGE" ]
   },
   {
     "id": "needle_curved",
