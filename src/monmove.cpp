@@ -16,6 +16,8 @@
 #include "behavior.h"
 #include "bionics.h"
 #include "cata_utility.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "creature_tracker.h"
 #include "debug.h"
 #include "effect.h"
@@ -1699,6 +1701,19 @@ static tripoint find_closest_stair( const tripoint &near_this, const ter_bitflag
 bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
                        const float stagger_adjustment )
 {
+    const auto hook_results = cata::run_hooks(
+                                  "on_monster_try_move",
+    [ &, this]( sol::table & params ) {
+        params["monster"] = this;
+        params["from"] = pos();
+        params["to"] = p;
+        params["force"] = force;
+    } );
+    const auto can_move = hook_results.get_or( "allowed", true );
+    if( !can_move ) {
+        return false;
+    }
+
     const bool on_ground = !digging() && !flies();
 
     const bool z_move = p.z != pos().z;
