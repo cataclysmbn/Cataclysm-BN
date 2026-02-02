@@ -25,7 +25,6 @@
 #include "character.h"
 #include "character_id.h"
 #include "clzones.h"
-#include "color.h"
 #include "coordinate_conversions.h"
 #include "cuboid_rectangle.h"
 #include "cursesdef.h"
@@ -38,7 +37,6 @@
 #include "fstream_utils.h"
 #include "game.h"
 #include "game_constants.h"
-#include "hsv_color.h"
 #include "input.h"
 #include "int_id.h"
 #include "init.h"
@@ -1515,6 +1513,64 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
     // offset should be the total number of sprites loaded from every tileset image
     // eliminate any sprite references that are too high to exist
     // also eliminate negative sprite references
+
+
+    // Tint pairs allow one overlay to tint another
+    // Hair color tints effecting hair style overlays, for example
+    // This lets you do sillier things than that, too
+    // You could potentially tint a character's armor for customization purposes
+    if ( config.has_array( "tints" ) ) {
+        auto colors = get_all_colors();
+        for ( const JsonObject& tint_def : config.get_array( "tints" ) ) {
+            const auto type_id = tint_def.get_string( "type" );
+            const auto tint_value = tint_def.get_string( "value" );
+            if ( tint_value.empty() || type_id.empty() ) {
+                continue;
+            }
+            RGBColor tint_color;
+            if ( tint_value.starts_with( '#' ) && tint_value.size() == 7 ) {
+                for ( const auto& c : tint_value.substr( 1 ) ) {
+                    if ( !std::isxdigit( c ) ) {
+                        continue;
+                    }
+                }
+                tint_color = from_rgb_string( tint_value );
+            } else {
+                auto curse_color = colors.name_to_color( tint_value );
+                if ( curse_color == c_unset ) {
+                    continue;
+                }
+                tint_color = curses_color_to_RGB( curse_color );
+            }
+            ts.tints[type_id] = tint_color;
+        }
+    }
+
+    if ( config.has_array( "tint_pairs" ) ) {
+        auto colors = get_all_colors();
+        for ( const JsonObject& tint_def : config.get_array( "tint_pairs" ) ) {
+            const auto tint_id = tint_def.get_string( "id" );
+            const auto type_id = tint_def.get_string( "type" );
+            if ( tint_id.empty() || type_id.empty() ) {
+                continue;
+            }
+            ts.tint_pairs[tint_id] = type_id;
+        }
+    }
+}
+
+std::string tileset::get_tint_controller( const std::string &tint_type ) {
+    if ( tint_pairs.contains( tint_type ) ) {
+        return tint_pairs[tint_type];
+    }
+    return std::string();
+}
+
+RGBColor* tileset::get_tint( const std::string ctr_type ) {
+    if ( tints.contains( ctr_type ) ) {
+        return &tints[ctr_type];
+    }
+    return nullptr;
 }
 
 void tileset_loader::process_variations_after_loading( weighted_int_list<std::vector<int>> &vs )
@@ -4134,10 +4190,32 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
     auto overlays = ch.get_overlay_ids();
     for( const auto& [overlay_id, data] : overlays ) {
 
-        const auto [overlay_bgCol, overlay_fgCol] = std::visit( get_overlay_color, data );
+        auto [overlay_bgCol, overlay_fgCol] = std::visit( get_overlay_color, data );
 
-        std::string draw_id = overlay_id;
-        if( find_overlay_looks_like( ch.male, overlay_id, draw_id ) ) {
+        auto draw_id = overlay_id;
+        auto hair_pos = draw_id.find( "hair_" );
+        auto found = false;
+        if ( draw_id.find( "hair_" ) != std::string::npos ) {
+            for ( const auto& oth_mut : ch.get_mutations() ) {
+                auto color_id = oth_mut.str();
+                if ( oth_mut.obj().types.contains( "hair_color" ) &&
+                    draw_id.find( color_id ) == std::string::npos ) {
+                    auto prepend = draw_id.substr( 0, hair_pos );
+                    auto append = draw_id.substr( hair_pos );
+                    append = append.substr( append.find( '_' ) );
+                    auto new_id = prepend + color_id + append;
+                    found = find_overlay_looks_like( ch.male, new_id, new_id );
+                    if ( found ) {
+                        overlay_bgCol = std::nullopt;
+                        overlay_fgCol = std::nullopt;
+                        draw_id = new_id;
+                    }
+                    break;
+                }
+            }
+        }
+        if ( !found ) { found = find_overlay_looks_like(ch.male, overlay_id, draw_id); }
+        if( found ) {
             int overlay_height_3d = prev_height_3d;
             if( ch.facing == FD_RIGHT ) {
                 const tile_search_params tile {draw_id, C_NONE, "", corner, /*rota:*/ 0};

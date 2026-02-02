@@ -80,6 +80,7 @@ static const std::string flag_CITY_START( "CITY_START" );
 static const std::string flag_SECRET( "SECRET" );
 
 static const std::string type_hair_style( "hair_style" );
+static const std::string type_hair_color( "hair_color" );
 static const std::string type_skin_tone( "skin_tone" );
 static const std::string type_facial_hair( "facial_hair" );
 static const std::string type_eye_color( "eye_color" );
@@ -446,6 +447,7 @@ void set_cosmetic_trait( Character &c, std::string mutation_type, const trait_id
 void avatar::randomize_cosmetics()
 {
     randomize_cosmetic_trait( type_hair_style );
+    randomize_cosmetic_trait( type_hair_color );
     randomize_cosmetic_trait( type_skin_tone );
     randomize_cosmetic_trait( type_eye_color );
     //arbitrary 50% chance to add beard to male characters
@@ -471,13 +473,16 @@ bool avatar::create( character_type type, const std::string &tempname )
     int tab = 0;
     points_left points = points_left();
 
-    static auto male_default_hair = trait_id( "hair_black_medium" );
-    static auto female_default_hair = trait_id( "hair_blond_long" );
+    static auto male_default_hair_style = trait_id( "hair_medium" );
+    static auto female_default_hair_style = trait_id( "hair_long" );
+    static auto male_default_hair_color = trait_id( "hair_black" );
+    static auto female_default_hair_color = trait_id( "hair_blond" );
 
     switch( type ) {
         case character_type::CUSTOM:
             // don't make them bald!
-            set_cosmetic_trait( *this, type_hair_style, male ? male_default_hair : female_default_hair );
+            set_cosmetic_trait( *this, type_hair_style, male ? male_default_hair_style : female_default_hair_style);
+            set_cosmetic_trait(*this, type_hair_color, male ? male_default_hair_color : female_default_hair_color);
             break;
         case character_type::RANDOM:
             //random scenario, default name if exist

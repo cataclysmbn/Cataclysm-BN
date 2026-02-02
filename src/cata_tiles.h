@@ -13,6 +13,7 @@
 #include "animation.h"
 #include "enums.h"
 #include "hash_utils.h"
+#include "hsv_color.h"
 #include "lightmap.h"
 #include "line.h"
 #include "map_memory.h"
@@ -236,6 +237,8 @@ class tileset
 #endif
 
         std::unordered_map<std::string, tile_type> tile_ids;
+        std::unordered_map<std::string, RGBColor> tints;
+        std::unordered_map<std::string, std::string> tint_pairs;
         // caches both "default" and "_season_XXX" tile variants (to reduce the number of lookups)
         // either variant can be either a `nullptr` or a pointer/reference to the real value (stored inside `tile_ids`)
         std::unordered_map<std::string, season_tile_value>
@@ -281,6 +284,10 @@ class tileset
          */
         std::optional<tile_lookup_res> find_tile_type_by_season( const std::string &id,
                 season_type season ) const;
+
+        std::string get_tint_controller(const std::string& tint_type);
+
+        RGBColor* get_tint(const std::string ctr_type);
 };
 
 class tileset_loader
@@ -684,6 +691,7 @@ class cata_tiles
         static auto get_trap_color( const trap &tr, const map &map, tripoint tripoint ) -> color_tint_pair;
         static auto get_field_color( const field &f, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_item_color( const item &i, const map &m, const tripoint &p ) -> color_tint_pair;
+        static auto get_item_color( const item &i ) -> color_tint_pair;
         static auto get_vpart_color(
             const optional_vpart_position &vp, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_monster_color(
@@ -692,11 +700,17 @@ class cata_tiles
             const Character &ch, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_effect_color(
             const effect &eff, const Character &c, const map &m, const tripoint &p ) -> color_tint_pair;
+        static auto get_effect_color(
+            const effect &eff, const Character &c ) -> color_tint_pair;
         static auto get_bionic_color(
             const bionic &bio, const Character &c, const map &m, const tripoint &p )-> color_tint_pair;
-        static auto get_mutation_color(
+        static auto get_bionic_color(
+            const bionic &bio, const Character &c )-> color_tint_pair;
+        auto get_mutation_color(
             const mutation &mut, const Character &c, const map &m,
             const tripoint &p )-> color_tint_pair;
+        auto get_mutation_color(
+            const mutation &mut, const Character &c )-> color_tint_pair;
 
         bool draw_terrain( const tripoint &p, lit_level ll, int &height_3d,
                            const bool ( &invisible )[5], int z_drop );

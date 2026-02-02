@@ -5,6 +5,7 @@
 #include "monster.h"
 #include "character.h"
 #include "field.h"
+#include "color.h"
 
 auto cata_tiles::get_overmap_color(
     const overmapbuffer &, const tripoint_abs_omt & ) -> color_tint_pair
@@ -43,7 +44,13 @@ auto cata_tiles::get_field_color(
 }
 
 auto cata_tiles::get_item_color(
-    const item &, const map &, const tripoint & ) -> color_tint_pair
+    const item &i, const map &, const tripoint & ) -> color_tint_pair
+{
+    return get_item_color( i );
+}
+
+auto cata_tiles::get_item_color(
+    const item & ) -> color_tint_pair
 {
     return {std::nullopt, std::nullopt};
 }
@@ -67,20 +74,71 @@ auto cata_tiles::get_character_color(
 }
 
 auto cata_tiles::get_effect_color(
-    const effect &, const Character &, const map &, const tripoint & ) -> color_tint_pair
+    const effect &eff, const Character &c, const map &, const tripoint & ) -> color_tint_pair
+{
+    return get_effect_color( eff, c );
+}
+
+auto cata_tiles::get_effect_color(
+    const effect &, const Character & ) -> color_tint_pair
 {
     return {std::nullopt, std::nullopt};
 }
 
 auto cata_tiles::get_bionic_color(
-    const bionic &, const Character &, const map &, const tripoint & )-> color_tint_pair
+    const bionic &bio, const Character &c, const map &, const tripoint & )-> color_tint_pair
+{
+    return get_bionic_color( bio, c );
+}
+
+auto cata_tiles::get_bionic_color(
+    const bionic &, const Character & )-> color_tint_pair
 {
     return {std::nullopt, std::nullopt};
 }
 
 auto cata_tiles::get_mutation_color(
-    const mutation &, const Character &, const map &, const tripoint & )-> color_tint_pair
+    const mutation &mut, const Character &c, const map &, const tripoint & )-> color_tint_pair
 {
+    return get_mutation_color( mut, c );
+}
+
+auto cata_tiles::get_mutation_color(
+    const mutation &mut, const Character &c )-> color_tint_pair
+{
+    mutation_branch mutation = mut.first.obj();
+    for( const auto &mut_type : mutation.types ) {
+        auto controller = tileset_ptr->get_tint_controller( mut_type );
+        if( !controller.empty() ) {
+            for( const auto &oth_mut : c.get_mutations() ) {
+                if( oth_mut.obj().types.contains( controller ) ) {
+                    auto tint = tileset_ptr->get_tint( oth_mut.str() );
+                    if( tint != nullptr ) {
+                        auto sdl_tint = SDL_Color{ tint->r, tint->g, tint->b, tint->a };
+                        return { sdl_tint, sdl_tint };
+                    } else {
+                        auto str = oth_mut.str();
+                        if( str.find( "_" ) == std::string::npos ) {
+                            break;
+                        }
+                        str = str.substr( str.rfind( '_' ) + 1 );
+                        auto colors = get_all_colors();
+                        if( str == "blonde" ) { str = "yellow"; }
+                        else if (str == "gray") { str = "light_gray"; }
+                        auto curse_color = colors.name_to_color( "c_" + str );
+                        if( curse_color == c_unset ) {
+                            return { std::nullopt, std::nullopt };
+                        }
+                        auto tint = curses_color_to_RGB( curse_color );
+                        auto sdl_tint = SDL_Color{ tint.r, tint.g, tint.b, tint.a };
+                        return { sdl_tint, sdl_tint };
+                    }
+                    break;
+                }
+            }
+            break;
+        }
+    }
     return {std::nullopt, std::nullopt};
 }
 

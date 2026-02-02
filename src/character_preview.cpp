@@ -1,6 +1,8 @@
 #if defined(TILES)
 #include "character_preview.h"
 #include "bionics.h"
+#include "color.h"
+#include "hsv_color.h"
 #include "magic.h"
 #include "messages.h"
 #include "type_id.h"
@@ -34,15 +36,11 @@ class char_preview_adapter : public cata_tiles
             return static_cast<char_preview_adapter *>( ct );
         }
 
-        // TODO: Find a way, if any, to get tint colors for preview
-        // This will need to stay in sync with cata_tiles::draw_entity_with_overlays
         void display_avatar_preview_with_overlays( const avatar &ch, const point &p, bool with_clothing ) {
-            // ch is never an npc so we can set ent_name directly
             std::string ent_name = ch.male ? "player_male" : "player_female";
 
             int height_3d = 0;
             int prev_height_3d = 0;
-            // depending on the toggle flip sprite left or right
             if( ch.facing == FD_RIGHT ) {
                 const tile_search_params tile { ent_name, C_NONE, "", corner, 0 };
                 draw_from_id_string(
@@ -55,67 +53,123 @@ class char_preview_adapter : public cata_tiles
                     lit_level::BRIGHT, false, 0, true, height_3d );
             }
 
-            // next up, draw all the overlays, need to construct them locally
-            std::vector<std::string> overlays = get_overlay_ids( ch, with_clothing );
-            for( const std::string &overlay : overlays ) {
-                std::string draw_id = overlay;
-                if( find_overlay_looks_like( ch.male, overlay, draw_id ) ) {
+            auto get_overlay_color = [&]<typename T>( T && arg ) {
+                using Decayed = std::remove_reference_t<T>;
+                using PtrBase = std::remove_const_t<std::remove_pointer_t<Decayed>>;
+                if constexpr( std::is_same_v<PtrBase, item> ) {
+                    return get_item_color( *arg );
+                } else if constexpr( std::is_same_v<PtrBase, effect> ) {
+                    return get_effect_color( *arg, ch );
+                } else if constexpr( std::is_same_v<PtrBase, bionic> ) {
+                    return get_bionic_color( *arg, ch );
+                } else if constexpr( std::is_same_v<PtrBase, mutation> ) {
+                    return get_mutation_color( *arg, ch );
+                } else {
+                    return color_tint_pair{std::nullopt, std::nullopt};
+                }
+            };
+
+            auto result = get_overlay_ids( ch, with_clothing );
+            for( const auto &[overlay_id, entry] : result.overlays ) {
+                auto [overlay_bgCol, overlay_fgCol] = std::visit( get_overlay_color, entry );
+                std::string draw_id = overlay_id;
+
+                auto hair_pos = draw_id.find( "hair_" );
+                auto found = false;
+                if( hair_pos != std::string::npos ) {
+                    for( const auto &mut : ch.get_mutations() ) {
+                        auto color_id = mut.str();
+                        if( mut.obj().types.contains( "hair_color" ) &&
+                            draw_id.find( color_id ) == std::string::npos ) {
+                            auto prepend = draw_id.substr( 0, hair_pos );
+                            auto append = draw_id.substr( hair_pos );
+                            append = append.substr( append.find( '_' ) );
+                            auto new_id = prepend + color_id + append;
+                            found = find_overlay_looks_like( ch.male, new_id, new_id );
+                            if (found) {
+                                overlay_bgCol = std::nullopt;
+                                overlay_fgCol = std::nullopt;
+                                draw_id = new_id;
+                            }
+                            break;
+                        }
+                    }
+                }
+                if( !found ) {
+                    found = find_overlay_looks_like( ch.male, overlay_id, draw_id );
+                }
+
+                if( found ) {
                     int overlay_height_3d = prev_height_3d;
                     if( ch.facing == FD_RIGHT ) {
                         const tile_search_params tile { draw_id, C_NONE, "", corner, /*rota*/ 0 };
                         draw_from_id_string(
-                            tile, tripoint( p, 0 ), std::nullopt, std::nullopt,
+                            tile, tripoint( p, 0 ), overlay_bgCol, overlay_fgCol,
                             lit_level::BRIGHT, false, 0, true, overlay_height_3d );
                     } else if( ch.facing == FD_LEFT ) {
                         const tile_search_params tile { draw_id, C_NONE, "", corner, /*rota*/ 4 };
                         draw_from_id_string(
-                            tile, tripoint( p, 0 ), std::nullopt, std::nullopt,
+                            tile, tripoint( p, 0 ), overlay_bgCol, overlay_fgCol,
                             lit_level::BRIGHT, false, 0, true, overlay_height_3d );
                     }
-                    // the tallest height-having overlay is the one that counts
                     height_3d = std::max( height_3d, overlay_height_3d );
                 }
             }
         }
     private:
-        // @brief This is basically a copy of Character::get_overlay_ids but builds up ids we care about
-        std::vector<std::string> get_overlay_ids( const avatar &av, bool with_clothing ) {
-            std::vector<std::string> rval;
-            std::multimap<int, std::string> mutation_sorting;
+        using overlay_entry = Character::overlay_entry;
+        struct overlay_result {
+            std::vector<overlay_entry> overlays;
+            avatar temp_avatar;
+        };
 
-            // first get effects
-            for( const auto &eff : av.get_all_effects() ) { // only returns non-removed effects
-                rval.emplace_back( "effect_" + eff.first.str() );
+        overlay_result get_overlay_ids( const avatar &av, bool with_clothing ) {
+            overlay_result result;
+            std::multimap<int, overlay_entry> mutation_sorting;
+
+            for( const auto &[eff_type, eff_by_part] : av.get_all_effects() ) {
+                const effect &eff = eff_by_part.begin()->second;
+                if( !eff.is_removed() ) {
+                    result.overlays.emplace_back( overlay_entry{
+                        "effect_" + eff_type.str(),
+                        &eff
+                    } );
+                }
             }
-            // then get mutations
-            for( const auto &mut : av.my_mutations ) {
+
+            for( const mutation &mut : av.my_mutations ) {
+                if( !mut.second.show_sprite ) {
+                    continue;
+                }
                 std::string overlay_id = ( mut.second.powered ? "active_" : "" ) + mut.first.str();
                 int order = get_overlay_order_of_mutation( overlay_id );
-                mutation_sorting.insert( std::pair<int, std::string>( order, overlay_id ) );
+                mutation_sorting.insert( { order, overlay_entry{ overlay_id, &mut } } );
             }
 
-            // add any profession bionics
-            // we'll use a temporary character for this and clothing so we aren't modifying the base character
-            avatar t_av;
             for( const bionic_id &bio : av.prof->CBMs() ) {
-                t_av.add_bionic( bio );
+                result.temp_avatar.add_bionic( bio );
             }
             for( const bionic &bio : *av.my_bionics ) {
                 if( !bio.id->included ) {
-                    t_av.add_bionic( bio.id );
+                    result.temp_avatar.add_bionic( bio.id );
                 }
             }
-            for( const bionic &bio : *t_av.my_bionics ) {
+            for( const bionic &bio : *result.temp_avatar.my_bionics ) {
+                if( !bio.show_sprite ) {
+                    continue;
+                }
                 std::string overlay_id = ( bio.powered ? "active_" : "" ) + bio.id.str();
                 int order = get_overlay_order_of_mutation( overlay_id );
-                mutation_sorting.insert( std::pair<int, std::string>( order, overlay_id ) );
+                mutation_sorting.insert( { order, overlay_entry{ overlay_id, &bio } } );
             }
 
-            for( auto &mutorder : mutation_sorting ) {
-                rval.push_back( "mutation_" + mutorder.second );
+            for( auto &[order, entry] : mutation_sorting ) {
+                result.overlays.emplace_back( overlay_entry{
+                    "mutation_" + entry.id,
+                    entry.entry
+                } );
             }
 
-            // now that we have bionics applied we can see what clothing we can wear
             if( with_clothing ) {
                 static const flag_id json_flag_auto_wield( "auto_wield" );
                 std::vector<itype_id> wielded_items;
@@ -123,17 +177,23 @@ class char_preview_adapter : public cata_tiles
                     if( it->has_flag( json_flag_auto_wield ) ) {
                         wielded_items.push_back( it->typeId() );
                     } else if( it->is_armor() && av.can_wear( *it ).success() ) {
-                        t_av.wear_item( item::spawn( *std::move( it ) ), false );
+                        result.temp_avatar.wear_item( item::spawn( *std::move( it ) ), false );
                     }
                 }
-                for( const item * const &worn_item : t_av.worn ) {
-                    rval.push_back( "worn_" + worn_item->typeId().str() );
+                for( const item *const &worn_item : result.temp_avatar.worn ) {
+                    result.overlays.emplace_back( overlay_entry{
+                        "worn_" + worn_item->typeId().str(),
+                        worn_item
+                    } );
                 }
                 for( const itype_id &wielded : wielded_items ) {
-                    rval.push_back( "wielded_" + wielded.str() );
+                    result.overlays.emplace_back( overlay_entry{
+                        "wielded_" + wielded.str(),
+                        std::monostate{}
+                    } );
                 }
             }
-            return rval;
+            return result;
         }
 };
 
