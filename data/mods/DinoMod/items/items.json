@@ -11,32 +11,20 @@
     "id": "genome_drive_tyrannosaurus_rex",
     "copy-from": "genome_drive",
     "name": { "str": "genome drive" },
-    "item_vars": {
-      "specimen_sample": "mon_tyrannosaurus",
-      "specimen_sample_progress": "5",
-      "specimen_name": "tyrannosaurus rex"
-    }
+    "item_vars": { "specimen_sample": "mon_tyrannosaurus", "specimen_sample_progress": "5", "specimen_name": "tyrannosaurus rex" }
   },
   {
     "type": "GENERIC",
     "id": "genome_drive_brachiosaurus",
     "copy-from": "genome_drive",
     "name": { "str": "genome drive" },
-    "item_vars": {
-      "specimen_sample": "mon_brachiosaurus",
-      "specimen_sample_progress": "5",
-      "specimen_name": "brachiosaurus"
-    }
+    "item_vars": { "specimen_sample": "mon_brachiosaurus", "specimen_sample_progress": "5", "specimen_name": "brachiosaurus" }
   },
   {
     "type": "GENERIC",
     "id": "genome_drive_stegosaurus",
     "copy-from": "genome_drive",
     "name": { "str": "genome drive" },
-    "item_vars": {
-      "specimen_sample": "mon_stegosaurus",
-      "specimen_sample_progress": "5",
-      "specimen_name": "stegosaurus"
-    }
+    "item_vars": { "specimen_sample": "mon_stegosaurus", "specimen_sample_progress": "5", "specimen_name": "stegosaurus" }
   }
 ]

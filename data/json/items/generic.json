@@ -566,22 +566,14 @@
     "id": "genome_drive_black_rat",
     "copy-from": "genome_drive",
     "name": { "str": "genome drive" },
-    "item_vars": {
-      "specimen_sample": "mon_black_rat",
-      "specimen_sample_progress": "2",
-      "specimen_name": "black rat"
-    }
+    "item_vars": { "specimen_sample": "mon_black_rat", "specimen_sample_progress": "2", "specimen_name": "black rat" }
   },
   {
     "type": "GENERIC",
     "id": "genome_drive_wolf_mutant_huge",
     "copy-from": "genome_drive",
     "name": { "str": "genome drive" },
-    "item_vars": {
-      "specimen_sample": "mon_wolf_mutant_huge",
-      "specimen_sample_progress": "2",
-      "specimen_name": "dire wolf"
-    }
+    "item_vars": { "specimen_sample": "mon_wolf_mutant_huge", "specimen_sample_progress": "2", "specimen_name": "dire wolf" }
   },
   {
     "type": "GENERIC",
