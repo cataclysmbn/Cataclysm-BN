@@ -2137,8 +2137,7 @@ bool map::valid_move( const tripoint &from, const tripoint &to,
 
     int part_up;
     const vehicle *veh_up = veh_at_internal( up_p, part_up );
-    if( veh_up != nullptr && !veh_at( up_p ).part_with_feature( VPFLAG_NOCOLLIDEBELOW,
-            false ) ) {
+    if( veh_up != nullptr && !veh_at( up_p ).part_with_feature( VPFLAG_NOCOLLIDEBELOW, false ) ) {
         // TODO: Hatches below the vehicle
         return false;
     }
