@@ -15,6 +15,7 @@
 #include "catalua_type_operators.h"
 #include "color.h" // nc_color
 #include "damage.h"
+#include "data_vars.h"
 #include "enums.h" // point
 #include "explosion.h"
 #include "game_constants.h"
@@ -1028,7 +1029,7 @@ struct itype {
         bool rigid = true;
 
         // Default item vars for the resulting item
-        std::map<std::string, std::string> item_vars;
+        data_vars::data_set item_vars;
 
         /** Damage output in melee for zero or more damage types */
         std::array<int, NUM_DT> melee;

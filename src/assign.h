@@ -17,7 +17,7 @@
 #include "units.h"
 #include "units_serde.h"
 #include "concepts_utility.h"
-
+#include "data_vars.h"
 namespace detail
 {
 template<typename ...T>
@@ -422,6 +422,11 @@ bool assign( const JsonObject &jo,
 bool assign( const JsonObject &jo,
              const std::string &name,
              nc_color &val,
+             const bool strict = false );
+
+bool assign( const JsonObject &jo,
+             const std::string &name,
+             data_vars::data_set &val,
              const bool strict = false );
 
 class time_duration;

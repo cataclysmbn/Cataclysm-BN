@@ -1,5 +1,5 @@
 #include "assign.h"
-
+#include "data_vars.h"
 #include <algorithm>
 
 void report_strict_violation( const JsonObject &jo, const std::string &message,
@@ -695,3 +695,19 @@ void assign_dmg_relative( damage_instance &out,
         }
     }
 }
+
+bool assign( const JsonObject &jo,
+             const std::string &name,
+             data_vars::data_set &val,
+             const bool strict )
+{
+    if( jo.has_array( name ) ) {
+        for( JsonArray arr : jo.get_array( name ) ) {
+            val[arr.get_string( 0 )] = arr.get_string( 1 );
+        }
+    } else {
+        return false;
+    }
+    return true;
+}
+

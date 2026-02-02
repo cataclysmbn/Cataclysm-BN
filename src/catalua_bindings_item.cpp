@@ -270,14 +270,14 @@ void reg_item( sol::state &lua )
 
         DOC( "Get variable as string" );
         luna::set_fx( ut, "get_var_str", []( const UT_CLASS & c, const std::string & name, const std::string & def_val )
-                {
-                    return c.get_var( name, def_val );
-                } );
+        {
+            return c.get_var( name, def_val );
+        } );
         DOC( "Get variable as float number" );
         luna::set_fx( ut, "get_var_num", []( const UT_CLASS & c, const std::string & name, const double & def_val )
-            {
-                return c.get_var( name, def_val );
-            } );
+        {
+            return c.get_var( name, def_val );
+        } );
         DOC( "Get variable as tripoint" );
         luna::set_fx( ut, "get_var_tri", []( const UT_CLASS & c, const std::string & name, const tripoint & def_val )
         {
