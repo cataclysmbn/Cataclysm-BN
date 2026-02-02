@@ -2,6 +2,7 @@ gdebug.log_info("NPC Lua hook test activated.")
 
 local mod = game.mod_runtime[game.current_mod]
 
+---@param params OnDialogueStartParams
 mod.on_dialogue_start = function(params)
   local npc = params.npc
   local next_topic = params.next_topic
@@ -11,6 +12,7 @@ mod.on_dialogue_start = function(params)
   return "TALK_FRIEND"
 end
 
+---@param params OnDialogueOptionParams
 mod.on_dialogue_option = function(params)
   local npc = params.npc
   local next_topic = params.next_topic
@@ -24,17 +26,20 @@ mod.on_dialogue_option = function(params)
   end
 end
 
+---@param params OnDialogueEndParams
 mod.on_dialogue_end = function(params)
   local npc = params.npc
   print("Dialogue ended with " .. npc.name .. ".")
 end
 
+---@param params OnTryNPCInterationParams
 mod.on_try_npc_interaction = function(params)
   local check = QueryPopup.new()
   check:message("Allow Interaction?")
   return check:query_yn() == "YES"
 end
 
+---@param params OnTryNPCInterationParams
 mod.force_talk = function(params)
   params.npc:talk_to_u()
   return false
