@@ -1093,8 +1093,7 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
 
     decide_needs();
 
-    const auto hook_results = cata::run_hooks( "on_dialogue_start", [ &,
-    this]( sol::table & params ) {
+    const auto hook_results = cata::run_hooks( "on_dialogue_start", [ &, this]( auto & params ) {
         params["npc"] = this;
         params["next_topic"] = d.topic_stack.back().id;
     } );
@@ -1126,8 +1125,7 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
         }
         talk_topic next = d.opt( d_win, name, d.topic_stack.back() );
 
-        const auto hook_results = cata::run_hooks( "on_dialogue_option", [ &,
-        this]( sol::table & params ) {
+        const auto hook_results = cata::run_hooks( "on_dialogue_option", [ &, this]( auto & params ) {
             params["npc"] = this;
             params["next_topic"] = next.id;
         } );
