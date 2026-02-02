@@ -760,6 +760,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
 
     // If not enough wheels, mess up the ground a bit.
     if( !vertical && !veh.valid_wheel_config() && !veh.is_in_water() && !veh.is_flying_in_air() &&
+        !veh.has_sufficient_lift( true ) &&
         dp.z == 0 ) {
         veh.velocity += veh.velocity < 0 ? 2000 : -2000;
         for( const auto &p : veh.get_points() ) {
@@ -2137,8 +2138,8 @@ bool map::valid_move( const tripoint &from, const tripoint &to,
 
     int part_up;
     const vehicle *veh_up = veh_at_internal( up_p, part_up );
-    if( veh_up != nullptr ) {
-        // TODO: Hatches below the vehicle, passable frames
+    if( veh_up != nullptr && !veh_at( up_p ).part_with_feature( VPFLAG_NOCOLLIDEBELOW, false ) ) {
+        // TODO: Hatches below the vehicle
         return false;
     }
 
