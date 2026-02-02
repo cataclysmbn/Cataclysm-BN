@@ -25,7 +25,8 @@ bool is_valid_layer_z( int z )
     return false;
 }
 
-oter_id get_default_layer_terrain(world_layer layer, int relative_z) {
+oter_id get_default_layer_terrain( world_layer layer, int relative_z )
+{
     switch( layer ) {
         default:
             return oter_str_id( "pd_border" );
