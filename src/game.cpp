@@ -5412,14 +5412,11 @@ void game::control_vehicle()
 bool game::npc_menu( npc &who, const bool &force )
 {
     if( !force ) {
-        const auto hook_results = cata::run_hooks( "on_try_npc_interaction",
-        [ &, this]( sol::table & params ) {
-            params["npc"] = &who;
-        },
-        cata::hook_opts{ .exit_early = true } );
-        if( !hook_results.get_or( "allowed", true ) ) { return false; }
+        const auto allowed = cata::run_hooks( "on_try_npc_interaction",
+        [&]( auto & params ) { params["npc"] = &who; }, { .exit_early = true } ).get_or( "allowed", true );
+        if( !allowed ) { return false; }
     }
-    cata::run_hooks( "on_npc_interaction", [ &, this]( sol::table & params ) { params["npc"] = &who; } );
+    cata::run_hooks( "on_npc_interaction", [&]( auto & params ) { params["npc"] = &who; } );
     enum choices : int {
         talk = 0,
         swap_pos,
