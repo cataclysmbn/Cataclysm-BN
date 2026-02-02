@@ -80,6 +80,7 @@
 #include "morale.h"
 #include "morale_types.h"
 #include "mtype.h"
+#include "mutation.h"
 #include "npc.h"
 #include "npc_class.h"
 #include "options.h"
@@ -103,6 +104,7 @@
 #include "submap.h"
 #include "text_snippets.h"
 #include "tileray.h"
+#include "trait_group.h"
 #include "units.h"
 #include "uistate.h"
 #include "value_ptr.h"
@@ -112,8 +114,6 @@
 #include "vitamin.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
-
-struct mutation_branch;
 
 static const efftype_id effect_riding( "riding" );
 
@@ -585,15 +585,85 @@ void Character::load( const JsonObject &data )
     }
 
     data.read( "mutations", my_mutations );
+    // Migration for old combined hair mutations (e.g., hair_black_crewcut -> hair_black + hair_crewcut)
+    std::vector<trait_id> valid_hair_colors = get_mutations_in_type( "hair_color" );
+    std::vector<trait_id> valid_hair_styles = get_mutations_in_type( "hair_style" );
+    std::vector<trait_id> migrations_to_add;
+    bool has_hair_bald = false;
+    bool has_hair_color = false;
     for( auto it = my_mutations.begin(); it != my_mutations.end(); ) {
         const trait_id &mid = it->first;
         if( mid.is_valid() ) {
             on_mutation_gain( mid );
             cached_mutations.push_back( &mid.obj() );
+            if( mid.str() == "HAIR_BALD" ) {
+                has_hair_bald = true;
+            }
+            for( const trait_id &color_trait : valid_hair_colors ) {
+                if( mid == color_trait ) {
+                    has_hair_color = true;
+                    break;
+                }
+            }
             ++it;
         } else {
-            debugmsg( "character %s has invalid mutation %s, it will be ignored", name, mid.c_str() );
+            std::string mid_str = mid.str();
+            bool migrated = false;
+
+            if( mid_str.starts_with( "hair_" ) ) {
+                for( const trait_id &color_trait : valid_hair_colors ) {
+                    std::string color_str = color_trait.str();
+                    if( color_str.starts_with( "hair_" ) ) {
+                        std::string color_name = color_str.substr( 5 ); // skip "hair_"
+                        std::string prefix = "hair_" + color_name + "_";
+                        if( mid_str.starts_with( prefix ) ) {
+                            std::string style_suffix = mid_str.substr( prefix.length() );
+                            for( const trait_id &style_trait : valid_hair_styles ) {
+                                std::string style_str = style_trait.str();
+                                if( style_str.starts_with( "hair_" ) ) {
+                                    std::string style_name = style_str.substr( 5 ); // skip "hair_"
+                                    if( style_suffix == style_name ) {
+                                        migrations_to_add.push_back( color_trait );
+                                        migrations_to_add.push_back( style_trait );
+                                        has_hair_color = true;
+                                        migrated = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if( migrated ) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if( !migrated ) {
+                debugmsg( "character %s has invalid mutation %s, it will be ignored", name, mid.c_str() );
+            }
             it = my_mutations.erase( it );
+        }
+    }
+    for( const trait_id &tid : migrations_to_add ) {
+        if( !has_trait( tid ) ) {
+            my_mutations[tid] = trait_data();
+            on_mutation_gain( tid );
+            cached_mutations.push_back( &tid.obj() );
+        }
+    }
+    // Handle old HAIR_BALD saves: if character has HAIR_BALD but no hair color,
+    // add a random hair color (in the new system, even bald characters have a hair color)
+    if( has_hair_bald && !has_hair_color ) {
+        trait_group::Trait_list random_colors = trait_group::traits_from(
+                    trait_group::Trait_group_tag( "Hair_Color_Any" ) );
+        if( !random_colors.empty() ) {
+            const trait_id &color_tid = random_colors.front();
+            if( !has_trait( color_tid ) ) {
+                my_mutations[color_tid] = trait_data();
+                on_mutation_gain( color_tid );
+                cached_mutations.push_back( &color_tid.obj() );
+            }
         }
     }
     recalculate_size();
