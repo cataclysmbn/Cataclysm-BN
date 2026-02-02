@@ -573,29 +573,40 @@ void Character::load( const JsonObject &data )
     data.read( "magic", magic );
     JsonArray parray;
 
+    // Migration for old combined hair mutations (e.g., hair_black_crewcut -> hair_black + hair_crewcut)
+    std::vector<trait_id> valid_hair_colors = get_mutations_in_type( "hair_color" );
+    std::vector<trait_id> valid_hair_styles = get_mutations_in_type( "hair_style" );
+
     data.read( "traits", my_traits );
     for( auto it = my_traits.begin(); it != my_traits.end(); ) {
         const auto &tid = *it;
         if( tid.is_valid() ) {
             ++it;
         } else {
-            debugmsg( "character %s has invalid trait %s, it will be ignored", name, tid.c_str() );
+            bool silence = false;
+            auto pid = it->str();
+            if( pid.starts_with( "hair_" ) ) {
+                int cnt = 0;
+                for( auto c : pid.substr( 5 ) ) {
+                    if( c == '_' ) cnt++;
+                }
+                silence = cnt >= 1;
+            }
+            if ( !silence ) {
+                debugmsg( "character %s has invalid trait %s, it will be ignored", name, pid );
+            }
             my_traits.erase( it++ );
         }
     }
 
     data.read( "mutations", my_mutations );
-    // Migration for old combined hair mutations (e.g., hair_black_crewcut -> hair_black + hair_crewcut)
-    std::vector<trait_id> valid_hair_colors = get_mutations_in_type( "hair_color" );
-    std::vector<trait_id> valid_hair_styles = get_mutations_in_type( "hair_style" );
     std::vector<trait_id> migrations_to_add;
     bool has_hair_bald = false;
     bool has_hair_color = false;
     for( auto it = my_mutations.begin(); it != my_mutations.end(); ) {
-        const trait_id &mid = it->first;
+        const auto &mid = it->first;
+        auto pid = mid.str();
         if( mid.is_valid() ) {
-            on_mutation_gain( mid );
-            cached_mutations.push_back( &mid.obj() );
             if( mid.str() == "HAIR_BALD" ) {
                 has_hair_bald = true;
             }
@@ -613,27 +624,27 @@ void Character::load( const JsonObject &data )
             if( mid_str.starts_with( "hair_" ) ) {
                 for( const trait_id &color_trait : valid_hair_colors ) {
                     std::string color_str = color_trait.str();
-                    if( color_str.starts_with( "hair_" ) ) {
-                        std::string color_name = color_str.substr( 5 ); // skip "hair_"
-                        std::string prefix = "hair_" + color_name + "_";
-                        if( mid_str.starts_with( prefix ) ) {
-                            std::string style_suffix = mid_str.substr( prefix.length() );
-                            for( const trait_id &style_trait : valid_hair_styles ) {
-                                std::string style_str = style_trait.str();
-                                if( style_str.starts_with( "hair_" ) ) {
-                                    std::string style_name = style_str.substr( 5 ); // skip "hair_"
-                                    if( style_suffix == style_name ) {
-                                        migrations_to_add.push_back( color_trait );
-                                        migrations_to_add.push_back( style_trait );
-                                        has_hair_color = true;
-                                        migrated = true;
-                                        break;
-                                    }
-                                }
+                    if ( !color_str.starts_with( "hair_" ) ) {
+                        color_str = "hair_" + color_str;
+                    }
+                    std::string prefix = color_str + "_";
+                    if( mid_str.starts_with( prefix ) ) {
+                        std::string style_suffix = mid_str.substr( prefix.length() );
+                        for( const trait_id &style_trait : valid_hair_styles ) {
+                            std::string style_str = style_trait.str();
+                            if( style_str.starts_with( "hair_" ) ) {
+                                style_str = style_str.substr( 5 );
                             }
-                            if( migrated ) {
+                            if( style_suffix == style_str) {
+                                migrations_to_add.push_back( color_trait );
+                                migrations_to_add.push_back( style_trait );
+                                has_hair_color = true;
+                                migrated = true;
                                 break;
                             }
+                        }
+                        if( migrated ) {
+                            break;
                         }
                     }
                 }
@@ -645,11 +656,23 @@ void Character::load( const JsonObject &data )
             it = my_mutations.erase( it );
         }
     }
+
+    // Iterate twice to avoid issues with subsequent calls on invalid mutations
+    for( auto it = my_mutations.begin(); it != my_mutations.end(); ) {
+        const auto &mid = it->first;
+        on_mutation_gain( mid );
+        cached_mutations.push_back( &mid.obj() );
+        it++;
+    }
+
     for( const trait_id &tid : migrations_to_add ) {
         if( !has_trait( tid ) ) {
-            my_mutations[tid] = trait_data();
-            on_mutation_gain( tid );
-            cached_mutations.push_back( &tid.obj() );
+            if( !has_base_trait( tid ) ) {
+                toggle_trait( tid );
+            }
+            else {
+                set_mutation( tid );
+            }
         }
     }
     // Handle old HAIR_BALD saves: if character has HAIR_BALD but no hair color,
@@ -660,9 +683,10 @@ void Character::load( const JsonObject &data )
         if( !random_colors.empty() ) {
             const trait_id &color_tid = random_colors.front();
             if( !has_trait( color_tid ) ) {
-                my_mutations[color_tid] = trait_data();
-                on_mutation_gain( color_tid );
-                cached_mutations.push_back( &color_tid.obj() );
+                set_mutation( color_tid );
+            }
+            if( !has_base_trait( color_tid ) ) {
+                toggle_trait( color_tid );
             }
         }
     }

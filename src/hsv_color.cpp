@@ -163,7 +163,7 @@ void RGBColor::deserialize( JsonIn &jsin )
         if( nc_id != def_c_unset ) {
             *this = curses_color_to_RGB( cm.get( nc_id ) );
         } else if( str.starts_with( "#" ) ) {
-            *this = from_rgb_string( str );
+            *this = rgb_from_hex_string( str );
         } else {
             debugmsg( "Unknown color value: %s", str.c_str() );
         }
@@ -171,7 +171,7 @@ void RGBColor::deserialize( JsonIn &jsin )
         debugmsg( "Unknown color value" );
     }
 }
-RGBColor from_rgb_string( std::string str )
+RGBColor rgb_from_hex_string( std::string str )
 {
     if ( !str.empty() ) {
         if ( str.starts_with( "#" ) ) {

@@ -1523,7 +1523,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
         auto colors = get_all_colors();
         for ( const JsonObject& tint_def : config.get_array( "tints" ) ) {
             const auto type_id = tint_def.get_string( "type" );
-            const auto tint_value = tint_def.get_string( "value" );
+            const auto tint_value = tint_def.get_string( "color" );
             if ( tint_value.empty() || type_id.empty() ) {
                 continue;
             }
@@ -1534,7 +1534,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                         continue;
                     }
                 }
-                tint_color = from_rgb_string( tint_value );
+                tint_color = rgb_from_hex_string( tint_value );
             } else {
                 auto curse_color = colors.name_to_color( tint_value );
                 if ( curse_color == c_unset ) {
@@ -1549,12 +1549,12 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
     if ( config.has_array( "tint_pairs" ) ) {
         auto colors = get_all_colors();
         for ( const JsonObject& tint_def : config.get_array( "tint_pairs" ) ) {
-            const auto tint_id = tint_def.get_string( "id" );
-            const auto type_id = tint_def.get_string( "type" );
-            if ( tint_id.empty() || type_id.empty() ) {
+            const auto source_type = tint_def.get_string( "source_type" );
+            const auto target_type = tint_def.get_string( "target_type" );
+            if ( source_type.empty() || target_type.empty() ) {
                 continue;
             }
-            ts.tint_pairs[tint_id] = type_id;
+            ts.tint_pairs[target_type] = source_type;
         }
     }
 }

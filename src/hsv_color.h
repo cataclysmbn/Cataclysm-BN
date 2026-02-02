@@ -38,7 +38,7 @@ struct HSVColor {
     uint8_t A;
 };
 
-auto from_rgb_string( std::string str ) -> RGBColor;
+auto rgb_from_hex_string( std::string str ) -> RGBColor;
 auto curses_color_to_RGB( const nc_color &color ) -> RGBColor;
 auto hsv2rgb( HSVColor color ) -> RGBColor;
 auto rgb2hsv( RGBColor color ) -> HSVColor;
