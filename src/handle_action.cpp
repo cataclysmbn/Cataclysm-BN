@@ -1856,23 +1856,22 @@ bool game::handle_action()
                     [[maybe_unused]] bool moved = false;
                     map &here = get_map();
                     const optional_vpart_position vp = here.veh_at( u.pos() );
-                    if( vp ) {
-                        const vpart_info info = vp->vehicle().part_info( vp->part_index() );
-                        if( vp && info.has_flag( "LADDER" ) ) {
-                            tripoint where = u.pos();
-                            tripoint below = where;
+                    const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
+                    if( idx != -1 ) {
+                        const vpart_info info = vp->vehicle().part_info( idx );
+                        tripoint where = u.pos();
+                        tripoint below = where;
+                        below.z--;
+                        // Keep going down until we find a tile that is NOT open air
+                        while( get_map().ter( below ).id().str() == "t_open_air" ) {
+                            where.z--;
                             below.z--;
-                            // Keep going down until we find a tile that is NOT open air
-                            while( get_map().ter( below ).id().str() == "t_open_air" ) {
-                                where.z--;
-                                below.z--;
-                            }
-                            const int dist = u.pos().z - below.z;
-                            if( info.ladder_length() >= dist ) {
-                                get_map().unboard_vehicle( u.pos() );
-                                vertical_move( -dist, true );
-                                moved = true;
-                            }
+                        }
+                        const int dist = u.pos().z - below.z;
+                        if( info.ladder_length() >= dist ) {
+                            get_map().unboard_vehicle( u.pos() );
+                            vertical_move( -dist, true );
+                            moved = true;
                         }
                     }
                 }
@@ -1900,12 +1899,15 @@ bool game::handle_action()
                         const optional_vpart_position vp = here.veh_at( tripoint( xy, i ) );
                         const int dist = i - u.pos().z;
                         if( vp ) {
-                            const vpart_info info = vp->vehicle().part_info( vp->part_index() );
-                            if( info.has_flag( "LADDER" ) && info.ladder_length() >= dist ) {
-                                vertical_move( dist, true );
-                                here.board_vehicle( u.pos(), u.as_character() );
-                                moved = true;
-                                break;
+                            const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
+                            if( idx != -1 ) {
+                                const vpart_info info = vp->vehicle().part_info( idx );
+                                if( info.ladder_length() >= dist ) {
+                                    vertical_move( dist, true );
+                                    here.board_vehicle( u.pos(), u.as_character() );
+                                    moved = true;
+                                    break;
+                                }
                             }
                         }
                     }

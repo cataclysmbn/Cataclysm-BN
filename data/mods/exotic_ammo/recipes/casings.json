@@ -1,5 +1,20 @@
 [
   {
+    "type": "recipe",
+    "result": "9x18mm_casing",
+    "id_suffix": "resize",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "skills_required": [ "gun", 3 ],
+    "time": "2 m",
+    "batch_time_factors": [ 60, 5 ],
+    "book_learn": [ [ "manual_pistol", 5 ], [ "recipe_bullets", 3 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "CASING_PRESSING", "level": 2 } ],
+    "components": [ [ [ "9mm_casing", 1 ] ] ]
+  },
+  {
     "result": "9x18mm_casing",
     "type": "recipe",
     "category": "CC_AMMO",
@@ -45,6 +60,7 @@
     "type": "recipe",
     "result": "460_casing",
     "id_suffix": "resize",
+    "byproducts": [ [ "cartridgebrass", 2 ] ],
     "category": "CC_AMMO",
     "subcategory": "CSC_AMMO_COMPONENTS",
     "skill_used": "fabrication",
@@ -54,8 +70,7 @@
     "batch_time_factors": [ 60, 5 ],
     "book_learn": [ [ "manual_pistol", 5 ], [ "recipe_bullets", 3 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "DRILL", "level": 2 }, { "id": "CASING_PRESSING", "level": 2 } ],
-    "tools": [ [ [ "cordless_drill", 2 ] ] ],
-    "components": [ [ [ "308_casing", 1 ], [ "3006_casing", 1 ] ] ]
+    "components": [ [ [ "308_casing", 1 ], [ "762_51_casing", 1 ], [ "3006_casing", 1 ] ] ]
   },
   {
     "result": "460_casing",
@@ -84,6 +99,22 @@
     "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "45colt_casing",
+    "id_suffix": "resize",
+    "byproducts": [ [ "cartridgebrass", 3 ] ],
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "skills_required": [ "gun", 3 ],
+    "time": "2 m 6 s",
+    "batch_time_factors": [ 60, 5 ],
+    "book_learn": [ [ "manual_pistol", 5 ], [ "recipe_bullets", 3 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "DRILL", "level": 2 }, { "id": "CASING_PRESSING", "level": 2 } ],
+    "components": [ [ [ "454_casing", 1 ] ] ]
   },
   {
     "result": "500_casing",
