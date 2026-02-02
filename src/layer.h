@@ -128,7 +128,7 @@ constexpr bool is_bounded_layer( world_layer layer )
     }
 }
 
-oter_id get_default_terrain( world_layer layer, int relative_z = 0 );
+oter_id get_default_layer_terrain( world_layer layer, int relative_z = 0 );
 
 /**
  * Check if an absolute z-level falls within any valid layer's z-range.
