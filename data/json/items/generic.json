@@ -575,7 +575,6 @@
     "name": { "str": "genome drive" },
     "item_vars": { "specimen_sample": "mon_wolf_mutant_huge", "specimen_sample_progress": "5", "specimen_name": "dire wolf" }
   },
-  },
   {
     "type": "GENERIC",
     "id": "blank_card",
