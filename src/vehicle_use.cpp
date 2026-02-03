@@ -1483,7 +1483,6 @@ void vehicle::operate_planter()
                 }
                 if( !i->count_by_charges() || i->charges == 1 ) {
                     i->set_age( 0_turns );
-                    i->set_flag( flag_id( "HIDDEN_ITEM" ) );
                     detached_ptr<item> det;
                     v.erase( it, &det );
                     g->m.add_item( loc, std::move( det ) );
@@ -1491,7 +1490,6 @@ void vehicle::operate_planter()
                     detached_ptr<item> tmp = item::spawn( *i );
                     tmp->charges = 1;
                     tmp->set_age( 0_turns );
-                    tmp->set_flag( flag_id( "HIDDEN_ITEM" ) );
                     g->m.add_item( loc, std::move( tmp ) );
                     i->charges--;
                 }
