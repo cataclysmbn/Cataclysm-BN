@@ -2,6 +2,12 @@
 
 This document describes how to define and modify game data (effects, mutations, bionics, and dialogue) using Lua.
 
+## WARNING
+
+Modifying/Creating values typically created in JSON bypass typical validation checks, thus allowing you to shoot yourself in the foot that much easier.
+Utilize the JSON dumping utility, and double check things.
+Recommendation: Define as much as possible in JSON, replace as little as possible in Lua to accomplish the effect you're going for.
+
 ## Overview
 
 Lua data definitions allow mods to programmatically create and modify game content. This is useful for:
