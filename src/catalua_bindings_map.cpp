@@ -4,6 +4,8 @@
 #include "catalua_luna_doc.h"
 
 #include "game.h"
+#include "artifact_enum_traits.h"
+#include "enum_conversions.h"
 #include "distribution_grid.h"
 #include "field.h"
 #include "map.h"
@@ -130,6 +132,20 @@ void cata::detail::reg_map( sol::state &lua )
         int count ) -> item* {
             detached_ptr<item> new_item = item::spawn( itype, calendar::turn, count );
             return m.add_item_or_charges( p, std::move( new_item ) ).get();
+        } );
+
+        DOC( "Spawns a random artifact at a position on the map." );
+        luna::set_fx( ut, "spawn_artifact_at", []( map & m, const tripoint & p ) -> void {
+            m.spawn_artifact( p );
+        } );
+
+        DOC( "Spawns a natural artifact at a position on the map. Omit `property` to choose one at random." );
+        luna::set_fx( ut, "spawn_natural_artifact_at", []( map & m, const tripoint & p,
+        sol::optional<std::string> property ) -> void {
+            const auto prop = property && !property->empty()
+            ? io::string_to_enum<artifact_natural_property>( *property )
+            : ARTPROP_NULL;
+            m.spawn_natural_artifact( p, prop );
         } );
 
         DOC( "Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag." );

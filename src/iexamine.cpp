@@ -91,6 +91,7 @@
 #include "requirements.h"
 #include "rng.h"
 #include "sounds.h"
+#include "cloning_utils.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
@@ -5681,12 +5682,11 @@ static void cloning_vat_activate( player &p, const tripoint &examp )
     uilist specimen_menu;
     specimen_menu.text = _( "Select specimen sample:" );
     for( size_t z = 0; z < syringes.size(); z++ ) {
-        const shared_ptr_fast<monster> newmon_ptr = make_shared_fast<monster>
-                ( mtype_id( syringes[z]->get_var( "specimen_sample" ) ) );
+        const auto specimen_id = mtype_id( syringes[z]->get_var( "specimen_sample" ) );
+        const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_id ) );
         specimen_menu.addentry( z, true, MENU_AUTOASSIGN, string_format( "%s [%s]",
                                 syringes[z]->display_name(),
-                                to_string( time_duration::from_turns( turns_to_clone * ( syringes[z]->get_var( "specimen_size",
-                                           1 ) + 1 ) ) ) ) );
+                                to_string( time_duration::from_turns( turns_to_clone * size ) ) ) );
     }
     specimen_menu.query();
     const int choice = specimen_menu.ret;
@@ -5759,7 +5759,9 @@ static void cloning_vat_activate( player &p, const tripoint &examp )
                 }
             }
 
-            result->set_counter( turns_to_clone * ( selected_syringe->get_var( "specimen_size", 1 ) + 1 ) );
+            const auto specimen_id = mtype_id( selected_syringe->get_var( "specimen_sample" ) );
+            const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_id ) );
+            result->set_counter( turns_to_clone * size );
             result->activate();
             here.add_item( examp, std::move( result ) );
 

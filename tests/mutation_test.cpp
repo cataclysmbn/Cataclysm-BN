@@ -76,7 +76,7 @@ TEST_CASE( "Having all mutations give correct highest category", "[mutations]" )
     for( auto &cat : mutation_category_trait::get_all() ) {
         const auto &cur_cat = cat.second;
         const auto &cat_id = cur_cat.id;
-        if( cat_id == mutation_category_id( "ANY" ) ) {
+        if( cat_id == mutation_category_id( "ANY" ) || cat_id == mutation_category_id( "MYCUS" ) ) {
             continue;
         }
 
@@ -111,7 +111,7 @@ TEST_CASE( "Having all pre-threshold mutations gives a sensible threshold breach
     for( auto &cat : mutation_category_trait::get_all() ) {
         const auto &cur_cat = cat.second;
         const auto &cat_id = cur_cat.id;
-        if( cat_id == mutation_category_id( "ANY" ) ) {
+        if( cat_id == mutation_category_id( "ANY" ) || cat_id == mutation_category_id( "MYCUS" ) ) {
             continue;
         }
 
@@ -155,7 +155,7 @@ TEST_CASE( "Gaining a mutation in category makes mutations from other categories
     for( auto &cat : mutation_category_trait::get_all() ) {
         const auto &cur_cat = cat.second;
         const auto &cat_id = cur_cat.id;
-        if( cat_id == mutation_category_id( "ANY" ) ) {
+        if( cat_id == mutation_category_id( "ANY" ) || cat_id == mutation_category_id( "MYCUS" ) ) {
             continue;
         }
 

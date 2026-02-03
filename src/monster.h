@@ -304,7 +304,7 @@ class monster : public Creature, public location_visitable<monster>
 
         /** Returns innate monster bash skill, without calculating additional from helpers */
         int bash_skill();
-        int bash_estimate();
+        int bash_estimate( const tripoint &target );
         /** Returns ability of monster and any cooperative helpers to
          * bash the designated target.  **/
         int group_bash_skill( const tripoint &target );

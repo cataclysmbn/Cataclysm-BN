@@ -666,19 +666,19 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
         auto light_overh = one_in( 4 );
         auto light_atom  = one_in( 2 );
         for( auto &pt : parts ) {
-            if( pt.has_flag( VPFLAG_CONE_LIGHT ) ) {
+            if( pt.info().has_flag( VPFLAG_CONE_LIGHT ) ) {
                 pt.enabled = light_head;
-            } else if( pt.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
                 pt.enabled = light_whead;
-            } else if( pt.has_flag( VPFLAG_DOME_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_DOME_LIGHT ) ) {
                 pt.enabled = light_dome;
-            } else if( pt.has_flag( VPFLAG_AISLE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_AISLE_LIGHT ) ) {
                 pt.enabled = light_aisle;
-            } else if( pt.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
                 pt.enabled = light_hoverh;
-            } else if( pt.has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_CIRCLE_LIGHT ) ) {
                 pt.enabled = light_overh;
-            } else if( pt.has_flag( VPFLAG_ATOMIC_LIGHT ) ) {
+            } else if( pt.info().has_flag( VPFLAG_ATOMIC_LIGHT ) ) {
                 pt.enabled = light_atom;
             }
         }
@@ -1179,7 +1179,7 @@ void vehicle::smash( map &m, float hp_percent_loss_min, float hp_percent_loss_ma
 {
     for( auto &part : parts ) {
         //Skip any parts already mashed up or removed.
-        if( part.is_broken() || part.removed ) {
+        if( part.is_broken() || part.removed || part.info().has_flag( VPFLAG_NOSMASH ) ) {
             continue;
         }
 
@@ -1525,12 +1525,12 @@ bool vehicle::is_structural_part_removed() const
  */
 bool vehicle::can_mount( point dp, const vpart_id &id ) const
 {
-    //The part has to actually exist.
+    // The part has to actually exist.
     if( !id.is_valid() ) {
         return false;
     }
 
-    //It also has to be a real part, not the null part
+    // It also has to be a real part, not the null part
     const vpart_info &part = id.obj();
     if( part.has_flag( "NOINSTALL" ) ) {
         return false;
@@ -1538,7 +1538,7 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
 
     const std::vector<int> parts_in_square = parts_at_relative( dp, false );
 
-    //New Subpath for balloon type structures when on the edge
+    // New Subpath for balloon type structures when on the edge
     if( part.has_flag( "EXTENDABLE" ) ) {
         if( parts_in_square.empty() ) {
             // There needs to be parts for these
@@ -1557,7 +1557,7 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
             return false;
         }
     }
-    //First part in an empty square MUST be a structural part
+    // First part in an empty square MUST be a structural part
     if( parts_in_square.empty() && part.location != part_location_structure ) {
         return false;
     }
@@ -1565,8 +1565,12 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
     if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "ANIMAL_CTRL" ) ) {
         return false;
     }
-    //No other part can be placed on a protrusion
+    // No other part can be placed on a protrusion
     if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "PROTRUSION" ) ) {
+        return false;
+    }
+    // NOCOLLIDE parts can not have other parts on the same tile
+    if( !parts_in_square.empty() && part_info( parts_in_square[0] ).has_flag( "NOCOLLIDE" ) ) {
         return false;
     }
 
@@ -4544,7 +4548,9 @@ double vehicle::coeff_rolling_drag() const
         wheel_factor *= wheel_ratio /
                         ( base_wheels * wheel_ratio - base_wheels + wheelcache.size() );
     }
-    coefficient_rolling_resistance = newton_ratio * wheel_factor * to_kilogram( total_mass() );
+    coefficient_rolling_resistance = newton_ratio * wheel_factor * to_kilogram(
+                                         total_mass() ) * get_lift_percent( true );
+    coefficient_rolling_resistance = std::max( coefficient_rolling_resistance, 0.0 );
     coeff_rolling_dirty = false;
     return coefficient_rolling_resistance;
 }
@@ -4676,9 +4682,14 @@ double vehicle::total_thrust( const bool fuelled, const bool safe, const bool id
 }
 
 // get sum of lift from all lifting parts
-double vehicle::total_lift( const bool fuelled, const bool safe, const bool ideal ) const
+double vehicle::total_lift( const bool fuelled, const bool safe, const bool ideal,
+                            const bool unpowered ) const
 {
-    return thrust_of_rotorcraft( fuelled, safe, ideal ) + total_balloon_lift() + total_wing_lift();
+    if( unpowered ) {
+        return total_balloon_lift() + total_wing_lift();
+    } else {
+        return thrust_of_rotorcraft( fuelled, safe, ideal ) + total_balloon_lift() + total_wing_lift();
+    }
 }
 
 int vehicle::get_takeoff_speed() const
@@ -4712,9 +4723,15 @@ bool vehicle::has_lift() const
     return has_part( VPFLAG_ROTOR ) || has_part( VPFLAG_BALLOON ) || has_part( VPFLAG_WING );
 }
 
-bool vehicle::has_sufficient_lift() const
+bool vehicle::has_sufficient_lift( const bool unpowered ) const
 {
-    return total_lift( true ) > to_newton( total_mass() );
+    return total_lift( true, false, false, unpowered ) > to_newton( total_mass() );
+}
+
+double vehicle::get_lift_percent( const bool unpowered ) const
+{
+    return std::max( 0.0, 1 - ( total_lift( true, false, false,
+                                            unpowered ) / to_newton( total_mass() ) ) );
 }
 
 bool vehicle::is_rotorcraft() const
@@ -4792,7 +4809,8 @@ double vehicle::coeff_water_drag() const
     // water_mass = vehicle_mass
     // area * depth = vehicle_mass / water_density
     // depth = vehicle_mass / water_density / area
-    draft_m = to_kilogram( total_mass() ) / water_density / hull_area;
+    draft_m = to_kilogram( total_mass() ) / water_density / hull_area * get_lift_percent( true );
+    draft_m = std::max( draft_m, 0.0 );
     // increase the streamlining as more of the boat is covered in boat boards
     double c_water_drag = 1.25 - hull_coverage;
     // hull height starts at 0.3m and goes up as you add more boat boards
@@ -5047,7 +5065,7 @@ float vehicle::steering_effectiveness() const
         // I'M ON A BOAT
         return can_float() ? 1.0f : 0.0f;
     }
-    if( is_flying ) {
+    if( is_flying || has_sufficient_lift( true ) ) {
         // I'M IN THE AIR
         // May need to add a separate check for planes, if/when they happen
         return is_aircraft() ? 1.0f : 0.0f;

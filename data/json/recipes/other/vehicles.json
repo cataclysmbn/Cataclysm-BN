@@ -1120,9 +1120,8 @@
     "difficulty": 5,
     "time": "2 h",
     "autolearn": true,
-    "using": [ [ "soldering_standard", 10 ] ],
+    "using": [ [ "soldering_standard", 10 ], [ "coding_standard", 60 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "tools": [ [ [ "laptop", -1 ] ] ],
     "components": [
       [ [ "targeting_module", 1 ] ],
       [ [ "ai_module", 1 ] ],
@@ -1138,20 +1137,25 @@
     "result": "bomber_controls",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
-    "skill_used": "electronics",
-    "skills_required": [ [ "computer", 4 ], [ "mechanics", 3 ] ],
+    "skill_used": "mechanics",
+    "skills_required": [ [ "fabrication", 4 ], [ "electronics", 2 ] ],
     "difficulty": 5,
     "time": "2 h",
     "autolearn": true,
-    "using": [ [ "soldering_standard", 10 ] ],
-    "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "tools": [ [ [ "laptop", -1 ] ] ],
+    "using": [ [ "steel_standard", 1 ], [ "soldering_standard", 10 ] ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "WRENCH", "level": 1 },
+      { "id": "SCREW", "level": 1 }
+    ],
     "components": [
-      [ [ "ai_module", 1 ] ],
-      [ [ "identification_module", 1 ] ],
+      [ [ "sheet_metal", 2 ] ],
+      [ [ "motor_tiny", 2 ] ],
+      [ [ "spring", 1 ] ],
       [ [ "cable", 10 ] ],
-      [ [ "sensor_module", 1 ] ],
-      [ [ "robot_controls", 1 ] ]
+      [ [ "wire", 2 ] ],
+      [ [ "pilot_light", 1 ] ]
     ]
   },
   {
@@ -1160,7 +1164,7 @@
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
     "skill_used": "mechanics",
-    "skills_required": [ [ "mechanics", 3 ], [ "electronics", 1 ] ],
+    "skills_required": [ [ "fabrication", 3 ], [ "electronics", 1 ] ],
     "difficulty": 4,
     "time": "2 h",
     "autolearn": true,
