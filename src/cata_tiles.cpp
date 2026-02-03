@@ -1519,39 +1519,45 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
     // Hair color tints effecting hair style overlays, for example
     // This lets you do sillier things than that, too
     // You could potentially tint a character's armor for customization purposes
-    if ( config.has_array( "tints" ) ) {
-        auto colors = get_all_colors();
-        for ( const JsonObject& tint_def : config.get_array( "tints" ) ) {
-            const auto type_id = tint_def.get_string( "type" );
-            const auto tint_value = tint_def.get_string( "color" );
-            if ( tint_value.empty() || type_id.empty() ) {
-                continue;
+    if( config.has_array( "tints" ) ) {
+        const auto &colors = get_all_colors();
+        auto parse_color = [&colors]( const std::string & color_str ) -> std::optional<SDL_Color> {
+            if( color_str.empty() ) {
+                return std::nullopt;
             }
-            RGBColor tint_color;
-            if ( tint_value.starts_with( '#' ) && tint_value.size() == 7 ) {
-                for ( const auto& c : tint_value.substr( 1 ) ) {
-                    if ( !std::isxdigit( c ) ) {
-                        continue;
+            if( color_str.starts_with( '#' ) && color_str.size() == 7 ) {
+                for( const char c : color_str.substr( 1 ) ) {
+                    if( !std::isxdigit( c ) ) {
+                        return std::nullopt;
                     }
                 }
-                tint_color = rgb_from_hex_string( tint_value );
-            } else {
-                auto curse_color = colors.name_to_color( tint_value );
-                if ( curse_color == c_unset ) {
-                    continue;
-                }
-                tint_color = curses_color_to_RGB( curse_color );
+                return static_cast<SDL_Color>( rgb_from_hex_string( color_str ) );
             }
-            ts.tints[type_id] = tint_color;
+            const nc_color curse_color = colors.name_to_color( color_str );
+            if( curse_color == c_unset ) {
+                return std::nullopt;
+            }
+            return static_cast<SDL_Color>( curses_color_to_RGB( curse_color ) );
+        };
+
+        for( const JsonObject &tint_def : config.get_array( "tints" ) ) {
+            const std::string type_id = tint_def.get_string( "type" );
+            if( type_id.empty() ) {
+                continue;
+            }
+            std::optional<SDL_Color> fg = parse_color( tint_def.get_string( "fg_color", "" ) );
+            std::optional<SDL_Color> bg = parse_color( tint_def.get_string( "bg_color", "" ) );
+            if( fg.has_value() || bg.has_value() ) {
+                ts.tints[type_id] = { bg, fg };
+            }
         }
     }
 
-    if ( config.has_array( "tint_pairs" ) ) {
-        auto colors = get_all_colors();
-        for ( const JsonObject& tint_def : config.get_array( "tint_pairs" ) ) {
-            const auto source_type = tint_def.get_string( "source_type" );
-            const auto target_type = tint_def.get_string( "target_type" );
-            if ( source_type.empty() || target_type.empty() ) {
+    if( config.has_array( "tint_pairs" ) ) {
+        for( const JsonObject &tint_def : config.get_array( "tint_pairs" ) ) {
+            const std::string source_type = tint_def.get_string( "source_type" );
+            const std::string target_type = tint_def.get_string( "target_type" );
+            if( source_type.empty() || target_type.empty() ) {
                 continue;
             }
             ts.tint_pairs[target_type] = source_type;
@@ -1559,16 +1565,18 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
     }
 }
 
-std::string tileset::get_tint_controller( const std::string &tint_type ) {
-    if ( tint_pairs.contains( tint_type ) ) {
+std::string tileset::get_tint_controller( const std::string &tint_type )
+{
+    if( tint_pairs.contains( tint_type ) ) {
         return tint_pairs[tint_type];
     }
     return std::string();
 }
 
-RGBColor* tileset::get_tint( const std::string ctr_type ) {
-    if ( tints.contains( ctr_type ) ) {
-        return &tints[ctr_type];
+const color_tint_pair *tileset::get_tint( const std::string &tint_id )
+{
+    if( tints.contains( tint_id ) ) {
+        return &tints[tint_id];
     }
     return nullptr;
 }
@@ -4189,50 +4197,53 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
     };
 
     // next up, draw all the overlays
-    auto overlays = ch.get_overlay_ids();
-    for( const auto& [overlay_id, data] : overlays ) {
+    const auto overlays = ch.get_overlay_ids();
+    for( const auto &[overlay_id, data] : overlays ) {
+        auto [overlay_bg_color, overlay_fg_color] = std::visit( get_overlay_color, data );
 
-        auto [overlay_bgCol, overlay_fgCol] = std::visit( get_overlay_color, data );
+        std::string draw_id = overlay_id;
+        bool found = false;
 
-        auto draw_id = overlay_id;
-        auto hair_pos = draw_id.find( "hair_" );
-        auto found = false;
-        if ( draw_id.find( "hair_" ) != std::string::npos ) {
-            for ( const auto& oth_mut : ch.get_mutations() ) {
-                auto color_id = oth_mut.str();
-                if ( oth_mut.obj().types.contains( "hair_color" ) &&
-                    draw_id.find( color_id ) == std::string::npos ) {
-                    auto prepend = draw_id.substr( 0, hair_pos );
-                    auto append = draw_id.substr( hair_pos );
-                    append = append.substr( append.find( '_' ) );
-                    auto new_id = prepend + color_id + append;
-                    found = find_overlay_looks_like( ch.male, new_id, new_id );
-                    if ( found ) {
-                        overlay_bgCol = std::nullopt;
-                        overlay_fgCol = std::nullopt;
-                        draw_id = new_id;
-                    }
+        // Legacy hair color injection: try to find a tile with the hair color in the name
+        const size_t hair_pos = draw_id.find( "hair_" );
+        if( hair_pos != std::string::npos ) {
+            for( const trait_id &other_mut : ch.get_mutations() ) {
+                if( !other_mut.obj().types.contains( "hair_color" ) ) {
+                    continue;
+                }
+                const std::string color_id = other_mut.str();
+                if( draw_id.find( color_id ) != std::string::npos ) {
                     break;
                 }
+                const std::string prefix = draw_id.substr( 0, hair_pos );
+                std::string suffix = draw_id.substr( hair_pos );
+                suffix = suffix.substr( suffix.find( '_' ) );
+                const std::string new_id = prefix + color_id + suffix;
+                // draw_id is set to the resolved tile ID if found
+                found = find_overlay_looks_like( ch.male, new_id, draw_id );
+                if( found ) {
+                    overlay_bg_color = std::nullopt;
+                    overlay_fg_color = std::nullopt;
+                }
+                break;
             }
         }
-        if ( !found ) { found = find_overlay_looks_like(ch.male, overlay_id, draw_id); }
-        if( found ) {
-            int overlay_height_3d = prev_height_3d;
-            if( ch.facing == FD_RIGHT ) {
-                const tile_search_params tile {draw_id, C_NONE, "", corner, /*rota:*/ 0};
-                draw_from_id_string(
-                    tile, p, overlay_bgCol, overlay_fgCol,
-                    ll, false, 0, as_independent_entity, overlay_height_3d );
-            } else if( ch.facing == FD_LEFT ) {
-                const tile_search_params tile = {draw_id, C_NONE, "", corner, /*rota:*/ 4};
-                draw_from_id_string(
-                    tile, p, overlay_bgCol, overlay_fgCol,
-                    ll, false, 0, as_independent_entity, overlay_height_3d );
-            }
-            // the tallest height-having overlay is the one that counts
-            height_3d = std::max( height_3d, overlay_height_3d );
+
+        if( !found ) {
+            found = find_overlay_looks_like( ch.male, overlay_id, draw_id );
         }
+        if( !found ) {
+            continue;
+        }
+
+        int overlay_height_3d = prev_height_3d;
+        const int rota = ch.facing == FD_RIGHT ? 0 : 4;
+        const tile_search_params tile{ draw_id, C_NONE, "", corner, rota };
+        draw_from_id_string(
+            tile, p, overlay_bg_color, overlay_fg_color,
+            ll, false, 0, as_independent_entity, overlay_height_3d );
+        // the tallest height-having overlay is the one that counts
+        height_3d = std::max( height_3d, overlay_height_3d );
     }
 }
 

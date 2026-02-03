@@ -104,42 +104,43 @@ auto cata_tiles::get_mutation_color(
 }
 
 auto cata_tiles::get_mutation_color(
-    const mutation &mut, const Character &c )-> color_tint_pair
+    const mutation &mut, const Character &c ) -> color_tint_pair
 {
-    mutation_branch mutation = mut.first.obj();
-    for( const auto &mut_type : mutation.types ) {
-        auto controller = tileset_ptr->get_tint_controller( mut_type );
-        if( !controller.empty() ) {
-            for( const auto &oth_mut : c.get_mutations() ) {
-                if( oth_mut.obj().types.contains( controller ) ) {
-                    auto tint = tileset_ptr->get_tint( oth_mut.str() );
-                    if( tint != nullptr ) {
-                        auto sdl_tint = SDL_Color{ tint->r, tint->g, tint->b, tint->a };
-                        return { sdl_tint, sdl_tint };
-                    } else {
-                        auto str = oth_mut.str();
-                        if( str.find( "_" ) == std::string::npos ) {
-                            break;
-                        }
-                        str = str.substr( str.rfind( '_' ) + 1 );
-                        auto colors = get_all_colors();
-                        if( str == "blonde" ) { str = "yellow"; }
-                        else if (str == "gray") { str = "light_gray"; }
-                        auto curse_color = colors.name_to_color( "c_" + str );
-                        if( curse_color == c_unset ) {
-                            return { std::nullopt, std::nullopt };
-                        }
-                        auto tint = curses_color_to_RGB( curse_color );
-                        auto sdl_tint = SDL_Color{ tint.r, tint.g, tint.b, tint.a };
-                        return { sdl_tint, sdl_tint };
-                    }
-                    break;
-                }
-            }
-            break;
+    const mutation_branch &mut_branch = mut.first.obj();
+    for( const std::string &mut_type : mut_branch.types ) {
+        const std::string controller = tileset_ptr->get_tint_controller( mut_type );
+        if( controller.empty() ) {
+            continue;
         }
+        for( const trait_id &other_mut : c.get_mutations() ) {
+            if( !other_mut.obj().types.contains( controller ) ) {
+                continue;
+            }
+            const color_tint_pair *tint = tileset_ptr->get_tint( other_mut.str() );
+            if( tint != nullptr ) {
+                return *tint;
+            }
+            // Legacy fallback: extract color from mutation name suffix
+            std::string color_name = other_mut.str();
+            if( color_name.find( '_' ) == std::string::npos ) {
+                return { std::nullopt, std::nullopt };
+            }
+            color_name = color_name.substr( color_name.rfind( '_' ) + 1 );
+            if( color_name == "blond" ) {
+                color_name = "yellow";
+            } else if( color_name == "gray" ) {
+                color_name = "light_gray";
+            }
+            const nc_color curse_color = get_all_colors().name_to_color( "c_" + color_name );
+            if( curse_color == c_unset ) {
+                return { std::nullopt, std::nullopt };
+            }
+            const SDL_Color sdl_tint = static_cast<SDL_Color>( curses_color_to_RGB( curse_color ) );
+            return { sdl_tint, sdl_tint };
+        }
+        break;
     }
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 #endif

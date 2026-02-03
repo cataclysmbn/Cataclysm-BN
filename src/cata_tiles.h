@@ -203,6 +203,8 @@ struct std::hash<tileset_lookup_key> {
 constexpr int TILESET_NO_MASK = -1;
 constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
 
+using color_tint_pair = std::pair<std::optional<SDL_Color>, std::optional<SDL_Color>>;
+
 class tileset
 {
     private:
@@ -237,7 +239,7 @@ class tileset
 #endif
 
         std::unordered_map<std::string, tile_type> tile_ids;
-        std::unordered_map<std::string, RGBColor> tints;
+        std::unordered_map<std::string, color_tint_pair> tints;
         std::unordered_map<std::string, std::string> tint_pairs;
         // caches both "default" and "_season_XXX" tile variants (to reduce the number of lookups)
         // either variant can be either a `nullptr` or a pointer/reference to the real value (stored inside `tile_ids`)
@@ -285,9 +287,9 @@ class tileset
         std::optional<tile_lookup_res> find_tile_type_by_season( const std::string &id,
                 season_type season ) const;
 
-        std::string get_tint_controller(const std::string& tint_type);
+        std::string get_tint_controller( const std::string &tint_type );
 
-        RGBColor* get_tint(const std::string ctr_type);
+        const color_tint_pair *get_tint( const std::string &tint_id );
 };
 
 class tileset_loader
@@ -439,7 +441,6 @@ class idle_animation_manager
  *     - The color of the block at 'point'.
  */
 using color_block_overlay_container = std::pair<SDL_BlendMode, std::multimap<point, SDL_Color>>;
-using color_tint_pair = std::pair<std::optional<SDL_Color>, std::optional<SDL_Color>>;
 
 struct tile_render_info;
 
