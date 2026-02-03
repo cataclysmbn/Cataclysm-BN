@@ -23,10 +23,7 @@ local function add_line(lines, label, value, value_color)
   local value_tint = value_color or "white"
   table.insert(
     lines,
-    color_text(label_clean, "green")
-      .. color_text(":", "dark_gray")
-      .. " "
-      .. color_text(value, value_tint)
+    color_text(label_clean, "green") .. color_text(":", "dark_gray") .. " " .. color_text(value, value_tint)
   )
 end
 
@@ -36,9 +33,7 @@ local function collect_artifacts(who)
   local artifacts = {}
 
   for _, it in ipairs(items) do
-    if it:is_artifact() then
-      table.insert(artifacts, it)
-    end
+    if it:is_artifact() then table.insert(artifacts, it) end
   end
 
   return artifacts
@@ -48,14 +43,10 @@ end
 local function describe_artifact(it)
   local itype_id = it:get_type()
   local itype = itype_id:obj()
-  if not itype then
-    return locale.gettext("Unable to read artifact data.")
-  end
+  if not itype then return locale.gettext("Unable to read artifact data.") end
 
   local slot = itype:slot_artifact()
-  if not slot then
-    return locale.gettext("This item has no artifact effects.")
-  end
+  if not slot then return locale.gettext("This item has no artifact effects.") end
 
   local lines = {}
   table.insert(lines, color_text("ARTIFACT ANALYSIS TERMINAL", "green"))
@@ -93,9 +84,7 @@ analyzer.menu = function(who, item, pos)
       menu:add(idx - 1, entry)
     end
     choice = menu:query()
-    if choice < 0 then
-      return 0
-    end
+    if choice < 0 then return 0 end
   end
 
   local selected = artifacts[choice + 1]

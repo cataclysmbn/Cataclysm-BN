@@ -36,20 +36,20 @@ auto artifact_effect_names( const std::vector<art_effect_passive> &effects
                           ) -> std::vector<std::string>
 {
     return effects
-           | std::views::transform( []( const art_effect_passive effect ) {
-               return io::enum_to_string( effect );
-           } )
-           | std::ranges::to<std::vector>();
+    | std::views::transform( []( const art_effect_passive effect ) {
+        return io::enum_to_string( effect );
+    } )
+    | std::ranges::to<std::vector>();
 }
 
 auto artifact_effect_names( const std::vector<art_effect_active> &effects
                           ) -> std::vector<std::string>
 {
     return effects
-           | std::views::transform( []( const art_effect_active effect ) {
-               return io::enum_to_string( effect );
-           } )
-           | std::ranges::to<std::vector>();
+    | std::views::transform( []( const art_effect_active effect ) {
+        return io::enum_to_string( effect );
+    } )
+    | std::ranges::to<std::vector>();
 }
 
 auto artifact_effect_description( const art_effect_passive effect ) -> std::string
@@ -220,20 +220,20 @@ auto artifact_effect_descriptions( const std::vector<art_effect_passive> &effect
                                  ) -> std::vector<std::string>
 {
     return effects
-           | std::views::transform( []( const art_effect_passive effect ) {
-               return artifact_effect_description( effect );
-           } )
-           | std::ranges::to<std::vector>();
+    | std::views::transform( []( const art_effect_passive effect ) {
+        return artifact_effect_description( effect );
+    } )
+    | std::ranges::to<std::vector>();
 }
 
 auto artifact_effect_descriptions( const std::vector<art_effect_active> &effects
                                  ) -> std::vector<std::string>
 {
     return effects
-           | std::views::transform( []( const art_effect_active effect ) {
-               return artifact_effect_description( effect );
-           } )
-           | std::ranges::to<std::vector>();
+    | std::views::transform( []( const art_effect_active effect ) {
+        return artifact_effect_description( effect );
+    } )
+    | std::ranges::to<std::vector>();
 }
 
 auto artifact_charge_description( const art_charge charge ) -> std::string
@@ -1317,45 +1317,45 @@ void reg_islot( sol::state &lua )
         SET_MEMB_RO( effects_worn );
 
         luna::set_fx( ut, "effects_activated_names",
-                      []( const islot_artifact &slot ) -> std::vector<std::string> {
+        []( const islot_artifact & slot ) -> std::vector<std::string> {
             return artifact_effect_names( slot.effects_activated );
         } );
         luna::set_fx( ut, "effects_carried_names",
-                      []( const islot_artifact &slot ) -> std::vector<std::string> {
+        []( const islot_artifact & slot ) -> std::vector<std::string> {
             return artifact_effect_names( slot.effects_carried );
         } );
         luna::set_fx( ut, "effects_wielded_names",
-                      []( const islot_artifact &slot ) -> std::vector<std::string> {
+        []( const islot_artifact & slot ) -> std::vector<std::string> {
             return artifact_effect_names( slot.effects_wielded );
         } );
         luna::set_fx( ut, "effects_worn_names",
-                      []( const islot_artifact &slot ) -> std::vector<std::string> {
+        []( const islot_artifact & slot ) -> std::vector<std::string> {
             return artifact_effect_names( slot.effects_worn );
         } );
 
         luna::set_fx( ut, "effects_activated_descriptions",
-                      []( const islot_artifact &slot ) -> std::vector<std::string> {
+        []( const islot_artifact & slot ) -> std::vector<std::string> {
             return artifact_effect_descriptions( slot.effects_activated );
         } );
         luna::set_fx( ut, "effects_carried_descriptions",
-                      []( const islot_artifact &slot ) -> std::vector<std::string> {
+        []( const islot_artifact & slot ) -> std::vector<std::string> {
             return artifact_effect_descriptions( slot.effects_carried );
         } );
         luna::set_fx( ut, "effects_wielded_descriptions",
-                      []( const islot_artifact &slot ) -> std::vector<std::string> {
+        []( const islot_artifact & slot ) -> std::vector<std::string> {
             return artifact_effect_descriptions( slot.effects_wielded );
         } );
         luna::set_fx( ut, "effects_worn_descriptions",
-                      []( const islot_artifact &slot ) -> std::vector<std::string> {
+        []( const islot_artifact & slot ) -> std::vector<std::string> {
             return artifact_effect_descriptions( slot.effects_worn );
         } );
 
         luna::set_fx( ut, "charge_type_description",
-                      []( const islot_artifact &slot ) -> std::string {
+        []( const islot_artifact & slot ) -> std::string {
             return artifact_charge_description( slot.charge_type );
         } );
         luna::set_fx( ut, "charge_req_description",
-                      []( const islot_artifact &slot ) -> std::string {
+        []( const islot_artifact & slot ) -> std::string {
             return artifact_charge_req_description( slot.charge_req );
         } );
     }
