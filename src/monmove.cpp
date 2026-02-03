@@ -1622,7 +1622,7 @@ int monster::group_bash_skill( const tripoint &target )
         // If we made it here, the last monster checked was the candidate.
         monster &helpermon = *mon;
         // Contribution falls off rapidly with distance from target.
-        bashskill += helpermon.bash_skill() / rl_dist( candidate, target );
+        bashskill += helpermon.bash_skill() / std::max( rl_dist( candidate, target ), 1 );
     }
 
     return bashskill;
