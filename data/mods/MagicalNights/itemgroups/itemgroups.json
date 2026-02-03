@@ -69,7 +69,6 @@
     "id": "magic_shop_rare_books",
     "items": [
       { "group": "spellbook_loot_2", "prob": 60 },
-      { "group": "spellbook_loot_3", "prob": 10 },
       { "group": "spell_scroll_tier_2", "prob": 60 },
       { "group": "spell_scroll_tier_3", "prob": 20 },
       { "group": "magic_recipe_advanced", "prob": 50 },
