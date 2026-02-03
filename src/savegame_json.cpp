@@ -588,11 +588,11 @@ void Character::load( const JsonObject &data )
             if( pid.starts_with( "hair_" ) ) {
                 int cnt = 0;
                 for( auto c : pid.substr( 5 ) ) {
-                    if( c == '_' ) cnt++;
+                    if( c == '_' ) { cnt++; }
                 }
                 silence = cnt >= 1;
             }
-            if ( !silence ) {
+            if( !silence ) {
                 debugmsg( "character %s has invalid trait %s, it will be ignored", name, pid );
             }
             my_traits.erase( it++ );
@@ -624,7 +624,7 @@ void Character::load( const JsonObject &data )
             if( mid_str.starts_with( "hair_" ) ) {
                 for( const trait_id &color_trait : valid_hair_colors ) {
                     std::string color_str = color_trait.str();
-                    if ( !color_str.starts_with( "hair_" ) ) {
+                    if( !color_str.starts_with( "hair_" ) ) {
                         color_str = "hair_" + color_str;
                     }
                     std::string prefix = color_str + "_";
@@ -635,7 +635,7 @@ void Character::load( const JsonObject &data )
                             if( style_str.starts_with( "hair_" ) ) {
                                 style_str = style_str.substr( 5 );
                             }
-                            if( style_suffix == style_str) {
+                            if( style_suffix == style_str ) {
                                 migrations_to_add.push_back( color_trait );
                                 migrations_to_add.push_back( style_trait );
                                 has_hair_color = true;
@@ -669,8 +669,7 @@ void Character::load( const JsonObject &data )
         if( !has_trait( tid ) ) {
             if( !has_base_trait( tid ) ) {
                 toggle_trait( tid );
-            }
-            else {
+            } else {
                 set_mutation( tid );
             }
         }
@@ -679,7 +678,7 @@ void Character::load( const JsonObject &data )
     // add a random hair color (in the new system, even bald characters have a hair color)
     if( has_hair_bald && !has_hair_color ) {
         trait_group::Trait_list random_colors = trait_group::traits_from(
-                    trait_group::Trait_group_tag( "Hair_Color_Any" ) );
+                trait_group::Trait_group_tag( "Hair_Color_Any" ) );
         if( !random_colors.empty() ) {
             const trait_id &color_tid = random_colors.front();
             if( !has_trait( color_tid ) ) {

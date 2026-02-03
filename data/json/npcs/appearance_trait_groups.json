@@ -19,49 +19,89 @@
     "type": "trait_group",
     "id": "Appearance_Irish",
     "subtype": "collection",
-    "traits": [ { "group": "Hair_Color_Irish", "prob": 100 }, { "group": "Hair_Style_Any", "prob": 100 }, { "group": "Skin_Fair", "prob": 100 }, { "group": "Eye_light", "prob": 100 } ]
+    "traits": [
+      { "group": "Hair_Color_Irish", "prob": 100 },
+      { "group": "Hair_Style_Any", "prob": 100 },
+      { "group": "Skin_Fair", "prob": 100 },
+      { "group": "Eye_light", "prob": 100 }
+    ]
   },
   {
     "type": "trait_group",
     "id": "Appearance_Caucasian",
     "subtype": "collection",
-    "traits": [ { "group": "Hair_Color_Any", "prob": 100 }, { "group": "Hair_Style_Any", "prob": 100 }, { "group": "Skin_White", "prob": 100 }, { "group": "Eye_any", "prob": 100 } ]
+    "traits": [
+      { "group": "Hair_Color_Any", "prob": 100 },
+      { "group": "Hair_Style_Any", "prob": 100 },
+      { "group": "Skin_White", "prob": 100 },
+      { "group": "Eye_any", "prob": 100 }
+    ]
   },
   {
     "type": "trait_group",
     "id": "Appearance_Germanic",
     "subtype": "collection",
-    "traits": [ { "group": "Hair_Color_Fair", "prob": 100 }, { "group": "Hair_Style_Any", "prob": 100 }, { "group": "Skin_Fair", "prob": 100 }, { "group": "Eye_light", "prob": 100 } ]
+    "traits": [
+      { "group": "Hair_Color_Fair", "prob": 100 },
+      { "group": "Hair_Style_Any", "prob": 100 },
+      { "group": "Skin_Fair", "prob": 100 },
+      { "group": "Eye_light", "prob": 100 }
+    ]
   },
   {
     "type": "trait_group",
     "id": "Appearance_Latin",
     "subtype": "collection",
-    "traits": [ { "group": "Hair_Color_Dark", "prob": 100 }, { "group": "Hair_Style_Any", "prob": 100 }, { "group": "Skin_Medium", "prob": 100 }, { "group": "Eye_dark", "prob": 100 } ]
+    "traits": [
+      { "group": "Hair_Color_Dark", "prob": 100 },
+      { "group": "Hair_Style_Any", "prob": 100 },
+      { "group": "Skin_Medium", "prob": 100 },
+      { "group": "Eye_dark", "prob": 100 }
+    ]
   },
   {
     "type": "trait_group",
     "id": "Appearance_African",
     "subtype": "collection",
-    "traits": [ { "group": "Hair_Color_Dark", "prob": 100 }, { "group": "Hair_Style_African", "prob": 100 }, { "group": "Skin_Dark", "prob": 100 }, { "group": "Eye_dark", "prob": 100 } ]
+    "traits": [
+      { "group": "Hair_Color_Dark", "prob": 100 },
+      { "group": "Hair_Style_African", "prob": 100 },
+      { "group": "Skin_Dark", "prob": 100 },
+      { "group": "Eye_dark", "prob": 100 }
+    ]
   },
   {
     "type": "trait_group",
     "id": "Appearance_EastAsian",
     "subtype": "collection",
-    "traits": [ { "group": "Hair_Color_Dark", "prob": 100 }, { "group": "Hair_Style_Any", "prob": 100 }, { "trait": "SKIN_TAN", "prob": 100 }, { "group": "Eye_dark", "prob": 100 } ]
+    "traits": [
+      { "group": "Hair_Color_Dark", "prob": 100 },
+      { "group": "Hair_Style_Any", "prob": 100 },
+      { "trait": "SKIN_TAN", "prob": 100 },
+      { "group": "Eye_dark", "prob": 100 }
+    ]
   },
   {
     "type": "trait_group",
     "id": "Appearance_SouthAsian",
     "subtype": "collection",
-    "traits": [ { "group": "Hair_Color_Dark", "prob": 100 }, { "group": "Hair_Style_Any", "prob": 100 }, { "trait": "SKIN_TAN", "prob": 100 }, { "group": "Eye_dark", "prob": 100 } ]
+    "traits": [
+      { "group": "Hair_Color_Dark", "prob": 100 },
+      { "group": "Hair_Style_Any", "prob": 100 },
+      { "trait": "SKIN_TAN", "prob": 100 },
+      { "group": "Eye_dark", "prob": 100 }
+    ]
   },
   {
     "type": "trait_group",
     "id": "Appearance_Mixed",
     "subtype": "collection",
-    "traits": [ { "group": "Hair_Color_Any", "prob": 100 }, { "group": "Hair_Style_Mixed", "prob": 100 }, { "group": "Skin_Any", "prob": 100 }, { "group": "Eye_any", "prob": 100 } ]
+    "traits": [
+      { "group": "Hair_Color_Any", "prob": 100 },
+      { "group": "Hair_Style_Mixed", "prob": 100 },
+      { "group": "Skin_Any", "prob": 100 },
+      { "group": "Eye_any", "prob": 100 }
+    ]
   },
   {
     "type": "trait_group",
@@ -215,5 +255,5 @@
       { "trait": "eye_gray", "prob": 3 },
       { "trait": "eye_green", "prob": 2 }
     ]
-  },
+  }
 ]

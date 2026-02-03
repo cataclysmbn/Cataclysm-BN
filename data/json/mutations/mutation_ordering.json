@@ -110,15 +110,7 @@
         "order": 1550
       },
       {
-        "id": [
-          "hair_crewcut",
-          "hair_mohawk",
-          "hair_fro",
-          "hair_short",
-          "hair_medium",
-          "hair_long",
-          "hair_bald"
-        ],
+        "id": [ "hair_crewcut", "hair_mohawk", "hair_fro", "hair_short", "hair_medium", "hair_long", "hair_bald" ],
         "order": 1600
       },
       { "id": [ "LEAVES", "TAIL_SNAKE", "TAIL_SNAKE_OK" ], "order": 1900 },

@@ -173,19 +173,19 @@ void RGBColor::deserialize( JsonIn &jsin )
 }
 RGBColor rgb_from_hex_string( std::string str )
 {
-    if ( !str.empty() ) {
-        if ( str.starts_with( "#" ) ) {
+    if( !str.empty() ) {
+        if( str.starts_with( "#" ) ) {
             str = str.substr( 1 );
         }
         auto cont = true;
-        if ( str.length() == 6 ) {
-            for ( const auto& c : str ) {
-                if ( !std::isxdigit( c ) ) {
+        if( str.length() == 6 ) {
+            for( const auto &c : str ) {
+                if( !std::isxdigit( c ) ) {
                     cont = false;
                     break;
                 }
             }
-            if (cont) {
+            if( cont ) {
                 std::istringstream is( str );
 
                 uint32_t tmp;

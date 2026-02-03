@@ -86,7 +86,7 @@ class char_preview_adapter : public cata_tiles
                             append = append.substr( append.find( '_' ) );
                             auto new_id = prepend + color_id + append;
                             found = find_overlay_looks_like( ch.male, new_id, new_id );
-                            if (found) {
+                            if( found ) {
                                 overlay_bgCol = std::nullopt;
                                 overlay_fgCol = std::nullopt;
                                 draw_id = new_id;
@@ -180,7 +180,7 @@ class char_preview_adapter : public cata_tiles
                         result.temp_avatar.wear_item( item::spawn( *std::move( it ) ), false );
                     }
                 }
-                for( const item *const &worn_item : result.temp_avatar.worn ) {
+                for( const item * const &worn_item : result.temp_avatar.worn ) {
                     result.overlays.emplace_back( overlay_entry{
                         "worn_" + worn_item->typeId().str(),
                         worn_item

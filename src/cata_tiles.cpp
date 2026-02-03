@@ -1522,10 +1522,12 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
     if( config.has_array( "tints" ) ) {
         const auto &colors = get_all_colors();
         auto parse_color = [&colors]( const std::string & color_str ) -> std::optional<SDL_Color> {
-            if( color_str.empty() ) {
+            if( color_str.empty() )
+            {
                 return std::nullopt;
             }
-            if( color_str.starts_with( '#' ) && color_str.size() == 7 ) {
+            if( color_str.starts_with( '#' ) && color_str.size() == 7 )
+            {
                 for( const char c : color_str.substr( 1 ) ) {
                     if( !std::isxdigit( c ) ) {
                         return std::nullopt;
@@ -1534,7 +1536,8 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 return static_cast<SDL_Color>( rgb_from_hex_string( color_str ) );
             }
             const nc_color curse_color = colors.name_to_color( color_str );
-            if( curse_color == c_unset ) {
+            if( curse_color == c_unset )
+            {
                 return std::nullopt;
             }
             return static_cast<SDL_Color>( curses_color_to_RGB( curse_color ) );

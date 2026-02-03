@@ -481,8 +481,10 @@ bool avatar::create( character_type type, const std::string &tempname )
     switch( type ) {
         case character_type::CUSTOM:
             // don't make them bald!
-            set_cosmetic_trait( *this, type_hair_style, male ? male_default_hair_style : female_default_hair_style);
-            set_cosmetic_trait(*this, type_hair_color, male ? male_default_hair_color : female_default_hair_color);
+            set_cosmetic_trait( *this, type_hair_style,
+                                male ? male_default_hair_style : female_default_hair_style );
+            set_cosmetic_trait( *this, type_hair_color,
+                                male ? male_default_hair_color : female_default_hair_color );
             break;
         case character_type::RANDOM:
             //random scenario, default name if exist
