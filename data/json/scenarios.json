@@ -415,7 +415,15 @@
     ],
     "allowed_locs": [ "sloc_lab_random", "sloc_lab_escape_cells", "sloc_lab_finale", "sloc_ice_lab_stairs", "sloc_ice_lab_finale" ],
     "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
-    "bionics": [ "bio_reactor", "bio_surgical_razor", "bio_metabolics", "bio_torsionratchet", "bio_tools", "bio_memory", "bio_geiger" ]
+    "bionics": [
+      "bio_atomic_battery",
+      "bio_surgical_razor",
+      "bio_metabolics",
+      "bio_torsionratchet",
+      "bio_tools",
+      "bio_memory",
+      "bio_geiger"
+    ]
   },
   {
     "type": "scenario",
@@ -722,6 +730,7 @@
     "map_extra": "mx_helicopter",
     "flags": [ "HELI_CRASH", "LONE_START" ],
     "bionics": [
+      "bio_reactor",
       "bio_metabolics",
       "bio_ethanol",
       "bio_ups",
@@ -828,7 +837,7 @@
       "bionic_labtech"
     ],
     "bionics": [
-      "bio_reactor",
+      "bio_atomic_battery",
       "bn_bio_solar",
       "bio_climate",
       "bio_evap",
@@ -870,6 +879,7 @@
     ],
     "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
     "bionics": [
+      "bio_reactor",
       "bio_metabolics",
       "bio_ethanol",
       "bio_ups",
@@ -935,6 +945,7 @@
     ],
     "flags": [ "CHALLENGE", "LONE_START" ],
     "bionics": [
+      "bio_reactor",
       "bio_metabolics",
       "bio_ethanol",
       "bio_ups",

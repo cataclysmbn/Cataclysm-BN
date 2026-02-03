@@ -822,8 +822,8 @@
     "id": "bio_reactor",
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
-    "name": { "str": "Atomic Battery CBM" },
-    "description": "This stripped down mini-reactor will slowly generate indefinite amounts of bionic power, with an integrated plutonium fuel cell producing 50J of power a turn when enabled.",
+    "name": { "str": "Internal Microreactor CBM" },
+    "description": "This stripped down mini-reactor will generate impressive amounts of bionic power, but may not be the safest thing to install.  1 plutonium fuel cell provides 1000 charges producing 10kW of power.",
     "price": "9 kUSD",
     "difficulty": 11
   },
@@ -831,10 +831,29 @@
     "id": "bio_advreactor",
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
-    "name": { "str": "Advanced Atomic Battery CBM" },
-    "description": "This module's miniature internal radiothermal generator has been upgraded with a highly experimental modification utilizing exotic matter.  Twice as effective as older models, it will producing 100J of power a turn when enabled.",
+    "name": { "str": "Advanced Microreactor CBM" },
+    "description": "This module upgrades a pre-installed microreactor with enhanced maximum yield and limited automatic radiation scrubbing capabilities.  1 plutonium fuel cell provides 1500 charges producing 10kW of power.",
     "price": "9 kUSD",
     "difficulty": 13
+  },
+  {
+    "id": "bio_reactoroverride",
+    "copy-from": "bionic_general_npc_usable",
+    "looks_like": "bio_reactor",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Micro Reactor Safety Override CBM" },
+    "description": "Disables the radiation safety protocols allowing for much higher energy production.  While active produces 40kJ of power a turn and 1 irradiated stack every 20 turns.",
+    "price": "9 kUSD",
+    "difficulty": 13
+  },
+  {
+    "id": "bio_atomic_battery",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Atomic Battery CBM" },
+    "description": " Effectively a plutonium fuel cell converted into an alphavoltaic battery, this bionic will provide a limitless source of power at a steady 50 watts when active, with only minimal exposure to radiation while in use.",
+    "price": "8 kUSD",
+    "difficulty": 8
   },
   {
     "id": "bio_reactor_upgrade",
