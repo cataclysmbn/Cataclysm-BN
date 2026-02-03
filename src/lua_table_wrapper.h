@@ -358,7 +358,7 @@ bool LuaTableWrapper::read( const std::string &name, T &value, bool throw_on_err
     sol::object obj = table_[name];
 
     // Handle string_id types (e.g., trait_id, bionic_id) - construct from string
-    if constexpr( is_string_id_v<T> || ( has_str_method_v<T> && !std::is_same_v<T, std::string> ) ) {
+    if constexpr( is_string_id_v<T> || ( has_str_method_v<T>&& !std::is_same_v<T, std::string> ) ) {
         if( obj.is<std::string>() ) {
             value = T( obj.as<std::string>() );
             return true;
