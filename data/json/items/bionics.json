@@ -860,8 +860,8 @@
     "bionic_id": "bio_advreactor",
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
-    "name": { "str": "Atomic Battery Upgrade CBM" },
-    "description": "A kit for upgrading a pre-installed microreactor with an experimental modification, which doubles the amount of power it can safely produce.",
+    "name": { "str": "Microreactor Upgrade CBM" },
+    "description": "A kit for upgrading a pre-installed microreactor with enhanced maximum yield and limited automatic radiation scrubbing capabilities.",
     "price": "2500 USD",
     "difficulty": 11,
     "is_upgrade": true
