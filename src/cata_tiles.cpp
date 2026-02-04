@@ -4366,7 +4366,7 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
     auto should_override = [&]<typename T>( T && arg ) {
         auto check = [&]( const mutation & mut ) {
             mutation_branch branch = mut.first.obj();
-            for (const std::string& mut_type : branch.types) {
+            for( const std::string &mut_type : branch.types ) {
                 auto controller = tileset_ptr->get_tint_controller( mut_type );
                 if( controller.first.empty() ) {
                     continue;

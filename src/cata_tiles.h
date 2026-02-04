@@ -288,7 +288,7 @@ class tileset
 
         std::unordered_map<std::string, tile_type> tile_ids;
         std::unordered_map<std::string, color_tint_pair> tints;
-        std::unordered_map<std::string, std::pair<std::string,bool>> tint_pairs;
+        std::unordered_map<std::string, std::pair<std::string, bool>> tint_pairs;
         // caches both "default" and "_season_XXX" tile variants (to reduce the number of lookups)
         // either variant can be either a `nullptr` or a pointer/reference to the real value (stored inside `tile_ids`)
         std::unordered_map<std::string, season_tile_value>

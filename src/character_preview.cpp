@@ -72,7 +72,7 @@ class char_preview_adapter : public cata_tiles
             auto should_override = [&]<typename T>( T && arg ) {
                 auto check = [&]( const mutation & mut ) {
                     mutation_branch branch = mut.first.obj();
-                    for (const std::string& mut_type : branch.types) {
+                    for( const std::string &mut_type : branch.types ) {
                         auto controller = tileset_ptr->get_tint_controller( mut_type );
                         if( controller.first.empty() ) {
                             continue;
@@ -111,7 +111,7 @@ class char_preview_adapter : public cata_tiles
                 std::string draw_id = overlay_id;
                 bool found = false;
 
-                if ( !std::visit( should_override, entry ) ) {
+                if( !std::visit( should_override, entry ) ) {
                     // Legacy hair color injection: try to find a tile with the hair color in the name
                     if( std::visit( is_hair_style, entry ) ) {
                         for( const trait_id &other_mut : ch.get_mutations() ) {
