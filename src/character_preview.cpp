@@ -70,7 +70,7 @@ class char_preview_adapter : public cata_tiles
             };
 
             auto is_hair_style = [&]<typename T>( T && arg ) {
-                auto check = [&]( const mutation& mut ) {
+                auto check = [&]( const mutation & mut ) {
                     if( mut.first.obj().types.contains( "hair_style" ) ) {
                         return true;
                     }
@@ -78,7 +78,7 @@ class char_preview_adapter : public cata_tiles
                 };
                 using Decayed = std::remove_reference_t<T>;
                 using PtrBase = std::remove_const_t<std::remove_pointer_t<Decayed>>;
-                if constexpr (std::is_same_v<PtrBase, mutation>) {
+                if constexpr( std::is_same_v<PtrBase, mutation> ) {
                     return check( *arg );
                 }
                 return false;

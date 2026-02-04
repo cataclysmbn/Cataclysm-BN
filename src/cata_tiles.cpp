@@ -1602,10 +1602,12 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
         //     The 4th byte encodes brightness: 0x00=0.0, 0x80=1.0, 0xFF≈2.0
         //     This is intentionally NOT rgba to allow brightness > 1.0
         auto parse_color = [&colors]( const std::string & color_str ) -> color_parse_result {
-            if( color_str.empty() ) {
+            if( color_str.empty() )
+            {
                 return { std::nullopt, std::nullopt };
             }
-            if( color_str.starts_with( '#' ) ) {
+            if( color_str.starts_with( '#' ) )
+            {
                 const std::string hex_part = color_str.substr( 1 );
                 for( const char c : hex_part ) {
                     if( !std::isxdigit( c ) ) {
@@ -1625,7 +1627,8 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 }
             }
             const nc_color curse_color = colors.name_to_color( color_str );
-            if( curse_color == c_unset ) {
+            if( curse_color == c_unset )
+            {
                 return { std::nullopt, std::nullopt };
             }
             return { static_cast<SDL_Color>( curses_color_to_RGB( curse_color ) ), std::nullopt };
@@ -1634,13 +1637,16 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
         // Parse a tint_config from either a string or an object
         // When has_top_level is true, fg_color/bg_color must be strings (simple mode)
         auto parse_tint_config = [&parse_color]( const JsonObject & obj, const std::string & key,
-        bool has_top_level, std::optional<float> top_contrast, std::optional<float> top_saturation, std::optional<float> top_brightness ) -> tint_config {
+                                 bool has_top_level, std::optional<float> top_contrast, std::optional<float> top_saturation,
+        std::optional<float> top_brightness ) -> tint_config {
             tint_config cfg;
-            if( !obj.has_member( key ) ) {
+            if( !obj.has_member( key ) )
+            {
                 return cfg;
             }
 
-            if( obj.has_string( key ) ) {
+            if( obj.has_string( key ) )
+            {
                 // Simple string value - parse as color (may include brightness from 4th hex pair)
                 auto [color, brightness] = parse_color( obj.get_string( key ) );
                 cfg.color = color;
@@ -1648,11 +1654,12 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 if( has_top_level ) {
                     cfg.contrast = top_contrast;
                     cfg.saturation = top_saturation;
-                    if ( top_brightness.has_value() ) {
+                    if( top_brightness.has_value() ) {
                         cfg.brightness = top_brightness.value();
                     }
                 }
-            } else if( obj.has_object( key ) && !has_top_level ) {
+            } else if( obj.has_object( key ) && !has_top_level )
+            {
                 // Complex object value - only allowed when no top-level contrast/saturation
                 JsonObject color_obj = obj.get_object( key );
                 auto [color, brightness] = parse_color( color_obj.get_string( "color", "" ) );
@@ -1694,9 +1701,9 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
             }
 
             tint_config fg = parse_tint_config( tint_def, "fg", has_top_level, top_contrast,
-                                                top_saturation, top_brightness);
+                                                top_saturation, top_brightness );
             tint_config bg = parse_tint_config( tint_def, "bg", has_top_level, top_contrast,
-                                                top_saturation, top_brightness);
+                                                top_saturation, top_brightness );
 
             if( fg.has_value() || bg.has_value() ) {
                 ts.tints[mut_id] = { bg, fg };
@@ -3667,7 +3674,7 @@ bool cata_tiles::draw_terrain( const tripoint &p, const lit_level ll, int &heigh
         int rotation = 0;
         int connect_group = 0;
         if( t.obj().connects( connect_group ) ) {
-            get_connect_values( p, subtile, rotation, connect_group, {});
+            get_connect_values( p, subtile, rotation, connect_group, {} );
             // re-memorize previously seen terrain in case new connections have been seen
             here.set_memory_seen_cache_dirty( p );
         } else {
@@ -4365,7 +4372,7 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
     };
 
     auto is_hair_style = [&]<typename T>( T && arg ) {
-        auto check = [&]( const mutation& mut ) {
+        auto check = [&]( const mutation & mut ) {
             if( mut.first.obj().types.contains( "hair_style" ) ) {
                 return true;
             }
@@ -4373,7 +4380,7 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
         };
         using Decayed = std::remove_reference_t<T>;
         using PtrBase = std::remove_const_t<std::remove_pointer_t<Decayed>>;
-        if constexpr (std::is_same_v<PtrBase, mutation>) {
+        if constexpr( std::is_same_v<PtrBase, mutation> ) {
             return check( *arg );
         }
         return false;

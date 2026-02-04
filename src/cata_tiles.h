@@ -226,7 +226,8 @@ struct tint_config {
 
     // Convenience: check if any tint effect should be applied
     bool has_value() const {
-        return color.has_value() || contrast.has_value() || saturation.has_value() || brightness.has_value();
+        return color.has_value() || contrast.has_value() || saturation.has_value() ||
+               brightness.has_value();
     }
 
     // Implicit conversions for backward compatibility and convenience
