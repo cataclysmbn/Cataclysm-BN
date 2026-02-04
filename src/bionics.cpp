@@ -182,7 +182,6 @@ static const bionic_id bio_time_freeze( "bio_time_freeze" );
 static const bionic_id bio_tools( "bio_tools" );
 static const bionic_id bio_torsionratchet( "bio_torsionratchet" );
 static const bionic_id bio_water_extractor( "bio_water_extractor" );
-static const bionic_id bionic_TOOLS_EXTEND( "bio_tools_extend" );
 static const bionic_id afs_bio_dopamine_stimulators( "afs_bio_dopamine_stimulators" );
 
 static const trait_id trait_CENOBITE( "CENOBITE" );
@@ -1248,12 +1247,6 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
     // Also reset crafting inventory cache if this bionic spawned a fake item
     if( !bio.info().fake_item.is_empty() ) {
         invalidate_crafting_inventory();
-    }
-
-    // Compatibility with old saves without the toolset hammerspace
-    if( !eff_only && bio.id == bio_tools && !has_bionic( bionic_TOOLS_EXTEND ) ) {
-        // E X T E N D    T O O L S
-        add_bionic( bionic_TOOLS_EXTEND );
     }
 
     return true;

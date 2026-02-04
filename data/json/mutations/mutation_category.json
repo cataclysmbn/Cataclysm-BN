@@ -274,5 +274,14 @@
     "mutagen_message": "You feel a slithering feeling.",
     "iv_message": "You hiss, left reeling from the strange sensations.",
     "memorial_message": "Seized opportunity in their coils."
+  },
+  {
+    "type": "mutation_category",
+    "id": "MYCUS",
+    "name": "Mycus",
+    "threshold_mut": "THRESH_MYCUS",
+    "mutagen_message": "",
+    "memorial_message": "Dissolved into the collective.",
+    "iv_message": ""
   }
 ]

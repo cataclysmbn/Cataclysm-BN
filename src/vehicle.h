@@ -99,6 +99,7 @@ enum veh_coll_type : int {
     veh_coll_veh,      // 2 - vehicle
     veh_coll_bashable, // 3 - bashable
     veh_coll_other,    // 4 - other
+    veh_coll_veh_nocollide, // 5 - vehicle NOCOLLIDE
     num_veh_coll_types
 };
 
@@ -1148,8 +1149,10 @@ class vehicle
         /**
          * total lift of all lifters
          */
-        double total_lift( bool fuelled, bool safe = false, bool ideal = false ) const;
-        bool has_sufficient_lift() const;
+        double total_lift( bool fuelled, bool safe = false, bool ideal = false,
+                           bool unpowered = false ) const;
+        bool has_sufficient_lift( bool unpowered = false ) const;
+        double get_lift_percent( bool unpowered = false ) const;
         int get_z_change() const;
         bool is_flying_in_air() const;
         void set_flying( bool new_flying_value );

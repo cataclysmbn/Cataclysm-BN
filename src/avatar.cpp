@@ -17,6 +17,7 @@
 #include "calendar.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
@@ -1121,8 +1122,9 @@ bool avatar::is_dead_state() const
     }
 
     if( Character::is_dead_state() ) {
-        auto &state = *DynamicDataLoader::get_instance().lua;;
-        run_hooks( state, "on_character_death" );
+        cata::run_hooks( "on_character_death", [ &, this]( auto & params ) {
+            params["char"] = this;
+        } );
         cached_dead_state.reset();
     }
 
