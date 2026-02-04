@@ -10575,7 +10575,7 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier, co
     const bool preserves = self->type->container && self->type->container->preserves;
     // Check if the item's container seals OR if the furniture/terrain at this location is SEALED
     const bool item_seals = self->type->container && self->type->container->seals;
-    const bool location_seals = get_map().has_flag( "SEALED", pos );
+    const bool location_seals = get_map().has_flag( TFLAG_SEALED, pos );
     const bool seals = item_seals || location_seals;
     item &obj = *self;
 

@@ -13,6 +13,7 @@
 #include "weather.h"
 
 static const furn_str_id f_atomic_freezer( "f_atomic_freezer" );
+static const furn_str_id f_smoking_rack( "f_smoking_rack" );
 
 static void set_map_temperature( weather_manager &weather, units::temperature new_temperature )
 {
@@ -225,12 +226,18 @@ TEST_CASE( "Items in smoking rack with SEALED flag are protected from rot", "[ro
         const tripoint normal_pnt = {14, 13, 0};
         
         // Set up smoking rack (has SEALED flag)
-        m.furn_set( smoking_rack_pnt, furn_str_id( "f_smoking_rack" ) );
+        m.furn_set( smoking_rack_pnt, f_smoking_rack );
         m.ter_set( smoking_rack_pnt, t_grass );
+        
+        // Verify that smoking rack has SEALED flag
+        REQUIRE( m.has_flag_furn( TFLAG_SEALED, smoking_rack_pnt ) );
         
         // Set up normal ground for comparison
         m.furn_set( normal_pnt, furn_str_id::NULL_ID() );
         m.ter_set( normal_pnt, t_grass );
+        
+        // Verify normal ground does not have SEALED flag
+        REQUIRE_FALSE( m.has_flag( TFLAG_SEALED, normal_pnt ) );
         
         set_map_temperature( weather, 18_c );
         
