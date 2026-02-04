@@ -4228,7 +4228,7 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     // Check for charcoal around the furniture (for smoking racks/mills)
     int amount_nearby = 0;
     if( cur_ammo->get_id() == itype_charcoal ) {
-        for( const tripoint &pt : here.points_in_radius( examp, 1 ) ) {
+        for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
             if( pt == examp ) {
                 continue; // Skip the furniture tile itself
             }
@@ -4278,7 +4278,7 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     
     // Then use from nearby ground
     if( remaining > 0 && amount_nearby > 0 ) {
-        for( const tripoint &pt : here.points_in_radius( examp, 1 ) ) {
+        for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
             if( pt == examp || remaining <= 0 ) {
                 continue;
             }

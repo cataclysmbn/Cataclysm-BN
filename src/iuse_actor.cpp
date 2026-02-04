@@ -1456,9 +1456,12 @@ int deploy_furn_actor::use( player &p, item &it, bool t, const tripoint &pos ) c
         return 0;
     }
 
-    // Check if there are items on the ground that would cause confusion
-    if( !here.i_at( pnt ).empty() ) {
-        p.add_msg_if_player( m_info, _( "You can't deploy furniture on a tile with items." ) );
+    // Check if there are items on the ground that would cause confusion for SEALED/NOITEM furniture
+    // (like smoking racks, where items would interfere with the lighting process)
+    const furn_t &furn_obj = furn_type.obj();
+    if( ( furn_obj.has_flag( TFLAG_SEALED ) || furn_obj.has_flag( TFLAG_NOITEM ) ) && 
+        !here.i_at( pnt ).empty() ) {
+        p.add_msg_if_player( m_info, _( "You can't deploy this furniture on a tile with items." ) );
         return 0;
     }
 
