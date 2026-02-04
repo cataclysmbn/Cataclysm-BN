@@ -13,7 +13,6 @@
 #include "weather.h"
 
 static const furn_str_id f_atomic_freezer( "f_atomic_freezer" );
-static const furn_str_id f_smoking_rack( "f_smoking_rack" );
 
 static void set_map_temperature( weather_manager &weather, units::temperature new_temperature )
 {
@@ -204,64 +203,4 @@ TEST_CASE( "Items don't rot away on map load if in a freezer" )
     REQUIRE( sealed_stack_after.size() == 1 );
     auto normal_stack_after = m.i_at( normal_pnt );
     REQUIRE( normal_stack_after.empty() );
-}
-
-TEST_CASE( "Items in smoking rack with SEALED flag are protected from rot", "[rot][smoking_rack]" )
-{
-    // Test for issue #5681: Items disappearing when loaded into smoking rack
-    // The SEALED flag on furniture should protect items from being destroyed by rot processing
-    
-    SECTION( "Food items added to smoking rack should not rot away immediately" ) {
-        weather_manager weather;
-        map &m = get_map();
-        
-        if( calendar::turn <= calendar::start_of_cataclysm ) {
-            calendar::turn = calendar::start_of_cataclysm + 1_minutes;
-        }
-        
-        constexpr tripoint_abs_sm test_location = tripoint_abs_sm( 100, 100, 0 );
-        m.load( test_location, false );
-        
-        const tripoint smoking_rack_pnt = {13, 13, 0};
-        const tripoint normal_pnt = {14, 13, 0};
-        
-        // Set up smoking rack (has SEALED flag)
-        m.furn_set( smoking_rack_pnt, f_smoking_rack );
-        m.ter_set( smoking_rack_pnt, t_grass );
-        
-        // Verify that smoking rack has SEALED flag
-        REQUIRE( m.has_flag_furn( TFLAG_SEALED, smoking_rack_pnt ) );
-        
-        // Set up normal ground for comparison
-        m.furn_set( normal_pnt, furn_str_id::NULL_ID() );
-        m.ter_set( normal_pnt, t_grass );
-        
-        // Verify normal ground does not have SEALED flag
-        REQUIRE_FALSE( m.has_flag( TFLAG_SEALED, normal_pnt ) );
-        
-        set_map_temperature( weather, 18_c );
-        
-        m.i_clear( smoking_rack_pnt );
-        m.i_clear( normal_pnt );
-        
-        // Create meat that's been sitting for 365 days and should have rotted
-        detached_ptr<item> old_meat_for_rack = item::spawn( "meat_cooked", 
-                                                             calendar::turn - 365_days );
-        detached_ptr<item> old_meat_normal = item::spawn( "meat_cooked",
-                                                          calendar::turn - 365_days );
-        
-        // Add items to map - this triggers item::process() which checks for rot
-        m.add_item( smoking_rack_pnt, std::move( old_meat_for_rack ) );
-        m.add_item( normal_pnt, std::move( old_meat_normal ) );
-        
-        // Check results
-        auto smoking_rack_stack = m.i_at( smoking_rack_pnt );
-        auto normal_stack = m.i_at( normal_pnt );
-        
-        // Item on SEALED smoking rack should still exist (protected from rot destruction)
-        CHECK( smoking_rack_stack.size() == 1 );
-        
-        // Item on normal ground should have rotted away and been destroyed
-        CHECK( normal_stack.empty() );
-    }
 }

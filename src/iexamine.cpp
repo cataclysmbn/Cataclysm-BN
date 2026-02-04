@@ -5925,7 +5925,9 @@ void iexamine::mill_finalize( player &, const tripoint &examp, const time_point 
     }
 
     for( detached_ptr<item> &it : results ) {
-        items.insert( std::move( it ) );
+        // Use add_item directly instead of items.insert to avoid NOITEM overflow behavior
+        // that can cause items to disappear when the mill is surrounded by walls/furniture
+        here.add_item( examp, std::move( it ) );
     }
     here.furn_set( examp, next_mill_type );
 }
@@ -6036,7 +6038,9 @@ static void smoker_finalize( player &, const tripoint &examp, const time_point &
     }
 
     for( detached_ptr<item> &it : results ) {
-        items.insert( std::move( it ) );
+        // Use add_item directly instead of items.insert to avoid NOITEM overflow behavior
+        // that can cause items to disappear when the smoking rack is surrounded by walls/furniture
+        here.add_item( examp, std::move( it ) );
     }
 
     here.furn_set( examp, next_smoker_type );
