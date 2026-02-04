@@ -4224,17 +4224,40 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     if( max_reload_amount <= 0 ) {
         return;
     }
-    if( amount_in_inv == 0 ) {
+    
+    // Check for charcoal around the furniture (for smoking racks/mills)
+    int amount_nearby = 0;
+    if( cur_ammo->get_id() == itype_charcoal ) {
+        for( const tripoint &pt : here.points_in_radius( examp, 1 ) ) {
+            if( pt == examp ) {
+                continue; // Skip the furniture tile itself
+            }
+            for( const item *it : here.i_at( pt ) ) {
+                if( it->typeId() == itype_charcoal ) {
+                    amount_nearby += it->charges;
+                }
+            }
+        }
+    }
+    
+    const int total_available = amount_in_inv + amount_nearby;
+    if( total_available == 0 ) {
         //~ Reloading or restocking a piece of furniture, for example a forge.
         add_msg( m_info, _( "You need some %1$s to reload this %2$s." ),
                  cur_ammo->nname( 2 ),
                  f.name() );
         return;
     }
-    const int max_amount = std::min( amount_in_inv, max_reload_amount );
+    const int max_amount = std::min( total_available, max_reload_amount );
     //~ Loading fuel or other items into a piece of furniture.
-    const std::string popupmsg = string_format( _( "Put how many of the %1$s into the %2$s?" ),
-                                 cur_ammo->nname( max_amount ), f.name() );
+    std::string source_desc = "";
+    if( amount_in_inv > 0 && amount_nearby > 0 ) {
+        source_desc = string_format( _( " (%d in inventory, %d nearby)" ), amount_in_inv, amount_nearby );
+    } else if( amount_nearby > 0 ) {
+        source_desc = string_format( _( " (%d nearby)" ), amount_nearby );
+    }
+    const std::string popupmsg = string_format( _( "Put how many of the %1$s into the %2$s?%3$s" ),
+                                 cur_ammo->nname( max_amount ), f.name(), source_desc );
     int amount = string_input_popup()
                  .title( popupmsg )
                  .width( 20 )
@@ -4244,7 +4267,42 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     if( amount <= 0 || amount > max_amount ) {
         return;
     }
-    p.use_charges( cur_ammo->get_id(), amount );
+    
+    // First use from inventory, then from nearby
+    int remaining = amount;
+    if( amount_in_inv > 0 ) {
+        const int from_inv = std::min( remaining, amount_in_inv );
+        p.use_charges( cur_ammo->get_id(), from_inv );
+        remaining -= from_inv;
+    }
+    
+    // Then use from nearby ground
+    if( remaining > 0 && amount_nearby > 0 ) {
+        for( const tripoint &pt : here.points_in_radius( examp, 1 ) ) {
+            if( pt == examp || remaining <= 0 ) {
+                continue;
+            }
+            auto ground_items = here.i_at( pt );
+            for( auto iter = ground_items.begin(); iter != ground_items.end() && remaining > 0; ) {
+                item *it = *iter;
+                if( it->typeId() == itype_charcoal ) {
+                    const int to_take = std::min( remaining, it->charges );
+                    if( to_take >= it->charges ) {
+                        detached_ptr<item> det;
+                        iter = ground_items.erase( iter, &det );
+                        remaining -= to_take;
+                    } else {
+                        it->charges -= to_take;
+                        remaining -= to_take;
+                        ++iter;
+                    }
+                } else {
+                    ++iter;
+                }
+            }
+        }
+    }
+    
     auto items = here.i_at( examp );
     for( auto &itm : items ) {
         if( itm->type == cur_ammo ) {

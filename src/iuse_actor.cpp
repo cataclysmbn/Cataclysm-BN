@@ -1456,6 +1456,12 @@ int deploy_furn_actor::use( player &p, item &it, bool t, const tripoint &pos ) c
         return 0;
     }
 
+    // Check if there are items on the ground that would cause confusion
+    if( !here.i_at( pnt ).empty() ) {
+        p.add_msg_if_player( m_info, _( "You can't deploy furniture on a tile with items." ) );
+        return 0;
+    }
+
     here.furn_set( pnt, furn_type );
     p.mod_moves( to_turns<int>( 2_seconds ) );
     return 1;
