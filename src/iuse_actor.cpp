@@ -108,6 +108,7 @@
 #include "weather.h"
 
 static const activity_id ACT_FIRSTAID( "ACT_FIRSTAID" );
+static const activity_id ACT_HAND_CRANK( "ACT_HAND_CRANK" );
 static const activity_id ACT_MAKE_ZLAVE( "ACT_MAKE_ZLAVE" );
 static const activity_id ACT_RELOAD( "ACT_RELOAD" );
 static const activity_id ACT_REPAIR_ITEM( "ACT_REPAIR_ITEM" );
@@ -5924,6 +5925,106 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint &pos ) co
 std::unique_ptr<iuse_actor> multicooker_iuse::clone() const
 {
     return std::make_unique<multicooker_iuse>( *this );
+}
+
+namespace {
+auto read_time_duration( const JsonObject &obj, const std::string &member,
+                         const time_duration &default_value ) -> time_duration
+{
+    if( !obj.has_member( member ) ) {
+        return default_value;
+    }
+    if( obj.has_string( member ) ) {
+        return read_from_json_string<time_duration>( *obj.get_raw( member ),
+                                                     time_duration::units );
+    }
+    if( obj.has_int( member ) ) {
+        return time_duration::from_turns( obj.get_int( member ) );
+    }
+    obj.throw_error( "member must be a duration string or integer turns", member );
+    return default_value;
+}
+} // namespace
+
+auto hand_crank_actor::load( const JsonObject &obj ) -> void
+{
+    charge_interval = read_time_duration( obj, "charge_interval", charge_interval );
+    obj.read( "charge_amount", charge_amount );
+    obj.read( "fatigue_per_interval", fatigue_per_interval );
+    obj.read( "ammo_type", ammo_type );
+    obj.read( "activity_name", activity_name );
+    obj.read( "start_message", start_message );
+    obj.read( "already_charged_message", already_charged_message );
+    obj.read( "need_battery_message", need_battery_message );
+    obj.read( "underwater_message", underwater_message );
+    obj.read( "exhausted_message", exhausted_message );
+    obj.read( "fully_charged_message", fully_charged_message );
+}
+
+auto hand_crank_actor::can_use( const Character &who, const item &it, bool,
+        const tripoint & ) const -> ret_val<bool>
+{
+    if( who.is_npc() ) {
+        return ret_val<bool>::make_failure();
+    }
+    if( who.is_underwater() ) {
+        return ret_val<bool>::make_failure( _( underwater_message ) );
+    }
+    if( who.get_fatigue() >= fatigue_levels::dead_tired ) {
+        return ret_val<bool>::make_failure( _( exhausted_message ) );
+    }
+    const auto *magazine = it.magazine_current();
+    if( !magazine || !magazine->has_flag( flag_RECHARGE ) ) {
+        return ret_val<bool>::make_failure( _( need_battery_message ) );
+    }
+    return ret_val<bool>::make_success();
+}
+
+auto hand_crank_actor::use( player &p, item &it, bool, const tripoint & ) const -> int
+{
+    if( p.is_npc() ) {
+        return 0;
+    }
+    if( p.is_underwater() ) {
+        p.add_msg_if_player( m_info, _( underwater_message ) );
+        return 0;
+    }
+    if( p.get_fatigue() >= fatigue_levels::dead_tired ) {
+        p.add_msg_if_player( m_info, _( exhausted_message ) );
+        return 0;
+    }
+    auto *magazine = it.magazine_current();
+    if( !magazine || !magazine->has_flag( flag_RECHARGE ) ) {
+        p.add_msg_if_player( m_info, _( need_battery_message ) );
+        return 0;
+    }
+    if( it.ammo_capacity() > it.ammo_remaining() ) {
+        p.add_msg_if_player( _( start_message ), it.tname(), magazine->tname() );
+        auto resolved_charge_interval = charge_interval;
+        if( resolved_charge_interval <= 0_turns ) {
+            resolved_charge_interval = 144_seconds;
+        }
+        const auto safe_charge_amount = std::max( 1, charge_amount );
+        const auto current = it.ammo_remaining();
+        const auto capacity = it.ammo_capacity();
+        const auto missing = capacity - current;
+        const auto required_intervals = divide_round_up( missing, safe_charge_amount );
+        const auto required_duration = resolved_charge_interval * required_intervals;
+        const auto moves = to_moves<int>( required_duration );
+        const auto interval_turns = to_turns<int>( resolved_charge_interval );
+        p.assign_activity( ACT_HAND_CRANK, moves, -1, 0, activity_name );
+        p.activity->add_tool( &it );
+        p.activity->values = { interval_turns, safe_charge_amount, fatigue_per_interval };
+        p.activity->str_values = { ammo_type.str(), fully_charged_message, exhausted_message };
+    } else {
+        p.add_msg_if_player( _( already_charged_message ), it.tname(), magazine->tname() );
+    }
+    return 0;
+}
+
+auto hand_crank_actor::clone() const -> std::unique_ptr<iuse_actor>
+{
+    return std::make_unique<hand_crank_actor>( *this );
 }
 
 void sex_toy_actor::load( JsonObject const &obj )
