@@ -3,6 +3,7 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "enums.h"
 #include "game.h"
 #include "artifact_enum_traits.h"
 #include "enum_conversions.h"
@@ -11,6 +12,7 @@
 #include "map.h"
 #include "map_iterator.h"
 #include "npc.h"
+#include "overmap.h"
 #include "trap.h"
 #include "detached_ptr.h"
 
@@ -250,6 +252,10 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "is_sheltered", []( map & m, tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
 
         luna::set_fx( ut, "is_in_sunlight", []( map & m, tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
+
+        // Mapgen stuffs
+
+        luna::set_fx( ut, "is_ot_match", []( std::string ref, oter_id & id, ot_match_type match ) -> bool { return is_ot_match( ref, id, match ); } );
     }
 
     // Register 'tinymap' class to be used in Lua
