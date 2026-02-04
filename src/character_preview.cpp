@@ -65,37 +65,60 @@ class char_preview_adapter : public cata_tiles
                 } else if constexpr( std::is_same_v<PtrBase, mutation> ) {
                     return get_mutation_color( *arg, ch );
                 } else {
-                    return color_tint_pair{std::nullopt, std::nullopt};
+                    return color_tint_pair{ std::nullopt, std::nullopt };
                 }
+            };
+
+            auto is_hair_style = [&]<typename T>( T && arg ) {
+                auto check = [&]( const mutation& mut ) {
+                    if( mut.first.obj().types.contains( "hair_style" ) ) {
+                        return true;
+                    }
+                    return false;
+                };
+                using Decayed = std::remove_reference_t<T>;
+                using PtrBase = std::remove_const_t<std::remove_pointer_t<Decayed>>;
+                if constexpr (std::is_same_v<PtrBase, mutation>) {
+                    return check( *arg );
+                }
+                return false;
             };
 
             auto result = get_overlay_ids( ch, with_clothing );
             for( const auto &[overlay_id, entry] : result.overlays ) {
-                auto [overlay_bgCol, overlay_fgCol] = std::visit( get_overlay_color, entry );
+                tint_config overlay_bg_color = std::nullopt;
+                tint_config overlay_fg_color = std::nullopt;
                 std::string draw_id = overlay_id;
+                bool found = false;
 
-                auto hair_pos = draw_id.find( "hair_" );
-                auto found = false;
-                if( hair_pos != std::string::npos ) {
-                    for( const auto &mut : ch.get_mutations() ) {
-                        auto color_id = mut.str();
-                        if( mut.obj().types.contains( "hair_color" ) &&
-                            draw_id.find( color_id ) == std::string::npos ) {
-                            auto prepend = draw_id.substr( 0, hair_pos );
-                            auto append = draw_id.substr( hair_pos );
-                            append = append.substr( append.find( '_' ) );
-                            auto new_id = prepend + color_id + append;
-                            found = find_overlay_looks_like( ch.male, new_id, new_id );
-                            if( found ) {
-                                overlay_bgCol = std::nullopt;
-                                overlay_fgCol = std::nullopt;
-                                draw_id = new_id;
-                            }
+                // Legacy hair color injection: try to find a tile with the hair color in the name
+                if( std::visit( is_hair_style, entry ) ) {
+                    for( const trait_id &other_mut : ch.get_mutations() ) {
+                        if( !other_mut.obj().types.contains( "hair_color" ) ) {
+                            continue;
+                        }
+                        const std::string color_id = other_mut.str();
+                        if( draw_id.find( color_id ) != std::string::npos ) {
                             break;
                         }
+                        const size_t hair_pos = draw_id.find( "hair_" );
+                        if( hair_pos == std::string::npos ) {
+                            continue;
+                        }
+                        const std::string prefix = draw_id.substr( 0, hair_pos );
+                        std::string suffix = draw_id.substr( hair_pos );
+                        suffix = suffix.substr( suffix.find( '_' ) );
+                        const std::string new_id = prefix + color_id + suffix;
+                        // draw_id is set to the resolved tile ID if found
+                        found = find_overlay_looks_like( ch.male, new_id, draw_id );
+                        break;
                     }
                 }
+
                 if( !found ) {
+                    auto pair = std::visit( get_overlay_color, entry );
+                    overlay_bg_color = pair.first;
+                    overlay_fg_color = pair.second;
                     found = find_overlay_looks_like( ch.male, overlay_id, draw_id );
                 }
 
@@ -104,12 +127,12 @@ class char_preview_adapter : public cata_tiles
                     if( ch.facing == FD_RIGHT ) {
                         const tile_search_params tile { draw_id, C_NONE, "", corner, /*rota*/ 0 };
                         draw_from_id_string(
-                            tile, tripoint( p, 0 ), overlay_bgCol, overlay_fgCol,
+                            tile, tripoint( p, 0 ), overlay_bg_color, overlay_fg_color,
                             lit_level::BRIGHT, false, 0, true, overlay_height_3d );
                     } else if( ch.facing == FD_LEFT ) {
                         const tile_search_params tile { draw_id, C_NONE, "", corner, /*rota*/ 4 };
                         draw_from_id_string(
-                            tile, tripoint( p, 0 ), overlay_bgCol, overlay_fgCol,
+                            tile, tripoint( p, 0 ), overlay_bg_color, overlay_fg_color,
                             lit_level::BRIGHT, false, 0, true, overlay_height_3d );
                     }
                     height_3d = std::max( height_3d, overlay_height_3d );

@@ -10,37 +10,37 @@
 auto cata_tiles::get_overmap_color(
     const overmapbuffer &, const tripoint_abs_omt & ) -> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_terrain_color(
     const ter_t &, const map &, const tripoint & ) -> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_furniture_color(
     const furn_t &, const map &, const tripoint & ) -> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_graffiti_color(
     const map &, const tripoint & )-> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_trap_color(
     const trap &, const map &, tripoint ) -> color_tint_pair
 {
-    return { std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_field_color(
     const field &, const map &, const tripoint & ) -> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_item_color(
@@ -52,25 +52,25 @@ auto cata_tiles::get_item_color(
 auto cata_tiles::get_item_color(
     const item & ) -> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_vpart_color(
     const optional_vpart_position &, const map &, const tripoint & )-> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_monster_color(
     const monster &, const map &, const tripoint & ) -> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_character_color(
     const Character &, const map &, const tripoint & ) -> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_effect_color(
@@ -82,7 +82,7 @@ auto cata_tiles::get_effect_color(
 auto cata_tiles::get_effect_color(
     const effect &, const Character & ) -> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_bionic_color(
@@ -94,7 +94,7 @@ auto cata_tiles::get_bionic_color(
 auto cata_tiles::get_bionic_color(
     const bionic &, const Character & )-> color_tint_pair
 {
-    return {std::nullopt, std::nullopt};
+    return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_mutation_color(
@@ -135,8 +135,7 @@ auto cata_tiles::get_mutation_color(
             if( curse_color == c_unset ) {
                 return { std::nullopt, std::nullopt };
             }
-            const SDL_Color sdl_tint = static_cast<SDL_Color>( curses_color_to_RGB( curse_color ) );
-            return { sdl_tint, sdl_tint };
+            return color_tint_pair{ curse_color, curse_color };
         }
         break;
     }
