@@ -798,7 +798,8 @@ static void apply_surf_blend_effect(
 
     const HSVColor dest_hsv = rgb2hsv( tint.color.value_or( TILESET_NO_COLOR ) );
     const auto blend_value = [&tint]( const uint8_t base, const uint8_t target ) -> uint8_t {
-        switch( tint.blend_mode ) {
+        switch( tint.blend_mode )
+        {
             case tint_blend_mode::multiply:
                 return static_cast<uint8_t>( base * target / 255 );
             case tint_blend_mode::additive:
@@ -1627,11 +1628,14 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
         };
 
         auto parse_blend_mode = []( const std::string & str ) -> tint_blend_mode {
-            if( str == "multiply" ) {
+            if( str == "multiply" )
+            {
                 return tint_blend_mode::multiply;
-            } else if( str == "additive" ) {
+            } else if( str == "additive" )
+            {
                 return tint_blend_mode::additive;
-            } else if( str == "subtract" ) {
+            } else if( str == "subtract" )
+            {
                 return tint_blend_mode::subtract;
             }
             return tint_blend_mode::overlay;
