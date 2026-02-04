@@ -799,23 +799,11 @@ static void apply_surf_blend_effect(
     ZoneScoped;
 
     const HSVColor dest_hsv = rgb2hsv( color );
-    constexpr auto overlay = []( const uint8_t lower, const uint8_t upper ) -> uint8_t {
-        if( lower > 127 )
-        {
-            const auto u = ( 255 - lower ) * 255 / 127;
-            const auto m = lower - ( 255 - lower );
-            const auto o = ( upper * u / 255 ) + m;
-            return std::clamp<uint8_t>( o, 0, 255 );
-        } else
-        {
-            const auto u = ( lower * 255 / 127 );
-            const auto o = upper * u / 255;
-            return std::clamp<uint8_t>( o, 0, 255 );
-        }
+    constexpr auto multiply = []( const uint8_t base, const uint8_t target ) -> uint8_t {
+        return static_cast<uint8_t>( base * target / 255 );
     };
 
-    // Pre-process function to apply contrast, saturation, and brightness
-    auto preprocess = [&]( SDL_Color c ) -> SDL_Color {
+    auto postprocess = [&]( SDL_Color c ) -> SDL_Color {
         if( contrast.has_value() )
         {
             c.r = apply_contrast( c.r, contrast.value() );
@@ -835,19 +823,16 @@ static void apply_surf_blend_effect(
 
     if( use_mask ) {
         auto effect_mask = [&]( const SDL_Color & base_rgb, const SDL_Color & mask_rgb )  -> SDL_Color {
-            // Apply contrast/saturation preprocessing
-            SDL_Color processed = preprocess( base_rgb );
-
-            HSVColor base_hsv = rgb2hsv( processed );
+            HSVColor base_hsv = rgb2hsv( base_rgb );
             base_hsv.H = dest_hsv.H;
             base_hsv.S = ilerp<uint16_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S, mask_rgb.g );
-            base_hsv.V = ilerp( base_hsv.V, overlay( base_hsv.V, dest_hsv.V ), mask_rgb.b );
+            base_hsv.V = ilerp( base_hsv.V, multiply( base_hsv.V, dest_hsv.V ), mask_rgb.b );
 
             RGBColor res = hsv2rgb( base_hsv );
-            res.r = ilerp( processed.r, res.r, mask_rgb.r );
-            res.g = ilerp( processed.g, res.g, mask_rgb.r );
-            res.b = ilerp( processed.b, res.b, mask_rgb.r );
-            return res;
+            res.r = ilerp( base_rgb.r, res.r, mask_rgb.r );
+            res.g = ilerp( base_rgb.g, res.g, mask_rgb.r );
+            res.b = ilerp( base_rgb.b, res.b, mask_rgb.r );
+            return postprocess( res );
         };
         apply_blend_filter(
             staging, dstRect,
@@ -857,14 +842,11 @@ static void apply_surf_blend_effect(
         );
     } else {
         auto effect_no_mask = [&]( const SDL_Color & c )  -> SDL_Color {
-            // Apply contrast/saturation preprocessing
-            SDL_Color processed = preprocess( c );
-
-            HSVColor base_hsv = rgb2hsv( processed );
+            HSVColor base_hsv = rgb2hsv( c );
             base_hsv.H = dest_hsv.H;
             base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S, 127 );
-            base_hsv.V = ilerp<uint16_t, uint8_t>( base_hsv.V, overlay( base_hsv.V, dest_hsv.V ), 127 );
-            return hsv2rgb( base_hsv );
+            base_hsv.V = ilerp<uint16_t, uint8_t>( base_hsv.V, multiply( base_hsv.V, dest_hsv.V ), 127 );
+            return postprocess( hsv2rgb( base_hsv ) );
         };
         apply_color_filter(
             staging, dstRect,
