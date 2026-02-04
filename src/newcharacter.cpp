@@ -449,7 +449,7 @@ std::unordered_set<std::string> required_cosmetic_trait_types = { type_hair_styl
 // We should define cosmetic traits in JSON so they can be appended by mods
 void avatar::randomize_cosmetics()
 {
-    for ( const std::string& mutation_type : required_cosmetic_trait_types ) {
+    for( const std::string &mutation_type : required_cosmetic_trait_types ) {
         randomize_cosmetic_trait( mutation_type );
     }
     //arbitrary 50% chance to add beard to male characters
@@ -1442,10 +1442,9 @@ tab_direction set_traits( avatar &u, points_left &points )
                     inc_type = 0;
                     popup( _( "Your profession of %s prevents you from removing this trait." ),
                            u.prof->gender_appropriate_name( u.male ) );
-                }
-                else {
+                } else {
                     std::string type;
-                    for ( const auto t : cur_trait.obj().types ) {
+                    for( const auto t : cur_trait.obj().types ) {
                         if( required_cosmetic_trait_types.contains( t ) ) {
                             type = t;
                             break;
@@ -1459,7 +1458,7 @@ tab_direction set_traits( avatar &u, points_left &points )
             } else if( newcharacter::has_conflicting_trait( u, cur_trait ) ) {
                 // Allow swapping cosmetic traits
                 std::string type;
-                for ( const auto t : cur_trait.obj().types ) {
+                for( const auto t : cur_trait.obj().types ) {
                     if( cosmetic_trait_types.contains( t ) ) {
                         type = t;
                         break;
@@ -1467,14 +1466,13 @@ tab_direction set_traits( avatar &u, points_left &points )
                 }
                 if( !type.empty() ) {
                     inc_type = 1;
-                    for ( const trait_id& tr : u.get_base_traits() ) {
+                    for( const trait_id &tr : u.get_base_traits() ) {
                         if( tr.obj().types.contains( type ) ) {
                             u.toggle_trait( tr );
                             break;
                         }
                     }
-                }
-                else {
+                } else {
                     popup( _( "You already picked a conflicting trait!" ) );
                 }
             } else if( g->scen->is_forbidden_trait( cur_trait ) ) {

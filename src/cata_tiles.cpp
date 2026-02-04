@@ -800,7 +800,7 @@ static void apply_surf_blend_effect(
 
     const HSVColor dest_hsv = rgb2hsv( color );
     constexpr auto multiply = []( const uint8_t base, const uint8_t target ) -> uint8_t {
-        return static_cast<uint8_t>( base * target / 255 );
+        return static_cast<uint8_t>( base *target / 255 );
     };
 
     auto postprocess = [&]( SDL_Color c ) -> SDL_Color {
