@@ -1339,7 +1339,8 @@ class hand_crank_actor : public iuse_actor
         ~hand_crank_actor() override = default;
         auto load( const JsonObject &obj ) -> void override;
         auto use( player &p, item &it, bool, const tripoint & ) const -> int override;
-        auto can_use( const Character &, const item &, bool, const tripoint & ) const -> ret_val<bool> override;
+        auto can_use( const Character &, const item &, bool,
+                      const tripoint & ) const -> ret_val<bool> override;
         auto clone() const -> std::unique_ptr<iuse_actor> override;
 };
 

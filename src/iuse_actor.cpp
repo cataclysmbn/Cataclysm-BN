@@ -5927,7 +5927,8 @@ std::unique_ptr<iuse_actor> multicooker_iuse::clone() const
     return std::make_unique<multicooker_iuse>( *this );
 }
 
-namespace {
+namespace
+{
 auto read_time_duration( const JsonObject &obj, const std::string &member,
                          const time_duration &default_value ) -> time_duration
 {
@@ -5936,7 +5937,7 @@ auto read_time_duration( const JsonObject &obj, const std::string &member,
     }
     if( obj.has_string( member ) ) {
         return read_from_json_string<time_duration>( *obj.get_raw( member ),
-                                                     time_duration::units );
+                time_duration::units );
     }
     if( obj.has_int( member ) ) {
         return time_duration::from_turns( obj.get_int( member ) );
@@ -5962,7 +5963,7 @@ auto hand_crank_actor::load( const JsonObject &obj ) -> void
 }
 
 auto hand_crank_actor::can_use( const Character &who, const item &it, bool,
-        const tripoint & ) const -> ret_val<bool>
+                                const tripoint & ) const -> ret_val<bool>
 {
     if( who.is_npc() ) {
         return ret_val<bool>::make_failure();
