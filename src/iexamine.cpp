@@ -6640,7 +6640,21 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
     const bool full_portable = f_volume >= sm_rack::MAX_FOOD_VOLUME_PORTABLE;
     const auto remaining_capacity = sm_rack::MAX_FOOD_VOLUME - f_volume;
     const auto remaining_capacity_portable = sm_rack::MAX_FOOD_VOLUME_PORTABLE - f_volume;
-    const auto has_coal_in_inventory = p.charges_of( itype_charcoal ) > 0;
+    
+    // Check for charcoal in inventory and nearby ground
+    int charcoal_nearby = 0;
+    for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
+        if( pt == examp ) {
+            continue;
+        }
+        for( const item *it : here.i_at( pt ) ) {
+            if( it->typeId() == itype_charcoal ) {
+                charcoal_nearby += it->charges;
+            }
+        }
+    }
+    const auto has_coal_in_inventory = p.charges_of( itype_charcoal ) > 0 || charcoal_nearby > 0;
+    
     const auto coal_charges = count_charges_in_list( &*itype_charcoal, items_here );
     const auto need_charges = get_charcoal_charges( f_volume );
     const bool has_coal = coal_charges > 0;
