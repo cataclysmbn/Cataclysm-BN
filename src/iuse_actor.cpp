@@ -86,6 +86,7 @@
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
+#include "cloning_utils.h"
 #include "string_formatter.h"
 #include "string_utils.h"
 #include "string_input_popup.h"
@@ -148,6 +149,7 @@ static const itype_id itype_syringe( "syringe" );
 static const itype_id itype_fertilizer( "fertilizer" );
 static const itype_id itype_genome_drive( "genome_drive" );
 static const itype_id itype_usb_drive( "usb_drive" );
+static const flag_id flag_genome_drive( "GENOME_DRIVE" );
 static const itype_id itype_mutagen( "mutagen" );
 static const itype_id itype_biomaterial( "biomaterial" );
 
@@ -5432,14 +5434,12 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint &pos ) 
              it.display_name(), m->name() );
 
 
-    auto drives = p.all_items_with_id( itype_genome_drive );
+    auto drives = p.all_items_with_flag( flag_genome_drive );
 
     for( size_t z = 0; z < drives.size(); z++ ) {
         if( drives[z]->get_var( "specimen_sample" ) == id_str ) {
             int progress = drives[z]->get_var( "specimen_sample_progress", 0 );
-            int size = drives[z]->get_var( "specimen_size" ).empty() ?
-                       static_cast<int>( m->get_size() ) + 1 :
-                       std::stoi( drives[z]->get_var( "specimen_size" ) );
+            const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( m->type->id ) );
 
             // Increment progress, but don't exceed size
             if( progress < size ) {
@@ -5460,12 +5460,11 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint &pos ) 
     // Create new genome drive
     p.use_amount( itype_usb_drive, 1, is_empty_usb );
     detached_ptr<item> drive = item::spawn( itype_genome_drive, calendar::turn );
-    int size = static_cast<int>( m->get_size() ) + 1;
+    const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( m->type->id ) );
 
     drive->set_var( "specimen_sample", id_str );
     drive->set_var( "specimen_sample_progress", "1" );  // First increment
     drive->set_var( "specimen_name", m->name() );
-    drive->set_var( "specimen_size", std::to_string( size ) );
 
     if( size > 1 ) {
         add_msg( m_info, "Progress: 1/%d for genome sample.", size );
@@ -5498,7 +5497,7 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
         add_msg( m_info, _( "There's not enough charge left in the %s." ), it.display_name() );
         return 0;
     }
-    auto genome_drives = p.all_items_with_id( itype_genome_drive );
+    auto genome_drives = p.all_items_with_flag( flag_genome_drive );
     if( genome_drives.size() == 0 ) {
         popup( "You have no valid genome drives." );
         return 0;
@@ -5509,8 +5508,9 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
     bool has_complete_sample = false;
     for( size_t z = 0; z < genome_drives.size(); z++ ) {
         const int progress = genome_drives[z]->get_var( "specimen_sample_progress", 0 );
-        const int size = genome_drives[z]->get_var( "specimen_size", 0 );
-        if( progress >= size ) {
+        const auto specimen_id = mtype_id( genome_drives[z]->get_var( "specimen_sample" ) );
+        const auto size = cloning_utils::specimen_required_sample_size( specimen_id );
+        if( size > 0 && progress >= size ) {
             has_complete_sample = true;
             specimen_menu.addentry( z, true, MENU_AUTOASSIGN, string_format( "%s",
                                     genome_drives[z]->display_name() ) );
@@ -5542,25 +5542,11 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
 
     if( menu.ret == 0 ) {
         // grab the monsters data from a fake copy
-        const shared_ptr_fast<monster> newmon_ptr = make_shared_fast<monster>
-                ( mtype_id( selected_drive->get_var( "specimen_sample" ) ) );
+        const auto specimen_id = mtype_id( selected_drive->get_var( "specimen_sample" ) );
+        const auto newmon_ptr = make_shared_fast<monster>( specimen_id );
         const monster &newmon = *newmon_ptr;
 
-        const int size_class = selected_drive->get_var( "specimen_size", 0 );
-
-        static const char *creature_size_strings[] = {
-            "TINY",
-            "SMALL",
-            "MEDIUM",
-            "LARGE",
-            "HUGE"
-        };
-
-        const char *size_str = "UNKNOWN";
-
-        if( size_class >= 0 && size_class < std::ssize( creature_size_strings ) ) {
-            size_str = creature_size_strings[size_class];
-        }
+        const char *size_str = cloning_utils::specimen_size_class_string( specimen_id );
 
         popup(
             _( "Examination Results:\n\nSample Name: %s\nSize Class: %s\nWeight: %.0fkg\nVolume: %.0fl" ),
@@ -5620,9 +5606,10 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
         }
 
         add_msg( m_info, _( "The research produced a viable %s sample!" ), newmon.name() );
-        selected_drive->set_var( "specimen_sample", chosen->name.str() );
-        selected_drive->set_var( "specimen_size", std::to_string( newmon.get_size() ) );
-        selected_drive->set_var( "specimen_sample_progress", selected_drive->get_var( "specimen_size" ) );
+        const auto specimen_id = mtype_id( chosen->name.str() );
+        const auto size = cloning_utils::specimen_required_sample_size( specimen_id );
+        selected_drive->set_var( "specimen_sample", specimen_id.str() );
+        selected_drive->set_var( "specimen_sample_progress", std::to_string( size ) );
         selected_drive->set_var( "specimen_name", newmon.name() );
     } else if( menu.ret == 2 ) {
         add_msg( "You clone a copy of the drive onto another USB." );
@@ -5632,7 +5619,6 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
         drive_copy->set_var( "specimen_sample", selected_drive->get_var( "specimen_sample" ) );
         drive_copy->set_var( "specimen_sample_progress",
                              selected_drive->get_var( "specimen_sample_progress" ) );
-        drive_copy->set_var( "specimen_size", selected_drive->get_var( "specimen_size" ) );
         drive_copy->set_var( "specimen_name", selected_drive->get_var( "specimen_name" ) );
 
         p.i_add( std::move( drive_copy ) );
@@ -5645,7 +5631,6 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
         detached_ptr<item> dna = item::spawn( itype_id( "dna" ), calendar::turn, 1 );
 
         dna->set_var( "specimen_sample", selected_drive->get_var( "specimen_sample" ) );
-        dna->set_var( "specimen_size", selected_drive->get_var( "specimen_size" ) );
         dna->set_var( "specimen_name", selected_drive->get_var( "specimen_name" ) );
 
         liquid_handler::handle_all_liquid( std::move( dna ), PICKUP_RANGE );
