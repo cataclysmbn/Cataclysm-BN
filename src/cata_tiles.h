@@ -159,6 +159,13 @@ class texture
         }
 };
 
+enum class tint_blend_mode : uint8_t {
+    overlay,
+    multiply,
+    additive,
+    subtract,
+};
+
 enum class tileset_fx_type {
     none,
     shadow,
@@ -170,64 +177,27 @@ enum class tileset_fx_type {
     z_overlay
 };
 
-struct tileset_lookup_key {
-    int sprite_index;
-    int mask_index;
-    tileset_fx_type effect;
-    SDL_Color color;
-    std::optional<float> contrast;
-    std::optional<float> saturation;
-    std::optional<float> brightness;
-
-    bool operator==( const tileset_lookup_key &other ) const {
-        return sprite_index == other.sprite_index
-               && mask_index == other.mask_index
-               && effect == other.effect
-               && color == other.color
-               && contrast == other.contrast
-               && saturation == other.saturation
-               && brightness == other.brightness;
-    }
-};
-
-template <>
-struct std::hash<tileset_lookup_key> {
-    size_t operator()( const tileset_lookup_key &v ) const noexcept {
-        std::size_t seed = 0;
-        cata::hash_combine( seed, v.sprite_index );
-        cata::hash_combine( seed, v.mask_index );
-        cata::hash_combine( seed, v.effect );
-        const union {
-            SDL_Color sdl;
-            uint32_t val;
-        } color = { v.color };
-        cata::hash_combine( seed, color.val );
-        if( v.contrast.has_value() ) {
-            cata::hash_combine( seed, v.contrast.value() );
-        }
-        if( v.saturation.has_value() ) {
-            cata::hash_combine( seed, v.saturation.value() );
-        }
-        if( v.brightness.has_value() ) {
-            cata::hash_combine( seed, v.brightness.value() );
-        }
-        return seed;
-    }
-};
-
 constexpr int TILESET_NO_MASK = -1;
 constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
 
 struct tint_config {
     std::optional<SDL_Color> color;
+    tint_blend_mode blend_mode = tint_blend_mode::overlay;
     std::optional<float> contrast;    // 1.0 = no change, absent = skip
     std::optional<float> saturation;  // 1.0 = no change, absent = skip
     std::optional<float> brightness;  // 1.0 = no change, absent = skip
 
-    // Convenience: check if any tint effect should be applied
     bool has_value() const {
         return color.has_value() || contrast.has_value() || saturation.has_value() ||
                brightness.has_value();
+    }
+
+    bool operator==( const tint_config &other ) const {
+        return color == other.color
+               && blend_mode == other.blend_mode
+               && contrast == other.contrast
+               && saturation == other.saturation
+               && brightness == other.brightness;
     }
 
     // Implicit conversions for backward compatibility and convenience
@@ -240,6 +210,48 @@ struct tint_config {
 };
 
 using color_tint_pair = std::pair<tint_config, tint_config>;  // {bg, fg}
+
+struct tileset_lookup_key {
+    int sprite_index;
+    int mask_index;
+    tileset_fx_type effect;
+    tint_config tint;
+
+    bool operator==( const tileset_lookup_key &other ) const {
+        return sprite_index == other.sprite_index
+               && mask_index == other.mask_index
+               && effect == other.effect
+               && tint == other.tint;
+    }
+};
+
+template <>
+struct std::hash<tileset_lookup_key> {
+    size_t operator()( const tileset_lookup_key &v ) const noexcept {
+        std::size_t seed = 0;
+        cata::hash_combine( seed, v.sprite_index );
+        cata::hash_combine( seed, v.mask_index );
+        cata::hash_combine( seed, v.effect );
+        if( v.tint.color.has_value() ) {
+            const union {
+                SDL_Color sdl;
+                uint32_t val;
+            } color = { v.tint.color.value() };
+            cata::hash_combine( seed, color.val );
+        }
+        cata::hash_combine( seed, static_cast<uint8_t>( v.tint.blend_mode ) );
+        if( v.tint.contrast.has_value() ) {
+            cata::hash_combine( seed, v.tint.contrast.value() );
+        }
+        if( v.tint.saturation.has_value() ) {
+            cata::hash_combine( seed, v.tint.saturation.value() );
+        }
+        if( v.tint.brightness.has_value() ) {
+            cata::hash_combine( seed, v.tint.brightness.value() );
+        }
+        return seed;
+    }
+};
 
 class tileset
 {
@@ -300,10 +312,7 @@ class tileset
 
         const texture *get_or_default( int sprite_index, int mask_index,
                                        const tileset_fx_type &type,
-                                       const SDL_Color &color,
-                                       std::optional<float> contrast = std::nullopt,
-                                       std::optional<float> saturation = std::nullopt,
-                                       std::optional<float> brightness = std::nullopt ) const;
+                                       const tint_config &tint = {} ) const;
 
 
         tile_type &create_tile_type( const std::string &id, tile_type &&new_tile_type );

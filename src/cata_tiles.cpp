@@ -707,7 +707,7 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
             SDL_RenderCopy( renderer.get(), st_tex, &st_sub_rect, &atl_tex.second );
         }
 
-        const auto tex_key = tileset_lookup_key{ index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR };
+        const auto tex_key = tileset_lookup_key{ index, TILESET_NO_MASK, tileset_fx_type::none, {} };
         auto& [at_tex, at_rect] = atl_tex;
         ts.tile_lookup.emplace( tex_key, texture( std::move( at_tex ), at_rect ) );
     }
@@ -791,32 +791,46 @@ static SDL_Color apply_brightness( const SDL_Color &c, float brightness )
 }
 
 static void apply_surf_blend_effect(
-    SDL_Surface *staging, const SDL_Color &color, const bool use_mask,
-    const SDL_Rect &dstRect, const SDL_Rect &srcRect, const SDL_Rect &maskRect,
-    std::optional<float> contrast, std::optional<float> saturation,
-    std::optional<float> brightness )
+    SDL_Surface *staging, const tint_config &tint, const bool use_mask,
+    const SDL_Rect &dstRect, const SDL_Rect &srcRect, const SDL_Rect &maskRect )
 {
     ZoneScoped;
 
-    const HSVColor dest_hsv = rgb2hsv( color );
-    constexpr auto multiply = []( const uint8_t base, const uint8_t target ) -> uint8_t {
-        return static_cast<uint8_t>( base *target / 255 );
+    const HSVColor dest_hsv = rgb2hsv( tint.color.value_or( TILESET_NO_COLOR ) );
+    const auto blend_value = [&tint]( const uint8_t base, const uint8_t target ) -> uint8_t {
+        switch( tint.blend_mode ) {
+            case tint_blend_mode::multiply:
+                return static_cast<uint8_t>( base * target / 255 );
+            case tint_blend_mode::additive:
+                return static_cast<uint8_t>( std::min( base + target, 255 ) );
+            case tint_blend_mode::subtract:
+                return static_cast<uint8_t>( std::max( base - ( 255 - target ), 0 ) );
+            default:
+            case tint_blend_mode::overlay:
+                if( base > 127 ) {
+                    const auto u = ( 255 - base ) * 255 / 127;
+                    const auto m = base - ( 255 - base );
+                    return std::clamp<uint8_t>( ( target * u / 255 ) + m, 0, 255 );
+                } else {
+                    return std::clamp<uint8_t>( target * ( base * 255 / 127 ) / 255, 0, 255 );
+                }
+        }
     };
 
-    auto postprocess = [&]( SDL_Color c ) -> SDL_Color {
-        if( contrast.has_value() )
+    auto postprocess = [&tint]( SDL_Color c ) -> SDL_Color {
+        if( tint.contrast.has_value() )
         {
-            c.r = apply_contrast( c.r, contrast.value() );
-            c.g = apply_contrast( c.g, contrast.value() );
-            c.b = apply_contrast( c.b, contrast.value() );
+            c.r = apply_contrast( c.r, tint.contrast.value() );
+            c.g = apply_contrast( c.g, tint.contrast.value() );
+            c.b = apply_contrast( c.b, tint.contrast.value() );
         }
-        if( saturation.has_value() )
+        if( tint.saturation.has_value() )
         {
-            c = apply_saturation( c, saturation.value() );
+            c = apply_saturation( c, tint.saturation.value() );
         }
-        if( brightness.has_value() )
+        if( tint.brightness.has_value() )
         {
-            c = apply_brightness( c, brightness.value() );
+            c = apply_brightness( c, tint.brightness.value() );
         }
         return c;
     };
@@ -826,7 +840,7 @@ static void apply_surf_blend_effect(
             HSVColor base_hsv = rgb2hsv( base_rgb );
             base_hsv.H = dest_hsv.H;
             base_hsv.S = ilerp<uint16_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S, mask_rgb.g );
-            base_hsv.V = ilerp( base_hsv.V, multiply( base_hsv.V, dest_hsv.V ), mask_rgb.b );
+            base_hsv.V = ilerp( base_hsv.V, blend_value( base_hsv.V, dest_hsv.V ), mask_rgb.b );
 
             RGBColor res = hsv2rgb( base_hsv );
             res.r = ilerp( base_rgb.r, res.r, mask_rgb.r );
@@ -845,7 +859,7 @@ static void apply_surf_blend_effect(
             HSVColor base_hsv = rgb2hsv( c );
             base_hsv.H = dest_hsv.H;
             base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S, 127 );
-            base_hsv.V = ilerp<uint16_t, uint8_t>( base_hsv.V, multiply( base_hsv.V, dest_hsv.V ), 127 );
+            base_hsv.V = ilerp<uint16_t, uint8_t>( base_hsv.V, blend_value( base_hsv.V, dest_hsv.V ), 127 );
             return postprocess( hsv2rgb( base_hsv ) );
         };
         apply_color_filter(
@@ -859,18 +873,15 @@ static void apply_surf_blend_effect(
 const texture *tileset::get_or_default( const int sprite_index,
                                         const int mask_index,
                                         const tileset_fx_type &type,
-                                        const SDL_Color &color,
-                                        std::optional<float> contrast,
-                                        std::optional<float> saturation,
-                                        std::optional<float> brightness ) const
+                                        const tint_config &tint ) const
 {
     ZoneScoped;
 
 #if defined(DYNAMIC_ATLAS)
 
-    const auto base_tex_key = tileset_lookup_key{ sprite_index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, std::nullopt, std::nullopt, std::nullopt };
-    const auto mask_tex_key = tileset_lookup_key{ mask_index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, std::nullopt, std::nullopt, std::nullopt };
-    const auto mod_tex_key = tileset_lookup_key{ sprite_index, mask_index, type, color, contrast, saturation, brightness };
+    const auto base_tex_key = tileset_lookup_key{ sprite_index, TILESET_NO_MASK, tileset_fx_type::none, {} };
+    const auto mask_tex_key = tileset_lookup_key{ mask_index, TILESET_NO_MASK, tileset_fx_type::none, {} };
+    const auto mod_tex_key = tileset_lookup_key{ sprite_index, mask_index, type, tint };
 
     if( g->display_overlay_state( ACTION_DISPLAY_TILES_NO_VFX ) ) {
         const auto base_tex_it = tile_lookup.find( base_tex_key );
@@ -932,12 +943,11 @@ const texture *tileset::get_or_default( const int sprite_index,
 
         SDL_RenderReadPixels( rp, nullptr, st_surf->format->format, st_surf->pixels, st_surf->pitch );
 
-        if( color == TILESET_NO_COLOR && !contrast.has_value() && !saturation.has_value() &&
-            !brightness.has_value() ) {
+        if( !tint.has_value() ) {
             apply_color_filter( st_surf, st_sub_rect_tinted, st_surf, st_sub_rect_source, color_pixel_copy );
         } else {
-            apply_surf_blend_effect( st_surf, color, mask_tex, st_sub_rect_tinted,
-                                     st_sub_rect_source, st_sub_rect_mask, contrast, saturation, brightness );
+            apply_surf_blend_effect( st_surf, tint, mask_tex, st_sub_rect_tinted,
+                                     st_sub_rect_source, st_sub_rect_mask );
         }
 
         apply_color_filter( st_surf, st_sub_rect_final,  st_surf, st_sub_rect_tinted, vfx_func );
@@ -1616,10 +1626,23 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
             return { static_cast<SDL_Color>( curses_color_to_RGB( curse_color ) ), std::nullopt };
         };
 
+        auto parse_blend_mode = []( const std::string & str ) -> tint_blend_mode {
+            if( str == "multiply" ) {
+                return tint_blend_mode::multiply;
+            } else if( str == "additive" ) {
+                return tint_blend_mode::additive;
+            } else if( str == "subtract" ) {
+                return tint_blend_mode::subtract;
+            }
+            return tint_blend_mode::overlay;
+        };
+
         // Parse a tint_config from either a string or an object
         // When has_top_level is true, fg_color/bg_color must be strings (simple mode)
-        auto parse_tint_config = [&parse_color]( const JsonObject & obj, const std::string & key,
-                                 bool has_top_level, std::optional<float> top_contrast, std::optional<float> top_saturation,
+        auto parse_tint_config = [&parse_color, &parse_blend_mode]( const JsonObject & obj,
+                                 const std::string & key,
+                                 bool has_top_level, tint_blend_mode top_blend_mode,
+                                 std::optional<float> top_contrast, std::optional<float> top_saturation,
         std::optional<float> top_brightness ) -> tint_config {
             tint_config cfg;
             if( !obj.has_member( key ) )
@@ -1633,6 +1656,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 auto [color, brightness] = parse_color( obj.get_string( key ) );
                 cfg.color = color;
                 cfg.brightness = brightness;
+                cfg.blend_mode = top_blend_mode;
                 if( has_top_level ) {
                     cfg.contrast = top_contrast;
                     cfg.saturation = top_saturation;
@@ -1647,6 +1671,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 auto [color, brightness] = parse_color( color_obj.get_string( "color", "" ) );
                 cfg.color = color;
                 cfg.brightness = brightness;
+                cfg.blend_mode = parse_blend_mode( color_obj.get_string( "blend_mode", "" ) );
                 if( color_obj.has_float( "contrast" ) ) {
                     cfg.contrast = color_obj.get_float( "contrast" );
                 }
@@ -1671,6 +1696,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
             std::optional<float> top_contrast;
             std::optional<float> top_saturation;
             std::optional<float> top_brightness;
+            tint_blend_mode top_blend_mode = parse_blend_mode( tint_def.get_string( "blend_mode", "" ) );
             const bool has_top_level = tint_def.has_float( "contrast" ) || tint_def.has_float( "saturation" );
             if( tint_def.has_float( "contrast" ) ) {
                 top_contrast = tint_def.get_float( "contrast" );
@@ -1682,10 +1708,10 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 top_brightness = tint_def.get_float( "brightness" );
             }
 
-            tint_config fg = parse_tint_config( tint_def, "fg", has_top_level, top_contrast,
-                                                top_saturation, top_brightness );
-            tint_config bg = parse_tint_config( tint_def, "bg", has_top_level, top_contrast,
-                                                top_saturation, top_brightness );
+            tint_config fg = parse_tint_config( tint_def, "fg", has_top_level, top_blend_mode,
+                                                top_contrast, top_saturation, top_brightness );
+            tint_config bg = parse_tint_config( tint_def, "bg", has_top_level, top_blend_mode,
+                                                top_contrast, top_saturation, top_brightness );
 
             if( fg.has_value() || bg.has_value() ) {
                 ts.tints[mut_id] = { bg, fg };
@@ -3282,11 +3308,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
                             ? 0
                             : ( rota % num_sprites );
 
-    // Extract tint values, but may be overridden by fx_type
-    std::optional<SDL_Color> effective_color = tint.color;
-    std::optional<float> effective_contrast = tint.contrast;
-    std::optional<float> effective_saturation = tint.saturation;
-    std::optional<float> effective_brightness = tint.brightness;
+    tint_config effective_tint = tint;
 
     tileset_fx_type fx_type;
     if( ll == lit_level::MEMORIZED ) {
@@ -3297,10 +3319,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
                   : tileset_fx_type::overexposed;
     } else if( overlay_count > 0 && static_z_effect ) {
         fx_type = tileset_fx_type::z_overlay;
-        effective_color = std::nullopt;
-        effective_contrast = std::nullopt;
-        effective_saturation = std::nullopt;
-        effective_brightness = std::nullopt;
+        effective_tint = {};
     } else if( apply_visual_effects && g->u.is_underwater() ) {
         fx_type = ll == lit_level::LOW
                   ? tileset_fx_type::underwater_dark
@@ -3314,30 +3333,16 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
     const int tile_idx = sprite_list[sprite_num];
     const int mask_idx = tint_mask_list[sprite_num];
 
-    const auto default_color = tile.default_tint.value_or( TILESET_NO_COLOR );
-
-    SDL_Color tint_color;
-    if( tile.flags.contains( flag_TINT_NONE ) ) {
-        tint_color = TILESET_NO_COLOR;
-        effective_contrast = std::nullopt;
-        effective_saturation = std::nullopt;
-        effective_brightness = std::nullopt;
-    } else if( is_fg && tile.flags.contains( flag_TINT_NO_FG ) ) {
-        tint_color = TILESET_NO_COLOR;
-        effective_contrast = std::nullopt;
-        effective_saturation = std::nullopt;
-        effective_brightness = std::nullopt;
-    } else if( !is_fg && tile.flags.contains( flag_TINT_NO_BG ) ) {
-        tint_color = TILESET_NO_COLOR;
-        effective_contrast = std::nullopt;
-        effective_saturation = std::nullopt;
-        effective_brightness = std::nullopt;
-    } else {
-        tint_color = effective_color.value_or( default_color );
+    if( tile.flags.contains( flag_TINT_NONE ) ||
+        ( is_fg && tile.flags.contains( flag_TINT_NO_FG ) ) ||
+        ( !is_fg && tile.flags.contains( flag_TINT_NO_BG ) ) ) {
+        effective_tint = {};
+    } else if( !effective_tint.color.has_value() && tile.default_tint.has_value() ) {
+        effective_tint.color = tile.default_tint.value();
     }
 
-    const texture *sprite_tex = tileset_ptr->get_or_default( tile_idx, mask_idx, fx_type, tint_color,
-                                effective_contrast, effective_saturation, effective_brightness );
+    const texture *sprite_tex = tileset_ptr->get_or_default( tile_idx, mask_idx, fx_type,
+                                effective_tint );
 
     int width = 0;
     int height = 0;
@@ -3355,7 +3360,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
         if( !static_z_effect && overlay_count > 0 ) {
             const auto overlay =
                 tileset_ptr->get_or_default(
-                    tile_idx, TILESET_NO_MASK, tileset_fx_type::z_overlay, TILESET_NO_COLOR );
+                    tile_idx, TILESET_NO_MASK, tileset_fx_type::z_overlay );
             if( overlay ) {
                 overlay->set_alpha_mod( std::min( 192, overlay_count ) );
                 overlay->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
@@ -4451,7 +4456,7 @@ void tileset_loader::ensure_default_item_highlight()
         index,
         TILESET_NO_MASK,
         tileset_fx_type::none,
-        TILESET_NO_COLOR
+        {}
     }, texture( tex, rect ) );
 #else
     const Uint8 highlight_alpha = 127;
