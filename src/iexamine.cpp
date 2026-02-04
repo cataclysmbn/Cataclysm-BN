@@ -4249,6 +4249,24 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
         return;
     }
     const int max_amount = std::min( total_available, max_reload_amount );
+    
+    // For smoking racks, calculate appropriate default and max based on food capacity
+    int default_amount = max_amount;
+    int actual_max = max_amount;
+    if( cur_ammo->get_id() == itype_charcoal ) {
+        // Check if this is a smoking rack by checking furniture id
+        const furn_id furn = here.furn( examp );
+        if( furn == furn_str_id( "f_smoking_rack" ) || furn == furn_str_id( "f_smoking_rack_active" ) ||
+            furn == furn_str_id( "f_metal_smoking_rack" ) || furn == furn_str_id( "f_metal_smoking_rack_active" ) ) {
+            // Default to minimum charcoal needed (MIN_CHARCOAL = 100)
+            const int min_charcoal = 100;
+            default_amount = std::min( min_charcoal, max_amount );
+            // Max is what's needed for full capacity (MAX_FOOD_VOLUME = 20L, CHARCOAL_PER_LITER = 25)
+            const int max_needed = units::to_liter( units::from_liter( 20 ) ) * 25;
+            actual_max = std::min( max_needed, max_amount );
+        }
+    }
+    
     //~ Loading fuel or other items into a piece of furniture.
     std::string source_desc = "";
     if( amount_in_inv > 0 && amount_nearby > 0 ) {
@@ -4257,14 +4275,14 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
         source_desc = string_format( _( " (%d nearby)" ), amount_nearby );
     }
     const std::string popupmsg = string_format( _( "Put how many of the %1$s into the %2$s?%3$s" ),
-                                 cur_ammo->nname( max_amount ), f.name(), source_desc );
+                                 cur_ammo->nname( actual_max ), f.name(), source_desc );
     int amount = string_input_popup()
                  .title( popupmsg )
                  .width( 20 )
-                 .text( std::to_string( max_amount ) )
+                 .text( std::to_string( default_amount ) )
                  .only_digits( true )
                  .query_int();
-    if( amount <= 0 || amount > max_amount ) {
+    if( amount <= 0 || amount > actual_max ) {
         return;
     }
     
@@ -5983,9 +6001,7 @@ void iexamine::mill_finalize( player &, const tripoint &examp, const time_point 
     }
 
     for( detached_ptr<item> &it : results ) {
-        // Use add_item directly instead of items.insert to avoid NOITEM overflow behavior
-        // that can cause items to disappear when the mill is surrounded by walls/furniture
-        here.add_item( examp, std::move( it ) );
+        items.insert( std::move( it ) );
     }
     here.furn_set( examp, next_mill_type );
 }
