@@ -946,6 +946,11 @@
   },
   {
     "type": "item_action",
+    "id": "sonar_scan",
+    "name": { "str": "Scan with sonar" }
+  },
+  {
+    "type": "item_action",
     "id": "change_scent",
     "name": { "str": "Mask scent" }
   },

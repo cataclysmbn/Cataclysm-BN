@@ -525,6 +525,39 @@
     "magazine_well": "250 ml"
   },
   {
+    "id": "sonar_device",
+    "type": "TOOL",
+    "category": "electronics",
+    "name": { "str": "handheld sonar" },
+    "description": "A rugged sonar unit with a compact transducer and display.  Activate it to ping nearby underwater terrain and sketch what you find onto the overmap.",
+    "weight": "500 g",
+    "volume": "500 ml",
+    "price": "450 USD",
+    "price_postapoc": "15 USD",
+    "bashing": 2,
+    "material": [ "plastic", "steel" ],
+    "symbol": ";",
+    "color": "light_blue",
+    "ammo": "battery",
+    "charges_per_use": 100,
+    "use_action": "sonar_scan",
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
+      ]
+    ],
+    "magazine_well": "250 ml"
+  },
+  {
     "id": "hand_crank_charger",
     "type": "TOOL",
     "category": "electronics",

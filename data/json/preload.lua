@@ -6,6 +6,7 @@ local storage = game.mod_storage[game.current_mod]
 mod.storage = storage
 
 game.iuse_functions["VOLTMETER"] = function(...) return mod.voltmeter.menu(...) end
+game.iuse_functions["sonar_scan"] = function(...) return mod.sonar_scan(...) end
 
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...) return mod.on_nyctophobia_tick(...) end)
 
