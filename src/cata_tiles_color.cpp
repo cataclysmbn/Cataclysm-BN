@@ -108,12 +108,12 @@ auto cata_tiles::get_mutation_color(
 {
     const mutation_branch &mut_branch = mut.first.obj();
     for( const std::string &mut_type : mut_branch.types ) {
-        const std::string controller = tileset_ptr->get_tint_controller( mut_type );
-        if( controller.empty() ) {
+        auto controller = tileset_ptr->get_tint_controller( mut_type );
+        if( controller.first.empty() ) {
             continue;
         }
         for( const trait_id &other_mut : c.get_mutations() ) {
-            if( !other_mut.obj().types.contains( controller ) ) {
+            if( !other_mut.obj().types.contains( controller.first ) ) {
                 continue;
             }
             const color_tint_pair *tint = tileset_ptr->get_tint( other_mut.str() );
@@ -138,6 +138,10 @@ auto cata_tiles::get_mutation_color(
             return color_tint_pair{ curse_color, curse_color };
         }
         break;
+    }
+    const color_tint_pair *tint = tileset_ptr->get_tint( mut.first.str() );
+    if( tint != nullptr ) {
+        return *tint;
     }
     return { std::nullopt, std::nullopt };
 }

@@ -1,0 +1,11 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "color_expansion",
+    "name": "Color Expansion",
+    "authors": [ "Azmodius X" ],
+    "description": "Changes how color based mutations are rendered, and adds more of them.",
+    "category": "graphical",
+    "dependencies": [ "bn" ]
+  }
+]

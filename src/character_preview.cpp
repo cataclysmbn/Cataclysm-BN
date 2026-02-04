@@ -69,6 +69,26 @@ class char_preview_adapter : public cata_tiles
                 }
             };
 
+            auto should_override = [&]<typename T>( T && arg ) {
+                auto check = [&]( const mutation & mut ) {
+                    mutation_branch branch = mut.first.obj();
+                    for (const std::string& mut_type : branch.types) {
+                        auto controller = tileset_ptr->get_tint_controller( mut_type );
+                        if( controller.first.empty() ) {
+                            continue;
+                        }
+                        return controller.second;
+                    }
+                    return false;
+                };
+                using Decayed = std::remove_reference_t<T>;
+                using PtrBase = std::remove_const_t<std::remove_pointer_t<Decayed>>;
+                if constexpr( std::is_same_v<PtrBase, mutation> ) {
+                    return check( *arg );
+                }
+                return false;
+            };
+
             auto is_hair_style = [&]<typename T>( T && arg ) {
                 auto check = [&]( const mutation & mut ) {
                     if( mut.first.obj().types.contains( "hair_style" ) ) {
@@ -91,27 +111,29 @@ class char_preview_adapter : public cata_tiles
                 std::string draw_id = overlay_id;
                 bool found = false;
 
-                // Legacy hair color injection: try to find a tile with the hair color in the name
-                if( std::visit( is_hair_style, entry ) ) {
-                    for( const trait_id &other_mut : ch.get_mutations() ) {
-                        if( !other_mut.obj().types.contains( "hair_color" ) ) {
-                            continue;
-                        }
-                        const std::string color_id = other_mut.str();
-                        if( draw_id.find( color_id ) != std::string::npos ) {
+                if ( !std::visit( should_override, entry ) ) {
+                    // Legacy hair color injection: try to find a tile with the hair color in the name
+                    if( std::visit( is_hair_style, entry ) ) {
+                        for( const trait_id &other_mut : ch.get_mutations() ) {
+                            if( !other_mut.obj().types.contains( "hair_color" ) ) {
+                                continue;
+                            }
+                            const std::string color_id = other_mut.str();
+                            if( draw_id.find( color_id ) != std::string::npos ) {
+                                break;
+                            }
+                            const size_t hair_pos = draw_id.find( "hair_" );
+                            if( hair_pos == std::string::npos ) {
+                                continue;
+                            }
+                            const std::string prefix = draw_id.substr( 0, hair_pos );
+                            std::string suffix = draw_id.substr( hair_pos );
+                            suffix = suffix.substr( suffix.find( '_' ) );
+                            const std::string new_id = prefix + color_id + suffix;
+                            // draw_id is set to the resolved tile ID if found
+                            found = find_overlay_looks_like( ch.male, new_id, draw_id );
                             break;
                         }
-                        const size_t hair_pos = draw_id.find( "hair_" );
-                        if( hair_pos == std::string::npos ) {
-                            continue;
-                        }
-                        const std::string prefix = draw_id.substr( 0, hair_pos );
-                        std::string suffix = draw_id.substr( hair_pos );
-                        suffix = suffix.substr( suffix.find( '_' ) );
-                        const std::string new_id = prefix + color_id + suffix;
-                        // draw_id is set to the resolved tile ID if found
-                        found = find_overlay_looks_like( ch.male, new_id, draw_id );
-                        break;
                     }
                 }
 

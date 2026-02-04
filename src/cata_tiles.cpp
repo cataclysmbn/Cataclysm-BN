@@ -1727,20 +1727,21 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
         for( const JsonObject &tint_def : config.get_array( "tint_pairs" ) ) {
             const std::string source_type = tint_def.get_string( "source_type" );
             const std::string target_type = tint_def.get_string( "target_type" );
+            const bool override = tint_def.get_bool( "override", false );
             if( source_type.empty() || target_type.empty() ) {
                 continue;
             }
-            ts.tint_pairs[target_type] = source_type;
+            ts.tint_pairs[target_type] = { source_type, override };
         }
     }
 }
 
-std::string tileset::get_tint_controller( const std::string &tint_type )
+std::pair<std::string, bool> tileset::get_tint_controller( const std::string &tint_type )
 {
     if( tint_pairs.contains( tint_type ) ) {
         return tint_pairs[tint_type];
     }
-    return std::string();
+    return {};
 }
 
 const color_tint_pair *tileset::get_tint( const std::string &tint_id )
@@ -4362,6 +4363,26 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
         }
     };
 
+    auto should_override = [&]<typename T>( T && arg ) {
+        auto check = [&]( const mutation & mut ) {
+            mutation_branch branch = mut.first.obj();
+            for (const std::string& mut_type : branch.types) {
+                auto controller = tileset_ptr->get_tint_controller( mut_type );
+                if( controller.first.empty() ) {
+                    continue;
+                }
+                return controller.second;
+            }
+            return false;
+        };
+        using Decayed = std::remove_reference_t<T>;
+        using PtrBase = std::remove_const_t<std::remove_pointer_t<Decayed>>;
+        if constexpr( std::is_same_v<PtrBase, mutation> ) {
+            return check( *arg );
+        }
+        return false;
+    };
+
     auto is_hair_style = [&]<typename T>( T && arg ) {
         auto check = [&]( const mutation & mut ) {
             if( mut.first.obj().types.contains( "hair_style" ) ) {
@@ -4386,27 +4407,29 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
         std::string draw_id = overlay_id;
         bool found = false;
 
-        // Legacy hair color injection: try to find a tile with the hair color in the name
-        if( std::visit( is_hair_style, entry ) ) {
-            for( const trait_id &other_mut : ch.get_mutations() ) {
-                if( !other_mut.obj().types.contains( "hair_color" ) ) {
-                    continue;
-                }
-                const std::string color_id = other_mut.str();
-                if( draw_id.find( color_id ) != std::string::npos ) {
+        if( !std::visit( should_override, entry ) ) {
+            // Legacy hair color injection: try to find a tile with the hair color in the name
+            if( std::visit( is_hair_style, entry ) ) {
+                for( const trait_id &other_mut : ch.get_mutations() ) {
+                    if( !other_mut.obj().types.contains( "hair_color" ) ) {
+                        continue;
+                    }
+                    const std::string color_id = other_mut.str();
+                    if( draw_id.find( color_id ) != std::string::npos ) {
+                        break;
+                    }
+                    const size_t hair_pos = draw_id.find( "hair_" );
+                    if( hair_pos == std::string::npos ) {
+                        continue;
+                    }
+                    const std::string prefix = draw_id.substr( 0, hair_pos );
+                    std::string suffix = draw_id.substr( hair_pos );
+                    suffix = suffix.substr( suffix.find( '_' ) );
+                    const std::string new_id = prefix + color_id + suffix;
+                    // draw_id is set to the resolved tile ID if found
+                    found = find_overlay_looks_like( ch.male, new_id, draw_id );
                     break;
                 }
-                const size_t hair_pos = draw_id.find( "hair_" );
-                if( hair_pos == std::string::npos ) {
-                    continue;
-                }
-                const std::string prefix = draw_id.substr( 0, hair_pos );
-                std::string suffix = draw_id.substr( hair_pos );
-                suffix = suffix.substr( suffix.find( '_' ) );
-                const std::string new_id = prefix + color_id + suffix;
-                // draw_id is set to the resolved tile ID if found
-                found = find_overlay_looks_like( ch.male, new_id, draw_id );
-                break;
             }
         }
 
