@@ -176,9 +176,10 @@ void cata::detail::reg_overmap( sol::state &lua )
     DOC( "Reveal a square area around a center point on the overmap. Returns true if any new tiles were revealed." );
     DOC( "Optional filter callback receives oter_id and should return true to reveal that tile." );
     luna::set_fx( lib, "reveal",
-    []( const tripoint & center, int radius,
+                  []( const tripoint & center, int radius,
     sol::optional<sol::protected_function> filter_fn ) -> bool {
-        if( filter_fn.has_value() ) {
+        if( filter_fn.has_value() )
+        {
             auto filter = filter_fn.value();
             const auto wrapped_filter = [filter]( const oter_id & ter ) -> bool {
                 sol::protected_function_result res = filter( ter );
