@@ -341,6 +341,51 @@ ordering provided in `mutation_ordering.json`. Example:
 }
 ```
 
+## Tinting
+
+Tilesets can support tinting, and tinting pairs.
+
+### Tint pairs
+Tint pairs are used to have 1 "type" control the tinting of another tile base on it's "type".
+For example, hair_color controlling hair_style.
+```json
+"tint_pairs": [
+  { "source_type": "hair_color", "target_type": "hair_style", "override": true },
+  { "source_type": "hair_color", "target_type": "facial_hair", "override": true }
+],
+"tints": [
+			{ "id": "hair_blond", "fg": "#91631f", "contrast": 1.1, "blend_mode": "multiply" },
+			{ "id": "hair_white", "fg": "#ffffff", "blend_mode": "multiply" },
+      //...
+],
+"tiles-new": [//...
+```
+"override" is false by default, and enforces bypassing the legacy tile specification. This is more useful for mod_tilesets, which cannot remove entries from the main tileset.
+The "source_type" controls the "target_type" depending on what kind of overlay it is. Currently, this only effects mutations, and so it can handle "mutation_type" as input.
+
+### Tints
+Tints can be used for modifying the color of a tile, preventing the need to create an entirely seperate sprite for simple color variations.
+A tint entry can accept an "id", which can be a type or a direct id. Types are handled with tint_pairs. Direct ids refer to the id of the tile to modify, not formatted in the same way as overlays.
+Example:
+```json
+"tint_pairs": [//...
+"tints": [
+  { "id": "eye_pink", "fg": "#ff00bb", "saturation": 1.5 },
+  { "id": "eye_black", "fg": "c_black", "blend_mode": "multiply" },
+  { "id": "eye_white", "fg": { "color": "#ffffff", "saturation": 0.0, "brightness": 1.2 } },
+],
+"tiles-new": [//...
+```
+Tints are rather flexible. You can handle fg and bg seperately. They can accept either a color input, or an entry containing the color and modifiers. You must pick which kind you'll use. You cannot utilize modifiers that apply to both, and use the entry method.
+The modifiers are "saturation", "brightness", and "contrast". These are also mostly useful for mod_tilesets, but not exclusive.
+Additionally, you can set "blend_mode" to one of the following:
+- `overlay` (default)
+- `multiply`
+- `additive`
+- `subtract`
+Colors can be hex codes, or curses color names. There's fallback logic to aquire the color from the id using curses colors, but don't rely on it.
+
+
 ## Projectile Sprites
 
 Custom sprites can be defined for projectiles (bullets and thrown items) using specific naming conventions:
