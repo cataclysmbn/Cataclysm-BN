@@ -108,7 +108,8 @@
     "name": "solar farm",
     "sym": "#",
     "color": "i_yellow",
-    "see_cost": 5
+    "see_cost": 5,
+    "extras": "power_infrastructure"
   },
   {
     "type": "overmap_terrain",
@@ -116,7 +117,8 @@
     "name": "small power substation",
     "sym": "H",
     "color": "light_cyan",
-    "see_cost": 5
+    "see_cost": 5,
+    "extras": "power_infrastructure"
   },
   {
     "type": "overmap_terrain",
@@ -172,7 +174,8 @@
     "name": "large power substation",
     "sym": "H",
     "color": "cyan",
-    "see_cost": 5
+    "see_cost": 5,
+    "extras": "power_infrastructure"
   },
   {
     "type": "overmap_terrain",
