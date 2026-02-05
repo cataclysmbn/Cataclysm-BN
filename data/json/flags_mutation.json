@@ -80,5 +80,9 @@
   {
     "id": "FLIGHT_ALWAYS_ACTIVE",
     "type": "mutation_flag"
+  },
+  {
+    "id": "FURRY",
+    "type": "mutation_flag"
   }
 ]

@@ -4,7 +4,8 @@
     "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
     "tint_pairs": [
       { "source_type": "hair_color", "target_type": "hair_style", "override": true },
-      { "source_type": "hair_color", "target_type": "facial_hair", "override": true }
+      { "source_type": "hair_color", "target_type": "facial_hair", "override": true },
+      { "source_type": "hair_color", "target_type": "FURRY", "override": true }
     ],
     "tints": [
       { "id": "hair_blond", "fg": "#91631f", "contrast": 1.1, "blend_mode": "multiply" },

@@ -74,10 +74,15 @@ class char_preview_adapter : public cata_tiles
                     mutation_branch branch = mut.first.obj();
                     for( const std::string &mut_type : branch.types ) {
                         auto controller = tileset_ptr->get_tint_controller( mut_type );
-                        if( controller.first.empty() ) {
-                            continue;
+                        if( !controller.first.empty() ) {
+                            return controller.second;
                         }
-                        return controller.second;
+                    }
+                    for( const trait_flag_str_id &mut_flag : branch.flags ) {
+                        auto controller = tileset_ptr->get_tint_controller( mut_flag.str() );
+                        if( !controller.first.empty() ) {
+                            return controller.second;
+                        }
                     }
                     return false;
                 };

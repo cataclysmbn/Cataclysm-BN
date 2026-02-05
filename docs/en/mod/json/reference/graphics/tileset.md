@@ -364,12 +364,12 @@ For example, hair_color controlling hair_style.
 ```
 
 "override" is false by default, and enforces bypassing the legacy tile specification. This is more useful for mod_tilesets, which cannot remove entries from the main tileset.
-The "source_type" controls the "target_type" depending on what kind of overlay it is. Currently, this only effects mutations, and so it can handle "mutation_type" as input.
+The "source_type" controls the "target_type" depending on what kind of overlay it is. Currently, this only effects mutations, and so it can handle "mutation_type" as input. Alternatively, target_type can match a tag instead. This allows things like tinting fur based on hair color.
 
 ### Tints
 
 Tints can be used for modifying the color of a tile, preventing the need to create an entirely seperate sprite for simple color variations.
-A tint entry can accept an "id", which can be a type or a direct id. Types are handled with tint_pairs. Direct ids refer to the id of the tile to modify, not formatted in the same way as overlays.
+A tint entry can accept an "id", which can refer to a tile, or a tint pair source.
 Example:
 
 ```json
