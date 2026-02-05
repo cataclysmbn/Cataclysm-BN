@@ -484,7 +484,7 @@
           "mx_crater": 15,
           "mx_portal_in": 1,
           "mx_electric_anomaly": 1,
-          "mx_poppy_field_anomaly":1,
+          "mx_poppy_field_anomaly": 1,
           "mx_warm_anomaly": 1,
           "mx_cold_anomaly": 1,
           "mx_point_dead_vegetation": 50,
@@ -500,10 +500,7 @@
           "mx_grave": 5
         }
       },
-      "power_infrastructure": {
-        "chance": 25,
-        "extras": { "mx_electric_anomaly": 100 }
-      },
+      "power_infrastructure": { "chance": 25, "extras": { "mx_electric_anomaly": 100 } },
       "road": {
         "chance": 75,
         "extras": {

@@ -445,12 +445,12 @@
         "~~~~~~~~~"
       ],
       "terrain": { " ": "t_null", "~": "t_null" },
-      "place_fields": [ { "field": "fd_shock_vent", "x": [ 1,9 ], "y": [ 1,9 ], "intensity": 3, "repeat": 3 } ],
+      "place_fields": [ { "field": "fd_shock_vent", "x": [ 1, 9 ], "y": [ 1, 9 ], "intensity": 3, "repeat": 3 } ],
       "place_artifact": [
-          { "x": [3, 5], "y": [3, 5], "chance": 10, "property": "ARTPROP_MOVING" },
-          { "x": [3, 5], "y": [3, 5], "chance": 10, "property": "ARTPROP_HUMMING" },
-          { "x": [3, 5], "y": [3, 5], "chance": 10, "property": "ARTPROP_WRIGGLING" },
-          { "x": [3, 5], "y": [3, 5], "chance": 40, "property": "ARTPROP_ELECTRIC" }
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 10, "property": "ARTPROP_MOVING" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 10, "property": "ARTPROP_HUMMING" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 10, "property": "ARTPROP_WRIGGLING" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 40, "property": "ARTPROP_ELECTRIC" }
       ]
     }
   },
@@ -473,11 +473,11 @@
       ],
       "terrain": { " ": "t_null", "~": "t_null" },
       "furniture": { " ": [ [ "f_mutpoppy", 8 ], [ "f_null", 2 ] ], "~": [ [ "f_mutpoppy", 2 ], [ "f_null", 8 ] ] },
-      "place_fields": [ { "field": "fd_gas_vent", "x": [ 1,9 ], "y": [ 1,9 ], "intensity": 3, "repeat": 5 } ],
+      "place_fields": [ { "field": "fd_gas_vent", "x": [ 1, 9 ], "y": [ 1, 9 ], "intensity": 3, "repeat": 5 } ],
       "place_artifact": [
-          { "x": [3, 5], "y": [3, 5], "chance": 20, "property": "ARTPROP_BREATHING" },
-          { "x": [3, 5], "y": [3, 5], "chance": 20, "property": "ARTPROP_WHISPERING" },
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_DEAD" }
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 20, "property": "ARTPROP_BREATHING" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 20, "property": "ARTPROP_WHISPERING" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_DEAD" }
       ]
     }
   },
@@ -499,11 +499,11 @@
         "~~~~~~~~~"
       ],
       "terrain": { " ": "t_null", "~": "t_null" },
-      "place_fields": [ { "field": "fd_anomalous_snow_vent", "x": [ 1,9 ], "y": [ 1,9 ], "intensity": 3, "repeat": 8 }  ],
+      "place_fields": [ { "field": "fd_anomalous_snow_vent", "x": [ 1, 9 ], "y": [ 1, 9 ], "intensity": 3, "repeat": 8 } ],
       "place_artifact": [
-          { "x": [3, 5], "y": [3, 5], "chance": 20, "property": "ARTPROP_GLITTERING" },
-          { "x": [3, 5], "y": [3, 5], "chance": 20, "property": "ARTPROP_ENGRAVED" },
-          { "x": [3, 5], "y": [3, 5], "chance": 20, "property": "ARTPROP_RATTLING" }
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 20, "property": "ARTPROP_GLITTERING" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 20, "property": "ARTPROP_ENGRAVED" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 20, "property": "ARTPROP_RATTLING" }
       ]
     }
   },
@@ -525,11 +525,14 @@
         "~~~~~~~~~"
       ],
       "terrain": { " ": "t_null", "~": "t_null" },
-      "place_fields": [ { "field": "fd_fire_vent", "x": [ 1,9 ], "y": [ 1,9 ], "intensity": 3, "repeat": 12 }, { "field": "fd_hot_air_vent", "x": [ 1,9 ], "y": [ 1,9 ], "intensity": 3, "repeat": 16 } ],
+      "place_fields": [
+        { "field": "fd_fire_vent", "x": [ 1, 9 ], "y": [ 1, 9 ], "intensity": 3, "repeat": 12 },
+        { "field": "fd_hot_air_vent", "x": [ 1, 9 ], "y": [ 1, 9 ], "intensity": 3, "repeat": 16 }
+      ],
       "place_artifact": [
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_WARM" },
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_CRACKLING" },
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_GLOWING" }
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_WARM" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_CRACKLING" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_GLOWING" }
       ]
     }
   },
@@ -551,11 +554,11 @@
         "~~~~~~~~~"
       ],
       "terrain": { " ": "t_null", "~": "t_null" },
-      "place_fields": [ { "field": "fd_shadow_vent", "x": [ 1,9 ], "y": [ 1,9 ], "intensity": 3, "repeat": 8 } ],
+      "place_fields": [ { "field": "fd_shadow_vent", "x": [ 1, 9 ], "y": [ 1, 9 ], "intensity": 3, "repeat": 8 } ],
       "place_artifact": [
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_SLIMY" },
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_SCALED" },
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_FRACTAL" }
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_SLIMY" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_SCALED" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_FRACTAL" }
       ]
     }
   },
@@ -577,11 +580,11 @@
         "~~~~~~~~~"
       ],
       "terrain": { " ": "t_null", "~": "t_null" },
-      "place_fields": [ { "field": "fd_dazzling_vent", "x": [ 1,9 ], "y": [ 1,9 ], "intensity": 3, "repeat": 8 } ],
+      "place_fields": [ { "field": "fd_dazzling_vent", "x": [ 1, 9 ], "y": [ 1, 9 ], "intensity": 3, "repeat": 8 } ],
       "place_artifact": [
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_SLIMY" },
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_SCALED" },
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_FRACTAL" }
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_SLIMY" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_SCALED" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_FRACTAL" }
       ]
     }
   },
@@ -603,11 +606,11 @@
         "~~~~~~~~~"
       ],
       "terrain": { " ": "t_null", "~": "t_null" },
-      "place_fields": [ { "field": "fd_anomalous_bubble_vent", "x": [ 1,9 ], "y": [ 1,9 ], "intensity": 3, "repeat": 8 } ],
+      "place_fields": [ { "field": "fd_anomalous_bubble_vent", "x": [ 1, 9 ], "y": [ 1, 9 ], "intensity": 3, "repeat": 8 } ],
       "place_artifact": [
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_SLIMY" },
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_SCALED" },
-          { "x": [3, 5], "y": [3, 5], "chance": 30, "property": "ARTPROP_FRACTAL" }
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_SLIMY" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_SCALED" },
+        { "x": [ 3, 5 ], "y": [ 3, 5 ], "chance": 30, "property": "ARTPROP_FRACTAL" }
       ]
     }
   }

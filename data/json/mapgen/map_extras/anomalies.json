@@ -3,15 +3,7 @@
     "type": "mapgen",
     "method": "json",
     "update_mapgen_id": "mx_electric_anomaly",
-    "object": {
-      "place_nested": [
-        {
-          "chunks": [ [ "9x9_electric_anomaly", 100 ] ],
-          "x": [ 12, 12 ],
-          "y": [ 12, 12 ]
-        }
-      ]
-    }
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_electric_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
   },
   {
     "id": "mx_electric_anomaly",
@@ -28,15 +20,7 @@
     "type": "mapgen",
     "method": "json",
     "update_mapgen_id": "mx_poppy_field_anomaly",
-    "object": {
-      "place_nested": [
-        {
-          "chunks": [ [ "9x9_poppy_field_anomaly", 100 ] ],
-          "x": [ 12, 12 ],
-          "y": [ 12, 12 ]
-        }
-      ]
-    }
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_poppy_field_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
   },
   {
     "id": "mx_poppy_field_anomaly",
@@ -53,15 +37,7 @@
     "type": "mapgen",
     "method": "json",
     "update_mapgen_id": "mx_cold_anomaly",
-    "object": {
-      "place_nested": [
-        {
-          "chunks": [ [ "9x9_cold_anomaly", 100 ] ],
-          "x": [ 12, 12 ],
-          "y": [ 12, 12 ]
-        }
-      ]
-    }
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_cold_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
   },
   {
     "id": "mx_cold_anomaly",
@@ -78,15 +54,7 @@
     "type": "mapgen",
     "method": "json",
     "update_mapgen_id": "mx_warm_anomaly",
-    "object": {
-      "place_nested": [
-        {
-          "chunks": [ [ "9x9_warm_anomaly", 100 ] ],
-          "x": [ 12, 12 ],
-          "y": [ 12, 12 ]
-        }
-      ]
-    }
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_warm_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
   },
   {
     "id": "mx_warm_anomaly",
@@ -103,15 +71,7 @@
     "type": "mapgen",
     "method": "json",
     "update_mapgen_id": "mx_light_anomaly",
-    "object": {
-      "place_nested": [
-        {
-          "chunks": [ [ "9x9_light_anomaly", 100 ] ],
-          "x": [ 12, 12 ],
-          "y": [ 12, 12 ]
-        }
-      ]
-    }
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_light_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
   },
   {
     "id": "mx_light_anomaly",
@@ -128,15 +88,7 @@
     "type": "mapgen",
     "method": "json",
     "update_mapgen_id": "mx_shadow_anomaly",
-    "object": {
-      "place_nested": [
-        {
-          "chunks": [ [ "9x9_shadow_anomaly", 100 ] ],
-          "x": [ 12, 12 ],
-          "y": [ 12, 12 ]
-        }
-      ]
-    }
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_shadow_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
   },
   {
     "id": "mx_shadow_anomaly",
@@ -153,15 +105,7 @@
     "type": "mapgen",
     "method": "json",
     "update_mapgen_id": "mx_bubble_anomaly",
-    "object": {
-      "place_nested": [
-        {
-          "chunks": [ [ "9x9_bubble_anomaly", 100 ] ],
-          "x": [ 12, 12 ],
-          "y": [ 12, 12 ]
-        }
-      ]
-    }
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_bubble_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
   },
   {
     "id": "mx_bubble_anomaly",
