@@ -77,7 +77,7 @@
           "y": 35
         }
       ],
-      "nested": { "ω": { "chunks": [ [ "null", 80 ], [ "cargoship_crate_food", 10 ], [ "cargoship_crate_hardware", 10 ] ] } },
+      "nested": { ";": { "chunks": [ [ "null", 80 ], [ "cargoship_crate_food", 10 ], [ "cargoship_crate_hardware", 10 ] ] } },
       "place_monster": [
         { "group": "GROUP_ZOMBIE_CARGOSHIP", "x": [ 6, 16 ], "y": [ 25, 40 ], "repeat": [ 15, 20 ] },
         { "group": "GROUP_ZOMBIE_CARGOSHIP", "x": [ 6, 16 ], "y": [ 6, 23 ], "repeat": [ 15, 20 ] }
