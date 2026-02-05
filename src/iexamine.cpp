@@ -4259,20 +4259,9 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     }
     const int max_amount = std::min( total_available, max_reload_amount );
 
-    // For smoking racks, calculate appropriate default and max based on food capacity
+    // For smoking racks, use total available as default (no artificial limits)
     int default_amount = max_amount;
     int actual_max = max_amount;
-    if( cur_ammo->get_id() == itype_charcoal ) {
-        // Check if this is a smoking rack by checking furniture id
-        const furn_id furn = here.furn( examp );
-        if( furn == furn_str_id( "f_smoking_rack" ) || furn == furn_str_id( "f_smoking_rack_active" ) ||
-            furn == furn_str_id( "f_metal_smoking_rack" ) ||
-            furn == furn_str_id( "f_metal_smoking_rack_active" ) ) {
-            default_amount = std::min( sm_rack::MIN_CHARCOAL, max_amount );
-            const int max_needed = units::to_liter( sm_rack::MAX_FOOD_VOLUME ) * sm_rack::CHARCOAL_PER_LITER;
-            actual_max = std::min( max_needed, max_amount );
-        }
-    }
 
     //~ Loading fuel or other items into a piece of furniture.
     std::string source_desc = "";
@@ -4282,14 +4271,8 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
         source_desc = string_format( _( " (%d nearby)" ), amount_nearby );
     }
 
-    // Add max amount info for smoking racks with charcoal
-    std::string max_info = "";
-    if( cur_ammo->get_id() == itype_charcoal && actual_max < max_amount ) {
-        max_info = string_format( _( " (max %d)" ), actual_max );
-    }
-
-    const std::string popupmsg = string_format( _( "Put how much %1$s into the %2$s?%3$s%4$s" ),
-                                 cur_ammo->nname( actual_max ), f.name(), source_desc, max_info );
+    const std::string popupmsg = string_format( _( "Put how much %1$s into the %2$s?%3$s" ),
+                                 cur_ammo->nname( actual_max ), f.name(), source_desc );
     int amount = string_input_popup()
                  .title( popupmsg )
                  .width( 20 )
