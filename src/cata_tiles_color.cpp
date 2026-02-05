@@ -52,7 +52,7 @@ auto cata_tiles::get_item_color(
 auto cata_tiles::get_item_color(
     const item &i ) -> color_tint_pair
 {
-    const auto& data = i.get_flags();
+    const auto &data = i.get_flags();
     for( const flag_id &flag : data ) {
         const color_tint_pair *tint = tileset_ptr->get_tint( flag.str() );
         if( tint != nullptr ) {
