@@ -47,12 +47,14 @@
 #include "map_iterator.h"
 #include "mapbuffer.h"
 #include "mission.h"
+#include "messages.h"
 #include "mongroup.h"
 #include "npc.h"
 #include "omdata.h"
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
+#include "overmap_label.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
 #include "overmap_special.h"
@@ -444,6 +446,56 @@ static void draw_city_labels( const catacurses::window &w, const tripoint_abs_om
         }
 
         mvwprintz( w, point( text_x_min, text_y ), i_yellow, element.city->name );
+    }
+}
+
+static auto draw_map_labels( const catacurses::window &w, const tripoint_abs_omt &center ) -> void
+{
+    const auto win_x_max = getmaxx( w );
+    const auto win_y_max = getmaxy( w );
+    const auto screen_center_pos = point( win_x_max / 2, win_y_max / 2 );
+    for( auto x = 0; x < win_x_max; ++x ) {
+        for( auto y = 0; y < win_y_max; ++y ) {
+            const auto map_pos = center.xy() + point( x - screen_center_pos.x, y - screen_center_pos.y );
+            const auto map_pos_z = tripoint_abs_omt( map_pos, center.z() );
+
+            if( !overmap_buffer.seen( map_pos_z ) ) {
+                continue;
+            }
+
+            const auto &terrain = overmap_buffer.ter( map_pos_z );
+            const auto label = overmap_labels::get_label( terrain->get_type_id() );
+            if( !label.has_value() ) {
+                continue;
+            }
+
+            const auto label_text = _( *label );
+            if( label_text.empty() ) {
+                continue;
+            }
+
+            const auto screen_pos = point_rel_omt( point( x, y ) );
+            const auto text_width = utf8_width( label_text, true );
+            const auto text_x_min = screen_pos.x() - text_width / 2;
+            const auto text_x_max = text_x_min + text_width;
+            const auto text_y = screen_pos.y();
+
+            if( text_x_min < 0 ||
+                text_x_max > win_x_max ||
+                text_y < 0 ||
+                text_y > win_y_max ) {
+                continue;   // outside of the window bounds.
+            }
+
+            if( screen_center_pos.x >= ( text_x_min - 1 ) &&
+                screen_center_pos.x <= ( text_x_max ) &&
+                screen_center_pos.y >= ( text_y - 1 ) &&
+                screen_center_pos.y <= ( text_y + 1 ) ) {
+                continue;   // right under the cursor.
+            }
+
+            mvwprintz( w, point( text_x_min, text_y ), i_yellow, label_text );
+        }
     }
 }
 
@@ -1171,6 +1223,7 @@ static void draw_ascii( ui_adaptor &ui,
 
     if( center.z() == 0 && uistate.overmap_show_city_labels ) {
         draw_city_labels( w, center );
+        draw_map_labels( w, center );
     }
 
     half_open_rectangle<point_abs_omt> screen_bounds(

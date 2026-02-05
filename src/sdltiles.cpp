@@ -58,6 +58,7 @@
 #include "options.h"
 #include "output.h"
 #include "overmap_location.h"
+#include "overmap_label.h"
 #include "overmap_special.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
@@ -1148,7 +1149,6 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     }
 
     if( !viewing_weather && uistate.overmap_show_city_labels ) {
-
         const auto abs_sm_to_draw_label = [&]( const tripoint_abs_sm & city_pos, const int label_length ) {
             const tripoint tile_draw_pos = global_omt_to_draw_position( project_to<coords::omt>
                                            ( city_pos ) ) - o;
@@ -1171,6 +1171,30 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             draw_string( *font, renderer, geometry, name, draw_pos, 11 );
         };
 
+        const auto abs_omt_to_draw_label = [&]( const tripoint_abs_omt & omt_pos, const int label_length ) {
+            const auto tile_draw_pos = global_omt_to_draw_position( omt_pos ) - o;
+            auto draw_point = point( tile_draw_pos.x * tile_width + dest.x,
+                                     tile_draw_pos.y * tile_height + dest.y );
+            draw_point += point( ( tile_width - label_length * fontwidth ) / 2,
+                                 ( tile_height - fontheight ) / 2 );
+            return draw_point;
+        };
+
+        const auto label_bg_omt = [&]( const tripoint_abs_omt & pos, const std::string & name ) {
+            const auto name_length = utf8_width( name );
+            const auto draw_pos = abs_omt_to_draw_label( pos, name_length );
+            auto clip_rect = SDL_Rect{
+                .x = draw_pos.x,
+                .y = draw_pos.y,
+                .w = name_length * fontwidth,
+                .h = fontheight
+            };
+
+            geometry->rect( renderer, clip_rect, SDL_Color() );
+
+            draw_string( *font, renderer, geometry, name, draw_pos, 11 );
+        };
+
         // the tiles on the overmap are overmap tiles, so we need to use
         // coordinate conversions to make sure we're in the right place.
         const int radius = coords::project_to<coords::sm>( tripoint_abs_omt( std::min( max_col, max_row ),
@@ -1181,6 +1205,27 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             const tripoint_abs_omt city_center = coords::project_to<coords::omt>( city.abs_sm_pos );
             if( overmap_buffer.seen( city_center ) && overmap_area.contains( city_center.raw() ) ) {
                 label_bg( city.abs_sm_pos, city.city->name );
+            }
+        }
+
+        for( int row = min_row; row < max_row; row++ ) {
+            for( int col = min_col; col < max_col; col++ ) {
+                const tripoint_abs_omt omt_pos = corner_NW + point( col, row );
+                if( !overmap_buffer.seen( omt_pos ) ) {
+                    continue;
+                }
+                const auto &terrain = overmap_buffer.ter( omt_pos );
+                const auto label = overmap_labels::get_label( terrain->get_type_id() );
+                if( !label.has_value() ) {
+                    continue;
+                }
+                const auto label_text = _( *label );
+                if( label_text.empty() ) {
+                    continue;
+                }
+                if( overmap_area.contains( omt_pos.raw() ) ) {
+                    label_bg_omt( omt_pos, label_text );
+                }
             }
         }
     }
