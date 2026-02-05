@@ -6,6 +6,7 @@
 
 #include "avatar.h"
 #include "distribution_grid.h"
+#include "lua_tiles.h"
 #include "game.h"
 #include "lightmap.h"
 #include "map.h"
@@ -138,6 +139,54 @@ void cata::detail::reg_game_api( sol::state &lua )
             tripoint_north, tripoint_south, tripoint_east,
             tripoint_west, tripoint_above, tripoint_below
         };
+    } );
+
+    DOC( "Add a tile drawn at an absolute world position (map squares). "
+         "Returns a numeric handle that can be used to remove the tile later. "
+         "duration_turns: number of turns to display (-1 = permanent; "
+         "WARNING: permanent tiles persist indefinitely and are never cleaned up "
+         "automatically, use with care to avoid memory leaks). "
+         "priority: controls draw order when multiple lua tiles overlap "
+         "(higher priority draws on top, default 0). "
+         "cleanup_outside_bubble: if true (default), tile is removed when it "
+         "leaves the reality bubble." );
+    luna::set_fx( lib, "add_lua_tile",
+    []( const std::string & tile_id, const tripoint & abs_pos,
+        int duration_turns, sol::optional<int> priority,
+    sol::optional<bool> cleanup_outside_bubble ) -> int {
+        if( tile_id.empty() )
+        {
+            throw std::runtime_error( "add_lua_tile: tile_id must not be empty" );
+        }
+        if( duration_turns < -1 )
+        {
+            throw std::runtime_error(
+                "add_lua_tile: duration_turns must be -1 (permanent) or >= 0" );
+        }
+        return lua_tile_manager::get().add_tile(
+            tile_id, abs_pos,
+            priority.value_or( 0 ),
+            duration_turns,
+            cleanup_outside_bubble.value_or( true )
+        );
+    } );
+
+    DOC( "Remove a specific lua tile by its handle. Returns true if found and removed." );
+    luna::set_fx( lib, "remove_lua_tile",
+    []( int handle ) -> bool {
+        return lua_tile_manager::get().remove_tile( handle );
+    } );
+
+    DOC( "Remove all lua tiles at the given absolute position. Returns count of removed tiles." );
+    luna::set_fx( lib, "remove_lua_tiles_at",
+    []( const tripoint & abs_pos ) -> int {
+        return lua_tile_manager::get().remove_tiles_at( abs_pos );
+    } );
+
+    DOC( "Remove all lua tiles." );
+    luna::set_fx( lib, "clear_lua_tiles",
+    []() {
+        lua_tile_manager::get().clear_all();
     } );
 
     luna::finalize_lib( lib );

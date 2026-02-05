@@ -111,6 +111,7 @@
 #include "live_view.h"
 #include "loading_ui.h"
 #include "locations.h"
+#include "lua_tiles.h"
 #include "npc.h"
 #include "magic.h"
 #include "map.h"
@@ -1687,6 +1688,7 @@ bool game::do_turn()
     u.process_turn();
 
     cata::run_on_every_x_hooks( *DynamicDataLoader::get_instance().lua );
+    lua_tile_manager::get().cleanup();
 
     explosion_handler::get_explosion_queue().execute();
     cleanup_dead();

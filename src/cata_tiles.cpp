@@ -46,6 +46,7 @@
 #include "item_factory.h"
 #include "itype.h"
 #include "json.h"
+#include "lua_tiles.h"
 #include "make_static.h"
 #include "map.h"
 #include "map_memory.h"
@@ -116,7 +117,7 @@ static const std::array<std::string, 8> multitile_keys = {{
 extern int fontwidth;
 extern int fontheight;
 static const std::string empty_string;
-static const std::array<std::string, 13> TILE_CATEGORY_IDS = {{
+static const std::array<std::string, 15> TILE_CATEGORY_IDS = {{
         "", // C_NONE,
         "vehicle_part", // C_VEHICLE_PART,
         "terrain", // C_TERRAIN,
@@ -129,7 +130,9 @@ static const std::array<std::string, 13> TILE_CATEGORY_IDS = {{
         "bullet", // C_BULLET,
         "hit_entity", // C_HIT_ENTITY,
         "weather", // C_WEATHER,
-        "overmap_terrain"
+        "overmap_terrain", // C_OVERMAP_TERRAIN,
+        "overmap_note", // C_OVERMAP_NOTE,
+        "lua" // C_LUA
     }
 };
 
@@ -2338,6 +2341,11 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
             }
         }
+
+        // Lua tile overlays - drawn above all standard game layers
+        for( tile_render_info &p : draw_points ) {
+            draw_lua_tiles( p.pos, p.ll, p.height_3d, p.invisible, 0 );
+        }
     }
 
     // display number of monsters to spawn in mapgen preview
@@ -4087,6 +4095,45 @@ bool cata_tiles::draw_zombie_revival_indicators( const tripoint &pos, const lit_
         }
     }
     return false;
+}
+
+bool cata_tiles::draw_lua_tiles( const tripoint &p, lit_level ll, int &height_3d,
+                                 const bool( &invisible )[5], int z_drop )
+{
+    if( invisible[0] ) {
+        return false;
+    }
+
+    const lua_tile_manager &mgr = lua_tile_manager::get();
+    if( mgr.empty() ) {
+        return false;
+    }
+
+    static thread_local std::vector<const lua_tile_entry *> tiles_here;
+    mgr.get_tiles_at_local( p, tiles_here );
+
+    if( tiles_here.empty() ) {
+        return false;
+    }
+
+    bool drew_any = false;
+    for( const lua_tile_entry *entry : tiles_here ) {
+        // Lazy expiry check (complements periodic cleanup in game loop)
+        if( entry->duration_turns >= 0 ) {
+            time_point expiry = entry->created_at +
+                                time_duration::from_turns( entry->duration_turns );
+            if( calendar::turn >= expiry ) {
+                continue;
+            }
+        }
+
+        const tile_search_params tile { entry->tile_id, C_LUA, empty_string, 0, 0 };
+        drew_any |= draw_from_id_string(
+                        tile, p, std::nullopt, std::nullopt,
+                        ll, true, z_drop, false, height_3d );
+    }
+
+    return drew_any;
 }
 
 void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint &p, lit_level ll,
