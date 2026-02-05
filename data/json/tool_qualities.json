@@ -233,7 +233,8 @@
   {
     "type": "tool_quality",
     "id": "SEW",
-    "name": { "str": "sewing" }
+    "name": { "str": "sewing" },
+    "crafting_speed_bonus_per_level": 0.2
   },
   {
     "type": "tool_quality",
