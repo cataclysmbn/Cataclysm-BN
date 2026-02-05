@@ -4274,16 +4274,28 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     } else if( amount_nearby > 0 ) {
         source_desc = string_format( _( " (%d nearby)" ), amount_nearby );
     }
-    const std::string popupmsg = string_format( _( "Put how many of the %1$s into the %2$s?%3$s" ),
-                                 cur_ammo->nname( actual_max ), f.name(), source_desc );
+    
+    // Add max amount info for smoking racks with charcoal
+    std::string max_info = "";
+    if( cur_ammo->get_id() == itype_charcoal && actual_max < max_amount ) {
+        max_info = string_format( _( " (max %d)" ), actual_max );
+    }
+    
+    const std::string popupmsg = string_format( _( "Put how much %1$s into the %2$s?%3$s%4$s" ),
+                                 cur_ammo->nname( actual_max ), f.name(), source_desc, max_info );
     int amount = string_input_popup()
                  .title( popupmsg )
                  .width( 20 )
                  .text( std::to_string( default_amount ) )
                  .only_digits( true )
                  .query_int();
-    if( amount <= 0 || amount > actual_max ) {
+    if( amount <= 0 ) {
         return;
+    }
+    
+    // Clamp to actual max instead of rejecting
+    if( amount > actual_max ) {
+        amount = actual_max;
     }
     
     // First use from inventory, then from nearby
