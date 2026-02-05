@@ -4233,7 +4233,7 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     if( max_reload_amount <= 0 ) {
         return;
     }
-    
+
     // Check for charcoal to load around the rack as if crafting
     int amount_nearby = 0;
     if( cur_ammo->get_id() == itype_charcoal ) {
@@ -4248,7 +4248,7 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
             }
         }
     }
-    
+
     const int total_available = amount_in_inv + amount_nearby;
     if( total_available == 0 ) {
         //~ Reloading or restocking a piece of furniture, for example a forge.
@@ -4258,7 +4258,7 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
         return;
     }
     const int max_amount = std::min( total_available, max_reload_amount );
-    
+
     // For smoking racks, calculate appropriate default and max based on food capacity
     int default_amount = max_amount;
     int actual_max = max_amount;
@@ -4266,13 +4266,14 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
         // Check if this is a smoking rack by checking furniture id
         const furn_id furn = here.furn( examp );
         if( furn == furn_str_id( "f_smoking_rack" ) || furn == furn_str_id( "f_smoking_rack_active" ) ||
-            furn == furn_str_id( "f_metal_smoking_rack" ) || furn == furn_str_id( "f_metal_smoking_rack_active" ) ) {
+            furn == furn_str_id( "f_metal_smoking_rack" ) ||
+            furn == furn_str_id( "f_metal_smoking_rack_active" ) ) {
             default_amount = std::min( sm_rack::MIN_CHARCOAL, max_amount );
             const int max_needed = units::to_liter( sm_rack::MAX_FOOD_VOLUME ) * sm_rack::CHARCOAL_PER_LITER;
             actual_max = std::min( max_needed, max_amount );
         }
     }
-    
+
     //~ Loading fuel or other items into a piece of furniture.
     std::string source_desc = "";
     if( amount_in_inv > 0 && amount_nearby > 0 ) {
@@ -4280,13 +4281,13 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     } else if( amount_nearby > 0 ) {
         source_desc = string_format( _( " (%d nearby)" ), amount_nearby );
     }
-    
+
     // Add max amount info for smoking racks with charcoal
     std::string max_info = "";
     if( cur_ammo->get_id() == itype_charcoal && actual_max < max_amount ) {
         max_info = string_format( _( " (max %d)" ), actual_max );
     }
-    
+
     const std::string popupmsg = string_format( _( "Put how much %1$s into the %2$s?%3$s%4$s" ),
                                  cur_ammo->nname( actual_max ), f.name(), source_desc, max_info );
     int amount = string_input_popup()
@@ -4298,12 +4299,12 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     if( amount <= 0 ) {
         return;
     }
-    
+
     // Prevent putting in too much coal
     if( amount > actual_max ) {
         amount = actual_max;
     }
-    
+
     // First use from inventory,
     int remaining = amount;
     if( amount_in_inv > 0 ) {
@@ -4311,7 +4312,7 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
         p.use_charges( cur_ammo->get_id(), from_inv );
         remaining -= from_inv;
     }
-    
+
     // Then use from nearby ground
     if( remaining > 0 && amount_nearby > 0 ) {
         for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
@@ -4338,7 +4339,7 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
             }
         }
     }
-    
+
     auto items = here.i_at( examp );
     for( auto &itm : items ) {
         if( itm->type == cur_ammo ) {
@@ -6138,7 +6139,7 @@ static void smoker_load_food( player &p, const tripoint &examp,
         p.add_msg_if_player( _( "You can't place more food while it's smoking." ) );
         return;
     }
-    
+
     // Already smoked food has to be removed before adding more food for smoker to operate properly
     map_stack items = here.i_at( examp );
     for( item * const &it : items ) {
@@ -6148,7 +6149,7 @@ static void smoker_load_food( player &p, const tripoint &examp,
             return;
         }
     }
-    
+
     // filter SMOKABLE food
     inventory inv = p.crafting_inventory();
     inv.remove_items_with( []( const item & it ) {
@@ -6674,7 +6675,7 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
     const bool full_portable = f_volume >= sm_rack::MAX_FOOD_VOLUME_PORTABLE;
     const auto remaining_capacity = sm_rack::MAX_FOOD_VOLUME - f_volume;
     const auto remaining_capacity_portable = sm_rack::MAX_FOOD_VOLUME_PORTABLE - f_volume;
-    
+
     // Check for charcoal in inventory and nearby ground
     int charcoal_nearby = 0;
     for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
@@ -6694,7 +6695,7 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
         }
     }
     const auto has_coal_in_inventory = p.charges_of( itype_charcoal ) > 0 || charcoal_nearby > 0;
-    
+
     const auto coal_charges = count_charges_in_list( &*itype_charcoal, items_here );
     const auto need_charges = get_charcoal_charges( f_volume );
     const bool has_coal = coal_charges > 0;
