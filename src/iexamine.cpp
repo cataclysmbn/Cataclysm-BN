@@ -6143,6 +6143,17 @@ static void smoker_load_food( player &p, const tripoint &examp,
         p.add_msg_if_player( _( "You can't place more food while it's smoking." ) );
         return;
     }
+    
+    // Check for already smoked food - can't add more food if there's smoked food
+    map_stack items = here.i_at( examp );
+    for( item * const &it : items ) {
+        if( it->has_flag( flag_SMOKED ) && !it->has_flag( flag_SMOKABLE ) ) {
+            add_msg( _( "This rack already contains smoked food." ) );
+            add_msg( _( "Remove it before loading the smoking rack again." ) );
+            return;
+        }
+    }
+    
     // filter SMOKABLE food
     inventory inv = p.crafting_inventory();
     inv.remove_items_with( []( const item & it ) {
