@@ -2699,7 +2699,7 @@ auto cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY cate
             auto base_id = id.substr( 3 );
             const vpart_id base_vpid( base_id );
             if( !base_vpid.is_valid() ) {  // Fixed Fallback
-                find_tile_looks_like( base_id, C_FURNITURE, looks_like_jumps_limit - 1 )
+                return find_tile_looks_like( base_id, C_FURNITURE, looks_like_jumps_limit - 1 )
                 .or_else( [ &, this] { return find_tile_looks_like( base_id, C_TERRAIN, looks_like_jumps_limit - 1 ); } );
             }
             return find_tile_looks_like( "vp_" + base_vpid.obj().looks_like, category,
