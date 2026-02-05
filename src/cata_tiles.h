@@ -739,21 +739,21 @@ class cata_tiles
         static auto get_graffiti_color( const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_trap_color( const trap &tr, const map &map, tripoint tripoint ) -> color_tint_pair;
         static auto get_field_color( const field &f, const map &m, const tripoint &p ) -> color_tint_pair;
-        static auto get_item_color( const item &i, const map &m, const tripoint &p ) -> color_tint_pair;
-        static auto get_item_color( const item &i ) -> color_tint_pair;
+        auto get_item_color( const item &i, const map &m, const tripoint &p ) -> color_tint_pair;
+        auto get_item_color( const item &i ) -> color_tint_pair;
         static auto get_vpart_color(
             const optional_vpart_position &vp, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_monster_color(
             const monster &mon, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_character_color(
             const Character &ch, const map &m, const tripoint &p ) -> color_tint_pair;
-        static auto get_effect_color(
+        auto get_effect_color(
             const effect &eff, const Character &c, const map &m, const tripoint &p ) -> color_tint_pair;
-        static auto get_effect_color(
+        auto get_effect_color(
             const effect &eff, const Character &c ) -> color_tint_pair;
-        static auto get_bionic_color(
+        auto get_bionic_color(
             const bionic &bio, const Character &c, const map &m, const tripoint &p )-> color_tint_pair;
-        static auto get_bionic_color(
+        auto get_bionic_color(
             const bionic &bio, const Character &c )-> color_tint_pair;
         auto get_mutation_color(
             const mutation &mut, const Character &c, const map &m,

@@ -390,7 +390,9 @@ Additionally, you can set "blend_mode" to one of the following:
 - `multiply`
 - `additive`
 - `subtract`
-  Colors can be hex codes, or curses color names. There's fallback logic to aquire the color from the id using curses colors, but don't rely on it.
+
+Colors can be hex codes, or curses color names. There's fallback logic to aquire the color from the id using curses colors, but don't rely on it.
+Tints can currently be applied to mutations, items, bionics, and effects. You can tint by id or by tag, though effect flags are unsupported.
 
 ## Projectile Sprites
 

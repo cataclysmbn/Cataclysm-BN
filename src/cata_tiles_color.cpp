@@ -50,8 +50,19 @@ auto cata_tiles::get_item_color(
 }
 
 auto cata_tiles::get_item_color(
-    const item & ) -> color_tint_pair
+    const item &i ) -> color_tint_pair
 {
+    const auto& data = i.get_flags();
+    for( const flag_id &flag : data ) {
+        const color_tint_pair *tint = tileset_ptr->get_tint( flag.str() );
+        if( tint != nullptr ) {
+            return *tint;
+        }
+    }
+    const color_tint_pair *tint = tileset_ptr->get_tint( i.typeId().str() );
+    if( tint != nullptr ) {
+        return *tint;
+    }
     return { std::nullopt, std::nullopt };
 }
 
@@ -80,8 +91,12 @@ auto cata_tiles::get_effect_color(
 }
 
 auto cata_tiles::get_effect_color(
-    const effect &, const Character & ) -> color_tint_pair
+    const effect &eff, const Character &c ) -> color_tint_pair
 {
+    const color_tint_pair *tint = tileset_ptr->get_tint( eff.get_id().str() );
+    if( tint != nullptr ) {
+        return *tint;
+    }
     return { std::nullopt, std::nullopt };
 }
 
@@ -92,8 +107,19 @@ auto cata_tiles::get_bionic_color(
 }
 
 auto cata_tiles::get_bionic_color(
-    const bionic &, const Character & )-> color_tint_pair
+    const bionic &bio, const Character &c )-> color_tint_pair
 {
+    const auto &data = bio.id.obj();
+    for( const flag_id &flag : data.flags ) {
+        const color_tint_pair *tint = tileset_ptr->get_tint( flag.str() );
+        if( tint != nullptr ) {
+            return *tint;
+        }
+    }
+    const color_tint_pair *tint = tileset_ptr->get_tint( bio.id.str() );
+    if( tint != nullptr ) {
+        return *tint;
+    }
     return { std::nullopt, std::nullopt };
 }
 
