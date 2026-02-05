@@ -38,9 +38,7 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [
-      "evac_center_18"
-    ],
+    "id": [ "evac_center_18" ],
     "copy-from": "generic_evac_center",
     "sym": "┼",
     "map_label": "Refugee Center",

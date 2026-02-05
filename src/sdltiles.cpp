@@ -903,19 +903,21 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         // z position is hardcoded to 0 because the things this will be used to draw should not be skipped
         return tripoint( omp.raw().xy(), 0 );
     };
-    const auto has_player_label = [&]( const tripoint_abs_omt &pos ) -> bool {
+    const auto has_player_label = [&]( const tripoint_abs_omt & pos ) -> bool {
         const auto player_label = overmap_label_note::extract_label( overmap_buffer.note( pos ) );
         return player_label.has_value() && !player_label->empty();
     };
-    const auto has_map_label = [&]( const tripoint_abs_omt &pos ) -> bool {
+    const auto has_map_label = [&]( const tripoint_abs_omt & pos ) -> bool {
         if( const auto player_label = overmap_label_note::extract_label( overmap_buffer.note( pos ) );
-            player_label.has_value() && !player_label->empty() ) {
+            player_label.has_value() && !player_label->empty() )
+        {
             return true;
         }
 
         const auto &terrain = overmap_buffer.ter( pos );
         if( const auto static_label = overmap_labels::get_label( terrain->get_type_id() );
-            static_label.has_value() && !static_label->empty() ) {
+            static_label.has_value() && !static_label->empty() )
+        {
             return true;
         }
 
@@ -1220,14 +1222,14 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         const int radius = coords::project_to<coords::sm>( tripoint_abs_omt( std::min( max_col, max_row ),
                            0, 0 ) ).x() / 2;
 
-    for( const city_reference &city : overmap_buffer.get_cities_near(
-             coords::project_to<coords::sm>( center_abs_omt ), radius ) ) {
-        const tripoint_abs_omt city_center = coords::project_to<coords::omt>( city.abs_sm_pos );
-        if( overmap_buffer.seen( city_center ) && overmap_area.contains( city_center.raw() ) &&
-            !has_player_label( city_center ) ) {
-            label_bg( city.abs_sm_pos, city.city->name );
+        for( const city_reference &city : overmap_buffer.get_cities_near(
+                 coords::project_to<coords::sm>( center_abs_omt ), radius ) ) {
+            const tripoint_abs_omt city_center = coords::project_to<coords::omt>( city.abs_sm_pos );
+            if( overmap_buffer.seen( city_center ) && overmap_area.contains( city_center.raw() ) &&
+                !has_player_label( city_center ) ) {
+                label_bg( city.abs_sm_pos, city.city->name );
+            }
         }
-    }
 
         for( int row = min_row; row < max_row; row++ ) {
             for( int col = min_col; col < max_col; col++ ) {
@@ -1235,9 +1237,9 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 if( !overmap_buffer.seen( omt_pos ) ) {
                     continue;
                 }
-                auto label_text = std::optional<std::string>{};
+                auto label_text = std::optional<std::string> {};
                 if( const auto player_label =
-                    overmap_label_note::extract_label( overmap_buffer.note( omt_pos ) );
+                        overmap_label_note::extract_label( overmap_buffer.note( omt_pos ) );
                     player_label.has_value() ) {
                     label_text = *player_label;
                 } else {

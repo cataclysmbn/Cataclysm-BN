@@ -707,7 +707,7 @@ void oter_type_t::load( const JsonObject &jo, const std::string &src )
 
     optional( jo, was_loaded, "sym", symbol, unicode_codepoint_from_symbol_reader, NULL_UNICODE );
 
-    auto map_label = std::optional<std::string>{};
+    auto map_label = std::optional<std::string> {};
     if( jo.has_string( "map_label" ) ) {
         map_label = jo.get_string( "map_label" );
     }

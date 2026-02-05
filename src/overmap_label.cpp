@@ -4,7 +4,7 @@
 
 namespace
 {
-auto map_labels = std::map<oter_type_str_id, std::string>{};
+auto map_labels = std::map<oter_type_str_id, std::string> {};
 } // namespace
 
 auto overmap_labels::set_label( const oter_type_str_id &id,

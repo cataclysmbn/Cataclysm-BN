@@ -4,7 +4,7 @@
 
 namespace
 {
-constexpr auto label_prefix = std::string_view{ "LABEL:" };
+constexpr auto label_prefix = std::string_view { "LABEL:" };
 } // namespace
 
 auto overmap_label_note::make_note( const std::string &label ) -> std::string

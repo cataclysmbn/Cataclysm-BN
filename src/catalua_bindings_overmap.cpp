@@ -182,7 +182,8 @@ void cata::detail::reg_overmap( sol::state &lua )
     luna::set_fx( lib, "get_note",
     []( const tripoint & p ) -> sol::optional<std::string> {
         const auto &note_text = overmap_buffer.note( tripoint_abs_omt( p ) );
-        if( note_text.empty() ) {
+        if( note_text.empty() )
+        {
             return sol::nullopt;
         }
         return note_text;
@@ -192,7 +193,8 @@ void cata::detail::reg_overmap( sol::state &lua )
     luna::set_fx( lib, "set_note",
     []( const tripoint & p, const sol::optional<std::string> &note_text ) -> void {
         const auto pos = tripoint_abs_omt( p );
-        if( note_text.has_value() && !note_text->empty() ) {
+        if( note_text.has_value() && !note_text->empty() )
+        {
             overmap_buffer.add_note( pos, *note_text );
             return;
         }
