@@ -19,11 +19,7 @@
     "id": "lakebed_sunken_corpse",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [
-      { "item": "chain", "count": 1 },
-      { "item": "concrete", "count": 1 },
-      { "group": "everyday_corpse" }
-    ]
+    "entries": [ { "item": "chain", "count": 1 }, { "item": "concrete", "count": 1 }, { "group": "everyday_corpse" } ]
   },
   {
     "id": "underwater_toxic_waste",

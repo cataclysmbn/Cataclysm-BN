@@ -214,9 +214,7 @@
     "object": {
       "mapgensize": [ 12, 12 ],
       "rotation": [ 0, 3 ],
-      "place_items": [
-        { "item": "lakebed_sunken_corpse", "x": [ 2, 11 ], "y": [ 2, 11 ],  "chance": 75, "repeat": [ 2, 6 ] }
-      ]
+      "place_items": [ { "item": "lakebed_sunken_corpse", "x": [ 2, 11 ], "y": [ 2, 11 ], "chance": 75, "repeat": [ 2, 6 ] } ]
     }
   },
   {
