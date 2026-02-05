@@ -151,8 +151,8 @@ void cata::detail::reg_game_api( sol::state &lua )
          "cleanup_outside_bubble: if true (default), tile is removed when it "
          "leaves the reality bubble." );
     luna::set_fx( lib, "add_lua_tile",
-    []( const std::string & tile_id, const tripoint & abs_pos,
-        int duration_turns, sol::optional<int> priority,
+                  []( const std::string & tile_id, const tripoint & abs_pos,
+                      int duration_turns, sol::optional<int> priority,
     sol::optional<bool> cleanup_outside_bubble ) -> int {
         if( tile_id.empty() )
         {
