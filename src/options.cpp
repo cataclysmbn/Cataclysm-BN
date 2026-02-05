@@ -1664,8 +1664,8 @@ void options_manager::add_options_interface()
        );
 
     add( "VERBOSE_CRAFTING_SPEED_MODIFIERS", interface,
-         translate_marker( "Verbose crafting speed modifiers" ),
-         translate_marker( "If true, show 100% crafting speed multipliers in the crafting recipe info." ),
+         translate_marker( "Verbose crafting/construction speed modifiers" ),
+         translate_marker( "If true, show 100% crafting/construction speed modifiers in the info panels." ),
          false
        );
 

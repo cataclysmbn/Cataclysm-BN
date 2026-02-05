@@ -59,12 +59,10 @@ auto best_tool_multiplier_for_group( const inventory &crafting_inv,
 
     return best_multiplier;
 }
-} // namespace
 
-auto crafting_tools_speed_multiplier( const Character &who, const recipe &rec ) -> float
+auto crafting_tools_speed_multiplier( const inventory &crafting_inv,
+                                      const requirement_data &requirements ) -> float
 {
-    const auto &crafting_inv = const_cast<Character &>( who ).crafting_inventory();
-    const auto &requirements = rec.simple_requirements();
     const auto &quality_reqs = requirements.get_qualities();
     const auto &tool_reqs = requirements.get_tools();
     auto total_multiplier = 1.0f;
@@ -83,4 +81,18 @@ auto crafting_tools_speed_multiplier( const Character &who, const recipe &rec ) 
     } );
 
     return total_multiplier;
+}
+} // namespace
+
+auto crafting_tools_speed_multiplier( const Character &who, const recipe &rec ) -> float
+{
+    const auto &crafting_inv = const_cast<Character &>( who ).crafting_inventory();
+    return crafting_tools_speed_multiplier( crafting_inv, rec.simple_requirements() );
+}
+
+auto crafting_tools_speed_multiplier( const Character &who,
+                                      const requirement_data &requirements ) -> float
+{
+    const auto &crafting_inv = const_cast<Character &>( who ).crafting_inventory();
+    return crafting_tools_speed_multiplier( crafting_inv, requirements );
 }

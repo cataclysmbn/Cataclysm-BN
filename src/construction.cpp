@@ -20,6 +20,7 @@
 #include "construction_category.h"
 #include "construction_group.h"
 #include "coordinate_conversions.h"
+#include "crafting_quality.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "enums.h"
@@ -138,6 +139,22 @@ void failure_deconstruct( const tripoint & );
 
 namespace
 {
+auto construction_assistant_time_multiplier( const construction &con,
+                                             const Character &who ) -> float
+{
+    const auto helpers = character_funcs::get_crafting_helpers( who );
+    const auto assistants = std::ranges::count_if( helpers, [&]( const npc *helper ) {
+        return helper->meets_skill_requirements( con );
+    } );
+
+    if( assistants >= 2 ) {
+        return 0.4f;
+    }
+    if( assistants == 1 ) {
+        return 0.75f;
+    }
+    return 1.0f;
+}
 generic_factory<construction> all_constructions( "construction" );
 std::vector<construction_id> constructions_sorted;
 } // namespace
@@ -591,6 +608,75 @@ std::optional<construction_id> construction_menu( const bool blueprint )
 
                 // get time needed
                 add_folded( current_con->get_folded_time_string( available_window_width ) );
+
+                {
+                    const auto verbose_multipliers = get_option<bool>( "VERBOSE_CRAFTING_SPEED_MODIFIERS" );
+                    auto multiplier_color = [&]( int percent ) -> std::string {
+                        if( percent > 100 ) {
+                            return "green";
+                        }
+                        if( percent < 100 ) {
+                            return "red";
+                        }
+                        return verbose_multipliers ? "cyan" : "light_gray";
+                    };
+                    auto format_multiplier = [&]( const std::string &label,
+                    float multiplier ) -> std::string {
+                        const auto percent = static_cast<int>( multiplier * 100 );
+                        return string_format( _( "> %1$s: <color_%2$s>%3$d%%</color>" ), label,
+                                              multiplier_color( percent ), percent );
+                    };
+
+                    const auto assistants_time_mult =
+                        construction_assistant_time_multiplier( *current_con, g->u );
+                    const auto assistants_mult = 1.0f / assistants_time_mult;
+                    const auto tools_mult =
+                        crafting_tools_speed_multiplier( g->u, current_con->requirements.obj() );
+                    const auto mutation_mult = g->u.mutation_value( "construction_speed_modifier" );
+                    const auto scaling = get_option<int>( "CONSTRUCTION_SCALING" );
+                    const auto game_opt_mult = scaling == 0 ? 9999.0f : 100.0f / scaling;
+                    const auto total_mult =
+                        assistants_mult * tools_mult * mutation_mult * game_opt_mult;
+
+                    const auto total_label = _( "Total" );
+                    const auto multipliers =
+                        std::array<std::pair<std::string, float>, 5> { {
+                            { total_label, total_mult },
+                            { _( "Assistants" ), assistants_mult },
+                            { _( "Tools" ), tools_mult },
+                            { _( "Traits" ), mutation_mult },
+                            { _( "Game option" ), game_opt_mult }
+                        } };
+
+                    auto multiplier_lines = std::vector<std::string>();
+                    const auto total_percent = static_cast<int>( total_mult * 100 );
+                    std::ranges::for_each( multipliers, [&]( const auto &entry ) {
+                        if( entry.first == total_label ) {
+                            return;
+                        }
+                        const auto percent = static_cast<int>( entry.second * 100 );
+                        if( percent == 100 && !verbose_multipliers ) {
+                            return;
+                        }
+                        multiplier_lines.push_back( format_multiplier( entry.first, entry.second ) );
+                    } );
+
+                    const auto show_total = verbose_multipliers || total_percent != 100 ||
+                                            !multiplier_lines.empty();
+                    if( show_total ) {
+                        multiplier_lines.insert( multiplier_lines.begin(),
+                                                 format_multiplier( total_label, total_mult ) );
+                    }
+
+                    if( multiplier_lines.empty() && !verbose_multipliers ) {
+                        add_line( _( "Speed modifiers: <color_cyan>none</color>" ) );
+                    } else {
+                        add_line( _( "Speed modifiers:" ) );
+                        std::ranges::for_each( multiplier_lines, [&]( const auto &line ) {
+                            add_line( line );
+                        } );
+                    }
+                }
 
                 add_folded( current_con->requirements->get_folded_tools_list( available_window_width, color_stage,
                             total_inv ) );
@@ -1901,24 +1987,13 @@ bool construction::is_blacklisted() const
 
 int construction::adjusted_time() const
 {
-    int final_time = to_moves<int>( time );
-    int assistants = 0;
+    const auto &player = get_player_character();
+    const auto assistants_time_mult = construction_assistant_time_multiplier( *this, player );
+    const auto tools_mult = crafting_tools_speed_multiplier( player, requirements.obj() );
+    const auto base_time = static_cast<float>( to_moves<int>( time ) );
+    const auto scaled_time = base_time * assistants_time_mult * time_scale() / tools_mult;
 
-    for( auto &elem : character_funcs::get_crafting_helpers( get_player_character() ) ) {
-        if( elem->meets_skill_requirements( *this ) ) {
-            assistants++;
-        }
-    }
-
-    if( assistants >= 2 ) {
-        final_time *= 0.4f;
-    } else if( assistants == 1 ) {
-        final_time *= 0.75f;
-    }
-
-    final_time *= time_scale();
-
-    return final_time;
+    return static_cast<int>( scaled_time );
 }
 
 std::string construction::get_time_string() const

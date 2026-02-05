@@ -3484,6 +3484,11 @@ void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *pa
         for( const std::pair<const quality_id, int> q : sorted_lex( type->qualities ) ) {
             name_quality( q );
         }
+        if( type->crafting_speed_modifier != 1.0f ) {
+            const auto modifier_percent = static_cast<int>( type->crafting_speed_modifier * 100.0f );
+            info.emplace_back( "QUALITIES", "", string_format( _( "This item modifies crafting speed by <info>%d%%</info> when used in recipes." ),
+                              modifier_percent ) );
+        }
     }
 
     if( parts->test( iteminfo_parts::QUALITIES_CONTAINED ) &&
