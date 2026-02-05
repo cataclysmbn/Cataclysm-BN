@@ -110,12 +110,14 @@ auto cata_tiles::get_mutation_color(
     std::string fallback_color;
     color_tint_pair res;
 
-    auto get_tint = [&]( const std::string& ref ) -> bool {
+    auto get_tint = [&]( const std::string & ref ) -> bool {
         auto controller = tileset_ptr->get_tint_controller( ref );
-        if( controller.first.empty() ) {
+        if( controller.first.empty() )
+        {
             return false;
         }
-        for( const trait_id &other_mut : c.get_mutations() ) {
+        for( const trait_id &other_mut : c.get_mutations() )
+        {
             if( !other_mut.obj().types.contains( controller.first ) ) {
                 continue;
             }
@@ -130,13 +132,13 @@ auto cata_tiles::get_mutation_color(
     };
 
     for( const std::string &mut_type : mut_branch.types ) {
-        if ( get_tint( mut_type ) ) {
+        if( get_tint( mut_type ) ) {
             break;
         }
     }
-    if ( fallback_color.empty() && res == color_tint_pair()) {
+    if( fallback_color.empty() && res == color_tint_pair() ) {
         for( const trait_flag_str_id &mut_flag : mut_branch.flags ) {
-            if ( get_tint( mut_flag.str() ) ) {
+            if( get_tint( mut_flag.str() ) ) {
                 break;
             }
         }
