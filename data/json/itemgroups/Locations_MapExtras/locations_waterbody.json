@@ -9,7 +9,21 @@
     "id": "lake_bed",
     "type": "item_group",
     "subtype": "distribution",
-    "entries": [ { "group": "fishing_items_trash", "prob": 6 }, { "item": "clam", "prob": 1 } ]
+    "entries": [
+      { "group": "fishing_items_trash", "prob": 60 },
+      { "item": "clam", "prob": 10 },
+      { "item": "survnote", "container-item": "bottle_glass", "prob": 1 }
+    ]
+  },
+  {
+    "id": "lakebed_sunken_corpse",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "chain", "count": 1 },
+      { "item": "concrete", "count": 1 },
+      { "group": "everyday_corpse" }
+    ]
   },
   {
     "id": "underwater_toxic_waste",
