@@ -4161,6 +4161,15 @@ static int count_charges_in_list( const itype *type, const map_stack &items )
     return 0;
 }
 
+namespace sm_rack
+{
+const int MIN_CHARCOAL = 100;
+const int CHARCOAL_PER_LITER = 25;
+const units::volume MAX_FOOD_VOLUME_MILLING = units::from_liter( 100 );
+const units::volume MAX_FOOD_VOLUME = units::from_liter( 20 );
+const units::volume MAX_FOOD_VOLUME_PORTABLE = units::from_liter( 15 );
+} // namespace sm_rack
+
 void iexamine::reload_furniture( player &p, const tripoint &examp )
 {
     map &here = get_map();
@@ -4225,12 +4234,12 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
         return;
     }
     
-    // Check for charcoal around the furniture (for smoking racks/mills)
+    // Check for charcoal to load around the rack as if crafting
     int amount_nearby = 0;
     if( cur_ammo->get_id() == itype_charcoal ) {
         for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
             if( pt == examp ) {
-                continue; // Skip the furniture tile itself
+                continue;
             }
             for( const item *it : here.i_at( pt ) ) {
                 if( it->typeId() == itype_charcoal ) {
@@ -4258,11 +4267,8 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
         const furn_id furn = here.furn( examp );
         if( furn == furn_str_id( "f_smoking_rack" ) || furn == furn_str_id( "f_smoking_rack_active" ) ||
             furn == furn_str_id( "f_metal_smoking_rack" ) || furn == furn_str_id( "f_metal_smoking_rack_active" ) ) {
-            // Default to minimum charcoal needed (MIN_CHARCOAL = 100)
-            const int min_charcoal = 100;
-            default_amount = std::min( min_charcoal, max_amount );
-            // Max is what's needed for full capacity (MAX_FOOD_VOLUME = 20L, CHARCOAL_PER_LITER = 25)
-            const int max_needed = units::to_liter( units::from_liter( 20 ) ) * 25;
+            default_amount = std::min( sm_rack::MIN_CHARCOAL, max_amount );
+            const int max_needed = units::to_liter( sm_rack::MAX_FOOD_VOLUME ) * sm_rack::CHARCOAL_PER_LITER;
             actual_max = std::min( max_needed, max_amount );
         }
     }
@@ -4293,12 +4299,12 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
         return;
     }
     
-    // Clamp to actual max instead of rejecting
+    // Prevent putting in too much coal
     if( amount > actual_max ) {
         amount = actual_max;
     }
     
-    // First use from inventory, then from nearby
+    // First use from inventory,
     int remaining = amount;
     if( amount_in_inv > 0 ) {
         const int from_inv = std::min( remaining, amount_in_inv );
@@ -5657,15 +5663,6 @@ void iexamine::autodoc( player &p, const tripoint &examp )
     }
 }
 
-namespace sm_rack
-{
-const int MIN_CHARCOAL = 100;
-const int CHARCOAL_PER_LITER = 25;
-const units::volume MAX_FOOD_VOLUME_MILLING = units::from_liter( 100 );
-const units::volume MAX_FOOD_VOLUME = units::from_liter( 20 );
-const units::volume MAX_FOOD_VOLUME_PORTABLE = units::from_liter( 15 );
-} // namespace sm_rack
-
 static int get_charcoal_charges( units::volume food )
 {
     const int charcoal = to_liter( food ) * sm_rack::CHARCOAL_PER_LITER;
@@ -6124,8 +6121,6 @@ static void smoker_finalize( player &, const tripoint &examp, const time_point &
     }
 
     for( detached_ptr<item> &it : results ) {
-        // Use add_item directly instead of items.insert to avoid NOITEM overflow behavior
-        // that can cause items to disappear when the smoking rack is surrounded by walls/furniture
         here.add_item( examp, std::move( it ) );
     }
 
@@ -6144,7 +6139,7 @@ static void smoker_load_food( player &p, const tripoint &examp,
         return;
     }
     
-    // Check for already smoked food - can't add more food if there's smoked food
+    // Already smoked food has to be removed before adding more food for smoker to operate properly
     map_stack items = here.i_at( examp );
     for( item * const &it : items ) {
         if( it->has_flag( flag_SMOKED ) && !it->has_flag( flag_SMOKABLE ) ) {
@@ -6689,7 +6684,13 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
         for( const item *it : here.i_at( pt ) ) {
             if( it->typeId() == itype_charcoal ) {
                 charcoal_nearby += it->charges;
+                if( charcoal_nearby > 0 ) {
+                    break;
+                }
             }
+        }
+        if( charcoal_nearby > 0 ) {
+            break;
         }
     }
     const auto has_coal_in_inventory = p.charges_of( itype_charcoal ) > 0 || charcoal_nearby > 0;
