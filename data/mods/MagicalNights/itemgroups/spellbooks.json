@@ -134,7 +134,8 @@
       [ "spell_scroll_fire_storm", 50 ],
       [ "spell_scroll_ice_storm", 50 ],
       [ "spell_scroll_meteor", 10 ],
-      [ "spell_scroll_acid_storm", 20 ]
+      [ "spell_scroll_acid_storm", 20 ],
+      [ "spell_scroll_mana_bomb", 20 ]
     ]
   },
   {
