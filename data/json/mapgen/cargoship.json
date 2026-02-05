@@ -77,7 +77,7 @@
           "y": 35
         }
       ],
-      "nested": { ";": { "chunks": [ [ "null", 8 ], [ "cargoship_crate_food", 1 ], [ "cargoship_crate_gear", 1 ] ] } },
+      "nested": { "ω": { "chunks": [ [ "null", 80 ], [ "cargoship_crate_food", 10 ], [ "cargoship_crate_hardware", 10 ] ] } },
       "place_monster": [
         { "group": "GROUP_MIL_STRONG", "x": [ 6, 16 ], "y": [ 25, 40 ], "repeat": [ 15, 20 ] },
         { "group": "GROUP_MIL_STRONG", "x": [ 6, 16 ], "y": [ 6, 23 ], "repeat": [ 15, 20 ] }
@@ -97,22 +97,22 @@
         "        55555555        ",
         "      555ωωωωωω555      ",
         "    555ωωωωωωωωωω555    ",
-        "    5;-ωωωωωωωωωω-;5    ",
-        "    5;-ωωωωωωωωωω-;5    ",
-        "    5;-ωωωωωωωωωω-;5    ",
-        "   55;-ωωωωωωωωωω-;55   ",
-        "   5;-ωωωωωωωωωωωω-;5   ",
-        "   5;-ωωωωωωωωωωωω-;5   ",
-        "   5;-ωωωωωωωωωωωω-;5   ",
-        "   5;-ωωωωω>>ωωωωω-;5   ",
-        "   5;-ωωωωω>>ωωωωω-;5   ",
-        "   5;-ωωωωωωωωωωωω-;5   ",
-        "   5;-ωωωωωωωωωωωω-;5   ",
-        "   5;-ωωωωωωωωωωωω-;5   ",
-        "   5;-ωωωωωωωωωωωω-;5   ",
-        "   5;-ωωωωωωωωωωωω-;5   ",
-        "   5;-ωωωωωωωωωωωω-;5   ",
-        "   5;-ωωωωωωωωωωωω-;5   ",
+        "    5 -ωωωωωωωωωω- 5    ",
+        "    5 -ωωωωωωωωωω- 5    ",
+        "    5 -ωωωωωωωωωω- 5    ",
+        "   55 -ωωωωωωωωωω- 55   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωω>>ωωωωω- 5   ",
+        "   5 -ωωωωω>>ωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
+        "   5 -ωωωωωωωωωωωω- 5   ",
         "   555555555555555555   ",
         "   5Ω;+;bdfccfdb;+;Ω5   ",
         "   5Ω;5;;;;;;;;;;5;Ω5   ",
@@ -164,8 +164,8 @@
         "S": "f_shower",
         "&": "f_toilet"
       },
+      "place_nested": [ { "chunks": [ "CargoShipNested_commerical" ], "x": 6, "y": 3 } ],
       "place_monster": [ { "group": "GROUP_MIL_STRONG", "x": [ 5, 15 ], "y": [ 35, 43 ], "repeat": [ 15, 20 ] } ],
-      "nested": { "ω": { "chunks": [ [ "null", 9 ], [ "cargoship_crate_food", 1 ] ] } },
       "items": {
         "Ω": {
           "item": {
@@ -186,6 +186,45 @@
   {
     "type": "mapgen",
     "method": "json",
+    "nested_mapgen_id": "CargoShipNested_commerical",
+    "object": {
+      "mapgensize": [ 12, 18 ],
+      "rows": [
+        "   ωωωωωω   ",
+        " ωωωωωωωωωω ",
+        " ωωωωωωωωωω ",
+        " ωωωωωωωωωω ",
+        " ωωωωωωωωωω ",
+        " ωωωωωωωωωω ",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωω  ωωωωω",
+        "ωωωωω  ωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω",
+        "ωωωωωωωωωωωω"
+      ],
+      "nested": {
+        "ω": {
+          "chunks": [
+            [ "null", 90 ],
+            [ "cargoship_crate_food", 5 ],
+            [ "cargoship_crate_clothing", 3 ],
+            [ "cargoship_crate_kitchen", 1 ],
+            [ "cargoship_crate_entertainment", 1 ]
+          ]
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "cargoship_crate_food",
     "object": {
       "mapgensize": [ 1, 1 ],
@@ -195,10 +234,7 @@
         "ω": {
           "item": {
             "subtype": "distribution",
-            "entries": [
-              { "group": "military_patrol_food", "prob": 100, "count": [ 2, 3 ] },
-              { "group": "military_patrol_food", "prob": 75, "count": [ 3, 6 ] }
-            ]
+            "entries": [ { "group": "dry_goods", "prob": 100, "count": [ 1, 3 ] }, { "group": "cannedfood", "prob": 75, "count": [ 1, 3 ] } ]
           },
           "chance": 80
         }
@@ -208,7 +244,7 @@
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "cargoship_crate_gear",
+    "nested_mapgen_id": "cargoship_crate_clothing",
     "object": {
       "mapgensize": [ 1, 1 ],
       "rows": [ "ω" ],
@@ -217,11 +253,61 @@
         "ω": {
           "item": {
             "subtype": "distribution",
-            "entries": [
-              { "group": "clothing_military_distribution", "prob": 100, "count": [ 1, 2 ] },
-              { "group": "military_ballistic_armor", "prob": 50, "count": [ 1, 2 ] },
-              { "group": "military", "prob": 25 }
-            ]
+            "entries": [ { "group": "crate_clothes", "prob": 100, "count": [ 1, 2 ] }, { "group": "crate_winter", "prob": 75 } ]
+          },
+          "chance": 80
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "cargoship_crate_kitchen",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "ω" ],
+      "furniture": { "ω": "f_crate_c" },
+      "items": {
+        "ω": {
+          "item": { "subtype": "distribution", "entries": [ { "group": "crate_kitchen", "prob": 100, "count": [ 1, 2 ] } ] },
+          "chance": 80
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "cargoship_crate_entertainment",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "ω" ],
+      "furniture": { "ω": "f_crate_c" },
+      "items": {
+        "ω": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [ { "group": "crate_toys", "prob": 100 }, { "group": "crate_sports", "prob": 75 } ]
+          },
+          "chance": 80
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "cargoship_crate_hardware",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "ω" ],
+      "furniture": { "ω": "f_crate_c" },
+      "items": {
+        "ω": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [ { "group": "crate_parts", "prob": 100 }, { "group": "crate_cleaning", "prob": 75 } ]
           },
           "chance": 80
         }
