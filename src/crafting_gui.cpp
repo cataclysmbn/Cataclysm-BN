@@ -216,15 +216,17 @@ static std::vector<std::string> recipe_info(
     {
         const auto verbose_multipliers = get_option<bool>( "VERBOSE_CRAFTING_SPEED_MODIFIERS" );
         auto multiplier_color = [&]( int percent ) -> std::string {
-            if( percent > 100 ) {
+            if( percent > 100 )
+            {
                 return "green";
             }
-            if( percent < 100 ) {
+            if( percent < 100 )
+            {
                 return "red";
             }
             return verbose_multipliers ? "cyan" : "light_gray";
         };
-        auto format_multiplier = [&]( const std::string &label, float multiplier ) -> std::string {
+        auto format_multiplier = [&]( const std::string & label, float multiplier ) -> std::string {
             const auto percent = static_cast<int>( multiplier * 100 );
             return string_format( _( "> %1$s: <color_%2$s>%3$d%%</color>\n" ), label,
                                   multiplier_color( percent ), percent );
@@ -262,7 +264,7 @@ static std::vector<std::string> recipe_info(
 
         auto multiplier_lines = std::vector<std::string>();
         const auto total_percent = static_cast<int>( total_mult * 100 );
-        std::ranges::for_each( multipliers, [&]( const auto &entry ) {
+        std::ranges::for_each( multipliers, [&]( const auto & entry ) {
             if( entry.first == _( "Total" ) ) {
                 return;
             }
@@ -284,7 +286,7 @@ static std::vector<std::string> recipe_info(
             oss << _( "Speed modifiers: <color_cyan>none</color>\n" );
         } else {
             oss << _( "Speed modifiers:\n" );
-            std::ranges::for_each( multiplier_lines, [&]( const auto &line ) {
+            std::ranges::for_each( multiplier_lines, [&]( const auto & line ) {
                 oss << line;
             } );
         }

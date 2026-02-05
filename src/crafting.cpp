@@ -279,7 +279,7 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
                                  100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
 
     const auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
-                              game_opt_multi;
+                             game_opt_multi;
 
     if( light_multi <= 0.0f ) {
         who.add_msg_if_player( m_bad, _( "You can no longer see well enough to keep crafting." ) );

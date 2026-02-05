@@ -140,10 +140,10 @@ void failure_deconstruct( const tripoint & );
 namespace
 {
 auto construction_assistant_time_multiplier( const construction &con,
-                                             const Character &who ) -> float
+        const Character &who ) -> float
 {
     const auto helpers = character_funcs::get_crafting_helpers( who );
-    const auto assistants = std::ranges::count_if( helpers, [&]( const npc *helper ) {
+    const auto assistants = std::ranges::count_if( helpers, [&]( const npc * helper ) {
         return helper->meets_skill_requirements( con );
     } );
 
@@ -612,15 +612,17 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 {
                     const auto verbose_multipliers = get_option<bool>( "VERBOSE_CRAFTING_SPEED_MODIFIERS" );
                     auto multiplier_color = [&]( int percent ) -> std::string {
-                        if( percent > 100 ) {
+                        if( percent > 100 )
+                        {
                             return "green";
                         }
-                        if( percent < 100 ) {
+                        if( percent < 100 )
+                        {
                             return "red";
                         }
                         return verbose_multipliers ? "cyan" : "light_gray";
                     };
-                    auto format_multiplier = [&]( const std::string &label,
+                    auto format_multiplier = [&]( const std::string & label,
                     float multiplier ) -> std::string {
                         const auto percent = static_cast<int>( multiplier * 100 );
                         return string_format( _( "> %1$s: <color_%2$s>%3$d%%</color>" ), label,
@@ -640,17 +642,18 @@ std::optional<construction_id> construction_menu( const bool blueprint )
 
                     const auto total_label = _( "Total" );
                     const auto multipliers =
-                        std::array<std::pair<std::string, float>, 5> { {
+                    std::array<std::pair<std::string, float>, 5> { {
                             { total_label, total_mult },
                             { _( "Assistants" ), assistants_mult },
                             { _( "Tools" ), tools_mult },
                             { _( "Traits" ), mutation_mult },
                             { _( "Game option" ), game_opt_mult }
-                        } };
+                        }
+                    };
 
                     auto multiplier_lines = std::vector<std::string>();
                     const auto total_percent = static_cast<int>( total_mult * 100 );
-                    std::ranges::for_each( multipliers, [&]( const auto &entry ) {
+                    std::ranges::for_each( multipliers, [&]( const auto & entry ) {
                         if( entry.first == total_label ) {
                             return;
                         }
@@ -672,7 +675,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                         add_line( _( "Speed modifiers: <color_cyan>none</color>" ) );
                     } else {
                         add_line( _( "Speed modifiers:" ) );
-                        std::ranges::for_each( multiplier_lines, [&]( const auto &line ) {
+                        std::ranges::for_each( multiplier_lines, [&]( const auto & line ) {
                             add_line( line );
                         } );
                     }

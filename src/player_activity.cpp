@@ -224,7 +224,8 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     const float game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
                                 ? 9999
                                 : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
-    const float total_mult = light_mult * bench_mult * morale_mult * tools_mult * assist_mult * speed_mult *
+    const float total_mult = light_mult * bench_mult * morale_mult * tools_mult * assist_mult *
+                             speed_mult *
                              mutation_mult * game_opt_mult;
 
     const double remaining_percentage = 1.0 - craft->get_counter() / 10'000'000.0;
