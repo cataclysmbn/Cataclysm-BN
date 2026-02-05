@@ -1663,6 +1663,12 @@ void options_manager::add_options_interface()
          true
        );
 
+    add( "VERBOSE_CRAFTING_SPEED_MODIFIERS", interface,
+         translate_marker( "Verbose crafting speed modifiers" ),
+         translate_marker( "If true, show 100% crafting speed multipliers in the crafting recipe info." ),
+         false
+       );
+
     add( "AUTOSELECT_SINGLE_VALID_TARGET", interface,
          translate_marker( "Autoselect if exactly one valid target" ),
          translate_marker( "If true, directional actions ( like \"Examine\", \"Open\", \"Pickup\" ) "

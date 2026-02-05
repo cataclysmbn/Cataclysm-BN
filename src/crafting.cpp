@@ -249,10 +249,10 @@ float workbench_crafting_speed_multiplier( const item &craft, const bench_locati
 
 float crafting_speed_multiplier( const Character &who, const recipe &rec, bool )
 {
-    const auto quality_multi = crafting_quality_speed_multiplier( who, rec );
+    const auto tools_multi = crafting_tools_speed_multiplier( who, rec );
     const auto result = morale_crafting_speed_multiplier( who, rec ) *
                         lighting_crafting_speed_multiplier( who,
-                                rec ) * quality_multi * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                                rec ) * tools_multi * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
                                         ? 9999
                                         : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
                         who.mutation_value( "crafting_speed_modifier" );
@@ -273,12 +273,12 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     const float light_multi = lighting_crafting_speed_multiplier( who, rec );
     const float bench_multi = workbench_crafting_speed_multiplier( craft, bench );
     const float morale_multi = morale_crafting_speed_multiplier( who, rec );
-    const auto quality_multi = crafting_quality_speed_multiplier( who, rec );
+    const auto tools_multi = crafting_tools_speed_multiplier( who, rec );
     const float mutation_multi = who.mutation_value( "crafting_speed_modifier" );
     const float game_opt_multi = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0 ? 9999 :
                                  100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
 
-    const auto total_multi = light_multi * bench_multi * morale_multi * quality_multi * mutation_multi *
+    const auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
                               game_opt_multi;
 
     if( light_multi <= 0.0f ) {

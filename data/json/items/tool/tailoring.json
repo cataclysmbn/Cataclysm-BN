@@ -266,6 +266,7 @@
     "initial_charges": 50,
     "max_charges": 800,
     "charges_per_use": 1,
+    "crafting_speed_modifier": 1.5,
     "qualities": [ [ "SEW", 10 ] ],
     "use_action": [
       {
