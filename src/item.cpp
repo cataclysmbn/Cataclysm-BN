@@ -3485,7 +3485,7 @@ void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *pa
             name_quality( q );
         }
         auto crafting_speed_modifier = type->crafting_speed_modifier;
-        std::ranges::for_each( type->qualities, [&]( const auto &quality_entry ) {
+        std::ranges::for_each( type->qualities, [&]( const auto & quality_entry ) {
             const auto &quality = quality_entry.first.obj();
             const auto per_level_multiplier = quality.crafting_speed_bonus_per_level;
             if( per_level_multiplier <= 0.0f ) {
@@ -3501,8 +3501,9 @@ void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *pa
 
         if( crafting_speed_modifier != 1.0f ) {
             const auto modifier_percent = static_cast<int>( crafting_speed_modifier * 100.0f );
-            info.emplace_back( "QUALITIES", "", string_format( _( "This item modifies crafting speed by <info>%d%%</info> when used in recipes." ),
-                              modifier_percent ) );
+            info.emplace_back( "QUALITIES", "",
+                               string_format( _( "This item modifies crafting speed by <info>%d%%</info> when used in recipes." ),
+                                              modifier_percent ) );
         }
     }
 
