@@ -867,6 +867,8 @@ auto on_tank_removed( const tripoint_abs_ms &p ) -> void
         return;
     }
 
+    invalidate_submap_capacity_cache_at( project_to<coords::sm>( p ) );
+
     auto &grid = get_fluid_grid_tracker().storage_at( project_to<coords::omt>( p ) );
     auto state = grid.get_state();
     const auto new_capacity = state.capacity > *tank_capacity

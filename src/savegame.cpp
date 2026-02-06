@@ -505,6 +505,7 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
                 entry.read( "capacity_ml", capacity_ml );
 
                 auto state = fluid_grid::liquid_storage_state{
+                    .stored_by_type = {},
                     .capacity = units::from_milliliter( capacity_ml )
                 };
                 const auto liquids = entry.get_array( "liquids" );
