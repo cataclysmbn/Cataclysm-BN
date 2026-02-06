@@ -2,13 +2,14 @@
 
 #include "vehicle_preview.h"
 
+#include <algorithm>
+
 #include "cata_tiles.h"
 #include "cursesport.h"
 #include "game.h"
 #include "map.h"
 #include "output.h"
 #include "sdltiles.h"
-#include "units.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -164,7 +165,12 @@ void vehicle_preview_window::prepare( const catacurses::window &win )
     termx_pixels = termx_to_pixel_value();
     termy_pixels = termy_to_pixel_value();
 
-    // Apply current zoom level
+    if( !saved_original_zoom ) {
+        // Cache the current game zoom once; prepare() is called every redraw.
+        original_zoom = g ? g->get_zoom() : DEFAULT_TILESET_ZOOM;
+        saved_original_zoom = true;
+    }
+
     tilecontext->set_draw_scale( zoom );
 }
 
@@ -180,9 +186,7 @@ void vehicle_preview_window::zoom_in()
 {
     if( zoom < MAX_ZOOM ) {
         zoom *= 2;
-        if( zoom > MAX_ZOOM ) {
-            zoom = MAX_ZOOM;
-        }
+        zoom = std::min( zoom, MAX_ZOOM );
         tilecontext->set_draw_scale( zoom );
     }
 }
@@ -191,9 +195,7 @@ void vehicle_preview_window::zoom_out()
 {
     if( zoom > MIN_ZOOM ) {
         zoom /= 2;
-        if( zoom < MIN_ZOOM ) {
-            zoom = MIN_ZOOM;
-        }
+        zoom = std::max( zoom, MIN_ZOOM );
         tilecontext->set_draw_scale( zoom );
     }
 }
@@ -299,11 +301,12 @@ vehicle_preview_window::~vehicle_preview_window()
 
 void vehicle_preview_window::clear()
 {
-    // Restore default zoom level
-    tilecontext->set_draw_scale( DEFAULT_TILESET_ZOOM );
+    if( saved_original_zoom ) {
+        tilecontext->set_draw_scale( original_zoom );
+    }
 
     // Ensure clip rectangle is cleared
-    const SDL_Renderer_Ptr &renderer = get_sdl_renderer();
+    const auto &renderer = get_sdl_renderer();
     SDL_RenderSetClipRect( renderer.get(), nullptr );
 }
 

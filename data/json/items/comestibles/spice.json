@@ -128,7 +128,7 @@
     "container": "bottle_glass",
     "primary_material": "water",
     "category": "cooking_ingredients",
-    "flags": [ "NO_COOKING_BUFF" ],
+    "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "quench": -20,
     "charges": 10,
     "healthy": -1,

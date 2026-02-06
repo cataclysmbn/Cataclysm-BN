@@ -62,9 +62,8 @@ struct draw_sprite_line_options {
     const tripoint &p;
     const std::vector<tripoint> &points;
     /// Sprite for 0 degree angle (↑)
-    std::string bullet_0deg;
-    /// Optional sprite for 45 degree angle (↗), if not bullet_0deg is used
-    std::optional<std::string> bullet_45deg = std::nullopt;
+    std::string sprite;
+    bool rotate = false;
 };
 /// Draw a line of sprites along the given points
 void draw_line_of( const draw_sprite_line_options &options );

@@ -21,6 +21,7 @@
 #include "cached_options.h"
 #include "calendar.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_functions.h"
@@ -332,7 +333,8 @@ float Character::get_hit_weapon( const item &weap, const attack_statblock &attac
     }
 
     /** @EFFECT_MELEE improves hit chance for all items (including non-weapons) */
-    return ( skill / 3.0f ) + ( get_skill_level( skill_melee ) / 2.0f ) + attack.to_hit;
+    return ( skill / 3.0f ) + ( get_skill_level( skill_melee ) / 2.0f ) + attack.to_hit +
+           weap.get_melee_hit_bonus();
 }
 
 float Character::get_melee_hit( const item &weapon, const attack_statblock &attack ) const
@@ -819,10 +821,11 @@ double Character::crit_chance( float roll_hit, float target_dodge, const item &w
         weapon_crit_chance = 0.5 + 0.05 * get_skill_level( skill_unarmed );
     }
 
-    if( attack.to_hit > 0 ) {
-        weapon_crit_chance = std::max( weapon_crit_chance, 0.5 + 0.1 * attack.to_hit );
-    } else if( attack.to_hit < 0 ) {
-        weapon_crit_chance += 0.1 * attack.to_hit;
+    int attack_to_hit = attack.to_hit + weap.get_melee_hit_bonus();
+    if( attack_to_hit > 0 ) {
+        weapon_crit_chance = std::max( weapon_crit_chance, 0.5 + 0.1 * attack_to_hit );
+    } else if( attack_to_hit < 0 ) {
+        weapon_crit_chance += 0.1 * attack_to_hit;
     }
     weapon_crit_chance = limit_probability( weapon_crit_chance );
 

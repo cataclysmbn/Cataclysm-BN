@@ -68,6 +68,7 @@
 #include "line.h"
 #include "locations.h"
 #include "magic.h"
+#include "magic_enchantment.h"
 #include "map.h"
 #include "martialarts.h"
 #include "material.h"
@@ -96,6 +97,7 @@
 #include "rng.h"
 #include "rot.h"
 #include "scores_ui.h"
+#include "cloning_utils.h"
 #include "skill.h"
 #include "stomach.h"
 #include "string_formatter.h"
@@ -105,6 +107,7 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "units_energy.h"
 #include "units_utility.h"
 #include "value_ptr.h"
 #include "vehicle.h"
@@ -152,6 +155,7 @@ static const itype_id itype_rad_badge( "rad_badge" );
 static const itype_id itype_tuned_mechanism( "tuned_mechanism" );
 static const itype_id itype_stock_small( "stock_small" );
 static const itype_id itype_UPS( "UPS" );
+static const flag_id flag_genome_drive( "GENOME_DRIVE" );
 static const itype_id itype_bio_armor( "bio_armor" );
 static const itype_id itype_waterproof_gunmod( "waterproof_gunmod" );
 static const itype_id itype_water( "water" );
@@ -283,6 +287,7 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
     contents( this ),
     components( new component_item_location( this ) ), bday( turn )
 {
+    item_vars = type->item_vars;
     corpse = has_flag( flag_CORPSE ) ? &mtype_id::NULL_ID().obj() : nullptr;
     item_counter = type->countdown_interval;
 
@@ -2358,17 +2363,40 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
 
         if( parts->test( iteminfo_parts::GUN_DAMAGE_TOTAL ) ) {
             // Intentionally not using total_damage() as it applies multipliers
+            int total_damage = gun_du.amount + std::max( ammo_du.amount, thrown_du.amount );
+            // Apply enchantment bonuses to damage display
+            int base_bullet_damage = static_cast<int>( total_damage );
+            int ench_damage_bonus = viewer.bonus_from_enchantments( base_bullet_damage,
+                                    enchant_vals::mod::RANGED_DAMAGE_BULLET, true );
+            int displayed_damage = total_damage + ench_damage_bonus;
+
             info.emplace_back( "GUN", "sum_of_damage", _( " = <num>" ),
                                iteminfo::no_newline | iteminfo::no_name,
-                               gun_du.amount + std::max( ammo_du.amount, thrown_du.amount ) );
+                               displayed_damage );
+
+            if( ench_damage_bonus != 0 ) {
+                info.emplace_back( "GUN", "ench_damage", _( " (enchanted: <num>)" ),
+                                   iteminfo::no_name | iteminfo::show_plus,
+                                   ench_damage_bonus );
+            }
         }
     }
     info.back().bNewLine = true;
     avatar &you = get_avatar();
-    int max_gun_range = loaded_mod->gun_range( &you );
+    int base_gun_range = loaded_mod->gun_range( true ); // Without player bonuses
+    int max_gun_range = loaded_mod->gun_range( &you ); // Includes enchantment bonuses
     if( max_gun_range > 0 && parts->test( iteminfo_parts::GUN_MAX_RANGE ) ) {
         info.emplace_back( "GUN", _( "Maximum range: " ), "<num>", iteminfo::no_flags,
                            max_gun_range );
+
+        // Show enchantment bonus if present
+        int ench_range_bonus = you.bonus_from_enchantments( base_gun_range,
+                               enchant_vals::mod::RANGED_RANGE, true );
+        if( ench_range_bonus != 0 ) {
+            info.emplace_back( "GUN", "ench_range", _( " (enchanted: <num>)" ),
+                               iteminfo::no_name | iteminfo::show_plus,
+                               ench_range_bonus );
+        }
     }
 
     // TODO: This doesn't cover multiple damage types
@@ -2453,12 +2481,30 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
                                ammo_dispersion );
         }
         if( parts->test( iteminfo_parts::GUN_DISPERSION_TOTAL ) ) {
+            int base_dispersion = loaded_mod->gun_dispersion( true, false );
             info.emplace_back( "GUN", "sum_of_dispersion", _( " = <num>" ),
                                iteminfo::lower_is_better | iteminfo::no_name | iteminfo::no_newline,
-                               loaded_mod->gun_dispersion( true, false ) );
+                               base_dispersion );
+
+            // effective_dispersion includes ALL bonuses from character, skills, etc.
+            // but enchantment is applied last in get_weapon_dispersion
+            int effective_dispersion = static_cast<int>( ranged::get_weapon_dispersion( you, *this ).max() );
             info.emplace_back( "GUN", "eff_dispersion", _( " (effective: <num>)" ),
                                iteminfo::lower_is_better | iteminfo::no_name,
-                               static_cast<int>( ranged::get_weapon_dispersion( you, *this ).max() ) );
+                               effective_dispersion );
+
+            // Calculate enchantment bonus the same way as ranged.cpp:
+            // Use the effective dispersion (before final enchantment) as base
+            // Note: This isn't perfect because effective already includes some effects,
+            // but it's consistent with how ranged.cpp applies enchantments
+            int ench_dispersion_bonus = you.bonus_from_enchantments( effective_dispersion,
+                                        enchant_vals::mod::RANGED_DISPERSION, true );
+
+            if( ench_dispersion_bonus != 0 ) {
+                info.emplace_back( "GUN", "ench_dispersion", _( " (enchanted: <num>)" ),
+                                   iteminfo::lower_is_better | iteminfo::no_name | iteminfo::show_plus,
+                                   ench_dispersion_bonus );
+            }
         }
     }
     info.back().bNewLine = true;
@@ -2499,9 +2545,20 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
         info.back().bNewLine = true;
 
         if( parts->test( iteminfo_parts::GUN_RECOIL ) ) {
+            int base_recoil = loaded_mod->gun_recoil();
+            int ench_recoil_bonus = you.bonus_from_enchantments( base_recoil,
+                                    enchant_vals::mod::RANGED_RECOIL, true );
+            int effective_recoil = std::max( 0, base_recoil + ench_recoil_bonus );
+
             info.emplace_back( "GUN", _( "Effective recoil: " ), "",
                                iteminfo::no_newline | iteminfo::lower_is_better,
-                               loaded_mod->gun_recoil() );
+                               effective_recoil );
+
+            if( ench_recoil_bonus != 0 ) {
+                info.emplace_back( "GUN", "ench_recoil", _( " (enchanted: <num>)" ),
+                                   iteminfo::lower_is_better | iteminfo::no_name | iteminfo::show_plus,
+                                   ench_recoil_bonus );
+            }
         }
         if( bipod && parts->test( iteminfo_parts::GUN_RECOIL_BIPOD ) ) {
             info.emplace_back( "GUN", "bipod_recoil", _( " (with bipod <num>)" ),
@@ -2530,10 +2587,22 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
     }
 
     if( parts->test( iteminfo_parts::GUN_RELOAD_TIME ) ) {
+        int base_reload_time = mod->get_reload_time();
+        int ench_reload_bonus = you.bonus_from_enchantments( base_reload_time,
+                                enchant_vals::mod::RANGED_RELOAD_TIME, true );
+        int effective_reload = std::max( 25, base_reload_time + ench_reload_bonus );
+
         info.emplace_back( "GUN", _( "Reload time: " ),
                            has_flag( flag_RELOAD_ONE ) ? _( "<num> moves per round" ) :
                            _( "<num> moves " ),
-                           iteminfo::lower_is_better,  mod->get_reload_time() );
+                           iteminfo::lower_is_better | ( ench_reload_bonus != 0 ? iteminfo::no_newline : iteminfo::no_flags ),
+                           effective_reload );
+
+        if( ench_reload_bonus != 0 ) {
+            info.emplace_back( "GUN", "ench_reload", _( " (enchanted: <num>)" ),
+                               iteminfo::lower_is_better | iteminfo::no_name | iteminfo::show_plus,
+                               ench_reload_bonus );
+        }
     }
 
     if( parts->test( iteminfo_parts::GUN_USEDSKILL ) ) {
@@ -3165,7 +3234,7 @@ void item::book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
         if( knows_it ) {
             // In case the recipe is known, but has a different name in the book, use the
             // real name to avoid confusing the player.
-            const std::string name = elem.recipe->result_name();
+            const std::string name = elem.recipe->result_name( /*decorated=*/true );
             recipe_list.push_back( "<bold>" + name + "</bold>" );
         } else if( !can_learn ) {
             recipe_list.push_back( "<color_brown>" + elem.name.translated() + "</color>" );
@@ -3611,7 +3680,7 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
         if( dmg_bash || dmg_cut || dmg_stab ) {
             if( parts->test( iteminfo_parts::BASE_TOHIT ) ) {
                 info.emplace_back( "BASE", space + _( "To-hit bonus: " ), "",
-                                   iteminfo::show_plus, type->m_to_hit );
+                                   iteminfo::show_plus, type->m_to_hit + get_melee_hit_bonus() );
             }
 
             if( parts->test( iteminfo_parts::BASE_MOVES ) ) {
@@ -3652,7 +3721,7 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
 
             if( parts->test( iteminfo_parts::BASE_TOHIT ) ) {
                 info.emplace_back( "BASE", _( "To-hit bonus: " ), "",
-                                   iteminfo::show_plus, attack.to_hit );
+                                   iteminfo::show_plus, attack.to_hit + get_melee_hit_bonus() );
             }
 
             if( parts->test( iteminfo_parts::BASE_MOVES ) ) {
@@ -4219,7 +4288,7 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
                 [&crafting_inv]( const recipe * r ) {
                     bool can_make = r->deduped_requirements().can_make_with_inventory(
                                         crafting_inv, r->get_component_filter() );
-                    return std::make_pair( r->result_name(), can_make );
+                    return std::make_pair( r->result_name( /*decorated=*/true ), can_make );
                 } );
                 std::ranges::sort( result_names, localized_compare );
                 const std::string recipes =
@@ -4436,7 +4505,9 @@ nc_color item::color_in_inventory( const player &p ) const
     } else if( has_own_flag( flag_DIRTY ) ) {
         ret = c_brown;
     } else if( is_bionic() ) {
-        if( !p.has_bionic( type->bionic->id ) || type->bionic->id->has_flag( flag_MULTIINSTALL ) ) {
+        if( ( !p.has_bionic( type->bionic->id ) &&
+              !character_funcs::has_upgraded_bionic( p, type->bionic->id ) ) ||
+            type->bionic->id->has_flag( flag_MULTIINSTALL ) ) {
             ret = p.bionic_installation_issues( type->bionic->id ).empty() ? c_green : c_red;
         } else if( !has_fault( fault_bionic_nonsterile ) ) {
             ret = c_dark_gray;
@@ -5026,6 +5097,23 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
     }
     if( is_tool() && has_flag( flag_HEATS_FOOD ) ) {
         tagtext += _( " (heats)" );
+    }
+
+
+    if( has_var( "specimen_sample" ) ) {
+        const std::string specimen_name = get_var( "specimen_name" );
+        const int progress = get_var( "specimen_sample_progress", 0 );
+        const auto specimen_id = mtype_id( get_var( "specimen_sample" ) );
+        const auto size = cloning_utils::specimen_required_sample_size( specimen_id );
+        if( has_flag( flag_genome_drive ) && size > 0 && progress < size ) {
+            tagtext += string_format( " (%s [%d/%d])", specimen_name, progress, size );
+        } else {
+            tagtext += string_format( " (%s)", specimen_name );
+        }
+    }
+
+    if( has_var( "place_monster_override" ) ) {
+        tagtext += string_format( " (%s)", get_var( "place_monster_override_name" ) );
     }
 
     if( has_var( "NANOFAB_GROUP_ID" ) ) {
@@ -5621,6 +5709,9 @@ int item::damage_melee( const attack_statblock &attack, damage_type dt ) const
         default:
             break;
     }
+    // Apply melee damage bonus
+    const auto &bonus = get_melee_damage_bonus();
+    res += bonus.type_damage( dt );
 
     return std::max( res, 0 );
 }
@@ -5636,6 +5727,7 @@ std::map<std::string, attack_statblock> item::get_attacks() const
     // TODO: Cache
     for( const auto &attack : type->attacks ) {
         attack_statblock modified_attack = attack.second;
+        const auto &bonus = get_melee_damage_bonus();
         for( damage_unit &du : modified_attack.damage.damage_units ) {
             // effectiveness is reduced by 10% per damage level
             du.amount -= du.amount * std::max( damage_level( 4 ), 0 ) * 0.1;
@@ -5714,6 +5806,8 @@ std::map<std::string, attack_statblock> item::get_attacks() const
                 default:
                     break;
             }
+            // Apply melee damage bonus
+            du.amount += bonus.type_damage( du.type );
         }
         result[attack.first] = modified_attack;
 
@@ -5762,6 +5856,66 @@ std::map<std::string, attack_statblock> item::get_attacks() const
     }
 
     return result;
+}
+
+auto item::get_melee_damage_bonus( ) const -> const damage_instance &
+{
+    return melee_damage_bonus;
+}
+
+auto item::set_melee_damage_bonus( const damage_instance &bonus ) -> void
+{
+    melee_damage_bonus = bonus;
+}
+
+auto item::get_melee_hit_bonus() const -> int
+{
+    return melee_hit_bonus;
+}
+
+auto item::set_melee_hit_bonus( int bonus ) -> void
+{
+    melee_hit_bonus = bonus;
+}
+
+auto item::get_ranged_damage_bonus( ) const -> const damage_instance &
+{
+    return ranged_damage_bonus;
+}
+
+auto item::set_ranged_damage_bonus( const damage_instance &damages ) -> void
+{
+    ranged_damage_bonus = damages;
+}
+
+auto item::get_range_bonus() const -> int
+{
+    return range_bonus;
+}
+
+auto item::set_range_bonus( int bonus ) -> void
+{
+    range_bonus = bonus;
+}
+
+auto item::get_dispersion_bonus() const -> int
+{
+    return dispersion_bonus;
+}
+
+auto item::set_dispersion_bonus( int bonus ) -> void
+{
+    dispersion_bonus = bonus;
+}
+
+auto item::get_recoil_bonus() const -> int
+{
+    return recoil_bonus;
+}
+
+auto item::set_recoil_bonus( int bonus ) -> void
+{
+    recoil_bonus = bonus;
 }
 
 damage_instance item::base_damage_melee() const
@@ -7856,6 +8010,7 @@ int item::gun_dispersion( bool with_ammo, bool with_scaling ) const
     for( const item *mod : gunmods() ) {
         dispersion_sum += mod->type->gunmod->dispersion;
     }
+    dispersion_sum += get_dispersion_bonus();
     int dispPerDamage = get_option< int >( "DISPERSION_PER_GUN_DAMAGE" );
     dispersion_sum += damage_level( 4 ) * dispPerDamage;
     dispersion_sum = std::max( dispersion_sum, 0 );
@@ -7909,6 +8064,8 @@ damage_instance item::gun_damage( bool with_ammo ) const
         ret.add( ammo_data()->ammo->damage );
     }
 
+    ret.add( get_ranged_damage_bonus() );
+
     int item_damage = damage_level( 4 );
     if( item_damage > 0 ) {
         // TODO: This isn't a good solution for multi-damage guns/ammos
@@ -7954,6 +8111,8 @@ int item::gun_recoil( bool bipod ) const
         qty += ammo_data()->ammo->recoil;
     }
 
+    qty += get_recoil_bonus();
+
     return qty * gun_recoil_multiplier( bipod );
 }
 
@@ -7980,6 +8139,7 @@ int item::gun_range( bool with_ammo ) const
             ret += std::max( ammo_data()->ammo->range, ret_thrown );
         }
     }
+    ret += get_range_bonus();
     return std::min( std::max( 0, ret ), RANGE_HARD_CAP );
 }
 
@@ -7995,6 +8155,10 @@ int item::gun_range( const player *p ) const
 
     // Reduce bow range if player has less than minimum strength.
     ret *= ranged::str_draw_range_modifier( *this, *p );
+
+    // Apply enchantment bonuses to range
+    int ench_range_bonus = p->bonus_from_enchantments( ret, enchant_vals::mod::RANGED_RANGE, true );
+    ret = std::max( 1, ret + ench_range_bonus );
 
     return std::max( 0, ret );
 }
@@ -8090,6 +8254,11 @@ int item::ammo_capacity( bool potential_capacity ) const
     int res = 0;
 
     const item *mag = magazine_current();
+
+    if( has_flag( flag_USES_BIONIC_POWER ) ) {
+        avatar &you = get_avatar();
+        return you.get_max_power_level() / 1_kJ;
+    }
     if( mag ) {
         return mag->ammo_capacity();
     }
@@ -9937,6 +10106,26 @@ detached_ptr<item> item::process_fake_mill( detached_ptr<item> &&self, player * 
     return std::move( self );
 }
 
+detached_ptr<item> item::process_fake_cloning_vat( detached_ptr<item> &&self, player * /*carrier*/,
+        const tripoint &pos )
+{
+    if( !self ) {
+        return std::move( self );
+    }
+    map &here = get_map();
+    if( here.furn( pos ) != furn_str_id( "f_cloning_vat_active" ) ) {
+        self->item_counter = 0;
+        return detached_ptr<item>(); //destroy fake smoke
+    }
+
+    if( self->item_counter == 0 ) {
+        iexamine::cloning_vat_finalize( pos, self->birthday() ); //activate effects when timers goes to zero
+        return detached_ptr<item>(); //destroy fake smoke when it 'burns out'
+    }
+
+    return std::move( self );
+}
+
 detached_ptr<item> item::process_fake_smoke( detached_ptr<item> &&self, player * /*carrier*/,
         const tripoint &pos )
 {
@@ -10540,6 +10729,12 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
 
     if( self->has_flag( flag_FAKE_SMOKE ) ) {
         self = process_fake_smoke( std::move( self ), carrier, pos );
+        if( !self ) {
+            return std::move( self );
+        }
+    }
+    if( self->has_flag( flag_FAKE_CLONING_VAT ) ) {
+        self = process_fake_cloning_vat( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }

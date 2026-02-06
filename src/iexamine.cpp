@@ -25,6 +25,7 @@
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_unreachable.h"
 #include "cata_utility.h"
@@ -72,6 +73,7 @@
 #include "material.h"
 #include "messages.h"
 #include "monster.h"
+#include "mongroup.h"
 #include "mtype.h"
 #include "mutation.h"
 #include "npc.h"
@@ -89,6 +91,7 @@
 #include "requirements.h"
 #include "rng.h"
 #include "sounds.h"
+#include "cloning_utils.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
@@ -137,6 +140,7 @@ static const itype_id itype_chem_carbide( "chem_carbide" );
 static const itype_id itype_corpse( "corpse" );
 static const itype_id itype_electrohack( "electrohack" );
 static const itype_id itype_fake_milling_item( "fake_milling_item" );
+static const itype_id itype_fake_cloning_vat( "fake_cloning_vat_item" );
 static const itype_id itype_fake_smoke_plume( "fake_smoke_plume" );
 static const itype_id itype_fertilizer( "fertilizer" );
 static const itype_id itype_fire( "fire" );
@@ -162,6 +166,9 @@ static const itype_id itype_unfinished_cac2( "unfinished_cac2" );
 static const itype_id itype_unfinished_charcoal( "unfinished_charcoal" );
 static const itype_id itype_UPS( "UPS" );
 static const itype_id itype_water( "water" );
+static const itype_id itype_dna( "dna" );
+static const itype_id itype_embryo( "embryo" );
+static const itype_id itype_embryo_empty( "embryo_empty" );
 
 static const trap_str_id tr_unfinished_construction( "tr_unfinished_construction" );
 
@@ -379,7 +386,7 @@ void iexamine::nanofab( player &p, const tripoint &examp )
 
     // we're sticking an item from our inventory under the nanofabrication dispenser
     if( new_item->made_of( LIQUID ) ) {
-        liquid_handler::handle_liquid( std::move( new_item ) );  // let it own the pointer
+        liquid_handler::handle_all_liquid( std::move( new_item ), PICKUP_RANGE );  // let it own the pointer
         return;
     }
 
@@ -1825,6 +1832,7 @@ void iexamine::transform( player &p, const tripoint &pos )
                 }
                 g->m.ter_set( pos, g->m.get_ter_transforms_into( pos ) );
             }
+            p.moves -= to_moves<int>( 2_seconds );
             return;
         }
         case 2: {
@@ -4154,6 +4162,15 @@ static int count_charges_in_list( const itype *type, const map_stack &items )
     return 0;
 }
 
+namespace sm_rack
+{
+const int MIN_CHARCOAL = 100;
+const int CHARCOAL_PER_LITER = 25;
+const units::volume MAX_FOOD_VOLUME_MILLING = units::from_liter( 100 );
+const units::volume MAX_FOOD_VOLUME = units::from_liter( 20 );
+const units::volume MAX_FOOD_VOLUME_PORTABLE = units::from_liter( 15 );
+} // namespace sm_rack
+
 void iexamine::reload_furniture( player &p, const tripoint &examp )
 {
     map &here = get_map();
@@ -4217,27 +4234,96 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     if( max_reload_amount <= 0 ) {
         return;
     }
-    if( amount_in_inv == 0 ) {
+
+    // Check for charcoal to load around the rack as if crafting
+    int amount_nearby = 0;
+    if( cur_ammo->get_id() == itype_charcoal ) {
+        for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
+            if( pt == examp ) {
+                continue;
+            }
+            for( const item *it : here.i_at( pt ) ) {
+                if( it->typeId() == itype_charcoal ) {
+                    amount_nearby += it->charges;
+                }
+            }
+        }
+    }
+
+    const int total_available = amount_in_inv + amount_nearby;
+    if( total_available == 0 ) {
         //~ Reloading or restocking a piece of furniture, for example a forge.
         add_msg( m_info, _( "You need some %1$s to reload this %2$s." ),
                  cur_ammo->nname( 2 ),
                  f.name() );
         return;
     }
-    const int max_amount = std::min( amount_in_inv, max_reload_amount );
+    const int max_amount = std::min( total_available, max_reload_amount );
+
+    // For smoking racks, use total available as default (no artificial limits)
+    int default_amount = max_amount;
+    int actual_max = max_amount;
+
     //~ Loading fuel or other items into a piece of furniture.
-    const std::string popupmsg = string_format( _( "Put how many of the %1$s into the %2$s?" ),
-                                 cur_ammo->nname( max_amount ), f.name() );
+    std::string source_desc = "";
+    if( amount_in_inv > 0 && amount_nearby > 0 ) {
+        source_desc = string_format( _( " (%d in inventory, %d nearby)" ), amount_in_inv, amount_nearby );
+    } else if( amount_nearby > 0 ) {
+        source_desc = string_format( _( " (%d nearby)" ), amount_nearby );
+    }
+
+    const std::string popupmsg = string_format( _( "Put how much %1$s into the %2$s?%3$s" ),
+                                 cur_ammo->nname( actual_max ), f.name(), source_desc );
     int amount = string_input_popup()
                  .title( popupmsg )
                  .width( 20 )
-                 .text( std::to_string( max_amount ) )
+                 .text( std::to_string( default_amount ) )
                  .only_digits( true )
                  .query_int();
-    if( amount <= 0 || amount > max_amount ) {
+    if( amount <= 0 ) {
         return;
     }
-    p.use_charges( cur_ammo->get_id(), amount );
+
+    // Prevent putting in too much coal
+    if( amount > actual_max ) {
+        amount = actual_max;
+    }
+
+    // First use from inventory,
+    int remaining = amount;
+    if( amount_in_inv > 0 ) {
+        const int from_inv = std::min( remaining, amount_in_inv );
+        p.use_charges( cur_ammo->get_id(), from_inv );
+        remaining -= from_inv;
+    }
+
+    // Then use from nearby ground
+    if( remaining > 0 && amount_nearby > 0 ) {
+        for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
+            if( pt == examp || remaining <= 0 ) {
+                continue;
+            }
+            auto ground_items = here.i_at( pt );
+            for( auto iter = ground_items.begin(); iter != ground_items.end() && remaining > 0; ) {
+                item *it = *iter;
+                if( it->typeId() == itype_charcoal ) {
+                    const int to_take = std::min( remaining, it->charges );
+                    if( to_take >= it->charges ) {
+                        detached_ptr<item> det;
+                        iter = ground_items.erase( iter, &det );
+                        remaining -= to_take;
+                    } else {
+                        it->charges -= to_take;
+                        remaining -= to_take;
+                        ++iter;
+                    }
+                } else {
+                    ++iter;
+                }
+            }
+        }
+    }
+
     auto items = here.i_at( examp );
     for( auto &itm : items ) {
         if( itm->type == cur_ammo ) {
@@ -5562,15 +5648,6 @@ void iexamine::autodoc( player &p, const tripoint &examp )
     }
 }
 
-namespace sm_rack
-{
-const int MIN_CHARCOAL = 100;
-const int CHARCOAL_PER_LITER = 25;
-const units::volume MAX_FOOD_VOLUME_MILLING = units::from_liter( 100 );
-const units::volume MAX_FOOD_VOLUME = units::from_liter( 20 );
-const units::volume MAX_FOOD_VOLUME_PORTABLE = units::from_liter( 15 );
-} // namespace sm_rack
-
 static int get_charcoal_charges( units::volume food )
 {
     const int charcoal = to_liter( food ) * sm_rack::CHARCOAL_PER_LITER;
@@ -5636,6 +5713,132 @@ static void mill_activate( player &p, const tripoint &examp )
     result->set_counter( to_turns<int>( milling_time ) );
     here.add_item( examp, std::move( result ) );
     add_msg( _( "You remove the brake on the millstone and it slowly starts to turn." ) );
+}
+
+static void cloning_vat_activate( player &p, const tripoint &examp )
+{
+    map &here = get_map();
+    // 86400 = 1 day, so this is 12 hrs per size increment
+    const int turns_to_clone = 43200;
+
+    // filter out faulty carriers
+    auto carriers = p.wielded_items();
+    for( size_t i = 0; i < carriers.size(); ) {
+        item *const carrier = carriers[i];  // already a pointer
+        if( carrier->has_fault( fault_id( "fault_bionic_nonsterile" ) ) ||
+            carrier->typeId() != itype_embryo_empty ) {
+            carriers.erase( carriers.begin() + i ); // erase by iterator
+            // do NOT increment i here
+        } else {
+            i++; // increment only if we didn't erase
+        }
+    }
+    if( carriers.empty() ) {
+        popup( "You need a sterilized artificial womb and DNA to begin incubation." );
+        return;
+    }
+    if( ( *carriers.begin() )->has_flag( flag_RADIO_MOD ) ) {
+        popup( "You need to remove the radio mod first." );
+        return;
+    }
+
+    // choose specimen sample
+    auto syringes = p.all_items_with_id( itype_dna );
+    if( syringes.size() == 0 ) {
+        popup( "You have no valid specimen samples." );
+        return;
+    }
+    uilist specimen_menu;
+    specimen_menu.text = _( "Select specimen sample:" );
+    for( size_t z = 0; z < syringes.size(); z++ ) {
+        const auto specimen_id = mtype_id( syringes[z]->get_var( "specimen_sample" ) );
+        const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_id ) );
+        specimen_menu.addentry( z, true, MENU_AUTOASSIGN, string_format( "%s [%s]",
+                                syringes[z]->display_name(),
+                                to_string( time_duration::from_turns( turns_to_clone * size ) ) ) );
+    }
+    specimen_menu.query();
+    const int choice = specimen_menu.ret;
+    if( choice < 0 ) {
+        return;
+    }
+
+    // reference to the original detached_ptr
+    auto &selected_syringe = syringes[choice];
+    p.mod_moves( -250 );
+
+    // Only try to remove if the pointer is valid
+    if( !selected_syringe ) {
+        return;
+    }
+    // remove the clean carrier
+    detached_ptr<item> weapon = p.remove_primary_weapon();
+
+    // search for DNA and begin process
+    std::vector<item *> items = p.all_items_with_id( itype_dna );
+    for( size_t x = 0; x < items.size(); x++ ) {
+        if( selected_syringe->get_var( "specimen_sample" ) == items[x]->get_var( "specimen_sample" ) ) {
+            if( items[x]->units_remaining( p ) <= 1 ) {
+                // this consumes the container. need to figure that out
+                detached_ptr<item> garbage = p.i_rem( p.inv_position_by_item( items[x] ) );
+            } else {
+                items[x]->mod_charges( -1 );
+            }
+
+            add_msg( m_info, _( "The cloning vat begins its rapid incubation process." ) );
+            here.furn_set( examp, furn_str_id( "f_cloning_vat_active" ) );
+            detached_ptr<item> result = item::spawn( "fake_cloning_vat_item", calendar::turn );
+
+            // 100 turns = 1 second, so 180000 = 30 min per size increment
+            result->set_var( "specimen_name", selected_syringe->get_var( "specimen_name" ) );
+            result->set_var( "specimen_sample", selected_syringe->get_var( "specimen_sample" ) );
+
+            // cloning vat random upgrade logic
+            if( rng( 1, 100 ) < 90 ) {
+                const mtype_id id( selected_syringe->get_var( "specimen_sample" ) );
+                const mtype &type = id.obj();
+
+                mongroup_id upgrade_group = mongroup_id::NULL_ID();
+                upgrade_group = type.upgrade_group;
+                const auto mons = upgrade_group.obj().monsters;
+
+                if( !mons.empty() ) {
+                    // calculate total weight (sum of frequencies), pick random, then iterate until we find it
+                    int total_freq = 0;
+                    for( const MonsterGroupEntry &entry : mons ) {
+                        total_freq += entry.frequency;
+                    }
+                    int roll = rng( 1, total_freq );
+                    const MonsterGroupEntry *chosen = nullptr;
+                    for( const MonsterGroupEntry &entry : mons ) {
+                        roll -= entry.frequency;
+                        if( roll <= 0 ) {
+                            chosen = &entry;
+                            break;
+                        }
+                    }
+                    const shared_ptr_fast<monster> newmon_ptr = make_shared_fast<monster>
+                            ( mtype_id( chosen->name.str() ) );
+                    monster &newmon = *newmon_ptr;
+
+                    if( chosen ) {
+                        result->set_var( "specimen_sample", chosen->name.str() );
+                        result->set_var( "specimen_name", newmon.name() );
+                    }
+                }
+            }
+
+            const auto specimen_id = mtype_id( selected_syringe->get_var( "specimen_sample" ) );
+            const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_id ) );
+            result->set_counter( turns_to_clone * size );
+            result->activate();
+            here.add_item( examp, std::move( result ) );
+
+            return;
+        }
+    }
+
+    return;
 }
 
 static void smoker_activate( player &p, const tripoint &examp )
@@ -5798,6 +6001,48 @@ void iexamine::mill_finalize( player &, const tripoint &examp, const time_point 
     here.furn_set( examp, next_mill_type );
 }
 
+void iexamine::cloning_vat_finalize( const tripoint &examp, const time_point & )
+{
+    // grab items in the vat
+    map &here = get_map();
+    map_stack items_here = here.i_at( examp );
+    item developing_embryo;
+    if( items_here.size() == 1 &&
+        ( *items_here.begin() )->typeId() == itype_id( "fake_cloning_vat_item" ) ) {
+        if( here.furn( examp ) == furn_str_id( "f_cloning_vat_active" ) ) {
+            here.furn_set( examp, furn_str_id( "f_cloning_vat" ) );
+        }
+        developing_embryo = **items_here.begin();
+    }
+
+    here.furn_set( examp, furn_str_id( "f_cloning_vat" ) );
+
+    // cloning vat failure: choose random garbage item and faulty womb
+    if( rng( 1, 100 ) < 10 ) {
+        const std::vector<itype_id> item_results{ itype_id( "arm" ), itype_id( "leg" ), itype_id( "fetus" ) };
+        const itype_id &chosen_id = random_entry( item_results );
+        detached_ptr<item> spawned_womb = item::spawn( itype_embryo_empty, calendar::turn );
+        spawned_womb->faults.emplace( fault_id( "fault_bionic_nonsterile" ) );
+        here.add_item( examp, std::move( spawned_womb ) );
+        detached_ptr<item> spawned_item = item::spawn( chosen_id, calendar::turn );
+        here.add_item( examp, std::move( spawned_item ) );
+
+        sounds::sound( examp, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+
+        return;
+    }
+
+    // success: spawn the completed artificial womb
+    sounds::sound( examp, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
+    detached_ptr<item> spawned_embryo = item::spawn( itype_embryo, calendar::turn );
+    spawned_embryo->set_var( "place_monster_override", developing_embryo.get_var( "specimen_sample" ) );
+    spawned_embryo->set_var( "place_monster_override_name",
+                             developing_embryo.get_var( "specimen_name" ) );
+    here.add_item( examp, std::move( spawned_embryo ) );
+
+    return;
+}
+
 static void smoker_finalize( player &, const tripoint &examp, const time_point &start_time )
 {
     map &here = get_map();
@@ -5862,7 +6107,7 @@ static void smoker_finalize( player &, const tripoint &examp, const time_point &
     }
 
     for( detached_ptr<item> &it : results ) {
-        items.insert( std::move( it ) );
+        here.add_item( examp, std::move( it ) );
     }
 
     here.furn_set( examp, next_smoker_type );
@@ -5879,6 +6124,17 @@ static void smoker_load_food( player &p, const tripoint &examp,
         p.add_msg_if_player( _( "You can't place more food while it's smoking." ) );
         return;
     }
+
+    // Already smoked food has to be removed before adding more food for smoker to operate properly
+    map_stack items = here.i_at( examp );
+    for( item * const &it : items ) {
+        if( it->has_flag( flag_SMOKED ) && !it->has_flag( flag_SMOKABLE ) ) {
+            add_msg( _( "This rack already contains smoked food." ) );
+            add_msg( _( "Remove it before loading the smoking rack again." ) );
+            return;
+        }
+    }
+
     // filter SMOKABLE food
     inventory inv = p.crafting_inventory();
     inv.remove_items_with( []( const item & it ) {
@@ -6093,6 +6349,84 @@ void iexamine::on_smoke_out( const tripoint &examp, const time_point &start_time
     if( here.furn( examp ) == furn_str_id( "f_smoking_rack_active" ) ||
         here.furn( examp ) == furn_str_id( "f_metal_smoking_rack_active" ) ) {
         smoker_finalize( g->u, examp, start_time );
+    }
+}
+
+void iexamine::cloning_vat_examine( player &p, const tripoint &examp )
+{
+    map &here = get_map();
+    const bool active = here.furn( examp ) == furn_str_id( "f_cloning_vat_active" );
+    map_stack items_here = here.i_at( examp );
+
+    if( !active ) {
+        // handle inactive vat: load or unload
+        uilist menu;
+        menu.text = "What to do with the cloning vat?";
+        if( items_here.size() > 0 ) {
+            menu.addentry( "Get contents" );
+            menu.query();
+            if( menu.ret != 0 ) {
+                return;
+            }
+
+            // get pointer to first item, ask user if they want to wield
+            item *it = *items_here.begin();
+            if( !query_yn( string_format( "Take %s from the cloning vat?", it->tname().c_str() ) ) ) {
+                return;
+            }
+            // remove from map, store in det
+            detached_ptr<item> det;
+            items_here.erase( items_here.begin(), &det );
+            p.wield( std::move( det ) );
+
+            return;
+        }
+
+        menu.addentry( "Begin incubation" );
+        menu.query();
+
+        if( menu.ret != 0 ) {
+            return;
+        }
+
+        cloning_vat_activate( p, examp );
+    } else {
+        // handle active vat: cancel process
+        if( items_here.size() == 0 ) {
+            return;
+        }
+
+        const std::string prompt = string_format( _( "Cancel incubation (%s left)" ),
+                                   to_string( time_duration::from_turns( ( *items_here.begin() )->get_counter() ) ) );
+
+        uilist menu;
+        menu.text = "What to do with the active cloning vat?";
+        menu.addentry( prompt );
+        menu.query();
+        if( menu.ret != 0 ) {
+            return;
+        }
+        // Ask using the item's name
+        if( !query_yn( _( "Cancel incubation process?  This will kill the specimen inside." ) ) ) {
+            return;
+        }
+
+        sounds::sound( examp, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+
+        if( items_here.size() > 0 ) {
+            items_here.erase( items_here.begin() );  // delete all items here
+        }
+
+        // cloning vat failure
+        const std::vector<itype_id> item_results{ itype_id( "arm" ), itype_id( "leg" ), itype_id( "fetus" ) };
+        const itype_id &chosen_id = random_entry( item_results );
+        detached_ptr<item> spawned_remains = item::spawn( chosen_id, calendar::turn, 1 );
+        detached_ptr<item> spawned_womb = item::spawn( itype_embryo_empty, calendar::turn, 1 );
+        spawned_womb->faults.emplace( fault_id( "fault_bionic_nonsterile" ) );
+        here.add_item( examp, std::move( spawned_womb ) );
+        here.add_item( examp, std::move( spawned_remains ) );
+
+        here.furn_set( examp, furn_str_id( "f_cloning_vat" ) );
     }
 }
 
@@ -6326,7 +6660,27 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
     const bool full_portable = f_volume >= sm_rack::MAX_FOOD_VOLUME_PORTABLE;
     const auto remaining_capacity = sm_rack::MAX_FOOD_VOLUME - f_volume;
     const auto remaining_capacity_portable = sm_rack::MAX_FOOD_VOLUME_PORTABLE - f_volume;
-    const auto has_coal_in_inventory = p.charges_of( itype_charcoal ) > 0;
+
+    // Check for charcoal in inventory and nearby ground
+    int charcoal_nearby = 0;
+    for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
+        if( pt == examp ) {
+            continue;
+        }
+        for( const item *it : here.i_at( pt ) ) {
+            if( it->typeId() == itype_charcoal ) {
+                charcoal_nearby += it->charges;
+                if( charcoal_nearby > 0 ) {
+                    break;
+                }
+            }
+        }
+        if( charcoal_nearby > 0 ) {
+            break;
+        }
+    }
+    const auto has_coal_in_inventory = p.charges_of( itype_charcoal ) > 0 || charcoal_nearby > 0;
+
     const auto coal_charges = count_charges_in_list( &*itype_charcoal, items_here );
     const auto need_charges = get_charcoal_charges( f_volume );
     const bool has_coal = coal_charges > 0;
@@ -6676,6 +7030,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "ledge", &iexamine::ledge },
             { "autodoc", &iexamine::autodoc },
             { "quern_examine", &iexamine::quern_examine },
+            { "cloning_vat_examine", &iexamine::cloning_vat_examine },
             { "smoker_options", &iexamine::smoker_options },
             { "open_safe", &iexamine::open_safe },
             { "workbench", &iexamine::workbench },

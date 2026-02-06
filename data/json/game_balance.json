@@ -257,5 +257,12 @@
     "info": "An integer coefficient for determining the XP thresholds for leveling up in STK and similar",
     "stype": "int",
     "value": 400
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "ALWAYS_SHOW_MANA",
+    "info": "If true, always display the mana in the sidebar. Primarily useful for magic-related mods.",
+    "stype": "bool",
+    "value": false
   }
 ]

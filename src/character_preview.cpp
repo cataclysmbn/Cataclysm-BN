@@ -101,7 +101,9 @@ class char_preview_adapter : public cata_tiles
                 t_av.add_bionic( bio );
             }
             for( const bionic &bio : *av.my_bionics ) {
-                t_av.add_bionic( bio.id );
+                if( !bio.id->included ) {
+                    t_av.add_bionic( bio.id );
+                }
             }
             for( const bionic &bio : *t_av.my_bionics ) {
                 std::string overlay_id = ( bio.powered ? "active_" : "" ) + bio.id.str();

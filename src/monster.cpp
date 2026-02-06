@@ -11,6 +11,7 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "coordinate_conversions.h"
 #include "creature_tracker.h"
@@ -2854,6 +2855,7 @@ void monster::die( Creature *nkiller )
     add_item( remove_armor_item() );
     add_item( remove_storage_item() );
     add_item( remove_tied_item() );
+    add_item( remove_battery_item() );
 
     if( has_effect( effect_lightsnare ) ) {
         add_item( item::spawn( "string_36", calendar::start_of_cataclysm ) );
@@ -3020,6 +3022,7 @@ void monster::process_items()
     process_item_valptr( &*armor_item, *this );
     process_item_valptr( &*tack_item, *this );
     process_item_valptr( &*tied_item, *this );
+    process_item_valptr( &*battery_item, *this );
 }
 
 void monster::drop_items_on_death()
@@ -3364,6 +3367,11 @@ units::volume monster::get_carried_volume() const
 bool monster::is_dead() const
 {
     return dead || is_dead_state();
+}
+
+bool monster::is_nemesis() const
+{
+    return has_flag( MF_NEMESIS );
 }
 
 void monster::init_from_item( const item &itm )

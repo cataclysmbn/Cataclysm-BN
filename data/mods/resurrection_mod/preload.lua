@@ -9,8 +9,8 @@ local mod = game.mod_runtime[game.current_mod]
 
 game.iuse_functions["resurrection_anchor_use"] = function(...) return mod.iuse_function_anchor(...) end
 
-table.insert(game.hooks.on_character_death, function(...) return mod.on_character_death_hook(...) end)
+game.add_hook("on_character_death", function(...) return mod.on_character_death_hook(...) end)
 
-table.insert(game.hooks.on_game_load, function(...) return mod.on_game_load_hook(...) end)
+game.add_hook("on_game_load", function(...) return mod.on_game_load_hook(...) end)
 
-table.insert(game.hooks.on_game_save, function(...) return mod.on_game_save_hook(...) end)
+game.add_hook("on_game_save", function(...) return mod.on_game_save_hook(...) end)

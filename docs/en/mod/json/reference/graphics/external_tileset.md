@@ -123,6 +123,7 @@ Ultica are planned for the future.
 - Skateboard, item and vehicleparts. Port from DDA lacking sprites in UDP.
 - Sea scooter, item and vehiclepart. Item unique to BN.
 - Skeletal lich and skeletal master. Port from DDA that UDP lacked a sprite for.
+- AR-10.
 
 ### External_Tileset_DP_terrain_normal.png
 

@@ -120,7 +120,7 @@ Bright Nightsは、メインゲームに同梱されていないModを簡単に�
 
 #### ゲームに音楽(または音)がありません。どうすれば追加できますか?
 
-[Catapult](https://github.com/qrrk/Catapult)などのサードパーティランチャーを使用すると、ランチャーメニューからサウンドパック(およびMod)をインストールできます。手動でも可能です。サウンドパックを追加するには、ダウンロードして`<Game Folder>\data\sound\`に解凍し、設定から選択して、ゲームを再起動します。推奨されるのは[Otopack](https://github.com/RoyalFox2140/Otopack-2-BN)です。
+[Catapult](https://github.com/qrrk/Catapult)などのサードパーティランチャーを使用すると、ランチャーメニューからサウンドパック(およびMod)をインストールできます。手動でも可能です。サウンドパックを追加するには、ダウンロードして`<Game Folder>\data\sound\`に解凍し、設定から選択して、ゲームを再起動します。推奨されるのは[Otopack](https://github.com/NarandBD/Otopack-BN-Mk-2)です。
 
 #### サードパーティModはどこに置けばよいですか?
 

@@ -79,7 +79,7 @@ Most legacy crafting vehiclepart flags have been removed and should be replaced 
 "integrated_tools": [ "dehydrator", "vac_sealer", "food_processor", "press" ],  // Replaces the `CRAFTRIG` flag
 "integrated_tools": [ "chemistry_set", "electrolysis_kit" ],  // Replaces the `CHEMLAB` flag
 "integrated_tools": [ "forge" ],  // Replaces the `FORGE` flag
-"integrated_tools": [ "fake_adv_butchery" ],  // Replaces the `BUTCHER_EQ` flag
+"integrated_tools": [ "fake_adv_butchery" ],  // Needed with the `BUTCHER_EQ` flag
 "integrated_tools": [ "kiln" ],  // Replaces the `KILN` flag
 "integrated_tools": [ "soldering_iron", "welder" ],  // Replaces the tools
 "integrated_tools": [ "water_purifier" ],  // Replaces the tools, but not the ability to purify water in vehicle tanks, of the `WATER_PURIFIER` flag
