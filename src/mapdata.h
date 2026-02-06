@@ -596,7 +596,23 @@ void reset_furn_ter();
 
 enum class fluid_grid_role {
     tank,
-    fixture
+    fixture,
+    transformer
+};
+
+struct fluid_grid_transform_io {
+    itype_id liquid;
+    units::volume amount = 0_ml;
+};
+
+struct fluid_grid_transform_recipe {
+    std::vector<fluid_grid_transform_io> inputs;
+    std::vector<fluid_grid_transform_io> outputs;
+};
+
+struct fluid_grid_transformer_config {
+    time_duration tick_interval = 1_seconds;
+    std::vector<fluid_grid_transform_recipe> transforms;
 };
 
 struct fluid_grid_data {
@@ -608,6 +624,7 @@ struct fluid_grid_data {
     bool use_keg_capacity = false;
     std::optional<furn_str_id> connected_variant;
     std::optional<furn_str_id> disconnected_variant;
+    std::optional<fluid_grid_transformer_config> transformer;
 };
 
 struct furn_t : map_data_common_t {

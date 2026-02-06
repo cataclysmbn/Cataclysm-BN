@@ -73,6 +73,7 @@
 #include "distraction_manager.h"
 #include "distribution_grid.h"
 #include "drop_token.h"
+#include "fluid_grid.h"
 #include "editmap.h"
 #include "enums.h"
 #include "event.h"
@@ -1673,6 +1674,7 @@ bool game::do_turn()
     m.process_items();
     m.creature_in_field( u );
     grid_tracker_ptr->update( calendar::turn );
+    fluid_grid::update( calendar::turn );
 
     // Apply sounds from previous turn to monster and NPC AI.
     sounds::process_sounds();

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <queue>
@@ -33,6 +34,8 @@ using grid_member_ptr = shared_ptr_fast<grid_member_set>;
 using grid_member_map = std::map<tripoint_om_omt, grid_member_ptr>;
 using grid_member_cache_store = std::map<point_abs_om, grid_member_map>;
 using submap_capacity_cache_store = std::map<tripoint_abs_sm, units::volume>;
+using submap_tank_count_cache_store = std::map<tripoint_abs_sm, int>;
+using transformer_last_run_store = std::map<tripoint_abs_ms, time_point>;
 static const itype_id itype_water( "water" );
 static const itype_id itype_water_clean( "water_clean" );
 
@@ -97,6 +100,18 @@ auto submap_capacity_cache() -> submap_capacity_cache_store & // *NOPAD*
     return cache;
 }
 
+auto submap_tank_count_cache() -> submap_tank_count_cache_store & // *NOPAD*
+{
+    static auto cache = submap_tank_count_cache_store{};
+    return cache;
+}
+
+auto transformer_last_run() -> transformer_last_run_store & // *NOPAD*
+{
+    static auto cache = transformer_last_run_store{};
+    return cache;
+}
+
 auto volume_from_charges( const itype_id &liquid_type, int charges ) -> units::volume
 {
     if( charges <= 0 ) {
@@ -113,6 +128,82 @@ auto charges_from_volume( const itype_id &liquid_type, units::volume volume ) ->
     }
     auto liquid = item::spawn( liquid_type, calendar::turn );
     return liquid->charges_per_volume( volume );
+}
+
+auto batches_for_inputs( const std::vector<fluid_grid_transform_io> &inputs,
+                         const std::map<itype_id, units::volume> &available ) -> double
+{
+    if( inputs.empty() ) {
+        return 0.0;
+    }
+
+    auto max_batches = std::numeric_limits<double>::max();
+    std::ranges::for_each( inputs, [&]( const fluid_grid_transform_io & io ) {
+        const auto amount_ml = units::to_milliliter<int>( io.amount );
+        if( amount_ml <= 0 ) {
+            max_batches = 0.0;
+            return;
+        }
+        const auto iter = available.find( io.liquid );
+        if( iter == available.end() ) {
+            max_batches = 0.0;
+            return;
+        }
+        const auto available_ml = units::to_milliliter<double>( iter->second );
+        const auto required_ml = units::to_milliliter<double>( io.amount );
+        if( available_ml <= 0.0 || required_ml <= 0.0 ) {
+            max_batches = 0.0;
+            return;
+        }
+        max_batches = std::min( max_batches, available_ml / required_ml );
+    } );
+
+    if( max_batches == std::numeric_limits<double>::max() ) {
+        return 0.0;
+    }
+    return std::max( max_batches, 0.0 );
+}
+
+struct transformer_instance {
+    tripoint_abs_ms pos = tripoint_abs_ms( tripoint_zero );
+    const fluid_grid_transformer_config *config = nullptr;
+};
+
+auto collect_transformers( const std::set<tripoint_abs_omt> &grid,
+                           mapbuffer &mb ) -> std::vector<transformer_instance>
+{
+    auto submap_positions = std::set<tripoint_abs_sm> {};
+    std::ranges::for_each( grid, [&]( const tripoint_abs_omt & omp ) {
+        const auto base = project_to<coords::sm>( omp );
+        submap_positions.emplace( base + point_zero );
+        submap_positions.emplace( base + point_east );
+        submap_positions.emplace( base + point_south );
+        submap_positions.emplace( base + point_south_east );
+    } );
+
+    auto transformers = std::vector<transformer_instance> {};
+    std::ranges::for_each( submap_positions, [&]( const tripoint_abs_sm & sm_coord ) {
+        auto *sm = mb.lookup_submap( sm_coord );
+        if( sm == nullptr ) {
+            return;
+        }
+        std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
+            std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
+                const auto pos = point( x, y );
+                const auto &furn = sm->get_furn( pos ).obj();
+                if( !furn.fluid_grid || furn.fluid_grid->role != fluid_grid_role::transformer ) {
+                    return;
+                }
+                if( !furn.fluid_grid->transformer ) {
+                    return;
+                }
+                const auto abs_pos = project_combine( sm_coord, point_sm_ms( pos ) );
+                transformers.push_back( transformer_instance{ .pos = abs_pos, .config = &*furn.fluid_grid->transformer } );
+            } );
+        } );
+    } );
+
+    return transformers;
 }
 
 auto tank_capacity_at( mapbuffer &mb, const tripoint_abs_ms &p ) -> std::optional<units::volume>
@@ -146,8 +237,12 @@ auto ordered_liquid_types( const fluid_grid::liquid_storage_state &state ) -> st
     return ordered;
 }
 
-auto normalize_water_storage( fluid_grid::liquid_storage_state &state ) -> void
+auto normalize_water_storage( fluid_grid::liquid_storage_state &state,
+                              bool allow_mixed_water ) -> void
 {
+    if( allow_mixed_water ) {
+        return;
+    }
     auto clean_iter = state.stored_by_type.find( itype_water_clean );
     auto dirty_iter = state.stored_by_type.find( itype_water );
     if( clean_iter != state.stored_by_type.end() && dirty_iter != state.stored_by_type.end() ) {
@@ -164,8 +259,12 @@ auto normalize_water_storage( fluid_grid::liquid_storage_state &state ) -> void
     }
 }
 
-auto taint_clean_water( fluid_grid::liquid_storage_state &state ) -> void
+auto taint_clean_water( fluid_grid::liquid_storage_state &state,
+                        bool allow_mixed_water ) -> void
 {
+    if( allow_mixed_water ) {
+        return;
+    }
     auto clean_iter = state.stored_by_type.find( itype_water_clean );
     if( clean_iter == state.stored_by_type.end() ) {
         return;
@@ -281,6 +380,11 @@ auto invalidate_submap_capacity_cache_at( const tripoint_abs_sm &p ) -> void
     submap_capacity_cache().erase( p );
 }
 
+auto invalidate_submap_tank_count_cache_at( const tripoint_abs_sm &p ) -> void
+{
+    submap_tank_count_cache().erase( p );
+}
+
 auto storage_state_for_grid( const std::set<tripoint_abs_omt> &grid ) ->
 fluid_grid::liquid_storage_state
 {
@@ -377,6 +481,63 @@ auto submap_capacity_at( const tripoint_abs_sm &sm_coord, mapbuffer &mb ) -> uni
     } );
 
     cache.emplace( sm_coord, total );
+    return total;
+}
+
+auto submap_tank_count_at( const tripoint_abs_sm &sm_coord, mapbuffer &mb ) -> int
+{
+    auto &cache = submap_tank_count_cache();
+    const auto iter = cache.find( sm_coord );
+    if( iter != cache.end() ) {
+        return iter->second;
+    }
+
+    auto *sm = mb.lookup_submap( sm_coord );
+    if( sm == nullptr ) {
+        return 0;
+    }
+
+    auto total = 0;
+    std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
+        std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
+            const auto pos = point( x, y );
+            const auto &furn = sm->get_furn( pos ).obj();
+            if( tank_capacity_for_furn( furn ) ) {
+                ++total;
+            }
+        } );
+    } );
+
+    cache.emplace( sm_coord, total );
+    return total;
+}
+
+auto tank_count_for_grid( const std::vector<tripoint_abs_sm> &submap_coords,
+                          mapbuffer &mb ) -> int
+{
+    auto total = 0;
+    std::ranges::for_each( submap_coords, [&]( const tripoint_abs_sm & sm_coord ) {
+        total += submap_tank_count_at( sm_coord, mb );
+    } );
+    return total;
+}
+
+auto tank_count_for_grid( const std::set<tripoint_abs_omt> &grid,
+                          mapbuffer &mb ) -> int
+{
+    auto submap_positions = std::set<tripoint_abs_sm> {};
+    std::ranges::for_each( grid, [&]( const tripoint_abs_omt & omp ) {
+        const auto base = project_to<coords::sm>( omp );
+        submap_positions.emplace( base + point_zero );
+        submap_positions.emplace( base + point_east );
+        submap_positions.emplace( base + point_south );
+        submap_positions.emplace( base + point_south_east );
+    } );
+
+    auto total = 0;
+    std::ranges::for_each( submap_positions, [&]( const tripoint_abs_sm & sm_coord ) {
+        total += submap_tank_count_at( sm_coord, mb );
+    } );
     return total;
 }
 
@@ -522,6 +683,10 @@ class fluid_storage_grid
             return charges_from_volume( liquid_type, state.stored_for( liquid_type ) );
         }
 
+        auto allow_mixed_water() const -> bool {
+            return tank_count_for_grid( submap_coords, mb ) > 1;
+        }
+
         auto drain_charges( const itype_id &liquid_type, int charges ) -> int {
             if( charges <= 0 ) {
                 return 0;
@@ -554,9 +719,10 @@ class fluid_storage_grid
                 return 0;
             }
 
-            normalize_water_storage( state );
+            const auto allow_mixed = allow_mixed_water();
+            normalize_water_storage( state, allow_mixed );
             if( liquid_type == itype_water ) {
-                taint_clean_water( state );
+                taint_clean_water( state, allow_mixed );
             }
 
             const auto available_volume = state.capacity - state.stored_total();
@@ -592,7 +758,7 @@ class fluid_storage_grid
 
         auto set_state( const fluid_grid::liquid_storage_state &new_state ) -> void {
             state = new_state;
-            normalize_water_storage( state );
+            normalize_water_storage( state, allow_mixed_water() );
             cached_stats.reset();
             sync_storage();
         }
@@ -695,6 +861,7 @@ class fluid_grid_tracker
         auto rebuild_at( const tripoint_abs_ms &p ) -> void {
             const auto sm_pos = project_to<coords::sm>( p );
             invalidate_submap_capacity_cache_at( sm_pos );
+            invalidate_submap_tank_count_cache_at( sm_pos );
             make_storage_grid_at( sm_pos );
         }
 
@@ -712,6 +879,8 @@ class fluid_grid_tracker
             if( !tank_capacity ) {
                 return;
             }
+
+            invalidate_submap_tank_count_cache_at( target_sm );
 
             auto &grid = storage_at( project_to<coords::omt>( p ) );
             auto state = grid.get_state();
@@ -826,8 +995,24 @@ auto liquid_charges_at( const tripoint_abs_omt &p, const itype_id &liquid_type )
 auto would_contaminate( const tripoint_abs_omt &p, const itype_id &liquid_type ) -> bool
 {
     const auto state = get_fluid_grid_tracker().storage_at( p ).get_state();
+    const auto grid = grid_at( p );
+    const auto allow_mixed = tank_count_for_grid( grid, MAPBUFFER ) > 1;
     return std::ranges::any_of( state.stored_by_type, [&]( const auto & entry ) {
-        return entry.second > 0_ml && entry.first != liquid_type;
+        if( entry.second <= 0_ml ) {
+            return false;
+        }
+        if( entry.first == liquid_type ) {
+            return false;
+        }
+        if( allow_mixed ) {
+            const auto is_water_pair =
+                ( entry.first == itype_water && liquid_type == itype_water_clean ) ||
+                ( entry.first == itype_water_clean && liquid_type == itype_water );
+            if( is_water_pair ) {
+                return false;
+            }
+        }
+        return true;
     } );
 }
 
@@ -841,6 +1026,215 @@ auto drain_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_typ
                            int charges ) -> int
 {
     return get_fluid_grid_tracker().storage_at( p ).drain_charges( liquid_type, charges );
+}
+
+auto purify_water( const tripoint_abs_omt &p ) -> units::volume
+{
+    auto &grid = get_fluid_grid_tracker().storage_at( p );
+    auto state = grid.get_state();
+    const auto dirty_iter = state.stored_by_type.find( itype_water );
+    if( dirty_iter == state.stored_by_type.end() ) {
+        return 0_ml;
+    }
+
+    const auto dirty_volume = dirty_iter->second;
+    state.stored_by_type.erase( dirty_iter );
+    if( dirty_volume <= 0_ml ) {
+        grid.set_state( state );
+        return 0_ml;
+    }
+
+    state.stored_by_type[itype_water_clean] += dirty_volume;
+    grid.set_state( state );
+    return dirty_volume;
+}
+
+auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
+{
+    const auto grid = grid_at( p );
+    if( grid.empty() ) {
+        return;
+    }
+
+    auto transformers = collect_transformers( grid, MAPBUFFER );
+    if( transformers.empty() ) {
+        return;
+    }
+
+    auto &storage = get_fluid_grid_tracker().storage_at( p );
+    auto state = storage.get_state();
+    const auto available = state.stored_by_type;
+
+    struct transform_request {
+        const fluid_grid_transform_recipe *recipe = nullptr;
+        double batches = 0.0;
+    };
+
+    auto requests = std::vector<transform_request> {};
+    std::ranges::for_each( transformers, [&]( const transformer_instance & inst ) {
+        auto &last_run_map = transformer_last_run();
+        const auto iter = last_run_map.find( inst.pos );
+        const auto last_run = iter == last_run_map.end()
+                              ? calendar::start_of_cataclysm
+                              : iter->second;
+        if( to - last_run < inst.config->tick_interval ) {
+            return;
+        }
+        std::ranges::for_each( inst.config->transforms,
+        [&]( const fluid_grid_transform_recipe & recipe ) {
+            const auto batches = batches_for_inputs( recipe.inputs, available );
+            if( batches <= 0.0 ) {
+                return;
+            }
+            const auto capped_batches = std::min( 1.0, batches );
+            requests.push_back( transform_request{ .recipe = &recipe, .batches = capped_batches } );
+        } );
+    } );
+
+    if( requests.empty() ) {
+        return;
+    }
+
+    auto total_inputs_ml = std::map<itype_id, double> {};
+    auto total_outputs_ml = std::map<itype_id, double> {};
+    auto total_input_ml = 0.0;
+    auto total_output_ml = 0.0;
+    std::ranges::for_each( requests, [&]( const transform_request & request ) {
+        std::ranges::for_each( request.recipe->inputs, [&]( const fluid_grid_transform_io & io ) {
+            const auto volume_ml = units::to_milliliter<double>( io.amount ) * request.batches;
+            total_inputs_ml[io.liquid] += volume_ml;
+            total_input_ml += volume_ml;
+        } );
+        std::ranges::for_each( request.recipe->outputs, [&]( const fluid_grid_transform_io & io ) {
+            const auto volume_ml = units::to_milliliter<double>( io.amount ) * request.batches;
+            total_outputs_ml[io.liquid] += volume_ml;
+            total_output_ml += volume_ml;
+        } );
+    } );
+
+    auto scale = 1.0;
+    std::ranges::for_each( total_inputs_ml, [&]( const auto & entry ) {
+        const auto available_iter = available.find( entry.first );
+        const auto available_volume = available_iter == available.end()
+                                      ? 0_ml
+                                      : available_iter->second;
+        if( entry.second <= units::to_milliliter<double>( available_volume ) ) {
+            return;
+        }
+        const auto avail_ml = units::to_milliliter<double>( available_volume );
+        if( entry.second > 0.0 ) {
+            scale = std::min( scale, avail_ml / entry.second );
+        }
+    } );
+
+    if( total_output_ml > 0.0 ) {
+        const auto available_capacity = state.capacity - state.stored_total();
+        const auto max_output_ml =
+            units::to_milliliter<double>( available_capacity ) + total_input_ml;
+        if( total_output_ml > max_output_ml && max_output_ml > 0.0 ) {
+            scale = std::min( scale, max_output_ml / total_output_ml );
+        }
+    }
+
+    if( scale <= 0.0 ) {
+        return;
+    }
+
+    std::ranges::for_each( requests, [&]( const transform_request & request ) {
+        const auto scaled_batches = request.batches * scale;
+        if( scaled_batches <= 0.0 ) {
+            return;
+        }
+        auto adjusted_batches = std::numeric_limits<double>::max();
+        std::ranges::for_each( request.recipe->inputs, [&]( const fluid_grid_transform_io & io ) {
+            const auto amount_ml = units::to_milliliter<double>( io.amount );
+            if( amount_ml <= 0.0 ) {
+                adjusted_batches = 0.0;
+                return;
+            }
+            const auto volume_ml = amount_ml * scaled_batches;
+            if( volume_ml <= 0.0 ) {
+                adjusted_batches = 0.0;
+                return;
+            }
+            adjusted_batches = std::min( adjusted_batches,
+                                         std::floor( volume_ml ) / amount_ml );
+        } );
+
+        if( adjusted_batches <= 0.0 || adjusted_batches == std::numeric_limits<double>::max() ) {
+            return;
+        }
+
+        std::ranges::for_each( request.recipe->inputs, [&]( const fluid_grid_transform_io & io ) {
+            const auto amount_ml = units::to_milliliter<double>( io.amount );
+            const auto volume_ml = amount_ml * adjusted_batches;
+            const auto volume_ml_floor = static_cast<int>( std::floor( volume_ml ) );
+            if( volume_ml_floor <= 0 ) {
+                return;
+            }
+            const auto volume = units::from_milliliter( volume_ml_floor );
+            if( volume <= 0_ml ) {
+                return;
+            }
+            const auto iter = state.stored_by_type.find( io.liquid );
+            if( iter == state.stored_by_type.end() ) {
+                return;
+            }
+            iter->second -= std::min( iter->second, volume );
+            if( iter->second <= 0_ml ) {
+                state.stored_by_type.erase( iter );
+            }
+        } );
+        std::ranges::for_each( request.recipe->outputs, [&]( const fluid_grid_transform_io & io ) {
+            const auto amount_ml = units::to_milliliter<double>( io.amount );
+            const auto volume_ml = amount_ml * adjusted_batches;
+            const auto volume_ml_floor = static_cast<int>( std::floor( volume_ml ) );
+            if( volume_ml_floor <= 0 ) {
+                return;
+            }
+            const auto volume = units::from_milliliter( volume_ml_floor );
+            if( volume <= 0_ml ) {
+                return;
+            }
+            state.stored_by_type[io.liquid] += volume;
+        } );
+    } );
+
+    storage.set_state( state );
+
+    auto &last_run_map = transformer_last_run();
+    std::ranges::for_each( transformers, [&]( const transformer_instance & inst ) {
+        const auto iter = last_run_map.find( inst.pos );
+        const auto last_run = iter == last_run_map.end()
+                              ? calendar::start_of_cataclysm
+                              : iter->second;
+        if( to - last_run < inst.config->tick_interval ) {
+            return;
+        }
+        last_run_map[inst.pos] = to;
+    } );
+}
+
+auto update( time_point to ) -> void
+{
+    auto processed_grids = std::set<tripoint_abs_omt> {};
+    std::ranges::for_each( MAPBUFFER, [&]( const auto & entry ) {
+        const auto abs_sm = tripoint_abs_sm( entry.first );
+        auto &sm = *entry.second;
+        std::ranges::for_each( sm.active_furniture, [&]( const auto & active_entry ) {
+            const auto &pos_sm = active_entry.first;
+            const auto &furn = sm.get_furn( pos_sm.raw() ).obj();
+            if( !furn.fluid_grid || furn.fluid_grid->role != fluid_grid_role::transformer ) {
+                return;
+            }
+            const auto abs_ms = project_combine( abs_sm, pos_sm );
+            const auto omt_pos = project_to<coords::omt>( abs_ms );
+            if( !processed_grids.insert( omt_pos ).second ) {
+                return;
+            }
+            process_transformers_at( omt_pos, to );
+        } );
+    } );
 }
 
 auto on_contents_changed( const tripoint_abs_ms &p ) -> void
@@ -868,6 +1262,7 @@ auto on_tank_removed( const tripoint_abs_ms &p ) -> void
     }
 
     invalidate_submap_capacity_cache_at( project_to<coords::sm>( p ) );
+    invalidate_submap_tank_count_cache_at( project_to<coords::sm>( p ) );
 
     auto &grid = get_fluid_grid_tracker().storage_at( project_to<coords::omt>( p ) );
     auto state = grid.get_state();
@@ -1015,6 +1410,8 @@ auto clear() -> void
     get_fluid_grid_tracker().clear();
     grid_members_cache().clear();
     submap_capacity_cache().clear();
+    submap_tank_count_cache().clear();
+    transformer_last_run().clear();
 }
 
 } // namespace fluid_grid

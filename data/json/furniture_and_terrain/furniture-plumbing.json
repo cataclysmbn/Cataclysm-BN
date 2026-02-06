@@ -258,5 +258,67 @@
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 8, 15 ], "destroy_threshold": 50, "block_unaimed_chance": "25%" }
     }
+  },
+  {
+    "type": "furniture",
+    "id": "f_water_purifier_plumbed_off",
+    "copy-from": "f_water_purifier",
+    "name": "water purifier (plumbed, off)",
+    "description": "A water purifier hooked into a fluid grid.  It is switched off.",
+    "symbol": "W",
+    "bgcolor": "blue",
+    "examine_action": "transform",
+    "transforms_into": "f_water_purifier_plumbed",
+    "prompt": "Switch on the water purifier.",
+    "message": "You switch on the water purifier."
+  },
+  {
+    "type": "furniture",
+    "id": "f_water_purifier_plumbed",
+    "copy-from": "f_water_purifier",
+    "name": "water purifier (plumbed)",
+    "description": "A water purifier hooked into a fluid grid.  It has no power.",
+    "symbol": "W",
+    "bgcolor": "blue",
+    "examine_action": "transform",
+    "transforms_into": "f_water_purifier_plumbed_off",
+    "prompt": "Switch off the water purifier.",
+    "message": "You switch off the water purifier.",
+    "active": [
+      "charge_watcher",
+      { "min_power": 30, "transform": { "id": "f_water_purifier_plumbed_on", "msg": "The water purifier starts up." } }
+    ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_water_purifier_plumbed_on",
+    "copy-from": "f_water_purifier",
+    "name": "water purifier (plumbed, on)",
+    "description": "A water purifier hooked into a fluid grid.  It is switched on.",
+    "symbol": "W",
+    "bgcolor": "blue",
+    "examine_action": "transform",
+    "transforms_into": "f_water_purifier_plumbed_off",
+    "prompt": "Switch off the water purifier.",
+    "message": "You switch off the water purifier.",
+    "fluid_grid": {
+      "role": "transformer",
+      "allow_input": false,
+      "allow_output": false,
+      "allowed_liquids": [ "water", "water_clean" ],
+      "transformer": {
+        "tick_interval": "10 m",
+        "transforms": [
+          {
+            "inputs": [ { "liquid": "water", "amount": "1 L" } ],
+            "outputs": [ { "liquid": "water_clean", "amount": "1 L" } ]
+          }
+        ]
+      }
+    },
+    "active": [
+      "steady_consumer",
+      { "power": 20, "consume_every": "600 s", "transform": { "id": "f_water_purifier_plumbed", "msg": "The water purifier shuts down." } }
+    ]
   }
 ]
