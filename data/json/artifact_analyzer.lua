@@ -77,11 +77,10 @@ analyzer.menu = function(who, item, pos)
   local choice = 0
   if #artifacts > 1 then
     local menu = UiList.new()
-    menu:title(color_text(locale.gettext("Artifact Analyzer"), "green"))
+    menu:title(locale.gettext("Artifact Analyzer"))
     for idx, it in ipairs(artifacts) do
       local name = it:tname(1, false, 0)
-      local entry = color_text(name, "white")
-      menu:add(idx - 1, entry)
+      menu:add(idx - 1, name)
     end
     choice = menu:query()
     if choice < 0 then return 0 end
