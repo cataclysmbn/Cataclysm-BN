@@ -164,6 +164,16 @@ auto normalize_water_storage( fluid_grid::liquid_storage_state &state ) -> void
     }
 }
 
+auto taint_clean_water( fluid_grid::liquid_storage_state &state ) -> void
+{
+    auto clean_iter = state.stored_by_type.find( itype_water_clean );
+    if( clean_iter == state.stored_by_type.end() ) {
+        return;
+    }
+    state.stored_by_type[itype_water] += clean_iter->second;
+    state.stored_by_type.erase( clean_iter );
+}
+
 auto reduce_storage( fluid_grid::liquid_storage_state &state,
                      units::volume volume ) -> fluid_grid::liquid_storage_state
 {
@@ -399,8 +409,14 @@ auto split_storage_state( const fluid_grid::liquid_storage_state &state,
                           units::volume lhs_capacity,
                           units::volume rhs_capacity ) -> split_storage_result
 {
-    auto lhs_state = fluid_grid::liquid_storage_state{ .capacity = lhs_capacity };
-    auto rhs_state = fluid_grid::liquid_storage_state{ .capacity = rhs_capacity };
+    auto lhs_state = fluid_grid::liquid_storage_state{
+        .stored_by_type = {},
+        .capacity = lhs_capacity
+    };
+    auto rhs_state = fluid_grid::liquid_storage_state{
+        .stored_by_type = {},
+        .capacity = rhs_capacity
+    };
 
     const auto total_capacity = lhs_capacity + rhs_capacity;
     if( total_capacity <= 0_ml ) {
@@ -539,6 +555,9 @@ class fluid_storage_grid
             }
 
             normalize_water_storage( state );
+            if( liquid_type == itype_water ) {
+                taint_clean_water( state );
+            }
 
             const auto available_volume = state.capacity - state.stored_total();
             if( available_volume <= 0_ml ) {
@@ -573,6 +592,7 @@ class fluid_storage_grid
 
         auto set_state( const fluid_grid::liquid_storage_state &new_state ) -> void {
             state = new_state;
+            normalize_water_storage( state );
             cached_stats.reset();
             sync_storage();
         }
