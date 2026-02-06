@@ -88,7 +88,8 @@ auto build_fluid_grid_variant_maps() -> void
             add_fluid_grid_variant( connected, furn.id, *furn.fluid_grid->connected_variant, "connected" );
         }
         if( furn.fluid_grid->disconnected_variant ) {
-            add_fluid_grid_variant( disconnected, furn.id, *furn.fluid_grid->disconnected_variant, "disconnected" );
+            add_fluid_grid_variant( disconnected, furn.id, *furn.fluid_grid->disconnected_variant,
+                                    "disconnected" );
         }
     } );
 
@@ -1652,13 +1653,15 @@ void furn_t::load( const JsonObject &jo, const std::string &src )
             mandatory( fluid_grid_obj, was_loaded, "allow_input", fluid_grid_entry.allow_input );
             mandatory( fluid_grid_obj, was_loaded, "allow_output", fluid_grid_entry.allow_output );
             mandatory( fluid_grid_obj, was_loaded, "allowed_liquids", fluid_grid_entry.allowed_liquids );
-            optional( fluid_grid_obj, was_loaded, "use_keg_capacity", fluid_grid_entry.use_keg_capacity, false );
+            optional( fluid_grid_obj, was_loaded, "use_keg_capacity", fluid_grid_entry.use_keg_capacity,
+                      false );
             if( fluid_grid_obj.has_member( "capacity" ) ) {
                 const auto raw_capacity = fluid_grid_obj.get_int( "capacity" );
                 fluid_grid_entry.capacity = raw_capacity * units::legacy_volume_factor;
             }
             if( fluid_grid_obj.has_member( "connected_variant" ) ) {
-                fluid_grid_entry.connected_variant = furn_str_id( fluid_grid_obj.get_string( "connected_variant" ) );
+                fluid_grid_entry.connected_variant = furn_str_id(
+                        fluid_grid_obj.get_string( "connected_variant" ) );
             }
             if( fluid_grid_obj.has_member( "disconnected_variant" ) ) {
                 fluid_grid_entry.disconnected_variant = furn_str_id(

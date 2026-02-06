@@ -359,6 +359,10 @@ void map::add_vehicle_to_cache( vehicle *veh )
             continue;
         }
         const tripoint p = veh->global_part_pos3( vpr.part() );
+        int part = veh->part_with_feature( vpr.part_index(), VPFLAG_LADDER, true );
+        if( part != -1 ) {
+            cached_veh_rope[p.xy()] = std::make_pair( veh, static_cast<int>( part ) );
+        }
         level_cache &ch = get_cache( p.z );
         ch.veh_in_active_range = true;
 
@@ -390,6 +394,7 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint &pt )
             ch.veh_exists_at[pt.x][pt.y] = false;
         }
         ch.veh_cached_parts.erase( it );
+        cached_veh_rope.erase( pt.xy() );
     }
 
 }
@@ -410,6 +415,7 @@ void map::clear_vehicle_cache( )
         }
         ch.veh_in_active_range = false;
     }
+    cached_veh_rope.clear();
 }
 
 void map::clear_vehicle_list( const int zlev )
@@ -755,6 +761,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
 
     // If not enough wheels, mess up the ground a bit.
     if( !vertical && !veh.valid_wheel_config() && !veh.is_in_water() && !veh.is_flying_in_air() &&
+        !veh.has_sufficient_lift( true ) &&
         dp.z == 0 ) {
         veh.velocity += veh.velocity < 0 ? 2000 : -2000;
         for( const auto &p : veh.get_points() ) {
@@ -2132,8 +2139,8 @@ bool map::valid_move( const tripoint &from, const tripoint &to,
 
     int part_up;
     const vehicle *veh_up = veh_at_internal( up_p, part_up );
-    if( veh_up != nullptr ) {
-        // TODO: Hatches below the vehicle, passable frames
+    if( veh_up != nullptr && !veh_at( up_p ).part_with_feature( VPFLAG_NOCOLLIDEBELOW, false ) ) {
+        // TODO: Hatches below the vehicle
         return false;
     }
 
@@ -5721,6 +5728,7 @@ void map::disarm_trap( const tripoint &p )
 
     const int tSkillLevel = g->u.get_skill_level( skill_traps );
     const int diff = tr.get_difficulty();
+    const int tReward = diff + tr.get_avoidance();
     int roll = rng( tSkillLevel, 4 * tSkillLevel );
 
     // Some traps are not actual traps. Skip the rolls, different message and give the option to grab it right away.
@@ -5745,7 +5753,7 @@ void map::disarm_trap( const tripoint &p )
         g->u.add_morale( MORALE_ACCOMPLISHMENT, morale_buff, 40 );
         tr.on_disarmed( *this, p );
         if( diff > 1.25 * tSkillLevel ) { // failure might have set off trap
-            g->u.practice( skill_traps, 1.5 * ( diff - tSkillLevel ) );
+            g->u.practice( skill_traps, tReward );
         }
     } else if( roll >= diff * .8 ) {
         add_msg( _( "You fail to disarm the trap." ) );
@@ -5753,7 +5761,7 @@ void map::disarm_trap( const tripoint &p )
         g->u.rem_morale( MORALE_ACCOMPLISHMENT );
         g->u.add_morale( MORALE_FAILURE, morale_debuff, -40 );
         if( diff > 1.25 * tSkillLevel ) {
-            g->u.practice( skill_traps, 1.5 * ( diff - tSkillLevel ) );
+            g->u.practice( skill_traps, tReward / 2 );
         }
     } else {
         add_msg( m_bad, _( "You fail to disarm the trap, and you set it off!" ) );
@@ -5761,12 +5769,9 @@ void map::disarm_trap( const tripoint &p )
         g->u.rem_morale( MORALE_ACCOMPLISHMENT );
         g->u.add_morale( MORALE_FAILURE, morale_debuff, -40 );
         tr.trigger( p, &g->u );
-        if( diff - roll <= 6 ) {
-            // Give xp for failing, but not if we failed terribly (in which
-            // case the trap may not be disarmable).
-            g->u.practice( skill_traps, 2 * diff );
-        }
+        g->u.practice( skill_traps, tReward / 4 );
     }
+    g->u.mod_moves( -100 );
 }
 
 void map::remove_trap( const tripoint &p )
@@ -9359,6 +9364,21 @@ std::list<Creature *> map::get_creatures_in_radius( const tripoint &center, size
 
     }
     return creatures;
+}
+
+bool map::has_rope_at( tripoint pt ) const
+{
+    if( cached_veh_rope.contains( pt.xy() ) ) {
+        auto veh_pair = get_rope_at( pt.xy() );
+        vehicle *veh = veh_pair.first;
+        int veh_part = veh_pair.second;
+        return veh->part( veh_part ).info().ladder_length() >= veh->global_pos3().z - pt.z;
+    }
+    return false;
+}
+std::pair<vehicle *, int> map::get_rope_at( point pt ) const
+{
+    return cached_veh_rope.at( pt );
 }
 
 level_cache &map::access_cache( int zlev )

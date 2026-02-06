@@ -5669,7 +5669,7 @@ std::vector<tripoint_om_omt> overmap::place_special(
     const bool grid = special.has_flag( "ELECTRIC_GRID" );
     const auto fluid_grid_enabled = special.has_flag( "FLUID_GRID" );
     auto *fluid_connections = fluid_grid_enabled ? &fluid_grid::connections_for(
-                                     *this ) : nullptr;
+                                  *this ) : nullptr;
 
     special_placement_result result = special.place( *this, p, dir );
 
