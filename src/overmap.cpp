@@ -71,6 +71,7 @@
 #include "type_id.h"
 #include "weighted_list.h"
 #include "world.h"
+#include "world_type.h"
 
 static const efftype_id effect_pet( "pet" );
 
@@ -3366,6 +3367,13 @@ void overmap::generate( const overmap *north, const overmap *east,
 {
     if( g->gametype() == special_game_type::DEFENSE ) {
         dbg( DL::Info ) << "overmap::generate skipped in Defense special game mode!";
+        return;
+    }
+
+    const world_type_id &current_wt = g->get_current_world_type();
+    if( current_wt.is_valid() && !current_wt.obj().generate_overmap ) {
+        dbg( DL::Info ) << "overmap::generate skipped for world_type '" << current_wt.str()
+                        << "' (generate_overmap=false)";
         return;
     }
 

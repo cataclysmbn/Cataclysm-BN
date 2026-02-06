@@ -892,55 +892,41 @@
     "material": [ "iron", "glass" ]
   },
   {
-    "id": "debug_testing_dimension_travel",
+    "id": "embryo",
     "type": "TOOL",
-    "copy-from": "pocketwatch",
-    "name": { "str": "Dimensional Pocket Watch (Desert)" },
-    "description": "A pocket watch that allows the user to travel to the desert dimension.  Used for debugging purposes only.  Transforms after use.",
-    "looks_like": "pocketwatch",
-    "weight": "500 g",
-    "volume": "500 ml",
-    "price": "1 kUSD",
-    "price_postapoc": "1 USD",
-    "material": [ "brass", "glass" ],
-    "use_action": [
-      {
-        "type": "dimension_travel",
-        "destination": "desert_test",
-        "travel_radius": 5,
-        "need_charges": 0,
-        "fail_message": "The watch vibrates but nothing happens.",
-        "success_message": "You feel a wrenching sensation as you are pulled through space and time."
-      },
-      {
-        "type": "transform",
-        "target": "debug_testing_dimension_travel_return",
-        "msg": "The watch reconfigures itself."
-      }
-    ]
+    "looks_like": "pet_carrier",
+    "weight": "60 kg",
+    "volume": "60 L",
+    "price": "2000 USD",
+    "price_postapoc": "5 USD",
+    "symbol": "=",
+    "color": "dark_gray",
+    "//": "used by the cloning vat and adds a var called 'place_monster_override'",
+    "name": { "str": "artificial womb" },
+    "description": "This artificial womb holds a nearly fully grown clone, nurtured from extracted DNA within a cloning vat.  Activate it, and the organism will swiftly complete its development and emerge ready to function.  Ideal for quickly repopulating herds, restoring endangered species, or deploying engineered creatures with minimal wait.",
+    "flags": [ "RADIO_MODABLE", "ALLOWS_REMOTE_USE" ],
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "debug_mon",
+      "friendly_msg": "The cloned creature seems to enjoy your presence.",
+      "hostile_msg": "The cloned creature seems aloof to you!",
+      "difficulty": 10,
+      "moves": 250,
+      "skills": [ "survival" ]
+    }
   },
   {
-    "id": "debug_testing_dimension_travel_return",
+    "id": "embryo_empty",
     "type": "TOOL",
-    "copy-from": "pocketwatch",
-    "name": { "str": "Dimensional Pocket Watch (Default)" },
-    "description": "A pocket watch that allows the user to return to the default dimension.  Used for debugging purposes only.",
-    "looks_like": "pocketwatch",
-    "weight": "500 g",
-    "volume": "500 ml",
-    "price": "1 kUSD",
-    "price_postapoc": "1 USD",
-    "material": [ "brass", "glass" ],
-    "use_action": [
-      {
-        "type": "dimension_travel",
-        "destination": "default",
-        "travel_radius": 5,
-        "need_charges": 0,
-        "fail_message": "The watch vibrates but nothing happens.",
-        "success_message": "You feel reality snap back into place."
-      },
-      { "type": "transform", "target": "debug_testing_dimension_travel", "msg": "The watch reconfigures itself." }
-    ]
+    "looks_like": "pet_carrier",
+    "weight": "60 kg",
+    "volume": "60 L",
+    "price": "2000 USD",
+    "price_postapoc": "5 USD",
+    "symbol": "=",
+    "color": "dark_gray",
+    "//": "used by the cloning vat and adds a var called 'place_monster_override'",
+    "name": { "str": "artificial womb" },
+    "description": "A single-use vessel for transporting clones safely from the cloning vat to the field.  Currently empty, if sufficiently sterile it can be used by a cloning vat to grow a creature from a viable DNA sample. "
   }
 ]

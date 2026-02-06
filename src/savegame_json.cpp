@@ -2236,6 +2236,53 @@ void item::craft_data::deserialize( const JsonObject &obj )
     obj.read( "cached_tool_selections", cached_tool_selections );
 }
 
+void item::pocket_dimension_data::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+    jsout.member( "instance_id", instance_id );
+    jsout.member( "dimension_type", dimension_type );
+    jsout.member( "entry_point", entry_point );
+    jsout.member( "bounds_min", bounds_min );
+    jsout.member( "bounds_max", bounds_max );
+    jsout.member( "is_initialized", is_initialized );
+    jsout.member( "terrain_generated", terrain_generated );
+    jsout.member( "return_dimension", return_dimension );
+    jsout.member( "return_instance_id", return_instance_id );
+    jsout.member( "return_point", return_point );
+    jsout.end_object();
+}
+
+void item::pocket_dimension_data::deserialize( JsonIn &jsin )
+{
+    JsonObject obj = jsin.get_object();
+    obj.allow_omitted_members();
+    obj.read( "instance_id", instance_id );
+    obj.read( "dimension_type", dimension_type );
+    obj.read( "entry_point", entry_point );
+    obj.read( "bounds_min", bounds_min );
+    obj.read( "bounds_max", bounds_max );
+    is_initialized = obj.get_bool( "is_initialized", false );
+    terrain_generated = obj.get_bool( "terrain_generated", false );
+    obj.read( "return_dimension", return_dimension );
+    obj.read( "return_instance_id", return_instance_id );
+    obj.read( "return_point", return_point );
+}
+
+// Full equivalence. Consider only checking identifying data.
+bool item::pocket_dimension_data::operator==( const pocket_dimension_data &rhs ) const
+{
+    return instance_id == rhs.instance_id &&
+           dimension_type == rhs.dimension_type &&
+           entry_point == rhs.entry_point &&
+           bounds_min == rhs.bounds_min &&
+           bounds_max == rhs.bounds_max &&
+           is_initialized == rhs.is_initialized &&
+           terrain_generated == rhs.terrain_generated &&
+           return_dimension == rhs.return_dimension &&
+           return_instance_id == rhs.return_instance_id &&
+           return_point == rhs.return_point;
+}
+
 // Template parameter because item::craft_data is private and I don't want to make it public.
 template<typename T>
 static void load_legacy_craft_data( io::JsonObjectInputArchive &archive, T &value )
@@ -2483,6 +2530,8 @@ void item::io( Archive &archive )
 
     static const cata::value_ptr<relic> null_relic_ptr = nullptr;
     archive.io( "relic_data", relic_data, null_relic_ptr );
+
+    archive.io( "pocket_dim", pocket_dim, std::optional<pocket_dimension_data>() );
 
     archive.io( "drop_token", drop_token, decltype( drop_token )() );
 

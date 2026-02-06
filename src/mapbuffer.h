@@ -56,6 +56,16 @@ class mapbuffer
             return lookup_submap( p.raw() );
         }
 
+        /** Get a submap only if it's already loaded in memory.
+         * Unlike lookup_submap(), this does NOT query the database for missing submaps.
+         * Use this for out-of-bounds positions where we know there's no DB entry,
+         * to avoid ~2400 wasted SQLite queries per pocket dimension map load.
+         */
+        submap *lookup_submap_in_memory( const tripoint &p ) {
+            const auto iter = submaps.find( p );
+            return iter != submaps.end() ? iter->second.get() : nullptr;
+        }
+
     private:
         using submap_map_t = std::map<tripoint, std::unique_ptr<submap>>;
 
