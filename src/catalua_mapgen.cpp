@@ -5,6 +5,7 @@
 #include "player.h"
 #include "game.h"
 #include "mapgendata.h"
+#include "sol/sol.hpp"
 
 mapgen_function_lua::mapgen_function_lua( const std::string &func,
         int weight ) : mapgen_function( weight )
@@ -19,5 +20,7 @@ mapgen_function_lua::mapgen_function_lua( const std::string &func,
 
 void mapgen_function_lua::generate( mapgendata &dat )
 {
-    generate_func( dat, g->m );
+    if( generate_func.valid() ) {
+        generate_func( &dat );
+    }
 }
