@@ -136,9 +136,9 @@ auto is_supported_liquid( const itype_id &liquid_type ) -> bool
 
 auto ordered_liquid_types( const fluid_grid::liquid_storage_state &state ) -> std::vector<itype_id>
 {
-    auto ordered = std::vector<itype_id>{ itype_water, itype_water_clean };
+    auto ordered = std::vector<itype_id> { itype_water, itype_water_clean };
     std::ranges::for_each( state.stored_by_type | std::views::keys,
-    [&]( const itype_id &liquid_type ) {
+    [&]( const itype_id & liquid_type ) {
         if( std::ranges::find( ordered, liquid_type ) == ordered.end() ) {
             ordered.push_back( liquid_type );
         }
@@ -185,7 +185,7 @@ auto reduce_storage( fluid_grid::liquid_storage_state &state,
     }
 
     const auto ordered = ordered_liquid_types( state );
-    std::ranges::for_each( ordered, [&]( const itype_id &liquid_type ) {
+    std::ranges::for_each( ordered, [&]( const itype_id & liquid_type ) {
         if( remaining <= 0_ml ) {
             return;
         }
@@ -218,7 +218,7 @@ fluid_grid::liquid_storage_state
         .stored_by_type = lhs.stored_by_type,
         .capacity = lhs.capacity + rhs.capacity
     };
-    std::ranges::for_each( rhs.stored_by_type, [&]( const auto &entry ) {
+    std::ranges::for_each( rhs.stored_by_type, [&]( const auto & entry ) {
         merged.stored_by_type[entry.first] += entry.second;
     } );
     return merged;
@@ -427,7 +427,7 @@ auto split_storage_state( const fluid_grid::liquid_storage_state &state,
     const auto lhs_capacity_ml = units::to_milliliter<int>( lhs_capacity );
     const auto ratio = static_cast<double>( lhs_capacity_ml ) / total_capacity_ml;
 
-    std::ranges::for_each( state.stored_by_type, [&]( const auto &entry ) {
+    std::ranges::for_each( state.stored_by_type, [&]( const auto & entry ) {
         const auto liquid_ml = units::to_milliliter<int>( entry.second );
         const auto lhs_liquid_ml = static_cast<int>( std::round( liquid_ml * ratio ) );
 
@@ -728,7 +728,7 @@ class fluid_grid_tracker
             auto &items = target_submap->get_items( target_pos.raw() );
             items.clear();
 
-            std::ranges::for_each( overflow.stored_by_type, [&]( const auto &entry ) {
+            std::ranges::for_each( overflow.stored_by_type, [&]( const auto & entry ) {
                 if( entry.second <= 0_ml ) {
                     return;
                 }
@@ -826,7 +826,7 @@ auto liquid_charges_at( const tripoint_abs_omt &p, const itype_id &liquid_type )
 auto would_contaminate( const tripoint_abs_omt &p, const itype_id &liquid_type ) -> bool
 {
     const auto state = get_fluid_grid_tracker().storage_at( p ).get_state();
-    return std::ranges::any_of( state.stored_by_type, [&]( const auto &entry ) {
+    return std::ranges::any_of( state.stored_by_type, [&]( const auto & entry ) {
         return entry.second > 0_ml && entry.first != liquid_type;
     } );
 }
@@ -888,7 +888,7 @@ auto on_tank_removed( const tripoint_abs_ms &p ) -> void
     }
 
     auto &items = target_submap->get_items( target_pos.raw() );
-    std::ranges::for_each( overflow.stored_by_type, [&]( const auto &entry ) {
+    std::ranges::for_each( overflow.stored_by_type, [&]( const auto & entry ) {
         if( entry.second <= 0_ml ) {
             return;
         }
