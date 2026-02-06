@@ -110,7 +110,7 @@
     ],
     "locations": [ "river_center" ],
     "flags": [ "RIVER" ],
-    "occurrences": [ 1, 3 ]
+    "occurrences": [ 0, 2 ]
   },
   {
     "type": "overmap_special",

@@ -5409,8 +5409,14 @@ void game::control_vehicle()
     }
 }
 
-bool game::npc_menu( npc &who )
+bool game::npc_menu( npc &who, const bool &force )
 {
+    if( !force ) {
+        const auto allowed = cata::run_hooks( "on_try_npc_interaction",
+        [&]( auto & params ) { params["npc"] = &who; }, { .exit_early = true } ).get_or( "allowed", true );
+        if( !allowed ) { return false; }
+    }
+    cata::run_hooks( "on_npc_interaction", [&]( auto & params ) { params["npc"] = &who; } );
     enum choices : int {
         talk = 0,
         swap_pos,
@@ -11384,6 +11390,12 @@ void game::vertical_move( int movez, bool force, bool peeking )
         }
     } else {
         u.moves -= move_cost;
+        // Risk of failing, simple stuff like ladders are exempt
+        if( climbing && movez == 1 && m.climb_difficulty( u.pos() ) > 1 ) {
+            if( g->slip_down() ) {
+                return;
+            }
+        }
     }
     for( const auto &np : npcs_to_bring ) {
         if( np->in_vehicle ) {
@@ -11519,6 +11531,11 @@ void game::vertical_move( int movez, bool force, bool peeking )
     if( u.is_hauling() ) {
         const tripoint adjusted_pos = old_pos - sm_to_ms_copy( submap_shift );
         start_hauling( adjusted_pos );
+    }
+    if( m.has_flag( "UNSTABLE", u.pos() ) && !u.is_mounted() ) {
+        u.add_effect( effect_bouldering, 1_turns, bodypart_str_id::NULL_ID() );
+    } else if( u.has_effect( effect_bouldering ) ) {
+        u.remove_effect( effect_bouldering );
     }
 
     m.invalidate_map_cache( g->get_levz() );
@@ -13212,8 +13229,9 @@ bool game::slip_down()
 {
     ///\EFFECT_DEX decreases chances of slipping while climbing
     int climb = u.dex_cur;
-    if( u.has_trait( trait_BADKNEES ) ) {
-        climb = climb / 2;
+    // Parkour and Bad Knees affect it too, avoid division by zero
+    if( u.mutation_value( "movecost_obstacle_modifier" ) != 0.0f ) {
+        climb = climb / u.mutation_value( "movecost_obstacle_modifier" );
     }
     if( one_in( climb ) ) {
         add_msg( m_bad, _( "You slip while climbing and fall down again." ) );

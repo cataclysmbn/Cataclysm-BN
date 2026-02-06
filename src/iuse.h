@@ -108,7 +108,6 @@ int dive_tank( player *, item *, bool, const tripoint & );
 int gasmask( player *, item *, bool, const tripoint & );
 int portable_game( player *, item *, bool, const tripoint & );
 int vibe( player *, item *, bool, const tripoint & );
-int hand_crank( player *, item *, bool, const tripoint & );
 int vortex( player *, item *, bool, const tripoint & );
 int dog_whistle( player *, item *, bool, const tripoint & );
 int call_of_tindalos( player *, item *, bool, const tripoint & );
