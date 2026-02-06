@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -141,23 +142,6 @@ list_circularizer<T> make_circular( std::vector<T> &vec )
     return list_circularizer<T>( vec );
 }
 
-static void perform_nested( const recipe *rec, std::string filterstring,
-                            list_circularizer<std::string> &tab,
-                            list_circularizer<std::string> &subtab, bool &recalc )
-{
-    // if the recipe is just a nested group move to a place to view it
-    uistate.nested_recipes.clear();
-    for( const recipe_id &r : rec->nested_category_data ) {
-        uistate.nested_recipes.insert( r );
-    }
-    // set back to * and to the nested category
-    tab.set_index( 0 );
-    subtab = make_circular( craft_subcat_list[tab.cur()] );
-    // TODO: Make this less hard coded
-    subtab.prev();
-    recalc = true;
-}
-
 namespace
 {
 struct availability {
@@ -167,12 +151,12 @@ struct availability {
         auto all_items_filter = r->get_component_filter( recipe_filter_flags::none );
         auto no_rotten_filter = r->get_component_filter( recipe_filter_flags::no_rotten );
         const deduped_requirement_data &req = r->deduped_requirements();
+        is_nested_category = r->is_nested();
         could_craft_if_knew = req.can_make_with_inventory(
                                   inv, all_items_filter, batch_size, cost_adjustment::start_only );
         can_craft = known && could_craft_if_knew;
         can_craft_non_rotten = req.can_make_with_inventory(
                                    inv, no_rotten_filter, batch_size, cost_adjustment::start_only );
-        is_nested_category = r->is_nested();
         const requirement_data &simple_req = r->simple_requirements();
         apparently_craftable = simple_req.can_make_with_inventory(
                                    inv, all_items_filter, batch_size, cost_adjustment::start_only );
@@ -193,13 +177,19 @@ struct availability {
     bool is_nested_category;
     bool known;
 
-    nc_color selected_color() const {
+    auto selected_color() const -> nc_color {
+        if( is_nested_category ) {
+            return can_craft ? h_light_blue : h_blue;
+        }
         return can_craft
                ? ( can_craft_non_rotten && has_all_skills ? h_white : h_brown )
                : ( could_craft_if_knew && has_all_skills ? h_yellow : h_dark_gray );
     }
 
-    nc_color color( bool ignore_missing_skills = false ) const {
+    auto color( bool ignore_missing_skills = false ) const -> nc_color {
+        if( is_nested_category ) {
+            return can_craft ? c_light_blue : c_blue;
+        }
         return can_craft
                ? ( ( can_craft_non_rotten && has_all_skills ) || ignore_missing_skills ? c_white : c_yellow )
                : ( ( could_craft_if_knew && has_all_skills ) ||
@@ -207,6 +197,183 @@ struct availability {
     }
 
 };
+
+struct list_nested_options {
+    const recipe *rec = nullptr;
+    const inventory *crafting_inv = nullptr;
+    const std::vector<npc *> *helpers = nullptr;
+    int indent = 0;
+};
+
+auto list_nested( const list_nested_options &opts ) -> std::string
+{
+    auto description = std::string();
+    const auto avail = availability( opts.rec, 1, true );
+    if( opts.rec->is_nested() ) {
+        description += colorize( std::string( opts.indent,
+                                              ' ' ) + opts.rec->result_name() + ":\n", avail.color() );
+        std::ranges::for_each( opts.rec->nested_category_data, [&]( const recipe_id &nested ) {
+            description += list_nested( list_nested_options{
+                .rec = &nested.obj(),
+                .crafting_inv = opts.crafting_inv,
+                .helpers = opts.helpers,
+                .indent = opts.indent + 2
+            } );
+        } );
+    } else if( get_avatar().has_recipe( opts.rec, *opts.crafting_inv, *opts.helpers ) >= 0 ) {
+        description += colorize( std::string( opts.indent,
+                                              ' ' ) + opts.rec->result_name() + "\n", avail.color() );
+    }
+
+    return description;
+}
+
+auto ensure_availability( const recipe *rec,
+                          std::unordered_map<const recipe *, availability> &availability_cache,
+                          const recipe_subset &available_recipes,
+                          bool show_unavailable ) -> availability & // *NOPAD*
+{
+    if( !availability_cache.contains( rec ) ) {
+        const auto known = !show_unavailable || available_recipes.contains( *rec );
+        availability_cache.emplace( rec, availability( rec, 1, known ) );
+    }
+    return availability_cache.at( rec );
+}
+
+auto update_nested_can_craft( const recipe &rec,
+                              std::unordered_map<const recipe *, availability> &availability_cache,
+                              std::unordered_map<recipe_id, bool> &nested_can_craft_cache,
+                              std::unordered_set<recipe_id> &visiting,
+                              const recipe_subset &available_recipes,
+                              bool show_unavailable ) -> bool
+{
+    if( !rec.is_nested() ) {
+        return availability_cache.at( &rec ).can_craft;
+    }
+
+    const auto nested_cache_it = nested_can_craft_cache.find( rec.ident() );
+    if( nested_cache_it != nested_can_craft_cache.end() ) {
+        return nested_cache_it->second;
+    }
+
+    if( !visiting.insert( rec.ident() ).second ) {
+        return false;
+    }
+
+    const auto can_craft = std::ranges::any_of( rec.nested_category_data, [&]( const recipe_id &nested_id ) {
+        const auto *nested_rec = &nested_id.obj();
+        auto &nested_avail = ensure_availability( nested_rec, availability_cache, available_recipes,
+                             show_unavailable );
+        if( nested_rec->is_nested() ) {
+            nested_avail.can_craft = update_nested_can_craft( *nested_rec, availability_cache,
+                                      nested_can_craft_cache, visiting, available_recipes, show_unavailable );
+        }
+        return nested_avail.can_craft;
+    } );
+
+    visiting.erase( rec.ident() );
+    nested_can_craft_cache.emplace( rec.ident(), can_craft );
+    return can_craft;
+}
+
+struct expanded_list_options {
+    std::unordered_map<const recipe *, availability> &availability_cache;
+    std::unordered_map<recipe_id, bool> &nested_can_craft_cache;
+    std::unordered_set<recipe_id> &visiting_nested;
+    const recipe_subset &available_recipes;
+    avatar &player_character;
+    bool unread_recipes_first = false;
+    bool highlight_unread_recipes = false;
+    bool show_unavailable = false;
+};
+
+auto expand_nested_recipes( std::vector<const recipe *> &out_current,
+                            std::vector<int> &out_indent,
+                            const recipe *recp,
+                            int indent,
+                            const expanded_list_options &opts ) -> void
+{
+    auto &availability_cache = opts.availability_cache;
+    if( !availability_cache.contains( recp ) ) {
+        const auto known = !opts.show_unavailable || opts.available_recipes.contains( *recp );
+        availability_cache.emplace( recp, availability( recp, 1, known ) );
+    }
+
+    if( recp->is_nested() ) {
+        auto &nested_avail = availability_cache.at( recp );
+        nested_avail.can_craft = update_nested_can_craft(
+                                     *recp, availability_cache, opts.nested_can_craft_cache,
+                                     opts.visiting_nested, opts.available_recipes, opts.show_unavailable );
+    }
+
+    out_current.push_back( recp );
+    out_indent.push_back( indent );
+
+    if( !recp->is_nested() || !uistate.expanded_recipes.contains( recp->ident() ) ) {
+        return;
+    }
+
+    auto children = std::vector<const recipe *>();
+    std::ranges::for_each( recp->nested_category_data, [&]( const recipe_id &nested_id ) {
+        const auto *nested_rec = &nested_id.obj();
+        if( !availability_cache.contains( nested_rec ) ) {
+            const auto known = !opts.show_unavailable || opts.available_recipes.contains( *nested_rec );
+            availability_cache.emplace( nested_rec, availability( nested_rec, 1, known ) );
+        }
+        if( nested_rec->is_nested() ) {
+            auto &nested_avail = availability_cache.at( nested_rec );
+            nested_avail.can_craft = update_nested_can_craft(
+                                         *nested_rec, availability_cache, opts.nested_can_craft_cache,
+                                         opts.visiting_nested, opts.available_recipes, opts.show_unavailable );
+        }
+        children.push_back( nested_rec );
+    } );
+
+    std::ranges::stable_sort( children, [
+        &availability_cache, &player_character = opts.player_character,
+        unread_recipes_first = opts.unread_recipes_first,
+        highlight_unread_recipes = opts.highlight_unread_recipes
+    ]( const recipe *const a, const recipe *const b ) {
+        if( highlight_unread_recipes && unread_recipes_first ) {
+            const auto a_read = uistate.read_recipes.count( a->ident() );
+            const auto b_read = uistate.read_recipes.count( b->ident() );
+            if( a_read != b_read ) {
+                return !a_read;
+            }
+        }
+        const auto can_craft_a = availability_cache.at( a ).can_craft;
+        const auto can_craft_b = availability_cache.at( b ).can_craft;
+        if( can_craft_a != can_craft_b ) {
+            return can_craft_a;
+        }
+        if( b->difficulty != a->difficulty ) {
+            return b->difficulty < a->difficulty;
+        }
+        const auto a_name = a->result_name();
+        const auto b_name = b->result_name();
+        if( a_name != b_name ) {
+            return localized_compare( a_name, b_name );
+        }
+        return player_character.expected_time_to_craft( *b ) <
+               player_character.expected_time_to_craft( *a );
+    } );
+
+    std::ranges::for_each( children, [&]( const recipe *child ) {
+        expand_nested_recipes( out_current, out_indent, child, indent + 2, opts );
+    } );
+}
+
+auto nested_toggle( const recipe_id &rec, bool &recalc, bool &keepline ) -> void
+{
+    auto loc = uistate.expanded_recipes.find( rec );
+    if( loc != uistate.expanded_recipes.end() ) {
+        uistate.expanded_recipes.erase( rec );
+    } else {
+        uistate.expanded_recipes.insert( rec );
+    }
+    recalc = true;
+    keepline = true;
+}
 } // namespace
 
 static std::vector<std::string> recipe_info(
@@ -271,7 +438,7 @@ static std::vector<std::string> recipe_info(
                   "recipe <color_yellow>may appear to be craftable "
                   "when it is not</color>.\n" );
     }
-    if( !can_craft_this && avail.apparently_craftable && avail.known ) {
+    if( !can_craft_this && avail.apparently_craftable && avail.known && !recp.is_nested() ) {
         oss << _( "<color_red>Cannot be crafted because the same item is needed "
                   "for multiple components</color>\n" );
     }
@@ -411,6 +578,24 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             item_info_scroll_popup = 0;
         }
         std::vector<iteminfo> info = item_info_cache.dummy->info( count );
+        const auto category_name = normalized_names.contains( rec->category )
+                                   ? normalized_names[rec->category]
+                                   : rec->category;
+        const auto subcategory_name = normalized_names.contains( rec->subcategory )
+                                      ? normalized_names[rec->subcategory]
+                                      : rec->subcategory;
+        const auto category_label = subcategory_name.empty()
+                                    ? category_name
+                                    : string_format( "%s / %s", category_name, subcategory_name );
+        const auto category_label_upper = to_upper_case( category_label );
+        const auto category_name_label = _( "Category: " );
+        const auto category_entry = std::ranges::find_if( info,
+        [&]( const iteminfo &entry ) {
+            return entry.sType == "BASE" && entry.sName == category_name_label;
+        } );
+        if( category_entry != info.end() ) {
+            category_entry->sFmt = string_format( "<color_magenta>%s</color>", category_label_upper );
+        }
         item_info_data data( item_info_cache.dummy->tname( count ),
                              item_info_cache.dummy->type_name( count ),
                              info, {}, scroll_pos );
@@ -515,6 +700,7 @@ const recipe *select_crafting_recipe( int &batch_size_out )
     list_circularizer<std::string> tab( craft_cat_list );
     list_circularizer<std::string> subtab( craft_subcat_list[tab.cur()] );
     std::vector<const recipe *> current;
+    std::vector<int> indent;
     std::vector<availability> available;
     int line = 0;
     bool unread_recipes_first = false;
@@ -554,6 +740,8 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             return std::make_pair( recipes.recent(), false );
         } else if( subcat == "CSC_*_HIDDEN" ) {
             return std::make_pair( recipes.hidden(), true );
+        } else if( subcat == "CSC_*_NESTED" ) {
+            return std::make_pair( recipes.nested(), false );
         } else {
             return std::make_pair( recipes.in_category( cat, subcat != "CSC_ALL" ? subcat : "" ), false );
         }
@@ -606,7 +794,8 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         int recipe_scroll_window_max = std::min( recmax, recipe_scroll_window_min + dataLines );
 
         for( int i = recipe_scroll_window_min; i < recipe_scroll_window_max; ++i ) {
-            std::string tmp_name = current[i]->result_name( /*decorated=*/true );
+            auto tmp_name = std::string( indent[i], ' ' ) +
+                            current[i]->result_name( /*decorated=*/true );
             if( batch ) {
                 tmp_name = string_format( _( "%2dx %s" ), i + 1, tmp_name );
             }
@@ -636,38 +825,40 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             draw_can_craft_indicator( w_head, recp );
             wnoutrefresh( w_head );
 
-            const availability &avail = available[line];
-            // border + padding + name + padding
-            const int xpos = 1 + 1 + max_recipe_name_width + 3;
-            const int fold_width = FULL_SCREEN_WIDTH - xpos - 2;
-            const nc_color color = avail.color( true );
-            const std::string qry = trim( filterstring );
-            std::string qry_comps;
-            if( qry.starts_with( "c:" ) ) {
-                qry_comps = qry.substr( 2 );
-            }
+            if( !recp.is_nested() ) {
+                const availability &avail = available[line];
+                // border + padding + name + padding
+                const int xpos = 1 + 1 + max_recipe_name_width + 3;
+                const int fold_width = FULL_SCREEN_WIDTH - xpos - 2;
+                const nc_color color = avail.color( true );
+                const std::string qry = trim( filterstring );
+                std::string qry_comps;
+                if( qry.starts_with( "c:" ) ) {
+                    qry_comps = qry.substr( 2 );
+                }
 
-            const std::vector<std::string> &info = cached_recipe_info(
-                    recp, avail, u, show_unavailable, qry_comps, batch_size, fold_width, color );
+                const std::vector<std::string> &info = cached_recipe_info(
+                        recp, avail, u, show_unavailable, qry_comps, batch_size, fold_width, color );
 
-            const int total_lines = info.size();
-            if( recipe_info_scroll < 0 ) {
-                recipe_info_scroll = 0;
-            } else if( recipe_info_scroll + dataLines > total_lines ) {
-                recipe_info_scroll = std::max( 0, total_lines - dataLines );
-            }
-            for( int i = recipe_info_scroll;
-                 i < std::min( recipe_info_scroll + dataLines, total_lines );
-                 ++i ) {
-                nc_color dummy = color;
-                print_colored_text( w_data, point( xpos, i - recipe_info_scroll ),
-                                    dummy, color, info[i] );
-            }
+                const int total_lines = info.size();
+                if( recipe_info_scroll < 0 ) {
+                    recipe_info_scroll = 0;
+                } else if( recipe_info_scroll + dataLines > total_lines ) {
+                    recipe_info_scroll = std::max( 0, total_lines - dataLines );
+                }
+                for( int i = recipe_info_scroll;
+                     i < std::min( recipe_info_scroll + dataLines, total_lines );
+                     ++i ) {
+                    nc_color dummy = color;
+                    print_colored_text( w_data, point( xpos, i - recipe_info_scroll ),
+                                        dummy, color, info[i] );
+                }
 
-            if( total_lines > dataLines ) {
-                scrollbar().offset_x( xpos + fold_width + 1 ).content_size( total_lines )
-                .viewport_pos( recipe_info_scroll ).viewport_size( dataLines )
-                .apply( w_data );
+                if( total_lines > dataLines ) {
+                    scrollbar().offset_x( xpos + fold_width + 1 ).content_size( total_lines )
+                    .viewport_pos( recipe_info_scroll ).viewport_size( dataLines )
+                    .apply( w_data );
+                }
             }
         }
 
@@ -676,8 +867,46 @@ const recipe *select_crafting_recipe( int &batch_size_out )
 
         if( isWide && !current.empty() ) {
             if( current[line]->is_nested() ) {
-                const std::string desc = current[line]->description.translated() + "\n\n";;
-                fold_and_print( w_iteminfo, point_zero, item_info_width, c_light_gray, desc );
+                const auto &nested = *current[line];
+                const auto total_items = nested.nested_category_data.size();
+                const auto known_items = std::ranges::count_if(
+                    nested.nested_category_data, [&]( const recipe_id &nested_id ) {
+                    return available_recipes.contains( nested_id.obj() );
+                } );
+                const auto origin_name = nested.src.empty() || !nested.src.back().second.is_valid()
+                                         ? std::string( _( "unknown" ) )
+                                         : nested.src.back().second.obj().name();
+                const auto separator_len = std::max( 0, getmaxx( w_iteminfo ) - 1 );
+                const auto category_name = normalized_names.contains( nested.category )
+                                           ? normalized_names[nested.category]
+                                           : nested.category;
+                const auto subcategory_name = normalized_names.contains( nested.subcategory )
+                                              ? normalized_names[nested.subcategory]
+                                              : nested.subcategory;
+                const auto category_label = subcategory_name.empty()
+                                            ? category_name
+                                            : string_format( "%s / %s", category_name, subcategory_name );
+                const auto counts = string_format(
+                                        _( "Known recipes: <color_light_blue>%d</color>" ), known_items );
+                werase( w_iteminfo );
+                auto line_pos = 0;
+                mvwprintz( w_iteminfo, point( 0, line_pos++ ), c_light_gray, "%s",
+                           nested.result_name( /*decorated=*/false ) );
+                line_pos++;
+                line_pos += fold_and_print(
+                                w_iteminfo, point( 0, line_pos ), item_info_width, c_light_gray,
+                                string_format( _( "<color_light_blue>Origin: '%s'</color>" ), origin_name ) );
+                mvwhline( w_iteminfo, point( 0, line_pos++ ), LINE_OXOX, separator_len );
+                line_pos += fold_and_print(
+                                w_iteminfo, point( 0, line_pos ), item_info_width, c_light_gray,
+                                string_format( _( "Category: <color_magenta>%s</color>" ), category_label ) );
+                mvwhline( w_iteminfo, point( 0, line_pos++ ), LINE_OXOX, separator_len );
+                line_pos += fold_and_print( w_iteminfo, point( 0, line_pos ),
+                                            item_info_width, c_light_gray,
+                                            nested.description.translated() );
+                mvwhline( w_iteminfo, point( 0, line_pos++ ), LINE_OXOX, separator_len );
+                fold_and_print( w_iteminfo, point( 0, line_pos ),
+                                item_info_width, c_light_gray, counts );
                 scrollbar().offset_x( item_info_width - 1 ).offset_y( 0 ).content_size( 1 ).viewport_size( getmaxy(
                             w_iteminfo ) ).apply( w_iteminfo );
                 wnoutrefresh( w_iteminfo );
@@ -813,7 +1042,22 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                     num_recipe = picking.size();
                 }
 
-                available.reserve( current.size() );
+                auto nested_child_ids = std::unordered_set<recipe_id>();
+                std::ranges::for_each( current, [&]( const recipe *recp ) {
+                    if( recp->is_nested() ) {
+                        nested_child_ids.insert( recp->nested_category_data.begin(),
+                                                 recp->nested_category_data.end() );
+                    }
+                } );
+                if( !nested_child_ids.empty() ) {
+                    auto filtered_current = std::vector<const recipe *>();
+                    std::ranges::copy_if( current, std::back_inserter( filtered_current ),
+                    [&]( const recipe *recp ) {
+                        return recp->is_nested() || !nested_child_ids.contains( recp->ident() );
+                    } );
+                    current = std::move( filtered_current );
+                }
+
                 // cache recipe availability on first display
                 for( const recipe *e : current ) {
                     if( !availability_cache.contains( e ) ) {
@@ -821,6 +1065,18 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                                                     !show_unavailable || available_recipes.contains( *e ) ) );
                     }
                 }
+
+                auto nested_can_craft_cache = std::unordered_map<recipe_id, bool>();
+                auto visiting_nested = std::unordered_set<recipe_id>();
+                std::ranges::for_each( current, [&]( const recipe *recp ) {
+                    if( recp->is_nested() ) {
+                        auto &nested_avail = availability_cache.at( recp );
+                        nested_avail.can_craft = update_nested_can_craft(
+                                                     *recp, availability_cache, nested_can_craft_cache,
+                                                     visiting_nested,
+                                                     available_recipes, show_unavailable );
+                    }
+                } );
 
                 if( subtab.cur() != "CSC_*_RECENT" ) {
                     std::ranges::stable_sort( current, [
@@ -854,6 +1110,25 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                     } );
                 }
 
+                auto expanded_current = std::vector<const recipe *>();
+                auto expanded_indent = std::vector<int>();
+                auto expand_opts = expanded_list_options{
+                    .availability_cache = availability_cache,
+                    .nested_can_craft_cache = nested_can_craft_cache,
+                    .visiting_nested = visiting_nested,
+                    .available_recipes = available_recipes,
+                    .player_character = u,
+                    .unread_recipes_first = unread_recipes_first,
+                    .highlight_unread_recipes = highlight_unread_recipes,
+                    .show_unavailable = show_unavailable
+                };
+                std::ranges::for_each( current, [&]( const recipe *recp ) {
+                    expand_nested_recipes( expanded_current, expanded_indent, recp, 0, expand_opts );
+                } );
+                current = std::move( expanded_current );
+                indent = std::move( expanded_indent );
+
+                available.reserve( current.size() );
                 std::ranges::transform( current,
                 std::back_inserter( available ), [&]( const recipe * e ) {
                     return availability_cache.at( e );
@@ -980,8 +1255,7 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             line--;
             user_moved_line = highlight_unread_recipes;
         } else if( action == "CONFIRM" && current[line]->is_nested() ) {
-            perform_nested( current[line], filterstring, tab, subtab, recalc );
-            recalc = true;
+            nested_toggle( current[line]->ident(), recalc, keepline );
         } else if( action == "CONFIRM" ) {
             if( available.empty() || !available[line].can_craft ) {
                 popup( _( "You can't do that!  Press [<color_yellow>ESC</color>]!" ) );

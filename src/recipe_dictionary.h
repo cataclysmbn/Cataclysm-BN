@@ -145,8 +145,11 @@ class recipe_subset
         /** Find hidden recipes */
         std::vector<const recipe *> hidden() const;
 
-        /** Find current nested recipes */
+        /** Find nested recipe groups */
         std::vector<const recipe *> nested() const;
+
+        /** Find expanded recipes */
+        std::vector<const recipe *> expanded() const;
 
         /** Find recipes matching query (left anchored partial matches are supported) */
         std::vector<const recipe *> search( const std::string &txt,
@@ -189,5 +192,3 @@ class recipe_subset
 
 void serialize( const recipe_subset &value, JsonOut &jsout );
 void deserialize( recipe_subset &value, JsonIn &jsin );
-
-

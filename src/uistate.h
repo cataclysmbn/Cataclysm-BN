@@ -140,7 +140,7 @@ class uistatedata
         std::set<recipe_id> hidden_recipes;
         std::set<recipe_id> favorite_recipes;
         cata::flat_set<recipe_id> read_recipes;
-        std::set<recipe_id> nested_recipes; // NOLINT(cata-serialize)
+        std::set<recipe_id> expanded_recipes;
         std::vector<recipe_id> recent_recipes;
 
         std::set<construction_group_str_id> favorite_construct_recipes;
