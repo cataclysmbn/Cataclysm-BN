@@ -21,6 +21,7 @@ mapgen_function_lua::mapgen_function_lua( const std::string &func,
 void mapgen_function_lua::generate( mapgendata &dat )
 {
     if( generate_func.valid() ) {
-        generate_func( &dat );
+        sol::protected_function_result res = generate_func( &dat, &dat.m );
+        check_func_result( res );
     }
 }
