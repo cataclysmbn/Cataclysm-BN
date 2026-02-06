@@ -3261,10 +3261,7 @@
     "time": "20 m",
     "autolearn": true,
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "SCREW", "level": 1 } ],
-    "components": [
-      [ [ "steel_tiny", 2, "LIST" ] ],
-      [ [ "adhesive_proper", 1, "LIST" ] ]
-    ]
+    "components": [ [ [ "steel_tiny", 2, "LIST" ] ], [ [ "adhesive_proper", 1, "LIST" ] ] ]
   },
   {
     "type": "recipe",
@@ -3275,7 +3272,7 @@
     "time": "1 h",
     "autolearn": true,
     "using": [ [ "steel_tiny", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } , { "id": "HAMMER_FINE", "level": 1 } ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "HAMMER_FINE", "level": 1 } ],
     "components": [ [ [ "duct_tape", 30 ], [ "2x4", 1 ], [ "stick", 1 ] ] ]
   },
   {
