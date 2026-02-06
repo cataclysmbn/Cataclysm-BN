@@ -3251,5 +3251,43 @@
       [ [ "pilot_light", 1 ] ],
       [ [ "scrap", 1 ], [ "50_casing", 1 ] ]
     ]
+  },
+  {
+    "type": "recipe",
+    "result": "clamp",
+    "category": "CC_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "20 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "steel_tiny", 2, "LIST" ] ],
+      [ [ "adhesive_proper", 1, "LIST" ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "metal_file",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "steel_tiny", 2 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } , { "id": "HAMMER_FINE", "level": 1 } ],
+    "components": [ [ [ "duct_tape", 30 ], [ "2x4", 1 ], [ "stick", 1 ] ] ]
+  },
+  {
+    "result": "pin_reamer",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ] ],
+    "components": [ [ [ "2x4", 1 ], [ "stick", 1 ] ] ]
   }
 ]
