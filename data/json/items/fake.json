@@ -776,6 +776,7 @@
     "name": { "str": "installed reloading press" },
     "//": "Doesn't substitute for hand press because we want to define this tool in crafting requirements separately, due to disassembly code.",
     "qualities": [ [ "PULL", 2 ], [ "CASING_PRESSING", 3 ] ]
+    "crafting_speed_modifier": 1.5
   },
   {
     "id": "grid_hydraulic_press",
