@@ -39,7 +39,7 @@ struct liquid_storage_state {
 
     auto stored_total() const -> units::volume {
         auto total = 0_ml;
-        std::ranges::for_each( stored_by_type, [&]( const auto &entry ) {
+        std::ranges::for_each( stored_by_type, [&]( const auto & entry ) {
             total += entry.second;
         } );
         return total;

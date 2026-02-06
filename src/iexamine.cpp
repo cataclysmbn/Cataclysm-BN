@@ -3755,7 +3755,7 @@ void iexamine::keg( player &p, const tripoint &examp )
                          format_volume( fluid_stats.capacity ),
                          volume_units_abbr() );
                 const auto stored_count = std::ranges::count_if( fluid_stats.stored_by_type,
-                []( const auto &entry ) {
+                []( const auto & entry ) {
                     return entry.second > 0_ml;
                 } );
                 auto fluid_type = std::string{};
@@ -3763,7 +3763,7 @@ void iexamine::keg( player &p, const tripoint &examp )
                     fluid_type = _( "empty" );
                 } else if( stored_count == 1 ) {
                     const auto iter = std::ranges::find_if( fluid_stats.stored_by_type,
-                    []( const auto &entry ) {
+                    []( const auto & entry ) {
                         return entry.second > 0_ml;
                     } );
                     if( iter != fluid_stats.stored_by_type.end() ) {
