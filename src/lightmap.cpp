@@ -138,6 +138,15 @@ bool map::build_transparency_cache( const int zlev )
 
             const point sm_offset = sm_to_ms_copy( point( smx, smy ) );
 
+            if( cur_submap == nullptr ) {
+                for( int sx = 0; sx < SEEX; ++sx ) {
+                    std::uninitialized_fill_n(
+                        &transparency_cache[sm_offset.x + sx][sm_offset.y], SEEY,
+                        LIGHT_TRANSPARENCY_SOLID );
+                }
+                continue;
+            }
+
             if( !rebuild_all && !map_cache.transparency_cache_dirty[smx * MAPSIZE + smy] ) {
                 continue;
             }
@@ -483,6 +492,9 @@ void map::generate_lightmap( const int zlev )
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto cur_submap = get_submap_at_grid( { smx, smy, zlev } );
+            if( cur_submap == nullptr ) {
+                continue;
+            }
 
             for( int sx = 0; sx < SEEX; ++sx ) {
                 for( int sy = 0; sy < SEEY; ++sy ) {

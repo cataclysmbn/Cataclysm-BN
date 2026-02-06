@@ -773,7 +773,9 @@ extern ter_id t_null,
        t_railroad_track, t_railroad_track_h, t_railroad_track_v, t_railroad_track_d, t_railroad_track_d1,
        t_railroad_track_d2,
        t_railroad_track_on_tie, t_railroad_track_h_on_tie, t_railroad_track_v_on_tie,
-       t_railroad_track_d_on_tie;
+       t_railroad_track_d_on_tie,
+       t_pd_border,
+       t_rock_border;
 
 /*
 runtime index: furn_id

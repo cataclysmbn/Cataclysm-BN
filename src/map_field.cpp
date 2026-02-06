@@ -153,6 +153,9 @@ void map::process_fields()
             for( int y = 0; y < my_MAPSIZE; y++ ) {
                 if( field_cache[ x + y * MAPSIZE ] ) {
                     submap *const current_submap = get_submap_at_grid( { x, y, z } );
+                    if( current_submap == nullptr ) {
+                        continue;
+                    }
                     process_fields_in_submap( current_submap, tripoint( x, y, z ) );
                 }
             }
@@ -436,6 +439,11 @@ void map::process_fields_in_submap( submap *const current_submap,
             thep.y = locy + sm_offset.y;
             // A const reference to the tripoint above, so that the code below doesn't accidentally change it
             const tripoint &p = thep;
+
+            // Skip simulation for out-of-bounds areas (pocket dimension boundaries)
+            if( here.is_out_of_bounds( p ) ) {
+                continue;
+            }
 
             // This should be true only when the field in the current tile changes transparency state,
             // More correctly: not just when the field is opaque, but when it changes state
@@ -1202,7 +1210,8 @@ void map::process_fields_in_submap( submap *const current_submap,
         auto &field_cache = get_cache( z ).field_cache;
         for( int y = std::max( submap.y - 1, 0 ); y <= std::min( submap.y + 1, MAPSIZE - 1 ); ++y ) {
             for( int x = std::max( submap.x - 1, 0 ); x <= std::min( submap.x + 1, MAPSIZE - 1 ); ++x ) {
-                if( get_submap_at_grid( { x, y, z } )->field_count > 0 ) {
+                const struct submap *sm = get_submap_at_grid( { x, y, z } );
+                if( sm != nullptr && sm->field_count > 0 ) {
                     field_cache.set( x + y * MAPSIZE );
                 } else {
                     field_cache.reset( x + y * MAPSIZE );
