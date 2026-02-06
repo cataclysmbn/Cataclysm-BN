@@ -58,7 +58,7 @@ static const oter_str_id oter_omt_obsolete( "omt_obsolete" );
  * Changes that break backwards compatibility should bump this number, so the game can
  * load a legacy format loader.
  */
-const int savegame_version = 28;
+const int savegame_version = 29;
 
 /*
  * This is a global set by detected version header in .sav, maps.txt, or overmap.
@@ -498,21 +498,27 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
             auto &storage = fluid_grid::storage_for( *this );
             jsin.start_array();
             while( !jsin.end_array() ) {
-                jsin.start_array();
+                const auto entry = jsin.get_object();
                 auto origin = tripoint_om_omt{};
                 auto capacity_ml = 0;
-                auto clean_ml = 0;
-                auto dirty_ml = 0;
-                jsin.read( origin );
-                jsin.read( capacity_ml );
-                jsin.read( clean_ml );
-                jsin.read( dirty_ml );
-                storage[origin] = fluid_grid::water_storage_state{
-                    .stored_clean = units::from_milliliter( clean_ml ),
-                    .stored_dirty = units::from_milliliter( dirty_ml ),
+                entry.read( "pos", origin );
+                entry.read( "capacity_ml", capacity_ml );
+
+                auto state = fluid_grid::liquid_storage_state{
                     .capacity = units::from_milliliter( capacity_ml )
                 };
-                jsin.end_array();
+                const auto liquids = entry.get_array( "liquids" );
+                std::ranges::for_each( std::views::iota( size_t{ 0 }, liquids.size() ),
+                [&]( size_t i ) {
+                    const auto liquid_entry = liquids.get_array( i );
+                    const auto liquid_type = itype_id( liquid_entry.get_string( 0 ) );
+                    const auto volume_ml = liquid_entry.get_int( 1 );
+                    if( volume_ml > 0 ) {
+                        state.stored_by_type[liquid_type] += units::from_milliliter( volume_ml );
+                    }
+                } );
+
+                storage[origin] = state;
             }
         } else if( name == "radios" ) {
             jsin.start_array();
@@ -1098,12 +1104,22 @@ void overmap::serialize( std::ostream &fout ) const
     json.member( "fluid_grid_storage" );
     json.start_array();
     std::ranges::for_each( fluid_storage, [&]( const auto & entry ) {
+        json.start_object();
+        json.member( "pos", entry.first );
+        json.member( "capacity_ml", units::to_milliliter<int>( entry.second.capacity ) );
+        json.member( "liquids" );
         json.start_array();
-        json.write( entry.first );
-        json.write( units::to_milliliter<int>( entry.second.capacity ) );
-        json.write( units::to_milliliter<int>( entry.second.stored_clean ) );
-        json.write( units::to_milliliter<int>( entry.second.stored_dirty ) );
+        std::ranges::for_each( entry.second.stored_by_type, [&]( const auto & liquid_entry ) {
+            if( liquid_entry.second <= 0_ml ) {
+                return;
+            }
+            json.start_array();
+            json.write( liquid_entry.first );
+            json.write( units::to_milliliter<int>( liquid_entry.second ) );
+            json.end_array();
+        } );
         json.end_array();
+        json.end_object();
     } );
     json.end_array();
 

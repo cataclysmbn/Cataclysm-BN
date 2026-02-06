@@ -3749,11 +3749,32 @@ void iexamine::keg( player &p, const tripoint &examp )
             }
 
             case EXAMINE: {
-                const auto water_stats = fluid_grid::water_storage_at( pos_abs_omt );
-                add_msg( m_info, _( "Water stored: %1$s/%2$s %3$s." ),
-                         format_volume( water_stats.stored ),
-                         format_volume( water_stats.capacity ),
+                const auto fluid_stats = fluid_grid::storage_stats_at( pos_abs_omt );
+                add_msg( m_info, _( "Fluid stored: %1$s/%2$s %3$s." ),
+                         format_volume( fluid_stats.stored ),
+                         format_volume( fluid_stats.capacity ),
                          volume_units_abbr() );
+                const auto stored_count = std::ranges::count_if( fluid_stats.stored_by_type,
+                []( const auto &entry ) {
+                    return entry.second > 0_ml;
+                } );
+                auto fluid_type = std::string{};
+                if( stored_count == 0 ) {
+                    fluid_type = _( "empty" );
+                } else if( stored_count == 1 ) {
+                    const auto iter = std::ranges::find_if( fluid_stats.stored_by_type,
+                    []( const auto &entry ) {
+                        return entry.second > 0_ml;
+                    } );
+                    if( iter != fluid_stats.stored_by_type.end() ) {
+                        fluid_type = item::nname( iter->first );
+                    } else {
+                        fluid_type = _( "empty" );
+                    }
+                } else {
+                    fluid_type = _( "mixed fluids" );
+                }
+                add_msg( m_info, _( "Fluid type: %s." ), fluid_type );
                 return;
             }
 

@@ -8888,7 +8888,7 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoin
 {
     const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
     const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
-    const auto water_stats = fluid_grid::water_storage_at( pos_abs );
+    const auto fluid_stats = fluid_grid::storage_stats_at( pos_abs );
 
     auto connection_names = std::vector<std::string> {};
     connection_names.reserve( connections.size() );
@@ -8904,18 +8904,31 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoin
                              enumerate_as_string( connection_names ) );
     }
     p->add_msg_if_player( msg );
-    p->add_msg_if_player( string_format( _( "Water stored: %1$s/%2$s %3$s." ),
-                                         format_volume( water_stats.stored ),
-                                         format_volume( water_stats.capacity ),
+    p->add_msg_if_player( string_format( _( "Fluid stored: %1$s/%2$s %3$s." ),
+                                         format_volume( fluid_stats.stored ),
+                                         format_volume( fluid_stats.capacity ),
                                          volume_units_abbr() ) );
-    const auto clean_available =
-        fluid_grid::liquid_charges_at( pos_abs, itype_id( "water_clean" ) ) > 0;
-    const auto dirty_available =
-        fluid_grid::liquid_charges_at( pos_abs, itype_id( "water" ) ) > 0;
-    const auto quality = clean_available ? _( "clean" )
-                         : dirty_available ? _( "tainted" )
-                         : _( "empty" );
-    p->add_msg_if_player( string_format( _( "Water quality: %s." ), quality ) );
+    const auto stored_count = std::ranges::count_if( fluid_stats.stored_by_type,
+    []( const auto &entry ) {
+        return entry.second > 0_ml;
+    } );
+    auto fluid_type = std::string{};
+    if( stored_count == 0 ) {
+        fluid_type = _( "empty" );
+    } else if( stored_count == 1 ) {
+        const auto iter = std::ranges::find_if( fluid_stats.stored_by_type,
+        []( const auto &entry ) {
+            return entry.second > 0_ml;
+        } );
+        if( iter != fluid_stats.stored_by_type.end() ) {
+            fluid_type = item::nname( iter->first );
+        } else {
+            fluid_type = _( "empty" );
+        }
+    } else {
+        fluid_type = _( "mixed fluids" );
+    }
+    p->add_msg_if_player( string_format( _( "Fluid type: %s." ), fluid_type ) );
 
     return 0;
 }
