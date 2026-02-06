@@ -1,5 +1,5 @@
-require( ./lua_annotations.lua )
 local slimepit = {}
+
 
 slimepit.draw = function(data)
   local map = gapi.get_map()
