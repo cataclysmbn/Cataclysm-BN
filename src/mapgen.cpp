@@ -4035,10 +4035,7 @@ void map::draw_map( mapgendata &dat )
     const bool generated = run_mapgen_func( function_key, dat );
 
     if( !generated ) {
-        if( is_ot_match( "slimepit", terrain_type, ot_match_type::prefix ) ||
-            is_ot_match( "slime_pit", terrain_type, ot_match_type::prefix ) ) {
-            draw_slimepit( dat );
-        } else if( is_ot_match( "office", terrain_type, ot_match_type::prefix ) ) {
+        if( is_ot_match( "office", terrain_type, ot_match_type::prefix ) ) {
             draw_office_tower( dat );
         } else if( is_ot_match( "temple", terrain_type, ot_match_type::prefix ) ) {
             draw_temple( dat );
@@ -5981,56 +5978,6 @@ void map::draw_mine( mapgendata &dat )
                 }
             }
         }
-    }
-}
-
-void map::draw_slimepit( mapgendata &dat )
-{
-    const oter_id &terrain_type = dat.terrain_type();
-    if( is_ot_match( "slimepit", terrain_type, ot_match_type::prefix ) ) {
-        if( dat.zlevel() == 0 ) {
-            dat.fill_groundcover();
-        } else {
-            draw_fill_background( t_rock_floor );
-        }
-
-        for( int i = 0; i < 4; i++ ) {
-            if( !is_ot_match( "slimepit", dat.t_nesw[i], ot_match_type::prefix ) ) {
-                dat.set_dir( i, SEEX );
-            }
-        }
-
-        for( int i = 0; i < SEEX * 2; i++ ) {
-            for( int j = 0; j < SEEY * 2; j++ ) {
-                if( !one_in( 5 ) && ( rng( 0, dat.n_fac ) <= j &&
-                                      rng( 0, dat.w_fac ) <= i &&
-                                      SEEY * 2 - rng( 0, dat.s_fac ) > j &&
-                                      SEEX * 2 - rng( 0, dat.e_fac ) > i ) ) {
-                    ter_set( point( i, j ), t_slime );
-                }
-            }
-        }
-        if( terrain_type == "slimepit_down" ) {
-            ter_set( point( rng( 3, SEEX * 2 - 4 ), rng( 3, SEEY * 2 - 4 ) ), t_slope_down );
-        }
-        if( dat.above() == "slimepit_down" ) {
-            switch( rng( 1, 4 ) ) {
-                case 1:
-                    ter_set( point( rng( 0, 2 ), rng( 0, 2 ) ), t_slope_up );
-                    break;
-                case 2:
-                    ter_set( point( rng( 0, 2 ), SEEY * 2 - rng( 1, 3 ) ), t_slope_up );
-                    break;
-                case 3:
-                    ter_set( point( SEEX * 2 - rng( 1, 3 ), rng( 0, 2 ) ), t_slope_up );
-                    break;
-                case 4:
-                    ter_set( point( SEEX * 2 - rng( 1, 3 ), SEEY * 2 - rng( 1, 3 ) ), t_slope_up );
-            }
-        }
-        place_spawns( GROUP_BLOB, 1, point( SEEX, SEEY ), point( SEEX, SEEY ), 0.15 );
-        place_items( item_group_id( "sewer" ), 40, point_zero, point( EAST_EDGE, SOUTH_EDGE ), true,
-                     calendar::start_of_cataclysm );
     }
 }
 

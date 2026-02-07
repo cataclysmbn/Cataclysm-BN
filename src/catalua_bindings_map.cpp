@@ -1,3 +1,4 @@
+#include "calendar.h"
 #include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_luna.h"
@@ -15,6 +16,7 @@
 #include "overmap.h"
 #include "trap.h"
 #include "detached_ptr.h"
+#include "type_id.h"
 
 namespace sol
 {
@@ -257,6 +259,10 @@ void cata::detail::reg_map( sol::state &lua )
 
         luna::set_fx( ut, "is_ot_match", []( std::string ref, oter_id & id, ot_match_type match ) -> bool { return is_ot_match( ref, id, match ); } );
         luna::set_fx( ut, "draw_fill_background", []( map & m, std::string ref ) { m.draw_fill_background( ter_id( ref ) ); } );
+        luna::set_fx( ut, "place_spawns", []( map & m, std::string id, int chance, point topleft,
+        point bottomright, float density, bool single ) { m.place_spawns( mongroup_id( id ), chance, topleft, bottomright, density, single ); } );
+        luna::set_fx( ut, "place_items", []( map & m, std::string id, int chance, point topleft,
+        point bottomright, bool onflat ) { m.place_items( item_group_id( id ), chance, topleft, bottomright, onflat, calendar::start_of_cataclysm ); } );
     }
 
     // Register 'tinymap' class to be used in Lua

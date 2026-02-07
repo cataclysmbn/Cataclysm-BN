@@ -36,6 +36,8 @@ slimepit.draw = function(data, map)
       map:set_ter_at( Tripoint.new( gapi.rng( 21, 23 ), gapi.rng( 21, 23 ), z ), TerId.new( "t_slope_up" ):int_id() )
     end
   end
+  map:place_spawns( "GROUP_BLOB", 1, Point.new( 0, 0 ), Point.new( 24, 24 ), 0.15, false );
+  map:place_items( "sewer", 40, Point.new( 0, 0 ), Point.new( 24, 24 ), true );
 end
 
 return slimepit

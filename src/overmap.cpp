@@ -946,8 +946,6 @@ bool oter_t::is_hardcoded() const
         "office_tower_1_entrance",
         "office_tower_b",
         "office_tower_b_entrance",
-        "slimepit",
-        "slimepit_down",
         "temple",
         "temple_finale",
         "temple_stairs"
