@@ -2526,6 +2526,7 @@
       [ "shield_spiked_large", 1 ],
       [ "shield_riot", 8 ],
       [ "shield_ballistic", 4 ],
+      [ "artifact_compass", 8 ],
       [ "shield_ballistic_large", 2 ],
       [ "shield_welded", 2 ],
       [ "carbon_shield", 1 ]

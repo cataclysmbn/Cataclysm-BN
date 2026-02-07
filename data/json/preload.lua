@@ -6,7 +6,9 @@ local storage = game.mod_storage[game.current_mod]
 mod.storage = storage
 
 game.iuse_functions["VOLTMETER"] = function(...) return mod.voltmeter.menu(...) end
+game.iuse_functions["ARTIFACT_COMPASS"] = function(...) return mod.artifact_compass.use(...) end
 
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...) return mod.on_nyctophobia_tick(...) end)
+gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...) return mod.on_artifact_compass_tick(...) end)
 
 game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)

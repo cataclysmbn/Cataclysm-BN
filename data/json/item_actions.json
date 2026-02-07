@@ -816,6 +816,11 @@
   },
   {
     "type": "item_action",
+    "id": "ARTIFACT_COMPASS",
+    "name": { "str": "Toggle artifact compass" }
+  },
+  {
+    "type": "item_action",
     "id": "TOWEL",
     "name": { "str": "Dry/clean yourself" }
   },

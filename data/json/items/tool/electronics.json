@@ -902,6 +902,40 @@
     "flags": [ "IS_UPS" ]
   },
   {
+    "id": "artifact_compass",
+    "type": "TOOL",
+    "category": "electronics",
+    "name": { "str": "artifact compass" },
+    "description": "A battered handheld locator that ticks and beeps when it senses nearby artifacts.  The beeping grows more insistent as you get closer.",
+    "weight": "450 g",
+    "volume": "500 ml",
+    "price": "120 USD",
+    "price_postapoc": "15 USD",
+    "bashing": 2,
+    "material": [ "plastic", "steel" ],
+    "symbol": ";",
+    "color": "light_gray",
+    "ammo": "battery",
+    "charges_per_use": 1,
+    "use_action": [ "ARTIFACT_COMPASS" ],
+    "flags": [ "BELT_CLIP" ],
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
+      ]
+    ],
+    "magazine_well": "250 ml"
+  },
+  {
     "id": "vibrator",
     "type": "TOOL",
     "category": "electronics",
