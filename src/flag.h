@@ -42,6 +42,7 @@ extern const flag_id flag_BIO_IMMUNE;
 extern const flag_id flag_BIPOD;
 extern const flag_id flag_BIRD;
 extern const flag_id flag_BLIND;
+extern const flag_id flag_BLINDS_EYES_ON_HIT;
 extern const flag_id flag_BLOCK_WHILE_WORN;
 extern const flag_id flag_BOMB;
 extern const flag_id flag_BOOK_CANNIBAL;
@@ -471,5 +472,4 @@ class json_flag
         /** Clear all loaded flags (invalidating any pointers) */
         static void reset();
 };
-
 

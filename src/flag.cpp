@@ -41,6 +41,7 @@ const flag_id flag_BIPOD( "BIPOD" );
 const flag_id flag_BIRD( "BIRD" );
 const flag_id flag_BLED( "BLED" );
 const flag_id flag_BLIND( "BLIND" );
+const flag_id flag_BLINDS_EYES_ON_HIT( "BLINDS_EYES_ON_HIT" );
 const flag_id flag_BLOCK_WHILE_WORN( "BLOCK_WHILE_WORN" );
 const flag_id flag_BOMB( "BOMB" );
 const flag_id flag_BOOK_CANNIBAL( "BOOK_CANNIBAL" );

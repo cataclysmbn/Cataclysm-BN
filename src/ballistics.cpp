@@ -54,6 +54,7 @@ static const ammo_effect_str_id ammo_effect_NO_EMBED( "NO_EMBED" );
 static const ammo_effect_str_id ammo_effect_NO_ITEM_DAMAGE( "NO_ITEM_DAMAGE" );
 static const ammo_effect_str_id ammo_effect_NO_OVERSHOOT( "NO_OVERSHOOT" );
 static const ammo_effect_str_id ammo_effect_NO_PENETRATE_OBSTACLES( "NO_PENETRATE_OBSTACLES" );
+static const auto ammo_effect_NO_DAMAGE = ammo_effect_str_id( "NO_DAMAGE" );
 static const ammo_effect_str_id ammo_effect_NULL_SOURCE( "NULL_SOURCE" );
 static const ammo_effect_str_id ammo_effect_SHATTER_SELF( "SHATTER_SELF" );
 static const ammo_effect_str_id ammo_effect_STREAM( "STREAM" );
@@ -249,9 +250,10 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 
     projectile &proj = attack.proj;
 
-    const bool stream = proj.has_effect( ammo_effect_STREAM ) ||
+    const auto stream = proj.has_effect( ammo_effect_STREAM ) ||
                         proj.has_effect( ammo_effect_STREAM_BIG ) ||
                         proj.has_effect( ammo_effect_JET );
+    const auto no_damage = proj.has_effect( ammo_effect_NO_DAMAGE );
     const char bullet = stream ? '#' : '*';
     const bool no_item_damage = proj.has_effect( ammo_effect_NO_ITEM_DAMAGE );
     const bool do_draw_line = proj.has_effect( ammo_effect_DRAW_AS_LINE ) ||
@@ -547,7 +549,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             const float dmg_before_penetration = proj.impact.total_damage();
             here.shoot( source, tp, proj, !no_item_damage && tp == target );
             const float dmg_after_penetration = proj.impact.total_damage();
-            has_momentum = dmg_after_penetration > 0;
+            has_momentum = dmg_after_penetration > 0 || ( no_damage && here.passable( tp ) );
             // We lost momentum from hitting something, penalize range.
             if( dmg_before_penetration > dmg_after_penetration ) {
                 apply_overpenetration_penalty( is_projectile_modify_overpenetration );

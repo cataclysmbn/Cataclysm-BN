@@ -96,6 +96,7 @@ static const weapon_category_id weapon_cat_ENERGY_WEAPONS( "ENERGY_WEAPONS" );
 static const ammo_effect_str_id ammo_effect_ACT_ON_RANGED_HIT( "ACT_ON_RANGED_HIT" );
 static const ammo_effect_str_id ammo_effect_BLACKPOWDER( "BLACKPOWDER" );
 static const ammo_effect_str_id ammo_effect_BOUNCE( "BOUNCE" );
+static const ammo_effect_str_id ammo_effect_BLINDS_EYES( "BLINDS_EYES" );
 static const ammo_effect_str_id ammo_effect_BURST( "BURST" );
 static const ammo_effect_str_id ammo_effect_CUSTOM_EXPLOSION( "CUSTOM_EXPLOSION" );
 static const ammo_effect_str_id ammo_effect_EMP( "EMP" );
@@ -1371,6 +1372,9 @@ dealt_projectile_attack throw_item( Character &who, const tripoint &target,
         proj.add_effect( ammo_effect_ACT_ON_RANGED_HIT );
         thrown.activate();
     }
+    if( thrown.has_flag( flag_BLINDS_EYES_ON_HIT ) ) {
+        proj.add_effect( ammo_effect_BLINDS_EYES );
+    }
     // This is just to indicate something is a thrown item
     // Checking with other methods downstream breaks other projectile attacks.
     proj.add_effect( ammo_effect_THROWN );
@@ -1896,6 +1900,9 @@ static projectile make_gun_projectile( const item &gun )
     if( gun.ammo_data() ) {
         assert( gun.ammo_data()->ammo );
         const islot_ammo &ammo = *gun.ammo_data()->ammo;
+        if( gun.ammo_data()->has_flag( flag_BLINDS_EYES_ON_HIT ) ) {
+            fx.add_effect( ammo_effect_BLINDS_EYES );
+        }
         // Some projectiles have a chance of being recoverable
         bool recover = !one_in( ammo.dont_recover_one_in );
         // Some weapons can override this
