@@ -51,6 +51,7 @@ enum spell_flag {
     CONCENTRATE, // focus affects spell fail %
     RANDOM_AOE, // picks random number between min+increment*level and max instead of normal behavior
     RANDOM_DAMAGE, // picks random number between min+increment*level and max instead of normal behavior
+    DIVIDE_DAMAGE, // divides damage equally among all the targets of the spell
     RANDOM_DURATION, // picks random number between min+increment*level and max instead of normal behavior
     RANDOM_TARGET, // picks a random valid target within your range instead of normal behavior.
     MUTATE_TRAIT, // overrides the mutate spell_effect to use a specific trait_id instead of a category

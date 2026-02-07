@@ -54,6 +54,7 @@
     "//": "Pistol ammo commonly owned by citizens and found in many locations.",
     "subtype": "distribution",
     "entries": [
+      { "item": "38_super", "prob": 8, "charges": [ 1, 100 ] },
       { "item": "38super_fmj", "prob": 7, "charges": [ 1, 100 ] },
       { "item": "500_Magnum", "prob": 25, "charges": [ 1, 100 ] },
       { "item": "57mm", "prob": 10, "charges": [ 1, 100 ] }
@@ -65,6 +66,7 @@
     "//": "Blackpowder pistol ammo balanced according to rarity, additional weight for calibers that have common, manual-action firearms available in that chambering.",
     "subtype": "distribution",
     "entries": [
+      { "item": "bp_38_super", "prob": 8, "charges": [ 1, 100 ] },
       { "item": "bp_38super_fmj", "prob": 7, "charges": [ 1, 100 ] },
       { "item": "bp_500_Magnum", "prob": 25, "charges": [ 1, 100 ] },
       { "item": "bp_57mm", "prob": 10, "charges": [ 1, 100 ] }
@@ -75,7 +77,12 @@
     "id": "ammo_pistol_common_full",
     "//": "Pistol ammo commonly owned by citizens and found in many locations, for vending machines.",
     "subtype": "distribution",
-    "entries": [ { "item": "38super_fmj", "prob": 7 }, { "item": "500_Magnum", "prob": 25 }, { "item": "57mm", "prob": 10 } ]
+    "entries": [
+      { "item": "38_super", "prob": 8 },
+      { "item": "38super_fmj", "prob": 7 },
+      { "item": "500_Magnum", "prob": 25 },
+      { "item": "57mm", "prob": 10 }
+    ]
   },
   {
     "type": "item_group",

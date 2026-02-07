@@ -629,7 +629,7 @@ static void draw_traits_info( const catacurses::window &w_info, const unsigned l
 static void draw_bionics_tab( ui_adaptor &ui, const catacurses::window &w_bionics,
                               const Character &you, const unsigned line,
                               const player_display_tab curtab,
-                              const std::vector<bionic> &bionicslist )
+                              const std::vector<std::pair<bionic, int>> &bionicslist )
 {
     werase( w_bionics );
     const bool is_current_tab = curtab == player_display_tab::bionics;
@@ -657,8 +657,12 @@ static void draw_bionics_tab( ui_adaptor &ui, const catacurses::window &w_bionic
         if( highlight_line ) {
             ui.set_cursor( w_bionics, pos );
         }
-        trim_and_print( w_bionics, pos, width,
-                        highlight_line ? hilite( c_white ) : c_white, "%s", bionicslist[i].info().name );
+
+        const auto& [bio, cnt] =  bionicslist[i];
+        const auto fmtstr = cnt > 1 ? "%s (%d)" : "%s";
+        const auto color = get_bionic_text_color( bio, highlight_line );
+        trim_and_print( w_bionics, pos, width, highlight_line ? hilite( color ) : color, fmtstr,
+                        bio.info().name, cnt );
     }
     if( do_draw_scrollbar ) {
         draw_scrollbar( w_bionics, range.first, height, bionicslist.size(), point( width + 1, 2 ), c_white,
@@ -668,13 +672,15 @@ static void draw_bionics_tab( ui_adaptor &ui, const catacurses::window &w_bionic
 }
 
 static void draw_bionics_info( const catacurses::window &w_info, const unsigned line,
-                               const std::vector<bionic> &bionicslist )
+                               const std::vector<std::pair<bionic, int>> &bionicslist )
 {
     werase( w_info );
     if( line < bionicslist.size() ) {
+        const auto& [bio, cnt] = bionicslist[line];
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        fold_and_print( w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray, "%s",
-                        bionicslist[line].info().description );
+        const auto fmtStr = cnt > 1 ? "%s\n\nYou have %s instances of this bionic installed." : "%s";
+        fold_and_print(
+            w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray, fmtStr, bio.info().description, cnt );
     }
     wnoutrefresh( w_info );
 }
@@ -1021,7 +1027,7 @@ static void draw_speed_tab( const catacurses::window &w_speed,
 static void draw_info_window( const catacurses::window &w_info, const Character &you,
                               const unsigned line, const player_display_tab curtab,
                               const std::vector<trait_id> &traitslist,
-                              const std::vector<bionic> &bionicslist,
+                              const std::vector<std::pair<bionic, int>> &bionicslist,
                               const std::vector<std::pair<std::string, std::string>> &effect_name_and_text,
                               const std::vector<HeaderSkill> &skillslist )
 {
@@ -1090,7 +1096,7 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
         const ui_adaptor &ui_traits, const ui_adaptor &ui_bionics,
         const ui_adaptor &ui_effects, const ui_adaptor &ui_skills,
         const std::vector<trait_id> &traitslist,
-        const std::vector<bionic> &bionicslist,
+        const std::vector<std::pair<bionic, int>> &bionicslist,
         const std::vector<std::pair<std::string, std::string>> &effect_name_and_text,
         const std::vector<HeaderSkill> &skillslist )
 {
@@ -1347,8 +1353,31 @@ void character_display::disp_info( Character &ch )
     std::ranges::sort( traitslist, trait_display_sort );
     const unsigned int trait_win_size_y_max = 1 + static_cast<unsigned>( traitslist.size() );
 
-    std::vector<bionic> bionicslist = *ch.my_bionics;
-    const unsigned int bionics_win_size_y_max = 2 + bionicslist.size();
+    std::multimap<bionic_id, bionic> bionics_map;
+    for( const auto &elem : *ch.my_bionics ) {
+        bionics_map.emplace( elem.id, elem );
+    }
+    std::vector<std::pair<bionic, int>> bionics_list;
+    for( auto it = bionics_map.begin(); it != bionics_map.end(); ) {
+        const auto [k, v] = *it;
+        int d = 0;
+        do {
+            ++it;
+            ++d;
+        } while( it != bionics_map.end() && k == it->first );
+        bionics_list.push_back( std::make_pair( v,  d ) );
+    }
+
+    using bionic_pair = decltype( bionics_list )::value_type;
+    std::ranges::sort( bionics_list, []( const bionic_pair & a, const bionic_pair & b ) -> bool {
+        if( a.first.info().activated != b.first.info().activated )
+        {
+            return a.first.info().activated;
+        }
+        constexpr auto less = bionic_sort_less{ bionic_ui_sort_mode::NAME };
+        return less( a.first, b.first );
+    } );
+    const unsigned int bionics_win_size_y_max = 2 + bionics_list.size();
 
     const std::vector<const Skill *> player_skill = Skill::get_skills_sorted_by(
     [&]( const Skill & a, const Skill & b ) {
@@ -1506,7 +1535,7 @@ void character_display::disp_info( Character &ch )
         borders.draw_border( w_bionics_border );
         wnoutrefresh( w_bionics_border );
         ui_bionics.disable_cursor();
-        draw_bionics_tab( ui_bionics, w_bionics, ch, line, curtab, bionicslist );
+        draw_bionics_tab( ui_bionics, w_bionics, ch, line, curtab, bionics_list );
     } );
 
     // ENCUMBRANCE
@@ -1625,7 +1654,7 @@ void character_display::disp_info( Character &ch )
         wnoutrefresh( w_info_border );
         ui_info.disable_cursor();
         draw_info_window( w_info, ch, line, curtab,
-                          traitslist, bionicslist, effect_name_and_text, skillslist );
+                          traitslist, bionics_list, effect_name_and_text, skillslist );
     } );
 
     bool done = false;
@@ -1635,7 +1664,7 @@ void character_display::disp_info( Character &ch )
 
         done = handle_player_display_action( ch, line, curtab, ctxt, ui_tip, ui_info,
                                              ui_stats, ui_encumb, ui_traits, ui_bionics, ui_effects, ui_skills,
-                                             traitslist, bionicslist, effect_name_and_text, skillslist );
+                                             traitslist, bionics_list, effect_name_and_text, skillslist );
     } while( !done );
 }
 

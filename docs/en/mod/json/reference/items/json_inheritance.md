@@ -131,18 +131,18 @@ The following types currently support inheritance:
 To find out if a types supports copy-from, you need to know if it has implemented generic_factory.
 To find out if this is the case, do the following:
 
-- Open [init.cpp](https://github.com/cataclysmbnteam/Cataclysm-BN/tree/main/src/init.cpp)
+- Open [init.cpp](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/src/init.cpp)
 - Find the line that mentions your type, for example `add( "gate", &gates::load );`
 - Copy the load function, in this case it would be _gates::load_
 - Use this in
-  [the search bar on github](https://github.com/cataclysmbnteam/Cataclysm-BN/search?q=%22gates%3A%3Aload%22&unscoped_q=%22gates%3A%3Aload%22&type=Code)
+  [the search bar on github](https://github.com/cataclysmbn/Cataclysm-BN/search?q=%22gates%3A%3Aload%22&unscoped_q=%22gates%3A%3Aload%22&type=Code)
   to find the file that contains _gates::load_
 - In the search results you find
-  [gates.cpp](https://github.com/cataclysmbnteam/Cataclysm-BN/tree/main/src/gates.cpp). open it.
+  [gates.cpp](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/src/gates.cpp). open it.
 - In gates.cpp, find the generic_factory line, it looks like this:
   `generic_factory<gate_data> gates_data( "gate type", "handle", "other_handles" );`
 - Since the generic_factory line is present, you can now conclude that it supports copy-from.
 - If you don't find generic_factoy present, it does not support copy-from, as is the case for type
   vitamin (repeat the above steps and find that
-  [vitamin.cpp](https://github.com/cataclysmbnteam/Cataclysm-BN/tree/main/src/vitamin.cpp) does not
+  [vitamin.cpp](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/src/vitamin.cpp) does not
   contain generic_factoy)

@@ -24,6 +24,7 @@
 #include "character_id.h"
 #include "character_martial_arts.h"
 #include "creature.h"
+#include "creature_functions.h"
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
@@ -319,6 +320,7 @@ static std::unique_ptr<npc> make_fake_npc( monster *z, int str, int dex, int int
     tmp->per_cur = per;
     if( z->friendly != 0 ) {
         tmp->set_attitude( NPCATT_FOLLOW );
+        tmp->set_fac( faction_id( "your_followers" ) );
     } else {
         tmp->set_attitude( NPCATT_KILL );
     }
@@ -1927,6 +1929,14 @@ bool mattack::fungus_bristle( monster *z )
 {
     if( g->u.has_trait( trait_THRESH_MARLOSS ) || g->u.has_trait( trait_THRESH_MYCUS ) ) {
         z->friendly = 1;
+    }
+    if( ( g->u.has_trait( trait_MARLOSS ) ) && ( g->u.has_trait( trait_MARLOSS_BLUE ) ) &&
+        !g->u.crossed_threshold() && rl_dist( z->pos(), g->u.pos() ) < 6 ) {
+        add_msg( m_info, _( "The %s recedes, as if anticipating your arrival…" ), z->name() );
+        z->no_corpse_quiet = true;
+        z->no_extra_death_drops = true;
+        z->die( nullptr );
+        return true;
     }
     Creature *target = z->attack_target();
     if( target == nullptr ||
@@ -3780,11 +3790,12 @@ bool mattack::flamethrower( monster *z )
     // TODO: that is always false!
     if( z->friendly != 0 ) {
         // Attacking monsters, not the player!
-        int boo_hoo;
-        Creature *target = z->auto_find_hostile_target( 5, boo_hoo );
+        // Flamethrower leaves dangerous trail
+        auto res = creature_functions::auto_find_hostile_target( *z, { .range = 5, .trail = true, .area = 0 } );
         // Couldn't find any targets!
-        if( target == nullptr ) {
+        if( !res ) {
             // Because that stupid oaf was in the way!
+            const int boo_hoo = res.error();
             if( boo_hoo > 0 && g->u.sees( *z ) ) {
                 add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
                                               "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
@@ -3794,7 +3805,7 @@ bool mattack::flamethrower( monster *z )
             // Did reset before refactor, changed to match other turret behaviors
             return false;
         }
-        flame( z, target );
+        flame( z, &res.value().get() );
         return true;
     }
 
@@ -3940,7 +3951,6 @@ bool mattack::copbot( monster *z )
 bool mattack::chickenbot( monster *z )
 {
     int mode = 0;
-    int boo_hoo = 0;
     Creature *target;
     if( z->friendly == 0 ) {
         target = z->attack_target();
@@ -3948,8 +3958,10 @@ bool mattack::chickenbot( monster *z )
             return false;
         }
     } else {
-        target = z->auto_find_hostile_target( 38, boo_hoo );
-        if( target == nullptr ) {
+        // Chickenbot uses M4 and 40mm grenades - bullets don't leave trail
+        auto res = creature_functions::auto_find_hostile_target( *z, { .range = 38, .trail = false, .area = 0 } );
+        if( !res ) {
+            const int boo_hoo = res.error();
             if( boo_hoo > 0 && g->u.sees( *z ) ) { // because that stupid oaf was in the way!
                 add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
                                               "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
@@ -3958,6 +3970,7 @@ bool mattack::chickenbot( monster *z )
             }
             return false;
         }
+        target = &res.value().get();
     }
 
     int cap = target->power_rating() - 1;
@@ -4022,7 +4035,6 @@ bool mattack::chickenbot( monster *z )
 bool mattack::multi_robot( monster *z )
 {
     int mode = 0;
-    int boo_hoo = 0;
     Creature *target;
     if( z->friendly == 0 ) {
         target = z->attack_target();
@@ -4030,8 +4042,9 @@ bool mattack::multi_robot( monster *z )
             return false;
         }
     } else {
-        target = z->auto_find_hostile_target( 48, boo_hoo );
-        if( target == nullptr ) {
+        auto res = creature_functions::auto_find_hostile_target( *z, { .range = 48, .trail = true, .area = 0 } );
+        if( !res ) {
+            const int boo_hoo = res.error();
             if( boo_hoo > 0 && g->u.sees( *z ) ) { // because that stupid oaf was in the way!
                 add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
                                               "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
@@ -4040,6 +4053,7 @@ bool mattack::multi_robot( monster *z )
             }
             return false;
         }
+        target = &res.value().get();
     }
 
     int cap = target->power_rating();
@@ -5976,6 +5990,11 @@ bool mattack::stretch_attack( monster *z )
 
 bool mattack::zombie_fuse( monster *z )
 {
+    // Don't max out fusion while just vibing away from targets.
+    Creature *target = z->attack_target();
+    if( target == nullptr || !z->sees( *target ) ) {
+        return false;
+    }
     monster *critter = nullptr;
     for( const tripoint &p : g->m.points_in_radius( z->pos(), 1 ) ) {
         critter = g->critter_at<monster>( p );

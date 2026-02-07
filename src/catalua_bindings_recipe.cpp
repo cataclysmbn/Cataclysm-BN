@@ -27,19 +27,23 @@ void cata::detail::reg_recipe( sol::state &lua )
             luna::no_bases,
             luna::no_constructor
         );
+
         SET_MEMB( category );
         SET_MEMB( subcategory );
-        luna::set( ut, "time", &recipe::time );
+        SET_MEMB( time );
         SET_MEMB( skill_used );
         SET_MEMB( difficulty );
         SET_MEMB( required_skills );
         SET_MEMB( learn_by_disassembly );
         SET_MEMB( booksets );
 
+        DOC( "DEPRECATED: use recipe_id instead" );
         SET_FX_T( ident, const recipe_id & () const );
-        SET_FX_T( result, const itype_id & () const );
-        SET_FX_T( result_name, std::string() const );
-        SET_FX_T( has_flag, bool ( const std::string & flag_name ) const );
+
+        SET_FX_N( ident, "recipe_id" );
+        SET_FX( result );
+        SET_FX( result_name );
+        SET_FX( has_flag );
 
         namespace views = std::views;
         namespace ranges = std::ranges;
@@ -59,4 +63,15 @@ void cata::detail::reg_recipe( sol::state &lua )
         luna::set_fx( ut, "get_all", []() -> std::vector<recipe> { return recipe_dict | views::values | ranges::to<std::vector<recipe>>(); } );
     }
 #undef UT_CLASS // #define UT_CLASS recipe
+
+#define UT_CLASS book_recipe
+    {
+        auto ut = luna::new_usertype<UT_CLASS>( lua, luna::no_bases, luna::no_constructor );
+
+        SET_MEMB( name );
+        SET_MEMB( skill_level );
+        SET_MEMB( recipe );
+        SET_MEMB( hidden );
+    }
+#undef UT_CLASS
 }

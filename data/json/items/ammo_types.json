@@ -37,6 +37,12 @@
   },
   {
     "type": "ammunition_type",
+    "id": "bolt_heavy",
+    "name": "ballista bolts",
+    "default": "ammo_ballista_iron"
+  },
+  {
+    "type": "ammunition_type",
     "id": "bolt",
     "name": "bolts",
     "default": "bolt_wood"
@@ -46,6 +52,12 @@
     "id": "arrow",
     "name": "arrows",
     "default": "arrow_wood"
+  },
+  {
+    "id": "atlatl",
+    "name": "atlatl dart",
+    "default": "atlatl_dart_wood",
+    "type": "ammunition_type"
   },
   {
     "type": "ammunition_type",
@@ -341,6 +353,12 @@
     "id": "conc_alcohol",
     "name": "concentrated alcohol",
     "default": "denat_alcohol"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "dna",
+    "name": "DNA",
+    "default": "dna"
   },
   {
     "type": "ammunition_type",

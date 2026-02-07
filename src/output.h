@@ -577,6 +577,21 @@ std::pair<std::string, nc_color> get_bar( float cur, float max, int width = 5,
         bool extra_resolution = true,
         const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red } );
 
+/**
+ * @return Pair of a string containing the bar, and its color
+ * @param segments A vector containing N bar characters with which to fill the bar at different values
+ * @param cur Current value being formatted
+ * @param max Maximum possible value, e.g. a full bar
+ * @param extra_resolution Double the resolution of displayed values with \ symbols.
+ * @param colors A vector containing N colors with which to color the bar at different values
+ */
+// The last color is used for an empty bar
+// extra_resolution
+std::pair<std::string, nc_color> get_bar_custom(
+    const std::vector<std::string> &segments,
+    float cur, float max, int width = 5, bool extra_resolution = true,
+    const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red} );
+
 std::pair<std::string, nc_color> get_hp_bar( int cur_hp, int max_hp, bool is_mon = false );
 
 std::pair<std::string, nc_color> get_stamina_bar( int cur_stam, int max_stam );

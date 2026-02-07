@@ -14,12 +14,12 @@
         "FFFFFFFFFFFFFFFFFFFFFFFF",
         "FFFFFFFFFFFFFFFFFFFFFFFF",
         "|||OOOOOO||++||OOOOOO|||",
-        "|l                    l|",
-        "|l                    l|",
-        "|l  llllll    llllll  l|",
-        "|l                    l|",
-        "|l                    l|",
-        "|l  llllll    llllll  l|",
+        "|l  l  l        l  l  l|",
+        "|l  l  l        l  l  l|",
+        "|l  l  l        l  l  l|",
+        "|l  l  l        l  l  l|",
+        "|l  l  l        l  l  l|",
+        "|l  l  l        l  l  l|",
         "|                      |",
         "|c                    c|",
         "|c     ##TTTTTT##     c|",
@@ -60,7 +60,8 @@
         "l": { "item": "antique", "chance": 50, "repeat": 2 },
         "T": { "item": "antique_rare", "chance": 80 },
         "U": { "item": "trash_dumpster", "chance": 80 }
-      }
+      },
+      "place_vehicles": [ { "vehicle": "museum_vehicles", "x": [ 11, 12 ], "y": [ 11, 12 ], "chance": 50, "rotation": 270 } ]
     }
   },
   {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "type_id.h"
-
+#include "character.h"
 #include <memory>
 #include <filesystem>
 

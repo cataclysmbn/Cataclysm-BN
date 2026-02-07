@@ -673,6 +673,12 @@ bool Character::mutation_ok( const trait_id &mutation, bool force_good, bool for
         return false;
     }
 
+    for( trait_id mut : get_mutations() ) {
+        if( mut->prevents.contains( mutation ) ) {
+            return false;
+        }
+    }
+
     for( const bionic &i : get_bionic_collection() ) {
         const bionic_id &bid = i.id;
         for( const trait_id &mid : bid->canceled_mutations ) {
@@ -970,7 +976,8 @@ void Character::old_mutate()
             }
 
             // ...consider whether its in our highest category
-            if( has_trait( base_mutation ) && !has_base_trait( base_mutation ) ) {
+            if( has_trait( base_mutation ) && ( !has_base_trait( base_mutation ) ||
+                                                get_option<bool>( "canmutprofmut" ) ) ) {
                 // Starting traits don't count toward categories
                 std::vector<trait_id> group = mutations_category[cat];
                 bool in_cat = false;
@@ -1165,7 +1172,7 @@ bool Character::mutate_towards( const trait_id &mut )
         if( !has_trait( cancel[i] ) ) {
             cancel.erase( cancel.begin() + i );
             i--;
-        } else if( has_base_trait( cancel[i] ) ) {
+        } else if( has_base_trait( cancel[i] ) && !get_option<bool>( "canmutprofmut" ) ) {
             //If we have the trait, but it's a base trait, don't allow it to be removed normally
             canceltrait.push_back( cancel[i] );
             cancel.erase( cancel.begin() + i );
@@ -1213,7 +1220,7 @@ bool Character::mutate_towards( const trait_id &mut )
     bool threshold = mdata.threshold;
     bool profession = mdata.profession;
     bool has_threshreq = false;
-    std::vector<trait_id> threshreq = mdata.threshreq;
+    const unsigned short tierreq = mdata.threshold_tier;
 
     // It shouldn't pick a Threshold anyway--they're supposed to be non-Valid
     // and aren't categorized. This can happen if someone makes a threshold mutation into a prerequisite.
@@ -1226,14 +1233,14 @@ bool Character::mutate_towards( const trait_id &mut )
         return false;
     }
 
-    for( size_t i = 0; !has_threshreq && i < threshreq.size(); i++ ) {
-        if( has_trait( threshreq[i] ) ) {
+    for( auto cat : mdata.category ) {
+        if( has_trait( cat->threshold_muts[tierreq] ) ) {
             has_threshreq = true;
         }
     }
 
     // No crossing The Threshold by simply not having it
-    if( !has_threshreq && !threshreq.empty() ) {
+    if( ( tierreq != 0 ) && !has_threshreq )  {
         add_msg_if_player( _( "You feel something straining deep inside you, yearning to be free…" ) );
         return false;
     }
@@ -1395,7 +1402,7 @@ void Character::remove_mutation( const trait_id &mut, bool silent )
         //Check each mutation until we reach the end or find a trait to revert to
         for( auto &iter : mutation_branch::get_all() ) {
             //See if it's in our list of base traits but not active
-            if( has_base_trait( iter.id ) && !has_trait( iter.id ) ) {
+            if( has_base_trait( iter.id ) && !get_option<bool>( "canmutprofmut" ) && !has_trait( iter.id ) ) {
                 //See if that base trait cancels the mutation we are using
                 std::vector<trait_id> traitcheck = iter.cancels;
                 if( !traitcheck.empty() ) {
@@ -1417,7 +1424,7 @@ void Character::remove_mutation( const trait_id &mut, bool silent )
         //Check each mutation until we reach the end or find a trait to revert to
         for( auto &iter : mutation_branch::get_all() ) {
             //See if it's in our list of base traits but not active
-            if( has_base_trait( iter.id ) && !has_trait( iter.id ) ) {
+            if( has_base_trait( iter.id ) && !get_option<bool>( "canmutprofmut" ) && !has_trait( iter.id ) ) {
                 //See if that base trait cancels the mutation we are using
                 std::vector<trait_id> traitcheck = iter.cancels;
                 if( !traitcheck.empty() ) {
@@ -1628,20 +1635,32 @@ mutagen_attempt mutagen_common_checks( Character &guy, const item &it, bool stro
     return mutagen_attempt( true, 0 );
 }
 
-void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category )
+void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category,
+                              const unsigned short tier )
 {
-    // Threshold-check.  You only get to cross once!
-    if( guy.crossed_threshold() ) {
+    // Can't cross the same tier threshold multiple times
+    if( guy.thresh_tier >= tier ) {
         return;
     }
 
-    // If there is no threshold for this category, don't check it
-    const trait_id &mutation_thresh = m_category.threshold_mut;
-    if( mutation_thresh.is_empty() ) {
+    // No skipping tiers
+    if( guy.thresh_tier < tier - 1 ) {
+        test_crossing_threshold( guy, m_category, tier - 1 );
+        return;
+    }
+
+    // If there is no threshold for this category at this tier, don't check it
+    const std::vector<trait_id> &mutation_thresh = m_category.threshold_muts;
+    if( mutation_thresh.size() < tier + 1 ) {
         return;
     }
 
     mutation_category_id mutation_category = m_category.id;
+    // If you've already passed a threshold, you can't get a different tree's threshold
+    if( ( guy.thresh_tier > 0 ) && ( guy.thresh_category != mutation_category ) ) {
+        return;
+    }
+
     int total = 0;
     for( const auto &iter : mutation_category_trait::get_all() ) {
         total += guy.mutation_category_level[ iter.first ];
@@ -1666,8 +1685,10 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
         if( x_in_y( breacher, total ) ) {
             guy.add_msg_if_player( m_good,
                                    _( "Something strains mightily for a moment… and then… you're… FREE!" ) );
-            guy.set_mutation( mutation_thresh );
+            guy.set_mutation( mutation_thresh[tier] );
             g->events().send<event_type::crosses_mutation_threshold>( guy.getID(), m_category.id );
+            guy.thresh_category = mutation_category; // Set the mutation category for the character
+            guy.thresh_tier++; // Increment mutation tier, since this should always be + 1 tier
             // Manually removing Carnivore, since it tends to creep in
             // This is because carnivore is a prerequisite for the
             // predator-style post-threshold mutations.
@@ -1678,9 +1699,8 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
             }
         }
     } else if( guy.has_trait( trait_NOPAIN ) ) {
-        //~NOPAIN is a post-Threshold trait, so you shouldn't
-        //~legitimately have it and get here!
-        guy.add_msg_if_player( m_bad, _( "You feel extremely Bugged." ) );
+        // With additional tiers of threshold, this is now possible to actually hit
+        guy.add_msg_if_player( m_bad, _( "You feel extremely disappointed as nothing happens." ) );
     } else if( breach_power > 100 ) {
         guy.add_msg_if_player( m_bad, _( "You stagger with a piercing headache!" ) );
         guy.mod_pain_noresist( 8 );

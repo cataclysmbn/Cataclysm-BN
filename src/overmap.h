@@ -479,8 +479,12 @@ class overmap
         const city &get_nearest_city( const tripoint_om_omt &p ) const;
 
         void signal_hordes( const tripoint_rel_sm &p, int sig_power );
+        void signal_nemesis( tripoint_abs_sm p );
         void process_mongroups();
         void move_hordes();
+        void move_nemesis();
+        void place_nemesis( tripoint_abs_omt p );
+        bool remove_nemesis(); // returns true if nemesis found and removed
 
         // Overall terrain
         void place_river( point_om_omt pa, point_om_omt pb );
@@ -624,4 +628,3 @@ const std::string &oter_get_rotation_string( const oter_id &oter );
  * Determine whether provided tile belongs to overmap connection.
  */
 bool belongs_to_connection( const overmap_connection_id &id, const oter_id &oter );
-

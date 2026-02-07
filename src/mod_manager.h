@@ -1,5 +1,7 @@
 #pragma once
 
+#include "catalua_type_operators.h"
+
 #include <cstddef>
 #include <map>
 #include <optional>
@@ -24,7 +26,7 @@ const std::map<std::string, std::string> &get_mod_list_cat_tab();
 struct translatable_mod_info {
     private:
         std::string mod_path;
-        std::string name_raw;
+        std::string name_raw_;
         std::string name_tr;
         std::string description_raw;
         std::string description_tr;
@@ -33,8 +35,9 @@ struct translatable_mod_info {
     public:
         translatable_mod_info();
         translatable_mod_info( std::string name, std::string description, std::string path );
-        std::string name();
-        std::string description();
+        auto name() -> std::string;
+        auto name_raw() const -> std::string;
+        auto description() -> std::string;
 };
 
 struct MOD_INFORMATION {
@@ -42,8 +45,9 @@ struct MOD_INFORMATION {
         mutable translatable_mod_info translatable_info;
 
     public:
-        std::string name() const;
-        std::string description() const;
+        auto name() const -> std::string;
+        auto name_raw() const -> std::string;
+        auto description() const -> std::string;
 
         void set_translatable_info( translatable_mod_info &&tmi ) {
             translatable_info = std::move( tmi );
@@ -96,6 +100,8 @@ struct MOD_INFORMATION {
         bool obsolete = false;
 
         std::pair<int, std::string> category = { -1, "" };
+
+        LUA_TYPE_OPS( MOD_INFORMATION, ident );
 };
 
 namespace mod_management

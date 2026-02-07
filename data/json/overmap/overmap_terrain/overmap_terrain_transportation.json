@@ -486,5 +486,13 @@
     "color": "dark_gray",
     "see_cost": 5,
     "extras": "build"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "billboard_0", "billboard_1", "billboard_2" ],
+    "name": "billboard",
+    "sym": "T",
+    "color": "dark_gray",
+    "see_cost": 1
   }
 ]

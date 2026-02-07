@@ -9,6 +9,7 @@
 #include <vector>
 #include <memory>
 #include <type_traits>
+#include <variant>
 
 #include "enums.h"
 
@@ -341,4 +342,76 @@ class restore_on_out_of_scope
 */
 holiday get_holiday_from_time( std::time_t time = 0, bool force_refresh = false );
 
+template <typename T, std::size_t ... Is>
+constexpr T _pow10p( std::index_sequence<Is...> const & )
+{
+    auto apply = []( size_t, T & v ) { v *= 10; };
+    T ret { 1 };
+    ( apply( Is, ret ), ... );
+    return ret;
+}
 
+template <typename T, std::size_t ... Is>
+constexpr T _pow10n( std::index_sequence<Is...> const & )
+{
+    auto apply = []( size_t, T & v ) { v /= 10; };
+    T ret { 1 };
+    ( apply( Is, ret ), ... );
+    return ret;
+}
+
+template < typename T, int E, std::size_t N = ( E < 0 ? -E : E ) >
+           constexpr T pow10()
+{
+    return E < 0
+               ? _pow10n<T>( std::make_index_sequence<N> {} )
+               : _pow10p<T>( std::make_index_sequence<N> {} );
+}
+
+namespace detail
+{
+template <bool Static, typename T>
+struct variant_cast_impl;
+
+template <bool Static, typename ...Ts>
+struct variant_cast_impl<Static, std::variant<Ts...>> {
+    using target_type = std::variant<Ts...>;
+
+    // DO NOT make this into a lambda, due to an issue with MSVC
+    // where it'll fail the constexpr requires check, and fall into the throw branch,
+    // even with a valid target_type constructor
+    struct visitor {
+        template<typename U>
+        auto operator()( U &&v ) -> target_type {
+            if constexpr( requires { target_type{v}; } ) {
+                return v;
+            } else if constexpr( Static ) {
+                static_assert( !Static, "bad variant cast" );
+            } else {
+                throw std::bad_variant_access();
+            }
+        }
+    };
+
+    template<typename ... Us>
+    auto operator()( const std::variant<Us...> &var ) -> target_type {
+        return std::visit( visitor{}, var );
+    }
+};
+} // namespace detail
+
+/// If the value on source variant does have a valid destination type on destination, throws std::bad_variant_access
+template<typename T, typename U>
+auto dynamic_variant_cast( const U &from ) -> T
+{
+    auto caster = detail::variant_cast_impl<false, T> {};
+    return caster( from );
+}
+
+/// All types on source variant must have a valid destination type on destination, checked at compile time
+template<typename T, typename U>
+auto static_variant_cast( const U &from ) -> T
+{
+    auto caster = detail::variant_cast_impl<true, T> {};
+    return caster( from );
+}

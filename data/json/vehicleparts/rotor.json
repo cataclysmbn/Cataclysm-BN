@@ -73,6 +73,8 @@
       { "item": "steel_chunk", "count": [ 1, 4 ] },
       { "item": "splinter", "count": [ 15, 30 ] }
     ],
+    "extend": { "flags": [ "FOLDABLE" ] },
+    "folded_volume": "50 L",
     "damage_reduction": { "all": 10 }
   },
   {

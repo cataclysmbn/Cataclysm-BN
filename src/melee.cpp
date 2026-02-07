@@ -1,6 +1,7 @@
 #include "melee.h"
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <climits>
 #include <cmath>
@@ -20,6 +21,7 @@
 #include "cached_options.h"
 #include "calendar.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_functions.h"
@@ -331,7 +333,8 @@ float Character::get_hit_weapon( const item &weap, const attack_statblock &attac
     }
 
     /** @EFFECT_MELEE improves hit chance for all items (including non-weapons) */
-    return ( skill / 3.0f ) + ( get_skill_level( skill_melee ) / 2.0f ) + attack.to_hit;
+    return ( skill / 3.0f ) + ( get_skill_level( skill_melee ) / 2.0f ) + attack.to_hit +
+           weap.get_melee_hit_bonus();
 }
 
 float Character::get_melee_hit( const item &weapon, const attack_statblock &attack ) const
@@ -818,10 +821,11 @@ double Character::crit_chance( float roll_hit, float target_dodge, const item &w
         weapon_crit_chance = 0.5 + 0.05 * get_skill_level( skill_unarmed );
     }
 
-    if( attack.to_hit > 0 ) {
-        weapon_crit_chance = std::max( weapon_crit_chance, 0.5 + 0.1 * attack.to_hit );
-    } else if( attack.to_hit < 0 ) {
-        weapon_crit_chance += 0.1 * attack.to_hit;
+    int attack_to_hit = attack.to_hit + weap.get_melee_hit_bonus();
+    if( attack_to_hit > 0 ) {
+        weapon_crit_chance = std::max( weapon_crit_chance, 0.5 + 0.1 * attack_to_hit );
+    } else if( attack_to_hit < 0 ) {
+        weapon_crit_chance += 0.1 * attack_to_hit;
     }
     weapon_crit_chance = limit_probability( weapon_crit_chance );
 
@@ -2426,6 +2430,14 @@ int Character::attack_cost( const item &weap ) const
     move_cost *= stamina_penalty;
     move_cost += skill_cost;
     move_cost -= dexbonus;
+
+    // If we're strong enough to use this weapon one-handed but commit to two-handing it anyway, make it easier to swing.
+    // Limit to weapons over 100 base movecost so you can't do this with weapons that're too small.
+    // Exponential bonus so heavier weapons benefit more than small ones.
+    if( weap.attack_cost() > 100 && !weap.is_two_handed( *this ) &&
+        has_two_arms() && !worn_with_flag( flag_RESTRICT_HANDS ) ) {
+        move_cost = std::pow( move_cost, 0.975f );
+    }
 
     move_cost += bonus_from_enchantments( move_cost, enchant_vals::mod::ATTACK_COST, true );
 

@@ -30,6 +30,7 @@ Vehicle components when installed on a vehicle.
 "wheel_type":                 // (Optional: standard, off-road)
 "contact_area":               // (Optional) Affects vehicle ground pressure
 "cargo_weight_modifier": 33,  // (Optional, default = 100) Modifies cargo weight by set percentage
+"weight_modifier": 33,        // (Optional, default = 100) Modifies base part weight by set percentage
 "fuel_type": "NULL",          // (Optional, default = "NULL") Type of fuel/ammo the part consumes, as an item id
 
 "item": "wheel",              // The item used to install this part, and the item obtained when removing this part
@@ -60,6 +61,7 @@ Vehicle components when installed on a vehicle.
 "height": 5,                  // Optional field, height of balloons in meters ( aka multiplie of their lift )
 "lift_coff": 0.5,             // Optional field, multiplier of wing effectiveness
 "propeller_diameter": 0.5,    // Optional field, diameter of propeller
+"length": 3,                  // Optional field, z-level length of ladder
 ```
 
 ### Integrated Tools
@@ -77,7 +79,7 @@ Most legacy crafting vehiclepart flags have been removed and should be replaced 
 "integrated_tools": [ "dehydrator", "vac_sealer", "food_processor", "press" ],  // Replaces the `CRAFTRIG` flag
 "integrated_tools": [ "chemistry_set", "electrolysis_kit" ],  // Replaces the `CHEMLAB` flag
 "integrated_tools": [ "forge" ],  // Replaces the `FORGE` flag
-"integrated_tools": [ "fake_adv_butchery" ],  // Replaces the `BUTCHER_EQ` flag
+"integrated_tools": [ "fake_adv_butchery" ],  // Needed with the `BUTCHER_EQ` flag
 "integrated_tools": [ "kiln" ],  // Replaces the `KILN` flag
 "integrated_tools": [ "soldering_iron", "welder" ],  // Replaces the tools
 "integrated_tools": [ "water_purifier" ],  // Replaces the tools, but not the ability to purify water in vehicle tanks, of the `WATER_PURIFIER` flag

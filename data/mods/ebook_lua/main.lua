@@ -1,4 +1,4 @@
-local ui = require("ui")
+local ui = require("lib.ui")
 
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
@@ -183,7 +183,7 @@ mod.ebook_scan = function(user, device)
       if sel_scan == 0 then
         if hit_end then
           local YN = ui.query_yn(locale.gettext("WARNING: Not enough battery to scan all books.\nProceed anyway?"))
-          if YN == "YES" then
+          if YN then
             local count2 = 0
             for t_str, _ in pairs(found) do
               mod.insert_lib2(device, t_str)
@@ -191,7 +191,7 @@ mod.ebook_scan = function(user, device)
               if count2 >= dev_limit then break end
             end
             gapi.add_msg(MsgType.good, string.format(locale.gettext("You scanned %d book(s)."), dev_limit))
-            return dev_limit
+            return dev_limit * 10
           else --selected NO
             return -1
           end
@@ -200,7 +200,7 @@ mod.ebook_scan = function(user, device)
             mod.insert_lib2(device, t_str)
           end
           gapi.add_msg(MsgType.good, string.format(locale.gettext("You scanned %d book(s)."), num_found))
-          return num_found
+          return num_found * 10
         end
       else --selected Cancel or pressed ESC
         return -1
@@ -450,7 +450,7 @@ mod.mc_io = function(reader, device)
             ui.query_any_key(string.format(locale.gettext("%s has nothing new books."), that_mc:tname(1, false, 0)))
           else
             ui.query_any_key(
-              string.format(locale.gettext("%d books downloaded from %s."), dl_count, that_mc:tname(1, false, 0))
+              string.format(locale.gettext("%1$d books downloaded from %2$s."), dl_count, that_mc:tname(1, false, 0))
             )
           end
         elseif ans_mc_menu == 2 then --Upload
@@ -468,7 +468,7 @@ mod.mc_io = function(reader, device)
           else
             ui.query_any_key(
               string.format(
-                locale.gettext("%d books uploaded on %s.\nNaming the card is recommended."),
+                locale.gettext("%1$d books uploaded on %2$s.\nNaming the card is recommended."),
                 ul_count,
                 that_mc:tname(1, false, 0)
               )
@@ -485,9 +485,9 @@ mod.mc_io = function(reader, device)
                 that_mc:tname(1, false, 0)
               )
             )
-            if yn1 == "YES" then
+            if yn1 then
               local yn2 = ui.query_yn(locale.gettext("Are you sure to delete book data in the card?"))
-              if yn2 == "YES" then
+              if yn2 then
                 that_mc:erase_var("name")
                 that_mc:erase_var("book_data")
                 ui.query_any_key(locale.gettext("The memory card is reset successfully."))
@@ -579,14 +579,14 @@ mod.ebook_ui = function(who, item, pos)
   uilist:desc_enabled(true)
   uilist:text(
     string.format(
-      locale.gettext("Welcome to e-book library!\nThis device currently holds %d book(s).\nNetwork sync unavilable."),
+      locale.gettext("Welcome to e-book library!\nThis device currently holds %d book(s).\nNetwork sync unavailable."),
       var_count
     )
   )
   uilist:add_w_desc(
     -1,
     locale.gettext("Scan book(s)"),
-    locale.gettext("Scans all the book you have. It will progress instantly.")
+    locale.gettext("Scan all the books you have. It will progress instantly.")
   )
   uilist:add_w_desc(
     -1,

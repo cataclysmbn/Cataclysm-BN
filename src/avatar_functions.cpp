@@ -24,6 +24,7 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
+#include "locations.h"
 
 static const trait_id trait_CHLOROMORPH( "CHLOROMORPH" );
 static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
@@ -565,7 +566,7 @@ void toolmod_add( avatar &you, item &tool, item &mod )
     }
 
     you.assign_activity( activity_id( "ACT_TOOLMOD_ADD" ), 1, -1 );
-    you.activity->tools.emplace_back( &tool );
+    you.activity->add_tool( &tool );
     you.activity->targets.emplace_back( &mod );
 }
 
@@ -588,7 +589,11 @@ void use_item( avatar &you, item &used )
             add_msg( _( "You can't do anything interesting with your %s." ), used.tname() );
             return;
         }
-        you.invoke_item( &used, used.position() );
+        if( used.has_flag( flag_TEMPORARY_ITEM ) ) {
+            you.invoke_item( &used );
+        } else {
+            you.invoke_item( &used, used.position() );
+        }
 
     } else if( is_pet_food( used ) ) {
         you.invoke_item( &used, used.position() );

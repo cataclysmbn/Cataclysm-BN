@@ -16,6 +16,12 @@
     "use_action": [ "RPG_SYSTEM_MENU" ]
   },
   {
+    "id": "morale_damaged_soul",
+    "type": "morale_type",
+    "text": "Your soul burns and aches",
+    "permanent": true
+  },
+  {
     "type": "effect_type",
     "id": "damaged_soul",
     "name": [ "Damaged Soul" ],
@@ -24,7 +30,30 @@
     ],
     "apply_message": "You feel a deep pain in your soul as you abandon your path.",
     "remove_message": "The spiritual damage heals.",
+    "morale": "morale_damaged_soul",
     "rating": "bad",
-    "base_mods": { "str_mod": [ -4 ], "dex_mod": [ -4 ], "int_mod": [ -4 ], "per_mod": [ -4 ], "speed_mod": [ -25 ] }
+    "max_duration": "3 d",
+    "base_mods": {
+      "str_mod": [ -4 ],
+      "dex_mod": [ -4 ],
+      "int_mod": [ -4 ],
+      "per_mod": [ -4 ],
+      "speed_mod": [ -25 ],
+      "pain_amount": [ 2 ],
+      "pain_max": [ 2 ],
+      "pain_max_val": [ 100 ],
+      "morale": [ -20 ]
+    }
+  },
+  {
+    "type": "recipe",
+    "result": "system_interface",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "time": "1 m",
+    "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
+    "components": [ [ [ "rock", 1 ], [ "sharp_rock", 1 ] ] ]
   }
 ]

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "farming_tools",
+    "type": "item_group",
+    "items": [ [ "portable_planter_s", 10 ], [ "portable_planter_m", 5 ] ]
+  },
+  {
+    "id": "science",
+    "type": "item_group",
+    "items": [ [ "portable_planter_l", 1 ] ]
+  }
+]

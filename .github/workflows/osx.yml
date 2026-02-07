@@ -32,25 +32,25 @@ jobs:
       matrix:
         include:
           - name: osx-curses-x64
-            os: macos-13
+            os: macos-15-intel
             tiles: 0
             artifact: osx-curses-x64
             ext: dmg
             content: application/x-apple-diskimage
           - name: osx-tiles-x64
-            os: macos-13
+            os: macos-15-intel
             tiles: 1
             artifact: osx-tiles-x64
             ext: dmg
             content: application/x-apple-diskimage
           - name: osx-curses-arm
-            os: macos-14
+            os: macos-15
             tiles: 0
             artifact: osx-curses-arm
             ext: dmg
             content: application/x-apple-diskimage
           - name: osx-tiles-arm
-            os: macos-14
+            os: macos-15
             tiles: 1
             artifact: osx-tiles-arm
             ext: dmg
@@ -77,10 +77,22 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl2 sdl2_image sdl2_ttf sdl2_mixer gettext ccache parallel llvm@20 astyle sqlite3 zlib
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl2 sdl2_image sdl2_ttf sdl2_mixer gettext parallel llvm@20 astyle sqlite3 zlib
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.artifact }}-${{ github.ref_name }}
+          restore-keys: |
+            ${{ matrix.artifact }}-${{ github.ref_name }}
+            ${{ matrix.artifact }}-main
+            ${{ matrix.artifact }}-
+          max-size: 500M
+          verbose: 2
+          save: ${{ github.event_name != 'pull_request' }}
 
       - name: Check Clang OK
         run: |
@@ -90,4 +102,4 @@ jobs:
       - name: Build
         run: |
           source ./venv/bin/activate
-          make -j3 TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LANGUAGES=all USE_HOME_DIR=1 OSX_MIN=11 PCH=0 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist
+          make -j3 CCACHE=1 TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LANGUAGES=all USE_HOME_DIR=1 OSX_MIN=11 PCH=0 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist

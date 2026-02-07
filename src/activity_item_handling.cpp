@@ -68,6 +68,7 @@
 #include "stomach.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "trap.h"
 #include "units.h"
@@ -325,6 +326,22 @@ static void stash_on_pet( std::vector<detached_ptr<item>> &items, monster &pet,
     }
 }
 
+// Helper function to collect names of all favorited items (including contents)
+static auto collect_favorited_item_names( const item &it ) -> std::vector<std::string>
+{
+    std::vector<std::string> favorited_names;
+    if( it.is_favorite ) {
+        favorited_names.push_back( it.display_name() );
+    }
+
+    auto favorited_contents = it.contents.all_items_ptr()
+    | std::views::filter( []( const item * i ) { return i->is_favorite; } )
+    | std::views::transform( []( const item * i ) { return i->display_name(); } );
+
+    std::ranges::copy( favorited_contents, std::back_inserter( favorited_names ) );
+    return favorited_names;
+}
+
 void drop_on_map( Character &c, item_drop_reason reason,
                   detached_ptr<item> &&it,
                   const tripoint &where )
@@ -397,8 +414,9 @@ void drop_on_map( Character &c, item_drop_reason reason,
 
         if( get_option<bool>( "AUTO_NOTES_DROPPED_FAVORITES" ) && it->is_favorite ) {
             const tripoint_abs_omt your_pos = c.global_omt_location();
+            const std::string sprite_prefix = "SPRITE:" + it->typeId().str() + ";";
             if( !overmap_buffer.has_note( your_pos ) ) {
-                overmap_buffer.add_note( your_pos, it->display_name() );
+                overmap_buffer.add_note( your_pos, sprite_prefix + it->display_name() );
             } else {
                 overmap_buffer.add_note( your_pos, overmap_buffer.note( your_pos ) + "; " + it->display_name() );
             }
@@ -428,6 +446,24 @@ void drop_on_map( Character &c, item_drop_reason reason,
                 break;
         }
     }
+    if( get_option<bool>( "AUTO_NOTES_DROPPED_FAVORITES" ) ) {
+        const tripoint_abs_omt your_pos = c.global_omt_location();
+
+        auto all_favorited_names = items
+        | cata::ranges::flat_map( []( const auto & it ) { return collect_favorited_item_names( *it ); } )
+        | std::ranges::to<std::vector>();
+
+        if( !all_favorited_names.empty() ) {
+            const auto note_text = join( all_favorited_names, "; " );
+
+            if( !overmap_buffer.has_note( your_pos ) ) {
+                overmap_buffer.add_note( your_pos, note_text );
+            } else {
+                overmap_buffer.add_note( your_pos, overmap_buffer.note( your_pos ) + "; " + note_text );
+            }
+        }
+    }
+
     for( auto &it : items ) {
         item &obj = *it;
         here.add_item_or_charges( where, std::move( it ) );
@@ -734,6 +770,8 @@ void drop_activity_actor::do_turn( player_activity &, Character &who )
 
     put_into_vehicle_or_drop( who, item_drop_reason::deliberate,
                               dropped, pos, force_ground );
+
+    get_map().process_falling();
 
     if( items.empty() ) {
         who.cancel_activity();
@@ -2418,7 +2456,7 @@ static bool mine_activity( player &p, const tripoint &src_loc )
         moves /= 2;
     }
     p.assign_activity( powered ? ACT_JACKHAMMER : ACT_PICKAXE, moves );
-    p.activity->tools.emplace_back( chosen_item );
+    p.activity->add_tool( chosen_item );
     p.activity->placement = here.getabs( src_loc );
     return true;
 
@@ -2438,12 +2476,12 @@ static bool chop_tree_activity( player &p, const tripoint &src_loc )
     const ter_id ter = here.ter( src_loc );
     if( here.has_flag( flag_TREE, src_loc ) ) {
         p.assign_activity( ACT_CHOP_TREE, moves, -1, p.get_item_position( best_qual ) );
-        p.activity->tools.emplace_back( best_qual );
+        p.activity->add_tool( best_qual );
         p.activity->placement = here.getabs( src_loc );
         return true;
     } else if( ter == t_trunk || ter == t_stump ) {
         p.assign_activity( ACT_CHOP_LOGS, moves, -1, p.get_item_position( best_qual ) );
-        p.activity->tools.emplace_back( best_qual );
+        p.activity->add_tool( best_qual );
         p.activity->placement = here.getabs( src_loc );
         return true;
     }
@@ -2918,7 +2956,7 @@ static bool generic_multi_activity_do( player &p, const activity_id &act_id,
         item *best_rod = p.best_quality_item( qual_FISHING );
         p.assign_activity( std::make_unique<player_activity>( ACT_FISH, to_moves<int>( 5_hours ), 0,
                            0, best_rod->tname() ) );
-        p.activity->tools.emplace_back( best_rod );
+        p.activity->add_tool( best_rod );
         p.activity->coord_set = g->get_fishable_locations( ACTIVITY_SEARCH_DISTANCE, src_loc );
         return false;
     } else if( reason == do_activity_reason::NEEDS_MINING ) {
@@ -3278,7 +3316,7 @@ void try_fuel_fire( player_activity &act, player &p, const bool starting_fire )
         // If we specifically need tinder to start this fire, grab it the instant it's found and ignore any other fuel
         if( starting_fire ) {
             // Only track firestarter if we have an activity assigned to light a new fire, or it will implode.
-            item &firestarter = *act.tools.front();
+            item &firestarter = *act.get_tools().front();
             if( firestarter.has_flag( flag_REQUIRES_TINDER ) ) {
                 if( it->has_flag( flag_TINDER ) ) {
                     move_item( p, *it, 1, *refuel_spot, *best_fire );

@@ -481,6 +481,7 @@ static void damage_targets( const spell &sp, Creature &caster,
                             const std::set<tripoint> &targets )
 {
     bool sound_played = false;
+    const int affected = std::ranges::count_if( targets, [&]( const auto & target ) { return g->critter_at<Creature>( target ) != nullptr; } );
     for( const tripoint &target : targets ) {
         if( !sp.is_valid_target( caster, target ) ) {
             continue;
@@ -499,6 +500,9 @@ static void damage_targets( const spell &sp, Creature &caster,
         bolt.speed = 10000;
         bolt.impact = ( caster.is_monster() ) ? sp.get_damage_instance() : sp.get_damage_instance(
                           *caster.as_character() );
+        if( sp.has_flag( spell_flag::DIVIDE_DAMAGE ) ) {
+            bolt.impact.mult_damage( 1.0f / affected );
+        }
         bolt.add_effect( ammo_effect_magic );
 
         dealt_projectile_attack atk;
@@ -892,6 +896,7 @@ void spell_effect::spawn_ethereal_item( const spell &sp, Creature &caster, const
     if( !granted->is_comestible() && !( sp.has_flag( spell_flag::PERMANENT ) ) ) {
         granted->set_var( "ethereal", to_turns<int>( sp.duration_turns() ) );
         granted->set_flag( flag_id( "ETHEREAL_ITEM" ) );
+        granted->set_flag( flag_id( "NO_SALVAGE" ) );
     }
     if( granted->count_by_charges() && sp.damage() > 0 ) {
         granted->charges = sp.damage();
@@ -1046,8 +1051,13 @@ void spell_effect::spawn_summoned_vehicle( const spell &sp, Creature &caster,
         caster.add_msg_if_player( m_bad, _( "There is already a vehicle there." ) );
         return;
     }
-    if( vehicle *veh = here.add_vehicle( sp.summon_vehicle_id(), target, -90_degrees, 100, 0 ) ) {
+    vehicle *veh = here.add_vehicle( sp.summon_vehicle_id(), target, -90_degrees, 100, 0, false, false,
+                                     true );
+    if( veh ) {
         veh->magic = true;
+        if( caster.is_player() ) {
+            veh->set_owner( *caster.as_player() );
+        }
         const time_duration summon_time = sp.duration_turns();
         if( !sp.has_flag( spell_flag::PERMANENT ) ) {
             veh->summon_time_limit = summon_time;

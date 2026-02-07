@@ -1,5 +1,7 @@
 #pragma once
 
+#include "catalua_type_operators.h"
+
 #include <string>
 #include <utility>
 
@@ -27,5 +29,8 @@ class ammunition_type
         static void load_ammunition_type( const JsonObject &jsobj );
         static void reset();
         static void check_consistency();
+
+    public:
+        LUA_TYPE_OPS( ammunition_type, default_ammotype_ );
 };
 

@@ -4,7 +4,7 @@
     "id": "RPG_WARRIOR",
     "name": "[Warrior]",
     "points": 0,
-    "description": "Through rigorous training, you've honed your body. Your endurance is exceptional, you never tire. Every 5 minutes: reduce fatigue, increase stamina. Per level: +0.55 STR, +0.2 DEX, +0.1 INT, +0.15 PER",
+    "description": "Through rigorous training, you've honed your body. Your endurance is exceptional, you tire slowly. Every 5 minutes increase stamina. Per level: +0.55 STR, +0.2 DEX, +0.1 INT, +0.15 PER",
     "valid": false,
     "purifiable": false,
     "player_display": true
@@ -14,7 +14,7 @@
     "id": "RPG_BERSERKER",
     "name": "[Berserker]",
     "points": 0,
-    "description": "Rage fuels your strikes. Your fury makes you strike 15% faster. Your endurance is exceptional, you never tire. Every 5 minutes: reduce fatigue, increase stamina. Per level: +0.75 STR, +0.45 DEX, +0.1 INT, +0.2 PER",
+    "description": "Rage fuels your strikes. Your fury makes you strike 15% faster. Your endurance is exceptional, you tire slowly. Every 5 minutes increase stamina. Per level: +0.75 STR, +0.45 DEX, +0.1 INT, +0.2 PER",
     "valid": false,
     "purifiable": false,
     "player_display": true,
@@ -25,11 +25,11 @@
     "id": "RPG_GUARDIAN",
     "name": "[Guardian]",
     "points": 0,
-    "description": "A living shield, protecting all. Your skin is naturally armored (+3 physical armor). Your endurance is exceptional, you never tire. Every 5 minutes: reduce fatigue, increase stamina. Per level: +0.6 STR, +0.15 DEX, +0.15 INT, +0.6 PER",
+    "description": "A living shield, protecting all. Your skin is naturally armored (+4 physical armor). Your endurance is exceptional, you tire slowly. Every 5 minutes increase stamina. Per level: +0.6 STR, +0.15 DEX, +0.15 INT, +0.6 PER",
     "valid": false,
     "purifiable": false,
     "player_display": true,
-    "armor": [ { "parts": "ALL", "physical": 3 } ]
+    "armor": [ { "parts": "ALL", "physical": 4 } ]
   },
   {
     "type": "mutation",
@@ -61,21 +61,30 @@
     "id": "RPG_SCHOLAR",
     "name": "[Scholar]",
     "points": 0,
-    "description": "Knowledge is your greatest weapon. Your hands work with supernatural speed (+25% crafting speed, +50% reading speed). Moderate mana reserves (+800 mana, +20% mana regen). Per level: +0.1 STR, +0.3 DEX, +0.8 INT, +0.3 PER",
+    "description": "Knowledge flows to you effortlessly. You read with supernatural comprehension (+100% reading speed). Moderate mana reserves (+800 mana, +20% mana regen). Per level: +0.05 STR, +0.15 DEX, +0.8 INT, +0.5 PER",
     "valid": false,
     "purifiable": false,
     "player_display": true,
     "mana_modifier": 800,
     "mana_regen_multiplier": 1.2,
-    "crafting_speed_modifier": 1.25,
-    "reading_speed_multiplier": 1.5
+    "reading_speed_multiplier": 0.5
+  },
+  {
+    "type": "mutation",
+    "id": "RPG_ROGUE",
+    "name": "[Rogue]",
+    "points": 0,
+    "description": "Cunning and dexterous. A master of finesse and guile. Per level: +0.1 STR, +0.55 DEX, +0.15 INT, +0.2 PER",
+    "valid": false,
+    "purifiable": false,
+    "player_display": true
   },
   {
     "type": "mutation",
     "id": "RPG_SCOUT",
     "name": "[Scout]",
     "points": 0,
-    "description": "Swift and aware. Your movements are unnaturally fast (5% faster movement, +1 speed per level). Per level: +0.1 STR, +0.55 DEX, +0.05 INT, +0.3 PER",
+    "description": "Master tracker and observer. Your senses are razor sharp. Your movements are unnaturally fast (5% faster movement, +1 speed per level). Per level: +0.15 STR, +0.3 DEX, +0.05 INT, +0.5 PER",
     "valid": false,
     "purifiable": false,
     "player_display": true,
@@ -83,30 +92,63 @@
   },
   {
     "type": "mutation",
-    "id": "RPG_RANGER",
-    "name": "[Ranger]",
+    "id": "RPG_ACROBAT",
+    "name": "[Acrobat]",
     "points": 0,
-    "description": "Master of the wilds. You see clearly in darkness (night vision 20 tiles). You never need water (heavy thirst reduction every 5 min). Your movements are unnaturally fast (8% faster movement, +1 speed per level). Per level: +0.15 STR, +0.65 DEX, +0.1 INT, +0.6 PER",
+    "description": "A blur of graceful motion. Your reflexes are supernatural (+6 dodge bonus). Your movements flow with impossible speed (8% faster movement, +1.5 speed per level). Per level: +0.1 STR, +0.8 DEX, +0.2 INT, +0.4 PER",
     "valid": false,
     "purifiable": false,
     "player_display": true,
     "movecost_modifier": 0.92,
-    "night_vision_range": 20
+    "dodge_modifier": 6
   },
   {
     "type": "mutation",
     "id": "RPG_ASSASSIN",
     "name": "[Assassin]",
     "points": 0,
-    "description": "A shadow striking without warning. You move in complete silence (-40% noise, +30% hearing). You are nearly invisible (+50% stealth). Your movements blur with supernatural speed (12% faster movement, +5% speed multiplier, +2 speed per level). Per level: +0.1 STR, +0.75 DEX, +0.35 INT, +0.3 PER",
+    "description": "A shadow striking without warning. You move in complete silence (-40% noise, +30% hearing). You are nearly invisible (+50% stealth). Your movements blur with supernatural speed (8% faster movement, +1.5 speed per level). Per level: +0.1 STR, +0.75 DEX, +0.35 INT, +0.3 PER",
     "valid": false,
     "purifiable": false,
     "player_display": true,
-    "movecost_modifier": 0.88,
-    "speed_modifier": 1.05,
+    "movecost_modifier": 0.92,
     "hearing_modifier": 1.3,
     "noise_modifier": 0.6,
     "stealth_modifier": 1.5
+  },
+  {
+    "type": "mutation",
+    "id": "RPG_RANGER",
+    "name": "[Ranger]",
+    "points": 0,
+    "description": "Master sharpshooter with perfect aim. You see clearly in darkness (night vision 20 tiles). You require less water (half at level 10, none at 20). Your movements are unnaturally fast (5% faster movement, +1 speed per level). Per level: +0.15 STR, +0.45 DEX, +0.1 INT, +0.8 PER",
+    "valid": false,
+    "purifiable": false,
+    "player_display": true,
+    "movecost_modifier": 0.95,
+    "night_vision_range": 20
+  },
+  {
+    "type": "mutation",
+    "id": "RPG_CRAFTSMAN",
+    "name": "[Craftsman]",
+    "points": 0,
+    "description": "Master of all trades. Your skilled hands work with incredible precision (+1 to all crafting skills, +40% crafting speed). Per level: +0.2 STR, +0.3 DEX, +0.4 INT, +0.6 PER",
+    "valid": false,
+    "purifiable": false,
+    "player_display": true,
+    "craft_skill_bonus": [
+      [ "electronics", 4 ],
+      [ "tailor", 4 ],
+      [ "mechanics", 4 ],
+      [ "firstaid", 4 ],
+      [ "computer", 4 ],
+      [ "traps", 4 ],
+      [ "fabrication", 4 ],
+      [ "cooking", 4 ],
+      [ "survival", 4 ]
+    ],
+    "crafting_speed_modifier": 1.4
   },
   {
     "type": "mutation",
@@ -123,7 +165,7 @@
     "id": "RPG_TRAIT_VITAL_ESSENCE",
     "name": "[Vital Essence]",
     "points": 0,
-    "description": "Life energy flows through you. You are perpetually healthy and healing (increases health by 0.1 per level every 5 minutes).",
+    "description": "Life energy flows through you. You are perpetually healthy and healing (increases health by 0.02 per level every 5 minutes).",
     "valid": false,
     "purifiable": false,
     "player_display": true
@@ -154,11 +196,11 @@
     "id": "RPG_TRAIT_LIGHTWEIGHT",
     "name": "[Lightweight Frame]",
     "points": 0,
-    "description": "Your body is optimized for speed over strength. You move much faster but can't carry as much (15% faster movement, 25% less carry capacity).",
+    "description": "Your body is optimized for speed over strength. You move much faster but can't carry as much (25% faster movement, 25% less carry capacity).",
     "valid": false,
     "purifiable": false,
     "player_display": true,
-    "movecost_modifier": 0.85,
+    "movecost_modifier": 0.75,
     "weight_capacity_modifier": 0.75
   },
   {
@@ -406,5 +448,15 @@
     "purifiable": false,
     "player_display": true,
     "butchering_quality": 40
+  },
+  {
+    "type": "mutation",
+    "id": "RPG_TRAIT_VAMPIRIC",
+    "name": "[Vampiric]",
+    "points": 0,
+    "description": "You drain life essence from your foes. Heal for 0.5% of monster's max HP per level (minimum 1 HP) on kill.",
+    "valid": false,
+    "purifiable": false,
+    "player_display": true
   }
 ]

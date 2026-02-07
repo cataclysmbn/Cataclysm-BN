@@ -189,6 +189,8 @@ class avatar : public player
 
         bool is_hallucination() const override;
 
+        auto is_dead_state() const -> bool override;
+
         pimpl<teleporter_list> translocators;
 
         int get_str_base() const override;
@@ -200,8 +202,8 @@ class avatar : public player
         int free_upgrade_points() const;
         // how much "kill xp" you have
         int kill_xp() const;
-        // how much "kill xp" needed for next point (empty if reached max level)
-        std::optional<int> kill_xp_for_next_point() const;
+        // how much "kill xp" needed for next point
+        int kill_xp_for_next_point() const;
         // upgrade stat from kills
         void upgrade_stat( character_stat stat );
 

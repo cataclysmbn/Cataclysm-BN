@@ -126,7 +126,7 @@
           { "id": "iron_ore", "fg": 111 },
           { "id": "m1874_gatling", "fg": 112 },
           { "id": "overlay_wielded_m1874_gatling", "fg": 113 },
-          { "id": "vp_mounted_m1874_gatling", "fg": 114 },
+          { "id": "vp_mounted_m1874_gatling", "fg": 114, "rotates": true },
           { "id": "mon_zombie_acid_mortar", "fg": 115 },
           { "id": "corpse_mon_zombie_acid_mortar", "fg": 116 },
           { "id": "mon_zombie_acid_spawner", "fg": 117 },
@@ -204,7 +204,7 @@
             "additional_tiles": [ { "id": "broken", "fg": 160 } ]
           },
           {
-            "id": "vp_propeller_metal",
+            "id": [ "vp_propeller_metal", "vp_propeller_wood" ],
             "fg": 161,
             "rotates": true,
             "multitile": true,
@@ -223,7 +223,48 @@
           { "id": [ "overlay_worn_shield_bronze", "overlay_wielded_shield_bronze" ], "fg": 168 },
           { "id": "shield_scute", "fg": 169 },
           { "id": [ "overlay_worn_shield_scute", "overlay_wielded_shield_scute" ], "fg": 170 },
-          { "id": [ "overlay_worn_shield_ballistic_large", "overlay_worn_shield_ballistic_large" ], "fg": 171 }
+          { "id": [ "overlay_worn_shield_ballistic_large", "overlay_worn_shield_ballistic_large" ], "fg": 171 },
+          {
+            "id": [
+              "vp_mounted_huge_crossbow",
+              "vp_mounted_rep_crossbow",
+              "vp_mounted_carbon_rep_crossbow",
+              "vp_mounted_launcher_ballista"
+            ],
+            "fg": 172,
+            "rotates": true
+          },
+          { "id": "bat_metal_bolted", "fg": 173 },
+          { "id": "overlay_wielded_bat_metal_bolted", "fg": 174 },
+          { "id": "ar10", "fg": 176 },
+          { "id": "overlay_wielded_ar10", "fg": 177 },
+          { "id": [ "overlay_wielded_saiga_12", "overlay_wielded_saiga_410" ], "fg": 179 },
+          {
+            "id": [
+              "vp_wing_wood_horizontal",
+              "vp_lit_wing_wood_horizontal",
+              "vp_wing_wood_external_horizontal",
+              "vp_lit_wing_wood_external_horizontal"
+            ],
+            "fg": 180,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 181 } ]
+          },
+          {
+            "id": [ "vp_wing_wood_left", "vp_lit_wing_wood_left", "vp_wing_wood_external_left", "vp_lit_wing_wood_external_left" ],
+            "fg": 182,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 183 } ]
+          },
+          {
+            "id": [ "vp_wing_wood_right", "vp_lit_wing_wood_right", "vp_wing_wood_external_right", "vp_lit_wing_wood_external_right" ],
+            "fg": 184,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 185 } ]
+          }
         ],
         "sprite_width": 32,
         "sprite_height": 32

@@ -14,7 +14,7 @@
     "container": "pressurized_tank_chem",
     "phase": "liquid",
     "ammo_type": "chemical_spray",
-    "range": 4,
+    "range": 8,
     "count": 800,
     "effects": [ "TOXICGAS", "NEVER_MISFIRES", "JET" ]
   },
@@ -33,7 +33,7 @@
     "container": "pressurized_tank_chem",
     "phase": "liquid",
     "ammo_type": "chemical_spray",
-    "range": 4,
+    "range": 8,
     "count": 800,
     "effects": [ "GAS_FUNGICIDAL", "STREAM_GAS_FUNGICIDAL", "NEVER_MISFIRES", "JET" ]
   },
@@ -52,7 +52,7 @@
     "container": "pressurized_tank_chem",
     "phase": "liquid",
     "ammo_type": "chemical_spray",
-    "range": 4,
+    "range": 8,
     "count": 800,
     "effects": [ "GAS_INSECTICIDAL", "STREAM_GAS_INSECTICIDAL", "NEVER_MISFIRES", "JET" ]
   }

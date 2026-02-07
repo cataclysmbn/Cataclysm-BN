@@ -15,6 +15,16 @@ feat: add new mutation
 feat(port): port mutation description from DDA
 ```
 
+The PR title should be easy to understand for players at a glance. It's recommended to use imperative and descriptive title (`<verb> <noun>`) like:
+
+```diff
+- feat: rebalancing some rifles
++ feat: nerf jam chance of m16 and m4
+```
+
+before: it's hard to know whether they are buffed or nerfed, and which rifles are changed unless reading the full PR description.
+after: it's easy to understand what exactly is changed from the title itself.
+
 ## Type
 
 The type is the first word in the PR title. They specify the type of change being made. When in
@@ -89,10 +99,25 @@ feat: semi-plausible smokeless gunpowder recipe
 feat(port): game store
 ```
 
+### `lua`: Changes to Lua API
+
+Changes to the Lua API, such as:
+
+- [adding new bindings](../mod/lua/guides/binding.md)
+- improving lua documentation/API generation
+- [migrating hardcoded C++ features to lua](https://github.com/cataclysmbn/Cataclysm-BN/pull/6901)
+
+Example PR title:
+
+```
+feat(lua): add dialogue bindings
+```
+
 ### `UI`: Interfaces
 
 UI/UX changes like:
 
+- adding mouse support
 - adding/adjusting menus
 - change shortcuts
 - streamlining workflows
@@ -113,7 +138,7 @@ Improve translation and other languages support.
 fix(UI,i18n): recipe names not translated unless learned
 ```
 
-### `mods/<MOD_ID>`: Mods
+### `mods` or `mods/<MOD_ID>`: Mods
 
 - changes contained within a mod
 - extends what is capable within a mod
@@ -122,7 +147,7 @@ Example PR title:
 
 ```
 feat(mods/Magical_Nights): add missing owlbear pelts recipe
-fix(mods/no_hope): No Hope doesn't make the world freezing
+fix(mods): No Hope doesn't make the world freezing
 ```
 
 ### `balance`: Balance Changes

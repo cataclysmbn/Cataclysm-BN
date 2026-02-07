@@ -57,6 +57,9 @@
   "into": "flour",                           // The item id of the product. Product MUST be something that uses charges.
   "conversion_rate": 4                       // Number of products per item consumed. At a conversion_rate of 4, 1 item is milled into 4 product. Only accepts integers.
 },
+"item_vars": {                               // Prepopulate Item Vars; Currently used by nothing other then mods and in game logic
+  "test": "test"                             // Predominately lua mods will find this useful
+}
 "explode_in_fire": true,                     // Should the item explode if set on fire
 "explosion": {                               // Physical explosion data
   "damage": 10,                              // Damage the explosion deals to player at epicenter. Damage is halved above 50% radius.
@@ -71,6 +74,7 @@
     }
   }
 },
+"repair_difficulty": 2                       // Overrites recipe difficulty being used for repair difficulty
 ```
 
 #### damage_instance
@@ -174,9 +178,9 @@ Pet armor can be defined like this:
 "storage" : 0,        //  (Optional, default = 0) How many volume storage slots it adds
 "environmental_protection" : 0,  //  (Optional, default = 0) How much environmental protection it affords
 "material_thickness" : 1,  // Thickness of material, in millimeter units (approximately).  Generally ranges between 1 - 5, more unusual armor types go up to 10 or more
-"pet_bodytype":        // the body type of the pet that this monster will fit.  See MONSTERS.md
-"max_pet_vol:          // the maximum volume of the pet that will fit into this armor. Volume in ml and L can be used - "50 ml" or "2 L".
-"min_pet_vol:          // the minimum volume of the pet that will fit into this armor. Volume in ml and L can be used - "50 ml" or "2 L".
+"pet_bodytype": "dog",       // the body type of the pet that this monster will fit.  See MONSTERS.md
+"max_pet_vol": "50 ml",   // the maximum volume of the pet that will fit into this armor. Volume in ml and L can be used - "50 ml" or "2 L".
+"min_pet_vol": "50 ml",   // the minimum volume of the pet that will fit into this armor. Volume in ml and L can be used - "50 ml" or "2 L".
 "power_armor" : false, // If this is a power armor item (those are special).
 ```
 
@@ -221,7 +225,7 @@ Alternately, every item (tool, gun, even food) can be used as book if it has boo
 "book_data" : {       // additionally the same book data like above
     "max_level" : 5,
     "intelligence" : 11,
-    "time" : 35,
+    "time" : "35 m",
     "fun" : -2,
     "skill" : "computer",
     "chapters" : 4,
@@ -319,7 +323,7 @@ When adding a new book, please use this color key:
 A few exceptions to this color key may apply, for example for books that don’t are what they seem to
 be. Never use `yellow` and `red`, those colors are reserved for sounds and infrared vision.
 
-####CBMs
+#### CBMs
 
 CBMs can be defined like this:
 
@@ -542,14 +546,14 @@ Gun mods can be defined like this:
                                // Additionally some gunmod specific entries:
 "location": "stock",           // Mandatory. Where is this gunmod is installed?
 "mod_targets": [ "crossbow" ], // Optional. What specific weapons can this gunmod be used with?
-"mod_target_category": [ [ "BOWS" ] ], // Optional. What specific weapon categories can this gunmod be used with?
+"mod_target_category": [ [ "BOWS" ] ], // Optional. Weapon category requirements. Inner arrays are AND, outer array is OR. E.g. [["RIFLES","AUTOLOADING"]] = RIFLE AND AUTOLOADING; [["PISTOLS"],["REVOLVERS"]] = PISTOL OR REVOLVER.
 "mod_exclusions": [ "laser_rifle" ], // Optional. What specific weapons can't this gunmod be used with?
-"mod_exclusion_category": [ [ "ENERGY_WEAPONS" ] ], // Optional. What specific weapon categories can't this gunmod be used with?
+"mod_exclusion_category": [ [ "ENERGY_WEAPONS" ] ], // Optional. Excluded weapon categories. Same logic as mod_target_category - matching any inner array prevents installation.
 "acceptable_ammo": [ "9mm" ],  // Optional filter restricting mod to guns with those base (before modifiers) ammo types
 "install_time": "30 s",        // Optional time installation takes. Installation is instantaneous if unspecified. An integer will be read as moves or a time string can be used.
 "ammo_modifier": [ "57" ],     // Optional field which if specified modifies parent gun to use these ammo types
-"magazine_adaptor": [ [ "223", [ "stanag30" ] ] ], // Optional field which changes the types of magazines the parent gun accepts
-"mode_modifier": [ [ "AUTO", "auto", 5 ] ]         // Optional field which adds new firing modes to a weapon
+"magazine_adaptor": [ [ "223", [ "stanag30" ] ] ], // Optional. Array of [ammotype, [...magazines]] pairs. Overrides the weapon's compatible magazines for that ammo type.
+"mode_modifier": [ [ "AUTO", "auto", 5 ] ],       // Optional. Array of [mode_id, mode_name, burst_size, [...flags]?] arrays. Adds firing modes to the weapon. Optional flags array can include "MELEE", "REACH_ATTACK", etc.
 "damage_modifier": -1,         // Optional field increasing or decreasing base gun damage
 "dispersion_modifier": 15,     // Optional field increasing or decreasing base gun dispersion
 "loudness_modifier": 4,        // Optional field increasing or decreasing base guns loudness
@@ -566,7 +570,7 @@ Gun mods can be defined like this:
 Alternately, every item (book, tool, armor, even food) can be used as a gunmod if it has
 gunmod_data:
 
-```
+```json
 "type": "TOOL",       // Or any other item type
 ...                   // same entries as for the type (e.g. same entries as for any tool),
 "gunmod_data" : {
@@ -605,7 +609,7 @@ gunmod_data:
 "to_hit": 3,          // To-hit bonus if using it as a melee weapon
 "max_charges": 75,    // Maximum charges tool can hold
 "initial_charges": 75, // Charges when spawned
-"rand_charges: [10, 15, 25], // Randomize the charges when spawned. This example has a 50% chance of rng(10, 15) charges and a 50% chance of rng(15, 25) (The endpoints are included)
+"rand_charges": [10, 15, 25], // Randomize the charges when spawned. This example has a 50% chance of rng(10, 15) charges and a 50% chance of rng(15, 25) (The endpoints are included)
 "sub": "hotplate",    // optional; this tool has the same functions as another tool
 "charge_factor": 5,   // this tool uses charge_factor charges for every charge required in a recipe; intended for tools that have a "sub" field but use a different ammo that the original tool
 "charges_per_use": 1, // Charges consumed per tool use
@@ -786,7 +790,7 @@ machines.
 
 ```json
 "fuel" : {
-    energy": 34.2,               // battery charges per mL of fuel. batteries have energy 1
+    "energy": 34.2,               // battery charges per mL of fuel. batteries have energy 1
                                  // is also MJ/L from https://en.wikipedia.org/wiki/Energy_density
                                  // assumes stacksize 250 per volume 1 (250mL). Multiply
                                  // by 250 / stacksize * volume for other stack sizes and
@@ -819,11 +823,11 @@ more structured function.
     "transform_charges": 1,         // Number of charges used by item when it transforms.
     "need_charges": 1,                      // Number of charges the item needs to transform. Just a check, nothing is consumed.
     "need_charges_msg": "The lamp is empty.", // Message to display if there aren't enough charges.
-    "need_worn": true;                        // Whether the item needs to be worn to be transformed, is false by default.
+    "need_worn": true,                        // Whether the item needs to be worn to be transformed, is false by default.
     "need_wielding": false,             // Whether the item needs to be wielded to be transformed, false by default.
     "need_dry": false,                  // Whether the item cannot transform while submerged in water, false by default.
     "target_charges" : 3, // Number of charges the transformed item has.
-    "rand_target_charges: [10, 15, 25], // Randomize the charges the transformed item has. This example has a 50% chance of rng(10, 15) charges and a 50% chance of rng(15, 25) (The endpoints are included)
+    "rand_target_charges": [10, 15, 25], // Randomize the charges the transformed item has. This example has a 50% chance of rng(10, 15) charges and a 50% chance of rng(15, 25) (The endpoints are included)
     "container" : "jar",  // Container holding the target item.
     "moves" : 500         // Moves required to transform the item in excess of a normal action.
 },
@@ -1090,7 +1094,7 @@ more structured function.
     "spell_id": "magus_escape", // The ID of the spell to be casted
     "no_fail": true,            // Whether you can fail the cast
     "level": 10,                // The level its cast at
-    "need_worn": true           // if you need to wear it to cast the spell
+    "need_worn": true,           // if you need to wear it to cast the spell
     "need_wielding": true       // if you need to wield it to cast the spell
 }
 ```
@@ -1100,7 +1104,7 @@ more structured function.
 Any item with a "snippet_category" entry will have random descriptions, based on that snippet
 category:
 
-```
+```json
 "snippet_category": "newspaper",
 ```
 
@@ -1137,7 +1141,7 @@ a random one for each item of that type.
 
 One can also put the snippets directly in the item definition:
 
-```
+```json
 "snippet_category": [ "text 1", "text 2", "text 3" ],
 ```
 

@@ -2777,12 +2777,16 @@ void apply_function( const string_id<map_extra> &id, map &m, const tripoint &abs
 
         // Only place note if the user has not disabled it via the auto note manager
         if( autoNoteSettings.has_auto_note_enabled( id ) ) {
+            std::string sprite_prefix;
+            if( extra.looks_like && !extra.looks_like->empty() ) {
+                sprite_prefix = "SPRITE:" + *extra.looks_like + ";";
+            }
             const std::string mx_note =
-                string_format( "%s:%s;<color_yellow>%s</color>: <color_white>%s</color>",
-                               extra.get_symbol(),
-                               get_note_string_from_color( extra.color ),
-                               extra.name(),
-                               extra.description() );
+                sprite_prefix + string_format( "%s:%s;<color_yellow>%s</color>: <color_white>%s</color>",
+                                               extra.get_symbol(),
+                                               get_note_string_from_color( extra.color ),
+                                               extra.name(),
+                                               extra.description() );
             // TODO: fix point types
             overmap_buffer.add_note( tripoint_abs_omt( sm_to_omt_copy( abs_sub ) ), mx_note );
         }
@@ -2876,6 +2880,7 @@ void map_extra::load( const JsonObject &jo, const std::string & )
     }
     optional( jo, was_loaded, "sym", symbol, unicode_codepoint_from_symbol_reader, NULL_UNICODE );
     color = jo.has_member( "color" ) ? color_from_string( jo.get_string( "color" ) ) : c_white;
+    optional( jo, was_loaded, "looks_like", looks_like );
     optional( jo, was_loaded, "autonote", autonote, false );
 }
 
@@ -2884,6 +2889,9 @@ extern std::map<std::string, std::vector<std::unique_ptr<update_mapgen_function_
 
 void map_extra::check() const
 {
+    if( looks_like && looks_like->empty() ) {
+        debugmsg( "map extra (%s) defines empty looks_like id", id.str() );
+    }
     switch( generator_method ) {
         case map_extra_method::map_extra_function: {
             const map_extra_pointer mx_func = MapExtras::get_function( generator_id );

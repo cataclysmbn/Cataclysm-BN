@@ -66,7 +66,7 @@
         ".rY.r,.. G.....d...tt.Y.",
         ".R..r,...G.........tt...",
         ".....,..tg..............",
-        "---l,,..tg.....d........",
+        "-+-l,,..tg.....d........",
         "..-l....tggGGggdh.......",
         "..-lll...G,,,,gd........",
         "..-----g-ggGGgg-gggGg-+-",
@@ -81,11 +81,11 @@
         "-+-------GggggG-------+-",
         ".......................-",
         ".......................-",
-        ".CCCCxxxxx....xCCxxCCCx-",
+        ".CCCCxxxxA....ACCxxCCCx-",
         "........................"
       ],
       "palettes": [ "lab_palette", "lab_loot_research" ],
-      "furniture": { "R": "f_rack", "D": "f_desk" },
+      "furniture": { "R": "f_rack", "D": "f_desk", "A": "f_artifact_analyzer_console" },
       "fields": { "Q": { "field": "fd_fatigue", "intensity": 3 } },
       "mapping": {
         "R": { "item": [ { "item": "dimensional_anchor" }, { "item": "phase_immersion_suit" } ] },
@@ -100,11 +100,7 @@
       },
       "place_nested": [ { "chunks": [ "lab_finale_loot" ], "x": 4, "y": 1 } ],
       "place_loot": [ { "item": "id_science", "x": [ 19, 20 ], "y": [ 2, 5 ] } ],
-      "place_monster": [
-        { "monster": "mon_hound_tindalos", "x": [ 7, 8 ], "y": [ 17, 18 ], "chance": 90 },
-        { "monster": "mon_hound_tindalos", "x": [ 16, 17 ], "y": [ 17, 18 ], "chance": 90 },
-        { "monster": "mon_mech_lifter", "x": 2, "y": 2, "chance": 100 }
-      ]
+      "place_monster": [ { "monster": "mon_mech_lifter", "x": 2, "y": 2, "chance": 100 } ]
     }
   },
   {
@@ -132,7 +128,7 @@
         "...|r.hh........h .r|...",
         "...|r.Y..........Y.r|...",
         "...|r..|---MM---|..r|...",
-        "-MM|---|..?..?..|---|MM-",
+        "-MM|---|........|---|MM-",
         "........................",
         "........................",
         "........................",
@@ -183,7 +179,7 @@
         "....|--|-----------|....",
         "........................",
         "..Y..................Y..",
-        "..........?..?..........",
+        "........................",
         "........................",
         "---------|....|--ggggg--",
         "ttttt.xtt|Y..Y|Y........",

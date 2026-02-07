@@ -106,6 +106,8 @@ void translocator( player &p, const tripoint &examp );
 void on_smoke_out( const tripoint &examp,
                    const time_point &start_time ); //activates end of smoking effects
 void mill_finalize( player &, const tripoint &examp, const time_point &start_time );
+void cloning_vat_finalize( const tripoint &examp, const time_point &start_time );
+void cloning_vat_examine( player &p, const tripoint &examp );
 void quern_examine( player &p, const tripoint &examp );
 void smoker_options( player &p, const tripoint &examp );
 void open_safe( player &p, const tripoint &examp );
@@ -127,7 +129,7 @@ std::vector<detached_ptr<item>> get_harvest_items( const itype &type, int plant_
 
 // Planting functions
 std::vector<seed_tuple> get_seed_entries( const std::vector<item *> &seed_inv );
-int query_seed( const std::vector<seed_tuple> &seed_entries );
+int query_seed( const std::vector<seed_tuple> &seed_entries, int min_req = 1 );
 void plant_seed( player &p, const tripoint &examp, const itype_id &seed_id );
 void harvest_plant( player &p, const tripoint &examp, bool from_activity = false );
 void fertilize_plant( player &p, const tripoint &tile, const itype_id &fertilizer );

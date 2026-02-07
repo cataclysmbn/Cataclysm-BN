@@ -1,0 +1,13 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "resurrection_tech",
+    "name": "Resurrection",
+    "authors": [ "Wishduck" ],
+    "description": "Adds resurrection anchors.",
+    "category": "content",
+    "obsolete": false,
+    "lua_api_version": 2,
+    "dependencies": [ "bn" ]
+  }
+]

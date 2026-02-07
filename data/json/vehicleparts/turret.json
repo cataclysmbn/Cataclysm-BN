@@ -66,6 +66,22 @@
     "requirements": { "install": { "skills": [ [ "mechanics", 2 ] ] }, "removal": { "skills": [ [ "mechanics", 0 ] ] } }
   },
   {
+    "id": "mounted_launcher_ballista",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted ballista" },
+    "item": "launcher_ballista",
+    "looks_like": "mounted_huge_crossbow",
+    "color": "green",
+    "broken_color": "green",
+    "breaks_into": [
+      { "item": "scrap", "count": [ 10, 20 ] },
+      { "item": "splinter", "count": [ 12, 24 ] },
+      { "item": "string_36", "count": [ 5, 10 ] }
+    ],
+    "requirements": { "install": { "skills": [ [ "mechanics", 3 ], [ "launcher", 1 ] ] }, "removal": { "skills": [ [ "mechanics", 1 ] ] } }
+  },
+  {
     "id": "mounted_emp_gun",
     "copy-from": "turret",
     "type": "vehicle_part",

@@ -85,8 +85,8 @@ int throwable_extinguisher_act( player *, item *, bool, const tripoint & );
 int directional_hologram( player *, item *, bool, const tripoint & );
 int capture_monster_veh( player *, item *, bool, const tripoint & );
 int capture_monster_act( player *, item *, bool, const tripoint & );
-int granade( player *, item *, bool, const tripoint & );
-int granade_act( player *, item *, bool, const tripoint & );
+int debug_grenade( player *, item *, bool, const tripoint & );
+int debug_grenade_act( player *, item *, bool, const tripoint & );
 int c4( player *, item *, bool, const tripoint & );
 int arrow_flammable( player *, item *, bool, const tripoint & );
 int acidbomb_act( player *, item *, bool, const tripoint & );
@@ -108,7 +108,6 @@ int dive_tank( player *, item *, bool, const tripoint & );
 int gasmask( player *, item *, bool, const tripoint & );
 int portable_game( player *, item *, bool, const tripoint & );
 int vibe( player *, item *, bool, const tripoint & );
-int hand_crank( player *, item *, bool, const tripoint & );
 int vortex( player *, item *, bool, const tripoint & );
 int dog_whistle( player *, item *, bool, const tripoint & );
 int call_of_tindalos( player *, item *, bool, const tripoint & );
@@ -292,5 +291,4 @@ struct use_function {
         /** @return Used by @ref item::info to get description of the actor */
         void dump_info( const item &, std::vector<iteminfo> & ) const;
 };
-
 

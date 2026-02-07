@@ -67,6 +67,16 @@
   },
   {
     "type": "mutation",
+    "id": "INATTENTIVE",
+    "name": { "str": "Inattentive" },
+    "points": -4,
+    "starting_trait": true,
+    "description": "You never paid attention to your surroundings and specifically to people around you.  You can't judge intent of critters you see.",
+    "purifiable": false,
+    "valid": false
+  },
+  {
+    "type": "mutation",
     "id": "OUTDOORSMAN",
     "name": { "str": "Outdoorsman" },
     "points": 1,
@@ -585,7 +595,8 @@
       "style_pankration",
       "style_kickboxing"
     ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -603,7 +614,8 @@
       "style_zui_quan",
       "style_wingchun"
     ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -613,7 +625,8 @@
     "description": "You have studied the arts of the Shaolin monks.  You start with one of the five animal fighting styles: Tiger, Crane, Leopard, Snake, or Dragon.",
     "starting_trait": true,
     "initial_ma_styles": [ "style_tiger", "style_crane", "style_leopard", "style_snake", "style_dragon" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -632,7 +645,8 @@
       "style_swordsmanship",
       "style_medievalpole"
     ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -642,7 +656,8 @@
     "description": "You were an avid fencer, starting with foil and moving onto saber, then épée.  You competed nationally and dabbled with some of the historical fencing weapons afforded by HEMA's popularity.",
     "starting_trait": false,
     "initial_ma_styles": [ "style_fencing" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -1059,6 +1074,15 @@
     "starting_trait": true,
     "valid": false,
     "category": [ "MEDICAL" ]
+  },
+  {
+    "type": "mutation",
+    "id": "NYCTOPHOBIA",
+    "name": { "str": "Nyctophobia" },
+    "points": -3,
+    "description": "You are terribly afraid of the dark.  You refuse to enter very dark areas.  If you somehow still happen to stay in dark areas, you suffer from various detrimental mental and physical effects.",
+    "starting_trait": true,
+    "valid": false
   },
   {
     "type": "mutation",
@@ -2823,6 +2847,7 @@
     "description": "We have streamlined our nutritional requirements.  We rely on the Mycus for sustenance, as it relies on us.  We may locate sources of sustenance in close proximity to Mycus core towers, and in forested areas that the Mycus has grown into.",
     "valid": false,
     "purifiable": false,
+    "prereqs": [ "M_IMMUNE" ],
     "threshreq": [ "THRESH_MYCUS" ],
     "cancels": [ "GOURMAND", "BEAK", "BEAK_PECK", "BEAK_HUM" ],
     "category": [ "MYCUS" ]
@@ -6769,6 +6794,17 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
+    "cancels": [ "GUNSHY" ],
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "GUNSHY",
+    "name": { "str": "Gun Shy" },
+    "points": -4,
+    "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
+    "starting_trait": true,
+    "cancels": [ "BRAWLER" ],
     "valid": false
   },
   {
@@ -6826,6 +6862,16 @@
   },
   {
     "type": "mutation",
+    "id": "HAS_NEMESIS",
+    "name": { "str": "Hunted" },
+    "points": -1,
+    "description": "Since the start of the Cataclysm, something has been hunting you relentlessly.  You can outrun it, but it always seems to find you eventually.  The only escape is for one of you to die.",
+    "valid": false,
+    "starting_trait": false,
+    "purifiable": false
+  },
+  {
+    "type": "mutation",
     "id": "PROF_FERAL",
     "name": { "str": "Lost To The Cataclysm" },
     "points": 0,
@@ -6834,5 +6880,16 @@
     "purifiable": false,
     "profession": true,
     "scent_type": "sc_fetid"
+  },
+  {
+    "type": "mutation",
+    "id": "PROF_KNIGHT",
+    "name": { "str": "Swordsman" },
+    "points": 0,
+    "description": "You have trained in the ways of the European nobility. Mostly useless even before the Cataclysm, now the only thing worth anything is the swordsmanship.",
+    "valid": false,
+    "initial_ma_styles": [ "style_swordsmanship" ],
+    "purifiable": false,
+    "profession": true
   }
 ]

@@ -1,0 +1,12 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "test_lua_require",
+    "name": "Test Lua Require",
+    "authors": [ "Test" ],
+    "description": "Test mod for Lua relative and absolute imports",
+    "category": "misc",
+    "dependencies": [ "bn" ],
+    "obsolete": true
+  }
+]

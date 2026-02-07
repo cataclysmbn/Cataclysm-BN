@@ -2,6 +2,19 @@ gdebug.log_info("RPG System: Main")
 
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
+local mutations = require("rpg_mutations")
+local Mutation = mutations.Mutation
+local MUTATIONS = mutations.MUTATIONS
+local ALL_CLASS_IDS = mutations.ALL_CLASS_IDS
+local ALL_TRAIT_IDS = mutations.ALL_TRAIT_IDS
+local BASE_CLASS_IDS = mutations.BASE_CLASS_IDS
+local PRESTIGE_CLASS_IDS = mutations.PRESTIGE_CLASS_IDS
+local STAT_BONUS_IDS = mutations.STAT_BONUS_IDS
+local PERIODIC_BONUS_IDS = mutations.PERIODIC_BONUS_IDS
+local KILL_MONSTER_BONUS_IDS = mutations.KILL_MONSTER_BONUS_IDS
+local register_mutation = mutations.register_mutation
+local gettext = locale.gettext
+local vgettext = locale.vgettext
 local function color_text(text, color) return string.format("<color_%s>%s</color>", color, text) end
 
 local function color_good(text) return color_text(text, "light_green") end
@@ -52,6 +65,32 @@ end
 local XP_COEFFICIENT = 2.2387
 local XP_EXPONENT = 3.65
 
+-- Progression Constants
+local LEVELS_PER_STAT_POINT = 2
+local LEVELS_PER_TRAIT_SLOT = 5
+
+-- Function to register a new mutation with the RPG system (can be called by other mods)
+-- config: table with mutation properties (id, type, symbol, requirements, stat_bonuses, etc.)
+-- See rpg_mutations.lua Mutation class for full structure
+mod.add_mutation = function(config)
+  if not config or not config.id then
+    gdebug.log_error("RPG System: add_mutation called without valid config or id")
+    return false
+  end
+
+  if MUTATIONS[config.id] then
+    -- If it's already there, just ignore.
+    return false
+  end
+
+  local mutation = Mutation.new(config)
+  MUTATIONS[config.id] = mutation
+  register_mutation(mutation)
+
+  gdebug.log_info("RPG System: Registered new mutation: " .. config.id)
+  return true
+end
+
 local function get_rpg_level(exp)
   local level = math.floor((exp / XP_COEFFICIENT) ^ (1 / XP_EXPONENT))
   return math.min(level, 40)
@@ -70,40 +109,75 @@ end
 
 local function set_char_value(char, key, value) char:set_value(key, tostring(value)) end
 
--- Ehhh, these aren't great and should be refactored if many more classes are added.
-local function has_class(char)
-  local classes = {
-    MutationBranchId.new("RPG_WARRIOR"),
-    MutationBranchId.new("RPG_BERSERKER"),
-    MutationBranchId.new("RPG_GUARDIAN"),
-    MutationBranchId.new("RPG_MAGE"),
-    MutationBranchId.new("RPG_MYSTIC"),
-    MutationBranchId.new("RPG_SCHOLAR"),
-    MutationBranchId.new("RPG_SCOUT"),
-    MutationBranchId.new("RPG_RANGER"),
-    MutationBranchId.new("RPG_ASSASSIN"),
-  }
+-- Common requirement checking and formatting
+local function check_requirements(player, mutation, current_level)
+  local reqs = mutation.requirements
+  if not reqs or (not reqs.level and not reqs.stats and not reqs.skills) then return true, {} end
 
-  for _, class in ipairs(classes) do
-    if char:has_trait(class) then return true end
+  local unmet = {}
+
+  -- Check level requirement
+  if reqs.level and current_level < reqs.level then
+    table.insert(unmet, { type = "level", label = "Lv", current = current_level, required = reqs.level })
+  end
+
+  -- Check stat requirements
+  if reqs.stats then
+    local stats_map = {
+      STR = player:get_str(),
+      DEX = player:get_dex(),
+      INT = player:get_int(),
+      PER = player:get_per(),
+    }
+    for stat, required in pairs(reqs.stats) do
+      local current = stats_map[stat]
+      if current < required then
+        table.insert(unmet, { type = "stat", label = stat, current = current, required = required })
+      end
+    end
+  end
+
+  -- Check skill requirements
+  if reqs.skills then
+    for skill_name, required in pairs(reqs.skills) do
+      local current = player:get_skill_level(SkillId.new(skill_name))
+      if current < required then
+        local display_name = skill_name:gsub("^%l", string.upper)
+        table.insert(unmet, { type = "skill", label = display_name, current = current, required = required })
+      end
+    end
+  end
+
+  return #unmet == 0, unmet
+end
+
+local function format_requirement(label, current, required, show_current)
+  local met = current >= required
+  local color_fn = met and color_good or color_bad
+  if show_current then
+    return color_fn(string.format("%s %d/%d", label, current, required))
+  else
+    return color_fn(string.format("%s %d+", label, required))
+  end
+end
+
+local function format_requirements_list(unmet, show_current)
+  local parts = {}
+  for _, req in ipairs(unmet) do
+    table.insert(parts, format_requirement(req.label, req.current, req.required, show_current))
+  end
+  return table.concat(parts, ", ")
+end
+
+local function has_class(char)
+  for _, class_id in ipairs(ALL_CLASS_IDS) do
+    if char:has_trait(class_id) then return true end
   end
   return false
 end
 
 local function get_class_info(char)
-  local class_ids = {
-    MutationBranchId.new("RPG_WARRIOR"),
-    MutationBranchId.new("RPG_BERSERKER"),
-    MutationBranchId.new("RPG_GUARDIAN"),
-    MutationBranchId.new("RPG_MAGE"),
-    MutationBranchId.new("RPG_MYSTIC"),
-    MutationBranchId.new("RPG_SCHOLAR"),
-    MutationBranchId.new("RPG_SCOUT"),
-    MutationBranchId.new("RPG_RANGER"),
-    MutationBranchId.new("RPG_ASSASSIN"),
-  }
-
-  for _, class_id in ipairs(class_ids) do
+  for _, class_id in ipairs(ALL_CLASS_IDS) do
     if char:has_trait(class_id) then
       local class_obj = class_id:obj()
       return class_obj:name(), class_obj:desc()
@@ -113,37 +187,8 @@ local function get_class_info(char)
 end
 
 local function get_current_traits(char)
-  local trait_ids = {
-    MutationBranchId.new("RPG_TRAIT_BIONIC_SYMBIOTE"),
-    MutationBranchId.new("RPG_TRAIT_VITAL_ESSENCE"),
-    MutationBranchId.new("RPG_TRAIT_RADIOACTIVE_BLOOD"),
-    MutationBranchId.new("RPG_TRAIT_IRON_HIDE"),
-    MutationBranchId.new("RPG_TRAIT_LIGHTWEIGHT"),
-    MutationBranchId.new("RPG_TRAIT_PACK_MULE"),
-    MutationBranchId.new("RPG_TRAIT_TIRELESS"),
-    MutationBranchId.new("RPG_TRAIT_MANA_FONT"),
-    MutationBranchId.new("RPG_TRAIT_BLINK_STEP"),
-    MutationBranchId.new("RPG_TRAIT_NATURAL_HEALER"),
-    MutationBranchId.new("RPG_TRAIT_ADAPTIVE_BIOLOGY"),
-    MutationBranchId.new("RPG_TRAIT_GLASS_CANNON"),
-    MutationBranchId.new("RPG_TRAIT_JUGGERNAUT"),
-    MutationBranchId.new("RPG_TRAIT_ARCANE_BATTERY"),
-    MutationBranchId.new("RPG_TRAIT_IRON_FISTS"),
-    MutationBranchId.new("RPG_TRAIT_EFFICIENT_METABOLISM"),
-    MutationBranchId.new("RPG_TRAIT_COMBAT_REFLEXES"),
-    MutationBranchId.new("RPG_TRAIT_ACROBAT"),
-    MutationBranchId.new("RPG_TRAIT_TIRELESS_WORKER"),
-    MutationBranchId.new("RPG_TRAIT_RAPID_METABOLISM"),
-    MutationBranchId.new("RPG_TRAIT_SCENTLESS"),
-    MutationBranchId.new("RPG_TRAIT_CLOTTING_FACTOR"),
-    MutationBranchId.new("RPG_TRAIT_REGENERATOR"),
-    MutationBranchId.new("RPG_TRAIT_MASTER_CRAFTSMAN"),
-    MutationBranchId.new("RPG_TRAIT_PACK_RAT"),
-    MutationBranchId.new("RPG_TRAIT_NATURAL_BUTCHER"),
-  }
-
   local current = {}
-  for _, trait_id in ipairs(trait_ids) do
+  for _, trait_id in ipairs(ALL_TRAIT_IDS) do
     if char:has_trait(trait_id) then
       local trait_obj = trait_id:obj()
       table.insert(current, { name = trait_obj:name(), desc = trait_obj:desc() })
@@ -171,14 +216,13 @@ mod.on_game_started = function()
 
   gapi.add_msg(
     MsgType.mixed,
-    color_info("[System]")
-      .. " initialized. Welcome "
-      .. color_highlight("[User]")
-      .. " of world IB-73758-R. Use your "
-      .. color_info("[System Interface]")
-      .. " to access the "
-      .. color_info("[System]")
-      .. "."
+    string.format(
+      gettext("%s initialized. Welcome %s of world IB-73758-R. Use your %s to access the %s."),
+      color_info(gettext("[System]")),
+      color_highlight(gettext("[User]")),
+      color_info(gettext("[System Interface]")),
+      color_info(gettext("[System]"))
+    )
   )
 end
 
@@ -203,14 +247,13 @@ mod.on_game_load = function()
 
     gapi.add_msg(
       MsgType.mixed,
-      color_info("[System]")
-        .. " initialized. Welcome "
-        .. color_highlight("[User]")
-        .. " of world IB-73758-R. Use your "
-        .. color_info("[System Interface]")
-        .. " to access the "
-        .. color_info("[System]")
-        .. "."
+      string.format(
+        gettext("%s initialized. Welcome %s of world IB-73758-R. Use your %s to access the %s."),
+        color_info(gettext("[System]")),
+        color_highlight(gettext("[User]")),
+        color_info(gettext("[System Interface]")),
+        color_info(gettext("[System]"))
+      )
     )
     gdebug.log_info("RPG System: Initialized on game load")
     return
@@ -226,7 +269,9 @@ mod.on_monster_killed = function(params)
   if not killer or not monster then return end
   if not killer:is_avatar() then return end
 
-  local player = killer
+  local player = killer:as_character()
+  if not player then return end
+
   local exp = get_char_value(player, "rpg_exp", 0)
   local old_level = get_char_value(player, "rpg_level", 0)
 
@@ -240,35 +285,50 @@ mod.on_monster_killed = function(params)
     set_char_value(player, "rpg_level", new_level)
 
     local level_msg = color_good("★ ")
-      .. color_highlight("LEVEL UP!")
+      .. color_highlight(gettext("LEVEL UP!"))
       .. color_good(" ★")
-      .. " You are now "
-      .. color_info("Level " .. new_level)
-      .. "!"
+      .. " "
+      .. string.format(gettext("You are now %s!"), color_info(gettext("Level") .. " " .. new_level))
     gapi.add_msg(MsgType.good, level_msg)
 
-    local max_traits = 1 + math.floor(new_level / 5)
-    set_char_value(player, "rpg_max_traits", max_traits)
+    -- Calculate trait slots
+    local old_max_traits = 1 + math.floor(old_level / LEVELS_PER_TRAIT_SLOT)
+    local new_max_traits = 1 + math.floor(new_level / LEVELS_PER_TRAIT_SLOT)
+    set_char_value(player, "rpg_max_traits", new_max_traits)
 
-    if new_level % 5 == 0 and new_level > 0 then
+    if new_max_traits > old_max_traits then
+      local traits_gained = new_max_traits - old_max_traits
       gapi.add_msg(
         MsgType.good,
-        color_good("New trait slot unlocked!") .. " You now have " .. color_highlight(max_traits) .. " trait slots."
+        color_good(vgettext("New trait slot unlocked!", "New trait slots unlocked!", traits_gained))
+          .. " "
+          .. string.format(gettext("You now have %s trait slots."), color_highlight(new_max_traits))
       )
     end
 
-    if new_level % 2 == 0 and new_level > 0 then
+    -- Calculate stat points earned by iterating through levels crossed
+    local stat_points_earned = 0
+    for level = old_level + 1, new_level do
+      if level % LEVELS_PER_STAT_POINT == 0 then stat_points_earned = stat_points_earned + 1 end
+    end
+
+    if stat_points_earned > 0 then
       local stat_points = get_char_value(player, "rpg_stat_points", 0)
-      stat_points = stat_points + 1
+      stat_points = stat_points + stat_points_earned
       set_char_value(player, "rpg_stat_points", stat_points)
       gapi.add_msg(
         MsgType.good,
-        color_good("✦ Stat point earned!")
-          .. " You have "
-          .. color_highlight(stat_points)
-          .. " unassigned stat point"
-          .. (stat_points > 1 and "s" or "")
-          .. "."
+        color_good(
+          string.format(
+            vgettext("✦ %d stat point earned!", "✦ %d stat points earned!", stat_points_earned),
+            stat_points_earned
+          )
+        )
+          .. " "
+          .. string.format(
+            vgettext("You have %s unassigned stat point.", "You have %s unassigned stat points.", stat_points),
+            color_highlight(stat_points)
+          )
       )
     end
   end
@@ -276,6 +336,22 @@ mod.on_monster_killed = function(params)
   local xp_needed = rpg_xp_needed(new_level + 1)
   local xp_to_next = xp_needed - exp
   set_char_value(player, "rpg_xp_to_next_level", xp_to_next)
+
+  -- Apply kill monster bonuses (e.g., healing on kill)
+  local level = get_char_value(player, "rpg_level", 0)
+  local level_scaling = get_char_value(player, "rpg_level_scaling", 100) / 100.0
+
+  for _, mutation_id in ipairs(KILL_MONSTER_BONUS_IDS) do
+    if player:has_trait(mutation_id) then
+      local mutation = MUTATIONS[mutation_id:str()]
+      local bonuses = mutation.kill_monster_bonuses
+
+      if bonuses.heal_percent then
+        local heal_amount = math.max(1, math.floor(monster_hp * (bonuses.heal_percent * level * level_scaling / 100)))
+        player:healall(heal_amount)
+      end
+    end
+  end
 end
 
 mod.on_character_reset_stats = function(params)
@@ -286,6 +362,7 @@ mod.on_character_reset_stats = function(params)
   local level = get_char_value(character, "rpg_level", 0)
   local level_scaling = get_char_value(character, "rpg_level_scaling", 100) / 100.0
 
+  -- Apply manually assigned stats
   local assigned_str = get_char_value(character, "rpg_assigned_str", 0)
   local assigned_dex = get_char_value(character, "rpg_assigned_dex", 0)
   local assigned_int = get_char_value(character, "rpg_assigned_int", 0)
@@ -296,79 +373,18 @@ mod.on_character_reset_stats = function(params)
   character:mod_int_bonus(assigned_int)
   character:mod_per_bonus(assigned_per)
 
-  -- These should also be refactored if more classes are added probably.
-  if character:has_trait(MutationBranchId.new("RPG_WARRIOR")) then
-    character:mod_str_bonus(math.floor(level * 0.55 * level_scaling))
-    character:mod_dex_bonus(math.floor(level * 0.2 * level_scaling))
-    character:mod_int_bonus(math.floor(level * 0.1 * level_scaling))
-    character:mod_per_bonus(math.floor(level * 0.15 * level_scaling))
-  end
+  -- Apply stat bonuses from mutations that have them
+  for _, mutation_id in ipairs(STAT_BONUS_IDS) do
+    if character:has_trait(mutation_id) then
+      local mutation = MUTATIONS[mutation_id:str()]
+      local bonuses = mutation.stat_bonuses
 
-  if character:has_trait(MutationBranchId.new("RPG_MAGE")) then
-    character:mod_str_bonus(math.floor(level * 0.1 * level_scaling))
-    character:mod_dex_bonus(math.floor(level * 0.05 * level_scaling))
-    character:mod_int_bonus(math.floor(level * 0.55 * level_scaling))
-    character:mod_per_bonus(math.floor(level * 0.3 * level_scaling))
-  end
-
-  if character:has_trait(MutationBranchId.new("RPG_SCOUT")) then
-    character:mod_str_bonus(math.floor(level * 0.1 * level_scaling))
-    character:mod_dex_bonus(math.floor(level * 0.55 * level_scaling))
-    character:mod_int_bonus(math.floor(level * 0.05 * level_scaling))
-    character:mod_per_bonus(math.floor(level * 0.3 * level_scaling))
-  end
-
-  if character:has_trait(MutationBranchId.new("RPG_BERSERKER")) then
-    character:mod_str_bonus(math.floor(level * 0.75 * level_scaling))
-    character:mod_dex_bonus(math.floor(level * 0.45 * level_scaling))
-    character:mod_int_bonus(math.floor(level * 0.1 * level_scaling))
-    character:mod_per_bonus(math.floor(level * 0.2 * level_scaling))
-  end
-
-  if character:has_trait(MutationBranchId.new("RPG_GUARDIAN")) then
-    character:mod_str_bonus(math.floor(level * 0.6 * level_scaling))
-    character:mod_dex_bonus(math.floor(level * 0.15 * level_scaling))
-    character:mod_int_bonus(math.floor(level * 0.15 * level_scaling))
-    character:mod_per_bonus(math.floor(level * 0.6 * level_scaling))
-  end
-
-  if character:has_trait(MutationBranchId.new("RPG_MYSTIC")) then
-    character:mod_str_bonus(math.floor(level * 0.1 * level_scaling))
-    character:mod_dex_bonus(math.floor(level * 0.2 * level_scaling))
-    character:mod_int_bonus(math.floor(level * 0.75 * level_scaling))
-    character:mod_per_bonus(math.floor(level * 0.45 * level_scaling))
-  end
-
-  if character:has_trait(MutationBranchId.new("RPG_SCHOLAR")) then
-    character:mod_str_bonus(math.floor(level * 0.1 * level_scaling))
-    character:mod_dex_bonus(math.floor(level * 0.3 * level_scaling))
-    character:mod_int_bonus(math.floor(level * 0.8 * level_scaling))
-    character:mod_per_bonus(math.floor(level * 0.3 * level_scaling))
-  end
-
-  if character:has_trait(MutationBranchId.new("RPG_RANGER")) then
-    character:mod_str_bonus(math.floor(level * 0.15 * level_scaling))
-    character:mod_dex_bonus(math.floor(level * 0.65 * level_scaling))
-    character:mod_int_bonus(math.floor(level * 0.1 * level_scaling))
-    character:mod_per_bonus(math.floor(level * 0.6 * level_scaling))
-  end
-
-  if character:has_trait(MutationBranchId.new("RPG_ASSASSIN")) then
-    character:mod_str_bonus(math.floor(level * 0.1 * level_scaling))
-    character:mod_dex_bonus(math.floor(level * 0.75 * level_scaling))
-    character:mod_int_bonus(math.floor(level * 0.35 * level_scaling))
-    character:mod_per_bonus(math.floor(level * 0.3 * level_scaling))
-  end
-
-  if
-    character:has_trait(MutationBranchId.new("RPG_SCOUT"))
-    or character:has_trait(MutationBranchId.new("RPG_RANGER"))
-  then
-    character:mod_speed_bonus(math.floor(level * 1 * level_scaling))
-  end
-
-  if character:has_trait(MutationBranchId.new("RPG_ASSASSIN")) then
-    character:mod_speed_bonus(math.floor(level * 2 * level_scaling))
+      if bonuses.str then character:mod_str_bonus(math.floor(level * bonuses.str * level_scaling)) end
+      if bonuses.dex then character:mod_dex_bonus(math.floor(level * bonuses.dex * level_scaling)) end
+      if bonuses.int then character:mod_int_bonus(math.floor(level * bonuses.int * level_scaling)) end
+      if bonuses.per then character:mod_per_bonus(math.floor(level * bonuses.per * level_scaling)) end
+      if bonuses.speed then character:mod_speed_bonus(math.floor(level * bonuses.speed * level_scaling)) end
+    end
   end
 end
 
@@ -381,30 +397,24 @@ mod.on_every_5_minutes = function()
 
   local level_scaling = get_char_value(player, "rpg_level_scaling", 100) / 100.0
 
-  if
-    player:has_trait(MutationBranchId.new("RPG_WARRIOR"))
-    or player:has_trait(MutationBranchId.new("RPG_BERSERKER"))
-    or player:has_trait(MutationBranchId.new("RPG_GUARDIAN"))
-  then
-    player:mod_fatigue(math.floor(-level * 0.5 * level_scaling))
-    player:mod_stamina(math.floor(level * 20 * level_scaling))
-  end
+  -- Apply periodic bonuses from mutations that have them
+  for _, mutation_id in ipairs(PERIODIC_BONUS_IDS) do
+    if player:has_trait(mutation_id) then
+      local mutation = MUTATIONS[mutation_id:str()]
+      local bonuses = mutation.periodic_bonuses
 
-  if player:has_trait(MutationBranchId.new("RPG_RANGER")) then
-    player:mod_thirst(math.floor(-level * 1.5 * level_scaling))
-  end
-
-  if player:has_trait(MutationBranchId.new("RPG_TRAIT_VITAL_ESSENCE")) then
-    player:mod_healthy_mod(0.1 * level * level_scaling, 100)
-  end
-
-  if player:has_trait(MutationBranchId.new("RPG_TRAIT_RADIOACTIVE_BLOOD")) then
-    player:mod_rad(math.floor(-level * 0.5 * level_scaling))
-  end
-
-  if player:has_trait(MutationBranchId.new("RPG_TRAIT_BIONIC_SYMBIOTE")) then
-    local power_regen = Energy.from_joule(math.floor(level * 2 * 1000 * level_scaling))
-    player:mod_power_level(power_regen)
+      if bonuses.fatigue then player:mod_fatigue(math.floor(level * bonuses.fatigue * level_scaling)) end
+      if bonuses.stamina then player:mod_stamina(math.floor(level * bonuses.stamina * level_scaling)) end
+      if bonuses.thirst and player:get_thirst() >= 40 and math.random() > 0.75 then
+        player:mod_thirst(math.floor(level * bonuses.thirst * level_scaling * 4))
+      end
+      if bonuses.rad then player:mod_rad(math.floor(level * bonuses.rad * level_scaling)) end
+      if bonuses.healthy_mod then player:mod_healthy_mod(bonuses.healthy_mod * level * level_scaling, 100) end
+      if bonuses.power_level then
+        local power_regen = Energy.from_joule(math.floor(level * bonuses.power_level * 1000 * level_scaling))
+        player:mod_power_level(power_regen)
+      end
+    end
   end
 end
 
@@ -415,6 +425,9 @@ mod.open_rpg_menu = function(who, item, pos)
   local keep_open = true
 
   while keep_open do
+    -- Refresh player stats to reflect any changes from class/trait selections
+    player:reset()
+
     local exp = get_char_value(player, "rpg_exp", 0)
     local level = get_char_value(player, "rpg_level", 0)
     local num_traits = get_char_value(player, "rpg_num_traits", 0)
@@ -424,7 +437,7 @@ mod.open_rpg_menu = function(who, item, pos)
     local current_traits = get_current_traits(player)
 
     local ui = UiList.new()
-    ui:title("=== [SYSTEM] ===")
+    ui:title(gettext("=== [SYSTEM] ==="))
 
     local current_level_xp = rpg_xp_needed(level)
     local next_level_xp = rpg_xp_needed(level + 1)
@@ -439,12 +452,16 @@ mod.open_rpg_menu = function(who, item, pos)
 
     local info_text = ""
 
-    info_text = info_text .. color_highlight("Name: ") .. color_good(player_name) .. "\n"
-    info_text = info_text .. color_highlight("Level: ") .. color_good(string.format("%d", level))
+    info_text = info_text .. color_highlight(gettext("Name:") .. " ") .. color_good(player_name) .. "\n"
+    info_text = info_text .. color_highlight(gettext("Level:") .. " ") .. color_good(string.format("%d", level))
     if level < 40 then
-      info_text = info_text .. color_text(string.format(" (Next: %.0f XP)", xp_to_next), "light_gray")
+      info_text = info_text
+        .. color_text(
+          string.format(" (" .. gettext("Next:") .. " %.0f " .. gettext("XP") .. ")", xp_to_next),
+          "light_gray"
+        )
     else
-      info_text = info_text .. color_warning(" [MAX]")
+      info_text = info_text .. color_warning(" [" .. gettext("MAX") .. "]")
     end
     info_text = info_text .. "\n"
 
@@ -453,7 +470,7 @@ mod.open_rpg_menu = function(who, item, pos)
       info_text = info_text .. "XP: " .. progress .. "\n"
     end
 
-    info_text = info_text .. color_highlight("Total XP: ") .. string.format("%.0f", exp) .. "\n"
+    info_text = info_text .. color_highlight(gettext("Total XP:") .. " ") .. string.format("%.0f", exp) .. "\n"
     info_text = info_text
       .. color_text(
         "─────────────────────────────────────────",
@@ -462,57 +479,65 @@ mod.open_rpg_menu = function(who, item, pos)
       .. "\n"
 
     local stat_points = get_char_value(player, "rpg_stat_points", 0)
-    info_text = info_text .. color_highlight("Stats:") .. "\n"
+    info_text = info_text .. color_highlight(gettext("Stats:")) .. "\n"
     info_text = info_text
       .. string.format(
         "  %s %s  %s %s  %s %s  %s %s\n",
-        color_text("STR:", "light_gray"),
+        color_text(gettext("STR:"), "light_gray"),
         color_good(str_val),
-        color_text("DEX:", "light_gray"),
+        color_text(gettext("DEX:"), "light_gray"),
         color_good(dex_val),
-        color_text("INT:", "light_gray"),
+        color_text(gettext("INT:"), "light_gray"),
         color_good(int_val),
-        color_text("PER:", "light_gray"),
+        color_text(gettext("PER:"), "light_gray"),
         color_good(per_val)
       )
     if stat_points > 0 then
       info_text = info_text
         .. color_good(
-          "  ✦ " .. stat_points .. " unassigned stat point" .. (stat_points > 1 and "s" or "") .. " available!\n"
+          string.format(
+            vgettext(
+              "  ✦ %d unassigned stat point available!",
+              "  ✦ %d unassigned stat points available!",
+              stat_points
+            ),
+            stat_points
+          ) .. "\n"
         )
     end
 
     local all_skills = {
-      { name = "Dodge", skill = "dodge" },
-      { name = "Melee", skill = "melee" },
-      { name = "Unarmed", skill = "unarmed" },
-      { name = "Bashing", skill = "bashing" },
-      { name = "Cutting", skill = "cutting" },
-      { name = "Piercing", skill = "stabbing" },
-      { name = "Archery", skill = "archery" },
-      { name = "Handguns", skill = "gun" },
-      { name = "Rifles", skill = "rifle" },
-      { name = "Shotguns", skill = "shotgun" },
-      { name = "SMGs", skill = "smg" },
-      { name = "Launchers", skill = "launcher" },
-      { name = "Throwing", skill = "throw" },
-      { name = "Cooking", skill = "cooking" },
-      { name = "Tailoring", skill = "tailor" },
-      { name = "Mechanics", skill = "mechanics" },
-      { name = "Electronics", skill = "electronics" },
-      { name = "Fabrication", skill = "fabrication" },
-      { name = "First Aid", skill = "firstaid" },
-      { name = "Computers", skill = "computer" },
-      { name = "Survival", skill = "survival" },
-      { name = "Trapping", skill = "traps" },
-      { name = "Swimming", skill = "swimming" },
-      { name = "Driving", skill = "driving" },
-      { name = "Bartering", skill = "barter" },
-      { name = "Speech", skill = "speech" },
-      { name = "Spellcraft", skill = "spellcraft" },
+      { name = gettext("Dodge"), skill = "dodge" },
+      { name = gettext("Melee"), skill = "melee" },
+      { name = gettext("Unarmed"), skill = "unarmed" },
+      { name = gettext("Bashing"), skill = "bashing" },
+      { name = gettext("Cutting"), skill = "cutting" },
+      { name = gettext("Piercing"), skill = "stabbing" },
+      { name = gettext("Archery"), skill = "archery" },
+      { name = gettext("Marksmanship"), skill = "gun" },
+      { name = gettext("Handguns"), skill = "pistol" },
+      { name = gettext("Rifles"), skill = "rifle" },
+      { name = gettext("Shotguns"), skill = "shotgun" },
+      { name = gettext("SMGs"), skill = "smg" },
+      { name = gettext("Launchers"), skill = "launcher" },
+      { name = gettext("Throwing"), skill = "throw" },
+      { name = gettext("Cooking"), skill = "cooking" },
+      { name = gettext("Tailoring"), skill = "tailor" },
+      { name = gettext("Mechanics"), skill = "mechanics" },
+      { name = gettext("Electronics"), skill = "electronics" },
+      { name = gettext("Fabrication"), skill = "fabrication" },
+      { name = gettext("First Aid"), skill = "firstaid" },
+      { name = gettext("Computers"), skill = "computer" },
+      { name = gettext("Survival"), skill = "survival" },
+      { name = gettext("Trapping"), skill = "traps" },
+      { name = gettext("Athletics"), skill = "swimming" },
+      { name = gettext("Driving"), skill = "driving" },
+      { name = gettext("Bartering"), skill = "barter" },
+      { name = gettext("Speech"), skill = "speech" },
+      { name = gettext("Spellcraft"), skill = "spellcraft" },
     }
 
-    info_text = info_text .. color_highlight("Skills:") .. "\n"
+    info_text = info_text .. color_highlight(gettext("Skills:")) .. "\n"
 
     local displayed_skills = {}
     for _, skill_info in ipairs(all_skills) do
@@ -541,7 +566,7 @@ mod.open_rpg_menu = function(who, item, pos)
       end
       if skill_count % 3 ~= 0 then info_text = info_text .. "\n" end
     else
-      info_text = info_text .. color_text("  No skills trained yet.", "dark_gray") .. "\n"
+      info_text = info_text .. color_text(gettext("  No skills trained yet."), "dark_gray") .. "\n"
     end
 
     info_text = info_text
@@ -553,9 +578,9 @@ mod.open_rpg_menu = function(who, item, pos)
 
     -- Class info
     if class_name == "[None]" then
-      info_text = info_text .. color_highlight("Class: ") .. color_warning(class_name) .. "\n"
+      info_text = info_text .. color_highlight(gettext("Class:") .. " ") .. color_warning(gettext("[None]")) .. "\n"
     else
-      info_text = info_text .. color_highlight("Class: ") .. color_good(class_name) .. "\n"
+      info_text = info_text .. color_highlight(gettext("Class:") .. " ") .. color_good(class_name) .. "\n"
       if class_desc then
         local wrapped = wrap_text(class_desc, 60, "  ")
         info_text = info_text .. color_text(wrapped, "light_gray") .. "\n"
@@ -571,21 +596,21 @@ mod.open_rpg_menu = function(who, item, pos)
 
     -- Trait section
     info_text = info_text
-      .. color_highlight("Trait Slots: ")
+      .. color_highlight(gettext("Trait Slots:") .. " ")
       .. color_good(string.format("%d", num_traits))
       .. color_text("/", "light_gray")
       .. color_highlight(string.format("%d", max_traits))
       .. "\n"
 
     if #current_traits > 0 then
-      info_text = info_text .. color_highlight("Active Traits:") .. "\n"
+      info_text = info_text .. color_highlight(gettext("Active Traits:")) .. "\n"
       for _, trait in ipairs(current_traits) do
         info_text = info_text .. color_good("  • " .. trait.name) .. "\n"
         local wrapped = wrap_text(trait.desc, 58, "    ")
         info_text = info_text .. color_text(wrapped, "light_gray") .. "\n"
       end
     else
-      info_text = info_text .. color_text("  No traits selected yet.", "dark_gray") .. "\n"
+      info_text = info_text .. color_text(gettext("  No traits selected yet."), "dark_gray") .. "\n"
     end
 
     info_text = info_text .. "\n"
@@ -593,19 +618,28 @@ mod.open_rpg_menu = function(who, item, pos)
     ui:text(info_text)
 
     local menu_items = {}
-    table.insert(menu_items, { text = "Manage Class", action = "class" })
+    table.insert(menu_items, { text = gettext("Manage Class"), action = "class" })
 
     if stat_points > 0 then
       table.insert(
         menu_items,
-        { text = color_good("Assign Stats (" .. stat_points .. " available)"), action = "stats" }
+        { text = color_good(string.format(gettext("Assign Stats (%d available)"), stat_points)), action = "stats" }
       )
     end
 
-    if num_traits < max_traits then table.insert(menu_items, { text = "Manage Traits", action = "traits" }) end
+    -- Always show the Assign Traits menu (allows resetting traits)
+    local available_slots = max_traits - num_traits
+    if available_slots > 0 then
+      table.insert(menu_items, {
+        text = color_good(string.format(gettext("Assign Traits (%d available)"), available_slots)),
+        action = "traits",
+      })
+    else
+      table.insert(menu_items, { text = gettext("Manage Traits"), action = "traits" })
+    end
 
-    table.insert(menu_items, { text = "Help", action = "help" })
-    table.insert(menu_items, { text = "Close", action = "close" })
+    table.insert(menu_items, { text = gettext("Help"), action = "help" })
+    table.insert(menu_items, { text = gettext("Close"), action = "close" })
 
     for i, item_entry in ipairs(menu_items) do
       ui:add(i, item_entry.text)
@@ -635,273 +669,86 @@ mod.open_rpg_menu = function(who, item, pos)
   return 0
 end
 
-local function format_requirement(label, current, required, show_current)
-  local met = current >= required
-  local color_fn = met and color_good or color_bad
-  if show_current then
-    return color_fn(string.format("%s %d/%d", label, current, required))
-  else
-    return color_fn(string.format("%s %d+", label, required))
-  end
-end
-
 mod.manage_class_menu = function(player)
   local level = get_char_value(player, "rpg_level", 0)
-  local str_val = player:get_str()
-  local dex_val = player:get_dex()
-  local int_val = player:get_int()
-  local per_val = player:get_per()
 
   local ui = UiList.new()
-  ui:title("=== Select Class ===")
+  ui:title(gettext("=== Select Class ==="))
   ui:desc_enabled(true)
 
   local options = {}
   local index = 1
 
+  -- Show base classes if player doesn't have a class
   if not has_class(player) then
-    local warrior_id = MutationBranchId.new("RPG_WARRIOR")
-    local warrior_meets = str_val >= 8
-    -- Honestly, these should also definitely be refactored if more classes are added to be
-    -- a generic format requirements function. That takes in class/trait requirements and returns
-    -- a formatted string.
-    local warrior_text = warrior_meets and color_good("⚔ [Warrior]")
-      or color_text("⚔ [Warrior]", "dark_gray") .. " - " .. format_requirement("STR", str_val, 8, true)
-    table.insert(options, {
-      text = warrior_text,
-      desc = warrior_id:obj():desc(),
-      id = warrior_id,
-      can_select = warrior_meets,
-      index = index,
-    })
-    index = index + 1
+    for id, mutation in pairs(MUTATIONS) do
+      if mutation.type == "class" and not mutation.is_prestige then
+        local mutation_id = mutation:get_mutation_id()
+        local class_obj = mutation_id:obj()
+        local can_select, unmet = check_requirements(player, mutation, level)
 
-    local mage_id = MutationBranchId.new("RPG_MAGE")
-    local mage_meets = int_val >= 8
-    local mage_text = mage_meets and color_good("✦ [Mage]")
-      or color_text("✦ [Mage]", "dark_gray") .. " - " .. format_requirement("INT", int_val, 8, true)
-    table.insert(options, {
-      text = mage_text,
-      desc = mage_id:obj():desc(),
-      id = mage_id,
-      can_select = mage_meets,
-      index = index,
-    })
-    index = index + 1
+        local display_text
+        if can_select then
+          display_text = color_good(mutation.symbol .. " [" .. class_obj:name() .. "]")
+        else
+          display_text = color_text(mutation.symbol .. " [" .. class_obj:name() .. "]", "dark_gray")
+            .. " - "
+            .. format_requirements_list(unmet, true)
+        end
 
-    local scout_id = MutationBranchId.new("RPG_SCOUT")
-    local scout_meets = dex_val >= 8
-    local scout_text = scout_meets and color_good("➳ [Scout]")
-      or color_text("➳ [Scout]", "dark_gray") .. " - " .. format_requirement("DEX", dex_val, 8, true)
-    table.insert(options, {
-      text = scout_text,
-      desc = scout_id:obj():desc(),
-      id = scout_id,
-      can_select = scout_meets,
-      index = index,
-    })
-    index = index + 1
+        table.insert(options, {
+          text = display_text,
+          desc = class_obj:desc(),
+          id = mutation_id,
+          mutation = mutation,
+          can_select = can_select,
+          index = index,
+        })
+        index = index + 1
+      end
+    end
   end
 
-  -- Prestige classes (show if level 10+ and have appropriate base class)
-  if player:has_trait(MutationBranchId.new("RPG_WARRIOR")) then
-    local berserker_id = MutationBranchId.new("RPG_BERSERKER")
-    local melee_skill = player:get_skill_level(SkillId.new("melee"))
-    local unarmed_skill = player:get_skill_level(SkillId.new("unarmed"))
-    local berserker_meets = level >= 10 and str_val >= 12 and dex_val >= 8 and melee_skill >= 6 and unarmed_skill >= 5
+  -- Show prestige classes if player has the appropriate base class
+  for id, mutation in pairs(MUTATIONS) do
+    if mutation.type == "class" and mutation.is_prestige then
+      local base_class_id = MUTATIONS[mutation.base_class]:get_mutation_id()
+      if player:has_trait(base_class_id) then
+        local mutation_id = mutation:get_mutation_id()
+        local class_obj = mutation_id:obj()
+        local can_select, unmet = check_requirements(player, mutation, level)
 
-    local berserker_text
-    if berserker_meets then
-      berserker_text = color_good("★ [Berserker]") .. color_text(" (Prestige)", "yellow")
-    else
-      local reqs = format_requirement("Lv", level, 10, true)
-        .. ", "
-        .. format_requirement("STR", str_val, 12, true)
-        .. ", "
-        .. format_requirement("DEX", dex_val, 8, true)
-        .. ", "
-        .. format_requirement("Melee", melee_skill, 6, true)
-        .. ", "
-        .. format_requirement("Unarmed", unarmed_skill, 5, true)
-      berserker_text = color_text("★ [Berserker]", "dark_gray") .. " - " .. reqs
+        local display_text
+        if can_select then
+          display_text = color_good(mutation.symbol .. " [" .. class_obj:name() .. "]")
+            .. color_text(" (Prestige)", "yellow")
+        else
+          display_text = color_text(mutation.symbol .. " [" .. class_obj:name() .. "]", "dark_gray")
+            .. " - "
+            .. format_requirements_list(unmet, true)
+        end
+
+        table.insert(options, {
+          text = display_text,
+          desc = class_obj:desc(),
+          id = mutation_id,
+          mutation = mutation,
+          remove_first = base_class_id,
+          can_select = can_select,
+          index = index,
+        })
+        index = index + 1
+      end
     end
-
-    table.insert(options, {
-      text = berserker_text,
-      desc = berserker_id:obj():desc(),
-      id = berserker_id,
-      remove_first = MutationBranchId.new("RPG_WARRIOR"),
-      can_select = berserker_meets,
-      index = index,
-    })
-    index = index + 1
-
-    local guardian_id = MutationBranchId.new("RPG_GUARDIAN")
-    local dodge_skill = player:get_skill_level(SkillId.new("dodge"))
-    local firstaid_skill = player:get_skill_level(SkillId.new("firstaid"))
-    local guardian_meets = level >= 10 and str_val >= 12 and per_val >= 8 and dodge_skill >= 6 and firstaid_skill >= 4
-
-    local guardian_text
-    if guardian_meets then
-      guardian_text = color_good("★ [Guardian]") .. color_text(" (Prestige)", "yellow")
-    else
-      local reqs = format_requirement("Lv", level, 10, true)
-        .. ", "
-        .. format_requirement("STR", str_val, 12, true)
-        .. ", "
-        .. format_requirement("PER", per_val, 8, true)
-        .. ", "
-        .. format_requirement("Dodge", dodge_skill, 6, true)
-        .. ", "
-        .. format_requirement("FirstAid", firstaid_skill, 4, true)
-      guardian_text = color_text("★ [Guardian]", "dark_gray") .. " - " .. reqs
-    end
-
-    table.insert(options, {
-      text = guardian_text,
-      desc = guardian_id:obj():desc(),
-      id = guardian_id,
-      remove_first = MutationBranchId.new("RPG_WARRIOR"),
-      can_select = guardian_meets,
-      index = index,
-    })
-    index = index + 1
   end
 
-  if player:has_trait(MutationBranchId.new("RPG_MAGE")) then
-    local mystic_id = MutationBranchId.new("RPG_MYSTIC")
-    local spellcraft_skill = player:get_skill_level(SkillId.new("spellcraft"))
-    local mystic_meets = level >= 10 and int_val >= 12 and per_val >= 8 and spellcraft_skill >= 6
-
-    local mystic_text
-    if mystic_meets then
-      mystic_text = color_good("★ [Mystic]") .. color_text(" (Prestige)", "yellow")
-    else
-      local reqs = format_requirement("Lv", level, 10, true)
-        .. ", "
-        .. format_requirement("INT", int_val, 12, true)
-        .. ", "
-        .. format_requirement("PER", per_val, 8, true)
-        .. ", "
-        .. format_requirement("Spellcraft", spellcraft_skill, 6, true)
-      mystic_text = color_text("★ [Mystic]", "dark_gray") .. " - " .. reqs
-    end
-
-    table.insert(options, {
-      text = mystic_text,
-      desc = mystic_id:obj():desc(),
-      id = mystic_id,
-      remove_first = MutationBranchId.new("RPG_MAGE"),
-      can_select = mystic_meets,
-      index = index,
-    })
-    index = index + 1
-
-    local scholar_id = MutationBranchId.new("RPG_SCHOLAR")
-    local fabrication_skill = player:get_skill_level(SkillId.new("fabrication"))
-    local electronics_skill = player:get_skill_level(SkillId.new("electronics"))
-    local scholar_meets = level >= 10
-      and int_val >= 12
-      and dex_val >= 8
-      and fabrication_skill >= 5
-      and electronics_skill >= 4
-
-    local scholar_text
-    if scholar_meets then
-      scholar_text = color_good("★ [Scholar]") .. color_text(" (Prestige)", "yellow")
-    else
-      local reqs = format_requirement("Lv", level, 10, true)
-        .. ", "
-        .. format_requirement("INT", int_val, 12, true)
-        .. ", "
-        .. format_requirement("DEX", dex_val, 8, true)
-        .. ", "
-        .. format_requirement("Fabrication", fabrication_skill, 5, true)
-        .. ", "
-        .. format_requirement("Electronics", electronics_skill, 4, true)
-      scholar_text = color_text("★ [Scholar]", "dark_gray") .. " - " .. reqs
-    end
-
-    table.insert(options, {
-      text = scholar_text,
-      desc = scholar_id:obj():desc(),
-      id = scholar_id,
-      remove_first = MutationBranchId.new("RPG_MAGE"),
-      can_select = scholar_meets,
-      index = index,
-    })
-    index = index + 1
-  end
-
-  if player:has_trait(MutationBranchId.new("RPG_SCOUT")) then
-    local ranger_id = MutationBranchId.new("RPG_RANGER")
-    local archery_skill = player:get_skill_level(SkillId.new("archery"))
-    local survival_skill = player:get_skill_level(SkillId.new("survival"))
-    local ranger_meets = level >= 10 and dex_val >= 12 and per_val >= 10 and archery_skill >= 6 and survival_skill >= 5
-
-    local ranger_text
-    if ranger_meets then
-      ranger_text = color_good("★ [Ranger]") .. color_text(" (Prestige)", "yellow")
-    else
-      local reqs = format_requirement("Lv", level, 10, true)
-        .. ", "
-        .. format_requirement("DEX", dex_val, 12, true)
-        .. ", "
-        .. format_requirement("PER", per_val, 10, true)
-        .. ", "
-        .. format_requirement("Archery", archery_skill, 6, true)
-        .. ", "
-        .. format_requirement("Survival", survival_skill, 5, true)
-      ranger_text = color_text("★ [Ranger]", "dark_gray") .. " - " .. reqs
-    end
-
-    table.insert(options, {
-      text = ranger_text,
-      desc = ranger_id:obj():desc(),
-      id = ranger_id,
-      remove_first = MutationBranchId.new("RPG_SCOUT"),
-      can_select = ranger_meets,
-      index = index,
-    })
-    index = index + 1
-
-    local assassin_id = MutationBranchId.new("RPG_ASSASSIN")
-    local throw_skill = player:get_skill_level(SkillId.new("throw"))
-    local cooking_skill = player:get_skill_level(SkillId.new("cooking"))
-    local assassin_meets = level >= 10 and dex_val >= 12 and int_val >= 8 and throw_skill >= 5 and cooking_skill >= 4
-
-    local assassin_text
-    if assassin_meets then
-      assassin_text = color_good("★ [Assassin]") .. color_text(" (Prestige)", "yellow")
-    else
-      local reqs = format_requirement("Lv", level, 10, true)
-        .. ", "
-        .. format_requirement("DEX", dex_val, 12, true)
-        .. ", "
-        .. format_requirement("INT", int_val, 8, true)
-        .. ", "
-        .. format_requirement("Throwing", throw_skill, 5, true)
-        .. ", "
-        .. format_requirement("Cooking", cooking_skill, 4, true)
-      assassin_text = color_text("★ [Assassin]", "dark_gray") .. " - " .. reqs
-    end
-
-    table.insert(options, {
-      text = assassin_text,
-      desc = assassin_id:obj():desc(),
-      id = assassin_id,
-      remove_first = MutationBranchId.new("RPG_SCOUT"),
-      can_select = assassin_meets,
-      index = index,
-    })
-    index = index + 1
-  end
-
+  -- Show abandon option if player has a class
   if has_class(player) then
     table.insert(options, {
-      text = color_bad("✖ Abandon class"),
-      desc = color_warning("WARNING: ")
-        .. "Damages your soul for 3 days, greatly reducing all your stats and movement speed.",
+      text = color_bad(gettext("✖ Abandon class")),
+      desc = color_warning(gettext("WARNING:")) .. " " .. gettext(
+        "Damages your soul for 3 days, with severe penalties."
+      ),
       action = "abandon",
       can_select = true,
       index = index,
@@ -909,9 +756,10 @@ mod.manage_class_menu = function(player)
     index = index + 1
   end
 
+  -- Back option
   table.insert(options, {
-    text = color_text("← Back", "light_gray"),
-    desc = "Return to main menu",
+    text = color_text(gettext("← Back"), "light_gray"),
+    desc = gettext("Return to main menu"),
     action = "back",
     can_select = true,
     index = index,
@@ -928,33 +776,24 @@ mod.manage_class_menu = function(player)
     local chosen = options[choice_index]
 
     if not chosen.can_select then
-      gapi.add_msg(MsgType.warning, color_warning("You don't meet the requirements for this class."))
+      gapi.add_msg(MsgType.warning, color_warning(gettext("You don't meet the requirements for this class.")))
       return
     end
 
     if chosen.action == "back" then
       return
     elseif chosen.action == "abandon" then
-      local all_classes = {
-        MutationBranchId.new("RPG_WARRIOR"),
-        MutationBranchId.new("RPG_BERSERKER"),
-        MutationBranchId.new("RPG_GUARDIAN"),
-        MutationBranchId.new("RPG_MAGE"),
-        MutationBranchId.new("RPG_MYSTIC"),
-        MutationBranchId.new("RPG_SCHOLAR"),
-        MutationBranchId.new("RPG_SCOUT"),
-        MutationBranchId.new("RPG_RANGER"),
-        MutationBranchId.new("RPG_ASSASSIN"),
-      }
-
-      for _, class_id in ipairs(all_classes) do
+      -- Remove all classes
+      for _, class_id in ipairs(ALL_CLASS_IDS) do
         if player:has_trait(class_id) then player:remove_mutation(class_id, true) end
       end
 
       player:add_effect(EffectTypeId.new("damaged_soul"), TimeDuration.from_hours(72))
       gapi.add_msg(
         MsgType.bad,
-        color_bad("✖ You have abandoned your class!") .. " Your soul is " .. color_bad("damaged") .. " for 3 days."
+        color_bad(gettext("✖ You have abandoned your class!"))
+          .. " "
+          .. string.format(gettext("Your soul is %s for 3 days."), color_bad(gettext("damaged")))
       )
     elseif chosen.id then
       if chosen.remove_first then player:remove_mutation(chosen.remove_first, true) end
@@ -962,152 +801,91 @@ mod.manage_class_menu = function(player)
       local class_name = chosen.id:obj():name()
       gapi.add_msg(
         MsgType.good,
-        color_good("✓ You have chosen your path as ") .. color_highlight(class_name) .. color_good("!")
+        string.format(gettext("✓ You have chosen your path as %s!"), color_highlight(class_name))
       )
     end
   end
 end
 
-local function check_trait_requirements(player, trait_id)
-  -- Maybe this is inefficient, but it's not run often enough for that to matter.
-  local str_val = player:get_str()
-  local dex_val = player:get_dex()
-  local int_val = player:get_int()
-  local per_val = player:get_per()
-
-  local requirements = {
-    RPG_TRAIT_BIONIC_SYMBIOTE = { stats = { INT = 10 } },
-    RPG_TRAIT_VITAL_ESSENCE = { stats = { PER = 12 } },
-    RPG_TRAIT_RADIOACTIVE_BLOOD = {},
-    RPG_TRAIT_IRON_HIDE = { stats = { STR = 12 } },
-    RPG_TRAIT_LIGHTWEIGHT = { stats = { DEX = 12 } },
-    RPG_TRAIT_PACK_MULE = { stats = { STR = 14 } },
-    RPG_TRAIT_TIRELESS = { stats = { STR = 10 } },
-    RPG_TRAIT_MANA_FONT = { stats = { INT = 14 } },
-    RPG_TRAIT_BLINK_STEP = { stats = { DEX = 14 } },
-    RPG_TRAIT_NATURAL_HEALER = { stats = { PER = 10 } },
-    RPG_TRAIT_ADAPTIVE_BIOLOGY = {},
-    RPG_TRAIT_GLASS_CANNON = { stats = { DEX = 16 } },
-    RPG_TRAIT_JUGGERNAUT = { stats = { STR = 18 } },
-    RPG_TRAIT_ARCANE_BATTERY = { stats = { INT = 16 } },
-    RPG_TRAIT_IRON_FISTS = { stats = { STR = 12 } },
-    RPG_TRAIT_COMBAT_REFLEXES = { stats = { DEX = 12 } },
-    RPG_TRAIT_ACROBAT = { stats = { DEX = 14 } },
-    RPG_TRAIT_EFFICIENT_METABOLISM = {},
-    RPG_TRAIT_TIRELESS_WORKER = { stats = { STR = 10 } },
-    RPG_TRAIT_RAPID_METABOLISM = { stats = { STR = 12 } },
-    RPG_TRAIT_SCENTLESS = { stats = { PER = 10 } },
-    RPG_TRAIT_CLOTTING_FACTOR = { stats = { STR = 10 } },
-    RPG_TRAIT_REGENERATOR = { stats = { STR = 14, PER = 10 } },
-    RPG_TRAIT_MASTER_CRAFTSMAN = { stats = { INT = 12, DEX = 12 } },
-    RPG_TRAIT_PACK_RAT = { stats = { STR = 10 } },
-    RPG_TRAIT_NATURAL_BUTCHER = { stats = { DEX = 10, PER = 10 }, skills = { survival = 2 } },
-  }
-
-  local reqs = requirements[trait_id]
-  if not reqs then return true, "" end
-
-  local unmet = {}
-
-  if reqs.stats then
-    if reqs.stats.STR and str_val < reqs.stats.STR then table.insert(unmet, string.format("STR %d", reqs.stats.STR)) end
-    if reqs.stats.DEX and dex_val < reqs.stats.DEX then table.insert(unmet, string.format("DEX %d", reqs.stats.DEX)) end
-    if reqs.stats.INT and int_val < reqs.stats.INT then table.insert(unmet, string.format("INT %d", reqs.stats.INT)) end
-    if reqs.stats.PER and per_val < reqs.stats.PER then table.insert(unmet, string.format("PER %d", reqs.stats.PER)) end
-  end
-
-  if reqs.skills then
-    for skill_name, required_level in pairs(reqs.skills) do
-      local skill_level = player:get_skill_level(SkillId.new(skill_name))
-      if skill_level < required_level then
-        local display_name = skill_name:gsub("^%l", string.upper)
-        table.insert(unmet, string.format("%s %d", display_name, required_level))
-      end
-    end
-  end
-
-  if #unmet > 0 then return false, "Requires: " .. table.concat(unmet, ", ") end
-
-  return true, ""
-end
-
 mod.manage_traits_menu = function(player)
+  local level = get_char_value(player, "rpg_level", 0)
   local num_traits = get_char_value(player, "rpg_num_traits", 0)
   local max_traits = get_char_value(player, "rpg_max_traits", 1)
-
-  if num_traits >= max_traits then
-    gapi.add_msg(MsgType.warning, color_warning("You have no trait slots available."))
-    return
-  end
+  local has_available_slots = num_traits < max_traits
 
   local ui = UiList.new()
-  ui:title(string.format("=== Select Trait (%d/%d) ===", num_traits, max_traits))
+  ui:title(string.format(gettext("=== Select Trait (%d/%d) ==="), num_traits, max_traits))
   ui:desc_enabled(true)
 
-  local all_traits = {
-    MutationBranchId.new("RPG_TRAIT_BIONIC_SYMBIOTE"),
-    MutationBranchId.new("RPG_TRAIT_VITAL_ESSENCE"),
-    MutationBranchId.new("RPG_TRAIT_RADIOACTIVE_BLOOD"),
-    MutationBranchId.new("RPG_TRAIT_IRON_HIDE"),
-    MutationBranchId.new("RPG_TRAIT_LIGHTWEIGHT"),
-    MutationBranchId.new("RPG_TRAIT_PACK_MULE"),
-    MutationBranchId.new("RPG_TRAIT_TIRELESS"),
-    MutationBranchId.new("RPG_TRAIT_MANA_FONT"),
-    MutationBranchId.new("RPG_TRAIT_BLINK_STEP"),
-    MutationBranchId.new("RPG_TRAIT_NATURAL_HEALER"),
-    MutationBranchId.new("RPG_TRAIT_ADAPTIVE_BIOLOGY"),
-    MutationBranchId.new("RPG_TRAIT_GLASS_CANNON"),
-    MutationBranchId.new("RPG_TRAIT_JUGGERNAUT"),
-    MutationBranchId.new("RPG_TRAIT_ARCANE_BATTERY"),
-    MutationBranchId.new("RPG_TRAIT_IRON_FISTS"),
-    MutationBranchId.new("RPG_TRAIT_EFFICIENT_METABOLISM"),
-    MutationBranchId.new("RPG_TRAIT_COMBAT_REFLEXES"),
-    MutationBranchId.new("RPG_TRAIT_ACROBAT"),
-    MutationBranchId.new("RPG_TRAIT_TIRELESS_WORKER"),
-    MutationBranchId.new("RPG_TRAIT_RAPID_METABOLISM"),
-    MutationBranchId.new("RPG_TRAIT_SCENTLESS"),
-    MutationBranchId.new("RPG_TRAIT_CLOTTING_FACTOR"),
-    MutationBranchId.new("RPG_TRAIT_REGENERATOR"),
-    MutationBranchId.new("RPG_TRAIT_MASTER_CRAFTSMAN"),
-    MutationBranchId.new("RPG_TRAIT_PACK_RAT"),
-    MutationBranchId.new("RPG_TRAIT_NATURAL_BUTCHER"),
-  }
-
   local traits = {}
-  for i, trait_id in ipairs(all_traits) do
-    local already_has = player:has_trait(trait_id)
-    local trait_obj = trait_id:obj()
-    local trait_name = trait_obj:name()
-    local trait_desc = trait_obj:desc()
+  local index = 1
 
-    local meets_reqs, req_text = check_trait_requirements(player, trait_id:str())
+  -- Loop through all trait mutations
+  for id, mutation in pairs(MUTATIONS) do
+    if mutation.type == "trait" then
+      local trait_id = mutation:get_mutation_id()
+      local already_has = player:has_trait(trait_id)
+      local trait_obj = trait_id:obj()
+      local trait_name = trait_obj:name()
+      local trait_desc = trait_obj:desc()
 
-    local display_name
-    local can_select = not already_has and meets_reqs
+      local can_select_reqs, unmet = check_requirements(player, mutation, level)
+      -- Can only select if you have available slots, meet requirements, and don't already have it
+      local can_select = has_available_slots and not already_has and can_select_reqs
 
-    if already_has then
-      display_name = color_text("✓ " .. trait_name, "dark_gray") .. color_text(" (Owned)", "dark_gray")
-    elseif not meets_reqs then
-      display_name = color_text("◆ " .. trait_name, "dark_gray") .. " - " .. color_bad(req_text)
-    else
-      display_name = color_good("◆ " .. trait_name)
+      local display_name
+      if already_has then
+        display_name = color_text("✓ " .. trait_name, "dark_gray")
+          .. color_text(" (" .. gettext("Owned") .. ")", "dark_gray")
+      elseif not has_available_slots then
+        display_name = color_text("◆ " .. trait_name, "dark_gray")
+          .. color_text(" (" .. gettext("No slots available") .. ")", "dark_gray")
+      elseif not can_select_reqs then
+        display_name = color_text("◆ " .. trait_name, "dark_gray") .. " - " .. format_requirements_list(unmet, false)
+      else
+        display_name = color_good("◆ " .. trait_name)
+      end
+
+      table.insert(traits, {
+        id = trait_id,
+        name = display_name,
+        desc = trait_desc,
+        can_select = can_select,
+        index = index,
+      })
+      index = index + 1
     end
+  end
 
-    table.insert(traits, {
-      id = trait_id,
-      name = display_name,
-      desc = trait_desc,
-      can_select = can_select,
-      index = i,
-    })
+  -- Reset Traits option
+  local current_traits = get_current_traits(player)
+  local can_reset = #current_traits > 0
+  local reset_text
+  if can_reset then
+    reset_text = color_text(gettext("✖ Reset Traits"), "red")
+  else
+    reset_text = color_text(gettext("✖ Reset Traits"), "dark_gray")
+      .. color_text(" (" .. gettext("No traits to reset") .. ")", "dark_gray")
   end
 
   table.insert(traits, {
-    name = color_text("← Back", "light_gray"),
-    desc = "Return to main menu",
+    name = reset_text,
+    desc = gettext(
+      "Remove all traits and damage your soul for 3 days, with severe penalties. You will keep your trait slots."
+    ),
+    action = "reset",
+    can_select = can_reset,
+    index = index,
+  })
+  index = index + 1
+
+  -- Back option
+  table.insert(traits, {
+    name = color_text(gettext("← Back"), "light_gray"),
+    desc = gettext("Return to main menu"),
     action = "back",
     can_select = true,
-    index = #all_traits + 1,
+    index = index,
   })
 
   for i, trait in ipairs(traits) do
@@ -1121,21 +899,37 @@ mod.manage_traits_menu = function(player)
     local chosen = traits[choice_index]
 
     if not chosen.can_select then
-      if player:has_trait(chosen.id) then
-        gapi.add_msg(MsgType.warning, color_warning("You already have this trait."))
+      if chosen.id and player:has_trait(chosen.id) then
+        gapi.add_msg(MsgType.warning, color_warning(gettext("You already have this trait.")))
       else
-        gapi.add_msg(MsgType.warning, color_warning("You don't meet the requirements for this trait."))
+        gapi.add_msg(MsgType.warning, color_warning(gettext("You don't meet the requirements for this trait.")))
       end
       return
     end
 
     if chosen.action == "back" then
       return
+    elseif chosen.action == "reset" then
+      -- Remove all traits
+      for _, trait_id in ipairs(ALL_TRAIT_IDS) do
+        if player:has_trait(trait_id) then player:remove_mutation(trait_id, true) end
+      end
+
+      -- Reset trait counter but keep max traits (slots)
+      set_char_value(player, "rpg_num_traits", 0)
+
+      player:add_effect(EffectTypeId.new("damaged_soul"), TimeDuration.from_hours(72))
+      gapi.add_msg(
+        MsgType.bad,
+        color_bad(gettext("✖ You have abandoned your traits!"))
+          .. " "
+          .. string.format(gettext("Your soul is %s for 3 days."), color_bad(gettext("damaged")))
+      )
     elseif chosen.id then
       player:set_mutation(chosen.id)
       set_char_value(player, "rpg_num_traits", num_traits + 1)
       local trait_name = chosen.id:obj():name()
-      gapi.add_msg(MsgType.good, color_good("✓ You have gained ") .. color_highlight(trait_name) .. color_good("!"))
+      gapi.add_msg(MsgType.good, string.format(gettext("✓ You have gained %s!"), color_highlight(trait_name)))
     end
   end
 end
@@ -1144,12 +938,12 @@ mod.assign_stats_menu = function(player)
   local stat_points = get_char_value(player, "rpg_stat_points", 0)
 
   if stat_points <= 0 then
-    gapi.add_msg(MsgType.warning, color_warning("You have no stat points to assign."))
+    gapi.add_msg(MsgType.warning, color_warning(gettext("You have no stat points to assign.")))
     return
   end
 
   local ui = UiList.new()
-  ui:title(string.format("=== Assign Stat Points (%d available) ===", stat_points))
+  ui:title(string.format(gettext("=== Assign Stat Points (%d available) ==="), stat_points))
   ui:desc_enabled(true)
 
   local str_val = player:get_str()
@@ -1159,28 +953,36 @@ mod.assign_stats_menu = function(player)
 
   local options = {
     {
-      name = string.format("Strength (Current: %d)", str_val),
-      desc = "Strength affects your melee damage, the amount of weight you can carry, your total HP, your resistance to many diseases, and the effectiveness of actions which require brute force.",
+      name = string.format(gettext("Strength (Current: %d)"), str_val),
+      desc = gettext(
+        "Strength affects your melee damage, the amount of weight you can carry, your total HP, your resistance to many diseases, and the effectiveness of actions which require brute force."
+      ),
       stat = "STR",
     },
     {
-      name = string.format("Dexterity (Current: %d)", dex_val),
-      desc = "Dexterity affects your chance to hit in melee combat, helps you steady your gun for ranged combat, and enhances many actions that require finesse.",
+      name = string.format(gettext("Dexterity (Current: %d)"), dex_val),
+      desc = gettext(
+        "Dexterity affects your chance to hit in melee combat, helps you steady your gun for ranged combat, and enhances many actions that require finesse."
+      ),
       stat = "DEX",
     },
     {
-      name = string.format("Intelligence (Current: %d)", int_val),
-      desc = "Intelligence is less important in most situations, but it is vital for more complex tasks like electronics crafting.  It also affects how much skill you can pick up from reading a book.",
+      name = string.format(gettext("Intelligence (Current: %d)"), int_val),
+      desc = gettext(
+        "Intelligence is less important in most situations, but it is vital for more complex tasks like electronics crafting.  It also affects how much skill you can pick up from reading a book."
+      ),
       stat = "INT",
     },
     {
-      name = string.format("Perception (Current: %d)", per_val),
-      desc = "Perception is the most important stat for ranged combat.  It's also used for detecting traps and other things of interest.",
+      name = string.format(gettext("Perception (Current: %d)"), per_val),
+      desc = gettext(
+        "Perception is the most important stat for ranged combat.  It's also used for detecting traps and other things of interest."
+      ),
       stat = "PER",
     },
     {
-      name = color_text("← Back", "light_gray"),
-      desc = "Return to main menu",
+      name = color_text(gettext("← Back"), "light_gray"),
+      desc = gettext("Return to main menu"),
       stat = "BACK",
     },
   }
@@ -1203,30 +1005,30 @@ mod.assign_stats_menu = function(player)
 
       set_char_value(player, "rpg_stat_points", stat_points - 1)
 
-      gapi.add_msg(MsgType.good, color_good("✓ +1 ") .. color_highlight(chosen.stat) .. color_good(" assigned!"))
+      gapi.add_msg(MsgType.good, string.format(gettext("✓ +1 %s assigned!"), color_highlight(chosen.stat)))
     end
   end
 end
 
 mod.show_help_menu = function(player)
   local ui = UiList.new()
-  ui:title("=== [System] Information ===")
+  ui:title(gettext("=== [System] Information ==="))
   ui:desc_enabled(true)
 
   local options = {
     {
-      name = "About the System",
-      desc = "[System] Query: Basic information",
+      name = gettext("About the System"),
+      desc = gettext("[System] Query: Basic information"),
       action = "about",
     },
     {
-      name = "Adjust Level Scaling",
-      desc = "Fine-tune power scaling for balance",
+      name = gettext("Adjust Level Scaling"),
+      desc = gettext("Fine-tune power scaling for balance"),
       action = "scaling",
     },
     {
-      name = color_text("← Back", "light_gray"),
-      desc = "Return to main menu",
+      name = color_text(gettext("← Back"), "light_gray"),
+      desc = gettext("Return to main menu"),
       action = "back",
     },
   }
@@ -1252,10 +1054,10 @@ end
 
 mod.show_about_screen = function(player)
   local ui = UiList.new()
-  ui:title("=== [System] Database Entry ===")
+  ui:title(gettext("=== [System] Database Entry ==="))
 
   local help_text = ""
-  help_text = help_text .. color_info("[System]") .. " Protocol IB-73758-R\n"
+  help_text = help_text .. color_info(gettext("[System]")) .. " " .. gettext("Protocol IB-73758-R") .. "\n"
   help_text = help_text
     .. color_text(
       "─────────────────────────────────────────",
@@ -1263,28 +1065,38 @@ mod.show_about_screen = function(player)
     )
     .. "\n\n"
 
-  help_text = help_text .. "Welcome to the " .. color_info("[System]") .. "! You, among\n"
-  help_text = help_text .. "all inhabitants of world IB-73758-R, have\n"
-  help_text = help_text .. "been blessed with a chance at greatness\n"
-  help_text = help_text .. "for your great deeds doing " .. color_warning("[REASON NOT FOUND]") .. ".\n"
-  help_text = help_text .. "Admire below the power made available:\n\n"
+  help_text = help_text
+    .. string.format(
+      gettext(
+        "Welcome to the %s! You, among all inhabitants of world IB-73758-R, have been blessed with a chance at greatness for your great deeds doing %s."
+      ),
+      color_info(gettext("[System]")),
+      color_warning(gettext("[REASON NOT FOUND]"))
+    )
+    .. "\n"
+  help_text = help_text .. gettext("Admire below the power made available:") .. "\n\n"
 
-  help_text = help_text .. color_highlight("PROGRESSION") .. "\n"
-  help_text = help_text .. "• Level 10: Prestige Class unlocks\n"
-  help_text = help_text .. "• +1 stat point per 2 levels\n"
-  help_text = help_text .. "• +1 trait slot per 5 levels\n\n"
+  help_text = help_text .. color_highlight(gettext("PROGRESSION")) .. "\n"
+  help_text = help_text .. string.format(gettext("• Level 10: Prestige Class unlocks")) .. "\n"
+  help_text = help_text .. string.format(gettext("• +1 stat point per %d levels"), LEVELS_PER_STAT_POINT) .. "\n"
+  help_text = help_text .. string.format(gettext("• +1 trait slot per %d levels"), LEVELS_PER_TRAIT_SLOT) .. "\n\n"
 
-  help_text = help_text .. color_highlight("BALANCE") .. "\n"
-  help_text = help_text .. "~25 point value (weak early, strong late)\n"
-  help_text = help_text .. color_warning("⚠") .. " Not meant to be used with Stats through Kills\n\n"
+  help_text = help_text .. color_highlight(gettext("BALANCE")) .. "\n"
+  help_text = help_text .. gettext("~25 point value (much less early, more late)") .. "\n"
+  help_text = help_text
+    .. color_warning("⚠")
+    .. " "
+    .. gettext("Not meant to be used with Stats through Kills")
+    .. "\n\n"
 
-  help_text = help_text .. color_highlight("PRESTIGE PATHS") .. "\n"
-  help_text = help_text .. "Warrior → Berserker / Guardian\n"
-  help_text = help_text .. "Mage → Mystic / Scholar\n"
-  help_text = help_text .. "Scout → Ranger / Assassin\n"
+  help_text = help_text .. color_highlight(gettext("PRESTIGE PATHS")) .. "\n"
+  help_text = help_text .. gettext("Warrior") .. " → " .. gettext("Berserker") .. " / " .. gettext("Guardian") .. "\n"
+  help_text = help_text .. gettext("Mage") .. " → " .. gettext("Mystic") .. " / " .. gettext("Scholar") .. "\n"
+  help_text = help_text .. gettext("Rogue") .. " → " .. gettext("Acrobat") .. " / " .. gettext("Assassin") .. "\n"
+  help_text = help_text .. gettext("Scout") .. " → " .. gettext("Ranger") .. " / " .. gettext("Craftsman") .. "\n"
 
   ui:text(help_text)
-  ui:add(1, color_text("← Back", "light_gray"))
+  ui:add(1, color_text(gettext("← Back"), "light_gray"))
 
   ui:query()
 end
@@ -1293,40 +1105,40 @@ mod.adjust_level_scaling = function(player)
   local current_scaling = get_char_value(player, "rpg_level_scaling", 100)
 
   local ui = UiList.new()
-  ui:title("=== Adjust Level Scaling ===")
+  ui:title(gettext("=== Adjust Level Scaling ==="))
   ui:desc_enabled(true)
 
   local info_text = ""
-  info_text = info_text .. "Current setting: " .. color_highlight(current_scaling .. "%") .. "\n"
+  info_text = info_text .. gettext("Current setting:") .. " " .. color_highlight(current_scaling .. "%") .. "\n"
   info_text = info_text
     .. color_text(
-      "Affects class bonuses and periodic effects. Things that don't scale with level are unaffected.",
+      gettext("Affects class bonuses and periodic effects. Things that don't scale with level are unaffected."),
       "light_gray"
     )
     .. "\n"
-  info_text = info_text .. color_text("Does not affect assigned stats.", "light_gray") .. "\n\n"
+  info_text = info_text .. color_text(gettext("Does not affect assigned stats."), "light_gray") .. "\n\n"
 
   ui:text(info_text)
 
   local options = {
     {
-      name = "0% (Disable scaling)",
-      desc = "Disables all level-based class bonuses and periodic effects.",
+      name = gettext("0% (Disable scaling)"),
+      desc = gettext("Disables all level-based class bonuses and periodic effects."),
       value = 0,
     },
     {
-      name = "50% (Half power)",
-      desc = "Half effectiveness for balanced gameplay.",
+      name = gettext("50% (Half power)"),
+      desc = gettext("Half effectiveness for balanced gameplay."),
       value = 50,
     },
     {
-      name = "100% (Full power)",
-      desc = "Default intended [System] experience.",
+      name = gettext("100% (Full power)"),
+      desc = gettext("Default intended [System] experience."),
       value = 100,
     },
     {
-      name = color_text("← Back", "light_gray"),
-      desc = "Return to help menu",
+      name = color_text(gettext("← Back"), "light_gray"),
+      desc = gettext("Return to help menu"),
       value = nil,
     },
   }
@@ -1344,7 +1156,10 @@ mod.adjust_level_scaling = function(player)
 
     if chosen.value ~= nil then
       set_char_value(player, "rpg_level_scaling", chosen.value)
-      gapi.add_msg(MsgType.good, color_good("Level scaling set to ") .. color_highlight(chosen.value .. "%"))
+      gapi.add_msg(
+        MsgType.good,
+        string.format(gettext("Level scaling set to %s"), color_highlight(chosen.value .. "%"))
+      )
     end
   end
 end

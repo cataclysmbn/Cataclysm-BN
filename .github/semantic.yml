@@ -6,7 +6,7 @@
 # Validate the PR title, and ignore all commit messages
 enabled: true
 titleOnly: true
-targetUrl: "https://docs.cataclysmbn.org/en/contribute/changelog_guidelines/"
+targetUrl: "https://docs.cataclysmbn.org/contribute/changelog_guidelines/"
 types:
   - feat
   - fix
@@ -24,6 +24,7 @@ scopes:
   - i18n
   - balance
   - port
+  - lua
   - mods/CheesyInnaWoodFixes
   - mods/DinoMod
   - mods/MMA
@@ -32,6 +33,7 @@ scopes:
   - mods/No_Acid_Zombies
   - mods/No_Anthills
   - mods/No_Blobs
+  - mods/No_Cockroaches
   - mods/No_Explosive_Zombies
   - mods/No_Ferals
   - mods/No_Fungi
@@ -44,6 +46,7 @@ scopes:
   - mods/aftershock
   - mods/alt_map_key
   - mods/cbm_slots
+  - mods/change_hairstyle
   - mods/civilians
   - mods/classic_zombies
   - mods/crazy_cataclysm
@@ -51,25 +54,34 @@ scopes:
   - mods/dangerous_fungi
   - mods/desertpack
   - mods/disable_lifting
+  - mods/exotic_ammo
+  - mods/flowerpots_plus
   - mods/fuji_mpp
   - mods/innawoods
   - mods/jump_pad
+  - mods/lethal_zeds
   - mods/limit_fungal_growth
   - mods/manualbionicinstall
   - mods/my_sweet_cataclysm
+  - mods/no_global_uniques
   - mods/no_npc_food
   - mods/no_reviving_zombies
   - mods/no_zombify
   - mods/novitamins
+  - mods/nuclear_tear
   - mods/pathfinding_stockfish
   - mods/pride_flags
+  - mods/resurrection_tech
+  - mods/rpg_system
   - mods/saveload_lua_test
   - mods/smart_house_remote_mod
   - mods/speedydex
   - mods/stats_through_kills
-  - mods/rpg_system
   - mods/tablet_ebook
   - mods/teleportation_tech
   - mods/test_data
+  - mods/test_lua_hooks
   - mods/udp_redux
+  - mods/underground_dynamic_temperature
+  - mods/weather_variants
   - mods

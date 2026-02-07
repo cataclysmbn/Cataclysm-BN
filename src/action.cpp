@@ -37,6 +37,7 @@
 #include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
+#include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
@@ -297,6 +298,8 @@ std::string action_ident( action_id act )
             return "debug_radiation";
         case ACTION_DISPLAY_SUBMAP_GRID:
             return "debug_submap_grid";
+        case ACTION_TOGGLE_ZONE_OVERLAY:
+            return "toggle_zone_overlay";
         case ACTION_TOGGLE_HOUR_TIMER:
             return "debug_hour_timer";
         case ACTION_TOGGLE_DEBUG_MODE:
@@ -424,6 +427,7 @@ bool can_action_change_worldstate( const action_id act )
         case ACTION_DISPLAY_RADIATION:
         case ACTION_DISPLAY_TRANSPARENCY:
         case ACTION_DISPLAY_SUBMAP_GRID:
+        case ACTION_TOGGLE_ZONE_OVERLAY:
         case ACTION_ZOOM_OUT:
         case ACTION_ZOOM_IN:
         case ACTION_TOGGLE_PIXEL_MINIMAP:
@@ -655,7 +659,7 @@ bool can_interact_at( action_id action, const tripoint &p )
     map &here = get_map();
     switch( action ) {
         case ACTION_OPEN:
-            return here.open_door( p, !here.is_outside( g->u.pos() ), true );
+            return here.can_open_door( &get_avatar(), p, !here.is_outside( g->u.pos() ) );
         case ACTION_CLOSE: {
             const optional_vpart_position vp = here.veh_at( p );
             return ( vp &&
@@ -855,7 +859,7 @@ action_id handle_action_menu()
                 ACTION_TOGGLE_PANEL_ADM, ACTION_DISPLAY_SCENT, ACTION_DISPLAY_SCENT_TYPE,
                 ACTION_DISPLAY_TEMPERATURE, ACTION_DISPLAY_VEHICLE_AI, ACTION_DISPLAY_VISIBILITY,
                 ACTION_DISPLAY_LIGHTING, ACTION_DISPLAY_TRANSPARENCY, ACTION_DISPLAY_RADIATION,
-                ACTION_DISPLAY_SUBMAP_GRID, ACTION_TOGGLE_DEBUG_MODE
+                ACTION_DISPLAY_SUBMAP_GRID, ACTION_TOGGLE_ZONE_OVERLAY, ACTION_TOGGLE_DEBUG_MODE
             } );
         } else if( category == _( "Interact" ) ) {
             register_actions( {

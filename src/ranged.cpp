@@ -1,6 +1,7 @@
 #include "ranged.h"
 
 #include <algorithm>
+#include <numeric>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -20,6 +21,8 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
@@ -41,6 +44,7 @@
 #include "itype.h"
 #include "line.h"
 #include "magic.h"
+#include "magic_enchantment.h"
 #include "map.h"
 #include "material.h"
 #include "math_defines.h"
@@ -945,6 +949,19 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
                                 : nullptr;
         projectile projectile = make_gun_projectile( gun );
 
+        // Apply enchantment bonuses to projectile
+        int base_bullet_damage = static_cast<int>( projectile.impact.type_damage( DT_BULLET ) );
+        int ench_damage_bonus = who.bonus_from_enchantments( base_bullet_damage,
+                                enchant_vals::mod::RANGED_DAMAGE_BULLET, true );
+        if( ench_damage_bonus != 0 ) {
+            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus );
+        }
+
+        int ench_range_bonus = who.bonus_from_enchantments( projectile.range,
+                               enchant_vals::mod::RANGED_RANGE, true );
+        // Ensure range doesn't go below 1
+        projectile.range = std::max( 1, projectile.range + ench_range_bonus );
+
         // Slings use ammo damage or damage from throwing the ammo, whichever is higher
         if( gun.gun_skill() == skill_throw && !who.is_fake() && gun.ammo_data() ) {
             item &tmp = *item::spawn_temporary( item( gun.ammo_data() ) );
@@ -1060,6 +1077,13 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
     int practice_units = aoe_attack ? curshot : hits;
     who.as_player()->practice( gun.gun_skill(), ( practice_units + 1 ) * 5 );
 
+    cata::run_hooks( "on_shoot", [ & ]( auto & params ) {
+        params["shooter"] = &who;
+        params["target_pos"] = &target;
+        params["shots"] = curshot;
+        params["gun"] = &gun;
+        params["ammo"] = ammo;
+    } );
     return curshot;
 }
 
@@ -1449,6 +1473,12 @@ dealt_projectile_attack throw_item( Character &who, const tripoint &target,
     who.last_target_pos = std::nullopt;
     who.recoil = MAX_RECOIL;
 
+    cata::run_hooks( "on_throw", [ & ]( auto & params ) {
+        params["thrower"] = &who;
+        params["target_pos"] = &target;
+        params["throw_from_pos"] = &throw_from;
+        params["thrown"] = &thrown;
+    } );
     return dealt_attack;
 }
 
@@ -1911,8 +1941,13 @@ int ranged::time_to_attack( const Character &p, const item &firing, const item *
                                  *const_cast<item *>( loc ) );
         RAS_time = opt.moves() + reload_stamina_penalty;
     }
-    return std::max( info.min_time,
-                     info.base_time - info.time_reduction_per_level * p.get_skill_level( skill_used ) + RAS_time );
+    int base_time = std::max( info.min_time,
+                              info.base_time - info.time_reduction_per_level * p.get_skill_level( skill_used ) + RAS_time );
+    // Apply enchantment bonus to reload time
+    int ench_reload_bonus = p.bonus_from_enchantments( base_time, enchant_vals::mod::RANGED_RELOAD_TIME,
+                            true );
+    // Ensure we don't go below minimum time even with enchantments
+    return std::max( info.min_time, base_time + ench_reload_bonus );
 }
 
 static void cycle_action( item &weap, const tripoint &pos )
@@ -2054,12 +2089,6 @@ item::sound_data item::gun_noise( const bool burst ) const
     return { 0, "" }; // silent weapons
 }
 
-static bool is_driving( const Character &p )
-{
-    const optional_vpart_position vp = get_map().veh_at( p.pos() );
-    return vp && vp->vehicle().is_moving() && vp->vehicle().player_in_control( p );
-}
-
 static double dispersion_from_skill( double skill, double weapon_dispersion )
 {
     if( skill >= MAX_SKILL ) {
@@ -2091,7 +2120,7 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
 
     dispersion.add_range( ( who.encumb( body_part_arm_l ) + who.encumb( body_part_arm_r ) ) / 5.0 );
 
-    if( is_driving( who ) ) {
+    if( character_funcs::is_driving( who ) ) {
         // get volume of gun (or for auxiliary gunmods the parent gun)
         const item *parent = who.has_item( obj ) ? who.find_parent( obj ) : nullptr;
         const int vol = ( parent ? parent->volume() : obj.volume() ) / 250_ml;
@@ -2135,6 +2164,12 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
             dispersion.add_range( 1000 );
         }
     }
+
+    // Apply enchantment bonus to dispersion
+    int base_dispersion = static_cast<int>( dispersion.max() );
+    int ench_dispersion_bonus = who.bonus_from_enchantments( base_dispersion,
+                                enchant_vals::mod::RANGED_DISPERSION, true );
+    dispersion.add_range( ench_dispersion_bonus );
 
     return dispersion;
 }
@@ -2260,7 +2295,11 @@ double ranged::recoil_vehicle( const Character &who )
 
 double ranged::recoil_total( const Character &who )
 {
-    return who.recoil + recoil_vehicle( who );
+    double base_recoil = who.recoil + recoil_vehicle( who );
+    double ench_recoil_bonus = who.bonus_from_enchantments( base_recoil,
+                               enchant_vals::mod::RANGED_RECOIL );
+    // Recoil cannot be negative
+    return std::max( 0.0, base_recoil + ench_recoil_bonus );
 }
 
 namespace ranged
@@ -2897,8 +2936,14 @@ void target_ui::update_target_list()
         targets = ranged::targetable_creatures( *you, range );
     }
 
-    std::sort( targets.begin(), targets.end(), [&]( const Creature * lhs, const Creature * rhs ) {
-        return rl_dist_exact( lhs->pos(), you->pos() ) < rl_dist_exact( rhs->pos(), you->pos() );
+    map &here = get_map();
+    const auto player_pos = you->pos();
+
+    std::ranges::sort( targets, {}, [&]( const Creature * c ) -> std::tuple<bool, bool, int> {
+        const auto target_pos = c->pos();
+        const bool same_z = player_pos.z == target_pos.z;
+        const bool has_los = here.sees( player_pos, target_pos, range );
+        return { !has_los, !same_z, rl_dist_exact( target_pos, player_pos ) };
     } );
 }
 

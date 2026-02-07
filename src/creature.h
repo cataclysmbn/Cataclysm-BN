@@ -656,6 +656,7 @@ class Creature
 
 
         virtual void set_all_parts_hp_cur( int set );
+        virtual void mod_all_parts_hp_cur( int mod );
         void set_all_parts_hp_to_max();
 
         virtual int get_speed_base() const;

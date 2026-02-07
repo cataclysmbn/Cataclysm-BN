@@ -987,7 +987,7 @@
   {
     "id": "museum_vehicles",
     "type": "vehicle_group",
-    "vehicles": [ [ "cannon_3in", 50 ], [ "gatling_carriage", 50 ] ]
+    "vehicles": [ [ "cannon_3in", 50 ], [ "gatling_carriage", 25 ], [ "ballista_mount", 25 ] ]
   },
   {
     "id": "military_display_vehicles",

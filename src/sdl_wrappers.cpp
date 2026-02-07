@@ -1,6 +1,7 @@
 #if defined(TILES)
 
 #include "sdl_wrappers.h"
+#include "sdl_utils.h"
 
 #include <cassert>
 #include <ostream>
@@ -159,6 +160,11 @@ SDL_Surface_Ptr load_image( const char *const path )
     if( !result ) {
         throw std::runtime_error( "Could not load image \"" + std::string( path ) + "\": " +
                                   IMG_GetError() );
+    }
+    // Convert Surface to raw SDL_Color format if necessary, as load_image doesn't guarantee any particular format to be loaded
+    if( result->format->format != sdl_color_pixel_format ) {
+        const auto tmp = SDL_ConvertSurfaceFormat( result.get(), sdl_color_pixel_format, 0 );
+        result = SDL_Surface_Ptr{tmp};
     }
     return result;
 }

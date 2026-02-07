@@ -40,11 +40,19 @@ decltype( Pathfinding::cached_closest_z_changes ) Pathfinding::cached_closest_z_
 //   so we have to make our own
 static constexpr bool is_nan( float x )
 {
+#if defined(_MSC_VER)
     return x != x;
+#else
+    return std::isnan( x );
+#endif
 }
 static constexpr bool is_inf( float x )
 {
-    return x == INFINITY;
+#if defined(_MSC_VER)
+    return x == INFINITY || x == -INFINITY;
+#else
+    return std::isinf( x );
+#endif
 }
 
 // PathfindingSettings impls
@@ -1011,6 +1019,7 @@ std::vector<tripoint> Pathfinding::get_route_3d(
 
                 if( is_inf( best_distance ) ) {
                     // No trivial Z path exists, give up
+                    debugmsg_of( DL::Debug, "Failed to find a trivial path across z-levels" );
                     return std::vector<tripoint>();
                 }
 
@@ -1018,6 +1027,13 @@ std::vector<tripoint> Pathfinding::get_route_3d(
             }
 
             z_path.push_back( best_z_change );
+
+            constexpr auto unreasonable_z_hops = 1000;
+            if( z_path.size() > unreasonable_z_hops ) {
+                debugmsg( "Failed to find a path with less than %d z-level changes", unreasonable_z_hops );
+                return std::vector<tripoint>();
+            }
+
             cur_origin = best_z_change.from;
             cur_origin_point = cur_origin.xy();
         }

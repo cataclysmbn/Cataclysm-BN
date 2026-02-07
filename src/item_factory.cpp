@@ -971,8 +971,8 @@ void Item_factory::init()
                                 "present</info>."
                               ) );
     add_iuse( "GEIGER", &iuse::geiger );
-    add_iuse( "GRANADE", &iuse::granade );
-    add_iuse( "GRANADE_ACT", &iuse::granade_act );
+    add_iuse( "DEBUG_GRENADE", &iuse::debug_grenade );
+    add_iuse( "DEBUG_GRENADE_ACT", &iuse::debug_grenade_act );
     add_iuse( "GRENADE_INC_ACT", &iuse::grenade_inc_act );
     add_iuse( "GUN_CLEAN", &iuse::gun_clean );
     add_iuse( "GUN_REPAIR", &iuse::gun_repair );
@@ -1059,7 +1059,6 @@ void Item_factory::init()
     add_iuse( "BLOOD_DRAW", &iuse::blood_draw );
     add_iuse( "MIND_SPLICER", &iuse::mind_splicer );
     add_iuse( "VIBE", &iuse::vibe );
-    add_iuse( "HAND_CRANK", &iuse::hand_crank );
     add_iuse( "VORTEX", &iuse::vortex );
     add_iuse( "WATER_PURIFIER", &iuse::water_purifier );
     add_iuse( "WEAK_ANTIBIOTIC", &iuse::weak_antibiotic );
@@ -1095,6 +1094,8 @@ void Item_factory::init()
     add_actor( std::make_unique<deploy_furn_actor>() );
     add_actor( std::make_unique<place_monster_iuse>() );
     add_actor( std::make_unique<change_scent_iuse>() );
+    add_actor( std::make_unique<cloning_syringe_iuse>() );
+    add_actor( std::make_unique<dna_editor_iuse>() );
     add_actor( std::make_unique<place_npc_iuse>() );
     add_actor( std::make_unique<reveal_map_actor>() );
     add_actor( std::make_unique<unfold_vehicle_iuse>() );
@@ -1113,11 +1114,14 @@ void Item_factory::init()
     add_actor( std::make_unique<gps_device_actor>() );
     add_actor( std::make_unique<sew_advanced_actor>() );
     add_actor( std::make_unique<multicooker_iuse>() );
+    add_actor( std::make_unique<hand_crank_actor>() );
     add_actor( std::make_unique<sex_toy_actor>() );
     add_actor( std::make_unique<train_skill_actor>() );
     add_actor( std::make_unique<iuse_music_player>() );
     add_actor( std::make_unique<iuse_prospect_pick>() );
     add_actor( std::make_unique<iuse_reveal_contents>() );
+    add_actor( std::make_unique<iuse_flowerpot_plant>() );
+    add_actor( std::make_unique<iuse_flowerpot_collect>() );
 
     // An empty dummy group, it will not spawn anything. However, it makes that item group
     // id valid, so it can be used all over the place without need to explicitly check for it.
@@ -1827,7 +1831,7 @@ void Item_factory::load( islot_fuel &slot, const JsonObject &jo, const std::stri
 
     assign( jo, "energy", slot.energy, strict, 0.001f );
     if( jo.has_member( "pump_terrain" ) ) {
-        slot.pump_terrain = jo.get_string( "pump_terrain" );
+        slot.pump_terrain = ter_id( jo.get_string( "pump_terrain" ) );
     }
     if( jo.has_member( "explosion_data" ) ) {
         slot.has_explode_data = true;
@@ -2630,7 +2634,9 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
     assign( jo, "magazine_well", def.magazine_well );
     assign( jo, "explode_in_fire", def.explode_in_fire );
     assign( jo, "solar_efficiency", def.solar_efficiency );
+    assign( jo, "repair_difficulty", def.repair_difficulty );
     assign( jo, "ascii_picture", def.picture_id );
+    assign( jo, "item_vars", def.item_vars );
 
     if( jo.has_member( "thrown_damage" ) ) {
         def.thrown_damage = load_damage_instance( jo.get_array( "thrown_damage" ) );

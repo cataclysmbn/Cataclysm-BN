@@ -23,5 +23,30 @@
     "name": { "str": "wired metal aerofoil" },
     "description": "A section of aircraft wing made of sheet metal skin over steel ribs and stringers, and a navigation light wired into it.  Wings allow a vehicle to fly, but require a propeller and enough velocity to take off.",
     "relative": { "weight": "200 g", "price": "10 USD", "price_postapoc": "25 cent" }
+  },
+  {
+    "type": "GENERIC",
+    "id": "wing_wood_item",
+    "name": { "str": "wooden aerofoil" },
+    "description": "A section of aircraft wing made of fabric over wooden frame.  Wings allow a vehicle to fly, but require a propeller and enough velocity to take off.",
+    "weight": "5 kg",
+    "to_hit": -3,
+    "color": "light_gray",
+    "symbol": "]",
+    "looks_like": "carbonfiber_boat_hull",
+    "material": [ "cotton" ],
+    "volume": "15 L",
+    "bashing": 3,
+    "category": "veh_parts",
+    "price": "40 USD",
+    "price_postapoc": "1 USD"
+  },
+  {
+    "type": "GENERIC",
+    "id": "lit_wing_wood_item",
+    "copy-from": "wing_wood_item",
+    "name": { "str": "wired wooden aerofoil" },
+    "description": "A section of aircraft wing made of fabric over wooden frame, and a navigation light wired into it.  Wings allow a vehicle to fly, but require a propeller and enough velocity to take off.",
+    "relative": { "weight": "200 g", "price": "10 USD", "price_postapoc": "25 cent" }
   }
 ]
