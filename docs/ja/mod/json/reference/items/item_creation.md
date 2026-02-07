@@ -523,14 +523,14 @@ Gun mods can be defined like this:
                                // 以下は銃器改造パーツ固有の項目です:
 "location": "stock",           // (必須) このパーツが装着される部位(ストック、銃口など)を指定します。
 "mod_targets": [ "crossbow" ], // (任意) このパーツを装着できる特定の武器のリスト。
-"mod_target_category": [ [ "BOWS" ] ], // (任意) このパーツを装着できる武器カテゴリーのリスト。
+"mod_target_category": [ [ "BOWS" ] ], // (任意) 武器カテゴリー要件。内側配列はAND、外側配列はOR。例: [["RIFLES","AUTOLOADING"]] = ライフルかつオートローディング; [["PISTOLS"],["REVOLVERS"]] = ピストルまたはリボルバー。
 "mod_exclusions": [ "laser_rifle" ], // (任意) このパーツを装着「できない」特定の武器のリスト。
-"mod_exclusion_category": [ [ "ENERGY_WEAPONS" ] ], // (任意) このパーツを装着「できない」カテゴリーのリスト。
+"mod_exclusion_category": [ [ "ENERGY_WEAPONS" ] ], // (任意) 除外する武器カテゴリー。mod_target_categoryと同じ論理 - 内側配列のいずれかに一致すると装着不可。
 "acceptable_ammo": [ "9mm" ],  // (任意) 改造前のベース武器が特定の弾種である場合のみ装着可能にするフィルター。
 "install_time": "30 s",        // (任意) 装着にかかる時間。指定しない場合は即座に装着されます。
 "ammo_modifier": [ "57" ],     // (任意) 指定した場合、ベース武器の使用弾薬をこれらのタイプに変更します。
-"magazine_adaptor": [ [ "223", [ "stanag30" ] ] ], // (任意) ベース武器が受け付けるマガジンの種類を変更します。
-"mode_modifier": [ [ "AUTO", "auto", 5 ] ]         // (任意) 武器に新しい射撃モードを追加します。
+"magazine_adaptor": [ [ "223", [ "stanag30" ] ] ], // (任意) [弾薬タイプ, [...マガジン一覧]] の配列。その弾薬タイプの武器の compatible magazines を上書き。
+"mode_modifier": [ [ "AUTO", "auto", 5 ] ],       // (任意) [モードID, モード名, 連射数, [...フラグ]?] の配列。武器に射撃モードを追加。フラグ配列には "MELEE", "REACH_ATTACK" などが指定可能。
 "damage_modifier": -1,         // (任意) 銃の基本ダメージを増減させます。
 "dispersion_modifier": 15,     // (任意) 銃の基本散布界を増減させます。
 "loudness_modifier": 4,        // (任意) 銃の射撃音の大きさを増減させます。
