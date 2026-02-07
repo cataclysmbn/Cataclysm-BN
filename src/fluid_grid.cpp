@@ -272,7 +272,7 @@ auto taint_clean_water( fluid_grid::liquid_storage_state &state,
 
 auto cleanup_zero_storage( fluid_grid::liquid_storage_state &state ) -> void
 {
-    auto to_erase = std::vector<itype_id>{};
+    auto to_erase = std::vector<itype_id> {};
     std::ranges::for_each( state.stored_by_type, [&]( const auto & entry ) {
         if( entry.second <= 0_ml ) {
             to_erase.push_back( entry.first );
@@ -285,7 +285,7 @@ auto cleanup_zero_storage( fluid_grid::liquid_storage_state &state ) -> void
 
 auto stored_types_in_order( const fluid_grid::liquid_storage_state &state ) -> std::vector<itype_id>
 {
-    auto present = std::vector<itype_id>{};
+    auto present = std::vector<itype_id> {};
     const auto ordered = ordered_liquid_types( state );
     present.reserve( ordered.size() );
     std::ranges::for_each( ordered, [&]( const itype_id & liquid_type ) {

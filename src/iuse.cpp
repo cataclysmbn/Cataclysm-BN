@@ -8878,7 +8878,7 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoin
                                          format_volume( fluid_stats.stored ),
                                          format_volume( fluid_stats.capacity ),
                                          volume_units_abbr() ) );
-    auto fluid_entries = std::vector<std::string>{};
+    auto fluid_entries = std::vector<std::string> {};
     std::ranges::for_each( fluid_stats.stored_by_type, [&]( const auto & entry ) {
         if( entry.second <= 0_ml ) {
             return;

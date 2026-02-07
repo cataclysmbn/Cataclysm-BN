@@ -288,7 +288,10 @@
     "message": "You switch off the water purifier.",
     "active": [
       "charge_watcher",
-      { "min_power": 30, "transform": { "id": "f_water_purifier_plumbed_on", "msg": "The water purifier starts up." } }
+      {
+        "min_power": 30,
+        "transform": { "id": "f_water_purifier_plumbed_on", "msg": "The water purifier starts up." }
+      }
     ]
   },
   {
@@ -312,16 +315,17 @@
       "transformer": {
         "tick_interval": "10 m",
         "transforms": [
-          {
-            "inputs": [ { "liquid": "water", "amount": "1 L" } ],
-            "outputs": [ { "liquid": "water_clean", "amount": "1 L" } ]
-          }
+          { "inputs": [ { "liquid": "water", "amount": "1 L" } ], "outputs": [ { "liquid": "water_clean", "amount": "1 L" } ] }
         ]
       }
     },
     "active": [
       "steady_consumer",
-      { "power": 40, "consume_every": "600 s", "transform": { "id": "f_water_purifier_plumbed", "msg": "The water purifier shuts down." } }
+      {
+        "power": 40,
+        "consume_every": "600 s",
+        "transform": { "id": "f_water_purifier_plumbed", "msg": "The water purifier shuts down." }
+      }
     ]
   }
 ]
