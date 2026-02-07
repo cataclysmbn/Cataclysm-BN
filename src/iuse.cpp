@@ -8878,27 +8878,21 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoin
                                          format_volume( fluid_stats.stored ),
                                          format_volume( fluid_stats.capacity ),
                                          volume_units_abbr() ) );
-    const auto stored_count = std::ranges::count_if( fluid_stats.stored_by_type,
-    []( const auto & entry ) {
-        return entry.second > 0_ml;
-    } );
-    auto fluid_type = std::string{};
-    if( stored_count == 0 ) {
-        fluid_type = _( "empty" );
-    } else if( stored_count == 1 ) {
-        const auto iter = std::ranges::find_if( fluid_stats.stored_by_type,
-        []( const auto & entry ) {
-            return entry.second > 0_ml;
-        } );
-        if( iter != fluid_stats.stored_by_type.end() ) {
-            fluid_type = item::nname( iter->first );
-        } else {
-            fluid_type = _( "empty" );
+    auto fluid_entries = std::vector<std::string>{};
+    std::ranges::for_each( fluid_stats.stored_by_type, [&]( const auto & entry ) {
+        if( entry.second <= 0_ml ) {
+            return;
         }
+        const auto name = item::nname( entry.first );
+        const auto volume = format_volume( entry.second );
+        fluid_entries.push_back( string_format( _( "%1$s: %2$s" ), name, volume ) );
+    } );
+    if( fluid_entries.empty() ) {
+        p->add_msg_if_player( _( "Fluids: empty." ) );
     } else {
-        fluid_type = _( "mixed fluids" );
+        p->add_msg_if_player( string_format( _( "Fluids: %s." ),
+                                             enumerate_as_string( fluid_entries ) ) );
     }
-    p->add_msg_if_player( string_format( _( "Fluid type: %s." ), fluid_type ) );
 
     return 0;
 }
