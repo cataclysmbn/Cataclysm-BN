@@ -952,6 +952,19 @@
   },
   {
     "type": "recipe",
+    "result": "xbow_draw_assist",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "mechanics",
+    "difficulty": 3,
+    "skills_required": [ [ "fabrication", 1 ] ],
+    "time": "30 m",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ] ],
+    "components": [ [ [ "duct_tape", 35 ] ], [ [ "motor_tiny", 1 ] ], [ [ "string_6", 4 ] ], [ [ "adhesive_proper", 2, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "crossbow_lever",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_MODS",
