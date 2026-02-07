@@ -263,6 +263,7 @@
     "type": "furniture",
     "id": "f_water_purifier_plumbed_off",
     "copy-from": "f_water_purifier",
+    "looks_like": "f_water_purifier",
     "name": "water purifier (plumbed, off)",
     "description": "A water purifier hooked into a fluid grid.  It is switched off.",
     "symbol": "W",
@@ -276,6 +277,7 @@
     "type": "furniture",
     "id": "f_water_purifier_plumbed",
     "copy-from": "f_water_purifier",
+    "looks_like": "f_water_purifier",
     "name": "water purifier (plumbed)",
     "description": "A water purifier hooked into a fluid grid.  It has no power.",
     "symbol": "W",
@@ -293,6 +295,7 @@
     "type": "furniture",
     "id": "f_water_purifier_plumbed_on",
     "copy-from": "f_water_purifier",
+    "looks_like": "f_water_purifier",
     "name": "water purifier (plumbed, on)",
     "description": "A water purifier hooked into a fluid grid.  It is switched on.",
     "symbol": "W",
@@ -318,7 +321,7 @@
     },
     "active": [
       "steady_consumer",
-      { "power": 20, "consume_every": "600 s", "transform": { "id": "f_water_purifier_plumbed", "msg": "The water purifier shuts down." } }
+      { "power": 40, "consume_every": "600 s", "transform": { "id": "f_water_purifier_plumbed", "msg": "The water purifier shuts down." } }
     ]
   }
 ]
