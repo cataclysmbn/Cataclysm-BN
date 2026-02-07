@@ -37,5 +37,9 @@ void cata::detail::reg_mapgendata( sol::state &lua )
     luna::set_fx( ut, "below", []( mapgendata & dat ) { return dat.below(); } );
     DOC( "Gets the z-level that it is generated at." );
     luna::set_fx( ut, "zlevel", []( mapgendata & dat ) { return dat.zlevel(); } );
+    DOC( "Sets the direction of the mapgen." );
+    luna::set_fx( ut, "set_dir", []( mapgendata & dat, int i, int j ) { return dat.set_dir( i, j ); } );
+    DOC( "Fills the ground with default terrain." );
+    luna::set_fx( ut, "fill_groundcover", []( mapgendata & dat ) { dat.fill_groundcover(); } );
 
 }
