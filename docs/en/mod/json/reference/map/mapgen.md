@@ -53,9 +53,28 @@ preferred method of adding both content and mods.
   single mapgen file. You can also link mapgen files for multiple z-level buildings and multi-tile
   buildings.
 
+- Lua: Lua support depends on the use of a lua method defined by the field luamethod, during mod loading
+  one would place the method into game.mapgen_functions\[id\] where id is what is the string in luamethod
+  This allows for procedual overmap tiles to be made, similar to the hardcoded labs
+
+
 ## Mapgen definition Placement
 
-Mapgen definitions can be added in 2 places:
+Mapgen definitions can be added in 3 places:
+
+### Lua mapgen
+
+This is how to define a map defined by lua elsewhere
+```json
+[
+  {
+    "type": "mapgen",
+    "method": "lua",
+    "om_terrain": [ "slimepit", "slimepit_down" ],
+    "luamethod": "slimepit"
+  }
+]
+```
 
 ### Embedded mapgen
 
