@@ -1,0 +1,121 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "update_mapgen_id": "mx_electric_anomaly",
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_electric_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
+  },
+  {
+    "id": "mx_electric_anomaly",
+    "type": "map_extra",
+    "name": "Electric Anomaly",
+    "looks_like": "fd_electricity",
+    "description": "An electric anomaly.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_electric_anomaly" },
+    "sym": "X",
+    "color": "yellow",
+    "autonote": true
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "update_mapgen_id": "mx_poppy_field_anomaly",
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_poppy_field_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
+  },
+  {
+    "id": "mx_poppy_field_anomaly",
+    "type": "map_extra",
+    "name": "Poppy Field Anomaly",
+    "looks_like": "f_mutpoppy",
+    "description": "A poppy field anomaly.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_poppy_field_anomaly" },
+    "sym": "X",
+    "color": "yellow",
+    "autonote": true
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "update_mapgen_id": "mx_cold_anomaly",
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_cold_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
+  },
+  {
+    "id": "mx_cold_anomaly",
+    "type": "map_extra",
+    "name": "Cold Anomaly",
+    "looks_like": "f_cold_anomaly",
+    "description": "A cold anomaly.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_cold_anomaly" },
+    "sym": "X",
+    "color": "yellow",
+    "autonote": true
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "update_mapgen_id": "mx_warm_anomaly",
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_warm_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
+  },
+  {
+    "id": "mx_warm_anomaly",
+    "type": "map_extra",
+    "name": "Warm Anomaly",
+    "looks_like": "fd_fire",
+    "description": "A warm anomaly.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_warm_anomaly" },
+    "sym": "X",
+    "color": "yellow",
+    "autonote": true
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "update_mapgen_id": "mx_light_anomaly",
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_light_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
+  },
+  {
+    "id": "mx_light_anomaly",
+    "type": "map_extra",
+    "name": "Light Anomaly",
+    "looks_like": "fd_dazzling",
+    "description": "A light anomaly.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_light_anomaly" },
+    "sym": "X",
+    "color": "yellow",
+    "autonote": true
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "update_mapgen_id": "mx_shadow_anomaly",
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_shadow_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
+  },
+  {
+    "id": "mx_shadow_anomaly",
+    "type": "map_extra",
+    "name": "Shadow Anomaly",
+    "looks_like": "fd_shadow",
+    "description": "A shadow anomaly.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_shadow_anomaly" },
+    "sym": "X",
+    "color": "yellow",
+    "autonote": true
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "update_mapgen_id": "mx_bubble_anomaly",
+    "object": { "place_nested": [ { "chunks": [ [ "9x9_bubble_anomaly", 100 ] ], "x": [ 12, 12 ], "y": [ 12, 12 ] } ] }
+  },
+  {
+    "id": "mx_bubble_anomaly",
+    "type": "map_extra",
+    "name": "Bubble Anomaly",
+    "looks_like": "fd_anomalous_bubble",
+    "description": "A bubble anomaly.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_bubble_anomaly" },
+    "sym": "X",
+    "color": "yellow",
+    "autonote": true
+  }
+]

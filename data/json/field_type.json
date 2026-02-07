@@ -1369,5 +1369,210 @@
     "display_items": false,
     "display_field": true,
     "looks_like": "fd_smoke"
+  },
+  {
+    "id": "fd_hot_air_vent",
+    "type": "field_type",
+    "intensity_levels": [ { "name": "hot air vent", "sym": "&" }, { "//": "repeat last entry" }, { "//": "repeat last entry" } ],
+    "description_affix": "under",
+    "wandering_field": "fd_hot_air4",
+    "priority": -1,
+    "phase": "gas",
+    "display_items": true,
+    "display_field": false,
+    "looks_like": "fd_hot_air4"
+  },
+  {
+    "id": "fd_anomalous_snow_vent",
+    "type": "field_type",
+    "intensity_levels": [ { "name": "anomalous snow vent", "sym": "&" }, { "//": "repeat last entry" }, { "//": "repeat last entry" } ],
+    "description_affix": "under",
+    "wandering_field": "fd_anomalous_snow",
+    "priority": -1,
+    "phase": "gas",
+    "display_items": true,
+    "display_field": true,
+    "looks_like": "fd_anomalous_snow"
+  },
+  {
+    "id": "fd_relax_gas_vent",
+    "type": "field_type",
+    "intensity_levels": [ { "name": "relaxation gas vent", "sym": "&" }, { "//": "repeat last entry" }, { "//": "repeat last entry" } ],
+    "description_affix": "under",
+    "wandering_field": "fd_relax_gas",
+    "immunity_data": { "body_part_env_resistance": [ [ "mouth", 15 ] ] },
+    "priority": -1,
+    "phase": "gas",
+    "display_items": true,
+    "display_field": true,
+    "looks_like": "fd_relax_gas"
+  },
+  {
+    "id": "fd_long_dazzling",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "hazy dazzling light", "sym": "8", "light_emitted": 5, "translucency": 1 },
+      { "name": "dazzling", "color": "light_red_yellow", "sym": "8", "light_emitted": 5, "translucency": 10 },
+      { "name": "thick dazzling light", "color": "yellow", "light_emitted": 5, "translucency": 0 }
+    ],
+    "description_affix": "illuminated_by",
+    "priority": 4,
+    "half_life": "3 minutes",
+    "decay_amount_factor": 5,
+    "gas_absorption_factor": 15,
+    "percent_spread": 50,
+    "dirty_transparency_cache": true,
+    "has_fume": true,
+    "phase": "gas",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_dazzling"
+  },
+  {
+    "id": "fd_long_shadow",
+    "type": "field_type",
+    "half_life": "3 minutes",
+    "decay_amount_factor": 5,
+    "gas_absorption_factor": 15,
+    "percent_spread": 50,
+    "dirty_transparency_cache": true,
+    "has_fume": true,
+    "phase": "gas",
+    "intensity_levels": [
+      { "name": "hazy shadow", "sym": "8", "light_override": 3.7, "translucency": 1 },
+      { "name": "shadow", "sym": "8", "color": "dark_gray", "light_override": 3.7, "translucency": 10 },
+      { "name": "thick shadow", "color": "black", "light_override": 3.7, "translucency": 0 }
+    ],
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_shadow"
+  },
+  {
+    "id": "fd_shadow_vent",
+    "type": "field_type",
+    "intensity_levels": [ { "name": "shadow vent", "sym": "&" }, { "//": "repeat last entry" }, { "//": "repeat last entry" } ],
+    "description_affix": "under",
+    "wandering_field": "fd_long_shadow",
+    "gas_absorption_factor": 15,
+    "dirty_transparency_cache": true,
+    "priority": -1,
+    "phase": "gas",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_shadow"
+  },
+  {
+    "id": "fd_dazzling_vent",
+    "type": "field_type",
+    "intensity_levels": [ { "name": "dazzling vent", "sym": "&" }, { "//": "repeat last entry" }, { "//": "repeat last entry" } ],
+    "description_affix": "under",
+    "wandering_field": "fd_long_dazzling",
+    "gas_absorption_factor": 15,
+    "dirty_transparency_cache": true,
+    "priority": -1,
+    "phase": "gas",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_dazzling"
+  },
+  {
+    "id": "fd_anomalous_snow",
+    "type": "field_type",
+    "legacy_enum_id": 44,
+    "intensity_levels": [
+      { "name": "anomalous snow", "sym": "&", "convection_temperature_mod": -70 },
+      { "color": "blue", "convection_temperature_mod": -100 },
+      { "color": "cyan", "convection_temperature_mod": -160 }
+    ],
+    "decay_amount_factor": 5,
+    "percent_spread": 100,
+    "outdoor_age_speedup": "100 minutes",
+    "priority": -1,
+    "half_life": "50 minutes",
+    "phase": "gas",
+    "display_items": true,
+    "display_field": true,
+    "looks_like": "weather_snowflake"
+  },
+  {
+    "id": "fd_anomalous_bubble",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "hazy anomalous bubbles",
+        "sym": "8",
+        "translucency": 1,
+        "effects": [
+          {
+            "effect_id": "corroding",
+            "body_part": "torso",
+            "intensity": 1,
+            "min_duration": "5 seconds",
+            "max_duration": "5 seconds",
+            "message": "The acidic bubbles sting your skin!",
+            "message_type": "bad"
+          }
+        ]
+      },
+      {
+        "name": "anomalous bubbles",
+        "color": "light_green",
+        "transparent": false,
+        "translucency": 10,
+        "effects": [
+          {
+            "effect_id": "corroding",
+            "body_part": "torso",
+            "intensity": 2,
+            "min_duration": "10 seconds",
+            "max_duration": "10 seconds",
+            "message": "The acidic bubbles burn your skin!",
+            "message_type": "bad"
+          }
+        ]
+      },
+      {
+        "name": "thick anomalous bubbles",
+        "color": "green",
+        "translucency": 0,
+        "effects": [
+          {
+            "effect_id": "corroding",
+            "body_part": "torso",
+            "intensity": 3,
+            "min_duration": "20 seconds",
+            "max_duration": "20 seconds",
+            "message": "The acidic bubbles eat into your skin!",
+            "message_type": "bad"
+          }
+        ]
+      }
+    ],
+    "decay_amount_factor": 5,
+    "gas_absorption_factor": 15,
+    "percent_spread": 30,
+    "outdoor_age_speedup": "3 minutes",
+    "dirty_transparency_cache": true,
+    "immunity_data": { "traits": [ "ACIDPROOF" ] },
+    "priority": 8,
+    "half_life": "10 minutes",
+    "phase": "gas",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_smoke"
+  },
+  {
+    "id": "fd_anomalous_bubble_vent",
+    "type": "field_type",
+    "intensity_levels": [ { "name": "anomalous bubble vent", "sym": "&" }, { "//": "repeat last entry" }, { "//": "repeat last entry" } ],
+    "description_affix": "under",
+    "wandering_field": "fd_anomalous_bubble",
+    "gas_absorption_factor": 15,
+    "dirty_transparency_cache": true,
+    "priority": -1,
+    "phase": "gas",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_anomalous_bubble"
   }
 ]
