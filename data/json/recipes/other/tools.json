@@ -3260,8 +3260,7 @@
     "difficulty": 3,
     "time": "20 m",
     "autolearn": true,
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CUT", "level": 1 }, { "id": "SCREW", "level": 1 } ],
-    "components": [ [ [ "steel_tiny", 2, "LIST" ] ], [ [ "adhesive_proper", 1, "LIST" ] ] ]
+    "using": [ [ "blacksmithing_intermediate", 2 ], [ "steel_tiny", 2 ] ]
   },
   {
     "type": "recipe",
@@ -3271,9 +3270,7 @@
     "skill_used": "fabrication",
     "time": "1 h",
     "autolearn": true,
-    "using": [ [ "steel_tiny", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "HAMMER_FINE", "level": 1 } ],
-    "components": [ [ [ "duct_tape", 30 ], [ "2x4", 1 ], [ "stick", 1 ] ] ]
+    "using": [ [ "steel_tiny", 2 ], [ "blacksmithing_advanced", 2 ], [ "wood_structural_small", 1 ] ]
   },
   {
     "result": "pin_reamer",
@@ -3284,7 +3281,6 @@
     "difficulty": 4,
     "time": "1 h",
     "autolearn": true,
-    "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ] ],
-    "components": [ [ [ "2x4", 1 ], [ "stick", 1 ] ] ]
+    "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ], [ "wood_structural_small", 1 ] ]
   }
 ]
