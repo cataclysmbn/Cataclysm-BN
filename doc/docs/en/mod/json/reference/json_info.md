@@ -762,14 +762,15 @@ This document describes the JSON fluid grid support for furniture.
 
 ## Fluid grid object (furniture)
 
-Furniture can define a `fluid_grid` object to mark it as a fluid grid tank or fixture and control
-what liquids it can accept. Fluid grids currently support only `water` and `water_clean`.
+Furniture can define a `fluid_grid` object to mark it as a fluid grid tank, fixture, or transformer
+and control what liquids it can accept. Fluid grids currently support only `water` and
+`water_clean`.
 
 ### Fields
 
 | Identifier | Description |
 | --- | --- |
-| role | (_mandatory_) Either `tank` or `fixture`. Tanks contribute storage capacity to the fluid grid. Fixtures are grid endpoints without storage. |
+| role | (_mandatory_) One of `tank`, `fixture`, or `transformer`. Tanks contribute storage capacity to the fluid grid. Fixtures are grid endpoints without storage. Transformers process liquids in the grid according to a recipe. |
 | allow_input | (_mandatory_) Whether the grid can accept liquids into this furniture. |
 | allow_output | (_mandatory_) Whether the grid can output liquids from this furniture. |
 | allowed_liquids | (_mandatory_) Array of liquid item ids allowed for this furniture. Fluid grids currently support only `water` and `water_clean`. |
@@ -777,6 +778,21 @@ what liquids it can accept. Fluid grids currently support only `water` and `wate
 | use_keg_capacity | (_optional_) If `true`, use the furniture `keg_capacity` as its tank capacity. |
 | connected_variant | (_optional_) Furniture id to switch to when connecting this tank to the fluid grid. |
 | disconnected_variant | (_optional_) Furniture id to switch to when disconnecting this tank from the fluid grid. |
+| transformer | (_optional_) Transformer configuration object. Required when `role` is `transformer`. |
+
+### Transformer object
+
+| Identifier | Description |
+| --- | --- |
+| tick_interval | (_mandatory_) How often the transformer runs. Uses standard time duration formatting. |
+| transforms | (_mandatory_) Array of transform recipes. Each recipe has `inputs` and `outputs` arrays. |
+
+Each transform entry has:
+
+| Identifier | Description |
+| --- | --- |
+| liquid | (_mandatory_) Liquid item id. |
+| amount | (_mandatory_) Volume string (e.g. `"1 L"`). |
 
 ### Notes
 
@@ -785,6 +801,10 @@ what liquids it can accept. Fluid grids currently support only `water` and `wate
 - For `role: "tank"`, you must define at least one of `connected_variant` or `disconnected_variant`.
   Defining one side lets the engine infer the other during load.
 - For `role: "fixture"`, capacity and variant fields are ignored.
+- For `role: "transformer"`, capacity and variant fields are ignored and the `transformer` object is
+  required.
+- Transformers only run while the furniture is active (for example, via an `active` entry that
+  keeps it running). If it is not active, no transforms occur.
 - Typically, only the connected variant needs the `fluid_grid` object. Define
   `disconnected_variant` on the connected furniture and leave the disconnected furniture without
   `fluid_grid` so it does not contribute to grid storage until connected.
@@ -845,6 +865,31 @@ Fixture (no storage):
     "allow_input": true,
     "allow_output": true,
     "allowed_liquids": [ "water", "water_clean" ]
+  }
+}
+```
+
+Transformer (water purifier):
+
+```json
+{
+  "type": "furniture",
+  "id": "f_water_purifier_plumbed_on",
+  "name": "water purifier (plumbed, on)",
+  "fluid_grid": {
+    "role": "transformer",
+    "allow_input": false,
+    "allow_output": false,
+    "allowed_liquids": [ "water", "water_clean" ],
+    "transformer": {
+      "tick_interval": "10 m",
+      "transforms": [
+        {
+          "inputs": [ { "liquid": "water", "amount": "1 L" } ],
+          "outputs": [ { "liquid": "water_clean", "amount": "1 L" } ]
+        }
+      ]
+    }
   }
 }
 ```
