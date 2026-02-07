@@ -35,6 +35,8 @@ void cata::detail::reg_mapgendata( sol::state &lua )
     luna::set_fx( ut, "above", []( mapgendata & dat ) { return dat.above(); } );
     DOC( "Gets the oter id to the below." );
     luna::set_fx( ut, "below", []( mapgendata & dat ) { return dat.below(); } );
+    DOC( "Returns t_nesw at index i" );
+    luna::set_fx( ut, "get_nesw", []( mapgendata & dat, int i ) { return dat.t_nesw[i]; } );
     DOC( "Gets the z-level that it is generated at." );
     luna::set_fx( ut, "zlevel", []( mapgendata & dat ) { return dat.zlevel(); } );
     DOC( "Sets the direction of the mapgen." );

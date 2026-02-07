@@ -10,9 +10,9 @@ slimepit.draw = function(data, map)
     map:draw_fill_background("t_rock_floor")
   end
   for dir=0, 3 do
-    if not map.is_ot_match( "slimepit", ter, ot_match_prefix ) then
+    if not map.is_ot_match( "slimepit", data:get_nesw(dir), ot_match_prefix ) then
       -- Use SEEX for 12
-      data.set_dir( dir, 12 )
+      data:set_dir( dir, 12 )
     end
   end
   for i=0, 24 do
