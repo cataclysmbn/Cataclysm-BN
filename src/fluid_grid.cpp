@@ -33,8 +33,11 @@ using grid_member_set = std::set<tripoint_om_omt>;
 using grid_member_ptr = shared_ptr_fast<grid_member_set>;
 using grid_member_map = std::map<tripoint_om_omt, grid_member_ptr>;
 using grid_member_cache_store = std::map<point_abs_om, grid_member_map>;
-using submap_capacity_cache_store = std::map<tripoint_abs_sm, units::volume>;
-using submap_tank_count_cache_store = std::map<tripoint_abs_sm, int>;
+struct submap_tank_cache_entry {
+    units::volume capacity = 0_ml;
+    int tank_count = 0;
+};
+using submap_tank_cache_store = std::map<tripoint_abs_sm, submap_tank_cache_entry>;
 using transformer_last_run_store = std::map<tripoint_abs_ms, time_point>;
 static const itype_id itype_water( "water" );
 static const itype_id itype_water_clean( "water_clean" );
@@ -94,15 +97,9 @@ auto grid_members_cache() -> grid_member_cache_store & // *NOPAD*
     return cache;
 }
 
-auto submap_capacity_cache() -> submap_capacity_cache_store & // *NOPAD*
+auto submap_tank_cache() -> submap_tank_cache_store & // *NOPAD*
 {
-    static auto cache = submap_capacity_cache_store{};
-    return cache;
-}
-
-auto submap_tank_count_cache() -> submap_tank_count_cache_store & // *NOPAD*
-{
-    static auto cache = submap_tank_count_cache_store{};
+    static auto cache = submap_tank_cache_store{};
     return cache;
 }
 
@@ -273,6 +270,66 @@ auto taint_clean_water( fluid_grid::liquid_storage_state &state,
     state.stored_by_type.erase( clean_iter );
 }
 
+auto cleanup_zero_storage( fluid_grid::liquid_storage_state &state ) -> void
+{
+    auto to_erase = std::vector<itype_id>{};
+    std::ranges::for_each( state.stored_by_type, [&]( const auto & entry ) {
+        if( entry.second <= 0_ml ) {
+            to_erase.push_back( entry.first );
+        }
+    } );
+    std::ranges::for_each( to_erase, [&]( const itype_id & liquid_type ) {
+        state.stored_by_type.erase( liquid_type );
+    } );
+}
+
+auto stored_types_in_order( const fluid_grid::liquid_storage_state &state ) -> std::vector<itype_id>
+{
+    auto present = std::vector<itype_id>{};
+    const auto ordered = ordered_liquid_types( state );
+    present.reserve( ordered.size() );
+    std::ranges::for_each( ordered, [&]( const itype_id & liquid_type ) {
+        const auto iter = state.stored_by_type.find( liquid_type );
+        if( iter == state.stored_by_type.end() ) {
+            return;
+        }
+        if( iter->second <= 0_ml ) {
+            return;
+        }
+        present.push_back( liquid_type );
+    } );
+    return present;
+}
+
+auto enforce_tank_type_limit( fluid_grid::liquid_storage_state &state,
+                              int tank_count ) -> void
+{
+    cleanup_zero_storage( state );
+    if( tank_count <= 0 ) {
+        state.stored_by_type.clear();
+        return;
+    }
+    auto ordered_present = stored_types_in_order( state );
+    if( ordered_present.size() <= static_cast<size_t>( tank_count ) ) {
+        return;
+    }
+    const auto primary = ordered_present.front();
+    const auto keep_count = static_cast<size_t>( std::max( tank_count, 1 ) );
+    const auto merge_view = ordered_present | std::views::drop( keep_count );
+    std::ranges::for_each( merge_view, [&]( const itype_id & liquid_type ) {
+        const auto iter = state.stored_by_type.find( liquid_type );
+        if( iter == state.stored_by_type.end() ) {
+            return;
+        }
+        if( iter->second <= 0_ml ) {
+            state.stored_by_type.erase( iter );
+            return;
+        }
+        state.stored_by_type[primary] += iter->second;
+        state.stored_by_type.erase( iter );
+    } );
+}
+
 auto reduce_storage( fluid_grid::liquid_storage_state &state,
                      units::volume volume ) -> fluid_grid::liquid_storage_state
 {
@@ -375,14 +432,9 @@ auto invalidate_grid_members_cache_at( const tripoint_abs_omt &p ) -> void
     invalidate_grid_members_cache( omc.om->pos() );
 }
 
-auto invalidate_submap_capacity_cache_at( const tripoint_abs_sm &p ) -> void
+auto invalidate_submap_cache_at( const tripoint_abs_sm &p ) -> void
 {
-    submap_capacity_cache().erase( p );
-}
-
-auto invalidate_submap_tank_count_cache_at( const tripoint_abs_sm &p ) -> void
-{
-    submap_tank_count_cache().erase( p );
+    submap_tank_cache().erase( p );
 }
 
 auto storage_state_for_grid( const std::set<tripoint_abs_omt> &grid ) ->
@@ -455,9 +507,10 @@ auto grid_members_for( const tripoint_abs_omt &p ) -> const grid_member_set & //
     return *members_ptr;
 }
 
-auto submap_capacity_at( const tripoint_abs_sm &sm_coord, mapbuffer &mb ) -> units::volume
+auto submap_tank_cache_at( const tripoint_abs_sm &sm_coord,
+                           mapbuffer &mb ) -> submap_tank_cache_entry
 {
-    auto &cache = submap_capacity_cache();
+    auto &cache = submap_tank_cache();
     const auto iter = cache.find( sm_coord );
     if( iter != cache.end() ) {
         return iter->second;
@@ -465,51 +518,24 @@ auto submap_capacity_at( const tripoint_abs_sm &sm_coord, mapbuffer &mb ) -> uni
 
     auto *sm = mb.lookup_submap( sm_coord );
     if( sm == nullptr ) {
-        return 0_ml;
+        return submap_tank_cache_entry{};
     }
 
-    auto total = 0_ml;
+    auto entry = submap_tank_cache_entry{};
     std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
         std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
             const auto pos = point( x, y );
             const auto &furn = sm->get_furn( pos ).obj();
             const auto tank_capacity = tank_capacity_for_furn( furn );
             if( tank_capacity ) {
-                total += *tank_capacity;
+                entry.capacity += *tank_capacity;
+                ++entry.tank_count;
             }
         } );
     } );
 
-    cache.emplace( sm_coord, total );
-    return total;
-}
-
-auto submap_tank_count_at( const tripoint_abs_sm &sm_coord, mapbuffer &mb ) -> int
-{
-    auto &cache = submap_tank_count_cache();
-    const auto iter = cache.find( sm_coord );
-    if( iter != cache.end() ) {
-        return iter->second;
-    }
-
-    auto *sm = mb.lookup_submap( sm_coord );
-    if( sm == nullptr ) {
-        return 0;
-    }
-
-    auto total = 0;
-    std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
-        std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
-            const auto pos = point( x, y );
-            const auto &furn = sm->get_furn( pos ).obj();
-            if( tank_capacity_for_furn( furn ) ) {
-                ++total;
-            }
-        } );
-    } );
-
-    cache.emplace( sm_coord, total );
-    return total;
+    cache.emplace( sm_coord, entry );
+    return entry;
 }
 
 auto tank_count_for_grid( const std::vector<tripoint_abs_sm> &submap_coords,
@@ -517,7 +543,7 @@ auto tank_count_for_grid( const std::vector<tripoint_abs_sm> &submap_coords,
 {
     auto total = 0;
     std::ranges::for_each( submap_coords, [&]( const tripoint_abs_sm & sm_coord ) {
-        total += submap_tank_count_at( sm_coord, mb );
+        total += submap_tank_cache_at( sm_coord, mb ).tank_count;
     } );
     return total;
 }
@@ -525,19 +551,28 @@ auto tank_count_for_grid( const std::vector<tripoint_abs_sm> &submap_coords,
 auto tank_count_for_grid( const std::set<tripoint_abs_omt> &grid,
                           mapbuffer &mb ) -> int
 {
-    auto submap_positions = std::set<tripoint_abs_sm> {};
-    std::ranges::for_each( grid, [&]( const tripoint_abs_omt & omp ) {
-        const auto base = project_to<coords::sm>( omp );
-        submap_positions.emplace( base + point_zero );
-        submap_positions.emplace( base + point_east );
-        submap_positions.emplace( base + point_south );
-        submap_positions.emplace( base + point_south_east );
-    } );
-
     auto total = 0;
-    std::ranges::for_each( submap_positions, [&]( const tripoint_abs_sm & sm_coord ) {
-        total += submap_tank_count_at( sm_coord, mb );
+    std::ranges::for_each( grid, [&]( const tripoint_abs_omt & omp ) {
+        const auto sm_coord = project_to<coords::sm>( omp );
+        total += submap_tank_cache_at( sm_coord + point_zero, mb ).tank_count;
+        total += submap_tank_cache_at( sm_coord + point_east, mb ).tank_count;
+        total += submap_tank_cache_at( sm_coord + point_south, mb ).tank_count;
+        total += submap_tank_cache_at( sm_coord + point_south_east, mb ).tank_count;
     } );
+    return total;
+}
+
+auto tank_count_for_grid_excluding( const std::set<tripoint_abs_omt> &grid,
+                                    mapbuffer &mb,
+                                    const std::optional<tripoint_abs_ms> &exclude ) -> int
+{
+    auto total = tank_count_for_grid( grid, mb );
+    if( !exclude ) {
+        return total;
+    }
+    if( tank_capacity_at( mb, *exclude ) ) {
+        return std::max( total - 1, 0 );
+    }
     return total;
 }
 
@@ -555,7 +590,7 @@ auto calculate_capacity_for_grid( const std::set<tripoint_abs_omt> &grid,
 
     auto total = 0_ml;
     std::ranges::for_each( submap_positions, [&]( const tripoint_abs_sm & sm_coord ) {
-        total += submap_capacity_at( sm_coord, mb );
+        total += submap_tank_cache_at( sm_coord, mb ).capacity;
     } );
 
     return total;
@@ -776,7 +811,7 @@ class fluid_storage_grid
         auto calculate_capacity() const -> units::volume {
             auto total = 0_ml;
             std::ranges::for_each( submap_coords, [&]( const tripoint_abs_sm & sm_coord ) {
-                total += submap_capacity_at( sm_coord, mb );
+                total += submap_tank_cache_at( sm_coord, mb ).capacity;
             } );
             return total;
         }
@@ -860,8 +895,7 @@ class fluid_grid_tracker
 
         auto rebuild_at( const tripoint_abs_ms &p ) -> void {
             const auto sm_pos = project_to<coords::sm>( p );
-            invalidate_submap_capacity_cache_at( sm_pos );
-            invalidate_submap_tank_count_cache_at( sm_pos );
+            invalidate_submap_cache_at( sm_pos );
             make_storage_grid_at( sm_pos );
         }
 
@@ -880,10 +914,11 @@ class fluid_grid_tracker
                 return;
             }
 
-            invalidate_submap_tank_count_cache_at( target_sm );
+            invalidate_submap_cache_at( target_sm );
 
             auto &grid = storage_at( project_to<coords::omt>( p ) );
             auto state = grid.get_state();
+            const auto omt_pos = project_to<coords::omt>( p );
             const auto new_capacity = state.capacity > *tank_capacity
                                       ? state.capacity - *tank_capacity
                                       : 0_ml;
@@ -892,6 +927,10 @@ class fluid_grid_tracker
                                          : 0_ml;
             auto overflow = reduce_storage( state, overflow_volume );
             state.capacity = new_capacity;
+            const auto grid_positions = fluid_grid::grid_at( omt_pos );
+            const auto tank_count =
+                tank_count_for_grid_excluding( grid_positions, mb, std::optional{ p } );
+            enforce_tank_type_limit( state, tank_count );
             grid.set_state( state );
 
             auto &items = target_submap->get_items( target_pos.raw() );
@@ -1261,10 +1300,10 @@ auto on_tank_removed( const tripoint_abs_ms &p ) -> void
         return;
     }
 
-    invalidate_submap_capacity_cache_at( project_to<coords::sm>( p ) );
-    invalidate_submap_tank_count_cache_at( project_to<coords::sm>( p ) );
+    invalidate_submap_cache_at( project_to<coords::sm>( p ) );
 
-    auto &grid = get_fluid_grid_tracker().storage_at( project_to<coords::omt>( p ) );
+    const auto omt_pos = project_to<coords::omt>( p );
+    auto &grid = get_fluid_grid_tracker().storage_at( omt_pos );
     auto state = grid.get_state();
     const auto new_capacity = state.capacity > *tank_capacity
                               ? state.capacity - *tank_capacity
@@ -1274,6 +1313,9 @@ auto on_tank_removed( const tripoint_abs_ms &p ) -> void
                                  : 0_ml;
     auto overflow = reduce_storage( state, overflow_volume );
     state.capacity = new_capacity;
+    const auto grid_positions = fluid_grid::grid_at( omt_pos );
+    const auto tank_count = tank_count_for_grid( grid_positions, MAPBUFFER );
+    enforce_tank_type_limit( state, tank_count );
     grid.set_state( state );
 
     auto target_sm = tripoint_abs_sm{};
@@ -1409,8 +1451,7 @@ auto clear() -> void
     fluid_storage_store().clear();
     get_fluid_grid_tracker().clear();
     grid_members_cache().clear();
-    submap_capacity_cache().clear();
-    submap_tank_count_cache().clear();
+    submap_tank_cache().clear();
     transformer_last_run().clear();
 }
 
