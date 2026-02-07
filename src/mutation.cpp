@@ -24,6 +24,7 @@
 #include "handle_liquid.h"
 #include "item.h"
 #include "item_contents.h"
+#include "item_group.h"
 #include "itype.h"
 #include "make_static.h"
 #include "magic_enchantment.h"
@@ -38,6 +39,7 @@
 #include "output.h"
 #include "overmapbuffer.h"
 #include "player_activity.h"
+#include "rng.h"
 #include "rng.h"
 #include "string_id.h"
 #include "translations.h"
@@ -617,12 +619,32 @@ void Character::activate_mutation( const trait_id &mut )
             activity->values.push_back( to_turns<int>( startup_time ) );
             return;
         }
-    } else if( !mdata.spawn_item.is_empty() ) {
-        detached_ptr<item> granted = item::spawn( mdata.spawn_item );
-        if( granted->made_of( LIQUID ) ) {
-            liquid_handler::consume_liquid( std::move( granted ), 1 );
+    } else if( !mdata.spawn_item.is_empty() || !mdata.spawn_item_group.is_empty() ) {
+        const auto chance = std::clamp( mdata.spawn_item_chance, 0, 100 );
+        if( !x_in_y( chance, 100 ) ) {
+            tdata.powered = false;
+            return;
+        }
+        const auto count = std::max( 1, mdata.spawn_item_count );
+        if( !mdata.spawn_item_group.is_empty() ) {
+            for( int i = 0; i < count; ++i ) {
+                auto granted_items = item_group::items_from( mdata.spawn_item_group,
+                                     calendar::turn );
+                std::ranges::for_each( granted_items, [&]( detached_ptr<item> &granted ) {
+                    if( granted->made_of( LIQUID ) ) {
+                        liquid_handler::consume_liquid( std::move( granted ), 1 );
+                    } else {
+                        i_add_or_drop( std::move( granted ) );
+                    }
+                } );
+            }
         } else {
-            i_add_or_drop( std::move( granted ) );
+            detached_ptr<item> granted = item::spawn( mdata.spawn_item, calendar::turn, count );
+            if( granted->made_of( LIQUID ) ) {
+                liquid_handler::consume_liquid( std::move( granted ), 1 );
+            } else {
+                i_add_or_drop( std::move( granted ) );
+            }
         }
         add_msg_if_player( mdata.spawn_item_message() );
         tdata.powered = false;
