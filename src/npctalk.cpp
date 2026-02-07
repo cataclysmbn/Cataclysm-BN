@@ -20,6 +20,8 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_effects.h"
@@ -974,7 +976,7 @@ void npc_chatbin::check_missions()
     ma.erase( last, ma.end() );
 }
 
-void npc::talk_to_u( bool radio_contact )
+void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
 {
     avatar &you = get_avatar();
     if( you.is_dead_state() ) {
@@ -1013,7 +1015,7 @@ void npc::talk_to_u( bool radio_contact )
             d.missions_assigned.push_back( mission );
         }
     }
-    d.add_topic( chatbin.first_topic );
+    if( !enforce_first_topic ) { d.add_topic( chatbin.first_topic ); }
     if( radio_contact ) {
         d.add_topic( "TALK_RADIO" );
         d.by_radio = true;
@@ -1091,6 +1093,19 @@ void npc::talk_to_u( bool radio_contact )
 
     decide_needs();
 
+    const auto hook_results = cata::run_hooks( "on_dialogue_start", [ &, this]( auto & params ) {
+        params["npc"] = this;
+        params["next_topic"] = d.topic_stack.back().id;
+    } );
+    for( const auto &result : hook_results ) {
+        if( !result.second.is<sol::table>() ) { continue; };
+        auto new_topic = result.second.as<sol::table>().get<std::string>( "result" );
+        if( !new_topic.empty() && new_topic != d.topic_stack.back().id ) {
+            d.add_topic( new_topic );
+        }
+    }
+    if( !enforce_first_topic ) { d.add_topic( chatbin.first_topic ); }
+
     dialogue_window d_win;
     // Main dialogue loop
     do {
@@ -1108,7 +1123,24 @@ void npc::talk_to_u( bool radio_contact )
                 chatbin.mission_selected = d.missions_assigned.front();
             }
         }
-        const talk_topic next = d.opt( d_win, name, d.topic_stack.back() );
+        talk_topic next = d.opt( d_win, name, d.topic_stack.back() );
+
+        const auto hook_results = cata::run_hooks( "on_dialogue_option", [ &, this]( auto & params ) {
+            params["npc"] = this;
+            params["next_topic"] = next.id;
+        } );
+        auto final_result = d.topic_stack.back().id;
+        for( const auto &result : hook_results ) {
+            if( !result.second.is<sol::table>() ) { continue; };
+            final_result = result.second.as<sol::table>().get_or<std::string>( "result", final_result );
+            // Allow higher priority topics to veto, but still trigger subsequent calls?
+            // auto allowed = result.second.as<sol::table>().get<sol::object>( "allowed" );
+            // if ( allowed.is<bool>() && !allowed.as<bool>() ) { break; };
+        }
+        if( !final_result.empty() && final_result != d.topic_stack.back().id ) {
+            next = talk_topic( final_result );
+        }
+
         if( next.id == "TALK_NONE" ) {
             int cat = topic_category( d.topic_stack.back() );
             do {
@@ -1122,6 +1154,10 @@ void npc::talk_to_u( bool radio_contact )
             d.add_topic( next );
         }
     } while( !d.done );
+
+    cata::run_hooks( "on_dialogue_end", [ &, this]( auto & params ) {
+        params["npc"] = this;
+    } );
 
     if( you.activity->id() == ACT_AIM && !you.has_weapon() ) {
         you.cancel_activity();

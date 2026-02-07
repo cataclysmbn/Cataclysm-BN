@@ -405,7 +405,8 @@
     "color": "dark_gray",
     "see_cost": 5,
     "mondensity": 2,
-    "flags": [ "SIDEWALK" ]
+    "flags": [ "SIDEWALK" ],
+    "map_label": "Necropolis"
   },
   {
     "type": "overmap_terrain",

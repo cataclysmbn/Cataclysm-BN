@@ -1059,7 +1059,6 @@ void Item_factory::init()
     add_iuse( "BLOOD_DRAW", &iuse::blood_draw );
     add_iuse( "MIND_SPLICER", &iuse::mind_splicer );
     add_iuse( "VIBE", &iuse::vibe );
-    add_iuse( "HAND_CRANK", &iuse::hand_crank );
     add_iuse( "VORTEX", &iuse::vortex );
     add_iuse( "WATER_PURIFIER", &iuse::water_purifier );
     add_iuse( "WEAK_ANTIBIOTIC", &iuse::weak_antibiotic );
@@ -1115,6 +1114,7 @@ void Item_factory::init()
     add_actor( std::make_unique<gps_device_actor>() );
     add_actor( std::make_unique<sew_advanced_actor>() );
     add_actor( std::make_unique<multicooker_iuse>() );
+    add_actor( std::make_unique<hand_crank_actor>() );
     add_actor( std::make_unique<sex_toy_actor>() );
     add_actor( std::make_unique<train_skill_actor>() );
     add_actor( std::make_unique<iuse_music_player>() );
