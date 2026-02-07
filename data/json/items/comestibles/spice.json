@@ -36,6 +36,7 @@
     "copy-from": "spice",
     "type": "COMESTIBLE",
     "name": { "str_sp": "salt" },
+    "flags": [ "BLINDS_EYES_ON_HIT" ],
     "description": "Yuck!  You surely wouldn't want to eat this.  It's good for preserving meat and cooking, though.",
     "color": "white"
   },

@@ -115,6 +115,7 @@ static const ammo_effect_str_id ammo_effect_RECYCLED( "RECYCLED" );
 static const ammo_effect_str_id ammo_effect_SHATTER_SELF( "SHATTER_SELF" );
 static const ammo_effect_str_id ammo_effect_SHOT( "SHOT" );
 static const ammo_effect_str_id ammo_effect_TANGLE( "TANGLE" );
+static const ammo_effect_str_id ammo_effect_NET_TANGLE( "NET_TANGLE" );
 static const ammo_effect_str_id ammo_effect_WIDE( "WIDE" );
 static const ammo_effect_str_id ammo_effect_THROWN( "THROWN" );
 
@@ -1429,6 +1430,9 @@ dealt_projectile_attack throw_item( Character &who, const tripoint &target,
     // handling for tangling thrown items
     if( thrown.has_flag( flag_TANGLE ) ) {
         proj.add_effect( ammo_effect_TANGLE );
+    }
+    if( thrown.has_flag( flag_NET_TANGLE ) ) {
+        proj.add_effect( ammo_effect_NET_TANGLE );
     }
 
     if( thrown.has_flag( flag_NO_DAMAGE ) ) {

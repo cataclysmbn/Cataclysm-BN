@@ -327,6 +327,7 @@ const flag_id flag_SUN_GLASSES( "SUN_GLASSES" );
 const flag_id flag_SUPER_FANCY( "SUPER_FANCY" );
 const flag_id flag_SWIM_GOGGLES( "SWIM_GOGGLES" );
 const flag_id flag_TACK( "TACK" );
+const flag_id flag_NET_TANGLE( "NET_TANGLE" );
 const flag_id flag_TANGLE( "TANGLE" );
 const flag_id flag_TARDIS( "TARDIS" );
 const flag_id flag_THERMOMETER( "THERMOMETER" );

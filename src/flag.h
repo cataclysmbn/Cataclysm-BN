@@ -329,6 +329,7 @@ extern const flag_id flag_SUN_GLASSES;
 extern const flag_id flag_SUPER_FANCY;
 extern const flag_id flag_SWIM_GOGGLES;
 extern const flag_id flag_TACK;
+extern const flag_id flag_NET_TANGLE;
 extern const flag_id flag_TANGLE;
 extern const flag_id flag_TARDIS;
 extern const flag_id flag_THERMOMETER;
@@ -472,4 +473,3 @@ class json_flag
         /** Clear all loaded flags (invalidating any pointers) */
         static void reset();
 };
-

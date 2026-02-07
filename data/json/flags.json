@@ -2115,6 +2115,12 @@
     "context": [  ]
   },
   {
+    "id": "NET_TANGLE",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "Thrown nets apply the NET_TANGLE ammo effect to nearby creatures."
+  },
+  {
     "id": "TARDIS",
     "type": "json_flag",
     "context": [  ]
