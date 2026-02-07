@@ -155,7 +155,8 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
         // if they aren't friendly they will try and break out of the net/bolas/lasso
         // players and NPCs just get the downed effect, and item is dropped.
         // TODO: storing the item on player until they recover from downed
-        if( ( proj.has_effect( ammo_effect_TANGLE ) || proj.has_effect( ammo_effect_NET_TANGLE ) ) && mon_there ) {
+        if( ( proj.has_effect( ammo_effect_TANGLE ) || proj.has_effect( ammo_effect_NET_TANGLE ) ) &&
+            mon_there ) {
             do_drop = false;
         }
         if( proj.has_effect( ammo_effect_ACT_ON_RANGED_HIT ) ) {
@@ -234,7 +235,7 @@ static void apply_net_tangle_aoe( const tripoint &center )
         tripoint_east + tripoint_south
     };
 
-    std::ranges::for_each( net_offsets, [&]( const tripoint &offset ) {
+    std::ranges::for_each( net_offsets, [&]( const tripoint & offset ) {
         const tripoint pt = center + offset;
         if( !here.inbounds( pt ) ) {
             return;
