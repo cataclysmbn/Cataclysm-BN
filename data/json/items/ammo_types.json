@@ -416,6 +416,24 @@
   },
   {
     "type": "ammunition_type",
+    "id": "bola",
+    "name": "bola",
+    "default": "bolas"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "bola_launcher",
+    "name": "bola cartridge",
+    "default": "bola_cartridge"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "net_launcher",
+    "name": "net cartridge",
+    "default": "net_cartridge"
+  },
+  {
+    "type": "ammunition_type",
     "id": "ampoule",
     "name": "chemical ampoule",
     "default": "ampoule"

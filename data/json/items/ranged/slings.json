@@ -132,5 +132,24 @@
     "durability": 6,
     "reload": 100,
     "extend": { "flags": [ "BELT_CLIP" ] }
+  },
+  {
+    "id": "bola_launcher",
+    "copy-from": "sling_base",
+    "type": "GUN",
+    "name": { "str": "bola launcher" },
+    "description": "A short staff with a release cup and retention cord, designed to lob bolas farther than a hand throw.",
+    "price": "12 USD",
+    "material": [ "wood", "leather" ],
+    "weight": "450 g",
+    "volume": "1250 ml",
+    "to_hit": -1,
+    "ammo": "bola_launcher",
+    "ranged_damage": { "damage_type": "bash", "amount": 0 },
+    "range": 15,
+    "dispersion": 240,
+    "durability": 6,
+    "reload": 150,
+    "extend": { "flags": [ "BELT_CLIP" ] }
   }
 ]
