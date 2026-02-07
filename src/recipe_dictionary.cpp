@@ -287,7 +287,7 @@ bool recipe_subset::empty_category( const std::string &cat, const std::string &s
     } else if( subcat == "CSC_*_HIDDEN" ) {
         return uistate.hidden_recipes.empty();
     } else if( subcat == "CSC_*_NESTED" ) {
-        return !std::ranges::any_of( recipes, []( const recipe *r ) {
+        return !std::ranges::any_of( recipes, []( const recipe * r ) {
             return *r && !r->obsolete && r->is_nested();
         } );
     }

@@ -15,15 +15,15 @@ extra grouping layer without adding new craft tabs.
 
 ### Fields
 
-| Identifier            | Description |
-| --------------------- | ----------- |
-| id                    | Unique ID for the nested category. |
-| type                  | Must be `nested_category`. |
-| nested_name           | Display name shown in the crafting UI. Recommended because nested categories have no `result`. |
-| category              | Crafting category (`CC_*`) where the entry appears. |
-| subcategory           | Crafting subcategory where the entry appears. |
-| description           | Optional description shown in the crafting UI. |
-| nested_category_data  | Array of recipe IDs or nested category IDs to display under this entry. |
+| Identifier           | Description                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| id                   | Unique ID for the nested category.                                                             |
+| type                 | Must be `nested_category`.                                                                     |
+| nested_name          | Display name shown in the crafting UI. Recommended because nested categories have no `result`. |
+| category             | Crafting category (`CC_*`) where the entry appears.                                            |
+| subcategory          | Crafting subcategory where the entry appears.                                                  |
+| description          | Optional description shown in the crafting UI.                                                 |
+| nested_category_data | Array of recipe IDs or nested category IDs to display under this entry.                        |
 
 ### Behavior Notes
 
