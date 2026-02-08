@@ -3861,7 +3861,7 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
     // first get effects
     for( const auto &[eff_type, eff_by_part] : *effects ) {
         const auto eff = eff_by_part.begin()->second;
-        if( !eff.is_removed() ) {
+        if( eff.get_id().is_valid() && !eff.is_removed() ) {
             const std::string &looks_like = eff_type.obj().get_looks_like();
 
             const overlay_entry ent {
