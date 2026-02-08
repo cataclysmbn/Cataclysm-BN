@@ -1385,5 +1385,21 @@
     "qualities": [ [ "CONTAIN", 1 ] ],
     "flags": [ "ALLOWS_REMOTE_USE" ],
     "use_action": { "type": "deploy_furn", "furn_type": "f_trashcan" }
+  },
+   {
+    "id": "dehydrator_tray",
+    "type": "CONTAINER",
+    "category": "container",
+    "name": { "str": "dehydrator tray"},
+    "description": "A flat metal tray for dehydrating meat. Intended for use in a dehydrator in stacks.",
+    "weight": "400 g",
+    "volume": "500 ml",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "material": "steel",
+    "symbol": ")",
+    "color": "white",
+    "contains": "2 L",
+	"//": "Pseudo-container in order to make the hack work."
   }
 ]
