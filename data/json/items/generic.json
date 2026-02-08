@@ -3064,7 +3064,7 @@
     "symbol": "P",
     "color": "dark_gray",
     "name": { "str": "small lock and key", "str_pl": "small locks and keys" },
-    "description": "A small lock, with a set of keys still inserted.",
+    "description": "A small lock, with a set of keys still inserted.  Can be installed on a vehicle or used to replace the lock on a door or a safe.",
     "price": "5 USD",
     "price_postapoc": "10 cent",
     "material": "steel",

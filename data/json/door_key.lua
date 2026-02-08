@@ -1,3 +1,5 @@
+local ui = require("lib.ui")
+
 local door_key = {}
 
 local function get_selected_tile(prompt) return gapi.choose_adjacent(prompt, false) end
@@ -322,6 +324,41 @@ function door_key.set_lock(who, item, pos)
   end
 
   open_ter_str = select(2, get_open_ter_id(closed_ter_str))
+
+  local requirement_base = get_requirement("replace_door_or_safe_locks")
+    if not requirement_base then
+      gapi.add_msg(MsgType.warning, locale.gettext("Error: requirement not found."))
+      return 0
+    end
+
+    local reqs = requirement_base * 1
+    local crafting_inv = who:crafting_inventory()
+
+    local replacement_string = string.format( locale.gettext("You are replacing a door or safe lock with a new one.") )
+
+    -- Check if player has required items/tools
+    if not reqs:can_make_with_inventory(crafting_inv) then
+      local missing_info = string.format("%s\n%s\n%s", replacement_string, reqs:list_missing(), reqs:list_all())
+      ui.popup(missing_info)
+      return 0
+    end
+
+    -- Confirm with player
+    local confirm = ui.query_yn(
+      string.format("%s\n%s\n%s", replacement_string, reqs:list_all(), locale.gettext("Are you sure?"))
+    )
+
+    if confirm then
+      -- Consume items and tools
+      for _, component_list in ipairs(reqs:get_components()) do
+        who:consume_items(component_list)
+      end
+      for _, tool_list in ipairs(reqs:get_tools()) do
+        who:consume_tools(tool_list)
+      end
+      who:invalidate_crafting_inventory()
+    end
+    
 
   if closed_from_open and closed_ter_id ~= nil then
     map:set_ter_at(chosen, closed_ter_id)
