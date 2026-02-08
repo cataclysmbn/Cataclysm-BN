@@ -12,7 +12,7 @@
     "using": [ [ "sewing_standard", 3 ] ],
     "components": [ [ [ "rag", 4 ] ] ]
   },
-   {
+  {
     "result": "helmet_liner",
     "type": "recipe",
     "category": "CC_ARMOR",
