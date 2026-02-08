@@ -93,10 +93,6 @@ auto cata_tiles::get_effect_color(
 auto cata_tiles::get_effect_color(
     const effect &eff, const Character &c ) -> color_tint_pair
 {
-    const color_tint_pair *tint = tileset_ptr->get_tint( eff.get_id().str() );
-    if( tint != nullptr ) {
-        return *tint;
-    }
     return { std::nullopt, std::nullopt };
 }
 

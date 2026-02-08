@@ -701,12 +701,8 @@ bool assign( const JsonObject &jo,
              data_vars::data_set &val,
              const bool strict )
 {
-    if( jo.has_array( name ) ) {
-        for( JsonArray arr : jo.get_array( name ) ) {
-            val[arr.get_string( 0 )] = arr.get_string( 1 );
-        }
-    } else {
-        return false;
+    for( const JsonMember member : jo.get_object( name ) ) {
+        val[member.name()] = member.get_string();
     }
     return true;
 }
