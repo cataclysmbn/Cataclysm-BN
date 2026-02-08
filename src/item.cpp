@@ -5103,8 +5103,8 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
     if( has_var( "specimen_sample" ) ) {
         const std::string specimen_name = get_var( "specimen_name" );
         const int progress = get_var( "specimen_sample_progress", 0 );
-        const auto specimen_id = mtype_id( get_var( "specimen_sample" ) );
-        const auto size = cloning_utils::specimen_required_sample_size( specimen_id );
+        const std::string specimen_sample = get_var( "specimen_sample" );
+        const auto size = cloning_utils::specimen_required_sample_size( specimen_sample );
         if( has_flag( flag_genome_drive ) && size > 0 && progress < size ) {
             tagtext += string_format( " (%s [%d/%d])", specimen_name, progress, size );
         } else {

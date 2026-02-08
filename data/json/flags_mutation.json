@@ -140,5 +140,10 @@
   {
     "id": "FLIGHT_ALWAYS_ACTIVE",
     "type": "mutation_flag"
+  },
+  {
+    "id": "NO_CLONE",
+    "//": "Traits with this flag are not copied when a genome is cloned.",
+    "type": "mutation_flag"
   }
 ]

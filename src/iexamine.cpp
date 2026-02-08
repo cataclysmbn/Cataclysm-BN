@@ -142,6 +142,7 @@ static const itype_id itype_electrohack( "electrohack" );
 static const itype_id itype_fake_milling_item( "fake_milling_item" );
 static const itype_id itype_fake_cloning_vat( "fake_cloning_vat_item" );
 static const itype_id itype_fake_smoke_plume( "fake_smoke_plume" );
+static const requirement_id requirement_cloning_vat_womb( "cloning_vat_womb" );
 static const itype_id itype_fertilizer( "fertilizer" );
 static const itype_id itype_fire( "fire" );
 static const itype_id itype_fungal_seeds( "fungal_seeds" );
@@ -5721,26 +5722,66 @@ static void cloning_vat_activate( player &p, const tripoint &examp )
     // 86400 = 1 day, so this is 12 hrs per size increment
     const int turns_to_clone = 43200;
 
-    // filter out faulty carriers
-    auto carriers = p.wielded_items();
-    for( size_t i = 0; i < carriers.size(); ) {
-        item *const carrier = carriers[i];  // already a pointer
-        if( carrier->has_fault( fault_id( "fault_bionic_nonsterile" ) ) ||
-            carrier->typeId() != itype_embryo_empty ) {
-            carriers.erase( carriers.begin() + i ); // erase by iterator
-            // do NOT increment i here
-        } else {
-            i++; // increment only if we didn't erase
-        }
+    if( !requirement_cloning_vat_womb.is_valid() ) {
+        popup( "Internal error: cloning requirement missing." );
+        return;
     }
-    if( carriers.empty() ) {
+    const requirement_data *const reqs = &requirement_cloning_vat_womb.obj();
+    if( !reqs ) {
+        popup( "Internal error: cloning requirement missing." );
+        return;
+    }
+
+    const inventory &crafting_inv = p.crafting_inventory( examp, PICKUP_RANGE, false );
+    if( !reqs->can_make_with_inventory( crafting_inv, is_crafting_component ) ) {
+        const std::string requirement_string =
+            _( "You need a sterilized artificial womb and DNA to begin incubation." );
+        popup( string_format( "%s\n%s\n%s", requirement_string, reqs->list_missing(), reqs->list_all() ) );
+        return;
+    }
+
+    bool has_radio_mod = false;
+    bool has_valid_carrier = false;
+    for( item *const carrier : crafting_inv.items_with( []( const item & it ) {
+        return it.typeId() == itype_embryo_empty;
+    } ) ) {
+        if( carrier->has_fault( fault_id( "fault_bionic_nonsterile" ) ) ) {
+            continue;
+        }
+        if( carrier->has_flag( flag_RADIO_MOD ) ) {
+            has_radio_mod = true;
+            continue;
+        }
+        has_valid_carrier = true;
+        break;
+    }
+    if( !has_valid_carrier ) {
+        if( has_radio_mod ) {
+            popup( "You need to remove the radio mod first." );
+        } else {
+            popup( "You need a sterilized artificial womb and DNA to begin incubation." );
+        }
+        return;
+    }
+
+    const auto &component_options = reqs->get_components();
+    if( component_options.empty() ) {
+        popup( "Internal error: cloning requirement has no components." );
+        return;
+    }
+
+    const std::vector<item_comp> &components = component_options.front();
+    const auto filter = []( const item &it ) {
+        return is_crafting_component( it ) && !it.has_fault( fault_id( "fault_bionic_nonsterile" ) ) &&
+               !it.has_flag( flag_RADIO_MOD );
+    };
+    const std::vector<detached_ptr<item>> consumed =
+        p.consume_items( components, 1, filter );
+    if( consumed.empty() ) {
         popup( "You need a sterilized artificial womb and DNA to begin incubation." );
         return;
     }
-    if( ( *carriers.begin() )->has_flag( flag_RADIO_MOD ) ) {
-        popup( "You need to remove the radio mod first." );
-        return;
-    }
+    p.invalidate_crafting_inventory();
 
     // choose specimen sample
     auto syringes = p.all_items_with_id( itype_dna );
@@ -5751,8 +5792,8 @@ static void cloning_vat_activate( player &p, const tripoint &examp )
     uilist specimen_menu;
     specimen_menu.text = _( "Select specimen sample:" );
     for( size_t z = 0; z < syringes.size(); z++ ) {
-        const auto specimen_id = mtype_id( syringes[z]->get_var( "specimen_sample" ) );
-        const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_id ) );
+        const std::string specimen_sample = syringes[z]->get_var( "specimen_sample" );
+        const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_sample ) );
         specimen_menu.addentry( z, true, MENU_AUTOASSIGN, string_format( "%s [%s]",
                                 syringes[z]->display_name(),
                                 to_string( time_duration::from_turns( turns_to_clone * size ) ) ) );
@@ -5771,9 +5812,6 @@ static void cloning_vat_activate( player &p, const tripoint &examp )
     if( !selected_syringe ) {
         return;
     }
-    // remove the clean carrier
-    detached_ptr<item> weapon = p.remove_primary_weapon();
-
     // search for DNA and begin process
     std::vector<item *> items = p.all_items_with_id( itype_dna );
     for( size_t x = 0; x < items.size(); x++ ) {
@@ -5790,12 +5828,20 @@ static void cloning_vat_activate( player &p, const tripoint &examp )
             detached_ptr<item> result = item::spawn( "fake_cloning_vat_item", calendar::turn );
 
             // 100 turns = 1 second, so 180000 = 30 min per size increment
+            std::string specimen_sample = selected_syringe->get_var( "specimen_sample" );
+            const std::string specimen_origin = selected_syringe->get_var( "specimen_origin", "monster" );
             result->set_var( "specimen_name", selected_syringe->get_var( "specimen_name" ) );
-            result->set_var( "specimen_sample", selected_syringe->get_var( "specimen_sample" ) );
+            result->set_var( "specimen_sample", specimen_sample );
+            result->set_var( "specimen_origin", specimen_origin );
+            result->set_var( "specimen_stats", selected_syringe->get_var( "specimen_stats" ) );
+            result->set_var( "specimen_mutations", selected_syringe->get_var( "specimen_mutations" ) );
+            result->set_var( "specimen_age", selected_syringe->get_var( "specimen_age" ) );
+            result->set_var( "specimen_height", selected_syringe->get_var( "specimen_height" ) );
+            result->set_var( "specimen_gender", selected_syringe->get_var( "specimen_gender" ) );
 
             // cloning vat random upgrade logic
-            if( rng( 1, 100 ) < 90 ) {
-                const mtype_id id( selected_syringe->get_var( "specimen_sample" ) );
+            if( specimen_origin == "monster" && rng( 1, 100 ) < 90 ) {
+                const mtype_id id( specimen_sample );
                 const mtype &type = id.obj();
 
                 mongroup_id upgrade_group = mongroup_id::NULL_ID();
@@ -5822,14 +5868,14 @@ static void cloning_vat_activate( player &p, const tripoint &examp )
                     monster &newmon = *newmon_ptr;
 
                     if( chosen ) {
-                        result->set_var( "specimen_sample", chosen->name.str() );
+                        specimen_sample = chosen->name.str();
+                        result->set_var( "specimen_sample", specimen_sample );
                         result->set_var( "specimen_name", newmon.name() );
                     }
                 }
             }
 
-            const auto specimen_id = mtype_id( selected_syringe->get_var( "specimen_sample" ) );
-            const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_id ) );
+            const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_sample ) );
             result->set_counter( turns_to_clone * size );
             result->activate();
             here.add_item( examp, std::move( result ) );
@@ -6035,9 +6081,24 @@ void iexamine::cloning_vat_finalize( const tripoint &examp, const time_point & )
     // success: spawn the completed artificial womb
     sounds::sound( examp, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
     detached_ptr<item> spawned_embryo = item::spawn( itype_embryo, calendar::turn );
-    spawned_embryo->set_var( "place_monster_override", developing_embryo.get_var( "specimen_sample" ) );
-    spawned_embryo->set_var( "place_monster_override_name",
-                             developing_embryo.get_var( "specimen_name" ) );
+    const std::string specimen_origin = developing_embryo.get_var( "specimen_origin", "monster" );
+    spawned_embryo->set_var( "specimen_origin", specimen_origin );
+    spawned_embryo->set_var( "specimen_name", developing_embryo.get_var( "specimen_name" ) );
+    spawned_embryo->set_var( "specimen_stats", developing_embryo.get_var( "specimen_stats" ) );
+    spawned_embryo->set_var( "specimen_mutations", developing_embryo.get_var( "specimen_mutations" ) );
+    spawned_embryo->set_var( "specimen_age", developing_embryo.get_var( "specimen_age" ) );
+    spawned_embryo->set_var( "specimen_height", developing_embryo.get_var( "specimen_height" ) );
+    spawned_embryo->set_var( "specimen_gender", developing_embryo.get_var( "specimen_gender" ) );
+    if( specimen_origin == "human" ) {
+        spawned_embryo->set_var( "place_npc_override", "human_clone" );
+    } else {
+        spawned_embryo->set_var( "place_monster_override", developing_embryo.get_var( "specimen_sample" ) );
+        spawned_embryo->set_var( "place_monster_override_name",
+                                 developing_embryo.get_var( "specimen_name" ) );
+    }
+    if( specimen_origin == "human" ) {
+        add_msg( m_good, _( "A human clone embryo is ready." ) );
+    }
     here.add_item( examp, std::move( spawned_embryo ) );
 
     return;

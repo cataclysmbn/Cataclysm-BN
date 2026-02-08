@@ -1,6 +1,7 @@
 #include "game_object.h"
 
 #include <memory>
+#include <type_traits>
 
 #include "cata_arena.h"
 #include "item.h"
@@ -9,6 +10,11 @@
 template<typename T>
 void game_object<T>::destroy()
 {
+    if constexpr ( std::is_same_v<T, item> ) {
+        if( static_cast<T *>( this ) == &null_item_reference() ) {
+            return;
+        }
+    }
     if( loc != nullptr ) {
         debugmsg( "Attempted to destroy an item with a location." );
         remove_location();

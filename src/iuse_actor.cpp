@@ -67,6 +67,8 @@
 #include "memory_fast.h"
 #include "messages.h"
 #include "monster.h"
+#include "npc.h"
+#include "npc_class.h"
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -153,6 +155,7 @@ static const itype_id itype_usb_drive( "usb_drive" );
 static const flag_id flag_genome_drive( "GENOME_DRIVE" );
 static const itype_id itype_mutagen( "mutagen" );
 static const itype_id itype_biomaterial( "biomaterial" );
+static const requirement_id requirement_genome_workstation_biomaterial( "genome_workstation_biomaterial" );
 
 static const skill_id skill_fabrication( "fabrication" );
 static const skill_id skill_firstaid( "firstaid" );
@@ -1224,32 +1227,119 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
     newmon.init_from_item( it );
 
     tripoint pnt = it.is_active() ? pos : p.pos();
+    const bool spawn_npc = it.has_var( "place_npc_override" );
+    const std::string creature_label = spawn_npc ? _( "clone" ) : newmon.name();
+
+    std::optional<tripoint> spawn_pos;
+
+    map &here = get_map();
+    if( place_random ) {
+        std::vector<tripoint> candidates;
+        for( int dz = -1; dz <= 1; ++dz ) {
+            for( int dy = -1; dy <= 1; ++dy ) {
+                for( int dx = -1; dx <= 1; ++dx ) {
+                    const tripoint target = pnt + tripoint( dx, dy, dz );
+                    if( here.passable( target ) ) {
+                        candidates.push_back( target );
+                    }
+                }
+            }
+        }
+        if( candidates.empty() ) {
+            p.add_msg_if_player( m_info, _( "There is no adjacent square to release the %s in!" ),
+                                 creature_label );
+            it.deactivate();
+            return 0;
+        }
+        spawn_pos = random_entry( candidates );
+    } else {
+        const std::string query = spawn_npc ? _( "Place the clone where?" ) :
+                                            string_format( _( "Place the %s where?" ), newmon.name() );
+        const std::optional<tripoint> pnt_ = choose_adjacent( query );
+        if( !pnt_ ) {
+            return 0;
+        }
+        if( !here.passable( *pnt_ ) ) {
+            p.add_msg_if_player( m_info, _( "You cannot place a %s there." ), newmon.name() );
+            return 0;
+        }
+        spawn_pos = *pnt_;
+    }
+
+    if( spawn_npc ) {
+        shared_ptr_fast<npc> clone = make_shared_fast<npc>();
+        clone->inv_clear();
+        clone->worn.clear();
+        clone->remove_primary_weapon();
+        clone->clear_mutations();
+        const tripoint spawn_point = spawn_pos.value();
+        const std::string specimen_stats_str = it.get_var( "specimen_stats", "" );
+        const std::string specimen_mutations_str = it.get_var( "specimen_mutations", "" );
+        const std::string specimen_age_str = it.get_var( "specimen_age", "" );
+        const std::string specimen_height_str = it.get_var( "specimen_height", "" );
+        const std::string specimen_gender_str = it.get_var( "specimen_gender", "" );
+        if( !specimen_stats_str.empty() ) {
+            const std::array<int, 4> stored_stats = cloning_utils::specimen_stats_from_string(
+                        specimen_stats_str );
+            clone->str_max = stored_stats[0];
+            clone->dex_max = stored_stats[1];
+            clone->int_max = stored_stats[2];
+            clone->per_max = stored_stats[3];
+            clone->set_str_bonus( 0 );
+            clone->set_dex_bonus( 0 );
+            clone->set_int_bonus( 0 );
+            clone->set_per_bonus( 0 );
+        }
+        if( !specimen_mutations_str.empty() ) {
+            const auto specimen_traits = cloning_utils::specimen_mutations_from_string(
+                        specimen_mutations_str );
+            if( !specimen_traits.empty() ) {
+                clone->clear_mutations();
+                std::ranges::for_each( specimen_traits, [&]( const trait_id &trait ) {
+                    clone->toggle_trait( trait );
+                } );
+            }
+        }
+        if( !specimen_age_str.empty() ) {
+            clone->set_base_age( cloning_utils::specimen_age_from_string( specimen_age_str ) );
+        }
+        if( !specimen_height_str.empty() ) {
+            clone->set_base_height( cloning_utils::specimen_height_from_string( specimen_height_str ) );
+        }
+        if( !specimen_gender_str.empty() ) {
+            clone->male = cloning_utils::specimen_gender_from_string( specimen_gender_str );
+        }
+        clone->set_body();
+        clone->recalc_hp();
+        clone->spawn_at_precise( here.get_abs_sub().xy(), spawn_point );
+        clone->place_on_map();
+        const std::string default_label = it.get_var( "item_label",
+            it.get_var( "specimen_name", _( "Clone" ) ) );
+        string_input_popup name_popup;
+        name_popup.title( _( "Name the clone" ) )
+                  .description( _( "Enter a name for the clone (leave blank to keep the default label)." ) )
+                  .text( default_label );
+        name_popup.query();
+        const std::string label = name_popup.text().empty() ? default_label : name_popup.text();
+        clone->name = label;
+        overmap_buffer.insert_npc( clone );
+        if( !it.is_active() ) {
+            p.moves -= moves;
+        }
+        it.convert( itype_id( "embryo_empty" ) );
+        it.clear_vars();
+        it.faults.emplace( fault_bionic_nonsterile );
+        add_msg( m_good, _( "A cloned human emerges from the artificial womb." ) );
+        return 1;
+    }
 
     if( it.has_var( "place_monster_override" ) ) {
         newmon.no_extra_death_drops = true;
         it.deactivate();
     }
-    if( place_random ) {
-        // place_critter_around returns the same pointer as its parameter (or null)
-        // Allow position to be different from the player for tossed or launched items
-        if( !g->place_critter_around( newmon_ptr, pnt, 1 ) ) {
-            p.add_msg_if_player( m_info, _( "There is no adjacent square to release the %s in!" ),
-                                 newmon.name() );
-            // If remotely triggered due to ACT_ON_RANGED_HIT, set it back to being inactive so it won't spawn infinitely
-            it.deactivate();
-            return 0;
-        }
-    } else {
-        const std::string query = string_format( _( "Place the %s where?" ), newmon.name() );
-        const std::optional<tripoint> pnt_ = choose_adjacent( query );
-        if( !pnt_ ) {
-            return 0;
-        }
-        // place_critter_at returns the same pointer as its parameter (or null)
-        if( !g->place_critter_at( newmon_ptr, *pnt_ ) ) {
-            p.add_msg_if_player( m_info, _( "You cannot place a %s there." ), newmon.name() );
-            return 0;
-        }
+    if( !g->place_critter_at( newmon_ptr, spawn_pos.value() ) ) {
+        p.add_msg_if_player( m_info, _( "You cannot place a %s there." ), newmon.name() );
+        return 0;
     }
     // If it's active then we know it was triggered by ACT_ON_RANGED_HIT and did not deactivate from lack of room earlier
     // If so, don't drain moves from remote deployment since it would trigger after the throw
@@ -5377,26 +5467,66 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint &pos ) 
     }
 
     const std::string query = string_format( _( "Select which creature?" ) );
-    const std::optional<tripoint> pnt_ = choose_adjacent( query );
+    const std::optional<tripoint> pnt_ = query_yn( _( "Scan yourself?" ) ) ? std::optional<tripoint>{ p.pos() } :
+        choose_adjacent( query );
 
     if( !pnt_ ) {
-        // No valid point was chosen — handle this case, maybe just return
         return 0;
     }
 
-    // Extract the tripoint from the optional
     const tripoint &pnt = *pnt_;
-    const Creature *const critter = g->critter_at( pnt );
+    Creature *const critter = g->critter_at( pnt );
     if( !critter ) {
         add_msg( m_info, _( "There's no creature there." ) );
         return 0;
     }
 
-    monster *const m = const_cast<monster *>( critter->as_monster() );
-    if( !m ) {
+    Character *const character = critter->as_character();
+    if( !character ) {
         add_msg( m_info, _( "There's no creature there." ) );
         return 0;
     }
+
+    monster *const m = critter->as_monster();
+    npc *const target_npc = critter->as_npc();
+    const bool target_is_player = critter->is_player();
+    std::string specimen_origin = "monster";
+    std::string specimen_sample;
+    std::string specimen_name;
+
+    if( m ) {
+        specimen_sample = m->type->id.str();
+        specimen_name = m->name();
+    } else if( target_npc ) {
+        if( !target_npc->is_friendly( p ) ) {
+            target_npc->make_angry();
+        add_msg( m_bad, _( "%s glares at you.  You need to be friends before you can sample their DNA." ),
+                 target_npc->name );
+            return 0;
+        }
+        specimen_origin = "human";
+        specimen_sample = "npc:human";
+        specimen_name = target_npc->name;
+    } else if( target_is_player ) {
+        specimen_origin = "human";
+        specimen_sample = "npc:human";
+        specimen_name = p.disp_name();
+    } else {
+        add_msg( m_info, _( "There's no creature there." ) );
+        return 0;
+    }
+
+    const bool human_sample = specimen_origin == "human";
+    const std::string specimen_stats = human_sample ?
+        cloning_utils::specimen_stats_to_string( *character ) : std::string();
+    const std::string specimen_mutations = human_sample ?
+        cloning_utils::specimen_mutations_to_string( *character ) : std::string();
+    const std::string specimen_age = human_sample ?
+        cloning_utils::specimen_age_to_string( *character ) : std::string();
+    const std::string specimen_height = human_sample ?
+        cloning_utils::specimen_height_to_string( *character ) : std::string();
+    const std::string specimen_gender = human_sample ?
+        cloning_utils::specimen_gender_to_string( *character ) : std::string();
 
     const int fa_skill = p.get_skill_level( skill_firstaid );
     // Convert first aid skill into success chance.
@@ -5407,7 +5537,7 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint &pos ) 
 
     // use moves and damage mon
     p.mod_moves( -moves );
-    m->apply_damage( &p, bodypart_id( "torso" ), 1 );
+    character->apply_damage( &p, bodypart_id( "torso" ), 1 );
 
     if( !x_in_y( chance, 100 ) ) {
         add_msg( m_bad, _( "The %s emits a loud error beep!  You failed to gather a sufficient sample." ),
@@ -5418,38 +5548,71 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint &pos ) 
     }
 
     // we can only grow organic matter, and some species are invalid
-    bool in_bad_species = m->in_species( species_HALLUCINATION ) || m->in_species( species_ROBOT ) ||
-                          m->in_species( species_ZOMBIE ) || m->in_species( species_NETHER ) ||
-                          m->in_species( species_SKELETON );
-    if( m->has_flag( MF_CANT_CLONE ) || in_bad_species ) {
+    bool invalid_sample = false;
+    if( m ) {
+        const bool in_bad_species = m->in_species( species_HALLUCINATION ) || m->in_species( species_ROBOT ) ||
+                                    m->in_species( species_ZOMBIE ) || m->in_species( species_NETHER ) ||
+                                    m->in_species( species_SKELETON );
+        invalid_sample = m->has_flag( MF_CANT_CLONE ) || in_bad_species;
+    }
+    if( invalid_sample ) {
         add_msg( m_info,
                  _( "The %s emits two error beeps.  This creature can't provide a valid sample." ) );
         return 0;
     }
 
     // technically you can't use the same creature for two different scans, but you should be able to copy USB so doesn't matter
-    if( m->get_value( "genome_scanned" ) == "true" ) {
+    if( character->get_value( "genome_scanned" ) == "true" ) {
         add_msg( m_info, _( "That creature's genome has already been scanned." ) );
         return 0;
     }
 
-    m->set_value( "genome_scanned", "true" );
-
-    const mtype_id &id = m->type->id;
-    const std::string id_str = id.str();
+    character->set_value( "genome_scanned", "true" );
 
     add_msg( m_good, _( "The %s beeps softly.  You successfully gathered a sample from the %s!" ),
-             it.display_name(), m->name() );
+             it.display_name(), specimen_name );
+
+    const std::string specimen_sample_str = specimen_sample;
 
 
+
+    const auto update_specimen_metadata = [&]( item &drive_item ) {
+        if( specimen_stats.empty() ) {
+            drive_item.erase_var( "specimen_stats" );
+        } else {
+            drive_item.set_var( "specimen_stats", specimen_stats );
+        }
+        if( specimen_mutations.empty() ) {
+            drive_item.erase_var( "specimen_mutations" );
+        } else {
+            drive_item.set_var( "specimen_mutations", specimen_mutations );
+        }
+        if( specimen_age.empty() ) {
+            drive_item.erase_var( "specimen_age" );
+        } else {
+            drive_item.set_var( "specimen_age", specimen_age );
+        }
+        if( specimen_height.empty() ) {
+            drive_item.erase_var( "specimen_height" );
+        } else {
+            drive_item.set_var( "specimen_height", specimen_height );
+        }
+        if( specimen_gender.empty() ) {
+            drive_item.erase_var( "specimen_gender" );
+        } else {
+            drive_item.set_var( "specimen_gender", specimen_gender );
+        }
+    };
     auto drives = p.all_items_with_flag( flag_genome_drive );
 
     for( size_t z = 0; z < drives.size(); z++ ) {
-        if( drives[z]->get_var( "specimen_sample" ) == id_str ) {
+        if( drives[z]->get_var( "specimen_sample" ) == specimen_sample_str ) {
             int progress = drives[z]->get_var( "specimen_sample_progress", 0 );
-            const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( m->type->id ) );
+            const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_sample_str ) );
 
             // Increment progress, but don't exceed size
+            drives[z]->set_var( "specimen_origin", specimen_origin );
+            update_specimen_metadata( *drives[z] );
             if( progress < size ) {
                 progress++;
                 drives[z]->set_var( "specimen_sample_progress", std::to_string( progress ) );
@@ -5468,11 +5631,13 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint &pos ) 
     // Create new genome drive
     p.use_amount( itype_usb_drive, 1, is_empty_usb );
     detached_ptr<item> drive = item::spawn( itype_genome_drive, calendar::turn );
-    const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( m->type->id ) );
+    const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_sample_str ) );
 
-    drive->set_var( "specimen_sample", id_str );
+    drive->set_var( "specimen_sample", specimen_sample_str );
     drive->set_var( "specimen_sample_progress", "1" );  // First increment
-    drive->set_var( "specimen_name", m->name() );
+    drive->set_var( "specimen_name", specimen_name );
+    drive->set_var( "specimen_origin", specimen_origin );
+    update_specimen_metadata( *drive );
 
     if( size > 1 ) {
         add_msg( m_info, "Progress: 1/%d for genome sample.", size );
@@ -5495,7 +5660,7 @@ void dna_editor_iuse::load( const JsonObject &obj )
     assign( obj, "charges_to_use", charges_to_use );
 }
 
-int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
+int dna_editor_iuse::use( player &p, item &it, bool, const tripoint &pos ) const
 {
     const auto is_empty_usb = []( const item & drive ) {
         return drive.contents.empty();
@@ -5505,6 +5670,11 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
         add_msg( m_info, _( "There's not enough charge left in the %s." ), it.display_name() );
         return 0;
     }
+    const requirement_data *const dna_reqs = &requirement_genome_workstation_biomaterial.obj();
+    const inventory crafting_inv = p.crafting_inventory( pos, PICKUP_RANGE, false );
+    const bool can_produce_dna =
+        dna_reqs &&
+        dna_reqs->can_make_with_inventory( crafting_inv, is_crafting_component );
     auto genome_drives = p.all_items_with_flag( flag_genome_drive );
     if( genome_drives.size() == 0 ) {
         popup( "You have no valid genome drives." );
@@ -5516,8 +5686,8 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
     bool has_complete_sample = false;
     for( size_t z = 0; z < genome_drives.size(); z++ ) {
         const int progress = genome_drives[z]->get_var( "specimen_sample_progress", 0 );
-        const auto specimen_id = mtype_id( genome_drives[z]->get_var( "specimen_sample" ) );
-        const auto size = cloning_utils::specimen_required_sample_size( specimen_id );
+        const std::string specimen_sample = genome_drives[z]->get_var( "specimen_sample" );
+        const auto size = cloning_utils::specimen_required_sample_size( specimen_sample );
         if( size > 0 && progress >= size ) {
             has_complete_sample = true;
             specimen_menu.addentry( z, true, MENU_AUTOASSIGN, string_format( "%s",
@@ -5538,19 +5708,24 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
 
     uilist menu;
     menu.text = string_format( _( "What to do with the %s?" ), selected_drive->display_name() );
-    menu.addentry( 0, true, 'e', "Examine sample" );
-    menu.addentry( 1, p.has_charges( itype_mutagen, 1 ) &&
+    const bool sample_is_monster = selected_drive->get_var( "specimen_origin", "monster" ) != "human";
+    menu.addentry( 0, sample_is_monster, 'e', "Examine sample" );
+    menu.addentry( 1, sample_is_monster &&
+                   p.has_charges( itype_mutagen, 1 ) &&
                    p.has_charges( itype_biomaterial, 1 ), 'i', "Research upgrade" );
     menu.addentry( 2, p.has_amount( itype_usb_drive, 1, true, is_empty_usb ), 'c', "Clone drive" );
-    menu.addentry( 3, p.has_charges( itype_biomaterial, 1 ), 'p', "Produce DNA" );
+    menu.addentry( 3, can_produce_dna, 'p', "Produce DNA" );
     menu.query();
     if( menu.ret < 0 ) {
         return 0;
     }
 
     if( menu.ret == 0 ) {
-        // grab the monsters data from a fake copy
-        const auto specimen_id = mtype_id( selected_drive->get_var( "specimen_sample" ) );
+        if( !sample_is_monster ) {
+            return 0;
+        }
+        const std::string specimen_sample = selected_drive->get_var( "specimen_sample" );
+        const auto specimen_id = mtype_id( specimen_sample );
         const auto newmon_ptr = make_shared_fast<monster>( specimen_id );
         const monster &newmon = *newmon_ptr;
 
@@ -5566,7 +5741,11 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
 
         return 0;
     } else if( menu.ret == 1 ) {
-        const mtype_id id( selected_drive->get_var( "specimen_sample" ) );
+        if( !sample_is_monster ) {
+            return 0;
+        }
+        const std::string specimen_sample = selected_drive->get_var( "specimen_sample" );
+        const mtype_id id( specimen_sample );
         const mtype &type = id.obj();
 
         mongroup_id upgrade_group = mongroup_id::NULL_ID();
@@ -5625,22 +5804,47 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
         detached_ptr<item> drive_copy = item::spawn( itype_genome_drive, calendar::turn );
 
         drive_copy->set_var( "specimen_sample", selected_drive->get_var( "specimen_sample" ) );
+        drive_copy->set_var( "specimen_origin", selected_drive->get_var( "specimen_origin", "monster" ) );
         drive_copy->set_var( "specimen_sample_progress",
                              selected_drive->get_var( "specimen_sample_progress" ) );
         drive_copy->set_var( "specimen_name", selected_drive->get_var( "specimen_name" ) );
+        drive_copy->set_var( "specimen_stats", selected_drive->get_var( "specimen_stats" ) );
+        drive_copy->set_var( "specimen_mutations", selected_drive->get_var( "specimen_mutations" ) );
+        drive_copy->set_var( "specimen_age", selected_drive->get_var( "specimen_age" ) );
+        drive_copy->set_var( "specimen_height", selected_drive->get_var( "specimen_height" ) );
+        drive_copy->set_var( "specimen_gender", selected_drive->get_var( "specimen_gender" ) );
 
         p.i_add( std::move( drive_copy ) );
     } else if( menu.ret == 3 ) {
-        p.use_charges( itype_biomaterial, 1 );
+        if( !dna_reqs ) {
+            popup( _( "Internal error: genome workstation requirement missing." ) );
+            return 0;
+        }
+        const auto &component_options = dna_reqs->get_components();
+        if( component_options.empty() ) {
+            popup( _( "Internal error: genome workstation requirement has no components." ) );
+            return 0;
+        }
+        const std::vector<item_comp> &components = component_options.front();
+        const std::vector<detached_ptr<item>> consumed_items =
+            p.consume_items( components, 1, is_crafting_component );
+        if( consumed_items.empty() ) {
+            popup( _( "You need biomaterial to produce DNA." ) );
+            return 0;
+        }
+        p.invalidate_crafting_inventory();
         const std::string msg = string_format( _( "You produce a unit of %s DNA." ),
                                                selected_drive->get_var( "specimen_name" ) );
         add_msg( msg );
-
         detached_ptr<item> dna = item::spawn( itype_id( "dna" ), calendar::turn, 1 );
-
         dna->set_var( "specimen_sample", selected_drive->get_var( "specimen_sample" ) );
+        dna->set_var( "specimen_origin", selected_drive->get_var( "specimen_origin", "monster" ) );
         dna->set_var( "specimen_name", selected_drive->get_var( "specimen_name" ) );
-
+        dna->set_var( "specimen_stats", selected_drive->get_var( "specimen_stats" ) );
+        dna->set_var( "specimen_mutations", selected_drive->get_var( "specimen_mutations" ) );
+        dna->set_var( "specimen_age", selected_drive->get_var( "specimen_age" ) );
+        dna->set_var( "specimen_height", selected_drive->get_var( "specimen_height" ) );
+        dna->set_var( "specimen_gender", selected_drive->get_var( "specimen_gender" ) );
         liquid_handler::handle_all_liquid( std::move( dna ), PICKUP_RANGE );
     }
 
