@@ -54,6 +54,7 @@
 #include "output.h"
 #include "overmap_connection.h"
 #include "overmap_location.h"
+#include "overmap_label.h"
 #include "overmap_noise.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
@@ -706,6 +707,11 @@ void oter_type_t::load( const JsonObject &jo, const std::string &src )
 
     optional( jo, was_loaded, "sym", symbol, unicode_codepoint_from_symbol_reader, NULL_UNICODE );
 
+    auto map_label = std::optional<std::string> {};
+    if( jo.has_string( "map_label" ) ) {
+        map_label = jo.get_string( "map_label" );
+    }
+
     assign( jo, "name", name, strict );
     assign( jo, "see_cost", see_cost, strict );
     assign( jo, "travel_cost", travel_cost, strict );
@@ -732,6 +738,13 @@ void oter_type_t::load( const JsonObject &jo, const std::string &src )
     optional( jo, was_loaded, "flags", flags, flag_reader );
 
     optional( jo, was_loaded, "connect_group", connect_group, string_reader{} );
+
+    if( map_label.has_value() ) {
+        overmap_labels::set_label( id, map_label );
+    } else if( jo.has_member( "copy-from" ) ) {
+        auto copy_from_id = oter_type_str_id( jo.get_string( "copy-from" ) );
+        overmap_labels::set_label( id, overmap_labels::get_label( copy_from_id ) );
+    }
 
     if( has_flag( oter_flags::line_drawing ) ) {
         if( has_flag( oter_flags::no_rotate ) ) {
@@ -1015,6 +1028,7 @@ void overmap_terrains::reset()
 {
     terrain_types.reset();
     terrains.reset();
+    overmap_labels::reset();
 }
 
 const std::vector<oter_t> &overmap_terrains::get_all()

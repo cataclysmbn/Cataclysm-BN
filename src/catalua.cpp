@@ -25,6 +25,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "fstream_utils.h"
 #include "init.h"
 #include "item_factory.h"
+#include "lua_action_menu.h"
 #include "map.h"
 #include "messages.h"
 #include "mod_manager.h"
@@ -102,6 +103,7 @@ void reload_lua_code()
     cata::lua_state &state = *DynamicDataLoader::get_instance().lua;
     const auto &packs = world_generator->active_world->info->active_mod_order;
     try {
+        cata::lua_action_menu::clear_entries();
         const int lua_mods = init::load_main_lua_scripts( state, packs );
         add_msg( m_good, _( "Reloaded %1$d lua mods." ), lua_mods );
     } catch( std::runtime_error &e ) {
@@ -200,6 +202,7 @@ std::unique_ptr<lua_state, lua_state_deleter> make_wrapped_state()
 void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modlist )
 {
     sol::state &lua = state.lua;
+    cata::lua_action_menu::clear_entries();
 
     sol::table active_mods = lua.create_table();
     sol::table mod_runtime = lua.create_table();

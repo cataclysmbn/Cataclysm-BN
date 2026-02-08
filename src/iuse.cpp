@@ -135,7 +135,6 @@ static const activity_id ACT_FISH( "ACT_FISH" );
 static const activity_id ACT_GAME( "ACT_GAME" );
 static const activity_id ACT_GENERIC_GAME( "ACT_GENERIC_GAME" );
 static const activity_id ACT_HAIRCUT( "ACT_HAIRCUT" );
-static const activity_id ACT_HAND_CRANK( "ACT_HAND_CRANK" );
 static const activity_id ACT_JACKHAMMER( "ACT_JACKHAMMER" );
 static const activity_id ACT_MEDITATE( "ACT_MEDITATE" );
 static const activity_id ACT_MIND_SPLICER( "ACT_MIND_SPLICER" );
@@ -980,7 +979,8 @@ static void do_purify( player &p )
     mutation_category_id thresh = p.thresh_category != mutation_category_id::NULL_ID() ?
                                   p.thresh_category : p.get_highest_category();
     for( auto &traits_iter : mutation_branch::get_all() ) {
-        if( p.has_trait( traits_iter.id ) && !p.has_base_trait( traits_iter.id ) ) {
+        if( p.has_trait( traits_iter.id ) && ( !p.has_base_trait( traits_iter.id ) ||
+                                               get_option<bool>( "canmutprofmut" ) ) ) {
             //Looks for active mutation
             bool threshlocked = false;
             for( auto cat : traits_iter.category ) {
@@ -1036,7 +1036,8 @@ int iuse::purify_iv( player *p, item *it, bool, const tripoint & )
                                   p->thresh_category : p->get_highest_category();
     std::vector<trait_id> valid; // Which flags the player has
     for( auto &traits_iter : mutation_branch::get_all() ) {
-        if( p->has_trait( traits_iter.id ) && !p->has_base_trait( traits_iter.id ) ) {
+        if( p->has_trait( traits_iter.id ) && ( !p->has_base_trait( traits_iter.id ) ||
+                                                get_option<bool>( "canmutprofmut" ) ) ) {
             //Looks for active mutation
             bool threshlocked = false;
             for( auto cat : traits_iter.category ) {
@@ -1094,8 +1095,8 @@ int iuse::purify_smart( player *p, item *it, bool, const tripoint & )
     std::vector<trait_id> valid; // Which flags the player has
     std::vector<std::string> valid_names; // Which flags the player has
     for( auto &traits_iter : mutation_branch::get_all() ) {
-        if( p->has_trait( traits_iter.id ) &&
-            !p->has_base_trait( traits_iter.id ) &&
+        if( p->has_trait( traits_iter.id ) && ( !p->has_base_trait( traits_iter.id ) ||
+                                                get_option<bool>( "canmutprofmut" ) ) &&
             traits_iter.id->purifiable ) {
             //Looks for active mutation
             bool threshlocked = false;
@@ -1359,6 +1360,9 @@ int iuse::mycus( player *p, item *it, bool t, const tripoint &pos )
         p->fall_asleep( 5_hours - p->int_cur * 1_minutes );
         p->unset_mutation( trait_THRESH_MARLOSS );
         p->set_mutation( trait_THRESH_MYCUS );
+        // Cleanse fungal infections
+        p->remove_effect( effect_fungus );
+        p->remove_effect( effect_spores );
         g->invalidate_main_ui_adaptor();
         //~ The Mycus does not use the term (or encourage the concept of) "you".  The PC is a local/native organism, but is now the Mycus.
         //~ It still understands the concept, but uninitelligent fungaloids and mind-bent symbiotes should not need it.
@@ -4051,40 +4055,6 @@ int iuse::portable_game( player *p, item *it, bool t, const tripoint & )
         if( game_score != 0 ) {
             p->add_morale( MORALE_GAME, game_score, 60, 2_hours, 30_minutes, true );
         }
-    }
-    return 0;
-}
-
-int iuse::hand_crank( player *p, item *it, bool, const tripoint & )
-{
-    if( p->is_npc() ) {
-        // Long action
-        return 0;
-    }
-    if( p->is_underwater() ) {
-        p->add_msg_if_player( m_info, _( "It's not waterproof enough to work underwater." ) );
-        return 0;
-    }
-    if( p->get_fatigue() >= fatigue_levels::dead_tired ) {
-        p->add_msg_if_player( m_info, _( "You're too exhausted to keep cranking." ) );
-        return 0;
-    }
-    item *magazine = it->magazine_current();
-    if( magazine && magazine->has_flag( flag_RECHARGE ) ) {
-        // 1600 minutes. It shouldn't ever run this long, but it's an upper bound.
-        // expectation is it runs until the player is too tired.
-        int moves = to_moves<int>( 1600_minutes );
-        if( it->ammo_capacity() > it->ammo_remaining() ) {
-            p->add_msg_if_player( _( "You start cranking the %s to charge its %s." ), it->tname(),
-                                  it->magazine_current()->tname() );
-            p->assign_activity( ACT_HAND_CRANK, moves, -1, 0, "hand-cranking" );
-            p->activity->add_tool( it );
-        } else {
-            p->add_msg_if_player( _( "You could use the %s to charge its %s, but it's already charged." ),
-                                  it->tname(), magazine->tname() );
-        }
-    } else {
-        p->add_msg_if_player( m_info, _( "You need a rechargeable battery cell to charge." ) );
     }
     return 0;
 }
