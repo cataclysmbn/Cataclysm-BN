@@ -11147,11 +11147,11 @@ bool item::on_drop( const tripoint &pos )
 
 bool item::on_drop( const tripoint &pos, map &m )
 {
-    avatar& you = get_avatar();
+    avatar &you = get_avatar();
 
-    if (type->istate_callbacks) {
-        bool prevented = type->istate_callbacks->call_on_drop(you, *this, pos);
-        if (prevented) {
+    if( type->istate_callbacks ) {
+        bool prevented = type->istate_callbacks->call_on_drop( you, *this, pos );
+        if( prevented ) {
             return true;
         }
     }
