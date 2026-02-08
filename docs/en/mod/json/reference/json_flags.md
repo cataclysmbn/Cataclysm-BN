@@ -541,6 +541,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `BLOCK_WIND` This terrain will block the effects of wind.
 - `BURROWABLE` Burrowing monsters can travel under this terrain, while most others can't (e.g.
   graboid will traverse under the chain link fence, while ordinary zombie will be stopped by it).
+- `BUTCHER_EQ` Butcher's equipment - required for full butchery of corpses.
 - `CAN_SIT` Furniture the player can sit on. Player sitting near furniture with the "FLAT_SURF" tag
   will get mood bonus for eating.
 - `CHIP` Used in construction menu to determine if wall can have paint chipped off.
@@ -1349,6 +1350,8 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `TRIFFID` Location is related to triffids. Used to classify location.
 - `LAKE` Location is is placed on a lake and will be ignored for placement if the overmap doesn't
   contain any lake terrain.
+- `RIVER` Location is is placed on a lake and will be ignored for placement if the overmap doesn't
+  contain any lake terrain.
 - `UNIQUE` Location is unique and will only occur once per overmap. `occurrences` is overridden to
   define a percent chance (e.g. `"occurrences" : [75, 100]` is 75%)
 - `ENDGAME` Location will have highest priority during special placement, and won't be affected by
@@ -1694,6 +1697,10 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `NEEDS_WHEEL_MOUNT_MEDIUM` Can only be installed on a part with `WHEEL_MOUNT_MEDIUM` flag.
 - `NEEDS_WINDOW` Can only be installed on a part with `WINDOW` flag.
 - `NO_JACK`
+- `NOCOLLIDE`
+- `NOCOLLIDEABOVE` Feature that simply doesn't collide when going up a z-level, or something goes down onto it, requires NOCOLLIDE.
+- `NOCOLLIDEBELOW` Feature that simply doesn't collide when going down a z-level, or something goes up onto it, requires NOCOLLIDE.
+- `NOSMASH`
 - `NOINSTALL` Cannot be installed.
 - `NOFIELDS` Prevents fields ( smoke radiation etc ) from affecting anything on the same tile
 - `NOREMOVE_SECURITY` Cannot be uninstalled if the vehicle has a working security system.

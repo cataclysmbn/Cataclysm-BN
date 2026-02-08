@@ -48,8 +48,8 @@ class veh_preview_adapter : public cata_tiles
          */
         void draw_vpart_tile( const vpart_id &vp_id, const point &pixel_pos,
                               int part_mod, int rotation_degrees,
-                              std::optional<SDL_Color> bg_color,
-                              std::optional<SDL_Color> fg_color ) {
+                              const tint_config &bg_color,
+                              const tint_config &fg_color ) {
             if( !vp_id.is_valid() ) {
                 return;
             }
@@ -94,8 +94,7 @@ class veh_preview_adapter : public cata_tiles
          * Get the paint colors for a vehicle part.
          * Uses get_vpart_color which will return actual colors when painting is implemented.
          */
-        static std::pair<std::optional<SDL_Color>, std::optional<SDL_Color>>
-        get_part_colors( const vehicle &veh, int part_idx ) {
+        static color_tint_pair get_part_colors( const vehicle &veh, int part_idx ) {
             map &here = get_map();
             const tripoint part_pos = veh.global_part_pos3( part_idx );
             const optional_vpart_position vp = here.veh_at( part_pos );
@@ -202,8 +201,8 @@ void vehicle_preview_window::zoom_out()
 
 void vehicle_preview_window::draw_vpart_at_pixel( const vpart_id &vp_id, point pixel_pos,
         int part_mod, units::angle veh_facing,
-        std::optional<SDL_Color> bg_color,
-        std::optional<SDL_Color> fg_color )
+        const tint_config &bg_color,
+        const tint_config &fg_color )
 {
     const int rotation_degrees = static_cast<int>( std::round( to_degrees( veh_facing ) ) );
 

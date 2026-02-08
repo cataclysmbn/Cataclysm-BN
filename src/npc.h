@@ -881,7 +881,7 @@ class npc : public player
         int follow_distance() const;
 
         // Dialogue and bartering--see npctalk.cpp
-        void talk_to_u( bool radio_contact = false );
+        void talk_to_u( bool radio_contact = false, bool enforce_first_topic = false );
         // Re-roll the inventory of a shopkeeper
         void shop_restock();
         std::string get_restock_interval() const;
@@ -953,6 +953,10 @@ class npc : public player
         void decide_needs();
         void reboot();
         void die( Creature *killer ) override;
+        /**
+        * Deletes the npc without any death notifications.
+        */
+        void erase();
         bool is_dead() const;
         // How well we smash terrain (not corpses!)
         int smash_ability() const;

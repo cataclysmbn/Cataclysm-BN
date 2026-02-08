@@ -196,6 +196,7 @@ static const efftype_id effect_riding( "riding" );
 static const efftype_id effect_saddled( "monster_saddled" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_slept_through_alarm( "slept_through_alarm" );
+static const efftype_id effect_spores( "spores" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_took_prozac( "took_prozac" );
@@ -6919,6 +6920,8 @@ bool Character::is_immune_effect( const efftype_id &eff ) const
         return is_immune_damage( DT_ACID ) || has_trait( trait_SLIMY ) || has_trait( trait_VISCOUS );
     } else if( eff == effect_nausea ) {
         return has_trait( trait_STRONGSTOMACH );
+    } else if( eff == effect_spores || eff == effect_fungus ) {
+        return has_trait( trait_M_IMMUNE );
     } else if( eff == effect_bleed ) {
         // Ugly, it was badly implemented and should be a flag
         return mutation_value( "bleed_resist" ) > 0.0f;
@@ -8498,6 +8501,13 @@ void Character::shout( std::string msg, bool order )
 
     sounds::sound( pos(), noise, order ? sounds::sound_t::order : sounds::sound_t::alert, msg, false,
                    "shout", shout );
+}
+
+void Character::signal_nemesis()
+{
+    const tripoint_abs_omt ompos = global_omt_location();
+    const tripoint_abs_sm smpos = project_to<coords::sm>( ompos );
+    overmap_buffer.signal_nemesis( smpos );
 }
 
 void Character::vomit()
@@ -11672,8 +11682,8 @@ float Character::stability_roll() const
 
     /** @EFFECT_DEX slightly improves player stability roll */
 
-    /** @EFFECT_MELEE improves player stability roll */
-    return get_melee() + get_str() + ( get_per() / 3.0f ) + ( get_dex() / 4.0f );
+    /** @EFFECT_DODGE improves player stability roll */
+    return get_dodge() + get_str() + ( get_per() / 3.0f ) + ( get_dex() / 4.0f );
 }
 
 bool Character::uncanny_dodge()
@@ -12115,6 +12125,8 @@ int Character::item_reload_cost( const item &it, item &ammo, int qty ) const
         qty = clamp( qty, ammo.contents.front().charges, 1 );
     } else if( ammo.is_magazine() ) {
         qty = 1;
+    } else if( ammo.is_comestible() ) {
+        qty = std::max( std::min( qty, ammo.charges ), 1 );
     } else {
         debugmsg( "cannot determine reload cost as %s is neither ammo or magazine", ammo.tname() );
         return 0;

@@ -304,7 +304,7 @@ class monster : public Creature, public location_visitable<monster>
 
         /** Returns innate monster bash skill, without calculating additional from helpers */
         int bash_skill();
-        int bash_estimate();
+        int bash_estimate( const tripoint &target );
         /** Returns ability of monster and any cooperative helpers to
          * bash the designated target.  **/
         int group_bash_skill( const tripoint &target );
@@ -521,6 +521,8 @@ class monster : public Creature, public location_visitable<monster>
         bool death_drops = true;
         bool is_dead() const;
         bool made_footstep;
+        // Returns true if this is a nemesis monster from the hunted scenario.
+        bool is_nemesis() const;
         // If we're unique
         std::string unique_name;
         bool hallucination;
@@ -666,5 +668,4 @@ class monster : public Creature, public location_visitable<monster>
         /** Processes monster-specific effects of an effect. */
         void process_one_effect( effect &it, bool is_new ) override;
 };
-
 

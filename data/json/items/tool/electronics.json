@@ -185,6 +185,7 @@
   {
     "type": "TOOL_ARMOR",
     "id": "wrist_comp_budget",
+    "looks_like": "game_watch",
     "//": "mainlined from tefnut expansion",
     "name": { "str": "wrist computer" },
     "category": "clothing",
@@ -537,7 +538,19 @@
     "symbol": ":",
     "color": "light_gray",
     "ammo": "battery",
-    "use_action": "HAND_CRANK",
+    "use_action": {
+      "type": "HAND_CRANK",
+      "charge_interval": "144 seconds",
+      "charge_amount": 2,
+      "fatigue_per_interval": 1,
+      "ammo_type": "battery",
+      "start_message": "You start cranking the %s to charge its %s.",
+      "already_charged_message": "You could use the %s to charge its %s, but it's already charged.",
+      "need_battery_message": "You need a rechargeable battery cell to charge.",
+      "underwater_message": "It's not waterproof enough to work underwater.",
+      "exhausted_message": "You're too exhausted to keep cranking.",
+      "fully_charged_message": "You've charged the battery completely."
+    },
     "magazines": [
       [
         "battery",
@@ -574,7 +587,6 @@
     "use_action": [
       "EINKTABLETPC",
       "PORTABLE_GAME",
-      "ROBOTCONTROL",
       {
         "//": "40 xp/hr.  Tier 1, 0-3 skill, higher-tier EXP since requires power.",
         "type": "train_skill",

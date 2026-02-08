@@ -57,6 +57,9 @@
   "into": "flour",                           // The item id of the product. Product MUST be something that uses charges.
   "conversion_rate": 4                       // Number of products per item consumed. At a conversion_rate of 4, 1 item is milled into 4 product. Only accepts integers.
 },
+"item_vars": {                               // Prepopulate Item Vars; Currently used by nothing other then mods and in game logic
+  "test": "test"                             // Predominately lua mods will find this useful
+}
 "explode_in_fire": true,                     // Should the item explode if set on fire
 "explosion": {                               // Physical explosion data
   "damage": 10,                              // Damage the explosion deals to player at epicenter. Damage is halved above 50% radius.
@@ -543,14 +546,14 @@ Gun mods can be defined like this:
                                // Additionally some gunmod specific entries:
 "location": "stock",           // Mandatory. Where is this gunmod is installed?
 "mod_targets": [ "crossbow" ], // Optional. What specific weapons can this gunmod be used with?
-"mod_target_category": [ [ "BOWS" ] ], // Optional. What specific weapon categories can this gunmod be used with?
+"mod_target_category": [ [ "BOWS" ] ], // Optional. Weapon category requirements. Inner arrays are AND, outer array is OR. E.g. [["RIFLES","AUTOLOADING"]] = RIFLE AND AUTOLOADING; [["PISTOLS"],["REVOLVERS"]] = PISTOL OR REVOLVER.
 "mod_exclusions": [ "laser_rifle" ], // Optional. What specific weapons can't this gunmod be used with?
-"mod_exclusion_category": [ [ "ENERGY_WEAPONS" ] ], // Optional. What specific weapon categories can't this gunmod be used with?
+"mod_exclusion_category": [ [ "ENERGY_WEAPONS" ] ], // Optional. Excluded weapon categories. Same logic as mod_target_category - matching any inner array prevents installation.
 "acceptable_ammo": [ "9mm" ],  // Optional filter restricting mod to guns with those base (before modifiers) ammo types
 "install_time": "30 s",        // Optional time installation takes. Installation is instantaneous if unspecified. An integer will be read as moves or a time string can be used.
 "ammo_modifier": [ "57" ],     // Optional field which if specified modifies parent gun to use these ammo types
-"magazine_adaptor": [ [ "223", [ "stanag30" ] ] ], // Optional field which changes the types of magazines the parent gun accepts
-"mode_modifier": [ [ "AUTO", "auto", 5 ] ]         // Optional field which adds new firing modes to a weapon
+"magazine_adaptor": [ [ "223", [ "stanag30" ] ] ], // Optional. Array of [ammotype, [...magazines]] pairs. Overrides the weapon's compatible magazines for that ammo type.
+"mode_modifier": [ [ "AUTO", "auto", 5 ] ],       // Optional. Array of [mode_id, mode_name, burst_size, [...flags]?] arrays. Adds firing modes to the weapon. Optional flags array can include "MELEE", "REACH_ATTACK", etc.
 "damage_modifier": -1,         // Optional field increasing or decreasing base gun damage
 "dispersion_modifier": 15,     // Optional field increasing or decreasing base gun dispersion
 "loudness_modifier": 4,        // Optional field increasing or decreasing base guns loudness

@@ -734,7 +734,7 @@ auto action_menu_base_category_ids() -> const std::vector<std::string> & // *NOP
 auto is_action_menu_base_category( const std::string &category_id ) -> bool
 {
     const auto &ids = action_menu_base_category_ids();
-    return std::ranges::find( ids, category_id ) != ids.end();
+    return std::ranges::contains( ids, category_id );
 }
 
 auto make_register_actions( std::vector<uilist_entry> &entries, const input_context &ctxt )
@@ -894,8 +894,7 @@ action_id handle_action_menu()
                 // help _is_a menu.
                 entry->txt += "…";
             }
-            const auto has_lua_debug = std::ranges::find( lua_category_ids, "debug" ) !=
-                                       lua_category_ids.end();
+            const auto has_lua_debug = std::ranges::contains( lua_category_ids, "debug" );
             if( hotkey_for_action( ACTION_DEBUG ) > -1 || has_lua_debug ) {
                 // register with global key
                 register_categories( { "debug" } );
@@ -903,13 +902,13 @@ action_id handle_action_menu()
                     entry->hotkey = hotkey_for_action( ACTION_DEBUG );
                 }
             }
-            auto extra_categories = std::vector<std::string> {};
-            std::ranges::copy_if( lua_category_ids, std::back_inserter( extra_categories ),
-            [&]( const std::string & category ) {
+            auto extra_categories = lua_category_ids
+            | std::views::filter( [&]( const std::string & category ) {
                 return !is_action_menu_base_category( category ) &&
                        category != "debug" &&
                        category != "back";
-            } );
+            } )
+            | std::ranges::to<std::vector>();
             if( !extra_categories.empty() ) {
                 register_categories( std::move( extra_categories ) );
             }

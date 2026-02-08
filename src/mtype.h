@@ -76,6 +76,7 @@ enum m_flag : int {
     MF_KEENNOSE,            //Keen sense of smell
     MF_STUMBLES,            // Stumbles in its movement
     MF_WARM,                // Warm blooded
+    MF_NEMESIS,             // Is a nemesis monster
     MF_NOHEAD,              // Headshots not allowed!
     MF_HARDTOSHOOT,         // It's one size smaller for ranged attacks, no less then creature_size::tiny
     MF_GRABS,               // Its attacks may grab us!
@@ -477,5 +478,4 @@ struct mtype {
 };
 
 mon_effect_data load_mon_effect_data( const JsonObject &e );
-
 

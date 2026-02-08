@@ -135,7 +135,6 @@ static const activity_id ACT_FISH( "ACT_FISH" );
 static const activity_id ACT_GAME( "ACT_GAME" );
 static const activity_id ACT_GENERIC_GAME( "ACT_GENERIC_GAME" );
 static const activity_id ACT_HAIRCUT( "ACT_HAIRCUT" );
-static const activity_id ACT_HAND_CRANK( "ACT_HAND_CRANK" );
 static const activity_id ACT_JACKHAMMER( "ACT_JACKHAMMER" );
 static const activity_id ACT_MEDITATE( "ACT_MEDITATE" );
 static const activity_id ACT_MIND_SPLICER( "ACT_MIND_SPLICER" );
@@ -330,7 +329,6 @@ static const requirement_id requirement_add_grid_connection =
 static const species_id FUNGUS( "FUNGUS" );
 static const species_id HALLUCINATION( "HALLUCINATION" );
 static const species_id INSECT( "INSECT" );
-static const species_id ROBOT( "ROBOT" );
 static const species_id ZOMBIE( "ZOMBIE" );
 
 static const mongroup_id GROUP_FISH( "GROUP_FISH" );
@@ -981,7 +979,8 @@ static void do_purify( player &p )
     mutation_category_id thresh = p.thresh_category != mutation_category_id::NULL_ID() ?
                                   p.thresh_category : p.get_highest_category();
     for( auto &traits_iter : mutation_branch::get_all() ) {
-        if( p.has_trait( traits_iter.id ) && !p.has_base_trait( traits_iter.id ) ) {
+        if( p.has_trait( traits_iter.id ) && ( !p.has_base_trait( traits_iter.id ) ||
+                                               get_option<bool>( "canmutprofmut" ) ) ) {
             //Looks for active mutation
             bool threshlocked = false;
             for( auto cat : traits_iter.category ) {
@@ -1037,7 +1036,8 @@ int iuse::purify_iv( player *p, item *it, bool, const tripoint & )
                                   p->thresh_category : p->get_highest_category();
     std::vector<trait_id> valid; // Which flags the player has
     for( auto &traits_iter : mutation_branch::get_all() ) {
-        if( p->has_trait( traits_iter.id ) && !p->has_base_trait( traits_iter.id ) ) {
+        if( p->has_trait( traits_iter.id ) && ( !p->has_base_trait( traits_iter.id ) ||
+                                                get_option<bool>( "canmutprofmut" ) ) ) {
             //Looks for active mutation
             bool threshlocked = false;
             for( auto cat : traits_iter.category ) {
@@ -1095,8 +1095,8 @@ int iuse::purify_smart( player *p, item *it, bool, const tripoint & )
     std::vector<trait_id> valid; // Which flags the player has
     std::vector<std::string> valid_names; // Which flags the player has
     for( auto &traits_iter : mutation_branch::get_all() ) {
-        if( p->has_trait( traits_iter.id ) &&
-            !p->has_base_trait( traits_iter.id ) &&
+        if( p->has_trait( traits_iter.id ) && ( !p->has_base_trait( traits_iter.id ) ||
+                                                get_option<bool>( "canmutprofmut" ) ) &&
             traits_iter.id->purifiable ) {
             //Looks for active mutation
             bool threshlocked = false;
@@ -1360,6 +1360,9 @@ int iuse::mycus( player *p, item *it, bool t, const tripoint &pos )
         p->fall_asleep( 5_hours - p->int_cur * 1_minutes );
         p->unset_mutation( trait_THRESH_MARLOSS );
         p->set_mutation( trait_THRESH_MYCUS );
+        // Cleanse fungal infections
+        p->remove_effect( effect_fungus );
+        p->remove_effect( effect_spores );
         g->invalidate_main_ui_adaptor();
         //~ The Mycus does not use the term (or encourage the concept of) "you".  The PC is a local/native organism, but is now the Mycus.
         //~ It still understands the concept, but uninitelligent fungaloids and mind-bent symbiotes should not need it.
@@ -1753,7 +1756,7 @@ int iuse::fishing_rod( player *p, item *it, bool, const tripoint & )
     }
     p->add_msg_if_player( _( "You cast your line and wait to hook something…" ) );
     p->assign_activity( ACT_FISH, to_moves<int>( 5_hours ), 0, 0, it->tname() );
-    p->activity->tools.emplace_back( it );
+    p->activity->add_tool( it );
     p->activity->placement = *found;
     p->activity->coord_set = g->get_fishable_locations( 60, *found );
     return 0;
@@ -2882,7 +2885,7 @@ int iuse::jackhammer( player *p, item *it, bool, const tripoint &pos )
     moves = moves * ( 10 - helpers.size() ) / 10;
 
     p->assign_activity( ACT_JACKHAMMER, moves );
-    p->activity->tools.emplace_back( it );
+    p->activity->add_tool( it );
     p->activity->placement = g->m.getabs( pnt );
     p->add_msg_if_player( _( "You start drilling into the %1$s with your %2$s." ),
                           g->m.tername( pnt ), it->tname() );
@@ -2974,7 +2977,7 @@ int iuse::pickaxe( player *p, item *it, bool, const tripoint &pos )
     moves = moves * ( 10 - helpers.size() ) / 10;
 
     p->assign_activity( ACT_PICKAXE, moves, -1 );
-    p->activity->tools.emplace_back( it );
+    p->activity->add_tool( it );
     p->activity->placement = g->m.getabs( pnt );
     p->add_msg_if_player( _( "You strike the %1$s with your %2$s." ),
                           g->m.tername( pnt ), it->tname() );
@@ -4056,40 +4059,6 @@ int iuse::portable_game( player *p, item *it, bool t, const tripoint & )
     return 0;
 }
 
-int iuse::hand_crank( player *p, item *it, bool, const tripoint & )
-{
-    if( p->is_npc() ) {
-        // Long action
-        return 0;
-    }
-    if( p->is_underwater() ) {
-        p->add_msg_if_player( m_info, _( "It's not waterproof enough to work underwater." ) );
-        return 0;
-    }
-    if( p->get_fatigue() >= fatigue_levels::dead_tired ) {
-        p->add_msg_if_player( m_info, _( "You're too exhausted to keep cranking." ) );
-        return 0;
-    }
-    item *magazine = it->magazine_current();
-    if( magazine && magazine->has_flag( flag_RECHARGE ) ) {
-        // 1600 minutes. It shouldn't ever run this long, but it's an upper bound.
-        // expectation is it runs until the player is too tired.
-        int moves = to_moves<int>( 1600_minutes );
-        if( it->ammo_capacity() > it->ammo_remaining() ) {
-            p->add_msg_if_player( _( "You start cranking the %s to charge its %s." ), it->tname(),
-                                  it->magazine_current()->tname() );
-            p->assign_activity( ACT_HAND_CRANK, moves, -1, 0, "hand-cranking" );
-            p->activity->tools.emplace_back( it );
-        } else {
-            p->add_msg_if_player( _( "You could use the %s to charge its %s, but it's already charged." ),
-                                  it->tname(), magazine->tname() );
-        }
-    } else {
-        p->add_msg_if_player( m_info, _( "You need a rechargeable battery cell to charge." ) );
-    }
-    return 0;
-}
-
 int iuse::vibe( player *p, item *it, bool, const tripoint & )
 {
     if( p->is_npc() ) {
@@ -4126,7 +4095,7 @@ int iuse::vibe( player *p, item *it, bool, const tripoint & )
                                   it->tname() );
         }
         p->assign_activity( ACT_VIBE, moves, -1, 0, "de-stressing" );
-        p->activity->tools.emplace_back( it );
+        p->activity->add_tool( it );
     }
     return it->type->charges_to_use();
 }
@@ -4451,7 +4420,7 @@ int iuse::chop_tree( player *p, item *it, bool t, const tripoint & )
     moves = moves * ( 10 - helpers.size() ) / 10;
 
     p->assign_activity( ACT_CHOP_TREE, moves, -1, p->get_item_position( it ) );
-    p->activity->tools.emplace_back( it );
+    p->activity->add_tool( it );
     p->activity->placement = g->m.getabs( pnt );
 
     return it->type->charges_to_use();
@@ -4498,7 +4467,7 @@ int iuse::chop_logs( player *p, item *it, bool t, const tripoint & )
 
     p->assign_activity( ACT_CHOP_LOGS, moves, -1, p->get_item_position( it ) );
     p->activity->placement = g->m.getabs( pnt );
-    p->activity->tools.emplace_back( it );
+    p->activity->add_tool( it );
 
     return it->type->charges_to_use();
 }
@@ -5552,10 +5521,37 @@ int iuse::seed( player *p, item *it, bool, const tripoint & )
     return 0;
 }
 
+namespace
+{
+auto is_hackable_robot( const monster &mon ) -> bool
+{
+    // HackPRO targets electronic robots regardless of species naming.
+    return mon.has_flag( MF_ELECTRONIC );
+}
+
+auto get_hackable_friendly_monsters( game &game_ref ) -> std::vector<shared_ptr_fast<monster>>
+{
+    auto monsters = game_ref.all_monsters();
+    auto &items = monsters.items;
+    auto results = std::vector<shared_ptr_fast<monster>> {};
+    std::ranges::for_each( items, [&]( const auto & weak_monster ) {
+        auto current = weak_monster.lock();
+        if( !current || current->is_dead() ) {
+            return;
+        }
+        if( current->friendly == 0 || !is_hackable_robot( *current ) ) {
+            return;
+        }
+        results.push_back( std::move( current ) );
+    } );
+    return results;
+}
+} // namespace
+
 bool iuse::robotcontrol_can_target( player *p, const monster &m )
 {
     return !m.is_dead()
-           && m.type->in_species( ROBOT )
+           && is_hackable_robot( m )
            && m.friendly == 0
            && rl_dist( p->pos(), m.pos() ) <= 10;
 }
@@ -5635,15 +5631,13 @@ int iuse::robotcontrol( player *p, item *it, bool, const tripoint & )
         }
         case 1: { //make all friendly robots stop their purposeless extermination of (un)life.
             p->moves -= to_moves<int>( 1_seconds );
-            int f = 0; //flag to check if you have robotic allies
-            for( monster &critter : g->all_monsters() ) {
-                if( critter.friendly != 0 && critter.type->in_species( ROBOT ) ) {
-                    p->add_msg_if_player( _( "A following %s goes into passive mode." ),
-                                          critter.name() );
-                    critter.add_effect( effect_docile, 1_turns );
-                    f = 1;
-                }
-            }
+            auto hackables = get_hackable_friendly_monsters( *g );
+            const auto f = hackables.empty() ? 0 : 1;
+            std::ranges::for_each( hackables, [&]( const shared_ptr_fast<monster> &critter ) {
+                p->add_msg_if_player( _( "A following %s goes into passive mode." ),
+                                      critter->name() );
+                critter->add_effect( effect_docile, 1_turns );
+            } );
             if( f == 0 ) {
                 p->add_msg_if_player( _( "You are not commanding any robots." ) );
                 return 0;
@@ -5652,15 +5646,13 @@ int iuse::robotcontrol( player *p, item *it, bool, const tripoint & )
         }
         case 2: { //make all friendly robots terminate (un)life with extreme prejudice
             p->moves -= to_moves<int>( 1_seconds );
-            int f = 0; //flag to check if you have robotic allies
-            for( monster &critter : g->all_monsters() ) {
-                if( critter.friendly != 0 && critter.has_flag( MF_ELECTRONIC ) ) {
-                    p->add_msg_if_player( _( "A following %s goes into combat mode." ),
-                                          critter.name() );
-                    critter.remove_effect( effect_docile );
-                    f = 1;
-                }
-            }
+            auto hackables = get_hackable_friendly_monsters( *g );
+            const auto f = hackables.empty() ? 0 : 1;
+            std::ranges::for_each( hackables, [&]( const shared_ptr_fast<monster> &critter ) {
+                p->add_msg_if_player( _( "A following %s goes into combat mode." ),
+                                      critter->name() );
+                critter->remove_effect( effect_docile );
+            } );
             if( f == 0 ) {
                 p->add_msg_if_player( _( "You are not commanding any robots." ) );
                 return 0;

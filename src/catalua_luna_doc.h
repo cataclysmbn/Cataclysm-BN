@@ -1,5 +1,6 @@
 #pragma once
 
+#include "calendar.h"
 #include "catalua_luna.h"
 #include "mission.h"
 #include "type_id.h"
@@ -26,6 +27,7 @@ enum art_effect_active : int;
 enum art_effect_passive : int;
 enum vitamin_type : int;
 enum class ot_match_type : int;
+enum moon_phase : int;
 
 namespace sfx
 {
@@ -280,6 +282,7 @@ LUNA_ENUM( art_effect_active, "ArtifactEffectPassive" )
 LUNA_ENUM( art_effect_passive, "ArtifactEffectActive" )
 LUNA_ENUM( phase_id, "Phase" )
 LUNA_ENUM( vitamin_type, "VitaminType" )
+LUNA_ENUM( moon_phase, "MoonPhase" );
 
 // ISlot
 LUNA_VAL( islot_container, "IslotContainer" );

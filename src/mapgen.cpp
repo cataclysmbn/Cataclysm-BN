@@ -15,6 +15,7 @@
 #include <unordered_map>
 
 #include "advanced_inv_listitem.h"
+#include "artifact_enum_traits.h"
 #include "all_enum_values.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -2249,6 +2250,38 @@ class jmapgen_spawn_item : public jmapgen_piece
             type.check( oter_name, parameters );
         }
 };
+/// Place an artifact.
+class jmapgen_artifact : public jmapgen_piece
+{
+    public:
+        bool natural = false;
+        std::optional<artifact_natural_property> property;
+        jmapgen_int chance;
+
+        explicit jmapgen_artifact( const JsonObject &jsi )
+            : chance( jsi, "chance", 100, 100 ) {
+            repeat = jmapgen_int( jsi, "repeat", 1, 1 );
+            jsi.read( "natural", natural );
+            if( jsi.has_member( "property" ) ) {
+                property = jsi.get_enum_value<artifact_natural_property>( "property" );
+                natural = true;
+            }
+        }
+
+        void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
+                  ) const override {
+            const auto raw_chance = chance.get();
+            if( raw_chance != 100 && !x_in_y( raw_chance, 100 ) ) {
+                return;
+            }
+            const tripoint p( x.get(), y.get(), dat.m.get_abs_sub().z );
+            if( natural ) {
+                dat.m.spawn_natural_artifact( p, property.value_or( ARTPROP_NULL ) );
+                return;
+            }
+            dat.m.spawn_artifact( p );
+        }
+};
 /**
  * Place a trap.
  * "trap": id of the trap.
@@ -3360,6 +3393,8 @@ mapgen_palette mapgen_palette::load_internal( const JsonObject &jo, const std::s
     // json member name is not optimal, it should be plural like all the others above, but that conflicts
     // with the items entry with refers to item groups.
     new_pal.load_place_mapings<jmapgen_spawn_item>( jo, "item", format_placings );
+    new_pal.load_place_mapings<jmapgen_artifact>( jo, "artifact", format_placings );
+    new_pal.load_place_mapings<jmapgen_artifact>( jo, "artifacts", format_placings );
     new_pal.load_place_mapings<jmapgen_trap>( jo, "traps", format_placings );
     new_pal.load_place_mapings<jmapgen_monster>( jo, "monster", format_placings );
     new_pal.load_place_mapings<jmapgen_make_rubble>( jo, "rubble", format_placings );
@@ -3422,9 +3457,8 @@ bool mapgen_function_json_nested::setup_internal( const JsonObject &jo )
     if( jo.has_array( "mapgensize" ) ) {
         JsonArray jarr = jo.get_array( "mapgensize" );
         mapgensize = point( jarr.get_int( 0 ), jarr.get_int( 1 ) );
-        if( mapgensize.x == 0 || mapgensize.x != mapgensize.y ) {
-            // Non-square sizes not implemented yet
-            jo.throw_error( "\"mapgensize\" must be an array of two identical, positive numbers" );
+        if( mapgensize.x <= 0 || mapgensize.y <= 0 ) {
+            jo.throw_error( "\"mapgensize\" must be an array of two positive numbers" );
         }
         total_size = mapgensize;
     } else {
@@ -3611,6 +3645,7 @@ bool mapgen_function_json_base::setup_common( const JsonObject &jo )
     objects.load_objects<jmapgen_gaspump>( jo, "place_gaspumps" );
     objects.load_objects<jmapgen_item_group>( jo, "place_items" );
     objects.load_objects<jmapgen_loot>( jo, "place_loot" );
+    objects.load_objects<jmapgen_artifact>( jo, "place_artifact" );
     objects.load_objects<jmapgen_monster_group>( jo, "place_monsters" );
     objects.load_objects<jmapgen_vehicle>( jo, "place_vehicles" );
     objects.load_objects<jmapgen_trap>( jo, "place_traps" );

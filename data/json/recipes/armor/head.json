@@ -13,6 +13,19 @@
     "components": [ [ [ "rag", 4 ] ] ]
   },
   {
+    "result": "helmet_liner",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "time": "10 m",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_tailor", 1 ], [ "manual_tailor", 1 ], [ "tailor_portfolio", 1 ] ],
+    "using": [ [ "sewing_standard", 3 ] ],
+    "components": [ [ [ "rag", 3 ] ] ]
+  },
+  {
     "result": "bandana",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -1493,7 +1506,7 @@
     "book_learn": [ [ "textbook_tailor", 3 ], [ "manual_tailor", 3 ], [ "tailor_portfolio", 3 ] ],
     "using": [ [ "sewing_standard", 10 ] ],
     "tools": [ [ [ "soldering_standard", 5, "LIST" ], [ "surface_heat", 5, "LIST" ] ] ],
-    "components": [ [ [ "neoprene", 2 ] ], [ [ "rag", 2 ] ] ]
+    "components": [ [ [ "neoprene", 2 ] ], [ [ "nylon", 2 ] ] ]
   },
   {
     "result": "chainmail_hood",

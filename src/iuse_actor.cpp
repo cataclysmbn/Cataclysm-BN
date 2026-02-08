@@ -86,6 +86,7 @@
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
+#include "cloning_utils.h"
 #include "string_formatter.h"
 #include "string_utils.h"
 #include "string_input_popup.h"
@@ -107,6 +108,7 @@
 #include "weather.h"
 
 static const activity_id ACT_FIRSTAID( "ACT_FIRSTAID" );
+static const activity_id ACT_HAND_CRANK( "ACT_HAND_CRANK" );
 static const activity_id ACT_MAKE_ZLAVE( "ACT_MAKE_ZLAVE" );
 static const activity_id ACT_RELOAD( "ACT_RELOAD" );
 static const activity_id ACT_REPAIR_ITEM( "ACT_REPAIR_ITEM" );
@@ -148,6 +150,7 @@ static const itype_id itype_syringe( "syringe" );
 static const itype_id itype_fertilizer( "fertilizer" );
 static const itype_id itype_genome_drive( "genome_drive" );
 static const itype_id itype_usb_drive( "usb_drive" );
+static const flag_id flag_genome_drive( "GENOME_DRIVE" );
 static const itype_id itype_mutagen( "mutagen" );
 static const itype_id itype_biomaterial( "biomaterial" );
 
@@ -1456,6 +1459,14 @@ int deploy_furn_actor::use( player &p, item &it, bool t, const tripoint &pos ) c
         return 0;
     }
 
+    // It shouldn't be possible to deploy a NOITEM furniture on top of items.
+    const furn_t &furn_obj = furn_type.obj();
+    if( ( furn_obj.has_flag( TFLAG_SEALED ) || furn_obj.has_flag( TFLAG_NOITEM ) ) &&
+        !here.i_at( pnt ).empty() ) {
+        p.add_msg_if_player( m_info, _( "Can't put that here - items in the way." ) );
+        return 0;
+    }
+
     here.furn_set( pnt, furn_type );
     p.mod_moves( to_turns<int>( 2_seconds ) );
     return 1;
@@ -1846,7 +1857,7 @@ int firestarter_actor::use( player &p, item &it, bool t, const tripoint &spos ) 
         moves_modifier + moves_cost_fast / 100.0 + 2;
     p.assign_activity( ACT_START_FIRE, moves, potential_skill_gain,
                        0, it.tname() );
-    p.activity->tools.emplace_back( &it );
+    p.activity->add_tool( &it );
     p.activity->values.push_back( g->natural_light_level( pos.z ) );
     p.activity->placement = pos;
     // charges to use are handled by the activity
@@ -5431,14 +5442,12 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint &pos ) 
              it.display_name(), m->name() );
 
 
-    auto drives = p.all_items_with_id( itype_genome_drive );
+    auto drives = p.all_items_with_flag( flag_genome_drive );
 
     for( size_t z = 0; z < drives.size(); z++ ) {
         if( drives[z]->get_var( "specimen_sample" ) == id_str ) {
             int progress = drives[z]->get_var( "specimen_sample_progress", 0 );
-            int size = drives[z]->get_var( "specimen_size" ).empty() ?
-                       static_cast<int>( m->get_size() ) + 1 :
-                       std::stoi( drives[z]->get_var( "specimen_size" ) );
+            const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( m->type->id ) );
 
             // Increment progress, but don't exceed size
             if( progress < size ) {
@@ -5459,12 +5468,11 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint &pos ) 
     // Create new genome drive
     p.use_amount( itype_usb_drive, 1, is_empty_usb );
     detached_ptr<item> drive = item::spawn( itype_genome_drive, calendar::turn );
-    int size = static_cast<int>( m->get_size() ) + 1;
+    const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( m->type->id ) );
 
     drive->set_var( "specimen_sample", id_str );
     drive->set_var( "specimen_sample_progress", "1" );  // First increment
     drive->set_var( "specimen_name", m->name() );
-    drive->set_var( "specimen_size", std::to_string( size ) );
 
     if( size > 1 ) {
         add_msg( m_info, "Progress: 1/%d for genome sample.", size );
@@ -5497,7 +5505,7 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
         add_msg( m_info, _( "There's not enough charge left in the %s." ), it.display_name() );
         return 0;
     }
-    auto genome_drives = p.all_items_with_id( itype_genome_drive );
+    auto genome_drives = p.all_items_with_flag( flag_genome_drive );
     if( genome_drives.size() == 0 ) {
         popup( "You have no valid genome drives." );
         return 0;
@@ -5508,8 +5516,9 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
     bool has_complete_sample = false;
     for( size_t z = 0; z < genome_drives.size(); z++ ) {
         const int progress = genome_drives[z]->get_var( "specimen_sample_progress", 0 );
-        const int size = genome_drives[z]->get_var( "specimen_size", 0 );
-        if( progress >= size ) {
+        const auto specimen_id = mtype_id( genome_drives[z]->get_var( "specimen_sample" ) );
+        const auto size = cloning_utils::specimen_required_sample_size( specimen_id );
+        if( size > 0 && progress >= size ) {
             has_complete_sample = true;
             specimen_menu.addentry( z, true, MENU_AUTOASSIGN, string_format( "%s",
                                     genome_drives[z]->display_name() ) );
@@ -5541,25 +5550,11 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
 
     if( menu.ret == 0 ) {
         // grab the monsters data from a fake copy
-        const shared_ptr_fast<monster> newmon_ptr = make_shared_fast<monster>
-                ( mtype_id( selected_drive->get_var( "specimen_sample" ) ) );
+        const auto specimen_id = mtype_id( selected_drive->get_var( "specimen_sample" ) );
+        const auto newmon_ptr = make_shared_fast<monster>( specimen_id );
         const monster &newmon = *newmon_ptr;
 
-        const int size_class = selected_drive->get_var( "specimen_size", 0 );
-
-        static const char *creature_size_strings[] = {
-            "TINY",
-            "SMALL",
-            "MEDIUM",
-            "LARGE",
-            "HUGE"
-        };
-
-        const char *size_str = "UNKNOWN";
-
-        if( size_class >= 0 && size_class < std::ssize( creature_size_strings ) ) {
-            size_str = creature_size_strings[size_class];
-        }
+        const char *size_str = cloning_utils::specimen_size_class_string( specimen_id );
 
         popup(
             _( "Examination Results:\n\nSample Name: %s\nSize Class: %s\nWeight: %.0fkg\nVolume: %.0fl" ),
@@ -5619,9 +5614,10 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
         }
 
         add_msg( m_info, _( "The research produced a viable %s sample!" ), newmon.name() );
-        selected_drive->set_var( "specimen_sample", chosen->name.str() );
-        selected_drive->set_var( "specimen_size", std::to_string( newmon.get_size() ) );
-        selected_drive->set_var( "specimen_sample_progress", selected_drive->get_var( "specimen_size" ) );
+        const auto specimen_id = mtype_id( chosen->name.str() );
+        const auto size = cloning_utils::specimen_required_sample_size( specimen_id );
+        selected_drive->set_var( "specimen_sample", specimen_id.str() );
+        selected_drive->set_var( "specimen_sample_progress", std::to_string( size ) );
         selected_drive->set_var( "specimen_name", newmon.name() );
     } else if( menu.ret == 2 ) {
         add_msg( "You clone a copy of the drive onto another USB." );
@@ -5631,7 +5627,6 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
         drive_copy->set_var( "specimen_sample", selected_drive->get_var( "specimen_sample" ) );
         drive_copy->set_var( "specimen_sample_progress",
                              selected_drive->get_var( "specimen_sample_progress" ) );
-        drive_copy->set_var( "specimen_size", selected_drive->get_var( "specimen_size" ) );
         drive_copy->set_var( "specimen_name", selected_drive->get_var( "specimen_name" ) );
 
         p.i_add( std::move( drive_copy ) );
@@ -5644,7 +5639,6 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint & ) const
         detached_ptr<item> dna = item::spawn( itype_id( "dna" ), calendar::turn, 1 );
 
         dna->set_var( "specimen_sample", selected_drive->get_var( "specimen_sample" ) );
-        dna->set_var( "specimen_size", selected_drive->get_var( "specimen_size" ) );
         dna->set_var( "specimen_name", selected_drive->get_var( "specimen_name" ) );
 
         liquid_handler::handle_all_liquid( std::move( dna ), PICKUP_RANGE );
@@ -5941,6 +5935,107 @@ std::unique_ptr<iuse_actor> multicooker_iuse::clone() const
     return std::make_unique<multicooker_iuse>( *this );
 }
 
+namespace
+{
+auto read_time_duration( const JsonObject &obj, const std::string &member,
+                         const time_duration &default_value ) -> time_duration
+{
+    if( !obj.has_member( member ) ) {
+        return default_value;
+    }
+    if( obj.has_string( member ) ) {
+        return read_from_json_string<time_duration>( *obj.get_raw( member ),
+                time_duration::units );
+    }
+    if( obj.has_int( member ) ) {
+        return time_duration::from_turns( obj.get_int( member ) );
+    }
+    obj.throw_error( "member must be a duration string or integer turns", member );
+    return default_value;
+}
+} // namespace
+
+auto hand_crank_actor::load( const JsonObject &obj ) -> void
+{
+    charge_interval = read_time_duration( obj, "charge_interval", charge_interval );
+    obj.read( "charge_amount", charge_amount );
+    obj.read( "fatigue_per_interval", fatigue_per_interval );
+    obj.read( "ammo_type", ammo_type );
+    obj.read( "activity_name", activity_name );
+    obj.read( "start_message", start_message );
+    obj.read( "already_charged_message", already_charged_message );
+    obj.read( "need_battery_message", need_battery_message );
+    obj.read( "underwater_message", underwater_message );
+    obj.read( "exhausted_message", exhausted_message );
+    obj.read( "fully_charged_message", fully_charged_message );
+}
+
+auto hand_crank_actor::can_use( const Character &who, const item &it, bool,
+                                const tripoint & ) const -> ret_val<bool>
+{
+    if( who.is_npc() ) {
+        return ret_val<bool>::make_failure();
+    }
+    if( who.is_underwater() ) {
+        return ret_val<bool>::make_failure( _( underwater_message ) );
+    }
+    if( who.get_fatigue() >= fatigue_levels::dead_tired ) {
+        return ret_val<bool>::make_failure( _( exhausted_message ) );
+    }
+    const auto *magazine = it.magazine_current();
+    if( !magazine || !magazine->has_flag( flag_RECHARGE ) ) {
+        return ret_val<bool>::make_failure( _( need_battery_message ) );
+    }
+    return ret_val<bool>::make_success();
+}
+
+auto hand_crank_actor::use( player &p, item &it, bool, const tripoint & ) const -> int
+{
+    if( p.is_npc() ) {
+        return 0;
+    }
+    if( p.is_underwater() ) {
+        p.add_msg_if_player( m_info, _( underwater_message ) );
+        return 0;
+    }
+    if( p.get_fatigue() >= fatigue_levels::dead_tired ) {
+        p.add_msg_if_player( m_info, _( exhausted_message ) );
+        return 0;
+    }
+    auto *magazine = it.magazine_current();
+    if( !magazine || !magazine->has_flag( flag_RECHARGE ) ) {
+        p.add_msg_if_player( m_info, _( need_battery_message ) );
+        return 0;
+    }
+    if( it.ammo_capacity() > it.ammo_remaining() ) {
+        p.add_msg_if_player( _( start_message ), it.tname(), magazine->tname() );
+        auto resolved_charge_interval = charge_interval;
+        if( resolved_charge_interval <= 0_turns ) {
+            resolved_charge_interval = 144_seconds;
+        }
+        const auto safe_charge_amount = std::max( 1, charge_amount );
+        const auto current = it.ammo_remaining();
+        const auto capacity = it.ammo_capacity();
+        const auto missing = capacity - current;
+        const auto required_intervals = divide_round_up( missing, safe_charge_amount );
+        const auto required_duration = resolved_charge_interval * required_intervals;
+        const auto moves = to_moves<int>( required_duration );
+        const auto interval_turns = to_turns<int>( resolved_charge_interval );
+        p.assign_activity( ACT_HAND_CRANK, moves, -1, 0, activity_name );
+        p.activity->add_tool( &it );
+        p.activity->values = { interval_turns, safe_charge_amount, fatigue_per_interval };
+        p.activity->str_values = { ammo_type.str(), fully_charged_message, exhausted_message };
+    } else {
+        p.add_msg_if_player( _( already_charged_message ), it.tname(), magazine->tname() );
+    }
+    return 0;
+}
+
+auto hand_crank_actor::clone() const -> std::unique_ptr<iuse_actor>
+{
+    return std::make_unique<hand_crank_actor>( *this );
+}
+
 void sex_toy_actor::load( JsonObject const &obj )
 {
     moves = obj.get_int( "moves", 60000 ); // default is 10 minutes
@@ -6027,7 +6122,7 @@ int train_skill_actor::use( player &p, item &i, bool, const tripoint & ) const
     p.set_value( "training_iuse_skill_xp_chance", std::to_string( training_skill_xp_chance ) );
     p.assign_activity( ACT_TRAIN_SKILL, hours * 360000, -1, 0, "training" );
     p.activity->str_values.emplace_back( i.typeId() );
-    p.activity->tools.emplace_back( i );
+    p.activity->add_tool( &i );
 
     return 0;
 }
@@ -6047,7 +6142,7 @@ int sex_toy_actor::use( player &p, item &i, bool, const tripoint & ) const
                              i.tname() );
     }
     p.assign_activity( ACT_VIBE, moves, -1, 0, "de-stressing" );
-    p.activity->tools.emplace_back( i );
+    p.activity->add_tool( &i );
 
     return i.type->charges_to_use();
 }

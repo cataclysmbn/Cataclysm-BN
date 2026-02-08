@@ -80,6 +80,7 @@
 #include "morale.h"
 #include "morale_types.h"
 #include "mtype.h"
+#include "mutation.h"
 #include "npc.h"
 #include "npc_class.h"
 #include "options.h"
@@ -103,6 +104,7 @@
 #include "submap.h"
 #include "text_snippets.h"
 #include "tileray.h"
+#include "trait_group.h"
 #include "units.h"
 #include "uistate.h"
 #include "value_ptr.h"
@@ -112,8 +114,6 @@
 #include "vitamin.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
-
-struct mutation_branch;
 
 static const efftype_id effect_riding( "riding" );
 
@@ -209,7 +209,7 @@ void player_activity::serialize( JsonOut &json ) const
         json.member( "str_values", str_values );
         json.member( "auto_resume", auto_resume );
         json.member( "monsters", monsters );
-        json.member( "tools", tools );
+        json.member( "tools", tools_ );
         json.member( "moves_total", moves_total );
         json.member( "moves_left", moves_left );
         json.member( "assistants_ids", assistants_ids_ );
@@ -272,7 +272,7 @@ void player_activity::deserialize( JsonIn &jsin )
     str_values = data.get_string_array( "str_values" );
     data.read( "auto_resume", auto_resume );
     data.read( "monsters", monsters );
-    data.read( "tools", tools );
+    data.read( "tools", tools_ );
     data.read( "assistants_ids", assistants_ids_ );
 
 }
@@ -573,27 +573,120 @@ void Character::load( const JsonObject &data )
     data.read( "magic", magic );
     JsonArray parray;
 
+    // Migration for old combined hair mutations (e.g., hair_black_crewcut -> hair_black + hair_crewcut)
+    std::vector<trait_id> valid_hair_colors = get_mutations_in_type( "hair_color" );
+    std::vector<trait_id> valid_hair_styles = get_mutations_in_type( "hair_style" );
+
     data.read( "traits", my_traits );
     for( auto it = my_traits.begin(); it != my_traits.end(); ) {
         const auto &tid = *it;
         if( tid.is_valid() ) {
             ++it;
         } else {
-            debugmsg( "character %s has invalid trait %s, it will be ignored", name, tid.c_str() );
+            bool silence = false;
+            auto pid = it->str();
+            if( pid.starts_with( "hair_" ) ) {
+                int cnt = 0;
+                for( auto c : pid.substr( 5 ) ) {
+                    if( c == '_' ) { cnt++; }
+                }
+                silence = cnt >= 1;
+            }
+            if( !silence ) {
+                debugmsg( "character %s has invalid trait %s, it will be ignored", name, pid );
+            }
             my_traits.erase( it++ );
         }
     }
 
     data.read( "mutations", my_mutations );
+    std::vector<trait_id> migrations_to_add;
+    bool has_hair_bald = false;
+    bool has_hair_color = false;
     for( auto it = my_mutations.begin(); it != my_mutations.end(); ) {
-        const trait_id &mid = it->first;
+        const auto &mid = it->first;
+        auto pid = mid.str();
         if( mid.is_valid() ) {
-            on_mutation_gain( mid );
-            cached_mutations.push_back( &mid.obj() );
+            if( mid.str() == "HAIR_BALD" ) {
+                has_hair_bald = true;
+            }
+            for( const trait_id &color_trait : valid_hair_colors ) {
+                if( mid == color_trait ) {
+                    has_hair_color = true;
+                    break;
+                }
+            }
             ++it;
         } else {
-            debugmsg( "character %s has invalid mutation %s, it will be ignored", name, mid.c_str() );
+            std::string mid_str = mid.str();
+            bool migrated = false;
+
+            if( mid_str.starts_with( "hair_" ) ) {
+                for( const trait_id &color_trait : valid_hair_colors ) {
+                    std::string color_str = color_trait.str();
+                    if( !color_str.starts_with( "hair_" ) ) {
+                        color_str = "hair_" + color_str;
+                    }
+                    std::string prefix = color_str + "_";
+                    if( mid_str.starts_with( prefix ) ) {
+                        std::string style_suffix = mid_str.substr( prefix.length() );
+                        for( const trait_id &style_trait : valid_hair_styles ) {
+                            std::string style_str = style_trait.str();
+                            if( style_str.starts_with( "hair_" ) ) {
+                                style_str = style_str.substr( 5 );
+                            }
+                            if( style_suffix == style_str ) {
+                                migrations_to_add.push_back( color_trait );
+                                migrations_to_add.push_back( style_trait );
+                                has_hair_color = true;
+                                migrated = true;
+                                break;
+                            }
+                        }
+                        if( migrated ) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if( !migrated ) {
+                debugmsg( "character %s has invalid mutation %s, it will be ignored", name, mid.c_str() );
+            }
             it = my_mutations.erase( it );
+        }
+    }
+
+    // Iterate twice to avoid issues with subsequent calls on invalid mutations
+    for( auto it = my_mutations.begin(); it != my_mutations.end(); ) {
+        const auto &mid = it->first;
+        on_mutation_gain( mid );
+        cached_mutations.push_back( &mid.obj() );
+        it++;
+    }
+
+    for( const trait_id &tid : migrations_to_add ) {
+        if( !has_trait( tid ) ) {
+            if( !has_base_trait( tid ) ) {
+                toggle_trait( tid );
+            } else {
+                set_mutation( tid );
+            }
+        }
+    }
+    // Handle old HAIR_BALD saves: if character has HAIR_BALD but no hair color,
+    // add a random hair color (in the new system, even bald characters have a hair color)
+    if( has_hair_bald && !has_hair_color ) {
+        trait_group::Trait_list random_colors = trait_group::traits_from(
+                trait_group::Trait_group_tag( "Hair_Color_Any" ) );
+        if( !random_colors.empty() ) {
+            const trait_id &color_tid = random_colors.front();
+            if( !has_trait( color_tid ) ) {
+                set_mutation( color_tid );
+            }
+            if( !has_base_trait( color_tid ) ) {
+                toggle_trait( color_tid );
+            }
         }
     }
     recalculate_size();
@@ -2233,6 +2326,69 @@ static void migrate( std::vector<detached_ptr<item>> &stack )
     }
 }
 } // namespace to_cbc_migration
+namespace damage_instance_serialization
+{
+
+struct serialized_damage_unit {
+    int type = 0;
+    float amount = 0.0f;
+    float res_pen = 0.0f;
+    float res_mult = 1.0f;
+    float damage_multiplier = 1.0f;
+
+    auto serialize( JsonOut &jsout ) const -> void {
+        jsout.start_array();
+        jsout.write( type );
+        jsout.write( amount );
+        jsout.write( res_pen );
+        jsout.write( res_mult );
+        jsout.write( damage_multiplier );
+        jsout.end_array();
+    }
+
+    auto deserialize( JsonIn &jsin ) -> void {
+        jsin.start_array();
+        jsin.read( type );
+        jsin.read( amount );
+        jsin.read( res_pen );
+        jsin.read( res_mult );
+        jsin.read( damage_multiplier );
+        jsin.end_array();
+    }
+};
+
+auto serialize_damage_instance( const damage_instance &dmg ) -> std::vector<serialized_damage_unit>
+{
+    auto result = std::vector<serialized_damage_unit> {};
+    for( const auto &du : dmg.damage_units ) {
+        result.push_back( {
+            static_cast<int>( du.type ),
+            du.amount,
+            du.res_pen,
+            du.res_mult,
+            du.damage_multiplier
+        } );
+    }
+    return result;
+}
+
+auto deserialize_damage_instance( const std::vector<serialized_damage_unit> &serialized ) ->
+damage_instance
+{
+    auto result = damage_instance{};
+    for( const auto &sdu : serialized ) {
+        result.damage_units.emplace_back(
+            static_cast<damage_type>( sdu.type ),
+            sdu.amount,
+            sdu.res_pen,
+            sdu.res_mult,
+            sdu.damage_multiplier
+        );
+    }
+    return result;
+}
+
+} // namespace damage_instance_serialization
 
 template<typename Archive>
 void item::io( Archive &archive )
@@ -2290,6 +2446,24 @@ void item::io( Archive &archive )
     archive.io( "rot", rot, 0_turns );
     archive.io( "last_rot_check", last_rot_check, calendar::start_of_cataclysm );
     archive.io( "techniques", techniques, io::empty_default_tag() );
+    {
+        auto serialized_melee = std::vector<damage_instance_serialization::serialized_damage_unit> {};
+        auto serialized_ranged = std::vector<damage_instance_serialization::serialized_damage_unit> {};
+
+        archive.io( "melee_damage_bonus", serialized_melee );
+        archive.io( "ranged_damage_bonus", serialized_ranged );
+
+        // 로드 시에만 역직렬화
+        if( !serialized_melee.empty() ) {
+            melee_damage_bonus = deserialize_damage_instance( serialized_melee );
+        }
+        if( !serialized_ranged.empty() ) {
+            ranged_damage_bonus = deserialize_damage_instance( serialized_ranged );
+        }
+    }
+    archive.io( "range_bonus", range_bonus, 0 );
+    archive.io( "dispersion_bonus", dispersion_bonus, 0 );
+    archive.io( "recoil_bonus", recoil_bonus, 0 );
     archive.io( "faults", faults, io::empty_default_tag() );
     archive.io( "item_tags", item_tags, io::empty_default_tag() );
     archive.io( "components", components, io::empty_default_tag() );
@@ -2454,6 +2628,17 @@ void item::serialize( JsonOut &json ) const
 {
     io::JsonObjectOutputArchive archive( json );
     const_cast<item *>( this )->io( archive );
+
+    if( !melee_damage_bonus.damage_units.empty() ) {
+        json.member( "melee_damage_bonus",
+                     damage_instance_serialization::serialize_damage_instance( melee_damage_bonus ) );
+    }
+
+    if( !ranged_damage_bonus.damage_units.empty() ) {
+        json.member( "ranged_damage_bonus",
+                     damage_instance_serialization::serialize_damage_instance( ranged_damage_bonus ) );
+    }
+
     if( !contents.empty() ) {
         json.member( "contents", contents );
     }

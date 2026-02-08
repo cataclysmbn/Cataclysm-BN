@@ -13,7 +13,7 @@ struct entry {
     std::string name;
     std::string category_id;
     int hotkey = -1;
-    sol::protected_function callback;
+    sol::protected_function fn;
 };
 
 struct entry_options {
@@ -21,7 +21,7 @@ struct entry_options {
     std::string name;
     std::string category_id = "misc";
     std::optional<std::string> hotkey;
-    sol::protected_function callback;
+    sol::protected_function fn;
 };
 
 auto register_entry( const entry_options &opts ) -> void;
