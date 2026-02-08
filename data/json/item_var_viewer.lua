@@ -3,16 +3,12 @@ local ui = require("lib.ui")
 local viewer = {}
 
 local function color_text(text, color)
-  if text == nil then
-    return ""
-  end
+  if text == nil then return "" end
   return string.format("<color_%s>%s</color>", color or "white", text)
 end
 
 local function count_vars(vars)
-  if type(vars) ~= "table" then
-    return 0
-  end
+  if type(vars) ~= "table" then return 0 end
   local sum = 0
   for _ in pairs(vars) do
     sum = sum + 1
@@ -29,7 +25,7 @@ end
 local function build_display_lines(display_name, vars)
   local lines = {
     format_label(display_name, vars),
-    ""
+    "",
   }
 
   local keys = {}
@@ -41,11 +37,7 @@ local function build_display_lines(display_name, vars)
   for _, key in ipairs(keys) do
     table.insert(
       lines,
-      string.format(
-        "%s %s",
-        color_text(string.format("%s:", key), "light_blue"),
-        color_text(vars[key], "white")
-      )
+      string.format("%s %s", color_text(string.format("%s:", key), "light_blue"), color_text(vars[key], "white"))
     )
   end
 
@@ -70,15 +62,13 @@ viewer.menu = function(who, item, pos)
     local choice = {
       type = "item",
       subject = candidate,
-      get_vars = function()
-        return candidate:vars_table()
-      end
+      get_vars = function() return candidate:vars_table() end,
     }
     choice.subject_name = candidate:tname(1, false, 0)
     local count = count_vars(choice.get_vars())
     local label = string.format(
       "%s %s %s",
-    color_text(locale.gettext("Item"), "magenta"),
+      color_text(locale.gettext("Item"), "magenta"),
       color_text(choice.subject_name, "white"),
       color_text(string.format("[%d vars]", count), "light_gray")
     )
@@ -88,9 +78,7 @@ viewer.menu = function(who, item, pos)
   local player_choice = {
     type = "player",
     subject = who,
-    get_vars = function()
-      return who:values_table()
-    end
+    get_vars = function() return who:values_table() end,
   }
   player_choice.subject_name = who:disp_name(false, true)
   local player_count = count_vars(player_choice.get_vars())
@@ -117,9 +105,7 @@ viewer.menu = function(who, item, pos)
         local monster_choice = {
           type = "monster",
           subject = monster_obj,
-          get_vars = function()
-            return monster_obj:values_table()
-          end
+          get_vars = function() return monster_obj:values_table() end,
         }
         monster_choice.subject_name = monster_obj:disp_name(false, true)
         local monk_count = count_vars(monster_choice.get_vars())
@@ -133,16 +119,14 @@ viewer.menu = function(who, item, pos)
       end
     end
     local npc_obj = gapi.get_npc_at(pt, false)
-  if npc_obj then
-    local key = tostring(npc_obj)
-    if not seen_npcs[key] then
-      seen_npcs[key] = true
+    if npc_obj then
+      local key = tostring(npc_obj)
+      if not seen_npcs[key] then
+        seen_npcs[key] = true
         local npc_choice = {
           type = "npc",
           subject = npc_obj,
-          get_vars = function()
-            return npc_obj:values_table()
-          end
+          get_vars = function() return npc_obj:values_table() end,
         }
         npc_choice.subject_name = npc_obj:disp_name(false, true)
         local npc_count = count_vars(npc_choice.get_vars())
@@ -166,9 +150,7 @@ viewer.menu = function(who, item, pos)
         local item_choice = {
           type = "ground_item",
           subject = it,
-          get_vars = function()
-            return it:vars_table()
-          end
+          get_vars = function() return it:vars_table() end,
         }
         item_choice.subject_name = it:tname(1, false, 0)
         local map_item_count = count_vars(item_choice.get_vars())
@@ -189,25 +171,15 @@ viewer.menu = function(who, item, pos)
   end
 
   local choice = menu:query()
-  if choice < 0 then
-    return 0
-  end
+  if choice < 0 then return 0 end
 
   local selected = choices[choice + 1]
-  if not selected then
-    return 0
-  end
+  if not selected then return 0 end
 
   local vars = selected.get_vars()
   if type(vars) ~= "table" or next(vars) == nil then
     ui.popup(
-      color_text(
-        string.format(
-          locale.gettext("No stored variables found on %s."),
-          selected.subject_name
-        ),
-        "light_gray"
-      )
+      color_text(string.format(locale.gettext("No stored variables found on %s."), selected.subject_name), "light_gray")
     )
     return 0
   end

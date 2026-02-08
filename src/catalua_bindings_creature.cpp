@@ -189,10 +189,11 @@ void cata::detail::reg_creature( sol::state &lua )
         DOC( "Retrieves an arbitrary entry using the same key format as set_value." );
         SET_FX_T( get_value, std::string( const std::string & ) const );
         DOC( "Returns all stored creature vars as a Lua table" );
-        luna::set_fx( ut, "values_table", []( sol::this_state state, const Creature &cr ) {
+        luna::set_fx( ut, "values_table", []( sol::this_state state, const Creature & cr )
+        {
             sol::state_view lua( state );
             sol::table vars = lua.create_table();
-            std::ranges::for_each( cr.get_values_map(), [&]( const auto &entry ) {
+            std::ranges::for_each( cr.get_values_map(), [&]( const auto & entry ) {
                 vars[entry.first] = entry.second;
             } );
             return vars;
