@@ -379,5 +379,26 @@
     "energy_source": "MANA",
     "scale_int": true,
     "flags": [ "CONCENTRATE", "SOMATIC", "LOUD" ]
-  }
+  },
+  {
+    "id": "phase_jump",
+    "type": "SPELL",
+    "name": { "str": "Phase Jump" },
+    "description": "Teleports you a short distance in chosen direction.",
+    "effect": "teleport",
+    "valid_targets": [ "self" ],
+    "scale_int": true,
+    "flags": [ "SOMATIC", "SILENT", "NO_HANDS", "TARGET_TELEPORT" ],
+    "min_range": 5,
+    "max_range": 10,
+    "range_increment": 0.5,
+    "min_aoe": 0,
+    "max_aoe": 0,
+    "max_level": 10,
+    "difficulty": 6,
+    "spell_class": "MAGUS",
+    "base_casting_time": 200,
+    "energy_source": "MANA",
+    "base_energy_cost": 400
+  },
 ]
