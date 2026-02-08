@@ -229,5 +229,70 @@
     "batch_time_factors": [ 80, 1 ],
     "tools": [ [ [ "dehydrator", 25 ], [ "char_smoker", 25 ] ] ],
     "components": [ [ [ "raw_lentils", 1 ] ] ]
+  },
+       {
+    "type": "recipe",
+    "result": "drying_meat",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_DRY",
+    "delete_flags": [ "BAD_TASTE" ],
+    "skill_used": "cooking",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": true,
+    "tools": [ [ [ "dehydrator", 500 ], [ "char_smoker", 500 ] ] ],
+    "components": [ [ [ "meat_red", 20, "LIST" ] ], [ [ "dehydrator_tray", 1 ] ] ],
+	"//": "A quick hack until we're able to properly make set-and-forget cooking a thing."
+  },
+   {
+    "type": "recipe",
+    "result": "drying_veg",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_DRY",
+    "delete_flags": [ "BAD_TASTE" ],
+    "skill_used": "cooking",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": true,
+    "tools": [ [ [ "dehydrator", 500 ], [ "char_smoker", 500 ] ] ],
+    "components": [  [ [ "veggy_any_fresh_uncooked", 20, "LIST" ], [ "dandelion_cooked", 20 ], [ "fiddlehead_boiled", 20 ], [ "burdock_cooked", 20 ], [ "wild_herbs", 800 ] ], [ [ "dehydrator_tray", 1 ] ] ]
+  },
+   {
+    "type": "recipe",
+    "result": "drying_fruit",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_DRY",
+    "delete_flags": [ "BAD_TASTE" ],
+    "skill_used": "cooking",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": true,
+    "tools": [ [ [ "dehydrator", 500 ], [ "char_smoker", 500 ] ] ],
+    "components": [ [ [ "sweet_fruit", 20, "LIST" ], [ "coconut", 20 ], [ "can_coconut", 20 ] ], [ [ "dehydrator_tray", 1 ] ] ] 
+  },
+    {
+    "type": "recipe",
+    "result": "drying_fish",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_DRY",
+    "delete_flags": [ "BAD_TASTE" ],
+    "skill_used": "cooking",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": true,
+    "tools": [ [ [ "dehydrator", 500 ], [ "char_smoker", 500 ] ] ],
+    "components": [ [ [ "fish", 20 ] ], [ [ "dehydrator_tray", 1 ] ] ]
+  },
+   {
+    "type": "recipe",
+    "result": "drying_taint",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_DRY",
+    "skill_used": "cooking",
+    "difficulty": 2,
+    "time": "1 m",
+    "autolearn": true,
+    "tools": [ [ [ "dehydrator", 500 ], [ "char_smoker", 500 ] ] ],
+    "components": [ [ [ "meat_tainted", 20 ] ], [ [ "dehydrator_tray", 1 ] ] ]
   }
 ]
