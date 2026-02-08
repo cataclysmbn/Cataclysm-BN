@@ -13,6 +13,7 @@
 #include <shared_mutex>
 
 #include "coordinates.h"
+#include "dimension_bounds.h"
 #include "enums.h"
 #include "json.h"
 #include "memory_fast.h"
@@ -171,6 +172,16 @@ class overmapbuffer
         void save();
         void clear();
         void create_custom_overmap( const point_abs_om &, overmap_special_batch &specials );
+
+        /**
+         * Set dimension bounds for pocket dimension overmap rendering.
+         * When set, tiles outside the bounds return boundary overmap terrain.
+         */
+        void set_dimension_bounds( const dimension_bounds &bounds );
+        /**
+         * Clear dimension bounds (e.g. when exiting a pocket dimension).
+         */
+        void clear_dimension_bounds();
 
         /**
         * Generates overmap tiles, if missing
@@ -543,6 +554,11 @@ class overmapbuffer
          * to not exist on disk. See @ref get_existing for usage.
          */
         std::set<point_abs_om> known_non_existing;
+
+        // Optional dimension bounds for pocket dimension rendering
+        std::optional<dimension_bounds> current_bounds_;
+        // Cached resolved overmap terrain id for out-of-bounds tiles
+        oter_id bounds_oter_id_;
 
         // Set of globally unique overmap specials that have already been placed
         std::unordered_set<overmap_special_id> placed_unique_specials;

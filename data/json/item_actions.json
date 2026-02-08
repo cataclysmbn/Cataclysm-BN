@@ -1043,5 +1043,10 @@
     "type": "item_action",
     "id": "dimension_travel",
     "name": { "str": "Travel to another dimension" }
+  },
+  {
+    "type": "item_action",
+    "id": "pocket_dimension",
+    "name": { "str": "Access a pocket dimension" }
   }
 ]

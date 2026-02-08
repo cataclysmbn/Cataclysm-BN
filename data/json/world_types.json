@@ -1,0 +1,42 @@
+[
+  {
+    "type": "world_type",
+    "id": "default",
+    "name": { "str": "New England" },
+    "description": { "str": "The cataclysm really did a number on the property value." },
+    "region_settings": "default",
+    "generate_overmap": true,
+    "infinite_bounds": true,
+    "save_prefix": "",
+    "allow_npc_travel": true,
+    "allow_vehicle_travel": true
+  },
+  {
+    "type": "world_type",
+    "id": "pocket_dimension",
+    "name": { "str": "Pocket Dimension" },
+    "description": { "str": "A small bounded extradimensional space." },
+    "region_settings": "default",
+    "generate_overmap": false,
+    "infinite_bounds": false,
+    "boundary_terrain": "t_pd_border",
+    "simulate_when_inactive": false,
+    "save_prefix": "pocket_",
+    "allow_npc_travel": false,
+    "allow_vehicle_travel": false,
+    "parent_dimension": "default"
+  },
+  {
+    "type": "world_type",
+    "id": "desert_test",
+    "name": { "str": "Desert Dimension" },
+    "description": { "str": "An alternate dimension dominated by arid desert terrain." },
+    "region_settings": "desert_test",
+    "generate_overmap": true,
+    "infinite_bounds": true,
+    "save_prefix": "desert_test_",
+    "allow_npc_travel": false,
+    "allow_vehicle_travel": false,
+    "parent_dimension": "default"
+  }
+]

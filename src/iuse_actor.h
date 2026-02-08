@@ -1506,7 +1506,7 @@ class iuse_flowerpot_collect final : public iuse_actor
 class iuse_dimension_travel : public iuse_actor
 {
     public:
-        std::string destination = "default";
+        world_type_id destination;
         int travel_radius = 1;
         int need_charges = 1;
         std::string fail_message;
@@ -1520,4 +1520,31 @@ class iuse_dimension_travel : public iuse_actor
         std::unique_ptr<iuse_actor> clone() const override;
     private:
         void dimension_travel( player &p, item &, const tripoint &pos ) const;
+};
+
+/**
+ * iuse_actor for items that function as keys to pocket dimensions.
+ * When used from the base dimension, enters the pocket.
+ * When used from inside the pocket, exits to the return point.
+ */
+class iuse_pocket_dimension : public iuse_actor
+{
+    public:
+        world_type_id pocket_type = world_type_id( "pocket_dimension" ); // Which world_type to use for this pocket
+        std::string entry_mapgen;               // Overmap special ID for generation
+        bool persistent = false;                 // Does the pocket survive item destruction?
+        int need_charges = 0;
+        std::optional<ter_str_id> boundary_terrain;  // Override boundary terrain for this pocket
+        std::string pocket_name;                 // Display name for this pocket on the overmap
+
+        iuse_pocket_dimension( const std::string &type = "pocket_dimension" ) : iuse_actor( type ) {}
+        ~iuse_pocket_dimension() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &p, item &, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &it, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+    private:
+        void initialize_pocket( item &it ) const;
+        void enter_pocket( player &p, item &it ) const;
+        void exit_pocket( player &p, item &it ) const;
 };
