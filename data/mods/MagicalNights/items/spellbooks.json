@@ -291,14 +291,14 @@
     "type": "GENERIC",
     "category": "spellbooks",
     "name": { "str": "The Tome of Magical Movement", "str_pl": "copies of The Tome of Magical Movement" },
-    "//": "4 Magus spells",
+    "//": "5 Magus spells",
     "description": "This small lightweight book seems to almost not entirely exist, let's say it 97% does.  It contains Magus spells focused on movement.",
     "weight": "231 g",
     "volume": "500 ml",
     "price": "50 USD",
     "symbol": "?",
     "color": "light_gray",
-    "use_action": { "type": "learn_spell", "spells": [ "phase_door", "magus_escape", "magus_haste", "magus_slow" ] }
+    "use_action": { "type": "learn_spell", "spells": [ "phase_door", "magus_escape", "magus_haste", "magus_slow", "phase_jump" ] }
   },
   {
     "id": "summon_scroll_smudged",
