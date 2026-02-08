@@ -502,7 +502,7 @@
     },
     "flags": [ "TRADER_AVOID" ]
   },
-   {
+  {
     "id": "drying_veg",
     "type": "GENERIC",
     "category": "cooking_ingredients",
@@ -529,7 +529,7 @@
     },
     "flags": [ "TRADER_AVOID" ]
   },
-     {
+  {
     "id": "drying_fruit",
     "type": "GENERIC",
     "category": "cooking_ingredients",
@@ -555,7 +555,7 @@
     },
     "flags": [ "TRADER_AVOID" ]
   },
-       {
+  {
     "id": "drying_fish",
     "type": "GENERIC",
     "category": "cooking_ingredients",
@@ -581,7 +581,7 @@
     },
     "flags": [ "TRADER_AVOID" ]
   },
-    {
+  {
     "id": "drying_taint",
     "type": "GENERIC",
     "category": "cooking_ingredients",
