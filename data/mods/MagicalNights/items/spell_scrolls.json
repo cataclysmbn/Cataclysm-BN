@@ -1022,7 +1022,7 @@
     "description": "Pulls nearby creature towards you.",
     "use_action": { "type": "learn_spell", "spells": [ "force_pull" ] }
   },
-   {
+  {
     "type": "GENERIC",
     "copy-from": "spell_scroll",
     "id": "spell_scroll_mana_bomb",
@@ -1030,5 +1030,14 @@
     "name": { "str": "Scroll of Mana Bomb", "str_pl": "Scrolls of Mana Bomb" },
     "description": "As if normal nukes weren't enough.",
     "use_action": { "type": "learn_spell", "spells": [ "mana_bomb" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "spell_scroll",
+    "id": "spell_scroll_phase_jump",
+    "//": "Magus spell",
+    "name": { "str": "Scroll of Phase Jump", "str_pl": "Scrolls of Phase Jump" },
+    "description": "Teleports you a short distance in chosen direction.",
+    "use_action": { "type": "learn_spell", "spells": [ "phase_jump" ] }
   }
 ]
