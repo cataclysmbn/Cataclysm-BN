@@ -821,6 +821,11 @@
   },
   {
     "type": "item_action",
+    "id": "OBJ_VAR_VIEWER",
+    "name": { "str": "Inspect object variables" }
+  },
+  {
+    "type": "item_action",
     "id": "TOWEL",
     "name": { "str": "Dry/clean yourself" }
   },

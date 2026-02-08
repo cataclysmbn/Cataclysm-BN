@@ -926,5 +926,20 @@
     "//": "used by the cloning vat and adds a var called 'place_monster_override'",
     "name": { "str": "artificial womb" },
     "description": "A single-use vessel for transporting clones safely from the cloning vat to the field.  Currently empty, if sufficiently sterile it can be used by a cloning vat to grow a creature from a viable DNA sample. "
+  },
+  {
+    "id": "item_var_viewer",
+    "type": "TOOL",
+    "category": "electronics",
+    "name": { "str": "object variable viewer" },
+    "description": "A compact analyzer that scans any nearby object and reveals every stored variable for quick debugging without needing to drop the object.",
+    "weight": "400 g",
+    "volume": "750 ml",
+    "price": "900 USD",
+    "price_postapoc": "30 USD",
+    "symbol": ";",
+    "color": "light_gray",
+    "use_action": [ "ITEM_VAR_VIEWER" ],
+    "flags": [ "BELT_CLIP" ]
   }
 ]

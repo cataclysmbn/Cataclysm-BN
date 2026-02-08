@@ -1741,6 +1741,10 @@ std::string Creature::get_value( const std::string &key ) const
     auto it = values.find( key );
     return ( it == values.end() ) ? "" : it->second;
 }
+auto Creature::get_values_map() const -> const std::unordered_map<std::string, std::string> &
+{
+    return values;
+}
 
 void Creature::mod_pain( int npain )
 {
