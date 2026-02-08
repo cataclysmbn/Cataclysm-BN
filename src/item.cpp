@@ -11147,21 +11147,22 @@ bool item::on_drop( const tripoint &pos )
 
 bool item::on_drop( const tripoint &pos, map &m )
 {
+    avatar& you = get_avatar();
+
+    if (type->istate_callbacks) {
+        bool prevented = type->istate_callbacks->call_on_drop(you, *this, pos);
+        if (prevented) {
+            return true;
+        }
+    }
+
     // dropping liquids, even currently frozen ones, on the ground makes them
     // dirty
     if( made_of( LIQUID ) && !m.has_flag( flag_LIQUIDCONT, pos ) &&
         !has_own_flag( flag_DIRTY ) ) {
         set_flag( flag_DIRTY );
     }
-    avatar &you = get_avatar();
     you.flag_encumbrance();
-
-    if( type->istate_callbacks ) {
-        bool prevented = type->istate_callbacks->call_on_drop( you, *this, pos );
-        if( prevented ) {
-            return true;
-        }
-    }
 
     return type->drop_action && type->drop_action.call( you, *this, false, pos );
 }
