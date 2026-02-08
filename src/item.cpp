@@ -7166,6 +7166,11 @@ bool item::contents_made_of( const phase_id phase ) const
     return !contents.empty() && contents.front().made_of( phase );
 }
 
+bool item::contents_normally_made_of( const phase_id phase ) const
+{
+    return !contents.empty() && contents.front().type->phase == phase;
+}
+
 bool item::made_of( phase_id phase ) const
 {
     if( is_null() ) {
@@ -7430,6 +7435,13 @@ bool item::is_non_resealable_container() const
     return type->container && !type->container->seals && type->container->unseals_into;
 }
 
+bool item::is_in_container() const
+{
+    auto location = static_cast<item_location *>( &*loc );
+    return location->where() == item_location_type::container || ( parent_item() &&
+            parent_item()->is_container() );
+}
+
 bool item::is_bucket() const
 {
     // That "preserves" part is a hack:
@@ -7551,7 +7563,15 @@ bool item::is_container_full( bool allow_bucket ) const
     if( is_container_empty() ) {
         return false;
     }
-    return get_remaining_capacity_for_liquid( contents.front(), allow_bucket ) == 0;
+    if( is_watertight_container() ) {
+        return get_remaining_capacity_for_liquid( contents.front(), allow_bucket ) == 0;
+    } else if( !is_reloadable_with( contents.front().typeId() ) ) {
+        return true;
+    } else {
+        int ammo = contents.front().charges_per_volume( get_container_capacity() ) -
+                   contents.front().charges;
+        return ammo <= 0;
+    }
 }
 
 bool item::can_unload_liquid() const
@@ -7588,7 +7608,13 @@ bool item::is_reloadable_helper( const itype_id &ammo, bool now ) const
     } else if( is_watertight_container() ) {
         if( ammo.is_empty() ) {
             return now ? !is_container_full() : true;
-        } else if( ammo->phase != LIQUID ) {
+        } else {
+            return now ? ( is_container_empty() || contents.front().typeId() == ammo ) : true;
+        }
+    } else if( is_container() ) {
+        if( ammo.is_empty() ) {
+            return now ? !is_container_full() : true;
+        } else if( ammo->phase == LIQUID ) {
             return false;
         } else {
             return now ? ( is_container_empty() || contents.front().typeId() == ammo ) : true;
@@ -8838,22 +8864,29 @@ int item_reload_option::moves() const
 
 void item_reload_option::qty( int val )
 {
-    bool ammo_in_container = ammo->is_ammo_container();
-    bool ammo_in_liquid_container = ammo->is_watertight_container();
-    item &ammo_obj = ( ammo_in_container || ammo_in_liquid_container ) ?
+    bool ammo_in_ammo_container = ammo->is_ammo_container();
+    bool ammo_in_container = ammo->is_container();
+    item &ammo_obj = ( ammo_in_ammo_container || ammo_in_container ) ?
                      ammo->contents.front() : *ammo;
 
-    if( ( ammo_in_container && !ammo_obj.is_ammo() ) ||
-        ( ammo_in_liquid_container && !ammo_obj.made_of( LIQUID ) ) ) {
+    if( ammo_in_ammo_container && !ammo_obj.is_ammo() ) {
         debugmsg( "Invalid reload option: %s", ammo_obj.tname() );
         return;
     }
 
     // Checking ammo capacity implicitly limits guns with removable magazines to capacity 0.
     // This gets rounded up to 1 later.
-    int remaining_capacity = target->is_watertight_container() ?
-                             target->get_remaining_capacity_for_liquid( ammo_obj, true ) :
-                             target->ammo_capacity() - target->ammo_remaining();
+    int remaining_capacity = 0;
+    if( target->is_watertight_container() && ammo_obj.made_of( LIQUID ) ) {
+        remaining_capacity = target->get_remaining_capacity_for_liquid( ammo_obj, true );
+    } else if( target->is_container() && ammo_obj.is_comestible() ) {
+        remaining_capacity = ammo_obj.charges_per_volume( target->get_container_capacity() );
+        if( !target->is_container_empty() ) {
+            remaining_capacity -= target->ammo_remaining();
+        }
+    } else {
+        remaining_capacity = target->ammo_capacity() - target->ammo_remaining();
+    }
     if( target->has_flag( flag_RELOAD_ONE ) && !ammo->has_flag( flag_SPEEDLOADER ) ) {
         remaining_capacity = 1;
     }
@@ -8864,7 +8897,7 @@ void item_reload_option::qty( int val )
         }
     }
 
-    bool ammo_by_charges = ammo_obj.is_ammo() || ammo_in_liquid_container;
+    bool ammo_by_charges = ammo_obj.is_ammo() || ammo_in_container || ammo->is_comestible();
     int available_ammo = ammo_by_charges ? ammo_obj.charges : ammo_obj.ammo_remaining();
     // constrain by available ammo, target capacity and other external factors (max_qty)
     // @ref max_qty is currently set when reloading ammo belts and limits to available linkages
@@ -8920,9 +8953,17 @@ bool item::reload( Character &who, item &loc, int qty )
     }
 
     // limit quantity of ammo loaded to remaining capacity
-    int limit = is_watertight_container()
-                ? get_remaining_capacity_for_liquid( *ammo )
-                : ammo_capacity() - ammo_remaining();
+    int limit = 0;
+    if( is_watertight_container() && ammo->made_of( LIQUID ) ) {
+        limit = get_remaining_capacity_for_liquid( *ammo, true );
+    } else if( is_container() && ammo->is_comestible() ) {
+        limit = ammo->charges_per_volume( get_container_capacity() );
+        if( !is_container_empty() ) {
+            limit -= ammo_remaining();
+        }
+    } else {
+        limit = ammo_capacity() - ammo_remaining();
+    }
 
     if( ammo->ammo_type() == ammo_plutonium ) {
         limit = limit / PLUTONIUM_CHARGES + ( limit % PLUTONIUM_CHARGES != 0 );
@@ -8956,11 +8997,7 @@ bool item::reload( Character &who, item &loc, int qty )
             // NOLINTNEXTLINE(bugprone-use-after-move)
             put_in( std::move( to_reload ) );
         }
-    } else if( is_watertight_container() ) {
-        if( !ammo->made_of( LIQUID ) ) {
-            debugmsg( "Tried to reload liquid container with non-liquid." );
-            return false;
-        }
+    } else if( is_container() ) {
         if( container ) {
             container->on_contents_changed();
         }
@@ -9235,7 +9272,7 @@ int item::get_remaining_capacity_for_liquid( const item &liquid, bool allow_buck
         }
         remaining_capacity = ammo_capacity() - ammo_remaining();
     } else if( is_container() ) {
-        if( !type->container->watertight ) {
+        if( !type->container->watertight && liquid.made_of( LIQUID ) ) {
             return error( string_format( _( "That %s isn't water-tight." ), tname() ) );
         } else if( !type->container->seals && ( !allow_bucket || !is_bucket() ) ) {
             return error( string_format( is_bucket() ?
@@ -10820,7 +10857,9 @@ bool item::is_reloadable() const
         return true;
 
     } else if( is_container() ) {
-        return true;
+        // TODO: Make buckets actually reloadable using reload menu
+        // This would be done via locking this off by weather or not it was wielded or on dirt most likely
+        return type->container->seals;
 
     } else if( !is_gun() && !is_tool() && !is_magazine() ) {
         return false;

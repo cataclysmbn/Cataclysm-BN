@@ -647,4 +647,3 @@ class overmapbuffer
 };
 
 extern overmapbuffer overmap_buffer;
-
