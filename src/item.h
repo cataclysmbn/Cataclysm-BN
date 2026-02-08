@@ -2291,6 +2291,7 @@ class item : public location_visitable<item>, public game_object<item>
          * Data for items that act as keys to pocket dimensions.
          */
         struct pocket_dimension_data {
+            pocket_dimension_data() {}
             std::string instance_id;              // Unique identifier (UUID-like)
             world_type_id dimension_type;         // Which world_type to use
             tripoint_abs_omt entry_point;         // Where player spawns on entry
