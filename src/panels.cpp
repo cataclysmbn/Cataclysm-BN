@@ -1073,12 +1073,12 @@ static void draw_limb_narrow( avatar &u, const catacurses::window &w )
     for( const bodypart_id &bp : u.get_all_body_parts( true ) ) {
         int ny;
         int nx;
-        if( i < 3 ) {
-            ny = i;
-            nx = 8;
-        } else {
+        if (i % 2) {
             ny = ny2++;
             nx = 26;
+        } else {
+            ny = ny2;
+            nx = 8;
         }
         wmove( w, point( nx, ny ) );
         draw_limb_health( u, w, bp.id() );
