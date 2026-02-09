@@ -12,35 +12,35 @@
         "ππππππππ---ξξ---ππππππππ",
         "ππππππ---ξξξξξξ---ππππππ",
         "ππππ---ξξξξξξξξξξ---ππππ",
-        "ππππ-ξξ5555555555ξξ-ππππ",
-        "ππππ-ξξ5;;;55;;;5ξξ-ππππ",
-        "ππππ-ξξ5;;;55;;;5ξξ-ππππ",
-        "πππ--ξξ5;;;55;;;5ξξ--πππ",
-        "πππ-ξξξ5;;;55;;;5ξξξ-πππ",
-        "πππ-ξξξ5;;;55;;;5ξξξ-πππ",
-        "πππ-ξξξ5555555555ξξξ-πππ",
+        "ππππ-ξ55555ξξ55555ξ-ππππ",
+        "ππππ-ξ5;;;5ξξ5;;;5ξ-ππππ",
+        "ππππ-ξ5;;;5ξξ5;;;5ξ-ππππ",
+        "πππ--ξ5;;;5ξξ5;;;5ξ--πππ",
+        "πππ-ξξ5;;;5ξξ5;;;5ξξ-πππ",
+        "πππ-ξξ5;;;5ξξ5;;;5ξξ-πππ",
+        "πππ-ξξ5###5ξξ5###5ξξ-πππ",
         "πππ-ξξξξξξξ<<ξξξξξξξ-πππ",
-        "πππ-5555555<<5555555-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-ξξξξξξξ<<ξξξξξξξ-πππ",
+        "πππ-5555555ξξ5555555-πππ",
+        "πππ-5;;;;;#ξξ#;;;;;5-πππ",
+        "πππ-5;;;;;#ξξ#;;;;;5-πππ",
+        "πππ-5;;;;;#ξξ#;;;;;5-πππ",
         "πππ-5555555ξξ5555555-πππ",
         "πππ-ξξξξξξξξξξξξξξξξ-πππ",
-        "πππ-5555555ξξ5555555-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5555555ξξ5555555-πππ",
         "πππ-ξξξξξξξξξξξξξξξξ-πππ",
         "πππ-5555555ξξ5555555-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
-        "πππ-5;;;;;5ξξ5;;;;;5-πππ",
+        "πππ-5;;;;;#ξξ#;;;;;5-πππ",
+        "πππ-5;;;;;#ξξ#;;;;;5-πππ",
+        "πππ-5;;;;;#ξξ#;;;;;5-πππ",
         "πππ-5555555ξξ5555555-πππ",
+        "πππ-ξξξξξξξξξξξξξξξξ-πππ",
+        "πππ-ξξξξξξξξξξξξξξξξ-πππ",
+        "πππ-5555555ξξ5555555-πππ",
+        "πππ-5;;;;;#ξξ#;;;;;5-πππ",
+        "πππ-5;;;;;#ξξ#;;;;;5-πππ",
+        "πππ-5;;;;;#ξξ#;;;;;5-πππ",
+        "πππ-5555555ξξ5555555-πππ",
+        "πππ-ξξξξξξξξξξξξξξξξ-πππ",
         "πππ-ξξξξξξξξξξξξξξξξ-πππ",
         "πππ-ξξ555¥¥¥¥¥¥555ξξ-πππ",
         "πππ-ξξo¬t¬tttt¬t¬oξξ-πππ",
@@ -66,7 +66,8 @@
         "¬": "t_metal_floor",
         "<": "t_stairs_down",
         "t": "t_console_broken",
-        "+": "t_door_metal_c"
+        "+": "t_door_metal_c",
+        "#": "t_door_metal_locked"
       },
       "furniture": { "o": "f_air_conditioner", "h": "f_chair", "O": "f_standing_tank" },
       "place_graffiti": [
@@ -76,21 +77,10 @@
           "y": 35
         }
       ],
-      "mapping": { ";": { "items": [ { "item": "military_patrol_food", "chance": 70 } ] } },
-      "place_loot": [
-        { "group": "military_patrol_food", "chance": 80, "x": [ 6, 8 ], "y": [ 6, 10 ] },
-        { "group": "military_patrol_food", "chance": 80, "x": [ 15, 17 ], "y": [ 6, 10 ] },
-        { "group": "military_patrol_food", "chance": 80, "x": [ 5, 9 ], "y": [ 14, 16 ] },
-        { "group": "military_patrol_food", "chance": 80, "x": [ 14, 18 ], "y": [ 14, 16 ] },
-        { "group": "military_patrol_food", "chance": 80, "x": [ 5, 9 ], "y": [ 20, 22 ] },
-        { "group": "military_patrol_food", "chance": 80, "x": [ 14, 18 ], "y": [ 20, 22 ] },
-        { "group": "military_patrol_food", "chance": 80, "x": [ 5, 9 ], "y": [ 26, 32 ] },
-        { "group": "military_patrol_food", "chance": 80, "x": [ 14, 18 ], "y": [ 26, 32 ] },
-        { "group": "military_patrol_food", "chance": 80, "x": [ 6, 17 ], "y": [ 37, 41 ] }
-      ],
+      "nested": { ";": { "chunks": [ [ "null", 80 ], [ "cargoship_crate_food", 10 ], [ "cargoship_crate_hardware", 10 ] ] } },
       "place_monster": [
-        { "group": "GROUP_MIL_STRONG", "x": [ 6, 16 ], "y": [ 25, 40 ], "repeat": [ 15, 20 ] },
-        { "group": "GROUP_MIL_STRONG", "x": [ 6, 16 ], "y": [ 6, 23 ], "repeat": [ 15, 20 ] }
+        { "group": "GROUP_ZOMBIE_CARGOSHIP", "x": [ 6, 16 ], "y": [ 25, 40 ], "repeat": [ 15, 20 ] },
+        { "group": "GROUP_ZOMBIE_CARGOSHIP", "x": [ 6, 16 ], "y": [ 6, 23 ], "repeat": [ 15, 20 ] }
       ]
     }
   },
@@ -162,7 +152,6 @@
       },
       "furniture": {
         "Ω": "f_crate_c",
-        "ω": "f_crate_c",
         "b": "f_oven",
         "d": "f_counter",
         "f": "f_sink",
@@ -175,20 +164,10 @@
         "S": "f_shower",
         "&": "f_toilet"
       },
-      "place_monster": [ { "group": "GROUP_MIL_STRONG", "x": [ 5, 15 ], "y": [ 35, 43 ], "repeat": [ 15, 20 ] } ],
-      "place_nested": [ { "chunks": [ "CargoShipNested_military" ], "x": 6, "y": 3 } ],
+      "place_nested": [ { "chunks": [ "CargoShipNested_commerical" ], "x": 6, "y": 3 } ],
+      "place_monster": [ { "group": "GROUP_ZOMBIE_CARGOSHIP", "x": [ 5, 15 ], "y": [ 35, 43 ], "repeat": [ 15, 20 ] } ],
       "items": {
         "Ω": {
-          "item": {
-            "subtype": "distribution",
-            "entries": [
-              { "group": "military_patrol_food", "prob": 90, "count": [ 3, 5 ] },
-              { "group": "mil_food", "prob": 40, "count": [ 1, 5 ] }
-            ]
-          },
-          "chance": 80
-        },
-        "ω": {
           "item": {
             "subtype": "distribution",
             "entries": [
@@ -207,21 +186,21 @@
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "CargoShipNested_military",
+    "nested_mapgen_id": "CargoShipNested_commerical",
     "object": {
       "mapgensize": [ 12, 18 ],
       "rows": [
-        "555ωωωωωω555",
-        "5ωωωωωωωωωω5",
-        "-ωωωωωωωωωω-",
-        "-ωωωωωωωωωω-",
-        "-ωωωωωωωωωω-",
-        "-ωωωωωωωωωω-",
+        "   ωωωωωω   ",
+        " ωωωωωωωωωω ",
+        " ωωωωωωωωωω ",
+        " ωωωωωωωωωω ",
+        " ωωωωωωωωωω ",
+        " ωωωωωωωωωω ",
         "ωωωωωωωωωωωω",
         "ωωωωωωωωωωωω",
         "ωωωωωωωωωωωω",
-        "ωωωωω>>ωωωωω",
-        "ωωωωω>>ωωωωω",
+        "ωωωωω  ωωωωω",
+        "ωωωωω  ωωωωω",
         "ωωωωωωωωωωωω",
         "ωωωωωωωωωωωω",
         "ωωωωωωωωωωωω",
@@ -230,13 +209,105 @@
         "ωωωωωωωωωωωω",
         "ωωωωωωωωωωωω"
       ],
-      "terrain": { "5": "t_wall_metal", " ": "t_water_moving_dp", "-": "t_metal_railing", "ω": "t_metal_floor", ">": "t_stairs_up" },
+      "nested": {
+        "ω": {
+          "chunks": [
+            [ "null", 90 ],
+            [ "cargoship_crate_food", 5 ],
+            [ "cargoship_crate_clothing", 3 ],
+            [ "cargoship_crate_kitchen", 1 ],
+            [ "cargoship_crate_entertainment", 1 ]
+          ]
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "cargoship_crate_food",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "ω" ],
       "furniture": { "ω": "f_crate_c" },
       "items": {
         "ω": {
           "item": {
             "subtype": "distribution",
-            "entries": [ { "group": "SUS_fridge", "prob": 90, "count": [ 3, 5 ] }, { "group": "SUS_fridge", "prob": 40, "count": [ 1, 5 ] } ]
+            "entries": [ { "group": "dry_goods", "prob": 100, "count": [ 1, 3 ] }, { "group": "cannedfood", "prob": 75, "count": [ 1, 3 ] } ]
+          },
+          "chance": 80
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "cargoship_crate_clothing",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "ω" ],
+      "furniture": { "ω": "f_crate_c" },
+      "items": {
+        "ω": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [ { "group": "crate_clothes", "prob": 100, "count": [ 1, 2 ] }, { "group": "crate_winter", "prob": 75 } ]
+          },
+          "chance": 80
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "cargoship_crate_kitchen",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "ω" ],
+      "furniture": { "ω": "f_crate_c" },
+      "items": {
+        "ω": {
+          "item": { "subtype": "distribution", "entries": [ { "group": "crate_kitchen", "prob": 100, "count": [ 1, 2 ] } ] },
+          "chance": 80
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "cargoship_crate_entertainment",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "ω" ],
+      "furniture": { "ω": "f_crate_c" },
+      "items": {
+        "ω": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [ { "group": "crate_toys", "prob": 100 }, { "group": "crate_sports", "prob": 75 } ]
+          },
+          "chance": 80
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "cargoship_crate_hardware",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "ω" ],
+      "furniture": { "ω": "f_crate_c" },
+      "items": {
+        "ω": {
+          "item": {
+            "subtype": "distribution",
+            "entries": [ { "group": "crate_parts", "prob": 100 }, { "group": "crate_cleaning", "prob": 75 } ]
           },
           "chance": 80
         }

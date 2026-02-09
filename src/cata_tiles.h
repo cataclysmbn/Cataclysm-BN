@@ -13,6 +13,7 @@
 #include "animation.h"
 #include "enums.h"
 #include "hash_utils.h"
+#include "hsv_color.h"
 #include "lightmap.h"
 #include "line.h"
 #include "map_memory.h"
@@ -159,6 +160,13 @@ class texture
         }
 };
 
+enum class tint_blend_mode : uint8_t {
+    overlay,
+    multiply,
+    additive,
+    subtract,
+};
+
 enum class tileset_fx_type {
     none,
     shadow,
@@ -170,17 +178,51 @@ enum class tileset_fx_type {
     z_overlay
 };
 
+constexpr int TILESET_NO_MASK = -1;
+constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
+
+struct tint_config {
+    std::optional<SDL_Color> color;
+    tint_blend_mode blend_mode = tint_blend_mode::overlay;
+    std::optional<float> contrast;    // 1.0 = no change, absent = skip
+    std::optional<float> saturation;  // 1.0 = no change, absent = skip
+    std::optional<float> brightness;  // 1.0 = no change, absent = skip
+
+    bool has_value() const {
+        return color.has_value() || contrast.has_value() || saturation.has_value() ||
+               brightness.has_value();
+    }
+
+    bool operator==( const tint_config &other ) const {
+        return color == other.color
+               && blend_mode == other.blend_mode
+               && contrast == other.contrast
+               && saturation == other.saturation
+               && brightness == other.brightness;
+    }
+
+    // Implicit conversions for backward compatibility and convenience
+    tint_config() = default;
+    tint_config( std::optional<SDL_Color> c ) : color( c ) {}
+    tint_config( std::nullopt_t ) : color( std::nullopt ) {}
+    tint_config( SDL_Color c ) : color( c ) {}
+    tint_config( RGBColor c ) : color( static_cast<SDL_Color>( c ) ) {}
+    tint_config( nc_color c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( c ) ) ) {}
+};
+
+using color_tint_pair = std::pair<tint_config, tint_config>;  // {bg, fg}
+
 struct tileset_lookup_key {
     int sprite_index;
     int mask_index;
     tileset_fx_type effect;
-    SDL_Color color;
+    tint_config tint;
 
     bool operator==( const tileset_lookup_key &other ) const {
         return sprite_index == other.sprite_index
                && mask_index == other.mask_index
                && effect == other.effect
-               && color == other.color;
+               && tint == other.tint;
     }
 };
 
@@ -191,17 +233,26 @@ struct std::hash<tileset_lookup_key> {
         cata::hash_combine( seed, v.sprite_index );
         cata::hash_combine( seed, v.mask_index );
         cata::hash_combine( seed, v.effect );
-        const union {
-            SDL_Color sdl;
-            uint32_t val;
-        } color = { v.color };
-        cata::hash_combine( seed, color.val );
+        if( v.tint.color.has_value() ) {
+            const union {
+                SDL_Color sdl;
+                uint32_t val;
+            } color = { v.tint.color.value() };
+            cata::hash_combine( seed, color.val );
+        }
+        cata::hash_combine( seed, static_cast<uint8_t>( v.tint.blend_mode ) );
+        if( v.tint.contrast.has_value() ) {
+            cata::hash_combine( seed, v.tint.contrast.value() );
+        }
+        if( v.tint.saturation.has_value() ) {
+            cata::hash_combine( seed, v.tint.saturation.value() );
+        }
+        if( v.tint.brightness.has_value() ) {
+            cata::hash_combine( seed, v.tint.brightness.value() );
+        }
         return seed;
     }
 };
-
-constexpr int TILESET_NO_MASK = -1;
-constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
 
 class tileset
 {
@@ -237,6 +288,8 @@ class tileset
 #endif
 
         std::unordered_map<std::string, tile_type> tile_ids;
+        std::unordered_map<std::string, color_tint_pair> tints;
+        std::unordered_map<std::string, std::pair<std::string, bool>> tint_pairs;
         // caches both "default" and "_season_XXX" tile variants (to reduce the number of lookups)
         // either variant can be either a `nullptr` or a pointer/reference to the real value (stored inside `tile_ids`)
         std::unordered_map<std::string, season_tile_value>
@@ -260,7 +313,7 @@ class tileset
 
         const texture *get_or_default( int sprite_index, int mask_index,
                                        const tileset_fx_type &type,
-                                       const SDL_Color &color ) const;
+                                       const tint_config &tint = {} ) const;
 
 
         tile_type &create_tile_type( const std::string &id, tile_type &&new_tile_type );
@@ -282,6 +335,10 @@ class tileset
          */
         std::optional<tile_lookup_res> find_tile_type_by_season( const std::string &id,
                 season_type season ) const;
+
+        std::pair<std::string, bool> get_tint_controller( const std::string &tint_type );
+
+        const color_tint_pair *get_tint( const std::string &tint_id );
 };
 
 class tileset_loader
@@ -433,7 +490,6 @@ class idle_animation_manager
  *     - The color of the block at 'point'.
  */
 using color_block_overlay_container = std::pair<SDL_BlendMode, std::multimap<point, SDL_Color>>;
-using color_tint_pair = std::pair<std::optional<SDL_Color>, std::optional<SDL_Color>>;
 
 struct tile_render_info;
 
@@ -521,14 +577,14 @@ class cata_tiles
          * @return always true
          */
         bool draw_from_id_string( const tile_search_params &tile, const tripoint &pos,
-                                  std::optional<SDL_Color> bg_color,
-                                  std::optional<SDL_Color> fg_color,
+                                  const tint_config &bg_tint,
+                                  const tint_config &fg_tint,
                                   lit_level ll, bool apply_visual_effects,
                                   int overlay_count,
                                   bool as_independent_entity ) {
             int discard = 0;
             return draw_from_id_string(
-                       tile, pos, bg_color, fg_color,
+                       tile, pos, bg_tint, fg_tint,
                        ll, apply_visual_effects, overlay_count,
                        as_independent_entity, discard
                    );
@@ -539,8 +595,8 @@ class cata_tiles
          *
          * @param tile Tile to draw from
          * @param pos Tripoint of the tile to draw.
-         * @param bg_color
-         * @param fg_color
+         * @param bg_tint
+         * @param fg_tint
          * @param ll light level
          * @param apply_visual_effects use night vision and underwater colors?
          * @param overlay_count how blue the tile looks for lower z levels
@@ -551,8 +607,8 @@ class cata_tiles
          * @return always true
          */
         bool draw_from_id_string( const tile_search_params &tile, const tripoint &pos,
-                                  std::optional<SDL_Color> bg_color,
-                                  std::optional<SDL_Color> fg_color,
+                                  const tint_config &bg_tint,
+                                  const tint_config &fg_tint,
                                   lit_level ll, bool apply_visual_effects,
                                   int overlay_count, bool as_independent_entity,
                                   int &height_3d );
@@ -575,17 +631,17 @@ class cata_tiles
          * @param loc_rand picked random int
          * @param is_fg is foreground layer
          * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
-         * @param color
+         * @param tint tint configuration (color, contrast, saturation)
          * @param ll light level
          * @param apply_visual_effects use night vision and underwater colors?
          * @param overlay_count how blue the tile looks for lower z levels
          */
         bool draw_sprite_at( const tile_type &tile, point p,
                              unsigned int loc_rand, bool is_fg, int rota,
-                             std::optional<SDL_Color> color, lit_level ll,
+                             const tint_config &tint, lit_level ll,
                              bool apply_visual_effects, int overlay_count ) {
             int discard = 0;
-            return draw_sprite_at( tile, p, loc_rand, is_fg, rota, color, ll,
+            return draw_sprite_at( tile, p, loc_rand, is_fg, rota, tint, ll,
                                    apply_visual_effects, overlay_count, discard );
         }
 
@@ -597,7 +653,7 @@ class cata_tiles
          * @param loc_rand picked random int
          * @param is_fg is foreground layer
          * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
-         * @param color
+         * @param tint tint configuration (color, contrast, saturation)
          * @param ll light level
          * @param apply_visual_effects use night vision and underwater colors?
          * @param overlay_count how blue the tile looks for lower z levels
@@ -606,7 +662,7 @@ class cata_tiles
          */
         bool draw_sprite_at( const tile_type &tile, point p,
                              unsigned int loc_rand, bool is_fg, int rota,
-                             std::optional<SDL_Color> color, lit_level ll,
+                             const tint_config &tint, lit_level ll,
                              bool apply_visual_effects, int overlay_count,
                              int &height_3d );
 
@@ -617,8 +673,8 @@ class cata_tiles
          * @param p Point to draw the tile at.
          * @param loc_rand picked random int
          * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
-         * @param bg_color
-         * @param fg_color
+         * @param bg_tint background tint configuration
+         * @param fg_tint foreground tint configuration
          * @param ll light level
          * @param apply_visual_effects use night vision and underwater colors?
          * @param height_3d return parameter for height of the sprite
@@ -627,7 +683,7 @@ class cata_tiles
          */
         bool draw_tile_at( const tile_type &tile, point p,
                            unsigned int loc_rand, int rota,
-                           std::optional<SDL_Color> bg_color, std::optional<SDL_Color> fg_color,
+                           const tint_config &bg_tint, const tint_config &fg_tint,
                            lit_level ll, bool apply_visual_effects, int &height_3d,
                            int overlay_count );
 
@@ -684,20 +740,27 @@ class cata_tiles
         static auto get_graffiti_color( const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_trap_color( const trap &tr, const map &map, tripoint tripoint ) -> color_tint_pair;
         static auto get_field_color( const field &f, const map &m, const tripoint &p ) -> color_tint_pair;
-        static auto get_item_color( const item &i, const map &m, const tripoint &p ) -> color_tint_pair;
+        auto get_item_color( const item &i, const map &m, const tripoint &p ) -> color_tint_pair;
+        auto get_item_color( const item &i ) -> color_tint_pair;
         static auto get_vpart_color(
             const optional_vpart_position &vp, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_monster_color(
             const monster &mon, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_character_color(
             const Character &ch, const map &m, const tripoint &p ) -> color_tint_pair;
-        static auto get_effect_color(
+        auto get_effect_color(
             const effect &eff, const Character &c, const map &m, const tripoint &p ) -> color_tint_pair;
-        static auto get_bionic_color(
+        auto get_effect_color(
+            const effect &eff, const Character &c ) -> color_tint_pair;
+        auto get_bionic_color(
             const bionic &bio, const Character &c, const map &m, const tripoint &p )-> color_tint_pair;
-        static auto get_mutation_color(
+        auto get_bionic_color(
+            const bionic &bio, const Character &c )-> color_tint_pair;
+        auto get_mutation_color(
             const mutation &mut, const Character &c, const map &m,
             const tripoint &p )-> color_tint_pair;
+        auto get_mutation_color(
+            const mutation &mut, const Character &c )-> color_tint_pair;
 
         bool draw_terrain( const tripoint &p, lit_level ll, int &height_3d,
                            const bool ( &invisible )[5], int z_drop );
