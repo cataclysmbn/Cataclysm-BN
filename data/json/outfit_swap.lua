@@ -21,9 +21,7 @@ outfit_swap.swap_outfit = function()
     local detached = who:remove_worn(worn[i])
     if detached then
       local leftover = map:add_item(target, detached)
-      if leftover then
-        gapi.add_msg("Couldn't drop a worn item on the tile.")
-      end
+      if leftover then gapi.add_msg("Couldn't drop a worn item on the tile.") end
     end
   end
 
@@ -34,9 +32,7 @@ outfit_swap.swap_outfit = function()
         local worn_ok = who:wear_detached(detached, false)
         if not worn_ok then
           local leftover = map:add_item(target, detached)
-          if leftover then
-            gapi.add_msg("Couldn't return an item to the tile.")
-          end
+          if leftover then gapi.add_msg("Couldn't return an item to the tile.") end
         end
       end
     end

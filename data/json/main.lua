@@ -3,7 +3,6 @@ local nyctophobia = require("./nyctophobia")
 local artifact_analyzer = require("./artifact_analyzer")
 local outfit_swap = require("./outfit_swap")
 
-
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
 
