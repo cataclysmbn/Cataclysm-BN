@@ -14,6 +14,7 @@
 #include "catalua_type_operators.h"
 #include "creature.h"
 #include "damage.h"
+#include "data_reader.h"
 #include "hash_utils.h"
 #include "memory_fast.h"
 #include "pldata.h"
@@ -24,6 +25,7 @@
 
 class Character;
 class JsonObject;
+class LuaTableWrapper;
 class Trait_group;
 class item;
 class nc_color;
@@ -300,6 +302,12 @@ struct mutation_branch {
     public:
         std::string name() const;
         std::string desc() const;
+        void set_name( const translation &t ) {
+            raw_name = t;
+        }
+        void set_description( const translation &t ) {
+            raw_desc = t;
+        }
 
         /**
          * Returns the color to display the mutation name with.
@@ -328,6 +336,16 @@ struct mutation_branch {
         // For init.cpp: load mutation data from json
         void load( const JsonObject &jo, const std::string &src );
         static void load_trait( const JsonObject &jo, const std::string &src );
+        /**
+         * Load fields from any DataReader (JSON or Lua).
+         * Defined in mutation_data.cpp using schema macros.
+         * Explicit instantiations provided for JsonObject and LuaTableWrapper.
+         */
+        template<typename Reader>
+        requires DataReader<Reader>
+        void load_fields( const Reader &reader, bool was_loaded );
+        /** Register a Lua-defined mutation. */
+        static void register_lua_mutation( mutation_branch mut );
         // For init.cpp: check internal consistency (valid ids etc.) of all mutations
         static void check_consistency();
 
@@ -541,5 +559,4 @@ mutagen_attempt mutagen_common_checks( Character &guy, const item &it, bool stro
 
 void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category,
                               const unsigned short tier );
-
 

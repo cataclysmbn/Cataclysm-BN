@@ -9,7 +9,9 @@
 
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_sol_fwd.h"
 #include "catalua_type_operators.h"
+#include "data_reader.h"
 #include "flat_set.h"
 #include "hash_utils.h"
 #include "translations.h"
@@ -77,14 +79,29 @@ struct caused_effect {
 };
 
 
+class LuaTableWrapper;
+
 class effect_type
 {
         friend void load_effect_type( const JsonObject &jo );
+        friend void register_lua_effect_type( effect_type eff );
+        friend effect_type lua_table_to_effect_type( const std::string &id, const sol::table &def );
         friend class effect;
     public:
         effect_type() = default;
 
         efftype_id id;
+
+        /** For generic_factory compatibility */
+        bool was_loaded = false;
+
+        /**
+         * Unified field loading - works with both JsonObject and LuaTableWrapper.
+         * Uses schema macros defined in effect.cpp for DRY field definitions.
+         */
+        template<typename Reader>
+        requires DataReader<Reader>
+        void load_fields( const Reader &reader, bool was_loaded );
 
         /** Returns if an effect is good or bad for message display. */
         effect_rating get_rating() const;
@@ -411,6 +428,9 @@ class effect
 void load_effect_type( const JsonObject &jo );
 void reset_effect_types();
 
+/** Register a Lua-defined effect type. */
+void register_lua_effect_type( effect_type eff );
+
 std::vector<efftype_id> find_all_effect_types();
 
 std::string texitify_base_healing_power( int power );
@@ -421,5 +441,4 @@ class effects_map : public
     std::unordered_map<efftype_id, std::unordered_map<bodypart_str_id, effect>>
 {
 };
-
 

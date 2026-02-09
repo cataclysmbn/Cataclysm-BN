@@ -24,6 +24,7 @@
 #endif
 #include "catalua.h"
 #include "color.h"
+#include "lua_data_dumper.h"
 #include "crash.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -207,6 +208,7 @@ int main( int argc, char *argv[] )
     std::string dump;
     dump_mode dmode = dump_mode::TSV;
     std::vector<std::string> opts;
+    bool dump_lua_data = false;
     std::string world; /** if set try to load first save in this world on startup */
 
 #if defined(__ANDROID__)
@@ -243,7 +245,7 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 15> first_pass_arguments = {{
+        const std::array<arg_handler, 16> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
@@ -447,6 +449,20 @@ int main( int argc, char *argv[] )
                         }
                         test_mode = true;
                         lua_types_output_path = params[0];
+                        return 0;
+                    }
+                },
+                {
+                    "--dump-lua-data", "[types...]",
+                    "Dump Lua-defined data as JSON to stdout (for tooling)",
+                    section_default,
+                    [&dump_lua_data, &opts]( int n, const char *params[] ) -> int {
+                        test_mode = true;
+                        dump_lua_data = true;
+                        for( int i = 0; i < n; ++i )
+                        {
+                            opts.emplace_back( params[ i ] );
+                        }
                         return 0;
                     }
                 }
@@ -763,6 +779,16 @@ int main( int argc, char *argv[] )
         if( !dump.empty() ) {
             init_colors();
             exit( g->dump_stats( dump, dmode, opts ) ? 0 : 1 );
+        }
+        if( dump_lua_data ) {
+            // Dump Lua-defined data as JSON for tooling
+            auto *lua = DynamicDataLoader::get_instance().lua.get();
+            if( lua ) {
+                exit( cata::dump_lua_data( *lua, opts, std::cout ) ? 0 : 1 );
+            } else {
+                std::cerr << "Error: Lua not available\n";
+                exit( 1 );
+            }
         }
         if( check_mods ) {
             init_colors();

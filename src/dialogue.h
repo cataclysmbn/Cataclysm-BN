@@ -437,4 +437,7 @@ class json_talk_topic
 void unload_talk_topics();
 void load_talk_topic( const JsonObject &jo );
 
+/** Register a Lua-defined talk topic. */
+void register_lua_talk_topic( const std::string &id, json_talk_topic topic );
+
 

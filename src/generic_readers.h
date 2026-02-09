@@ -2,6 +2,7 @@
 
 #include <map>
 #include <vector>
+#include "data_reader.h"
 #include "json.h"
 #include "units.h"
 
@@ -294,6 +295,53 @@ class generic_typed_reader
                    handle_proportional( jo, member_name, member ) ||
                    do_relative( jo, member_name, member );
         }
+
+        /**
+         * DataReader version for containers - reads array of strings and converts each.
+         * Only enabled for types that are NOT JsonObject (to avoid ambiguity).
+         */
+        template<DataReader Reader, typename C>
+        requires( reader_detail::handler<C>::is_container && !std::is_same_v<Reader, JsonObject> )
+        bool operator()( const Reader &reader, const std::string &member_name,
+                         C &container, bool was_loaded ) const {
+            const Derived &derived = static_cast<const Derived &>( *this );
+            if( reader.has_array( member_name ) ) {
+                reader_detail::handler<C>().clear( container );
+                auto arr = reader.get_array( member_name );
+                while( arr.has_more() ) {
+                    std::string str_val = arr.next_string();
+                    reader_detail::handler<C>().insert( container, derived.get_from_string( str_val ) );
+                }
+                return true;
+            } else if( reader.has_string( member_name ) ) {
+                // Single value as string
+                reader_detail::handler<C>().clear( container );
+                std::string str_val = reader.get_string( member_name );
+                reader_detail::handler<C>().insert( container, derived.get_from_string( str_val ) );
+                return true;
+            } else if( !was_loaded ) {
+                return false;
+            }
+            // For Lua, we don't support extend/delete syntax (yet)
+            return true;
+        }
+
+        /**
+         * DataReader version for simple (non-container) members.
+         * Only enabled for types that are NOT JsonObject (to avoid ambiguity).
+         */
+        template<DataReader Reader, typename C>
+        requires( !reader_detail::handler<C>::is_container && !std::is_same_v<Reader, JsonObject> )
+        bool operator()( const Reader &reader, const std::string &member_name,
+                         C &member, bool /*was_loaded*/ ) const {
+            const Derived &derived = static_cast<const Derived &>( *this );
+            if( reader.has_string( member_name ) ) {
+                std::string str_val = reader.get_string( member_name );
+                member = derived.get_from_string( str_val );
+                return true;
+            }
+            return false;
+        }
 };
 
 /**
@@ -314,6 +362,10 @@ class auto_flags_reader : public generic_typed_reader<auto_flags_reader<FlagType
     public:
         FlagType get_next( JsonIn &jin ) const {
             return FlagType( jin.get_string() );
+        }
+        // For DataReader support (Lua)
+        FlagType get_from_string( const std::string &str ) const {
+            return FlagType( str );
         }
 };
 
@@ -449,6 +501,10 @@ class string_id_reader : public generic_typed_reader<string_id_reader<T>>
     public:
         string_id<T> get_next( JsonIn &jin ) const {
             return string_id<T>( jin.get_string() );
+        }
+        // For DataReader support (Lua)
+        string_id<T> get_from_string( const std::string &str ) const {
+            return string_id<T>( str );
         }
 };
 

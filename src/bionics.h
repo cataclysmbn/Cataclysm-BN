@@ -11,6 +11,7 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "catalua_type_operators.h"
+#include "data_reader.h"
 #include "flat_set.h"
 #include "translations.h"
 #include "type_id.h"
@@ -20,6 +21,7 @@
 
 class JsonIn;
 class JsonObject;
+class LuaTableWrapper;
 class JsonOut;
 class Character;
 class player;
@@ -151,11 +153,21 @@ struct bionic_data {
     std::set<flag_id> flags;
     bool has_flag( const flag_id &flag ) const;
 
+    /**
+     * Unified field loading - works with both JsonObject and LuaTableWrapper.
+     * Uses schema macros defined in bionics.cpp for DRY field definitions.
+     */
+    template<typename Reader>
+    requires DataReader<Reader>
+    void load_fields( const Reader &reader, bool was_loaded );
+
     itype_id itype() const;
 
     bool is_included( const bionic_id &id ) const;
 
     static void load_bionic( const JsonObject &jo, const std::string &src );
+    /** Register a Lua-defined bionic. */
+    static void register_lua_bionic( bionic_data bio );
     static void check_consistency();
     static void finalize_all();
     static std::vector<bionic_data> get_all();
@@ -249,5 +261,4 @@ int bionic_manip_cos( float adjusted_skill, int bionic_difficulty );
 
 std::vector<bionic_id> bionics_cancelling_trait( const std::vector<bionic_id> &bios,
         const trait_id &tid );
-
 
