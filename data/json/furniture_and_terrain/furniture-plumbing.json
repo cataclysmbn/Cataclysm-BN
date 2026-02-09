@@ -327,5 +327,24 @@
         "transform": { "id": "f_water_purifier_plumbed", "msg": "The water purifier shuts down." }
       }
     ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_rain_collector_plumbed",
+    "name": "rain collector (plumbed)",
+    "description": "A plumbed rain collector that feeds a fluid grid when it is raining.",
+    "symbol": "U",
+    "color": "light_blue",
+    "move_cost_mod": -1,
+    "coverage": 30,
+    "required_str": 6,
+    "flags": [ "TRANSPARENT", "PLACE_ITEM", "BLOCKSDOOR" ],
+    "fluid_grid": {
+      "role": "rain_collector",
+      "allow_input": false,
+      "allow_output": false,
+      "allowed_liquids": [ "water" ],
+      "transformer": { "tick_interval": "10 m", "collector_area_m2": 1.0 }
+    }
   }
 ]

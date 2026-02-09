@@ -770,7 +770,7 @@ and control what liquids it can accept. Fluid grids currently support only `wate
 
 | Identifier | Description |
 | --- | --- |
-| role | (_mandatory_) One of `tank`, `fixture`, or `transformer`. Tanks contribute storage capacity to the fluid grid. Fixtures are grid endpoints without storage. Transformers process liquids in the grid according to a recipe. |
+| role | (_mandatory_) One of `tank`, `fixture`, `transformer`, or `rain_collector`. Tanks contribute storage capacity to the fluid grid. Fixtures are grid endpoints without storage. Transformers process liquids in the grid according to a recipe. Rain collectors add dirty water to the grid while it is raining. |
 | allow_input | (_mandatory_) Whether the grid can accept liquids into this furniture. |
 | allow_output | (_mandatory_) Whether the grid can output liquids from this furniture. |
 | allowed_liquids | (_mandatory_) Array of liquid item ids allowed for this furniture. Fluid grids currently support only `water` and `water_clean`. |
@@ -778,14 +778,15 @@ and control what liquids it can accept. Fluid grids currently support only `wate
 | use_keg_capacity | (_optional_) If `true`, use the furniture `keg_capacity` as its tank capacity. |
 | connected_variant | (_optional_) Furniture id to switch to when connecting this tank to the fluid grid. |
 | disconnected_variant | (_optional_) Furniture id to switch to when disconnecting this tank from the fluid grid. |
-| transformer | (_optional_) Transformer configuration object. Required when `role` is `transformer`. |
+| transformer | (_optional_) Transformer configuration object. Required when `role` is `transformer` or `rain_collector`. |
 
 ### Transformer object
 
 | Identifier | Description |
 | --- | --- |
 | tick_interval | (_mandatory_) How often the transformer runs. Uses standard time duration formatting. |
-| transforms | (_mandatory_) Array of transform recipes. Each recipe has `inputs` and `outputs` arrays. |
+| transforms | (_optional_) Array of transform recipes. Each recipe has `inputs` and `outputs` arrays. Required when `role` is `transformer`. |
+| collector_area_m2 | (_optional_) Collector surface area in square meters. Used only when `role` is `rain_collector`. |
 
 Each transform entry has:
 
@@ -803,8 +804,13 @@ Each transform entry has:
 - For `role: "fixture"`, capacity and variant fields are ignored.
 - For `role: "transformer"`, capacity and variant fields are ignored and the `transformer` object is
   required.
-- Transformers only run while the furniture is active (for example, via an `active` entry that
-  keeps it running). If it is not active, no transforms occur.
+- For `role: "rain_collector"`, capacity and variant fields are ignored. Use `collector_area_m2` in
+  the `transformer` object and omit `transforms`.
+- Transformers and rain collectors are processed by the fluid grid update system, not by the
+  active-tile system. They are evaluated when their submaps are loaded (reality bubble) and catch up
+  from their last run to the current time when loaded.
+- Toggling a transformer on/off resets its last-run time so it does not retroactively process time
+  spent off.
 - Typically, only the connected variant needs the `fluid_grid` object. Define
   `disconnected_variant` on the connected furniture and leave the disconnected furniture without
   `fluid_grid` so it does not contribute to grid storage until connected.

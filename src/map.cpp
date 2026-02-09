@@ -1584,6 +1584,10 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
         current_submap->active_furniture[point_sm_ms( l )] = atd;
         get_distribution_grid_tracker().on_changed( tripoint_abs_ms( getabs( p ) ) );
     }
+
+    if( old_t.fluid_grid || new_t.fluid_grid ) {
+        fluid_grid::on_structure_changed( tripoint_abs_ms( getabs( p ) ) );
+    }
 }
 
 bool map::can_move_furniture( const tripoint &pos, player *p )

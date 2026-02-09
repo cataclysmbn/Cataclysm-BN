@@ -597,7 +597,8 @@ void reset_furn_ter();
 enum class fluid_grid_role {
     tank,
     fixture,
-    transformer
+    transformer,
+    rain_collector
 };
 
 struct fluid_grid_transform_io {
@@ -612,8 +613,7 @@ struct fluid_grid_transform_recipe {
 
 struct fluid_grid_transformer_config {
     time_duration tick_interval = 1_seconds;
-    bool requires_rain = false;
-    bool requires_outdoors = false;
+    double collector_area_m2 = 0.0;
     std::vector<fluid_grid_transform_recipe> transforms;
 };
 

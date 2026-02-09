@@ -586,6 +586,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
 {
     m.load( pos_sm, true, pump_events );
     grid_tracker_ptr->load( m );
+    fluid_grid::load( m );
 }
 
 std::optional<tripoint> game::find_local_stairs_leading_to( map &mp, const int z_after )

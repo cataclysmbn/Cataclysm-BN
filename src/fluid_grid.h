@@ -13,6 +13,7 @@
 #include "units.h"
 
 class overmap;
+class map;
 
 namespace fluid_grid
 {
@@ -73,6 +74,7 @@ auto drain_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_typ
 auto purify_water( const tripoint_abs_omt &p ) -> units::volume;
 auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void;
 auto update( time_point to ) -> void;
+auto load( const map &m ) -> void;
 auto on_contents_changed( const tripoint_abs_ms &p ) -> void;
 auto on_structure_changed( const tripoint_abs_ms &p ) -> void;
 auto on_tank_removed( const tripoint_abs_ms &p ) -> void;
