@@ -731,6 +731,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_rain_collector",
+    "name": "Build Rain Collector"
+  },
+  {
+    "type": "construction_group",
     "id": "build_water_well",
     "name": "Build Water Well"
   },
