@@ -952,7 +952,7 @@
   },
   {
     "type": "recipe",
-    "result": "xbow_draw_assist",
+    "result": "crossbow_draw_assist",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_MODS",
     "skill_used": "mechanics",

@@ -89,9 +89,9 @@
     "flags": [ "NEEDS_UNFOLD" ]
   },
   {
-    "id": "xbow_draw_assist",
+    "id": "crossbow_draw_assist",
     "type": "GUNMOD",
-    "name": { "str": "draw motor" },
+    "name": { "str": "crossbow draw motor" },
     "description": "An electric motor that can be attached to a crossbow's string to make it easier to draw back. It makes reloading faster, but requires UPS power and makes the crossbow bulkier and heavier. Who said crossbows needed to be medieval?",
     "weight": "675 g",
     "volume": "150 ml",
