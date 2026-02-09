@@ -961,7 +961,7 @@
     "time": "30 m",
     "autolearn": true,
     "using": [ [ "blacksmithing_advanced", 10 ], [ "soldering_standard", 5 ], [ "steel_standard", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_M", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "SCREW", "level": 1 } ],
     "components": [
       [ [ "duct_tape", 35 ] ],
       [ [ "motor_tiny", 1 ] ],
