@@ -1020,7 +1020,7 @@ class fluid_grid_tracker
                 return;
             }
             const auto base = project_to<coords::sm>( omt_pos );
-            const auto submaps = std::array<tripoint_abs_sm, 4>{
+            const auto submaps = std::array<tripoint_abs_sm, 4> {
                 base + point_zero,
                 base + point_east,
                 base + point_south,
