@@ -1672,6 +1672,8 @@ void furn_t::load( const JsonObject &jo, const std::string &src )
                 auto transformer_obj = fluid_grid_obj.get_object( "transformer" );
                 auto transformer = fluid_grid_transformer_config{};
                 mandatory( transformer_obj, was_loaded, "tick_interval", transformer.tick_interval );
+                optional( transformer_obj, was_loaded, "requires_rain", transformer.requires_rain, false );
+                optional( transformer_obj, was_loaded, "requires_outdoors", transformer.requires_outdoors, false );
                 auto transforms = transformer_obj.get_array( "transforms" );
                 for( JsonObject transform_obj : transforms ) {
                     auto recipe = fluid_grid_transform_recipe{};
@@ -1686,7 +1688,9 @@ void furn_t::load( const JsonObject &jo, const std::string &src )
                             out.push_back( io );
                         }
                     };
-                    parse_io( transform_obj.get_array( "inputs" ), recipe.inputs );
+                    if( transform_obj.has_array( "inputs" ) ) {
+                        parse_io( transform_obj.get_array( "inputs" ), recipe.inputs );
+                    }
                     parse_io( transform_obj.get_array( "outputs" ), recipe.outputs );
                     transformer.transforms.push_back( recipe );
                 }

@@ -22,6 +22,7 @@
 #include "overmapbuffer.h"
 #include "point.h"
 #include "submap.h"
+#include "weather.h"
 
 namespace
 {
@@ -38,7 +39,7 @@ struct submap_tank_cache_entry {
     int tank_count = 0;
 };
 using submap_tank_cache_store = std::map<tripoint_abs_sm, submap_tank_cache_entry>;
-using transformer_last_run_store = std::map<tripoint_abs_ms, time_point>;
+using transformer_cache_store = std::map<tripoint_abs_sm, bool>;
 static const itype_id itype_water( "water" );
 static const itype_id itype_water_clean( "water_clean" );
 
@@ -103,10 +104,64 @@ auto submap_tank_cache() -> submap_tank_cache_store & // *NOPAD*
     return cache;
 }
 
-auto transformer_last_run() -> transformer_last_run_store & // *NOPAD*
+auto transformer_cache() -> transformer_cache_store & // *NOPAD*
 {
-    static auto cache = transformer_last_run_store{};
+    static auto cache = transformer_cache_store{};
     return cache;
+}
+
+auto transformer_last_run_at( const tripoint_abs_ms &p ) -> time_point
+{
+    auto target_sm = tripoint_abs_sm{};
+    auto target_pos = point_sm_ms{};
+    std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
+    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    if( target_submap == nullptr ) {
+        return calendar::start_of_cataclysm;
+    }
+
+    const auto iter = target_submap->transformer_last_run.find( target_pos );
+    if( iter == target_submap->transformer_last_run.end() ) {
+        return calendar::start_of_cataclysm;
+    }
+
+    return iter->second;
+}
+
+auto set_transformer_last_run_at( const tripoint_abs_ms &p, time_point t ) -> void
+{
+    auto target_sm = tripoint_abs_sm{};
+    auto target_pos = point_sm_ms{};
+    std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
+    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    if( target_submap == nullptr ) {
+        return;
+    }
+
+    target_submap->transformer_last_run[target_pos] = t;
+}
+
+auto clear_transformer_last_run_at( const tripoint_abs_ms &p ) -> void
+{
+    auto target_sm = tripoint_abs_sm{};
+    auto target_pos = point_sm_ms{};
+    std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
+    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    if( target_submap == nullptr ) {
+        return;
+    }
+
+    target_submap->transformer_last_run.erase( target_pos );
+}
+
+auto ticks_between( const time_point &from, const time_point &to,
+                    const time_duration &tick_length ) -> int
+{
+    if( tick_length <= 0_turns ) {
+        return 0;
+    }
+    return ( to_turn<int>( to ) / to_turns<int>( tick_length ) ) -
+           ( to_turn<int>( from ) / to_turns<int>( tick_length ) );
 }
 
 auto volume_from_charges( const itype_id &liquid_type, int charges ) -> units::volume
@@ -131,7 +186,7 @@ auto batches_for_inputs( const std::vector<fluid_grid_transform_io> &inputs,
                          const std::map<itype_id, units::volume> &available ) -> double
 {
     if( inputs.empty() ) {
-        return 0.0;
+        return 1.0;
     }
 
     auto max_batches = std::numeric_limits<double>::max();
@@ -159,6 +214,24 @@ auto batches_for_inputs( const std::vector<fluid_grid_transform_io> &inputs,
         return 0.0;
     }
     return std::max( max_batches, 0.0 );
+}
+
+auto is_outdoors_at( const tripoint_abs_ms &p ) -> bool
+{
+    auto target_sm = tripoint_abs_sm{};
+    auto target_pos = point_sm_ms{};
+    std::tie( target_sm, target_pos ) = project_remain<coords::sm>( p );
+    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    if( target_submap == nullptr ) {
+        return false;
+    }
+    return target_submap->get_ter( target_pos.raw() ).obj().has_flag( "OUTSIDE" );
+}
+
+auto is_raining_at( const tripoint_abs_ms &p, const time_point &t ) -> bool
+{
+    const auto weather = current_weather( p.raw(), t );
+    return weather->rains;
 }
 
 struct transformer_instance {
@@ -435,6 +508,47 @@ auto invalidate_grid_members_cache_at( const tripoint_abs_omt &p ) -> void
 auto invalidate_submap_cache_at( const tripoint_abs_sm &p ) -> void
 {
     submap_tank_cache().erase( p );
+}
+
+auto invalidate_transformer_cache_at( const tripoint_abs_sm &p ) -> void
+{
+    transformer_cache().erase( p );
+}
+
+auto submap_has_transformer( const tripoint_abs_sm &sm_coord, mapbuffer &mb ) -> bool
+{
+    auto &cache = transformer_cache();
+    const auto iter = cache.find( sm_coord );
+    if( iter != cache.end() ) {
+        return iter->second;
+    }
+
+    auto *sm = mb.lookup_submap( sm_coord );
+    if( sm == nullptr ) {
+        cache.emplace( sm_coord, false );
+        return false;
+    }
+
+    auto found = false;
+    std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
+        if( found ) {
+            return;
+        }
+        std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
+            if( found ) {
+                return;
+            }
+            const auto pos = point( x, y );
+            const auto &furn = sm->get_furn( pos ).obj();
+            if( !furn.fluid_grid || furn.fluid_grid->role != fluid_grid_role::transformer ) {
+                return;
+            }
+            found = true;
+        } );
+    } );
+
+    cache.emplace( sm_coord, found );
+    return found;
 }
 
 auto storage_state_for_grid( const std::set<tripoint_abs_omt> &grid ) ->
@@ -1110,13 +1224,17 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
     };
 
     auto requests = std::vector<transform_request> {};
+    auto processed_transformers = std::vector<tripoint_abs_ms> {};
     std::ranges::for_each( transformers, [&]( const transformer_instance & inst ) {
-        auto &last_run_map = transformer_last_run();
-        const auto iter = last_run_map.find( inst.pos );
-        const auto last_run = iter == last_run_map.end()
-                              ? calendar::start_of_cataclysm
-                              : iter->second;
-        if( to - last_run < inst.config->tick_interval ) {
+        const auto last_run = transformer_last_run_at( inst.pos );
+        const auto tick_count = ticks_between( last_run, to, inst.config->tick_interval );
+        if( tick_count <= 0 ) {
+            return;
+        }
+        if( inst.config->requires_outdoors && !is_outdoors_at( inst.pos ) ) {
+            return;
+        }
+        if( inst.config->requires_rain && !is_raining_at( inst.pos, to ) ) {
             return;
         }
         std::ranges::for_each( inst.config->transforms,
@@ -1125,9 +1243,10 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
             if( batches <= 0.0 ) {
                 return;
             }
-            const auto capped_batches = std::min( 1.0, batches );
+            const auto capped_batches = std::min( static_cast<double>( tick_count ), batches );
             requests.push_back( transform_request{ .recipe = &recipe, .batches = capped_batches } );
         } );
+        processed_transformers.push_back( inst.pos );
     } );
 
     if( requests.empty() ) {
@@ -1168,8 +1287,9 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
 
     if( total_output_ml > 0.0 ) {
         const auto available_capacity = state.capacity - state.stored_total();
-        const auto max_output_ml =
-            units::to_milliliter<double>( available_capacity ) + total_input_ml;
+        const auto max_output_ml = total_input_ml > 0.0
+                                   ? units::to_milliliter<double>( available_capacity ) + total_input_ml
+                                   : units::to_milliliter<double>( available_capacity );
         if( total_output_ml > max_output_ml && max_output_ml > 0.0 ) {
             scale = std::min( scale, max_output_ml / total_output_ml );
         }
@@ -1241,16 +1361,8 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
 
     storage.set_state( state );
 
-    auto &last_run_map = transformer_last_run();
-    std::ranges::for_each( transformers, [&]( const transformer_instance & inst ) {
-        const auto iter = last_run_map.find( inst.pos );
-        const auto last_run = iter == last_run_map.end()
-                              ? calendar::start_of_cataclysm
-                              : iter->second;
-        if( to - last_run < inst.config->tick_interval ) {
-            return;
-        }
-        last_run_map[inst.pos] = to;
+    std::ranges::for_each( processed_transformers, [&]( const tripoint_abs_ms & pos ) {
+        set_transformer_last_run_at( pos, to );
     } );
 }
 
@@ -1259,20 +1371,14 @@ auto update( time_point to ) -> void
     auto processed_grids = std::set<tripoint_abs_omt> {};
     std::ranges::for_each( MAPBUFFER, [&]( const auto & entry ) {
         const auto abs_sm = tripoint_abs_sm( entry.first );
-        auto &sm = *entry.second;
-        std::ranges::for_each( sm.active_furniture, [&]( const auto & active_entry ) {
-            const auto &pos_sm = active_entry.first;
-            const auto &furn = sm.get_furn( pos_sm.raw() ).obj();
-            if( !furn.fluid_grid || furn.fluid_grid->role != fluid_grid_role::transformer ) {
-                return;
-            }
-            const auto abs_ms = project_combine( abs_sm, pos_sm );
-            const auto omt_pos = project_to<coords::omt>( abs_ms );
-            if( !processed_grids.insert( omt_pos ).second ) {
-                return;
-            }
-            process_transformers_at( omt_pos, to );
-        } );
+        if( !submap_has_transformer( abs_sm, MAPBUFFER ) ) {
+            return;
+        }
+        const auto omt_pos = project_to<coords::omt>( abs_sm );
+        if( !processed_grids.insert( omt_pos ).second ) {
+            return;
+        }
+        process_transformers_at( omt_pos, to );
     } );
 }
 
@@ -1284,6 +1390,8 @@ auto on_contents_changed( const tripoint_abs_ms &p ) -> void
 auto on_structure_changed( const tripoint_abs_ms &p ) -> void
 {
     const auto omt_pos = project_to<coords::omt>( p );
+    clear_transformer_last_run_at( p );
+    invalidate_transformer_cache_at( project_to<coords::sm>( p ) );
     invalidate_grid_members_cache_at( omt_pos );
     get_fluid_grid_tracker().rebuild_at( p );
 }
@@ -1452,7 +1560,7 @@ auto clear() -> void
     get_fluid_grid_tracker().clear();
     grid_members_cache().clear();
     submap_tank_cache().clear();
-    transformer_last_run().clear();
+    transformer_cache().clear();
 }
 
 } // namespace fluid_grid

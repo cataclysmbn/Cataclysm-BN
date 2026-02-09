@@ -612,6 +612,8 @@ struct fluid_grid_transform_recipe {
 
 struct fluid_grid_transformer_config {
     time_duration tick_interval = 1_seconds;
+    bool requires_rain = false;
+    bool requires_outdoors = false;
     std::vector<fluid_grid_transform_recipe> transforms;
 };
 
