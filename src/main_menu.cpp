@@ -622,6 +622,11 @@ bool main_menu::opening_screen()
         return false;
     }
 
+    if( !assure_dir_exist( PATH_INFO::user_moddir() ) ) {
+        popup( _( "Unable to make user mods directory.  Check permissions." ) );
+        return false;
+    }
+
     if( !assure_dir_exist( PATH_INFO::savedir() ) ) {
         popup( _( "Unable to make save directory.  Check permissions." ) );
         return false;

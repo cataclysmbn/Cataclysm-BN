@@ -204,7 +204,7 @@
             "additional_tiles": [ { "id": "broken", "fg": 160 } ]
           },
           {
-            "id": "vp_propeller_metal",
+            "id": [ "vp_propeller_metal", "vp_propeller_wood" ],
             "fg": 161,
             "rotates": true,
             "multitile": true,

@@ -1,4 +1,5 @@
 name: "Manual release"
+run-name: "Manual Release ${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}"
 concurrency: release
 
 on:
@@ -16,7 +17,7 @@ env:
 jobs:
   release:
     name: Create Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@v4
         with:

@@ -19,6 +19,7 @@
 #include "crafting.h"
 #include "cursesdef.h"
 #include "game.h"
+#include "game_inventory.h"
 #include "input.h"
 #include "inventory.h"
 #include "item.h"
@@ -317,6 +318,7 @@ static input_context make_crafting_context( bool highlight_unread_recipes )
     ctxt.register_action( "CYCLE_BATCH" );
     ctxt.register_action( "RELATED_RECIPES" );
     ctxt.register_action( "HIDE_SHOW_RECIPE" );
+    ctxt.register_action( "COMPARE" );
     ctxt.register_action( "TOGGLE_UNAVAILABLE" );
     if( highlight_unread_recipes ) {
         ctxt.register_action( "TOGGLE_RECIPE_UNREAD" );
@@ -448,6 +450,7 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         add_action_desc( "RELATED_RECIPES", pgettext( "crafting gui", "Related" ) );
         add_action_desc( "TOGGLE_FAVORITE", pgettext( "crafting gui", "Favorite" ) );
         add_action_desc( "CYCLE_BATCH", pgettext( "crafting gui", "Batch" ) );
+        add_action_desc( "COMPARE", pgettext( "crafting gui", "Compare" ) );
         add_action_desc( "TOGGLE_UNAVAILABLE", pgettext( "crafting gui", "Show unavailable" ) );
         add_action_desc( "HELP_KEYBINDINGS", pgettext( "crafting gui", "Keybindings" ) );
         keybinding_x = isWide ? 5 : 2;
@@ -961,6 +964,21 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                 return catacurses::newwin( height, width, point( ( TERMX - width ) / 2, ( TERMY - height ) / 2 ) );
             }, data );
 
+            recalc = true;
+            keepline = true;
+        } else if( action == "COMPARE" ) {
+            if( current.empty() ) {
+                popup( _( "Nothing selected!  Press [<color_yellow>ESC</color>]!" ) );
+                recalc = true;
+                continue;
+            }
+            auto crafted_item = current[line]->create_result();
+            crafted_item->set_var( "recipe_exemplar", current[line]->ident().str() );
+            item *selected = game_menus::inv::titled_menu(
+                                 u, _( "Compare to which item?" ), _( "Your inventory is empty." ) );
+            if( selected != nullptr ) {
+                game_menus::inv::compare( *selected, *crafted_item );
+            }
             recalc = true;
             keepline = true;
         } else if( action == "FILTER" ) {

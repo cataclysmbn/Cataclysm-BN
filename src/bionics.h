@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -24,6 +25,7 @@ class JsonObject;
 class JsonOut;
 class Character;
 class player;
+class lua_bionic_callback_actor;
 
 enum class character_stat : char;
 
@@ -259,11 +261,19 @@ struct bionic_data {
 
     bool is_included( const bionic_id &id ) const;
 
+    /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+     *  Mutable because it is wired post-construction through const factory references. */
+    mutable const lua_bionic_callback_actor *lua_callbacks = nullptr;
+
     static void load_bionic( const JsonObject &jo, const std::string &src );
     static void check_consistency();
     static void finalize_all();
     static std::vector<bionic_data> get_all();
     static void reset();
+
+    /** Wire Lua callback pointers onto bionic_data objects. */
+    static void resolve_lua_callbacks(
+        const std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> &actors );
 
     bool was_loaded = false;
     void load( const JsonObject &obj, const std::string & );
@@ -314,6 +324,8 @@ struct bionic {
 
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );
+
+        LUA_TYPE_OPS( bionic, id );
     private:
         // generic bionic specific flags
         cata::flat_set<std::string> bionic_tags;

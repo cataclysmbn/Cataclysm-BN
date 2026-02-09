@@ -44,6 +44,7 @@
           "medium_storage_battery",
           "small_storage_battery",
           "storage_battery",
+          "huge_atomic_battery_cell",
           "battery_car",
           "battery_motorbike",
           "battery_motorbike_small"
