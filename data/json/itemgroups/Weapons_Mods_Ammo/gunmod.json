@@ -13,7 +13,8 @@
       [ "pistol_lanyard", 50 ],
       [ "suppressor", 60 ],
       [ "suppressor_compact", 40 ],
-      [ "cheek_pad", 25 ]
+      [ "cheek_pad", 25 ],
+      [ "revolverCylinderExp", 5 ]
     ]
   },
   {
