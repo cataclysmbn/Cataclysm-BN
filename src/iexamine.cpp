@@ -5996,7 +5996,7 @@ void iexamine::mill_finalize( player &, const tripoint &examp, const time_point 
     }
 
     for( detached_ptr<item> &it : results ) {
-        items.insert( std::move( it ) );
+        here.add_item( examp, std::move( it ) );
     }
     here.furn_set( examp, next_mill_type );
 }
