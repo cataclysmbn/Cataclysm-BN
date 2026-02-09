@@ -316,6 +316,7 @@ extern const flag_id flag_SNIPPET_NEEDS_LITERACY;
 extern const flag_id flag_SOLARPACK;
 extern const flag_id flag_SOLARPACK_ON;
 extern const flag_id flag_SPAWN_FRIENDLY;
+extern const flag_id flag_SPAWN_MEAN;
 extern const flag_id flag_SPEAR;
 extern const flag_id flag_SPEEDLOADER;
 extern const flag_id flag_SPLINT;

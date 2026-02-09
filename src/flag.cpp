@@ -314,6 +314,7 @@ const flag_id flag_SNIPPET_NEEDS_LITERACY( "SNIPPET_NEEDS_LITERACY" );
 const flag_id flag_SOLARPACK( "SOLARPACK" );
 const flag_id flag_SOLARPACK_ON( "SOLARPACK_ON" );
 const flag_id flag_SPAWN_FRIENDLY( "SPAWN_FRIENDLY" );
+const flag_id flag_SPAWN_MEAN( "SPAWN_MEAN" );
 const flag_id flag_SPEAR( "SPEAR" );
 const flag_id flag_SPEEDLOADER( "SPEEDLOADER" );
 const flag_id flag_SPLINT( "SPLINT" );
