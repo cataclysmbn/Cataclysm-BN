@@ -72,6 +72,54 @@
     "types": [ "hair_color" ]
   },
   {
+    "id": "hair_blue",
+    "type": "mutation",
+    "name": { "str": "Hair color: blue" },
+    "description": "You have blue hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_purple",
+    "type": "mutation",
+    "name": { "str": "Hair color: purple" },
+    "description": "You have purple hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_green",
+    "type": "mutation",
+    "name": { "str": "Hair color: green" },
+    "description": "You have green hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_cyan",
+    "type": "mutation",
+    "name": { "str": "Hair color: cyan" },
+    "description": "You have cyan hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
     "id": "hair_crewcut",
     "type": "mutation",
     "name": { "str": "Hair style: crew-cut" },
