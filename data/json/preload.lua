@@ -5,8 +5,21 @@ local storage = game.mod_storage[game.current_mod]
 
 mod.storage = storage
 
+local outfit_swapper = require("./outfit_swap")
+mod.outfit_swapper = outfit_swapper
+
 game.iuse_functions["VOLTMETER"] = function(...) return mod.voltmeter.menu(...) end
 game.iuse_functions["ARTIFACT_ANALYZER"] = function(...) return mod.artifact_analyzer.menu(...) end
+
+gapi.register_action_menu_entry{
+    id = "bn:inventory_swap_outfit",
+    name = "Swap Outfit",
+    category = "inventory",
+    hotkey = "o",
+    fn = function()
+      return mod.outfit_swapper.menu()
+    end
+}
 
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...) return mod.on_nyctophobia_tick(...) end)
 
