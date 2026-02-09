@@ -80,6 +80,7 @@ static const std::string flag_CITY_START( "CITY_START" );
 static const std::string flag_SECRET( "SECRET" );
 
 static const std::string type_hair_style( "hair_style" );
+static const std::string type_hair_color( "hair_color" );
 static const std::string type_skin_tone( "skin_tone" );
 static const std::string type_facial_hair( "facial_hair" );
 static const std::string type_eye_color( "eye_color" );
@@ -443,11 +444,14 @@ void set_cosmetic_trait( Character &c, std::string mutation_type, const trait_id
 
 } // namespace
 
+std::unordered_set<std::string> cosmetic_trait_types = { type_hair_style, type_hair_color, type_skin_tone, type_eye_color, type_facial_hair };
+std::unordered_set<std::string> required_cosmetic_trait_types = { type_hair_style, type_hair_color, type_skin_tone, type_eye_color };
+// We should define cosmetic traits in JSON so they can be appended by mods
 void avatar::randomize_cosmetics()
 {
-    randomize_cosmetic_trait( type_hair_style );
-    randomize_cosmetic_trait( type_skin_tone );
-    randomize_cosmetic_trait( type_eye_color );
+    for( const std::string &mutation_type : required_cosmetic_trait_types ) {
+        randomize_cosmetic_trait( mutation_type );
+    }
     //arbitrary 50% chance to add beard to male characters
     if( male && one_in( 2 ) ) {
         randomize_cosmetic_trait( type_facial_hair );
@@ -471,13 +475,16 @@ bool avatar::create( character_type type, const std::string &tempname )
     int tab = 0;
     points_left points = points_left();
 
-    static auto male_default_hair = trait_id( "hair_black_medium" );
-    static auto female_default_hair = trait_id( "hair_blond_long" );
+    static auto male_default_hair_style = trait_id( "hair_medium" );
+    static auto female_default_hair_style = trait_id( "hair_long" );
 
     switch( type ) {
         case character_type::CUSTOM:
+            // We can randomize cosmetics for a custom character, it's fine. Not sure I like the idea of a "default" appearance
+            randomize_cosmetics();
             // don't make them bald!
-            set_cosmetic_trait( *this, type_hair_style, male ? male_default_hair : female_default_hair );
+            set_cosmetic_trait( *this, type_hair_style,
+                                male ? male_default_hair_style : female_default_hair_style );
             break;
         case character_type::RANDOM:
             //random scenario, default name if exist
@@ -1435,9 +1442,39 @@ tab_direction set_traits( avatar &u, points_left &points )
                     inc_type = 0;
                     popup( _( "Your profession of %s prevents you from removing this trait." ),
                            u.prof->gender_appropriate_name( u.male ) );
+                } else {
+                    std::string type;
+                    for( const auto t : cur_trait.obj().types ) {
+                        if( required_cosmetic_trait_types.contains( t ) ) {
+                            type = t;
+                            break;
+                        }
+                    }
+                    if( !type.empty() ) {
+                        inc_type = 0;
+                        popup( _( "You must have a trait of this type." ) );
+                    }
                 }
             } else if( newcharacter::has_conflicting_trait( u, cur_trait ) ) {
-                popup( _( "You already picked a conflicting trait!" ) );
+                // Allow swapping cosmetic traits
+                std::string type;
+                for( const auto t : cur_trait.obj().types ) {
+                    if( cosmetic_trait_types.contains( t ) ) {
+                        type = t;
+                        break;
+                    }
+                }
+                if( !type.empty() ) {
+                    inc_type = 1;
+                    for( const trait_id &tr : u.get_base_traits() ) {
+                        if( tr.obj().types.contains( type ) ) {
+                            u.toggle_trait( tr );
+                            break;
+                        }
+                    }
+                } else {
+                    popup( _( "You already picked a conflicting trait!" ) );
+                }
             } else if( g->scen->is_forbidden_trait( cur_trait ) ) {
                 popup( _( "The scenario you picked prevents you from taking this trait!" ) );
             } else if( u.prof->is_forbidden_trait( cur_trait ) ) {

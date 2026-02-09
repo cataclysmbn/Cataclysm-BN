@@ -1459,6 +1459,14 @@ int deploy_furn_actor::use( player &p, item &it, bool t, const tripoint &pos ) c
         return 0;
     }
 
+    // It shouldn't be possible to deploy a NOITEM furniture on top of items.
+    const furn_t &furn_obj = furn_type.obj();
+    if( ( furn_obj.has_flag( TFLAG_SEALED ) || furn_obj.has_flag( TFLAG_NOITEM ) ) &&
+        !here.i_at( pnt ).empty() ) {
+        p.add_msg_if_player( m_info, _( "Can't put that here - items in the way." ) );
+        return 0;
+    }
+
     here.furn_set( pnt, furn_type );
     p.mod_moves( to_turns<int>( 2_seconds ) );
     return 1;

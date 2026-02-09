@@ -1,0 +1,98 @@
+[
+  {
+    "id": "eye_pink",
+    "type": "mutation",
+    "name": { "str": "Eye color: pink" },
+    "description": "You have oddly pink eyes.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "eye_color" ]
+  },
+  {
+    "id": "eye_white",
+    "type": "mutation",
+    "name": { "str": "Eye color: white" },
+    "description": "You have no visible irises.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "eye_color" ]
+  },
+  {
+    "id": "eye_black",
+    "type": "mutation",
+    "name": { "str": "Eye color: black" },
+    "description": "Your eyes are disconcertingly pitch black.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "eye_color" ]
+  },
+  {
+    "id": "hair_pink",
+    "type": "mutation",
+    "name": { "str": "Hair: pink" },
+    "description": "pink hair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_blue",
+    "type": "mutation",
+    "name": { "str": "Hair: blue" },
+    "description": "blue hair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_green",
+    "type": "mutation",
+    "name": { "str": "Hair: green" },
+    "description": "green hair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_purple",
+    "type": "mutation",
+    "name": { "str": "Hair: purple" },
+    "description": "purple hair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_cyan",
+    "type": "mutation",
+    "name": { "str": "Hair: cyan" },
+    "description": "cyan hair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  }
+]

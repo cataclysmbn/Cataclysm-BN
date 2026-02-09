@@ -3860,8 +3860,8 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
 
     // first get effects
     for( const auto &[eff_type, eff_by_part] : *effects ) {
-        const auto eff = eff_by_part.begin()->second;
-        if( !eff.is_removed() ) {
+        const auto &eff = eff_by_part.begin()->second;
+        if( eff.get_id().is_valid() && !eff.is_removed() ) {
             const std::string &looks_like = eff_type.obj().get_looks_like();
 
             const overlay_entry ent {
@@ -12125,6 +12125,8 @@ int Character::item_reload_cost( const item &it, item &ammo, int qty ) const
         qty = clamp( qty, ammo.contents.front().charges, 1 );
     } else if( ammo.is_magazine() ) {
         qty = 1;
+    } else if( ammo.is_comestible() ) {
+        qty = std::max( std::min( qty, ammo.charges ), 1 );
     } else {
         debugmsg( "cannot determine reload cost as %s is neither ammo or magazine", ammo.tname() );
         return 0;
