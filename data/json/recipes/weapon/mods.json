@@ -963,7 +963,7 @@
     "using": [ [ "blacksmithing_advanced", 10 ], [ "soldering_standard", 5 ], [ "steel_standard", 2 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "SCREW", "level": 1 } ],
     "components": [
-      [ [ "duct_tape", 35 ] ],
+      [ [ "duct_tape", 35 ], [ "medical_tape", 35 ] ],
       [ [ "motor_tiny", 1 ] ],
       [ [ "power_supply", 1 ] ],
       [ [ "e_scrap", 1 ] ],
