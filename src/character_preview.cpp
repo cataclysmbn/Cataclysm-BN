@@ -177,14 +177,15 @@ class char_preview_adapter : public cata_tiles
             overlay_result result;
             std::multimap<int, overlay_entry> mutation_sorting;
 
-            for( const auto &[eff_type, eff_by_part] : av.get_all_effects() ) {
+            for( const auto &[eff_type, eff_by_part] : av.get_effects() ) {
                 const effect &eff = eff_by_part.begin()->second;
-                if( !eff.is_removed() ) {
-                    result.overlays.emplace_back( overlay_entry{
-                        "effect_" + eff_type.str(),
-                        &eff
-                    } );
+                if( eff.is_removed() ) {
+                    continue;
                 }
+                result.overlays.emplace_back( overlay_entry{
+                    "effect_" + eff_type.str(),
+                    &eff
+                } );
             }
 
             for( const mutation &mut : av.my_mutations ) {
