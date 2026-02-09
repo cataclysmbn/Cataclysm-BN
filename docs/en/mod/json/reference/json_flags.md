@@ -1585,7 +1585,7 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `SPAWN_FRIENDLY` Applied to eggs laid by pets and to pet bots reverted to items. Any monster that
   hatches from said egg will also spawn friendly, and deployable bots flagged with this will skip
   checking for player skills since it's already been configured correctly once already.
-- `SPAWN_MEAN` Applied no where in the code; Add to make a monster always mean, such as for a target dummy; Inverse of SPAWN_FRIENDLY
+- `SPAWN_HOSTILE` Applied no where in the code; Add to make a monster always hostile, such as for a target dummy; Inverse of SPAWN_FRIENDLY
 - `USE_UPS` The tool has the UPS mod and is charged from an UPS.
 - `WARM` A hidden flag used to track an item's journey to/from hot, buffers between HOT and cold.
 - `WET` Item is wet and will slowly dry off (e.g. towel).
