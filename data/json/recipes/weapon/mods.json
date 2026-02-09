@@ -957,11 +957,12 @@
     "subcategory": "CSC_WEAPON_MODS",
     "skill_used": "mechanics",
     "difficulty": 3,
-    "skills_required": [ [ "fabrication", 1 ] ],
+    "skills_required": [ [ "fabrication", 3 ], [ "electronics", 4 ] ], 
     "time": "30 m",
     "autolearn": true,
-    "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ] ],
-    "components": [ [ [ "duct_tape", 35 ] ], [ [ "motor_tiny", 1 ] ], [ [ "string_6", 4 ] ], [ [ "adhesive_proper", 2, "LIST" ] ] ]
+    "using": [ [ "blacksmithing_advanced", 10 ], [ "soldering_standard", 5 ], [ "steel_standard", 2 ] ],
+	"qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_M", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+  "components": [ [ [ "duct_tape", 35 ] ], [ [ "motor_tiny", 1 ] ], [ [ "power_supply", 1 ] ], [ [ "e_scrap", 1 ] ], [ [ "cable", 4 ] ], [ [ "string_6", 4 ] ], [ [ "adhesive_proper", 2, "LIST" ] ] ]
   },
   {
     "type": "recipe",
