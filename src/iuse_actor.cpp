@@ -1313,15 +1313,7 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
         clone->recalc_hp();
         clone->spawn_at_precise( here.get_abs_sub().xy(), spawn_point );
         clone->place_on_map();
-        const std::string default_label = it.get_var( "item_label",
-            it.get_var( "specimen_name", _( "Clone" ) ) );
-        string_input_popup name_popup;
-        name_popup.title( _( "Name the clone" ) )
-                  .description( _( "Enter a name for the clone (leave blank to keep the default label)." ) )
-                  .text( default_label );
-        name_popup.query();
-        const std::string label = name_popup.text().empty() ? default_label : name_popup.text();
-        clone->name = label;
+        clone->name = it.get_var( "specimen_name", _( "Clone" ) );
         overmap_buffer.insert_npc( clone );
         if( !it.is_active() ) {
             p.moves -= moves;
@@ -5671,10 +5663,13 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint &pos ) const
         return 0;
     }
     const requirement_data *const dna_reqs = &requirement_genome_workstation_biomaterial.obj();
-    const inventory crafting_inv = p.crafting_inventory( pos, PICKUP_RANGE, false );
+    const inventory crafting_inv = p.crafting_inventory( pos, PICKUP_RANGE, true );
+    const auto biomaterial_filter = []( const item &it ) {
+        return is_crafting_component( it ) && it.get_var( "specimen_sample" ).empty();
+    };
     const bool can_produce_dna =
         dna_reqs &&
-        dna_reqs->can_make_with_inventory( crafting_inv, is_crafting_component );
+        dna_reqs->can_make_with_inventory( crafting_inv, biomaterial_filter );
     auto genome_drives = p.all_items_with_flag( flag_genome_drive );
     if( genome_drives.size() == 0 ) {
         popup( "You have no valid genome drives." );
@@ -5827,7 +5822,7 @@ int dna_editor_iuse::use( player &p, item &it, bool, const tripoint &pos ) const
         }
         const std::vector<item_comp> &components = component_options.front();
         const std::vector<detached_ptr<item>> consumed_items =
-            p.consume_items( components, 1, is_crafting_component );
+            p.consume_items( components, 1, biomaterial_filter );
         if( consumed_items.empty() ) {
             popup( _( "You need biomaterial to produce DNA." ) );
             return 0;

@@ -17,6 +17,9 @@
 
 namespace cloning_utils
 {
+inline const trait_flag_str_id trait_flag_NO_CLONE( "NO_CLONE" );
+inline const trait_flag_str_id trait_flag_BG_SURVIVAL_STORY( "BG_SURVIVAL_STORY" );
+
 inline auto specimen_size_class( const mtype_id &specimen_id ) -> int
 {
     if( specimen_id.is_null() ) {
@@ -108,11 +111,17 @@ inline auto specimen_mutations_to_string( const Character &source ) -> std::stri
     if( muts.empty() ) {
         return std::string();
     }
-    static const trait_flag_str_id trait_flag_NO_CLONE( "NO_CLONE" );
     std::vector<std::string> names;
     names.reserve( muts.size() );
     std::ranges::for_each( muts, [&]( const trait_id &trait ) {
-        if( trait.obj().flags.contains( trait_flag_NO_CLONE ) ) {
+        const mutation_branch &trait_data = trait.obj();
+        if( trait_data.flags.contains( trait_flag_NO_CLONE ) ) {
+            return;
+        }
+        if( trait_data.flags.contains( trait_flag_BG_SURVIVAL_STORY ) ) {
+            return;
+        }
+        if( trait_data.profession ) {
             return;
         }
         names.push_back( trait.str() );
@@ -132,9 +141,17 @@ inline auto specimen_mutations_from_string( const std::string &mutations ) -> st
             return;
         }
         const trait_id tid( part );
-        if( tid.is_valid() ) {
-            result.push_back( tid );
+        if( !tid.is_valid() ) {
+            return;
         }
+        const mutation_branch &trait_data = tid.obj();
+        if( trait_data.flags.contains( trait_flag_BG_SURVIVAL_STORY ) ) {
+            return;
+        }
+        if( trait_data.profession ) {
+            return;
+        }
+        result.push_back( tid );
     } );
     return result;
 }

@@ -1,5 +1,7 @@
 #include "catalua_bindings.h"
 
+#include <ranges>
+
 #include "activity_type.h"
 #include "avatar.h"
 #include "bionics.h"

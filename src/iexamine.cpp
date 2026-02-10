@@ -5770,19 +5770,6 @@ static void cloning_vat_activate( player &p, const tripoint &examp )
         return;
     }
 
-    const std::vector<item_comp> &components = component_options.front();
-    const auto filter = []( const item &it ) {
-        return is_crafting_component( it ) && !it.has_fault( fault_id( "fault_bionic_nonsterile" ) ) &&
-               !it.has_flag( flag_RADIO_MOD );
-    };
-    const std::vector<detached_ptr<item>> consumed =
-        p.consume_items( components, 1, filter );
-    if( consumed.empty() ) {
-        popup( "You need a sterilized artificial womb and DNA to begin incubation." );
-        return;
-    }
-    p.invalidate_crafting_inventory();
-
     // choose specimen sample
     auto syringes = p.all_items_with_id( itype_dna );
     if( syringes.size() == 0 ) {
@@ -5798,11 +5785,24 @@ static void cloning_vat_activate( player &p, const tripoint &examp )
                                 syringes[z]->display_name(),
                                 to_string( time_duration::from_turns( turns_to_clone * size ) ) ) );
     }
+
     specimen_menu.query();
     const int choice = specimen_menu.ret;
     if( choice < 0 ) {
         return;
     }
+
+    const auto &components = component_options.front();
+    const auto filter = []( const item &it ) {
+        return is_crafting_component( it ) && !it.has_fault( fault_id( "fault_bionic_nonsterile" ) ) &&
+               !it.has_flag( flag_RADIO_MOD );
+    };
+    const auto consumed = p.consume_items( components, 1, filter );
+    if( consumed.empty() ) {
+        popup( "You need a sterilized artificial womb and DNA to begin incubation." );
+        return;
+    }
+    p.invalidate_crafting_inventory();
 
     // reference to the original detached_ptr
     auto &selected_syringe = syringes[choice];
@@ -6081,7 +6081,7 @@ void iexamine::cloning_vat_finalize( const tripoint &examp, const time_point & )
     // success: spawn the completed artificial womb
     sounds::sound( examp, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
     detached_ptr<item> spawned_embryo = item::spawn( itype_embryo, calendar::turn );
-    const std::string specimen_origin = developing_embryo.get_var( "specimen_origin", "monster" );
+    const auto specimen_origin = developing_embryo.get_var( "specimen_origin", "monster" );
     spawned_embryo->set_var( "specimen_origin", specimen_origin );
     spawned_embryo->set_var( "specimen_name", developing_embryo.get_var( "specimen_name" ) );
     spawned_embryo->set_var( "specimen_stats", developing_embryo.get_var( "specimen_stats" ) );
@@ -6091,6 +6091,12 @@ void iexamine::cloning_vat_finalize( const tripoint &examp, const time_point & )
     spawned_embryo->set_var( "specimen_gender", developing_embryo.get_var( "specimen_gender" ) );
     if( specimen_origin == "human" ) {
         spawned_embryo->set_var( "place_npc_override", "human_clone" );
+        const auto specimen_name = developing_embryo.get_var( "specimen_name" );
+        if( !specimen_name.empty() ) {
+            const auto display_name = string_format( "%s (%s)", spawned_embryo->type->nname( 1 ),
+                                                    specimen_name );
+            spawned_embryo->set_var( "item_label", display_name );
+        }
     } else {
         spawned_embryo->set_var( "place_monster_override", developing_embryo.get_var( "specimen_sample" ) );
         spawned_embryo->set_var( "place_monster_override_name",
