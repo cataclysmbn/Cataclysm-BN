@@ -2607,12 +2607,16 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
         src_set = mgr.get_near( zone_type_id( zone_type ), abspos, ACTIVITY_SEARCH_DISTANCE );
         // multiple construction will form a list of targets based on blueprint zones and unfinished constructions
         if( act_id == ACT_MULTIPLE_CONSTRUCTION ) {
+            static const zone_type_id zone_type_CONSTRUCTION_IGNORE( "CONSTRUCTION_IGNORE" );
             for( const tripoint &elem : here.points_in_radius( localpos, ACTIVITY_SEARCH_DISTANCE ) ) {
                 partial_con *pc = here.partial_con_at( elem );
                 if( pc ) {
                     src_set.insert( here.getabs( elem ) );
                 }
             }
+            std::erase_if( src_set, [&]( const tripoint &point ) {
+                return mgr.has( zone_type_CONSTRUCTION_IGNORE, point );
+            } );
             // farming activities encompass tilling, planting, harvesting.
         } else if( act_id == ACT_MULTIPLE_FARM ) {
             dark_capable = true;

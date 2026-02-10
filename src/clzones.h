@@ -150,11 +150,20 @@ class plot_options : public zone_options, public mark_option
 
 class blueprint_options : public zone_options, public mark_option
 {
+    public:
+        enum class blueprint_layout {
+            rectangle_fill,
+            rectangle_border,
+            circle_fill,
+            circle_border,
+        };
+
     private:
         // furn/ter id as string.
         std::string mark;
         construction_group_str_id group = construction_group_str_id::NULL_ID();
         construction_id index;
+        blueprint_layout layout = blueprint_layout::rectangle_fill;
 
         enum query_con_result {
             canceled,
@@ -162,7 +171,13 @@ class blueprint_options : public zone_options, public mark_option
             changed,
         };
 
-        query_con_result query_con();
+        auto query_con() -> query_con_result;
+        enum class query_layout_result {
+            canceled,
+            successful,
+            changed,
+        };
+        auto query_layout() -> query_layout_result;
 
     public:
         std::string get_mark() const override {
@@ -176,6 +191,10 @@ class blueprint_options : public zone_options, public mark_option
             return true;
         }
 
+        auto get_layout() const -> blueprint_layout {
+            return layout;
+        }
+
         construction_id get_final_construction(
             const std::vector<construction_id> &list_constructions,
             const construction_id &id,
@@ -183,6 +202,11 @@ class blueprint_options : public zone_options, public mark_option
 
         bool query_at_creation() override;
         bool query() override;
+
+        auto get_covered_points( const tripoint &start,
+                                 const tripoint &end ) const -> std::vector<tripoint>;
+        auto has_inside( const tripoint &start, const tripoint &end,
+                         const tripoint &candidate ) const -> bool;
 
         std::string get_zone_name_suggestion() const override;
 
@@ -329,11 +353,10 @@ class zone_data
         zone_options &get_options() {
             return *options;
         }
-        bool has_inside( const tripoint &p ) const {
-            return p.x >= start.x && p.x <= end.x &&
-                   p.y >= start.y && p.y <= end.y &&
-                   p.z >= start.z && p.z <= end.z;
+        auto get_options_ptr() const -> shared_ptr_fast<zone_options> {
+            return options;
         }
+        auto has_inside( const tripoint &p ) const -> bool;
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );
 };
@@ -437,4 +460,4 @@ class zone_manager
         void deserialize( JsonIn &jsin );
 };
 
-
+auto get_zone_covered_points( const zone_data &zone ) -> std::vector<tripoint>;

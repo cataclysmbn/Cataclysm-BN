@@ -27,6 +27,7 @@
 #include "memory_fast.h"
 #include "pimpl.h"
 #include "point.h"
+#include "zone_draw_options.h"
 #include "type_id.h"
 #include "location_vector.h"
 
@@ -531,6 +532,7 @@ class game
         /** Checks whether or not there is a zone of particular type nearby */
         bool check_near_zone( const zone_type_id &type, const tripoint &where ) const;
         bool is_zones_manager_open() const;
+        bool is_zone_submap_grid_overlay_enabled() const;
         void zones_manager();
 
         // Look at nearby terrain ';', or select zone points
@@ -658,7 +660,7 @@ class game
         void draw_line( const tripoint &p, const std::vector<tripoint> &points );
         void draw_weather( const weather_printable &wPrint );
         void draw_sct();
-        void draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset );
+        void draw_zones( const zone_draw_options &options );
         // In curses mode, draw critter (if visible!) on its current position into w_terrain.
         // @param center the center of view, same as when calling map::draw
         void draw_critter( const Creature &critter, const tripoint &center );
@@ -1036,6 +1038,8 @@ class game
         bool first_redraw_since_waiting_started = true;
         /** Is Zone manager open or not - changes graphics of some zone tiles */
         bool zones_manager_open = false;
+        /** Zone manager toggle for submap grid overlay (only active while the UI is open) */
+        bool zone_submap_grid_overlay = false;
 
         std::unique_ptr<special_game> gamemode;
 
@@ -1104,5 +1108,3 @@ namespace cata_event_dispatch
 // @param p The point the avatar is moving to on map m
 void avatar_moves( const avatar &u, const map &m, const tripoint &p );
 } // namespace cata_event_dispatch
-
-

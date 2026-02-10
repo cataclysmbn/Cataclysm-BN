@@ -446,6 +446,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
     ctxt.register_action( "DOWN", to_translation( "Move cursor down" ) );
     ctxt.register_action( "RIGHT", to_translation( "Move tab right" ) );
     ctxt.register_action( "LEFT", to_translation( "Move tab left" ) );
+    ctxt.register_action( "TAB", to_translation( "Move tab right" ) );
+    ctxt.register_action( "BACKTAB", to_translation( "Move tab left" ) );
     ctxt.register_action( "PAGE_UP" );
     ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "CONFIRM" );
@@ -917,14 +919,14 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             } else {
                 select = constructs.size() - 1;
             }
-        } else if( action == "LEFT" ) {
+        } else if( action == "LEFT" || action == "BACKTAB" ) {
             update_info = true;
             update_cat = true;
             tabindex--;
             if( tabindex < 0 ) {
                 tabindex = tabcount - 1;
             }
-        } else if( action == "RIGHT" ) {
+        } else if( action == "RIGHT" || action == "TAB" ) {
             update_info = true;
             update_cat = true;
             tabindex = ( tabindex + 1 ) % tabcount;
