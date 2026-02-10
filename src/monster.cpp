@@ -3065,31 +3065,27 @@ void monster::drop_items_on_death()
     // Apply both global and category-specific spawn rates
     const auto global_spawn_rate = get_option<float>( "ITEM_SPAWNRATE" );
 
-    // Filter items based on combined spawn rates
-    std::vector<detached_ptr<item>> remaining;
-    for( auto &it : items ) {
+    // Filter items based on combined spawn rates using std::erase_if
+    std::erase_if( items, [global_spawn_rate]( const auto & it ) {
         // Always keep mission items
         if( it->has_flag( flag_MISSION_ITEM ) ) {
-            remaining.push_back( std::move( it ) );
-            continue;
+            return false; // keep
         }
 
         // Calculate combined rate: global × category
         const auto category_rate = get_item_category_spawn_rate( *it );
         const auto final_rate = std::min( global_spawn_rate * category_rate, 1.0f );
 
-        // Keep item based on final probability
-        if( rng_float( 0, 1 ) < final_rate ) {
-            remaining.push_back( std::move( it ) );
-        }
-    }
+        // Remove item based on final probability (erase_if removes when predicate is true)
+        return rng_float( 0, 1 ) >= final_rate;
+    } );
 
     // If there aren't any items left, there's nothing left to do
-    if( remaining.empty() ) {
+    if( items.empty() ) {
         return;
     }
 
-    g->m.spawn_items( pos(), std::move( remaining ) );
+    g->m.spawn_items( pos(), std::move( items ) );
 }
 
 void monster::process_one_effect( effect &it, bool is_new )
