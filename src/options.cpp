@@ -1861,6 +1861,10 @@ void options_manager::add_options_interface()
          translate_marker( "Highlight unread recipes to allow tracking of newly learned recipes." ),
          true
        );
+    add( "ENABLE_NESTED_CATEGORIES", interface, translate_marker( "Enable nested crafting categories" ),
+         translate_marker( "Show nested crafting categories in the crafting UI.  When disabled, nested recipes appear directly in their normal subcategories." ),
+         true
+       );
     add( "HIGHLIGHT_UNREAD_ITEMS", interface, translate_marker( "Highlight unread items" ),
          translate_marker( "Highlight unread items to allow tracking of newly discovered items." ),
          true
