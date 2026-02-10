@@ -334,7 +334,7 @@ static void draw_grid( const catacurses::window &w, const int list_width )
     mvwprintz( w, point( 2, 0 ), c_light_red, _( " Construction " ) );
     // draw internal lines
     mvwvline( w, point( list_width, 1 ), LINE_XOXO, getmaxy( w ) - 2 );
-    mvwhline( w, point( 1, 2 ), LINE_OXOX, list_width );
+    mvwhline( w, point( 1, 2 ), LINE_OXOX, getmaxx( w ) - 2 );
     // draw intersections
     mvwputch( w, point( list_width, 0 ), c_light_gray, LINE_OXXX );
     mvwputch( w, point( list_width, getmaxy( w ) - 1 ), c_light_gray, LINE_XXOX );
@@ -410,6 +410,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
     int w_height = 0;
     int w_width = 0;
     catacurses::window w_con;
+    catacurses::window w_tabs;
 
     int w_list_width = 0;
     int w_list_height = 0;
@@ -456,26 +457,27 @@ std::optional<construction_id> construction_menu( const bool blueprint )
     ctxt.register_action( "RESET_FILTER" );
 
     const std::vector<construction_category> &construct_cat = construction_categories::get_all();
-    std::vector<size_t> construct_cat_order( construct_cat.size() );
-    {
-        std::iota( construct_cat_order.begin(), construct_cat_order.end(), // NOLINT(modernize-use-ranges)
-                   0 );
-        const auto move_to_end = [&]( const construction_category_id & id ) -> void {
-            auto it = std::ranges::find_if( construct_cat_order, [&]( auto & v )
-            {
-                return construct_cat[v].id == id;
-            } );
-            if( it != construct_cat_order.end() )
-            {
-                std::rotate( it, it + 1, construct_cat_order.end() );
-            }
-        };
-
-        // Force the construction list to be { ..., FAVORITE, FILTER }
-        move_to_end( construction_category_FAVORITE );
-        move_to_end( construction_category_FILTER );
+    std::vector<size_t> construct_cat_order;
+    construct_cat_order.reserve( construct_cat.size() );
+    const auto append_category = [&]( const construction_category_id & id ) {
+        const auto it = std::ranges::find_if( construct_cat, [&]( const construction_category & cat ) {
+            return cat.id == id;
+        } );
+        if( it != construct_cat.end() ) {
+            construct_cat_order.push_back( std::distance( construct_cat.begin(), it ) );
+        }
+    };
+    append_category( construction_category_ALL );
+    append_category( construction_category_FAVORITE );
+    for( size_t i = 0; i < construct_cat.size(); ++i ) {
+        const construction_category_id &id = construct_cat[i].id;
+        if( id == construction_category_ALL || id == construction_category_FAVORITE ||
+            id == construction_category_FILTER ) {
+            continue;
+        }
+        construct_cat_order.push_back( i );
     }
-    const int tabcount = static_cast<int>( construction_category::count() );
+    const int tabcount = static_cast<int>( construct_cat_order.size() );
 
     std::string filter;
 
@@ -648,6 +650,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
         const int w_y0 = ( TERMY > w_height ) ? ( TERMY - w_height ) / 2 : 0;
         const int w_x0 = ( TERMX > w_width ) ? ( TERMX - w_width ) / 2 : 0;
         w_con = catacurses::newwin( w_height, w_width, point( w_x0, w_y0 ) );
+        w_tabs = catacurses::newwin( 3, w_width - 2, point( w_x0 + 1, w_y0 ) );
 
         w_list_width = static_cast<int>( .375 * w_width );
         w_list_height = w_height - 4;
@@ -667,12 +670,50 @@ std::optional<construction_id> construction_menu( const bool blueprint )
         draw_grid( w_con, w_list_width + w_list_x0 );
 
         // Erase existing tab selection & list of constructions
-        mvwhline( w_con, point_south_east, ' ', w_list_width );
+        mvwhline( w_con, point( 1, 1 ), ' ', w_width - 2 );
         werase( w_list );
-        // Print new tab listing
-        // NOLINTNEXTLINE(cata-use-named-point-constants)
-        mvwprintz( w_con, point( 1, 1 ), c_yellow, "<< %s >>",
-                   construct_cat[construct_cat_order[tabindex]].name() );
+        // Print tab listing with craft-style tabs and overflow indicators
+        std::vector<std::string> tab_labels;
+        tab_labels.reserve( construct_cat_order.size() );
+        std::ranges::transform( construct_cat_order, std::back_inserter( tab_labels ),
+        [&]( const size_t idx ) {
+            return construct_cat[idx].name();
+        } );
+        const auto tab_width = []( const std::string & label ) -> int {
+            return utf8_width( label ) + 3; // padding similar to craft tabs
+        };
+        const int tabs_available = getmaxx( w_tabs ) - 2;
+        int first_tab = 0;
+        const auto last_visible_tab = [&]( const int start_idx ) -> int {
+            int used = 0;
+            int last = start_idx - 1;
+            for( size_t i = static_cast<size_t>( start_idx ); i < tab_labels.size(); ++i ) {
+                const int needed = tab_width( tab_labels[i] );
+                if( used + needed > tabs_available ) {
+                    break;
+                }
+                used += needed;
+                last = static_cast<int>( i );
+            }
+            return last;
+        };
+        int last_tab = last_visible_tab( first_tab );
+        while( tabindex > last_tab && first_tab < static_cast<int>( tab_labels.size() ) ) {
+            first_tab++;
+            last_tab = last_visible_tab( first_tab );
+        }
+        std::vector<std::string> visible_tabs;
+        for( int i = first_tab; i <= last_tab; ++i ) {
+            visible_tabs.push_back( tab_labels[i] );
+        }
+        werase( w_tabs );
+        draw_tabs( w_tabs, visible_tabs, static_cast<size_t>( tabindex - first_tab ) );
+        if( first_tab > 0 ) {
+            mvwprintz( w_tabs, point( 0, 1 ), c_light_gray, "<" );
+        }
+        if( last_tab + 1 < static_cast<int>( tab_labels.size() ) ) {
+            mvwprintz( w_tabs, point( getmaxx( w_tabs ) - 1, 1 ), c_light_gray, ">" );
+        }
         // Determine where in the master list to start printing
         calcStartPos( offset, select, w_list_height, constructs.size() );
         // Print the constructions between offset and max (or how many will fit)
@@ -740,6 +781,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
 
         draw_scrollbar( w_con, select, w_list_height, constructs.size(), point( 0, 3 ) );
         wnoutrefresh( w_con );
+        wnoutrefresh( w_tabs );
 
         wnoutrefresh( w_list );
     } );
@@ -750,29 +792,41 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             construction_group_str_id last_construction = construction_group_str_id::NULL_ID();
             if( isnew ) {
                 filter = uistate.construction_filter;
-                tabindex = uistate.construction_tab.is_valid()
-                           ? uistate.construction_tab.id().to_i() : 0;
+                if( uistate.construction_tab.is_valid() ) {
+                    const auto it = std::ranges::find_if( construct_cat_order,
+                    [&]( const size_t idx ) {
+                        return construct_cat[idx].id == uistate.construction_tab;
+                    } );
+                    if( it != construct_cat_order.end() ) {
+                        tabindex = std::distance( construct_cat_order.begin(), it );
+                    }
+                }
                 if( uistate.last_construction.is_valid() ) {
                     last_construction = uistate.last_construction;
                 }
             } else if( select >= 0 && static_cast<size_t>( select ) < constructs.size() ) {
                 last_construction = constructs[select];
             }
-            category_id = construct_cat[construct_cat_order[tabindex]].id;
-            if( category_id == construction_category_ALL ) {
-                constructs = available;
-            } else if( category_id == construction_category_FILTER ) {
+            const auto fill_constructs = [&]( const std::vector<construction_group_str_id> &source ) {
                 constructs.clear();
-                std::ranges::copy_if( available,
-                                      std::back_inserter( constructs ),
+                if( filter.empty() ) {
+                    constructs = source;
+                    return;
+                }
+                std::ranges::copy_if( source, std::back_inserter( constructs ),
                 [&]( const construction_group_str_id & group ) {
                     return lcmatch( group->name(), filter );
                 } );
+            };
+            category_id = construct_cat[construct_cat_order[tabindex]].id;
+            if( category_id == construction_category_ALL ) {
+                fill_constructs( available );
             } else if( category_id == construction_category_FAVORITE ) {
-                constructs.clear();
-                std::ranges::copy_if( available, std::back_inserter( constructs ), is_favorite );
+                std::vector<construction_group_str_id> favorites;
+                std::ranges::copy_if( available, std::back_inserter( favorites ), is_favorite );
+                fill_constructs( favorites );
             } else {
-                constructs = cat_available[category_id];
+                fill_constructs( cat_available[category_id] );
             }
             select = 0;
             if( last_construction ) {
@@ -789,7 +843,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             update_info = false;
 
             notes.clear();
-            if( tabindex == tabcount - 1 && !filter.empty() ) {
+            if( !filter.empty() ) {
                 notes.push_back( string_format( _( "Press [<color_red>%s</color>] to clear filter." ),
                                                 ctxt.get_desc( "RESET_FILTER" ) ) );
             }
@@ -834,17 +888,16 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             .width( 50 )
             .description( _( "Filter" ) )
             .max_length( 100 )
-            .text( tabindex == tabcount - 1 ? filter : std::string() )
+            .text( filter )
             .query();
             if( popup.confirmed() ) {
                 filter = popup.text();
                 uistate.construction_filter = filter;
                 update_info = true;
                 update_cat = true;
-                tabindex = tabcount - 1;
             }
         } else if( action == "RESET_FILTER" ) {
-            if( tabindex == tabcount - 1 && !filter.empty() ) {
+            if( !filter.empty() ) {
                 filter.clear();
                 uistate.construction_filter.clear();
                 update_info = true;
