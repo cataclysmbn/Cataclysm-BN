@@ -2271,5 +2271,27 @@
       "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "string_6", "count": 4 }, { "item": "tarp", "count": 1 } ]
     },
     "flags": [ "TRANSPARENT", "FLAMMABLE", "THIN_OBSTACLE", "INDOORS", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
+  },
+  {
+    "type": "scenario",
+    "id": "largebuilding",
+    "name": "Large Building",
+    "obsolete": true,
+    "points": -2,
+    "description": "Whether due to stubbornness, ignorance, or just plain bad luck, you missed the evacuation, and are stuck in a large building full of the risen dead.",
+    "allowed_locs": [
+      "sloc_mall_loading_area",
+      "sloc_mall_loading_area_roof",
+      "sloc_mall_food_court",
+      "sloc_apartments_rooftop",
+      "sloc_apartments_house",
+      "sloc_hospital",
+      "sloc_bastion_fort",
+      "sloc_marina",
+      "sloc_convention_center_rooftop"
+    ],
+    "start_name": "In Large Building",
+    "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
+    "flags": [ "CITY_START", "LONE_START" ]
   }
 ]

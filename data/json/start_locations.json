@@ -208,6 +208,12 @@
   },
   {
     "type": "start_location",
+    "id": "sloc_cabin_lapin",
+    "name": "Warrener's Cabin",
+    "terrain": [ "cabin_lapin" ]
+  },
+  {
+    "type": "start_location",
     "id": "sloc_hospital",
     "name": "Hospital",
     "terrain": [ { "om_terrain": "hospital", "om_terrain_match_type": "PREFIX" } ]
@@ -274,6 +280,13 @@
     "id": "sloc_ice_lab_finale",
     "name": "Deep-frozen science lab",
     "terrain": [ "ice_lab_finale" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_hub_01",
+    "name": "Hub 01",
+    "terrain": [ "robofachq_surface_parking" ],
+    "flags": [ "ALLOW_OUTSIDE" ]
   },
   {
     "type": "start_location",
@@ -374,6 +387,12 @@
   },
   {
     "type": "start_location",
+    "id": "sloc_farm_isherwood",
+    "name": "Isherwood Farms",
+    "terrain": [ "farm_isherwood_2" ]
+  },
+  {
+    "type": "start_location",
     "id": "sloc_church",
     "name": "Church",
     "terrain": [ "church_3rdfloor_1", "church_1", "church_steeple_end", "church" ]
@@ -435,6 +454,24 @@
     "id": "sloc_horse_ranch",
     "name": "Horse Ranch",
     "terrain": [ "horse_farm_13" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_occupied_chemlab",
+    "name": "Chemist's Cabin",
+    "terrain": [ "chemical_lab_ocu" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_occupied_scrapyard",
+    "name": "Inhabited Scrap Yard",
+    "terrain": [ "smallscrapyard_ocu" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_occupied_lumbermill",
+    "name": "Inhabited Lumbermill",
+    "terrain": [ "lumbermill_1_0_ocu" ]
   },
   {
     "type": "start_location",
