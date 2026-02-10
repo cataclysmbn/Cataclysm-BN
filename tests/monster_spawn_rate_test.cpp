@@ -14,12 +14,11 @@
 #include "type_id.h"
 
 // Test category-based spawn rates for monster drops
+// Note: These are simplified tests that verify the option system behavior.
+// Full integration tests would require setting up a complete game world,
+// monsters with death_drops item groups, and checking actual item spawns.
 TEST_CASE( "monster_drops_respect_category_spawn_rates", "[monster][spawn_rate][item]" )
 {
-    // Save current options
-    const auto saved_global_rate = get_option<float>( "ITEM_SPAWNRATE" );
-    const auto saved_gun_rate = get_option<float>( "SPAWN_RATE_guns" );
-
     SECTION( "global spawn rate of zero prevents all drops except mission items" ) {
         override_option opt_global( "ITEM_SPAWNRATE", "0.0" );
         override_option opt_guns( "SPAWN_RATE_guns", "1.0" );
