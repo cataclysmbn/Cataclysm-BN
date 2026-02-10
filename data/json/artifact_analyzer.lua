@@ -66,7 +66,7 @@ local function describe_artifact(it)
 end
 
 ---@type fun(who: Character, item: Item, pos: Tripoint): integer
-mod.artifact_analyzer.menu = function(params)
+artifact_analyzer.menu = function(params)
   local who = params.who
   local item = params.item
   local pos = params.pos
