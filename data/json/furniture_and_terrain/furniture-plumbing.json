@@ -215,18 +215,18 @@
       ]
     }
   },
-  {
-    "type": "furniture",
-    "id": "f_water_purifier",
-    "looks_like": "f_water_heater",
-    "name": "water purifier",
-    "description": "This removes ions dissolved in the water, making it pretty clean, if you care about that kind of thing.",
-    "symbol": "W",
-    "bgcolor": "blue",
-    "move_cost_mod": -1,
-    "coverage": 50,
-    "required_str": -1,
-    "deconstruct": {
+    {
+      "type": "furniture",
+      "abstract": "f_water_purifier_base",
+      "looks_like": "f_water_heater",
+      "name": "abstract water purifier",
+      "description": "Abstract furniture.  If you see this, something went wrong.",
+      "symbol": "W",
+      "bgcolor": "blue",
+      "move_cost_mod": -1,
+      "coverage": 50,
+      "required_str": -1,
+      "deconstruct": {
       "items": [
         { "item": "scrap", "count": [ 2, 6 ] },
         { "item": "steel_chunk", "count": [ 1, 3 ] },
@@ -256,59 +256,59 @@
         { "item": "cu_pipe", "count": [ 1, 3 ] }
       ],
       "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 8, 15 ], "destroy_threshold": 50, "block_unaimed_chance": "25%" }
-    }
-  },
-  {
-    "type": "furniture",
-    "id": "f_water_purifier_plumbed_off",
-    "copy-from": "f_water_purifier",
-    "looks_like": "f_water_purifier",
-    "name": "water purifier (plumbed, off)",
-    "description": "A water purifier hooked into a fluid grid.  It is switched off.",
-    "symbol": "W",
-    "bgcolor": "blue",
-    "examine_action": "transform",
-    "transforms_into": "f_water_purifier_plumbed",
-    "prompt": "Switch on the water purifier.",
-    "message": "You switch on the water purifier."
-  },
-  {
-    "type": "furniture",
-    "id": "f_water_purifier_plumbed",
-    "copy-from": "f_water_purifier",
-    "looks_like": "f_water_purifier",
-    "name": "water purifier (plumbed)",
-    "description": "A water purifier hooked into a fluid grid.  It has no power.",
-    "symbol": "W",
-    "bgcolor": "blue",
-    "examine_action": "transform",
-    "transforms_into": "f_water_purifier_plumbed_off",
-    "prompt": "Switch off the water purifier.",
-    "message": "You switch off the water purifier.",
-    "active": [
-      "charge_watcher",
+        "ranged": { "reduction": [ 8, 15 ], "destroy_threshold": 50, "block_unaimed_chance": "25%" }
+        }
+      },
       {
-        "min_power": 30,
-        "transform": { "id": "f_water_purifier_plumbed_on", "msg": "The water purifier starts up." }
-      }
-    ]
-  },
-  {
-    "type": "furniture",
-    "id": "f_water_purifier_plumbed_on",
-    "copy-from": "f_water_purifier",
-    "looks_like": "f_water_purifier",
-    "name": "water purifier (plumbed, on)",
-    "description": "A water purifier hooked into a fluid grid.  It is switched on.",
-    "symbol": "W",
-    "bgcolor": "blue",
-    "examine_action": "transform",
-    "transforms_into": "f_water_purifier_plumbed_off",
-    "prompt": "Switch off the water purifier.",
-    "message": "You switch off the water purifier.",
-    "fluid_grid": {
-      "role": "transformer",
+        "type": "furniture",
+        "id": "f_water_purifier_off",
+        "copy-from": "f_water_purifier_base",
+        "looks_like": "f_water_purifier",
+        "name": "water purifier (off)",
+        "description": "This removes ions dissolved in the water, making it pretty clean, if you care about that kind of thing.  It is hooked into a fluid grid and switched off.",
+        "symbol": "W",
+        "bgcolor": "blue",
+        "examine_action": "transform",
+        "transforms_into": "f_water_purifier",
+        "prompt": "Switch on the water purifier.",
+        "message": "You switch on the water purifier."
+      },
+      {
+        "type": "furniture",
+        "id": "f_water_purifier",
+        "copy-from": "f_water_purifier_base",
+        "looks_like": "f_water_purifier",
+        "name": "water purifier",
+        "description": "This removes ions dissolved in the water, making it pretty clean, if you care about that kind of thing.  It is hooked into a fluid grid.",
+        "symbol": "W",
+        "bgcolor": "blue",
+        "examine_action": "transform",
+        "transforms_into": "f_water_purifier_off",
+        "prompt": "Switch off the water purifier.",
+        "message": "You switch off the water purifier.",
+        "active": [
+          "charge_watcher",
+          {
+            "min_power": 30,
+            "transform": { "id": "f_water_purifier_on", "msg": "The water purifier starts up." }
+          }
+        ]
+      },
+      {
+        "type": "furniture",
+        "id": "f_water_purifier_on",
+        "copy-from": "f_water_purifier_base",
+        "looks_like": "f_water_purifier",
+        "name": "water purifier (on)",
+        "description": "This removes ions dissolved in the water, making it pretty clean, if you care about that kind of thing.  It is hooked into a fluid grid and switched on.",
+        "symbol": "W",
+      "bgcolor": "blue",
+      "examine_action": "transform",
+      "transforms_into": "f_water_purifier_off",
+      "prompt": "Switch off the water purifier.",
+      "message": "You switch off the water purifier.",
+      "fluid_grid": {
+        "role": "transformer",
       "allow_input": false,
       "allow_output": false,
       "allowed_liquids": [ "water", "water_clean" ],
@@ -319,15 +319,15 @@
         ]
       }
     },
-    "active": [
-      "steady_consumer",
-      {
-        "power": 40,
-        "consume_every": "600 s",
-        "transform": { "id": "f_water_purifier_plumbed", "msg": "The water purifier shuts down." }
-      }
-    ]
-  },
+      "active": [
+        "steady_consumer",
+        {
+          "power": 40,
+          "consume_every": "600 s",
+          "transform": { "id": "f_water_purifier", "msg": "The water purifier shuts down." }
+        }
+      ]
+    },
   {
     "type": "furniture",
     "id": "f_rain_collector_plumbed",
