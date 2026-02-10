@@ -45,7 +45,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "peanut_bush", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "peanut_bush", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_peanut",
     "dark_craftable": true
@@ -58,9 +58,9 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "peanut_bush"} ],
+    "byproducts": [ { "item": "peanut_bush"}, { "item": "material_soil", "charges": 4 } ],
     "pre_terrain": "t_shrub_peanut",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_peanut_bush",
 	"dark_craftable": true
   },
@@ -72,7 +72,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "peanut_bush", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "peanut_bush", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_peanut_harvested",
     "dark_craftable": true
@@ -87,7 +87,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "peanut_bush_h"} ],
     "pre_terrain": "t_shrub_peanut_harvested",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_peanut_bush_h",
 	"dark_craftable": true
   },
@@ -99,7 +99,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "blueberry_bush", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "blueberry_bush", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_blueberry",
     "dark_craftable": true
@@ -114,7 +114,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "blueberry_bush"} ],
     "pre_terrain": "t_shrub_blueberry",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_blueberry_bush",
 	"dark_craftable": true
   },
@@ -126,7 +126,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "blueberry_bush_h", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "blueberry_bush_h", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_blueberry_harvested",
     "dark_craftable": true
@@ -141,7 +141,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "blueberry_bush_h"} ],
     "pre_terrain": "t_shrub_blueberry_harvested",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_blueberry_bush_h",
 	"dark_craftable": true
   },
@@ -153,7 +153,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "strawberry_bush", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "strawberry_bush", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_strawberry",
     "dark_craftable": true
@@ -168,7 +168,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "strawberry_bush"} ],
     "pre_terrain": "t_shrub_strawberry",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_strawberry_bush",
 	"dark_craftable": true
   },
@@ -180,7 +180,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "strawberry_bush_h", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "strawberry_bush_h", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_strawberry_harvested",
     "dark_craftable": true
@@ -195,7 +195,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "strawberry_bush_h"} ],
     "pre_terrain": "t_shrub_strawberry_harvested",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_strawberry_bush_h",
 	"dark_craftable": true
   },
@@ -207,7 +207,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "blackberry_bush", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "blackberry_bush", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_blackberry",
     "dark_craftable": true
@@ -222,7 +222,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "blackberry_bush"} ],
     "pre_terrain": "t_shrub_blackberry",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_blackberry_bush",
 	"dark_craftable": true
   },
@@ -234,7 +234,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "blackberry_bush_h", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "blackberry_bush_h", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_blackberry_harvested",
     "dark_craftable": true
@@ -249,7 +249,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "blackberry_bush_h"} ],
     "pre_terrain": "t_shrub_blackberry_harvested",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_blackberry_bush_h",
 	"dark_craftable": true
   },
@@ -261,7 +261,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "huckleberry_bush", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "huckleberry_bush", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_huckleberry",
     "dark_craftable": true
@@ -276,7 +276,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "huckleberry_bush"} ],
     "pre_terrain": "t_shrub_huckleberry",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_huckleberry_bush",
 	"dark_craftable": true
   },
@@ -288,7 +288,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "huckleberry_bush_h", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "huckleberry_bush_h", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_huckleberry_harvested",
     "dark_craftable": true
@@ -303,7 +303,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "huckleberry_bush_h"} ],
     "pre_terrain": "t_shrub_huckleberry_harvested",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_huckleberry_bush_h",
 	"dark_craftable": true
   },
@@ -315,7 +315,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "raspberry_bush", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "raspberry_bush", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_raspberry",
     "dark_craftable": true
@@ -330,7 +330,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "raspberry_bush"} ],
     "pre_terrain": "t_shrub_raspberry",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_raspberry_bush",
 	"dark_craftable": true
   },
@@ -342,7 +342,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "raspberry_bush_h", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "raspberry_bush_h", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_raspberry_harvested",
     "dark_craftable": true
@@ -357,7 +357,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "raspberry_bush_h"} ],
     "pre_terrain": "t_shrub_raspberry_harvested",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_raspberry_bush_h",
 	"dark_craftable": true
   },
@@ -369,7 +369,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "grape_bush", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "grape_bush", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_grape",
     "dark_craftable": true
@@ -384,7 +384,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "grape_bush"} ],
     "pre_terrain": "t_shrub_grape",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_grape_bush",
 	"dark_craftable": true
   },
@@ -396,7 +396,7 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "15 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "components": [ [ [ "grape_bush_h", 1 ] ], [ [ "water", 6 ], [ "water_clean", 6 ] ], [ [ "material_soil", 1 ] ] ],
+    "components": [ [ [ "grape_bush_h", 1 ] ], [ [ "water", 4 ], [ "water_clean", 4 ] ], [ [ "material_soil", 4 ] ] ],
     "pre_terrain": "t_pit_shallow",
     "post_terrain": "t_shrub_grape_harvested",
     "dark_craftable": true
@@ -411,7 +411,7 @@
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
     "byproducts": [ { "item": "grape_bush_h"} ],
     "pre_terrain": "t_shrub_grape_harvested",
-    "post_terrain": "t_dirt",
+    "post_terrain": "t_pit_shallow",
     "group": "dig_grape_bush_h",
 	"dark_craftable": true
   }
