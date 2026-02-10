@@ -744,15 +744,16 @@ const recipe *select_crafting_recipe( int &batch_size_out )
             return std::make_pair( recipes.hidden(), true );
         } else if( subcat == "CSC_*_NESTED" ) {
             return std::make_pair( enable_nested_categories ? recipes.nested()
-                                  : std::vector<const recipe *>(), false );
+                                   : std::vector<const recipe *>(), false );
         } else {
             return std::make_pair( recipes.in_category( cat, subcat != "CSC_ALL" ? subcat : "" ), false );
         }
     };
 
-    const auto remove_nested_categories = [enable_nested_categories]( std::vector<const recipe *> &recipes ) {
+    const auto remove_nested_categories = [enable_nested_categories]( std::vector<const recipe *>
+    &recipes ) {
         if( !enable_nested_categories ) {
-            std::erase_if( recipes, []( const recipe *recp ) {
+            std::erase_if( recipes, []( const recipe * recp ) {
                 return recp->is_nested();
             } );
         }
@@ -1060,7 +1061,7 @@ const recipe *select_crafting_recipe( int &batch_size_out )
 
                 if( enable_nested_categories ) {
                     auto nested_child_ids = std::unordered_set<recipe_id>();
-                    std::ranges::for_each( current, [&]( const recipe *recp ) {
+                    std::ranges::for_each( current, [&]( const recipe * recp ) {
                         if( recp->is_nested() ) {
                             nested_child_ids.insert( recp->nested_category_data.begin(),
                                                      recp->nested_category_data.end() );
@@ -1069,7 +1070,7 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                     if( !nested_child_ids.empty() ) {
                         auto filtered_current = std::vector<const recipe *>();
                         std::ranges::copy_if( current, std::back_inserter( filtered_current ),
-                        [&]( const recipe *recp ) {
+                        [&]( const recipe * recp ) {
                             return recp->is_nested() || !nested_child_ids.contains( recp->ident() );
                         } );
                         current = std::move( filtered_current );
