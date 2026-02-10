@@ -1454,6 +1454,9 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
             return;
         }
         auto adjusted_batches = std::numeric_limits<double>::max();
+        if( request.recipe->inputs.empty() ) {
+            adjusted_batches = scaled_batches;
+        }
         std::ranges::for_each( request.recipe->inputs, [&]( const fluid_grid_transform_io & io ) {
             const auto amount_ml = units::to_milliliter<double>( io.amount );
             if( amount_ml <= 0.0 ) {

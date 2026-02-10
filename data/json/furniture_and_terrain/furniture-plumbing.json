@@ -294,10 +294,10 @@
           }
         ]
       },
-      {
-        "type": "furniture",
-        "id": "f_water_purifier_on",
-        "copy-from": "f_water_purifier_base",
+    {
+      "type": "furniture",
+      "id": "f_water_purifier_on",
+      "copy-from": "f_water_purifier_base",
         "looks_like": "f_water_purifier",
         "name": "water purifier (on)",
         "description": "This removes ions dissolved in the water, making it pretty clean, if you care about that kind of thing.  It is hooked into a fluid grid and switched on.",
@@ -328,9 +328,111 @@
         }
       ]
     },
-  {
-    "type": "furniture",
-    "id": "f_rain_collector_plumbed",
+    {
+      "type": "furniture",
+      "abstract": "f_electric_well_pump_base",
+      "looks_like": "f_debug_pump",
+      "name": "abstract electric well pump",
+      "description": "Abstract furniture.  If you see this, something went wrong.",
+      "symbol": "&",
+      "color": "light_gray",
+      "move_cost_mod": 6,
+      "coverage": 40,
+      "required_str": -1,
+      "flags": [ "TRANSPARENT", "THIN_OBSTACLE" ],
+      "deconstruct": {
+        "items": [
+          { "item": "well_pump", "count": 1 },
+          { "item": "pipe", "count": 6 },
+          { "item": "motor_small", "count": 1 },
+          { "item": "power_supply", "count": 1 },
+          { "item": "cable", "charges": [ 5, 10 ] }
+        ]
+      },
+      "bash": {
+        "str_min": 15,
+        "str_max": 80,
+        "sound": "whack!",
+        "sound_fail": "thunk.",
+        "items": [
+          { "item": "steel_chunk", "count": [ 0, 2 ] },
+          { "item": "scrap", "count": [ 3, 6 ] },
+          { "item": "pipe", "count": [ 0, 2 ] }
+        ]
+      }
+    },
+    {
+      "type": "furniture",
+      "id": "f_electric_well_pump_off",
+      "copy-from": "f_electric_well_pump_base",
+      "looks_like": "f_debug_pump",
+      "name": "electric well pump (off)",
+      "description": "An electric well pump connected to a fluid grid.  It is switched off.",
+      "symbol": "&",
+      "color": "light_gray",
+      "examine_action": "transform",
+      "transforms_into": "f_electric_well_pump",
+      "prompt": "Switch on the electric well pump.",
+      "message": "You switch on the electric well pump."
+    },
+    {
+      "type": "furniture",
+      "id": "f_electric_well_pump",
+      "copy-from": "f_electric_well_pump_base",
+      "looks_like": "f_debug_pump",
+      "name": "electric well pump",
+      "description": "An electric well pump connected to a fluid grid.  It has no power.",
+      "symbol": "&",
+      "color": "light_gray",
+      "examine_action": "transform",
+      "transforms_into": "f_electric_well_pump_off",
+      "prompt": "Switch off the electric well pump.",
+      "message": "You switch off the electric well pump.",
+      "active": [
+        "charge_watcher",
+        {
+          "min_power": 30,
+          "transform": { "id": "f_electric_well_pump_on", "msg": "The electric well pump starts up." }
+        }
+      ]
+    },
+    {
+      "type": "furniture",
+      "id": "f_electric_well_pump_on",
+      "copy-from": "f_electric_well_pump_base",
+      "looks_like": "f_debug_pump",
+      "name": "electric well pump (on)",
+      "description": "An electric well pump connected to a fluid grid.  It is switched on.",
+      "symbol": "&",
+      "color": "light_gray",
+      "examine_action": "transform",
+      "transforms_into": "f_electric_well_pump_off",
+      "prompt": "Switch off the electric well pump.",
+      "message": "You switch off the electric well pump.",
+      "fluid_grid": {
+        "role": "transformer",
+        "allow_input": false,
+        "allow_output": false,
+        "allowed_liquids": [ "water" ],
+        "transformer": {
+          "tick_interval": "10 m",
+          "transforms": [
+            { "outputs": [ { "liquid": "water", "amount": "5 L" } ] }
+          ]
+        }
+      },
+      "active": [
+        "steady_consumer",
+        {
+          "power": 30,
+          "consume_every": "600 s",
+          "transform": { "id": "f_electric_well_pump", "msg": "The electric well pump shuts down." }
+        }
+      ]
+    },
+    {
+      "type": "furniture",
+      "id": "f_rain_collector_plumbed",
     "name": "rain collector (plumbed)",
     "description": "A plumbed rain collector that feeds a fluid grid when it is raining.",
     "symbol": "U",

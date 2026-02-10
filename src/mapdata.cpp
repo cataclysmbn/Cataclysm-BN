@@ -1694,7 +1694,12 @@ void furn_t::load( const JsonObject &jo, const std::string &src )
                         if( transform_obj.has_array( "inputs" ) ) {
                             parse_io( transform_obj.get_array( "inputs" ), recipe.inputs );
                         }
-                        parse_io( transform_obj.get_array( "outputs" ), recipe.outputs );
+                        if( transform_obj.has_array( "outputs" ) ) {
+                            parse_io( transform_obj.get_array( "outputs" ), recipe.outputs );
+                        }
+                        if( recipe.inputs.empty() && recipe.outputs.empty() ) {
+                            debugmsg( "fluid grid transformer entry missing inputs/outputs in %s", id.c_str() );
+                        }
                         transformer.transforms.push_back( recipe );
                     }
                 }
