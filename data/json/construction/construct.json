@@ -1108,40 +1108,30 @@
     "pre_flags": "PIT_DEEP",
     "post_terrain": "t_covered_well"
   },
-    {
-      "type": "construction",
-      "id": "constr_water_pump",
-      "group": "build_water_well",
-      "category": "CONSTRUCT",
-      "required_skills": [ [ "fabrication", 4 ], [ "mechanics", 2 ] ],
-      "time": "180 m",
-      "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "WRENCH", "level": 1 } ] ],
-      "components": [ [ [ "well_pump", 1 ] ], [ [ "pipe", 6 ] ] ],
-      "pre_terrain": "t_covered_well",
-      "post_terrain": "t_water_pump"
-    },
-    {
-      "type": "construction",
-      "id": "constr_electric_well_pump",
-      "group": "build_water_well",
-      "category": "CONSTRUCT",
-      "required_skills": [ [ "fabrication", 4 ], [ "mechanics", 2 ], [ "electronics", 2 ] ],
-      "time": "240 m",
-      "qualities": [
-        [ { "id": "HAMMER", "level": 2 } ],
-        [ { "id": "WRENCH", "level": 1 } ],
-        [ { "id": "SCREW", "level": 1 } ]
-      ],
-      "components": [
-        [ [ "well_pump", 1 ] ],
-        [ [ "pipe", 6 ] ],
-        [ [ "motor_small", 1 ] ],
-        [ [ "power_supply", 1 ] ],
-        [ [ "cable", 10 ] ]
-      ],
-      "pre_terrain": "t_covered_well",
-      "post_furniture": "f_electric_well_pump"
-    },
+  {
+    "type": "construction",
+    "id": "constr_water_pump",
+    "group": "build_water_well",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "fabrication", 4 ], [ "mechanics", 2 ] ],
+    "time": "180 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "WRENCH", "level": 1 } ] ],
+    "components": [ [ [ "well_pump", 1 ] ], [ [ "pipe", 6 ] ] ],
+    "pre_terrain": "t_covered_well",
+    "post_terrain": "t_water_pump"
+  },
+  {
+    "type": "construction",
+    "id": "constr_electric_well_pump",
+    "group": "build_water_well",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "fabrication", 4 ], [ "mechanics", 2 ], [ "electronics", 2 ] ],
+    "time": "240 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "WRENCH", "level": 1 } ], [ { "id": "SCREW", "level": 1 } ] ],
+    "components": [ [ [ "well_pump", 1 ] ], [ [ "pipe", 6 ] ], [ [ "motor_small", 1 ] ], [ [ "power_supply", 1 ] ], [ [ "cable", 10 ] ] ],
+    "pre_terrain": "t_covered_well",
+    "post_furniture": "f_electric_well_pump"
+  },
   {
     "type": "construction",
     "id": "constr_door_bar",
