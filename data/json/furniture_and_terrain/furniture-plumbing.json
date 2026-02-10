@@ -66,6 +66,8 @@
     "coverage": 45,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "CONTAINER", "PLACE_ITEM", "MOUNTABLE" ],
+    "examine_action": "fluid_grid_fixture",
+    "fluid_grid": { "role": "fixture", "allow_input": false, "allow_output": true, "allowed_liquids": [ "water", "water_clean" ] },
     "connects_to": "COUNTER",
     "bash": {
       "str_min": 8,

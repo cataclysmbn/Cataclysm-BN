@@ -13,6 +13,8 @@ void override_default_print( sol::state &lua );
 void forbid_unsafe_functions( sol::state &lua );
 
 void reg_avatar( sol::state &lua );
+void reg_bionics( sol::state &lua );
+void mod_bionic_data( sol::state &lua );
 void reg_character( sol::state &lua );
 void reg_colors( sol::state &lua );
 void reg_constants( sol::state &lua );

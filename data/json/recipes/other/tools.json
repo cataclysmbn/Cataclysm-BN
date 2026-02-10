@@ -3251,5 +3251,36 @@
       [ [ "pilot_light", 1 ] ],
       [ [ "scrap", 1 ], [ "50_casing", 1 ] ]
     ]
+  },
+  {
+    "type": "recipe",
+    "result": "clamp",
+    "category": "CC_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "20 m",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_intermediate", 2 ], [ "steel_tiny", 2 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "metal_file",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "steel_tiny", 2 ], [ "blacksmithing_advanced", 2 ], [ "wood_structural_small", 1 ] ]
+  },
+  {
+    "result": "pin_reamer",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ], [ "wood_structural_small", 1 ] ]
   }
 ]

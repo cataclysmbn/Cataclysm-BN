@@ -196,7 +196,7 @@
     "city_distance": [ 5, 25 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 0, 4 ],
-    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
+    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -1102,7 +1102,7 @@
     "city_distance": [ 3, 15 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 0, 2 ],
-    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
+    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -1117,7 +1117,7 @@
     "city_distance": [ 2, 14 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 0, 2 ],
-    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
+    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -1132,7 +1132,7 @@
     "city_distance": [ 2, 14 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 0, 2 ],
-    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
+    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -1147,7 +1147,7 @@
     "city_distance": [ 2, 14 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 0, 2 ],
-    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
+    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -1162,7 +1162,7 @@
     "city_distance": [ 2, 14 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 0, 2 ],
-    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
+    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -1177,7 +1177,7 @@
     "city_distance": [ 2, 14 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 0, 2 ],
-    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
+    "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID", "FLUID_GRID" ]
   },
   {
     "type": "overmap_special",

@@ -20,6 +20,7 @@
 #include "ballistics.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catalua_icallback_actor.h"
 #include "character.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
@@ -223,6 +224,8 @@ bool string_id<bionic_data>::is_valid() const
     return bionic_factory.is_valid( *this );
 }
 
+
+
 std::vector<bodypart_id> get_occupied_bodyparts( const bionic_id &bid )
 {
     std::vector<bodypart_id> parts;
@@ -271,6 +274,17 @@ void bionic_data::finalize_all()
 std::vector<bionic_data> bionic_data::get_all()
 {
     return bionic_factory.get_all();
+}
+
+void bionic_data::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> &actors )
+{
+    for( const bionic_data &bd : bionic_factory.get_all() ) {
+        auto it = actors.find( bd.id.str() );
+        if( it != actors.end() ) {
+            bd.lua_callbacks = it->second.get();
+        }
+    }
 }
 
 void bionic_data::reset()
@@ -1165,6 +1179,10 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         invalidate_crafting_inventory();
     }
 
+    if( const auto *lcb = bio.info().lua_callbacks ) {
+        lcb->call_on_activate( *this, bio );
+    }
+
     return true;
 }
 
@@ -1247,6 +1265,10 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
     // Also reset crafting inventory cache if this bionic spawned a fake item
     if( !bio.info().fake_item.is_empty() ) {
         invalidate_crafting_inventory();
+    }
+
+    if( const auto *lcb = bio.info().lua_callbacks ) {
+        lcb->call_on_deactivate( *this, bio );
     }
 
     return true;
@@ -2296,6 +2318,10 @@ void Character::perform_uninstall( bionic_id bid, int difficulty, int success,
         add_msg( m_good, _( "Successfully removed %s." ), bid.obj().name );
         remove_bionic( bid );
 
+        if( const auto *lcb = bid.obj().lua_callbacks ) {
+            lcb->call_on_removed( *this, bid );
+        }
+
         // remove power bank provided by bionic
         mod_max_power_level( -power_lvl );
 
@@ -2588,6 +2614,10 @@ void Character::perform_install( bionic_id bid, bionic_id upbid, int difficulty,
     }
 
     add_bionic( bid );
+
+    if( const auto *lcb = bid.obj().lua_callbacks ) {
+        lcb->call_on_installed( *this, bid );
+    }
 
     if( !trait_to_rem.empty() ) {
         for( const trait_id &tid : trait_to_rem ) {
