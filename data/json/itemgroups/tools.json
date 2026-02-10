@@ -218,7 +218,8 @@
       [ "soldering_iron", 150 ],
       [ "cordless_drill", 100 ],
       [ "pin_reamer", 30 ],
-      [ "clamp", 10 ]
+      [ "clamp", 10 ],
+      [ "plumber_toolkit", 5 ]
     ]
   },
   {
@@ -456,6 +457,8 @@
       [ "gelbox", 5 ],
       [ "microcentrifuge", 5 ],
       [ "dna_editor", 3 ],
+      [ "genome_drive_black_rat", 5 ],
+      [ "genome_drive_wolf_mutant_huge", 5 ],
       [ "beaker", 5 ],
       [ "gradcylinder", 5 ],
       [ "test_tube_micro", 5 ],

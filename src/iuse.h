@@ -108,7 +108,6 @@ int dive_tank( player *, item *, bool, const tripoint & );
 int gasmask( player *, item *, bool, const tripoint & );
 int portable_game( player *, item *, bool, const tripoint & );
 int vibe( player *, item *, bool, const tripoint & );
-int hand_crank( player *, item *, bool, const tripoint & );
 int vortex( player *, item *, bool, const tripoint & );
 int dog_whistle( player *, item *, bool, const tripoint & );
 int call_of_tindalos( player *, item *, bool, const tripoint & );
@@ -172,6 +171,8 @@ int toggle_ups_charging( player *, item *, bool, const tripoint & );
 int report_grid_charge( player *, item *, bool, const tripoint & );
 int report_grid_connections( player *, item *, bool, const tripoint & );
 int modify_grid_connections( player *, item *, bool, const tripoint & );
+int report_fluid_grid_connections( player *, item *, bool, const tripoint & );
+int modify_fluid_grid_connections( player *, item *, bool, const tripoint & );
 int bullet_vibe_on( player *, item *, bool, const tripoint & );
 
 // MACGUFFINS
@@ -292,5 +293,4 @@ struct use_function {
         /** @return Used by @ref item::info to get description of the actor */
         void dump_info( const item &, std::vector<iteminfo> & ) const;
 };
-
 

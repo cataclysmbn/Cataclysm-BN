@@ -23,6 +23,8 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_id.h"
@@ -46,6 +48,7 @@
 #include "flag.h"
 #include "flat_set.h"
 #include "fragment_cloud.h"
+#include "fluid_grid.h"
 #include "fungal_effects.h"
 #include "game.h"
 #include "harvest.h"
@@ -358,6 +361,10 @@ void map::add_vehicle_to_cache( vehicle *veh )
             continue;
         }
         const tripoint p = veh->global_part_pos3( vpr.part() );
+        int part = veh->part_with_feature( vpr.part_index(), VPFLAG_LADDER, true );
+        if( part != -1 ) {
+            cached_veh_rope[p.xy()] = std::make_pair( veh, static_cast<int>( part ) );
+        }
         level_cache &ch = get_cache( p.z );
         ch.veh_in_active_range = true;
 
@@ -389,6 +396,7 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint &pt )
             ch.veh_exists_at[pt.x][pt.y] = false;
         }
         ch.veh_cached_parts.erase( it );
+        cached_veh_rope.erase( pt.xy() );
     }
 
 }
@@ -409,6 +417,7 @@ void map::clear_vehicle_cache( )
         }
         ch.veh_in_active_range = false;
     }
+    cached_veh_rope.clear();
 }
 
 void map::clear_vehicle_list( const int zlev )
@@ -754,6 +763,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
 
     // If not enough wheels, mess up the ground a bit.
     if( !vertical && !veh.valid_wheel_config() && !veh.is_in_water() && !veh.is_flying_in_air() &&
+        !veh.has_sufficient_lift( true ) &&
         dp.z == 0 ) {
         veh.velocity += veh.velocity < 0 ? 2000 : -2000;
         for( const auto &p : veh.get_points() ) {
@@ -2131,8 +2141,8 @@ bool map::valid_move( const tripoint &from, const tripoint &to,
 
     int part_up;
     const vehicle *veh_up = veh_at_internal( up_p, part_up );
-    if( veh_up != nullptr ) {
-        // TODO: Hatches below the vehicle, passable frames
+    if( veh_up != nullptr && !veh_at( up_p ).part_with_feature( VPFLAG_NOCOLLIDEBELOW, false ) ) {
+        // TODO: Hatches below the vehicle
         return false;
     }
 
@@ -3616,11 +3626,16 @@ bash_results map::bash_furn_success( const tripoint &p, const bash_params &param
                     continue;
                 }
 
-                const map_bash_info &recur_bash = frn.obj().bash;
+                const auto &furn_obj = frn.obj();
+                const auto &recur_bash = furn_obj.bash;
                 // Check if we share a center type and thus a "tent type"
                 for( const auto &cur_id : recur_bash.tent_centers ) {
                     if( centers.contains( cur_id.id() ) ) {
                         // Found same center, wreck current tile
+                        if( furn_obj.fluid_grid &&
+                            furn_obj.fluid_grid->role == fluid_grid_role::tank ) {
+                            fluid_grid::on_tank_removed( tripoint_abs_ms( getabs( pt ) ) );
+                        }
                         spawn_items( p, item_group::items_from( recur_bash.drop_group, calendar::turn ) );
                         furn_set( pt, recur_bash.furn_set );
                         break;
@@ -3630,6 +3645,9 @@ bash_results map::bash_furn_success( const tripoint &p, const bash_params &param
         }
         soundfxvariant = "smash_cloth";
     } else {
+        if( furnid.fluid_grid && furnid.fluid_grid->role == fluid_grid_role::tank ) {
+            fluid_grid::on_tank_removed( tripoint_abs_ms( getabs( p ) ) );
+        }
         furn_set( p, bash.furn_set );
         for( item * const &it : i_at( p ) )  {
             it->on_drop( p, *this );
@@ -3782,6 +3800,23 @@ bash_results map::bash_ter_furn( const tripoint &p, const bash_params &params )
                 if( rng( 1, 100 ) <= damage_percent ) {
                     furn_set( p, flipped_version );
                 }
+            }
+        }
+        // Hard impacts have a chance to dislodge targets perching above
+        if( params.strength >= smin / 2 && one_in( smin / 2 ) ) {
+            tripoint above( p.xy(), p.z + 1 );
+            Character *character = g->critter_at<Character>( above );
+            if( has_flag( TFLAG_UNSTABLE, above ) && character != nullptr ) {
+                character->add_msg_if_player( m_warning,
+                                              _( "You feel the ground beneath you shake from the impact!" ) );
+
+                if( character->stability_roll() < rng( 1, params.strength - ( smin / 2 ) ) ) {
+                    character->add_msg_player_or_npc( m_bad, _( "You lose your balance!" ),
+                                                      _( "<npcname> loses their balance!" ) );
+
+                    g->fling_creature( character, rng_float( 0_degrees, 360_degrees ), 10 );
+                }
+
             }
         }
     } else {
@@ -5712,6 +5747,7 @@ void map::disarm_trap( const tripoint &p )
 
     const int tSkillLevel = g->u.get_skill_level( skill_traps );
     const int diff = tr.get_difficulty();
+    const int tReward = diff + tr.get_avoidance();
     int roll = rng( tSkillLevel, 4 * tSkillLevel );
 
     // Some traps are not actual traps. Skip the rolls, different message and give the option to grab it right away.
@@ -5736,7 +5772,7 @@ void map::disarm_trap( const tripoint &p )
         g->u.add_morale( MORALE_ACCOMPLISHMENT, morale_buff, 40 );
         tr.on_disarmed( *this, p );
         if( diff > 1.25 * tSkillLevel ) { // failure might have set off trap
-            g->u.practice( skill_traps, 1.5 * ( diff - tSkillLevel ) );
+            g->u.practice( skill_traps, tReward );
         }
     } else if( roll >= diff * .8 ) {
         add_msg( _( "You fail to disarm the trap." ) );
@@ -5744,7 +5780,7 @@ void map::disarm_trap( const tripoint &p )
         g->u.rem_morale( MORALE_ACCOMPLISHMENT );
         g->u.add_morale( MORALE_FAILURE, morale_debuff, -40 );
         if( diff > 1.25 * tSkillLevel ) {
-            g->u.practice( skill_traps, 1.5 * ( diff - tSkillLevel ) );
+            g->u.practice( skill_traps, tReward / 2 );
         }
     } else {
         add_msg( m_bad, _( "You fail to disarm the trap, and you set it off!" ) );
@@ -5752,12 +5788,9 @@ void map::disarm_trap( const tripoint &p )
         g->u.rem_morale( MORALE_ACCOMPLISHMENT );
         g->u.add_morale( MORALE_FAILURE, morale_debuff, -40 );
         tr.trigger( p, &g->u );
-        if( diff - roll <= 6 ) {
-            // Give xp for failing, but not if we failed terribly (in which
-            // case the trap may not be disarmable).
-            g->u.practice( skill_traps, 2 * diff );
-        }
+        g->u.practice( skill_traps, tReward / 4 );
     }
+    g->u.mod_moves( -100 );
 }
 
 void map::remove_trap( const tripoint &p )
@@ -8258,6 +8291,12 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
                 monster *const placed = g->place_critter_at( make_shared_fast<monster>( tmp ), p );
                 if( placed ) {
                     placed->on_load();
+                    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+                        params["creature"] = placed;
+                    } );
+                    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+                        params["monster"] = placed;
+                    } );
                     if( i.disposition == spawn_disposition::SpawnDisp_Pet ) {
                         placed->make_pet();
                     }
@@ -9350,6 +9389,21 @@ std::list<Creature *> map::get_creatures_in_radius( const tripoint &center, size
 
     }
     return creatures;
+}
+
+bool map::has_rope_at( tripoint pt ) const
+{
+    if( cached_veh_rope.contains( pt.xy() ) ) {
+        auto veh_pair = get_rope_at( pt.xy() );
+        vehicle *veh = veh_pair.first;
+        int veh_part = veh_pair.second;
+        return veh->part( veh_part ).info().ladder_length() >= veh->global_pos3().z - pt.z;
+    }
+    return false;
+}
+std::pair<vehicle *, int> map::get_rope_at( point pt ) const
+{
+    return cached_veh_rope.at( pt );
 }
 
 level_cache &map::access_cache( int zlev )

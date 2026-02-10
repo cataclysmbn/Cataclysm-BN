@@ -590,6 +590,7 @@ Example:
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | x, y     | (required) Spawn coordinates. Value from `0-23`, or range `[ 0-23, 0-23 ]` for a random value in that range.                                                                  |
 | repeat   | (optional) Value: `[ n1, n2 ]`. Spawn artifacts randomly between `n1` and `n2` times. Only makes sense if the coordinates are random. Example: `[ 1, 3 ]` - repeat 1-3 times. |
+| chance   | (optional) Percentage chance to spawn the artifact.                                                                                                                           |
 | natural  | (optional) If true, spawn a natural artifact.                                                                                                                                 |
 | property | (optional) `ARTPROP_*` value for the natural artifact property. If omitted, a random property is chosen.                                                                      |
 

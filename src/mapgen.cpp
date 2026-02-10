@@ -21,6 +21,8 @@
 #include "calendar.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_id.h"
 #include "clzones.h"
 #include "numeric_interval.h"
@@ -2256,8 +2258,10 @@ class jmapgen_artifact : public jmapgen_piece
     public:
         bool natural = false;
         std::optional<artifact_natural_property> property;
+        jmapgen_int chance;
 
-        explicit jmapgen_artifact( const JsonObject &jsi ) {
+        explicit jmapgen_artifact( const JsonObject &jsi )
+            : chance( jsi, "chance", 100, 100 ) {
             repeat = jmapgen_int( jsi, "repeat", 1, 1 );
             jsi.read( "natural", natural );
             if( jsi.has_member( "property" ) ) {
@@ -2268,6 +2272,10 @@ class jmapgen_artifact : public jmapgen_piece
 
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
+            const auto raw_chance = chance.get();
+            if( raw_chance != 100 && !x_in_y( raw_chance, 100 ) ) {
+                return;
+            }
             const tripoint p( x.get(), y.get(), dat.m.get_abs_sub().z );
             if( natural ) {
                 dat.m.spawn_natural_artifact( p, property.value_or( ARTPROP_NULL ) );
@@ -6274,6 +6282,12 @@ character_id map::place_npc( point p, const string_id<npc_template> &type, bool 
     temp->spawn_at_precise( { abs_sub.xy() }, { p, abs_sub.z } );
     temp->toggle_trait( trait_NPC_STATIC_NPC );
     overmap_buffer.insert_npc( temp );
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = temp.get();
+    } );
+    cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+        params["npc"] = temp.get();
+    } );
     return temp->getID();
 }
 

@@ -123,6 +123,12 @@
     "info": "This item <info>provides</info> instructions and other required data for several bionics, allowing installation of them with <good>minimal failure chance</good>."
   },
   {
+    "id": "GENOME_DRIVE",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "info": "This item stores <info>genetic data</info> for a genome workstation."
+  },
+  {
     "id": "BIONIC_NPC_USABLE",
     "type": "json_flag",
     "context": [ "BIONIC_ITEM" ],
@@ -605,6 +611,13 @@
     "context": [ "GENERIC" ],
     "//": "This item will spawn friendly. Used for pets and such.",
     "info": "Any creature spawned from this item will <info>always</info> emerge <good>friendly to you</good>."
+  },
+  {
+    "id": "SPAWN_HOSTILE",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "//": "This item will spawn mean. Used for target dummies and such.",
+    "info": "Any creature spawned from this item will <info>always</info> emerge <bad>against you</good>."
   },
   {
     "id": "STAB",

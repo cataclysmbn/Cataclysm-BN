@@ -22,6 +22,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
@@ -44,6 +45,7 @@
 #include "itype.h"
 #include "line.h"
 #include "magic.h"
+#include "magic_enchantment.h"
 #include "map.h"
 #include "material.h"
 #include "math_defines.h"
@@ -915,6 +917,13 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
         debugmsg( "Attempted to fire zero or negative shots using %s", gun.tname() );
     }
 
+    // Lua iranged can_fire callback: blocks firing before any ammo is consumed
+    if( const auto *iranged_cb = gun.type->iranged_callbacks ) {
+        if( !iranged_cb->call_can_fire( who, gun ) ) {
+            return 0;
+        }
+    }
+
     std::optional<shape_factory> shape = ranged::get_shape_factory( gun );
 
     map &here = get_map();
@@ -947,6 +956,19 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
                                 ? veh_pointer_or_null( here.veh_at( who.pos() ) )
                                 : nullptr;
         projectile projectile = make_gun_projectile( gun );
+
+        // Apply enchantment bonuses to projectile
+        int base_bullet_damage = static_cast<int>( projectile.impact.type_damage( DT_BULLET ) );
+        int ench_damage_bonus = who.bonus_from_enchantments( base_bullet_damage,
+                                enchant_vals::mod::RANGED_DAMAGE_BULLET, true );
+        if( ench_damage_bonus != 0 ) {
+            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus );
+        }
+
+        int ench_range_bonus = who.bonus_from_enchantments( projectile.range,
+                               enchant_vals::mod::RANGED_RANGE, true );
+        // Ensure range doesn't go below 1
+        projectile.range = std::max( 1, projectile.range + ench_range_bonus );
 
         // Slings use ammo damage or damage from throwing the ammo, whichever is higher
         if( gun.gun_skill() == skill_throw && !who.is_fake() && gun.ammo_data() ) {
@@ -1062,6 +1084,13 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
     // launchers train weapon skill for both hits and misses.
     int practice_units = aoe_attack ? curshot : hits;
     who.as_player()->practice( gun.gun_skill(), ( practice_units + 1 ) * 5 );
+
+    // Lua iranged on_fire callback: returns false to zero out hits (force miss)
+    if( const auto *iranged_cb = gun.type->iranged_callbacks ) {
+        if( !iranged_cb->call_on_fire( who, gun, target, curshot ) ) {
+            hits = 0;
+        }
+    }
 
     cata::run_hooks( "on_shoot", [ & ]( auto & params ) {
         params["shooter"] = &who;
@@ -1927,8 +1956,13 @@ int ranged::time_to_attack( const Character &p, const item &firing, const item *
                                  *const_cast<item *>( loc ) );
         RAS_time = opt.moves() + reload_stamina_penalty;
     }
-    return std::max( info.min_time,
-                     info.base_time - info.time_reduction_per_level * p.get_skill_level( skill_used ) + RAS_time );
+    int base_time = std::max( info.min_time,
+                              info.base_time - info.time_reduction_per_level * p.get_skill_level( skill_used ) + RAS_time );
+    // Apply enchantment bonus to reload time
+    int ench_reload_bonus = p.bonus_from_enchantments( base_time, enchant_vals::mod::RANGED_RELOAD_TIME,
+                            true );
+    // Ensure we don't go below minimum time even with enchantments
+    return std::max( info.min_time, base_time + ench_reload_bonus );
 }
 
 static void cycle_action( item &weap, const tripoint &pos )
@@ -2146,6 +2180,12 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
         }
     }
 
+    // Apply enchantment bonus to dispersion
+    int base_dispersion = static_cast<int>( dispersion.max() );
+    int ench_dispersion_bonus = who.bonus_from_enchantments( base_dispersion,
+                                enchant_vals::mod::RANGED_DISPERSION, true );
+    dispersion.add_range( ench_dispersion_bonus );
+
     return dispersion;
 }
 
@@ -2270,7 +2310,11 @@ double ranged::recoil_vehicle( const Character &who )
 
 double ranged::recoil_total( const Character &who )
 {
-    return who.recoil + recoil_vehicle( who );
+    double base_recoil = who.recoil + recoil_vehicle( who );
+    double ench_recoil_bonus = who.bonus_from_enchantments( base_recoil,
+                               enchant_vals::mod::RANGED_RECOIL );
+    // Recoil cannot be negative
+    return std::max( 0.0, base_recoil + ench_recoil_bonus );
 }
 
 namespace ranged
