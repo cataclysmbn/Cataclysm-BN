@@ -2608,6 +2608,7 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
         // multiple construction will form a list of targets based on blueprint zones and unfinished constructions
         if( act_id == ACT_MULTIPLE_CONSTRUCTION ) {
             static const zone_type_id zone_type_CONSTRUCTION_IGNORE( "CONSTRUCTION_IGNORE" );
+            const auto before_filter_count = src_set.size();
             for( const tripoint &elem : here.points_in_radius( localpos, ACTIVITY_SEARCH_DISTANCE ) ) {
                 partial_con *pc = here.partial_con_at( elem );
                 if( pc ) {
@@ -2617,6 +2618,16 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
             std::erase_if( src_set, [&]( const tripoint &point ) {
                 return mgr.has( zone_type_CONSTRUCTION_IGNORE, point );
             } );
+            if( before_filter_count > 0 && src_set.empty() ) {
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_suppress_activity_complete_message( true );
+                    guy->set_activity_failure_message(
+                        _( "Construction tasks skipped: all targets are inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ) );
+                }
+                p.add_msg_player_or_npc( m_info,
+                                         _( "Construction tasks skipped: all targets are inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ),
+                                         _( "<npcname> reports every construction target is inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ) );
+            }
             // farming activities encompass tilling, planting, harvesting.
         } else if( act_id == ACT_MULTIPLE_FARM ) {
             dark_capable = true;
@@ -2658,6 +2669,16 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
     if( !pre_dark_check && post_dark_check ) {
         p.add_msg_if_player( m_info, _( "It is too dark to do this activity." ) );
     }
+    if( act_id == ACT_MULTIPLE_CONSTRUCTION && src_set.empty() ) {
+        if( npc *guy = p.as_npc() ) {
+            guy->set_suppress_activity_complete_message( true );
+            guy->set_activity_failure_message(
+                _( "No construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ) );
+        }
+        p.add_msg_player_or_npc( m_info,
+                                 _( "No construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ),
+                                 _( "<npcname> reports no construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ) );
+    }
     return src_set;
 }
 
@@ -2667,6 +2688,30 @@ static requirement_check_result generic_multi_activity_check_requirement( player
         const tripoint &src, const tripoint &src_loc, const std::unordered_set<tripoint> &src_set,
         const bool check_only = false )
 {
+    const bool is_vehicle_activity = act_id == ACT_VEHICLE_DECONSTRUCTION ||
+                                     act_id == ACT_VEHICLE_REPAIR;
+    const auto record_activity_failure = [&]( const std::string &msg ) {
+        if( npc *guy = p.as_npc() ) {
+            guy->set_suppress_activity_complete_message( true );
+            const std::string existing = guy->peek_activity_failure_message();
+            if( existing.empty() ) {
+                guy->set_activity_failure_message( msg );
+            }
+        }
+    };
+    const auto record_construction_failure = [&]( const std::string &msg ) {
+        if( act_id != ACT_MULTIPLE_CONSTRUCTION ) {
+            return;
+        }
+        record_activity_failure( msg );
+    };
+    const auto record_vehicle_failure = [&]( const std::string &msg ) {
+        if( !is_vehicle_activity ) {
+            return;
+        }
+        record_activity_failure( msg );
+    };
+
     map &here = get_map();
     const tripoint abspos = here.getabs( p.pos() );
     zone_manager &mgr = zone_manager::get_manager();
@@ -2690,6 +2735,8 @@ static requirement_check_result generic_multi_activity_check_requirement( player
     // tidy up activity doesn't - it wants things that may not be in a zone already - things that may have been left lying around.
     if( needs_to_be_in_zone && !zone ) {
         can_do_it = false;
+        record_construction_failure( _( "No valid construction site here.  Check your blueprint zones and ignored areas." ) );
+        record_vehicle_failure( _( "Vehicle work ended: no valid target zone here." ) );
         return SKIP_LOCATION;
     }
     if( can_do_it ) {
@@ -2705,13 +2752,19 @@ static requirement_check_result generic_multi_activity_check_requirement( player
         // we can discount this tile, the work can't be done.
         if( reason == do_activity_reason::DONT_HAVE_SKILL ) {
             p.add_msg_if_player( m_info, _( "You don't have the skill for this task." ) );
+            record_construction_failure( _( "Construction blocked: insufficient skill for the selected build." ) );
+            record_vehicle_failure( _( "Vehicle work blocked: insufficient skill for this task." ) );
         } else if( reason == do_activity_reason::BLOCKING_TILE ) {
             p.add_msg_if_player( m_info, _( "There is something blocking the location for this task." ) );
+            record_construction_failure( _( "Construction blocked: something is occupying the build site." ) );
+            record_vehicle_failure( _( "Vehicle work blocked: something is occupying the work site." ) );
         } else if( reason == do_activity_reason::NEEDS_WARM_WEATHER ) {
             p.add_msg_if_player( m_info, _( "It is too cold to plant anything now." ) );
+            record_construction_failure( _( "Construction blocked: conditions are too cold for this step." ) );
         } else if( reason == do_activity_reason::NEEDS_ABOVE_GROUND ) {
             p.add_msg_if_player( m_info,
                                  _( "It's too cold down here to plant this type of seed underground." ) );
+            record_construction_failure( _( "Construction blocked: this step must be above ground." ) );
         }
         return SKIP_LOCATION;
     } else if( reason == do_activity_reason::NO_COMPONENTS ||
@@ -2822,7 +2875,41 @@ static requirement_check_result generic_multi_activity_check_requirement( player
         // is it even worth fetching anything if there isn't enough nearby?
         if( !are_requirements_nearby( tool_pickup ? loot_zone_spots : combined_spots, what_we_need, p,
                                       act_id, tool_pickup, src_loc ) ) {
-            p.add_msg_if_player( m_info, _( "The required items are not available to complete this task." ) );
+            const auto needs_construction = act_id == ACT_MULTIPLE_CONSTRUCTION;
+            const std::string missing_text = needs_construction
+                                             ? _( "Construction skipped: required components or tools are missing nearby." )
+                                             : _( "The required items are not available to complete this task." );
+            p.add_msg_player_or_npc( m_info, missing_text,
+                                     _( "<npcname> cannot continue: components or tools are missing nearby." ) );
+            if( needs_construction ) {
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_suppress_activity_complete_message( true );
+                }
+                const std::string missing_list = what_we_need->list_missing();
+                auto combined = missing_text;
+                if( !missing_list.empty() ) {
+                    combined += "\n" + missing_list;
+                }
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_activity_failure_message( combined );
+                }
+                if( !missing_list.empty() ) {
+                    p.add_msg_player_or_npc( m_info,
+                                             string_format( _( "Missing for construction:\n%s" ), missing_list ),
+                                             string_format( _( "<npcname> is missing for construction:\n%s" ),
+                                                     missing_list ) );
+                }
+            } else if( is_vehicle_activity ) {
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_suppress_activity_complete_message( true );
+                    const std::string missing_list = what_we_need->list_missing();
+                    std::string combined = _( "Vehicle work skipped: required components or tools are missing nearby." );
+                    if( !missing_list.empty() ) {
+                        combined += "\n" + missing_list;
+                    }
+                    guy->set_activity_failure_message( combined );
+                }
+            }
             if( reason == do_activity_reason::NEEDS_VEH_DECONST ||
                 reason == do_activity_reason::NEEDS_VEH_REPAIR ) {
                 p.activity_vehicle_part_index = -1;
@@ -2991,6 +3078,8 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
     const tripoint abspos = here.getabs( p.pos() );
     // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
     activity_id activity_to_restore = act.id();
+    const bool is_multi_construction = activity_to_restore == ACT_MULTIPLE_CONSTRUCTION;
+    bool construction_progress = false;
     // Nuke the current activity, leaving the backlog alone
     if( !check_only ) {
         p.activity = std::make_unique<player_activity>();
@@ -3030,6 +3119,9 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
         if( req_res == SKIP_LOCATION ) {
             continue;
         } else if( req_res == RETURN_EARLY ) {
+            if( is_multi_construction ) {
+                construction_progress = true;
+            }
             return true;
         }
 
@@ -3038,6 +3130,16 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
 
             // check if we found path to source / adjacent tile
             if( route.empty() ) {
+                if( is_multi_construction ) {
+                    if( npc *guy = p.as_npc() ) {
+                        guy->set_suppress_activity_complete_message( true );
+                        const std::string existing = guy->peek_activity_failure_message();
+                        const std::string msg = existing.empty()
+                                                ? _( "Construction task ended with no progress.  Path to the site is blocked." )
+                                                : existing;
+                        guy->set_activity_failure_message( msg );
+                    }
+                }
                 check_npc_revert( p );
                 continue;
             }
@@ -3052,6 +3154,9 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
                 // activity will be restarted only if
                 // player arrives on destination tile
                 p.set_destination( route, std::make_unique<player_activity>( activity_to_restore ) );
+                if( is_multi_construction ) {
+                    construction_progress = true;
+                }
                 return true;
             }
         }
@@ -3065,10 +3170,23 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
             activity_to_restore != ACT_FETCH_REQUIRED &&
             !character_funcs::can_see_fine_details( p ) ) {
             p.add_msg_if_player( m_info, _( "It is too dark to work here." ) );
+            if( is_multi_construction ) {
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_suppress_activity_complete_message( true );
+                    const std::string existing = guy->peek_activity_failure_message();
+                    const std::string msg = existing.empty()
+                                            ? _( "Construction task ended with no progress.  It was too dark to work." )
+                                            : existing;
+                    guy->set_activity_failure_message( msg );
+                }
+            }
             return false;
         }
         if( !check_only ) {
             if( !generic_multi_activity_do( p, activity_to_restore, act_info, src, src_loc ) ) {
+                if( is_multi_construction ) {
+                    construction_progress = true;
+                }
                 // if the activity was succesful
                 // then a new activity was assigned
                 // and the backlog was given the multi-act
@@ -3087,10 +3205,33 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
         }
         // if we got here, we need to revert otherwise NPC will be stuck in AI Limbo and have a head explosion.
         if( p.backlog.empty() || src_set.empty() ) {
+            if( is_multi_construction && !construction_progress ) {
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_suppress_activity_complete_message( true );
+                    const std::string existing = guy->peek_activity_failure_message();
+                    if( existing.empty() ) {
+                        guy->set_activity_failure_message(
+                            _( "Construction task ended with no progress.  Check zones and required components." ) );
+                    } else {
+                        guy->set_activity_failure_message( existing );
+                    }
+                }
+            }
             check_npc_revert( p );
             // tidy up leftover moved parts and tools left lying near the work spots.
             if( player_activity( activity_to_restore ).is_multi_type() ) {
                 p.assign_activity( ACT_TIDY_UP );
+            }
+        } else if( is_multi_construction && !construction_progress ) {
+            if( npc *guy = p.as_npc() ) {
+                guy->set_suppress_activity_complete_message( true );
+                const std::string existing = guy->peek_activity_failure_message();
+                if( existing.empty() ) {
+                    guy->set_activity_failure_message(
+                        _( "Construction task ended with no progress.  Check zones and required components." ) );
+                } else {
+                    guy->set_activity_failure_message( existing );
+                }
             }
         }
         p.activity_vehicle_part_index = -1;

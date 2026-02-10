@@ -3444,7 +3444,11 @@ bool npc::do_player_activity()
             backlog.pop_front();
             current_activity_id = activity->id();
         } else {
-            if( is_player_ally() ) {
+            const std::string failure_msg = consume_activity_failure_message();
+            const bool suppressed = consume_suppress_activity_complete_message();
+            if( !failure_msg.empty() ) {
+                add_msg( m_info, failure_msg );
+            } else if( is_player_ally() && !suppressed ) {
                 add_msg( m_info, string_format( "%s completed the assigned task.", disp_name() ) );
             }
             current_activity_id = activity_id::NULL_ID();

@@ -689,6 +689,35 @@ void npc::revert_after_activity()
     backlog.clear();
 }
 
+void npc::set_suppress_activity_complete_message( const bool value )
+{
+    suppress_activity_complete_message = value;
+}
+
+bool npc::consume_suppress_activity_complete_message()
+{
+    const bool suppressed = suppress_activity_complete_message;
+    suppress_activity_complete_message = false;
+    return suppressed;
+}
+
+void npc::set_activity_failure_message( const std::string &msg )
+{
+    activity_failure_message = msg;
+}
+
+std::string npc::consume_activity_failure_message()
+{
+    std::string msg = activity_failure_message;
+    activity_failure_message.clear();
+    return msg;
+}
+
+std::string npc::peek_activity_failure_message() const
+{
+    return activity_failure_message;
+}
+
 npc_mission npc::get_previous_mission()
 {
     return previous_mission;
