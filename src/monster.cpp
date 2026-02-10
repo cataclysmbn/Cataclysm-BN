@@ -30,6 +30,7 @@
 #include "int_id.h"
 #include "item_group.h"
 #include "item.h"
+#include "item_category.h"
 #include "itype.h"
 #include "line.h"
 #include "locations.h"
