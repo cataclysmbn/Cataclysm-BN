@@ -50,7 +50,7 @@
     "post_terrain": "t_shrub_peanut",
     "dark_craftable": true
   },
-   {
+  {
     "type": "construction",
     "id": "constr_dig_peanut_bush",
     "//": "Digs up a bush.",
@@ -58,13 +58,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "peanut_bush"}, { "item": "material_soil", "charges": 4 } ],
+    "byproducts": [ { "item": "peanut_bush" }, { "item": "material_soil", "charges": 4 } ],
     "pre_terrain": "t_shrub_peanut",
     "post_terrain": "t_pit_shallow",
     "group": "dig_peanut_bush",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_plant_peanut_bush_h",
     "group": "replant_peanut_bush_h",
@@ -77,7 +77,7 @@
     "post_terrain": "t_shrub_peanut_harvested",
     "dark_craftable": true
   },
-   {
+  {
     "type": "construction",
     "id": "constr_dig_peanut_bush_h",
     "//": "Digs up a bush.",
@@ -85,13 +85,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "peanut_bush_h"} ],
+    "byproducts": [ { "item": "peanut_bush_h" } ],
     "pre_terrain": "t_shrub_peanut_harvested",
     "post_terrain": "t_pit_shallow",
     "group": "dig_peanut_bush_h",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-   {
+  {
     "type": "construction",
     "id": "constr_plant_blueberry_bush",
     "group": "replant_blueberry_bush",
@@ -104,7 +104,7 @@
     "post_terrain": "t_shrub_blueberry",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_blueberry_bush",
     "//": "Digs up a bush.",
@@ -112,13 +112,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "blueberry_bush"} ],
+    "byproducts": [ { "item": "blueberry_bush" } ],
     "pre_terrain": "t_shrub_blueberry",
     "post_terrain": "t_pit_shallow",
     "group": "dig_blueberry_bush",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-   {
+  {
     "type": "construction",
     "id": "constr_plant_blueberry_bush_h",
     "group": "replant_blueberry_bush_h",
@@ -131,7 +131,7 @@
     "post_terrain": "t_shrub_blueberry_harvested",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_blueberry_bush_h",
     "//": "Digs up a bush.",
@@ -139,13 +139,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "blueberry_bush_h"} ],
+    "byproducts": [ { "item": "blueberry_bush_h" } ],
     "pre_terrain": "t_shrub_blueberry_harvested",
     "post_terrain": "t_pit_shallow",
     "group": "dig_blueberry_bush_h",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-     {
+  {
     "type": "construction",
     "id": "constr_plant_strawberry_bush",
     "group": "replant_strawberry_bush",
@@ -158,7 +158,7 @@
     "post_terrain": "t_shrub_strawberry",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_strawberry_bush",
     "//": "Digs up a bush.",
@@ -166,13 +166,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "strawberry_bush"} ],
+    "byproducts": [ { "item": "strawberry_bush" } ],
     "pre_terrain": "t_shrub_strawberry",
     "post_terrain": "t_pit_shallow",
     "group": "dig_strawberry_bush",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-   {
+  {
     "type": "construction",
     "id": "constr_plant_strawberry_bush_h",
     "group": "replant_strawberry_bush_h",
@@ -185,7 +185,7 @@
     "post_terrain": "t_shrub_strawberry_harvested",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_strawberry_bush_h",
     "//": "Digs up a bush.",
@@ -193,13 +193,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "strawberry_bush_h"} ],
+    "byproducts": [ { "item": "strawberry_bush_h" } ],
     "pre_terrain": "t_shrub_strawberry_harvested",
     "post_terrain": "t_pit_shallow",
     "group": "dig_strawberry_bush_h",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-   {
+  {
     "type": "construction",
     "id": "constr_plant_blackberry_bush",
     "group": "replant_blackberry_bush",
@@ -212,7 +212,7 @@
     "post_terrain": "t_shrub_blackberry",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_blackberry_bush",
     "//": "Digs up a bush.",
@@ -220,13 +220,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "blackberry_bush"} ],
+    "byproducts": [ { "item": "blackberry_bush" } ],
     "pre_terrain": "t_shrub_blackberry",
     "post_terrain": "t_pit_shallow",
     "group": "dig_blackberry_bush",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_plant_blackberry_bush_h",
     "group": "replant_blackberry_bush_h",
@@ -239,7 +239,7 @@
     "post_terrain": "t_shrub_blackberry_harvested",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_blackberry_bush_h",
     "//": "Digs up a bush.",
@@ -247,13 +247,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "blackberry_bush_h"} ],
+    "byproducts": [ { "item": "blackberry_bush_h" } ],
     "pre_terrain": "t_shrub_blackberry_harvested",
     "post_terrain": "t_pit_shallow",
     "group": "dig_blackberry_bush_h",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_plant_huckleberry_bush",
     "group": "replant_huckleberry_bush",
@@ -266,7 +266,7 @@
     "post_terrain": "t_shrub_huckleberry",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_huckleberry_bush",
     "//": "Digs up a bush.",
@@ -274,13 +274,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "huckleberry_bush"} ],
+    "byproducts": [ { "item": "huckleberry_bush" } ],
     "pre_terrain": "t_shrub_huckleberry",
     "post_terrain": "t_pit_shallow",
     "group": "dig_huckleberry_bush",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_plant_huckleberry_bush_h",
     "group": "replant_huckleberry_bush_h",
@@ -293,7 +293,7 @@
     "post_terrain": "t_shrub_huckleberry_harvested",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_huckleberry_bush_h",
     "//": "Digs up a bush.",
@@ -301,13 +301,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "huckleberry_bush_h"} ],
+    "byproducts": [ { "item": "huckleberry_bush_h" } ],
     "pre_terrain": "t_shrub_huckleberry_harvested",
     "post_terrain": "t_pit_shallow",
     "group": "dig_huckleberry_bush_h",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-   {
+  {
     "type": "construction",
     "id": "constr_plant_raspberry_bush",
     "group": "replant_raspberry_bush",
@@ -320,7 +320,7 @@
     "post_terrain": "t_shrub_raspberry",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_raspberry_bush",
     "//": "Digs up a bush.",
@@ -328,13 +328,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "raspberry_bush"} ],
+    "byproducts": [ { "item": "raspberry_bush" } ],
     "pre_terrain": "t_shrub_raspberry",
     "post_terrain": "t_pit_shallow",
     "group": "dig_raspberry_bush",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_plant_raspberry_bush_h",
     "group": "replant_raspberry_bush_h",
@@ -347,7 +347,7 @@
     "post_terrain": "t_shrub_raspberry_harvested",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_raspberry_bush_h",
     "//": "Digs up a bush.",
@@ -355,13 +355,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "raspberry_bush_h"} ],
+    "byproducts": [ { "item": "raspberry_bush_h" } ],
     "pre_terrain": "t_shrub_raspberry_harvested",
     "post_terrain": "t_pit_shallow",
     "group": "dig_raspberry_bush_h",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-   {
+  {
     "type": "construction",
     "id": "constr_plant_grape_bush",
     "group": "replant_grape_bush",
@@ -374,7 +374,7 @@
     "post_terrain": "t_shrub_grape",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_grape_bush",
     "//": "Digs up a bush.",
@@ -382,13 +382,13 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "grape_bush"} ],
+    "byproducts": [ { "item": "grape_bush" } ],
     "pre_terrain": "t_shrub_grape",
     "post_terrain": "t_pit_shallow",
     "group": "dig_grape_bush",
-	"dark_craftable": true
+    "dark_craftable": true
   },
-   {
+  {
     "type": "construction",
     "id": "constr_plant_grape_bush_h",
     "group": "replant_grape_bush_h",
@@ -401,7 +401,7 @@
     "post_terrain": "t_shrub_grape_harvested",
     "dark_craftable": true
   },
-    {
+  {
     "type": "construction",
     "id": "constr_dig_grape_bush_h",
     "//": "Digs up a bush.",
@@ -409,10 +409,10 @@
     "required_skills": [ [ "survival", 3 ] ],
     "time": "30 m",
     "qualities": [ [ { "id": "DIG", "level": 2 } ] ],
-    "byproducts": [ { "item": "grape_bush_h"} ],
+    "byproducts": [ { "item": "grape_bush_h" } ],
     "pre_terrain": "t_shrub_grape_harvested",
     "post_terrain": "t_pit_shallow",
     "group": "dig_grape_bush_h",
-	"dark_craftable": true
+    "dark_craftable": true
   }
 ]

@@ -1674,7 +1674,7 @@
     "id": "dig_peanut_bush",
     "name": "Dig Up Peanut Bush"
   },
-   {
+  {
     "type": "construction_group",
     "id": "replant_peanut_bush_h",
     "name": "Replant Harvested Peanut Bush"
@@ -1684,7 +1684,7 @@
     "id": "dig_peanut_bush_h",
     "name": "Dig Up Harvested Peanut Bush"
   },
-    {
+  {
     "type": "construction_group",
     "id": "replant_blueberry_bush",
     "name": "Replant Blueberry Bush"
@@ -1694,7 +1694,7 @@
     "id": "dig_blueberry_bush",
     "name": "Dig Up Blueberry Bush"
   },
-   {
+  {
     "type": "construction_group",
     "id": "replant_blueberry_bush_h",
     "name": "Replant Harvested Blueberry Bush"
@@ -1704,7 +1704,7 @@
     "id": "dig_blueberry_bush_h",
     "name": "Dig Up Harvested Blueberry Bush"
   },
-   {
+  {
     "type": "construction_group",
     "id": "replant_strawberry_bush",
     "name": "Replant Strawberry Bush"
@@ -1714,7 +1714,7 @@
     "id": "dig_strawberry_bush",
     "name": "Dig Up Strawberry Bush"
   },
-   {
+  {
     "type": "construction_group",
     "id": "replant_strawberry_bush_h",
     "name": "Replant Harvested Strawberry Bush"
@@ -1724,7 +1724,7 @@
     "id": "dig_strawberry_bush_h",
     "name": "Dig Up Harvested Strawberry Bush"
   },
-   {
+  {
     "type": "construction_group",
     "id": "replant_blackberry_bush",
     "name": "Replant Blackberry Bush"
@@ -1734,7 +1734,7 @@
     "id": "dig_blackberry_bush",
     "name": "Dig Up Blackberry Bush"
   },
-   {
+  {
     "type": "construction_group",
     "id": "replant_blackberry_bush_h",
     "name": "Replant Harvested Blackberry Bush"
@@ -1744,7 +1744,7 @@
     "id": "dig_blackberry_bush_h",
     "name": "Dig Up Harvested Blackberry Bush"
   },
-   {
+  {
     "type": "construction_group",
     "id": "replant_huckleberry_bush",
     "name": "Replant Huckleberry Bush"
@@ -1754,7 +1754,7 @@
     "id": "dig_huckleberry_bush",
     "name": "Dig Up Huckleberry Bush"
   },
-   {
+  {
     "type": "construction_group",
     "id": "replant_huckleberry_bush_h",
     "name": "Replant Harvested Huckleberry Bush"
@@ -1764,7 +1764,7 @@
     "id": "dig_huckleberry_bush_h",
     "name": "Dig Up Harvested Huckleberry Bush"
   },
-   {
+  {
     "type": "construction_group",
     "id": "replant_raspberry_bush",
     "name": "Replant Raspberry Bush"
@@ -1774,7 +1774,7 @@
     "id": "dig_raspberry_bush",
     "name": "Dig Up Raspberry Bush"
   },
-    {
+  {
     "type": "construction_group",
     "id": "replant_raspberry_bush_h",
     "name": "Replant Harvested Raspberry Bush"
@@ -1784,7 +1784,7 @@
     "id": "dig_raspberry_bush_h",
     "name": "Dig Up Harvested Raspberry Bush"
   },
-   {
+  {
     "type": "construction_group",
     "id": "replant_grape_bush",
     "name": "Replant Grape Bush"
@@ -1794,7 +1794,7 @@
     "id": "dig_grape_bush",
     "name": "Dig Up Grape Bush"
   },
-    {
+  {
     "type": "construction_group",
     "id": "replant_grape_bush_h",
     "name": "Replant Harvested Grape Bush"
