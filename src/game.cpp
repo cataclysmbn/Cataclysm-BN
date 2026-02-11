@@ -278,7 +278,7 @@ static const trait_id trait_WAYFARER( "WAYFARER" );
 static const trait_id trait_HAS_NEMESIS( "HAS_NEMESIS" );
 
 static const trait_flag_str_id trait_flag_MUTATION_FLIGHT( "MUTATION_FLIGHT" );
-static const trait_flag_str_id trait_flag_TAIL_FIN( "TAIL_FIN" );
+static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
 
 static const trap_str_id tr_unfinished_construction( "tr_unfinished_construction" );
 
@@ -11297,7 +11297,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
                 // ... and we're already submerged
                 if( u.is_underwater() ) {
                     if( u.swim_speed() < 500 || u.shoe_type_count( itype_swim_fins ) ||
-                        u.has_trait_flag( trait_flag_TAIL_FIN ) ) {
+                        u.has_trait_flag( trait_flag_MUTATION_SWIM ) ) {
                         u.set_underwater( false );
                         add_msg( _( "You surface." ) );
                         surfacing = true;

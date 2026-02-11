@@ -3089,7 +3089,8 @@
     "movecost_swim_modifier": 0.75,
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
-    "allowed_items": [ "ALLOWS_TAIL" ]
+    "allowed_items": [ "ALLOWS_TAIL" ],
+	"flags": [ "MUTATION_SWIM" ]
   },
   {
     "type": "mutation",
@@ -5774,7 +5775,8 @@
     "allowed_items": [ "ALLOWS_HOOVES" ],
     "allowed_items_only": true,
     "movecost_modifier": 1.2,
-    "noise_modifier": 0
+    "noise_modifier": 0,
+	"flags": [ "MUTATION_SWIM" ]
   },
   {
     "type": "mutation",
