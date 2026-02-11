@@ -3255,7 +3255,7 @@ struct zone_callback_options {
 };
 
 static auto create_zone_callback( const zone_callback_options &options )
--> shared_ptr_fast<game::draw_callback_t>
+- > shared_ptr_fast<game::draw_callback_t>
 {
     auto &zone_start = options.zone_start;
     auto &zone_end = options.zone_end;
@@ -3264,7 +3264,7 @@ static auto create_zone_callback( const zone_callback_options &options )
     const auto is_moving_zone = options.is_moving_zone;
     ( void ) options.zone_blink;
     return make_shared_fast<game::draw_callback_t>(
-    [&, point_generator = std::move( point_generator ), is_moving_zone]() {
+    [ &, point_generator = std::move( point_generator ), is_moving_zone]() {
         if( zone_cursor ) {
             if( is_moving_zone ) {
                 g->draw_cursor( ( zone_start.value() + zone_end.value() ) / 2 );
@@ -6739,8 +6739,9 @@ void game::zones_manager()
     shared_ptr_fast<const blueprint_options> current_bp_options;
     static const auto zone_construction_blueprint = zone_type_id( "CONSTRUCTION_BLUEPRINT" );
     auto zone_point_generator =
-    [&]( const tripoint &start, const tripoint &end ) -> std::vector<tripoint> {
-        if( current_zone_type == zone_construction_blueprint ) {
+    [&]( const tripoint & start, const tripoint & end ) -> std::vector<tripoint> {
+        if( current_zone_type == zone_construction_blueprint )
+        {
             if( current_bp_options ) {
                 return current_bp_options->get_covered_points( start, end );
             }
@@ -6748,12 +6749,12 @@ void game::zones_manager()
         return std::vector<tripoint>();
     };
     shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback( zone_callback_options{
-                .zone_start = zone_start,
-                .zone_end = zone_end,
-                .zone_blink = zone_blink,
-                .zone_cursor = zone_cursor,
-                .point_generator = zone_point_generator,
-            } );
+        .zone_start = zone_start,
+        .zone_end = zone_end,
+        .zone_blink = zone_blink,
+        .zone_cursor = zone_cursor,
+        .point_generator = zone_point_generator,
+    } );
     add_draw_callback( zone_cb );
 
     auto query_position =
@@ -7283,13 +7284,13 @@ look_around_result game::look_around( bool show_window, tripoint &center,
         return std::vector<tripoint>();
     };
     shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback( zone_callback_options{
-                .zone_start = zone_start,
-                .zone_end = zone_end,
-                .zone_blink = zone_blink,
-                .zone_cursor = zone_cursor,
-                .point_generator = noop_zone_points,
-                .is_moving_zone = is_moving_zone,
-            } );
+        .zone_start = zone_start,
+        .zone_end = zone_end,
+        .zone_blink = zone_blink,
+        .zone_cursor = zone_cursor,
+        .point_generator = noop_zone_points,
+        .is_moving_zone = is_moving_zone,
+    } );
     add_draw_callback( zone_cb );
 
     is_looking = true;

@@ -2145,7 +2145,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
     if( show_zones_overlay ) {
         const zone_manager &mgr = zone_manager::get_manager();
-        std::ranges::for_each( mgr.get_zones(), [&]( const zone_manager::ref_const_zone_data &ref ) {
+        std::ranges::for_each( mgr.get_zones(), [&]( const zone_manager::ref_const_zone_data & ref ) {
             const zone_data &zone = ref.get();
             if( !zone.get_enabled() ) {
                 return;
@@ -2153,7 +2153,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
             const auto covered_points = get_zone_covered_points( zone );
             auto local_tiles = std::unordered_set<point>();
-            std::ranges::for_each( covered_points, [&]( const tripoint &pos ) {
+            std::ranges::for_each( covered_points, [&]( const tripoint & pos ) {
                 if( pos.z != center.z ) {
                     return;
                 }
@@ -4628,7 +4628,7 @@ void cata_tiles::init_draw_zones( const zone_draw_options &options )
     zone_points = options.points;
     zone_point_lookup.clear();
     if( !zone_points.empty() ) {
-        std::ranges::for_each( zone_points, [&]( const tripoint &point ) {
+        std::ranges::for_each( zone_points, [&]( const tripoint & point ) {
             zone_point_lookup.insert( point );
         } );
     }
@@ -5088,7 +5088,7 @@ void cata_tiles::draw_zones_frame( std::multimap<point, formatted_text> &overlay
         if( zone ) {
             overlay_strings.emplace( player_to_screen( center_local.xy() ),
                                      formatted_text( zone->get_name(), catacurses::white,
-                                                     direction::NORTH ) );
+                                             direction::NORTH ) );
         }
         return;
     }

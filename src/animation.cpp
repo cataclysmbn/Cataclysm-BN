@@ -906,7 +906,7 @@ void draw_zones_curses( const catacurses::window &w, const zone_draw_options &op
     nc_color    const col = invert_color( c_light_green );
     const bool has_points = !options.points.empty();
     if( has_points ) {
-        std::ranges::for_each( options.points, [&]( const tripoint &location ) {
+        std::ranges::for_each( options.points, [&]( const tripoint & location ) {
             mvwputch( w, point( location.x - options.offset.x, location.y - options.offset.y ),
                       col, '~' );
         } );
@@ -925,7 +925,8 @@ void draw_zones_curses( const catacurses::window &w, const zone_draw_options &op
     }
 
     const auto bounds = [&]() -> std::optional<std::pair<point, point>> {
-        if( has_points ) {
+        if( has_points )
+        {
             const auto min_x = std::ranges::minmax_element( options.points, {}, &tripoint::x );
             const auto min_y = std::ranges::minmax_element( options.points, {}, &tripoint::y );
             return std::pair<point, point>( point( min_x.min->x, min_y.min->y ),

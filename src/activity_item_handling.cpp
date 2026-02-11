@@ -1357,13 +1357,14 @@ static auto format_skill_requirements( const std::map<skill_id, int> &skills ) -
     }
     auto parts = std::vector<std::string>();
     parts.reserve( skills.size() );
-    std::ranges::transform( skills, std::back_inserter( parts ), []( const auto &entry ) {
+    std::ranges::transform( skills, std::back_inserter( parts ), []( const auto & entry ) {
         return string_format( "%s %d", entry.first->name(), entry.second );
     } );
     return join( parts, ", " );
 }
 
-static void set_activity_failure_message( player &p, const std::string &msg, bool *notice_sent = nullptr )
+static void set_activity_failure_message( player &p, const std::string &msg,
+        bool *notice_sent = nullptr )
 {
     if( msg.empty() ) {
         return;
@@ -2716,7 +2717,7 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
                     src_set.insert( here.getabs( elem ) );
                 }
             }
-            std::erase_if( src_set, [&]( const tripoint &point ) {
+            std::erase_if( src_set, [&]( const tripoint & point ) {
                 return mgr.has( zone_type_CONSTRUCTION_IGNORE, point );
             } );
             if( before_filter_count > 0 && src_set.empty() ) {
@@ -2791,16 +2792,16 @@ static requirement_check_result generic_multi_activity_check_requirement( player
 {
     const bool is_vehicle_activity = act_id == ACT_VEHICLE_DECONSTRUCTION ||
                                      act_id == ACT_VEHICLE_REPAIR;
-    const auto record_activity_failure = [&]( const std::string &msg ) {
+    const auto record_activity_failure = [&]( const std::string & msg ) {
         set_activity_failure_message( p, msg, failure_notice_sent );
     };
-    const auto record_construction_failure = [&]( const std::string &msg ) {
+    const auto record_construction_failure = [&]( const std::string & msg ) {
         if( act_id != ACT_MULTIPLE_CONSTRUCTION ) {
             return;
         }
         record_activity_failure( msg );
     };
-    const auto record_vehicle_failure = [&]( const std::string &msg ) {
+    const auto record_vehicle_failure = [&]( const std::string & msg ) {
         if( !is_vehicle_activity ) {
             return;
         }
@@ -2830,7 +2831,8 @@ static requirement_check_result generic_multi_activity_check_requirement( player
     // tidy up activity doesn't - it wants things that may not be in a zone already - things that may have been left lying around.
     if( needs_to_be_in_zone && !zone ) {
         can_do_it = false;
-        record_construction_failure( _( "No valid construction site here.  Check your blueprint zones and ignored areas." ) );
+        record_construction_failure(
+            _( "No valid construction site here.  Check your blueprint zones and ignored areas." ) );
         record_vehicle_failure( _( "Vehicle work ended: no valid target zone here." ) );
         return SKIP_LOCATION;
     }
@@ -3002,7 +3004,8 @@ static requirement_check_result generic_multi_activity_check_requirement( player
                 if( npc *guy = p.as_npc() ) {
                     guy->set_suppress_activity_complete_message( true );
                     const std::string missing_list = what_we_need->list_missing();
-                    std::string combined = _( "Vehicle work skipped: required components or tools are missing nearby." );
+                    std::string combined =
+                        _( "Vehicle work skipped: required components or tools are missing nearby." );
                     if( !missing_list.empty() ) {
                         combined += "\n" + missing_list;
                     }

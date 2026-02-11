@@ -253,12 +253,12 @@ auto make_circle_shape( const zone_bounds &bounds, const bool border_only ) -> c
     const double center_x = static_cast<double>( bounds.min.x + bounds.max.x ) / 2.0;
     const double center_y = static_cast<double>( bounds.min.y + bounds.max.y ) / 2.0;
     const double radius = static_cast<double>( std::max( bounds.max.x - bounds.min.x,
-                                bounds.max.y - bounds.min.y ) ) / 2.0;
+                          bounds.max.y - bounds.min.y ) ) / 2.0;
     const double outer_radius = radius + 1.0;
     const double inner_radius = border_only ? std::max( radius - 1.0, 0.0 ) : 0.0;
 
     return circle_shape{
-        center_x, center_y, outer_radius * outer_radius, inner_radius * inner_radius
+        center_x, center_y, outer_radius * outer_radius, inner_radius *inner_radius
     };
 }
 
@@ -344,13 +344,13 @@ auto blueprint_options::get_covered_points( const tripoint &start,
             }
         }
         auto border_set = std::unordered_set<tripoint>();
-        const auto neighbors = std::array<point, 8>{
+        const auto neighbors = std::array<point, 8> {
             point_east, point_west, point_north, point_south,
             point_east + point_north, point_east + point_south,
             point_west + point_north, point_west + point_south
         };
-        std::ranges::for_each( fill_set, [&]( const tripoint &pt ) {
-            const bool at_edge = std::ranges::any_of( neighbors, [&]( const point &dir ) {
+        std::ranges::for_each( fill_set, [&]( const tripoint & pt ) {
+            const bool at_edge = std::ranges::any_of( neighbors, [&]( const point & dir ) {
                 const tripoint neigh( pt.xy() + dir, pt.z );
                 return !fill_set.contains( neigh );
             } );
@@ -393,12 +393,12 @@ auto blueprint_options::has_inside( const tripoint &start, const tripoint &end,
         if( !point_in_circle( shape, candidate ) ) {
             return false;
         }
-        const auto neighbors = std::array<point, 8>{
+        const auto neighbors = std::array<point, 8> {
             point_east, point_west, point_north, point_south,
             point_east + point_north, point_east + point_south,
             point_west + point_north, point_west + point_south
         };
-        return std::ranges::any_of( neighbors, [&]( const point &dir ) {
+        return std::ranges::any_of( neighbors, [&]( const point & dir ) {
             const tripoint neigh( candidate.xy() + dir, candidate.z );
             return !point_in_circle( shape, neigh );
         } );
@@ -462,7 +462,7 @@ auto blueprint_options::query_layout() -> query_layout_result
     layout_menu.text = _( "Select placement layout" );
     layout_menu.desc_enabled = false;
     auto index = 0;
-    std::ranges::for_each( layouts, [&]( const blueprint_layout &candidate ) {
+    std::ranges::for_each( layouts, [&]( const blueprint_layout & candidate ) {
         layout_menu.addentry( index, true, MENU_AUTOASSIGN,
                               blueprint_layout_description( candidate ) );
         if( candidate == layout ) {
@@ -880,14 +880,14 @@ void zone_manager::cache_data()
 {
     area_cache.clear();
 
-    std::ranges::for_each( zones, [&]( zone_data &elem ) {
+    std::ranges::for_each( zones, [&]( zone_data & elem ) {
         if( !elem.get_enabled() ) {
             return;
         }
 
         auto &cache = area_cache[elem.get_type_hash()];
         const auto points = get_zone_covered_points( elem );
-        std::ranges::for_each( points, [&]( const tripoint &point ) {
+        std::ranges::for_each( points, [&]( const tripoint & point ) {
             cache.insert( point );
         } );
     } );
@@ -897,14 +897,14 @@ void zone_manager::cache_vzones()
 {
     vzone_cache.clear();
     auto vzones = get_map().get_vehicle_zones( g->get_levz() );
-    std::ranges::for_each( vzones, [&]( zone_data *elem ) {
+    std::ranges::for_each( vzones, [&]( zone_data * elem ) {
         if( elem == nullptr || !elem->get_enabled() ) {
             return;
         }
 
         auto &cache = vzone_cache[elem->get_type_hash()];
         const auto points = get_zone_covered_points( *elem );
-        std::ranges::for_each( points, [&]( const tripoint &point ) {
+        std::ranges::for_each( points, [&]( const tripoint & point ) {
             cache.insert( point );
         } );
     } );

@@ -562,10 +562,12 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             add_header_line( current_group->name() );
             add_header_line( " " );
             const auto origin_from_tile = []( const auto & tile ) -> std::optional<std::string> {
-                if( tile.src.empty() ) {
+                if( tile.src.empty() )
+                {
                     return std::nullopt;
                 }
-                return enumerate_as_string( tile.src.begin(), tile.src.end(), []( const auto & source ) {
+                return enumerate_as_string( tile.src.begin(), tile.src.end(), []( const auto & source )
+                {
                     return string_format( "'%s'", source.second->name() );
                 }, enumeration_conjunction::arrow );
             };
@@ -583,10 +585,10 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                                          ? origin_from_tile( ( *furniture_it )->post_furniture.obj() )
                                          : std::nullopt );
             const auto origin_to_display = origin_line.value_or( string_format( "'%s'",
-                                                      _( "Bright Nights" ) ) );
+                                           _( "Bright Nights" ) ) );
             add_header_line( colorize( _( "Origin: " ) + origin_to_display, c_light_blue ) );
             construct_separator_line = std::string( available_window_width,
-                                         static_cast<char>( LINE_OXOX ) );
+                                                    static_cast<char>( LINE_OXOX ) );
             add_header_line( construct_separator_line );
             const auto category_it = [&]() {
                 for( const construction *con_variant : options ) {
@@ -599,7 +601,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                     }
                 }
                 return construct_cat.end();
-            }();
+            }
+            ();
             if( category_it != construct_cat.end() ) {
                 add_header_line( colorize( _( "Category: " ), c_white ) +
                                  colorize( category_it->name(), c_magenta ) );
@@ -672,7 +675,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                                                  colorize( string_format( "%d", result_tile->movecost ),
                                                            color_data ) ) );
                         const bool indestructible = result_tile->bash.str_min == -1 &&
-                                                     result_tile->bash.str_max == -1;
+                                                    result_tile->bash.str_max == -1;
                         if( indestructible ) {
                             add_line( string_format( "%s %s", _( "Bash str:" ),
                                                      colorize( _( "Indestructible" ), color_data ) ) );
@@ -680,7 +683,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                             add_line( string_format( "%s %s",
                                                      _( "Bash str:" ),
                                                      colorize( string_format( "%d - %d", result_tile->bash.str_min,
-                                                                              result_tile->bash.str_max ),
+                                                               result_tile->bash.str_max ),
                                                                color_data ) ) );
                         }
                     }
@@ -836,7 +839,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
         const auto last_visible_tab = [&]( const int start_idx ) -> int {
             int used = 0;
             int last = start_idx - 1;
-            for( size_t i = static_cast<size_t>( start_idx ); i < tab_labels.size(); ++i ) {
+            for( size_t i = static_cast<size_t>( start_idx ); i < tab_labels.size(); ++i )
+            {
                 const int needed = tab_width( i );
                 if( used + needed > tabs_available ) {
                     break;
@@ -871,10 +875,10 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 const int adjusted_time = first_option->adjusted_time();
                 if( base_time > 0 && adjusted_time > 0 ) {
                     const int speed_percent = static_cast<int>( std::round( 100.0f * base_time /
-                                                     static_cast<float>( adjusted_time ) ) );
+                                              static_cast<float>( adjusted_time ) ) );
                     const bool is_slow = speed_percent < 100;
                     const nc_color line_color = is_slow ? i_yellow : i_green;
-                    construction_speed_line = std::pair<nc_color, std::string>{
+                    construction_speed_line = std::pair<nc_color, std::string> {
                         line_color, string_format( _( "Construction speed %d%%" ), speed_percent )
                     };
                 }
@@ -1017,53 +1021,60 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 last_construction = constructs[select];
             }
             set_filter_mode( !filter.empty() );
-            const auto group_matches_filter = [&]( const construction_group_str_id &group_id,
-            const std::string &filter_string ) -> bool {
-                if( filter_string.empty() ) {
+            const auto group_matches_filter = [&]( const construction_group_str_id & group_id,
+            const std::string & filter_string ) -> bool {
+                if( filter_string.empty() )
+                {
                     return true;
                 }
                 std::vector<const construction *> group_options = constructions_by_group( group_id );
-                if( group_options.empty() ) {
+                if( group_options.empty() )
+                {
                     return false;
                 }
-                const auto match_item = []( const item_comp &comp, const std::string &term ) -> bool {
+                const auto match_item = []( const item_comp & comp, const std::string & term ) -> bool {
                     const std::string comp_name = item::nname( comp.type, comp.count );
                     return lcmatch( comp_name, term ) || lcmatch( comp.type.str(), term );
                 };
-                const auto match_tool = []( const tool_comp &tool, const std::string &term ) -> bool {
+                const auto match_tool = []( const tool_comp & tool, const std::string & term ) -> bool {
                     const std::string tool_name = item::nname( tool.type, tool.count );
                     return lcmatch( tool_name, term ) || lcmatch( tool.type.str(), term );
                 };
-                const auto match_quality = []( const quality_requirement &quality_req,
-                const std::string &term ) -> bool {
+                const auto match_quality = []( const quality_requirement & quality_req,
+                const std::string & term ) -> bool {
                     const std::string quality_name = quality_req.type->name.translated();
                     return lcmatch( quality_name, term ) || lcmatch( quality_req.type.str(), term );
                 };
-                const auto match_skill = []( const skill_id &skill, const std::string &term ) -> bool {
+                const auto match_skill = []( const skill_id & skill, const std::string & term ) -> bool {
                     return lcmatch( skill.obj().name(), term ) || lcmatch( skill.str(), term );
                 };
                 const auto match_description = []( const map_data_common_t *tile,
-                const std::string &term ) -> bool {
-                    if( tile == nullptr ) {
+                const std::string & term ) -> bool {
+                    if( tile == nullptr )
+                    {
                         return false;
                     }
                     return lcmatch( tile->description.translated(), term );
                 };
-                const auto any_option_matches = [&]( const std::function<bool( const construction * )> &pred ) {
+                const auto any_option_matches = [&]( const std::function<bool( const construction * )> &pred )
+                {
                     return std::ranges::any_of( group_options, pred );
                 };
-                const auto option_description_matches = [&]( const construction *con,
-                const std::string &term ) -> bool {
-                    if( con->post_terrain.is_empty() && con->post_furniture.is_empty() ) {
+                const auto option_description_matches = [&]( const construction * con,
+                const std::string & term ) -> bool {
+                    if( con->post_terrain.is_empty() && con->post_furniture.is_empty() )
+                    {
                         return false;
                     }
-                    if( !con->post_terrain.is_empty() ) {
+                    if( !con->post_terrain.is_empty() )
+                    {
                         const ter_t &result_ter = con->post_terrain.obj();
                         if( match_description( &result_ter, term ) ) {
                             return true;
                         }
                     }
-                    if( !con->post_furniture.is_empty() ) {
+                    if( !con->post_furniture.is_empty() )
+                    {
                         const furn_t &result_furn = con->post_furniture.obj();
                         if( match_description( &result_furn, term ) ) {
                             return true;
@@ -1073,7 +1084,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 };
 
                 const auto tokens = string_split( filter_string, ',' );
-                return std::ranges::all_of( tokens, [&]( const std::string &raw_token ) {
+                return std::ranges::all_of( tokens, [&]( const std::string & raw_token )
+                {
                     const std::string token = trim( raw_token );
                     if( token.empty() ) {
                         return true;
@@ -1206,15 +1218,15 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             };
             if( !filter.empty() ) {
                 notes.push_back( strip_period( string_format( _( "Press [<color_red>%s</color>] to clear filter." ),
-                                                ctxt.get_desc( "RESET_FILTER" ) ) ) );
+                                               ctxt.get_desc( "RESET_FILTER" ) ) ) );
             }
             if( tabcount > 1 ) {
                 notes.push_back( strip_period( string_format( _( "Press [<color_yellow>%s or %s</color>] to tab." ),
-                                                ctxt.get_desc( "LEFT" ),
-                                                ctxt.get_desc( "RIGHT" ) ) ) );
+                                               ctxt.get_desc( "LEFT" ),
+                                               ctxt.get_desc( "RIGHT" ) ) ) );
             }
             notes.push_back( strip_period( string_format( _( "Press [<color_yellow>%s</color>] to search." ),
-                                            ctxt.get_desc( "FILTER" ) ) ) );
+                                           ctxt.get_desc( "FILTER" ) ) ) );
             if( !hide_unconstructable ) {
                 notes.push_back( strip_period( string_format(
                                                    _( "Press [<color_yellow>%s</color>] to hide unavailable constructions." ),
