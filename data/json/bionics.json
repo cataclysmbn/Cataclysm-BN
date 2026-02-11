@@ -1364,7 +1364,7 @@
     "id": "bio_atomic_battery",
     "type": "bionic",
     "name": { "str": "Atomic Battery" },
-    "description": "A compact alphavoltaic power source, producing a steady source of limitless bionic power at the cost of minimal radiation while in use.  Produces 50W of power while active.",
+    "description": "A compact alphavoltaic power source, producing a steady source of limitless bionic power.  Produces 50W of power while active.",
     "fuel_options": [ "c_atomic_battery_power" ],
     "fuel_efficiency": 0.05,
     "time": 1,
