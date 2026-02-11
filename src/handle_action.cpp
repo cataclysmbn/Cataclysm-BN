@@ -1853,7 +1853,6 @@ bool game::handle_action()
                 } else if( veh_ctrl && vp->vehicle().is_aircraft() ) {
                     pldrive( tripoint_below );
                 } else if( get_map().has_rope_at( u.pos() ) ) {
-                    [[maybe_unused]] bool moved = false;
                     map &here = get_map();
                     const optional_vpart_position vp = here.veh_at( u.pos() );
                     const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
@@ -1874,7 +1873,6 @@ bool game::handle_action()
                         if( info.ladder_length() >= dist ) {
                             get_map().unboard_vehicle( u.pos() );
                             vertical_move( -dist, true );
-                            moved = true;
                         }
                     }
                 }
