@@ -4687,7 +4687,7 @@ void map::draw_lab( mapgendata &dat )
                    is_ot_match( "ants", dat.west(), ot_match_type::contains );
 
         if( ice_lab ) {
-            int temperature = -20 + 30 * ( dat.zlevel() );
+            int temperature = -20 + 15 * ( dat.zlevel() );
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
             set_temperature( p2 + point( 0, SEEY ), temperature );
