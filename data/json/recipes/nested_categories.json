@@ -186,14 +186,7 @@
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_NESTED",
     "description": "Shelter basics and simple camp cooking.",
-    "nested_category_data": [
-      "tent_kit",
-      "tent_kit_repair",
-      "large_tent_kit",
-      "large_tent_kit_repair",
-      "popcan_stove",
-      "rock_quern"
-    ]
+    "nested_category_data": [ "tent_kit", "tent_kit_repair", "large_tent_kit", "large_tent_kit_repair", "popcan_stove", "rock_quern" ]
   },
   {
     "type": "nested_category",
@@ -202,13 +195,7 @@
     "category": "CC_ARMOR",
     "subcategory": "CSC_ARMOR_NESTED",
     "description": "Daypacks, rucks, and upgraded hiking rigs.",
-    "nested_category_data": [
-      "backpack",
-      "backpack_leather",
-      "backpack_hiking",
-      "backpack_tactical_large",
-      "survivor_hiking_backpack"
-    ]
+    "nested_category_data": [ "backpack", "backpack_leather", "backpack_hiking", "backpack_tactical_large", "survivor_hiking_backpack" ]
   },
   {
     "type": "nested_category",
@@ -337,13 +324,7 @@
     "category": "CC_ELECTRONIC",
     "subcategory": "CSC_ELECTRONIC_NESTED",
     "description": "Handheld and packable lights for camp and field use.",
-    "nested_category_data": [
-      "reading_light",
-      "flashlight",
-      "electric_lantern",
-      "atomic_light",
-      "atomic_lamp"
-    ]
+    "nested_category_data": [ "reading_light", "flashlight", "electric_lantern", "atomic_light", "atomic_lamp" ]
   },
   {
     "type": "nested_category",

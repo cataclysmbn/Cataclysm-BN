@@ -57,7 +57,15 @@
   {
     "type": "recipe_category",
     "id": "CC_CHEM",
-    "recipe_subcategories": [ "CSC_ALL", "CSC_CHEM_NESTED", "CSC_CHEM_DRUGS", "CSC_CHEM_FUEL", "CSC_CHEM_MUTAGEN", "CSC_CHEM_CHEMICALS", "CSC_CHEM_OTHER" ]
+    "recipe_subcategories": [
+      "CSC_ALL",
+      "CSC_CHEM_NESTED",
+      "CSC_CHEM_DRUGS",
+      "CSC_CHEM_FUEL",
+      "CSC_CHEM_MUTAGEN",
+      "CSC_CHEM_CHEMICALS",
+      "CSC_CHEM_OTHER"
+    ]
   },
   {
     "type": "recipe_category",
