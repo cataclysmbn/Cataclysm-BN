@@ -396,6 +396,48 @@
   },
   {
     "type": "start_location",
+    "id": "sloc_basement_game",
+    "name": "Game Room Basement",
+    "terrain": [ "basement" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_chem",
+    "name": "Chemistry Basement",
+    "terrain": [ "basement_chem", "basement_chem2" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_hidden_lab",
+    "name": "Hidden Lab Stairs",
+    "terrain": [ "basement_hidden_lab_stairs" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_meth",
+    "name": "Meth Lab Basement",
+    "terrain": [ "basement_meth" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_messed",
+    "name": "Ruined Basement",
+    "terrain": [ "basement_messed" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_survival",
+    "name": "Prepper Basement",
+    "terrain": [ "basement_survival" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_weed",
+    "name": "Grow Operation Basement",
+    "terrain": [ "basement_weed" ]
+  },
+  {
+    "type": "start_location",
     "id": "sloc_zoo_giftshop",
     "name": "Zoo (Giftshop)",
     "terrain": [ "zoo_0_1" ]

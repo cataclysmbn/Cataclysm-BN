@@ -813,6 +813,25 @@
   },
   {
     "type": "scenario",
+    "id": "basement_dweller",
+    "name": "Basement Dweller",
+    "points": 1,
+    "description": "You were happiest tucked away below street level, tinkering and hiding in your basement.",
+    "start_name": "Basement Hideout",
+    "allowed_locs": [
+      "sloc_basement_bionic",
+      "sloc_basement_game",
+      "sloc_basement_chem",
+      "sloc_basement_hidden_lab",
+      "sloc_basement_meth",
+      "sloc_basement_messed",
+      "sloc_basement_survival",
+      "sloc_basement_weed"
+    ],
+    "flags": [ "CITY_START", "LONE_START" ]
+  },
+  {
+    "type": "scenario",
     "id": "cyberpunk",
     "name": "High Tech, Low Life",
     "description": "Before the world ended, bionics were reserved for the rich and the famous.  You might not have been either, but you wanted in.  Hidden offices sequestered away in basements, anesthetic smuggled out of hospitals, and desperate people with little to lose could get you what you wanted.  If you went too deep, however, your augmentation may have come at a price...",
