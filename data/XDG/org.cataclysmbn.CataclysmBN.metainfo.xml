@@ -68,7 +68,7 @@
         <content_attribute id="language-discrimination">intense</content_attribute>
     </content_rating>
     <releases>
-        <release version="0.10.0" date="2026-02-7">
+        <release version="0.10.0" date="2026-02-07">
             <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.10.0</url>
             <description>
                 <p>Notable Changes</p>
