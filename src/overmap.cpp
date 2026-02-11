@@ -58,6 +58,7 @@
 #include "overmap_noise.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
+#include "fluid_grid.h"
 #include "regional_settings.h"
 #include "rng.h"
 #include "rotatable_symbols.h"
@@ -5680,6 +5681,9 @@ std::vector<tripoint_om_omt> overmap::place_special(
     }
 
     const bool grid = special.has_flag( "ELECTRIC_GRID" );
+    const auto fluid_grid_enabled = special.has_flag( "FLUID_GRID" );
+    auto *fluid_connections = fluid_grid_enabled ? &fluid_grid::connections_for(
+                                  *this ) : nullptr;
 
     special_placement_result result = special.place( *this, p, dir );
 
@@ -5754,12 +5758,17 @@ std::vector<tripoint_om_omt> overmap::place_special(
     for( const tripoint_om_omt &location : result.omts_used ) {
         mapgen_args_index[location] = args_index;
         overmap_special_placements[location] = special.id;
-        if( grid ) {
+        if( grid || fluid_connections ) {
             for( size_t i = 0; i < six_cardinal_directions.size(); i++ ) {
                 const tripoint_om_omt other = location + six_cardinal_directions[i];
                 if( std::find( result.omts_used.begin(), result.omts_used.end(),
                                other ) != result.omts_used.end() ) {
-                    electric_grid_connections[location].set( i, true );
+                    if( grid ) {
+                        electric_grid_connections[location].set( i, true );
+                    }
+                    if( fluid_connections ) {
+                        ( *fluid_connections )[location].set( i, true );
+                    }
                 }
             }
         }

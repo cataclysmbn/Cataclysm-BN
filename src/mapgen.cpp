@@ -21,6 +21,8 @@
 #include "calendar.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_id.h"
 #include "clzones.h"
 #include "numeric_interval.h"
@@ -4685,7 +4687,7 @@ void map::draw_lab( mapgendata &dat )
                    is_ot_match( "ants", dat.west(), ot_match_type::contains );
 
         if( ice_lab ) {
-            int temperature = -20 + 30 * ( dat.zlevel() );
+            int temperature = -20 + 15 * ( dat.zlevel() );
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
             set_temperature( p2 + point( 0, SEEY ), temperature );
@@ -6280,6 +6282,12 @@ character_id map::place_npc( point p, const string_id<npc_template> &type, bool 
     temp->spawn_at_precise( { abs_sub.xy() }, { p, abs_sub.z } );
     temp->toggle_trait( trait_NPC_STATIC_NPC );
     overmap_buffer.insert_npc( temp );
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = temp.get();
+    } );
+    cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+        params["npc"] = temp.get();
+    } );
     return temp->getID();
 }
 

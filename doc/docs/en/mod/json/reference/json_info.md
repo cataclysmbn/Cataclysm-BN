@@ -755,3 +755,96 @@ If `old_directions` option is enabled each entry will create four migrations: fo
 `old_north` to `new_north`, `old_east` to `new_east` and such. If `new_directions` is set to
 `false`, then all four terrains will be migrated to one plain `new`. For both of those cases you
 only need to specify plain `old` and `new` names in `oter_ids` map, without any suffixes.
+
+# Fluid Grid
+
+This document describes the JSON fluid grid support for furniture.
+
+## Fluid grid object (furniture)
+
+Furniture can define a `fluid_grid` object to mark it as a fluid grid tank or fixture and control
+what liquids it can accept. Fluid grids currently support only `water` and `water_clean`.
+
+### Fields
+
+| Identifier | Description |
+| --- | --- |
+| role | (_mandatory_) Either `tank` or `fixture`. Tanks contribute storage capacity to the fluid grid. Fixtures are grid endpoints without storage. |
+| allow_input | (_mandatory_) Whether the grid can accept liquids into this furniture. |
+| allow_output | (_mandatory_) Whether the grid can output liquids from this furniture. |
+| allowed_liquids | (_mandatory_) Array of liquid item ids allowed for this furniture. Fluid grids currently support only `water` and `water_clean`. |
+| capacity | (_optional_) Integer capacity in the game's standard volume unit. If set, this overrides `use_keg_capacity`. |
+| use_keg_capacity | (_optional_) If `true`, use the furniture `keg_capacity` as its tank capacity. |
+| connected_variant | (_optional_) Furniture id to switch to when connecting this tank to the fluid grid. |
+| disconnected_variant | (_optional_) Furniture id to switch to when disconnecting this tank from the fluid grid. |
+
+### Notes
+
+- For `role: "tank"`, you must set either `capacity` or `use_keg_capacity`. If both are set,
+  `capacity` is used.
+- For `role: "tank"`, you must define at least one of `connected_variant` or `disconnected_variant`.
+  Defining one side lets the engine infer the other during load.
+- For `role: "fixture"`, capacity and variant fields are ignored.
+- Typically, only the connected variant needs the `fluid_grid` object. Define
+  `disconnected_variant` on the connected furniture and leave the disconnected furniture without
+  `fluid_grid` so it does not contribute to grid storage until connected.
+- Fluid grids currently support only `water` and `water_clean`.
+- Fluid grids store only one water quality at a time. Adding any dirty water contaminates the
+  entire stored supply, and clean water added to a dirty grid becomes dirty. A grid becomes clean
+  only after all dirty water is drained and clean water is added.
+
+### Examples
+
+Tank using `keg_capacity`:
+
+```json
+{
+  "type": "furniture",
+  "id": "f_standing_tank_connected",
+  "copy-from": "f_standing_tank",
+  "name": "standing tank (connected)",
+  "keg_capacity": 1200,
+  "fluid_grid": {
+    "role": "tank",
+    "allow_input": true,
+    "allow_output": true,
+    "allowed_liquids": [ "water", "water_clean" ],
+    "disconnected_variant": "f_standing_tank",
+    "use_keg_capacity": true
+  }
+}
+```
+
+Tank with explicit capacity:
+
+```json
+{
+  "type": "furniture",
+  "id": "f_custom_connected_tank",
+  "name": "custom connected tank",
+  "fluid_grid": {
+    "role": "tank",
+    "allow_input": true,
+    "allow_output": true,
+    "allowed_liquids": [ "water", "water_clean" ],
+    "capacity": 2000
+  }
+}
+```
+
+Fixture (no storage):
+
+```json
+{
+  "type": "furniture",
+  "id": "f_connected_sink",
+  "name": "connected sink",
+  "examine_action": "fluid_grid_fixture",
+  "fluid_grid": {
+    "role": "fixture",
+    "allow_input": true,
+    "allow_output": true,
+    "allowed_liquids": [ "water", "water_clean" ]
+  }
+}
+```
