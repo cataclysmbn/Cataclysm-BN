@@ -8,6 +8,7 @@
 #include <iterator>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <utility>
 
 #include "action.h"
@@ -609,8 +610,13 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             }
             add_header_line( construct_separator_line );
             construct_buffers.push_back( header_buffer );
-            tab_status_line = string_format( _( "* No hidden recipe - %d in category *" ),
-                                             current_category_total );
+            if( filter_mode ) {
+                tab_status_line = string_format( _( "* %d results in category *" ),
+                                                 static_cast<int>( constructs.size() ) );
+            } else {
+                tab_status_line = string_format( _( "* No hidden recipe - %d in category *" ),
+                                                 current_category_total );
+            }
             for( const construction *current_con : options ) {
                 stage_counter++;
                 if( hide_unconstructable && !can_construct( *current_con ) ) {
@@ -926,8 +932,15 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 ui.set_cursor( w_list, print_from );
             }
             const std::string group_name = is_favorite( group ) ? "* " + group->name() : group->name();
-            trim_and_print( w_list, print_from, w_list_width,
-                            construction_color( group, highlight ), group_name );
+            if( filter_mode ) {
+                const nc_color base_col = c_dark_gray;
+                const nc_color final_col = highlight ? hilite( base_col ) : base_col;
+                trim_and_print( w_list, print_from, w_list_width, final_col, group_name );
+            } else {
+                const nc_color base_col = construction_color( group, false );
+                const nc_color final_col = highlight ? hilite( base_col ) : base_col;
+                trim_and_print( w_list, print_from, w_list_width, final_col, group_name );
+            }
         }
 
         // Clear out lines for tools & materials
@@ -1257,21 +1270,59 @@ std::optional<construction_id> construction_menu( const bool blueprint )
 
         const std::string action = ctxt.handle_input();
         if( action == "FILTER" ) {
-            string_input_popup popup;
-            popup
-            .title( _( "Search" ) )
-            .width( 50 )
-            .description( _( "Searched" ) )
-            .max_length( 100 )
-            .text( filter )
-            .query();
-            if( popup.confirmed() ) {
-                filter = popup.text();
-                uistate.construction_filter = filter;
-                set_filter_mode( !filter.empty() );
-                update_info = true;
-                update_cat = true;
+            struct filter_example {
+                char key;
+                std::string example;
+                std::string description;
+            };
+            const std::vector<filter_example> prefix_examples{
+                filter_example{ .key = 'd', .example = _( "wall" ), .description = _( "<color_cyan>description</color> contains text" ) },
+                filter_example{ .key = 'c', .example = _( "2x4" ), .description = _( "<color_cyan>component</color> required" ) },
+                filter_example{ .key = 't', .example = _( "hammer" ), .description = _( "<color_cyan>tool</color> required" ) },
+                filter_example{ .key = 'Q', .example = _( "WRENCH" ), .description = _( "<color_cyan>quality</color> required" ) },
+                filter_example{ .key = 'p', .example = _( "fabrication" ), .description = _( "<color_cyan>primary skill</color> required" ) },
+                filter_example{ .key = 's', .example = _( "mechanics" ), .description = _( "<color_cyan>any skill</color> required" ) }
+            };
+            const filter_example &widest_example = std::ranges::max( prefix_examples, std::less<>(),
+            []( const filter_example & entry ) {
+                return utf8_width( entry.example );
+            } );
+            const int max_example_length = utf8_width( widest_example.example );
+            const std::string spaces( max_example_length, ' ' );
+
+            std::string description =
+                _( "The default is to search construction names.  Single-character prefixes "
+                   "with a colon <color_red>:</color> search other fields.  Additional filters are separated "
+                   "by commas <color_red>,</color>.\n\n"
+                   "<color_white>Examples:</color>\n" );
+
+            const std::string example_name = _( "wall" );
+            const int example_padding = max_example_length - utf8_width( example_name );
+            description += string_format( _( "  <color_white>%s</color>%.*s    %s\n" ),
+                                          example_name, example_padding, spaces,
+                                          _( "<color_cyan>name</color> of construction" ) );
+
+            for( const filter_example &prefix : prefix_examples ) {
+                const int padding = max_example_length - utf8_width( prefix.example );
+                description += string_format( _( "  <color_yellow>%c</color><color_white>:%s</color>%.*s  %s\n" ),
+                                              prefix.key, prefix.example, padding, spaces, prefix.description );
             }
+
+            description += _( "\nUse <color_red>up/down arrow</color> to go through your search history." );
+
+            string_input_popup()
+            .title( _( "Search:" ) )
+            .width( 85 )
+            .description( description )
+            .desc_color( c_light_gray )
+            .max_length( 100 )
+            .identifier( "construction_filter" )
+            .hist_use_uilist( true )
+            .edit( filter );
+            uistate.construction_filter = filter;
+            set_filter_mode( !filter.empty() );
+            update_info = true;
+            update_cat = true;
         } else if( action == "RESET_FILTER" ) {
             if( !filter.empty() ) {
                 filter.clear();
