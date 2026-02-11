@@ -856,6 +856,17 @@
     "difficulty": 8
   },
   {
+    "id": "bio_atomic_battery_upgrade",
+    "bionic_id": "bio_reactor",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Atomic Battery Upgrade CBM" },
+    "description": "A kit for upgrading a pre-installed atomic battery into a Microreactor, providing options for significantly more power generation potential and fuel capacity at the cost of increased radiation exposure.",
+    "price": "2500 USD",
+    "difficulty": 10,
+    "is_upgrade": true
+  },
+  {
     "id": "bio_reactor_upgrade",
     "bionic_id": "bio_advreactor",
     "copy-from": "bionic_general_npc_usable",
