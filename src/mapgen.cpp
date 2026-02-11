@@ -1859,6 +1859,10 @@ class jmapgen_gaspump : public jmapgen_piece
             const auto combined_rate = global_rate * fuel_rate;
             charges = static_cast<int>( charges * combined_rate );
 
+            if( charges <= 0 ) {
+                return;
+            }
+
             itype_id chosen_fuel = fuel.get( dat );
             if( chosen_fuel.is_null() ) {
                 dat.m.place_gas_pump( r, charges );
