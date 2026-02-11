@@ -44,6 +44,7 @@
 #include "flag.h"
 #include "game.h"
 #include "item.h"
+#include "item_category.h"
 #include "item_contents.h"
 #include "item_group.h"
 #include "itype.h"
@@ -6116,56 +6117,66 @@ void vehicle::place_spawn_items()
         }
     }
 
-    for( const auto &spawn : type.obj().item_spawns ) {
-        if( rng( 1, 100 ) <= spawn.chance ) {
-            int part = part_with_feature( spawn.pos, "CARGO", false );
-            if( part < 0 ) {
-                debugmsg( "No CARGO parts at (%d, %d) of %s!", spawn.pos.x, spawn.pos.y, name );
+    std::ranges::for_each( type.obj().item_spawns, [this]( const auto & spawn ) {
+        if( rng( 1, 100 ) > spawn.chance ) {
+            return;
+        }
 
-            } else {
-                // if vehicle part is broken only 50% of items spawn and they will be variably damaged
-                bool broken = parts[ part ].is_broken();
-                if( broken && one_in( 2 ) ) {
-                    continue;
+        auto part = part_with_feature( spawn.pos, "CARGO", false );
+        if( part < 0 ) {
+            debugmsg( "No CARGO parts at (%d, %d) of %s!", spawn.pos.x, spawn.pos.y, name );
+            return;
+        }
+
+        auto broken = parts[ part ].is_broken();
+        if( broken && one_in( 2 ) ) {
+            return;
+        }
+
+        std::vector<detached_ptr<item>> created;
+        created.reserve( spawn.item_ids.size() );
+        std::ranges::transform( spawn.item_ids, std::back_inserter( created ),
+        []( const itype_id & e ) {
+            return item::in_its_container( item::spawn( e ) );
+        } );
+
+        std::ranges::for_each( spawn.item_groups, [&created]( const item_group_id & e ) {
+            auto group_items = item_group::items_from( e, calendar::start_of_cataclysm );
+            std::ranges::move( group_items, std::back_inserter( created ) );
+        } );
+
+        const auto global_spawn_rate = get_option<float>( "ITEM_SPAWNRATE" );
+
+        std::erase_if( created, [broken, global_spawn_rate]( detached_ptr<item> &e ) {
+            if( e->is_null() ) {
+                return true;
+            }
+            if( broken && e->mod_damage( rng( 1, e->max_damage() ) ) ) {
+                return true;
+            }
+
+            const auto category_rate = g->m.item_category_spawn_rate( *e );
+            const auto final_rate = std::min( global_spawn_rate * category_rate, 1.0f );
+
+            return rng_float( 0, 1 ) >= final_rate;
+        } );
+
+        std::ranges::for_each( created, [this, &spawn, part]( detached_ptr<item> &e ) {
+            if( e->is_tool() || e->is_gun() || e->is_magazine() ) {
+                auto spawn_ammo = rng( 0, 99 ) < spawn.with_ammo && e->ammo_remaining() == 0;
+                auto spawn_mag  = rng( 0, 99 ) < spawn.with_magazine && !e->magazine_integral() &&
+                                  !e->magazine_current();
+
+                if( spawn_mag ) {
+                    e->put_in( item::spawn( e->magazine_default(), e->birthday() ) );
                 }
-
-                std::vector<detached_ptr<item>> created;
-                created.reserve( spawn.item_ids.size() );
-                for( const itype_id &e : spawn.item_ids ) {
-                    created.emplace_back( item::in_its_container( item::spawn( e ) ) );
-                }
-                for( const item_group_id &e : spawn.item_groups ) {
-                    std::vector<detached_ptr<item>> group_items = item_group::items_from( e,
-                                                 calendar::start_of_cataclysm );
-                    for( auto &spawn_item : group_items ) {
-                        created.emplace_back( std::move( spawn_item ) );
-                    }
-                }
-
-                for( detached_ptr<item> &e : created ) {
-                    if( e->is_null() ) {
-                        continue;
-                    }
-                    if( broken && e->mod_damage( rng( 1, e->max_damage() ) ) ) {
-                        continue; // we destroyed the item
-                    }
-                    if( e->is_tool() || e->is_gun() || e->is_magazine() ) {
-                        bool spawn_ammo = rng( 0, 99 ) < spawn.with_ammo && e->ammo_remaining() == 0;
-                        bool spawn_mag  = rng( 0, 99 ) < spawn.with_magazine && !e->magazine_integral() &&
-                                          !e->magazine_current();
-
-                        if( spawn_mag ) {
-                            e->put_in( item::spawn( e->magazine_default(), e->birthday() ) );
-                        }
-                        if( spawn_ammo ) {
-                            e->ammo_set( e->ammo_default() );
-                        }
-                    }
-                    add_item( part, std::move( e ) );
+                if( spawn_ammo ) {
+                    e->ammo_set( e->ammo_default() );
                 }
             }
-        }
-    }
+            add_item( part, std::move( e ) );
+        } );
+    } );
 }
 
 void vehicle::gain_moves()
