@@ -11,6 +11,7 @@
 #include "faction.h"
 #include "fstream_utils.h"
 #include "json.h"
+#include "lua_mod_options.h"
 #include "mapdata.h"
 #include "options.h"
 #include "point.h"
@@ -928,4 +929,114 @@ TEST_CASE( "lua_hooks_exit_early", "[lua]" )
     CHECK( log_tbl.get<std::string>( 1 ) == "p10" );
     CHECK( results_tbl.get<bool>( "allowed" ) == false );
     CHECK( log_tbl.get<sol::optional<std::string>>( 2 ) == sol::nullopt );
+}
+
+TEST_CASE( "lua_mod_options_registration", "[lua]" )
+{
+    sol::state lua = make_lua_state();
+
+    // Use existing game table from bindings
+    sol::table game_table = lua.globals()["game"];
+    game_table["current_mod"] = "test_mod";
+
+    // Create test_data table for results
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    // Ensure mod_settings page exists
+    get_options().ensure_mod_settings_page();
+
+    // Clear any previous test options
+    cata::clear_lua_options();
+
+    // Run the Lua test script
+    run_lua_test_script( lua, "options_test.lua" );
+
+    // Check that options were registered successfully
+    CHECK( test_data.get<bool>( "bool_result" ) == true );
+    CHECK( test_data.get<bool>( "int_result" ) == true );
+    CHECK( test_data.get<bool>( "float_result" ) == true );
+    CHECK( test_data.get<bool>( "select_result" ) == true );
+    CHECK( test_data.get<bool>( "input_result" ) == true );
+
+    // Test duplicate registration - should fail with debugmsg
+    cata::lua_option_spec dup_spec;
+    dup_spec.id = "TEST_BOOL";
+    dup_spec.name = to_translation( "Duplicate" );
+    dup_spec.type = cata::lua_option_type::boolean;
+    dup_spec.default_bool = false;
+    bool dup_result = false;
+    std::string dmsg = capture_debugmsg_during( [&]() {
+        dup_result = cata::register_lua_option( "test_mod", dup_spec );
+    } );
+    CHECK( dup_result == false );
+    CHECK( dmsg == "Lua option 'test_mod.TEST_BOOL' already registered" );
+
+    // Verify options exist in options manager
+    auto &opts = get_options();
+    CHECK( opts.has_option( "test_mod.TEST_BOOL" ) );
+    CHECK( opts.has_option( "test_mod.TEST_INT" ) );
+    CHECK( opts.has_option( "test_mod.TEST_FLOAT" ) );
+    CHECK( opts.has_option( "test_mod.TEST_SELECT" ) );
+    CHECK( opts.has_option( "test_mod.TEST_INPUT" ) );
+
+    // Verify default values
+    CHECK( opts.get_option( "test_mod.TEST_BOOL" ).value_as<bool>() == true );
+    CHECK( opts.get_option( "test_mod.TEST_INT" ).value_as<int>() == 50 );
+    CHECK( opts.get_option( "test_mod.TEST_FLOAT" ).value_as<float>() == Approx( 0.5f ) );
+    CHECK( opts.get_option( "test_mod.TEST_SELECT" ).value_as<std::string>() == "option_a" );
+    CHECK( opts.get_option( "test_mod.TEST_INPUT" ).value_as<std::string>() == "default_value" );
+
+    // Clean up
+    cata::clear_lua_options();
+}
+
+TEST_CASE( "lua_mod_options_get_option", "[lua]" )
+{
+    sol::state lua = make_lua_state();
+
+    // Set up test context - use the existing game table from bindings
+    sol::table game_table = lua.globals()["game"];
+    game_table["current_mod"] = "test_mod";
+
+    // Ensure mod_settings page exists and clear previous
+    get_options().ensure_mod_settings_page();
+    cata::clear_lua_options();
+
+    // Register a test option
+    cata::lua_option_spec spec;
+    spec.id = "GET_TEST";
+    spec.name = to_translation( "Get Test Option" );
+    spec.tooltip = to_translation( "Test getting option value" );
+    spec.type = cata::lua_option_type::integer;
+    spec.default_int = 42;
+    spec.min_int = 0;
+    spec.max_int = 100;
+    CHECK( cata::register_lua_option( "test_mod", spec ) );
+
+    // Test game.get_option function
+    sol::optional<int> value = lua.script( R"(
+        return game.get_option("test_mod.GET_TEST")
+    )" ).get<sol::optional<int>>();
+
+    REQUIRE( value.has_value() );
+    CHECK( *value == 42 );
+
+    // Test game.get_mod_option function (with automatic prefix)
+    sol::optional<int> mod_value = lua.script( R"(
+        return game.get_mod_option("GET_TEST")
+    )" ).get<sol::optional<int>>();
+
+    REQUIRE( mod_value.has_value() );
+    CHECK( *mod_value == 42 );
+
+    // Test non-existent option returns nil
+    sol::object nil_value = lua.script( R"(
+        return game.get_option("NONEXISTENT_OPTION")
+    )" ).get<sol::object>();
+
+    CHECK( nil_value == sol::lua_nil );
+
+    // Clean up
+    cata::clear_lua_options();
 }

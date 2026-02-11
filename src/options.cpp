@@ -5,6 +5,7 @@
 #include <cfloat>
 #include <climits>
 #include <iterator>
+#include <ranges>
 #include <stdexcept>
 
 #include "calendar.h"
@@ -155,6 +156,7 @@ constexpr auto general = "general";
 constexpr auto interface = "interface";
 constexpr auto graphics = "graphics";
 constexpr auto world_default = "world_default";
+constexpr auto mod_settings = "mod_settings";
 constexpr auto debug = "debug";
 #if defined(__ANDROID__)
 constexpr auto android = "android";
@@ -3261,6 +3263,16 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         return p.id_ == world_default;
     } ) - pages_.begin();
 
+    const int iModSettingsPage = std::ranges::find_if( pages_, [&]( const Page & p ) {
+        return p.id_ == mod_settings;
+    } ) - pages_.begin();
+
+    // Helper to check if a page index is a world-options type page
+    const auto is_world_opt_page = [&]( int page_idx ) -> bool {
+        return page_idx == iWorldOptPage ||
+        ( page_idx == iModSettingsPage && iModSettingsPage < static_cast<int>( pages_.size() ) );
+    };
+
     // temporary alias so the code below does not need to be changed
     options_container &OPTIONS = options;
     options_container &ACTIVE_WORLD_OPTIONS = world_options.has_value() ?
@@ -3357,7 +3369,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
                                world_options_only );
         draw_borders_internal( w_options_header, vert_lines );
 
-        auto &cOPTIONS = ( ingame || world_options_only ) && iCurrentPage == iWorldOptPage ?
+        auto &cOPTIONS = ( ingame || world_options_only ) && is_world_opt_page( iCurrentPage ) ?
                          ACTIVE_WORLD_OPTIONS : OPTIONS;
 
         const Page &page = pages_[iCurrentPage];
@@ -3484,7 +3496,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             mvwprintz( w_options_header, point( 7, 0 ), c_white, "" );
             for( int i = 0; i < static_cast<int>( pages_.size() ); i++ ) {
                 wprintz( w_options_header, c_white, "[" );
-                if( ingame && i == iWorldOptPage ) {
+                if( ingame && is_world_opt_page( i ) ) {
                     wprintz( w_options_header, iCurrentPage == i ? hilite( c_light_green ) : c_light_green,
                              _( "Current world" ) );
                 } else {
@@ -3502,7 +3514,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         std::string tooltip = curr_item.fmt_tooltip( find_group( curr_item.group ), cOPTIONS );
         fold_and_print( w_options_tooltip, point_zero, iMinScreenWidth - 2, c_white, tooltip );
 
-        if( ingame && iCurrentPage == iWorldOptPage ) {
+        if( ingame && is_world_opt_page( iCurrentPage ) ) {
             mvwprintz( w_options_tooltip, point( 3, 3 ), c_light_red, "%s", _( "Note: " ) );
             wprintz( w_options_tooltip, c_white, "%s",
                      _( "Some of these options may produce unexpected results if changed." ) );
@@ -3518,7 +3530,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         Page &page = pages_[iCurrentPage];
         auto &page_items = page.items_;
 
-        auto &cOPTIONS = ( ingame || world_options_only ) && iCurrentPage == iWorldOptPage ?
+        auto &cOPTIONS = ( ingame || world_options_only ) && is_world_opt_page( iCurrentPage ) ?
                          ACTIVE_WORLD_OPTIONS : OPTIONS;
 
         const std::string action = ctxt.handle_input();
@@ -3666,7 +3678,7 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         if( iter.second != OPTIONS[iter.first] ) {
             options_changed = true;
 
-            if( iter.second.getPage() == world_default ) {
+            if( iter.second.getPage() == world_default || iter.second.getPage() == mod_settings ) {
                 world_options_changed = true;
             }
 
@@ -3929,7 +3941,7 @@ options_manager::options_container options_manager::get_world_defaults() const
 {
     std::unordered_map<std::string, cOpt> result;
     for( auto &elem : options ) {
-        if( elem.second.getPage() == world_default ) {
+        if( elem.second.getPage() == world_default || elem.second.getPage() == mod_settings ) {
             result.insert( elem );
         }
     }
@@ -3942,5 +3954,50 @@ void options_manager::set_world_options( options_container *options )
         world_options.reset();
     } else {
         world_options = options;
+    }
+}
+
+void options_manager::clear_lua_options()
+{
+    // Remove all options on the mod_settings page
+    std::erase_if( options, []( const auto & elem ) {
+        return elem.second.getPage() == mod_settings;
+    } );
+
+    // Remove the mod_settings page items
+    for( auto &page : pages_ ) {
+        if( page.id_ == mod_settings ) {
+            page.items_.clear();
+            break;
+        }
+    }
+
+    // Also clear from world options if set
+    if( world_options.has_value() ) {
+        std::erase_if( *world_options.value(), []( const auto & elem ) {
+            return elem.second.getPage() == mod_settings;
+        } );
+    }
+}
+
+void options_manager::ensure_mod_settings_page()
+{
+    // Check if page already exists
+    for( const auto &page : pages_ ) {
+        if( page.id_ == mod_settings ) {
+            return;
+        }
+    }
+
+    // Insert mod_settings page after world_default but before debug
+    auto it = std::ranges::find_if( pages_, []( const Page & p ) {
+        return p.id_ == "debug";
+    } );
+
+    if( it != pages_.end() ) {
+        pages_.insert( it, Page( mod_settings, to_translation( "Mod Settings" ) ) );
+    } else {
+        // Fallback: just add at end
+        pages_.emplace_back( mod_settings, to_translation( "Mod Settings" ) );
     }
 }
