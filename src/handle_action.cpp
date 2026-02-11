@@ -1894,36 +1894,32 @@ bool game::handle_action()
                         break;
                     }
                 }
-                if( !u.in_vehicle && get_map().has_rope_at( u.pos() ) ) {
-                    bool moved = false;
-                    point xy = u.pos().xy();
-                    map &here = get_map();
-                    tripoint where = u.pos();
-                    if( get_map().ter( where ).id().str() != "t_open_air" ) {
-                        break;
-                    }
-                    tripoint above = where;
-                    above.z++;
-                    // Keep going down until we find a tile that is NOT open air
-                    while( get_map().ter( above ).id().str() == "t_open_air" &&
-                           !here.veh_at( tripoint( xy, above.z ) ) )  {
+                if( !u.in_vehicle ) {
+                    if( get_map().has_rope_at( u.pos() ) ) {
+                        point xy = u.pos().xy();
+                        map &here = get_map();
+                        tripoint where = u.pos();
+                        tripoint above = where;
                         above.z++;
-                    }
-                    const optional_vpart_position vp = here.veh_at( tripoint( xy, above.z ) );
-                    const int dist = above.z - u.pos().z;
-                    if( vp ) {
-                        const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
-                        if( idx != -1 ) {
-                            const vpart_info info = vp->vehicle().part_info( idx );
-                            if( info.ladder_length() >= dist ) {
-                                vertical_move( dist, true );
-                                here.board_vehicle( u.pos(), u.as_character() );
-                                moved = true;
-                                break;
+                        // Keep going down until we find a tile that is NOT open air
+                        while( get_map().ter( above ).id().str() == "t_open_air" &&
+                               !here.veh_at( tripoint( xy, above.z ) ) )  {
+                            above.z++;
+                        }
+                        const optional_vpart_position vp = here.veh_at( tripoint( xy, above.z ) );
+                        const int dist = above.z - u.pos().z;
+                        if( vp ) {
+                            const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
+                            if( idx != -1 ) {
+                                const vpart_info info = vp->vehicle().part_info( idx );
+                                if( info.ladder_length() >= dist ) {
+                                    vertical_move( dist, true );
+                                    here.board_vehicle( u.pos(), u.as_character() );
+                                    break;
+                                }
                             }
                         }
-                    }
-                    if( !moved ) {
+                    } else {
                         vertical_move( 1, false );
                     }
                 } else if( veh_ctrl && vp->vehicle().is_aircraft() ) {
