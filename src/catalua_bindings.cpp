@@ -17,6 +17,7 @@
 #include "distribution_grid.h"
 #include "enum_conversions.h"
 #include "enums.h"
+#include "faction.h"
 #include "field_type.h"
 #include "game.h"
 #include "itype.h"
@@ -994,4 +995,6 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_testing_library( lua );
     reg_requirement( lua );
     reg_inventory( lua );
+    reg_faction( lua );
+    reg_faction_manager( lua );
 }
