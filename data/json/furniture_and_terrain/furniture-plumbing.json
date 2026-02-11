@@ -429,6 +429,7 @@
     "description": "A plumbed rain collector that feeds a fluid grid when it is raining.",
     "symbol": "U",
     "color": "light_blue",
+    "looks_like": "tr_metal_funnel",
     "move_cost_mod": -1,
     "coverage": 30,
     "required_str": 6,
