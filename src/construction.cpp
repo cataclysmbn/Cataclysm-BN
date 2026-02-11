@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -41,6 +42,7 @@
 #include "messages.h"
 #include "morale_types.h"
 #include "mtype.h"
+#include "mod_manager.h"
 #include "npc.h"
 #include "options.h"
 #include "output.h"
@@ -421,6 +423,9 @@ std::optional<construction_id> construction_menu( const bool blueprint )
     int pos_x = 0;
     int available_window_width = 0;
     int available_buffer_height = 0;
+    std::string construct_separator_line;
+    std::string tab_status_line;
+    int notes_render_height = 0;
 
     std::optional<construction_id> ret;
 
@@ -440,6 +445,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
     int total_project_breakpoints = 0;
     int current_construct_breakpoint = 0;
     const inventory &total_inv = g->u.crafting_inventory();
+    int current_category_total = 0;
 
     input_context ctxt( "CONSTRUCTION" );
     ctxt.register_action( "UP", to_translation( "Move cursor up" ) );
@@ -505,12 +511,32 @@ std::optional<construction_id> construction_menu( const bool blueprint )
         tabcount = filter_mode ? 1 : normal_tabcount;
     };
 
-    const nc_color color_stage = c_white;
+    const nc_color color_stage = c_light_gray;
     ui_adaptor ui;
 
     const auto recalc_buffer = [&]() {
-        //leave room for top and bottom UI text
-        available_buffer_height = w_height - 3 - 3 - static_cast<int>( notes.size() );
+        const int hint_width = available_window_width;
+        const std::string notes_line_combined = std::accumulate( notes.begin(), notes.end(), std::string(),
+        []( const std::string & acc, const std::string & note ) {
+            return acc.empty() ? note : acc + ", " + note;
+        } );
+        const std::vector<std::string> folded_notes = foldstring( notes_line_combined, hint_width );
+        notes_render_height = static_cast<int>( folded_notes.size() );
+        // leave room for header rows, hint rows, and footer spacing
+        available_buffer_height = w_height - 4 - notes_render_height;
+
+        tab_status_line = current_category_total > 0
+                          ? string_format( _( "* No hidden recipe - %d in category *" ),
+                                           current_category_total )
+                          : std::string();
+        if( constructs.empty() ) {
+            construct_buffers.clear();
+            full_construct_buffer.clear();
+            construct_buffer_breakpoints.clear();
+            construct_buffer_breakpoints.push_back( 0 );
+            current_construct_breakpoint = 0;
+            return;
+        }
 
         if( !constructs.empty() ) {
             if( select >= static_cast<int>( constructs.size() ) ) {
@@ -528,6 +554,60 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             construct_buffer_breakpoints.clear();
             full_construct_buffer.clear();
             int stage_counter = 0;
+            std::vector<std::string> header_buffer;
+            const auto add_header_line = [&]( const std::string & line ) {
+                const auto folded = foldstring( line, available_window_width );
+                header_buffer.insert( header_buffer.end(), folded.begin(), folded.end() );
+            };
+            add_header_line( current_group->name() );
+            add_header_line( " " );
+            const auto origin_from_tile = []( const auto & tile ) -> std::optional<std::string> {
+                if( tile.src.empty() ) {
+                    return std::nullopt;
+                }
+                return enumerate_as_string( tile.src.begin(), tile.src.end(), []( const auto & source ) {
+                    return string_format( "'%s'", source.second->name() );
+                }, enumeration_conjunction::arrow );
+            };
+            const auto terrain_it = std::ranges::find_if( options,
+            []( const construction * con_variant ) {
+                return !con_variant->post_terrain.is_empty();
+            } );
+            const auto furniture_it = std::ranges::find_if( options,
+            []( const construction * con_variant ) {
+                return !con_variant->post_furniture.is_empty();
+            } );
+            const auto origin_line = terrain_it != options.end()
+                                     ? origin_from_tile( ( *terrain_it )->post_terrain.obj() )
+                                     : ( furniture_it != options.end()
+                                         ? origin_from_tile( ( *furniture_it )->post_furniture.obj() )
+                                         : std::nullopt );
+            const auto origin_to_display = origin_line.value_or( string_format( "'%s'",
+                                                      _( "Bright Nights" ) ) );
+            add_header_line( colorize( _( "Origin: " ) + origin_to_display, c_light_blue ) );
+            construct_separator_line = std::string( available_window_width,
+                                         static_cast<char>( LINE_OXOX ) );
+            add_header_line( construct_separator_line );
+            const auto category_it = [&]() {
+                for( const construction *con_variant : options ) {
+                    const auto it = std::ranges::find_if( construct_cat,
+                    [&]( const construction_category & cat ) {
+                        return cat.id == con_variant->category;
+                    } );
+                    if( it != construct_cat.end() ) {
+                        return it;
+                    }
+                }
+                return construct_cat.end();
+            }();
+            if( category_it != construct_cat.end() ) {
+                add_header_line( colorize( _( "Category: " ), c_white ) +
+                                 colorize( category_it->name(), c_magenta ) );
+            }
+            add_header_line( construct_separator_line );
+            construct_buffers.push_back( header_buffer );
+            tab_status_line = string_format( _( "* No hidden recipe - %d in category *" ),
+                                             current_category_total );
             for( const construction *current_con : options ) {
                 stage_counter++;
                 if( hide_unconstructable && !can_construct( *current_con ) ) {
@@ -556,23 +636,58 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 if( post_is_ter_or_furn ) {
                     std::string result_name;
                     std::string result_descr;
+                    const map_data_common_t *result_tile = nullptr;
+                    std::optional<std::string> result_mod_origin;
                     if( !current_con->post_terrain.is_empty() ) {
-                        result_name = current_con->post_terrain.obj().name();
-                        result_descr = current_con->post_terrain.obj().description.translated();
+                        const ter_t &result_ter = current_con->post_terrain.obj();
+                        result_name = result_ter.name();
+                        result_descr = result_ter.description.translated();
+                        result_tile = &result_ter;
+                        if( !result_ter.src.empty() ) {
+                            result_mod_origin = enumerate_as_string( result_ter.src.begin(),
+                            result_ter.src.end(), []( const auto & source ) {
+                                return string_format( "'%s'", source.second.str() );
+                            }, enumeration_conjunction::arrow );
+                        }
                     } else {
-                        result_name = current_con->post_furniture.obj().name();
-                        result_descr = current_con->post_furniture.obj().description.translated();
+                        const furn_t &result_furn = current_con->post_furniture.obj();
+                        result_name = result_furn.name();
+                        result_descr = result_furn.description.translated();
+                        result_tile = &result_furn;
+                        if( !result_furn.src.empty() ) {
+                            result_mod_origin = enumerate_as_string( result_furn.src.begin(),
+                            result_furn.src.end(), []( const auto & source ) {
+                                return string_format( "'%s'", source.second.str() );
+                            }, enumeration_conjunction::arrow );
+                        }
                     }
 
-                    if( options.size() > 1 ) {
-                        std::string current_line = string_format( _( "Stage/Variant #%d: " ), stage_counter );
-                        current_line += colorize( result_name, color_title );
-                        add_line( current_line );
+                    std::string stage_line = string_format( _( "Stage/Variant #%d: " ), stage_counter );
+                    stage_line += colorize( result_name, color_title );
+                    add_line( stage_line );
+
+                    if( result_tile != nullptr ) {
+                        add_line( string_format( "%s %s",
+                                                 _( "Move cost:" ),
+                                                 colorize( string_format( "%d", result_tile->movecost ),
+                                                           color_data ) ) );
+                        const bool indestructible = result_tile->bash.str_min == -1 &&
+                                                     result_tile->bash.str_max == -1;
+                        if( indestructible ) {
+                            add_line( string_format( "%s %s", _( "Bash str:" ),
+                                                     colorize( _( "Indestructible" ), color_data ) ) );
+                        } else {
+                            add_line( string_format( "%s %s",
+                                                     _( "Bash str:" ),
+                                                     colorize( string_format( "%d - %d", result_tile->bash.str_min,
+                                                                              result_tile->bash.str_max ),
+                                                               color_data ) ) );
+                        }
                     }
 
-                    std::string current_line = _( "Result: " );
-                    current_line += colorize( result_descr, color_data );
-                    add_line( current_line );
+                    std::string result_line = _( "Result: " );
+                    result_line += colorize( result_descr, color_data );
+                    add_line( result_line );
                 }
 
                 // display required skill and difficulty
@@ -674,7 +789,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
         const int w_y0 = ( TERMY > w_height ) ? ( TERMY - w_height ) / 2 : 0;
         const int w_x0 = ( TERMX > w_width ) ? ( TERMX - w_width ) / 2 : 0;
         w_con = catacurses::newwin( w_height, w_width, point( w_x0, w_y0 ) );
-        w_tabs = catacurses::newwin( 3, w_width - 2, point( w_x0 + 1, w_y0 ) );
+        w_tabs = catacurses::newwin( 3, w_width, point( w_x0, w_y0 ) );
 
         w_list_width = static_cast<int>( .375 * w_width );
         w_list_height = w_height - 4;
@@ -707,16 +822,22 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 return construct_cat[idx].name();
             } );
         }
-        const auto tab_width = []( const std::string & label ) -> int {
-            return utf8_width( label ) + 3; // padding similar to craft tabs
+        const auto label_for = [&]( const size_t idx ) -> std::string {
+            return tab_labels[idx];
         };
-        const int tabs_available = getmaxx( w_tabs ) - 2;
+        const auto tab_width = [&]( const size_t idx ) -> int {
+            const auto label_width = utf8_width( label_for( idx ) );
+            return label_width + 3;
+        };
+        const auto tabs_width = getmaxx( w_tabs );
+        const int tab_bar_width = std::max( 4, tabs_width * 7 / 10 );
+        const int tabs_available = tab_bar_width - 2;
         int first_tab = 0;
         const auto last_visible_tab = [&]( const int start_idx ) -> int {
             int used = 0;
             int last = start_idx - 1;
             for( size_t i = static_cast<size_t>( start_idx ); i < tab_labels.size(); ++i ) {
-                const int needed = tab_width( tab_labels[i] );
+                const int needed = tab_width( i );
                 if( used + needed > tabs_available ) {
                     break;
                 }
@@ -732,15 +853,61 @@ std::optional<construction_id> construction_menu( const bool blueprint )
         }
         std::vector<std::string> visible_tabs;
         for( int i = first_tab; i <= last_tab; ++i ) {
-            visible_tabs.push_back( tab_labels[i] );
+            visible_tabs.push_back( tab_labels[ i ] );
         }
         werase( w_tabs );
-        draw_tabs( w_tabs, visible_tabs, static_cast<size_t>( tabindex - first_tab ) );
-        if( first_tab > 0 ) {
-            mvwprintz( w_tabs, point( 0, 1 ), c_light_gray, "<" );
+        werase( w_tabs );
+        // draw baseline and corners for tabs row
+        mvwhline( w_tabs, point( 0, 2 ), LINE_OXOX, tabs_width );
+        mvwputch( w_tabs, point( 0, 2 ), BORDER_COLOR, LINE_OXXO );
+        mvwputch( w_tabs, point( tabs_width - 1, 2 ), BORDER_COLOR, LINE_OOXX );
+        std::optional<std::pair<nc_color, std::string>> construction_speed_line;
+        if( !constructs.empty() && select >= 0 && static_cast<size_t>( select ) < constructs.size() ) {
+            const construction_group_str_id &current_group = constructs[select];
+            const std::vector<const construction *> group_options = constructions_by_group( current_group );
+            if( !group_options.empty() ) {
+                const construction *first_option = group_options.front();
+                const int base_time = to_moves<int>( first_option->time );
+                const int adjusted_time = first_option->adjusted_time();
+                if( base_time > 0 && adjusted_time > 0 ) {
+                    const int speed_percent = static_cast<int>( std::round( 100.0f * base_time /
+                                                     static_cast<float>( adjusted_time ) ) );
+                    const bool is_slow = speed_percent < 100;
+                    const nc_color line_color = is_slow ? i_yellow : i_green;
+                    construction_speed_line = std::pair<nc_color, std::string>{
+                        line_color, string_format( _( "Construction speed %d%%" ), speed_percent )
+                    };
+                }
+            }
         }
-        if( last_tab + 1 < static_cast<int>( tab_labels.size() ) ) {
-            mvwprintz( w_tabs, point( getmaxx( w_tabs ) - 1, 1 ), c_light_gray, ">" );
+        if( filter_mode ) {
+            const std::string display_label = label_for( 0 );
+            draw_tab( w_tabs, 2, display_label, true );
+        } else {
+            int start_x = 2;
+            const auto selected_visible_tab = tabindex - first_tab;
+            for( size_t idx = 0; idx < visible_tabs.size(); ++idx ) {
+                const size_t label_index = static_cast<size_t>( first_tab ) + idx;
+                const bool is_selected = static_cast<int>( idx ) == selected_visible_tab;
+                const std::string base_label = tab_labels[label_index];
+                const std::string display_label = base_label;
+                const auto label_width = utf8_width( display_label );
+                draw_tab( w_tabs, start_x, display_label, is_selected );
+                start_x += label_width + 3;
+            }
+            if( first_tab > 0 ) {
+                mvwprintz( w_tabs, point( 0, 1 ), c_light_gray, "<" );
+            }
+            if( last_tab + 1 < static_cast<int>( tab_labels.size() ) ) {
+                mvwprintz( w_tabs, point( tab_bar_width - 1, 1 ), c_light_gray, ">" );
+            }
+        }
+        if( construction_speed_line.has_value() ) {
+            const auto &[line_color, line_text] = *construction_speed_line;
+            right_print( w_tabs, 0, 1, line_color, line_text );
+        }
+        if( !tab_status_line.empty() ) {
+            right_print( w_tabs, 1, 1, c_green, tab_status_line );
         }
         // Determine where in the master list to start printing
         calcStartPos( offset, select, w_list_height, constructs.size() );
@@ -764,11 +931,18 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             mvwhline( w_con, point( pos_x, i ), ' ', available_window_width );
         }
 
-        // print the hotkeys regardless of if there are constructions
-        for( size_t i = 0; i < notes.size(); ++i ) {
-            trim_and_print( w_con, point( pos_x,
-                                          w_height - 1 - static_cast<int>( notes.size() ) + static_cast<int>( i ) ),
-                            available_window_width, c_white, notes[i] );
+        if( !notes.empty() ) {
+            const std::string notes_line = std::accumulate( notes.begin(), notes.end(), std::string(),
+            []( const std::string & acc, const std::string & note ) {
+                return acc.empty() ? note : acc + ", " + note;
+            } );
+            const int hint_width = available_window_width;
+            const std::vector<std::string> folded_notes = foldstring( notes_line, hint_width );
+            int start_y = w_height - notes_render_height - 1;
+            for( size_t i = 0; i < folded_notes.size(); ++i ) {
+                trim_and_print( w_con, point( pos_x, start_y + static_cast<int>( i ) ),
+                                hint_width, c_white, folded_notes[i] );
+            }
         }
 
         if( !constructs.empty() ) {
@@ -788,7 +962,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             if( static_cast<size_t>( construct_buffer_breakpoints[current_construct_breakpoint] +
                                      available_buffer_height ) < full_construct_buffer.size() ) {
                 // Print next stage indicator if more breakpoints are remaining after screen height
-                trim_and_print( w_con, point( pos_x, w_height - 2 - static_cast<int>( notes.size() ) ),
+                trim_and_print( w_con, point( pos_x, w_height - 2 ),
                                 available_window_width,
                                 c_white, _( "Press %s to show next stage(s)." ),
                                 ctxt.get_desc( "PAGE_DOWN" ) );
@@ -798,12 +972,19 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             nc_color stored_color = color_stage;
             for( size_t i = static_cast<size_t>( construct_buffer_breakpoints[current_construct_breakpoint] );
                  i < full_construct_buffer.size(); i++ ) {
-                //the value of 3 is from leaving room at the top of window
-                if( ypos > available_buffer_height + 3 ) {
+                const int max_content_row = w_height - notes_render_height - 2;
+                if( ypos > max_content_row ) {
                     break;
                 }
-                print_colored_text( w_con, point( w_list_width + w_list_x0 + 2, ypos++ ), stored_color, color_stage,
-                                    full_construct_buffer[i] );
+                const std::string &line = full_construct_buffer[i];
+                if( !construct_separator_line.empty() && line == construct_separator_line ) {
+                    mvwhline( w_con, point( w_list_width + w_list_x0 + 2, ypos ),
+                              LINE_OXOX, available_window_width );
+                    ypos++;
+                    continue;
+                }
+                print_colored_text( w_con, point( w_list_width + w_list_x0 + 2, ypos++ ), stored_color,
+                                    color_stage, line );
             }
         }
 
@@ -836,30 +1017,170 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 last_construction = constructs[select];
             }
             set_filter_mode( !filter.empty() );
+            const auto group_matches_filter = [&]( const construction_group_str_id &group_id,
+            const std::string &filter_string ) -> bool {
+                if( filter_string.empty() ) {
+                    return true;
+                }
+                std::vector<const construction *> group_options = constructions_by_group( group_id );
+                if( group_options.empty() ) {
+                    return false;
+                }
+                const auto match_item = []( const item_comp &comp, const std::string &term ) -> bool {
+                    const std::string comp_name = item::nname( comp.type, comp.count );
+                    return lcmatch( comp_name, term ) || lcmatch( comp.type.str(), term );
+                };
+                const auto match_tool = []( const tool_comp &tool, const std::string &term ) -> bool {
+                    const std::string tool_name = item::nname( tool.type, tool.count );
+                    return lcmatch( tool_name, term ) || lcmatch( tool.type.str(), term );
+                };
+                const auto match_quality = []( const quality_requirement &quality_req,
+                const std::string &term ) -> bool {
+                    const std::string quality_name = quality_req.type->name.translated();
+                    return lcmatch( quality_name, term ) || lcmatch( quality_req.type.str(), term );
+                };
+                const auto match_skill = []( const skill_id &skill, const std::string &term ) -> bool {
+                    return lcmatch( skill.obj().name(), term ) || lcmatch( skill.str(), term );
+                };
+                const auto match_description = []( const map_data_common_t *tile,
+                const std::string &term ) -> bool {
+                    if( tile == nullptr ) {
+                        return false;
+                    }
+                    return lcmatch( tile->description.translated(), term );
+                };
+                const auto any_option_matches = [&]( const std::function<bool( const construction * )> &pred ) {
+                    return std::ranges::any_of( group_options, pred );
+                };
+                const auto option_description_matches = [&]( const construction *con,
+                const std::string &term ) -> bool {
+                    if( con->post_terrain.is_empty() && con->post_furniture.is_empty() ) {
+                        return false;
+                    }
+                    if( !con->post_terrain.is_empty() ) {
+                        const ter_t &result_ter = con->post_terrain.obj();
+                        if( match_description( &result_ter, term ) ) {
+                            return true;
+                        }
+                    }
+                    if( !con->post_furniture.is_empty() ) {
+                        const furn_t &result_furn = con->post_furniture.obj();
+                        if( match_description( &result_furn, term ) ) {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+
+                const auto tokens = string_split( filter_string, ',' );
+                return std::ranges::all_of( tokens, [&]( const std::string &raw_token ) {
+                    const std::string token = trim( raw_token );
+                    if( token.empty() ) {
+                        return true;
+                    }
+                    if( token.size() > 2 && token[1] == ':' ) {
+                        const std::string term = trim( token.substr( 2 ) );
+                        if( term.empty() ) {
+                            return true;
+                        }
+                        switch( token[0] ) {
+                            case 'd':
+                                return any_option_matches( [&]( const construction * con ) {
+                                    return option_description_matches( con, term );
+                                } );
+                            case 'c':
+                                return any_option_matches( [&]( const construction * con ) {
+                                    const auto &comps = con->requirements->get_components();
+                                    return std::ranges::any_of( comps, [&]( const auto & alt_group ) {
+                                        return std::ranges::any_of( alt_group, [&]( const item_comp & comp ) {
+                                            return match_item( comp, term );
+                                        } );
+                                    } );
+                                } );
+                            case 't':
+                                return any_option_matches( [&]( const construction * con ) {
+                                    const auto &tools = con->requirements->get_tools();
+                                    return std::ranges::any_of( tools, [&]( const auto & alt_group ) {
+                                        return std::ranges::any_of( alt_group, [&]( const tool_comp & tool ) {
+                                            return match_tool( tool, term );
+                                        } );
+                                    } );
+                                } );
+                            case 'Q':
+                                return any_option_matches( [&]( const construction * con ) {
+                                    const auto &qualities = con->requirements->get_qualities();
+                                    return std::ranges::any_of( qualities, [&]( const auto & alt_group ) {
+                                        return std::ranges::any_of( alt_group,
+                                        [&]( const quality_requirement & quality_req ) {
+                                            return match_quality( quality_req, term );
+                                        } );
+                                    } );
+                                } );
+                            case 'p':
+                                return any_option_matches( [&]( const construction * con ) {
+                                    if( con->required_skills.empty() ) {
+                                        return false;
+                                    }
+                                    const skill_id primary = con->required_skills.begin()->first;
+                                    return match_skill( primary, term );
+                                } );
+                            case 's':
+                                return any_option_matches( [&]( const construction * con ) {
+                                    return std::ranges::any_of( con->required_skills,
+                                    [&]( const std::pair<skill_id, int> &skill_pair ) {
+                                        return match_skill( skill_pair.first, term );
+                                    } );
+                                } );
+                            default:
+                                return false;
+                        }
+                    }
+                    const bool name_match = lcmatch( group_id->name(), token );
+                    if( name_match ) {
+                        return true;
+                    }
+                    return any_option_matches( [&]( const construction * con ) {
+                        if( !con->post_terrain.is_empty() ) {
+                            const ter_t &result_ter = con->post_terrain.obj();
+                            if( lcmatch( result_ter.name(), token ) ) {
+                                return true;
+                            }
+                        }
+                        if( !con->post_furniture.is_empty() ) {
+                            const furn_t &result_furn = con->post_furniture.obj();
+                            if( lcmatch( result_furn.name(), token ) ) {
+                                return true;
+                            }
+                        }
+                        return option_description_matches( con, token );
+                    } );
+                } );
+            };
             const auto fill_constructs = [&]( const std::vector<construction_group_str_id> &source ) {
                 constructs.clear();
-                if( filter.empty() ) {
-                    constructs = source;
-                    return;
-                }
                 std::ranges::copy_if( source, std::back_inserter( constructs ),
                 [&]( const construction_group_str_id & group ) {
-                    return lcmatch( group->name(), filter );
+                    return group_matches_filter( group, filter );
                 } );
             };
             if( filter_mode ) {
                 category_id = construction_category_FILTER;
+                current_category_total = static_cast<int>( available.size() );
                 fill_constructs( available );
             } else {
                 category_id = construct_cat[construct_cat_order[tabindex]].id;
                 if( category_id == construction_category_ALL ) {
+                    current_category_total = static_cast<int>( available.size() );
                     fill_constructs( available );
                 } else if( category_id == construction_category_FAVORITE ) {
                     std::vector<construction_group_str_id> favorites;
                     std::ranges::copy_if( available, std::back_inserter( favorites ), is_favorite );
+                    current_category_total = static_cast<int>( favorites.size() );
                     fill_constructs( favorites );
                 } else {
-                    fill_constructs( cat_available[category_id] );
+                    const auto &source = cat_available[category_id];
+                    current_category_total = static_cast<int>( source.size() );
+                    fill_constructs( source );
                 }
             }
             select = 0;
@@ -877,39 +1198,45 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             update_info = false;
 
             notes.clear();
+            const auto strip_period = []( std::string text ) {
+                while( !text.empty() && text.back() == '.' ) {
+                    text.pop_back();
+                }
+                return text;
+            };
             if( !filter.empty() ) {
-                notes.push_back( string_format( _( "Press [<color_red>%s</color>] to clear filter." ),
-                                                ctxt.get_desc( "RESET_FILTER" ) ) );
+                notes.push_back( strip_period( string_format( _( "Press [<color_red>%s</color>] to clear filter." ),
+                                                ctxt.get_desc( "RESET_FILTER" ) ) ) );
             }
             if( tabcount > 1 ) {
-                notes.push_back( string_format( _( "Press [<color_yellow>%s or %s</color>] to tab." ),
+                notes.push_back( strip_period( string_format( _( "Press [<color_yellow>%s or %s</color>] to tab." ),
                                                 ctxt.get_desc( "LEFT" ),
-                                                ctxt.get_desc( "RIGHT" ) ) );
+                                                ctxt.get_desc( "RIGHT" ) ) ) );
             }
-            notes.push_back( string_format( _( "Press [<color_yellow>%s</color>] to search." ),
-                                            ctxt.get_desc( "FILTER" ) ) );
+            notes.push_back( strip_period( string_format( _( "Press [<color_yellow>%s</color>] to search." ),
+                                            ctxt.get_desc( "FILTER" ) ) ) );
             if( !hide_unconstructable ) {
-                notes.push_back( string_format(
-                                     _( "Press [<color_yellow>%s</color>] to hide unavailable constructions." ),
-                                     ctxt.get_desc( "TOGGLE_UNAVAILABLE_CONSTRUCTIONS" ) ) );
+                notes.push_back( strip_period( string_format(
+                                                   _( "Press [<color_yellow>%s</color>] to hide unavailable constructions." ),
+                                                   ctxt.get_desc( "TOGGLE_UNAVAILABLE_CONSTRUCTIONS" ) ) ) );
             } else {
-                notes.push_back( string_format(
-                                     _( "Press [<color_red>%s</color>] to show unavailable constructions." ),
-                                     ctxt.get_desc( "TOGGLE_UNAVAILABLE_CONSTRUCTIONS" ) ) );
+                notes.push_back( strip_period( string_format(
+                                                   _( "Press [<color_red>%s</color>] to show unavailable constructions." ),
+                                                   ctxt.get_desc( "TOGGLE_UNAVAILABLE_CONSTRUCTIONS" ) ) ) );
             }
             if( select >= 0 && static_cast<size_t>( select ) < constructs.size() &&
                 is_favorite( constructs[select] ) ) {
-                notes.push_back( string_format(
-                                     _( "Press [<color_yellow>%s</color>] to remove from favorites." ),
-                                     ctxt.get_desc( "TOGGLE_FAVORITE" ) ) );
+                notes.push_back( strip_period( string_format(
+                                                   _( "Press [<color_yellow>%s</color>] to remove from favorites." ),
+                                                   ctxt.get_desc( "TOGGLE_FAVORITE" ) ) ) );
             } else {
-                notes.push_back( string_format(
-                                     _( "Press [<color_yellow>%s</color>] to add to favorites." ),
-                                     ctxt.get_desc( "TOGGLE_FAVORITE" ) ) );
+                notes.push_back( strip_period( string_format(
+                                                   _( "Press [<color_yellow>%s</color>] to add to favorites." ),
+                                                   ctxt.get_desc( "TOGGLE_FAVORITE" ) ) ) );
             }
-            notes.push_back( string_format(
-                                 _( "Press [<color_yellow>%s</color>] to view and edit keybindings." ),
-                                 ctxt.get_desc( "HELP_KEYBINDINGS" ) ) );
+            notes.push_back( strip_period( string_format(
+                                               _( "Press [<color_yellow>%s</color>] to view and edit keybindings." ),
+                                               ctxt.get_desc( "HELP_KEYBINDINGS" ) ) ) );
 
             recalc_buffer();
         } // Finished updating
