@@ -772,13 +772,37 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
         }
 
         if( pt.is_tank() && !type->parts[p].fuel.is_null() ) {
-            int qty = pt.ammo_capacity() * veh_fuel_mult / 100;
+            auto qty = pt.ammo_capacity() * veh_fuel_mult / 100;
             qty *= std::max( type->parts[p].fuel->stack_size, 1 );
             qty /= to_milliliter( units::legacy_volume_factor );
-            pt.ammo_set( type->parts[ p ].fuel, qty );
+
+            const auto global_rate = get_option<float>( "ITEM_SPAWNRATE" );
+            const auto fuel_rate = get_option<float>( "SPAWN_RATE_fuel" );
+            const auto combined_rate = global_rate * fuel_rate;
+
+            if( combined_rate < 1.0f ) {
+                if( rng_float( 0, 1 ) < combined_rate ) {
+                    pt.ammo_set( type->parts[ p ].fuel, qty );
+                }
+            } else {
+                auto scaled_qty = std::min( static_cast<int>( qty * combined_rate ), pt.ammo_capacity() );
+                pt.ammo_set( type->parts[ p ].fuel, scaled_qty );
+            }
         } else if( pt.is_fuel_store() && !type->parts[p].fuel.is_null() ) {
-            int qty = pt.ammo_capacity() * veh_fuel_mult / 100;
-            pt.ammo_set( type->parts[ p ].fuel, qty );
+            auto qty = pt.ammo_capacity() * veh_fuel_mult / 100;
+
+            const auto global_rate = get_option<float>( "ITEM_SPAWNRATE" );
+            const auto fuel_rate = get_option<float>( "SPAWN_RATE_fuel" );
+            const auto combined_rate = global_rate * fuel_rate;
+
+            if( combined_rate < 1.0f ) {
+                if( rng_float( 0, 1 ) < combined_rate ) {
+                    pt.ammo_set( type->parts[ p ].fuel, qty );
+                }
+            } else {
+                auto scaled_qty = std::min( static_cast<int>( qty * combined_rate ), pt.ammo_capacity() );
+                pt.ammo_set( type->parts[ p ].fuel, scaled_qty );
+            }
         }
 
         if( vp.has_feature( "OPENABLE" ) ) { // doors are closed
@@ -6107,15 +6131,26 @@ void vehicle::place_spawn_items()
         return;
     }
 
-    for( const auto &pt : type->parts ) {
-        if( pt.with_ammo ) {
-            int turret = part_with_feature( pt.pos, "TURRET", true );
-            if( turret >= 0 && x_in_y( pt.with_ammo, 100 ) ) {
-                parts[ turret ].ammo_set( random_entry( pt.ammo_types ), rng( pt.ammo_qty.first,
-                                          pt.ammo_qty.second ) );
-            }
+    std::ranges::for_each( type->parts, [this]( const auto & pt ) {
+        if( !pt.with_ammo ) {
+            return;
         }
-    }
+
+        auto turret = part_with_feature( pt.pos, "TURRET", true );
+        if( turret < 0 ) {
+            return;
+        }
+
+        const auto global_rate = get_option<float>( "ITEM_SPAWNRATE" );
+        const auto ammo_rate = get_option<float>( "SPAWN_RATE_ammo" );
+        const auto combined_rate = std::min( global_rate * ammo_rate, 1.0f );
+        const auto scaled_chance = static_cast<int>( pt.with_ammo * combined_rate );
+
+        if( x_in_y( scaled_chance, 100 ) ) {
+            parts[ turret ].ammo_set( random_entry( pt.ammo_types ), rng( pt.ammo_qty.first,
+                                      pt.ammo_qty.second ) );
+        }
+    } );
 
     std::ranges::for_each( type.obj().item_spawns, [this]( const auto & spawn ) {
         if( rng( 1, 100 ) > spawn.chance ) {
