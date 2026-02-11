@@ -73,6 +73,7 @@
 #include "distraction_manager.h"
 #include "distribution_grid.h"
 #include "drop_token.h"
+#include "fluid_grid.h"
 #include "editmap.h"
 #include "enums.h"
 #include "event.h"
@@ -585,6 +586,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
 {
     m.load( pos_sm, true, pump_events );
     grid_tracker_ptr->load( m );
+    fluid_grid::load( m );
 }
 
 std::optional<tripoint> game::find_local_stairs_leading_to( map &mp, const int z_after )
@@ -1673,6 +1675,7 @@ bool game::do_turn()
     m.process_items();
     m.creature_in_field( u );
     grid_tracker_ptr->update( calendar::turn );
+    fluid_grid::update( calendar::turn );
 
     // Apply sounds from previous turn to monster and NPC AI.
     sounds::process_sounds();

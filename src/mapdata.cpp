@@ -105,7 +105,9 @@ auto parse_fluid_grid_role( const std::string &role ) -> std::optional<fluid_gri
 {
     static const auto role_map = std::unordered_map<std::string, fluid_grid_role> {
         { "tank", fluid_grid_role::tank },
-        { "fixture", fluid_grid_role::fixture }
+        { "fixture", fluid_grid_role::fixture },
+        { "transformer", fluid_grid_role::transformer },
+        { "rain_collector", fluid_grid_role::rain_collector }
     };
     const auto iter = role_map.find( role );
     if( iter == role_map.end() ) {
@@ -1667,6 +1669,44 @@ void furn_t::load( const JsonObject &jo, const std::string &src )
                 fluid_grid_entry.disconnected_variant = furn_str_id(
                         fluid_grid_obj.get_string( "disconnected_variant" ) );
             }
+            if( fluid_grid_obj.has_member( "transformer" ) ) {
+                auto transformer_obj = fluid_grid_obj.get_object( "transformer" );
+                auto transformer = fluid_grid_transformer_config{};
+                mandatory( transformer_obj, was_loaded, "tick_interval", transformer.tick_interval );
+                if( fluid_grid_entry.role == fluid_grid_role::rain_collector ) {
+                    optional( transformer_obj, was_loaded, "collector_area_m2", transformer.collector_area_m2, 0.0 );
+                } else {
+                    optional( transformer_obj, was_loaded, "collector_area_m2", transformer.collector_area_m2, 0.0 );
+                    auto transforms = transformer_obj.get_array( "transforms" );
+                    for( JsonObject transform_obj : transforms ) {
+                        auto recipe = fluid_grid_transform_recipe{};
+                        auto parse_io = [&]( const JsonArray & array,
+                        std::vector<fluid_grid_transform_io> &out ) {
+                            for( JsonObject io_obj : array ) {
+                                auto io = fluid_grid_transform_io{};
+                                mandatory( io_obj, was_loaded, "liquid", io.liquid );
+                                if( !assign( io_obj, "amount", io.amount, true ) ) {
+                                    debugmsg( "fluid grid transformer entry missing amount in %s", id.c_str() );
+                                }
+                                out.push_back( io );
+                            }
+                        };
+                        if( transform_obj.has_array( "inputs" ) ) {
+                            parse_io( transform_obj.get_array( "inputs" ), recipe.inputs );
+                        }
+                        if( transform_obj.has_array( "outputs" ) ) {
+                            parse_io( transform_obj.get_array( "outputs" ), recipe.outputs );
+                        }
+                        if( recipe.inputs.empty() && recipe.outputs.empty() ) {
+                            debugmsg( "fluid grid transformer entry missing inputs/outputs in %s", id.c_str() );
+                        }
+                        transformer.transforms.push_back( recipe );
+                    }
+                }
+                fluid_grid_entry.transformer = transformer;
+            } else if( fluid_grid_entry.role == fluid_grid_role::rain_collector ) {
+                debugmsg( "rain collector fluid grid missing transformer config in %s", id.c_str() );
+            }
             fluid_grid = fluid_grid_entry;
         }
     }
@@ -1791,8 +1831,19 @@ void furn_t::check() const
             }
         } else {
             if( fluid_grid_data.capacity || fluid_grid_data.use_keg_capacity ) {
-                debugmsg( "furn %s has fluid grid fixture role with capacity configured", id.c_str() );
+                debugmsg( "furn %s has fluid grid non-tank role with capacity configured", id.c_str() );
             }
+        }
+        if( ( fluid_grid_data.role == fluid_grid_role::transformer ||
+              fluid_grid_data.role == fluid_grid_role::rain_collector ) &&
+            !fluid_grid_data.transformer ) {
+            debugmsg( "furn %s has fluid grid transformer or rain_collector role but no transformer configured",
+                      id.c_str() );
+        }
+        if( fluid_grid_data.role == fluid_grid_role::rain_collector &&
+            fluid_grid_data.transformer &&
+            fluid_grid_data.transformer->collector_area_m2 <= 0.0 ) {
+            debugmsg( "furn %s has rain collector role but no collector_area_m2 set", id.c_str() );
         }
         if( fluid_grid_data.connected_variant && !fluid_grid_data.connected_variant->is_valid() ) {
             debugmsg( "furn %s has invalid fluid grid connected_variant %s", id.c_str(),
