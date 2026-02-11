@@ -5084,6 +5084,15 @@ void cata_tiles::draw_zones_frame( std::multimap<point, formatted_text> &overlay
     const zone_data *zone = zone_manager::get_manager().get_zone_at(
                                 get_map().getabs( lookup_local ) );
 
+    if( has_custom_points ) {
+        if( zone ) {
+            overlay_strings.emplace( player_to_screen( center_local.xy() ),
+                                     formatted_text( zone->get_name(), catacurses::white,
+                                                     direction::NORTH ) );
+        }
+        return;
+    }
+
     const point screen_tl = player_to_screen( min_local );
     const point screen_br = player_to_screen( max_local ) + point( tile_width, tile_height );
 

@@ -6899,7 +6899,8 @@ void game::zones_manager()
 
                 current_zone_type = id;
                 current_bp_options = std::dynamic_pointer_cast<const blueprint_options>( options );
-                const auto position = query_position();
+                std::optional<std::pair<tripoint, tripoint>> position;
+                position = query_position();
                 if( !position ) {
                     break;
                 }

@@ -155,7 +155,7 @@ class blueprint_options : public zone_options, public mark_option
             rectangle_fill,
             rectangle_border,
             circle_fill,
-            circle_border,
+            circle_border
         };
 
     private:

@@ -469,8 +469,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             construct_cat_order.push_back( std::distance( construct_cat.begin(), it ) );
         }
     };
-    append_category( construction_category_ALL );
     append_category( construction_category_FAVORITE );
+    append_category( construction_category_ALL );
     for( size_t i = 0; i < construct_cat.size(); ++i ) {
         const construction_category_id &id = construct_cat[i].id;
         if( id == construction_category_ALL || id == construction_category_FAVORITE ||
@@ -479,9 +479,31 @@ std::optional<construction_id> construction_menu( const bool blueprint )
         }
         construct_cat_order.push_back( i );
     }
-    const int tabcount = static_cast<int>( construct_cat_order.size() );
+    const auto normal_tabcount = static_cast<int>( construct_cat_order.size() );
+    auto tabcount = normal_tabcount;
 
     std::string filter;
+    auto filter_mode = false;
+    auto saved_tabindex = tabindex;
+    const auto set_filter_mode = [&]( const bool active ) {
+        if( active == filter_mode ) {
+            return;
+        }
+        if( active ) {
+            saved_tabindex = tabindex;
+            tabindex = 0;
+        } else {
+            tabindex = saved_tabindex;
+            if( tabindex >= normal_tabcount ) {
+                tabindex = normal_tabcount - 1;
+            }
+            if( tabindex < 0 ) {
+                tabindex = 0;
+            }
+        }
+        filter_mode = active;
+        tabcount = filter_mode ? 1 : normal_tabcount;
+    };
 
     const nc_color color_stage = c_white;
     ui_adaptor ui;
@@ -676,11 +698,15 @@ std::optional<construction_id> construction_menu( const bool blueprint )
         werase( w_list );
         // Print tab listing with craft-style tabs and overflow indicators
         std::vector<std::string> tab_labels;
-        tab_labels.reserve( construct_cat_order.size() );
-        std::ranges::transform( construct_cat_order, std::back_inserter( tab_labels ),
-        [&]( const size_t idx ) {
-            return construct_cat[idx].name();
-        } );
+        if( filter_mode ) {
+            tab_labels.push_back( _( "Searched" ) );
+        } else {
+            tab_labels.reserve( construct_cat_order.size() );
+            std::ranges::transform( construct_cat_order, std::back_inserter( tab_labels ),
+            [&]( const size_t idx ) {
+                return construct_cat[idx].name();
+            } );
+        }
         const auto tab_width = []( const std::string & label ) -> int {
             return utf8_width( label ) + 3; // padding similar to craft tabs
         };
@@ -809,6 +835,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             } else if( select >= 0 && static_cast<size_t>( select ) < constructs.size() ) {
                 last_construction = constructs[select];
             }
+            set_filter_mode( !filter.empty() );
             const auto fill_constructs = [&]( const std::vector<construction_group_str_id> &source ) {
                 constructs.clear();
                 if( filter.empty() ) {
@@ -820,15 +847,20 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                     return lcmatch( group->name(), filter );
                 } );
             };
-            category_id = construct_cat[construct_cat_order[tabindex]].id;
-            if( category_id == construction_category_ALL ) {
+            if( filter_mode ) {
+                category_id = construction_category_FILTER;
                 fill_constructs( available );
-            } else if( category_id == construction_category_FAVORITE ) {
-                std::vector<construction_group_str_id> favorites;
-                std::ranges::copy_if( available, std::back_inserter( favorites ), is_favorite );
-                fill_constructs( favorites );
             } else {
-                fill_constructs( cat_available[category_id] );
+                category_id = construct_cat[construct_cat_order[tabindex]].id;
+                if( category_id == construction_category_ALL ) {
+                    fill_constructs( available );
+                } else if( category_id == construction_category_FAVORITE ) {
+                    std::vector<construction_group_str_id> favorites;
+                    std::ranges::copy_if( available, std::back_inserter( favorites ), is_favorite );
+                    fill_constructs( favorites );
+                } else {
+                    fill_constructs( cat_available[category_id] );
+                }
             }
             select = 0;
             if( last_construction ) {
@@ -849,9 +881,11 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 notes.push_back( string_format( _( "Press [<color_red>%s</color>] to clear filter." ),
                                                 ctxt.get_desc( "RESET_FILTER" ) ) );
             }
-            notes.push_back( string_format( _( "Press [<color_yellow>%s or %s</color>] to tab." ),
-                                            ctxt.get_desc( "LEFT" ),
-                                            ctxt.get_desc( "RIGHT" ) ) );
+            if( tabcount > 1 ) {
+                notes.push_back( string_format( _( "Press [<color_yellow>%s or %s</color>] to tab." ),
+                                                ctxt.get_desc( "LEFT" ),
+                                                ctxt.get_desc( "RIGHT" ) ) );
+            }
             notes.push_back( string_format( _( "Press [<color_yellow>%s</color>] to search." ),
                                             ctxt.get_desc( "FILTER" ) ) );
             if( !hide_unconstructable ) {
@@ -888,13 +922,14 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             popup
             .title( _( "Search" ) )
             .width( 50 )
-            .description( _( "Filter" ) )
+            .description( _( "Searched" ) )
             .max_length( 100 )
             .text( filter )
             .query();
             if( popup.confirmed() ) {
                 filter = popup.text();
                 uistate.construction_filter = filter;
+                set_filter_mode( !filter.empty() );
                 update_info = true;
                 update_cat = true;
             }
@@ -902,6 +937,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             if( !filter.empty() ) {
                 filter.clear();
                 uistate.construction_filter.clear();
+                set_filter_mode( false );
                 update_info = true;
                 update_cat = true;
             }
@@ -996,7 +1032,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
         }
     } while( !exit );
 
-    uistate.construction_tab = int_id<construction_category>( construct_cat_order[tabindex] ).id();
+    const auto tab_to_store = filter_mode ? saved_tabindex : tabindex;
+    uistate.construction_tab = int_id<construction_category>( construct_cat_order[tab_to_store] ).id();
 
     return ret;
 }

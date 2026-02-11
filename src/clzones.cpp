@@ -254,8 +254,8 @@ auto make_circle_shape( const zone_bounds &bounds, const bool border_only ) -> c
     const double center_y = static_cast<double>( bounds.min.y + bounds.max.y ) / 2.0;
     const double radius = static_cast<double>( std::max( bounds.max.x - bounds.min.x,
                                 bounds.max.y - bounds.min.y ) ) / 2.0;
-    const double outer_radius = radius + 0.5;
-    const double inner_radius = border_only ? std::max( radius - 0.5, 0.0 ) : 0.0;
+    const double outer_radius = radius + 1.0;
+    const double inner_radius = border_only ? std::max( radius - 1.0, 0.0 ) : 0.0;
 
     return circle_shape{
         center_x, center_y, outer_radius * outer_radius, inner_radius * inner_radius
@@ -329,12 +329,43 @@ auto blueprint_options::get_covered_points( const tripoint &start,
         return points;
     }
 
+    const auto shape = make_circle_shape( bounds, border_only );
+    if( circle_layout && border_only ) {
+        auto fill_set = std::unordered_set<tripoint>();
+        const auto circle_fill = make_circle_shape( bounds, false );
+        for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
+            for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
+                for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
+                    const tripoint pt( x, y, z );
+                    if( point_in_circle( circle_fill, pt ) ) {
+                        fill_set.insert( pt );
+                    }
+                }
+            }
+        }
+        auto border_set = std::unordered_set<tripoint>();
+        const auto neighbors = std::array<point, 8>{
+            point_east, point_west, point_north, point_south,
+            point_east + point_north, point_east + point_south,
+            point_west + point_north, point_west + point_south
+        };
+        std::ranges::for_each( fill_set, [&]( const tripoint &pt ) {
+            const bool at_edge = std::ranges::any_of( neighbors, [&]( const point &dir ) {
+                const tripoint neigh( pt.xy() + dir, pt.z );
+                return !fill_set.contains( neigh );
+            } );
+            if( at_edge ) {
+                border_set.insert( pt );
+            }
+        } );
+        return std::vector<tripoint>( border_set.begin(), border_set.end() );
+    }
+
     auto points = std::vector<tripoint>();
     const auto x_span = bounds.max.x - bounds.min.x + 1;
     const auto y_span = bounds.max.y - bounds.min.y + 1;
     const auto z_span = bounds.max.z - bounds.min.z + 1;
     points.reserve( static_cast<size_t>( x_span * y_span * z_span ) );
-    const auto shape = make_circle_shape( bounds, border_only );
     for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
         for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
             for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
@@ -357,6 +388,21 @@ auto blueprint_options::has_inside( const tripoint &start, const tripoint &end,
     }
     const auto circle_layout = layout == blueprint_layout::circle_fill ||
                                layout == blueprint_layout::circle_border;
+    if( circle_layout && layout == blueprint_layout::circle_border ) {
+        const auto shape = make_circle_shape( bounds, false );
+        if( !point_in_circle( shape, candidate ) ) {
+            return false;
+        }
+        const auto neighbors = std::array<point, 8>{
+            point_east, point_west, point_north, point_south,
+            point_east + point_north, point_east + point_south,
+            point_west + point_north, point_west + point_south
+        };
+        return std::ranges::any_of( neighbors, [&]( const point &dir ) {
+            const tripoint neigh( candidate.xy() + dir, candidate.z );
+            return !point_in_circle( shape, neigh );
+        } );
+    }
     const auto border_only = layout == blueprint_layout::rectangle_border ||
                              layout == blueprint_layout::circle_border;
     if( !circle_layout ) {
@@ -612,10 +658,8 @@ std::string plot_options::get_zone_name_suggestion() const
 
 std::vector<std::pair<std::string, std::string>> blueprint_options::get_descriptions() const
 {
-    std::vector<std::pair<std::string, std::string>> options =
-                std::vector<std::pair<std::string, std::string>>();
-    options.emplace_back( _( "Construct: " ),
-                          group ? group->name() : _( "No Construction" ) );
+    auto options = std::vector<std::pair<std::string, std::string>>();
+    options.emplace_back( _( "Construct: " ), group ? group->name() : _( "No Construction" ) );
     options.emplace_back( _( "Layout: " ), blueprint_layout_description( layout ) );
 
     return options;
