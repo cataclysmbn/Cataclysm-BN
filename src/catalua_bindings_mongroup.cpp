@@ -8,6 +8,7 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "monstergenerator.h"
 #include "mongroup.h"
 
 auto cata::detail::reg_monster_groups( sol::state &lua ) -> void
@@ -169,6 +170,24 @@ auto cata::detail::reg_monster_groups( sol::state &lua ) -> void
     luna::set_fx( lib, "get_group",
     []( const mongroup_id &group_id ) -> const MonsterGroup & {
         return group_id.obj();
+    } );
+
+    luna::finalize_lib( lib );
+}
+
+auto cata::detail::reg_monster_type_ids( sol::state &lua ) -> void
+{
+    DOC( "Monster type definitions and helpers" );
+    auto lib = luna::begin_lib( lua, "monster_types" );
+
+    DOC( "List all monster type ids currently loaded." );
+    luna::set_fx( lib, "get_all_ids",
+    []() -> std::vector<mtype_id> {
+        namespace views = std::views;
+        const auto &mtypes = MonsterGenerator::generator().get_all_mtypes();
+        return mtypes
+               | views::transform( []( const mtype &type ) { return type.id; } )
+               | std::ranges::to<std::vector<mtype_id>>();
     } );
 
     luna::finalize_lib( lib );
