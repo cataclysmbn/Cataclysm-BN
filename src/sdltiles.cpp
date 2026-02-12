@@ -995,11 +995,15 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 if( blink && uistate.overmap_debug_mongroup ) {
                     const std::vector<mongroup *> mgroups = overmap_buffer.monsters_at( omp );
                     if( !mgroups.empty() ) {
-                        auto mgroup_iter = mgroups.begin();
-                        std::advance( mgroup_iter, rng( 0, mgroups.size() - 1 ) );
-                        const tile_search_params tile {( *mgroup_iter )->type->defaultMonster.str(), C_NONE, empty_string, 0, 0};
-                        draw_from_id_string( tile, omp.raw(), std::nullopt,
-                                             std::nullopt, lit_level::LIT, false, 0, false );
+                        const auto horde_it = std::ranges::find_if( mgroups, []( const mongroup *mgp ) {
+                            return mgp != nullptr && mgp->horde;
+                        } );
+                        const mongroup *chosen = horde_it != mgroups.end() ? *horde_it : mgroups.front();
+                        if( chosen != nullptr ) {
+                            const tile_search_params tile { chosen->type->defaultMonster.str(), C_NONE, empty_string, 0, 0};
+                            draw_from_id_string( tile, omp.raw(), std::nullopt,
+                                                 std::nullopt, lit_level::LIT, false, 0, false );
+                        }
                     }
                 }
                 const auto fallback_horde_id = [&]( const tripoint_abs_omt &pos ) -> std::string {
