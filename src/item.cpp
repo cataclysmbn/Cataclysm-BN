@@ -1291,6 +1291,11 @@ void item::clear_vars()
     item_vars.clear();
 }
 
+auto item::get_vars_map() const -> const std::map<std::string, std::string> &
+{
+    return item_vars;
+}
+
 void item::add_item_with_id( const itype_id &itype, int count )
 {
     detached_ptr<item> new_item = item::spawn( itype, calendar::turn, count );

@@ -333,6 +333,16 @@ void reg_item( sol::state &lua )
         SET_FX( erase_var );
         DOC( "Erase all variables" );
         SET_FX( clear_vars );
+        DOC( "Returns all stored item vars as a table" );
+        luna::set_fx( ut, "vars_table", []( sol::this_state state, const item & it )
+        {
+            sol::state_view lua( state );
+            sol::table vars = lua.create_table();
+            std::ranges::for_each( it.get_vars_map(), [&]( const auto & entry ) {
+                vars[entry.first] = entry.second;
+            } );
+            return vars;
+        } );
 
         DOC( "Spawns a new item. Same as gapi.create_item " );
         luna::set_fx( ut, "spawn", []( const itype_id & itype, int count )

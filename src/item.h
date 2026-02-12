@@ -1533,6 +1533,7 @@ class item : public location_visitable<item>, public game_object<item>
         void erase_var( const std::string &name );
         /** Removes all item variables. */
         void clear_vars();
+        auto get_vars_map() const -> const std::map<std::string, std::string> &;
         /** Adds child items to the contents of this one. */
         void add_item_with_id( const itype_id &itype, int count = 1 );
         /** Checks if this item contains an item with itype. */
@@ -2703,5 +2704,4 @@ struct cable_connection_data {
         con2.point = tripoint_abs_ms( tmp );
     }
 };
-
 
