@@ -284,5 +284,51 @@ void cata::detail::reg_overmap( sol::state &lua )
         overmap_buffer.move_hordes();
     } );
 
+    DOC( "Create a monster horde at the given absolute OMT position. Pass a table with fields: type (mongroup_id, required), pos (tripoint abs_omt, required), radius (int), population (int), horde (bool), behaviour (string), diffuse (bool), target (tripoint abs_omt)." );
+    luna::set_fx( lib, "create_horde",
+    []( const sol::table &opts ) -> mongroup * {
+        const sol::object type_obj = opts.get<sol::object>( "type" );
+        mongroup_id type_id = mongroup_id::NULL_ID();
+        if( type_obj.is<std::string>() ) {
+            type_id = mongroup_id( type_obj.as<std::string>() );
+        } else if( type_obj.is<mongroup_id>() ) {
+            type_id = type_obj.as<mongroup_id>();
+        }
+        const sol::optional<tripoint> pos_val = opts.get<sol::optional<tripoint>>( "pos" );
+        if( type_id.is_null() || !pos_val.has_value() ) {
+            return nullptr;
+        }
+        const tripoint pos_omt = *pos_val;
+        const int radius = opts.get_or( "radius", 1 );
+        const int population = opts.get_or( "population", 100 );
+        const bool is_horde = opts.get_or( "horde", true );
+        const std::string behaviour = opts.get_or( "behaviour", std::string( "roam" ) );
+        const bool diffuse = opts.get_or( "diffuse", false );
+        const sol::optional<tripoint> target_omt = opts.get<sol::optional<tripoint>>( "target" );
+
+        const tripoint_abs_omt pos_abs_omt( pos_omt );
+        const tripoint_abs_sm pos_abs_sm = project_to<coords::sm>( pos_abs_omt );
+        point_abs_om omp;
+        point_om_sm sm_within;
+        std::tie( omp, sm_within ) = project_remain<coords::om>( pos_abs_sm.xy() );
+
+        mongroup mg( type_id, tripoint_om_sm( sm_within, pos_abs_sm.z() ), radius, population );
+        mg.abs_pos = pos_abs_sm;
+        mg.horde = is_horde;
+        mg.horde_behaviour = behaviour;
+        mg.diffuse = diffuse;
+
+        if( target_omt.has_value() ) {
+            const tripoint_abs_sm target_abs_sm = project_to<coords::sm>( tripoint_abs_omt( *target_omt ) );
+            point_abs_om target_om;
+            point_om_sm target_within;
+            std::tie( target_om, target_within ) = project_remain<coords::om>( target_abs_sm.xy() );
+            mg.target = tripoint_om_sm( target_within, target_abs_sm.z() );
+            mg.nemesis_target = target_abs_sm;
+        }
+
+        return overmap_buffer.create_horde( mg );
+    } );
+
     luna::finalize_lib( lib );
 }

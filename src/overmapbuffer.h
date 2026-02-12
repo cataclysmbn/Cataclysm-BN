@@ -428,6 +428,8 @@ class overmapbuffer
          * @param p The player's location in absolute submap coordinates.
          */
         void signal_nemesis( tripoint_abs_sm p );
+        /// Create a new monster group (useful for hordes) and return a pointer to it, or nullptr on failure.
+        mongroup *create_horde( const mongroup &group );
         /**
          * Process nearby monstergroups (dying mostly).
          */
