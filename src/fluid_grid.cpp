@@ -1291,6 +1291,65 @@ auto add_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,
     return get_fluid_grid_tracker().storage_at( p ).add_charges( liquid_type, charges );
 }
 
+auto seed_liquid_charges_for_mapgen( const tripoint_abs_omt &p, const itype_id &liquid_type,
+                                     int charges ) -> int
+{
+    if( charges <= 0 ) {
+        return 0;
+    }
+    if( !is_supported_liquid( liquid_type ) ) {
+        return 0;
+    }
+
+    const auto grid = grid_at( p );
+    if( grid.empty() ) {
+        return 0;
+    }
+
+    const auto anchor_abs = anchor_for_grid( grid );
+    auto omc = overmap_buffer.get_om_global( anchor_abs );
+    auto &storage = fluid_grid::storage_for( *omc.om );
+    auto &state = storage[omc.local];
+    state.capacity = calculate_capacity_for_grid( grid, MAPBUFFER );
+
+    if( state.stored_total() > state.capacity ) {
+        reduce_storage( state, state.stored_total() - state.capacity );
+    }
+
+    const auto allow_mixed = tank_count_for_grid( grid, MAPBUFFER ) > 1;
+    normalize_water_storage( state, allow_mixed );
+    if( liquid_type == itype_water ) {
+        taint_clean_water( state, allow_mixed );
+    }
+
+    const auto available_volume = state.capacity - state.stored_total();
+    if( available_volume <= 0_ml ) {
+        return 0;
+    }
+
+    const auto max_charges = charges_from_volume( liquid_type, available_volume );
+    const auto added = std::min( charges, max_charges );
+    if( added <= 0 ) {
+        return 0;
+    }
+
+    const auto added_volume = volume_from_charges( liquid_type, added );
+    if( liquid_type == itype_water_clean ) {
+        const auto dirty_iter = state.stored_by_type.find( itype_water );
+        if( dirty_iter != state.stored_by_type.end() ) {
+            dirty_iter->second += added_volume;
+        } else {
+            state.stored_by_type[itype_water_clean] += added_volume;
+        }
+    } else {
+        state.stored_by_type[itype_water] += added_volume;
+    }
+
+    const auto tank_count = tank_count_for_grid( grid, MAPBUFFER );
+    enforce_tank_type_limit( state, tank_count );
+    return added;
+}
+
 auto drain_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,
                            int charges ) -> int
 {

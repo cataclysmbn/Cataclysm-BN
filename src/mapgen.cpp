@@ -34,6 +34,7 @@
 #include "drawing_primitives.h"
 #include "enums.h"
 #include "field_type.h"
+#include "fluid_grid.h"
 #include "game.h"
 #include "game_constants.h"
 #include "generic_factory.h"
@@ -1892,19 +1893,31 @@ class jmapgen_liquid_item : public jmapgen_piece
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
             if( one_in( chance.get() ) ) {
-                itype_id chosen_id = liquid.get( dat );
+                const auto chosen_id = liquid.get( dat );
                 if( chosen_id.is_null() ) {
                     return;
                 }
                 // Itemgroups apply migrations when being loaded, but we need to migrate
                 // individual items here.
-                itype_id migrated = item_controller->migrate_id( chosen_id );
-                detached_ptr<item> newliquid = item::spawn( migrated, calendar::start_of_cataclysm );
+                const auto migrated = item_controller->migrate_id( chosen_id );
+                auto newliquid = item::spawn( migrated, calendar::start_of_cataclysm );
                 if( amount.valmax > 0 ) {
                     newliquid->charges = amount.get();
                 }
-                dat.m.add_item_or_charges( tripoint( x.get(), y.get(), dat.m.get_abs_sub().z ),
-                                           std::move( newliquid ) );
+
+                const auto target = tripoint( x.get(), y.get(), dat.m.get_abs_sub().z );
+                const auto &furn = dat.m.furn( target.xy() ).obj();
+                if( furn.fluid_grid && furn.fluid_grid->role == fluid_grid_role::tank &&
+                    furn.fluid_grid->allowed_liquids.contains( migrated ) ) {
+                    const auto target_abs_omt = project_to<coords::omt>( dat.m.getglobal( target ) );
+                    const auto added = fluid_grid::seed_liquid_charges_for_mapgen( target_abs_omt, migrated,
+                                       newliquid->charges );
+                    if( added > 0 ) {
+                        return;
+                    }
+                }
+
+                dat.m.add_item_or_charges( target, std::move( newliquid ) );
             }
         }
 
