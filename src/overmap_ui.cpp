@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <tuple>
@@ -1128,11 +1129,15 @@ static void draw_ascii( ui_adaptor &ui,
             } else if( blink && uistate.overmap_highlighted_omts.contains( omp ) ) {
                 ter_color = c_pink;
                 ter_sym = "&";
-            } else if( blink && showhordes && los &&
+            } else if( blink && showhordes &&
                        overmap_buffer.get_horde_size( omp ) >= HORDE_VISIBILITY_SIZE ) {
-                // Display Hordes only when within player line-of-sight
-                ter_color = c_green;
+                // Display large hordes when overlay is enabled; tint brighter in LOS
+                ter_color = los ? c_green : c_light_green;
                 ter_sym = overmap_buffer.get_horde_size( omp ) > HORDE_VISIBILITY_SIZE * 2 ? "Z" : "z";
+            } else if( blink && showhordes && overmap_buffer.has_horde( omp ) ) {
+                // Fallback: show smaller/unknown hordes too
+                ter_color = los ? c_green : c_light_green;
+                ter_sym = "z";
             } else if( blink && overmap_buffer.has_vehicle( omp ) ) {
                 // Display Vehicles only when player can see the location
                 ter_color = c_cyan;
@@ -1163,33 +1168,56 @@ static void draw_ascii( ui_adaptor &ui,
                     ter_color = c_red;
                     ter_sym = "x";
                 } else {
-                    const auto &groups = overmap_buffer.monsters_at( omp );
-                    for( auto &mgp : groups ) {
-                        if( mgp->type == GROUP_FOREST ) {
-                            // Don't flood the map with forest creatures.
-                            continue;
-                        }
-                        if( mgp->type == GROUP_NEMESIS ) {
-                            // Nemesis horde shows as &
-                            ter_sym = "&";
-                            ter_color = c_red;
-                            break;
-                        }
-                        if( mgp->horde ) {
-                            // Hordes show as +
-                            ter_sym = "+";
-                            break;
-                        } else {
-                            // Regular groups show as -
-                            ter_sym = "-";
+                    const auto groups = overmap_buffer.monsters_at( omp );
+                    const auto nemesis_it = std::ranges::find_if( groups, []( const mongroup *mgp ) {
+                        return mgp != nullptr && mgp->type == GROUP_NEMESIS;
+                    } );
+                    if( nemesis_it != groups.end() ) {
+                        ter_sym = "&";
+                        ter_color = c_red;
+                    } else {
+                        const auto group_it = std::ranges::find_if( groups, []( const mongroup *mgp ) {
+                            return mgp != nullptr && mgp->type != GROUP_FOREST;
+                        } );
+
+                        if( group_it != groups.end() && *group_it != nullptr ) {
+                            const mongroup *mgp = *group_it;
+                            if( mgp->horde ) {
+                                ter_sym = mgp->type.is_valid() ? "+" : "Z";
+                            } else {
+                                ter_sym = "-";
+                            }
+                            ter_color = los ? c_light_blue : c_blue;
+                            if( ter_sym == "Z" && !los ) {
+                                ter_color = c_green;
+                            } else if( ter_sym == "Z" ) {
+                                ter_color = c_green;
+                            }
                         }
                     }
-                    // Set the color only if we encountered an eligible group.
-                    if( ter_sym == "+" || ter_sym == "-" ) {
-                        if( los ) {
-                            ter_color = c_light_blue;
+                }
+            }
+
+            // Fallback horde highlight when hordes overlay is enabled (non-debug)
+            if( showhordes && ter_sym != "+" && ter_sym != "-" && ter_sym != "Z" ) {
+                const auto groups = overmap_buffer.monsters_at( omp );
+                const auto nemesis_it = std::ranges::find_if( groups, []( const mongroup *mgp ) {
+                    return mgp != nullptr && mgp->type == GROUP_NEMESIS;
+                } );
+                if( nemesis_it != groups.end() ) {
+                    ter_sym = "&";
+                    ter_color = c_red;
+                } else {
+                    const auto horde_it = std::ranges::find_if( groups, []( const mongroup *mgp ) {
+                        return mgp != nullptr && mgp->horde && mgp->type != GROUP_FOREST;
+                    } );
+                    if( horde_it != groups.end() && *horde_it != nullptr ) {
+                        const mongroup *mgp = *horde_it;
+                        ter_sym = mgp->type.is_valid() ? "+" : "Z";
+                        if( ter_sym == "Z" ) {
+                            ter_color = los ? c_green : c_green;
                         } else {
-                            ter_color = c_blue;
+                            ter_color = los ? c_light_blue : c_blue;
                         }
                     }
                 }
