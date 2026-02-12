@@ -1535,8 +1535,15 @@ auto on_contents_changed( const tripoint_abs_ms &p ) -> void
 
 auto on_structure_changed( const tripoint_abs_ms &p ) -> void
 {
+    const auto sm_pos = project_to<coords::sm>( p );
+    // Mapgen mutates temporary submaps before they are committed to MAPBUFFER.
+    // Ignore those transient updates so we don't cache zero-capacity grids.
+    if( MAPBUFFER.lookup_submap( sm_pos ) == nullptr ) {
+        return;
+    }
+
     const auto omt_pos = project_to<coords::omt>( p );
-    invalidate_transformer_cache_at( project_to<coords::sm>( p ) );
+    invalidate_transformer_cache_at( sm_pos );
     invalidate_grid_members_cache_at( omt_pos );
     get_fluid_grid_tracker().rebuild_at( p );
     get_fluid_grid_tracker().update_transformers_at( p );
