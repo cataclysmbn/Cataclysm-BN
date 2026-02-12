@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "catalua_type_operators.h"
 #include "coordinates.h"
 #include "io_tags.h"
 #include "monster.h"
@@ -45,6 +46,8 @@ struct MonsterGroupEntry {
         , starts( new_starts )
         , ends( new_ends ) {
     }
+
+    LUA_TYPE_OPS( MonsterGroupEntry, name );
 };
 
 struct MonsterGroupResult {
@@ -119,6 +122,7 @@ struct mongroup {
         type( ptype ), pos( ppos ), radius( prad ), population( ppop ), target( ptarget ),
         interest( pint ), dying( pdie ), horde( phorde ), diffuse( pdiff ) { }
     mongroup() = default;
+    LUA_TYPE_OPS( mongroup, type );
     bool is_safe() const;
     bool empty() const;
     void clear();
@@ -178,6 +182,7 @@ class MonsterGroupManager
         static std::vector<mtype_id> GetMonstersFromGroup( const mongroup_id &group );
         static const MonsterGroup &GetMonsterGroup( const mongroup_id &group );
         static const MonsterGroup &GetUpgradedMonsterGroup( const mongroup_id &group );
+        static std::vector<mongroup_id> get_all_group_ids();
         /**
          * Gets a random monster, weighted by frequency.
          * Ignores cost multiplier.
@@ -200,4 +205,3 @@ class MonsterGroupManager
         static t_string_set monster_categories_blacklist;
         static t_string_set monster_categories_whitelist;
 };
-

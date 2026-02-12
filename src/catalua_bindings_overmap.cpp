@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -9,8 +10,10 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "enums.h"
+#include "mongroup.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
 #include "type_id.h"
@@ -228,6 +231,57 @@ void cata::detail::reg_overmap( sol::state &lua )
     luna::set_fx( lib, "remove_grid_connection",
     []( const tripoint & lhs, const tripoint & rhs ) -> bool {
         return overmap_buffer.remove_grid_connection( tripoint_abs_omt( lhs ), tripoint_abs_omt( rhs ) );
+    } );
+
+    // Horde and monster group methods
+    DOC( "List monster groups influencing the given overmap tile (absolute OMT coordinates)." );
+    luna::set_fx( lib, "monster_groups_at",
+    []( const tripoint & p ) -> std::vector<mongroup *> {
+        return overmap_buffer.monsters_at( tripoint_abs_omt( p ) );
+    } );
+
+    DOC( "List hordes influencing the given overmap tile (absolute OMT coordinates)." );
+    luna::set_fx( lib, "hordes_at",
+    []( const tripoint & p ) -> std::vector<mongroup *> {
+        namespace views = std::views;
+        return overmap_buffer.monsters_at( tripoint_abs_omt( p ) )
+        | views::filter( []( const mongroup *group ) {
+            return group != nullptr && group->horde;
+        } )
+        | std::ranges::to<std::vector<mongroup *>>();
+    } );
+
+    DOC( "Count hordes influencing the given overmap tile (absolute OMT coordinates)." );
+    luna::set_fx( lib, "horde_count",
+    []( const tripoint & p ) -> int {
+        auto groups = overmap_buffer.monsters_at( tripoint_abs_omt( p ) );
+        return static_cast<int>( std::ranges::count_if( groups, []( const mongroup *group ) {
+            return group != nullptr && group->horde;
+        } ) );
+    } );
+
+    DOC( "Check if a horde is present at the given overmap tile." );
+    luna::set_fx( lib, "has_horde",
+    []( const tripoint & p ) -> bool {
+        return overmap_buffer.has_horde( tripoint_abs_omt( p ) );
+    } );
+
+    DOC( "Get the estimated size of the horde at the given overmap tile." );
+    luna::set_fx( lib, "horde_size",
+    []( const tripoint & p ) -> int {
+        return overmap_buffer.get_horde_size( tripoint_abs_omt( p ) );
+    } );
+
+    DOC( "Signal nearby hordes toward an absolute submap position with the given strength." );
+    luna::set_fx( lib, "signal_hordes",
+    []( const tripoint & center_sm, int sig_power ) -> void {
+        overmap_buffer.signal_hordes( tripoint_abs_sm( center_sm ), sig_power );
+    } );
+
+    DOC( "Advance horde movement across all loaded overmaps." );
+    luna::set_fx( lib, "move_hordes",
+    []() -> void {
+        overmap_buffer.move_hordes();
     } );
 
     luna::finalize_lib( lib );
