@@ -1899,6 +1899,10 @@ bool game::handle_action()
                         tripoint where = u.pos();
                         tripoint above = where;
                         above.z++;
+                        if( get_map().ter( above ).id().str() != "t_open_air" ) {
+                            vertical_move( 1, false );
+                            break;
+                        }
                         // Keep going down until we find a tile that is NOT open air
                         while( get_map().ter( above ).id().str() == "t_open_air" &&
                                !here.veh_at( tripoint( xy, above.z ) ) )  {
@@ -1916,6 +1920,8 @@ bool game::handle_action()
                                     break;
                                 }
                             }
+                        } else {
+                            vertical_move( 1, false );
                         }
                     } else {
                         vertical_move( 1, false );
