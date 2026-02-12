@@ -6068,18 +6068,18 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint &pos )
                 itype_id music_type;
                 const auto music_it = it->type->use_methods.find( "music_player" );
                 if( music_it != it->type->use_methods.end() ) {
-                    const iuse_music_player *music_actor = 
+                    const iuse_music_player *music_actor =
                         dynamic_cast<const iuse_music_player *>( music_it->second.get_actor_ptr() );
                     if( music_actor ) {
                         music_type = music_actor->target;
                     }
                 }
-                
+
                 // Transform to music variant if found
                 if( !music_type.is_empty() && music_type.is_valid() ) {
                     it->convert( music_type );
                 }
-                
+
                 it->activate();
                 it->set_var( "EIPC_MUSIC_ON", "1" );
 
