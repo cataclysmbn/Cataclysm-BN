@@ -1310,25 +1310,30 @@ auto seed_liquid_charges_for_mapgen( const tripoint_abs_omt &p, const itype_id &
     auto omc = overmap_buffer.get_om_global( anchor_abs );
     auto &storage = fluid_grid::storage_for( *omc.om );
     auto &state = storage[omc.local];
-    state.capacity = calculate_capacity_for_grid( grid, MAPBUFFER );
-
-    if( state.stored_total() > state.capacity ) {
-        reduce_storage( state, state.stored_total() - state.capacity );
+    const auto is_transient_mapgen = MAPBUFFER.lookup_submap( project_to<coords::sm>( p ) ) == nullptr;
+    const auto tank_count = is_transient_mapgen ? 1 : tank_count_for_grid( grid, MAPBUFFER );
+    if( !is_transient_mapgen ) {
+        state.capacity = calculate_capacity_for_grid( grid, MAPBUFFER );
+        if( state.stored_total() > state.capacity ) {
+            reduce_storage( state, state.stored_total() - state.capacity );
+        }
     }
 
-    const auto allow_mixed = tank_count_for_grid( grid, MAPBUFFER ) > 1;
+    const auto allow_mixed = tank_count > 1;
     normalize_water_storage( state, allow_mixed );
     if( liquid_type == itype_water ) {
         taint_clean_water( state, allow_mixed );
     }
 
-    const auto available_volume = state.capacity - state.stored_total();
-    if( available_volume <= 0_ml ) {
-        return 0;
+    auto added = charges;
+    if( !is_transient_mapgen ) {
+        const auto available_volume = state.capacity - state.stored_total();
+        if( available_volume <= 0_ml ) {
+            return 0;
+        }
+        const auto max_charges = charges_from_volume( liquid_type, available_volume );
+        added = std::min( charges, max_charges );
     }
-
-    const auto max_charges = charges_from_volume( liquid_type, available_volume );
-    const auto added = std::min( charges, max_charges );
     if( added <= 0 ) {
         return 0;
     }
@@ -1345,8 +1350,9 @@ auto seed_liquid_charges_for_mapgen( const tripoint_abs_omt &p, const itype_id &
         state.stored_by_type[itype_water] += added_volume;
     }
 
-    const auto tank_count = tank_count_for_grid( grid, MAPBUFFER );
-    enforce_tank_type_limit( state, tank_count );
+    if( !is_transient_mapgen ) {
+        enforce_tank_type_limit( state, tank_count );
+    }
     return added;
 }
 
