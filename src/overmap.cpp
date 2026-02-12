@@ -28,9 +28,13 @@
 #include "assign.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua.h"
+#include "catalua_impl.h"
+#include "catalua_sol.h"
 #include "character_id.h"
 #include "coordinate_conversions.h"
 #include "debug.h"
+#include "init.h"
 #include "distribution.h"
 #include "flood_fill.h"
 #include "fstream_utils.h"
@@ -3649,7 +3653,53 @@ void overmap::move_hordes()
         mg.dec_interest( 1 );
 
         if( ( mg.pos.xy() == mg.target.xy() ) || mg.interest <= 15 ) {
-            mg.wander( *this );
+            const auto om_abs = pos();
+            const auto group_abs = project_combine( om_abs, mg.pos.xy() );
+            const auto target_abs = project_combine( om_abs, mg.target.xy() );
+            auto used_hook_target = false;
+
+            if( auto *state = DynamicDataLoader::get_instance().lua.get() ) {
+                auto &lua = state->lua;
+                auto game = lua.globals()["game"];
+                auto behaviours_obj = game["horde_behaviours"].get<sol::object>();
+                if( behaviours_obj.is<sol::table>() ) {
+                    auto behaviours = behaviours_obj.as<sol::table>();
+                    const auto fn_obj = behaviours.get_or<sol::object>( mg.horde_behaviour, sol::lua_nil );
+                    if( fn_obj.is<sol::protected_function>() || fn_obj.is<sol::function>() ) {
+                        auto func = fn_obj.as<sol::protected_function>();
+                        auto params = lua.create_table();
+                        auto results = lua.create_table();
+                        params["results"] = results;
+                        params["group"] = &mg;
+                        params["pos_abs_sm"] = tripoint_abs_sm( group_abs, mg.pos.z() ).raw();
+                        params["target_abs_sm"] = tripoint_abs_sm( target_abs, mg.target.z() ).raw();
+                        params["behaviour"] = mg.horde_behaviour;
+
+                        auto res = func( params );
+                        check_func_result( res );
+
+                        const auto hook_target = results.get<sol::optional<tripoint>>( "target" );
+                        const auto hook_interest = results.get<sol::optional<int>>( "interest" );
+                        if( hook_target.has_value() ) {
+                            const auto hook_abs_sm = tripoint_abs_sm( *hook_target );
+                            auto target_om = point_abs_om{};
+                            auto target_within = point_om_sm{};
+                            std::tie( target_om, target_within ) = project_remain<coords::om>( hook_abs_sm.xy() );
+                            if( target_om == om_abs ) {
+                                mg.target = tripoint_om_sm( target_within, hook_abs_sm.z() );
+                                used_hook_target = true;
+                            }
+                        }
+                        if( hook_interest.has_value() ) {
+                            mg.set_interest( *hook_interest );
+                        }
+                    }
+                }
+            }
+
+            if( !used_hook_target ) {
+                mg.wander( *this );
+            }
         }
 
         // Decrease movement chance according to the terrain we're currently on.

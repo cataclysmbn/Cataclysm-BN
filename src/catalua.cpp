@@ -246,6 +246,7 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     // bionic/mutation functions
     gt["bionic_functions"] = lua.create_table();
     gt["mutation_functions"] = lua.create_table();
+    gt["horde_behaviours"] = lua.create_table();
 
     // hooks
     cata::define_hooks( state );
