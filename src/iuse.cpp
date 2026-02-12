@@ -6054,11 +6054,32 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint &pos )
             p->moves -= 30;
 
             if( it->is_active() ) {
+                // Turn music off - revert to original type
+                const std::optional<itype_id> revert_to = it->type->tool->revert_to;
+                if( revert_to.has_value() ) {
+                    it->convert( revert_to.value() );
+                }
                 it->deactivate();
                 it->erase_var( "EIPC_MUSIC_ON" );
 
                 p->add_msg_if_player( m_info, _( "You turned off music on your %s." ), it->tname() );
             } else {
+                // Turn music on - find music_player action's target if it exists
+                itype_id music_type;
+                const auto music_it = it->type->use_methods.find( "music_player" );
+                if( music_it != it->type->use_methods.end() ) {
+                    const iuse_music_player *music_actor = 
+                        dynamic_cast<const iuse_music_player *>( music_it->second.get_actor_ptr() );
+                    if( music_actor ) {
+                        music_type = music_actor->target;
+                    }
+                }
+                
+                // Transform to music variant if found
+                if( !music_type.is_empty() && music_type.is_valid() ) {
+                    it->convert( music_type );
+                }
+                
                 it->activate();
                 it->set_var( "EIPC_MUSIC_ON", "1" );
 
