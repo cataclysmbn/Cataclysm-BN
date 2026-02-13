@@ -759,7 +759,8 @@ static void apply_surf_blend_effect(
 {
     ZoneScoped;
 
-    const auto blend_op = [&tint]( const SDL_Color base, const SDL_Color target, std::optional<SDL_Color> mask = std::nullopt ) -> SDL_Color {
+    const auto blend_op = [&tint]( const SDL_Color base, const SDL_Color target,
+    std::optional<SDL_Color> mask = std::nullopt ) -> SDL_Color {
         switch( tint.blend_mode )
         {
             case tint_blend_mode::additive:
@@ -767,13 +768,13 @@ static void apply_surf_blend_effect(
             case tint_blend_mode::subtract:
                 return RGBColor{ std::max<uint8_t>( base.r - ( 255 - target.r ), 0 ), std::max<uint8_t>( base.g - ( 255 - target.g ), 0 ), std::max<uint8_t>( base.b - ( 255 - target.b ), 0 ), base.a };
             case tint_blend_mode::multiply:
-                return RGBColor{ static_cast<uint8_t>( base.r * target.r / 255 ), static_cast<uint8_t>( base.g * target.g / 255 ), static_cast<uint8_t>( base.b * target.b / 255 ), base.a };
+                return RGBColor{ static_cast<uint8_t>( base.r *target.r / 255 ), static_cast<uint8_t>( base.g *target.g / 255 ), static_cast<uint8_t>( base.b *target.b / 255 ), base.a };
             default:
                 return base;
             case tint_blend_mode::overlay:
                 auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
                     // Pegtop soft light formula
-                    int result = ( ( 255 - 2 * blend ) * base * base / 255 + 2 * blend * base ) / 255;
+                    int result = ( ( 255 - 2 * blend ) * base *base / 255 + 2 * blend * base ) / 255;
                     return std::clamp<int>( result, 0, 255 );
                 };
                 return SDL_Color{
@@ -794,11 +795,13 @@ static void apply_surf_blend_effect(
         }
         if( tint.saturation.has_value() )
         {
-            s = static_cast<uint16_t>( std::clamp( static_cast<float>( s ) * tint.saturation.value(), 0.0f, 65535.0f) );
+            s = static_cast<uint16_t>( std::clamp( static_cast<float>( s ) * tint.saturation.value(), 0.0f,
+                                                   65535.0f ) );
         }
         if( tint.brightness.has_value() )
         {
-            v = static_cast<uint8_t>( std::clamp( static_cast<float>( v ) * tint.brightness.value(), 0.0f, 255.0f ) );
+            v = static_cast<uint8_t>( std::clamp( static_cast<float>( v ) * tint.brightness.value(), 0.0f,
+                                                  255.0f ) );
         }
         return hsv2rgb( HSVColor{ h, s, v, a } );
     };
