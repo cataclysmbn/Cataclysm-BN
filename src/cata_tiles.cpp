@@ -774,41 +774,40 @@ static void apply_surf_blend_effect(
             case tint_blend_mode::multiply:
                 col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ), static_cast<uint8_t>( base.g *target.g / 256 ), static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
                 break;
-            case tint_blend_mode::overlay:
-                {
-                    auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
-                        // Pegtop soft light formula
-                        int result = ( ( 255 - 2 * blend ) * base *base / 256 + 2 * blend * base ) / 256;
-                        return std::clamp<int>( result, 0, 255 );
-                    };
-                    col = SDL_Color{
-                        overlay_channel( base.r, target.r ),
-                        overlay_channel( base.g, target.g ),
-                        overlay_channel( base.b, target.b ),
-                        base.a
-                    };
-                    break;
-                }
+            case tint_blend_mode::overlay: {
+                auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
+                    // Pegtop soft light formula
+                    int result = ( ( 255 - 2 * blend ) * base *base / 256 + 2 * blend * base ) / 256;
+                    return std::clamp<int>( result, 0, 255 );
+                };
+                col = SDL_Color{
+                    overlay_channel( base.r, target.r ),
+                    overlay_channel( base.g, target.g ),
+                    overlay_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
             default:
-            case tint_blend_mode::tint:
-                {
-                    auto base_hsv = rgb2hsv( base );
-                    auto target_hsv = rgb2hsv( target );
-                    base_hsv.H = target_hsv.H;
-                    base_hsv.S = std::min( base_hsv.S, target_hsv.S );
-                    if( base_hsv.V > 127 ) {
-                        const auto u = ( 255 - base_hsv.V ) * 255 / 127;
-                        const auto m = base_hsv.V - ( 255 - base_hsv.V );
-                        base_hsv.V = std::clamp<uint8_t>( ( target_hsv.V * u / 255 ) + m, 0, 255 );
-                    } else {
-                        base_hsv.V = std::clamp<uint8_t>( target_hsv.V * ( base_hsv.V * 255 / 127 ) / 255, 0, 255 );
-                    }
-                    col = hsv2rgb( base_hsv );
-                    break;
+            case tint_blend_mode::tint: {
+                auto base_hsv = rgb2hsv( base );
+                auto target_hsv = rgb2hsv( target );
+                base_hsv.H = target_hsv.H;
+                base_hsv.S = std::min( base_hsv.S, target_hsv.S );
+                if( base_hsv.V > 127 ) {
+                    const auto u = ( 255 - base_hsv.V ) * 255 / 127;
+                    const auto m = base_hsv.V - ( 255 - base_hsv.V );
+                    base_hsv.V = std::clamp<uint8_t>( ( target_hsv.V * u / 255 ) + m, 0, 255 );
+                } else {
+                    base_hsv.V = std::clamp<uint8_t>( target_hsv.V * ( base_hsv.V * 255 / 127 ) / 255, 0, 255 );
                 }
-                
+                col = hsv2rgb( base_hsv );
+                break;
+            }
+
         }
-        if( mask.has_value() ) {
+        if( mask.has_value() )
+        {
             auto base_hsv = rgb2hsv( base );
             auto [h, s, v, a] = rgb2hsv( col );
             const uint8_t mask_factor = mask.value().r * target.a / 256;
