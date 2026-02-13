@@ -789,15 +789,11 @@ static void apply_surf_blend_effect(
                 break;
             }
             default:
-            case tint_blend_mode::tint: {
+            case tint_blend_mode::tint:
                 auto base_hsv = rgb2hsv( base );
                 auto target_hsv = rgb2hsv( target );
                 base_hsv.H = target_hsv.H;
-                if( !mask.has_value() ) {
-                    base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, target_hsv.S ), target_hsv.S, 127 );
-                } else {
-                    base_hsv.S = std::min( base_hsv.S, target_hsv.S );
-                }
+                base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, target_hsv.S ), target_hsv.S, mask.has_value()? mask.value().g : 127 );
                 int o;
                 if( base_hsv.V > 127 ) {
                     o = std::clamp<int>( 255 - ( 255 - base_hsv.V ) * ( 255 - target_hsv.V ) / 128, 0, 255 );
@@ -805,28 +801,15 @@ static void apply_surf_blend_effect(
                 } else {
                     o = std::clamp<int>( base_hsv.V * target_hsv.V / 128, 0, 255 );
                 }
-                if( !mask.has_value() ) {
-                    base_hsv.V = ilerp<uint16_t, uint8_t>( base_hsv.V, std::clamp<uint8_t>( o, 0, 255 ), 127 );
-                } else {
-                    base_hsv.V = std::clamp<uint8_t>( o, 0, 255 );
-                }
+                base_hsv.V = ilerp<uint16_t, uint8_t>( std::clamp<uint8_t>( o, 0, 255 ), target_hsv.V, mask.has_value()? mask.value().b : 127 );
                 col = hsv2rgb( base_hsv );
                 break;
-            }
-
         }
         if( mask.has_value() )
         {
-            auto base_hsv = rgb2hsv( base );
-            auto [h, s, v, a] = rgb2hsv( col );
-            const uint8_t mask_factor = mask.value().r * target.a / 256;
-            s = ilerp( base_hsv.S, s, mask.value().g * target.a / 256 );
-            v = ilerp( base_hsv.V, v, mask.value().b * target.a / 256 );
-            auto res = hsv2rgb( HSVColor{ h, s, v, base.a } );
-            res.r = ilerp( base.r, res.r, mask_factor );
-            res.g = ilerp( base.g, res.g, mask_factor );
-            res.b = ilerp( base.b, res.b, mask_factor );
-            return res;
+            col.r = ilerp( base.r, col.r, mask.value().r );
+            col.g = ilerp( base.g, col.g, mask.value().r );
+            col.b = ilerp( base.b, col.b, mask.value().r );
         }
         return col;
     };
