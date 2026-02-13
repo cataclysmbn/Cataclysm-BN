@@ -793,7 +793,8 @@ static void apply_surf_blend_effect(
                 auto base_hsv = rgb2hsv( base );
                 auto target_hsv = rgb2hsv( target );
                 base_hsv.H = target_hsv.H;
-                base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, target_hsv.S ), target_hsv.S, mask.has_value()? mask.value().g : 127 );
+                base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, target_hsv.S ), target_hsv.S,
+                                                       mask.has_value() ? mask.value().g : 127 );
                 int o;
                 if( base_hsv.V > 127 ) {
                     o = std::clamp<int>( 255 - ( 255 - base_hsv.V ) * ( 255 - target_hsv.V ) / 128, 0, 255 );
@@ -801,7 +802,8 @@ static void apply_surf_blend_effect(
                 } else {
                     o = std::clamp<int>( base_hsv.V * target_hsv.V / 128, 0, 255 );
                 }
-                base_hsv.V = ilerp<uint16_t, uint8_t>( std::clamp<uint8_t>( o, 0, 255 ), target_hsv.V, mask.has_value()? mask.value().b : 127 );
+                base_hsv.V = ilerp<uint16_t, uint8_t>( std::clamp<uint8_t>( o, 0, 255 ), target_hsv.V,
+                                                       mask.has_value() ? mask.value().b : 127 );
                 col = hsv2rgb( base_hsv );
                 break;
         }
