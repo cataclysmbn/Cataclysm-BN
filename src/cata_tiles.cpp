@@ -771,27 +771,17 @@ static void apply_surf_blend_effect(
             default:
                 return base;
             case tint_blend_mode::overlay:
-                const auto base_hsv = rgb2hsv( base );
-                const auto target_hsv = rgb2hsv( target );
-                const uint32_t h = target_hsv.H;
-                uint8_t v;
-                if( base_hsv.V > 127 ) {
-                    v = std::clamp<int>( 255 - ( 255 - base_hsv.V ) * ( 255 - target_hsv.V ) / 128, 0, 255 );
-                } else {
-                    v = std::clamp<int>( base_hsv.V * target_hsv.V / 128, 0, 255 );
-                }
-                uint16_t s = static_cast<uint32_t>( target_hsv.S ) * ( 255 - v ) / 255;
-                if( mask.has_value() ) {
-                    const uint8_t mask_factor = mask.value().r * target.a / 255;
-                    s = ilerp( base_hsv.S, s, mask.value().g * target.a / 255 );
-                    v = ilerp( base_hsv.V, v, mask.value().b * target.a / 255 );
-                    auto res = hsv2rgb( HSVColor{ h, s, v, base.a } );
-                    res.r = ilerp( base.r, res.r, mask_factor );
-                    res.g = ilerp( base.g, res.g, mask_factor );
-                    res.b = ilerp( base.b, res.b, mask_factor );
-                    return res;
-                }
-                return hsv2rgb( HSVColor{ h, s, v, base.a } );
+                auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
+                    // Pegtop soft light formula
+                    int result = ( ( 255 - 2 * blend ) * base * base / 255 + 2 * blend * base ) / 255;
+                    return std::clamp<int>( result, 0, 255 );
+                };
+                return SDL_Color{
+                    overlay_channel( base.r, target.r ),
+                    overlay_channel( base.g, target.g ),
+                    overlay_channel( base.b, target.b ),
+                    base.a
+                };
         }
     };
 
