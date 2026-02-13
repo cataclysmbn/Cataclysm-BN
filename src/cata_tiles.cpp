@@ -777,12 +777,25 @@ static void apply_surf_blend_effect(
                     int result = ( ( 255 - 2 * blend ) * base *base / 255 + 2 * blend * base ) / 255;
                     return std::clamp<int>( result, 0, 255 );
                 };
-                return SDL_Color{
+                auto col = SDL_Color{
                     overlay_channel( base.r, target.r ),
                     overlay_channel( base.g, target.g ),
                     overlay_channel( base.b, target.b ),
                     base.a
                 };
+                if( mask.has_value() ) {
+                    auto base_hsv = rgb2hsv( base );
+                    auto [h, s, v, a] = rgb2hsv( col );
+                    const uint8_t mask_factor = mask.value().r * target.a / 255;
+                    s = ilerp( base_hsv.S, s, mask.value().g * target.a / 255 );
+                    v = ilerp( base_hsv.V, v, mask.value().b * target.a / 255 );
+                    auto res = hsv2rgb( HSVColor{ h, s, v, base.a } );
+                    res.r = ilerp( base.r, res.r, mask_factor );
+                    res.g = ilerp( base.g, res.g, mask_factor );
+                    res.b = ilerp( base.b, res.b, mask_factor );
+                    return res;
+                }
+                return col;
         }
     };
 
