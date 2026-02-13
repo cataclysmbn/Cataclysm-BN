@@ -753,100 +753,69 @@ static T ilerp( const T a, const T b, const U t )
     return ( ( b * t ) + ( a * ( max_t - t ) ) ) / max_t;
 };
 
-// Apply contrast adjustment to a pixel channel
-// contrast: 1.0 = no change, >1 increases contrast, <1 decreases
-static uint8_t apply_contrast( uint8_t value, float contrast )
-{
-    const float adjusted = ( ( static_cast<float>( value ) - 128.0f ) * contrast ) + 128.0f;
-    return static_cast<uint8_t>( std::clamp( adjusted, 0.0f, 255.0f ) );
-}
-
-// Apply saturation adjustment to a pixel
-// saturation: 1.0 = no change, 0 = grayscale, >1 increases saturation
-static SDL_Color apply_saturation( const SDL_Color &c, float saturation )
-{
-    // Calculate luminance using standard weights
-    const float gray = 0.299f * c.r + 0.587f * c.g + 0.114f * c.b;
-    const float r = gray + ( c.r - gray ) * saturation;
-    const float g = gray + ( c.g - gray ) * saturation;
-    const float b = gray + ( c.b - gray ) * saturation;
-    return SDL_Color{
-        static_cast<uint8_t>( std::clamp( r, 0.0f, 255.0f ) ),
-        static_cast<uint8_t>( std::clamp( g, 0.0f, 255.0f ) ),
-        static_cast<uint8_t>( std::clamp( b, 0.0f, 255.0f ) ),
-        c.a
-    };
-}
-
-// Apply brightness adjustment to a pixel
-// brightness: 1.0 = no change, 0 = black, >1 = brighter
-static SDL_Color apply_brightness( const SDL_Color &c, float brightness )
-{
-    return SDL_Color{
-        static_cast<uint8_t>( std::clamp( c.r * brightness, 0.0f, 255.0f ) ),
-        static_cast<uint8_t>( std::clamp( c.g * brightness, 0.0f, 255.0f ) ),
-        static_cast<uint8_t>( std::clamp( c.b * brightness, 0.0f, 255.0f ) ),
-        c.a
-    };
-}
-
 static void apply_surf_blend_effect(
     SDL_Surface *staging, const tint_config &tint, const bool use_mask,
     const SDL_Rect &dstRect, const SDL_Rect &srcRect, const SDL_Rect &maskRect )
 {
     ZoneScoped;
 
-    const HSVColor dest_hsv = rgb2hsv( tint.color.value_or( TILESET_NO_COLOR ) );
-    const auto blend_value = [&tint]( const uint8_t base, const uint8_t target ) -> uint8_t {
+    const auto blend_op = [&tint]( const SDL_Color base, const SDL_Color target, std::optional<SDL_Color> mask = std::nullopt ) -> SDL_Color {
         switch( tint.blend_mode )
         {
-            case tint_blend_mode::multiply:
-                return static_cast<uint8_t>( base * target / 255 );
             case tint_blend_mode::additive:
-                return static_cast<uint8_t>( std::min( base + target, 255 ) );
+                return RGBColor{ std::min<uint8_t>( base.r + target.r, 255 ), std::min<uint8_t>( base.g + target.g, 255 ), std::min<uint8_t>( base.b + target.b, 255 ), std::min<uint8_t>( base.a + target.a, 255 ) };
             case tint_blend_mode::subtract:
-                return static_cast<uint8_t>( std::max( base - ( 255 - target ), 0 ) );
+                return RGBColor{ std::max<uint8_t>( base.r - ( 255 - target.r ), 0 ), std::max<uint8_t>( base.g - ( 255 - target.g ), 0 ), std::max<uint8_t>( base.b - ( 255 - target.b ), 0 ), base.a };
+            case tint_blend_mode::multiply:
+                return RGBColor{ static_cast<uint8_t>( base.r * target.r / 255 ), static_cast<uint8_t>( base.g * target.g / 255 ), static_cast<uint8_t>( base.b * target.b / 255 ), base.a };
             default:
+                return base;
             case tint_blend_mode::overlay:
-                if( base > 127 ) {
-                    const auto u = ( 255 - base ) * 255 / 127;
-                    const auto m = base - ( 255 - base );
-                    return std::clamp<uint8_t>( ( target * u / 255 ) + m, 0, 255 );
+                const auto base_hsv = rgb2hsv( base );
+                const auto target_hsv = rgb2hsv( target );
+                const uint32_t h = target_hsv.H;
+                uint8_t v;
+                if( base_hsv.V > 127 ) {
+                    v = std::clamp<int>( 255 - ( 255 - base_hsv.V ) * ( 255 - target_hsv.V ) / 128, 0, 255 );
                 } else {
-                    return std::clamp<uint8_t>( target * ( base * 255 / 127 ) / 255, 0, 255 );
+                    v = std::clamp<int>( base_hsv.V * target_hsv.V / 128, 0, 255 );
                 }
+                uint16_t s = static_cast<uint32_t>( target_hsv.S ) * ( 255 - v ) / 255;
+                if( mask.has_value() ) {
+                    const uint8_t mask_factor = mask.value().r * target.a / 255;
+                    s = ilerp( base_hsv.S, s, mask.value().g * target.a / 255 );
+                    v = ilerp( base_hsv.V, v, mask.value().b * target.a / 255 );
+                    auto res = hsv2rgb( HSVColor{ h, s, v, base.a } );
+                    res.r = ilerp( base.r, res.r, mask_factor );
+                    res.g = ilerp( base.g, res.g, mask_factor );
+                    res.b = ilerp( base.b, res.b, mask_factor );
+                    return res;
+                }
+                return hsv2rgb( HSVColor{ h, s, v, base.a } );
         }
     };
 
     auto postprocess = [&tint]( SDL_Color c ) -> SDL_Color {
+        auto [h, s, v, a] = rgb2hsv( c );
         if( tint.contrast.has_value() )
         {
-            c.r = apply_contrast( c.r, tint.contrast.value() );
-            c.g = apply_contrast( c.g, tint.contrast.value() );
-            c.b = apply_contrast( c.b, tint.contrast.value() );
+            const float adjusted = ( ( static_cast<float>( v ) - 128.0f ) * tint.contrast.value() ) + 128.0f;
+            v =  static_cast<uint8_t>( std::clamp( adjusted, 0.0f, 255.0f ) );
         }
         if( tint.saturation.has_value() )
         {
-            c = apply_saturation( c, tint.saturation.value() );
+            s = static_cast<uint16_t>( std::clamp( static_cast<float>( s ) * tint.saturation.value(), 0.0f, 65535.0f) );
         }
         if( tint.brightness.has_value() )
         {
-            c = apply_brightness( c, tint.brightness.value() );
+            v = static_cast<uint8_t>( std::clamp( static_cast<float>( v ) * tint.brightness.value(), 0.0f, 255.0f ) );
         }
-        return c;
+        return hsv2rgb( HSVColor{ h, s, v, a } );
     };
 
     if( use_mask ) {
         auto effect_mask = [&]( const SDL_Color & base_rgb, const SDL_Color & mask_rgb )  -> SDL_Color {
-            HSVColor base_hsv = rgb2hsv( base_rgb );
-            base_hsv.H = dest_hsv.H;
-            base_hsv.S = ilerp<uint16_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S, mask_rgb.g );
-            base_hsv.V = ilerp( base_hsv.V, blend_value( base_hsv.V, dest_hsv.V ), mask_rgb.b );
-
-            RGBColor res = hsv2rgb( base_hsv );
-            res.r = ilerp( base_rgb.r, res.r, mask_rgb.r );
-            res.g = ilerp( base_rgb.g, res.g, mask_rgb.r );
-            res.b = ilerp( base_rgb.b, res.b, mask_rgb.r );
+            RGBColor res = blend_op( base_rgb, tint.color.value_or( TILESET_NO_COLOR ), mask_rgb );
             return postprocess( res );
         };
         apply_blend_filter(
@@ -857,11 +826,8 @@ static void apply_surf_blend_effect(
         );
     } else {
         auto effect_no_mask = [&]( const SDL_Color & c )  -> SDL_Color {
-            HSVColor base_hsv = rgb2hsv( c );
-            base_hsv.H = dest_hsv.H;
-            base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S, 127 );
-            base_hsv.V = ilerp<uint16_t, uint8_t>( base_hsv.V, blend_value( base_hsv.V, dest_hsv.V ), 127 );
-            return postprocess( hsv2rgb( base_hsv ) );
+            RGBColor res = blend_op( c, tint.color.value_or( TILESET_NO_COLOR ) );
+            return postprocess( res );
         };
         apply_color_filter(
             staging, dstRect,
