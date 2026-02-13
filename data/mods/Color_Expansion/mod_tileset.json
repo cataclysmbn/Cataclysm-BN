@@ -20,6 +20,10 @@
       { "id": "hair_purple", "fg": "#4f007d", "blend_mode": "multiply", "saturation": 1.5 },
       { "id": "hair_cyan", "fg": "#00ffdd", "blend_mode": "multiply" },
       { "id": "eye_pink", "fg": "#ff00bb", "saturation": 1.5 },
+      { "id": "eye_grey", "fg": "#808080", "saturation": 1.5 },
+      { "id": "eye_purple", "fg": "#4f007d", "saturation": 1.5 },
+      { "id": "eye_green", "fg": "#00ff08", "saturation": 1.5 },
+      { "id": "eye_yellow", "fg": "#ffff00", "saturation": 1.5 },
       { "id": "eye_black", "fg": "#050505", "blend_mode": "multiply" },
       { "id": "eye_white", "fg": "#ffffff", "saturation": 0.0, "brightness": 1.2 }
     ],
