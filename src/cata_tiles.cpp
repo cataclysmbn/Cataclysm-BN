@@ -761,42 +761,66 @@ static void apply_surf_blend_effect(
 
     const auto blend_op = [&tint]( const SDL_Color base, const SDL_Color target,
     std::optional<SDL_Color> mask = std::nullopt ) -> SDL_Color {
+        SDL_Color col;
+
         switch( tint.blend_mode )
         {
             case tint_blend_mode::additive:
-                return RGBColor{ std::min<uint8_t>( base.r + target.r, 255 ), std::min<uint8_t>( base.g + target.g, 255 ), std::min<uint8_t>( base.b + target.b, 255 ), std::min<uint8_t>( base.a + target.a, 255 ) };
+                col = RGBColor{ std::min<uint8_t>( base.r + target.r, 255 ), std::min<uint8_t>( base.g + target.g, 255 ), std::min<uint8_t>( base.b + target.b, 255 ), std::min<uint8_t>( base.a + target.a, 255 ) };
+                break;
             case tint_blend_mode::subtract:
-                return RGBColor{ std::max<uint8_t>( base.r - ( 255 - target.r ), 0 ), std::max<uint8_t>( base.g - ( 255 - target.g ), 0 ), std::max<uint8_t>( base.b - ( 255 - target.b ), 0 ), base.a };
+                col = RGBColor{ std::max<uint8_t>( base.r - ( 255 - target.r ), 0 ), std::max<uint8_t>( base.g - ( 255 - target.g ), 0 ), std::max<uint8_t>( base.b - ( 255 - target.b ), 0 ), base.a };
+                break;
             case tint_blend_mode::multiply:
-                return RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ), static_cast<uint8_t>( base.g *target.g / 256 ), static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
-            default:
-                return base;
+                col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ), static_cast<uint8_t>( base.g *target.g / 256 ), static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
+                break;
             case tint_blend_mode::overlay:
-                auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
-                    // Pegtop soft light formula
-                    int result = ( ( 255 - 2 * blend ) * base *base / 256 + 2 * blend * base ) / 256;
-                    return std::clamp<int>( result, 0, 255 );
-                };
-                auto col = SDL_Color{
-                    overlay_channel( base.r, target.r ),
-                    overlay_channel( base.g, target.g ),
-                    overlay_channel( base.b, target.b ),
-                    base.a
-                };
-                if( mask.has_value() ) {
-                    auto base_hsv = rgb2hsv( base );
-                    auto [h, s, v, a] = rgb2hsv( col );
-                    const uint8_t mask_factor = mask.value().r * target.a / 256;
-                    s = ilerp( base_hsv.S, s, mask.value().g * target.a / 256 );
-                    v = ilerp( base_hsv.V, v, mask.value().b * target.a / 256 );
-                    auto res = hsv2rgb( HSVColor{ h, s, v, base.a } );
-                    res.r = ilerp( base.r, res.r, mask_factor );
-                    res.g = ilerp( base.g, res.g, mask_factor );
-                    res.b = ilerp( base.b, res.b, mask_factor );
-                    return res;
+                {
+                    auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
+                        // Pegtop soft light formula
+                        int result = ( ( 255 - 2 * blend ) * base *base / 256 + 2 * blend * base ) / 256;
+                        return std::clamp<int>( result, 0, 255 );
+                    };
+                    col = SDL_Color{
+                        overlay_channel( base.r, target.r ),
+                        overlay_channel( base.g, target.g ),
+                        overlay_channel( base.b, target.b ),
+                        base.a
+                    };
+                    break;
                 }
-                return col;
+            default:
+            case tint_blend_mode::tint:
+                {
+                    auto base_hsv = rgb2hsv( base );
+                    auto target_hsv = rgb2hsv( target );
+                    base_hsv.H = target_hsv.H;
+                    base_hsv.S = std::min( base_hsv.S, target_hsv.S );
+                    if( base_hsv.V > 127 ) {
+                        const auto u = ( 255 - base_hsv.V ) * 255 / 127;
+                        const auto m = base_hsv.V - ( 255 - base_hsv.V );
+                        base_hsv.V = std::clamp<uint8_t>( ( target_hsv.V * u / 255 ) + m, 0, 255 );
+                    } else {
+                        base_hsv.V = std::clamp<uint8_t>( target_hsv.V * ( base_hsv.V * 255 / 127 ) / 255, 0, 255 );
+                    }
+                    col = hsv2rgb( base_hsv );
+                    break;
+                }
+                
         }
+        if( mask.has_value() ) {
+            auto base_hsv = rgb2hsv( base );
+            auto [h, s, v, a] = rgb2hsv( col );
+            const uint8_t mask_factor = mask.value().r * target.a / 256;
+            s = ilerp( base_hsv.S, s, mask.value().g * target.a / 256 );
+            v = ilerp( base_hsv.V, v, mask.value().b * target.a / 256 );
+            auto res = hsv2rgb( HSVColor{ h, s, v, base.a } );
+            res.r = ilerp( base.r, res.r, mask_factor );
+            res.g = ilerp( base.g, res.g, mask_factor );
+            res.b = ilerp( base.b, res.b, mask_factor );
+            return res;
+        }
+        return col;
     };
 
     auto postprocess = [&tint]( SDL_Color c ) -> SDL_Color {
@@ -1603,6 +1627,15 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
             if( str == "multiply" )
             {
                 return tint_blend_mode::multiply;
+            } else if( str == "overlay" )
+            {
+                return tint_blend_mode::overlay;
+            } else if( str == "tint" )
+            {
+                return tint_blend_mode::tint;
+            } else if( str == "additive" )
+            {
+                return tint_blend_mode::additive;
             } else if( str == "additive" )
             {
                 return tint_blend_mode::additive;
@@ -1610,7 +1643,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
             {
                 return tint_blend_mode::subtract;
             }
-            return tint_blend_mode::overlay;
+            return tint_blend_mode::tint;
         };
 
         // Parse a tint_config from either a string or an object
