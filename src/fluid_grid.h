@@ -69,6 +69,8 @@ auto liquid_charges_at( const tripoint_abs_omt &p, const itype_id &liquid_type )
 auto would_contaminate( const tripoint_abs_omt &p, const itype_id &liquid_type ) -> bool;
 auto add_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,
                          int charges ) -> int;
+auto seed_liquid_charges_for_mapgen( const tripoint_abs_omt &p, const itype_id &liquid_type,
+                                     int charges ) -> int;
 auto drain_liquid_charges( const tripoint_abs_omt &p, const itype_id &liquid_type,
                            int charges ) -> int;
 auto purify_water( const tripoint_abs_omt &p ) -> units::volume;

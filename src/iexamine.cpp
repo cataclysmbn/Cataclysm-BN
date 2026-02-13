@@ -4556,9 +4556,26 @@ void iexamine::liquid_source( player &, const tripoint &examp )
                                    calendar::turn, item::INFINITE_CHARGES ) );
 }
 
-auto iexamine::fluid_grid_fixture( player &, const tripoint &examp ) -> void
+auto iexamine::fluid_grid_fixture( player &p, const tripoint &examp ) -> void
 {
     map &here = get_map();
+    const auto has_lootable_items = !here.i_at( examp ).empty();
+    if( has_lootable_items ) {
+        uilist selection_menu;
+        selection_menu.text = _( "Select an action" );
+        selection_menu.addentry( 0, true, 'g', _( "Get items" ) );
+        selection_menu.addentry( 1, true, 'w', _( "Use fixture" ) );
+        selection_menu.query();
+        if( selection_menu.ret == 0 ) {
+            none( p, examp );
+            pickup::pick_up( examp, 0 );
+            return;
+        }
+        if( selection_menu.ret != 1 ) {
+            return;
+        }
+    }
+
     const auto &furn = here.furn( examp ).obj();
     if( !furn.fluid_grid || furn.fluid_grid->role != fluid_grid_role::fixture ) {
         add_msg( m_info, _( "It is not connected to a fluid grid fixture." ) );
