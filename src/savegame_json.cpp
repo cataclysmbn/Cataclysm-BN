@@ -4132,6 +4132,14 @@ void submap::store( JsonOut &jsout ) const
         pr.second.serialize( jsout );
     }
     jsout.end_array();
+
+    jsout.member( "transformer_last_run" );
+    jsout.start_array();
+    for( const auto &pr : transformer_last_run ) {
+        jsout.write( pr.first );
+        jsout.write( pr.second );
+    }
+    jsout.end_array();
 }
 
 void submap::load( JsonIn &jsin, const std::string &member_name, int version,
@@ -4374,6 +4382,15 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             point_sm_ms p;
             jsin.read( p );
             active_furniture[p].deserialize( jsin );
+        }
+    } else if( member_name == "transformer_last_run" ) {
+        jsin.start_array();
+        while( !jsin.end_array() ) {
+            point_sm_ms p;
+            time_point t;
+            jsin.read( p );
+            jsin.read( t );
+            transformer_last_run[p] = t;
         }
     } else {
         jsin.skip_value();

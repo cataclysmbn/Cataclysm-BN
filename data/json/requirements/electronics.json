@@ -11,6 +11,6 @@
     "type": "requirement",
     "//": "Connect two fluid grid tiles. Cost is multiplied by number of elements in resulting grid.",
     "components": [ [ [ "pipe", 1 ] ], [ [ "hose", 2 ] ] ],
-    "qualities": [ { "id": "SAW_M", "level": 1 } ]
+    "tools": [ [ [ "oxy_torch", 5 ], [ "welder", 25 ], [ "fake_gridwelder", 25 ], [ "toolset", 50 ] ] ]
   }
 ]
