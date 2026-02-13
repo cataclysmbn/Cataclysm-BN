@@ -768,13 +768,13 @@ static void apply_surf_blend_effect(
             case tint_blend_mode::subtract:
                 return RGBColor{ std::max<uint8_t>( base.r - ( 255 - target.r ), 0 ), std::max<uint8_t>( base.g - ( 255 - target.g ), 0 ), std::max<uint8_t>( base.b - ( 255 - target.b ), 0 ), base.a };
             case tint_blend_mode::multiply:
-                return RGBColor{ static_cast<uint8_t>( base.r *target.r / 255 ), static_cast<uint8_t>( base.g *target.g / 255 ), static_cast<uint8_t>( base.b *target.b / 255 ), base.a };
+                return RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ), static_cast<uint8_t>( base.g *target.g / 256 ), static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
             default:
                 return base;
             case tint_blend_mode::overlay:
                 auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
                     // Pegtop soft light formula
-                    int result = ( ( 255 - 2 * blend ) * base *base / 255 + 2 * blend * base ) / 255;
+                    int result = ( ( 255 - 2 * blend ) * base *base / 256 + 2 * blend * base ) / 256;
                     return std::clamp<int>( result, 0, 255 );
                 };
                 auto col = SDL_Color{
@@ -786,9 +786,9 @@ static void apply_surf_blend_effect(
                 if( mask.has_value() ) {
                     auto base_hsv = rgb2hsv( base );
                     auto [h, s, v, a] = rgb2hsv( col );
-                    const uint8_t mask_factor = mask.value().r * target.a / 255;
-                    s = ilerp( base_hsv.S, s, mask.value().g * target.a / 255 );
-                    v = ilerp( base_hsv.V, v, mask.value().b * target.a / 255 );
+                    const uint8_t mask_factor = mask.value().r * target.a / 256;
+                    s = ilerp( base_hsv.S, s, mask.value().g * target.a / 256 );
+                    v = ilerp( base_hsv.V, v, mask.value().b * target.a / 256 );
                     auto res = hsv2rgb( HSVColor{ h, s, v, base.a } );
                     res.r = ilerp( base.r, res.r, mask_factor );
                     res.g = ilerp( base.g, res.g, mask_factor );
