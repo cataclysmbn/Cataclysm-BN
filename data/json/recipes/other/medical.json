@@ -184,7 +184,7 @@
       [ [ "duct_tape", 20 ], [ "medical_tape", 5 ] ],
       [
         [ "disinfectant", 5 ],
-		[ "chem_hydrogen_peroxide", 5],
+        [ "chem_hydrogen_peroxide", 5 ],
         [ "thyme_oil", 1 ],
         [ "chem_ethanol", 250 ],
         [ "denat_alcohol", 250 ],
