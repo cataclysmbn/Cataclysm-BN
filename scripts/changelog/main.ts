@@ -1,10 +1,10 @@
 import { Command } from "@cliffy/command"
 import { mapValues, maxBy, minBy } from "jsr:@std/collections"
 
-import { parse } from "https://deno.land/x/commit@0.1.5/mod.ts"
 import { titleCase } from "https://deno.land/x/case@2.1.1/mod.ts"
 
 import { fmtLink } from "./fmt_commit.ts"
+import { type CommitInfo, parseCommit } from "./parse_commit.ts"
 import { type Commit, readCommits } from "./read_commits.ts"
 import { paragraph } from "./paragraph.ts"
 
@@ -13,14 +13,31 @@ const asSections = (group: Record<string, string>): string =>
     .map(([type, message]) => `### ${titleCase(type)}\n\n${message}`)
     .join("\n\n")
 
+const formatCommitList = (items: { commit: Commit; info: CommitInfo }[]): string =>
+  items
+    .flatMap((x) => fmtLink({ subject: x.commit.subject, author: x.commit.author }))
+    .toSorted((a, b) => a.pr - b.pr)
+    .map(({ entry }) => entry)
+    .join("\n")
+
 const commitsSection = (changelog: Commit[]) => {
-  const byTypes = Object.groupBy(changelog, (x) => parse(x.subject).type!)
-  const messages = mapValues(byTypes, (xs) =>
-    xs!
-      .flatMap(fmtLink)
-      .toSorted((a, b) => a.pr - b.pr)
-      .map(({ entry }) => entry)
-      .join("\n"))
+  const parsed = changelog
+    .map((commit) => ({ commit, info: parseCommit(commit.subject) }))
+    .filter((x): x is { commit: Commit; info: CommitInfo } => x.info !== null)
+
+  const breaking = parsed.filter((x) => x.info.breaking)
+  const regular = parsed.filter((x) => !x.info.breaking)
+
+  const byTypes = Object.groupBy(regular, (x) => x.info.type)
+  const regularMessages = mapValues(byTypes, formatCommitList)
+
+  const messages: Record<string, string> = {}
+
+  if (breaking.length > 0) {
+    messages["Breaking Changes"] = formatCommitList(breaking)
+  }
+
+  Object.assign(messages, regularMessages)
 
   return asSections(messages)
 }
@@ -35,11 +52,6 @@ const authorsSection = (changelog: Commit[]) => {
     .sort((a, b) => b[1] - a[1])
     .map(([k, v]) => `- **${k}** with ${v} contributions`)
     .join("\n")
-  // const authors = mapValues(
-  //   byAuthors,
-  //   (xs) => xs!.map(({ subject }) => parse(subject).subject).join("\n"),
-  // )
-  // return authors
 }
 
 const changelogImage =
@@ -47,7 +59,7 @@ const changelogImage =
 
 const isoDate = (date: Date | string) => new Date(date).toISOString().split("T")[0]
 
-const template = (commits: Commit[]) => {
+const redditTemplate = (commits: Commit[]) => {
   const begin = minBy(commits, (x) => x.date)!.date
   const end = maxBy(commits, (x) => x.date)!.date
 
@@ -103,28 +115,41 @@ https://docs.cataclysmbn.org/contribute/contributing/
 }
 
 const main = new Command()
-  .option("-s, --since <date>", "Same as git log --since, e.g 2024-09-22", {
-    default: "last monday 1 week ago",
-  })
-  .option("-u, --until <date>", "Same as git log --until, e.g 2024-10-01", {
-    default: "today",
-  })
-  .option("-o, --output <file>", "Output file to save template to")
+  .option(
+    "-s, --since <ref>",
+    "Same as git log --since. Accepts dates, SHAs, or tags (e.g., 2024-09-22, HEAD~10, v0.1)",
+    { default: "last monday 1 week ago" },
+  )
+  .option(
+    "-u, --until <ref>",
+    "Same as git log --until. Accepts dates, SHAs, or tags (e.g., 2024-10-01, HEAD, v0.2)",
+    { default: "today" },
+  )
+  .option("-o, --output <file>", "Output file to save changelog to")
   .option("-q, --quiet", "Do not print the changelog to stdout")
+  .option("-f, --format <format>", "Output format (reddit or default)", {
+    default: "default",
+    value: (val: string) => {
+      if (val !== "reddit" && val !== "default") {
+        throw new Error(`Invalid format "${val}". Must be "reddit" or "default"`)
+      }
+      return val
+    },
+  })
   .description(paragraph`
-      Generate a reddit changelog template from git commits.
+      Generate a changelog from git commits.
 
       usage (at project root): deno task changelog --since 2024-09-22 --until 2024-09-30
 
-      in order to apply proper formatting, switch to Markdown Editor when pasting the output into Reddit.
+      For reddit format, switch to Markdown Editor when pasting the output into Reddit.
     `)
-  .action(async ({ since, until, output, quiet = false }) => {
+  .action(async ({ since, until, output, quiet = false, format }) => {
     const log = quiet ? () => {} : console.log
 
     const commits = await readCommits({ since, until })
     log(`${commits.length} commits found`)
 
-    const changelog = template(commits)
+    const changelog = format === "reddit" ? redditTemplate(commits) : commitsSection(commits)
 
     log(changelog)
     if (output) await Deno.writeTextFile(output, changelog)

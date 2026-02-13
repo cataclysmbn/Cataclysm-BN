@@ -4129,6 +4129,18 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
         vehicle *veh = veh_pair.first;
         int veh_part = veh_pair.second;
 
+        int veh_z = veh->global_pos3().z;
+        auto part = veh->part( veh_part ).info();
+        if( veh_z - p.z <= 0 ) {
+            return false;
+        }
+        if( part.ladder_length() >= veh_z - p.z ) {
+            for( int i = p.z + 1; i <= veh_z; i++ ) {
+                if( here.ter( tripoint( p.xy(), i ) ).id().str() != "t_open_air" ) {
+                    return false;
+                }
+            }
+        }
         // Gets the visible part, should work fine once tileset vp_ids are updated to work with the vehicle part json ids
         // get the vpart_id
         char part_mod = 0;

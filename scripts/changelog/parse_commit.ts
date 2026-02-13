@@ -10,10 +10,11 @@ export type CommitInfo = {
 
 /**
  * Parse a squash-merged commit in conventional commit format.
+ * Returns null if the commit doesn't match the expected format.
  */
-export const parseCommit = (x: string): CommitInfo => {
+export const parseCommit = (x: string): CommitInfo | null => {
   const res = re.captures(x)
-  if (!res) throw new Error(`Failed to parse commit: ${x}`)
+  if (!res) return null
 
   const { type, desc, scopes, pr, breaking } = res
   return { type, desc, scopes: scopes?.split(",") ?? [], pr: +pr, breaking: !!breaking }

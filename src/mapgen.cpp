@@ -21,6 +21,9 @@
 #include "calendar.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "catalua_mapgen.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_id.h"
 #include "clzones.h"
 #include "numeric_interval.h"
@@ -31,6 +34,7 @@
 #include "drawing_primitives.h"
 #include "enums.h"
 #include "field_type.h"
+#include "fluid_grid.h"
 #include "game.h"
 #include "game_constants.h"
 #include "generic_factory.h"
@@ -506,6 +510,12 @@ load_mapgen_function( const JsonObject &jio, point offset, point total )
         jo.allow_omitted_members();
         return std::make_shared<mapgen_function_json>(
                    jsrc, mgweight, offset, total );
+    } else if( mgtype == "lua" ) {
+        if( !jio.has_string( "luamethod" ) ) {
+            jio.throw_error( R"(mapgen with method "lua" must define string "luamethod")" );
+        }
+        std::string luamethod = jio.get_string( "luamethod" );
+        return std::make_shared<mapgen_function_lua>( luamethod, mgweight );
     } else {
         jio.throw_error( R"(invalid value: must be "builtin" or "json")", "method" );
     }
@@ -1883,19 +1893,31 @@ class jmapgen_liquid_item : public jmapgen_piece
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
             if( one_in( chance.get() ) ) {
-                itype_id chosen_id = liquid.get( dat );
+                const auto chosen_id = liquid.get( dat );
                 if( chosen_id.is_null() ) {
                     return;
                 }
                 // Itemgroups apply migrations when being loaded, but we need to migrate
                 // individual items here.
-                itype_id migrated = item_controller->migrate_id( chosen_id );
-                detached_ptr<item> newliquid = item::spawn( migrated, calendar::start_of_cataclysm );
+                const auto migrated = item_controller->migrate_id( chosen_id );
+                auto newliquid = item::spawn( migrated, calendar::start_of_cataclysm );
                 if( amount.valmax > 0 ) {
                     newliquid->charges = amount.get();
                 }
-                dat.m.add_item_or_charges( tripoint( x.get(), y.get(), dat.m.get_abs_sub().z ),
-                                           std::move( newliquid ) );
+
+                const auto target = tripoint( x.get(), y.get(), dat.m.get_abs_sub().z );
+                const auto &furn = dat.m.furn( target.xy() ).obj();
+                if( furn.fluid_grid && furn.fluid_grid->role == fluid_grid_role::tank &&
+                    furn.fluid_grid->allowed_liquids.contains( migrated ) ) {
+                    const auto target_abs_omt = project_to<coords::omt>( dat.m.getglobal( target ) );
+                    const auto added = fluid_grid::seed_liquid_charges_for_mapgen( target_abs_omt, migrated,
+                                       newliquid->charges );
+                    if( added > 0 ) {
+                        return;
+                    }
+                }
+
+                dat.m.add_item_or_charges( target, std::move( newliquid ) );
             }
         }
 
@@ -4034,10 +4056,7 @@ void map::draw_map( mapgendata &dat )
     const bool generated = run_mapgen_func( function_key, dat );
 
     if( !generated ) {
-        if( is_ot_match( "slimepit", terrain_type, ot_match_type::prefix ) ||
-            is_ot_match( "slime_pit", terrain_type, ot_match_type::prefix ) ) {
-            draw_slimepit( dat );
-        } else if( is_ot_match( "office", terrain_type, ot_match_type::prefix ) ) {
+        if( is_ot_match( "office", terrain_type, ot_match_type::prefix ) ) {
             draw_office_tower( dat );
         } else if( is_ot_match( "temple", terrain_type, ot_match_type::prefix ) ) {
             draw_temple( dat );
@@ -4685,7 +4704,7 @@ void map::draw_lab( mapgendata &dat )
                    is_ot_match( "ants", dat.west(), ot_match_type::contains );
 
         if( ice_lab ) {
-            int temperature = -20 + 30 * ( dat.zlevel() );
+            int temperature = -20 + 15 * ( dat.zlevel() );
             set_temperature( p2, temperature );
             set_temperature( p2 + point( SEEX, 0 ), temperature );
             set_temperature( p2 + point( 0, SEEY ), temperature );
@@ -5983,56 +6002,6 @@ void map::draw_mine( mapgendata &dat )
     }
 }
 
-void map::draw_slimepit( mapgendata &dat )
-{
-    const oter_id &terrain_type = dat.terrain_type();
-    if( is_ot_match( "slimepit", terrain_type, ot_match_type::prefix ) ) {
-        if( dat.zlevel() == 0 ) {
-            dat.fill_groundcover();
-        } else {
-            draw_fill_background( t_rock_floor );
-        }
-
-        for( int i = 0; i < 4; i++ ) {
-            if( !is_ot_match( "slimepit", dat.t_nesw[i], ot_match_type::prefix ) ) {
-                dat.set_dir( i, SEEX );
-            }
-        }
-
-        for( int i = 0; i < SEEX * 2; i++ ) {
-            for( int j = 0; j < SEEY * 2; j++ ) {
-                if( !one_in( 5 ) && ( rng( 0, dat.n_fac ) <= j &&
-                                      rng( 0, dat.w_fac ) <= i &&
-                                      SEEY * 2 - rng( 0, dat.s_fac ) > j &&
-                                      SEEX * 2 - rng( 0, dat.e_fac ) > i ) ) {
-                    ter_set( point( i, j ), t_slime );
-                }
-            }
-        }
-        if( terrain_type == "slimepit_down" ) {
-            ter_set( point( rng( 3, SEEX * 2 - 4 ), rng( 3, SEEY * 2 - 4 ) ), t_slope_down );
-        }
-        if( dat.above() == "slimepit_down" ) {
-            switch( rng( 1, 4 ) ) {
-                case 1:
-                    ter_set( point( rng( 0, 2 ), rng( 0, 2 ) ), t_slope_up );
-                    break;
-                case 2:
-                    ter_set( point( rng( 0, 2 ), SEEY * 2 - rng( 1, 3 ) ), t_slope_up );
-                    break;
-                case 3:
-                    ter_set( point( SEEX * 2 - rng( 1, 3 ), rng( 0, 2 ) ), t_slope_up );
-                    break;
-                case 4:
-                    ter_set( point( SEEX * 2 - rng( 1, 3 ), SEEY * 2 - rng( 1, 3 ) ), t_slope_up );
-            }
-        }
-        place_spawns( GROUP_BLOB, 1, point( SEEX, SEEY ), point( SEEX, SEEY ), 0.15 );
-        place_items( item_group_id( "sewer" ), 40, point_zero, point( EAST_EDGE, SOUTH_EDGE ), true,
-                     calendar::start_of_cataclysm );
-    }
-}
-
 void map::draw_connections( const mapgendata &dat )
 {
     const oter_id &terrain_type = dat.terrain_type();
@@ -6280,6 +6249,12 @@ character_id map::place_npc( point p, const string_id<npc_template> &type, bool 
     temp->spawn_at_precise( { abs_sub.xy() }, { p, abs_sub.z } );
     temp->toggle_trait( trait_NPC_STATIC_NPC );
     overmap_buffer.insert_npc( temp );
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = temp.get();
+    } );
+    cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+        params["npc"] = temp.get();
+    } );
     return temp->getID();
 }
 
