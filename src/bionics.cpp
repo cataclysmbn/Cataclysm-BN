@@ -1502,6 +1502,12 @@ bool Character::burn_fuel( bionic &bio, bool start )
     const bool is_metabolism_powered = bio.is_this_fuel_powered( fuel_type_metabolism );
     const bool is_cable_powered = bio.info().is_remote_fueled;
     std::vector<itype_id> fuel_available = get_fuel_available( bio.id );
+    // When a bionic has passive_fuel_efficiency, perpetual fuels are handled by
+    // passive_power_gen() while the bionic is off.  Exclude them from burn_fuel()
+    // so they don't interfere with consumable fuel processing when active.
+    if( bio.info().passive_fuel_efficiency > 0.0f ) {
+        std::erase_if( fuel_available, []( const auto & fuel ) { return fuel->has_flag( flag_PERPETUAL ); } );
+    }
     float effective_efficiency = get_effective_efficiency( bio, bio.info().fuel_efficiency );
 
     if( is_cable_powered ) {

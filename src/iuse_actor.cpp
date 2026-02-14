@@ -28,6 +28,8 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "catalua_icallback_actor.h"
 #include "character.h"
@@ -1230,6 +1232,12 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
         newmon.no_extra_death_drops = true;
         it.deactivate();
     }
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = &newmon;
+    } );
+    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+        params["monster"] = &newmon;
+    } );
     if( place_random ) {
         // place_critter_around returns the same pointer as its parameter (or null)
         // Allow position to be different from the player for tossed or launched items
@@ -1286,7 +1294,7 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
     /** @EFFECT_INT increases chance of a placed turret being friendly */
     /** Full-on pets also auto-succeed if we've already succeeded before deactivating it */
     if( rng( 0, p.int_cur ) + skill_offset < rng( 0, 2 * ( difficulty * diff_mod ) ) &&
-        !it.has_flag( flag_SPAWN_FRIENDLY ) ) {
+        !it.has_flag( flag_SPAWN_FRIENDLY ) || it.has_flag( flag_SPAWN_HOSTILE ) ) {
         if( hostile_msg.empty() ) {
             p.add_msg_if_player( m_bad, _( "The %s scans you and makes angry beeping noises!" ),
                                  newmon.name() );

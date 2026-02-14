@@ -17,6 +17,12 @@
   },
   {
     "type": "trait_group",
+    "id": "Hair_Any",
+    "subtype": "collection",
+    "traits": [ { "group": "Hair_Color_Any", "prob": 100 }, { "group": "Hair_Style_Any", "prob": 100 } ]
+  },
+  {
+    "type": "trait_group",
     "id": "Appearance_Irish",
     "subtype": "collection",
     "traits": [

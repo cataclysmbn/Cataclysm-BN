@@ -5190,6 +5190,9 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
     if( has_flag( flag_SPAWN_FRIENDLY ) ) {
         tagtext += _( " (friendly)" );
     }
+    if( has_flag( flag_SPAWN_HOSTILE ) ) {
+        tagtext += _( " (hostile)" );
+    }
 
     if( is_favorite ) {
         tagtext += _( " *" ); // Display asterisk for favorite items
