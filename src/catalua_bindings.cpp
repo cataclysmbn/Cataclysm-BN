@@ -461,7 +461,7 @@ void cata::detail::reg_colors( sol::state &lua )
 }
 
 
-void cata::detail::reg_tint_color( sol::state& lua )
+void cata::detail::reg_tint_color( sol::state &lua )
 {
 #define UT_CLASS color_tint_pair
     {
@@ -494,17 +494,21 @@ void cata::detail::reg_tint_color( sol::state& lua )
             UT_CLASS( color_id )
             > ()
         );
-        luna::set_fx( ut, "color", []( UT_CLASS & col, const sol::object & obj ) {
+        luna::set_fx( ut, "color", []( UT_CLASS & col, const sol::object & obj )
+        {
             if( obj.is<std::string>() ) {
                 std::string color = obj.as<std::string>();
-                col.color = color.starts_with( '#' ) ? rgb_from_hex_string( color ) : curses_color_to_RGB( color_from_string( color ) );
+                col.color = color.starts_with( '#' ) ? rgb_from_hex_string( color ) : curses_color_to_RGB(
+                    color_from_string( color ) );
             } else if( obj.is<color_id>() ) {
-                col.color = static_cast<SDL_Color>( curses_color_to_RGB( get_all_colors().get( obj.as<color_id>() ) ) );
+                col.color = static_cast<SDL_Color>( curses_color_to_RGB( get_all_colors().get(
+                                                        obj.as<color_id>() ) ) );
             }
         } );
-        luna::set_fx( ut, "blend_mode", []( UT_CLASS & col, const std::string & mode ) {
+        luna::set_fx( ut, "blend_mode", []( UT_CLASS & col, const std::string & mode )
+        {
             if( !mode.empty() ) {
-                if ( mode == "overlay" ) {
+                if( mode == "overlay" ) {
                     col.blend_mode = tint_blend_mode::overlay;
                 } else if( mode == "multiply" ) {
                     col.blend_mode = tint_blend_mode::multiply;
@@ -517,13 +521,16 @@ void cata::detail::reg_tint_color( sol::state& lua )
                 }
             };
         } );
-        luna::set_fx( ut, "contrast", []( UT_CLASS & col, const float & val ) {
+        luna::set_fx( ut, "contrast", []( UT_CLASS & col, const float & val )
+        {
             col.contrast = val;
         } );
-        luna::set_fx( ut, "saturation", []( UT_CLASS & col, const float & val ) {
+        luna::set_fx( ut, "saturation", []( UT_CLASS & col, const float & val )
+        {
             col.saturation = val;
         } );
-        luna::set_fx( ut, "brightness", []( UT_CLASS & col, const float & val ) {
+        luna::set_fx( ut, "brightness", []( UT_CLASS & col, const float & val )
+        {
             col.brightness = val;
         } );
     }
@@ -1049,7 +1056,7 @@ void cata::reg_all_bindings( sol::state &lua )
     mod_bionic_data( lua );
     mod_mutation_branch( lua );
     reg_bionics( lua );
-    reg_tint_color(lua);
+    reg_tint_color( lua );
     reg_magic( lua );
     reg_names( lua );
     reg_mission( lua );
