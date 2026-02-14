@@ -6,7 +6,37 @@
     "name": { "str": "Bionic Stomach CBM" },
     "looks_like": "bio_digestion",
     "description": "A simple stomach replacement. It takes up significantly less room than a biologic stomach, but prevents the use of other digestive bionics and requires minor upkeep.",
+    "price": "600 USD",
+    "difficulty": 5
+  },
+  {
+    "id": "bio_heart_replacement",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Bionic Heart CBM" },
+    "looks_like": "bio_blood_filter",
+    "description": "A basic heart replacement. You're much less likely to have a heart attack with this, but who wants to test that? Prevents utilization of other heart bionics.",
     "price": "1200 USD",
     "difficulty": 5
+  },
+  {
+    "id": "bio_heart_replacement_mk2",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Bionic Heart MkII CBM" },
+    "looks_like": "bio_blood_filter",
+    "description": "An advanced heart replacement. Replaces significant portions of your vascular system. Compatible with other bionics that interact with the heart.",
+    "price": "2500 USD",
+    "difficulty": 9
+  },
+  {
+    "id": "bio_lungs_replacement",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Bionic Lungs" },
+    "looks_like": "bio_purifier",
+    "description": "Replacement lungs. They nullify asthma, but can get gummed up just like normal lungs. Prevents the usage of other lung bionics.",
+    "price": "1200 USD",
+    "difficulty": 8
   }
 ]
