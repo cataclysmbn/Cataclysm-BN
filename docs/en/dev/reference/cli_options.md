@@ -15,112 +15,176 @@ but also provides a number of command line options to help modders and developer
 
 ## Info
 
-### `--help`
+### `--help
+
+`
 
 print this message and exit.
 
-### `--version`
+### `--version
+
+`
 
 print the version and exit.
 
-### `--paths`
+### `--paths
+
+`
 
 print the paths used by the game and exit.
 
-## Command line parameters
+### `
 
-### `--seed <string of letters and or numbers>`
+`
+
+Command line parameters:.
+
+### `--seed <string of letters and or numbers>
+
+`
 
 Sets the random number generator's seed value.
 
-### `--jsonverify`
+### `--jsonverify
+
+`
 
 Checks the BN json files.
 
-### `--check-mods [mods…]`
+### `--check-mods [mods…]
+
+`
 
 Checks the json files belonging to BN mods.
 
-### `--dump-stats <what> [mode = TSV] [opts…]`
+### `--dump-stats <what> [mode = TSV] [opts…]
+
+`
 
 Dumps item stats.
 
-### `--world <name>`
+### `--world <name>
+
+`
 
 Load world.
 
-### `--basepath <path>`
+### `--basepath <path>
+
+`
 
 Base path for all game data subdirectories.
 
-### `--dont-debugmsg`
+### `--dont-debugmsg
+
+`
 
 If set, no debug messages will be printed.
 
-### `--lua-doc <output path>`
+### `--lua-doc <output path>
+
+`
 
 Generate Lua docs to given path and exit.
 
-### `--lua-types <output path>`
+### `--lua-types <output path>
+
+`
 
 Generate Lua types to given path and exit.
 
-### `--datadir <directory name>`
+### `--datadir <directory name>
+
+`
 
 Sub directory from which game data is loaded.
 
-### `--autopickupfile <filename>`
+### `--autopickupfile <filename>
+
+`
 
 Name of the autopickup options file within the configdir.
 
-### `--motdfile <filename>`
+### `--motdfile <filename>
+
+`
 
 Name of the message of the day file within the motd directory.
 
-## Map sharing
+### `
 
-### `--shared`
+`
+
+Map sharing.
+
+### `--shared
+
+`
 
 Activates the map-sharing mode.
 
-### `--username <name>`
+### `--username <name>
+
+`
 
 Instructs map-sharing code to use this name for your character..
 
-### `--addadmin <username>`
+### `--addadmin <username>
+
+`
 
 Instructs map-sharing code to use this name for your character and give you access to the cheat functions..
 
-### `--adddebugger <username>`
+### `--adddebugger <username>
+
+`
 
 Informs map-sharing code that you're running inside a debugger.
 
-### `--competitive`
+### `--competitive
+
+`
 
 Instructs map-sharing code to disable access to the in-game cheat functions.
 
-### `--worldmenu`
+### `--worldmenu
+
+`
 
 Enables the world menu in the map-sharing code.
 
-## User directories
+### `
 
-### `--userdir <path>`
+`
+
+User directories.
+
+### `--userdir <path>
+
+`
 
 Base path for user-overrides to files from the ./data directory and named below.
 
-### `--savedir <directory name>`
+### `--savedir <directory name>
+
+`
 
 Subdirectory for game saves.
 
-### `--configdir <directory name>`
+### `--configdir <directory name>
+
+`
 
 Subdirectory for game configuration.
 
-### `--memorialdir <directory name>`
+### `--memorialdir <directory name>
+
+`
 
 Subdirectory for memorials.
 
-### `--optionfile <filename>`
+### `--optionfile <filename>
+
+`
 
 Name of the options file within the configdir.

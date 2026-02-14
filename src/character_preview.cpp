@@ -144,8 +144,8 @@ class char_preview_adapter : public cata_tiles
 
                 if( !found ) {
                     auto pair = std::visit( get_overlay_color, entry );
-                    overlay_bg_color = pair.first;
-                    overlay_fg_color = pair.second;
+                    overlay_bg_color = pair.bg;
+                    overlay_fg_color = pair.fg;
                     found = find_overlay_looks_like( ch.male, overlay_id, draw_id );
                 }
 

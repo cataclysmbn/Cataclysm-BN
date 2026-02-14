@@ -11,6 +11,9 @@
 #include <variant>
 
 #include "animation.h"
+#include "catalua_bindings.h"
+#include "catalua_bindings_utils.h"
+#include "catalua_luna_doc.h"
 #include "enums.h"
 #include "hash_utils.h"
 #include "hsv_color.h"
@@ -208,9 +211,23 @@ struct tint_config {
     tint_config( SDL_Color c ) : color( c ) {}
     tint_config( RGBColor c ) : color( static_cast<SDL_Color>( c ) ) {}
     tint_config( nc_color c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( c ) ) ) {}
+    tint_config( std::string c ) : color( c.starts_with( '#' ) ? rgb_from_hex_string( c ) : curses_color_to_RGB( color_from_string( c ) ) ) {}
+    tint_config( color_id c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( get_all_colors().get( c ) ) ) ) {}
 };
 
-using color_tint_pair = std::pair<tint_config, tint_config>;  // {bg, fg}
+struct color_tint_pair {
+	tint_config bg;
+	tint_config fg;
+
+    bool operator==( const color_tint_pair &other ) const {
+        return bg == other.bg
+               && fg == other.fg;
+    }
+    color_tint_pair() = default;
+    color_tint_pair( std::nullopt_t ) : bg( std::nullopt ), fg( std::nullopt ) {}
+    color_tint_pair( tint_config tint ) : bg( tint ), fg( tint ) {}
+	color_tint_pair( tint_config bg, tint_config fg ) : bg( bg ), fg( fg ) {}
+};
 
 struct tileset_lookup_key {
     int sprite_index;

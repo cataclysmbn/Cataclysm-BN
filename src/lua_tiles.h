@@ -5,11 +5,13 @@
 #include <vector>
 
 #include "calendar.h"
+#include "cata_tiles.h"
 #include "coordinates.h"
 #include "point.h"
 
 struct lua_tile_entry {
     std::string tile_id;           // Any tileset sprite ID
+    color_tint_pair tint;          // Color tint
     tripoint_abs_ms pos;           // Absolute world position (map squares)
     int priority;                  // Higher = drawn on top
     int duration_turns;            // -1 = permanent
@@ -32,7 +34,7 @@ class lua_tile_manager
          * @param cleanup_outside_bubble If true, remove when outside reality bubble
          * @return Unique handle for later removal
          */
-        int add_tile( const std::string &tile_id, const tripoint &abs_pos,
+        int add_tile( const std::string &tile_id, const color_tint_pair& tint, const tripoint &abs_pos,
                       int priority, int duration_turns, bool cleanup_outside_bubble );
 
         /** Remove a specific tile by its handle. Returns true if found and removed. */

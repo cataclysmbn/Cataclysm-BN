@@ -4000,8 +4000,7 @@ bool cata_tiles::draw_field_or_item( const tripoint &p, const lit_level ll, int 
         const auto it_override = item_override.find( p );
         const bool it_overridden = it_override != item_override.end();
 
-        tint_config bgCol;
-        tint_config fgCol;
+        color_tint_pair color_pair;
 
         itype_id it_id;
         mtype_id mon_id;
@@ -4021,7 +4020,7 @@ bool cata_tiles::draw_field_or_item( const tripoint &p, const lit_level ll, int 
             hilite = tile.get_item_count() > 1;
             it_type = itm.type;
 
-            std::tie( bgCol, fgCol ) = get_item_color( itm, here, p );
+            color_pair = get_item_color( itm, here, p );
         } else {
             it_type = nullptr;
             hilite = false;
@@ -4037,7 +4036,7 @@ bool cata_tiles::draw_field_or_item( const tripoint &p, const lit_level ll, int 
 
             const tile_search_params tile { disp_id, C_ITEM, it_category, 0, 0 };
             ret_draw_items = draw_from_id_string(
-                                 tile, p, bgCol, fgCol,
+                                 tile, p, color_pair.bg, color_pair.fg,
                                  lit, nv, z_drop, false, height_3d );
             if( ret_draw_items && hilite ) {
                 draw_item_highlight( p );
@@ -4372,7 +4371,7 @@ bool cata_tiles::draw_lua_tiles( const tripoint &p, lit_level ll, int &height_3d
 
         const tile_search_params tile { entry->tile_id, C_LUA, empty_string, 0, 0 };
         drew_any |= draw_from_id_string(
-                        tile, p, std::nullopt, std::nullopt,
+                        tile, p, entry->tint.bg, entry->tint.fg,
                         ll, true, z_drop, false, height_3d );
     }
 
@@ -4499,8 +4498,8 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
 
         if( !found ) {
             auto pair = std::visit( get_overlay_color, entry );
-            overlay_bg_color = pair.first;
-            overlay_fg_color = pair.second;
+            overlay_bg_color = pair.bg;
+            overlay_fg_color = pair.fg;
             found = find_overlay_looks_like( ch.male, overlay_id, draw_id );
         }
         if( found ) {

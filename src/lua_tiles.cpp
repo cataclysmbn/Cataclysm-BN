@@ -12,13 +12,14 @@ lua_tile_manager &lua_tile_manager::get()
     return instance;
 }
 
-int lua_tile_manager::add_tile( const std::string &tile_id, const tripoint &abs_pos,
-                                int priority, int duration_turns,
-                                bool cleanup_outside_bubble )
+int lua_tile_manager::add_tile( const std::string &tile_id, const color_tint_pair &tint,
+                                const tripoint &abs_pos, int priority,
+                                int duration_turns, bool cleanup_outside_bubble )
 {
     int h = next_handle_++;
     lua_tile_entry entry;
     entry.tile_id = tile_id;
+    entry.tint = tint;
     entry.pos = tripoint_abs_ms( abs_pos );
     entry.priority = priority;
     entry.duration_turns = duration_turns;
