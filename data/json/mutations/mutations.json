@@ -4709,6 +4709,20 @@
   },
   {
     "type": "mutation",
+    "id": "BODYHAIR",
+    "name": { "str": "Hairy" },
+    "points": 0,
+    "visibility": 4,
+    "starting_trait": true,
+    "bodytemp_modifiers": [ 0, 80 ],
+    "description": "Your body is covered in thick body hair, making you slightly warmer.",
+    "category": [ "CHIMERA", "SPIDER", "MOUSE" ],
+    "types": [ "SKIN" ],
+    "changes_to": [ "LIGHTFUR" ],
+    "flags": [ "FURRY" ]
+  },
+  {
+    "type": "mutation",
     "id": "MET_RAT",
     "name": { "str": "Rapid Metabolism" },
     "points": -2,
