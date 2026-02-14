@@ -14,11 +14,14 @@
 #include <ostream>
 #include <ranges>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "avatar.h"
 #include "behavior.h"
 #include "bionics.h"
 #include "cata_utility.h"
+#include "catalua.h"
+#include "catalua_impl.h"
 #include "creature_tracker.h"
 #include "debug.h"
 #include "effect.h"
@@ -27,6 +30,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
+#include "init.h"
 #include "line.h"
 #include "make_static.h"
 #include "map.h"
@@ -84,6 +88,67 @@ static const std::string flag_AUTODOC_COUCH( "AUTODOC_COUCH" );
 
 namespace
 {
+
+auto report_missing_lua_ai( const std::string &method ) -> void
+{
+    static auto warned = std::unordered_set<std::string>{};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    debugmsg( "Lua monster AI function '%s' is not defined", method );
+}
+
+auto report_invalid_lua_ai_return( const std::string &method, const sol::object &value,
+                                   sol::state &lua ) -> void
+{
+    static auto warned = std::unordered_set<std::string>{};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    const auto type_name = get_luna_type( value );
+    const auto raw_name = type_name.value_or(
+                              std::string( sol::type_name( lua, value.get_type() ) ) );
+    debugmsg( "Lua monster AI function '%s' returned %s, expected boolean or nil",
+              method, raw_name );
+}
+
+auto run_lua_monster_ai( monster &mon ) -> bool
+{
+    const auto &lua_method = mon.type->lua_ai;
+    if( !lua_method ) {
+        return false;
+    }
+
+    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    if( lua_state == nullptr ) {
+        return false;
+    }
+
+    sol::state &lua = lua_state->lua;
+    sol::object ref = lua.globals()["game"]["monster_ai_functions"][*lua_method];
+    if( ref.get_type() != sol::type::function ) {
+        report_missing_lua_ai( *lua_method );
+        return false;
+    }
+
+    auto func = ref.as<sol::protected_function>();
+    sol::protected_function_result res = func( &mon );
+    check_func_result( res );
+    if( !res.valid() ) {
+        return false;
+    }
+
+    const auto value = res.get<sol::object>();
+    if( value.get_type() == sol::type::lua_nil ) {
+        return false;
+    }
+    if( value.get_type() != sol::type::boolean ) {
+        report_invalid_lua_ai_return( *lua_method, value, lua );
+        return false;
+    }
+
+    return value.as<bool>();
+}
 
 } // namespace
 static const std::string flag_LIQUID( "LIQUID" );
@@ -767,6 +832,10 @@ void monster::move()
         return;
     }
     map &here = get_map();
+
+    if( run_lua_monster_ai( *this ) ) {
+        return;
+    }
 
     behavior::monster_oracle_t oracle( this );
     behavior::tree goals;

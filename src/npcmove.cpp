@@ -10,6 +10,7 @@
 #include <numeric>
 #include <ostream>
 #include <tuple>
+#include <unordered_set>
 
 #include "active_item_cache.h"
 #include "activity_handlers.h"
@@ -22,6 +23,8 @@
 #include "character_id.h"
 #include "clzones.h"
 #include "coordinate_conversions.h"
+#include "catalua.h"
+#include "catalua_impl.h"
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
@@ -35,6 +38,7 @@
 #include "game_constants.h"
 #include "gates.h"
 #include "gun_mode.h"
+#include "init.h"
 #include "item.h"
 #include "item_contents.h"
 #include "item_functions.h"
@@ -49,6 +53,7 @@
 #include "mission.h"
 #include "monster.h"
 #include "mtype.h"
+#include "npc_class.h"
 #include "npctalk.h"
 #include "options.h"
 #include "overmap.h"
@@ -71,6 +76,76 @@
 #include "visitable.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+
+namespace
+{
+
+auto report_missing_lua_npc_ai( const std::string &method ) -> void
+{
+    static auto warned = std::unordered_set<std::string>{};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    debugmsg( "Lua NPC AI function '%s' is not defined", method );
+}
+
+auto report_invalid_lua_npc_ai_return( const std::string &method, const sol::object &value,
+                                       sol::state &lua ) -> void
+{
+    static auto warned = std::unordered_set<std::string>{};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    const auto type_name = get_luna_type( value );
+    const auto raw_name = type_name.value_or(
+                              std::string( sol::type_name( lua, value.get_type() ) ) );
+    debugmsg( "Lua NPC AI function '%s' returned %s, expected boolean or nil",
+              method, raw_name );
+}
+
+auto run_lua_npc_ai( npc &who ) -> bool
+{
+    if( !who.myclass.is_valid() ) {
+        return false;
+    }
+
+    const auto &lua_method = who.myclass.obj().lua_ai;
+    if( !lua_method ) {
+        return false;
+    }
+
+    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    if( lua_state == nullptr ) {
+        return false;
+    }
+
+    sol::state &lua = lua_state->lua;
+    sol::object ref = lua.globals()["game"]["npc_ai_functions"][*lua_method];
+    if( ref.get_type() != sol::type::function ) {
+        report_missing_lua_npc_ai( *lua_method );
+        return false;
+    }
+
+    auto func = ref.as<sol::protected_function>();
+    sol::protected_function_result res = func( &who );
+    check_func_result( res );
+    if( !res.valid() ) {
+        return false;
+    }
+
+    const auto value = res.get<sol::object>();
+    if( value.get_type() == sol::type::lua_nil ) {
+        return false;
+    }
+    if( value.get_type() != sol::type::boolean ) {
+        report_invalid_lua_npc_ai_return( *lua_method, value, lua );
+        return false;
+    }
+
+    return value.as<bool>();
+}
+
+} // namespace
 
 static const activity_id ACT_PULP( "ACT_PULP" );
 
@@ -710,6 +785,14 @@ void npc::move()
     // NPCs under operation should just stay still
     if( activity->id() == activity_id( "ACT_OPERATION" ) ) {
         execute_action( npc_player_activity );
+        return;
+    }
+
+    const auto starting_moves = get_moves();
+    if( run_lua_npc_ai( *this ) ) {
+        if( get_moves() == starting_moves ) {
+            set_moves( 0 );
+        }
         return;
     }
 

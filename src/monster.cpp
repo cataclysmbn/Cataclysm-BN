@@ -7,10 +7,13 @@
 #include <optional>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "avatar.h"
 #include "bodypart.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
+#include "catalua_impl.h"
 #include "catalua_sol.h"
 #include "character.h"
 #include "coordinate_conversions.h"
@@ -28,6 +31,7 @@
 #include "game_constants.h"
 #include "game.h"
 #include "int_id.h"
+#include "init.h"
 #include "item_group.h"
 #include "item.h"
 #include "itype.h"
@@ -138,6 +142,76 @@ static const trait_id trait_PHEROMONE_INSECT( "PHEROMONE_INSECT" );
 static const trait_id trait_PHEROMONE_MAMMAL( "PHEROMONE_MAMMAL" );
 static const trait_id trait_PROF_FERAL( "PROF_FERAL" );
 static const trait_id trait_TERRIFYING( "TERRIFYING" );
+
+namespace
+{
+
+auto report_missing_lua_attitude( const std::string &method ) -> void
+{
+    static auto warned = std::unordered_set<std::string>{};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    debugmsg( "Lua monster attitude function '%s' is not defined", method );
+}
+
+auto report_invalid_lua_attitude_return( const std::string &method, const sol::object &value,
+                                         sol::state &lua ) -> void
+{
+    static auto warned = std::unordered_set<std::string>{};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    const auto type_name = get_luna_type( value );
+    const auto raw_name = type_name.value_or(
+                              std::string( sol::type_name( lua, value.get_type() ) ) );
+    debugmsg( "Lua monster attitude function '%s' returned %s, expected MonsterAttitude",
+              method, raw_name );
+}
+
+auto get_lua_monster_attitude( const monster &mon,
+                               const Character *target ) -> std::optional<monster_attitude>
+{
+    const auto &lua_method = mon.type->lua_attitude;
+    if( !lua_method ) {
+        return std::nullopt;
+    }
+
+    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    if( lua_state == nullptr ) {
+        return std::nullopt;
+    }
+
+    sol::state &lua = lua_state->lua;
+    sol::object ref = lua.globals()["game"]["monster_attitude_functions"][*lua_method];
+    if( ref.get_type() != sol::type::function ) {
+        report_missing_lua_attitude( *lua_method );
+        return std::nullopt;
+    }
+
+    auto func = ref.as<sol::protected_function>();
+    const auto target_ref = target != nullptr
+                            ? sol::make_object( lua, target )
+                            : sol::make_object( lua, sol::lua_nil );
+    sol::protected_function_result res = func( &mon, target_ref );
+    check_func_result( res );
+    if( !res.valid() ) {
+        return std::nullopt;
+    }
+
+    const auto value = res.get<sol::object>();
+    if( value.get_type() == sol::type::lua_nil ) {
+        return std::nullopt;
+    }
+    if( value.get_type() != sol::type::number ) {
+        report_invalid_lua_attitude_return( *lua_method, value, lua );
+        return std::nullopt;
+    }
+
+    return value.as<monster_attitude>();
+}
+
+} // namespace
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 
 struct pathfinding_settings;
@@ -1461,6 +1535,10 @@ std::string io::enum_to_string<monster_attitude>( monster_attitude att )
 
 auto monster::attitude( const Character *u ) const -> monster_attitude
 {
+    if( const auto lua_attitude = get_lua_monster_attitude( *this, u ); lua_attitude ) {
+        return *lua_attitude;
+    }
+
     if( friendly != 0 ) {
         if( has_effect( effect_docile ) ) {
             return MATT_FPASSIVE;

@@ -403,6 +403,8 @@ struct mtype {
 
         // Do we indiscriminately attack characters, or should we wait until one annoys us?
         bool aggro_character = true;
+        std::optional<std::string> lua_attitude;
+        std::optional<std::string> lua_ai;
 
         mtype();
         /**

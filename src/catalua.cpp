@@ -225,6 +225,24 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
 
     // iuse functions
     gt["iuse_functions"] = lua.create_table();
+    gt["iwieldable_functions"] = lua.create_table();
+    gt["iwearable_functions"] = lua.create_table();
+    gt["iequippable_functions"] = lua.create_table();
+    gt["istate_functions"] = lua.create_table();
+    gt["imelee_functions"] = lua.create_table();
+    gt["iranged_functions"] = lua.create_table();
+
+    // bionic/mutation functions
+    gt["bionic_functions"] = lua.create_table();
+    gt["mutation_functions"] = lua.create_table();
+
+    // mapgen functions
+    gt["mapgen_functions"] = lua.create_table();
+
+    // monster functions
+    gt["monster_attitude_functions"] = lua.create_table();
+    gt["monster_ai_functions"] = lua.create_table();
+    gt["npc_ai_functions"] = lua.create_table();
 
     // hooks
     cata::define_hooks( state );

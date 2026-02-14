@@ -9,6 +9,7 @@
 #include <set>
 #include <utility>
 
+#include "assign.h"
 #include "debug.h"
 #include "generic_factory.h"
 #include "item_group.h"
@@ -248,6 +249,7 @@ void npc_class::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "worn_override", worn_override );
     optional( jo, was_loaded, "carry_override", carry_override );
     optional( jo, was_loaded, "weapon_override", weapon_override );
+    assign( jo, "lua_ai", lua_ai );
 
     if( jo.has_member( "traits" ) ) {
         traits = trait_group::load_trait_group( jo.get_member( "traits" ), "collection" );
