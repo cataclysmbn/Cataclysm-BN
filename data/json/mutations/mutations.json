@@ -2136,9 +2136,8 @@
     "visibility": 3,
     "ugliness": 2,
     "description": "Your skin is light green and has a slightly woody quality to it.  This provides 2 points of cut and stab armor and 1 point of ballistic armor, and helps you retain moisture, resulting in less thirst.  Greatly decreases wet penalties.",
-    "types": [ "SKIN", "skin_tone" ],
-    "changes_to": [ "BARK" ],
-    "leads_to": [ "THORNS", "LEAVES" ],
+    "types": [ "skin_tone" ],
+    "leads_to": [ "THORNS", "LEAVES", "BARK" ],
     "category": [ "PLANT", "ELFA" ],
     "wet_protection": [
       { "part": "head", "neutral": 4 },
@@ -2162,23 +2161,23 @@
     "points": 5,
     "visibility": 10,
     "ugliness": 3,
-    "description": "Your skin is coated in a light bark, like that of a tree.  This provides 5 points of cutting and piercing damage, 4 points of ballistic armor, and one point of protection from fire.  Greatly reduces wet effects.",
-    "types": [ "SKIN", "skin_tone" ],
+    "description": "Your skin has grown over with bark, like that of a tree.  This provides an additional 3 points of cutting, piercing, and ballistic armor, along with 1 point of protection from fire.  Further reduces wet effects.",
+    "types": [ "SKIN" ],
     "prereqs": [ "PLANTSKIN" ],
     "category": [ "PLANT" ],
     "wet_protection": [
-      { "part": "head", "ignored": 5 },
-      { "part": "leg_l", "ignored": 16 },
-      { "part": "leg_r", "ignored": 16 },
-      { "part": "foot_l", "ignored": 5 },
-      { "part": "foot_r", "ignored": 5 },
-      { "part": "arm_l", "ignored": 14 },
-      { "part": "arm_r", "ignored": 14 },
-      { "part": "hand_l", "ignored": 4 },
-      { "part": "hand_r", "ignored": 4 },
-      { "part": "torso", "ignored": 30 }
+      { "part": "head", "ignored": 1 },
+      { "part": "leg_l", "ignored": 11 },
+      { "part": "leg_r", "ignored": 11 },
+      { "part": "foot_l", "ignored": 4 },
+      { "part": "foot_r", "ignored": 4 },
+      { "part": "arm_l", "ignored": 10 },
+      { "part": "arm_r", "ignored": 10 },
+      { "part": "hand_l", "ignored": 3 },
+      { "part": "hand_r", "ignored": 3 },
+      { "part": "torso", "ignored": 20 }
     ],
-    "armor": [ { "parts": "ALL", "cut": 5, "stab": 5, "bullet": 4, "heat": 1 } ]
+    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ]
   },
   {
     "type": "mutation",
