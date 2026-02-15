@@ -39,7 +39,7 @@ struct HSVColor {
 };
 
 auto rgb_from_hex_string( std::string str ) -> RGBColor;
-auto rgb_to_hex_string( const RGBColor& color ) -> std::string;
+auto rgb_to_hex_string( const RGBColor &color ) -> std::string;
 auto curses_color_to_RGB( const nc_color &color ) -> RGBColor;
 auto curses_id_to_RGB( const color_id &color ) -> RGBColor;
 auto hsv2rgb( HSVColor color ) -> RGBColor;

@@ -185,8 +185,10 @@ enum class tileset_fx_type {
 constexpr int TILESET_NO_MASK = -1;
 constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
 
-static auto SDL_Color_from_string( const std::string &str ) -> SDL_Color {
-    return static_cast<SDL_Color>( str.starts_with( '#' ) ? rgb_from_hex_string( str ) : curses_color_to_RGB( color_from_string( str ) ) );
+static auto SDL_Color_from_string( const std::string &str ) -> SDL_Color
+{
+    return static_cast<SDL_Color>( str.starts_with( '#' ) ? rgb_from_hex_string(
+                                       str ) : curses_color_to_RGB( color_from_string( str ) ) );
 }
 
 struct tint_config {

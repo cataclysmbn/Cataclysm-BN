@@ -18,7 +18,7 @@ auto curses_color_to_RGB( const nc_color &color ) -> RGBColor
 #endif
 }
 
-auto curses_id_to_RGB(const color_id& color) -> RGBColor
+auto curses_id_to_RGB( const color_id &color ) -> RGBColor
 {
     return curses_color_to_RGB( get_all_colors().get( color ) );
 }
@@ -206,5 +206,6 @@ RGBColor rgb_from_hex_string( std::string str )
 
 std::string rgb_to_hex_string( const RGBColor &color )
 {
-    return "#" + std::format( "{:x}", color.r ) + std::format( "{:x}", color.g ) + std::format( "{:x}", color.b );
+    return "#" + std::format( "{:x}", color.r ) + std::format( "{:x}", color.g ) + std::format( "{:x}",
+            color.b );
 }

@@ -514,7 +514,8 @@ void cata::detail::reg_tint_color( sol::state &lua )
         } );
 
         DOC( "Returns the tint color as a hex string, mostly for debugging." );
-        luna::set_fx(ut, "get_hex_color", []( UT_CLASS & col ) {
+        luna::set_fx( ut, "get_hex_color", []( UT_CLASS & col )
+        {
             return rgb_to_hex_string( *col.color );
         } );
 
