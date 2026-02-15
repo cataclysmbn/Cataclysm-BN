@@ -170,7 +170,7 @@
       { "trait": "hair_short", "prob": 35 },
       { "trait": "hair_medium", "prob": 25 },
       { "trait": "hair_long", "prob": 13 },
-      { "trait": "HAIR_BALD", "prob": 13 }
+      { "trait": "HAIR_BALD", "prob": 1 }
     ]
   },
   {
@@ -184,7 +184,7 @@
       { "trait": "hair_short", "prob": 35 },
       { "trait": "hair_medium", "prob": 25 },
       { "trait": "hair_long", "prob": 13 },
-      { "trait": "HAIR_BALD", "prob": 13 }
+      { "trait": "HAIR_BALD", "prob": 1 }
     ]
   },
   {
@@ -198,7 +198,7 @@
       { "trait": "hair_short", "prob": 35 },
       { "trait": "hair_medium", "prob": 25 },
       { "trait": "hair_long", "prob": 13 },
-      { "trait": "HAIR_BALD", "prob": 13 }
+      { "trait": "HAIR_BALD", "prob": 1 }
     ]
   },
   {

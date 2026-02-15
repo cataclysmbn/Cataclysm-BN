@@ -163,6 +163,35 @@
 }
 ```
 
+#### 防具部位データ
+
+複数の部位を保護し、部位ごとに異なるカバレッジや動作制限を設定する場合は、`armor_portion_data` を使用します。これにより、各部位または部位グループに対して個別の値を定義できます:
+
+```json
+"armor_portion_data": [
+    {
+        "covers": [ "torso" ],
+        "coverage": 95,
+        "encumbrance": 15
+    },
+    {
+        "covers": [ "arms", "legs" ],
+        "coverage": 80,
+        "encumbrance": 10,
+        "max_encumbrance": 20
+    }
+]
+```
+
+`armor_portion_data` 配列の各エントリのフィールド:
+
+- `covers`: このエントリが適用される身体部位IDの配列 (例: "torso", "head", "eyes", "mouth", "arms", "hands", "legs", "feet")
+- `coverage`: 身体部位の面積を覆う割合 (0-100)。値が高いほど保護性能が高くなります。
+- `encumbrance`: その部位に対する動作制限値。既定値は0です。
+- `max_encumbrance`: 収納容量が満杯の際の動作制限値。既定値は `encumbrance` と同じです。
+
+`armor_portion_data` を使用する場合、トップレベルの `covers`, `coverage`, `encumbrance`, `max_encumbrance` フィールドは使用せず、部位データに置き換えられます。
+
 ### ペット用防具
 
 ペット用防具のデータは、仲間にしたモンスターや動物に装備させる際の防御性能や、装着可能なサイズ制限を決定します:

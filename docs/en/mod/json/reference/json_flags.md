@@ -1094,7 +1094,8 @@ Multiple death functions can be used. Not all combinations make sense.
 - `MF_CARD_OVERRIDE` Not a mech, but can be converted to friendly using an ID card in the same way
   that mechs can.
 - `CONSOLE_DESPAWN` Despawns when a nearby console is properly hacked.
-- `IMMOBILE` Doesn't move (e.g. turrets)
+- `IMMOBILE` Doesn't move & doesn't use non-special attacks (e.g. turrets)
+- `STATIONARY` Stationary, but will fight back (e.g. training dummies )
 - `ID_CARD_DESPAWN` Despawns when a science ID card is used on a nearby console
 - `INTERIOR_AMMO` Monster contains ammo inside itself, no need to load on launch. Prevents ammo from
   being dropped on disable.

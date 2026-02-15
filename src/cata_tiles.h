@@ -164,6 +164,7 @@ class texture
 };
 
 enum class tint_blend_mode : uint8_t {
+    tint,
     overlay,
     multiply,
     additive,
@@ -186,7 +187,7 @@ constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
 
 struct tint_config {
     std::optional<SDL_Color> color;
-    tint_blend_mode blend_mode = tint_blend_mode::overlay;
+    tint_blend_mode blend_mode = tint_blend_mode::tint;
     std::optional<float> contrast;    // 1.0 = no change, absent = skip
     std::optional<float> saturation;  // 1.0 = no change, absent = skip
     std::optional<float> brightness;  // 1.0 = no change, absent = skip
