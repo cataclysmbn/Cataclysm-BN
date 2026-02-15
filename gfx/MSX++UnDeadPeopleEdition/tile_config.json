@@ -34546,7 +34546,7 @@
         { "id": "mosin44_ebr", "fg": 19214, "rotates": false },
         { "id": "overlay_wielded_mosin44_ebr", "fg": 19215, "rotates": false },
         { "id": "mosin91_30_ebr", "fg": 19216, "rotates": false },
-        { "id": "overlay_wielded_mosin91_30_ebr", "fg": 73217, "rotates": false },
+        { "id": "overlay_wielded_mosin91_30_ebr", "fg": 19217, "rotates": false },
         {
           "id": "mon_feral_jackboot",
           "fg": [ { "weight": 111, "sprite": 19218 }, { "weight": 111, "sprite": 19219 }, { "weight": 111, "sprite": 19220 } ],

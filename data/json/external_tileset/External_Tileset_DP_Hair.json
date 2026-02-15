@@ -9,7 +9,7 @@
     "tints": [
       { "id": "hair_blond", "fg": "#b78800", "blend_mode": "multiply" },
       { "id": "hair_platinum_blond", "fg": "#ffd971", "blend_mode": "multiply" },
-      { "id": "hair_white", "fg": "#ffffff", "blend_mode": "overlay" },
+      { "id": "hair_white", "fg": "#ffffff", "blend_mode": "softlight" },
       { "id": "hair_black", "fg": "#383838", "blend_mode": "multiply" },
       { "id": "hair_brown", "fg": "#603e1e", "blend_mode": "multiply" },
       { "id": "hair_light_brown", "fg": "#a76523", "blend_mode": "multiply" },

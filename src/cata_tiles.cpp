@@ -780,17 +780,90 @@ static void apply_surf_blend_effect(
                 col = RGBColor{ static_cast<uint8_t>(base.r * target.r / 256), static_cast<uint8_t>(base.g * target.g / 256), static_cast<uint8_t>(base.b * target.b / 256), base.a };
                 break;
             }
-            case tint_blend_mode::overlay:
+            case tint_blend_mode::normal: // A truely accurate normal blend would use the alpha from the target, but that'd be useless here.
             {
-                auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
+                col = RGBColor{ static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.r, target.r, target.a ) ),
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.g, target.g, target.a ) ),
+                    static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.b, target.b, target.a ) ), base.a };
+                break;
+            }
+            case tint_blend_mode::divide:
+            {
+                col = RGBColor{ static_cast<uint8_t>( base.r / std::max<uint8_t>(1, target.r) ),
+                    static_cast<uint8_t>( base.g / std::max<uint8_t>(1, target.g) ),
+                    static_cast<uint8_t>( base.b / std::max<uint8_t>(1, target.b) ), base.a };
+                break;
+            }
+            case tint_blend_mode::screen:
+            {
+                auto screen_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
+                    int result = std::clamp<int>( 255 - ( 255 - base) * ( 255 - blend ) / 128, 0, 255 );
+                    return std::clamp<int>( result, 0, 255 );
+                };
+                col = SDL_Color{
+                    screen_channel( base.r, target.r ),
+                    screen_channel( base.g, target.g ),
+                    screen_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
+            case tint_blend_mode::softlight:
+            {
+                auto softlight_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
                     // Pegtop soft light formula
                     int result = ( ( 255 - 2 * blend ) * base * base / 256 + 2 * blend * base ) / 256;
                     return std::clamp<int>( result, 0, 255 );
                 };
                 col = SDL_Color{
+                    softlight_channel( base.r, target.r ),
+                    softlight_channel( base.g, target.g ),
+                    softlight_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
+            case tint_blend_mode::hardlight:
+            {
+                auto hardlight_channel = [](uint8_t base, uint8_t blend) -> uint8_t {
+                    if( blend > 127 ) {
+                        return std::clamp<int>( 255 - ( 255 - base ) * ( 255 - blend ) / 128, 0, 255 );
+                    } else {
+                        return std::clamp<int>( base * blend / 128, 0, 255 );
+                    }
+                };
+                col = SDL_Color{
+                    hardlight_channel(base.r, target.r),
+                    hardlight_channel(base.g, target.g),
+                    hardlight_channel(base.b, target.b),
+                    base.a
+                };
+                break;
+            }
+            case tint_blend_mode::overlay:
+            {
+                auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
+                    if( base > 127 ) {
+                        return std::clamp<int>( 255 - ( 255 - base ) * ( 255 - blend ) / 128, 0, 255 );
+                    } else {
+                        return std::clamp<int>( base * blend / 128, 0, 255 );
+                    }
+                };
+                col = SDL_Color{
                     overlay_channel( base.r, target.r ),
                     overlay_channel( base.g, target.g ),
                     overlay_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
+            case tint_blend_mode::dissolve:
+            {
+                auto dissolve = static_cast<uint8_t>( rand() % 0xff ) > target.a;
+                col = SDL_Color{
+                    dissolve ? target.r : base.r,
+                    dissolve ? target.g : base.g,
+                    dissolve ? target.b : base.b,
                     base.a
                 };
                 break;
@@ -804,24 +877,24 @@ static void apply_surf_blend_effect(
                 constexpr auto overlay = [](const uint8_t lower, const uint8_t upper) -> uint8_t {
                     if (lower > 127)
                     {
-                        const auto u = (255 - lower) * 255 / 127;
-                        const auto m = lower - (255 - lower);
-                        const auto o = (upper * u / 255) + m;
-                        return std::clamp<uint8_t>(o, 0, 255);
+                        const auto u = ( 255 - lower ) * 255 / 127;
+                        const auto m = lower - ( 255 - lower );
+                        const auto o = ( upper * u / 255 ) + m;
+                        return std::clamp<uint8_t>(o, 0, 255 );
                     }
                     else
                     {
-                        const auto u = (lower * 255 / 127);
+                        const auto u = ( lower * 255 / 127 );
                         const auto o = upper * u / 255;
-                        return std::clamp<uint8_t>(o, 0, 255);
+                        return std::clamp<uint8_t>( o, 0, 255 );
                     }
                 };
 
                 base_hsv.H = dest_hsv.H;
-                base_hsv.S = ilerp<uint16_t, uint8_t>(std::min(base_hsv.S, dest_hsv.S), dest_hsv.S, mask.has_value() ? mask.value().g : 127);
-                base_hsv.V = ilerp<uint16_t, uint8_t>(base_hsv.V, overlay(base_hsv.V, dest_hsv.V), mask.has_value() ? mask.value().b : 127);
+                base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S, mask.has_value() ? mask.value().g : 127 );
+                base_hsv.V = ilerp<uint16_t, uint8_t>( base_hsv.V, overlay( base_hsv.V, dest_hsv.V ), mask.has_value() ? mask.value().b : 127 );
 
-                col = hsv2rgb(base_hsv);
+                col = hsv2rgb( base_hsv );
                 break;
             }
         }
@@ -853,6 +926,9 @@ static void apply_surf_blend_effect(
         }
         return hsv2rgb( HSVColor{ h, s, v, a } );
     };
+
+    const size_t& surf_hash = get_surface_hash( staging, &dstRect );
+    srand( static_cast<unsigned int>( surf_hash ) );
 
     if( use_mask ) {
         auto effect_mask = [&]( const SDL_Color & base_rgb, const SDL_Color & mask_rgb )  -> SDL_Color {
@@ -1635,26 +1711,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
         };
 
         auto parse_blend_mode = []( const std::string & str ) -> tint_blend_mode {
-            if( str == "multiply" )
-            {
-                return tint_blend_mode::multiply;
-            } else if( str == "overlay" )
-            {
-                return tint_blend_mode::overlay;
-            } else if( str == "tint" )
-            {
-                return tint_blend_mode::tint;
-            } else if( str == "additive" )
-            {
-                return tint_blend_mode::additive;
-            } else if( str == "additive" )
-            {
-                return tint_blend_mode::additive;
-            } else if( str == "subtract" )
-            {
-                return tint_blend_mode::subtract;
-            }
-            return tint_blend_mode::tint;
+            return string_to_tint_blend_mode( str );
         };
 
         // Parse a tint_config from either a string or an object

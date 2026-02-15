@@ -9,10 +9,10 @@
       { "id": "SKIN_PINK", "fg": "#ffb5bc", "blend_mode": "multiply" },
       { "id": "SKIN_TAN", "fg": "#ff9f68", "blend_mode": "multiply" },
       { "id": "SKIN_OLIVE", "fg": "#ffe3ac", "blend_mode": "multiply" },
-      { "id": "PALE", "fg": "#ffccb5", "blend_mode": "overlay" },
-      { "id": "ALBINO", "fg": "#ffe3d7", "blend_mode": "overlay" },
-      { "id": "SUNBURN", "fg": "#ffe3d7", "blend_mode": "overlay" },
-      { "id": "PLANTSKIN", "fg": "#7fba45", "blend_mode": "overlay" }
+      { "id": "PALE", "fg": "#ffccb5", "blend_mode": "softlight" },
+      { "id": "ALBINO", "fg": "#ffe3d7", "blend_mode": "softlight" },
+      { "id": "SUNBURN", "fg": "#ffe3d7", "blend_mode": "softlight" },
+      { "id": "PLANTSKIN", "fg": "#7fba45", "blend_mode": "softlight" }
     ],
     "tiles-new": [
       {

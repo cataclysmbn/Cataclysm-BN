@@ -11,7 +11,7 @@
       { "id": "hair_cyan", "fg": "#00ffff", "blend_mode": "multiply" },
       { "id": "eye_pink", "fg": "#ff00bb", "blend_mode": "multiply" },
       { "id": "eye_black", "fg": "#050505", "blend_mode": "multiply" },
-      { "id": "eye_white", "fg": "#ffffff", "blend_mode": "overlay", "saturation": 0.0, "brightness": 1.2 },
+      { "id": "eye_white", "fg": "#ffffff", "blend_mode": "softlight", "saturation": 0.0, "brightness": 1.2 },
       { "id": "SKIN_PITCH_BLACK", "fg": "#1f1f1f", "blend_mode": "multiply" },
       { "id": "SKIN_YELLOW", "fg": "#ffff00", "blend_mode": "multiply" },
       { "id": "SKIN_RED", "fg": "#ff0000", "blend_mode": "multiply" },
