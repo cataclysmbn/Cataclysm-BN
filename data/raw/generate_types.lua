@@ -282,6 +282,14 @@ on_try_npc_interaction = {}
 ---@field npc NPC
 on_npc_interaction = {}
 
+---@class OnTryMonsterInteractionParams
+---@field monster Monster
+on_try_monster_interaction = {}
+
+---@class OnMonsterInteractionParams
+---@field monster Monster
+on_monster_interaction = {}
+
 ---@class OnDialogueStartParams
 ---@field npc NPC
 ---@field next_topic string
