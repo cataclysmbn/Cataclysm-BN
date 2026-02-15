@@ -57,7 +57,7 @@
       ],
       "place_nested": [
         { "chunks": [ "crt_lab_veh_wind_prod_plane" ], "x": 1, "y": 18 },
-        { "chunks": [ "crt_lab_veh_wind_tun" ], "x": 7, "y": 6 }
+        { "chunks": [ "crt_lab_veh_wind_tun_blimp" ], "x": 8, "y": 5 }
       ],
       "terrain": {
         "#": "t_concrete_wall",
@@ -69,11 +69,12 @@
         "B": "f_workbench",
         "C": "f_crate_c",
         "3": "f_3d_printer",
-        "c": "f_console"
+        "c": "f_console_table"
       },
       "items": {
         "C": { "item": "crt_lab_veh_parts", "chance": 75, "repeat": 5 },
-        "3": { "item": "crt_lab_veh_printer", "chance": 50, "repeat": 2 }
+        "3": { "item": "crt_lab_veh_printer", "chance": 50, "repeat": 2 },
+        "B": { "item": "tools_mechanic", "chance": 50, "repeat": 2 }
       },
       "place_monster": [
         { "group": "GROUP_MIL_STRONG", "x": [ 1, 5 ], "y": [ 1, 16 ], "repeat": [ 1, 2 ] },
@@ -100,11 +101,37 @@
         "a": "t_floor"
       },
       "place_vehicles": [
-        { "vehicle": "crt_solardart_incomplete", "x": 8, "y": 2, "rotation": 0 }
+        { "vehicle": "crt_solardart_incomplete", "x": 8, "y": 2, "rotation": 90 }
       ],
       "items": {
         "a": { "item": "crt_lab_veh_parts", "chance": 100 }
       }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "crt_lab_veh_wind_tun_blimp",
+    "object": {
+      "mapgensize": [ 8, 10 ],
+      "terrain": {
+        " ": "t_floor"
+      },
+      "rows": [
+        "        ",
+        "        ",
+        "        ",
+        "        ",
+        "        ",
+        "        ",
+        "        ",
+        "        ",
+        "        ",
+        "        "
+      ],
+      "place_vehicles": [
+        { "vehicle": "crt_microblimp", "x": 3, "y": 5, "rotation": 0 }
+      ],
     }
   }
 ]

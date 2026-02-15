@@ -1,0 +1,71 @@
+[
+  {
+    "id": "crt_solardart",
+    "type": "vehicle",
+    "name": "CRIT Solar Dart",
+    "blueprint": [
+      "--a  ",
+      "^w^BW ",
+      "BCCSWP",
+      "vwvBW ",
+      "--b   "
+    ],
+    "blueprint_origin": { "x": 3, "y": 2 },
+    "palette": {
+      "W": [ "frame_carbon_vertical", "windshield_horizontal_front", "crt_wing_horizontal" ],
+      "^": [ "frame_carbon_vertical", "board_vertical_left", "crt_wing_horizontal" ],
+      "v": [ "frame_carbon_vertical", "board_vertical_right", "crt_wing_horizontal" ],
+      "w": [ "frame_carbon_vertical", "board_vertical_right", "crt_wing_horizontal", "wheel_mount_light_steerable", "wheel_small" ],
+      "B": [ "frame_carbon_vertical", "door_carbon", "crt_wing_horizontal", "wheel_mount_light_steerable", "wheel_small" ],
+      "a": [ "crt_wing_external_left" ],
+      "b": [ "crt_wing_external_right" ],
+      "-": [ "crt_wing_external_horizontal" ],
+      "C": [ "frame_carbon_cross", "cargo_space_carbon", "medium_storage_battery", "roof", "crt_wing_horizontal" ],
+      "S": [
+        "frame_carbon_cross",
+        "seat",
+        "seatbelt",
+        "controls",
+        "dashboard",
+        "black_box",
+        "roof",
+        "engine_electric_large",
+        "crt_wing_horizontal"
+      ],
+      "P": [ "propeller_metal" ]
+    }
+  },
+  {
+    "id": "crt_solardart_incomplete",
+    "type": "vehicle",
+    "name": "Unfinished CRIT Solar Dart",
+    "blueprint": [
+      "--a  ",
+      "^w^BW ",
+      "BCCSWP",
+      "vwvBW ",
+      "--b   "
+    ],
+    "blueprint_origin": { "x": 3, "y": 2 },
+    "palette": {
+      "W": [ "frame_carbon_vertical", "windshield_horizontal_front", "crt_wing_horizontal" ],
+      "^": [ "frame_carbon_vertical", "board_vertical_left", "crt_wing_horizontal" ],
+      "v": [ "frame_carbon_vertical", "board_vertical_right", "crt_wing_horizontal" ],
+      "w": [ "frame_carbon_vertical", "board_vertical_right", "crt_wing_horizontal" ],
+      "B": [ "frame_carbon_vertical", "door_carbon", "crt_wing_horizontal" ],
+      "a": [ "crt_wing_external_left" ],
+      "b": [ "crt_wing_external_right" ],
+      "-": [ "crt_wing_external_horizontal" ],
+      "C": [ "frame_carbon_cross", "cargo_space_carbon", "medium_storage_battery", "crt_wing_horizontal" ],
+      "S": [
+        "frame_carbon_cross",
+        "seat",
+        "seatbelt",
+        "controls",
+        "dashboard",
+        "crt_wing_horizontal"
+      ],
+      "P": [ "propeller_metal" ]
+    }
+  }
+]
