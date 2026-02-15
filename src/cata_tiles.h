@@ -185,6 +185,10 @@ enum class tileset_fx_type {
 constexpr int TILESET_NO_MASK = -1;
 constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
 
+static auto SDL_Color_from_string( const std::string &str ) -> SDL_Color {
+    return static_cast<SDL_Color>( str.starts_with( '#' ) ? rgb_from_hex_string( str ) : curses_color_to_RGB( color_from_string( str ) ) );
+}
+
 struct tint_config {
     std::optional<SDL_Color> color;
     tint_blend_mode blend_mode = tint_blend_mode::tint;
@@ -209,13 +213,10 @@ struct tint_config {
     tint_config() = default;
     tint_config( std::optional<SDL_Color> c ) : color( c ) {}
     tint_config( std::nullopt_t ) : color( std::nullopt ) {}
-    tint_config( SDL_Color c ) : color( c ) {}
-    tint_config( RGBColor c ) : color( static_cast<SDL_Color>( c ) ) {}
-    tint_config( nc_color c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( c ) ) ) {}
-    tint_config( std::string c ) : color( c.starts_with( '#' ) ? rgb_from_hex_string(
-                c ) : curses_color_to_RGB( color_from_string( c ) ) ) {}
-    tint_config( color_id c ) : color( static_cast<SDL_Color>( curses_color_to_RGB(
-                                               get_all_colors().get( c ) ) ) ) {}
+    tint_config( HSVColor c ) : color( hsv2rgb( c ) ) {}
+    tint_config( nc_color c ) : color( curses_color_to_RGB( c ) ) {}
+    tint_config( std::string c ) : color( SDL_Color_from_string( c ) ) {}
+    tint_config( color_id c ) : color( curses_id_to_RGB( c ) ) {}
 };
 
 struct color_tint_pair {

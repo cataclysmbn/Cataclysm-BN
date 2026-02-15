@@ -18,6 +18,11 @@ auto curses_color_to_RGB( const nc_color &color ) -> RGBColor
 #endif
 }
 
+auto curses_id_to_RGB(const color_id& color) -> RGBColor
+{
+    return curses_color_to_RGB( get_all_colors().get( color ) );
+}
+
 static auto median( const uint8_t a, const uint8_t b, const uint8_t c )
 {
     if( ( a > b ) ^ ( a > c ) ) {
@@ -197,4 +202,9 @@ RGBColor rgb_from_hex_string( std::string str )
     }
     debugmsg( "Invalid color value" );
     return RGBColor{ 255, 255, 255, 255 };
+}
+
+std::string rgb_to_hex_string( const RGBColor &color )
+{
+    return "#" + std::format( "{:x}", color.r ) + std::format( "{:x}", color.g ) + std::format( "{:x}", color.b );
 }

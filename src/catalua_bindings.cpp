@@ -460,12 +460,14 @@ void cata::detail::reg_colors( sol::state &lua )
     luna::finalize_enum( et );
 }
 
-
 void cata::detail::reg_tint_color( sol::state &lua )
 {
 #define UT_CLASS color_tint_pair
     {
         DOC( "Color Tint Pair" );
+        DOC( "Simply contains two tint configs." );
+        DOC( "Can be constructed with one or two tint configs (first is bg, second is fg)." );
+        DOC( "If only one tint config is given, it is used for both bg and fg." );
         sol::usertype<UT_CLASS> ut =
         luna::new_usertype<UT_CLASS>(
             lua,
@@ -476,14 +478,16 @@ void cata::detail::reg_tint_color( sol::state &lua )
             UT_CLASS( tint_config, tint_config )
             > ()
         );
-        luna::set_fx( ut, "bg", []( UT_CLASS & tp, const tint_config & tint ) { tp.bg = tint; } );
-        luna::set_fx( ut, "fg", []( UT_CLASS & tp, const tint_config & tint ) { tp.fg = tint; } );
+        SET_MEMB( bg );
+        SET_MEMB( fg );
     }
 #undef UT_CLASS // #define UT_CLASS color_tint_pair
 
 #define UT_CLASS tint_config
     {
         DOC( "Tint Config" );
+        DOC( "Contains tinting parameters for tile rendering." );
+        DOC( "Can be constructed with a color input in the same way as set_color." );
         sol::usertype<UT_CLASS> ut =
         luna::new_usertype<UT_CLASS>(
             lua,
@@ -494,18 +498,29 @@ void cata::detail::reg_tint_color( sol::state &lua )
             UT_CLASS( color_id )
             > ()
         );
-        luna::set_fx( ut, "color", []( UT_CLASS & col, const sol::object & obj )
+
+        DOC( "Sets the tint color." );
+        DOC( "Accepts a string hex code or curses color name:" );
+        DOC( "(#ab7f3d) | (c_red)" );
+        DOC( "Or a color_id enum value." );
+        luna::set_fx( ut, "set_color", []( UT_CLASS & col, const sol::object & obj )
         {
             if( obj.is<std::string>() ) {
                 std::string color = obj.as<std::string>();
-                col.color = color.starts_with( '#' ) ? rgb_from_hex_string( color ) : curses_color_to_RGB(
-                    color_from_string( color ) );
+                col.color = SDL_Color_from_string( color );
             } else if( obj.is<color_id>() ) {
-                col.color = static_cast<SDL_Color>( curses_color_to_RGB( get_all_colors().get(
-                                                        obj.as<color_id>() ) ) );
+                col.color = curses_id_to_RGB( obj.as<color_id>() );
             }
         } );
-        luna::set_fx( ut, "blend_mode", []( UT_CLASS & col, const std::string & mode )
+
+        DOC( "Returns the tint color as a hex string, mostly for debugging." );
+        luna::set_fx(ut, "get_hex_color", []( UT_CLASS & col ) {
+            return rgb_to_hex_string( *col.color );
+        } );
+
+        DOC( "Sets the blend mode." );
+        DOC( "Accepts one of: tint, overlay, multiply, additive, subtract" );
+        luna::set_fx( ut, "set_blend_mode", []( UT_CLASS & col, const std::string & mode )
         {
             if( !mode.empty() ) {
                 if( mode == "overlay" ) {
@@ -516,23 +531,16 @@ void cata::detail::reg_tint_color( sol::state &lua )
                     col.blend_mode = tint_blend_mode::additive;
                 } else if( mode == "subtract" ) {
                     col.blend_mode = tint_blend_mode::subtract;
-                } else { // Tint key not implemented yet, so cast 0 for now (prevent conflicts) TODO: replace
-                    col.blend_mode = static_cast<tint_blend_mode>( 0 );
+                } else {
+                    col.blend_mode = tint_blend_mode::tint;
                 }
             };
         } );
-        luna::set_fx( ut, "contrast", []( UT_CLASS & col, const float & val )
-        {
-            col.contrast = val;
-        } );
-        luna::set_fx( ut, "saturation", []( UT_CLASS & col, const float & val )
-        {
-            col.saturation = val;
-        } );
-        luna::set_fx( ut, "brightness", []( UT_CLASS & col, const float & val )
-        {
-            col.brightness = val;
-        } );
+
+        DOC( "Contrast, staturation, and brightness take floats as multipliers. 1.0 == no change." );
+        SET_MEMB( contrast );
+        SET_MEMB( saturation );
+        SET_MEMB( brightness );
     }
 #undef UT_CLASS // #define UT_CLASS tint_config
 }
