@@ -1694,13 +1694,18 @@ bool vehicle::can_unmount( const int p, std::string &reason ) const
     const auto no_remove_open =  part_info( p ).has_flag( "NOREMOVE_OPEN" );
     for( const auto &elem : parts_here ) {
         const auto is_openable = part_info( elem ).has_flag( "OPENABLE" );
-        if( no_remove_closed && is_openable && !parts[elem].open ) {
+        const auto is_working = !parts[elem].is_broken();
+        if( no_remove_closed && is_openable && is_working && !parts[elem].open ) {
             reason = string_format( _( "Open the attached %s first." ), part_info( elem ).name() );
             return false;
         }
-        if( no_remove_open && is_openable &&  parts[elem].open ) {
+        if( no_remove_open && is_openable && is_working && parts[elem].open ) {
             reason = string_format( _( "Close the attached %s first." ), part_info( elem ).name() );
             return false;
+        }
+
+        if( !is_working ) {
+            continue;
         }
 
         for( const std::string &flag : part_info( elem ).get_flags() ) {
