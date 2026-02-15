@@ -4,7 +4,7 @@
     "id": "color_expansion",
     "name": "Color Expansion",
     "authors": [ "Azmodius X" ],
-    "description": "Changes how color based mutations are rendered, and adds more of them. Also lets women have beards.",
+    "description": "Adds multiple wacky appearance colors to choose from.",
     "category": "graphical",
     "dependencies": [ "bn" ]
   }

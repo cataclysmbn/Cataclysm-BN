@@ -14,8 +14,20 @@
   {
     "id": "hair_brown",
     "type": "mutation",
-    "name": { "str": "Hair color: brown" },
-    "description": "You have brown hair.",
+    "name": { "str": "Hair color: dark brown" },
+    "description": "You have dark brown hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_light_brown",
+    "type": "mutation",
+    "name": { "str": "Hair color: light brown" },
+    "description": "You have light brown hair.",
     "points": 0,
     "starting_trait": true,
     "valid": false,
@@ -26,8 +38,20 @@
   {
     "id": "hair_blond",
     "type": "mutation",
-    "name": { "str": "Hair color: blond" },
-    "description": "You have blond hair.",
+    "name": { "str": "Hair color: golden blond" },
+    "description": "You have golden blond hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_platinum_blond",
+    "type": "mutation",
+    "name": { "str": "Hair color: platinum blond" },
+    "description": "You have platinum blond hair.",
     "points": 0,
     "starting_trait": true,
     "valid": false,
@@ -252,6 +276,18 @@
     "types": [ "eye_color" ]
   },
   {
+    "type": "mutation",
+    "id": "PALE",
+    "name": { "str": "Pale Skin" },
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "Your skin is rather pale.",
+    "types": [ "skin_tone" ]
+  },
+  {
     "id": "SKIN_DARK",
     "type": "mutation",
     "name": { "str": "Skin tone: dark brown" },
@@ -304,6 +340,18 @@
     "type": "mutation",
     "name": { "str": "Skin tone: bronze" },
     "description": "You have a bronze or tan skin tone.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "skin_tone" ]
+  },
+  {
+    "id": "SKIN_OLIVE",
+    "type": "mutation",
+    "name": { "str": "Skin tone: olive" },
+    "description": "You have an olive skin tone.",
     "points": 0,
     "starting_trait": true,
     "valid": false,

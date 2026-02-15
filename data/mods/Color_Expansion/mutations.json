@@ -36,6 +36,18 @@
     "types": [ "eye_color" ]
   },
   {
+    "id": "hair_crimson",
+    "type": "mutation",
+    "name": { "str": "Hair color: crimson" },
+    "description": "You have crimson hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
     "id": "hair_pink",
     "type": "mutation",
     "name": { "str": "Hair color: pink" },
@@ -94,5 +106,120 @@
     "purifiable": false,
     "player_display": false,
     "types": [ "hair_color" ]
+  },
+  {
+    "type": "mutation",
+    "id": "SKIN_PITCH_BLACK",
+    "name": { "str": "Pitch Black Skin" },
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "Your skin is pitch black.",
+    "types": [ "skin_tone" ]
+  },
+  {
+    "type": "mutation",
+    "id": "SKIN_YELLOW",
+    "name": { "str": "Yellow Skin" },
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "Are you a shocky rat or a simp?",
+    "types": [ "skin_tone" ]
+  },
+  {
+    "type": "mutation",
+    "id": "SKIN_RED",
+    "name": { "str": "Red Skin" },
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "Your skin is crimson.",
+    "types": [ "skin_tone" ]
+  },
+  {
+    "type": "mutation",
+    "id": "SKIN_GREEN",
+    "name": { "str": "Green Skin" },
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "Your skin is green.",
+    "types": [ "skin_tone" ]
+  },
+  {
+    "type": "mutation",
+    "id": "SKIN_BLUE",
+    "name": { "str": "Blue Skin" },
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "You're blue, da ba de, da ba DIE.",
+    "types": [ "skin_tone" ]
+  },
+  {
+    "type": "mutation",
+    "id": "SKIN_CYAN",
+    "name": { "str": "Cyan Skin" },
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "Your skin is cyan.",
+    "types": [ "skin_tone" ]
+  },
+  {
+    "type": "mutation",
+    "id": "SKIN_VIOLET",
+    "name": { "str": "Violet Skin" },
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "Your skin is purple.",
+    "types": [ "skin_tone" ]
+  },
+  {
+    "type": "mutation",
+    "id": "SKIN_BUBBLEGUM",
+    "name": { "str": "Bubblegum Skin" },
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "Your skin is a vivid pink.",
+    "types": [ "skin_tone" ]
+  },
+  {
+    "type": "overlay_order",
+    "overlay_ordering": [
+      {
+        "id": [
+          "SKIN_PITCH_BLACK",
+          "SKIN_YELLOW",
+          "SKIN_RED",
+          "SKIN_GREEN",
+          "SKIN_BLUE",
+          "SKIN_CYAN",
+          "SKIN_VIOLET",
+          "SKIN_BUBBLEGUM"
+        ],
+        "order": 1100
+      },
+      { "id": [ "eye_pink", "eye_white", "eye_black" ], "order": 1200 }
+    ]
   }
 ]
