@@ -1454,7 +1454,7 @@
     "color": "white",
     "move_cost_mod": 1,
     "required_str": -1,
-    "flags": [ "LADDER", "TRANSPARENT", "SEEN_FROM_ABOVE" ],
+    "flags": [ "LADDER", "TRANSPARENT", "SEEN_FROM_ABOVE", "REMOVE_FROM_ABOVE" ],
     "examine_action": "deployed_furniture",
     "deployed_item": "grapnel",
     "bash": {

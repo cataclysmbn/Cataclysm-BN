@@ -73,6 +73,7 @@
 #include "distraction_manager.h"
 #include "distribution_grid.h"
 #include "drop_token.h"
+#include "fluid_grid.h"
 #include "editmap.h"
 #include "enums.h"
 #include "event.h"
@@ -278,7 +279,7 @@ static const trait_id trait_WAYFARER( "WAYFARER" );
 static const trait_id trait_HAS_NEMESIS( "HAS_NEMESIS" );
 
 static const trait_flag_str_id trait_flag_MUTATION_FLIGHT( "MUTATION_FLIGHT" );
-static const trait_flag_str_id trait_flag_TAIL_FIN( "TAIL_FIN" );
+static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
 
 static const trap_str_id tr_unfinished_construction( "tr_unfinished_construction" );
 
@@ -585,6 +586,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
 {
     m.load( pos_sm, true, pump_events );
     grid_tracker_ptr->load( m );
+    fluid_grid::load( m );
 }
 
 std::optional<tripoint> game::find_local_stairs_leading_to( map &mp, const int z_after )
@@ -1673,6 +1675,7 @@ bool game::do_turn()
     m.process_items();
     m.creature_in_field( u );
     grid_tracker_ptr->update( calendar::turn );
+    fluid_grid::update( calendar::turn );
 
     // Apply sounds from previous turn to monster and NPC AI.
     sounds::process_sounds();
@@ -11297,7 +11300,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
                 // ... and we're already submerged
                 if( u.is_underwater() ) {
                     if( u.swim_speed() < 500 || u.shoe_type_count( itype_swim_fins ) ||
-                        u.has_trait_flag( trait_flag_TAIL_FIN ) ) {
+                        u.has_trait_flag( trait_flag_MUTATION_SWIM ) ) {
                         u.set_underwater( false );
                         add_msg( _( "You surface." ) );
                         surfacing = true;

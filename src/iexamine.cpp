@@ -4560,9 +4560,26 @@ void iexamine::liquid_source( player &, const tripoint &examp )
                                    calendar::turn, item::INFINITE_CHARGES ) );
 }
 
-auto iexamine::fluid_grid_fixture( player &, const tripoint &examp ) -> void
+auto iexamine::fluid_grid_fixture( player &p, const tripoint &examp ) -> void
 {
     map &here = get_map();
+    const auto has_lootable_items = !here.i_at( examp ).empty();
+    if( has_lootable_items ) {
+        uilist selection_menu;
+        selection_menu.text = _( "Select an action" );
+        selection_menu.addentry( 0, true, 'g', _( "Get items" ) );
+        selection_menu.addentry( 1, true, 'w', _( "Use fixture" ) );
+        selection_menu.query();
+        if( selection_menu.ret == 0 ) {
+            none( p, examp );
+            pickup::pick_up( examp, 0 );
+            return;
+        }
+        if( selection_menu.ret != 1 ) {
+            return;
+        }
+    }
+
     const auto &furn = here.furn( examp ).obj();
     if( !furn.fluid_grid || furn.fluid_grid->role != fluid_grid_role::fixture ) {
         add_msg( m_info, _( "It is not connected to a fluid grid fixture." ) );
@@ -5418,7 +5435,7 @@ void iexamine::pay_gas( player &p, const tripoint &examp )
 
 void iexamine::ledge( player &p, const tripoint &examp )
 {
-    enum ledge_action : int { jump_over, climb_down, spin_web_bridge };
+    enum ledge_action : int { jump_over, climb_down, pull_up_rope, spin_web_bridge };
     if( p.in_vehicle ) {
         if( !character_funcs::can_fly( p ) &&
             !query_yn( _( "Do you really want to jump off the vehicle?" ) ) ) {
@@ -5450,6 +5467,13 @@ void iexamine::ledge( player &p, const tripoint &examp )
     cmenu.text = _( "There is a ledge here.  What do you want to do?" );
     cmenu.addentry( ledge_action::jump_over, true, 'j', _( "Jump over." ) );
     cmenu.addentry( ledge_action::climb_down, true, 'c', _( "Climb down." ) );
+    //if the tile below has a grappling hook, you can pull it up
+    tripoint below_rope = examp;
+    below_rope.z--;
+    if( get_map().has_flag_furn( "REMOVE_FROM_ABOVE", below_rope ) ) {
+        cmenu.addentry( ledge_action::pull_up_rope, true, 'r', _( "Pull up the %s." ),
+                        get_map().furn( below_rope ).obj().name() );
+    }
     if( p.has_trait( trait_WEB_BRIDGE ) ) {
         cmenu.addentry( ledge_action::spin_web_bridge, true, 'w', _( "Spin Web Bridge." ) );
     }
@@ -5562,6 +5586,15 @@ void iexamine::ledge( player &p, const tripoint &examp )
                 g->vertical_move( -1, true );
             }
             here.creature_on_trap( p );
+            break;
+        }
+        case ledge_action::pull_up_rope: {
+            map &here = get_map();
+            p.add_msg_if_player( m_info, _( "You pull up the %s." ),
+                                 here.furn( below_rope ).obj().name() );
+            const auto furn_item = here.furn( below_rope ).obj().deployed_item;
+            here.add_item_or_charges( p.pos(), item::spawn( furn_item, calendar::turn ) );
+            here.furn_set( below_rope, f_null );
             break;
         }
         case ledge_action::spin_web_bridge: {
