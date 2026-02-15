@@ -750,7 +750,6 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) cons
     veh->set_owner( p );
 
     if( !veh->is_foldable() ) {
-        std::cout << "Not foldable\n";
         // Mark the vehicle as foldable.
         veh->tags.insert( "convertible" );
         // Store the id of the item the vehicle is made of.
