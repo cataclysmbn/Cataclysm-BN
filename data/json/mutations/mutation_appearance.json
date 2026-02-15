@@ -186,7 +186,7 @@
     "description": "You have blue eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -198,7 +198,7 @@
     "description": "You have brown eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -210,7 +210,7 @@
     "description": "You have hazel eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -222,7 +222,7 @@
     "description": "You have amber eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -234,7 +234,7 @@
     "description": "You have gray eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -246,7 +246,7 @@
     "description": "You have green eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -258,7 +258,7 @@
     "description": "You have incredibly rare red eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -270,7 +270,7 @@
     "description": "You have incredibly rare violet eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]

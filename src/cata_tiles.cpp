@@ -766,18 +766,25 @@ static void apply_surf_blend_effect(
         switch( tint.blend_mode )
         {
             case tint_blend_mode::additive:
-                col = RGBColor{ std::min<uint8_t>( base.r + target.r, 255 ), std::min<uint8_t>( base.g + target.g, 255 ), std::min<uint8_t>( base.b + target.b, 255 ), std::min<uint8_t>( base.a + target.a, 255 ) };
+            {
+                col = RGBColor{ std::min<uint8_t>(base.r + target.r, 255), std::min<uint8_t>(base.g + target.g, 255), std::min<uint8_t>(base.b + target.b, 255), std::min<uint8_t>(base.a + target.a, 255) };
                 break;
+            }
             case tint_blend_mode::subtract:
-                col = RGBColor{ std::max<uint8_t>( base.r - ( 255 - target.r ), 0 ), std::max<uint8_t>( base.g - ( 255 - target.g ), 0 ), std::max<uint8_t>( base.b - ( 255 - target.b ), 0 ), base.a };
+            {
+                col = RGBColor{ std::max<uint8_t>(base.r - (255 - target.r), 0), std::max<uint8_t>(base.g - (255 - target.g), 0), std::max<uint8_t>(base.b - (255 - target.b), 0), base.a };
                 break;
+            }
             case tint_blend_mode::multiply:
-                col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ), static_cast<uint8_t>( base.g *target.g / 256 ), static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
+            {
+                col = RGBColor{ static_cast<uint8_t>(base.r * target.r / 256), static_cast<uint8_t>(base.g * target.g / 256), static_cast<uint8_t>(base.b * target.b / 256), base.a };
                 break;
-            case tint_blend_mode::overlay: {
+            }
+            case tint_blend_mode::overlay:
+            {
                 auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
                     // Pegtop soft light formula
-                    int result = ( ( 255 - 2 * blend ) * base *base / 256 + 2 * blend * base ) / 256;
+                    int result = ( ( 255 - 2 * blend ) * base * base / 256 + 2 * blend * base ) / 256;
                     return std::clamp<int>( result, 0, 255 );
                 };
                 col = SDL_Color{
@@ -790,22 +797,33 @@ static void apply_surf_blend_effect(
             }
             default:
             case tint_blend_mode::tint:
-                auto base_hsv = rgb2hsv( base );
-                auto target_hsv = rgb2hsv( target );
-                base_hsv.H = target_hsv.H;
-                base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, target_hsv.S ), target_hsv.S,
-                                                       mask.has_value() ? mask.value().g : 127 );
-                int o;
-                if( base_hsv.V > 127 ) {
-                    o = std::clamp<int>( 255 - ( 255 - base_hsv.V ) * ( 255 - target_hsv.V ) / 128, 0, 255 );
+            {
+                auto base_hsv = rgb2hsv(base);
+                auto dest_hsv = rgb2hsv(target);
 
-                } else {
-                    o = std::clamp<int>( base_hsv.V * target_hsv.V / 128, 0, 255 );
-                }
-                base_hsv.V = ilerp<uint16_t, uint8_t>( std::clamp<uint8_t>( o, 0, 255 ), target_hsv.V,
-                                                       mask.has_value() ? mask.value().b : 127 );
-                col = hsv2rgb( base_hsv );
+                constexpr auto overlay = [](const uint8_t lower, const uint8_t upper) -> uint8_t {
+                    if (lower > 127)
+                    {
+                        const auto u = (255 - lower) * 255 / 127;
+                        const auto m = lower - (255 - lower);
+                        const auto o = (upper * u / 255) + m;
+                        return std::clamp<uint8_t>(o, 0, 255);
+                    }
+                    else
+                    {
+                        const auto u = (lower * 255 / 127);
+                        const auto o = upper * u / 255;
+                        return std::clamp<uint8_t>(o, 0, 255);
+                    }
+                };
+
+                base_hsv.H = dest_hsv.H;
+                base_hsv.S = ilerp<uint16_t, uint8_t>(std::min(base_hsv.S, dest_hsv.S), dest_hsv.S, mask.has_value() ? mask.value().g : 127);
+                base_hsv.V = ilerp<uint16_t, uint8_t>(base_hsv.V, overlay(base_hsv.V, dest_hsv.V), mask.has_value() ? mask.value().b : 127);
+
+                col = hsv2rgb(base_hsv);
                 break;
+            }
         }
         if( mask.has_value() )
         {
