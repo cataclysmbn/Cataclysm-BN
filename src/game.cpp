@@ -3480,6 +3480,125 @@ void game::draw_ter( const bool draw_sounds )
               draw_sounds );
 }
 
+namespace {
+
+struct mission_direction_indicator {
+    point pos;
+    std::string glyph;
+    nc_color color = c_red;
+};
+
+auto get_active_or_custom_target( const avatar &you ) -> tripoint_abs_omt
+{
+    const auto custom_targ = you.get_custom_mission_target();
+    if( custom_targ != overmap::invalid_tripoint ) {
+        return custom_targ;
+    }
+    return you.get_active_mission_target();
+}
+
+auto direction_glyph( const direction dir ) -> std::optional<std::string>
+{
+    switch( dir ) {
+        case direction::NORTH:
+            return "^";
+        case direction::NORTHEAST:
+            return LINE_OOXX_S;
+        case direction::EAST:
+            return ">";
+        case direction::SOUTHEAST:
+            return LINE_XOOX_S;
+        case direction::SOUTH:
+            return "v";
+        case direction::SOUTHWEST:
+            return LINE_XXOO_S;
+        case direction::WEST:
+            return "<";
+        case direction::NORTHWEST:
+            return LINE_OXXO_S;
+        default:
+            return std::nullopt;
+    }
+}
+
+auto get_mission_edge_pos( const point &window_size,
+                           const point &screen_center,
+                           const point &delta ) -> std::optional<point>
+{
+    const auto max_x = window_size.x - 1;
+    const auto max_y = window_size.y - 1;
+    if( max_x < 0 || max_y < 0 ) {
+        return std::nullopt;
+    }
+
+    const auto clamped_center = point( clamp( screen_center.x, 0, max_x ),
+                                       clamp( screen_center.y, 0, max_y ) );
+    if( delta == point_zero ) {
+        return std::nullopt;
+    }
+
+    const auto scale = std::max( window_size.x, window_size.y ) * 2;
+    const auto target = clamped_center + point( delta.x * scale, delta.y * scale );
+    const auto edge_path = line_to( clamped_center, target );
+    if( edge_path.empty() ) {
+        return std::nullopt;
+    }
+
+    const auto in_bounds = [max_x, max_y]( const point &pos ) {
+        return pos.x >= 0 && pos.x <= max_x && pos.y >= 0 && pos.y <= max_y;
+    };
+
+    auto edge_view = edge_path | std::views::reverse;
+    const auto edge_it = std::ranges::find_if( edge_view, in_bounds );
+    if( edge_it == edge_view.end() ) {
+        return std::nullopt;
+    }
+
+    auto edge_pos = *edge_it;
+    if( edge_pos.x == max_x ) {
+        edge_pos.x = clamp( max_x - 1, 0, max_x );
+    }
+    if( edge_pos.y == max_y ) {
+        edge_pos.y = clamp( max_y - 1, 0, max_y );
+    }
+
+    return edge_pos;
+}
+
+auto get_mission_direction_indicator( const avatar &you,
+                                      const point &window_size )
+-> std::optional<mission_direction_indicator>
+{
+    const auto targ = get_active_or_custom_target( you );
+    if( targ == overmap::invalid_tripoint ) {
+        return std::nullopt;
+    }
+
+    const auto player_omt = you.global_omt_location();
+    if( targ.xy() == player_omt.xy() ) {
+        return std::nullopt;
+    }
+
+    const auto dir = direction_from( player_omt.xy(), targ.xy() );
+    const auto marker_sym = direction_glyph( dir );
+    if( !marker_sym ) {
+        return std::nullopt;
+    }
+
+    const auto delta = targ.xy().raw() - player_omt.xy().raw();
+    const auto marker = get_mission_edge_pos( window_size, point( POSX, POSY ), delta );
+    if( !marker ) {
+        return std::nullopt;
+    }
+    return mission_direction_indicator{
+        .pos = *marker,
+        .glyph = *marker_sym,
+        .color = c_red,
+    };
+}
+
+} // namespace
+
 void game::draw_ter( const tripoint &center, const bool looking, const bool draw_sounds )
 {
     ter_view_p = center;
@@ -3506,6 +3625,11 @@ void game::draw_ter( const tripoint &center, const bool looking, const bool draw
     if( u.controlling_vehicle && !looking ) {
         draw_veh_dir_indicator( false );
         draw_veh_dir_indicator( true );
+    }
+
+    if( const auto indicator = get_mission_direction_indicator(
+            u, point( getmaxx( w_terrain ), getmaxy( w_terrain ) ) ) ) {
+        mvwputch( w_terrain, indicator->pos, indicator->color, indicator->glyph );
     }
     // Place the cursor over the player as is expected by screen readers.
     wmove( w_terrain, -center.xy() + g->u.pos().xy() + point( POSX, POSY ) );
@@ -3543,8 +3667,10 @@ void game::draw_minimap()
 
     const tripoint_abs_omt curs = u.global_omt_location();
     const point_abs_omt curs2( curs.xy() );
-    const tripoint_abs_omt targ = u.get_active_mission_target();
-    bool drew_mission = targ == overmap::invalid_tripoint;
+    const auto custom_targ = u.get_custom_mission_target();
+    const auto mission_targ = u.get_active_mission_target();
+    const auto targ = custom_targ != overmap::invalid_tripoint ? custom_targ : mission_targ;
+    auto drew_mission = targ == overmap::invalid_tripoint;
 
     for( int i = -2; i <= 2; i++ ) {
         for( int j = -2; j <= 2; j++ ) {

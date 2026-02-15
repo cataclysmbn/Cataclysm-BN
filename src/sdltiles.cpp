@@ -773,6 +773,10 @@ static std::optional<std::pair<tripoint_abs_omt, std::string>> get_mission_arrow
         mission_arrow_variant += 'e';
     }
 
+    if( arr_pos.x == overmap_area.p_max.x ) {
+        arr_pos.x = std::max( overmap_area.p_min.x, arr_pos.x - 1 );
+    }
+
     return std::make_pair( tripoint_abs_omt( arr_pos ), mission_arrow_variant );
 }
 

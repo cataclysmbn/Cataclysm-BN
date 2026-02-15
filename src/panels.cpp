@@ -141,9 +141,12 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
                                      const tripoint_abs_omt &global_omt, point start_input,
                                      const int width, const int height )
 {
+    auto &player_character = get_avatar();
     const point_abs_omt curs = global_omt.xy();
-    const tripoint_abs_omt targ = you.get_active_mission_target();
-    bool drew_mission = targ == overmap::invalid_tripoint;
+    const auto custom_targ = player_character.get_custom_mission_target();
+    const auto mission_targ = you.get_active_mission_target();
+    const auto targ = custom_targ != overmap::invalid_tripoint ? custom_targ : mission_targ;
+    auto drew_mission = targ == overmap::invalid_tripoint;
     const int start_y = start_input.y + ( height / 2 ) - 2;
     const int start_x = start_input.x + ( width / 2 ) - 2;
 
@@ -224,7 +227,6 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
             mvwputch( w_minimap, point( arrowx + start_x, arrowy + start_y ), c_red, glyph );
         }
     }
-    avatar &player_character = get_avatar();
     const int sight_points = player_character.overmap_sight_range( g->light_level(
                                  player_character.posz() ) );
     for( int i = -3; i <= 3; i++ ) {

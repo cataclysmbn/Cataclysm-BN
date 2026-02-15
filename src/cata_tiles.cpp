@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iterator>
+#include <limits>
 #include <optional>
 #include <set>
 #include <stdexcept>
@@ -44,6 +45,7 @@
 #include "item_factory.h"
 #include "itype.h"
 #include "json.h"
+#include "line.h"
 #include "make_static.h"
 #include "map.h"
 #include "map_memory.h"
@@ -55,6 +57,7 @@
 #include "mtype.h"
 #include "npc.h"
 #include "omdata.h"
+#include "overmap.h"
 #include "output.h"
 #include "overlay_ordering.h"
 #include "overmap_location.h"
@@ -78,6 +81,100 @@
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
+
+namespace {
+
+auto get_active_or_custom_target( const avatar &you ) -> tripoint_abs_omt
+{
+    const auto custom_targ = you.get_custom_mission_target();
+    if( custom_targ != overmap::invalid_tripoint ) {
+        return custom_targ;
+    }
+    return you.get_active_mission_target();
+}
+
+auto get_mission_direction_tile_id( const tripoint_abs_omt &from,
+                                    const tripoint_abs_omt &to )
+-> std::optional<std::string>
+{
+    if( to == overmap::invalid_tripoint ) {
+        return std::nullopt;
+    }
+    if( to.xy() == from.xy() ) {
+        return std::nullopt;
+    }
+
+    switch( direction_from( from.xy(), to.xy() ) ) {
+        case direction::NORTH:
+            return "mission_arrow_n";
+        case direction::NORTHEAST:
+            return "mission_arrow_ne";
+        case direction::EAST:
+            return "mission_arrow_e";
+        case direction::SOUTHEAST:
+            return "mission_arrow_se";
+        case direction::SOUTH:
+            return "mission_arrow_s";
+        case direction::SOUTHWEST:
+            return "mission_arrow_sw";
+        case direction::WEST:
+            return "mission_arrow_w";
+        case direction::NORTHWEST:
+            return "mission_arrow_nw";
+        default:
+            return std::nullopt;
+    }
+}
+
+auto get_mission_direction_edge_pos( const point &screen_size,
+                                     const point &screen_center,
+                                     const point &map_origin,
+                                     const point &delta,
+                                     const int z )
+-> std::optional<tripoint>
+{
+    const auto max_x = screen_size.x - 1;
+    const auto max_y = screen_size.y - 1;
+    if( max_x < 0 || max_y < 0 ) {
+        return std::nullopt;
+    }
+
+    const auto clamped_center = point( clamp( screen_center.x, 0, max_x ),
+                                       clamp( screen_center.y, 0, max_y ) );
+    if( delta == point_zero ) {
+        return std::nullopt;
+    }
+
+    const auto scale = std::max( screen_size.x, screen_size.y ) * 2;
+    const auto target = clamped_center + point( delta.x * scale, delta.y * scale );
+    const auto edge_path = line_to( clamped_center, target );
+    if( edge_path.empty() ) {
+        return std::nullopt;
+    }
+
+    const auto in_bounds = [max_x, max_y]( const point &pos ) {
+        return pos.x >= 0 && pos.x <= max_x && pos.y >= 0 && pos.y <= max_y;
+    };
+
+    auto edge_view = edge_path | std::views::reverse;
+    const auto edge_it = std::ranges::find_if( edge_view, in_bounds );
+    if( edge_it == edge_view.end() ) {
+        return std::nullopt;
+    }
+
+    auto screen_pos = *edge_it;
+
+    if( screen_pos.x == max_x ) {
+        screen_pos.x = clamp( max_x - 1, 0, max_x );
+    }
+    if( screen_pos.y == max_y ) {
+        screen_pos.y = clamp( max_y - 1, 0, max_y );
+    }
+
+    return tripoint( screen_pos + map_origin, z );
+}
+
+} // namespace
 #include "vpart_position.h"
 #include "weather.h"
 #include "weighted_list.h"
@@ -2737,6 +2834,24 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             const auto pos = indicator_offset->xy() + tripoint( g->u.posx(), g->u.posy(), center.z );
             draw_from_id_string(
                 tile, pos, std::nullopt, std::nullopt,
+                lit_level::LIT, false, 0, false );
+        }
+    }
+
+    if( const auto tile_id = get_mission_direction_tile_id(
+            g->u.global_omt_location(), get_active_or_custom_target( g->u ) ) ) {
+        const auto delta = get_active_or_custom_target( g->u ).xy().raw() -
+                           g->u.global_omt_location().xy().raw();
+        const auto edge_pos = get_mission_direction_edge_pos(
+            point( max_col, max_row ),
+            point( POSX, POSY ),
+            o,
+            delta,
+            center.z );
+        if( edge_pos ) {
+            const tile_search_params tile { *tile_id, C_NONE, empty_string, 0, 0 };
+            draw_from_id_string(
+                tile, *edge_pos, std::nullopt, std::nullopt,
                 lit_level::LIT, false, 0, false );
         }
     }
