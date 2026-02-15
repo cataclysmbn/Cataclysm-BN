@@ -779,6 +779,50 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_mon_death", []( const sol::table & ) {} );
 
+    DOC( "Called when any creature is spawned for the first time.  " );
+    DOC( "This is the base hook; `on_monster_spawn` and `on_npc_spawn` also trigger this.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `creature` (Creature)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_creature_spawn", []( const sol::table & ) {} );
+
+    DOC( "Called when a monster is spawned for the first time.  " );
+    DOC( "Also triggers `on_creature_spawn`.  " );
+    DOC( "Note: monsters spawned via mapgen submap spawn points will fire this hook,  " );
+    DOC( "but monsters materialized from overmap monster groups may not.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_monster_spawn", []( const sol::table & ) {} );
+
+    DOC( "Called when an NPC is spawned for the first time.  " );
+    DOC( "Also triggers `on_creature_spawn`.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (Npc)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_npc_spawn", []( const sol::table & ) {} );
+
+    DOC( "Called when any creature is loaded onto the active map.  " );
+    DOC( "This is the base hook; `on_monster_loaded` and `on_npc_loaded` also trigger this.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `creature` (Creature)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_creature_loaded", []( const sol::table & ) {} );
+
+    DOC( "Called when a monster is loaded onto the active map.  " );
+    DOC( "Also triggers `on_creature_loaded`.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_monster_loaded", []( const sol::table & ) {} );
+
+    DOC( "Called when an NPC is loaded onto the active map.  " );
+    DOC( "Also triggers `on_creature_loaded`.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (Npc)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_npc_loaded", []( const sol::table & ) {} );
+
     DOC( "Called every in-game period" );
     luna::set_fx( lib, "on_every_x", []( const sol::table & ) {} );
 
@@ -931,7 +975,9 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_colors( lua );
     reg_enums( lua );
     reg_game_ids( lua );
+    mod_bionic_data( lua );
     mod_mutation_branch( lua );
+    reg_bionics( lua );
     reg_magic( lua );
     reg_names( lua );
     reg_mission( lua );
@@ -948,4 +994,5 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_testing_library( lua );
     reg_requirement( lua );
     reg_inventory( lua );
+    reg_mapgendata( lua );
 }

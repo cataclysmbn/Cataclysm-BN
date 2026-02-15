@@ -619,6 +619,13 @@
     "info": "Any creature spawned from this item will <info>always</info> emerge <good>friendly to you</good>."
   },
   {
+    "id": "SPAWN_HOSTILE",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "//": "This item will spawn mean. Used for target dummies and such.",
+    "info": "Any creature spawned from this item will <info>always</info> emerge <bad>against you</good>."
+  },
+  {
     "id": "STAB",
     "type": "json_flag",
     "context": [ "GENERIC", "TOOL" ]

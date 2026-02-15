@@ -1,0 +1,81 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tint_pairs": [
+      { "source_type": "hair_color", "target_type": "hair_style", "override": true },
+      { "source_type": "hair_color", "target_type": "facial_hair", "override": true },
+      { "source_type": "hair_color", "target_type": "FURRY", "override": true }
+    ],
+    "tints": [
+      { "id": "hair_blond", "fg": "#ffca00", "blend_mode": "overlay", "saturation": 1.4 },
+      { "id": "hair_white", "fg": "#ffffff", "blend_mode": "multiply", "saturation": 0.0, "brightness": 1.4 },
+      { "id": "hair_black", "fg": "#000000", "blend_mode": "overlay", "saturation": 0.0, "brightness": 0.5 },
+      { "id": "hair_brown", "fg": "#5e3000", "blend_mode": "overlay", "saturation": 1.6 },
+      { "id": "hair_red", "fg": "#ff0000", "blend_mode": "overlay", "saturation": 1.2 },
+      { "id": "hair_gray", "fg": "#dddddd", "blend_mode": "multiply" },
+      { "id": "hair_purple", "fg": "#ae00dd", "blend_mode": "overlay", "saturation": 1.2 },
+      { "id": "hair_blue", "fg": "#3500ff", "blend_mode": "overlay", "saturation": 1.2 },
+      { "id": "hair_green", "fg": "#196600", "blend_mode": "overlay", "saturation": 1.2 },
+      { "id": "hair_pink", "fg": "#ff00f8", "blend_mode": "overlay", "brightness": 1.3 },
+      { "id": "hair_cyan", "fg": "#00ffff", "blend_mode": "overlay", "saturation": 1.4 },
+      { "id": "eye_pink", "fg": "#ff00bb", "blend_mode": "overlay", "saturation": 1.5 },
+      { "id": "eye_black", "fg": "#050505", "blend_mode": "multiply" },
+      { "id": "eye_white", "fg": "#ffffff", "blend_mode": "overlay", "saturation": 0.0, "brightness": 1.2 }
+    ],
+    "tiles-new": [
+      {
+        "file": "../../../gfx/MSX++UnDeadPeopleEdition/normal_character.png",
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "tiles": [
+          { "id": "overlay_mutation_FACIAL_HAIR_3DAYSTUBBLE", "fg": 66, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_ANCHOR", "fg": 67, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_BEARD", "fg": 68, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_CHEVRON", "fg": 69, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_CHIN_CURTAIN", "fg": 70, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_CHIN_STRAP", "fg": 71, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_CHIN_STRIP", "fg": 72, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_CIRCLE", "fg": 73, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_GOATEE", "fg": 74, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_GUNSLINGER", "fg": 75, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_HANDLEBAR", "fg": 76, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_HORSESHOE", "fg": 77, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_MUSTACHE", "fg": 78, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_MUTTONCHOPS", "fg": 79, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_NECKBEARD", "fg": 80, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_PENCIL", "fg": 81, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_ROYALE", "fg": 82, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_SHENANDOAH", "fg": 83, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_SHORTBOXED", "fg": 84, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_SIDEBURNS", "fg": 85, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_SOUL_PATCH", "fg": 86, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_TOOTHBRUSH", "fg": 87, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_VANDYKE", "fg": 88, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_WALRUS", "fg": 89, "rotates": false },
+          { "id": "overlay_mutation_FACIAL_HAIR_ZAPPA", "fg": 90, "rotates": false },
+          { "id": "overlay_female_mutation_hair_crewcut", "fg": 141, "rotates": false },
+          { "id": "overlay_male_mutation_hair_crewcut", "fg": 142, "rotates": false },
+          { "id": "overlay_mutation_hair_fro", "fg": 143, "rotates": false },
+          { "id": "overlay_female_mutation_hair_long", "fg": 144, "rotates": false },
+          { "id": "overlay_male_mutation_hair_long", "fg": 145, "rotates": false },
+          { "id": "overlay_female_mutation_hair_medium", "fg": 146, "rotates": false },
+          { "id": "overlay_male_mutation_hair_medium", "fg": 147, "rotates": false },
+          { "id": "overlay_mutation_hair_mohawk", "fg": 148, "rotates": false },
+          { "id": "overlay_female_mutation_hair_short", "fg": 149, "rotates": false },
+          { "id": "overlay_male_mutation_hair_short", "fg": 150, "rotates": false }
+        ]
+      },
+      {
+        "file": "../../json/external_tileset/External_Tileset_DP_eyes.png",
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "tiles": [
+          { "id": "overlay_mutation_eye_pink", "fg": 341 },
+          { "id": "overlay_mutation_eye_black", "fg": 341 },
+          { "id": "overlay_mutation_eye_white", "fg": 341 }
+        ]
+      }
+    ]
+  }
+]
