@@ -1,93 +1,89 @@
--- data/mods/change_hairstyle/main.lua
-
--- Get the current mod's runtime environment
 local mod = game.mod_runtime[game.current_mod]
 
--- This is our main function, called when the player uses the "Change hairstyle" action
--- who: Character object, representing the user (usually the player)
--- item: Item object, representing the item being used (e.g., scissors)
--- pos: Tripoint object, representing the location of use
 mod.change_hairstyle_function = function(params)
-  local who = params.user
-  local item = params.item
-  local pos = params.pos
-  -- === Step 1: Find the player's current hairstyle (using the new method) ===
-  local current_hairstyle_id = nil
-  local current_mutations = who:get_mutations(true) -- Get all of the player's mutations
+    local who = params.user
 
-  for _, mut_id in ipairs(current_mutations) do
-    local id_str = mut_id:str()
-    -- string.match(id_str, "^hair") checks if the string starts with "hair"
-    -- The "^" symbol in pattern matching represents "start of the string"
-    if id_str:match("^hair") then
-      current_hairstyle_id = mut_id -- Found it! Store it
-      -- gdebug.log_info("Found current hairstyle: " .. id_str)
-      break -- Break the loop once found
+    local function get_hair_trait_type(mut_raw)
+        if not mut_raw then return nil end
+        
+        local success, types = pcall(function() return mut_raw:mutation_types() end)
+        if success and types then
+            for k, v in pairs(types) do
+                local t = (type(v) == "string") and v or k
+                if t == "hair_style" then return "hair_style" end
+                if t == "hair_color" then return "hair_color" end
+            end
+        end
+
+        local id_str = mut_raw.id:str()
+        if id_str:find("style") then return "hair_style" end
+        if id_str:find("color") then return "hair_color" end
+        
+        return nil
     end
-  end
 
-  -- === Step 2: Get all available hairstyles in the game (using the new method) ===
-  local hairstyle_options = {}
-  local all_mutations_raw = MutationBranchRaw.get_all() -- Get all defined mutations in the game
+    local main_menu = UiList.new()
+    main_menu:title(locale.gettext("Appearance Customization"))
+    main_menu:add(1, locale.gettext("Change Hair Style"))
+    main_menu:add(2, locale.gettext("Change Hair Color"))
+    
+    local main_choice = main_menu:query()
+    if main_choice < 0 then return 0 end
 
-  for _, mut_data in ipairs(all_mutations_raw) do
-    local id_str = mut_data.id:str()
-    -- Also use string.match to check
-    if id_str:match("^hair") then
-      -- If it's a hairstyle, add it to our options list
-      table.insert(hairstyle_options, {
-        id = mut_data.id,
-        name = mut_data:name(), -- Get the hairstyle's display name in the game
-      })
+    local target_type = (main_choice == 1) and "hair_style" or "hair_color"
+
+    local current_trait_id = nil
+    local current_muts = who:get_mutations(true)
+    for _, mut_id in pairs(current_muts) do
+        if get_hair_trait_type(mut_id:obj()) == target_type then
+            current_trait_id = mut_id
+            break
+        end
     end
-  end
 
-  -- If no hairstyle options are found, the game data might have changed
-  if #hairstyle_options == 0 then
-    gapi.add_msg(MsgType.warning, "Error: No hairstyle mutations found in the game data.")
+    local options = {}
+    local all_muts_raw = MutationBranchRaw.get_all()
+    for _, mut_data in pairs(all_muts_raw) do
+        if get_hair_trait_type(mut_data) == target_type then
+            table.insert(options, {
+                id = mut_data.id,
+                name = mut_data:name()
+            })
+        end
+    end
+
+    if #options == 0 then
+        gapi.add_msg(MsgType.warning, locale.gettext("No available traits found."))
+        return 0
+    end
+
+    table.sort(options, function(a, b) return a.name < b.name end)
+
+    local ui = UiList.new()
+    ui:title(target_type == "hair_style" and locale.gettext("Select Style:") or locale.gettext("Select Color:"))
+    for i, opt in ipairs(options) do
+        ui:add(i, opt.name)
+    end
+
+    local choice = ui:query()
+    if choice > 0 then
+        local selected = options[choice]
+
+        if current_trait_id and current_trait_id:str() == selected.id:str() then
+            gapi.add_msg(locale.gettext("You already have this style/color."))
+            return 0
+        end
+
+        if current_trait_id then
+            who:remove_mutation(current_trait_id, true)
+        end
+
+        who:set_mutation(selected.id)
+        gapi.add_msg(MsgType.good, locale.gettext("Success! Your appearance has been updated."))
+        
+        who:assign_activity(ActivityTypeId.new("ACT_HAIRCUT"), 18000, -1, -1, "")
+        return 1
+    end
+
     return 0
-  end
-
-  -- === Step 3: Create and display the UI list ===
-  local ui = UiList.new()
-  ui:title("Please select a new hairstyle:")
-
-  -- Add all hairstyle options to the UI list
-  for i, option in ipairs(hairstyle_options) do
-    ui:add(i, option.name)
-  end
-
-  local choice_index = ui:query() -- Display the UI and wait for the player's choice, returning the selected index
-
-  -- === Step 4: Process the player's choice ===
-  if choice_index > 0 then
-    local selected_hairstyle = hairstyle_options[choice_index]
-
-    -- Check if the player selected the same hairstyle they already have
-    if current_hairstyle_id and current_hairstyle_id:str() == selected_hairstyle.id:str() then
-      gapi.add_msg("You decide to keep your current hairstyle.")
-      return 0 -- Consumes nothing
-    end
-
-    -- If the player already has a hairstyle, remove the old one first
-    if current_hairstyle_id then
-      who:remove_mutation(current_hairstyle_id, true)
-      -- gdebug.log_info("Removed old hairstyle: " .. current_hairstyle_id:str())
-    end
-
-    -- Grant the player the new hairstyle mutation
-    who:set_mutation(selected_hairstyle.id)
-    -- gdebug.log_info("Set new hairstyle: " .. selected_hairstyle.id:str())
-
-    gapi.add_msg(MsgType.good, "You changed your hairstyle!")
-
-    -- Consume item charge and time
-    -- You can return a number to represent the amount of charge consumed, e.g., 1
-    -- To make it take time, an activity can be added
-    who:assign_activity(ActivityTypeId.new("ACT_HAIRCUT"), 18000, -1, -1, "") -- Takes 5 minutes
-    return 1
-  else
-    gapi.add_msg("You decide not to change your hairstyle for now.")
-    return 0 -- Consumes nothing
-  end
 end
