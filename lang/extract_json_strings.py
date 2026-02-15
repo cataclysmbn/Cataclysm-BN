@@ -500,6 +500,8 @@ def extract_scenario(state, item):
 
 def extract_mapgen(state, item):
     # writestr will not write string if it is None.
+    if "object" not in item or type(item["object"]) != dict:
+        return
     for (objkey, objval) in sorted(item["object"].items(), key=lambda x: x[0]):
         if objkey == "place_specials" or objkey == "place_signs":
             for special in objval:
