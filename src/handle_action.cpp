@@ -1852,8 +1852,7 @@ bool game::handle_action()
                     vertical_move( -1, false );
                 } else if( veh_ctrl && vp->vehicle().is_aircraft() ) {
                     pldrive( tripoint_below );
-                } else {
-                    [[maybe_unused]] bool moved = false;
+                } else if( get_map().has_rope_at( u.pos() ) ) {
                     map &here = get_map();
                     const optional_vpart_position vp = here.veh_at( u.pos() );
                     const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
@@ -1861,6 +1860,9 @@ bool game::handle_action()
                         const vpart_info info = vp->vehicle().part_info( idx );
                         tripoint where = u.pos();
                         tripoint below = where;
+                        if( get_map().ter( where ).id().str() != "t_open_air" ) {
+                            break;
+                        }
                         below.z--;
                         // Keep going down until we find a tile that is NOT open air
                         while( get_map().ter( below ).id().str() == "t_open_air" ) {
@@ -1871,7 +1873,6 @@ bool game::handle_action()
                         if( info.ladder_length() >= dist ) {
                             get_map().unboard_vehicle( u.pos() );
                             vertical_move( -dist, true );
-                            moved = true;
                         }
                     }
                 }
@@ -1892,12 +1893,23 @@ bool game::handle_action()
                     }
                 }
                 if( !u.in_vehicle ) {
-                    bool moved = false;
-                    point xy = u.pos().xy();
-                    map &here = get_map();
-                    for( int i = u.pos().z; i <= 10; i++ ) {
-                        const optional_vpart_position vp = here.veh_at( tripoint( xy, i ) );
-                        const int dist = i - u.pos().z;
+                    if( get_map().has_rope_at( u.pos() ) ) {
+                        point xy = u.pos().xy();
+                        map &here = get_map();
+                        tripoint where = u.pos();
+                        tripoint above = where;
+                        above.z++;
+                        if( get_map().ter( above ).id().str() != "t_open_air" ) {
+                            vertical_move( 1, false );
+                            break;
+                        }
+                        // Keep going down until we find a tile that is NOT open air
+                        while( get_map().ter( above ).id().str() == "t_open_air" &&
+                               !here.veh_at( tripoint( xy, above.z ) ) )  {
+                            above.z++;
+                        }
+                        const optional_vpart_position vp = here.veh_at( tripoint( xy, above.z ) );
+                        const int dist = above.z - u.pos().z;
                         if( vp ) {
                             const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
                             if( idx != -1 ) {
@@ -1905,13 +1917,13 @@ bool game::handle_action()
                                 if( info.ladder_length() >= dist ) {
                                     vertical_move( dist, true );
                                     here.board_vehicle( u.pos(), u.as_character() );
-                                    moved = true;
                                     break;
                                 }
                             }
+                        } else {
+                            vertical_move( 1, false );
                         }
-                    }
-                    if( !moved ) {
+                    } else {
                         vertical_move( 1, false );
                     }
                 } else if( veh_ctrl && vp->vehicle().is_aircraft() ) {

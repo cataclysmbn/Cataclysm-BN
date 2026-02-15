@@ -90,4 +90,4 @@ jobs:
         run: |
           # deno lint
           deno test --allow-read
-          deno run --allow-read --allow-write scripts/semantic.ts
+          deno run --allow-read --allow-write --allow-env=npm_package_config_libvips scripts/semantic.ts
