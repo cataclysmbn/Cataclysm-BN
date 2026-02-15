@@ -173,49 +173,29 @@ enum class tint_blend_mode : uint8_t {
     dissolve
 };
 
-static constexpr tint_blend_mode string_to_tint_blend_mode( const std::string &str ) {
-    if (str == "multiply")
-    {
+static constexpr tint_blend_mode string_to_tint_blend_mode( const std::string &str )
+{
+    if( str == "multiply" ) {
         return tint_blend_mode::multiply;
-    }
-    else if (str == "overlay")
-    {
+    } else if( str == "overlay" ) {
         return tint_blend_mode::overlay;
-    }
-    else if (str == "softlight")
-    {
+    } else if( str == "softlight" ) {
         return tint_blend_mode::softlight;
-    }
-    else if (str == "hardlight")
-    {
+    } else if( str == "hardlight" ) {
         return tint_blend_mode::hardlight;
-    }
-    else if (str == "normal")
-    {
+    } else if( str == "normal" ) {
         return tint_blend_mode::normal;
-    }
-    else if (str == "screen")
-    {
+    } else if( str == "screen" ) {
         return tint_blend_mode::screen;
-    }
-    else if (str == "divide")
-    {
+    } else if( str == "divide" ) {
         return tint_blend_mode::divide;
-    }
-    else if (str == "dissolve")
-    {
+    } else if( str == "dissolve" ) {
         return tint_blend_mode::dissolve;
-    }
-    else if (str == "additive")
-    {
+    } else if( str == "additive" ) {
         return tint_blend_mode::additive;
-    }
-    else if (str == "additive")
-    {
+    } else if( str == "additive" ) {
         return tint_blend_mode::additive;
-    }
-    else if (str == "subtract")
-    {
+    } else if( str == "subtract" ) {
         return tint_blend_mode::subtract;
     }
     return tint_blend_mode::tint;
