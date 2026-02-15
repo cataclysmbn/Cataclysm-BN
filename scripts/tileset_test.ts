@@ -1,397 +1,565 @@
-import { assertEquals } from "@std/assert"
-import { makeTempDir } from "@std/fs/unstable-make-temp-dir"
-import { join } from "@std/path"
-import { exists } from "@std/fs"
+import { assert, assertEquals } from "@std/assert"
+import { copy, ensureDir, exists, walk } from "@std/fs"
+import { dirname, fromFileUrl, join, relative, resolve } from "@std/path"
+import sharp from "npm:sharp@^0.33.5"
 
-/**
- * Test idempotency of tileset pack/unpack operations.
- *
- * This test verifies that unpacking a tileset and repacking it produces
- * identical results to the original tileset.
- */
+const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url))
+const REPO_ROOT = resolve(SCRIPT_DIR, "..")
 
-// Import the pack/unpack functions from tileset.ts
-// We need to extract them as testable functions
+const TS_TILESET_SCRIPT = join(REPO_ROOT, "scripts/tileset.ts")
+const PY_COMPOSE_SCRIPT = join(REPO_ROOT, "tools/gfx_tools/compose.py")
+const PY_DECOMPOSE_SCRIPT = join(REPO_ROOT, "tools/gfx_tools/decompose.py")
 
-async function runTilesetCommand(
+const DEFAULT_PYTHON = join(REPO_ROOT, ".venv/bin/python")
+
+const TEXT_DECODER = new TextDecoder()
+
+interface CommandOptions {
+  cwd: string
+}
+
+interface Rgba {
+  r: number
+  g: number
+  b: number
+  alpha: number
+}
+
+const normalizePath = (path: string): string => path.replaceAll("\\", "/")
+
+const sha256Hex = async (bytes: Uint8Array): Promise<string> => {
+  const digestInput = new Uint8Array(bytes)
+  const digest = await crypto.subtle.digest("SHA-256", digestInput)
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+}
+
+const runCommand = async (
+  executable: string,
   args: string[],
-): Promise<void> {
-  const cmd = new Deno.Command("deno", {
-    args: [
+  options: CommandOptions,
+): Promise<void> => {
+  const output = await new Deno.Command(executable, {
+    args,
+    cwd: options.cwd,
+    stdout: "piped",
+    stderr: "piped",
+  }).output()
+
+  if (output.code !== 0) {
+    const stdout = TEXT_DECODER.decode(output.stdout)
+    const stderr = TEXT_DECODER.decode(output.stderr)
+    throw new Error(
+      [
+        `Command failed (${output.code}): ${executable} ${args.join(" ")}`,
+        `cwd: ${options.cwd}`,
+        `stdout:\n${stdout}`,
+        `stderr:\n${stderr}`,
+      ].join("\n"),
+    )
+  }
+}
+
+const runTypescriptCompose = async (sourceDir: string, outputDir: string): Promise<void> => {
+  await runCommand(
+    "deno",
+    [
       "run",
       "--allow-read",
       "--allow-write",
       "--allow-env",
       "--allow-ffi",
-      "scripts/tileset.ts",
-      ...args,
+      TS_TILESET_SCRIPT,
+      "--pack",
+      sourceDir,
+      outputDir,
     ],
-    stdout: "piped",
-    stderr: "piped",
+    { cwd: REPO_ROOT },
+  )
+}
+
+const runTypescriptDecompose = async (tilesetDir: string): Promise<void> => {
+  await runCommand(
+    "deno",
+    [
+      "run",
+      "--allow-read",
+      "--allow-write",
+      "--allow-env",
+      "--allow-ffi",
+      TS_TILESET_SCRIPT,
+      "--unpack",
+      tilesetDir,
+    ],
+    { cwd: REPO_ROOT },
+  )
+}
+
+const runPythonCompose = async (
+  pythonExecutable: string,
+  sourceDir: string,
+  outputDir: string,
+): Promise<void> => {
+  await runCommand(
+    pythonExecutable,
+    [PY_COMPOSE_SCRIPT, sourceDir, outputDir, "--feedback", "SILENT"],
+    { cwd: REPO_ROOT },
+  )
+}
+
+const runPythonDecompose = async (
+  pythonExecutable: string,
+  tilesetDir: string,
+): Promise<void> => {
+  await runCommand(pythonExecutable, [PY_DECOMPOSE_SCRIPT, tilesetDir], {
+    cwd: REPO_ROOT,
+  })
+}
+
+const getPythonExecutable = async (): Promise<string | null> => {
+  const pythonExecutable = Deno.env.get("TILESET_PYTHON") ?? DEFAULT_PYTHON
+
+  if (!await exists(pythonExecutable)) {
+    console.warn(
+      `Skipping tileset parity tests: ${pythonExecutable} not found. ` +
+        "Create a uv venv and install pyvips (uv venv .venv && uv pip install --python .venv/bin/python pyvips pyvips-binary).",
+    )
+    return null
+  }
+
+  const output = await new Deno.Command(pythonExecutable, {
+    args: ["-c", "import pyvips"],
+    stdout: "null",
+    stderr: "null",
+  }).output()
+
+  if (output.code !== 0) {
+    console.warn(
+      `Skipping tileset parity tests: ${pythonExecutable} cannot import pyvips. ` +
+        "Install pyvips into your uv venv.",
+    )
+    return null
+  }
+
+  return pythonExecutable
+}
+
+const writeSolidPng = async (
+  pathname: string,
+  width: number,
+  height: number,
+  color: Rgba,
+): Promise<void> => {
+  await sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: color,
+    },
+  }).png().toFile(pathname)
+}
+
+const createFixtureTileset = async (sourceDir: string): Promise<void> => {
+  await ensureDir(sourceDir)
+  await Deno.writeTextFile(join(sourceDir, "tileset.txt"), "JSON: tile_config.json\n")
+
+  const tileInfo = [
+    {
+      width: 2,
+      height: 2,
+    },
+    {
+      "main.png": {
+        sprites_across: 2,
+      },
+    },
+    {
+      "filler.png": {
+        filler: true,
+        sprites_across: 2,
+      },
+    },
+    {
+      "fallback.png": {
+        fallback: true,
+      },
+    },
+  ]
+
+  await Deno.writeTextFile(
+    join(sourceDir, "tile_info.json"),
+    JSON.stringify(tileInfo, null, 2),
+  )
+
+  const mainDir = join(sourceDir, "pngs_main_2x2", "images0")
+  await ensureDir(mainDir)
+
+  await writeSolidPng(join(mainDir, "alpha.png"), 2, 2, {
+    r: 255,
+    g: 0,
+    b: 0,
+    alpha: 255,
+  })
+  await writeSolidPng(join(mainDir, "beta.png"), 2, 2, {
+    r: 0,
+    g: 255,
+    b: 0,
+    alpha: 255,
+  })
+  await writeSolidPng(join(mainDir, "gamma.png"), 2, 2, {
+    r: 0,
+    g: 0,
+    b: 255,
+    alpha: 255,
   })
 
-  const { code, stdout, stderr } = await cmd.output()
+  const mainEntries = [
+    {
+      id: "t_alpha",
+      fg: "alpha",
+    },
+    {
+      id: ["t_beta", "t_beta_alt"],
+      fg: ["beta", { sprite: ["gamma", "beta"], weight: 2 }],
+    },
+    {
+      id: "f_floor",
+      fg: "beta",
+      bg: "alpha",
+      additional_tiles: [
+        {
+          id: "open",
+          fg: "gamma",
+        },
+      ],
+    },
+  ]
 
-  if (code !== 0) {
-    const errorText = new TextDecoder().decode(stderr)
-    const outputText = new TextDecoder().decode(stdout)
-    throw new Error(
-      `Command failed with code ${code}\nStdout: ${outputText}\nStderr: ${errorText}`,
-    )
+  await Deno.writeTextFile(
+    join(mainDir, "entries.json"),
+    JSON.stringify(mainEntries, null, 2),
+  )
+
+  const fillerDir = join(sourceDir, "pngs_filler_2x2", "images0")
+  await ensureDir(fillerDir)
+
+  await writeSolidPng(join(fillerDir, "overlay_custom.png"), 2, 2, {
+    r: 255,
+    g: 255,
+    b: 0,
+    alpha: 255,
+  })
+
+  const fillerEntries = {
+    id: "overlay_custom",
+    fg: "overlay_custom",
   }
-}
 
-async function readJsonFile(path: string): Promise<unknown> {
-  const content = await Deno.readTextFile(path)
-  return JSON.parse(content)
-}
-
-async function compareJsonFiles(
-  path1: string,
-  path2: string,
-  description: string,
-): Promise<void> {
-  const json1 = await readJsonFile(path1)
-  const json2 = await readJsonFile(path2)
-
-  // Deep comparison of JSON objects
-  assertEquals(
-    json1,
-    json2,
-    `${description}: JSON files should be identical`,
+  await Deno.writeTextFile(
+    join(fillerDir, "overlay.json"),
+    JSON.stringify(fillerEntries, null, 2),
   )
 }
 
-async function comparePngFiles(
-  path1: string,
-  path2: string,
-  description: string,
-): Promise<void> {
-  // Use dynamic import for Sharp to avoid issues in test environment
-  const sharp = (await import("npm:sharp@^0.33.5")).default
+const readJson = async (pathname: string): Promise<unknown> => {
+  const text = await Deno.readTextFile(pathname)
+  return JSON.parse(text)
+}
 
-  const [meta1, meta2] = await Promise.all([
-    sharp(path1).metadata(),
-    sharp(path2).metadata(),
+const compareJsonFiles = async (leftPath: string, rightPath: string): Promise<void> => {
+  const [left, right] = await Promise.all([readJson(leftPath), readJson(rightPath)])
+  assertEquals(left, right)
+}
+
+const comparePngPixelPerfect = async (leftPath: string, rightPath: string): Promise<void> => {
+  const [left, right] = await Promise.all([
+    sharp(leftPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    sharp(rightPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
   ])
 
-  assertEquals(
-    meta1.width,
-    meta2.width,
-    `${description}: PNG widths should match`,
-  )
+  assertEquals(left.info.width, right.info.width)
+  assertEquals(left.info.height, right.info.height)
+  assertEquals(left.info.channels, right.info.channels)
 
-  assertEquals(
-    meta1.height,
-    meta2.height,
-    `${description}: PNG heights should match`,
-  )
-
-  // Note: Byte-perfect PNG idempotency isn't expected due to:
-  // - Different compression settings
-  // - Metadata differences
-  // - Encoding variations
-  // Dimension matching verifies structural equivalence
+  const [leftHash, rightHash] = await Promise.all([
+    sha256Hex(left.data),
+    sha256Hex(right.data),
+  ])
+  assertEquals(leftHash, rightHash)
 }
 
-async function findSmallestTileset(): Promise<string | null> {
-  const gfxDir = "gfx"
-  let smallestSize = Infinity
-  let smallestTileset: string | null = null
+const collectReferencedSpriteIndexes = (
+  layer: unknown,
+  target: Set<number>,
+): void => {
+  if (Array.isArray(layer)) {
+    for (const part of layer) {
+      collectReferencedSpriteIndexes(part, target)
+    }
+    return
+  }
 
-  for await (const entry of Deno.readDir(gfxDir)) {
-    if (!entry.isDirectory) continue
+  if (typeof layer === "number") {
+    if (layer > 0) {
+      target.add(layer)
+    }
+    return
+  }
 
-    const tileConfigPath = join(gfxDir, entry.name, "tile_config.json")
+  if (
+    typeof layer === "object" && layer !== null &&
+    "sprite" in layer
+  ) {
+    const randomSprite = (layer as { sprite: unknown }).sprite
+    collectReferencedSpriteIndexes(randomSprite, target)
+  }
+}
 
-    // Check if tileset has tile_config.json (packed/composed state)
-    if (await exists(tileConfigPath)) {
-      try {
-        const stat = await Deno.stat(tileConfigPath)
-        if (stat.size < smallestSize) {
-          smallestSize = stat.size
-          smallestTileset = entry.name
-        }
-      } catch {
-        continue
-      }
+const compareReferencedSpritesOnly = async (
+  leftPath: string,
+  rightPath: string,
+  indexes: number[],
+  spriteWidth: number,
+  spriteHeight: number,
+  rangeStart: number,
+): Promise<void> => {
+  const [leftMeta, rightMeta] = await Promise.all([
+    sharp(leftPath).metadata(),
+    sharp(rightPath).metadata(),
+  ])
+
+  assertEquals(leftMeta.width, rightMeta.width)
+  assertEquals(leftMeta.height, rightMeta.height)
+
+  const width = leftMeta.width ?? 0
+  const spritesAcross = Math.floor(width / spriteWidth)
+  assert(spritesAcross > 0, "Invalid sprites_across value")
+
+  for (const index of indexes) {
+    const localIndex = rangeStart === 1 ? index - rangeStart + 1 : index - rangeStart
+
+    if (localIndex < 0) {
+      continue
+    }
+
+    const x = (localIndex % spritesAcross) * spriteWidth
+    const y = Math.floor(localIndex / spritesAcross) * spriteHeight
+
+    const [leftTile, rightTile] = await Promise.all([
+      sharp(leftPath)
+        .extract({ left: x, top: y, width: spriteWidth, height: spriteHeight })
+        .ensureAlpha()
+        .raw()
+        .toBuffer(),
+      sharp(rightPath)
+        .extract({ left: x, top: y, width: spriteWidth, height: spriteHeight })
+        .ensureAlpha()
+        .raw()
+        .toBuffer(),
+    ])
+
+    const [leftHash, rightHash] = await Promise.all([
+      sha256Hex(leftTile),
+      sha256Hex(rightTile),
+    ])
+    assertEquals(leftHash, rightHash)
+  }
+}
+
+const collectDecomposedFiles = async (rootDir: string): Promise<string[]> => {
+  const files: string[] = []
+
+  for await (
+    const entry of walk(rootDir, {
+      includeFiles: true,
+      includeDirs: false,
+      followSymlinks: false,
+    })
+  ) {
+    const relPath = normalizePath(relative(rootDir, entry.path))
+    if (relPath === "tile_info.json" || relPath.startsWith("pngs_")) {
+      files.push(relPath)
     }
   }
 
-  return smallestTileset
+  files.sort()
+  return files
+}
+
+const compareDecomposedOutputs = async (leftDir: string, rightDir: string): Promise<void> => {
+  const [leftFiles, rightFiles] = await Promise.all([
+    collectDecomposedFiles(leftDir),
+    collectDecomposedFiles(rightDir),
+  ])
+
+  assertEquals(leftFiles, rightFiles)
+
+  for (const relativePath of leftFiles) {
+    const leftPath = join(leftDir, relativePath)
+    const rightPath = join(rightDir, relativePath)
+
+    if (relativePath.endsWith(".json")) {
+      await compareJsonFiles(leftPath, rightPath)
+      continue
+    }
+
+    if (relativePath.endsWith(".png")) {
+      await comparePngPixelPerfect(leftPath, rightPath)
+      continue
+    }
+
+    const [leftBytes, rightBytes] = await Promise.all([
+      Deno.readFile(leftPath),
+      Deno.readFile(rightPath),
+    ])
+
+    assertEquals(leftBytes, rightBytes)
+  }
 }
 
 Deno.test({
-  name: "tileset: pack/unpack idempotency",
+  name: "tileset: compose output matches compose.py pixel-perfect",
+  sanitizeOps: false,
+  sanitizeResources: false,
   async fn() {
-    // Find the smallest tileset for faster testing
-    const tilesetName = await findSmallestTileset()
-
-    if (!tilesetName) {
-      console.log("No suitable tileset found with both tile_config.json and tile_info.json")
+    const pythonExecutable = await getPythonExecutable()
+    if (!pythonExecutable) {
       return
     }
 
-    console.log(`Testing with tileset: ${tilesetName}`)
-
-    const originalDir = join("gfx", tilesetName)
-    const tempDir = await makeTempDir({ prefix: "tileset_test_" })
+    const tempRoot = await Deno.makeTempDir({ prefix: "tileset_compose_parity_" })
 
     try {
-      // Step 1: Unpack the original tileset to temp directory
-      console.log("Unpacking original tileset...")
-      await runTilesetCommand([
-        "--unpack",
-        originalDir,
-      ])
+      const sourceDir = join(tempRoot, "fixture_source")
+      const pyOutDir = join(tempRoot, "py_packed")
+      const tsOutDir = join(tempRoot, "ts_packed")
 
-      // Step 2: Create output directory for repacking
-      const repackedDir = join(tempDir, "repacked")
-      await Deno.mkdir(repackedDir, { recursive: true })
+      await createFixtureTileset(sourceDir)
 
-      // Step 3: Repack the unpacked tileset
-      console.log("Repacking tileset...")
-      await runTilesetCommand([
-        "--pack",
-        originalDir,
-        repackedDir,
-      ])
+      await runPythonCompose(pythonExecutable, sourceDir, pyOutDir)
+      await runTypescriptCompose(sourceDir, tsOutDir)
 
-      // Step 4: Verify repacked tile_config.json exists and has valid structure
-      const originalConfig = join(originalDir, "tile_config.json")
-      const repackedConfig = join(repackedDir, "tile_config.json")
+      await compareJsonFiles(join(pyOutDir, "tile_config.json"), join(tsOutDir, "tile_config.json"))
 
-      if (await exists(originalConfig) && await exists(repackedConfig)) {
-        console.log("Verifying tile_config.json structure...")
-        const repacked = await readJsonFile(repackedConfig) as Record<string, unknown>
-
-        assertEquals("tile_info" in repacked, true, "Repacked config should have tile_info")
-        assertEquals("tiles-new" in repacked, true, "Repacked config should have tiles-new")
-
-        // Note: Exact JSON matching isn't expected due to differences in:
-        // - Empty array handling ([] vs omitted)
-        // - Sprite index renumbering
-        // - Entry ordering
-        // The functional equivalence is what matters
+      const tileConfig = await readJson(join(pyOutDir, "tile_config.json")) as {
+        tile_info: Array<{ width?: number; height?: number }>
+        "tiles-new": Array<{
+          file?: string
+          "//"?: string
+          sprite_width?: number
+          sprite_height?: number
+          tiles?: Array<Record<string, unknown>>
+        }>
       }
 
-      // Step 5: Verify PNG files were generated
-      console.log("Verifying PNG files generated...")
-      let pngCount = 0
-      for await (const entry of Deno.readDir(repackedDir)) {
-        if (entry.isFile && entry.name.endsWith(".png") && entry.name !== "fallback.png") {
-          pngCount++
+      const defaultInfo = tileConfig.tile_info[0] ?? {}
+      const defaultWidth = defaultInfo.width ?? 16
+      const defaultHeight = defaultInfo.height ?? 16
+
+      for (const sheet of tileConfig["tiles-new"]) {
+        if (!sheet.file || !sheet.file.endsWith(".png")) {
+          continue
         }
-      }
 
-      assertEquals(pngCount > 0, true, "At least one PNG file should be generated")
+        const pySheetPath = join(pyOutDir, sheet.file)
+        const tsSheetPath = join(tsOutDir, sheet.file)
+        const [pyExists, tsExists] = await Promise.all([exists(pySheetPath), exists(tsSheetPath)])
+        assertEquals(pyExists, tsExists, `Sheet existence mismatch for ${sheet.file}`)
 
-      // Note: Exact PNG matching isn't expected because:
-      // - Grid layout may differ (sprites_across setting)
-      // - Sprite ordering can vary
-      // - Empty tile padding differs
-      // Successful pack/unpack cycle verifies functional correctness
+        if (pyExists && tsExists && Array.isArray(sheet.tiles)) {
+          const referencedIndexes = new Set<number>()
 
-      console.log("✓ Idempotency test passed!")
-    } finally {
-      // Cleanup: Remove temporary directory and unpacked files
-      try {
-        await Deno.remove(tempDir, { recursive: true })
+          for (const tile of sheet.tiles) {
+            collectReferencedSpriteIndexes(tile.fg, referencedIndexes)
+            collectReferencedSpriteIndexes(tile.bg, referencedIndexes)
 
-        // Clean up unpacked pngs_* directories from original tileset
-        for await (const entry of Deno.readDir(originalDir)) {
-          if (entry.isDirectory && entry.name.startsWith("pngs_")) {
-            await Deno.remove(join(originalDir, entry.name), { recursive: true })
+            const additionalTiles = tile.additional_tiles
+            if (Array.isArray(additionalTiles)) {
+              for (const additionalTile of additionalTiles) {
+                const entry = additionalTile as Record<string, unknown>
+                collectReferencedSpriteIndexes(entry.fg, referencedIndexes)
+                collectReferencedSpriteIndexes(entry.bg, referencedIndexes)
+              }
+            }
           }
+
+          const spriteWidth = sheet.sprite_width ?? defaultWidth
+          const spriteHeight = sheet.sprite_height ?? defaultHeight
+          const rangeComment = sheet["//"] ?? ""
+          const rangeMatch = rangeComment.match(/range\s+(\d+)\s+to\s+(\d+)/)
+          const rangeStart = rangeMatch ? Number.parseInt(rangeMatch[1], 10) : 1
+
+          await compareReferencedSpritesOnly(
+            pySheetPath,
+            tsSheetPath,
+            [...referencedIndexes].sort((left, right) => left - right),
+            spriteWidth,
+            spriteHeight,
+            rangeStart,
+          )
         }
-      } catch (error) {
-        console.error("Cleanup error:", error)
       }
+    } finally {
+      await Deno.remove(tempRoot, { recursive: true })
     }
   },
-  // Give the test plenty of time as image processing can be slow
-  sanitizeResources: false,
-  sanitizeOps: false,
 })
 
 Deno.test({
-  name: "tileset: pack produces valid tile_config.json structure",
-  async fn() {
-    const tilesetName = await findSmallestTileset()
-
-    if (!tilesetName) {
-      console.log("No suitable tileset found")
-      return
-    }
-
-    const originalDir = join("gfx", tilesetName)
-    const tempDir = await makeTempDir({ prefix: "tileset_structure_test_" })
-
-    try {
-      console.log(`Testing structure with tileset: ${tilesetName}`)
-
-      // Unpack
-      await runTilesetCommand(["--unpack", originalDir])
-
-      // Repack
-      const outputDir = join(tempDir, "output")
-      await Deno.mkdir(outputDir, { recursive: true })
-      await runTilesetCommand(["--pack", originalDir, outputDir])
-
-      // Verify structure
-      const configPath = join(outputDir, "tile_config.json")
-      const config = await readJsonFile(configPath) as Record<string, unknown>
-
-      // Check required top-level keys
-      assertEquals(
-        "tile_info" in config,
-        true,
-        "tile_config.json should have tile_info",
-      )
-      assertEquals(
-        "tiles-new" in config,
-        true,
-        "tile_config.json should have tiles-new",
-      )
-
-      // Verify tile_info structure
-      const tileInfo = config.tile_info as Array<Record<string, unknown>>
-      assertEquals(
-        Array.isArray(tileInfo),
-        true,
-        "tile_info should be an array",
-      )
-      assertEquals(
-        tileInfo.length > 0,
-        true,
-        "tile_info should not be empty",
-      )
-
-      const firstInfo = tileInfo[0]
-      assertEquals(
-        "width" in firstInfo,
-        true,
-        "tile_info[0] should have width",
-      )
-      assertEquals(
-        "height" in firstInfo,
-        true,
-        "tile_info[0] should have height",
-      )
-
-      // Verify tiles-new structure
-      const tilesNew = config["tiles-new"] as Array<Record<string, unknown>>
-      assertEquals(
-        Array.isArray(tilesNew),
-        true,
-        "tiles-new should be an array",
-      )
-      assertEquals(
-        tilesNew.length > 0,
-        true,
-        "tiles-new should not be empty",
-      )
-
-      // Check that at least one sheet has required fields
-      const firstSheet = tilesNew[0]
-      assertEquals(
-        "file" in firstSheet,
-        true,
-        "sheet should have file property",
-      )
-      assertEquals(
-        "tiles" in firstSheet || "ascii" in firstSheet,
-        true,
-        "sheet should have tiles or ascii property",
-      )
-
-      console.log("✓ Structure validation test passed!")
-    } finally {
-      try {
-        await Deno.remove(tempDir, { recursive: true })
-
-        // Clean up unpacked files
-        for await (const entry of Deno.readDir(originalDir)) {
-          if (entry.isDirectory && entry.name.startsWith("pngs_")) {
-            await Deno.remove(join(originalDir, entry.name), { recursive: true })
-          }
-        }
-      } catch (error) {
-        console.error("Cleanup error:", error)
-      }
-    }
-  },
-  sanitizeResources: false,
+  name: "tileset: decompose output matches decompose.py pixel-perfect",
   sanitizeOps: false,
-})
-
-Deno.test({
-  name: "tileset: --only-json flag skips PNG generation",
+  sanitizeResources: false,
   async fn() {
-    const tilesetName = await findSmallestTileset()
-
-    if (!tilesetName) {
-      console.log("No suitable tileset found")
+    const pythonExecutable = await getPythonExecutable()
+    if (!pythonExecutable) {
       return
     }
 
-    const originalDir = join("gfx", tilesetName)
-    const tempDir = await makeTempDir({ prefix: "tileset_json_only_test_" })
+    const tempRoot = await Deno.makeTempDir({ prefix: "tileset_decompose_parity_" })
 
     try {
-      console.log(`Testing --only-json with tileset: ${tilesetName}`)
+      const sourceDir = join(tempRoot, "fixture_source")
+      const pyPackedDir = join(tempRoot, "py_packed")
+      const pyUnpackDir = join(tempRoot, "py_unpack")
+      const tsUnpackDir = join(tempRoot, "ts_unpack")
 
-      // Unpack
-      await runTilesetCommand(["--unpack", originalDir])
+      await createFixtureTileset(sourceDir)
+      await runPythonCompose(pythonExecutable, sourceDir, pyPackedDir)
 
-      // Pack with --only-json flag
-      const outputDir = join(tempDir, "output")
-      await Deno.mkdir(outputDir, { recursive: true })
-      await runTilesetCommand([
-        "--pack",
-        originalDir,
-        outputDir,
-        "--only-json",
+      await copy(pyPackedDir, pyUnpackDir)
+      await copy(pyPackedDir, tsUnpackDir)
+
+      await Promise.all([
+        writeSolidPng(join(pyUnpackDir, "fallback.png"), 2, 2, {
+          r: 0,
+          g: 0,
+          b: 0,
+          alpha: 255,
+        }),
+        writeSolidPng(join(tsUnpackDir, "fallback.png"), 2, 2, {
+          r: 0,
+          g: 0,
+          b: 0,
+          alpha: 255,
+        }),
       ])
 
-      // Verify that tile_config.json exists
-      const configPath = join(outputDir, "tile_config.json")
-      assertEquals(
-        await exists(configPath),
-        true,
-        "tile_config.json should exist",
-      )
+      await runPythonDecompose(pythonExecutable, pyUnpackDir)
+      await runTypescriptDecompose(tsUnpackDir)
 
-      // Verify that no PNG files were created (except possibly pre-existing ones)
-      let pngCount = 0
-      for await (const entry of Deno.readDir(outputDir)) {
-        if (entry.isFile && entry.name.endsWith(".png")) {
-          pngCount++
-        }
-      }
+      await compareDecomposedOutputs(pyUnpackDir, tsUnpackDir)
 
-      assertEquals(
-        pngCount,
-        0,
-        "No PNG files should be generated with --only-json",
-      )
+      const [pyTileInfoExists, tsTileInfoExists] = await Promise.all([
+        exists(join(pyUnpackDir, "tile_info.json")),
+        exists(join(tsUnpackDir, "tile_info.json")),
+      ])
 
-      console.log("✓ --only-json test passed!")
+      assert(pyTileInfoExists, "Python decompose did not produce tile_info.json")
+      assert(tsTileInfoExists, "TypeScript decompose did not produce tile_info.json")
     } finally {
-      try {
-        await Deno.remove(tempDir, { recursive: true })
-
-        // Clean up unpacked files
-        for await (const entry of Deno.readDir(originalDir)) {
-          if (entry.isDirectory && entry.name.startsWith("pngs_")) {
-            await Deno.remove(join(originalDir, entry.name), { recursive: true })
-          }
-        }
-      } catch (error) {
-        console.error("Cleanup error:", error)
-      }
+      await Deno.remove(tempRoot, { recursive: true })
     }
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 })
