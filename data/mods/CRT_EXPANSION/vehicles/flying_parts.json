@@ -6,7 +6,7 @@
     "type": "vehicle_part",
     "name": "C.R.I.T. small airship balloon",
     "description": "A balloon interspaced with solar cells that provides lift, but requires aircraft propellers for horizontal momentum. While weaker then solar panels, they make up for it in quantity",
-    "item": "crt_airship_balloon_item_small",
+    "item": "crt_airship_balloon_small_item",
     "height": 30,
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "rope_natural_short", 1 ] ] },
@@ -62,7 +62,7 @@
   },
   {
     "type": "GENERIC",
-    "id": "crt_airship_balloon_item_small",
+    "id": "crt_airship_balloon_small_item",
     "symbol": "o",
     "color": "light_gray",
     "name": { "str": "C.R.I.T. airship balloon small" },
@@ -97,5 +97,81 @@
     "category": "veh_parts",
     "explosion": { "damage": 100, "radius": 2 },
     "explode_in_fire": true
-  }
+  },
+  {
+    "abstract": "crt_wing",
+    "copy-from": "wing_carbon",
+    "type": "vehicle_part",
+    "name": "C.R.I.T solar wing",
+    "item": "crt_wing_item",
+    "epower": 10,
+    "extend": { "flags": [ "SOLAR_PANEL" ] }
+  },
+  {
+    "abstract": "crt_wing_external",
+    "copy-from": "crt_wing",
+    "type": "vehicle_part",
+    "name": "external C.R.I.T solar wing",
+    "location": "structural",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] }
+  },
+  {
+    "id": "crt_wing_horizontal",
+    "copy-from": "crt_wing",
+    "type": "vehicle_part",
+    "looks_like": "wing_metal_horizontal",
+    "symbol": "h"
+  },
+  {
+    "id": "crt_wing_left",
+    "copy-from": "crt_wing",
+    "type": "vehicle_part",
+    "looks_like": "wing_metal_left",
+    "symbol": "y"
+  },
+  {
+    "id": "crt_wing_right",
+    "copy-from": "crt_wing",
+    "type": "vehicle_part",
+    "looks_like": "wing_metal_right",
+    "symbol": "u"
+  },
+  {
+    "id": "crt_wing_external_horizontal",
+    "copy-from": "crt_wing_external",
+    "type": "vehicle_part",
+    "looks_like": "wing_metal_horizontal",
+    "symbol": "h"
+  },
+  {
+    "id": "crt_wing_external_left",
+    "copy-from": "crt_wing_external",
+    "type": "vehicle_part",
+    "looks_like": "wing_metal_left",
+    "symbol": "y"
+  },
+  {
+    "id": "crt_wing_external_right",
+    "copy-from": "crt_wing_external",
+    "type": "vehicle_part",
+    "looks_like": "wing_metal_right",
+    "symbol": "u"
+  },
+  {
+    "type": "GENERIC",
+    "id": "crt_wing_item",
+    "name": { "str": "C.R.I.T aerofoil" },
+    "description": "A section of aircraft wing made of carbon fiber fabric, with a thin solar panel layered over the top, over ridid carbon fiber ribs and stringers.  Wings allow a vehicle to fly, but require a propeller and enough velocity to take off.",
+    "weight": "10 kg",
+    "to_hit": -3,
+    "color": "light_gray",
+    "symbol": "]",
+    "looks_like": "carbon_boat_hull",
+    "material": [ "carbon_fiber" ],
+    "volume": "15 L",
+    "bashing": 10,
+    "category": "veh_parts",
+    "price": "40 USD",
+    "price_postapoc": "1 USD"
+  },
 ]
