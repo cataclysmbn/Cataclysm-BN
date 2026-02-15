@@ -672,7 +672,9 @@ class TileEntryHandler {
 
     if (!entryIds || (!fgLayer && !bgLayer)) {
       console.warn(
-        `skipping empty entry in ${this.filepath}${entryIds ? ` with IDs ${prefix}${entryIds}` : ""}`,
+        `skipping empty entry in ${this.filepath}${
+          entryIds ? ` with IDs ${prefix}${entryIds}` : ""
+        }`,
       )
       return null
     }
@@ -723,8 +725,13 @@ class TileEntryHandler {
   }
 
   convertEntryLayer(
-    entryLayer: number | number[] | Record<string, unknown>[] | Record<string, unknown> | string |
-      string[],
+    entryLayer:
+      | number
+      | number[]
+      | Record<string, unknown>[]
+      | Record<string, unknown>
+      | string
+      | string[],
   ): (number | Record<string, unknown>)[] {
     const output: (number | Record<string, unknown>)[] = []
 
@@ -1080,9 +1087,7 @@ class ExtractionData {
 
   async writeExpansions(): Promise<void> {
     for (const expandEntry of this.tsData.expansions) {
-      const expansionId = Array.isArray(expandEntry.id)
-        ? expandEntry.id[0]
-        : expandEntry.id
+      const expansionId = Array.isArray(expandEntry.id) ? expandEntry.id[0] : expandEntry.id
       if (typeof expansionId !== "string") continue
 
       const expandEntryPathname = join(this.tsDirPathname, `${expansionId}.json`)
@@ -1162,7 +1167,10 @@ class PngRefs {
   lastPngnum = 0
   tsData = new Map<string, TileSheetData>()
 
-  async getAllData(tilesetDirname: string, deletePathname?: string): Promise<Record<string, unknown>> {
+  async getAllData(
+    tilesetDirname: string,
+    deletePathname?: string,
+  ): Promise<Record<string, unknown>> {
     this.tilesetPathname = resolve(tilesetDirname)
 
     try {
@@ -1251,7 +1259,9 @@ class PngRefs {
             if (name) pngnum.sprite = name
           }
           newIndex.push(pngnum)
-        } else if (typeof pngnum === "number" && pngnum >= 0 && !this.deletePngnums.includes(pngnum)) {
+        } else if (
+          typeof pngnum === "number" && pngnum >= 0 && !this.deletePngnums.includes(pngnum)
+        ) {
           const name = this.pngnumToPngname.get(pngnum)
           if (name) newIndex.push(name)
         }
