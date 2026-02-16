@@ -138,7 +138,7 @@ void activity_speed::calc_light_factor( const Character &who, const activity_tar
     const float darkness = ( character_funcs::fine_detail_vision_mod( who ) -
                              character_funcs::FINE_VISION_THRESHOLD ) / 7.0f;
 
-    if( const recipe *const *rec_ptr = std::get_if<const recipe *>( &target ) ) {
+    if( const recipe * const *rec_ptr = std::get_if<const recipe *>( &target ) ) {
         const recipe *rec = *rec_ptr;
         if( rec != nullptr ) {
             if( rec->has_flag( flag_BLIND_EASY ) ) {
