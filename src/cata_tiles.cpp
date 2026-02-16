@@ -821,10 +821,11 @@ static void apply_surf_blend_effect(
                 auto hardlight_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( blend > 127 )
                     {
-                        return std::clamp<uint8_t>( 255 - ( 255 - blend ) * ( ( std::max( 255 - base, 1 ) ) * 255 / 127 ) / 255, 0, 255 );
+                        return std::clamp<uint8_t>( 255 - ( 255 - blend ) * ( ( std::max( 255 - base,
+                                                    1 ) ) * 255 / 127 ) / 255, 0, 255 );
                     } else
                     {
-                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255 , 0, 255 );
+                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
                     }
                 };
                 col = SDL_Color{
@@ -839,10 +840,11 @@ static void apply_surf_blend_effect(
                 auto overlay_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( base > 127 )
                     {
-                        return std::clamp<uint8_t>( 255 - ( std::max( 255 - blend, 1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 );
+                        return std::clamp<uint8_t>( 255 - ( std::max( 255 - blend,
+                                                            1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 );
                     } else
                     {
-                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255 , 0, 255 );
+                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
                     }
                 };
                 col = SDL_Color{
@@ -861,10 +863,11 @@ static void apply_surf_blend_effect(
                 constexpr auto overlay = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( base > 127 )
                     {
-                        return std::clamp<uint8_t>( 255 - ( std::max( 255 - blend, 1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 );
+                        return std::clamp<uint8_t>( 255 - ( std::max( 255 - blend,
+                                                            1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 );
                     } else
                     {
-                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255 , 0, 255 );
+                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
                     }
                 };
 
