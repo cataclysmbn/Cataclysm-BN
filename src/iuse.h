@@ -85,8 +85,8 @@ int throwable_extinguisher_act( player *, item *, bool, const tripoint & );
 int directional_hologram( player *, item *, bool, const tripoint & );
 int capture_monster_veh( player *, item *, bool, const tripoint & );
 int capture_monster_act( player *, item *, bool, const tripoint & );
-int granade( player *, item *, bool, const tripoint & );
-int granade_act( player *, item *, bool, const tripoint & );
+int debug_grenade( player *, item *, bool, const tripoint & );
+int debug_grenade_act( player *, item *, bool, const tripoint & );
 int c4( player *, item *, bool, const tripoint & );
 int arrow_flammable( player *, item *, bool, const tripoint & );
 int acidbomb_act( player *, item *, bool, const tripoint & );
@@ -102,14 +102,12 @@ int pick_lock( player *, item *, bool, const tripoint & );
 int portal( player *, item *, bool, const tripoint & );
 int tazer( player *, item *, bool, const tripoint & );
 int tazer2( player *, item *, bool, const tripoint & );
-int mp3( player *, item *, bool, const tripoint & );
 int mp3_on( player *, item *, bool, const tripoint & );
 int rpgdie( player *, item *, bool, const tripoint & );
 int dive_tank( player *, item *, bool, const tripoint & );
 int gasmask( player *, item *, bool, const tripoint & );
 int portable_game( player *, item *, bool, const tripoint & );
 int vibe( player *, item *, bool, const tripoint & );
-int hand_crank( player *, item *, bool, const tripoint & );
 int vortex( player *, item *, bool, const tripoint & );
 int dog_whistle( player *, item *, bool, const tripoint & );
 int call_of_tindalos( player *, item *, bool, const tripoint & );
@@ -136,6 +134,7 @@ int seed( player *, item *, bool, const tripoint & );
 int oxygen_bottle( player *, item *, bool, const tripoint & );
 int radio_mod( player *, item *, bool, const tripoint & );
 int remove_all_mods( player *, item *, bool, const tripoint & );
+int good_fishing_spot( tripoint );
 int fishing_rod( player *, item *, bool, const tripoint & );
 int fish_trap( player *, item *, bool, const tripoint & );
 int gun_clean( player *, item *, bool, const tripoint & );
@@ -172,6 +171,9 @@ int toggle_ups_charging( player *, item *, bool, const tripoint & );
 int report_grid_charge( player *, item *, bool, const tripoint & );
 int report_grid_connections( player *, item *, bool, const tripoint & );
 int modify_grid_connections( player *, item *, bool, const tripoint & );
+int report_fluid_grid_connections( player *, item *, bool, const tripoint & );
+int modify_fluid_grid_connections( player *, item *, bool, const tripoint & );
+int bullet_vibe_on( player *, item *, bool, const tripoint & );
 
 // MACGUFFINS
 
@@ -180,8 +182,6 @@ int radiocaron( player *, item *, bool, const tripoint & );
 int radiocontrol( player *, item *, bool, const tripoint & );
 
 int autoclave( player *, item *, bool, const tripoint & );
-
-int multicooker( player *, item *, bool, const tripoint & );
 
 int remoteveh( player *, item *, bool, const tripoint & );
 
@@ -293,5 +293,4 @@ struct use_function {
         /** @return Used by @ref item::info to get description of the actor */
         void dump_info( const item &, std::vector<iteminfo> & ) const;
 };
-
 

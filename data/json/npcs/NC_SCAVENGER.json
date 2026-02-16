@@ -27,7 +27,6 @@
       { "item": "colt_python", "prob": 15 },
       { "item": "sw_610", "prob": 30 },
       { "item": "ruger_redhawk", "prob": 5 },
-      { "item": "makarov", "prob": 5 },
       { "item": "m9", "prob": 50 }
     ]
   },

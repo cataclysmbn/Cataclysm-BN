@@ -99,6 +99,7 @@ enum veh_coll_type : int {
     veh_coll_veh,      // 2 - vehicle
     veh_coll_bashable, // 3 - bashable
     veh_coll_other,    // 4 - other
+    veh_coll_veh_nocollide, // 5 - vehicle NOCOLLIDE
     num_veh_coll_types
 };
 
@@ -385,6 +386,7 @@ class vehicle
 {
     private:
         bool has_structural_part( point dp ) const;
+        bool has_structural_or_extendable_part( point dp ) const;
         bool is_structural_part_removed() const;
         void open_or_close( int part_index, bool opening );
         bool is_connected( const vehicle_part &to, const vehicle_part &from,
@@ -399,6 +401,7 @@ class vehicle
         int break_off( int p, int dmg );
         // Returns if it did actually explode
         bool explode_fuel( int p, damage_type type );
+        std::pair<int, int> get_controls_and_security() const;
         //damages vehicle controls and security system
         void smash_security_system();
         // get vpart powerinfo for part number, accounting for variable-sized parts and hps.
@@ -468,7 +471,8 @@ class vehicle
             return find_vehicle( where.raw() );
         }
 
-        vehicle( const vproto_id &type_id, int init_veh_fuel = -1, int init_veh_status = -1 );
+        vehicle( const vproto_id &type_id, int init_veh_fuel = -1, int init_veh_status = -1,
+                 std::optional<bool> locked = std::nullopt, std::optional<bool> has_keys = std::nullopt );
         vehicle();
         ~vehicle();
 
@@ -515,7 +519,9 @@ class vehicle
         bool remote_controlled( const Character &who ) const;
 
         // init parts state for randomly generated vehicle
-        void init_state( int init_veh_fuel, int init_veh_status );
+        void init_state( int init_veh_fuel, int init_veh_status,
+                         std::optional<bool> locked,
+                         std::optional<bool> has_keys );
 
         // damages all parts of a vehicle by a random amount
         void smash( map &m, float hp_percent_loss_min = 0.1f, float hp_percent_loss_max = 1.2f,
@@ -525,7 +531,7 @@ class vehicle
         void deserialize( JsonIn &jsin );
         // Vehicle parts list - all the parts on a single tile
         int print_part_list( const catacurses::window &win, int y1, int max_y, int width, int p,
-                             int hl = -1, bool detail = false ) const;
+                             int hl = -1, bool detail = false, int start_at = 0 ) const;
 
         // Vehicle parts descriptions - descriptions for all the parts on a single tile
         void print_vparts_descs( const catacurses::window &win, int max_y, int width, int p,
@@ -545,38 +551,22 @@ class vehicle
         bool is_owned_by( const Character &c, bool available_to_take = false ) const;
         bool is_old_owner( const Character &c, bool available_to_take = false ) const;
         std::string get_owner_name() const;
-        void set_old_owner( const faction_id &temp_owner ) {
-            theft_time = calendar::turn;
-            old_owner = temp_owner;
-        }
-        void remove_old_owner() {
-            theft_time = std::nullopt;
-            old_owner = faction_id::NULL_ID();
-        }
-        void set_owner( const faction_id &new_owner ) {
-            owner = new_owner;
-        }
+        void set_old_owner( const faction_id &temp_owner );
+        void remove_old_owner();
+        void set_owner( const faction_id &new_owner );
         void set_owner( const Character &c );
-        void remove_owner() {
-            owner = faction_id::NULL_ID();
-        }
-        faction_id get_owner() const {
-            return owner;
-        }
-        faction_id get_old_owner() const {
-            return old_owner;
-        }
-        bool has_owner() const {
-            return !owner.is_null();
-        }
-        bool has_old_owner() const {
-            return !old_owner.is_null();
-        }
+        void remove_owner();
+        faction_id get_owner() const;
+        faction_id get_old_owner() const;
+        bool has_owner() const;
+        bool has_old_owner() const;
         /**
          * Handle potential vehicle theft.
          * @param you Avatar to check against
-         * @param check_only If true, won't prompt to steal and instead will refure to interact
-         * @param prompt Whether to prompt confirmation or proceed with the theft without prompt
+         * @param check_only If true, won't prompt to steal and instead will
+         * refure to interact
+         * @param prompt Whether to prompt confirmation or proceed with the
+         * theft without prompt
          * @return whether the avatar is willing to interact with the vehicle
          */
         bool handle_potential_theft( avatar &you, bool check_only = false, bool prompt = true );
@@ -586,9 +576,7 @@ class vehicle
         void autopilot_patrol();
         units::angle get_angle_from_targ( const tripoint &targ );
         void drive_to_local_target( const tripoint &target, bool follow_protocol );
-        tripoint get_autodrive_target() {
-            return autodrive_local_target;
-        }
+        tripoint get_autodrive_target();
         // Drive automatically towards some destination for one turn.
         autodrive_result do_autodrive( Character &driver );
         // Stop any kind of automatic vehicle control and apply the brakes.
@@ -743,6 +731,13 @@ class vehicle
          *  @returns true if part is found
          */
         bool has_part( const std::string &flag, bool enabled = false ) const;
+        /**
+         *  Check if vehicle has at least one unbroken part with specified flag
+         *  @param flag Specified flag to search parts for
+         *  @param enabled if set part must also be enabled to be considered
+         *  @returns true if part is found
+         */
+        bool has_part( const vpart_bitflags &flag, bool enabled = false ) const;
 
         /**
          *  Check if vehicle has at least one unbroken part with specified flag
@@ -789,7 +784,7 @@ class vehicle
          *  @return part index or -1 if no part
          */
         int next_part_to_close( int p, bool outside = false ) const;
-
+        std::vector<int> all_standalone_parts() const;
         // returns indices of all parts in the given location slot
         std::vector<int> all_parts_at_location( const std::string &location ) const;
         // shifts an index to next available of that type for NPC activities
@@ -976,6 +971,8 @@ class vehicle
         // vehicle motion after precalc[1] is prepared.
         point pivot_displacement() const;
 
+        // Get combined power of all engines, the ideal amount of power, not the current power
+        int ideal_engine_power( bool safe = false ) const;
         // Get combined power of all engines. If fueled == true, then only engines which
         // vehicle have fuel for are accounted.  If safe == true, then limit engine power to
         // their safe power.
@@ -983,13 +980,14 @@ class vehicle
 
         // Get ground acceleration gained by combined power of all engines. If fueled == true,
         // then only engines which the vehicle has fuel for are included
-        int ground_acceleration( bool fueled = true, int at_vel_in_vmi = -1 ) const;
+        int ground_acceleration( bool fueled = true, int at_vel_in_vmi = -1, bool ideal = false ) const;
         // Get water acceleration gained by combined power of all engines. If fueled == true,
         // then only engines which the vehicle has fuel for are included
-        int water_acceleration( bool fueled = true, int at_vel_in_vmi = -1 ) const;
+        int water_acceleration( bool fueled = true, int at_vel_in_vmi = -1, bool ideal = false ) const;
         // get air acceleration gained by combined power of all engines. If fueled == true,
         // then only engines which the vehicle hs fuel for are included
-        int rotor_acceleration( bool fueled = true, int at_vel_in_vmi = -1 ) const;
+        int aircraft_acceleration( bool fueled = true, int at_vel_in_vmi = -1, bool ideal = false ) const;
+
         // Get acceleration for the current movement mode
         int acceleration( bool fueled = true, int at_vel_in_vmi = -1 ) const;
 
@@ -1004,26 +1002,26 @@ class vehicle
 
         // Get maximum ground velocity gained by combined power of all engines.
         // If fueled == true, then only the engines which the vehicle has fuel for are included
-        int max_ground_velocity( bool fueled = true ) const;
+        int max_ground_velocity( bool fueled = true, bool ideal = false ) const;
         // Get maximum water velocity gained by combined power of all engines.
         // If fueled == true, then only the engines which the vehicle has fuel for are included
-        int max_water_velocity( bool fueled = true ) const;
+        int max_water_velocity( bool fueled = true, bool ideal = false ) const;
         // get maximum air velocity based on rotor physics
-        int max_rotor_velocity( bool fueled = true ) const;
+        int max_air_velocity( bool fueled = true, bool ideal = false ) const;
         // Get maximum velocity for the current movement mode
-        int max_velocity( bool fueled = true ) const;
+        int max_velocity( bool fueled = true, bool ideal = false ) const;
         // Get maximum reverse velocity for the current movement mode
-        int max_reverse_velocity( bool fueled = true ) const;
+        int max_reverse_velocity( bool fueled = true, bool ideal = false ) const;
 
         // Get safe ground velocity gained by combined power of all engines.
         // If fueled == true, then only the engines which the vehicle has fuel for are included
-        int safe_ground_velocity( bool fueled = true ) const;
+        int safe_ground_velocity( bool fueled = true, bool ideal = false ) const;
         // get safe air velocity gained by combined power of all engines.
         // if fueled == true, then only the engines which the vehicle hs fuel for are included
-        int safe_rotor_velocity( bool fueled = true ) const;
+        int safe_aircraft_velocity( bool fueled = true, bool ideal = false ) const;
         // Get safe water velocity gained by combined power of all engines.
         // If fueled == true, then only the engines which the vehicle has fuel for are included
-        int safe_water_velocity( bool fueled = true ) const;
+        int safe_water_velocity( bool fueled = true, bool ideal = false ) const;
         // Get maximum velocity for the current movement mode
         int safe_velocity( bool fueled = true ) const;
 
@@ -1105,18 +1103,56 @@ class vehicle
         bool is_in_water( bool deep_water = false ) const;
         bool is_watercraft() const;
         /**
-         * is the vehicle flying? is it a rotorcraft?
+         * is the vehicle flying? is it an aircraft?
+         */
+        bool is_aircraft() const;
+        /**
+         * does the vehicle use rotors?
          */
         bool is_rotorcraft() const;
+        /**
+         * does the vehicle have lift-generating parts?
+         */
+        bool has_lift() const;
         /**
          * total area of every rotors in m^2
          */
         double total_rotor_area() const;
         /**
+         * lift of balloons in newtons
+         */
+        double total_balloon_lift() const;
+        /**
+         * lift from wings in newtons
+         */
+        double total_wing_lift() const;
+        /**
+         * speed needed for aircraft takeoff
+         */
+        int get_takeoff_speed() const;
+        /**
+         * total area of every propeller in m^2
+         */
+        double total_propeller_area() const;
+        /**
          * lift of rotorcraft in newton
          */
-        double lift_thrust_of_rotorcraft( bool fuelled, bool safe = false ) const;
-        bool has_sufficient_rotorlift() const;
+        double thrust_of_rotorcraft( bool fuelled, bool safe = false, bool ideal = false ) const;
+        /**
+         * foward thrust of propellers in newtons
+         */
+        double foward_thrust_of_propellers( bool fuelled, bool safe = false, bool ideal = false ) const;
+        /**
+         * total foward thrust of all airborn pushers
+         */
+        double total_thrust( bool fuelled, bool safe = false, bool ideal = false ) const;
+        /**
+         * total lift of all lifters
+         */
+        double total_lift( bool fuelled, bool safe = false, bool ideal = false,
+                           bool unpowered = false ) const;
+        bool has_sufficient_lift( bool unpowered = false ) const;
+        double get_lift_percent( bool unpowered = false ) const;
         int get_z_change() const;
         bool is_flying_in_air() const;
         void set_flying( bool new_flying_value );
@@ -1360,6 +1396,20 @@ class vehicle
         // Be aware this will not consider damage to more outside parts such as inner parts protected by an outer wall, only armor effects are considered
         unsigned int hits_to_destroy( int p, int dmg, damage_type type ) const;
 
+        /**
+         * @name Vehicle Droppers
+         *
+         *@{*/
+
+        vehicle_part *get_cargo_part( vehicle_part *part );
+
+        bool has_item_stored( vehicle_part *part );
+
+        void item_dropper_drop( std::vector<vehicle_part *> droppers, bool single );
+
+        void item_dropper_drop_all();
+
+        void item_dropper_drop_single( bool single );
     private:
         /*
          * Find all turrets that are ready to fire.
@@ -1535,12 +1585,12 @@ class vehicle
         // Process vehicle emitters
         void process_emitters();
 
+    private:
         // The faction that owns this vehicle.
         faction_id owner = faction_id::NULL_ID();
         // The faction that previously owned this vehicle
         faction_id old_owner = faction_id::NULL_ID();
 
-    private:
         mutable double coefficient_air_resistance = 1;
         mutable double coefficient_rolling_resistance = 1;
         mutable double coefficient_water_resistance = 1;
@@ -1571,7 +1621,7 @@ class vehicle
         std::vector<int> engines;          // List of engine indices
         std::vector<int> reactors;         // List of reactor indices
         std::vector<int> solar_panels;     // List of solar panel indices
-        std::vector<int> wind_turbines;     // List of wind turbine indices
+        std::vector<int> wind_turbines;    // List of wind turbine indices
         std::vector<int> water_wheels;     // List of water wheel indices
         std::vector<int> sails;            // List of sail indices
         std::vector<int> funnels;          // List of funnel indices
@@ -1579,8 +1629,12 @@ class vehicle
         std::vector<int> loose_parts;      // List of UNMOUNT_ON_MOVE parts
         std::vector<int> wheelcache;       // List of wheels
         std::vector<int> rotors;           // List of rotors
+        std::vector<int> balloons;         // List of balloons
+        std::vector<int> wings;            // List of wings
+        std::vector<int> propellers;       // List of propellerrs
         std::vector<int> rail_wheelcache;  // List of rail wheels
         std::vector<int> steering;         // List of STEERABLE parts
+        std::vector<int> droppers;         // List of droppers
         // List of parts that will not be on a vehicle very often, or which only one will be present
         std::vector<int> speciality;
         std::vector<int> floating;         // List of parts that provide buoyancy to boats
@@ -1711,6 +1765,7 @@ class vehicle
         // direction we are moving
         tileray move;
 
+
     private:
         bool no_refresh = false;
 
@@ -1735,7 +1790,6 @@ class vehicle
         // is the vehicle currently flying
         mutable bool is_flying = false;
         int requested_z_change = 0;
-
         // is the vehicle currently placed on the map
         bool attached = false;
 

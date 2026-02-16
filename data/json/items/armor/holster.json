@@ -42,7 +42,7 @@
     "coverage": 5,
     "encumbrance": 2,
     "material_thickness": 1,
-    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ],
+    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES" ],
     "use_action": {
       "type": "holster",
       "max_volume": "500 ml",
@@ -122,10 +122,10 @@
       "type": "holster",
       "max_volume": "1 L",
       "min_volume": "250 ml",
-      "skills": [ "pistol", "smg", "shotgun", "rifle" ],
+      "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ],
       "flags": [ "HOLSTER_PISTOL" ]
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "sholster",
@@ -166,8 +166,8 @@
       "skills": [ "pistol" ],
       "flags": [ "HOLSTER_PISTOL" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "SKINTIGHT", "COMPACT", "WATER_FRIENDLY" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "SKINTIGHT", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
   },
   {
     "id": "shoulder_holster",
@@ -186,7 +186,7 @@
     "id": "survivor_vest",
     "type": "ARMOR",
     "name": { "str": "survivor harness", "str_pl": "survivor harnesses" },
-    "description": "A custom-built light harness covered with pouches and including an integral tactical sling for a small rifle or other such weapon.  Durable and carefully crafted to be comfortable to wear.  Activate to holster/draw your weapon.",
+    "description": "A custom-built light harness covered with pouches and including a few integral tactical slings for firearms, magazines, and field tools.  Durable and carefully crafted to be comfortable to wear.  Activate to holster/draw your weapon.",
     "weight": "320 g",
     "volume": "1250 ml",
     "price": "200 USD",
@@ -197,12 +197,22 @@
     "color": "green",
     "covers": [ "torso" ],
     "coverage": 20,
-    "encumbrance": 4,
+    "encumbrance": 5,
     "storage": "3 L",
     "material_thickness": 2,
-    "use_action": { "type": "holster", "max_volume": "3750 ml", "min_volume": "1250 ml", "skills": [ "smg", "shotgun", "rifle" ] },
-    "valid_mods": [ "steel_padded", "alloy_padded", "resized_large" ],
-    "flags": [ "WATER_FRIENDLY", "STURDY", "WAIST", "COMPACT" ]
+    "use_action": {
+      "type": "holster",
+      "holster_prompt": "Stow equipment",
+      "holster_msg": "You stow your %s",
+      "min_volume": "250ml",
+      "max_volume": "3750ml",
+      "multi": 4,
+      "draw_cost": 120,
+      "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "SHEATH_AXE", "MAG_COMPACT", "MAG_BULKY", "MAG_BELT", "SPEEDLOADER", "BELT_CLIP" ],
+      "skills": [ "smg", "shotgun", "rifle", "launcher", "pistol" ]
+    },
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
+    "flags": [ "WATER_FRIENDLY", "STURDY", "WAIST", "COMPACT", "ALLOWS_WINGS" ]
   },
   {
     "id": "baldric_holster",
@@ -230,7 +240,7 @@
       "skills": [ "pistol" ],
       "flags": [ "HOLSTER_PISTOL" ]
     },
-    "flags": [ "BELTED", "COMPACT" ]
+    "flags": [ "BELTED", "COMPACT", "ALLOWS_WINGS" ]
   },
   {
     "id": "XL_holster",
@@ -253,9 +263,9 @@
       "type": "holster",
       "min_volume": "750 ml",
       "max_volume": "1500 ml",
-      "skills": [ "pistol", "smg", "shotgun", "rifle" ],
+      "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ],
       "flags": [ "HOLSTER_PISTOL" ]
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
   }
 ]

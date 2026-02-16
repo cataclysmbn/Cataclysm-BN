@@ -1,0 +1,72 @@
+[
+  {
+    "id": "chunk_copper",
+    "type": "MIGRATION",
+    "replace": "copper_ore"
+  },
+  {
+    "id": "chunk_silver",
+    "type": "MIGRATION",
+    "replace": "silver_ore"
+  },
+  {
+    "id": "chunk_gold",
+    "type": "MIGRATION",
+    "replace": "gold_small"
+  },
+  {
+    "id": "chunk_aluminum",
+    "type": "MIGRATION",
+    "replace": "material_aluminium_ingot"
+  },
+  {
+    "id": "chunk_cassiterite",
+    "type": "MIGRATION",
+    "replace": "tin_ore"
+  },
+  {
+    "id": "chunk_galena",
+    "type": "MIGRATION",
+    "replace": "lead_ore"
+  },
+  {
+    "id": "chunk_hematite",
+    "type": "MIGRATION",
+    "replace": "iron_ore"
+  },
+  {
+    "id": "chunk_cinnabar",
+    "type": "MIGRATION",
+    "replace": "iron_ore"
+  },
+  {
+    "type": "recipe",
+    "result": "copper",
+    "id_suffix": "native",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "platinum_small",
+    "id_suffix": "smelt",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "silver_small",
+    "id_suffix": "native",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "gold_small",
+    "id_suffix": "native",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "material_aluminium_ingot",
+    "id_suffix": "native",
+    "obsolete": true
+  }
+]

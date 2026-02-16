@@ -161,7 +161,7 @@
     "time": "210 m",
     "autolearn": true,
     "using": [ [ "sewing_standard", 30 ] ],
-    "components": [ [ [ "duct_tape", 350 ] ], [ [ "bag_plastic", 70 ] ], [ [ "fabric_standard", 70, "LIST" ] ] ]
+    "components": [ [ [ "duct_tape", 350 ] ], [ [ "bag_plastic", 70 ], [ "bag_zipper", 70 ] ], [ [ "fabric_standard", 70, "LIST" ] ] ]
   },
   {
     "result": "superalloy_armor_medium_quadruped",

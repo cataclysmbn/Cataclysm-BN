@@ -896,6 +896,7 @@ layout each connection point will be linked to the closest connection of same ty
 | `terrain`    | `overmap_terrain` to be placed when the placement location matches `locations`.                            |
 | `locations`  | List of `overmap_location` that this subtype applies to. Can be empty; signifies `terrain` is valid as is. |
 | `basic_cost` | Cost of this subtype when pathfinding a route. Default 0.                                                  |
+| `weight`     | Weight of the item appearing over other items. Default 0.                                                  |
 | `flags`      | See `Overmap connections` in [json_flags.md](../json_flags).                                               |
 
 ## Overmap Location

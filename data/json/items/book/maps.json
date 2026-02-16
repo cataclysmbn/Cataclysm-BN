@@ -90,10 +90,12 @@
         "hiway",
         "road",
         "bridge",
+        "dam",
         "fema_entrance",
         "bunker",
         "helipad",
         "outpost",
+        "mil_base",
         { "om_terrain": "silo", "om_terrain_match_type": "TYPE" },
         { "om_terrain": "shelter", "om_terrain_match_type": "TYPE" },
         "police",
@@ -116,6 +118,7 @@
         "hiway",
         "road",
         "bridge",
+        "dam",
         "s_pharm",
         "s_gun",
         "s_grocery",
@@ -144,6 +147,7 @@
         "hiway",
         "road",
         "bridge",
+        "dam",
         { "om_terrain": "shelter", "om_terrain_match_type": "TYPE" },
         "hospital",
         "school",
@@ -170,6 +174,42 @@
     }
   },
   {
+    "id": "sewermap",
+    "copy-from": "abstractmap",
+    "type": "GENERIC",
+    "name": "sewer maintenance map",
+    "looks_like": "roadmap",
+    "description": "This is a map of sewer tunnels formerly used by public maintenance workers.  Using it will add sewer systems to your map.",
+    "color": "light_blue",
+    "use_action": {
+      "type": "reveal_map",
+      "radius": 180,
+      "terrain": [ "sewer", "sewer_straight", "sewer_curved", "sewer_tee", "sewer_end" ],
+      "message": "You add the local sewer systems to your map."
+    }
+  },
+  {
+    "id": "cavemap",
+    "copy-from": "abstractmap",
+    "type": "GENERIC",
+    "name": "spelunker's map",
+    "looks_like": "roadmap",
+    "description": "This is a handmade map of local caving spots, some requiring trespassing.  There's probably bigger worries than that now, though.",
+    "color": "light_blue",
+    "use_action": {
+      "type": "reveal_map",
+      "radius": 180,
+      "terrain": [
+        "cave",
+        "cave_rat_underground",
+        "cave_rat",
+        "cave_underground",
+        { "om_terrain": "mine", "om_terrain_match_type": "PREFIX" }
+      ],
+      "message": "You mark potential entry points and underground routes in the margins of your map."
+    }
+  },
+  {
     "id": "trailmap",
     "copy-from": "abstractmap",
     "type": "GENERIC",
@@ -193,7 +233,18 @@
     "use_action": {
       "type": "reveal_map",
       "radius": 180,
-      "terrain": [ "hiway", "road", "bridge", "hotel_tower", "s_restaurant", "cathedral", "s_restaurant_fast", "megastore", "museum" ],
+      "terrain": [
+        "hiway",
+        "road",
+        "bridge",
+        "dam",
+        "hotel_tower",
+        "s_restaurant",
+        "cathedral",
+        "s_restaurant_fast",
+        "megastore",
+        "museum"
+      ],
       "message": "You add roads and tourist attractions to your map."
     }
   },
@@ -211,6 +262,7 @@
         "hiway",
         "road",
         "bridge",
+        "dam",
         "s_restaurant_coffee",
         "s_restaurant",
         { "om_terrain": "bar", "om_terrain_match_type": "TYPE" },
@@ -236,6 +288,7 @@
         "river_shore",
         "river_center",
         "bridge_under",
+        "dam_under",
         "railroad_bridge",
         "lake_shore",
         "lake_surface",
@@ -249,6 +302,60 @@
         "prison_alcatraz"
       ],
       "message": "You add local waterways and notable features on the shore to your map."
+    }
+  },
+  {
+    "id": "urbexmap",
+    "copy-from": "abstractmap",
+    "type": "GENERIC",
+    "name": { "str": "urban explorer's map" },
+    "description": "This is a printout of a local road map, with several buildings circled in red.  Using it will add roads and abandoned buildings to your map.",
+    "color": "white",
+    "use_action": {
+      "type": "reveal_map",
+      "radius": 180,
+      "terrain": [
+        "hiway",
+        "road",
+        "bridge",
+        "dam",
+        "desolatebarn",
+        "shoppingplaza",
+        { "om_terrain": "office_tower_collapse_a2", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "office_tower_collapse_b_a2", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "office_tower_collapse_a0", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "office_tower_collapse_b0", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "office_tower_collapse_b1", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "office_tower_collapse_b2", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "office_tower_collapse_b_a0", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "office_tower_collapse_b_b0", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "office_tower_collapse_b_b1", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "office_tower_collapse_b_b2", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "abandonedwarehouse", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "abstorefront", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "derelict_property", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "abandoned_textile_mill_0_1", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "abandoned_textile_mill_0_2", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "abandoned_textile_mill_0_3", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "abandoned_textile_mill_b_0_1", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "abandoned_textile_mill_b_0_2", "om_terrain_match_type": "TYPE" },
+        { "om_terrain": "homelesscamp", "om_terrain_match_type": "TYPE" }
+      ],
+      "message": "You add roads and abandoned buildings to your map."
+    }
+  },
+  {
+    "id": "satellitemap",
+    "copy-from": "abstractmap",
+    "type": "GENERIC",
+    "name": { "str": "satellite map" },
+    "description": "This is a printed satellite map of the local area.  Due to it's low quality and lack of map legend, you are unable to recognise most buildings.  Using it will add terrain and roads to your map.",
+    "color": "light_gray",
+    "use_action": {
+      "type": "reveal_map",
+      "radius": 90,
+      "terrain": [ "hiway", "road", "bridge", "dam", "field", "swamp", "forest", "lake", "river" ],
+      "message": "You add terrain and roads to your map."
     }
   }
 ]

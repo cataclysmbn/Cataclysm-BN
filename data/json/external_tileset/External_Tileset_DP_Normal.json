@@ -15,7 +15,7 @@
           { "id": [ "overlay_worn_shield_wooden_large", "overlay_wielded_shield_wooden_large" ], "fg": 6 },
           { "id": "shield_riot", "fg": 7 },
           { "id": [ "overlay_worn_shield_riot", "overlay_wielded_shield_riot" ], "fg": 8 },
-          { "id": "shield_ballistic", "fg": 9 },
+          { "id": [ "shield_ballistic", "shield_ballistic_large" ], "fg": 9 },
           { "id": [ "overlay_worn_shield_ballistic", "overlay_worn_shield_ballistic" ], "fg": 10 },
           { "id": "sling_bullet", "fg": 11 },
           { "id": "shield_leather", "fg": 12 },
@@ -126,7 +126,7 @@
           { "id": "iron_ore", "fg": 111 },
           { "id": "m1874_gatling", "fg": 112 },
           { "id": "overlay_wielded_m1874_gatling", "fg": 113 },
-          { "id": "vp_mounted_m1874_gatling", "fg": 114 },
+          { "id": "vp_mounted_m1874_gatling", "fg": 114, "rotates": true },
           { "id": "mon_zombie_acid_mortar", "fg": 115 },
           { "id": "corpse_mon_zombie_acid_mortar", "fg": 116 },
           { "id": "mon_zombie_acid_spawner", "fg": 117 },
@@ -169,7 +169,103 @@
           { "id": [ "sea_scooter", "overlay_wielded_sea_scooter" ], "fg": 144 },
           { "id": "vp_sea_scooter_hull", "fg": 145 },
           { "id": "mon_skeleton_necro", "fg": 146 },
-          { "id": "mon_skeleton_master", "fg": 147 }
+          { "id": "mon_skeleton_master", "fg": 147 },
+          { "id": "pulley_crane_small_wood", "fg": 148 },
+          { "id": "vp_crane_small_wood", "fg": 149, "rotates": true },
+          { "id": [ "overlay_female_mutation_TAIL_SNAKE", "overlay_female_mutation_TAIL_SNAKE_OK" ], "fg": 150 },
+          { "id": [ "overlay_male_mutation_TAIL_SNAKE", "overlay_male_mutation_TAIL_SNAKE_OK" ], "fg": 151 },
+          { "id": "overlay_worn_stockings_snake_tail", "fg": 152 },
+          { "id": "helmet_conical", "fg": 153 },
+          { "id": "f_cave_mushrooms", "fg": 154 },
+          {
+            "id": [
+              "vp_wing_metal_horizontal",
+              "vp_lit_wing_metal_horizontal",
+              "vp_wing_metal_external_horizontal",
+              "vp_lit_wing_metal_external_horizontal"
+            ],
+            "fg": 155,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 156 } ]
+          },
+          {
+            "id": [ "vp_wing_metal_left", "vp_lit_wing_metal_left", "vp_wing_metal_external_left", "vp_lit_wing_metal_external_left" ],
+            "fg": 157,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 158 } ]
+          },
+          {
+            "id": [ "vp_wing_metal_right", "vp_lit_wing_metal_right", "vp_wing_metal_external_right", "vp_lit_wing_metal_external_right" ],
+            "fg": 159,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 160 } ]
+          },
+          {
+            "id": [ "vp_propeller_metal", "vp_propeller_wood" ],
+            "fg": 161,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 162 } ]
+          },
+          {
+            "id": "vp_airship_balloon",
+            "fg": 163,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 164 } ]
+          },
+          { "id": "shield_targe_wooden", "fg": 165 },
+          { "id": [ "overlay_worn_shield_targe_wooden", "overlay_wielded_shield_targe_wooden" ], "fg": 166 },
+          { "id": "shield_bronze", "fg": 167 },
+          { "id": [ "overlay_worn_shield_bronze", "overlay_wielded_shield_bronze" ], "fg": 168 },
+          { "id": "shield_scute", "fg": 169 },
+          { "id": [ "overlay_worn_shield_scute", "overlay_wielded_shield_scute" ], "fg": 170 },
+          { "id": [ "overlay_worn_shield_ballistic_large", "overlay_worn_shield_ballistic_large" ], "fg": 171 },
+          {
+            "id": [
+              "vp_mounted_huge_crossbow",
+              "vp_mounted_rep_crossbow",
+              "vp_mounted_carbon_rep_crossbow",
+              "vp_mounted_launcher_ballista"
+            ],
+            "fg": 172,
+            "rotates": true
+          },
+          { "id": "bat_metal_bolted", "fg": 173 },
+          { "id": "overlay_wielded_bat_metal_bolted", "fg": 174 },
+          { "id": "ar10", "fg": 176 },
+          { "id": "overlay_wielded_ar10", "fg": 177 },
+          { "id": [ "overlay_wielded_saiga_12", "overlay_wielded_saiga_410" ], "fg": 179 },
+          {
+            "id": [
+              "vp_wing_wood_horizontal",
+              "vp_lit_wing_wood_horizontal",
+              "vp_wing_wood_external_horizontal",
+              "vp_lit_wing_wood_external_horizontal"
+            ],
+            "fg": 180,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 181 } ]
+          },
+          {
+            "id": [ "vp_wing_wood_left", "vp_lit_wing_wood_left", "vp_wing_wood_external_left", "vp_lit_wing_wood_external_left" ],
+            "fg": 182,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 183 } ]
+          },
+          {
+            "id": [ "vp_wing_wood_right", "vp_lit_wing_wood_right", "vp_wing_wood_external_right", "vp_lit_wing_wood_external_right" ],
+            "fg": 184,
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "fg": 185 } ]
+          },
+          { "id": "f_rain_collector_plumbed", "fg": 186 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

@@ -1,0 +1,66 @@
+[
+  {
+    "id": "portable_planter_l",
+    "type": "TOOL",
+    "name": { "str": "POWER-GRO planter MK-II" },
+    "description": "The POWER-GRO planter MK-II is the ultimate solution for indoors growing. A whole farm right at your kitchen.\nBy reading this label you agree that POWER-GRO is not liable for any radiation related incidents, and waive any rights to sue POWER-GRO.\nConsumes up to 5 seeds and 5 units of fertilizer per use.",
+    "category": "tools_farming",
+    "weight": "50 kg",
+    "volume": "75 L",
+    "price": "1000 USD",
+    "price_postapoc": "1000 USD",
+    "material": [ "steel" ],
+    "flags": [ "NO_SALVAGE", "LEAK_DAM", "RADIOACTIVE", "ALLOWS_REMOTE_USE" ],
+    "symbol": ")",
+    "color": "blue",
+    "ammo": [ "plant_fertilizer" ],
+    "looks_like": "plastic_pot_flower",
+    "initial_charges": 0,
+    "max_charges": 60,
+    "use_action": {
+      "type": "flowerpot_plant",
+      "growth_rate": 1.5,
+      "harvest_mult": 2,
+      "seeds_per_use": [ 1, 5 ],
+      "fert_per_use": [ 0, 5 ],
+      "fert_boost": 0.1,
+      "terrain": [ "PLANTABLE", "SHALLOW_WATER", "MUSHROOM_PLANTABLE" ],
+      "stages": [
+        "portable_planter_l",
+        "portable_planter_l_seed",
+        "portable_planter_l_seedling",
+        "portable_planter_l_mature",
+        "portable_planter_l_harvest"
+      ]
+    }
+  },
+  {
+    "id": "portable_planter_l_seed",
+    "type": "TOOL",
+    "name": { "str": "POWER-GRO planter MK-II (seed)" },
+    "description": "The POWER-GRO planter MK-II is the ultimate solution for indoors growing. A whole farm right at your kitchen.\nBy reading this label you agree that POWER-GRO is not liable for any radiation related incidents, and waive any rights to sue POWER-GRO.\nThis one has a seed in it.",
+    "copy-from": "portable_planter_l",
+    "extend": { "flags": [ "LIGHT_8" ] }
+  },
+  {
+    "id": "portable_planter_l_seedling",
+    "type": "TOOL",
+    "name": { "str": "POWER-GRO planter MK-II (seedling)" },
+    "description": "The POWER-GRO planter MK-II is the ultimate solution for indoors growing. A whole farm right at your kitchen.\nBy reading this label you agree that POWER-GRO is not liable for any radiation related incidents, and waive any rights to sue POWER-GRO.\nThe seed is sprouting.",
+    "copy-from": "portable_planter_l_seed"
+  },
+  {
+    "id": "portable_planter_l_mature",
+    "type": "TOOL",
+    "name": { "str": "POWER-GRO planter MK-II (mature)" },
+    "description": "The POWER-GRO planter MK-II is the ultimate solution for indoors growing. A whole farm right at your kitchen.\nBy reading this label you agree that POWER-GRO is not liable for any radiation related incidents, and waive any rights to sue POWER-GRO.\nShould bear fruit soon.",
+    "copy-from": "portable_planter_l_seedling"
+  },
+  {
+    "id": "portable_planter_l_harvest",
+    "type": "TOOL",
+    "name": { "str": "POWER-GRO planter MK-II (harvest)" },
+    "description": "The POWER-GRO planter MK-II is the ultimate solution for indoors growing. A whole farm right at your kitchen.\nBy reading this label you agree that POWER-GRO is not liable for any radiation related incidents, and waive any rights to sue POWER-GRO.\nFresh produce right at your fingertips.",
+    "copy-from": "portable_planter_l_mature"
+  }
+]

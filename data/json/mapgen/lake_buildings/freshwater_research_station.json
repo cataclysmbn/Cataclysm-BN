@@ -215,7 +215,7 @@
         "@": { "item": "bed", "chance": 70 },
         "C": [ { "item": "tools_science", "chance": 20 }, { "item": "tools_common", "chance": 60 } ],
         "c": [
-          { "item": "SUS_utensils", "chance": 40 },
+          { "item": "SUS_kitchen_misc", "chance": 40 },
           { "item": "SUS_cookware", "chance": 40 },
           { "item": "SUS_knife_drawer", "chance": 30 }
         ],

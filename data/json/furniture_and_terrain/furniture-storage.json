@@ -628,7 +628,7 @@
     "required_str": 4,
     "flags": [ "TRANSPARENT", "FLAMMABLE", "PLACE_ITEM", "BLOCKSDOOR", "MOUNTABLE" ],
     "deconstruct": { "items": [ { "item": "nail", "charges": 8 }, { "item": "2x4", "count": 3 } ] },
-    "max_volume": "30 L",
+    "max_volume": "100 L",
     "bash": {
       "str_min": 6,
       "str_max": 30,
@@ -1059,6 +1059,24 @@
   },
   {
     "type": "furniture",
+    "id": "f_standing_tank_plumbed",
+    "copy-from": "f_standing_tank",
+    "name": "standing tank (plumbed)",
+    "description": "A large freestanding metal tank hooked into a fluid grid.",
+    "symbol": "O",
+    "color": "light_gray",
+    "keg_capacity": 1200,
+    "fluid_grid": {
+      "role": "tank",
+      "allow_input": true,
+      "allow_output": true,
+      "allowed_liquids": [ "water", "water_clean" ],
+      "disconnected_variant": "f_standing_tank",
+      "use_keg_capacity": true
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_clay_storage",
     "looks_like": "f_standing_tank",
     "name": "clay water pots",
@@ -1138,9 +1156,37 @@
   },
   {
     "type": "furniture",
+    "id": "f_atomic_butter_churn",
+    "name": "atomic butter churn on a stand",
+    "description": "The Rivtech Atomic Butter Churn in deployed state.  It hums menacingly.  Ready to add raw milk and salt.  It will churn till the earth is a cinder.",
+    "symbol": "H",
+    "color": "light_green",
+    "crafting_pseudo_item": "atomic_pseudo_churn",
+    "move_cost_mod": -1,
+    "coverage": 70,
+    "required_str": -1,
+    "flags": [ "NOITEM", "SEALED", "ALLOW_FIELD_EFFECT", "TRANSPARENT", "EASY_DECONSTRUCT", "CONTAINER", "LIQUIDCONT" ],
+    "deconstruct": { "items": [ { "item": "atomic_butterchurn", "count": 1 } ] },
+    "examine_action": "keg",
+    "keg_capacity": 45,
+    "bash": {
+      "str_min": 12,
+      "str_max": 50,
+      "sound": "smash!",
+      "sound_fail": "whump.",
+      "items": [
+        { "item": "plastic_chunk", "count": [ 6, 8 ] },
+        { "item": "water_faucet", "prob": 50 },
+        { "item": "sheet_metal_small", "count": [ 6, 12 ] },
+        { "item": "scrap", "count": [ 10, 20 ] }
+      ]
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_foot_locker",
     "name": "metal foot locker",
-    "description": "An metal storage box, capable of holding any number of things.  The lid has has a small lock.",
+    "description": "A metal storage box, capable of holding any number of things.  The lid has has a small lock.",
     "symbol": "O",
     "color": "white",
     "move_cost_mod": 2,
@@ -1163,6 +1209,39 @@
         { "item": "hinge", "charges": 2 }
       ],
       "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 40, "block_unaimed_chance": "25%" }
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_chest",
+    "copy-from": "f_crate_o",
+    "name": "wooden chest",
+    "description": "A nice big wooden box with a hinged lid, to store all manner of things in.",
+    "symbol": "O",
+    "color": "brown",
+    "looks_like": "f_foot_locker",
+    "deconstruct": {
+      "items": [
+        { "item": "2x4", "count": 10 },
+        { "item": "wood_panel", "count": 2 },
+        { "item": "nail", "charges": 20 },
+        { "item": "lock", "count": 1 },
+        { "item": "hinge", "charges": 2 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 40,
+      "sound": "smash!",
+      "sound_fail": "wham!",
+      "items": [
+        { "item": "2x4", "count": [ 8, 12 ] },
+        { "item": "nail", "charges": [ 8, 14 ] },
+        { "item": "splinter", "count": [ 4, 10 ] },
+        { "item": "hinge", "count": [ 0, 2 ] },
+        { "item": "scrap", "count": [ 1, 2 ] }
+      ],
+      "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 40, "block_unaimed_chance": "50%" }
     }
   }
 ]

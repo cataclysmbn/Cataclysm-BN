@@ -28,7 +28,7 @@
     "price": "100 USD",
     "price_postapoc": "5 USD",
     "to_hit": -3,
-    "material": [ "neoprene", "cotton" ],
+    "material": [ "neoprene", "nylon" ],
     "symbol": "[",
     "looks_like": "wetsuit_spring",
     "color": "dark_gray",
@@ -50,7 +50,7 @@
     "volume": "1 L",
     "price": "45 USD",
     "price_postapoc": "250 cent",
-    "material": [ "neoprene", "cotton" ],
+    "material": [ "neoprene", "nylon" ],
     "symbol": "[",
     "looks_like": "hood_rain",
     "color": "dark_gray",
@@ -73,7 +73,7 @@
     "price_postapoc": "15 USD",
     "to_hit": -1,
     "bashing": 10,
-    "material": [ "kevlar", "plastic", "neoprene" ],
+    "material": [ "kevlar", "nylon", "neoprene" ],
     "symbol": "[",
     "looks_like": "wetsuit_hood",
     "color": "dark_gray",
@@ -96,7 +96,7 @@
     "price_postapoc": "50 USD",
     "to_hit": -3,
     "bashing": 6,
-    "material": [ "kevlar", "plastic", "neoprene" ],
+    "material": [ "kevlar", "nylon", "neoprene" ],
     "symbol": "[",
     "looks_like": "wetsuit",
     "color": "dark_gray",
@@ -108,7 +108,7 @@
     "material_thickness": 4,
     "environmental_protection": 10,
     "resistance": { "bullet": 25 },
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "POCKETS", "HOOD", "RAINPROOF", "STURDY" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "POCKETS", "HOOD", "RAINPROOF", "STURDY", "ALLOWS_WINGS" ]
   },
   {
     "id": "gloves_h20survivor",
@@ -120,7 +120,7 @@
     "price": "180 USD",
     "price_postapoc": "20 USD",
     "to_hit": 2,
-    "material": [ "kevlar", "plastic", "neoprene" ],
+    "material": [ "kevlar", "nylon", "neoprene" ],
     "symbol": "[",
     "looks_like": "gloves_rubber",
     "color": "dark_gray",
@@ -142,7 +142,7 @@
     "price": "120 USD",
     "price_postapoc": "5 USD",
     "to_hit": -3,
-    "material": [ "neoprene", "cotton" ],
+    "material": [ "neoprene", "nylon" ],
     "symbol": "[",
     "looks_like": "wetsuit",
     "color": "pink",
@@ -175,7 +175,7 @@
     "encumbrance": 30,
     "warmth": 5,
     "material_thickness": 3,
-    "flags": [ "VARSIZE", "STURDY", "WATER_FRIENDLY", "ELECTRIC_IMMUNE", "HELMET_COMPAT" ]
+    "flags": [ "VARSIZE", "STURDY", "WATER_FRIENDLY", "ELECTRIC_IMMUNE", "HELMET_COMPAT", "ALLOWS_TAIL" ]
   },
   {
     "id": "shark_suit",
@@ -196,7 +196,7 @@
     "encumbrance": 30,
     "warmth": 5,
     "material_thickness": 3,
-    "flags": [ "VARSIZE", "STURDY", "WATER_FRIENDLY" ]
+    "flags": [ "VARSIZE", "STURDY", "WATER_FRIENDLY", "ALLOWS_TAIL" ]
   },
   {
     "id": "goggles_swim",
@@ -230,7 +230,7 @@
     "price": "30 USD",
     "price_postapoc": "1 USD",
     "to_hit": 1,
-    "material": [ "neoprene", "cotton", "rubber" ],
+    "material": [ "neoprene", "nylon" ],
     "symbol": "[",
     "looks_like": "gloves_tactical",
     "color": "dark_gray",

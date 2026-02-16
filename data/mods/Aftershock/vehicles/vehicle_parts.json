@@ -124,7 +124,8 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
     },
-    "flags": [ "CARGO", "OBSTACLE", "WELDRIG", "FORGE", "KILN", "COVERED" ],
+    "flags": [ "CARGO", "OBSTACLE", "WELDRIG", "COVERED", "CRAFTER" ],
+    "integrated_tools": [ "forge", "kiln", "welder", "soldering_iron" ],
     "breaks_into": [
       { "item": "steel_lump", "count": [ 3, 6 ] },
       { "item": "steel_chunk", "count": [ 3, 6 ] },
@@ -155,7 +156,8 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
     },
-    "flags": [ "CARGO", "OBSTACLE", "KITCHEN", "CHEMLAB", "FAUCET", "COVERED" ],
+    "flags": [ "CARGO", "OBSTACLE", "HOTPLATE", "FAUCET", "COVERED", "CRAFTER" ],
+    "integrated_tools": [ "chemistry_set", "electrolysis_kit", "pot", "pan", "hotplate" ],
     "breaks_into": [
       { "item": "steel_lump", "count": [ 6, 9 ] },
       { "item": "steel_chunk", "count": [ 6, 9 ] },
@@ -187,7 +189,8 @@
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
     },
-    "flags": [ "CARGO", "OBSTACLE", "KITCHEN", "CHEMLAB", "CRAFTRIG", "FAUCET", "WATER_PURIFIER", "COVERED" ],
+    "flags": [ "CARGO", "OBSTACLE", "HOTPLATE", "FAUCET", "WATER_PURIFIER", "COVERED", "CRAFTER" ],
+    "integrated_tools": [ "chemistry_set", "electrolysis_kit", "pot", "pan", "hotplate", "dehydrator", "vac_sealer", "food_processor", "press" ],
     "breaks_into": [
       { "item": "steel_lump", "count": [ 9, 18 ] },
       { "item": "steel_chunk", "count": [ 9, 18 ] },

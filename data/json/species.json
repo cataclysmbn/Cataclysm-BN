@@ -18,7 +18,8 @@
     "id": "AMPHIBIAN",
     "name": { "str": "amphibian" },
     "description": "an amphibian",
-    "fear_triggers": [ "HURT", "FIRE" ]
+    "fear_triggers": [ "HURT", "FIRE" ],
+    "footsteps": [ "slosh", "squelch", "slip and plop", "a wet shuffle", "a muffled squish", "ribbit", "a long croak" ]
   },
   {
     "type": "SPECIES",
@@ -32,14 +33,16 @@
     "id": "REPTILE",
     "name": { "str": "reptile" },
     "description": "a reptile",
-    "fear_triggers": [ "HURT", "FIRE" ]
+    "fear_triggers": [ "HURT", "FIRE" ],
+    "footsteps": [ "slithering", "the rustle of scales", "scratch" ]
   },
   {
     "type": "SPECIES",
     "id": "FISH",
     "name": { "str_sp": "fish" },
     "description": "a fish",
-    "fear_triggers": [ "HURT", "FRIEND_ATTACKED" ]
+    "fear_triggers": [ "HURT", "FRIEND_ATTACKED" ],
+    "footsteps": [ "flop", "the slap of fins", "a splash", "a wet thump", "gurgle", "slosh" ]
   },
   {
     "type": "SPECIES",
@@ -53,14 +56,24 @@
     "id": "NETHER",
     "name": { "str": "nether creature" },
     "description": "a nether creature",
-    "fear_triggers": [ "HURT" ]
+    "fear_triggers": [ "HURT" ],
+    "footsteps": [
+      "a whispering echo",
+      "an ethereal hiss",
+      "a dry crackle",
+      "a shadowy rustle",
+      "a distorted thrum",
+      "an unearthly hum",
+      "a sibilant crackle",
+      "a faint wail"
+    ]
   },
   {
     "type": "SPECIES",
     "id": "BLOB",
     "name": { "str": "blob" },
     "description": "a blob",
-    "footsteps": "plop."
+    "footsteps": [ "plop", "squelch", "glorp", "slosh", "blop", "splat", "squish", "blubber", "gloop", "thud" ]
   },
   {
     "type": "SPECIES",
@@ -74,6 +87,16 @@
     "id": "LEECH_PLANT",
     "name": { "str": "leech plant" },
     "description": "a leech plant",
+    "footsteps": [
+      "rustling",
+      "the crackle of leaves",
+      "the swish of vines",
+      "a spark crackle",
+      "electric snap",
+      "zing",
+      "the fizz of electricity",
+      "pop and rustle"
+    ],
     "fear_triggers": [ "HURT", "FIRE" ]
   },
   {
@@ -82,14 +105,24 @@
     "name": { "str": "insect" },
     "description": "an insect",
     "anger_triggers": [ "FRIEND_DIED" ],
-    "fear_triggers": [ "HURT", "FIRE" ]
+    "fear_triggers": [ "HURT", "FIRE" ],
+    "footsteps": [
+      "skittering",
+      "the pattering of tiny legs",
+      "chitter",
+      "a soft crawl",
+      "the clicking of legs",
+      "a rapid scuttle",
+      "a scritching sound",
+      "the tapping of many feet"
+    ]
   },
   {
     "type": "SPECIES",
     "id": "INSECT_FLYING",
     "name": "a flying insect",
     "description": "a flying insect",
-    "footsteps": "bzzzzzzzzzzzzzzzzz",
+    "footsteps": [ "buzzing softly", "a gentle hum", "a low buzz", "a faint whir of wings", "a soft flutter" ],
     "anger_triggers": [ "FRIEND_DIED" ],
     "fear_triggers": [ "HURT", "FIRE" ]
   },
@@ -98,7 +131,7 @@
     "id": "WASP",
     "name": "an angry wasp",
     "description": "a flying insect",
-    "footsteps": "BZZZZZZZZZZZZZZZZZ",
+    "footsteps": [ "BZZZZZZZZZZZZZZZZZ!", "a loud buzzing", "a furious hum" ],
     "anger_triggers": [ "FRIEND_DIED", "HURT", "SOUND" ],
     "fear_triggers": [ "FIRE" ],
     "flags": [ "LOUDMOVES" ]
@@ -108,7 +141,7 @@
     "id": "CENTIPEDE",
     "name": { "str": "centipede" },
     "description": "a centipede",
-    "footsteps": "skittering.",
+    "footsteps": [ "skittering", "a rapid scuttle", "clicking legs", "a soft crawl", "scritching along" ],
     "fear_triggers": [ "FIRE" ]
   },
   {
@@ -117,14 +150,16 @@
     "name": { "str": "spider" },
     "description": "a spider",
     "anger_triggers": [ "FRIEND_DIED" ],
-    "fear_triggers": [ "HURT", "FIRE" ]
+    "fear_triggers": [ "HURT", "FIRE" ],
+    "footsteps": [ "skittering", "a light patter of legs", "clicking of joints", "a subtle crawl", "soft scuttling" ]
   },
   {
     "type": "SPECIES",
     "id": "PLANT",
     "name": { "str": "plant" },
     "description": "a plant",
-    "fear_triggers": [ "HURT", "FIRE" ]
+    "fear_triggers": [ "HURT", "FIRE" ],
+    "footsteps": [ "rustling", "the crunch of leaves", "crackle", "the swish of vines" ]
   },
   {
     "type": "SPECIES",
@@ -138,7 +173,7 @@
     "id": "WORM",
     "name": { "str": "worm" },
     "description": "a worm",
-    "footsteps": "rustle.",
+    "footsteps": [ "a thrum", "a rumble", "vibrations", "a thud" ],
     "fear_triggers": [ "HURT" ]
   },
   {
@@ -146,26 +181,71 @@
     "id": "ZOMBIE",
     "name": { "str": "zombie" },
     "description": "a zombie",
-    "footsteps": "shuffling."
+    "footsteps": [ "shuffling", "moaning", "gargling", "growling", "gasping", "grunting" ]
   },
   {
     "type": "SPECIES",
     "id": "ROBOT",
     "name": { "str": "robot" },
     "description": "a robot",
-    "footsteps": "mechanical whirring."
+    "footsteps": [
+      "a metallic clank",
+      "a gear grind",
+      "a servo click",
+      "the clunk of metal",
+      "the thud of machinery",
+      "the whirring of servos"
+    ]
+  },
+  {
+    "type": "SPECIES",
+    "id": "ROBOT_FLYING",
+    "name": { "str": "flying robot" },
+    "description": "a flying robot",
+    "footsteps": [
+      "the whir of rotors",
+      "a high-pitched buzz",
+      "an electronic hum",
+      "a soft mechanical whine",
+      "the sizzling of motors",
+      "a hovering whirr",
+      "a rotor spin",
+      "a servo buzz"
+    ],
+    "flags": [ "LOUDMOVES" ]
   },
   {
     "type": "SPECIES",
     "id": "HORROR",
     "name": { "str": "horror" },
-    "description": "a horror"
+    "description": "a horror",
+    "footsteps": [
+      "a light scuttle",
+      "a soft shuffle",
+      "an unnatural click",
+      "a hollow tap",
+      "creaking joints",
+      "the scraping of nails",
+      "a tiny skitter",
+      "a quiet thump"
+    ]
   },
   {
     "type": "SPECIES",
     "id": "ABERRATION",
     "name": { "str": "abberation" },
-    "description": "an aberration"
+    "description": "an aberration",
+    "footsteps": [
+      "a squelch",
+      "slithering",
+      "crackling shifts",
+      "a wet scraping",
+      "a hollow thump",
+      "a twisting rattle",
+      "gurgle",
+      "an unearthly squeak",
+      "a chittering snap"
+    ]
   },
   {
     "type": "SPECIES",
@@ -176,11 +256,26 @@
     "type": "SPECIES",
     "id": "HUMAN",
     "name": { "str": "human" },
-    "description": "a human"
+    "description": "a human",
+    "footsteps": [ "footsteps" ]
+  },
+  {
+    "type": "SPECIES",
+    "id": "SKELETON",
+    "name": { "str": "skeleton" },
+    "description": "a skeleton",
+    "footsteps": [ "the clatter of bones", "a rattle", "the click of joints", "a dry crackle", "the tinkle of bone", "a hollow clack" ]
   },
   {
     "type": "SPECIES",
     "name": { "str_sp": "unknown species" },
     "id": "UNKNOWN"
+  },
+  {
+    "type": "SPECIES",
+    "id": "DEBUG",
+    "name": { "str": "debug monster" },
+    "description": "a debug monster used for testing. Please report this.",
+    "footsteps": [ "shuffling" ]
   }
 ]

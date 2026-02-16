@@ -93,8 +93,8 @@
     "object": {
       "palettes": [
         "standard_domestic_palette",
-        "standard_domestic_lino_bathroom",
-        "standard_domestic_lino_kitchen",
+        "parameterized_linoleum_color_kitchen",
+        "parameterized_linoleum_color_bathroom",
         "standard_domestic_landscaping_palette"
       ],
       "fill_ter": "t_floor",
@@ -112,9 +112,9 @@
         ",.....#     V||||#..[..,",
         ",.....o ffh      o.....,",
         ",,,,,,#||||  R|++#,,,,,,",
-        ",.....#6___  R|Qq#^....,",
-        ",..[..#5_JJ  R|||#.....,",
-        ",.....oO___   +_t#.....,",
+        ",.....#6˙˙˙  R|Qq#^....,",
+        ",..[..#5˙JJ  R|||#.....,",
+        ",.....oO˙˙˙   +¨t#.....,",
         ",.....#125F yz|9So.....,",
         ",.....#####*o#####.....,",
         ",.....^#>*----jjj......,",
@@ -126,8 +126,7 @@
       ],
       "terrain": {
         ",": [ [ "t_dirt", 2 ], "t_region_groundcover_urban" ],
-        "_": "t_linoleum_gray",
-        "q": "t_linoleum_gray",
+        "q": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" },
         "!": "t_dirtmound"
       },
       "place_loot": [ { "item": "television", "x": 8, "y": 9 } ]
@@ -142,8 +141,8 @@
     "object": {
       "palettes": [
         "standard_domestic_palette",
-        "standard_domestic_lino_bathroom",
-        "standard_domestic_lino_kitchen",
+        "parameterized_linoleum_color_kitchen",
+        "parameterized_linoleum_color_bathroom",
         "standard_domestic_landscaping_palette"
       ],
       "fill_ter": "t_floor",
@@ -155,15 +154,15 @@
         "_____...................",
         "_____...................",
         "_____!###o#####o##&&....",
-        "_____!#B000t|D  ¤#&&~...",
-        "_____!#B8S0||| @@#&&....",
+        "_____!#B¨¨¨t|D  ¤#&&~...",
+        "_____!#B8S¨||| @@#&&....",
         "_____p#|||+|d+ @@o&&....",
         "_____!#?L| |ɸ+  ¤#&&.~..",
         "..----#++| ||||+|#-.....",
-        "...---*    hffh00*-.....",
-        "....--oƏ   00000Y#^.....",
-        ".....!#H  R|0000F#......",
-        ".....!oH  x|60005o......",
+        "...---*    hffh˙˙*-.....",
+        "....--oƏ   ˙˙˙˙˙Y#^.....",
+        ".....!#H  R|˙˙˙˙F#......",
+        ".....!oH  x|6˙˙˙5o......",
         ".....!#H  y|32JOJ#...[..",
         ".....!####o###o###......",
         "......^#>#..............",
@@ -177,10 +176,9 @@
         "~": "t_region_groundcover_urban",
         "&": "t_dirtmound",
         "!": "t_dirtmound",
-        "Y": "t_linoleum_gray",
-        "h": "t_linoleum_gray",
-        "f": "t_linoleum_gray",
-        "0": "t_linoleum_gray"
+        "Y": { "param": "linoleum_color_kitchen", "fallback": "t_linoleum_white" },
+        "h": { "param": "linoleum_color_kitchen", "fallback": "t_linoleum_white" },
+        "f": { "param": "linoleum_color_kitchen", "fallback": "t_linoleum_white" }
       },
       "furniture": { "?": "f_rack" },
       "items": {

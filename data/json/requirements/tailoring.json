@@ -48,6 +48,18 @@
     "components": [ [ [ "2x4", 1 ] ], [ [ "cordage", 2, "LIST" ] ] ]
   },
   {
+    "id": "cuir_bouilli_standard",
+    "type": "requirement",
+    "//": "Materials and crafting quality used to harden leather or scutes.",
+    "qualities": [ { "id": "COOK", "level": 3 } ],
+    "tools": [ [ [ "water_boiling_heat", 10, "LIST" ] ] ],
+    "components": [
+      [ [ "water", 5 ], [ "water_clean", 5 ] ],
+      [ [ "wax", 1 ], [ "any_tallow", 4, "LIST" ], [ "vinegar", 5 ], [ "pine_bough", 10 ] ],
+      [ [ "salt", 25 ] ]
+    ]
+  },
+  {
     "id": "plastic_molding",
     "type": "requirement",
     "//": "Melting and reshaping plastic items, per 70 g of plastic. Usually takes 30 minutes per unit.",

@@ -9,6 +9,7 @@
 #include "catacharset.h"
 #include "cata_utility.h"
 #include "character.h"
+#include "color.h"
 #include "enum_conversions.h"
 #include "flat_set.h"
 #include "game.h"
@@ -26,6 +27,7 @@
 #include "units.h"
 
 static const std::string flag_SAFE_FUEL_OFF( "SAFE_FUEL_OFF" );
+static const flag_id flag_MULTIINSTALL( "MULTIINSTALL" );
 
 // '!', '-' and '=' are uses as default bindings in the menu
 const invlet_wrapper
@@ -70,42 +72,18 @@ units::energy bionic_sort_power( const bionic_data &lbd )
            lbd.power_activate + lbd.power_over_time;
 }
 
-struct bionic_sort_less {
-    bool operator()( const bionic *lhs, const bionic *rhs ) const {
-        const bionic_data &lbd = lhs->info();
-        const bionic_data &rbd = rhs->info();
-
-        switch( uistate.bionic_sort_mode ) {
-            case bionic_ui_sort_mode::nsort:
-            case bionic_ui_sort_mode::NONE:
-                //use installation order
-                return true;
-            case bionic_ui_sort_mode::INVLET:
-                return lhs->invlet < rhs->invlet;
-            case bionic_ui_sort_mode::POWER: {
-                units::energy lbd_sort_power = bionic_sort_power( lbd );
-                units::energy rbd_sort_power = bionic_sort_power( rbd );
-                if( lbd_sort_power != rbd_sort_power ) {
-                    return lbd_sort_power < rbd_sort_power;
-                }
-            }
-            /* fallthrough */
-            case bionic_ui_sort_mode::NAME:
-                return localized_compare( lbd.name.translated(), rbd.name.translated() );
-        }
-        return false;
-    }
-};
-
 using sorted_bionics = cata::flat_set<bionic *, bionic_sort_less>;
 
 sorted_bionics filtered_bionics( bionic_collection &all_bionics,
                                  bionic_tab_mode mode )
 {
-    sorted_bionics filtered_entries;
+    const auto less = bionic_sort_less{uistate.bionic_sort_mode};
+    sorted_bionics filtered_entries( less );
+    std::set<bionic_id> displayed_bionics;
     for( auto &elem : all_bionics ) {
-        if( ( mode == TAB_ACTIVE ) == elem.id->activated ) {
+        if( ( mode == TAB_ACTIVE ) == elem.id->activated && !displayed_bionics.contains( elem.id ) ) {
             filtered_entries.insert( &elem );
+            displayed_bionics.insert( elem.id );
         }
     }
     return filtered_entries;
@@ -136,6 +114,32 @@ bionic_ui_sort_mode pick_sort_mode()
 }
 
 } // namespace
+
+bool bionic_sort_less::operator()( const bionic &lhs, const bionic &rhs ) const
+{
+    const bionic_data &lbd = lhs.info();
+    const bionic_data &rbd = rhs.info();
+
+    switch( mode ) {
+        case bionic_ui_sort_mode::nsort:
+        case bionic_ui_sort_mode::NONE:
+            //use installation order
+            return true;
+        case bionic_ui_sort_mode::INVLET:
+            return lhs.invlet < rhs.invlet;
+        case bionic_ui_sort_mode::POWER: {
+            units::energy lbd_sort_power = bionic_sort_power( lbd );
+            units::energy rbd_sort_power = bionic_sort_power( rbd );
+            if( lbd_sort_power != rbd_sort_power ) {
+                return lbd_sort_power < rbd_sort_power;
+            }
+        }
+        /* fallthrough */
+        case bionic_ui_sort_mode::NAME:
+            return localized_compare( lbd.name.translated(), rbd.name.translated() );
+    }
+    return false;
+}
 
 namespace io
 {
@@ -387,7 +391,13 @@ static void draw_description( const catacurses::window &win, const bionic &bio,
                                 _( "Power usage: %s" ), poweronly_string );
     }
     ypos += 1 + fold_and_print( win, point( 0, ypos ), width, c_light_blue, "%s", bio.id->description );
-
+    if( bio.info().has_flag( flag_MULTIINSTALL ) ) {
+        int count = who.count_bionic_of_type( bio.id );
+        if( count != 1 ) {
+            fold_and_print( win, point( 0, ypos ), width, c_magenta,
+                            "You have %s instances of this bionic installed.", count );
+        }
+    }
     // TODO: Unhide when enforcing limits
     if( get_option < bool >( "CBM_SLOTS_ENABLED" ) ) {
         int body_part_count = who.get_all_body_parts().size();
@@ -498,7 +508,7 @@ static void draw_connectors( const catacurses::window &win, point start,
 }
 
 //get a text color depending on the power/powering state of the bionic
-static nc_color get_bionic_text_color( const bionic &bio, const bool isHighlightedBionic )
+nc_color get_bionic_text_color( const bionic &bio, const bool isHighlightedBionic )
 {
     nc_color type = c_white;
     bool is_power_source = bio.id->has_flag( STATIC( flag_id( "BIONIC_POWER_SOURCE" ) ) );
@@ -915,8 +925,8 @@ void show_bionics_ui( Character &who )
                     continue;
                 } else {
                     popup( _( "You can not activate %s!\n"
-                              "To read a description of %s, press '%s', then '%c'." ), bio_data.name,
-                           bio_data.name, ctxt.get_desc( "TOGGLE_EXAMINE" ), tmp->invlet );
+                              "To read a description of %s, press '%s'" ), bio_data.name,
+                           bio_data.name, ctxt.get_desc( "TOGGLE_EXAMINE" ) );
                 }
             } else if( menu_mode == EXAMINING ) {
                 // Describing bionics, allow user to jump to description key

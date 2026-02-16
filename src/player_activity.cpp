@@ -19,11 +19,13 @@
 #include "construction_partial.h"
 #include "crafting.h"
 #include "distraction_manager.h"
+#include "flag.h"
 #include "game.h"
 #include "item.h"
 #include "itype.h"
 #include "map.h"
 #include "npc.h"
+#include "options.h"
 #include "player.h"
 #include "profile.h"
 #include "recipe.h"
@@ -216,20 +218,26 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     const float assist_total_moves = std::max( 1, rec.batch_time( craft->charges, 1.0f, assistants ) );
     const float assist_mult = base_total_moves / assist_total_moves;
     const float speed_mult = u.get_speed() / 100.0f;
-    const float total_mult = light_mult * bench_mult * morale_mult * assist_mult * speed_mult;
+    const float mutation_mult = u.mutation_value( "crafting_speed_modifier" );
+    const float game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                                ? 9999
+                                : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
+    const float total_mult = light_mult * bench_mult * morale_mult * assist_mult * speed_mult *
+                             mutation_mult * game_opt_mult;
 
-    const double remaining_percentage = 1.0 - craft->item_counter / 10'000'000.0;
+    const double remaining_percentage = 1.0 - craft->get_counter() / 10'000'000.0;
     int remaining_turns = remaining_percentage * base_total_moves / 100 / std::max( 0.01f, total_mult );
     std::string time_desc = string_format( _( "Time left: %s" ),
                                            to_string( time_duration::from_turns( remaining_turns ) ) );
 
-    const std::array<std::pair<float, std::string>, 6> mults_with_data = { {
+    const std::array<std::pair<float, std::string>, 7> mults_with_data = { {
             { total_mult, _( "Total" ) },
             { speed_mult, _( "Speed" ) },
             { light_mult, _( "Light" ) },
             { bench_mult, _( "Workbench" ) },
             { morale_mult, _( "Morale" ) },
             { assist_mult, _( "Assistants" ) },
+            { mutation_mult, _( "Traits" ) }
         }
     };
     std::string mults_desc = _( "Crafting speed multipliers:\n" );
@@ -673,7 +681,7 @@ bool player_activity::can_resume_with( const player_activity &other, const Chara
 bool player_activity::is_distraction_ignored( distraction_type type ) const
 {
     return ( get_distraction_manager().is_ignored( type ) ||
-             ignored_distractions.find( type ) != ignored_distractions.end() );
+             ignored_distractions.contains( type ) );
 }
 
 void player_activity::ignore_distraction( distraction_type type )
@@ -746,4 +754,11 @@ void activity_ptr::serialize( JsonOut &json ) const
 void activity_ptr::deserialize( JsonIn &jsin )
 {
     act->deserialize( jsin );
+}
+
+auto player_activity::add_tool( item *it ) -> void
+{
+    if( it && !it->has_flag( flag_PSEUDO ) ) {
+        tools_.emplace_back( it );
+    }
 }

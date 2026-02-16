@@ -16,6 +16,8 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "cata_algo.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_turn.h"
@@ -123,6 +125,9 @@ static const itype_id itype_smoxygen_tank( "smoxygen_tank" );
 static const itype_id itype_thorazine( "thorazine" );
 static const itype_id itype_oxygen_tank( "oxygen_tank" );
 
+static const itype_id fuel_wind( "wind" );
+static const itype_id fuel_sunlight( "sunlight" );
+
 static constexpr float NPC_DANGER_VERY_LOW = 5.0f;
 static constexpr float NPC_DANGER_MAX = 150.0f;
 static constexpr float MAX_FLOAT = 5000000000.0f;
@@ -155,15 +160,6 @@ const std::vector<bionic_id> power_cbms = { {
         bio_advreactor,
         bio_furnace,
         bio_reactor,
-    }
-};
-const std::vector<bionic_id> defense_cbms = { {
-        bio_ads,
-        bio_faraday,
-        bio_heat_absorb,
-        bio_heatsink,
-        bio_ods,
-        bio_shock
     }
 };
 
@@ -370,20 +366,23 @@ void npc::assess_danger()
     }
 
     Character &player_character = get_player_character();
+    // NPCs will hold back from charging if they get in trouble.
     const bool self_defense_only = rules.engagement == combat_engagement::NO_MOVE ||
-                                   rules.engagement == combat_engagement::NONE;
+                                   rules.engagement == combat_engagement::NONE ||
+                                   emergency();
     const bool no_fighting = rules.has_flag( ally_rule::forbid_engage );
-    const bool must_retreat = is_walking_with() && rules.has_flag( ally_rule::follow_close ) &&
+    // Companion NPCs will additionally break off to return to the player when in trouble if not already ordered to.
+    const bool must_retreat = is_walking_with() && ( emergency() ||
+                              rules.has_flag( ally_rule::follow_close ) ) &&
                               !too_close( pos(), player_character.pos(), follow_distance() );
 
-    if( is_player_ally() ) {
-        if( rules.engagement == combat_engagement::FREE_FIRE ) {
-            def_radius = std::max( 6, max_range );
-        } else if( self_defense_only ) {
-            def_radius = max_range;
-        } else if( no_fighting ) {
-            def_radius = 1;
-        }
+    // Set this for non-companion NPCs too so all NPCs will switch to self-defense if low on stamina or wounded.
+    if( rules.engagement == combat_engagement::FREE_FIRE ) {
+        def_radius = std::max( 6, max_range );
+    } else if( self_defense_only ) {
+        def_radius = max_range;
+    } else if( no_fighting ) {
+        def_radius = 1;
     }
 
     const auto ok_by_rules = [max_range, def_radius, this, &player_character]( const Creature & c,
@@ -814,6 +813,28 @@ void npc::move()
         // No present danger
         deactivate_combat_cbms();
 
+        // Deactivate Armor & Weapons
+        for( auto &elem : worn ) {
+            // The is_active() part was taken from is_wearing_active_power_armor
+            if( elem->has_flag( flag_COMBAT_NPC_USE ) && elem->has_flag( flag_COMBAT_NPC_ON ) ) {
+                if( elem->get_use( "transform" ) ) {
+                    invoke_item( elem, "transform" );
+                } else if( elem->get_use( "set_transform" ) ) {
+                    invoke_item( elem, "set_transform" );
+                }
+            }
+        }
+        item &weapon = primary_weapon();
+        if( !weapon.is_null() && weapon.has_flag( flag_COMBAT_NPC_USE ) &&
+            weapon.has_flag( flag_COMBAT_NPC_ON ) ) {
+            if( weapon.get_use( "transform" ) ) {
+                invoke_item( &weapon, "transform" );
+            } else if( weapon.get_use( "fireweapon_on" ) ) {
+                invoke_item( &weapon, "fireweapon_on" );
+            }
+        }
+
+
         action = address_needs();
         print_action( "address_needs %s", action );
 
@@ -1148,6 +1169,9 @@ void npc::execute_action( npc_action action )
         }
         case npc_follow_player:
             update_path( player_character.pos() );
+            move_mode = rules.has_flag( ally_rule::move_own_pace ) ?
+                        ( ( static_cast<int>( path.size() ) > follow_distance() * 4 ) ? CMM_RUN : CMM_WALK ) :
+                        player_character.get_movement_mode();
             if( static_cast<int>( path.size() ) <= follow_distance() &&
                 player_character.posz() == posz() ) { // We're close enough to u.
                 move_pause();
@@ -1161,6 +1185,9 @@ void npc::execute_action( npc_action action )
             break;
 
         case npc_follow_embarked: {
+            move_mode = rules.has_flag( ally_rule::move_own_pace ) ?
+                        ( ( static_cast<int>( path.size() ) > follow_distance() * 4 ) ? CMM_RUN : CMM_WALK ) :
+                        player_character.get_movement_mode();
             const optional_vpart_position vp = here.veh_at( player_character.pos() );
 
             if( !vp ) {
@@ -1362,6 +1389,29 @@ npc_action npc::method_of_attack()
     // if there's enough of a threat to be here, power up the combat CBMs
     activate_combat_cbms();
 
+    // Activate Armor & Weapons
+    for( auto &elem : worn ) {
+        // The is_active() part was taken from is_wearing_active_power_armor
+        if( elem->has_flag( flag_COMBAT_NPC_USE ) && !elem->has_flag( flag_COMBAT_NPC_ON ) ) {
+            if( elem->get_use( "transform" ) ) {
+                invoke_item( elem, "transform" );
+            } else if( elem->get_use( "set_transform" ) ) {
+                invoke_item( elem, "set_transform" );
+            }
+        }
+    }
+    item &weapon = primary_weapon();
+    if( !weapon.is_null() && weapon.has_flag( flag_COMBAT_NPC_USE ) &&
+        !weapon.has_flag( flag_COMBAT_NPC_ON ) ) {
+
+        if( weapon.get_use( "transform" ) ) {
+            invoke_item( &weapon, "transform" );
+        } else if( weapon.get_use( "fireweapon_off" ) ) {
+            invoke_item( &weapon, "fireweapon_off" );
+        }
+
+
+    }
 
     if( emergency() && alt_attack() ) {
         add_msg( m_debug, "%s is trying an alternate attack", disp_name() );
@@ -1376,7 +1426,7 @@ npc_action npc::method_of_attack()
 
     gun_mode g_mode = cbm_active.is_null() ? primary_weapon().gun_current_mode() :
                       cbm_fake_active->gun_current_mode();
-    if( !can_use_gun || dist <= 1 ||
+    if( !can_use_gun || dist == 0 ||
         ( g_mode && ( ( use_silent && !g_mode->is_silent() ) ||
                       ( item_funcs::shots_remaining( *this, *g_mode ) < g_mode.qty ) ) ) ) {
         g_mode = gun_mode();
@@ -1568,8 +1618,10 @@ void npc::adjust_power_cbms()
 
 void npc::activate_combat_cbms()
 {
-    for( const bionic_id &cbm_id : defense_cbms ) {
-        activate_bionic_by_id( cbm_id );
+    for( bionic &bio : get_bionic_collection() ) {
+        if( bio.info().has_flag( flag_COMBAT_NPC_USE ) ) {
+            activate_bionic( bio );
+        }
     }
     if( can_use_offensive_cbm() ) {
         check_or_use_weapon_cbm();
@@ -1578,8 +1630,10 @@ void npc::activate_combat_cbms()
 
 void npc::deactivate_combat_cbms()
 {
-    for( const bionic_id &cbm_id : defense_cbms ) {
-        deactivate_bionic_by_id( cbm_id );
+    for( bionic &bio : get_bionic_collection() ) {
+        if( bio.info().has_flag( flag_COMBAT_NPC_USE ) ) {
+            deactivate_bionic( bio );
+        }
     }
     deactivate_bionic_by_id( bio_hydraulics );
     deactivate_weapon_cbm( *this );
@@ -1704,11 +1758,17 @@ bool npc::recharge_cbm()
                     fuel_op.end() ||
                     std::find( fuel_op.begin(), fuel_op.end(), itype_denat_alcohol ) !=
                     fuel_op.end();
+                const bool need_environment =
+                    std::find( fuel_op.begin(), fuel_op.end(), fuel_sunlight ) != fuel_op.end() ||
+                    std::find( fuel_op.begin(), fuel_op.end(), fuel_wind ) != fuel_op.end();
 
                 if( std::find( fuel_op.begin(), fuel_op.end(), itype_battery ) != fuel_op.end() ) {
                     complain_about( "need_batteries", 3_hours, "<need_batteries>", false );
                 } else if( need_alcohol ) {
                     complain_about( "need_booze", 3_hours, "<need_booze>", false );
+                } else if( need_environment ) {
+                    // No Need for NPCs to complain about the weather and time of day...
+                    continue;
                 } else {
                     complain_about( "need_fuel", 3_hours, "<need_fuel>", false );
                 }
@@ -1736,33 +1796,33 @@ healing_options npc::patient_assessment( const Character &c )
     healing_options try_to_fix;
     try_to_fix.clear_all();
 
-    for( const std::pair<const bodypart_str_id, bodypart> &elem : c.get_body() ) {
-
-        if( c.has_effect( effect_bleed, elem.first ) ) {
+    for( const auto &part : c.get_all_body_parts( true ) ) {
+        const auto &bp = c.get_part( part );
+        if( c.has_effect( effect_bleed, part.id() ) ) {
             try_to_fix.bleed = true;
         }
 
-        if( c.has_effect( effect_bite, elem.first ) ) {
+        if( c.has_effect( effect_bite, part.id() ) ) {
             try_to_fix.bite = true;
         }
 
-        if( c.has_effect( effect_infected, elem.first ) ) {
+        if( c.has_effect( effect_infected, part.id() ) ) {
             try_to_fix.infect = true;
         }
         int part_threshold = 75;
-        if( elem.first == bodypart_str_id( "head" ) ) {
+        if( part == bodypart_str_id( "head" ) ) {
             part_threshold += 20;
-        } else if( elem.first == bodypart_str_id( "torso" ) ) {
+        } else if( part == bodypart_str_id( "torso" ) ) {
             part_threshold += 10;
         }
         part_threshold = std::min( 80, part_threshold );
-        part_threshold = part_threshold * elem.second.get_hp_max() / 100;
+        part_threshold = part_threshold * bp.get_hp_max() / 100;
 
-        if( elem.second.get_hp_cur() <= part_threshold ) {
-            if( !c.has_effect( effect_bandaged, elem.first ) ) {
+        if( bp.get_hp_cur() <= part_threshold ) {
+            if( !c.has_effect( effect_bandaged, part.id() ) ) {
                 try_to_fix.bandage = true;
             }
-            if( !c.has_effect( effect_disinfected, elem.first ) ) {
+            if( !c.has_effect( effect_disinfected, part.id() ) ) {
                 try_to_fix.disinfect = true;
             }
         }
@@ -2147,6 +2207,10 @@ bool npc::wont_hit_friend( const tripoint &tar, const item &it, bool throwing ) 
         // TODO: Extract common functions with turret target selection
         units::angle safe_angle_ally = safe_angle;
         int ally_dist = rl_dist( pos(), ally.pos() );
+        // Skip adjacent allies - ballistics code now protects them
+        if( ally_dist <= 1 ) {
+            continue;
+        }
         if( ally_dist < 3 ) {
             safe_angle_ally += ( 3 - ally_dist ) * 30_degrees;
         }
@@ -2259,7 +2323,7 @@ bool npc::update_path( const tripoint &p, const bool no_bashing, bool force )
 
 bool npc::can_open_door( const tripoint &p, const bool inside ) const
 {
-    return !rules.has_flag( ally_rule::avoid_doors ) && get_map().open_door( p, inside, true );
+    return !rules.has_flag( ally_rule::avoid_doors ) && get_map().can_open_door( this, p, inside );
 }
 
 bool npc::can_move_to( const tripoint &p, bool no_bashing ) const
@@ -2276,17 +2340,55 @@ bool npc::can_move_to( const tripoint &p, bool no_bashing ) const
 void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomove )
 {
     tripoint p = pt;
+
+    const auto hook_results = cata::run_hooks(
+                                  "on_npc_try_move",
+    [ &, this]( sol::table & params ) {
+        params["npc"] = this;
+        params["from"] = pos();
+        params["to"] = p;
+        params["movement_mode"] = get_movement_mode();
+        params["via_ramp"] = false;
+        if( is_mounted() ) {
+            params["mounted"] = true;
+            params["mount"] = mounted_creature.get();
+        } else {
+            params["mounted"] = false;
+        }
+    } );
+
+    const auto char_hook_results = cata::run_hooks(
+                                       "on_character_try_move",
+    [ &, this]( sol::table & params ) {
+        params["char"] = static_cast<Character *>( this );
+        params["from"] = pos();
+        params["to"] = p;
+        params["movement_mode"] = get_movement_mode();
+        params["via_ramp"] = false;
+        if( is_mounted() ) {
+            params["mounted"] = true;
+            params["mount"] = mounted_creature.get();
+        } else {
+            params["mounted"] = false;
+        }
+    } );
+
+    if( !hook_results.get_or( "allowed", true ) ||
+        !char_hook_results.get_or( "allowed", true ) ) {
+        return;
+    }
+
     map &here = get_map();
     bool ceiling_blocking_climb = !here.has_floor_or_support( pos() ) ||
                                   here.has_floor_or_support( p + tripoint_above );
     if( sees_dangerous_field( p )
-        || ( nomove != nullptr && nomove->find( p ) != nomove->end() ) ) {
+        || ( nomove != nullptr && nomove->contains( p ) ) ) {
         // Move to a neighbor field instead, if possible.
         // Maybe this code already exists somewhere?
         auto other_points = here.get_dir_circle( pos(), p );
         for( const tripoint &ot : other_points ) {
             if( could_move_onto( ot )
-                && ( nomove == nullptr || nomove->find( ot ) == nomove->end() ) ) {
+                && ( nomove == nullptr || !nomove->contains( ot ) ) ) {
 
                 p = ot;
                 break;
@@ -2304,7 +2406,7 @@ void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomo
 
     // nomove is used to resolve recursive invocation, so reset destination no
     // matter it was changed by stunned effect or not.
-    if( nomove != nullptr && nomove->find( p ) != nomove->end() ) {
+    if( nomove != nullptr && nomove->contains( p ) ) {
         p = pos();
     }
 
@@ -2430,9 +2532,9 @@ void npc::move_to( const tripoint &pt, bool no_bashing, std::set<tripoint> *nomo
             moves -= run_cost( here.combined_movecost( pos(), p ), diag );
         }
         moved = true;
-    } else if( here.open_door( p, !here.is_outside( pos() ), true ) ) {
+    } else if( here.can_open_door( this, p, !here.is_outside( pos() ) ) ) {
         if( !is_hallucination() ) { // hallucinations don't open doors
-            here.open_door( p, !here.is_outside( pos() ) );
+            here.open_door( this, p, !here.is_outside( pos() ) );
             moves -= 100;
         } else { // hallucinations teleport through doors
             moves -= 100;
@@ -2594,7 +2696,7 @@ void npc::move_away_from( const tripoint &pt, bool no_bash_atk, std::set<tripoin
     int chance = 2;
     map &here = get_map();
     for( const tripoint &p : here.points_in_radius( pos(), 1 ) ) {
-        if( nomove != nullptr && nomove->find( p ) != nomove->end() ) {
+        if( nomove != nullptr && nomove->contains( p ) ) {
             continue;
         }
 
@@ -3381,8 +3483,7 @@ bool npc::wield_better_weapon()
 
     const auto compare_weapon =
     [this, &best, &best_dps, can_use_gun, use_silent, dist, &mode_pairs ]( const item & it ) {
-        // If dist is 1 then we're in melee range, so disallow shooting guns.
-        bool gun_usable = can_use_gun && ( dist > 1 || dist == -1 ) && ( !use_silent || it.is_silent() );
+        bool gun_usable = can_use_gun && dist != 0 && ( !use_silent || it.is_silent() );
         double dps = 0.0f;
         auto [mode_id, mode_] = npc_ai::best_mode_for_range( *this, it, dist );
 

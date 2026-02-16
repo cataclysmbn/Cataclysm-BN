@@ -98,7 +98,10 @@
   {
     "id": "TALK_MISSION_ADVICE",
     "type": "talk_topic",
-    "responses": [ { "text": "Sounds good, thanks.", "topic": "TALK_NONE" }, { "text": "Sounds good.  Bye!", "topic": "TALK_DONE" } ]
+    "responses": [
+      { "text": "Sounds good, thanks.", "topic": "TALK_MISSION_ACCEPTED" },
+      { "text": "Sounds good.  Bye!", "topic": "TALK_DONE" }
+    ]
   },
   {
     "id": "TALK_MISSION_REJECTED",
@@ -133,7 +136,8 @@
                 { "mission_goal": "MGOAL_ASSASSINATE" },
                 { "mission_goal": "MGOAL_KILL_MONSTER" },
                 { "mission_goal": "MGOAL_KILL_MONSTER_SPEC" },
-                { "mission_goal": "MGOAL_KILL_MONSTER_TYPE" }
+                { "mission_goal": "MGOAL_KILL_MONSTER_TYPE" },
+                { "mission_goal": "MGOAL_KILL_MONSTERS" }
               ]
             }
           ]
@@ -208,7 +212,13 @@
         "topic": "TALK_MISSION_SUCCESS",
         "condition": {
           "and": [
-            { "or": [ { "mission_goal": "MGOAL_KILL_MONSTER_SPEC" }, { "mission_goal": "MGOAL_KILL_MONSTER_TYPE" } ] },
+            {
+              "or": [
+                { "mission_goal": "MGOAL_KILL_MONSTER_SPEC" },
+                { "mission_goal": "MGOAL_KILL_MONSTER_TYPE" },
+                { "mission_goal": "MGOAL_KILL_MONSTERS" }
+              ]
+            },
             "mission_complete"
           ]
         },

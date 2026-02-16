@@ -118,6 +118,7 @@ enum class oter_flags : int {
     source_tailoring,
     source_vehicles,
     source_weapon,
+    is_bridge,
     num_oter_flags
 };
 
@@ -296,6 +297,14 @@ struct oter_t {
 
         bool is_lake_shore() const {
             return type->has_flag( oter_flags::lake_shore );
+        }
+
+        // Comparison operators for Lua bindings
+        bool operator==( const oter_t &rhs ) const {
+            return id == rhs.id;
+        }
+        bool operator<( const oter_t &rhs ) const {
+            return id < rhs.id;
         }
 
     private:

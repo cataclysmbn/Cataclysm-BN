@@ -54,6 +54,7 @@
 #include "units.h"
 
 static const trait_id trait_NONE( "NONE" );
+static const trait_id trait_BRAWLER( "BRAWLER" );
 static const trait_flag_str_id trait_flag_SUBTLE_SPELL( "SUBTLE_SPELL" );
 static const trait_flag_str_id trait_flag_SILENT_SPELL( "SILENT_SPELL" );
 
@@ -97,6 +98,7 @@ std::string enum_to_string<spell_flag>( spell_flag data )
         case spell_flag::CONCENTRATE: return "CONCENTRATE";
         case spell_flag::RANDOM_AOE: return "RANDOM_AOE";
         case spell_flag::RANDOM_DAMAGE: return "RANDOM_DAMAGE";
+        case spell_flag::DIVIDE_DAMAGE: return "DIVIDE_DAMAGE";
         case spell_flag::RANDOM_DURATION: return "RANDOM_DURATION";
         case spell_flag::RANDOM_TARGET: return "RANDOM_TARGET";
         case spell_flag::MUTATE_TRAIT: return "MUTATE_TRAIT";
@@ -106,6 +108,9 @@ std::string enum_to_string<spell_flag>( spell_flag data )
         case spell_flag::BRAWL: return "BRAWL";
         case spell_flag::DUPE_SOUND: return "DUPE_SOUND";
         case spell_flag::ADD_MELEE_DAM: return "ADD_MELEE_DAM";
+        case spell_flag::PHYSICAL: return "PHYSICAL";
+        case spell_flag::MOD_MELEE_MOVES: return "MOD_MELEE_MOVES";
+        case spell_flag::MOD_MELEE_STAM: return "MOD_MELEE_STAM";
         case spell_flag::LAST: break;
     }
     debugmsg( "Invalid spell_flag" );
@@ -357,6 +362,22 @@ void spell_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "final_casting_time", final_casting_time, base_casting_time );
     optional( jo, was_loaded, "casting_time_increment", casting_time_increment, 0.0f );
 
+    std::vector<std::string> temp_vector;
+    std::vector<std::string> default_vector;
+    optional( jo, was_loaded, "melee_dam", temp_vector, default_vector );
+    for( auto d : temp_vector ) {
+        // phys and ele provided for convenience when you want entire categories
+        std::array<damage_type, 3> phys = {DT_BASH, DT_CUT, DT_STAB}; // Ballistic not included because why would ballistic be on a melee anyway
+        std::array<damage_type, 8> ele = {DT_ACID, DT_HEAT, DT_COLD, DT_DARK, DT_PSI, DT_LIGHT, DT_BIOLOGICAL, DT_ELECTRIC}; // True not included
+        if( d == "physical" ) {
+            melee_dam.insert( melee_dam.end(), phys.begin(), phys.end() );
+        } else if( d == "elemental" ) {
+            melee_dam.insert( melee_dam.end(), ele.begin(), ele.end() );
+        } else {
+            melee_dam.push_back( damage_type_from_string( d ) );
+        }
+    }
+
     for( const JsonMember member : jo.get_object( "learn_spells" ) ) {
         learn_spells.insert( std::pair<std::string, int>( member.name(), member.get_int() ) );
     }
@@ -549,15 +570,8 @@ int spell::damage_as_character( const Character &guy ) const
 {
     // Open-ended for the purposes of further expansion
     double total_damage = damage();
-    if( has_flag( spell_flag::ADD_MELEE_DAM ) ) {
-        item &weapon = guy.used_weapon();
-        int weapon_damage = 0;
-        if( !weapon.is_null() ) {
-            // Just take the max, rather than worrying about how to integrate the other damage types
-            // Also assumes that weapons aren't dealing other damage types
-            weapon_damage = std::max( {weapon.damage_melee( DT_STAB ), weapon.damage_melee( DT_CUT ), weapon.damage_melee( DT_BASH )} );
-        }
-        total_damage += weapon_damage;
+    if( has_flag( spell_flag::PHYSICAL ) && guy.has_trait( trait_BRAWLER ) ) {
+        total_damage *= 1.2; // Brawlers get a damage boost for Physical Techniques
     }
 
     total_damage *= get_stat_mult( false,
@@ -573,6 +587,18 @@ std::string spell::damage_string( const Character &guy ) const
     } else {
         const int dmg = damage_as_character( guy );
         if( dmg >= 0 ) {
+            // Legacy code, to be likely removed or reworked later.
+            if( has_flag( spell_flag::ADD_MELEE_DAM ) ) {
+                item &weapon = guy.used_weapon();
+                if( !weapon.is_null() ) {
+                    // Replicate what it displayed previously
+                    return string_format( "%d", dmg + std::max( {weapon.damage_melee( DT_STAB ), weapon.damage_melee( DT_CUT ), weapon.damage_melee( DT_BASH )} ) );
+                }
+            } else if( !type->melee_dam.empty() ) {
+                // Don't bother trying to display each individual bit of damage
+                // Important part is that the user knows they'll get out more damage than it says
+                return string_format( "%d + melee dam", dmg );
+            }
             return string_format( "%d", dmg );
         } else {
             return string_format( "+%d", std::abs( dmg ) );
@@ -716,15 +742,25 @@ bool spell::can_learn( const Character &guy ) const
 
 int spell::energy_cost( const Character &guy ) const
 {
-    int cost;
-    if( type->base_energy_cost < type->final_energy_cost ) {
-        cost = std::min( type->final_energy_cost,
-                         static_cast<int>( std::round( type->base_energy_cost + type->energy_increment * get_level() ) ) );
+    int cost = 0;
+    if( has_flag( spell_flag::MOD_MELEE_STAM ) ) {
+        item &weapon = guy.used_weapon();
+        if( !weapon.is_null() ) {
+            cost += weapon.stamina_cost();
+        }
+    }
+    // Shortcut to avoid checking the flag twice
+    if( type->base_energy_cost < 0 && cost > 0 ) {
+        // Special overload of default behavior to instead use it as a multiplier ala Rapid Strike
+        cost *= type->energy_increment;
+    } else if( type->base_energy_cost < type->final_energy_cost ) {
+        cost += std::min( type->final_energy_cost,
+                          static_cast<int>( std::round( type->base_energy_cost + type->energy_increment * get_level() ) ) );
     } else if( type->base_energy_cost > type->final_energy_cost ) {
-        cost = std::max( type->final_energy_cost,
-                         static_cast<int>( std::round( type->base_energy_cost + type->energy_increment * get_level() ) ) );
+        cost += std::max( type->final_energy_cost,
+                          static_cast<int>( std::round( type->base_energy_cost + type->energy_increment * get_level() ) ) );
     } else {
-        cost = type->base_energy_cost;
+        cost += type->base_energy_cost;
     }
     if( !has_flag( spell_flag::NO_HANDS ) ) {
         // the first 10 points of combined encumbrance is ignored, but quickly adds up
@@ -815,16 +851,26 @@ int spell::casting_time( const Character &guy ) const
 {
     // casting time in moves
     int casting_time = 0;
-    if( type->base_casting_time < type->final_casting_time ) {
-        casting_time = std::min( type->final_casting_time,
-                                 static_cast<int>( std::round( type->base_casting_time + type->casting_time_increment *
-                                         get_level() ) ) );
+    if( has_flag( spell_flag::MOD_MELEE_MOVES ) ) {
+        item &weapon = guy.used_weapon();
+        if( !weapon.is_null() ) {
+            casting_time += weapon.attack_cost();
+        }
+    }
+    // Shortcut to avoid checking the flag twice
+    if( type->base_casting_time < 0 && casting_time > 0 ) {
+        // Special overload of default behavior to instead use it as a multiplier ala Rapid Strike
+        casting_time *= type->casting_time_increment;
+    } else if( type->base_casting_time < type->final_casting_time ) {
+        casting_time += std::min( type->final_casting_time,
+                                  static_cast<int>( std::round( type->base_casting_time + type->casting_time_increment *
+                                          get_level() ) ) );
     } else if( type->base_casting_time > type->final_casting_time ) {
-        casting_time = std::max( type->final_casting_time,
-                                 static_cast<int>( std::round( type->base_casting_time + type->casting_time_increment *
-                                         get_level() ) ) );
+        casting_time += std::max( type->final_casting_time,
+                                  static_cast<int>( std::round( type->base_casting_time + type->casting_time_increment *
+                                          get_level() ) ) );
     } else {
-        casting_time = type->base_casting_time;
+        casting_time += type->base_casting_time;
     }
     if( !has_flag( spell_flag::NO_LEGS ) ) {
         // The first base leg encumbrance combined points of encumbrance are ignored
@@ -838,7 +884,7 @@ int spell::casting_time( const Character &guy ) const
                                           guy.encumb( body_part_arm_l ) + guy.encumb( body_part_arm_r ) - type->arm_encumbrance_threshold );
         casting_time += arms_encumb * 2;
     }
-    if( guy.is_armed() && !has_flag( spell_flag::NO_HANDS ) &&
+    if( guy.is_armed() && !has_flag( spell_flag::NO_HANDS ) && !has_flag( spell_flag::PHYSICAL ) &&
         !guy.primary_weapon().has_flag( flag_MAGIC_FOCUS ) ) {
         casting_time = std::round( casting_time * 1.5 );
     }
@@ -890,13 +936,16 @@ float spell::spell_fail( const Character &guy ) const
         stats_vals += guy.get_int();
     }
 
+    // Brawlers get a boost to effective skill for physical techniques
+    int brawler_bonus = ( has_flag( spell_flag::PHYSICAL ) && guy.has_trait( trait_BRAWLER ) ) ? 5 : 0;
+
     // formula is based on the following:
     // exponential curve
     // effective skill of 0 or less is 100% failure
     // effective skill of 8 (8 of relevant stats, 0 spellcraft, 0 spell level, spell difficulty 0) is ~50% failure
     // effective skill of 30 is 0% failure
     const float effective_skill = ( 2 * ( get_level() - get_difficulty() ) ) + stats_vals +
-                                  guy.get_skill_level( skill() );
+                                  guy.get_skill_level( skill() ) + brawler_bonus;
     // add an if statement in here because sufficiently large numbers will definitely overflow because of exponents
     if( effective_skill > 30.0f ) {
         return 0.0f;
@@ -1129,7 +1178,7 @@ bool spell::target_by_monster_id( const tripoint &p ) const
     }
     bool valid = false;
     if( monster *const target = g->critter_at<monster>( p ) ) {
-        if( type->targeted_monster_ids.find( target->type->id ) != type->targeted_monster_ids.end() ) {
+        if( type->targeted_monster_ids.contains( target->type->id ) ) {
             valid = true;
         }
     }
@@ -1312,6 +1361,24 @@ dealt_damage_instance spell::get_dealt_damage_instance() const
 damage_instance spell::get_damage_instance( const Character &guy ) const
 {
     damage_instance dmg;
+    // moved out of damage_as_character specifically so that the more modern method works better
+    if( !type->melee_dam.empty() || has_flag( spell_flag::ADD_MELEE_DAM ) ) {
+        item &weapon = guy.used_weapon();
+        if( !weapon.is_null() ) {
+            if( has_flag( spell_flag::ADD_MELEE_DAM ) ) {
+                // Legacy code, to be likely removed or reworked later.
+                // Kept mostly the same as before so that balance doesn't go out of whack without time to correct it.
+                // Just take the max, rather than worrying about how to integrate the other damage types
+                // Also assumes that weapons aren't dealing other damage types (Which is no-longer a good assumption)
+                dmg.add_damage( dmg_type(), std::max( {weapon.damage_melee( DT_STAB ), weapon.damage_melee( DT_CUT ), weapon.damage_melee( DT_BASH )} ) );
+            } else {
+                // Adds the relevant damage types to the attack individually
+                for( auto d : type->melee_dam ) {
+                    dmg.add_damage( d, weapon.damage_melee( d ) ) ;
+                }
+            }
+        }
+    }
     dmg.add_damage( dmg_type(), damage_as_character( guy ) );
     return dmg;
 }
@@ -1319,7 +1386,25 @@ damage_instance spell::get_damage_instance( const Character &guy ) const
 dealt_damage_instance spell::get_dealt_damage_instance( const Character &guy ) const
 {
     dealt_damage_instance dmg;
-    dmg.set_damage( dmg_type(), damage_as_character( guy ) );
+    int bonus_main_damage = 0; // Least jank way to handle legacy code
+    if( !type->melee_dam.empty() || has_flag( spell_flag::ADD_MELEE_DAM ) ) {
+        item &weapon = guy.used_weapon();
+        if( !weapon.is_null() ) {
+            if( has_flag( spell_flag::ADD_MELEE_DAM ) ) {
+                // Legacy code, to be likely removed or reworked later.
+                // Kept mostly the same as before so that balance doesn't go out of whack without time to correct it.
+                // Just take the max, rather than worrying about how to integrate the other damage types
+                // Also assumes that weapons aren't dealing other damage types (Which is no-longer a good assumption)
+                bonus_main_damage =  std::max( {weapon.damage_melee( DT_STAB ), weapon.damage_melee( DT_CUT ), weapon.damage_melee( DT_BASH )} );
+            } else {
+                // Adds the relevant damage types to the attack individually
+                for( auto d : type->melee_dam ) {
+                    dmg.set_damage( d, weapon.damage_melee( d ) ) ;
+                }
+            }
+        }
+    }
+    dmg.set_damage( dmg_type(), damage_as_character( guy ) + bonus_main_damage );
     return dmg;
 }
 
@@ -1822,8 +1907,24 @@ static std::string enumerate_spell_data( const spell &sp )
     if( sp.has_flag( spell_flag::BRAWL ) ) {
         spell_data.emplace_back( _( "can be used by Brawlers" ) );
     }
+    if( sp.has_flag( spell_flag::PHYSICAL ) ) {
+        spell_data.emplace_back( _( "is a physical technique and can be used by Brawlers" ) );
+    }
     if( sp.has_flag( spell_flag::ADD_MELEE_DAM ) ) {
         spell_data.emplace_back( _( "can be augmented by melee weapon damage" ) );
+    }
+    if( sp.has_flag( spell_flag::DIVIDE_DAMAGE ) ) {
+        spell_data.emplace_back( _( "divides damage evenly among its targets" ) );
+    }
+    if( !sp.type->melee_dam.empty() ) {
+        std::string damage_names;
+        // I don't like unsigned int here but otherwise compiler complains about comparing signed and unsigned
+        for( unsigned int i = 0; i < sp.type->melee_dam.size() - 1; i++ ) {
+            damage_names += name_by_dt( sp.type->melee_dam[i] ) + ", ";
+        }
+        damage_names += name_by_dt( sp.type->melee_dam.back() );
+        spell_data.emplace_back( string_format(
+                                     _( "can be augmented by the following damage types on melee weapons: %s" ), damage_names ) );
     }
     if( sp.type->scale_str ) {
         spell_data.emplace_back( _( "scales off of strength stat" ) );

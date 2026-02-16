@@ -29,6 +29,7 @@
     "price_postapoc": "10 cent",
     "material": [ "veggy" ],
     "volume": "250 ml",
+    "flags": [ "RAW", "NO_COOKING_BUFF" ],
     "milling": { "into": "flour", "conversion_rate": 15 },
     "fun": -14,
     "vitamins": [ [ "veggy_allergen", 1 ] ]
@@ -913,6 +914,7 @@
   {
     "type": "COMESTIBLE",
     "id": "veggy_sausage",
+    "looks_like": "sausage",
     "name": "smoked veggy sausage",
     "weight": "148 g",
     "comestible_type": "FOOD",

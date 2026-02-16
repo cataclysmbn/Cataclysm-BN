@@ -11,11 +11,13 @@
 #include "flag.h"
 #include "flat_set.h"
 #include "generic_factory.h"
+#include "generic_readers.h"
 #include "item.h"
 #include "item_contents.h"
 #include "item_group.h"
 #include "itype.h"
 #include "json.h"
+#include "mission.h"
 #include "options.h"
 #include "pldata.h"
 #include "translations.h"
@@ -237,6 +239,8 @@ void profession::load( const JsonObject &jo, const std::string & )
     }
     optional( jo, was_loaded, "no_bonus", no_bonus );
 
+    optional( jo, was_loaded, "starting_cash", _starting_cash );
+
     optional( jo, was_loaded, "skills", _starting_skills, skilllevel_reader {} );
     optional( jo, was_loaded, "addictions", _starting_addictions, addiction_reader {} );
     // TODO: use string_id<bionic_type> or so
@@ -244,7 +248,14 @@ void profession::load( const JsonObject &jo, const std::string & )
     // TODO: use string_id<mutation_branch> or so
     optional( jo, was_loaded, "traits", _starting_traits, auto_flags_reader<trait_id> {} );
     optional( jo, was_loaded, "forbidden_traits", _forbidden_traits, auto_flags_reader<trait_id> {} );
+    optional( jo, was_loaded, "forbidden_bionics", _forbidden_bionics, auto_flags_reader<bionic_id> {} );
+    optional( jo, was_loaded, "allowed_traits", _allowed_traits, auto_flags_reader<trait_id> {} );
+    optional( jo, was_loaded, "allowed_bionics", _allowed_bionics, auto_flags_reader<bionic_id> {} );
+    optional( jo, was_loaded, "forbids_bionics", _forbids_bionics );
     optional( jo, was_loaded, "flags", flags, auto_flags_reader<> {} );
+
+    optional( jo, was_loaded, "missions", _missions, auto_flags_reader<mission_type_id> {} );
+    optional( jo, was_loaded, "npcs", _starting_npcs, auto_flags_reader<npc_class_id> {} );
 }
 
 const profession_id &profession::generic()
@@ -324,6 +335,18 @@ void profession::check_definition() const
             debugmsg( "trait %s for profession %s does not exist", t.c_str(), id.c_str() );
         }
     }
+
+    for( auto &t : _forbidden_bionics ) {
+        if( !t.is_valid() ) {
+            debugmsg( "bionic %s for profession %s does not exist", t.c_str(), id.c_str() );
+        }
+    }
+
+    for( auto &t : _allowed_bionics ) {
+        if( !t.is_valid() ) {
+            debugmsg( "bionic %s for profession %s does not exist", t.c_str(), id.c_str() );
+        }
+    }
     for( const auto &elem : _starting_pets ) {
         if( !elem.is_valid() ) {
             debugmsg( "startng pet %s for profession %s does not exist", elem.c_str(), id.c_str() );
@@ -332,6 +355,22 @@ void profession::check_definition() const
     for( const auto &elem : _starting_skills ) {
         if( !elem.first.is_valid() ) {
             debugmsg( "skill %s for profession %s does not exist", elem.first.c_str(), id.c_str() );
+        }
+    }
+
+    for( const auto &m : _missions ) {
+        if( !m.is_valid() ) {
+            debugmsg( "starting mission %s for profession %s does not exist", m.c_str(), id.c_str() );
+        }
+
+        if( std::find( m->origins.begin(), m->origins.end(), ORIGIN_GAME_START ) == m->origins.end() ) {
+            debugmsg( "starting mission %s for profession %s must include an origin of ORIGIN_GAME_START",
+                      m.c_str(), id.c_str() );
+        }
+    }
+    for( const auto &elem : _starting_npcs ) {
+        if( !elem.is_valid() ) {
+            debugmsg( "npc class %s for profession %s does not exist", elem.c_str(), id.c_str() );
         }
     }
 }
@@ -373,6 +412,11 @@ static time_point advanced_spawn_time()
 signed int profession::point_cost() const
 {
     return _point_cost;
+}
+
+std::optional<int> profession::starting_cash() const
+{
+    return _starting_cash;
 }
 
 static void clear_faults( item &it )
@@ -418,7 +462,13 @@ std::vector<detached_ptr<item>> profession::items( bool male,
     std::vector<itype_id> bonus = item_substitutions.get_bonus_items( traits );
     for( const itype_id &elem : bonus ) {
         if( elem != no_bonus ) {
-            result.push_back( item::spawn( elem, advanced_spawn_time(), item::default_charges_tag {} ) );
+            auto bonus_item = item::spawn( elem, advanced_spawn_time(), item::default_charges_tag {} );
+            if( !bonus_item->magazine_current() &&
+                bonus_item->magazine_default() != itype_id::NULL_ID() ) {
+                bonus_item->put_in( item::spawn( bonus_item->magazine_default(),
+                                                 bonus_item->birthday() ) );
+            }
+            result.push_back( std::move( bonus_item ) );
         }
     }
     for( auto iter = result.begin(); iter != result.end(); ) {
@@ -501,11 +551,34 @@ std::set<trait_id> profession::get_forbidden_traits() const
     return _forbidden_traits;
 }
 
+std::set<trait_id> profession::get_allowed_traits() const
+{
+    return _allowed_traits;
+}
+
+std::vector<bionic_id> profession::get_locked_bionics() const
+{
+    return _starting_CBMs;
+}
+
+std::set<bionic_id> profession::get_allowed_bionics() const
+{
+    return _allowed_bionics;
+}
+
+bool profession::forbids_bionics() const
+{
+    return _forbids_bionics;
+}
 profession::StartingSkillList profession::skills() const
 {
     return _starting_skills;
 }
 
+std::vector<npc_class_id> profession::npcs() const
+{
+    return _starting_npcs;
+}
 bool profession::has_flag( const std::string &flag ) const
 {
     return flags.contains( flag );
@@ -520,6 +593,27 @@ bool profession::is_locked_trait( const trait_id &trait ) const
 bool profession::is_forbidden_trait( const trait_id &trait ) const
 {
     return _forbidden_traits.contains( trait );
+}
+
+bool profession::is_allowed_trait( const trait_id &trait ) const
+{
+    return _allowed_traits.contains( trait );
+}
+
+bool profession::is_locked_bionic( const bionic_id &bionic ) const
+{
+    return std::ranges::find( _starting_CBMs, bionic ) !=
+           _starting_CBMs.end();
+}
+
+bool profession::is_forbidden_bionic( const bionic_id &bionic ) const
+{
+    return _forbidden_bionics.contains( bionic );
+}
+
+bool profession::is_allowed_bionic( const bionic_id &bionic ) const
+{
+    return _allowed_bionics.contains( bionic );
 }
 
 std::map<spell_id, int> profession::spells() const
@@ -570,7 +664,7 @@ void json_item_substitution::load( const JsonObject &jo )
     const std::string title = jo.get_string( item_mode ? "item" : "trait" );
 
     auto check_duplicate_item = [&]( const itype_id & it ) {
-        return substitutions.find( it ) != substitutions.end() ||
+        return substitutions.contains( it ) ||
                std::ranges::find_if( bonuses,
         [&it]( const std::pair<itype_id, trait_requirements> &p ) {
             return p.first == it;
@@ -712,4 +806,9 @@ std::vector<itype_id> json_item_substitution::get_bonus_items( const std::vector
         }
     }
     return ret;
+}
+
+const std::vector<mission_type_id> &profession::missions() const
+{
+    return _missions;
 }

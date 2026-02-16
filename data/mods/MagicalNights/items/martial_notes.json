@@ -1,0 +1,150 @@
+[
+  {
+    "abstract": "martial_note",
+    "name": { "str": "Martial Note" },
+    "type": "GENERIC",
+    "category": "spellbooks",
+    "weight": "475 g",
+    "volume": "500 ml",
+    "price": "40 USD",
+    "looks_like": "survnote",
+    "material": [ "paper" ],
+    "symbol": "?",
+    "color": "yellow"
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_whirlwind_blade",
+    "//": "Adventurer technique",
+    "name": { "str": "Note on Whirlwind Blade", "str_pl": "Notes on Whirlwind Blade" },
+    "description": "Sometimes, you have to spin to win! Those enemies stand no chance with your blade!",
+    "use_action": { "type": "learn_spell", "spells": [ "whirlwind_blade" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_sprint",
+    "//": "Adventurer technique",
+    "name": { "str": "Note on Sprint", "str_pl": "Notes on Sprint" },
+    "description": "This'll give those jerks on your old highschool track team a run for their money!",
+    "use_action": { "type": "learn_spell", "spells": [ "sprint" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_adventurers_remedy",
+    "//": "Adventurer technique",
+    "name": { "str": "Note on Adventurer's Remedy", "str_pl": "Notes on Adventurer's Remedy" },
+    "description": "Inevitably, every adventurer will get in a sticky situation with a bad cut or break at least once in their career. This'll help put you on the mend and get back to adventuring!",
+    "use_action": { "type": "learn_spell", "spells": [ "adventurers_remedy" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_swift_strike",
+    "//": "Adventurer technique",
+    "name": { "str": "Note on Swift Strike", "str_pl": "Notes on Swift Strike" },
+    "description": "It may not be the fastest strike out there, but it'll certainly do against the standard adventuring fare.",
+    "use_action": { "type": "learn_spell", "spells": [ "swift_strike" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_pocket_sand",
+    "//": "Adventurer technique",
+    "name": { "str": "Note on Pocket Sand", "str_pl": "Notes on Pocket Sand" },
+    "description": "You think you saw this in a video of some kind once. It's certainly worth a try, in this world.",
+    "use_action": { "type": "learn_spell", "spells": [ "pocket_sand" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_adventurers_cure",
+    "//": "Adventurer technique",
+    "name": { "str": "Note on Adventurer's Cure", "str_pl": "Notes on Adventurer's Cure" },
+    "description": "A must-have for any adventurers with an allergy to bee stings and similar natural poisons.",
+    "use_action": { "type": "learn_spell", "spells": [ "adventurers_cure" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_survival_wooden_javelins",
+    "//": "Adventurer technique",
+    "name": { "str": "Note on Survivalist's Wooden Javelins", "str_pl": "Notes on Survivalist's Wooden Javelins" },
+    "description": "For those averse to bowery, a good set of javelins is the next-best thing. Fortunately, adventurers devised ways to quickly make a pair serviceable for their travels.",
+    "use_action": { "type": "learn_spell", "spells": [ "survival_wooden_javelins" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_adventurers_relief",
+    "//": "Adventurer technique",
+    "name": { "str": "Note on Adventurer's Relief", "str_pl": "Notes on Adventurer's Relief" },
+    "description": "Adventuring tends to result in a good amount of small cuts and bruises that might not be life-threatening, but boy do they hurt like hell!",
+    "use_action": { "type": "learn_spell", "spells": [ "adventurers_relief" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_sparrows_strike",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Sparrow's Strike", "str_pl": "Notes on Sparrow's Strike" },
+    "description": "You must strike like a sparrow and attack before your enemy may react",
+    "use_action": { "type": "learn_spell", "spells": [ "sparrows_strike" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_treechopping_cut",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Treechopping Cut", "str_pl": "Notes on Treechopping Cut" },
+    "description": "Ever wanted to chop down a tree in a single strike? Now you can!",
+    "use_action": { "type": "learn_spell", "spells": [ "treechopping_cut" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_hornets_stinger",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Hornet's Stinger", "str_pl": "Notes on Hornet's Stinger" },
+    "description": "Much like a hornet's stinger stabs right through your skin, you must stab right through your enemies.",
+    "use_action": { "type": "learn_spell", "spells": [ "hornets_stinger" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_traveling_strike",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Traveling Strike", "str_pl": "Notes on Traveling Strike" },
+    "description": "A technique for when you're on the move and you don't want to stop in place and cut your enemy down",
+    "use_action": { "type": "learn_spell", "spells": [ "traveling_strike" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_execution_flurry",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Execution Flurry", "str_pl": "Notes on Execution Flurry" },
+    "description": "You are a storm that is approaching, preparing to devastate your enemies.",
+    "use_action": { "type": "learn_spell", "spells": [ "execution_flurry" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_iaido",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Iaido", "str_pl": "Notes on Iaido" },
+    "description": "Attacking your enemy in the same breath that you draw your sword is a recipe for efficient combat.",
+    "use_action": { "type": "learn_spell", "spells": [ "iaido" ] }
+  },
+  {
+    "type": "GENERIC",
+    "copy-from": "martial_note",
+    "id": "martial_note_blademasters_repose",
+    "//": "Blademaster technique",
+    "name": { "str": "Note on Blademaster's Repose", "str_pl": "Notes on Blademaster's Repose" },
+    "description": "When your reflexes and your blade are what stands between you and death, you must make sure that both are razor-sharp.",
+    "use_action": { "type": "learn_spell", "spells": [ "blademasters_repose" ] }
+  }
+]

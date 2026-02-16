@@ -1,54 +1,5 @@
 [
   {
-    "id": "afs_atomic_smartphone",
-    "type": "TOOL",
-    "name": { "str": "atomic smartphone" },
-    "description": "Never charge your phone again with the Rivtech atomic smartphone.  Rated for 10 million years of use, this cutting-edge gadget had been on public markets for less than a week when the Cataclysm hit, and their eye-watering price made them a rarity.  It includes an alarm clock, a high-resolution camera, and a bright flashlight.",
-    "weight": "300 g",
-    "volume": "50 ml",
-    "price": 200000,
-    "price_postapoc": 2500,
-    "material": [ "plastic", "aluminum" ],
-    "looks_like": "cell_phone",
-    "symbol": ";",
-    "color": "light_green",
-    "use_action": [
-      {
-        "target": "afs_atomic_smartphone_flashlight",
-        "msg": "You activate the flashlight app.",
-        "active": true,
-        "type": "transform"
-      },
-      "CAMERA",
-      "MP3"
-    ],
-    "flags": [ "WATCH", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
-  },
-  {
-    "id": "afs_atomic_smartphone_music",
-    "copy-from": "afs_atomic_smartphone",
-    "type": "TOOL",
-    "name": { "str": "atomic smartphone - music", "str_pl": "atomic smartphones - music" },
-    "description": "This phone is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
-    "revert_to": "afs_atomic_smartphone",
-    "use_action": [ "MP3_ON" ],
-    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
-  },
-  {
-    "id": "afs_atomic_smartphone_flashlight",
-    "copy-from": "afs_atomic_smartphone",
-    "type": "TOOL",
-    "name": { "str": "atomic smartphone - Flashlight", "str_pl": "atomic smartphones - Flashlight" },
-    "revert_to": "afs_atomic_smartphone",
-    "use_action": {
-      "target": "afs_atomic_smartphone",
-      "msg": "You deactivate the flashlight app.",
-      "menu_text": "Turn off flashlight",
-      "type": "transform"
-    },
-    "flags": [ "WATCH", "LIGHT_25", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
-  },
-  {
     "id": "afs_wraitheon_smartphone",
     "type": "TOOL",
     "name": { "str": "Wraitheon executive's smartphone" },
@@ -59,18 +10,35 @@
     "material": [ "superalloy", "aluminum" ],
     "use_action": [
       {
-        "target": "afs_atomic_wraitheon_flashlight",
+        "target": "afs_wraitheon_smartphone_flashlight",
         "msg": "You activate the flashlight app.",
         "active": true,
         "type": "transform"
       },
       "CAMERA",
-      "MP3",
+      {
+        "type": "music_player",
+        "target": "afs_wraitheon_smartphone_music",
+        "msg": "You put in the earbuds and start listening to music.",
+        "moves": 200
+      },
+      {
+        "//": "40 xp/hr.  Tier 1, 0-3 skill, higher-tier EXP since requires power.",
+        "type": "train_skill",
+        "training_msg": "You fiddle with your phone’s settings and apps, picking up some basic computer knowledge.",
+        "training_skill": "computer",
+        "training_skill_min_level": 0,
+        "training_skill_xp": 8,
+        "training_skill_max_level": 3,
+        "training_skill_fatigue": 0,
+        "training_skill_interval": 12,
+        "training_skill_xp_chance": 90
+      },
       "ROBOTCONTROL"
     ]
   },
   {
-    "id": "afs_atomic_wraitheon_music",
+    "id": "afs_wraitheon_smartphone_music",
     "copy-from": "afs_wraitheon_smartphone",
     "type": "TOOL",
     "name": { "str": "Wraitheon executive's smartphone - music", "str_pl": "Wraitheon executive's smartphones - music" },
@@ -80,7 +48,7 @@
     "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
   },
   {
-    "id": "afs_atomic_wraitheon_flashlight",
+    "id": "afs_wraitheon_smartphone_flashlight",
     "copy-from": "afs_atomic_smartphone_flashlight",
     "type": "TOOL",
     "name": { "str": "Executive's smartphone - Flashlight", "str_pl": "Executive's smartphones - Flashlight" },
@@ -91,21 +59,6 @@
       "menu_text": "Turn off flashlight",
       "type": "transform"
     }
-  },
-  {
-    "id": "afs_atompot",
-    "type": "TOOL",
-    "name": { "str": "atompot" },
-    "copy-from": "pressure_cooker",
-    "description": "Rivtech's premiere self-heating kitchen appliance, complete with lid, hand-crafted with the power of the atom to reach any temperature in thirty seconds.  As bulky as it is, its plutonium power source means that it can be used to cook an absurd amount of meals without ever worrying about running low on power.  Unsurprisingly, sales weren't particularly good because of the prospect of irradiating your food, but internal shielding ensures that only trace amounts find its way into the center.",
-    "price": "300 USD",
-    "price_postapoc": "50 USD",
-    "material": [ "steel", "plastic" ],
-    "looks_like": "pot",
-    "symbol": ")",
-    "color": "light_green",
-    "use_action": "HOTPLATE",
-    "flags": [ "ALLOWS_REMOTE_USE" ]
   },
   {
     "id": "afs_chain_wrench",
@@ -223,7 +176,7 @@
     "coverage": 5,
     "encumbrance": 2,
     "covers": [ "leg_either" ],
-    "extend": { "flags": [ "POWERARMOR_COMPATIBLE" ] }
+    "extend": { "flags": [ "POWERARMOR_COMPATIBLE", "ALLOWS_TAIL_SNAKE", "ALLOWS_TAIL" ] }
   },
   {
     "id": "adv_UPS_off",
@@ -234,7 +187,7 @@
     "coverage": 5,
     "encumbrance": 1,
     "covers": [ "leg_either" ],
-    "flags": [ "WAIST", "COMPACT", "FRAGILE", "OVERSIZE", "IS_UPS", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "WAIST", "COMPACT", "FRAGILE", "OVERSIZE", "IS_UPS", "POWERARMOR_COMPATIBLE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "bionic_maintenance_toolkit",

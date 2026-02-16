@@ -8,6 +8,7 @@
         [ "gasoline", 1 ],
         [ "diesel", 1 ],
         [ "biodiesel", 1 ],
+        [ "chem_butane", 1 ],
         [ "chem_ethanol", 1 ],
         [ "chem_methanol", 1 ],
         [ "ether", 1 ],
@@ -26,6 +27,7 @@
     "components": [
       [
         [ "gasoline", 1 ],
+        [ "chem_butane", 1 ],
         [ "chem_ethanol", 1 ],
         [ "chem_methanol", 1 ],
         [ "ether", 1 ],

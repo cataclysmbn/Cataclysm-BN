@@ -108,6 +108,7 @@
     "color": "green",
     "see_cost": 5,
     "extras": "sewer",
+    "spawns": { "group": "GROUP_SEWER", "population": [ 1, 6 ], "chance": 30 },
     "flags": [ "LINEAR" ]
   },
   {
@@ -144,7 +145,8 @@
     "sym": "│",
     "color": "green",
     "see_cost": 999,
-    "mondensity": 2
+    "mondensity": 2,
+    "spawns": { "group": "GROUP_SEWER", "population": [ 1, 6 ], "chance": 30 }
   },
   {
     "type": "overmap_terrain",

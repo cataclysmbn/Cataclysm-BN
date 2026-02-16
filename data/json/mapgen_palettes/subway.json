@@ -58,6 +58,7 @@
     "items": {
       "N": { "item": "tools_construction", "chance": 90, "repeat": 3 },
       "Q": { "item": "office_paper", "chance": 90, "repeat": 5 }
-    }
+    },
+    "nested": { ".": { "chunks": [ [ "null", 9 ], [ "place_cave_moss", 1 ] ] } }
   }
 ]

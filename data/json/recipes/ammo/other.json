@@ -49,7 +49,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 1 ] ],
     "using": [ [ "forging_standard", 5 ] ],
-    "qualities": [ { "id": "CASING_FORMING", "level": 2 }, { "id": "CONTAIN_HOT", "level": 1 } ],
+    "qualities": [ { "id": "CASING_PRESSING", "level": 2 }, { "id": "CONTAIN_HOT", "level": 1 } ],
     "components": [ [ [ "weights", 34, "LIST" ], [ "steel_tiny", 2, "LIST" ] ] ]
   },
   {

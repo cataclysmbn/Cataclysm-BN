@@ -20,8 +20,8 @@
     "storage": "100 L",
     "warmth": 5,
     "material_thickness": 2,
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "BELTED", "ONLY_ONE", "LEAK_DAM" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "BELTED", "ONLY_ONE", "LEAK_DAM", "ALLOWS_WINGS" ]
   },
   {
     "id": "afs_titanium_vest",
@@ -40,7 +40,8 @@
     "coverage": 80,
     "encumbrance": 4,
     "material_thickness": 2,
-    "valid_mods": [ "resized_large" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "ALLOWS_WINGS" ]
   },
   {
     "id": "afs_holo_cloak_mk2",
@@ -70,7 +71,7 @@
     "encumbrance": 4,
     "warmth": 30,
     "material_thickness": 3,
-    "flags": [ "OVERSIZE", "HOOD", "OUTER", "NO_REPAIR", "SUPER_FANCY", "STURDY" ],
+    "flags": [ "OVERSIZE", "HOOD", "OUTER", "NO_REPAIR", "SUPER_FANCY", "STURDY", "ALLOWS_TAIL_SNAKE" ],
     "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "BONUS_DODGE", "add": 1 } ] } ] }
   },
   {
@@ -91,8 +92,8 @@
     "encumbrance": 12,
     "material_thickness": 3,
     "use_action": [ "SOLARPACK" ],
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "FRAGILE", "OUTER", "ONLY_ONE", "SOLARPACK" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "FRAGILE", "OUTER", "ONLY_ONE", "SOLARPACK", "ALLOWS_WINGS" ]
   },
   {
     "id": "q_solarpack_on",
@@ -114,8 +115,8 @@
     "material_thickness": 1,
     "use_action": [ "SOLARPACK_OFF" ],
     "solar_efficiency": 0.24,
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "FRAGILE", "OUTER", "ONLY_ONE", "SOLARPACK_ON" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "FRAGILE", "OUTER", "ONLY_ONE", "SOLARPACK_ON", "ALLOWS_WINGS" ]
   },
   {
     "id": "xlswat_armor",
@@ -140,7 +141,7 @@
     "storage": "8 L",
     "warmth": 35,
     "material_thickness": 9,
-    "valid_mods": [ "steel_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 4,
     "flags": [ "OVERSIZE", "POCKETS", "STURDY" ]
   },
@@ -243,6 +244,6 @@
       "max_weight": "12 kg",
       "flags": [ "BELT_CLIP" ]
     },
-    "flags": [ "WATER_FRIENDLY", "BELTED" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "ALLOWS_WINGS" ]
   }
 ]

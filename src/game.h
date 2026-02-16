@@ -28,6 +28,7 @@
 #include "pimpl.h"
 #include "point.h"
 #include "type_id.h"
+#include "location_vector.h"
 
 class Character;
 class Creature_tracker;
@@ -490,18 +491,11 @@ class game
                               const time_duration &catch_duration );
         /**
          * Get the contiguous fishable locations starting at fish_pos, out to the specificed distance.
-         * @param distance Distance around the fish_pos to examine for contiguous fishable locations.
+         * @param radius Distance around the fish_pos to examine for contiguous fishable locations.
          * @param fish_pos The location being fished.
          * @return A set of locations representing the valid contiguous fishable locations.
          */
-        std::unordered_set<tripoint> get_fishable_locations( int distance, const tripoint &fish_pos );
-        /**
-         * Get the fishable monsters within the provided fishable locations.
-         * @param fishable_locations A set of locations which are valid fishable terrain. Any fishable monsters
-         * are filtered by this collection to determine those which can actually be caught.
-         * @return Fishable monsters within the specified fishable terrain.
-         */
-        std::vector<monster *> get_fishable_monsters( std::unordered_set<tripoint> &fishable_locations );
+        std::unordered_set<tripoint>get_fishable_locations( int radius, const tripoint &fish_pos );
 
         /** Flings the input creature in the given direction. */
         void fling_creature( Creature *c, const units::angle &dir, float flvel, bool controlled = false );
@@ -586,6 +580,8 @@ class game
         void reload_tileset( const std::function<void( std::string )> &out );
         void temp_exit_fullscreen();
         void reenter_fullscreen();
+        void zoom_in_overmap();
+        void zoom_out_overmap();
         void zoom_in();
         void zoom_out();
         void reset_zoom();
@@ -654,7 +650,7 @@ class game
 
         // Animation related functions
         void draw_bullet( const tripoint &t, int i, const std::vector<tripoint> &trajectory,
-                          char bullet );
+                          char bullet, const std::string &custom_sprite = {} );
         void draw_hit_mon( const tripoint &p, const monster &m, bool dead = false );
         void draw_hit_player( const Character &p, int dam );
         void draw_line( const tripoint &p, const tripoint &center_point,
@@ -720,7 +716,7 @@ class game
         bool load( const std::string &world );
 
         /** Returns true if the menu handled stuff and player shouldn't do anything else */
-        bool npc_menu( npc &who );
+        bool npc_menu( npc &who, const bool &force = false );
 
         // Handle phasing through walls, returns true if it handled the move
         bool phasing_move( const tripoint &dest, bool via_ramp = false );
@@ -754,7 +750,8 @@ class game
         // create vehicle nearby, for example; for a profession vehicle.
         vehicle *place_vehicle_nearby(
             const vproto_id &id, const point_abs_omt &origin, int min_distance,
-            int max_distance, const std::vector<std::string> &omt_search_types = {} );
+            int max_distance, const std::vector<std::string> &omt_search_types = {},
+            bool notwater = false );
         // V Menu Functions and helpers:
         void list_items_monsters(); // Called when you invoke the `V`-menu
 
@@ -908,6 +905,7 @@ class game
         void display_lighting(); // Displays lighting conditions heat map
         void display_radiation(); // Displays radiation map
         void display_transparency(); // Displays transparency map
+        void display_tiles_no_vfx(); // Disables tileset visual effects
 
         // prints the IRL time in ms of the last full in-game hour
         class debug_hour_timer
@@ -984,6 +982,7 @@ class game
 
         bool debug_pathfinding = false; // show NPC pathfinding on overmap ui
         bool debug_submap_grid_overlay = false;
+        bool show_zone_overlay = false;
 
         /* tile overlays */
         // Toggle all other overlays off and flip the given overlay on/off.
@@ -1044,6 +1043,7 @@ class game
 
         /** How far the tileset should be zoomed out, 16 is default. 32 is zoomed in by x2, 8 is zoomed out by x0.5 */
         float tileset_zoom = 0;
+        int overmap_tileset_zoom = DEFAULT_TILESET_ZOOM;
 
         /** Seed for all the random numbers that should have consistent randomness (weather). */
         unsigned int seed = 0;
@@ -1081,6 +1081,11 @@ class game
         @return whether player has slipped down
         */
         bool slip_down();
+    private:
+        location_vector<item> fake_items;
+    public:
+        item *add_fake_item( detached_ptr<item> &&fake );
+        void remove_fake_item( item *it );
 };
 
 // Returns temperature modifier from direct heat radiation of nearby sources

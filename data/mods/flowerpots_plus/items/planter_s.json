@@ -1,0 +1,65 @@
+[
+  {
+    "id": "portable_planter_s",
+    "type": "TOOL",
+    "name": { "str": "portable planter" },
+    "description": "A small sized planter for your indoor growing needs.\nConsumes up to 1 seed and 1 unit of fertilizer per use.",
+    "category": "tools_farming",
+    "weight": "3 kg",
+    "volume": "5 L",
+    "price": "10 USD",
+    "price_postapoc": "10 USD",
+    "material": "plastic",
+    "flags": [ "NO_SALVAGE", "ALLOWS_REMOTE_USE" ],
+    "symbol": ")",
+    "color": "green",
+    "ammo": [ "plant_fertilizer" ],
+    "looks_like": "plastic_pot_flower",
+    "initial_charges": 0,
+    "max_charges": 15,
+    "use_action": {
+      "type": "flowerpot_plant",
+      "growth_rate": 1,
+      "harvest_mult": 1,
+      "seeds_per_use": [ 1, 1 ],
+      "fert_per_use": [ 0, 1 ],
+      "fert_boost": 0.2,
+      "terrain": [ "PLANTABLE" ],
+      "stages": [
+        "portable_planter_s",
+        "portable_planter_s_seed",
+        "portable_planter_s_seedling",
+        "portable_planter_s_mature",
+        "portable_planter_s_harvest"
+      ]
+    }
+  },
+  {
+    "id": "portable_planter_s_seed",
+    "type": "TOOL",
+    "name": { "str": "portable planter (seed)" },
+    "description": "A small sized planter for your indoor growing needs.\nThis one has a seed in it.",
+    "copy-from": "portable_planter_s"
+  },
+  {
+    "id": "portable_planter_s_seedling",
+    "type": "TOOL",
+    "name": { "str": "portable planter (seedling)" },
+    "description": "A small sized planter for your indoor growing needs.\nThe seed is sprouting.",
+    "copy-from": "portable_planter_s_seed"
+  },
+  {
+    "id": "portable_planter_s_mature",
+    "type": "TOOL",
+    "name": { "str": "portable planter (mature)" },
+    "description": "A small sized planter for your indoor growing needs.\nShould bear fruit soon.",
+    "copy-from": "portable_planter_s_seedling"
+  },
+  {
+    "id": "portable_planter_s_harvest",
+    "type": "TOOL",
+    "name": { "str": "portable planter (harvest)" },
+    "description": "A small sized planter for your indoor growing needs.\nFresh produce right at your fingertips.",
+    "copy-from": "portable_planter_s_mature"
+  }
+]

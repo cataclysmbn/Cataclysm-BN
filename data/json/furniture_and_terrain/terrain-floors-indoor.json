@@ -705,8 +705,9 @@
       "str_max": 200,
       "sound": "metal screeching!",
       "sound_fail": "clang!",
-      "ter_set": "t_dirt",
-      "items": [ { "item": "pipe", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 1, 40 ] } ]
+      "ter_set": "t_null",
+      "str_min_supported": 60,
+      "items": [ { "item": "steel_chunk", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 1, 40 ] } ]
     }
   },
   {
@@ -913,6 +914,64 @@
     "trap": "tr_ledge",
     "flags": [ "TRANSPARENT" ],
     "examine_action": "ledge"
+  },
+  {
+    "type": "terrain",
+    "id": "t_real_fake_air",
+    "name": "quarry hole air",
+    "description": "This is effectively open air, with a frame bracing to ensure anything around it doesnt collapse into it. Blocks roofs, but deconstructing the bracing would be rather easy.",
+    "symbol": " ",
+    "looks_like": "t_open_air",
+    "color": "i_cyan",
+    "move_cost": 2,
+    "trap": "tr_ledge",
+    "flags": [ "TRANSPARENT", "NO_FLOOR", "EASY_DECONSTRUCT" ],
+    "deconstruct": { "ter_set": "t_null", "items": [ { "item": "2x4", "count": 24 } ] },
+    "examine_action": "ledge"
+  },
+  {
+    "type": "terrain",
+    "id": "t_airbridge_wood",
+    "name": "crude plank bridge",
+    "description": "A gathering of planks over a large hole or air. Not very sturdy.",
+    "looks_like": "t_grate",
+    "symbol": "#",
+    "color": "brown",
+    "move_cost": 2,
+    "flags": [ "TRANSPARENT", "FLAT" ],
+    "deconstruct": { "ter_set": "t_real_fake_air", "items": [ { "item": "2x4", "count": 12 } ] },
+    "bash": {
+      "str_min": 8,
+      "str_max": 80,
+      "sound": "smash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_real_fake_air",
+      "items": [ { "item": "2x4", "count": 2, "prob": 25 }, { "item": "splinter", "count": [ 2, 4 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_airbridge_metal",
+    "name": "metal bridge",
+    "description": "Some sturdy metal sheets welded into a makeshift bridge. Suprisingly sturdy.",
+    "looks_like": "t_grate",
+    "symbol": "#",
+    "color": "dark_gray",
+    "move_cost": 2,
+    "flags": [ "TRANSPARENT", "FLAT" ],
+    "deconstruct": { "ter_set": "t_airbridge_wood", "items": [ { "item": "sheet_metal", "count": 2 } ] },
+    "bash": {
+      "str_min": 90,
+      "str_max": 400,
+      "sound": "SMASH!",
+      "sound_fail": "clang!",
+      "ter_set": "t_airbridge_wood",
+      "items": [
+        { "item": "2x4", "count": [ 4, 8 ], "prob": 25 },
+        { "item": "splinter", "count": [ 2, 4 ] },
+        { "item": "sheet_metal", "count": [ 1, 2 ] }
+      ]
+    }
   },
   {
     "type": "terrain",

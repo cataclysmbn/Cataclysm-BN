@@ -29,7 +29,7 @@
       "transform_charges": 5,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE", "POWERED", "FRAGILE_MELEE" ]
+    "flags": [ "NONCONDUCTIVE", "POWERED", "FRAGILE_MELEE", "COMBAT_NPC_USE" ]
   },
   {
     "id": "masonrysaw_on",
@@ -47,7 +47,7 @@
     "qualities": [ [ "BUTCHER", -100 ] ],
     "revert_msg": "Your masonry saw goes quiet",
     "use_action": { "type": "transform", "target": "masonrysaw_off", "msg": "You turn off the masonry saw." },
-    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE" ]
+    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ]
   },
   {
     "id": "grinder_blade",

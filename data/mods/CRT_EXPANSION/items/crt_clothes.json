@@ -5,10 +5,10 @@
     "type": "ARMOR",
     "name": "C.R.I.T. blouse",
     "description": "C.R.I.T. standard-issue blouse.  Durable, lightweight, and has ample storage.  Super-flex neoprene keeps one warm in moderately cold weather while a sleek design keeps it from being too flashy.  A zipper at the back and front allows for quick donning and doffing.",
-    "flags": [ "COLLAR", "VARSIZE", "WATERPROOF", "STURDY", "FANCY", "ALLOWS_NATURAL_ATTACKS" ],
+    "flags": [ "COLLAR", "VARSIZE", "WATERPROOF", "STURDY", "FANCY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_WINGS" ],
     "color": "light_gray",
     "material": [ "neoprene", "kevlar" ],
-    "warmth": 35
+    "warmth": 25
   },
   {
     "id": "crt_pants",
@@ -18,9 +18,9 @@
     "description": "C.R.I.T. standard-issue trousers.  Durable, lightweight and has ample storage.  Super-flex neoprene keeps one warm in moderately cold weather.",
     "color": "light_gray",
     "material": [ "neoprene", "kevlar" ],
-    "warmth": 35,
+    "warmth": 25,
     "coverage": 100,
-    "flags": [ "WATERPROOF", "VARSIZE", "STURDY" ]
+    "extend": { "flags": [ "WATERPROOF", "STURDY" ] }
   },
   {
     "id": "crt_dress_pants",
@@ -37,7 +37,7 @@
     "encumbrance": 10,
     "coverage": 100,
     "material_thickness": 2,
-    "flags": [ "WATERPROOF", "VARSIZE", "FANCY" ]
+    "flags": [ "WATERPROOF", "VARSIZE", "FANCY", "POCKETS" ]
   },
   {
     "id": "crt_helmet_liner",
@@ -59,6 +59,7 @@
     "weight": "1060 g",
     "volume": "1500 ml",
     "price": "1 kUSD",
+    "price_postapoc": "5 USD",
     "to_hit": -1,
     "bashing": 2,
     "material": [ "cotton", "plastic", "rubber" ],
@@ -82,6 +83,7 @@
     "weight": "558 g",
     "volume": "250 ml",
     "price": "1 kUSD",
+    "price_postapoc": "5 USD",
     "to_hit": -1,
     "material": [ "cotton", "neoprene" ],
     "symbol": "[",
@@ -89,29 +91,11 @@
     "looks_like": "gloves_tactical",
     "covers": [ "hands" ],
     "coverage": 90,
-    "encumbrance": 4,
+    "encumbrance": 2,
     "warmth": 10,
     "material_thickness": 1,
     "environmental_protection": 2,
     "flags": [ "SKINTIGHT", "WATER_FRIENDLY" ]
-  },
-  {
-    "id": "crt_belt",
-    "copy-from": "survivor_belt_notools",
-    "type": "ARMOR",
-    "name": "C.R.I.T. web belt",
-    "description": "C.R.I.T. standard-issue belt.  Keeps your trousers up and your tools on your hip.",
-    "color": "blue",
-    "material": [ "leather", "brass" ],
-    "use_action": {
-      "type": "holster",
-      "holster_prompt": "Sheath blade",
-      "holster_msg": "You sheath your %s",
-      "min_volume": "0 ml",
-      "max_volume": "1 L",
-      "flags": [ "BELT_CLIP", "SHEATH_KNIFE", "SHEATH_SWORD" ]
-    },
-    "flags": [ "STURDY", "WAIST" ]
   },
   {
     "id": "crt_rec_duster",
@@ -122,6 +106,7 @@
     "weight": "1520 g",
     "volume": "5750 ml",
     "price": "255 USD",
+    "price_postapoc": "25 USD",
     "to_hit": -1,
     "material": [ "cotton", "neoprene", "rubber" ],
     "symbol": "[",
@@ -134,7 +119,7 @@
     "warmth": 15,
     "material_thickness": 1,
     "environmental_protection": 2,
-    "flags": [ "POCKETS", "OUTER", "OVERSIZE", "COLLAR", "WATERPROOF", "RAINPROOF", "FANCY" ]
+    "flags": [ "POCKETS", "OUTER", "OVERSIZE", "COLLAR", "WATERPROOF", "RAINPROOF", "FANCY", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ]
   },
   {
     "id": "crt_rec_hat",
@@ -145,6 +130,7 @@
     "weight": "253 g",
     "volume": "1250 ml",
     "price": "45 USD",
+    "price_postapoc": "4 USD",
     "material": [ "cotton", "neoprene", "rubber" ],
     "symbol": "[",
     "color": "white",
@@ -155,6 +141,6 @@
     "warmth": 15,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "flags": [ "FANCY", "VARSIZE", "RAINPROOF", "WATERPROOF" ]
+    "flags": [ "FANCY", "VARSIZE", "RAINPROOF", "WATERPROOF", "ALLOWS_HORNS" ]
   }
 ]

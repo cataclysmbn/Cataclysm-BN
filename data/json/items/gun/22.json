@@ -18,7 +18,7 @@
     "durability": 6,
     "min_cycle_recoil": 39,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 6 ] ],
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "magazines": [ [ "22", [ "a180mag" ] ] ]
   },
   {
@@ -92,7 +92,7 @@
     "color": "brown",
     "ammo": "22",
     "blackpowder_tolerance": 96,
-    "barrel_length": "500 ml"
+    "barrel_volume": "500 ml"
   },
   {
     "id": "ruger_1022",
@@ -112,7 +112,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 4 },
     "dispersion": 110,
     "min_cycle_recoil": 39,
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "magazine_well": "250 ml",
     "magazines": [ [ "22", [ "ruger1022mag", "ruger1022bigmag" ] ] ]
   },

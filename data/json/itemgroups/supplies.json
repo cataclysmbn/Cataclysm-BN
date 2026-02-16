@@ -99,6 +99,7 @@
       { "item": "rope_6", "prob": 10 },
       { "item": "sheet_metal", "prob": 10 },
       { "item": "sheet_metal_small", "prob": 10 },
+      { "item": "aluminium_sheet", "prob": 5 },
       { "item": "plastic_sheet", "prob": 30, "count": [ 5, 15 ] },
       { "item": "rebar", "prob": 40, "count": [ 5, 10 ] },
       { "item": "brick", "prob": 40, "count": [ 5, 10 ] },
@@ -248,6 +249,8 @@
       [ "permanent_marker", 20 ],
       [ "cu_pipe", 50 ],
       [ "fungicide", 5 ],
+      [ "gas_insecticidal", 5 ],
+      [ "gas_fungicidal", 5 ],
       [ "insecticide", 5 ],
       [ "charcoal", 5 ],
       { "group": "ammo_pocket_batteries_full", "prob": 50 },
@@ -255,8 +258,8 @@
       [ "fertilizer_commercial", 30 ],
       [ "chem_sulphuric_acid", 30 ],
       [ "chem_muriatic_acid", 35 ],
-      [ "butane_tank", 30 ],
-      [ "butane_can", 20 ],
+      { "item": "chem_butane", "prob": 30, "container-item": "bottle_plastic" },
+      { "item": "chem_butane", "prob": 20, "container-item": "metal_tank_little" },
       [ "peephole", 25 ],
       { "item": "chem_chromium_oxide", "prob": 5, "charges-min": 100 },
       { "item": "zinc_metal", "prob": 5, "charges-min": 100 },
@@ -312,7 +315,7 @@
       [ "chem_agar", 10 ],
       [ "oxygen_tank", 6 ],
       [ "nitrogen_tank", 7 ],
-      [ "butane_tank", 5 ],
+      { "item": "chem_butane", "prob": 5, "container-item": "metal_tank_little" },
       [ "carbondioxide_tank", 5 ],
       { "item": "c_hydrogen_gas", "prob": 8, "container-item": "metal_tank_little", "charges": [ 10, 20 ] },
       [ "salt", 10 ],
@@ -373,6 +376,7 @@
       { "item": "copper", "prob": 10, "count": [ 1, 5 ] },
       { "item": "tin", "prob": 10, "count": [ 1, 5 ] },
       { "item": "material_aluminium_ingot", "prob": 10, "count": [ 1, 10 ] },
+      { "item": "aluminium_sheet", "prob": 10, "count": [ 1, 3 ] },
       { "item": "scrap_copper", "prob": 5, "count": [ 1, 10 ] },
       { "item": "wire", "prob": 5 },
       { "item": "scrap", "prob": 70, "count": [ 1, 10 ] }
@@ -419,6 +423,7 @@
       [ "vehicle_controls", 3 ],
       [ "horn_car", 10 ],
       [ "horn_big", 8 ],
+      [ "horn_ship", 1 ],
       [ "horn_bicycle", 8 ],
       [ "v8_combustion", 10 ],
       [ "weldrig", 1 ],
@@ -498,7 +503,8 @@
       [ "mop", 3 ],
       [ "mop_folded", 2 ],
       [ "cell_phone", 1 ],
-      [ "smart_phone", 10 ],
+      [ "smart_phone", 5 ],
+      [ "wrist_comp_budget", 5 ],
       [ "duct_tape", 5 ],
       { "group": "ammo_pocket_batteries", "prob": 5 },
       [ "flashlight", 10 ],
@@ -595,8 +601,14 @@
   {
     "id": "civilian_helicopter_parts",
     "type": "item_group",
-    "//": "Parts for civilian helicopter",
-    "items": [ [ "small_turbine_engine", 50 ], [ "small_helicopter_rotor", 40 ], [ "homebuilt_gyrocopter_rotor", 10 ] ]
+    "//": "Parts for civilian aircraft, not just helis anymore.  ID retained for compatibility.",
+    "items": [
+      [ "small_turbine_engine", 25 ],
+      [ "small_helicopter_rotor", 20 ],
+      [ "homebuilt_gyrocopter_rotor", 5 ],
+      [ "metal_propeller_item", 25 ],
+      { "item": "wing_metal_item", "count": [ 1, 2 ] }
+    ]
   },
   {
     "id": "military_helicopter_parts",
@@ -693,6 +705,18 @@
       { "item": "sheet", "prob": 25 },
       { "item": "bucket", "prob": 50 },
       { "item": "hand_paddles", "prob": 25 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "supplies_skyfarer_ballista",
+    "//": "Ammo for mounted weapon stations on Temporal Anomaly airships",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "rock", "prob": 25, "count": [ 25, 50 ] },
+      { "item": "sling_bullet", "prob": 25, "count": [ 10, 20 ] },
+      { "item": "ammo_ballista_wood", "prob": 25, "count": [ 5, 10 ] },
+      { "item": "ammo_ballista_iron", "prob": 25, "count": [ 5, 10 ] }
     ]
   }
 ]

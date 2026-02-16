@@ -127,7 +127,14 @@
       { "item": "thermos", "prob": 10 },
       { "item": "spray_can", "prob": 10 },
       {
-        "distribution": [ { "item": "roadmap" }, { "item": "trailmap" }, { "item": "touristmap" }, { "item": "restaurantmap" } ],
+        "distribution": [
+          { "item": "roadmap" },
+          { "item": "trailmap" },
+          { "item": "touristmap" },
+          { "item": "restaurantmap" },
+          { "item": "urbexmap" },
+          { "item": "waterwaymap" }
+        ],
         "prob": 5
       },
       {
@@ -182,7 +189,7 @@
           { "item": "handrolled_cig", "prob": 10 },
           { "item": "nic_gum", "prob": 20 },
           { "item": "ecig", "prob": 15 },
-          { "item": "butane_can", "prob": 10 },
+          { "item": "chem_butane", "prob": 10, "container-item": "bottle_plastic" },
           { "collection": [ { "item": "weed" }, { "item": "pipe_glass", "prob": 50 } ], "prob": 10 },
           { "collection": [ { "item": "nectar_collector" }, { "item": "thc_wax", "prob": 50 } ], "prob": 10 },
           { "distribution": [ { "item": "joint", "prob": 80 }, { "item": "joint_roach", "prob": 20 } ], "prob": 10 },

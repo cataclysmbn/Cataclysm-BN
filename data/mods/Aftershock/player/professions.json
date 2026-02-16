@@ -98,6 +98,7 @@
     "description": "You worked as a technician in a sterile, high-security facility concerned with the fabrication of bionic implants.  The final evacuation order caught you in the middle of your 16 hour extended shift, and you barely managed to escape the building, tools in hand.",
     "points": 2,
     "skills": [ { "level": 4, "name": "electronics" } ],
+    "starting_cash": 50000,
     "items": {
       "both": {
         "items": [
@@ -110,8 +111,7 @@
           "boots",
           "backpack",
           "jeans"
-        ],
-        "entries": [ { "item": "cash_card", "charges": 50000 } ]
+        ]
       },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
@@ -127,14 +127,11 @@
     "traits": [ "FLIMSY3", "SLOWHEALER3" ],
     "pets": [ { "name": "afs_mon_sentinel_lx", "amount": 2 } ],
     "skills": [ { "level": 6, "name": "speech" }, { "level": 6, "name": "computer" } ],
+    "starting_cash": 400000000,
     "items": {
       "both": {
         "items": [ "tux", "dress_shoes", "socks", "gold_watch", "undershirt", "smart_phone", "gasdiscount_platinum" ],
-        "entries": [
-          { "item": "cash_card", "charges": 200000000 },
-          { "item": "cash_card", "charges": 200000000 },
-          { "item": "afs_wraitheon_smartphone" }
-        ]
+        "entries": [ { "item": "afs_wraitheon_smartphone" } ]
       },
       "male": [ "briefs", "collarpin", "diamond_ring" ],
       "female": [ "panties", "hairpin", "pearl_collar" ]
@@ -188,6 +185,7 @@
     "name": "Assistant Sub-Executive",
     "description": "Through a lifetime of hard work, dedication, boot-licking and immense luck, you achieved the almost impossible, and were promoted from an indentured clerk to a minor managerial position.  Although you were still an expendable peon among the ranks of the corporation, you earned numbers most people could only dream of, and you savored it.",
     "points": 2,
+    "starting_cash": 200000000,
     "items": {
       "both": {
         "items": [ "tux", "dress_shoes", "socks", "gold_watch", "undershirt", "smart_phone", "gasdiscount_platinum" ],
@@ -204,6 +202,7 @@
     "description": "You are an uplifted elephant hybrid, a precisely engineered enforcer creature created by combining human, elephant and mastodon DNA.  Unlike most of your war-minded kin, you sought a peaceful retirement after completing your compulsive service period, and even earned the right to be considered a full citizen.  Now, with the end of the world in the horizon, it seems that your combat skills might come useful once again.",
     "points": 7,
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 6, "name": "gun" },
       { "level": 4, "name": "shotgun" },
       { "level": 2, "name": "pistol" },
@@ -249,6 +248,7 @@
       "afs_bio_cranialbomb"
     ],
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 5, "name": "gun" },
       { "level": 4, "name": "rifle" },
       { "level": 2, "name": "pistol" },

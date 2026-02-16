@@ -14,6 +14,7 @@
 #include "ballistics.h"
 #include "bodypart.h"
 #include "creature.h"
+#include "creature_tracker.h"
 #include "damage.h"
 #include "effect.h"
 #include "game.h"
@@ -159,7 +160,8 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
     }
 
     // No return fire from dead monsters.
-    if( m.is_dead_state() ) {
+    // Second set is due to how the EMP projector kills critters
+    if( m.is_dead_state() || !g->critter_tracker->find( m.pos() ) ) {
         return;
     }
 

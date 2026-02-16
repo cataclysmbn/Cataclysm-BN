@@ -1,0 +1,400 @@
+[
+  {
+    "type": "construction",
+    "id": "constr_pit_spiked",
+    "group": "spike_pit",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 1 ], [ "traps", 0 ] ],
+    "time": "5 m",
+    "components": [ [ [ "spear_wood", 4 ], [ "pointy_stick", 4 ] ] ],
+    "pre_terrain": "t_pit",
+    "post_terrain": "t_pit_spiked"
+  },
+  {
+    "type": "construction",
+    "id": "constr_pit_glass",
+    "group": "glass_pit",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 1 ], [ "traps", 0 ] ],
+    "time": "5 m",
+    "components": [ [ [ "glass_shard", 16 ] ] ],
+    "pre_terrain": "t_pit",
+    "post_terrain": "t_pit_glass"
+  },
+  {
+    "type": "construction",
+    "id": "constr_grave",
+    "group": "dig_grave_and_bury_sealed_coffin",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "60 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 1 } ], [ { "id": "DIG", "level": 2 } ] ],
+    "components": [ [ [ "rock", 20 ], [ "wood_structural_small", 2, "LIST" ] ] ],
+    "pre_furniture": "f_coffin_c",
+    "post_flags": [ "keep_items" ],
+    "post_terrain": "t_grave_new",
+    "post_special": "done_grave"
+  },
+  {
+    "type": "construction",
+    "id": "constr_shallow_grave",
+    "group": "dig_shallow_grave",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 1 } ], [ { "id": "DIG", "level": 2 } ] ],
+    "components": [ [ [ "rock", 20 ], [ "wood_structural_small", 2, "LIST" ] ] ],
+    "pre_flags": "PIT_SHALLOW",
+    "post_flags": [ "keep_items" ],
+    "post_terrain": "t_grave_new",
+    "post_special": "done_grave"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_downstair",
+    "group": "mine_downstair",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 6 ] ],
+    "time": "480 m",
+    "qualities": [
+      [ { "id": "AXE", "level": 2 }, { "id": "SAW_W", "level": 1 } ],
+      [ { "id": "HAMMER", "level": 2 } ],
+      [ { "id": "DIG", "level": 2 } ]
+    ],
+    "tools": [ [ [ "pickaxe", -1 ], [ "jackhammer", 160 ], [ "elec_jackhammer", 7000 ] ] ],
+    "components": [ [ [ "wood_structural", 6, "LIST" ], [ "log", 2 ] ], [ [ "rope_natural", 1, "LIST" ] ] ],
+    "pre_special": "check_down_OK",
+    "pre_terrain": "t_rock_floor",
+    "post_special": "done_mine_downstair"
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_downstair",
+    "group": "dig_downstair",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 5 ] ],
+    "time": "420 m",
+    "qualities": [
+      [ { "id": "AXE", "level": 2 }, { "id": "SAW_W", "level": 1 } ],
+      [ { "id": "HAMMER", "level": 2 } ],
+      [ { "id": "DIG", "level": 2 } ]
+    ],
+    "tools": [ [ [ "pickaxe", -1 ], [ "jackhammer", 140 ], [ "elec_jackhammer", 7000 ] ] ],
+    "components": [ [ [ "wood_structural", 4, "LIST" ], [ "log", 1 ] ], [ [ "rope_natural", 1, "LIST" ] ] ],
+    "needs_diggable": true,
+    "pre_special": "check_down_OK",
+    "post_special": "done_dig_stair"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_downstair_no_roof",
+    "copy-from": "constr_mine_downstair",
+    "pre_terrain": "t_rock_floor_no_roof"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair",
+    "group": "mine_upstair",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 6 ] ],
+    "time": "480 m",
+    "qualities": [
+      [ { "id": "AXE", "level": 2 }, { "id": "SAW_W", "level": 1 } ],
+      [ { "id": "HAMMER", "level": 2 } ],
+      [ { "id": "DIG", "level": 2 } ]
+    ],
+    "tools": [
+      [ [ "pickaxe", -1 ], [ "jackhammer", 160 ], [ "elec_jackhammer", 7000 ] ],
+      [
+        "miner_hat",
+        "hat_hard",
+        "firehelmet",
+        "helmet_ball",
+        "helmet_army",
+        "helmet_lobster",
+        "helmet_riot",
+        "tac_helmet",
+        "miner_hat_on"
+      ]
+    ],
+    "//": "Helmets are essential because you're digging up and things may fall on you.",
+    "components": [ [ [ "wood_structural", 6, "LIST" ], [ "log", 2 ] ], [ [ "rope_natural", 1, "LIST" ] ] ],
+    "pre_special": "check_up_OK",
+    "pre_terrain": "t_rock",
+    "post_special": "done_mine_upstair"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_iron",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_iron"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_banded_iron",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_banded_iron"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_copper",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_copper"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_tetrahedrite",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_tetrahedrite"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_chalcopyrite",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_chalcopyrite"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_lead",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_lead"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_galena",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_galena"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_galenau",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_galenau"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_tin",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_tin"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_coppin",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_coppin"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_bronzium",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_bronzium"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_silver",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_silver"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_gold",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_gold"
+  },
+  {
+    "type": "construction",
+    "id": "constr_mine_upstair_ore_electrumite",
+    "copy-from": "constr_mine_upstair",
+    "pre_terrain": "t_rock_ore_electrumite"
+  },
+  {
+    "type": "construction",
+    "id": "constr_concrete_ramp_low",
+    "group": "build_low_end_of_a_concrete_ramp",
+    "//": "Builds a low end of a concrete ramp going up on this level and down on the level above.",
+    "pre_note": "Build a concrete ramp leading to the next z-level above, and the corresponding ramp down leading from the z-level above to this level.  The high end of a ramp must be built adjacent to allow moving between z-levels in both directions.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 3 ] ],
+    "time": "150 m",
+    "tools": [ [ [ "con_mix", 125 ] ] ],
+    "qualities": [ [ { "id": "SMOOTH", "level": 1 } ] ],
+    "components": [ [ [ "concrete", 5 ] ], [ [ "water", 5 ] ] ],
+    "pre_flags": "PIT_SHALLOW",
+    "pre_special": "check_ramp_low",
+    "post_terrain": "t_ramp_up_low",
+    "post_special": "done_ramp_low"
+  },
+  {
+    "type": "construction",
+    "id": "constr_concrete_ramp_high",
+    "group": "build_high_end_of_a_concrete_ramp",
+    "//": "Builds a high end of a concrete ramp going up on this level and down on the level above.",
+    "pre_note": "Build a concrete ramp leading to the next z-level above, and the corresponding ramp down leading from the z-level above to this level.  It must be built next to a low end of a ramp to allow moving between z-levels in both directions.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 3 ] ],
+    "time": "150 m",
+    "tools": [ [ [ "con_mix", 125 ] ] ],
+    "qualities": [ [ { "id": "SMOOTH", "level": 1 } ] ],
+    "components": [ [ [ "concrete", 5 ] ], [ [ "water", 5 ] ] ],
+    "pre_flags": "PIT_SHALLOW",
+    "pre_special": "check_ramp_high",
+    "post_terrain": "t_ramp_up_high",
+    "post_special": "done_ramp_high"
+  },
+  {
+    "type": "construction",
+    "id": "constr_earthen_ramp_low",
+    "group": "build_low_end_of_an_earthen_ramp",
+    "//": "Builds a low end of a rammed earth ramp going up on this level and down on the level above.",
+    "pre_note": "Build a rammed earth ramp leading to the next z-level above, and the corresponding ramp down leading from the z-level above to this level.  The high end of a ramp must be built adjacent to allow moving between z-levels in both directions.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "100 m",
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SMOOTH", "level": 1 } ],
+    "tools": [ [ "log" ] ],
+    "components": [
+      [ [ "material_soil", 100 ] ],
+      [ [ "water", 50 ], [ "water_clean", 50 ] ],
+      [ [ "material_sand", 20 ], [ "material_quicklime", 20 ], [ "concrete", 1 ] ]
+    ],
+    "pre_terrain": "t_fence_post",
+    "pre_special": "check_ramp_low",
+    "post_terrain": "t_ramp_up_low",
+    "post_special": "done_ramp_low"
+  },
+  {
+    "type": "construction",
+    "id": "constr_earthen_ramp_high",
+    "group": "build_high_end_of_an_earthen_ramp",
+    "//": "Builds a high end of a rammed earth ramp going up on this level and down on the level above.",
+    "pre_note": "Build a rammed earth ramp leading to the next z-level above, and the corresponding ramp down leading from the z-level above to this level.  It must be built next to a low end of a ramp to allow moving between z-levels in both directions.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "100 m",
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SMOOTH", "level": 1 } ],
+    "tools": [ [ "log" ] ],
+    "components": [
+      [ [ "material_soil", 100 ] ],
+      [ [ "water", 50 ], [ "water_clean", 50 ] ],
+      [ [ "material_sand", 20 ], [ "material_quicklime", 20 ], [ "concrete", 1 ] ]
+    ],
+    "pre_terrain": "t_fence_post",
+    "pre_special": "check_ramp_high",
+    "post_terrain": "t_ramp_up_high",
+    "post_special": "done_ramp_high"
+  },
+  {
+    "type": "construction",
+    "id": "constr_wooden_ramp_low",
+    "group": "build_low_end_of_a_wooden_ramp",
+    "//": "Builds a low end of a wooden ramp going up on this level and down on the level above.",
+    "pre_note": "Build a wooden ramp leading to the next z-level above, and the corresponding ramp down leading from the z-level above to this level.  The high end of a ramp must be built adjacent to allow moving between z-levels in both directions.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "45 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ] ],
+    "components": [ [ [ "wood_sheet", 1 ], [ "wood_panel", 2 ] ], [ [ "2x4", 10 ] ], [ [ "nail", 40 ] ] ],
+    "pre_special": "check_empty_ramp_low",
+    "post_terrain": "t_ramp_up_low",
+    "post_special": "done_ramp_low"
+  },
+  {
+    "type": "construction",
+    "id": "constr_wooden_ramp_high",
+    "group": "build_high_end_of_a_wooden_ramp",
+    "//": "Builds a high end of a wooden ramp going up on this level and down on the level above.",
+    "pre_note": "Build a wooden ramp leading to the next z-level above, and the corresponding ramp down leading from the z-level above to this level.  It must be built next to a low end of a ramp to allow moving between z-levels in both directions.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "45 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ] ],
+    "components": [ [ [ "wood_sheet", 1 ], [ "wood_panel", 2 ] ], [ [ "2x4", 10 ] ], [ [ "nail", 40 ] ] ],
+    "pre_special": "check_empty_ramp_high",
+    "post_terrain": "t_ramp_up_high",
+    "post_special": "done_ramp_high"
+  },
+  {
+    "type": "construction",
+    "id": "constr_natural_ramp_low",
+    "group": "build_low_end_of_a_natural_ramp",
+    "//": "Digs a low end of a stone ramp going up on this level and down on the level above.",
+    "pre_note": "Digs a simple stone ramp leading to the next z-level above, and the corresponding ramp down leading from the z-level above to this level.  The high end of a ramp must be built adjacent to allow moving between z-levels in both directions.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "45 m",
+    "qualities": [ [ { "id": "SMOOTH", "level": 1 } ], [ { "id": "DIG", "level": 2 } ] ],
+    "tools": [ [ [ "pickaxe", -1 ], [ "jackhammer", 160 ], [ "elec_jackhammer", 7000 ] ] ],
+    "pre_terrain": "t_rock",
+    "pre_special": "check_ramp_low",
+    "post_terrain": "t_ramp_up_low",
+    "post_special": "done_ramp_low"
+  },
+  {
+    "type": "construction",
+    "id": "constr_natural_ramp_high",
+    "group": "build_high_end_of_a_natural_ramp",
+    "//": "Digs a high end of a stone ramp going up on this level and down on the level above.",
+    "pre_note": "Digs a simple stone ramp leading to the next z-level above, and the corresponding ramp down leading from the z-level above to this level.  It must be built next to a low end of a ramp to allow moving between z-levels in both directions.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "45 m",
+    "qualities": [ [ { "id": "SMOOTH", "level": 1 } ], [ { "id": "DIG", "level": 2 } ] ],
+    "tools": [ [ [ "pickaxe", -1 ], [ "jackhammer", 160 ], [ "elec_jackhammer", 7000 ] ] ],
+    "pre_terrain": "t_rock",
+    "pre_special": "check_ramp_high",
+    "post_terrain": "t_ramp_up_high",
+    "post_special": "done_ramp_high"
+  },
+  {
+    "type": "construction",
+    "id": "quarry_dirt",
+    "group": "quarry_ground",
+    "pre_note": "Removes any remaining material left in the pit, and smooths and reinforces the surrounding ground to not fall in.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 4 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SMOOTH", "level": 1 } ], [ { "id": "DIG", "level": 2 } ] ],
+    "components": [ [ [ "wood_structural", 12, "LIST" ] ] ],
+    "pre_flags": "PIT_DEEP",
+    "post_terrain": "t_real_fake_air"
+  },
+  {
+    "type": "construction",
+    "id": "quarry_rock_floor",
+    "group": "quarry_ground",
+    "pre_note": "Mines a hole straight through a rock floor; adding wood to not allow nearby rocks to fill the hole. You see no possible way this could go wrong.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 4 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SMOOTH", "level": 1 } ], [ { "id": "DIG", "level": 2 } ] ],
+    "components": [ [ [ "wood_structural", 12, "LIST" ] ] ],
+    "pre_terrain": "t_rock_floor",
+    "post_terrain": "t_real_fake_air"
+  },
+  {
+    "type": "construction",
+    "id": "makeshift_bridge_wood",
+    "group": "makeshift_bridge",
+    "pre_note": "Covers any reinforced holes with some 2x4 to make a crude bridge.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "10 m",
+    "components": [ [ [ "wood_structural", 12, "LIST" ] ] ],
+    "pre_terrain": "t_real_fake_air",
+    "post_terrain": "t_airbridge_wood"
+  },
+  {
+    "type": "construction",
+    "id": "makeshift_bridge_metal",
+    "group": "makeshift_bridge",
+    "pre_note": "Reinforces a 2x4 plank bridge into a much more sturdy metal version.",
+    "category": "DIG",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "90 m",
+    "using": [ [ "welding_standard", 5 ] ],
+    "components": [ [ [ "sheet_metal", 2 ] ] ],
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
+    "pre_terrain": "t_airbridge_wood",
+    "post_terrain": "t_airbridge_metal"
+  }
+]

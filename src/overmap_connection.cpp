@@ -4,14 +4,18 @@
 #include <cstddef>
 #include <algorithm>
 #include <cassert>
+#include <iterator>
+#include <limits>
 #include <map>
 #include <memory>
+#include <vector>
 
 #include "generic_factory.h"
 #include "json.h"
 #include "overmap_location.h"
 #include "debug.h"
-
+#include "type_id.h"
+#include "weighted_list.h"
 namespace
 {
 
@@ -60,6 +64,10 @@ bool overmap_connection::subtype::allows_terrain( const oter_id &oter ) const
 {
     if( oter->type_is( terrain ) ) {
         return true;    // Can be built on similar terrains.
+    } else {
+        if( oter->get_mapgen_id().starts_with( terrain.str() ) ) {
+            return true;    // For bridges, starts the same, is the same
+        }
     }
 
     return std::ranges::any_of( locations,
@@ -76,6 +84,7 @@ void overmap_connection::subtype::load( const JsonObject &jo )
     mandatory( jo, false, "locations", locations );
 
     optional( jo, false, "basic_cost", basic_cost, 0 );
+    optional( jo, false, "weight", weight, 1 );
     optional( jo, false, "flags", flags, flag_reader );
 }
 
@@ -85,6 +94,50 @@ void overmap_connection::subtype::deserialize( JsonIn &jsin )
     load( jo );
 }
 
+overmap_connection::overmap_connection( const overmap_connection &other )
+{
+    *this = other;
+}
+
+overmap_connection::overmap_connection( overmap_connection &&other ) noexcept
+{
+    *this = std::move( other );
+}
+
+overmap_connection &overmap_connection::operator=( const overmap_connection &other )
+{
+    auto _ = std::lock_guard{mutex};
+    auto __ = std::lock_guard{other.mutex};
+
+    id = other.id;
+    was_loaded = other.was_loaded;
+    default_terrain = other.default_terrain;
+    layout = other.layout;
+    subtypes = other.subtypes;
+
+    return *this;
+}
+
+overmap_connection &overmap_connection::operator=( overmap_connection &&other ) noexcept
+{
+    auto _ = std::lock_guard{mutex};
+    auto __ = std::lock_guard{other.mutex};
+
+    id = other.id ;
+    was_loaded = other.was_loaded ;
+    default_terrain = other.default_terrain ;
+    layout = other.layout ;
+    subtypes = std::move( other.subtypes );
+
+    return *this;
+}
+
+void overmap_connection::clear_subtype_cache() const
+{
+    auto _ = std::lock_guard{mutex};
+    cached_subtypes.clear();
+}
+
 const overmap_connection::subtype *overmap_connection::pick_subtype_for(
     const oter_id &ground ) const
 {
@@ -92,22 +145,66 @@ const overmap_connection::subtype *overmap_connection::pick_subtype_for(
         return nullptr;
     }
 
-    const size_t cache_index = ground.to_i();
-    assert( cache_index < cached_subtypes.size() );
-
-    if( cached_subtypes[cache_index] ) {
-        return cached_subtypes[cache_index].value;
+    {
+        auto _ = std::lock_guard{mutex};
+        const auto it = cached_subtypes.find( ground );
+        if( it != cached_subtypes.end() ) {
+            return it->second.value;
+        }
     }
 
-    const auto iter = std::ranges::find_if( subtypes,
-    [&ground]( const subtype & elem ) {
+    // Used below in find_if iteration
+    auto passes = [&ground]( const subtype & elem ) {
         return elem.allows_terrain( ground );
-    } );
+    };
+    const overmap_connection::subtype *result = nullptr;
+    // Weighted list for indexes in subtypes
+    // Can't just use the subtype, because then we return a local var pointer
+    // No segfaults if we return the pointer to subtypes
+    weighted_int_list<size_t> weighted_terrain;
+    // Everything is lower then max
+    int min_cost = INT_MAX;
+    // For loop iterating through all instances of subtypes that can be placed here.
+    for( auto iter = std::find_if( subtypes.begin(), subtypes.end(), passes );
+         iter != subtypes.end();
+         iter = std::find_if( ++iter, subtypes.end(), passes ) ) {
+        auto subtype = &*iter;
+        // If it's hardcoded to be set here
+        // We better set it here
+        if( subtype->locations.empty() ) {
+            weighted_terrain.clear();
+            weighted_terrain.add( iter - subtypes.begin(), subtype->weight );
+            break;
+        }
+        // Revert if cost is lower, keep if same, ignore if higher
+        if( subtype->basic_cost < min_cost ) {
+            weighted_terrain.clear();
+            weighted_terrain.add( iter - subtypes.begin(), subtype->weight );
+            min_cost = subtype->basic_cost;
+        } else if( subtype->basic_cost == min_cost ) {
+            weighted_terrain.add( iter - subtypes.begin(), subtype->weight );
+        }
+    }
+    // Essentially get a random one out of the weights
+    // Only issue is we need to make sure it's not null
+    // Null happens when trying to place a road over a cabin for instance
+    size_t *idx = weighted_terrain.pick();
+    if( idx != nullptr ) {
+        result = &subtypes[*idx];
+    }
+    // Null subtypes are fine, and expected from this function
+    // This is the cache so long roads are easy
 
-    const overmap_connection::subtype *result = iter != subtypes.cend() ? &*iter : nullptr;
-
-    cached_subtypes[cache_index].value = result;
-    cached_subtypes[cache_index].assigned = true;
+    {
+        auto _ = std::lock_guard{mutex};
+        const auto it = cached_subtypes.find( ground );
+        if( it != cached_subtypes.end() ) {
+            // Another thread has picked a value for this while this one was working
+            // discard current value and use that
+            return it->second.value;
+        }
+        cached_subtypes[ground] = cache{ result, true };
+    }
 
     return result;
 }
@@ -153,7 +250,7 @@ void overmap_connection::check() const
 
 void overmap_connection::finalize()
 {
-    cached_subtypes.resize( overmap_terrains::get_all().size() );
+    //cached_subtypes.resize( overmap_terrains::get_all().size() );
 }
 
 namespace overmap_connections

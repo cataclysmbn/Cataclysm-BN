@@ -89,7 +89,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "40",
-    "barrel_length": "750 ml"
+    "barrel_volume": "750 ml"
   },
   {
     "id": "sig_40",
@@ -146,7 +146,7 @@
     "handling": 20,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
     "loudness": 25,
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "valid_mod_locations": [
       [ "accessories", 3 ],
       [ "barrel", 1 ],
@@ -170,7 +170,7 @@
     "description": "A homemade 6-shot revolver.  While it's not as good as the pre-Cataclysm manufactured weapons, it's a decent piece of work, all things considered.",
     "weight": "1333 g",
     "volume": "750 ml",
-    "barrel_length": "100 ml",
+    "barrel_volume": "100 ml",
     "price": "150 USD",
     "price_postapoc": "750 cent",
     "material": [ "steel" ],
@@ -285,7 +285,7 @@
     "description": "A semi-automatic rifle using .40 S&W rounds.  It is also compatible with Glock 22 magazines.",
     "weight": "2200 g",
     "volume": "2 L",
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "price": "1675 USD",
     "price_postapoc": "40 USD",
     "material": [ "steel", "plastic" ],
@@ -308,7 +308,7 @@
     "description": "A submachine gun with a sleek in-line design.  It features a 2-round burst mode to make the most out of its unique recoil mitigation system alongside a blistering full-auto mode.  This one is chambered in .40 S&W and uses Glock 22 magazines.",
     "weight": "3400 g",
     "volume": "1750 ml",
-    "barrel_length": "150 ml",
+    "barrel_volume": "150 ml",
     "price": "3100 USD",
     "price_postapoc": "35 USD",
     "to_hit": -2,

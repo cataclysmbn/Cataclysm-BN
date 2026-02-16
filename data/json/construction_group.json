@@ -166,6 +166,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_char_purifier",
+    "name": "Build Charcoal Purifier"
+  },
+  {
+    "type": "construction_group",
     "id": "build_coat_rack",
     "name": "Build Coat Rack"
   },
@@ -341,8 +346,18 @@
   },
   {
     "type": "construction_group",
-    "id": "build_junk_metal_floor",
+    "id": "build_junk_metal_door",
+    "name": "Build Junk Metal Door"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_junk_metal_floor_noroof",
     "name": "Build Junk Metal Floor"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_junk_metal_floor",
+    "name": "Build Junk Metal Roof Over Floor"
   },
   {
     "type": "construction_group",
@@ -551,6 +566,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_simple_wood_barricade",
+    "name": "Build Simple Wooden Barricade"
+  },
+  {
+    "type": "construction_group",
     "id": "build_rock_forge",
     "name": "Build Rock Forge"
   },
@@ -691,6 +711,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_tarp_lean_to_leather",
+    "name": "Build Leather Tarp Lean-To"
+  },
+  {
+    "type": "construction_group",
     "id": "build_thatched_roof",
     "name": "Build Thatched Roof Over Dirt Floor"
   },
@@ -703,6 +728,11 @@
     "type": "construction_group",
     "id": "build_warehouse_shelf",
     "name": "Build Warehouse Shelf"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_rain_collector",
+    "name": "Build Rain Collector"
   },
   {
     "type": "construction_group",
@@ -738,6 +768,11 @@
     "type": "construction_group",
     "id": "build_wood_wall",
     "name": "Build Wood Wall"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_treasure_chest",
+    "name": "Build Wooden Chest"
   },
   {
     "type": "construction_group",
@@ -966,6 +1001,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_cloning_vat",
+    "name": "Plug In Cloning Vat"
+  },
+  {
+    "type": "construction_group",
     "id": "install_oven",
     "name": "Plug In Oven"
   },
@@ -1033,6 +1073,11 @@
     "type": "construction_group",
     "id": "install_solar_panel",
     "name": "Install Solar Panel"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_foldable_solar_panel",
+    "name": "Install Foldable Solar Panel"
   },
   {
     "type": "construction_group",
@@ -1563,5 +1608,255 @@
     "type": "construction_group",
     "id": "build_adobe_roof",
     "name": "Build Roof Over Adobe Floor"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_bathtub_money",
+    "name": "Fill Bathtub with Money"
+  },
+  {
+    "type": "construction_group",
+    "id": "remove_bathtub_money",
+    "name": "Remove Money from Bathtub"
+  },
+  {
+    "type": "construction_group",
+    "id": "water_fill_pit",
+    "name": "Fill Pit With Water"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_high_end_of_a_natural_ramp",
+    "name": "Dig High End of a Ramp"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_low_end_of_a_natural_ramp",
+    "name": "Dig Low End of a Ramp"
+  },
+  {
+    "type": "construction_group",
+    "id": "makeshift_bridge",
+    "name": "Construct Crude Bridge"
+  },
+  {
+    "type": "construction_group",
+    "id": "quarry_ground",
+    "name": "Quarry Ground Away"
+  },
+  {
+    "type": "construction_group",
+    "id": "quarry_roof",
+    "name": "Remove Flat Roof"
+  },
+  {
+    "type": "construction_group",
+    "id": "add_grass",
+    "name": "Plant Grass"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_canvas_floor",
+    "name": "Build canvas flooring"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_canvas_wall",
+    "name": "Build canvas wall"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_canvas_door",
+    "name": "Build canvas door"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_peanut_bush",
+    "name": "Replant Peanut Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_peanut_bush",
+    "name": "Dig Up Peanut Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_peanut_bush_h",
+    "name": "Replant Harvested Peanut Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_peanut_bush_h",
+    "name": "Dig Up Harvested Peanut Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_blueberry_bush",
+    "name": "Replant Blueberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_blueberry_bush",
+    "name": "Dig Up Blueberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_blueberry_bush_h",
+    "name": "Replant Harvested Blueberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_blueberry_bush_h",
+    "name": "Dig Up Harvested Blueberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_strawberry_bush",
+    "name": "Replant Strawberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_strawberry_bush",
+    "name": "Dig Up Strawberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_strawberry_bush_h",
+    "name": "Replant Harvested Strawberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_strawberry_bush_h",
+    "name": "Dig Up Harvested Strawberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_blackberry_bush",
+    "name": "Replant Blackberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_blackberry_bush",
+    "name": "Dig Up Blackberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_blackberry_bush_h",
+    "name": "Replant Harvested Blackberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_blackberry_bush_h",
+    "name": "Dig Up Harvested Blackberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_huckleberry_bush",
+    "name": "Replant Huckleberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_huckleberry_bush",
+    "name": "Dig Up Huckleberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_huckleberry_bush_h",
+    "name": "Replant Harvested Huckleberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_huckleberry_bush_h",
+    "name": "Dig Up Harvested Huckleberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_raspberry_bush",
+    "name": "Replant Raspberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_raspberry_bush",
+    "name": "Dig Up Raspberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_raspberry_bush_h",
+    "name": "Replant Harvested Raspberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_raspberry_bush_h",
+    "name": "Dig Up Harvested Raspberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_grape_bush",
+    "name": "Replant Grape Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_grape_bush",
+    "name": "Dig Up Grape Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_grape_bush_h",
+    "name": "Replant Harvested Grape Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_grape_bush_h",
+    "name": "Dig Up Harvested Grape Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_ebench",
+    "name": "Place Exercise Bench"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_bmachine",
+    "name": "Place Ball Machine"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_ptable",
+    "name": "Place Pool Table"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_arcade",
+    "name": "Place Arcade Machine"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_pinball",
+    "name": "Place Pinball Machine"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_ergo",
+    "name": "Place Ergometer"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_treadmill",
+    "name": "Place Treadmill"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_pbag",
+    "name": "Place Punching Bag"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_spole",
+    "name": "Place Dancing Pole"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_roulette",
+    "name": "Place Roulette Table"
   }
 ]

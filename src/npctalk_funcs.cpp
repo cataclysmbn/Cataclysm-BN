@@ -79,12 +79,11 @@ static const efftype_id effect_npc_suspend( "npc_suspend" );
 static const efftype_id effect_pet( "pet" );
 static const efftype_id effect_sleep( "sleep" );
 
+static const flag_id flag_BIONIC_WEAPON( "BIONIC_WEAPON" );
+
 static const mtype_id mon_chicken( "mon_chicken" );
 static const mtype_id mon_cow( "mon_cow" );
 static const mtype_id mon_horse( "mon_horse" );
-
-static const bionic_id bio_power_storage( "bio_power_storage" );
-static const bionic_id bio_power_storage_mkII( "bio_power_storage_mkII" );
 
 struct itype;
 
@@ -373,6 +372,11 @@ void talk_function::wake_up( npc &p )
     // TODO: Get mad at player for waking us up unless we're in danger
 }
 
+void talk_function::control_npc( npc &p )
+{
+    get_avatar().control_npc( p );
+}
+
 void talk_function::reveal_stats( npc &p )
 {
     character_display::disp_info( p );
@@ -424,17 +428,13 @@ void talk_function::bionic_remove( npc &p )
     std::vector<itype_id> bionic_types;
     std::vector<std::string> bionic_names;
     for( const bionic &bio : all_bio ) {
-        if( std::ranges::find( bionic_types,
-                               bio.info().itype() ) == bionic_types.end() ) {
-            if( bio.id != bio_power_storage ||
-                bio.id != bio_power_storage_mkII ) {
-                bionic_types.push_back( bio.info().itype() );
-                if( bio.info().itype().is_valid() ) {
-                    item *tmp = item::spawn_temporary( bio.id.str(), calendar::start_of_cataclysm );
-                    bionic_names.push_back( tmp->tname() + " - " + format_money( 50000 + ( tmp->price( true ) / 4 ) ) );
-                } else {
-                    bionic_names.push_back( bio.id.str() + " - " + format_money( 50000 ) );
-                }
+        if( std::ranges::find( bionic_types, bio.info().itype() ) == bionic_types.end() ) {
+            bionic_types.push_back( bio.info().itype() );
+            if( bio.info().itype().is_valid() ) {
+                item *tmp = item::spawn_temporary( bio.id.str(), calendar::start_of_cataclysm );
+                bionic_names.push_back( tmp->tname() + " - " + format_money( 50000 + ( tmp->price( true ) / 4 ) ) );
+            } else {
+                bionic_names.push_back( bio.id.str() + " - " + format_money( 50000 ) );
             }
         }
     }
@@ -692,7 +692,7 @@ void talk_function::deny_lead( npc &p )
 
 void talk_function::deny_equipment( npc &p )
 {
-    p.add_effect( effect_asked_for_item, 1_hours );
+    p.add_effect( effect_asked_for_item, 6_hours );
 }
 
 void talk_function::deny_train( npc &p )
@@ -813,7 +813,18 @@ void talk_function::player_weapon_away( npc &/*p*/ )
 
 void talk_function::player_weapon_drop( npc &/*p*/ )
 {
-    get_map().add_item_or_charges( g->u.pos(), g->u.remove_primary_weapon() );
+    for( item *weapon : g->u.wielded_items() ) {
+        const auto ret = g->u.can_unwield( *weapon );
+        if( ret.success() ) {
+            get_map().add_item_or_charges( g->u.pos(), g->u.remove_primary_weapon() );
+        }
+    }
+
+    for( bionic &i : *g->u.my_bionics ) {
+        if( i.powered && i.info().has_flag( flag_BIONIC_WEAPON ) ) {
+            g->u.deactivate_bionic( i );
+        }
+    }
 }
 
 void talk_function::lead_to_safety( npc &p )
@@ -827,6 +838,11 @@ void talk_function::lead_to_safety( npc &p )
 
 bool npc_trading::pay_npc( npc &np, int cost )
 {
+    // Free items should never trigger trading
+    if( cost <= 0 ) {
+        return true;
+    }
+
     if( np.op_of_u.owed >= cost ) {
         np.op_of_u.owed -= cost;
         return true;

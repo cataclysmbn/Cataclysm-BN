@@ -1,0 +1,61 @@
+[
+  {
+    "id": "martial_magic_tier_0",
+    "type": "item_group",
+    "//": "provided for convenience for locations that could have either martial books or spell books.",
+    "items": [ { "group": "martialmanual_tier_0", "prob": 50 }, { "group": "spellbook_tier_0", "prob": 50 } ]
+  },
+  {
+    "id": "martial_magic_tier_1",
+    "type": "item_group",
+    "items": [ { "group": "martialmanual_tier_1", "prob": 50 }, { "group": "spellbook_tier_1", "prob": 50 } ]
+  },
+  {
+    "id": "martial_magic_loot_0",
+    "type": "item_group",
+    "//": "the difference between tiers and loot are that loot should be easy to",
+    "//2": "drop into an itemgroup or mapgen without having multiple entries for higher tier spellbooks.",
+    "//3": "and loot tiers will not always have the lower tier spellbook tiers.",
+    "items": [
+      { "group": "spellbook_tier_0", "prob": 60 },
+      { "group": "martialmanual_tier_0", "prob": 60 },
+      { "group": "spellbook_tier_1", "prob": 30 },
+      { "group": "martialmanual_tier_1", "prob": 30 },
+      { "group": "spellbook_tier_2", "prob": 9 },
+      { "group": "spellbook_tier_3", "prob": 1 },
+      { "group": "spell_scroll_tier_0", "prob": 300 },
+      { "group": "martial_note_tier_0", "prob": 300 },
+      { "group": "spell_scroll_tier_1", "prob": 100 },
+      { "group": "martial_note_tier_1", "prob": 100 }
+    ]
+  },
+  {
+    "id": "martial_magic_loot_1",
+    "type": "item_group",
+    "items": [
+      { "group": "spellbook_tier_0", "prob": 30 },
+      { "group": "martialmanual_tier_0", "prob": 30 },
+      { "group": "spellbook_tier_1", "prob": 50 },
+      { "group": "martialmanual_tier_1", "prob": 50 },
+      { "group": "spellbook_tier_2", "prob": 18 },
+      { "group": "spellbook_tier_3", "prob": 2 },
+      { "group": "spell_scroll_tier_1", "prob": 300 },
+      { "group": "martial_note_tier_1", "prob": 100 },
+      { "group": "spell_scroll_tier_2", "prob": 100 }
+    ]
+  },
+  {
+    "id": "martial_magic_loot_2",
+    "type": "item_group",
+    "items": [
+      { "group": "spellbook_tier_0", "prob": 5 },
+      { "group": "martialmanual_tier_0", "prob": 5 },
+      { "group": "spellbook_tier_1", "prob": 30 },
+      { "group": "martialmanual_tier_1", "prob": 30 },
+      { "group": "spellbook_tier_2", "prob": 50 },
+      { "group": "spellbook_tier_3", "prob": 15 },
+      { "group": "spell_scroll_tier_2", "prob": 300 },
+      { "group": "spell_scroll_tier_3", "prob": 100 }
+    ]
+  }
+]

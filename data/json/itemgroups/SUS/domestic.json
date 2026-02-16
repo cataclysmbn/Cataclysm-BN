@@ -1,19 +1,20 @@
 [
   {
-    "id": "SUS_silverware",
+    "id": "SUS_kitchen_misc",
     "type": "item_group",
-    "//": "SUS item groups are collections that contain a reasonable realistic distribution of items that might spawn in a given storage furniture.",
-    "//2": "This group is for a silverware drawer.",
-    "subtype": "collection",
-    "entries": [ { "item": "knife_steak", "prob": 85 } ]
-  },
-  {
-    "id": "SUS_utensils",
-    "type": "item_group",
-    "//": "SUS item groups are collections that contain a reasonable realistic distribution of items that might spawn in a given storage furniture.",
-    "//2": "This group is for a utensils drawer.",
-    "subtype": "collection",
-    "entries": [ { "item": "tongs", "prob": 95 }, { "item": "tongs", "prob": 50 } ]
+    "//": "Misc items to stash in random drawers.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "paper", "prob": 25, "charges": [ 40, 60 ] },
+      { "item": "aluminum_foil", "prob": 25 },
+      { "item": "tongs", "prob": 25 },
+      { "item": "brush", "prob": 5 },
+      { "item": "alarmclock", "prob": 5 },
+      { "item": "thermometer", "prob": 5 },
+      { "item": "funnel", "prob": 5 },
+      { "item": "wire_saw", "prob": 4 },
+      { "item": "survnote", "prob": 1 }
+    ]
   },
   {
     "id": "SUS_knife_drawer",
@@ -22,7 +23,13 @@
     "//2": "This group is for a drawer full of knives and related implements.",
     "subtype": "collection",
     "entries": [
-      { "distribution": [ { "item": "knife_chef", "prob": 10 }, { "item": "knife_vegetable_cleaver", "prob": 3 } ] },
+      {
+        "distribution": [
+          { "item": "knife_chef", "prob": 10 },
+          { "item": "knife_vegetable_cleaver", "prob": 3 },
+          { "item": "knife_bread", "prob": 2 }
+        ]
+      },
       {
         "distribution": [ { "item": "knife_butcher", "prob": 10 }, { "item": "knife_meat_cleaver", "prob": 10 } ],
         "prob": 65
@@ -42,7 +49,8 @@
       { "group": "tools_recharging", "prob": 50 },
       { "group": "tools_lighting", "prob": 50 },
       { "group": "ammo_pocket_batteries", "prob": 75 },
-      { "group": "household_clutter", "count": [ 1, 3 ], "prob": 75 }
+      { "group": "household_clutter", "count": [ 1, 3 ], "prob": 75 },
+      { "item": "plastic_shopping_bag", "count": [ 1, 6 ], "prob": 25 }
     ]
   },
   {
@@ -185,7 +193,12 @@
             "prob": 80
           },
           {
-            "distribution": [ { "item": "toastem", "prob": 40 }, { "item": "toastem2", "prob": 30 }, { "item": "toastem3", "prob": 30 } ],
+            "distribution": [
+              { "item": "toastem", "prob": 40 },
+              { "item": "toastem2", "prob": 30 },
+              { "item": "toastem3", "prob": 30 },
+              { "item": "blinkie", "prob": 20 }
+            ],
             "prob": 60
           }
         ],

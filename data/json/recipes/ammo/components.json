@@ -19,31 +19,11 @@
     "//": "Roughly consistent by weight, about 70 grams of material.",
     "charges": 35,
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
-    "components": [ [ [ "chem_saltpetre", 10 ] ], [ [ "chem_sulphur", 20 ] ], [ [ "charcoal", 1 ], [ "coal_lump", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "chem_black_powder",
-    "id_suffix": "generic",
-    "category": "CC_AMMO",
-    "subcategory": "CSC_AMMO_COMPONENTS",
-    "skill_used": "fabrication",
-    "skills_required": [ "cooking", 1 ],
-    "difficulty": 4,
-    "time": "2 m",
-    "book_learn": [
-      [ "textbook_anarch", 4 ],
-      [ "recipe_bullets", 2 ],
-      [ "manual_shotgun", 3 ],
-      [ "manual_pistol", 3 ],
-      [ "adv_chemistry", 3 ],
-      [ "textbook_chemistry", 3 ],
-      [ "reference_cooking", 4 ]
-    ],
-    "charges": 10,
-    "qualities": [ { "id": "CHEM", "level": 2 } ],
-    "tools": [ [ [ "hotplate", 5 ], [ "toolset", 5 ] ] ],
-    "components": [ [ [ "oxy_powder", 5 ] ], [ [ "lye_powder", 5 ] ], [ [ "charcoal", 1 ], [ "coal_lump", 1 ] ] ]
+    "components": [
+      [ [ "chem_saltpetre", 10 ], [ "oxy_powder", 10 ] ],
+      [ [ "chem_sulphur", 20 ], [ "lye_powder", 20 ] ],
+      [ [ "charcoal", 1 ], [ "coal_lump", 1 ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -336,6 +316,7 @@
     "type": "recipe",
     "result": "380_casing",
     "id_suffix": "resize",
+    "byproducts": [ [ "cartridgebrass", 2 ] ],
     "category": "CC_AMMO",
     "subcategory": "CSC_AMMO_COMPONENTS",
     "skill_used": "fabrication",
@@ -345,7 +326,6 @@
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [ [ "manual_pistol", 5 ], [ "recipe_bullets", 3 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "DRILL", "level": 2 }, { "id": "CASING_PRESSING", "level": 2 } ],
-    "tools": [ [ [ "cordless_drill", 2 ] ] ],
     "components": [ [ [ "223_casing", 1 ] ] ]
   },
   {
@@ -362,6 +342,21 @@
     "book_learn": [ [ "manual_rifle", 5 ], [ "recipe_bullets", 3 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "CASING_PRESSING", "level": 2 } ],
     "components": [ [ [ "223_casing", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "38_casing",
+    "id_suffix": "resize",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "skills_required": [ "gun", 3 ],
+    "time": "2 m",
+    "batch_time_factors": [ 60, 5 ],
+    "book_learn": [ [ "manual_pistol", 5 ], [ "recipe_bullets", 3 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "CASING_PRESSING", "level": 2 } ],
+    "components": [ [ [ "357mag_casing", 1 ] ] ]
   },
   {
     "result": "cannonball_explosive",
@@ -411,7 +406,9 @@
     "skills_required": [ "gun", 3 ],
     "difficulty": 4,
     "time": "30 s",
+    "reversible": true,
     "charges": 1,
+    "decomp_learn": 6,
     "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
     "components": [ [ [ "22_casing", 1 ] ], [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ] ]
   },

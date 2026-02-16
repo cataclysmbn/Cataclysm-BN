@@ -507,7 +507,7 @@ struct event_transformation_impl : public event_transformation::impl {
         }
 
         for( const std::string &drop_field_name : drop_fields_ ) {
-            if( input_fields.find( drop_field_name ) == input_fields.end() ) {
+            if( !input_fields.contains( drop_field_name ) ) {
                 debugmsg( "event_transformation %s lists field %s to be dropped, but no field "
                           "with that name exists in the input", name, drop_field_name );
             }

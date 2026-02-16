@@ -520,5 +520,48 @@
       [ [ "pipe", 8 ] ],
       [ [ "chem_rocket_fuel", 33 ] ]
     ]
+  },
+  {
+    "type": "recipe",
+    "result": "ammo_ballista_wood",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_LAUNCHER",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "20 m",
+    "autolearn": true,
+    "book_learn": [ [ "recipe_arrows", 1 ], [ "textbook_weapwest", 1 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "wood_structural_small", 1, "LIST" ], [ "broom", 1 ], [ "pool_cue", 1 ], [ "pointy_stick", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "ammo_ballista_copper",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_LAUNCHER",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "10 m",
+    "reversible": true,
+    "autolearn": true,
+    "book_learn": [ [ "recipe_arrows", 2 ], [ "textbook_weapwest", 2 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 8, "LIST" ] ] ],
+    "components": [ [ [ "ammo_ballista_wood", 1 ] ], [ [ "copper_scrap_equivalent", 6, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "ammo_ballista_iron",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_LAUNCHER",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "10 m",
+    "reversible": true,
+    "autolearn": true,
+    "book_learn": [ [ "recipe_arrows", 3 ], [ "textbook_weapwest", 3 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "tools": [ [ [ "blacksmithing_standard", 1, "LIST" ] ] ],
+    "components": [ [ [ "ammo_ballista_wood", 1 ] ], [ [ "steel_tiny", 1, "LIST" ] ] ]
   }
 ]

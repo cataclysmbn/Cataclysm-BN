@@ -26,6 +26,7 @@ class Character;
 class JsonObject;
 class Trait_group;
 class item;
+class lua_mutation_callback_actor;
 class nc_color;
 template <typename E> struct enum_traits;
 template <typename T> class string_id;
@@ -80,6 +81,8 @@ struct mutation_branch {
         bool purifiable = false;
         // True if it's a threshold itself, and shouldn't be obtained *easily* (False by default).
         bool threshold = false;
+        // The tier of threshold that this mutation belongs to (0 for not being post-thresh)
+        unsigned short threshold_tier = 0;
         // True if this is a trait associated with professional training/experience, so profession/quest ONLY.
         bool profession = false;
         // True if the mutation is obtained through the debug menu
@@ -94,6 +97,8 @@ struct mutation_branch {
         bool starts_active = false;
         // Allow soft (fabric) gear on restricted body parts
         bool allow_soft_gear  = false;
+        // If true, not even oversized gear is allowed unless it's accepted by allowed_items.
+        bool allowed_items_only  = false;
         // IF any of the 8 are true, it drains that as the "cost"
         bool fatigue       = false;
         bool hunger        = false;
@@ -152,6 +157,9 @@ struct mutation_branch {
         float noise_modifier = 1.0f;
         float scent_modifier = 1.0f;
         float bleed_resist = 0;
+        float packmule_modifier = 1.0f;
+        float crafting_speed_modifier = 1.0f;
+        float construction_speed_modifier = 1.0f;
         std::optional<int> scent_intensity;
         std::optional<int> scent_mask;
 
@@ -266,9 +274,9 @@ struct mutation_branch {
 
         std::vector<trait_id> prereqs; // Prerequisites; Only one is required
         std::vector<trait_id> prereqs2; // Prerequisites; need one from here too
-        std::vector<trait_id> threshreq; // Prerequisites; dedicated slot to needing thresholds
         std::set<std::string> types; // Mutation types, you can't have two mutations that share a type
         std::vector<trait_id> cancels; // Mutations that conflict with this one
+        std::set<trait_id> prevents; // Mutations that cannot be added with this one
         std::vector<trait_id> replacements; // Mutations that replace this one
         std::vector<trait_id> additions; // Mutations that add to this one
         std::vector<mutation_category_id> category; // Mutation Categories
@@ -279,6 +287,8 @@ struct mutation_branch {
         std::map<body_part, int> encumbrance_covered;
         // Body parts that now need OVERSIZE gear
         std::set<body_part> restricts_gear;
+        // item flags that allow wearing gear even if its body part is restricted
+        std::set<flag_id> allowed_items;
         // Mutation stat mods
         /** Key pair is <active: bool, mod type: "STR"> */
         std::unordered_map<std::pair<bool, std::string>, int, cata::tuple_hash> mods;
@@ -313,9 +323,17 @@ struct mutation_branch {
          * All known mutations. Key is the mutation id, value is the mutation_branch that you would
          * also get by calling @ref get.
          */
+        /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+         *  Mutable because it is wired post-construction through const factory references. */
+        mutable const lua_mutation_callback_actor *lua_callbacks = nullptr;
+
         static const std::vector<mutation_branch> &get_all();
         // For init.cpp: reset (clear) the mutation data
         static void reset_all();
+
+        /** Wire Lua callback pointers onto mutation_branch objects. */
+        static void resolve_lua_callbacks(
+            const std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> &actors );
         // For init.cpp: load mutation data from json
         void load( const JsonObject &jo, const std::string &src );
         static void load_trait( const JsonObject &jo, const std::string &src );
@@ -439,8 +457,9 @@ struct mutation_category_trait {
 
         // Mutation category i.e "BIRD", "CHIMERA"
         mutation_category_id id;
-        // The trait that you gain when you break the threshold for this category
-        trait_id threshold_mut;
+        // The traits that you gain when you break the thresholds for this category
+        // NULL ID is put there so that index = tier instead of tier - 1
+        std::vector<trait_id> threshold_muts = {trait_id::NULL_ID()};
 
         // These are defaults
         int mutagen_hunger  = 10;
@@ -529,6 +548,7 @@ struct mutagen_attempt {
 mutagen_attempt mutagen_common_checks( Character &guy, const item &it, bool strong,
                                        mutagen_technique technique );
 
-void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category );
+void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category,
+                              const unsigned short tier );
 
 

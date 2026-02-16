@@ -208,6 +208,12 @@
   },
   {
     "type": "start_location",
+    "id": "sloc_cabin_lapin",
+    "name": "Warrener's Cabin",
+    "terrain": [ "cabin_lapin" ]
+  },
+  {
+    "type": "start_location",
     "id": "sloc_hospital",
     "name": "Hospital",
     "terrain": [ { "om_terrain": "hospital", "om_terrain_match_type": "PREFIX" } ]
@@ -229,6 +235,13 @@
     "id": "sloc_forest",
     "name": "Middle of Nowhere",
     "terrain": [ "forest" ],
+    "flags": [ "ALLOW_OUTSIDE" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_swamp",
+    "name": "Swamp",
+    "terrain": [ "forest_water" ],
     "flags": [ "ALLOW_OUTSIDE" ]
   },
   {
@@ -267,6 +280,13 @@
     "id": "sloc_ice_lab_finale",
     "name": "Deep-frozen science lab",
     "terrain": [ "ice_lab_finale" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_hub_01",
+    "name": "Hub 01",
+    "terrain": [ "robofachq_surface_parking" ],
+    "flags": [ "ALLOW_OUTSIDE" ]
   },
   {
     "type": "start_location",
@@ -367,6 +387,12 @@
   },
   {
     "type": "start_location",
+    "id": "sloc_farm_isherwood",
+    "name": "Isherwood Farms",
+    "terrain": [ "farm_isherwood_2" ]
+  },
+  {
+    "type": "start_location",
     "id": "sloc_church",
     "name": "Church",
     "terrain": [ "church_3rdfloor_1", "church_1", "church_steeple_end", "church" ]
@@ -386,6 +412,48 @@
     "id": "sloc_basement_bionic",
     "name": "Shady Basement",
     "terrain": [ "basement_bionic" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_game",
+    "name": "Game Room Basement",
+    "terrain": [ "basement" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_chem",
+    "name": "Chemistry Basement",
+    "terrain": [ "basement_chem", "basement_chem2" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_hidden_lab",
+    "name": "Hidden Lab Stairs",
+    "terrain": [ "basement_hidden_lab_stairs" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_meth",
+    "name": "Meth Lab Basement",
+    "terrain": [ "basement_meth" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_messed",
+    "name": "Ruined Basement",
+    "terrain": [ "basement_messed" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_survival",
+    "name": "Prepper Basement",
+    "terrain": [ "basement_survival" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_basement_weed",
+    "name": "Grow Operation Basement",
+    "terrain": [ "basement_weed" ]
   },
   {
     "type": "start_location",
@@ -428,6 +496,24 @@
     "id": "sloc_horse_ranch",
     "name": "Horse Ranch",
     "terrain": [ "horse_farm_13" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_occupied_chemlab",
+    "name": "Chemist's Cabin",
+    "terrain": [ "chemical_lab_ocu" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_occupied_scrapyard",
+    "name": "Inhabited Scrap Yard",
+    "terrain": [ "smallscrapyard_ocu" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_occupied_lumbermill",
+    "name": "Inhabited Lumbermill",
+    "terrain": [ "lumbermill_1_0_ocu" ]
   },
   {
     "type": "start_location",
@@ -537,5 +623,11 @@
       "convention_3_2_2",
       "convention_4_2_2"
     ]
+  },
+  {
+    "type": "start_location",
+    "id": "water_tower",
+    "name": "Water Tower",
+    "terrain": [ "water_tower_-1zl" ]
   }
 ]

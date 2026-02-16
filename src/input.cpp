@@ -561,7 +561,7 @@ input_manager::t_input_event_list &input_manager::get_or_create_event_list(
 
     // A new action is created in the event that the user creates a local
     // keymapping that masks a global one.
-    if( actions.find( action_descriptor ) == actions.end() ) {
+    if( !actions.contains( action_descriptor ) ) {
         action_attributes &attributes = actions[action_descriptor];
         attributes.name = get_default_action_name( action_descriptor );
         attributes.is_user_created = true;

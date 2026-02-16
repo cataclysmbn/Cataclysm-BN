@@ -1,5 +1,20 @@
 {
     "recommendations": [
-        "tangzx.emmylua"
+        // LSP
+        "llvm-vs-code-extensions.vscode-clangd",
+        "vadimcn.vscode-lldb",
+        "tangzx.emmylua",
+        "denoland.vscode-deno",
+        // Formatters
+        "dprint.dprint",
+        "chiehyu.vscode-astyle",
+        "cdda-toys.cdda-json-formatter",
+        // Git
+        "mhutchie.git-graph",
+        "eamodio.gitlens",
+        // Utils
+        "github.vscode-github-actions",
+        "mrorz.language-gettext",
+        "kisstkondoros.vscode-gutter-preview",
     ]
 }

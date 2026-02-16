@@ -10,7 +10,7 @@
     "ammo": 50,
     "magazine": 100,
     "items": [
-      { "item": "lighter", "prob": 50, "charges-min": 0, "charges-max": 10 },
+      { "item": "lighter", "prob": 50, "charges": [ 0, 5 ] },
       { "item": "matches", "prob": 50, "charges-min": 0, "charges-max": 20 },
       { "item": "cig", "prob": 20, "charges-min": 1, "charges-max": 5 },
       [ "plastic_shopping_bag", 50 ],
@@ -26,7 +26,8 @@
       [ "stick", 30 ],
       [ "joint_roach", 20 ],
       [ "pipe", 10 ],
-      [ "bag_plastic", 30 ],
+      [ "bag_plastic", 20 ],
+      [ "bag_zipper", 10 ],
       [ "bottle_plastic", 30 ],
       [ "bottle_plastic_small", 35 ],
       [ "bag_canvas", 15 ],

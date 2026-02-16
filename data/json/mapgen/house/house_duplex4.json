@@ -26,26 +26,13 @@
         "..o@@ |   RR|    |  ho..",
         "..#@@s|   |||||| |d@@#..",
         "..##o#| |+|Q|89| |#o##..",
-        "...``*  |--S|S-+  *``...",
+        "...``*  |¨¨S|S¨+  *``...",
         ".X.``#L |t89|Qt| L#``...",
         ".....##o########o##.....",
         "......%%%..^.%%%.....u..",
         "........................"
       ],
-      "palettes": [ "standard_domestic_palette" ],
-      "terrain": {
-        "%": [ "t_region_shrub", "t_region_shrub_fruit", "t_region_shrub_decorative" ],
-        "[": [ [ "t_region_tree_fruit", 2 ], [ "t_region_tree_nut", 2 ], "t_region_tree_shade" ],
-        "!": "t_region_groundcover_urban",
-        "`": "t_concrete",
-        "t": "t_linoleum_gray",
-        "S": "t_linoleum_gray",
-        "Q": "t_linoleum_gray",
-        "8": "t_linoleum_gray",
-        "9": "t_linoleum_gray",
-        "-": "t_linoleum_gray"
-      },
-      "furniture": { "!": "f_region_flower" },
+      "palettes": [ "standard_domestic_palette", "parameterized_linoleum_color_bathroom", "standard_domestic_landscaping_palette" ],
       "place_item": [ { "item": "television", "x": 11, "y": 13 }, { "item": "television", "x": 13, "y": 13 } ]
     }
   },

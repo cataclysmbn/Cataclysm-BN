@@ -70,19 +70,5 @@
     "using": [ [ "welding_standard", 3 ] ],
     "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
     "components": [ [ [ "afs_scrap_titanium", 2 ] ] ]
-  },
-  {
-    "result": "atomic_butterchurn",
-    "type": "uncraft",
-    "skill_used": "electronics",
-    "time": "30 s",
-    "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [
-      [ [ "plastic_chunk", 5 ] ],
-      [ [ "power_supply", 1 ] ],
-      [ [ "element", 1 ] ],
-      [ [ "scrap", 2 ] ],
-      [ [ "plut_cell", 1 ] ]
-    ]
   }
 ]

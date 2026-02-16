@@ -814,7 +814,7 @@
     "price": "6 USD",
     "price_postapoc": "50 cent",
     "material": [ "veggy" ],
-    "flags": [ "TRADER_AVOID", "SMOKABLE", "RAW" ],
+    "flags": [ "TRADER_AVOID", "SMOKABLE", "RAW", "NO_COOKING_BUFF" ],
     "smoking_result": "dry_veggy",
     "volume": "250 ml",
     "vitamins": [ [ "vitA", 16 ], [ "vitC", 36 ], [ "calcium", 4 ], [ "iron", 4 ], [ "veggy_allergen", 1 ] ]
@@ -966,8 +966,30 @@
     "material": [ "veggy" ],
     "volume": "250 ml",
     "fun": -3,
-    "flags": [ "RAW" ],
+    "flags": [ "RAW", "NO_COOKING_BUFF" ],
     "milling": { "into": "flour", "conversion_rate": 5 },
     "vitamins": [ [ "vitC", 5 ], [ "calcium", 3 ], [ "iron", 9 ], [ "veggy_allergen", 1 ] ]
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "lake_greens",
+    "name": { "str_sp": "aquatic greens" },
+    "weight": "100 g",
+    "color": "light_green",
+    "looks_like": "horseradish_greens",
+    "spoils_in": "7 days",
+    "comestible_type": "FOOD",
+    "symbol": "%",
+    "healthy": 1,
+    "description": "Shoots and leaves from underwater plants, such as hornwort or pondweed.  A bit like raw seaweed.",
+    "price": "80 cent",
+    "material": [ "veggy" ],
+    "volume": "250 ml",
+    "fun": -2,
+    "flags": [ "SMOKABLE", "RAW" ],
+    "smoking_result": "dry_veggy",
+    "//": "Based off raw seaweed, per aquacalc",
+    "calories": 38,
+    "vitamins": [ [ "vitA", 8 ], [ "vitC", 15 ], [ "calcium", 7 ], [ "iron", 21 ], [ "veggy_allergen", 1 ] ]
   }
 ]

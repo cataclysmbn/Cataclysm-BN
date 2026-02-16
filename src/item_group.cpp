@@ -548,6 +548,46 @@ bool Item_group::remove_item( const itype_id &itemid )
     return items.empty();
 }
 
+bool Item_group::remove_specific_item( const std::string &itemid )
+{
+    for( prop_list::iterator a = items.begin(); a != items.end(); ) {
+        auto b = dynamic_cast<Single_item_creator *>( ( &*a )->get() );
+        if( b == nullptr ) {
+            ++a;
+        } else if( b->type == Single_item_creator::Type::S_ITEM ) {
+            if( itemid == b->id ) {
+                sum_prob -= ( *a )->probability;
+                a = items.erase( a );
+                return true;
+            }
+            ++a;
+        } else {
+            ++a;
+        }
+    }
+    return items.empty();
+}
+
+bool Item_group::remove_specific_group( const std::string &itemid )
+{
+    for( prop_list::iterator a = items.begin(); a != items.end(); ) {
+        auto b = dynamic_cast<Single_item_creator *>( ( &*a )->get() );
+        if( b == nullptr ) {
+            ++a;
+        } else if( b->type == Single_item_creator::Type::S_ITEM_GROUP ) {
+            if( itemid == b->id ) {
+                sum_prob -= ( *a )->probability;
+                a = items.erase( a );
+                return true;
+            }
+            ++a;
+        } else {
+            ++a;
+        }
+    }
+    return items.empty();
+}
+
 bool Item_group::replace_item( const itype_id &itemid, const itype_id &replacementid )
 {
     for( const std::unique_ptr<Item_spawn_data> &elem : items ) {

@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <sstream>
+#include <ranges>
 
 #include "game_info.h"
 #include "options.h"
@@ -402,13 +404,10 @@ auto game_info::mods_loaded() -> std::string
         return "No loaded mods";
     }
 
-    std::vector<std::string> mod_names;
-    mod_names.reserve( mod_ids.size() );
-    std::transform( mod_ids.begin(), mod_ids.end(),
-    std::back_inserter( mod_names ), []( const mod_id mod ) -> std::string {
-        // e.g. "Dark Days Ahead [dda]".
-        return string_format( "%s [%s]", remove_color_tags( mod->name() ), mod->ident.str() );
-    } );
+    // e.g. "Bright Nights [bn]".
+    const auto mod_names =
+    std::views::transform( mod_ids, []( const auto mod ) { return string_format( "%s [%s]", remove_color_tags( mod->name_raw() ), mod->ident.str() ); } )
+    | std::ranges::to<std::vector>();
 
     return join( mod_names, ",\n    " ); // note: 4 spaces for a slight offset.
 }

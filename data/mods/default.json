@@ -1,5 +1,7 @@
 [
   "bn",
+  "bn_lua",
+  "nuclear_tear",
   "no_npc_food",
   "novitamins",
   "No_Rail_Stations",
@@ -8,5 +10,6 @@
   "udp_redux",
   "pride_flags",
   "tablet_ebook",
-  "change_hairstyle"
+  "change_hairstyle",
+  "cbm_slots"
 ]

@@ -13,4 +13,4 @@ deno task serve
 ## License
 
 [AGPL 3.0 only](./LICENSE), except subdirectories named language code, such as `en`, `ko`, `de`,
-`ru`, which follows the same license as the game. See [License.txt](../doc/LICENSE.txt) for details.
+`ru`, which follows the same license as the game. See [License.txt](../LICENSE.txt) for details.

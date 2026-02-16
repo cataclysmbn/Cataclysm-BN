@@ -589,7 +589,7 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( orientation faci
         }
         tripoint pos;
         driven_veh.coord_translate( angle, pivot, part.mount, pos );
-        if( extent_map.find( pos.y ) == extent_map.end() ) {
+        if( !extent_map.contains( pos.y ) ) {
             extent_map[pos.y] = { pos.x, pos.x };
         } else {
             auto &extent = extent_map[pos.y];
@@ -617,7 +617,7 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( orientation faci
     // we need to check for collision when the vehicle is moving in this direction
     const std::unordered_set<point> occupied_set( ret.occupied_zone.begin(), ret.occupied_zone.end() );
     for( point pt : ret.occupied_zone ) {
-        if( occupied_set.find( pt + increment ) == occupied_set.end() ) {
+        if( !occupied_set.contains( pt + increment ) ) {
             ret.collision_points.emplace_back( pt );
         }
     }
@@ -803,7 +803,7 @@ void vehicle::autodrive_controller::precompute_data()
         // initialize car and driver properties
         data.land_ok = driven_veh.valid_wheel_config();
         data.water_ok = driven_veh.can_float();
-        data.air_ok = driven_veh.is_rotorcraft();
+        data.air_ok = driven_veh.is_aircraft();
         data.max_speed_tps = std::min( MAX_SPEED_TPS, driven_veh.safe_velocity() / VMIPH_PER_TPS );
         data.acceleration.resize( data.max_speed_tps );
         for( int speed_tps = 0; speed_tps < data.max_speed_tps; speed_tps++ ) {
@@ -911,7 +911,7 @@ const
                 }
             } else if( !data.valid_position( next_addr ) ) {
                 ok = false;
-            } else if( !goal_found && data.goal_zone.find( next_addr ) != data.goal_zone.end() ) {
+            } else if( !goal_found && data.goal_zone.contains( next_addr ) ) {
                 goal_found = true;
             }
         }
@@ -1222,6 +1222,11 @@ autodrive_result vehicle::do_autodrive( Character &driver )
     }
     active_autodrive_controller->check_safe_speed();
     std::optional<navigation_step> next_step = active_autodrive_controller->compute_next_step();
+    if( has_part( VPFLAG_WING ) && is_flying_in_air() ) {
+        driver.add_msg_if_player( _( "Autodrive is not good enough for flying planes." ) );
+        stop_autodriving( false );
+        return autodrive_result::abort;
+    }
     if( !next_step ) {
         // message handles pathfinding failure either due to obstacles or inability to see
         driver.add_msg_if_player( _( "Can't see a path forward." ) );

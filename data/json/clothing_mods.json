@@ -30,6 +30,21 @@
   },
   {
     "type": "clothing_mod",
+    "id": "hard_steel_padded",
+    "flag": "hard_steel_padded",
+    "item": "hard_steel_armor",
+    "implement_prompt": "Pad with hard steel",
+    "destroy_prompt": "Destroy hard steel padding",
+    "restricted": true,
+    "mod_value": [
+      { "type": "bash", "value": 2, "proportion": [ "thickness" ] },
+      { "type": "cut", "value": 3.5, "proportion": [ "thickness" ] },
+      { "type": "bullet", "value": 3.5, "proportion": [ "thickness" ] },
+      { "type": "encumbrance", "value": 6, "round_up": true, "proportion": [ "thickness", "coverage" ] }
+    ]
+  },
+  {
+    "type": "clothing_mod",
     "id": "alloy_padded",
     "flag": "alloy_padded",
     "item": "alloy_sheet",
@@ -54,6 +69,20 @@
       { "type": "bash", "value": 1, "proportion": [ "thickness" ] },
       { "type": "cut", "value": 2, "proportion": [ "thickness" ] },
       { "type": "bullet", "value": 3, "proportion": [ "thickness" ] },
+      { "type": "encumbrance", "value": 3, "round_up": true, "proportion": [ "thickness", "coverage" ] }
+    ]
+  },
+  {
+    "type": "clothing_mod",
+    "id": "carbon_fiber_padded",
+    "flag": "carbon_fiber_padded",
+    "item": "carbon_fiber_filament",
+    "implement_prompt": "Permeate with carbon fiber",
+    "destroy_prompt": "Destroy carbon fiber weave",
+    "mod_value": [
+      { "type": "bash", "value": 2.5, "proportion": [ "thickness" ] },
+      { "type": "cut", "value": 3, "proportion": [ "thickness" ] },
+      { "type": "bullet", "value": 3.5, "proportion": [ "thickness" ] },
       { "type": "encumbrance", "value": 3, "round_up": true, "proportion": [ "thickness", "coverage" ] }
     ]
   },
@@ -90,6 +119,16 @@
     "item": "rag",
     "implement_prompt": "Resize to fit abnormally large mutated anatomy",
     "destroy_prompt": "Undo resizing for mutated anatomy",
+    "restricted": true,
+    "mod_value": [ { "type": "encumbrance", "value": 10, "proportion": [ "coverage" ] } ]
+  },
+  {
+    "type": "clothing_mod",
+    "id": "resized_small",
+    "flag": "resized_small",
+    "item": "rag",
+    "implement_prompt": "Resize to fit abnormally small mutants",
+    "destroy_prompt": "Undo resizing for small mutants",
     "restricted": true,
     "mod_value": [ { "type": "encumbrance", "value": 10, "proportion": [ "coverage" ] } ]
   },

@@ -169,7 +169,8 @@
       [ "rope_30", 35 ],
       [ "hatchet", 10 ],
       [ "misc_repairkit", 5 ],
-      [ "mess_kit", 10 ],
+      [ "gasoline_cooker", 5 ],
+      [ "mess_kit", 5 ],
       [ "pot", 20 ],
       [ "inflatable_boat", 25 ],
       [ "hand_pump", 5 ],
@@ -336,8 +337,8 @@
       [ "survival_kit", 30 ],
       [ "premium_survival_kit", 3 ],
       [ "wire_saw", 10 ],
-      [ "butane_can", 20 ],
-      [ "butane_tank", 15 ]
+      { "item": "chem_butane", "prob": 20, "container-item": "bottle_plastic" },
+      { "item": "chem_butane", "prob": 15, "container-item": "metal_tank_little" }
     ]
   },
   {

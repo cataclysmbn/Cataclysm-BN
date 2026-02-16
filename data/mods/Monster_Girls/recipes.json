@@ -138,5 +138,29 @@
     "result": "mutagen_kitsune",
     "copy-from": "mutagen_beast",
     "components": [ [ [ "mutagen", 1 ] ], [ [ "animal_blood_concentrate", 3 ] ], [ [ "ammonia", 1 ], [ "lye_powder", 100 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "iv_mutagen_lamia",
+    "copy-from": "iv_mutagen_serpent",
+    "components": [ [ [ "mutagen_lamia", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "mutagen_lamia",
+    "copy-from": "mutagen_serpent",
+    "components": [ [ [ "mutagen", 1 ] ], [ [ "egg_reptile", 1 ], [ "scute_piece", 3 ] ], [ [ "ammonia", 1 ], [ "lye_powder", 100 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "iv_mutagen_bunnygirl",
+    "copy-from": "iv_mutagen_rabbit",
+    "components": [ [ [ "mutagen_rabbit", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "mutagen_bunnygirl",
+    "copy-from": "mutagen_rabbit",
+    "components": [ [ [ "mutagen", 1 ] ], [ [ "carrot", 3 ], [ "irradiated_carrot", 1 ] ], [ [ "ammonia", 1 ], [ "lye_powder", 100 ] ] ]
   }
 ]

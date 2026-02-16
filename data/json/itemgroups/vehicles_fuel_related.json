@@ -68,6 +68,8 @@
       [ "roadmap", 1 ],
       [ "trailmap", 1 ],
       [ "touristmap", 1 ],
+      [ "survivormap", 1 ],
+      [ "cavemap", 1 ],
       [ "regionaltransportmap", 1 ],
       [ "eclipse_glasses", 1 ],
       [ "thermos", 5 ],

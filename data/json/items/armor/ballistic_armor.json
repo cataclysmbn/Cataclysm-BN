@@ -20,7 +20,7 @@
     "warmth": 12,
     "material_thickness": 6,
     "//": "Ceramic disks inside block addition of steel plating modification",
-    "flags": [ "OUTER", "NO_REPAIR" ]
+    "flags": [ "OUTER", "NO_REPAIR", "ALLOWS_WINGS" ]
   },
   {
     "id": "dragonskinempty",
@@ -43,7 +43,7 @@
     "encumbrance": 6,
     "warmth": 10,
     "material_thickness": 3,
-    "flags": [ "STURDY", "OUTER" ]
+    "flags": [ "STURDY", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "flotation_vest_sandbag",

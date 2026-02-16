@@ -288,6 +288,15 @@
     "requirements": [ { "event_statistic": "num_avatar_mutation_threshold_raptor", "is": ">=", "target": 1 } ]
   },
   {
+    "id": "achievement_mutation_threshold_serpent",
+    "type": "achievement",
+    "name": { "str": "[Mutation] No Step On Snek" },
+    "description": "Legs are for chumps.  You are now a post-threshold Serpent mutant.",
+    "//": "Threshold achievements are hidden until obtained",
+    "hidden_by": [ "achievement_mutation_threshold_serpent" ],
+    "requirements": [ { "event_statistic": "num_avatar_mutation_threshold_serpent", "is": ">=", "target": 1 } ]
+  },
+  {
     "id": "achievement_mutation_threshold_slime",
     "type": "achievement",
     "name": { "str": "[Mutation] Slippery When Moist" },

@@ -130,5 +130,16 @@
     "purifiable": false,
     "threshold": true,
     "mutagen_target_modifier": 10
+  },
+  {
+    "type": "mutation",
+    "id": "THRESH_LAMIA",
+    "name": { "str": "Lamia" },
+    "points": 1,
+    "description": "You have to put in a lot of care to keep your scales smooth and shiny, but it's worth it.  All you need now is a nice warm rock to bask on, or someone to coil around for warmth…",
+    "valid": false,
+    "purifiable": false,
+    "threshold": true,
+    "mutagen_target_modifier": 10
   }
 ]

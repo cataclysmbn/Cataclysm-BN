@@ -924,7 +924,7 @@ void computer_session::action_srcf_seal()
     add_msg( m_warning, _( "Evacuate Immediately!" ) );
     map &here = get_map();
     for( const tripoint &p : here.points_on_zlevel() ) {
-        if( here.ter( p ) == t_elevator || here.ter( p ) == t_vat ) {
+        if( here.ter( p ) == t_elevator || here.furn( p ) == furn_str_id( "f_cloning_vat" ) ) {
             here.make_rubble( p, f_rubble_rock );
             explosion_handler::explosion( p, &g->u, 40, 0.7, true );
         }

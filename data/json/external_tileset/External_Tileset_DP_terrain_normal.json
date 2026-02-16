@@ -58,25 +58,26 @@
             "rotates": false,
             "multitile": true,
             "additional_tiles": [
-              { "id": "center", "fg": 51 },
-              { "id": "corner", "fg": [ 52, 53, 54, 55 ] },
-              { "id": "edge", "fg": [ 56, 57 ] },
-              { "id": "end_piece", "fg": [ 58, 59, 60, 61 ] },
-              { "id": "t_connection", "fg": [ 62, 63, 64, 65 ] },
-              {
-                "id": "unconnected",
-                "fg": [
-                  { "weight": 30, "sprite": 66 },
-                  { "weight": 30, "sprite": 67 },
-                  { "weight": 30, "sprite": 68 },
-                  { "weight": 30, "sprite": 69 },
-                  { "weight": 30, "sprite": 70 },
-                  { "weight": 30, "sprite": 71 },
-                  { "weight": 30, "sprite": 72 },
-                  { "weight": 30, "sprite": 73 },
-                  { "weight": 30, "sprite": 74 }
-                ]
-              }
+              { "id": "center", "fg": 51, "bg": 67 },
+              { "id": "corner", "fg": [ 52, 53, 54, 55 ], "bg": 67 },
+              { "id": "edge", "fg": [ 56, 57 ], "bg": 67 },
+              { "id": "end_piece", "fg": [ 58, 59, 60, 61 ], "bg": 67 },
+              { "id": "t_connection", "fg": [ 62, 63, 64, 65 ], "bg": 67 },
+              { "id": "unconnected", "fg": 66, "bg": 67 }
+            ]
+          },
+          {
+            "id": "t_moss_underground",
+            "fg": 51,
+            "rotates": false,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "center", "fg": 51, "bg": 68 },
+              { "id": "corner", "fg": [ 52, 53, 54, 55 ], "bg": 68 },
+              { "id": "edge", "fg": [ 56, 57 ], "bg": 68 },
+              { "id": "end_piece", "fg": [ 58, 59, 60, 61 ], "bg": 68 },
+              { "id": "t_connection", "fg": [ 62, 63, 64, 65 ], "bg": 68 },
+              { "id": "unconnected", "fg": 66, "bg": 68 }
             ]
           }
         ],

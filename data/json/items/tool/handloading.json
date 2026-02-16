@@ -56,7 +56,7 @@
     "type": "GENERIC",
     "category": "tools",
     "name": { "str": "reloading press", "str_pl": "reloading presses" },
-    "description": "This is an all-in-one handloading tool consisting of a multi-stage press, bullet molds, a hotplate, and a collet puller for disassembling cartridges.  Once installed as furniture, it can handle both making your own ammunition and taking ammo apart for materials.",
+    "description": "This is an all-in-one handloading tool consisting of a multi-stage press, bullet molds, a hotplate, and a collet puller for disassembling cartridges.  It needs to be hooked up as grid furniture or mounted on a vehicle, but once you do it can handle both making your own ammunition and taking ammo apart for materials.",
     "weight": "6 kg",
     "volume": "2 L",
     "price": "100 USD",

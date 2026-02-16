@@ -108,8 +108,9 @@
       { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 50 },
       {
         "distribution": [
-          { "item": "shield_riot", "prob": 75, "damage": [ 1, 4 ] },
-          { "item": "shield_ballistic", "prob": 25, "damage": [ 1, 4 ] }
+          { "item": "shield_riot", "prob": 60, "damage": [ 1, 4 ] },
+          { "item": "shield_ballistic", "prob": 30, "damage": [ 1, 4 ] },
+          { "item": "shield_ballistic_large", "prob": 10, "damage": [ 1, 4 ] }
         ],
         "prob": 25
       }

@@ -19,7 +19,7 @@
     "volume": "500 ml",
     "charges": 8,
     "phase": "liquid",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 1,
     "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
@@ -57,17 +57,18 @@
     "description": "A gloppy mix of egg, oil, and salt that is traditionally used to moisten sandwiches.",
     "price": "187 cent",
     "price_postapoc": "5 USD",
-    "material": [ "junk", "egg" ],
+    "material": [ "egg" ],
     "weight": "15 g",
     "volume": "250 ml",
     "comestible_type": "DRINK",
     "container": "condiment_bottle_unsealed",
     "calories": 106,
+    "flags": [ "NO_COOKING_BUFF" ],
     "spoils_in": "6 days 16 hours",
     "charges": 16,
     "fun": -7,
     "phase": "liquid",
-    "vitamins": [ [ "egg_allergen", 1 ], [ "junk_allergen", 1 ] ]
+    "vitamins": [ [ "egg_allergen", 1 ] ]
   },
   {
     "id": "ketchup",
@@ -84,6 +85,7 @@
     "comestible_type": "DRINK",
     "container": "condiment_bottle_unsealed",
     "calories": 21,
+    "flags": [ "NO_COOKING_BUFF" ],
     "spoils_in": "15 days",
     "charges": 16,
     "fun": -6,
@@ -99,17 +101,18 @@
     "description": "A condiment made from the seeds of a mustard plant (/Brassica/ or /Sinapis/), vinegar, salt, and spices.",
     "price": "50 cent",
     "price_postapoc": "1 USD",
-    "material": [ "junk" ],
+    "material": [ "water" ],
     "weight": "5 g",
     "volume": "250 ml",
     "comestible_type": "DRINK",
     "container": "condiment_bottle_unsealed",
     "fun": -8,
     "calories": 10,
+    "flags": [ "NO_COOKING_BUFF" ],
     "spoils_in": "15 days",
     "charges": 48,
     "phase": "liquid",
-    "vitamins": [ [ "iron", 2 ], [ "junk_allergen", 1 ] ]
+    "vitamins": [ [ "iron", 2 ] ]
   },
   {
     "id": "honey_bottled",
@@ -130,7 +133,7 @@
     "charges": 16,
     "healthy": 1,
     "fun": 3,
-    "flags": [ "NUTRIENT_OVERRIDE" ],
+    "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "phase": "liquid"
   },
   {
@@ -147,12 +150,12 @@
     "volume": "250 ml",
     "comestible_type": "DRINK",
     "container": "jar_glass_sealed",
-    "material": [ "junk", "nut" ],
+    "material": [ "nut" ],
     "quench": -2,
     "calories": 190,
     "charges": 8,
     "phase": "liquid",
-    "flags": [ "USE_EAT_VERB" ],
+    "flags": [ "USE_EAT_VERB", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "iron", 6 ] ],
     "fun": 2
   },
@@ -181,6 +184,7 @@
     "phase": "liquid",
     "charges": 16,
     "calories": 3,
+    "flags": [ "NO_COOKING_BUFF" ],
     "fun": -10
   },
   {
@@ -204,7 +208,7 @@
     "charges": 16,
     "phase": "liquid",
     "fun": -25,
-    "flags": [ "NUTRIENT_OVERRIDE" ],
+    "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "veggy_allergen", 1 ] ]
   },
   {
@@ -229,7 +233,7 @@
     "charges": 16,
     "phase": "liquid",
     "fun": -25,
-    "flags": [ "NUTRIENT_OVERRIDE" ],
+    "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
@@ -252,7 +256,7 @@
     "phase": "liquid",
     "charges": 4,
     "fun": 2,
-    "flags": [ "USE_EAT_VERB" ],
+    "flags": [ "USE_EAT_VERB", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "calcium", 18 ], [ "iron", 23 ], [ "junk_allergen", 1 ] ]
   },
   {
@@ -269,6 +273,7 @@
     "volume": "250 ml",
     "comestible_type": "FOOD",
     "container": "jar_glass",
+    "flags": [ "NO_COOKING_BUFF" ],
     "quench": -10,
     "calories": 31,
     "charges": 48,
@@ -300,6 +305,7 @@
     "phase": "liquid",
     "charges": 8,
     "calories": 80,
+    "flags": [ "NO_COOKING_BUFF" ],
     "fun": 6,
     "vitamins": [ [ "junk_allergen", 1 ] ]
   }

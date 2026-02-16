@@ -47,32 +47,6 @@
     "flags": [ "WATCH", "ALARMCLOCK" ]
   },
   {
-    "type": "TOOL",
-    "category": "tools",
-    "id": "butane_can",
-    "name": { "str": "can of butane", "str_pl": "cans of butane" },
-    "description": "A typical can of butane that you would normally use to fill a lighter.  It could be useful as a fuel, but also as a solvent or chemical reagent.",
-    "symbol": "!",
-    "color": "dark_gray",
-    "looks_like": "spray_can",
-    "weight": "400 g",
-    "volume": "500 ml",
-    "price": "15 USD",
-    "price_postapoc": "250 cent",
-    "initial_charges": 30,
-    "max_charges": 30,
-    "charges_per_use": 1,
-    "material": [ "steel" ],
-    "flags": [ "NO_UNLOAD" ],
-    "explosion": {
-      "power": 4503,
-      "distance_factor": 0.1,
-      "fire": true,
-      "shrapnel": { "casing_mass": 50, "fragment_mass": 0.05, "recovery": 0 }
-    },
-    "explode_in_fire": true
-  },
-  {
     "id": "cow_bell",
     "type": "GENERIC",
     "category": "tools",
@@ -238,7 +212,8 @@
     "bashing": 6,
     "material": [ "bone" ],
     "symbol": ";",
-    "color": "white"
+    "color": "white",
+    "flags": [ "MISSION_ITEM" ]
   },
   {
     "id": "flamable_arrow",
@@ -384,6 +359,22 @@
     "color": "light_gray"
   },
   {
+    "id": "horn_ship",
+    "type": "GENERIC",
+    "category": "veh_parts",
+    "name": { "str": "ship air horn" },
+    "description": "An enormous ship air horn, extremely loud and deafening.  Usually found on large vessels.",
+    "weight": "5 kg",
+    "volume": "6 L",
+    "price": "120 USD",
+    "price_postapoc": "10 cent",
+    "to_hit": -1,
+    "bashing": 4,
+    "material": [ "steel", "plastic" ],
+    "symbol": ";",
+    "color": "light_gray"
+  },
+  {
     "id": "horn_car",
     "type": "GENERIC",
     "category": "veh_parts",
@@ -478,7 +469,7 @@
     "use_action": "MIND_SPLICER",
     "volume": "1 L",
     "weight": "600 g",
-    "flags": [ "TRADER_AVOID" ]
+    "flags": [ "TRADER_AVOID", "MISSION_ITEM" ]
   },
   {
     "id": "permanent_marker",
@@ -574,7 +565,7 @@
     "symbol": ";",
     "color": "light_gray",
     "qualities": [ [ "HAMMER", 1 ] ],
-    "flags": [ "DURABLE_MELEE" ]
+    "flags": [ "DURABLE_MELEE", "MISSION_ITEM" ]
   },
   {
     "id": "sarcophagus_access_code",
@@ -590,7 +581,8 @@
     "bashing": 1,
     "material": "paper",
     "symbol": ";",
-    "color": "white"
+    "color": "white",
+    "flags": [ "MISSION_ITEM" ]
   },
   {
     "id": "small_space_heater",
@@ -898,5 +890,43 @@
     "price": "250 USD",
     "price_postapoc": "1 USD",
     "material": [ "iron", "glass" ]
+  },
+  {
+    "id": "embryo",
+    "type": "TOOL",
+    "looks_like": "pet_carrier",
+    "weight": "60 kg",
+    "volume": "60 L",
+    "price": "2000 USD",
+    "price_postapoc": "5 USD",
+    "symbol": "=",
+    "color": "dark_gray",
+    "//": "used by the cloning vat and adds a var called 'place_monster_override'",
+    "name": { "str": "artificial womb" },
+    "description": "This artificial womb holds a nearly fully grown clone, nurtured from extracted DNA within a cloning vat.  Activate it, and the organism will swiftly complete its development and emerge ready to function.  Ideal for quickly repopulating herds, restoring endangered species, or deploying engineered creatures with minimal wait.",
+    "flags": [ "RADIO_MODABLE", "ALLOWS_REMOTE_USE" ],
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "debug_mon",
+      "friendly_msg": "The cloned creature seems to enjoy your presence.",
+      "hostile_msg": "The cloned creature seems aloof to you!",
+      "difficulty": 10,
+      "moves": 250,
+      "skills": [ "survival" ]
+    }
+  },
+  {
+    "id": "embryo_empty",
+    "type": "TOOL",
+    "looks_like": "pet_carrier",
+    "weight": "60 kg",
+    "volume": "60 L",
+    "price": "2000 USD",
+    "price_postapoc": "5 USD",
+    "symbol": "=",
+    "color": "dark_gray",
+    "//": "used by the cloning vat and adds a var called 'place_monster_override'",
+    "name": { "str": "artificial womb" },
+    "description": "A single-use vessel for transporting clones safely from the cloning vat to the field.  Currently empty, if sufficiently sterile it can be used by a cloning vat to grow a creature from a viable DNA sample. "
   }
 ]

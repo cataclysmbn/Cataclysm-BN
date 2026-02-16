@@ -9,7 +9,7 @@
     "ascii_picture": "glock_20",
     "weight": "780 g",
     "volume": "480 ml",
-    "barrel_length": "55 ml",
+    "barrel_volume": "55 ml",
     "price": "592 USD",
     "price_postapoc": "25 USD",
     "to_hit": -2,
@@ -42,7 +42,7 @@
     "dispersion": 170,
     "durability": 10,
     "min_cycle_recoil": 500,
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "magazine_well": "150 ml",
     "magazines": [ [ "10mm", [ "glock20mag", "glock20bigmag", "glock20drum50rd" ] ] ]
   }

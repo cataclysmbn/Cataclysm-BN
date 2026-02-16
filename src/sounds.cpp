@@ -369,6 +369,19 @@ void sounds::process_sounds()
     recent_sounds.clear();
 }
 
+// Ensure description ends with punctuation, using a preferred character if missing
+static auto ensure_punctuation = []( const std::string &desc, char preferred )
+{
+    if( desc.empty() ) {
+        return desc;
+    }
+    char last = desc.back();
+    if( last == '.' || last == '!' || last == '?' || last == '"' ) {
+        return desc;
+    }
+    return desc + preferred;
+};
+
 // skip some sounds to avoid message spam
 static bool describe_sound( sounds::sound_t category, bool from_player_position )
 {
@@ -512,7 +525,8 @@ void sounds::process_sound_markers( Character *who )
         if( !sound.ambient && ( pos != who->pos() ) && !get_map().pl_sees( pos, distance_to_sound ) ) {
             if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
                 !get_safemode().is_sound_safe( sound.description, distance_to_sound ) ) {
-                const std::string query = string_format( _( "Heard %s!" ), description );
+                const std::string final_description = ensure_punctuation( description, '!' );
+                const std::string query = string_format( _( "Heard %s" ), final_description );
                 g->cancel_activity_or_ignore_query( distraction_type::noise, query );
             }
         }
@@ -523,14 +537,17 @@ void sounds::process_sound_markers( Character *who )
             if( sound.category == sound_t::combat || sound.category == sound_t::alarm ) {
                 severity = m_warning;
             }
+
+            std::string final_description = ensure_punctuation( description, '.' );
+
             // if we can see it, don't print a direction
             if( pos == who->pos() ) {
-                add_msg( severity, _( "From your position you hear %1$s" ), description );
+                add_msg( severity, _( "From your position you hear %1$s" ), final_description );
             } else if( who->sees( pos ) ) {
-                add_msg( severity, _( "You hear %1$s" ), description );
+                add_msg( severity, _( "You hear %1$s" ), final_description );
             } else {
                 std::string direction = direction_name( direction_from( who->pos(), pos ) );
-                add_msg( severity, _( "From the %1$s you hear %2$s" ), direction, description );
+                add_msg( severity, _( "From the %1$s you hear %2$s" ), direction, final_description );
             }
         }
 
@@ -1448,6 +1465,7 @@ void sfx::do_footstep()
             ter_str_id( "t_underbrush_harvested_autumn" ),
             ter_str_id( "t_underbrush_harvested_winter" ),
             ter_str_id( "t_moss" ),
+            ter_str_id( "t_moss_underground" ),
             ter_str_id( "t_grass_white" ),
             ter_str_id( "t_grass_long" ),
             ter_str_id( "t_grass_tall" ),

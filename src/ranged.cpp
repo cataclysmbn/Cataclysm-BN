@@ -1,6 +1,7 @@
 #include "ranged.h"
 
 #include <algorithm>
+#include <numeric>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -20,6 +21,9 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
@@ -41,6 +45,7 @@
 #include "itype.h"
 #include "line.h"
 #include "magic.h"
+#include "magic_enchantment.h"
 #include "map.h"
 #include "material.h"
 #include "math_defines.h"
@@ -92,6 +97,7 @@ static const weapon_category_id weapon_cat_ENERGY_WEAPONS( "ENERGY_WEAPONS" );
 static const ammo_effect_str_id ammo_effect_ACT_ON_RANGED_HIT( "ACT_ON_RANGED_HIT" );
 static const ammo_effect_str_id ammo_effect_BLACKPOWDER( "BLACKPOWDER" );
 static const ammo_effect_str_id ammo_effect_BOUNCE( "BOUNCE" );
+static const ammo_effect_str_id ammo_effect_BLINDS_EYES( "BLINDS_EYES" );
 static const ammo_effect_str_id ammo_effect_BURST( "BURST" );
 static const ammo_effect_str_id ammo_effect_CUSTOM_EXPLOSION( "CUSTOM_EXPLOSION" );
 static const ammo_effect_str_id ammo_effect_EMP( "EMP" );
@@ -110,6 +116,7 @@ static const ammo_effect_str_id ammo_effect_RECYCLED( "RECYCLED" );
 static const ammo_effect_str_id ammo_effect_SHATTER_SELF( "SHATTER_SELF" );
 static const ammo_effect_str_id ammo_effect_SHOT( "SHOT" );
 static const ammo_effect_str_id ammo_effect_TANGLE( "TANGLE" );
+static const ammo_effect_str_id ammo_effect_NET_TANGLE( "NET_TANGLE" );
 static const ammo_effect_str_id ammo_effect_WIDE( "WIDE" );
 static const ammo_effect_str_id ammo_effect_THROWN( "THROWN" );
 
@@ -117,9 +124,7 @@ static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_hit_by_player( "hit_by_player" );
 static const efftype_id effect_on_roof( "on_roof" );
 
-static const itype_id itype_adv_UPS_off( "adv_UPS_off" );
 static const itype_id itype_UPS( "UPS" );
-static const itype_id itype_UPS_off( "UPS_off" );
 
 static const trap_str_id tr_practice_target( "tr_practice_target" );
 
@@ -555,9 +560,17 @@ double Creature::ranged_target_size() const
     if( const_cast<Creature &>( *this ).uncanny_dodge() ) {
         return 0.0;
     }
-    if( has_flag( MF_HARDTOSHOOT ) ) {
+    bool is_crouched = false;
+    if( Character *ch = const_cast<Creature &>( *this ).as_character() ) {
+        if( ch->movement_mode_is( CMM_CROUCH ) ) {
+            is_crouched = true;
+        }
+    }
+    if( has_flag( MF_HARDTOSHOOT ) || is_crouched ) {
         switch( get_size() ) {
             case creature_size::tiny:
+                // We can't be smaller than tiny, but we can make the hit rate lower.
+                return 0.05;
             case creature_size::small:
                 return occupied_tile_fraction( creature_size::tiny );
             case creature_size::medium:
@@ -906,6 +919,13 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
         debugmsg( "Attempted to fire zero or negative shots using %s", gun.tname() );
     }
 
+    // Lua iranged can_fire callback: blocks firing before any ammo is consumed
+    if( const auto *iranged_cb = gun.type->iranged_callbacks ) {
+        if( !iranged_cb->call_can_fire( who, gun ) ) {
+            return 0;
+        }
+    }
+
     std::optional<shape_factory> shape = ranged::get_shape_factory( gun );
 
     map &here = get_map();
@@ -938,6 +958,19 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
                                 ? veh_pointer_or_null( here.veh_at( who.pos() ) )
                                 : nullptr;
         projectile projectile = make_gun_projectile( gun );
+
+        // Apply enchantment bonuses to projectile
+        int base_bullet_damage = static_cast<int>( projectile.impact.type_damage( DT_BULLET ) );
+        int ench_damage_bonus = who.bonus_from_enchantments( base_bullet_damage,
+                                enchant_vals::mod::RANGED_DAMAGE_BULLET, true );
+        if( ench_damage_bonus != 0 ) {
+            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus );
+        }
+
+        int ench_range_bonus = who.bonus_from_enchantments( projectile.range,
+                               enchant_vals::mod::RANGED_RANGE, true );
+        // Ensure range doesn't go below 1
+        projectile.range = std::max( 1, projectile.range + ench_range_bonus );
 
         // Slings use ammo damage or damage from throwing the ammo, whichever is higher
         if( gun.gun_skill() == skill_throw && !who.is_fake() && gun.ammo_data() ) {
@@ -1054,6 +1087,20 @@ int ranged::fire_gun( Character &who, const tripoint &target, int max_shots, ite
     int practice_units = aoe_attack ? curshot : hits;
     who.as_player()->practice( gun.gun_skill(), ( practice_units + 1 ) * 5 );
 
+    // Lua iranged on_fire callback: returns false to zero out hits (force miss)
+    if( const auto *iranged_cb = gun.type->iranged_callbacks ) {
+        if( !iranged_cb->call_on_fire( who, gun, target, curshot ) ) {
+            hits = 0;
+        }
+    }
+
+    cata::run_hooks( "on_shoot", [ & ]( auto & params ) {
+        params["shooter"] = &who;
+        params["target_pos"] = &target;
+        params["shots"] = curshot;
+        params["gun"] = &gun;
+        params["ammo"] = ammo;
+    } );
     return curshot;
 }
 
@@ -1341,6 +1388,9 @@ dealt_projectile_attack throw_item( Character &who, const tripoint &target,
         proj.add_effect( ammo_effect_ACT_ON_RANGED_HIT );
         thrown.activate();
     }
+    if( thrown.has_flag( flag_BLINDS_EYES_ON_HIT ) ) {
+        proj.add_effect( ammo_effect_BLINDS_EYES );
+    }
     // This is just to indicate something is a thrown item
     // Checking with other methods downstream breaks other projectile attacks.
     proj.add_effect( ammo_effect_THROWN );
@@ -1396,6 +1446,9 @@ dealt_projectile_attack throw_item( Character &who, const tripoint &target,
     if( thrown.has_flag( flag_TANGLE ) ) {
         proj.add_effect( ammo_effect_TANGLE );
     }
+    if( thrown.has_flag( flag_NET_TANGLE ) ) {
+        proj.add_effect( ammo_effect_NET_TANGLE );
+    }
 
     if( thrown.has_flag( flag_NO_DAMAGE ) ) {
         proj.add_effect( ammo_effect_NO_DAMAGE );
@@ -1443,6 +1496,12 @@ dealt_projectile_attack throw_item( Character &who, const tripoint &target,
     who.last_target_pos = std::nullopt;
     who.recoil = MAX_RECOIL;
 
+    cata::run_hooks( "on_throw", [ & ]( auto & params ) {
+        params["thrower"] = &who;
+        params["target_pos"] = &target;
+        params["throw_from_pos"] = &throw_from;
+        params["thrown"] = &thrown;
+    } );
     return dealt_attack;
 }
 
@@ -1860,6 +1919,9 @@ static projectile make_gun_projectile( const item &gun )
     if( gun.ammo_data() ) {
         assert( gun.ammo_data()->ammo );
         const islot_ammo &ammo = *gun.ammo_data()->ammo;
+        if( gun.ammo_data()->has_flag( flag_BLINDS_EYES_ON_HIT ) ) {
+            fx.add_effect( ammo_effect_BLINDS_EYES );
+        }
         // Some projectiles have a chance of being recoverable
         bool recover = !one_in( ammo.dont_recover_one_in );
         // Some weapons can override this
@@ -1905,8 +1967,13 @@ int ranged::time_to_attack( const Character &p, const item &firing, const item *
                                  *const_cast<item *>( loc ) );
         RAS_time = opt.moves() + reload_stamina_penalty;
     }
-    return std::max( info.min_time,
-                     info.base_time - info.time_reduction_per_level * p.get_skill_level( skill_used ) + RAS_time );
+    int base_time = std::max( info.min_time,
+                              info.base_time - info.time_reduction_per_level * p.get_skill_level( skill_used ) + RAS_time );
+    // Apply enchantment bonus to reload time
+    int ench_reload_bonus = p.bonus_from_enchantments( base_time, enchant_vals::mod::RANGED_RELOAD_TIME,
+                            true );
+    // Ensure we don't go below minimum time even with enchantments
+    return std::max( info.min_time, base_time + ench_reload_bonus );
 }
 
 static void cycle_action( item &weap, const tripoint &pos )
@@ -2048,12 +2115,6 @@ item::sound_data item::gun_noise( const bool burst ) const
     return { 0, "" }; // silent weapons
 }
 
-static bool is_driving( const Character &p )
-{
-    const optional_vpart_position vp = get_map().veh_at( p.pos() );
-    return vp && vp->vehicle().is_moving() && vp->vehicle().player_in_control( p );
-}
-
 static double dispersion_from_skill( double skill, double weapon_dispersion )
 {
     if( skill >= MAX_SKILL ) {
@@ -2085,7 +2146,7 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
 
     dispersion.add_range( ( who.encumb( body_part_arm_l ) + who.encumb( body_part_arm_r ) ) / 5.0 );
 
-    if( is_driving( who ) ) {
+    if( character_funcs::is_driving( who ) ) {
         // get volume of gun (or for auxiliary gunmods the parent gun)
         const item *parent = who.has_item( obj ) ? who.find_parent( obj ) : nullptr;
         const int vol = ( parent ? parent->volume() : obj.volume() ) / 250_ml;
@@ -2102,6 +2163,10 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
     dispersion.add_range( dispersion_from_skill( avgSkill, weapon_dispersion ) );
 
     if( who.has_bionic( bio_targeting ) ) {
+        dispersion.add_multiplier( 0.75 );
+    }
+    // If we're crouched, it's easier to steady our aim.
+    if( who.movement_mode_is( CMM_CROUCH ) ) {
         dispersion.add_multiplier( 0.75 );
     }
 
@@ -2125,6 +2190,12 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
             dispersion.add_range( 1000 );
         }
     }
+
+    // Apply enchantment bonus to dispersion
+    int base_dispersion = static_cast<int>( dispersion.max() );
+    int ench_dispersion_bonus = who.bonus_from_enchantments( base_dispersion,
+                                enchant_vals::mod::RANGED_DISPERSION, true );
+    dispersion.add_range( ench_dispersion_bonus );
 
     return dispersion;
 }
@@ -2250,7 +2321,11 @@ double ranged::recoil_vehicle( const Character &who )
 
 double ranged::recoil_total( const Character &who )
 {
-    return who.recoil + recoil_vehicle( who );
+    double base_recoil = who.recoil + recoil_vehicle( who );
+    double ench_recoil_bonus = who.bonus_from_enchantments( base_recoil,
+                               enchant_vals::mod::RANGED_RECOIL );
+    // Recoil cannot be negative
+    return std::max( 0.0, base_recoil + ench_recoil_bonus );
 }
 
 namespace ranged
@@ -2887,8 +2962,14 @@ void target_ui::update_target_list()
         targets = ranged::targetable_creatures( *you, range );
     }
 
-    std::sort( targets.begin(), targets.end(), [&]( const Creature * lhs, const Creature * rhs ) {
-        return rl_dist_exact( lhs->pos(), you->pos() ) < rl_dist_exact( rhs->pos(), you->pos() );
+    map &here = get_map();
+    const auto player_pos = you->pos();
+
+    std::ranges::sort( targets, {}, [&]( const Creature * c ) -> std::tuple<bool, bool, int> {
+        const auto target_pos = c->pos();
+        const bool same_z = player_pos.z == target_pos.z;
+        const bool has_los = here.sees( player_pos, target_pos, range );
+        return { !has_los, !same_z, rl_dist_exact( target_pos, player_pos ) };
     } );
 }
 
@@ -3965,8 +4046,7 @@ auto ranged::gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::
             }
         }
         if( !is_mech_weapon ) {
-            if( !( you.has_charges( itype_UPS_off, ups_drain ) ||
-                   you.has_charges( itype_adv_UPS_off, adv_ups_drain ) ||
+            if( !( you.has_charges( itype_UPS, ups_drain )  ||
                    ( you.has_active_bionic( bio_ups ) &&
                      you.get_power_level() >= units::from_kilojoule( ups_drain ) ) ) ) {
                 messages.push_back( string_format(

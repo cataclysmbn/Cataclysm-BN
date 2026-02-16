@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <weighted_list.h>
 
 #include "coordinates.h"
 #include "cube_direction.h"
@@ -150,7 +151,73 @@ static const std::map<std::string, oter_flags> oter_flags_map = {
     { "SOURCE_SAFETY", oter_flags::source_safety },
     { "SOURCE_TAILORING", oter_flags::source_tailoring },
     { "SOURCE_VEHICLES", oter_flags::source_vehicles },
-    { "SOURCE_WEAPON", oter_flags::source_weapon }
+    { "SOURCE_WEAPON", oter_flags::source_weapon },
+    { "IS_BRIDGE", oter_flags::is_bridge }
+};
+
+/*
+* TODO: Needs to load from a JSON somwhere, move to json.
+* changing later won't affect already seen areas so safe to change mid-save
+* 1= -(1-3), 2= -(4-7),3= -(8-10) in Z levels
+*/
+static const std::map<std::string, std::map<std::string, int>>
+ore_depth_to_rate = {{"shallow",
+        {
+            {"iron", 6},
+            {"banded_iron", 14},
+            {"copper", 3},
+            {"tetrahedrite", 6},
+            {"chalcopyrite", 6},
+            {"lead", 1},
+            {"galena", 1},
+            {"galenau", 1},
+            {"tin", 10},
+            {"coppin", 6},
+            {"bronzium", 4},
+            {"silver", 1},
+            {"gold", 1},
+            {"electrumite", 1},
+        }
+    },
+    {
+        "medium",
+        {
+            {"iron", 8},
+            {"banded_iron", 18},
+            {"copper", 4},
+            {"tetrahedrite", 4},
+            {"chalcopyrite", 4},
+            {"lead", 3},
+            {"galena", 2},
+            {"galenau", 2},
+            {"tin", 6},
+            {"coppin", 7},
+            {"bronzium", 5},
+            {"silver", 2},
+            {"gold", 2},
+            {"electrumite", 3},
+        }
+    },
+    {
+        "deep",
+        {
+            {"iron", 14},
+            {"banded_iron", 4},
+            {"copper", 9},
+            {"tetrahedrite", 2},
+            {"chalcopyrite", 2},
+            {"lead", 8},
+            {"galena", 4},
+            {"galenau", 4},
+            {"tin", 1},
+            {"coppin", 2},
+            {"bronzium", 2},
+            {"silver", 5},
+            {"gold", 5},
+            {"electrumite", 8},
+        }
+    },
+    {"how", {{"tin", 1}}}
 };
 
 template<typename Tripoint>
@@ -407,14 +474,17 @@ class overmap
         void generate( const overmap *north, const overmap *east,
                        const overmap *south, const overmap *west,
                        overmap_special_batch &enabled_specials );
-        bool generate_sub( int z );
         bool generate_over( int z );
 
         const city &get_nearest_city( const tripoint_om_omt &p ) const;
 
         void signal_hordes( const tripoint_rel_sm &p, int sig_power );
+        void signal_nemesis( tripoint_abs_sm p );
         void process_mongroups();
         void move_hordes();
+        void move_nemesis();
+        void place_nemesis( tripoint_abs_omt p );
+        bool remove_nemesis(); // returns true if nemesis found and removed
 
         // Overall terrain
         void place_river( point_om_omt pa, point_om_omt pb );
@@ -478,6 +548,7 @@ class overmap
         std::vector<tripoint_om_omt> place_special(
             const overmap_special &special, const tripoint_om_omt &p, om_direction::type dir,
             const city &cit, bool must_be_unexplored, bool force );
+        void spawn_ores( const tripoint_abs_omt &p );
     private:
         /**
          * Iterate over the overmap and place the quota of specials.
@@ -557,4 +628,3 @@ const std::string &oter_get_rotation_string( const oter_id &oter );
  * Determine whether provided tile belongs to overmap connection.
  */
 bool belongs_to_connection( const overmap_connection_id &id, const oter_id &oter );
-

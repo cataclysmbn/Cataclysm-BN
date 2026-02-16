@@ -186,8 +186,8 @@
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
       }
     },
-    "flags": [ "MOUNTABLE", "SHOCK_RESISTANT" ],
-    "damage_reduction": { "all": 84 }
+    "flags": [ "FOLDABLE", "MOUNTABLE", "SHOCK_RESISTANT" ],
+    "damage_reduction": { "all": 62 }
   },
   {
     "id": "frame_wood_deck",
@@ -211,7 +211,6 @@
     },
     "flags": [
       "MOUNTABLE",
-      "INITIAL_PART",
       "SEAT",
       "ENGINE",
       "E_STARTS_INSTANTLY",

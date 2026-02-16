@@ -72,7 +72,10 @@
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
-        "entries": [ { "drop": "withered", "base_num": [ 1, 2 ] }, { "drop": "seed_flower", "base_num": [ 1, 2 ] } ]
+        "entries": [
+          { "drop": "withered", "base_num": [ 1, 2 ], "no_auto_pickup": true },
+          { "drop": "seed_flower", "base_num": [ 1, 2 ] }
+        ]
       }
     ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
@@ -93,7 +96,7 @@
       {
         "seasons": [ "spring", "summer", "autumn" ],
         "entries": [
-          { "drop": "withered", "base_num": [ 1, 2 ] },
+          { "drop": "withered", "base_num": [ 1, 2 ], "no_auto_pickup": true },
           { "drop": "seed_spurge", "base_num": [ 1, 2 ] },
           { "drop": "spurge", "base_num": [ 1, 4 ] }
         ]
@@ -150,7 +153,10 @@
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
-        "entries": [ { "drop": "withered", "base_num": [ 1, 2 ] }, { "drop": "seed_flower", "base_num": [ 1, 2 ] } ]
+        "entries": [
+          { "drop": "withered", "base_num": [ 1, 2 ], "no_auto_pickup": true },
+          { "drop": "seed_flower", "base_num": [ 1, 2 ] }
+        ]
       }
     ],
     "//": "Add flower and bud spawns once useful.",
@@ -171,7 +177,10 @@
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
-        "entries": [ { "drop": "withered", "base_num": [ 1, 2 ] }, { "drop": "seed_flower", "base_num": [ 1, 2 ] } ]
+        "entries": [
+          { "drop": "withered", "base_num": [ 1, 2 ], "no_auto_pickup": true },
+          { "drop": "seed_flower", "base_num": [ 1, 2 ] }
+        ]
       }
     ],
     "//": "Add flower and bud spawns once useful.",
@@ -193,7 +202,7 @@
       {
         "seasons": [ "spring", "summer", "autumn" ],
         "entries": [
-          { "drop": "withered", "base_num": [ 1, 2 ] },
+          { "drop": "withered", "base_num": [ 1, 2 ], "no_auto_pickup": true },
           { "drop": "seed_flower", "base_num": [ 1, 2 ] },
           { "drop": "lotus", "base_num": [ 1, 2 ] }
         ]
@@ -228,7 +237,12 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE", "FLOWER" ],
     "examine_action": "harvest_furn",
-    "harvest_by_season": [ { "seasons": [ "spring", "summer", "autumn" ], "entries": [ { "drop": "withered", "base_num": [ 1, 2 ] } ] } ],
+    "harvest_by_season": [
+      {
+        "seasons": [ "spring", "summer", "autumn" ],
+        "entries": [ { "drop": "withered", "base_num": [ 1, 2 ], "no_auto_pickup": true } ]
+      }
+    ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
   },
   {
@@ -246,7 +260,10 @@
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
-        "entries": [ { "drop": "withered", "base_num": [ 1, 2 ] }, { "drop": "seed_flower", "base_num": [ 1, 2 ] } ]
+        "entries": [
+          { "drop": "withered", "base_num": [ 1, 2 ], "no_auto_pickup": true },
+          { "drop": "seed_flower", "base_num": [ 1, 2 ] }
+        ]
       }
     ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
@@ -295,7 +312,10 @@
     "harvest_by_season": [
       {
         "seasons": [ "spring", "summer", "autumn" ],
-        "entries": [ { "drop": "datura_seed", "base_num": [ 2, 6 ] }, { "drop": "withered", "base_num": [ 1, 2 ] } ]
+        "entries": [
+          { "drop": "datura_seed", "base_num": [ 2, 6 ] },
+          { "drop": "withered", "base_num": [ 1, 2 ], "no_auto_pickup": true }
+        ]
       }
     ],
     "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
@@ -384,7 +404,7 @@
     "type": "furniture",
     "id": "f_lake_pondweed",
     "name": "pondweed",
-    "description": "An aquatic pondweed, it's sort of tall and blocks your view.",
+    "description": "An aquatic pondweed, it's sort of tall and blocks your view.  Whether Potamogeton or Elodea, most varieties have edible shoots that are best picked early in the year.",
     "symbol": "#",
     "color": "green",
     "looks_like": "f_brambles",
@@ -392,6 +412,16 @@
     "coverage": 40,
     "required_str": -1,
     "flags": [ "CONTAINER", "HIDE_PLACE" ],
+    "examine_action": "harvest_furn",
+    "harvest_by_season": [
+      {
+        "seasons": [ "spring" ],
+        "entries": [
+          { "drop": "withered", "base_num": [ 2, 4 ], "no_auto_pickup": true },
+          { "drop": "lake_greens", "base_num": [ 2, 4 ] }
+        ]
+      }
+    ],
     "bash": {
       "str_min": 4,
       "str_max": 30,
@@ -423,13 +453,23 @@
     "type": "furniture",
     "id": "f_lake_hornwort",
     "name": "hornwort",
-    "description": "A species of hornwort that grows at the bottom of lakes.",
+    "description": "A species of hornwort that grows at the bottom of lakes.  Though known for being harmful to other plants, the leaves are safe for humans to eat and available most of the year.",
     "symbol": "#",
     "color": "green",
     "looks_like": "f_chamomile",
     "move_cost_mod": 1,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "TINY", "NOCOLLIDE" ],
+    "examine_action": "harvest_furn",
+    "harvest_by_season": [
+      {
+        "seasons": [ "spring", "summer", "autumn" ],
+        "entries": [
+          { "drop": "withered", "base_num": [ 1, 2 ], "no_auto_pickup": true },
+          { "drop": "lake_greens", "base_num": [ 1, 2 ] }
+        ]
+      }
+    ],
     "bash": {
       "str_min": 4,
       "str_max": 30,
@@ -454,7 +494,22 @@
       "str_max": 30,
       "sound": "swish.",
       "sound_fail": "blub.",
-      "items": [ { "item": "withered", "count": [ 1, 2 ] } ]
+      "items": [ { "item": "withered", "count": [ 1, 3 ] }, { "group": "lake_bed", "count": [ 0, 2 ] } ]
     }
+  },
+  {
+    "type": "furniture",
+    "id": "f_cave_mushrooms",
+    "name": "cave mushrooms",
+    "description": "A cluster of fungi growing in the dark.  Could be plucked, they might be edible.",
+    "symbol": "f",
+    "color": "brown",
+    "looks_like": "f_fungal_clump",
+    "move_cost_mod": 0,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "TINY", "FLAMMABLE_ASH", "NOCOLLIDE" ],
+    "examine_action": "harvest_furn",
+    "harvest_by_season": [ { "seasons": [ "spring", "summer", "autumn", "winter" ], "entries": [ { "drop": "mushroom", "base_num": 1 } ] } ],
+    "bash": { "str_min": 2, "str_max": 6, "sound": "crunch.", "sound_fail": "whish." }
   }
 ]

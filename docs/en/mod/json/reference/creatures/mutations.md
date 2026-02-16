@@ -29,11 +29,12 @@
 "profession": true, //Trait is a starting profession special trait. (default: false)
 "debug": false,     //Trait is for debug purposes (default: false)
 "player_display": true, //Trait is displayed in the `@` player display menu
-"category": ["MUTCAT_BIRD", "MUTCAT_INSECT"], // Categories containing this mutation
+"category": ["BIRD", "INSECT"], // Categories containing this mutation
 "prereqs": ["SKIN_ROUGH"], // Needs these mutations before you can mutate toward this mutation
 "prereqs2": ["LEAVES"], //Also need these mutations before you can mutate towards this mutation. When both set creates 2 different mutation paths, random from one is picked. Only use together with "prereqs"
-"threshreq": ["THRESH_SPIDER"], //Required threshold for this mutation to be possible
+"threshold_tier": 1, //Required tier of one of the categories' thresholds to mutate
 "cancels": ["ROT1", "ROT2", "ROT3"], // Cancels these mutations when mutating
+"prevents": ["ROT1", "ROT2", "ROT3"], // Prevents you from recieving these mutations when mutating
 "changes_to": ["FASTHEALER2"], // Can change into these mutations when mutating further
 "leads_to": [], // Mutations that add to this one
 "passive_mods" : { //increases stats with the listed value. Negative means a stat reduction
@@ -46,6 +47,8 @@
 "vitamins_absorb_multi": [ [ "flesh", [ [ "vitA", 0 ], [ "vitB", 0 ], [ "vitC", 0 ], [ "calcium", 0 ], [ "iron", 0 ] ], [ "all", [ [ "vitA", 2 ], [ "vitB", 2 ], [ "vitC", 2 ], [ "calcium", 2 ], [ "iron", 2 ] ] ] ], // multiplier of vitamin absorption based on material. "all" is every material. supports multiple materials.
 "craft_skill_bonus": [ [ "electronics", -2 ], [ "tailor", -2 ], [ "mechanics", -2 ] ], // Skill affected by the mutation and their bonuses. Bonuses can be negative, a bonus of 4 is worth 1 full skill level.
 "restricts_gear" : [ "TORSO" ], //list of bodyparts that get restricted by this mutation
+"allowed_items" : [ "TORSO" ], //Items with these flags can be worn regardless of restrictions.
+"allowed_items_only" : true, //If true and this mutation restricts gear, then only `allowed_items` can be worn with this, excluding even OVERSIZE items that would otherwise be wearable. (default: false)
 "allow_soft_gear" : true, //If there is a list of 'restricts_gear' this sets if the location still allows items made out of soft materials (Only one of the types need to be soft for it to be considered soft). (default: false)
 "destroys_gear" : true, //If true, destroys the gear in the 'restricts_gear' location when mutated into. (default: false)
 "encumbrance_always" : [ // Adds this much encumbrance to selected body parts
@@ -77,6 +80,9 @@
 "weight_capacity_modifier" : 0.5, // Multiplies how much weight you can carry before being penalized.
 "hearing_modifier" : 0.5, // Multiplier for how good your hearing is, higher values mean detecting sounds from farther away. A value of zero renders you completely deaf.
 "noise_modifier" : 0.5, // Multiplier for how much noise you make while moving, with zero making your footsteps silent.
+"packmule_modifier" : 1.0, // Multiplies the storage space granted by backpacks and similar worn containers.
+"crafting_speed_modifier" : 1.0, // Multiplies the crafting speed of the player.
+"construction_speed_modifier" : 1.0, // Multiplies the construction speed of the player.
 "stealth_modifier" : 0, // Percentage to be subtracted from player's visibility range, capped to 60. Negative values work, but are not very effective due to the way vision ranges are capped
 "night_vision_range" : 0.0, // Night range vision. Only the best and the worst value out of all mutations are added. A value of 8 or higher will allow reading in complete darkness as though the player were in dim lighting. (default: 0.0)
 "active" : true, //When set the mutation is an active mutation that the player needs to activate (default: false)
@@ -111,8 +117,8 @@
 "metabolism_modifier": 0.333, // Extra metabolism rate multiplier. 1.0 doubles usage, -0.5 halves.
 "fatigue_modifier": 0.5, // Extra fatigue rate multiplier. 1.0 doubles usage, -0.5 halves.
 "fatigue_regen_modifier": 0.333, // Modifier for the rate at which fatigue and sleep deprivation drops when resting.
-"healing_awake": 1.0, // Healing rate per turn while awake.
-"healing_resting": 0.5, // Healing rate per turn while resting.
+"healing_awake": 1.0, //  Affects healing while awake. This and resting is affected by healthiness awake_rate = heal_rate * healing_awake
+"healing_resting": 0.5, // Affects healing while asleep. asleep_rate = at_rest_quality * heal_rate * ( 1.0f + healing_resting)
 "mending_modifier": 1.2 // Multiplier on how fast your limbs mend - This value would make your limbs mend 20% faster
 "stamina_regen_modifier": 0.5 // Extra stamina regeneration rate multiplier. 1.0 doubles regen, -0.5 halves.
 "max_stamina_modifier": 1.5 // Multiplier on maximum stamina.  Stamina regeneration is proportionally modified by the same rate, so this includes stamina_regen_modifier implicitly. See Character::update_stamina in Character.cpp.

@@ -90,7 +90,8 @@
         ],
         "prob": 50
       },
-      { "item": "money_bundle", "count": [ 5, 50 ], "prob": 50 }
+      { "item": "money_bundle", "count": [ 5, 50 ], "prob": 50 },
+      { "item": "money_pile", "count": [ 1, 3 ], "prob": 10 }
     ]
   }
 ]

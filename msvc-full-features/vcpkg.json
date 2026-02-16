@@ -6,9 +6,10 @@
     { "name": "sdl2-image", "features": [ "libjpeg-turbo" ] },
     { "name": "sdl2-mixer", "features": [ "libflac", "mpg123", "libmodplug" ] },
     "sdl2-ttf",
-    "sqlite3", "zlib"
+    "sqlite3",
+    "zlib"
   ],
-  "builtin-baseline": "b322364f06308bdd24823f9d8f03fe0cc86fd46f",
+  "builtin-baseline": "b1b19307e2d2ec1eefbdb7ea069de7d4bcd31f01",
   "overrides": [
     { "name": "sdl2-mixer", "version": "2.6.3#1" }
   ],

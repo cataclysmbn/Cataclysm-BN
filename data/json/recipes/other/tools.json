@@ -16,28 +16,84 @@
     "result": "tent_kit",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TOOLS",
-    "skill_used": "fabrication",
+    "skill_used": "tailor",
     "skills_required": [ "survival", 2 ],
     "difficulty": 2,
-    "book_learn": [ [ "fun_survival", 1 ], [ "manual_survival", 1 ], [ "textbook_survival", 1 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SCREW", "level": 1 } ],
-    "time": "28 m",
+    "time": "1 h",
+    "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "largebroketent", 1 ], [ "broketent", 2 ] ], [ [ "adhesive", 2, "LIST" ] ] ]
+    "book_learn": [ [ "fun_survival", 1 ], [ "manual_survival", 1 ], [ "textbook_survival", 1 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "SEW", "level": 2 } ],
+    "components": [
+      [ [ "sheet", 8 ] ],
+      [ [ "spike", 8 ], [ "pointy_stick", 8 ] ],
+      [ [ "adhesive", 2, "LIST" ] ],
+      [ [ "filament", 200, "LIST" ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "tent_kit",
+    "id_suffix": "_repair",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "tailor",
+    "skills_required": [ "survival", 2 ],
+    "difficulty": 2,
+    "time": "15 m",
+    "reversible": true,
+    "autolearn": true,
+    "book_learn": [ [ "fun_survival", 1 ], [ "manual_survival", 1 ], [ "textbook_survival", 1 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "SEW", "level": 2 } ],
+    "components": [
+      [ [ "broketent", 1 ] ],
+      [ [ "sheet", 4 ] ],
+      [ [ "spike", 4 ], [ "pointy_stick", 4 ] ],
+      [ [ "adhesive", 1, "LIST" ] ],
+      [ [ "filament", 100, "LIST" ] ]
+    ]
   },
   {
     "type": "recipe",
     "result": "large_tent_kit",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TOOLS",
-    "skill_used": "fabrication",
+    "skill_used": "tailor",
     "skills_required": [ "survival", 2 ],
+    "time": "1 h 30 m",
     "difficulty": 2,
-    "book_learn": [ [ "fun_survival", 1 ], [ "manual_survival", 1 ], [ "textbook_survival", 1 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SCREW", "level": 1 } ],
-    "time": "32 m",
+    "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "largebroketent", 2 ], [ "broketent", 4 ], [ "tent_kit", 3 ] ], [ [ "adhesive", 3, "LIST" ] ] ]
+    "book_learn": [ [ "fun_survival", 1 ], [ "manual_survival", 1 ], [ "textbook_survival", 1 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "SEW", "level": 2 } ],
+    "components": [
+      [ [ "sheet", 16 ] ],
+      [ [ "spike", 16 ], [ "pointy_stick", 16 ] ],
+      [ [ "adhesive", 4, "LIST" ] ],
+      [ [ "filament", 400, "LIST" ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "large_tent_kit",
+    "id_suffix": "_repair",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "tailor",
+    "skills_required": [ "survival", 2 ],
+    "time": "30 m",
+    "difficulty": 2,
+    "reversible": true,
+    "autolearn": true,
+    "book_learn": [ [ "fun_survival", 1 ], [ "manual_survival", 1 ], [ "textbook_survival", 1 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "SEW", "level": 2 } ],
+    "components": [
+      [ [ "largebroketent", 1 ] ],
+      [ [ "sheet", 8 ] ],
+      [ [ "spike", 8 ], [ "pointy_stick", 8 ] ],
+      [ [ "adhesive", 2, "LIST" ] ],
+      [ [ "filament", 200, "LIST" ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -358,6 +414,22 @@
     "autolearn": true,
     "qualities": [ { "id": "HAMMER", "level": 1 } ],
     "components": [ [ [ "stick", 1 ], [ "2x4", 1 ] ], [ [ "rock", 1 ] ], [ [ "filament", 100, "LIST" ], [ "cordage_short", 2, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "propick_alpha",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "survival",
+    "time": "5 m",
+    "reversible": true,
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "components": [
+      [ [ "stick", 1 ], [ "2x4", 1 ] ],
+      [ [ "sharp_rock", 1 ] ],
+      [ [ "filament", 100, "LIST" ], [ "cordage_short", 2, "LIST" ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -873,6 +945,27 @@
   },
   {
     "type": "recipe",
+    "result": "plumber_toolkit",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "mechanics",
+    "difficulty": 2,
+    "time": "5 m",
+    "reversible": true,
+    "book_learn": [ [ "textbook_mechanics", 1 ], [ "mag_mechanics", 2 ] ],
+    "components": [
+      [ [ "wrench", 1 ] ],
+      [ [ "pliers", 1 ] ],
+      [ [ "clamp", 1 ] ],
+      [ [ "boltcutters", 1 ] ],
+      [ [ "cordless_drill", 1 ] ],
+      [ [ "funnel", 1 ] ],
+      [ [ "duct_tape", 200 ] ],
+      [ [ "hacksaw", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "large_repairkit",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TOOLS",
@@ -1075,6 +1168,31 @@
     "subcategory": "CSC_OTHER_TOOLS",
     "skill_used": "fabrication",
     "difficulty": 4,
+    "time": "2 h",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_standard", 4 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "wood_structural_small", 1, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "propick_beta",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "1 h",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "CASING_PRESSING", "level": 2 } ],
+    "tools": [ [ [ "surface_heat", 7, "LIST" ] ] ],
+    "components": [ [ [ "copper_scrap_equivalent", 4, "LIST" ] ], [ [ "wood_structural_small", 1, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "propick_charlie",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 6,
     "time": "2 h",
     "autolearn": true,
     "using": [ [ "blacksmithing_standard", 4 ], [ "steel_standard", 1 ] ],
@@ -2728,8 +2846,11 @@
     "difficulty": 5,
     "skills_required": [ "mechanics", 3 ],
     "time": "3 h",
+    "reversible": true,
+    "decomp_learn": 5,
     "book_learn": [ [ "manual_mechanics", 3 ], [ "manual_fabrication", 5 ], [ "textbook_fabrication", 5 ] ],
-    "using": [ [ "blacksmithing_advanced", 10 ], [ "steel_standard", 5 ] ]
+    "using": [ [ "blacksmithing_advanced", 10 ], [ "steel_standard", 4 ] ],
+    "components": [ [ [ "motor_oil", 1000 ], [ "lamp_oil", 1000 ] ] ]
   },
   {
     "result": "jack_makeshift",
@@ -2740,6 +2861,8 @@
     "difficulty": 2,
     "skills_required": [ "mechanics", 1 ],
     "time": "100 m",
+    "reversible": true,
+    "decomp_learn": 2,
     "autolearn": [ [ "fabrication", 4 ] ],
     "book_learn": [ [ "manual_mechanics", 1 ], [ "manual_fabrication", 2 ], [ "textbook_fabrication", 2 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
@@ -2754,6 +2877,8 @@
     "difficulty": 3,
     "skills_required": [ "mechanics", 2 ],
     "time": "200 m",
+    "reversible": true,
+    "decomp_learn": 3,
     "book_learn": [ [ "manual_mechanics", 2 ], [ "manual_fabrication", 3 ], [ "textbook_fabrication", 3 ] ],
     "using": [ [ "welding_standard", 5 ] ],
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
@@ -2993,7 +3118,7 @@
     "components": [
       [ [ "rag", 1 ] ],
       [ [ "stick", 1 ], [ "2x4", 1 ], [ "pool_cue", 1 ], [ "torch_done", 1 ] ],
-      [ [ "flammable_liquid", 100, "LIST" ], [ "pitch_wood", 4 ] ]
+      [ [ "flammable_liquid", 100, "LIST" ], [ "disinfectant_makeshift", 4 ], [ "pitch_wood", 4 ] ]
     ],
     "flags": [ "BLIND_HARD" ]
   },
@@ -3128,5 +3253,55 @@
     "//": "Mullite is created by firing kaolinite clay at very high temeperatures.",
     "components": [ [ [ "clay_lump", 6 ] ], [ [ "material_sand", 60 ] ] ],
     "//2": "Sand was used in the actual recipes that scientists re-discovered."
+  },
+  {
+    "type": "recipe",
+    "result": "survivor_lighter",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "skills_required": [ "survival", 3 ],
+    "difficulty": 4,
+    "time": "45 m",
+    "autolearn": true,
+    "reversible": true,
+    "book_learn": [ [ "textbook_survival", 2 ], [ "mag_survival", 3 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "cordage_short", 1, "LIST" ], [ "cotton_ball", 2 ] ],
+      [ [ "pilot_light", 1 ] ],
+      [ [ "scrap", 1 ], [ "50_casing", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "clamp",
+    "category": "CC_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "20 m",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_intermediate", 2 ], [ "steel_tiny", 2 ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "metal_file",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "steel_tiny", 2 ], [ "blacksmithing_advanced", 2 ], [ "wood_structural_small", 1 ] ]
+  },
+  {
+    "result": "pin_reamer",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "1 h",
+    "autolearn": true,
+    "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ], [ "wood_structural_small", 1 ] ]
   }
 ]

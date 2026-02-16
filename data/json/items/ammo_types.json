@@ -37,6 +37,12 @@
   },
   {
     "type": "ammunition_type",
+    "id": "bolt_heavy",
+    "name": "ballista bolts",
+    "default": "ammo_ballista_iron"
+  },
+  {
+    "type": "ammunition_type",
     "id": "bolt",
     "name": "bolts",
     "default": "bolt_wood"
@@ -46,6 +52,12 @@
     "id": "arrow",
     "name": "arrows",
     "default": "arrow_wood"
+  },
+  {
+    "id": "atlatl",
+    "name": "atlatl dart",
+    "default": "atlatl_dart_wood",
+    "type": "ammunition_type"
   },
   {
     "type": "ammunition_type",
@@ -218,6 +230,12 @@
   },
   {
     "type": "ammunition_type",
+    "id": "lighter_fluid",
+    "name": "butane",
+    "default": "chem_butane"
+  },
+  {
+    "type": "ammunition_type",
     "id": "gasoline",
     "name": "gasoline",
     "default": "gasoline"
@@ -338,6 +356,12 @@
   },
   {
     "type": "ammunition_type",
+    "id": "dna",
+    "name": "DNA",
+    "default": "dna"
+  },
+  {
+    "type": "ammunition_type",
     "id": "8x40mm",
     "name": "8x40mm caseless",
     "default": "8mm_caseless"
@@ -389,6 +413,12 @@
     "id": "thrown",
     "name": "throwing weapon",
     "default": "thrown"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "bola",
+    "name": "bola",
+    "default": "bolas"
   },
   {
     "type": "ammunition_type",
@@ -605,5 +635,11 @@
     "id": "pitch_wood",
     "name": "pitch",
     "default": "pitch_wood"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "bola_launcher",
+    "name": "bola cartridge",
+    "default": "bola_cartridge"
   }
 ]

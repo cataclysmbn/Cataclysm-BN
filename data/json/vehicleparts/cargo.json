@@ -222,6 +222,21 @@
     "type": "vehicle_part"
   },
   {
+    "copy-from": "box",
+    "id": "box_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber box" },
+    "size": "90 L",
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_carbon", 10 ] ] }
+    },
+    "durability": 120,
+    "damage_reduction": { "all": 34 },
+    "extend": { "flags": [ "SHOCK_RESISTANT" ] }
+  },
+  {
     "copy-from": "box_abstract",
     "id": "wood box",
     "type": "vehicle_part",
@@ -289,6 +304,25 @@
     "flags": [ "CARGO", "LOCKABLE_CARGO", "COVERED", "BOARDABLE" ]
   },
   {
+    "copy-from": "trunk",
+    "id": "trunk_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber trunk" },
+    "size": "195 L",
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "durability": 420,
+    "damage_reduction": { "all": 34 },
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "extend": { "flags": [ "SHOCK_RESISTANT" ] }
+  },
+  {
     "copy-from": "trunk_abstract",
     "id": "trunk_floor",
     "type": "vehicle_part",
@@ -338,17 +372,26 @@
     "copy-from": "cargo_space",
     "id": "cargo_space_carbon",
     "type": "vehicle_part",
-    "name": { "str": "carbon cargo space" },
+    "name": { "str": "carbon fiber cargo space" },
     "size": "600 L",
     "item": "cargo_rack_carbon",
     "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "durability": 420,
+    "damage_reduction": { "all": 34 },
     "extend": { "flags": [ "SHOCK_RESISTANT" ] }
   },
   {
     "copy-from": "cargo_space_carbon",
     "id": "cargo_space_carbon_external",
     "type": "vehicle_part",
-    "name": { "str": "external carbon cargo rack" },
+    "name": { "str": "external carbon fiber cargo rack" },
     "location": "structure",
     "description": "Storage space, mounted outside your vehicle's armor and vulnerable to damage.",
     "size": "300 L",

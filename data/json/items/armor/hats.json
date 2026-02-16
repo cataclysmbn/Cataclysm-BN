@@ -39,7 +39,7 @@
     "coverage": 40,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "FANCY" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "FANCY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "beret_wool",
@@ -58,7 +58,7 @@
     "coverage": 40,
     "warmth": 15,
     "material_thickness": 2,
-    "flags": [ "VARSIZE", "WATERPROOF", "FANCY" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "FANCY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "bowhat",
@@ -80,7 +80,7 @@
     "warmth": 5,
     "material_thickness": 2,
     "environmental_protection": 1,
-    "flags": [ "FANCY", "VARSIZE" ]
+    "flags": [ "FANCY", "VARSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "cowboy_hat",
@@ -121,7 +121,7 @@
     "coverage": 15,
     "material_thickness": 1,
     "container_data": { "contains": "500 ml", "watertight": true },
-    "flags": [ "OVERSIZE", "BELTED", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY" ]
+    "flags": [ "OVERSIZE", "BELTED", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "eboshi",
@@ -142,7 +142,8 @@
     "encumbrance": 10,
     "warmth": 4,
     "material_thickness": 1,
-    "valid_mods": [ "resized_large" ]
+    "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ],
+    "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
     "id": "hat_boonie",
@@ -186,8 +187,8 @@
     "warmth": 5,
     "material_thickness": 1,
     "environmental_protection": 2,
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "SUN_GLASSES" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "SUN_GLASSES", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "hat_chef",
@@ -209,7 +210,7 @@
     "warmth": 5,
     "material_thickness": 2,
     "environmental_protection": 1,
-    "valid_mods": [ "resized_large" ]
+    "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
     "id": "hat_cotton",
@@ -228,7 +229,7 @@
     "coverage": 65,
     "warmth": 20,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "HELMET_COMPAT" ]
+    "flags": [ "VARSIZE", "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "hat_fur",
@@ -248,7 +249,7 @@
     "encumbrance": 10,
     "warmth": 70,
     "material_thickness": 3,
-    "valid_mods": [ "resized_large" ]
+    "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
     "id": "hat_faux_fur",
@@ -325,7 +326,7 @@
     "warmth": 50,
     "material_thickness": 3,
     "environmental_protection": 2,
-    "flags": [ "VARSIZE" ]
+    "flags": [ "VARSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "hat_knit",
@@ -344,7 +345,7 @@
     "coverage": 65,
     "warmth": 40,
     "material_thickness": 2,
-    "flags": [ "VARSIZE", "HELMET_COMPAT" ]
+    "flags": [ "VARSIZE", "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "hat_newsboy",
@@ -364,7 +365,7 @@
     "coverage": 50,
     "warmth": 30,
     "material_thickness": 2,
-    "flags": [ "VARSIZE" ]
+    "flags": [ "VARSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "hat_noise_cancelling",
@@ -384,7 +385,7 @@
     "encumbrance": 17,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "DEAF", "HELMET_COMPAT" ]
+    "flags": [ "OVERSIZE", "DEAF", "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "hat_sombrero",
@@ -407,7 +408,7 @@
     "warmth": 2,
     "material_thickness": 2,
     "environmental_protection": 4,
-    "valid_mods": [ "resized_large" ],
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "FANCY", "OUTER", "SUN_GLASSES" ]
   },
   {
@@ -428,8 +429,8 @@
     "coverage": 40,
     "warmth": 3,
     "material_thickness": 1,
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "HELMET_COMPAT" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "kufi",
@@ -451,7 +452,8 @@
     "warmth": 6,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "valid_mods": [ "resized_large" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "maid_hat",
@@ -472,7 +474,7 @@
     "encumbrance": 10,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "FANCY" ]
+    "flags": [ "VARSIZE", "FANCY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "porkpie",
@@ -494,7 +496,7 @@
     "warmth": 5,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "flags": [ "FANCY", "VARSIZE" ]
+    "flags": [ "FANCY", "VARSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "postman_hat",
@@ -516,8 +518,8 @@
     "warmth": 10,
     "material_thickness": 1,
     "environmental_protection": 2,
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "SUN_GLASSES" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "SUN_GLASSES", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "straw_hat",
@@ -555,7 +557,7 @@
     "covers": [ "head" ],
     "coverage": 90,
     "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ARMOR_PSI", "add": -10 } ] } ] },
-    "flags": [ "OVERSIZE", "PSYSHIELD_PARTIAL", "SKINTIGHT", "TRADER_AVOID", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "OVERSIZE", "PSYSHIELD_PARTIAL", "SKINTIGHT", "TRADER_AVOID", "POWERARMOR_COMPATIBLE", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "tophat",
@@ -578,7 +580,7 @@
     "warmth": 5,
     "material_thickness": 2,
     "environmental_protection": 1,
-    "flags": [ "VARSIZE", "SUPER_FANCY" ]
+    "flags": [ "VARSIZE", "SUPER_FANCY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
     "id": "tricorne",
@@ -644,7 +646,7 @@
     "warmth": 5,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "SUN_GLASSES" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "SUN_GLASSES", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   }
 ]

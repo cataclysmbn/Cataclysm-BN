@@ -116,8 +116,8 @@
         "b": { "item": "lab_bookshelves", "chance": 60, "repeat": 2 },
         "c": { "item": "office_supplies", "chance": 60 },
         "Ć": [
-          { "item": "SUS_silverware", "chance": 80 },
-          { "item": "SUS_utensils", "chance": 80 },
+          { "item": "SUS_kitchen_misc", "chance": 80 },
+          { "item": "SUS_kitchen_misc", "chance": 80 },
           { "item": "SUS_knife_drawer", "chance": 80 },
           { "item": "SUS_dishes", "chance": 80 },
           { "item": "SUS_cookware", "chance": 80 }

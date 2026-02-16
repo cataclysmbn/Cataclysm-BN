@@ -10,7 +10,7 @@
     "color": "light_gray",
     "broken_color": "light_blue",
     "durability": 200,
-    "description": "A rigid steel boom crane.  If it is in your line of sight and within two tiles of another vehicle, you will automatically use it when you want jack up the other vehicle to change the its wheels.  To use it to lift a heavy component like an engine that you are installing or removing, the crane must have line of sight to where it is going and it must be within four tiles of it.",
+    "description": "A rigid steel boom crane.  If it is in your line of sight and within two tiles of another vehicle, you will automatically use it when you jack up the other vehicle to change the its wheels.  To use it to lift a heavy component like an engine that you are installing or removing, the crane must have line of sight to where it is going and it must be within four tiles of it.",
     "breaks_into": [ { "item": "pipe", "count": [ 8, 32 ] }, { "item": "scrap", "count": [ 8, 24 ] } ],
     "qualities": [ [ "LIFT", 40 ], [ "JACK", 40 ] ],
     "requirements": {
@@ -41,7 +41,7 @@
     "color": "light_gray",
     "broken_color": "light_blue",
     "durability": 100,
-    "description": "An extendable cantilever crane.  If it is in your line of sight and within two tiles of another vehicle, you will automatically use it when you want jack up the other vehicle to change the its wheels.  To use it to lift a heavy component like an engine that you are installing or removing, the crane must have line of sight to where it is going and it must be within four tiles of it.",
+    "description": "An extendable cantilever crane.  If it is in your line of sight and within two tiles of another vehicle, you will automatically use it when you jack up the other vehicle to change its wheels.  To use it to lift a heavy component like an engine that you are installing or removing, the crane must have line of sight to where it is going and it must be within four tiles of it.",
     "folded_volume": "3 L",
     "breaks_into": [ { "item": "pipe", "count": [ 2, 8 ] }, { "item": "scrap", "count": [ 2, 6 ] } ],
     "qualities": [ [ "LIFT", 7 ], [ "JACK", 7 ] ],
@@ -64,7 +64,7 @@
     "color": "light_gray",
     "broken_color": "light_blue",
     "durability": 100,
-    "description": "A small pallet lifter.  If it is in your line of sight and within two tiles of another vehicle, you will automatically use it when you want jack up the other vehicle to change the its wheels.  To use it to lift a heavy component like an engine that you are installing or removing, the crane must have line of sight to where it is going and it must be within four tiles of it.",
+    "description": "A small pallet lifter.  If it is in your line of sight and within two tiles of another vehicle, you will automatically use it when you jack up the other vehicle to change the its wheels.  To use it to lift a heavy component like an engine that you are installing or removing, the crane must have line of sight to where it is going and it must be within four tiles of it.",
     "folded_volume": "3 L",
     "breaks_into": [ { "item": "pipe", "count": [ 1, 4 ] }, { "item": "scrap", "count": [ 2, 6 ] } ],
     "qualities": [ [ "LIFT", 1 ], [ "JACK", 1 ] ],
@@ -88,7 +88,7 @@
     "broken_color": "light_gray",
     "damage_modifier": 200,
     "durability": 300,
-    "description": "A pair of forklift arms.  If it is in your line of sight and within two tiles of another vehicle, you will automatically use it when you want jack up the other vehicle to change the its wheels.  To use it to lift a heavy component like an engine that you are installing or removing, the crane must have line of sight to where it is going and it must be within four tiles of it.",
+    "description": "A pair of forklift arms.  If it is in your line of sight and within two tiles of another vehicle, you will automatically use it when you jack up the other vehicle to change the its wheels.  To use it to lift a heavy component like an engine that you are installing or removing, the crane must have line of sight to where it is going and it must be within four tiles of it.",
     "size": "12500 ml",
     "breaks_into": [
       { "item": "steel_lump", "count": [ 4, 6 ] },
@@ -103,6 +103,26 @@
     },
     "flags": [ "CARGO", "PROTRUSION" ],
     "damage_reduction": { "all": 42 }
+  },
+  {
+    "copy-from": "forklift_fork",
+    "id": "forklift_fork_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber forklift arm" },
+    "size": "15 L",
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "durability": 360,
+    "damage_reduction": { "all": 50 },
+    "folded_volume": "2500 ml",
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
   },
   {
     "id": "rockwheel",
@@ -185,5 +205,29 @@
     },
     "flags": [ "SELF_JACK", "SHOCK_RESISTANT" ],
     "damage_reduction": { "all": 5 }
+  },
+  {
+    "id": "crane_small_wood",
+    "copy-from": "crane_small",
+    "type": "vehicle_part",
+    "name": { "str": "wooden pulley crane" },
+    "item": "pulley_crane_small_wood",
+    "color": "brown",
+    "broken_color": "brown",
+    "looks_like": "crane_small",
+    "durability": 80,
+    "description": "A wooden rope and pulley crane.  If it is in your line of sight and within two tiles of another vehicle, you will automatically use it when you jack up the other vehicle to change its wheels.  To use it to lift a heavy component like an engine that you are installing or removing, the crane must have line of sight to where it is going and it must be within four tiles of it.",
+    "breaks_into": [ { "item": "splinter", "count": [ 10, 20 ] }, { "item": "string_36", "count": [ 15, 30 ] } ],
+    "qualities": [ [ "LIFT", 4 ], [ "JACK", 4 ] ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "damage_reduction": { "all": 16, "stab": 6, "cut": 8 }
   }
 ]

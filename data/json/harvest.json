@@ -273,6 +273,23 @@
     ]
   },
   {
+    "id": "mutant_mammal_small_fur_and_scales",
+    "//": "does not drop stomach or other small organs",
+    "type": "harvest",
+    "entries": [
+      { "drop": "mutant_blood", "type": "blood", "mass_ratio": 0.1 },
+      { "drop": "mutant_meat", "type": "flesh", "mass_ratio": 0.28 },
+      { "drop": "mutant_meat_scrap", "type": "flesh", "mass_ratio": 0.05 },
+      { "drop": "brain", "type": "flesh", "mass_ratio": 0.005 },
+      { "drop": "mutant_offal", "type": "offal", "mass_ratio": 0.01 },
+      { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
+      { "drop": "bone", "type": "bone", "mass_ratio": 0.15 },
+      { "drop": "raw_fur", "type": "skin", "mass_ratio": 0.01 },
+      { "drop": "scute_piece", "type": "skin", "mass_ratio": 0.01 },
+      { "drop": "mutant_fat", "type": "flesh", "mass_ratio": 0.07 }
+    ]
+  },
+  {
     "id": "mammal_leather",
     "//": "drops regular stomach",
     "type": "harvest",
@@ -306,6 +323,24 @@
       { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
       { "drop": "bone", "type": "bone", "mass_ratio": 0.15 },
       { "drop": "raw_leather", "type": "skin", "mass_ratio": 0.02 },
+      { "drop": "mutant_fat", "type": "flesh", "mass_ratio": 0.07 }
+    ]
+  },
+  {
+    "id": "mutant_mammal_leather_and_chitin",
+    "//": "drops regular stomach",
+    "type": "harvest",
+    "entries": [
+      { "drop": "mutant_blood", "type": "blood", "mass_ratio": 0.1 },
+      { "drop": "mutant_meat", "type": "flesh", "mass_ratio": 0.3 },
+      { "drop": "mutant_meat_scrap", "type": "flesh", "mass_ratio": 0.03 },
+      { "drop": "brain", "type": "flesh", "mass_ratio": 0.005 },
+      { "drop": "mutant_offal", "type": "offal", "mass_ratio": 0.01 },
+      { "drop": "stomach", "scale_num": [ 1, 1 ], "max": 1, "type": "offal" },
+      { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
+      { "drop": "bone", "type": "bone", "mass_ratio": 0.15 },
+      { "drop": "raw_leather", "type": "skin", "mass_ratio": 0.01 },
+      { "drop": "chitin_piece", "type": "skin", "mass_ratio": 0.01 },
       { "drop": "mutant_fat", "type": "flesh", "mass_ratio": 0.07 }
     ]
   },
@@ -385,6 +420,27 @@
     ]
   },
   {
+    "id": "mutant_animal_toothy_scute",
+    "//": "has scutes and teeth but normal bones and stomach",
+    "type": "harvest",
+    "entries": [
+      { "drop": "mutant_blood", "type": "blood", "mass_ratio": 0.1 },
+      { "drop": "mutant_meat", "type": "flesh", "mass_ratio": 0.32 },
+      { "drop": "mutant_meat_scrap", "type": "flesh", "mass_ratio": 0.01 },
+      { "drop": "lung", "type": "flesh", "mass_ratio": 0.0035 },
+      { "drop": "liver", "type": "offal", "mass_ratio": 0.01 },
+      { "drop": "brain", "type": "flesh", "mass_ratio": 0.005 },
+      { "drop": "sweetbread", "type": "flesh", "mass_ratio": 0.002 },
+      { "drop": "kidney", "type": "offal", "mass_ratio": 0.002 },
+      { "drop": "stomach", "scale_num": [ 1, 1 ], "max": 1, "type": "offal" },
+      { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
+      { "drop": "bone", "type": "bone", "mass_ratio": 0.15 },
+      { "drop": "teeth_serrated", "type": "bone", "mass_ratio": 0.02 },
+      { "drop": "scute_piece", "type": "skin", "mass_ratio": 0.04 },
+      { "drop": "mutant_fat", "type": "flesh", "mass_ratio": 0.07 }
+    ]
+  },
+  {
     "id": "animal_toothy_large_scute",
     "//": "drops large stomach, has scutes and teeth but normal non-mutant bones",
     "type": "harvest",
@@ -421,13 +477,12 @@
       { "drop": "stomach_large", "scale_num": [ 1, 1 ], "max": 1, "type": "offal" },
       { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
       { "drop": "bone_heavy", "type": "bone", "mass_ratio": 0.15 },
-      { "drop": "scute_piece", "type": "skin", "mass_ratio": 0.02 },
-      { "drop": "raw_leather", "type": "skin", "mass_ratio": 0.02 },
+      { "drop": "scute_piece", "type": "skin", "mass_ratio": 0.04 },
       { "drop": "mutant_fat", "type": "flesh", "mass_ratio": 0.07 }
     ]
   },
   {
-    "id": "mutant_mammal_toothy_large_scute",
+    "id": "mutant_mammal_toothy_large_fur_and_scute",
     "//": "drops large stomach",
     "type": "harvest",
     "entries": [
@@ -443,7 +498,8 @@
       { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
       { "drop": "bone_heavy", "type": "bone", "mass_ratio": 0.15 },
       { "drop": "teeth_serrated", "type": "bone", "mass_ratio": 0.02 },
-      { "drop": "scute_piece", "type": "skin", "mass_ratio": 0.04 },
+      { "drop": "raw_fur", "type": "skin", "mass_ratio": 0.02 },
+      { "drop": "scute_piece", "type": "skin", "mass_ratio": 0.02 },
       { "drop": "mutant_fat", "type": "flesh", "mass_ratio": 0.07 }
     ]
   },

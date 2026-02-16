@@ -675,8 +675,6 @@
         { "item": "recharge_station", "x": 30, "y": 20, "chance": 35 },
         { "item": "minifridge", "x": 36, "y": 22, "chance": 35 },
         { "item": "minifreezer", "x": 36, "y": 23, "chance": 35 },
-        { "item": "dishwasher", "x": 36, "y": 21, "chance": 35 },
-        { "item": "washing_machine", "x": 31, "y": 20, "chance": 35 },
         { "item": "mountable_heater", "x": 32, "y": 20, "chance": 35 },
         { "item": "mountable_cooler", "x": 33, "y": 20, "chance": 35 }
       ],

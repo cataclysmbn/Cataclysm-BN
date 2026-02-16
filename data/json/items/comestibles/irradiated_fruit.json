@@ -7,7 +7,7 @@
     "description": "An irradiated rose hips will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -17,7 +17,7 @@
     "description": "An irradiated elderberry will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -27,7 +27,7 @@
     "description": "An irradiated mulberry will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -37,7 +37,7 @@
     "description": "An irradiated huckleberry will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -47,7 +47,7 @@
     "description": "An irradiated raspberry will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -57,7 +57,7 @@
     "description": "An irradiated cranberry will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -67,7 +67,7 @@
     "description": "An irradiated strawberry will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -77,7 +77,7 @@
     "description": "An irradiated blueberry will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -87,7 +87,7 @@
     "description": "Mmm, irradiated.  Will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -97,7 +97,7 @@
     "description": "An irradiated banana will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -107,7 +107,7 @@
     "description": "An irradiated orange will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -117,7 +117,7 @@
     "description": "An irradiated lemon will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -127,7 +127,7 @@
     "description": "An irradiated grapefruit will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -138,7 +138,7 @@
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
     "flags": [ "SMOKABLE" ],
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -148,7 +148,7 @@
     "description": "An irradiated cherry will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -158,7 +158,7 @@
     "description": "A group of irradiated plums will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -168,7 +168,7 @@
     "description": "An irradiated grape will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -178,7 +178,7 @@
     "description": "An irradiated pineapple will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -188,7 +188,7 @@
     "description": "An irradiated peach will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -199,7 +199,7 @@
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
     "flags": [ "EATEN_COLD", "SMOKABLE" ],
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -209,7 +209,7 @@
     "description": "An irradiated melon will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -219,7 +219,7 @@
     "description": "An irradiated blackberry will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -229,7 +229,7 @@
     "description": "An irradiated mango will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -239,7 +239,7 @@
     "description": "An irradiated pomegranate will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -249,7 +249,7 @@
     "description": "An irradiated papaya will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -259,7 +259,7 @@
     "description": "An irradiated kiwi will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   },
   {
     "type": "COMESTIBLE",
@@ -269,6 +269,6 @@
     "description": "An irradiated apricot will remain edible nearly forever.  Sterilized using radiation, so it's safe to eat.",
     "proportional": { "price": 2 },
     "spoils_in": "0 hours",
-    "container": "bag_plastic"
+    "container": "bag_zipper"
   }
 ]

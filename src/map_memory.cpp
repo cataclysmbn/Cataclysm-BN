@@ -207,7 +207,8 @@ static void temp_remove_open_air( const shared_ptr_fast<mm_submap> &sm )
         for( int y = 0; y < SEEY; y++ ) {
             const memorized_terrain_tile &t = sm->tile( {x, y} );
 
-            if( !t.tile.empty() && t.tile == "t_open_air" ) {
+            if( !t.tile.empty() && ( t.tile == "t_open_air" || t.tile == "t_open_air_rooved" ||
+                                     t.tile == "t_open_air_rooved_outside" ) ) {
                 sm->set_tile( {x, y}, mm_submap::default_tile );
             }
         }

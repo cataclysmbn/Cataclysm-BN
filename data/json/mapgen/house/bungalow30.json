@@ -57,8 +57,8 @@
       "palettes": [
         "standard_domestic_palette",
         "standard_domestic_basement_palette",
-        "standard_domestic_lino_kitchen",
-        "standard_domestic_lino_bathroom"
+        "parameterized_linoleum_color_kitchen",
+        "parameterized_linoleum_color_bathroom"
       ],
       "fill_ter": "t_floor",
       "rows": [
@@ -67,9 +67,9 @@
         "^^^^^^^^^^^^^^^^^^^^^^^^",
         "^^^^^^^^^^^^^^^^^^^^^^^^",
         "^|||||||||||||||#######^",
-        "^|D+  ¤@@¤T|B,8|░UUU░g#^",
-        "^|z+   @@  |B,S|Z░░░░░#^",
-        "^||||d     |t,8|░░░░░q#^",
+        "^|D+  ¤@@¤T|B¨8|░UUU░g#^",
+        "^|z+   @@  |B¨S|Z░░░░░#^",
+        "^||||d     |t¨8|░░░░░q#^",
         "^|zz|d    ɸ||+||W░░░░q#^",
         "^|++||||+|||T R||||+||#^",
         "^|  rrr       R|b░░░░░#^",
@@ -77,9 +77,9 @@
         "^|       ffh  L|!!!░░░#^",
         "^|      hff   Ə|!!!░░░#^",
         "^| sHHH        *!!!░░░#^",
-        "^|       3,,,,F|!!!░░i#^",
-        "^|R lll  7,,,,2|!!!░░i#^",
-        "^|R      6,,,,1|░░░░░i#^",
+        "^|       3˙˙˙˙F|!!!░░i#^",
+        "^|R lll  7˙˙˙˙2|!!!░░i#^",
+        "^|R      6˙˙˙˙1|░░░░░i#^",
         "^|R xxx  45JOJJ|░░░░░░#^",
         "^|||||||||||||||#░#####^",
         "^^^^^^^^^^^^^^^^#<#^^^^^",
@@ -96,8 +96,7 @@
         "g": "t_thconc_floor",
         "i": "t_thconc_floor",
         "░": "t_thconc_floor",
-        "!": "t_carpet_red",
-        ",": "t_linoleum_gray"
+        "!": "t_carpet_red"
       },
       "furniture": {  },
       "items": {  },
@@ -111,8 +110,8 @@
     "object": {
       "palettes": [
         "standard_domestic_palette",
-        "standard_domestic_lino_kitchen",
-        "standard_domestic_lino_bathroom",
+        "parameterized_linoleum_color_kitchen",
+        "parameterized_linoleum_color_bathroom",
         "standard_domestic_landscaping_palette"
       ],
       "fill_ter": "t_floor",
@@ -129,12 +128,12 @@
         ".#+|||+|||+||||  E~~~~o.",
         ".#D|Q+           ~~~~~#.",
         ".#|||| ||+||     Txxx #.",
-        ".#D z| |B,8| h   |||||#.",
-        ".#|+||+|B,S| ffh |nF41#.",
-        ".#b dd |t,8|hff   ,,,3#.",
-        ".#     ||||| h    ,J,J#.",
-        ".o     R|8t|     |,J,5o.",
-        ".#y @@  +,,|+|  V|,,,J#.",
+        ".#D z| |B¨8| h   |||||#.",
+        ".#|+||+|B¨S| ffh |nF41#.",
+        ".#b dd |t¨8|hff   ˙˙˙3#.",
+        ".#     ||||| h    ˙J˙J#.",
+        ".o     R|8t|     |˙J˙5o.",
+        ".#y @@  +¨¨|+|  V|˙˙˙J#.",
         ".# ¤@@¤ |S9|U|y Ə|6O72#.",
         ".###oo########o*####o##.",
         "..^........-0000*>#.....",
@@ -147,8 +146,7 @@
         "~": "t_carpet_purple",
         "H": "t_carpet_purple",
         "s": "t_carpet_purple",
-        "E": "t_carpet_purple",
-        ",": "t_linoleum_gray"
+        "E": "t_carpet_purple"
       },
       "place_loot": [
         { "item": "television", "x": 19, "y": 11 },

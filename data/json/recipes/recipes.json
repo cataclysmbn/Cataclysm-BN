@@ -82,6 +82,7 @@
       "CSC_ARMOR_HANDS",
       "CSC_ARMOR_LEGS",
       "CSC_ARMOR_FEET",
+      "CSC_ARMOR_SHIELD",
       "CSC_ARMOR_OTHER"
     ]
   },

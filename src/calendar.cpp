@@ -491,6 +491,9 @@ float calendar::season_ratio()
 
 bool calendar::once_every( const time_duration &event_frequency )
 {
+    if( event_frequency <= 0_turns ) {
+        return false;
+    }
     return ( calendar::turn - calendar::turn_zero ) % event_frequency == 0_turns;
 }
 

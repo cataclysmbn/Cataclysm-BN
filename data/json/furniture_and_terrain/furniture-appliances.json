@@ -184,7 +184,7 @@
         { "item": "cable", "charges": 2 },
         { "item": "power_supply", "count": 1 },
         { "item": "light_bulb", "count": 1 },
-        { "item": "steel_lump", "count": 1 },
+        { "item": "steel_chunk", "count": 5 },
         { "item": "pipe", "count": 1 }
       ]
     },
@@ -840,7 +840,7 @@
     "id": "f_server",
     "looks_like": "f_utility_shelf",
     "name": "server stack",
-    "description": "This is a big pile of computers.  They're all turned off.",
+    "description": "This is a big pile of computers.  They're all turned off, but if you can get power going it might be useful for training your Computers skill.",
     "symbol": ":",
     "color": "blue_white",
     "move_cost_mod": -1,
@@ -856,6 +856,8 @@
         { "item": "cable", "charges": [ 5, 10 ] }
       ]
     },
+    "crafting_pseudo_item": "fake_training_server",
+    "examine_action": "use_furn_fake_item",
     "bash": {
       "str_min": 16,
       "str_max": 40,
@@ -935,7 +937,6 @@
       "items": [
         { "item": "solder_wire", "charges": 20 },
         { "item": "plastic_chunk", "count": 2 },
-        { "item": "steel_chunk", "count": 5 },
         { "item": "wind_turbine", "count": 1 }
       ]
     },
@@ -973,7 +974,6 @@
       "items": [
         { "item": "solder_wire", "charges": 20 },
         { "item": "plastic_chunk", "count": 2 },
-        { "item": "steel_chunk", "count": 5 },
         { "item": "xl_wind_turbine", "count": 1 }
       ]
     },
@@ -987,7 +987,6 @@
         { "item": "2x4", "count": [ 1, 30 ] },
         { "item": "scrap", "count": [ 3, 6 ] },
         { "item": "cable", "charges": [ 10, 15 ] },
-        { "item": "scrap", "count": [ 4, 6 ] },
         { "item": "pipe", "count": [ 0, 3 ] }
       ],
       "//": "Variable reduction, destroy_threshold equal to str_min instead of str_max due to delicate electronics",
@@ -1013,7 +1012,6 @@
       "items": [
         { "item": "solder_wire", "charges": 20 },
         { "item": "plastic_chunk", "count": 2 },
-        { "item": "steel_chunk", "count": 5 },
         { "item": "water_wheel", "count": 1 }
       ]
     },
@@ -1027,7 +1025,6 @@
         { "item": "2x4", "count": [ 1, 5 ] },
         { "item": "scrap", "count": [ 3, 6 ] },
         { "item": "cable", "charges": [ 10, 15 ] },
-        { "item": "scrap", "count": [ 4, 6 ] },
         { "item": "pipe", "count": [ 0, 3 ] }
       ],
       "//": "Variable, destroy_threshold equal to str_min instead of str_max due to delicate electronics",
@@ -1050,7 +1047,6 @@
       "items": [
         { "item": "solder_wire", "charges": 20 },
         { "item": "plastic_chunk", "count": 2 },
-        { "item": "steel_chunk", "count": 5 },
         { "item": "xl_water_wheel", "count": 1 }
       ]
     },
@@ -1064,7 +1060,6 @@
         { "item": "2x4", "count": [ 1, 30 ] },
         { "item": "scrap", "count": [ 3, 6 ] },
         { "item": "cable", "charges": [ 10, 15 ] },
-        { "item": "scrap", "count": [ 4, 6 ] },
         { "item": "pipe", "count": [ 0, 3 ] }
       ],
       "//": "Variable reduction, destroy_threshold equal to str_min instead of str_max due to delicate electronics",
@@ -1145,6 +1140,45 @@
         { "item": "scrap", "count": [ 4, 6 ] },
         { "item": "plastic_chunk", "count": [ 1, 2 ] },
         { "item": "steel_chunk", "count": 3 }
+      ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_foldable_solar_unit",
+    "name": "mounted foldable solar panel",
+    "description": "A mounted foldable solar panel connected to building's electric grid.",
+    "symbol": "#",
+    "looks_like": "f_solar_unit",
+    "color": "yellow",
+    "move_cost_mod": 2,
+    "required_str": -1,
+    "active": [ "solar", { "power": 40 } ],
+    "flags": [ "TRANSPARENT" ],
+    "deconstruct": {
+      "items": [
+        { "item": "solder_wire", "charges": 10 },
+        { "item": "plastic_chunk", "count": 2 },
+        { "item": "steel_chunk", "count": 2 },
+        { "item": "pipe", "count": 2 },
+        { "item": "foldable_solar_panel", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 10,
+      "str_max": 20,
+      "sound": "whack!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "solder_wire", "charges": [ 5, 10 ] },
+        { "item": "solar_cell", "count": [ 1, 2 ] },
+        { "item": "scrap", "count": [ 1, 3 ] },
+        { "item": "amplifier", "prob": 50 },
+        { "item": "cable", "charges": [ 5, 10 ] },
+        { "item": "power_supply", "prob": 50 },
+        { "item": "scrap", "count": [ 2, 3 ] },
+        { "item": "plastic_chunk", "count": [ 1, 2 ] },
+        { "item": "steel_chunk", "count": 2 }
       ]
     }
   },
@@ -2447,6 +2481,7 @@
     "type": "furniture",
     "id": "f_space_heater_large",
     "copy-from": "f_space_heater_base",
+    "looks_like": "large_space_heater",
     "symbol": ";",
     "color": "light_gray",
     "name": "large space heater (no power)",
@@ -2471,6 +2506,7 @@
     "type": "furniture",
     "id": "f_space_heater_large_off",
     "copy-from": "f_space_heater_base",
+    "looks_like": "large_space_heater",
     "symbol": ";",
     "color": "light_gray",
     "name": "large space heater (off)",
@@ -2668,7 +2704,7 @@
         { "item": "cable", "charges": 2 },
         { "item": "power_supply", "count": 1 },
         { "item": "light_bulb", "count": 1 },
-        { "item": "steel_lump", "count": 1 }
+        { "item": "steel_chunk", "count": 5 }
       ]
     },
     "bash": {
@@ -2880,5 +2916,67 @@
         { "item": "scrap", "count": [ 3, 12 ] }
       ]
     }
+  },
+  {
+    "type": "furniture",
+    "id": "f_cloning_vat",
+    "name": "cloning vat",
+    "description": "A vat full of solution, probably intended to hold growing clones of people or other life forms.  Requires a steady, strong power supply to avoid failure.  Examine it to activate, requires a sterile artificial womb and viable DNA, the latter produced via a genome workstation from stored sample data off USB and sufficient growth medium.",
+    "symbol": "0",
+    "color": "light_cyan",
+    "looks_like": "t_vat",
+    "move_cost_mod": -1,
+    "required_str": 6,
+    "coverage": 75,
+    "flags": [ "TRANSPARENT", "SEALED", "PLACE_ITEM", "WALL", "EASY_DECONSTRUCT" ],
+    "deconstruct": { "items": [ { "item": "cloning_vat", "count": 1 } ] },
+    "examine_action": "cloning_vat_examine",
+    "bash": {
+      "str_min": 6,
+      "str_max": 80,
+      "sound": "ker-rash!",
+      "sound_fail": "plunk.",
+      "sound_vol": 16,
+      "sound_fail_vol": 12,
+      "items": [ { "item": "glass_shard", "count": [ 3, 6 ] }, { "item": "scrap", "count": [ 0, 2 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 6 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 6, "block_unaimed_chance": "75%" }
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_cloning_vat_active",
+    "name": "active cloning vat",
+    "description": "A vat full of solution, its surface rippling as bubbles rise to the top.  It hums softly, the liquid churning as if something inside is taking shape.",
+    "symbol": "0",
+    "color": "light_cyan",
+    "looks_like": "t_vat",
+    "move_cost_mod": -1,
+    "required_str": 6,
+    "coverage": 75,
+    "flags": [ "TRANSPARENT", "SEALED", "PLACE_ITEM", "WALL" ],
+    "examine_action": "cloning_vat_examine",
+    "bash": {
+      "str_min": 6,
+      "str_max": 80,
+      "sound": "ker-rash!",
+      "sound_fail": "plunk.",
+      "sound_vol": 16,
+      "sound_fail_vol": 12,
+      "items": [ { "item": "glass_shard", "count": [ 3, 6 ] }, { "item": "scrap", "count": [ 0, 2 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 6 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 6, "block_unaimed_chance": "75%" }
+    },
+    "active": [
+      "steady_consumer",
+      {
+        "power": 100,
+        "consume_every": "600 s",
+        "transform": {
+          "id": "f_cloning_vat",
+          "msg": "<color_red>The cloning vat shuts down unexpectedly, destroying the materials in the process.</color>"
+        }
+      }
+    ]
   }
 ]

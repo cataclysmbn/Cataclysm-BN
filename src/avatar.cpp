@@ -13,7 +13,12 @@
 #include <utility>
 
 #include "action.h"
+#include "bodypart.h"
 #include "calendar.h"
+#include "catalua.h"
+#include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
@@ -30,12 +35,16 @@
 #include "event.h"
 #include "event_bus.h"
 #include "faction.h"
+#include "flag.h"
 #include "game.h"
 #include "game_constants.h"
 #include "help.h"
 #include "inventory.h"
+#include "init.h"
 #include "item.h"
 #include "item_contents.h"
+#include "item_factory.h"
+#include "locations.h"
 #include "itype.h"
 #include "iuse.h"
 #include "kill_tracker.h"
@@ -80,6 +89,9 @@ static const efftype_id effect_alarm_clock( "alarm_clock" );
 static const efftype_id effect_contacts( "contacts" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_slept_through_alarm( "slept_through_alarm" );
+static const efftype_id effect_cold( "cold" );
+static const efftype_id effect_hot( "hot" );
+static const efftype_id effect_hot_speed( "hot_speed" );
 
 static const itype_id itype_guidebook( "guidebook" );
 
@@ -87,8 +99,6 @@ static const trait_id trait_CENOBITE( "CENOBITE" );
 static const trait_id trait_HYPEROPIC( "HYPEROPIC" );
 static const trait_id trait_ILLITERATE( "ILLITERATE" );
 static const trait_id trait_PROF_DICEMASTER( "PROF_DICEMASTER" );
-
-static const flag_id flag_FIX_FARSIGHT( "FIX_FARSIGHT" );
 
 static const morale_type MORALE_FOOD_COLD( "morale_food_cold" );
 static const morale_type MORALE_FOOD_VERY_COLD( "morale_food_very_cold" );
@@ -116,7 +126,83 @@ avatar::avatar()
 
 avatar::~avatar() = default;
 avatar::avatar( avatar && )  noexcept = default;
-avatar &avatar::operator=( avatar && )  noexcept = default;
+avatar &avatar::operator=( avatar && ) noexcept = default;
+
+static void swap_npc( npc &one, npc &two, npc &tmp )
+{
+    tmp = std::move( one );
+    one = std::move( two );
+    two = std::move( tmp );
+}
+
+void avatar::control_npc( npc &np )
+{
+    if( !np.is_player_ally() ) {
+        debugmsg( "control_npc() called on non-allied npc %s", np.name );
+        return;
+    }
+    // Cancel activities before swap to prevent issues with stale references
+    // Avatar's activity would transfer to NPC and reference invalid items/state
+    cancel_activity();
+    np.cancel_activity();
+    if( !shadow_npc ) {
+        shadow_npc = std::make_unique<npc>();
+        shadow_npc->op_of_u.trust = 10;
+        shadow_npc->op_of_u.value = 10;
+        shadow_npc->set_attitude( NPCATT_FOLLOW );
+    }
+    npc tmp;
+    std::string save_id = get_save_id();
+    // move avatar character data into shadow npc
+    swap_character( *shadow_npc, tmp );
+    // swap target npc with shadow npc
+    swap_npc( *shadow_npc, np, tmp );
+    // Reset np's dead state cache since swap_npc moved character data
+    np.reset_cached_dead_state();
+    // move shadow npc character data into avatar
+    swap_character( *shadow_npc, tmp );
+    set_save_id( save_id );
+    // Swappy the thirst and kcal so swapping is not infinite food with no food
+    if( get_option<bool>( "NO_NPC_FOOD" ) ) {
+        // You're stomachs become one thing :)
+        stomach = np.stomach;
+        set_thirst( np.get_thirst( ) );
+        set_stored_kcal( np.get_stored_kcal() );
+        // NPCs can't whine about a lack of food or water after you leave their body
+        np.set_stored_kcal( np.max_stored_kcal() - 100 );
+        np.set_thirst( 0 );
+    }
+    for( auto &pr : np.get_body() ) {
+        pr.second.set_location( new wield_item_location( &np ) );
+    }
+    for( auto &pr : get_body() ) {
+        pr.second.set_location( new wield_item_location( this ) );
+    }
+
+    for( auto &pr : get_body() ) {
+        const bodypart_id &bp = pr.first;
+        np.remove_effect( effect_cold, bp.id() );
+        np.remove_effect( effect_hot, bp.id() );
+        np.remove_effect( effect_hot_speed, bp.id() );
+    }
+
+    np.onswapsetpos( np.pos() );
+    // the avatar character is no longer a follower NPC
+    g->remove_npc_follower( getID() );
+    // the previous avatar character is now a follower (unless they're dead)
+    if( np.is_dead_state() ) {
+        // The swapped-out character was dead, so kill the NPC properly
+        np.die( nullptr );
+    } else {
+        g->add_npc_follower( np.getID() );
+        np.set_fac( faction_id( "your_followers" ) );
+    }
+    // perception and mutations may have changed, so reset light level caches
+    g->reset_light_level();
+    // center the map on the new avatar character
+    g->vertical_shift( posz() );
+    g->update_map( *this );
+}
 
 void avatar::toggle_map_memory()
 {
@@ -592,7 +678,7 @@ bool avatar::read( item *loc, const bool continuous )
                        elem.first->getID().get_value() ) != 0;
     } ) ||
     !std::all_of( activity->values.begin(), activity->values.end(), [&]( int elem ) {
-        return learners.find( g->find_npc( character_id( elem ) ) ) != learners.end();
+        return learners.contains( g->find_npc( character_id( elem ) ) );
     } ) ) {
 
         if( learners.size() == 1 ) {
@@ -732,7 +818,7 @@ static void skim_book_msg( const item &book, avatar &u )
         if( elem.is_hidden() && !u.knows_recipe( elem.recipe ) ) {
             continue;
         }
-        recipe_list.push_back( elem.name );
+        recipe_list.push_back( elem.name.translated() );
     }
     if( !recipe_list.empty() ) {
         std::string recipe_line =
@@ -1030,6 +1116,22 @@ bool avatar::is_hallucination() const
     return false;
 }
 
+bool avatar::is_dead_state() const
+{
+    if( cached_dead_state.has_value() ) {
+        return cached_dead_state.value();
+    }
+
+    if( Character::is_dead_state() ) {
+        cata::run_hooks( "on_character_death", [ &, this]( auto & params ) {
+            params["char"] = this;
+        } );
+        cached_dead_state.reset();
+    }
+
+    return Character::is_dead_state();
+}
+
 void avatar::disp_morale()
 {
     int equilibrium = character_effects::calc_focus_equilibrium( *this );
@@ -1066,37 +1168,40 @@ int avatar::kill_xp() const
     return g->get_kill_tracker().kill_xp();
 }
 
-// based on  D&D 5e level progression
-static const std::array<int, 20> xp_cutoffs = { {
-        400, 1600, 3600, 6400, 10000,
-        14400, 19600, 25600, 32400, 40000,
-        48400, 57600, 67600, 78400, 90000,
-        102400, 115600, 129600, 144400, 160000
-    }
-};
+static int xp_cutoffs( unsigned int level )
+{
+    int coeff = get_option<int>( "AVATAR_LEVEL_XP_COEFF" );
+    // In nicer terms, this is a quadratic
+    return ( pow( level, 2 ) * coeff );
+}
 
 int avatar::free_upgrade_points() const
 {
     const int xp = kill_xp();
     int lvl = 0;
-    for( const int &xp_lvl : xp_cutoffs ) {
-        if( xp >= xp_lvl ) {
+    bool found_level = false;
+    while( !found_level ) {
+        if( xp >= xp_cutoffs( lvl + 1 ) ) {
             lvl++;
         } else {
-            break;
+            found_level = true;
         }
     }
     return lvl - str_upgrade - dex_upgrade - int_upgrade - per_upgrade;
 }
 
-std::optional<int> avatar::kill_xp_for_next_point() const
+int avatar::kill_xp_for_next_point() const
 {
-    auto it = std::ranges::lower_bound( xp_cutoffs, kill_xp() );
-    if( it == xp_cutoffs.end() ) {
-        return std::nullopt;
-    } else {
-        return *it - kill_xp();
+    const int xp_gained = kill_xp();
+    int level = 0;
+    bool found_higher = false;
+    while( !found_higher ) {
+        level++;
+        if( xp_gained < xp_cutoffs( level ) ) {
+            found_higher = true;
+        }
     }
+    return xp_cutoffs( level ) - xp_gained;
 }
 
 void avatar::upgrade_stat( character_stat stat )
@@ -1137,7 +1242,14 @@ void avatar::set_movement_mode( character_movemode new_mode )
                     add_msg( _( "You nudge your steed into a steady trot." ) );
                 }
             } else {
-                add_msg( _( "You start walking." ) );
+                // Spend moves to stand up if crouched, otherwise just stop running.
+                if( move_mode == CMM_CROUCH ) {
+                    mod_moves( -100 );
+                    recoil = MAX_RECOIL;
+                    add_msg( _( "You stand up." ) );
+                } else {
+                    add_msg( _( "You start walking." ) );
+                }
             }
             break;
         }
@@ -1153,7 +1265,14 @@ void avatar::set_movement_mode( character_movemode new_mode )
                         add_msg( _( "You spur your steed into a gallop." ) );
                     }
                 } else {
-                    add_msg( _( "You start running." ) );
+                    // Spend moves to stand up if crouched, otherwise just stop running.
+                    if( move_mode == CMM_CROUCH ) {
+                        mod_moves( -100 );
+                        recoil = MAX_RECOIL;
+                        add_msg( _( "You stand up and start running." ) );
+                    } else {
+                        add_msg( _( "You start running." ) );
+                    }
                 }
             } else {
                 if( is_mounted() ) {
@@ -1176,6 +1295,11 @@ void avatar::set_movement_mode( character_movemode new_mode )
                     add_msg( _( "You slow your steed to a walk." ) );
                 }
             } else {
+                // Don't spend moves if we were already crouching.
+                if( move_mode != CMM_CROUCH ) {
+                    recoil = MAX_RECOIL;
+                    mod_moves( -100 );
+                }
                 add_msg( _( "You start crouching." ) );
             }
             break;
@@ -1238,6 +1362,13 @@ bool avatar::wield( item &target )
         return false;
     }
 
+    // Lua iwieldable can_wield callback
+    if( const auto *iwield_cb = target.type->iwieldable_callbacks ) {
+        if( !iwield_cb->call_can_wield( *this, target ) ) {
+            return false;
+        }
+    }
+
     if( !unwield() ) {
         return false;
     }
@@ -1288,6 +1419,13 @@ detached_ptr<item> avatar::wield( detached_ptr<item> &&target )
         return std::move( target );
     }
 
+    // Lua iwieldable can_wield callback
+    if( const auto *iwield_cb = target->type->iwieldable_callbacks ) {
+        if( !iwield_cb->call_can_wield( *this, *target ) ) {
+            return std::move( target );
+        }
+    }
+
     if( !unwield() ) {
         return std::move( target );
     }
@@ -1311,8 +1449,12 @@ detached_ptr<item> avatar::wield( detached_ptr<item> &&target )
 
 bool avatar::invoke_item( item *used, const tripoint &pt )
 {
-    const std::map<std::string, use_function> &use_methods = used->type->use_methods;
-
+    std::map<std::string, use_function> use_methods;
+    use_methods.insert( used->type->use_methods.begin(), used->type->use_methods.end() );
+    // Make sure the flag is that of the mod, not of the item being used :P
+    if( used->has_flag( flag_ADD_UPS_TOGGLE ) && !used->type->has_flag( flag_ADD_UPS_TOGGLE ) ) {
+        use_methods["TOGGLE_UPS_CHARGING"] = item_controller->usage_from_string( "TOGGLE_UPS_CHARGING" );
+    }
     if( use_methods.empty() ) {
         return false;
     } else if( use_methods.size() == 1 ) {

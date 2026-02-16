@@ -4,7 +4,7 @@
     "id": "MonsterGirls",
     "name": "Monster Girls Mutations",
     "authors": [ "Robbietheneko" ],
-    "maintainers": [ "Robbietheneko" ],
+    "maintainers": [ "Robbietheneko", "scarf005" ],
     "description": "Ever thought that base-game mutations are way too body-horror and ugly for you?  Ever wished your character could become an anime catgirl?  This is the mod for you!  This mod replaces the vanilla mutation categories with anime-inspired ones that ought to be far cuter.  Note: currently not 1:1 on new to old mutation categories.",
     "category": "content",
     "dependencies": [ "bn" ]

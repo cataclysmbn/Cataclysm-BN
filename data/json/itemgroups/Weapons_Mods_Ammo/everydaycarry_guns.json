@@ -1685,6 +1685,16 @@
     ]
   },
   {
+    "id": "everyday_colt_ring",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "colt_ring", "ammo-group": "on_hand_44paper", "charges": [ 0, 9 ] },
+      { "group": "on_hand_44paper", "prob": 80, "charges": [ 5, 10 ], "count": [ 2, 3 ] }
+    ]
+  },
+  {
     "id": "everyday_pistol_flintlock",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

@@ -2,7 +2,7 @@
 
 /**
  * @module
- * [PR#6363](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/6363)
+ * [PR#6363](https://github.com/cataclysmbn/Cataclysm-BN/pull/6363)
  */
 
 import { bgBrightYellow } from "@std/fmt/colors"

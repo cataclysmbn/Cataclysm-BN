@@ -11,7 +11,7 @@ export const fmtLink = ({ subject, author }: { subject: string; author: string }
 
   const { title, pr } = groups
   const entry =
-    `- [#${pr}](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/${pr}) **${title.trim()}** by ${author}.`
+    `- [#${pr}](https://github.com/cataclysmbn/Cataclysm-BN/pull/${pr}) **${title.trim()}** by ${author}.`
 
   return [{ pr: parseInt(pr, 10), entry }]
 }

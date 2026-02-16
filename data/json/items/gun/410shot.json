@@ -12,7 +12,7 @@
     "material": [ "steel", "plastic" ],
     "dispersion": 395,
     "durability": 7,
-    "barrel_length": "750 ml",
+    "barrel_volume": "750 ml",
     "magazine_well": "250 ml",
     "ammo": "410shot",
     "blackpowder_tolerance": 24,
@@ -34,7 +34,7 @@
     "dispersion": 210,
     "durability": 9,
     "clip_size": 1,
-    "barrel_length": "117 ml",
+    "barrel_volume": "117 ml",
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],

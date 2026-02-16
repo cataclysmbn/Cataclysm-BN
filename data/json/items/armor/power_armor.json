@@ -16,11 +16,11 @@
     "looks_like": "power_armor_basic",
     "color": "light_gray",
     "covers": [ "torso", "arms", "hands", "legs", "feet" ],
-    "coverage": 95,
-    "encumbrance": 35,
+    "coverage": 100,
+    "encumbrance": 30,
     "storage": "4 L",
     "warmth": 50,
-    "material_thickness": 8,
+    "material_thickness": 7,
     "environmental_protection": 6,
     "flags": [ "WATERPROOF", "STURDY" ]
   },
@@ -40,10 +40,10 @@
     "looks_like": "power_armor_helmet_basic",
     "color": "light_gray",
     "covers": [ "head", "eyes", "mouth" ],
-    "coverage": 95,
-    "encumbrance": 35,
+    "coverage": 100,
+    "encumbrance": 30,
     "warmth": 50,
-    "material_thickness": 8,
+    "material_thickness": 7,
     "environmental_protection": 6,
     "qualities": [ [ "GLARE", 2 ] ],
     "flags": [ "WATERPROOF", "STURDY", "SUN_GLASSES" ]
@@ -83,7 +83,7 @@
       "set_charges": 2,
       "set_charges_msg": "You need a UPS or a bionic armor interface to power this."
     },
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE", "COMBAT_NPC_USE" ]
   },
   {
     "id": "power_armor_basic_on",
@@ -93,9 +93,10 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "power armor (active)", "str_pl": "suits of power armor (active)" },
     "description": "These were the second wave of military combat exoskeleton, and got a lot of media attention, with popular Navy commercials featuring them heavily.  It consists of a muscle-boosting exoskeleton frame with overlayed segmented alloy plating.  Despite advancements over the original bulky 'tank suits', it's still highly cumbersome when inactive.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
-    "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 1500000,
     "revert_to": "power_armor_basic",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,
@@ -143,7 +144,7 @@
       "set_charges": 2,
       "set_charges_msg": "You need a UPS or a bionic armor interface to power this."
     },
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE", "COMBAT_NPC_USE" ]
   },
   {
     "id": "power_armor_heavy_on",
@@ -153,9 +154,10 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "heavy power armor (active)", "str_pl": "suits of heavy power armor (active)" },
     "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, covered in thick segmented armor plates, were tested in military service a few years back and determined to be too heavy and expensive for regular use.  Now that it's in your hands, though, you have a massive suit of power armor capable of resisting almost any small arms fire and most other forms of attack.  On the other hand, it doubles your effective weight, and it's almost impossible not to bump into things.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
-    "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 2250000,
     "revert_to": "power_armor_heavy",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 6 } ] } ] },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,
@@ -202,7 +204,7 @@
       "set_charges": 2,
       "set_charges_msg": "You need a UPS or a bionic armor interface to power this."
     },
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXO", "WATERPROOF", "STURDY", "ELECTRIC_IMMUNE", "COMBAT_NPC_USE" ]
   },
   {
     "id": "power_armor_light_on",
@@ -212,9 +214,10 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "light power armor (active)", "str_pl": "suits of light power armor (active)" },
     "description": "The final iteration of military power armor before the fall of civilization, this type - a powered exoskeleton with high-tech segmented plating - was designed for actual widespread combat use and was seen on the front lines during the last days of the cataclysm.  Like the heavier suits, it is resistant to most modern weaponry, but it is much more light and maneuverable.  Unfortunately, the world ended before it could roll out in significant numbers.  An integrated chemical resistant bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.  It is currently turned on, activate it to turn it off.",
-    "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "CLIMATE_CONTROL", "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 750000,
     "revert_to": "power_armor_light",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 4 } ] } ] },
     "use_action": {
       "type": "set_transform",
       "turn_off": true,
@@ -507,7 +510,7 @@
     "description": "A leather holster, big enough for a rifle or other large gun.  Designed to be strapped to the back, it's been converted to clip onto power armor.  Activate to holster/draw a gun.",
     "//": "Modified versions of standard accessories gain steel submaterial if absent, double encumbrance, +500 weight, and power armor mod flag.",
     "material": [ "leather", "steel" ],
-    "encumbrance": 10,
+    "proportional": { "encumbrance": 2 },
     "relative": { "weight": "500 g" },
     "extend": { "flags": [ "POWERARMOR_MOD" ] }
   },
@@ -518,7 +521,63 @@
     "name": { "str": "power armor holster" },
     "description": "A leather strap worn on the hip for holding pistol sized guns.  It's been converted to clip onto power armor.  Activate to holster/draw a gun.",
     "material": [ "leather", "steel" ],
-    "encumbrance": 4,
+    "proportional": { "encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_sholster",
+    "copy-from": "sholster",
+    "type": "ARMOR",
+    "name": { "str": "power armor fast draw holster" },
+    "description": "A comfortable quick draw holster for small guns.  It's been converted to clip onto power armor.  Activate to holster/draw a gun.",
+    "material": [ "leather", "steel" ],
+    "proportional": { "encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_shoulder_holster",
+    "copy-from": "shoulder_holster",
+    "type": "ARMOR",
+    "name": { "str": "power armor shoulder holster" },
+    "description": "A shoulder holster that allows a gun to hang comfortably beneath the arm, converted to clip onto power armor.  Activate to holster/draw a gun.",
+    "material": [ "leather", "steel" ],
+    "proportional": { "encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_XL_holster",
+    "copy-from": "XL_holster",
+    "type": "ARMOR",
+    "name": { "str": "power armor XL holster" },
+    "description": "A belt holster consisting of a loop and strap intended for use with larger firearms.  Slightly more cumbersome than a standard holster, it's been converted to clip onto power armor.  Activate to holster/draw a gun.",
+    "material": [ "leather", "steel" ],
+    "proportional": { "encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_axe_ring",
+    "copy-from": "axe_ring",
+    "type": "ARMOR",
+    "name": { "str": "power armor ring holster" },
+    "description": "A combination of leather and a metal ring to hold an axe, hammer, or similar tool at your side.  It's been converted to clip onto power armor.",
+    "encumbrance": 1,
+    "proportional": { "max_encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_baldric",
+    "copy-from": "baldric",
+    "type": "ARMOR",
+    "name": { "str": "power armor baldric" },
+    "description": "A leather scabbard, big enough for anything up to a longsword, or even a bit larger than that.  Designed to be worn at the waist, it's been converted to clip onto power armor.  Activate to sheath/draw a sword.",
+    "material": [ "leather", "wood", "steel" ],
+    "encumbrance": 1,
+    "proportional": { "max_encumbrance": 2 },
     "relative": { "weight": "500 g" },
     "extend": { "flags": [ "POWERARMOR_MOD" ] }
   },
@@ -529,8 +588,7 @@
     "name": { "str": "power armor back scabbard" },
     "description": "A leather scabbard, big enough for almost any sword.  Designed to be strapped to the back, it's been converted to clip onto power armor.  Activate to sheath/draw a sword.",
     "material": [ "leather", "wood", "steel" ],
-    "encumbrance": 6,
-    "max_encumbrance": 10,
+    "proportional": { "encumbrance": 2, "max_encumbrance": 2 },
     "relative": { "weight": "500 g" },
     "extend": { "flags": [ "POWERARMOR_MOD" ] }
   },
@@ -541,8 +599,7 @@
     "name": { "str": "power armor scabbard" },
     "description": "A large, adjustable sheath for holding swords and other large blades.  It's been converted to clip onto power armor.  Activate to sheathe/draw a weapon.",
     "material": [ "leather", "wood", "steel" ],
-    "encumbrance": 4,
-    "max_encumbrance": 8,
+    "proportional": { "encumbrance": 2, "max_encumbrance": 2 },
     "relative": { "weight": "500 g" },
     "extend": { "flags": [ "POWERARMOR_MOD" ] }
   },
@@ -553,7 +610,84 @@
     "name": { "str": "power armor sheath" },
     "description": "A leather sheath for holding knives and other small blades.  It's been converted to clip onto power armor.  Activate to sheathe/draw a weapon.",
     "material": [ "leather", "steel" ],
-    "encumbrance": 2,
+    "proportional": { "encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_ammo_pouch",
+    "copy-from": "ammo_pouch",
+    "type": "ARMOR",
+    "name": { "str": "power armor ammo satchel" },
+    "description": "A small pouch that can be used to store most types of small ammunition, rockets will not fit.  It's been converted to clip onto power armor.  Activate to store ammunition.",
+    "material": [ "cotton", "steel" ],
+    "proportional": { "encumbrance": 2, "max_encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_ammo_satchel",
+    "copy-from": "ammo_satchel",
+    "type": "ARMOR",
+    "name": { "str": "power armor magazine satchel" },
+    "description": "A fabric ammo bag worn at the waist which is capable of holding two magazines, ammo belts, speedloaders of nearly any size close at hand.  It's been converted to clip onto power armor.",
+    "material": [ "cotton", "steel" ],
+    "proportional": { "encumbrance": 2, "max_encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_legpouch_large",
+    "copy-from": "legpouch_large",
+    "type": "ARMOR",
+    "name": { "str": "power armor leg magazine pouch", "str_pl": "power armor leg magazine pouches" },
+    "description": "A fabric ammo pouch that can be strapped to your leg and capable of holding two magazines close at hand, converted to clip onto power armor.",
+    "material": [ "cotton", "steel" ],
+    "proportional": { "encumbrance": 2, "max_encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_mag_satchel_leg",
+    "copy-from": "mag_satchel_leg",
+    "type": "ARMOR",
+    "name": { "str": "power armor leg magazine satchel" },
+    "description": "A fabric ammo pouch that can be strapped to the leg, capable of holding a single magazine, ammo belt, or speedloader of modest size.  It's been converted to clip onto power armor.",
+    "material": [ "cotton", "steel" ],
+    "proportional": { "encumbrance": 2, "max_encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_ammo_satchel_leg",
+    "copy-from": "ammo_satchel_leg",
+    "type": "ARMOR",
+    "name": { "str": "power armor leg ammo satchel" },
+    "description": "A small pouch wrapped around the leg that can be used to store most types of small ammunition, rockets will not fit.  It's been converted to clip onto power armor.  Activate to store ammunition.",
+    "material": [ "cotton", "steel" ],
+    "proportional": { "encumbrance": 2, "max_encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_grenade_pouch",
+    "copy-from": "grenade_pouch",
+    "type": "ARMOR",
+    "name": { "str": "power armor grenade ammo pouch", "str_pl": "power armor grenade ammo pouches" },
+    "description": "A small pouch for storing cartridge grenades with straps for attaching it to your belt or other webbing, converted to clip onto power armor.",
+    "material": [ "cotton", "plastic", "steel" ],
+    "proportional": { "encumbrance": 2 },
+    "relative": { "weight": "500 g" },
+    "extend": { "flags": [ "POWERARMOR_MOD" ] }
+  },
+  {
+    "id": "power_armor_grenadebandolier",
+    "copy-from": "grenadebandolier",
+    "type": "ARMOR",
+    "name": { "str": "power armor hand grenade pouch", "str_pl": "power armor hand grenade pouches" },
+    "description": "A pouch for holding up to four full-sized grenades of various types, converted to clip onto power armor.",
+    "material": [ "cotton", "steel" ],
+    "encumbrance": 1,
     "relative": { "weight": "500 g" },
     "extend": { "flags": [ "POWERARMOR_MOD" ] }
   },
@@ -587,7 +721,7 @@
       "need_worn": true,
       "need_charges": 1
     },
-    "flags": [ "USE_UPS", "NAT_UPS", "STURDY", "NO_UNLOAD", "NO_RELOAD", "OUTER", "ONLY_ONE" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "STURDY", "NO_UNLOAD", "NO_RELOAD", "OUTER", "ONLY_ONE", "COMBAT_NPC_USE" ]
   },
   {
     "id": "exosuit_survivor_on",
@@ -596,7 +730,7 @@
     "type": "TOOL_ARMOR",
     "name": { "str_sp": "survivor armored exo-suit (active)" },
     "description": "Although power armor took the world's militaries by storm, not everyone has access to it.  This particular suit is cobbled together from scavenged materials, but it works for what it is.  It is currently turned on, activate it to turn it off.",
-    "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "power_draw": 500000,
     "revert_to": "exosuit_survivor",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s disengages.", "target": "exosuit_survivor" },
@@ -619,7 +753,7 @@
     "color": "light_gray",
     "covers": [ "torso", "arms", "hands", "legs", "feet" ],
     "coverage": 35,
-    "encumbrance": 30,
+    "encumbrance": 20,
     "storage": "7 L",
     "material_thickness": 8,
     "max_charges": 500,
@@ -651,7 +785,12 @@
       "BELTED",
       "EXOSUIT",
       "OVERSIZE",
-      "ALLOWS_NATURAL_ATTACKS"
+      "ALLOWS_NATURAL_ATTACKS",
+      "ALLOWS_CLAWS",
+      "ALLOWS_CLAWS_FOOT",
+      "ALLOWS_TAIL",
+      "ALLOWS_WINGS",
+      "COMBAT_NPC_USE"
     ]
   },
   {
@@ -661,13 +800,13 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "military exo-suit (active)", "str_pl": "military exo-suits (active)" },
     "description": "Although power armor took the world's militaries by storm, the technologies used to make them also allowed for smaller, less protective external rigging that rely on UPS to boost strength and speed, ones designed for operatives or light infantry rather than heavy infantry.  It is currently turned on, activate it to turn it off.",
-    "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "ELECTRIC_IMMUNE", "TRADER_AVOID" ] },
+    "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "ELECTRIC_IMMUNE", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
     "qualities": [ [ "HV_INSULATION", 1 ] ],
-    "power_draw": 350000,
+    "power_draw": 250000,
     "revert_to": "exosuit_military",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s disengages.", "target": "exosuit_military" },
     "covers": [ "torso", "arms", "hands", "legs", "feet" ],
-    "encumbrance": 5,
+    "encumbrance": 0,
     "weight_capacity_bonus": "20 kg"
   },
   {
@@ -688,7 +827,7 @@
     "covers": [ "torso", "arms", "hands", "legs", "feet" ],
     "qualities": [ [ "HV_INSULATION", 1 ] ],
     "coverage": 35,
-    "encumbrance": 30,
+    "encumbrance": 25,
     "storage": "15 L",
     "material_thickness": 8,
     "max_charges": 500,
@@ -721,7 +860,12 @@
       "BELTED",
       "EXOSUIT",
       "OVERSIZE",
-      "ALLOWS_NATURAL_ATTACKS"
+      "ALLOWS_NATURAL_ATTACKS",
+      "ALLOWS_CLAWS",
+      "ALLOWS_CLAWS_FOOT",
+      "ALLOWS_TAIL",
+      "ALLOWS_WINGS",
+      "COMBAT_NPC_USE"
     ]
   },
   {
@@ -731,8 +875,8 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "industrial exo-suit (active)", "str_pl": "industrial exo-suits (active)" },
     "description": "Although power armor took the world's militaries by storm, the technologies used to make them also allowed for industrial powered suits meant for heavy lifting.  It is currently turned on, activate it to turn it off.",
-    "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID" ] },
-    "power_draw": 350000,
+    "extend": { "flags": [ "HEAVY_WEAPON_SUPPORT", "TRADER_AVOID", "COMBAT_NPC_ON" ] },
+    "power_draw": 250000,
     "revert_to": "exosuit_industrial",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s disengages.", "target": "exosuit_industrial" },
     "covers": [ "torso", "arms", "hands", "legs", "feet" ],

@@ -43,7 +43,7 @@ bench_location find_best_bench( const Character &who, const item &craft );
 float workbench_crafting_speed_multiplier( const item &craft, const bench_location &bench );
 float morale_crafting_speed_multiplier( const Character &who, const recipe &rec );
 float lighting_crafting_speed_multiplier( const Character &who, const recipe &rec );
-float crafting_speed_multiplier( const Character &who, const recipe &rec, bool in_progress );
+float crafting_speed_multiplier( const Character &who, const recipe &rec, bool );
 float crafting_speed_multiplier( const Character &who, const item &craft,
                                  const bench_location &bench );
 void complete_craft( Character &who, item &craft );

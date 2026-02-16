@@ -28,7 +28,7 @@
     "description": "The Calico M960 is an automatic carbine with a unique circular magazine that allows for high capacities and reduced recoil.",
     "weight": "2270 g",
     "volume": "1 L",
-    "barrel_length": "100 ml",
+    "barrel_volume": "100 ml",
     "price": "2400 USD",
     "price_postapoc": "50 USD",
     "to_hit": -2,
@@ -64,7 +64,7 @@
     "dispersion": 180,
     "durability": 10,
     "min_cycle_recoil": 450,
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "magazine_well": "250 ml",
     "magazines": [ [ "9mm", [ "m9bigmag", "m9mag" ] ] ]
   },
@@ -261,7 +261,7 @@
     "dispersion": 180,
     "durability": 7,
     "min_cycle_recoil": 450,
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "built_in_mods": [ "folding_stock" ],
     "valid_mod_locations": [
       [ "accessories", 4 ],
@@ -273,6 +273,7 @@
       [ "muzzle", 1 ],
       [ "rail", 1 ],
       [ "sights", 1 ],
+      [ "underbarrel", 1 ],
       [ "sling", 1 ]
     ],
     "magazine_well": "250 ml",
@@ -346,7 +347,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "9mm",
-    "barrel_length": "750 ml"
+    "barrel_volume": "750 ml"
   },
   {
     "id": "smg_9mm",
@@ -370,7 +371,7 @@
     "handling": 20,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
     "loudness": 25,
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "magazines": [ [ "9mm", [ "survivor9mm_mag", "stenmag" ] ] ]
   },
   {
@@ -395,7 +396,7 @@
     "min_cycle_recoil": 450,
     "handling": 25,
     "modes": [ [ "DEFAULT", "burst", 4 ] ],
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "muzzle", 1 ],
@@ -417,7 +418,7 @@
     "description": "The TEC-9 is a machine pistol made of cheap polymers and machine stamped parts.  Its rise in popularity among criminals is largely due to its intimidating looks and low cost.",
     "weight": "1400 g",
     "volume": "500 ml",
-    "barrel_length": "50 ml",
+    "barrel_volume": "50 ml",
     "price": "1250 USD",
     "price_postapoc": "2750 cent",
     "to_hit": -2,
@@ -464,7 +465,7 @@
     "description": "The Uzi 9x19mm has enjoyed immense popularity, selling more units than any other submachine gun.  It is widely used as a personal defense weapon, or as a primary weapon by elite frontline forces.",
     "weight": "2700 g",
     "volume": "1250 ml",
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "price": "2080 USD",
     "price_postapoc": "30 USD",
     "to_hit": -2,
@@ -580,7 +581,7 @@
     "description": "The Walther P38 is a semi-automatic handgun adopted shortly before the second world war.  Developed due to the high production costs of its predecessor, the Luger P08, the P38 is also chambered in 9mm Parabellum.  This early DA/SA locked-breech design would introduce features later seen on more modern firearms such as the Beretta 92 series, and served Germany until 2004.",
     "weight": "800 g",
     "volume": "547 ml",
-    "barrel_length": "50 ml",
+    "barrel_volume": "50 ml",
     "price": "390 USD",
     "price_postapoc": "2250 cent",
     "to_hit": -2,
@@ -689,7 +690,7 @@
     "description": "A submachine gun with a sleek in-line design.  It features a 2-round burst mode to make the most out of its unique recoil mitigation system alongside a blistering full-auto mode.  This one is chambered in 9mm and uses full-size Glock 17 magazines.",
     "weight": "3400 g",
     "volume": "1750 ml",
-    "barrel_length": "150 ml",
+    "barrel_volume": "150 ml",
     "price": "3100 USD",
     "price_postapoc": "35 USD",
     "to_hit": -2,

@@ -129,6 +129,7 @@
     "weight": "8 g",
     "bashing": 1,
     "ammo_type": "components",
+    "flags": [ "BLINDS_EYES_ON_HIT" ],
     "qualities": [ [ "SANDING", 1 ] ],
     "count": 50
   },
@@ -294,7 +295,7 @@
     "color": "pink",
     "use_action": "FUNGICIDE",
     "stim": -7,
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "comestible_type": "MED",
     "symbol": "!",
     "healthy": -7,
@@ -316,7 +317,7 @@
     "//": "Typically sold in larger quantities, but that's handed in the charge count.",
     "color": "pink",
     "looks_like": "fungicide",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "symbol": "!",
     "description": "Agricultural-grade chemical insecticide powder designed to eradicate insect pests.",
     "price": "11 USD",
@@ -459,7 +460,7 @@
     "//": "Weight should be 1.76g but the game will round down the number to 1g and 1.76g is closer to 2g",
     "bashing": 1,
     "ammo_type": "components",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "count": 100
   },
   {
@@ -814,6 +815,36 @@
     "bashing": 3
   },
   {
+    "type": "GENERIC",
+    "id": "gold_ore",
+    "copy-from": "iron_ore",
+    "name": { "str": "chunk of gold ore", "str_pl": "chunks of gold ore" },
+    "color": "yellow",
+    "looks_like": "steel_lump",
+    "description": "A small, dense chunk of what seems to be quartz,but what interests you is the gold interlaced. With the right knowhow, it could be smelted into usable metal.",
+    "volume": "500 ml",
+    "//": "19.3 grams/cc for gold density, so we'll just assume a 25% density with the rest as quartz [2.65 grams/cc] and round for nice-ness.",
+    "weight": "3500 g",
+    "bashing": 3
+  },
+  {
+    "type": "GENERIC",
+    "id": "geode",
+    "category": "scrap_metal",
+    "price": "250 cent",
+    "name": { "str": "geode" },
+    "symbol": ",",
+    "color": "brown",
+    "looks_like": "steel_lump",
+    "description": "A large rock, sounds kinda hollow, could crack it open easy enough, wonder whats inside?",
+    "use_action": { "type": "reveal_contents", "group": "geode_contents", "open_message": "You crack open the %s, revealing " },
+    "material": "stone",
+    "volume": "1 L",
+    "//": "ah the geode, natures gacha ball.",
+    "weight": "12 kg",
+    "bashing": 2
+  },
+  {
     "type": "AMMO",
     "id": "chem_aluminium_sulphate",
     "category": "chems",
@@ -918,7 +949,7 @@
     "weight": "2 g",
     "bashing": 1,
     "ammo_type": "components",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "count": 100
   },
   {
@@ -1240,7 +1271,7 @@
     "color": "yellow",
     "calories": 70,
     "charges": 8,
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "flags": [ "EATEN_COLD" ],
     "description": "These clear cubes of processed seaweed can be dissolved in boiling water to create a very sturdy, temperature resistant gel.  Not only is it good for making gels to separate molecules by size, but it's a great cheat ingredient to make sure your jellies set properly.",
     "material": [ "junk" ],

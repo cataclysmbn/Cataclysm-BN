@@ -1,0 +1,38 @@
+[
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_MILITIA",
+    "name": { "str": "Militia Member" },
+    "job_description": "Ready to fight.",
+    "traits": [
+      { "group": "BG_survival_story_UNIVERSAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "worn_override": "NC_PROF_MILITIA_worn",
+    "carry_override": "NC_PROF_MILITIA_carry",
+    "weapon_override": "NC_PROF_MILITIA_melee",
+    "bonus_str": { "rng": [ -6, -2 ] },
+    "bonus_dex": { "rng": [ -6, -2 ] },
+    "bonus_int": { "rng": [ -6, -2 ] },
+    "bonus_per": { "rng": [ -3, -1 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_MILITIA_worn",
+    "subtype": "collection",
+    "entries": [ { "item": "tank_top" }, { "item": "jeans" }, { "item": "flip_flops" } ]
+  },
+  {
+    "id": "NC_PROF_MILITIA_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "stick" } ]
+  },
+  {
+    "id": "NC_PROF_MILITIA_carry",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "null" } ]
+  }
+]

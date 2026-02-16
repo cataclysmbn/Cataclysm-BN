@@ -333,6 +333,15 @@
   },
   {
     "type": "terrain",
+    "id": "t_slope_down_underground",
+    "copy-from": "t_slope_down",
+    "symbol": ">",
+    "color": "brown",
+    "roof": "t_rock_roof",
+    "extend": { "flags": [ "INDOORS" ] }
+  },
+  {
+    "type": "terrain",
     "id": "t_slope_up",
     "name": "upward slope",
     "description": "An upward facing slope.",

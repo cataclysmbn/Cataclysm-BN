@@ -240,6 +240,6 @@ MO 파일을 불러올 때 게임에서는 먼저 이름에 언어와 방언이 
 
 ### 참고: 모드 번역을 구현하는 PR
 
-https://github.com/cataclysmbnteam/Cataclysm-BN/pull/505
+https://github.com/cataclysmbn/Cataclysm-BN/pull/505
 
 ### [모드 번역 예시](https://github.com/Kenan2000/Bright-Nights-Kenan-Mod-Pack/pull/36)

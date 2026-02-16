@@ -69,5 +69,14 @@
       { "monster": "mon_wasp", "freq": 200, "cost_multiplier": 1 },
       { "monster": "mon_dermatik", "freq": 100, "cost_multiplier": 1 }
     ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_CHUD",
+    "default": "mon_chud",
+    "monsters": [
+      { "monster": "mon_one_eye", "freq": 90, "cost_multiplier": 0 },
+      { "monster": "mon_crawler", "freq": 35, "cost_multiplier": 0 }
+    ]
   }
 ]

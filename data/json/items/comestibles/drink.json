@@ -19,7 +19,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitC", 167 ], [ "calcium", 1 ], [ "iron", 1 ], [ "fruit_allergen", 1 ] ],
     "fun": 2
   },
@@ -44,7 +44,7 @@
     "volume": "250 ml",
     "phase": "liquid",
     "vitamins": [ [ "vitA", 2 ], [ "calcium", 11 ], [ "nut_allergen", 1 ] ],
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 1
   },
   {
@@ -92,7 +92,7 @@
     "material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": 6
   },
   {
@@ -110,7 +110,7 @@
     "description": "This serving of coffee has been created using an atomic coffee pot's FULL NUCLEAR brewing cycle.  Every possible microgram of caffeine and flavor has been carefully extracted for your enjoyment, using the power of the atom.",
     "price": "3 USD",
     "price_postapoc": "1 USD",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": 10
   },
   {
@@ -171,7 +171,7 @@
     "material": [ "milk", "water" ],
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": 14,
     "vitamins": [ [ "milk_allergen", 1 ] ]
   },
@@ -208,7 +208,7 @@
     "material": [ "junk", "milk" ],
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitA", 9 ], [ "vitC", 8 ], [ "calcium", 18 ], [ "iron", 4 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ],
     "fun": 7
   },
@@ -230,7 +230,7 @@
     "material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": -5
   },
   {
@@ -250,7 +250,7 @@
     "volume": "250 ml",
     "material": [ "water" ],
     "phase": "liquid",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": 2
   },
   {
@@ -276,7 +276,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 5,
     "vitamins": [ [ "junk_allergen", 1 ] ]
   },
@@ -299,7 +299,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": -15,
     "vitamins": [ [ "junk_allergen", 10 ] ]
   },
@@ -326,7 +326,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 5,
     "vitamins": [ [ "junk_allergen", 1 ] ]
   },
@@ -349,7 +349,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": -15,
     "vitamins": [ [ "junk_allergen", 10 ] ]
   },
@@ -376,7 +376,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 5,
     "vitamins": [ [ "junk_allergen", 1 ] ]
   },
@@ -399,7 +399,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": -15,
     "vitamins": [ [ "junk_allergen", 10 ] ]
   },
@@ -427,7 +427,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 10,
     "vitamins": [ [ "junk_allergen", 5 ] ]
   },
@@ -452,7 +452,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitA", 1 ], [ "vitC", 131 ], [ "calcium", 3 ], [ "iron", 1 ], [ "fruit_allergen", 1 ] ],
     "fun": 3
   },
@@ -474,7 +474,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitC", 60 ], [ "fruit_allergen", 1 ], [ "junk_allergen", 1 ] ],
     "fun": 6
   },
@@ -495,7 +495,7 @@
     "volume": "250 ml",
     "material": [ "water" ],
     "phase": "liquid",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "calcium", 11 ], [ "vitC", 10 ], [ "vitA", 33 ], [ "iron", 10 ] ],
     "fun": 2
   },
@@ -516,7 +516,7 @@
     "volume": "250 ml",
     "material": [ "water" ],
     "phase": "liquid",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "calcium", 34 ], [ "vitC", 10 ], [ "vitA", 34 ], [ "iron", 20 ] ],
     "fun": 3
   },
@@ -539,7 +539,7 @@
     "volume": "250 ml",
     "phase": "liquid",
     "charges": 2,
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "EATEN_HOT" ],
     "vitamins": [ [ "vitA", 5 ], [ "vitC", 3 ], [ "calcium", 13 ], [ "iron", 2 ], [ "egg_allergen", 1 ], [ "milk_allergen", 1 ] ],
     "fun": 15
   },
@@ -566,7 +566,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitC", 105 ], [ "junk_allergen", 1 ] ],
     "fun": 5
   },
@@ -592,7 +592,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": -15,
     "vitamins": [ [ "vitC", 630 ], [ "junk_allergen", 10 ] ]
   },
@@ -635,7 +635,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": -15,
     "vitamins": [ [ "junk_allergen", 10 ] ]
   },
@@ -657,7 +657,7 @@
     "volume": "250 ml",
     "material": [ "water" ],
     "phase": "liquid",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": 4,
     "vitamins": [ [ "iron", 1 ] ]
   },
@@ -683,7 +683,7 @@
     "fun": 8,
     "spoils_in": "1 day",
     "vitamins": [ [ "calcium", 4 ], [ "iron", 2 ], [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ],
-    "flags": [ "EATEN_HOT" ]
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ]
   },
   {
     "type": "COMESTIBLE",
@@ -734,7 +734,7 @@
     "volume": "250 ml",
     "phase": "liquid",
     "charges": 2,
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitC", 53 ], [ "iron", 2 ], [ "fruit_allergen", 1 ] ],
     "fun": 3
   },
@@ -786,7 +786,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitC", 25 ], [ "fruit_allergen", 1 ] ],
     "fun": 8
   },
@@ -809,7 +809,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitC", 16 ], [ "iron", 2 ], [ "fruit_allergen", 1 ] ],
     "fun": 3
   },
@@ -832,7 +832,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 5,
     "vitamins": [ [ "junk_allergen", 1 ] ]
   },
@@ -855,7 +855,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": -15,
     "vitamins": [ [ "junk_allergen", 10 ] ]
   },
@@ -893,7 +893,7 @@
     "quench": 35,
     "fun": 10,
     "spoils_in": "1 day",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "junk_allergen", 1 ], [ "milk_allergen", 1 ] ]
   },
   {
@@ -916,7 +916,7 @@
     "material": [ "milk" ],
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitA", 10 ], [ "vitB", 6 ], [ "vitC", 4 ], [ "calcium", 25 ], [ "milk_allergen", 1 ] ],
     "fun": 1
   },
@@ -944,6 +944,7 @@
     "addiction_potential": 2,
     "calories": 69,
     "description": "Coffee mixed into milk.",
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "price": "480 cent",
     "price_postapoc": "50 cent",
     "material": [ "milk", "water" ],
@@ -984,6 +985,7 @@
     "quench": 40,
     "healthy": 1,
     "calories": 69,
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "description": "Hot tea with cold milk.",
     "price": "450 cent",
     "price_postapoc": "50 cent",
@@ -1016,7 +1018,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "//2": "most store-bought oj is fortified with calcium.",
     "vitamins": [ [ "vitA", 2 ], [ "vitC", 146 ], [ "calcium", 28 ], [ "iron", 2 ], [ "fruit_allergen", 1 ] ],
     "fun": 3
@@ -1040,7 +1042,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 5,
     "vitamins": [ [ "junk_allergen", 1 ] ]
   },
@@ -1063,7 +1065,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": -15,
     "vitamins": [ [ "junk_allergen", 10 ] ]
   },
@@ -1083,7 +1085,7 @@
     "volume": "250 ml",
     "material": [ "water" ],
     "phase": "liquid",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": 1,
     "vitamins": [ [ "vitC", 10 ] ]
   },
@@ -1105,7 +1107,7 @@
     "volume": "250 ml",
     "material": [ "water" ],
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 4,
     "vitamins": [ [ "vitC", 10 ] ]
   },
@@ -1129,7 +1131,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitC", 50 ], [ "calcium", 3 ], [ "junk_allergen", 1 ] ],
     "fun": 3
   },
@@ -1152,7 +1154,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": -15,
     "vitamins": [ [ "vitC", 300 ], [ "calcium", 18 ], [ "junk_allergen", 10 ] ]
   },
@@ -1175,7 +1177,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 3,
     "vitamins": [ [ "junk_allergen", 1 ] ]
   },
@@ -1198,7 +1200,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": -15,
     "vitamins": [ [ "junk_allergen", 10 ] ]
   },
@@ -1224,7 +1226,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 6,
     "vitamins": [ [ "junk_allergen", 1 ] ]
   },
@@ -1245,7 +1247,7 @@
     "material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": -1,
     "vitamins": [ [ "vitC", 1 ] ]
   },
@@ -1274,6 +1276,7 @@
     "symbol": "~",
     "quench": 60,
     "calories": 24,
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "description": "A basic oral rehydration therapy drink.  It will rehydrate you faster than water, but it tastes kind of strange.",
     "price": "55 cent",
     "price_postapoc": "50 cent",
@@ -1294,6 +1297,7 @@
     "symbol": "~",
     "quench": 38,
     "calories": 17,
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "description": "Water with sugar or honey added.  Tastes okay.",
     "price": "95 cent",
     "price_postapoc": "10 cent",
@@ -1321,7 +1325,7 @@
     "volume": "250 ml",
     "material": [ "water" ],
     "phase": "liquid",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": 6
   },
   {
@@ -1346,7 +1350,7 @@
     "volume": "250 ml",
     "material": [ "water" ],
     "phase": "liquid",
-    "flags": [ "UNSAFE_CONSUME", "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "UNSAFE_CONSUME", "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": 10
   },
   {
@@ -1366,7 +1370,7 @@
     "volume": "500 ml",
     "material": [ "water" ],
     "phase": "liquid",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": -5
   },
   {
@@ -1389,7 +1393,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 1,
     "vitamins": [ [ "vitA", 60 ], [ "vitC", 180 ], [ "calcium", 4 ], [ "iron", 4 ], [ "veggy_allergen", 1 ] ]
   },
@@ -1537,7 +1541,7 @@
     "primary_material": "water",
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "fun": 3,
     "vitamins": [ [ "veggy_allergen", 1 ] ]
   }

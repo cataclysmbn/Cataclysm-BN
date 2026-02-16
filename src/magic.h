@@ -51,6 +51,7 @@ enum spell_flag {
     CONCENTRATE, // focus affects spell fail %
     RANDOM_AOE, // picks random number between min+increment*level and max instead of normal behavior
     RANDOM_DAMAGE, // picks random number between min+increment*level and max instead of normal behavior
+    DIVIDE_DAMAGE, // divides damage equally among all the targets of the spell
     RANDOM_DURATION, // picks random number between min+increment*level and max instead of normal behavior
     RANDOM_TARGET, // picks a random valid target within your range instead of normal behavior.
     MUTATE_TRAIT, // overrides the mutate spell_effect to use a specific trait_id instead of a category
@@ -59,7 +60,10 @@ enum spell_flag {
     NO_FAIL, // this spell cannot fail when you cast it
     BRAWL, // this spell can be used by brawlers
     DUPE_SOUND, // this spell will play 'duplicate' sounds, if relevant to the spell effect
-    ADD_MELEE_DAM, // Add melee damage to the spell's damage
+    ADD_MELEE_DAM, // Add melee damage to the spell's damage. Legacy method, "melee_dam" vector is preferred instead
+    PHYSICAL, // IMPLIES BRAWL. This spell is actually a Physical Technique / Weapon Arte / similar, and is sort-of a replacement of martial arts.
+    MOD_MELEE_MOVES, // Use melee attack cost as a base and add spell cost on top
+    MOD_MELEE_STAM, // Use melee stamina cost as a base and add spell cost on top
     LAST
 };
 
@@ -292,6 +296,9 @@ class spell_type
         energy_type energy_source = energy_type::none_energy;
 
         damage_type dmg_type = damage_type::DT_NULL;
+
+        // Melee damage types that the 'spell' uses
+        std::vector<damage_type> melee_dam;
 
         // list of valid targets to be affected by the area of effect.
         enum_bitset<valid_target> effect_targets;

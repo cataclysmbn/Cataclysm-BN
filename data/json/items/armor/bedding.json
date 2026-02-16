@@ -18,7 +18,8 @@
     "encumbrance": 15,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_TAIL_SNAKE", "ALLOWS_HOOVES" ],
+    "qualities": [ [ "SLEEP_AID", 1 ] ]
   },
   {
     "id": "blanket",
@@ -40,7 +41,8 @@
     "warmth": 50,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_TAIL_SNAKE", "ALLOWS_HOOVES" ],
+    "qualities": [ [ "SLEEP_AID", 2 ] ]
   },
   {
     "id": "down_blanket",
@@ -62,7 +64,8 @@
     "warmth": 70,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_TAIL_SNAKE", "ALLOWS_HOOVES" ],
+    "qualities": [ [ "SLEEP_AID", 3 ] ]
   },
   {
     "id": "fur_blanket",
@@ -84,7 +87,8 @@
     "warmth": 80,
     "material_thickness": 4,
     "environmental_protection": 1,
-    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_TAIL_SNAKE", "ALLOWS_HOOVES" ],
+    "qualities": [ [ "SLEEP_AID", 3 ] ]
   },
   {
     "id": "afs_quilt",
@@ -104,8 +108,9 @@
     "warmth": 100,
     "material_thickness": 3,
     "environmental_protection": 2,
-    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS" ],
-    "looks_like": "down_blanket"
+    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_TAIL_SNAKE", "ALLOWS_HOOVES" ],
+    "looks_like": "down_blanket",
+    "qualities": [ [ "SLEEP_AID", 3 ] ]
   },
   {
     "id": "afs_quilt_patchwork",
@@ -136,7 +141,8 @@
     "warmth": 80,
     "material_thickness": 4,
     "environmental_protection": 1,
-    "flags": [ "OVERSIZE", "OUTER" ],
+    "qualities": [ [ "SLEEP_AID", 2 ] ],
+    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_TAIL_SNAKE", "ALLOWS_HOOVES" ],
     "use_action": {
       "menu_text": "Roll up",
       "type": "transform",

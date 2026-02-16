@@ -9,7 +9,10 @@
       { "terrain": "road", "locations": [ "forest_without_trail" ], "basic_cost": 20 },
       { "terrain": "road", "locations": [ "forest_trail" ], "basic_cost": 25 },
       { "terrain": "road", "locations": [ "swamp" ], "basic_cost": 40 },
-      { "terrain": "bridge", "locations": [ "water" ], "basic_cost": 120 }
+      { "terrain": "dam", "locations": [ "water" ], "basic_cost": 120, "weight": 1 },
+      { "terrain": "bridge", "locations": [ "water" ], "basic_cost": 120, "weight": 4 },
+      { "terrain": "dam", "locations": [ "dam" ], "basic_cost": 0, "weight": 1 },
+      { "terrain": "bridge", "locations": [ "bridge" ], "basic_cost": 0, "weight": 4 }
     ]
   },
   {

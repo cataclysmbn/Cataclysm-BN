@@ -230,8 +230,7 @@
       { "group": "ammo_atomic_batteries", "prob": 5 },
       { "item": "corpse", "prob": 10 },
       { "item": "holy_symbol", "prob": 1 },
-      { "item": "mutagen", "prob": 8 },
-      { "item": "purifier", "prob": 12 },
+      { "group": "mutagens_common", "prob": 20 },
       { "item": "meat", "prob": 50 },
       { "item": "meat_tainted", "prob": 60 },
       { "item": "arm", "prob": 4 },
@@ -351,7 +350,8 @@
       { "item": "pastaextruder", "prob": 10 },
       { "item": "can_sealer", "prob": 10 },
       { "item": "remotevehcontrol", "prob": 8 },
-      { "item": "shield_ballistic", "prob": 10 }
+      { "item": "shield_ballistic", "prob": 10 },
+      { "item": "shield_ballistic_large", "prob": 10 }
     ]
   },
   {
@@ -508,6 +508,16 @@
       { "group": "mon_zombie_labsecurity_death_drops", "damage": [ 2, 4 ], "prob": 5 },
       { "group": "mon_zombie_kevlar_death_drops", "damage": [ 2, 4 ], "prob": 15 },
       { "group": "mon_zombie_military_pilot_death_drops", "damage": [ 2, 4 ], "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "dog_clothes",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "rubber_armor_small_quadruped", "prob": 50 },
+      { "item": "leather_armor_small_quadruped", "prob": 25 },
+      { "item": "kevlar_armor_small_quadruped", "prob": 1 }
     ]
   }
 ]

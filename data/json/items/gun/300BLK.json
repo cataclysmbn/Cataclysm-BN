@@ -16,7 +16,7 @@
     "dispersion": 150,
     "min_cycle_recoil": 1700,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "built_in_mods": [ "folding_stock" ],
     "magazines": [
       [

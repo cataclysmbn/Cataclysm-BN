@@ -61,7 +61,7 @@
       "transform_charges": 5,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE", "POWERED" ]
+    "flags": [ "NONCONDUCTIVE", "POWERED", "COMBAT_NPC_USE" ]
   },
   {
     "id": "chainsaw_on",
@@ -79,7 +79,7 @@
     "qualities": [ [ "BUTCHER", -100 ] ],
     "revert_msg": "Your chainsaw goes quiet",
     "use_action": { "type": "transform", "target": "chainsaw_off", "msg": "You turn off the chainsaw." },
-    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE" ]
+    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ]
   },
   {
     "id": "circsaw_off",
@@ -100,7 +100,7 @@
     "ammo": "battery",
     "charges_per_use": 5,
     "use_action": { "target": "circsaw_on", "msg": "You turn on the circular saw.", "active": true, "type": "transform" },
-    "flags": [ "NONCONDUCTIVE" ],
+    "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ],
     "magazines": [
       [
         "battery",
@@ -124,7 +124,7 @@
     "qualities": [ [ "CUT", 1 ], [ "SAW_W", 2 ], [ "BUTCHER", -40 ] ],
     "revert_msg": "Your circular saw goes quiet",
     "use_action": { "type": "transform", "target": "circsaw_off", "msg": "You turn off the circular saw." },
-    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE" ],
+    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"
   },
   {
@@ -196,7 +196,7 @@
       "transform_charges": 5,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE", "POWERED" ],
+    "flags": [ "NONCONDUCTIVE", "POWERED", "COMBAT_NPC_USE" ],
     "magazines": [
       [
         "battery",
@@ -219,7 +219,7 @@
     "qualities": [ [ "BUTCHER", -100 ] ],
     "revert_msg": "Your electric chainsaw goes quiet",
     "use_action": { "type": "transform", "target": "elec_chainsaw_off", "msg": "You turn off the electric chainsaw." },
-    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE" ],
+    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"
   },
   {

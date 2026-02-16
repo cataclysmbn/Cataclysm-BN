@@ -30,6 +30,7 @@ Vehicle components when installed on a vehicle.
 "wheel_type":                 // (Optional: standard, off-road)
 "contact_area":               // (Optional) Affects vehicle ground pressure
 "cargo_weight_modifier": 33,  // (Optional, default = 100) Modifies cargo weight by set percentage
+"weight_modifier": 33,        // (Optional, default = 100) Modifies base part weight by set percentage
 "fuel_type": "NULL",          // (Optional, default = "NULL") Type of fuel/ammo the part consumes, as an item id
 
 "item": "wheel",              // The item used to install this part, and the item obtained when removing this part
@@ -57,6 +58,31 @@ Vehicle components when installed on a vehicle.
 "comfort": 3,                 // Optional field, defaults to 0. How comfortable this terrain/furniture is. Impact ability to fall asleep on it. (uncomfortable = -999, neutral = 0, slightly_comfortable = 3, comfortable = 5, very_comfortable = 10)
 "floor_bedding_warmth": 300,  // Optional field, defaults to 0. Bonus warmth offered by this terrain/furniture when used to sleep.
 "bonus_fire_warmth_feet": 200,// Optional field, defaults to 300. Increase warmth received on feet from nearby fire.
+"height": 5,                  // Optional field, height of balloons in meters ( aka multiplie of their lift )
+"lift_coff": 0.5,             // Optional field, multiplier of wing effectiveness
+"propeller_diameter": 0.5,    // Optional field, diameter of propeller
+"length": 3,                  // Optional field, z-level length of ladder
+```
+
+### Integrated Tools
+
+```json
+"integrated_tools": [ "foo" ],
+```
+
+An option array of tools that this vehiclepart will provide for crafting purposes, compare and contrast `crafting_pseudo_item` for furniture. Requires the vehiclepart to have the `CRAFTING` flag to function.
+
+Most legacy crafting vehiclepart flags have been removed and should be replaced with equivalent tools. The `WATER_PURIFIER`, `FAUCET` and the `WATER_FAUCET` flags, which provide specific functions on examine, have been retained.
+
+```json
+"integrated_tools": [ "pot", "pan", "hotplate" ],  // Replaces the `KITCHEN` flag
+"integrated_tools": [ "dehydrator", "vac_sealer", "food_processor", "press" ],  // Replaces the `CRAFTRIG` flag
+"integrated_tools": [ "chemistry_set", "electrolysis_kit" ],  // Replaces the `CHEMLAB` flag
+"integrated_tools": [ "forge" ],  // Replaces the `FORGE` flag
+"integrated_tools": [ "fake_adv_butchery" ],  // Needed with the `BUTCHER_EQ` flag
+"integrated_tools": [ "kiln" ],  // Replaces the `KILN` flag
+"integrated_tools": [ "soldering_iron", "welder" ],  // Replaces the tools
+"integrated_tools": [ "water_purifier" ],  // Replaces the tools, but not the ability to purify water in vehicle tanks, of the `WATER_PURIFIER` flag
 ```
 
 ### Part Resistance

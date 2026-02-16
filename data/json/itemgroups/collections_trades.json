@@ -7,7 +7,8 @@
       { "group": "tools_general", "prob": 50 },
       { "group": "supplies_hardware", "prob": 50 },
       { "group": "hardware_clothing", "prob": 10 },
-      [ "survnote", 1 ]
+      [ "survnote", 1 ],
+      [ "atomic_butterchurn", 1 ]
     ]
   },
   {

@@ -48,6 +48,46 @@
     "type": "vehicle_part"
   },
   {
+    "copy-from": "door_abstract",
+    "abstract": "door_carbon_abstract",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber door" },
+    "durability": 270,
+    "size": "3 L",
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "damage_reduction": { "all": 25 },
+    "folded_volume": "2500 ml",
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+  },
+  {
+    "copy-from": "door_opaque_abstract",
+    "abstract": "door_carbon_opaque_abstract",
+    "type": "vehicle_part",
+    "name": { "str": "opaque carbon fiber door" },
+    "durability": 288,
+    "size": "3 L",
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "damage_reduction": { "all": 34 },
+    "folded_volume": "2500 ml",
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+  },
+  {
     "abstract": "hddoor_abstract",
     "breaks_into": "ig_vp_hdframe",
     "broken_color": "cyan",
@@ -128,7 +168,7 @@
     "damage_reduction": { "all": 30 },
     "description": "A strong door.  A window lets you see through it when closed.",
     "durability": 420,
-    "flags": [ "CARGO", "LOCKABLE_CARGO", "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "COVERED" ],
+    "flags": [ "CARGO", "LOCKABLE_CARGO", "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "COVERED", "WINDOW" ],
     "item": "frame",
     "location": "center",
     "looks_like": "door",
@@ -167,6 +207,65 @@
     "type": "vehicle_part"
   },
   {
+    "copy-from": "door_internal_abstract",
+    "abstract": "door_internal_carbon_abstract",
+    "type": "vehicle_part",
+    "name": { "str": "internal carbon fiber door" },
+    "durability": 288,
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "damage_reduction": { "all": 34 },
+    "folded_volume": "2500 ml",
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+  },
+  {
+    "copy-from": "hatch_abstract",
+    "abstract": "hatch_carbon_abstract",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber hatch" },
+    "durability": 504,
+    "size": "45 L",
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "damage_reduction": { "all": 36 },
+    "folded_volume": "2500 ml",
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+  },
+  {
+    "copy-from": "hatch_opaque_abstract",
+    "abstract": "hatch_opaque_carbon_abstract",
+    "type": "vehicle_part",
+    "name": { "str": "opaque carbon fiber hatch" },
+    "durability": 540,
+    "size": "45 L",
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "damage_reduction": { "all": 41 },
+    "folded_volume": "2500 ml",
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+  },
+  {
     "abstract": "hdhatch_abstract",
     "breaks_into": "ig_vp_hdframe",
     "broken_color": "dark_gray",
@@ -176,7 +275,7 @@
     "damage_reduction": { "all": 78 },
     "description": "A very strong door.  A window lets you see through it when closed.",
     "durability": 900,
-    "flags": [ "CARGO", "LOCKABLE_CARGO", "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "COVERED" ],
+    "flags": [ "CARGO", "LOCKABLE_CARGO", "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "COVERED", "WINDOW" ],
     "item": "hdframe",
     "location": "center",
     "looks_like": "hatch",
@@ -227,6 +326,20 @@
     "type": "vehicle_part"
   },
   {
+    "copy-from": "door_carbon_abstract",
+    "id": "door_carbon",
+    "looks_like": "door",
+    "symbol": "+",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "door_carbon_opaque_abstract",
+    "id": "door_carbon_opaque",
+    "looks_like": "door_opaque",
+    "symbol": "+",
+    "type": "vehicle_part"
+  },
+  {
     "copy-from": "hddoor_abstract",
     "id": "hddoor",
     "symbol": "+",
@@ -253,6 +366,27 @@
   {
     "copy-from": "hatch_opaque_abstract",
     "id": "hatch_opaque",
+    "symbol": "+",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "door_internal_carbon_abstract",
+    "id": "door_internal_carbon",
+    "looks_like": "door_internal",
+    "symbol": "+",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "hatch_carbon_abstract",
+    "id": "hatch_carbon",
+    "looks_like": "hatch",
+    "symbol": "+",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "hatch_opaque_carbon_abstract",
+    "id": "hatch_opaque_carbon",
+    "looks_like": "hatch_opaque",
     "symbol": "+",
     "type": "vehicle_part"
   },
@@ -313,6 +447,62 @@
   {
     "copy-from": "door_abstract",
     "id": "door_rear",
+    "symbol": "B",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "door_carbon_abstract",
+    "id": "door_carbon_front_left",
+    "looks_like": "door_front_left",
+    "symbol": "y",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "door_carbon_abstract",
+    "id": "door_carbon_vertical_left",
+    "looks_like": "door_vertical_left",
+    "symbol": "L",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "door_carbon_abstract",
+    "id": "door_carbon_front_right",
+    "looks_like": "door_front_right",
+    "symbol": "u",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "door_carbon_abstract",
+    "id": "door_carbon_rear_left",
+    "looks_like": "door_rear_left",
+    "symbol": "b",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "door_carbon_abstract",
+    "id": "door_carbon_vertical_right",
+    "looks_like": "door_vertical_right",
+    "symbol": "R",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "door_carbon_abstract",
+    "id": "door_carbon_rear_right",
+    "looks_like": "door_rear_right",
+    "symbol": "n",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "door_carbon_abstract",
+    "id": "door_carbon_front",
+    "looks_like": "door_front",
+    "symbol": "T",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "door_carbon_abstract",
+    "id": "door_carbon_rear",
+    "looks_like": "door_rear",
     "symbol": "B",
     "type": "vehicle_part"
   },

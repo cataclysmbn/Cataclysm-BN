@@ -16,7 +16,7 @@
     "casing": "5x50_hull",
     "range": 60,
     "//": "Balanced as AP",
-    "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 26 },
+    "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 50 },
     "dispersion": 60,
     "recoil": 400,
     "price_postapoc": "18 USD",
@@ -32,7 +32,7 @@
     "price": "1688 cent",
     "price_postapoc": "24 USD",
     "//": "Balanced as AP, with 25% higher damage and 50% higher arpen",
-    "relative": { "range": -10, "damage": { "damage_type": "bullet", "amount": 8, "armor_penetration": 13 } },
+    "relative": { "range": -10, "damage": { "damage_type": "bullet", "amount": 8, "armor_penetration": 25 } },
     "proportional": { "dispersion": 1.5, "recoil": 1.5 }
   }
 ]

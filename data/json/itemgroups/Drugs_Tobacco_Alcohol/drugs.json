@@ -81,7 +81,10 @@
       [ "prozac", 100 ],
       [ "thorazine", 100 ],
       [ "ghb", 100 ],
-      [ "xanax", 100 ]
+      [ "xanax", 100 ],
+      [ "purifier", 3 ],
+      [ "iv_purifier", 1 ],
+      [ "purifier_smart_shot", 1 ]
     ]
   },
   {

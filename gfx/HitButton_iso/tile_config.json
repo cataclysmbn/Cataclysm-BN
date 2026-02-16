@@ -8158,7 +8158,7 @@
           "fg": 2377
         },
         {
-          "id": ["mon_bat" ],
+          "id": ["mon_bat", "mon_bat_pup", "mon_bat_vampire"],
           "fg": 2378
         },
         {

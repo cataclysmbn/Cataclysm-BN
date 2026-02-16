@@ -47,12 +47,12 @@
     "repairs_like": "boots_larmor",
     "type": "ARMOR",
     "name": { "str": "pair of fishing waders", "str_pl": "pairs of fishing waders" },
-    "description": "Waterproof plastic fishing waders with a single large front pocket.",
+    "description": "Waterproof fishing waders with a single large front pocket.",
     "weight": "1360 g",
     "volume": "9500 ml",
     "price": "100 USD",
     "price_postapoc": "50 cent",
-    "material": [ "plastic" ],
+    "material": [ "rubber" ],
     "symbol": "[",
     "looks_like": "pants_ski",
     "color": "green",
@@ -63,7 +63,7 @@
     "warmth": 5,
     "material_thickness": 2,
     "environmental_protection": 6,
-    "flags": [ "VARSIZE", "WATERPROOF" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "ALLOWS_WINGS" ]
   },
   {
     "id": "hot_pants",
@@ -141,7 +141,7 @@
     "storage": "500 ml",
     "warmth": 10,
     "material_thickness": 3,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "POCKETS" ]
   },
   {
@@ -165,7 +165,7 @@
     "storage": "500 ml",
     "warmth": 10,
     "material_thickness": 3,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "POCKETS", "FANCY" ]
   },
   {
@@ -186,7 +186,7 @@
     "storage": "250 ml",
     "warmth": 20,
     "material_thickness": 3,
-    "flags": [ "VARSIZE" ]
+    "flags": [ "VARSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "kilt_leather",
@@ -206,7 +206,7 @@
     "storage": "250 ml",
     "warmth": 10,
     "material_thickness": 3,
-    "flags": [ "VARSIZE" ]
+    "flags": [ "VARSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "leggings",
@@ -243,7 +243,7 @@
     "covers": [ "legs" ],
     "coverage": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "loincloth_fur",
@@ -262,7 +262,7 @@
     "coverage": 5,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "loincloth_leather",
@@ -280,7 +280,7 @@
     "covers": [ "legs" ],
     "coverage": 5,
     "material_thickness": 2,
-    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "loincloth_wool",
@@ -299,7 +299,7 @@
     "coverage": 5,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "nanoskirt",
@@ -318,7 +318,7 @@
     "covers": [ "legs" ],
     "coverage": 7,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "FANCY" ]
+    "flags": [ "VARSIZE", "FANCY", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "pants",
@@ -353,7 +353,7 @@
     "volume": "2500 ml",
     "price": "35 USD",
     "price_postapoc": "250 cent",
-    "material": [ "cotton", "plastic" ],
+    "material": [ "cotton", "nylon" ],
     "symbol": "[",
     "looks_like": "pants_cargo",
     "color": "green",
@@ -363,7 +363,7 @@
     "storage": "2500 ml",
     "warmth": 20,
     "material_thickness": 2,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "POCKETS" ]
   },
   {
@@ -429,7 +429,7 @@
     "storage": "1 L",
     "warmth": 80,
     "material_thickness": 3,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 3,
     "flags": [ "VARSIZE", "POCKETS" ]
   },
@@ -463,7 +463,7 @@
     "storage": "500 ml",
     "warmth": 25,
     "material_thickness": 2,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE" ]
   },
   {
@@ -596,7 +596,7 @@
     "storage": "250 ml",
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE" ]
+    "flags": [ "VARSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "skirt_leather",
@@ -617,7 +617,7 @@
     "encumbrance": 10,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "VARSIZE" ]
+    "flags": [ "VARSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "striped_pants",
@@ -680,7 +680,7 @@
     "volume": "2500 ml",
     "price": "4375 cent",
     "price_postapoc": "250 cent",
-    "material": [ "cotton", "plastic" ],
+    "material": [ "cotton", "nylon" ],
     "symbol": "[",
     "looks_like": "pants_army",
     "color": "white",
@@ -690,7 +690,7 @@
     "storage": "2500 ml",
     "warmth": 50,
     "material_thickness": 3,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "POCKETS" ]
   },
   {

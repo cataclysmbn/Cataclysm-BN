@@ -64,6 +64,24 @@
     "damage_reduction": { "all": 28 }
   },
   {
+    "abstract": "aluminum_board",
+    "copy-from": "board",
+    "type": "vehicle_part",
+    "name": { "str": "aluminum board" },
+    "proportional": { "durability": 0.75 },
+    "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
+    "damage_reduction": { "all": 20 }
+  },
+  {
+    "abstract": "aluminum_halfboard",
+    "copy-from": "halfboard",
+    "type": "vehicle_part",
+    "name": { "str": "aluminum quarterpanel" },
+    "proportional": { "durability": 0.75 },
+    "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
+    "damage_reduction": { "all": 20 }
+  },
+  {
     "abstract": "stowboard",
     "type": "vehicle_part",
     "name": { "str": "stow board" },
@@ -123,6 +141,54 @@
     "extend": { "flags": [ "HALF_BOARD" ] },
     "delete": { "flags": [ "OPAQUE", "FULL_BOARD" ] },
     "damage_reduction": { "all": 75, "cut": 80, "stab": 80 }
+  },
+  {
+    "copy-from": "hdstowboard",
+    "abstract": "hdstowboard_superalloy",
+    "type": "vehicle_part",
+    "name": { "str": "superalloy stow board" },
+    "item": "alloy_plate",
+    "breaks_into": "ig_vp_alloy",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_superalloy", 1 ] ]
+      }
+    },
+    "extend": { "flags": [ "SHOCK_IMMUNE" ] }
+  },
+  {
+    "copy-from": "hdboard",
+    "abstract": "hdboard_superalloy",
+    "type": "vehicle_part",
+    "name": { "str": "superalloy board" },
+    "item": "alloy_plate",
+    "breaks_into": "ig_vp_alloy",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_superalloy", 1 ] ]
+      }
+    },
+    "extend": { "flags": [ "SHOCK_IMMUNE" ] }
+  },
+  {
+    "copy-from": "hdhalfboard",
+    "abstract": "hdhalfboard_superalloy",
+    "type": "vehicle_part",
+    "name": { "str": "superalloy quarterpanel" },
+    "item": "alloy_plate",
+    "breaks_into": "ig_vp_alloy",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_superalloy", 1 ] ]
+      }
+    },
+    "extend": { "flags": [ "SHOCK_IMMUNE" ] }
   },
   {
     "abstract": "woodboard",
@@ -193,6 +259,20 @@
     "symbol": "h"
   },
   {
+    "id": "aluminum_halfboard_cover",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "looks_like": "halfboard_cover",
+    "symbol": "^"
+  },
+  {
+    "id": "aluminum_board_horizontal",
+    "copy-from": "aluminum_board",
+    "type": "vehicle_part",
+    "looks_like": "board_horizontal",
+    "symbol": "h"
+  },
+  {
     "id": "clothboard_horizontal",
     "copy-from": "clothboard",
     "type": "vehicle_part",
@@ -208,6 +288,13 @@
     "id": "halfboard_horizontal",
     "copy-from": "halfboard",
     "type": "vehicle_part",
+    "symbol": "h"
+  },
+  {
+    "id": "aluminum_halfboard_horizontal",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "looks_like": "halfboard_horizontal",
     "symbol": "h"
   },
   {
@@ -233,6 +320,27 @@
     "id": "hdhalfboard_horizontal",
     "copy-from": "hdhalfboard",
     "type": "vehicle_part",
+    "symbol": "h"
+  },
+  {
+    "id": "hdstowboard_superalloy_horizontal",
+    "copy-from": "hdstowboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdstowboard_horizontal",
+    "symbol": "h"
+  },
+  {
+    "id": "hdboard_superalloy_horizontal",
+    "copy-from": "hdboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdboard_horizontal",
+    "symbol": "h"
+  },
+  {
+    "id": "hdhalfboard_superalloy_horizontal",
+    "copy-from": "hdhalfboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdhalfboard_horizontal",
     "symbol": "h"
   },
   {
@@ -268,6 +376,20 @@
     "symbol": "T"
   },
   {
+    "id": "aluminum_board_horizontal_front",
+    "looks_like": "board_horizontal_front",
+    "copy-from": "aluminum_board",
+    "type": "vehicle_part",
+    "symbol": "T"
+  },
+  {
+    "id": "aluminum_halfboard_horizontal_front",
+    "looks_like": "halfboard_horizontal_front",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "T"
+  },
+  {
     "id": "xlhalfboard_horizontal_front",
     "looks_like": "halfboard_horizontal_front",
     "copy-from": "xlhalfboard",
@@ -285,6 +407,20 @@
     "id": "halfboard_horizontal_rear",
     "looks_like": "halfboard_horizontal",
     "copy-from": "halfboard",
+    "type": "vehicle_part",
+    "symbol": "B"
+  },
+  {
+    "id": "aluminum_board_horizontal_rear",
+    "looks_like": "board_horizontal_rear",
+    "copy-from": "aluminum_board",
+    "type": "vehicle_part",
+    "symbol": "B"
+  },
+  {
+    "id": "aluminum_halfboard_horizontal_rear",
+    "looks_like": "halfboard_horizontal_rear",
+    "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
     "symbol": "B"
   },
@@ -308,9 +444,23 @@
     "symbol": "="
   },
   {
+    "id": "aluminum_halfboard_horizontal_2",
+    "looks_like": "halfboard_horizontal_2",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "="
+  },
+  {
     "id": "hdhalfboard_horizontal_2",
     "copy-from": "hdhalfboard",
     "type": "vehicle_part",
+    "symbol": "="
+  },
+  {
+    "id": "hdhalfboard_superalloy_horizontal_2",
+    "copy-from": "hdhalfboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdhalfboard_horizontal_2",
     "symbol": "="
   },
   {
@@ -340,6 +490,20 @@
     "symbol": "="
   },
   {
+    "id": "aluminum_halfboard_horizontal_2_front",
+    "looks_like": "halfboard_horizontal_2_front",
+    "copy-from": "halfboard",
+    "type": "vehicle_part",
+    "symbol": "="
+  },
+  {
+    "id": "aluminum_halfboard_horizontal_2_rear",
+    "looks_like": "halfboard_horizontal_2_rear",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "="
+  },
+  {
     "id": "xlhalfboard_horizontal_2_front",
     "looks_like": "xlhalfboard_horizontal_2",
     "copy-from": "xlhalfboard",
@@ -360,6 +524,13 @@
     "symbol": "u"
   },
   {
+    "id": "aluminum_board_ne",
+    "looks_like": "board_ne",
+    "copy-from": "aluminum_board",
+    "type": "vehicle_part",
+    "symbol": "u"
+  },
+  {
     "id": "clothboard_ne",
     "copy-from": "clothboard",
     "type": "vehicle_part",
@@ -375,6 +546,13 @@
   {
     "id": "halfboard_ne",
     "copy-from": "halfboard",
+    "type": "vehicle_part",
+    "symbol": "u"
+  },
+  {
+    "id": "aluminum_halfboard_ne",
+    "looks_like": "halfboard_ne",
+    "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
     "symbol": "u"
   },
@@ -406,6 +584,27 @@
     "symbol": "u"
   },
   {
+    "id": "hdstowboard_superalloy_ne",
+    "copy-from": "hdstowboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdstowboard_ne",
+    "symbol": "u"
+  },
+  {
+    "id": "hdboard_superalloy_ne",
+    "copy-from": "hdboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdboard_ne",
+    "symbol": "u"
+  },
+  {
+    "id": "hdhalfboard_superalloy_ne",
+    "copy-from": "hdhalfboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdhalfboard_ne",
+    "symbol": "u"
+  },
+  {
     "id": "woodboard_ne",
     "copy-from": "woodboard",
     "type": "vehicle_part",
@@ -432,6 +631,13 @@
     "symbol": "y"
   },
   {
+    "id": "aluminum_board_nw",
+    "looks_like": "board_nw",
+    "copy-from": "aluminum_board",
+    "type": "vehicle_part",
+    "symbol": "y"
+  },
+  {
     "id": "clothboard_nw",
     "copy-from": "clothboard",
     "type": "vehicle_part",
@@ -447,6 +653,13 @@
   {
     "id": "halfboard_nw",
     "copy-from": "halfboard",
+    "type": "vehicle_part",
+    "symbol": "y"
+  },
+  {
+    "id": "aluminum_halfboard_nw",
+    "looks_like": "halfboard_nw",
+    "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
     "symbol": "y"
   },
@@ -478,6 +691,27 @@
     "symbol": "y"
   },
   {
+    "id": "hdstowboard_superalloy_nw",
+    "copy-from": "hdstowboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdstowboard_nw",
+    "symbol": "y"
+  },
+  {
+    "id": "hdboard_superalloy_nw",
+    "copy-from": "hdboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdboard_nw",
+    "symbol": "y"
+  },
+  {
+    "id": "hdhalfboard_superalloy_nw",
+    "copy-from": "hdhalfboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdhalfboard_nw",
+    "symbol": "y"
+  },
+  {
     "id": "woodboard_nw",
     "copy-from": "woodboard",
     "type": "vehicle_part",
@@ -504,6 +738,13 @@
     "symbol": "n"
   },
   {
+    "id": "aluminum_board_se",
+    "looks_like": "board_se",
+    "copy-from": "aluminum_board",
+    "type": "vehicle_part",
+    "symbol": "n"
+  },
+  {
     "id": "clothboard_se",
     "copy-from": "clothboard",
     "type": "vehicle_part",
@@ -519,6 +760,13 @@
   {
     "id": "halfboard_se",
     "copy-from": "halfboard",
+    "type": "vehicle_part",
+    "symbol": "n"
+  },
+  {
+    "id": "aluminum_halfboard_se",
+    "looks_like": "halfboard_se",
+    "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
     "symbol": "n"
   },
@@ -550,6 +798,27 @@
     "symbol": "n"
   },
   {
+    "id": "hdstowboard_superalloy_se",
+    "copy-from": "hdstowboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdstowboard_se",
+    "symbol": "n"
+  },
+  {
+    "id": "hdboard_superalloy_se",
+    "copy-from": "hdboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdboard_se",
+    "symbol": "n"
+  },
+  {
+    "id": "hdhalfboard_superalloy_se",
+    "copy-from": "hdhalfboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdhalfboard_se",
+    "symbol": "n"
+  },
+  {
     "id": "woodboard_se",
     "copy-from": "woodboard",
     "type": "vehicle_part",
@@ -576,6 +845,13 @@
     "symbol": "b"
   },
   {
+    "id": "aluminum_board_sw",
+    "looks_like": "board_sw",
+    "copy-from": "aluminum_board",
+    "type": "vehicle_part",
+    "symbol": "b"
+  },
+  {
     "id": "clothboard_sw",
     "copy-from": "clothboard",
     "type": "vehicle_part",
@@ -591,6 +867,13 @@
   {
     "id": "halfboard_sw",
     "copy-from": "halfboard",
+    "type": "vehicle_part",
+    "symbol": "b"
+  },
+  {
+    "id": "aluminum_halfboard_sw",
+    "looks_like": "halfboard_sw",
+    "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
     "symbol": "b"
   },
@@ -622,6 +905,27 @@
     "symbol": "b"
   },
   {
+    "id": "hdstowboard_superalloy_sw",
+    "copy-from": "hdstowboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdstowboard_sw",
+    "symbol": "b"
+  },
+  {
+    "id": "hdboard_superalloy_sw",
+    "copy-from": "hdboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdboard_sw",
+    "symbol": "b"
+  },
+  {
+    "id": "hdhalfboard_superalloy_sw",
+    "copy-from": "hdhalfboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdhalfboard_sw",
+    "symbol": "b"
+  },
+  {
     "id": "woodboard_sw",
     "copy-from": "woodboard",
     "type": "vehicle_part",
@@ -648,6 +952,13 @@
     "symbol": "j"
   },
   {
+    "id": "aluminum_board_vertical",
+    "looks_like": "board_vertical",
+    "copy-from": "aluminum_board",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
     "id": "clothboard_vertical",
     "copy-from": "clothboard",
     "type": "vehicle_part",
@@ -662,6 +973,13 @@
   {
     "id": "halfboard_vertical",
     "copy-from": "halfboard",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
+    "id": "aluminum_halfboard_vertical",
+    "looks_like": "halfboard_vertical",
+    "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
     "symbol": "j"
   },
@@ -688,6 +1006,27 @@
     "id": "hdhalfboard_vertical",
     "copy-from": "hdhalfboard",
     "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
+    "id": "hdstowboard_superalloy_vertical",
+    "copy-from": "hdstowboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdstowboard_vertical",
+    "symbol": "j"
+  },
+  {
+    "id": "hdboard_superalloy_vertical",
+    "copy-from": "hdboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdboard_vertical",
+    "symbol": "j"
+  },
+  {
+    "id": "hdhalfboard_superalloy_vertical",
+    "copy-from": "hdhalfboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdhalfboard_vertical",
     "symbol": "j"
   },
   {
@@ -723,6 +1062,20 @@
     "symbol": "j"
   },
   {
+    "id": "aluminum_board_vertical_left",
+    "looks_like": "board_vertical_left",
+    "copy-from": "aluminum_board",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
+    "id": "aluminum_halfboard_vertical_left",
+    "looks_like": "halfboard_vertical_left",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
     "id": "xlhalfboard_vertical_left",
     "looks_like": "xlhalfboard_vertical",
     "copy-from": "xlhalfboard",
@@ -740,6 +1093,20 @@
     "id": "halfboard_vertical_right",
     "looks_like": "halfboard_vertical",
     "copy-from": "halfboard",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
+    "id": "aluminum_board_vertical_right",
+    "looks_like": "board_vertical_right",
+    "copy-from": "aluminum_board",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
+    "id": "aluminum_halfboard_vertical_right",
+    "looks_like": "halfboard_vertical_right",
+    "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
     "symbol": "j"
   },
@@ -763,9 +1130,23 @@
     "symbol": "H"
   },
   {
+    "id": "aluminum_halfboard_vertical_2",
+    "looks_like": "halfboard_vertical_2",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "H"
+  },
+  {
     "id": "hdhalfboard_vertical_2",
     "copy-from": "hdhalfboard",
     "type": "vehicle_part",
+    "symbol": "H"
+  },
+  {
+    "id": "hdhalfboard_superalloy_vertical_2",
+    "copy-from": "hdhalfboard_superalloy",
+    "type": "vehicle_part",
+    "looks_like": "hdhalfboard_vertical_2",
     "symbol": "H"
   },
   {
@@ -797,6 +1178,34 @@
   {
     "id": "halfboard_vertical_T_left",
     "copy-from": "halfboard",
+    "type": "vehicle_part",
+    "symbol": "["
+  },
+  {
+    "id": "aluminum_halfboard_vertical_2_left",
+    "looks_like": "halfboard_vertical_2_left",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "H"
+  },
+  {
+    "id": "aluminum_halfboard_vertical_2_right",
+    "looks_like": "halfboard_vertical_2_right",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "H"
+  },
+  {
+    "id": "aluminum_halfboard_vertical_T_right",
+    "looks_like": "halfboard_vertical_T_right",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "]"
+  },
+  {
+    "id": "aluminum_halfboard_vertical_T_left",
+    "looks_like": "halfboard_vertical_T_left",
+    "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
     "symbol": "["
   }

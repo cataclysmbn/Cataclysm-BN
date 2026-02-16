@@ -8,31 +8,55 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <variant>
 
 #include "animation.h"
 #include "enums.h"
+#include "hash_utils.h"
+#include "hsv_color.h"
 #include "lightmap.h"
 #include "line.h"
 #include "map_memory.h"
 #include "options.h"
+#include "overmapbuffer.h"
 #include "pimpl.h"
 #include "point.h"
-#include "sdl_wrappers.h"
 #include "sdl_geometry.h"
+#include "sdl_utils.h"
+#include "sdl_wrappers.h"
 #include "type_id.h"
 #include "weather.h"
 #include "weighted_list.h"
 
 class Character;
+struct char_trait_data;
+using mutation = std::pair<const trait_id, char_trait_data>;
+class monster;
 class JsonObject;
 class pixel_minimap;
+class dynamic_atlas;
+class field;
+class item;
+class optional_vpart_position;
+class effect;
+struct bionic;
 
 extern void set_displaybuffer_rendertarget();
 
 /** Structures */
 struct tile_type {
+    using sprite_list = weighted_int_list<std::vector<int>>;
     // fg and bg are both a weighted list of lists of sprite IDs
-    weighted_int_list<std::vector<int>> fg, bg;
+    struct sprite_pair {
+        sprite_list fg, bg;
+    };
+
+    struct sprite_masks {
+        sprite_pair tint;
+    };
+
+    sprite_pair sprite;
+    sprite_masks masks;
     bool multitile = false;
     bool rotates = false;
     bool animated = false;
@@ -41,6 +65,8 @@ struct tile_type {
     point offset = point_zero;
 
     std::vector<std::string> available_subtiles;
+    std::set<flag_id> flags;
+    std::optional<SDL_Color> default_tint;
 };
 
 // Make sure to change TILE_CATEGORY_IDS if this changes!
@@ -78,12 +104,13 @@ class tile_lookup_res
 
 class texture
 {
+        friend class dynamic_atlas;
     private:
-        std::shared_ptr<SDL_Texture> sdl_texture_ptr;
+        SDL_Texture_SharedPtr sdl_texture_ptr;
         SDL_Rect srcrect = { 0, 0, 0, 0 };
 
     public:
-        texture( std::shared_ptr<SDL_Texture> ptr, const SDL_Rect &rect ) : sdl_texture_ptr( ptr ),
+        texture( SDL_Texture_SharedPtr ptr, const SDL_Rect &rect ) : sdl_texture_ptr( ptr ),
             srcrect( rect ) { }
         texture() = default;
 
@@ -91,6 +118,7 @@ class texture
         std::pair<int, int> dimension() const {
             return std::make_pair( srcrect.w, srcrect.h );
         }
+
         /// Interface to @ref SDL_RenderCopyEx, using this as the texture, and
         /// null as source rectangle (render the whole texture). Other parameters
         /// are simply passed through.
@@ -101,9 +129,129 @@ class texture
                                      flip );
         }
 
-        int set_alpha_mod( int mod ) const {
+        /// Interface to @ref SDL_RenderCopy, using this as the texture
+        int render_copy( const SDL_Renderer_Ptr &renderer, const SDL_Rect *const dstrect ) const {
+            return SDL_RenderCopy( renderer.get(), sdl_texture_ptr.get(), &srcrect, dstrect );
+        }
+
+        int get_blend_mode( SDL_BlendMode *mode ) const {
+            return SDL_GetTextureBlendMode( sdl_texture_ptr.get(), mode );
+        }
+
+        int set_blend_mode( const SDL_BlendMode mode ) const {
+            return SDL_SetTextureBlendMode( sdl_texture_ptr.get(), mode );
+        }
+
+        int get_alpha_mod( uint8_t *mod ) const {
+            return SDL_GetTextureAlphaMod( sdl_texture_ptr.get(), mod );
+        }
+
+        int set_alpha_mod( const uint8_t mod ) const {
             return SDL_SetTextureAlphaMod( sdl_texture_ptr.get(), mod );
         }
+
+        int set_color_mod( const uint8_t r, const uint8_t g, const uint8_t b ) const {
+            return SDL_SetTextureColorMod( sdl_texture_ptr.get(), r, g, b );
+        }
+
+        int get_color_mod( uint8_t *r, uint8_t *g, uint8_t *b ) const {
+            return SDL_GetTextureColorMod( sdl_texture_ptr.get(), r, g, b );
+        }
+};
+
+enum class tint_blend_mode : uint8_t {
+    tint,
+    overlay,
+    multiply,
+    additive,
+    subtract,
+};
+
+enum class tileset_fx_type {
+    none,
+    shadow,
+    night,
+    overexposed,
+    underwater,
+    underwater_dark,
+    memory,
+    z_overlay
+};
+
+constexpr int TILESET_NO_MASK = -1;
+constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
+
+struct tint_config {
+    std::optional<SDL_Color> color;
+    tint_blend_mode blend_mode = tint_blend_mode::tint;
+    std::optional<float> contrast;    // 1.0 = no change, absent = skip
+    std::optional<float> saturation;  // 1.0 = no change, absent = skip
+    std::optional<float> brightness;  // 1.0 = no change, absent = skip
+
+    bool has_value() const {
+        return color.has_value() || contrast.has_value() || saturation.has_value() ||
+               brightness.has_value();
+    }
+
+    bool operator==( const tint_config &other ) const {
+        return color == other.color
+               && blend_mode == other.blend_mode
+               && contrast == other.contrast
+               && saturation == other.saturation
+               && brightness == other.brightness;
+    }
+
+    // Implicit conversions for backward compatibility and convenience
+    tint_config() = default;
+    tint_config( std::optional<SDL_Color> c ) : color( c ) {}
+    tint_config( std::nullopt_t ) : color( std::nullopt ) {}
+    tint_config( SDL_Color c ) : color( c ) {}
+    tint_config( RGBColor c ) : color( static_cast<SDL_Color>( c ) ) {}
+    tint_config( nc_color c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( c ) ) ) {}
+};
+
+using color_tint_pair = std::pair<tint_config, tint_config>;  // {bg, fg}
+
+struct tileset_lookup_key {
+    int sprite_index;
+    int mask_index;
+    tileset_fx_type effect;
+    tint_config tint;
+
+    bool operator==( const tileset_lookup_key &other ) const {
+        return sprite_index == other.sprite_index
+               && mask_index == other.mask_index
+               && effect == other.effect
+               && tint == other.tint;
+    }
+};
+
+template <>
+struct std::hash<tileset_lookup_key> {
+    size_t operator()( const tileset_lookup_key &v ) const noexcept {
+        std::size_t seed = 0;
+        cata::hash_combine( seed, v.sprite_index );
+        cata::hash_combine( seed, v.mask_index );
+        cata::hash_combine( seed, v.effect );
+        if( v.tint.color.has_value() ) {
+            const union {
+                SDL_Color sdl;
+                uint32_t val;
+            } color = { v.tint.color.value() };
+            cata::hash_combine( seed, color.val );
+        }
+        cata::hash_combine( seed, static_cast<uint8_t>( v.tint.blend_mode ) );
+        if( v.tint.contrast.has_value() ) {
+            cata::hash_combine( seed, v.tint.contrast.value() );
+        }
+        if( v.tint.saturation.has_value() ) {
+            cata::hash_combine( seed, v.tint.saturation.value() );
+        }
+        if( v.tint.brightness.has_value() ) {
+            cata::hash_combine( seed, v.tint.brightness.value() );
+        }
+        return seed;
+    }
 };
 
 class tileset
@@ -122,6 +270,13 @@ class tileset
         // multiplier for pixel-doubling tilesets
         float tile_pixelscale;
 
+#if defined(DYNAMIC_ATLAS)
+        std::unique_ptr<dynamic_atlas> tileset_atlas;
+        mutable std::unordered_map<tileset_lookup_key, texture> tile_lookup;
+    public:
+        dynamic_atlas *texture_atlas() const { return tileset_atlas.get(); }
+    private:
+#else
         std::vector<texture> tile_values;
         std::vector<texture> shadow_tile_values;
         std::vector<texture> night_tile_values;
@@ -130,16 +285,15 @@ class tileset
         std::vector<texture> underwater_dark_tile_values;
         std::vector<texture> memory_tile_values;
         std::vector<texture> z_overlay_values;
+#endif
 
         std::unordered_map<std::string, tile_type> tile_ids;
+        std::unordered_map<std::string, color_tint_pair> tints;
+        std::unordered_map<std::string, std::pair<std::string, bool>> tint_pairs;
         // caches both "default" and "_season_XXX" tile variants (to reduce the number of lookups)
         // either variant can be either a `nullptr` or a pointer/reference to the real value (stored inside `tile_ids`)
-        std::unordered_map<std::string, season_tile_value> tile_ids_by_season[season_type::NUM_SEASONS];
-
-        static const texture *get_if_available( const size_t index,
-                                                const decltype( shadow_tile_values ) &tiles ) {
-            return index < tiles.size() ? & tiles[index] : nullptr;
-        }
+        std::unordered_map<std::string, season_tile_value>
+        tile_ids_by_season[season_type::NUM_SEASONS];
 
         friend class tileset_loader;
 
@@ -157,30 +311,10 @@ class tileset
             return tileset_id;
         }
 
-        const texture *get_tile( const size_t index ) const {
-            return get_if_available( index, tile_values );
-        }
-        const texture *get_night_tile( const size_t index ) const {
-            return get_if_available( index, night_tile_values );
-        }
-        const texture *get_shadow_tile( const size_t index ) const {
-            return get_if_available( index, shadow_tile_values );
-        }
-        const texture *get_overexposed_tile( const size_t index ) const {
-            return get_if_available( index, overexposed_tile_values );
-        }
-        const texture *get_underwater_tile( const size_t index ) const {
-            return get_if_available( index, underwater_tile_values );
-        }
-        const texture *get_underwater_dark_tile( const size_t index ) const {
-            return get_if_available( index, underwater_dark_tile_values );
-        }
-        const texture *get_memory_tile( const size_t index ) const {
-            return get_if_available( index, memory_tile_values );
-        }
-        const texture *get_z_overlay( const size_t index ) const {
-            return get_if_available( index, z_overlay_values );
-        }
+        const texture *get_or_default( int sprite_index, int mask_index,
+                                       const tileset_fx_type &type,
+                                       const tint_config &tint = {} ) const;
+
 
         tile_type &create_tile_type( const std::string &id, tile_type &&new_tile_type );
         const tile_type *find_tile_type( const std::string &id ) const;
@@ -201,6 +335,10 @@ class tileset
          */
         std::optional<tile_lookup_res> find_tile_type_by_season( const std::string &id,
                 season_type season ) const;
+
+        std::pair<std::string, bool> get_tint_controller( const std::string &tint_type );
+
+        const color_tint_pair *get_tint( const std::string &tint_id );
 };
 
 class tileset_loader
@@ -228,7 +366,9 @@ class tileset_loader
 
         /** Returns false if failed to create texture. */
         bool copy_surface_to_texture( const SDL_Surface_Ptr &surf, point offset,
-                                      std::vector<texture> &target );
+                                      std::vector<texture> &target ) const;
+
+        bool copy_surface_to_dynamic_atlas( const SDL_Surface_Ptr &surf, point offset ) ;
 
         /** Returns false if failed to create texture(s). */
         bool create_textures_from_tile_atlas( const SDL_Surface_Ptr &tile_atlas, point offset );
@@ -358,21 +498,32 @@ struct tile_search_result {
     std::string found_id;
 };
 
+struct tile_search_params {
+    // String id of the tile to draw.
+    const std::string &id;
+    // Category of the tile to draw.
+    TILE_CATEGORY category;
+    // if id is not found, try to find a tile for the category+subcategory combination
+    const std::string &subcategory;
+    // variant of the tile
+    int subtile;
+    // rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
+    int rota;
+};
+
 class cata_tiles
 {
     public:
-        cata_tiles( const SDL_Renderer_Ptr &render, const GeometryRenderer_Ptr &geometry );
+        cata_tiles( const SDL_Renderer_Ptr &render,
+                    const GeometryRenderer_Ptr &geometry );
         ~cata_tiles();
 
-        /** Reload tileset, with the given scale. Scale is divided by 16 to allow for scales < 1 without risking
-         *  float inaccuracies. */
+        /** Reload tileset, with the given scale. Scale is divided by 16 to allow for
+         * scales < 1 without risking float inaccuracies. */
         void set_draw_scale( float scale );
 
         /** Tries to find tile with specified parameters and return it if exists **/
-        std::optional<tile_search_result> tile_type_search(
-            const std::string &id, TILE_CATEGORY category, const std::string &subcategory,
-            int subtile, int rota
-        );
+        std::optional<tile_search_result> tile_type_search( const tile_search_params &tile );
 
         void on_options_changed();
 
@@ -397,10 +548,6 @@ class cata_tiles
 
         std::optional<tile_lookup_res> find_tile_with_season( const std::string &id ) const;
 
-        std::optional<tile_lookup_res>
-        find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
-                              int looks_like_jumps_limit = 10 ) const;
-
         // this templated method is used only from it's own cpp file, so it's ok to declare it here
         template<typename T>
         std::optional<tile_lookup_res>
@@ -411,52 +558,60 @@ class cata_tiles
         bool find_overlay_looks_like( bool male, const std::string &overlay, std::string &draw_id );
 
         /**
-         * @brief draw_from_id_string() without category, subcategory and height_3d
-         *
-         * @param category C_NONE
-         * @param subcategory empty_string
-         * @param height_3d nullint
-         */
-        bool draw_from_id_string( const std::string &id, const tripoint &pos, int subtile, int rota,
-                                  lit_level ll, bool apply_visual_effects, int overlay_count );
-        /**
-         * @brief * @brief draw_from_id_string() without height_3d
-         *
-         * @param height_3d nullint
-         */
-        bool draw_from_id_string( const std::string &id, TILE_CATEGORY category,
-                                  const std::string &subcategory, const tripoint &pos, int subtile, int rota,
-                                  lit_level ll, bool apply_visual_effects, int overlay_count );
-        /**
-         * @brief draw_from_id_string() without height_3d
-         *
-         * @param category C_NONE
-         * @param subcategory empty_string
-         */
-        bool draw_from_id_string( const std::string &id, const tripoint &pos, int subtile, int rota,
-                                  lit_level ll, bool apply_visual_effects, int &height_3d, int overlay_count );
-        /**
          * @brief Try to draw a tile using the given id. calls draw_tile_at() at the end.
          *
          * @param id String id of the tile to draw.
          * @param category Category of the tile to draw.
          * @param subcategory if id is not found, try to find a tile for the category+subcategory combination
-         * @param pos Tripoint of the tile to draw.
          * @param subtile variant of the tile
          * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
+         * @param pos Tripoint of the tile to draw.
+         * @param bg_color
+         * @param fg_color
          * @param ll light level
          * @param apply_visual_effects use night vision and underwater colors?
-         * @param height_3d return parameter for height of the sprite
          * @param overlay_count how blue the tile looks for lower z levels
          * @param as_independent_entity draw tile as single entity to the screen
          *                              (like if you would to display something unrelated to game map context
          *                              e.g. character preview tile in character creation screen)
          * @return always true
          */
-        bool draw_from_id_string( const std::string &id, TILE_CATEGORY category,
-                                  const std::string &subcategory, const tripoint &pos, int subtile, int rota,
-                                  lit_level ll, bool apply_visual_effects, int &height_3d, int overlay_count,
-                                  bool as_independent_entity = false );
+        bool draw_from_id_string( const tile_search_params &tile, const tripoint &pos,
+                                  const tint_config &bg_tint,
+                                  const tint_config &fg_tint,
+                                  lit_level ll, bool apply_visual_effects,
+                                  int overlay_count,
+                                  bool as_independent_entity ) {
+            int discard = 0;
+            return draw_from_id_string(
+                       tile, pos, bg_tint, fg_tint,
+                       ll, apply_visual_effects, overlay_count,
+                       as_independent_entity, discard
+                   );
+        }
+
+        /**
+         * @brief Try to draw a tile using the given id. calls draw_tile_at() at the end.
+         *
+         * @param tile Tile to draw from
+         * @param pos Tripoint of the tile to draw.
+         * @param bg_tint
+         * @param fg_tint
+         * @param ll light level
+         * @param apply_visual_effects use night vision and underwater colors?
+         * @param overlay_count how blue the tile looks for lower z levels
+         * @param as_independent_entity draw tile as single entity to the screen
+         *                              (like if you would to display something unrelated to game map context
+         *                              e.g. character preview tile in character creation screen)
+         * @param height_3d return parameter for height of the sprite
+         * @return always true
+         */
+        bool draw_from_id_string( const tile_search_params &tile, const tripoint &pos,
+                                  const tint_config &bg_tint,
+                                  const tint_config &fg_tint,
+                                  lit_level ll, bool apply_visual_effects,
+                                  int overlay_count, bool as_independent_entity,
+                                  int &height_3d );
         /**
         * @brief Draw overmap tile, if it's transparent, then draw lower tile first
         *
@@ -470,23 +625,46 @@ class cata_tiles
 
         /**
          * @brief draw_sprite_at() without height_3d
+         *
+         * @param tile Tile to draw.
+         * @param p Point to draw the tile at.
+         * @param loc_rand picked random int
+         * @param is_fg is foreground layer
+         * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
+         * @param tint tint configuration (color, contrast, saturation)
+         * @param ll light level
+         * @param apply_visual_effects use night vision and underwater colors?
+         * @param overlay_count how blue the tile looks for lower z levels
          */
-        bool draw_sprite_at(
-            const tile_type &tile, const weighted_int_list<std::vector<int>> &svlist,
-            point, unsigned int loc_rand, bool rota_fg, int rota, lit_level ll,
-            bool apply_visual_effects, int overlay_count );
+        bool draw_sprite_at( const tile_type &tile, point p,
+                             unsigned int loc_rand, bool is_fg, int rota,
+                             const tint_config &tint, lit_level ll,
+                             bool apply_visual_effects, int overlay_count ) {
+            int discard = 0;
+            return draw_sprite_at( tile, p, loc_rand, is_fg, rota, tint, ll,
+                                   apply_visual_effects, overlay_count, discard );
+        }
 
         /**
-         * @brief Try to draw either forground or background using the given reference.
+         * @brief Try to draw either foreground or background using the given reference.
          *
-         * @param svlist list of weighted subtile variants
-         * @param rota_fg is it foreground (true) or background?
+         * @param tile Tile to draw.
+         * @param p Point to draw the tile at.
+         * @param loc_rand picked random int
+         * @param is_fg is foreground layer
+         * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
+         * @param tint tint configuration (color, contrast, saturation)
+         * @param ll light level
+         * @param apply_visual_effects use night vision and underwater colors?
+         * @param overlay_count how blue the tile looks for lower z levels
+         * @param height_3d return parameter for height of the sprite
          * @return always true.
          */
-        bool draw_sprite_at(
-            const tile_type &tile, const weighted_int_list<std::vector<int>> &svlist,
-            point, unsigned int loc_rand, bool rota_fg, int rota, lit_level ll,
-            bool apply_visual_effects, int &height_3d, int overlay_alpha );
+        bool draw_sprite_at( const tile_type &tile, point p,
+                             unsigned int loc_rand, bool is_fg, int rota,
+                             const tint_config &tint, lit_level ll,
+                             bool apply_visual_effects, int overlay_count,
+                             int &height_3d );
 
         /**
          * @brief Calls draw_sprite_at() twice each for foreground and background.
@@ -494,16 +672,20 @@ class cata_tiles
          * @param tile Tile to draw.
          * @param p Point to draw the tile at.
          * @param loc_rand picked random int
-         * @param rota_fg rotate foreground: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
          * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
+         * @param bg_tint background tint configuration
+         * @param fg_tint foreground tint configuration
          * @param ll light level
          * @param apply_visual_effects use night vision and underwater colors?
          * @param height_3d return parameter for height of the sprite
          * @param overlay_count how blue the tile looks for lower z levels
          * @return always true.
          */
-        bool draw_tile_at( const tile_type &tile, point, unsigned int loc_rand, int rota,
-                           lit_level ll, bool apply_visual_effects, int &height_3d, int overlay_count );
+        bool draw_tile_at( const tile_type &tile, point p,
+                           unsigned int loc_rand, int rota,
+                           const tint_config &bg_tint, const tint_config &fg_tint,
+                           lit_level ll, bool apply_visual_effects, int &height_3d,
+                           int overlay_count );
 
         /**
          * @brief Draws a colored solid color tile at position, with optional blending
@@ -513,8 +695,8 @@ class cata_tiles
          * @param blend_mode Blend mode to draw the tile with
          * @return always true.
          */
-        bool draw_color_at( const SDL_Color &color, point p,
-                            SDL_BlendMode blend_mode = SDL_BLENDMODE_NONE );
+        bool draw_color_at(
+            const SDL_Color &color, point p, SDL_BlendMode blend_mode = SDL_BLENDMODE_NONE );
 
         /** Tile Picking */
         void get_tile_values( int t, const int *tn, int &subtile, int &rotation );
@@ -537,21 +719,48 @@ class cata_tiles
         void get_rotation_and_subtile( char val, int &rota, int &subtile );
 
         /** Map memory */
-        bool has_memory_at( const tripoint &p ) const;
-        bool has_terrain_memory_at( const tripoint &p ) const;
-        bool has_furniture_memory_at( const tripoint &p ) const;
-        bool has_trap_memory_at( const tripoint &p ) const;
-        bool has_vpart_memory_at( const tripoint &p ) const;
-        memorized_terrain_tile get_terrain_memory_at( const tripoint &p ) const;
-        memorized_terrain_tile get_furniture_memory_at( const tripoint &p ) const;
-        memorized_terrain_tile get_trap_memory_at( const tripoint &p ) const;
-        memorized_terrain_tile get_vpart_memory_at( const tripoint &p ) const;
+        static bool has_memory_at( const tripoint &p );
+        static auto get_ter_memory_at( const tripoint &p ) -> std::optional<memorized_terrain_tile>;
+        static auto get_furn_memory_at( const tripoint &p ) -> std::optional<memorized_terrain_tile>;
+        static auto get_trap_memory_at( const tripoint &p ) -> std::optional<memorized_terrain_tile>;
+        static auto get_vpart_memory_at( const tripoint &p ) -> std::optional<memorized_terrain_tile>;
 
         /** Drawing Layers */
         bool would_apply_vision_effects( visibility_type visibility ) const;
         bool apply_vision_effects( const tripoint &pos, visibility_type visibility );
 
         bool draw_block( const tripoint &p, SDL_Color color, int scale );
+
+        static auto get_overmap_color( const overmapbuffer &o,
+                                       const tripoint_abs_omt &p ) -> color_tint_pair;
+        static auto get_terrain_color( const ter_t &t, const map &m,
+                                       const tripoint &p ) -> color_tint_pair;
+        static auto get_furniture_color( const furn_t &f, const map &m,
+                                         const tripoint &p ) -> color_tint_pair;
+        static auto get_graffiti_color( const map &m, const tripoint &p ) -> color_tint_pair;
+        static auto get_trap_color( const trap &tr, const map &map, tripoint tripoint ) -> color_tint_pair;
+        static auto get_field_color( const field &f, const map &m, const tripoint &p ) -> color_tint_pair;
+        auto get_item_color( const item &i, const map &m, const tripoint &p ) -> color_tint_pair;
+        auto get_item_color( const item &i ) -> color_tint_pair;
+        static auto get_vpart_color(
+            const optional_vpart_position &vp, const map &m, const tripoint &p ) -> color_tint_pair;
+        static auto get_monster_color(
+            const monster &mon, const map &m, const tripoint &p ) -> color_tint_pair;
+        static auto get_character_color(
+            const Character &ch, const map &m, const tripoint &p ) -> color_tint_pair;
+        auto get_effect_color(
+            const effect &eff, const Character &c, const map &m, const tripoint &p ) -> color_tint_pair;
+        auto get_effect_color(
+            const effect &eff, const Character &c ) -> color_tint_pair;
+        auto get_bionic_color(
+            const bionic &bio, const Character &c, const map &m, const tripoint &p )-> color_tint_pair;
+        auto get_bionic_color(
+            const bionic &bio, const Character &c )-> color_tint_pair;
+        auto get_mutation_color(
+            const mutation &mut, const Character &c, const map &m,
+            const tripoint &p )-> color_tint_pair;
+        auto get_mutation_color(
+            const mutation &mut, const Character &c )-> color_tint_pair;
 
         bool draw_terrain( const tripoint &p, lit_level ll, int &height_3d,
                            const bool ( &invisible )[5], int z_drop );
@@ -574,10 +783,12 @@ class cata_tiles
         void draw_entity_with_overlays( const Character &ch, const tripoint &p, lit_level ll,
                                         int &height_3d, bool as_independent_entity = false );
 
-
         bool draw_item_highlight( const tripoint &pos );
 
     public:
+        auto find_tile_looks_like( const std::string &id, TILE_CATEGORY category,
+                                   int looks_like_jumps_limit = 10 ) const -> std::optional<tile_lookup_res>;
+
         // Animation layers
         void init_explosion( const tripoint &p, int radius, const std::string &name );
         void draw_explosion_frame();
@@ -593,6 +804,8 @@ class cata_tiles
         void void_cone_aoe();
 
         void init_draw_bullet( const tripoint &p, std::string name, int rotation );
+        void init_draw_bullets( const std::vector<tripoint> &ps, const std::vector<std::string> &names,
+                                const std::vector<int> &rotations );
         void draw_bullet_frame();
         void void_bullet();
 
@@ -625,7 +838,7 @@ class cata_tiles
         void void_sct();
 
         void init_draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset );
-        void draw_zones_frame();
+        void draw_zones_frame( std::multimap<point, formatted_text> &overlay_strings );
         void void_zones();
 
         void init_draw_radiation_override( const tripoint &p, int rad );
@@ -770,9 +983,9 @@ class cata_tiles
         tripoint cone_aoe_origin;
         one_bucket cone_aoe_layer;
 
-        tripoint bul_pos;
-        std::string bul_id;
-        int bul_rotation = 0;
+        std::vector<tripoint> bul_pos;
+        std::vector<std::string> bul_id;
+        std::vector<int> bul_rotation;
 
         tripoint hit_pos;
         std::string hit_entity_id;
@@ -824,6 +1037,7 @@ class cata_tiles
 
     public:
         std::string memory_map_mode = "color_pixel_sepia";
+        tileset *current_tileset() const { return tileset_ptr.get(); }
 };
 
 

@@ -5,6 +5,7 @@
 #include <cstring>
 #include <chrono>
 
+#include "catacharset.h"
 #include "game.h"
 #include "avatar.h"
 #include "debug.h"
@@ -640,7 +641,11 @@ sqlite3 *world::get_player_db()
     }
 
     if( last_save_id != g->u.get_save_id() ) {
-        throw std::runtime_error( "Save ID changed without reloading the world object" );
+        copy_file(
+            info->folder_path() + "/" + base64_encode( last_save_id ) + ".sqlite3",
+            info->folder_path() + "/" + base64_encode( g->u.get_save_id() ) + ".sqlite3"
+        );
+        save_db = open_db( info->folder_path() + "/" + get_player_path() + ".sqlite3" );
     }
 
     return save_db;

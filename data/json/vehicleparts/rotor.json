@@ -43,7 +43,7 @@
       "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "2 h", "using": [ [ "welding_standard", 10 ], [ "steel_tiny", 1 ] ] }
     },
     "durability": 100,
-    "description": "A set of four military-grade helicopter rotor blades, used to provide lift by rotation.",
+    "description": "A set of four civilian helicopter rotor blades, used to provide lift by rotation.",
     "damage_modifier": 80,
     "breaks_into": [ { "item": "scrap", "count": [ 8, 15 ] }, { "item": "steel_chunk", "count": [ 2, 8 ] } ],
     "damage_reduction": { "all": 22 }
@@ -73,6 +73,8 @@
       { "item": "steel_chunk", "count": [ 1, 4 ] },
       { "item": "splinter", "count": [ 15, 30 ] }
     ],
+    "extend": { "flags": [ "FOLDABLE" ] },
+    "folded_volume": "50 L",
     "damage_reduction": { "all": 10 }
   },
   {

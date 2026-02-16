@@ -90,7 +90,14 @@ void mutation_category_trait::load( const JsonObject &jsobj )
     mutation_category_trait new_category;
     jsobj.read( "id", new_category.id, true );
     new_category.raw_name = jsobj.get_string( "name" );
-    new_category.threshold_mut = trait_id( jsobj.get_string( "threshold_mut" ) );
+    if( jsobj.has_array( "threshold_muts" ) ) {
+        for( auto id : jsobj.get_string_array( "threshold_muts" ) ) {
+            new_category.threshold_muts.push_back( trait_id( id ) );
+        }
+    } else {
+        new_category.threshold_muts.push_back( trait_id( jsobj.get_string( "threshold_mut" ) ) );
+    }
+
 
     new_category.raw_mutagen_message = jsobj.get_string( "mutagen_message" );
     new_category.mutagen_hunger  = jsobj.get_int( "mutagen_hunger", 10 );
@@ -198,9 +205,14 @@ void mutation_category_trait::check_consistency()
 {
     for( const auto &pr : mutation_category_traits ) {
         const mutation_category_trait &cat = pr.second;
-        if( !cat.threshold_mut.is_empty() && !cat.threshold_mut.is_valid() ) {
-            debugmsg( "Mutation category %s has threshold mutation %s, which does not exist",
-                      cat.id.c_str(), cat.threshold_mut.c_str() );
+        if( !( cat.threshold_muts.size() == 1 ) ) {
+            for( auto mut : cat.threshold_muts ) {
+                if( !mut.is_valid() && ( mut != trait_id::NULL_ID() ) ) {
+                    debugmsg( "Mutation category %s has threshold mutation %s, which does not exist",
+                              cat.id.c_str(), mut.c_str() );
+                }
+            }
+
         }
     }
 }
@@ -293,6 +305,7 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "active", activated, false );
     optional( jo, was_loaded, "starts_active", starts_active, false );
     optional( jo, was_loaded, "allow_soft_gear", allow_soft_gear, false );
+    optional( jo, was_loaded, "allowed_items_only", allowed_items_only, false );
     optional( jo, was_loaded, "cost", cost, 0 );
     optional( jo, was_loaded, "time", cooldown, 0 );
     optional( jo, was_loaded, "hunger", hunger, false );
@@ -335,6 +348,15 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
 
     optional( jo, was_loaded, "bodytemp_sleep", bodytemp_sleep, 0 );
     optional( jo, was_loaded, "threshold", threshold, false );
+    unsigned short tier_default;
+    if( jo.has_array( "threshreq" ) ) {
+        tier_default = !( jo.get_array( "threshreq" ).empty() ) ? 1 : 0;
+    } else if( jo.has_string( "threshreq" ) ) {
+        tier_default = !( jo.get_string( "threshreq" ).empty() ) ? 1 : 0;
+    } else {
+        tier_default = 0;
+    }
+    optional( jo, was_loaded, "threshold_tier", threshold_tier, tier_default );
     optional( jo, was_loaded, "profession", profession, false );
     optional( jo, was_loaded, "debug", debug, false );
     optional( jo, was_loaded, "player_display", player_display, true );
@@ -389,6 +411,9 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "night_vision_range", night_vision_range, 0.0f );
     optional( jo, was_loaded, "reading_speed_multiplier", reading_speed_multiplier, 1.0f );
     optional( jo, was_loaded, "skill_rust_multiplier", skill_rust_multiplier, 1.0f );
+    optional( jo, was_loaded, "packmule_modifier", packmule_modifier, 1.0f );
+    optional( jo, was_loaded, "crafting_speed_modifier", crafting_speed_modifier, 1.0f );
+    optional( jo, was_loaded, "construction_speed_modifier", construction_speed_modifier, 1.0f );
     optional( jo, was_loaded, "scent_modifier", scent_modifier, 1.0f );
     optional( jo, was_loaded, "scent_intensity", scent_intensity, std::nullopt );
     optional( jo, was_loaded, "scent_mask", scent_mask, std::nullopt );
@@ -434,8 +459,8 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
 
     optional( jo, was_loaded, "prereqs", prereqs, trait_reader{} );
     optional( jo, was_loaded, "prereqs2", prereqs2, trait_reader{} );
-    optional( jo, was_loaded, "threshreq", threshreq, trait_reader{} );
     optional( jo, was_loaded, "cancels", cancels, trait_reader{} );
+    optional( jo, was_loaded, "prevents", prevents, trait_reader{} );
     optional( jo, was_loaded, "changes_to", replacements, trait_reader{} );
     optional( jo, was_loaded, "leads_to", additions, trait_reader{} );
     optional( jo, was_loaded, "flags", flags, auto_flags_reader<trait_flag_str_id> {} );
@@ -498,6 +523,10 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
 
     for( const std::string line : jo.get_array( "restricts_gear" ) ) {
         restricts_gear.insert( get_body_part_token( line ) );
+    }
+
+    for( const std::string line : jo.get_array( "allowed_items" ) ) {
+        allowed_items.insert( flag_id( line ) );
     }
 
     for( JsonObject ao : jo.get_array( "armor" ) ) {
@@ -599,7 +628,6 @@ void mutation_branch::check_consistency()
         }
         ::check_consistency( mdata.prereqs, mid, "prereq" );
         ::check_consistency( mdata.prereqs2, mid, "prereqs2" );
-        ::check_consistency( mdata.threshreq, mid, "threshreq" );
         ::check_consistency( mdata.cancels, mid, "cancels" );
         ::check_consistency( mdata.replacements, mid, "replacements" );
         ::check_consistency( mdata.additions, mid, "additions" );
@@ -631,6 +659,17 @@ std::string mutation_branch::get_name( const trait_id &mutation_id )
 const std::vector<mutation_branch> &mutation_branch::get_all()
 {
     return trait_factory.get_all();
+}
+
+void mutation_branch::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> &actors )
+{
+    for( const mutation_branch &mb : trait_factory.get_all() ) {
+        auto it = actors.find( mb.id.str() );
+        if( it != actors.end() ) {
+            mb.lua_callbacks = it->second.get();
+        }
+    }
 }
 
 void mutation_branch::reset_all()

@@ -248,6 +248,7 @@
         "ignore_armor": false,
         "effect_msg": "The acidic drizzle burns, but is mostly harmless for now...",
         "effect_msg_frequency": 3,
+        "effect_msg_blocked_frequency": 32,
         "message_type": 3,
         "clothing_protection": 2,
         "umbrella_protection": 1
@@ -284,6 +285,7 @@
         "ignore_armor": false,
         "effect_msg": "The acid rain burns your skin!",
         "effect_msg_frequency": 1,
+        "effect_msg_blocked_frequency": 32,
         "message_type": 1,
         "clothing_protection": 2,
         "umbrella_protection": 1

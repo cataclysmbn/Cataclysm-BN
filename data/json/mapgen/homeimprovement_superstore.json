@@ -10,7 +10,9 @@
       [ "flyer", 30 ],
       [ "box_small", 30 ],
       [ "rag", 20 ],
-      [ "bag_plastic", 20 ],
+      [ "plastic_shopping_bag", 20 ],
+      [ "bag_plastic", 15 ],
+      [ "bag_zipper", 5 ],
       [ "news_regional", 15 ],
       [ "mag_news", 15 ]
     ]

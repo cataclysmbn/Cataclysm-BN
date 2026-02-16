@@ -153,7 +153,16 @@
     "material_thickness": 1,
     "environmental_protection": 2,
     "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "MOVE_COST", "add": -5 } ] } ] },
-    "flags": [ "WATERPROOF", "ROLLER_QUAD", "BELTED", "POWERARMOR_COMPATIBLE", "UNBREAKABLE" ]
+    "flags": [
+      "WATERPROOF",
+      "ROLLER_QUAD",
+      "BELTED",
+      "POWERARMOR_COMPATIBLE",
+      "UNBREAKABLE",
+      "ALLOWS_TAIL_SNAKE",
+      "ALLOWS_HOOVES",
+      "ALLOWS_CLAWS_FOOT"
+    ]
   },
   {
     "type": "GENERIC",
@@ -293,7 +302,8 @@
       "NO_REPAIR",
       "NO_SALVAGE",
       "POWERARMOR_COMPATIBLE",
-      "UNBREAKABLE"
+      "UNBREAKABLE",
+      "ALLOWS_WINGS"
     ]
   },
   {
@@ -490,7 +500,7 @@
     "warmth": 0,
     "material_thickness": 2,
     "environmental_protection": 2,
-    "flags": [ "ONLY_ONE", "OVERSIZE", "PERSONAL", "POWERARMOR_COMPATIBLE", "UNBREAKABLE" ]
+    "flags": [ "ONLY_ONE", "OVERSIZE", "PERSONAL", "POWERARMOR_COMPATIBLE", "UNBREAKABLE", "ALLOWS_HOOVES" ]
   },
   {
     "id": "aura_stoneskin",
@@ -510,7 +520,7 @@
     "warmth": 5,
     "material_thickness": 2,
     "environmental_protection": 2,
-    "flags": [ "ONLY_ONE", "OVERSIZE", "PERSONAL", "POWERARMOR_COMPATIBLE", "UNBREAKABLE" ]
+    "flags": [ "ONLY_ONE", "OVERSIZE", "PERSONAL", "POWERARMOR_COMPATIBLE", "UNBREAKABLE", "ALLOWS_HOOVES" ]
   },
   {
     "id": "overcharge_burn_scar",
@@ -524,7 +534,7 @@
     "covers": [ "eyes", "mouth" ],
     "encumbrance": 18,
     "relic_data": { "passive_effects": [ { "id": "ench_overcharge_burn_scar" } ] },
-    "flags": [ "NO_TAKEOFF", "TRADER_AVOID", "BLIND", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "NO_TAKEOFF", "TRADER_AVOID", "BLIND", "POWERARMOR_COMPATIBLE", "SEMITANGIBLE" ]
   },
   {
     "id": "protect_env",

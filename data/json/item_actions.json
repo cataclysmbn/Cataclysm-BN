@@ -21,6 +21,11 @@
   },
   {
     "type": "item_action",
+    "id": "reveal_contents",
+    "name": { "str": "Unveil Contents" }
+  },
+  {
+    "type": "item_action",
     "id": "HAMMER",
     "name": { "str": "Pull out nails" }
   },
@@ -53,6 +58,11 @@
     "type": "item_action",
     "id": "PICKAXE",
     "name": { "str": "Dig through rock" }
+  },
+  {
+    "type": "item_action",
+    "id": "prospect_pick",
+    "name": { "str": "Analyze nearby minerals" }
   },
   {
     "type": "item_action",
@@ -446,12 +456,12 @@
   },
   {
     "type": "item_action",
-    "id": "GRANADE",
+    "id": "DEBUG_GRENADE",
     "name": { "str": "Activate" }
   },
   {
     "type": "item_action",
-    "id": "GRANADE_ACT",
+    "id": "DEBUG_GRENADE_ACT",
     "name": { "str": "Activate" }
   },
   {
@@ -556,11 +566,6 @@
   },
   {
     "type": "item_action",
-    "id": "MP3",
-    "name": { "str": "Play music" }
-  },
-  {
-    "type": "item_action",
     "id": "MP3_ON",
     "name": { "str": "Turn off music" }
   },
@@ -581,6 +586,16 @@
   },
   {
     "type": "item_action",
+    "id": "cloning_syringe",
+    "name": { "str": "Take specimen sample" }
+  },
+  {
+    "type": "item_action",
+    "id": "dna_editor",
+    "name": { "str": "Inspect genome drive" }
+  },
+  {
+    "type": "item_action",
     "id": "SOLARPACK",
     "name": { "str": "Unfold" }
   },
@@ -588,11 +603,6 @@
     "type": "item_action",
     "id": "SOLARPACK_OFF",
     "name": { "str": "Fold" }
-  },
-  {
-    "type": "item_action",
-    "id": "MULTICOOKER",
-    "name": { "str": "Cook" }
   },
   {
     "type": "item_action",
@@ -796,8 +806,28 @@
   },
   {
     "type": "item_action",
+    "id": "REPORT_FLUID_GRID_CONNECTIONS",
+    "name": { "str": "Check fluid grid connections" }
+  },
+  {
+    "type": "item_action",
     "id": "MODIFY_GRID_CONNECTIONS",
     "name": { "str": "Modify grid connections" }
+  },
+  {
+    "type": "item_action",
+    "id": "MODIFY_FLUID_GRID_CONNECTIONS",
+    "name": { "str": "Modify fluid grid connections" }
+  },
+  {
+    "type": "item_action",
+    "id": "VOLTMETER",
+    "name": { "str": "Measure grid power" }
+  },
+  {
+    "type": "item_action",
+    "id": "ARTIFACT_ANALYZER",
+    "name": { "str": "Analyze artifact" }
   },
   {
     "type": "item_action",
@@ -833,6 +863,11 @@
     "type": "item_action",
     "id": "VIBE",
     "name": { "str": "Well, you know" }
+  },
+  {
+    "type": "item_action",
+    "id": "BULLET_VIBE_ON",
+    "name": { "str": "Turn off toy" }
   },
   {
     "type": "item_action",
@@ -976,6 +1011,11 @@
   },
   {
     "type": "item_action",
+    "id": "multicooker",
+    "name": { "str": "CRAFT" }
+  },
+  {
+    "type": "item_action",
     "id": "CRAFT",
     "name": { "str": "Work on craft" }
   },
@@ -988,5 +1028,30 @@
     "type": "item_action",
     "id": "AMPUTATE",
     "name": { "str": "(Debug) Amputate body part" }
+  },
+  {
+    "type": "item_action",
+    "id": "sex_toy",
+    "name": { "str": "Relieve some tension" }
+  },
+  {
+    "type": "item_action",
+    "id": "train_skill",
+    "name": { "str": "Train skill" }
+  },
+  {
+    "type": "item_action",
+    "id": "music_player",
+    "name": { "str": "Listen to music" }
+  },
+  {
+    "type": "item_action",
+    "id": "flowerpot_plant",
+    "name": { "str": "Use the planter" }
+  },
+  {
+    "type": "item_action",
+    "id": "flowerpot_collect",
+    "name": { "str": "Collect a plant" }
   }
 ]

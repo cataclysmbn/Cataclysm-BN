@@ -308,7 +308,7 @@
       "β": [
         { "item": "SUS_cookware", "chance": 100, "repeat": [ 0, 4 ] },
         { "item": "SUS_knife_drawer", "chance": 100, "repeat": [ 0, 4 ] },
-        { "item": "SUS_utensils", "chance": 100, "repeat": [ 0, 4 ] },
+        { "item": "SUS_kitchen_misc", "chance": 100, "repeat": [ 0, 4 ] },
         { "item": "SUS_dishes", "chance": 100, "repeat": [ 0, 4 ] },
         { "item": "SUS_spice_collection", "chance": 100, "repeat": [ 0, 15 ] }
       ],

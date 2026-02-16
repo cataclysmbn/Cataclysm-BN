@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <memory>
 #include <numeric>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -27,7 +28,9 @@
 #include "requirements.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "string_utils.h"
 #include "translations.h"
+#include "type_id.h"
 #include "units.h"
 #include "units_utility.h"
 #include "value_ptr.h"
@@ -103,7 +106,19 @@ static const std::unordered_map<std::string, vpart_bitflags> vpart_bitflag_map =
     { "REACTOR", VPFLAG_REACTOR },
     { "RAIL", VPFLAG_RAIL },
     { "TURRET_CONTROLS", VPFLAG_TURRET_CONTROLS },
+    { "AUTOLOADER", VPFLAG_AUTOLOADER },
     { "ROOF", VPFLAG_ROOF },
+    { "BALLOON", VPFLAG_BALLOON },
+    { "WING", VPFLAG_WING },
+    { "PROPELLER", VPFLAG_PROPELLER },
+    { "EXTENDABLE", VPFLAG_EXTENDABLE },
+    { "NOCOLLIDE", VPFLAG_NOCOLLIDE },
+    { "NOCOLLIDEABOVE", VPFLAG_NOCOLLIDEABOVE },
+    { "NOCOLLIDEBELOW", VPFLAG_NOCOLLIDEBELOW },
+    { "NOSMASH", VPFLAG_NOSMASH },
+    { "NOFIELDS", VPFLAG_NOFIELDS },
+    { "DROPPER", VPFLAG_DROPPER },
+    { "LADDER", VPFLAG_LADDER }
 };
 
 static const std::vector<std::pair<std::string, int>> standard_terrain_mod = {{
@@ -246,6 +261,50 @@ void vpart_info::load_rotor( std::optional<vpslot_rotor> &roptr, const JsonObjec
     assert( roptr );
 }
 
+void vpart_info::load_propeller( std::optional<vpslot_propeller> &proptr, const JsonObject &jo )
+{
+    vpslot_propeller propeller_info{};
+    if( proptr ) {
+        propeller_info = *proptr;
+    }
+    assign( jo, "propeller_diameter", propeller_info.propeller_diameter );
+    proptr = propeller_info;
+    assert( proptr );
+}
+
+void vpart_info::load_wing( std::optional<vpslot_wing> &wptr, const JsonObject &jo )
+{
+    vpslot_wing wing_info{};
+    if( wptr ) {
+        wing_info = *wptr;
+    }
+    assign( jo, "lift_coff", wing_info.lift_coff );
+    wptr = wing_info;
+    assert( wptr );
+}
+
+void vpart_info::load_balloon( std::optional<vpslot_balloon> &balptr, const JsonObject &jo )
+{
+    vpslot_balloon balloon_info{};
+    if( balptr ) {
+        balloon_info = *balptr;
+    }
+    assign( jo, "height", balloon_info.height );
+    balptr = balloon_info;
+    assert( balptr );
+}
+
+void vpart_info::load_ladder( std::optional<vpslot_ladder> &ladptr, const JsonObject &jo )
+{
+    vpslot_ladder lad_info{};
+    if( ladptr ) {
+        lad_info = *ladptr;
+    }
+    assign( jo, "length", lad_info.length );
+    ladptr = lad_info;
+    assert( ladptr );
+}
+
 void vpart_info::load_wheel( std::optional<vpslot_wheel> &whptr, const JsonObject &jo )
 {
     vpslot_wheel wh_info{};
@@ -305,6 +364,23 @@ void vpart_info::load_workbench( std::optional<vpslot_workbench> &wbptr, const J
     assert( wbptr );
 }
 
+void vpart_info::load_crafter( std::optional<vpslot_crafter> &craftptr, const JsonObject &jo )
+{
+    vpslot_crafter craft_info{};
+    if( craftptr ) {
+        craft_info = *craftptr;
+    }
+
+    JsonArray tools = jo.get_array( "integrated_tools" );
+
+    for( std::string cur : tools ) {
+        craft_info.fake_parts.emplace_back( itype_id( cur ) );
+    }
+
+    craftptr = craft_info;
+    assert( craftptr );
+}
+
 /**
  * Reads in a vehicle part from a JsonObject.
  */
@@ -352,6 +428,7 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
     assign( jo, "difficulty", def.difficulty );
     assign( jo, "bonus", def.bonus );
     assign( jo, "cargo_weight_modifier", def.cargo_weight_modifier );
+    assign( jo, "weight_modifier", def.weight_modifier );
     assign( jo, "flags", def.flags );
     assign( jo, "description", def.description );
 
@@ -435,10 +512,28 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
         load_rotor( def.rotor_info, jo );
     }
 
+    if( def.has_flag( "PROPELLER" ) ) {
+        load_propeller( def.propeller_info, jo );
+    }
+
+    if( def.has_flag( "BALLOON" ) ) {
+        load_balloon( def.balloon_info, jo );
+    }
+
+    if( def.has_flag( "LADDER" ) ) {
+        load_ladder( def.ladder_info, jo );
+    }
+
+    if( def.has_flag( "WING" ) ) {
+        load_wing( def.wing_info, jo );
+    }
+
     if( def.has_flag( "WORKBENCH" ) ) {
         load_workbench( def.workbench_info, jo );
     }
-
+    if( def.has_flag( "CRAFTER" ) ) {
+        load_crafter( def.crafter_info, jo );
+    }
     // Dummy
     // TODO: Implement
     jo.get_string_array( "categories" );
@@ -667,6 +762,14 @@ void vpart_info::check()
         if( part.has_flag( VPFLAG_ENABLED_DRAINS_EPOWER ) && part.epower == 0 ) {
             debugmsg( "%s is set to drain epower, but has epower == 0", part.id.c_str() );
         }
+        if( part.has_flag( VPFLAG_NOCOLLIDEABOVE ) && !part.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            debugmsg( "%s has flag NOCOLLIDEABOVE, but does not have the prerequisite flag NOCOLLIDE",
+                      part.id.c_str() );
+        }
+        if( part.has_flag( VPFLAG_NOCOLLIDEBELOW ) && !part.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            debugmsg( "%s has flag NOCOLLIDEBELOW, but does not have the prerequisite flag NOCOLLIDE",
+                      part.id.c_str() );
+        }
         // Parts with non-zero epower must have a flag that affects epower usage
         static const std::vector<std::string> handled = {{
                 "ENABLED_DRAINS_EPOWER", "SECURITY", "ENGINE",
@@ -750,6 +853,7 @@ int vpart_info::format_description( std::string &msg, const nc_color &format_col
     }
 
     if( !long_descrip.empty() ) {
+        long_descrip = replace_colors( long_descrip );
         const auto wrap_descrip = foldstring( long_descrip, width );
         msg += wrap_descrip[0];
         for( size_t i = 1; i < wrap_descrip.size(); i++ ) {
@@ -912,6 +1016,29 @@ int vpart_info::rotor_diameter() const
     return has_flag( VPFLAG_ROTOR ) ? rotor_info->rotor_diameter : 0;
 }
 
+float vpart_info::balloon_height() const
+{
+    return has_flag( VPFLAG_BALLOON ) ? balloon_info->height : 0;
+}
+
+int vpart_info::ladder_length() const
+{
+    return has_flag( "LADDER" ) ? ladder_info->length : 0;
+}
+
+float vpart_info::lift_coff() const
+{
+    return has_flag( VPFLAG_WING ) ? wing_info->lift_coff : 0;
+}
+
+int vpart_info::propeller_diameter() const
+{
+    return has_flag( VPFLAG_PROPELLER ) ? propeller_info->propeller_diameter : 0;
+}
+const std::vector<itype_id> vpart_info::craftertools() const
+{
+    return crafter_info->fake_parts;
+}
 const std::optional<vpslot_workbench> &vpart_info::get_workbench_info() const
 {
     return workbench_info;
@@ -998,9 +1125,50 @@ void vehicle_prototype::load( const JsonObject &jo )
         vproto.parts.push_back( pt );
     };
 
+    if( jo.has_member( "flags" ) ) {
+        vproto.flags = jo.get_tags<flag_id>( "flags" );
+    }
+
     if( jo.has_member( "blueprint" ) ) {
-        // currently unused, read to suppress unvisited members warning
-        jo.get_array( "blueprint" );
+        if( jo.has_member( "palette" ) ) {
+            std::map< char, JsonArray > string_palette;
+            for( const JsonMember member : jo.get_object( "palette" ) ) {
+                std::vector<std::string> members;
+                for( const auto entry : member.get_array() ) {
+                    members.push_back( entry );
+                }
+                string_palette[member.name().at( 0 )] = member.get_array();
+            }
+            std::map< char, std::vector<vpart_id> > veh_palette;
+            for( auto const character : string_palette ) {
+                for( std::string part : character.second ) {
+                    if( !veh_palette.contains( character.first ) ) {
+                        veh_palette[character.first] = { vpart_id( part ) };
+                    } else {
+                        veh_palette[character.first].push_back( vpart_id( part ) );
+                    }
+                }
+            }
+            auto pnt = jo.get_object( "blueprint_origin" );
+            int y = -pnt.get_int( "y", 0 );
+            for( std::string row : jo.get_array( "blueprint" ) ) {
+                int x = -pnt.get_int( "x", 0 ) - 1;
+                for( char character : row ) {
+                    x += 1;
+                    if( !veh_palette.contains( character ) ) { continue; }
+                    for( auto const part : veh_palette.at( character ) ) {
+                        part_def pt;
+                        pt.pos = point( x, y );
+                        pt.part = part;
+                        vproto.parts.push_back( pt );
+                    }
+                }
+                y += 1;
+            }
+        } else {
+            // This still has to be optional in cases where old mods or places are still using it for only display purposes
+            jo.get_array( "blueprint" );
+        }
     }
 
     for( JsonObject part : jo.get_array( "parts" ) ) {

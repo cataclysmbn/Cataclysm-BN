@@ -410,7 +410,7 @@
     "description": "Salty dried meat that lasts for a long time, but will make you thirsty.",
     "primary_material": "cured_meat",
     "weight": "85 g",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "color": "brown",
     "volume": "250 ml",
     "parasites": 0,
@@ -429,7 +429,7 @@
     "name": { "str_sp": "salted fish" },
     "description": "Salty dried fish that lasts for a long time, but will make you thirsty.",
     "primary_material": "cured_meat",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "color": "light_gray",
     "spoils_in": "0 days",
     "parasites": 0,
@@ -601,7 +601,7 @@
     "volume": "250 ml",
     "phase": "liquid",
     "fun": -50,
-    "flags": [ "IS_BLOOD" ],
+    "flags": [ "IS_BLOOD", "NO_COOKING_BUFF" ],
     "drop_action": { "type": "emit_actor", "emits": [ "emit_drop_blood" ], "scale_qty": true },
     "vitamins": [ [ "meat_allergen", 1 ] ]
   },
@@ -729,7 +729,7 @@
     "volume": "250 ml",
     "charges": 2,
     "stack_size": 4,
-    "flags": [ "UNRECOVERABLE", "NO_SALVAGE" ],
+    "flags": [ "UNRECOVERABLE", "NO_SALVAGE", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "meat_allergen", 1 ] ],
     "fun": -18
   },
@@ -1177,5 +1177,35 @@
     "description": "Dry and tough bark matter harvested from an alien plant.  It is slightly translucent, and if placed against the light you can distinguish glistening blue veins running through it.",
     "price_postapoc": "10 cent",
     "vitamins": [ [ "vitA", 6 ], [ "vitC", 0 ], [ "calcium", 2 ], [ "iron", 8 ], [ "vitB", 6 ], [ "mutant_toxin", 12 ] ]
+  },
+  {
+    "id": "assorted_bugs",
+    "type": "COMESTIBLE",
+    "name": { "str_sp": "assorted bugs" },
+    "description": "A handful of random edible bugs - beetles, grasshoppers, worms, caterpillars, even the occasional spider.  Not very appetizing raw, but it will keep you alive.",
+    "weight": "100 g",
+    "volume": "100 ml",
+    "color": "green",
+    "symbol": "*",
+    "comestible_type": "FOOD",
+    "calories": 30,
+    "quench": 1,
+    "fun": -10,
+    "material": [ "iflesh" ]
+  },
+  {
+    "id": "clam",
+    "type": "COMESTIBLE",
+    "name": { "str_sp": "clam" },
+    "description": "A fresh clam, still in its shell.  Mild, briny, and full of micronutrients, but not very filling.",
+    "weight": "100 g",
+    "volume": "100 ml",
+    "color": "light_gray",
+    "symbol": "%",
+    "comestible_type": "FOOD",
+    "calories": 35,
+    "quench": 3,
+    "fun": -2,
+    "material": [ "flesh" ]
   }
 ]

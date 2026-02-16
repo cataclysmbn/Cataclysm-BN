@@ -55,7 +55,7 @@
         "r": "f_rubble",
         "t": "f_table",
         "{": "f_vending_o",
-        "M": [ "f_crate_c", "f_cardboard_box" ]
+        "M": [ "f_chest", [ "f_crate_c", 4 ], [ "f_cardboard_box", 5 ] ]
       },
       "place_loot": [ { "item": "television", "x": 3, "y": 6, "chance": 75 }, { "item": "stepladder", "x": 5, "y": 19, "chance": 100 } ],
       "place_items": [
@@ -191,7 +191,7 @@
         "L": "f_locker",
         "t": "f_rack",
         "I": "f_dumpster",
-        "M": [ "f_crate_c", "f_cardboard_box" ]
+        "M": [ "f_chest", [ "f_crate_c", 4 ], [ "f_cardboard_box", 5 ] ]
       },
       "place_loot": [ { "item": "television", "x": 3, "y": 6, "chance": 75 }, { "item": "stepladder", "x": 5, "y": 19, "chance": 100 } ],
       "items": {

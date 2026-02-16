@@ -50,6 +50,23 @@
     "flags": [ "ALLOWS_REMOTE_USE" ]
   },
   {
+    "id": "atomic_pseudo_churn",
+    "type": "TOOL",
+    "sub": "atomic_coffeepot",
+    "name": { "str": "deployed atomic butter churn" },
+    "description": "This is a crafting_pseudo_item if you have it something is wrong.",
+    "weight": "6464 g",
+    "volume": "11356 ml",
+    "price": "200 USD",
+    "to_hit": -2,
+    "bashing": 9,
+    "material": [ "plastic", "steel" ],
+    "qualities": [ [ "CONTAIN", 1 ], [ "CHURN", 2 ], [ "BOIL", 1 ] ],
+    "symbol": "H",
+    "color": "light_cyan",
+    "flags": [ "ALLOWS_REMOTE_USE" ]
+  },
+  {
     "id": "can_sealer",
     "type": "GENERIC",
     "category": "tools_cooking",
@@ -92,7 +109,7 @@
       "transform_charges": 1,
       "need_dry": true
     },
-    "flags": [ "SHEATH_SWORD", "NONCONDUCTIVE" ],
+    "flags": [ "SHEATH_SWORD", "NONCONDUCTIVE", "COMBAT_NPC_USE" ],
     "magazines": [
       [
         "battery",
@@ -115,7 +132,7 @@
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 25 ] ],
     "revert_msg": "Your electric carver goes quiet",
     "use_action": { "type": "transform", "target": "carver_off", "msg": "You turn off the electric carver." },
-    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE" ],
+    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"
   },
   {
@@ -486,7 +503,7 @@
   {
     "id": "soda_machine",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "soda machine" },
     "looks_like": "coffeemaker",
     "description": "This is a kitchen appliance capable of creating carbonated beverages.",
@@ -512,7 +529,7 @@
   {
     "id": "atomic_soda_machine",
     "type": "TOOL",
-    "category": "tools",
+    "category": "tools_cooking",
     "name": { "str": "atomic soda machine" },
     "looks_like": "atomic_coffeepot",
     "description": "This is a Curie-G soda machine, a follow-up to the infamous coffeepot by CuppaTech.  It uses the same miniature RTG core to chill and carbonate beverages.  Normally, it dispenses standard fizzy drinks using stored CO₂ and coolant, but with a twist of the dial, it can cycle irradiated condensation from the RTG chamber into the mix.  Like its predecessor, the atomic soda machine is banned in most regions.",
@@ -531,8 +548,8 @@
     "id": "gasoline_cooker",
     "type": "TOOL",
     "category": "tools_cooking",
-    "name": { "str": "gasoline cooker" },
-    "description": "This is a simple heater powered by gasoline.  It is designed for cooking food.",
+    "name": { "str": "camping stove" },
+    "description": "This is a simple burner powered by pressurized fuel, such as butane or gasoline.  It is designed for cooking food.",
     "weight": "1944 g",
     "volume": "1250 ml",
     "price": "50 USD",
@@ -542,7 +559,8 @@
     "material": "steel",
     "symbol": ";",
     "color": "green",
-    "ammo": "gasoline",
+    "ammo": [ "lighter_fluid", "gasoline" ],
+    "default_ammo": "chem_butane",
     "sub": "hotplate",
     "initial_charges": 500,
     "max_charges": 500,
@@ -592,6 +610,21 @@
       ]
     ],
     "magazine_well": "500 ml"
+  },
+  {
+    "id": "afs_atompot",
+    "type": "TOOL",
+    "name": { "str": "atompot" },
+    "copy-from": "pressure_cooker",
+    "description": "Rivtech's premiere self-heating kitchen appliance, complete with lid, hand-crafted with the power of the atom to reach any temperature in thirty seconds.  As bulky as it is, its plutonium power source means that it can be used to cook an absurd amount of meals without ever worrying about running low on power.  Unsurprisingly, sales weren't particularly good because of the prospect of irradiating your food, but internal shielding ensures that only trace amounts find its way into the center.",
+    "price": "300 USD",
+    "price_postapoc": "50 USD",
+    "material": [ "steel", "plastic" ],
+    "looks_like": "pot",
+    "symbol": ")",
+    "color": "light_green",
+    "use_action": "HOTPLATE",
+    "flags": [ "ALLOWS_REMOTE_USE" ]
   },
   {
     "id": "jar_eggs_pickled",
@@ -694,7 +727,7 @@
     "type": "TOOL",
     "category": "tools_cooking",
     "name": { "str": "mess kit" },
-    "description": "A self-contained camping mess kit, containing everything you might need for wilderness cooking.  This model relies on a battery-operated hotplate, rather than the more commonplace chemical-fueled Esbit stove.",
+    "description": "A self-contained camping mess kit, containing everything you might need for wilderness cooking.  This model relies on a battery-operated hotplate, rather than the more commonplace chemical-fueled butane and Esbit stoves.",
     "weight": "1500 g",
     "volume": "1 L",
     "price": 5000,
@@ -795,9 +828,18 @@
     "symbol": ";",
     "color": "red",
     "ammo": "battery",
-    "power_draw": 1500000,
     "qualities": [ [ "CONTAIN", 1 ] ],
-    "use_action": "MULTICOOKER",
+    "use_action": [
+      {
+        "type": "multicooker",
+        "do_hallu": true,
+        "charges_to_start": 50,
+        "charges_per_minute": 1,
+        "time_mult": 1,
+        "subcategories": [ "CSC_FOOD_MEAT", "CSC_FOOD_VEGGI", "CSC_FOOD_PASTA" ],
+        "temporary_tools": [ "tongs", "toolset", "pot" ]
+      }
+    ],
     "magazines": [
       [
         "battery",
@@ -807,12 +849,23 @@
     "magazine_well": "500 ml"
   },
   {
-    "id": "multi_cooker_filled",
+    "id": "multi_cooker_improved",
     "type": "TOOL",
     "copy-from": "multi_cooker",
-    "name": { "str": "multi cooker - cooking" },
-    "description": "A professional-grade multi-cooker, with a battery slot for camping trips or tailgating.  There is a dish in it.",
-    "delete": { "qualities": [ [ "CONTAIN", 1 ] ] }
+    "name": { "str": "improved multi cooker" },
+    "description": "A professional-grade multi-cooker, with a battery slot for camping trips or tailgating. This has been tinkered with.",
+    "use_action": [
+      {
+        "type": "multicooker",
+        "do_hallu": true,
+        "charges_to_start": 25,
+        "charges_per_minute": 1,
+        "time_mult": 0.75,
+        "recipes": [ "water_clean" ],
+        "subcategories": [ "CSC_FOOD_MEAT", "CSC_FOOD_VEGGI", "CSC_FOOD_PASTA" ],
+        "temporary_tools": [ "tongs", "toolset", "pot" ]
+      }
+    ]
   },
   {
     "id": "oil_cooker",

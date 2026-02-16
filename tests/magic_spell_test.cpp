@@ -233,7 +233,7 @@ static int spell_damage( const spell_id sp_id, const int spell_level )
 {
     spell test_spell( sp_id );
     test_spell.set_level( spell_level );
-    return test_spell.damage();
+    return test_spell.get_damage_instance().total_damage();
 }
 
 static int spell_damage_character( const spell_id sp_id, const int spell_level,
@@ -241,7 +241,7 @@ static int spell_damage_character( const spell_id sp_id, const int spell_level,
 {
     spell test_spell( sp_id );
     test_spell.set_level( spell_level );
-    return test_spell.damage_as_character( guy );
+    return test_spell.get_damage_instance( guy ).total_damage();
 }
 
 TEST_CASE( "spell damage", "[magic][spell][damage]" )
@@ -249,10 +249,15 @@ TEST_CASE( "spell damage", "[magic][spell][damage]" )
     clear_all_state();
     spell_id pew_id( "test_spell_pew" );
     spell_id pew_melee_id( "test_spell_pew_melee" );
+    spell_id pew_int_id( "test_spell_pew_int_scaling" );
+    spell_id pew_physical_id( "test_spell_pew_physical" );
+    spell_id pew_cut_id( "test_spell_pew_melee_cut" );
     const spell_type &pew_type = pew_id.obj();
     avatar &dummy = g->u;
     clear_character( dummy );
     dummy.set_primary_weapon( item::spawn( "katana" ) );
+    dummy.int_max = 16;
+    dummy.set_mutation( trait_id( "BRAWLER" ) );
 
     // Level 0 damage for this spell is 1
     REQUIRE( pew_type.min_damage == 1 );
@@ -284,6 +289,12 @@ TEST_CASE( "spell damage", "[magic][spell][damage]" )
     SECTION( "spells that have character-dependent bonuses correctly vary damage" ) {
         // ADD_MELEE_DAM
         CHECK( spell_damage( pew_melee_id, 1 ) < spell_damage_character( pew_melee_id, 1, dummy ) );
+        // int_scale
+        CHECK( spell_damage( pew_int_id, 1 ) < spell_damage_character( pew_int_id, 1, dummy ) );
+        // PHYSICAL (Level increased to properly test smaller bonus)
+        CHECK( spell_damage( pew_physical_id, 5 ) < spell_damage_character( pew_melee_id, 5, dummy ) );
+        // melee_dam: ["physical"]
+        CHECK( spell_damage( pew_cut_id, 1 ) < spell_damage_character( pew_cut_id, 1, dummy ) );
     }
 }
 

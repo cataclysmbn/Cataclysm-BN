@@ -1,0 +1,82 @@
+[
+  {
+    "//": "C.R.I.T. lab",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_1side" ],
+    "weight": 200,
+    "object": {
+      "fill_ter": "t_strconc_floor",
+      "rows": [
+        "|--|--|--|-..-|--|-----|",
+        "|bb|bb|bb|....|,,|l,,,b|",
+        "|,,|,,|,,|...6|,,W,,,,b|",
+        "|l,|l,|l,|....|,,|-----|",
+        "|-W|-W|-W|-LL-|,,|l,,,b|",
+        "|,,,,,,,,,%,,x,,,W,,,,b|",
+        "|,,,,,,,,,,,,,,,,|-----|",
+        "|--W-|,,,,,,,,,,,|l,,,b|",
+        "|S,,,|,,,,,,,,,,,W,,,,b|",
+        "|S,,,|W-|,,,,,,,,|-----|",
+        "|,,,,|,l|,,,,,,,,|,,,,l|",
+        "|W|W-|,,|,,,,,,,,W,h,,b|",
+        "|T|,T|bb|7,,,,,,,|ddd,b|",
+        "|-|--|--|--LL----|-----|",
+        "|Prrrrrrrr,,,,rrrrrrrrP|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|3,,tt,,tt,,,,tt,,tt,,3|",
+        "|F,,tt,,tt,,,,tt,,tt,,F|",
+        "|w,,tt,,tt,,,,tt,,tt,,w|",
+        "|3,,tt,,tt,,,,tt,,tt,,3|",
+        "|3,,tt,,tt,,,,tt,,tt,,3|",
+        "|P,,,,,,,,,,,,,,,,,,,,P|",
+        "|----------------------|"
+      ],
+      "palettes": [ "lab_palette" ],
+      "place_monster": [ { "monster": [ "mon_zombie_scientist" ], "x": [ 1, 21 ], "y": [ 1, 16 ], "pack_size": [ 1, 6 ], "chance": 40 } ],
+      "terrain": { "7": "t_console" },
+      "mapping": {
+        "l": {
+          "items": [
+            { "item": "science", "chance": 10 },
+            { "item": "softdrugs", "chance": 3 },
+            { "item": "crt_eng_set", "chance": 100 },
+            { "item": "lab_bookshelves", "chance": 50 }
+          ]
+        },
+        "b": { "items": [ { "item": "bed", "chance": 50 } ] },
+        "d": { "items": [ { "item": "office", "chance": 50 } ] },
+        "r": { "items": [ { "item": "crt_lab_loot", "chance": 50 } ] },
+        "t": {
+          "items": [
+            { "item": "tools_science", "chance": 10 },
+            { "item": "robots", "chance": 10 },
+            { "item": "science", "chance": 10 },
+            { "item": "mut_lab", "chance": 2 },
+            { "item": "crt_airship_balloon_item", "chance": 5 }
+          ]
+        }
+      },
+      "furniture": { "3": "f_3d_printer_advanced", "F": "f_gridforge", "w": "f_gridwelder", "P": "f_grid_plut_generator" },
+      "computers": {
+        "6": {
+          "name": "C.R.I.T. Lab Housing Entrance",
+          "security": 4,
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 6 } ],
+          "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
+        },
+        "7": {
+          "name": "C.R.I.T. Lab Entrance",
+          "security": 6,
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 } ],
+          "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
+        }
+      },
+      "place_nested": [
+        { "chunks": [ [ "null", 45 ], [ "lab_barracks_turret", 50 ], [ "lab_hulk_smash", 5 ] ], "x": 0, "y": 0 },
+        { "chunks": [ "lab_1side_border_doors" ], "x": 0, "y": 0 }
+      ]
+    }
+  }
+]

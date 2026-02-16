@@ -91,7 +91,7 @@
   {
     "id": "mtorch_everburning_lit",
     "type": "TOOL",
-    "name": { "str": "everburning torch", "str_pl": "everburning torches" },
+    "name": { "str": "everburning torch (lit)", "str_pl": "everburning torches (lit)" },
     "copy-from": "mtorch_everburning",
     "revert_to": "mtorch_everburning",
     "sub": "fire",
@@ -154,6 +154,7 @@
         "materials": [
           "cotton",
           "leather",
+          "nylon",
           "wool",
           "fur",
           "faux_fur",
@@ -162,11 +163,10 @@
           "neoprene",
           "gutskin",
           "scute",
-          "black_dragon_hide",
-          "demon_chitin"
+          "black_dragon_hide"
         ],
         "skill": "tailor",
-        "tool_quality": 1,
+        "tool_quality": 3,
         "cost_scaling": 0.1,
         "move_cost": 500
       },
@@ -175,6 +175,7 @@
         "materials": [
           "cotton",
           "leather",
+          "nylon",
           "wool",
           "fur",
           "faux_fur",
@@ -182,20 +183,21 @@
           "kevlar",
           "neoprene",
           "gutskin",
-          "plastic",
           "scute",
-          "kevlar_rigid"
+          "black_dragon_hide"
         ],
         "skill": "tailor",
         "clothing_mods": [
           "leather_padded",
           "steel_padded",
+          "hard_steel_padded",
           "alloy_padded",
           "kevlar_padded",
           "nomex_padded",
           "furred",
           "wooled",
           "resized_large",
+          "resized_small",
           "pocketed",
           "owlbear_furred",
           "demonchitin_padded",
@@ -330,8 +332,7 @@
     "color": "dark_gray",
     "ammo": "crystallized_mana",
     "magazines": [ [ "crystallized_mana", [ "small_mana_crystal" ] ] ],
-    "charges_per_use": 5,
-    "use_action": "VIBE",
+    "use_action": { "type": "sex_toy", "moves": 60000 },
     "magazine_well": "250 ml"
   }
 ]

@@ -99,7 +99,6 @@
       [ "boat_motor_single", 175 ],
       [ "scuba_boat", 25 ],
       [ "fishing_boat", 25 ],
-      [ "water_autosweeper", 50 ],
       [ "barge_trailer", 50 ],
       [ "boat_motor_smuggler", 50 ],
       [ "boat_motor_police", 150 ],
@@ -109,6 +108,21 @@
       [ "pirate_ship", 25 ],
       [ "DUKW", 75 ],
       [ "hovercraft_motor_single", 25 ]
+    ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "cove_boats",
+    "vehicles": [
+      [ "jetski", 100 ],
+      [ "raft", 100 ],
+      [ "boat_motor_single", 200 ],
+      [ "fishing_boat", 100 ],
+      [ "boat_motor_smuggler", 100 ],
+      [ "boat_motor_police", 125 ],
+      [ "CG_patrol_boat", 25 ],
+      [ "sailboat", 150 ],
+      [ "pirate_ship", 100 ]
     ]
   },
   {
@@ -605,6 +619,27 @@
   },
   {
     "type": "vehicle_group",
+    "id": "runway",
+    "//": "Lower chance of wrecked helis, include planes and other aircraft",
+    "vehicles": [
+      [ "plane_small", 500 ],
+      [ "2seater2", 100 ],
+      [ "SmallFlier1", 300 ],
+      [ "2seater2_Wreck", 100 ],
+      [ "SmallFlier3_Wreck", 50 ],
+      [ "SmallFlier2", 300 ],
+      [ "Medevac1", 100 ],
+      [ "Smallflier1_Wreck", 100 ],
+      [ "SmallFlier2_Wreck", 100 ],
+      [ "Medevac1_Wreck", 50 ],
+      [ "SmallFlier3", 300 ],
+      [ "Medevac2", 150 ],
+      [ "Medevac2_Wreck", 100 ],
+      [ "blimp", 25 ]
+    ]
+  },
+  {
+    "type": "vehicle_group",
     "id": "mil_helicopters",
     "vehicles": [
       [ "Medevac1", 200 ],
@@ -787,6 +822,16 @@
   },
   {
     "type": "vehicle_group",
+    "id": "trains_mine_shaft",
+    "vehicles": [ [ "motorized_draisine_6seats", 100 ], [ "motorized_draisine_2seats", 400 ], [ "coal_hopper", 600 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "trains_lab_entrance",
+    "vehicles": [ [ "motorized_draisine_6seats", 250 ], [ "electric_tram", 750 ] ]
+  },
+  {
+    "type": "vehicle_group",
     "id": "oa_vg_wreck",
     "//": "for ws_regional_dump",
     "vehicles": [
@@ -902,7 +947,7 @@
   {
     "type": "vehicle_group",
     "id": "speedway_rv",
-    "vehicles": [ [ "lux_rv", 300 ], [ "rv", 700 ] ]
+    "vehicles": [ [ "lux_rv", 300 ], [ "rv", 675 ], [ "surv_rv", 25 ] ]
   },
   {
     "type": "vehicle_group",
@@ -942,7 +987,7 @@
   {
     "id": "museum_vehicles",
     "type": "vehicle_group",
-    "vehicles": [ [ "cannon_3in", 50 ], [ "gatling_carriage", 50 ] ]
+    "vehicles": [ [ "cannon_3in", 50 ], [ "gatling_carriage", 25 ], [ "ballista_mount", 25 ] ]
   },
   {
     "id": "military_display_vehicles",

@@ -67,7 +67,7 @@
     "tools": [ [ [ "surface_heat", 25, "LIST" ] ] ],
     "components": [
       [ [ "water_clean", 1 ], [ "water", 1 ] ],
-      [ [ "chem_ethanol", 25 ], [ "chem_methanol", 25 ], [ "denat_alcohol", 25 ] ],
+      [ [ "chem_ethanol", 25 ], [ "chem_methanol", 25 ], [ "denat_alcohol", 25 ], [ "disinfectant_makeshift", 1 ] ],
       [ [ "lye_powder", 2 ], [ "chem_potassium_hydroxide", 4 ] ],
       [
         [ "cooking_oil", 16 ],
@@ -106,7 +106,12 @@
     "tools": [ [ [ "surface_heat", 375, "LIST" ] ] ],
     "components": [
       [ [ "water_clean", 15 ], [ "water", 15 ] ],
-      [ [ "chem_ethanol", 375 ], [ "chem_methanol", 375 ], [ "denat_alcohol", 375 ] ],
+      [
+        [ "chem_ethanol", 375 ],
+        [ "chem_methanol", 375 ],
+        [ "denat_alcohol", 375 ],
+        [ "disinfectant_makeshift", 15 ]
+      ],
       [ [ "chem_lye", 1, "LIST" ], [ "chem_potassium_hydroxide", 60 ] ],
       [
         [ "cooking_oil", 240 ],

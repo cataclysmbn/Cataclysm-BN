@@ -56,16 +56,8 @@
       [ "textbook_armwest", 6 ],
       [ "textbook_armschina", 6 ]
     ],
-    "using": [ [ "sewing_standard", 4 ] ],
-    "qualities": [ { "id": "COOK", "level": 3 } ],
-    "tools": [ [ [ "surface_heat", 20, "LIST" ] ] ],
-    "components": [
-      [ [ "water", 10 ], [ "water_clean", 10 ] ],
-      [ [ "wax", 2 ], [ "any_tallow", 8, "LIST" ], [ "vinegar", 10 ], [ "pine_bough", 20 ] ],
-      [ [ "salt", 50 ] ],
-      [ [ "armor_larmor", 1 ] ],
-      [ [ "armguard_larmor", 1 ] ]
-    ]
+    "using": [ [ "sewing_standard", 4 ], [ "cuir_bouilli_standard", 2 ] ],
+    "components": [ [ [ "armor_larmor", 1 ] ], [ [ "armguard_larmor", 1 ] ] ]
   },
   {
     "result": "armor_chitin",
@@ -376,7 +368,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 4 ], [ "advanced_electronics", 4 ], [ "textbook_electronics", 4 ] ],
     "flags": [ "NO_RESIZE" ],
-    "components": [ [ [ "chainmail_suit", 1 ] ], [ [ "cable", 200 ] ] ]
+    "components": [ [ [ "chainmail_suit", 1 ] ], [ [ "chainmail_hands", 1 ] ], [ [ "chainmail_feet", 1 ] ], [ [ "cable", 200 ] ] ]
   },
   {
     "result": "cloak",
@@ -831,7 +823,7 @@
     "book_learn": [ [ "textbook_tailor", 4 ], [ "manual_tailor", 5 ], [ "tailor_portfolio", 4 ] ],
     "using": [ [ "sewing_standard", 50 ] ],
     "tools": [ [ [ "soldering_standard", 20, "LIST" ], [ "surface_heat", 20, "LIST" ] ] ],
-    "components": [ [ [ "neoprene", 12 ] ], [ [ "rag", 12 ] ] ]
+    "components": [ [ [ "neoprene", 12 ] ], [ [ "nylon", 12 ] ] ]
   },
   {
     "result": "wetsuit_spring",
@@ -845,7 +837,7 @@
     "book_learn": [ [ "textbook_tailor", 3 ], [ "manual_tailor", 4 ], [ "tailor_portfolio", 3 ] ],
     "using": [ [ "sewing_standard", 40 ] ],
     "tools": [ [ [ "soldering_standard", 15, "LIST" ], [ "surface_heat", 15, "LIST" ] ] ],
-    "components": [ [ [ "neoprene", 8 ] ], [ [ "rag", 8 ] ] ]
+    "components": [ [ [ "neoprene", 8 ] ], [ [ "nylon", 8 ] ] ]
   },
   {
     "result": "wool_suit",
@@ -858,6 +850,30 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 150 ] ],
     "components": [ [ [ "felt_patch", 24 ] ] ]
+  },
+  {
+    "result": "wolfsuit",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 7,
+    "time": "5 h",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 200 ] ],
+    "components": [ [ [ "faux_fur", 30 ] ] ]
+  },
+  {
+    "result": "dinosuit",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 7,
+    "time": "5 h",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 200 ] ],
+    "components": [ [ [ "faux_fur", 30 ] ] ]
   },
   {
     "result": "wsurvivor_suit",

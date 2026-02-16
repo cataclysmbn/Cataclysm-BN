@@ -2,6 +2,10 @@
 title: Makefile
 ---
 
+> [!CAUTION]
+>
+> makefile build is deprecated and will not recieve updates. Please build with [CMake](./cmake.md) instead.
+
 To build Cataclysm from source you will need at least a C++ compiler, some basic developer tools,
 and necessary build dependencies. The exact package names vary greatly from distro to distro, so
 this part of the guide is intended to give you higher-level understanding of the process.
@@ -173,7 +177,7 @@ check correct version of SDL2 is installed by running:
 ```
 
 using old version of SDL could result in
-[IME not working.](https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1497)
+[IME not working.](https://github.com/cataclysmbn/Cataclysm-BN/issues/1497)
 
 ### Building
 
@@ -287,7 +291,7 @@ The procedure is very much similar to cross-compilation to Windows from Linux. T
 Please note that due to historical difficulties with cross-compilation errors, run-time
 optimizations are disabled for cross-compilation to Mac OS X targets. (`-O0` is specified as a
 compilation flag.) See
-[Pull Request #26564](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/26564) for details.
+[Pull Request #26564](https://github.com/cataclysmbn/Cataclysm-BN/pull/26564) for details.
 
 ### Dependencies
 
@@ -377,7 +381,7 @@ builds the SDL version with all features enabled, including tiles, sound and loc
 - SDL2_image (tested with 2.0.3)
 
 The Gradle build process automatically installs dependencies from
-[deps.zip](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/android/app/deps.zip).
+[deps.zip](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/android/app/deps.zip).
 
 ### Setup
 

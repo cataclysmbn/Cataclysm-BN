@@ -720,7 +720,7 @@
     "looks_like": "t_fencegate_o",
     "move_cost": 2,
     "coverage": 60,
-    "flags": [ "TRANSPARENT", "DOOR", "BURROWABLE", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "BURROWABLE", "FLAT", "ROAD" ],
     "connects_to": "WOODFENCE",
     "close": "t_gate_metal_c",
     "deconstruct": {
@@ -858,7 +858,31 @@
         { "item": "scrap", "count": [ 1, 3 ] },
         { "item": "splinter", "count": [ 1, 3 ] }
       ],
-      "ranged": { "reduction": [ 20, 20 ], "destroy_threshold": 12, "block_unaimed_chance": "25%" }
+      "ranged": { "reduction": [ 20, 20 ], "destroy_threshold": 80, "block_unaimed_chance": "25%" }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_railing_underwater",
+    "copy-from": "t_railing",
+    "name": "underwater railing",
+    "description": "A flooded section of wooden railing.  Much less effective at stopping you from jumping overboard, now.",
+    "symbol": "LINE_OXOX",
+    "color": "yellow",
+    "extend": { "flags": [ "LIQUID", "SWIMMABLE", "WATER_CUBE", "DEEP_WATER", "GOES_UP" ] },
+    "bash": {
+      "str_min": 10,
+      "str_max": 40,
+      "sound": "crack!",
+      "sound_fail": "whump.",
+      "ter_set": "t_floor_wood_underwater",
+      "items": [
+        { "item": "2x4", "prob": 50 },
+        { "item": "nail", "charges": [ 2, 6 ] },
+        { "item": "scrap", "count": [ 1, 3 ] },
+        { "item": "splinter", "count": [ 1, 3 ] }
+      ],
+      "ranged": { "reduction": [ 10, 10 ], "destroy_threshold": 40, "block_unaimed_chance": "25%" }
     }
   },
   {
@@ -902,8 +926,8 @@
     "connects_to": "RAILING",
     "deconstruct": { "ter_set": "t_rock_floor", "items": [ { "item": "sheet_metal", "count": 2 }, { "item": "pipe", "count": 4 } ] },
     "bash": {
-      "str_min": 20,
-      "str_max": 80,
+      "str_min": 25,
+      "str_max": 100,
       "sound": "clang!",
       "sound_fail": "whump.",
       "ter_set": "t_rock_floor",
@@ -913,14 +937,13 @@
         { "item": "sheet_metal_small", "charges": [ 1, 4 ] },
         { "item": "scrap", "count": [ 1, 3 ] }
       ],
-      "ranged": { "reduction": [ 20, 20 ], "destroy_threshold": 80, "block_unaimed_chance": "25%" }
+      "ranged": { "reduction": [ 25, 25 ], "destroy_threshold": 100, "block_unaimed_chance": "25%" }
     }
   },
   {
     "type": "terrain",
     "id": "t_metal_railing_underwater",
     "looks_like": "t_metal_railing",
-    "alias": [ "t_metal__railing_h", "t_metal__railing_v" ],
     "name": "underwater metal railing",
     "description": "A section of metal railing.",
     "symbol": "LINE_OXOX",
@@ -944,8 +967,8 @@
     "connects_to": "RAILING",
     "deconstruct": { "ter_set": "t_water_cube", "items": [ { "item": "sheet_metal", "count": 2 }, { "item": "pipe", "count": 4 } ] },
     "bash": {
-      "str_min": 20,
-      "str_max": 80,
+      "str_min": 25,
+      "str_max": 100,
       "sound": "clang!",
       "sound_fail": "whump.",
       "ter_set": "t_water_cube",
@@ -955,7 +978,7 @@
         { "item": "sheet_metal_small", "charges": [ 1, 4 ] },
         { "item": "scrap", "count": [ 1, 3 ] }
       ],
-      "ranged": { "reduction": [ 20, 20 ], "destroy_threshold": 80, "block_unaimed_chance": "25%" }
+      "ranged": { "reduction": [ 25, 25 ], "destroy_threshold": 100, "block_unaimed_chance": "25%" }
     }
   },
   {
@@ -997,13 +1020,13 @@
     "coverage": 25,
     "flags": [ "TRANSPARENT", "NOITEM", "REDUCE_SCENT", "MOUNTABLE", "SHORT", "THIN_OBSTACLE", "ROAD", "BURROWABLE" ],
     "bash": {
-      "str_min": 8,
+      "str_min": 25,
       "str_max": 150,
       "sound": "crunch!",
       "sound_fail": "clang!",
       "ter_set": "t_pavement_hw_air",
       "items": [ { "item": "pipe", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 3, 6 ] } ],
-      "ranged": { "reduction": [ 8, 8 ], "destroy_threshold": 150, "block_unaimed_chance": "25%" }
+      "ranged": { "reduction": [ 25, 25 ], "destroy_threshold": 150, "block_unaimed_chance": "25%" }
     }
   },
   {
@@ -1017,13 +1040,13 @@
     "coverage": 25,
     "flags": [ "TRANSPARENT", "NOITEM", "REDUCE_SCENT", "MOUNTABLE", "SHORT", "THIN_OBSTACLE", "ROAD", "BURROWABLE" ],
     "bash": {
-      "str_min": 8,
+      "str_min": 25,
       "str_max": 150,
       "sound": "crunch!",
       "sound_fail": "clang!",
       "ter_set": "t_pavement_bg_dp",
       "items": [ { "item": "pipe", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 3, 6 ] } ],
-      "ranged": { "reduction": [ 8, 8 ], "destroy_threshold": 150, "block_unaimed_chance": "25%" }
+      "ranged": { "reduction": [ 25, 25 ], "destroy_threshold": 150, "block_unaimed_chance": "25%" }
     }
   },
   {
@@ -1038,13 +1061,13 @@
     "flags": [ "TRANSPARENT", "NOITEM", "REDUCE_SCENT", "MOUNTABLE", "SHORT", "THIN_OBSTACLE", "ROAD", "BURROWABLE" ],
     "looks_like": "t_guardrail_bg_dp",
     "bash": {
-      "str_min": 8,
+      "str_min": 25,
       "str_max": 150,
       "sound": "crunch!",
       "sound_fail": "clang!",
       "ter_set": "t_pavement",
       "items": [ { "item": "pipe", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 3, 6 ] } ],
-      "ranged": { "reduction": [ 8, 8 ], "destroy_threshold": 150, "block_unaimed_chance": "25%" }
+      "ranged": { "reduction": [ 25, 25 ], "destroy_threshold": 150, "block_unaimed_chance": "25%" }
     }
   }
 ]

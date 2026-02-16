@@ -55,10 +55,11 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [
-      { "item": "textbook_anarch", "prob": 50 },
+      { "item": "textbook_anarch", "prob": 45 },
       { "item": "textbook_fireman", "prob": 30 },
       { "item": "textbook_gaswarfare", "prob": 10 },
-      { "item": "atomic_survival", "prob": 10 }
+      { "item": "atomic_survival", "prob": 10 },
+      { "item": "note_mutagen_conspiracy", "prob": 5 }
     ]
   }
 ]

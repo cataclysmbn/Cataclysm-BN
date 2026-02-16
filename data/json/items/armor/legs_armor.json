@@ -43,7 +43,7 @@
     "storage": "1500 ml",
     "warmth": 30,
     "material_thickness": 4,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 6,
     "flags": [ "VARSIZE", "POCKETS", "STURDY", "WATERPROOF", "OUTER" ]
   },
@@ -57,14 +57,14 @@
     "price": "75 USD",
     "price_postapoc": "20 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel" ],
     "symbol": "[",
     "looks_like": "legguard_hard",
     "color": "light_red",
     "covers": [ "legs" ],
-    "coverage": 95,
+    "coverage": 100,
     "encumbrance": 20,
-    "material_thickness": 4,
+    "material_thickness": 3,
     "flags": [ "VARSIZE", "STURDY" ]
   },
   {
@@ -86,8 +86,8 @@
     "encumbrance": 3,
     "warmth": 10,
     "material_thickness": 3,
-    "valid_mods": [ "steel_padded", "alloy_padded", "resized_large" ],
-    "flags": [ "OUTER" ]
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
+    "flags": [ "OUTER", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "fencing_pants",
@@ -109,7 +109,7 @@
     "storage": "500 ml",
     "warmth": 20,
     "material_thickness": 2,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE" ]
   },
   {
@@ -129,7 +129,7 @@
     "covers": [ "legs" ],
     "coverage": 30,
     "material_thickness": 5,
-    "valid_mods": [ "steel_padded", "alloy_padded", "resized_large" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "WATER_FRIENDLY", "BELTED" ]
   },
   {
@@ -185,14 +185,14 @@
     "price": "200 USD",
     "price_postapoc": "40 USD",
     "to_hit": -1,
-    "material": [ "steel", "leather" ],
+    "material": [ "steel" ],
     "symbol": "[",
     "looks_like": "legguard_hard",
     "color": "light_gray",
     "covers": [ "legs" ],
     "coverage": 95,
-    "encumbrance": 20,
-    "warmth": 20,
+    "encumbrance": 30,
+    "warmth": 10,
     "material_thickness": 4,
     "flags": [ "VARSIZE", "OUTER", "STURDY" ]
   },
@@ -202,9 +202,9 @@
     "type": "ARMOR",
     "name": { "str": "pair of superalloy leg guards", "str_pl": "pairs of superalloy leg guards" },
     "description": "A full assembly of medieval leg protection, made from cutting-edge superalloy.  Cuisses, poleyns, and greaves, with leather straps to secure each piece and connect it as part of a set.",
-    "material": [ "superalloy", "leather" ],
+    "material": [ "superalloy" ],
     "color": "light_cyan",
-    "encumbrance": 15,
+    "encumbrance": 25,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -270,7 +270,7 @@
     "encumbrance": 18,
     "warmth": 20,
     "material_thickness": 2,
-    "flags": [ "OUTER" ]
+    "flags": [ "OUTER", "ALLOWS_TAIL" ]
   },
   {
     "id": "lsurvivor_pants",
@@ -292,7 +292,7 @@
     "warmth": 12,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "RAINPROOF", "STURDY" ]
   },
   {
@@ -315,7 +315,7 @@
     "warmth": 35,
     "material_thickness": 3,
     "environmental_protection": 2,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "WATERPROOF" ]
   },
   {
@@ -337,15 +337,15 @@
     "storage": "3500 ml",
     "warmth": 15,
     "material_thickness": 5,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 3,
     "flags": [ "VARSIZE", "POCKETS", "STURDY", "WATERPROOF" ]
   },
   {
     "id": "skirt_armor",
     "type": "ARMOR",
-    "name": { "str_sp": "armored skirt" },
-    "description": "A knee-length skirt made of overlapping quilted pads, similar to those used by ancient Roman and Greek soldiers.  Not quite as protective as a gambeson, but it's far less hot and encumbering.",
+    "name": { "str_sp": "padded skirt" },
+    "description": "A knee-length skirt made of overlapping quilted pads, similar to those used by ancient Roman and Greek soldiers.  Doesn't cover as much as a gambeson, but it's far less hot and encumbering.",
     "weight": "600 g",
     "volume": "2 L",
     "price": "100 USD",
@@ -355,19 +355,19 @@
     "looks_like": "skirt",
     "color": "dark_gray",
     "covers": [ "legs" ],
-    "coverage": 85,
+    "coverage": 75,
     "encumbrance": 5,
     "warmth": 6,
-    "material_thickness": 4,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
-    "flags": [ "VARSIZE", "STURDY" ]
+    "material_thickness": 5,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
+    "flags": [ "VARSIZE", "STURDY", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "skirt_armor_leather",
     "type": "ARMOR",
-    "name": { "str_sp": "armored leather skirt" },
+    "name": { "str_sp": "leather armor skirt" },
     "copy-from": "skirt_armor",
-    "description": "A knee-length skirt made of overlapping leather armor plates, similar to those used by ancient Roman and Greek soldiers.  It's not very encumbering compared to proper legplates, but it's less protective as well.",
+    "description": "A knee-length skirt made of overlapping leather armor plates, similar to those used by ancient Roman and Greek soldiers.  It's not very encumbering compared to proper legplates, but provides less coverage too.",
     "weight": "800 g",
     "price": "100 USD",
     "price_postapoc": "150 cent",
@@ -381,11 +381,10 @@
     "id": "skirt_armor_plate",
     "type": "ARMOR",
     "name": { "str_sp": "plated leather skirt" },
-    "description": "An armored skirt made of leather with metal plates expertly sewn into it.  It's not as protective as proper leg armor, but it's also far more tolerable to wear in the summer and far easier to move in.",
-    "weight": "1300 g",
+    "description": "An armored skirt made of leather with metal plates expertly sewn into it.  Covers less than proper leg armor, but it's also far more tolerable to wear in the summer and far easier to move in.",
     "material": [ "leather", "iron" ],
-    "price_postapoc": "175 cent",
-    "encumbrance": 6
+    "proportional": { "price": 4, "price_postapoc": 1.2, "encumbrance": 1.25 },
+    "relative": { "weight": "500 g", "volume": "2 L" }
   },
   {
     "id": "greaves_bone",
@@ -398,6 +397,7 @@
     "encumbrance": 12,
     "warmth": 12,
     "environmental_protection": 1,
+    "extend": { "flags": [ "ALLOWS_TAIL" ] },
     "//": "Lower here since the closet counterpart is heavier",
     "proportional": { "weight": 0.8 }
   },
@@ -408,6 +408,7 @@
     "description": "Custom legs of layered carbon fiber armor made using a 3D printer.  Its rigid plates are more comparable to a suit of armor than kevlar, but it's very protective and lightweight.",
     "copy-from": "legguard_lightplate",
     "material": [ "carbon_fiber" ],
+    "extend": { "flags": [ "ALLOWS_TAIL" ] },
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   }
 ]

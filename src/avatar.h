@@ -91,6 +91,12 @@ class avatar : public player
             save_id = id;
         }
 
+        /**
+        * Makes the avatar "take over" the given NPC, while the current avatar character
+        * becomes an NPC.
+        */
+        void control_npc( npc & );
+
         void toggle_map_memory();
         bool should_show_map_memory();
         void prepare_map_memory_region( const tripoint &p1, const tripoint &p2 );
@@ -183,6 +189,8 @@ class avatar : public player
 
         bool is_hallucination() const override;
 
+        auto is_dead_state() const -> bool override;
+
         pimpl<teleporter_list> translocators;
 
         int get_str_base() const override;
@@ -194,8 +202,8 @@ class avatar : public player
         int free_upgrade_points() const;
         // how much "kill xp" you have
         int kill_xp() const;
-        // how much "kill xp" needed for next point (empty if reached max level)
-        std::optional<int> kill_xp_for_next_point() const;
+        // how much "kill xp" needed for next point
+        int kill_xp_for_next_point() const;
         // upgrade stat from kills
         void upgrade_stat( character_stat stat );
 
@@ -281,6 +289,11 @@ class avatar : public player
 
         /** Warnings from factions about bad behavior */
         std::map<faction_id, std::pair<int, time_point>> warning_record;
+        /**
+        * The NPC that would control the avatar's character in the avatar's absence.
+        * The Character data in this object is not relevant/used.
+        */
+        std::unique_ptr<npc> shadow_npc;
 
     public:
         // ---------------VALUES-----------------

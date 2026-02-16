@@ -27,7 +27,7 @@
     "name": { "str": "lamellar cuirass", "str_pl": "lamellar cuirasses" },
     "description": "A cuirass made of multiple pieces of tough leather, laced together for durable yet flexible protection.",
     "weight": "2108 g",
-    "volume": "9250 ml",
+    "volume": "6 L",
     "price": "260 USD",
     "price_postapoc": "25 USD",
     "material": [ "leather" ],
@@ -39,8 +39,20 @@
     "coverage": 80,
     "encumbrance": 12,
     "warmth": 15,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "STURDY" ]
+  },
+  {
+    "id": "armor_lamellar_plated",
+    "copy-from": "armor_lamellar",
+    "type": "ARMOR",
+    "name": { "str": "plated lamellar cuirass", "str_pl": "plated lamellar cuirasses" },
+    "description": "A cuirass made of multiple pieces of tough leather and metal scales laced together, forming durable yet flexible protection.",
+    "looks_like": "chainmail_vest",
+    "material": [ "leather", "iron" ],
+    "valid_mods": [  ],
+    "proportional": { "price": 4, "price_postapoc": 1.2, "encumbrance": 1.25 },
+    "relative": { "weight": "1500 g" }
   },
   {
     "id": "armor_lorica",
@@ -95,15 +107,15 @@
     "price": "100 USD",
     "price_postapoc": "20 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel" ],
     "symbol": "[",
     "looks_like": "vest_leather",
     "color": "light_red",
     "covers": [ "torso" ],
-    "coverage": 95,
+    "coverage": 100,
     "encumbrance": 20,
-    "material_thickness": 4,
-    "flags": [ "VARSIZE", "STURDY" ]
+    "material_thickness": 3,
+    "flags": [ "VARSIZE", "STURDY", "ALLOWS_WINGS" ]
   },
   {
     "id": "chestguard_hard",
@@ -126,7 +138,7 @@
     "warmth": 20,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "flags": [ "WATER_FRIENDLY", "STURDY", "OUTER" ]
+    "flags": [ "WATER_FRIENDLY", "STURDY", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "cuirass_lightplate",
@@ -138,14 +150,14 @@
     "price": "200 USD",
     "price_postapoc": "40 USD",
     "to_hit": -1,
-    "material": [ "steel", "leather" ],
+    "material": [ "steel" ],
     "symbol": "[",
     "looks_like": "chestguard_hard",
     "color": "light_gray",
     "covers": [ "torso" ],
     "coverage": 95,
-    "encumbrance": 20,
-    "warmth": 20,
+    "encumbrance": 30,
+    "warmth": 10,
     "material_thickness": 4,
     "flags": [ "VARSIZE", "OUTER", "STURDY" ]
   },
@@ -155,9 +167,9 @@
     "type": "ARMOR",
     "name": { "str": "superalloy cuirass", "str_pl": "superalloy cuirasses" },
     "description": "A superalloy breastplate, and a vital part of plate armor.  Even as full armor went into decline, cuirasses remained in use among cavalry in Europe.",
-    "material": [ "superalloy", "leather" ],
+    "material": [ "superalloy" ],
     "color": "light_cyan",
-    "encumbrance": 15,
+    "encumbrance": 25,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -202,8 +214,8 @@
     "encumbrance": 5,
     "warmth": 25,
     "material_thickness": 3,
-    "valid_mods": [ "steel_padded", "alloy_padded", "resized_large" ],
-    "flags": [ "STURDY" ]
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
+    "flags": [ "STURDY", "ALLOWS_WINGS" ]
   },
   {
     "id": "jacket_leather_mod",
@@ -226,7 +238,7 @@
     "warmth": 30,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "flags": [ "VARSIZE", "POCKETS", "OUTER" ]
+    "flags": [ "VARSIZE", "POCKETS", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "jacket_leather_bone",
@@ -254,8 +266,8 @@
     "encumbrance": 8,
     "warmth": 10,
     "material_thickness": 1,
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "VARSIZE", "OUTER" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "VARSIZE", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "lame_saber",
@@ -275,8 +287,8 @@
     "encumbrance": 8,
     "warmth": 10,
     "material_thickness": 1,
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "VARSIZE", "OUTER" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "VARSIZE", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "football_armor",
@@ -342,8 +354,8 @@
     "warmth": 15,
     "material_thickness": 5,
     "environmental_protection": 1,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
-    "flags": [ "VARSIZE", "WATERPROOF", "RAINPROOF", "STURDY" ]
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
+    "flags": [ "VARSIZE", "WATERPROOF", "RAINPROOF", "STURDY", "ALLOWS_WINGS" ]
   },
   {
     "id": "motorbike_armor",
@@ -367,7 +379,7 @@
     "warmth": 35,
     "material_thickness": 4,
     "environmental_protection": 2,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "WATERPROOF" ]
   },
   {
@@ -387,7 +399,7 @@
     "coverage": 65,
     "warmth": 5,
     "material_thickness": 3,
-    "flags": [ "SKINTIGHT" ]
+    "flags": [ "SKINTIGHT", "ALLOWS_WINGS" ]
   },
   {
     "id": "plastron_plastic",
@@ -406,7 +418,7 @@
     "encumbrance": 2,
     "warmth": 5,
     "material_thickness": 3,
-    "flags": [ "SKINTIGHT" ]
+    "flags": [ "SKINTIGHT", "ALLOWS_WINGS" ]
   },
   {
     "id": "vest_leather_mod",
@@ -429,7 +441,7 @@
     "warmth": 30,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "flags": [ "VARSIZE", "POCKETS", "OUTER" ]
+    "flags": [ "VARSIZE", "POCKETS", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "cuirass_bone",

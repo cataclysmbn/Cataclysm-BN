@@ -2,12 +2,6 @@
 title: CMake
 ---
 
-> [!CAUTION]
->
-> CMake build is work-in-progress.
-
-For official way to build CataclysmBN see [Compiler Support](../../reference/compiler_support.md).
-
 ## Prerequisites
 
 You'll need to have these libraries and their development headers installed in order to build
@@ -40,7 +34,15 @@ In order to compile localization files, you'll also need `gettext` package.
 ## Build Environment
 
 You can obtain the source code tarball for the latest version from
-[git](https://github.com/cataclysmbnteam/Cataclysm-BN).
+[git](https://github.com/cataclysmbn/Cataclysm-BN).
+
+```sh
+git clone --filter=blob:none https://github.com/cataclysmbn/Cataclysm-BN.git
+cd Cataclysm-BN
+```
+
+> [!TIP]
+> `filter=blob:none` creates a [blobless clone](https://github.blog/open-source/git/get-up-to-speed-with-partial-clone-and-shallow-clone/), which makes the initial clone much faster by downloading files on-demand.
 
 ### UNIX Environment
 
@@ -49,7 +51,7 @@ Obtain packages specified above with your system package manager.
 - For Ubuntu-based distros (24.04 onwards):
 
 ```sh
-sudo apt install git cmake ninja-build mold clang ccache \
+sudo apt install git cmake ninja-build mold g++-14 clang-20 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -64,18 +66,67 @@ freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
 ```
 
+#### Verifying Compiler Version
+
+You need to have at least `gcc` 14 **and** `clang` 19 to build CataclysmBN. You can check your compiler version with:
+
+```sh
+$ g++ --version
+g++ (GCC) 15.2.1 20250808 (Red Hat 15.2.1-1)
+Copyright (C) 2025 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+$ clang++ --version
+clang version 20.1.8 (Fedora 20.1.8-4.fc42)
+Target: x86_64-redhat-linux-gnu
+Thread model: posix
+InstalledDir: /usr/bin
+Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
+```
+
+> [!TIP]
+>
+> **when intalled `gcc-{version}` but `gcc` is not found**
+>
+> Use `update-alternatives` to set the default gcc version:
+>
+> ```sh
+> sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
+> sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+> sudo update-alternatives --display gcc
+> gcc - auto mode
+>   link best version is /usr/bin/gcc-14
+>   link currently points to /usr/bin/gcc-14
+>   link gcc is /usr/bin/gcc
+> /usr/bin/gcc-14 - priority 100
+> sudo update-alternatives --display g++
+> g++ - auto mode
+>   link best version is /usr/bin/g++-14
+>   link currently points to /usr/bin/g++-14
+>   link g++ is /usr/bin/g++
+> /usr/bin/g++-14 - priority 100
+> ```
+>
+> The same applies to `clang`.
+>
+> ```sh
+> sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
+> sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
+> ```
+
 ### Windows Subsystem for Linux (WSL)
 
 Follow the same instructions for `UNIX environment`; it just works (TM)
 
-If you plan on using `tiles`, make sure you have the latest [WSL 2 that supports GUI](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps).
+If you plan on using `tiles`, make sure you have the latest [WSL 2 that supports GUI](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps) and [have installed matching drivers](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps#prerequisites).
 
 ### Windows Environment (MSYS2)
 
 1. Follow steps from here: https://msys2.github.io/
 2. Install CataclysmBN build deps:
 
-```
+```sh
 pacman -S mingw-w64-x86_64-toolchain msys/git \
    	  mingw-w64-x86_64-cmake \
    	  mingw-w64-x86_64-SDL2_{image,mixer,ttf} \
@@ -105,36 +156,7 @@ from one source directory.
 >
 > Inside the source tree build is **NOT** supported.
 
-To build CataclysmBN out of source:
-
-```sh
-mkdir build
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-```
-
-The above example creates a build directory inside the source directory, but that's not required -
-you can just as easily create it in a completely different location.
-
-To install CataclysmBN after building (as root using su or sudo if necessary):
-
-```sh
-cmake --install build
-```
-
-To change build options, you can either pass the options on the command line:
-
-```sh
-cmake .. -DOPTION_NAME=option_value
-```
-
-Or use either the `ccmake` or `cmake-gui` front-ends, which display all options and their cached
-values on a console and graphical UI, respectively.
-
-```sh
-ccmake ..
-cmake-gui ..
-```
+#### Build with Presets (Recommended)
 
 There's multiple predefined [build presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) available, which simplifies build process to just two commands:
 
@@ -160,6 +182,104 @@ This will place the executables into `out/build/linux-slim/`.
 > ```sh
 > cmake --build build --preset linux-slim --target cataclysm-bn-tiles --parallel 4
 > ```
+
+#### Build without Presets
+
+To build CataclysmBN out of source:
+
+```sh
+mkdir build
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+The above example creates a build directory inside the source directory, but that's not required -
+you can just as easily create it in a completely different location.
+
+To install CataclysmBN after building (as root using su or sudo if necessary):
+
+```sh
+cmake --install build
+```
+
+### Creating Distribution Packages
+
+Use the `dist-tiles` or `dist-curses` presets to create portable distribution packages:
+
+```sh
+# Configure for tiles distribution
+cmake --preset dist-tiles
+
+# Build the game and tools
+cmake --build --preset dist-tiles
+
+# Create distribution package
+cmake --install build --prefix cataclysmbn-linux-tiles
+```
+
+For curses-only builds:
+
+```sh
+cmake --preset dist-curses
+cmake --build --preset dist-curses
+cmake --install build --prefix cataclysmbn-linux-curses
+```
+
+This creates a self-contained directory with the following structure:
+
+```
+cataclysmbn-linux-tiles/
+├── cataclysm-bn-tiles     # Game executable
+├── cataclysm-launcher     # Launcher script
+├── json_formatter         # JSON formatting tool
+├── data/                  # Game data files
+├── gfx/                   # Tilesets
+├── lang/                  # Translations
+├── doc/                   # Documentation
+├── README.md
+├── LICENSE.txt
+└── VERSION.txt
+```
+
+To create a tarball for distribution:
+
+```sh
+tar -czvf cataclysmbn-linux-tiles.tar.gz cataclysmbn-linux-tiles
+```
+
+> [!TIP]
+> The `cataclysm-launcher` script sets up the correct working directory and library paths.
+> Use it to run the game from any location.
+
+#### Distribution Presets
+
+| Preset        | Description                             |
+| ------------- | --------------------------------------- |
+| `dist-tiles`  | Tiles + Sound + Languages               |
+| `dist-curses` | Curses + Languages                      |
+| `lint`        | Minimal build for formatting tools only |
+
+#### Portable vs System Install
+
+| Option          | `USE_PREFIX_DATA_DIR=OFF` | `USE_PREFIX_DATA_DIR=ON`   |
+| --------------- | ------------------------- | -------------------------- |
+| Data location   | `./data/`                 | `/usr/share/cataclysm-bn/` |
+| Config location | `./config/`               | `~/.config/cataclysm-bn/`  |
+| Best for        | Portable/release builds   | System packages (deb/rpm)  |
+
+To change build options, you can either pass the options on the command line:
+
+```sh
+cmake .. -DOPTION_NAME=option_value
+```
+
+Or use either the `ccmake` or `cmake-gui` front-ends, which display all options and their cached
+values on a console and graphical UI, respectively.
+
+```sh
+ccmake ..
+cmake-gui ..
+```
 
 ## Build for Visual Studio / MSBuild
 
@@ -340,6 +460,11 @@ Use XDG directories for save and config files.
 - TESTS=`<boolean>`
 
 Whether to build tests.
+
+- JSON_FORMAT=`<boolean>`
+
+Build the `json_formatter` tool and enable `style-json` / `style-json-parallel` targets for
+formatting JSON files. See [Formatting & Linting](../formatting.md) for usage.
 
 So a CMake command for building Cataclysm-BN in release mode with tiles and sound support will look
 as follows, provided it is run in build directory located in the project.

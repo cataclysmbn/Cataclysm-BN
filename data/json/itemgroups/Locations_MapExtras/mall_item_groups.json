@@ -4,7 +4,8 @@
     "type": "item_group",
     "items": [
       [ "flyer", 10 ],
-      [ "bag_plastic", 10 ],
+      [ "bag_plastic", 8 ],
+      [ "bag_zipper", 2 ],
       [ "bottle_plastic", 10 ],
       [ "cup_plastic", 10 ],
       [ "bottle_glass", 10 ],
@@ -251,8 +252,8 @@
       [ "ecig", 20 ],
       [ "pipe_glass", 20 ],
       [ "pipe_glass_bong", 20 ],
-      [ "butane_can", 40 ],
-      [ "butane_tank", 5 ],
+      { "item": "chem_butane", "prob": 40, "container-item": "bottle_plastic" },
+      { "item": "chem_butane", "prob": 5, "container-item": "metal_tank_little" },
       [ "nectar_collector", 10 ],
       [ "advanced_ecig", 5 ],
       [ "weed", 5 ],
@@ -279,7 +280,8 @@
       [ "manual_electronics", 20 ],
       [ "cable", 60 ],
       [ "cell_phone", 1 ],
-      [ "smart_phone", 120 ],
+      [ "smart_phone", 90 ],
+      [ "wrist_comp_budget", 30 ],
       [ "wristwatch", 60 ],
       [ "mobile_memory_card_used", 10 ]
     ]

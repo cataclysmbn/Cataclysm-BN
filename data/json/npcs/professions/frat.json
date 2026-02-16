@@ -1,0 +1,45 @@
+[
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_FRAT",
+    "name": { "str": "Frat Member" },
+    "job_description": "I'm looking for parties.",
+    "traits": [
+      { "group": "BG_survival_story_TEENAGER" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "worn_override": "NC_PROF_FRAT_worn",
+    "carry_override": "NC_PROF_FRAT_carry",
+    "weapon_override": "NC_PROF_FRAT_melee",
+    "bonus_str": { "rng": [ -4, 2 ] },
+    "bonus_dex": { "rng": [ -4, 0 ] },
+    "bonus_int": { "rng": [ -4, -2 ] },
+    "bonus_per": { "rng": [ -2, 0 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_FRAT_worn",
+    "subtype": "collection",
+    "entries": [
+      { "item": "gold_watch" },
+      { "item": "boxer_shorts" },
+      { "item": "polo_shirt" },
+      { "item": "jacket_leather" },
+      { "item": "pants" },
+      { "item": "dress_shoes" }
+    ]
+  },
+  {
+    "id": "NC_PROF_FRAT_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "null" } ]
+  },
+  {
+    "id": "NC_PROF_FRAT_carry",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "smart_phone" } ]
+  }
+]

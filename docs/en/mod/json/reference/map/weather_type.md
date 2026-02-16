@@ -86,6 +86,7 @@ Example effect:
   "bodypart_string": "head", // bodypart to apply the effect on.
   "effect_msg": "You feel an odd wave-like sensation pass through your head.", // message to display in chat when the player is afflicted
   "effect_msg_frequency": 16, // chance to display this message every time the player is afflicted.
+  "effect_msg_blocked_frequency": 32, // chance to display this message every time the player blocks the effect with clothing.
   "message_type": 2, // type of message to display: good, bad, mixed, etc.
   "clothing_protection": 0, // one in X chance to block precipitation.
   "umbrella_protection": 0 // one in X chance to block precipitation.

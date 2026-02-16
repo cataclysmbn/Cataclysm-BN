@@ -34,7 +34,8 @@
       [ "tac_fullhelmet", 5 ],
       [ "tac_helmet", 10 ],
       [ "shield_riot", 20 ],
-      [ "shield_ballistic", 5 ]
+      [ "shield_ballistic", 5 ],
+      [ "shield_ballistic_large", 5 ]
     ]
   },
   {
@@ -98,7 +99,8 @@
       [ "shovel", 15 ],
       [ "shovel_short", 5 ],
       [ "cell_phone", 1 ],
-      [ "smart_phone", 20 ],
+      [ "smart_phone", 15 ],
+      [ "wrist_comp_budget", 5 ],
       [ "airhorn", 5 ],
       [ "boltcutters", 5 ],
       [ "tacvest", 10 ],

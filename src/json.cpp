@@ -1251,20 +1251,59 @@ constexpr static uint64_t neg_INT64_MIN()
     }
 }
 
+constexpr static bool overflow_add( const uint64_t lhs, const uint64_t rhs, uint64_t &result )
+{
+    const uint64_t r = lhs + rhs;
+    if( r < lhs ) {
+        return true;
+    }
+    result = r;
+    return false;
+}
+
+constexpr static bool overflow_mul( const uint64_t lhs, const uint64_t rhs, uint64_t &result )
+{
+    if( lhs > std::numeric_limits<uint64_t>::max() / rhs ) {
+        return true;
+    }
+    result = lhs * rhs;
+    return false;
+}
+
 number_sci_notation JsonIn::get_any_int()
 {
     number_sci_notation n = get_any_number();
-    if( n.exp < 0 ) {
-        error( "Integers cannot have a decimal point or negative order of magnitude." );
-    }
     // Manually apply scientific notation, since std::pow converts to double under the hood.
-    for( int64_t i = 0; i < n.exp; i++ ) {
-        if( n.number > std::numeric_limits<uint64_t>::max() / 10ULL ) {
-            error( "Specified order of magnitude too large -- encountered overflow applying it." );
+    if( n.fract_exp < 0 ) {
+        for( /* */; n.fract_exp < 0; ++n.fract_exp ) {
+            n.fract /= 10ULL;
         }
-        n.number *= 10ULL;
+    } else {
+        for( /* */; n.fract_exp > 0; --n.fract_exp ) {
+            if( overflow_mul( n.fract, 10, n.fract ) ) {
+                error( "Specified order of magnitude too large -- encountered overflow applying it." );
+            }
+        }
     }
-    n.exp = 0;
+
+    if( n.integral_exp < 0 ) {
+        for( /* */; n.integral_exp < 0; ++n.integral_exp ) {
+            n.integral /= 10ULL;
+        }
+    } else {
+        for( /* */; n.integral_exp > 0; --n.integral_exp ) {
+            if( overflow_mul( n.integral, 10, n.integral ) ) {
+                error( "Specified order of magnitude too large -- encountered overflow applying it." );
+            }
+            n.integral *= 10ULL;
+        }
+    }
+
+    if( overflow_add( n.integral, n.fract, n.integral ) ) {
+        error( "Specified order of magnitude too large -- encountered overflow applying it." ); // Overflow detected
+    }
+    n.fract = 0;
+
     return n;
 }
 
@@ -1273,10 +1312,10 @@ int JsonIn::get_int()
     static_assert( sizeof( int ) <= sizeof( int64_t ),
                    "JsonIn::get_int() assumed sizeof( int ) <= sizeof( int64_t )" );
     number_sci_notation n = get_any_int();
-    if( !n.negative && n.number > static_cast<uint64_t>( std::numeric_limits<int>::max() ) ) {
+    if( !n.negative && n.integral > static_cast<uint64_t>( std::numeric_limits<int>::max() ) ) {
         error( "Found a number greater than " + std::to_string( std::numeric_limits<int>::max() ) +
                " which is unsupported in this context." );
-    } else if( n.negative && n.number > neg_INT_MIN() ) {
+    } else if( n.negative && n.integral > neg_INT_MIN() ) {
         error( "Found a number less than " + std::to_string( std::numeric_limits<int>::min() ) +
                " which is unsupported in this context." );
     }
@@ -1285,21 +1324,21 @@ int JsonIn::get_int()
                        || neg_INT_MIN() - static_cast<uint64_t>( std::numeric_limits<int>::max() )
                        <= static_cast<uint64_t>( std::numeric_limits<int>::max() ),
                        "JsonIn::get_int() assumed -INT_MIN - INT_MAX <= INT_MAX" );
-        if( n.number > static_cast<uint64_t>( std::numeric_limits<int>::max() ) ) {
-            const uint64_t x = n.number - static_cast<uint64_t>( std::numeric_limits<int>::max() );
+        if( n.integral > static_cast<uint64_t>( std::numeric_limits<int>::max() ) ) {
+            const uint64_t x = n.integral - static_cast<uint64_t>( std::numeric_limits<int>::max() );
             return -std::numeric_limits<int>::max() - static_cast<int>( x );
         } else {
-            return -static_cast<int>( n.number );
+            return -static_cast<int>( n.integral );
         }
     } else {
-        return static_cast<int>( n.number );
+        return static_cast<int>( n.integral );
     }
 }
 
 unsigned int JsonIn::get_uint()
 {
     number_sci_notation n = get_any_int();
-    if( n.number > std::numeric_limits<unsigned int>::max() ) {
+    if( n.integral > std::numeric_limits<unsigned int>::max() ) {
         error( "Found a number greater than " +
                std::to_string( std::numeric_limits<unsigned int>::max() ) +
                " which is unsupported in this context." );
@@ -1307,16 +1346,16 @@ unsigned int JsonIn::get_uint()
     if( n.negative ) {
         error( "Unsigned integers cannot have a negative sign." );
     }
-    return static_cast<unsigned int>( n.number );
+    return static_cast<unsigned int>( n.integral );
 }
 
 int64_t JsonIn::get_int64()
 {
     number_sci_notation n = get_any_int();
-    if( !n.negative && n.number > static_cast<uint64_t>( std::numeric_limits<int64_t>::max() ) ) {
+    if( !n.negative && n.integral > static_cast<uint64_t>( std::numeric_limits<int64_t>::max() ) ) {
         error( "Signed integers greater than " +
                std::to_string( std::numeric_limits<int64_t>::max() ) + " not supported." );
-    } else if( n.negative && n.number > neg_INT64_MIN() ) {
+    } else if( n.negative && n.integral > neg_INT64_MIN() ) {
         error( "Integers less than "
                + std::to_string( std::numeric_limits<int64_t>::min() ) + " not supported." );
     }
@@ -1325,14 +1364,14 @@ int64_t JsonIn::get_int64()
                        || neg_INT64_MIN() - static_cast<uint64_t>( std::numeric_limits<int64_t>::max() )
                        <= static_cast<uint64_t>( std::numeric_limits<int64_t>::max() ),
                        "JsonIn::get_int64() assumed -INT64_MIN - INT64_MAX <= INT64_MAX" );
-        if( n.number > static_cast<uint64_t>( std::numeric_limits<int64_t>::max() ) ) {
-            const uint64_t x = n.number - static_cast<uint64_t>( std::numeric_limits<int64_t>::max() );
+        if( n.integral > static_cast<uint64_t>( std::numeric_limits<int64_t>::max() ) ) {
+            const uint64_t x = n.integral - static_cast<uint64_t>( std::numeric_limits<int64_t>::max() );
             return -std::numeric_limits<int64_t>::max() - static_cast<int64_t>( x );
         } else {
-            return -static_cast<int64_t>( n.number );
+            return -static_cast<int64_t>( n.integral );
         }
     } else {
-        return static_cast<int64_t>( n.number );
+        return static_cast<int64_t>( n.integral );
     }
 }
 
@@ -1342,26 +1381,35 @@ uint64_t JsonIn::get_uint64()
     if( n.negative ) {
         error( "Unsigned integers cannot have a negative sign." );
     }
-    return n.number;
+    return n.integral;
 }
 
 double JsonIn::get_float()
 {
     number_sci_notation n = get_any_number();
-    return n.number * std::pow( 10.0f, n.exp ) * ( n.negative ? -1.f : 1.f );
+
+    double int_part = n.integral * std::pow( 10.0f, n.integral_exp );
+    double fract_part = n.fract * std::pow( 10.0f, n.fract_exp );
+    double sum = fract_part + int_part;
+    return n.negative ? -sum : sum;
 }
 
 number_sci_notation JsonIn::get_any_number()
 {
     // this could maybe be prettier?
-    char ch;
     number_sci_notation ret;
+    if( !stream ) {
+        return ret;
+    }
+
+    char ch;
     int mod_e = 0;
     eat_whitespace();
     if( !stream->get( ch ) ) {
         error( "unexpected end of input", 0 );
     }
-    if( ( ret.negative = ch == '-' ) ) {
+    ret.negative = ch == '-';
+    if( ret.negative ) {
         if( !stream->get( ch ) ) {
             error( "unexpected end of input", 0 );
         }
@@ -1373,52 +1421,51 @@ number_sci_notation JsonIn::get_any_number()
     }
     if( ch == '0' ) {
         // allow a single leading zero in front of a '.' or 'e'/'E'
-        stream->get( ch );
-        if( ch >= '0' && ch <= '9' ) {
+        if( stream->get( ch ) && ch >= '0' && ch <= '9' ) {
             error( "leading zeros not allowed", -1 );
         }
     }
     while( ch >= '0' && ch <= '9' ) {
-        ret.number *= 10;
-        ret.number += ( ch - '0' );
+        ret.integral *= 10;
+        ret.integral += ( ch - '0' );
         if( !stream->get( ch ) ) {
             break;
         }
     }
     if( ch == '.' ) {
         while( stream->get( ch ) && ch >= '0' && ch <= '9' ) {
-            ret.number *= 10;
-            ret.number += ( ch - '0' );
+            ret.fract *= 10;
+            ret.fract += ( ch - '0' );
             mod_e -= 1;
         }
     }
-    if( stream && ( ch == 'e' || ch == 'E' ) ) {
+    if( *stream && ( ch == 'e' || ch == 'E' ) ) {
         if( !stream->get( ch ) ) {
             error( "unexpected end of input", 0 );
         }
-        bool neg;
-        if( ( neg = ch == '-' ) || ch == '+' ) {
+        const bool neg = ch == '-';
+        if( neg || ch == '+' ) {
             if( !stream->get( ch ) ) {
                 error( "unexpected end of input", 0 );
             }
         }
         while( ch >= '0' && ch <= '9' ) {
-            ret.exp *= 10;
-            ret.exp += ( ch - '0' );
+            ret.integral_exp *= 10;
+            ret.integral_exp += ( ch - '0' );
             if( !stream->get( ch ) ) {
                 break;
             }
         }
         if( neg ) {
-            ret.exp *= -1;
+            ret.integral_exp *= -1;
         }
     }
     // unget the final non-number character (probably a separator)
-    if( stream ) {
+    if( *stream && !stream->eof() ) {
         stream->unget();
     }
     end_value();
-    ret.exp += mod_e;
+    ret.fract_exp += ret.integral_exp + mod_e;
     return ret;
 }
 
@@ -1484,10 +1531,6 @@ bool JsonIn::end_array()
 {
     eat_whitespace();
     if( peek() == ']' ) {
-        if( ate_separator ) {
-            uneat_whitespace();
-            error( "comma not allowed at end of array" );
-        }
         stream->get();
         end_value();
         return true;
@@ -1517,10 +1560,6 @@ bool JsonIn::end_object()
 {
     eat_whitespace();
     if( peek() == '}' ) {
-        if( ate_separator ) {
-            uneat_whitespace();
-            error( "comma not allowed at end of object" );
-        }
         stream->get();
         end_value();
         return true;
@@ -2076,7 +2115,15 @@ JsonOut::JsonOut( std::ostream &s, bool pretty, int depth ) :
     stream->imbue( std::locale::classic() );
     stream->setf( std::ios_base::showpoint );
     stream->setf( std::ios_base::dec, std::ostream::basefield );
-    stream->setf( std::ios_base::fixed, std::ostream::floatfield );
+
+    /*
+     * commented out to stop it from writing doubles/floats it can't parse back
+     * like 54696394524485867741542555987381396439624664800566192243134814355318004424435928931463872556597877428236578712370545239603438011686357686626341989342609988250274471275461834399704797104579286662369597085437097735427176009798232582855542740026820932997238901947368886937780653608615767489758455266771331973120
+     * aka 5.469639452448587e+307
+     * fixed / scientific is now handled when writing the value
+     * if it would be larger than 15 digits, it's written as scientific
+     */
+    // stream->setf( std::ios_base::fixed, std::ostream::floatfield );
 
     // automatically stringify bool to "true" or "false"
     stream->setf( std::ios_base::boolalpha );

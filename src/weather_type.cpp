@@ -178,6 +178,7 @@ void weather_type::load( const JsonObject &jo, const std::string & )
             std::string id_str = weather_effect.get_string( "effect_id_str" );
             std::string msg = weather_effect.get_string( "effect_msg" );
             int freq = weather_effect.get_int( "effect_msg_frequency" );
+            int blocked_freq = weather_effect.get_int( "effect_msg_blocked_frequency" );
             int effect_intensity = weather_effect.get_int( "effect_intensity" );
             std::string bodypart_string = weather_effect.get_string( "bodypart_string", "" );
             time_duration duration = read_from_json_string<time_duration>
@@ -185,7 +186,7 @@ void weather_type::load( const JsonObject &jo, const std::string & )
                                        time_duration::units );
 
             bodypart_str_id bp_id = bodypart_str_id::NULL_ID();
-            if( bodypart_string != "" ) {
+            if( !bodypart_string.empty() ) {
                 bp_id = bodypart_str_id( bodypart_string );
             }
 
@@ -199,7 +200,7 @@ void weather_type::load( const JsonObject &jo, const std::string & )
             effects.emplace_back(
             [ = ]( int intensity ) {
                 weather_effect::effect( intensity, duration, bp_id, effect_intensity, id_str, msg,
-                                        freq,
+                                        freq, blocked_freq,
                                         gmt, precipitation_name, ignore_armor, clothing_protection, umbrella_protection );
             },
             intensity

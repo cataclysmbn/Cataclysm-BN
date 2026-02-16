@@ -417,7 +417,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
             if( carrier ) {
                 carrier->add_msg_if_player( m_bad, _( "You feel fatigue seeping into your body." ) );
                 carrier->mod_fatigue( rng( rech.intensity_min, rech.intensity_max ) );
-                carrier->mod_stamina( -100 * rng( rech.intensity_min, rech.intensity_max ) );
+                carrier->mod_stamina( -100 * rng( rech.intensity_min, rech.intensity_max ), false );
             } else {
                 return false;
             }

@@ -1,0 +1,23 @@
+[
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "crit_mags_scarh",
+    "entries": [
+      { "item": "scarhmag", "ammo-item": "762_51", "charges": 20 },
+      { "item": "scarhmag", "ammo-item": "762_51", "charges": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "crit_mags_m9",
+    "entries": [ { "item": "m9mag", "ammo-item": "9mm", "charges": 15 }, { "item": "m9mag", "ammo-item": "9mm", "charges": 15 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "crit_gun_specops",
+    "entries": [ { "item": "crt_laser_pistol", "contents-item": [ "flare_gmod", "bthk_stock", "beam_difractor" ] } ]
+  }
+]

@@ -26,8 +26,8 @@
       "max_weight": "3600 g",
       "flags": [ "BELT_CLIP" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "FANCY", "WAIST", "COMPACT", "WATER_FRIENDLY" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "FANCY", "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
   },
   {
     "abstract": "judo_belt_abstract",
@@ -46,8 +46,8 @@
     "coverage": 5,
     "encumbrance": 2,
     "material_thickness": 5,
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
   },
   {
     "id": "judo_belt_black",
@@ -129,8 +129,8 @@
       "max_weight": "400 g",
       "flags": [ "BELT_CLIP" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
   },
   {
     "id": "obi_gi",
@@ -174,8 +174,8 @@
       "max_weight": "3600 g",
       "flags": [ "BELT_CLIP" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
   },
   {
     "id": "survivor_belt_notools",
@@ -237,8 +237,8 @@
       "max_weight": "1500 g",
       "flags": [ "BELT_CLIP", "SHEATH_KNIFE" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
   },
   {
     "id": "webbing_belt",
@@ -265,7 +265,7 @@
       "min_volume": "40 ml",
       "flags": [ "BELT_CLIP" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
   }
 ]

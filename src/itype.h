@@ -32,6 +32,12 @@ class Item_factory;
 class item;
 class JsonObject;
 class JsonIn;
+class lua_iwieldable_actor;
+class lua_iwearable_actor;
+class lua_iequippable_actor;
+class lua_istate_actor;
+class lua_imelee_actor;
+class lua_iranged_actor;
 class player;
 class relic;
 struct tripoint;
@@ -102,6 +108,7 @@ struct islot_tool {
 
     itype_id subtype;
 
+    itype_id default_ammo = itype_id::NULL_ID();
     int max_charges = 0;
     int def_charges = 0;
     int charge_factor = 1;
@@ -109,6 +116,8 @@ struct islot_tool {
     int turns_per_charge = 0;
     int turns_active = 0;
     int power_draw = 0;
+    int ups_eff_mult = 1;
+    int ups_recharge_rate = 5;
 
     std::vector<int> rand_charges;
 };
@@ -289,7 +298,7 @@ struct islot_armor {
      */
     units::volume storage = 0_ml;
     /**
-    * Factor modifiying weight capacity
+    * Factor modifying weight capacity
     */
     float weight_capacity_modifier = 1.0;
     /**
@@ -338,6 +347,33 @@ struct islot_pet_armor {
     std::string bodytype = "none";
 };
 
+/**
+ * What recipes can be learned from this book.
+ */
+struct book_recipe {
+    /**
+     * The recipe that can be learned (never null).
+     */
+    const class recipe *recipe;
+    /**
+     * The skill level required to learn the recipe.
+     */
+    int skill_level;
+    /**
+     * The name for the recipe as it appears in the book.
+     */
+    translation name;
+    /**
+     * Hidden means it does not show up in the description of the book.
+     */
+    bool hidden;
+    bool is_hidden() const {
+        return hidden;
+    }
+
+    LUA_TYPE_OPS( book_recipe, recipe );
+};
+
 struct islot_book {
     /**
      * Which skill it upgrades, if any. Can be @ref skill_id::NULL_ID.
@@ -372,35 +408,8 @@ struct islot_book {
      * Fun books have chapters; after all are read, the book is less fun.
      */
     int chapters = 0;
-    /**
-     * What recipes can be learned from this book.
-     */
-    struct recipe_with_description_t {
-        /**
-         * The recipe that can be learned (never null).
-         */
-        const class recipe *recipe;
-        /**
-         * The skill level required to learn the recipe.
-         */
-        int skill_level;
-        /**
-         * The name for the recipe as it appears in the book.
-         */
-        std::string name;
-        /**
-         * Hidden means it does not show up in the description of the book.
-         */
-        bool hidden;
-        bool operator<( const recipe_with_description_t &rhs ) const {
-            return recipe < rhs.recipe;
-        }
-        bool is_hidden() const {
-            return hidden;
-        }
-    };
-    using recipe_list_t = std::set<recipe_with_description_t>;
-    recipe_list_t recipes;
+
+    std::set<book_recipe> recipes;
 };
 
 struct islot_mod {
@@ -490,7 +499,7 @@ struct islot_fuel {
         float energy = 0.0f;
         struct fuel_explosion explosion_data;
         bool has_explode_data = false;
-        std::string pump_terrain = "t_null";
+        ter_id pump_terrain = t_null;
 };
 
 // TODO: this shares a lot with the ammo item type, merge into a separate slot type?
@@ -543,9 +552,9 @@ struct islot_gun : common_ranged_data {
      */
     int min_cycle_recoil = 0;
     /**
-     * Length of gun barrel, if positive allows sawing down of the barrel
+     * Volume of material removed by sawing down the barrel, if left unspecified barrel can't be sawed down.
      */
-    units::volume barrel_length = 0_ml;
+    units::volume barrel_volume = 0_ml;
     /**
      * Effects that are applied to the ammo when fired.
      */
@@ -809,6 +818,12 @@ struct islot_seed {
      */
     std::string required_terrain_flag = "PLANTABLE";
     islot_seed() = default;
+
+    /**
+     * Time it takes to grow from one stage to another. There are 4 plant stages:
+     * seed, seedling, mature and harvest. Non-seed items return 0.
+     */
+    time_duration get_plant_epoch() const;
 };
 
 struct islot_artifact {
@@ -955,6 +970,14 @@ struct itype {
         /** Action to take BEFORE the item is placed on map. If it returns non-zero, item won't be placed. */
         use_function drop_action;
 
+        /** Lua callback actors (non-owning, owned by Item_factory) */
+        const lua_iwieldable_actor *iwieldable_callbacks = nullptr;
+        const lua_iwearable_actor *iwearable_callbacks = nullptr;
+        const lua_iequippable_actor *iequippable_callbacks = nullptr;
+        const lua_istate_actor *istate_callbacks = nullptr;
+        const lua_imelee_actor *imelee_callbacks = nullptr;
+        const lua_iranged_actor *iranged_callbacks = nullptr;
+
         /** Fields to emit when item is in active state */
         std::set<emit_id> emits;
 
@@ -1018,6 +1041,9 @@ struct itype {
         // If non-rigid volume (and if worn encumbrance) increases proportional to contents
         bool rigid = true;
 
+        // Default item vars for the resulting item
+        std::map<std::string, std::string> item_vars;
+
         /** Damage output in melee for zero or more damage types */
         std::array<int, NUM_DT> melee;
         /**
@@ -1065,6 +1091,10 @@ struct itype {
          * Efficiency of solar energy conversion for solarpacks.
          */
         float solar_efficiency = 0;
+
+        // Sets repair difficulty for items
+        // Overrides recipe difficulty
+        int repair_difficulty = -1;
 
         FlagsSetType item_tags;
 

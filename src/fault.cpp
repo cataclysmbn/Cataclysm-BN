@@ -70,7 +70,7 @@ void fault::load_fault( const JsonObject &jo )
 
     optional( jo, false, "flags", f.flags );
 
-    if( faults_all.find( f.id_ ) != faults_all.end() ) {
+    if( faults_all.contains( f.id_ ) ) {
         jo.throw_error( "parsed fault overwrites existing definition", "id" );
     } else {
         faults_all[f.id_] = f;

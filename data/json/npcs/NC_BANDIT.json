@@ -200,7 +200,8 @@
           { "item": "shield_wooden", "prob": 10 },
           { "item": "shield_spiked", "prob": 5 },
           { "item": "shield_welded", "prob": 5 },
-          { "item": "shield_ballistic", "prob": 5 }
+          { "item": "shield_ballistic", "prob": 3 },
+          { "item": "shield_ballistic_large", "prob": 2 }
         ],
         "prob": 10
       }
@@ -260,8 +261,7 @@
           { "item": "colt_navy", "prob": 50 },
           { "item": "colt_saa", "prob": 60 },
           { "item": "draco", "prob": 30 },
-          { "item": "lemat_revolver", "prob": 50 },
-          { "item": "makarov", "prob": 50 }
+          { "item": "lemat_revolver", "prob": 50 }
         ],
         "prob": 10
       },

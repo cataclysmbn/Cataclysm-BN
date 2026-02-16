@@ -206,10 +206,5 @@
       [ "afs_textbook_launchers", 3 ],
       [ "textbook_atomic", 8 ]
     ]
-  },
-  {
-    "id": "guns_pistol_improvised",
-    "type": "item_group",
-    "items": [ [ "v29_cheap", 10 ] ]
   }
 ]

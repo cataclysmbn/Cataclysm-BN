@@ -100,6 +100,7 @@ class Skill
         bool is_combat_skill() const;
         bool is_contextual_skill() const;
         bool is_weapon_skill() const;
+        bool unaffected_by_focus() const;
 
         // Required for LUA
         bool operator<( const Skill &rhs ) const {

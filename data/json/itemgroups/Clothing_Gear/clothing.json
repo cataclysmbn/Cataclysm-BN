@@ -428,7 +428,8 @@
       { "item": "tac_helmet", "prob": 10 },
       { "item": "glasses_bal", "prob": 10 },
       { "item": "mask_bal", "prob": 5 },
-      { "item": "shield_ballistic", "prob": 5 }
+      { "item": "shield_ballistic", "prob": 5 },
+      { "item": "shield_ballistic_large", "prob": 5 }
     ]
   },
   {
@@ -1283,6 +1284,7 @@
       [ "dinosuit", 4 ],
       [ "zentai", 5 ],
       [ "vibrator", 5 ],
+      [ "bullet_vibrator", 5 ],
       { "item": "condom", "prob": 30, "count": [ 1, 5 ] },
       [ "snuggie", 5 ],
       [ "flyer", 10 ],
@@ -2019,7 +2021,8 @@
       { "group": "pwr_armor_acc", "prob": 10 },
       [ "mask_gas", 10 ],
       [ "duffelbag", 15 ],
-      [ "mess_kit", 9 ],
+      [ "gasoline_cooker", 5 ],
+      [ "mess_kit", 4 ],
       [ "mil_mess_kit", 1 ],
       [ "backpack", 32 ],
       [ "briefcase", 10 ],
@@ -2030,6 +2033,7 @@
       [ "knee_pads", 40 ],
       [ "mask_bal", 5 ],
       [ "shield_ballistic", 2 ],
+      [ "shield_ballistic_large", 1 ],
       [ "e_tool", 10 ],
       [ "shovel_short", 2 ],
       [ "waterproof_gunmod", 8 ],
@@ -2522,6 +2526,7 @@
       [ "shield_spiked_large", 1 ],
       [ "shield_riot", 8 ],
       [ "shield_ballistic", 4 ],
+      [ "shield_ballistic_large", 2 ],
       [ "shield_welded", 2 ],
       [ "carbon_shield", 1 ]
     ]

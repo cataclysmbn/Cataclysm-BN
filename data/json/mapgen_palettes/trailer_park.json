@@ -25,6 +25,7 @@
       "t": "f_table",
       "F": "f_fridge",
       "H": "f_sofa",
+      "h": [ [ "f_null", 90 ], [ "f_space_heater_off", 6 ], [ "f_space_heater_large", 4 ] ],
       "S": "f_sink",
       "C": "f_counter",
       "a": "f_cupboard",
@@ -36,6 +37,6 @@
       "A": "f_armchair"
     },
     "toilets": { "T": {  } },
-    "nested": { "W": { "chunks": [ [ "null", 90 ], [ "house_place_air_conditioner", 10 ] ] } }
+    "nested": { "W": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] } }
   }
 ]

@@ -85,6 +85,12 @@ void cata::detail::mod_mutation_branch( sol::state &lua )
         SET_MEMB_RO( mending_modifier );
         DOC( "Bonus HP multiplier. 1.0 doubles HP; -0.5 halves it." );
         SET_MEMB_RO( hp_modifier );
+        DOC( "Packmule multiplier. 2.0 doubles backpack/container volume; 0.5 halves it." );
+        SET_MEMB_RO( packmule_modifier );
+        DOC( "Crafting speed multiplier. 2.0 doubles crafting speed; 0.5 halves it." );
+        SET_MEMB_RO( crafting_speed_modifier );
+        DOC( "Construction speed multiplier. 2.0 doubles construction speed; 0.5 halves it." );
+        SET_MEMB_RO( construction_speed_modifier );
         DOC( "Secondary HP multiplier; stacks with the other one. 1.0 doubles HP; -0.5 halves it." );
         SET_MEMB_RO( hp_modifier_secondary );
         DOC( "Flat adjustment to HP." );
@@ -139,7 +145,7 @@ void cata::detail::mod_mutation_branch( sol::state &lua )
         DOC( "Lists the secondary mutation(s) needed to gain this mutation." );
         luna::set_fx( ut, "other_prerequisites", []( const UT_CLASS & mut ) -> std::vector<trait_id> { std::vector<trait_id> rv = mut.prereqs2; return rv; } );
         DOC( "Lists the threshold mutation(s) required to gain this mutation." );
-        luna::set_fx( ut, "thresh_requirements", []( const UT_CLASS & mut ) -> std::vector<trait_id> { std::vector<trait_id> rv = mut.threshreq; return rv; } );
+        luna::set_fx( ut, "thresh_requirements", []( const UT_CLASS & mut ) -> std::vector<trait_id> { std::vector<trait_id> rv; for( auto cat : mut.category ) { rv.push_back( cat->threshold_muts[ mut.threshold_tier ] ); } return rv; } );
         DOC( "Lists the type(s) of this mutation. Mutations of a given type are mutually exclusive." );
         luna::set_fx( ut, "mutation_types", []( const UT_CLASS & mut ) -> std::set<std::string> { std::set<std::string> rv = mut.types; return rv; } );
         DOC( "Lists conflicting mutations." );

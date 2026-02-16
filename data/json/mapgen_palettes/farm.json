@@ -42,6 +42,7 @@
       "8": "t_dirtfloor"
     },
     "furniture": {
+      "`": [ [ "f_null", 90 ], [ "f_space_heater_off", 6 ], [ "f_space_heater_large", 4 ] ],
       "B": "f_bed",
       "b": "f_bathtub",
       "d": "f_dresser",
@@ -90,11 +91,11 @@
         { "item": "moonshine_brew", "chance": 65 }
       ],
       "Y": { "item": "coat_rack", "chance": 35, "repeat": [ 1, 4 ] },
-      "4": [ { "item": "SUS_dishes" }, { "item": "SUS_silverware" }, { "item": "SUS_knife_drawer" } ],
+      "4": [ { "item": "SUS_dishes" }, { "item": "SUS_kitchen_misc" }, { "item": "SUS_knife_drawer" } ],
       "5": [ { "item": "SUS_junk_drawer" }, { "item": "SUS_kitchen_sink" } ],
-      "6": [ { "item": "SUS_cookware" }, { "item": "SUS_utensils" } ],
+      "6": [ { "item": "SUS_cookware" }, { "item": "SUS_kitchen_misc" } ],
       "ü": { "item": "guns_hunting_safe", "chance": 100 }
     },
-    "nested": { "w": { "chunks": [ [ "null", 90 ], [ "house_place_air_conditioner", 10 ] ] } }
+    "nested": { "w": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] } }
   }
 ]

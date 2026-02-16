@@ -12,6 +12,7 @@
       }
     },
     "furniture": {
+      "`": [ [ "f_null", 90 ], [ "f_space_heater_off", 6 ], [ "f_space_heater_large", 4 ] ],
       "A": "f_stool",
       "B": "f_chair",
       "C": "f_armchair",
@@ -206,7 +207,7 @@
       "Y": { "item": "trash", "chance": 30, "repeat": [ 1, 2 ] },
       "R": { "item": "homebooks", "chance": 70, "repeat": [ 3, 8 ] }
     },
-    "nested": { "o": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] } }
+    "nested": { "o": { "chunks": [ [ "null", 195 ], [ "house_place_air_conditioner", 5 ] ] } }
   },
   {
     "type": "palette",

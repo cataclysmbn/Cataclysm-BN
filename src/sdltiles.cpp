@@ -41,6 +41,7 @@
 #include "cuboid_rectangle.h"
 #include "cursesport.h"
 #include "debug.h"
+#include "dynamic_atlas.h"
 #include "filesystem.h"
 #include "font_loader.h"
 #include "game.h"
@@ -57,6 +58,8 @@
 #include "options.h"
 #include "output.h"
 #include "overmap_location.h"
+#include "overmap_label.h"
+#include "overmap_label_note.h"
 #include "overmap_special.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
@@ -103,11 +106,13 @@
 //Globals                           *
 //***********************************
 
-std::unique_ptr<cata_tiles> tilecontext;
+std::shared_ptr<cata_tiles> tilecontext;
+std::shared_ptr<cata_tiles> overmap_tilecontext;
 static uint32_t lastupdate = 0;
 static uint32_t interval = 25;
 static bool needupdate = false;
 static bool need_invalidate_framebuffers = false;
+static const std::string empty_string;
 
 palette_array windowsPalette;
 
@@ -865,22 +870,22 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         geometry->rect( renderer, clipRect, SDL_Color() );
     }
 
+    point s;
+    get_window_tile_counts( width, height, s.x, s.y );
+
     op = point( dest.x * fontwidth, dest.y * fontheight );
     // Rounding up to include incomplete tiles at the bottom/right edges
     screentile_width = divide_round_up( width, tile_width );
     screentile_height = divide_round_up( height, tile_height );
 
-    window_dimensions wnd_dim = get_window_dimensions( g->w_overmap );
-
     const int min_col = 0;
-    const int max_col = screentile_width;
+    const int max_col = s.x;
     const int min_row = 0;
-    const int max_row = screentile_height;
+    const int max_row = s.y;
     int height_3d = 0;
     avatar &you = get_avatar();
     const tripoint_abs_omt avatar_pos = you.global_omt_location();
-    const tripoint_abs_omt corner_NW = center_abs_omt - point( wnd_dim.window_size_cell.x / 2,
-                                       wnd_dim.window_size_cell.y / 2 );
+    const tripoint_abs_omt corner_NW = center_abs_omt - point( max_col / 2, max_row / 2 );
     const tripoint_abs_omt corner_SE = corner_NW + point( max_col - 1, max_row - 1 );
     const inclusive_cuboid<tripoint> overmap_area( corner_NW.raw(), corner_SE.raw() );
     // Debug vision allows seeing everything
@@ -897,6 +902,26 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     const auto global_omt_to_draw_position = []( const tripoint_abs_omt & omp ) {
         // z position is hardcoded to 0 because the things this will be used to draw should not be skipped
         return tripoint( omp.raw().xy(), 0 );
+    };
+    const auto has_player_label = [&]( const tripoint_abs_omt & pos ) -> bool {
+        const auto player_label = overmap_label_note::extract_label( overmap_buffer.note( pos ) );
+        return player_label.has_value() && !player_label->empty();
+    };
+    const auto has_map_label = [&]( const tripoint_abs_omt & pos ) -> bool {
+        if( const auto player_label = overmap_label_note::extract_label( overmap_buffer.note( pos ) );
+            player_label.has_value() && !player_label->empty() )
+        {
+            return true;
+        }
+
+        const auto &terrain = overmap_buffer.ter( pos );
+        if( const auto static_label = overmap_labels::get_label( terrain->get_type_id() );
+            static_label.has_value() && !static_label->empty() )
+        {
+            return true;
+        }
+
+        return false;
     };
 
     for( int row = min_row; row < max_row; row++ ) {
@@ -942,14 +967,20 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 draw_om_tile_recursively( omp + tripoint( 0, 0, -z_offset ), id, rotation, subtile, z_offset );
             } else {
                 const lit_level ll = overmap_buffer.is_explored( omp ) ? lit_level::LOW : lit_level::LIT;
+
+                auto [bgCol, fgCol] = get_overmap_color( overmap_buffer, omp );
+
                 // light level is now used for choosing between grayscale filter and normal lit tiles.
-                draw_from_id_string( id, TILE_CATEGORY::C_OVERMAP_TERRAIN, "overmap_terrain", omp.raw(),
-                                     subtile, rotation, ll, false, height_3d, 0 );
+                const tile_search_params tile { id, C_OVERMAP_TERRAIN, "overmap_terrain", subtile, rotation };
+                draw_from_id_string( tile, omp.raw(), bgCol, fgCol,
+                                     ll, false, 0, false,
+                                     height_3d );
             }
 
             if( blink && uistate.overmap_highlighted_omts.contains( omp ) ) {
                 if( tile_iso ) {
-                    draw_from_id_string( "highlight", omp.raw(), 0, 0, lit_level::LIT, false, 0 );
+                    const tile_search_params tile {"highlight", C_NONE, empty_string, 0, 0};
+                    draw_from_id_string( tile, omp.raw(), std::nullopt, std::nullopt, lit_level::LIT, false, 0, false );
                 } else {
                     SDL_Color c = curses_color_to_SDL( c_pink );
                     c.a = c.a >> 1;
@@ -964,44 +995,43 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                     if( !mgroups.empty() ) {
                         auto mgroup_iter = mgroups.begin();
                         std::advance( mgroup_iter, rng( 0, mgroups.size() - 1 ) );
-                        draw_from_id_string( ( *mgroup_iter )->type->defaultMonster.str(),
-                                             omp.raw(), 0, 0, lit_level::LIT, false, 0 );
+                        const tile_search_params tile {( *mgroup_iter )->type->defaultMonster.str(), C_NONE, empty_string, 0, 0};
+                        draw_from_id_string( tile, omp.raw(), std::nullopt,
+                                             std::nullopt, lit_level::LIT, false, 0, false );
                     }
                 }
                 const int horde_size = overmap_buffer.get_horde_size( omp );
                 if( showhordes && los && horde_size >= HORDE_VISIBILITY_SIZE ) {
                     // a little bit of hardcoded fallbacks for hordes
+                    std::string horde_id;
                     if( find_tile_with_season( id ) ) {
-                        draw_from_id_string( string_format( "overmap_horde_%d", horde_size ),
-                                             omp.raw(), 0, 0, lit_level::LIT, false, 0 );
+                        horde_id = string_format( "overmap_horde_%d", horde_size );
                     } else {
                         switch( horde_size ) {
                             case HORDE_VISIBILITY_SIZE:
-                                draw_from_id_string( "mon_zombie", omp.raw(), 0, 0, lit_level::LIT,
-                                                     false, 0 );
+                                horde_id = "mon_zombie";
                                 break;
                             case HORDE_VISIBILITY_SIZE + 1:
-                                draw_from_id_string( "mon_zombie_tough", omp.raw(), 0, 0,
-                                                     lit_level::LIT, false, 0 );
+                                horde_id = "mon_zombie_tough";
                                 break;
                             case HORDE_VISIBILITY_SIZE + 2:
-                                draw_from_id_string( "mon_zombie_brute", omp.raw(), 0, 0,
-                                                     lit_level::LIT, false, 0 );
+                                horde_id = "mon_zombie_brute";
                                 break;
                             case HORDE_VISIBILITY_SIZE + 3:
-                                draw_from_id_string( "mon_zombie_hulk", omp.raw(), 0, 0,
-                                                     lit_level::LIT, false, 0 );
+                                horde_id = "mon_zombie_hulk";
                                 break;
                             case HORDE_VISIBILITY_SIZE + 4:
-                                draw_from_id_string( "mon_zombie_necro", omp.raw(), 0, 0,
-                                                     lit_level::LIT, false, 0 );
+                                horde_id = "mon_zombie_necro";
                                 break;
                             default:
-                                draw_from_id_string( "mon_zombie_master", omp.raw(), 0, 0,
-                                                     lit_level::LIT, false, 0 );
+                                horde_id = "mon_zombie_master";
                                 break;
                         }
                     }
+                    const tile_search_params tile { horde_id, C_NONE, empty_string, 0, 0};
+                    draw_from_id_string(
+                        tile, omp.raw(), std::nullopt, std::nullopt,
+                        lit_level::LIT, false, 0, false );
                 }
             }
 
@@ -1009,21 +1039,25 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 // Highlight areas that already have been generated
                 // TODO: fix point types
                 if( MAPBUFFER.lookup_submap( project_to<coords::sm>( omp ).raw() ) ) {
-                    draw_from_id_string( "highlight", omp.raw(), 0, 0, lit_level::LIT, false, 0 );
+                    const tile_search_params tile {"highlight", C_NONE, empty_string, 0, 0};
+                    draw_from_id_string(
+                        tile, omp.raw(), std::nullopt, std::nullopt,
+                        lit_level::LIT, false, 0, false );
                 }
             }
 
             if( blink && overmap_buffer.has_vehicle( omp ) ) {
-                if( find_tile_looks_like( "overmap_remembered_vehicle", TILE_CATEGORY::C_OVERMAP_NOTE ) ) {
-                    draw_from_id_string( "overmap_remembered_vehicle", TILE_CATEGORY::C_OVERMAP_NOTE,
-                                         "overmap_note", omp.raw(), 0, 0, lit_level::LIT, false, 0 );
-                } else {
-                    draw_from_id_string( "note_c_cyan", TILE_CATEGORY::C_OVERMAP_NOTE,
-                                         "overmap_note", omp.raw(), 0, 0, lit_level::LIT, false, 0 );
-                }
+                const std::string tile_id = find_tile_looks_like( "overmap_remembered_vehicle", C_OVERMAP_NOTE )
+                                            ? "overmap_remembered_vehicle"
+                                            : "note_c_cyan";
+                const tile_search_params tile { tile_id, C_OVERMAP_NOTE, "overmap_note", 0, 0 };
+                draw_from_id_string(
+                    tile, omp.raw(), std::nullopt, std::nullopt,
+                    lit_level::LIT, false, 0, false );
             }
 
-            if( blink && uistate.overmap_show_map_notes && overmap_buffer.has_note( omp ) ) {
+            if( blink && uistate.overmap_show_map_notes && overmap_buffer.has_note( omp ) &&
+                !has_map_label( omp ) ) {
 
                 nc_color ter_color = c_black;
                 std::string ter_sym = " ";
@@ -1031,9 +1065,22 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 std::tie( ter_sym, ter_color, std::ignore ) =
                     overmap_ui::get_note_display_info( overmap_buffer.note( omp ) );
 
-                std::string note_name = "note_" + ter_sym + "_" + string_from_color( ter_color );
-                draw_from_id_string( note_name, TILE_CATEGORY::C_OVERMAP_NOTE, "overmap_note",
-                                     omp.raw(), 0, 0, lit_level::LIT, false, 0 );
+                bool drew_note_sprite = false;
+                const std::optional<std::string> note_sprite =
+                    overmap_ui::get_note_sprite_id( overmap_buffer.note( omp ) );
+                if( note_sprite ) {
+                    const tile_search_params sprite_tile { *note_sprite, C_NONE, empty_string, 0, 0 };
+                    drew_note_sprite = draw_from_id_string(
+                                           sprite_tile, omp.raw(), std::nullopt, std::nullopt,
+                                           lit_level::LIT, false, 0, false );
+                }
+                if( !drew_note_sprite ) {
+                    std::string note_name = "note_" + ter_sym + "_" + string_from_color( ter_color );
+                    const tile_search_params tile { note_name, C_OVERMAP_NOTE, "overmap_note", 0, 0 };
+                    draw_from_id_string(
+                        tile, omp.raw(), std::nullopt, std::nullopt,
+                        lit_level::LIT, false, 0, false );
+                }
             }
         }
     }
@@ -1045,8 +1092,10 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         int rotation;
         int subtile;
         terrain.get_rotation_and_subtile( rotation, subtile );
-        draw_from_id_string( id, global_omt_to_draw_position( center_abs_omt ), subtile, rotation,
-                             lit_level::LOW, true, 0 );
+        const tile_search_params tile { id, C_NONE, empty_string, subtile, rotation };
+        draw_from_id_string(
+            tile, global_omt_to_draw_position( center_abs_omt ), std::nullopt, std::nullopt,
+            lit_level::LOW, true, 0, false );
     }
     if( uistate.place_special ) {
         for( const overmap_special_terrain &s_ter : uistate.place_special->preview_terrains() ) {
@@ -1060,8 +1109,10 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 int subtile;
                 terrain.get_rotation_and_subtile( rotation, subtile );
 
-                draw_from_id_string( id, TILE_CATEGORY::C_OVERMAP_TERRAIN, "overmap_terrain",
-                                     global_omt_to_draw_position( center_abs_omt + rp ), 0, rotation, lit_level::LOW, true, 0 );
+                const tile_search_params tile { id, C_OVERMAP_TERRAIN, "overmap_terrain", 0, rotation };
+                draw_from_id_string(
+                    tile, global_omt_to_draw_position( center_abs_omt + rp ), std::nullopt, std::nullopt,
+                    lit_level::LOW, true, 0, false );
             }
         }
     }
@@ -1081,8 +1132,13 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         draw_entity_with_overlays( you, global_omt_to_draw_position( avatar_pos ),
                                    lit_level::LIT, height_3d );
     }
-    draw_from_id_string( "cursor", global_omt_to_draw_position( center_abs_omt ), 0, 0, lit_level::LIT,
-                         false, 0 );
+
+    {
+        const tile_search_params tile { "cursor", C_NONE, empty_string, 0, 0 };
+        draw_from_id_string(
+            tile, global_omt_to_draw_position( center_abs_omt ), std::nullopt, std::nullopt,
+            lit_level::LIT, false, 0, false );
+    }
 
     if( blink ) {
         // Draw path for auto-travel
@@ -1095,7 +1151,10 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             } else {
                 id = "overmap_path_below";
             }
-            draw_from_id_string( id, global_omt_to_draw_position( pos ), 0, 0, lit_level::LIT, false, 0 );
+            const tile_search_params tile { id, C_NONE, empty_string, 0, 0 };
+            draw_from_id_string(
+                tile, global_omt_to_draw_position( pos ), std::nullopt, std::nullopt,
+                lit_level::LIT, false, 0, false );
         }
 
         // reduce the area where the map cursor is drawn so it doesn't get cut off
@@ -1104,13 +1163,14 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         const std::optional<std::pair<tripoint_abs_omt, std::string>> mission_arrow =
                     get_mission_arrow( map_cursor_area, center_abs_omt );
         if( mission_arrow ) {
-            draw_from_id_string( mission_arrow->second, global_omt_to_draw_position( mission_arrow->first ), 0,
-                                 0, lit_level::LIT, false, 0 );
+            const tile_search_params tile { mission_arrow->second, C_NONE, empty_string, 0, 0 };
+            draw_from_id_string(
+                tile, global_omt_to_draw_position( mission_arrow->first ), std::nullopt, std::nullopt,
+                lit_level::LIT, false, 0, false );
         }
     }
 
     if( !viewing_weather && uistate.overmap_show_city_labels ) {
-
         const auto abs_sm_to_draw_label = [&]( const tripoint_abs_sm & city_pos, const int label_length ) {
             const tripoint tile_draw_pos = global_omt_to_draw_position( project_to<coords::omt>
                                            ( city_pos ) ) - o;
@@ -1133,6 +1193,30 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             draw_string( *font, renderer, geometry, name, draw_pos, 11 );
         };
 
+        const auto abs_omt_to_draw_label = [&]( const tripoint_abs_omt & omt_pos, const int label_length ) {
+            const auto tile_draw_pos = global_omt_to_draw_position( omt_pos ) - o;
+            auto draw_point = point( tile_draw_pos.x * tile_width + dest.x,
+                                     tile_draw_pos.y * tile_height + dest.y );
+            draw_point += point( ( tile_width - label_length * fontwidth ) / 2,
+                                 ( tile_height - fontheight ) / 2 );
+            return draw_point;
+        };
+
+        const auto label_bg_omt = [&]( const tripoint_abs_omt & pos, const std::string & name ) {
+            const auto name_length = utf8_width( name );
+            const auto draw_pos = abs_omt_to_draw_label( pos, name_length );
+            auto clip_rect = SDL_Rect{
+                .x = draw_pos.x,
+                .y = draw_pos.y,
+                .w = name_length * fontwidth,
+                .h = fontheight
+            };
+
+            geometry->rect( renderer, clip_rect, SDL_Color() );
+
+            draw_string( *font, renderer, geometry, name, draw_pos, 11 );
+        };
+
         // the tiles on the overmap are overmap tiles, so we need to use
         // coordinate conversions to make sure we're in the right place.
         const int radius = coords::project_to<coords::sm>( tripoint_abs_omt( std::min( max_col, max_row ),
@@ -1141,8 +1225,36 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         for( const city_reference &city : overmap_buffer.get_cities_near(
                  coords::project_to<coords::sm>( center_abs_omt ), radius ) ) {
             const tripoint_abs_omt city_center = coords::project_to<coords::omt>( city.abs_sm_pos );
-            if( overmap_buffer.seen( city_center ) && overmap_area.contains( city_center.raw() ) ) {
+            if( overmap_buffer.seen( city_center ) && overmap_area.contains( city_center.raw() ) &&
+                !has_player_label( city_center ) ) {
                 label_bg( city.abs_sm_pos, city.city->name );
+            }
+        }
+
+        for( int row = min_row; row < max_row; row++ ) {
+            for( int col = min_col; col < max_col; col++ ) {
+                const tripoint_abs_omt omt_pos = corner_NW + point( col, row );
+                if( !overmap_buffer.seen( omt_pos ) ) {
+                    continue;
+                }
+                auto label_text = std::optional<std::string> {};
+                if( const auto player_label =
+                        overmap_label_note::extract_label( overmap_buffer.note( omt_pos ) );
+                    player_label.has_value() ) {
+                    label_text = *player_label;
+                } else {
+                    const auto &terrain = overmap_buffer.ter( omt_pos );
+                    if( const auto static_label = overmap_labels::get_label( terrain->get_type_id() );
+                        static_label.has_value() ) {
+                        label_text = _( *static_label );
+                    }
+                }
+                if( !label_text.has_value() || label_text->empty() ) {
+                    continue;
+                }
+                if( overmap_area.contains( omt_pos.raw() ) ) {
+                    label_bg_omt( omt_pos, *label_text );
+                }
             }
         }
     }
@@ -1151,7 +1263,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
 
     if( uistate.overmap_show_map_notes ) {
         const std::string &note_text = overmap_buffer.note( center_abs_omt );
-        if( !note_text.empty() ) {
+        if( !note_text.empty() && !overmap_label_note::is_label_only( note_text ) ) {
             const std::tuple<char, nc_color, size_t> note_info = overmap_ui::get_note_display_info(
                         note_text );
             const size_t pos = std::get<2>( note_info );
@@ -1537,9 +1649,26 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
                     continue;
                 }
 
-                // TODO: draw with outline / BG color for better readability
                 const uint32_t ch = text.at( i );
-                map_font->OutputChar( renderer, geometry, utf32_to_utf8( ch ), point( x, y ), ft.color );
+                const auto glyph = utf32_to_utf8( ch );
+                const bool outlined_white = ft.color == catacurses::white ||
+                                            ft.color == catacurses::white + 8;
+
+                if( outlined_white ) {
+                    static constexpr std::array<point, 4> outline_offsets = {
+                        point_east,
+                        point_north,
+                        point_west,
+                        point_south,
+                    };
+                    for( const point &offset : outline_offsets ) {
+                        map_font->OutputChar( renderer, geometry, glyph,
+                                              point( x + offset.x, y + offset.y ),
+                                              catacurses::black );
+                    }
+                }
+
+                map_font->OutputChar( renderer, geometry, glyph, point( x, y ), ft.color );
                 width += mk_wcwidth( ch );
             }
 
@@ -1578,7 +1707,8 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
         // Special font for the terrain window
         update = draw_window( map_font, w );
     } else if( g && w == g->w_overmap && use_tiles && use_tiles_overmap ) {
-        tilecontext->draw_om( win->pos, overmap_ui::redraw_info.center, overmap_ui::redraw_info.blink );
+        overmap_tilecontext->draw_om( win->pos, overmap_ui::redraw_info.center,
+                                      overmap_ui::redraw_info.blink );
         update = true;
     } else if( g && w == g->w_overmap && overmap_font ) {
         // Special font for the terrain window
@@ -2859,6 +2989,10 @@ static void CheckMessages()
                                 if( cargopart >= 0 && ( !veh->get_items( cargopart ).empty() ) ) {
                                     actions.insert( ACTION_PICKUP );
                                 }
+                                if( g->u.controlling_vehicle && veh->has_sufficient_lift() ) {
+                                    actions.insert( ACTION_MOVE_UP );
+                                    actions.insert( ACTION_MOVE_DOWN );
+                                }
                             }
                         }
 
@@ -3457,6 +3591,38 @@ int projected_window_height()
     return get_option<int>( "TERMINAL_Y" ) * fontheight;
 }
 
+// Measures scaling factor for high-dpi displays
+static std::pair<float, float> get_display_scale( int display_index )
+{
+#if SDL_VERSION_ATLEAST(2,26,0)
+    int x = SDL_WINDOWPOS_CENTERED_DISPLAY( display_index );
+    int y = SDL_WINDOWPOS_CENTERED_DISPLAY( display_index );
+
+    SDL_Window *w = SDL_CreateWindow(
+                        "probe",
+                        x, y,
+                        16, 16,
+                        SDL_WINDOW_HIDDEN | SDL_WINDOW_ALLOW_HIGHDPI
+                    );
+    if( !w ) {
+        return std::make_pair( 1.0f, 1.0f );
+    }
+
+    int lw, lh;
+    SDL_GetWindowSize( w, &lw, &lh );
+    int pw, ph;
+    SDL_GetWindowSizeInPixels( w, &pw, &ph );
+    SDL_DestroyWindow( w );
+
+    float scale_w = lw ? static_cast<float>( pw ) / static_cast<float>( lw ) : 1.0f;
+    float scale_h = lh ? static_cast<float>( ph ) / static_cast<float>( lh ) : 1.0f;
+    return std::make_pair( scale_w, scale_h );
+#else
+    ( void )display_index; // avoid unused parameter lint
+    return std::make_pair( 1.0f, 1.0f );
+#endif
+}
+
 static void init_term_size_and_scaling_factor()
 {
     scaling_factor = 1;
@@ -3490,7 +3656,11 @@ static void init_term_size_and_scaling_factor()
                                                      SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MAXIMIZED
                                                    ) );
 
+#if SDL_VERSION_ATLEAST(2,26,0)
+                SDL_GetWindowSizeInPixels( test_window.get(), &max_width, &max_height );
+#else
                 SDL_GetWindowSize( test_window.get(), &max_width, &max_height );
+#endif
 
                 // If the video subsystem isn't reset the test window messes things up later
                 test_window.reset();
@@ -3499,8 +3669,9 @@ static void init_term_size_and_scaling_factor()
 
             } else {
                 // For fullscreen or window borderless maximum size is the display size
-                max_width = current_display.w;
-                max_height = current_display.h;
+                auto [ dpi_scale_w, dpi_scale_h ] = get_display_scale( current_display_id );
+                max_width = dpi_scale_w * current_display.w;
+                max_height = dpi_scale_h * current_display.h;
             }
         } else {
             dbg( DL::Warn ) << "Failed to get current Display Mode, assuming infinite display size.";
@@ -3586,11 +3757,13 @@ void catacurses::init_interface()
     WinCreate();
 
     dbg( DL::Info ) << "Initializing SDL Tiles context";
-    tilecontext = std::make_unique<cata_tiles>( renderer, geometry );
+    tilecontext = std::make_shared<cata_tiles>( renderer, geometry );
+    const auto tilesName = get_option<std::string>( "TILES" );
+    const auto omTilesName = get_option<std::string>( "OVERMAP_TILES" );
     try {
         std::vector<mod_id> dummy;
         tilecontext->load_tileset(
-            get_option<std::string>( "TILES" ),
+            tilesName,
             dummy,
             /*precheck=*/true,
             /*force=*/false,
@@ -3603,7 +3776,27 @@ void catacurses::init_interface()
         // Setting it to false disables this from getting used.
         use_tiles = false;
     }
-
+    if( tilesName == omTilesName ) {
+        overmap_tilecontext = tilecontext;
+    } else {
+        try {
+            overmap_tilecontext = std::make_shared<cata_tiles>( renderer, geometry );
+            std::vector<mod_id> dummy;
+            overmap_tilecontext->load_tileset(
+                omTilesName,
+                dummy,
+                /*precheck=*/true,
+                /*force=*/false,
+                /*pump_events=*/true
+            );
+        } catch( const std::exception &err ) {
+            dbg( DL::Error ) << "failed to check for overmap tileset: " << err.what();
+            // use_tiles is the cached value of the USE_TILES option.
+            // most (all?) code refers to this to see if cata_tiles should be used.
+            // Setting it to false disables this from getting used.
+            use_tiles = false;
+        }
+    }
     color_loader<SDL_Color>().load( windowsPalette );
     init_colors();
 
@@ -3634,8 +3827,10 @@ void load_tileset()
     if( !tilecontext || !use_tiles ) {
         return;
     }
+    const auto tilesName = get_option<std::string>( "TILES" );
+    const auto omTilesName = get_option<std::string>( "OVERMAP_TILES" );
     tilecontext->load_tileset(
-        get_option<std::string>( "TILES" ),
+        tilesName,
         world_generator->active_world->info->active_mod_order,
         /*precheck=*/false,
         /*force=*/false,
@@ -3644,12 +3839,31 @@ void load_tileset()
     tilecontext->do_tile_loading_report( []( const std::string & str ) {
         DebugLog( DL::Info, DC::Main ) << str;
     } );
+
+    if( tilesName == omTilesName ) {
+        overmap_tilecontext = tilecontext;
+    } else {
+        if( overmap_tilecontext ) {
+            overmap_tilecontext = std::make_shared<cata_tiles>( renderer, geometry );
+            overmap_tilecontext->load_tileset(
+                omTilesName,
+                world_generator->active_world->info->active_mod_order,
+                /*precheck=*/false,
+                /*force=*/false,
+                /*pump_events=*/true
+            );
+            overmap_tilecontext->do_tile_loading_report( []( const std::string & str ) {
+                DebugLog( DL::Info, DC::Main ) << str;
+            } );
+        }
+    }
 }
 
 //Ends the terminal, destroy everything
 void catacurses::endwin()
 {
     tilecontext.reset();
+    overmap_tilecontext.reset();
     font.reset();
     map_font.reset();
     overmap_font.reset();
@@ -3772,8 +3986,8 @@ static window_dimensions get_window_dimensions( const catacurses::window &win,
     } else if( overmap_font && g && win == g->w_overmap ) {
         if( use_tiles && use_tiles_overmap ) {
             // tiles might have different dimensions than standard font
-            dim.scaled_font_size.x = tilecontext->get_tile_width();
-            dim.scaled_font_size.y = tilecontext->get_tile_height();
+            dim.scaled_font_size.x = overmap_tilecontext->get_tile_width();
+            dim.scaled_font_size.y = overmap_tilecontext->get_tile_height();
         } else {
             dim.scaled_font_size.x = overmap_font->width;
             dim.scaled_font_size.y = overmap_font->height;
@@ -3893,16 +4107,16 @@ static int map_font_height()
 
 static int overmap_font_width()
 {
-    if( use_tiles && tilecontext && use_tiles_overmap ) {
-        return tilecontext->get_tile_width();
+    if( use_tiles && overmap_tilecontext && use_tiles_overmap ) {
+        return overmap_tilecontext->get_tile_width();
     }
     return ( overmap_font ? overmap_font.get() : font.get() )->width;
 }
 
 static int overmap_font_height()
 {
-    if( use_tiles && tilecontext && use_tiles_overmap ) {
-        return tilecontext->get_tile_height();
+    if( use_tiles && overmap_tilecontext && use_tiles_overmap ) {
+        return overmap_tilecontext->get_tile_height();
     }
     return ( overmap_font ? overmap_font.get() : font.get() )->height;
 }
@@ -3971,6 +4185,10 @@ bool save_screenshot( const std::string &file_path )
     return true;
 }
 
+void repoint_overmap_tilecontext()
+{
+    overmap_tilecontext = std::make_shared<cata_tiles>( renderer, geometry );
+}
 #ifdef _WIN32
 HWND getWindowHandle()
 {

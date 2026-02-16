@@ -256,7 +256,7 @@ bool trap::can_see( const tripoint &pos, const Character &p ) const
 void trap::trigger( const tripoint &pos, Creature *creature, item *item ) const
 {
     const bool is_real_creature = creature != nullptr && !creature->is_hallucination();
-    if( ( is_real_creature || item != nullptr ) && !creature->has_effect( dashing_effect ) ) {
+    if( ( is_real_creature && !creature->has_effect( dashing_effect ) ) || item != nullptr ) {
         bool triggered = act( pos, creature, item );
         if( triggered && is_real_creature ) {
             if( Character *ch = creature->as_character() ) {

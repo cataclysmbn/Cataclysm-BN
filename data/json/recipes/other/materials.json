@@ -625,6 +625,27 @@
   },
   {
     "type": "recipe",
+    "result": "chunk_rubber",
+    "id_suffix": "chemistry",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "cooking",
+    "difficulty": 5,
+    "time": "30 m",
+    "book_learn": [ [ "adv_chemistry", 3 ], [ "textbook_chemistry", 3 ], [ "reference_cooking", 5 ] ],
+    "batch_time_factors": [ 80, 4 ],
+    "qualities": [ { "id": "CHEM", "level": 2 }, { "id": "FINE_DISTILL", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 50, "LIST" ] ] ],
+    "//": "Rough abstraction of making butadiene using butane and a metal catalyst, styrene from methanol (note: we're missing toluene and a zeolite catalyst), then combining with hydroperoxide produced from ether (note: also missing alkyl mercaptan ).",
+    "components": [
+      [ [ "chem_butane", 250 ] ],
+      [ [ "chem_methanol", 50 ] ],
+      [ [ "chem_aluminium_powder", 10 ], [ "chem_chromium_oxide", 10 ] ],
+      [ [ "ether", 25 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "spring",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_MATERIALS",
@@ -974,7 +995,7 @@
       ]
     ],
     "components": [
-      [ [ "chem_ethanol", 50 ], [ "denat_alcohol", 50 ] ],
+      [ [ "chem_ethanol", 50 ], [ "denat_alcohol", 50 ], [ "disinfectant_makeshift", 2 ] ],
       [ [ "copper_scrap_equivalent", 2, "LIST" ] ],
       [ [ "acid", 1 ] ],
       [ [ "bleach", 2 ] ],
@@ -1574,6 +1595,35 @@
     "//": "25% yield, coal and flux also used in reduction.",
     "components": [
       [ [ "silver_ore", 1 ] ],
+      [ [ "coal_lump", 4 ], [ "charcoal", 16 ] ],
+      [ [ "material_limestone", 2 ], [ "material_quicklime", 2 ], [ "chem_carbide", 40 ] ]
+    ]
+  },
+  {
+    "result": "gold_small",
+    "charges": 250,
+    "id_suffix": "smelt",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "skills_required": [ "survival", 3 ],
+    "time": "75 m",
+    "batch_time_factors": [ 90, 4 ],
+    "autolearn": true,
+    "book_learn": [
+      [ "jewelry_book", 3 ],
+      [ "textbook_survival", 2 ],
+      [ "manual_survival", 2 ],
+      [ "atomic_survival", 2 ],
+      [ "survival_book", 2 ],
+      [ "welding_book", 2 ]
+    ],
+    "using": [ [ "forging_standard", 4 ] ],
+    "//": "25% yield, coal and flux also used in reduction.",
+    "components": [
+      [ [ "gold_ore", 1 ] ],
       [ [ "coal_lump", 4 ], [ "charcoal", 16 ] ],
       [ [ "material_limestone", 2 ], [ "material_quicklime", 2 ], [ "chem_carbide", 40 ] ]
     ]

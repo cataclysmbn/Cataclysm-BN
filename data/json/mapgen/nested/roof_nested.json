@@ -583,7 +583,8 @@
             [ "res_roof_survivorbag", 2 ],
             [ "res_roof_scope", 5 ],
             [ "res_roof_feral", 1 ],
-            [ "res_roof_wasp", 1 ]
+            [ "res_roof_wasp", 1 ],
+            [ "res_roof_randomnpc", 1 ]
           ],
           "x": [ 0 ],
           "y": [ 0 ]
@@ -694,6 +695,22 @@
         { "group": "drugs_heal_simple", "x": 0, "y": 0, "chance": 20, "repeat": [ 2, 3 ] },
         { "item": "duffelbag", "x": 0, "y": 0 }
       ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "res_roof_randomnpc",
+    "//": "friend or foe? a bit safer up here",
+    "object": {
+      "mapgensize": [ 3, 3 ],
+      "rows": [
+        "___",
+        "___",
+        "___"
+      ],
+      "terrain": { "_": "t_null" },
+      "place_npcs": [ { "class": "NPC_wandering_scavenger", "x": [ 0, 2 ], "y": [ 0, 2 ] } ]
     }
   }
 ]

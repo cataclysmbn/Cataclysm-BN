@@ -73,7 +73,7 @@ std::string mtype::nname( unsigned int quantity ) const
 
 bool mtype::has_special_attack( const std::string &attack_name ) const
 {
-    return special_attacks.find( attack_name ) != special_attacks.end();
+    return special_attacks.contains( attack_name );
 }
 
 bool mtype::has_flag( m_flag flag ) const
@@ -120,7 +120,7 @@ bool mtype::has_placate_trigger( mon_trigger trigger ) const
 
 bool mtype::in_category( const std::string &category ) const
 {
-    return categories.find( category ) != categories.end();
+    return categories.contains( category );
 }
 
 bool mtype::in_species( const species_id &spec ) const
@@ -246,10 +246,20 @@ std::string mtype::get_description() const
 
 std::string mtype::get_footsteps() const
 {
+    std::vector<translation> all_footsteps;
+
     for( const species_id &s : species ) {
-        return s.obj().get_footsteps();
+        const auto &f = s.obj().footsteps;
+        all_footsteps.insert( all_footsteps.end(), f.begin(), f.end() );
     }
-    return _( "footsteps." );
+
+    if( all_footsteps.empty() ) {
+        return _( "indistinct footsteps." );
+    }
+
+    // pick a random footstep
+    size_t idx = rng( 0, all_footsteps.size() - 1 );
+    return all_footsteps[idx].translated();
 }
 
 void mtype::set_strategy()

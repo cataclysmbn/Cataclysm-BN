@@ -70,7 +70,19 @@ enum vpart_bitflags : int {
     VPFLAG_REACTOR,
     VPFLAG_RAIL,
     VPFLAG_TURRET_CONTROLS,
+    VPFLAG_AUTOLOADER,
     VPFLAG_ROOF,
+    VPFLAG_BALLOON,
+    VPFLAG_WING,
+    VPFLAG_PROPELLER,
+    VPFLAG_EXTENDABLE,
+    VPFLAG_NOCOLLIDE,
+    VPFLAG_NOCOLLIDEABOVE,
+    VPFLAG_NOCOLLIDEBELOW,
+    VPFLAG_NOSMASH,
+    VPFLAG_NOFIELDS,
+    VPFLAG_DROPPER,
+    VPFLAG_LADDER,
 
     NUM_VPFLAGS
 };
@@ -108,12 +120,31 @@ struct vpslot_rotor {
     int rotor_diameter = 1;
 };
 
+struct vpslot_propeller {
+    int propeller_diameter = 1;
+};
+struct vpslot_wing {
+    float lift_coff = 1;
+};
+
+struct vpslot_balloon {
+    float height = 1;
+};
+
+struct vpslot_ladder {
+    int length = 0;
+};
+
 struct vpslot_workbench {
     // Base multiplier applied for crafting here
     float multiplier = 1.0f;
     // Mass/volume allowed before a crafting speed penalty is applied
     units::mass allowed_mass = 0_gram;
     units::volume allowed_volume = 0_ml;
+};
+
+struct vpslot_crafter {
+    std::vector<itype_id> fake_parts;
 };
 
 struct transform_terrain_data {
@@ -135,7 +166,12 @@ class vpart_info
         std::optional<vpslot_engine> engine_info;
         std::optional<vpslot_wheel> wheel_info;
         std::optional<vpslot_rotor> rotor_info;
+        std::optional<vpslot_propeller> propeller_info;
+        std::optional<vpslot_wing> wing_info;
+        std::optional<vpslot_balloon> balloon_info;
+        std::optional<vpslot_ladder> ladder_info;
         std::optional<vpslot_workbench> workbench_info;
+        std::optional<vpslot_crafter> crafter_info;
 
     public:
         /** Translated name of a part */
@@ -268,6 +304,9 @@ class vpart_info
         /** cargo weight modifier (percentage) */
         int cargo_weight_modifier = 100;
 
+        /** base weight modifier (percentage) */
+        int weight_modifier = 100;
+
         /** Flat decrease of damage of a given type. */
         resistances damage_reduction;
 
@@ -299,9 +338,14 @@ class vpart_info
         int wheel_area() const;
         std::vector<std::pair<std::string, int>> wheel_terrain_mod() const;
         float wheel_or_rating() const;
-        /** @name rotor specific functions
+        /** @name flight specific functions
         */
         int rotor_diameter() const;
+        float lift_coff() const;
+        int propeller_diameter() const;
+        float balloon_height() const;
+        int ladder_length() const;
+        const std::vector<itype_id> craftertools() const;
         /**
          * Getter for optional workbench info
          */
@@ -343,6 +387,11 @@ class vpart_info
         static void load_wheel( std::optional<vpslot_wheel> &whptr, const JsonObject &jo );
         static void load_workbench( std::optional<vpslot_workbench> &wbptr, const JsonObject &jo );
         static void load_rotor( std::optional<vpslot_rotor> &roptr, const JsonObject &jo );
+        static void load_wing( std::optional<vpslot_wing> &wptr, const JsonObject &jo );
+        static void load_balloon( std::optional<vpslot_balloon> &balptr, const JsonObject &jo );
+        static void load_ladder( std::optional<vpslot_ladder> &ladptr, const JsonObject &jo );
+        static void load_propeller( std::optional<vpslot_propeller> &proptr, const JsonObject &jo );
+        static void load_crafter( std::optional<vpslot_crafter> &craftptr, const JsonObject &jo );
         static void load( const JsonObject &jo, const std::string &src );
         static void finalize();
         static void check();
@@ -388,6 +437,7 @@ struct vehicle_prototype {
     std::string name;
     std::vector<part_def> parts;
     std::vector<vehicle_item_spawn> item_spawns;
+    std::set<flag_id> flags;
 
     std::unique_ptr<vehicle> blueprint;
 

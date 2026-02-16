@@ -166,10 +166,10 @@ auto operator|( R &&r, const Self &&adaptor )
     return adaptor( std::forward<R>( r ) );
 }
 
-template <typename Comp>
+template <typename Proj>
 struct MaxAdaptor {
-    Comp comp;
-    explicit MaxAdaptor( Comp c ) : comp( std::move( c ) ) {}
+    Proj proj;
+    explicit MaxAdaptor( Proj s ) : proj( std::move( s ) ) {}
 
     template <std::ranges::input_range R>
     requires std::copy_constructible<std::ranges::range_value_t<R>>
@@ -182,11 +182,14 @@ struct MaxAdaptor {
         }
 
         std::ranges::range_value_t<R> max_val = *current_it;
+        auto max_proj = proj( max_val );
         ++current_it;
 
         while( current_it != last_it ) {
-            if( comp( max_val, *current_it ) ) {
+            auto current_proj = proj( *current_it );
+            if( max_proj < current_proj ) {
                 max_val = *current_it;
+                max_proj = current_proj;
             }
             ++current_it;
         }
@@ -194,10 +197,10 @@ struct MaxAdaptor {
     }
 };
 
-template <typename Comp>
+template <typename Proj>
 struct MinAdaptor {
-    Comp comp;
-    explicit MinAdaptor( Comp c ) : comp( std::move( c ) ) {}
+    Proj proj;
+    explicit MinAdaptor( Proj s ) : proj( std::move( s ) ) {}
 
     template <std::ranges::input_range R>
     requires std::copy_constructible<std::ranges::range_value_t<R>>
@@ -210,11 +213,14 @@ struct MinAdaptor {
         }
 
         std::ranges::range_value_t<R> min_val = *current_it;
+        auto min_proj = proj( min_val );
         ++current_it;
 
         while( current_it != last_it ) {
-            if( comp( *current_it, min_val ) ) {
+            auto current_proj = proj( *current_it );
+            if( current_proj < min_proj ) {
                 min_val = *current_it;
+                min_proj = current_proj;
             }
             ++current_it;
         }
@@ -222,24 +228,49 @@ struct MinAdaptor {
     }
 };
 
-template <typename Comp>
-inline auto max_by( Comp &&comp )
+template <typename T, typename BinOp>
+struct FoldLeftAdaptor {
+    T init;
+    BinOp op;
+
+    explicit FoldLeftAdaptor( T i, BinOp o ) : init( std::move( i ) ), op( std::move( o ) ) {}
+
+    template <std::ranges::input_range R>
+    auto operator()( R &&r ) const {
+        auto accum = init;
+        for( auto &&elem : r ) {
+            accum = op( std::move( accum ), std::forward<decltype( elem )>( elem ) );
+        }
+        return accum;
+    }
+};
+
+template <typename Proj>
+inline auto max_by( Proj &&proj )
 {
-    return MaxAdaptor<std::decay_t<Comp>>( std::forward<Comp>( comp ) );
+    return MaxAdaptor<std::decay_t<Proj>>( std::forward<Proj>( proj ) );
 }
 inline auto max()
 {
-    return MaxAdaptor( std::less{} );
+    return MaxAdaptor( std::identity{} );
 }
 
-template <typename Comp>
-inline auto min_by( Comp &&comp )
+template <typename Proj>
+inline auto min_by( Proj &&proj )
 {
-    return MinAdaptor<std::decay_t<Comp>>( std::forward<Comp>( comp ) );
+    return MinAdaptor<std::decay_t<Proj>>( std::forward<Proj>( proj ) );
 }
 inline auto min()
 {
-    return MinAdaptor( std::less{} );
+    return MinAdaptor( std::identity{} );
+}
+
+/// std::ranges::fold_left but pipeable
+template <typename T, typename BinOp>
+inline auto fold_left( T &&init, BinOp &&op )
+{
+    return FoldLeftAdaptor<std::decay_t<T>, std::decay_t<BinOp>>(
+               std::forward<T>( init ), std::forward<BinOp>( op ) );
 }
 
 } // namespace ranges

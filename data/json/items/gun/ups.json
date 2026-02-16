@@ -170,10 +170,10 @@
     "material": [ "steel", "plastic" ],
     "color": "magenta",
     "range": 30,
-    "ranged_damage": { "damage_type": "heat", "amount": 10, "armor_penetration": 4 },
+    "ranged_damage": { "damage_type": "heat", "amount": 16, "armor_penetration": 4 },
     "dispersion": 180,
     "loudness": 7,
-    "ups_charges": 10,
+    "ups_charges": 20,
     "ammo_effects": [ "LASER", "INCENDIARY" ]
   },
   {

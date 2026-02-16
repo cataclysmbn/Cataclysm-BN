@@ -13,7 +13,7 @@
     "ammo": "84x246mm",
     "weight": "6900 g",
     "volume": "4500 ml",
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "bashing": 8,
     "dispersion": 300,
     "clip_size": 1,
@@ -24,6 +24,7 @@
       [ "grip", 1 ],
       [ "mechanism", 4 ],
       [ "sights", 1 ],
+      [ "sling", 1 ],
       [ "rail", 1 ],
       [ "underbarrel", 1 ]
     ]

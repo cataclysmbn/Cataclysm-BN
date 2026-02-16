@@ -110,7 +110,7 @@ void dependency_node::inherit_errors()
                 }
             }
         }
-        if( nodes_visited.find( check->key ) != nodes_visited.end() ) {
+        if( nodes_visited.contains( check->key ) ) {
             continue;
         }
         // add check parents, if exist, to stack
@@ -156,7 +156,7 @@ std::vector<dependency_node *> dependency_node::get_dependencies_as_nodes() cons
         nodes_to_check.pop();
 
         // make sure that the one we are checking is not THIS one
-        if( found.find( check->key ) != found.end() ) {
+        if( found.contains( check->key ) ) {
             continue; // just keep going, we aren't really caring about availability right now
         }
 
@@ -216,7 +216,7 @@ std::vector<dependency_node *> dependency_node::get_dependents_as_nodes() const
         dependency_node *check = nodes_to_check.top();
         nodes_to_check.pop();
 
-        if( found.find( check->key ) != found.end() ) {
+        if( found.contains( check->key ) ) {
             // skip it because we recursed for some reason
             continue;
         }
@@ -256,7 +256,7 @@ void dependency_tree::build_node_map(
 {
     for( auto &elem : key_dependency_map ) {
         // check to see if the master node map knows the key
-        if( master_node_map.find( elem.first ) == master_node_map.end() ) {
+        if( !master_node_map.contains( elem.first ) ) {
             master_node_map.emplace( elem.first, elem.first );
         }
     }

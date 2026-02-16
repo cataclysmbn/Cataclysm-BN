@@ -63,7 +63,7 @@
     "storage": "1 L",
     "warmth": 20,
     "material_thickness": 5,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "POCKETS", "STURDY" ]
   },
   {
@@ -123,7 +123,7 @@
     "storage": "1 L",
     "warmth": 60,
     "material_thickness": 4,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "POCKETS", "WATERPROOF", "STURDY" ]
   },
   {
@@ -147,7 +147,7 @@
     "storage": "2 L",
     "warmth": 25,
     "material_thickness": 4,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "POCKETS", "STURDY" ]
   },
   {
@@ -161,14 +161,14 @@
     "price_postapoc": "120 USD",
     "to_hit": -5,
     "bashing": 8,
-    "material": [ "steel", "leather" ],
+    "material": [ "steel" ],
     "symbol": "[",
     "looks_like": "armor_larmor",
     "color": "light_gray",
     "covers": [ "torso", "legs", "arms" ],
     "coverage": 95,
-    "encumbrance": 20,
-    "warmth": 20,
+    "encumbrance": 30,
+    "warmth": 10,
     "material_thickness": 4,
     "flags": [ "VARSIZE", "OUTER", "STURDY" ]
   },
@@ -178,9 +178,9 @@
     "type": "ARMOR",
     "name": { "str": "superalloy plate armor" },
     "description": "A suit of Gothic plate armor, remade using modern superalloy.",
-    "material": [ "superalloy", "leather" ],
+    "material": [ "superalloy" ],
     "color": "light_cyan",
-    "encumbrance": 15,
+    "encumbrance": 25,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -203,9 +203,9 @@
     "storage": "20 L",
     "warmth": 20,
     "material_thickness": 5,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 1,
-    "flags": [ "VARSIZE", "POCKETS" ]
+    "flags": [ "VARSIZE", "POCKETS", "ALLOWS_WINGS" ]
   },
   {
     "id": "armor_nomad_light",
@@ -227,33 +227,21 @@
     "storage": "12500 ml",
     "warmth": 10,
     "material_thickness": 4,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 1,
-    "flags": [ "VARSIZE", "POCKETS" ]
+    "flags": [ "VARSIZE", "POCKETS", "ALLOWS_WINGS" ]
   },
   {
     "id": "armor_plarmor",
+    "copy-from": "armor_larmor",
     "type": "ARMOR",
     "name": { "str": "plated leather armor" },
     "description": "Thick leather body armor that has been reinforced with strategically-placed metal plates.  Strong and comfortable.",
-    "weight": "4150 g",
-    "volume": "9 L",
-    "price": "1100 USD",
-    "price_postapoc": "30 USD",
-    "to_hit": -5,
-    "bashing": 2,
     "material": [ "leather", "iron" ],
-    "symbol": "[",
-    "color": "brown",
     "covers": [ "legs", "torso", "arms" ],
-    "looks_like": "armor_larmor",
-    "coverage": 90,
-    "encumbrance": 24,
-    "storage": "1500 ml",
-    "warmth": 25,
-    "material_thickness": 4,
-    "environmental_protection": 1,
-    "flags": [ "VARSIZE", "POCKETS", "STURDY" ]
+    "valid_mods": [  ],
+    "proportional": { "price": 4, "price_postapoc": 1.2, "encumbrance": 1.25 },
+    "relative": { "weight": "2650 g", "volume": "2 L" }
   },
   {
     "id": "armor_plate",
@@ -266,14 +254,14 @@
     "price_postapoc": "60 USD",
     "to_hit": -5,
     "bashing": 8,
-    "material": [ "steel", "leather" ],
+    "material": [ "steel" ],
     "symbol": "[",
     "looks_like": "armor_lightplate",
     "color": "light_gray",
     "covers": [ "torso", "legs", "arms" ],
-    "coverage": 90,
+    "coverage": 95,
     "encumbrance": 45,
-    "warmth": 20,
+    "warmth": 10,
     "material_thickness": 5,
     "flags": [ "VARSIZE", "OUTER", "FANCY" ]
   },
@@ -283,7 +271,7 @@
     "type": "ARMOR",
     "name": { "str": "ornamental superalloy plate armor" },
     "description": "A heavy suit of ornamental armor, remade using modern superalloy.",
-    "material": [ "superalloy", "leather" ],
+    "material": [ "superalloy" ],
     "color": "light_cyan",
     "encumbrance": 40,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
@@ -352,9 +340,9 @@
     "storage": "20 L",
     "warmth": 30,
     "material_thickness": 8,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 2,
-    "flags": [ "VARSIZE", "POCKETS", "STURDY", "WATERPROOF" ]
+    "flags": [ "VARSIZE", "POCKETS", "STURDY", "WATERPROOF", "ALLOWS_WINGS" ]
   },
   {
     "id": "armor_scrapsuit",
@@ -377,7 +365,7 @@
     "encumbrance": 18,
     "warmth": 20,
     "material_thickness": 2,
-    "flags": [ "OUTER" ]
+    "flags": [ "OUTER", "ALLOWS_TAIL" ]
   },
   {
     "id": "beekeeping_suit",
@@ -413,16 +401,17 @@
     "price": "35988 cent",
     "price_postapoc": "30 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel", "cotton" ],
     "symbol": "[",
     "looks_like": "armor_blarmor",
     "color": "light_red",
     "covers": [ "torso", "arms", "legs" ],
-    "coverage": 95,
+    "coverage": 100,
     "encumbrance": 20,
     "warmth": 30,
     "material_thickness": 6,
-    "flags": [ "VARSIZE", "STURDY" ]
+    "//": "Made from leggings which wouldn't make sense for Serpent mutants but flavored as basically a mail tunic, so allow it",
+    "flags": [ "VARSIZE", "STURDY", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ]
   },
   {
     "id": "chainmail_suit",
@@ -434,12 +423,12 @@
     "price": "450 USD",
     "price_postapoc": "80 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel", "cotton" ],
     "symbol": "[",
     "looks_like": "touring_suit",
     "color": "light_red",
     "covers": [ "torso", "head", "arms", "legs" ],
-    "coverage": 95,
+    "coverage": 100,
     "encumbrance": 20,
     "warmth": 30,
     "material_thickness": 6,
@@ -448,22 +437,17 @@
   {
     "id": "chainmail_suit_faraday",
     "type": "ARMOR",
+    "copy-from": "chainmail_suit",
     "name": { "str": "faraday chainmail suit" },
     "description": "A fully customized chainmail suit that can be worn over your normal clothing.  The suit is conductively interconnected, protecting against electricity.",
     "weight": "16836 g",
     "volume": "3500 ml",
     "price": "350 USD",
     "price_postapoc": "90 USD",
-    "to_hit": -1,
-    "material": [ "iron", "cotton" ],
-    "symbol": "[",
-    "color": "light_red",
     "covers": [ "torso", "head", "arms", "hands", "legs", "feet" ],
     "qualities": [ [ "HV_INSULATION", 1 ] ],
-    "coverage": 100,
     "encumbrance": 30,
-    "material_thickness": 4,
-    "flags": [ "VARSIZE", "STURDY", "HELMET_COMPAT", "ELECTRIC_IMMUNE", "OUTER" ]
+    "extend": { "flags": [ "ELECTRIC_IMMUNE" ] }
   },
   {
     "id": "cleansuit",
@@ -484,7 +468,7 @@
     "warmth": 10,
     "material_thickness": 1,
     "environmental_protection": 10,
-    "flags": [ "VARSIZE", "WATERPROOF", "HOOD", "RAINPROOF", "RAD_RESIST", "OUTER" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "HOOD", "RAINPROOF", "RAD_RESIST", "OUTER", "ALLOWS_TAIL" ]
   },
   {
     "id": "entry_suit",
@@ -529,9 +513,9 @@
     "warmth": 15,
     "material_thickness": 6,
     "resistance": { "bullet": 25 },
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 10,
-    "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "RAINPROOF", "STURDY" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "RAINPROOF", "STURDY", "ALLOWS_WINGS" ]
   },
   {
     "id": "gambeson",
@@ -552,8 +536,8 @@
     "encumbrance": 15,
     "warmth": 30,
     "material_thickness": 5,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
-    "flags": [ "VARSIZE", "STURDY" ]
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
+    "flags": [ "VARSIZE", "STURDY", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ]
   },
   {
     "id": "hazmat_suit",
@@ -576,7 +560,7 @@
     "warmth": 40,
     "material_thickness": 2,
     "environmental_protection": 20,
-    "flags": [ "VARSIZE", "WATERPROOF", "RAINPROOF", "GAS_PROOF", "RAD_PROOF", "ELECTRIC_IMMUNE", "OUTER" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "RAINPROOF", "GAS_PROOF", "RAD_PROOF", "ELECTRIC_IMMUNE", "OUTER", "ALLOWS_TAIL" ]
   },
   {
     "id": "hsurvivor_suit",
@@ -601,7 +585,7 @@
     "material_thickness": 6,
     "environmental_protection": 3,
     "resistance": { "bullet": 35 },
-    "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "HOOD", "RAINPROOF", "STURDY" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "HOOD", "RAINPROOF", "STURDY", "ALLOWS_WINGS" ]
   },
   {
     "id": "sasurvivor_suit",
@@ -646,10 +630,10 @@
     "storage": "15 L",
     "warmth": 10,
     "material_thickness": 5,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 3,
     "resistance": { "bullet": 25 },
-    "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "HOOD", "RAINPROOF", "STURDY" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "HOOD", "RAINPROOF", "STURDY", "ALLOWS_WINGS" ]
   },
   {
     "id": "nomex_suit",
@@ -737,8 +721,8 @@
     "storage": "2500 ml",
     "warmth": 25,
     "material_thickness": 2,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
-    "flags": [ "VARSIZE", "FANCY", "POCKETS" ]
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
+    "flags": [ "VARSIZE", "FANCY", "POCKETS", "ALLOWS_WINGS" ]
   },
   {
     "id": "survivor_suit",
@@ -759,10 +743,10 @@
     "storage": "15 L",
     "warmth": 15,
     "material_thickness": 6,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 3,
     "resistance": { "bullet": 30 },
-    "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "HOOD", "RAINPROOF", "STURDY" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "HOOD", "RAINPROOF", "STURDY", "ALLOWS_WINGS" ]
   },
   {
     "id": "swat_armor",
@@ -785,7 +769,7 @@
     "storage": "5 L",
     "warmth": 35,
     "material_thickness": 11,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 4,
     "flags": [ "POCKETS", "STURDY" ]
   },
@@ -811,7 +795,7 @@
     "storage": "250 ml",
     "warmth": 25,
     "material_thickness": 3,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 2,
     "flags": [ "VARSIZE", "WATERPROOF", "RAINPROOF" ]
   },
@@ -836,10 +820,10 @@
     "storage": "6 L",
     "warmth": 75,
     "material_thickness": 6,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "environmental_protection": 5,
     "resistance": { "bullet": 30 },
-    "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "HOOD", "RAINPROOF", "STURDY" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "POCKETS", "HOOD", "RAINPROOF", "STURDY", "ALLOWS_WINGS" ]
   },
   {
     "id": "armor_carbonplate",
@@ -848,6 +832,7 @@
     "description": "A custom suit of layered carbon fiber armor over neoprene padding made using a 3D printer.  Its rigid plates are more comparable to a suit of armor than kevlar, but it's very protective and moves surprisingly well.",
     "copy-from": "armor_lightplate",
     "material": [ "carbon_fiber" ],
+    "extend": { "flags": [ "ALLOWS_TAIL" ] },
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -857,6 +842,7 @@
     "description": "Leg and body armor made from the hardened scales of large reptiles.",
     "copy-from": "armor_larmor",
     "material": [ "scute" ],
+    "color": "green",
     "material_thickness": 5,
     "environmental_protection": 4
   }

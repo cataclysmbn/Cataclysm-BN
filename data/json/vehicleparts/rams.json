@@ -23,22 +23,16 @@
     "color": "dark_gray",
     "broken_color": "dark_gray",
     "durability": 650,
-    "breaks_into": [
-      { "item": "steel_lump", "count": [ 4, 6 ] },
-      { "item": "steel_chunk", "count": [ 4, 6 ] },
-      { "item": "scrap", "count": [ 4, 6 ] }
-    ],
+    "breaks_into": "ig_vp_alloy",
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
-      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
       "repair": {
-        "skills": [ [ "mechanics", 5 ] ],
+        "skills": [ [ "mechanics", 3 ] ],
         "time": "60 m",
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_superalloy", 1 ] ]
       }
     },
     "extend": { "flags": [ "SHOCK_IMMUNE" ] },
-    "damage_reduction": { "all": 120 }
+    "damage_reduction": { "all": 156 }
   },
   {
     "id": "ram_hardsteel",

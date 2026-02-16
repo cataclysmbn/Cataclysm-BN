@@ -3,6 +3,7 @@
 // IWYU pragma: no_include <cxxabi.h>
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <chrono>
 #include <csignal>
@@ -31,6 +32,8 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "character_display.h"
 #include "character_id.h"
@@ -108,6 +111,7 @@
 #include "weather_gen.h"
 #include "weighted_list.h"
 #include "game_info.h"
+#include "overmap_special.h"
 
 static const mtype_id mon_generator( "mon_generator" );
 
@@ -116,6 +120,9 @@ extern std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_j
 
 #if defined(TILES)
 #include "sdl_wrappers.h"
+#include "cata_tiles.h"
+#include "dynamic_atlas.h"
+#include "sdltiles.h"
 #endif
 
 namespace debug_menu
@@ -125,6 +132,7 @@ enum debug_menu_index {
     DEBUG_WISH,
     DEBUG_SHORT_TELEPORT,
     DEBUG_LONG_TELEPORT,
+    DEBUG_TELEPORT_TO_OVERMAP_SPECIAL,
     DEBUG_REVEAL_MAP,
     DEBUG_SPAWN_NPC,
     DEBUG_SPAWN_MON,
@@ -191,6 +199,9 @@ enum debug_menu_index {
     DEBUG_NESTED_MAPGEN,
     DEBUG_RESET_IGNORED_MESSAGES,
     DEBUG_RELOAD_TILES,
+    DEBUG_SWAP_CHAR,
+    DEBUG_DUMP_TILES,
+    DEBUG_DISPLAY_TILESET_NO_VFX
 };
 
 class mission_debug
@@ -202,6 +213,7 @@ class mission_debug
         static void edit_mission( mission &m );
         static void edit( Character &who );
         static void edit_player();
+        static void control_npc_menu();
         static void edit_npc( npc &who );
         static std::string describe( const mission &m );
 };
@@ -234,6 +246,10 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_DISPLAY_TRANSPARENCY, true, 'p', _( "Toggle display transparency" ) ) },
             { uilist_entry( DEBUG_DISPLAY_RADIATION, true, 'R', _( "Toggle display radiation" ) ) },
             { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ) },
+#if defined(TILES)
+            { uilist_entry( ACTION_TOGGLE_ZONE_OVERLAY, true, 'z', _( "Toggle zone overlay" ) ) },
+#endif
+            { uilist_entry( DEBUG_SET_AUTOMOVE, true, 'A', _( "Set automove target" ) ) },
             { uilist_entry( DEBUG_SHOW_MUT_CAT, true, 'm', _( "Show mutation category levels" ) ) },
             { uilist_entry( DEBUG_SHOW_MUT_CHANCES, true, 'u', _( "Show mutation trait chances" ) ) },
             { uilist_entry( DEBUG_BENCHMARK, true, 'b', _( "Draw benchmark" ) ) },
@@ -249,8 +265,13 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_TEST_WEATHER, true, 'W', _( "Test weather" ) ) },
             { uilist_entry( DEBUG_TEST_MAP_EXTRA_DISTRIBUTION, true, 'e', _( "Test map extra list" ) ) },
             { uilist_entry( DEBUG_RESET_IGNORED_MESSAGES, true, 'I', _( "Reset ignored debug messages" ) ) },
+            { uilist_entry( DEBUG_SWAP_CHAR, true, 'x', _( "Control NPC follower" ) ) },
 #if defined(TILES)
             { uilist_entry( DEBUG_RELOAD_TILES, true, 'D', _( "Reload tileset and show missing tiles" ) ) },
+#endif
+#if defined(TILES) && defined(DYNAMIC_ATLAS)
+            { uilist_entry( DEBUG_DUMP_TILES, true, 'F', _( "Dump dynamic tile atlas" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_TILESET_NO_VFX, true, 'j', _( "Toggle tileset visual effects" ) ) },
 #endif
         };
         uilist_initializer.insert( uilist_initializer.begin(), debug_only_options.begin(),
@@ -275,6 +296,7 @@ static int teleport_uilist()
     const std::vector<uilist_entry> uilist_initializer = {
         { uilist_entry( DEBUG_SHORT_TELEPORT, true, 's', _( "Teleport - short range" ) ) },
         { uilist_entry( DEBUG_LONG_TELEPORT, true, 'l', _( "Teleport - long range" ) ) },
+        { uilist_entry( DEBUG_TELEPORT_TO_OVERMAP_SPECIAL, true, 'a', _( "Teleport - overmap special" ) ) },
         { uilist_entry( DEBUG_OM_TELEPORT, true, 'o', _( "Teleport - adjacent overmap" ) ) },
         { uilist_entry( DEBUG_OM_TELEPORT_COORDINATES, true, 'p', _( "Teleport - specific overmap coordinates" ) ) },
     };
@@ -446,6 +468,36 @@ void teleport_overmap( bool specific_coordinates )
     add_msg( _( "You teleport to overmap %s." ), new_pos.to_string() );
 }
 
+static void teleport_to_overmap_special()
+{
+    std::vector<const overmap_special *> vec_os;
+    std::vector<std::pair<std::string, vproto_id>> area_strings;
+
+    uilist area_menu;
+    for( const overmap_special &elem : overmap_specials::get_all() ) {
+        vec_os.push_back( &elem );
+        const std::string entry_text = elem.id.str();
+        area_menu.addentry( -1, true, 0, entry_text );
+    }
+
+    area_menu.text = _( "Choose area to teleport to" );
+    area_menu.query( true );
+    if( area_menu.ret == UILIST_CANCEL ) {
+        return;
+    }
+
+    const overmap_special *target = vec_os[area_menu.ret];
+    const overmap_special_id target_id = target->id;
+    mission_target_params t;
+    t.overmap_terrain = target->get_terrain_at( tripoint() )->get_mapgen_id();
+    t.overmap_special = target_id;
+    t.search_range = 0;
+    t.reveal_radius = 3;
+
+    g->place_player_overmap( mission_util::get_om_terrain_pos( t ) );
+    add_msg( _( "You teleport to submap %s." ), target_id );
+}
+
 void spawn_nested_mapgen()
 {
     uilist nest_menu;
@@ -514,6 +566,29 @@ static Character &pick_character( Character &preselected )
     return c != nullptr ? *c : preselected;
 }
 
+static void control_npc_menu()
+{
+    std::vector<shared_ptr_fast<npc>> followers;
+    uilist charmenu;
+    int charnum = 0;
+    for( const auto &elem : g->get_follower_list() ) {
+        shared_ptr_fast<npc> follower = overmap_buffer.find_npc( elem );
+        if( follower ) {
+            followers.emplace_back( follower );
+            charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, follower->get_name() );
+        }
+    }
+    if( followers.empty() ) {
+        return;
+    }
+    charmenu.w_y_setup = 0;
+    charmenu.query();
+    if( charmenu.ret < 0 || static_cast<size_t>( charmenu.ret ) >= followers.size() ) {
+        return;
+    }
+    get_avatar().control_npc( *followers.at( charmenu.ret ) );
+}
+
 void character_edit_menu( Character &c )
 {
     npc *np = c.is_npc() ? static_cast<npc *>( &c ) : nullptr;
@@ -565,7 +640,7 @@ void character_edit_menu( Character &c )
         pick, desc, skills, stats, items, delete_items, item_worn,
         hp, stamina, morale, clear_morale, pain, needs, healthy, status, mission_add, mission_edit,
         tele, mutate, bionics, npc_class, attitude, opinion, effects,
-        learn_ma, unlock_recipes, learn_spells, level_spells
+        learn_ma, unlock_recipes, forget_items, learn_spells, level_spells
     };
 
     // Maybe TODO: this could actually be static if not for translations
@@ -591,7 +666,8 @@ void character_edit_menu( Character &c )
             uilist_entry( edit_character::mission_edit, true, 'M',  _( "Edit [M]issions (WARNING: Unstable!)" ) ),
             uilist_entry( edit_character::effects, true, 'E',  _( "Edit [E]ffects" ) ),
             uilist_entry( edit_character::learn_ma, true, 'l', _( "[l]earn all melee styles" ) ),
-            uilist_entry( edit_character::unlock_recipes, true, 'r', _( "Unlock all [r]ecipes" ) )
+            uilist_entry( edit_character::unlock_recipes, true, 'r', _( "Unlock all [r]ecipes" ) ),
+            uilist_entry( edit_character::forget_items, true, 'F', _( "[F]orget all items" ) )
         }
     };
 
@@ -1089,6 +1165,11 @@ void character_edit_menu( Character &c )
             add_msg( m_good, _( "You know how to craft that now." ) );
         }
         break;
+        case edit_character::forget_items:
+            add_msg( m_info, _( "Item debug." ) );
+            uistate.read_items.clear();
+            add_msg( m_bad, _( "You don't know about any items anymore." ) );
+            break;
         case edit_character::learn_spells:
             if( spell_type::get_all().empty() ) {
                 add_msg( m_bad, _( "There are no spells to learn.  You must install a mod that adds some." ) );
@@ -1439,6 +1520,10 @@ void debug()
             debug_menu::teleport_long();
             break;
 
+        case DEBUG_TELEPORT_TO_OVERMAP_SPECIAL:
+            debug_menu::teleport_to_overmap_special();
+            break;
+
         case DEBUG_REVEAL_MAP: {
             auto &cur_om = g->get_cur_om();
             for( int i = 0; i < OMAPX; i++ ) {
@@ -1467,6 +1552,12 @@ void debug()
             faction *new_solo_fac = g->faction_manager_ptr->add_new_faction( temp->name,
                                     faction_id( new_fac_id ), faction_id( "no_faction" ) );
             temp->set_fac( new_solo_fac ? new_solo_fac->id : faction_id( "no_faction" ) );
+            cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+                params["creature"] = temp.get();
+            } );
+            cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+                params["npc"] = temp.get();
+            } );
             g->load_npcs();
         }
         break;
@@ -1626,8 +1717,12 @@ void debug()
                         if( query_int( dir, -90, _( "Vehicle direction (in degrees): " ) ) ) {
                             vehicle *veh = m.add_vehicle( selected_opt, dest,
                                                           normalize( units::from_degrees( dir ) ),
-                                                          100, veh_cond_menu.ret - 1 );
+                                                          100, veh_cond_menu.ret - 1,
+                                                          true,
+                                                          false,
+                                                          true );
                             if( veh != nullptr ) {
+                                veh->set_owner( u );
                                 m.board_vehicle( dest, &u );
                             }
                         }
@@ -1866,8 +1961,14 @@ void debug()
         case DEBUG_DISPLAY_SUBMAP_GRID:
             g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
             break;
+        case ACTION_TOGGLE_ZONE_OVERLAY:
+            g->show_zone_overlay = !g->show_zone_overlay;
+            break;
         case DEBUG_HOUR_TIMER:
             g->toggle_debug_hour_timer();
+            break;
+        case DEBUG_SWAP_CHAR:
+            control_npc_menu();
             break;
         case DEBUG_CHANGE_TIME: {
             auto set_turn = [&]( const int initial, const time_duration & factor, const char *const msg ) {
@@ -2090,7 +2191,7 @@ void debug()
 
         case DEBUG_BUG_REPORT: {
             constexpr const char *const bug_report_url =
-                "https://github.com/cataclysmbnteam/Cataclysm-BN/issues/new"
+                "https://github.com/cataclysmbn/Cataclysm-BN/issues/new"
                 "?labels=bug"
                 "&template=bug_report.yml"
                 "&versions-and-configuration=";
@@ -2182,13 +2283,27 @@ void debug()
         case DEBUG_RESET_IGNORED_MESSAGES:
             debug_reset_ignored_messages();
             break;
-        case DEBUG_RELOAD_TILES:
+        case DEBUG_RELOAD_TILES: {
             std::ostringstream ss;
             g->reload_tileset( [&ss]( const std::string & str ) {
                 ss << str << '\n';
             } );
             add_msg( ss.str() );
             break;
+        }
+        case DEBUG_DUMP_TILES: {
+#if defined(TILES) && defined(DYNAMIC_ATLAS)
+            tilecontext->current_tileset()->texture_atlas()->readback_load();
+            tilecontext->current_tileset()->texture_atlas()->readback_dump( PATH_INFO::config_dir() );
+            tilecontext->current_tileset()->texture_atlas()->readback_clear();
+#endif
+            break;
+        }
+        case DEBUG_DISPLAY_TILESET_NO_VFX: {
+            g->display_toggle_overlay( ACTION_DISPLAY_TILES_NO_VFX );
+            break;
+        }
+
     }
     m.invalidate_map_cache( g->get_levz() );
 }

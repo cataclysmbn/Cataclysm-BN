@@ -11,6 +11,7 @@
 
 #include "avatar_action.h"
 #include "bionics.h"
+#include "catalua_icallback_actor.h"
 #include "character.h"
 #include "color.h"
 #include "creature.h"
@@ -43,6 +44,8 @@
 #include "translations.h"
 #include "units.h"
 #include "weighted_list.h"
+
+using TraitSet = std::set<trait_id>;
 
 static const activity_id ACT_TREE_COMMUNION( "ACT_TREE_COMMUNION" );
 
@@ -101,7 +104,17 @@ std::string enum_to_string<mutagen_technique>( mutagen_technique data )
 
 bool Character::has_trait( const trait_id &b ) const
 {
-    return my_mutations.count( b ) || enchantment_cache->get_mutations().contains( b );
+    return my_mutations.contains( b ) || enchantment_cache->get_mutations().contains( b );
+}
+
+bool Character::has_one_of_traits( const TraitSet &trait_set ) const
+{
+    for( const trait_id &trait : trait_set ) {
+        if( my_mutations.contains( trait ) || enchantment_cache->get_mutations().contains( trait ) ) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Character::has_trait_flag( const trait_flag_str_id &b ) const
@@ -115,7 +128,7 @@ bool Character::has_trait_flag( const trait_flag_str_id &b ) const
 bool Character::has_base_trait( const trait_id &b ) const
 {
     // Look only at base traits
-    return my_traits.find( b ) != my_traits.end();
+    return my_traits.contains( b );
 }
 
 void Character::toggle_trait( const trait_id &trait_ )
@@ -213,13 +226,28 @@ void Character::apply_mods( const trait_id &mut, bool add_remove )
 
 bool mutation_branch::conflicts_with_item( const item &it ) const
 {
-    if( allow_soft_gear && it.is_soft() ) {
-        return false;
+    // Check if the mutation explicitly permits this item first.
+    for( const flag_id &allowed : allowed_items ) {
+        if( it.has_flag( allowed ) ) {
+            return false;
+        }
     }
-
     for( body_part bp : restricts_gear ) {
         if( it.covers( convert_bp( bp ).id() ) ) {
-            return true;
+            // If it's oversized, forbid it if we're ONLY permitting allowed_items, otherwise allow it
+            if( it.has_flag( STATIC( flag_id( "OVERSIZE" ) ) ) ||
+                it.has_flag( STATIC( flag_id( "resized_large" ) ) ) ) {
+                if( allowed_items_only ) {
+                    return true;
+                } else {
+                    return false;
+                }
+                // If we're still here, allow soft gear where relevant.
+            } else if( allow_soft_gear && it.is_soft() ) {
+                return false;
+            } else {
+                return true;
+            }
         }
     }
 
@@ -291,10 +319,6 @@ void Character::mutation_effect( const trait_id &mut )
     }
 
     remove_worn_items_with( [&]( detached_ptr<item> &&armor ) {
-        if( armor->has_flag( STATIC( flag_id( "OVERSIZE" ) ) ) ||
-            armor->has_flag( STATIC( flag_id( "resized_large" ) ) ) ) {
-            return std::move( armor );
-        }
         if( !branch.conflicts_with_item( *armor ) ) {
             return std::move( armor );
         }
@@ -306,6 +330,21 @@ void Character::mutation_effect( const trait_id &mut )
         // It could cause segmentation fault if mutation change will trigger clothes removal on character creation
         // with preview clothes toggled on. So checking if game started.
         if( g->w_terrain ) {
+
+            //get dependant worn items only checks for powerarmor helmets or powerarmor mods
+            //so this just removes those if powerarmor is also removed
+            const auto deps = get_dependent_worn_items( *armor );
+            for( const auto &it : deps ) {
+                add_msg_player_or_npc( m_bad,
+                                       _( "Your %s is pushed off!" ),
+                                       _( "<npcname>'s %s is pushed off!" ),
+                                       it->tname() );
+
+                it->on_takeoff( *this );
+                detached_ptr<item> det = worn.remove( it );
+                get_map().add_item_or_charges( pos(), std::move( det ) );
+            }
+
             get_map().add_item_or_charges( pos(), std::move( armor ) );
         }
         return detached_ptr<item>();
@@ -316,6 +355,10 @@ void Character::mutation_effect( const trait_id &mut )
     }
 
     on_mutation_gain( mut );
+
+    if( const auto *lcb = mut.obj().lua_callbacks ) {
+        lcb->call_on_gain( *this, mut );
+    }
 }
 
 void Character::mutation_loss_effect( const trait_id &mut )
@@ -360,6 +403,10 @@ void Character::mutation_loss_effect( const trait_id &mut )
     }
 
     on_mutation_loss( mut );
+
+    if( const auto *lcb = mut.obj().lua_callbacks ) {
+        lcb->call_on_loss( *this, mut );
+    }
 }
 
 bool Character::has_active_mutation( const trait_id &b ) const
@@ -481,6 +528,10 @@ void Character::activate_mutation( const trait_id &mut )
     }
     mutation_spend_resources( mut );
     tdata.powered = true;
+
+    if( const auto *lcb = mdata.lua_callbacks ) {
+        lcb->call_on_activate( *this, mut );
+    }
 
     if( !mut->enchantments.empty() ) {
         recalculate_enchantment_cache();
@@ -620,6 +671,10 @@ void Character::deactivate_mutation( const trait_id &mut )
     if( !mut->enchantments.empty() ) {
         recalculate_enchantment_cache();
     }
+
+    if( const auto *lcb = mut.obj().lua_callbacks ) {
+        lcb->call_on_deactivate( *this, mut );
+    }
 }
 
 bool Character::mutation_ok( const trait_id &mutation, bool force_good, bool force_bad ) const
@@ -633,6 +688,12 @@ bool Character::mutation_ok( const trait_id &mutation, bool force_good, bool for
     if( has_trait( mutation ) || has_child_flag( mutation ) ) {
         // We already have this mutation or something that replaces it.
         return false;
+    }
+
+    for( trait_id mut : get_mutations() ) {
+        if( mut->prevents.contains( mutation ) ) {
+            return false;
+        }
     }
 
     for( const bionic &i : get_bionic_collection() ) {
@@ -932,7 +993,8 @@ void Character::old_mutate()
             }
 
             // ...consider whether its in our highest category
-            if( has_trait( base_mutation ) && !has_base_trait( base_mutation ) ) {
+            if( has_trait( base_mutation ) && ( !has_base_trait( base_mutation ) ||
+                                                get_option<bool>( "canmutprofmut" ) ) ) {
                 // Starting traits don't count toward categories
                 std::vector<trait_id> group = mutations_category[cat];
                 bool in_cat = false;
@@ -1127,7 +1189,7 @@ bool Character::mutate_towards( const trait_id &mut )
         if( !has_trait( cancel[i] ) ) {
             cancel.erase( cancel.begin() + i );
             i--;
-        } else if( has_base_trait( cancel[i] ) ) {
+        } else if( has_base_trait( cancel[i] ) && !get_option<bool>( "canmutprofmut" ) ) {
             //If we have the trait, but it's a base trait, don't allow it to be removed normally
             canceltrait.push_back( cancel[i] );
             cancel.erase( cancel.begin() + i );
@@ -1175,7 +1237,7 @@ bool Character::mutate_towards( const trait_id &mut )
     bool threshold = mdata.threshold;
     bool profession = mdata.profession;
     bool has_threshreq = false;
-    std::vector<trait_id> threshreq = mdata.threshreq;
+    const unsigned short tierreq = mdata.threshold_tier;
 
     // It shouldn't pick a Threshold anyway--they're supposed to be non-Valid
     // and aren't categorized. This can happen if someone makes a threshold mutation into a prerequisite.
@@ -1188,14 +1250,14 @@ bool Character::mutate_towards( const trait_id &mut )
         return false;
     }
 
-    for( size_t i = 0; !has_threshreq && i < threshreq.size(); i++ ) {
-        if( has_trait( threshreq[i] ) ) {
+    for( auto cat : mdata.category ) {
+        if( has_trait( cat->threshold_muts[tierreq] ) ) {
             has_threshreq = true;
         }
     }
 
     // No crossing The Threshold by simply not having it
-    if( !has_threshreq && !threshreq.empty() ) {
+    if( ( tierreq != 0 ) && !has_threshreq )  {
         add_msg_if_player( _( "You feel something straining deep inside you, yearning to be free…" ) );
         return false;
     }
@@ -1357,7 +1419,7 @@ void Character::remove_mutation( const trait_id &mut, bool silent )
         //Check each mutation until we reach the end or find a trait to revert to
         for( auto &iter : mutation_branch::get_all() ) {
             //See if it's in our list of base traits but not active
-            if( has_base_trait( iter.id ) && !has_trait( iter.id ) ) {
+            if( has_base_trait( iter.id ) && !get_option<bool>( "canmutprofmut" ) && !has_trait( iter.id ) ) {
                 //See if that base trait cancels the mutation we are using
                 std::vector<trait_id> traitcheck = iter.cancels;
                 if( !traitcheck.empty() ) {
@@ -1379,7 +1441,7 @@ void Character::remove_mutation( const trait_id &mut, bool silent )
         //Check each mutation until we reach the end or find a trait to revert to
         for( auto &iter : mutation_branch::get_all() ) {
             //See if it's in our list of base traits but not active
-            if( has_base_trait( iter.id ) && !has_trait( iter.id ) ) {
+            if( has_base_trait( iter.id ) && !get_option<bool>( "canmutprofmut" ) && !has_trait( iter.id ) ) {
                 //See if that base trait cancels the mutation we are using
                 std::vector<trait_id> traitcheck = iter.cancels;
                 if( !traitcheck.empty() ) {
@@ -1590,20 +1652,32 @@ mutagen_attempt mutagen_common_checks( Character &guy, const item &it, bool stro
     return mutagen_attempt( true, 0 );
 }
 
-void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category )
+void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category,
+                              const unsigned short tier )
 {
-    // Threshold-check.  You only get to cross once!
-    if( guy.crossed_threshold() ) {
+    // Can't cross the same tier threshold multiple times
+    if( guy.thresh_tier >= tier ) {
         return;
     }
 
-    // If there is no threshold for this category, don't check it
-    const trait_id &mutation_thresh = m_category.threshold_mut;
-    if( mutation_thresh.is_empty() ) {
+    // No skipping tiers
+    if( guy.thresh_tier < tier - 1 ) {
+        test_crossing_threshold( guy, m_category, tier - 1 );
+        return;
+    }
+
+    // If there is no threshold for this category at this tier, don't check it
+    const std::vector<trait_id> &mutation_thresh = m_category.threshold_muts;
+    if( mutation_thresh.size() < tier + 1 ) {
         return;
     }
 
     mutation_category_id mutation_category = m_category.id;
+    // If you've already passed a threshold, you can't get a different tree's threshold
+    if( ( guy.thresh_tier > 0 ) && ( guy.thresh_category != mutation_category ) ) {
+        return;
+    }
+
     int total = 0;
     for( const auto &iter : mutation_category_trait::get_all() ) {
         total += guy.mutation_category_level[ iter.first ];
@@ -1628,8 +1702,10 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
         if( x_in_y( breacher, total ) ) {
             guy.add_msg_if_player( m_good,
                                    _( "Something strains mightily for a moment… and then… you're… FREE!" ) );
-            guy.set_mutation( mutation_thresh );
+            guy.set_mutation( mutation_thresh[tier] );
             g->events().send<event_type::crosses_mutation_threshold>( guy.getID(), m_category.id );
+            guy.thresh_category = mutation_category; // Set the mutation category for the character
+            guy.thresh_tier++; // Increment mutation tier, since this should always be + 1 tier
             // Manually removing Carnivore, since it tends to creep in
             // This is because carnivore is a prerequisite for the
             // predator-style post-threshold mutations.
@@ -1640,9 +1716,8 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
             }
         }
     } else if( guy.has_trait( trait_NOPAIN ) ) {
-        //~NOPAIN is a post-Threshold trait, so you shouldn't
-        //~legitimately have it and get here!
-        guy.add_msg_if_player( m_bad, _( "You feel extremely Bugged." ) );
+        // With additional tiers of threshold, this is now possible to actually hit
+        guy.add_msg_if_player( m_bad, _( "You feel extremely disappointed as nothing happens." ) );
     } else if( breach_power > 100 ) {
         guy.add_msg_if_player( m_bad, _( "You stagger with a piercing headache!" ) );
         guy.mod_pain_noresist( 8 );

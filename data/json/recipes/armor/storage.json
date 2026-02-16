@@ -586,7 +586,7 @@
     "autolearn": true,
     "using": [ [ "cordage", 2 ] ],
     "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "bag_plastic", 8 ] ] ]
+    "components": [ [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ] ] ]
   },
   {
     "result": "quiver",
@@ -652,6 +652,38 @@
     "components": [ [ [ "birchbark", 10 ] ] ]
   },
   {
+    "result": "quiver_atlatl",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "skills_required": [ "gun", 1 ],
+    "time": "15 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "autolearn": true,
+    "book_learn": [ [ "recipe_arrows", 1 ] ],
+    "using": [ [ "sewing_standard", 3 ] ],
+    "components": [ [ [ "leather", 3 ] ] ]
+  },
+  {
+    "result": "quiver_birchbark_atlatl",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "tailor",
+    "difficulty": 3,
+    "skills_required": [ [ "survival", 1 ], [ "gun", 1 ] ],
+    "time": "30 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "autolearn": true,
+    "book_learn": [ [ "recipe_arrows", 2 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "birchbark", 5 ] ] ]
+  },
+  {
     "result": "ragpouch",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -686,6 +718,21 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 10 ] ],
     "components": [ [ [ "leather", 6 ] ] ]
+  },
+  {
+    "result": "sheath_birchbark",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "tailor",
+    "difficulty": 3,
+    "skills_required": [ "survival", 1 ],
+    "time": "20 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "birchbark", 3 ] ] ]
   },
   {
     "result": "sholster",
@@ -724,6 +771,18 @@
     "components": [ [ [ "straw_pile", 5 ], [ "birchbark", 7 ] ] ]
   },
   {
+    "result": "pack_basket",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "skills_required": [ "survival", 1 ],
+    "time": "24 m",
+    "autolearn": true,
+    "components": [ [ [ "straw_pile", 10 ], [ "birchbark", 12 ] ], [ [ "cordage", 2, "LIST" ], [ "filament", 90, "LIST" ] ] ]
+  },
+  {
     "result": "survivor_hiking_backpack",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -747,7 +806,8 @@
         [ "leather_pouch", 2 ],
         [ "dump_pouch", 1 ],
         [ "purse", 2 ],
-        [ "fanny", 2 ]
+        [ "fanny", 2 ],
+        [ "webbing_belt", 2 ]
       ],
       [ [ "duct_tape", 300 ] ]
     ]
@@ -886,13 +946,13 @@
       [
         [ "tacvest", 1 ],
         [ "legrig", 1 ],
-        [ "vest", 1 ],
         [ "tool_belt", 1 ],
         [ "ragpouch", 3 ],
         [ "leather_pouch", 2 ],
         [ "dump_pouch", 1 ],
         [ "purse", 2 ],
-        [ "fanny", 2 ]
+        [ "fanny", 2 ],
+        [ "webbing_belt", 1 ]
       ],
       [ [ "duct_tape", 50 ] ]
     ]
@@ -1074,6 +1134,76 @@
     "components": [ [ [ "holster", 1 ] ] ]
   },
   {
+    "result": "power_armor_sholster",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "skills_required": [ "fabrication", 3 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "sholster", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_shoulder_holster",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "skills_required": [ "fabrication", 3 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "shoulder_holster", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_XL_holster",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 8,
+    "skills_required": [ "fabrication", 5 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "XL_holster", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_axe_ring",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 7,
+    "skills_required": [ "fabrication", 4 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "axe_ring", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_baldric",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 8,
+    "skills_required": [ "fabrication", 5 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "baldric", 1 ] ] ]
+  },
+  {
     "result": "power_armor_bscabbard",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -1114,5 +1244,103 @@
     "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
     "components": [ [ [ "sheath", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_ammo_pouch",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 5,
+    "skills_required": [ "fabrication", 2 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "ammo_pouch", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_ammo_satchel",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "skills_required": [ "fabrication", 3 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "ammo_satchel", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_legpouch_large",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "skills_required": [ "fabrication", 3 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "legpouch_large", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_mag_satchel_leg",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 5,
+    "skills_required": [ "fabrication", 2 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "mag_satchel_leg", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_ammo_satchel_leg",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 5,
+    "skills_required": [ "fabrication", 2 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "ammo_satchel_leg", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_grenade_pouch",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "skills_required": [ "fabrication", 3 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "grenade_pouch", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_grenadebandolier",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "skills_required": [ "fabrication", 3 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "grenadebandolier", 1 ] ] ]
   }
 ]

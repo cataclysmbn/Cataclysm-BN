@@ -43,6 +43,7 @@ void submap::swap( submap &first, submap &second )
     std::swap( first.vehicles, second.vehicles );
     std::swap( first.partial_constructions, second.partial_constructions );
     std::swap( first.active_furniture, second.active_furniture );
+    std::swap( first.transformer_last_run, second.transformer_last_run );
     std::swap( first.is_uniform, second.is_uniform );
     std::swap( first.computers, second.computers );
     std::swap( first.legacy_computer, second.legacy_computer );
@@ -389,7 +390,7 @@ void submap::update_legacy_computer()
 
 bool submap::has_computer( point p ) const
 {
-    return computers.find( p ) != computers.end() || ( legacy_computer && ter[p.x][p.y] == t_console );
+    return computers.contains( p ) || ( legacy_computer && ter[p.x][p.y] == t_console );
 }
 
 const computer *submap::get_computer( point p ) const
@@ -533,4 +534,10 @@ void submap::rotate( int turns )
         rot_active_furn.emplace( point_sm_ms( rotate_point( elem.first.raw() ) ), elem.second );
     }
     active_furniture = rot_active_furn;
+
+    std::map<point_sm_ms, time_point> rot_transformer_last_run;
+    for( auto &elem : transformer_last_run ) {
+        rot_transformer_last_run.emplace( point_sm_ms( rotate_point( elem.first.raw() ) ), elem.second );
+    }
+    transformer_last_run = rot_transformer_last_run;
 }

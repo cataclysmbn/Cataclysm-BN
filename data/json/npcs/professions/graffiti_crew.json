@@ -1,0 +1,53 @@
+[
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_GRAFFITI",
+    "name": { "str": "Street Artist" },
+    "job_description": "I'm just looking for a good spot to tag.",
+    "traits": [
+      { "group": "BG_survival_story_UNIVERSAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "NC_PROF_GRAFFITI" },
+      { "group": "Appearance_demographics" }
+    ],
+    "common": false,
+    "worn_override": "NC_PROF_GRAFFITI_worn",
+    "carry_override": "NC_PROF_GRAFFITI_carry",
+    "weapon_override": "NC_PROF_GRAFFITI_melee",
+    "bonus_str": { "rng": [ -2, 2 ] },
+    "bonus_dex": { "rng": [ 2, 4 ] },
+    "bonus_int": { "rng": [ -2, 2 ] },
+    "bonus_per": { "rng": [ 0, 2 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GRAFFITI_worn",
+    "subtype": "collection",
+    "entries": [
+      { "item": "wristwatch" },
+      { "item": "slingpack" },
+      { "item": "hoodie" },
+      { "item": "jeans" },
+      { "item": "socks" },
+      { "item": "sneakers" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_GRAFFITI_carry",
+    "subtype": "collection",
+    "entries": [ { "item": "spray_can" }, { "item": "smart_phone" }, { "item": "permanent_marker" }, { "item": "switchblade" } ]
+  },
+  {
+    "id": "NC_PROF_GRAFFITI_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "null" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "NC_PROF_GRAFFITI",
+    "subtype": "collection",
+    "traits": [ { "group": "trait_group_PARKOUR", "prob": 100 }, { "group": "trait_group_GOODCARDIO", "prob": 100 } ]
+  }
+]

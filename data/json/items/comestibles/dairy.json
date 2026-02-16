@@ -40,7 +40,7 @@
     "material": [ "milk" ],
     "volume": "500 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "charges": 2,
     "vitamins": [ [ "vitA", 10 ], [ "vitB", 6 ], [ "vitC", 4 ], [ "calcium", 25 ], [ "milk_allergen", 1 ] ],
     "fun": 1
@@ -56,6 +56,7 @@
     "comestible_type": "FOOD",
     "symbol": "%",
     "calories": 150,
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "description": "Delicious fermented dairy.  It tastes of vanilla.",
     "price": "190 cent",
     "price_postapoc": "1 USD",
@@ -76,6 +77,7 @@
     "symbol": "%",
     "quench": -1,
     "calories": 106,
+    "flags": [ "NO_COOKING_BUFF" ],
     "container": "wrapper",
     "description": "A yellow stick of milkfat and milk solids, usually made from cow's milk.",
     "price": "3 USD",
@@ -111,6 +113,7 @@
     "comestible_type": "FOOD",
     "symbol": "%",
     "calories": 302,
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "Sugary, fermented dairy.  A wonderful treat.",
     "price": "210 cent",
     "price_postapoc": "250 cent",
@@ -136,7 +139,7 @@
     "charges": 5,
     "vitamins": [ [ "vitA", 5 ], [ "calcium", 32 ], [ "iron", 2 ] ],
     "fun": 6,
-    "flags": [ "NUTRIENT_OVERRIDE", "SMOKABLE" ],
+    "flags": [ "NUTRIENT_OVERRIDE", "SMOKABLE", "NO_COOKING_BUFF" ],
     "smoking_result": "cheese_hard"
   },
   {
@@ -159,7 +162,7 @@
     "charges": 5,
     "vitamins": [ [ "vitA", 5 ], [ "calcium", 32 ], [ "iron", 2 ], [ "milk_allergen", 1 ] ],
     "fun": 5,
-    "flags": [ "NUTRIENT_OVERRIDE" ]
+    "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ]
   },
   {
     "type": "COMESTIBLE",
@@ -172,6 +175,7 @@
     "comestible_type": "FOOD",
     "symbol": "%",
     "calories": 120,
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "A block of yellow processed cheese.",
     "price": "450 cent",
     "price_postapoc": "4 USD",
@@ -211,11 +215,12 @@
     "name": { "str_sp": "powdered milk" },
     "weight": "30 g",
     "color": "white",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": -1,
     "calories": 132,
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "Dehydrated milk powder.  Mix with water to make drinkable milk.",
     "price": "11 USD",
     "price_postapoc": "2 USD",
@@ -239,6 +244,7 @@
     "symbol": "~",
     "quench": 12,
     "calories": 103,
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "Cow's milk that has been partly dehydrated to vastly increase its shelf life, and also sweetened.",
     "price": "70 cent",
     "price_postapoc": "1 USD",
@@ -269,7 +275,7 @@
     "material": [ "milk" ],
     "volume": "250 ml",
     "phase": "liquid",
-    "flags": [ "EATEN_COLD" ],
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "vitA", 1 ], [ "vitB", 1 ], [ "vitC", 1 ], [ "calcium", 1 ], [ "milk_allergen", 1 ] ]
   }
 ]

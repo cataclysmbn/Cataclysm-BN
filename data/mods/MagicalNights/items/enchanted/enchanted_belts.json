@@ -22,7 +22,7 @@
       "max_weight": "400 g",
       "flags": [ "BELT_CLIP" ]
     },
-    "flags": [ "WAIST", "WATER_FRIENDLY", "STURDY" ]
+    "flags": [ "WAIST", "WATER_FRIENDLY", "STURDY", "ALLOWS_WINGS" ]
   },
   {
     "type": "TOOL_ARMOR",

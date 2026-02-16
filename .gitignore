@@ -11,6 +11,7 @@
 /bindist/
 build.*
 build
+!build.yml
 !build-scripts
 !build-data
 test_user_dir*
@@ -50,6 +51,10 @@ cataclysmdda-*
 debug.log
 logg.txt
 
+# Generated Lua docs (see `deno task docs:gen`)
+/docs/en/mod/lua/reference/lua.md
+/lua_annotations.lua
+
 # Visual Studio files
 *.code-workspace
 *.ilk
@@ -62,6 +67,7 @@ logg.txt
 *.vcxproj.filters
 .vs/
 .vscode/
+!.vscode/extensions.json
 Debug*/
 Release*/
 .cache/

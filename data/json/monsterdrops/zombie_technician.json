@@ -10,6 +10,8 @@
         "distribution": [ { "group": "tools_carpentry", "prob": 30 }, { "group": "tools_common", "prob": 70 } ],
         "prob": 30
       },
+      { "item": "subwaymap", "prob": 2 },
+      { "item": "sewermap", "prob": 2 },
       { "group": "supplies_electronics", "prob": 50 },
       { "item": "id_industrial", "prob": 20 }
     ]
@@ -36,6 +38,9 @@
       },
       { "group": "underwear", "damage": [ 1, 4 ] },
       { "item": "miner_hat", "prob": 90, "damage": [ 1, 4 ] },
+      { "item": "cavemap", "prob": 4 },
+      { "item": "subwaymap", "prob": 2 },
+      { "item": "sewermap", "prob": 2 },
       {
         "distribution": [ { "group": "mine_equipment", "prob": 50 }, { "group": "mine_materials", "prob": 50 } ],
         "prob": 60
@@ -62,6 +67,8 @@
         "prob": 30
       },
       { "group": "supplies_electronics", "prob": 50 },
+      { "item": "subwaymap", "prob": 2 },
+      { "item": "sewermap", "prob": 2 },
       { "item": "id_industrial", "prob": 20 },
       { "group": "recycle_steel", "count": [ 4, 8 ] }
     ]

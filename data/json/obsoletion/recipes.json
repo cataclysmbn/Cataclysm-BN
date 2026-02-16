@@ -1882,11 +1882,6 @@
     "obsolete": true
   },
   {
-    "result": "beltfeed",
-    "type": "recipe",
-    "obsolete": true
-  },
-  {
     "result": "makeshift_grenade",
     "type": "recipe",
     "obsolete": true
@@ -2205,5 +2200,56 @@
     "result": "762_25typeP",
     "type": "recipe",
     "obsolete": true
+  },
+  {
+    "result": "chem_black_powder_generic",
+    "type": "recipe",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "washing_machine",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "dishwasher",
+    "obsolete": true
+  },
+  {
+    "result": "washing_machine",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "time": "1 h",
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
+    "components": [
+      [ [ "cable", 8 ] ],
+      [ [ "hose", 1 ] ],
+      [ [ "cu_pipe", 3 ] ],
+      [ [ "motor_small", 1 ] ],
+      [ [ "e_scrap", 4 ] ],
+      [ [ "element", 4 ] ],
+      [ [ "power_supply", 4 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "RAM", 1 ] ]
+    ]
+  },
+  {
+    "result": "dishwasher",
+    "type": "uncraft",
+    "skill_used": "electronics",
+    "time": "1 h",
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
+    "components": [
+      [ [ "cable", 8 ] ],
+      [ [ "hose", 1 ] ],
+      [ [ "cu_pipe", 3 ] ],
+      [ [ "motor_tiny", 1 ] ],
+      [ [ "e_scrap", 4 ] ],
+      [ [ "element", 4 ] ],
+      [ [ "power_supply", 4 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "RAM", 1 ] ]
+    ]
   }
 ]

@@ -7,6 +7,12 @@
   },
   {
     "type": "dream",
+    "messages": [ "You have a strange dream about snakes.", "Your dreams give you a strange slithering feeling." ],
+    "category": "SERPENT",
+    "strength": 1
+  },
+  {
+    "type": "dream",
     "messages": [
       "You have a strange dream about being a patient in a frightening hospital.",
       "Your dreams give you an oddly medicated feeling."
@@ -130,6 +136,12 @@
   },
   {
     "type": "dream",
+    "messages": [ "You have a strange dream about carrots.", "Your dreams give you a strange fuzzy, hopping feeling." ],
+    "category": "RABBIT",
+    "strength": 1
+  },
+  {
+    "type": "dream",
     "messages": [
       "You dream of a strange quest for a bush that grows gray apples.",
       "You feel like you're cracking a combination lock.",
@@ -146,6 +158,15 @@
       "While dreaming, you see a distinctively lizard-like reflection of yourself."
     ],
     "category": "LIZARD",
+    "strength": 2
+  },
+  {
+    "type": "dream",
+    "messages": [
+      "You have a disturbing dream of slithering and coiling around a small mammal.",
+      "While dreaming, you see an unblinking serpentine reflection of yourself."
+    ],
+    "category": "SERPENT",
     "strength": 2
   },
   {
@@ -306,11 +327,26 @@
   },
   {
     "type": "dream",
+    "messages": [ "You dream of nibbling on fresh carrots in a moonlit garden.", "You dream of digging a cozy burrow in soft earth." ],
+    "category": "RABBIT",
+    "strength": 2
+  },
+  {
+    "type": "dream",
     "messages": [
       "You are terrified by a dream of becoming a lizard hybrid.",
       "You have a disturbingly lifelike dream of living as a lizard."
     ],
     "category": "LIZARD",
+    "strength": 3
+  },
+  {
+    "type": "dream",
+    "messages": [
+      "You have an unsettling dream about living as some sort of snake creature.",
+      "You're unnerved by a dream where your slithering serpentine form seemed unnaturally graceful and lifelike."
+    ],
+    "category": "SERPENT",
     "strength": 3
   },
   {
@@ -486,8 +522,26 @@
   },
   {
     "type": "dream",
+    "messages": [
+      "You have an unsettling dream where your ears twitch at every distant sound.",
+      "You dream of fleeing through tall grass, your powerful legs carrying you to safety."
+    ],
+    "category": "RABBIT",
+    "strength": 3
+  },
+  {
+    "type": "dream",
     "messages": [ "You are terrified by a dream of becoming an ape hybrid.", "You blissfully recall days spent lounging in the sun." ],
     "category": "LIZARD",
+    "strength": 4
+  },
+  {
+    "type": "dream",
+    "messages": [
+      "You're haunted by a dream of the old days spent stumbling on ape-legs.",
+      "You have a vivid dream of crushing worthy prey in your powerful coils."
+    ],
+    "category": "SERPENT",
     "strength": 4
   },
   {
@@ -663,6 +717,15 @@
       "You hear the sirens again, but this time you stay in your hole in the wall.  Nobody will think to look there!"
     ],
     "category": "MOUSE",
+    "strength": 4
+  },
+  {
+    "type": "dream",
+    "messages": [
+      "You dream vividly of life as a rabbit, every sense alert for predators.",
+      "In your dream, you thump your foot in warning as a shadow passes overhead."
+    ],
+    "category": "RABBIT",
     "strength": 4
   },
   {

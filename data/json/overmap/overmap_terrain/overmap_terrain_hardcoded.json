@@ -34,7 +34,7 @@
     "color": "brown",
     "see_cost": 2,
     "extras": "field",
-    "spawns": { "group": "GROUP_FOREST", "population": [ 0, 1 ], "chance": 13 },
+    "spawns": { "group": "GROUP_FOREST", "population": [ 1, 3 ], "chance": 15 },
     "flags": [ "NO_ROTATE" ]
   },
   {
@@ -46,7 +46,7 @@
     "color": "green",
     "see_cost": 3,
     "extras": "forest",
-    "spawns": { "group": "GROUP_FOREST", "population": [ 0, 3 ], "chance": 13 },
+    "spawns": { "group": "GROUP_FOREST", "population": [ 1, 3 ], "chance": 15 },
     "flags": [ "NO_ROTATE", "SOURCE_FORAGE" ]
   },
   {
@@ -58,7 +58,7 @@
     "color": "green",
     "see_cost": 4,
     "extras": "forest_thick",
-    "spawns": { "group": "GROUP_FOREST", "population": [ 0, 6 ], "chance": 15 },
+    "spawns": { "group": "GROUP_FOREST", "population": [ 1, 6 ], "chance": 30 },
     "mapgen": [ { "method": "builtin", "name": "forest" } ],
     "flags": [ "NO_ROTATE", "SOURCE_FORAGE" ]
   },
@@ -71,7 +71,7 @@
     "color": "cyan",
     "see_cost": 4,
     "extras": "forest_water",
-    "spawns": { "group": "GROUP_SWAMP", "population": [ 2, 6 ], "chance": 50 },
+    "spawns": { "group": "GROUP_SWAMP", "population": [ 1, 6 ], "chance": 30 },
     "mapgen": [ { "method": "builtin", "name": "forest" } ],
     "flags": [ "NO_ROTATE", "SOURCE_FORAGE", "RISK_HIGH" ]
   },

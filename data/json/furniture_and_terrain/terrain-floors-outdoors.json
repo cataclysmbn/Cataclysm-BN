@@ -291,7 +291,7 @@
     "name": "yellow pavement",
     "connects_to": "PAVEMENT",
     "description": "Streaks of carefully aligned yellow paint mark the road to inform drivers not to cross.  No one is enforcing these rules anymore.",
-    "symbol": ".",
+    "symbol": ":",
     "color": "yellow",
     "move_cost": 2,
     "flags": [ "TRANSPARENT", "FLAT", "ROAD", "MINEABLE" ],
@@ -401,6 +401,26 @@
   },
   {
     "type": "terrain",
+    "id": "t_floor_wood_underwater",
+    "copy-from": "t_floor_noroof",
+    "name": "underwater wooden floor",
+    "description": "Rotting old floorboards long since repurposed as Davy Jones's patio.",
+    "symbol": ".",
+    "color": "brown",
+    "extend": { "flags": [ "LIQUID", "SWIMMABLE", "WATER_CUBE", "DEEP_WATER", "GOES_UP" ] },
+    "delete": { "flags": [ "FLAMMABLE_HARD" ] },
+    "bash": {
+      "ter_set": "t_lake_bed",
+      "str_min": 20,
+      "str_max": 200,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "bash_below": true,
+      "items": [ { "item": "splinter", "count": [ 2, 8 ] }, { "item": "nail", "charges": [ 5, 10 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
     "id": "t_metal_floor_no_roof",
     "name": "metal floor",
     "looks_like": "t_metal_floor",
@@ -421,6 +441,27 @@
         { "item": "scrap", "count": [ 9, 36 ] }
       ],
       "bash_below": true
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_junk_floor_noroof",
+    "name": "junk metal floor",
+    "description": "A simple floor of rusty scrap metal bolted and wire-tied to a makeshift frame.  Very fashionable in post-apocalyptic shantytowns.",
+    "symbol": "`",
+    "color": "dark_gray",
+    "looks_like": "t_junk_floor",
+    "move_cost": 2,
+    "flags": [ "TRANSPARENT", "FLAT" ],
+    "bash": {
+      "str_min": 30,
+      "str_max": 200,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "ter_set": "t_null",
+      "str_min_supported": 60,
+      "bash_below": true,
+      "items": [ { "item": "steel_chunk", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 1, 40 ] } ]
     }
   },
   {
@@ -660,5 +701,17 @@
       "str_min_supported": 100,
       "items": [ { "item": "material_sand", "charges": [ 250, 500 ] } ]
     }
+  },
+  {
+    "type": "terrain",
+    "id": "t_od_metal_floor",
+    "looks_like": "t_metal_floor",
+    "name": "metal floor",
+    "description": "High-quality and tough checkered flooring to reduce risk of slips and falls.",
+    "symbol": ".",
+    "color": "light_cyan",
+    "move_cost": 2,
+    "flags": [ "TRANSPARENT", "FLAT", "ROAD" ],
+    "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 100, "str_max": 500, "str_min_supported": 200 }
   }
 ]

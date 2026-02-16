@@ -515,7 +515,11 @@
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
     "flags": [ "BLIND_HARD" ],
-    "components": [ [ [ "lemon", 1 ], [ "irradiated_lemon", 1 ] ], [ [ "sugar", 33 ] ], [ [ "water_clean", 10 ] ] ]
+    "components": [
+      [ [ "lemon", 1 ], [ "irradiated_lemon", 1 ], [ "lemonade_powder", 1 ] ],
+      [ [ "sugar", 33 ] ],
+      [ [ "water_clean", 10 ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -550,7 +554,7 @@
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
     "flags": [ "BLIND_HARD" ],
-    "components": [ [ [ "orange", 1 ], [ "irradiated_orange", 1 ] ], [ [ "sugar", 38 ] ], [ [ "water_clean", 10 ] ] ]
+    "components": [ [ [ "orange", 2 ], [ "irradiated_orange", 2 ], [ "oj", 1 ] ], [ [ "sugar", 33 ] ], [ [ "water_clean", 10 ] ] ]
   },
   {
     "type": "recipe",
@@ -640,7 +644,12 @@
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
     "flags": [ "BLIND_HARD" ],
-    "components": [ [ [ "caffeine", 2 ] ], [ [ "lemon", 1 ], [ "irradiated_lemon", 1 ] ], [ [ "sugar", 36 ] ], [ [ "water_clean", 10 ] ] ]
+    "components": [
+      [ [ "caffeine", 2 ] ],
+      [ [ "lemon", 1 ], [ "irradiated_lemon", 1 ], [ "lemonade_powder", 1 ] ],
+      [ [ "sugar", 36 ] ],
+      [ [ "water_clean", 10 ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -1691,6 +1700,7 @@
     "difficulty": 5,
     "time": "7 m",
     "autolearn": true,
+    "book_learn": [ [ "note_mutagen_conspiracy", 4 ] ],
     "batch_time_factors": [ 83, 5 ],
     "qualities": [ { "id": "COOK", "level": 2 } ],
     "tools": [ [ [ "surface_heat", 20, "LIST" ] ] ],
@@ -1706,6 +1716,7 @@
     "difficulty": 5,
     "time": "7 m",
     "autolearn": true,
+    "book_learn": [ [ "note_mutagen_conspiracy", 4 ] ],
     "qualities": [ { "id": "COOK", "level": 2 } ],
     "tools": [ [ [ "water_boiling_heat", 1, "LIST" ] ] ],
     "components": [ [ [ "sewage", 1 ] ], [ [ "hard_liquor_chem", 1, "LIST" ] ] ]
@@ -1723,5 +1734,33 @@
     "qualities": [ { "id": "BOIL", "level": 1 }, { "id": "CUT", "level": 1 } ],
     "tools": [ [ [ "water_boiling_heat", 2, "LIST" ] ] ],
     "components": [ [ [ "dry_rice", 1 ] ], [ [ "barley", 1 ] ], [ [ "water", 1 ], [ "water_clean", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "cranberry_juice",
+    "byproducts": [ [ "juice_pulp", 2 ] ],
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_DRINKS",
+    "skill_used": "cooking",
+    "difficulty": 1,
+    "time": "5 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CONTAIN", "level": 1 } ],
+    "tools": [ [ [ "rag", -1 ] ] ],
+    "components": [ [ [ "cranberries", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "oj",
+    "byproducts": [ [ "juice_pulp", 2 ] ],
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_DRINKS",
+    "skill_used": "cooking",
+    "difficulty": 1,
+    "time": "5 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CONTAIN", "level": 1 } ],
+    "tools": [ [ [ "rag", -1 ] ] ],
+    "components": [ [ [ "orange", 2 ] ] ]
   }
 ]

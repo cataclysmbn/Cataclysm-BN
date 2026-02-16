@@ -70,13 +70,13 @@
     "use_action": {
       "type": "repair_item",
       "item_action_type": "repair_fabric",
-      "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "gutskin" ],
+      "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "gutskin", "scute" ],
       "skill": "tailor",
       "tool_quality": 1,
       "cost_scaling": 0.1,
       "move_cost": 1300
     },
-    "flags": [ "STAB", "ALLOWS_REMOTE_USE" ]
+    "flags": [ "STAB", "ALLOWS_REMOTE_USE", "NO_SALVAGE" ]
   },
   {
     "id": "needle_curved",
@@ -96,15 +96,23 @@
     "max_charges": 200,
     "charges_per_use": 1,
     "qualities": [ [ "SEW_CURVED", 1 ] ],
-    "use_action": {
-      "type": "repair_item",
-      "item_action_type": "repair_fabric",
-      "materials": [ "neoprene" ],
-      "skill": "tailor",
-      "tool_quality": 1,
-      "cost_scaling": 0.1,
-      "move_cost": 1200
-    },
+    "use_action": [
+      {
+        "type": "repair_item",
+        "item_action_type": "repair_fabric",
+        "materials": [ "neoprene" ],
+        "skill": "tailor",
+        "tool_quality": 1,
+        "cost_scaling": 0.1,
+        "move_cost": 1200
+      },
+      {
+        "type": "sew_advanced",
+        "materials": [ "neoprene" ],
+        "skill": "tailor",
+        "clothing_mods": [ "furred", "wooled", "resized_large", "resized_small", "pocketed" ]
+      }
+    ],
     "flags": [ "STAB", "ALLOWS_REMOTE_USE" ]
   },
   {
@@ -128,7 +136,7 @@
     "use_action": {
       "type": "repair_item",
       "item_action_type": "repair_fabric",
-      "materials": [ "cotton", "nylon", "leather", "wool", "fur", "faux_fur", "nomex", "gutskin" ],
+      "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "gutskin", "scute" ],
       "skill": "tailor",
       "tool_quality": 0,
       "cost_scaling": 0.1,
@@ -141,7 +149,7 @@
     "type": "TOOL",
     "category": "tools_workshop",
     "name": { "str": "sewing kit" },
-    "description": "This is a plastic kit with a variety of needles, some plastic spools for thread, and a few other useful textile tools.  Use a sewing kit on an article of clothing to attempt to repair or reinforce that clothing.  This uses your tailoring skill.",
+    "description": "This is a plastic kit with a variety of needles, some plastic spools for thread, and a few other useful textile tools.  Use a sewing kit on an article of clothing to attempt to repair or reinforce that clothing.  This uses your tailoring skill, and can also sew pockets or warmer liner into your gear, or resize it for mutant wearers.",
     "weight": "85 g",
     "volume": "250 ml",
     "price": "10 USD",
@@ -155,15 +163,23 @@
     "max_charges": 400,
     "charges_per_use": 1,
     "qualities": [ [ "SEW", 3 ] ],
-    "use_action": {
-      "type": "repair_item",
-      "item_action_type": "repair_fabric",
-      "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "scute", "gutskin" ],
-      "skill": "tailor",
-      "tool_quality": 2,
-      "cost_scaling": 0.1,
-      "move_cost": 1000
-    },
+    "use_action": [
+      {
+        "type": "repair_item",
+        "item_action_type": "repair_fabric",
+        "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "gutskin", "scute" ],
+        "skill": "tailor",
+        "tool_quality": 2,
+        "cost_scaling": 0.1,
+        "move_cost": 1000
+      },
+      {
+        "type": "sew_advanced",
+        "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "gutskin", "scute" ],
+        "skill": "tailor",
+        "clothing_mods": [ "furred", "wooled", "resized_large", "resized_small", "pocketed" ]
+      }
+    ],
     "flags": [ "ALLOWS_REMOTE_USE" ]
   },
   {
@@ -185,7 +201,7 @@
     "type": "TOOL",
     "category": "tools_workshop",
     "name": { "str": "tailor's kit" },
-    "description": "This is a high quality kit consisting of a variety of needles, some plastic spools for thread, some small scissors, and an awl.  Using your tailoring skill, this kit can customize your clothing and armor, whether up-armoring them or altering some items to fit large mutant wearers.",
+    "description": "This is a high quality kit consisting of a variety of needles, some plastic spools for thread, some small scissors, and an awl.  Using your tailoring skill, this kit can customize your clothing and armor, whether up-armoring them or altering some items to fit mutant wearers.",
     "weight": "100 g",
     "volume": "500 ml",
     "price": 1000,
@@ -212,31 +228,19 @@
       },
       {
         "type": "sew_advanced",
-        "materials": [
-          "cotton",
-          "leather",
-          "nylon",
-          "wool",
-          "fur",
-          "faux_fur",
-          "nomex",
-          "kevlar",
-          "neoprene",
-          "gutskin",
-          "plastic",
-          "kevlar_rigid",
-          "scute"
-        ],
+        "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "neoprene", "gutskin", "scute" ],
         "skill": "tailor",
         "clothing_mods": [
           "leather_padded",
           "steel_padded",
+          "hard_steel_padded",
           "alloy_padded",
           "kevlar_padded",
           "nomex_padded",
           "furred",
           "wooled",
           "resized_large",
+          "resized_small",
           "pocketed"
         ]
       }

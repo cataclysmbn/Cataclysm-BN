@@ -169,14 +169,13 @@
     "skill_used": "fabrication",
     "difficulty": 2,
     "time": "1 h",
-    "reversible": true,
     "autolearn": true,
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [
-      [ [ "mutant_bug_hydrogen_sacs", 288 ] ],
-      [ [ "bag_plastic", 12 ] ],
-      [ [ "rope_natural", 1, "LIST" ] ],
-      [ [ "rigid_plastic_sheet", 1 ] ]
+      [ [ "c_hydrogen_gas", 25 ] ],
+      [ [ "bag_plastic", 12 ], [ "bag_zipper", 12 ] ],
+      [ [ "rope_natural_short", 1, "LIST" ] ],
+      [ [ "plastic_sheet", 1 ] ]
     ]
   },
   {
@@ -387,7 +386,9 @@
         [ "bread_sandwich", 1, "LIST" ],
         [ "macaroni_raw", 1 ],
         [ "spaghetti_raw", 1 ],
-        [ "noodles_fast", 1 ]
+        [ "noodles_fast", 1 ],
+        [ "assorted_bugs", 1 ],
+        [ "clam", 1 ]
       ]
     ]
   },
@@ -613,27 +614,20 @@
     "difficulty": 10,
     "time": "1 h 20 m",
     "book_learn": [ [ "sa_cryptology_key", 10 ] ],
-    "tools": [
-      [ [ "software_hacking", -1 ], [ "control_laptop", -1 ] ],
-      [ [ "laptop", -1 ], [ "control_laptop", -1 ] ],
-      [ [ "sa_cryptology_key", -1 ] ],
-      [ [ "software_math", -1 ] ],
-      [ [ "black_box", -1 ] ]
-    ],
+    "using": [ [ "coding_standard", 120 ], [ "hacking_standard", -1 ] ],
+    "tools": [ [ [ "sa_cryptology_key", -1 ] ], [ [ "black_box", -1 ] ] ],
     "components": [ [ [ "paper", 1 ] ] ]
   },
   {
-    "result": "software_hacking",
     "type": "recipe",
+    "result": "mobile_memory_card_used",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "computer",
-    "skills_required": [ "electronics", 6 ],
-    "difficulty": 10,
-    "time": "6 h",
-    "book_learn": [ [ "sa_cryptology_key", 10 ] ],
-    "tools": [ [ [ "laptop", -1 ], [ "control_laptop", -1 ] ], [ [ "software_math", -1 ] ] ],
-    "components": [ [ [ "usb_drive", 1 ] ] ]
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "coding_standard", 120 ], [ "utility_software_standard", -1 ] ],
+    "components": [ [ [ "mobile_memory_card", 1 ], [ "mobile_memory_card_encrypted", 1 ] ] ]
   },
   {
     "result": "software_medical",
@@ -642,12 +636,14 @@
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "computer",
     "skills_required": [ "firstaid", 8 ],
+    "reversible": true,
+    "contained": true,
     "difficulty": 6,
     "autolearn": true,
     "time": "6 h",
     "book_learn": [ [ "reference_firstaid1", 8 ] ],
-    "tools": [ [ [ "laptop", -1 ], [ "control_laptop", -1 ] ], [ [ "software_math", -1 ] ] ],
-    "components": [ [ [ "usb_drive", 1 ] ] ]
+    "using": [ [ "coding_standard", 120 ], [ "math_software_standard", -1 ] ],
+    "components": [ [ [ "usb_drive", 1 ], [ "mobile_memory_card_used", 1 ] ] ]
   },
   {
     "result": "software_math",
@@ -655,14 +651,16 @@
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "computer",
+    "reversible": true,
+    "contained": true,
     "difficulty": 8,
     "autolearn": true,
     "//": "weird to use cooking here, but it represents science skill",
     "skills_required": [ "cooking", 8 ],
     "time": "6 h",
     "book_learn": [ [ "reference_cooking", 8 ] ],
-    "tools": [ [ [ "laptop", -1 ], [ "control_laptop", -1 ] ] ],
-    "components": [ [ [ "usb_drive", 1 ] ] ]
+    "using": [ [ "coding_standard", 120 ] ],
+    "components": [ [ [ "usb_drive", 1 ], [ "mobile_memory_card_used", 1 ] ] ]
   },
   {
     "result": "software_useless",
@@ -671,11 +669,24 @@
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "computer",
+    "reversible": true,
+    "contained": true,
     "difficulty": 3,
     "autolearn": true,
     "time": "1 h",
-    "tools": [ [ [ "laptop", -1 ], [ "control_laptop", -1 ] ] ],
-    "components": [ [ [ "usb_drive", 1 ] ] ]
+    "using": [ [ "coding_standard", 120 ] ],
+    "components": [ [ [ "usb_drive", 1 ], [ "mobile_memory_card_used", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "satellitemap",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "computer",
+    "difficulty": 8,
+    "time": "4 h",
+    "using": [ [ "coding_standard", 120 ], [ "hacking_standard", -1 ] ],
+    "components": [ [ [ "paper", 25 ] ] ]
   },
   {
     "result": "cot",
@@ -870,5 +881,39 @@
     "result": "carbondioxide_tank",
     "time": "30 s",
     "components": [ [ [ "metal_tank_little", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "money_pile",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 0,
+    "time": "1 m",
+    "reversible": true,
+    "autolearn": true,
+    "components": [ [ [ "money_bundle", 10 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "biomaterial",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_OTHER",
+    "skill_used": "cooking",
+    "//": "high first aid since we're already simplifying DNA extraction and the nutrients such",
+    "skills_required": [ [ "firstaid", 8 ] ],
+    "difficulty": 8,
+    "time": "2 h",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 1 ],
+    "qualities": [
+      { "id": "CONCENTRATE", "level": 1 },
+      { "id": "SEPARATE", "level": 1 },
+      { "id": "ANALYSIS", "level": 1 },
+      { "id": "DISTILL", "level": 1 },
+      { "id": "CHEM", "level": 3 }
+    ],
+    "tools": [ [ [ "surface_heat", 30, "LIST" ] ] ],
+    "components": [ [ [ "meat_red", 1, "LIST" ] ], [ [ "veggy_any", 1, "LIST" ] ], [ [ "saline", 7 ] ], [ [ "chem_peptone_broth", 1 ] ] ]
   }
 ]

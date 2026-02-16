@@ -486,6 +486,18 @@
     }
   },
   {
+    "id": "MISSION_KILL_NEMESIS",
+    "type": "mission_definition",
+    "name": { "str": "Kill Your Pursuer" },
+    "description": "Since the start of the Cataclysm, something has been hunting you relentlessly.  You can outrun it but never truly escape it.  It won't end until one of you dies.",
+    "goal": "MGOAL_KILL_NEMESIS",
+    "difficulty": 5,
+    "value": 0,
+    "start": "kill_nemesis",
+    "end": { "effect": [ { "u_lose_trait": "HAS_NEMESIS" } ] },
+    "origins": [ "ORIGIN_GAME_START" ]
+  },
+  {
     "id": "MISSION_KILL_JABBERWOCK",
     "type": "mission_definition",
     "name": { "str": "Kill Jabberwock" },
@@ -596,7 +608,7 @@
   {
     "id": "MISSION_HELICOPTER_REFUEL",
     "type": "mission_definition",
-    "name": { "str": "Refuel your helicopter." },
+    "name": { "str": "Refuel your aircraft." },
     "description": "You were flying towards a nearby private airport before your forced landing.  You could still reach it by ground, and scavenge it for fuel.",
     "goal": "MGOAL_GO_TO_TYPE",
     "destination": "s_air_hangars",
@@ -859,5 +871,59 @@
     },
     "origins": [ "ORIGIN_GAME_START" ],
     "value": 0
+  },
+  {
+    "id": "MISSION_DOG_LOVER",
+    "type": "mission_definition",
+    "name": { "str": "Protect Your Canine Friends!" },
+    "//": "original DDA mission has the player search for quadruped armor, but MGOAL_FIND_ITEM seems to consume it upon completion",
+    "description": "Search any nearby pet stores for armor for your pups. You think you remember the location of one...",
+    "goal": "MGOAL_GO_TO_TYPE",
+    "difficulty": 1,
+    "value": 0,
+    "start": { "assign_mission_target": { "om_terrain": "s_petstore", "reveal_radius": 3, "z": 0 } },
+    "//2": "end should have u_add_morale, but we don't have it yet",
+    "origins": [ "ORIGIN_GAME_START" ],
+    "destination": "s_petstore"
+  },
+  {
+    "id": "MISSION_HEIST_DRIVER",
+    "type": "mission_definition",
+    "name": { "str": "The Final Heist" },
+    "description": "You and your crew swore the last job was the last job - until the dead started getting involved. Now, with old friends, loaded guns, and one impossible score, you’ve got one shot to pull this off before the grave claims you too.",
+    "goal": "MGOAL_GO_TO_TYPE",
+    "difficulty": 1,
+    "value": 0,
+    "start": {
+      "assign_mission_target": { "om_terrain": "bank", "reveal_radius": 3, "search_range": 200, "min_distance": 15, "z": 0 }
+    },
+    "origins": [ "ORIGIN_GAME_START" ],
+    "destination": "bank"
+  },
+  {
+    "id": "MISSION_HEIST_NEIGHBORHOOD_WATCH",
+    "type": "mission_definition",
+    "name": { "str": "Rebuild the Neighborhood" },
+    "description": "The old neighborhood may never be the same - but we can rebuild a new one from the ground up, starting at the hardware store.",
+    "goal": "MGOAL_GO_TO_TYPE",
+    "difficulty": 2,
+    "value": 0,
+    "start": {
+      "assign_mission_target": { "om_terrain": "home_improvement", "om_special": "home_improvement", "reveal_radius": 3, "z": 0 }
+    },
+    "origins": [ "ORIGIN_GAME_START" ],
+    "destination": "home_improvement"
+  },
+  {
+    "id": "MISSION_ONE_BIG_NEST",
+    "type": "mission_definition",
+    "name": { "str": "One Big Nest" },
+    "description": "This isn’t just another infestation - it’s something new, something bigger than anything you ever had to deal with before the Cataclysm. The nest is massive, the pests inside meaner and tougher than the ones you used to spray and squash. This is the ultimate extermination job: locate the nest, gear up, and clear it out. If you survive, there won’t be anything left inside to crawl back out.",
+    "goal": "MGOAL_GO_TO_TYPE",
+    "difficulty": 2,
+    "value": 0,
+    "start": { "assign_mission_target": { "om_terrain": "anthill", "reveal_radius": 3, "z": 0 } },
+    "origins": [ "ORIGIN_GAME_START" ],
+    "destination": "anthill"
   }
 ]

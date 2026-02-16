@@ -228,6 +228,27 @@
     "faults": [ "fault_gun_blackpowder", "fault_gun_dirt" ]
   },
   {
+    "abstract": "rifle_manual_cap_ball",
+    "copy-from": "rifle_manual",
+    "type": "GUN",
+    "name": { "str": "cap & ball rifle" },
+    "blackpowder_tolerance": 72,
+    "reload": 150,
+    "valid_mod_locations": [
+      [ "accessories", 4 ],
+      [ "barrel", 1 ],
+      [ "bore", 1 ],
+      [ "grip", 1 ],
+      [ "magazine", 1 ],
+      [ "muzzle", 1 ],
+      [ "rail", 1 ],
+      [ "sights", 1 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ]
+    ],
+    "flags": [ "RELOAD_ONE", "RELOAD_EJECT", "NO_UNLOAD" ]
+  },
+  {
     "abstract": "rifle_semi",
     "copy-from": "rifle_base",
     "type": "GUN",
@@ -519,7 +540,8 @@
       [ "sights", 1 ],
       [ "sling", 1 ],
       [ "stock", 1 ],
-      [ "underbarrel", 1 ]
+      [ "underbarrel", 1 ],
+      [ "muzzle", 1 ]
     ]
   }
 ]

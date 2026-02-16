@@ -35,10 +35,13 @@ The format is this:
     "id": "<some name>",
     "ammo": <some number>,
     "magazine": <some number>,
+    "purge": <true/false>,
+    "delete": [ ... ],
     "entries": [ ... ]
 }
 ```
 
+`purge` is optional. It is a bool for weather or not all previous things defined in the item group should be purged.
 `subtype` is optional. It can be `collection` or `distribution`. If unspecified, it defaults to
 `old`, which denotes that this item group uses the old format (which is technically a distribution).
 
@@ -153,6 +156,23 @@ explicit min and max values. In other words `"count": [a,b]` is the same as
 
 The container is checked and the item is put inside the container, and the charges of the item are
 capped/increased to match the size of the container.
+
+### Delete array
+
+The `delete` list contains entries, each of which can be one of the followingi:
+
+1. Item
+   ```json
+   { "item": "<item-id>" }
+   ```
+
+2. Group
+   ```json
+   { "group": "<group-id>" }
+   ```
+
+All previously defined items with these ids will be removed from the list, if they do not exist
+there is no error emmitted, it just skips along ( as it was most likely already removed by another mod )
 
 ### Ammo and Magazines
 

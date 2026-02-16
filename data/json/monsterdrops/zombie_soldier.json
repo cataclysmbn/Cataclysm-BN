@@ -94,7 +94,13 @@
         "prob": 10
       },
       { "group": "misc_smoking", "prob": 30 },
-      { "item": "shield_ballistic", "prob": 10, "damage": [ 1, 4 ] }
+      {
+        "distribution": [
+          { "item": "shield_ballistic", "prob": 50, "damage": [ 1, 4 ] },
+          { "item": "shield_ballistic_large", "prob": 50, "damage": [ 1, 4 ] }
+        ],
+        "prob": 10
+      }
     ]
   },
   {
@@ -113,7 +119,8 @@
       },
       { "item": "steel_plate", "prob": 25, "damage": [ 1, 4 ] },
       { "item": "hard_plate", "prob": 15, "damage": [ 1, 4 ] },
-      { "item": "shield_ballistic", "prob": 10, "damage": [ 1, 4 ] }
+      { "item": "shield_ballistic", "prob": 5, "damage": [ 1, 4 ] },
+      { "item": "shield_ballistic_large", "prob": 5, "damage": [ 1, 4 ] }
     ]
   },
   {

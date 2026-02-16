@@ -144,7 +144,7 @@
     "armor_bullet": 3,
     "vision_day": 30,
     "vision_night": 5,
-    "harvest": "mutant_animal_large_scute",
+    "harvest": "mutant_animal_toothy_scute",
     "special_attacks": [
       [ "RATTLE", 6 ],
       {
@@ -185,7 +185,7 @@
     "dodge": 1,
     "vision_day": 1,
     "vision_night": 30,
-    "harvest": "mutant_animal_large_noskin",
+    "harvest": "mutant_animal_toothy_scute",
     "path_settings": { "max_dist": 5 },
     "death_function": [ "NORMAL" ],
     "flags": [ "SEES", "SMELLS", "WARM", "VENOM", "SWIMS" ]

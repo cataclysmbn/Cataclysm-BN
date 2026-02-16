@@ -2579,6 +2579,19 @@
   },
   {
     "type": "city_building",
+    "id": "rvpark_city",
+    "locations": [ "land" ],
+    "overmaps": [
+      { "point": [ 0, 0, 0 ], "overmap": "rv_park_1_north" },
+      { "point": [ 1, 0, 0 ], "overmap": "rv_park_2_north" },
+      { "point": [ 0, 1, 0 ], "overmap": "rv_park_3_north" },
+      { "point": [ 1, 1, 0 ], "overmap": "rv_park_4_north" },
+      { "point": [ 0, 1, 1 ], "overmap": "rv_park_roof_1_north" },
+      { "point": [ 1, 1, 1 ], "overmap": "rv_park_roof_2_north" }
+    ]
+  },
+  {
+    "type": "city_building",
     "id": "small_office",
     "locations": [ "land" ],
     "overmaps": [
@@ -3368,7 +3381,8 @@
       { "point": [ 1, 0, 0 ], "overmap": "football_field_a2_north" },
       { "point": [ 2, 0, 0 ], "overmap": "football_field_a3_north" },
       { "point": [ 3, 0, 0 ], "overmap": "football_field_a4_north" },
-      { "point": [ 4, 0, 0 ], "overmap": "football_field_a5_north" }
+      { "point": [ 4, 0, 0 ], "overmap": "football_field_a5_north" },
+      { "point": [ 3, 2, 2 ], "overmap": "open_air_blimp_north" }
     ]
   },
   {
@@ -3439,7 +3453,8 @@
       { "point": [ 0, 0, 0 ], "overmap": "s_baseballfield_a1_north" },
       { "point": [ 1, 0, 0 ], "overmap": "s_baseballfield_a2_north" },
       { "point": [ 0, 1, 0 ], "overmap": "s_baseballfield_b1_north" },
-      { "point": [ 1, 1, 0 ], "overmap": "s_baseballfield_b2_north" }
+      { "point": [ 1, 1, 0 ], "overmap": "s_baseballfield_b2_north" },
+      { "point": [ 0, 0, 2 ], "overmap": "open_air_blimp_north" }
     ]
   },
   {
@@ -3507,7 +3522,8 @@
       { "point": [ 0, 4, 0 ], "overmap": "stadium_0_4_north" },
       { "point": [ 1, 4, 0 ], "overmap": "stadium_1_4_north" },
       { "point": [ 2, 4, 0 ], "overmap": "stadium_2_4_north" },
-      { "point": [ 3, 4, 0 ], "overmap": "stadium_3_4_north" }
+      { "point": [ 3, 4, 0 ], "overmap": "stadium_3_4_north" },
+      { "point": [ 2, 0, 2 ], "overmap": "open_air_blimp_north" }
     ]
   },
   {

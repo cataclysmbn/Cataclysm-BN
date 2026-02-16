@@ -149,7 +149,10 @@ mod.add_anchor_to_list = function(pos)
   mod.save_anchor_omt()
 end
 
-mod.iuse_function_anchor = function(who, item, pos)
+mod.iuse_function_anchor = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   local a = { "teleporter_anchor_deployed" }
 
   local player_abs_pos = gapi.get_map():get_abs_ms(pos)
@@ -195,7 +198,10 @@ mod.add_station_to_list = function(pos)
   mod.save_station_pos(num)
 end
 
-mod.iuse_function_station = function(who, item, pos)
+mod.iuse_function_station = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   local a = { "teleporter_station_deployed" }
   local player_abs_pos = gapi.get_map():get_abs_ms(pos)
   --print(player_abs_pos)
@@ -547,7 +553,7 @@ mod.scan_omt_remove_furn = function(abs_omt, ftype)
     --print(furniture_name)
   elseif ftype == "anchor" then
     furniture_name = tostring(FurnId.new("teleporter_anchor_deployed"):int_id())
-    spawn_item = "teleporter_station_undeployed"
+    spawn_item = "teleporter_anchor_undeployed"
     --print(furniture_name)
   end
   local x, y = 0, 0
@@ -568,13 +574,7 @@ mod.scan_omt_remove_furn = function(abs_omt, ftype)
       --gapi.get_map():set_furn_at( xyz, FurnId.new("f_fridge"):int_id() )
       if furn_at_tile == furniture_name then
         gapi.get_map():set_furn_at(xyz, FurnId.new("f_null"):int_id())
-        gapi.add_msg(
-          locale.gettext(
-            "You should get the"
-              .. tostring(spawn_item)
-              .. "item back at this point, but not yet available in LUA, sorry! Feel free to debug spawn the appropriate item."
-          )
-        )
+        gapi.get_map():create_item_at(xyz, ItypeId.new(spawn_item), 1)
         return 0
       elseif i == const.OMT_MS_SIZE and j == const.OMT_MS_SIZE then
         gapi.add_msg(locale.gettext("Appropriate furniture not found. Something went terribly wrong!"))
@@ -643,7 +643,10 @@ mod.remove_placed_furniture = function(pos)
   end
 end
 
-mod.iuse_function_controller = function(who, item, pos)
+mod.iuse_function_controller = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   --print("used teleporter remote")
   mod.update_station_charge()
 

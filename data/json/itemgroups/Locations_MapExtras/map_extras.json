@@ -2,6 +2,13 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "map_extra_corpse",
+    "//": "Individual dead body separated into its own group for re-use",
+    "entries": [ { "item": "corpse", "damage": 3 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "map_extra_science",
     "entries": [
       { "item": "id_science", "prob": 50, "//": "half the time an id card" },
@@ -10,15 +17,14 @@
       { "group": "lab_pants", "damage-min": 1, "damage-max": 3 },
       { "group": "lab_shoes", "damage-min": 1, "damage-max": 3 },
       { "group": "lab_torso", "damage-min": 1, "damage-max": 3 },
-      { "group": "underwear", "damage-min": 1, "damage-max": 3 },
-      { "item": "corpse", "damage": 3, "//": "always a corpse, pulped!" }
+      { "group": "underwear", "damage-min": 1, "damage-max": 3 }
     ]
   },
   {
     "type": "item_group",
     "subtype": "collection",
     "id": "map_extra_military",
-    "entries": [ { "group": "military_corpse_extra_items" }, { "item": "corpse", "damage": 3 } ]
+    "entries": [ { "group": "military_corpse_extra_items" } ]
   },
   {
     "type": "item_group",
@@ -33,8 +39,7 @@
       {
         "distribution": [ { "group": "fridge_alcohol_random", "prob": 75 }, { "group": "smokedrugs", "prob": 25 } ],
         "prob": 50
-      },
-      { "item": "corpse", "damage": 3 }
+      }
     ]
   },
   {
@@ -49,8 +54,7 @@
       {
         "distribution": [ { "group": "fridge_alcohol_random", "prob": 75 }, { "group": "smokedrugs", "prob": 25 } ],
         "prob": 50
-      },
-      { "item": "corpse", "damage": 3 }
+      }
     ]
   },
   {
@@ -79,8 +83,7 @@
       {
         "distribution": [ { "group": "fridge_alcohol_random", "prob": 75 }, { "group": "smokedrugs", "prob": 25 } ],
         "prob": 50
-      },
-      { "item": "corpse", "damage": 3 }
+      }
     ]
   },
   {
@@ -99,8 +102,7 @@
           { "group": "archery_hunting", "prob": 25, "damage": [ 0, 2 ] }
         ],
         "prob": 75
-      },
-      { "item": "corpse", "damage": 3 }
+      }
     ]
   },
   {
@@ -114,21 +116,20 @@
       {
         "distribution": [ { "item": "bandana", "damage": [ 1, 4 ], "prob": 50 }, { "item": "bandana_head", "damage": [ 1, 4 ], "prob": 25 } ],
         "prob": 10
-      },
-      { "item": "corpse", "damage": 3 }
+      }
     ]
   },
   {
     "id": "map_extra_police",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [ { "group": "mon_zombie_cop_death_drops" }, { "item": "corpse", "damage": 3 } ]
+    "entries": [ { "group": "mon_zombie_cop_death_drops" } ]
   },
   {
     "id": "map_extra_swat",
     "type": "item_group",
     "subtype": "collection",
-    "entries": [ { "group": "mon_zombie_swat_death_drops" }, { "item": "corpse", "damage": 3 } ]
+    "entries": [ { "group": "mon_zombie_swat_death_drops" } ]
   },
   {
     "type": "item_group",

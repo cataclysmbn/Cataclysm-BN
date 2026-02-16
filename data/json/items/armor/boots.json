@@ -17,7 +17,7 @@
     "coverage": 40,
     "encumbrance": 10,
     "material_thickness": 2,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS_FOOT" ]
   },
   {
     "id": "boots",
@@ -81,7 +81,7 @@
     "warmth": 35,
     "material_thickness": 3,
     "environmental_protection": 8,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
   },
   {
@@ -301,8 +301,7 @@
     "description": "Thick leather boots that have been reinforced with strategically-placed metal plates.  Strong yet light.",
     "material": [ "leather", "iron" ],
     "looks_like": "boots_plate",
-    "encumbrance": 8,
-    "proportional": { "price": 4, "price_postapoc": 1.2 },
+    "proportional": { "price": 4, "price_postapoc": 1.2, "encumbrance": 1.25 },
     "relative": { "weight": "500 g" }
   },
   {
@@ -345,9 +344,9 @@
     "color": "light_gray",
     "covers": [ "feet" ],
     "coverage": 100,
-    "encumbrance": 27,
+    "encumbrance": 25,
     "warmth": 20,
-    "material_thickness": 4,
+    "material_thickness": 5,
     "environmental_protection": 1,
     "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
   },
@@ -359,7 +358,7 @@
     "description": "A set of armor plated boots, made with lightweight superalloy.",
     "material": [ "superalloy", "leather" ],
     "color": "light_cyan",
-    "encumbrance": 23,
+    "encumbrance": 20,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -608,7 +607,7 @@
     "warmth": 20,
     "material_thickness": 4,
     "environmental_protection": 2,
-    "valid_mods": [ "resized_large" ],
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "FANCY" ]
   },
   {
@@ -674,7 +673,7 @@
     "coverage": 10,
     "encumbrance": 35,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS_FOOT" ]
   },
   {
     "id": "flip_flops_exp",
@@ -696,7 +695,7 @@
     "encumbrance": 30,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS_FOOT" ]
   },
   {
     "id": "footrags",
@@ -715,7 +714,7 @@
     "coverage": 65,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES" ]
   },
   {
     "id": "footrags_fur",
@@ -735,7 +734,7 @@
     "encumbrance": 4,
     "warmth": 20,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES" ]
   },
   {
     "id": "footrags_leather",
@@ -755,7 +754,7 @@
     "encumbrance": 3,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES" ]
   },
   {
     "id": "footrags_wool",
@@ -775,7 +774,7 @@
     "encumbrance": 2,
     "warmth": 15,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES" ]
   },
   {
     "id": "geta",
@@ -864,7 +863,7 @@
     "coverage": 20,
     "encumbrance": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS_FOOT" ]
   },
   {
     "id": "lowtops",
@@ -1079,7 +1078,7 @@
     "coverage": 30,
     "encumbrance": 14,
     "material_thickness": 2,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS_FOOT" ]
   },
   {
     "id": "swim_fins",
@@ -1134,7 +1133,7 @@
     "volume": "1 L",
     "price": "68 USD",
     "price_postapoc": "250 cent",
-    "material": [ "neoprene", "cotton" ],
+    "material": [ "neoprene", "nylon" ],
     "symbol": "[",
     "looks_like": "boots_rubber",
     "color": "dark_gray",
@@ -1199,7 +1198,7 @@
     "price": "5012 cent",
     "price_postapoc": "20 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel", "leather" ],
     "symbol": "[",
     "color": "light_red",
     "covers": [ "feet" ],
@@ -1226,7 +1225,7 @@
     "encumbrance": 7,
     "warmth": 40,
     "material_thickness": 2,
-    "flags": [ "VARSIZE", "OVERSIZE" ]
+    "flags": [ "VARSIZE", "OVERSIZE", "ALLOWS_HOOVES" ]
   },
   {
     "id": "nomex_socks",
@@ -1304,7 +1303,7 @@
     "coverage": 70,
     "encumbrance": 3,
     "material_thickness": 1,
-    "flags": [ "WATERPROOF", "OVERSIZE" ]
+    "flags": [ "WATERPROOF", "OVERSIZE", "OVERSIZE" ]
   },
   {
     "id": "socks_bowling",
@@ -1397,7 +1396,47 @@
     "encumbrance": 10,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE", "ALLOWS_HOOVES" ]
+  },
+  {
+    "id": "stockings_snake_tail",
+    "copy-from": "stockings_tent_legs",
+    "type": "ARMOR",
+    "name": { "str": "tail warmer" },
+    "description": "An oversized leg warmer clearly designed for legless mutants, or an awkward tube skirt for more normal survivors.",
+    "proportional": { "weight": 2, "volume": 2, "encumbrance": 2, "warmth": 2, "material_thickness": 2 },
+    "coverage": 90,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
+    "extend": { "flags": [ "ALLOWS_TAIL_SNAKE" ] }
+  },
+  {
+    "id": "stockings_snake_tail_fur",
+    "copy-from": "stockings_snake_tail",
+    "type": "ARMOR",
+    "name": { "str": "fur tail warmer" },
+    "description": "An oversized leg warmer made of fur.  Clearly designed for legless mutants, or an awkward tube skirt for more normal survivors.",
+    "material": [ "fur" ],
+    "proportional": { "weight": 2, "volume": 2, "encumbrance": 2, "warmth": 2.5 },
+    "extend": { "flags": [ "WATERPROOF" ] }
+  },
+  {
+    "id": "stockings_snake_tail_leather",
+    "copy-from": "stockings_snake_tail",
+    "type": "ARMOR",
+    "name": { "str": "leather tail warmer" },
+    "description": "An oversized leg warmer made of leather.  Clearly designed for legless mutants, or an awkward tube skirt for more normal survivors.",
+    "material": [ "leather" ],
+    "proportional": { "weight": 1.5, "volume": 1.5, "encumbrance": 1.5, "warmth": 1.5 },
+    "extend": { "flags": [ "WATERPROOF" ] }
+  },
+  {
+    "id": "stockings_snake_tail_wool",
+    "copy-from": "stockings_snake_tail",
+    "type": "ARMOR",
+    "name": { "str": "wool tail warmer" },
+    "description": "An oversized leg warmer made of wool.  Clearly designed for legless mutants, or an awkward tube skirt for more normal survivors.",
+    "material": [ "wool" ],
+    "proportional": { "weight": 1.25, "volume": 1.25, "encumbrance": 1.25, "warmth": 2 }
   },
   {
     "id": "tabi_dress",
@@ -1456,7 +1495,7 @@
     "encumbrance": 6,
     "warmth": 2,
     "material_thickness": 3,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "STURDY", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "STURDY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS_FOOT" ]
   },
   {
     "id": "socks_thick",
@@ -1473,8 +1512,7 @@
     "type": "ARMOR",
     "name": { "str": "pair of carbon fiber boots", "str_pl": "pairs of carbon fiber boots" },
     "description": "A custom pair of boots made out of layered carbon fiber armor made using a 3D printer.  Its rigid plates are more comparable to a suit of armor than kevlar, but it's very protective and lightweight.",
-    "copy-from": "boots_plarmor",
-    "encumbrance": 22,
+    "copy-from": "boots_plate",
     "material": [ "carbon_fiber" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
@@ -1485,6 +1523,7 @@
     "description": "Boots made from the hardened scales of large reptiles.  It doesn't look quite like normal alligator skin boots due to the armored design.",
     "copy-from": "boots_larmor",
     "material": [ "scute" ],
+    "color": "green",
     "material_thickness": 5,
     "environmental_protection": 4
   }

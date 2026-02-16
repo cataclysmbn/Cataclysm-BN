@@ -87,8 +87,8 @@ TEST_CASE( "zapback_npc_meleeattack_ranged_reach_weapon", "[mondefense]" )
 TEST_CASE( "zapback_npc_electricity_immune", "[mondefense]" )
 {
     standard_npc attacker( "Attacker" );
-    attacker.add_bionic( bionic_id( "bio_power_storage" ) );
     attacker.add_bionic( bionic_id( "bio_faraday" ) );
+    attacker.add_bionic( bionic_id( "bio_power_storage" ) );
     attacker.mod_power_level( 100_kJ );
     // Don't forget to turn it on...
     test_zapback( attacker, true );

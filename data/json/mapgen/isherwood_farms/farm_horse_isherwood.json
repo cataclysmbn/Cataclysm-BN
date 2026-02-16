@@ -392,7 +392,7 @@
       "rows": [
         "                        ",
         "     |-vv-|-v-v-|_____  ",
-        "     |@*hk|@@**d|_____  ",
+        "     |@`hk|@@`*d|_____  ",
         "     |@**k|***hkv_____  ",
         "     vd**8|8***k|_____  ",
         "     |-+------+-|_____  ",
@@ -406,7 +406,7 @@
         "     |---+-------______ ",
         "     |@@****d|_________ ",
         "     v@@****yv_________ ",
-        "     |n*****d|_________ ",
+        "     |n**`**d|_________ ",
         "    4|--1n1---_________ ",
         "       -vvv-            ",
         "                        ",
@@ -416,7 +416,7 @@
         "                        "
       ],
       "palettes": [ "farm_horse" ],
-      "terrain": { "_": "t_shingle_flat_roof", "*": "t_floor", " ": "t_open_air", ">": "t_stairs_down" },
+      "terrain": { "_": "t_shingle_flat_roof", "*": "t_floor", "`": "t_floor", " ": "t_open_air", ">": "t_stairs_down" },
       "items": {
         "@": { "item": "bed", "chance": 50, "repeat": [ 1, 2 ] },
         "D": { "item": "trash_cart", "chance": 50 },

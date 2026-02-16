@@ -656,6 +656,7 @@ class Creature
 
 
         virtual void set_all_parts_hp_cur( int set );
+        virtual void mod_all_parts_hp_cur( int mod );
         void set_all_parts_hp_to_max();
 
         virtual int get_speed_base() const;
@@ -941,6 +942,7 @@ class Creature
 
         // TODO: There may be a cleaner way of doing it than exposing the map
         effects_map get_all_effects() const;
+        const effects_map &get_effects() const;
 
     protected:
         weak_ptr_fast<Creature> killer; // whoever killed us. this should be NULL unless we are dead

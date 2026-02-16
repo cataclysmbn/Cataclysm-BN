@@ -283,24 +283,25 @@ const std::unordered_map<std::string, cbm_reserve_rule> cbm_reserve_strs = { {
     }
 };
 
-enum class ally_rule {
+enum class ally_rule : int {
     DEFAULT = 0,
-    use_guns = 1,
-    use_grenades = 2,
-    use_silent = 4,
-    avoid_friendly_fire = 8,
-    allow_pick_up = 16,
-    allow_bash = 32,
-    allow_sleep = 64,
-    allow_complain = 128,
-    allow_pulp = 256,
-    close_doors = 512,
-    follow_close = 1024,
-    avoid_doors = 2048,
-    hold_the_line = 4096,
-    ignore_noise = 8192,
-    forbid_engage = 16384,
-    follow_distance_2 = 32768
+    use_guns = 1 << 0,
+    use_grenades = 1 << 1,
+    use_silent = 1 << 2,
+    avoid_friendly_fire = 1 << 3,
+    allow_pick_up = 1 << 4,
+    allow_bash = 1 << 5,
+    allow_sleep = 1 << 6,
+    allow_complain = 1 << 7,
+    allow_pulp = 1 << 8,
+    close_doors = 1 << 9,
+    follow_close = 1 << 10,
+    avoid_doors = 1 << 11,
+    hold_the_line = 1 << 12,
+    ignore_noise = 1 << 13,
+    forbid_engage = 1 << 14,
+    follow_distance_2 = 1 << 15,
+    move_own_pace = 1 << 16,
 };
 
 struct ally_rule_data {
@@ -420,6 +421,13 @@ const std::unordered_map<std::string, ally_rule_data> ally_rule_strs = { {
                 ally_rule::follow_distance_2,
                 "<ally_rule_follow_distance_2_true_text>",
                 "<ally_rule_follow_distance_2_false_text>"
+            }
+        },
+        {
+            "move_own_pace", {
+                ally_rule::move_own_pace,
+                "<ally_rule_move_own_pace_true_text>",
+                "<ally_rule_move_own_pace_false_text>"
             }
         }
     }
@@ -735,7 +743,7 @@ class npc : public player
         npc( const npc & ) = delete;
         npc( npc && ) = delete;
         npc &operator=( const npc & ) = delete;
-        npc &operator=( npc && ) = delete;
+        npc &operator=( npc && ) noexcept;
         ~npc() override;
 
         bool is_player() const override {
@@ -873,7 +881,7 @@ class npc : public player
         int follow_distance() const;
 
         // Dialogue and bartering--see npctalk.cpp
-        void talk_to_u( bool radio_contact = false );
+        void talk_to_u( bool radio_contact = false, bool enforce_first_topic = false );
         // Re-roll the inventory of a shopkeeper
         void shop_restock();
         std::string get_restock_interval() const;
@@ -945,6 +953,10 @@ class npc : public player
         void decide_needs();
         void reboot();
         void die( Creature *killer ) override;
+        /**
+        * Deletes the npc without any death notifications.
+        */
+        void erase();
         bool is_dead() const;
         // How well we smash terrain (not corpses!)
         int smash_ability() const;
@@ -1184,6 +1196,7 @@ class npc : public player
          * Do not use when placing a NPC in mapgen.
          */
         void setpos( const tripoint &pos ) override;
+        void onswapsetpos( const tripoint &pos );
         void travel_overmap( const tripoint &pos );
         npc_attitude get_attitude() const;
         void set_attitude( npc_attitude new_attitude );

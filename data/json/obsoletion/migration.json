@@ -718,5 +718,15 @@
     "id": "22_cb",
     "type": "MIGRATION",
     "replace": "22_cphp"
+  },
+  {
+    "id": "smartphone_music",
+    "type": "MIGRATION",
+    "replace": "smart_phone_music"
+  },
+  {
+    "id": "multi_cooker_filled",
+    "type": "MIGRATION",
+    "replace": "multi_cooker"
   }
 ]

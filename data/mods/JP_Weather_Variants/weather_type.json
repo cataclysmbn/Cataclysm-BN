@@ -122,6 +122,7 @@
         "ignore_armor": true,
         "effect_msg": "You feel an odd wave-like sensation pass through your body.",
         "effect_msg_frequency": 16,
+        "effect_msg_blocked_frequency": 32,
         "message_type": 2,
         "clothing_protection": 0,
         "umbrella_protection": 0
@@ -207,6 +208,7 @@
         "ignore_armor": false,
         "effect_msg": "The acidic snowflakes burn, but are mostly harmless for now...",
         "effect_msg_frequency": 3,
+        "effect_msg_blocked_frequency": 32,
         "message_type": 3,
         "clothing_protection": 2,
         "umbrella_protection": 1
@@ -243,6 +245,7 @@
         "ignore_armor": false,
         "effect_msg": "The acidic snowflakes burn your skin as they melt!",
         "effect_msg_frequency": 1,
+        "effect_msg_blocked_frequency": 32,
         "message_type": 1,
         "clothing_protection": 2,
         "umbrella_protection": 1
@@ -279,6 +282,7 @@
         "ignore_armor": false,
         "effect_msg": "The acidic snowflakes burn your skin as they melt!",
         "effect_msg_frequency": 1,
+        "effect_msg_blocked_frequency": 32,
         "message_type": 1,
         "clothing_protection": 2,
         "umbrella_protection": 1

@@ -104,16 +104,23 @@ TEST_CASE( "max_by", "[ranges]" )
 
     SECTION( "general case" ) {
         auto input = std::vector{ foo{ 1 }, foo{ 2 }, foo{ 3 } };
-        auto output = input | max_by( std::less{} );
+        auto output = input | max_by( []( const foo & f ) { return f.i; } );
 
         CHECK( output.value() == foo{3} );
     }
 
     SECTION( "empty input" ) {
         auto input = std::vector<int> {};
-        auto output = input | max_by( std::less{} );
+        auto output = input | max_by( []( int x ) { return x; } );
 
         CHECK( !output.has_value() );
+    }
+
+    SECTION( "reverse order selector" ) {
+        auto input = std::vector{ foo{ 1 }, foo{ 2 }, foo{ 3 } };
+        auto output = input | max_by( []( const foo & f ) { return -f.i; } );
+
+        CHECK( output.value() == foo{1} );
     }
 }
 
@@ -141,16 +148,23 @@ TEST_CASE( "min_by", "[ranges]" )
 
     SECTION( "general case" ) {
         auto input = std::vector{ foo{ 1 }, foo{ 2 }, foo{ 3 } };
-        auto output = input | min_by( std::less{} );
+        auto output = input | min_by( []( const foo & f ) { return f.i; } );
 
         CHECK( output.value() == foo{1} );
     }
 
     SECTION( "empty input" ) {
         auto input = std::vector<int> {};
-        auto output = input | min_by( std::less{} );
+        auto output = input | min_by( []( int x ) { return x; } );
 
         CHECK( !output.has_value() );
+    }
+
+    SECTION( "reverse order selector" ) {
+        auto input = std::vector{ foo{ 1 }, foo{ 2 }, foo{ 3 } };
+        auto output = input | min_by( []( const foo & f ) { return -f.i; } );
+
+        CHECK( output.value() == foo{3} );
     }
 }
 

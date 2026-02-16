@@ -16,6 +16,7 @@ In `data/json/debug_spells.json` there is a template spell, copied here for your
   "effect": "shallow_pit", // effects are coded in C++. A list will be provided below of possible effects that have been coded.
   "effect_str": "template", // special. see below
   "extra_effects": [{ "id": "fireball", "hit_self": false, "max_level": 3 }], // this allows you to cast multiple spells with only one spell
+  "melee_dam": ["cut", "elemental"], // the melee damage of these listed types will be added to spell damage. Supports standard damage type strings and also the categories of 'physical' and 'elemental' for convenience
   "affected_body_parts": [
     "HEAD",
     "TORSO",
@@ -34,7 +35,7 @@ In `data/json/debug_spells.json` there is a template spell, copied here for your
   "base_casting_time": 100, // this is the casting time (in moves)
   "base_energy_cost": 10, // the amount of energy (of the requisite type) to cast the spell
   "energy_source": "MANA", // the type of energy used to cast the spell. types are: MANA, BIONIC, HP, STAMINA, FATIGUE, NONE (none will not use mana)
-  "components": [requirement_id]                            // an id from a requirement, like the ones you use for crafting. spell components require to cast.
+  "components": [requirement_id],                            // an id from a requirement, like the ones you use for crafting. spell components require to cast.
   "difficulty": 12, // the difficulty to learn/cast the spell
   "max_level": 10, // maximum level you can achieve in the spell
   "min_damage": 0, // minimum damage (or "starting" damage)
@@ -127,6 +128,8 @@ experience you need to get to a level is below:
 - `RANDOM_DAMAGE` - picks random number between min+increment\*level and max instead of normal
   behavior
 
+- `DIVIDE_DAMAGE` - divides the spell's damage among all the creatures it hits evenly
+
 - `RANDOM_DURATION` - picks random number between min+increment\*level and max instead of normal
   behavior
 
@@ -144,7 +147,13 @@ experience you need to get to a level is below:
 
 - `DUPE_SOUND` - Allows a spell to play multiple of the same sound (i.e. a sound for each target affected)
 
-- `ADD_MELEE_DAM` - Adds the highest category of melee damage for your currently wielded item to the spell's damage
+- `ADD_MELEE_DAM` - Adds the highest category of melee damage for your currently wielded item to the spell's damage (LEGACY, only handles Bash Stab and Cut. Please instead use `melee_dam` field)
+
+- `PHYSICAL` - Implies BRAWL and also means that Brawlers get a bonus when using the spell. Mostly for "Physical Techniques"
+
+- `MOD_MELEE_MOVES` - The melee move cost of your weapon is added to the "spell"'s cast cost. Special behavior: If the base_casting_time is negative with this flag, the "increment" is instead a multiplier on the melee cost (useful for replicating rapid strike in spell form)
+
+- `MOD_MEELE_STAM` - Like `MOD_MELEE_MOVES` but for the casting cost of the spell and the stamina cost of your weapon. Primarily meant for stamina techniques. Has the same special behavior involving negative base costs and the increment field.
 
 - `NO_FAIL` - this spell cannot fail when you cast it
 
@@ -303,7 +312,7 @@ than using it. Examples of all three are shown below:
 {
   "id": "DEBUG_spellbook",
   "type": "GENERIC",
-  "name": "A Technomancer's Guide to Debugging C:DDA",
+  "name": "A Technomancer's Guide to Debugging C:BN",
   "description": "static std::string description( spell sp ) const;",
   "weight": 1,
   "volume": "1 ml",

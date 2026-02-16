@@ -11,7 +11,7 @@
         "LEEL",
         " EE ",
         "y   ",
-        "O   "
+        "O`  "
       ],
       "palettes": [ "house_w_nest_palette" ],
       "items": {
@@ -31,7 +31,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "EE  ",
+        "EE `",
         "L  I",
         "  BI",
         "Oa  "
@@ -55,7 +55,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "II  ",
+        "II `",
         "B  L",
         "y EE",
         "O   "
@@ -81,7 +81,7 @@
         "IIy ",
         "B  O",
         " E  ",
-        "LE  "
+        "LE `"
       ],
       "palettes": [ "house_w_nest_palette" ],
       "items": {
@@ -104,7 +104,7 @@
         "LEEL",
         " EE ",
         "y   ",
-        "O   "
+        "O  `"
       ],
       "palettes": [ "house_w_nest_palette" ],
       "items": {
@@ -126,7 +126,7 @@
         "OEEO",
         " EE ",
         " 66 ",
-        " 66 "
+        "`66 "
       ],
       "palettes": [ "house_w_nest_palette" ],
       "items": {
@@ -149,7 +149,7 @@
         "OEEO",
         " EE ",
         "    ",
-        " Ih "
+        "`Ih "
       ],
       "palettes": [ "house_w_nest_palette" ],
       "items": {
@@ -172,7 +172,7 @@
         "OEEO",
         " EE ",
         "    ",
-        " bH "
+        "`bH "
       ],
       "palettes": [ "house_w_nest_palette" ],
       "items": {
@@ -193,7 +193,7 @@
       "rotation": [ 0, 3 ],
       "rows": [
         "O  L",
-        "  EE",
+        "` EE",
         "  EE",
         "a  L"
       ],
@@ -215,7 +215,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "   O",
+        "`  O",
         "66EE",
         "66EE",
         "   O"
@@ -238,7 +238,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "   O",
+        "`  O",
         "I EE",
         "h EE",
         "   O"
@@ -261,7 +261,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "   O",
+        "`  O",
         "b EE",
         "H EE",
         "   O"
@@ -284,7 +284,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "L   ",
+        "L  `",
         "EE O",
         "EE y",
         "L   "
@@ -306,7 +306,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "O   ",
+        "O  `",
         "EE66",
         "EE66",
         "O   "
@@ -329,7 +329,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "O   ",
+        "O  `",
         "EE h",
         "EE I",
         "O   "
@@ -352,7 +352,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "O   ",
+        "O  `",
         "EE H",
         "EE b",
         "O   "
@@ -375,7 +375,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        " aO ",
+        " aO`",
         "    ",
         " EE ",
         "LEEL"
@@ -398,7 +398,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        " 66 ",
+        " 66`",
         " 66 ",
         " EE ",
         "OEEO"
@@ -421,7 +421,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        " Ih ",
+        " Ih`",
         "    ",
         " EE ",
         "OEEO"
@@ -444,7 +444,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        " bH ",
+        " bH`",
         "    ",
         " EE ",
         "OEEO"
@@ -467,7 +467,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        " C▤ ",
+        " C▤`",
         "O   ",
         " EE ",
         " EE "
@@ -492,7 +492,7 @@
         " EE ",
         " EE ",
         "O   ",
-        " C▤ "
+        " C▤`"
       ],
       "palettes": [ "house_w_nest_palette" ],
       "items": {
@@ -511,7 +511,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "    ",
+        "`   ",
         "C EE",
         "▤ EE",
         " O  "
@@ -533,7 +533,7 @@
       "mapgensize": [ 4, 4 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "    ",
+        "   `",
         "EE C",
         "EE ▤",
         "  O "
@@ -558,7 +558,7 @@
         " LEEL",
         "  EE ",
         "y    ",
-        "IB   ",
+        "IB  `",
         "I  OO"
       ],
       "palettes": [ "house_w_nest_palette" ],
@@ -579,7 +579,7 @@
       "mapgensize": [ 5, 5 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "  II ",
+        "` II ",
         "O B  ",
         "O   y",
         " EE  ",
@@ -603,7 +603,7 @@
       "mapgensize": [ 5, 5 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "L    ",
+        "L   `",
         "EE  I",
         "EE BI",
         "L    ",
@@ -627,7 +627,7 @@
       "mapgensize": [ 5, 5 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "     ",
+        "`    ",
         "O   L",
         "O  EE",
         "B  EE",
@@ -655,7 +655,7 @@
         "O E y",
         "    C",
         " B  a",
-        " II  "
+        "`II  "
       ],
       "palettes": [ "house_w_nest_palette" ],
       "items": {
@@ -676,7 +676,7 @@
       "mapgensize": [ 5, 5 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "     ",
+        "`    ",
         "IB  y",
         "I   C",
         "  E a",
@@ -701,7 +701,7 @@
       "mapgensize": [ 5, 5 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "     ",
+        "    `",
         "EE  I",
         "L  AI",
         "y   ▤",
@@ -726,7 +726,7 @@
       "mapgensize": [ 5, 5 ],
       "rotation": [ 0, 3 ],
       "rows": [
-        "  OO ",
+        "` OO ",
         "IB  L",
         "I  EE",
         "y   ▤",

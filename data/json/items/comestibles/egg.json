@@ -308,6 +308,7 @@
     "symbol": "%",
     "quench": -2,
     "calories": 80,
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "Whole fresh eggs, dehydrated into an easy to store powder.",
     "price": "1120 cent",
     "price_postapoc": "750 cent",
@@ -350,7 +351,7 @@
     "material": [ "egg" ],
     "fun": 2,
     "spoils_in": "10 days",
-    "delete": { "flags": [ "RAW" ] },
+    "flags": [ "NO_COOKING_BUFF" ],
     "vitamins": [ [ "egg_allergen", 1 ] ]
   },
   {
@@ -379,6 +380,7 @@
     "spoils_in": "30 days",
     "symbol": "%",
     "quench": -1,
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "A pickled egg.  Rather salty, but tastes good and lasts for a long time.",
     "price": "95 cent",
     "price_postapoc": "75 cent",

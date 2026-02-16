@@ -35,7 +35,22 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_armschina", 2 ] ],
     "using": [ [ "sewing_standard", 68 ] ],
-    "components": [ [ [ "cordage_superior", 4, "LIST" ] ], [ [ "rag", 4 ] ], [ [ "fabric_hides_proper", 42, "LIST" ] ] ]
+    "components": [ [ [ "cordage", 4, "LIST" ] ], [ [ "rag", 4 ] ], [ [ "fabric_hides_proper", 42, "LIST" ] ] ]
+  },
+  {
+    "result": "armor_lamellar_plated",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_TORSO",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "skills_required": [ "tailor", 4 ],
+    "time": "40 m",
+    "book_learn": [ [ "textbook_tailor", 5 ], [ "tailor_portfolio", 5 ], [ "textbook_armwest", 4 ], [ "textbook_armschina", 4 ] ],
+    "autolearn": [ [ "fabrication", 4 ], [ "tailor", 5 ] ],
+    "using": [ [ "sewing_standard", 25 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 } ],
+    "components": [ [ [ "steel_tiny", 6, "LIST" ], [ "sheet_metal_small", 6 ] ], [ [ "armor_lamellar", 1 ] ] ]
   },
   {
     "result": "bikini_top",
@@ -214,7 +229,7 @@
     "difficulty": 1,
     "time": "30 m",
     "autolearn": true,
-    "components": [ [ [ "duct_tape", 50 ] ], [ [ "bag_plastic", 10 ] ], [ [ "rag", 10 ] ] ]
+    "components": [ [ [ "duct_tape", 50 ] ], [ [ "bag_plastic", 10 ], [ "bag_zipper", 10 ] ], [ [ "rag", 10 ] ] ]
   },
   {
     "result": "cuirass_lightplate",

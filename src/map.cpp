@@ -6,12 +6,15 @@
 #include <climits>
 #include <cstdlib>
 #include <cstring>
+#include <ranges>
 #include <limits>
 #include <optional>
 #include <ostream>
 #include <queue>
 #include <type_traits>
 #include <unordered_map>
+#include <variant>
+#include <vector>
 
 #include "active_item_cache.h"
 #include "ammo.h"
@@ -20,6 +23,8 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_id.h"
@@ -43,6 +48,7 @@
 #include "flag.h"
 #include "flat_set.h"
 #include "fragment_cloud.h"
+#include "fluid_grid.h"
 #include "fungal_effects.h"
 #include "game.h"
 #include "harvest.h"
@@ -67,6 +73,7 @@
 #include "math_defines.h"
 #include "memory_fast.h"
 #include "messages.h"
+#include "mission.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "morale_types.h"
@@ -140,6 +147,9 @@ static const ter_str_id t_rock_floor_no_roof( "t_rock_floor_no_roof" );
 
 // Conversion constant for 100ths of miles per hour to meters per second
 constexpr float velocity_constant = 0.0044704;
+
+static const std::string str_DOOR_LOCKING( "DOOR_LOCKING" );
+static const std::string str_OPENCLOSE_INSIDE( "OPENCLOSE_INSIDE" );
 
 #define dbg(x) DebugLog((x),DC::Map)
 
@@ -351,9 +361,19 @@ void map::add_vehicle_to_cache( vehicle *veh )
             continue;
         }
         const tripoint p = veh->global_part_pos3( vpr.part() );
+        int part = veh->part_with_feature( vpr.part_index(), VPFLAG_LADDER, true );
+        if( part != -1 ) {
+            cached_veh_rope[p.xy()] = std::make_pair( veh, static_cast<int>( part ) );
+        }
         level_cache &ch = get_cache( p.z );
         ch.veh_in_active_range = true;
-        ch.veh_cached_parts[p] = std::make_pair( veh,  static_cast<int>( vpr.part_index() ) );
+
+        // DANGER: Unlike what you think where you can just use vpr.has_flag( VPFLAG_NOCOLLIDE )
+        // THAT DOES NOT WORK DO NOT TRY AND CHANGE THIS MESS
+        if( !ch.veh_cached_parts.contains( p ) ||
+            ( !veh->part_info( vpr.part_index() ).has_flag( VPFLAG_NOCOLLIDE ) ) ) {
+            ch.veh_cached_parts[p] = std::make_pair( veh,  static_cast<int>( vpr.part_index() ) );
+        }
         if( inbounds( p ) ) {
             ch.veh_exists_at[p.x][p.y] = true;
         }
@@ -370,12 +390,13 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint &pt )
     }
 
     level_cache &ch = get_cache( pt.z );
-    if( inbounds( pt ) ) {
-        ch.veh_exists_at[pt.x][pt.y] = false;
-    }
     auto it = ch.veh_cached_parts.find( pt );
     if( it != ch.veh_cached_parts.end() && it->second.first == veh ) {
+        if( inbounds( pt ) ) {
+            ch.veh_exists_at[pt.x][pt.y] = false;
+        }
         ch.veh_cached_parts.erase( it );
+        cached_veh_rope.erase( pt.xy() );
     }
 
 }
@@ -396,6 +417,7 @@ void map::clear_vehicle_cache( )
         }
         ch.veh_in_active_range = false;
     }
+    cached_veh_rope.clear();
 }
 
 void map::clear_vehicle_list( const int zlev )
@@ -548,7 +570,7 @@ bool map::vehproceed( VehicleList &vehicle_list )
     // Then vertical-only movement
     if( cur_veh == nullptr ) {
         for( wrapped_vehicle &vehs_v : vehicle_list ) {
-            if( vehs_v.v->is_falling || ( vehs_v.v->is_rotorcraft() && vehs_v.v->get_z_change() != 0 ) ) {
+            if( vehs_v.v->is_falling || ( vehs_v.v->is_aircraft() && vehs_v.v->get_z_change() != 0 ) ) {
                 cur_veh = &vehs_v;
                 break;
             }
@@ -636,13 +658,14 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
     int impulse = 0;
 
     std::vector<veh_collision> collisions;
+    std::vector<vehicle *> passthrough;
 
     // Find collisions
     // Velocity of car before collision
     // Split into vertical and horizontal movement
     const int &coll_velocity = vertical ? veh.vertical_velocity : veh.velocity;
     const int velocity_before = coll_velocity;
-    if( velocity_before == 0 && !veh.is_rotorcraft() && !veh.is_flying_in_air() ) {
+    if( velocity_before == 0 && !veh.is_aircraft() && !veh.is_flying_in_air() ) {
         debugmsg( "%s tried to move %s with no velocity",
                   veh.name, vertical ? "vertically" : "horizontally" );
         return &veh;
@@ -674,6 +697,10 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
         // Non-vehicle collisions
         for( const auto &coll : collisions ) {
             if( coll.type == veh_coll_veh ) {
+                continue;
+            }
+            if( coll.type == veh_coll_veh_nocollide ) {
+                passthrough.push_back( static_cast<vehicle *>( coll.target ) );
                 continue;
             }
             if( coll.part > veh.part_count() ||
@@ -716,7 +743,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
 
     const int velocity_after = coll_velocity;
     bool can_move = velocity_after != 0 && sgn( velocity_after ) == sgn( velocity_before );
-    if( dp.z != 0 && veh.is_rotorcraft() ) {
+    if( dp.z != 0 && veh.is_aircraft() ) {
         can_move = true;
     }
     units::angle coll_turn = 0_degrees;
@@ -736,6 +763,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
 
     // If not enough wheels, mess up the ground a bit.
     if( !vertical && !veh.valid_wheel_config() && !veh.is_in_water() && !veh.is_flying_in_air() &&
+        !veh.has_sufficient_lift( true ) &&
         dp.z == 0 ) {
         veh.velocity += veh.velocity < 0 ? 2000 : -2000;
         for( const auto &p : veh.get_points() ) {
@@ -833,6 +861,9 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
                      veh.tow_data.get_towed()->disp_name() );
             veh.tow_data.get_towed()->invalidate_towing( true );
         }
+    }
+    for( vehicle *colveh : passthrough ) {
+        g->m.add_vehicle_to_cache( colveh );
     }
     // Redraw scene, but only if the player is not engaged in an activity and
     // the vehicle was seen before or after the move.
@@ -1366,7 +1397,9 @@ bool map::displace_vehicle( vehicle &veh, const tripoint &dp )
         }
         veh.check_is_heli_landed();
     }
-
+    if( veh.is_flying_in_air() ) {
+        veh.check_is_heli_landed();
+    }
     if( remote ) {
         // Has to be after update_map or coordinates won't be valid
         g->setremoteveh( &veh );
@@ -1508,9 +1541,14 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
         set_outside_cache_dirty( p.z );
     }
 
-    if( old_t.has_flag( TFLAG_NO_FLOOR ) != new_t.has_flag( TFLAG_NO_FLOOR ) ) {
+    if( ( old_t.has_flag( TFLAG_NO_FLOOR ) != new_t.has_flag( TFLAG_NO_FLOOR ) ) ||
+        ( old_t.has_flag( TFLAG_Z_TRANSPARENT ) != new_t.has_flag( TFLAG_Z_TRANSPARENT ) ) ) {
         set_floor_cache_dirty( p.z );
-        set_seen_cache_dirty( p );
+        // Changes to floor / z-transparency can reveal (or hide) tiles on the z-level below.
+        // Invalidate seen caches unconditionally for both affected levels so tiles drawing
+        // does not render stale BLANK visibility after events like explosions.
+        set_seen_cache_dirty( p.z );
+        set_seen_cache_dirty( p.z - 1 );
     }
 
     if( old_t.has_flag( TFLAG_SUN_ROOF_ABOVE ) != new_t.has_flag( TFLAG_SUN_ROOF_ABOVE ) ) {
@@ -1545,6 +1583,10 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
         }
         current_submap->active_furniture[point_sm_ms( l )] = atd;
         get_distribution_grid_tracker().on_changed( tripoint_abs_ms( getabs( p ) ) );
+    }
+
+    if( old_t.fluid_grid || new_t.fluid_grid ) {
+        fluid_grid::on_structure_changed( tripoint_abs_ms( getabs( p ) ) );
     }
 }
 
@@ -1636,7 +1678,7 @@ uint8_t map::get_known_connections( const tripoint &p, int connect_group,
     }
 #endif
 
-    const bool overridden = override.find( p ) != override.end();
+    const bool overridden = override.contains( p );
     const bool is_transparent = ch.transparency_cache[p.x][p.y] > LIGHT_TRANSPARENCY_SOLID;
 
     // populate connection information
@@ -1687,7 +1729,7 @@ uint8_t map::get_known_connections_f( const tripoint &p, int connect_group,
     }
 #endif
 
-    const bool overridden = override.find( p ) != override.end();
+    const bool overridden = override.contains( p );
     const bool is_transparent = ch.transparency_cache[p.x][p.y] > LIGHT_TRANSPARENCY_SOLID;
 
     // populate connection information
@@ -1842,7 +1884,16 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
         set_floor_cache_dirty( p.z );
         // It's a set, not a flag
         support_cache_dirty.insert( p );
-        set_seen_cache_dirty( p );
+        // Opening/closing a floor affects visibility on this and the level below.
+        set_seen_cache_dirty( p.z );
+        set_seen_cache_dirty( p.z - 1 );
+    }
+
+    if( new_t.has_flag( TFLAG_Z_TRANSPARENT ) != old_t.has_flag( TFLAG_Z_TRANSPARENT ) ) {
+        set_floor_cache_dirty( p.z );
+        // Changing z-transparency affects visibility between this z-level and the one below.
+        set_seen_cache_dirty( p.z );
+        set_seen_cache_dirty( p.z - 1 );
     }
 
     if( new_t.has_flag( TFLAG_SUSPENDED ) != old_t.has_flag( TFLAG_SUSPENDED ) ) {
@@ -2094,8 +2145,8 @@ bool map::valid_move( const tripoint &from, const tripoint &to,
 
     int part_up;
     const vehicle *veh_up = veh_at_internal( up_p, part_up );
-    if( veh_up != nullptr ) {
-        // TODO: Hatches below the vehicle, passable frames
+    if( veh_up != nullptr && !veh_at( up_p ).part_with_feature( VPFLAG_NOCOLLIDEBELOW, false ) ) {
+        // TODO: Hatches below the vehicle
         return false;
     }
 
@@ -2165,7 +2216,7 @@ int map::climb_difficulty( const tripoint &p ) const
     return std::max( 0, best_difficulty - blocks_movement );
 }
 
-bool map::has_floor( const tripoint &p ) const
+bool map::has_floor( const tripoint &p, bool visible_only ) const
 {
     if( !zlevels || p.z < -OVERMAP_DEPTH + 1 || p.z > OVERMAP_HEIGHT ) {
         return true;
@@ -2175,7 +2226,8 @@ bool map::has_floor( const tripoint &p ) const
         return true;
     }
 
-    return get_cache_ref( p.z ).floor_cache[p.x][p.y];
+    return get_cache_ref( p.z ).floor_cache[p.x][p.y] || ( !visible_only &&
+            has_flag( TFLAG_Z_TRANSPARENT, p ) );
 }
 
 bool map::floor_between( const tripoint &first, const tripoint &second ) const
@@ -2899,11 +2951,50 @@ point map::random_outdoor_tile()
     return random_entry( options, point_north_west );
 }
 
+bool map::has_item_with( const tripoint &p, const std::function<bool( const item & )> &filter )
+{
+    for( const item *it : i_at( p ) ) {
+        if( filter( *it ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool map::has_adjacent_item_with( const tripoint &p,
+                                  const std::function<bool( const item & )> &filter )
+{
+    for( const tripoint &adj : points_in_radius( p, 1 ) ) {
+        if( !has_items( adj ) ) {
+            continue;
+        }
+
+        for( const item *it : i_at( adj ) ) {
+            if( filter( *it ) ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool map::has_adjacent_furniture_with( const tripoint &p,
                                        const std::function<bool( const furn_t & )> &filter )
 {
     for( const tripoint &adj : points_in_radius( p, 1 ) ) {
         if( has_furn( adj ) && filter( furn( adj ).obj() ) ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool map::has_adjacent_terrain_with( const tripoint &p,
+                                     const std::function<bool( const ter_t & )> &filter )
+{
+    for( const tripoint &adj : points_in_radius( p, 1 ) ) {
+        if( filter( ter( adj ).obj() ) ) {
             return true;
         }
     }
@@ -2931,7 +3022,7 @@ bool map::has_nearby_table( const tripoint &p, int radius )
         if( has_flag( "FLAT_SURF", pt ) ) {
             return true;
         }
-        if( vp && ( vp->vehicle().has_part( "KITCHEN" ) || vp->vehicle().has_part( "FLAT_SURF" ) ) ) {
+        if( vp && ( vp->vehicle().has_part( "FLAT_SURF" ) ) ) {
             return true;
         }
     }
@@ -3539,11 +3630,16 @@ bash_results map::bash_furn_success( const tripoint &p, const bash_params &param
                     continue;
                 }
 
-                const map_bash_info &recur_bash = frn.obj().bash;
+                const auto &furn_obj = frn.obj();
+                const auto &recur_bash = furn_obj.bash;
                 // Check if we share a center type and thus a "tent type"
                 for( const auto &cur_id : recur_bash.tent_centers ) {
                     if( centers.contains( cur_id.id() ) ) {
                         // Found same center, wreck current tile
+                        if( furn_obj.fluid_grid &&
+                            furn_obj.fluid_grid->role == fluid_grid_role::tank ) {
+                            fluid_grid::on_tank_removed( tripoint_abs_ms( getabs( pt ) ) );
+                        }
                         spawn_items( p, item_group::items_from( recur_bash.drop_group, calendar::turn ) );
                         furn_set( pt, recur_bash.furn_set );
                         break;
@@ -3553,6 +3649,9 @@ bash_results map::bash_furn_success( const tripoint &p, const bash_params &param
         }
         soundfxvariant = "smash_cloth";
     } else {
+        if( furnid.fluid_grid && furnid.fluid_grid->role == fluid_grid_role::tank ) {
+            fluid_grid::on_tank_removed( tripoint_abs_ms( getabs( p ) ) );
+        }
         furn_set( p, bash.furn_set );
         for( item * const &it : i_at( p ) )  {
             it->on_drop( p, *this );
@@ -3696,6 +3795,33 @@ bash_results map::bash_ter_furn( const tripoint &p, const bash_params &params )
         if( !params.silent ) {
             sounds::sound( p, sound_volume, sounds::sound_t::combat, bash->sound_fail, false,
                            "smash_fail", soundfxvariant );
+        }
+
+        if( !smash_ter && smax > 0 ) {
+            const auto flipped_version = get_furn_transforms_into( p );
+            if( flipped_version != furn_str_id::NULL_ID() ) {
+                const int damage_percent = ( params.strength * 100 ) / smax;
+                if( rng( 1, 100 ) <= damage_percent ) {
+                    furn_set( p, flipped_version );
+                }
+            }
+        }
+        // Hard impacts have a chance to dislodge targets perching above
+        if( params.strength >= smin / 2 && one_in( smin / 2 ) ) {
+            tripoint above( p.xy(), p.z + 1 );
+            Character *character = g->critter_at<Character>( above );
+            if( has_flag( TFLAG_UNSTABLE, above ) && character != nullptr ) {
+                character->add_msg_if_player( m_warning,
+                                              _( "You feel the ground beneath you shake from the impact!" ) );
+
+                if( character->stability_roll() < rng( 1, params.strength - ( smin / 2 ) ) ) {
+                    character->add_msg_player_or_npc( m_bad, _( "You lose your balance!" ),
+                                                      _( "<npcname> loses their balance!" ) );
+
+                    g->fling_creature( character, rng_float( 0_degrees, 360_degrees ), 10 );
+                }
+
+            }
         }
     } else {
         if( smash_ter ) {
@@ -4158,79 +4284,235 @@ bool map::hit_with_fire( const tripoint &p )
     return true;
 }
 
-bool map::open_door( const tripoint &p, const bool inside, const bool check_only )
+bool map::can_open_door(
+    const const_interacting_entity &who, const tripoint &p, bool inside
+) const
 {
-    avatar &you = get_avatar();
+
     const auto &ter = this->ter( p ).obj();
-    const auto &furn = this->furn( p ).obj();
-
     if( ter.open ) {
-        if( has_flag( "OPENCLOSE_INSIDE", p ) && !inside ) {
-            return false;
-        }
-        if( you.is_mounted() ) {
-            auto mon = you.mounted_creature.get();
-            if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                add_msg( m_info, _( "You can't open things while you're riding." ) );
-                return false;
-            }
-        }
-        if( !check_only ) {
-            sounds::sound( p, 6, sounds::sound_t::movement, _( "swish" ), true,
-                           "open_door", ter.id.str() );
-            ter_set( p, ter.open );
+        return can_open_door_ter( who, ter, p, inside );
+    }
 
-            if( ( you.has_trait( trait_id( "SCHIZOPHRENIC" ) ) || you.has_artifact_with( AEP_SCHIZO ) )
-                && one_in( 50 ) && !ter.has_flag( "TRANSPARENT" ) ) {
-                tripoint mp = p + -2 * you.pos().xy() + tripoint( 2 * p.x, 2 * p.y, p.z );
-                g->spawn_hallucination( mp );
-            }
-        }
+    const auto &furn = this->furn( p ).obj();
+    if( furn.open ) {
+        return can_open_door_furn( who, furn, p, inside );
+    }
 
-        return true;
-    } else if( furn.open ) {
-        if( has_flag( "OPENCLOSE_INSIDE", p ) && !inside ) {
-            return false;
-        }
-        if( you.is_mounted() ) {
-            auto mon = you.mounted_creature.get();
-            if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                add_msg( m_info, _( "You can't open things while you're riding." ) );
-                return false;
-            }
-        }
+    const optional_vpart_position vp = veh_at( p );
+    if( vp ) {
+        return can_open_door_veh( who, vp, p, inside );
+    }
 
-        if( !check_only ) {
-            sounds::sound( p, 6, sounds::sound_t::movement, _( "swish" ), true,
-                           "open_door", furn.id.str() );
-            furn_set( p, furn.open );
-        }
+    return false;
 
-        return true;
-    } else if( const optional_vpart_position vp = veh_at( p ) ) {
-        int openable = vp->vehicle().next_part_to_open( vp->part_index(), true );
-        if( openable >= 0 ) {
-            if( you.is_mounted() ) {
-                auto mon = you.mounted_creature.get();
+}
+
+
+bool map::open_door(
+    const interacting_entity &who,  const tripoint &p, const bool inside
+)
+{
+    const auto &ter = this->ter( p ).obj();
+    if( ter.open ) {
+        return open_door_ter( who, ter, p, inside );
+    }
+
+    const auto &furn = this->furn( p ).obj();
+    if( furn.open ) {
+        return open_door_furn( who, furn, p, inside );
+    }
+
+    const optional_vpart_position vp = veh_at( p );
+    if( vp ) {
+        return open_door_veh( who, vp, p, inside );
+    }
+
+    return false;
+}
+
+struct can_open_while_mounted {
+    template<typename T>
+    auto operator()( T u ) -> bool {
+        constexpr auto is_const_char = std::is_same_v<Character *, T>;
+        constexpr auto is_char = std::is_same_v<const Character *, T>;
+        if constexpr( is_const_char || is_char ) {
+            if( u->is_mounted() ) {
+                auto mon = u->mounted_creature.get();
                 if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                    add_msg( m_info, _( "You can't open things while you're riding." ) );
+                    u->add_msg_if_player( m_info, _( "You can't open things while you're riding." ) );
                     return false;
                 }
             }
-            if( !check_only ) {
-                if( !vp->vehicle().handle_potential_theft( you ) ) {
-                    return false;
-                }
-                vp->vehicle().open_all_at( openable );
-            }
-
-            return true;
         }
+        return true;
+    };
+};
+
+bool map::can_open_door_ter(
+    const const_interacting_entity &who, const ter_t &,
+    const tripoint &p, bool inside
+) const
+{
+
+    if( has_flag( str_OPENCLOSE_INSIDE, p ) && !inside ) {
+        return false;
+    }
+
+    if( !std::visit( can_open_while_mounted{}, who ) ) {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool map::open_door_ter(
+    const interacting_entity &who, const ter_t &ter,
+    const tripoint &p, const bool inside
+)
+{
+    if( !can_open_door_ter( static_variant_cast<const_interacting_entity>( who ), ter, p, inside ) ) {
+        return false;
+    }
+
+    sounds::sound(
+        p, 6, sounds::sound_t::movement, _( "swish" ),
+        true, "open_door", ter.id.str() );
+    ter_set( p, ter.open );
+
+    const auto is_schizo = std::visit( []<typename T>( T u ) -> bool {
+        if constexpr( std::is_same_v<T, Character *> )
+        {
+            return u->has_trait( trait_id( "SCHIZOPHRENIC" ) ) || u->has_artifact_with( AEP_SCHIZO );
+        }
+        return false;
+    }, who );
+
+    const tripoint you_pos = std::visit( []<typename T>( T u ) { return u->pos(); }, who );
+
+    if( is_schizo
+        && one_in( 50 )
+        && !ter.has_flag( "TRANSPARENT" ) ) {
+        const tripoint mp =
+            p + -2 * you_pos.xy() + tripoint( 2 * p.x, 2 * p.y, p.z );
+        g->spawn_hallucination( mp );
+    }
+
+    return true;
+
+}
+
+bool map::can_open_door_furn(
+    const const_interacting_entity &who, const furn_t &,
+    const tripoint &p, bool inside
+) const
+{
+
+    if( has_flag( str_OPENCLOSE_INSIDE, p ) && !inside ) {
+        return false;
+    }
+
+    if( !std::visit( can_open_while_mounted{}, who ) ) {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool map::open_door_furn(
+    const interacting_entity &who, const furn_t &furn,
+    const tripoint &p, const bool inside
+)
+{
+    if( !can_open_door_furn( static_variant_cast<const_interacting_entity>( who ), furn, p, inside ) ) {
+        return false;
+    }
+
+    sounds::sound(
+        p, 6, sounds::sound_t::movement, _( "swish" ),
+        true, "open_door", furn.id.str() );
+    furn_set( p, furn.open );
+    return true;
+
+}
+
+bool map::can_open_door_veh(
+    const const_interacting_entity &who, const optional_vpart_position &vp,
+    const tripoint &, bool inside
+) const
+{
+
+    const int openable = vp->vehicle().next_part_to_open( vp->part_index(), !inside );
+    if( openable < 0 ) {
+        const int openable_other_way = vp->vehicle().next_part_to_open( vp->part_index(), !inside );
+        if( openable_other_way >= 0 ) {
+            const auto you = std::visit( []( auto &&v ) { return static_cast<const Creature *>( v );}, who );
+            if( inside ) {
+                you->add_msg_if_player( _( "The %1$s's %2$s can only be opened from outside." ), vp->vehicle().name,
+                                        vp->vehicle().part_info( vp->part_index() ).name() );
+            } else {
+                you->add_msg_if_player( _( "The %1$s's %2$s can only be opened from inside." ), vp->vehicle().name,
+                                        vp->vehicle().part_info( vp->part_index() ).name() );
+            }
+        }
+        return false;
+    }
+
+    if( !std::visit( can_open_while_mounted{}, who ) ) {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool map::open_door_veh(
+    const interacting_entity &who, const optional_vpart_position &vp,
+    const tripoint &p, bool inside
+)
+{
+    if( !can_open_door_veh( static_variant_cast<const_interacting_entity>( who ), vp, p, inside ) ) {
+        return false;
+    }
+
+    if( std::holds_alternative<Character *>( who ) ) {
+        auto &you = *std::get<Character *>( who );
+        if( you.is_avatar() &&
+            !vp->vehicle().handle_potential_theft( *you.as_avatar() ) ) {
+            return false;
+        }
+    }
+
+    const auto is_owner = std::visit(
+    [&]<typename T>( T u ) -> bool {
+        if constexpr( std::is_same_v<T, Character *> )
+        {
+            return vp->vehicle().is_owned_by( *u );
+        }
+        return false;
+    },
+    who );
+
+    const auto lock_part = vp.part_with_feature( str_DOOR_LOCKING, true );
+    const bool has_locked_door = lock_part.has_value() && lock_part.value().part().enabled;
+    // vehicle::is_locked = you have no keys / vehicle has not been hotwired yet
+    // unrelated to the door lock itself
+    if( has_locked_door && ( !is_owner || vp->vehicle().is_locked ) ) {
+
+        const auto &veh = vp->vehicle();
+        const auto you = std::visit( []( auto &&v ) { return static_cast<const Creature *>( v );}, who );
+        const auto dpart = veh.next_part_to_open( vp->part_index(), !inside );
+        you->add_msg_if_player( _( "The %1$s's %2$s is locked." ), veh.name,
+                                veh.part_info( dpart ).name() );
 
         return false;
     }
 
-    return false;
+    const int openable = vp->vehicle().next_part_to_open( vp->part_index(), !inside );
+    vp->vehicle().open_all_at( openable );
+    return true;
 }
 
 void map::translate( const ter_id &from, const ter_id &to )
@@ -4276,7 +4558,7 @@ void map::translate_radius( const ter_id &from, const ter_id &to, float radi, co
 
 bool map::close_door( const tripoint &p, const bool inside, const bool check_only )
 {
-    if( has_flag( "OPENCLOSE_INSIDE", p ) && !inside ) {
+    if( has_flag( str_OPENCLOSE_INSIDE, p ) && !inside ) {
         return false;
     }
 
@@ -5305,150 +5587,35 @@ std::vector<detached_ptr<item>> map::use_charges( const tripoint &origin, const 
             continue;
         }
 
-        const std::optional<vpart_reference> kpart = vp.part_with_feature( "FAUCET", true );
-        const std::optional<vpart_reference> weldpart = vp.part_with_feature( "WELDRIG", true );
-        const std::optional<vpart_reference> craftpart = vp.part_with_feature( "CRAFTRIG", true );
-        const std::optional<vpart_reference> butcherpart = vp.part_with_feature( "BUTCHER_EQ", true );
-        const std::optional<vpart_reference> forgepart = vp.part_with_feature( "FORGE", true );
-        const std::optional<vpart_reference> kilnpart = vp.part_with_feature( "KILN", true );
-        const std::optional<vpart_reference> chempart = vp.part_with_feature( "CHEMLAB", true );
+        const std::optional<vpart_reference> crafterpart = vp.part_with_feature( "CRAFTER", true );
+        const std::optional<vpart_reference> faupart = vp.part_with_feature( "FAUCET", true );
         const std::optional<vpart_reference> autoclavepart = vp.part_with_feature( "AUTOCLAVE", true );
         const std::optional<vpart_reference> cargo = vp.part_with_feature( "CARGO", true );
 
-        if( kpart ) { // we have a faucet, now to see what to drain
+        if( crafterpart ) {
+            for( itype_id id : crafterpart->info().craftertools() ) {
+                if( type == id ) {
+                    detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
+                    tmp->charges = crafterpart->vehicle().drain( itype_battery, quantity );
+                    quantity -= tmp->charges;
+                    ret.push_back( std::move( tmp ) );
+
+                    if( quantity == 0 ) {
+                        return ret;
+                    }
+                }
+            }
+        }
+        if( faupart ) { // we have a faucet, now to see what to drain
             itype_id ftype = itype_id::NULL_ID();
 
-            // Special case hotplates which draw battery power
-            if( type == itype_hotplate ) {
-                ftype = itype_battery;
-            } else {
-                ftype = type;
-            }
+            ftype = type;
 
             // TODO: add a sane birthday arg
             //TODO!: check if we actually need the return  here
             detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = kpart->vehicle().drain( ftype, quantity );
+            tmp->charges = faupart->vehicle().drain( ftype, quantity );
             // TODO: Handle water poison when crafting starts respecting it
-            quantity -= tmp->charges;
-            ret.push_back( std::move( tmp ) );
-
-            if( quantity == 0 ) {
-                return ret;
-            }
-        }
-
-        if( weldpart ) { // we have a weldrig, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
-
-            if( type == itype_welder ) {
-                ftype = itype_battery;
-            } else if( type == itype_soldering_iron ) {
-                ftype = itype_battery;
-            }
-            // TODO: add a sane birthday arg
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = weldpart->vehicle().drain( ftype, quantity );
-            quantity -= tmp->charges;
-            ret.push_back( std::move( tmp ) );
-
-            if( quantity == 0 ) {
-                return ret;
-            }
-        }
-
-        if( craftpart ) { // we have a craftrig, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
-
-            if( type == itype_press ) {
-                ftype = itype_battery;
-            } else if( type == itype_vac_sealer ) {
-                ftype = itype_battery;
-            } else if( type == itype_dehydrator ) {
-                ftype = itype_battery;
-            } else if( type == itype_food_processor ) {
-                ftype = itype_battery;
-            }
-
-            // TODO: add a sane birthday arg
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = craftpart->vehicle().drain( ftype, quantity );
-            quantity -= tmp->charges;
-            ret.push_back( std::move( tmp ) );
-
-            if( quantity == 0 ) {
-                return ret;
-            }
-        }
-
-        if( butcherpart ) {// we have a butchery station, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
-
-            if( type == itype_butchery ) {
-                ftype = itype_battery;
-            }
-
-            // TODO: add a sane birthday arg
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = butcherpart->vehicle().drain( ftype, quantity );
-            quantity -= tmp->charges;
-            ret.push_back( std::move( tmp ) );
-
-            if( quantity == 0 ) {
-                return ret;
-            }
-        }
-
-        if( forgepart ) { // we have a veh_forge, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
-
-            if( type == itype_forge ) {
-                ftype = itype_battery;
-            }
-
-            // TODO: add a sane birthday arg
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = forgepart->vehicle().drain( ftype, quantity );
-            quantity -= tmp->charges;
-            ret.push_back( std::move( tmp ) );
-
-            if( quantity == 0 ) {
-                return ret;
-            }
-        }
-
-        if( kilnpart ) { // we have a veh_kiln, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
-
-            if( type == itype_kiln ) {
-                ftype = itype_battery;
-            }
-
-            // TODO: add a sane birthday arg
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = kilnpart->vehicle().drain( ftype, quantity );
-            quantity -= tmp->charges;
-            ret.push_back( std::move( tmp ) );
-
-            if( quantity == 0 ) {
-                return ret;
-            }
-        }
-
-        if( chempart ) { // we have a chem_lab, now to see what to drain
-            itype_id ftype = itype_id::NULL_ID();
-
-            if( type == itype_chemistry_set ) {
-                ftype = itype_battery;
-            } else if( type == itype_hotplate ) {
-                ftype = itype_battery;
-            } else if( type == itype_electrolysis_kit ) {
-                ftype = itype_battery;
-            }
-
-            // TODO: add a sane birthday arg
-            detached_ptr<item> tmp = item::spawn( type, calendar::start_of_cataclysm );
-            tmp->charges = chempart->vehicle().drain( ftype, quantity );
             quantity -= tmp->charges;
             ret.push_back( std::move( tmp ) );
 
@@ -5584,6 +5751,7 @@ void map::disarm_trap( const tripoint &p )
 
     const int tSkillLevel = g->u.get_skill_level( skill_traps );
     const int diff = tr.get_difficulty();
+    const int tReward = diff + tr.get_avoidance();
     int roll = rng( tSkillLevel, 4 * tSkillLevel );
 
     // Some traps are not actual traps. Skip the rolls, different message and give the option to grab it right away.
@@ -5608,7 +5776,7 @@ void map::disarm_trap( const tripoint &p )
         g->u.add_morale( MORALE_ACCOMPLISHMENT, morale_buff, 40 );
         tr.on_disarmed( *this, p );
         if( diff > 1.25 * tSkillLevel ) { // failure might have set off trap
-            g->u.practice( skill_traps, 1.5 * ( diff - tSkillLevel ) );
+            g->u.practice( skill_traps, tReward );
         }
     } else if( roll >= diff * .8 ) {
         add_msg( _( "You fail to disarm the trap." ) );
@@ -5616,7 +5784,7 @@ void map::disarm_trap( const tripoint &p )
         g->u.rem_morale( MORALE_ACCOMPLISHMENT );
         g->u.add_morale( MORALE_FAILURE, morale_debuff, -40 );
         if( diff > 1.25 * tSkillLevel ) {
-            g->u.practice( skill_traps, 1.5 * ( diff - tSkillLevel ) );
+            g->u.practice( skill_traps, tReward / 2 );
         }
     } else {
         add_msg( m_bad, _( "You fail to disarm the trap, and you set it off!" ) );
@@ -5624,12 +5792,9 @@ void map::disarm_trap( const tripoint &p )
         g->u.rem_morale( MORALE_ACCOMPLISHMENT );
         g->u.add_morale( MORALE_FAILURE, morale_debuff, -40 );
         tr.trigger( p, &g->u );
-        if( diff - roll <= 6 ) {
-            // Give xp for failing, but not if we failed terribly (in which
-            // case the trap may not be disarmable).
-            g->u.practice( skill_traps, 2 * diff );
-        }
+        g->u.practice( skill_traps, tReward / 4 );
     }
+    g->u.mod_moves( -100 );
 }
 
 void map::remove_trap( const tripoint &p )
@@ -5954,7 +6119,7 @@ void map::update_visibility_cache( const int zlev )
     int sm_squares_seen[MAPSIZE][MAPSIZE];
     std::memset( sm_squares_seen, 0, sizeof( sm_squares_seen ) );
 
-    int min_z = fov_3d ? -OVERMAP_DEPTH : zlev;
+    int min_z = fov_3d ? -OVERMAP_DEPTH : ( zlevels ? std::max( zlev - 1, -OVERMAP_DEPTH ) : zlev );
     int max_z = fov_3d ? OVERMAP_HEIGHT : zlev;
 
     for( int z = min_z; z <= max_z; z++ ) {
@@ -6545,9 +6710,9 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
             }
         } else {
             const int max_z = std::max( new_point.z, last_point.z );
-            if( ( has_floor_or_support( {new_point.xy(), max_z} ) ||
+            if( ( has_floor( {new_point.xy(), max_z}, true ) ||
                   !is_transparent( {new_point.xy(), last_point.z} ) ) &&
-                ( has_floor_or_support( {last_point.xy(), max_z} ) ||
+                ( has_floor( {last_point.xy(), max_z}, true ) ||
                   !is_transparent( {last_point.xy(), new_point.z} ) ) ) {
                 visible = false;
                 return false;
@@ -7419,7 +7584,7 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
         auto &map_cache = get_cache( grid.z );
         for( const auto &veh : tmpsub->vehicles ) {
             // Only add if not tracking already.
-            if( map_cache.vehicle_list.find( veh.get() ) == map_cache.vehicle_list.end() ) {
+            if( !map_cache.vehicle_list.contains( veh.get() ) ) {
                 map_cache.vehicle_list.insert( veh.get() );
                 if( !veh->loot_zones.empty() ) {
                     map_cache.zone_vehicles.insert( veh.get() );
@@ -8106,6 +8271,13 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
         for( int j = 0; j < i.count; j++ ) {
             monster tmp( i.type );
             tmp.mission_id = i.mission_id;
+            if( i.mission_id != -1 ) {
+                mission *found_mission = mission::find( i.mission_id );
+                if( found_mission != nullptr &&
+                    found_mission->get_type().goal == MGOAL_KILL_MONSTERS ) {
+                    found_mission->register_kill_needed();
+                }
+            }
             if( i.name != "NONE" ) {
                 tmp.unique_name = i.name;
             }
@@ -8123,6 +8295,12 @@ void map::spawn_monsters_submap( const tripoint &gp, bool ignore_sight )
                 monster *const placed = g->place_critter_at( make_shared_fast<monster>( tmp ), p );
                 if( placed ) {
                     placed->on_load();
+                    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+                        params["creature"] = placed;
+                    } );
+                    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+                        params["monster"] = placed;
+                    } );
                     if( i.disposition == spawn_disposition::SpawnDisp_Pet ) {
                         placed->make_pet();
                     }
@@ -8473,7 +8651,7 @@ bool map::build_floor_cache( const int zlev )
                 for( int sy = 0; sy < SEEY; ++sy ) {
                     point sp( sx, sy );
                     const ter_t &terrain = cur_submap->get_ter( sp ).obj();
-                    if( terrain.has_flag( TFLAG_NO_FLOOR ) ) {
+                    if( terrain.has_flag( TFLAG_NO_FLOOR ) || terrain.has_flag( TFLAG_Z_TRANSPARENT ) ) {
                         if( below_submap && ( below_submap->get_furn( sp ).obj().has_flag( TFLAG_SUN_ROOF_ABOVE ) ) ) {
                             continue;
                         }
@@ -8664,6 +8842,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     const int minz = zlevels ? -OVERMAP_DEPTH : zlev;
     const int maxz = zlevels ? OVERMAP_HEIGHT : zlev;
     bool seen_cache_dirty = false;
+    std::vector<int> dirty_seen_cache_levels;
     for( int z = minz; z <= maxz; z++ ) {
         // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
         const bool affects_seen_cache =  z == zlev || fov_3d;
@@ -8671,7 +8850,11 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         build_transparency_cache( z );
         update_suspension_cache( z );
         seen_cache_dirty |= ( build_floor_cache( z ) && affects_seen_cache );
-        seen_cache_dirty |= get_cache( z ).seen_cache_dirty && affects_seen_cache;
+        const bool level_seen_dirty = get_cache( z ).seen_cache_dirty;
+        seen_cache_dirty |= level_seen_dirty;
+        if( level_seen_dirty ) {
+            dirty_seen_cache_levels.push_back( z );
+        }
         diagonal_blocks fill = {false, false};
         std::uninitialized_fill_n( &( get_cache( z ).vehicle_obscured_cache[0][0] ), MAPSIZE_X * MAPSIZE_Y,
                                    fill );
@@ -8697,7 +8880,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         player_prev_pos = p;
     }
     if( !skip_lightmap ) {
-        generate_lightmap( zlev );
+        dirty_seen_cache_levels.push_back( zlev );
+        std::ranges::sort( dirty_seen_cache_levels );
+        dirty_seen_cache_levels.erase( std::ranges::unique( dirty_seen_cache_levels ).begin(),
+                                       dirty_seen_cache_levels.end() );
+        for( const int level : dirty_seen_cache_levels ) {
+            generate_lightmap( level );
+        }
     }
 }
 
@@ -9204,6 +9393,21 @@ std::list<Creature *> map::get_creatures_in_radius( const tripoint &center, size
 
     }
     return creatures;
+}
+
+bool map::has_rope_at( tripoint pt ) const
+{
+    if( cached_veh_rope.contains( pt.xy() ) ) {
+        auto veh_pair = get_rope_at( pt.xy() );
+        vehicle *veh = veh_pair.first;
+        int veh_part = veh_pair.second;
+        return veh->part( veh_part ).info().ladder_length() >= veh->global_pos3().z - pt.z;
+    }
+    return false;
+}
+std::pair<vehicle *, int> map::get_rope_at( point pt ) const
+{
+    return cached_veh_rope.at( pt );
 }
 
 level_cache &map::access_cache( int zlev )

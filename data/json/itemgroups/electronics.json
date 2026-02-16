@@ -33,6 +33,7 @@
       [ "gps_device", 10 ],
       [ "scouter", 5 ],
       [ "smart_phone", 30 ],
+      [ "wrist_comp_budget", 20 ],
       [ "eink_tablet_pc", 8 ],
       [ "laptop", 20 ],
       [ "smart_lamp", 5 ],
@@ -46,6 +47,9 @@
       [ "UPS_off", 5 ],
       [ "usb_drive", 5 ],
       [ "software_useless", 10 ],
+      [ "software_utility", 10 ],
+      [ "software_math", 5 ],
+      [ "software_medical", 5 ],
       [ "vac_sealer", 10 ],
       [ "radio_car_box", 3 ],
       [ "radiocontrol", 25 ],
@@ -53,7 +57,8 @@
       [ "chem_nitric_acid", 1 ],
       [ "l-stick", 1 ],
       [ "solarpack", 10 ],
-      [ "laser_source", 5 ]
+      [ "laser_source", 5 ],
+      [ "afs_atomic_smartphone", 1 ]
     ]
   },
   {
@@ -78,10 +83,12 @@
       [ "portable_game", 12 ],
       [ "game_watch", 3 ],
       [ "vibrator", 10 ],
+      [ "bullet_vibrator", 10 ],
       [ "flashlight", 40 ],
       [ "heavy_flashlight", 10 ],
       [ "radio", 20 ],
-      [ "mess_kit", 5 ],
+      [ "gasoline_cooker", 3 ],
+      [ "mess_kit", 2 ],
       [ "hotplate", 10 ],
       [ "coffeemaker", 10 ],
       [ "receiver", 10 ],
@@ -94,7 +101,8 @@
       [ "recipe_augs", 4 ],
       [ "cable", 60 ],
       [ "vac_sealer", 10 ],
-      [ "smart_phone", 50 ],
+      [ "smart_phone", 30 ],
+      [ "wrist_comp_budget", 20 ],
       [ "eink_tablet_pc", 15 ],
       [ "laptop", 30 ],
       [ "smart_lamp", 10 ],
@@ -107,7 +115,8 @@
       [ "magnifying_glass", 4 ],
       [ "omnicamera", 2 ],
       [ "l-stick", 1 ],
-      [ "reading_light", 6 ]
+      [ "reading_light", 6 ],
+      [ "afs_atomic_smartphone", 2 ]
     ]
   },
   {
@@ -117,8 +126,10 @@
     "items": [
       { "item": "cell_phone", "prob": 3, "charges-min": 0, "charges-max": 15 },
       { "item": "cell_phone", "prob": 1, "charges-min": 150, "charges-max": 150 },
-      { "item": "smart_phone", "prob": 50, "charges-min": 0, "charges-max": 15 },
-      { "item": "smart_phone", "prob": 20, "charges-min": 130, "charges-max": 250 }
+      { "item": "smart_phone", "prob": 40, "charges-min": 0, "charges-max": 15 },
+      { "item": "smart_phone", "prob": 15, "charges-min": 130, "charges-max": 250 },
+      { "item": "wrist_comp_budget", "prob": 10, "charges-min": 0, "charges-max": 15 },
+      { "item": "wrist_comp_budget", "prob": 5, "charges-min": 130, "charges-max": 250 }
     ]
   },
   {

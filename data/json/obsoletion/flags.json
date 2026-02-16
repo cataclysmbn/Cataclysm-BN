@@ -3,5 +3,11 @@
     "id": "FREEZERBURN",
     "type": "json_flag",
     "context": [ "COMESTIBLE" ]
+  },
+  {
+    "id": "SLEEP_AID",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "info": "This item provides comfort during sleep."
   }
 ]

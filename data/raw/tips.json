@@ -86,7 +86,10 @@
       "Take cover!  Standing next to sandbags or other obstacles will let you shoot past them unimpeded, while blocking some return fire.",
       "Ballistic windows can take the bite out of bullets flying your way.  Boulders or other hard obstacles can also block shots, or be shot over if you're next to them.",
       "Many types of furniture have a chance to intercept bullets, reducing some of the damage taken.  The bigger and harder the obstacle, the better.",
-      "If you prefer a more subtle approach to breaking and entering, crouching will make you automatically prioritize lockpicking over prying tools."
+      "If you prefer a more subtle approach to breaking and entering, crouching will make you automatically prioritize lockpicking over prying tools.",
+      "Crouching slows you down, but allows you to hide behind obstacles and makes you a smaller target when bullets start flying.",
+      "Make every shot count.  Take time to steady your aim, or crouch for more accurate fire.",
+      "Running, swimming, and other physical activity will increase your Athletics skill, reducing encumbrance penalty, decreasing stamina consumption, and making swimming easier."
     ]
   }
 ]

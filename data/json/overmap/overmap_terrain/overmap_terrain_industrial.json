@@ -1159,6 +1159,14 @@
   },
   {
     "type": "overmap_terrain",
+    "id": "mine_shaft_lower_sub_station",
+    "name": "subway station?",
+    "sym": "S",
+    "color": "dark_gray",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
     "id": [
       "mine_spiral_west",
       "mine_spiral_central",

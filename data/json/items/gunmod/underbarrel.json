@@ -20,7 +20,8 @@
       [ "GATLING_GUNS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "handling_modifier": 40,
     "dispersion_modifier": -50,
@@ -44,7 +45,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "extend": { "flags": [ "PUMP_RAIL_COMPATIBLE" ] }
   },
@@ -70,7 +72,8 @@
       "dispersion": 345,
       "durability": 10,
       "blackpowder_tolerance": 72,
-      "clip_size": 2
+      "clip_size": 2,
+      "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ]
     },
     "flags": [ "IRREMOVABLE", "RELOAD_ONE", "RELOAD_EJECT" ]
   },
@@ -89,7 +92,15 @@
     "color": "light_red",
     "location": "underbarrel",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
-    "gun_data": { "ammo": "shot", "skill": "shotgun", "dispersion": 480, "durability": 6, "blackpowder_tolerance": 72, "clip_size": 2 },
+    "gun_data": {
+      "ammo": "shot",
+      "skill": "shotgun",
+      "dispersion": 480,
+      "durability": 6,
+      "blackpowder_tolerance": 72,
+      "clip_size": 2,
+      "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ]
+    },
     "flags": [ "IRREMOVABLE", "RELOAD_ONE", "NEVER_JAMS", "RELOAD_EJECT" ]
   },
   {
@@ -115,7 +126,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "handling_modifier": 5,
     "flags": [ "PUMP_RAIL_COMPATIBLE" ]
@@ -138,7 +150,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -292,7 +305,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "sight_dispersion": 30,
     "aim_speed": 9,
@@ -356,7 +370,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -392,7 +407,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -436,7 +452,8 @@
         [ "M_XBOWS" ],
         [ "GRENADE_LAUNCHERS" ],
         [ "ROCKET_LAUNCHERS" ],
-        [ "FLAMETHROWERS" ]
+        [ "FLAMETHROWERS" ],
+        [ "SPRAY_GUNS" ]
       ],
       "mode_modifier": [ [ "REACH", "bayonet", 2, [ "MELEE", "REACH_ATTACK" ] ] ]
     },
@@ -474,7 +491,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -500,7 +518,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ],
     "gun_data": { "ammo": "40x46mm", "skill": "launcher", "dispersion": 450, "durability": 10, "clip_size": 1 }
   },
@@ -557,7 +576,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   },
   {
@@ -574,7 +594,14 @@
     "color": "light_red",
     "location": "underbarrel",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ], [ "M_XBOWS" ] ],
-    "gun_data": { "ammo": "shot", "skill": "shotgun", "dispersion": 375, "durability": 10, "clip_size": 2 },
+    "gun_data": {
+      "ammo": "shot",
+      "skill": "shotgun",
+      "dispersion": 375,
+      "durability": 10,
+      "clip_size": 2,
+      "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ]
+    },
     "flags": [ "RELOAD_ONE" ]
   },
   {
@@ -592,7 +619,8 @@
       [ "M_XBOWS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   }
 ]

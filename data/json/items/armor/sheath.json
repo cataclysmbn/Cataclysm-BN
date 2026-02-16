@@ -24,7 +24,7 @@
       "max_volume": "2500 ml",
       "flags": [ "SHEATH_AXE", "BELT_CLIP" ]
     },
-    "flags": [ "NONCONDUCTIVE", "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "NONCONDUCTIVE", "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "baldric",
@@ -81,7 +81,7 @@
       "draw_cost": 150,
       "flags": [ "SHEATH_KNIFE" ]
     },
-    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY" ]
+    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY", "ALLOWS_HOOVES" ]
   },
   {
     "id": "wristsheath",
@@ -169,7 +169,7 @@
       "max_volume": "2750 ml",
       "flags": [ "SHEATH_SWORD" ]
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "sheath",
@@ -196,7 +196,18 @@
       "draw_cost": 80,
       "flags": [ "SHEATH_KNIFE" ]
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
+  },
+  {
+    "id": "sheath_birchbark",
+    "copy-from": "sheath",
+    "type": "ARMOR",
+    "name": { "str": "birchbark sheath", "str_pl": "birchbark sheathes" },
+    "description": "A hand made sheath made from birch bark, for holding knives and other small blades.  Activate to sheathe/draw a weapon.",
+    "price": "15 USD",
+    "material": [ "wood" ],
+    "color": "light_gray",
+    "coverage": 7
   },
   {
     "id": "spearsling",

@@ -126,7 +126,7 @@
     "encumbrance": 10,
     "warmth": 10,
     "material_thickness": 2,
-    "valid_mods": [ "resized_large" ]
+    "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
     "id": "mask_bal",
@@ -205,7 +205,7 @@
     "warmth": 5,
     "material_thickness": 1,
     "environmental_protection": 2,
-    "valid_mods": [ "resized_large" ]
+    "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
     "id": "mask_guy_fawkes",
@@ -227,7 +227,7 @@
     "warmth": 5,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "valid_mods": [ "steel_padded", "alloy_padded", "resized_large" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "WATER_FRIENDLY" ]
   },
   {
@@ -252,7 +252,7 @@
     "warmth": 5,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "valid_mods": [ "steel_padded", "alloy_padded", "resized_large" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "WATER_FRIENDLY", "STURDY" ]
   },
   {

@@ -11,11 +11,11 @@
     "material": "water",
     "symbol": "=",
     "color": "green",
-    "container": "bottle_plastic",
+    "container": "pressurized_tank_chem",
     "phase": "liquid",
     "ammo_type": "chemical_spray",
-    "range": 4,
-    "count": 100,
+    "range": 8,
+    "count": 800,
     "effects": [ "TOXICGAS", "NEVER_MISFIRES", "JET" ]
   },
   {
@@ -30,11 +30,11 @@
     "material": "water",
     "symbol": "=",
     "color": "yellow",
-    "container": "bottle_plastic",
+    "container": "pressurized_tank_chem",
     "phase": "liquid",
     "ammo_type": "chemical_spray",
-    "range": 4,
-    "count": 100,
+    "range": 8,
+    "count": 800,
     "effects": [ "GAS_FUNGICIDAL", "STREAM_GAS_FUNGICIDAL", "NEVER_MISFIRES", "JET" ]
   },
   {
@@ -49,11 +49,11 @@
     "material": "water",
     "symbol": "=",
     "color": "yellow",
-    "container": "bottle_plastic",
+    "container": "pressurized_tank_chem",
     "phase": "liquid",
     "ammo_type": "chemical_spray",
-    "range": 4,
-    "count": 100,
+    "range": 8,
+    "count": 800,
     "effects": [ "GAS_INSECTICIDAL", "STREAM_GAS_INSECTICIDAL", "NEVER_MISFIRES", "JET" ]
   }
 ]

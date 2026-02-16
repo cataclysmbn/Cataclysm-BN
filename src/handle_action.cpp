@@ -116,7 +116,6 @@ static const efftype_id effect_alarm_clock( "alarm_clock" );
 static const efftype_id effect_laserlocked( "laserlocked" );
 static const efftype_id effect_relax_gas( "relax_gas" );
 
-static const itype_id itype_radiocontrol( "radiocontrol" );
 static const itype_id itype_shoulder_strap( "shoulder_strap" );
 static const itype_id itype_pistol_lanyard( "pistol_lanyard" );
 
@@ -530,39 +529,14 @@ static void open()
     const tripoint openp = *openp_;
     map &here = get_map();
 
-    u.moves -= 100;
-
     if( const optional_vpart_position vp = here.veh_at( openp ) ) {
-        vehicle *const veh = &vp->vehicle();
-        int openable = veh->next_part_to_open( vp->part_index() );
+        const vehicle *const veh = &vp->vehicle();
+        const int openable = veh->next_part_to_open( vp->part_index() );
         if( openable >= 0 ) {
             const vehicle *player_veh = veh_pointer_or_null( here.veh_at( u.pos() ) );
-            bool outside = !player_veh || player_veh != veh;
-            if( !outside ) {
-                if( !veh->handle_potential_theft( get_avatar() ) ) {
-                    u.moves += 100;
-                    return;
-                } else {
-                    veh->open( openable );
-                }
-            } else {
-                // Outside means we check if there's anything in that tile outside-openable.
-                // If there is, we open everything on tile. This means opening a closed,
-                // curtained door from outside is possible, but it will magically open the
-                // curtains as well.
-                int outside_openable = veh->next_part_to_open( vp->part_index(), true );
-                if( outside_openable == -1 ) {
-                    const std::string name = veh->part_info( openable ).name();
-                    add_msg( m_info, _( "That %s can only opened from the inside." ), name );
-                    u.moves += 100;
-                } else {
-                    if( !veh->handle_potential_theft( get_avatar() ) ) {
-                        u.moves += 100;
-                        return;
-                    } else {
-                        veh->open_all_at( openable );
-                    }
-                }
+            const bool outside = !player_veh || player_veh != veh;
+            if( here.open_door_veh( &get_avatar(), vp, openp, !outside ) ) {
+                u.moves -= 100;
             }
         } else {
             // If there are any OPENABLE parts here, they must be already open
@@ -571,14 +545,10 @@ static void open()
                 const std::string name = already_open->info().name();
                 add_msg( m_info, _( "That %s is already open." ), name );
             }
-            u.moves += 100;
         }
-        return;
-    }
-
-    bool didit = here.open_door( openp, !here.is_outside( u.pos() ) );
-
-    if( !didit ) {
+    } else if( here.open_door( &u, openp, !here.is_outside( u.pos() ) ) ) {
+        u.moves -= 100;
+    } else {
         const ter_str_id tid = here.ter( openp ).id();
 
         if( here.has_flag( flag_LOCKED, openp ) ) {
@@ -587,11 +557,9 @@ static void open()
         } else if( tid.obj().close ) {
             // if the following message appears unexpectedly, the prior check was for t_door_o
             add_msg( m_info, _( "That door is already open." ) );
-            u.moves += 100;
             return;
         }
         add_msg( m_info, _( "No door there." ) );
-        u.moves += 100;
     }
 }
 
@@ -1454,7 +1422,7 @@ static void cast_spell()
         if( temp_spell.can_cast( u ) ) {
             can_cast_spells = true;
         }
-        if( temp_spell.has_flag( spell_flag::BRAWL ) ) {
+        if( temp_spell.has_flag( spell_flag::BRAWL ) || temp_spell.has_flag( spell_flag::PHYSICAL ) ) {
             has_brawler_spell = true;
         }
     }
@@ -1477,7 +1445,8 @@ static void cast_spell()
 
     spell &sp = *u.magic->get_spells()[spell_index];
 
-    if( !sp.has_flag( spell_flag::BRAWL ) && u.has_trait( trait_BRAWLER ) ) {
+    if( !( sp.has_flag( spell_flag::BRAWL ) || sp.has_flag( spell_flag::PHYSICAL ) ) &&
+        u.has_trait( trait_BRAWLER ) ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
                  _( "Pfft, that spell is for COWARDS, and a Brawler like you is no coward!" ) );
         return;
@@ -1494,10 +1463,11 @@ static void cast_spell()
         }
     }
 
-    if( u.is_armed() && !sp.has_flag( spell_flag::NO_HANDS ) &&
+    if( u.is_armed() && !( sp.has_flag( spell_flag::NO_HANDS ) ||
+                           sp.has_flag( spell_flag::PHYSICAL ) ) &&
         !u.primary_weapon().has_flag( flag_MAGIC_FOCUS ) && u.primary_weapon().is_two_handed( u ) ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 _( "You need your hands free to cast this spell!" ) );
+                 _( "You need at least one hand free to cast this spell!" ) );
         return;
     }
 
@@ -1827,7 +1797,7 @@ bool game::handle_action()
             case ACTION_MOVE_LEFT:
             case ACTION_MOVE_FORTH_LEFT:
                 if( !u.get_value( "remote_controlling" ).empty() &&
-                    ( u.has_active_item( itype_radiocontrol ) ||
+                    ( u.has_active_item_with_action( "RADIOCONTROL" ) ||
                       u.has_active_bionic( bio_remote ) ) ) {
                     rcdrive( get_delta_from_movement_action( act, iso_rotate::yes ) );
                 } else if( veh_ctrl ) {
@@ -1866,34 +1836,105 @@ bool game::handle_action()
                 break;
             case ACTION_MOVE_DOWN:
                 if( u.is_mounted() ) {
-                    auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                        add_msg( m_info, _( "You can't go down stairs while you're riding." ) );
+                    const monster *mon = u.mounted_creature.get();
+
+                    const bool can_use_stairs =
+                        mon->has_flag( MF_RIDEABLE_MECH ) ||
+                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                        mon->has_flag( MF_FLIES );
+
+                    if( !can_use_stairs ) {
+                        add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
                         break;
                     }
                 }
                 if( !u.in_vehicle ) {
                     vertical_move( -1, false );
-                } else if( veh_ctrl && vp->vehicle().is_rotorcraft() ) {
+                } else if( veh_ctrl && vp->vehicle().is_aircraft() ) {
                     pldrive( tripoint_below );
+                } else if( get_map().has_rope_at( u.pos() ) ) {
+                    map &here = get_map();
+                    const optional_vpart_position vp = here.veh_at( u.pos() );
+                    const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
+                    if( idx != -1 ) {
+                        const vpart_info info = vp->vehicle().part_info( idx );
+                        tripoint where = u.pos();
+                        tripoint below = where;
+                        if( get_map().ter( where ).id().str() != "t_open_air" ) {
+                            break;
+                        }
+                        below.z--;
+                        // Keep going down until we find a tile that is NOT open air
+                        while( get_map().ter( below ).id().str() == "t_open_air" ) {
+                            where.z--;
+                            below.z--;
+                        }
+                        const int dist = u.pos().z - below.z;
+                        if( info.ladder_length() >= dist ) {
+                            get_map().unboard_vehicle( u.pos() );
+                            vertical_move( -dist, true );
+                        }
+                    }
                 }
                 break;
 
             case ACTION_MOVE_UP:
                 if( u.is_mounted() ) {
-                    auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                        add_msg( m_info, _( "You can't go down stairs while you're riding." ) );
+                    const monster *mon = u.mounted_creature.get();
+
+                    const bool can_use_stairs =
+                        mon->has_flag( MF_RIDEABLE_MECH ) ||
+                        mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                        mon->has_flag( MF_FLIES );
+
+                    if( !can_use_stairs ) {
+                        add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
                         break;
                     }
                 }
                 if( !u.in_vehicle ) {
-                    vertical_move( 1, false );
-                } else if( veh_ctrl && vp->vehicle().is_rotorcraft() ) {
+                    if( get_map().has_rope_at( u.pos() ) ) {
+                        point xy = u.pos().xy();
+                        map &here = get_map();
+                        tripoint where = u.pos();
+                        tripoint above = where;
+                        above.z++;
+                        if( get_map().ter( above ).id().str() != "t_open_air" ) {
+                            vertical_move( 1, false );
+                            break;
+                        }
+                        // Keep going down until we find a tile that is NOT open air
+                        while( get_map().ter( above ).id().str() == "t_open_air" &&
+                               !here.veh_at( tripoint( xy, above.z ) ) )  {
+                            above.z++;
+                        }
+                        const optional_vpart_position vp = here.veh_at( tripoint( xy, above.z ) );
+                        const int dist = above.z - u.pos().z;
+                        if( vp ) {
+                            const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
+                            if( idx != -1 ) {
+                                const vpart_info info = vp->vehicle().part_info( idx );
+                                if( info.ladder_length() >= dist ) {
+                                    vertical_move( dist, true );
+                                    here.board_vehicle( u.pos(), u.as_character() );
+                                    break;
+                                }
+                            }
+                        } else {
+                            vertical_move( 1, false );
+                        }
+                    } else {
+                        vertical_move( 1, false );
+                    }
+                } else if( veh_ctrl && vp->vehicle().is_aircraft() ) {
                     pldrive( tripoint_above );
-                } else if( veh_ctrl && vp->vehicle().has_part( "ROTOR" ) &&
-                           !vp->vehicle().has_sufficient_rotorlift() ) {
-                    add_msg( m_bad, _( "The rotors struggle to generate enough lift!" ) );
+                } else if( veh_ctrl && ( vp->vehicle().has_part( "ROTOR" ) ||
+                                         vp->vehicle().has_part( "BALLOON" ) ||
+                                         vp->vehicle().has_part( "WING" ) ) &&
+                           !vp->vehicle().has_sufficient_lift() ) {
+                    add_msg( m_bad, _( "The craft struggles to generate enough lift!" ) );
+                } else {
+                    u.add_msg_if_player( _( "You need a propeller to take off!" ) );
                 }
                 break;
 
@@ -2395,7 +2436,7 @@ bool game::handle_action()
                 break;
 
             case ACTION_OPEN_WIKI:
-                if( get_option<std::string>( "WIKI_DOC_URL" ).length() > 0 ) {
+                if( !get_option<std::string>( "WIKI_DOC_URL" ).empty() ) {
                     open_url( get_option<std::string>( "WIKI_DOC_URL" ) );
                 } else {
                     add_msg( m_bad, _( "Invalid Wiki URL specified!" ) );
@@ -2405,7 +2446,7 @@ bool game::handle_action()
                 break;
 
             case ACTION_OPEN_HHG:
-                if( get_option<std::string>( "HHG_URL" ).length() > 0 ) {
+                if( !get_option<std::string>( "HHG_URL" ).empty() ) {
                     open_url( get_option<std::string>( "HHG_URL" ) + std::string( "/?t=UNDEAD_PEOPLE" ) );
                 } else {
                     add_msg( m_bad, _( "Invalid Hitchhiker's Guide URL specified!" ) );
@@ -2601,6 +2642,10 @@ bool game::handle_action()
 
             case ACTION_DISPLAY_SUBMAP_GRID:
                 g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
+                break;
+
+            case ACTION_TOGGLE_ZONE_OVERLAY:
+                g->show_zone_overlay = !g->show_zone_overlay;
                 break;
 
             case ACTION_TOGGLE_HOUR_TIMER:

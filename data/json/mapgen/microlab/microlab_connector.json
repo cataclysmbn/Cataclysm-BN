@@ -85,37 +85,49 @@
     "object": {
       "fill_ter": "t_concrete",
       "rows": [
+        "___gTgggTg____gTgggTg___",
+        "___IXIIIXI____IXIIIXI___",
+        "___gTgggTg____gTgggTg___",
+        "___gTgggTg____gTgggTg___",
+        "___IXIIIXI____IXIIIXI___",
+        "#__gTgggTg____gTgggTg__#",
+        "##_gTgggTg____gTgggTg_##",
+        "##|gpgggpg____gpgggpg|##",
         "##|                  |##",
-        "##|^                 |##",
-        "##|^ hhhh  YY   hhhh |##",
-        "##|^                 |##",
-        "##|^ hhhh       hhhh |##",
-        "##|^                 |##",
-        "##|^          |^^^^^^|##",
+        "##|^ hhhh  YY  hhhh ^|##",
+        "##|^                ^|##",
+        "##|^ hhhh      hhhh ^|##",
+        "##|^                ^|##",
         "##||(((((|    ||||||||##",
-        "###|l h  ( YY |#########",
-        "###|l    ( YY |#########",
+        "###|l ddd( YY |#########",
+        "###|l  hd( YY |#########",
         "###|l    (    |#########",
-        "###||2||||    |#########",
-        "###|     |    |#########",
-        "###|   hd|G55||#########",
-        "###|  ddd|   ^|#########",
-        "###||5(((|   ^|||||||###",
+        "###||5(((||55G|||||||###",
         "###|B          VV ^^|###",
         "###|B      YY      ?|###",
         "###|B dddd YY    t ?|###",
         "###|B d hd         ?|###",
         "###|B          t? ^^|###",
-        "###||||||||  ||||||||###",
-        "##########|22|##########",
-        "##########|  |##########"
+        "###||||||||22||||||||###"
       ],
       "palettes": [ "microlab" ],
-      "terrain": { "G": "t_card_science" },
+      "terrain": {
+        "_": [ [ "t_rock_floor", 9 ], "t_moss_underground" ],
+        "G": "t_card_science",
+        "g": "t_railroad_rubble",
+        "I": "t_railroad_tie",
+        "p": "t_buffer_stop",
+        "T": "t_railroad_track",
+        "X": "t_railroad_track_on_tie"
+      },
       "items": {
         "l": [ { "item": "guns_milspec", "chance": 10 }, { "item": "ammo_milspec", "chance": 70 } ],
         "t": { "item": "magazines", "chance": 90 }
-      }
+      },
+      "place_vehicles": [
+        { "vehicle": "trains_lab_entrance", "x": 7, "y": 5, "chance": 25, "rotation": 90 },
+        { "vehicle": "trains_lab_entrance", "x": 16, "y": 1, "chance": 25, "rotation": 270 }
+      ]
     }
   },
   {

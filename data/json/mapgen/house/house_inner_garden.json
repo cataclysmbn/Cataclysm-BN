@@ -52,12 +52,12 @@
         "a": { "item": "art", "chance": 100 },
         "n": [
           { "item": "SUS_dishes", "chance": 100 },
-          { "item": "SUS_silverware", "chance": 100 },
+          { "item": "SUS_kitchen_misc", "chance": 100 },
           { "item": "SUS_kitchen_sink", "chance": 100 }
         ],
         "Q": [ { "item": "SUS_cookware", "chance": 100 }, { "item": "SUS_spice_collection", "chance": 100 } ],
         "K": [
-          { "item": "SUS_utensils", "chance": 100 },
+          { "item": "SUS_kitchen_misc", "chance": 100 },
           { "item": "SUS_knife_drawer", "chance": 100 },
           { "item": "SUS_junk_drawer", "chance": 100 },
           { "item": "SUS_appliances_cupboard", "chance": 100 }

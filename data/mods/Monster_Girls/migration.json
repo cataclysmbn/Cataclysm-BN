@@ -70,6 +70,16 @@
     "replace": "iv_mutagen"
   },
   {
+    "id": "mutagen_serpent",
+    "type": "MIGRATION",
+    "replace": "mutagen_lamia"
+  },
+  {
+    "id": "iv_mutagen_serpent",
+    "type": "MIGRATION",
+    "replace": "iv_mutagen_lamia"
+  },
+  {
     "id": "mutagen_raptor",
     "type": "MIGRATION",
     "replace": "mutagen"
@@ -208,5 +218,15 @@
     "id": "iv_mutagen_fish",
     "type": "MIGRATION",
     "replace": "iv_mutagen"
+  },
+  {
+    "id": "mutagen_rabbit",
+    "type": "MIGRATION",
+    "replace": "mutagen_bunnygirl"
+  },
+  {
+    "id": "iv_mutagen_rabbit",
+    "type": "MIGRATION",
+    "replace": "iv_mutagen_bunnygirl"
   }
 ]

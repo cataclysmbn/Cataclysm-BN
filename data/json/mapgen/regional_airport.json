@@ -440,7 +440,7 @@
         "/%fss_,___________,_ssf/",
         "/%fss_,___________,_ssf/"
       ],
-      "place_vehicles": [ { "vehicle": "helicopters", "chance": 80, "fuel": -1, "rotation": 180, "status": -1, "x": 8, "y": 12 } ],
+      "place_vehicles": [ { "vehicle": "runway", "chance": 80, "fuel": -1, "rotation": 180, "status": -1, "x": 11, "y": 12 } ],
       "palettes": [ "airport_palette" ]
     }
   },
@@ -726,6 +726,7 @@
         "************************",
         "************************"
       ],
+      "place_vehicles": [ { "vehicle": "runway", "chance": 40, "fuel": -1, "rotation": 270, "status": -1, "x": 11, "y": 12 } ],
       "palettes": [ "airport_palette" ]
     }
   },

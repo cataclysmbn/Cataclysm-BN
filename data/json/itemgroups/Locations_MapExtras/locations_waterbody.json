@@ -9,12 +9,60 @@
     "id": "lake_bed",
     "type": "item_group",
     "subtype": "distribution",
-    "entries": [ { "group": "fishing_items_trash", "prob": 6 } ]
+    "entries": [
+      { "group": "fishing_items_trash", "prob": 60 },
+      { "item": "clam", "prob": 10 },
+      { "item": "survnote", "container-item": "bottle_glass", "prob": 1 }
+    ]
+  },
+  {
+    "id": "lakebed_sunken_corpse",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "chain", "count": 1 }, { "item": "concrete", "count": 1 }, { "group": "everyday_corpse" } ]
   },
   {
     "id": "underwater_toxic_waste",
     "type": "item_group",
     "subtype": "distribution",
     "entries": [ { "group": "toxic_waste", "prob": 200 }, { "group": "toxic_dump_equipment", "prob": 20 } ]
+  },
+  {
+    "id": "sunken_ship_wood_cargo",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      { "group": "fort_historic_wardrobe", "prob": 25, "count": [ 2, 4 ], "damage": [ 2, 4 ] },
+      { "group": "supplies_cannonball", "prob": 25, "damage": [ 1, 3 ] },
+      { "group": "supplies_ship_rigging", "prob": 25, "damage": [ 1, 3 ] },
+      { "group": "supplies_naval_cache", "prob": 25, "damage": [ 1, 3 ] }
+    ]
+  },
+  {
+    "id": "underwater_wood_beam_spawn",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "wood_beam", "damage": [ 1, 3 ] } ]
+  },
+  {
+    "id": "underwater_cannon_spawn",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "cannon_3in_ordnance", "damage": [ 2, 4 ] } ]
+  },
+  {
+    "id": "swords_caliburn",
+    "type": "item_group",
+    "subtype": "distribution",
+    "//": "Strange boulders lying in caves, distributing swords",
+    "entries": [
+      { "item": "longsword", "prob": 10, "damage": [ 0, 2 ] },
+      { "item": "longsword_inferior", "prob": 40, "damage": [ 0, 2 ] },
+      { "item": "arming_sword", "prob": 5, "damage": [ 0, 2 ] },
+      { "item": "arming_sword_inferior", "prob": 20, "damage": [ 0, 2 ] },
+      { "item": "estoc", "prob": 4, "damage": [ 0, 2 ] },
+      { "item": "estoc_inferior", "prob": 16, "damage": [ 0, 2 ] },
+      { "item": "sword_metal", "prob": 5, "damage": [ 0, 2 ] }
+    ]
   }
 ]

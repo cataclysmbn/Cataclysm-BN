@@ -661,6 +661,7 @@
         "########################"
       ],
       "terrain": { "#": "t_rock" },
+      "furniture": { " ": [ [ "f_null", 9 ], "f_cave_mushrooms" ] },
       "place_nested": [
         { "chunks": [ "ant_tunnel_bounds_h" ], "x": [ 4, 6 ], "y": 0 },
         { "chunks": [ "ant_tunnel_bounds_h" ], "x": [ 4, 6 ], "y": 1 },
@@ -1138,6 +1139,7 @@
         "########################"
       ],
       "terrain": { "#": "t_rock" },
+      "furniture": { " ": [ [ "f_null", 9 ], "f_cave_mushrooms" ] },
       "place_nested": [
         { "chunks": [ "ant_tunnel_bounds_h" ], "x": [ 4, 6 ], "y": 0 },
         { "chunks": [ "ant_tunnel_bounds_h" ], "x": [ 4, 6 ], "y": 1 },

@@ -285,6 +285,8 @@
     "types": [ "WINGS" ],
     "prereqs": [ "WINGS_STUB" ],
     "category": [ "MIGO" ],
+    "restricts_gear": [ "torso" ],
+    "allowed_items": [ "ALLOWS_WINGS" ],
     "falling_damage_multiplier": 0.75,
     "attacks": {
       "attack_text_u": "You buffet %s with your wings",
@@ -417,6 +419,8 @@
     "category": [ "MASTODON" ],
     "wet_protection": [ { "part": "foot_l", "neutral": 10 }, { "part": "foot_r", "neutral": 10 } ],
     "armor": [ { "parts": [ "foot_l", "foot_r" ], "bash": 2, "cut": 2 } ],
+    "restricts_gear": [ "foot_l", "foot_r" ],
+    "allowed_items": [ "ALLOWS_HOOVES" ],
     "attacks": {
       "attack_text_u": "You kick %s with your massive feet",
       "attack_text_npc": "%1$s kicks %2$s with their massive feet",
@@ -479,6 +483,7 @@
     "prereqs": [ "HORNS" ],
     "restricts_gear": [ "mouth" ],
     "allow_soft_gear": true,
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "category": [ "MASTODON" ],
     "threshreq": [ "THRESH_MASTODON" ],
     "attacks": {
@@ -556,6 +561,7 @@
     "prereqs": [ "SNOUT" ],
     "category": [ "MASTODON" ],
     "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "social_modifiers": { "intimidate": 10 },
     "craft_skill_bonus": [ [ "electronics", 1 ], [ "tailor", 1 ], [ "mechanics", 1 ], [ "cooking", 1 ] ]
   },

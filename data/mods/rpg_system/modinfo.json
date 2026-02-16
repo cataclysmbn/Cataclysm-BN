@@ -1,0 +1,19 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "rpg_system",
+    "name": "RPG System",
+    "description": "Adds an RPG [System] with [Classes], [Traits] and [Levels]. Gain experience from killing monsters, level up, choose a class, and gain powerful traits.",
+    "authors": [ "mamick2006" ],
+    "maintainers": [ "RobbieNeko" ],
+    "category": "content",
+    "lua_api_version": 2,
+    "dependencies": [ "bn" ]
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "MAGIC_STAT_SCALING_PERCENT",
+    "stype": "int",
+    "value": 5
+  }
+]

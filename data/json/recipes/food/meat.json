@@ -405,6 +405,7 @@
         [ "burdock_cooked", 1 ],
         [ "veggy_wild_cooked", 1 ],
         [ "veggy_cooked", 1 ],
+        [ "lake_greens", 1 ],
         [ "spinach", 2 ],
         [ "grape_leaves", 2 ]
       ],
@@ -433,6 +434,7 @@
         [ "burdock_cooked", 2 ],
         [ "veggy_wild_cooked", 2 ],
         [ "veggy_cooked", 2 ],
+        [ "lake_greens", 2 ],
         [ "spinach", 2 ],
         [ "grape_leaves", 2 ]
       ],
@@ -1262,6 +1264,7 @@
         [ "dandelion_cooked", 1 ],
         [ "burdock_cooked", 1 ],
         [ "chili_pepper_roasted", 1 ],
+        [ "lake_greens", 1 ],
         [ "spinach", 1 ],
         [ "grape_leaves", 1 ]
       ],
@@ -2033,6 +2036,7 @@
         [ "veggy_wild_cooked", 2 ],
         [ "irradiated_cabbage", 2 ],
         [ "cabbage", 2 ],
+        [ "lake_greens", 2 ],
         [ "spinach", 2 ],
         [ "grape_leaves", 2 ]
       ],

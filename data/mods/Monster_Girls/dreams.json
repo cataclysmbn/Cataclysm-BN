@@ -1,6 +1,12 @@
 [
   {
     "type": "dream",
+    "messages": [ "You have a strange dream about snakes.", "Your dreams give you a strange slithering feeling." ],
+    "category": "LAMIA",
+    "strength": 1
+  },
+  {
+    "type": "dream",
     "messages": [ "You have a strange dream about birds.", "Your dreams give you a strange feathered feeling." ],
     "category": "HARPY",
     "strength": 1
@@ -70,6 +76,15 @@
     "messages": [ "You have a strange dream about bunnies.", "Your dreams give you a joyful bouncy feeling." ],
     "category": "BUNNYGIRL",
     "strength": 1
+  },
+  {
+    "type": "dream",
+    "messages": [
+      "You have a dream of moving across a field, yet you don't hear your footsteps…",
+      "While dreaming, you see a strangely serpentine reflection of yourself."
+    ],
+    "category": "LAMIA",
+    "strength": 2
   },
   {
     "type": "dream",
@@ -158,6 +173,15 @@
     ],
     "category": "KITSUNE",
     "strength": 2
+  },
+  {
+    "type": "dream",
+    "messages": [
+      "You have an vivid dream of yourself with a long, serpentine tail instead of legs.",
+      "Your dream-self seems so graceful, slithering along in their dexterous scaly form."
+    ],
+    "category": "LAMIA",
+    "strength": 3
   },
   {
     "type": "dream",
@@ -270,6 +294,15 @@
     ],
     "category": "BUNNYGIRL",
     "strength": 3
+  },
+  {
+    "type": "dream",
+    "messages": [
+      "You have a nostalgic dream of stumbling around clumsily on two legs instead of an elegant snake tail.",
+      "You dream of coiling around a loved one, keeping them wrapped up close for warmth."
+    ],
+    "category": "LAMIA",
+    "strength": 4
   },
   {
     "type": "dream",

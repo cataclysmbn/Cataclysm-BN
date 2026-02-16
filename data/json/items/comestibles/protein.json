@@ -24,7 +24,7 @@
     "healthy": 2,
     "fun": -1,
     "vitamins": [ [ "calcium", 7 ], [ "meat_allergen", 1 ] ],
-    "flags": [ "EATEN_COLD" ]
+    "flags": [ "EATEN_COLD", "NO_COOKING_BUFF" ]
   },
   {
     "id": "protein_powder",
@@ -48,7 +48,8 @@
     "color": "white",
     "container": "bottle_plastic_small",
     "calories": 100,
-    "vitamins": [  ]
+    "vitamins": [  ],
+    "flags": [ "NO_COOKING_BUFF" ]
   },
   {
     "id": "protein_bar_evac",

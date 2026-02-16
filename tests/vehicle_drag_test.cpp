@@ -101,8 +101,8 @@ static bool test_drag(
     const double c_air = veh_ptr->coeff_air_drag();
     const double c_rolling = veh_ptr->coeff_rolling_drag();
     const double c_water = veh_ptr->coeff_water_drag();
-    const int safe_v = veh_ptr->safe_ground_velocity( false );
-    const int max_v = veh_ptr->max_ground_velocity( false );
+    const int safe_v = veh_ptr->safe_ground_velocity( false, true );
+    const int max_v = veh_ptr->max_ground_velocity( false, true );
 
     const auto d_in_bounds = [&]( const double expected, double value ) {
         double expected_high = expected * 1.05;
@@ -294,10 +294,10 @@ TEST_CASE( "vehicle_drag", "[vehicle] [engine]" )
     test_vehicle_drag( "schoolbus", 0.411188, 3.331642, 1491.510227, 12930, 15101 );
     test_vehicle_drag( "security_van", 0.541800, 7.617575, 6252.103125, 11074, 13079 );
     test_vehicle_drag( "wienermobile", 1.063697, 2.385608, 1957.981250, 11253, 13409 );
-    test_vehicle_drag( "canoe", 0.609525, 7.551118, 2.138157, 337, 707 );
+    test_vehicle_drag( "canoe", 0.609525, 6.970263, 1.973684, 337, 707 );
     test_vehicle_drag( "kayak", 0.609525, 4.036067, 1.523792, 544, 1067 );
     test_vehicle_drag( "kayak_racing", 0.609525, 3.704980, 1.398792, 586, 1133 );
     test_vehicle_drag( "DUKW", 0.776903, 3.8956, 84.26, 9993, 12063 );
-    test_vehicle_drag( "raft", 0.997815, 9.743243, 5.517750, 239, 508 );
+    test_vehicle_drag( "raft", 1.59315, 9.177513, 5.197368, 225, 477 );
     test_vehicle_drag( "inflatable_boat", 0.469560, 3.616690, 2.048188, 602, 1173 );
 }

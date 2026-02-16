@@ -122,5 +122,16 @@
     "mission_offered": "MISSION_JOIN_TRACKER",
     "chat": "TALK_STRANGER_FRIENDLY",
     "faction": "no_faction"
+  },
+  {
+    "type": "npc",
+    "id": "NPC_wandering_scavenger",
+    "name_suffix": "wandering survivor",
+    "//": "spawns in the res_lawn_randomnpc nested mapgen",
+    "class": "NC_WANDERING_SCAVENGER",
+    "attitude": 0,
+    "mission": 7,
+    "chat": "TALK_STRANGER_NEUTRAL",
+    "faction": "no_faction"
   }
 ]

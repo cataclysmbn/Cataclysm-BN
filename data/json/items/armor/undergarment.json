@@ -17,7 +17,7 @@
     "encumbrance": 1,
     "warmth": 20,
     "material_thickness": 1,
-    "valid_mods": [ "resized_large" ],
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "SKINTIGHT" ]
   },
   {
@@ -56,7 +56,7 @@
     "coverage": 15,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "SKINTIGHT", "WATER_FRIENDLY", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "WATER_FRIENDLY", "POWERARMOR_COMPATIBLE", "ALLOWS_WINGS" ]
   },
   {
     "id": "bikini_top",
@@ -74,7 +74,7 @@
     "covers": [ "torso" ],
     "coverage": 10,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "ALLOWS_WINGS" ]
   },
   {
     "id": "bikini_top_fur",
@@ -93,7 +93,7 @@
     "coverage": 10,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "ALLOWS_WINGS" ]
   },
   {
     "id": "bikini_top_leather",
@@ -112,7 +112,7 @@
     "coverage": 10,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "ALLOWS_WINGS" ]
   },
   {
     "id": "boxer_briefs",
@@ -188,7 +188,7 @@
     "coverage": 15,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "ALLOWS_WINGS" ]
   },
   {
     "id": "briefs",
@@ -329,8 +329,8 @@
     "warmth": 25,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
-    "flags": [ "VARSIZE", "FANCY", "SKINTIGHT" ]
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
+    "flags": [ "VARSIZE", "FANCY", "SKINTIGHT", "ALLOWS_WINGS" ]
   },
   {
     "id": "leg_warmers",
@@ -350,7 +350,7 @@
     "encumbrance": 1,
     "warmth": 20,
     "material_thickness": 1,
-    "valid_mods": [ "resized_large" ],
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "SKINTIGHT" ]
   },
   {
@@ -487,7 +487,7 @@
     "coverage": 30,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "ALLOWS_WINGS" ]
   },
   {
     "id": "tank_top",

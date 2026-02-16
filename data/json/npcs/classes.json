@@ -240,6 +240,30 @@
   },
   {
     "type": "npc_class",
+    "id": "NC_WANDERING_SCAVENGER",
+    "name": { "str": "Wandering Scavenger" },
+    "//": "spawns in the res_lawn_randomnpc nested mapgen",
+    "job_description": "I'm a wandering soul just trying to survive.",
+    "traits": [
+      { "group": "BG_survival_story_UNIVERSAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "NPC_mutation_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "skills": [
+      { "skill": "ALL", "level": { "sum": [ { "dice": [ 3, 2 ] }, { "constant": -3 } ] } },
+      { "skill": "melee", "bonus": { "rng": [ 2, 5 ] } },
+      { "skill": "cutting", "bonus": { "rng": [ 2, 5 ] } },
+      { "skill": "bashing", "bonus": { "rng": [ 2, 5 ] } },
+      { "skill": "stabbing", "bonus": { "rng": [ 2, 5 ] } },
+      { "skill": "gun", "bonus": { "rng": [ 2, 4 ] } },
+      { "skill": "pistol", "bonus": { "rng": [ 2, 5 ] } },
+      { "skill": "rifle", "bonus": { "rng": [ 0, 3 ] } },
+      { "skill": "archery", "bonus": { "rng": [ 0, 3 ] } }
+    ]
+  },
+  {
+    "type": "npc_class",
     "id": "NC_HUNTER",
     "name": { "str": "Hunter" },
     "job_description": "I'm tracking game.",

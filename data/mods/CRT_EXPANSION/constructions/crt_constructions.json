@@ -8,7 +8,7 @@
     "time": "45 m",
     "qualities": [ [ { "id": "DIG", "level": 1 } ], [ { "id": "SAW_W", "level": 1 } ] ],
     "components": [
-      [ [ "stick", 6 ], [ "2x4", 3 ] ],
+      [ [ "wood_structural_small", 2, "LIST" ] ],
       [ [ "rock", 2 ], [ "pebble", 15 ] ],
       [ [ "material_soil", 40 ] ],
       [ [ "withered", 6 ], [ "withered_bundle", 2 ] ]

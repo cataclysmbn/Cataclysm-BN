@@ -8,13 +8,16 @@
 #include "activity_handlers.h"
 #include "assign.h"
 #include "debug.h"
+#include "flag.h"
 #include "enum_conversions.h"
 #include "json.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
-
+#include "game.h"
+#include "player_activity.h"
+#include "item.h"
 // activity_type functions
 static std::map< activity_id, activity_type > activity_type_all;
 
@@ -139,7 +142,7 @@ void activity_type::load( const JsonObject &jo )
         }
     }
 
-    if( activity_type_all.find( result.id_ ) != activity_type_all.end() ) {
+    if( activity_type_all.contains( result.id_ ) ) {
         debugmsg( "Redefinition of %s", result.id_.c_str() );
     } else {
         activity_type_all.insert( { result.id_, result } );
@@ -152,10 +155,8 @@ void activity_type::check_consistency()
         if( pair.second.verb_.empty() ) {
             debugmsg( "%s doesn't have a verb", pair.first.c_str() );
         }
-        const bool has_actor = activity_actors::deserialize_functions.find( pair.second.id_ ) !=
-                               activity_actors::deserialize_functions.end();
-        const bool has_turn_func = activity_handlers::do_turn_functions.find( pair.second.id_ ) !=
-                                   activity_handlers::do_turn_functions.end();
+        const bool has_actor = activity_actors::deserialize_functions.contains( pair.second.id_ );
+        const bool has_turn_func = activity_handlers::do_turn_functions.contains( pair.second.id_ );
 
         if( pair.second.special_ && !( has_turn_func || has_actor ) ) {
             debugmsg( "%s needs a do_turn function or activity actor if it expects a special behaviour.",
@@ -173,14 +174,14 @@ void activity_type::check_consistency()
     }
 
     for( const auto &pair : activity_handlers::do_turn_functions ) {
-        if( activity_type_all.find( pair.first ) == activity_type_all.end() ) {
+        if( !activity_type_all.contains( pair.first ) ) {
             debugmsg( "The do_turn function %s doesn't correspond to a valid activity_type.",
                       pair.first.c_str() );
         }
     }
 
     for( const auto &pair : activity_handlers::finish_functions ) {
-        if( activity_type_all.find( pair.first ) == activity_type_all.end() ) {
+        if( !activity_type_all.contains( pair.first ) ) {
             debugmsg( "The finish_function %s doesn't correspond to a valid activity_type",
                       pair.first.c_str() );
         }
@@ -202,6 +203,12 @@ bool activity_type::call_finish( player_activity *act, player *p ) const
         pair->second( act, p );
         // kill activity sounds at finish
         sfx::end_activity_sounds();
+        if( !act->get_tools().empty() ) {
+            auto &tool = *act->get_tools().front();
+            if( tool.has_flag( flag_TEMPORARY_ITEM ) ) {
+                g->remove_fake_item( &tool );
+            }
+        }
         return true;
     }
     return false;

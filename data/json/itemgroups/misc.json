@@ -41,7 +41,7 @@
     "items": [
       [ "joint_roach", 50 ],
       [ "blunt_roach", 50 ],
-      [ "butane_can", 50 ],
+      { "item": "chem_butane", "prob": 50, "container-item": "bottle_plastic" },
       { "group": "weed_accessories", "prob": 200 },
       { "group": "dispensary", "prob": 200 }
     ]
@@ -189,6 +189,7 @@
       { "group": "elecsto_stor", "count": [ 1, 2 ], "prob": 30 },
       { "item": "money_bundle", "count": [ 1, 10 ], "prob": 20 },
       { "item": "survnote", "prob": 10 },
+      { "item": "survivormap", "prob": 1 },
       { "item": "flyer", "count": [ 1, 10 ], "prob": 30 },
       { "item": "character_sheet", "count": [ 1, 2 ], "prob": 5 },
       { "item": "phonebook", "prob": 10 },
@@ -236,7 +237,7 @@
       { "item": "light_plus_battery_cell", "charges": 150 },
       { "item": "light_plus_battery_cell", "charges": 150, "container-item": "flashlight" },
       { "item": "light_plus_battery_cell", "charges": 150, "container-item": "radio" },
-      { "item": "lighter", "charges": 100 },
+      { "item": "lighter", "charges": 25 },
       { "item": "pockknife" },
       { "item": "multitool" },
       { "item": "1st_aid" },
@@ -278,10 +279,11 @@
     "type": "item_group",
     "id": "maps",
     "items": [
-      { "item": "roadmap", "prob": 25 },
-      { "item": "touristmap", "prob": 25 },
-      { "item": "regionaltransportmap", "prob": 25 },
-      { "item": "survivormap", "prob": 25 }
+      { "item": "roadmap", "prob": 30 },
+      { "item": "touristmap", "prob": 30 },
+      { "item": "regionaltransportmap", "prob": 30 },
+      { "item": "survivormap", "prob": 10 },
+      { "item": "cavemap", "prob": 10 }
     ]
   },
   {
@@ -346,6 +348,33 @@
       { "item": "beer", "prob": 80 },
       { "item": "fruit_wine", "prob": 40 },
       { "item": "brandy", "prob": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "geode_contents",
+    "//": "Ah yes, geodes, natures gacha ball.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "gold_ore", "prob": 10, "count": [ 1, 3 ] },
+      { "item": "silver_ore", "prob": 10, "count": [ 1, 3 ] },
+      { "item": "lead_ore", "prob": 15, "count": [ 3, 5 ] },
+      { "item": "tin_ore", "prob": 15, "count": [ 3, 6 ] },
+      { "item": "copper_ore", "prob": 15, "count": [ 3, 6 ] },
+      { "item": "iron_ore", "prob": 15, "count": [ 3, 6 ] },
+      { "item": "citrine", "prob": 1, "count": 1 },
+      { "item": "diamond", "prob": 1, "count": 1 },
+      { "item": "emerald", "prob": 1, "count": 1 },
+      { "item": "peridot", "prob": 1, "count": 1 },
+      { "item": "amethyst", "prob": 1, "count": 1 },
+      { "item": "sapphire", "prob": 1, "count": 1 },
+      { "item": "aquamarine", "prob": 1, "count": 1 },
+      { "item": "blue_topaz", "prob": 1, "count": 1 },
+      { "item": "tourmaline", "prob": 1, "count": 1 },
+      { "item": "alexandrite", "prob": 1, "count": 1 },
+      { "item": "opal", "prob": 1, "count": 1 },
+      { "item": "ruby", "prob": 1, "count": 1 },
+      { "item": "garnet", "prob": 1, "count": 1 }
     ]
   }
 ]

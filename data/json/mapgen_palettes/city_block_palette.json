@@ -125,6 +125,6 @@
       "Y": { "item": "trash", "chance": 30, "repeat": [ 1, 2 ] },
       "R": { "item": "homebooks", "chance": 30, "repeat": [ 1, 2 ] }
     },
-    "nested": { "@": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] } }
+    "nested": { "@": { "chunks": [ [ "null", 195 ], [ "house_place_air_conditioner", 5 ] ] } }
   }
 ]

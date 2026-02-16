@@ -57,7 +57,8 @@
           { "id": "mon_zombie_technician_evolved_iron2", "fg": 37 },
           { "id": [ "t_grass_tall_season_spring", "t_grass_tall_season_summer" ], "fg": 38 },
           { "id": "t_grass_tall_season_autumn", "fg": 39 },
-          { "id": "t_grass_tall_season_winter", "fg": 40 }
+          { "id": "t_grass_tall_season_winter", "fg": 40 },
+          { "id": "overlay_worn_helmet_conical", "fg": 41 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,

@@ -7,5 +7,14 @@
     "time": "15 m",
     "qualities": [ { "id": "SAW_M", "level": 1 } ],
     "components": [ [ [ "material_aluminium_ingot", 18 ] ], [ [ "chem_aluminium_powder", 50 ] ] ]
+  },
+  {
+    "result": "mil_plate",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "15 m",
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
+    "components": [ [ [ "hard_steel_armor", 8 ] ], [ [ "ceramic_armor", 8 ] ] ]
   }
 ]

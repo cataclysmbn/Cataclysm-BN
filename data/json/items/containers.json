@@ -147,22 +147,14 @@
   },
   {
     "id": "bag_zipper",
+    "copy-from": "bag_plastic",
     "type": "CONTAINER",
     "category": "container",
-    "name": { "str": "zipper bag" },
+    "name": { "str": "resealable plastic bag" },
     "looks_like": "bag_plastic",
-    "description": "An inexpensive flexible rectangular storage bag on its typical small size.  Transparent and made of plastic, it can be sealed and opened by a slider which works in a similar way to a zip fastener.",
-    "weight": "2 g",
-    "volume": "10 ml",
-    "price": "0 cent",
-    "price_postapoc": "10 cent",
-    "rigid": false,
-    "material": "plastic",
-    "symbol": ")",
-    "color": "light_gray",
-    "contains": "250 ml",
-    "seals": true,
-    "flags": [ "TRADER_AVOID" ]
+    "description": "A plastic bag with a zipper closure that lets it be resealed.  Essentially trash, though could carry liquids in a pinch.",
+    "watertight": true,
+    "seals": true
   },
   {
     "id": "bag_body_bag",
@@ -181,6 +173,7 @@
     "symbol": ")",
     "color": "dark_gray",
     "contains": "100 L",
+    "seals": true,
     "flags": [ "TRADER_AVOID" ]
   },
   {
@@ -350,7 +343,8 @@
     "material": "paper",
     "symbol": ")",
     "color": "white",
-    "contains": "84 ml"
+    "contains": "84 ml",
+    "seals": true
   },
   {
     "id": "box_small",
@@ -365,7 +359,8 @@
     "material": "cardboard",
     "symbol": ")",
     "color": "brown",
-    "contains": "1 L"
+    "contains": "1 L",
+    "seals": true
   },
   {
     "id": "box_medium",
@@ -381,7 +376,8 @@
     "material": "cardboard",
     "symbol": ")",
     "color": "brown",
-    "contains": "3 L"
+    "contains": "3 L",
+    "seals": true
   },
   {
     "id": "box_large",
@@ -398,6 +394,7 @@
     "symbol": ")",
     "color": "brown",
     "contains": "5 L",
+    "seals": true,
     "flags": [ "ALLOWS_REMOTE_USE" ],
     "use_action": { "type": "deploy_furn", "furn_type": "f_cardboard_box" }
   },
@@ -437,7 +434,7 @@
     "seals": true,
     "watertight": true,
     "armor_data": { "covers": [ "torso" ], "coverage": 15, "storage": "1 L", "material_thickness": 1 },
-    "flags": [ "BELTED" ]
+    "flags": [ "BELTED", "ALLOWS_WINGS" ]
   },
   {
     "id": "can_drink",
@@ -597,7 +594,7 @@
     "seals": true,
     "watertight": true,
     "armor_data": { "covers": [ "leg_either" ], "coverage": 5, "encumbrance": 2, "material_thickness": 2 },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "power_armor_canteen",
@@ -834,7 +831,7 @@
     "watertight": true,
     "armor_data": { "covers": [ "leg_either" ], "coverage": 2, "material_thickness": 1 },
     "qualities": [ [ "BOIL", 1 ] ],
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "jar_3l_glass",
@@ -1111,7 +1108,7 @@
     "seals": true,
     "watertight": true,
     "armor_data": { "covers": [ "torso" ], "coverage": 5, "encumbrance": 5, "material_thickness": 2 },
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
   },
   {
     "id": "stomach_sealed",
@@ -1153,7 +1150,7 @@
     "seals": true,
     "watertight": true,
     "armor_data": { "covers": [ "leg_either" ], "coverage": 5, "material_thickness": 2 },
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "waterskin2",
@@ -1175,7 +1172,7 @@
     "seals": true,
     "watertight": true,
     "armor_data": { "covers": [ "torso" ], "coverage": 10, "material_thickness": 2 },
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
   },
   {
     "id": "waterskin3",
@@ -1197,7 +1194,7 @@
     "seals": true,
     "watertight": true,
     "armor_data": { "covers": [ "torso" ], "coverage": 15, "material_thickness": 2 },
-    "flags": [ "BELTED", "COMPACT", "WATER_FRIENDLY" ]
+    "flags": [ "BELTED", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
   },
   {
     "id": "wooden_barrel",

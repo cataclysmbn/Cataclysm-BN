@@ -36,6 +36,7 @@
     "color": "white",
     "fun": -5,
     "calories": 192,
+    "flags": [ "RAW", "NO_COOKING_BUFF" ],
     "use_action": {
       "target": "sourdough_starter_uncovered",
       "msg": "After feeding it and caring for it for a week, your sourdough starter is finally ready for the big leagues.",
@@ -62,6 +63,7 @@
     "color": "white",
     "fun": -5,
     "calories": 192,
+    "flags": [ "RAW", "NO_COOKING_BUFF" ],
     "use_action": {
       "target": "sourdough_starter_uncovered",
       "msg": "The starter is now stinky and bubbly, and looks ready for cooking.",
@@ -88,12 +90,13 @@
     "color": "yellow",
     "fun": -1,
     "calories": 192,
+    "flags": [ "RAW", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "wheat_allergen", 1 ] ]
   },
   {
     "type": "COMESTIBLE",
     "id": "sourdough_bread",
-    "name": "sourdough bread",
+    "name": { "str_sp": "sourdough bread" },
     "weight": "56 g",
     "color": "brown",
     "spoils_in": "8 days",
@@ -116,7 +119,7 @@
   {
     "type": "COMESTIBLE",
     "id": "flatbread",
-    "name": "flatbread",
+    "name": { "str_sp": "flatbread" },
     "weight": "85 g",
     "color": "brown",
     "spoils_in": "11 days 16 hours",
@@ -135,7 +138,7 @@
   {
     "type": "COMESTIBLE",
     "id": "bread",
-    "name": "bread",
+    "name": { "str_sp": "bread" },
     "weight": "60 g",
     "color": "brown",
     "spoils_in": "10 days",
@@ -181,7 +184,7 @@
   {
     "type": "COMESTIBLE",
     "id": "cornbread",
-    "name": "cornbread",
+    "name": { "str_sp": "cornbread" },
     "weight": "60 g",
     "color": "yellow",
     "spoils_in": "30 days",
@@ -230,17 +233,20 @@
     "weight": "50 g",
     "color": "yellow",
     "comestible_type": "FOOD",
+    "container": "box_small",
     "symbol": "%",
     "quench": -1,
     "healthy": -4,
     "calories": 140,
+    "charges": 10,
     "description": "A sweet, cream-filled snack cake with an indefinitely long shelf life. For all you know, this could be the last one that anyone will enjoy in the whole universe.",
-    "price": "50 cent",
-    "price_postapoc": "3 USD",
+    "price": "6 USD",
+    "//": "blinkies are a sought after commodity",
+    "price_postapoc": "12 USD",
     "material": [ "junk", "wheat" ],
-    "volume": "100 ml",
+    "volume": "1000 ml",
     "vitamins": [ [ "calcium", 4 ], [ "iron", 1 ], [ "wheat_allergen", 1 ], [ "milk_allergen", 1 ], [ "junk_allergen", 5 ] ],
-    "fun": 8
+    "fun": 20
   },
   {
     "type": "COMESTIBLE",
@@ -301,6 +307,7 @@
     "material": [ "wheat" ],
     "volume": "250 ml",
     "charges": 2,
+    "flags": [ "NO_COOKING_BUFF" ],
     "vitamins": [ [ "calcium", 2 ], [ "iron", 15 ], [ "wheat_allergen", 1 ] ],
     "stack_size": 20,
     "fun": -1
@@ -322,7 +329,7 @@
     "material": [ "wheat" ],
     "volume": "250 ml",
     "charges": 10,
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 3,
     "vitamins": [ [ "vitA", 1 ], [ "calcium", 11 ], [ "iron", 9 ], [ "wheat_allergen", 1 ] ]
   },

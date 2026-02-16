@@ -414,7 +414,7 @@
         { "group": "SUS_kitchen_sink", "x": 31, "y": 34 },
         { "group": "SUS_kitchen_sink", "x": 31, "y": 36 },
         { "group": "SUS_spice_collection", "x": 41, "y": 34 },
-        { "group": "SUS_utensils", "x": 42, "y": 34 },
+        { "group": "SUS_kitchen_misc", "x": 42, "y": 34 },
         { "group": "SUS_junk_drawer", "x": 42, "y": 35 },
         { "group": "SUS_knife_drawer", "x": 42, "y": 36 },
         { "group": "SUS_dishes", "x": 42, "y": 37, "chance": 90, "repeat": 10 },

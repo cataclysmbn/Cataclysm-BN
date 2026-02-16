@@ -241,5 +241,124 @@
     "id": "trait_group_PROJUNK",
     "subtype": "distribution",
     "traits": [ { "trait": "PROJUNK" }, { "trait": "ANTIJUNK" } ]
+  },
+  {
+    "//": "This group picks out several mutations based on the options provided by the Lab Patient scenario.",
+    "type": "trait_group",
+    "id": "NPC_mutation_traits",
+    "subtype": "collection",
+    "traits": [
+      { "group": "trait_group_EARS", "prob": 50 },
+      { "group": "trait_group_TAIL", "prob": 50 },
+      { "group": "trait_group_SKIN", "prob": 50 },
+      { "group": "trait_group_MOUTH", "prob": 25 },
+      { "group": "trait_group_LEGS", "prob": 25 },
+      { "group": "trait_group_WINGS", "prob": 25 },
+      { "group": "trait_group_SIZE", "prob": 25 },
+      { "group": "trait_group_VISION", "prob": 10 },
+      { "group": "trait_group_SUNLIGHT", "prob": 10 },
+      { "group": "trait_group_DIET", "prob": 10 },
+      { "group": "trait_group_DNA", "prob": 10 },
+      { "group": "trait_group_PHEROMONE", "prob": 10 },
+      { "trait": "ELFAEYES", "prob": 5 },
+      { "trait": "GILLS", "prob": 5 },
+      { "trait": "SPINES", "prob": 5 },
+      { "trait": "NAILS", "prob": 5 },
+      { "trait": "RADIOGENIC", "prob": 5 },
+      { "trait": "BIOLUM2", "prob": 5 },
+      { "trait": "WEB_WALKER", "prob": 5 },
+      { "trait": "WHISKERS", "prob": 5 },
+      { "trait": "SLIT_NOSTRILS", "prob": 5 },
+      { "trait": "WEBBED", "prob": 5 },
+      { "trait": "RADIOACTIVE1", "prob": 5 },
+      { "trait": "SLIMY", "prob": 5 },
+      { "trait": "COLDBLOOD", "prob": 5 },
+      { "trait": "GROWL", "prob": 5 },
+      { "trait": "ARM_FEATHERS", "prob": 5 },
+      { "trait": "ARM_TENTACLES", "prob": 5 },
+      { "trait": "PONDEROUS1", "prob": 5 },
+      { "trait": "ALCMET", "prob": 5 },
+      { "trait": "LIGHT_BONES", "prob": 5 },
+      { "trait": "ELECTRORECEPTORS", "prob": 5 },
+      { "trait": "ANTLERS", "prob": 5 }
+    ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_VISION",
+    "subtype": "distribution",
+    "traits": [ { "trait": "NIGHTVISION" }, { "trait": "NIGHTVISION2" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_MOUTH",
+    "subtype": "distribution",
+    "traits": [ { "trait": "FANGS" }, { "trait": "BEAK" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_SKIN",
+    "subtype": "distribution",
+    "traits": [ { "trait": "PLANTSKIN" }, { "trait": "CHITIN" }, { "trait": "SCALES" }, { "trait": "FEATHERS" }, { "trait": "FUR" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_LEGS",
+    "subtype": "distribution",
+    "traits": [
+      { "trait": "PADDED_FEET" },
+      { "trait": "RAP_TALONS" },
+      { "trait": "HOOVES" },
+      { "trait": "LEG_TENTACLES" },
+      { "trait": "TAIL_SNAKE" }
+    ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_EARS",
+    "subtype": "distribution",
+    "traits": [ { "trait": "CANINE_EARS" }, { "trait": "FELINE_EARS" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_TAIL",
+    "subtype": "distribution",
+    "traits": [ { "trait": "TAIL_FLUFFY" }, { "trait": "TAIL_LONG" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_SUNLIGHT",
+    "subtype": "distribution",
+    "traits": [ { "trait": "TROGLO" }, { "trait": "SUNLIGHT_DEPENDENT" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_DIET",
+    "subtype": "distribution",
+    "traits": [ { "trait": "HERBIVORE" }, { "trait": "CARNIVORE" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_DNA",
+    "subtype": "distribution",
+    "traits": [ { "trait": "ROBUST" }, { "trait": "UNSTABLE" }, { "trait": "CHAOTIC" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_PHEROMONE",
+    "subtype": "distribution",
+    "traits": [ { "trait": "PHEROMONE_INSECT" }, { "trait": "PHEROMONE_MAMMAL" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_WINGS",
+    "subtype": "distribution",
+    "traits": [ { "trait": "WINGS_BIRD" }, { "trait": "WINGS_INSECT" }, { "trait": "WINGS_BAT" } ]
+  },
+  {
+    "type": "trait_group",
+    "id": "trait_group_SIZE",
+    "subtype": "distribution",
+    "traits": [ { "trait": "SMALL" }, { "trait": "LARGE" } ]
   }
 ]

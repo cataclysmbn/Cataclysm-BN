@@ -86,7 +86,7 @@
     "components": [
       [ [ "paper", 5 ], [ "rolling_paper", 32 ] ],
       [ [ "acid", 2 ], [ "chem_sulphuric_acid", 2 ], [ "chem_nitric_acid", 2 ] ],
-      [ [ "ammonia", 1 ], [ "chem_ethanol", 250 ], [ "denat_alcohol", 250 ] ],
+      [ [ "ammonia", 1 ], [ "chem_ethanol", 250 ], [ "denat_alcohol", 250 ], [ "disinfectant_makeshift", 10 ] ],
       [
         [ "soap", 3 ],
         [ "edible_tallow_lard", 2, "LIST" ],
@@ -297,8 +297,11 @@
     "time": "30 s",
     "reversible": true,
     "autolearn": true,
-    "using": [ [ "accelerant_liquid", 500 ] ],
-    "components": [ [ [ "rag", 1 ] ], [ [ "bottle_glass", 1 ], [ "flask_glass", 1 ], [ "clay_canister", 1 ] ] ]
+    "components": [
+      [ [ "rag", 1 ] ],
+      [ [ "bottle_glass", 1 ], [ "flask_glass", 1 ], [ "clay_canister", 1 ] ],
+      [ [ "flammable_liquid", 500, "LIST" ], [ "disinfectant_makeshift", 20 ] ]
+    ]
   },
   {
     "result": "dynamite_bomb",

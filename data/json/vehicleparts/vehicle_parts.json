@@ -81,6 +81,12 @@
     "entries": [ { "item": "carbon_fiber_filament", "count": [ 20, 40 ] } ]
   },
   {
+    "type": "item_group",
+    "id": "ig_vp_alloy",
+    "subtype": "collection",
+    "entries": [ { "item": "alloy_sheet", "count": [ 4, 8 ] } ]
+  },
+  {
     "type": "vehicle_part",
     "id": "null",
     "name": { "str": "null part" },
@@ -475,6 +481,22 @@
     "damage_reduction": { "all": 75 }
   },
   {
+    "copy-from": "hdroof",
+    "id": "hdroof_superalloy",
+    "type": "vehicle_part",
+    "name": { "str": "superalloy roof" },
+    "item": "alloy_plate",
+    "breaks_into": "ig_vp_alloy",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_superalloy", 1 ] ]
+      }
+    },
+    "extend": { "flags": [ "SHOCK_IMMUNE" ] }
+  },
+  {
     "type": "vehicle_part",
     "id": "blade_horizontal",
     "name": { "str": "blade" },
@@ -766,73 +788,6 @@
       { "item": "motor_tiny", "prob": 25 }
     ],
     "damage_reduction": { "all": 32 }
-  },
-  {
-    "type": "vehicle_part",
-    "id": "washing_machine",
-    "name": { "str": "washing machine" },
-    "symbol": "H",
-    "looks_like": "f_washer",
-    "color": "light_blue",
-    "broken_symbol": "#",
-    "broken_color": "light_blue",
-    "damage_modifier": 80,
-    "durability": 100,
-    "description": "A small washing machine.  It's only good for salvage, or decorating your vehicle.",
-    "epower": -400,
-    "size": "40 L",
-    "item": "washing_machine",
-    "location": "center",
-    "requirements": {
-      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
-      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
-      "repair": {
-        "skills": [ [ "mechanics", 4 ] ],
-        "time": "60 m",
-        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
-      }
-    },
-    "flags": [ "CARGO", "OBSTACLE", "COVERED", "ENABLED_DRAINS_EPOWER" ],
-    "breaks_into": [
-      { "item": "steel_lump", "count": [ 8, 13 ] },
-      { "item": "steel_chunk", "count": [ 8, 13 ] },
-      { "item": "scrap", "count": [ 8, 13 ] },
-      { "item": "hose", "prob": 50 }
-    ],
-    "damage_reduction": { "all": 32 }
-  },
-  {
-    "type": "vehicle_part",
-    "id": "dishwasher",
-    "name": { "str": "dishwasher" },
-    "symbol": "d",
-    "color": "light_blue",
-    "broken_symbol": "#",
-    "broken_color": "light_blue",
-    "damage_modifier": 80,
-    "durability": 100,
-    "description": "A small dishwasher.  It's only good for salvage, or decorating your vehicle.",
-    "epower": -400,
-    "size": "40 L",
-    "item": "dishwasher",
-    "location": "center",
-    "looks_like": "washing_machine",
-    "requirements": {
-      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
-      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
-      "repair": {
-        "skills": [ [ "mechanics", 4 ] ],
-        "time": "60 m",
-        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
-      }
-    },
-    "flags": [ "CARGO", "OBSTACLE", "COVERED", "ENABLED_DRAINS_EPOWER" ],
-    "breaks_into": [
-      { "item": "steel_lump", "count": [ 8, 13 ] },
-      { "item": "steel_chunk", "count": [ 8, 13 ] },
-      { "item": "scrap", "count": [ 8, 13 ] },
-      { "item": "hose", "prob": 50 }
-    ]
   },
   {
     "type": "vehicle_part",
@@ -1153,7 +1108,7 @@
     "type": "vehicle_part",
     "id": "gas_sac_buoyancy_cell",
     "name": { "str": "gas sac buoyancy cell" },
-    "description": "Gas sacs tied together to keep your boat out of the water.",
+    "description": "Hydrogen-filled bags tied together.  Can help a boat float or provide limited lift for an airship.",
     "symbol": "o",
     "looks_like": "t_wall_log",
     "color": "brown",
@@ -1168,14 +1123,19 @@
       "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "qualities": [ { "id": "CUT", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "rope_natural_short", 1 ] ] }
     },
-    "flags": [ "FLOATS", "SHOCK_IMMUNE" ],
-    "breaks_into": [
-      { "item": "mutant_bug_hydrogen_sacs", "count": [ 144, 288 ] },
-      { "item": "bag_plastic", "count": [ 2, 10 ] },
-      { "item": "rigid_plastic_sheet", "count": [ 0, 2 ] }
-    ],
-    "//": "slight damage reduction, like a pillow sort of",
-    "damage_reduction": { "all": 2 }
+    "flags": [ "BALLOON", "FLOATS", "SHOCK_IMMUNE" ],
+    "height": 10,
+    "//": "Todo: Should explode if destroyed by fire damage.",
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 5, 10 ] } ],
+    "damage_reduction": { "all": 5 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "gas_sac_buoyancy_cell_external",
+    "copy-from": "gas_sac_buoyancy_cell",
+    "name": { "str": "external gas sac buoyancy cell" },
+    "location": "under",
+    "extend": { "flags": [ "PROTUSION", "BOARDABLE", "EXTENDABLE", "AISLE", "ROOF" ] }
   },
   {
     "type": "vehicle_part",
@@ -1222,7 +1182,6 @@
     "location": "structure",
     "flags": [
       "FLOATS",
-      "INITIAL_PART",
       "MOUNTABLE",
       "SEAT",
       "SEAT_REQUIRES_BALANCE",
@@ -1275,17 +1234,49 @@
     "broken_symbol": "x",
     "broken_color": "light_gray",
     "damage_modifier": 50,
-    "durability": 480,
+    "durability": 288,
     "item": "carbonfiber_boat_hull",
+    "folded_volume": "12500 ml",
     "location": "under",
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 6 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
-      "removal": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "armor_kevlar_plate", 1 ] ] }
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
     },
-    "flags": [ "FLOATS", "BOARDABLE", "SHOCK_RESISTANT" ],
+    "flags": [ "FLOATS", "BOARDABLE", "FOLDABLE", "SHOCK_RESISTANT" ],
     "breaks_into": "ig_vp_carbon",
-    "damage_reduction": { "all": 14 }
+    "damage_reduction": { "all": 34 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "aluminium_boat_hull",
+    "name": { "str": "aluminum boat hull" },
+    "description": "A rigid aluminum sheet that keeps water out of your boat.",
+    "symbol": "o",
+    "color": "light_blue",
+    "looks_like": "boat_board",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 200,
+    "item": "aluminium_sheet",
+    "location": "under",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "soldering_standard", 5 ], [ "vehicle_repair_aluminium", 1 ] ]
+      }
+    },
+    "flags": [ "FLOATS" ],
+    "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
+    "damage_reduction": { "all": 20 }
   },
   {
     "type": "vehicle_part",
@@ -1811,6 +1802,22 @@
     "damage_reduction": { "all": 75 }
   },
   {
+    "copy-from": "v_hdshutter",
+    "id": "v_hdshutter_superalloy",
+    "type": "vehicle_part",
+    "name": { "str": "superalloy shutter" },
+    "item": "alloy_plate",
+    "breaks_into": "ig_vp_alloy",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_superalloy", 1 ] ]
+      }
+    },
+    "extend": { "flags": [ "SHOCK_IMMUNE" ] }
+  },
+  {
     "type": "vehicle_part",
     "id": "v_woodshutter",
     "copy-from": "v_shutter",
@@ -1949,7 +1956,7 @@
     "broken_color": "yellow",
     "damage_modifier": 10,
     "durability": 15,
-    "description": "A small wind turbine.  Will slowly recharge the vehicle's electrical power when exposed to the wind.",
+    "description": "A small wind turbine.  Will slowly recharge the vehicle's electrical power when exposed to the wind depending on wind speed.",
     "epower": 30,
     "item": "wind_turbine",
     "location": "on_roof",
@@ -1989,7 +1996,7 @@
     "broken_color": "yellow",
     "damage_modifier": 10,
     "durability": 70,
-    "description": "A large wind turbine with stabilizing legs.  Will recharge the vehicle's electrical power when exposed to the wind.  Will cause extra drag on the vehicle.",
+    "description": "A large wind turbine with stabilizing legs.  Will recharge the vehicle's electrical power when exposed to the wind depending on wind speed.  Will cause extra drag on the vehicle.",
     "epower": 90,
     "item": "xl_wind_turbine",
     "location": "on_roof",
@@ -2204,24 +2211,20 @@
     "color": "dark_gray",
     "broken_symbol": ")",
     "broken_color": "dark_gray",
-    "durability": 600,
+    "durability": 660,
     "item": "alloy_plate",
     "location": "armor",
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
-      "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
       "repair": {
-        "skills": [ [ "mechanics", 5 ] ],
+        "skills": [ [ "mechanics", 3 ] ],
         "time": "60 m",
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_superalloy", 1 ] ]
       }
     },
     "flags": [ "ARMOR", "SHOCK_IMMUNE" ],
-    "breaks_into": [
-      { "item": "steel_lump", "count": [ 4, 6 ] },
-      { "item": "steel_chunk", "count": [ 4, 6 ] },
-      { "item": "scrap", "count": [ 4, 6 ] }
-    ],
+    "breaks_into": "ig_vp_alloy",
     "damage_reduction": { "all": 56 }
   },
   {
@@ -2374,6 +2377,31 @@
   },
   {
     "type": "vehicle_part",
+    "id": "horn_ship",
+    "name": { "str": "ship air horn" },
+    "symbol": "*",
+    "color": "light_gray",
+    "broken_symbol": "*",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 175,
+    "description": "An enormous ship air horn.  Use the vehicle controls and select the honk option to make a deafening noise.",
+    "bonus": 1000,
+    "item": "horn_ship",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "600 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "300 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "150 s",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "HORN", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "steel_chunk", "count": [ 1, 3 ] } ]
+  },
+  {
+    "type": "vehicle_part",
     "id": "beeper",
     "name": { "str": "back-up beeper" },
     "symbol": "*",
@@ -2416,6 +2444,25 @@
     "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "LOW_FINAL_AIR_DRAG", "NO_ROOF_NEEDED", "WINDOW" ],
     "breaks_into": "ig_vp_frame",
     "damage_reduction": { "all": 25 }
+  },
+  {
+    "copy-from": "door_trunk",
+    "id": "door_trunk_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber trunk door" },
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "durability": 180,
+    "damage_reduction": { "all": 30 },
+    "folded_volume": "2500 ml",
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
   },
   {
     "type": "vehicle_part",
@@ -2489,6 +2536,25 @@
     "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE" ],
     "breaks_into": "ig_vp_frame",
     "damage_reduction": { "all": 26 }
+  },
+  {
+    "copy-from": "door_sliding",
+    "id": "door_sliding_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber sliding door" },
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "durability": 180,
+    "damage_reduction": { "all": 31 },
+    "folded_volume": "2500 ml",
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
   },
   {
     "type": "vehicle_part",
@@ -3148,7 +3214,7 @@
     "broken_color": "light_gray",
     "damage_modifier": 5,
     "durability": 80,
-    "description": "An improvised raincatcher made using a tarpaulin, to collect rainwater into the tank beneath it.",
+    "description": "An improvised raincatcher made using a tarp, to collect rainwater into the tank beneath it.",
     "size": "90 L",
     "item": "tarp_raincatcher",
     "location": "on_roof",
@@ -3370,6 +3436,29 @@
   },
   {
     "type": "vehicle_part",
+    "id": "door_lock",
+    "name": { "str": "door lock" },
+    "symbol": "+",
+    "color": "dark_gray",
+    "broken_symbol": "+",
+    "broken_color": "light_gray",
+    "durability": 100,
+    "description": "A set of locks.  Attached to a suitable openable part, it will prevent other people from opening it.",
+    "folded_volume": "250 ml",
+    "weight_modifier": 0,
+    "item": "cargo_lock",
+    "location": "door_lock",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "12 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "12 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "6 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_small_metal", 1 ] ] }
+    },
+    "flags": [ "DOOR_LOCKING", "FOLDABLE", "SHOCK_RESISTANT", "NOREMOVE_SECURITY", "NOREMOVE_CLOSED" ],
+    "breaks_into": [ { "item": "clockworks", "count": [ 0, 2 ] }, { "item": "scrap", "count": [ 2, 6 ] } ],
+    "damage_reduction": { "all": 60 }
+  },
+  {
+    "type": "vehicle_part",
     "id": "turret_mount",
     "name": { "str": "turret mount" },
     "symbol": "X",
@@ -3472,6 +3561,25 @@
     "breaks_into": "ig_vp_frame"
   },
   {
+    "copy-from": "turret_mount",
+    "id": "turret_mount_manual_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "simple carbon fiber turret mount" },
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "5 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "folded_volume": "2500 ml",
+    "durability": 500,
+    "damage_reduction": { "all": 65 },
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+  },
+  {
     "type": "vehicle_part",
     "id": "controls_turret",
     "name": { "str": "turret control unit" },
@@ -3486,6 +3594,32 @@
     "description": "A set of motor, camera, and an AI unit which allows for tracking targets, friend-or-foe identification, and firing the connected turret in full automatic mode.  When installed over the turret, it will enable auto targeting mode for said turret.",
     "folded_volume": "750 ml",
     "flags": [ "ENABLED_DRAINS_EPOWER", "TURRET_CONTROLS", "UNMOUNT_ON_DAMAGE", "SHOCK_RESISTANT" ],
+    "requirements": {
+      "install": {
+        "time": "40 m",
+        "skills": [ [ "mechanics", 3 ], [ "electronics", 3 ] ],
+        "qualities": [ { "id": "SCREW", "level": 1 } ]
+      },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "3 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "qualities": [ { "id": "SCREW", "level": 1 } ] }
+    },
+    "breaks_into": "ig_vp_device"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "bomber controls",
+    "looks_like": "turret_controls",
+    "name": { "str": "bomb bay" },
+    "symbol": "$",
+    "color": "yellow",
+    "broken_symbol": "$",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 50,
+    "item": "bomber_controls",
+    "description": "A motor and attached linkage that can activate and drop items, such as explosives, from within the attached storage space.  Activating it from vehicle controls will let you select which items to arm, then release them underneath the vehicle.",
+    "folded_volume": "750 ml",
+    "flags": [ "DROPPER", "SHOCK_RESISTANT" ],
     "requirements": {
       "install": {
         "time": "40 m",

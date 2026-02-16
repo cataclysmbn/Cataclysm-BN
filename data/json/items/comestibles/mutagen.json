@@ -159,6 +159,15 @@
     "use_action": { "type": "mutagen_iv", "mutation_category": "LIZARD" }
   },
   {
+    "id": "iv_mutagen_serpent",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "serpent serum",
+    "description": "A super-concentrated mutagen resembling congealed venom.  You need a syringe to inject it… if you really want to?",
+    "color": "light_green",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SERPENT" }
+  },
+  {
     "id": "iv_mutagen_lupine",
     "copy-from": "iv_mutagen_flavor",
     "type": "COMESTIBLE",
@@ -365,6 +374,13 @@
     "use_action": { "type": "mutagen", "mutation_category": "LIZARD" }
   },
   {
+    "id": "mutagen_serpent",
+    "copy-from": "mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "serpent mutagen",
+    "use_action": { "type": "mutagen", "mutation_category": "SERPENT" }
+  },
+  {
     "id": "mutagen_lupine",
     "copy-from": "mutagen_flavor",
     "type": "COMESTIBLE",
@@ -478,7 +494,7 @@
     "comestible_type": "MED",
     "category": "mutagen",
     "name": "purifier smart shot",
-    "description": "An experimental stem cell treatment utilizing medical nanomachines, offering limited control over which mutations are purified.  The liquid sloshes strangely inside of this syringe.",
+    "description": "An experimental stem cell treatment utilizing medical nanomachines, offering limited control over which genetic traits are altered. You can use it to selectively remove mutations. The liquid sloshes strangely inside of this syringe.",
     "weight": "12 g",
     "volume": "10ml",
     "price": "12 kUSD",

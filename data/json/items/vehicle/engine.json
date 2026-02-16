@@ -25,6 +25,37 @@
     ]
   },
   {
+    "abstract": "engine_diesel_strong",
+    "copy-from": "engine_combustion",
+    "type": "ENGINE",
+    "name": { "str": "strong diesel engine" },
+    "faults": [
+      "fault_engine_belt_drive",
+      "fault_engine_filter_air",
+      "fault_engine_filter_fuel",
+      "fault_engine_glow_plug",
+      "fault_engine_immobiliser",
+      "fault_engine_pump_diesel",
+      "fault_engine_pump_water",
+      "fault_engine_starter"
+    ],
+    "//": "player should atleast have a basic understanding to be able to work on and learn from it",
+    "flags": [ "ALLOWS_REMOTE_USE" ],
+    "use_action": [
+      {
+        "//": "40 xp/hr.  Tier 2, 2-5 skill.",
+        "type": "train_skill",
+        "training_msg": "You examine the V6 engine, disassembling and reassembling it in an effort to learn a bit about how its components fit together and operate.",
+        "training_skill": "mechanics",
+        "training_skill_min_level": 2,
+        "training_skill_xp": 8,
+        "training_skill_max_level": 5,
+        "training_skill_interval": 12,
+        "training_skill_xp_chance": 90
+      }
+    ]
+  },
+  {
     "abstract": "engine_gasoline",
     "copy-from": "engine_combustion",
     "type": "ENGINE",
@@ -37,6 +68,36 @@
       "fault_engine_pump_fuel",
       "fault_engine_pump_water",
       "fault_engine_starter"
+    ]
+  },
+  {
+    "abstract": "engine_gasoline_strong",
+    "copy-from": "engine_combustion",
+    "type": "ENGINE",
+    "name": { "str": "strong gasoline engine" },
+    "faults": [
+      "fault_engine_belt_drive",
+      "fault_engine_filter_air",
+      "fault_engine_filter_fuel",
+      "fault_engine_immobiliser",
+      "fault_engine_pump_fuel",
+      "fault_engine_pump_water",
+      "fault_engine_starter"
+    ],
+    "//": "player should atleast have a basic understanding to be able to work on and learn from it",
+    "flags": [ "ALLOWS_REMOTE_USE" ],
+    "use_action": [
+      {
+        "//": "40 xp/hr.  Tier 2, 2-5 skill.",
+        "type": "train_skill",
+        "training_msg": "You examine the V6 engine, disassembling and reassembling it in an effort to learn a bit about how its components fit together and operate.",
+        "training_skill": "mechanics",
+        "training_skill_min_level": 2,
+        "training_skill_xp": 8,
+        "training_skill_max_level": 5,
+        "training_skill_interval": 12,
+        "training_skill_xp_chance": 90
+      }
     ]
   },
   {
@@ -125,7 +186,7 @@
   },
   {
     "id": "v6_combustion",
-    "copy-from": "engine_gasoline",
+    "copy-from": "engine_gasoline_strong",
     "type": "ENGINE",
     "name": { "str": "V6 engine" },
     "description": "A powerful 6-cylinder combustion engine.",
@@ -137,7 +198,7 @@
   },
   {
     "id": "v6_diesel",
-    "copy-from": "engine_diesel",
+    "copy-from": "engine_diesel_strong",
     "type": "ENGINE",
     "name": { "str": "V6 diesel engine" },
     "description": "A powerful 6-cylinder diesel engine.",
@@ -149,7 +210,7 @@
   },
   {
     "id": "v8_combustion",
-    "copy-from": "engine_gasoline",
+    "copy-from": "engine_gasoline_strong",
     "type": "ENGINE",
     "name": { "str": "V8 engine" },
     "description": "A large and very powerful 8-cylinder combustion engine.",
@@ -161,7 +222,7 @@
   },
   {
     "id": "v8_diesel",
-    "copy-from": "engine_diesel",
+    "copy-from": "engine_diesel_strong",
     "type": "ENGINE",
     "name": { "str": "V8 diesel engine" },
     "description": "A powerful 8-cylinder diesel engine.",
@@ -173,7 +234,7 @@
   },
   {
     "id": "v12_combustion",
-    "copy-from": "engine_gasoline",
+    "copy-from": "engine_gasoline_strong",
     "type": "ENGINE",
     "name": { "str": "V12 engine" },
     "description": "A massive and extremely powerful V12 engine, usually built into high end sports cars.",
@@ -185,7 +246,7 @@
   },
   {
     "id": "v12_diesel",
-    "copy-from": "engine_diesel",
+    "copy-from": "engine_diesel_strong",
     "type": "ENGINE",
     "name": { "str": "V12 diesel engine" },
     "description": "A massive and extremely powerful V12 engine, usually built into heavy trucks.",
@@ -268,7 +329,7 @@
   },
   {
     "id": "engine_block_medium",
-    "copy-from": "spare_part",
+    "copy-from": "engine_block_tiny",
     "type": "GENERIC",
     "name": { "str": "medium engine block" },
     "description": "The beginnings of a medium gas or diesel engine.  It's not good for much of anything on its own.",
@@ -280,7 +341,7 @@
   },
   {
     "id": "engine_block_small",
-    "copy-from": "spare_part",
+    "copy-from": "engine_block_tiny",
     "type": "GENERIC",
     "name": { "str": "small engine block" },
     "description": "The beginnings of a small gas or diesel engine.  It's not good for much of anything on its own.",
@@ -300,6 +361,19 @@
     "weight": "8000 g",
     "volume": "500 ml",
     "price": "35 USD",
+    "use_action": [
+      {
+        "//": "20 xp/hr.  Tier 1, 0-3 skill.",
+        "type": "train_skill",
+        "training_msg": "You examine the engine block, learning a bit about how its components fit together and operate.",
+        "training_skill": "mechanics",
+        "training_skill_min_level": 0,
+        "training_skill_xp": 4,
+        "training_skill_max_level": 3,
+        "training_skill_interval": 12,
+        "training_skill_xp_chance": 90
+      }
+    ],
     "price_postapoc": "1 USD"
   },
   {

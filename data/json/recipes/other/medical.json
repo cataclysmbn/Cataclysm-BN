@@ -182,7 +182,14 @@
     "components": [
       [ [ "rag", 3 ], [ "medical_gauze", 1 ] ],
       [ [ "duct_tape", 20 ], [ "medical_tape", 5 ] ],
-      [ [ "disinfectant", 5 ], [ "thyme_oil", 1 ], [ "chem_ethanol", 250 ], [ "denat_alcohol", 250 ] ]
+      [
+        [ "disinfectant", 5 ],
+        [ "chem_hydrogen_peroxide", 5 ],
+        [ "thyme_oil", 1 ],
+        [ "chem_ethanol", 250 ],
+        [ "denat_alcohol", 250 ],
+        [ "disinfectant_makeshift", 10 ]
+      ]
     ]
   },
   {
@@ -241,7 +248,11 @@
     ],
     "qualities": [ { "id": "CHEM", "level": 2 } ],
     "tools": [ [ [ "surface_heat", 20, "LIST" ] ] ],
-    "components": [ [ [ "water_clean", 1 ] ], [ [ "oxy_powder", 10 ] ], [ [ "chem_ethanol", 250 ], [ "denat_alcohol", 250 ] ] ]
+    "components": [
+      [ [ "water_clean", 1 ] ],
+      [ [ "oxy_powder", 10 ] ],
+      [ [ "chem_ethanol", 250 ], [ "denat_alcohol", 250 ], [ "disinfectant_makeshift", 10 ] ]
+    ]
   },
   {
     "result": "disinfectant_makeshift",
@@ -346,6 +357,6 @@
       [ "reference_firstaid1", 6 ]
     ],
     "tools": [ [ [ "vac_sealer", 15 ], [ "makeshift_sealer", 30 ] ] ],
-    "components": [ [ [ "bag_plastic", 1 ] ], [ [ "paper", 2 ] ] ]
+    "components": [ [ [ "bag_plastic", 1 ], [ "bag_zipper", 1 ] ], [ [ "paper", 2 ] ] ]
   }
 ]

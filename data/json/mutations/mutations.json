@@ -67,6 +67,16 @@
   },
   {
     "type": "mutation",
+    "id": "INATTENTIVE",
+    "name": { "str": "Inattentive" },
+    "points": -4,
+    "starting_trait": true,
+    "description": "You never paid attention to your surroundings and specifically to people around you.  You can't judge intent of critters you see.",
+    "purifiable": false,
+    "valid": false
+  },
+  {
+    "type": "mutation",
     "id": "OUTDOORSMAN",
     "name": { "str": "Outdoorsman" },
     "points": 1,
@@ -225,7 +235,7 @@
     "points": 1,
     "description": "Your system is rather tolerant of poisons and toxins, and most will affect you less.",
     "starting_trait": true,
-    "category": [ "INSECT", "SLIME", "SPIDER", "MEDICAL" ]
+    "category": [ "INSECT", "SERPENT", "SLIME", "SPIDER", "MEDICAL" ]
   },
   {
     "type": "mutation",
@@ -319,7 +329,8 @@
     "description": "You can manage to find space for anything!  You can carry 40% more volume.",
     "starting_trait": true,
     "valid": false,
-    "cancels": [ "DISORGANIZED" ]
+    "cancels": [ "DISORGANIZED" ],
+    "packmule_modifier": 1.4
   },
   {
     "type": "mutation",
@@ -391,7 +402,7 @@
     "points": 2,
     "description": "You eat faster, and can eat and drink more, than anyone else!  You also enjoy food more; delicious food is better for your morale, and you don't mind unsavory meals as much.",
     "starting_trait": true,
-    "category": [ "MOUSE", "LUPINE" ],
+    "category": [ "MOUSE", "LUPINE", "SERPENT" ],
     "valid": false
   },
   {
@@ -584,7 +595,8 @@
       "style_pankration",
       "style_kickboxing"
     ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -602,7 +614,8 @@
       "style_zui_quan",
       "style_wingchun"
     ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -612,7 +625,8 @@
     "description": "You have studied the arts of the Shaolin monks.  You start with one of the five animal fighting styles: Tiger, Crane, Leopard, Snake, or Dragon.",
     "starting_trait": true,
     "initial_ma_styles": [ "style_tiger", "style_crane", "style_leopard", "style_snake", "style_dragon" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -631,7 +645,8 @@
       "style_swordsmanship",
       "style_medievalpole"
     ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -641,7 +656,8 @@
     "description": "You were an avid fencer, starting with foil and moving onto saber, then épée.  You competed nationally and dabbled with some of the historical fencing weapons afforded by HEMA's popularity.",
     "starting_trait": false,
     "initial_ma_styles": [ "style_fencing" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -813,7 +829,8 @@
     "description": "You are terrible at organizing and storing your possessions.  You can carry 40% less volume.",
     "starting_trait": true,
     "valid": false,
-    "cancels": [ "PACKMULE" ]
+    "cancels": [ "PACKMULE" ],
+    "packmule_modifier": 0.6
   },
   {
     "type": "mutation",
@@ -832,7 +849,7 @@
     "points": -1,
     "description": "Your hearing is poor, and you may not hear quiet or far-off noises.",
     "starting_trait": true,
-    "category": [ "PLANT" ],
+    "category": [ "PLANT", "SERPENT" ],
     "cancels": [ "GOODHEARING" ],
     "hearing_modifier": 0.5
   },
@@ -1005,7 +1022,7 @@
     "changes_to": [ "SMELLY2" ],
     "types": [ "SCENT" ],
     "scent_intensity": 800,
-    "category": [ "FELINE", "LUPINE", "MOUSE" ]
+    "category": [ "FELINE", "LUPINE", "MOUSE", "SERPENT" ]
   },
   {
     "type": "mutation",
@@ -1057,6 +1074,15 @@
     "starting_trait": true,
     "valid": false,
     "category": [ "MEDICAL" ]
+  },
+  {
+    "type": "mutation",
+    "id": "NYCTOPHOBIA",
+    "name": { "str": "Nyctophobia" },
+    "points": -3,
+    "description": "You are terribly afraid of the dark.  You refuse to enter very dark areas.  If you somehow still happen to stay in dark areas, you suffer from various detrimental mental and physical effects.",
+    "starting_trait": true,
+    "valid": false
   },
   {
     "type": "mutation",
@@ -1349,7 +1375,7 @@
     "social_modifiers": { "persuade": -1, "intimidate": 1 },
     "leads_to": [ "LIZ_IR" ],
     "cancels": [ "ELFAEYES", "FEL_EYE", "URSINE_EYE", "BIRD_EYE", "COMPOUND_EYES" ],
-    "category": [ "LIZARD", "RAPTOR" ]
+    "category": [ "LIZARD", "SERPENT", "RAPTOR" ]
   },
   {
     "type": "mutation",
@@ -1359,7 +1385,7 @@
     "description": "Your optic nerves and brain have mutated to catch up with your eyes, allowing you to see in the infrared spectrum.",
     "prereqs": [ "LIZ_EYE" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "INFRARED" ],
-    "category": [ "LIZARD", "RAPTOR" ]
+    "category": [ "LIZARD", "SERPENT", "RAPTOR" ]
   },
   {
     "type": "mutation",
@@ -1441,7 +1467,7 @@
     "description": "Your teeth have grown into two-inch-long fangs, allowing you to make an extra attack when conditions favor it.",
     "types": [ "TEETH" ],
     "changes_to": [ "SABER_TEETH", "SHARKTEETH" ],
-    "category": [ "LIZARD", "FISH", "LUPINE", "FELINE", "CHIMERA" ],
+    "category": [ "LIZARD", "SERPENT", "FISH", "LUPINE", "FELINE", "CHIMERA" ],
     "attacks": [
       {
         "attack_text_u": "You sink your fangs into %s",
@@ -1629,7 +1655,7 @@
     "ugliness": 3,
     "description": "A set of flexible green scales has grown to cover your body, acting as 3 points of natural armor across your body.  Somewhat reduces wet effects.",
     "types": [ "SKIN" ],
-    "category": [ "CHIMERA", "RAPTOR", "LIZARD" ],
+    "category": [ "CHIMERA", "RAPTOR", "LIZARD", "SERPENT" ],
     "prereqs": [ "SKIN_ROUGH" ],
     "changes_to": [ "THICK_SCALES", "SLEEK_SCALES", "PATCHSKIN1" ],
     "movecost_swim_modifier": 0.9,
@@ -1757,7 +1783,8 @@
     "category": [ "CHIMERA", "SPIDER", "MOUSE" ],
     "types": [ "SKIN" ],
     "prereqs": [ "SKIN_ROUGH" ],
-    "changes_to": [ "FUR", "FELINE_FUR", "LUPINE_FUR", "URSINE_FUR", "CHITIN_FUR", "PATCHSKIN1", "RABBIT_FUR" ]
+    "changes_to": [ "FUR", "FELINE_FUR", "LUPINE_FUR", "URSINE_FUR", "CHITIN_FUR", "PATCHSKIN1", "RABBIT_FUR" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1773,7 +1800,8 @@
     "changes_to": [ "URSINE_FUR" ],
     "prereqs": [ "LIGHTFUR" ],
     "category": [ "BEAST", "CATTLE", "RAT" ],
-    "armor": [ { "parts": "ALL", "bash": 3 } ]
+    "armor": [ { "parts": "ALL", "bash": 3 } ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1788,7 +1816,8 @@
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR" ],
     "category": [ "URSINE" ],
-    "armor": [ { "parts": "ALL", "bash": 5 } ]
+    "armor": [ { "parts": "ALL", "bash": 5 } ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1803,7 +1832,8 @@
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR" ],
     "category": [ "LUPINE" ],
-    "armor": [ { "parts": "ALL", "bash": 3 } ]
+    "armor": [ { "parts": "ALL", "bash": 3 } ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1818,7 +1848,8 @@
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR" ],
     "leads_to": [ "LYNX_FUR" ],
-    "category": [ "BEAST", "FELINE", "MOUSE" ]
+    "category": [ "BEAST", "FELINE", "MOUSE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1830,7 +1861,8 @@
     "description": "Your fur has grown out significantly around your cheeks and neck.",
     "types": [ "SKIN" ],
     "prereqs": [ "FELINE_FUR" ],
-    "category": [ "FELINE" ]
+    "category": [ "FELINE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1859,7 +1891,8 @@
     "category": [ "CHIMERA" ],
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR", "SCALES" ],
-    "changes_to": [ "PATCHSKIN2" ]
+    "changes_to": [ "PATCHSKIN2" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1887,7 +1920,8 @@
     "armor": [ { "parts": "ALL", "physical": 5 } ],
     "category": [ "CHIMERA" ],
     "types": [ "SKIN" ],
-    "prereqs": [ "PATCHSKIN1" ]
+    "prereqs": [ "PATCHSKIN1" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1998,7 +2032,8 @@
     "prereqs": [ "CHITIN", "LIGHTFUR" ],
     "category": [ "SPIDER" ],
     "changes_to": [ "CHITIN_FUR2" ],
-    "armor": [ { "parts": "ALL", "physical": 5 } ]
+    "armor": [ { "parts": "ALL", "physical": 5 } ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -2014,7 +2049,8 @@
     "prereqs": [ "CHITIN_FUR" ],
     "category": [ "SPIDER" ],
     "changes_to": [ "CHITIN_FUR3", "CHITIN3" ],
-    "armor": [ { "parts": "ALL", "physical": 7, "bash": 10 } ]
+    "armor": [ { "parts": "ALL", "physical": 7, "bash": 10 } ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -2043,7 +2079,8 @@
     "threshreq": [ "THRESH_SPIDER" ],
     "category": [ "SPIDER" ],
     "armor": [ { "parts": "ALL", "physical": 10, "bash": 15 } ],
-    "passive_mods": { "dex_mod": -1 }
+    "passive_mods": { "dex_mod": -1 },
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -2099,9 +2136,8 @@
     "visibility": 3,
     "ugliness": 2,
     "description": "Your skin is light green and has a slightly woody quality to it.  This provides 2 points of cut and stab armor and 1 point of ballistic armor, and helps you retain moisture, resulting in less thirst.  Greatly decreases wet penalties.",
-    "types": [ "SKIN", "skin_tone" ],
-    "changes_to": [ "BARK" ],
-    "leads_to": [ "THORNS", "LEAVES" ],
+    "types": [ "skin_tone" ],
+    "leads_to": [ "THORNS", "LEAVES", "BARK" ],
     "category": [ "PLANT", "ELFA" ],
     "wet_protection": [
       { "part": "head", "neutral": 4 },
@@ -2125,23 +2161,23 @@
     "points": 5,
     "visibility": 10,
     "ugliness": 3,
-    "description": "Your skin is coated in a light bark, like that of a tree.  This provides 5 points of cutting and piercing damage, 4 points of ballistic armor, and one point of protection from fire.  Greatly reduces wet effects.",
-    "types": [ "SKIN", "skin_tone" ],
+    "description": "Your skin has grown over with bark, like that of a tree.  This provides an additional 3 points of cutting, piercing, and ballistic armor, along with 1 point of protection from fire.  Further reduces wet effects.",
+    "types": [ "SKIN" ],
     "prereqs": [ "PLANTSKIN" ],
     "category": [ "PLANT" ],
     "wet_protection": [
-      { "part": "head", "ignored": 5 },
-      { "part": "leg_l", "ignored": 16 },
-      { "part": "leg_r", "ignored": 16 },
-      { "part": "foot_l", "ignored": 5 },
-      { "part": "foot_r", "ignored": 5 },
-      { "part": "arm_l", "ignored": 14 },
-      { "part": "arm_r", "ignored": 14 },
-      { "part": "hand_l", "ignored": 4 },
-      { "part": "hand_r", "ignored": 4 },
-      { "part": "torso", "ignored": 30 }
+      { "part": "head", "ignored": 1 },
+      { "part": "leg_l", "ignored": 11 },
+      { "part": "leg_r", "ignored": 11 },
+      { "part": "foot_l", "ignored": 4 },
+      { "part": "foot_r", "ignored": 4 },
+      { "part": "arm_l", "ignored": 10 },
+      { "part": "arm_r", "ignored": 10 },
+      { "part": "hand_l", "ignored": 3 },
+      { "part": "hand_r", "ignored": 3 },
+      { "part": "torso", "ignored": 20 }
     ],
-    "armor": [ { "parts": "ALL", "cut": 5, "stab": 5, "bullet": 4, "heat": 1 } ]
+    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ]
   },
   {
     "type": "mutation",
@@ -2354,8 +2390,10 @@
     "ugliness": 2,
     "cut_dmg_bonus": 6,
     "butchering_quality": 4,
-    "description": "You have claws on the ends of your fingers.  If you aren't wearing gloves, your unarmed attacks deal a minor amount of cutting damage.",
+    "description": "You have claws on the ends of your fingers.  Prevents wearing gloves, unless they're fingerless.",
     "types": [ "CLAWS" ],
+    "restricts_gear": [ "hand_l", "hand_r" ],
+    "allowed_items": [ "ALLOWS_CLAWS" ],
     "prereqs": [ "NAILS" ],
     "changes_to": [ "CLAWS_RETRACT", "CLAWS_RAT" ],
     "cancels": [ "ARM_TENTACLES", "ARM_TENTACLES_4", "ARM_TENTACLES_8" ],
@@ -2371,8 +2409,10 @@
     "cut_dmg_bonus": 6,
     "butchering_quality": 4,
     "flags": [ "UNARMED_BONUS" ],
-    "description": "Your claws have grown tougher and slightly gnarled.",
+    "description": "Your claws have grown tougher and slightly gnarled.  Prevents wearing gloves that aren't fingerless.",
     "types": [ "CLAWS" ],
+    "restricts_gear": [ "hand_l", "hand_r" ],
+    "allowed_items": [ "ALLOWS_CLAWS" ],
     "prereqs": [ "CLAWS" ],
     "changes_to": [ "CLAWS_ST" ],
     "cancels": [ "ARM_TENTACLES", "ARM_TENTACLES_4", "ARM_TENTACLES_8" ],
@@ -2390,8 +2430,10 @@
     "cut_dmg_bonus": 6,
     "butchering_quality": 8,
     "flags": [ "UNARMED_BONUS" ],
-    "description": "Your paws are bone, muscle, and claw with a thin layer of skin and fur.  They might as well be made of stainless steel.",
+    "description": "Your paws are bone, muscle, and claw with a thin layer of skin and fur.  They might as well be made of stainless steel.  Prevents wearing gloves that aren't fingerless.",
     "types": [ "CLAWS" ],
+    "restricts_gear": [ "hand_l", "hand_r" ],
+    "allowed_items": [ "ALLOWS_CLAWS" ],
     "prereqs": [ "CLAWS_RAT" ],
     "prereqs2": [ "PAWS" ],
     "threshreq": [ "THRESH_RAT" ],
@@ -2460,7 +2502,8 @@
     "flags": [ "UNARMED_BONUS" ],
     "mixed_effect": true,
     "restricts_gear": [ "hand_l", "hand_r" ],
-    "description": "Your index fingers have grown into huge talons.  After a bit of practice, you find that this does not affect your dexterity, but allows for a deadly unarmed attack.  They also prevent wearing gloves.",
+    "allowed_items": [ "ALLOWS_CLAWS" ],
+    "description": "Your index fingers have grown into huge talons.  After a bit of practice, you find that this does not affect your dexterity, but allows for a deadly unarmed attack.  They also prevent wearing gloves, though fingerless gloves are fair game.",
     "types": [ "CLAWS" ],
     "prereqs": [ "NAILS" ],
     "cancels": [ "ARM_TENTACLES", "ARM_TENTACLES_4", "ARM_TENTACLES_8" ],
@@ -2582,7 +2625,7 @@
     "description": "Your body produces a potent venom.  Cutting or stabbing attacks from mutations have a chance to poison your target.",
     "prereqs": [ "POISRESIST" ],
     "changes_to": [ "POISONOUS2" ],
-    "category": [ "SLIME", "TROGLOBITE", "SPIDER" ]
+    "category": [ "SLIME", "TROGLOBITE", "SPIDER", "SERPENT" ]
   },
   {
     "type": "mutation",
@@ -2591,8 +2634,8 @@
     "points": 2,
     "description": "Your venom has become particularly strong.  You're confident that your bites or other cutting/stabbing natural attacks will take your target down quickly.",
     "prereqs": [ "POISONOUS" ],
-    "threshreq": [ "THRESH_SPIDER" ],
-    "category": [ "SPIDER" ]
+    "threshreq": [ "THRESH_SPIDER", "THRESH_SERPENT" ],
+    "category": [ "SPIDER", "SERPENT" ]
   },
   {
     "type": "mutation",
@@ -2701,6 +2744,7 @@
     "types": [ "LEGS" ],
     "category": [ "RAPTOR" ],
     "restricts_gear": [ "foot_l", "foot_r" ],
+    "allowed_items": [ "ALLOWS_CLAWS_FOOT" ],
     "attacks": {
       "attack_text_u": "You slash %s with a talon",
       "attack_text_npc": "%1$s slashes %2$s with a talon",
@@ -2713,7 +2757,7 @@
     "type": "mutation",
     "id": "HOOVES",
     "name": { "str": "Hooves" },
-    "points": -2,
+    "points": -3,
     "visibility": 2,
     "ugliness": 2,
     "mixed_effect": true,
@@ -2722,6 +2766,8 @@
     "category": [ "CATTLE", "CHIMERA" ],
     "wet_protection": [ { "part": "foot_l", "neutral": 10 }, { "part": "foot_r", "neutral": 10 } ],
     "restricts_gear": [ "foot_l", "foot_r" ],
+    "allowed_items": [ "ALLOWS_HOOVES" ],
+    "allowed_items_only": true,
     "armor": [ { "parts": [ "foot_l", "foot_r" ], "physical": 10 } ],
     "attacks": {
       "attack_text_u": "You kick %s with your hooves",
@@ -2811,6 +2857,7 @@
     "description": "We have streamlined our nutritional requirements.  We rely on the Mycus for sustenance, as it relies on us.  We may locate sources of sustenance in close proximity to Mycus core towers, and in forested areas that the Mycus has grown into.",
     "valid": false,
     "purifiable": false,
+    "prereqs": [ "M_IMMUNE" ],
     "threshreq": [ "THRESH_MYCUS" ],
     "cancels": [ "GOURMAND", "BEAK", "BEAK_PECK", "BEAK_HUM" ],
     "category": [ "MYCUS" ]
@@ -2848,8 +2895,8 @@
     "points": 3,
     "description": "Eating rotting, long-dead flesh is good for the struggle, and safe--if still completely unappealing--for you.",
     "prereqs": [ "POISRESIST" ],
-    "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE" ],
-    "category": [ "RAT", "CHIMERA", "MOUSE" ]
+    "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE", "THRESH_SERPENT" ],
+    "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ]
   },
   {
     "type": "mutation",
@@ -2879,6 +2926,7 @@
     "threshreq": [ "THRESH_FELINE", "THRESH_CHIMERA" ],
     "category": [ "FELINE", "CHIMERA" ],
     "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "social_modifiers": { "intimidate": 15 },
     "attacks": {
       "attack_text_u": "You tear into %s with your saber teeth",
@@ -2934,6 +2982,7 @@
     "prereqs": [ "HORNS" ],
     "category": [ "CHIMERA" ],
     "restricts_gear": [ "head" ],
+    "allowed_items": [ "ALLOWS_HORNS" ],
     "attacks": {
       "attack_text_u": "You headbutt %s with your curled horns",
       "attack_text_npc": "%1$s headbutts %2$s with their curled horns",
@@ -2954,6 +3003,7 @@
     "types": [ "HORNS" ],
     "prereqs": [ "HORNS" ],
     "restricts_gear": [ "head" ],
+    "allowed_items": [ "ALLOWS_HORNS" ],
     "allow_soft_gear": true,
     "attacks": {
       "attack_text_u": "You stab %s with your pointed horns",
@@ -2975,6 +3025,7 @@
     "types": [ "HORNS" ],
     "prereqs": [ "HORNS" ],
     "restricts_gear": [ "head" ],
+    "allowed_items": [ "ALLOWS_HORNS" ],
     "allow_soft_gear": true,
     "attacks": {
       "attack_text_u": "You butt %s with your antlers",
@@ -2998,6 +3049,7 @@
     "active": true,
     "starts_active": true,
     "restricts_gear": [ "head" ],
+    "allowed_items": [ "ALLOWS_HORNS" ],
     "allow_soft_gear": true
   },
   {
@@ -3035,7 +3087,9 @@
     "wet_protection": [ { "part": "leg_l", "good": 3 }, { "part": "leg_r", "good": 3 } ],
     "movecost_swim_modifier": 0.75,
     "restricts_gear": [ "leg_l", "leg_r" ],
-    "allow_soft_gear": true
+    "allow_soft_gear": true,
+    "allowed_items": [ "ALLOWS_TAIL" ],
+    "flags": [ "MUTATION_SWIM" ]
   },
   {
     "type": "mutation",
@@ -3050,7 +3104,9 @@
     "category": [ "FELINE" ],
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
-    "dodge_modifier": 2
+    "allowed_items": [ "ALLOWS_TAIL" ],
+    "dodge_modifier": 2,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3064,7 +3120,9 @@
     "category": [ "CATTLE" ],
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
-    "dodge_modifier": 1
+    "allowed_items": [ "ALLOWS_TAIL" ],
+    "dodge_modifier": 1,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3078,6 +3136,7 @@
     "category": [ "RAT", "MOUSE" ],
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
+    "allowed_items": [ "ALLOWS_TAIL" ],
     "dodge_modifier": 2
   },
   {
@@ -3093,6 +3152,7 @@
     "category": [ "LIZARD" ],
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
+    "allowed_items": [ "ALLOWS_TAIL" ],
     "attacks": {
       "attack_text_u": "You whap %s with your tail",
       "attack_text_npc": "%1$s whaps %2$s with their tail",
@@ -3113,6 +3173,7 @@
     "category": [ "RAPTOR" ],
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
+    "allowed_items": [ "ALLOWS_TAIL" ],
     "dodge_modifier": 3
   },
   {
@@ -3127,8 +3188,10 @@
     "category": [ "BEAST", "LUPINE" ],
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
+    "allowed_items": [ "ALLOWS_TAIL" ],
     "social_modifiers": { "lie": -20, "persuade": 10 },
-    "dodge_modifier": 4
+    "dodge_modifier": 4,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3142,6 +3205,7 @@
     "prereqs": [ "TAIL_LONG" ],
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
+    "allowed_items": [ "ALLOWS_TAIL" ],
     "attacks": {
       "attack_text_u": "You sting %s with your tail",
       "attack_text_npc": "%1$s stings %2$s with their tail",
@@ -3162,6 +3226,7 @@
     "category": [ "CHIMERA" ],
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
+    "allowed_items": [ "ALLOWS_TAIL" ],
     "attacks": {
       "attack_text_u": "You club %s with your tail",
       "attack_text_npc": "%1$s clubs %2$s with their tail",
@@ -3328,10 +3393,11 @@
       "THRESH_FELINE",
       "THRESH_URSINE",
       "THRESH_LIZARD",
+      "THRESH_SERPENT",
       "THRESH_SPIDER"
     ],
     "cancels": [ "PACIFIST" ],
-    "category": [ "BEAST", "RAPTOR", "CHIMERA", "LUPINE", "FELINE", "URSINE", "LIZARD", "SPIDER" ],
+    "category": [ "BEAST", "RAPTOR", "CHIMERA", "LUPINE", "FELINE", "URSINE", "LIZARD", "SERPENT", "SPIDER" ],
     "flags": [ "PRED1" ]
   },
   {
@@ -3353,10 +3419,11 @@
       "THRESH_FELINE",
       "THRESH_URSINE",
       "THRESH_LIZARD",
+      "THRESH_SERPENT",
       "THRESH_SPIDER"
     ],
     "cancels": [ "PACIFIST" ],
-    "category": [ "BEAST", "RAPTOR", "CHIMERA", "LUPINE", "FELINE", "URSINE", "LIZARD", "SPIDER" ],
+    "category": [ "BEAST", "RAPTOR", "CHIMERA", "LUPINE", "FELINE", "URSINE", "LIZARD", "SERPENT", "SPIDER" ],
     "flags": [ "PRED2" ]
   },
   {
@@ -3380,10 +3447,11 @@
       "THRESH_FELINE",
       "THRESH_URSINE",
       "THRESH_LIZARD",
+      "THRESH_SERPENT",
       "THRESH_SPIDER"
     ],
     "cancels": [ "PACIFIST" ],
-    "category": [ "BEAST", "RAPTOR", "CHIMERA", "LUPINE", "FELINE", "URSINE", "LIZARD", "SPIDER" ],
+    "category": [ "BEAST", "RAPTOR", "CHIMERA", "LUPINE", "FELINE", "URSINE", "LIZARD", "SERPENT", "SPIDER" ],
     "passive_mods": { "int_mod": -1 },
     "flags": [ "PRED3" ]
   },
@@ -3415,8 +3483,16 @@
     "purifiable": false,
     "prereqs": [ "CARNIVORE" ],
     "prereqs2": [ "PRED3", "PRED4" ],
-    "threshreq": [ "THRESH_BEAST", "THRESH_RAPTOR", "THRESH_CHIMERA", "THRESH_URSINE", "THRESH_LIZARD", "THRESH_SPIDER" ],
-    "category": [ "BEAST", "RAPTOR", "CHIMERA", "URSINE", "LIZARD", "SPIDER" ],
+    "threshreq": [
+      "THRESH_BEAST",
+      "THRESH_RAPTOR",
+      "THRESH_CHIMERA",
+      "THRESH_URSINE",
+      "THRESH_LIZARD",
+      "THRESH_SERPENT",
+      "THRESH_SPIDER"
+    ],
+    "category": [ "BEAST", "RAPTOR", "CHIMERA", "URSINE", "LIZARD", "SERPENT", "SPIDER" ],
     "flags": [ "CANNIBAL" ]
   },
   {
@@ -3448,6 +3524,8 @@
     "falling_damage_multiplier": 0.75,
     "flags": [ "MUTATION_FLIGHT" ],
     "types": [ "WINGS" ],
+    "restricts_gear": [ "torso" ],
+    "allowed_items": [ "ALLOWS_WINGS" ],
     "prereqs": [ "WINGS_STUB" ],
     "category": [ "BIRD" ]
   },
@@ -3460,6 +3538,8 @@
     "ugliness": 4,
     "description": "You have a pair of large, translucent wings.  They are too small to provide lift, but can reduce falling damage and if activated will greatly speed your movement, with some effort and noise.",
     "types": [ "WINGS" ],
+    "restricts_gear": [ "torso" ],
+    "allowed_items": [ "ALLOWS_WINGS" ],
     "prereqs": [ "WINGS_STUB" ],
     "category": [ "INSECT" ],
     "active": true,
@@ -3501,6 +3581,7 @@
     "category": [ "INSECT", "SPIDER" ],
     "wet_protection": [ { "part": "mouth", "ignored": 100 } ],
     "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "attacks": {
       "attack_text_u": "You bite %s with your fangs",
       "attack_text_npc": "%1$s bites %2$s with their fangs",
@@ -3545,7 +3626,8 @@
     "types": [ "EARS" ],
     "category": [ "BEAST", "CATTLE", "CHIMERA" ],
     "changes_to": [ "LUPINE_EARS" ],
-    "hearing_modifier": 1.5
+    "hearing_modifier": 1.5,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3557,7 +3639,8 @@
     "description": "Your hearing has evolved further and is now on par with that of wolves.  You can hear things significantly farther away.",
     "types": [ "EARS" ],
     "category": [ "LUPINE" ],
-    "hearing_modifier": 1.75
+    "hearing_modifier": 1.75,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3569,7 +3652,8 @@
     "description": "You've grown an extra pair of feline ears.  You find it easier to tune in on sounds from afar.  They are also very fluffy!",
     "types": [ "EARS" ],
     "category": [ "FELINE" ],
-    "hearing_modifier": 1.25
+    "hearing_modifier": 1.25,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3581,7 +3665,8 @@
     "description": "You've grown an extra pair of ursine ears.  You can hear things a little farther away.",
     "types": [ "EARS" ],
     "category": [ "URSINE" ],
-    "hearing_modifier": 1.25
+    "hearing_modifier": 1.25,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3606,7 +3691,8 @@
     "valid": false,
     "types": [ "EARS" ],
     "category": [ "MOUSE", "RAT" ],
-    "hearing_modifier": 2
+    "hearing_modifier": 2,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3736,7 +3822,7 @@
     "types": [ "SIZE" ],
     "prereqs": [ "STR_UP", "STR_UP_2", "STR_UP_3", "STR_UP_4" ],
     "changes_to": [ "LARGE_OK", "HUGE" ],
-    "category": [ "BEAST", "URSINE", "CATTLE", "LIZARD", "RAPTOR", "CHIMERA" ],
+    "category": [ "BEAST", "URSINE", "CATTLE", "LIZARD", "SERPENT", "RAPTOR", "CHIMERA" ],
     "passive_mods": { "str_mod": 2 },
     "weight_capacity_modifier": 1.05,
     "body_size": "LARGE"
@@ -3751,10 +3837,18 @@
     "types": [ "SIZE" ],
     "prereqs": [ "LARGE" ],
     "prereqs2": [ "STR_UP", "STR_UP_2", "STR_UP_3", "STR_UP_4" ],
-    "threshreq": [ "THRESH_BEAST", "THRESH_URSINE", "THRESH_CATTLE", "THRESH_LIZARD", "THRESH_RAPTOR", "THRESH_CHIMERA" ],
+    "threshreq": [
+      "THRESH_BEAST",
+      "THRESH_URSINE",
+      "THRESH_CATTLE",
+      "THRESH_LIZARD",
+      "THRESH_SERPENT",
+      "THRESH_RAPTOR",
+      "THRESH_CHIMERA"
+    ],
     "changes_to": [ "HUGE" ],
     "leads_to": [ "MUT_TOUGH" ],
-    "category": [ "BEAST", "URSINE", "CATTLE", "LIZARD", "RAPTOR", "CHIMERA" ],
+    "category": [ "BEAST", "URSINE", "CATTLE", "LIZARD", "SERPENT", "RAPTOR", "CHIMERA" ],
     "passive_mods": { "str_mod": 2 },
     "weight_capacity_modifier": 1.05,
     "body_size": "LARGE"
@@ -4206,7 +4300,7 @@
     "ugliness": 4,
     "description": "You have a flattened nose and thin slits for nostrils, giving you a lizard-like appearance.  This makes breathing slightly difficult and increases mouth encumbrance by 10.",
     "encumbrance_always": [ [ "mouth", 10 ] ],
-    "category": [ "LIZARD", "CEPHALOPOD", "RAPTOR" ]
+    "category": [ "LIZARD", "SERPENT", "CEPHALOPOD", "RAPTOR" ]
   },
   {
     "type": "mutation",
@@ -4216,7 +4310,7 @@
     "visibility": 1,
     "ugliness": 3,
     "description": "Your tongue is forked, like that of a reptile.  This has no effect.",
-    "category": [ "LIZARD", "RAPTOR" ]
+    "category": [ "LIZARD", "SERPENT", "RAPTOR" ]
   },
   {
     "type": "mutation",
@@ -4261,6 +4355,8 @@
     "description": "You have a pair of large, leathery wings.  You can move them a little, but they only catch enough air to reduce falling damage a bit, and in fact put you off balance, reducing your ability to dodge slightly.",
     "types": [ "WINGS" ],
     "prereqs": [ "WINGS_STUB" ],
+    "restricts_gear": [ "torso" ],
+    "allowed_items": [ "ALLOWS_WINGS" ],
     "dodge_modifier": -3,
     "falling_damage_multiplier": 0.75
   },
@@ -4280,6 +4376,7 @@
     "threshreq": [ "THRESH_INSECT" ],
     "category": [ "INSECT" ],
     "restricts_gear": [ "torso" ],
+    "allowed_items": [ "ALLOWS_WINGS" ],
     "social_modifiers": { "lie": 15, "persuade": 5, "intimidate": -20 },
     "dodge_modifier": -4,
     "movecost_modifier": 0.9,
@@ -4433,6 +4530,7 @@
     "prereqs": [ "SNOUT" ],
     "category": [ "CATTLE" ],
     "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "social_modifiers": { "intimidate": 15 }
   },
   {
@@ -4448,6 +4546,7 @@
     "prereqs": [ "SNOUT" ],
     "category": [ "BEAST", "LUPINE" ],
     "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "social_modifiers": { "intimidate": 6 },
     "attacks": {
       "attack_text_u": "You nip at %s",
@@ -4471,6 +4570,7 @@
     "prereqs": [ "SNOUT" ],
     "category": [ "URSINE" ],
     "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "attacks": {
       "attack_text_u": "You bite %s",
       "attack_text_npc": "%1$s bites %2$s",
@@ -4491,7 +4591,8 @@
     "types": [ "MUZZLE" ],
     "prereqs": [ "SNOUT" ],
     "category": [ "RAT" ],
-    "restricts_gear": [ "mouth" ]
+    "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ]
   },
   {
     "type": "mutation",
@@ -4504,8 +4605,9 @@
     "description": "Your face and jaws are a shorter version of those found on alligators.  They look NASTY--as do the bite wounds they can inflict--but prevent wearing mouthgear.",
     "types": [ "MUZZLE" ],
     "prereqs": [ "SNOUT" ],
-    "category": [ "LIZARD" ],
+    "category": [ "LIZARD", "SERPENT" ],
     "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "social_modifiers": { "intimidate": 20 },
     "attacks": {
       "attack_text_u": "You bite a chunk out of %s",
@@ -4603,6 +4705,20 @@
     "changes_to": [ "HUNGER2", "MET_RAT" ],
     "category": [ "RAT", "ALPHA", "MEDICAL", "ELFA", "BEAST", "SLIME", "RAPTOR", "CHIMERA", "MOUSE", "RABBIT" ],
     "metabolism_modifier": 0.5
+  },
+  {
+    "type": "mutation",
+    "id": "BODYHAIR",
+    "name": { "str": "Hairy" },
+    "points": 0,
+    "visibility": 4,
+    "starting_trait": true,
+    "bodytemp_modifiers": [ 0, 80 ],
+    "description": "Your body is covered in thick body hair, making you slightly warmer.",
+    "category": [ "CHIMERA", "SPIDER", "MOUSE" ],
+    "types": [ "SKIN" ],
+    "changes_to": [ "LIGHTFUR" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4835,7 +4951,8 @@
     "prereqs": [ "CLAWS", "CLAWS_RETRACT", "CLAWS_RAT" ],
     "cancels": [ "TALONS" ],
     "changes_to": [ "PAWS_LARGE" ],
-    "category": [ "LUPINE", "RAT", "FELINE" ]
+    "category": [ "LUPINE", "RAT", "FELINE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4862,7 +4979,8 @@
     "types": [ "HANDS" ],
     "prereqs": [ "PAWS" ],
     "cancels": [ "TALONS" ],
-    "category": [ "BEAST", "URSINE" ]
+    "category": [ "BEAST", "URSINE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4878,6 +4996,7 @@
     "category": [ "BIRD", "CEPHALOPOD" ],
     "wet_protection": [ { "part": "mouth", "ignored": 1 } ],
     "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "attacks": {
       "attack_text_u": "You peck %s",
       "attack_text_npc": "%1$s pecks %2$s",
@@ -4903,6 +5022,7 @@
     "category": [ "BIRD" ],
     "wet_protection": [ { "part": "mouth", "ignored": 2 } ],
     "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "attacks": [
       {
         "attack_text_u": "You jackhammer into %s with your beak",
@@ -4930,7 +5050,8 @@
     "category": [ "BIRD" ],
     "wet_protection": [ { "part": "mouth", "ignored": 2 } ],
     "active": true,
-    "restricts_gear": [ "mouth" ]
+    "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ]
   },
   {
     "type": "mutation",
@@ -5085,7 +5206,7 @@
     "description": "Your body's ability to digest fruits, vegetables, grains and nuts is severely hampered.  You cannot eat anything besides meat.",
     "cancels": [ "VEGETARIAN", "HERBIVORE", "RUMINANT", "GRAZER" ],
     "leads_to": [ "SAPROVORE" ],
-    "category": [ "LIZARD", "BEAST", "SPIDER", "CHIMERA", "RAPTOR", "FELINE" ],
+    "category": [ "LIZARD", "SERPENT", "BEAST", "SPIDER", "CHIMERA", "RAPTOR", "FELINE" ],
     "vitamin_rates": [ [ "vitC", -1200 ] ]
   },
   {
@@ -5322,7 +5443,7 @@
     "prereqs": [ "COLDBLOOD2" ],
     "changes_to": [ "COLDBLOOD4" ],
     "types": [ "METABOLISM" ],
-    "category": [ "INSECT", "LIZARD" ],
+    "category": [ "INSECT", "LIZARD", "SERPENT" ],
     "temperature_speed_modifier": 0.5,
     "metabolism_modifier": -0.5
   },
@@ -5334,10 +5455,10 @@
     "mixed_effect": true,
     "description": "Your body has become permanently cold-blooded.  Your speed lowers or raises 1% for every 2 (1.1) degrees below or above 65 F (18.3 C).  You only need to eat half as much as an average human.",
     "prereqs": [ "COLDBLOOD3" ],
-    "threshreq": [ "THRESH_LIZARD", "THRESH_PLANT" ],
+    "threshreq": [ "THRESH_LIZARD", "THRESH_SERPENT", "THRESH_PLANT" ],
     "purifiable": false,
     "types": [ "METABOLISM" ],
-    "category": [ "LIZARD", "PLANT" ],
+    "category": [ "LIZARD", "SERPENT", "PLANT" ],
     "temperature_speed_modifier": 0.5,
     "metabolism_modifier": -0.5
   },
@@ -5370,7 +5491,7 @@
     "mixed_effect": true,
     "points": -1,
     "description": "You hiss when speaking.  Persuading NPCs will be more difficult, but threatening them will be easier.",
-    "category": [ "LIZARD", "RAPTOR", "SPIDER" ],
+    "category": [ "LIZARD", "SERPENT", "RAPTOR", "SPIDER" ],
     "social_modifiers": { "persuade": -20, "lie": -10, "intimidate": 10 }
   },
   {
@@ -5434,7 +5555,9 @@
     "prereqs": [ "CHITIN", "CHITIN2", "CHITIN3", "CHITIN_FUR2", "CHITIN_FUR3" ],
     "threshreq": [ "THRESH_INSECT", "THRESH_SPIDER" ],
     "category": [ "INSECT", "SPIDER" ],
+    "//": "Affects the torso so treat it the same as wings.",
     "restricts_gear": [ "torso" ],
+    "allowed_items": [ "ALLOWS_WINGS" ],
     "passive_mods": { "dex_mod": -2 }
   },
   {
@@ -5471,6 +5594,7 @@
     "threshreq": [ "THRESH_SPIDER" ],
     "category": [ "SPIDER" ],
     "restricts_gear": [ "torso" ],
+    "allowed_items": [ "ALLOWS_WINGS" ],
     "passive_mods": { "dex_mod": -4 }
   },
   {
@@ -5644,7 +5768,7 @@
     "type": "mutation",
     "id": "LEG_TENTACLES",
     "name": { "str": "Leg Tentacles" },
-    "points": -4,
+    "points": -5,
     "visibility": 8,
     "ugliness": 4,
     "mixed_effect": true,
@@ -5661,8 +5785,11 @@
       { "part": "foot_r", "neutral": 6 }
     ],
     "restricts_gear": [ "foot_l", "foot_r" ],
+    "allowed_items": [ "ALLOWS_HOOVES" ],
+    "allowed_items_only": true,
     "movecost_modifier": 1.2,
-    "noise_modifier": 0
+    "noise_modifier": 0,
+    "flags": [ "MUTATION_SWIM" ]
   },
   {
     "type": "mutation",
@@ -5687,6 +5814,17 @@
     "purifiable": false,
     "threshold": true,
     "//": "Based on highest of category's iv_hunger, iv_thirst, or iv_fatigue.  Most default to 10+10+5 so default value of 10",
+    "mutagen_target_modifier": 10
+  },
+  {
+    "type": "mutation",
+    "id": "THRESH_SERPENT",
+    "name": { "str": "Serpent" },
+    "points": 1,
+    "description": "They say you have to crawl before you can walk.  You walked, but now slithering feels better.",
+    "valid": false,
+    "purifiable": false,
+    "threshold": true,
     "mutagen_target_modifier": 10
   },
   {
@@ -5947,7 +6085,8 @@
     "description": "Your stubby tail has become fuzzy and more round.  It looks adorable, but doesn't seem to serve another purpose beyond that.",
     "types": [ "TAIL" ],
     "cancels": [ "TAIL_STUB" ],
-    "category": [ "RABBIT", "BEAST" ]
+    "category": [ "RABBIT", "BEAST" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -5967,7 +6106,8 @@
         "parts": [ "torso", "head", "arm_l", "arm_r", "hand_l", "hand_r", "leg_l", "leg_r", "foot_l", "foot_r", "mouth" ],
         "bash": 1
       }
-    ]
+    ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -5982,6 +6122,7 @@
     "category": [ "RABBIT" ],
     "wet_protection": [ { "part": "foot_l", "neutral": 10 }, { "part": "foot_r", "neutral": 10 } ],
     "restricts_gear": [ "foot_l", "foot_r" ],
+    "allowed_items": [ "ALLOWS_HOOVES" ],
     "bodytemp_modifiers": [ 25, 50 ],
     "armor": [ { "parts": [ "foot_l", "foot_r" ], "bash": 1 } ],
     "attacks": {
@@ -6016,7 +6157,8 @@
     "types": [ "HANDS" ],
     "prereqs": [ "NAILS" ],
     "cancels": [ "TALONS" ],
-    "category": [ "RABBIT" ]
+    "category": [ "RABBIT" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -6153,6 +6295,85 @@
       "base_damage": { "damage_type": "stab", "amount": 25 }
     },
     "purifiable": false
+  },
+  {
+    "type": "mutation",
+    "id": "TAIL_SNAKE",
+    "name": { "str": "Snake Body" },
+    "points": -5,
+    "visibility": 8,
+    "ugliness": 4,
+    "mixed_effect": true,
+    "description": "Your legs and feet have merged into a long, scaly tail.  It's harder for you to move (though you can wind through obstacles a bit better) and harder to dodge, and limits what you can wear.  Anything you can get to fit on your tail just makes crawling around even more awkward.  At least it protects your lower half decently, reduces wet effects, and lets you carry more weight.",
+    "types": [ "LEGS", "TAIL" ],
+    "changes_to": [ "TAIL_SNAKE_OK" ],
+    "category": [ "SERPENT" ],
+    "//": "This and LEG_TENTACLES should be the first to be tweaked if we get the ability to edit body part map with mutations.",
+    "encumbrance_covered": [ [ "leg_l", 10 ], [ "leg_r", 10 ], [ "foot_l", 10 ], [ "foot_r", 10 ] ],
+    "wet_protection": [
+      { "part": "leg_l", "ignored": 10 },
+      { "part": "leg_r", "ignored": 10 },
+      { "part": "foot_l", "ignored": 100 },
+      { "part": "foot_r", "ignored": 100 }
+    ],
+    "armor": [ { "parts": [ "leg_l", "leg_r", "foot_l", "foot_r" ], "physical": 10 } ],
+    "restricts_gear": [ "leg_l", "leg_r", "foot_l", "foot_r" ],
+    "allowed_items": [ "ALLOWS_TAIL_SNAKE" ],
+    "allowed_items_only": true,
+    "weight_capacity_modifier": 1.25,
+    "movecost_obstacle_modifier": 0.9,
+    "movecost_flatground_modifier": 1.25,
+    "movecost_swim_modifier": 0.9,
+    "noise_modifier": 1.25,
+    "dodge_modifier": -1
+  },
+  {
+    "type": "mutation",
+    "id": "TAIL_SNAKE_OK",
+    "name": { "str": "Serpentine Body" },
+    "points": -3,
+    "visibility": 8,
+    "ugliness": 4,
+    "mixed_effect": true,
+    "description": "Your snake body has grown stronger and more flexible, or maybe you're just getting used to moving with it.  It's still incredibly inconvenient to find clothes for your tail, but you're better at navigating obstacles and can even whip enemies with the end.",
+    "types": [ "LEGS", "TAIL" ],
+    "category": [ "SERPENT" ],
+    "prereqs": [ "TAIL_SNAKE" ],
+    "leads_to": [ "SNAKE_COILS" ],
+    "threshreq": [ "THRESH_SERPENT" ],
+    "encumbrance_covered": [ [ "leg_l", 5 ], [ "leg_r", 5 ], [ "foot_l", 5 ], [ "foot_r", 5 ] ],
+    "wet_protection": [
+      { "part": "leg_l", "ignored": 10 },
+      { "part": "leg_r", "ignored": 10 },
+      { "part": "foot_l", "ignored": 100 },
+      { "part": "foot_r", "ignored": 100 }
+    ],
+    "armor": [ { "parts": [ "leg_l", "leg_r", "foot_l", "foot_r" ], "physical": 10 } ],
+    "restricts_gear": [ "leg_l", "leg_r", "foot_l", "foot_r" ],
+    "allowed_items": [ "ALLOWS_TAIL_SNAKE" ],
+    "allowed_items_only": true,
+    "weight_capacity_modifier": 1.25,
+    "movecost_obstacle_modifier": 0.75,
+    "movecost_swim_modifier": 0.9,
+    "attacks": {
+      "attack_text_u": "You whap %s with your tail",
+      "attack_text_npc": "%1$s whaps %2$s with their tail",
+      "chance": 20,
+      "strength_damage": { "damage_type": "bash", "amount": 1 }
+    }
+  },
+  {
+    "type": "mutation",
+    "id": "SNAKE_COILS",
+    "name": { "str": "Crushing Coils" },
+    "points": 4,
+    "description": "Your newfound size has granted some extra bulk to your serpentine half.  You haven't figured out how to constrict anything with it, but it does further enhance your strength (+4) and your lower half's natural armor is even thicker.",
+    "category": [ "SERPENT" ],
+    "prereqs": [ "TAIL_SNAKE_OK" ],
+    "prereqs2": [ "LARGE", "LARGE_OK", "HUGE", "HUGE_OK" ],
+    "threshreq": [ "THRESH_SERPENT" ],
+    "passive_mods": { "str_mod": 4 },
+    "armor": [ { "parts": [ "leg_l", "leg_r", "foot_l", "foot_r" ], "physical": 10 } ]
   },
   {
     "type": "mutation",
@@ -6531,6 +6752,17 @@
   },
   {
     "type": "mutation",
+    "id": "DEBUG_HT",
+    "name": { "str": "Debug Hammertime" },
+    "points": 99,
+    "valid": false,
+    "description": "Crafting and construction are practically instant.",
+    "debug": true,
+    "crafting_speed_modifier": 9999,
+    "construction_speed_modifier": 9999
+  },
+  {
+    "type": "mutation",
     "id": "DEBUG_MIND_CONTROL",
     "name": { "str": "Debug Mind Control" },
     "points": 99,
@@ -6601,6 +6833,17 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
+    "cancels": [ "GUNSHY" ],
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "GUNSHY",
+    "name": { "str": "Gun Shy" },
+    "points": -4,
+    "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
+    "starting_trait": true,
+    "cancels": [ "BRAWLER" ],
     "valid": false
   },
   {
@@ -6658,6 +6901,16 @@
   },
   {
     "type": "mutation",
+    "id": "HAS_NEMESIS",
+    "name": { "str": "Hunted" },
+    "points": -1,
+    "description": "Since the start of the Cataclysm, something has been hunting you relentlessly.  You can outrun it, but it always seems to find you eventually.  The only escape is for one of you to die.",
+    "valid": false,
+    "starting_trait": false,
+    "purifiable": false
+  },
+  {
+    "type": "mutation",
     "id": "PROF_FERAL",
     "name": { "str": "Lost To The Cataclysm" },
     "points": 0,
@@ -6666,5 +6919,16 @@
     "purifiable": false,
     "profession": true,
     "scent_type": "sc_fetid"
+  },
+  {
+    "type": "mutation",
+    "id": "PROF_KNIGHT",
+    "name": { "str": "Swordsman" },
+    "points": 0,
+    "description": "You have trained in the ways of the European nobility. Mostly useless even before the Cataclysm, now the only thing worth anything is the swordsmanship.",
+    "valid": false,
+    "initial_ma_styles": [ "style_swordsmanship" ],
+    "purifiable": false,
+    "profession": true
   }
 ]

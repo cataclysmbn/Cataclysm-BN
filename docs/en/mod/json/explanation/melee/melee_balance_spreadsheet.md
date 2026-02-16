@@ -1,6 +1,6 @@
 # Melee balance spreadsheet
 
-![spreadsheet](https://github.com/cataclysmbnteam/Cataclysm-BN/assets/54838975/1fa4f7ec-2965-4247-a592-94f246b13662)
+![spreadsheet](https://github.com/cataclysmbn/Cataclysm-BN/assets/54838975/1fa4f7ec-2965-4247-a592-94f246b13662)
 
 This is documentation for the 'Melee Weapons Evaluation.ods' spreadsheet. This is the spreadsheet
 that drove the 0.E experimental melee weapon rebalance project. The original spreadsheet is

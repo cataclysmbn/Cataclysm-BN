@@ -1,6 +1,7 @@
 #include "melee.h"
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <climits>
 #include <cmath>
@@ -19,6 +20,9 @@
 #include "bionics.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_functions.h"
@@ -34,6 +38,8 @@
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
+#include "iuse.h"
+#include "iuse_actor.h"
 #include "line.h"
 #include "magic_enchantment.h"
 #include "map.h"
@@ -144,7 +150,7 @@ item &Character::used_weapon() const
 
 item &Character::primary_weapon() const
 {
-    if( get_body().find( body_part_arm_r ) == get_body().end() ) {
+    if( !get_body().contains( body_part_arm_r ) ) {
         return null_item_reference();
     }
     return *get_part( body_part_arm_r ).wielding.wielded;
@@ -152,7 +158,7 @@ item &Character::primary_weapon() const
 
 std::vector<item *> Character::wielded_items() const
 {
-    if( get_body().find( body_part_arm_r ) == get_body().end() ) {
+    if( !get_body().contains( body_part_arm_r ) ) {
         return {};
     }
 
@@ -328,7 +334,8 @@ float Character::get_hit_weapon( const item &weap, const attack_statblock &attac
     }
 
     /** @EFFECT_MELEE improves hit chance for all items (including non-weapons) */
-    return ( skill / 3.0f ) + ( get_skill_level( skill_melee ) / 2.0f ) + attack.to_hit;
+    return ( skill / 3.0f ) + ( get_skill_level( skill_melee ) / 2.0f ) + attack.to_hit +
+           weap.get_melee_hit_bonus();
 }
 
 float Character::get_melee_hit( const item &weapon, const attack_statblock &attack ) const
@@ -478,7 +485,18 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
     }
     item &cur_weapon = allow_unarmed ? used_weapon() : primary_weapon();
     const attack_statblock &attack = melee::pick_attack( *this, cur_weapon, t );
+
+    // Lua imelee on_melee_attack callback: fires before hit resolution.
+    // Returning false from Lua forces a miss.
+    bool lua_force_miss = false;
+    if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
+        if( !imelee_cb->call_on_melee_attack( *this, t, cur_weapon ) ) {
+            lua_force_miss = true;
+        }
+    }
+
     int hit_spread = t.deal_melee_attack( this, hit_roll( cur_weapon, attack ) );
+    const bool attack_hit = !lua_force_miss && hit_spread >= 0;
 
     if( cur_weapon.attack_cost() > attack_cost( cur_weapon ) * 20 ) {
         add_msg( m_bad, _( "This weapon is too unwieldy to attack with!" ) );
@@ -487,7 +505,12 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
 
     int move_cost = attack_cost( cur_weapon );
 
-    if( hit_spread < 0 ) {
+    if( !attack_hit ) {
+        // Lua imelee on_miss callback
+        if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
+            imelee_cb->call_on_miss( *this, cur_weapon );
+        }
+
         int stumble_pen = stumble( *this, cur_weapon );
         sfx::generate_melee_sound( pos(), t.pos(), false, false );
         if( is_player() ) { // Only display messages if this is the player
@@ -593,6 +616,12 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
                 perform_special_attacks( t, dealt_special_dam );
             }
             t.deal_melee_hit( this, &cur_weapon, hit_spread, critical_hit, d, dealt_dam );
+
+            // Lua imelee on_hit callback
+            if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
+                imelee_cb->call_on_hit( *this, t, cur_weapon, dealt_dam );
+            }
+
             if( dealt_special_dam.type_damage( DT_CUT ) > 0 ||
                 dealt_special_dam.type_damage( DT_STAB ) > 0 ||
                 ( cur_weapon.is_null() && ( dealt_dam.type_damage( DT_CUT ) > 0 ||
@@ -673,7 +702,13 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         dealt_projectile_attack dp = dealt_projectile_attack();
         t.as_character()->on_hit( this, bodypart_str_id::NULL_ID().id(), &dp );
     }
-    return;
+
+    cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["target"] = &t;
+        params["success"] = attack_hit;
+    } );
+
 }
 
 void Character::reach_attack( const tripoint &p )
@@ -808,10 +843,11 @@ double Character::crit_chance( float roll_hit, float target_dodge, const item &w
         weapon_crit_chance = 0.5 + 0.05 * get_skill_level( skill_unarmed );
     }
 
-    if( attack.to_hit > 0 ) {
-        weapon_crit_chance = std::max( weapon_crit_chance, 0.5 + 0.1 * attack.to_hit );
-    } else if( attack.to_hit < 0 ) {
-        weapon_crit_chance += 0.1 * attack.to_hit;
+    int attack_to_hit = attack.to_hit + weap.get_melee_hit_bonus();
+    if( attack_to_hit > 0 ) {
+        weapon_crit_chance = std::max( weapon_crit_chance, 0.5 + 0.1 * attack_to_hit );
+    } else if( attack_to_hit < 0 ) {
+        weapon_crit_chance += 0.1 * attack_to_hit;
     }
     weapon_crit_chance = limit_probability( weapon_crit_chance );
 
@@ -1635,13 +1671,21 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
             martial_arts_data->learn_current_style_CQB( is_player() );
         }
     }
+
+    cata::run_hooks( "on_creature_performed_technique", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["technique"] = &technique;
+        params["target"] = &t;
+        params["damage_instance"] = &di;
+        params["move_cost"] = move_cost;
+    } );
 }
 
 static int blocking_ability( const item &shield )
 {
     int block_bonus = 0;
     if( shield.has_technique( WBLOCK_3 ) ) {
-        block_bonus = 10;
+        block_bonus = 8;
     } else if( shield.has_technique( WBLOCK_2 ) ) {
         block_bonus = 6;
     } else if( shield.has_technique( WBLOCK_1 ) ) {
@@ -1784,9 +1828,27 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
         thing_blocked_with = body_part_name( bp_hit->token );
     }
 
-    if( has_shield ) {
-        // Does our shield cover the limb we blocked with? If so, add the block bonus.
-        block_score += shield.covers( bp_hit ) ? block_bonus : 0;
+    bool shield_roll = false;
+    if( has_shield && bp_hit != bodypart_str_id( "foot_l" ) && bp_hit != bodypart_str_id( "foot_r" ) ) {
+        // We have a chance of applying the shield's direct damage reduction to other parts.
+        if( shield.has_flag( flag_BLOCK_WHILE_WORN ) ) {
+            float shield_block_chance = shield.get_avg_coverage();
+            bool leg_hit = bp_hit == bodypart_str_id( "leg_l" ) || bp_hit == bodypart_str_id( "leg_r" );
+            // Start with the same modifiers as ranged blocking.
+            if( shield.has_technique( WBLOCK_3 ) ) {
+                shield_block_chance *= leg_hit ? 0.75f : 0.9f;
+            } else if( shield.has_technique( WBLOCK_2 ) ) {
+                shield_block_chance *= leg_hit ? 0.5f : 0.8f;
+            } else if( shield.has_technique( WBLOCK_1 ) ) {
+                shield_block_chance *= leg_hit ? 0.25f : 0.7f;
+            }
+            // Melee skill directly buffs block chance, enough to ensure 100% chance of blocking a torso/head hit with a riot shield at 10 skill.
+            shield_block_chance += get_skill_level( skill_melee );
+            if( rng( 1, 100 ) <= shield_block_chance ) {
+                shield_roll = true;
+            }
+        }
+
     }
 
     // Map block_score to the logistic curve for a number between 1 and 0.
@@ -1819,6 +1881,11 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
             }
 
             float previous_amount = elem.amount;
+            // If we have a shield and it covers the limb we're hitting, we already rolled for armor.
+            // Instead, roll to apply bonus damage reduction to limbs NOT already covered by it, based on melee skill.
+            if( shield_roll && ( !shield.covers( bp_hit ) || !is_wearing( shield ) ) ) {
+                elem.amount -= this->get_block_amount( shield, elem );
+            }
             elem.amount *= physical_block_multiplier;
             damage_blocked += previous_amount - elem.amount;
         }
@@ -1852,7 +1919,7 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
     if( total_damage > std::numeric_limits<float>::epsilon() ) {
         blocked_ratio = ( total_damage - damage_blocked ) / total_damage;
     }
-    if( blocked_ratio < std::numeric_limits<float>::epsilon() ) {
+    if( damage_blocked >= total_damage ) {
         //~ Damage amount in "You block <damage amount> with your <weapon>."
         damage_blocked_description = pgettext( "block amount", "all of the damage" );
     } else if( blocked_ratio < 0.2 ) {
@@ -1896,6 +1963,20 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
             melee_attack( *source, false, &tec );
         }
     }
+
+    // Lua imelee on_block callback (fires for the blocking item)
+    if( const auto *imelee_cb = shield.type->imelee_callbacks ) {
+        imelee_cb->call_on_block( *this, *source, shield,
+                                  static_cast<int>( damage_blocked ) );
+    }
+
+    cata::run_hooks( "on_creature_blocked", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["source"] = source;
+        params["bodypart_id"] = bp_hit;
+        params["damage_instance"] = dam;
+        params["damage_blocked"] = damage_blocked;
+    } );
 
     return true;
 }
@@ -2378,6 +2459,14 @@ int Character::attack_cost( const item &weap ) const
     move_cost += skill_cost;
     move_cost -= dexbonus;
 
+    // If we're strong enough to use this weapon one-handed but commit to two-handing it anyway, make it easier to swing.
+    // Limit to weapons over 100 base movecost so you can't do this with weapons that're too small.
+    // Exponential bonus so heavier weapons benefit more than small ones.
+    if( weap.attack_cost() > 100 && !weap.is_two_handed( *this ) &&
+        has_two_arms() && !worn_with_flag( flag_RESTRICT_HANDS ) ) {
+        move_cost = std::pow( move_cost, 0.975f );
+    }
+
     move_cost += bonus_from_enchantments( move_cost, enchant_vals::mod::ATTACK_COST, true );
 
     // Martial arts last. Flat has to be after mult, because comments say so.
@@ -2425,25 +2514,43 @@ double npc_ai::weapon_value( const Character &who, const item &weap, int ammo )
 
 double npc_ai::melee_value( const Character &who, const item &weap )
 {
-    // start with average effective dps against a range of enemies
-    double my_value = weap.average_dps( *who.as_player(), melee::default_attack( weap ) );
+    item &weapon = *item::spawn_temporary( weap );
+    if( weapon.has_flag( flag_COMBAT_NPC_USE ) && !weapon.has_flag( flag_COMBAT_NPC_ON ) ) {
+        if( weapon.get_use( "transform" ) ) {
+            const use_function *use = weapon.type->get_use( "transform" );
+            if( use->can_call( who, weapon, false, who.pos() ).success() ) {
+                // Stolen from item.cpp
+                weapon.convert( dynamic_cast<const iuse_transform *>
+                                ( use->get_actor_ptr() )->target );
+            }
+        } else if( weapon.get_use( "fireweapon_off" ) ) {
+            const use_function *use = weapon.type->get_use( "fireweapon_off" );
+            if( use->can_call( who, weapon, false, who.pos() ).success() ) {
+                weapon.convert( dynamic_cast<const fireweapon_off_actor *>
+                                ( use->get_actor_ptr() )->target_id );
+            }
+        }
 
-    float reach = weap.reach_range( who );
+    }
+    // start with average effective dps against a range of enemies
+    double my_value = weapon.average_dps( *who.as_player(), melee::default_attack( weapon ) );
+
+    float reach = weapon.reach_range( who );
     // value reach weapons more
     if( reach > 1.0f ) {
         my_value *= 1.0f + 0.5f * ( std::sqrt( reach ) - 1.0f );
     }
     // value polearms less to account for the trickiness of keeping the right range
-    if( weap.has_flag( flag_POLEARM ) ) {
+    if( weapon.has_flag( flag_POLEARM ) ) {
         my_value *= 0.8;
     }
 
     // value style weapons more
-    if( !who.martial_arts_data->enumerate_known_styles( weap.type->get_id() ).empty() ) {
+    if( !who.martial_arts_data->enumerate_known_styles( weapon.type->get_id() ).empty() ) {
         my_value *= 1.5;
     }
 
-    add_msg( m_debug, "%s as melee: %.1f", weap.type->get_id().str(), my_value );
+    add_msg( m_debug, "%s as melee: %.1f", weapon.type->get_id().str(), my_value );
 
     return std::max( 0.0, my_value );
 }

@@ -13,6 +13,19 @@
     "components": [ [ [ "rag", 4 ] ] ]
   },
   {
+    "result": "helmet_liner",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "time": "10 m",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_tailor", 1 ], [ "manual_tailor", 1 ], [ "tailor_portfolio", 1 ] ],
+    "using": [ [ "sewing_standard", 3 ] ],
+    "components": [ [ [ "rag", 3 ] ] ]
+  },
+  {
     "result": "bandana",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -629,7 +642,7 @@
     "components": [
       [ [ "helmet_liner", 1 ], [ "hat_cotton", 1 ], [ "rag", 3 ] ],
       [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ], [ "helmet_army", 1 ], [ "kevlar_plate", 6 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
       [ [ "fabric_hides_proper", 8, "LIST" ] ],
       [ [ "duct_tape", 150 ] ],
       [
@@ -661,7 +674,7 @@
     "components": [
       [ [ "helmet_liner", 1 ], [ "hat_cotton", 1 ], [ "rag", 3 ] ],
       [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ], [ "helmet_army", 1 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
       [ [ "steel_chunk", 2 ], [ "scrap", 6 ] ],
       [ [ "duct_tape", 75 ] ],
       [
@@ -693,7 +706,7 @@
     "components": [
       [ [ "helmet_liner", 1 ], [ "hat_cotton", 1 ], [ "rag", 3 ] ],
       [ [ "tac_helmet", 1 ], [ "tac_fullhelmet", 1 ], [ "helmet_army", 1 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
       [ [ "alloy_sheet", 4 ] ],
       [ [ "duct_tape", 75 ] ],
       [
@@ -765,7 +778,12 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 40 ] ],
     "tools": [ [ [ "soldering_standard", 30, "LIST" ], [ "surface_heat", 30, "LIST" ] ] ],
-    "components": [ [ [ "rag", 8 ] ], [ [ "kevlar_plate", 4 ] ], [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ] ], [ [ "duct_tape", 100 ] ] ]
+    "components": [
+      [ [ "rag", 8 ] ],
+      [ [ "kevlar_plate", 4 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
+      [ [ "duct_tape", 100 ] ]
+    ]
   },
   {
     "result": "hood_rain",
@@ -777,7 +795,7 @@
     "time": "12 m",
     "autolearn": true,
     "tools": [  ],
-    "components": [ [ [ "duct_tape", 20 ] ], [ [ "bag_plastic", 2 ] ], [ [ "rag", 2 ] ] ]
+    "components": [ [ [ "duct_tape", 20 ] ], [ [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ], [ [ "rag", 2 ] ] ]
   },
   {
     "result": "hood_survivor",
@@ -795,7 +813,7 @@
       [ [ "fabric_hides_proper", 6, "LIST" ] ],
       [ [ "fabric_standard", 2, "LIST" ] ],
       [ [ "kevlar_plate", 4 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
       [ [ "duct_tape", 100 ] ]
     ]
   },
@@ -815,7 +833,7 @@
       [ [ "fur", 8 ] ],
       [ [ "fabric_standard", 2, "LIST" ] ],
       [ [ "kevlar_plate", 4 ] ],
-      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ] ],
+      [ [ "hood_rain", 1 ], [ "bag_plastic", 2 ], [ "bag_zipper", 2 ] ],
       [ [ "duct_tape", 100 ] ]
     ]
   },
@@ -916,7 +934,7 @@
       [ "textbook_gaswarfare", 3 ]
     ],
     "components": [
-      [ [ "bag_plastic", 2 ], [ "bottle_plastic", 1 ], [ "bottle_plastic_small", 2 ] ],
+      [ [ "bag_plastic", 2 ], [ "bag_zipper", 2 ], [ "bottle_plastic", 1 ], [ "bottle_plastic_small", 2 ] ],
       [ [ "rag", 2 ], [ "bandana", 2 ], [ "paper", 10 ] ],
       [ [ "charcoal", 10 ] ]
     ]
@@ -1488,7 +1506,7 @@
     "book_learn": [ [ "textbook_tailor", 3 ], [ "manual_tailor", 3 ], [ "tailor_portfolio", 3 ] ],
     "using": [ [ "sewing_standard", 10 ] ],
     "tools": [ [ [ "soldering_standard", 5, "LIST" ], [ "surface_heat", 5, "LIST" ] ] ],
-    "components": [ [ [ "neoprene", 2 ] ], [ [ "rag", 2 ] ] ]
+    "components": [ [ [ "neoprene", 2 ] ], [ [ "nylon", 2 ] ] ]
   },
   {
     "result": "chainmail_hood",

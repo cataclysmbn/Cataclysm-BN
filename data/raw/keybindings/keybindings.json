@@ -560,10 +560,38 @@
   },
   {
     "type": "keybinding",
+    "id": "COMPARE",
+    "category": "CRAFTING",
+    "name": "Compare",
+    "bindings": [ { "input_method": "keyboard", "key": "I" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "HIDE_SHOW_RECIPE",
     "category": "CRAFTING",
     "name": "Hide/show recipe",
     "bindings": [ { "input_method": "keyboard", "key": "s" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "TOGGLE_RECIPE_UNREAD",
+    "category": "CRAFTING",
+    "name": "Toggle read/unread",
+    "bindings": [ { "input_method": "keyboard", "key": "v" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "MARK_ALL_RECIPES_READ",
+    "category": "CRAFTING",
+    "name": "Mark all recipes as read",
+    "bindings": [ { "input_method": "keyboard", "key": "V" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "TOGGLE_UNREAD_RECIPES_FIRST",
+    "category": "CRAFTING",
+    "name": "Show unread recipes on top",
+    "bindings": [ { "input_method": "keyboard", "key": "U" } ]
   },
   {
     "type": "keybinding",
@@ -1387,6 +1415,34 @@
     "category": "VEH_INTERACT",
     "name": "Scroll down through vehicle overview",
     "bindings": [ { "input_method": "keyboard", "key": "}" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "ZOOM_IN",
+    "category": "VEH_INTERACT",
+    "name": "Zoom in (tiles mode)",
+    "bindings": [ { "input_method": "keyboard", "key": "z" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "ZOOM_OUT",
+    "category": "VEH_INTERACT",
+    "name": "Zoom out (tiles mode)",
+    "bindings": [ { "input_method": "keyboard", "key": "Z" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "PARTS_LIST_UP",
+    "category": "VEH_INTERACT",
+    "name": "Scroll up through parts list",
+    "bindings": [ { "input_method": "keyboard", "key": "-" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "PARTS_LIST_DOWN",
+    "category": "VEH_INTERACT",
+    "name": "Scroll down through parts list",
+    "bindings": [ { "input_method": "keyboard", "key": "=" } ]
   },
   {
     "type": "keybinding",
@@ -2215,6 +2271,12 @@
   },
   {
     "type": "keybinding",
+    "name": "Toggle Zone Overlay",
+    "category": "DEFAULTMODE",
+    "id": "toggle_zone_overlay"
+  },
+  {
+    "type": "keybinding",
     "name": "Switch Sidebar Style",
     "category": "DEFAULTMODE",
     "id": "toggle_sidebar_style"
@@ -2687,6 +2749,13 @@
     "category": "ZONES_MANAGER",
     "name": "Show all zones / hide distant zones",
     "bindings": [ { "input_method": "keyboard", "key": "s" }, { "input_method": "keyboard", "key": "S" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "TOGGLE_ZONE_OVERLAY",
+    "category": "ZONES_MANAGER",
+    "name": "Toggle zone overlay",
+    "bindings": [ { "input_method": "keyboard", "key": "o" }, { "input_method": "keyboard", "key": "O" } ]
   },
   {
     "type": "keybinding",
@@ -3208,6 +3277,69 @@
   },
   {
     "type": "keybinding",
+    "id": "FILTER",
+    "category": "NPC_TRADE",
+    "name": "Filter",
+    "bindings": [ { "input_method": "keyboard", "key": "/" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RESET_FILTER",
+    "category": "NPC_TRADE",
+    "name": "Reset filter",
+    "bindings": [ { "input_method": "keyboard", "key": "r" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "CATEGORY_SELECTION",
+    "category": "NPC_TRADE",
+    "name": "Toggle category select",
+    "bindings": [ { "input_method": "keyboard", "key": ";" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "AUTOBALANCE",
+    "category": "NPC_TRADE",
+    "name": "Autobalance trade",
+    "bindings": [ { "input_method": "keyboard", "key": "=" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "TOGGLE_ITEM_INFO",
+    "category": "NPC_TRADE",
+    "name": "Toggle item description",
+    "bindings": [ { "input_method": "keyboard", "key": "+" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "UP",
+    "category": "NPC_TRADE",
+    "name": "Move cursor up",
+    "bindings": [ { "input_method": "keyboard", "key": "UP" }, { "input_method": "gamepad", "key": "JOY_UP" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "DOWN",
+    "category": "NPC_TRADE",
+    "name": "Move cursor down",
+    "bindings": [ { "input_method": "keyboard", "key": "DOWN" }, { "input_method": "gamepad", "key": "JOY_DOWN" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RIGHT",
+    "category": "NPC_TRADE",
+    "name": "Add item to trade",
+    "bindings": [ { "input_method": "keyboard", "key": "RIGHT" }, { "input_method": "gamepad", "key": "JOY_RIGHT" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "LEFT",
+    "category": "NPC_TRADE",
+    "name": "Remove item from trade",
+    "bindings": [ { "input_method": "keyboard", "key": "LEFT" }, { "input_method": "gamepad", "key": "JOY_LEFT" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "PAGE_UP",
     "category": "NPC_TRADE",
     "name": "Back",
@@ -3225,7 +3357,7 @@
     "id": "EXAMINE",
     "category": "NPC_TRADE",
     "name": "Examine item",
-    "bindings": [ { "input_method": "keyboard", "key": "/" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "e" } ]
   },
   {
     "type": "keybinding",
@@ -3239,6 +3371,12 @@
     "id": "CHANGE_PROFESSION_NAME",
     "name": "Change profession name",
     "bindings": [ { "input_method": "keyboard", "key": "*" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "CHANGE_NAME",
+    "name": "Change name",
+    "bindings": [ { "input_method": "keyboard", "key": "&" } ]
   },
   {
     "id": "ACTIVATE",
@@ -3681,5 +3819,11 @@
     "category": "NEW_CHAR_STATS",
     "name": "Select random stat",
     "bindings": [ { "input_method": "keyboard", "key": "*" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "SWAPTONPC",
+    "name": "Swap To NPC",
+    "bindings": [ { "input_method": "keyboard", "key": "s" } ]
   }
 ]

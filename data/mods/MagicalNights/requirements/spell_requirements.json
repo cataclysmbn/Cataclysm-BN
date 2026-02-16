@@ -19,5 +19,44 @@
       [ [ "bone", 3 ], [ "bone_human", 3 ], [ "bone_tainted", 6 ] ],
       [ [ "blood", 4 ], [ "blood_tainted", 200 ], [ "dragon_blood", 20 ] ]
     ]
+  },
+  {
+    "id": "spell_components_adventurers_remedy",
+    "type": "requirement",
+    "//": "Natural ingredients used to make a poultice",
+    "components": [
+      [ [ "wild_herbs", 20 ], [ "thyme", 1 ], [ "mugwort", 1 ], [ "coca_leaf", 10 ] ],
+      [ [ "grape_leaves", 1 ], [ "bee_balm", 1 ], [ "rhubarb", 1 ], [ "birchbark", 1 ] ]
+    ]
+  },
+  {
+    "id": "spell_components_pocket_sand",
+    "type": "requirement",
+    "//": "Sand and sand-like items",
+    "components": [ [ [ "material_sand", 50 ], [ "salt", 100 ], [ "pepper", 100 ], [ "chilly-p", 100 ] ] ]
+  },
+  {
+    "id": "spell_components_adventurers_cure",
+    "type": "requirement",
+    "//": "Natural ingredients used to make a poultice. The joke is that all of the possible active ingredients are poisonous.",
+    "components": [
+      [ [ "almond", 4 ], [ "rhubarb", 1 ], [ "potato", 1 ], [ "datura_seed", 5 ] ],
+      [ [ "grape_leaves", 1 ], [ "bee_balm", 1 ], [ "birchbark", 1 ] ]
+    ]
+  },
+  {
+    "id": "spell_components_surv_javelins",
+    "type": "requirement",
+    "//": "Sticks and the like",
+    "components": [ [ [ "stick", 5 ], [ "stick_long", 5 ], [ "pointy_stick", 5 ], [ "spear_wood", 5 ], [ "pool_cue", 5 ] ] ]
+  },
+  {
+    "id": "spell_components_adventurers_relief",
+    "type": "requirement",
+    "//": "Natural ingredients used to make a poultice. Pain relieving active ingredients.",
+    "components": [
+      [ [ "magnesium", 100 ], [ "willowbark", 1 ], [ "cannabis", 1 ], [ "poppy_bud", 2 ] ],
+      [ [ "grape_leaves", 1 ], [ "bee_balm", 1 ], [ "rhubarb", 1 ], [ "birchbark", 1 ] ]
+    ]
   }
 ]

@@ -17,5 +17,25 @@
       "male": { "entries": [ { "item": "boxer_shorts" } ] },
       "female": { "entries": [ { "item": "panties" } ] }
     }
+  },
+  {
+    "type": "profession",
+    "id": "makeshift_militia",
+    "name": "Makeshift Militia",
+    "description": "You and a few neighbors grabbed whatever sticks and scraps you could find. Now the cataclysm is here, and you’re a futile fighter in a makeshift militia - badly equipped, badly trained, but determined to go down swinging.",
+    "points": 3,
+    "items": {
+      "both": {
+        "entries": [
+          { "item": "tank_top" },
+          { "item": "jeans" },
+          { "item": "flip_flops" },
+          { "item": "stick", "custom-flags": [ "auto_wield" ] }
+        ]
+      },
+      "male": { "entries": [ { "item": "boxer_shorts" } ] },
+      "female": { "entries": [ { "item": "panties" } ] }
+    },
+    "npcs": [ "NC_PROF_MILITIA", "NC_PROF_MILITIA", "NC_PROF_MILITIA", "NC_PROF_MILITIA" ]
   }
 ]

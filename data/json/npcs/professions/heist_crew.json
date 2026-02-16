@@ -1,0 +1,88 @@
+[
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_HEIST_SHOOTER",
+    "name": { "str": "Heist Shooter" },
+    "job_description": "I'm just looking for a quick buck.",
+    "traits": [
+      { "group": "BG_survival_story_CRIMINAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "common": false,
+    "worn_override": "NC_PROF_HEIST_worn",
+    "carry_override": "NC_PROF_HEIST_SHOOTER_carry",
+    "weapon_override": "NC_PROF_HEIST_SHOOTER_melee",
+    "bonus_str": { "rng": [ -2, 0 ] },
+    "bonus_dex": { "rng": [ -2, 2 ] },
+    "bonus_int": { "rng": [ -2, 0 ] },
+    "bonus_per": { "rng": [ 2, 4 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_HEIST_worn",
+    "subtype": "collection",
+    "entries": [
+      { "item": "wristwatch" },
+      { "item": "duffelbag" },
+      { "item": "boxer_shorts" },
+      { "item": "jeans" },
+      { "item": "tshirt" },
+      { "item": "jacket_leather" },
+      { "item": "balclava" },
+      { "item": "gloves_fingerless" },
+      { "item": "socks" },
+      { "item": "sneakers" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_HEIST_SHOOTER_carry",
+    "subtype": "collection",
+    "entries": [ { "item": "762_51", "charges": 150 }, { "item": "powered_earmuffs" }, { "item": "EMPbomb", "count": 3 } ]
+  },
+  {
+    "id": "NC_PROF_HEIST_SHOOTER_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "akdrum75", "charges": 75, "ammo-item": "762_m43", "container-item": "aksemi" } ]
+  },
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_HEIST_THIEF",
+    "name": { "str": "Heist Thief" },
+    "job_description": "I'm just looking for a quick buck.",
+    "traits": [
+      { "group": "BG_survival_story_CRIMINAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "common": false,
+    "worn_override": "NC_PROF_HEIST_worn",
+    "carry_override": "NC_PROF_HEIST_THIEF_carry",
+    "weapon_override": "NC_PROF_HEIST_THIEF_melee",
+    "bonus_str": { "rng": [ -2, 0 ] },
+    "bonus_dex": { "rng": [ 1, 3 ] },
+    "bonus_int": { "rng": [ 2, 4 ] },
+    "bonus_per": { "rng": [ 1, 3 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_HEIST_THIEF_carry",
+    "subtype": "collection",
+    "entries": [
+      { "group": "newspaper_recent" },
+      { "item": "hammer_sledge" },
+      { "item": "bag_canvas" },
+      { "item": "laptop" },
+      { "item": "permanent_marker" },
+      { "item": "picklocks" }
+    ]
+  },
+  {
+    "id": "NC_PROF_HEIST_THIEF_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "crowbar" } ]
+  }
+]
