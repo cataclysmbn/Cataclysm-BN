@@ -5306,34 +5306,34 @@ void vehicle::consume_fuel( int load, const int t_seconds, bool skip_electric )
         const bool npc_needs_enabled = !get_option<bool>( "NO_NPC_FOOD" );
         for( vpart_reference vp : get_enabled_parts( VPFLAG_ENGINE ) ) {
             if( vp.info().fuel_type == fuel_type_muscle ) {
-                player &p = *get_passenger( vp.part_index() );
-                if( ( vp.info().has_flag( "MUSCLE_LEGS" ) && ( p.get_working_leg_count() >= 2 ) ) ||
-                    ( vp.info().has_flag( "MUSCLE_ARMS" ) && ( p.get_working_arm_count() >= 2 ) ) ) {
+                player *p = get_passenger( vp.part_index() );
+                if( p && ( ( vp.info().has_flag( "MUSCLE_LEGS" ) && ( p->get_working_leg_count() >= 2 ) ) ||
+                           ( vp.info().has_flag( "MUSCLE_ARMS" ) && ( p->get_working_arm_count() >= 2 ) ) ) ) {
                     const item &muscle = *item::spawn_temporary( "muscle" );
-                    for( const bionic_id &bid : p.get_bionic_fueled_with( muscle ) ) {
-                        if( p.has_active_bionic( bid ) ) { // active power gen
+                    for( const bionic_id &bid : p->get_bionic_fueled_with( muscle ) ) {
+                        if( p->has_active_bionic( bid ) ) { // active power gen
                             // more pedaling = more power
-                            p.mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->fuel_efficiency *
-                                               ( load / 1000.0f ) );
+                            p->mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->fuel_efficiency *
+                                                ( load / 1000.0f ) );
                             mod += eff_load / 5;
                         } else { // passive power gen
-                            p.mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->passive_fuel_efficiency *
-                                               ( load / 1000.0f ) );
+                            p->mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->passive_fuel_efficiency *
+                                                ( load / 1000.0f ) );
                             mod += eff_load / 10;
                         }
                     }
                     // decreased stamina burn scalable with load
-                    if( p.has_active_bionic( bio_jointservo ) ) {
-                        p.mod_power_level( -bio_jointservo->power_trigger * std::max( eff_load / 20, 1 ) );
+                    if( p->has_active_bionic( bio_jointservo ) ) {
+                        p->mod_power_level( -bio_jointservo->power_trigger * std::max( eff_load / 20, 1 ) );
                         mod -= std::max( eff_load / 5, 5 );
                     }
-                    if( p.is_player() || npc_needs_enabled ) {
+                    if( p->is_player() || npc_needs_enabled ) {
                         if( one_in( 1000 / load ) && one_in( 10 ) ) {
-                            p.mod_stored_kcal( -10 );
-                            p.mod_thirst( 1 );
-                            p.mod_fatigue( 1 );
+                            p->mod_stored_kcal( -10 );
+                            p->mod_thirst( 1 );
+                            p->mod_fatigue( 1 );
                         }
-                        p.mod_stamina( -( base_burn + mod ) );
+                        p->mod_stamina( -( base_burn + mod ) );
                         add_msg( m_debug, "Load: %d", load );
                         add_msg( m_debug, "Mod: %d", mod );
                         add_msg( m_debug, "Burn: %d", -( base_burn + mod ) );
