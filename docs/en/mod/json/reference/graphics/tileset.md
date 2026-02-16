@@ -386,10 +386,22 @@ Tints are rather flexible. You can handle fg and bg seperately. They can accept 
 The modifiers are "saturation", "brightness", and "contrast". These are also mostly useful for mod_tilesets, but not exclusive.
 Additionally, you can set "blend_mode" to one of the following:
 
-- `overlay` (default)
+- `tint` (default)
+- `overlay`
+- `softlight`
+- `hardlight`
 - `multiply`
 - `additive`
 - `subtract`
+- `normal`
+- `screen`
+- `divide`
+
+References can be seen here:
+https://en.wikipedia.org/wiki/Blend_modes
+Of note:
+`tint` is bespoke. It changes the color of the texture in such a way that even black and white completely converts the resulting tile, while still preserving decent contrast. It's useful for a "painted" effect.
+`normal` uses the alpha of the tile at the moment, since the alpha of the tint would result in an awkward square halo for any effect.
 
 Colors can be hex codes, or curses color names. There's fallback logic to aquire the color from the id using curses colors, but don't rely on it.
 Tints can currently be applied to mutations, items, bionics, and effects. You can tint by id or by tag, though effect flags are unsupported.
