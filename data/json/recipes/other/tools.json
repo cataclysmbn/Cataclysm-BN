@@ -3293,12 +3293,7 @@
     "time": "25 m",
     "autolearn": true,
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
-    "components": [
-      [ [ "plastic_chunk", 3 ] ],
-      [ [ "scrap", 1 ] ],
-      [ [ "wire", 5 ] ],
-      [ [ "spike", 1 ], [ "pointy_stick", 1 ] ]
-    ]
+    "components": [ [ [ "plastic_chunk", 3 ] ], [ [ "scrap", 1 ] ], [ [ "wire", 5 ] ], [ [ "spike", 1 ], [ "pointy_stick", 1 ] ] ]
   },
   {
     "type": "recipe",
