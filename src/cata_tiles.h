@@ -169,8 +169,7 @@ enum class tint_blend_mode : uint8_t {
     subtract,
     normal,
     screen,
-    divide,
-    dissolve
+    divide
 };
 
 static constexpr tint_blend_mode string_to_tint_blend_mode( const std::string &str )
