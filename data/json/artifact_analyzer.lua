@@ -66,7 +66,10 @@ local function describe_artifact(it)
 end
 
 ---@type fun(who: Character, item: Item, pos: Tripoint): integer
-analyzer.menu = function(who, item, pos)
+analyzer.menu = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   local artifacts = collect_artifacts(who)
 
   if #artifacts == 0 then

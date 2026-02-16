@@ -142,6 +142,12 @@
     "info": "This gear <bad>prevents</bad> you from <info>seeing</info> anything."
   },
   {
+    "id": "BLINDS_EYES_ON_HIT",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "When thrown and it hits a creature's head, it can <bad>blind</bad> them."
+  },
+  {
     "id": "EFFECT_NIGHT_VISION",
     "context": [  ],
     "type": "json_flag"
@@ -611,6 +617,13 @@
     "context": [ "GENERIC" ],
     "//": "This item will spawn friendly. Used for pets and such.",
     "info": "Any creature spawned from this item will <info>always</info> emerge <good>friendly to you</good>."
+  },
+  {
+    "id": "SPAWN_HOSTILE",
+    "type": "json_flag",
+    "context": [ "GENERIC" ],
+    "//": "This item will spawn mean. Used for target dummies and such.",
+    "info": "Any creature spawned from this item will <info>always</info> emerge <bad>against you</good>."
   },
   {
     "id": "STAB",
@@ -2107,6 +2120,12 @@
     "id": "TANGLE",
     "type": "json_flag",
     "context": [  ]
+  },
+  {
+    "id": "NET_TANGLE",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "Thrown nets apply the NET_TANGLE ammo effect to nearby creatures."
   },
   {
     "id": "TARDIS",

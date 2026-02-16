@@ -58,7 +58,6 @@
 #include "units_temperature.h"
 #include "weather.h"
 
-static const bionic_id bio_atomic_battery( "bio_atomic_battery" );
 static const bionic_id bio_dis_acid( "bio_dis_acid" );
 static const bionic_id bio_dis_shock( "bio_dis_shock" );
 static const bionic_id bio_drain( "bio_drain" );
@@ -1275,12 +1274,6 @@ void Character::suffer_from_radiation()
 
         mod_power_level( 40_kJ );
         mod_rad( 2 );
-    }
-    // Atomic battery is much safer but will still provide small amounts of radiation.
-    if( has_active_bionic( bio_atomic_battery ) ) {
-        if( calendar::once_every( 20_minutes ) ) {
-            mod_rad( 1 );
-        }
     }
 }
 

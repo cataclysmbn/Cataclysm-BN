@@ -26,6 +26,7 @@ class Character;
 class JsonObject;
 class Trait_group;
 class item;
+class lua_mutation_callback_actor;
 class nc_color;
 template <typename E> struct enum_traits;
 template <typename T> class string_id;
@@ -322,9 +323,17 @@ struct mutation_branch {
          * All known mutations. Key is the mutation id, value is the mutation_branch that you would
          * also get by calling @ref get.
          */
+        /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+         *  Mutable because it is wired post-construction through const factory references. */
+        mutable const lua_mutation_callback_actor *lua_callbacks = nullptr;
+
         static const std::vector<mutation_branch> &get_all();
         // For init.cpp: reset (clear) the mutation data
         static void reset_all();
+
+        /** Wire Lua callback pointers onto mutation_branch objects. */
+        static void resolve_lua_callbacks(
+            const std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> &actors );
         // For init.cpp: load mutation data from json
         void load( const JsonObject &jo, const std::string &src );
         static void load_trait( const JsonObject &jo, const std::string &src );

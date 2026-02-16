@@ -44,6 +44,7 @@ void submap::swap( submap &first, submap &second )
     std::swap( first.vehicles, second.vehicles );
     std::swap( first.partial_constructions, second.partial_constructions );
     std::swap( first.active_furniture, second.active_furniture );
+    std::swap( first.transformer_last_run, second.transformer_last_run );
     std::swap( first.is_uniform, second.is_uniform );
     std::swap( first.computers, second.computers );
     std::swap( first.legacy_computer, second.legacy_computer );
@@ -548,4 +549,9 @@ void submap::rotate( int turns )
         rot_ter_vars.emplace( rotate_point( elem.first ), elem.second );
     }
     ter_vars = rot_ter_vars;
+    std::map<point_sm_ms, time_point> rot_transformer_last_run;
+    for( auto &elem : transformer_last_run ) {
+        rot_transformer_last_run.emplace( point_sm_ms( rotate_point( elem.first.raw() ) ), elem.second );
+    }
+    transformer_last_run = rot_transformer_last_run;
 }

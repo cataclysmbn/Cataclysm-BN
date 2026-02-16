@@ -26,6 +26,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "cached_item_options.h"
+#include "catalua_icallback_actor.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
@@ -4646,6 +4647,10 @@ void item::on_wear( Character &who )
         handle_pickup_ownership( who );
     }
     who.on_item_wear( *this );
+
+    if( type->iwearable_callbacks ) {
+        type->iwearable_callbacks->call_on_wear( who, *this );
+    }
 }
 
 void item::on_takeoff( Character &who )
@@ -4665,6 +4670,10 @@ void item::on_takeoff( Character &who )
             return;
         }
         actor->bypass( *who.as_player(), *this, false, who.pos() );
+    }
+
+    if( type->iwearable_callbacks ) {
+        type->iwearable_callbacks->call_on_takeoff( who, *this );
     }
 }
 
@@ -4727,6 +4736,17 @@ void item::on_wield( player &p, int mv )
 
     // Update encumbrance in case we were wearing it
     p.flag_encumbrance();
+
+    if( type->iwieldable_callbacks ) {
+        type->iwieldable_callbacks->call_on_wield( p, *this, mv );
+    }
+}
+
+void item::on_unwield( Character &who )
+{
+    if( type->iwieldable_callbacks ) {
+        type->iwieldable_callbacks->call_on_unwield( who, *this );
+    }
 }
 
 void item::handle_pickup_ownership( Character &c )
@@ -4790,6 +4810,10 @@ void item::on_pickup( Character &who )
     }
 
     who.flag_encumbrance();
+
+    if( type->istate_callbacks ) {
+        type->istate_callbacks->call_on_pickup( who, *this );
+    }
 }
 
 void item::on_contents_changed()
@@ -4805,6 +4829,11 @@ void item::on_damage( int qty, damage_type )
 {
     if( is_corpse() && qty + damage_ >= max_damage() ) {
         set_flag( flag_PULPED );
+    }
+
+    if( type->iequippable_callbacks ) {
+        type->iequippable_callbacks->call_on_durability_change(
+            get_avatar(), *this, damage_, damage_ + qty );
     }
 }
 
@@ -5068,6 +5097,9 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
     }
     if( has_flag( flag_SPAWN_FRIENDLY ) ) {
         tagtext += _( " (friendly)" );
+    }
+    if( has_flag( flag_SPAWN_HOSTILE ) ) {
+        tagtext += _( " (hostile)" );
     }
 
     if( is_favorite ) {
@@ -6930,6 +6962,10 @@ bool item::mod_damage( int qty, damage_type dt )
         destroy |= damage_ + qty > max_damage();
 
         damage_ = std::max( std::min( damage_ + qty, max_damage() ), min_damage() );
+    }
+
+    if( destroy && type->iequippable_callbacks ) {
+        type->iequippable_callbacks->call_on_break( get_avatar(), *this );
     }
 
     return destroy;
@@ -8971,6 +9007,13 @@ bool item::reload( Character &who, item &loc, int qty )
 
     qty = std::min( qty, limit );
 
+    // Lua iranged can_reload callback: blocks reloading before ammo is consumed
+    if( const auto *iranged_cb = type->iranged_callbacks ) {
+        if( !iranged_cb->call_can_reload( who, *this ) ) {
+            return false;
+        }
+    }
+
     casings_handle( [&who]( detached_ptr<item> &&e ) {
         return who.i_add_or_drop( std::move( e ) );
     } );
@@ -9048,6 +9091,10 @@ bool item::reload( Character &who, item &loc, int qty )
                 who.inv_restack();
             }
         }
+    }
+
+    if( type->iranged_callbacks ) {
+        type->iranged_callbacks->call_on_reload( who, *this );
     }
 
     return true;
@@ -11011,14 +11058,23 @@ bool item::on_drop( const tripoint &pos )
 
 bool item::on_drop( const tripoint &pos, map &m )
 {
+    avatar &you = get_avatar();
+
+    if( type->istate_callbacks ) {
+        bool prevented = type->istate_callbacks->call_on_drop( you, *this, pos );
+        if( prevented ) {
+            return true;
+        }
+    }
+
     // dropping liquids, even currently frozen ones, on the ground makes them
     // dirty
     if( made_of( LIQUID ) && !m.has_flag( flag_LIQUIDCONT, pos ) &&
         !has_own_flag( flag_DIRTY ) ) {
         set_flag( flag_DIRTY );
     }
-    avatar &you = get_avatar();
     you.flag_encumbrance();
+
     return type->drop_action && type->drop_action.call( you, *this, false, pos );
 }
 
