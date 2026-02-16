@@ -640,7 +640,16 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [ "movietheater_0_0", "movietheater_2_0", "movietheater_0_1", "movietheater_1_1", "movietheater_2_1", "movietheater_0_2", "movietheater_1_2", "movietheater_2_2" ],
+    "id": [
+      "movietheater_0_0",
+      "movietheater_2_0",
+      "movietheater_0_1",
+      "movietheater_1_1",
+      "movietheater_2_1",
+      "movietheater_0_2",
+      "movietheater_1_2",
+      "movietheater_2_2"
+    ],
     "copy-from": "generic_city_building",
     "name": "movie theater",
     "sym": "M",

@@ -4,10 +4,7 @@
     "method": "json",
     "nested_mapgen_id": "lodge_cannibal_15x15",
     "object": {
-      "mapgensize": [
-        15,
-        15
-      ],
+      "mapgensize": [ 15, 15 ],
       "rows": [
         "               ",
         "               ",
@@ -25,9 +22,7 @@
         "SF DRA LRa LRL ",
         "               "
       ],
-      "palettes": [
-        "lodge_items"
-      ]
+      "palettes": [ "lodge_items" ]
     }
   },
   {
@@ -35,10 +30,7 @@
     "method": "json",
     "nested_mapgen_id": "lodge_hunting_15x15",
     "object": {
-      "mapgensize": [
-        15,
-        15
-      ],
+      "mapgensize": [ 15, 15 ],
       "rows": [
         "               ",
         "               ",
@@ -56,9 +48,7 @@
         "SF DRA BRa BRB ",
         "               "
       ],
-      "palettes": [
-        "lodge_items"
-      ]
+      "palettes": [ "lodge_items" ]
     }
   },
   {
@@ -66,10 +56,7 @@
     "method": "json",
     "nested_mapgen_id": "lodge_pantry_15x15",
     "object": {
-      "mapgensize": [
-        15,
-        15
-      ],
+      "mapgensize": [ 15, 15 ],
       "rows": [
         "               ",
         "               ",
@@ -87,9 +74,7 @@
         "SS SRA BRB SRS ",
         "               "
       ],
-      "palettes": [
-        "lodge_items"
-      ]
+      "palettes": [ "lodge_items" ]
     }
   },
   {
@@ -97,10 +82,7 @@
     "method": "json",
     "nested_mapgen_id": "lodge_game_6x6",
     "object": {
-      "mapgensize": [
-        6,
-        6
-      ],
+      "mapgensize": [ 6, 6 ],
       "rows": [
         "E CC T",
         "      ",
@@ -124,25 +106,8 @@
         "O": "t_carpet_red",
         "_": "t_carpet_red"
       },
-      "furniture": {
-        "A": "f_stool",
-        "B": "f_table",
-        "E": "f_armchair",
-        "C": "f_bookcase",
-        "T": "f_floor_lamp"
-      },
-      "items": {
-        "C": [
-          {
-            "item": "games",
-            "chance": 80,
-            "repeat": [
-              3,
-              6
-            ]
-          }
-        ]
-      }
+      "furniture": { "A": "f_stool", "B": "f_table", "E": "f_armchair", "C": "f_bookcase", "T": "f_floor_lamp" },
+      "items": { "C": [ { "item": "games", "chance": 80, "repeat": [ 3, 6 ] } ] }
     }
   },
   {
@@ -150,10 +115,7 @@
     "method": "json",
     "nested_mapgen_id": "lodge_dungeon_6x6",
     "object": {
-      "mapgensize": [
-        6,
-        6
-      ],
+      "mapgensize": [ 6, 6 ],
       "rows": [
         " tc td",
         " t  t ",
@@ -189,77 +151,21 @@
         "b": "f_bench",
         "f": "f_table",
         "h": "f_butcher_rack",
-        "y": [
-          "f_indoor_plant_y",
-          "f_indoor_plant"
-        ]
+        "y": [ "f_indoor_plant_y", "f_indoor_plant" ]
       },
-      "item": {
-        "C": [
-          {
-            "item": "bullwhip",
-            "chance": 100
-          }
-        ]
-      },
+      "item": { "C": [ { "item": "bullwhip", "chance": 100 } ] },
       "items": {
         "C": [
-          {
-            "item": "SUS_tailoring_materials",
-            "chance": 80,
-            "repeat": [
-              3,
-              6
-            ]
-          },
-          {
-            "item": "leather_shop_repair",
-            "chance": 40,
-            "repeat": [
-              2,
-              4
-            ]
-          }
+          { "item": "SUS_tailoring_materials", "chance": 80, "repeat": [ 3, 6 ] },
+          { "item": "leather_shop_repair", "chance": 40, "repeat": [ 2, 4 ] }
         ],
         "c": [
-          {
-            "item": "pants",
-            "chance": 100
-          },
-          {
-            "item": "shirts",
-            "chance": 100
-          },
-          {
-            "item": "leather_shop_accessories",
-            "chance": 10
-          }
+          { "item": "pants", "chance": 100 },
+          { "item": "shirts", "chance": 100 },
+          { "item": "leather_shop_accessories", "chance": 10 }
         ]
       },
-      "place_fields": [
-        {
-          "field": "fd_blood",
-          "x": [
-            2,
-            3
-          ],
-          "y": [
-            0,
-            1
-          ]
-        },
-        {
-          "field": "fd_gibs_flesh",
-          "x": [
-            2,
-            3
-          ],
-          "y": [
-            0,
-            1
-          ]
-        }
-      ]
+      "place_fields": [ { "field": "fd_blood", "x": [ 2, 3 ], "y": [ 0, 1 ] }, { "field": "fd_gibs_flesh", "x": [ 2, 3 ], "y": [ 0, 1 ] } ]
     }
   },
   {
@@ -267,10 +173,7 @@
     "method": "json",
     "nested_mapgen_id": "lodge_drug_6x6",
     "object": {
-      "mapgensize": [
-        6,
-        6
-      ],
+      "mapgensize": [ 6, 6 ],
       "rows": [
         "E CC T",
         "      ",
@@ -304,55 +207,17 @@
         "b": "f_bench",
         "f": "f_table",
         "h": "f_chair",
-        "y": [
-          "f_indoor_plant_y",
-          "f_indoor_plant"
-        ]
+        "y": [ "f_indoor_plant_y", "f_indoor_plant" ]
       },
       "item": {
         "C": [
-          {
-            "item": "straw_doll",
-            "chance": 80,
-            "repeat": [
-              6,
-              14
-            ]
-          },
-          {
-            "item": "bag_body_bag",
-            "chance": 40,
-            "repeat": [
-              2,
-              4
-            ]
-          }
+          { "item": "straw_doll", "chance": 80, "repeat": [ 6, 14 ] },
+          { "item": "bag_body_bag", "chance": 40, "repeat": [ 2, 4 ] }
         ],
         "B": [
-          {
-            "item": "coke",
-            "chance": 60,
-            "repeat": [
-              13,
-              126
-            ]
-          },
-          {
-            "item": "funnel",
-            "chance": 60,
-            "repeat": [
-              0,
-              1
-            ]
-          },
-          {
-            "item": "bag_plastic",
-            "chance": 90,
-            "repeat": [
-              20,
-              60
-            ]
-          }
+          { "item": "coke", "chance": 60, "repeat": [ 13, 126 ] },
+          { "item": "funnel", "chance": 60, "repeat": [ 0, 1 ] },
+          { "item": "bag_plastic", "chance": 90, "repeat": [ 20, 60 ] }
         ]
       }
     }
