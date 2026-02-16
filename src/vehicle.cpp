@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <ranges>
 
 #include "active_tile_data_def.h"
 #include "avatar.h"
@@ -1306,23 +1307,20 @@ bool vehicle::can_enable_muscle_engine( int e, std::string &failure_reason ) con
     const vpart_info &engine_info = part_info( part_idx );
     const point engine_mount = parts[part_idx].mount;
 
-    for( const vpart_reference &vpr : get_all_parts() ) {
-        if( vpr.mount() == engine_mount && vpr.part().has_flag( vehicle_part::passenger_flag ) ) {
-            const player *passenger = get_passenger( vpr.part_index() );
-            if( passenger != nullptr ) {
-                if( engine_info.has_flag( "MUSCLE_LEGS" ) && passenger->get_working_leg_count() < 2 ) {
-                    failure_reason = string_format( _( "%s cannot operate the %s due to injured legs." ),
-                                                    passenger->name, engine_info.name() );
-                    return false;
-                }
-                if( engine_info.has_flag( "MUSCLE_ARMS" ) && passenger->get_working_arm_count() < 2 ) {
-                    failure_reason = string_format( _( "%s cannot operate the %s due to injured arms." ),
-                                                    passenger->name, engine_info.name() );
-                    return false;
-                }
-                return true;
-            }
+
+    const player *passenger = get_passenger( part_idx );
+    if( passenger != nullptr ) {
+        if( engine_info.has_flag( "MUSCLE_LEGS" ) && passenger->get_working_leg_count() < 2 ) {
+            failure_reason = string_format( _( "%s cannot operate the %s due to injured legs." ),
+                                            passenger->name, engine_info.name() );
+            return false;
         }
+        if( engine_info.has_flag( "MUSCLE_ARMS" ) && passenger->get_working_arm_count() < 2 ) {
+            failure_reason = string_format( _( "%s cannot operate the %s due to injured arms." ),
+                                            passenger->name, engine_info.name() );
+            return false;
+        }
+        return true;
     }
 
     failure_reason = string_format( _( "The %s cannot operate without an occupant." ),
@@ -1336,17 +1334,13 @@ bool vehicle::has_muscle_engine_operator( int e ) const
     const vpart_info &engine_info = part_info( part_idx );
     const point engine_mount = parts[part_idx].mount;
 
-    for( const vpart_reference &vpr : get_all_parts() ) {
-        if( vpr.mount() == engine_mount && vpr.part().has_flag( vehicle_part::passenger_flag ) ) {
-            const player *passenger = get_passenger( vpr.part_index() );
-            if( passenger != nullptr ) {
-                if( engine_info.has_flag( "MUSCLE_LEGS" ) && passenger->get_working_leg_count() >= 2 ) {
-                    return true;
-                }
-                if( engine_info.has_flag( "MUSCLE_ARMS" ) && passenger->get_working_arm_count() >= 2 ) {
-                    return true;
-                }
-            }
+    const player *passenger = get_passenger( part_idx );
+    if( passenger != nullptr ) {
+        if( engine_info.has_flag( "MUSCLE_LEGS" ) && passenger->get_working_leg_count() >= 2 ) {
+            return true;
+        }
+        if( engine_info.has_flag( "MUSCLE_ARMS" ) && passenger->get_working_arm_count() >= 2 ) {
+            return true;
         }
     }
     return false;
@@ -1417,7 +1411,9 @@ bool vehicle::has_engine_conflict( const vpart_info *possible_conflict,
 
 bool vehicle::is_engine_type( const int e, const itype_id  &ft ) const
 {
-    return parts[engines[e]].ammo_current().is_null() ? parts[engines[e]].fuel_current() == ft :
+    auto engine_fuel = parts[engines[e]].info().engine_fuel_opts();
+    bool engine_has_fuel = std::find( engine_fuel.begin(), engine_fuel.end(), ft ) != engine_fuel.end();
+    return parts[engines[e]].ammo_current().is_null() ? engine_has_fuel :
            parts[engines[e]].ammo_current() == ft;
 }
 
@@ -5307,75 +5303,40 @@ void vehicle::consume_fuel( int load, const int t_seconds, bool skip_electric )
         base_burn = std::max( eff_load / 3, base_burn );
 
         // Check if player is contributing muscle power
-        const optional_vpart_position vp = g->m.veh_at( g->u.pos() );
-        bool player_contributing = false;
-        if( vp && &vp->vehicle() == this && player_in_control( g->u ) ) {
-            const int p = avail_part_with_feature( vp->part_index(), VPFLAG_ENGINE, true );
-            if( p >= 0 && is_part_on( p ) && part_info( p ).fuel_type == fuel_type_muscle ) {
-                if( ( part_info( p ).has_flag( "MUSCLE_LEGS" ) && ( g->u.get_working_leg_count() >= 2 ) ) ||
-                    ( part_info( p ).has_flag( "MUSCLE_ARMS" ) && ( g->u.get_working_arm_count() >= 2 ) ) ) {
-                    player_contributing = true;
-                }
-            }
-        }
-
-        if( player_contributing ) {
-            //charge bionics when using muscle engine
-            const item &muscle = *item::spawn_temporary( "muscle" );
-            for( const bionic_id &bid : g->u.get_bionic_fueled_with( muscle ) ) {
-                if( g->u.has_active_bionic( bid ) ) { // active power gen
-                    // more pedaling = more power
-                    g->u.mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->fuel_efficiency *
-                                          ( load / 1000.0f ) );
-                    mod += eff_load / 5;
-                } else { // passive power gen
-                    g->u.mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->passive_fuel_efficiency *
-                                          ( load / 1000.0f ) );
-                    mod += eff_load / 10;
-                }
-            }
-            // decreased stamina burn scalable with load
-            if( g->u.has_active_bionic( bio_jointservo ) ) {
-                g->u.mod_power_level( -bio_jointservo->power_trigger * std::max( eff_load / 20, 1 ) );
-                mod -= std::max( eff_load / 5, 5 );
-            }
-            if( one_in( 1000 / load ) && one_in( 10 ) ) {
-                g->u.mod_stored_kcal( -10 );
-                g->u.mod_thirst( 1 );
-                g->u.mod_fatigue( 1 );
-            }
-            g->u.mod_stamina( -( base_burn + mod ) );
-            add_msg( m_debug, "Load: %d", load );
-            add_msg( m_debug, "Mod: %d", mod );
-            add_msg( m_debug, "Burn: %d", -( base_burn + mod ) );
-        }
-
-        // Apply energy cost to NPCs powering muscle engines
         const bool npc_needs_enabled = !get_option<bool>( "NO_NPC_FOOD" );
-        for( int ep = 0; ep < static_cast<int>( engines.size() ); ep++ ) {
-            if( is_engine_type( ep, fuel_type_muscle ) && is_engine_on( ep ) ) {
-                const vehicle_part &engine_part = parts[engines[ep]];
-                npc *crew_member = const_cast<npc *>( engine_part.crew() );
-                if( crew_member != nullptr ) {
-                    // Check NPC limb functionality
-                    if( ( part_info( engines[ep] ).has_flag( "MUSCLE_LEGS" ) &&
-                          ( crew_member->get_working_leg_count() >= 2 ) ) ||
-                        ( part_info( engines[ep] ).has_flag( "MUSCLE_ARMS" ) &&
-                          ( crew_member->get_working_arm_count() >= 2 ) ) ) {
-                        // Apply same energy costs as player
-                        int npc_mod = 4 * st; // strain
-                        int npc_base_burn = static_cast<int>( get_option<float>( "PLAYER_BASE_STAMINA_REGEN_RATE" ) ) - 3;
-                        npc_base_burn = std::max( eff_load / 3, npc_base_burn );
-
-                        // Only consume energy if NPC needs are enabled
-                        if( npc_needs_enabled ) {
-                            if( one_in( 1000 / load ) && one_in( 10 ) ) {
-                                crew_member->mod_stored_kcal( -10 );
-                                crew_member->mod_thirst( 1 );
-                                crew_member->mod_fatigue( 1 );
-                            }
+        for( vpart_reference vp : get_enabled_parts( VPFLAG_ENGINE ) ) {
+            if( vp.info().fuel_type == fuel_type_muscle ) {
+                player &p = *get_passenger( vp.part_index() );
+                if( ( vp.info().has_flag( "MUSCLE_LEGS" ) && ( p.get_working_leg_count() >= 2 ) ) ||
+                    ( vp.info().has_flag( "MUSCLE_ARMS" ) && ( p.get_working_arm_count() >= 2 ) ) ) {
+                    const item &muscle = *item::spawn_temporary( "muscle" );
+                    for( const bionic_id &bid : p.get_bionic_fueled_with( muscle ) ) {
+                        if( p.has_active_bionic( bid ) ) { // active power gen
+                            // more pedaling = more power
+                            p.mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->fuel_efficiency *
+                                               ( load / 1000.0f ) );
+                            mod += eff_load / 5;
+                        } else { // passive power gen
+                            p.mod_power_level( units::from_kilojoule( muscle.fuel_energy() ) * bid->passive_fuel_efficiency *
+                                               ( load / 1000.0f ) );
+                            mod += eff_load / 10;
                         }
-                        crew_member->mod_stamina( -( npc_base_burn + npc_mod ) );
+                    }
+                    // decreased stamina burn scalable with load
+                    if( p.has_active_bionic( bio_jointservo ) ) {
+                        p.mod_power_level( -bio_jointservo->power_trigger * std::max( eff_load / 20, 1 ) );
+                        mod -= std::max( eff_load / 5, 5 );
+                    }
+                    if( p.is_player() || npc_needs_enabled ) {
+                        if( one_in( 1000 / load ) && one_in( 10 ) ) {
+                            p.mod_stored_kcal( -10 );
+                            p.mod_thirst( 1 );
+                            p.mod_fatigue( 1 );
+                        }
+                        p.mod_stamina( -( base_burn + mod ) );
+                        add_msg( m_debug, "Load: %d", load );
+                        add_msg( m_debug, "Mod: %d", mod );
+                        add_msg( m_debug, "Burn: %d", -( base_burn + mod ) );
                     }
                 }
             }
@@ -5635,8 +5596,9 @@ void vehicle::power_parts()
         if( engine_epower < 0 ) {
             // Not enough epower to run gas engine ignition system
             engine_on = false;
-            if( player_in_control( g->u ) || g->u.sees( global_pos3() ) ) {
-                add_msg( _( "The %s's engine dies!" ), name );
+            if( ( player_in_control( g->u ) || g->u.sees( global_pos3() ) ) &&
+                has_engine_type_not( fuel_type_muscle, true ) ) {
+                add_msg( _( "The %s's engine dies! 1" ), name );
             }
         }
     }
@@ -5991,7 +5953,7 @@ void vehicle::idle( bool on_map )
         if( engine_on && g->u.sees( global_pos3() ) &&
             ( has_engine_type_not( fuel_type_muscle, true ) && has_engine_type_not( fuel_type_animal, true ) &&
               has_engine_type_not( fuel_type_wind, true ) && has_engine_type_not( fuel_type_mana, true ) ) ) {
-            add_msg( _( "The %s's engine dies!" ), name );
+            add_msg( _( "The %s's engine dies! 2" ), name );
         }
         engine_on = false;
     }
