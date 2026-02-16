@@ -245,7 +245,8 @@ void cata::detail::reg_overmap( sol::state &lua )
     []( const tripoint & p ) -> std::vector<mongroup *> {
         namespace views = std::views;
         return overmap_buffer.monsters_at( tripoint_abs_omt( p ) )
-        | views::filter( []( const mongroup *group ) {
+        | views::filter( []( const mongroup * group )
+        {
             return group != nullptr && group->horde;
         } )
         | std::ranges::to<std::vector<mongroup *>>();
@@ -255,7 +256,8 @@ void cata::detail::reg_overmap( sol::state &lua )
     luna::set_fx( lib, "horde_count",
     []( const tripoint & p ) -> int {
         auto groups = overmap_buffer.monsters_at( tripoint_abs_omt( p ) );
-        return static_cast<int>( std::ranges::count_if( groups, []( const mongroup *group ) {
+        return static_cast<int>( std::ranges::count_if( groups, []( const mongroup * group )
+        {
             return group != nullptr && group->horde;
         } ) );
     } );
@@ -286,16 +288,19 @@ void cata::detail::reg_overmap( sol::state &lua )
 
     DOC( "Create a monster horde at the given absolute OMT position. Pass a table with fields: type (mongroup_id, required), pos (tripoint abs_omt, required), radius (int), population (int), horde (bool), behaviour (string), diffuse (bool), target (tripoint abs_omt)." );
     luna::set_fx( lib, "create_horde",
-    []( const sol::table &opts ) -> mongroup * {
+    []( const sol::table & opts ) -> mongroup * {
         const sol::object type_obj = opts.get<sol::object>( "type" );
         mongroup_id type_id = mongroup_id::NULL_ID();
-        if( type_obj.is<std::string>() ) {
+        if( type_obj.is<std::string>() )
+        {
             type_id = mongroup_id( type_obj.as<std::string>() );
-        } else if( type_obj.is<mongroup_id>() ) {
+        } else if( type_obj.is<mongroup_id>() )
+        {
             type_id = type_obj.as<mongroup_id>();
         }
         const sol::optional<tripoint> pos_val = opts.get<sol::optional<tripoint>>( "pos" );
-        if( type_id.is_null() || !pos_val.has_value() ) {
+        if( type_id.is_null() || !pos_val.has_value() )
+        {
             return nullptr;
         }
         const tripoint pos_omt = *pos_val;
@@ -318,7 +323,8 @@ void cata::detail::reg_overmap( sol::state &lua )
         mg.horde_behaviour = behaviour;
         mg.diffuse = diffuse;
 
-        if( target_omt.has_value() ) {
+        if( target_omt.has_value() )
+        {
             const tripoint_abs_sm target_abs_sm = project_to<coords::sm>( tripoint_abs_omt( *target_omt ) );
             point_abs_om target_om;
             point_om_sm target_within;

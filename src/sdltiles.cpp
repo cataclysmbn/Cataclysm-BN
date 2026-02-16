@@ -995,7 +995,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 if( blink && uistate.overmap_debug_mongroup ) {
                     const std::vector<mongroup *> mgroups = overmap_buffer.monsters_at( omp );
                     if( !mgroups.empty() ) {
-                        const auto horde_it = std::ranges::find_if( mgroups, []( const mongroup *mgp ) {
+                        const auto horde_it = std::ranges::find_if( mgroups, []( const mongroup * mgp ) {
                             return mgp != nullptr && mgp->horde;
                         } );
                         const mongroup *chosen = horde_it != mgroups.end() ? *horde_it : mgroups.front();
@@ -1006,27 +1006,32 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                         }
                     }
                 }
-                const auto fallback_horde_id = [&]( const tripoint_abs_omt &pos ) -> std::string {
+                const auto fallback_horde_id = [&]( const tripoint_abs_omt & pos ) -> std::string {
                     const auto groups = overmap_buffer.monsters_at( pos );
-                    const auto horde_it = std::ranges::find_if( groups, []( const mongroup *mgp ) {
+                    const auto horde_it = std::ranges::find_if( groups, []( const mongroup * mgp )
+                    {
                         return mgp != nullptr && mgp->horde && mgp->type.is_valid();
                     } );
-                    if( horde_it == groups.end() ) {
+                    if( horde_it == groups.end() )
+                    {
                         return "mon_zombie";
                     }
 
                     const mongroup *mgp = *horde_it;
                     const MonsterGroup &group = mgp->type.obj();
                     const auto default_id = group.defaultMonster.is_valid() ? group.defaultMonster.str() : std::string( "mon_zombie" );
-                    if( group.monsters.empty() ) {
+                    if( group.monsters.empty() )
+                    {
                         return default_id;
                     }
 
-                    const auto best_entry = std::ranges::max_element( group.monsters, []( const auto &lhs,
-                    const auto &rhs ) {
+                    const auto best_entry = std::ranges::max_element( group.monsters, []( const auto & lhs,
+                            const auto & rhs )
+                    {
                         return lhs.frequency < rhs.frequency;
                     } );
-                    if( best_entry == group.monsters.end() ) {
+                    if( best_entry == group.monsters.end() )
+                    {
                         return default_id;
                     }
                     return best_entry->name.is_valid() ? best_entry->name.str() : default_id;
@@ -1046,7 +1051,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                         auto fallback_id = fallback_horde_id( omp );
                         if( !find_tile_with_season( fallback_id ) ) {
                             const auto groups = overmap_buffer.monsters_at( omp );
-                            const auto horde_it = std::ranges::find_if( groups, []( const mongroup *mgp ) {
+                            const auto horde_it = std::ranges::find_if( groups, []( const mongroup * mgp ) {
                                 return mgp != nullptr && mgp->horde && mgp->type.is_valid();
                             } );
                             if( horde_it != groups.end() && ( *horde_it ) != nullptr ) {

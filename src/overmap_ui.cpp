@@ -1169,14 +1169,14 @@ static void draw_ascii( ui_adaptor &ui,
                     ter_sym = "x";
                 } else {
                     const auto groups = overmap_buffer.monsters_at( omp );
-                    const auto nemesis_it = std::ranges::find_if( groups, []( const mongroup *mgp ) {
+                    const auto nemesis_it = std::ranges::find_if( groups, []( const mongroup * mgp ) {
                         return mgp != nullptr && mgp->type == GROUP_NEMESIS;
                     } );
                     if( nemesis_it != groups.end() ) {
                         ter_sym = "&";
                         ter_color = c_red;
                     } else {
-                        const auto group_it = std::ranges::find_if( groups, []( const mongroup *mgp ) {
+                        const auto group_it = std::ranges::find_if( groups, []( const mongroup * mgp ) {
                             return mgp != nullptr && mgp->type != GROUP_FOREST;
                         } );
 
@@ -1201,14 +1201,14 @@ static void draw_ascii( ui_adaptor &ui,
             // Fallback horde highlight when hordes overlay is enabled (non-debug)
             if( showhordes && ter_sym != "+" && ter_sym != "-" && ter_sym != "Z" ) {
                 const auto groups = overmap_buffer.monsters_at( omp );
-                const auto nemesis_it = std::ranges::find_if( groups, []( const mongroup *mgp ) {
+                const auto nemesis_it = std::ranges::find_if( groups, []( const mongroup * mgp ) {
                     return mgp != nullptr && mgp->type == GROUP_NEMESIS;
                 } );
                 if( nemesis_it != groups.end() ) {
                     ter_sym = "&";
                     ter_color = c_red;
                 } else {
-                    const auto horde_it = std::ranges::find_if( groups, []( const mongroup *mgp ) {
+                    const auto horde_it = std::ranges::find_if( groups, []( const mongroup * mgp ) {
                         return mgp != nullptr && mgp->horde && mgp->type != GROUP_FOREST;
                     } );
                     if( horde_it != groups.end() && *horde_it != nullptr ) {
