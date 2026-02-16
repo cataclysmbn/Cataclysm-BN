@@ -284,7 +284,7 @@ tar -czvf cataclysmbn-linux-tiles.tar.gz cataclysmbn-linux-tiles
 #### Distribution Presets
 
 | Preset         | Description                             |
-|----------------|-----------------------------------------|
+| -------------- | --------------------------------------- |
 | `dist-tiles`   | Linux: Tiles + Sound + Languages        |
 | `dist-curses`  | Linux: Curses + Languages               |
 | `osx-arm-dist` | macOS ARM: Tiles + Sound + Languages    |
