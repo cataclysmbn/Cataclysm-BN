@@ -117,6 +117,7 @@
       "sloc_horse_ranch",
       "sloc_lighthouse_ground",
       "sloc_cabin_lake",
+      "sloc_lodge_ground",
       "sloc_freshwater_research_station",
       "sloc_marina"
     ],
@@ -455,6 +456,7 @@
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
+      "sloc_lodge_ground",
       "sloc_campsite",
       "sloc_campground",
       "sloc_bastion_fort",
@@ -492,6 +494,7 @@
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
+      "sloc_lodge_ground",
       "sloc_campsite",
       "sloc_campground",
       "sloc_cabin_lake",

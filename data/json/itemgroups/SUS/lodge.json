@@ -1,0 +1,185 @@
+[
+  {
+    "id": "SUS_hunting_archery",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      {
+        "item": "compbow",
+        "prob": 40
+      },
+      {
+        "item": "compbow_high",
+        "prob": 20
+      },
+      {
+        "item": "compbow_low",
+        "prob": 30
+      },
+      {
+        "item": "compositebow",
+        "prob": 25
+      },
+      {
+        "item": "compositebow_short",
+        "prob": 20
+      },
+      {
+        "item": "longbow",
+        "prob": 20
+      },
+      {
+        "item": "woodgreatbow",
+        "prob": 10
+      },
+      {
+        "item": "compgreatbow",
+        "prob": 10
+      },
+      {
+        "item": "bow_sling",
+        "prob": 10
+      }
+    ],
+    "//": "items found in an archery space"
+  },
+  {
+    "id": "SUS_hunting_rifle",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      {
+        "item": "ar15",
+        "prob": 150,
+        "charges": [
+          0,
+          30
+        ]
+      },
+      {
+        "item": "marlin_9a",
+        "prob": 20,
+        "charges": [
+          0,
+          19
+        ]
+      },
+      {
+        "item": "remington_700",
+        "prob": 40,
+        "charges": [
+          0,
+          4
+        ]
+      },
+      {
+        "item": "ruger_1022",
+        "prob": 70,
+        "charges": [
+          0,
+          10
+        ]
+      },
+      {
+        "item": "ruger_mini",
+        "prob": 10,
+        "charges": [
+          0,
+          5
+        ]
+      },
+      {
+        "item": "win70",
+        "prob": 20,
+        "charges": [
+          0,
+          3
+        ]
+      },
+      {
+        "item": "henry_big_boy",
+        "prob": 2,
+        "charges": [
+          0,
+          10
+        ]
+      },
+      {
+        "item": "weatherby_5",
+        "prob": 2,
+        "charges": [
+          0,
+          3
+        ]
+      }
+    ],
+    "//": "items found in a rifle hunting space"
+  },
+  {
+    "id": "hunting_lodge_weapons",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      {
+        "group": "guns_shotgun_common",
+        "prob": 30
+      },
+      {
+        "group": "SUS_hunting_rifle",
+        "prob": 20
+      },
+      {
+        "group": "SUS_hunting_archery",
+        "prob": 15
+      }
+    ],
+    "//": "items found in a shotgun hunting space"
+  },
+  {
+    "id": "cannibal_weapons",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      {
+        "group": "guns_shotgun_common",
+        "prob": 30
+      },
+      {
+        "group": "SUS_hunting_rifle",
+        "prob": 20
+      }
+    ],
+    "//": "items found in a most dangerous game space"
+  },
+  {
+    "id": "cannibal_food",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      {
+        "item": "machete",
+        "prob": 20
+      },
+      {
+        "item": "meat_salted",
+        "prob": 30
+      },
+      {
+        "group": "preserved_food",
+        "prob": 20
+      },
+      {
+        "group": "dry_goods",
+        "prob": 30
+      },
+      {
+        "item": "meat_smoked",
+        "prob": 60
+      },
+      {
+        "group": "SUS_pantry",
+        "prob": 10
+      }
+    ]
+  }
+]
