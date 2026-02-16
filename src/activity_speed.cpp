@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <optional>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "activity_type.h"
@@ -12,12 +13,17 @@
 #include "character_stat.h"
 #include "game.h"
 #include "map.h"
+#include "recipe.h"
+#include "skill.h"
 #include "type_id.h"
 #include "veh_type.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
 static const skill_id stat_speech( "speech" );
+
+static const std::string flag_BLIND_EASY( "BLIND_EASY" );
+static const std::string flag_BLIND_HARD( "BLIND_HARD" );
 
 static const quality_id qual_BUTCHER( "BUTCHER" );
 static const quality_id qual_CUT_FINE( "CUT_FINE" );
@@ -89,7 +95,19 @@ void activity_speed::calc_all_moves( Character &who, activity_reqs_adapter &reqs
     if( type->assistable() ) {
         calc_assistants_factor( who );
     }
-    calc_moves( who );
+    // Use target-aware versions where applicable
+    if( type->light_affected() ) {
+        calc_light_factor( who, reqs.target );
+    }
+    if( type->speed_affected() ) {
+        player_speed = who.get_speed() / 100.0f;
+    }
+    if( type->stats_affected() ) {
+        calc_stats_factors( who );
+    }
+    if( type->morale_affected() ) {
+        calc_morale_factor( who );
+    }
 }
 
 
@@ -107,6 +125,43 @@ void activity_speed::calc_light_factor( const Character &who )
             character_funcs::fine_detail_vision_mod( who ) -
             character_funcs::FINE_VISION_THRESHOLD
         ) / 7.0f;
+    light = limit_factor( 1.0f - darkness, 0.0f );
+}
+
+void activity_speed::calc_light_factor( const Character &who, const activity_target &target )
+{
+    if( character_funcs::can_see_fine_details( who ) ) {
+        light = 1.0f;
+        return;
+    }
+
+    const float darkness = ( character_funcs::fine_detail_vision_mod( who ) -
+                             character_funcs::FINE_VISION_THRESHOLD ) / 7.0f;
+
+    if( const recipe *const *rec_ptr = std::get_if<const recipe *>( &target ) ) {
+        const recipe *rec = *rec_ptr;
+        if( rec != nullptr ) {
+            if( rec->has_flag( flag_BLIND_EASY ) ) {
+                const SkillLevelMap &char_skills = who.get_all_skills();
+                int skill_bonus = char_skills.exceeds_recipe_requirements( *rec );
+                // 100% speed in well lit area at skill+0
+                // 25% speed in pitch black at skill+0
+                // skill+2 removes speed penalty
+                light = 1.0f - darkness * 0.75f * std::max( 0, 2 - skill_bonus ) / 2.0f;
+                return;
+            } else if( rec->has_flag( flag_BLIND_HARD ) ) {
+                const SkillLevelMap &char_skills = who.get_all_skills();
+                int skill_bonus = char_skills.exceeds_recipe_requirements( *rec );
+                if( skill_bonus >= 2 ) {
+                    // skill+8 removes speed penalty
+                    light = 1.0f - darkness * 0.75f * std::max( 0, 8 - skill_bonus ) / 6.0f;
+                    return;
+                }
+                // Not skilled enough for BLIND_HARD - fall through to default
+            }
+        }
+    }
+    // Construction or monostate or recipe without blind flags: use default
     light = limit_factor( 1.0f - darkness, 0.0f );
 }
 
