@@ -414,6 +414,10 @@ void iexamine::gaspump( player &p, const tripoint &examp )
     for( auto item_it = items.begin(); item_it != items.end(); ++item_it ) {
         item *content = *item_it;
         if( content->made_of( LIQUID ) ) {
+            if( content->charges <= 0 ) {
+                add_msg( m_info, _( "Out of order." ) );
+                return;
+            }
             item_it = location_vector<item>::iterator();
             ///\EFFECT_DEX decreases chance of spilling gas from a pump
             if( one_in( 10 + p.get_dex() ) ) {

@@ -808,5 +808,16 @@
     "time": "1 m",
     "using": [ [ "3d_printing_standard", 1 ] ],
     "components": [ [ [ "plastic_chunk", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "dehydrator_tray",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_CONTAINERS",
+    "skill_used": "fabrication",
+    "difficulty": 0,
+    "time": "5 s",
+    "autolearn": true,
+    "components": [ [ [ "sheet_metal_small", 1 ] ] ]
   }
 ]

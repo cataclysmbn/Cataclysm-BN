@@ -91,7 +91,7 @@ auto cata_tiles::get_effect_color(
 }
 
 auto cata_tiles::get_effect_color(
-    const effect &eff, const Character &c ) -> color_tint_pair
+    const effect &eff, const Character & ) -> color_tint_pair
 {
     const color_tint_pair *tint = tileset_ptr->get_tint( eff.get_id().str() );
     if( tint != nullptr ) {
@@ -107,7 +107,7 @@ auto cata_tiles::get_bionic_color(
 }
 
 auto cata_tiles::get_bionic_color(
-    const bionic &bio, const Character &c )-> color_tint_pair
+    const bionic &bio, const Character & )-> color_tint_pair
 {
     const auto &data = bio.id.obj();
     for( const flag_id &flag : data.flags ) {

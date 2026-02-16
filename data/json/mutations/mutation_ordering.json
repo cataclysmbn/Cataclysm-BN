@@ -47,10 +47,27 @@
         ],
         "order": 1000
       },
-      { "id": [ "PALE", "SKIN_DARK", "SKIN_LIGHT", "SKIN_MEDIUM", "SKIN_PINK", "SKIN_TAN" ], "order": 1100 },
       {
         "id": [
           "ALBINO",
+          "SUNBURN",
+          "PLANTSKIN",
+          "PALE",
+          "SKIN_DARK",
+          "SKIN_LIGHT",
+          "SKIN_MEDIUM",
+          "SKIN_PINK",
+          "SKIN_TAN",
+          "SKIN_OLIVE"
+        ],
+        "order": 1100
+      },
+      {
+        "id": [ "eye_red", "eye_violet", "eye_hazel", "eye_blue", "eye_brown", "eye_gray", "eye_green", "eye_amber" ],
+        "order": 1200
+      },
+      {
+        "id": [
           "BARK",
           "CHITIN",
           "CHITIN2",
@@ -64,7 +81,6 @@
           "LIGHT_FUR",
           "LUPINE_FUR",
           "LYNX_FUR",
-          "PLANTSKIN",
           "RABBIT_FUR",
           "SCALES",
           "SKIN_ROUGH",

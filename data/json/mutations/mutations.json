@@ -1201,6 +1201,7 @@
     "points": -1,
     "description": "You lack skin pigmentation due to a genetic problem.  You sunburn extremely easily, and typically use an umbrella and sunglasses when going out in the sun.",
     "starting_trait": true,
+    "prereqs": [ "eye_red" ],
     "changes_to": [ "SUNBURN" ],
     "category": [ "TROGLOBITE", "MOUSE", "RABBIT" ],
     "types": [ "skin_tone" ]
@@ -4382,19 +4383,6 @@
     "movecost_modifier": 0.9,
     "//": "Hardcoded effects include a 50% chance to negate a fall outright, this multiplier kicks in if you fall that roll or when tossed by a hulk.",
     "falling_damage_multiplier": 0.75
-  },
-  {
-    "type": "mutation",
-    "id": "PALE",
-    "name": { "str": "Pale Skin" },
-    "points": 0,
-    "visibility": 3,
-    "ugliness": 1,
-    "description": "Your skin is rather pale.",
-    "changes_to": [ "ALBINO" ],
-    "leads_to": [ "TROGLO" ],
-    "category": [ "LUPINE" ],
-    "types": [ "skin_tone" ]
   },
   {
     "type": "mutation",

@@ -30,6 +30,7 @@
 #include "int_id.h"
 #include "item_group.h"
 #include "item.h"
+#include "item_category.h"
 #include "itype.h"
 #include "line.h"
 #include "locations.h"
@@ -3032,6 +3033,31 @@ void monster::process_items()
     process_item_valptr( &*battery_item, *this );
 }
 
+namespace
+{
+
+/// Calculate category-specific spawn rate for an item
+/// Similar to map::item_category_spawn_rate but without roll_remainder
+/// for rates > 1.0 (we treat them as probability multipliers instead)
+auto get_item_category_spawn_rate( const item &itm ) -> float // *NOPAD*
+{
+    const std::string &cat = itm.get_category().id.c_str();
+    auto spawn_rate = get_option<float>( "SPAWN_RATE_" + cat );
+
+    // Apply perishable modifiers
+    if( itm.goes_bad_after_opening( true ) ) {
+        auto spawn_rate_mod = get_option<float>( "SPAWN_RATE_perishables_canned" );
+        spawn_rate *= spawn_rate_mod;
+    } else if( itm.goes_bad() ) {
+        auto spawn_rate_mod = get_option<float>( "SPAWN_RATE_perishables" );
+        spawn_rate *= spawn_rate_mod;
+    }
+
+    return spawn_rate;
+}
+
+} // namespace
+
 void monster::drop_items_on_death()
 {
     if( is_hallucination() ) {
@@ -3041,24 +3067,30 @@ void monster::drop_items_on_death()
         return;
     }
 
-    std::vector<detached_ptr<item>> items = item_group::items_from( type->death_drops,
-                                            calendar::start_of_cataclysm );
+    auto items = item_group::items_from( type->death_drops,
+                                         calendar::start_of_cataclysm );
 
-    // This block removes some items, according to item spawn scaling factor
-    const float spawn_rate = get_option<float>( "ITEM_SPAWNRATE" );
-    if( spawn_rate < 1 ) {
-        // Temporary vector, to remember which items will be dropped
-        std::vector<detached_ptr<item>> remaining;
-        for( auto &it : items ) {
-            if( it->has_flag( flag_MISSION_ITEM ) || rng_float( 0, 1 ) < spawn_rate ) {
-                remaining.push_back( std::move( it ) );
-            }
+    // Apply both global and category-specific spawn rates
+    const auto global_spawn_rate = get_option<float>( "ITEM_SPAWNRATE" );
+
+    // Filter items based on combined spawn rates using std::erase_if
+    std::erase_if( items, [global_spawn_rate]( const auto & it ) {
+        // Always keep mission items
+        if( it->has_flag( flag_MISSION_ITEM ) ) {
+            return false; // keep
         }
-        // If there aren't any items left, there's nothing left to do
-        if( remaining.empty() ) {
-            return;
-        }
-        items = std::move( remaining );
+
+        // Calculate combined rate: global × category
+        const auto category_rate = get_item_category_spawn_rate( *it );
+        const auto final_rate = std::min( global_spawn_rate * category_rate, 1.0f );
+
+        // Remove item based on final probability (erase_if removes when predicate is true)
+        return rng_float( 0, 1 ) >= final_rate;
+    } );
+
+    // If there aren't any items left, there's nothing left to do
+    if( items.empty() ) {
+        return;
     }
 
     g->m.spawn_items( pos(), std::move( items ) );

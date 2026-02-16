@@ -251,9 +251,9 @@ void cata::detail::reg_map( sol::state &lua )
 
         luna::set_fx( ut, "is_outside", sol::resolve<bool( const tripoint & ) const>( &map::is_outside ) );
         // Actually sheltered or in sunlight doesn't need map, but it's convenient to have it here
-        luna::set_fx( ut, "is_sheltered", []( map & m, tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
+        luna::set_fx( ut, "is_sheltered", []( map &, tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
 
-        luna::set_fx( ut, "is_in_sunlight", []( map & m, tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
+        luna::set_fx( ut, "is_in_sunlight", []( map &, tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
 
         // Mapgen stuffs
 

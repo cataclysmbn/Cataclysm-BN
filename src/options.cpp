@@ -1663,6 +1663,12 @@ void options_manager::add_options_interface()
          true
        );
 
+    add( "VERBOSE_CRAFTING_SPEED_MODIFIERS", interface,
+         translate_marker( "Verbose crafting/construction speed modifiers" ),
+         translate_marker( "If true, show 100% crafting/construction speed modifiers in the info panels." ),
+         false
+       );
+
     add( "AUTOSELECT_SINGLE_VALID_TARGET", interface,
          translate_marker( "Autoselect if exactly one valid target" ),
          translate_marker( "If true, directional actions ( like \"Examine\", \"Open\", \"Pickup\" ) "
@@ -2533,12 +2539,12 @@ void options_manager::add_options_world_default()
 
     add( "ITEM_SPAWNRATE", world_default,
          "Item spawn scaling factor",
-         "A scaling factor that determines density of item spawns. A higher number means more items.",
+         "A scaling factor that determines density of item spawns. A higher number means more items. Affects both map generation and monster death drops.",
          0.01, 10.0, 1.0, 0.01 );
 
     add_option_group( world_default, Group( "item_category_spawn_rate",
                                             to_translation( "Item category scaling factors" ),
-                                            to_translation( "Spawn rate for item categories. Values ≤ 1.0 represent a chance to spawn. >1.0 means extra spawns. Set to 0.0 to disable spawning items from that category." ) ),
+                                            to_translation( "Spawn rate for item categories. For map generation: values ≤ 1.0 represent a chance to spawn, >1.0 means extra spawns. For monster drops: values >1.0 increase spawn probability (capped at 100%). Set to 0.0 to disable spawning items from that category." ) ),
     [&]( const std::string & page_id ) {
 
         add( "SPAWN_RATE_ammo", page_id, "AMMO",

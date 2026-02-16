@@ -956,6 +956,7 @@ struct itype {
 
         std::map<quality_id, int> qualities; //Tool quality indicators
         std::map<std::string, std::string> properties;
+        float crafting_speed_modifier = 1.0f;
 
         // A list of conditional names, in order of ascending priority.
         std::vector<conditional_name> conditional_names;
@@ -1143,5 +1144,3 @@ struct itype {
         bool is_fuel() const;
         bool is_seed() const;
 };
-
-
