@@ -3480,7 +3480,8 @@ void game::draw_ter( const bool draw_sounds )
               draw_sounds );
 }
 
-namespace {
+namespace
+{
 
 struct mission_direction_indicator {
     point pos;
@@ -3544,7 +3545,7 @@ auto get_mission_edge_pos( const point &window_size,
         return std::nullopt;
     }
 
-    const auto in_bounds = [max_x, max_y]( const point &pos ) {
+    const auto in_bounds = [max_x, max_y]( const point & pos ) {
         return pos.x >= 0 && pos.x <= max_x && pos.y >= 0 && pos.y <= max_y;
     };
 
@@ -3628,7 +3629,7 @@ void game::draw_ter( const tripoint &center, const bool looking, const bool draw
     }
 
     if( const auto indicator = get_mission_direction_indicator(
-            u, point( getmaxx( w_terrain ), getmaxy( w_terrain ) ) ) ) {
+                                   u, point( getmaxx( w_terrain ), getmaxy( w_terrain ) ) ) ) {
         mvwputch( w_terrain, indicator->pos, indicator->color, indicator->glyph );
     }
     // Place the cursor over the player as is expected by screen readers.

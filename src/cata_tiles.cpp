@@ -82,7 +82,8 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 
-namespace {
+namespace
+{
 
 auto get_active_or_custom_target( const avatar &you ) -> tripoint_abs_omt
 {
@@ -152,7 +153,7 @@ auto get_mission_direction_edge_pos( const point &screen_size,
         return std::nullopt;
     }
 
-    const auto in_bounds = [max_x, max_y]( const point &pos ) {
+    const auto in_bounds = [max_x, max_y]( const point & pos ) {
         return pos.x >= 0 && pos.x <= max_x && pos.y >= 0 && pos.y <= max_y;
     };
 
@@ -2839,15 +2840,15 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     }
 
     if( const auto tile_id = get_mission_direction_tile_id(
-            g->u.global_omt_location(), get_active_or_custom_target( g->u ) ) ) {
+                                 g->u.global_omt_location(), get_active_or_custom_target( g->u ) ) ) {
         const auto delta = get_active_or_custom_target( g->u ).xy().raw() -
                            g->u.global_omt_location().xy().raw();
         const auto edge_pos = get_mission_direction_edge_pos(
-            point( max_col, max_row ),
-            point( POSX, POSY ),
-            o,
-            delta,
-            center.z );
+                                  point( max_col, max_row ),
+                                  point( POSX, POSY ),
+                                  o,
+                                  delta,
+                                  center.z );
         if( edge_pos ) {
             const tile_search_params tile { *tile_id, C_NONE, empty_string, 0, 0 };
             draw_from_id_string(
