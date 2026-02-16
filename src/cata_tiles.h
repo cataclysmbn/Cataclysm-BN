@@ -189,8 +189,6 @@ static constexpr tint_blend_mode string_to_tint_blend_mode( const std::string &s
         return tint_blend_mode::screen;
     } else if( str == "divide" ) {
         return tint_blend_mode::divide;
-    } else if( str == "dissolve" ) {
-        return tint_blend_mode::dissolve;
     } else if( str == "additive" ) {
         return tint_blend_mode::additive;
     } else if( str == "additive" ) {
