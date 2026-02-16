@@ -84,18 +84,18 @@ void activity_speed::calc_all_moves( Character &who, activity_reqs_adapter &reqs
 {
     if( type->bench_affected() ) {
         find_best_bench( who.pos(), reqs.metrics );
-        calc_bench_factor( who );
+        calc_bench_factor( who, reqs.target );
     }
     if( type->tools_affected() ) {
-        calc_tools_factor( who, reqs.qualities );
+        calc_tools_factor( who, reqs.qualities, reqs.target );
     }
     if( type->skill_affected() ) {
-        calc_skill_factor( who, reqs.skills );
+        calc_skill_factor( who, reqs.skills, reqs.target );
     }
     if( type->assistable() ) {
-        calc_assistants_factor( who );
+        calc_assistants_factor( who, reqs.target );
     }
-    // Use target-aware versions where applicable
+    // Use target-aware versions for all calculations
     if( type->light_affected() ) {
         calc_light_factor( who, reqs.target );
     }
@@ -103,10 +103,10 @@ void activity_speed::calc_all_moves( Character &who, activity_reqs_adapter &reqs
         player_speed = who.get_speed() / 100.0f;
     }
     if( type->stats_affected() ) {
-        calc_stats_factors( who );
+        calc_stats_factors( who, reqs.target );
     }
     if( type->morale_affected() ) {
-        calc_morale_factor( who );
+        calc_morale_factor( who, reqs.target );
     }
 }
 
@@ -138,7 +138,7 @@ void activity_speed::calc_light_factor( const Character &who, const activity_tar
     const float darkness = ( character_funcs::fine_detail_vision_mod( who ) -
                              character_funcs::FINE_VISION_THRESHOLD ) / 7.0f;
 
-    if( const recipe * const *rec_ptr = std::get_if<const recipe *>( &target ) ) {
+    if( const recipe *const *rec_ptr = std::get_if<const recipe *>( &target ) ) {
         const recipe *rec = *rec_ptr;
         if( rec != nullptr ) {
             if( rec->has_flag( flag_BLIND_EASY ) ) {
@@ -197,6 +197,12 @@ void activity_speed::calc_skill_factor( const Character &who, const skill_reqs &
     skills = limit_factor( f );
 }
 
+void activity_speed::calc_skill_factor( const Character &who, const skill_reqs &skill_req,
+                                        const activity_target &/*target*/ )
+{
+    calc_skill_factor( who, skill_req );
+}
+
 std::pair<character_stat, float> activity_speed::calc_single_stat( const Character &who,
         const activity_req<character_stat> &stat )
 {
@@ -238,12 +244,23 @@ void activity_speed::calc_assistants_factor( const Character &who )
     assist = 1.0f + refine_factor( f, 1, 0.0f, 200.0f );
 }
 
+void activity_speed::calc_assistants_factor( const Character &who,
+        const activity_target &/*target*/ )
+{
+    calc_assistants_factor( who );
+}
 
 void activity_speed::calc_bench_factor( const Character &/*who*/ )
 {
     bench_factor = bench
                    ? bench->wb_info.multiplier_adjusted
                    : 1.0f;
+}
+
+void activity_speed::calc_bench_factor( const Character &who,
+                                        const activity_target &/*target*/ )
+{
+    calc_bench_factor( who );
 }
 
 void activity_speed::calc_stats_factors( const Character &who )
@@ -255,6 +272,12 @@ void activity_speed::calc_stats_factors( const Character &who )
             stats.emplace_back( calc_single_stat( who, stat ) );
         }
     }
+}
+
+void activity_speed::calc_stats_factors( const Character &who,
+        const activity_target &/*target*/ )
+{
+    calc_stats_factors( who );
 }
 
 float activity_speed::get_best_qual_mod( const activity_req<quality_id> &q,
@@ -313,6 +336,12 @@ void activity_speed::calc_tools_factor( Character &who, const q_reqs &quality_re
     tools = limit_factor( f );
 }
 
+void activity_speed::calc_tools_factor( Character &who, const q_reqs &quality_reqs,
+                                        const activity_target &/*target*/ )
+{
+    calc_tools_factor( who, quality_reqs );
+}
+
 void activity_speed::calc_morale_factor( const Character &who )
 {
     const int p_morale = who.get_morale_level();
@@ -332,6 +361,12 @@ void activity_speed::calc_morale_factor( const Character &who )
         morale = 1.20f + p_morale / 100.0f;
     }
     morale = 1.0f;
+}
+
+void activity_speed::calc_morale_factor( const Character &who,
+        const activity_target &/*target*/ )
+{
+    calc_morale_factor( who );
 }
 
 void activity_speed::find_best_bench( const tripoint &pos, const metric metrics )
