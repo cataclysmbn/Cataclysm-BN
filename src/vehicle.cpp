@@ -5598,7 +5598,7 @@ void vehicle::power_parts()
             engine_on = false;
             if( ( player_in_control( g->u ) || g->u.sees( global_pos3() ) ) &&
                 has_engine_type_not( fuel_type_muscle, true ) ) {
-                add_msg( _( "The %s's engine dies! 1" ), name );
+                add_msg( _( "The %s's engine dies!" ), name );
             }
         }
     }
@@ -5953,7 +5953,7 @@ void vehicle::idle( bool on_map )
         if( engine_on && g->u.sees( global_pos3() ) &&
             ( has_engine_type_not( fuel_type_muscle, true ) && has_engine_type_not( fuel_type_animal, true ) &&
               has_engine_type_not( fuel_type_wind, true ) && has_engine_type_not( fuel_type_mana, true ) ) ) {
-            add_msg( _( "The %s's engine dies! 2" ), name );
+            add_msg( _( "The %s's engine dies!" ), name );
         }
         engine_on = false;
     }
