@@ -4418,6 +4418,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             jsin.read( loc );
             auto &vars = ter_vars[loc];
             jsin.read( vars );
+        }
     } else if( member_name == "transformer_last_run" ) {
         jsin.start_array();
         while( !jsin.end_array() ) {
