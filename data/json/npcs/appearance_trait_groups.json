@@ -83,7 +83,7 @@
     "traits": [
       { "group": "Hair_Color_Dark", "prob": 100 },
       { "group": "Hair_Style_Any", "prob": 100 },
-      { "trait": "SKIN_TAN", "prob": 100 },
+      { "trait": "SKIN_OLIVE", "prob": 100 },
       { "group": "Eye_dark", "prob": 100 }
     ]
   },
@@ -115,9 +115,11 @@
     "subtype": "distribution",
     "traits": [
       { "trait": "hair_red", "prob": 5 },
-      { "trait": "hair_blond", "prob": 25 },
+      { "trait": "hair_blond", "prob": 20 },
+      { "trait": "hair_platinum_blond", "prob": 5 },
       { "trait": "hair_black", "prob": 25 },
-      { "trait": "hair_brown", "prob": 25 },
+      { "trait": "hair_brown", "prob": 15 },
+      { "trait": "hair_light_brown", "prob": 10 },
       { "trait": "hair_gray", "prob": 10 },
       { "trait": "hair_white", "prob": 10 }
     ]
@@ -128,9 +130,11 @@
     "subtype": "distribution",
     "traits": [
       { "trait": "hair_red", "prob": 10 },
-      { "trait": "hair_blond", "prob": 10 },
+      { "trait": "hair_blond", "prob": 8 },
+      { "trait": "hair_platinum_blond", "prob": 2 },
       { "trait": "hair_black", "prob": 25 },
-      { "trait": "hair_brown", "prob": 40 },
+      { "trait": "hair_brown", "prob": 15 },
+      { "trait": "hair_light_brown", "prob": 25 },
       { "trait": "hair_gray", "prob": 8 },
       { "trait": "hair_white", "prob": 7 }
     ]
@@ -141,9 +145,11 @@
     "subtype": "distribution",
     "traits": [
       { "trait": "hair_red", "prob": 1 },
-      { "trait": "hair_blond", "prob": 50 },
+      { "trait": "hair_blond", "prob": 40 },
+      { "trait": "hair_platinum_blond", "prob": 10 },
       { "trait": "hair_black", "prob": 7 },
-      { "trait": "hair_brown", "prob": 40 },
+      { "trait": "hair_brown", "prob": 15 },
+      { "trait": "hair_light_brown", "prob": 25 },
       { "trait": "hair_gray", "prob": 5 },
       { "trait": "hair_white", "prob": 8 }
     ]
@@ -217,13 +223,18 @@
     "type": "trait_group",
     "id": "Skin_Fair",
     "subtype": "distribution",
-    "traits": [ { "trait": "SKIN_PINK", "prob": 5 }, { "trait": "SKIN_LIGHT", "prob": 5 } ]
+    "traits": [ { "trait": "SKIN_PINK", "prob": 5 }, { "trait": "SKIN_LIGHT", "prob": 8 }, { "trait": "SKIN_OLIVE", "prob": 3 } ]
   },
   {
     "type": "trait_group",
     "id": "Skin_White",
     "subtype": "distribution",
-    "traits": [ { "trait": "SKIN_MEDIUM", "prob": 15 }, { "trait": "SKIN_PINK", "prob": 25 }, { "trait": "SKIN_LIGHT", "prob": 55 } ]
+    "traits": [
+      { "trait": "SKIN_MEDIUM", "prob": 10 },
+      { "trait": "SKIN_PINK", "prob": 20 },
+      { "trait": "SKIN_LIGHT", "prob": 50 },
+      { "trait": "SKIN_OLIVE", "prob": 20 }
+    ]
   },
   {
     "type": "trait_group",

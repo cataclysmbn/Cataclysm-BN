@@ -765,20 +765,87 @@ static void apply_surf_blend_effect(
 
         switch( tint.blend_mode )
         {
-            case tint_blend_mode::additive:
+            case tint_blend_mode::additive: {
                 col = RGBColor{ std::min<uint8_t>( base.r + target.r, 255 ), std::min<uint8_t>( base.g + target.g, 255 ), std::min<uint8_t>( base.b + target.b, 255 ), std::min<uint8_t>( base.a + target.a, 255 ) };
                 break;
-            case tint_blend_mode::subtract:
+            }
+            case tint_blend_mode::subtract: {
                 col = RGBColor{ std::max<uint8_t>( base.r - ( 255 - target.r ), 0 ), std::max<uint8_t>( base.g - ( 255 - target.g ), 0 ), std::max<uint8_t>( base.b - ( 255 - target.b ), 0 ), base.a };
                 break;
-            case tint_blend_mode::multiply:
+            }
+            case tint_blend_mode::multiply: {
                 col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ), static_cast<uint8_t>( base.g *target.g / 256 ), static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
                 break;
-            case tint_blend_mode::overlay: {
-                auto overlay_channel = []( uint8_t base, uint8_t blend ) -> uint8_t {
+            }
+            case tint_blend_mode::normal: {
+                // A truely accurate normal blend would use the alpha from the target, but that'd be useless here.
+                col = RGBColor{ static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.r, target.r, target.a ) ),
+                                static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.g, target.g, target.a ) ),
+                                static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.b, target.b, target.a ) ), base.a };
+                break;
+            }
+            case tint_blend_mode::divide: {
+                col = RGBColor{ static_cast<uint8_t>( base.r / std::max<uint8_t>( 1, target.r ) ),
+                                static_cast<uint8_t>( base.g / std::max<uint8_t>( 1, target.g ) ),
+                                static_cast<uint8_t>( base.b / std::max<uint8_t>( 1, target.b ) ), base.a };
+                break;
+            }
+            case tint_blend_mode::screen: {
+                auto screen_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
+                    int result = std::clamp<int>( 255 - ( 255 - base ) * ( 255 - blend ) / 128, 0, 255 );
+                    return std::clamp<int>( result, 0, 255 );
+                };
+                col = SDL_Color{
+                    screen_channel( base.r, target.r ),
+                    screen_channel( base.g, target.g ),
+                    screen_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
+            case tint_blend_mode::softlight: {
+                auto softlight_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     // Pegtop soft light formula
                     int result = ( ( 255 - 2 * blend ) * base *base / 256 + 2 * blend * base ) / 256;
                     return std::clamp<int>( result, 0, 255 );
+                };
+                col = SDL_Color{
+                    softlight_channel( base.r, target.r ),
+                    softlight_channel( base.g, target.g ),
+                    softlight_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
+            case tint_blend_mode::hardlight: {
+                auto hardlight_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
+                    if( blend > 127 )
+                    {
+                        return std::clamp<uint8_t>( 255 - ( 255 - blend ) * ( ( std::max( 255 - base,
+                                                    1 ) ) * 255 / 127 ) / 255, 0, 255 );
+                    } else
+                    {
+                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
+                    }
+                };
+                col = SDL_Color{
+                    hardlight_channel( base.r, target.r ),
+                    hardlight_channel( base.g, target.g ),
+                    hardlight_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
+            case tint_blend_mode::overlay: {
+                auto overlay_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
+                    if( base > 127 )
+                    {
+                        return std::clamp<uint8_t>( 255 - ( std::max( 255 - blend,
+                                                            1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 );
+                    } else
+                    {
+                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
+                    }
                 };
                 col = SDL_Color{
                     overlay_channel( base.r, target.r ),
@@ -789,23 +856,30 @@ static void apply_surf_blend_effect(
                 break;
             }
             default:
-            case tint_blend_mode::tint:
+            case tint_blend_mode::tint: {
                 auto base_hsv = rgb2hsv( base );
-                auto target_hsv = rgb2hsv( target );
-                base_hsv.H = target_hsv.H;
-                base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, target_hsv.S ), target_hsv.S,
-                                                       mask.has_value() ? mask.value().g : 127 );
-                int o;
-                if( base_hsv.V > 127 ) {
-                    o = std::clamp<int>( 255 - ( 255 - base_hsv.V ) * ( 255 - target_hsv.V ) / 128, 0, 255 );
+                auto dest_hsv = rgb2hsv( target );
 
-                } else {
-                    o = std::clamp<int>( base_hsv.V * target_hsv.V / 128, 0, 255 );
-                }
-                base_hsv.V = ilerp<uint16_t, uint8_t>( std::clamp<uint8_t>( o, 0, 255 ), target_hsv.V,
+                constexpr auto overlay = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
+                    if( base > 127 )
+                    {
+                        return std::clamp<uint8_t>( 255 - ( std::max( 255 - blend,
+                                                            1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 );
+                    } else
+                    {
+                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
+                    }
+                };
+
+                base_hsv.H = dest_hsv.H;
+                base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S,
+                                                       mask.has_value() ? mask.value().g : 127 );
+                base_hsv.V = ilerp<uint16_t, uint8_t>( base_hsv.V, overlay( base_hsv.V, dest_hsv.V ),
                                                        mask.has_value() ? mask.value().b : 127 );
+
                 col = hsv2rgb( base_hsv );
                 break;
+            }
         }
         if( mask.has_value() )
         {
@@ -1617,26 +1691,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
         };
 
         auto parse_blend_mode = []( const std::string & str ) -> tint_blend_mode {
-            if( str == "multiply" )
-            {
-                return tint_blend_mode::multiply;
-            } else if( str == "overlay" )
-            {
-                return tint_blend_mode::overlay;
-            } else if( str == "tint" )
-            {
-                return tint_blend_mode::tint;
-            } else if( str == "additive" )
-            {
-                return tint_blend_mode::additive;
-            } else if( str == "additive" )
-            {
-                return tint_blend_mode::additive;
-            } else if( str == "subtract" )
-            {
-                return tint_blend_mode::subtract;
-            }
-            return tint_blend_mode::tint;
+            return string_to_tint_blend_mode( str );
         };
 
         // Parse a tint_config from either a string or an object

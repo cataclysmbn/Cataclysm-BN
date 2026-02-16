@@ -162,10 +162,41 @@ class texture
 enum class tint_blend_mode : uint8_t {
     tint,
     overlay,
+    softlight,
+    hardlight,
     multiply,
     additive,
     subtract,
+    normal,
+    screen,
+    divide
 };
+
+static constexpr tint_blend_mode string_to_tint_blend_mode( const std::string &str )
+{
+    if( str == "multiply" ) {
+        return tint_blend_mode::multiply;
+    } else if( str == "overlay" ) {
+        return tint_blend_mode::overlay;
+    } else if( str == "softlight" ) {
+        return tint_blend_mode::softlight;
+    } else if( str == "hardlight" ) {
+        return tint_blend_mode::hardlight;
+    } else if( str == "normal" ) {
+        return tint_blend_mode::normal;
+    } else if( str == "screen" ) {
+        return tint_blend_mode::screen;
+    } else if( str == "divide" ) {
+        return tint_blend_mode::divide;
+    } else if( str == "additive" ) {
+        return tint_blend_mode::additive;
+    } else if( str == "additive" ) {
+        return tint_blend_mode::additive;
+    } else if( str == "subtract" ) {
+        return tint_blend_mode::subtract;
+    }
+    return tint_blend_mode::tint;
+}
 
 enum class tileset_fx_type {
     none,
