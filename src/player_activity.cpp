@@ -307,7 +307,8 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                     progress_desc += string_format( _( "  - Processing %s out of %s\n" ), actor->progress.get_index(),
                                                     actor->progress.get_total_tasks() );
                     progress_desc += string_format( _( "  - Estimated time: %s\n" ),
-                                                    to_string( time_duration::from_turns( actor->progress.get_moves_left() / speed.moves_per_turn() ) ) );
+                                                    to_string( time_duration::from_turns( actor->progress.get_moves_left() /
+                                                            speed.moves_per_turn() ) ) );
                     progress_desc += " - Current: ";
                 }
                 progress_desc += string_format( "%.1f%%\n",
