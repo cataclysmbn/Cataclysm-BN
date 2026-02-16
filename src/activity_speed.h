@@ -87,7 +87,7 @@ class activity_speed
 
         //Returns total amonut of moves based on factors
         inline int total_moves() const {
-            return std::roundf( total() * 100.0f );
+            return std::max(1.0f, std::roundf( total() * 100.0f ));
         }
 
         //Calculates all factors
