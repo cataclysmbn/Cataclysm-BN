@@ -141,7 +141,8 @@ float lighting_crafting_speed_multiplier( const Character &who, const recipe &re
     if( rec.has_flag( flag_BLIND_IMPOSSIBLE ) && darkness < -1.0f ) {
         return 0.0f;
     }
-    constexpr auto formula = []( const float &darkness, const int &skill_thresh, const int &skill_bonus, const float &scalar, const float &min = 0.25f ) -> float {
+    constexpr auto formula = []( const float & darkness, const int &skill_thresh,
+    const int &skill_bonus, const float & scalar, const float &min = 0.25f ) -> float {
         return std::max( 1.0f - std::powf( darkness * scalar, 2 ) * std::max( 0, skill_thresh - skill_bonus ), min );
     };
 

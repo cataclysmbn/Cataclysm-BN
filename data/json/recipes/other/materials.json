@@ -1097,7 +1097,7 @@
     "autolearn": true,
     "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
-    "components": [ [ [ "rag", 10 ] ] ],
+    "components": [ [ [ "rag", 10 ] ] ]
   },
   {
     "result": "bundle_leather",
@@ -1111,7 +1111,7 @@
     "autolearn": true,
     "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
-    "components": [ [ [ "leather", 10 ] ] ],
+    "components": [ [ [ "leather", 10 ] ] ]
   },
   {
     "result": "bundle_wool",
@@ -1125,7 +1125,7 @@
     "autolearn": true,
     "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
-    "components": [ [ [ "felt_patch", 10 ] ] ],
+    "components": [ [ [ "felt_patch", 10 ] ] ]
   },
   {
     "type": "recipe",

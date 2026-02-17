@@ -152,7 +152,8 @@ void activity_speed::calc_light_factor( const Character &who, const activity_tar
                 return;
             }
 
-            constexpr auto formula = []( const float &darkness, const int &skill_thresh, const int &skill_bonus, const float &scalar, const float &min = 0.25f ) -> float {
+            constexpr auto formula = []( const float & darkness, const int &skill_thresh,
+            const int &skill_bonus, const float & scalar, const float &min = 0.25f ) -> float {
                 return limit_factor( 1.0f - std::powf( darkness * scalar, 2 ) * std::max( 0, skill_thresh - skill_bonus ), min );
             };
 
