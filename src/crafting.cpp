@@ -144,11 +144,12 @@ float lighting_crafting_speed_multiplier( const Character &who, const recipe &re
     // penalty_scale: deficit for 50% speed at full darkness
     auto calc_light_with_blocking = [&]( float block_divisor, float penalty_scale ) -> float {
         bool blocked = ( darkness + skill_deficit / block_divisor ) > 1.0f;
-        if( blocked ) {
+        if( blocked )
+        {
             return 0.0f;
         }
         // When not blocked, linear penalty with 5% minimum (20x max slowdown)
-        return std::max( 0.05f, 1.0f - darkness * skill_deficit / penalty_scale );
+        return std::max( 0.05f, 1.0f - darkness *skill_deficit / penalty_scale );
     };
 
     if( rec.has_flag( flag_BLIND_IMPOSSIBLE ) ) {
