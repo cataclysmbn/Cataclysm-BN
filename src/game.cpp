@@ -112,6 +112,7 @@
 #include "live_view.h"
 #include "loading_ui.h"
 #include "locations.h"
+#include "lua_tiles.h"
 #include "npc.h"
 #include "magic.h"
 #include "map.h"
@@ -1702,6 +1703,7 @@ bool game::do_turn()
     u.process_turn();
 
     cata::run_on_every_x_hooks( *DynamicDataLoader::get_instance().lua );
+    lua_tile_manager::get().cleanup();
 
     explosion_handler::get_explosion_queue().execute();
     cleanup_dead();
@@ -2833,6 +2835,8 @@ bool game::load( const save_t &name )
     cata::load_world_lua_state( get_active_world(), "lua_state.json" );
 
     cata::run_on_game_load_hooks( *DynamicDataLoader::get_instance().lua );
+
+    lua_tile_manager::get().clear_all();
 
     // Build caches once so any immediate post-load draws don't use uninitialized lighting/visibility,
     // then re-invalidate so the first real in-game draw rebuilds everything again.

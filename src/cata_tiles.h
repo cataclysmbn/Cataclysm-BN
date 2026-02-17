@@ -11,6 +11,9 @@
 #include <variant>
 
 #include "animation.h"
+#include "catalua_bindings.h"
+#include "catalua_bindings_utils.h"
+#include "catalua_luna_doc.h"
 #include "enums.h"
 #include "hash_utils.h"
 #include "hsv_color.h"
@@ -84,7 +87,8 @@ enum TILE_CATEGORY {
     C_HIT_ENTITY,
     C_WEATHER,
     C_OVERMAP_TERRAIN,
-    C_OVERMAP_NOTE
+    C_OVERMAP_NOTE,
+    C_LUA
 };
 
 class tile_lookup_res
@@ -212,6 +216,12 @@ enum class tileset_fx_type {
 constexpr int TILESET_NO_MASK = -1;
 constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
 
+static auto SDL_Color_from_string( const std::string &str ) -> SDL_Color
+{
+    return static_cast<SDL_Color>( str.starts_with( '#' ) ? rgb_from_hex_string(
+                                       str ) : curses_color_to_RGB( color_from_string( str ) ) );
+}
+
 struct tint_config {
     std::optional<SDL_Color> color;
     tint_blend_mode blend_mode = tint_blend_mode::tint;
@@ -236,12 +246,25 @@ struct tint_config {
     tint_config() = default;
     tint_config( std::optional<SDL_Color> c ) : color( c ) {}
     tint_config( std::nullopt_t ) : color( std::nullopt ) {}
-    tint_config( SDL_Color c ) : color( c ) {}
-    tint_config( RGBColor c ) : color( static_cast<SDL_Color>( c ) ) {}
-    tint_config( nc_color c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( c ) ) ) {}
+    tint_config( HSVColor c ) : color( hsv2rgb( c ) ) {}
+    tint_config( nc_color c ) : color( curses_color_to_RGB( c ) ) {}
+    tint_config( std::string c ) : color( SDL_Color_from_string( c ) ) {}
+    tint_config( color_id c ) : color( curses_id_to_RGB( c ) ) {}
 };
 
-using color_tint_pair = std::pair<tint_config, tint_config>;  // {bg, fg}
+struct color_tint_pair {
+    tint_config bg;
+    tint_config fg;
+
+    bool operator==( const color_tint_pair &other ) const {
+        return bg == other.bg
+               && fg == other.fg;
+    }
+    color_tint_pair() = default;
+    color_tint_pair( std::nullopt_t ) : bg( std::nullopt ), fg( std::nullopt ) {}
+    color_tint_pair( tint_config tint ) : bg( tint ), fg( tint ) {}
+    color_tint_pair( tint_config bg, tint_config fg ) : bg( bg ), fg( fg ) {}
+};
 
 struct tileset_lookup_key {
     int sprite_index;
@@ -811,6 +834,8 @@ class cata_tiles
                              const bool ( &invisible )[5], int z_drop );
         bool draw_zombie_revival_indicators( const tripoint &pos, lit_level ll, int &height_3d,
                                              const bool ( &invisible )[5], int z_drop );
+        bool draw_lua_tiles( const tripoint &p, lit_level ll, int &height_3d,
+                             const bool ( &invisible )[5], int z_drop );
         void draw_entity_with_overlays( const Character &ch, const tripoint &p, lit_level ll,
                                         int &height_3d, bool as_independent_entity = false );
 

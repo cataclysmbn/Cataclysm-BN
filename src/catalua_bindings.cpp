@@ -11,6 +11,7 @@
 #include "artifact.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_tiles.h"
 #include "character.h"
 #include "creature.h"
 #include "damage.h"
@@ -454,6 +455,92 @@ void cata::detail::reg_colors( sol::state &lua )
     }
 
     luna::finalize_enum( et );
+}
+
+void cata::detail::reg_tint_color( sol::state &lua )
+{
+#define UT_CLASS color_tint_pair
+    {
+        DOC( "Color Tint Pair" );
+        DOC( "Simply contains two tint configs." );
+        DOC( "Can be constructed with one or two tint configs (first is bg, second is fg)." );
+        DOC( "If only one tint config is given, it is used for both bg and fg." );
+        sol::usertype<UT_CLASS> ut =
+        luna::new_usertype<UT_CLASS>(
+            lua,
+            luna::no_bases,
+            luna::constructors <
+            UT_CLASS(),
+            UT_CLASS( tint_config ),
+            UT_CLASS( tint_config, tint_config )
+            > ()
+        );
+        SET_MEMB( bg );
+        SET_MEMB( fg );
+    }
+#undef UT_CLASS // #define UT_CLASS color_tint_pair
+
+#define UT_CLASS tint_config
+    {
+        DOC( "Tint Config" );
+        DOC( "Contains tinting parameters for tile rendering." );
+        DOC( "Can be constructed with a color input in the same way as set_color." );
+        sol::usertype<UT_CLASS> ut =
+        luna::new_usertype<UT_CLASS>(
+            lua,
+            luna::no_bases,
+            luna::constructors <
+            UT_CLASS(),
+            UT_CLASS( std::string ),
+            UT_CLASS( color_id )
+            > ()
+        );
+
+        DOC( "Sets the tint color." );
+        DOC( "Accepts a string hex code or curses color name:" );
+        DOC( "(#ab7f3d) | (c_red)" );
+        DOC( "Or a color_id enum value." );
+        luna::set_fx( ut, "set_color", []( UT_CLASS & col, const sol::object & obj )
+        {
+            if( obj.is<std::string>() ) {
+                std::string color = obj.as<std::string>();
+                col.color = SDL_Color_from_string( color );
+            } else if( obj.is<color_id>() ) {
+                col.color = curses_id_to_RGB( obj.as<color_id>() );
+            }
+        } );
+
+        DOC( "Returns the tint color as a hex string, mostly for debugging." );
+        luna::set_fx( ut, "get_hex_color", []( UT_CLASS & col )
+        {
+            return rgb_to_hex_string( *col.color );
+        } );
+
+        DOC( "Sets the blend mode." );
+        DOC( "Accepts one of: tint, overlay, multiply, additive, subtract" );
+        luna::set_fx( ut, "set_blend_mode", []( UT_CLASS & col, const std::string & mode )
+        {
+            if( !mode.empty() ) {
+                if( mode == "overlay" ) {
+                    col.blend_mode = tint_blend_mode::overlay;
+                } else if( mode == "multiply" ) {
+                    col.blend_mode = tint_blend_mode::multiply;
+                } else if( mode == "additive" ) {
+                    col.blend_mode = tint_blend_mode::additive;
+                } else if( mode == "subtract" ) {
+                    col.blend_mode = tint_blend_mode::subtract;
+                } else {
+                    col.blend_mode = tint_blend_mode::tint;
+                }
+            };
+        } );
+
+        DOC( "Contrast, staturation, and brightness take floats as multipliers. 1.0 == no change." );
+        SET_MEMB( contrast );
+        SET_MEMB( saturation );
+        SET_MEMB( brightness );
+    }
+#undef UT_CLASS // #define UT_CLASS tint_config
 }
 
 void cata::detail::reg_enums( sol::state &lua )
@@ -975,6 +1062,7 @@ void cata::reg_all_bindings( sol::state &lua )
     mod_bionic_data( lua );
     mod_mutation_branch( lua );
     reg_bionics( lua );
+    reg_tint_color( lua );
     reg_magic( lua );
     reg_names( lua );
     reg_mission( lua );

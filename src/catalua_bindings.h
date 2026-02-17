@@ -33,6 +33,7 @@ void reg_hooks_examples( sol::state &lua );
 void reg_inventory( sol::state &lua );
 void reg_item( sol::state &lua );
 void reg_locale_api( sol::state &lua );
+void reg_tint_color( sol::state &lua );
 void reg_map( sol::state &lua );
 void reg_mapgendata( sol::state &lua );
 void reg_mission( sol::state &lua );
