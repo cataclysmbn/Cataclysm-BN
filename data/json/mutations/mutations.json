@@ -4530,7 +4530,8 @@
       "MUZZLE_RAT",
       "RABBIT_NOSE"
     ],
-    "category": [ "FELINE" ]
+    "category": [ "FELINE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4570,7 +4571,8 @@
       "body_part": "mouth",
       "chance": 18,
       "base_damage": { "damage_type": "cut", "amount": 4 }
-    }
+    },
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4593,7 +4595,8 @@
       "body_part": "mouth",
       "chance": 20,
       "base_damage": { "damage_type": "cut", "amount": 5 }
-    }
+    },
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4607,7 +4610,8 @@
     "prereqs": [ "SNOUT" ],
     "category": [ "RAT" ],
     "restricts_gear": [ "mouth" ],
-    "allowed_items": [ "ALLOWS_MUZZLE" ]
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -6088,7 +6092,8 @@
     "valid": false,
     "types": [ "EARS" ],
     "category": [ "RABBIT" ],
-    "hearing_modifier": 1.8
+    "hearing_modifier": 1.8,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -6157,7 +6162,8 @@
     "description": "Your nose has morphed into a cute bunny nose, along with the snout.  It's extremely twitchy too.",
     "types": [ "MUZZLE" ],
     "prereqs": [ "SNOUT" ],
-    "category": [ "RABBIT" ]
+    "category": [ "RABBIT" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",

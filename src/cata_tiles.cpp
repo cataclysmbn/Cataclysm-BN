@@ -766,15 +766,23 @@ static void apply_surf_blend_effect(
         switch( tint.blend_mode )
         {
             case tint_blend_mode::additive: {
-                col = RGBColor{ std::min<uint8_t>( base.r + target.r, 255 ), std::min<uint8_t>( base.g + target.g, 255 ), std::min<uint8_t>( base.b + target.b, 255 ), std::min<uint8_t>( base.a + target.a, 255 ) };
+                col = RGBColor{
+                    static_cast<uint8_t>( std::min<int>( base.r + target.r, 255 ) ),
+                    static_cast<uint8_t>( std::min<int>( base.g + target.g, 255 ) ),
+                    static_cast<uint8_t>( std::min<int>( base.b + target.b, 255 ) ),
+                    static_cast<uint8_t>( std::min<int>( base.a + target.a, 255 ) ) };
                 break;
             }
             case tint_blend_mode::subtract: {
-                col = RGBColor{ std::max<uint8_t>( base.r - ( 255 - target.r ), 0 ), std::max<uint8_t>( base.g - ( 255 - target.g ), 0 ), std::max<uint8_t>( base.b - ( 255 - target.b ), 0 ), base.a };
+                col = RGBColor{ static_cast<uint8_t>( std::max<int>( base.r - ( 255 - target.r ), 0 ) ),
+                                static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
+                                static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ), base.a };
                 break;
             }
             case tint_blend_mode::multiply: {
-                col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ), static_cast<uint8_t>( base.g *target.g / 256 ), static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
+                col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ),
+                                static_cast<uint8_t>( base.g *target.g / 256 ),
+                                static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
                 break;
             }
             case tint_blend_mode::normal: {
@@ -821,11 +829,11 @@ static void apply_surf_blend_effect(
                 auto hardlight_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( blend > 127 )
                     {
-                        return std::clamp<uint8_t>( 255 - ( 255 - blend ) * ( ( std::max( 255 - base,
-                                                    1 ) ) * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( 255 - blend ) * ( ( std::max( 255 - base,
+                                                     1 ) ) * 255 / 127 ) / 255, 0, 255 ) );
                     } else
                     {
-                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
                     }
                 };
                 col = SDL_Color{
@@ -840,11 +848,11 @@ static void apply_surf_blend_effect(
                 auto overlay_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( base > 127 )
                     {
-                        return std::clamp<uint8_t>( 255 - ( std::max( 255 - blend,
-                                                            1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( std::max( 255 - blend,
+                                                     1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 ) );
                     } else
                     {
-                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
                     }
                 };
                 col = SDL_Color{
@@ -863,11 +871,11 @@ static void apply_surf_blend_effect(
                 constexpr auto overlay = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( base > 127 )
                     {
-                        return std::clamp<uint8_t>( 255 - ( std::max( 255 - blend,
-                                                            1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( std::max( 255 - blend,
+                                                     1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 ) );
                     } else
                     {
-                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
                     }
                 };
 
@@ -1616,19 +1624,21 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 inp_mngr.pump_events();
             }
         }
-    } else {
+    } else if( config.has_array( "tiles" ) ) {
+        // old system, no tile file path entry, only one array of tiles
         sprite_width = ts.tile_width;
         sprite_height = ts.tile_height;
         sprite_offset = point_zero;
         R = -1;
         G = -1;
         B = -1;
-        // old system, no tile file path entry, only one array of tiles
         dbg( DL::Info ) << "Attempting to Load Tileset file " << img_path;
         load_tileset( img_path, pump_events );
         load_tilejson_from_file( config );
         offset = size;
     }
+    // If neither tiles-new nor tiles is present, this is a tints-only mod_tileset
+    // Skip tile loading and continue to process tints, overlay_ordering, etc.
 
     // allows a tileset to override the order of mutation images being applied to a character
     if( config.has_array( "overlay_ordering" ) ) {
@@ -3361,7 +3371,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
      */
     const auto num_sprites = sprite_list.size();
     const auto is_single_sprite = num_sprites == 1;
-    const auto rotate_sprite = is_fg && is_single_sprite;
+    const auto rotate_sprite = ( is_fg || tile.rotates ) && is_single_sprite;
     const auto sprite_num = is_single_sprite
                             ? 0
                             : ( rota % num_sprites );
