@@ -46,9 +46,6 @@ struct quality {
     quality_id id;
     translation name;
 
-    float crafting_speed_bonus_per_level = 0.0f;
-    int crafting_speed_level_offset = 0;
-
     /** Materials it can salvage */
     std::set<material_id> salvagable_materials;
     std::vector<std::pair<int, std::string>> usages;
@@ -474,3 +471,5 @@ class deduped_requirement_data
         bool is_too_complex_ = false;
         std::vector<requirement_data> alternatives_;
 };
+
+

@@ -20,7 +20,6 @@
     "max_charges": 450,
     "techniques": [ "SWEEP" ],
     "qualities": [ [ "AXE", 4 ] ],
-    "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,

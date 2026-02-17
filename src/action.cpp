@@ -6,8 +6,6 @@
 #include <iterator>
 #include <memory>
 #include <optional>
-#include <ranges>
-#include <set>
 #include <utility>
 
 #include "avatar.h"
@@ -23,7 +21,6 @@
 #include "iexamine.h"
 #include "input.h"
 #include "item.h"
-#include "lua_action_menu.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "mapdata.h"
@@ -54,7 +51,7 @@ static const std::string flag_GOES_UP( "GOES_UP" );
 static const std::string flag_SEALED( "SEALED" );
 static const std::string flag_SWIMMABLE( "SWIMMABLE" );
 
-static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
+static const trait_flag_str_id trait_flag_TAIL_FIN( "TAIL_FIN" );
 
 class inventory;
 
@@ -604,7 +601,7 @@ bool can_move_vertical_at( const tripoint &p, int movez )
             return !g->u.is_underwater() && !g->u.worn_with_flag( flag_FLOTATION );
         } else {
             return g->u.swim_speed() < 500 || ( g->u.is_wearing( itype_id( "swim_fins" ) ) ||
-                                                g->u.has_trait_flag( trait_flag_MUTATION_SWIM ) );
+                                                g->u.has_trait_flag( trait_flag_TAIL_FIN ) );
         }
     }
 
@@ -688,55 +685,6 @@ bool can_interact_at( action_id action, const tripoint &p )
 
 namespace
 {
-auto action_menu_category_display_name( const std::string &category_id ) -> std::string
-{
-    if( category_id == "look" ) {
-        return _( "Look" );
-    }
-    if( category_id == "interact" ) {
-        return _( "Interact" );
-    }
-    if( category_id == "inventory" ) {
-        return _( "Inventory" );
-    }
-    if( category_id == "combat" ) {
-        return _( "Combat" );
-    }
-    if( category_id == "craft" ) {
-        return _( "Craft" );
-    }
-    if( category_id == "info" ) {
-        return _( "Info" );
-    }
-    if( category_id == "misc" ) {
-        return _( "Misc" );
-    }
-    if( category_id == "debug" ) {
-        return _( "Debug" );
-    }
-    return category_id;
-}
-
-auto action_menu_base_category_ids() -> const std::vector<std::string> & // *NOPAD*
-{
-    static const auto category_ids = std::vector<std::string> {
-        "look",
-        "interact",
-        "inventory",
-        "combat",
-        "craft",
-        "info",
-        "misc"
-    };
-    return category_ids;
-}
-
-auto is_action_menu_base_category( const std::string &category_id ) -> bool
-{
-    const auto &ids = action_menu_base_category_ids();
-    return std::ranges::contains( ids, category_id );
-}
-
 auto make_register_actions( std::vector<uilist_entry> &entries, const input_context &ctxt )
 {
     return [&]( std::vector<action_id> &&names ) -> void {
@@ -751,13 +699,12 @@ auto make_register_categories( std::vector<uilist_entry> &entries,
                                std::map<int, std::string> &categories_by_int,
                                int &last_category )
 {
-    return [&]( std::vector<std::string> &&category_ids ) -> void {
-        const auto fn = [&]( const std::string & category_id ) -> uilist_entry {
-            const auto name = action_menu_category_display_name( category_id );
-            categories_by_int[last_category] = category_id;
+    return [&]( std::vector<std::string> &&names ) -> void {
+        const auto fn = [&]( const std::string & name ) -> uilist_entry {
+            categories_by_int[last_category] = name;
             return { last_category++, true, -1, name + "…" };
         };
-        std::ranges::transform( category_ids, std::back_inserter( entries ),  fn );
+        std::ranges::transform( names, std::back_inserter( entries ),  fn );
     };
 }
 
@@ -838,16 +785,13 @@ action_id handle_action_menu()
     std::ranges::reverse( sorted_pairs );
 
     // Default category is called "back"
-    auto category_id = std::string{ "back" };
-    const auto &lua_entries = cata::lua_action_menu::get_entries();
+    std::string category = "back";
 
     while( true ) {
         std::vector<uilist_entry> entries;
         uilist_entry *entry;
         std::map<int, std::string> categories_by_int;
-        auto lua_entries_by_int = std::map<int, std::string> {};
         int last_category = NUM_ACTIONS + 1;
-        auto last_lua_entry = 3 * NUM_ACTIONS;
 
         const auto register_actions = make_register_actions( entries, ctxt );
         const auto register_action_if_hotkey_assigned = [&]( action_id action ) {
@@ -857,33 +801,18 @@ action_id handle_action_menu()
         };
         const auto register_categories =
             make_register_categories( entries, categories_by_int, last_category );
-        const auto register_lua_action_entries = [&]( const std::string & selected_category ) {
-            const auto matches_category =
-            [&]( const cata::lua_action_menu::entry & entry_to_check ) -> bool {
-                return entry_to_check.category_id == selected_category;
-            };
-            auto filtered = lua_entries | std::views::filter( matches_category );
-            std::ranges::for_each( filtered, [&]( const cata::lua_action_menu::entry & menu_entry ) {
-                lua_entries_by_int[last_lua_entry] = menu_entry.id;
-                entries.emplace_back( last_lua_entry, true, menu_entry.hotkey, menu_entry.name );
-                last_lua_entry++;
-            } );
-        };
 
-        if( category_id == "back" ) {
-            auto lua_category_ids = std::set<std::string> {};
-            std::ranges::for_each( lua_entries,
-            [&]( const cata::lua_action_menu::entry & menu_entry ) {
-                lua_category_ids.insert( menu_entry.category_id );
-            } );
-
+        if( category == "back" ) {
             for( const auto &[ action, weight ] : sorted_pairs ) {
                 if( weight >= 200 ) {
                     register_actions( { action } );
                 }
             }
 
-            register_categories( { "look", "interact", "inventory", "combat", "craft", "info", "misc" } );
+            register_categories( {
+                _( "Look" ), _( "Interact" ), _( "Inventory" ),
+                _( "Combat" ), _( "Craft" ), _( "Info" ), _( "Misc" )
+            } );
 
             register_action_if_hotkey_assigned( ACTION_QUICKSAVE );
             register_actions( { ACTION_SAVE } );
@@ -894,30 +823,16 @@ action_id handle_action_menu()
                 // help _is_a menu.
                 entry->txt += "…";
             }
-            const auto has_lua_debug = std::ranges::contains( lua_category_ids, "debug" );
-            if( hotkey_for_action( ACTION_DEBUG ) > -1 || has_lua_debug ) {
+            if( hotkey_for_action( ACTION_DEBUG ) > -1 ) {
                 // register with global key
-                register_categories( { "debug" } );
-                if( ( entry = &entries.back() ) && hotkey_for_action( ACTION_DEBUG ) > -1 ) {
+                register_categories( { _( "Debug" ) } );
+                if( ( entry = &entries.back() ) ) {
                     entry->hotkey = hotkey_for_action( ACTION_DEBUG );
                 }
             }
-            auto extra_categories = lua_category_ids
-            | std::views::filter( [&]( const std::string & category ) {
-                return !is_action_menu_base_category( category ) &&
-                       category != "debug" &&
-                       category != "back";
-            } )
-            | std::ranges::to<std::vector>();
-            if( !extra_categories.empty() ) {
-                register_categories( std::move( extra_categories ) );
-            }
-
-            register_lua_action_entries( category_id );
-        } else if( category_id == "look" ) {
+        } else if( category == _( "Look" ) ) {
             register_actions( { ACTION_LOOK, ACTION_PEEK, ACTION_LIST_ITEMS, ACTION_ZONES, ACTION_MAP, ACTION_SKY } );
-            register_lua_action_entries( category_id );
-        } else if( category_id == "inventory" ) {
+        } else if( category == _( "Inventory" ) ) {
             register_actions( {ACTION_INVENTORY, ACTION_ADVANCEDINV, ACTION_SORT_ARMOR, ACTION_DIR_DROP } );
 
             // Everything below here can be accessed through
@@ -928,8 +843,7 @@ action_id handle_action_menu()
                 ACTION_WEAR, ACTION_TAKE_OFF, ACTION_EAT, ACTION_OPEN_CONSUME,
                 ACTION_READ, ACTION_WIELD, ACTION_UNLOAD
             } );
-            register_lua_action_entries( category_id );
-        } else if( category_id == "debug" ) {
+        } else if( category == _( "Debug" ) ) {
             register_actions( { ACTION_DEBUG } );
             if( ( entry = &entries.back() ) ) {
                 // debug _is_a menu.
@@ -947,15 +861,13 @@ action_id handle_action_menu()
                 ACTION_DISPLAY_LIGHTING, ACTION_DISPLAY_TRANSPARENCY, ACTION_DISPLAY_RADIATION,
                 ACTION_DISPLAY_SUBMAP_GRID, ACTION_TOGGLE_ZONE_OVERLAY, ACTION_TOGGLE_DEBUG_MODE
             } );
-            register_lua_action_entries( category_id );
-        } else if( category_id == "interact" ) {
+        } else if( category == _( "Interact" ) ) {
             register_actions( {
                 ACTION_EXAMINE, ACTION_SMASH, ACTION_MOVE_DOWN, ACTION_MOVE_UP,
                 ACTION_OPEN, ACTION_CLOSE, ACTION_CHAT, ACTION_PICKUP,
                 ACTION_PICKUP_FEET, ACTION_GRAB, ACTION_HAUL, ACTION_BUTCHER, ACTION_LOOT,
             } );
-            register_lua_action_entries( category_id );
-        } else if( category_id == "combat" ) {
+        } else if( category == _( "Combat" ) ) {
             register_actions( {
                 ACTION_CYCLE_MOVE, ACTION_RESET_MOVE, ACTION_TOGGLE_RUN, ACTION_TOGGLE_CROUCH,
                 ACTION_OPEN_MOVEMENT, ACTION_FIRE, ACTION_RELOAD_ITEM, ACTION_RELOAD_WEAPON,
@@ -965,20 +877,17 @@ action_id handle_action_menu()
                 ACTION_IGNORE_ENEMY, ACTION_TOGGLE_AUTO_FEATURES, ACTION_TOGGLE_AUTO_PULP_BUTCHER,
                 ACTION_TOGGLE_AUTO_MINING, ACTION_TOGGLE_AUTO_FORAGING
             } );
-            register_lua_action_entries( category_id );
-        } else if( category_id == "craft" ) {
+        } else if( category == _( "Craft" ) ) {
             register_actions( {
                 ACTION_CRAFT, ACTION_RECRAFT, ACTION_LONGCRAFT,
                 ACTION_CONSTRUCT, ACTION_DISASSEMBLE, ACTION_SALVAGE
             } );
-            register_lua_action_entries( category_id );
-        } else if( category_id == "info" ) {
+        } else if( category == _( "Info" ) ) {
             register_actions( {
                 ACTION_PL_INFO, ACTION_MISSIONS, ACTION_SCORES,
                 ACTION_FACTIONS, ACTION_MORALE, ACTION_MESSAGES, ACTION_DIARY
             } );
-            register_lua_action_entries( category_id );
-        } else if( category_id == "misc" ) {
+        } else if( category == _( "Misc" ) ) {
             register_actions( {
                 ACTION_WAIT, ACTION_SLEEP, ACTION_BIONICS, ACTION_MUTATIONS,
                 ACTION_CONTROL_VEHICLE, ACTION_ITEMACTION, ACTION_TOGGLE_THIEF_MODE
@@ -988,20 +897,17 @@ action_id handle_action_menu()
                 register_actions( { ACTION_ZOOM_OUT, ACTION_ZOOM_IN } );
             }
 #endif
-            register_lua_action_entries( category_id );
-        } else {
-            register_lua_action_entries( category_id );
         }
 
-        if( category_id != "back" ) {
+        if( category != "back" ) {
             std::string msg = _( "Back" );
             entries.emplace_back( 2 * NUM_ACTIONS, true,
                                   hotkey_for_action( ACTION_ACTIONMENU ), msg + "…" );
         }
 
         std::string title = _( "Actions" );
-        if( category_id != "back" ) {
-            auto catgname = action_menu_category_display_name( category_id );
+        if( category != "back" ) {
+            std::string catgname = category;
             capitalize_letter( catgname, 0 );
             title += ": " + catgname;
         }
@@ -1015,17 +921,13 @@ action_id handle_action_menu()
         if( selection < 0 || selection == NUM_ACTIONS ) {
             return ACTION_NULL;
         } else if( selection == 2 * NUM_ACTIONS ) {
-            if( category_id != "back" ) {
-                category_id = "back";
+            if( category != "back" ) {
+                category = "back";
             } else {
                 return ACTION_NULL;
             }
-        } else if( const auto lua_entry = lua_entries_by_int.find( selection );
-                   lua_entry != lua_entries_by_int.end() ) {
-            cata::lua_action_menu::run_entry( lua_entry->second );
-            return ACTION_NULL;
         } else if( selection > NUM_ACTIONS ) {
-            category_id = categories_by_int[selection];
+            category = categories_by_int[selection];
         } else {
             return static_cast<action_id>( selection );
         }

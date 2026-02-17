@@ -316,7 +316,6 @@
     "type": "recipe",
     "result": "380_casing",
     "id_suffix": "resize",
-    "byproducts": [ [ "cartridgebrass", 2 ] ],
     "category": "CC_AMMO",
     "subcategory": "CSC_AMMO_COMPONENTS",
     "skill_used": "fabrication",
@@ -326,6 +325,7 @@
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [ [ "manual_pistol", 5 ], [ "recipe_bullets", 3 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "DRILL", "level": 2 }, { "id": "CASING_PRESSING", "level": 2 } ],
+    "tools": [ [ [ "cordless_drill", 2 ] ] ],
     "components": [ [ [ "223_casing", 1 ] ] ]
   },
   {
@@ -342,21 +342,6 @@
     "book_learn": [ [ "manual_rifle", 5 ], [ "recipe_bullets", 3 ] ],
     "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "CASING_PRESSING", "level": 2 } ],
     "components": [ [ [ "223_casing", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "38_casing",
-    "id_suffix": "resize",
-    "category": "CC_AMMO",
-    "subcategory": "CSC_AMMO_COMPONENTS",
-    "skill_used": "fabrication",
-    "difficulty": 2,
-    "skills_required": [ "gun", 3 ],
-    "time": "2 m",
-    "batch_time_factors": [ 60, 5 ],
-    "book_learn": [ [ "manual_pistol", 5 ], [ "recipe_bullets", 3 ] ],
-    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "CASING_PRESSING", "level": 2 } ],
-    "components": [ [ [ "357mag_casing", 1 ] ] ]
   },
   {
     "result": "cannonball_explosive",

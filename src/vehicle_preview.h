@@ -2,7 +2,6 @@
 
 #include <optional>
 
-#include "cata_tiles.h"
 #include "cursesdef.h"
 #include "point.h"
 #include "sdl_wrappers.h"
@@ -83,8 +82,8 @@ struct vehicle_preview_window {
          */
         void draw_vpart_at_pixel( const vpart_id &vp_id, point pixel_pos,
                                   int part_mod, units::angle veh_facing,
-                                  const tint_config &bg_color = {},
-                                  const tint_config &fg_color = {} );
+                                  std::optional<SDL_Color> bg_color = std::nullopt,
+                                  std::optional<SDL_Color> fg_color = std::nullopt );
 
         /** Draw a highlight overlay at the given pixel position */
         void draw_highlight_at_pixel( point pixel_pos );

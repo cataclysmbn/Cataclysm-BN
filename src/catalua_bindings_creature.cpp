@@ -18,9 +18,7 @@
 #include "field.h"
 #include "field_type.h"
 #include "flag.h"
-#include "make_static.h"
 #include "flag_trait.h"
-#include "game.h"
 #include "inventory.h"
 #include "magic.h"
 #include "map.h"
@@ -589,16 +587,6 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( mutation_loss_effect, void( const trait_id & ) );
 
-        luna::set_fx( ut, "activate_mutation_id", []( UT_CLASS & utObj, trait_id & mut )
-        {
-            utObj.activate_mutation( mut );
-        } );
-
-        luna::set_fx( ut, "deactivate_mutation_id", []( UT_CLASS & utObj, trait_id & mut )
-        {
-            utObj.deactivate_mutation( mut );
-        } );
-
         SET_FX_T( has_active_mutation, bool( const trait_id & ) const );
 
         SET_FX_T( mutate, void() );
@@ -631,37 +619,7 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( get_bionics, std::vector<bionic_id>() const );
 
-        luna::set_fx( ut, "get_bionic", []( UT_CLASS & utObj, const bionic_id & bid ) -> bionic {
-            return utObj.get_bionic_state( bid );
-        } );
-
         SET_FX_T( has_bionic, bool( const bionic_id & b ) const );
-
-        luna::set_fx( ut, "activate_bionic", []( UT_CLASS & utObj, const bionic_id & bid, std::optional<bool> block_message ) -> bool {
-            if( utObj.has_bionic( bid ) )
-            {
-                bionic &bio = utObj.get_bionic_state( bid );
-                bio.powered = bio.info().has_flag( STATIC( flag_id( "BIONIC_TOGGLED" ) ) ) ||
-                bio.info().charge_time > 0;
-                if( bio.info().charge_time > 0 ) {
-                    bio.charge_timer = bio.info().charge_time;
-                }
-                if( !bio.id->enchantments.empty() ) {
-                    utObj.recalculate_enchantment_cache();
-                }
-                return utObj.activate_bionic( bio, block_message.value_or( true ) );
-            }
-            return false;
-        } );
-
-        luna::set_fx( ut, "deactivate_bionic", []( UT_CLASS & utObj, const bionic_id & bid, std::optional<bool> block_message ) -> bool {
-            if( utObj.has_bionic( bid ) )
-            {
-                bionic &bio = utObj.get_bionic_state( bid );
-                return utObj.deactivate_bionic( bio, block_message.value_or( true ) );
-            }
-            return false;
-        } );
 
         SET_FX_T( has_active_bionic, bool( const bionic_id & b ) const );
 
@@ -678,47 +636,6 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( add_bionic, void( const bionic_id & ) );
 
-        // Power saving / auto-start controls (by bionic_id)
-        luna::set_fx( ut, "toggle_safe_fuel_mod", []( UT_CLASS & ch, const bionic_id & bid )
-        {
-            if( ch.has_bionic( bid ) ) {
-                ch.get_bionic_state( bid ).toggle_safe_fuel_mod();
-            }
-        } );
-        luna::set_fx( ut, "toggle_auto_start_mod", []( UT_CLASS & ch, const bionic_id & bid )
-        {
-            if( ch.has_bionic( bid ) ) {
-                ch.get_bionic_state( bid ).toggle_auto_start_mod();
-            }
-        } );
-        luna::set_fx( ut, "set_auto_start_thresh", []( UT_CLASS & ch, const bionic_id & bid, float val )
-        {
-            if( ch.has_bionic( bid ) ) {
-                ch.get_bionic_state( bid ).set_auto_start_thresh( val );
-            }
-        } );
-        luna::set_fx( ut, "get_auto_start_thresh", []( UT_CLASS & ch, const bionic_id & bid ) -> float {
-            if( ch.has_bionic( bid ) )
-            {
-                return ch.get_bionic_state( bid ).get_auto_start_thresh();
-            }
-            return -1.0f;
-        } );
-        luna::set_fx( ut, "is_auto_start_on", []( UT_CLASS & ch, const bionic_id & bid ) -> bool {
-            if( ch.has_bionic( bid ) )
-            {
-                return ch.get_bionic_state( bid ).is_auto_start_on();
-            }
-            return false;
-        } );
-        luna::set_fx( ut, "is_auto_start_keep_full", []( UT_CLASS & ch, const bionic_id & bid ) -> bool {
-            if( ch.has_bionic( bid ) )
-            {
-                return ch.get_bionic_state( bid ).is_auto_start_keep_full();
-            }
-            return false;
-        } );
-
         SET_FX_T( get_power_level, units::energy() const );
         SET_FX_T( get_max_power_level, units::energy() const );
         SET_FX_T( mod_power_level, void( const units::energy & ) );
@@ -728,7 +645,6 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( is_max_power, bool() const );
         SET_FX_T( has_power, bool() const );
         SET_FX_T( has_max_power, bool() const );
-        SET_FX_T( enough_power_for, bool( const bionic_id & ) const );
 
         SET_FX_T( is_worn, bool( const item & ) const );
 
@@ -1131,7 +1047,6 @@ void cata::detail::reg_npc( sol::state &lua )
         SET_FX_T( is_enemy, bool() const );
 
         SET_FX_T( is_following, bool() const );
-
         SET_FX_T( is_obeying, bool( const Character & p ) const );
 
         SET_FX_T( is_friendly, bool( const Character & p ) const );
@@ -1151,94 +1066,41 @@ void cata::detail::reg_npc( sol::state &lua )
         SET_FX_T( is_patrolling, bool() const );
 
         SET_FX_T( has_player_activity, bool() const );
-
-        DOC( "Returns true if the npc has the 'NPC_MISSION_TRAVELLING' mission." );
-
         SET_FX_T( is_travelling, bool() const );
-
-        DOC( "Returns true if the npc is a player ally and their op_of_u.trust is >= 5." );
 
         SET_FX_T( is_minion, bool() const );
 
-        DOC( "Returns true if the npc would be hostile to the player on sight regardless of their current attitude." );
-
         SET_FX_T( guaranteed_hostile, bool() const );
-
-        DOC( "Causes the npc to leave your faction, incur various negative opinion maluses, and say explatives to the player." );
 
         SET_FX_T( mutiny, void() );
 
-        DOC( "Returns the npc's faction id. If it's part of a monster faction, it returns the id of the monster faction." );
-
         SET_FX_T( get_monster_faction, mfaction_id() const );
-
-        DOC( "Gets the npc's follow distance. This can only be a few values, and is determined by npc rules." );
 
         SET_FX_T( follow_distance, int() const );
 
-        DOC( "Returns the npc's current target as a creature, if it has one." );
-
         SET_FX_T( current_target, Creature * () );
-
-        DOC( "Returns the npc's current ally, if it has one." );
-
         SET_FX_T( current_ally, Creature * () );
-
-        DOC( "Gets a value based on the npc's perspective of the area's danger." );
 
         SET_FX_T( danger_assessment, float() );
 
-        DOC( "Gets the npc's blunt damage with their currently equipped weapon." );
-
-        SET_FX_T( smash_ability, int() const );
-
-        DOC( "Returns the first topic of the npc's chatbin." );
-
-        luna::set_fx( ut, "get_first_topic", []( UT_CLASS & npchar ) -> std::string { return npchar.chatbin.first_topic; } );
-
-        DOC( "Sets the first topic of the npc's chatbin. Note that some circumstances may cause this to not be the first topic used, such as player allies." );
-
-        luna::set_fx( ut, "set_first_topic", []( UT_CLASS & npchar, const std::string & str ) -> void { npchar.chatbin.first_topic = str; } );
-
-        DOC( "Triggers the npc menu to open." );
-        luna::set_fx( ut, "npc_menu", []( UT_CLASS & npchar, sol::optional<bool> force ) -> void { g->npc_menu( npchar, force.value_or( false ) ); } );
-
-        DOC( "Causes the npc to talk to you. Passing a topic will force that topic to be used in place of all others, including code enforced topics such as 'TALK_STOLE_ITEM'." );
-        luna::set_fx( ut, "talk_to_u", []( UT_CLASS & npchar, sol::optional<std::string> topic, sol::optional<bool> radio_contact ) -> void {
-            if( topic.has_value() && !topic.value().empty() ) {  npchar.chatbin.first_topic = topic.value(); }
-            npchar.talk_to_u( radio_contact.value_or( false ), topic.has_value() );
-        } );
-
-        DOC( "Has the npc say the given string in the sidebar." );
-
         luna::set_fx( ut, "say", &UT_CLASS::say<> );
 
-        DOC( "Complain about an issue if enough time has passed. The first string is the issue identifier, with the second being the complaint text." );
-        DOC( "The optional bool allows you to force a complaint without concern for the input time." );
+        SET_FX_T( smash_ability, int() const );
 
         luna::set_fx( ut, "complain_about",
         []( UT_CLASS & npchar, const std::string & issue, const time_duration & dur, const std::string & speech, sol::optional<bool> force ) -> bool {
             return npchar.complain_about( issue, dur, speech, force.value_or( false ) );
         } );
 
-        DOC( "Wrapper for complain_about that warns about a specific type of threat, with" );
-
-        DOC( "different warnings for hostile or friendly NPCs and hostile NPCs always complaining." );
-
         SET_FX_T( warn_about,
                   void( const std::string & type, const time_duration &, const std::string &,
                         int, const tripoint & ) );
 
-        DOC( "Finds something to complain about and complains. Returns if complained." );
-
         SET_FX_T( complain, bool() );
-
-        DOC( "Rates how dangerous a target is from 0 (harmless) to 1 (max danger)." );
 
         SET_FX_T( evaluate_enemy, float( const Creature & ) const );
 
         SET_FX_T( can_open_door, bool( const tripoint &, bool ) const );
-
         SET_FX_T( can_move_to, bool( const tripoint &, bool ) const );
 
         SET_FX_T( saw_player_recently, bool() const );
@@ -1246,9 +1108,7 @@ void cata::detail::reg_npc( sol::state &lua )
         SET_FX_T( has_omt_destination, bool() const );
 
         SET_FX_T( get_attitude, npc_attitude() const );
-
         SET_FX_T( set_attitude, void( npc_attitude new_attitude ) );
-
         SET_FX_T( has_activity, bool() const );
     }
 #undef UT_CLASS // #define UT_CLASS npc

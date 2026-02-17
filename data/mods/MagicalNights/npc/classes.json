@@ -32,7 +32,6 @@
       { "skill": "ALL", "level": { "mul": [ { "one_in": 3 }, { "sum": [ { "dice": [ 2, 2 ] }, { "rng": [ 0, -2 ] } ] } ] } },
       { "skill": "spellcraft", "bonus": { "rng": [ 4, 6 ] } }
     ],
-    "shopkeeper_item_group": "old_magus_shop",
     "spells": [ { "id": "magic_missile", "level": 18 }, { "id": "gravity_well", "level": 10 }, { "id": "foxs_cunning", "level": 7 } ]
   },
   {

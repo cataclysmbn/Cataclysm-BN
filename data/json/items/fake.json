@@ -29,20 +29,7 @@
     "name": { "str": "integrated toolset" },
     "flags": [ "TRADER_AVOID", "BIONIC_TOOLS", "USES_BIONIC_POWER" ],
     "max_charges": 10000,
-    "charges_per_use": 1,
-    "use_action": [
-      "HAMMER",
-      "CROWBAR",
-      {
-        "type": "repair_item",
-        "item_action_type": "repair_metal",
-        "materials": [ "kevlar", "plastic", "iron", "steel", "budget_steel", "hardsteel", "aluminum", "copper", "silver", "gold", "glass" ],
-        "skill": "mechanics",
-        "cost_scaling": 0.1,
-        "move_cost": 1000
-      },
-      { "flame": false, "type": "cauterize" }
-    ],
+    "use_action": [ "HAMMER", "CROWBAR" ],
     "qualities": [
       [ "HOSE", 1 ],
       [ "HAMMER", 3 ],
@@ -74,14 +61,6 @@
     "max_charges": 10000,
     "qualities": [ [ "VOLT_MEASURE", 1 ] ],
     "use_action": [ "VOLTMETER" ]
-  },
-  {
-    "id": "fake_artifact_analyzer_console",
-    "copy-from": "fake_item",
-    "type": "TOOL",
-    "name": { "str": "artifact analyzer console" },
-    "flags": [ "TRADER_AVOID" ],
-    "use_action": [ "ARTIFACT_ANALYZER" ]
   },
   {
     "id": "fake_goggles",
@@ -783,8 +762,7 @@
     "type": "TOOL",
     "name": { "str": "installed reloading press" },
     "//": "Doesn't substitute for hand press because we want to define this tool in crafting requirements separately, due to disassembly code.",
-    "qualities": [ [ "PULL", 2 ], [ "CASING_PRESSING", 3 ] ],
-    "crafting_speed_modifier": 1.5
+    "qualities": [ [ "PULL", 2 ], [ "CASING_PRESSING", 3 ] ]
   },
   {
     "id": "grid_hydraulic_press",
@@ -801,8 +779,7 @@
     "copy-from": "fake_item",
     "type": "TOOL",
     "name": { "str": "installed advanced butchering station" },
-    "qualities": [ [ "BUTCHER", 50 ], [ "CUT", 3 ], [ "CUT_FINE", 5 ] ],
-    "flags": [ "FLAT_SURFACE" ]
+    "qualities": [ [ "BUTCHER", 50 ], [ "CUT", 3 ], [ "CUT_FINE", 5 ] ]
   },
   {
     "id": "translocation_caster_spell",
@@ -820,18 +797,5 @@
     "type": "TOOL",
     "name": { "str_sp": "local gateway" },
     "use_action": { "type": "cast_spell", "spell_id": "translocation_caster_spell", "no_fail": true, "level": 0 }
-  },
-  {
-    "type": "GENERIC",
-    "//": "pseudo item, used as fuel type for atomic battery CBM",
-    "id": "c_atomic_battery_power",
-    "symbol": "?",
-    "color": "white",
-    "name": { "str": "Alphavoltaic Power", "str_pl": "none" },
-    "description": "seeing this is a bug",
-    "stackable": true,
-    "volume": "0 ml",
-    "flags": [ "PSEUDO", "PERPETUAL" ],
-    "fuel": { "energy": 1 }
   }
 ]

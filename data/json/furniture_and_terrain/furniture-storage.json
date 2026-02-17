@@ -628,7 +628,7 @@
     "required_str": 4,
     "flags": [ "TRANSPARENT", "FLAMMABLE", "PLACE_ITEM", "BLOCKSDOOR", "MOUNTABLE" ],
     "deconstruct": { "items": [ { "item": "nail", "charges": 8 }, { "item": "2x4", "count": 3 } ] },
-    "max_volume": "100 L",
+    "max_volume": "30 L",
     "bash": {
       "str_min": 6,
       "str_max": 30,
@@ -1055,24 +1055,6 @@
       "sound_fail": "clang!",
       "items": [ { "item": "scrap", "count": [ 8, 32 ] }, { "item": "water_faucet", "prob": 50 } ],
       "ranged": { "reduction": [ 10, 10 ], "destroy_threshold": 20, "block_unaimed_chance": "75%" }
-    }
-  },
-  {
-    "type": "furniture",
-    "id": "f_standing_tank_plumbed",
-    "copy-from": "f_standing_tank",
-    "name": "standing tank (plumbed)",
-    "description": "A large freestanding metal tank hooked into a fluid grid.",
-    "symbol": "O",
-    "color": "light_gray",
-    "keg_capacity": 1200,
-    "fluid_grid": {
-      "role": "tank",
-      "allow_input": true,
-      "allow_output": true,
-      "allowed_liquids": [ "water", "water_clean" ],
-      "disconnected_variant": "f_standing_tank",
-      "use_keg_capacity": true
     }
   },
   {

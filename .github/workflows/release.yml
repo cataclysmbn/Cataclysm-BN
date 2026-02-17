@@ -10,7 +10,7 @@ env:
 
 jobs:
   metadata:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     outputs:
       count: ${{ steps.env_vars.outputs.count }}
       tag_name: ${{ steps.env_vars.outputs.tag_name }}
@@ -38,7 +38,7 @@ jobs:
   release:
     needs: metadata
     name: Create Release
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
 
     if: github.event_name == 'workflow_dispatch' || fromJson(needs.metadata.outputs.count) > 0
     outputs:

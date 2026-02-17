@@ -594,41 +594,6 @@ void reset_furn_ter();
  * The terrain list contains the master list of  information and metadata for a given type of terrain.
  */
 
-enum class fluid_grid_role {
-    tank,
-    fixture,
-    transformer,
-    rain_collector
-};
-
-struct fluid_grid_transform_io {
-    itype_id liquid;
-    units::volume amount = 0_ml;
-};
-
-struct fluid_grid_transform_recipe {
-    std::vector<fluid_grid_transform_io> inputs;
-    std::vector<fluid_grid_transform_io> outputs;
-};
-
-struct fluid_grid_transformer_config {
-    time_duration tick_interval = 1_seconds;
-    double collector_area_m2 = 0.0;
-    std::vector<fluid_grid_transform_recipe> transforms;
-};
-
-struct fluid_grid_data {
-    fluid_grid_role role = fluid_grid_role::tank;
-    bool allow_input = false;
-    bool allow_output = false;
-    std::set<itype_id> allowed_liquids;
-    std::optional<units::volume> capacity;
-    bool use_keg_capacity = false;
-    std::optional<furn_str_id> connected_variant;
-    std::optional<furn_str_id> disconnected_variant;
-    std::optional<fluid_grid_transformer_config> transformer;
-};
-
 struct furn_t : map_data_common_t {
 
     std::vector<std::pair<furn_str_id, mod_id>> src;
@@ -664,7 +629,6 @@ struct furn_t : map_data_common_t {
     std::optional<float> surgery_skill_multiplier;
 
     cata::poly_serialized<active_tile_data> active;
-    std::optional<fluid_grid_data> fluid_grid;
 
     std::vector<itype> crafting_pseudo_item_types() const;
     std::vector<itype> crafting_ammo_item_types() const;
@@ -687,8 +651,6 @@ void load_terrain( const JsonObject &jo, const std::string &src );
 
 void verify_furniture();
 void verify_terrain();
-auto fluid_grid_connected_variant( const furn_id &id ) -> std::optional<furn_id>;
-auto fluid_grid_disconnected_variant( const furn_id &id ) -> std::optional<furn_id>;
 
 /*
 runtime index: ter_id
@@ -866,3 +828,5 @@ extern furn_id f_null,
 
 // consistency checking of terlist & furnlist.
 void check_furniture_and_terrain();
+
+

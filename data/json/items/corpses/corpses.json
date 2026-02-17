@@ -28,7 +28,7 @@
     "material": [ "hflesh" ],
     "price": "0 cent",
     "volume": "7500 ml",
-    "flags": [ "TRADER_AVOID", "MISSION_ITEM" ]
+    "flags": [ "TRADER_AVOID" ]
   },
   {
     "type": "GENERIC",

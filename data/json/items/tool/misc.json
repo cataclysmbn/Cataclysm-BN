@@ -212,8 +212,7 @@
     "bashing": 6,
     "material": [ "bone" ],
     "symbol": ";",
-    "color": "white",
-    "flags": [ "MISSION_ITEM" ]
+    "color": "white"
   },
   {
     "id": "flamable_arrow",
@@ -469,7 +468,7 @@
     "use_action": "MIND_SPLICER",
     "volume": "1 L",
     "weight": "600 g",
-    "flags": [ "TRADER_AVOID", "MISSION_ITEM" ]
+    "flags": [ "TRADER_AVOID" ]
   },
   {
     "id": "permanent_marker",
@@ -565,7 +564,7 @@
     "symbol": ";",
     "color": "light_gray",
     "qualities": [ [ "HAMMER", 1 ] ],
-    "flags": [ "DURABLE_MELEE", "MISSION_ITEM" ]
+    "flags": [ "DURABLE_MELEE" ]
   },
   {
     "id": "sarcophagus_access_code",
@@ -581,8 +580,7 @@
     "bashing": 1,
     "material": "paper",
     "symbol": ";",
-    "color": "white",
-    "flags": [ "MISSION_ITEM" ]
+    "color": "white"
   },
   {
     "id": "small_space_heater",

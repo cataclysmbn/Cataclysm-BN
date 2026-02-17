@@ -1,7 +1,6 @@
 #include "crafting_gui.h"
 
 #include <algorithm>
-#include <array>
 #include <cstring>
 #include <iterator>
 #include <map>
@@ -18,10 +17,8 @@
 #include "character_functions.h"
 #include "color.h"
 #include "crafting.h"
-#include "crafting_quality.h"
 #include "cursesdef.h"
 #include "game.h"
-#include "game_inventory.h"
 #include "input.h"
 #include "inventory.h"
 #include "item.h"
@@ -213,85 +210,6 @@ static std::vector<std::string> recipe_info(
     oss << string_format( _( "Batch time savings: <color_cyan>%s</color>\n" ),
                           recp.batch_savings_string() );
 
-    {
-        const auto verbose_multipliers = get_option<bool>( "VERBOSE_CRAFTING_SPEED_MODIFIERS" );
-        auto multiplier_color = [&]( int percent ) -> std::string {
-            if( percent > 100 )
-            {
-                return "green";
-            }
-            if( percent < 100 )
-            {
-                return "red";
-            }
-            return verbose_multipliers ? "cyan" : "light_gray";
-        };
-        auto format_multiplier = [&]( const std::string & label, float multiplier ) -> std::string {
-            const auto percent = static_cast<int>( multiplier * 100 );
-            return string_format( _( "> %1$s: <color_%2$s>%3$d%%</color>\n" ), label,
-                                  multiplier_color( percent ), percent );
-        };
-
-        const auto craft_preview = recp.create_result();
-        const auto best_bench = find_best_bench( u, *craft_preview );
-        const auto bench_mult = workbench_crafting_speed_multiplier( *craft_preview, best_bench );
-        const auto tools_mult = crafting_tools_speed_multiplier( u, recp );
-        const auto light_mult = lighting_crafting_speed_multiplier( u, recp );
-        const auto morale_mult = morale_crafting_speed_multiplier( u, recp );
-        const auto mutation_mult = u.mutation_value( "crafting_speed_modifier" );
-        const auto game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
-                                   ? 9999
-                                   : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
-        const auto assistants = u.available_assistant_count( recp );
-        const auto base_total_moves = std::max( 1, recp.batch_time( batch_size, 1.0f, 0 ) );
-        const auto assist_total_moves = std::max( 1, recp.batch_time( batch_size, 1.0f, assistants ) );
-        const auto assist_mult = static_cast<float>( base_total_moves ) /
-                                 static_cast<float>( assist_total_moves );
-        const auto total_mult = bench_mult * assist_mult * tools_mult * light_mult * morale_mult *
-                                mutation_mult * game_opt_mult;
-
-        const std::array<std::pair<std::string, float>, 8> multipliers = { {
-                { _( "Total" ), total_mult },
-                { _( "Workbench" ), bench_mult },
-                { _( "Assistants" ), assist_mult },
-                { _( "Tools" ), tools_mult },
-                { _( "Light" ), light_mult },
-                { _( "Morale" ), morale_mult },
-                { _( "Traits" ), mutation_mult },
-                { _( "Game option" ), game_opt_mult }
-            }
-        };
-
-        auto multiplier_lines = std::vector<std::string>();
-        const auto total_percent = static_cast<int>( total_mult * 100 );
-        std::ranges::for_each( multipliers, [&]( const auto & entry ) {
-            if( entry.first == _( "Total" ) ) {
-                return;
-            }
-            const auto percent = static_cast<int>( entry.second * 100 );
-            if( percent == 100 && !verbose_multipliers ) {
-                return;
-            }
-            multiplier_lines.push_back( format_multiplier( entry.first, entry.second ) );
-        } );
-
-        const auto show_total = verbose_multipliers || total_percent != 100 ||
-                                !multiplier_lines.empty();
-        if( show_total ) {
-            multiplier_lines.insert( multiplier_lines.begin(),
-                                     format_multiplier( _( "Total" ), total_mult ) );
-        }
-
-        if( multiplier_lines.empty() && !verbose_multipliers ) {
-            oss << _( "Speed modifiers: <color_cyan>none</color>\n" );
-        } else {
-            oss << _( "Speed modifiers:\n" );
-            std::ranges::for_each( multiplier_lines, [&]( const auto & line ) {
-                oss << line;
-            } );
-        }
-    }
-
     const int makes = recp.makes_amount();
     if( makes > 1 ) {
         oss << string_format( _( "Recipe makes: <color_cyan>%d</color>\n" ), makes );
@@ -399,7 +317,6 @@ static input_context make_crafting_context( bool highlight_unread_recipes )
     ctxt.register_action( "CYCLE_BATCH" );
     ctxt.register_action( "RELATED_RECIPES" );
     ctxt.register_action( "HIDE_SHOW_RECIPE" );
-    ctxt.register_action( "COMPARE" );
     ctxt.register_action( "TOGGLE_UNAVAILABLE" );
     if( highlight_unread_recipes ) {
         ctxt.register_action( "TOGGLE_RECIPE_UNREAD" );
@@ -531,7 +448,6 @@ const recipe *select_crafting_recipe( int &batch_size_out )
         add_action_desc( "RELATED_RECIPES", pgettext( "crafting gui", "Related" ) );
         add_action_desc( "TOGGLE_FAVORITE", pgettext( "crafting gui", "Favorite" ) );
         add_action_desc( "CYCLE_BATCH", pgettext( "crafting gui", "Batch" ) );
-        add_action_desc( "COMPARE", pgettext( "crafting gui", "Compare" ) );
         add_action_desc( "TOGGLE_UNAVAILABLE", pgettext( "crafting gui", "Show unavailable" ) );
         add_action_desc( "HELP_KEYBINDINGS", pgettext( "crafting gui", "Keybindings" ) );
         keybinding_x = isWide ? 5 : 2;
@@ -1045,21 +961,6 @@ const recipe *select_crafting_recipe( int &batch_size_out )
                 return catacurses::newwin( height, width, point( ( TERMX - width ) / 2, ( TERMY - height ) / 2 ) );
             }, data );
 
-            recalc = true;
-            keepline = true;
-        } else if( action == "COMPARE" ) {
-            if( current.empty() ) {
-                popup( _( "Nothing selected!  Press [<color_yellow>ESC</color>]!" ) );
-                recalc = true;
-                continue;
-            }
-            auto crafted_item = current[line]->create_result();
-            crafted_item->set_var( "recipe_exemplar", current[line]->ident().str() );
-            item *selected = game_menus::inv::titled_menu(
-                                 u, _( "Compare to which item?" ), _( "Your inventory is empty." ) );
-            if( selected != nullptr ) {
-                game_menus::inv::compare( *selected, *crafted_item );
-            }
             recalc = true;
             keepline = true;
         } else if( action == "FILTER" ) {

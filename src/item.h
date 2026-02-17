@@ -799,8 +799,6 @@ class item : public location_visitable<item>, public game_object<item>
         bool is_container_empty() const;
         /** Whether removing this item's contents will permanently alter it. */
         bool is_non_resealable_container() const;
-        /** Weather the item is contained in a container. */
-        bool is_in_container() const;
         /**
          * Whether this item has no more free capacity for its current content.
          * @param allow_bucket Allow filling non-sealable containers
@@ -1064,10 +1062,6 @@ class item : public location_visitable<item>, public game_object<item>
          * If contents nonempty, return true if item phase is same, else false
          */
         bool contents_made_of( phase_id phase ) const;
-        /**
-         * If contents nonempty, return true if itype phase is same, else false
-         */
-        bool contents_normally_made_of( phase_id phase ) const;
         /**
          * Are we solid, liquid, gas, plasma?
          */
@@ -1447,11 +1441,6 @@ class item : public location_visitable<item>, public game_object<item>
          * @param mv number of moves *already* spent wielding the weapon
          */
         void on_wield( player &p, int mv = 0 );
-        /**
-         * Callback when a player stops wielding the item.
-         * @param who character that has stopped wielding item
-         */
-        void on_unwield( Character &who );
         /**
          * Callback when a player starts carrying the item. The item is already in the inventory
          * and is called from there. This is not called when the item is added to the inventory

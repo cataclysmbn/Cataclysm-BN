@@ -9,6 +9,66 @@
     "type": "mutation_flag"
   },
   {
+    "id": "hair_black",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_blond",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_brown",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_crewcut",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_fro",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_gray",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_long",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_medium",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_mohawk",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_red",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_short",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
+    "id": "hair_white",
+    "//": "This trait flag is used by cosmetic trait JSON, with no hardcode usage at present.",
+    "type": "mutation_flag"
+  },
+  {
     "id": "mycus",
     "//": "This trait flag is used in dialogue JSON, with no hardcode usage at present.",
     "type": "mutation_flag"
@@ -79,14 +139,6 @@
   },
   {
     "id": "FLIGHT_ALWAYS_ACTIVE",
-    "type": "mutation_flag"
-  },
-  {
-    "id": "MUTATION_SWIM",
-    "type": "mutation_flag"
-  },
-  {
-    "id": "FURRY",
     "type": "mutation_flag"
   }
 ]

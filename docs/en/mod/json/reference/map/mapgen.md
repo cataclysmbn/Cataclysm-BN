@@ -53,28 +53,9 @@ preferred method of adding both content and mods.
   single mapgen file. You can also link mapgen files for multiple z-level buildings and multi-tile
   buildings.
 
-- Lua: Lua support depends on the use of a lua method defined by the field luamethod, during mod loading
-  one would place the method into game.mapgen_functions\[id\] where id is what is the string in luamethod
-  This allows for procedual overmap tiles to be made, similar to the hardcoded labs
-
 ## Mapgen definition Placement
 
-Mapgen definitions can be added in 3 places:
-
-### Lua mapgen
-
-This is how to define a map defined by lua elsewhere
-
-```json
-[
-  {
-    "type": "mapgen",
-    "method": "lua",
-    "om_terrain": ["slimepit", "slimepit_down"],
-    "luamethod": "slimepit"
-  }
-]
-```
+Mapgen definitions can be added in 2 places:
 
 ### Embedded mapgen
 
@@ -589,29 +570,6 @@ Example:
 | amount | (required) Number of items to spawn. Single integer, or range `[ a, b ]` for a random value in that range.                                                               |
 | chance | (optional) One-in-N chance to spawn item.                                                                                                                                |
 | repeat | (optional) Value: `[ n1, n2 ]`. Spawn item randomly between `n1` and `n2` times. Only makes sense if the coordinates are random. Example: `[ 1, 3 ]` - repeat 1-3 times. |
-
-## Spawn artifacts with a "place_artifact" array
-
-**optional** A list of artifacts to spawn. Use `natural: true` with an optional `property` to spawn
-a natural artifact, otherwise a random artifact is created. For mapping-style usage, the special
-type is `artifact` (or `artifacts`).
-
-Example:
-
-```json
-"place_artifact": [
-    { "x": 12, "y": 10 },
-    { "x": [ 4, 18 ], "y": [ 4, 18 ], "repeat": [ 1, 2 ], "natural": true, "property": "ARTPROP_GLOWING" }
-]
-```
-
-| Field    | Description                                                                                                                                                                   |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| x, y     | (required) Spawn coordinates. Value from `0-23`, or range `[ 0-23, 0-23 ]` for a random value in that range.                                                                  |
-| repeat   | (optional) Value: `[ n1, n2 ]`. Spawn artifacts randomly between `n1` and `n2` times. Only makes sense if the coordinates are random. Example: `[ 1, 3 ]` - repeat 1-3 times. |
-| chance   | (optional) Percentage chance to spawn the artifact.                                                                                                                           |
-| natural  | (optional) If true, spawn a natural artifact.                                                                                                                                 |
-| property | (optional) `ARTPROP_*` value for the natural artifact property. If omitted, a random property is chosen.                                                                      |
 
 ## Extra map features with specials
 

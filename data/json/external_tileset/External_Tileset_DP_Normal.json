@@ -204,7 +204,7 @@
             "additional_tiles": [ { "id": "broken", "fg": 160 } ]
           },
           {
-            "id": [ "vp_propeller_metal", "vp_propeller_wood" ],
+            "id": "vp_propeller_metal",
             "fg": 161,
             "rotates": true,
             "multitile": true,
@@ -264,8 +264,7 @@
             "rotates": true,
             "multitile": true,
             "additional_tiles": [ { "id": "broken", "fg": 185 } ]
-          },
-          { "id": "f_rain_collector_plumbed", "fg": 186 }
+          }
         ],
         "sprite_width": 32,
         "sprite_height": 32

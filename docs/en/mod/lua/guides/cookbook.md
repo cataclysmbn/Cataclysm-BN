@@ -88,7 +88,7 @@ end
 Then connect the hook to the function ONLY ONCE.
 
 ```lua
-game.add_hook("on_creature_performed_technique", function(...) return on_creature_performed_technique(...) end)
+table.insert(game.hooks.on_creature_performed_technique, function(...) return on_creature_performed_technique(...) end)
 ```
 
 <details>
@@ -146,8 +146,8 @@ First, set up the hook in your preload.lua:
 
 ```lua
 local mod = game.mod_runtime[game.current_mod]
-game.add_hook("on_weather_changed", function(...) mod.weather_changed_alert(...) end)
-game.add_hook("on_weather_updated", function(...) mod.weather_report(...) end)
+table.insert(game.hooks.on_weather_changed, function(...) mod.weather_changed_alert(...) end)
+table.insert(game.hooks.on_weather_updated, function(...) mod.weather_report(...) end)
 ```
 
 Then define the handlers in your main.lua:
@@ -186,8 +186,8 @@ First, set up the hooks in your preload.lua:
 
 ```lua
 local mod = game.mod_runtime[game.current_mod]
-game.add_hook("on_shoot", function(...) return mod.on_shoot_fun(...) end)
-game.add_hook("on_throw", function(...) return mod.on_throw_fun(...) end)
+table.insert(game.hooks.on_shoot, function(...) return mod.on_shoot_fun(...) end)
+table.insert(game.hooks.on_throw, function(...) return mod.on_throw_fun(...) end)
 ```
 
 Then define the handlers in your main.lua:
@@ -252,7 +252,7 @@ gapi.get_map():move_item_at(source_pos, dest_pos)
 ```lua
 -- In preload.lua
 local mod = game.mod_runtime[game.current_mod]
-game.add_hook("on_mon_death", function(...) return mod.on_mon_death(...) end)
+table.insert(game.hooks.on_mon_death, function(...) return mod.on_mon_death(...) end)
 ```
 
 ```lua
@@ -275,7 +275,7 @@ end
 ```lua
 -- In preload.lua
 local mod = game.mod_runtime[game.current_mod]
-game.add_hook("on_char_death", function(...) return mod.on_char_death(...) end)
+table.insert(game.hooks.on_char_death, function(...) return mod.on_char_death(...) end)
 ```
 
 ```lua
@@ -342,20 +342,10 @@ print( km:knows_spell(ex_sp) ) -- check again
 
 ## Dynamic Item Actions
 
-All item, bionic, and mutation callback tables are keyed by string id and take a
-table of optional callback functions. Every callback receives a single `params`
-table with named fields.
-
-### game.iuse_functions
-
-| Callbacks | params fields         |
-| --------- | --------------------- |
-| `use`     | `user`, `item`, `pos` |
-| `can_use` | `user`, `item`, `pos` |
-
-`use` returns an `int` (time cost in moves). `can_use` returns `bool`.
+### Creating custom item use functions in Lua
 
 ```lua
+-- Define an item's use behavior with tick and can_use functions
 game.iuse_functions["my_custom_item"] = {
     use = function(params)
         local user = params.user
@@ -365,119 +355,25 @@ game.iuse_functions["my_custom_item"] = {
     end,
 
     can_use = function(params)
+        local user = params.user
+        local item = params.item
         -- Return true to allow use, false to prevent
         return true
-    end
-}
-```
-
-### Item lifecycle callbacks
-
-Several additional callback tables let you react to item events.
-
-### game.iwieldable_functions
-
-| Callbacks                                | params fields               |
-| ---------------------------------------- | --------------------------- |
-| `on_wield`                               | `user`, `item`, `move_cost` |
-| `on_unwield`, `can_wield`, `can_unwield` | `user`, `item`              |
-
----
-### game.iwearable_functions
-| Callbacks | params fields |
-|-----------|---------------|
-| `on_wear`, `on_takeoff`, `can_wear`, `can_takeoff` | `user`, `item` |
----
-
-### game.iequippable_functions
-
-| Callbacks               | params fields                              |
-| ----------------------- | ------------------------------------------ |
-| `on_durability_change`  | `user`, `item`, `old_damage`, `new_damage` |
-| `on_repair`, `on_break` | `user`, `item`                             |
-
----
-### game.istate_functions
-| Callbacks            | params fields         |
-|--------------------- | --------------------- |
-| `on_tick`, `on_drop` | `user`, `item`, `pos` |
-| `on_pickup`          | `user`, `item`        |
----
-
-### game.imelee_functions
-
-| Callbacks         | params fields                               |
-| ----------------- | ------------------------------------------- |
-| `on_melee_attack` | `user`, `target`, `item`                    |
-| `on_hit`          | `user`, `target`, `item`, `damage_instance` |
-| `on_block`        | `user`, `source`, `item`, `damage_blocked`  |
-| `on_miss`         | `user`, `item`                              |
-
----
-### game.iranged_functions
-| Callbacks                             | params fields                         |
-| ------------------------------------- | ------------------------------------- |
-| `on_fire`                             | `user`, `item`, `target_pos`, `shots` |
-| `on_reload`, `can_fire`, `can_reload` | `user`, `item`                        |
----
-
-`can_*` callbacks return `bool` — return `false` to block the action.
-
-```lua
-game.iwieldable_functions["cursed_sword"] = {
-    on_wield = function(params)
-        gdebug.log_info(params.user:get_name() .. " draws " .. params.item:tname(1))
     end,
-    can_unwield = function(params)
-        -- Cursed sword can't be put down
-        return false
+
+    tick = function(params)
+        local user = params.user
+        local item = params.item
+        -- Called periodically while item is active
+        if item:get_countdown() == 0 then
+            gdebug.log_info("Item countdown finished!")
+        end
     end
 }
-```
 
-### Bionic callbacks
-
-`game.bionic_functions` is keyed by bionic string id. Each callback receives
-a single `params` table.
-
-| Callback        | params fields       | When fired                  |
-| --------------- | ------------------- | --------------------------- |
-| `on_activate`   | `user`, `bionic`    | After bionic is activated   |
-| `on_deactivate` | `user`, `bionic`    | After bionic is deactivated |
-| `on_installed`  | `user`, `bionic_id` | After bionic is installed   |
-| `on_removed`    | `user`, `bionic_id` | After bionic is removed     |
-
-```lua
-game.bionic_functions["bio_laser"] = {
-    on_activate = function(params)
-        gdebug.log_info(params.user:get_name() .. " activated bio_laser")
-    end,
-    on_installed = function(params)
-        gdebug.log_info("Installed: " .. tostring(params.bionic_id))
-    end
-}
-```
-
-### Mutation callbacks
-
-`game.mutation_functions` is keyed by trait string id.
-
-| Callback        | params fields      | When fired                    |
-| --------------- | ------------------ | ----------------------------- |
-| `on_activate`   | `user`, `trait_id` | After mutation is toggled on  |
-| `on_deactivate` | `user`, `trait_id` | After mutation is toggled off |
-| `on_gain`       | `user`, `trait_id` | After mutation is gained      |
-| `on_loss`       | `user`, `trait_id` | After mutation is lost        |
-
-```lua
-game.mutation_functions["TRAIT_QUICK"] = {
-    on_gain = function(params)
-        gdebug.log_info(params.user:get_name() .. " gained " .. tostring(params.trait_id))
-    end,
-    on_loss = function(params)
-        gdebug.log_info(params.user:get_name() .. " lost " .. tostring(params.trait_id))
-    end
-}
+-- Set a countdown on an item to trigger periodic ticks
+local item = gapi.create_item(ItypeId.new("some_item"), 1)
+item:set_countdown(100)  -- Ticks for 100 turns
 ```
 
 ## More Combat Hooks
@@ -487,10 +383,10 @@ game.mutation_functions["TRAIT_QUICK"] = {
 ```lua
 -- In preload.lua
 local mod = game.mod_runtime[game.current_mod]
-game.add_hook("on_creature_dodged", function(...) return mod.on_creature_dodged(...) end)
-game.add_hook("on_creature_blocked", function(...) return mod.on_creature_blocked(...) end)
-game.add_hook("on_creature_performed_technique", function(...) return mod.on_creature_performed_technique(...) end)
-game.add_hook("on_creature_melee_attacked", function(...) return mod.on_creature_melee_attacked(...) end)
+table.insert(game.hooks.on_creature_dodged, function(...) return mod.on_creature_dodged(...) end)
+table.insert(game.hooks.on_creature_blocked, function(...) return mod.on_creature_blocked(...) end)
+table.insert(game.hooks.on_creature_performed_technique, function(...) return mod.on_creature_performed_technique(...) end)
+table.insert(game.hooks.on_creature_melee_attacked, function(...) return mod.on_creature_melee_attacked(...) end)
 ```
 
 ```lua

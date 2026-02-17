@@ -222,7 +222,7 @@
     "quench": -2,
     "healthy": 1,
     "calories": 100,
-    "flags": [ "NO_COOKING_BUFF", "SMOKED" ],
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "Dehydrated fruit flakes.  With proper storage, this dried food will remain edible for an incredibly long time.  They are useful for several cooking recipes.",
     "price": "9 USD",
     "price_postapoc": "1 USD",

@@ -418,10 +418,7 @@ mod.on_every_5_minutes = function()
   end
 end
 
-mod.open_rpg_menu = function(params)
-  local who = params.user
-  local item = params.item
-  local pos = params.pos
+mod.open_rpg_menu = function(who, item, pos)
   if not who:is_avatar() then return 0 end
 
   local player = who

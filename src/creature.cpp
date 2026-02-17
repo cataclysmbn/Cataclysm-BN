@@ -1072,12 +1072,11 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
     const int total_damage = dealt_dam.total_damage();
     const int env_resist = get_env_resist( bp_hit );
 
-    const bool should_blind = proj.has_effect( ammo_effect_BLINDS_EYES );
-    const int blind_strength = should_blind ? total_damage - env_resist : 0;
-    if( should_blind ) {
-        const auto blind_duration = blind_strength > 0 ? rng( 3_turns, 10_turns ) : rng( 1_turns, 3_turns );
+    const int blind_strength = bp_hit == bodypart_str_id( "head" )
+                               && proj.has_effect( ammo_effect_BLINDS_EYES ) ? total_damage - env_resist : 0;
+    if( blind_strength > 0 ) {
         // TODO: Change this to require bp_eyes
-        add_env_effect( effect_blind, body_part_eyes, 5, blind_duration );
+        add_env_effect( effect_blind, body_part_eyes, 5, rng( 3_turns, 10_turns ) );
     }
 
     const int sap_strength = proj.has_effect( ammo_effect_APPLY_SAP ) ? total_damage - env_resist : 0;
@@ -2466,11 +2465,6 @@ void Creature::describe_infrared( std::vector<std::string> &buf ) const
 void Creature::describe_specials( std::vector<std::string> &buf ) const
 {
     buf.emplace_back( _( "You sense a creature here." ) );
-}
-
-const effects_map &Creature::get_effects() const
-{
-    return *effects;
 }
 
 effects_map Creature::get_all_effects() const

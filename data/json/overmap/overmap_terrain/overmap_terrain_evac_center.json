@@ -30,18 +30,11 @@
       "evac_center_13",
       "evac_center_14",
       "evac_center_17",
+      "evac_center_18",
       "evac_center_19"
     ],
     "copy-from": "generic_evac_center",
     "sym": "┼",
-    "color": "white"
-  },
-  {
-    "type": "overmap_terrain",
-    "id": [ "evac_center_18" ],
-    "copy-from": "generic_evac_center",
-    "sym": "┼",
-    "map_label": "Refugee Center",
     "color": "white"
   },
   {

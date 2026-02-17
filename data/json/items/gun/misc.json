@@ -47,24 +47,5 @@
     "reload": 500,
     "loudness": 5,
     "valid_mod_locations": [ [ "sling", 1 ] ]
-  },
-  {
-    "id": "bola_net_launcher",
-    "copy-from": "launcher_base",
-    "type": "GUN",
-    "name": { "str": "restraint launcher" },
-    "description": "A compact pistol-style launcher designed to fire bola or net cartridges for non-lethal control.",
-    "weight": "1800 g",
-    "volume": "1500 ml",
-    "price": "600 USD",
-    "price_postapoc": "15 USD",
-    "material": [ "steel", "plastic" ],
-    "ammo": "bola_launcher",
-    "range": 16,
-    "dispersion": 140,
-    "durability": 8,
-    "clip_size": 1,
-    "reload": 200,
-    "flags": [ "PRIMITIVE_RANGED_WEAPON", "NON_FOULING", "NEVER_JAMS" ]
   }
 ]

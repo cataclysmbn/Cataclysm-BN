@@ -17,10 +17,7 @@ end
 local voltmeter = {}
 
 ---@type fun(who: Character, item: Item, pos: Tripoint): integer
-voltmeter.menu = function(params)
-  local who = params.user
-  local item = params.item
-  local pos = params.pos
+voltmeter.menu = function(who, item, pos)
   local info_msg = voltmeter.get_grid_charge_info(who, item, pos)
   info_msg = info_msg .. "\n" .. voltmeter.get_grid_connections_info(who, item, pos)
   info_msg = info_msg .. "\n\n" .. locale.gettext("Do you want to modify grid connections?")

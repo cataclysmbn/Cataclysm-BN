@@ -16,8 +16,6 @@
 #include "behavior.h"
 #include "bionics.h"
 #include "cata_utility.h"
-#include "catalua_hooks.h"
-#include "catalua_sol.h"
 #include "creature_tracker.h"
 #include "debug.h"
 #include "effect.h"
@@ -281,7 +279,7 @@ bool monster::can_squeeze_to( const tripoint &p ) const
 
 bool monster::can_move_to( const tripoint &p ) const
 {
-    return can_reach_to( p ) && will_move_to( p ) && !has_flag( MF_STATIONARY );
+    return can_reach_to( p ) && will_move_to( p );
 }
 
 void monster::set_dest( const tripoint &p )
@@ -1137,7 +1135,7 @@ void monster::move()
                 if( is_wandering() && destination == wander_pos ) {
                     continue;
                 }
-                const int estimate = here.bash_rating( bash_estimate( candidate ), candidate );
+                const int estimate = here.bash_rating( bash_estimate(), candidate );
                 if( estimate <= 0 ) {
                     continue;
                 }
@@ -1401,7 +1399,7 @@ tripoint monster::scent_move()
             ( !has_flag( MF_AQUATIC ) || g->m.is_divable( dest ) ) &&
             ( ( can_move_to( dest ) && !get_map().obstructed_by_vehicle_rotation( pos(), dest ) ) ||
               ( dest == g->u.pos() ) ||
-              ( can_bash && g->m.bash_rating( bash_estimate( dest ), dest ) > 0 ) ) ) {
+              ( can_bash && g->m.bash_rating( bash_estimate(), dest ) > 0 ) ) ) {
             if( ( !fleeing && smell > bestsmell ) || ( fleeing && smell < bestsmell ) ) {
                 smoves.clear();
                 smoves.push_back( dest );
@@ -1576,9 +1574,15 @@ bool monster::bash_at( const tripoint &p )
     return true;
 }
 
-int monster::bash_estimate( const tripoint &target )
+int monster::bash_estimate()
 {
-    return group_bash_skill( target );
+    int estimate = bash_skill();
+    if( has_flag( MF_GROUP_BASH ) ) {
+        // Right now just give them a boost so they try to bash a lot of stuff.
+        // TODO: base it on number of nearby friendlies.
+        estimate *= 2;
+    }
+    return estimate;
 }
 
 int monster::bash_skill()
@@ -1622,7 +1626,7 @@ int monster::group_bash_skill( const tripoint &target )
         // If we made it here, the last monster checked was the candidate.
         monster &helpermon = *mon;
         // Contribution falls off rapidly with distance from target.
-        bashskill += helpermon.bash_skill() / std::max( rl_dist( candidate, target ), 1 );
+        bashskill += helpermon.bash_skill() / rl_dist( candidate, target );
     }
 
     return bashskill;
@@ -1695,19 +1699,6 @@ static tripoint find_closest_stair( const tripoint &near_this, const ter_bitflag
 bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
                        const float stagger_adjustment )
 {
-    const auto hook_results = cata::run_hooks(
-                                  "on_monster_try_move",
-    [ &, this]( sol::table & params ) {
-        params["monster"] = this;
-        params["from"] = pos();
-        params["to"] = p;
-        params["force"] = force;
-    } );
-    const auto can_move = hook_results.get_or( "allowed", true );
-    if( !can_move ) {
-        return false;
-    }
-
     const bool on_ground = !digging() && !flies();
 
     const bool z_move = p.z != pos().z;

@@ -19,7 +19,7 @@ concurrency:
 jobs:
   skip-duplicates:
     continue-on-error: true
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     outputs:
       should_skip_code: ${{ steps.skip_code_check.outputs.should_skip }}
       should_skip_data: ${{ steps.skip_data_check.outputs.should_skip }}

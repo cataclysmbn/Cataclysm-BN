@@ -42,7 +42,6 @@ extern const flag_id flag_BIO_IMMUNE;
 extern const flag_id flag_BIPOD;
 extern const flag_id flag_BIRD;
 extern const flag_id flag_BLIND;
-extern const flag_id flag_BLINDS_EYES_ON_HIT;
 extern const flag_id flag_BLOCK_WHILE_WORN;
 extern const flag_id flag_BOMB;
 extern const flag_id flag_BOOK_CANNIBAL;
@@ -317,7 +316,6 @@ extern const flag_id flag_SNIPPET_NEEDS_LITERACY;
 extern const flag_id flag_SOLARPACK;
 extern const flag_id flag_SOLARPACK_ON;
 extern const flag_id flag_SPAWN_FRIENDLY;
-extern const flag_id flag_SPAWN_HOSTILE;
 extern const flag_id flag_SPEAR;
 extern const flag_id flag_SPEEDLOADER;
 extern const flag_id flag_SPLINT;
@@ -330,7 +328,6 @@ extern const flag_id flag_SUN_GLASSES;
 extern const flag_id flag_SUPER_FANCY;
 extern const flag_id flag_SWIM_GOGGLES;
 extern const flag_id flag_TACK;
-extern const flag_id flag_NET_TANGLE;
 extern const flag_id flag_TANGLE;
 extern const flag_id flag_TARDIS;
 extern const flag_id flag_THERMOMETER;
@@ -474,3 +471,5 @@ class json_flag
         /** Clear all loaded flags (invalidating any pointers) */
         static void reset();
 };
+
+

@@ -20,8 +20,7 @@
     "description": "You have received defensive training.  For every hit you land, gain various miniscule combat bonuses that scale off of your stats.",
     "starting_trait": true,
     "initial_ma_styles": [ "style_crt_cqb", "style_crt_blade", "style_crt_enforcement" ],
-    "valid": false,
-    "purifiable": false
+    "valid": false
   },
   {
     "type": "martial_art",

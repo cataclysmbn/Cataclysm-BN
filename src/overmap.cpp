@@ -54,11 +54,9 @@
 #include "output.h"
 #include "overmap_connection.h"
 #include "overmap_location.h"
-#include "overmap_label.h"
 #include "overmap_noise.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
-#include "fluid_grid.h"
 #include "regional_settings.h"
 #include "rng.h"
 #include "rotatable_symbols.h"
@@ -708,11 +706,6 @@ void oter_type_t::load( const JsonObject &jo, const std::string &src )
 
     optional( jo, was_loaded, "sym", symbol, unicode_codepoint_from_symbol_reader, NULL_UNICODE );
 
-    auto map_label = std::optional<std::string> {};
-    if( jo.has_string( "map_label" ) ) {
-        map_label = jo.get_string( "map_label" );
-    }
-
     assign( jo, "name", name, strict );
     assign( jo, "see_cost", see_cost, strict );
     assign( jo, "travel_cost", travel_cost, strict );
@@ -739,13 +732,6 @@ void oter_type_t::load( const JsonObject &jo, const std::string &src )
     optional( jo, was_loaded, "flags", flags, flag_reader );
 
     optional( jo, was_loaded, "connect_group", connect_group, string_reader{} );
-
-    if( map_label.has_value() ) {
-        overmap_labels::set_label( id, map_label );
-    } else if( jo.has_member( "copy-from" ) ) {
-        auto copy_from_id = oter_type_str_id( jo.get_string( "copy-from" ) );
-        overmap_labels::set_label( id, overmap_labels::get_label( copy_from_id ) );
-    }
 
     if( has_flag( oter_flags::line_drawing ) ) {
         if( has_flag( oter_flags::no_rotate ) ) {
@@ -960,6 +946,8 @@ bool oter_t::is_hardcoded() const
         "office_tower_1_entrance",
         "office_tower_b",
         "office_tower_b_entrance",
+        "slimepit",
+        "slimepit_down",
         "temple",
         "temple_finale",
         "temple_stairs"
@@ -1027,7 +1015,6 @@ void overmap_terrains::reset()
 {
     terrain_types.reset();
     terrains.reset();
-    overmap_labels::reset();
 }
 
 const std::vector<oter_t> &overmap_terrains::get_all()
@@ -5679,9 +5666,6 @@ std::vector<tripoint_om_omt> overmap::place_special(
     }
 
     const bool grid = special.has_flag( "ELECTRIC_GRID" );
-    const auto fluid_grid_enabled = special.has_flag( "FLUID_GRID" );
-    auto *fluid_connections = fluid_grid_enabled ? &fluid_grid::connections_for(
-                                  *this ) : nullptr;
 
     special_placement_result result = special.place( *this, p, dir );
 
@@ -5756,17 +5740,12 @@ std::vector<tripoint_om_omt> overmap::place_special(
     for( const tripoint_om_omt &location : result.omts_used ) {
         mapgen_args_index[location] = args_index;
         overmap_special_placements[location] = special.id;
-        if( grid || fluid_connections ) {
+        if( grid ) {
             for( size_t i = 0; i < six_cardinal_directions.size(); i++ ) {
                 const tripoint_om_omt other = location + six_cardinal_directions[i];
                 if( std::find( result.omts_used.begin(), result.omts_used.end(),
                                other ) != result.omts_used.end() ) {
-                    if( grid ) {
-                        electric_grid_connections[location].set( i, true );
-                    }
-                    if( fluid_connections ) {
-                        ( *fluid_connections )[location].set( i, true );
-                    }
+                    electric_grid_connections[location].set( i, true );
                 }
             }
         }

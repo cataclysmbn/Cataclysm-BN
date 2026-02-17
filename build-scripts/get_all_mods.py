@@ -30,8 +30,6 @@ for info in glob.glob('data/mods/*/modinfo.json'):
         if e["type"] == "MOD_INFO":
             if not do_lua and "lua_api_version" in e:
                 continue
-            if e.get("obsolete", False):
-                continue
             ident = e["id"]
             if not ident in blacklist:
                 all_mod_dependencies[ident] = e.get("dependencies", [])

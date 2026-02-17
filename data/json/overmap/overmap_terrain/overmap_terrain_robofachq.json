@@ -11,6 +11,7 @@
     "id": [
       "robofachq_roof_a1",
       "robofachq_roof_a2",
+      "robofachq_surface_entrance",
       "robofachq_surface_car_entrance",
       "robofachq_surface_a3",
       "robofachq_surface_b0",
@@ -66,15 +67,6 @@
     "sym": "0",
     "color": "light_blue",
     "see_cost": 5
-  },
-  {
-    "type": "overmap_terrain",
-    "id": "robofachq_surface_entrance",
-    "name": "hub 01",
-    "sym": "0",
-    "color": "light_blue",
-    "see_cost": 5,
-    "map_label": "Hub 01"
   },
   {
     "type": "overmap_terrain",

@@ -17,8 +17,6 @@
 #include "calendar.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
-#include "catalua_icallback_actor.h"
-#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
@@ -1123,9 +1121,8 @@ bool avatar::is_dead_state() const
     }
 
     if( Character::is_dead_state() ) {
-        cata::run_hooks( "on_character_death", [ &, this]( auto & params ) {
-            params["char"] = this;
-        } );
+        auto &state = *DynamicDataLoader::get_instance().lua;;
+        run_hooks( state, "on_character_death" );
         cached_dead_state.reset();
     }
 
@@ -1362,13 +1359,6 @@ bool avatar::wield( item &target )
         return false;
     }
 
-    // Lua iwieldable can_wield callback
-    if( const auto *iwield_cb = target.type->iwieldable_callbacks ) {
-        if( !iwield_cb->call_can_wield( *this, target ) ) {
-            return false;
-        }
-    }
-
     if( !unwield() ) {
         return false;
     }
@@ -1417,13 +1407,6 @@ detached_ptr<item> avatar::wield( detached_ptr<item> &&target )
 {
     if( !can_wield( *target ).success() ) {
         return std::move( target );
-    }
-
-    // Lua iwieldable can_wield callback
-    if( const auto *iwield_cb = target->type->iwieldable_callbacks ) {
-        if( !iwield_cb->call_can_wield( *this, *target ) ) {
-            return std::move( target );
-        }
     }
 
     if( !unwield() ) {

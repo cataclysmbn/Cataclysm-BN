@@ -56,6 +56,7 @@ static const trait_id trait_INSECT_ARMS_OK( "INSECT_ARMS_OK" );
 static const trait_id trait_INSECT_ARMS( "INSECT_ARMS" );
 static const trait_id trait_LIGHTFUR( "LIGHTFUR" );
 static const trait_id trait_LUPINE_FUR( "LUPINE_FUR" );
+static const trait_id trait_M_IMMUNE( "M_IMMUNE" );
 static const trait_id trait_NOMAD( "NOMAD" );
 static const trait_id trait_NOMAD2( "NOMAD2" );
 static const trait_id trait_NOMAD3( "NOMAD3" );
@@ -64,7 +65,6 @@ static const trait_id trait_SLIMY( "SLIMY" );
 static const trait_id trait_STIMBOOST( "STIMBOOST" );
 static const trait_id trait_SUNLIGHT_DEPENDENT( "SUNLIGHT_DEPENDENT" );
 static const trait_id trait_THICK_SCALES( "THICK_SCALES" );
-static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const trait_id trait_URSINE_FUR( "URSINE_FUR" );
 static const trait_id trait_WEBBED( "WEBBED" );
 static const trait_id trait_WHISKERS_RAT( "WHISKERS_RAT" );
@@ -575,8 +575,7 @@ void Character::process_effects_internal()
     if( has_effect( effect_darkness ) && g->is_in_sunlight( pos() ) ) {
         remove_effect( effect_darkness );
     }
-    // Mycus can still accidentally get infected until they pick up immunity, but won't suffer from it.
-    if( has_trait( trait_THRESH_MYCUS ) && has_effect( effect_fungus ) ) {
+    if( has_trait( trait_M_IMMUNE ) && has_effect( effect_fungus ) ) {
         vomit();
         remove_effect( effect_fungus );
         add_msg_if_player( m_bad, _( "We have mistakenly colonized a local guide!  Purging now." ) );
@@ -825,9 +824,7 @@ void Character::reset_stats()
     recalc_sight_limits();
     recalc_speed_bonus();
 
-    cata::run_hooks( "on_character_reset_stats", [this]( auto & params ) {
-        params["character"] = this;
-    } );
+    cata::run_hooks( "on_character_reset_stats", [this]( auto & params ) { params["character"] = this; } );
 }
 
 void Character::environmental_revert_effect()

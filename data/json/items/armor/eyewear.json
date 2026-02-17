@@ -307,44 +307,5 @@
     "environmental_protection": 15,
     "qualities": [ [ "GLARE", 1 ] ],
     "flags": [ "WATER_FRIENDLY", "SUN_GLASSES", "OVERSIZE", "VARSIZE", "STURDY" ]
-  },
-  {
-    "id": "test_enchanted_hawkeye",
-    "type": "ARMOR",
-    "name": { "str": "debug hawkeye scouter" },
-    "description": "DEBUG ITEM: A legendary sniper's scouter with the eyes of a hawk.  Provides extreme firearm performance enhancements to the wearer.  For testing purposes only.",
-    "weight": "150 g",
-    "volume": "300 ml",
-    "price": "0 cent",
-    "price_postapoc": "0 cent",
-    "to_hit": -2,
-    "material": [ "superalloy", "plastic" ],
-    "symbol": "[",
-    "looks_like": "glasses_bal",
-    "color": "light_red",
-    "covers": [ "eyes" ],
-    "coverage": 100,
-    "encumbrance": 5,
-    "warmth": 5,
-    "material_thickness": 3,
-    "environmental_protection": 5,
-    "qualities": [ [ "GLARE", 2 ] ],
-    "flags": [ "WATER_FRIENDLY", "SUN_GLASSES", "UNBREAKABLE", "VARSIZE" ],
-    "relic_data": {
-      "passive_effects": [
-        {
-          "has": "WORN",
-          "condition": "ALWAYS",
-          "values": [
-            { "value": "PERCEPTION", "add": 5 },
-            { "value": "RANGED_DISPERSION", "add": -200 },
-            { "value": "RANGED_DAMAGE_BULLET", "add": 15 },
-            { "value": "RANGED_RANGE", "multiply": 0.5 },
-            { "value": "RANGED_RECOIL", "multiply": -0.5 },
-            { "value": "RANGED_RELOAD_TIME", "multiply": -0.3 }
-          ]
-        }
-      ]
-    }
   }
 ]

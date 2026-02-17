@@ -823,7 +823,7 @@
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
     "name": { "str": "Internal Microreactor CBM" },
-    "description": "This stripped down mini-reactor will generate impressive amounts of bionic power, but may not be the safest thing to install.  1 plutonium fuel cell provides 1000 charges producing 10kW of power.  Produces 50W of power while inactive.",
+    "description": "This stripped down mini-reactor will generate impressive amounts of bionic power, but may not be the safest thing to install.  1 plutonium fuel cell provides 1000 charges producing 10kJ of power a turn, while not active & fueled provides a constant 50J of power.",
     "price": "9 kUSD",
     "difficulty": 11
   },
@@ -832,7 +832,7 @@
     "copy-from": "bionic_general_npc_usable",
     "type": "BIONIC_ITEM",
     "name": { "str": "Advanced Microreactor CBM" },
-    "description": "This module upgrades a pre-installed microreactor with enhanced maximum yield and limited automatic radiation scrubbing capabilities.  1 plutonium fuel cell provides 1500 charges producing 10kW of power.  Produces 75W of power while inactive.",
+    "description": "This module upgrades a pre-installed microreactor with enhanced maximum yield and limited automatic radiation scrubbing capabilities.  1 plutonium fuel cell provides 1500 charges producing 10kJ of power a turn, while not active & fueled provides a constant 75J of power.",
     "price": "9 kUSD",
     "difficulty": 13
   },
@@ -845,26 +845,6 @@
     "description": "Disables the radiation safety protocols allowing for much higher energy production.  While active produces 40kJ of power a turn and 1 irradiated stack every 20 turns.",
     "price": "9 kUSD",
     "difficulty": 13
-  },
-  {
-    "id": "bio_atomic_battery",
-    "copy-from": "bionic_general_npc_usable",
-    "type": "BIONIC_ITEM",
-    "name": { "str": "Atomic Battery CBM" },
-    "description": " Effectively a plutonium fuel cell converted into an alphavoltaic battery, this bionic will provide a limitless source of power at a steady 50 watts when active, with only minimal exposure to radiation while in use.",
-    "price": "8 kUSD",
-    "difficulty": 8
-  },
-  {
-    "id": "bio_atomic_battery_upgrade",
-    "bionic_id": "bio_reactor",
-    "copy-from": "bionic_general_npc_usable",
-    "type": "BIONIC_ITEM",
-    "name": { "str": "Atomic Battery Upgrade CBM" },
-    "description": "A kit for upgrading a pre-installed atomic battery into a Microreactor, providing options for significantly more power generation potential and fuel capacity at the cost of increased radiation exposure.",
-    "price": "2500 USD",
-    "difficulty": 10,
-    "is_upgrade": true
   },
   {
     "id": "bio_reactor_upgrade",

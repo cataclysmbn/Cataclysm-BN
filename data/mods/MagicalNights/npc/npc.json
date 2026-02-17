@@ -6,7 +6,7 @@
     "name_suffix": "magus",
     "class": "NC_OLD_MAGUS",
     "attitude": 0,
-    "mission": 3,
+    "mission": 7,
     "mission_offered": "MISSION_GET_MAGIC_BOOK",
     "chat": "TALK_OLD_MAGUS",
     "faction": "wizards_ancient"

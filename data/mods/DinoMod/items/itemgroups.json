@@ -72,10 +72,5 @@
       { "item": "steel_armor_ostrich", "prob": 10 },
       { "item": "bronze_armor_ostrich", "prob": 10 }
     ]
-  },
-  {
-    "type": "item_group",
-    "id": "dinomod_finale_genome_drive",
-    "items": [ [ "genome_drive_tyrannosaurus_rex", 1 ], [ "genome_drive_brachiosaurus", 1 ], [ "genome_drive_stegosaurus", 1 ] ]
   }
 ]

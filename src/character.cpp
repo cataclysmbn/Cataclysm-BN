@@ -27,7 +27,6 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_hooks.h"
-#include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
@@ -197,7 +196,6 @@ static const efftype_id effect_riding( "riding" );
 static const efftype_id effect_saddled( "monster_saddled" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_slept_through_alarm( "slept_through_alarm" );
-static const efftype_id effect_spores( "spores" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_took_prozac( "took_prozac" );
@@ -2476,13 +2474,6 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
         return std::move( wear );
     }
 
-    // Lua iwearable can_wear callback
-    if( const auto *iwear_cb = to_wear.type->iwearable_callbacks ) {
-        if( !iwear_cb->call_can_wear( *this, to_wear ) ) {
-            return std::move( wear );
-        }
-    }
-
     const bool was_deaf = is_deaf();
     const bool supertinymouse = get_size() == creature_size::tiny;
     last_item = to_wear.typeId();
@@ -3515,13 +3506,6 @@ bool Character::takeoff( item &it, std::vector<detached_ptr<item>> *res )
         return false;
     }
 
-    // Lua iwearable can_takeoff callback
-    if( const auto *iwear_cb = it.type->iwearable_callbacks ) {
-        if( !iwear_cb->call_can_takeoff( *this, it ) ) {
-            return false;
-        }
-    }
-
     auto iter = std::ranges::find_if( worn, [ &it ]( item * wit ) {
         return &it == wit;
     } );
@@ -3617,15 +3601,6 @@ bool Character::unwield()
     if( !can_unwield( primary_weapon() ).success() ) {
         return false;
     }
-
-    // Lua iwieldable can_unwield callback
-    if( const auto *iwield_cb = primary_weapon().type->iwieldable_callbacks ) {
-        if( !iwield_cb->call_can_unwield( *this, primary_weapon() ) ) {
-            return false;
-        }
-    }
-
-    primary_weapon().on_unwield( *this );
 
     const std::string query = string_format( _( "Stop wielding %s?" ), primary_weapon().tname() );
 
@@ -3884,8 +3859,8 @@ std::vector<Character::overlay_entry> Character::get_overlay_ids() const
 
     // first get effects
     for( const auto &[eff_type, eff_by_part] : *effects ) {
-        const auto &eff = eff_by_part.begin()->second;
-        if( eff.get_id().is_valid() && !eff.is_removed() ) {
+        const auto eff = eff_by_part.begin()->second;
+        if( !eff.is_removed() ) {
             const std::string &looks_like = eff_type.obj().get_looks_like();
 
             const overlay_entry ent {
@@ -6944,8 +6919,6 @@ bool Character::is_immune_effect( const efftype_id &eff ) const
         return is_immune_damage( DT_ACID ) || has_trait( trait_SLIMY ) || has_trait( trait_VISCOUS );
     } else if( eff == effect_nausea ) {
         return has_trait( trait_STRONGSTOMACH );
-    } else if( eff == effect_spores || eff == effect_fungus ) {
-        return has_trait( trait_M_IMMUNE );
     } else if( eff == effect_bleed ) {
         // Ugly, it was badly implemented and should be a flag
         return mutation_value( "bleed_resist" ) > 0.0f;
@@ -11706,8 +11679,8 @@ float Character::stability_roll() const
 
     /** @EFFECT_DEX slightly improves player stability roll */
 
-    /** @EFFECT_DODGE improves player stability roll */
-    return get_dodge() + get_str() + ( get_per() / 3.0f ) + ( get_dex() / 4.0f );
+    /** @EFFECT_MELEE improves player stability roll */
+    return get_melee() + get_str() + ( get_per() / 3.0f ) + ( get_dex() / 4.0f );
 }
 
 bool Character::uncanny_dodge()
@@ -12149,8 +12122,6 @@ int Character::item_reload_cost( const item &it, item &ammo, int qty ) const
         qty = clamp( qty, ammo.contents.front().charges, 1 );
     } else if( ammo.is_magazine() ) {
         qty = 1;
-    } else if( ammo.is_comestible() ) {
-        qty = std::max( std::min( qty, ammo.charges ), 1 );
     } else {
         debugmsg( "cannot determine reload cost as %s is neither ammo or magazine", ammo.tname() );
         return 0;

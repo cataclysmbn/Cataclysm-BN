@@ -208,7 +208,6 @@
     "description": "A small tome, seemingly covered in tanned human skin.",
     "weight": "355 g",
     "volume": "500 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "red",
     "use_action": {
@@ -233,7 +232,6 @@
     "description": "A bark covered book.",
     "weight": "355 g",
     "volume": "500 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "green",
     "use_action": { "type": "learn_spell", "spells": [ "druid_woodshaft", "druid_veggrasp", "druid_rootstrike", "druid_naturebow1" ] }
@@ -247,7 +245,6 @@
     "//": "1 technomancer, 2 animist, 1 druid, 1 earthshaper spell",
     "weight": "728 g",
     "volume": "3 L",
-    "price": "50 USD",
     "symbol": "?",
     "color": "light_blue",
     "use_action": {
@@ -264,7 +261,6 @@
     "description": "Your standard wizardy looking spellbook, filled with Magus combat spells.  You sure lucked out!",
     "weight": "434 g",
     "volume": "750 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "light_gray",
     "use_action": { "type": "learn_spell", "spells": [ "magus_mana_beam", "magus_mana_bolt", "magus_mana_blast" ] }
@@ -278,7 +274,6 @@
     "description": "This large dusty spellbook seems perpetually, well, dusty.  It contains the power of the earth.",
     "weight": "483 g",
     "volume": "825 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "brown",
     "use_action": {
@@ -291,14 +286,13 @@
     "type": "GENERIC",
     "category": "spellbooks",
     "name": { "str": "The Tome of Magical Movement", "str_pl": "copies of The Tome of Magical Movement" },
-    "//": "4 Magus spells",
+    "//": "3 Magus spells",
     "description": "This small lightweight book seems to almost not entirely exist, let's say it 97% does.  It contains Magus spells focused on movement.",
     "weight": "231 g",
     "volume": "500 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "light_gray",
-    "use_action": { "type": "learn_spell", "spells": [ "phase_door", "magus_escape", "magus_haste", "magus_slow" ] }
+    "use_action": { "type": "learn_spell", "spells": [ "phase_door", "magus_escape", "magus_haste" ] }
   },
   {
     "id": "summon_scroll_smudged",
@@ -309,7 +303,6 @@
     "description": "This looks like someone was designing a new spell, but spilled a mug of coffee on it and crumpled it up in anger.  You can tell that it will definitely cast something, but you can't be sure that it will work very well.",
     "weight": "129 g",
     "volume": "100 ml",
-    "price": "5 USD",
     "symbol": "?",
     "color": "light_gray",
     "use_action": { "type": "learn_spell", "spells": [ "summon_bear" ] }
@@ -323,7 +316,6 @@
     "description": "This book details various ways of summoning an undead minion to fight for you.  They all appear to disappear after a short time, crumbling to dust.",
     "weight": "788 g",
     "volume": "2250 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "light_gray",
     "use_action": { "type": "learn_spell", "spells": [ "summon_zombie", "summon_skeleton", "summon_decayed_pouncer" ] }
@@ -337,7 +329,6 @@
     "description": "This thick manual instructs the spellcaster on manipulating and empowering various forms of matter and energy.",
     "weight": "258 g",
     "volume": "750 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "light_gray",
     "use_action": { "type": "learn_spell", "spells": [ "synaptic_stimulation", "animated_blade", "mirror_image" ] }
@@ -351,7 +342,6 @@
     "//": "2 Technomancer spells",
     "weight": "211 g",
     "volume": "500 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "light_gray",
     "use_action": { "type": "learn_spell", "spells": [ "taze", "quantum_tunnel_lesser" ] }
@@ -368,7 +358,6 @@
     "description": "This lab reference material book is thick and overflowing with information on combining magic with EM radiation.",
     "weight": "284 g",
     "volume": "1 L",
-    "price": "50 USD",
     "symbol": "?",
     "color": "light_gray",
     "use_action": { "type": "learn_spell", "spells": [ "taze", "laze" ] }
@@ -382,7 +371,6 @@
     "description": "This book outlines in great detail how time and space are wibbly-wobbly and non-Euclidean.  It also appears to have a dozen different coordinate systems that it uses nearly interchangeably, which makes it hard to follow.  There's lots of jargon, but with intense study you can probably learn a thing or two about portals.",
     "weight": "1200 g",
     "volume": "2500 ml",
-    "price": "200 USD",
     "symbol": "?",
     "color": "light_blue",
     "use_action": { "type": "learn_spell", "spells": [ "translocate_self" ] }
@@ -396,7 +384,6 @@
     "description": "The Human is the only creature that seeks to improve himself.  This study examines different spells that can heighten various senses temporarily, in hopes to discover a more permanent solution.",
     "weight": "1300 g",
     "volume": "2500 ml",
-    "price": "200 USD",
     "symbol": "?",
     "color": "yellow",
     "use_action": { "type": "learn_spell", "spells": [ "cats_grace", "ogres_strength", "foxs_cunning", "eagles_sight" ] }
@@ -410,7 +397,6 @@
     "description": "A fairly simplistic looking technomancer's spellbook containing just a couple simple technomancy spells.",
     "weight": "256 g",
     "volume": "500 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "green",
     "use_action": { "type": "learn_spell", "spells": [ "synaptic_stimulation", "taze" ] },
@@ -425,7 +411,6 @@
     "description": "A fairly simplistic looking stormshaper's spellbook containing just a couple simple stormshaping spells.",
     "weight": "256 g",
     "volume": "500 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "blue",
     "use_action": { "type": "learn_spell", "spells": [ "windrun", "jolt" ] }
@@ -439,7 +424,6 @@
     "description": "A fairly simplistic looking earthshaper's spellbook containing just a couple simple earthshaping spells.",
     "weight": "256 g",
     "volume": "500 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "brown",
     "use_action": { "type": "learn_spell", "spells": [ "stonefist", "eshaper_rockbolt" ] }
@@ -453,7 +437,6 @@
     "description": "A fairly simplistic looking kelvinist's spellbook containing just a couple simple spells from both fire and ice.",
     "weight": "260 g",
     "volume": "500 ml",
-    "price": "50 USD",
     "symbol": "?",
     "color": "light_blue",
     "use_action": { "type": "learn_spell", "spells": [ "chilling_touch", "glide_ice", "create_lighter", "point_flare" ] }

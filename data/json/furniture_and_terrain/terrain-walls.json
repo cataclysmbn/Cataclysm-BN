@@ -515,7 +515,6 @@
     "looks_like": "t_brick_wall",
     "move_cost": 0,
     "coverage": 100,
-    "roof": "t_flat_roof",
     "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL", "MINEABLE", "BLOCK_WIND" ],
     "connects_to": "WALL",
     "bash": {

@@ -5,7 +5,7 @@
     "name": "Change Hairstyle",
     "authors": [ "jeremy7986" ],
     "description": "Hairdressing tools can now actually change your hairstyle! Change your hairstyle and your mood in the Cataclysm!",
-    "version": "<color_light_green>20260215</color>",
+    "version": "<color_light_green>20250802</color>",
     "category": "misc_additions",
     "lua_api_version": 2,
     "dependencies": [ "bn" ]

@@ -250,8 +250,7 @@
     "id": "tied",
     "name": [ "Tied Up" ],
     "desc": [ "AI tag used for tied up critters.  This is a bug if you have it." ],
-    "permanent": true,
-    "show_in_info": true
+    "permanent": true
   },
   {
     "type": "effect_type",

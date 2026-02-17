@@ -706,17 +706,5 @@
       { "item": "bucket", "prob": 50 },
       { "item": "hand_paddles", "prob": 25 }
     ]
-  },
-  {
-    "type": "item_group",
-    "id": "supplies_skyfarer_ballista",
-    "//": "Ammo for mounted weapon stations on Temporal Anomaly airships",
-    "subtype": "distribution",
-    "entries": [
-      { "item": "rock", "prob": 25, "count": [ 25, 50 ] },
-      { "item": "sling_bullet", "prob": 25, "count": [ 10, 20 ] },
-      { "item": "ammo_ballista_wood", "prob": 25, "count": [ 5, 10 ] },
-      { "item": "ammo_ballista_iron", "prob": 25, "count": [ 5, 10 ] }
-    ]
   }
 ]

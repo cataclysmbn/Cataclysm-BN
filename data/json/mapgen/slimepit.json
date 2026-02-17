@@ -1,8 +1,0 @@
-[
-  {
-    "type": "mapgen",
-    "method": "lua",
-    "om_terrain": [ "slimepit", "slimepit_down" ],
-    "luamethod": "slimepit"
-  }
-]

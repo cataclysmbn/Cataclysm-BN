@@ -2048,7 +2048,7 @@ void activity_handlers::reload_finish( player_activity *act, player *p )
             sounds::ambient_sound( p->pos(), reloadable.type->gun->reload_noise_volume,
                                    sounds::sound_t::activity, reloadable.type->gun->reload_noise );
         }
-    } else if( reloadable.is_container() ) {
+    } else if( reloadable.is_watertight_container() ) {
         msg = _( "You refill the %s." );
     }
     add_msg( m_neutral, msg, reloadable.tname(), ammo_name );
@@ -2235,64 +2235,20 @@ void activity_handlers::hand_crank_do_turn( player_activity *act, player *p )
     // to 10 watt (suspicious claims from some manufacturers) sustained output.
     // It takes 2.4 minutes to produce 1kj at just slightly under 7 watts (25 kj per hour)
     // time-based instead of speed based because it's a sustained activity
-    auto &hand_crank_item = *act->get_tools().front();
-    constexpr auto interval_turns_index = 0;
-    constexpr auto charge_amount_index = 1;
-    constexpr auto fatigue_amount_index = 2;
-    constexpr auto ammo_type_index = 0;
-    constexpr auto fully_charged_message_index = 1;
-    constexpr auto exhausted_message_index = 2;
-    auto charge_interval = 144_seconds;
-    auto charge_amount = 1;
-    auto fatigue_amount = 1;
-    auto ammo_type = itype_id( "battery" );
-    auto fully_charged_message = std::string( "You've charged the battery completely." );
-    auto exhausted_message = std::string( "You're too exhausted to keep cranking." );
+    item &hand_crank_item = *act->get_tools().front();
 
-    if( act->values.size() > interval_turns_index ) {
-        charge_interval = time_duration::from_turns( act->values[interval_turns_index] );
-    }
-    if( act->values.size() > charge_amount_index ) {
-        charge_amount = std::max( 1, act->values[charge_amount_index] );
-    }
-    if( act->values.size() > fatigue_amount_index ) {
-        fatigue_amount = std::max( 0, act->values[fatigue_amount_index] );
-    }
-    if( act->str_values.size() > ammo_type_index &&
-        !act->str_values[ammo_type_index].empty() ) {
-        ammo_type = itype_id( act->str_values[ammo_type_index] );
-    }
-    if( act->str_values.size() > fully_charged_message_index &&
-        !act->str_values[fully_charged_message_index].empty() ) {
-        fully_charged_message = act->str_values[fully_charged_message_index];
-    }
-    if( act->str_values.size() > exhausted_message_index &&
-        !act->str_values[exhausted_message_index].empty() ) {
-        exhausted_message = act->str_values[exhausted_message_index];
-    }
-    if( charge_interval <= 0_turns ) {
-        charge_interval = 144_seconds;
-    }
-
-    if( calendar::once_every( charge_interval ) ) {
-        p->mod_fatigue( fatigue_amount );
+    if( calendar::once_every( 144_seconds ) ) {
+        p->mod_fatigue( 1 );
         if( hand_crank_item.ammo_capacity() > hand_crank_item.ammo_remaining() ) {
-            const auto current = hand_crank_item.ammo_remaining();
-            const auto capacity = hand_crank_item.ammo_capacity();
-            const auto next_charges = std::min( capacity, current + charge_amount );
-            hand_crank_item.ammo_set( ammo_type, next_charges );
-            if( next_charges >= capacity ) {
-                act->moves_left = 0;
-                add_msg( m_info, _( fully_charged_message ) );
-            }
+            hand_crank_item.ammo_set( itype_battery, hand_crank_item.ammo_remaining() + 1 );
         } else {
             act->moves_left = 0;
-            add_msg( m_info, _( fully_charged_message ) );
+            add_msg( m_info, _( "You've charged the battery completely." ) );
         }
     }
     if( p->get_fatigue() >= fatigue_levels::dead_tired ) {
         act->moves_left = 0;
-        add_msg( m_info, _( exhausted_message ) );
+        add_msg( m_info, _( "You're too exhausted to keep cranking." ) );
     }
 
 }

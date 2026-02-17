@@ -2,34 +2,26 @@
 
 #include "debug.h"
 
-#include <algorithm>
 #include <clocale>
-#include <optional>
-#include <ranges>
-#include <string>
-#include <vector>
 
 constexpr int LUA_API_VERSION = 2;
 
 #include "catalua_sol.h"
 
 #include "avatar.h"
-#include "bionics.h"
 #include "catalua_console.h"
 #include "catalua_hooks.h"
 #include "catalua_impl.h"
-#include "catalua_icallback_actor.h"
+#include "catalua_iuse_actor.h"
 #include "catalua_readonly.h"
 #include "catalua_serde.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "init.h"
 #include "item_factory.h"
-#include "lua_action_menu.h"
 #include "map.h"
 #include "messages.h"
 #include "mod_manager.h"
-#include "mutation.h"
 #include "path_info.h"
 #include "point.h"
 #include "worldfactory.h"
@@ -65,7 +57,7 @@ auto generate_lua_docs( const std::filesystem::path &script_path,
     lua.globals()["doc_gen_func"] = lua.create_table();
     lua.globals()["print"] = [&]( const sol::variadic_args & va ) {
         for( auto it : va ) {
-            const auto str = lua["tostring"]( it ).get<std::string>();
+            std::string str = lua["tostring"]( it );
             std::cout << str;
         }
         std::cout << std::endl;
@@ -80,7 +72,7 @@ auto generate_lua_docs( const std::filesystem::path &script_path,
         sol::protected_function doc_gen_func = lua["doc_gen_func"]["impl"];
         sol::protected_function_result res = doc_gen_func();
         check_func_result( res );
-        const auto ret = res.get<std::string>();
+        std::string ret = res;
         write_to_file( to.string(), [&]( std::ostream & s ) -> void {
             s << ret;
         } );
@@ -103,7 +95,6 @@ void reload_lua_code()
     cata::lua_state &state = *DynamicDataLoader::get_instance().lua;
     const auto &packs = world_generator->active_world->info->active_mod_order;
     try {
-        cata::lua_action_menu::clear_entries();
         const int lua_mods = init::load_main_lua_scripts( state, packs );
         add_msg( m_good, _( "Reloaded %1$d lua mods." ), lua_mods );
     } catch( std::runtime_error &e ) {
@@ -122,7 +113,7 @@ void debug_write_lua_backtrace( std::ostream &out )
 
     luaL_traceback( container.lua_state(), state->lua.lua_state(), "=== Lua backtrace report ===", 0 );
 
-    const auto data = sol::stack::pop<std::string>( container );
+    std::string data = sol::stack::pop<std::string>( container );
     out << data << '\n';
 }
 
@@ -138,7 +129,7 @@ bool save_world_lua_state( const world *world, const std::string &path )
     const mod_management::t_mod_list &mods = world_generator->active_world->info->active_mod_order;
     sol::table t = get_mod_storage_table( state );
     run_on_game_save_hooks( state );
-    const auto ret = world->write_to_file( path, [&]( std::ostream & stream ) {
+    bool ret = world->write_to_file( path, [&]( std::ostream & stream ) {
         JsonOut jsout( stream );
         jsout.start_object();
         for( const mod_id &mod : mods ) {
@@ -160,7 +151,7 @@ bool load_world_lua_state( const world *world, const std::string &path )
     const mod_management::t_mod_list &mods = world_generator->active_world->info->active_mod_order;
     sol::table t = get_mod_storage_table( state );
 
-    const auto ret = world->read_from_file( path, [&]( std::istream & stream ) {
+    bool ret = world->read_from_file( path, [&]( std::istream & stream ) {
         JsonIn jsin( stream );
         JsonObject jsobj = jsin.get_object();
 
@@ -202,7 +193,6 @@ std::unique_ptr<lua_state, lua_state_deleter> make_wrapped_state()
 void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modlist )
 {
     sol::state &lua = state.lua;
-    cata::lua_action_menu::clear_entries();
 
     sol::table active_mods = lua.create_table();
     sol::table mod_runtime = lua.create_table();
@@ -224,7 +214,6 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     it["active_mods"] = active_mods;
     it["mod_runtime"] = mod_runtime;
     it["mod_storage"] = mod_storage;
-    it["hook_test_results"] = lua.create_table();
     it["on_every_x_hooks"] = std::vector<cata::on_every_x_hooks>();
     gt["hooks"] = hooks;
 
@@ -234,75 +223,11 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     gt["mod_storage"] = make_readonly_table( lua, mod_storage );
     gt["hooks"] = make_readonly_table( lua, hooks );
 
-    // item functions
+    // iuse functions
     gt["iuse_functions"] = lua.create_table();
-    gt["iwieldable_functions"] = lua.create_table();
-    gt["iwearable_functions"] = lua.create_table();
-    gt["iequippable_functions"] = lua.create_table();
-    gt["istate_functions"] = lua.create_table();
-    gt["imelee_functions"] = lua.create_table();
-    gt["iranged_functions"] = lua.create_table();
-
-    // bionic/mutation functions
-    gt["bionic_functions"] = lua.create_table();
-    gt["mutation_functions"] = lua.create_table();
-
-    // mapgen functions
-    gt["mapgen_functions"] = lua.create_table();
 
     // hooks
     cata::define_hooks( state );
-
-    gt["add_hook"] = [&lua]( const std::string & hook_name, const sol::object & entry ) {
-        auto *L = lua.lua_state();
-        sol::table hooks_table = lua["game"]["hooks"];
-        sol::optional<sol::table> maybe_hook_list = hooks_table[hook_name];
-
-        if( !maybe_hook_list ) {
-            debugmsg( "Invalid hook name: %s", hook_name );
-            return;
-        }
-
-        sol::table hook_list = *maybe_hook_list;
-
-        const auto current_mod = lua["game"]["current_mod"];
-        const auto mod_id = current_mod.valid() && current_mod.get_type() == sol::type::string
-                            ? current_mod.get<std::string>()
-                            : "<unknown>";
-
-        const auto is_function = entry.is<sol::function>() || entry.is<sol::protected_function>();
-        if( is_function ) {
-            auto new_entry = lua.create_table();
-            new_entry["mod_id"] = mod_id;
-            new_entry["priority"] = 0;
-            new_entry["fn"] = entry;
-
-            sol::stack::push( L, hook_list );
-            const auto next_index = static_cast<int>( lua_rawlen( L, -1 ) ) + 1;
-            lua_pop( L, 1 );
-
-            hook_list.set( next_index, new_entry );
-            return;
-        }
-
-        if( entry.is<sol::table>() ) {
-            auto tbl = entry.as<sol::table>();
-            const auto has_mod_id = tbl["mod_id"].valid() && tbl["mod_id"].get_type() != sol::type::lua_nil;
-            if( !has_mod_id ) {
-                tbl["mod_id"] = mod_id;
-            }
-
-            sol::stack::push( L, hook_list );
-            const auto next_index = static_cast<int>( lua_rawlen( L, -1 ) ) + 1;
-            lua_pop( L, 1 );
-
-            hook_list.set( next_index, tbl );
-            return;
-        }
-
-        debugmsg( "add_hook expects function or table entry, got type: %s for hook: %s",
-                  sol::type_name( lua, entry.get_type() ).c_str(), hook_name.c_str() );
-    };
 }
 
 void set_mod_being_loaded( lua_state &state, const mod_id &mod )
@@ -327,7 +252,7 @@ void clear_mod_being_loaded( lua_state &state )
 
 void run_mod_preload_script( lua_state &state, const mod_id &mod )
 {
-    const auto script_path = mod->path + "/" + "preload.lua";
+    std::string script_path = mod->path + "/" + "preload.lua";
 
     if( !file_exist( script_path ) ) {
         return;
@@ -338,7 +263,7 @@ void run_mod_preload_script( lua_state &state, const mod_id &mod )
 
 void run_mod_finalize_script( lua_state &state, const mod_id &mod )
 {
-    const auto script_path = mod->path + "/" + "finalize.lua";
+    std::string script_path = mod->path + "/" + "finalize.lua";
 
     if( !file_exist( script_path ) ) {
         return;
@@ -349,7 +274,7 @@ void run_mod_finalize_script( lua_state &state, const mod_id &mod )
 
 void run_mod_main_script( lua_state &state, const mod_id &mod )
 {
-    const auto script_path = mod->path + "/" + "main.lua";
+    std::string script_path = mod->path + "/" + "main.lua";
 
     if( !file_exist( script_path ) ) {
         return;
@@ -358,241 +283,85 @@ void run_mod_main_script( lua_state &state, const mod_id &mod )
     run_lua_script( state.lua, script_path );
 }
 
-namespace
+auto run_hooks( std::string_view hook_name ) -> bool
 {
-// Owning storage for bionic/mutation Lua callback actors.
-// Populated during reg_lua_icallback_actors(), resolved during resolve_lua_bionic_and_mutation_callbacks().
-std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> bionic_callback_actors;
-std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> mutation_callback_actors;
-} // namespace
-
-namespace
-{
-
-struct hook_entry {
-    int priority = 0;
-    int index = 0;
-    bool is_table = false;
-    std::string mod_id;
-};
-
-struct hook_cache_entry {
-    int rawlen = -1;
-    std::vector<hook_entry> entries;
-};
-
-auto get_hook_cache() -> std::unordered_map<std::string, hook_cache_entry> &
-{
-    static auto cache = std::unordered_map<std::string, hook_cache_entry> {};
-    return cache;
+    lua_state &state = *DynamicDataLoader::get_instance().lua;
+    return run_hooks( state, hook_name, []( sol::table & ) {}, false );
 }
-
-auto table_rawlen( sol::state_view lua, const sol::table &t ) -> int
+auto run_hooks( lua_state &state, std::string_view hook_name ) -> bool
 {
-    auto *L = lua.lua_state();
-    sol::stack::push( L, t );
-    const auto len = static_cast<int>( lua_rawlen( L, -1 ) );
-    lua_pop( L, 1 );
-    return len;
+    return run_hooks( state, hook_name, []( sol::table & ) {}, false );
 }
-
-auto build_hook_entries( sol::state_view lua, std::string_view hook_name,
-                         const sol::table &hooks ) -> std::vector<hook_entry>
-{
-    auto entries = std::vector<hook_entry> {};
-
-    const int len = table_rawlen( lua, hooks );
-    entries.reserve( std::max( 0, len ) );
-
-    auto needs_sort = false;
-
-    for( int idx = 1; idx <= len; ++idx ) {
-        try {
-            const auto obj = hooks.get_or<sol::object>( idx, sol::lua_nil );
-            if( obj == sol::lua_nil ) {
-                continue;
-            }
-
-            if( obj.is<sol::protected_function>() || obj.is<sol::function>() ) {
-                entries.emplace_back( hook_entry{
-                    .priority = 0,
-                    .index = idx,
-                    .is_table = false,
-                    .mod_id = "<unknown>",
-                } );
-                continue;
-            }
-
-            if( obj.is<sol::table>() ) {
-                const auto tbl = obj.as<sol::table>();
-
-                const auto mod_id = tbl.get_or<std::string>( "mod_id", "<unknown>" );
-                const auto priority_obj = tbl.get<sol::optional<int>>( "priority" );
-                const auto priority = priority_obj.value_or( 0 );
-                const auto hook_obj = tbl.get_or<sol::object>( "fn", sol::lua_nil );
-
-                if( !( hook_obj.is<sol::protected_function>() || hook_obj.is<sol::function>() ) ) {
-                    throw std::runtime_error( "invalid hook entry: expected function at key 'fn'" );
-                }
-
-                needs_sort = needs_sort || priority != 0;
-
-                entries.emplace_back( hook_entry{
-                    .priority = priority,
-                    .index = idx,
-                    .is_table = true,
-                    .mod_id = mod_id,
-                } );
-                continue;
-            }
-
-            throw std::runtime_error( "invalid hook entry: expected function or table" );
-        } catch( const std::runtime_error &e ) {
-            debugmsg( "Failed to parse hook %s[%d]: %s", hook_name, idx, e.what() );
-        }
-    }
-
-    if( needs_sort ) {
-        std::ranges::stable_sort( entries, std::ranges::greater{}, []( const hook_entry & e ) { return e.priority; } );
-    }
-
-    return entries;
-}
-
-auto get_hook_entries( sol::state_view lua, std::string_view hook_name,
-                       const sol::table &hooks ) -> const std::vector<hook_entry> &
-{
-    auto &cache = get_hook_cache();
-    auto &entry = cache[std::string{ hook_name }];
-
-    const int len = table_rawlen( lua, hooks );
-    if( entry.rawlen != len ) {
-        entry.rawlen = len;
-        entry.entries = build_hook_entries( lua, hook_name, hooks );
-    }
-
-    return entry.entries;
-}
-
-} // namespace
-
 auto run_hooks( std::string_view hook_name,
                 std::function < auto( sol::table &params ) -> void > init,
-                const hook_opts &opts ) -> sol::table
+                bool default_result ) -> bool
 {
-    auto &state = opts.state ? *opts.state : *DynamicDataLoader::get_instance().lua;
-    auto &lua = state.lua;
+    lua_state &state = *DynamicDataLoader::get_instance().lua;
+    return run_hooks( state, hook_name, init, default_result );
+}
+auto run_hooks( lua_state &state, std::string_view hook_name,
+                std::function < auto( sol::table &params ) -> void > init,
+                bool default_result ) -> bool
+{
+    sol::state &lua = state.lua;
+    sol::table hooks = lua.globals()["game"]["hooks"][hook_name];
 
     auto params = lua.create_table();
-    auto results = lua.create_table();
-    results["allowed"] = true;
+    init( params );
 
-    params["results"] = results;
-    params["prev"] = sol::lua_nil;
-
-    if( init ) {
-        init( params );
-    }
-
-    const auto maybe_hooks = lua.globals()["game"]["hooks"][hook_name].get<sol::optional<sol::table>>();
-    if( !maybe_hooks ) {
-        return results;
-    }
-
-    const auto &hooks = *maybe_hooks;
-    const auto &entries = get_hook_entries( lua, hook_name, hooks );
-
-    auto out_idx = 1;
-    auto i = size_t{ 0 };
-    while( i < entries.size() ) {
-        const hook_entry &e = entries[i];
+    for( auto &ref : hooks ) {
+        int idx = -1;
         try {
-            const sol::object obj = hooks.get_or<sol::object>( e.index, sol::lua_nil );
-            if( obj == sol::lua_nil ) {
-                ++i;
-                continue;
-            }
-
-            sol::protected_function func;
-            if( e.is_table ) {
-                const sol::table tbl = obj.as<sol::table>();
-                const sol::object hook_obj = tbl.get_or<sol::object>( "fn", sol::lua_nil );
-                func = hook_obj.as<sol::protected_function>();
-            } else {
-                func = obj.as<sol::protected_function>();
-            }
-
+            idx = ref.first.as<int>();
+            sol::protected_function func = ref.second;
             sol::protected_function_result res = func( params );
             check_func_result( res );
-
-            sol::object result = sol::make_object( lua, sol::lua_nil );
             if( res.valid() ) {
-                result = res.get<sol::object>();
-            }
-
-            params["prev"] = result;
-
-            sol::table one = lua.create_table();
-            one["mod_id"] = e.mod_id;
-            one["priority"] = e.priority;
-            if( result != sol::lua_nil ) {
-                one["result"] = result;
-            }
-            results[out_idx++] = one;
-
-            if( result.is<bool>() && !result.as<bool>() ) {
-                results["allowed"] = false;
-                if( opts.exit_early ) {
-                    break;
+                auto result = res.get<sol::object>();
+                if( result.is<bool>() && !result.as<bool>() ) {
+                    return false;
                 }
             }
-        } catch( const std::runtime_error &e_err ) {
-            debugmsg( "Failed to run hook %s[%d](%s): %s", hook_name, static_cast<int>( i ), e.mod_id.c_str(),
-                      e_err.what() );
+        } catch( std::runtime_error &e ) {
+            debugmsg( "Failed to run hook %s[%d]: %s", hook_name, idx, e.what() );
+            return default_result;
         }
-        ++i;
     }
-
-    return results;
+    return default_result;
 }
 
 
-void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
+void reg_lua_iuse_actors( lua_state &state, Item_factory &ifactory )
 {
     sol::state &lua = state.lua;
 
-    const sol::table iuse_funcs = lua.globals()["game"]["iuse_functions"];
-    const sol::table iwieldable_funcs = lua.globals()["game"]["iwieldable_functions"];
-    const sol::table iwearable_funcs = lua.globals()["game"]["iwearable_functions"];
-    const sol::table iequippable_funcs = lua.globals()["game"]["iequippable_functions"];
-    const sol::table istate_funcs = lua.globals()["game"]["istate_functions"];
-    const sol::table imelee_funcs = lua.globals()["game"]["imelee_functions"];
-    const sol::table iranged_funcs = lua.globals()["game"]["iranged_functions"];
+    const sol::table funcs = lua.globals()["game"]["iuse_functions"];
 
-    auto it = iuse_funcs.begin();
-    while( it != iuse_funcs.end() ) {
-        const auto ref = *it;
+    for( auto &ref : funcs ) {
         std::string key;
         try {
             key = ref.first.as<std::string>();
 
             switch( ref.second.get_type() ) {
                 case sol::type::function: {
-                    auto func = ref.second.as<sol::function>();
+                    auto func =  ref.second.as<sol::function>();
                     ifactory.add_actor( std::make_unique<lua_iuse_actor>(
                                             key,
                                             std::move( func ),
+                                            sol::lua_nil,
                                             sol::lua_nil ) );
                     break;
                 }
                 case sol::type::table: {
-                    const auto tbl = ref.second.as<sol::table>();
+                    auto tbl = ref.second.as<sol::table>();
                     auto use_fn = tbl.get<sol::function>( "use" );
                     auto can_use_fn = tbl.get_or<sol::function>( "can_use", sol::lua_nil );
+                    auto tick_fn = tbl.get_or<sol::function>( "tick", sol::lua_nil );
                     ifactory.add_actor( std::make_unique<lua_iuse_actor>(
                                             key,
                                             std::move( use_fn ),
-                                            std::move( can_use_fn ) ) );
+                                            std::move( can_use_fn ),
+                                            std::move( tick_fn ) ) );
                     break;
                 }
                 default: {
@@ -603,243 +372,7 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
             debugmsg( "Failed to extract iuse_functions k='%s': %s", key, e.what() );
             break;
         }
-        ++it;
     }
-
-    // --- iwieldable registration ---
-    {
-        auto it = iwieldable_funcs.begin();
-        while( it != iwieldable_funcs.end() ) {
-            const auto ref = *it;
-            std::string key;
-            try {
-                key = ref.first.as<std::string>();
-                if( ref.second.get_type() != sol::type::table ) {
-                    throw std::runtime_error( "iwieldable entry must be a table" );
-                }
-                const auto tbl = ref.second.as<sol::table>();
-                auto on_wield = tbl.get_or<sol::function>( "on_wield", sol::lua_nil );
-                auto on_unwield = tbl.get_or<sol::function>( "on_unwield", sol::lua_nil );
-                auto can_wield = tbl.get_or<sol::function>( "can_wield", sol::lua_nil );
-                auto can_unwield = tbl.get_or<sol::function>( "can_unwield", sol::lua_nil );
-                ifactory.add_iwieldable_actor(
-                    itype_id( key ),
-                    std::make_unique<lua_iwieldable_actor>(
-                        key, std::move( on_wield ), std::move( on_unwield ),
-                        std::move( can_wield ), std::move( can_unwield ) ) );
-            } catch( std::runtime_error &e ) {
-                debugmsg( "Failed to extract iwieldable_functions k='%s': %s", key, e.what() );
-                break;
-            }
-            ++it;
-        }
-    }
-
-    // --- iwearable registration ---
-    {
-        auto it = iwearable_funcs.begin();
-        while( it != iwearable_funcs.end() ) {
-            const auto ref = *it;
-            std::string key;
-            try {
-                key = ref.first.as<std::string>();
-                if( ref.second.get_type() != sol::type::table ) {
-                    throw std::runtime_error( "iwearable entry must be a table" );
-                }
-                const auto tbl = ref.second.as<sol::table>();
-                auto on_wear = tbl.get_or<sol::function>( "on_wear", sol::lua_nil );
-                auto on_takeoff = tbl.get_or<sol::function>( "on_takeoff", sol::lua_nil );
-                auto can_wear = tbl.get_or<sol::function>( "can_wear", sol::lua_nil );
-                auto can_takeoff = tbl.get_or<sol::function>( "can_takeoff", sol::lua_nil );
-                ifactory.add_iwearable_actor(
-                    itype_id( key ),
-                    std::make_unique<lua_iwearable_actor>(
-                        key, std::move( on_wear ), std::move( on_takeoff ),
-                        std::move( can_wear ), std::move( can_takeoff ) ) );
-            } catch( std::runtime_error &e ) {
-                debugmsg( "Failed to extract iwearable_functions k='%s': %s", key, e.what() );
-                break;
-            }
-            ++it;
-        }
-    }
-
-    // --- iequippable registration ---
-    {
-        auto it = iequippable_funcs.begin();
-        while( it != iequippable_funcs.end() ) {
-            const auto ref = *it;
-            std::string key;
-            try {
-                key = ref.first.as<std::string>();
-                if( ref.second.get_type() != sol::type::table ) {
-                    throw std::runtime_error( "iequippable entry must be a table" );
-                }
-                const auto tbl = ref.second.as<sol::table>();
-                auto on_durability_change = tbl.get_or<sol::function>( "on_durability_change",
-                                            sol::lua_nil );
-                auto on_repair = tbl.get_or<sol::function>( "on_repair", sol::lua_nil );
-                auto on_break = tbl.get_or<sol::function>( "on_break", sol::lua_nil );
-                ifactory.add_iequippable_actor(
-                    itype_id( key ),
-                    std::make_unique<lua_iequippable_actor>(
-                        key, std::move( on_durability_change ),
-                        std::move( on_repair ), std::move( on_break ) ) );
-            } catch( std::runtime_error &e ) {
-                debugmsg( "Failed to extract iequippable_functions k='%s': %s", key, e.what() );
-                break;
-            }
-            ++it;
-        }
-    }
-
-    // --- istate registration ---
-    {
-        auto it = istate_funcs.begin();
-        while( it != istate_funcs.end() ) {
-            const auto ref = *it;
-            std::string key;
-            try {
-                key = ref.first.as<std::string>();
-                if( ref.second.get_type() != sol::type::table ) {
-                    throw std::runtime_error( "istate entry must be a table" );
-                }
-                const auto tbl = ref.second.as<sol::table>();
-                auto on_tick = tbl.get_or<sol::function>( "on_tick", sol::lua_nil );
-                auto on_pickup = tbl.get_or<sol::function>( "on_pickup", sol::lua_nil );
-                auto on_drop = tbl.get_or<sol::function>( "on_drop", sol::lua_nil );
-                ifactory.add_istate_actor(
-                    itype_id( key ),
-                    std::make_unique<lua_istate_actor>(
-                        key, std::move( on_tick ), std::move( on_pickup ),
-                        std::move( on_drop ) ) );
-            } catch( std::runtime_error &e ) {
-                debugmsg( "Failed to extract istate_functions k='%s': %s", key, e.what() );
-                break;
-            }
-            ++it;
-        }
-    }
-
-    // --- imelee registration ---
-    {
-        auto it = imelee_funcs.begin();
-        while( it != imelee_funcs.end() ) {
-            const auto ref = *it;
-            std::string key;
-            try {
-                key = ref.first.as<std::string>();
-                if( ref.second.get_type() != sol::type::table ) {
-                    throw std::runtime_error( "imelee entry must be a table" );
-                }
-                const auto tbl = ref.second.as<sol::table>();
-                auto on_melee_attack = tbl.get_or<sol::function>( "on_melee_attack", sol::lua_nil );
-                auto on_hit = tbl.get_or<sol::function>( "on_hit", sol::lua_nil );
-                auto on_block = tbl.get_or<sol::function>( "on_block", sol::lua_nil );
-                auto on_miss = tbl.get_or<sol::function>( "on_miss", sol::lua_nil );
-                ifactory.add_imelee_actor(
-                    itype_id( key ),
-                    std::make_unique<lua_imelee_actor>(
-                        key, std::move( on_melee_attack ), std::move( on_hit ),
-                        std::move( on_block ), std::move( on_miss ) ) );
-            } catch( std::runtime_error &e ) {
-                debugmsg( "Failed to extract imelee_functions k='%s': %s", key, e.what() );
-                break;
-            }
-            ++it;
-        }
-    }
-
-    // --- iranged registration ---
-    {
-        auto it = iranged_funcs.begin();
-        while( it != iranged_funcs.end() ) {
-            const auto ref = *it;
-            std::string key;
-            try {
-                key = ref.first.as<std::string>();
-                if( ref.second.get_type() != sol::type::table ) {
-                    throw std::runtime_error( "iranged entry must be a table" );
-                }
-                const auto tbl = ref.second.as<sol::table>();
-                auto on_fire = tbl.get_or<sol::function>( "on_fire", sol::lua_nil );
-                auto on_reload = tbl.get_or<sol::function>( "on_reload", sol::lua_nil );
-                auto can_fire = tbl.get_or<sol::function>( "can_fire", sol::lua_nil );
-                auto can_reload = tbl.get_or<sol::function>( "can_reload", sol::lua_nil );
-                ifactory.add_iranged_actor(
-                    itype_id( key ),
-                    std::make_unique<lua_iranged_actor>(
-                        key, std::move( on_fire ), std::move( on_reload ),
-                        std::move( can_fire ), std::move( can_reload ) ) );
-            } catch( std::runtime_error &e ) {
-                debugmsg( "Failed to extract iranged_functions k='%s': %s", key, e.what() );
-                break;
-            }
-            ++it;
-        }
-    }
-
-    // --- bionic callback registration ---
-    const sol::table bionic_funcs = lua.globals()["game"]["bionic_functions"];
-    {
-        auto it = bionic_funcs.begin();
-        while( it != bionic_funcs.end() ) {
-            const auto ref = *it;
-            std::string key;
-            try {
-                key = ref.first.as<std::string>();
-                if( ref.second.get_type() != sol::type::table ) {
-                    throw std::runtime_error( "bionic_functions entry must be a table" );
-                }
-                const auto tbl = ref.second.as<sol::table>();
-                auto on_activate = tbl.get_or<sol::function>( "on_activate", sol::lua_nil );
-                auto on_deactivate = tbl.get_or<sol::function>( "on_deactivate", sol::lua_nil );
-                auto on_installed = tbl.get_or<sol::function>( "on_installed", sol::lua_nil );
-                auto on_removed = tbl.get_or<sol::function>( "on_removed", sol::lua_nil );
-                bionic_callback_actors[key] = std::make_unique<lua_bionic_callback_actor>(
-                                                  key, std::move( on_activate ), std::move( on_deactivate ),
-                                                  std::move( on_installed ), std::move( on_removed ) );
-            } catch( std::runtime_error &e ) {
-                debugmsg( "Failed to extract bionic_functions k='%s': %s", key, e.what() );
-                break;
-            }
-            ++it;
-        }
-    }
-
-    // --- mutation callback registration ---
-    const sol::table mutation_funcs = lua.globals()["game"]["mutation_functions"];
-    {
-        auto it = mutation_funcs.begin();
-        while( it != mutation_funcs.end() ) {
-            const auto ref = *it;
-            std::string key;
-            try {
-                key = ref.first.as<std::string>();
-                if( ref.second.get_type() != sol::type::table ) {
-                    throw std::runtime_error( "mutation_functions entry must be a table" );
-                }
-                const auto tbl = ref.second.as<sol::table>();
-                auto on_activate = tbl.get_or<sol::function>( "on_activate", sol::lua_nil );
-                auto on_deactivate = tbl.get_or<sol::function>( "on_deactivate", sol::lua_nil );
-                auto on_gain = tbl.get_or<sol::function>( "on_gain", sol::lua_nil );
-                auto on_loss = tbl.get_or<sol::function>( "on_loss", sol::lua_nil );
-                mutation_callback_actors[key] = std::make_unique<lua_mutation_callback_actor>(
-                                                    key, std::move( on_activate ), std::move( on_deactivate ),
-                                                    std::move( on_gain ), std::move( on_loss ) );
-            } catch( std::runtime_error &e ) {
-                debugmsg( "Failed to extract mutation_functions k='%s': %s", key, e.what() );
-                break;
-            }
-            ++it;
-        }
-    }
-}
-
-void resolve_lua_bionic_and_mutation_callbacks()
-{
-    bionic_data::resolve_lua_callbacks( bionic_callback_actors );
-    mutation_branch::resolve_lua_callbacks( mutation_callback_actors );
 }
 
 void run_on_every_x_hooks( lua_state &state )
@@ -889,22 +422,22 @@ void lua_state_deleter::operator()( lua_state *state ) const
 
 void run_on_game_save_hooks( lua_state &state )
 {
-    run_hooks( "on_game_save", nullptr, { .state = &state } );
+    run_hooks( state, "on_game_save" );
 }
 
 void run_on_game_load_hooks( lua_state &state )
 {
-    run_hooks( "on_game_load", nullptr, { .state = &state } );
+    run_hooks( state, "on_game_load" );
 }
 
 void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &p,
                                       const time_point &when )
 {
-    run_hooks( "on_mapgen_postprocess", [&]( sol::table & params ) {
+    run_hooks( state, "on_mapgen_postprocess", [&]( sol::table & params ) {
         params["map"] = &m;
         params["omt"] = p;
         params["when"] = when;
-    }, { .state = &state } );
+    } );
 }
 
 } // namespace cata

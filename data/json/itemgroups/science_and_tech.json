@@ -238,9 +238,6 @@
       [ "gelbox", 3 ],
       [ "microcentrifuge", 3 ],
       [ "dna_editor", 1 ],
-      [ "genome_drive_black_rat", 3 ],
-      [ "genome_drive_wolf_mutant_huge", 3 ],
-      [ "biomaterial", 3 ],
       [ "beaker", 5 ],
       [ "gradcylinder", 5 ],
       [ "flask_glass", 2 ],
@@ -519,7 +516,7 @@
       { "item": "bio_reactor", "prob": 10 },
       { "item": "bio_advreactor", "prob": 10 },
       { "item": "bio_reactor_upgrade", "prob": 5 },
-      { "item": "huge_atomic_battery_cell", "prob": 25, "charges": [ 50000, 100000 ] }
+      { "item": "huge_atomic_battery_cell", "prob": 25 }
     ]
   }
 ]

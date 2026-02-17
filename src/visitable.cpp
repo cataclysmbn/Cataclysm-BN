@@ -615,10 +615,6 @@ VisitResponse visitable<monster>::visit_items(
         visit_internal( func, mon->get_tied_item() ) == VisitResponse::ABORT ) {
         return VisitResponse::ABORT;
     }
-    if( mon->get_battery_item() &&
-        visit_internal( func, mon->get_battery_item() ) == VisitResponse::ABORT ) {
-        return VisitResponse::ABORT;
-    }
 
     return VisitResponse::NEXT;
 }
@@ -952,9 +948,6 @@ void location_visitable<monster>::remove_items_with( const
     }
     if( mon->get_tied_item() ) {
         mon->get_tied_item()->attempt_detach( check_item );
-    }
-    if( mon->get_battery_item() ) {
-        mon->get_battery_item()->attempt_detach( check_item );
     }
 }
 /** @relates visitable */

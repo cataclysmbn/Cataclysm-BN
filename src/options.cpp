@@ -1568,7 +1568,7 @@ void options_manager::add_options_interface()
 
     add( "HHG_URL", interface, translate_marker( "Hitchhiker's Guide URL" ),
          translate_marker( "The URL opened by pressing the open HHG keybind." ),
-         "https://cataclysmbn-guide.com", 60
+         "https://cbn-guide.pages.dev", 60
        );
 
     add_empty_line();
@@ -1661,12 +1661,6 @@ void options_manager::add_options_interface()
     add( "INV_USE_ACTION_NAMES", interface, translate_marker( "Display actions in Use Item menu" ),
          translate_marker( "If true, actions ( like \"Read\", \"Smoke\", \"Wrap tighter\" ) will be displayed next to the corresponding items." ),
          true
-       );
-
-    add( "VERBOSE_CRAFTING_SPEED_MODIFIERS", interface,
-         translate_marker( "Verbose crafting/construction speed modifiers" ),
-         translate_marker( "If true, show 100% crafting/construction speed modifiers in the info panels." ),
-         false
        );
 
     add( "AUTOSELECT_SINGLE_VALID_TARGET", interface,
@@ -2273,11 +2267,6 @@ void options_manager::add_options_debug()
         add( "SLEEP_SKIP_MON", page_id, translate_marker( "Sleep Boost: Skip Monster Movement" ),
              translate_marker( "Monsters do not move while sleeping" ),
              false );
-#if defined(__ANDROID__)
-        add( "LOAD_FROM_EXTERNAL", page_id, translate_marker( "External Storage Saving" ),
-             translate_marker( "Save in data/catalcysm... instead of Documents/..." ),
-             false );
-#endif
     } );
 
     add_empty_line();
@@ -2538,20 +2527,14 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
-    add( "canmutprofmut", world_default, "Starting Trait Cancelling",
-         "Allow starting traits to be cancelled and effected by purifiers?",
-         false );
-
-    add_empty_line();
-
     add( "ITEM_SPAWNRATE", world_default,
          "Item spawn scaling factor",
-         "A scaling factor that determines density of item spawns. A higher number means more items. Affects both map generation and monster death drops.",
+         "A scaling factor that determines density of item spawns. A higher number means more items.",
          0.01, 10.0, 1.0, 0.01 );
 
     add_option_group( world_default, Group( "item_category_spawn_rate",
                                             to_translation( "Item category scaling factors" ),
-                                            to_translation( "Spawn rate for item categories. For map generation: values ≤ 1.0 represent a chance to spawn, >1.0 means extra spawns. For monster drops: values >1.0 increase spawn probability (capped at 100%). Set to 0.0 to disable spawning items from that category." ) ),
+                                            to_translation( "Spawn rate for item categories. Values ≤ 1.0 represent a chance to spawn. >1.0 means extra spawns. Set to 0.0 to disable spawning items from that category." ) ),
     [&]( const std::string & page_id ) {
 
         add( "SPAWN_RATE_ammo", page_id, "AMMO",

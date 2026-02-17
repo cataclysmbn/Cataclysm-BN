@@ -4972,5 +4972,36 @@
       { "point": [ 0, 0, 1 ], "overmap": "vending_park_roof_1_north" },
       { "point": [ 1, 0, 1 ], "overmap": "vending_park_roof_2_north" }
     ]
+  },
+  {
+    "type": "overmap_special",
+    "id": "water_tower",
+    "overmaps": [
+      { "point": [ 0, 0, 0 ], "overmap": "water_tower_0zl_north" },
+      { "point": [ 0, 0, 1 ], "overmap": "water_tower_1zl_north" },
+      { "point": [ 0, 0, 2 ], "overmap": "water_tower_2zl_north" },
+      { "point": [ 0, 0, 3 ], "overmap": "water_tower_3zl_north" },
+      { "point": [ 0, 0, 4 ], "overmap": "water_tower_4zl_north" },
+      { "point": [ 0, 0, 5 ], "overmap": "water_tower_5zl_north" },
+      { "point": [ 0, 0, -1 ], "overmap": "water_tower_-1zl_north" },
+      { "point": [ 0, 0, -2 ], "overmap": "water_tower_tank_north" },
+      { "point": [ -1, -1, -2 ], "overmap": "water_tower_corner_north" },
+      { "point": [ 0, -1, -2 ], "overmap": "water_tower_edge_north" },
+      { "point": [ 1, -1, -2 ], "overmap": "water_tower_corner_east" },
+      { "point": [ -1, 0, -2 ], "overmap": "water_tower_edge_west" },
+      { "point": [ 1, 0, -2 ], "overmap": "water_tower_edge_east" },
+      { "point": [ -1, 1, -2 ], "overmap": "water_tower_corner_west" },
+      { "point": [ 0, 1, -2 ], "overmap": "water_tower_edge_south" },
+      { "point": [ 1, 1, -2 ], "overmap": "water_tower_corner_south" }
+    ],
+    "connections": [
+      { "point": [ 0, -1, 0 ], "connection": "local_road" },
+      { "point": [ 0, 1, -1 ], "connection": "sewer_tunnel", "from": [ 0, 0, -1 ] },
+      { "point": [ 0, 2, -2 ], "connection": "subway_tunnel", "from": [ 0, 1, -2 ] }
+    ],
+    "locations": [ "land" ],
+    "city_distance": [ -1, 2 ],
+    "city_sizes": [ 3, 20 ],
+    "occurrences": [ 2, 6 ]
   }
 ]

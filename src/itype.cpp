@@ -2,7 +2,6 @@
 
 #include <cstdlib>
 
-#include "catalua_icallback_actor.h"
 #include "debug.h"
 #include "item.h"
 #include "make_static.h"
@@ -172,12 +171,6 @@ const use_function *itype::get_use( const std::string &iuse_name ) const
 
 void itype::tick( player &p, item &it, const tripoint &pos ) const
 {
-    // If istate_callbacks defines on_tick, use it instead of legacy use_methods loop
-    if( istate_callbacks && istate_callbacks->has_on_tick() ) {
-        istate_callbacks->call_on_tick( p, it, pos );
-        return;
-    }
-    // Legacy fallback: tick via use_methods (iuse tick_func)
     // Maybe should move charge decrementing here?
     for( auto &method : use_methods ) {
         method.second.call( p, it, true, pos );

@@ -66,8 +66,6 @@
     "coverage": 45,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "CONTAINER", "PLACE_ITEM", "MOUNTABLE" ],
-    "examine_action": "fluid_grid_fixture",
-    "fluid_grid": { "role": "fixture", "allow_input": false, "allow_output": true, "allowed_liquids": [ "water", "water_clean" ] },
     "connects_to": "COUNTER",
     "bash": {
       "str_min": 8,
@@ -217,10 +215,10 @@
   },
   {
     "type": "furniture",
-    "abstract": "f_water_purifier_base",
+    "id": "f_water_purifier",
     "looks_like": "f_water_heater",
-    "name": "abstract water purifier",
-    "description": "Abstract furniture.  If you see this, something went wrong.",
+    "name": "water purifier",
+    "description": "This removes ions dissolved in the water, making it pretty clean, if you care about that kind of thing.",
     "symbol": "W",
     "bgcolor": "blue",
     "move_cost_mod": -1,
@@ -257,189 +255,6 @@
       ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 8, 15 ], "destroy_threshold": 50, "block_unaimed_chance": "25%" }
-    }
-  },
-  {
-    "type": "furniture",
-    "id": "f_water_purifier_off",
-    "copy-from": "f_water_purifier_base",
-    "looks_like": "f_water_purifier",
-    "name": "water purifier (off)",
-    "description": "This removes ions dissolved in the water, making it pretty clean, if you care about that kind of thing.  It is hooked into a fluid grid and switched off.",
-    "symbol": "W",
-    "bgcolor": "blue",
-    "examine_action": "transform",
-    "transforms_into": "f_water_purifier",
-    "prompt": "Switch on the water purifier.",
-    "message": "You switch on the water purifier."
-  },
-  {
-    "type": "furniture",
-    "id": "f_water_purifier",
-    "copy-from": "f_water_purifier_base",
-    "looks_like": "f_water_purifier",
-    "name": "water purifier",
-    "description": "This removes ions dissolved in the water, making it pretty clean, if you care about that kind of thing.  It is hooked into a fluid grid.",
-    "symbol": "W",
-    "bgcolor": "blue",
-    "examine_action": "transform",
-    "transforms_into": "f_water_purifier_off",
-    "prompt": "Switch off the water purifier.",
-    "message": "You switch off the water purifier.",
-    "active": [
-      "charge_watcher",
-      { "min_power": 30, "transform": { "id": "f_water_purifier_on", "msg": "The water purifier starts up." } }
-    ]
-  },
-  {
-    "type": "furniture",
-    "id": "f_water_purifier_on",
-    "copy-from": "f_water_purifier_base",
-    "looks_like": "f_water_purifier",
-    "name": "water purifier (on)",
-    "description": "This removes ions dissolved in the water, making it pretty clean, if you care about that kind of thing.  It is hooked into a fluid grid and switched on.",
-    "symbol": "W",
-    "bgcolor": "blue",
-    "examine_action": "transform",
-    "transforms_into": "f_water_purifier_off",
-    "prompt": "Switch off the water purifier.",
-    "message": "You switch off the water purifier.",
-    "fluid_grid": {
-      "role": "transformer",
-      "allow_input": false,
-      "allow_output": false,
-      "allowed_liquids": [ "water", "water_clean" ],
-      "transformer": {
-        "tick_interval": "10 m",
-        "transforms": [
-          { "inputs": [ { "liquid": "water", "amount": "1 L" } ], "outputs": [ { "liquid": "water_clean", "amount": "1 L" } ] }
-        ]
-      }
-    },
-    "active": [
-      "steady_consumer",
-      {
-        "power": 40,
-        "consume_every": "600 s",
-        "transform": { "id": "f_water_purifier", "msg": "The water purifier shuts down." }
-      }
-    ]
-  },
-  {
-    "type": "furniture",
-    "abstract": "f_electric_well_pump_base",
-    "looks_like": "f_debug_pump",
-    "name": "abstract electric well pump",
-    "description": "Abstract furniture.  If you see this, something went wrong.",
-    "symbol": "&",
-    "color": "light_gray",
-    "move_cost_mod": 6,
-    "coverage": 40,
-    "required_str": -1,
-    "flags": [ "TRANSPARENT", "THIN_OBSTACLE" ],
-    "deconstruct": {
-      "items": [
-        { "item": "well_pump", "count": 1 },
-        { "item": "pipe", "count": 6 },
-        { "item": "motor_small", "count": 1 },
-        { "item": "power_supply", "count": 1 },
-        { "item": "cable", "charges": [ 5, 10 ] }
-      ]
-    },
-    "bash": {
-      "str_min": 15,
-      "str_max": 80,
-      "sound": "whack!",
-      "sound_fail": "thunk.",
-      "items": [
-        { "item": "steel_chunk", "count": [ 0, 2 ] },
-        { "item": "scrap", "count": [ 3, 6 ] },
-        { "item": "pipe", "count": [ 0, 2 ] }
-      ]
-    }
-  },
-  {
-    "type": "furniture",
-    "id": "f_electric_well_pump_off",
-    "copy-from": "f_electric_well_pump_base",
-    "looks_like": "f_debug_pump",
-    "name": "electric well pump (off)",
-    "description": "An electric well pump connected to a fluid grid.  It is switched off.",
-    "symbol": "&",
-    "color": "light_gray",
-    "examine_action": "transform",
-    "transforms_into": "f_electric_well_pump",
-    "prompt": "Switch on the electric well pump.",
-    "message": "You switch on the electric well pump."
-  },
-  {
-    "type": "furniture",
-    "id": "f_electric_well_pump",
-    "copy-from": "f_electric_well_pump_base",
-    "looks_like": "f_debug_pump",
-    "name": "electric well pump",
-    "description": "An electric well pump connected to a fluid grid.  It has no power.",
-    "symbol": "&",
-    "color": "light_gray",
-    "examine_action": "transform",
-    "transforms_into": "f_electric_well_pump_off",
-    "prompt": "Switch off the electric well pump.",
-    "message": "You switch off the electric well pump.",
-    "active": [
-      "charge_watcher",
-      {
-        "min_power": 30,
-        "transform": { "id": "f_electric_well_pump_on", "msg": "The electric well pump starts up." }
-      }
-    ]
-  },
-  {
-    "type": "furniture",
-    "id": "f_electric_well_pump_on",
-    "copy-from": "f_electric_well_pump_base",
-    "looks_like": "f_debug_pump",
-    "name": "electric well pump (on)",
-    "description": "An electric well pump connected to a fluid grid.  It is switched on.",
-    "symbol": "&",
-    "color": "light_gray",
-    "examine_action": "transform",
-    "transforms_into": "f_electric_well_pump_off",
-    "prompt": "Switch off the electric well pump.",
-    "message": "You switch off the electric well pump.",
-    "fluid_grid": {
-      "role": "transformer",
-      "allow_input": false,
-      "allow_output": false,
-      "allowed_liquids": [ "water" ],
-      "transformer": { "tick_interval": "10 m", "transforms": [ { "outputs": [ { "liquid": "water", "amount": "5 L" } ] } ] }
-    },
-    "active": [
-      "steady_consumer",
-      {
-        "power": 30,
-        "consume_every": "600 s",
-        "transform": { "id": "f_electric_well_pump", "msg": "The electric well pump shuts down." }
-      }
-    ]
-  },
-  {
-    "type": "furniture",
-    "id": "f_rain_collector_plumbed",
-    "name": "rain collector (plumbed)",
-    "description": "A plumbed rain collector that feeds a fluid grid when it is raining.",
-    "symbol": "U",
-    "color": "light_blue",
-    "looks_like": "tr_metal_funnel",
-    "move_cost_mod": -1,
-    "coverage": 30,
-    "required_str": 6,
-    "flags": [ "TRANSPARENT", "PLACE_ITEM", "BLOCKSDOOR" ],
-    "fluid_grid": {
-      "role": "rain_collector",
-      "allow_input": false,
-      "allow_output": false,
-      "allowed_liquids": [ "water" ],
-      "transformer": { "tick_interval": "10 m", "collector_area_m2": 1.0 }
     }
   }
 ]

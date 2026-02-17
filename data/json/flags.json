@@ -123,12 +123,6 @@
     "info": "This item <info>provides</info> instructions and other required data for several bionics, allowing installation of them with <good>minimal failure chance</good>."
   },
   {
-    "id": "GENOME_DRIVE",
-    "type": "json_flag",
-    "context": [ "GENERIC" ],
-    "info": "This item stores <info>genetic data</info> for a genome workstation."
-  },
-  {
     "id": "BIONIC_NPC_USABLE",
     "type": "json_flag",
     "context": [ "BIONIC_ITEM" ],
@@ -140,12 +134,6 @@
     "context": [ "ARMOR", "TOOL_ARMOR" ],
     "//": "Blinds the wearer while worn, and provides nominal protection vs flashbang flashes.",
     "info": "This gear <bad>prevents</bad> you from <info>seeing</info> anything."
-  },
-  {
-    "id": "BLINDS_EYES_ON_HIT",
-    "type": "json_flag",
-    "context": [  ],
-    "info": "When thrown and it hits a creature's head, it can <bad>blind</bad> them."
   },
   {
     "id": "EFFECT_NIGHT_VISION",
@@ -617,13 +605,6 @@
     "context": [ "GENERIC" ],
     "//": "This item will spawn friendly. Used for pets and such.",
     "info": "Any creature spawned from this item will <info>always</info> emerge <good>friendly to you</good>."
-  },
-  {
-    "id": "SPAWN_HOSTILE",
-    "type": "json_flag",
-    "context": [ "GENERIC" ],
-    "//": "This item will spawn mean. Used for target dummies and such.",
-    "info": "Any creature spawned from this item will <info>always</info> emerge <bad>against you</good>."
   },
   {
     "id": "STAB",
@@ -2120,12 +2101,6 @@
     "id": "TANGLE",
     "type": "json_flag",
     "context": [  ]
-  },
-  {
-    "id": "NET_TANGLE",
-    "type": "json_flag",
-    "context": [  ],
-    "info": "Thrown nets apply the NET_TANGLE ammo effect to nearby creatures."
   },
   {
     "id": "TARDIS",

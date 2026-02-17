@@ -33,7 +33,7 @@ static const std::map< std::string, nameFlags > gender_flags {
     { "unisex", nameIsUnisexName }
 };
 
-nameFlags usage_flag( const std::string &usage )
+static nameFlags usage_flag( const std::string &usage )
 {
     const auto it = usage_flags.find( usage );
     if( it != usage_flags.end() ) {
@@ -42,7 +42,7 @@ nameFlags usage_flag( const std::string &usage )
     return static_cast< nameFlags >( 0 );
 }
 
-nameFlags gender_flag( const std::string &gender )
+static nameFlags gender_flag( const std::string &gender )
 {
     const auto it = gender_flags.find( gender );
     if( it != gender_flags.end() ) {

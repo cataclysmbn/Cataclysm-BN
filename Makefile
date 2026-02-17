@@ -1004,7 +1004,6 @@ install: version $(TARGET)
 	cp -R data/credits $(DATA_PREFIX)
 	cp -R data/title $(DATA_PREFIX)
 	cp -R data/help $(DATA_PREFIX)
-	cp -R data/lua $(DATA_PREFIX)
 ifeq ($(TILES), 1)
 	cp -R gfx $(DATA_PREFIX)
 endif
@@ -1036,7 +1035,6 @@ install: version $(TARGET)
 	cp -R --no-preserve=ownership data/credits $(DATA_PREFIX)
 	cp -R --no-preserve=ownership data/title $(DATA_PREFIX)
 	cp -R --no-preserve=ownership data/help $(DATA_PREFIX)
-	cp -R --no-preserve=ownership data/lua $(DATA_PREFIX)
 ifeq ($(TILES), 1)
 	cp -R --no-preserve=ownership gfx $(DATA_PREFIX)
 endif
@@ -1092,7 +1090,6 @@ endif
 	cp -R data/credits $(APPDATADIR)
 	cp -R data/title $(APPDATADIR)
 	cp -R data/help $(APPDATADIR)
-	cp -R data/lua $(APPDATADIR)
 ifdef LANGUAGES
 	lang/compile_mo.sh $(LANGUAGES)
 	mkdir -p $(APPRESOURCESDIR)/lang/mo/

@@ -129,7 +129,6 @@
     "weight": "8 g",
     "bashing": 1,
     "ammo_type": "components",
-    "flags": [ "BLINDS_EYES_ON_HIT" ],
     "qualities": [ [ "SANDING", 1 ] ],
     "count": 50
   },

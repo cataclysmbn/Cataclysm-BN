@@ -163,38 +163,20 @@ void RGBColor::deserialize( JsonIn &jsin )
         if( nc_id != def_c_unset ) {
             *this = curses_color_to_RGB( cm.get( nc_id ) );
         } else if( str.starts_with( "#" ) ) {
-            *this = rgb_from_hex_string( str );
+            std::istringstream is( str.substr( 1 ) );
+
+            uint32_t tmp;
+            is >> std::hex;
+            is >> tmp;
+
+            r = static_cast<uint8_t>( ( tmp >> 16 ) & 0xFF );
+            g = static_cast<uint8_t>( ( tmp >> 8 ) & 0xFF );
+            b = static_cast<uint8_t>( ( tmp >> 0 ) & 0xFF );
+            a = 255;
         } else {
             debugmsg( "Unknown color value: %s", str.c_str() );
         }
     } else {
         debugmsg( "Unknown color value" );
     }
-}
-RGBColor rgb_from_hex_string( std::string str )
-{
-    if( !str.empty() ) {
-        if( str.starts_with( "#" ) ) {
-            str = str.substr( 1 );
-        }
-        auto cont = true;
-        if( str.length() == 6 ) {
-            for( const auto &c : str ) {
-                if( !std::isxdigit( c ) ) {
-                    cont = false;
-                    break;
-                }
-            }
-            if( cont ) {
-                std::istringstream is( str );
-
-                uint32_t tmp;
-                is >> std::hex;
-                is >> tmp;
-                return RGBColor{ static_cast<uint8_t>( ( tmp >> 16 ) & 0xFF ), static_cast<uint8_t>( ( tmp >> 8 ) & 0xFF ), static_cast<uint8_t>( ( tmp >> 0 ) & 0xFF ), 255 };
-            }
-        }
-    }
-    debugmsg( "Invalid color value" );
-    return RGBColor{ 255, 255, 255, 255 };
 }
