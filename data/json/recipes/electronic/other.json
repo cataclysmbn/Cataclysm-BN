@@ -962,6 +962,7 @@
     "skills_required": [ "electronics", 6 ],
     "reversible": true,
     "difficulty": 10,
+    "contained": true,
     "time": "6 h",
     "book_learn": [ [ "sa_cryptology_key", 10 ] ],
     "using": [ [ "coding_standard", 120 ], [ "utility_software_standard", -1 ], [ "math_software_standard", -1 ] ],

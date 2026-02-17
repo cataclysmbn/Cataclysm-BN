@@ -1,16 +1,22 @@
+#include "calendar.h"
 #include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "enums.h"
 #include "game.h"
+#include "artifact_enum_traits.h"
+#include "enum_conversions.h"
 #include "distribution_grid.h"
 #include "field.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "npc.h"
+#include "overmap.h"
 #include "trap.h"
 #include "detached_ptr.h"
+#include "type_id.h"
 
 namespace sol
 {
@@ -132,6 +138,20 @@ void cata::detail::reg_map( sol::state &lua )
             return m.add_item_or_charges( p, std::move( new_item ) ).get();
         } );
 
+        DOC( "Spawns a random artifact at a position on the map." );
+        luna::set_fx( ut, "spawn_artifact_at", []( map & m, const tripoint & p ) -> void {
+            m.spawn_artifact( p );
+        } );
+
+        DOC( "Spawns a natural artifact at a position on the map. Omit `property` to choose one at random." );
+        luna::set_fx( ut, "spawn_natural_artifact_at", []( map & m, const tripoint & p,
+        sol::optional<std::string> property ) -> void {
+            const auto prop = property && !property->empty()
+            ? io::string_to_enum<artifact_natural_property>( *property )
+            : ARTPROP_NULL;
+            m.spawn_natural_artifact( p, prop );
+        } );
+
         DOC( "Creates a new corpse at a position on the map. You can skip `Opt` ones by omitting them or passing `nil`. `MtypeId` specifies which monster's body it is, `TimePoint` indicates when it died, `string` gives it a custom name, and `int` determines the revival time if the monster has the `REVIVES` flag." );
         luna::set_fx( ut, "create_corpse_at", []( map & m, const tripoint & p,
                       sol::optional<mtype_id> mtype,
@@ -231,9 +251,18 @@ void cata::detail::reg_map( sol::state &lua )
 
         luna::set_fx( ut, "is_outside", sol::resolve<bool( const tripoint & ) const>( &map::is_outside ) );
         // Actually sheltered or in sunlight doesn't need map, but it's convenient to have it here
-        luna::set_fx( ut, "is_sheltered", []( map & m, tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
+        luna::set_fx( ut, "is_sheltered", []( map &, tripoint & pos ) -> bool { return g->is_sheltered( pos ); } );
 
-        luna::set_fx( ut, "is_in_sunlight", []( map & m, tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
+        luna::set_fx( ut, "is_in_sunlight", []( map &, tripoint & pos ) -> bool { return g->is_in_sunlight( pos ); } );
+
+        // Mapgen stuffs
+
+        luna::set_fx( ut, "is_ot_match", []( std::string ref, oter_id & id, ot_match_type match ) -> bool { return is_ot_match( ref, id, match ); } );
+        luna::set_fx( ut, "draw_fill_background", []( map & m, std::string ref ) { m.draw_fill_background( ter_id( ref ) ); } );
+        luna::set_fx( ut, "place_spawns", []( map & m, std::string id, int chance, point topleft,
+        point bottomright, float density, bool single ) { m.place_spawns( mongroup_id( id ), chance, topleft, bottomright, density, single ); } );
+        luna::set_fx( ut, "place_items", []( map & m, std::string id, int chance, point topleft,
+        point bottomright, bool onflat ) { m.place_items( item_group_id( id ), chance, topleft, bottomright, onflat, calendar::start_of_cataclysm ); } );
     }
 
     // Register 'tinymap' class to be used in Lua

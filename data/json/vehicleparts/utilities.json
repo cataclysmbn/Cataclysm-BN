@@ -188,7 +188,7 @@
     "damage_reduction": { "all": 30 },
     "description": "Combining a fixed-up dissector, workbench and advanced electronics, this is a marvel capable of butchering, dissecting and cutting like nothing else!",
     "durability": 80,
-    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "TRANSPARENT", "FLAT_SURF" ],
+    "flags": [ "CARGO", "OBSTACLE", "BUTCHER_EQ", "CRAFTER", "TRANSPARENT", "FLAT_SURF" ],
     "integrated_tools": [ "fake_adv_butchery" ],
     "item": "adv_butchery",
     "location": "center",
@@ -362,7 +362,7 @@
     "broken_color": "dark_gray",
     "broken_symbol": "x",
     "size": "10 L",
-    "epower": -50,
+    "epower": -5,
     "flags": [ "COVERED", "ENABLED_DRAINS_EPOWER", "AUTOLOADER" ],
     "requirements": {
       "install": { "skills": [ [ "mechanics", 5 ], [ "electronics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },

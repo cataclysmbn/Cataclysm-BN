@@ -569,7 +569,8 @@
     "time": "10 m",
     "autolearn": [ [ "fabrication", 6 ], [ "tailor", 4 ] ],
     "book_learn": [ [ "textbook_armwest", 3 ], [ "textbook_fabrication", 3 ], [ "recipe_melee", 3 ] ],
-    "using": [ [ "chainmail_standard", 2 ] ]
+    "using": [ [ "chainmail_standard", 2 ], [ "sewing_standard", 10 ] ],
+    "components": [ [ [ "leather", 10 ] ] ]
   },
   {
     "result": "heels",

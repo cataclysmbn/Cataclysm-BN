@@ -541,6 +541,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `BLOCK_WIND` This terrain will block the effects of wind.
 - `BURROWABLE` Burrowing monsters can travel under this terrain, while most others can't (e.g.
   graboid will traverse under the chain link fence, while ordinary zombie will be stopped by it).
+- `BUTCHER_EQ` Butcher's equipment - required for full butchery of corpses.
 - `CAN_SIT` Furniture the player can sit on. Player sitting near furniture with the "FLAT_SURF" tag
   will get mood bonus for eating.
 - `CHIP` Used in construction menu to determine if wall can have paint chipped off.
@@ -1093,7 +1094,8 @@ Multiple death functions can be used. Not all combinations make sense.
 - `MF_CARD_OVERRIDE` Not a mech, but can be converted to friendly using an ID card in the same way
   that mechs can.
 - `CONSOLE_DESPAWN` Despawns when a nearby console is properly hacked.
-- `IMMOBILE` Doesn't move (e.g. turrets)
+- `IMMOBILE` Doesn't move & doesn't use non-special attacks (e.g. turrets)
+- `STATIONARY` Stationary, but will fight back (e.g. training dummies )
 - `ID_CARD_DESPAWN` Despawns when a science ID card is used on a nearby console
 - `INTERIOR_AMMO` Monster contains ammo inside itself, no need to load on launch. Prevents ammo from
   being dropped on disable.
@@ -1584,6 +1586,7 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `SPAWN_FRIENDLY` Applied to eggs laid by pets and to pet bots reverted to items. Any monster that
   hatches from said egg will also spawn friendly, and deployable bots flagged with this will skip
   checking for player skills since it's already been configured correctly once already.
+- `SPAWN_HOSTILE` `place_monster` items with this flag will always deploy a monster that's always hostile, such as for a target dummy; Inverse of SPAWN_FRIENDLY
 - `USE_UPS` The tool has the UPS mod and is charged from an UPS.
 - `WARM` A hidden flag used to track an item's journey to/from hot, buffers between HOT and cold.
 - `WET` Item is wet and will slowly dry off (e.g. towel).
@@ -1696,6 +1699,10 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `NEEDS_WHEEL_MOUNT_MEDIUM` Can only be installed on a part with `WHEEL_MOUNT_MEDIUM` flag.
 - `NEEDS_WINDOW` Can only be installed on a part with `WINDOW` flag.
 - `NO_JACK`
+- `NOCOLLIDE`
+- `NOCOLLIDEABOVE` Feature that simply doesn't collide when going up a z-level, or something goes down onto it, requires NOCOLLIDE.
+- `NOCOLLIDEBELOW` Feature that simply doesn't collide when going down a z-level, or something goes up onto it, requires NOCOLLIDE.
+- `NOSMASH`
 - `NOINSTALL` Cannot be installed.
 - `NOFIELDS` Prevents fields ( smoke radiation etc ) from affecting anything on the same tile
 - `NOREMOVE_SECURITY` Cannot be uninstalled if the vehicle has a working security system.

@@ -1,5 +1,7 @@
-#include "catalua_bindings.h"
+#include <ctime>
+#include <chrono>
 
+#include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
 #include "catalua.h"
 #include "catalua_log.h"
@@ -25,6 +27,7 @@
 #include "monfaction.h"
 #include "monster.h"
 #include "mtype.h"
+#include "name.h"
 #include "npc.h"
 #include "player.h"
 #include "rng.h"
@@ -337,6 +340,47 @@ void cata::detail::reg_debug_api( sol::state &lua )
     luna::finalize_lib( lib );
 }
 
+static tm *local_time_impl()
+{
+    const time_t timestamp = time( nullptr );
+    return localtime( &timestamp );
+}
+
+// This is from weather.cpp, but requires calandar.h.
+// I don't want to include that here since that's fairly awkward.
+static const std::array<std::string, 7> weekday_names = { {
+        translate_marker( "Sunday" ), translate_marker( "Monday" ),
+        translate_marker( "Tuesday" ), translate_marker( "Wednesday" ),
+        translate_marker( "Thursday" ), translate_marker( "Friday" ),
+        translate_marker( "Saturday" )
+    }
+};
+
+void cata::detail::reg_date_time_api( sol::state &lua )
+{
+    DOC( "System date and time API." );
+    luna::userlib lib = luna::begin_lib( lua, "date_time" ) ;
+
+    luna::set_fx( lib, "year", []() { return local_time_impl()->tm_year + 1900; } );
+    // It makes sense to start month at 1, not 0
+    luna::set_fx( lib, "month", []() { return local_time_impl()->tm_mon + 1; } );
+    DOC( "Days since Saturday." );
+    luna::set_fx( lib, "weekday", []() { return local_time_impl()->tm_wday; } );
+    luna::set_fx( lib, "weekday_str", []() { return weekday_names[local_time_impl()->tm_wday]; } );
+    luna::set_fx( lib, "day", []() { return local_time_impl()->tm_mday; } );
+    // Hour is different, since digital clocks wrap around at 24
+    DOC( "0 -> 23" );
+    luna::set_fx( lib, "hour", []() { return local_time_impl()->tm_hour; } );
+    luna::set_fx( lib, "minute", []() { return local_time_impl()->tm_min; } );
+    luna::set_fx( lib, "second", []() { return local_time_impl()->tm_sec; } );
+    luna::set_fx( lib, "millisecond", []() -> int {
+        auto now = std::chrono::system_clock::now().time_since_epoch();
+        return std::chrono::duration_cast<std::chrono::milliseconds>( now ).count() % 1000;
+    } );
+
+    luna::finalize_lib( lib );
+}
+
 void cata::detail::override_default_print( sol::state &lua )
 {
     lua.globals()["print"] = &lua_log_info_impl;
@@ -438,6 +482,54 @@ void cata::detail::reg_enums( sol::state &lua )
     reg_enum<moon_phase>( lua );
 }
 
+static const auto lowercase = []( std::string t )
+{
+    if( !t.empty() ) {
+        t.front() = std::tolower( t.front() );
+    }
+    return t;
+};
+
+namespace Name
+{
+std::string string_search( sol::variadic_args va )
+{
+    nameFlags flags = static_cast<nameFlags>( 0 );
+    // Only 9 flags exist, so cap
+    for( int i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
+        if( !va[i].is<std::string>() ) { continue; }
+        auto in = lowercase( va.get<std::string>( i ) );
+        flags = flags | usage_flag( in ) | gender_flag( in );
+    }
+    return get( flags );
+}
+}
+void cata::detail::reg_names( sol::state &lua )
+{
+    luna::userlib lib = luna::begin_lib( lua, "ch_names" );
+    DOC( "Generates a random full name with an optional boolean for gender." );
+    DOC( "The loaded name is one of usage with optional gender." );
+    DOC( "The combinations used in names files are as follows:" );
+    DOC( "" );
+    DOC( "Backer | (Female|Male|Unisex)" );
+    DOC( "Given  | (Female|Male)        // unisex names are duplicated in each group" );
+    DOC( "Family | Unisex" );
+    DOC( "Nick" );
+    DOC( "City" );
+    DOC( "World" );
+    luna::set_fx( lib, "generate", []( const sol::optional<bool> male ) -> std::string {
+        if( male.has_value() ) { return Name::generate( male.value() ); }
+        return Name::generate( one_in( 2 ) );
+    } );
+    DOC( "Generates a single name using any combination of search flags." );
+    luna::set_fx( lib, "pick", []( sol::variadic_args va ) -> std::string {
+        if( va.size() < 1 || !va[0].is<std::string>() ) { return std::string(); };
+        return Name::string_search( va );
+    } );
+
+    luna::finalize_lib( lib );
+}
+
 void cata::detail::reg_hooks_examples( sol::state &lua )
 {
     DOC( "Documentation for hooks" );
@@ -479,6 +571,41 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_weather_updated", []( const sol::table & ) {} );
 
+    DOC( "Called when the player tries to interact with an NPC.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC being interacted with  " );
+    DOC( "Return false to prevent the npc interaction menu from appearing.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_try_npc_interaction", []( const sol::table & ) {} );
+
+    DOC( "Called when the player interacts with an NPC.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC being interacted with  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_npc_interaction", []( const sol::table & ) {} );
+
+    DOC( "Called just before the dialogue window opens and the first topic is chosen.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC speaking  " );
+    DOC( "* `next_topic` (string): The topic that will be shown first  " );
+    DOC( "Return a new talk_topic id to add it as the next topic.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_dialogue_start", []( const sol::table & ) {} );
+
+    DOC( "Called when a dialogue option is selected.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC speaking  " );
+    DOC( "* `next_topic` (string): The topic that was selected  " );
+    DOC( "Return a new talk_topic id to add it as the next topic.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_dialogue_option", []( const sol::table & ) {} );
+
+    DOC( "Called when the dialogue window closes.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC speaking  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_dialogue_end", []( const sol::table & ) {} );
+
     DOC( "Called when a character or monster successfully dodges.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `char` (Character)  " );
@@ -515,13 +642,55 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_creature_melee_attacked", []( const sol::table & ) {} );
 
-    DOC( "Called when a character attempts to move.  " );
+    DOC( "Called when the player attempts to move.  " );
+    DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `player` (Player)  " );
+    DOC( "* `from` (Tripoint)  " );
+    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `movement_mode` (CharacterMoveMode)  " );
+    DOC( "* `via_ramp` (bool)  " );
+    DOC( "* `mounted` (bool)  " );
+    DOC( "* `mount` (Creature, if mounted)  " );
+    DOC( "Return false to block the move." );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_player_try_move", []( const sol::table & ) {} );
+
+    DOC( "Called when an NPC attempts to move.  " );
+    DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (Npc)  " );
+    DOC( "* `from` (Tripoint)  " );
+    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `movement_mode` (CharacterMoveMode)  " );
+    DOC( "* `via_ramp` (bool)  " );
+    DOC( "* `mounted` (bool)  " );
+    DOC( "* `mount` (Creature, if mounted)  " );
+    DOC( "Return false to block the move." );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_npc_try_move", []( const sol::table & ) {} );
+
+    DOC( "Called when a monster attempts to move.  " );
+    DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster)  " );
+    DOC( "* `from` (Tripoint)  " );
+    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `force` (bool): If the monster move call was forced  " );
+    DOC( "Return false to block the move." );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_monster_try_move", []( const sol::table & ) {} );
+
+    DOC( "Called after on_player_try_move or on_npc_try_move regardless of whether the specific hook vetoed.  " );
+    DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `char` (Character)  " );
     DOC( "* `from` (Tripoint)  " );
     DOC( "* `to` (Tripoint)  " );
     DOC( "* `movement_mode` (CharacterMoveMode)  " );
     DOC( "* `via_ramp` (bool)  " );
+    DOC( "* `mounted` (bool)  " );
+    DOC( "* `mount` (Creature, if mounted)  " );
     DOC( "Return false to block the move." );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_character_try_move", []( const sol::table & ) {} );
@@ -606,6 +775,50 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `killer` (Creature)  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_mon_death", []( const sol::table & ) {} );
+
+    DOC( "Called when any creature is spawned for the first time.  " );
+    DOC( "This is the base hook; `on_monster_spawn` and `on_npc_spawn` also trigger this.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `creature` (Creature)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_creature_spawn", []( const sol::table & ) {} );
+
+    DOC( "Called when a monster is spawned for the first time.  " );
+    DOC( "Also triggers `on_creature_spawn`.  " );
+    DOC( "Note: monsters spawned via mapgen submap spawn points will fire this hook,  " );
+    DOC( "but monsters materialized from overmap monster groups may not.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_monster_spawn", []( const sol::table & ) {} );
+
+    DOC( "Called when an NPC is spawned for the first time.  " );
+    DOC( "Also triggers `on_creature_spawn`.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (Npc)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_npc_spawn", []( const sol::table & ) {} );
+
+    DOC( "Called when any creature is loaded onto the active map.  " );
+    DOC( "This is the base hook; `on_monster_loaded` and `on_npc_loaded` also trigger this.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `creature` (Creature)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_creature_loaded", []( const sol::table & ) {} );
+
+    DOC( "Called when a monster is loaded onto the active map.  " );
+    DOC( "Also triggers `on_creature_loaded`.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_monster_loaded", []( const sol::table & ) {} );
+
+    DOC( "Called when an NPC is loaded onto the active map.  " );
+    DOC( "Also triggers `on_creature_loaded`.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (Npc)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_npc_loaded", []( const sol::table & ) {} );
 
     DOC( "Called every in-game period" );
     luna::set_fx( lib, "on_every_x", []( const sol::table & ) {} );
@@ -746,6 +959,7 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_debug_api( lua );
     reg_game_api( lua );
     reg_locale_api( lua );
+    reg_date_time_api( lua );
     reg_units( lua );
     reg_skill_level_map( lua );
     reg_damage_instance( lua );
@@ -758,8 +972,11 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_colors( lua );
     reg_enums( lua );
     reg_game_ids( lua );
+    mod_bionic_data( lua );
     mod_mutation_branch( lua );
+    reg_bionics( lua );
     reg_magic( lua );
+    reg_names( lua );
     reg_mission( lua );
     reg_mission_type( lua );
     reg_recipe( lua );
@@ -774,4 +991,5 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_testing_library( lua );
     reg_requirement( lua );
     reg_inventory( lua );
+    reg_mapgendata( lua );
 }
