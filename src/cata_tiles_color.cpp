@@ -24,14 +24,14 @@ auto cata_tiles::get_overmap_color(
 }
 
 auto cata_tiles::get_terrain_color(
-    const ter_t &/*ter*/, const map&, const tripoint& ) -> color_tint_pair
+    const ter_t &/*ter*/, const map &, const tripoint & ) -> color_tint_pair
 {
     // TODO: Add tint handling when terrain vars are implemented
     return { std::nullopt, std::nullopt };
 }
 
 auto cata_tiles::get_furniture_color(
-    const furn_t &/*furn*/, const map&, const tripoint& ) -> color_tint_pair
+    const furn_t &/*furn*/, const map &, const tripoint & ) -> color_tint_pair
 {
     // TODO: Add tint handling when furniture vars are implemented
     return { std::nullopt, std::nullopt };
@@ -64,7 +64,7 @@ auto cata_tiles::get_item_color(
 auto cata_tiles::get_item_color(
     const item &i ) -> color_tint_pair
 {
-    if ( i.has_var( "tint_bg" ) || i.has_var( "tint_fg" ) ) {
+    if( i.has_var( "tint_bg" ) || i.has_var( "tint_fg" ) ) {
         auto bg_col = SDL_Color_from_string( i.get_var( "tint_bg" ) );
         auto fg_col = SDL_Color_from_string( i.get_var( "tint_fg" ) );
 
@@ -76,50 +76,50 @@ auto cata_tiles::get_item_color(
         float contrast = i.has_var( "contrast" ) ? stof( i.get_var( "contrast" ) ) : 1.0f;
         float brightness = i.has_var( "brightness" ) ? stof( i.get_var( "brightness" ) ) : 1.0f;
 
-        if ( i.has_var( "tint_bg" ) ) {
+        if( i.has_var( "tint_bg" ) ) {
             bg_tint.color = bg_col;
             if( i.has_var( "blend_mode" ) ) {
                 bg_tint.blend_mode = blend_mode;
-            } else if ( i.has_var( "bg_blend_mode" ) ) {
+            } else if( i.has_var( "bg_blend_mode" ) ) {
                 bg_tint.blend_mode = string_to_tint_blend_mode( i.get_var( "bg_blend_mode" ) );
             }
             if( i.has_var( "saturation" ) ) {
                 bg_tint.saturation = saturation;
-            } else if ( i.has_var( "bg_saturation" ) ) {
+            } else if( i.has_var( "bg_saturation" ) ) {
                 bg_tint.saturation = stof( i.get_var( "bg_saturation" ) );
             }
             if( i.has_var( "contrast" ) ) {
                 bg_tint.contrast = contrast;
-            } else if ( i.has_var( "bg_contrast" ) ) {
+            } else if( i.has_var( "bg_contrast" ) ) {
                 bg_tint.contrast = stof( i.get_var( "bg_contrast" ) );
             }
             if( i.has_var( "brightness" ) ) {
                 bg_tint.brightness = brightness;
-            } else if ( i.has_var( "bg_brightness" ) ) {
+            } else if( i.has_var( "bg_brightness" ) ) {
                 bg_tint.brightness = stof( i.get_var( "bg_brightness" ) );
             }
         } else { bg_tint = std::nullopt; }
 
-        if ( i.has_var( "tint_fg" ) ) {
+        if( i.has_var( "tint_fg" ) ) {
             fg_tint.color = fg_col;
             if( i.has_var( "blend_mode" ) ) {
                 fg_tint.blend_mode = blend_mode;
-            } else if ( i.has_var( "fg_blend_mode" ) ) {
+            } else if( i.has_var( "fg_blend_mode" ) ) {
                 fg_tint.blend_mode = string_to_tint_blend_mode( i.get_var( "fg_blend_mode" ) );
             }
             if( i.has_var( "saturation" ) ) {
                 fg_tint.saturation = saturation;
-            } else if ( i.has_var( "fg_saturation" ) ) {
+            } else if( i.has_var( "fg_saturation" ) ) {
                 fg_tint.saturation = stof( i.get_var( "fg_saturation" ) );
             }
             if( i.has_var( "contrast" ) ) {
                 fg_tint.contrast = contrast;
-            } else if ( i.has_var( "fg_contrast" ) ) {
+            } else if( i.has_var( "fg_contrast" ) ) {
                 fg_tint.contrast = stof( i.get_var( "fg_contrast" ) );
             }
             if( i.has_var( "brightness" ) ) {
                 fg_tint.brightness = brightness;
-            } else if ( i.has_var( "fg_brightness" ) ) {
+            } else if( i.has_var( "fg_brightness" ) ) {
                 fg_tint.brightness = stof( i.get_var( "fg_brightness" ) );
             }
         } else { fg_tint = std::nullopt; }
