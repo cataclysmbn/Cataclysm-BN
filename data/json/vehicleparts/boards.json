@@ -68,6 +68,7 @@
     "copy-from": "board",
     "type": "vehicle_part",
     "name": { "str": "aluminum board" },
+    "item": "aluminium_sheet",
     "proportional": { "durability": 0.75 },
     "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
     "damage_reduction": { "all": 20 }
@@ -77,6 +78,7 @@
     "copy-from": "halfboard",
     "type": "vehicle_part",
     "name": { "str": "aluminum quarterpanel" },
+    "item": "aluminium_sheet",
     "proportional": { "durability": 0.75 },
     "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
     "damage_reduction": { "all": 20 }
