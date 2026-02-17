@@ -140,16 +140,26 @@ float lighting_crafting_speed_multiplier( const Character &who, const recipe &re
 
     float skill_deficit = std::max( 0.0f, static_cast<float>( -skill_bonus ) );
 
-    // block_divisor: higher = harder to block (block when darkness + deficit/divisor > 1)
-    // penalty_scale: deficit for 50% speed at full darkness
-    auto calc_light_with_blocking = [&]( float block_divisor, float penalty_scale ) -> float {
-        bool blocked = ( darkness + skill_deficit / block_divisor ) > 1.0f;
-        if( blocked )
-        {
+    // block_divisor: at full darkness, blocks when skill_deficit >= block_divisor
+    // base_penalty: base speed reduction at full darkness when meeting requirements
+    // deficit_scale: scales how much each point of skill deficit adds to penalty
+    // deficit_scale is set so speed hits 5% floor just before blocking threshold
+    auto calc_light_with_blocking = [&]( float block_divisor, float base_penalty,
+    float deficit_scale ) -> float {
+        // Block when skill deficit exceeds threshold for current darkness
+        if( skill_deficit >= darkness * block_divisor ) {
             return 0.0f;
         }
-        // When not blocked, linear penalty with 5% minimum (20x max slowdown)
-        return std::max( 0.05f, 1.0f - darkness *skill_deficit / penalty_scale );
+        // Base darkness penalty + skill deficit penalty
+        float deficit_penalty = ( deficit_scale > 0.0f ) ? ( skill_deficit / deficit_scale ) : 0.0f;
+        float total_penalty = darkness * ( base_penalty + deficit_penalty );
+        float result = 1.0f - total_penalty;
+        // Block if penalty drives result to 0 or below
+        if( result <= 0.0f ) {
+            return 0.0f;
+        }
+        // Otherwise apply 5% floor (20x max slowdown)
+        return std::max( 0.05f, result );
     };
 
     if( rec.has_flag( flag_BLIND_IMPOSSIBLE ) ) {
@@ -157,24 +167,22 @@ float lighting_crafting_speed_multiplier( const Character &who, const recipe &re
         if( darkness >= 0.5f ) {
             return 0.0f;
         }
-        // In good light, still applies harshest penalty (divisor=2, scale=2)
-        bool blocked = ( darkness + skill_deficit / 2.0f ) > 1.0f;
-        if( blocked ) {
-            return 0.0f;
-        }
-        return std::max( 0.05f, 1.0f - darkness * skill_deficit / 2.0f );
+        // In good light: 100% base penalty means mathematically blocks at full dark
+        // No explicit blocking - relies on mathematical blocking (result <= 0)
+        // deficit_scale=5 gives steep falloff with deficit
+        return calc_light_with_blocking( 1000.0f, 1.0f, 5.0f );
     } else if( rec.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ) {
-        // Very harsh: blocks easily (divisor=3), severe penalty (scale=3)
-        return calc_light_with_blocking( 3.0f, 3.0f );
+        // Very harsh: blocks at deficit >= 3*darkness, 25% base at full dark
+        return calc_light_with_blocking( 3.0f, 0.75f, 10.0f );
     } else if( rec.has_flag( flag_BLIND_HARD ) ) {
-        // Harsh: blocks at moderate conditions (divisor=6)
-        return calc_light_with_blocking( 6.0f, 6.0f );
+        // Harsh: blocks at deficit >= 6*darkness, 40% base at full dark
+        return calc_light_with_blocking( 6.0f, 0.60f, 14.0f );
     } else if( rec.has_flag( flag_BLIND_EASY ) ) {
-        // Lenient: very hard to block (divisor=20), gentle penalty
-        return calc_light_with_blocking( 20.0f, 18.0f );
+        // Lenient: blocks at deficit >= 20*darkness, 75% base at full dark
+        return calc_light_with_blocking( 20.0f, 0.25f, 27.0f );
     } else {
-        // Default (normal): blocks at extreme conditions (divisor=12)
-        return calc_light_with_blocking( 12.0f, 12.0f );
+        // Default: blocks at deficit >= 12*darkness, 60% base at full dark
+        return calc_light_with_blocking( 12.0f, 0.40f, 20.0f );
     }
 }
 
