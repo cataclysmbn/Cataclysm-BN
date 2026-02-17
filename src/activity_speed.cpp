@@ -128,7 +128,7 @@ void activity_speed::calc_light_factor( const Character &who )
             character_funcs::fine_detail_vision_mod( who ) -
             character_funcs::FINE_VISION_THRESHOLD
         ) / 7.0f;
-    light = limit_factor( 1.0f - darkness, 0.0f );
+    light = limit_factor( 1.0f - darkness, 0.05f );
 }
 
 void activity_speed::calc_light_factor( const Character &who, const activity_target &target )
@@ -147,42 +147,61 @@ void activity_speed::calc_light_factor( const Character &who, const activity_tar
             if( rec->has_flag( flag_BLIND_NO_EFFECT ) ) {
                 light = 1.0f;
                 return;
-            } else if( rec->has_flag( flag_BLIND_IMPOSSIBLE ) && darkness < -1.0f ) {
-                light = 0.0f;
+            } else if( rec->has_flag( flag_BLIND_IMPOSSIBLE ) ) {
+                // Auto-blocks at minimal light (~0.5 darkness) or worse
+                if( darkness >= 0.5f ) {
+                    light = 0.0f;
+                    return;
+                }
+                // In good light, still applies harshest penalty (divisor=2, scale=2)
+                const SkillLevelMap &char_skills_imp = who.get_all_skills();
+                int skill_bonus_imp = char_skills_imp.exceeds_recipe_requirements( *rec );
+                float skill_deficit_imp = std::max( 0.0f, static_cast<float>( -skill_bonus_imp ) );
+                bool blocked = ( darkness + skill_deficit_imp / 2.0f ) > 1.0f;
+                if( blocked ) {
+                    light = 0.0f;
+                    return;
+                }
+                light = std::max( 0.05f, 1.0f - darkness * skill_deficit_imp / 2.0f );
                 return;
             }
-
-            constexpr auto formula = []( const float & darkness, const int &skill_thresh,
-            const int &skill_bonus, const float & scalar, const float &min = 0.25f ) -> float {
-                return limit_factor( 1.0f - std::powf( darkness * scalar, 2 ) * std::max( 0, skill_thresh - skill_bonus ), min );
-            };
 
             const SkillLevelMap &char_skills = who.get_all_skills();
             int skill_bonus = char_skills.exceeds_recipe_requirements( *rec );
-            // Only becomes possible at +5 skill, and even then 8 skill required for 63% speed
-            if( rec->has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) || rec->has_flag( flag_BLIND_IMPOSSIBLE ) ) {
-                light = formula( darkness, 10, skill_bonus, 0.3f );
+            float skill_deficit = std::max( 0.0f, static_cast<float>( -skill_bonus ) );
+
+            // block_divisor: higher = harder to block (block when darkness + deficit/divisor > 1)
+            // penalty_scale: deficit for 50% speed at full darkness
+            auto calc_light_with_blocking = [&]( float block_divisor, float penalty_scale ) -> float {
+                bool blocked = ( darkness + skill_deficit / block_divisor ) > 1.0f;
+                if( blocked ) {
+                    return 0.0f;
+                }
+                // When not blocked, linear penalty with 5% minimum (20x max slowdown)
+                return std::max( 0.05f, 1.0f - darkness * skill_deficit / penalty_scale );
+            };
+
+            if( rec->has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ) {
+                // Very harsh: blocks easily (divisor=3), severe penalty (scale=3)
+                light = calc_light_with_blocking( 3.0f, 3.0f );
                 return;
-            }
-            // Impossible at 0 skill in dark, 23% speed at +2 skill in dark
-            else if( rec->has_flag( flag_BLIND_HARD ) ) {
-                light = formula( darkness, 8, skill_bonus, 0.25f );
+            } else if( rec->has_flag( flag_BLIND_HARD ) ) {
+                // Harsh: blocks at moderate conditions (divisor=6)
+                light = calc_light_with_blocking( 6.0f, 6.0f );
                 return;
-            }
-            // Even 0 skill results in 81% speed in complete darkness
-            else if( rec->has_flag( flag_BLIND_EASY ) ) {
-                light = formula( darkness, 4, skill_bonus, 0.15f );
+            } else if( rec->has_flag( flag_BLIND_EASY ) ) {
+                // Lenient: very hard to block (divisor=20), gentle penalty
+                light = calc_light_with_blocking( 20.0f, 18.0f );
                 return;
-            }
-            // 51% speed at 0 skill in dark, 23% speed at +2 skill in dark
-            else {
-                light = formula( darkness, 6, skill_bonus, 0.2f );
+            } else {
+                // Default (normal): blocks at extreme conditions (divisor=12)
+                light = calc_light_with_blocking( 12.0f, 12.0f );
                 return;
             }
         }
     }
-    // Construction or monostate: use default
-    light = limit_factor( 1.0f - darkness, 0.0f );
+    // Construction or monostate: use default with 5% min (20x max slowdown)
+    light = limit_factor( 1.0f - darkness, 0.05f );
 }
 
 void activity_speed::calc_skill_factor( const Character &who, const skill_reqs &skill_req )

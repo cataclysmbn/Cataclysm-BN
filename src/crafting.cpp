@@ -138,29 +138,42 @@ float lighting_crafting_speed_multiplier( const Character &who, const recipe &re
             character_funcs::FINE_VISION_THRESHOLD
         ) / 7.0f;
 
-    if( rec.has_flag( flag_BLIND_IMPOSSIBLE ) && darkness < -1.0f ) {
-        return 0.0f;
-    }
-    constexpr auto formula = []( const float & darkness, const int &skill_thresh,
-    const int &skill_bonus, const float & scalar, const float &min = 0.25f ) -> float {
-        return std::max( 1.0f - std::powf( darkness * scalar, 2 ) * std::max( 0, skill_thresh - skill_bonus ), min );
+    float skill_deficit = std::max( 0.0f, static_cast<float>( -skill_bonus ) );
+
+    // block_divisor: higher = harder to block (block when darkness + deficit/divisor > 1)
+    // penalty_scale: deficit for 50% speed at full darkness
+    auto calc_light_with_blocking = [&]( float block_divisor, float penalty_scale ) -> float {
+        bool blocked = ( darkness + skill_deficit / block_divisor ) > 1.0f;
+        if( blocked ) {
+            return 0.0f;
+        }
+        // When not blocked, linear penalty with 5% minimum (20x max slowdown)
+        return std::max( 0.05f, 1.0f - darkness * skill_deficit / penalty_scale );
     };
 
-    // Only becomes possible at +5 skill, and even then 8 skill required for 63% speed
-    if( rec.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) || rec.has_flag( flag_BLIND_IMPOSSIBLE ) ) {
-        return formula( darkness, 10, skill_bonus, 0.3f );
-    }
-    // Impossible at 0 skill in dark, 23% speed at +2 skill in dark
-    else if( rec.has_flag( flag_BLIND_HARD ) ) {
-        return formula( darkness, 8, skill_bonus, 0.25f );
-    }
-    // Even 0 skill results in 81% speed in complete darkness
-    else if( rec.has_flag( flag_BLIND_EASY ) ) {
-        return formula( darkness, 4, skill_bonus, 0.15f );
-    }
-    // 51% speed at 0 skill in dark, 23% speed at +2 skill in dark
-    else {
-        return formula( darkness, 6, skill_bonus, 0.2f );
+    if( rec.has_flag( flag_BLIND_IMPOSSIBLE ) ) {
+        // Auto-blocks at minimal light (~0.5 darkness) or worse
+        if( darkness >= 0.5f ) {
+            return 0.0f;
+        }
+        // In good light, still applies harshest penalty (divisor=2, scale=2)
+        bool blocked = ( darkness + skill_deficit / 2.0f ) > 1.0f;
+        if( blocked ) {
+            return 0.0f;
+        }
+        return std::max( 0.05f, 1.0f - darkness * skill_deficit / 2.0f );
+    } else if( rec.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ) {
+        // Very harsh: blocks easily (divisor=3), severe penalty (scale=3)
+        return calc_light_with_blocking( 3.0f, 3.0f );
+    } else if( rec.has_flag( flag_BLIND_HARD ) ) {
+        // Harsh: blocks at moderate conditions (divisor=6)
+        return calc_light_with_blocking( 6.0f, 6.0f );
+    } else if( rec.has_flag( flag_BLIND_EASY ) ) {
+        // Lenient: very hard to block (divisor=20), gentle penalty
+        return calc_light_with_blocking( 20.0f, 18.0f );
+    } else {
+        // Default (normal): blocks at extreme conditions (divisor=12)
+        return calc_light_with_blocking( 12.0f, 12.0f );
     }
 }
 
