@@ -160,7 +160,8 @@ void activity_speed::calc_light_factor( const Character &who, const activity_tar
             auto calc_light_with_blocking = [&]( float block_divisor, float base_penalty,
             float deficit_scale ) -> float {
                 // Block when skill deficit exceeds threshold for current darkness
-                if( skill_deficit >= darkness * block_divisor ) {
+                if( skill_deficit >= darkness * block_divisor )
+                {
                     return 0.0f;
                 }
                 // Base darkness penalty + skill deficit penalty
@@ -168,7 +169,8 @@ void activity_speed::calc_light_factor( const Character &who, const activity_tar
                 float total_penalty = darkness * ( base_penalty + deficit_penalty );
                 float result = 1.0f - total_penalty;
                 // Block if penalty drives result to 0 or below
-                if( result <= 0.0f ) {
+                if( result <= 0.0f )
+                {
                     return 0.0f;
                 }
                 // Otherwise apply 5% floor (20x max slowdown)
