@@ -1930,6 +1930,14 @@ bool mattack::fungus_bristle( monster *z )
     if( g->u.has_trait( trait_THRESH_MARLOSS ) || g->u.has_trait( trait_THRESH_MYCUS ) ) {
         z->friendly = 1;
     }
+    if( ( g->u.has_trait( trait_MARLOSS ) ) && ( g->u.has_trait( trait_MARLOSS_BLUE ) ) &&
+        !g->u.crossed_threshold() && rl_dist( z->pos(), g->u.pos() ) < 6 ) {
+        add_msg( m_info, _( "The %s recedes, as if anticipating your arrival…" ), z->name() );
+        z->no_corpse_quiet = true;
+        z->no_extra_death_drops = true;
+        z->die( nullptr );
+        return true;
+    }
     Creature *target = z->attack_target();
     if( target == nullptr ||
         !is_adjacent( z, target, true ) ||

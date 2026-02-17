@@ -371,7 +371,7 @@ Rufe das Tastenbelegungsmenü auf (drücke `Escape` dann `1`), scrolle fast bis 
 └─────────────────────────────────────────────────────┘
 ```
 
-Mit diesen Befehlen solltest du in der Lage sein, die richtigen Bedingungen zu schaffen, um deine Änderungen zu testen. Das [BN Wiki](https://cbn-guide.pages.dev/) kann nützliche Informationen zum Debug-Menü enthalten.
+Mit diesen Befehlen solltest du in der Lage sein, die richtigen Bedingungen zu schaffen, um deine Änderungen zu testen. Das [BN Wiki](https://cataclysmbn-guide.com/) kann nützliche Informationen zum Debug-Menü enthalten.
 
 ## Häufig gestellte Fragen
 

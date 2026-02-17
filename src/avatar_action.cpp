@@ -82,6 +82,7 @@ static const itype_id itype_underbrush( "underbrush" );
 static const skill_id skill_swimming( "swimming" );
 
 static const trait_id trait_BRAWLER( "BRAWLER" );
+static const trait_id trait_GUNSHY( "GUNSHY" );
 static const trait_id trait_BURROW( "BURROW" );
 static const trait_id trait_GRAZER( "GRAZER" );
 static const trait_id trait_RUMINANT( "RUMINANT" );
@@ -90,6 +91,8 @@ static const trait_id trait_SHELL2( "SHELL2" );
 static const std::string flag_RAMP_END( "RAMP_END" );
 static const std::string flag_SWIMMABLE( "SWIMMABLE" );
 static const std::string flag_LADDER( "LADDER" );
+
+static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
 
 #define dbg(x) DebugLog((x), DC::SDL)
 
@@ -579,7 +582,8 @@ void avatar_action::swim( map &m, avatar &you, const tripoint &p )
     if( movecost >= 500 ) {
         if( !you.is_underwater() &&
             !( you.shoe_type_count( itype_swim_fins ) == 2 ||
-               ( you.shoe_type_count( itype_swim_fins ) == 1 && one_in( 2 ) ) ) ) {
+               ( you.shoe_type_count( itype_swim_fins ) == 1 && one_in( 2 ) ) ||
+               you.has_trait_flag( trait_flag_MUTATION_SWIM ) ) ) {
             add_msg( m_bad, _( "You sink like a rock!" ) );
             you.set_underwater( true );
             ///\EFFECT_STR increases breath-holding capacity while sinking
@@ -689,6 +693,9 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
     if( you.has_trait( trait_BRAWLER ) ) {
         add_msg( m_good, _( "You refuse to use this ranged weapon." ) );
         return false;
+    } else if( you.has_trait( trait_GUNSHY ) && weapon.is_firearm() ) {
+        add_msg( m_good, _( "You refuse to use this gun." ) );
+        return false;
     }
 
     if( you.has_effect( effect_relax_gas ) ) {
@@ -718,10 +725,13 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
     return false;
 }
 
-bool avatar_action::will_fire_turret( avatar &you )
+bool avatar_action::will_fire_turret( avatar &you, const turret_data &turret )
 {
     if( you.has_trait( trait_BRAWLER ) ) {
         add_msg( m_bad, _( "You refuse to use this ranged weapon" ) );
+        return false;
+    } else if( you.has_trait( trait_GUNSHY ) && turret.base().is_firearm() ) {
+        add_msg( m_bad, _( "You refuse to use this gun turret" ) );
         return false;
     }
 
@@ -745,7 +755,7 @@ bool avatar_action::can_fire_turret( avatar &you, const map &m, const turret_dat
         return false;
     }
 
-    if( !will_fire_turret( you ) ) {
+    if( !will_fire_turret( you, turret ) ) {
         return false;
     }
 
@@ -1205,7 +1215,7 @@ void avatar_action::reload( item &loc, bool prompt, bool empty )
                 return;
             }
         }
-        if( it->is_watertight_container() && it->is_container_full() ) {
+        if( it->is_container() && it->is_container_full() ) {
             add_msg( m_info, _( "The %s is already full!" ), it->tname() );
             return;
         }

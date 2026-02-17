@@ -80,6 +80,7 @@
 #include "morale.h"
 #include "morale_types.h"
 #include "mtype.h"
+#include "mutation.h"
 #include "npc.h"
 #include "npc_class.h"
 #include "options.h"
@@ -103,6 +104,7 @@
 #include "submap.h"
 #include "text_snippets.h"
 #include "tileray.h"
+#include "trait_group.h"
 #include "units.h"
 #include "uistate.h"
 #include "value_ptr.h"
@@ -112,8 +114,6 @@
 #include "vitamin.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
-
-struct mutation_branch;
 
 static const efftype_id effect_riding( "riding" );
 
@@ -573,27 +573,120 @@ void Character::load( const JsonObject &data )
     data.read( "magic", magic );
     JsonArray parray;
 
+    // Migration for old combined hair mutations (e.g., hair_black_crewcut -> hair_black + hair_crewcut)
+    std::vector<trait_id> valid_hair_colors = get_mutations_in_type( "hair_color" );
+    std::vector<trait_id> valid_hair_styles = get_mutations_in_type( "hair_style" );
+
     data.read( "traits", my_traits );
     for( auto it = my_traits.begin(); it != my_traits.end(); ) {
         const auto &tid = *it;
         if( tid.is_valid() ) {
             ++it;
         } else {
-            debugmsg( "character %s has invalid trait %s, it will be ignored", name, tid.c_str() );
+            bool silence = false;
+            auto pid = it->str();
+            if( pid.starts_with( "hair_" ) ) {
+                int cnt = 0;
+                for( auto c : pid.substr( 5 ) ) {
+                    if( c == '_' ) { cnt++; }
+                }
+                silence = cnt >= 1;
+            }
+            if( !silence ) {
+                debugmsg( "character %s has invalid trait %s, it will be ignored", name, pid );
+            }
             my_traits.erase( it++ );
         }
     }
 
     data.read( "mutations", my_mutations );
+    std::vector<trait_id> migrations_to_add;
+    bool has_hair_bald = false;
+    bool has_hair_color = false;
     for( auto it = my_mutations.begin(); it != my_mutations.end(); ) {
-        const trait_id &mid = it->first;
+        const auto &mid = it->first;
+        auto pid = mid.str();
         if( mid.is_valid() ) {
-            on_mutation_gain( mid );
-            cached_mutations.push_back( &mid.obj() );
+            if( mid.str() == "HAIR_BALD" ) {
+                has_hair_bald = true;
+            }
+            for( const trait_id &color_trait : valid_hair_colors ) {
+                if( mid == color_trait ) {
+                    has_hair_color = true;
+                    break;
+                }
+            }
             ++it;
         } else {
-            debugmsg( "character %s has invalid mutation %s, it will be ignored", name, mid.c_str() );
+            std::string mid_str = mid.str();
+            bool migrated = false;
+
+            if( mid_str.starts_with( "hair_" ) ) {
+                for( const trait_id &color_trait : valid_hair_colors ) {
+                    std::string color_str = color_trait.str();
+                    if( !color_str.starts_with( "hair_" ) ) {
+                        color_str = "hair_" + color_str;
+                    }
+                    std::string prefix = color_str + "_";
+                    if( mid_str.starts_with( prefix ) ) {
+                        std::string style_suffix = mid_str.substr( prefix.length() );
+                        for( const trait_id &style_trait : valid_hair_styles ) {
+                            std::string style_str = style_trait.str();
+                            if( style_str.starts_with( "hair_" ) ) {
+                                style_str = style_str.substr( 5 );
+                            }
+                            if( style_suffix == style_str ) {
+                                migrations_to_add.push_back( color_trait );
+                                migrations_to_add.push_back( style_trait );
+                                has_hair_color = true;
+                                migrated = true;
+                                break;
+                            }
+                        }
+                        if( migrated ) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if( !migrated ) {
+                debugmsg( "character %s has invalid mutation %s, it will be ignored", name, mid.c_str() );
+            }
             it = my_mutations.erase( it );
+        }
+    }
+
+    // Iterate twice to avoid issues with subsequent calls on invalid mutations
+    for( auto it = my_mutations.begin(); it != my_mutations.end(); ) {
+        const auto &mid = it->first;
+        on_mutation_gain( mid );
+        cached_mutations.push_back( &mid.obj() );
+        it++;
+    }
+
+    for( const trait_id &tid : migrations_to_add ) {
+        if( !has_trait( tid ) ) {
+            if( !has_base_trait( tid ) ) {
+                toggle_trait( tid );
+            } else {
+                set_mutation( tid );
+            }
+        }
+    }
+    // Handle old HAIR_BALD saves: if character has HAIR_BALD but no hair color,
+    // add a random hair color (in the new system, even bald characters have a hair color)
+    if( has_hair_bald && !has_hair_color ) {
+        trait_group::Trait_list random_colors = trait_group::traits_from(
+                trait_group::Trait_group_tag( "Hair_Color_Any" ) );
+        if( !random_colors.empty() ) {
+            const trait_id &color_tid = random_colors.front();
+            if( !has_trait( color_tid ) ) {
+                set_mutation( color_tid );
+            }
+            if( !has_base_trait( color_tid ) ) {
+                toggle_trait( color_tid );
+            }
         }
     }
     recalculate_size();
@@ -4039,6 +4132,14 @@ void submap::store( JsonOut &jsout ) const
         pr.second.serialize( jsout );
     }
     jsout.end_array();
+
+    jsout.member( "transformer_last_run" );
+    jsout.start_array();
+    for( const auto &pr : transformer_last_run ) {
+        jsout.write( pr.first );
+        jsout.write( pr.second );
+    }
+    jsout.end_array();
 }
 
 void submap::load( JsonIn &jsin, const std::string &member_name, int version,
@@ -4281,6 +4382,15 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             point_sm_ms p;
             jsin.read( p );
             active_furniture[p].deserialize( jsin );
+        }
+    } else if( member_name == "transformer_last_run" ) {
+        jsin.start_array();
+        while( !jsin.end_array() ) {
+            point_sm_ms p;
+            time_point t;
+            jsin.read( p );
+            jsin.read( t );
+            transformer_last_run[p] = t;
         }
     } else {
         jsin.skip_value();

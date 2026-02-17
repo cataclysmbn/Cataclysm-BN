@@ -70,7 +70,7 @@ struct sdl_render_state {
         ( Flags & sdl_render_state_flags::blend_mode ) == sdl_render_state_flags::blend_mode;
 
     using tRT = std::conditional_t<has_render_target, std::tuple<SDL_Texture *>, std::tuple<>>;
-    using tCR = std::conditional_t<has_clip_rect, std::tuple<SDL_Rect>, std::tuple<>>;
+    using tCR = std::conditional_t<has_clip_rect, std::tuple<SDL_Rect, SDL_bool>, std::tuple<>>;
     using tVP = std::conditional_t<has_viewport, std::tuple<SDL_Rect>, std::tuple<>>;
     using tDC = std::conditional_t<has_draw_color, std::tuple<SDL_Color>, std::tuple<>>;
     using tBM = std::conditional_t<has_blend_mode, std::tuple<SDL_BlendMode>, std::tuple<>>;
@@ -83,10 +83,14 @@ struct sdl_render_state {
         has_clip_rect
         ? ( render_target_idx + 1 )
         : render_target_idx;
-    constexpr static ptrdiff_t viewport_idx =
-        has_viewport
+    constexpr static ptrdiff_t clip_enabled_idx =
+        has_clip_rect
         ? ( clip_rect_idx + 1 )
         : clip_rect_idx;
+    constexpr static ptrdiff_t viewport_idx =
+        has_viewport
+        ? ( clip_enabled_idx + 1 )
+        : clip_enabled_idx;
     constexpr static ptrdiff_t draw_color_idx =
         has_draw_color
         ? ( viewport_idx + 1 )
@@ -115,6 +119,7 @@ auto sdl_save_render_state( SDL_Renderer *r ) -> sdl_render_state<Flags>
     if constexpr( type::has_clip_rect ) {
         SDL_Rect &v = std::get<type::clip_rect_idx>( res );
         SDL_RenderGetClipRect( r, &v );
+        std::get<type::clip_enabled_idx>( res ) = SDL_RenderIsClipEnabled( r );
     }
     if constexpr( type::has_viewport ) {
         SDL_Rect &v = std::get<type::viewport_idx>( res );
@@ -143,8 +148,13 @@ auto sdl_restore_render_state( SDL_Renderer *r, const sdl_render_state<Flags> &s
         SDL_SetRenderTarget( r, v );
     }
     if constexpr( type::has_clip_rect ) {
-        const SDL_Rect &v = std::get<type::clip_rect_idx>( t );
-        SDL_RenderSetClipRect( r, &v );
+        const SDL_bool clip_enabled = std::get<type::clip_enabled_idx>( t );
+        if( clip_enabled ) {
+            const SDL_Rect &v = std::get<type::clip_rect_idx>( t );
+            SDL_RenderSetClipRect( r, &v );
+        } else {
+            SDL_RenderSetClipRect( r, nullptr );
+        }
     }
     if constexpr( type::has_viewport ) {
         const SDL_Rect &v = std::get<type::viewport_idx>( t );

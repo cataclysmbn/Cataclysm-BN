@@ -168,7 +168,7 @@ void vehicle::thrust( int thd, int z )
             add_msg( _( "The %s is too leaky!" ), name );
         }
         return;
-    } else if( !valid_wheel_config()  && z == 0 ) {
+    } else if( !valid_wheel_config() && z == 0 && !has_sufficient_lift( true ) ) {
         stop();
         if( pl_ctrl ) {
             add_msg( _( "The %s doesn't have enough wheels to move!" ), name );
@@ -460,6 +460,12 @@ bool vehicle::collision( std::vector<veh_collision> &colls,
         if( coll.type == veh_coll_nothing ) {
             continue;
         }
+        if( info.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            if( coll.type == veh_coll_veh_nocollide ) {
+                g->m.add_vehicle_to_cache( static_cast<vehicle *>( coll.target ) );
+            }
+            continue;
+        }
 
         colls.push_back( coll );
 
@@ -542,6 +548,24 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
     // Disable vehicle/critter collisions when bashing floor
     // TODO: More elegant code
     const bool is_veh_collision = !bash_floor && ovp && &ovp->vehicle() != this;
+    if( is_veh_collision ) {
+        vpart_info info = ovp->vehicle().part_info( ovp->part_index() );
+        if( info.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            veh_collision ret;
+            ret.type = veh_coll_veh_nocollide;
+            ret.part = part;
+            ret.target = &ovp->vehicle();
+            return ret;
+        }
+    } else {
+        const vpart_info info = part_info( part );
+        if( info.has_flag( VPFLAG_NOCOLLIDE ) ) {
+            veh_collision ret;
+            ret.type = veh_coll_nothing;
+            ret.part = part;
+            return ret;
+        }
+    }
     const bool is_body_collision = !bash_floor && critter != nullptr;
 
     veh_collision ret;
@@ -1111,6 +1135,10 @@ bool vehicle::check_heli_descend( Character &who )
     }
     map &here = get_map();
     for( const tripoint &pt : get_points( true ) ) {
+        const int idx = part_at( ( pt - global_pos3() ).xy() );
+        if( part_info( idx ).has_flag( VPFLAG_NOCOLLIDEBELOW ) ) {
+            continue;
+        }
         tripoint below( pt.xy(), pt.z - 1 );
         if( here.has_zlevels() && ( pt.z < -OVERMAP_DEPTH ||
                                     !here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, pt ) ) ) {
@@ -1118,6 +1146,12 @@ bool vehicle::check_heli_descend( Character &who )
             return false;
         }
         const optional_vpart_position ovp = here.veh_at( below );
+        if( ovp ) {
+            const vpart_info info = ovp->vehicle().part_info( ovp->part_index() );
+            if( info.has_flag( VPFLAG_NOCOLLIDEABOVE ) ) {
+                continue;
+            }
+        }
         if( here.impassable_ter_furn( below ) || here.has_flag_ter_or_furn( TFLAG_RAMP_DOWN, below ) ||
             ovp || g->critter_at( below ) ) {
             who.add_msg_if_player( m_bad,
@@ -1148,9 +1182,16 @@ bool vehicle::check_heli_ascend( Character &who )
             who.add_msg_if_player( m_bad, _( "It would be unsafe to try and ascend further." ) );
             return false;
         }
+        if( part_info( part_at( ( pt - global_pos3() ).xy() ) ).has_flag( VPFLAG_NOCOLLIDEABOVE ) ) {
+            continue;
+        }
         bool has_ceiling = !here.has_flag_ter( TFLAG_NO_FLOOR, above );
         bool has_blocking_ter_furn = here.impassable_ter_furn( above );
-        bool has_veh = here.veh_at( above ).has_value();
+        auto veh = here.veh_at( above );
+        bool has_veh = veh.has_value();
+        if( has_veh ) {
+            has_veh = !veh->vehicle().part_info( veh->part_index() ).has_flag( VPFLAG_NOCOLLIDEBELOW );
+        }
         bool has_critter = g->critter_at( above );
         if( has_ceiling || has_blocking_ter_furn || has_veh || has_critter ) {
             direction obstacle_direction = direction_from( ( pt - who.pos() ).xy() );
@@ -1700,6 +1741,9 @@ float map::vehicle_wheel_traction( const vehicle &veh,
     }
     if( veh.is_in_water() && veh.is_watercraft() && veh.can_float() ) {
         return 1.0f;
+    }
+    if( veh.is_flying_in_air() ) {
+        return ( veh.has_lift() ) ? 1.0f : -1.0f;
     }
 
     const auto &wheel_indices = veh.wheelcache;

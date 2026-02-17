@@ -68,6 +68,21 @@
         <content_attribute id="language-discrimination">intense</content_attribute>
     </content_rating>
     <releases>
+        <release version="0.10.0" date="2026-02-07">
+            <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.10.0</url>
+            <description>
+                <p>Notable Changes</p>
+                <ul>
+                    <li>Added the ability to select bionics in character creation</li>
+                    <li>Implemented framework for multi-tier mutation thresholds</li>
+                    <li>Expanded list of swords Niten Ichi Ryu can use</li>
+                    <li>Ice labs spawn naturally again</li>
+                    <li>Added a lesser version of the Brawler trait that only bans guns known as Gunshy</li>
+                    <li>Added nyctophobia (fear of the dark) trait</li>
+                    <li>Rest of the changes can be found in the github repo</li>
+                </ul>
+            </description>
+        </release>
         <release version="0.9.1" date="2025-11-14">
             <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.9.1</url>
             <description>

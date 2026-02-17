@@ -7,6 +7,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "avatar.h"
@@ -45,6 +46,64 @@ struct category_range {
     size_t end = 0;
 };
 
+auto build_page_starts( const std::vector<item_pricing> &list,
+                        const std::vector<size_t> &filtered,
+                        size_t rows_per_page ) -> std::vector<size_t>
+{
+    auto starts = std::vector<size_t> {};
+    if( rows_per_page <= 1 ) {
+        starts = std::views::iota( size_t{0}, filtered.size() )
+                 | std::ranges::to<std::vector>();
+        if( starts.empty() ) {
+            starts.push_back( 0 );
+        }
+        return starts;
+    }
+    if( filtered.empty() ) {
+        starts.push_back( 0 );
+        return starts;
+    }
+    auto index = size_t{0};
+    while( index < filtered.size() ) {
+        starts.push_back( index );
+        auto row = size_t{0};
+        auto last_category = std::optional<item_category_id> {};
+        while( index < filtered.size() ) {
+            const auto &ip = list[filtered[index]];
+            const auto category_id = ip.locs.front()->get_category().get_id();
+            if( !last_category || *last_category != category_id ) {
+                if( row + 2 > rows_per_page && row > 0 ) {
+                    break;
+                }
+                row += 1;
+            }
+            if( row + 1 > rows_per_page ) {
+                break;
+            }
+            row += 1;
+            last_category = category_id;
+            index++;
+            if( row >= rows_per_page ) {
+                break;
+            }
+        }
+    }
+    return starts;
+}
+
+auto page_index_for_offset( const std::vector<size_t> &page_starts,
+                            size_t offset ) -> size_t
+{
+    if( page_starts.empty() ) {
+        return 0;
+    }
+    const auto it = std::ranges::upper_bound( page_starts, offset );
+    if( it == page_starts.begin() ) {
+        return 0;
+    }
+    return static_cast<size_t>( std::distance( page_starts.begin(), it ) - 1 );
+}
+
 auto build_category_ranges( const std::vector<item_pricing> &list,
                             const std::vector<size_t> &filtered ) -> std::vector<category_range>
 {
@@ -69,6 +128,8 @@ auto build_category_ranges( const std::vector<item_pricing> &list,
 auto register_trade_actions( input_context &ctxt, bool include_any_input ) -> void
 {
     ctxt.register_action( "SWITCH_LISTS" );
+    ctxt.register_action( "PAGE_UP" );
+    ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "UP" );
     ctxt.register_action( "DOWN" );
     ctxt.register_action( "LEFT" );
@@ -76,8 +137,6 @@ auto register_trade_actions( input_context &ctxt, bool include_any_input ) -> vo
     ctxt.register_action( "FILTER" );
     ctxt.register_action( "RESET_FILTER" );
     ctxt.register_action( "CATEGORY_SELECTION" );
-    ctxt.register_action( "PAGE_UP" );
-    ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "EXAMINE" );
     ctxt.register_action( "AUTOBALANCE" );
     ctxt.register_action( "TOGGLE_ITEM_INFO" );
@@ -130,14 +189,14 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
     auto ctxt = input_context( "NPC_TRADE" );
     register_trade_actions( ctxt, false );
     ctxt.register_action( "SWITCH_LISTS" );
+    ctxt.register_action( "PAGE_UP" );
+    ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "UP" );
     ctxt.register_action( "DOWN" );
     ctxt.register_action( "LEFT" );
     ctxt.register_action( "RIGHT" );
     ctxt.register_action( "FILTER" );
     ctxt.register_action( "RESET_FILTER" );
-    ctxt.register_action( "PAGE_UP" );
-    ctxt.register_action( "PAGE_DOWN" );
     ctxt.register_action( "EXAMINE" );
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
@@ -368,38 +427,39 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
         const auto separator_y = 3;
         const auto header_y = 4;
         const auto header_color = c_light_gray;
-        const auto pane_free_volume = they ? state.volume_left : player_free_volume;
-        const auto pane_free_weight = they ? state.weight_left : player_free_weight;
-        const auto pane_max_volume = they ? np.volume_capacity() : g->u.volume_capacity();
-        const auto pane_max_weight = they ? np.weight_capacity() : g->u.weight_capacity();
-        const auto pane_used_volume = pane_max_volume - pane_free_volume;
-        const auto pane_used_weight = pane_max_weight - pane_free_weight;
-        const auto weight_used_str = string_format( "%.2f",
-                                     convert_weight( pane_used_weight ) );
-        const auto weight_max_str = string_format( "%.2f",
-                                    convert_weight( pane_max_weight ) );
-        const auto weight_str = string_format( _( "/%s %s" ), weight_max_str, weight_units() );
-        const auto vol_used_str = string_format( "%.2f",
-                                  convert_volume( to_milliliter( pane_used_volume ) ) );
-        const auto vol_max_str = string_format( "%.2f",
-                                                convert_volume( to_milliliter( pane_max_volume ) ) );
-        const auto vol_str = string_format( _( "/%s %s" ), vol_max_str, volume_units_abbr() );
-        const auto weight_color = pane_used_weight > pane_max_weight ? c_light_red : c_light_green;
-        const auto vol_color = pane_used_volume > pane_max_volume ? c_light_red : c_light_green;
         mvwprintz( w_whose, point( 1, stats_y ), header_color, std::string( win_w, ' ' ) );
-        const auto stats_width = utf8_width( weight_used_str ) +
-                                 utf8_width( weight_str ) + 2 +
-                                 utf8_width( vol_used_str ) +
-                                 utf8_width( vol_str );
-        auto x = std::max( win_w - stats_width, 1 );
-        mvwprintz( w_whose, point( x, stats_y ), weight_color, weight_used_str );
-        x += utf8_width( weight_used_str );
-        mvwprintz( w_whose, point( x, stats_y ), header_color, weight_str );
-        x += utf8_width( weight_str ) + 2;
-        mvwprintz( w_whose, point( x, stats_y ), vol_color, vol_used_str );
-        x += utf8_width( vol_used_str );
-        mvwprintz( w_whose, point( x, stats_y ), header_color, vol_str );
-        x += utf8_width( vol_str ) + 2;
+        if( !they || !np.is_shopkeeper() ) {
+            const auto pane_free_volume = they ? state.volume_left : player_free_volume;
+            const auto pane_free_weight = they ? state.weight_left : player_free_weight;
+            const auto pane_max_volume = they ? np.volume_capacity() : g->u.volume_capacity();
+            const auto pane_max_weight = they ? np.weight_capacity() : g->u.weight_capacity();
+            const auto pane_used_volume = pane_max_volume - pane_free_volume;
+            const auto pane_used_weight = pane_max_weight - pane_free_weight;
+            const auto weight_used_str = string_format( "%.2f",
+                                         convert_weight( pane_used_weight ) );
+            const auto weight_max_str = string_format( "%.2f",
+                                        convert_weight( pane_max_weight ) );
+            const auto weight_str = string_format( _( "/%s %s" ), weight_max_str, weight_units() );
+            const auto vol_used_str = string_format( "%.2f",
+                                      convert_volume( to_milliliter( pane_used_volume ) ) );
+            const auto vol_max_str = string_format( "%.2f",
+                                                    convert_volume( to_milliliter( pane_max_volume ) ) );
+            const auto vol_str = string_format( _( "/%s %s" ), vol_max_str, volume_units_abbr() );
+            const auto weight_color = pane_used_weight > pane_max_weight ? c_light_red : c_light_green;
+            const auto vol_color = pane_used_volume > pane_max_volume ? c_light_red : c_light_green;
+            const auto stats_width = utf8_width( weight_used_str ) +
+                                     utf8_width( weight_str ) + 2 +
+                                     utf8_width( vol_used_str ) +
+                                     utf8_width( vol_str );
+            auto x = std::max( win_w - stats_width, 1 );
+            mvwprintz( w_whose, point( x, stats_y ), weight_color, weight_used_str );
+            x += utf8_width( weight_used_str );
+            mvwprintz( w_whose, point( x, stats_y ), header_color, weight_str );
+            x += utf8_width( weight_str ) + 2;
+            mvwprintz( w_whose, point( x, stats_y ), vol_color, vol_used_str );
+            x += utf8_width( vol_used_str );
+            mvwprintz( w_whose, point( x, stats_y ), header_color, vol_str );
+        }
         mvwhline( w_whose, point( 1, separator_y ), LINE_OXOX, win_w );
         mvwprintz( w_whose, point( name_x + 3, header_y ), header_color,
                    trim_by_length( _( "Name (charges)" ), name_w ) );
@@ -443,9 +503,14 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
         mvwprintz( w_whose, point( filter_x, filter_y ), c_white, filter_suffix );
         const auto draw_filter_help = show_filter_help && ( they == help_on_theirs );
         if( draw_filter_help ) {
-            const auto help_start_y = trade_total_header_rows + 1;
-            const auto help_height = std::max( getmaxy( w_whose ) - help_start_y - 1, 0 );
+            const auto help_start_y = 1;
+            const auto help_height = std::max( getmaxy( w_whose ) - 2, 0 );
             if( help_height > 0 ) {
+                const auto clear_width = std::string( win_w, ' ' );
+                std::ranges::for_each( std::views::iota( help_start_y,
+                help_start_y + help_height ), [&]( int y ) {
+                    mvwprintz( w_whose, point( 1, y ), c_white, clear_width );
+                } );
                 draw_item_filter_rules( w_whose, help_start_y, help_height,
                                         item_filter_type::FILTER );
             }
@@ -566,12 +631,9 @@ auto trading_window::update_win( npc &np, const std::string &deal ) -> void
             row++;
         }
         const auto paging_y = getmaxy( w_whose ) - 1;
-        const auto total_pages = entries_per_page > 0 ?
-                                 std::max( ( filtered.size() + entries_per_page - 1 ) /
-                                           entries_per_page, size_t{1} ) :
-                                 size_t{1};
-        const auto raw_page = entries_per_page > 0 ? ( offset / entries_per_page ) + 1 : size_t{1};
-        const auto current_page = std::min( raw_page, total_pages );
+        const auto page_starts = build_page_starts( list, filtered, entries_per_page );
+        const auto total_pages = std::max( page_starts.size(), size_t{1} );
+        const auto current_page = page_index_for_offset( page_starts, offset ) + 1;
         const auto page_label = string_format( _( "< Page %d/%d >" ),
                                                static_cast<int>( current_page ),
                                                static_cast<int>( total_pages ) );
@@ -664,7 +726,7 @@ auto trading_window::show_item_data( size_t index, bool target_is_theirs ) -> in
     auto exit = false;
     while( !exit ) {
         ui_manager::redraw();
-        const auto action = ctxt.handle_input();
+        auto action = ctxt.handle_input();
         if( action == "UP" ) {
             result = info_popup_result::move_up;
             exit = true;
@@ -760,40 +822,37 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
     category_mode = false;
     them_category_cursor = 0;
     you_category_cursor = 0;
+    them_filtered = build_filtered_indices( state.theirs, them_filter );
+    you_filtered = build_filtered_indices( state.yours, you_filter );
+    ui_manager::redraw();
 
-    const auto clamp_cursor_to_list = [&]( size_t list_size, size_t &cursor,
-    size_t &offset ) -> void {
+    struct clamp_cursor_options {
+        const std::vector<item_pricing> &list;
+        const std::vector<size_t> &filtered;
+        size_t &cursor;
+        size_t &offset;
+    };
+    const auto clamp_cursor_to_list = [&]( const clamp_cursor_options & opts ) -> void {
+        if( opts.filtered.empty() )
+        {
+            opts.cursor = 0;
+            opts.offset = 0;
+            return;
+        }
+        opts.cursor = std::min( opts.cursor, opts.filtered.size() - 1 );
         if( entries_per_page == 0 )
         {
-            cursor = list_size == 0 ? 0 : std::min( cursor, list_size - 1 );
-            offset = 0;
+            opts.offset = 0;
             return;
         }
-        if( list_size == 0 )
-        {
-            cursor = 0;
-            offset = 0;
-            return;
-        }
-        cursor = std::min( cursor, list_size - 1 );
-        if( list_size <= entries_per_page )
-        {
-            offset = 0;
-            return;
-        }
-        if( cursor < offset )
-        {
-            offset = cursor;
-        } else if( cursor >= offset + entries_per_page )
-        {
-            offset = cursor - entries_per_page + 1;
-        }
-        if( offset + entries_per_page > list_size )
-        {
-            offset = list_size - entries_per_page;
-        }
+        const auto page_starts = build_page_starts( opts.list, opts.filtered, entries_per_page );
+        const auto page_index = page_index_for_offset( page_starts, opts.cursor );
+        opts.offset = page_starts[page_index];
     };
 
+    const auto affects_npc_capacity = [&]( const item & it ) -> bool {
+        return it.where() == item_location_type::character && &it != &np.primary_weapon();
+    };
     const auto apply_trade_change = [&]( item_pricing & ip, int new_amount ) -> void {
         auto &owner_sells = focus_them ? ip.u_has : ip.npc_has;
         auto &owner_sells_charge = focus_them ? ip.u_charges : ip.npc_charges;
@@ -815,10 +874,32 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         {
             state.your_balance -= delta_price;
         }
-        if( ip.locs.front()->where() == item_location_type::character )
+        if( affects_npc_capacity( *ip.locs.front() ) )
         {
             state.volume_left += ip.vol * signed_amount;
             state.weight_left += ip.weight * signed_amount;
+        }
+    };
+    const auto sync_category_cursor = [&]( const std::vector<item_pricing> &list,
+                                           const std::vector<size_t> &filtered_indices,
+                                           const std::vector<category_range> &category_ranges,
+                                           size_t &category_cursor,
+    size_t cursor ) -> void {
+        if( category_ranges.empty() || filtered_indices.empty() )
+        {
+            return;
+        }
+        const auto cursor_category = list[filtered_indices[cursor]]
+        .locs.front()->get_category().get_id();
+        const auto match = std::ranges::find_if( category_ranges,
+                [&]( const category_range & entry )
+        {
+            return entry.id == cursor_category;
+        } );
+        if( match != category_ranges.end() )
+        {
+            category_cursor = static_cast<size_t>(
+                std::distance( category_ranges.begin(), match ) );
         }
     };
     const auto get_current_amount = [&]( const item_pricing & ip ) -> int {
@@ -830,6 +911,150 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
     };
     const auto get_max_amount = [&]( const item_pricing & ip ) -> int {
         return ip.charges > 0 ? ip.charges : std::max( ip.count, 1 );
+    };
+    struct balance_item_entry {
+        size_t list_index = 0;
+        int current_amount = 0;
+        int max_amount = 0;
+        int unit_balance_delta = 0;
+    };
+    struct balance_choice {
+        int prev_balance = 0;
+        int amount = 0;
+    };
+    using balance_map = std::unordered_map<int, balance_choice>;
+    const auto calc_category_autobalance_plan = [&]( const std::vector<item_pricing> &list,
+            const std::vector<size_t> &filtered_indices,
+    const category_range & range ) -> std::unordered_map<size_t, int> {
+        auto plan = std::unordered_map<size_t, int> {};
+        auto entries = std::vector<balance_item_entry> {};
+        std::ranges::for_each( std::views::iota( range.start, range.end ),
+                               [&]( size_t idx )
+        {
+            const auto list_index = filtered_indices[idx];
+            const auto &ip = list[list_index];
+            const auto current_amount = get_current_amount( ip );
+            plan.emplace( list_index, current_amount );
+            const auto unit_balance_delta = ( focus_them ? -1 : 1 ) *
+                                            static_cast<int>( ip.price );
+            const auto max_amount = get_max_amount( ip );
+            if( unit_balance_delta == 0 || max_amount == 0 ) {
+                return;
+            }
+            entries.push_back( balance_item_entry{
+                .list_index = list_index,
+                .current_amount = current_amount,
+                .max_amount = max_amount,
+                .unit_balance_delta = unit_balance_delta
+            } );
+        } );
+        if( entries.empty() )
+        {
+            return plan;
+        }
+
+        auto min_balance = state.your_balance;
+        auto max_balance = state.your_balance;
+        std::ranges::for_each( entries, [&]( const balance_item_entry & entry )
+        {
+            const auto delta_at_min = entry.unit_balance_delta * ( 0 - entry.current_amount );
+            const auto delta_at_max = entry.unit_balance_delta *
+                                      ( entry.max_amount - entry.current_amount );
+            min_balance += std::min( delta_at_min, delta_at_max );
+            max_balance += std::max( delta_at_min, delta_at_max );
+        } );
+
+        auto dp = balance_map{ {
+                state.your_balance, balance_choice{
+                    .prev_balance = state.your_balance,
+                    .amount = 0 }
+            } };
+        auto decisions = std::vector<balance_map> {};
+        decisions.reserve( entries.size() );
+
+        std::ranges::for_each( entries, [&]( const balance_item_entry & entry )
+        {
+            auto next = balance_map {};
+            auto item_decisions = balance_map {};
+            std::ranges::for_each( dp, [&]( const auto & entry_pair ) {
+                const auto prev_balance = entry_pair.first;
+                const auto unit = entry.unit_balance_delta;
+                const auto current_amount = entry.current_amount;
+                const auto max_amount = entry.max_amount;
+                const auto lower = ( static_cast<double>( min_balance - prev_balance ) /
+                                     static_cast<double>( unit ) ) + current_amount;
+                const auto upper = ( static_cast<double>( max_balance - prev_balance ) /
+                                     static_cast<double>( unit ) ) + current_amount;
+                const auto min_amount = std::clamp(
+                                            static_cast<int>( std::ceil( std::min( lower, upper ) ) ),
+                                            0, max_amount );
+                const auto max_amount_bound = std::clamp(
+                                                  static_cast<int>( std::floor( std::max( lower, upper ) ) ),
+                                                  0, max_amount );
+                if( min_amount > max_amount_bound ) {
+                    return;
+                }
+                std::ranges::for_each( std::views::iota( min_amount, max_amount_bound + 1 ),
+                [&]( int amount ) {
+                    const auto new_balance = prev_balance +
+                                             unit * ( amount - current_amount );
+                    const auto inserted = next.emplace( new_balance, balance_choice{
+                        .prev_balance = prev_balance,
+                        .amount = amount } ).second;
+                    if( inserted ) {
+                        item_decisions.emplace( new_balance, balance_choice{
+                            .prev_balance = prev_balance,
+                            .amount = amount } );
+                    }
+                } );
+            } );
+            dp = std::move( next );
+            decisions.push_back( std::move( item_decisions ) );
+        } );
+
+        if( dp.empty() )
+        {
+            return plan;
+        }
+
+        auto best_balance = std::optional<int> {};
+        std::ranges::for_each( dp, [&]( const auto & entry_pair )
+        {
+            const auto balance = entry_pair.first;
+            if( balance >= 0 ) {
+                if( !best_balance || balance < *best_balance ) {
+                    best_balance = balance;
+                }
+            }
+        } );
+        if( !best_balance )
+        {
+            std::ranges::for_each( dp, [&]( const auto & entry_pair ) {
+                const auto balance = entry_pair.first;
+                if( !best_balance || balance > *best_balance ) {
+                    best_balance = balance;
+                }
+            } );
+        }
+        if( !best_balance )
+        {
+            return plan;
+        }
+
+        auto balance = *best_balance;
+        for( auto i = static_cast<int>( entries.size() ); i-- > 0; )
+        {
+            const auto index = static_cast<size_t>( i );
+            const auto &entry = entries[index];
+            auto &item_decisions = decisions[index];
+            const auto found = item_decisions.find( balance );
+            if( found == item_decisions.end() ) {
+                break;
+            }
+            plan[entry.list_index] = found->second.amount;
+            balance = found->second.prev_balance;
+        }
+        return plan;
     };
     const auto calc_autobalance_amount = [&]( const item_pricing & ip ) -> int {
         const auto unit_balance_delta = ( focus_them ? -1 : 1 ) * static_cast<int>( ip.price );
@@ -889,16 +1114,43 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         auto &category_cursor = focus_them ? them_category_cursor : you_category_cursor;
         const auto item_hotkeys = ctxt.get_available_single_char_hotkeys(
                                       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
-        ui_manager::redraw();
-        clamp_cursor_to_list( filtered.size(), cursor, offset );
+        clamp_cursor_to_list( clamp_cursor_options{
+            .list = target_list,
+            .filtered = filtered,
+            .cursor = cursor,
+            .offset = offset
+        } );
         const auto category_ranges = build_category_ranges( target_list, filtered );
+        const auto page_starts = build_page_starts( target_list, filtered, entries_per_page );
         if( category_cursor >= category_ranges.size() ) {
             category_cursor = category_ranges.empty() ? 0 : category_ranges.size() - 1;
         }
+        ui_manager::redraw();
 
         const auto action = ctxt.handle_input();
         if( action == "SWITCH_LISTS" ) {
             focus_them = !focus_them;
+            if( category_mode ) {
+                auto &new_target_list = focus_them ? state.theirs : state.yours;
+                auto &new_filtered = focus_them ? them_filtered : you_filtered;
+                auto &new_offset = focus_them ? them_off : you_off;
+                auto &new_cursor = focus_them ? them_cursor : you_cursor;
+                auto &new_category_cursor = focus_them ? them_category_cursor : you_category_cursor;
+                const auto new_category_ranges = build_category_ranges( new_target_list,
+                                                 new_filtered );
+                if( !new_category_ranges.empty() ) {
+                    if( new_category_cursor >= new_category_ranges.size() ) {
+                        new_category_cursor = new_category_ranges.size() - 1;
+                    }
+                    new_cursor = new_category_ranges[new_category_cursor].start;
+                    clamp_cursor_to_list( clamp_cursor_options{
+                        .list = new_target_list,
+                        .filtered = new_filtered,
+                        .cursor = new_cursor,
+                        .offset = new_offset
+                    } );
+                }
+            }
         } else if( action == "UP" ) {
             if( category_mode ) {
                 if( !category_ranges.empty() ) {
@@ -959,11 +1211,15 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                     continue;
                 }
                 const auto &range = category_ranges[category_cursor];
+                const auto plan = calc_category_autobalance_plan( target_list, filtered, range );
                 std::ranges::for_each( std::views::iota( range.start, range.end ),
                 [&]( size_t idx ) {
-                    auto &ip = target_list[filtered[idx]];
-                    const auto best_amount = calc_autobalance_amount( ip );
-                    apply_trade_change( ip, best_amount );
+                    const auto list_index = filtered[idx];
+                    auto &ip = target_list[list_index];
+                    const auto plan_it = plan.find( list_index );
+                    if( plan_it != plan.end() ) {
+                        apply_trade_change( ip, plan_it->second );
+                    }
                 } );
             } else {
                 auto &ip = target_list[filtered[cursor]];
@@ -977,18 +1233,15 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         } else if( action == "CATEGORY_SELECTION" ) {
             category_mode = !category_mode;
             if( category_mode && !category_ranges.empty() && !filtered.empty() ) {
-                const auto cursor_category = target_list[filtered[cursor]]
-                                             .locs.front()->get_category().get_id();
-                const auto match = std::ranges::find_if( category_ranges,
-                [&]( const category_range & entry ) {
-                    return entry.id == cursor_category;
-                } );
-                if( match != category_ranges.end() ) {
-                    category_cursor = static_cast<size_t>(
-                                          std::distance( category_ranges.begin(), match ) );
-                }
+                sync_category_cursor( target_list, filtered, category_ranges, category_cursor,
+                                      cursor );
                 cursor = category_ranges[category_cursor].start;
-                clamp_cursor_to_list( filtered.size(), cursor, offset );
+                clamp_cursor_to_list( clamp_cursor_options{
+                    .list = target_list,
+                    .filtered = filtered,
+                    .cursor = cursor,
+                    .offset = offset
+                } );
             }
         } else if( action == "FILTER" ) {
             auto &active_filter = focus_them ? them_filter : you_filter;
@@ -1027,7 +1280,12 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 auto &active_list = focus_them ? state.theirs : state.yours;
                 auto &active_filtered = focus_them ? them_filtered : you_filtered;
                 active_filtered = build_filtered_indices( active_list, active_filter );
-                clamp_cursor_to_list( active_filtered.size(), cursor, offset );
+                clamp_cursor_to_list( clamp_cursor_options{
+                    .list = active_list,
+                    .filtered = active_filtered,
+                    .cursor = cursor,
+                    .offset = offset
+                } );
             } else {
                 active_filter = original_filter;
             }
@@ -1037,22 +1295,39 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
             auto &active_list = focus_them ? state.theirs : state.yours;
             auto &active_filtered = focus_them ? them_filtered : you_filtered;
             active_filtered = build_filtered_indices( active_list, active_filter );
-            clamp_cursor_to_list( active_filtered.size(), cursor, offset );
+            clamp_cursor_to_list( clamp_cursor_options{
+                .list = active_list,
+                .filtered = active_filtered,
+                .cursor = cursor,
+                .offset = offset
+            } );
         } else if( action == "PAGE_UP" ) {
-            if( offset > entries_per_page ) {
-                offset -= entries_per_page;
+            const auto page_index = page_index_for_offset( page_starts, offset );
+            if( page_index > 0 ) {
+                offset = page_starts[page_index - 1];
             } else {
-                offset = 0;
-            }
-            if( !target_list.empty() ) {
-                cursor = offset;
-            }
-        } else if( action == "PAGE_DOWN" ) {
-            if( offset + entries_per_page < filtered.size() ) {
-                offset += entries_per_page;
+                offset = page_starts.front();
             }
             if( !filtered.empty() ) {
                 cursor = offset;
+                if( category_mode && !category_ranges.empty() ) {
+                    sync_category_cursor( target_list, filtered, category_ranges, category_cursor,
+                                          cursor );
+                }
+            }
+        } else if( action == "PAGE_DOWN" ) {
+            const auto page_index = page_index_for_offset( page_starts, offset );
+            if( ( page_index + 1 ) < page_starts.size() ) {
+                offset = page_starts[page_index + 1];
+            } else {
+                offset = page_starts.back();
+            }
+            if( !filtered.empty() ) {
+                cursor = offset;
+                if( category_mode && !category_ranges.empty() ) {
+                    sync_category_cursor( target_list, filtered, category_ranges, category_cursor,
+                                          cursor );
+                }
             }
         } else if( action == "EXAMINE" ) {
             if( category_mode ) {
@@ -1125,7 +1400,12 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
             ch_index += offset;
             if( ch_index < filtered.size() ) {
                 cursor = ch_index;
-                clamp_cursor_to_list( filtered.size(), cursor, offset );
+                clamp_cursor_to_list( clamp_cursor_options{
+                    .list = target_list,
+                    .filtered = filtered,
+                    .cursor = cursor,
+                    .offset = offset
+                } );
                 if( category_mode && !category_ranges.empty() ) {
                     const auto cursor_category = target_list[filtered[cursor]]
                                                  .locs.front()->get_category().get_id();
@@ -1190,7 +1470,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 if( !np.will_exchange_items_freely() ) {
                     state.your_balance -= delta_price;
                 }
-                if( ip.locs.front()->where() == item_location_type::character ) {
+                if( affects_npc_capacity( *ip.locs.front() ) ) {
                     state.volume_left += ip.vol * change_amount;
                     state.weight_left += ip.weight * change_amount;
                 }
