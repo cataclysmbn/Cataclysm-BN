@@ -766,7 +766,8 @@ static void apply_surf_blend_effect(
         switch( tint.blend_mode )
         {
             case tint_blend_mode::additive: {
-                col = RGBColor{ static_cast<uint8_t>( std::min<int>( base.r + target.r, 255 ) ),
+                col = RGBColor{
+                    static_cast<uint8_t>( std::min<int>( base.r + target.r, 255 ) ),
                     static_cast<uint8_t>( std::min<int>( base.g + target.g, 255 ) ),
                     static_cast<uint8_t>( std::min<int>( base.b + target.b, 255 ) ),
                     static_cast<uint8_t>( std::min<int>( base.a + target.a, 255 ) ) };
@@ -774,14 +775,14 @@ static void apply_surf_blend_effect(
             }
             case tint_blend_mode::subtract: {
                 col = RGBColor{ static_cast<uint8_t>( std::max<int>( base.r - ( 255 - target.r ), 0 ) ),
-                    static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
-                    static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ), base.a };
+                                static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
+                                static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ), base.a };
                 break;
             }
             case tint_blend_mode::multiply: {
                 col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ),
-                    static_cast<uint8_t>( base.g *target.g / 256 ),
-                    static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
+                                static_cast<uint8_t>( base.g *target.g / 256 ),
+                                static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
                 break;
             }
             case tint_blend_mode::normal: {
@@ -828,7 +829,8 @@ static void apply_surf_blend_effect(
                 auto hardlight_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( blend > 127 )
                     {
-                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( 255 - blend ) * ( ( std::max( 255 - base, 1 ) ) * 255 / 127 ) / 255, 0, 255 ) );
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( 255 - blend ) * ( ( std::max( 255 - base,
+                                                     1 ) ) * 255 / 127 ) / 255, 0, 255 ) );
                     } else
                     {
                         return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
@@ -846,7 +848,8 @@ static void apply_surf_blend_effect(
                 auto overlay_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( base > 127 )
                     {
-                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( std::max( 255 - blend, 1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 ) );
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( std::max( 255 - blend,
+                                                     1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 ) );
                     } else
                     {
                         return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
@@ -868,7 +871,8 @@ static void apply_surf_blend_effect(
                 constexpr auto overlay = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( base > 127 )
                     {
-                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( std::max( 255 - blend, 1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 ) );
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( std::max( 255 - blend,
+                                                     1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 ) );
                     } else
                     {
                         return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
