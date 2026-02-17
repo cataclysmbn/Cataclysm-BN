@@ -766,15 +766,22 @@ static void apply_surf_blend_effect(
         switch( tint.blend_mode )
         {
             case tint_blend_mode::additive: {
-                col = RGBColor{ std::min<uint8_t>( base.r + target.r, 255 ), std::min<uint8_t>( base.g + target.g, 255 ), std::min<uint8_t>( base.b + target.b, 255 ), std::min<uint8_t>( base.a + target.a, 255 ) };
+                col = RGBColor{ static_cast<uint8_t>( std::min<int>( base.r + target.r, 255 ) ),
+                    static_cast<uint8_t>( std::min<int>( base.g + target.g, 255 ) ),
+                    static_cast<uint8_t>( std::min<int>( base.b + target.b, 255 ) ),
+                    static_cast<uint8_t>( std::min<int>( base.a + target.a, 255 ) ) };
                 break;
             }
             case tint_blend_mode::subtract: {
-                col = RGBColor{ std::max<uint8_t>( base.r - ( 255 - target.r ), 0 ), std::max<uint8_t>( base.g - ( 255 - target.g ), 0 ), std::max<uint8_t>( base.b - ( 255 - target.b ), 0 ), base.a };
+                col = RGBColor{ static_cast<uint8_t>( std::max<int>( base.r - ( 255 - target.r ), 0 ) ),
+                    static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
+                    static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ), base.a };
                 break;
             }
             case tint_blend_mode::multiply: {
-                col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ), static_cast<uint8_t>( base.g *target.g / 256 ), static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
+                col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ),
+                    static_cast<uint8_t>( base.g *target.g / 256 ),
+                    static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
                 break;
             }
             case tint_blend_mode::normal: {
@@ -821,11 +828,10 @@ static void apply_surf_blend_effect(
                 auto hardlight_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( blend > 127 )
                     {
-                        return std::clamp<uint8_t>( 255 - ( 255 - blend ) * ( ( std::max( 255 - base,
-                                                    1 ) ) * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( 255 - blend ) * ( ( std::max( 255 - base, 1 ) ) * 255 / 127 ) / 255, 0, 255 ) );
                     } else
                     {
-                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
                     }
                 };
                 col = SDL_Color{
@@ -840,11 +846,10 @@ static void apply_surf_blend_effect(
                 auto overlay_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( base > 127 )
                     {
-                        return std::clamp<uint8_t>( 255 - ( std::max( 255 - blend,
-                                                            1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( std::max( 255 - blend, 1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 ) );
                     } else
                     {
-                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
                     }
                 };
                 col = SDL_Color{
@@ -863,11 +868,10 @@ static void apply_surf_blend_effect(
                 constexpr auto overlay = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
                     if( base > 127 )
                     {
-                        return std::clamp<uint8_t>( 255 - ( std::max( 255 - blend,
-                                                            1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( std::max( 255 - blend, 1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 ) );
                     } else
                     {
-                        return std::clamp<uint8_t>( blend * ( base * 255 / 127 ) / 255, 0, 255 );
+                        return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
                     }
                 };
 
@@ -1582,54 +1586,6 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
 void tileset_loader::load_internal( const JsonObject &config, const std::string &tileset_root,
                                     const std::string &img_path, const bool pump_events )
 {
-    if( config.has_array( "tiles-new" ) ) {
-        // new system, several entries
-        // When loading multiple tileset images this defines where
-        // the tiles from the most recently loaded image start from.
-        for( const JsonObject &tile_part_def : config.get_array( "tiles-new" ) ) {
-            const std::string tileset_image_path = tileset_root + '/' + tile_part_def.get_string( "file" );
-            R = -1;
-            G = -1;
-            B = -1;
-            if( tile_part_def.has_object( "transparency" ) ) {
-                JsonObject tra = tile_part_def.get_object( "transparency" );
-                R = tra.get_int( "R" );
-                G = tra.get_int( "G" );
-                B = tra.get_int( "B" );
-            }
-            sprite_width = tile_part_def.get_int( "sprite_width", ts.tile_width );
-            sprite_height = tile_part_def.get_int( "sprite_height", ts.tile_height );
-            // Now load the tile definitions for the loaded tileset image.
-            sprite_offset.x = tile_part_def.get_int( "sprite_offset_x", 0 );
-            sprite_offset.y = tile_part_def.get_int( "sprite_offset_y", 0 );
-            // First load the tileset image to get the number of available tiles.
-            dbg( DL::Info ) << "Attempting to Load Tileset file " << tileset_image_path;
-            load_tileset( tileset_image_path, pump_events );
-            load_tilejson_from_file( tile_part_def );
-            if( tile_part_def.has_member( "ascii" ) ) {
-                load_ascii( tile_part_def );
-            }
-            // Make sure the tile definitions of the next tileset image don't
-            // override the current ones.
-            offset += size;
-            if( pump_events ) {
-                inp_mngr.pump_events();
-            }
-        }
-    } else {
-        sprite_width = ts.tile_width;
-        sprite_height = ts.tile_height;
-        sprite_offset = point_zero;
-        R = -1;
-        G = -1;
-        B = -1;
-        // old system, no tile file path entry, only one array of tiles
-        dbg( DL::Info ) << "Attempting to Load Tileset file " << img_path;
-        load_tileset( img_path, pump_events );
-        load_tilejson_from_file( config );
-        offset = size;
-    }
-
     // allows a tileset to override the order of mutation images being applied to a character
     if( config.has_array( "overlay_ordering" ) ) {
         load_overlay_ordering_into_array( config, tileset_mutation_overlay_ordering );
@@ -1786,6 +1742,54 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
             }
             ts.tint_pairs[target_type] = { source_type, override };
         }
+    }
+
+    if( config.has_array( "tiles-new" ) ) {
+        // new system, several entries
+        // When loading multiple tileset images this defines where
+        // the tiles from the most recently loaded image start from.
+        for( const JsonObject &tile_part_def : config.get_array( "tiles-new" ) ) {
+            const std::string tileset_image_path = tileset_root + '/' + tile_part_def.get_string( "file" );
+            R = -1;
+            G = -1;
+            B = -1;
+            if( tile_part_def.has_object( "transparency" ) ) {
+                JsonObject tra = tile_part_def.get_object( "transparency" );
+                R = tra.get_int( "R" );
+                G = tra.get_int( "G" );
+                B = tra.get_int( "B" );
+            }
+            sprite_width = tile_part_def.get_int( "sprite_width", ts.tile_width );
+            sprite_height = tile_part_def.get_int( "sprite_height", ts.tile_height );
+            // Now load the tile definitions for the loaded tileset image.
+            sprite_offset.x = tile_part_def.get_int( "sprite_offset_x", 0 );
+            sprite_offset.y = tile_part_def.get_int( "sprite_offset_y", 0 );
+            // First load the tileset image to get the number of available tiles.
+            dbg( DL::Info ) << "Attempting to Load Tileset file " << tileset_image_path;
+            load_tileset( tileset_image_path, pump_events );
+            load_tilejson_from_file( tile_part_def );
+            if( tile_part_def.has_member( "ascii" ) ) {
+                load_ascii( tile_part_def );
+            }
+            // Make sure the tile definitions of the next tileset image don't
+            // override the current ones.
+            offset += size;
+            if( pump_events ) {
+                inp_mngr.pump_events();
+            }
+        }
+    } else {
+        sprite_width = ts.tile_width;
+        sprite_height = ts.tile_height;
+        sprite_offset = point_zero;
+        R = -1;
+        G = -1;
+        B = -1;
+        // old system, no tile file path entry, only one array of tiles
+        dbg( DL::Info ) << "Attempting to Load Tileset file " << img_path;
+        load_tileset( img_path, pump_events );
+        load_tilejson_from_file( config );
+        offset = size;
     }
 }
 
