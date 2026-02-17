@@ -3361,7 +3361,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
      */
     const auto num_sprites = sprite_list.size();
     const auto is_single_sprite = num_sprites == 1;
-    const auto rotate_sprite = is_fg && is_single_sprite;
+    const auto rotate_sprite = ( is_fg || tile.rotates ) && is_single_sprite;
     const auto sprite_num = is_single_sprite
                             ? 0
                             : ( rota % num_sprites );
