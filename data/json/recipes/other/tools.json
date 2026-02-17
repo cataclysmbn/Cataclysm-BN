@@ -868,7 +868,7 @@
     "time": "3 m",
     "reversible": true,
     "decomp_learn": 0,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_NEARLY_IMPOSSIBLE" ],
     "book_learn": [ [ "adv_chemistry", 1 ], [ "textbook_chemistry", 1 ], [ "reference_cooking", 1 ] ],
     "components": [ [ [ "cable", 10 ], [ "wire", 1 ] ], [ [ "hotplate", 1 ] ], [ [ "chemistry_set_basic", 1 ] ] ]
   },
@@ -3119,8 +3119,7 @@
       [ [ "rag", 1 ] ],
       [ [ "stick", 1 ], [ "2x4", 1 ], [ "pool_cue", 1 ], [ "torch_done", 1 ] ],
       [ [ "flammable_liquid", 100, "LIST" ], [ "disinfectant_makeshift", 4 ], [ "pitch_wood", 4 ] ]
-    ],
-    "flags": [ "BLIND_HARD" ]
+    ]
   },
   {
     "result": "dog_whistle_wood",

@@ -33,7 +33,7 @@
     "time": "1 h",
     "autolearn": true,
     "batch_time_factors": [ 83, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "rock_quern", -1 ], [ "clay_quern", -1 ] ] ],
     "components": [ [ [ "chitin_piece", 1 ], [ "acidchitin_piece", 1 ] ] ]
   },
@@ -49,7 +49,7 @@
     "time": "1 h 30 m",
     "autolearn": true,
     "batch_time_factors": [ 83, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "mortar_pestle", -1 ] ] ],
     "components": [ [ [ "chitin_piece", 1 ] ] ]
   },
@@ -164,7 +164,6 @@
     "time": "1 m",
     "autolearn": true,
     "charges": 6,
-    "flags": [ "BLIND_HARD" ],
     "components": [ [ [ "paper", 1 ] ] ]
   },
   {
@@ -1096,9 +1095,9 @@
     "difficulty": 1,
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
     "components": [ [ [ "rag", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
   },
   {
     "result": "bundle_leather",
@@ -1110,9 +1109,9 @@
     "difficulty": 1,
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
     "components": [ [ [ "leather", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
   },
   {
     "result": "bundle_wool",
@@ -1124,9 +1123,9 @@
     "difficulty": 1,
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
     "components": [ [ [ "felt_patch", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
   },
   {
     "type": "recipe",
@@ -1137,6 +1136,7 @@
     "time": "2 m",
     "autolearn": true,
     "qualities": [ { "id": "DIG", "level": 3 } ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "bag_canvas", 1 ] ], [ [ "material_sand", 3000 ] ] ]
   },
   {
@@ -1147,6 +1147,7 @@
     "skill_used": "fabrication",
     "time": "2 m",
     "autolearn": true,
+    "flags": [ "BLIND_NO_EFFECT" ],
     "qualities": [ { "id": "DIG", "level": 3 } ],
     "components": [ [ [ "bag_canvas", 1 ] ], [ [ "material_soil", 3 ] ] ]
   },

@@ -92,8 +92,13 @@ static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
 static const trait_id trait_HYPEROPIC( "HYPEROPIC" );
 
 static const flag_id flag_BIONIC_TOGGLED( "BIONIC_TOGGLED" );
+
+static const std::string flag_BLIND_NO_EFFECT( "BLIND_NO_EFFECT" );
 static const std::string flag_BLIND_EASY( "BLIND_EASY" );
 static const std::string flag_BLIND_HARD( "BLIND_HARD" );
+static const std::string flag_BLIND_NEARLY_IMPOSSIBLE( "BLIND_NEARLY_IMPOSSIBLE" );
+static const std::string flag_BLIND_IMPOSSIBLE( "BLIND_IMPOSSIBLE" );
+
 static const std::string flag_FULL_MAGAZINE( "FULL_MAGAZINE" );
 static const std::string flag_NO_RESIZE( "NO_RESIZE" );
 static const std::string flag_UNCRAFT_LIQUIDS_CONTAINED( "UNCRAFT_LIQUIDS_CONTAINED" );
@@ -119,7 +124,7 @@ static bool crafting_allowed( const Character &who, const recipe &rec )
 
 float lighting_crafting_speed_multiplier( const Character &who, const recipe &rec )
 {
-    if( character_funcs::can_see_fine_details( who ) ) {
+    if( rec.has_flag( flag_BLIND_NO_EFFECT ) || character_funcs::can_see_fine_details( who ) ) {
         return 1.0f;
     }
 
@@ -133,19 +138,28 @@ float lighting_crafting_speed_multiplier( const Character &who, const recipe &re
             character_funcs::FINE_VISION_THRESHOLD
         ) / 7.0f;
 
-    if( rec.has_flag( flag_BLIND_EASY ) ) {
-        // 100% speed in well lit area at skill+0
-        // 25% speed in pitch black at skill+0
-        // skill+2 removes speed penalty
-        return 1.0f - darkness * 0.75f * std::max( 0, 2 - skill_bonus ) / 2.0f;
-    } else if( rec.has_flag( flag_BLIND_HARD ) && skill_bonus >= 2 ) {
-        // 100% speed in well lit area at skill+2
-        // 25% speed in pitch black at skill+2
-        // skill+8 removes speed penalty
-        return 1.0f - darkness * 0.75f * std::max( 0, 8 - skill_bonus ) / 6.0f;
-    } else {
-        // Needs proper vision or the character is not skilled enough
+    if( rec.has_flag( flag_BLIND_IMPOSSIBLE ) && darkness < -1.0f ) {
         return 0.0f;
+    }
+    constexpr auto formula = []( const float &darkness, const int &skill_thresh, const int &skill_bonus, const float &scalar, const float &min = 0.25f ) -> float {
+        return std::max( 1.0f - std::powf( darkness * scalar, 2 ) * std::max( 0, skill_thresh - skill_bonus ), min );
+    };
+
+    // Only becomes possible at +5 skill, and even then 8 skill required for 63% speed
+    if( rec.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) || rec.has_flag( flag_BLIND_IMPOSSIBLE ) ) {
+        return formula( darkness, 10, skill_bonus, 0.3f );
+    }
+    // Impossible at 0 skill in dark, 23% speed at +2 skill in dark
+    else if( rec.has_flag( flag_BLIND_HARD ) ) {
+        return formula( darkness, 8, skill_bonus, 0.25f );
+    }
+    // Even 0 skill results in 81% speed in complete darkness
+    else if( rec.has_flag( flag_BLIND_EASY ) ) {
+        return formula( darkness, 4, skill_bonus, 0.15f );
+    }
+    // 51% speed at 0 skill in dark, 23% speed at +2 skill in dark
+    else {
+        return formula( darkness, 6, skill_bonus, 0.2f );
     }
 }
 

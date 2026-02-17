@@ -148,6 +148,36 @@
     "info": "When thrown and it hits a creature's head, it can <bad>blind</bad> them."
   },
   {
+    "id": "BLIND_NO_EFFECT",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "Light levels have no effect."
+  },
+  {
+    "id": "BLIND_EASY",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is easy to do in the dark."
+  },
+  {
+    "id": "BLIND_HARD",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is difficult to do in the dark."
+  },
+  {
+    "id": "BLIND_NEARLY_IMPOSSIBLE",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is incredibly difficult to do in the dark, and impossible if you cannot see."
+  },
+  {
+    "id": "BLIND_IMPOSSIBLE",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is cannot be done if you cannot see."
+  },
+  {
     "id": "EFFECT_NIGHT_VISION",
     "context": [  ],
     "type": "json_flag"

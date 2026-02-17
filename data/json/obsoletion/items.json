@@ -2332,14 +2332,14 @@
       [ [ "paper", 8 ] ],
       [ [ "bag_plastic", 1 ] ]
     ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_dessert",
     "type": "uncraft",
     "time": "4 s",
     "components": [ [ [ "dry_fruit", 1 ] ], [ [ "candy2", 1 ] ], [ [ "cookies", 1 ] ], [ [ "bag_plastic", 1 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "type": "COMESTIBLE",
