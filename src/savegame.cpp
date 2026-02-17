@@ -58,7 +58,7 @@ static const oter_str_id oter_omt_obsolete( "omt_obsolete" );
  * Changes that break backwards compatibility should bump this number, so the game can
  * load a legacy format loader.
  */
-const int savegame_version = 28;
+const int savegame_version = 29;
 
 /*
  * This is a global set by detected version header in .sav, maps.txt, or overmap.
