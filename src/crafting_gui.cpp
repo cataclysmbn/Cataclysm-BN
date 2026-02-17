@@ -45,8 +45,11 @@
 #include "ui_manager.h"
 #include "uistate.h"
 
+static const std::string flag_BLIND_NO_EFFECT( "BLIND_NO_EFFECT" );
 static const std::string flag_BLIND_EASY( "BLIND_EASY" );
 static const std::string flag_BLIND_HARD( "BLIND_HARD" );
+static const std::string flag_BLIND_NEARLY_IMPOSSIBLE( "BLIND_NEARLY_IMPOSSIBLE" );
+static const std::string flag_BLIND_IMPOSSIBLE( "BLIND_IMPOSSIBLE" );
 
 class npc;
 
@@ -298,9 +301,12 @@ static std::vector<std::string> recipe_info(
     }
 
     oss << string_format( _( "Craftable in the dark?  <color_cyan>%s</color>\n" ),
+                          recp.has_flag( flag_BLIND_NO_EFFECT ) ? _( "Effortless" ) :
                           recp.has_flag( flag_BLIND_EASY ) ? _( "Easy" ) :
-                          recp.has_flag( flag_BLIND_HARD ) ? _( "Hard" ) :
-                          _( "Impossible" ) );
+                          recp.has_flag( flag_BLIND_HARD ) ? _( "Awkward" ) :
+                          recp.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ? _( "Very Hard" ) :
+                          recp.has_flag( flag_BLIND_IMPOSSIBLE ) ? _( "Impossible" ) :
+                          _( "Reasonabe" ) );
 
     std::string nearby_string;
     const inventory &crafting_inv = u.crafting_inventory();
