@@ -1151,10 +1151,11 @@ void activity_handlers::butcher_finish( player_activity *act, player *p )
 
     map &here = get_map();
     safe_reference<item> &target = act->targets.back();
+    auto *target_item = const_cast<item *>( target.get_const() );
     const inventory &inv = p->crafting_inventory();
 
     // Corpses can disappear (rezzing!), so check for that
-    if( !target || !target->is_corpse() ) {
+    if( target.is_destroyed() || target_item == nullptr || !target_item->is_corpse() ) {
         p->add_msg_if_player( m_info, _( "There's no corpse to butcher!" ) );
         act->set_to_null();
         return;
@@ -1181,12 +1182,12 @@ void activity_handlers::butcher_finish( player_activity *act, player *p )
 
     // index is a bool that determines if we are ready to start the next target
     if( act->index ) {
-        const butchery_setup setup = consider_butchery( *target, *p, action );
+        const butchery_setup setup = consider_butchery( *target_item, *p, action );
         set_up_butchery_activity( *act, *p, setup );
         return;
     }
 
-    item &corpse_item = *target;
+    item &corpse_item = *target_item;
     const mtype *corpse = corpse_item.get_mtype();
     const field_type_id type_blood = corpse->bloodType();
     const field_type_id type_gib = corpse->gibType();
@@ -1243,7 +1244,7 @@ void activity_handlers::butcher_finish( player_activity *act, player *p )
         }
 
         // Remove the target from the map
-        target->detach();
+        target_item->detach();
 
         act->targets.pop_back();
 
@@ -1303,7 +1304,7 @@ void activity_handlers::butcher_finish( player_activity *act, player *p )
                                   corpse_item.tname() );
 
             // Remove the target from the map
-            target->detach();
+            target_item->detach();
             if( !act->targets.empty() ) {
                 act->targets.pop_back();
             }
@@ -1312,7 +1313,7 @@ void activity_handlers::butcher_finish( player_activity *act, player *p )
             p->add_msg_if_player( m_good, _( "You finish butchering the %s." ), corpse_item.tname() );
 
             // Remove the target from the map
-            target->detach();
+            target_item->detach();
             if( !act->targets.empty() ) {
                 act->targets.pop_back();
             }
@@ -1422,7 +1423,7 @@ void activity_handlers::butcher_finish( player_activity *act, player *p )
             }
 
             // Remove the target from the map
-            target->detach();
+            target_item->detach();
             if( !act->targets.empty() ) {
                 act->targets.pop_back();
             }
@@ -1431,7 +1432,7 @@ void activity_handlers::butcher_finish( player_activity *act, player *p )
             p->add_msg_if_player( m_good, _( "You finish dissecting the %s." ), corpse_item.tname() );
 
             // Remove the target from the map
-            target->detach();
+            target_item->detach();
             if( !act->targets.empty() ) {
                 act->targets.pop_back();
             }
