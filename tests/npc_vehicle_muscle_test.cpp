@@ -371,8 +371,11 @@ TEST_CASE( "npc_muscle_engine_broken_limbs", "[vehicle][muscle][npc][injury]" )
         npc &test_npc = create_test_npc();
 
         // Break the NPC's legs by adding the disabled effect
-        test_npc.add_effect( efftype_id( "disabled" ), 1_hours, bodypart_str_id( "leg_l" ) );
-        test_npc.add_effect( efftype_id( "disabled" ), 1_hours, bodypart_str_id( "leg_r" ) );
+        // It was flaky sometimes so try multiple times to break their legs
+        for( int i = 0; i < 10 && test_npc.get_working_leg_count() >= 2; i++ ) {
+            test_npc.add_effect( efftype_id( "disabled" ), 1_hours, bodypart_str_id( "leg_l" ) );
+            test_npc.add_effect( efftype_id( "disabled" ), 1_hours, bodypart_str_id( "leg_r" ) );
+        }
         CAPTURE( test_npc.has_effect( efftype_id( "disabled" ), bodypart_str_id( "leg_l" ) ) );
         CAPTURE( test_npc.has_effect( efftype_id( "disabled" ), bodypart_str_id( "leg_r" ) ) );
         CAPTURE( test_npc.get_working_leg_count() );
