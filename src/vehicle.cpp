@@ -80,6 +80,7 @@
  *   assemble "structure" once here instead of repeatedly later.
  */
 static const std::string part_location_structure( "structure" );
+static const std::string part_location_under( "under" );
 static const std::string part_location_center( "center" );
 static const std::string part_location_onroof( "on_roof" );
 
@@ -4873,17 +4874,23 @@ double vehicle::coeff_water_drag() const
     if( !coeff_water_dirty ) {
         return coefficient_water_resistance;
     }
-    std::vector<int> structure_indices = all_parts_at_location( part_location_structure );
-    if( structure_indices.empty() ) {
+    std::vector<int> hull_indices = all_parts_at_location( part_location_under );
+    if( hull_indices.empty() && floating.empty() ) {
         // huh?
         coeff_water_dirty = false;
         hull_height = 0.3;
         draft_m = 1.0;
         return 1250.0;
     }
-    double hull_coverage = static_cast<double>( floating.size() ) / structure_indices.size();
+    double hull_coverage = static_cast<double>( floating.size() ) / hull_indices.size();
 
-    int tile_width = mount_max.y - mount_min.y + 1;
+    std::set<int> occupied_y;
+    for( int idx : hull_indices ) {
+        occupied_y.insert( idx );
+    }
+
+    int tile_width = occupied_y.size();
+
     double width_m = tile_to_width( tile_width );
 
     // actual area of the hull in m^2 (handles non-rectangular shapes)
@@ -4894,7 +4901,7 @@ double vehicle::coeff_water_drag() const
     // actual area in m = # of structure tiles * length in tiles * width in meters /
     //                    ( length in tiles * width in tiles )
     // actual area in m = # of structure tiles * width in meters / width in tiles
-    double actual_area_m = width_m * structure_indices.size() / tile_width;
+    double actual_area_m = width_m * hull_indices.size() / tile_width;
 
     // effective hull area is actual hull area * hull coverage
     hull_area = actual_area_m * std::max( 0.1, hull_coverage );
