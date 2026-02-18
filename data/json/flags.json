@@ -142,6 +142,12 @@
     "info": "This gear <bad>prevents</bad> you from <info>seeing</info> anything."
   },
   {
+    "id": "BLINDS_EYES_ON_HIT",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "When thrown and it hits a creature's head, it can <bad>blind</bad> them."
+  },
+  {
     "id": "EFFECT_NIGHT_VISION",
     "context": [  ],
     "type": "json_flag"
@@ -798,6 +804,12 @@
     "type": "json_flag",
     "context": [  ],
     "info": "This item can be used to <info>pick locks</info> with <good>zero effort</good>."
+  },
+  {
+    "id": "DURABLE_LOCKPICK",
+    "type": "json_flag",
+    "context": [  ],
+    "//": "takes no damage from normal use"
   },
   {
     "id": "RAINPROOF",
@@ -2114,6 +2126,12 @@
     "id": "TANGLE",
     "type": "json_flag",
     "context": [  ]
+  },
+  {
+    "id": "NET_TANGLE",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "Thrown nets apply the NET_TANGLE ammo effect to nearby creatures."
   },
   {
     "id": "TARDIS",

@@ -361,9 +361,6 @@ void cata::detail::reg_date_time_api( sol::state &lua )
     DOC( "System date and time API." );
     luna::userlib lib = luna::begin_lib( lua, "date_time" ) ;
 
-    const time_t timestamp = time( nullptr );
-    const tm *loc = localtime( &timestamp );
-
     luna::set_fx( lib, "year", []() { return local_time_impl()->tm_year + 1900; } );
     // It makes sense to start month at 1, not 0
     luna::set_fx( lib, "month", []() { return local_time_impl()->tm_mon + 1; } );
@@ -994,4 +991,5 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_testing_library( lua );
     reg_requirement( lua );
     reg_inventory( lua );
+    reg_mapgendata( lua );
 }

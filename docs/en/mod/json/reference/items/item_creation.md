@@ -53,6 +53,7 @@
     [ "9mm", [ "glockmag" ] ]                // The first magazine specified for each ammo type is the default
     [ "45", [ "m1911mag", "m1911bigmag" ] ],
 ],
+"crafting_speed_modifier": 1.0,              // Optional (default = 1.0). Multiplier applied to crafting speed when this item satisfies a tool or quality requirement.
 "milling": {                                 // Optional. If given, the item can be milled in a water/wind mill.
   "into": "flour",                           // The item id of the product. Product MUST be something that uses charges.
   "conversion_rate": 4                       // Number of products per item consumed. At a conversion_rate of 4, 1 item is milled into 4 product. Only accepts integers.
@@ -166,6 +167,35 @@ Alternately, every item (book, tool, gun, even food) can be used as armor if it 
     "power_armor" : false
 }
 ```
+
+#### Armor Portion Data
+
+For items that cover multiple body parts with different coverage or encumbrance values, use `armor_portion_data`. This allows defining separate values for each body part or group of body parts:
+
+```json
+"armor_portion_data": [
+    { 
+        "covers": [ "torso" ], 
+        "coverage": 95, 
+        "encumbrance": 15 
+    },
+    { 
+        "covers": [ "arms", "legs" ], 
+        "coverage": 80, 
+        "encumbrance": 10,
+        "max_encumbrance": 20
+    }
+]
+```
+
+Fields for each entry in `armor_portion_data`:
+
+- `covers`: Array of body part IDs this entry applies to (e.g., "torso", "head", "eyes", "mouth", "arms", "hands", "legs", "feet")
+- `coverage`: Percentage of body part area covered (0-100). Higher values mean better protection.
+- `encumbrance`: How much the item encumbers the body part. Default is 0.
+- `max_encumbrance`: Encumbrance when the character is at full storage volume. Default equals `encumbrance`.
+
+When `armor_portion_data` is used, the top-level `covers`, `coverage`, `encumbrance`, and `max_encumbrance` fields should not be used as they are replaced by the portion data.
 
 ### Pet Armor
 
