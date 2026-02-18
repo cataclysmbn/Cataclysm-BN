@@ -998,28 +998,5 @@
     "type": "vehicle_group",
     "id": "os_work_vehicles",
     "vehicles": [ [ "wheelbarrow", 60 ], [ "portable_generator", 40 ], [ "oa_work_light", 50 ] ]
-  },
-  {
-    "type": "vehicle_group",
-    "id": "cars_only",
-    "vehicles": [
-      [ "4x4_car", 200 ],
-      [ "car_sports_electric", 100 ],
-      [ "car_mini", 375 ],
-      [ "car_hybrid", 200 ],
-      [ "beetle", 750 ],
-      [ "car", 1500 ],
-      [ "car_diesel", 750 ],
-      [ "car_hatch", 750 ],
-      [ "car_hatch_diesel", 400 ],
-      [ "car_luxury", 500 ],
-      [ "suv", 800 ],
-      [ "suv_electric", 100 ],
-      [ "suv_electric_rack", 100 ],
-      [ "car_anmlcmpt", 150 ],
-      [ "electric_car", 750 ],
-      [ "hippie_van", 250 ],
-      [ "car_sports", 30 ]
-    ]
   }
 ]

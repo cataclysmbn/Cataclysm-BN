@@ -315,7 +315,7 @@
     "type": "palette",
     "id": "car_theater_full",
     "palettes": [ "car_theater" ],
-    "vehicles": { "1": { "vehicle": "cars_only", "chance": 80, "rotation": 270 } },
+    "vehicles": { "1": { "vehicle": "speedway_car_truck", "chance": 80, "rotation": 270 } },
     "monster": { "_": { "group": "GROUP_MALL", "chance": 1 } }
   },
   {

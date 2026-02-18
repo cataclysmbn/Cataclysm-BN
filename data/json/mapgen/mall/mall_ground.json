@@ -137,7 +137,7 @@
         "*": "t_linoleum_gray",
         "F": "t_linoleum_gray"
       },
-      "furniture": { "%": [ "f_indoor_plant", "f_indoor_plant_y" ], "*": "f_trashcan", "Á": "f_console_broken", "¤": "f_bulletin" },
+      "furniture": { "%": [ "f_indoor_plant", "f_indoor_plant_y" ], "*": "f_trashcan", "¤": "f_bulletin" },
       "place_vendingmachines": [ { "item_group": "vending_food", "x": 99, "y": 6 }, { "item_group": "vending_drink", "x": 100, "y": 6 } ],
       "items": {
         "d": [
