@@ -155,11 +155,15 @@ Ultica are planned for the future.
 
 ### alternative_mutation_tileset.png
 
-![](../../../../../../../assets/img/external_tileset/mutation/after.png)
-
 <details><summary>Before</summary>
 
-![](../../../../../../../assets/img/external_tileset/mutation/before.png)
+![](.\img\alternative_external_mutation_before.png)
+
+</details>
+
+<details><summary>After</summary>
+
+![](.\img\alternative_external_mutation_after.png)
 
 </details>
 

@@ -1,0 +1,11 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "sample-uv-mod",
+    "name": "Dynamic Characters",
+    "authors": [ "Azmodius X" ],
+    "description": "Makes certain states like crouching and sleeping effect your character. Move them pixels! Currently compatable with: UDP",
+    "category": "graphical",
+    "dependencies": [ "bn" ]
+  }
+]
