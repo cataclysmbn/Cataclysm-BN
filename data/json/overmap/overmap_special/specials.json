@@ -4296,7 +4296,7 @@
       { "point": [ 1, 1, 0 ], "overmap": "lake_surface" }
     ],
     "locations": [ "lake_surface" ],
-    "occurrences": [ 1, 4 ],
+    "occurrences": [ 0, 8 ],
     "flags": [ "CLASSIC", "LAKE" ]
   },
   {
