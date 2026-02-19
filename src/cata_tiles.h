@@ -247,9 +247,9 @@ struct tint_config {
 
     bool has_value() const {
         return color != TILESET_NO_COLOR
-        || contrast.has_value()
-        || saturation.has_value()
-        || brightness.has_value();
+               || contrast.has_value()
+               || saturation.has_value()
+               || brightness.has_value();
     }
 
     bool operator==( const tint_config &other ) const {
@@ -262,11 +262,11 @@ struct tint_config {
 
     // Implicit conversions for backward compatibility and convenience
     tint_config() = default;
-    tint_config( const std::optional<SDL_Color>& c ) : color( c.value_or(TILESET_NO_COLOR) ) {}
-    tint_config( const std::nullopt_t& ) : color( TILESET_NO_COLOR ) {}
-    tint_config( const SDL_Color& c ) : color( c ) {}
-    tint_config( const RGBColor& c ) : color( static_cast<SDL_Color>( c ) ) {}
-    tint_config( const nc_color& c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( c ) ) ) {}
+    tint_config( const std::optional<SDL_Color> &c ) : color( c.value_or( TILESET_NO_COLOR ) ) {}
+    tint_config( const std::nullopt_t & ) : color( TILESET_NO_COLOR ) {}
+    tint_config( const SDL_Color &c ) : color( c ) {}
+    tint_config( const RGBColor &c ) : color( static_cast<SDL_Color>( c ) ) {}
+    tint_config( const nc_color &c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( c ) ) ) {}
 };
 
 using color_tint_pair = std::pair<tint_config, tint_config>;  // {bg, fg}

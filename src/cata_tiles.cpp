@@ -1104,9 +1104,10 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
 
         const auto tex_key = tileset_lookup_key{ index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, TILESET_NO_WARP, point_zero };
         auto &[at_tex, at_rect] = atl_tex;
-        auto [it,ok] = ts.tile_lookup.emplace( tex_key, tileset::tile_lookup_entry{ texture( std::move( at_tex ), at_rect ), point_zero } );
-        if (!ok) {
-            dbg(DL::Error) << "dynamic atlas hash collision, you will likely see minor graphical issues" << std::endl;
+        auto [it, ok] = ts.tile_lookup.emplace( tex_key, tileset::tile_lookup_entry{ texture( std::move( at_tex ), at_rect ), point_zero } );
+        if( !ok ) {
+            dbg( DL::Error ) << "dynamic atlas hash collision, you will likely see minor graphical issues" <<
+                             std::endl;
         }
     }
     sdl_restore_render_state( renderer.get(), state );
@@ -1553,8 +1554,9 @@ texture_result tileset::get_or_default( const int sprite_index,
         auto &[at_tex, at_rect] = atl_tex;
         auto [entry, ok] = tile_lookup.emplace( mod_tex_key,
                                                 tile_lookup_entry{ texture( std::move( at_tex ), at_rect ), warp_output_offset } );
-        if (!ok) {
-            dbg(DL::Error) << "dynamic atlas hash collision, you will likely see minor graphical issues" << std::endl;
+        if( !ok ) {
+            dbg( DL::Error ) << "dynamic atlas hash collision, you will likely see minor graphical issues" <<
+                             std::endl;
         }
         return { &entry->second.tex, entry->second.warp_offset };
     }
@@ -2303,7 +2305,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
             {
                 // Simple string value - parse as color (may include brightness from 4th hex pair)
                 auto [color, brightness] = parse_color( obj.get_string( key ) );
-                cfg.color = color.value_or(TILESET_NO_COLOR);
+                cfg.color = color.value_or( TILESET_NO_COLOR );
                 cfg.brightness = brightness;
                 cfg.blend_mode = top_blend_mode;
                 if( has_top_level ) {
@@ -2318,7 +2320,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 // Complex object value - only allowed when no top-level contrast/saturation
                 JsonObject color_obj = obj.get_object( key );
                 auto [color, brightness] = parse_color( color_obj.get_string( "color", "" ) );
-                cfg.color = color.value_or(TILESET_NO_COLOR);
+                cfg.color = color.value_or( TILESET_NO_COLOR );
                 cfg.brightness = brightness;
                 cfg.blend_mode = parse_blend_mode( color_obj.get_string( "blend_mode", "" ) );
                 if( color_obj.has_float( "contrast" ) ) {
