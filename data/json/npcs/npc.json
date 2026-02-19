@@ -12,6 +12,17 @@
   },
   {
     "type": "npc",
+    "id": "radio_thug",
+    "//": "Radio spawn variant that does not post up to guard a spot.",
+    "name_suffix": "Thug",
+    "class": "NC_THUG",
+    "attitude": 0,
+    "mission": 0,
+    "chat": "TALK_DONE",
+    "faction": "hells_raiders"
+  },
+  {
+    "type": "npc",
     "id": "bandit",
     "//": "Generic pistol/rifle focused guard for the Hell's Raiders faction.",
     "name_suffix": "Bandit",
@@ -20,6 +31,28 @@
     "mission": 8,
     "chat": "TALK_DONE",
     "faction": "hells_raiders"
+  },
+  {
+    "type": "npc",
+    "id": "radio_bandit",
+    "//": "Radio spawn variant that does not post up to guard a spot.",
+    "name_suffix": "Bandit",
+    "class": "NC_BANDIT",
+    "attitude": 0,
+    "mission": 0,
+    "chat": "TALK_DONE",
+    "faction": "hells_raiders"
+  },
+  {
+    "type": "npc",
+    "id": "radio_merchant",
+    "//": "Radio spawn merchant variant that keeps moving instead of holding a post.",
+    "name_suffix": "Merchant",
+    "class": "NC_TRADER",
+    "attitude": 0,
+    "mission": 0,
+    "chat": "TALK_STRANGER_NEUTRAL",
+    "faction": "free_merchants"
   },
   {
     "type": "npc",
@@ -132,6 +165,28 @@
     "attitude": 0,
     "mission": 7,
     "chat": "TALK_STRANGER_NEUTRAL",
+    "faction": "no_faction"
+  },
+  {
+    "type": "npc",
+    "id": "radio_wandering_scavenger",
+    "//": "Radio spawn variant that keeps moving instead of guarding.",
+    "name_suffix": "wandering survivor",
+    "class": "NC_WANDERING_SCAVENGER",
+    "attitude": 0,
+    "mission": 0,
+    "chat": "TALK_STRANGER_NEUTRAL",
+    "faction": "no_faction"
+  },
+  {
+    "type": "npc",
+    "id": "radio_doctor",
+    "//": "Radio spawn variant that keeps moving instead of guarding.",
+    "name_suffix": "Doctor",
+    "class": "NC_DOCTOR",
+    "attitude": 0,
+    "mission": 0,
+    "chat": "TALK_RANCH_DOCTOR",
     "faction": "no_faction"
   }
 ]
