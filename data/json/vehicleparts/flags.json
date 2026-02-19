@@ -35,5 +35,5 @@
     },
     "flags": [ "FOLDABLE", "PROTRUSION", "OVER", "UNMOUNT_ON_DAMAGE", "SHOCK_IMMUNE" ],
     "breaks_into": [ { "item": "splinter", "count": [ 1, 5 ] }, { "item": "american_flag", "count": 1 } ]
-  }  
+  }
 ]

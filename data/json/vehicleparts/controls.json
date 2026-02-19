@@ -340,5 +340,5 @@
     },
     "flags": [ "ON_CONTROLS", "SECURITY", "FOLDABLE", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ],
     "breaks_into": "ig_vp_device"
-  }  
+  }
 ]

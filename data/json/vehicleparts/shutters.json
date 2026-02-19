@@ -127,5 +127,5 @@
     },
     "flags": [ "OPENABLE", "OPAQUE", "OPENCLOSE_INSIDE", "CURTAIN", "MULTISQUARE", "SHOCK_IMMUNE" ],
     "breaks_into": [  ]
-  }  
+  }
 ]

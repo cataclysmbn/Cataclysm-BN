@@ -154,6 +154,5 @@
     "flags": [ "AISLE", "BOARDABLE" ],
     "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] }, { "item": "nail", "charges": [ 5, 10 ] } ],
     "damage_reduction": { "all": 16 }
-  },
-  
+  }
 ]

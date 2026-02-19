@@ -95,5 +95,5 @@
     ],
     "breaks_into": [ { "item": "plastic_chunk", "count": [ 4, 8 ] } ],
     "damage_reduction": { "all": 12, "stab": 4, "cut": 4 }
-  }  
+  }
 ]

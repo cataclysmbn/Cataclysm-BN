@@ -103,7 +103,6 @@
     "breaks_into": [ { "item": "plastic_chunk", "count": [ 4, 8 ] } ],
     "damage_reduction": { "all": 12, "stab": 4, "cut": 4 }
   },
-
   {
     "type": "vehicle_part",
     "id": "metal_boat_hull",
@@ -266,6 +265,5 @@
     "flags": [ "FLOATS", "VARIABLE_SIZE", "FOLDABLE", "SHOCK_IMMUNE" ],
     "breaks_into": [ { "item": "plastic_chunk", "count": [ 10, 20 ] } ],
     "damage_reduction": { "bash": 10 }
-  },
-  
+  }
 ]
