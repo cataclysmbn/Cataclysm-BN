@@ -41,7 +41,6 @@
     "coverage": 30,
     "light_emitted": 1,
     "required_str": -1,
-    "flags": [ "TRANSPARENT", "EMITTER" ],
-    "emissions": [ "emit_smoke_plume", "emit_hot_air_geyser" ]
+    "flags": [ "TRANSPARENT" ]
   }
 ]
