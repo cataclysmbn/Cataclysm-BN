@@ -147,9 +147,6 @@ static const efftype_id effect_crushed( "crushed" );
 
 static const ter_str_id t_rock_floor_no_roof( "t_rock_floor_no_roof" );
 
-// Conversion constant for 100ths of miles per hour to meters per second
-constexpr float velocity_constant = 0.0044704;
-
 static const std::string str_DOOR_LOCKING( "DOOR_LOCKING" );
 static const std::string str_OPENCLOSE_INSIDE( "OPENCLOSE_INSIDE" );
 
@@ -935,12 +932,10 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
         // imp? & delta? & final? reworked:
         // newvel1 =( vel1 * ( mass1 - mass2 ) + ( 2 * mass2 * vel2 ) ) / ( mass1 + mass2 )
         // as per http://en.wikipedia.org/wiki/Elastic_collision
-        //velocity of veh1 before collision in the direction of collision_axis_y, converting to m/s
-        float vel1_y = velocity_constant * collision_axis_y.dot_product( velo_veh1 );
-        float vel1_x = velocity_constant * collision_axis_x.dot_product( velo_veh1 );
-        //velocity of veh2 before collision in the direction of collision_axis_y, converting to m/s
-        float vel2_y = velocity_constant * collision_axis_y.dot_product( velo_veh2 );
-        float vel2_x = velocity_constant * collision_axis_x.dot_product( velo_veh2 );
+        float vel1_y = cmps_to_mps( collision_axis_y.dot_product( velo_veh1 ) );
+        float vel1_x = cmps_to_mps( collision_axis_x.dot_product( velo_veh1 ) );
+        float vel2_y = cmps_to_mps( collision_axis_y.dot_product( velo_veh2 ) );
+        float vel2_x = cmps_to_mps( collision_axis_x.dot_product( velo_veh2 ) );
         delta_vel = std::abs( vel1_y - vel2_y );
         // Keep in mind get_collision_factor is looking for m/s, not m/h.
         // e = 0 -> inelastic collision
@@ -957,8 +952,8 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
         float vel1_y_a = ( ( m2 * vel2_y * ( 1 + e ) + vel1_y * ( m1 - m2 * e ) ) / ( m1 + m2 ) );
         float vel2_y_a = ( ( m1 * vel1_y * ( 1 + e ) + vel2_y * ( m2 - m1 * e ) ) / ( m1 + m2 ) );
         // Add both components; Note: collision_axis is normalized
-        rl_vec2d final1 = ( collision_axis_y * vel1_y_a + collision_axis_x * vel1_x_a ) / velocity_constant;
-        rl_vec2d final2 = ( collision_axis_y * vel2_y_a + collision_axis_x * vel2_x_a ) / velocity_constant;
+        rl_vec2d final1 = ( collision_axis_y * vel1_y_a + collision_axis_x * vel1_x_a ) * 100.0;
+        rl_vec2d final2 = ( collision_axis_y * vel2_y_a + collision_axis_x * vel2_x_a ) * 100.0;
 
         veh.move.init( final1.as_point() );
         if( final1.dot_product( veh.face_vec() ) < 0 ) {
@@ -992,7 +987,7 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
         const float m1 = to_kilogram( veh.total_mass() );
         // Collision is perfectly inelastic for simplicity
         // Assume veh2 is standing still
-        dmg_veh1 = ( std::abs( vmiph_to_mps( veh.vertical_velocity ) ) * ( m1 / 10 ) ) / 2;
+        dmg_veh1 = ( std::abs( cmps_to_mps( veh.vertical_velocity ) ) * ( m1 / 10 ) ) / 2;
         dmg_veh2 = dmg_veh1;
         veh.vertical_velocity = 0;
     }

@@ -1428,14 +1428,14 @@ void game::calc_driving_offset( vehicle *veh )
                       ( getmaxy( w_terrain ) + 1 ) / 2 - border_range - 1 );
 
     // velocity at or below this results in no offset at all
-    static const float min_offset_vel = 1 * vehicles::vmiph_per_tile;
+    static const float min_offset_vel = 1 * vehicles::cmps_per_tile;
     // velocity at or above this results in maximal offset
     static const float max_offset_vel = std::min( max_offset.y, max_offset.x ) *
-                                        vehicles::vmiph_per_tile;
+                                        vehicles::cmps_per_tile;
     float velocity = veh->velocity;
     rl_vec2d offset = veh->move_vec();
     if( !veh->skidding && veh->player_in_control( u ) &&
-        std::abs( veh->cruise_velocity - veh->velocity ) < 7 * vehicles::vmiph_per_tile ) {
+        std::abs( veh->cruise_velocity - veh->velocity ) < 7 * vehicles::cmps_per_tile ) {
         // Use the cruise controlled velocity, but only if
         // it is not too different from the actual velocity.
         // The actual velocity changes too often (see above slowdown).

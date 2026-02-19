@@ -1060,6 +1060,12 @@
   },
   {
     "type": "overmap_terrain",
+    "id": "industrial_center_data_center_upper_roof",
+    "copy-from": "industrial_center_data_center",
+    "name": "data center roof"
+  },
+  {
+    "type": "overmap_terrain",
     "id": "industrial_center_admin",
     "name": "administration",
     "sym": "<",
