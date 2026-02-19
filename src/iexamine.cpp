@@ -7167,8 +7167,12 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
 
     for( const item * const &it : items_here ) {
         const bool has_smokable_item = it->typeId() != itype_charcoal && it->has_flag( flag_SMOKABLE );
-        if( has_smokable_item ) {
+        const bool has_removable_item = it->typeId() != itype_charcoal &&
+                                        it->typeId() != itype_fake_smoke_plume;
+        if( has_removable_item ) {
             f_check = true;
+        }
+        if( has_smokable_item ) {
             f_volume += it->volume();
         }
         if( active && it->typeId() == itype_fake_smoke_plume ) {
