@@ -7166,7 +7166,8 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
     bool f_check = false;
 
     for( const item * const &it : items_here ) {
-        if( it->is_food() ) {
+        const bool has_smokable_item = it->typeId() != itype_charcoal && it->has_flag( flag_SMOKABLE );
+        if( has_smokable_item ) {
             f_check = true;
             f_volume += it->volume();
         }
