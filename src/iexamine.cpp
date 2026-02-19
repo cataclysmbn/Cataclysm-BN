@@ -1563,7 +1563,7 @@ void iexamine::safe( player &p, const tripoint &examp )
 {
 
     map &here = get_map();
-    auto pseudo_prying_tools = std::vector<detached_ptr<item>>{};
+    auto pseudo_prying_tools = std::vector<detached_ptr<item>> {};
     auto *prying_tool = find_best_prying_tool( p, pseudo_prying_tools );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
@@ -1628,7 +1628,7 @@ void iexamine::safe( player &p, const tripoint &examp )
 void iexamine::gunsafe_el( player &p, const tripoint &examp )
 {
     map &here = get_map();
-    auto pseudo_prying_tools = std::vector<detached_ptr<item>>{};
+    auto pseudo_prying_tools = std::vector<detached_ptr<item>> {};
     auto *prying_tool = find_best_prying_tool( p, pseudo_prying_tools );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
@@ -1729,7 +1729,7 @@ void iexamine::locked_object( player &p, const tripoint &examp )
         }
     }
 
-    auto pseudo_prying_tools = std::vector<detached_ptr<item>>{};
+    auto pseudo_prying_tools = std::vector<detached_ptr<item>> {};
     auto *prying_tool = find_best_prying_tool( p, pseudo_prying_tools );
     if( prying_tool ) {
         const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
