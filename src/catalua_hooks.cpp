@@ -43,6 +43,8 @@ constexpr auto hook_names = std::array
     "on_creature_loaded",
     "on_monster_loaded",
     "on_npc_loaded",
+    "on_creature_unload",
+    "on_npc_unload",
 };
 
 void define_hooks( lua_state &state )

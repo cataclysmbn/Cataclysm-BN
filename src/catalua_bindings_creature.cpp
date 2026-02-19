@@ -12,6 +12,7 @@
 #include "catalua_luna_doc.h"
 #include "character.h"
 #include "creature.h"
+#include "coordinate_conversions.h"
 #include "damage.h"
 #include "disease.h"
 #include "enums.h"
@@ -1244,6 +1245,29 @@ void cata::detail::reg_npc( sol::state &lua )
         SET_FX_T( saw_player_recently, bool() const );
 
         SET_FX_T( has_omt_destination, bool() const );
+
+        DOC( "Returns the npc's overmap destination as a tripoint or nil if unset." );
+        luna::set_fx( ut, "get_omt_destination", []( const UT_CLASS & npchar ) -> sol::optional<tripoint> {
+            if( npchar.goal == npc::no_goal_point ) {
+                return sol::optional<tripoint>();
+            }
+            return sol::optional<tripoint>( npchar.goal.raw() );
+        } );
+
+        DOC( "Sets the npc's overmap destination (absolute omt tripoint)." );
+        luna::set_fx( ut, "set_omt_destination", []( UT_CLASS & npchar, const tripoint &dest ) -> void {
+            npchar.goal = tripoint_abs_omt( dest );
+        } );
+
+        DOC( "Clears the npc's overmap destination." );
+        luna::set_fx( ut, "clear_omt_destination", []( UT_CLASS & npchar ) -> void {
+            npchar.goal = npc::no_goal_point;
+        } );
+
+        DOC( "Moves the npc to an overmap tile (absolute omt tripoint) without pathing." );
+        luna::set_fx( ut, "travel_overmap_to", []( UT_CLASS & npchar, const tripoint &dest ) -> void {
+            npchar.travel_overmap( omt_to_sm_copy( dest ) );
+        } );
 
         SET_FX_T( get_attitude, npc_attitude() const );
 
