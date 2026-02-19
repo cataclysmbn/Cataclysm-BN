@@ -5997,6 +5997,7 @@
       { "point": [ 0, 1, 1 ], "overmap": "industrial_center_loading_bay_roof_north" },
       { "point": [ 3, 1, 1 ], "overmap": "industrial_center_medical_center_roof_north" },
       { "point": [ 3, 2, 1 ], "overmap": "industrial_center_data_center_roof_north" },
+      { "point": [ 3, 2, 2 ], "overmap": "industrial_center_data_center_upper_roof_north" },
       { "point": [ 3, 3, 1 ], "overmap": "industrial_center_admin_roof_north" },
       { "point": [ 2, 0, -1 ], "overmap": "industrial_center_pump_station_basement_north" }
     ],
