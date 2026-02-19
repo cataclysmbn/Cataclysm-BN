@@ -6390,9 +6390,11 @@ static void smoker_activate( player &p, const tripoint &examp )
     item *charcoal = nullptr;
 
     for( item * const &it : items ) {
-        if( it->has_flag( flag_SMOKED ) && !it->has_flag( flag_SMOKABLE ) ) {
-            add_msg( _( "This rack already contains smoked food." ) );
-            add_msg( _( "Remove it before firing the smoking rack again." ) );
+        // Check for finished items (either has SMOKED flag, or is not smokable and not charcoal)
+        if( ( it->has_flag( flag_SMOKED ) && !it->has_flag( flag_SMOKABLE ) ) ||
+            ( !it->has_flag( flag_SMOKABLE ) && it->typeId() != itype_charcoal ) ) {
+            add_msg( _( "This rack already contains finished items." ) );
+            add_msg( _( "Remove them before firing the smoking rack again." ) );
             return;
         }
         if( it->has_flag( flag_SMOKABLE ) ) {
@@ -6404,16 +6406,8 @@ static void smoker_activate( player &p, const tripoint &examp )
             charcoal_present = true;
             charcoal = it;
         }
-        if( it->typeId() != itype_charcoal && !it->has_flag( flag_SMOKABLE ) ) {
-            add_msg( m_bad, _( "This rack contains %s, which can't be smoked!" ), it->tname( 1,
-                     false ) );
-            add_msg( _( "You remove %s from the rack." ), it->tname() );
-            here.add_item_or_charges( p.pos(), here.i_rem( examp, it ) );
-            p.mod_moves( -p.item_handling_cost( *it ) );
-            return;
-        }
         if( it->has_flag( flag_SMOKED ) && it->has_flag( flag_SMOKABLE ) ) {
-            add_msg( _( "This rack has some smoked food that might be dehydrated by smoking it again." ) );
+            add_msg( _( "This rack has some smoked items that might be dehydrated by smoking them again." ) );
         }
     }
     if( !food_present ) {
@@ -6651,12 +6645,14 @@ static void smoker_load_food( player &p, const tripoint &examp,
         return;
     }
 
-    // Already smoked food has to be removed before adding more food for smoker to operate properly
+    // Already finished items have to be removed before adding more items for smoker to operate properly
     map_stack items = here.i_at( examp );
     for( item * const &it : items ) {
-        if( it->has_flag( flag_SMOKED ) && !it->has_flag( flag_SMOKABLE ) ) {
-            add_msg( _( "This rack already contains smoked food." ) );
-            add_msg( _( "Remove it before loading the smoking rack again." ) );
+        // Check for finished items (either has SMOKED flag, or is not smokable and not charcoal)
+        if( ( it->has_flag( flag_SMOKED ) && !it->has_flag( flag_SMOKABLE ) ) ||
+            ( !it->has_flag( flag_SMOKABLE ) && it->typeId() != itype_charcoal ) ) {
+            add_msg( _( "This rack already contains finished items." ) );
+            add_msg( _( "Remove them before loading the smoking rack again." ) );
             return;
         }
     }
@@ -6671,7 +6667,7 @@ static void smoker_load_food( player &p, const tripoint &examp,
     } );
 
     uilist smenu;
-    smenu.text = _( "Load smoking rack with what kind of food?" );
+    smenu.text = _( "Load smoking rack with what kind of item?" );
     // count and ask for item to be placed ...
     std::list<std::string> names;
     std::vector<const item *> entries;
@@ -7220,18 +7216,18 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
 
     if( !active ) {
         smenu.addentry_desc( 1, !empty && has_enough_coal, 'l',
-                             empty ?  _( "Light up and smoke food… insert some food for smoking first" ) :
+                             empty ?  _( "Light up and start smoking… insert some items for smoking first" ) :
                              !has_enough_coal ? string_format(
-                                 _( "Light up and smoke food… need extra %d charges of charcoal" ),
+                                 _( "Light up and start smoking… need extra %d charges of charcoal" ),
                                  need_charges - coal_charges ) :
-                             _( "Light up and smoke food" ),
+                             _( "Light up and start smoking" ),
                              _( "Light up the smoking rack and start smoking.  Smoking will take about 6 hours." ) );
         if( portable ) {
             smenu.addentry_desc( 2, !full_portable, 'f',
-                                 full_portable ? _( "Insert food for smoking… smoking rack is full" ) :
-                                 string_format( _( "Insert food for smoking… remaining capacity is %s %s" ),
+                                 full_portable ? _( "Insert items for smoking… smoking rack is full" ) :
+                                 string_format( _( "Insert items for smoking… remaining capacity is %s %s" ),
                                                 format_volume( remaining_capacity_portable ), volume_units_abbr() ),
-                                 _( "Fill the smoking rack with raw meat, fish or sausages for smoking or fruit or vegetable or smoked meat for drying." ) );
+                                 _( "Fill the smoking rack with raw meat, fish, sausages, hides, or other smokable items." ) );
 
             smenu.addentry_desc( 8, !active, 'z',
                                  active ? _( "You cannot disassemble this smoking rack while it is active!" ) :
@@ -7239,14 +7235,14 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
 
         } else {
             smenu.addentry_desc( 2, !full, 'f',
-                                 full ? _( "Insert food for smoking… smoking rack is full" ) :
-                                 string_format( _( "Insert food for smoking… remaining capacity is %s %s" ),
+                                 full ? _( "Insert items for smoking… smoking rack is full" ) :
+                                 string_format( _( "Insert items for smoking… remaining capacity is %s %s" ),
                                                 format_volume( remaining_capacity ), volume_units_abbr() ),
-                                 _( "Fill the smoking rack with raw meat, fish or sausages for smoking or fruit or vegetable or smoked meat for drying." ) );
+                                 _( "Fill the smoking rack with raw meat, fish, sausages, hides, or other smokable items." ) );
         }
 
         if( f_check ) {
-            smenu.addentry( 4, f_check, 'e', _( "Remove food from smoking rack" ) );
+            smenu.addentry( 4, f_check, 'e', _( "Remove items from smoking rack" ) );
         }
 
         smenu.addentry_desc( 3, has_coal_in_inventory, 'r',
