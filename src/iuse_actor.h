@@ -218,6 +218,8 @@ class unfold_vehicle_iuse : public iuse_actor
         /** Creature::moves it takes to unfold. */
         int moves = 0;
         std::map<itype_id, int> tools_needed;
+        bool allow_edit = false;
+        bool full_fuel = false;
 
         unfold_vehicle_iuse( const std::string &type = "unfold_vehicle" ) : iuse_actor( type ) {}
 
@@ -739,6 +741,54 @@ class manualnoise_actor : public iuse_actor
         int use( player &, item &, bool, const tripoint & ) const override;
         ret_val<bool> can_use( const Character &, const item &, bool, const tripoint & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
+};
+
+/**
+ * Sends a radio activation signal.
+ */
+class radio_signal_actor : public iuse_actor
+{
+    public:
+        radio_signal_actor( const std::string &type = "radio_signal" ) : iuse_actor( type ) {}
+        ~radio_signal_actor() override = default;
+
+        std::unique_ptr<iuse_actor> clone() const override;
+        void load( const JsonObject &obj ) override;
+        int use( player &p, item &it, bool t, const tripoint &pos ) const override;
+        ret_val<bool> can_use( const Character &who, const item &it, bool t,
+                               const tripoint &pos ) const override;
+        std::string get_name() const override;
+
+    private:
+        struct signal_entry {
+            int signal = 1;
+            translation menu_text;
+        };
+
+        translation menu_text;
+        translation prompt;
+        std::vector<signal_entry> signals;
+        std::string use_message = "Click.";
+        int moves = to_moves<int>( 2_seconds );
+};
+
+/**
+ * Remote vehicle control with configurable control class.
+ */
+class remoteveh_actor : public iuse_actor
+{
+    public:
+        remoteveh_actor( const std::string &type = "REMOTEVEH" ) : iuse_actor( type ) {}
+        ~remoteveh_actor() override = default;
+
+        std::unique_ptr<iuse_actor> clone() const override;
+        void load( const JsonObject &obj ) override;
+        int use( player &p, item &it, bool t, const tripoint &pos ) const override;
+        ret_val<bool> can_use( const Character &who, const item &it, bool t,
+                               const tripoint &pos ) const override;
+
+    private:
+        bool advanced = true;
 };
 
 /**

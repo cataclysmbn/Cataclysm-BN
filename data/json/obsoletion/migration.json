@@ -30,6 +30,16 @@
     "replace": "arrow_metal_sharpened_fletched"
   },
   {
+    "id": "radio_car",
+    "type": "MIGRATION",
+    "replace": "folding_rc_car"
+  },
+  {
+    "id": "radio_car_on",
+    "type": "MIGRATION",
+    "replace": "folding_rc_car"
+  },
+  {
     "id": "40mm_acidbomb",
     "type": "MIGRATION",
     "replace": "40x46mm_m651"

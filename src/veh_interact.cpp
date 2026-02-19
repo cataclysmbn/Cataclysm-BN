@@ -604,7 +604,9 @@ task_reason veh_interact::cant_do( char mode )
         case 'i':
             // install mode
             enough_morale = you.has_morale_to_craft();
-            valid_target = !can_mount.empty() && !veh->tags.contains( "convertible" );
+            valid_target = !can_mount.empty() &&
+                           ( !veh->tags.contains( "convertible" ) ||
+                             veh->tags.contains( "convertible_allow_edit" ) );
             //tool checks processed later
             enough_light = character_funcs::can_see_fine_details( you );
             has_tools = true;
@@ -646,7 +648,9 @@ task_reason veh_interact::cant_do( char mode )
         case 'o':
             // remove mode
             enough_morale = you.has_morale_to_craft();
-            valid_target = cpart >= 0 && !veh->tags.contains( "convertible" );
+            valid_target = cpart >= 0 &&
+                           ( !veh->tags.contains( "convertible" ) ||
+                             veh->tags.contains( "convertible_allow_edit" ) );
             part_free = parts_here.size() > 1 || ( cpart >= 0 && veh->can_unmount( cpart ) );
             //tool and skill checks processed later
             has_tools = true;
@@ -1055,6 +1059,7 @@ void veh_interact::do_install()
                part.has_flag( "CHIMES" ) ||
                part.has_flag( "MUFFLER" ) ||
                part.has_flag( "REMOTE_CONTROLS" ) ||
+               part.has_flag( "REMOTE_CONTROLS_SMALL" ) ||
                part.has_flag( "CURTAIN" ) ||
                part.has_flag( "SEATBELT" ) ||
                part.has_flag( "SECURITY" ) ||
@@ -1149,6 +1154,22 @@ void veh_interact::do_install()
                 }
                 if( veh->is_foldable() && !sel_vpart_info->has_flag( "FOLDABLE" ) &&
                     !query_yn( _( "Installing this part will make the vehicle unfoldable.  Continue?" ) ) ) {
+                    return;
+                }
+                static const std::string rcflag = "RC_COMPATIBLE";
+                const auto all_parts_rc_compatible = [&]() {
+                    for( const vpart_reference &vp : veh->get_all_parts() ) {
+                        if( vp.part().removed ) {
+                            continue;
+                        }
+                        if( !vp.info().has_flag( rcflag ) ) {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+                if( all_parts_rc_compatible() && !sel_vpart_info->has_flag( rcflag ) &&
+                    !query_yn( _( "Installing this part will make the vehicle non-RC compatible.  Continue?" ) ) ) {
                     return;
                 }
                 const auto &shapes =

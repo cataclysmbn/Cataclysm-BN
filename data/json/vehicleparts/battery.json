@@ -49,6 +49,7 @@
     "item": "battery_motorbike_small",
     "durability": 30,
     "folded_volume": "2 L",
+    "extend": { "flags": [ "RC_COMPATIBLE" ] },
     "breaks_into": [
       { "item": "steel_lump", "count": [ 4, 7 ] },
       { "item": "steel_chunk", "count": [ 4, 7 ] },
