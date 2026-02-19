@@ -17,14 +17,20 @@
 #
 # Non-interactive shortcut examples:
 #   /c "$(SolutionDir)cmake-build.bat -Platform win -Preset 1 -BuildType 2 -Action build"
+#   /c "$(SolutionDir)cmake-build.bat -Platform win -Preset 1 -BuildType 1 -Action debug"
 #   /c "$(SolutionDir)cmake-build.bat -Platform linux -Preset linux-slim -Target cataclysm-bn-tiles -Action build"
+#
+# For the debug action, add a second External Tool entry (e.g. "BN Debug") using -Action debug.
+# Windows: opens a new VS instance with devenv /debugexe (full debugger attached from start).
+# Linux  : starts the binary under gdbserver :4444; attach via Debug > Attach to Process
+#          (Connection type: gdb, Connection target: localhost:4444).
 
 param(
     [string]$Platform   = "",   # win | linux | mac
     [string]$Preset     = "",   # configure preset name or selection number
     [string]$BuildType  = "",   # Windows only: 1=Debug 2=RelWithDebInfo 3=Release
     [string]$Target     = "",   # cmake build target (derived from preset if blank)
-    [string]$Action     = "",   # build | run | rebuild | delete
+    [string]$Action     = "",   # build | run | rebuild | delete | debug
     [string]$RunArgs    = "",   # forwarded verbatim to the binary when running
     [string]$ExtraFlags = ""    # extra cmake configure flags, e.g. -DFOO=ON
 )
@@ -292,9 +298,106 @@ $ParamAction     = $Action
 $ParamRunArgs    = $RunArgs
 $ParamExtraFlags = $ExtraFlags
 
+# ── Interactivity helpers ──────────────────────────────────────────────────────
+# When stdin is a real console (terminal), interactive text menus work normally.
+# When redirected (e.g. VS "Use Output window"), we fall back to GUI pickers so
+# the tool still works without a terminal window.
+$isInteractive = -not [Console]::IsInputRedirected
+
+# Show a numbered text menu (terminal) or an Out-GridView picker (GUI mode).
+# $Items: ordered hashtable  Key => Label,
+#         plain string array (Value = Label), or
+#         @([PSCustomObject]@{Value=…; Label=…}) for pre-built entries.
+# Returns the chosen Value; exits 0 if the user dismisses the picker.
+function Select-Menu {
+    param([string]$Title, $Items)
+
+    # Normalise to @{Value; Label} entries.
+    if ($Items -is [System.Collections.IDictionary]) {
+        $entries = @($Items.GetEnumerator() | ForEach-Object {
+            [PSCustomObject]@{ Value = $_.Key; Label = $_.Value }
+        })
+    } elseif ($Items.Count -gt 0 -and $Items[0] -is [string]) {
+        $entries = @($Items | ForEach-Object { [PSCustomObject]@{ Value = $_; Label = $_ } })
+    } else {
+        $entries = @($Items)
+    }
+
+    if ($script:isInteractive) {
+        Write-Host ""
+        Write-Host "${Title}:"
+        for ($i = 0; $i -lt $entries.Count; $i++) {
+            Write-Host "  $($i + 1)  $($entries[$i].Label)"
+        }
+        Write-Host ""
+        $idx = [int](Read-Host "Enter number") - 1
+        if ($idx -lt 0 -or $idx -ge $entries.Count) { Write-Error "Invalid selection."; exit 1 }
+        return $entries[$idx].Value
+    } else {
+        Add-Type -AssemblyName System.Windows.Forms
+        Add-Type -AssemblyName System.Drawing
+
+        $labels  = @($entries | ForEach-Object { $_.Label })
+
+        # Size the window to fit the longest label (rough 7-px-per-char estimate for 10pt Segoe UI).
+        $maxChar = ($labels | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum
+        $fw = [Math]::Max(280, [Math]::Min(700, $maxChar * 7 + 60))
+        $fh = [Math]::Max(120, [Math]::Min(500, $labels.Count * 22 + 80))
+
+        $form = New-Object System.Windows.Forms.Form
+        $form.Text            = $Title
+        $form.ClientSize      = New-Object System.Drawing.Size($fw, $fh)
+        $form.StartPosition   = "CenterScreen"
+        $form.FormBorderStyle = "Sizable"
+        $form.MaximizeBox     = $false
+        $form.MinimizeBox     = $false
+        $form.Font            = New-Object System.Drawing.Font("Segoe UI", 10)
+
+        $list = New-Object System.Windows.Forms.ListBox
+        $list.SetBounds(0, 0, $fw, $fh - 44)
+        $list.Anchor        = "Top, Left, Right, Bottom"
+        $list.BorderStyle   = "None"
+        $list.IntegralHeight = $false
+        foreach ($lbl in $labels) { [void]$list.Items.Add($lbl) }
+        $list.SelectedIndex = 0
+
+        $ok = New-Object System.Windows.Forms.Button
+        $ok.Text         = "OK"
+        $ok.SetBounds(($fw - 80) / 2, $fh - 38, 80, 28)
+        $ok.Anchor       = "Bottom"
+        $ok.DialogResult = [System.Windows.Forms.DialogResult]::OK
+
+        $list.add_DoubleClick({ $form.DialogResult = [System.Windows.Forms.DialogResult]::OK })
+
+        $form.Controls.Add($list)
+        $form.Controls.Add($ok)
+        $form.AcceptButton = $ok
+
+        $dlg = $form.ShowDialog()
+        $si  = $list.SelectedIndex
+        $form.Dispose()
+
+        if ($dlg -ne [System.Windows.Forms.DialogResult]::OK -or $si -lt 0) { exit 0 }
+        return $entries[$si].Value
+    }
+}
+
+# Prompt for a free-form text value.
+# Uses a GUI InputBox when stdin is redirected; Read-Host otherwise.
+function Read-Input {
+    param([string]$Prompt, [string]$Default = "")
+    if ($script:isInteractive) {
+        return (Read-Host $Prompt)
+    } else {
+        Add-Type -AssemblyName Microsoft.VisualBasic
+        return [Microsoft.VisualBasic.Interaction]::InputBox($Prompt, "cmake-build", $Default)
+    }
+}
+
 $lastConfig = $null
 
 while ($true) {
+
 
 # ── Platform selection ────────────────────────────────────────────────────────
 # Build the menu dynamically; macOS only appears when mac presets are present.
@@ -309,16 +412,7 @@ if ($Platform -ne "") {
         exit 1
     }
 } else {
-    Write-Host ""
-    Write-Host "Select platform:"
-    $pKeys = @($platformList.Keys)
-    for ($i = 0; $i -lt $pKeys.Count; $i++) {
-        Write-Host "  $($i + 1)  $($platformList[$pKeys[$i]])"
-    }
-    Write-Host ""
-    $pidx = [int](Read-Host "Enter number") - 1
-    if ($pidx -ge 0 -and $pidx -lt $pKeys.Count) { $Platform = $pKeys[$pidx] }
-    else { Write-Error "Invalid selection."; exit 1 }
+    $Platform = Select-Menu "Select platform" $platformList
 }
 $IsWin   = ($Platform -eq "win")
 $IsMac   = ($Platform -eq "mac")
@@ -413,16 +507,12 @@ if ($Preset -ne "") {
         if (-not $selectedPreset) { Write-Error "Preset '$Preset' not found."; exit 1 }
     }
 } else {
-    Write-Host ""
-    Write-Host "Select configure preset:"
-    for ($i = 0; $i -lt $availPresets.Count; $i++) {
-        $label = if ($availPresets[$i].displayName) { $availPresets[$i].displayName } else { $availPresets[$i].name }
-        Write-Host "  $($i + 1)  $label"
+    $presetMap = [ordered]@{}
+    foreach ($p in $availPresets) {
+        $presetMap[$p.name] = if ($p.displayName) { $p.displayName } else { $p.name }
     }
-    Write-Host ""
-    $idx = [int](Read-Host "Enter number") - 1
-    if ($idx -ge 0 -and $idx -lt $availPresets.Count) { $selectedPreset = $availPresets[$idx] }
-    else { Write-Error "Invalid selection."; exit 1 }
+    $chosenPresetName = Select-Menu "Select configure preset" $presetMap
+    $selectedPreset   = $availPresets | Where-Object { $_.name -eq $chosenPresetName } | Select-Object -First 1
 }
 
 $presetName = $selectedPreset.name
@@ -436,13 +526,7 @@ if ($IsWin) {
         if ($idx -ge 0 -and $idx -lt $WinBuildTypes.Count) { $selectedBuildType = $WinBuildTypes[$idx] }
         else { Write-Error "Invalid -BuildType '$BuildType'. Range: 1-$($WinBuildTypes.Count)."; exit 1 }
     } else {
-        Write-Host ""
-        Write-Host "Select build type:"
-        for ($i = 0; $i -lt $WinBuildTypes.Count; $i++) { Write-Host "  $($i + 1)  $($WinBuildTypes[$i])" }
-        Write-Host ""
-        $idx = [int](Read-Host "Enter number") - 1
-        if ($idx -ge 0 -and $idx -lt $WinBuildTypes.Count) { $selectedBuildType = $WinBuildTypes[$idx] }
-        else { Write-Error "Invalid selection."; exit 1 }
+        $selectedBuildType = Select-Menu "Select build type" $WinBuildTypes
     }
 }
 
@@ -455,20 +539,12 @@ if ($Target -ne "") {
 } elseif ($inferredTargets.Count -eq 1) {
     $selectedTarget = $inferredTargets[0]
 } else {
-    Write-Host ""
-    Write-Host "Select target:"
-    for ($i = 0; $i -lt $inferredTargets.Count; $i++) { Write-Host "  $($i + 1)  $($inferredTargets[$i])" }
-    Write-Host "  $($inferredTargets.Count + 1)  Enter a custom target name"
-    Write-Host ""
-    $choice = Read-Host "Enter number"
-    $idx = [int]$choice - 1
-    if ($idx -ge 0 -and $idx -lt $inferredTargets.Count) {
-        $selectedTarget = $inferredTargets[$idx]
-    } elseif ($idx -eq $inferredTargets.Count) {
-        $selectedTarget = Read-Host "Target name"
+    $targetOptions  = $inferredTargets + @("(Enter a custom target name)")
+    $pickedTarget   = Select-Menu "Select target" $targetOptions
+    if ($pickedTarget -eq "(Enter a custom target name)") {
+        $selectedTarget = Read-Input "Target name"
     } else {
-        Write-Error "Invalid selection."
-        exit 1
+        $selectedTarget = $pickedTarget
     }
 }
 
@@ -522,38 +598,32 @@ if ($IsWin) {
 }
 
 # ── Action selection ──────────────────────────────────────────────────────────
-$validActions = @("build", "run", "rebuild", "delete")
+$validActions = @("build", "run", "rebuild", "delete", "debug")
 if ($Action -ne "" -and $validActions -notcontains $Action) {
     Write-Error "Invalid -Action '$Action'. Valid: $($validActions -join ', ')."
     exit 1
 }
 if ($Action -eq "") {
-    Write-Host ""
-    Write-Host "Select action:"
-    Write-Host "  1  Build"
-    Write-Host "  2  Run"
-    Write-Host "  3  Rebuild  (wipe build dir, reconfigure, build)"
-    Write-Host "  4  Delete build"
-    Write-Host "  x  Exit"
-    Write-Host ""
-    switch (Read-Host "Enter number") {
-        "1" { $Action = "build"   }
-        "2" { $Action = "run"     }
-        "3" { $Action = "rebuild" }
-        "4" { $Action = "delete"  }
-        "x" { exit 0             }
-        default { Write-Error "Invalid selection."; exit 1 }
+    $actionItems = [ordered]@{
+        "build"   = "Build"
+        "run"     = "Run"
+        "rebuild" = "Rebuild  (wipe build dir, reconfigure, build)"
+        "delete"  = "Delete build"
+        "debug"   = "Debug    (run under VS debugger / gdbserver)"
+        "exit"    = "Exit"
     }
+    $Action = Select-Menu "Select action" $actionItems
+    if ($Action -eq "exit") { exit 0 }
 }
 
 if ($isTestTarget -and $Action -eq "run" -and $RunArgs -eq "") {
     Write-Host ""
-    $RunArgs = Read-Host "Test args (blank = run all, e.g. [map])"
+    $RunArgs = Read-Input "Test args (blank = run all, e.g. [map])"
 }
 
 if (($Action -eq "build" -or $Action -eq "rebuild") -and $ExtraFlags -eq "") {
     Write-Host ""
-    $ExtraFlags = Read-Host "Extra cmake flags (blank = none, e.g. -DFOO=ON)"
+    $ExtraFlags = Read-Input "Extra cmake flags (blank = none, e.g. -DFOO=ON)"
 }
 
 # ── Summary ───────────────────────────────────────────────────────────────────
@@ -572,8 +642,8 @@ Write-Host ""
 
 # ── Delete ────────────────────────────────────────────────────────────────────
 if ($Action -eq "delete") {
-    $confirm = Read-Host "Delete $buildDir? (y/N)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") { Write-Host "Cancelled."; continue }
+    $confirm = Select-Menu "Delete $buildDir?" ([ordered]@{ "yes" = "Yes - delete"; "no" = "No - cancel" })
+    if ($confirm -ne "yes") { Write-Host "Cancelled."; continue }
     Write-Host "--- Deleting $buildDir ..."
     if ($IsLinux) {
         wsl bash -c "rm -rf $wslBuildPath"
@@ -602,8 +672,8 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
 
         if ($cacheExists -and $ExtraFlags -ne "") {
             Write-Host "--- Extra flags only apply during configure, but a cached build exists."
-            $r = Read-Host "Rebuild from scratch to apply them? [Y/n]"
-            if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+            $r = Select-Menu "Rebuild from scratch to apply extra flags?" ([ordered]@{ "yes" = "Yes - wipe and rebuild"; "no" = "No - keep cache" })
+            if ($r -eq "yes") {
                 Write-Host "--- Wiping build dir..."
                 Remove-Item -Recurse -Force $winBuildDir 2>$null
                 $cacheExists = $false
@@ -646,13 +716,17 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         Write-Host "==> Build complete."
         Write-Host "==> Binary: $binaryPath"
         Write-Host ""
-        $r = Read-Host "Run $selectedTarget now? [Y/n]"
-        if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+        $r = Select-Menu "Run $selectedTarget now?" ([ordered]@{
+            "run"   = "Run"
+            "debug" = "Debug    (attach VS debugger / gdbserver)"
+            "no"    = "No"
+        })
+        if ($r -ne "no") {
             if ($isTestTarget -and $RunArgs -eq "") {
                 Write-Host ""
-                $RunArgs = Read-Host "Test args (blank = run all, e.g. [map])"
+                $RunArgs = Read-Input "Test args (blank = run all, e.g. [map])"
             }
-            $Action = "run"
+            $Action = $r
         }
         Write-Host ""
 
@@ -669,8 +743,8 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
 
         if ($cacheExists -and $ExtraFlags -ne "") {
             Write-Host "--- Extra flags only apply during configure, but a cached build exists."
-            $r = Read-Host "Rebuild from scratch to apply them? [Y/n]"
-            if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+            $r = Select-Menu "Rebuild from scratch to apply extra flags?" ([ordered]@{ "yes" = "Yes - wipe and rebuild"; "no" = "No - keep cache" })
+            if ($r -eq "yes") {
                 Write-Host "--- Wiping build dir..."
                 Remove-Item -Recurse -Force $macBuildPath -ErrorAction SilentlyContinue
                 $cacheExists = $false
@@ -702,13 +776,17 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         Write-Host "==> Build complete."
         Write-Host "==> Binary: $binaryPath"
         Write-Host ""
-        $r = Read-Host "Run $selectedTarget now? [Y/n]"
-        if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+        $r = Select-Menu "Run $selectedTarget now?" ([ordered]@{
+            "run"   = "Run"
+            "debug" = "Debug    (attach VS debugger / gdbserver)"
+            "no"    = "No"
+        })
+        if ($r -ne "no") {
             if ($isTestTarget -and $RunArgs -eq "") {
                 Write-Host ""
-                $RunArgs = Read-Host "Test args (blank = run all, e.g. [map])"
+                $RunArgs = Read-Input "Test args (blank = run all, e.g. [map])"
             }
-            $Action = "run"
+            $Action = $r
         }
         Write-Host ""
 
@@ -784,8 +862,8 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
 
         if ($cacheExists -and $ExtraFlags -ne "") {
             Write-Host "--- Extra flags only apply during configure, but a cached build exists."
-            $r = Read-Host "Rebuild from scratch to apply them? [Y/n]"
-            if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+            $r = Select-Menu "Rebuild from scratch to apply extra flags?" ([ordered]@{ "yes" = "Yes - wipe and rebuild"; "no" = "No - keep cache" })
+            if ($r -eq "yes") {
                 Write-Host "--- Wiping build dir..."
                 wsl bash -c "rm -rf $wslBuildPath"
                 if ($LASTEXITCODE -ne 0) { Write-Error "Could not wipe build dir."; exit 1 }
@@ -818,37 +896,139 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         Write-Host ""
         Write-Host "==> Build complete."
         Write-Host ""
-        $r = Read-Host "Run $selectedTarget now? [Y/n]"
-        if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+        $r = Select-Menu "Run $selectedTarget now?" ([ordered]@{
+            "run"   = "Run"
+            "debug" = "Debug    (attach VS debugger / gdbserver)"
+            "no"    = "No"
+        })
+        if ($r -ne "no") {
             if ($isTestTarget -and $RunArgs -eq "") {
                 Write-Host ""
-                $RunArgs = Read-Host "Test args (blank = run all, e.g. [map])"
+                $RunArgs = Read-Input "Test args (blank = run all, e.g. [map])"
             }
-            $Action = "run"
+            $Action = $r
         }
         Write-Host ""
     }
 }
 
-# ── Run ───────────────────────────────────────────────────────────────────────
-if ($Action -eq "run") {
+# ── Run / Debug ───────────────────────────────────────────────────────────────
+if ($Action -eq "run" -or $Action -eq "debug") {
+    $isDebugRun = ($Action -eq "debug")
+
     if (-not $IsLinux -and -not (Test-Path $binaryPath)) {
         Write-Error "Binary not found: $binaryPath"
         Write-Error "Ensure the build succeeded, or run the 'Build' action first."
         exit 1
     }
-    Write-Host "--- Running $selectedTarget $RunArgs ..."
-    Write-Host ""
-    if ($IsLinux) {
-        wsl bash -c "cd $WslSrcDir; $binaryPath $RunArgs"
-        $runExit = $LASTEXITCODE
+    if ($isDebugRun) {
+        Write-Host "--- Launching $selectedTarget under debugger..."
     } else {
-        # Windows and macOS: run from source root so the game/tests can locate data/ and gfx/
+        Write-Host "--- Running $selectedTarget $RunArgs ..."
+    }
+    Write-Host ""
+
+    if ($IsLinux) {
+        if ($isDebugRun) {
+            # Ensure gdbserver is available (ships with the gdb package on Ubuntu).
+            $hasGdb = wsl bash -c "command -v gdbserver >/dev/null 2>&1 && echo yes || echo no"
+            if ("$hasGdb".Trim() -ne "yes") {
+                Write-Host "--- gdbserver not found; installing gdb..."
+                wsl -u root bash -c "apt-get install -y gdb"
+                if ($LASTEXITCODE -ne 0) { Write-Error "Failed to install gdb/gdbserver."; exit 1 }
+            }
+            $debugPort = 4444
+            Write-Host "==> gdbserver listening on :$debugPort - attach in VS now:"
+            Write-Host "    Debug > Attach to Process"
+            Write-Host "    Connection type  : gdb"
+            Write-Host "    Connection target : localhost:$debugPort"
+            Write-Host ""
+            wsl bash -c "cd $WslSrcDir; gdbserver :$debugPort $binaryPath $RunArgs"
+            $runExit = $LASTEXITCODE
+        } else {
+            wsl bash -c "cd $WslSrcDir; $binaryPath $RunArgs"
+            $runExit = $LASTEXITCODE
+        }
+    } elseif ($isDebugRun -and $IsWin) {
+        # cmake-build runs at standard (unelevated) integrity — same as VS — so COM ROT access
+        # works directly. Never elevate cmake-build; the ROT is partitioned by integrity level.
+        #
+        # Derive DTE ProgIDs from every installed VS version (2022=17, 2026=18, ...).
+        # GetActiveObject only returns running instances, so whichever VS the user has open
+        # is found automatically — not the "latest installed" version.
+        $vsWhere    = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $dteProgIds = @()
+        if (Test-Path $vsWhere) {
+            foreach ($ver in @(& $vsWhere -all -prerelease -property installationVersion 2>$null)) {
+                if ($ver -match '^(\d+)\.') {
+                    $id = "VisualStudio.DTE.$($Matches[1]).0"
+                    if ($dteProgIds -notcontains $id) { $dteProgIds += $id }
+                }
+            }
+        }
+        if (-not $dteProgIds) { $dteProgIds = @("VisualStudio.DTE.18.0", "VisualStudio.DTE.17.0", "VisualStudio.DTE.16.0") }
+
+        $startParams = @{ FilePath = $binaryPath; WorkingDirectory = $WinSrcPath; PassThru = $true }
+        if ($RunArgs -ne "") { $startParams['ArgumentList'] = $RunArgs.Split() }
+        $gameProc = Start-Process @startParams
+        Write-Host "==> Started $selectedTarget (PID $($gameProc.Id))"
+
+        # Brief pause to let the process initialise; detect immediate crashes.
+        Start-Sleep -Milliseconds 500
+        if ($gameProc.HasExited) {
+            Write-Host "==> ERROR: $selectedTarget exited immediately (code $($gameProc.ExitCode))."
+            Write-Host "    Check that the binary and working directory are correct."
+            $runExit = $gameProc.ExitCode
+        } else {
+            $attached   = $false
+            $vsFound    = $false
+            $attachErr  = ""
+            $deadline   = (Get-Date).AddSeconds(5)
+            do {
+                foreach ($progId in $dteProgIds) {
+                    try {
+                        $dte     = [Runtime.InteropServices.Marshal]::GetActiveObject($progId)
+                        $vsFound    = $true
+                        $targetProc = $null
+                        foreach ($p in $dte.Debugger.LocalProcesses) {
+                            if ([int]$p.ProcessID -eq $gameProc.Id) { $targetProc = $p; break }
+                        }
+                        if ($targetProc) {
+                            try   { [void]$targetProc.Attach(); $attached = $true; break }
+                            catch { $attachErr = "$_" }
+                        }
+                    } catch { }
+                }
+                if (-not $attached) { Start-Sleep -Milliseconds 200 }
+            } while (-not $attached -and (Get-Date) -lt $deadline)
+
+            if ($attached) {
+                Write-Host "==> VS debugger attached."
+            } elseif ($vsFound) {
+                Write-Host "==> VS found but could not attach to PID $($gameProc.Id)."
+                if ($attachErr) {
+                    Write-Host "    Attach() error: $attachErr"
+                } else {
+                    Write-Host "    Process not found in VS's list after 5 s."
+                    Write-Host "    If VS is running elevated, restart it without elevation."
+                }
+                Write-Host "    Attach manually: Debug > Attach to Process."
+            } else {
+                Write-Host "==> No running VS instance found."
+                Write-Host "    Attach manually: Debug > Attach to Process > PID $($gameProc.Id)."
+            }
+$gameProc.WaitForExit()
+            $runExit = $gameProc.ExitCode
+        }
+    } else {
+        # Normal run - Windows, macOS, or debug on macOS (falls back to plain run).
+        # Run from source root so the game/tests can locate data/ and gfx/.
         Push-Location $WinSrcPath
         if ($RunArgs -ne "") { & $binaryPath $RunArgs.Split() } else { & $binaryPath }
         $runExit = $LASTEXITCODE
         Pop-Location
     }
+
     Write-Host ""
     if ($runExit -ne 0) { Write-Host "==> Process exited with code $runExit" }
     else { Write-Host "==> Done." }
@@ -870,21 +1050,18 @@ if ($savedAction -ne "delete") {
     }
 }
 
-Write-Host ""
-Write-Host "==> What next?"
-Write-Host "  Enter  Start fresh"
+$nextItems = [ordered]@{ "new" = "Start fresh" }
 if ($lastConfig) {
     $rl = "$($lastConfig.Action): $($lastConfig.PresetLabel)"
     if ($lastConfig.BuildType) { $rl += " | $($lastConfig.BuildType)" }
     $rl += " | $($lastConfig.Target)"
-    Write-Host "  l      Repeat last  [$rl]"
+    $nextItems["last"] = "Repeat last  [$rl]"
 }
-Write-Host "  x      Exit"
-Write-Host ""
-$next = (Read-Host "Choice").ToLower().Trim()
+$nextItems["exit"] = "Exit"
+$next = Select-Menu "What next?" $nextItems
 
-if ($next -eq "x") { exit 0 }
-if ($next -eq "l" -and $lastConfig) {
+if ($next -eq "exit") { exit 0 }
+if ($next -eq "last" -and $lastConfig) {
     $Platform   = $lastConfig.Platform
     $Preset     = $lastConfig.PresetName
     $BuildType  = $lastConfig.BuildTypeIdx
