@@ -7335,8 +7335,10 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
         case 5: {
             //remove charcoal
             for( map_stack::iterator it = items_here.begin(); it != items_here.end(); ) {
-                if( ( rem_f_opt && ( *it )->is_food() ) || ( !rem_f_opt &&
-                        ( ( *it )->typeId() == itype_charcoal ) ) ) {
+                // Remove everything except charcoal when removing food, or only charcoal when removing charcoal
+                const bool should_remove = ( rem_f_opt && ( *it )->typeId() != itype_charcoal ) ||
+                                           ( !rem_f_opt && ( *it )->typeId() == itype_charcoal );
+                if( should_remove ) {
                     // get handling cost before the item reference is invalidated
                     const int handling_cost = -p.item_handling_cost( **it );
 
