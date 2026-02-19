@@ -640,7 +640,7 @@ TEST_CASE( "serialize_integers", "[json]" )
 
 TEST_CASE( "truncate_doubles", "[json]" )
 {
-    std::vector<std::pair<std::string, ptrdiff_t>> test {
+    std::vector<std::pair<std::string, int>> test {
         std::make_pair( "123456789.", 123456789 ),
         std::make_pair( "12345678.9", 12345678 ),
         std::make_pair( "1234567.89", 1234567 ),
@@ -677,7 +677,7 @@ TEST_CASE( "truncate_doubles", "[json]" )
 
     for( auto& [k, v] : test ) {
         std::stringstream is { k };
-        ptrdiff_t read_val;
+        auto read_val = int{};
         JsonIn jsin( is );
         CHECK( jsin.read( read_val ) );
         CAPTURE( read_val );

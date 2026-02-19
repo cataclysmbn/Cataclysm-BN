@@ -218,6 +218,10 @@ TEST_CASE( "broken_door_and_lock_can_be_removed", "[vehicle]" )
 
     auto &door_part = veh_ptr->part( door_idx );
     auto &lock_part = veh_ptr->part( lock_idx );
+    // DOORS CAN SPAWN OPEN GUYS
+    if( door_part.open ) {
+        door_part.open = false;
+    }
     REQUIRE_FALSE( door_part.open );
 
     REQUIRE( veh_ptr->mod_hp( door_part, -( door_part.hp() + 1 ), DT_BASH ) );
