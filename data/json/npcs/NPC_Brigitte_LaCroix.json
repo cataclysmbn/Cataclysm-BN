@@ -12,7 +12,8 @@
       { "trait": "ROBUST" },
       { "trait": "seer_mark" },
       { "group": "Appearance_African" },
-      { "trait": "hair_black_mohawk" }
+      { "trait": "hair_black" },
+      { "trait": "hair_mohawk" }
     ],
     "common": false,
     "bonus_per": { "rng": [ 0, 2 ] },
