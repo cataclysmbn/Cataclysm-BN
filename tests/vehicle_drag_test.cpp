@@ -123,8 +123,8 @@ static bool test_drag(
         valid &= d_in_bounds( expected_c_air, c_air );
         valid &= d_in_bounds( expected_c_rr, c_rolling );
         valid &= d_in_bounds( expected_c_water, c_water );
-        valid &= i_in_bounds( expected_safe, safe_v );
-        valid &= i_in_bounds( expected_max, max_v );
+        valid &= i_in_bounds( std::lround( static_cast<double>( expected_safe ) * 0.44704 ), safe_v );
+        valid &= i_in_bounds( std::lround( static_cast<double>( expected_max ) * 0.44704 ), max_v );
     }
     if( !valid ) {
         cata_printf( "    test_vehicle_drag( \"%s\", %f, %f, %f, %d, %d );\n",
