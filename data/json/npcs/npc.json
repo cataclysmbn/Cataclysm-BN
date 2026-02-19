@@ -16,8 +16,8 @@
     "//": "Radio spawn variant that does not post up to guard a spot.",
     "name_suffix": "Thug",
     "class": "NC_THUG",
-    "attitude": 0,
-    "mission": 0,
+    "attitude": 8,
+    "mission": 8,
     "chat": "TALK_DONE",
     "faction": "hells_raiders"
   },
@@ -38,8 +38,8 @@
     "//": "Radio spawn variant that does not post up to guard a spot.",
     "name_suffix": "Bandit",
     "class": "NC_BANDIT",
-    "attitude": 0,
-    "mission": 0,
+    "attitude": 8,
+    "mission": 8,
     "chat": "TALK_DONE",
     "faction": "hells_raiders"
   },
@@ -49,9 +49,9 @@
     "//": "Radio spawn merchant variant that keeps moving instead of holding a post.",
     "name_suffix": "Merchant",
     "class": "NC_TRADER",
-    "attitude": 0,
-    "mission": 0,
-    "chat": "TALK_STRANGER_NEUTRAL",
+    "attitude": 1,
+    "mission": 3,
+    "chat": "TALK_STRANGER_RADIO",
     "faction": "free_merchants"
   },
   {
@@ -162,7 +162,7 @@
     "name_suffix": "wandering survivor",
     "//": "spawns in the res_lawn_randomnpc nested mapgen",
     "class": "NC_WANDERING_SCAVENGER",
-    "attitude": 0,
+    "attitude": 1,
     "mission": 7,
     "chat": "TALK_STRANGER_NEUTRAL",
     "faction": "no_faction"
@@ -173,9 +173,20 @@
     "//": "Radio spawn variant that keeps moving instead of guarding.",
     "name_suffix": "wandering survivor",
     "class": "NC_WANDERING_SCAVENGER",
-    "attitude": 0,
-    "mission": 0,
-    "chat": "TALK_STRANGER_NEUTRAL",
+    "attitude": 1,
+    "mission": 8,
+    "chat": "TALK_STRANGER_RADIO",
+    "faction": "no_faction"
+  },
+  {
+    "type": "npc",
+    "id": "radio_job_broker",
+    "//": "Radio spawn variant that brings work offers.",
+    "name_suffix": "contract runner",
+    "class": "NC_WANDERING_SCAVENGER",
+    "attitude": 1,
+    "mission": 8,
+    "chat": "TALK_STRANGER_RADIO",
     "faction": "no_faction"
   },
   {
@@ -184,9 +195,9 @@
     "//": "Radio spawn variant that keeps moving instead of guarding.",
     "name_suffix": "Doctor",
     "class": "NC_DOCTOR",
-    "attitude": 0,
-    "mission": 0,
-    "chat": "TALK_RANCH_DOCTOR",
+    "attitude": 1,
+    "mission": 13,
+    "chat": "TALK_STRANGER_RADIO",
     "faction": "no_faction"
   }
 ]

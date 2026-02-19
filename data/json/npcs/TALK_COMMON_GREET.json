@@ -1,6 +1,6 @@
 [
   {
-    "id": [ "TALK_STRANGER_NEUTRAL", "TALK_STRANGER_FRIENDLY" ],
+    "id": [ "TALK_STRANGER_NEUTRAL", "TALK_STRANGER_FRIENDLY", "TALK_STRANGER_RADIO" ],
     "type": "talk_topic",
     "responses": [
       { "text": "Another survivor!  We should travel together.", "topic": "TALK_SUGGEST_FOLLOW" },
@@ -46,6 +46,7 @@
     "id": [
       "TALK_STRANGER_NEUTRAL",
       "TALK_STRANGER_FRIENDLY",
+      "TALK_STRANGER_RADIO",
       "TALK_STRANGER_SCARED",
       "TALK_STRANGER_WARY",
       "TALK_MISSION_DESCRIBE_URGENT"
@@ -66,6 +67,12 @@
         "failure": { "topic": "TALK_DONE", "effect": "hostile" }
       }
     ]
+  },
+  {
+    "id": "TALK_STRANGER_RADIO",
+    "type": "talk_topic",
+    "dynamic_line": "Hey, I heard your survivor band broadcast.",
+    "responses": [ { "text": "Bye.", "topic": "TALK_DONE" } ]
   },
   {
     "id": "TALK_STRANGER_FRIENDLY",

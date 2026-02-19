@@ -26,6 +26,11 @@ local function now_turn()
   return gapi.current_turn():to_turn()
 end
 
+local default_stay_hours = 6
+local cleanup_retry_turns = TimeDuration.from_minutes(10):to_turns()
+local cleanup_departure_distance = 60
+local spawn_retry_turns = TimeDuration.from_minutes(30):to_turns()
+
 local function debug_log(msg)
   gdebug.log_info(string.format("survivor_radio: %s", msg))
 end
@@ -55,6 +60,7 @@ local function signal_definitions()
           spawn_min_npcs = 1,
           spawn_max_npcs = 2,
           spawn_radius = 60,
+          stay_hours = 6,
           is_primary = true,
         },
         {
@@ -65,6 +71,7 @@ local function signal_definitions()
           spawn_min_npcs = 2,
           spawn_max_npcs = 3,
           spawn_radius = 60,
+          stay_hours = 6,
           is_primary = false,
         },
         {
@@ -75,6 +82,7 @@ local function signal_definitions()
           spawn_min_npcs = 1,
           spawn_max_npcs = 2,
           spawn_radius = 60,
+          stay_hours = 12,
           make_angry = true,
           is_primary = false,
         },
@@ -96,6 +104,7 @@ local function signal_definitions()
           spawn_min_npcs = 2,
           spawn_max_npcs = 3,
           spawn_radius = 60,
+          stay_hours = 6,
           is_primary = true,
         },
         {
@@ -106,6 +115,7 @@ local function signal_definitions()
           spawn_min_npcs = 2,
           spawn_max_npcs = 3,
           spawn_radius = 60,
+          stay_hours = 12,
           make_angry = true,
           is_primary = false,
         },
@@ -113,6 +123,27 @@ local function signal_definitions()
       duration_hours = 6,
       range = 60,
       start_msg = locale.gettext("You advertise a trade offer over the survivor band."),
+    },
+    {
+      id = "work",
+      name = locale.gettext("Requesting work"),
+      desc = locale.gettext("Ask nearby survivors for paid jobs."),
+      audiences = {
+        {
+          faction_id = "no_faction",
+          display_name = locale.gettext("Independent contractors"),
+          npc_templates = { "radio_job_broker" },
+          base_chance = 35,
+          spawn_min_npcs = 1,
+          spawn_max_npcs = 1,
+          spawn_radius = 60,
+          stay_hours = 6,
+          is_primary = true,
+        },
+      },
+      duration_hours = 6,
+      range = 60,
+      start_msg = locale.gettext("You broadcast a request for work on the survivor band."),
     },
     {
       id = "raider",
@@ -127,6 +158,7 @@ local function signal_definitions()
           spawn_min_npcs = 2,
           spawn_max_npcs = 5,
           spawn_radius = 60,
+          stay_hours = 12,
           make_angry = true,
           is_primary = true,
         }
@@ -155,13 +187,26 @@ local function resolve_storage()
   return storage
 end
 
-local function track_spawned_npc(npc)
+local function stay_turns_for_entry(entry)
+  local stay_hours = entry and entry.stay_hours or default_stay_hours
+  return TimeDuration.from_hours(stay_hours):to_turns()
+end
+
+local function track_spawned_npc(npc, entry)
   if not npc then return end
   local storage = resolve_storage()
   local tracked = storage.survivor_radio_spawned or {}
-  tracked[npc:getID():get_value()] = true
+  local npc_id = npc:getID():get_value()
+  tracked[npc_id] = true
   storage.survivor_radio_spawned = tracked
+  local cleanup_at = storage.survivor_radio_cleanup_at or {}
+  cleanup_at[npc_id] = now_turn() + stay_turns_for_entry(entry)
+  storage.survivor_radio_cleanup_at = cleanup_at
+  gapi.add_msg("A survivor radio contact has arrived nearby.")
 end
+
+local is_active_npc
+local request_departure
 
 survivor_radio.is_tracked_npc = function(npc_id)
   local storage = resolve_storage()
@@ -176,6 +221,10 @@ survivor_radio.clear_tracked_npc = function(npc_id)
   storage.survivor_radio_spawned = tracked
 end
 
+survivor_radio.cleanup_npc = function(npc_id)
+  return cleanup_npc_id(npc_id)
+end
+
 local function queue_erase_npc_id(npc_id)
   local storage = resolve_storage()
   local pending = storage.survivor_radio_pending_erase or {}
@@ -183,16 +232,72 @@ local function queue_erase_npc_id(npc_id)
   storage.survivor_radio_pending_erase = pending
 end
 
+local function cleanup_npc_id(npc_id)
+  if not npc_id then return false end
+  local was_tracked = survivor_radio.is_tracked_npc(npc_id)
+  local id = CharacterId.new(npc_id)
+  local npc = gapi.get_npc_by_id(id)
+  local avatar = gapi.get_avatar()
+  if npc and avatar and (npc:is_player_ally() or npc:is_ally(avatar) or npc:is_friendly(avatar)) then
+    survivor_radio.clear_tracked_npc(npc_id)
+    local storage = resolve_storage()
+    local cleanup_at = storage.survivor_radio_cleanup_at or {}
+    cleanup_at[npc_id] = nil
+    storage.survivor_radio_cleanup_at = cleanup_at
+    return true
+  end
+  if npc and is_active_npc(npc) then
+    if avatar and coords.rl_dist(npc:get_pos_ms(), avatar:get_pos_ms()) >= cleanup_departure_distance then
+      npc = nil
+    else
+      request_departure(npc)
+      return false
+    end
+  end
+  local removed = gapi.remove_npc_by_id(id)
+  if not removed then
+    queue_erase_npc_id(npc_id)
+  end
+  if removed then
+    survivor_radio.clear_tracked_npc(npc_id)
+    local storage = resolve_storage()
+    local cleanup_at = storage.survivor_radio_cleanup_at or {}
+    cleanup_at[npc_id] = nil
+    storage.survivor_radio_cleanup_at = cleanup_at
+    if was_tracked then
+      gapi.add_msg(MsgType.info, locale.gettext("The survivor radio contact is cleaned up."))
+    end
+  end
+  return removed
+end
+
 local function erase_pending_npcs()
   local storage = resolve_storage()
   local pending = storage.survivor_radio_pending_erase or {}
   for npc_id, should_erase in pairs(pending) do
     if should_erase then
-      gapi.remove_npc_by_id(CharacterId.new(npc_id))
-      pending[npc_id] = nil
+      if cleanup_npc_id(npc_id) then
+        pending[npc_id] = nil
+      end
     end
   end
   storage.survivor_radio_pending_erase = pending
+end
+
+local function cleanup_due_npcs()
+  local storage = resolve_storage()
+  local cleanup_at = storage.survivor_radio_cleanup_at or {}
+  local now = now_turn()
+  for npc_id, due_turn in pairs(cleanup_at) do
+    if due_turn and now >= due_turn then
+      if cleanup_npc_id(npc_id) then
+        cleanup_at[npc_id] = nil
+      else
+        cleanup_at[npc_id] = now + cleanup_retry_turns
+      end
+    end
+  end
+  storage.survivor_radio_cleanup_at = cleanup_at
 end
 
 local function broadcast_local_pos(broadcast, here)
@@ -204,6 +309,34 @@ end
 local function is_in_bounds(here, pt)
   local size = here:get_map_size()
   return pt.x >= 0 and pt.y >= 0 and pt.x < size and pt.y < size
+end
+
+is_active_npc = function(npc)
+  return gapi.get_npc_at(npc:get_pos_ms(), true) == npc
+end
+
+local function random_omt_offset(min_dist, max_dist)
+  local dist = gapi.rng(min_dist, max_dist)
+  local dx = gapi.rng(-dist, dist)
+  local dy = gapi.rng(-dist, dist)
+  if dx == 0 and dy == 0 then
+    dx = dist
+  end
+  if math.abs(dx) < min_dist and math.abs(dy) < min_dist then
+    if math.abs(dx) < min_dist then
+      dx = dx < 0 and -min_dist or min_dist
+    else
+      dy = dy < 0 and -min_dist or min_dist
+    end
+  end
+  return dx, dy
+end
+
+request_departure = function(npc)
+  local pos_abs_omt, _ = coords.ms_to_omt(npc:get_pos_ms())
+  local dx, dy = random_omt_offset(5, 9)
+  npc:set_omt_destination(Tripoint.new(pos_abs_omt.x + dx, pos_abs_omt.y + dy, pos_abs_omt.z))
+  npc:set_attitude(NpcAttitude.NPCATT_FLEE_TEMP)
 end
 
 local function random_offset_in_radius(radius, radius_min)
@@ -232,6 +365,7 @@ local function spawn_npc_offmap(entry, template, spawn_pos_abs)
   npc:set_pos_ms(spawn_pos_abs)
   npc:set_faction_id(FactionId.new(entry.faction_id))
   if entry.make_angry then npc:make_angry() end
+  track_spawned_npc(npc, entry)
   return npc
 end
 
@@ -270,7 +404,7 @@ local function choose_broadcast_frequency()
   return options[choice + 1].hours
 end
 
-local function maybe_spawn_npc(entry, broadcast, speech)
+local function spawn_audience(entry, broadcast)
   local here = gapi.get_map()
   local abs_pos = pos_from_table(broadcast.pos)
   if not abs_pos then return end
@@ -286,16 +420,6 @@ local function maybe_spawn_npc(entry, broadcast, speech)
 
   local templates = entry.npc_templates or {}
   if #templates == 0 then return end
-
-  local spawn_chance = chance_for_audience(entry, speech)
-  local roll = gapi.rng(1, 100)
-  debug_log(string.format(
-    "spawn roll=%d chance=%d audience=%s",
-    roll,
-    spawn_chance,
-    entry.faction_id or "unknown"
-  ))
-  if roll > spawn_chance then return end
 
   if use_local then
     local points = here:points_in_radius(local_pos, spawn_radius)
@@ -320,6 +444,7 @@ local function maybe_spawn_npc(entry, broadcast, speech)
             if npc then
               npc:set_faction_id(FactionId.new(entry.faction_id))
               if entry.make_angry then npc:make_angry() end
+              track_spawned_npc(npc, entry)
               debug_log(string.format(
                 "spawned npc=%s audience=%s",
                 template,
@@ -384,6 +509,20 @@ local function get_active_broadcast(storage)
   return saved
 end
 
+local function clear_pending_spawn(storage)
+  storage.survivor_radio_pending_spawn = nil
+end
+
+local function schedule_spawn(storage, signal_id, audience_index)
+  local delay_hours = gapi.rng(4, 24)
+  storage.survivor_radio_pending_spawn = {
+    signal_id = signal_id,
+    audience_index = audience_index,
+    due_turn = now_turn() + TimeDuration.from_hours(delay_hours):to_turns(),
+  }
+  debug_log(string.format("scheduled spawn signal=%s audience=%d delay_hours=%d", signal_id, audience_index, delay_hours))
+end
+
 ---@return number
 survivor_radio.menu = function(params)
   local storage = resolve_storage()
@@ -430,6 +569,7 @@ survivor_radio.menu = function(params)
 
   if active and choice == #signals then
     storage.survivor_radio = nil
+    clear_pending_spawn(storage)
     gapi.add_msg(MsgType.info, locale.gettext("You stop broadcasting."))
     return 0
   end
@@ -486,6 +626,7 @@ survivor_radio.menu = function(params)
     frequency_hours = frequency_hours,
     next_tick = now_turn() + TimeDuration.from_hours(frequency_hours):to_turns(),
   }
+  clear_pending_spawn(storage)
   debug_log(string.format("broadcast signal=%s speech=%d", selected.id, speech))
 
   gapi.add_msg(MsgType.good, selected.start_msg)
@@ -496,12 +637,35 @@ end
 function survivor_radio.register(mod)
   mod.on_survivor_radio_tick = function()
     local storage = mod.storage or resolve_storage()
+    cleanup_due_npcs()
+    erase_pending_npcs()
     local broadcast = get_active_broadcast(storage)
     if not broadcast then return end
 
     local def = get_signal_definition(broadcast.signal_id)
     if not def then return end
     local now = now_turn()
+    local pending = storage.survivor_radio_pending_spawn
+    if pending and pending.signal_id ~= broadcast.signal_id then
+      clear_pending_spawn(storage)
+      pending = nil
+    end
+    if pending and now >= pending.due_turn then
+      local pending_def = get_signal_definition(pending.signal_id)
+      local pending_entry = pending_def
+        and pending_def.audiences
+        and pending_def.audiences[pending.audience_index]
+      if pending_entry and spawn_audience(pending_entry, broadcast) then
+        clear_pending_spawn(storage)
+        return
+      end
+      pending.due_turn = now + spawn_retry_turns
+      storage.survivor_radio_pending_spawn = pending
+      return
+    elseif pending then
+      return
+    end
+
     local frequency_hours = broadcast.frequency_hours or 12
     if not broadcast.next_tick then
       broadcast.next_tick = now
@@ -515,13 +679,38 @@ function survivor_radio.register(mod)
 
     local audiences = def.audiences or {}
     local speech = broadcast.speech or 0
-    for _, entry in ipairs(audiences) do
-      if maybe_spawn_npc(entry, broadcast, speech) then
+    for idx, entry in ipairs(audiences) do
+      local spawn_chance = chance_for_audience(entry, speech)
+      local roll = gapi.rng(1, 100)
+      debug_log(string.format(
+        "spawn roll=%d chance=%d audience=%s",
+        roll,
+        spawn_chance,
+        entry.faction_id or "unknown"
+      ))
+      if roll <= spawn_chance then
+        schedule_spawn(storage, def.id, idx)
         return
       end
     end
-    debug_log(string.format("spawn tick: no audience spawned for signal=%s", broadcast.signal_id or "unknown"))
+    debug_log(string.format("spawn tick: no audience scheduled for signal=%s", broadcast.signal_id or "unknown"))
   end
+
+  mod.on_npc_unload = function(params)
+      local npc = params.npc
+      if npc then
+          local npc_id = npc:getID():get_value()
+          if mod.survivor_radio
+              and mod.survivor_radio.is_tracked_npc
+              and mod.survivor_radio.is_tracked_npc(npc_id) then
+              if not npc:is_player_ally() then
+                  cleanup_npc_id(npc_id)
+              end
+          end
+      end
+  end
+
+  game.add_hook("on_npc_unload", function(...) return mod.on_npc_unload(...) end)
 
   mod.on_npc_spawn = function(params)
     local storage = mod.storage or resolve_storage()
