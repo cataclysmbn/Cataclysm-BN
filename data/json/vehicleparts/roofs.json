@@ -1,0 +1,134 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "roof_cloth",
+    "name": { "str": "cloth roof" },
+    "symbol": "#",
+    "color": "light_gray",
+    "broken_symbol": "#",
+    "broken_color": "dark_gray",
+    "durability": 15,
+    "description": "A cloth roof.",
+    "folded_volume": "3750 ml",
+    "item": "sheet",
+    "location": "roof",
+    "requirements": {
+      "install": { "time": "5 m", "components": [ [ [ "string_6", 2 ], [ "duct_tape", 25 ] ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ], [ "tailor", 1 ] ],
+        "time": "150 s",
+        "using": [ [ "sewing_standard", 10 ], [ "fabric_standard", 1 ] ]
+      }
+    },
+    "flags": [ "ROOF", "FOLDABLE", "SHOCK_IMMUNE" ],
+    "breaks_into": "ig_vp_cloth"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "roof",
+    "name": { "str": "roof" },
+    "symbol": "#",
+    "color": "light_gray",
+    "broken_symbol": "#",
+    "broken_color": "dark_gray",
+    "durability": 240,
+    "description": "A metal roof.",
+    "item": "sheet_metal",
+    "location": "roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "flags": [ "ROOF" ],
+    "breaks_into": "ig_vp_sheet_metal",
+    "damage_reduction": { "all": 28 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "hdroof",
+    "name": { "str": "heavy duty roof" },
+    "symbol": "#",
+    "color": "dark_gray",
+    "broken_symbol": "#",
+    "broken_color": "dark_gray",
+    "durability": 1000,
+    "description": "A thick metal roof.",
+    "item": "steel_plate",
+    "location": "roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "ROOF" ],
+    "breaks_into": "ig_vp_steel_plate",
+    "damage_reduction": { "all": 75 }
+  },
+  {
+    "copy-from": "hdroof",
+    "id": "hdroof_superalloy",
+    "type": "vehicle_part",
+    "name": { "str": "superalloy roof" },
+    "item": "alloy_plate",
+    "breaks_into": "ig_vp_alloy",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_superalloy", 1 ] ]
+      }
+    },
+    "extend": { "flags": [ "SHOCK_IMMUNE" ] }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "roof_carbon",
+    "name": { "str": "carbon fiber roof" },
+    "symbol": "#",
+    "color": "dark_gray",
+    "broken_symbol": "#",
+    "broken_color": "dark_gray",
+    "durability": 1000,
+    "description": "A thick carbon fiber roof.",
+    "item": "carbon_plate",
+    "location": "roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "ROOF" ],
+    "breaks_into": "ig_vp_carbon",
+    "damage_reduction": { "all": 75 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "roof_wood",
+    "name": { "str": "wooden roof" },
+    "symbol": "#",
+    "color": "light_gray",
+    "broken_symbol": "#",
+    "broken_color": "dark_gray",
+    "durability": 130,
+    "description": "A wooden roof.",
+    "item": "wood_plate",
+    "location": "roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "flags": [ "ROOF" ],
+    "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] } ],
+    "damage_reduction": { "all": 16 }
+  }
+]

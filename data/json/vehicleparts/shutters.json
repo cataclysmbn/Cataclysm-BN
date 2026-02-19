@@ -1,0 +1,131 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "v_curtain",
+    "name": { "str": "curtain" },
+    "symbol": "\"",
+    "looks_like": "t_door_curtain_c",
+    "color": "dark_gray",
+    "broken_symbol": "0",
+    "broken_color": "light_gray",
+    "damage_modifier": 1,
+    "durability": 200,
+    "description": "A sheet over a window.",
+    "bonus": 25,
+    "item": "sheet",
+    "location": "on_windshield",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "5 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "5 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ], [ "tailor", 1 ] ],
+        "time": "20 s",
+        "using": [ [ "sewing_standard", 10 ], [ "fabric_standard", 1 ] ]
+      }
+    },
+    "flags": [ "OPENABLE", "OPENCLOSE_INSIDE", "OPAQUE", "CURTAIN", "MULTISQUARE", "NEEDS_WINDOW", "SHOCK_IMMUNE" ],
+    "breaks_into": [  ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "v_shutter",
+    "copy-from": "v_curtain",
+    "name": { "str": "shutter" },
+    "durability": 250,
+    "description": "Sheet metal shutters to protect a window, which can be opened or closed.",
+    "item": "sheet_metal",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "breaks_into": "ig_vp_sheet_metal",
+    "damage_reduction": { "all": 28 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "v_hdshutter",
+    "copy-from": "v_shutter",
+    "name": { "str": "heavy duty shutter" },
+    "durability": 500,
+    "description": "Strong metal shutters to armor a window, which can be opened or closed.",
+    "item": "steel_plate",
+    "requirements": {
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "breaks_into": "ig_vp_steel_plate",
+    "damage_reduction": { "all": 75 }
+  },
+  {
+    "copy-from": "v_hdshutter",
+    "id": "v_hdshutter_superalloy",
+    "type": "vehicle_part",
+    "name": { "str": "superalloy shutter" },
+    "item": "alloy_plate",
+    "breaks_into": "ig_vp_alloy",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_superalloy", 1 ] ]
+      }
+    },
+    "extend": { "flags": [ "SHOCK_IMMUNE" ] }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "v_woodshutter",
+    "copy-from": "v_shutter",
+    "name": { "str": "wooden shutter" },
+    "durability": 250,
+    "description": "Wooden shutters to protect a window, which can be opened or closed.",
+    "item": "wood_plate",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "breaks_into": "ig_vp_wood_plate",
+    "damage_reduction": { "all": 16, "cut": 8, "stab": 8 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "aisle_curtain",
+    "name": { "str": "aisle curtain" },
+    "symbol": "\"",
+    "looks_like": "v_curtain",
+    "color": "dark_gray",
+    "broken_symbol": "0",
+    "broken_color": "light_gray",
+    "damage_modifier": 1,
+    "durability": 200,
+    "description": "A sheet across an aisle.",
+    "bonus": 25,
+    "item": "sheet",
+    "location": "on_ceiling",
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 0 ], [ "tailor", 1 ] ],
+        "time": "5 m",
+        "using": [ [ "rope_natural_short", 1 ], [ "vehicle_screw", 1 ], [ "sewing_standard", 1 ] ]
+      },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "5 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ], [ "tailor", 1 ] ],
+        "time": "20 s",
+        "using": [ [ "sewing_standard", 10 ], [ "fabric_standard", 1 ] ]
+      }
+    },
+    "flags": [ "OPENABLE", "OPAQUE", "OPENCLOSE_INSIDE", "CURTAIN", "MULTISQUARE", "SHOCK_IMMUNE" ],
+    "breaks_into": [  ]
+  }  
+]

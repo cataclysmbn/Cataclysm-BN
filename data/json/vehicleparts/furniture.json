@@ -1,0 +1,209 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "veh_table",
+    "name": { "str": "table" },
+    "symbol": "#",
+    "looks_like": "f_table",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 60,
+    "durability": 145,
+    "size": "20 L",
+    "item": "v_table",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "breaks_into": [
+      { "item": "2x4", "count": [ 1, 6 ] },
+      { "item": "splinter", "count": [ 4, 6 ] },
+      { "item": "nail", "charges": [ 4, 7 ] }
+    ],
+    "workbench": { "multiplier": 1.1, "mass": "150 kg", "volume": "20L" },
+    "damage_reduction": { "all": 24 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "veh_table_wood",
+    "name": { "str": "wood table" },
+    "symbol": "#",
+    "looks_like": "f_table",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 60,
+    "durability": 145,
+    "size": "20 L",
+    "item": "w_table",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_nail_install", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "15 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "breaks_into": [
+      { "item": "2x4", "count": [ 1, 6 ] },
+      { "item": "splinter", "count": [ 4, 6 ] },
+      { "item": "nail", "charges": [ 4, 7 ] }
+    ],
+    "workbench": { "multiplier": 1.1, "mass": "150 kg", "volume": "20L" },
+    "damage_reduction": { "all": 16 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "bed",
+    "name": { "str": "bed" },
+    "symbol": "#",
+    "looks_like": "f_bed",
+    "color": "magenta",
+    "broken_symbol": "*",
+    "broken_color": "magenta",
+    "damage_modifier": 60,
+    "durability": 95,
+    "description": "A small but comfortable bed.",
+    "size": "50 L",
+    "item": "mattress",
+    "comfort": 4,
+    "floor_bedding_warmth": 800,
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "60 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ], [ "tailor", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "sewing_standard", 10 ], [ "fabric_standard", 1 ] ]
+      }
+    },
+    "flags": [ "BED", "BOARDABLE", "CARGO", "MOUNTABLE", "SHOCK_IMMUNE" ],
+    "breaks_into": [
+      { "item": "rag", "count": [ 1, 20 ] },
+      { "item": "cotton_ball", "count": [ 5, 25 ] },
+      { "item": "spring", "count": [ 0, 3 ] },
+      { "item": "scrap", "count": [ 4, 6 ] }
+    ],
+    "damage_reduction": { "all": 3 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "autodoc",
+    "name": { "str": "autodoc" },
+    "looks_like": "f_autodoc",
+    "symbol": "&",
+    "color": "light_cyan",
+    "broken_symbol": "#",
+    "broken_color": "light_cyan",
+    "damage_modifier": 80,
+    "durability": 100,
+    "description": "This is an autodoc.  You can use it to install or uninstall CBMs, splint broken limbs, treat wounds, check radiation level or conduct a blood analysis.  'e'xamine the tile with the autodoc, while on an autodoc couch, to use it.",
+    "size": "2750 ml",
+    "item": "vh_autodoc",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "AUTODOC", "COVERED" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 6, 10 ] },
+      { "item": "steel_chunk", "count": [ 6, 10 ] },
+      { "item": "scrap", "count": [ 6, 10 ] },
+      { "item": "hose", "prob": 50 }
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "autodoc_couch",
+    "name": { "str": "autodoc couch" },
+    "looks_like": "f_autodoc_couch",
+    "symbol": "H",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "red",
+    "damage_modifier": 80,
+    "durability": 100,
+    "description": "This is an autodoc couch.  You can use it to install or uninstall CBMs, splint broken limbs, treat wounds, check radiation level or conduct a blood analysis.  'e'xamine the tile with an autodoc, while on the autodoc couch, to use it.",
+    "size": "63 L",
+    "item": "vh_autodoc_couch",
+    "comfort": 4,
+    "floor_bedding_warmth": 500,
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "CARGO", "AUTODOC_COUCH", "BED", "BOARDABLE", "BELTABLE", "SEAT" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 6, 10 ] },
+      { "item": "steel_chunk", "count": [ 6, 10 ] },
+      { "item": "scrap", "count": [ 6, 10 ] },
+      { "item": "hose", "prob": 50 }
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "towel_hanger",
+    "name": { "str": "towel hanger" },
+    "symbol": "h",
+    "color": "brown",
+    "broken_symbol": "-",
+    "broken_color": "brown",
+    "damage_modifier": 10,
+    "description": "A towel hanger with towels.",
+    "durability": 45,
+    "folded_volume": "2500 ml",
+    "item": "towel_hanger",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "5 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "20 s",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 1 ] ]
+      }
+    },
+    "flags": [ "TOWEL", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "scrap", "count": [ 1, 3 ] }, { "item": "rag", "count": [ 1, 6 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "vehicle_clock",
+    "name": { "str": "clock" },
+    "symbol": ":",
+    "color": "light_gray",
+    "broken_symbol": ";",
+    "broken_color": "dark_gray",
+    "durability": 20,
+    "description": "A clock, so you know what time it is.",
+    "epower": 0,
+    "folded_volume": "250 ml",
+    "item": "clock",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "20 s",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "WATCH", "ALARMCLOCK", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "scrap", "prob": 50 } ]
+  }
+]

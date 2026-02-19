@@ -1,0 +1,271 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "boat_board",
+    "name": { "str": "wooden boat hull" },
+    "description": "A wooden board that keeps the water out of your boat.",
+    "symbol": "o",
+    "looks_like": "t_wall_log",
+    "color": "brown",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 40,
+    "item": "boat_board",
+    "location": "under",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 15 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "flags": [ "FLOATS" ],
+    "breaks_into": [ { "item": "splinter", "count": [ 10, 20 ] } ],
+    "damage_reduction": { "all": 10 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "raft_board",
+    "name": { "str": "raft boat hull" },
+    "description": "Logs tied together that will keep your boat out of the water.",
+    "symbol": "o",
+    "looks_like": "t_wall_log",
+    "color": "brown",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 30,
+    "item": "raft_board",
+    "location": "under",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "rope_natural_short", 2 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "qualities": [ { "id": "CUT", "level": 1 } ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "rope_natural_short", 1 ] ] }
+    },
+    "flags": [ "FLOATS" ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "gas_sac_buoyancy_cell",
+    "name": { "str": "gas sac buoyancy cell" },
+    "description": "Hydrogen-filled bags tied together.  Can help a boat float or provide limited lift for an airship.",
+    "symbol": "o",
+    "looks_like": "t_wall_log",
+    "color": "brown",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 30,
+    "item": "gas_sac_buoyancy_cell",
+    "location": "under",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "rope_natural_short", 2 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "qualities": [ { "id": "CUT", "level": 1 } ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "rope_natural_short", 1 ] ] }
+    },
+    "flags": [ "BALLOON", "FLOATS", "SHOCK_IMMUNE" ],
+    "height": 10,
+    "//": "Todo: Should explode if destroyed by fire damage.",
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 5, 10 ] } ],
+    "damage_reduction": { "all": 5 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "gas_sac_buoyancy_cell_external",
+    "copy-from": "gas_sac_buoyancy_cell",
+    "name": { "str": "external gas sac buoyancy cell" },
+    "location": "under",
+    "extend": { "flags": [ "PROTUSION", "BOARDABLE", "EXTENDABLE", "AISLE", "ROOF" ] }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "plastic_boat_hull",
+    "name": { "str": "plastic boat hull" },
+    "description": "A rigid plastic sheet that keeps water out of your boat.",
+    "symbol": "o",
+    "color": "light_blue",
+    "looks_like": "boat_board",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 120,
+    "item": "plastic_boat_hull",
+    "location": "under",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "soldering_standard", 5 ], [ "plastics", 1 ] ] }
+    },
+    "flags": [ "FLOATS" ],
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 4, 8 ] } ],
+    "damage_reduction": { "all": 12, "stab": 4, "cut": 4 }
+  },
+
+  {
+    "type": "vehicle_part",
+    "id": "metal_boat_hull",
+    "name": { "str": "metal boat hull" },
+    "description": "A metal sheet that keeps the water out of your boat.",
+    "symbol": "o",
+    "color": "dark_gray",
+    "looks_like": "boat_board",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 240,
+    "item": "sheet_metal",
+    "location": "under",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "flags": [ "FLOATS" ],
+    "breaks_into": "ig_vp_sheet_metal",
+    "damage_reduction": { "all": 28 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "carbonfiber_boat_hull",
+    "name": { "str": "carbon fiber boat hull" },
+    "description": "A light weight, advanced carbon fiber rigid sheet that keeps the water out of your boat.",
+    "symbol": "o",
+    "color": "dark_gray",
+    "looks_like": "boat_board",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 288,
+    "item": "carbonfiber_boat_hull",
+    "folded_volume": "12500 ml",
+    "location": "under",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "flags": [ "FLOATS", "BOARDABLE", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": "ig_vp_carbon",
+    "damage_reduction": { "all": 34 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "aluminium_boat_hull",
+    "name": { "str": "aluminum boat hull" },
+    "description": "A rigid aluminum sheet that keeps water out of your boat.",
+    "symbol": "o",
+    "color": "light_blue",
+    "looks_like": "boat_board",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 200,
+    "item": "aluminium_sheet",
+    "location": "under",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "soldering_standard", 5 ], [ "vehicle_repair_aluminium", 1 ] ]
+      }
+    },
+    "flags": [ "FLOATS" ],
+    "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
+    "damage_reduction": { "all": 20 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "hovercraft_section",
+    "name": { "str": "hovercraft impeller" },
+    "description": "An impeller and skirt used by air-cushion vehicles to float just above the surface of land or water.",
+    "symbol": "o",
+    "color": "dark_gray",
+    "looks_like": "inflatable_airbag",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 40,
+    "durability": 240,
+    "contact_area": 20,
+    "folded_volume": "250 ml",
+    "item": "hovercraft_section",
+    "location": "under",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 5 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 6 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "flags": [ "WHEEL", "FLOATS", "MULTISQUARE", "TRACKED", "VARIABLE_SIZE", "FOLDABLE", "STABLE", "SELF_JACK", "SHOCK_RESISTANT" ],
+    "wheel_type": "off-road",
+    "cargo_weight_modifier": 75,
+    "breaks_into": [
+      { "item": "steel_lump" },
+      { "item": "steel_chunk", "count": [ 1, 3 ] },
+      { "item": "scrap", "count": [ 1, 3 ] },
+      { "item": "cable", "charges": [ 0, 4 ] }
+    ],
+    "damage_reduction": { "all": 25 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "inflatable_section",
+    "name": { "str": "inflatable section" },
+    "symbol": "O",
+    "looks_like": "inflatable_airbag",
+    "color": "green",
+    "size": "15 L",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "durability": 50,
+    "item": "inflatable_section",
+    "location": "structure",
+    "folded_volume": "750 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "plastics", 1 ] ] }
+    },
+    "flags": [ "MOUNTABLE", "FOLDABLE", "BOARDABLE", "CARGO", "SHOCK_IMMUNE" ],
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 10, 20 ] } ],
+    "damage_reduction": { "bash": 10 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "inflatable_airbag",
+    "name": { "str": "inflatable airbag" },
+    "symbol": "O",
+    "color": "green",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 40,
+    "item": "inflatable_airbag",
+    "location": "under",
+    "folded_volume": "750 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "plastics", 1 ] ] }
+    },
+    "flags": [ "FLOATS", "VARIABLE_SIZE", "FOLDABLE", "SHOCK_IMMUNE" ],
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 10, 20 ] } ],
+    "damage_reduction": { "bash": 10 }
+  },
+  
+]

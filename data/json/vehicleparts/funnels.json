@@ -1,0 +1,159 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "leather_funnel",
+    "name": { "str": "leather funnel" },
+    "symbol": "V",
+    "looks_like": "funnel",
+    "color": "brown",
+    "broken_symbol": "*",
+    "broken_color": "light_gray",
+    "damage_modifier": 5,
+    "durability": 80,
+    "description": "A funnel that will collect rainwater into the tank beneath it.",
+    "size": "50 L",
+    "item": "leather_funnel",
+    "location": "on_roof",
+    "folded_volume": "250 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "6 m", "using": [ [ "vehicle_nail_install", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "3 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ], [ "tailor", 2 ] ],
+        "time": "6 m",
+        "using": [ [ "sewing_standard", 10 ], [ "fabric_hides_proper", 1 ] ]
+      }
+    },
+    "flags": [ "FUNNEL", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "leather", "count": [ 1, 2 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "birchbark_funnel",
+    "name": { "str": "birchbark funnel" },
+    "symbol": "V",
+    "looks_like": "funnel",
+    "color": "white",
+    "broken_symbol": "*",
+    "broken_color": "light_gray",
+    "damage_modifier": 5,
+    "durability": 60,
+    "description": "A funnel that will collect rainwater into the tank beneath it.",
+    "size": "60 L",
+    "item": "birchbark_funnel",
+    "location": "on_roof",
+    "folded_volume": "250 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "6 m", "using": [ [ "vehicle_nail_install", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "3 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "6 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "vehicle_repair_small_wood", 1 ] ]
+      }
+    },
+    "flags": [ "FUNNEL", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "birchbark", "count": [ 1, 2 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "makeshift_funnel",
+    "name": { "str": "makeshift funnel" },
+    "symbol": "V",
+    "looks_like": "funnel",
+    "color": "yellow",
+    "broken_symbol": "*",
+    "broken_color": "light_gray",
+    "damage_modifier": 5,
+    "durability": 80,
+    "description": "A funnel that will collect rainwater into the tank beneath it.",
+    "size": "50 L",
+    "item": "makeshift_funnel",
+    "location": "on_roof",
+    "folded_volume": "250 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "6 m", "using": [ [ "vehicle_nail_install", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "3 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "6 m", "using": [ [ "adhesive", 2 ], [ "plastics", 1 ] ] }
+    },
+    "flags": [ "FUNNEL", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 1, 2 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "funnel",
+    "name": { "str": "funnel" },
+    "symbol": "V",
+    "color": "yellow",
+    "broken_symbol": "*",
+    "broken_color": "light_gray",
+    "damage_modifier": 5,
+    "durability": 200,
+    "description": "A funnel that will collect rainwater into the tank beneath it.",
+    "size": "75 L",
+    "item": "funnel",
+    "location": "on_roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "6 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "3 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "6 m", "using": [ [ "adhesive", 1 ], [ "plastics", 1 ] ] }
+    },
+    "flags": [ "FUNNEL", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 1, 2 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "metal_funnel",
+    "name": { "str": "metal funnel" },
+    "symbol": "V",
+    "looks_like": "funnel",
+    "color": "light_gray",
+    "broken_symbol": "*",
+    "broken_color": "light_gray",
+    "damage_modifier": 30,
+    "durability": 300,
+    "description": "A funnel that will collect rainwater into the tank beneath it.",
+    "size": "100 L",
+    "item": "metal_funnel",
+    "location": "on_roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "flags": [ "FUNNEL", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "scrap", "count": [ 8, 12 ] } ],
+    "damage_reduction": { "all": 12 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "tarp_raincatcher_part",
+    "name": { "str": "tarp raincatcher" },
+    "symbol": "V",
+    "looks_like": "makeshift_funnel",
+    "color": "blue",
+    "broken_symbol": "*",
+    "broken_color": "light_gray",
+    "damage_modifier": 5,
+    "durability": 80,
+    "description": "An improvised raincatcher made using a tarp, to collect rainwater into the tank beneath it.",
+    "size": "90 L",
+    "item": "tarp_raincatcher",
+    "location": "on_roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "6 m", "using": [ [ "vehicle_nail_install", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "3 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "6 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "vehicle_repair_small_wood", 4 ] ]
+      }
+    },
+    "flags": [ "FUNNEL", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "splinter", "count": [ 5, 10 ] } ]
+  }
+]

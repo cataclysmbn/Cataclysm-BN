@@ -349,35 +349,179 @@
     "damage_reduction": { "all": 25 }
   },
   {
-    "id": "turret_autoloader",
     "type": "vehicle_part",
-    "name": { "str": "turret autoloader" },
-    "description": "An automated ammunition feeding system installed alongside a vehicle turret. It searches all vehicle cargo for compatible ammunition and reloads the turret. Must be installed on the same tile as a turret. The mechanical feeding system requires electrical power to operate.",
-    "item": "turret_autoloader",
-    "durability": 120,
-    "damage_modifier": 10,
-    "damage_reduction": { "all": 30 },
-    "color": "light_gray",
-    "symbol": "=",
-    "broken_color": "dark_gray",
-    "broken_symbol": "x",
-    "size": "10 L",
-    "epower": -5,
-    "flags": [ "COVERED", "ENABLED_DRAINS_EPOWER", "AUTOLOADER" ],
+    "id": "water_purifier",
+    "name": { "str": "water purifier" },
+    "symbol": "&",
+    "color": "blue",
+    "broken_symbol": "*",
+    "broken_color": "light_blue",
+    "damage_modifier": 40,
+    "durability": 200,
+    "description": "A water purifier, powered by the vehicle's batteries.  You can use it to purify water in a container or in the vehicle's tanks.  'e'xamine the tile with the purifier to use it.",
+    "item": "water_purifier",
+    "location": "anywhere",
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 5 ], [ "electronics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
-      "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "vehicle_screw", 1 ] ] },
       "repair": {
-        "skills": [ [ "mechanics", 6 ] ],
-        "time": "45 m",
-        "using": [ [ "welding_standard", 4 ], [ "vehicle_repair_electronics", 2 ] ]
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "15 m",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
+    "flags": [ "WATER_PURIFIER", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 1, 2 ] } ],
+    "damage_reduction": { "all": 26 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "water_faucet",
+    "name": { "str": "water faucet" },
+    "symbol": "u",
+    "looks_like": "f_sink",
+    "color": "light_gray",
+    "broken_symbol": "-",
+    "broken_color": "light_gray",
+    "damage_modifier": 10,
+    "description": "A water faucet.",
+    "durability": 45,
+    "folded_volume": "250 ml",
+    "item": "water_faucet",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "5 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "5 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "20 s",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 1 ] ]
+      }
+    },
+    "flags": [ "FAUCET", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "scrap", "count": [ 1, 3 ] } ],
+    "damage_reduction": { "all": 6 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "autoclave",
+    "name": { "str": "autoclave" },
+    "symbol": "A",
+    "looks_like": "dishwasher",
+    "color": "yellow",
+    "broken_symbol": "#",
+    "broken_color": "light_blue",
+    "damage_modifier": 80,
+    "durability": 100,
+    "description": "This is an autoclave.  It's useful for sterilizing things like CBMs.  'e'xamine the tile with the autoclave to use it.",
+    "epower": -1000,
+    "size": "2750 ml",
+    "item": "vh_autoclave",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "AUTOCLAVE", "COVERED", "ENABLED_DRAINS_EPOWER" ],
     "breaks_into": [
-      { "item": "steel_lump", "count": [ 3, 5 ] },
-      { "item": "steel_chunk", "count": [ 4, 6 ] },
+      { "item": "steel_lump", "count": [ 6, 10 ] },
+      { "item": "steel_chunk", "count": [ 6, 10 ] },
       { "item": "scrap", "count": [ 6, 10 ] },
-      { "item": "cable", "charges": [ 10, 20 ] }
+      { "item": "hose", "prob": 50 }
     ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "workbench",
+    "name": { "str": "workbench" },
+    "symbol": "#",
+    "looks_like": "veh_table_wood",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 60,
+    "durability": 300,
+    "size": "30 L",
+    "item": "workbench",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "breaks_into": [
+      { "item": "pipe", "count": [ 4, 6 ] },
+      { "item": "sheet_metal", "count": [ 0, 1 ] },
+      { "item": "sheet_metal_small", "count": [ 12, 24 ] },
+      { "item": "steel_chunk", "count": [ 4, 8 ] },
+      { "item": "scrap", "count": [ 12, 24 ] }
+    ],
+    "workbench": { "multiplier": 1.2, "mass": "300 kg", "volume": "30L" },
+    "damage_reduction": { "all": 29 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "survivors_workbench",
+    "name": { "str": "survivors workbench" },
+    "symbol": "#",
+    "looks_like": "veh_table_wood",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 60,
+    "durability": 300,
+    "size": "30 L",
+    "item": "survivors_workbench",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "breaks_into": [
+      { "item": "pipe", "count": [ 4, 6 ] },
+      { "item": "sheet_metal", "count": [ 0, 1 ] },
+      { "item": "sheet_metal_small", "count": [ 12, 24 ] },
+      { "item": "steel_chunk", "count": [ 4, 8 ] },
+      { "item": "scrap", "count": [ 12, 24 ] }
+    ],
+    "workbench": { "multiplier": 1.5, "mass": "300 kg", "volume": "30L" },
+    "damage_reduction": { "all": 29 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "robobench",
+    "name": { "str": "robobench" },
+    "symbol": "#",
+    "looks_like": "machinery_heavy",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 60,
+    "durability": 300,
+    "size": "30 L",
+    "item": "robobench",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "breaks_into": [
+      { "item": "pipe", "count": [ 4, 6 ] },
+      { "item": "sheet_metal", "count": [ 0, 1 ] },
+      { "item": "sheet_metal_small", "count": [ 12, 24 ] },
+      { "item": "steel_chunk", "count": [ 4, 8 ] },
+      { "item": "scrap", "count": [ 12, 24 ] }
+    ],
+    "workbench": { "multiplier": 1.8, "mass": "300 kg", "volume": "30L" },
+    "damage_reduction": { "all": 25 }
   }
 ]

@@ -1,0 +1,209 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "muffler",
+    "name": { "str": "muffler" },
+    "symbol": "/",
+    "color": "light_gray",
+    "broken_symbol": "/",
+    "broken_color": "light_gray",
+    "damage_modifier": 10,
+    "durability": 50,
+    "description": "A metal pipe that reduces some of noise of the engine.",
+    "bonus": 40,
+    "item": "muffler",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "flags": [ "MUFFLER", "SHOCK_RESISTANT" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 3, 5 ] },
+      { "item": "steel_chunk", "count": [ 3, 5 ] },
+      { "item": "scrap", "count": [ 3, 5 ] }
+    ],
+    "damage_reduction": { "all": 9 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "horn_bicycle",
+    "name": { "str": "bicycle horn" },
+    "symbol": "*",
+    "color": "light_gray",
+    "broken_symbol": "*",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 75,
+    "description": "A small horn.  Use the vehicle controls and select the honk option to make noise.",
+    "folded_volume": "250 ml",
+    "bonus": 45,
+    "item": "horn_bicycle",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "20 s", "using": [ [ "adhesive", 1 ], [ "plastics", 1 ] ] }
+    },
+    "flags": [ "HORN", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "scrap", "prob": 50 } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "horn_car",
+    "name": { "str": "car horn" },
+    "symbol": "*",
+    "color": "light_gray",
+    "broken_symbol": "*",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 100,
+    "description": "A horn.  Use the vehicle controls and select the honk option to make noise.",
+    "bonus": 100,
+    "item": "horn_car",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "20 s",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "HORN", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "scrap", "count": [ 0, 2 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "horn_big",
+    "name": { "str": "truck horn" },
+    "symbol": "*",
+    "color": "light_gray",
+    "broken_symbol": "*",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 125,
+    "description": "A powerful truck horn.  Use the vehicle controls and select the honk option to make noise.",
+    "bonus": 120,
+    "item": "horn_big",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "20 s",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "HORN", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "steel_chunk", "prob": 50 } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "horn_ship",
+    "name": { "str": "ship air horn" },
+    "symbol": "*",
+    "color": "light_gray",
+    "broken_symbol": "*",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 175,
+    "description": "An enormous ship air horn.  Use the vehicle controls and select the honk option to make a deafening noise.",
+    "bonus": 1000,
+    "item": "horn_ship",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "600 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "300 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "150 s",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "HORN", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "steel_chunk", "count": [ 1, 3 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "beeper",
+    "name": { "str": "back-up beeper" },
+    "symbol": "*",
+    "color": "light_gray",
+    "broken_symbol": "*",
+    "broken_color": "dark_gray",
+    "damage_modifier": 10,
+    "durability": 90,
+    "description": "An electronic noise maker.  It will automatically make noise when you drive in reverse, alerting things behind you to move out of the way.",
+    "bonus": 40,
+    "folded_volume": "250 ml",
+    "item": "beeper",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "20 s", "using": [ [ "adhesive", 1 ], [ "plastics", 1 ] ] }
+    },
+    "flags": [ "BEEPER", "ODDTURN", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": "ig_vp_device"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "stereo",
+    "name": { "str": "stereo system" },
+    "symbol": "&",
+    "color": "red",
+    "broken_symbol": "&",
+    "broken_color": "light_gray",
+    "damage_modifier": 0,
+    "durability": 60,
+    "description": "A stereo system.  When turned on, it plays music, improving your mood.",
+    "epower": -50,
+    "bonus": 80,
+    "item": "stereo",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "60 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "30 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "30 m",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "STEREO", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ],
+    "breaks_into": "ig_vp_device"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "chimes",
+    "name": { "str": "chimes" },
+    "symbol": "&",
+    "color": "red",
+    "broken_symbol": "&",
+    "broken_color": "light_gray",
+    "damage_modifier": 0,
+    "durability": 40,
+    "description": "A collection of electronic bells.  Use the vehicle's controls to turn it on or off.  When turned on, it makes noise, attracting neighborhood children.",
+    "epower": -50,
+    "item": "chimes",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "60 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "CHIMES", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ],
+    "location": "on_roof",
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 3, 5 ] },
+      { "item": "steel_chunk", "count": [ 3, 5 ] },
+      { "item": "scrap", "count": [ 3, 5 ] },
+      { "item": "cable", "count": [ 1, 3 ] },
+      { "item": "e_scrap", "count": [ 1, 2 ] }
+    ]
+  }  
+]

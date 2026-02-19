@@ -1,0 +1,39 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "mounted_pirate_flag",
+    "copy-from": "mounted_american_flag",
+    "name": { "str": "mounted Jolly Roger" },
+    "description": "A black pirate flag, fluttering in the breeze atop a vehicle.",
+    "color": "dark_gray",
+    "item": "pirate_flag",
+    "breaks_into": [ { "item": "splinter", "count": [ 1, 5 ] }, { "item": "pirate_flag", "count": 1 } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "mounted_american_flag",
+    "name": { "str": "mounted American flag" },
+    "description": "An American flag, fluttering in the breeze atop a vehicle.",
+    "symbol": "F",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "looks_like": "vp_sail",
+    "damage_modifier": 1,
+    "durability": 200,
+    "item": "american_flag",
+    "location": "on_roof",
+    "folded_volume": "500 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "60 m", "using": [ [ "cordage", 1 ], [ "wood_structural_small", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "60 m", "using": [  ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ], [ "tailor", 1 ] ],
+        "time": "60 m",
+        "using": [ [ "sewing_standard", 10 ], [ "fabric_standard", 1 ] ]
+      }
+    },
+    "flags": [ "FOLDABLE", "PROTRUSION", "OVER", "UNMOUNT_ON_DAMAGE", "SHOCK_IMMUNE" ],
+    "breaks_into": [ { "item": "splinter", "count": [ 1, 5 ] }, { "item": "american_flag", "count": 1 } ]
+  }  
+]
