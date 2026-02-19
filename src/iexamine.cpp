@@ -1814,14 +1814,14 @@ void iexamine::transform( player &p, const tripoint &pos )
         prompt = g->m.ter( pos ).obj().prompt;
     }
 
-    if (has_lootable_items || furn_is_deployed || can_climb) {
+    if( has_lootable_items || furn_is_deployed || can_climb ) {
 
         uilist selection_menu;
         selection_menu.text = _( "Select an action" );
-        if ( has_lootable_items ) {
+        if( has_lootable_items ) {
             selection_menu.addentry( 0, true, 'g', _( "Get items" ) );
         }
-            selection_menu.addentry( 1, true, 't', !prompt.empty() ? _( prompt ) : _( "Transform furniture" ) );
+        selection_menu.addentry( 1, true, 't', !prompt.empty() ? _( prompt ) : _( "Transform furniture" ) );
         if( furn_is_deployed ) {
             selection_menu.addentry( 2, true, 'T', _( "Take down the %s" ), g->m.furnname( pos ) );
         }
@@ -1832,9 +1832,9 @@ void iexamine::transform( player &p, const tripoint &pos )
 
         switch( selection_menu.ret ) {
             case 0:
-               none( p, pos );
-               pickup::pick_up( pos, 0 );
-               return;
+                none( p, pos );
+                pickup::pick_up( pos, 0 );
+                return;
             case 1: {
                 if( !message.empty() ) {
                     add_msg( _( message ) );
