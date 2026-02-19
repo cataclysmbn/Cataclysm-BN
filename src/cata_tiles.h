@@ -239,15 +239,17 @@ constexpr int TILESET_NO_MASK = -1;
 constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
 
 struct tint_config {
-    std::optional<SDL_Color> color;
+    SDL_Color color;
     tint_blend_mode blend_mode = tint_blend_mode::tint;
     std::optional<float> contrast;    // 1.0 = no change, absent = skip
     std::optional<float> saturation;  // 1.0 = no change, absent = skip
     std::optional<float> brightness;  // 1.0 = no change, absent = skip
 
     bool has_value() const {
-        return color.has_value() || contrast.has_value() || saturation.has_value() ||
-               brightness.has_value();
+        return color != TILESET_NO_COLOR
+        || contrast.has_value()
+        || saturation.has_value()
+        || brightness.has_value();
     }
 
     bool operator==( const tint_config &other ) const {
@@ -260,11 +262,11 @@ struct tint_config {
 
     // Implicit conversions for backward compatibility and convenience
     tint_config() = default;
-    tint_config( std::optional<SDL_Color> c ) : color( c ) {}
-    tint_config( std::nullopt_t ) : color( std::nullopt ) {}
-    tint_config( SDL_Color c ) : color( c ) {}
-    tint_config( RGBColor c ) : color( static_cast<SDL_Color>( c ) ) {}
-    tint_config( nc_color c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( c ) ) ) {}
+    tint_config( const std::optional<SDL_Color>& c ) : color( c.value_or(TILESET_NO_COLOR) ) {}
+    tint_config( const std::nullopt_t& ) : color( TILESET_NO_COLOR ) {}
+    tint_config( const SDL_Color& c ) : color( c ) {}
+    tint_config( const RGBColor& c ) : color( static_cast<SDL_Color>( c ) ) {}
+    tint_config( const nc_color& c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( c ) ) ) {}
 };
 
 using color_tint_pair = std::pair<tint_config, tint_config>;  // {bg, fg}
@@ -294,11 +296,11 @@ struct std::hash<tileset_lookup_key> {
         cata::hash_combine( seed, v.sprite_index );
         cata::hash_combine( seed, v.mask_index );
         cata::hash_combine( seed, v.effect );
-        if( v.tint.color.has_value() ) {
+        {
             const union {
                 SDL_Color sdl;
                 uint32_t val;
-            } color = { v.tint.color.value() };
+            } color = { v.tint.color };
             cata::hash_combine( seed, color.val );
         }
         cata::hash_combine( seed, static_cast<uint8_t>( v.tint.blend_mode ) );
