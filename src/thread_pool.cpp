@@ -59,6 +59,7 @@ cata_thread_pool &get_thread_pool()
     static cata_thread_pool pool( []() {
         const unsigned int hc = std::thread::hardware_concurrency();
         return hc > 1u ? hc - 1u : 0u;
-    }() );
+    }
+    () );
     return pool;
 }
