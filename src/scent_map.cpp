@@ -6,6 +6,7 @@
 
 #include "assign.h"
 #include "calendar.h"
+#include "thread_pool.h"
 #include "color.h"
 #include "cuboid_rectangle.h"
 #include "cursesdef.h"
@@ -60,11 +61,12 @@ void scent_map::reset()
 
 void scent_map::decay()
 {
-    for( auto &elem : grscent ) {
-        for( auto &val : elem ) {
+    // Each row of grscent is independent; parallelize over the outer dimension.
+    parallel_for( 0, static_cast<int>( grscent.size() ), [&]( int x ) {
+        for( auto &val : grscent[x] ) {
             val = std::max( 0, val - 1 );
         }
-    }
+    } );
 }
 
 void scent_map::draw( const catacurses::window &win, const int div, const tripoint &center ) const
@@ -186,7 +188,8 @@ void scent_map::update( const tripoint &center, map &m )
         squares_used_y[SCENT_RADIUS * 2][x] = 0;
     }
 
-    for( int x = 0; x < SCENT_RADIUS * 2 + 3; ++x ) {
+    // Y-pass: each x column is independent — no shared writes.
+    parallel_for( 0, SCENT_RADIUS * 2 + 3, [&]( int x ) {
         for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
 
             point abs( x + scentmap_minx - 1, y + scentmap_miny );
@@ -199,9 +202,12 @@ void scent_map::update( const tripoint &center, map &m )
                 squares_used_y[y][x] += scent_transfer[abs.x][i];
             }
         }
-    }
+    } );
+    // implicit barrier at end of parallel_for; sum_3_scent_y is fully populated
 
-    for( int x = 1; x < SCENT_RADIUS * 2 + 2; ++x ) {
+    // X-pass: reads sum_3_scent_y (now complete and read-only), writes new_scent[y][x].
+    // Each output column x is independent.
+    parallel_for( 1, SCENT_RADIUS * 2 + 2, [&]( int x ) {
         for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
             const point abs( x + scentmap_minx - 1, y + scentmap_miny );
 
@@ -235,8 +241,11 @@ void scent_map::update( const tripoint &center, map &m )
             new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x][abs.y] ) / 250;
 
         }
-    }
-    for( int x = 1; x < SCENT_RADIUS * 2 + 2; ++x ) {
+    } );
+    // implicit barrier; new_scent is fully populated
+    // Write-back: new_scent is read-only here; has_flag is a read-only map query;
+    // each x column writes to a distinct grscent column — safe to parallelize.
+    parallel_for( 1, SCENT_RADIUS * 2 + 2, [&]( int x ) {
         for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
             // Don't spread scent into water unless the source is in water.
             // Keep scent trails in the water when we exit until rain disturbs them.
@@ -247,7 +256,7 @@ void scent_map::update( const tripoint &center, map &m )
                 grscent[x + scentmap_minx - 1 ][y + scentmap_miny] = new_scent[y][x];
             }
         }
-    }
+    } );
 }
 
 namespace

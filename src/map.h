@@ -1863,7 +1863,11 @@ class map
         // Checks all suspended tiles on a z level and adds those that are invalid to the support_dirty_cache */
         void update_suspension_cache( const int &z );
     protected:
-        void generate_lightmap( int zlev );
+        // When skip_shared_init is true the caller has already: cleared sm/lsb for
+        // this level, called build_sunlight_cache() once, and applied character
+        // lights.  The function then processes only entities whose position z
+        // matches zlev, avoiding cross-level cache writes for parallel safety.
+        void generate_lightmap( int zlev, bool skip_shared_init = false );
         void build_seen_cache( const tripoint &origin, int target_z );
         void apply_character_light( Character &who );
 

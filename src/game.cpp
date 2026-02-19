@@ -170,6 +170,7 @@
 #include "string_input_popup.h"
 #include "submap.h"
 #include "type_id.h"
+#include "thread_pool.h"
 #include "tileray.h"
 #include "timed_event.h"
 #include "translations.h"
@@ -334,6 +335,8 @@ game::game() :
     last_mouse_edge_scroll( std::chrono::steady_clock::now() ),
     fake_items( new temp_item_location( ) )
 {
+    // Force thread pool startup before first turn to avoid a latency spike.
+    get_thread_pool();
     first_redraw_since_waiting_started = true;
     reset_light_level();
     events().subscribe( &*kill_tracker_ptr );
