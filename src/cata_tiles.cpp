@@ -4122,6 +4122,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
             if( overlay_tex ) {
                 overlay_tex->set_alpha_mod( std::min( 192, overlay_count ) );
                 overlay_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+                overlay_tex->set_alpha_mod( 255 );
             }
         }
         return ret;
