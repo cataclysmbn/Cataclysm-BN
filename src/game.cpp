@@ -175,6 +175,7 @@
 #include "string_input_popup.h"
 #include "submap.h"
 #include "type_id.h"
+#include "thread_pool.h"
 #include "tileray.h"
 #include "timed_event.h"
 #include "translations.h"

@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <condition_variable>
 #include <deque>
-#include <exception>
 #include <functional>
 #include <latch>
 #include <mutex>
@@ -88,31 +87,19 @@ void parallel_for( int begin, int end, F &&f )
 
     const int chunks = std::min( n, nw );
     std::latch latch( chunks );
-    std::exception_ptr first_ex;
-    std::mutex         ex_mutex;
 
     for( int c = 0; c < chunks; ++c ) {
         const int chunk_begin = begin + ( n * c / chunks );
         const int chunk_end   = begin + ( n * ( c + 1 ) / chunks );
-        pool.submit( [&latch, &f, &first_ex, &ex_mutex, chunk_begin, chunk_end]() {
-            try {
-                for( int i = chunk_begin; i < chunk_end; ++i ) {
-                    f( i );
-                }
-            } catch( ... ) {
-                std::lock_guard<std::mutex> lock( ex_mutex );
-                if( !first_ex ) {
-                    first_ex = std::current_exception();
-                }
+        pool.submit( [&latch, &f, chunk_begin, chunk_end]() {
+            for( int i = chunk_begin; i < chunk_end; ++i ) {
+                f( i );
             }
             latch.count_down();
         } );
     }
 
     latch.wait();
-    if( first_ex ) {
-        std::rethrow_exception( first_ex );
-    }
 }
 
 /**
@@ -145,29 +132,17 @@ void parallel_for_chunked( int begin, int end, int chunk_size, F &&f )
     }
 
     std::latch latch( num_chunks );
-    std::exception_ptr first_ex;
-    std::mutex         ex_mutex;
 
     for( int c = 0; c < num_chunks; ++c ) {
         const int chunk_begin = begin + c * chunk_size;
         const int chunk_end   = std::min( chunk_begin + chunk_size, end );
-        pool.submit( [&latch, &f, &first_ex, &ex_mutex, chunk_begin, chunk_end]() {
-            try {
-                for( int i = chunk_begin; i < chunk_end; ++i ) {
-                    f( i );
-                }
-            } catch( ... ) {
-                std::lock_guard<std::mutex> lock( ex_mutex );
-                if( !first_ex ) {
-                    first_ex = std::current_exception();
-                }
+        pool.submit( [&latch, &f, chunk_begin, chunk_end]() {
+            for( int i = chunk_begin; i < chunk_end; ++i ) {
+                f( i );
             }
             latch.count_down();
         } );
     }
 
     latch.wait();
-    if( first_ex ) {
-        std::rethrow_exception( first_ex );
-    }
 }

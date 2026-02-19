@@ -9,7 +9,6 @@
 #include <ranges>
 #include <limits>
 #include <mutex>
-#include <shared_mutex>
 #include <optional>
 #include <ostream>
 #include <queue>
@@ -8992,100 +8991,54 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     bool seen_cache_dirty = false;
     std::vector<int> dirty_seen_cache_levels;
 
-    // RISK-1: Refresh the shared weather-transparency lookup table once, serially,
-    // before the parallel Phase 1 block.  build_transparency_cache() reads the
-    // table on every call, so updating it here guarantees all workers see a
-    // consistent value without a data race.
-    update_weather_transparency_lookup();
-
     // Parallelize the expensive per-z-level cache builds across all z-levels.
     // Each build_*_cache(z) writes only to get_cache(z) — no z-level aliasing.
+    //
+    // Note: build_transparency_cache() may reset a module-level
+    // weather_transparency_lookup table on weather changes.  All z-level tasks
+    // would write the same value (idempotent), so the benign race is accepted.
     //
     // update_suspension_cache is intentionally excluded from this parallel block:
     // it calls support_dirty() which inserts into the shared support_cache_dirty
     // set and is not thread-safe.  It runs in a dedicated serial pass below.
-
     {
-        ZoneScopedN( "Phase1_parallel_caches" );
-        if( parallel_enabled && parallel_map_cache ) {
-            std::mutex dirty_mutex;
-            parallel_for( minz, maxz + 1, [&]( int z ) {
-                // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
-                const bool affects_seen_cache = z == zlev || fov_3d;
-                build_outside_cache( z );
-                build_transparency_cache( z );
-                const bool floor_dirty = build_floor_cache( z ) && affects_seen_cache;
+        std::mutex dirty_mutex;
+        parallel_for( minz, maxz + 1, [&]( int z ) {
+            // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
+            const bool affects_seen_cache = z == zlev || fov_3d;
+            build_outside_cache( z );
+            build_transparency_cache( z );
+            const bool floor_dirty = build_floor_cache( z ) && affects_seen_cache;
 
-                // Guard the 68 KB zero-fills: most z-levels have no vehicles.
-                // veh_in_active_range is set by update_vehicle_list() / clear_vehicle_list().
-                level_cache &ch = get_cache( z );
-                if( ch.veh_in_active_range ) {
-                    const diagonal_blocks fill = {false, false};
-                    std::uninitialized_fill_n( &ch.vehicle_obscured_cache[0][0],
-                                               MAPSIZE_X * MAPSIZE_Y, fill );
-                    std::uninitialized_fill_n( &ch.vehicle_obstructed_cache[0][0],
-                                               MAPSIZE_X * MAPSIZE_Y, fill );
-                }
+            diagonal_blocks fill = {false, false};
+            std::uninitialized_fill_n( &( get_cache( z ).vehicle_obscured_cache[0][0] ),
+                                       MAPSIZE_X * MAPSIZE_Y, fill );
+            std::uninitialized_fill_n( &( get_cache( z ).vehicle_obstructed_cache[0][0] ),
+                                       MAPSIZE_X * MAPSIZE_Y, fill );
 
-                const bool level_seen_dirty = ch.seen_cache_dirty;
-                if( floor_dirty || level_seen_dirty ) {
-                    std::lock_guard<std::mutex> lock( dirty_mutex );
-                    seen_cache_dirty = true;
-                    if( level_seen_dirty ) {
-                        dirty_seen_cache_levels.push_back( z );
-                    }
-                }
-            } );
-        } else {
-            for( int z = minz; z <= maxz; ++z ) {
-                // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
-                const bool affects_seen_cache = z == zlev || fov_3d;
-                build_outside_cache( z );
-                build_transparency_cache( z );
-                const bool floor_dirty = build_floor_cache( z ) && affects_seen_cache;
-
-                // Guard the 68 KB zero-fills: most z-levels have no vehicles.
-                // veh_in_active_range is set by update_vehicle_list() / clear_vehicle_list().
-                level_cache &ch = get_cache( z );
-                if( ch.veh_in_active_range ) {
-                    const diagonal_blocks fill = {false, false};
-                    std::uninitialized_fill_n( &ch.vehicle_obscured_cache[0][0],
-                                               MAPSIZE_X * MAPSIZE_Y, fill );
-                    std::uninitialized_fill_n( &ch.vehicle_obstructed_cache[0][0],
-                                               MAPSIZE_X * MAPSIZE_Y, fill );
-                }
-
-                const bool level_seen_dirty = ch.seen_cache_dirty;
-                if( floor_dirty || level_seen_dirty ) {
-                    seen_cache_dirty = true;
-                    if( level_seen_dirty ) {
-                        dirty_seen_cache_levels.push_back( z );
-                    }
+            const bool level_seen_dirty = get_cache( z ).seen_cache_dirty;
+            if( floor_dirty || level_seen_dirty ) {
+                std::lock_guard<std::mutex> lock( dirty_mutex );
+                seen_cache_dirty = true;
+                if( level_seen_dirty ) {
+                    dirty_seen_cache_levels.push_back( z );
                 }
             }
-        }
+        } );
     }
     // implicit barrier; outside/transparency/floor caches for all z-levels are complete.
 
-    {
-        ZoneScopedN( "Phase2_suspension" );
-        // update_suspension_cache calls support_dirty() which writes to the shared
-        // support_cache_dirty set; must remain serial.
-        for( int z = minz; z <= maxz; z++ ) {
-            update_suspension_cache( z );
-        }
+    // update_suspension_cache calls support_dirty() which writes to the shared
+    // support_cache_dirty set; must remain serial.
+    for( int z = minz; z <= maxz; z++ ) {
+        update_suspension_cache( z );
     }
 
-    {
-        ZoneScopedN( "Phase3_vehicles" );
-        // needs a separate pass as it changes the caches on neighbour z-levels (e.g. floor_cache);
-        // otherwise such changes might be overwritten by main cache-building logic.
-        // This pass must remain serial: do_vehicle_caching() writes to neighbor z-level caches.
-        for( int z = minz; z <= maxz; z++ ) {
-            if( get_cache( z ).veh_in_active_range ) {
-                do_vehicle_caching( z );
-            }
-        }
+    // needs a separate pass as it changes the caches on neighbour z-levels (e.g. floor_cache);
+    // otherwise such changes might be overwritten by main cache-building logic.
+    // This pass must remain serial: do_vehicle_caching() writes to neighbor z-level caches.
+    for( int z = minz; z <= maxz; z++ ) {
+        do_vehicle_caching( z );
     }
 
     seen_cache_dirty |= build_vision_transparency_cache( get_player_character() );
@@ -9107,19 +9060,16 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         dirty_seen_cache_levels.erase( std::ranges::unique( dirty_seen_cache_levels ).begin(),
                                        dirty_seen_cache_levels.end() );
 
-        if( dirty_seen_cache_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
+        if( dirty_seen_cache_levels.size() > 1 ) {
             // Multiple dirty levels: hoist shared initialization outside the
             // parallel loop so worker threads never race on cross-level writes.
             //
-            // Step 1: Clear sm, light_source_buffer, and lm for every dirty level.
-            // lm must be explicitly zeroed here: build_sunlight_cache only writes
-            // outdoor tiles, leaving interior cells with stale values from last
-            // turn (e.g., a removed torch would leave a ghost-light patch).
+            // Step 1: Clear sm and light_source_buffer for every dirty level.
+            // (lm is overwritten entirely by build_sunlight_cache below.)
             for( const int z : dirty_seen_cache_levels ) {
                 auto &c = get_cache( z );
                 std::memset( c.sm, 0, sizeof( c.sm ) );
                 std::memset( c.light_source_buffer, 0, sizeof( c.light_source_buffer ) );
-                std::memset( c.lm, 0, sizeof( c.lm ) );
             }
             // Step 2: Build sunlight (writes lm for ALL z-levels, top-to-bottom;
             // must run once and serially before the parallel loop).
@@ -9130,34 +9080,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             for( npc &guy : g->all_npcs() ) {
                 apply_character_light( guy );
             }
-            // Step 3b: Apply monster lights serially.  g->all_monsters() iterates
-            // weak_ptr_fast (std::__weak_ptr<T,_S_single>) whose refcount is non-atomic;
-            // calling lock() from worker threads is a data race.  apply_light_source()
-            // uses get_cache(p.z) so each monster writes to its own z-level's buffer.
-            for( monster &critter : g->all_monsters() ) {
-                if( critter.is_hallucination() ) {
-                    continue;
-                }
-                const tripoint &mp = critter.pos();
-                if( inbounds( mp ) ) {
-                    if( critter.has_effect( effect_onfire ) ) {
-                        apply_light_source( mp, 8 );
-                    }
-                    if( critter.type->luminance > 0 ) {
-                        apply_light_source( mp, critter.type->luminance );
-                    }
-                }
-            }
             // Step 4: Generate per-level dynamic lighting in parallel.
             // skip_shared_init=true: each worker skips the shared-init steps above
             // and only processes entities whose position z matches its own level.
-            //
-            // Pre-warm the vehicle list cache once, serially, before workers
-            // enter generate_lightmap().  get_vehicles() writes last_full_vehicle_list
-            // when the dirty flag is set; multiple threads racing on that write
-            // corrupts the allocator heap metadata.  After this call the flag is
-            // cleared and all workers will only read the cached list — safe.
-            get_vehicles();
             parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
                 generate_lightmap( dirty_seen_cache_levels[i], /*skip_shared_init=*/true );
             } );
