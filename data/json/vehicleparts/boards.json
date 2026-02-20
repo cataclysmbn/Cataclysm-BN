@@ -1089,7 +1089,6 @@
     "type": "vehicle_part",
     "symbol": "H"
   },
-
   {
     "id": "hdstowboard_horizontal",
     "copy-from": "hdstowboard",
@@ -1539,5 +1538,5 @@
     "type": "vehicle_part",
     "looks_like": "hdhalfboard_vertical_2",
     "symbol": "H"
-  },
+  }
 ]
