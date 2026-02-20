@@ -1104,7 +1104,11 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
 
         const auto tex_key = tileset_lookup_key{ index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, TILESET_NO_WARP, point_zero };
         auto &[at_tex, at_rect] = atl_tex;
-        ts.tile_lookup.emplace( tex_key, tileset::tile_lookup_entry{ texture( std::move( at_tex ), at_rect ), point_zero } );
+        auto [it, ok] = ts.tile_lookup.emplace( tex_key, tileset::tile_lookup_entry{ texture( std::move( at_tex ), at_rect ), point_zero } );
+        if( !ok ) {
+            dbg( DL::Error ) << "dynamic atlas hash collision, you will likely see minor graphical issues" <<
+                             std::endl;
+        }
     }
     sdl_restore_render_state( renderer.get(), state );
 
@@ -1295,19 +1299,19 @@ static void apply_surf_blend_effect(
 
     auto postprocess = [&tint]( SDL_Color c ) -> SDL_Color {
         auto [h, s, v, a] = rgb2hsv( c );
-        if( tint.contrast.has_value() )
+        if( fabs( tint.contrast - 1.0f ) > 0.001f )
         {
-            const float adjusted = ( ( static_cast<float>( v ) - 128.0f ) * tint.contrast.value() ) + 128.0f;
+            const float adjusted = ( ( static_cast<float>( v ) - 128.0f ) * tint.contrast ) + 128.0f;
             v =  static_cast<uint8_t>( std::clamp( adjusted, 0.0f, 255.0f ) );
         }
-        if( tint.saturation.has_value() )
+        if( fabs( tint.saturation - 1.0f ) > 0.001f )
         {
-            s = static_cast<uint16_t>( std::clamp( static_cast<float>( s ) * tint.saturation.value(), 0.0f,
+            s = static_cast<uint16_t>( std::clamp( static_cast<float>( s ) * tint.saturation, 0.0f,
                                                    65535.0f ) );
         }
-        if( tint.brightness.has_value() )
+        if( fabs( tint.brightness - 1.0f ) > 0.001f )
         {
-            v = static_cast<uint8_t>( std::clamp( static_cast<float>( v ) * tint.brightness.value(), 0.0f,
+            v = static_cast<uint8_t>( std::clamp( static_cast<float>( v ) * tint.brightness, 0.0f,
                                                   255.0f ) );
         }
         return hsv2rgb( HSVColor{ h, s, v, a } );
@@ -1315,7 +1319,7 @@ static void apply_surf_blend_effect(
 
     if( use_mask ) {
         auto effect_mask = [&]( const SDL_Color & base_rgb, const SDL_Color & mask_rgb )  -> SDL_Color {
-            RGBColor res = blend_op( base_rgb, tint.color.value_or( TILESET_NO_COLOR ), mask_rgb );
+            RGBColor res = blend_op( base_rgb, tint.color, mask_rgb );
             return postprocess( res );
         };
         apply_blend_filter(
@@ -1326,7 +1330,7 @@ static void apply_surf_blend_effect(
         );
     } else {
         auto effect_no_mask = [&]( const SDL_Color & c )  -> SDL_Color {
-            RGBColor res = blend_op( c, tint.color.value_or( TILESET_NO_COLOR ) );
+            RGBColor res = blend_op( c, tint.color );
             return postprocess( res );
         };
         apply_color_filter(
@@ -1550,6 +1554,10 @@ texture_result tileset::get_or_default( const int sprite_index,
         auto &[at_tex, at_rect] = atl_tex;
         auto [entry, ok] = tile_lookup.emplace( mod_tex_key,
                                                 tile_lookup_entry{ texture( std::move( at_tex ), at_rect ), warp_output_offset } );
+        if( !ok ) {
+            dbg( DL::Error ) << "dynamic atlas hash collision, you will likely see minor graphical issues" <<
+                             std::endl;
+        }
         return { &entry->second.tex, entry->second.warp_offset };
     }
 #else
@@ -2297,30 +2305,24 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
             {
                 // Simple string value - parse as color (may include brightness from 4th hex pair)
                 auto [color, brightness] = parse_color( obj.get_string( key ) );
-                cfg.color = color;
-                cfg.brightness = brightness;
+                cfg.color = color.value_or( TILESET_NO_COLOR );
+                cfg.brightness = brightness.value_or( 1.0f );
                 cfg.blend_mode = top_blend_mode;
                 if( has_top_level ) {
-                    cfg.contrast = top_contrast;
-                    cfg.saturation = top_saturation;
-                    if( top_brightness.has_value() ) {
-                        cfg.brightness = top_brightness.value();
-                    }
+                    cfg.contrast = top_contrast.value_or( 1.0f );
+                    cfg.saturation = top_saturation.value_or( 1.0f );
+                    cfg.brightness = top_brightness.value_or( 1.0f );
                 }
             } else if( obj.has_object( key ) && !has_top_level )
             {
                 // Complex object value - only allowed when no top-level contrast/saturation
                 JsonObject color_obj = obj.get_object( key );
                 auto [color, brightness] = parse_color( color_obj.get_string( "color", "" ) );
-                cfg.color = color;
-                cfg.brightness = brightness;
+                cfg.color = color.value_or( TILESET_NO_COLOR );
+                cfg.brightness = brightness.value_or( 1.0f );
                 cfg.blend_mode = parse_blend_mode( color_obj.get_string( "blend_mode", "" ) );
-                if( color_obj.has_float( "contrast" ) ) {
-                    cfg.contrast = color_obj.get_float( "contrast" );
-                }
-                if( color_obj.has_float( "saturation" ) ) {
-                    cfg.saturation = color_obj.get_float( "saturation" );
-                }
+                cfg.contrast = color_obj.get_float( "contrast", 1.0f );
+                cfg.saturation = color_obj.get_float( "saturation", 1.0f );
                 // Allow explicit brightness field to override hex-encoded brightness
                 if( color_obj.has_float( "brightness" ) ) {
                     cfg.brightness = color_obj.get_float( "brightness" );
@@ -4065,7 +4067,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
         ( is_fg && tile.flags.contains( flag_TINT_NO_FG ) ) ||
         ( !is_fg && tile.flags.contains( flag_TINT_NO_BG ) ) ) {
         effective_tint = {};
-    } else if( !effective_tint.color.has_value() && tile.default_tint.has_value() ) {
+    } else if( effective_tint.color == TILESET_NO_COLOR && tile.default_tint.has_value() ) {
         effective_tint.color = tile.default_tint.value();
     }
 
@@ -4114,6 +4116,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
             if( overlay_tex ) {
                 overlay_tex->set_alpha_mod( std::min( 192, overlay_count ) );
                 overlay_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+                overlay_tex->set_alpha_mod( 255 );
             }
         }
         return ret;
