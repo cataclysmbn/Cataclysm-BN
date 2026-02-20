@@ -8,9 +8,7 @@ rem   cmake-build.bat -Platform linux -Preset linux-slim -Action build     — L
 rem   cmake-build.bat -Platform linux -Preset 2 -Action run -RunArgs "[map]"  — run with filter
 rem   cmake-build.bat -Platform win -Preset 1 -BuildType 2 -Action debug  — run under VS debugger
 rem
-rem No elevation is required. WSL operations use "wsl -u root" (Linux-side root, not Windows admin).
-rem cmake-build and Visual Studio both run at standard integrity level, which is required for the
-rem VS debugger auto-attach (COM ROT is partitioned by integrity level).
+rem Windows builds run at standard integrity level (required for VS debugger auto-attach via COM ROT).
+rem Linux/WSL builds auto-elevate: the script spawns an elevated PowerShell window for WSL operations.
 
 powershell -Sta -ExecutionPolicy Bypass -File "%~dp0cmake-build.ps1" %*
-pause

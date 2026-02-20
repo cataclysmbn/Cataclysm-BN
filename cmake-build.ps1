@@ -22,8 +22,8 @@
 #
 # For the debug action, add a second External Tool entry (e.g. "BN Debug") using -Action debug.
 # Windows: opens a new VS instance with devenv /debugexe (full debugger attached from start).
-# Linux  : starts the binary under gdbserver :4444; attach via Debug > Attach to Process
-#          (Connection type: gdb, Connection target: localhost:4444).
+# Linux  : starts SSH in WSL, port-proxies localhost:2222 -> WSL:22, launches game in a new
+#          WSL window; attach via Debug > Attach to Process (Connection type: SSH, target: localhost:2222).
 
 param(
     [string]$Platform   = "",   # win | linux | mac
@@ -32,18 +32,22 @@ param(
     [string]$Target     = "",   # cmake build target (derived from preset if blank)
     [string]$Action     = "",   # build | run | rebuild | delete | debug
     [string]$RunArgs    = "",   # forwarded verbatim to the binary when running
-    [string]$ExtraFlags = ""    # extra cmake configure flags, e.g. -DFOO=ON
+    [string]$ExtraFlags = "",   # extra cmake configure flags, e.g. -DFOO=ON
+    [switch]$Gui                # force WinForms UI even in an interactive console (used by elevated WSL re-launch)
 )
 
 # ── User configuration ────────────────────────────────────────────────────────
-$WslSrcDir = "~/cbn"        # WSL path for synced source
-$WslBldDir = "~/cbn-build"  # WSL path for build dirs (overrides preset binaryDir)
-$VcpkgRoot = ""             # Windows only: path to vcpkg root (auto-detected if blank)
+$WslSrcDir     = "~/cbn"        # WSL path for synced source
+$WslBldDir     = "~/cbn-build"  # WSL path for build dirs (overrides preset binaryDir)
+$VcpkgRoot     = ""             # Windows only: path to vcpkg root (auto-detected if blank)
+$WslSdlDisplay = 0              # WSL run: SDL monitor index (0=first, 1=second, -1=SDL default)
 
 # ── Path resolution ───────────────────────────────────────────────────────────
 $WinSrcPath = $PSScriptRoot
 $DriveLetter = $WinSrcPath.Substring(0, 1).ToLower()
 $WslSrcPath  = "/mnt/$DriveLetter$($WinSrcPath.Substring(2).Replace('\', '/'))"
+$wslExe      = "$env:SystemRoot\System32\wsl.exe"
+function wsl { & $wslExe @args }
 
 # ── Load cmake presets ────────────────────────────────────────────────────────
 $presetsFile = "$WinSrcPath\CMakePresets.json"
@@ -302,7 +306,7 @@ $ParamExtraFlags = $ExtraFlags
 # When stdin is a real console (terminal), interactive text menus work normally.
 # When redirected (e.g. VS "Use Output window"), we fall back to GUI pickers so
 # the tool still works without a terminal window.
-$isInteractive = -not [Console]::IsInputRedirected
+$isInteractive = (-not [Console]::IsInputRedirected) -and (-not $Gui)
 
 # Show a numbered text menu (terminal) or an Out-GridView picker (GUI mode).
 # $Items: ordered hashtable  Key => Label,
@@ -481,8 +485,7 @@ To fix, do ONE of the following:
     }
 } else {
     # Linux (WSL)
-    wsl true 2>$null
-    if ($LASTEXITCODE -ne 0) {
+    if (-not (Test-Path $wslExe)) {
         Write-Error "WSL not available. Install WSL2 with Ubuntu from the Microsoft Store."
         exit 1
     }
@@ -531,7 +534,7 @@ if ($IsWin) {
 }
 
 # ── Target selection ──────────────────────────────────────────────────────────
-$inferredTargets = Get-PresetTargets $cacheVars
+$inferredTargets = @(Get-PresetTargets $cacheVars)
 $selectedTarget  = $null
 
 if ($Target -ne "") {
@@ -609,19 +612,19 @@ if ($Action -eq "") {
         "run"     = "Run"
         "rebuild" = "Rebuild  (wipe build dir, reconfigure, build)"
         "delete"  = "Delete build"
-        "debug"   = "Debug    (run under VS debugger / gdbserver)"
+        "debug"   = "Debug    (run under VS debugger / SSH attach)"
         "exit"    = "Exit"
     }
     $Action = Select-Menu "Select action" $actionItems
     if ($Action -eq "exit") { exit 0 }
 }
 
-if ($isTestTarget -and $Action -eq "run" -and $RunArgs -eq "") {
+if ($isTestTarget -and $Action -eq "run" -and $RunArgs -eq "" -and -not $PSBoundParameters.ContainsKey('RunArgs')) {
     Write-Host ""
     $RunArgs = Read-Input "Test args (blank = run all, e.g. [map])"
 }
 
-if (($Action -eq "build" -or $Action -eq "rebuild") -and $ExtraFlags -eq "") {
+if (($Action -eq "build" -or $Action -eq "rebuild") -and $ExtraFlags -eq "" -and -not $PSBoundParameters.ContainsKey('ExtraFlags')) {
     Write-Host ""
     $ExtraFlags = Read-Input "Extra cmake flags (blank = none, e.g. -DFOO=ON)"
 }
@@ -639,6 +642,30 @@ Write-Host "==> Binary    : $binaryPath"
 if ($ExtraFlags -ne "") { Write-Host "==> Extra flags: $ExtraFlags" }
 if ($RunArgs    -ne "") { Write-Host "==> Run args  : $RunArgs" }
 Write-Host ""
+
+# ── Elevation check (Linux/WSL) ───────────────────────────────────────────────
+# WSL requires admin. If not already elevated, re-launch as administrator.
+# The elevated window is a real console with stdin, so we do NOT pass -Gui:
+# text-based Read-Host prompts appear inline in the same console as build output,
+# which is more visible than a WinForms popup that can end up behind other windows.
+if ($IsLinux) {
+    $isAdmin = (New-Object Security.Principal.WindowsPrincipal(
+        [Security.Principal.WindowsIdentity]::GetCurrent()
+    )).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (-not $isAdmin) {
+        Write-Host "==> WSL builds require elevation. Relaunching as administrator..."
+        $elevCmd  = "& '" + $PSCommandPath.Replace("'", "''")    + "'"
+        $elevCmd += " -Platform linux"
+        $elevCmd += " -Preset '"  + $presetName.Replace("'", "''")     + "'"
+        $elevCmd += " -Target '"  + $selectedTarget.Replace("'", "''") + "'"
+        $elevCmd += " -Action '"  + $Action.Replace("'", "''")         + "'"
+        $elevCmd += " -RunArgs '"    + $RunArgs.Replace("'", "''")    + "'"
+        $elevCmd += " -ExtraFlags '" + $ExtraFlags.Replace("'", "''") + "'"
+        $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($elevCmd))
+        Start-Process powershell.exe -Verb RunAs -ArgumentList "-Sta -NoExit -ExecutionPolicy Bypass -EncodedCommand $encoded"
+        exit 0
+    }
+}
 
 # ── Delete ────────────────────────────────────────────────────────────────────
 if ($Action -eq "delete") {
@@ -718,7 +745,7 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         Write-Host ""
         $r = Select-Menu "Run $selectedTarget now?" ([ordered]@{
             "run"   = "Run"
-            "debug" = "Debug    (attach VS debugger / gdbserver)"
+            "debug" = "Debug    (attach VS debugger / SSH attach)"
             "no"    = "No"
         })
         if ($r -ne "no") {
@@ -778,7 +805,7 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         Write-Host ""
         $r = Select-Menu "Run $selectedTarget now?" ([ordered]@{
             "run"   = "Run"
-            "debug" = "Debug    (attach VS debugger / gdbserver)"
+            "debug" = "Debug    (attach VS debugger / SSH attach)"
             "no"    = "No"
         })
         if ($r -ne "no") {
@@ -814,7 +841,115 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         } else {
             Write-Host "--- All dependencies present."
         }
+
+        # Ubuntu installs versioned LLVM/clang binaries (e.g. clang-14) but doesn't
+        # always create bare-name alternatives. This block ensures tools are available,
+        # auto-installing missing packages if needed, then resolves full paths for cmake.
+        # Scripts are base64-encoded to avoid PowerShell 5.1 argument-quoting bugs.
+        $resolvedCC     = ""
+        $resolvedCXX    = ""
+        $resolvedAR     = ""
+        $resolvedRANLIB = ""
+        $needsLlvmFix = ("$($cacheVars['CMAKE_C_COMPILER'])"  -match "clang") -or
+                        ("$($cacheVars['CMAKE_CXX_COMPILER'])" -match "clang") -or
+                        ("$($cacheVars['CMAKE_AR'])"           -match "llvm")
+        if ($needsLlvmFix) {
+            Write-Host "--- Setting up LLVM toolchain..."
+            # Single root script: installs if missing, creates alternatives, prints TOOL_KEY=path.
+            $llvmScript = @'
+need_install() {
+    local t=$1
+    command -v "$t" >/dev/null 2>&1 && return 1
+    ls /usr/bin/$t-[0-9]* >/dev/null 2>&1 && return 1
+    ls /usr/lib/llvm-*/bin/$t >/dev/null 2>&1 && return 1
+    return 0
+}
+resolve() {
+    local p
+    p=$(command -v "$1" 2>/dev/null)
+    [ -z "$p" ] && p=$(ls /usr/bin/$1-[0-9]* 2>/dev/null | sort -V | tail -1)
+    [ -z "$p" ] && p=$(ls /usr/lib/llvm-*/bin/$1 2>/dev/null | sort -V | tail -1)
+    printf '%s' "$p"
+}
+if need_install clang; then
+    echo '  Installing clang...'
+    pkg=$(apt-cache search '^clang-[0-9]' 2>/dev/null | awk '{print $1}' | grep -xE 'clang-[0-9]+' | sort -V | tail -1)
+    [ -z "$pkg" ] && pkg=clang
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$pkg" >/dev/null
+fi
+if need_install llvm-ar; then
+    echo '  Installing llvm...'
+    pkg=$(apt-cache search '^llvm-[0-9]' 2>/dev/null | awk '{print $1}' | grep -xE 'llvm-[0-9]+' | sort -V | tail -1)
+    [ -z "$pkg" ] && pkg=llvm
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$pkg" >/dev/null
+fi
+for t in clang clang++ llvm-ar llvm-ranlib; do
+    if ! command -v "$t" >/dev/null 2>&1; then
+        b=$(ls /usr/bin/$t-[0-9]* 2>/dev/null | sort -V | tail -1)
+        [ -z "$b" ] && b=$(ls /usr/lib/llvm-*/bin/$t 2>/dev/null | sort -V | tail -1)
+        [ -n "$b" ] && update-alternatives --install /usr/bin/$t "$t" "$b" 100 2>/dev/null
+    fi
+done
+for item in CC:clang CXX:clang++ AR:llvm-ar RANLIB:llvm-ranlib; do
+    key=${item%%:*}
+    tool=${item##*:}
+    path=$(resolve "$tool")
+    printf 'TOOL_%s=%s\n' "$key" "$path"
+done
+'@
+            $llvmB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($llvmScript))
+            $toolPaths = @{}
+            wsl -u root bash -c "echo $llvmB64 | base64 -d | bash" | ForEach-Object {
+                $line = ($_ -replace "`r", "")
+                if ($line -match '^TOOL_(\w+)=(.+)$') {
+                    $toolPaths[$Matches[1]] = $Matches[2].Trim()
+                } else {
+                    Write-Host $line
+                }
+            }
+            $resolvedCC     = if ($toolPaths['CC'])     { $toolPaths['CC'] }     else { '' }
+            $resolvedCXX    = if ($toolPaths['CXX'])    { $toolPaths['CXX'] }    else { '' }
+            $resolvedAR     = if ($toolPaths['AR'])     { $toolPaths['AR'] }     else { '' }
+            $resolvedRANLIB = if ($toolPaths['RANLIB']) { $toolPaths['RANLIB'] } else { '' }
+            Write-Host "  clang      : $(if ($resolvedCC)     { $resolvedCC }     else { 'NOT FOUND' })"
+            Write-Host "  clang++    : $(if ($resolvedCXX)    { $resolvedCXX }    else { 'NOT FOUND' })"
+            Write-Host "  llvm-ar    : $(if ($resolvedAR)     { $resolvedAR }     else { 'NOT FOUND' })"
+            Write-Host "  llvm-ranlib: $(if ($resolvedRANLIB) { $resolvedRANLIB } else { 'NOT FOUND' })"
+            if (-not $resolvedCC) {
+                Write-Warning "clang not found after auto-install - cmake configure may fail"
+            }
+        }
         Write-Host ""
+
+        # Verify ccache and mold are actually present as binaries (dpkg status alone can be stale).
+        # If missing, install them and detect their full paths for cmake -D overrides.
+        $resolvedCcache = ""
+        $resolvedMold   = ""
+        $needsCcache = ("$($cacheVars['CMAKE_C_COMPILER_LAUNCHER'])" -match "ccache") -or
+                       ("$($cacheVars['CMAKE_CXX_COMPILER_LAUNCHER'])" -match "ccache")
+        $needsMold   = ("$($cacheVars['LINKER'])" -match "mold")
+        if ($needsCcache -or $needsMold) {
+            Write-Host "--- Checking launcher/linker tools..."
+        }
+        if ($needsCcache) {
+            $resolvedCcache = (wsl bash -c "command -v ccache 2>/dev/null").Trim() -replace "`r",""
+            if (-not $resolvedCcache) {
+                Write-Host "  Installing ccache..."
+                wsl -u root bash -c "DEBIAN_FRONTEND=noninteractive apt-get install -y -q ccache >/dev/null"
+                $resolvedCcache = (wsl bash -c "command -v ccache 2>/dev/null").Trim() -replace "`r",""
+            }
+            Write-Host "  ccache: $(if ($resolvedCcache) { $resolvedCcache } else { 'NOT FOUND - will disable' })"
+        }
+        if ($needsMold) {
+            $resolvedMold = (wsl bash -c "command -v mold 2>/dev/null").Trim() -replace "`r",""
+            if (-not $resolvedMold) {
+                Write-Host "  Installing mold..."
+                wsl -u root bash -c "DEBIAN_FRONTEND=noninteractive apt-get install -y -q mold >/dev/null"
+                $resolvedMold = (wsl bash -c "command -v mold 2>/dev/null").Trim() -replace "`r",""
+            }
+            Write-Host "  mold  : $(if ($resolvedMold) { $resolvedMold } else { 'NOT FOUND' })"
+        }
+        if ($needsCcache -or $needsMold) { Write-Host "" }
 
         # TSan kernel fix: high ASLR entropy causes shadow memory conflicts
         if ($isTSan) {
@@ -857,7 +992,9 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
 
         # cmake configure using the preset (skipped if cache already exists).
         # -B overrides the preset's binaryDir to keep builds in $WslBldDir.
-        wsl bash -c "test -f $wslBuildPath/CMakeCache.txt"
+        # NOTE: CMakeCache.txt is created even on FAILED configures (before compiler detection),
+        # so we check for build.ninja/Makefile — only written on successful configure.
+        wsl bash -c "test -f $wslBuildPath/build.ninja -o -f $wslBuildPath/Makefile"
         $cacheExists = ($LASTEXITCODE -eq 0)
 
         if ($cacheExists -and $ExtraFlags -ne "") {
@@ -873,16 +1010,30 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         }
 
         if (-not $cacheExists) {
+            # Wipe any stale CMakeCache.txt left by a previous failed configure.
+            # CMakeCache.txt is written before compiler detection, so it exists even after failure.
+            # A stale cache can cause cmake to use wrong (previously cached) compiler paths.
+            wsl bash -c "rm -f $wslBuildPath/CMakeCache.txt; exit 0"
             Write-Host "--- Configuring ($presetName)..."
             Write-Host "    cmake --preset $presetName -B $wslBuildPath$(if ($ExtraFlags) {" $ExtraFlags"})"
             Write-Host ""
             # cd to source so cmake --preset finds CMakePresets.json there.
-            # Pipe through grep to suppress the expected "not a git repository" stderr from
-            # CMake's version detection (harmless - we already wrote version.h above).
-            # String concatenation keeps ${PIPESTATUS[0]} out of PS variable expansion.
+            # Run cmake directly (no grep pipe) so $LASTEXITCODE reliably reflects cmake's exit code.
+            # (The pipe+PIPESTATUS approach was unreliable: cmake's non-zero exit propagated as 0.)
             $configCmd = "cd $WslSrcDir; cmake --preset $presetName -B $wslBuildPath"
+            # Pass resolved full paths via -D to override the preset's bare tool names.
+            # This ensures cmake finds the tools even if update-alternatives hasn't registered them.
+            if ($resolvedCC  -ne "") { $configCmd += " -DCMAKE_C_COMPILER=$resolvedCC -DCMAKE_CXX_COMPILER=$resolvedCXX" }
+            if ($resolvedAR  -ne "") { $configCmd += " -DCMAKE_AR=$resolvedAR -DCMAKE_RANLIB=$resolvedRANLIB" }
+            if ($needsCcache) {
+                if ($resolvedCcache) {
+                    $configCmd += " -DCMAKE_C_COMPILER_LAUNCHER=$resolvedCcache -DCMAKE_CXX_COMPILER_LAUNCHER=$resolvedCcache"
+                } else {
+                    $configCmd += " -DCMAKE_C_COMPILER_LAUNCHER= -DCMAKE_CXX_COMPILER_LAUNCHER="
+                }
+            }
             if ($ExtraFlags -ne "") { $configCmd += " $ExtraFlags" }
-            wsl bash -c ($configCmd + ' 2>&1 | grep -v "not a git repository"; exit ${PIPESTATUS[0]}')
+            wsl bash -c $configCmd
             if ($LASTEXITCODE -ne 0) { Write-Error "cmake configure failed."; exit 1 }
             Write-Host ""
         } else {
@@ -898,7 +1049,7 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         Write-Host ""
         $r = Select-Menu "Run $selectedTarget now?" ([ordered]@{
             "run"   = "Run"
-            "debug" = "Debug    (attach VS debugger / gdbserver)"
+            "debug" = "Debug    (attach VS debugger / SSH attach)"
             "no"    = "No"
         })
         if ($r -ne "no") {
@@ -929,24 +1080,87 @@ if ($Action -eq "run" -or $Action -eq "debug") {
     Write-Host ""
 
     if ($IsLinux) {
+        # SDL_VIDEO_DISPLAY selects which monitor the window opens on (0-indexed, -1 = SDL default).
+        $sdlDisplay = if ($WslSdlDisplay -ge 0) { "SDL_VIDEO_DISPLAY=$WslSdlDisplay " } else { "" }
+        # Verify the binary exists in WSL before run/debug.
+        $binExists = (wsl bash -c "test -f $binaryPath && echo 1 || echo 0").Trim() -replace "`r",""
+        if ($binExists -ne "1") {
+            Write-Error "Linux binary not found in WSL: $binaryPath"
+            Write-Error "Run the Build action first, or pass -Action build."
+            exit 1
+        }
         if ($isDebugRun) {
-            # Ensure gdbserver is available (ships with the gdb package on Ubuntu).
-            $hasGdb = wsl bash -c "command -v gdbserver >/dev/null 2>&1 && echo yes || echo no"
-            if ("$hasGdb".Trim() -ne "yes") {
-                Write-Host "--- gdbserver not found; installing gdb..."
-                wsl -u root bash -c "apt-get install -y gdb"
-                if ($LASTEXITCODE -ne 0) { Write-Error "Failed to install gdb/gdbserver."; exit 1 }
+            # ── SSH server setup in WSL ───────────────────────────────────────────────
+            # Build script as an array to avoid here-string column-0 requirements.
+            Write-Host "--- Setting up SSH server for VS remote attach..."
+            $sshScript = @(
+                'command -v sshd >/dev/null 2>&1 || {'
+                "    echo '  Installing openssh-server...'"
+                '    DEBIAN_FRONTEND=noninteractive apt-get install -y -q openssh-server >/dev/null'
+                '}'
+                'cfg=/etc/ssh/sshd_config'
+                'grep -qE ''^PasswordAuthentication yes'' "$cfg" 2>/dev/null || \'
+                '    sed -i ''s/^#*[[:space:]]*PasswordAuthentication.*/PasswordAuthentication yes/'' "$cfg"'
+                'ssh-keygen -A >/dev/null 2>&1'
+                'service ssh start 2>&1 || service ssh restart 2>&1'
+                'ss -tlnp 2>/dev/null | grep -q '':22'' && echo SSH_STATUS=ok || echo SSH_STATUS=failed'
+                '# Allow GDB to attach to processes not in its process tree (ptrace scope 1 blocks SSH-attached GDB).'
+                'echo 0 > /proc/sys/kernel/yama/ptrace_scope'
+            ) -join "`n"
+            $sshB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($sshScript))
+            $sshStatus = ""
+            wsl -u root bash -c "echo $sshB64 | base64 -d | bash" | ForEach-Object {
+                $line = ($_ -replace "`r", "")
+                if ($line -match '^SSH_STATUS=(.+)$') { $sshStatus = $Matches[1] }
+                else { Write-Host $line }
             }
-            $debugPort = 4444
-            Write-Host "==> gdbserver listening on :$debugPort - attach in VS now:"
-            Write-Host "    Debug > Attach to Process"
-            Write-Host "    Connection type  : gdb"
-            Write-Host "    Connection target : localhost:$debugPort"
+            if ($sshStatus -ne "ok") {
+                Write-Error "SSH server failed to start."
+                exit 1
+            }
+            # ── Port proxy: Windows localhost:2222 → WSL IP:22 ───────────────────────
+            # WSL2's IP changes on each WSL restart, so we refresh the proxy every run.
+            $wslIp   = ((wsl hostname -I) -replace "`r","").Trim() -split '\s+' | Select-Object -First 1
+            $wslUser = (wsl whoami).Trim() -replace "`r",""
+            Write-Host "    WSL IP : $wslIp"
+            netsh interface portproxy delete v4tov4 listenport=2222 listenaddress=127.0.0.1 2>&1 | Out-Null
+            $netshOut = netsh interface portproxy add v4tov4 listenport=2222 listenaddress=127.0.0.1 `
+                connectport=22 connectaddress=$wslIp 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Port proxy setup failed: $netshOut"
+                exit 1
+            }
+            $reach = Test-NetConnection -ComputerName 127.0.0.1 -Port 2222 -WarningAction SilentlyContinue
+            if (-not $reach.TcpTestSucceeded) {
+                Write-Error "localhost:2222 is not reachable after port proxy setup."
+                Write-Error "SSH may not be listening in WSL, or the proxy is blocked."
+                exit 1
+            }
+            Write-Host "    SSH    : reachable at localhost:2222"
+            # ── Launch game in a new WSL console window ───────────────────────────────
+            # Write the game script to a WSL temp file and open it via wsl.exe so it
+            # gets a real TTY and WSLg environment (DISPLAY/WAYLAND_DISPLAY are set).
+            $tmpScript   = "/tmp/cbn_run_${PID}.sh"
+            $gameScript  = "cd $WslSrcDir" + [char]10
+            $gameScript += "${sdlDisplay}${binaryPath} $RunArgs" + [char]10
+            $gameScript += "rm -f $tmpScript"
+            $gameB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($gameScript))
+            wsl bash -c "echo $gameB64 | base64 -d > $tmpScript && chmod +x $tmpScript"
+            Start-Process wsl.exe -ArgumentList @("--", "bash", $tmpScript)
             Write-Host ""
-            wsl bash -c "cd $WslSrcDir; gdbserver :$debugPort $binaryPath $RunArgs"
-            $runExit = $LASTEXITCODE
+            Write-Host "==> Game launched. Attach in Visual Studio:"
+            Write-Host "    1. Debug > Attach to Process  (Ctrl+Alt+P)"
+            Write-Host "    2. Connection type  : SSH"
+            Write-Host "    3. Connection target: localhost:2222"
+            Write-Host "       Username         : $wslUser"
+            Write-Host "       (authenticate with your WSL password)"
+            Write-Host "    4. Find '$selectedTarget' in the process list > Attach"
+            Write-Host ""
+            Write-Host "    VS saves the SSH connection - you only configure it once."
+            Write-Host ""
+            $runExit = 0
         } else {
-            wsl bash -c "cd $WslSrcDir; $binaryPath $RunArgs"
+            wsl bash -c "cd $WslSrcDir; ${sdlDisplay}${binaryPath} $RunArgs"
             $runExit = $LASTEXITCODE
         }
     } elseif ($isDebugRun -and $IsWin) {
