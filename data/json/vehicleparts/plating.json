@@ -1,0 +1,177 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "plating_chitin",
+    "name": { "str": "chitin plating" },
+    "symbol": ")",
+    "color": "yellow",
+    "broken_symbol": ")",
+    "broken_color": "light_gray",
+    "durability": 320,
+    "item": "chitin_plate",
+    "location": "armor",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "10 m", "using": [ [ "rope_natural", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m", "using": [ [ "armor_chitin", 3 ] ] }
+    },
+    "flags": [ "ARMOR" ],
+    "breaks_into": [ { "item": "chitin_piece", "count": [ 5, 15 ] } ],
+    "damage_reduction": { "all": 58 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "plating_acidchitin",
+    "copy-from": "plating_chitin",
+    "name": { "str": "biosilicified chitin plating" },
+    "proportional": { "durability": 1.5 },
+    "item": "acidchitin_plate",
+    "breaks_into": [ { "item": "acidchitin_piece", "count": [ 6, 19 ] } ],
+    "requirements": { "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "5 m", "using": [ [ "armor_acidchitin", 3 ] ] } },
+    "damage_reduction": { "all": 72 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "plating_wood",
+    "name": { "str": "wooden armor" },
+    "symbol": ")",
+    "color": "brown",
+    "broken_symbol": ")",
+    "broken_color": "brown",
+    "durability": 250,
+    "item": "wood_plate",
+    "location": "armor",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "flags": [ "ARMOR" ],
+    "breaks_into": "ig_vp_wood_plate",
+    "damage_reduction": { "all": 16, "cut": 8, "stab": 8 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "plating_steel",
+    "name": { "str": "steel plating" },
+    "symbol": ")",
+    "color": "light_cyan",
+    "broken_symbol": ")",
+    "broken_color": "light_cyan",
+    "durability": 660,
+    "item": "steel_plate",
+    "location": "armor",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "ARMOR" ],
+    "breaks_into": "ig_vp_steel_plate",
+    "damage_reduction": { "all": 56 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "plating_superalloy",
+    "name": { "str": "superalloy plating" },
+    "symbol": ")",
+    "color": "dark_gray",
+    "broken_symbol": ")",
+    "broken_color": "dark_gray",
+    "durability": 660,
+    "item": "alloy_plate",
+    "location": "armor",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_superalloy", 1 ] ]
+      }
+    },
+    "flags": [ "ARMOR", "SHOCK_IMMUNE" ],
+    "breaks_into": "ig_vp_alloy",
+    "damage_reduction": { "all": 56 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "plating_spiked",
+    "name": { "str": "spiked plating" },
+    "symbol": ")",
+    "color": "red",
+    "broken_symbol": ")",
+    "broken_color": "red",
+    "damage_modifier": 150,
+    "durability": 620,
+    "description": "A spiked plate that will increase the damage delivered to someone else in collisions.",
+    "item": "spiked_plate",
+    "location": "armor",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "ARMOR", "SHARP" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 4, 6 ] },
+      { "item": "steel_chunk", "count": [ 4, 6 ] },
+      { "item": "scrap", "count": [ 4, 6 ] },
+      { "item": "spike", "count": [ 0, 2 ] }
+    ],
+    "damage_reduction": { "all": 58 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "plating_hard",
+    "name": { "str": "hard plating" },
+    "symbol": ")",
+    "color": "cyan",
+    "broken_symbol": ")",
+    "broken_color": "cyan",
+    "durability": 780,
+    "item": "hard_plate",
+    "location": "armor",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 5 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "ARMOR" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 4, 6 ] },
+      { "item": "steel_chunk", "count": [ 4, 6 ] },
+      { "item": "scrap", "count": [ 4, 6 ] }
+    ],
+    "damage_reduction": { "all": 75 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "plating_military",
+    "name": { "str": "military composite armor plating" },
+    "symbol": ")",
+    "color": "green",
+    "broken_symbol": ")",
+    "broken_color": "green",
+    "durability": 700,
+    "item": "mil_plate",
+    "location": "armor",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ] }
+    },
+    "flags": [ "ARMOR" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 4, 6 ] },
+      { "item": "steel_chunk", "count": [ 4, 6 ] },
+      { "item": "scrap", "count": [ 4, 6 ] },
+      { "item": "ceramic_armor", "count": [ 0, 4 ] }
+    ],
+    "damage_reduction": { "all": 70, "cut": 95, "stab": 88 }
+  }
+]
