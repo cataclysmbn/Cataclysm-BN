@@ -100,7 +100,7 @@
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
-      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "vehicle_repair_carbon", 3 ] ] }
     },
     "flags": [ "ROOF" ],
     "breaks_into": "ig_vp_carbon",
