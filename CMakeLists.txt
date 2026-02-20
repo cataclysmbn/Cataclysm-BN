@@ -270,10 +270,13 @@ if (NOT MSVC)
     # Add debug symbols for non-release builds or when backtrace is enabled
     if (BACKTRACE OR NOT RELEASE)
         set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -g1")
-        # Use debug prefix map for ccache compatibility with git worktrees
+        # Use debug prefix map on GitHub Actions for ccache compatibility
+        # while preserving local debug source paths for IDE/GDB breakpoints.
         # see https://ccache.dev/manual/latest.html#_compiling_in_different_directories
-        file(RELATIVE_PATH REL_SRC_PATH "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}")
-        set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -ffile-prefix-map=${REL_SRC_PATH}=.")
+        if (DEFINED ENV{GITHUB_ACTIONS} AND "$ENV{GITHUB_ACTIONS}")
+            file(RELATIVE_PATH REL_SRC_PATH "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}")
+            set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -ffile-prefix-map=${REL_SRC_PATH}=.")
+        endif ()
     endif()
     # Compact the whitespace in the warning string
     string(REGEX REPLACE "[\t ]+" " " CATA_WARNINGS "${CATA_WARNINGS}")
