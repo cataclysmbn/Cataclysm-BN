@@ -2305,8 +2305,8 @@ class item : public location_visitable<item>, public game_object<item>
             std::string return_instance_id;       // If returning to another pocket (empty for base)
             tripoint_abs_omt return_point;        // Where to place player on exit
 
-            void serialize(JsonOut& jsout) const;
-            void deserialize(JsonIn& jsin);
+            void serialize( JsonOut &jsout ) const;
+            void deserialize( JsonIn &jsin );
 
             bool operator==( const pocket_dimension_data &rhs ) const;
         };

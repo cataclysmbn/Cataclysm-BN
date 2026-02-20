@@ -2852,8 +2852,8 @@ void options_manager::add_options_world_default()
                            "'Off' unloads normally. 'None' keeps loaded but frozen for fast travel. "
                            "'Minimal' simulates fields only (fire, gas). "
                            "'Moderate' adds vehicle systems (solar charging). "
-                           "'Full' simulates everything including off-screen combat." ),
-    {   { "off", translate_marker( "Off" ) },
+    "'Full' simulates everything including off-screen combat." ), {
+        { "off", translate_marker( "Off" ) },
         { "none", translate_marker( "None (Fast Travel)" ) },
         { "minimal", translate_marker( "Minimal (Fields)" ) },
         { "moderate", translate_marker( "Moderate (Fields + Vehicles)" ) },

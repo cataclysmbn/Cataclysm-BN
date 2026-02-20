@@ -1186,7 +1186,7 @@ auto weather_manager::get_temperature( const tripoint &location ) const -> units
     }
 
     const int added_f = ( g->new_game || g->swapping_dimensions ) ? 0 :
-                         g->m.get_temperature( location ) + temp_mod;
+                        g->m.get_temperature( location ) + temp_mod;
 
     // Calculate base temperature with underground influence
     units::temperature base_temp;
