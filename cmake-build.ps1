@@ -17,27 +17,37 @@
 #
 # Non-interactive shortcut examples:
 #   /c "$(SolutionDir)cmake-build.bat -Platform win -Preset 1 -BuildType 2 -Action build"
+#   /c "$(SolutionDir)cmake-build.bat -Platform win -Preset 1 -BuildType 1 -Action debug"
 #   /c "$(SolutionDir)cmake-build.bat -Platform linux -Preset linux-slim -Target cataclysm-bn-tiles -Action build"
+#
+# For the debug action, add a second External Tool entry (e.g. "BN Debug") using -Action debug.
+# Windows: opens a new VS instance with devenv /debugexe (full debugger attached from start).
+# Linux  : starts SSH in WSL, port-proxies localhost:2222 -> WSL:22, launches game in a new
+#          WSL window; attach via Debug > Attach to Process (Connection type: SSH, target: localhost:2222).
 
 param(
     [string]$Platform   = "",   # win | linux | mac
     [string]$Preset     = "",   # configure preset name or selection number
     [string]$BuildType  = "",   # Windows only: 1=Debug 2=RelWithDebInfo 3=Release
     [string]$Target     = "",   # cmake build target (derived from preset if blank)
-    [string]$Action     = "",   # build | run | rebuild | delete
+    [string]$Action     = "",   # build | run | rebuild | delete | debug
     [string]$RunArgs    = "",   # forwarded verbatim to the binary when running
-    [string]$ExtraFlags = ""    # extra cmake configure flags, e.g. -DFOO=ON
+    [string]$ExtraFlags = "",   # extra cmake configure flags, e.g. -DFOO=ON
+    [switch]$Gui                # force WinForms UI even in an interactive console (used by elevated WSL re-launch)
 )
 
 # ── User configuration ────────────────────────────────────────────────────────
-$WslSrcDir = "~/cbn"        # WSL path for synced source
-$WslBldDir = "~/cbn-build"  # WSL path for build dirs (overrides preset binaryDir)
-$VcpkgRoot = ""             # Windows only: path to vcpkg root (auto-detected if blank)
+$WslSrcDir     = "~/cbn"        # WSL path for synced source
+$WslBldDir     = "~/cbn-build"  # WSL path for build dirs (overrides preset binaryDir)
+$VcpkgRoot     = ""             # Windows only: path to vcpkg root (auto-detected if blank)
+$WslSdlDisplay = 0              # WSL run: SDL monitor index (0=first, 1=second, -1=SDL default)
 
 # ── Path resolution ───────────────────────────────────────────────────────────
 $WinSrcPath = $PSScriptRoot
 $DriveLetter = $WinSrcPath.Substring(0, 1).ToLower()
 $WslSrcPath  = "/mnt/$DriveLetter$($WinSrcPath.Substring(2).Replace('\', '/'))"
+$wslExe      = "$env:SystemRoot\System32\wsl.exe"
+function wsl { & $wslExe @args }
 
 # ── Load cmake presets ────────────────────────────────────────────────────────
 $presetsFile = "$WinSrcPath\CMakePresets.json"
@@ -292,9 +302,107 @@ $ParamAction     = $Action
 $ParamRunArgs    = $RunArgs
 $ParamExtraFlags = $ExtraFlags
 
+# ── Interactivity helpers ──────────────────────────────────────────────────────
+# When stdin is a real console (terminal), interactive text menus work normally.
+# When redirected (e.g. VS "Use Output window"), we fall back to GUI pickers so
+# the tool still works without a terminal window.
+$isInteractive = (-not [Console]::IsInputRedirected) -and (-not $Gui)
+
+# Show a numbered text menu (terminal) or an Out-GridView picker (GUI mode).
+# $Items: ordered hashtable  Key => Label,
+#         plain string array (Value = Label), or
+#         @([PSCustomObject]@{Value=…; Label=…}) for pre-built entries.
+# Returns the chosen Value; exits 0 if the user dismisses the picker.
+function Select-Menu {
+    param([string]$Title, $Items)
+
+    # Normalise to @{Value; Label} entries.
+    if ($Items -is [System.Collections.IDictionary]) {
+        $entries = @($Items.GetEnumerator() | ForEach-Object {
+            [PSCustomObject]@{ Value = $_.Key; Label = $_.Value }
+        })
+    } elseif ($Items.Count -gt 0 -and $Items[0] -is [string]) {
+        $entries = @($Items | ForEach-Object { [PSCustomObject]@{ Value = $_; Label = $_ } })
+    } else {
+        $entries = @($Items)
+    }
+
+    if ($script:isInteractive) {
+        Write-Host ""
+        Write-Host "${Title}:"
+        for ($i = 0; $i -lt $entries.Count; $i++) {
+            Write-Host "  $($i + 1)  $($entries[$i].Label)"
+        }
+        Write-Host ""
+        $idx = [int](Read-Host "Enter number") - 1
+        if ($idx -lt 0 -or $idx -ge $entries.Count) { Write-Error "Invalid selection."; exit 1 }
+        return $entries[$idx].Value
+    } else {
+        Add-Type -AssemblyName System.Windows.Forms
+        Add-Type -AssemblyName System.Drawing
+
+        $labels  = @($entries | ForEach-Object { $_.Label })
+
+        # Size the window to fit the longest label (rough 7-px-per-char estimate for 10pt Segoe UI).
+        $maxChar = ($labels | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum
+        $fw = [Math]::Max(280, [Math]::Min(700, $maxChar * 7 + 60))
+        $fh = [Math]::Max(120, [Math]::Min(500, $labels.Count * 22 + 80))
+
+        $form = New-Object System.Windows.Forms.Form
+        $form.Text            = $Title
+        $form.ClientSize      = New-Object System.Drawing.Size($fw, $fh)
+        $form.StartPosition   = "CenterScreen"
+        $form.FormBorderStyle = "Sizable"
+        $form.MaximizeBox     = $false
+        $form.MinimizeBox     = $false
+        $form.TopMost         = $true
+        $form.Font            = New-Object System.Drawing.Font("Segoe UI", 10)
+
+        $list = New-Object System.Windows.Forms.ListBox
+        $list.SetBounds(0, 0, $fw, $fh - 44)
+        $list.Anchor        = "Top, Left, Right, Bottom"
+        $list.BorderStyle   = "None"
+        $list.IntegralHeight = $false
+        foreach ($lbl in $labels) { [void]$list.Items.Add($lbl) }
+        $list.SelectedIndex = 0
+
+        $ok = New-Object System.Windows.Forms.Button
+        $ok.Text         = "OK"
+        $ok.SetBounds(($fw - 80) / 2, $fh - 38, 80, 28)
+        $ok.Anchor       = "Bottom"
+        $ok.DialogResult = [System.Windows.Forms.DialogResult]::OK
+
+        $list.add_DoubleClick({ $form.DialogResult = [System.Windows.Forms.DialogResult]::OK })
+
+        $form.Controls.Add($list)
+        $form.Controls.Add($ok)
+        $form.AcceptButton = $ok
+
+        $dlg = $form.ShowDialog()
+        $si  = $list.SelectedIndex
+        $form.Dispose()
+
+        if ($dlg -ne [System.Windows.Forms.DialogResult]::OK -or $si -lt 0) { exit 0 }
+        return $entries[$si].Value
+    }
+}
+
+# Prompt for a free-form text value.
+# Uses a GUI InputBox when stdin is redirected; Read-Host otherwise.
+function Read-Input {
+    param([string]$Prompt, [string]$Default = "")
+    if ($script:isInteractive) {
+        return (Read-Host $Prompt)
+    } else {
+        Add-Type -AssemblyName Microsoft.VisualBasic
+        return [Microsoft.VisualBasic.Interaction]::InputBox($Prompt, "cmake-build", $Default)
+    }
+}
+
 $lastConfig = $null
 
 while ($true) {
+
 
 # ── Platform selection ────────────────────────────────────────────────────────
 # Build the menu dynamically; macOS only appears when mac presets are present.
@@ -309,16 +417,7 @@ if ($Platform -ne "") {
         exit 1
     }
 } else {
-    Write-Host ""
-    Write-Host "Select platform:"
-    $pKeys = @($platformList.Keys)
-    for ($i = 0; $i -lt $pKeys.Count; $i++) {
-        Write-Host "  $($i + 1)  $($platformList[$pKeys[$i]])"
-    }
-    Write-Host ""
-    $pidx = [int](Read-Host "Enter number") - 1
-    if ($pidx -ge 0 -and $pidx -lt $pKeys.Count) { $Platform = $pKeys[$pidx] }
-    else { Write-Error "Invalid selection."; exit 1 }
+    $Platform = Select-Menu "Select platform" $platformList
 }
 $IsWin   = ($Platform -eq "win")
 $IsMac   = ($Platform -eq "mac")
@@ -387,8 +486,7 @@ To fix, do ONE of the following:
     }
 } else {
     # Linux (WSL)
-    wsl true 2>$null
-    if ($LASTEXITCODE -ne 0) {
+    if (-not (Test-Path $wslExe)) {
         Write-Error "WSL not available. Install WSL2 with Ubuntu from the Microsoft Store."
         exit 1
     }
@@ -413,16 +511,12 @@ if ($Preset -ne "") {
         if (-not $selectedPreset) { Write-Error "Preset '$Preset' not found."; exit 1 }
     }
 } else {
-    Write-Host ""
-    Write-Host "Select configure preset:"
-    for ($i = 0; $i -lt $availPresets.Count; $i++) {
-        $label = if ($availPresets[$i].displayName) { $availPresets[$i].displayName } else { $availPresets[$i].name }
-        Write-Host "  $($i + 1)  $label"
+    $presetMap = [ordered]@{}
+    foreach ($p in $availPresets) {
+        $presetMap[$p.name] = if ($p.displayName) { $p.displayName } else { $p.name }
     }
-    Write-Host ""
-    $idx = [int](Read-Host "Enter number") - 1
-    if ($idx -ge 0 -and $idx -lt $availPresets.Count) { $selectedPreset = $availPresets[$idx] }
-    else { Write-Error "Invalid selection."; exit 1 }
+    $chosenPresetName = Select-Menu "Select configure preset" $presetMap
+    $selectedPreset   = $availPresets | Where-Object { $_.name -eq $chosenPresetName } | Select-Object -First 1
 }
 
 $presetName = $selectedPreset.name
@@ -436,18 +530,12 @@ if ($IsWin) {
         if ($idx -ge 0 -and $idx -lt $WinBuildTypes.Count) { $selectedBuildType = $WinBuildTypes[$idx] }
         else { Write-Error "Invalid -BuildType '$BuildType'. Range: 1-$($WinBuildTypes.Count)."; exit 1 }
     } else {
-        Write-Host ""
-        Write-Host "Select build type:"
-        for ($i = 0; $i -lt $WinBuildTypes.Count; $i++) { Write-Host "  $($i + 1)  $($WinBuildTypes[$i])" }
-        Write-Host ""
-        $idx = [int](Read-Host "Enter number") - 1
-        if ($idx -ge 0 -and $idx -lt $WinBuildTypes.Count) { $selectedBuildType = $WinBuildTypes[$idx] }
-        else { Write-Error "Invalid selection."; exit 1 }
+        $selectedBuildType = Select-Menu "Select build type" $WinBuildTypes
     }
 }
 
 # ── Target selection ──────────────────────────────────────────────────────────
-$inferredTargets = Get-PresetTargets $cacheVars
+$inferredTargets = @(Get-PresetTargets $cacheVars)
 $selectedTarget  = $null
 
 if ($Target -ne "") {
@@ -455,20 +543,12 @@ if ($Target -ne "") {
 } elseif ($inferredTargets.Count -eq 1) {
     $selectedTarget = $inferredTargets[0]
 } else {
-    Write-Host ""
-    Write-Host "Select target:"
-    for ($i = 0; $i -lt $inferredTargets.Count; $i++) { Write-Host "  $($i + 1)  $($inferredTargets[$i])" }
-    Write-Host "  $($inferredTargets.Count + 1)  Enter a custom target name"
-    Write-Host ""
-    $choice = Read-Host "Enter number"
-    $idx = [int]$choice - 1
-    if ($idx -ge 0 -and $idx -lt $inferredTargets.Count) {
-        $selectedTarget = $inferredTargets[$idx]
-    } elseif ($idx -eq $inferredTargets.Count) {
-        $selectedTarget = Read-Host "Target name"
+    $targetOptions  = $inferredTargets + @("(Enter a custom target name)")
+    $pickedTarget   = Select-Menu "Select target" $targetOptions
+    if ($pickedTarget -eq "(Enter a custom target name)") {
+        $selectedTarget = Read-Input "Target name"
     } else {
-        Write-Error "Invalid selection."
-        exit 1
+        $selectedTarget = $pickedTarget
     }
 }
 
@@ -522,38 +602,32 @@ if ($IsWin) {
 }
 
 # ── Action selection ──────────────────────────────────────────────────────────
-$validActions = @("build", "run", "rebuild", "delete")
+$validActions = @("build", "run", "rebuild", "delete", "debug")
 if ($Action -ne "" -and $validActions -notcontains $Action) {
     Write-Error "Invalid -Action '$Action'. Valid: $($validActions -join ', ')."
     exit 1
 }
 if ($Action -eq "") {
-    Write-Host ""
-    Write-Host "Select action:"
-    Write-Host "  1  Build"
-    Write-Host "  2  Run"
-    Write-Host "  3  Rebuild  (wipe build dir, reconfigure, build)"
-    Write-Host "  4  Delete build"
-    Write-Host "  x  Exit"
-    Write-Host ""
-    switch (Read-Host "Enter number") {
-        "1" { $Action = "build"   }
-        "2" { $Action = "run"     }
-        "3" { $Action = "rebuild" }
-        "4" { $Action = "delete"  }
-        "x" { exit 0             }
-        default { Write-Error "Invalid selection."; exit 1 }
+    $actionItems = [ordered]@{
+        "build"   = "Build"
+        "run"     = "Run"
+        "rebuild" = "Rebuild  (wipe build dir, reconfigure, build)"
+        "delete"  = "Delete build"
+        "debug"   = "Debug    (run under VS debugger / SSH attach)"
+        "exit"    = "Exit"
     }
+    $Action = Select-Menu "Select action" $actionItems
+    if ($Action -eq "exit") { exit 0 }
 }
 
-if ($isTestTarget -and $Action -eq "run" -and $RunArgs -eq "") {
+if ($isTestTarget -and $Action -eq "run" -and $RunArgs -eq "" -and -not $PSBoundParameters.ContainsKey('RunArgs')) {
     Write-Host ""
-    $RunArgs = Read-Host "Test args (blank = run all, e.g. [map])"
+    $RunArgs = Read-Input "Test args (blank = run all, e.g. [map])"
 }
 
-if (($Action -eq "build" -or $Action -eq "rebuild") -and $ExtraFlags -eq "") {
+if (($Action -eq "build" -or $Action -eq "rebuild") -and $ExtraFlags -eq "" -and -not $PSBoundParameters.ContainsKey('ExtraFlags')) {
     Write-Host ""
-    $ExtraFlags = Read-Host "Extra cmake flags (blank = none, e.g. -DFOO=ON)"
+    $ExtraFlags = Read-Input "Extra cmake flags (blank = none, e.g. -DFOO=ON)"
 }
 
 # ── Summary ───────────────────────────────────────────────────────────────────
@@ -570,10 +644,34 @@ if ($ExtraFlags -ne "") { Write-Host "==> Extra flags: $ExtraFlags" }
 if ($RunArgs    -ne "") { Write-Host "==> Run args  : $RunArgs" }
 Write-Host ""
 
+# ── Elevation check (Linux/WSL) ───────────────────────────────────────────────
+# WSL requires admin. If not already elevated, re-launch as administrator.
+# The elevated window is a real console with stdin, so we do NOT pass -Gui:
+# text-based Read-Host prompts appear inline in the same console as build output,
+# which is more visible than a WinForms popup that can end up behind other windows.
+if ($IsLinux) {
+    $isAdmin = (New-Object Security.Principal.WindowsPrincipal(
+        [Security.Principal.WindowsIdentity]::GetCurrent()
+    )).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (-not $isAdmin) {
+        Write-Host "==> WSL builds require elevation. Relaunching as administrator..."
+        $elevCmd  = "& '" + $PSCommandPath.Replace("'", "''")    + "'"
+        $elevCmd += " -Platform linux"
+        $elevCmd += " -Preset '"  + $presetName.Replace("'", "''")     + "'"
+        $elevCmd += " -Target '"  + $selectedTarget.Replace("'", "''") + "'"
+        $elevCmd += " -Action '"  + $Action.Replace("'", "''")         + "'"
+        $elevCmd += " -RunArgs '"    + $RunArgs.Replace("'", "''")    + "'"
+        $elevCmd += " -ExtraFlags '" + $ExtraFlags.Replace("'", "''") + "'"
+        $encoded = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($elevCmd))
+        Start-Process powershell.exe -Verb RunAs -ArgumentList "-Sta -NoExit -ExecutionPolicy Bypass -EncodedCommand $encoded"
+        exit 0
+    }
+}
+
 # ── Delete ────────────────────────────────────────────────────────────────────
 if ($Action -eq "delete") {
-    $confirm = Read-Host "Delete $buildDir? (y/N)"
-    if ($confirm -ne "y" -and $confirm -ne "Y") { Write-Host "Cancelled."; continue }
+    $confirm = Select-Menu "Delete $buildDir?" ([ordered]@{ "yes" = "Yes - delete"; "no" = "No - cancel" })
+    if ($confirm -ne "yes") { Write-Host "Cancelled."; continue }
     Write-Host "--- Deleting $buildDir ..."
     if ($IsLinux) {
         wsl bash -c "rm -rf $wslBuildPath"
@@ -602,8 +700,8 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
 
         if ($cacheExists -and $ExtraFlags -ne "") {
             Write-Host "--- Extra flags only apply during configure, but a cached build exists."
-            $r = Read-Host "Rebuild from scratch to apply them? [Y/n]"
-            if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+            $r = Select-Menu "Rebuild from scratch to apply extra flags?" ([ordered]@{ "yes" = "Yes - wipe and rebuild"; "no" = "No - keep cache" })
+            if ($r -eq "yes") {
                 Write-Host "--- Wiping build dir..."
                 Remove-Item -Recurse -Force $winBuildDir 2>$null
                 $cacheExists = $false
@@ -639,20 +737,25 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         # (cmake cache update; no-op if deno is not installed)
         & $cmakeExe $winBuildDir -DLUA_DOCS_ON_BUILD:BOOL=OFF 2>$null | Out-Null
 
-        Write-Host "--- Building $selectedTarget ($selectedBuildType)..."
+        Write-Host "--- Building $selectedTarget ($selectedBuildType) ..."
+        Write-Host "    (compile in progress - this will take a while on first build)"
         & $cmakeExe --build $winBuildDir --config $selectedBuildType --target $selectedTarget
         if ($LASTEXITCODE -ne 0) { Write-Error "Build failed."; exit 1 }
         Write-Host ""
         Write-Host "==> Build complete."
         Write-Host "==> Binary: $binaryPath"
         Write-Host ""
-        $r = Read-Host "Run $selectedTarget now? [Y/n]"
-        if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+        $r = Select-Menu "Run $selectedTarget now?" ([ordered]@{
+            "run"   = "Run"
+            "debug" = "Debug    (attach VS debugger / SSH attach)"
+            "no"    = "No"
+        })
+        if ($r -ne "no") {
             if ($isTestTarget -and $RunArgs -eq "") {
                 Write-Host ""
-                $RunArgs = Read-Host "Test args (blank = run all, e.g. [map])"
+                $RunArgs = Read-Input "Test args (blank = run all, e.g. [map])"
             }
-            $Action = "run"
+            $Action = $r
         }
         Write-Host ""
 
@@ -669,8 +772,8 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
 
         if ($cacheExists -and $ExtraFlags -ne "") {
             Write-Host "--- Extra flags only apply during configure, but a cached build exists."
-            $r = Read-Host "Rebuild from scratch to apply them? [Y/n]"
-            if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+            $r = Select-Menu "Rebuild from scratch to apply extra flags?" ([ordered]@{ "yes" = "Yes - wipe and rebuild"; "no" = "No - keep cache" })
+            if ($r -eq "yes") {
                 Write-Host "--- Wiping build dir..."
                 Remove-Item -Recurse -Force $macBuildPath -ErrorAction SilentlyContinue
                 $cacheExists = $false
@@ -702,13 +805,17 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         Write-Host "==> Build complete."
         Write-Host "==> Binary: $binaryPath"
         Write-Host ""
-        $r = Read-Host "Run $selectedTarget now? [Y/n]"
-        if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+        $r = Select-Menu "Run $selectedTarget now?" ([ordered]@{
+            "run"   = "Run"
+            "debug" = "Debug    (attach VS debugger / SSH attach)"
+            "no"    = "No"
+        })
+        if ($r -ne "no") {
             if ($isTestTarget -and $RunArgs -eq "") {
                 Write-Host ""
-                $RunArgs = Read-Host "Test args (blank = run all, e.g. [map])"
+                $RunArgs = Read-Input "Test args (blank = run all, e.g. [map])"
             }
-            $Action = "run"
+            $Action = $r
         }
         Write-Host ""
 
@@ -736,7 +843,115 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         } else {
             Write-Host "--- All dependencies present."
         }
+
+        # Ubuntu installs versioned LLVM/clang binaries (e.g. clang-14) but doesn't
+        # always create bare-name alternatives. This block ensures tools are available,
+        # auto-installing missing packages if needed, then resolves full paths for cmake.
+        # Scripts are base64-encoded to avoid PowerShell 5.1 argument-quoting bugs.
+        $resolvedCC     = ""
+        $resolvedCXX    = ""
+        $resolvedAR     = ""
+        $resolvedRANLIB = ""
+        $needsLlvmFix = ("$($cacheVars['CMAKE_C_COMPILER'])"  -match "clang") -or
+                        ("$($cacheVars['CMAKE_CXX_COMPILER'])" -match "clang") -or
+                        ("$($cacheVars['CMAKE_AR'])"           -match "llvm")
+        if ($needsLlvmFix) {
+            Write-Host "--- Setting up LLVM toolchain..."
+            # Single root script: installs if missing, creates alternatives, prints TOOL_KEY=path.
+            $llvmScript = @'
+need_install() {
+    local t=$1
+    command -v "$t" >/dev/null 2>&1 && return 1
+    ls /usr/bin/$t-[0-9]* >/dev/null 2>&1 && return 1
+    ls /usr/lib/llvm-*/bin/$t >/dev/null 2>&1 && return 1
+    return 0
+}
+resolve() {
+    local p
+    p=$(command -v "$1" 2>/dev/null)
+    [ -z "$p" ] && p=$(ls /usr/bin/$1-[0-9]* 2>/dev/null | sort -V | tail -1)
+    [ -z "$p" ] && p=$(ls /usr/lib/llvm-*/bin/$1 2>/dev/null | sort -V | tail -1)
+    printf '%s' "$p"
+}
+if need_install clang; then
+    echo '  Installing clang...'
+    pkg=$(apt-cache search '^clang-[0-9]' 2>/dev/null | awk '{print $1}' | grep -xE 'clang-[0-9]+' | sort -V | tail -1)
+    [ -z "$pkg" ] && pkg=clang
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$pkg" >/dev/null
+fi
+if need_install llvm-ar; then
+    echo '  Installing llvm...'
+    pkg=$(apt-cache search '^llvm-[0-9]' 2>/dev/null | awk '{print $1}' | grep -xE 'llvm-[0-9]+' | sort -V | tail -1)
+    [ -z "$pkg" ] && pkg=llvm
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$pkg" >/dev/null
+fi
+for t in clang clang++ llvm-ar llvm-ranlib; do
+    if ! command -v "$t" >/dev/null 2>&1; then
+        b=$(ls /usr/bin/$t-[0-9]* 2>/dev/null | sort -V | tail -1)
+        [ -z "$b" ] && b=$(ls /usr/lib/llvm-*/bin/$t 2>/dev/null | sort -V | tail -1)
+        [ -n "$b" ] && update-alternatives --install /usr/bin/$t "$t" "$b" 100 2>/dev/null
+    fi
+done
+for item in CC:clang CXX:clang++ AR:llvm-ar RANLIB:llvm-ranlib; do
+    key=${item%%:*}
+    tool=${item##*:}
+    path=$(resolve "$tool")
+    printf 'TOOL_%s=%s\n' "$key" "$path"
+done
+'@
+            $llvmB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($llvmScript))
+            $toolPaths = @{}
+            wsl -u root bash -c "echo $llvmB64 | base64 -d | bash" | ForEach-Object {
+                $line = ($_ -replace "`r", "")
+                if ($line -match '^TOOL_(\w+)=(.+)$') {
+                    $toolPaths[$Matches[1]] = $Matches[2].Trim()
+                } else {
+                    Write-Host $line
+                }
+            }
+            $resolvedCC     = if ($toolPaths['CC'])     { $toolPaths['CC'] }     else { '' }
+            $resolvedCXX    = if ($toolPaths['CXX'])    { $toolPaths['CXX'] }    else { '' }
+            $resolvedAR     = if ($toolPaths['AR'])     { $toolPaths['AR'] }     else { '' }
+            $resolvedRANLIB = if ($toolPaths['RANLIB']) { $toolPaths['RANLIB'] } else { '' }
+            Write-Host "  clang      : $(if ($resolvedCC)     { $resolvedCC }     else { 'NOT FOUND' })"
+            Write-Host "  clang++    : $(if ($resolvedCXX)    { $resolvedCXX }    else { 'NOT FOUND' })"
+            Write-Host "  llvm-ar    : $(if ($resolvedAR)     { $resolvedAR }     else { 'NOT FOUND' })"
+            Write-Host "  llvm-ranlib: $(if ($resolvedRANLIB) { $resolvedRANLIB } else { 'NOT FOUND' })"
+            if (-not $resolvedCC) {
+                Write-Warning "clang not found after auto-install - cmake configure may fail"
+            }
+        }
         Write-Host ""
+
+        # Verify ccache and mold are actually present as binaries (dpkg status alone can be stale).
+        # If missing, install them and detect their full paths for cmake -D overrides.
+        $resolvedCcache = ""
+        $resolvedMold   = ""
+        $needsCcache = ("$($cacheVars['CMAKE_C_COMPILER_LAUNCHER'])" -match "ccache") -or
+                       ("$($cacheVars['CMAKE_CXX_COMPILER_LAUNCHER'])" -match "ccache")
+        $needsMold   = ("$($cacheVars['LINKER'])" -match "mold")
+        if ($needsCcache -or $needsMold) {
+            Write-Host "--- Checking launcher/linker tools..."
+        }
+        if ($needsCcache) {
+            $resolvedCcache = (wsl bash -c "command -v ccache 2>/dev/null").Trim() -replace "`r",""
+            if (-not $resolvedCcache) {
+                Write-Host "  Installing ccache..."
+                wsl -u root bash -c "DEBIAN_FRONTEND=noninteractive apt-get install -y -q ccache >/dev/null"
+                $resolvedCcache = (wsl bash -c "command -v ccache 2>/dev/null").Trim() -replace "`r",""
+            }
+            Write-Host "  ccache: $(if ($resolvedCcache) { $resolvedCcache } else { 'NOT FOUND - will disable' })"
+        }
+        if ($needsMold) {
+            $resolvedMold = (wsl bash -c "command -v mold 2>/dev/null").Trim() -replace "`r",""
+            if (-not $resolvedMold) {
+                Write-Host "  Installing mold..."
+                wsl -u root bash -c "DEBIAN_FRONTEND=noninteractive apt-get install -y -q mold >/dev/null"
+                $resolvedMold = (wsl bash -c "command -v mold 2>/dev/null").Trim() -replace "`r",""
+            }
+            Write-Host "  mold  : $(if ($resolvedMold) { $resolvedMold } else { 'NOT FOUND' })"
+        }
+        if ($needsCcache -or $needsMold) { Write-Host "" }
 
         # TSan kernel fix: high ASLR entropy causes shadow memory conflicts
         if ($isTSan) {
@@ -779,13 +994,15 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
 
         # cmake configure using the preset (skipped if cache already exists).
         # -B overrides the preset's binaryDir to keep builds in $WslBldDir.
-        wsl bash -c "test -f $wslBuildPath/CMakeCache.txt"
+        # NOTE: CMakeCache.txt is created even on FAILED configures (before compiler detection),
+        # so we check for build.ninja/Makefile — only written on successful configure.
+        wsl bash -c "test -f $wslBuildPath/build.ninja -o -f $wslBuildPath/Makefile"
         $cacheExists = ($LASTEXITCODE -eq 0)
 
         if ($cacheExists -and $ExtraFlags -ne "") {
             Write-Host "--- Extra flags only apply during configure, but a cached build exists."
-            $r = Read-Host "Rebuild from scratch to apply them? [Y/n]"
-            if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+            $r = Select-Menu "Rebuild from scratch to apply extra flags?" ([ordered]@{ "yes" = "Yes - wipe and rebuild"; "no" = "No - keep cache" })
+            if ($r -eq "yes") {
                 Write-Host "--- Wiping build dir..."
                 wsl bash -c "rm -rf $wslBuildPath"
                 if ($LASTEXITCODE -ne 0) { Write-Error "Could not wipe build dir."; exit 1 }
@@ -795,16 +1012,30 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         }
 
         if (-not $cacheExists) {
+            # Wipe any stale CMakeCache.txt left by a previous failed configure.
+            # CMakeCache.txt is written before compiler detection, so it exists even after failure.
+            # A stale cache can cause cmake to use wrong (previously cached) compiler paths.
+            wsl bash -c "rm -f $wslBuildPath/CMakeCache.txt; exit 0"
             Write-Host "--- Configuring ($presetName)..."
             Write-Host "    cmake --preset $presetName -B $wslBuildPath$(if ($ExtraFlags) {" $ExtraFlags"})"
             Write-Host ""
             # cd to source so cmake --preset finds CMakePresets.json there.
-            # Pipe through grep to suppress the expected "not a git repository" stderr from
-            # CMake's version detection (harmless - we already wrote version.h above).
-            # String concatenation keeps ${PIPESTATUS[0]} out of PS variable expansion.
+            # Run cmake directly (no grep pipe) so $LASTEXITCODE reliably reflects cmake's exit code.
+            # (The pipe+PIPESTATUS approach was unreliable: cmake's non-zero exit propagated as 0.)
             $configCmd = "cd $WslSrcDir; cmake --preset $presetName -B $wslBuildPath"
+            # Pass resolved full paths via -D to override the preset's bare tool names.
+            # This ensures cmake finds the tools even if update-alternatives hasn't registered them.
+            if ($resolvedCC  -ne "") { $configCmd += " -DCMAKE_C_COMPILER=$resolvedCC -DCMAKE_CXX_COMPILER=$resolvedCXX" }
+            if ($resolvedAR  -ne "") { $configCmd += " -DCMAKE_AR=$resolvedAR -DCMAKE_RANLIB=$resolvedRANLIB" }
+            if ($needsCcache) {
+                if ($resolvedCcache) {
+                    $configCmd += " -DCMAKE_C_COMPILER_LAUNCHER=$resolvedCcache -DCMAKE_CXX_COMPILER_LAUNCHER=$resolvedCcache"
+                } else {
+                    $configCmd += " -DCMAKE_C_COMPILER_LAUNCHER= -DCMAKE_CXX_COMPILER_LAUNCHER="
+                }
+            }
             if ($ExtraFlags -ne "") { $configCmd += " $ExtraFlags" }
-            wsl bash -c ($configCmd + ' 2>&1 | grep -v "not a git repository"; exit ${PIPESTATUS[0]}')
+            wsl bash -c $configCmd
             if ($LASTEXITCODE -ne 0) { Write-Error "cmake configure failed."; exit 1 }
             Write-Host ""
         } else {
@@ -818,37 +1049,202 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         Write-Host ""
         Write-Host "==> Build complete."
         Write-Host ""
-        $r = Read-Host "Run $selectedTarget now? [Y/n]"
-        if ($r -eq "" -or $r -eq "y" -or $r -eq "Y") {
+        $r = Select-Menu "Run $selectedTarget now?" ([ordered]@{
+            "run"   = "Run"
+            "debug" = "Debug    (attach VS debugger / SSH attach)"
+            "no"    = "No"
+        })
+        if ($r -ne "no") {
             if ($isTestTarget -and $RunArgs -eq "") {
                 Write-Host ""
-                $RunArgs = Read-Host "Test args (blank = run all, e.g. [map])"
+                $RunArgs = Read-Input "Test args (blank = run all, e.g. [map])"
             }
-            $Action = "run"
+            $Action = $r
         }
         Write-Host ""
     }
 }
 
-# ── Run ───────────────────────────────────────────────────────────────────────
-if ($Action -eq "run") {
+# ── Run / Debug ───────────────────────────────────────────────────────────────
+if ($Action -eq "run" -or $Action -eq "debug") {
+    $isDebugRun = ($Action -eq "debug")
+
     if (-not $IsLinux -and -not (Test-Path $binaryPath)) {
         Write-Error "Binary not found: $binaryPath"
         Write-Error "Ensure the build succeeded, or run the 'Build' action first."
         exit 1
     }
-    Write-Host "--- Running $selectedTarget $RunArgs ..."
-    Write-Host ""
-    if ($IsLinux) {
-        wsl bash -c "cd $WslSrcDir; $binaryPath $RunArgs"
-        $runExit = $LASTEXITCODE
+    if ($isDebugRun) {
+        Write-Host "--- Launching $selectedTarget under debugger..."
     } else {
-        # Windows and macOS: run from source root so the game/tests can locate data/ and gfx/
+        Write-Host "--- Running $selectedTarget $RunArgs ..."
+    }
+    Write-Host ""
+
+    if ($IsLinux) {
+        # SDL_VIDEO_DISPLAY selects which monitor the window opens on (0-indexed, -1 = SDL default).
+        $sdlDisplay = if ($WslSdlDisplay -ge 0) { "SDL_VIDEO_DISPLAY=$WslSdlDisplay " } else { "" }
+        # Verify the binary exists in WSL before run/debug.
+        $binExists = (wsl bash -c "test -f $binaryPath && echo 1 || echo 0").Trim() -replace "`r",""
+        if ($binExists -ne "1") {
+            Write-Error "Linux binary not found in WSL: $binaryPath"
+            Write-Error "Run the Build action first, or pass -Action build."
+            exit 1
+        }
+        if ($isDebugRun) {
+            # ── SSH server setup in WSL ───────────────────────────────────────────────
+            # Build script as an array to avoid here-string column-0 requirements.
+            Write-Host "--- Setting up SSH server for VS remote attach..."
+            $sshScript = @(
+                'command -v sshd >/dev/null 2>&1 || {'
+                "    echo '  Installing openssh-server...'"
+                '    DEBIAN_FRONTEND=noninteractive apt-get install -y -q openssh-server >/dev/null'
+                '}'
+                'cfg=/etc/ssh/sshd_config'
+                'grep -qE ''^PasswordAuthentication yes'' "$cfg" 2>/dev/null || \'
+                '    sed -i ''s/^#*[[:space:]]*PasswordAuthentication.*/PasswordAuthentication yes/'' "$cfg"'
+                'ssh-keygen -A >/dev/null 2>&1'
+                'service ssh start 2>&1 || service ssh restart 2>&1'
+                'ss -tlnp 2>/dev/null | grep -q '':22'' && echo SSH_STATUS=ok || echo SSH_STATUS=failed'
+                '# Allow GDB to attach to processes not in its process tree (ptrace scope 1 blocks SSH-attached GDB).'
+                'echo 0 > /proc/sys/kernel/yama/ptrace_scope'
+            ) -join "`n"
+            $sshB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($sshScript))
+            $sshStatus = ""
+            wsl -u root bash -c "echo $sshB64 | base64 -d | bash" | ForEach-Object {
+                $line = ($_ -replace "`r", "")
+                if ($line -match '^SSH_STATUS=(.+)$') { $sshStatus = $Matches[1] }
+                else { Write-Host $line }
+            }
+            if ($sshStatus -ne "ok") {
+                Write-Error "SSH server failed to start."
+                exit 1
+            }
+            # ── Port proxy: Windows localhost:2222 → WSL IP:22 ───────────────────────
+            # WSL2's IP changes on each WSL restart, so we refresh the proxy every run.
+            $wslIp   = ((wsl hostname -I) -replace "`r","").Trim() -split '\s+' | Select-Object -First 1
+            $wslUser = (wsl whoami).Trim() -replace "`r",""
+            Write-Host "    WSL IP : $wslIp"
+            netsh interface portproxy delete v4tov4 listenport=2222 listenaddress=127.0.0.1 2>&1 | Out-Null
+            $netshOut = netsh interface portproxy add v4tov4 listenport=2222 listenaddress=127.0.0.1 `
+                connectport=22 connectaddress=$wslIp 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Port proxy setup failed: $netshOut"
+                exit 1
+            }
+            $reach = Test-NetConnection -ComputerName 127.0.0.1 -Port 2222 -WarningAction SilentlyContinue
+            if (-not $reach.TcpTestSucceeded) {
+                Write-Error "localhost:2222 is not reachable after port proxy setup."
+                Write-Error "SSH may not be listening in WSL, or the proxy is blocked."
+                exit 1
+            }
+            Write-Host "    SSH    : reachable at localhost:2222"
+            # ── Launch game in a new WSL console window ───────────────────────────────
+            # Write the game script to a WSL temp file and open it via wsl.exe so it
+            # gets a real TTY and WSLg environment (DISPLAY/WAYLAND_DISPLAY are set).
+            $tmpScript   = "/tmp/cbn_run_${PID}.sh"
+            $gameScript  = "cd $WslSrcDir" + [char]10
+            $gameScript += "${sdlDisplay}${binaryPath} $RunArgs" + [char]10
+            $gameScript += "rm -f $tmpScript"
+            $gameB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($gameScript))
+            wsl bash -c "echo $gameB64 | base64 -d > $tmpScript && chmod +x $tmpScript"
+            Start-Process wsl.exe -ArgumentList @("--", "bash", $tmpScript)
+            Write-Host ""
+            Write-Host "==> Game launched. Attach in Visual Studio:"
+            Write-Host "    1. Debug > Attach to Process  (Ctrl+Alt+P)"
+            Write-Host "    2. Connection type  : SSH"
+            Write-Host "    3. Connection target: localhost:2222"
+            Write-Host "       Username         : $wslUser"
+            Write-Host "       (authenticate with your WSL password)"
+            Write-Host "    4. Find '$selectedTarget' in the process list > Attach"
+            Write-Host ""
+            Write-Host "    VS saves the SSH connection - you only configure it once."
+            Write-Host ""
+            $runExit = 0
+        } else {
+            wsl bash -c "cd $WslSrcDir; ${sdlDisplay}${binaryPath} $RunArgs"
+            $runExit = $LASTEXITCODE
+        }
+    } elseif ($isDebugRun -and $IsWin) {
+        # cmake-build runs at standard (unelevated) integrity — same as VS — so COM ROT access
+        # works directly. Never elevate cmake-build; the ROT is partitioned by integrity level.
+        #
+        # Derive DTE ProgIDs from every installed VS version (2022=17, 2026=18, ...).
+        # GetActiveObject only returns running instances, so whichever VS the user has open
+        # is found automatically — not the "latest installed" version.
+        $vsWhere    = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        $dteProgIds = @()
+        if (Test-Path $vsWhere) {
+            foreach ($ver in @(& $vsWhere -all -prerelease -property installationVersion 2>$null)) {
+                if ($ver -match '^(\d+)\.') {
+                    $id = "VisualStudio.DTE.$($Matches[1]).0"
+                    if ($dteProgIds -notcontains $id) { $dteProgIds += $id }
+                }
+            }
+        }
+        if (-not $dteProgIds) { $dteProgIds = @("VisualStudio.DTE.18.0", "VisualStudio.DTE.17.0", "VisualStudio.DTE.16.0") }
+
+        $startParams = @{ FilePath = $binaryPath; WorkingDirectory = $WinSrcPath; PassThru = $true }
+        if ($RunArgs -ne "") { $startParams['ArgumentList'] = $RunArgs.Split() }
+        $gameProc = Start-Process @startParams
+        Write-Host "==> Started $selectedTarget (PID $($gameProc.Id))"
+
+        # Brief pause to let the process initialise; detect immediate crashes.
+        Start-Sleep -Milliseconds 500
+        if ($gameProc.HasExited) {
+            Write-Host "==> ERROR: $selectedTarget exited immediately (code $($gameProc.ExitCode))."
+            Write-Host "    Check that the binary and working directory are correct."
+            $runExit = $gameProc.ExitCode
+        } else {
+            $attached   = $false
+            $vsFound    = $false
+            $attachErr  = ""
+            $deadline   = (Get-Date).AddSeconds(5)
+            do {
+                foreach ($progId in $dteProgIds) {
+                    try {
+                        $dte     = [Runtime.InteropServices.Marshal]::GetActiveObject($progId)
+                        $vsFound    = $true
+                        $targetProc = $null
+                        foreach ($p in $dte.Debugger.LocalProcesses) {
+                            if ([int]$p.ProcessID -eq $gameProc.Id) { $targetProc = $p; break }
+                        }
+                        if ($targetProc) {
+                            try   { [void]$targetProc.Attach(); $attached = $true; break }
+                            catch { $attachErr = "$_" }
+                        }
+                    } catch { }
+                }
+                if (-not $attached) { Start-Sleep -Milliseconds 200 }
+            } while (-not $attached -and (Get-Date) -lt $deadline)
+
+            if ($attached) {
+                Write-Host "==> VS debugger attached."
+            } elseif ($vsFound) {
+                Write-Host "==> VS found but could not attach to PID $($gameProc.Id)."
+                if ($attachErr) {
+                    Write-Host "    Attach() error: $attachErr"
+                } else {
+                    Write-Host "    Process not found in VS's list after 5 s."
+                    Write-Host "    If VS is running elevated, restart it without elevation."
+                }
+                Write-Host "    Attach manually: Debug > Attach to Process."
+            } else {
+                Write-Host "==> No running VS instance found."
+                Write-Host "    Attach manually: Debug > Attach to Process > PID $($gameProc.Id)."
+            }
+$gameProc.WaitForExit()
+            $runExit = $gameProc.ExitCode
+        }
+    } else {
+        # Normal run - Windows, macOS, or debug on macOS (falls back to plain run).
+        # Run from source root so the game/tests can locate data/ and gfx/.
         Push-Location $WinSrcPath
         if ($RunArgs -ne "") { & $binaryPath $RunArgs.Split() } else { & $binaryPath }
         $runExit = $LASTEXITCODE
         Pop-Location
     }
+
     Write-Host ""
     if ($runExit -ne 0) { Write-Host "==> Process exited with code $runExit" }
     else { Write-Host "==> Done." }
@@ -870,21 +1266,18 @@ if ($savedAction -ne "delete") {
     }
 }
 
-Write-Host ""
-Write-Host "==> What next?"
-Write-Host "  Enter  Start fresh"
+$nextItems = [ordered]@{ "new" = "Start fresh" }
 if ($lastConfig) {
     $rl = "$($lastConfig.Action): $($lastConfig.PresetLabel)"
     if ($lastConfig.BuildType) { $rl += " | $($lastConfig.BuildType)" }
     $rl += " | $($lastConfig.Target)"
-    Write-Host "  l      Repeat last  [$rl]"
+    $nextItems["last"] = "Repeat last  [$rl]"
 }
-Write-Host "  x      Exit"
-Write-Host ""
-$next = (Read-Host "Choice").ToLower().Trim()
+$nextItems["exit"] = "Exit"
+$next = Select-Menu "What next?" $nextItems
 
-if ($next -eq "x") { exit 0 }
-if ($next -eq "l" -and $lastConfig) {
+if ($next -eq "exit") { exit 0 }
+if ($next -eq "last" -and $lastConfig) {
     $Platform   = $lastConfig.Platform
     $Preset     = $lastConfig.PresetName
     $BuildType  = $lastConfig.BuildTypeIdx
