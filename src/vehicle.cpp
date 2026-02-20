@@ -4883,7 +4883,7 @@ double vehicle::coeff_water_drag() const
 
     std::set<int> occupied_y;
     for( int idx : hull_indices ) {
-        occupied_y.insert( idx );
+        occupied_y.insert( global_part_pos3( idx ).y );
     }
 
     int tile_width = occupied_y.size();
