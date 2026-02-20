@@ -1620,5 +1620,58 @@
       { "x": 0, "y": 0, "part": "metal_boat_hull" },
       { "x": -1, "y": 0, "part": "vehicle_scoop" }
     ]
-  }
+  },
+  {
+    "type": "vehicle",
+    "id": "carbon_catamaran",
+    "name": "Carbon Catamaran",
+    "blueprint": [
+      "y======-++---u",
+      "/.CeeC#......zu",
+      "<I_cc_>___I___BU",
+      "'_____+___S____!",
+      "<I____>___I___YN",
+      "/.ssss#......xn",
+      "b======-++---n"
+    ],
+    "palette": {
+      "c": [ "frame_carbon_horizontal", "seat", "roof_carbon" ],
+      "C": [ "frame_carbon_horizontal", "carbonfiber_boat_hull", "seat", "roof_carbon" ],
+      "e": [ "frame_carbon_horizontal", "carbonfiber_boat_hull", "veh_table", "roof_carbon" ],
+      "_": [ "frame_carbon_horizontal", "carbon_aisle_horizontal", "roof_carbon" ],
+      ".": [ "frame_carbon_horizontal", "carbon_aisle_horizontal", "roof_carbon", "carbonfiber_boat_hull" ],
+      ">": [ "frame_carbon_horizontal", "carbon_board_vertical_right" ]
+      "#": [ "frame_carbon_horizontal", "carbon_board_vertical_right", "carbonfiber_boat_hull" ],
+      "<": [ "frame_carbon_horizontal", "carbon_board_vertical_left" ]
+      "/": [ "frame_carbon_horizontal", "carbon_board_vertical_left", "carbonfiber_boat_hull" ],
+      "+": [ "frame_carbon_horizontal", "carbon_door" ],
+      "s": [ "frame_carbon_horizontal", "bed", "carbon_roof", "carbonfiber_boat_hull" ],
+      "!": [ "frame_carbon_horizontal", "carbon_halfboard_vertical_right" ]
+      "-": [ "frame_carbon_horizontal", "carbon_halfboard_horizontal", "carbonfiber_boat_hull" ],
+      "=": [ "frame_carbon_horizontal", "carbon_board_horizontal", "carbonfiber_boat_hull" ],
+      "I": [ "frame_carbon_horizontal", "box_carbon", "roof_carbon" ],
+      "y": [ "frame_carbon_horizontal", "carbon_board_ne", "carbonfiber_boat_hull" ],
+      "b": [ "frame_carbon_horizontal", "carbon_board_se", "carbonfiber_boat_hull" ],
+      "x": [ "frame_carbon_horizontal", "carbon_halfboard_ne", "carbonfiber_boat_hull" ],
+      "z": [ "frame_carbon_horizontal", "carbon_halfboard_se", "carbonfiber_boat_hull" ],
+      "Y": [ "frame_carbon_horizontal", "carbon_halfboard_ne" ],
+      "B": [ "frame_carbon_horizontal", "carbon_halfboard_se" ],
+      "'": [ "frame_wood_horizontal", "windshield", "v_curtain", "boat_board" ]
+    },
+    "items": [
+      { "x": 1, "y": 0, "chance": 75, "item_groups": [ "supplies_ship_rigging", "fishing_items" ] },
+      { "x": 2, "y": 0, "chance": 75, "item_groups": [ "supplies_ship_rigging", "fishing_items" ] },
+      { "x": 3, "y": 0, "chance": 75, "item_groups": [ "supplies_ship_rigging", "fishing_items" ] },
+      { "x": 1, "y": 0, "chance": 50, "items": [ "flotation_vest" ] },
+      { "x": 2, "y": 0, "chance": 50, "items": [ "flotation_vest" ] },
+      { "x": 3, "y": 0, "chance": 50, "items": [ "flotation_vest" ] },
+      { "x": -5, "y": -2, "chance": 50, "items": [ "waterwaymap" ] },
+      { "x": -5, "y": 2, "chance": 75, "item_groups": [ "tools_survival", "tools_survival" ] },
+      { "x": -5, "y": 2, "chance": 50, "item_groups": [ "tools_survival", "tools_survival" ] },
+      { "x": -5, "y": 2, "chance": 25, "item_groups": [ "tools_survival", "tools_survival" ] },
+      { "x": -4, "y": 2, "chance": 75, "item_groups": [ "stash_food", "stash_food", "drugs_heal_simple" ] },
+      { "x": -4, "y": 2, "chance": 50, "item_groups": [ "stash_food", "stash_food", "drugs_heal_simple" ] },
+      { "x": -4, "y": 2, "chance": 25, "item_groups": [ "stash_food", "stash_food", "drugs_heal_simple" ] }
+    ]
+  },
 ]
