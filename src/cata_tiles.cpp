@@ -1299,19 +1299,19 @@ static void apply_surf_blend_effect(
 
     auto postprocess = [&tint]( SDL_Color c ) -> SDL_Color {
         auto [h, s, v, a] = rgb2hsv( c );
-        if( tint.contrast.has_value() )
+        if( tint.contrast != 1.0f )
         {
-            const float adjusted = ( ( static_cast<float>( v ) - 128.0f ) * tint.contrast.value() ) + 128.0f;
+            const float adjusted = ( ( static_cast<float>( v ) - 128.0f ) * tint.contrast ) + 128.0f;
             v =  static_cast<uint8_t>( std::clamp( adjusted, 0.0f, 255.0f ) );
         }
-        if( tint.saturation.has_value() )
+        if( tint.saturation != 1.0f )
         {
-            s = static_cast<uint16_t>( std::clamp( static_cast<float>( s ) * tint.saturation.value(), 0.0f,
+            s = static_cast<uint16_t>( std::clamp( static_cast<float>( s ) * tint.saturation, 0.0f,
                                                    65535.0f ) );
         }
-        if( tint.brightness.has_value() )
+        if( tint.brightness != 1.0f )
         {
-            v = static_cast<uint8_t>( std::clamp( static_cast<float>( v ) * tint.brightness.value(), 0.0f,
+            v = static_cast<uint8_t>( std::clamp( static_cast<float>( v ) * tint.brightness, 0.0f,
                                                   255.0f ) );
         }
         return hsv2rgb( HSVColor{ h, s, v, a } );
@@ -2306,14 +2306,12 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 // Simple string value - parse as color (may include brightness from 4th hex pair)
                 auto [color, brightness] = parse_color( obj.get_string( key ) );
                 cfg.color = color.value_or( TILESET_NO_COLOR );
-                cfg.brightness = brightness;
+                cfg.brightness = brightness.value_or( 1.0f );
                 cfg.blend_mode = top_blend_mode;
                 if( has_top_level ) {
-                    cfg.contrast = top_contrast;
-                    cfg.saturation = top_saturation;
-                    if( top_brightness.has_value() ) {
-                        cfg.brightness = top_brightness.value();
-                    }
+                    cfg.contrast = top_contrast.value_or( 1.0f );
+                    cfg.saturation = top_saturation.value_or( 1.0f );
+                    cfg.brightness = top_brightness.value_or( 1.0f );
                 }
             } else if( obj.has_object( key ) && !has_top_level )
             {
@@ -2321,14 +2319,10 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 JsonObject color_obj = obj.get_object( key );
                 auto [color, brightness] = parse_color( color_obj.get_string( "color", "" ) );
                 cfg.color = color.value_or( TILESET_NO_COLOR );
-                cfg.brightness = brightness;
+                cfg.brightness = brightness.value_or( 1.0f );
                 cfg.blend_mode = parse_blend_mode( color_obj.get_string( "blend_mode", "" ) );
-                if( color_obj.has_float( "contrast" ) ) {
-                    cfg.contrast = color_obj.get_float( "contrast" );
-                }
-                if( color_obj.has_float( "saturation" ) ) {
-                    cfg.saturation = color_obj.get_float( "saturation" );
-                }
+                cfg.contrast = color_obj.get_float( "contrast", 1.0f );
+                cfg.saturation = color_obj.get_float( "saturation", 1.0f );
                 // Allow explicit brightness field to override hex-encoded brightness
                 if( color_obj.has_float( "brightness" ) ) {
                     cfg.brightness = color_obj.get_float( "brightness" );
