@@ -4875,7 +4875,7 @@ double vehicle::coeff_water_drag() const
     double hull_coverage;
     if( hull_indices.empty() && floating.empty() ) {
         hull_coverage = 0;
-    } else if ( hull_indices.empty() ) {
+    } else if( hull_indices.empty() ) {
         hull_coverage = 1;
     } else {
         hull_coverage = static_cast<double>( floating.size() ) / hull_indices.size();
@@ -4890,15 +4890,9 @@ double vehicle::coeff_water_drag() const
 
     double width_m = tile_to_width( tile_width );
 
-    // actual area of the hull in m^2 (handles non-rectangular shapes)
-    // footprint area in tiles = tile width * tile length
-    // effective footprint percent = # of structure tiles / footprint area in tiles
-    // actual hull area in m^2 = footprint percent * length in meters * width in meters
-    // length in meters = length in tiles
-    // actual area in m = # of structure tiles * length in tiles * width in meters /
-    //                    ( length in tiles * width in tiles )
-    // actual area in m = # of structure tiles * width in meters / width in tiles
-    double actual_area_m = width_m * hull_indices.size() / tile_width;
+    // Each piece of hull is 1m^2
+    // Thus area is the number of hull pieces
+    double actual_area_m = hull_indices.size();
 
     // effective hull area is actual hull area * hull coverage
     hull_area = actual_area_m * std::max( 0.1, hull_coverage );
