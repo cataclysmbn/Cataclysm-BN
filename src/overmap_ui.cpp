@@ -47,12 +47,15 @@
 #include "map_iterator.h"
 #include "mapbuffer.h"
 #include "mission.h"
+#include "messages.h"
 #include "mongroup.h"
 #include "npc.h"
 #include "omdata.h"
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
+#include "overmap_label.h"
+#include "overmap_label_note.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
 #include "overmap_special.h"
@@ -407,6 +410,12 @@ static bool get_scent_glyph( const tripoint_abs_omt &pos, nc_color &ter_color,
     return false;
 }
 
+static auto has_player_label( const tripoint_abs_omt &pos ) -> bool
+{
+    const auto player_label = overmap_label_note::extract_label( overmap_buffer.note( pos ) );
+    return player_label.has_value() && !player_label->empty();
+}
+
 static void draw_city_labels( const catacurses::window &w, const tripoint_abs_omt &center )
 {
     const int win_x_max = getmaxx( w );
@@ -440,11 +449,75 @@ static void draw_city_labels( const catacurses::window &w, const tripoint_abs_om
             continue;   // right under the cursor.
         }
 
-        if( !overmap_buffer.seen( tripoint_abs_omt( city_pos, center.z() ) ) ) {
+        const auto label_pos = tripoint_abs_omt( city_pos, center.z() );
+        if( !overmap_buffer.seen( label_pos ) ) {
             continue;   // haven't seen it.
+        }
+        if( has_player_label( label_pos ) ) {
+            continue;
         }
 
         mvwprintz( w, point( text_x_min, text_y ), i_yellow, element.city->name );
+    }
+}
+
+static auto get_map_label_text( const tripoint_abs_omt &pos ) -> std::optional<std::string>
+{
+    if( const auto player_label = overmap_label_note::extract_label( overmap_buffer.note( pos ) );
+        player_label.has_value() && !player_label->empty() ) {
+        return player_label;
+    }
+
+    const auto &terrain = overmap_buffer.ter( pos );
+    if( const auto static_label = overmap_labels::get_label( terrain->get_type_id() );
+        static_label.has_value() && !static_label->empty() ) {
+        return _( *static_label );
+    }
+
+    return std::nullopt;
+}
+
+static auto draw_map_labels( const catacurses::window &w, const tripoint_abs_omt &center ) -> void
+{
+    const auto win_x_max = getmaxx( w );
+    const auto win_y_max = getmaxy( w );
+    const auto screen_center_pos = point( win_x_max / 2, win_y_max / 2 );
+    for( auto x = 0; x < win_x_max; ++x ) {
+        for( auto y = 0; y < win_y_max; ++y ) {
+            const auto map_pos = center.xy() + point( x - screen_center_pos.x, y - screen_center_pos.y );
+            const auto map_pos_z = tripoint_abs_omt( map_pos, center.z() );
+
+            if( !overmap_buffer.seen( map_pos_z ) ) {
+                continue;
+            }
+
+            const auto label_text = get_map_label_text( map_pos_z );
+            if( !label_text.has_value() ) {
+                continue;
+            }
+
+            const auto screen_pos = point_rel_omt( point( x, y ) );
+            const auto text_width = utf8_width( *label_text, true );
+            const auto text_x_min = screen_pos.x() - text_width / 2;
+            const auto text_x_max = text_x_min + text_width;
+            const auto text_y = screen_pos.y();
+
+            if( text_x_min < 0 ||
+                text_x_max > win_x_max ||
+                text_y < 0 ||
+                text_y > win_y_max ) {
+                continue;   // outside of the window bounds.
+            }
+
+            if( screen_center_pos.x >= ( text_x_min - 1 ) &&
+                screen_center_pos.x <= ( text_x_max ) &&
+                screen_center_pos.y >= ( text_y - 1 ) &&
+                screen_center_pos.y <= ( text_y + 1 ) ) {
+                continue;   // right under the cursor.
+            }
+
+            mvwprintz( w, point( text_x_min, text_y ), i_yellow, *label_text );
+        }
     }
 }
 
@@ -1024,7 +1097,8 @@ static void draw_ascii( ui_adaptor &ui,
                 } else if( target.z() < center.z() ) {
                     ter_sym = "v";
                 }
-            } else if( blink && uistate.overmap_show_map_notes && overmap_buffer.has_note( omp ) ) {
+            } else if( blink && uistate.overmap_show_map_notes && overmap_buffer.has_note( omp ) &&
+                       !get_map_label_text( omp ).has_value() ) {
                 // Display notes in all situations, even when not seen
                 std::tie( ter_sym, ter_color, std::ignore ) =
                     get_note_display_info( overmap_buffer.note( omp ) );
@@ -1172,6 +1246,7 @@ static void draw_ascii( ui_adaptor &ui,
 
     if( center.z() == 0 && uistate.overmap_show_city_labels ) {
         draw_city_labels( w, center );
+        draw_map_labels( w, center );
     }
 
     half_open_rectangle<point_abs_omt> screen_bounds(
@@ -1216,7 +1291,7 @@ static void draw_ascii( ui_adaptor &ui,
 
     if( uistate.overmap_show_map_notes ) {
         const std::string &note_text = overmap_buffer.note( center );
-        if( !note_text.empty() ) {
+        if( !note_text.empty() && !overmap_label_note::is_label_only( note_text ) ) {
             const std::tuple<char, nc_color, size_t> note_info = get_note_display_info(
                         note_text );
             const size_t pos = std::get<2>( note_info );

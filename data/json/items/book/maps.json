@@ -204,13 +204,7 @@
         "cave_rat_underground",
         "cave_rat",
         "cave_underground",
-        "mine_entrance",
-        "mine_entrance_roof",
-        "mine_shaft_middle",
-        "mine_shaft_lower",
-        "mine",
-        "mine_down",
-        "mine_finale"
+        { "om_terrain": "mine", "om_terrain_match_type": "PREFIX" }
       ],
       "message": "You mark potential entry points and underground routes in the margins of your map."
     }

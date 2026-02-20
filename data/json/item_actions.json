@@ -806,13 +806,28 @@
   },
   {
     "type": "item_action",
+    "id": "REPORT_FLUID_GRID_CONNECTIONS",
+    "name": { "str": "Check fluid grid connections" }
+  },
+  {
+    "type": "item_action",
     "id": "MODIFY_GRID_CONNECTIONS",
     "name": { "str": "Modify grid connections" }
   },
   {
     "type": "item_action",
+    "id": "MODIFY_FLUID_GRID_CONNECTIONS",
+    "name": { "str": "Modify fluid grid connections" }
+  },
+  {
+    "type": "item_action",
     "id": "VOLTMETER",
     "name": { "str": "Measure grid power" }
+  },
+  {
+    "type": "item_action",
+    "id": "ARTIFACT_ANALYZER",
+    "name": { "str": "Analyze artifact" }
   },
   {
     "type": "item_action",

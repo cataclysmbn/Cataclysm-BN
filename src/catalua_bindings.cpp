@@ -361,9 +361,6 @@ void cata::detail::reg_date_time_api( sol::state &lua )
     DOC( "System date and time API." );
     luna::userlib lib = luna::begin_lib( lua, "date_time" ) ;
 
-    const time_t timestamp = time( nullptr );
-    const tm *loc = localtime( &timestamp );
-
     luna::set_fx( lib, "year", []() { return local_time_impl()->tm_year + 1900; } );
     // It makes sense to start month at 1, not 0
     luna::set_fx( lib, "month", []() { return local_time_impl()->tm_mon + 1; } );
@@ -574,6 +571,41 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_weather_updated", []( const sol::table & ) {} );
 
+    DOC( "Called when the player tries to interact with an NPC.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC being interacted with  " );
+    DOC( "Return false to prevent the npc interaction menu from appearing.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_try_npc_interaction", []( const sol::table & ) {} );
+
+    DOC( "Called when the player interacts with an NPC.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC being interacted with  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_npc_interaction", []( const sol::table & ) {} );
+
+    DOC( "Called just before the dialogue window opens and the first topic is chosen.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC speaking  " );
+    DOC( "* `next_topic` (string): The topic that will be shown first  " );
+    DOC( "Return a new talk_topic id to add it as the next topic.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_dialogue_start", []( const sol::table & ) {} );
+
+    DOC( "Called when a dialogue option is selected.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC speaking  " );
+    DOC( "* `next_topic` (string): The topic that was selected  " );
+    DOC( "Return a new talk_topic id to add it as the next topic.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_dialogue_option", []( const sol::table & ) {} );
+
+    DOC( "Called when the dialogue window closes.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (NPC): The NPC speaking  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_dialogue_end", []( const sol::table & ) {} );
+
     DOC( "Called when a character or monster successfully dodges.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `char` (Character)  " );
@@ -744,6 +776,50 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_mon_death", []( const sol::table & ) {} );
 
+    DOC( "Called when any creature is spawned for the first time.  " );
+    DOC( "This is the base hook; `on_monster_spawn` and `on_npc_spawn` also trigger this.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `creature` (Creature)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_creature_spawn", []( const sol::table & ) {} );
+
+    DOC( "Called when a monster is spawned for the first time.  " );
+    DOC( "Also triggers `on_creature_spawn`.  " );
+    DOC( "Note: monsters spawned via mapgen submap spawn points will fire this hook,  " );
+    DOC( "but monsters materialized from overmap monster groups may not.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_monster_spawn", []( const sol::table & ) {} );
+
+    DOC( "Called when an NPC is spawned for the first time.  " );
+    DOC( "Also triggers `on_creature_spawn`.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (Npc)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_npc_spawn", []( const sol::table & ) {} );
+
+    DOC( "Called when any creature is loaded onto the active map.  " );
+    DOC( "This is the base hook; `on_monster_loaded` and `on_npc_loaded` also trigger this.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `creature` (Creature)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_creature_loaded", []( const sol::table & ) {} );
+
+    DOC( "Called when a monster is loaded onto the active map.  " );
+    DOC( "Also triggers `on_creature_loaded`.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_monster_loaded", []( const sol::table & ) {} );
+
+    DOC( "Called when an NPC is loaded onto the active map.  " );
+    DOC( "Also triggers `on_creature_loaded`.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `npc` (Npc)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_npc_loaded", []( const sol::table & ) {} );
+
     DOC( "Called every in-game period" );
     luna::set_fx( lib, "on_every_x", []( const sol::table & ) {} );
 
@@ -896,7 +972,9 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_colors( lua );
     reg_enums( lua );
     reg_game_ids( lua );
+    mod_bionic_data( lua );
     mod_mutation_branch( lua );
+    reg_bionics( lua );
     reg_magic( lua );
     reg_names( lua );
     reg_mission( lua );
@@ -913,4 +991,5 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_testing_library( lua );
     reg_requirement( lua );
     reg_inventory( lua );
+    reg_mapgendata( lua );
 }

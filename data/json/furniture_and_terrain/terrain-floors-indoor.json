@@ -995,7 +995,7 @@
     "looks_like": "t_thconc_floor",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAT", "ROAD", "SUPPORTS_ROOF", "COLLAPSES" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",

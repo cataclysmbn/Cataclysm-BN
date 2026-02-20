@@ -164,12 +164,12 @@ void handbrake()
     veh->cruise_velocity = 0;
     bool is_on_rails = vehicle_movement::is_on_rails( here, *veh );
     if( !is_on_rails && veh->last_turn != 0_degrees &&
-        rng( 15, 60 ) * 100 < std::abs( veh->velocity ) ) {
+        std::lround( static_cast<double>( rng( 15, 60 ) * 100 ) * 0.44704 ) < std::abs( veh->velocity ) ) {
         veh->skidding = true;
         add_msg( m_warning, _( "You lose control of %s." ), veh->name );
         veh->turn( veh->last_turn > 0_degrees ? 60_degrees : -60_degrees );
     } else {
-        int braking_power = std::abs( veh->velocity ) / 2 + 10 * 100;
+        int braking_power = std::abs( veh->velocity ) / 2 + 447;
         if( std::abs( veh->velocity ) < braking_power ) {
             veh->stop();
         } else {
@@ -1483,6 +1483,7 @@ void vehicle::operate_planter()
                 }
                 if( !i->count_by_charges() || i->charges == 1 ) {
                     i->set_age( 0_turns );
+                    i->set_flag( flag_id( "HIDDEN_ITEM" ) );
                     detached_ptr<item> det;
                     v.erase( it, &det );
                     g->m.add_item( loc, std::move( det ) );
@@ -1490,6 +1491,7 @@ void vehicle::operate_planter()
                     detached_ptr<item> tmp = item::spawn( *i );
                     tmp->charges = 1;
                     tmp->set_age( 0_turns );
+                    tmp->set_flag( flag_id( "HIDDEN_ITEM" ) );
                     g->m.add_item( loc, std::move( tmp ) );
                     i->charges--;
                 }

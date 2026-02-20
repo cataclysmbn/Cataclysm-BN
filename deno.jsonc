@@ -13,9 +13,9 @@
     "docs:gen:lua": "./cataclysm-bn-tiles --lua-doc docs/en/mod/lua/reference/lua.md --lua-types lua_annotations.lua",
     "migrate-unit": "deno run -A scripts/migrate_legacy_unit.ts --path data/json; deno run -A scripts/migrate_legacy_unit.ts --path data/mods; make style-all-json-parallel",
     "dprint": "deno run -A npm:dprint",
-    "changelog": {
+    "changelog:reddit": {
       "description": "creates a weekly reddit changelog template",
-      "command": "deno run -A scripts/changelog/changelog_reddit.ts"
+      "command": "deno run -A scripts/changelog/main.ts --format reddit"
     },
     "semantic": {
       "description": "update available semantic commit types",

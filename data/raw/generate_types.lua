@@ -274,6 +274,28 @@ on_shoot = {}
 ---@field item Item
 on_throw = {}
 
+---@class OnTryNPCInterationParams
+---@field npc NPC
+on_try_npc_interaction = {}
+
+---@class OnNPCInterationParams
+---@field npc NPC
+on_npc_interaction = {}
+
+---@class OnDialogueStartParams
+---@field npc NPC
+---@field next_topic string
+on_dialogue_start = {}
+
+---@class OnDialogueOptionParams
+---@field npc NPC
+---@field next_topic string
+on_dialogue_option = {}
+
+---@class OnDialogueEndParams
+---@field npc NPC
+on_dialogue_end = {}
+
 ---@class OnCreatureDodgedParams
 ---@field char Character | Creature
 ---@field source Creature?
@@ -314,6 +336,30 @@ on_mapgen_postprocess = {}
 ---@field radius integer
 ---@field fire boolean
 on_explosion_start = {}
+
+---@class OnCreatureSpawnParams
+---@field creature Creature
+on_creature_spawn = {}
+
+---@class OnMonsterSpawnParams
+---@field monster Monster
+on_monster_spawn = {}
+
+---@class OnNpcSpawnParams
+---@field npc Npc
+on_npc_spawn = {}
+
+---@class OnCreatureLoadedParams
+---@field creature Creature
+on_creature_loaded = {}
+
+---@class OnMonsterLoadedParams
+---@field monster Monster
+on_monster_loaded = {}
+
+---@class OnNpcLoadedParams
+---@field npc Npc
+on_npc_loaded = {}
 
 ]]
 

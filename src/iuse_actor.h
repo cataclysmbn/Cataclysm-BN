@@ -1318,6 +1318,34 @@ class multicooker_iuse : public iuse_actor
 };
 
 /**
+ * Recharge a battery by hand-cranking.
+ */
+class hand_crank_actor : public iuse_actor
+{
+    public:
+        time_duration charge_interval = 144_seconds;
+        int charge_amount = 1;
+        int fatigue_per_interval = 1;
+        itype_id ammo_type = itype_id( "battery" );
+        std::string activity_name = "charging";
+        std::string start_message = "You start cranking the %s to charge its %s.";
+        std::string already_charged_message =
+            "You could use the %s to charge its %s, but it's already charged.";
+        std::string need_battery_message = "You need a rechargeable battery cell to charge.";
+        std::string underwater_message = "It's not waterproof enough to work underwater.";
+        std::string exhausted_message = "You're too exhausted to keep cranking.";
+        std::string fully_charged_message = "You've charged the battery completely.";
+
+        hand_crank_actor( const std::string &type = "HAND_CRANK" ) : iuse_actor( type ) {}
+        ~hand_crank_actor() override = default;
+        auto load( const JsonObject &obj ) -> void override;
+        auto use( player &p, item &it, bool, const tripoint & ) const -> int override;
+        auto can_use( const Character &, const item &, bool,
+                      const tripoint & ) const -> ret_val<bool> override;
+        auto clone() const -> std::unique_ptr<iuse_actor> override;
+};
+
+/**
  * Relieve some tension built up in the cataclysm
  * More generalized form of old VIBE iuse
  */

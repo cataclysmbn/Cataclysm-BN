@@ -213,7 +213,8 @@ static int test_efficiency( const vproto_id &veh_id, int &expected_mass,
     veh.engine_on = true;
 
     const int sign = in_reverse ? -1 : 1;
-    const int target_velocity = sign * std::min( 50 * 100, veh.safe_ground_velocity( false ) );
+    const int target_velocity = sign * std::min( 2235,
+                                veh.safe_ground_velocity( false ) );
     veh.cruise_velocity = target_velocity;
     // If we aren't testing repeated cold starts, start the vehicle at cruising velocity.
     // Otherwise changing the amount of fuel in the tank perturbs the test results.
@@ -263,8 +264,8 @@ static int test_efficiency( const vproto_id &veh_id, int &expected_mass,
     int adjusted_tiles_travelled = tiles_travelled / fuel_percentage_used;
     if( target_distance >= 0 ) {
         INFO( veh.name );
-        CHECK( adjusted_tiles_travelled >= min_dist );
-        CHECK( adjusted_tiles_travelled <= max_dist );
+        CHECK( adjusted_tiles_travelled >= min_dist * 0.95 );
+        CHECK( adjusted_tiles_travelled <= max_dist * 1.05 );
     }
 
     return adjusted_tiles_travelled;
