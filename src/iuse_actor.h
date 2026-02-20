@@ -1558,7 +1558,8 @@ class iuse_dimension_travel : public iuse_actor
 class iuse_pocket_dimension : public iuse_actor
 {
     public:
-        world_type_id pocket_type = world_type_id( "pocket_dimension" ); // Which world_type to use for this pocket
+        world_type_id pocket_type =
+            world_type_id( "pocket_dimension" ); // Which world_type to use for this pocket
         std::string entry_mapgen;               // Overmap special ID for generation
         bool persistent = false;                 // Does the pocket survive item destruction?
         int need_charges = 0;

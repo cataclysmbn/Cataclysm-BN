@@ -1200,7 +1200,8 @@ class game
         tripoint_abs_sm pocket_origin_position_;  // Player's overworld position before entering a pocket
         std::string pocket_dimension_name_;  // Display name of the current pocket dimension
         std::unique_ptr<secondary_world> kept_pocket_;  // Last visited pocket dimension (if kept loaded)
-        std::unique_ptr<secondary_world> kept_origin_;  // Origin dimension when inside a pocket (if kept loaded)
+        std::unique_ptr<secondary_world>
+        kept_origin_;  // Origin dimension when inside a pocket (if kept loaded)
     private:
         location_vector<item> fake_items;
     public:

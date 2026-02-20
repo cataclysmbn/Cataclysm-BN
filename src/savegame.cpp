@@ -291,7 +291,7 @@ void game::unserialize( std::istream &fin )
                                    bounds_obj.get_int( "max_z" ) );
             bounds.boundary_terrain = ter_str_id( bounds_obj.get_string( "boundary_terrain" ) );
             bounds.boundary_overmap_terrain = oter_str_id(
-                                                 bounds_obj.get_string( "boundary_overmap_terrain" ) );
+                                                  bounds_obj.get_string( "boundary_overmap_terrain" ) );
             m.set_dimension_bounds( bounds );
             overmap_buffer.set_dimension_bounds( bounds );
         }
