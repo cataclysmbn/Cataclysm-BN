@@ -65,6 +65,7 @@ void scent_map::reset()
 
 void scent_map::decay()
 {
+    ZoneScoped;
     // Each row of grscent is independent; parallelize over the outer dimension.
     parallel_for( 0, static_cast<int>( grscent.size() ), [&]( int x ) {
         for( auto &val : grscent[x] ) {
