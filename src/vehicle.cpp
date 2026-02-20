@@ -4872,21 +4872,21 @@ double vehicle::coeff_water_drag() const
         return coefficient_water_resistance;
     }
     std::vector<int> hull_indices = all_parts_at_location( part_location_under );
+    double hull_coverage;
     if( hull_indices.empty() && floating.empty() ) {
-        // huh?
-        coeff_water_dirty = false;
-        hull_height = 0.3;
-        draft_m = 1.0;
-        return 1250.0;
+        hull_coverage = 0;
+    } else if ( hull_indices.empty() ) {
+        hull_coverage = 1;
+    } else {
+        hull_coverage = static_cast<double>( floating.size() ) / hull_indices.size();
     }
-    double hull_coverage = static_cast<double>( floating.size() ) / hull_indices.size();
 
-    std::set<int> occupied_y;
+    std::set<int> occupied_x;
     for( int idx : hull_indices ) {
-        occupied_y.insert( global_part_pos3( idx ).y );
+        occupied_x.insert( global_part_pos3( idx ).x );
     }
 
-    int tile_width = occupied_y.size();
+    int tile_width = occupied_x.size();
 
     double width_m = tile_to_width( tile_width );
 
@@ -4909,8 +4909,12 @@ double vehicle::coeff_water_drag() const
     // water_mass = vehicle_mass
     // area * depth = vehicle_mass / water_density
     // depth = vehicle_mass / water_density / area
-    draft_m = to_kilogram( total_mass() ) / water_density / hull_area * get_lift_percent( true );
-    draft_m = std::max( draft_m, 0.0 );
+    if( hull_area == 0 ) {
+        draft_m = 1;
+    } else {
+        draft_m = to_kilogram( total_mass() ) / water_density / hull_area * get_lift_percent( true );
+        draft_m = std::max( draft_m, 0.0 );
+    }
     // increase the streamlining as more of the boat is covered in boat boards
     double c_water_drag = 1.25 - hull_coverage;
     // hull height starts at 0.3m and goes up as you add more boat boards
