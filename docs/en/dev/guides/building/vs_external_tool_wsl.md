@@ -16,7 +16,7 @@ Open **Tools -> External Tools...** and add an entry. The **Arguments** field is
 regardless of which interface mode you choose:
 
 | Field             | Value                                |
-|-------------------|--------------------------------------|
+| ----------------- | ------------------------------------ |
 | Title             | BN Build                             |
 | Command           | `cmd.exe`                            |
 | Arguments         | `/c "$(SolutionDir)cmake-build.bat"` |
@@ -24,9 +24,9 @@ regardless of which interface mode you choose:
 
 The **Use Output Window** checkbox controls which interface mode the tool uses:
 
-| Use Output Window | Interface                                                                 |
-|-------------------|---------------------------------------------------------------------------|
-| **Unchecked**     | Opens a separate `cmd` window; numbered text menus appear inline          |
+| Use Output Window | Interface                                                                  |
+| ----------------- | -------------------------------------------------------------------------- |
+| **Unchecked**     | Opens a separate `cmd` window; numbered text menus appear inline           |
 | **Checked**       | Runs inside the VS Output window; WinForms GUI list-pickers appear instead |
 
 The GUI pickers (checked) keep everything inside VS but require clicking through floating windows.
@@ -64,7 +64,7 @@ On each run the script prompts for:
 
 1. **Platform** — Windows (MSVC) or Linux (WSL)
 2. **Configure preset** — read from `CMakePresets.json` (and `CMakeUserPresets.json` if present)
-3. **Build type** — Debug / RelWithDebInfo / Release *(Windows only; Linux type is set in the preset)*
+3. **Build type** — Debug / RelWithDebInfo / Release _(Windows only; Linux type is set in the preset)_
 4. **Target** — derived from the preset's `TILES`/`TESTS` cache variables, or enter a custom name
 5. **Action** — Build, Run, Rebuild, Delete, or Debug
 
@@ -103,6 +103,7 @@ The script polls for up to 5 seconds for VS to register the process, then report
 prints fallback instructions.
 
 **Requirements:**
+
 - Visual Studio must be open and running at **standard** (non-elevated) integrity. If VS was
   launched as administrator the COM ROT is partitioned by integrity level and auto-attach will
   fail with a "no running VS instance found" message. Restart VS without elevation.
@@ -170,12 +171,12 @@ cmake-build.bat -Platform linux -Preset 2 -Action run -RunArgs "[map]"
 
 **Parameter reference:**
 
-| Parameter     | Values                                         | Notes                                      |
-|---------------|------------------------------------------------|--------------------------------------------|
-| `-Platform`   | `win` / `linux`                                |                                            |
-| `-Preset`     | preset name or 1-based index                   | Indexes match the order in CMakePresets.json |
-| `-BuildType`  | `1`=Debug `2`=RelWithDebInfo `3`=Release       | Windows only                               |
-| `-Target`     | cmake target name                              | Derived from preset if omitted             |
-| `-Action`     | `build` `run` `rebuild` `delete` `debug`       |                                            |
-| `-RunArgs`    | string forwarded to the binary                 | e.g. `[map]` for test filtering            |
-| `-ExtraFlags` | extra `cmake` configure flags                  | e.g. `-DFOO=ON`                            |
+| Parameter     | Values                                   | Notes                                        |
+| ------------- | ---------------------------------------- | -------------------------------------------- |
+| `-Platform`   | `win` / `linux`                          |                                              |
+| `-Preset`     | preset name or 1-based index             | Indexes match the order in CMakePresets.json |
+| `-BuildType`  | `1`=Debug `2`=RelWithDebInfo `3`=Release | Windows only                                 |
+| `-Target`     | cmake target name                        | Derived from preset if omitted               |
+| `-Action`     | `build` `run` `rebuild` `delete` `debug` |                                              |
+| `-RunArgs`    | string forwarded to the binary           | e.g. `[map]` for test filtering              |
+| `-ExtraFlags` | extra `cmake` configure flags            | e.g. `-DFOO=ON`                              |
