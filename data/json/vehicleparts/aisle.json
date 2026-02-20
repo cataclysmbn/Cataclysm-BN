@@ -44,7 +44,7 @@
       "repair": {
         "skills": [ [ "mechanics", 2 ] ],
         "time": "60 m",
-        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+        "using": [ [ "vehicle_repair_carbon", 3 ] ]
       }
     },
     "flags": [ "AISLE", "BOARDABLE" ],
@@ -70,7 +70,7 @@
       "repair": {
         "skills": [ [ "mechanics", 2 ] ],
         "time": "60 m",
-        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 3 ] ]
+        "using": [ [ "vehicle_repair_carbon", 3 ] ]
       }
     },
     "flags": [ "AISLE", "BOARDABLE" ],

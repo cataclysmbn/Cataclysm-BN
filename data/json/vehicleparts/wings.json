@@ -294,7 +294,7 @@
       "repair": {
         "skills": [ [ "mechanics", 5 ] ],
         "time": "10 m",
-        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 1 ] ]
+        "using": [ [ "vehicle_repair_carbon", 3 ] ]
       }
     },
     "flags": [ "WING", "SHOCK_RESISTANT", "FOLDABLE" ],
