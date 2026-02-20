@@ -84,6 +84,16 @@
     "damage_reduction": { "all": 20 }
   },
   {
+    "abstract": "aluminum_stowboard",
+    "copy-from": "stowboard",
+    "type": "vehicle_part",
+    "name": { "str": "aluminum stow board" },
+    "item": "aluminium_sheet",
+    "proportional": { "durability": 0.75 },
+    "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
+    "damage_reduction": { "all": 20 }
+  },
+  {
     "abstract": "carbon_board",
     "type": "vehicle_part",
     "name": { "str": "carbon board" },
@@ -113,6 +123,26 @@
     "proportional": { "durability": 0.8 },
     "extend": { "flags": [ "HALF_BOARD" ] },
     "delete": { "flags": [ "OPAQUE", "FULL_BOARD" ] },
+    "damage_reduction": { "all": 28 }
+  },
+  {
+    "abstract": "carbon_stowboard",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber stow board" },
+    "item": "sheet_carbon",
+    "location": "center",
+    "color": "white",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "durability": 120,
+    "description": "A metal wall with a storage locker.  Keeps zombies outside the vehicle and prevents people from seeing through it.",
+    "size": "75000 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_repair_carbon", 3 ] ] }
+    },
+    "flags": [ "OBSTACLE", "OPAQUE", "CARGO", "COVERED", "FULL_BOARD", "NO_ROOF_NEEDED", "LOCKABLE_CARGO" ],
     "damage_reduction": { "all": 28 }
   },
   {
@@ -467,6 +497,42 @@
     "symbol": "j"
   },
   {
+    "id": "stowboard_horizontal",
+    "copy-from": "stowboard",
+    "type": "vehicle_part",
+    "symbol": "h"
+  },
+  {
+    "id": "stowboard_ne",
+    "copy-from": "stowboard",
+    "type": "vehicle_part",
+    "symbol": "u"
+  },
+  {
+    "id": "stowboard_nw",
+    "copy-from": "stowboard",
+    "type": "vehicle_part",
+    "symbol": "y"
+  },
+  {
+    "id": "stowboard_se",
+    "copy-from": "stowboard",
+    "type": "vehicle_part",
+    "symbol": "n"
+  },
+  {
+    "id": "stowboard_sw",
+    "copy-from": "stowboard",
+    "type": "vehicle_part",
+    "symbol": "b"
+  },
+  {
+    "id": "stowboard_vertical",
+    "copy-from": "stowboard",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
     "id": "carbon_halfboard_cover",
     "copy-from": "carbon_halfboard",
     "type": "vehicle_part",
@@ -670,6 +736,48 @@
     "symbol": "j"
   },
   {
+    "id": "carbon_stowboard_horizontal",
+    "looks_like": "stowboard_horizontal",
+    "copy-from": "carbon_stowboard",
+    "type": "vehicle_part",
+    "symbol": "h"
+  },
+  {
+    "id": "carbon_stowboard_ne",
+    "looks_like": "stowboard_ne",
+    "copy-from": "carbon_stowboard",
+    "type": "vehicle_part",
+    "symbol": "u"
+  },
+  {
+    "id": "carbon_stowboard_nw",
+    "looks_like": "stowboard_nw",
+    "copy-from": "carbon_stowboard",
+    "type": "vehicle_part",
+    "symbol": "y"
+  },
+  {
+    "id": "carbon_stowboard_se",
+    "looks_like": "stowboard_se",
+    "copy-from": "carbon_stowboard",
+    "type": "vehicle_part",
+    "symbol": "n"
+  },
+  {
+    "id": "carbon_stowboard_sw",
+    "looks_like": "stowboard_sw",
+    "copy-from": "carbon_stowboard",
+    "type": "vehicle_part",
+    "symbol": "b"
+  },
+  {
+    "id": "carbon_stowboard_vertical",
+    "looks_like": "stowboard_vertical",
+    "copy-from": "carbon_stowboard",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
     "id": "aluminum_halfboard_cover",
     "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
@@ -852,6 +960,48 @@
     "symbol": "j"
   },
   {
+    "id": "aluminum_stowboard_horizontal",
+    "looks_like": "stowboard_horizontal",
+    "copy-from": "aluminum_stowboard",
+    "type": "vehicle_part",
+    "symbol": "h"
+  },
+  {
+    "id": "aluminum_stowboard_ne",
+    "looks_like": "stowboard_ne",
+    "copy-from": "aluminum_stowboard",
+    "type": "vehicle_part",
+    "symbol": "u"
+  },
+  {
+    "id": "aluminum_stowboard_nw",
+    "looks_like": "stowboard_nw",
+    "copy-from": "aluminum_stowboard",
+    "type": "vehicle_part",
+    "symbol": "y"
+  },
+  {
+    "id": "aluminum_stowboard_se",
+    "looks_like": "stowboard_se",
+    "copy-from": "aluminum_stowboard",
+    "type": "vehicle_part",
+    "symbol": "n"
+  },
+  {
+    "id": "aluminum_stowboard_sw",
+    "looks_like": "stowboard_sw",
+    "copy-from": "aluminum_stowboard",
+    "type": "vehicle_part",
+    "symbol": "b"
+  },
+  {
+    "id": "aluminum_stowboard_vertical",
+    "looks_like": "stowboard_vertical",
+    "copy-from": "aluminum_stowboard",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
     "id": "clothboard_horizontal",
     "copy-from": "clothboard",
     "type": "vehicle_part",
@@ -939,42 +1089,7 @@
     "type": "vehicle_part",
     "symbol": "H"
   },
-  {
-    "id": "stowboard_horizontal",
-    "copy-from": "stowboard",
-    "type": "vehicle_part",
-    "symbol": "h"
-  },
-  {
-    "id": "stowboard_ne",
-    "copy-from": "stowboard",
-    "type": "vehicle_part",
-    "symbol": "u"
-  },
-  {
-    "id": "stowboard_nw",
-    "copy-from": "stowboard",
-    "type": "vehicle_part",
-    "symbol": "y"
-  },
-  {
-    "id": "stowboard_se",
-    "copy-from": "stowboard",
-    "type": "vehicle_part",
-    "symbol": "n"
-  },
-  {
-    "id": "stowboard_sw",
-    "copy-from": "stowboard",
-    "type": "vehicle_part",
-    "symbol": "b"
-  },
-  {
-    "id": "stowboard_vertical",
-    "copy-from": "stowboard",
-    "type": "vehicle_part",
-    "symbol": "j"
-  },
+
   {
     "id": "hdstowboard_horizontal",
     "copy-from": "hdstowboard",
