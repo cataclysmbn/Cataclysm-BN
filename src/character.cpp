@@ -5926,7 +5926,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     int vehwindspeed = 0;
     const optional_vpart_position vp = m.veh_at( pos() );
     if( vp ) {
-        vehwindspeed = std::abs( vp->vehicle().velocity / 100 ); // vehicle velocity in mph
+        vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
     }
     const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
     bool sheltered = weather::is_sheltered( m, pos() );

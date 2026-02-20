@@ -996,8 +996,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         // Calculate local wind power
         int vehwindspeed = 0;
         if( optional_vpart_position vp = here.veh_at( pos() ) ) {
-            // vehicle velocity in mph
-            vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+            vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
         }
         const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
         /* cache g->get_temperature( player location ) since it is used twice. No reason to recalc */
@@ -1378,8 +1377,7 @@ bool Character::burn_fuel( bionic &bio, bool start )
                             int vehwindspeed = 0;
                             const optional_vpart_position vp = here.veh_at( pos() );
                             if( vp ) {
-                                // vehicle velocity in mph
-                                vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+                                vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
                             }
                             const weather_manager &wm = get_weather();
                             const double windpower = get_local_windpower( wm.windspeed + vehwindspeed,
@@ -1464,8 +1462,7 @@ void Character::passive_power_gen( bionic &bio )
             int vehwindspeed = 0;
             const optional_vpart_position vp = here.veh_at( pos() );
             if( vp ) {
-                // vehicle velocity in mph
-                vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+                vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
             }
             const weather_manager &weather = get_weather();
             const double windpower = get_local_windpower( weather.windspeed + vehwindspeed,
