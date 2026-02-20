@@ -116,7 +116,7 @@ static const std::array<std::string, 8> multitile_keys = {{
 extern int fontwidth;
 extern int fontheight;
 static const std::string empty_string;
-static const std::array<std::string, 13> TILE_CATEGORY_IDS = {{
+static const std::array<std::string, 14> TILE_CATEGORY_IDS = {{
         "", // C_NONE,
         "vehicle_part", // C_VEHICLE_PART,
         "terrain", // C_TERRAIN,
@@ -129,7 +129,8 @@ static const std::array<std::string, 13> TILE_CATEGORY_IDS = {{
         "bullet", // C_BULLET,
         "hit_entity", // C_HIT_ENTITY,
         "weather", // C_WEATHER,
-        "overmap_terrain"
+        "overmap_terrain",
+        "overmap_weather"
     }
 };
 
@@ -1897,6 +1898,12 @@ std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_searc
             if( tmp.is_valid() ) {
                 sym = tmp->symbol;
                 col = tmp->color;
+            }
+        } else if( category == C_OVERMAP_WEATHER ) {
+            const weather_type_id weather_type_id( id );
+            if( weather_type_id.is_valid() ) {
+                sym = weather_type_id->symbol;
+                col = weather_type_id->map_color;
             }
         } else if( category == C_OVERMAP_NOTE ) {
             sym = id[5];
