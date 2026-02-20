@@ -1299,17 +1299,17 @@ static void apply_surf_blend_effect(
 
     auto postprocess = [&tint]( SDL_Color c ) -> SDL_Color {
         auto [h, s, v, a] = rgb2hsv( c );
-        if( tint.contrast != 1.0f )
+        if( fabs( tint.contrast - 1.0f ) > 0.001f )
         {
             const float adjusted = ( ( static_cast<float>( v ) - 128.0f ) * tint.contrast ) + 128.0f;
             v =  static_cast<uint8_t>( std::clamp( adjusted, 0.0f, 255.0f ) );
         }
-        if( tint.saturation != 1.0f )
+        if( fabs( tint.saturation - 1.0f ) > 0.001f )
         {
             s = static_cast<uint16_t>( std::clamp( static_cast<float>( s ) * tint.saturation, 0.0f,
                                                    65535.0f ) );
         }
-        if( tint.brightness != 1.0f )
+        if( fabs( tint.brightness - 1.0f ) > 0.001f )
         {
             v = static_cast<uint8_t>( std::clamp( static_cast<float>( v ) * tint.brightness, 0.0f,
                                                   255.0f ) );

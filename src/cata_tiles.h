@@ -247,9 +247,9 @@ struct tint_config {
 
     bool has_value() const {
         return color != TILESET_NO_COLOR
-               || contrast != 1.0f
-               || saturation != 1.0f
-               || brightness != 1.0f;
+               || fabs( contrast - 1.0f ) > 0.001f
+               || fabs( saturation - 1.0f ) > 0.001f
+               || fabs( brightness - 1.0f ) > 0.001f;
     }
 
     bool operator==( const tint_config &other ) const {
