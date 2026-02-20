@@ -15,6 +15,7 @@
 #include "generic_factory.h"
 #include "map.h"
 #include "output.h"
+#include "profile.h"
 #include "string_id.h"
 
 static constexpr int SCENT_RADIUS = 40;
@@ -61,6 +62,7 @@ void scent_map::reset()
 
 void scent_map::decay()
 {
+    ZoneScoped;
     // Each row of grscent is independent; parallelize over the outer dimension.
     parallel_for( 0, static_cast<int>( grscent.size() ), [&]( int x ) {
         for( auto &val : grscent[x] ) {
