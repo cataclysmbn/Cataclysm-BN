@@ -2278,7 +2278,7 @@ void monster::shove_vehicle( const tripoint &remote_destination,
                     if( veh_mass < 1000_kilogram ) {
                         shove_moves_minimal = 100;
                         shove_veh_mass_moves_factor = 8;
-                        shove_velocity = 1000;
+                        shove_velocity = 447;
                         shove_damage_min = 0.00F;
                         shove_damage_max = 0.03F;
                     }
@@ -2287,7 +2287,7 @@ void monster::shove_vehicle( const tripoint &remote_destination,
                     if( veh_mass < 2000_kilogram ) {
                         shove_moves_minimal = 50;
                         shove_veh_mass_moves_factor = 4;
-                        shove_velocity = 1500;
+                        shove_velocity = 671;
                         shove_damage_min = 0.00F;
                         shove_damage_max = 0.05F;
                     }

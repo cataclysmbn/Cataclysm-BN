@@ -1032,7 +1032,7 @@ void vehicle::autopilot_patrol()
 std::set<point> vehicle::immediate_path( units::angle rotate )
 {
     std::set<point> points_to_check;
-    const int distance_to_check = 10 + ( velocity / 800 );
+    const int distance_to_check = 10 + ( velocity / 358 );
     units::angle adjusted_angle = normalize( face.dir() + rotate );
     // clamp to multiples of 15.
     adjusted_angle = round_to_multiple_of( adjusted_angle, 15_degrees );
@@ -1145,11 +1145,11 @@ void vehicle::drive_to_local_target( const tripoint &target, bool follow_protoco
     // we really want to avoid running the player over.
     // If its a helicopter, we dont need to worry about airborne obstacles so much
     // And fuel efficiency is terrible at low speeds.
-    int safe_player_follow_speed = 400;
+    int safe_player_follow_speed = 179;
     if( g->u.movement_mode_is( CMM_RUN ) ) {
-        safe_player_follow_speed = 800;
+        safe_player_follow_speed = 358;
     } else if( g->u.movement_mode_is( CMM_CROUCH ) ) {
-        safe_player_follow_speed = 200;
+        safe_player_follow_speed = 89;
     }
     if( follow_protocol ) {
         if( ( ( turn_x > 0 || turn_x < 0 ) && velocity > safe_player_follow_speed ) ||
@@ -1158,18 +1158,19 @@ void vehicle::drive_to_local_target( const tripoint &target, bool follow_protoco
         }
         if( ( velocity < std::min( safe_velocity(), safe_player_follow_speed ) && turn_x == 0 &&
               rl_dist( vehpos, g->m.getabs( g->u.pos() ) ) > 8 + ( ( mount_max.y * 3 ) + 4 ) ) ||
-            velocity < 100 ) {
+            velocity < 45 ) {
             accel_y = -1;
         }
     } else {
-        if( ( turn_x > 0 || turn_x < 0 ) && velocity > 1000 ) {
+        if( ( turn_x > 0 || turn_x < 0 ) && velocity > 447 ) {
             accel_y = 1;
         }
         if( ( velocity < std::min( safe_velocity(), is_aircraft() &&
-                                   is_flying_in_air() ? 12000 : 32 * 100 ) && turn_x == 0 ) || velocity < 500 ) {
+                                   is_flying_in_air() ? 5364 : 1431 ) && turn_x == 0 ) ||
+            velocity < 224 ) {
             accel_y = -1;
         }
-        if( is_patrolling && velocity > 400 ) {
+        if( is_patrolling && velocity > 179 ) {
             accel_y = 1;
         }
     }
@@ -4042,8 +4043,8 @@ int vehicle::ground_acceleration( const bool fueled, int at_vel_in_vmi, const bo
     if( !( engine_on || skidding ) ) {
         return 0;
     }
-    int target_vmiph = std::max( at_vel_in_vmi, std::max( 1000, max_velocity( fueled ) / 4 ) );
-    int cmps = vmiph_to_cmps( target_vmiph );
+    int target_cmps = std::max( at_vel_in_vmi, std::max( 447,
+                                max_velocity( fueled ) / 4 ) );
     double weight = to_kilogram( total_mass() );
     if( is_towing() ) {
         vehicle *other_veh = tow_data.get_towed();
@@ -4052,10 +4053,10 @@ int vehicle::ground_acceleration( const bool fueled, int at_vel_in_vmi, const bo
         }
     }
     int engine_power_ratio = ( ideal ? ideal_engine_power() : total_power_w( fueled ) ) / weight;
-    int accel_at_vel = 100 * 100 * engine_power_ratio / cmps;
-    add_msg( m_debug, "%s: accel at %d vimph is %d", name, target_vmiph,
-             cmps_to_vmiph( accel_at_vel ) );
-    return cmps_to_vmiph( accel_at_vel );
+    int accel_at_vel = 100 * 100 * engine_power_ratio / target_cmps;
+    add_msg( m_debug, "%s: accel at %d cm/s is %d cm/s", name, target_cmps,
+             accel_at_vel );
+    return accel_at_vel;
 }
 
 int vehicle::aircraft_acceleration( const bool fueled, int at_vel_in_vmi, const bool ideal ) const
@@ -4069,7 +4070,7 @@ int vehicle::aircraft_acceleration( const bool fueled, int at_vel_in_vmi, const 
         return 0;
     }
     const int accel_at_vel = 100 * total_thrust( fueled, ideal ) / to_kilogram( total_mass() );
-    return cmps_to_vmiph( accel_at_vel );
+    return accel_at_vel;
 }
 
 int vehicle::water_acceleration( const bool fueled, int at_vel_in_vmi, const bool ideal ) const
@@ -4077,9 +4078,8 @@ int vehicle::water_acceleration( const bool fueled, int at_vel_in_vmi, const boo
     if( !( engine_on || skidding ) ) {
         return 0;
     }
-    int target_vmiph = std::max( at_vel_in_vmi, std::max( 1000,
-                                 max_water_velocity( fueled ) / 4 ) );
-    int cmps = vmiph_to_cmps( target_vmiph );
+    int target_cmps = std::max( at_vel_in_vmi, std::max( 447,
+                                max_water_velocity( fueled ) / 4 ) );
     double weight = to_kilogram( total_mass() );
     if( is_towing() ) {
         vehicle *other_veh = tow_data.get_towed();
@@ -4088,10 +4088,10 @@ int vehicle::water_acceleration( const bool fueled, int at_vel_in_vmi, const boo
         }
     }
     int engine_power_ratio = ( ideal ? ideal_engine_power() : total_power_w( fueled ) ) / weight;
-    int accel_at_vel = 100 * 100 * engine_power_ratio / cmps;
-    add_msg( m_debug, "%s: water accel at %d vimph is %d", name, target_vmiph,
-             cmps_to_vmiph( accel_at_vel ) );
-    return cmps_to_vmiph( accel_at_vel );
+    int accel_at_vel = 100 * 100 * engine_power_ratio / target_cmps;
+    add_msg( m_debug, "%s: water accel at %d cm/s is %d cm/s", name, target_cmps,
+             accel_at_vel );
+    return accel_at_vel;
 }
 
 // cubic equation solution
@@ -4177,7 +4177,7 @@ int vehicle::max_ground_velocity( const bool fueled, const bool ideal ) const
                         -total_engine_w );
     add_msg( m_debug, "%s: power %d, c_air %3.2f, c_rolling %3.2f, max_in_mps %3.2f",
              name, total_engine_w, coeff_air_drag(), c_rolling_drag, max_in_mps );
-    return mps_to_vmiph( max_in_mps );
+    return mps_to_cmps( max_in_mps );
 }
 
 // the same physics as ground velocity, but there's no rolling resistance so the math is easy
@@ -4197,14 +4197,14 @@ int vehicle::max_water_velocity( const bool fueled, const bool ideal ) const
     double max_in_mps = std::cbrt( total_engine_w / total_drag );
     add_msg( m_debug, "%s: power %d, c_air %3.2f, c_water %3.2f, water max_in_mps %3.2f",
              name, total_engine_w, coeff_air_drag(), coeff_water_drag(), max_in_mps );
-    return mps_to_vmiph( max_in_mps );
+    return mps_to_cmps( max_in_mps );
 }
 
 int vehicle::max_air_velocity( const bool fueled, const bool ideal ) const
 {
     const double max_air_mps = std::sqrt( total_thrust( fueled, false, ideal ) / coeff_air_drag() );
     // fly fast at your own risk
-    return mps_to_vmiph( max_air_mps );
+    return mps_to_cmps( max_air_mps );
 }
 
 int vehicle::max_velocity( const bool fueled, const bool ideal ) const
@@ -4258,7 +4258,7 @@ int vehicle::safe_ground_velocity( const bool fueled, const bool ideal ) const
     double safe_in_mps = simple_cubic_solution( coeff_air_drag(), c_rolling_drag,
                          c_rolling_drag * vehicles::rolling_constant_to_variable,
                          -effective_engine_w );
-    return mps_to_vmiph( safe_in_mps );
+    return mps_to_cmps( safe_in_mps );
 }
 
 // TODO: Consider some kind of dynamic pressure based safe velocity
@@ -4267,7 +4267,7 @@ int vehicle::safe_aircraft_velocity( const bool fueled, const bool ideal ) const
 {
     const double max_air_mps = std::sqrt( total_thrust( fueled,
                                           true, ideal ) / coeff_air_drag() );
-    return std::min( 22501, mps_to_vmiph( max_air_mps ) );
+    return std::min( 10059, mps_to_cmps( max_air_mps ) );
 }
 
 // the same physics as max_water_velocity, but with a smaller engine power
@@ -4276,7 +4276,7 @@ int vehicle::safe_water_velocity( const bool fueled, const bool ideal ) const
     int total_engine_w = ( ideal ? ideal_engine_power( true ) : total_power_w( fueled, true ) );
     double total_drag = coeff_water_drag() + coeff_air_drag();
     double safe_in_mps = std::cbrt( total_engine_w / total_drag );
-    return mps_to_vmiph( safe_in_mps );
+    return mps_to_cmps( safe_in_mps );
 }
 
 int vehicle::safe_velocity( const bool fueled ) const
@@ -4410,7 +4410,7 @@ void vehicle::noise_and_smoke( int load, time_duration time )
     // Cap engine noise to avoid deafening.
     noise = std::min( noise, 100.0 );
     // Even a vehicle with engines off will make noise traveling at high speeds
-    noise = std::max( noise, std::fabs( velocity / 500.0 ) );
+    noise = std::max( noise, std::fabs( velocity / 224.0 ) );
     int lvl = 0;
     if( one_in( 4 ) && rng( 0, 30 ) < noise ) {
         while( noise > sounds[lvl].second ) {
@@ -4713,10 +4713,7 @@ double vehicle::total_balloon_lift() const
 // Based on air being 1kg/m^3
 double vehicle::total_wing_lift() const
 {
-    // Velocity is in mph * 100 (why oh why)
-    // Convert to km/h then m/s then m/s ^ 2
-    const double kilometerperhour = velocity / 100 * 1.609;
-    const double meterpersec = kilometerperhour / 3600 * 1000;
+    const double meterpersec = cmps_to_mps( velocity );
     const double meterpersecsquared = std::pow( meterpersec, 2 );
     return meterpersecsquared * std::accumulate( wings.begin(), wings.end(), double{0.0},
     [&]( double acc, int wing ) {
@@ -5216,7 +5213,7 @@ float vehicle::handling_difficulty() const
     // TestVehicle but on fungal bed (0.5 friction) and bad steering = 10
     // TestVehicle but turned 90 degrees during this turn (0 align) = 10
     const float diff_mod = ( ( 1.0f - steer ) + ( 1.0f - ktraction ) + ( 1.0f - aligned ) );
-    return velocity * diff_mod / vehicles::vmiph_per_tile;
+    return velocity * diff_mod / vehicles::cmps_per_tile;
 }
 
 std::map<itype_id, int> vehicle::fuel_usage() const
