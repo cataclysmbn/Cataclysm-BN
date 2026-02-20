@@ -355,6 +355,7 @@ function Select-Menu {
         $form.FormBorderStyle = "Sizable"
         $form.MaximizeBox     = $false
         $form.MinimizeBox     = $false
+        $form.TopMost         = $true
         $form.Font            = New-Object System.Drawing.Font("Segoe UI", 10)
 
         $list = New-Object System.Windows.Forms.ListBox
@@ -736,7 +737,8 @@ if ($Action -eq "build" -or $Action -eq "rebuild") {
         # (cmake cache update; no-op if deno is not installed)
         & $cmakeExe $winBuildDir -DLUA_DOCS_ON_BUILD:BOOL=OFF 2>$null | Out-Null
 
-        Write-Host "--- Building $selectedTarget ($selectedBuildType)..."
+        Write-Host "--- Building $selectedTarget ($selectedBuildType) ..."
+        Write-Host "    (compile in progress - this will take a while on first build)"
         & $cmakeExe --build $winBuildDir --config $selectedBuildType --target $selectedTarget
         if ($LASTEXITCODE -ne 0) { Write-Error "Build failed."; exit 1 }
         Write-Host ""
