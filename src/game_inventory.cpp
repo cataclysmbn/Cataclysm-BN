@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <cmath>
 #include <cstddef>
 #include <functional>
 #include <map>
@@ -10,6 +11,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "avatar.h"
@@ -37,6 +39,7 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "item_category.h"
+#include "material.h"
 #include "map.h"
 #include "npc.h"
 #include "options.h"
@@ -1477,8 +1480,63 @@ item *game_menus::inv::salvage( player &p )
 class repair_inventory_preset: public inventory_selector_preset
 {
     public:
-        repair_inventory_preset( const repair_item_actor *actor, const item *main_tool ) :
-            actor( actor ), main_tool( main_tool ) {
+        repair_inventory_preset( const repair_item_actor *actor, const item *main_tool,
+                                 player &character ) :
+            actor( actor ), main_tool( main_tool ), character( character ) {
+            append_cell( [ actor, &character ]( const item * loc ) {
+                const auto comp_needed = std::max<int>( 1,
+                                        std::ceil( loc->volume() / 250_ml * actor->cost_scaling ) );
+                auto valid_entries = std::set<material_id>{};
+                std::ranges::for_each( actor->materials, [ &valid_entries, &loc ]( const auto & mat ) {
+                    if( loc->made_of( mat ) ) {
+                        valid_entries.emplace( mat );
+                    }
+                } );
+
+                const auto &crafting_inv = character.crafting_inventory();
+                auto filter = is_crafting_component;
+
+                auto listed_components = std::set<itype_id>{};
+                auto material_list = std::vector<std::string>{};
+                std::ranges::for_each( valid_entries, [ &listed_components, &material_list, &crafting_inv, &filter,
+                                        &comp_needed ]( const auto & entry ) {
+                    const auto &component_id = entry.obj().repaired_with();
+                    if( listed_components.contains( component_id ) ) {
+                        return;
+                    }
+                    listed_components.emplace( component_id );
+                    if( item::count_by_charges( component_id ) ) {
+                        if( crafting_inv.has_charges( component_id, 1 ) ) {
+                            const auto num_comp = crafting_inv.charges_of( component_id );
+                            material_list.emplace_back( colorize( string_format( _( "%s (%d)" ), item::nname( component_id ),
+                                                        num_comp ), num_comp < comp_needed ? c_red : c_unset ) );
+                        }
+                    } else if( crafting_inv.has_amount( component_id, 1, false, filter ) ) {
+                        const auto num_comp = crafting_inv.amount_of( component_id, false );
+                        material_list.emplace_back( colorize( string_format( _( "%s (%d)" ), item::nname( component_id ),
+                                                    num_comp ), num_comp < comp_needed ? c_red : c_unset ) );
+                    }
+                } );
+
+                auto ret = join( material_list, ", " );
+                if( ret.empty() ) {
+                    ret = _( "<color_red>NONE</color>" );
+                }
+                return ret;
+            }, _( "MATERIALS AVAILABLE" ) );
+
+            append_cell( [ this ]( const item * loc ) {
+                const auto chance = get_cached_repair_chance( *loc );
+                return colorize( string_format( "%0.1f%%", 100.0f * chance.first ),
+                                 chance.first == 0 ? c_yellow : ( chance.second == 0 ? c_light_green : c_unset ) );
+            }, _( "(s)" ) );
+
+            append_cell( [ this ]( const item * loc ) {
+                const auto chance = get_cached_repair_chance( *loc );
+                return colorize( string_format( "%0.1f%%", 100.0f * chance.second ),
+                                 chance.second > chance.first ? c_yellow : ( chance.second == 0 &&
+                                         chance.first > 0 ? c_light_green : c_unset ) );
+            }, _( "(dmg)" ) );
         }
 
         bool is_shown( const item *loc ) const override {
@@ -1487,17 +1545,43 @@ class repair_inventory_preset: public inventory_selector_preset
         }
 
     private:
+        auto get_cached_repair_chance( const item &loc ) const -> std::pair<float, float>
+        {
+            auto [ iter, inserted ] = chance_cache.try_emplace( &loc );
+            if( inserted ) {
+                const auto level = character.get_skill_level( actor->used_skill );
+                const auto action_type = actor->default_action( loc, level );
+                iter->second = actor->repair_chance( character, loc, action_type );
+            }
+            return iter->second;
+        }
+
         const repair_item_actor *actor;
         const item *main_tool;
+        player &character;
+        mutable std::unordered_map<const item *, std::pair<float, float>> chance_cache;
 };
+
+static auto get_repair_hint( const player &character, const repair_item_actor *actor,
+                             const item *main_tool ) -> std::string
+{
+    auto hint = std::string{};
+    hint.append( string_format( _( "Tool: <color_cyan>%s</color>" ), main_tool->display_name() ) );
+    hint.append( " | " );
+    hint.append( string_format( _( "Skill used: <color_cyan>%s (%d)</color>" ),
+                                actor->used_skill.obj().name(),
+                                character.get_skill_level( actor->used_skill ) ) );
+    return hint;
+}
 
 item *game_menus::inv::repair( player &p, const repair_item_actor *actor,
                                const item *main_tool )
 {
-    return inv_internal( p, repair_inventory_preset( actor, main_tool ),
+    return inv_internal( p, repair_inventory_preset( actor, main_tool, p ),
                          _( "Repair what?" ), 1,
                          string_format( _( "You have no items that could be repaired with a %s." ),
-                                        main_tool->type_name( 1 ) ) );
+                                        main_tool->type_name( 1 ) ),
+                         get_repair_hint( p, actor, main_tool ) );
 }
 
 item *game_menus::inv::saw_barrel( player &p, item &tool )
