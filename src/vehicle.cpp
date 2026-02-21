@@ -4541,7 +4541,7 @@ double vehicle::coeff_air_drag() const
             d_check_max( drag[ col ].seat, pa, pa.info().has_flag( "SEAT" ) ||
                          pa.info().has_flag( "BED" ) );
             d_check_max( drag[ col ].turret, pa, pa.info().location == part_location_onroof &&
-                         !pa.info().has_flag( "SOLAR_PANEL" ) );
+                         !pa.info().has_flag( "SOLAR_PANEL" ) && !pa.info().has_flag( "WING"  ));
             d_check_max( drag[ col ].roof, pa, pa.info().has_flag( "ROOF" ) );
             d_check_max( drag[ col ].panel, pa, pa.info().has_flag( "SOLAR_PANEL" ) );
             d_check_max( drag[ col ].windmill, pa, pa.info().has_flag( "WIND_TURBINE" ) );
