@@ -4886,9 +4886,9 @@ double vehicle::coeff_water_drag() const
         occupied_x.insert( global_part_pos3( idx ).x );
     }
 
-    int tile_width = occupied_x.size();
-
-    double width_m = tile_to_width( tile_width );
+    // Tile == 1m width
+    // I have a feeling this and actual_area_m cancle out somewhere in there...
+    double width_m = occupied_x.size();
 
     // Each piece of hull is 1m^2
     // Thus area is the number of hull pieces
