@@ -922,15 +922,14 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
             }
 
             map_stack stack = here.i_at( p );
-            for( auto it = stack.begin(); it != stack.end(); it++ ) {
-                if( ( *it )->weight() < weight_cap &&
-                    ( *it )->made_of_any( affected_materials ) ) {
-                    detached_ptr<item> obj;
-                    stack.erase( it, &obj );
+            const auto it = std::ranges::find_if( stack, [&]( item * const candidate ) {
+                return candidate->weight() < weight_cap && candidate->made_of_any( affected_materials );
+            } );
+            if( it != stack.end() ) {
+                detached_ptr<item> obj;
+                stack.erase( it, &obj );
 
-                    affected.emplace_back( std::move( obj ), p );
-                    break;
-                }
+                affected.emplace_back( std::move( obj ), p );
             }
         }
 

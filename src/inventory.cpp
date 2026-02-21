@@ -373,8 +373,7 @@ void inventory::restack( player &p )
     items_type_cached = false;
     std::vector<item *> to_restack;
     int idx = 0;
-    for( invstack::iterator iter = items.begin(); iter != items.end(); ++iter, ++idx ) {
-        std::vector<item *> &stack = *iter;
+    std::ranges::for_each( items, [&]( std::vector<item *> &stack ) {
         // Sort the inner stack itself, so the most recently used item is at front and keeps the invlet
         std::ranges::sort( stack, []( auto * lhs, auto * rhs ) {
             return *lhs < *rhs;
@@ -391,16 +390,17 @@ void inventory::restack( player &p )
         }
         // remove non-matching items, stripping off end of stack so the first item keeps the invlet.
         while( stack.size() > 1 && !topmost.stacks_with( *stack.back() ) ) {
-            to_restack.push_back( iter->back() );
-            iter->pop_back();
+            to_restack.push_back( stack.back() );
+            stack.pop_back();
         }
-    }
+        ++idx;
+    } );
 
     // combine matching stacks
     // separate loop to ensure that ALL stacks are homogeneous
-    for( invstack::iterator iter = items.begin(); iter != items.end(); ++iter ) {
-        for( invstack::iterator other = iter; other != items.end(); ++other ) {
-            if( iter != other && iter->front()->stacks_with( *other->front() ) ) {
+    for( auto iter = items.begin(); iter != items.end(); iter = std::next( iter ) ) {
+        for( auto other = std::next( iter ); other != items.end(); ) {
+            if( iter->front()->stacks_with( *other->front() ) ) {
                 if( other->front()->count_by_charges() ) {
                     iter->front()->charges += other->front()->charges;
                 } else {
@@ -409,7 +409,8 @@ void inventory::restack( player &p )
                     }
                 }
                 other = items.erase( other );
-                --other;
+            } else {
+                other = std::next( other );
             }
         }
     }
@@ -626,29 +627,29 @@ void inventory::form_from_map( map &m, std::vector<tripoint> pts, const Characte
 std::vector<detached_ptr<item>> location_inventory::reduce_stack( const int position,
                              const int quantity )
 {
-    int pos = 0;
     std::vector<detached_ptr<item>> ret;
-    for( invstack::iterator iter = inv.items.begin(); iter != inv.items.end(); ++iter ) {
-        if( position == pos ) {
-            inv.binned = false;
-            inv.items_type_cached = false;
-            if( quantity >= static_cast<int>( iter->size() ) || quantity < 0 ) {
-                std::vector<item *> stack = *iter;
-                inv.items.erase( iter );
-                for( item *&it : stack ) {
-                    it->remove_location();
-                    ret.push_back( detached_ptr<item>( it ) );
-                }
-            } else {
-                for( int i = 0 ; i < quantity ; i++ ) {
-                    item *it = &inv.remove_item( iter->front() );
-                    it->remove_location();
-                    ret.push_back( detached_ptr<item>( it ) );
-                }
+    auto pos = 0;
+    const auto iter = std::ranges::find_if( inv.items, [&position,
+    &pos]( const std::vector<item *> & ) {
+        return position == pos++;
+    } );
+    if( iter != inv.items.end() ) {
+        inv.binned = false;
+        inv.items_type_cached = false;
+        if( quantity >= static_cast<int>( iter->size() ) || quantity < 0 ) {
+            std::vector<item *> stack = *iter;
+            inv.items.erase( iter );
+            for( item *&it : stack ) {
+                it->remove_location();
+                ret.push_back( detached_ptr<item>( it ) );
             }
-            break;
+        } else {
+            for( int i = 0 ; i < quantity ; i++ ) {
+                item *it = &inv.remove_item( iter->front() );
+                it->remove_location();
+                ret.push_back( detached_ptr<item>( it ) );
+            }
         }
-        ++pos;
     }
     return ret;
 }
@@ -669,25 +670,25 @@ item &inventory::remove_item( const item *it )
 
 item &inventory::remove_item( const int position )
 {
-    int pos = 0;
-    for( invstack::iterator iter = items.begin(); iter != items.end(); ++iter ) {
-        if( position == pos ) {
-            binned = false;
-            items_type_cached = false;
-            if( iter->size() > 1 ) {
-                std::vector<item *>::iterator stack_member = iter->begin();
-                char invlet = ( *stack_member )->invlet;
-                ++stack_member;
-                ( *stack_member )->invlet = invlet;
-            }
-            item &ret = *iter->front();
-            iter->erase( iter->begin() );
-            if( iter->empty() ) {
-                items.erase( iter );
-            }
-            return ret;
+    auto pos = 0;
+    const auto iter = std::ranges::find_if( items, [&position, &pos]( const std::vector<item *> & ) {
+        return position == pos++;
+    } );
+    if( iter != items.end() ) {
+        binned = false;
+        items_type_cached = false;
+        if( iter->size() > 1 ) {
+            std::vector<item *>::iterator stack_member = iter->begin();
+            char invlet = ( *stack_member )->invlet;
+            ++stack_member;
+            ( *stack_member )->invlet = invlet;
         }
-        ++pos;
+        item &ret = *iter->front();
+        iter->erase( iter->begin() );
+        if( iter->empty() ) {
+            items.erase( iter );
+        }
+        return ret;
     }
 
     return null_item_reference();

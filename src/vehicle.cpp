@@ -3255,9 +3255,9 @@ int vehicle::get_next_shifted_index( int original_index, Character &who )
 {
     int ret_index = original_index;
     bool found_shifted_index = false;
-    for( std::vector<vehicle_part>::reverse_iterator it = parts.rbegin(); it != parts.rend(); ++it ) {
-        if( who.get_value( "veh_index_type" ) == it->info().name() ) {
-            ret_index = index_of_part( &*it );
+    for( vehicle_part &part : parts | std::views::reverse ) {
+        if( who.get_value( "veh_index_type" ) == part.info().name() ) {
+            ret_index = index_of_part( &part );
             found_shifted_index = true;
             break;
         }

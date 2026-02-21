@@ -1091,12 +1091,14 @@ bool map::deregister_vehicle_zone( zone_data &zone )
 {
     if( const std::optional<vpart_reference> vp = veh_at( getlocal(
                 zone.get_start_point() ) ).part_with_feature( "CARGO", false ) ) {
-        auto bounds = vp->vehicle().loot_zones.equal_range( vp->mount() );
-        for( auto it = bounds.first; it != bounds.second; it++ ) {
-            if( &zone == &( it->second ) ) {
-                vp->vehicle().loot_zones.erase( it );
-                return true;
-            }
+        const auto bounds = vp->vehicle().loot_zones.equal_range( vp->mount() );
+        const auto it = std::ranges::find_if( std::ranges::subrange( bounds.first, bounds.second ),
+        [&zone]( const auto & entry ) {
+            return &zone == &entry.second;
+        } );
+        if( it != bounds.second ) {
+            vp->vehicle().loot_zones.erase( it );
+            return true;
         }
     }
     return false;

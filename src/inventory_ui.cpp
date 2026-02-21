@@ -794,13 +794,15 @@ void inventory_column::prepare_paging( const std::string &filter )
     }
     // Recover categories
     const item_category *current_category = nullptr;
-    for( auto iter = entries.begin(); iter != entries.end(); ++iter ) {
-        if( iter->get_category_ptr() == current_category ) {
+    for( size_t index = 0; index < entries.size(); ++index ) {
+        if( entries[index].get_category_ptr() == current_category ) {
             continue;
         }
-        current_category = iter->get_category_ptr();
-        iter = entries.insert( iter, inventory_entry( current_category ) );
-        expand_to_fit( *iter );
+        current_category = entries[index].get_category_ptr();
+        entries.insert( entries.begin() + static_cast<ptrdiff_t>( index ),
+                        inventory_entry( current_category ) );
+        expand_to_fit( entries[index] );
+        ++index;
     }
     // Determine the new height.
     entries_per_page = height;
@@ -1075,18 +1077,19 @@ static std::vector<std::list<item *>> restack_items( const item_stack::const_ite
 {
     std::vector<std::list<item *>> res;
 
-    for( auto it = from; it != to; ++it ) {
+    std::ranges::for_each( std::ranges::subrange( from, to ),
+    [&res, check_components]( item * const current_item ) {
         auto match = std::find_if( res.begin(), res.end(),
-        [ &it, check_components ]( const std::list<item *> &e ) {
-            return ( *it )->display_stacked_with( *const_cast<item *>( e.back() ), check_components );
+        [ current_item, check_components ]( const std::list<item *> &e ) {
+            return current_item->display_stacked_with( *const_cast<item *>( e.back() ), check_components );
         } );
 
         if( match != res.end() ) {
-            match->push_back( const_cast<item *>( *it ) );
+            match->push_back( current_item );
         } else {
-            res.emplace_back( 1, const_cast<item *>( *it ) );
+            res.emplace_back( 1, current_item );
         }
-    }
+    } );
 
     return res;
 }
@@ -1097,18 +1100,19 @@ static std::vector<std::list<item *>> restack_items( const std::vector<item *>::
 {
     std::vector<std::list<item *>> res;
 
-    for( auto it = from; it != to; ++it ) {
+    std::ranges::for_each( std::ranges::subrange( from, to ),
+    [&res, check_components]( item * const current_item ) {
         auto match = std::find_if( res.begin(), res.end(),
-        [ &it, check_components ]( const std::list<item *> &e ) {
-            return ( *it )->display_stacked_with( *const_cast<item *>( e.back() ), check_components );
+        [ current_item, check_components ]( const std::list<item *> &e ) {
+            return current_item->display_stacked_with( *const_cast<item *>( e.back() ), check_components );
         } );
 
         if( match != res.end() ) {
-            match->push_back( const_cast<item *>( *it ) );
+            match->push_back( current_item );
         } else {
-            res.emplace_back( 1, const_cast<item *>( *it ) );
+            res.emplace_back( 1, current_item );
         }
-    }
+    } );
 
     return res;
 }

@@ -48,7 +48,7 @@ TEST_CASE( "rect_range_iterator_safety_numeric", "[iterator][safety]" )
     struct test_rect {
         int x, y, w, h;
     };
-    
+
     auto it = rect_range<test_rect>( 10, 10, point( 2, 2 ) ).begin();
 
     // The dereference returns {x, y, width, height} struct where x,y are computed.
