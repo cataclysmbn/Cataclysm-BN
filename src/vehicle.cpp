@@ -4546,7 +4546,6 @@ double vehicle::coeff_air_drag() const
             d_check_max( drag[ col ].panel, pa, pa.info().has_flag( "SOLAR_PANEL" ) );
             d_check_max( drag[ col ].windmill, pa, pa.info().has_flag( "WIND_TURBINE" ) );
             d_check_max( drag[ col ].rotor, pa, pa.info().has_flag( "ROTOR" ) );
-            d_check_max( drag[ col ].ballon, pa, pa.info().has_flag( "BALLOON" ) );
             d_check_max( drag[ col ].sail, pa, pa.info().has_flag( "WIND_POWERED" ) );
             d_check_max( drag[ col ].exposed, pa, d_exposed( pa ) );
             d_check_min( drag[ col ].last, pa, pa.info().has_flag( "LOW_FINAL_AIR_DRAG" ) ||
@@ -4581,8 +4580,6 @@ double vehicle::coeff_air_drag() const
         c_air_drag_c += ( dc.windmill > minrow ) ? 5 * c_air_mod : 0;
         // rotors are not great for drag!
         c_air_drag_c += ( dc.rotor > minrow ) ? 6 * c_air_mod : 0;
-        // Neither are balloons
-        c_air_drag_c += ( dc.ballon > minrow ) ? 6 * c_air_mod : 0;
         // having a sail is terrible for your drag
         c_air_drag_c += ( dc.sail > minrow ) ? 7 * c_air_mod : 0;
         c_air_drag += c_air_drag_c;
