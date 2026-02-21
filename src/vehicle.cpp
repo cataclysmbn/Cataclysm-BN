@@ -3709,9 +3709,11 @@ std::vector<rider_data> vehicle::get_riders() const
 
 player *vehicle::get_passenger( int p ) const
 {
-    p = part_with_feature( p, VPFLAG_BOARDABLE, false );
-    if( p >= 0 && parts[p].has_flag( vehicle_part::passenger_flag ) ) {
-        return g->critter_by_id<player>( parts[p].passenger_id );
+    for( auto part : get_parts_at( mount_to_tripoint( parts[p].mount ), "BOARDABLE",
+                                   part_status_flag::any ) ) {
+        if( part && part->has_flag( vehicle_part::passenger_flag ) ) {
+            return g->critter_by_id<player>( part->passenger_id );
+        }
     }
     return nullptr;
 }
