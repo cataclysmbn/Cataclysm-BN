@@ -12,8 +12,78 @@
 #include "ui_manager.h"
 #include "uistate.h"
 
+#include <algorithm>
+
 namespace cata
 {
+
+namespace
+{
+
+struct numbered_prompt_line {
+    int number = 0;
+    std::string text;
+};
+
+auto split_prompt_lines( const std::string &text ) -> std::vector<std::string>
+{
+    auto lines = std::vector<std::string>();
+    auto start = std::string::size_type{ 0 };
+    while( start <= text.size() ) {
+        const auto end = text.find( '\n', start );
+        if( end == std::string::npos ) {
+            lines.push_back( text.substr( start ) );
+            break;
+        }
+        lines.push_back( text.substr( start, end - start ) );
+        start = end + 1;
+        if( start == text.size() ) {
+            lines.emplace_back();
+            break;
+        }
+    }
+    if( lines.empty() ) {
+        lines.emplace_back();
+    }
+    return lines;
+}
+
+auto format_line_number( const int line_number, const int width ) -> std::string
+{
+    if( line_number <= 0 ) {
+        return std::string( width, ' ' );
+    }
+    auto rendered = std::to_string( line_number );
+    const auto padding = width - static_cast<int>( rendered.size() );
+    if( padding > 0 ) {
+        rendered.insert( rendered.begin(), padding, ' ' );
+    }
+    return rendered;
+}
+
+auto build_numbered_prompt_lines( const std::string &text, const int content_width )
+    -> std::vector<numbered_prompt_line>
+{
+    auto lines = std::vector<numbered_prompt_line>();
+    const auto logical_lines = split_prompt_lines( text );
+    auto line_number = 1;
+    for( auto i = 0; i < static_cast<int>( logical_lines.size() ); ++i ) {
+        auto folded = foldstring( logical_lines[i], content_width );
+        if( folded.empty() ) {
+            folded.emplace_back();
+        }
+        for( auto j = 0; j < static_cast<int>( folded.size() ); ++j ) {
+            lines.push_back( numbered_prompt_line{
+                .number = j == 0 ? line_number : 0,
+                .text = std::move( folded[j] ),
+            } );
+        }
+        ++line_number;
+    }
+    return lines;
+}
+
+} // namespace
 
 struct folded_log_msg {
     bool is_head = false;
@@ -85,6 +155,7 @@ void show_lua_console_impl()
     ctxt.register_action( "EDIT" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "LUA_RELOAD" );
+    ctxt.register_action( "TOGGLE_EXPANDED" );
     ctxt.register_action( "HISTORY_UP" );
     ctxt.register_action( "HISTORY_DOWN" );
     ctxt.register_action( "SCROLL_UP" );
@@ -94,9 +165,9 @@ void show_lua_console_impl()
 
     ui_adaptor ui;
 
-    constexpr int CURRENT_INPUT = -1;
-    constexpr int scroll_speed = 5;
-    constexpr int input_area_size = 5;
+    constexpr auto CURRENT_INPUT = -1;
+    constexpr auto scroll_speed = 5;
+    constexpr auto collapsed_input_area_size = 5;
 
     point win_pos;
     point win_size;
@@ -105,8 +176,21 @@ void show_lua_console_impl()
     point prompt_pos;
     point prompt_size;
 
-    int log_scroll_pos = 0;
-    std::vector<folded_log_msg> log_folded;
+    auto log_scroll_pos = 0;
+    auto log_folded = std::vector<folded_log_msg>();
+
+    auto use_expanded_view = false;
+    auto input_area_size = collapsed_input_area_size;
+
+    const auto get_input_area_size = [&]( const point &window_size,
+    const bool expanded ) -> int {
+        const auto max_input_size = std::max( collapsed_input_area_size, window_size.y - 8 );
+        if( !expanded ) {
+            return collapsed_input_area_size;
+        }
+        const auto target_size = std::max( collapsed_input_area_size, window_size.y / 2 );
+        return std::min( max_input_size, target_size );
+    };
 
     const auto create_string_editor = [&]() {
         // Offset by one for the scrollbar
@@ -120,11 +204,12 @@ void show_lua_console_impl()
     std::string current_input;
     int history_cursor = CURRENT_INPUT;
 
-    bool is_editing = false;
+    auto is_editing = false;
 
     ui.on_screen_resize( [&]( ui_adaptor & ui ) {
         win_size = point( TERMX, TERMY );
         win_pos = point( ( TERMX - win_size.x ) / 2, ( TERMY - win_size.y ) / 2 );
+        input_area_size = get_input_area_size( win_size, use_expanded_view );
         prompt_size = point( win_size.x - 3, input_area_size );
         prompt_pos = win_pos + point( 2, win_size.y - input_area_size - 1 );
         log_pos = win_pos + point_south_east;
@@ -164,7 +249,10 @@ void show_lua_console_impl()
                        _( "Press Up/Down arrows to select from history" )
                      );
             mvwprintz( w_console, point( 1, separator_y - 1 ), c_light_gray,
-                       _( "Press PgUp/PgDn/Home/End to scroll output window" )
+                       string_format(
+                           _( "Press PgUp/PgDn/Home/End to scroll output window, %s to toggle expanded input view" ),
+                           ctxt.get_desc( "TOGGLE_EXPANDED" )
+                       )
                      );
         }
 
@@ -203,13 +291,38 @@ void show_lua_console_impl()
 
         werase( w_prompt );
 
-        print_scrollable(
-            w_prompt,
-            0,
-            history_cursor == CURRENT_INPUT ? current_input : get_input_history()[history_cursor],
-            c_light_gray,
-            ""
+        const auto prompt_text =
+            history_cursor == CURRENT_INPUT ? current_input : get_input_history()[history_cursor];
+        const auto prompt_line_count = std::max(
+            1,
+            static_cast<int>( split_prompt_lines( prompt_text ).size() )
         );
+        const auto line_number_width =
+            std::max( 2, static_cast<int>( std::to_string( prompt_line_count ).size() ) );
+        const auto gutter_width = line_number_width + 1;
+        const auto content_width = std::max( 1, prompt_size.x - gutter_width );
+        const auto prompt_lines = build_numbered_prompt_lines( prompt_text, content_width );
+        const auto prompt_start_line =
+            std::max( 0, static_cast<int>( prompt_lines.size() ) - prompt_size.y );
+        const auto visible_lines =
+            std::min( prompt_size.y, static_cast<int>( prompt_lines.size() ) - prompt_start_line );
+        for( auto i = 0; i < visible_lines; ++i ) {
+            const auto &line = prompt_lines[prompt_start_line + i];
+            mvwprintz(
+                w_prompt,
+                point( 0, i ),
+                c_light_gray,
+                "%s",
+                format_line_number( line.number, line_number_width )
+            );
+            mvwprintz(
+                w_prompt,
+                point( gutter_width, i ),
+                c_light_gray,
+                "%s",
+                line.text
+            );
+        }
 
         wnoutrefresh( w_prompt );
     } );
@@ -270,7 +383,10 @@ void show_lua_console_impl()
             ui.invalidate_ui();
             string_editor_window ew(
                 create_string_editor,
-                history_cursor == CURRENT_INPUT ? current_input : get_input_history()[history_cursor]
+                history_cursor == CURRENT_INPUT ? current_input : get_input_history()[history_cursor],
+                string_editor_window::string_editor_window_options{
+                    .show_line_numbers = true,
+                }
             );
             std::pair<bool, std::string> res = ew.query_string();
             is_editing = false;
@@ -289,6 +405,10 @@ void show_lua_console_impl()
             ui.invalidate_ui();
             log_invalidated = true;
             reload_lua_code();
+        } else if( act == "TOGGLE_EXPANDED" ) {
+            use_expanded_view = !use_expanded_view;
+            ui.mark_resize();
+            ui.invalidate_ui();
         }
     }
 }
