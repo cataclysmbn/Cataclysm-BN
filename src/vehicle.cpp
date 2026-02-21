@@ -4881,13 +4881,13 @@ double vehicle::coeff_water_drag() const
         hull_coverage = static_cast<double>( floating.size() ) / hull_indices.size();
     }
 
-    std::set<int> occupied_x;
+    std::set<int> occupied_y;
     for( int idx : hull_indices ) {
-        occupied_x.insert( parts[idx].mount.x );
+        occupied_y.insert( parts[idx].mount.y );
     }
     // Tile == 1m width
     // I have a feeling this and actual_area_m cancle out somewhere in there...
-    double width_m = occupied_x.size();
+    double width_m = occupied_y.size();
 
     // Each piece of hull is 1m^2
     // Thus area is the number of hull pieces
