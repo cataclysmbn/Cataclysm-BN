@@ -1662,7 +1662,7 @@
       "u": [ "frame_carbon_horizontal", "carbon_board_nw", "carbonfiber_boat_hull" ],
       "n": [ "frame_carbon_horizontal", "carbon_board_ne", "carbonfiber_boat_hull" ],
       "'": [ "frame_carbon_horizontal", "windshield", "v_curtain" ],
-      "S": [ "frame_carbon_vertical", "seat", "sail_large" ],
-    },
-  },
+      "S": [ "frame_carbon_vertical", "seat", "sail_large" ]
+    }
+  }
 ]
