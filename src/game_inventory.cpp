@@ -1529,14 +1529,14 @@ class repair_inventory_preset: public inventory_selector_preset
                 const auto chance = get_cached_repair_chance( *loc );
                 return colorize( string_format( "%0.1f%%", 100.0f * chance.first ),
                                  chance.first == 0 ? c_yellow : ( chance.second == 0 ? c_light_green : c_unset ) );
-            }, _( "(s)" ) );
+            }, _( "SUCCESS" ) );
 
             append_cell( [ this ]( const item * loc ) {
                 const auto chance = get_cached_repair_chance( *loc );
                 return colorize( string_format( "%0.1f%%", 100.0f * chance.second ),
                                  chance.second > chance.first ? c_yellow : ( chance.second == 0 &&
                                          chance.first > 0 ? c_light_green : c_unset ) );
-            }, _( "(dmg)" ) );
+            }, _( "DMG" ) );
         }
 
         bool is_shown( const item *loc ) const override {
