@@ -1485,8 +1485,8 @@ class repair_inventory_preset: public inventory_selector_preset
             actor( actor ), main_tool( main_tool ), character( character ) {
             append_cell( [ actor, &character ]( const item * loc ) {
                 const auto comp_needed = std::max<int>( 1,
-                                        std::ceil( loc->volume() / 250_ml * actor->cost_scaling ) );
-                auto valid_entries = std::set<material_id>{};
+                                                        std::ceil( loc->volume() / 250_ml * actor->cost_scaling ) );
+                auto valid_entries = std::set<material_id> {};
                 std::ranges::for_each( actor->materials, [ &valid_entries, &loc ]( const auto & mat ) {
                     if( loc->made_of( mat ) ) {
                         valid_entries.emplace( mat );
@@ -1496,10 +1496,10 @@ class repair_inventory_preset: public inventory_selector_preset
                 const auto &crafting_inv = character.crafting_inventory();
                 auto filter = is_crafting_component;
 
-                auto listed_components = std::set<itype_id>{};
-                auto material_list = std::vector<std::string>{};
+                auto listed_components = std::set<itype_id> {};
+                auto material_list = std::vector<std::string> {};
                 std::ranges::for_each( valid_entries, [ &listed_components, &material_list, &crafting_inv, &filter,
-                                        &comp_needed ]( const auto & entry ) {
+                                    &comp_needed ]( const auto & entry ) {
                     const auto &component_id = entry.obj().repaired_with();
                     if( listed_components.contains( component_id ) ) {
                         return;
@@ -1509,12 +1509,12 @@ class repair_inventory_preset: public inventory_selector_preset
                         if( crafting_inv.has_charges( component_id, 1 ) ) {
                             const auto num_comp = crafting_inv.charges_of( component_id );
                             material_list.emplace_back( colorize( string_format( _( "%s (%d)" ), item::nname( component_id ),
-                                                        num_comp ), num_comp < comp_needed ? c_red : c_unset ) );
+                                                                  num_comp ), num_comp < comp_needed ? c_red : c_unset ) );
                         }
                     } else if( crafting_inv.has_amount( component_id, 1, false, filter ) ) {
                         const auto num_comp = crafting_inv.amount_of( component_id, false );
                         material_list.emplace_back( colorize( string_format( _( "%s (%d)" ), item::nname( component_id ),
-                                                    num_comp ), num_comp < comp_needed ? c_red : c_unset ) );
+                                                              num_comp ), num_comp < comp_needed ? c_red : c_unset ) );
                     }
                 } );
 
@@ -1545,8 +1545,7 @@ class repair_inventory_preset: public inventory_selector_preset
         }
 
     private:
-        auto get_cached_repair_chance( const item &loc ) const -> std::pair<float, float>
-        {
+        auto get_cached_repair_chance( const item &loc ) const -> std::pair<float, float> {
             auto [ iter, inserted ] = chance_cache.try_emplace( &loc );
             if( inserted ) {
                 const auto level = character.get_skill_level( actor->used_skill );
