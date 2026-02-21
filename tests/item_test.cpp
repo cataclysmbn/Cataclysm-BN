@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 
 #include <initializer_list>
+#include <iterator>
 #include <limits>
 #include <memory>
 
@@ -52,6 +53,26 @@ TEST_CASE( "gun_layer", "[item]" )
     CHECK( gun.is_gunmod_compatible( *mod ).success() );
     gun.put_in( std::move( mod ) );
     CHECK( gun.get_layer() == BELTED_LAYER );
+}
+
+TEST_CASE( "gun_cycle_mode_wraps_from_last_to_first", "[item]" )
+{
+    item &reach_bow = *item::spawn_temporary( "reach_bow" );
+    const auto modes = reach_bow.gun_all_modes();
+
+    REQUIRE( modes.size() >= 2 );
+
+    const auto first_mode = modes.begin()->first;
+    const auto second_mode = std::next( modes.begin() )->first;
+    const auto last_mode = std::prev( modes.end() )->first;
+
+    REQUIRE( reach_bow.gun_set_mode( first_mode ) );
+    reach_bow.gun_cycle_mode();
+    CHECK( reach_bow.gun_get_mode_id() == second_mode );
+
+    REQUIRE( reach_bow.gun_set_mode( last_mode ) );
+    reach_bow.gun_cycle_mode();
+    CHECK( reach_bow.gun_get_mode_id() == first_mode );
 }
 
 TEST_CASE( "stacking_cash_cards", "[item]" )
