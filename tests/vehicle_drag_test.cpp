@@ -114,8 +114,8 @@ static bool test_water_drag(
                      veh_id.c_str(), c_water );
     }
     return valid;
-    
-}    
+
+}
 static bool test_drag(
     const vproto_id &veh_id,
     const double expected_c_air = 0, const double expected_c_rr = 0,
