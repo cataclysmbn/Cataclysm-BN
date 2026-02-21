@@ -4883,9 +4883,8 @@ double vehicle::coeff_water_drag() const
 
     std::set<int> occupied_x;
     for( int idx : hull_indices ) {
-        occupied_x.insert( global_part_pos3( idx ).x );
+        occupied_x.insert( parts[idx].mount.x );
     }
-
     // Tile == 1m width
     // I have a feeling this and actual_area_m cancle out somewhere in there...
     double width_m = occupied_x.size();
