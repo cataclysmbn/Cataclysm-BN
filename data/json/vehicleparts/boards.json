@@ -135,7 +135,7 @@
     "broken_symbol": "#",
     "broken_color": "light_gray",
     "durability": 120,
-    "description": "A metal wall with a storage locker.  Keeps zombies outside the vehicle and prevents people from seeing through it.",
+    "description": "A carbon fiber wall with a storage locker.  Keeps zombies outside the vehicle and prevents people from seeing through it.",
     "size": "75000 ml",
     "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
