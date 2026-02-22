@@ -680,7 +680,7 @@
     "flags": [ "resized_large" ]
   },
   {
-    "id": ["xlhsurvivor_suit", "xlsasurvivor_suit"],
+    "id": [ "xlhsurvivor_suit", "xlsasurvivor_suit" ],
     "type": "MIGRATION",
     "replace": "armor_scavenger",
     "flags": [ "resized_large" ]
@@ -724,7 +724,7 @@
     "replace": "multi_cooker"
   },
   {
-    "id": ["hsurvivor_suit", "sasurvivor_suit", "salsurvivor_suit"],
+    "id": [ "hsurvivor_suit", "sasurvivor_suit", "salsurvivor_suit" ],
     "type": "MIGRATION",
     "replace": "armor_scavenger"
   }

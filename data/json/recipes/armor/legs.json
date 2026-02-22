@@ -320,8 +320,8 @@
     "autolearn": true,
     "book_learn": [ [ "recipe_melee", 2 ] ],
     "using": [ [ "cordage", 1 ] ],
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 3 }, {"id": "SAW_M", "level": 2} ],
-    "components": [ [ [ "scrap", 30 ], [ "sheet_metal_small", 6 ] ],[["alloy_sheet", 4]] ]
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 } ],
+    "components": [ [ [ "scrap", 30 ], [ "sheet_metal_small", 6 ] ], [ [ "alloy_sheet", 4 ] ] ]
   },
   {
     "result": "loincloth",
@@ -776,13 +776,13 @@
     "subcategory": "CSC_ARMOR_LEGS",
     "skill_used": "tailor",
     "difficulty": 4,
-	"skills_required": [ [ "fabrication", 4 ] ],
+    "skills_required": [ [ "fabrication", 4 ] ],
     "time": "45 m",
     "autolearn": true,
     "book_learn": [ [ "textbook_armwest", 3 ] ],
     "using": [ [ "sewing_standard", 10 ] ],
-	"qualities": [ { "id": "HAMMER", "level": 3 }, {"id": "SAW_M", "level": 2} ],
-    "components": [ [["alloy_sheet", 4]], [ [ "skirt_armor_leather", 1 ] ] ]
+    "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 } ],
+    "components": [ [ [ "alloy_sheet", 4 ] ], [ [ "skirt_armor_leather", 1 ] ] ]
   },
   {
     "result": "carbon_legguard",

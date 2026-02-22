@@ -605,13 +605,13 @@
     "subcategory": "CSC_ARMOR_FEET",
     "skill_used": "tailor",
     "difficulty": 4,
-	"skills_required": [ [ "fabrication", 3 ] ],
+    "skills_required": [ [ "fabrication", 3 ] ],
     "time": "90 m",
     "autolearn": true,
     "book_learn": [ [ "textbook_armwest", 3 ] ],
     "using": [ [ "sewing_standard", 8 ] ],
-	"qualities": [ { "id": "HAMMER", "level": 3 }, {"id": "SAW_M", "level": 2} ],
-    "components": [ [ [ "leather", 6 ] ], [["alloy_sheet", 2]] ]
+    "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 } ],
+    "components": [ [ [ "leather", 6 ] ], [ [ "alloy_sheet", 2 ] ] ]
   },
   {
     "result": "socks_thick",

@@ -212,13 +212,13 @@
     "flags": [ "OUTER", "BLOCK_WHILE_WORN" ]
   },
   {
-	  "id": "armguard_scrap_superalloy",
-	  "type": "ARMOR",
+    "id": "armguard_scrap_superalloy",
+    "type": "ARMOR",
     "name": { "str": "pair of crude superalloy arm guards", "str_pl": "pairs of crude superalloy arm guards" },
     "description": "A pair of arm guards made from scraps of metal secured by simple strings, incorporating some advanced alloy plating among the random bits.  They're not comfortable, but the metal is quite strong.",
-	"copy-from": "armguard_scrap",
-	"material": [ "superalloy", "iron" ],
-	"proportional": { "weight": 0.8, "volume": 1.2, "price": 2,"price_postapoc": 2 },
+    "copy-from": "armguard_scrap",
+    "material": [ "superalloy", "iron" ],
+    "proportional": { "weight": 0.8, "volume": 1.2, "price": 2, "price_postapoc": 2 },
     "relative": { "material_thickness": 1 }
   },
   {

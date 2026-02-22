@@ -81,10 +81,10 @@
     "type": "ARMOR",
     "name": { "str_sp": "lorica supermetallica" },
     "description": "An ancient Roman laminar armor, reproduced with modern superalloy.  The overlapping metal strips are connected with internal leather straps.",
-	"copy-from": "armor_lorica",
+    "copy-from": "armor_lorica",
     "material": [ "superalloy", "leather" ],
     "color": "light_cyan",
-	"encumbrance": 13,
+    "encumbrance": 13,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -207,13 +207,13 @@
     "flags": [ "OUTER" ]
   },
   {
-	  "id": "cuirass_scrap_superalloy",
-	  "type": "ARMOR",
+    "id": "cuirass_scrap_superalloy",
+    "type": "ARMOR",
     "name": { "str": "crude superalloy cuirass", "str_pl": "crude superalloy cuirasses" },
     "description": "A cuirass made from scraps of metal secured by simple strings, incorporating some advanced alloy plating among the random bits.  It's not comfortable, but the metal is quite strong.",
-	"copy-from": "cuirass_scrap",
-	"material": [ "superalloy", "iron" ],
-	"proportional": { "weight": 0.8, "volume": 1.2, "price": 2,"price_postapoc": 2 },
+    "copy-from": "cuirass_scrap",
+    "material": [ "superalloy", "iron" ],
+    "proportional": { "weight": 0.8, "volume": 1.2, "price": 2, "price_postapoc": 2 },
     "relative": { "material_thickness": 1 }
   },
   {

@@ -166,7 +166,7 @@
     "book_learn": [ [ "recipe_melee", 2 ] ],
     "using": [ [ "cordage", 1 ] ],
     "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 } ],
-    "components": [ [ [ "scrap", 30 ], [ "sheet_metal_small", 6 ] ], [[ "alloy_sheet", 4]] ]
+    "components": [ [ [ "scrap", 30 ], [ "sheet_metal_small", 6 ] ], [ [ "alloy_sheet", 4 ] ] ]
   },
   {
     "result": "armguard_soft",
