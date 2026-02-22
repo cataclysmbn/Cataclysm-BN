@@ -554,21 +554,11 @@ void map::vehmove()
     };
     rebuild_pq();
 
-    // Update veh_in_active_range after each vehicle movement (preserves the
-    // semantics of the original vehproceed() cache-maintenance step).
-    auto update_active_range = [&]() {
-        for( int zlev = minz; zlev <= maxz; ++zlev ) {
-            level_cache &cache = get_cache( zlev );
-            cache.veh_in_active_range = cache.veh_in_active_range &&
-                                        std::ranges::any_of( cache.veh_exists_at,
-            []( const auto & row ) {
-                return std::any_of( std::begin( row ), std::end( row ),
-                []( bool veh_exists ) {
-                    return veh_exists;
-                } );
-            } );
-        }
-    };
+    // PERF-LOSS-2: the update_active_range lambda that previously scanned all
+    // veh_exists_at cells (up to MAPSIZE_X * MAPSIZE_Y per z-level) after every
+    // vehicle move has been removed.  veh_in_active_range is maintained
+    // incrementally by the existing update_vehicle_list() / vehicle removal
+    // paths; a full per-move scan is redundant and O(M²) in the worst case.
 
     // 15 equals 3 >50mph vehicles, or up to 15 slow (1 square move) ones
     // But 15 is too low for V12 death-bikes, let's put 100 here
@@ -610,17 +600,15 @@ void map::vehmove()
             vehicle_list = get_vehicles();
             rebuild_pq();
         } else {
-            // Rebuild on every successful move so that any vehicle whose of_turn
-            // was elevated by collision physics this step (e.g., a stationary car
-            // that was rammed) enters the queue.  A vehicle still holding budget
-            // (of_turn >= 1.0) will be re-enqueued naturally by rebuild_pq.
-            // The original vehproceed() did an O(V) scan every iteration anyway,
-            // so this preserves the same asymptotic complexity while fixing the
-            // edge case (BUG-1).
-            rebuild_pq();
+            // PERF-LOSS-1 fix: on the non-collision path, re-enqueue only the
+            // moved vehicle if it still has budget.  Collisions (which can
+            // elevate a stationary vehicle's of_turn) are handled by the full
+            // rebuild_pq() on the nullptr path above.  This restores the O(log V)
+            // per-iteration cost that V-1 was designed to achieve.
+            if( cur_veh->v->of_turn >= 1.0f ) {
+                pq.push( cur_veh );
+            }
         }
-
-        update_active_range();
     }
     // Process item removal on the vehicles that were modified this turn.
     // Use a copy because part_removal_cleanup can modify the container.
@@ -5297,28 +5285,16 @@ void map::process_items()
             process_items_in_vehicles( *current_submap );
         }
     }
-    // I-1: Pre-compute player position in absolute submap coordinates.
-    // Items beyond ITEM_PROCESS_RADIUS_SM submaps are skipped this turn.
-    // The radius must cover the full loaded map (MAPSIZE × MAPSIZE submaps).
-    // A player in one corner and a fire in the opposite corner are MAPSIZE-1
-    // submaps apart, so any smaller radius would stop fire spread and explosive
-    // timers from ticking.  MAPSIZE is a safe upper bound that guarantees all
-    // active items within the loaded bubble are processed (LOGIC-1 fix).
-    // A per-category exemption (cosmetic vs. critical items) can be layered on
-    // in a future pass if profiling shows this radius is too expensive.
-    // Chebyshev distance avoids a sqrt and keeps the check branch-predictable.
-    static constexpr int ITEM_PROCESS_RADIUS_SM = MAPSIZE;
-    const int player_sm_x = abs_sub.x + g->u.posx() / SEEX;
-    const int player_sm_y = abs_sub.y + g->u.posy() / SEEY;
-
     // Making a copy, in case the original variable gets modified during `process_items_in_submap`
+    // PERF-LOSS-3: the previous I-1 distance cull (radius = MAPSIZE) has been
+    // removed.  Items outside the loaded bubble are never in
+    // submaps_with_active_items, so ITEM_PROCESS_RADIUS_SM == MAPSIZE passed
+    // for every submap in the set — the check added two abs() calls and two
+    // comparisons per submap per turn while skipping nothing.  A category-aware
+    // cull (e.g., skip cosmetic items far from all creatures) remains a future
+    // option if profiling motivates it.
     const std::set<tripoint> submaps_with_active_items_copy = submaps_with_active_items;
     for( const tripoint &abs_pos : submaps_with_active_items_copy ) {
-        // I-1: skip submaps too far from the player.
-        if( std::abs( abs_pos.x - player_sm_x ) > ITEM_PROCESS_RADIUS_SM ||
-            std::abs( abs_pos.y - player_sm_y ) > ITEM_PROCESS_RADIUS_SM ) {
-            continue;
-        }
         const tripoint local_pos = abs_pos - abs_sub.xy();
         submap *const current_submap = get_submap_at_grid( local_pos );
         if( !current_submap->active_items.empty() ) {
@@ -5390,9 +5366,15 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
         vp.part().process_contents( vp.pos(), engine_heater_is_on );
     }
 
+    // MISSED-4: most vehicles have no RECHARGE parts; skip the cargo-part
+    // iteration entirely when the flag is clear.  process_vehicle_items() would
+    // return immediately per-part anyway, but the get_parts_including_carried()
+    // call and the loop itself are not free on vehicles with many cargo slots.
     auto cargo_parts = cur_veh.get_parts_including_carried( VPFLAG_CARGO );
-    for( const vpart_reference &vp : cargo_parts ) {
-        process_vehicle_items( cur_veh, vp.part_index() );
+    if( cur_veh.has_cargo_recharge ) {
+        for( const vpart_reference &vp : cargo_parts ) {
+            process_vehicle_items( cur_veh, vp.part_index() );
+        }
     }
 
     // OPP-4: most vehicles have no active items in cargo; skip the

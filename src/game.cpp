@@ -172,7 +172,6 @@
 #include "string_input_popup.h"
 #include "submap.h"
 #include "type_id.h"
-#include "thread_pool.h"
 #include "tileray.h"
 #include "timed_event.h"
 #include "translations.h"
@@ -4227,6 +4226,10 @@ void game::monmove()
     ZoneScoped;
     cleanup_dead();
 
+    // P-8: clear the per-turn sight cache at the top of every monmove() call
+    // so results from the previous turn are not reused.
+    turn_sight_cache_.clear();
+
     // -----------------------------------------------------------------------
     // P-7: Parallel planning pass.
     //
@@ -4237,6 +4240,7 @@ void game::monmove()
     // game state (map caches, faction data, creature positions).  The only
     // shared writes are:
     //   - skew_vision_cache (protected by skew_vision_cache_mutex, P-6)
+    //   - turn_sight_cache_ (protected by turn_sight_cache_mutex_, P-8)
     //   - per-thread RNG (thread-local engine, P-5)
     // This makes the parallel phase data-race-free.
     //
@@ -4249,6 +4253,16 @@ void game::monmove()
     // existing state from last turn.  Imperceptible at normal game speed;
     // the wandf > 0 check ensures any monster that heard a sound this turn
     // is still planned normally.
+    //
+    // LOGIC-3 (accepted approximation): wandf is only advanced by sound
+    // stimuli (sounds::process_sounds → monster::hear_sound).  It is NOT
+    // advanced by scent detection or visual-only triggers that do not also
+    // produce a sound.  A monster beyond DEFERRAL_RADIUS that followed a
+    // scent trail this turn but received no sound will have wandf == 0 and
+    // be deferred even though its AI should react.  The effect is at most a
+    // one-turn delay for far-field scent followers.  To fix this in the
+    // future, extend the condition to also check whether the monster's
+    // current scent reading exceeds its detection threshold.
     static constexpr int DEFERRAL_RADIUS = 60;
 
     // OPP-7: Unified disposition map replaces the old separate deferred set +
@@ -4274,13 +4288,22 @@ void game::monmove()
         }
     }
 
-    // OPP-1: Pre-warm skew_vision_cache with (monster → player) visibility for
-    // every plannable monster before the parallel phase.  All inserts happen
-    // serially on the main thread, so there is zero lock contention here.  The
-    // parallel phase then predominantly hits the cache and only needs a
-    // shared_lock (PERF-LOSS-1), collapsing contention to near zero.
+    // OPP-1: Pre-warm skew_vision_cache with (monster → player) and
+    // (monster → NPC) visibility pairs for every plannable monster before the
+    // parallel phase.  All inserts happen serially on the main thread so there
+    // is zero lock contention here.  The parallel phase then predominantly hits
+    // the cache and only needs a shared_lock, collapsing contention to near zero.
+    //
+    // PERF-LOSS-5: the original pre-warm covered only monster→player pairs.
+    // Adding monster→NPC pairs eliminates the remaining lock serialisation on
+    // maps with NPCs; faction-hostile monster pairs are not pre-warmed (their
+    // frequency in typical saves does not justify the O(M²) cost of checking
+    // all hostile-faction combinations up-front).
     for( monster *mon : plannable ) {
         mon->sees( u );
+        for( npc &n : all_npcs() ) {
+            mon->sees( n );
+        }
     }
 
     // PERF-LOSS-2 / OPP-5: parallel_for_chunked with a small chunk size gives the

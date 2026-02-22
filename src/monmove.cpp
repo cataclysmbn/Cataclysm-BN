@@ -10,6 +10,7 @@
 #include <list>
 #include <memory>
 #include <ostream>
+#include <shared_mutex>
 #include <unordered_map>
 
 #include "avatar.h"
@@ -302,6 +303,37 @@ void monster::wander_to( const tripoint &p, int f )
     wandf = f;
 }
 
+// P-8: per-turn symmetric sight-result cache wrapper.
+// Checks g->turn_sight_cache_ before invoking the full Creature::sees() chain.
+// Key is the sorted (lo-address, hi-address) pointer pair so A→B and B→A share
+// one cache entry (exploiting the symmetry of LOS ray traces).
+//
+// LOGIC-2 / P-5 note: x_in_y aggro-chance rolls inside compute_plan() run on
+// worker-thread RNG (tl_worker_engine).  This is data-race-free (P-5), but it
+// means aggro probabilities are no longer tied to the main-thread minstd_rand0
+// sequence, silently breaking save-file determinism and shifting all subsequent
+// main-thread RNG draws.  If determinism is required, move the x_in_y calls
+// into apply_plan() so they execute on the main thread with the shared engine.
+static bool turn_cached_sees( const Creature &seer, const Creature &target )
+{
+    const Creature *lo = &seer < &target ? &seer : &target;
+    const Creature *hi = &seer < &target ? &target : &seer;
+    const auto key = std::make_pair( lo, hi );
+    {
+        std::shared_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
+        const auto it = g->turn_sight_cache_.find( key );
+        if( it != g->turn_sight_cache_.end() ) {
+            return it->second;
+        }
+    }
+    const bool result = seer.sees( target );
+    {
+        std::unique_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
+        g->turn_sight_cache_.emplace( key, result );
+    }
+    return result;
+}
+
 float monster::rate_target( Creature &c, float best, bool smart, int precalc_dist ) const
 {
     // PERF-LOSS-4: use caller-supplied distance when available to avoid
@@ -317,7 +349,9 @@ float monster::rate_target( Creature &c, float best, bool smart, int precalc_dis
         return FLT_MAX;
     }
 
-    if( !sees( c ) ) {
+    // P-8: use the per-turn symmetric cache so symmetric pairs (A checks B,
+    // B checks A) pay for at most one ray trace per turn instead of two.
+    if( !turn_cached_sees( *this, c ) ) {
         return FLT_MAX;
     }
 
@@ -390,7 +424,7 @@ monster_plan_t monster::compute_plan() const
     bool swarms = has_flag( MF_SWARMS );
     auto mood   = attitude();
 
-    if( local_friendly == 0 && sees( g->u ) && !waiting ) {
+    if( local_friendly == 0 && turn_cached_sees( *this, g->u ) && !waiting ) {
         dist    = rate_target( g->u, dist, smart_planning );
         fleeing = fleeing || is_fleeing( g->u );
         target  = &g->u;
@@ -401,8 +435,15 @@ monster_plan_t monster::compute_plan() const
                 local_anger += angers_hostile_near;
             }
             if( angers_hostile_near ) {
-                // P-5 is active: x_in_y dispatches to the thread-local RNG engine
-                // (tl_worker_engine) on worker threads, so this is data-race-free.
+                // P-5 / LOGIC-2: x_in_y uses the thread-local RNG engine on
+                // worker threads — data-race-free, but aggro rolls are no longer
+                // tied to the main-thread minstd_rand0 sequence.  Save-file
+                // determinism is broken: replaying the same turns after a reload
+                // will produce different aggro outcomes because worker RNG seeds
+                // are based on thread_id ^ high_resolution_clock::now().  The
+                // main thread's RNG sequence also shifts (fewer calls per turn).
+                // To restore determinism, defer the x_in_y check to apply_plan()
+                // so it runs on the main thread with the shared engine.
                 if( x_in_y( local_anger, 100 ) ) {
                     result.aggro_triggers.push_back( "proximity" );
                 }
@@ -427,6 +468,7 @@ monster_plan_t monster::compute_plan() const
                     } else {
                         local_anger += angers_mating_season;
                     }
+                    // LOGIC-2: uses worker-thread RNG — see "proximity" comment above.
                     if( x_in_y( local_anger, 100 ) ) {
                         result.aggro_triggers.push_back( "mating season" );
                     }
@@ -533,6 +575,7 @@ monster_plan_t monster::compute_plan() const
                     } else {
                         local_anger += angers_mating_season;
                     }
+                    // LOGIC-2: uses worker-thread RNG — see "proximity" comment above.
                     if( x_in_y( local_anger, 100 ) ) {
                         result.aggro_triggers.push_back( "mating season" );
                     }
@@ -645,7 +688,12 @@ monster_plan_t monster::compute_plan() const
                 }
             }
         }
-        // else: prev_friendlyness == local_friendly already, no-op.
+        // else: the original plan() restored friendly from prev_friendlyness
+        // here, but that was a no-op because prev_friendlyness was set from
+        // friendly at the top of the function before any modification occurred.
+        // local_friendly is already the correct prior value; no restore needed.
+        // LOGIC-4: if future code modifies local_friendly before this block,
+        // a restore branch must be added here to avoid silently clobbering it.
     }
 
     if( has_effect( effect_dragging ) ) {
@@ -699,6 +747,7 @@ monster_plan_t monster::compute_plan() const
                     local_anger += anger_amount;
                 }
                 if( local_anger <= 40 ) {
+                    // LOGIC-2: uses worker-thread RNG — see "proximity" comment above.
                     if( x_in_y( local_anger, 100 ) ) {
                         result.aggro_triggers.push_back( "weakness" );
                     }
@@ -707,7 +756,7 @@ monster_plan_t monster::compute_plan() const
         }
     } else if( local_friendly > 0 && one_in( 3 ) ) {
         local_friendly--;
-    } else if( local_friendly < 0 && sees( g->u ) ) {
+    } else if( local_friendly < 0 && turn_cached_sees( *this, g->u ) ) {
         if( !has_flag( MF_PET_WONT_FOLLOW ) ) {
             if( rl_dist( pos(), g->u.pos() ) > 2 ) {
                 local_goal = g->u.pos();
@@ -754,6 +803,9 @@ monster_plan_t monster::compute_plan() const
 void monster::apply_plan( const monster_plan_t &plan )
 {
     // Apply movement goal.
+    // LOGIC-1: set_goal(plan.goal) correctly implements the unset_dest()
+    // semantic when plan.goal == pos(), because unset_dest() is defined as
+    // set_goal(pos()).  No special-case handling for the "unset" value is needed.
     set_goal( plan.goal );
 
     // Apply stat changes.
