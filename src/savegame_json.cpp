@@ -2889,12 +2889,24 @@ void vehicle::deserialize( JsonIn &jsin )
     int turn_dir_int;
     data.read( "turn_dir", turn_dir_int );
     turn_dir = units::from_degrees( turn_dir_int );
-    data.read( "velocity", velocity );
+    int loaded_velocity = 0;
+    int loaded_cruise_velocity = 0;
+    int loaded_vertical_velocity = 0;
+    data.read( "velocity", loaded_velocity );
     data.read( "falling", is_falling );
     data.read( "floating", is_floating );
     data.read( "flying", is_flying );
-    data.read( "cruise_velocity", cruise_velocity );
-    data.read( "vertical_velocity", vertical_velocity );
+    data.read( "cruise_velocity", loaded_cruise_velocity );
+    data.read( "vertical_velocity", loaded_vertical_velocity );
+    if( savegame_loading_version < 29 ) {
+        velocity = std::lround( static_cast<double>( loaded_velocity ) * 0.44704 );
+        cruise_velocity = std::lround( static_cast<double>( loaded_cruise_velocity ) * 0.44704 );
+        vertical_velocity = std::lround( static_cast<double>( loaded_vertical_velocity ) * 0.44704 );
+    } else {
+        velocity = loaded_velocity;
+        cruise_velocity = loaded_cruise_velocity;
+        vertical_velocity = loaded_vertical_velocity;
+    }
     data.read( "cruise_on", cruise_on );
     data.read( "engine_on", engine_on );
     data.read( "tracking_on", tracking_on );

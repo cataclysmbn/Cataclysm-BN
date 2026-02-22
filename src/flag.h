@@ -241,6 +241,7 @@ extern const flag_id flag_OUTER;
 extern const flag_id flag_OVERSIZE;
 extern const flag_id flag_PARTIAL_DEAF;
 extern const flag_id flag_PERFECT_LOCKPICK;
+extern const flag_id flag_DURABLE_LOCKPICK;
 extern const flag_id flag_PERPETUAL;
 extern const flag_id flag_PERSONAL;
 extern const flag_id flag_PLACE_RANDOMLY;

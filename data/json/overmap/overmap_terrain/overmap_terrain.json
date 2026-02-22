@@ -77,7 +77,7 @@
     "sym": "0",
     "color": "yellow",
     "see_cost": 5,
-    "flags": [ "RISK_LOW", "SOURCE_SAFETY" ]
+    "flags": [ "SOURCE_SAFETY" ]
   },
   {
     "type": "overmap_terrain",
@@ -92,6 +92,14 @@
     "id": "lighthouse_z3",
     "name": "lighthouse",
     "sym": "&",
+    "color": "yellow",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "lighthouse_basement",
+    "name": "lighthouse cellar",
+    "sym": "0",
     "color": "yellow",
     "see_cost": 5
   },

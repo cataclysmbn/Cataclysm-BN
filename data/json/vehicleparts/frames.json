@@ -226,6 +226,115 @@
     "damage_reduction": { "all": 2 }
   },
   {
+    "type": "vehicle_part",
+    "id": "cart_handle",
+    "name": { "str": "cart handle" },
+    "symbol": "-",
+    "looks_like": "frame_wood_horizontal",
+    "color": "white",
+    "broken_symbol": "~",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "noise_factor": 0,
+    "fuel_type": "animal",
+    "durability": 20,
+    "item": "pipe",
+    "m2c": 90,
+    "description": "A metal handle, a creature with hands could use it to push a vehicle.",
+    "power": 0,
+    "location": "structure",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "100 s", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "100 s", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "20 s",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 4 ] ]
+      }
+    },
+    "breaks_into": [ { "item": "scrap", "count": [ 4, 6 ] } ],
+    "flags": [ "ENGINE", "BOARDABLE", "E_STARTS_INSTANTLY", "ANIMAL_CTRL", "HARNESS_human", "STEERABLE", "UNMOUNT_ON_DAMAGE" ],
+    "damage_reduction": { "all": 2 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "frame_handle",
+    "name": { "str": "handle" },
+    "symbol": "^",
+    "color": "light_cyan",
+    "broken_symbol": "#",
+    "broken_color": "light_cyan",
+    "durability": 30,
+    "description": "A pair of handles.  You can mount other items on top of it.",
+    "folded_volume": "750 ml",
+    "item": "pipe",
+    "location": "structure",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "30 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "qualities": [ { "id": "SAW_M", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "30 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 4 ] ]
+      }
+    },
+    "flags": [ "MOUNTABLE", "FOLDABLE" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 4, 6 ] },
+      { "item": "steel_chunk", "count": [ 4, 6 ] },
+      { "item": "scrap", "count": [ 4, 6 ] }
+    ],
+    "damage_reduction": { "all": 5 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "frame_wood_handle",
+    "name": { "str": "wooden handle" },
+    "symbol": "^",
+    "looks_like": "frame_wood_cover",
+    "color": "light_red",
+    "broken_symbol": "#",
+    "broken_color": "brown",
+    "durability": 150,
+    "description": "A pair of handles.  You can mount other items on top of it.",
+    "item": "frame_wood",
+    "location": "structure",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] }, { "item": "nail", "charges": [ 5, 10 ] } ],
+    "damage_reduction": { "all": 4 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "frame_wood_light_handle",
+    "name": { "str": "light wooden handle" },
+    "symbol": "^",
+    "looks_like": "frame_wood_light_cover",
+    "color": "light_red",
+    "broken_symbol": "#",
+    "broken_color": "brown",
+    "durability": 100,
+    "description": "A pair of handles.  You can mount other items on top of it.",
+    "item": "frame_wood_light",
+    "location": "structure",
+    "breaks_into": [ { "item": "splinter", "count": [ 3, 5 ] }, { "item": "string_36", "count": [ 10, 15 ] } ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "10 m", "using": [ [ "rope_natural_short", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "5 m",
+        "using": [ [ "nail_any_adhesive", 1 ], [ "vehicle_repair_small_wood", 4 ] ]
+      }
+    }
+  },
+  {
     "id": "frame_cover",
     "copy-from": "frame",
     "type": "vehicle_part",

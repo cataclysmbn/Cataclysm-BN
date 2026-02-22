@@ -796,6 +796,9 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) cons
             debugmsg( "Error restoring vehicle: %s", e.c_str() );
         }
     }
+    if( g->m.veh_at( p.pos() ).part_with_feature( "BOARDABLE", true ) ) {
+        g->m.board_vehicle( p.pos(), &p );
+    }
     return 1;
 }
 
