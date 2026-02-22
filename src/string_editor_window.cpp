@@ -5,6 +5,8 @@
 #endif
 
 #include <algorithm>
+#include <array>
+#include <cctype>
 
 #if defined(__ANDROID__)
 #include <SDL_keyboard.h>
@@ -81,6 +83,125 @@ auto format_line_number( const int line_number, const int width ) -> std::string
         rendered.insert( rendered.begin(), padding, ' ' );
     }
     return rendered;
+}
+
+struct lua_syntax_token {
+    std::string text;
+    nc_color color = c_white;
+};
+
+auto is_identifier_start( const char c ) -> bool
+{
+    const auto uc = static_cast<unsigned char>( c );
+    return std::isalpha( uc ) != 0 || c == '_';
+}
+
+auto is_identifier_char( const char c ) -> bool
+{
+    const auto uc = static_cast<unsigned char>( c );
+    return std::isalnum( uc ) != 0 || c == '_';
+}
+
+auto is_number_char( const char c ) -> bool
+{
+    const auto uc = static_cast<unsigned char>( c );
+    return std::isdigit( uc ) != 0 || c == '.' || c == '_'
+           || ( c >= 'a' && c <= 'f' ) || ( c >= 'A' && c <= 'F' )
+           || c == 'x' || c == 'X';
+}
+
+auto is_lua_keyword( const std::string_view token ) -> bool
+{
+    static constexpr auto keywords = std::array<std::string_view, 22>{
+        "and", "break", "do", "else", "elseif", "end", "false", "for", "function",
+        "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then",
+        "true", "until", "while"
+    };
+    return std::ranges::find( keywords, token ) != keywords.end();
+}
+
+auto push_syntax_token( std::vector<lua_syntax_token> &tokens, const nc_color color,
+                        const std::string_view text ) -> void
+{
+    if( text.empty() ) {
+        return;
+    }
+    if( !tokens.empty() && tokens.back().color == color ) {
+        tokens.back().text.append( text );
+        return;
+    }
+    tokens.push_back( lua_syntax_token{ std::string( text ), color } );
+}
+
+auto build_lua_syntax_tokens( const std::string_view line ) -> std::vector<lua_syntax_token>
+{
+    auto tokens = std::vector<lua_syntax_token>();
+    auto i = std::string::size_type{ 0 };
+    while( i < line.size() ) {
+        const auto c = line[i];
+        if( c == '-' && i + 1 < line.size() && line[i + 1] == '-' ) {
+            push_syntax_token( tokens, c_dark_gray, line.substr( i ) );
+            break;
+        }
+        if( c == '"' || c == '\'' ) {
+            const auto quote = c;
+            auto j = i + 1;
+            auto escaped = false;
+            while( j < line.size() ) {
+                const auto ch = line[j];
+                if( escaped ) {
+                    escaped = false;
+                } else if( ch == '\\' ) {
+                    escaped = true;
+                } else if( ch == quote ) {
+                    ++j;
+                    break;
+                }
+                ++j;
+            }
+            push_syntax_token( tokens, c_light_green, line.substr( i, j - i ) );
+            i = j;
+            continue;
+        }
+        if( std::isdigit( static_cast<unsigned char>( c ) ) != 0
+            || ( c == '.' && i + 1 < line.size()
+                 && std::isdigit( static_cast<unsigned char>( line[i + 1] ) ) != 0 ) ) {
+            auto j = i + 1;
+            while( j < line.size() && is_number_char( line[j] ) ) {
+                ++j;
+            }
+            push_syntax_token( tokens, c_yellow, line.substr( i, j - i ) );
+            i = j;
+            continue;
+        }
+        if( is_identifier_start( c ) ) {
+            auto j = i + 1;
+            while( j < line.size() && is_identifier_char( line[j] ) ) {
+                ++j;
+            }
+            const auto token = line.substr( i, j - i );
+            const auto color = is_lua_keyword( token ) ? c_light_blue : c_white;
+            push_syntax_token( tokens, color, token );
+            i = j;
+            continue;
+        }
+        push_syntax_token( tokens, c_white, line.substr( i, 1 ) );
+        ++i;
+    }
+    return tokens;
+}
+
+auto print_syntax_line( const catacurses::window &win, const point &pos,
+                        const std::string &line ) -> void
+{
+    wmove( win, pos );
+    const auto tokens = build_lua_syntax_tokens( line );
+    for( auto i = std::string::size_type{ 0 }; i < tokens.size(); ++i ) {
+        const auto &token = tokens[i];
+        if( !token.text.empty() ) {
+            wprintz( win, token.color, "%s", token.text );
+        }
+    }
 }
 
 } // namespace
@@ -297,7 +418,7 @@ void string_editor_window::print_editor( ui_adaptor &ui )
                 format_line_number( line_number, line_number_width )
             );
         }
-        mvwprintz( _win, point( content_x, y ), c_white, "%s", line.str );
+        print_syntax_line( _win, point( content_x, y ), line.str );
         if( !_ime_preview_range && i == _cursor_display.y ) {
             uint32_t c_cursor = 0;
             const char *src = line.str.c_str();
