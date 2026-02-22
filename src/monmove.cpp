@@ -387,35 +387,9 @@ void monster::plan()
 }
 
 
-monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx ) const
+monster_plan_t monster::compute_plan() const
 {
     ZoneScoped;
-
-    // Thread-safe helpers: use pre-built snapshots when called from a worker
-    // thread, falling back to g->all_monsters() / g->all_npcs() on the main
-    // thread (ctx.monsters / ctx.npcs are null in that case).
-    const auto for_each_monster = [&]( auto &&fn ) {
-        if( ctx.monsters ) {
-            for( monster *mp : *ctx.monsters ) {
-                fn( *mp );
-            }
-        } else {
-            for( monster &tmp : g->all_monsters() ) {
-                fn( tmp );
-            }
-        }
-    };
-    const auto for_each_npc = [&]( auto &&fn ) {
-        if( ctx.npcs ) {
-            for( npc *np : *ctx.npcs ) {
-                fn( *np );
-            }
-        } else {
-            for( npc &who : g->all_npcs() ) {
-                fn( who );
-            }
-        }
-    };
 
     monster_plan_t result;
     // Initialise final-value fields from current monster state so a no-op
@@ -454,59 +428,68 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
     const int  fears_hostile_near =
         type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE ) ? 5 : 0;
 
-    // LOD Tier 1/2: skip the O(M²) faction-member scan for group morale and
-    // swarming.  At 20–60 tiles these behaviours are not player-visible.
-    // Tier 0 (full fidelity) runs the normal computation.
-    bool group_morale = lod_tier <= lod_group_morale_max_tier && has_flag( MF_GROUP_MORALE ) &&
-                        local_morale < type->morale;
-    bool swarms       = lod_tier <= lod_group_morale_max_tier && has_flag( MF_SWARMS );
+    bool group_morale = has_flag( MF_GROUP_MORALE ) && local_morale < type->morale;
+    bool swarms = has_flag( MF_SWARMS );
     auto mood   = attitude();
 
-    // GAIN-B: call rate_target once (which internally calls turn_cached_sees).
-    // The redundant outer turn_cached_sees guard has been removed; player
-    // visibility is determined by the rate_target return value (FLT_MAX = not visible).
-    if( local_friendly == 0 && !waiting ) {
-        const float player_dist = rate_target( g->u, dist, smart_planning );
-        if( player_dist < FLT_MAX ) {
-            dist    = player_dist;
-            fleeing = fleeing || is_fleeing( g->u );
-            target  = &g->u;
-            if( dist <= 5 ) {
-                if( has_flag( MF_FACTION_MEMORY ) ) {
-                    result.faction_angers.push_back( { mfaction_id( "player" ), angers_hostile_near } );
-                } else {
-                    local_anger += angers_hostile_near;
+    if( local_friendly == 0 && sees( g->u ) && !waiting ) {
+        dist    = rate_target( g->u, dist, smart_planning );
+        fleeing = fleeing || is_fleeing( g->u );
+        target  = &g->u;
+        if( dist <= 5 ) {
+            if( has_flag( MF_FACTION_MEMORY ) ) {
+                result.faction_angers.push_back( { mfaction_id( "player" ), angers_hostile_near } );
+            } else {
+                local_anger += angers_hostile_near;
+            }
+            if( angers_hostile_near ) {
+                // NOTE: x_in_y uses global RNG — safe while planning is serial.
+                // P-5 will replace this with thread-local RNG.
+                if( x_in_y( local_anger, 100 ) ) {
+                    result.aggro_triggers.push_back( "proximity" );
                 }
-                if( angers_hostile_near ) {
-                    // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
+            }
+            local_morale -= fears_hostile_near;
+            if( angers_mating_season > 0 ) {
+                bool mating_angry = false;
+                season_type season = season_of_year( calendar::turn );
+                for( auto &elem : type->baby_flags ) {
+                    if( ( season == SUMMER && elem == "SUMMER" ) ||
+                        ( season == WINTER && elem == "WINTER" ) ||
+                        ( season == SPRING && elem == "SPRING" ) ||
+                        ( season == AUTUMN && elem == "AUTUMN" ) ) {
+                        mating_angry = true;
+                        break;
+                    }
+                }
+                if( mating_angry ) {
+                    if( has_flag( MF_FACTION_MEMORY ) ) {
+                        result.faction_angers.push_back(
+                            { mfaction_id( "player" ), angers_mating_season } );
+                    } else {
+                        local_anger += angers_mating_season;
+                    }
                     if( x_in_y( local_anger, 100 ) ) {
-                        result.aggro_triggers.push_back( "proximity" );
+                        result.aggro_triggers.push_back( "mating season" );
                     }
                 }
-                local_morale -= fears_hostile_near;
-                if( angers_mating_season > 0 ) {
-                    bool mating_angry = false;
-                    season_type season = season_of_year( calendar::turn );
-                    for( auto &elem : type->baby_flags ) {
-                        if( ( season == SUMMER && elem == "SUMMER" ) ||
-                            ( season == WINTER && elem == "WINTER" ) ||
-                            ( season == SPRING && elem == "SPRING" ) ||
-                            ( season == AUTUMN && elem == "AUTUMN" ) ) {
-                            mating_angry = true;
-                            break;
-                        }
-                    }
-                    if( mating_angry ) {
+            }
+        }
+        if( angers_cub_threatened > 0 ) {
+            for( monster &tmp : g->all_monsters() ) {
+                if( type->baby_monster == tmp.type->id ) {
+                    // Mirrors original plan(): dist is updated so subsequent
+                    // target selection uses the baby-player distance.
+                    dist = tmp.rate_target( g->u, dist, smart_planning );
+                    if( dist <= 3 ) {
                         if( has_flag( MF_FACTION_MEMORY ) ) {
                             result.faction_angers.push_back(
-                            { mfaction_id( "player" ), angers_mating_season } );
+                                { mfaction_id( "player" ), angers_cub_threatened } );
                         } else {
-                            local_anger += angers_mating_season;
+                            local_anger += angers_cub_threatened;
                         }
-                        // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
-                        if( x_in_y( local_anger, 100 ) ) {
-                            result.aggro_triggers.push_back( "mating season" );
-                        }
+                        local_morale += angers_cub_threatened / 2;
+                        result.aggro_triggers.push_back( "threatening cub" );
                     }
                 }
             }
@@ -531,14 +514,13 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             }
         }
     } else if( local_friendly != 0 && !docile && !waiting ) {
-        for_each_monster( [&]( monster & tmp ) {
+        for( monster &tmp : g->all_monsters() ) {
             if( tmp.friendly == 0 ) {
                 // P-4: distance cull — skip ray trace if target is out of range.
-                const int d_tmp = rl_dist( pos(), tmp.pos() );
-                if( d_tmp > max_sight_range ) {
-                    return;
+                if( rl_dist( pos(), tmp.pos() ) > max_sight_range ) {
+                    continue;
                 }
-                float rating = rate_target( tmp, dist, smart_planning, d_tmp );
+                float rating = rate_target( tmp, dist, smart_planning );
                 if( rating < dist ) {
                     target = &tmp;
                     dist   = rating;
@@ -563,12 +545,11 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         }
 
         // P-4: distance cull.
-        const int d_who = rl_dist( pos(), who.pos() );
-        if( d_who > max_sight_range ) {
-            return;
+        if( rl_dist( pos(), who.pos() ) > max_sight_range ) {
+            continue;
         }
 
-        float rating = rate_target( who, dist, smart_planning, d_who );
+        float rating = rate_target( who, dist, smart_planning );
         bool fleeing_from = is_fleeing( who );
         if( rating == dist && ( fleeing || attitude( &who ) == MATT_ATTACK ) ) {
             ++valid_targets;
@@ -607,11 +588,10 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 if( mating_angry ) {
                     if( has_flag( MF_FACTION_MEMORY ) ) {
                         result.faction_angers.push_back(
-                        { mfaction_id( "player" ), angers_mating_season } );
+                            { mfaction_id( "player" ), angers_mating_season } );
                     } else {
                         local_anger += angers_mating_season;
                     }
-                    // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
                     if( x_in_y( local_anger, 100 ) ) {
                         result.aggro_triggers.push_back( "mating season" );
                     }
@@ -636,12 +616,11 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 monster &mon = *shared;
 
                 // P-4: distance cull.
-                const int d_mon = rl_dist( pos(), mon.pos() );
-                if( d_mon > max_sight_range ) {
+                if( rl_dist( pos(), mon.pos() ) > max_sight_range ) {
                     continue;
                 }
 
-                float rating = rate_target( mon, dist, smart_planning, d_mon );
+                float rating = rate_target( mon, dist, smart_planning );
                 if( rating == dist ) {
                     ++valid_targets;
                     if( one_in( valid_targets ) ) {
@@ -684,12 +663,11 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             monster &mon = *shared;
 
             // P-4: distance cull for swarm/morale checks.
-            const int d_swarm = rl_dist( pos(), mon.pos() );
-            if( d_swarm > max_sight_range ) {
+            if( rl_dist( pos(), mon.pos() ) > max_sight_range ) {
                 continue;
             }
 
-            float rating = rate_target( mon, dist, smart_planning, d_swarm );
+            float rating = rate_target( mon, dist, smart_planning );
             if( group_morale && rating <= 10 ) {
                 local_morale += 10 - rating;
             }
@@ -712,8 +690,6 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         target = nullptr;
     }
 
-    // LOGIC-4: if local_friendly is modified before this block in the future,
-    // add a restore branch here.
     if( type->has_special_attack( "OPERATE" ) ) {
         if( has_effect( effect_operating ) ) {
             local_friendly = 100;
@@ -726,7 +702,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 }
             }
         }
-        // else: no restore needed — the original else-branch was always a no-op.
+        // else: prev_friendlyness == local_friendly already, no-op.
     }
 
     if( has_effect( effect_dragging ) ) {
@@ -774,13 +750,12 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                         result.faction_angers.push_back( { target_mon->faction, anger_amount } );
                     } else if( target->is_player() || target->is_npc() ) {
                         result.faction_angers.push_back(
-                        { mfaction_id( "player" ), anger_amount } );
+                            { mfaction_id( "player" ), anger_amount } );
                     }
                 } else {
                     local_anger += anger_amount;
                 }
                 if( local_anger <= 40 ) {
-                    // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
                     if( x_in_y( local_anger, 100 ) ) {
                         result.aggro_triggers.push_back( "weakness" );
                     }
@@ -789,7 +764,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         }
     } else if( local_friendly > 0 && one_in( 3 ) ) {
         local_friendly--;
-    } else if( local_friendly < 0 && turn_cached_sees( *this, g->u ) ) {
+    } else if( local_friendly < 0 && sees( g->u ) ) {
         if( !has_flag( MF_PET_WONT_FOLLOW ) ) {
             if( rl_dist( pos(), g->u.pos() ) > 2 ) {
                 local_goal = g->u.pos();
@@ -836,9 +811,6 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
 void monster::apply_plan( const monster_plan_t &plan )
 {
     // Apply movement goal.
-    // LOGIC-1: set_goal(plan.goal) correctly implements the unset_dest()
-    // semantic when plan.goal == pos(), because unset_dest() is defined as
-    // set_goal(pos()).  No special-case handling for the "unset" value is needed.
     set_goal( plan.goal );
 
     // Apply stat changes.

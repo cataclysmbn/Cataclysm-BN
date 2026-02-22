@@ -65,8 +65,6 @@
 #include "coordinates.h"
 #include "crafting.h"
 #include "creature_tracker.h"
-#include "monster.h"
-#include "monster_action.h"
 #include "monster_plan.h"
 #include "thread_pool.h"
 #include "cursesport.h"
@@ -4441,28 +4439,16 @@ void game::monmove()
     ZoneScoped;
     cleanup_dead();
 
-    // P-8: clear the per-turn sight cache at the top of every monmove() call
-    // so results from the previous turn are not reused.
-    turn_sight_cache_.clear();
-
-    // LOD-A: assign tier 0/1/2 to every monster based on distance from player.
-    // Must run before the plannable collection so Tier-2 monsters are excluded
-    // from the parallel planning pass (they use the macro step instead).
-    const int tier0_count = tier_assign_all();
-
     // -----------------------------------------------------------------------
     // P-7: Parallel planning pass.
     //
-    // Collect Tier-0 and Tier-1 monsters that are alive and eligible for AI
-    // planning this turn, compute their plans in parallel, then apply and
-    // execute serially.  Tier-2 (Macro) monsters are excluded here; they take
-    // a single Manhattan step in the move execution loop below.
+    // Collect all monsters that are alive and eligible for AI planning this
+    // turn, compute their plans in parallel, then apply and execute serially.
     //
     // compute_plan() is const w.r.t. *this (monster) and only reads shared
     // game state (map caches, faction data, creature positions).  The only
     // shared writes are:
     //   - skew_vision_cache (protected by skew_vision_cache_mutex, P-6)
-    //   - turn_sight_cache_ (protected by turn_sight_cache_mutex_, P-8)
     //   - per-thread RNG (thread-local engine, P-5)
     // This makes the parallel phase data-race-free.
     //
@@ -4470,118 +4456,29 @@ void game::monmove()
     // setup phase (process_turn, creature_in_field) simply have their
     // pre-computed plan discarded.
     // -----------------------------------------------------------------------
-
-    // Configurable via Debug → Performance → "Monster LOD" settings.
-    const int action_budget  = lod_action_budget;
-    const int macro_interval = lod_macro_interval;
-
-    // Dynamic budget: at least the floor, but expanded to cover all Tier-0
-    // monsters so the cap never defers a full-AI monster.
-    // tier0_count is from this turn's tier_assign_all(), so it is current.
-    const int effective_budget = std::max( action_budget, tier0_count );
-    TracyPlot( "LOD Effective Budget", static_cast<int64_t>( effective_budget ) );
-
-    // OPP-7: Unified disposition map: a single hash lookup in the execution
-    // loop suffices:
-    //   value >= 0  → index into precomputed[] (monster has a parallel plan)
-    //   not present → not collected this turn (plan serially)
-    std::unordered_map<monster *, int> plan_index;
-
     std::vector<monster *> plannable;
     for( monster &critter : all_monsters() ) {
         if( !critter.is_dead() &&
             !critter.has_effect( effect_ai_controlled ) &&
             critter.moves > 0 &&
-            !critter.has_effect( effect_ridden ) &&
-            critter.lod_tier < 2 ) {
-            // Tier-2 monsters skip full planning; they use the macro step.
+            !critter.has_effect( effect_ridden ) ) {
             plannable.push_back( &critter );
         }
     }
 
-    // OPP-1 (PERF-A fix): Pre-warm both turn_sight_cache_ and skew_vision_cache
-    // for (monster → player), (monster → NPC), and faction-hostile (monster → monster)
-    // pairs before the parallel phase.  prewarm_sight() calls turn_cached_sees(),
-    // which populates turn_sight_cache_ under a unique_lock here (serial, zero
-    // contention).  The parallel phase then hits turn_sight_cache_ under shared_lock
-    // only — zero write contention.
-    //
-    // NPC pairs use a distance pre-cull: monsters beyond max_sight_range of an NPC
-    // can never see them, so the ray trace and cache insert are both skipped entirely.
-    for( monster *mon : plannable ) {
-        mon->prewarm_sight( u );
-        const int mon_max_sight = std::max( mon->type->vision_day, mon->type->vision_night );
-        for( npc &n : all_npcs() ) {
-            if( rl_dist( mon->pos(), n.pos() ) <= mon_max_sight ) {
-                mon->prewarm_sight( n );
-            }
-        }
-    }
-
-    // Pre-warm faction-hostile monster pairs within max_sight_range.
-    // Without this, hostile-faction pairs call turn_cached_sees() during the parallel
-    // phase on a cache miss, taking a unique_lock and serialising all workers that
-    // happen to need a faction-hostile LOS result at the same time.
-    // turn_cached_sees is symmetric — one prewarm_sight call covers both directions.
-    for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-        monster *mon_a = plannable[i];
-        const int max_range_a = std::max( mon_a->type->vision_day, mon_a->type->vision_night );
-        for( int j = i + 1; j < static_cast<int>( plannable.size() ); ++j ) {
-            monster *mon_b = plannable[j];
-            if( rl_dist( mon_a->pos(), mon_b->pos() ) > max_range_a ) {
-                continue;
-            }
-            if( mon_a->faction.obj().attitude( mon_b->faction ) == MFA_HATE ) {
-                mon_a->prewarm_sight( *mon_b );
-            }
-        }
-    }
-
-    // Build creature snapshots for thread-safe compute_plan() access.
-    // compute_plan() calls g->all_monsters() / g->all_npcs() to find targets.
-    // Those functions iterate weak_ptr_fast<T> objects whose refcounting uses
-    // _S_single (non-atomic).  Concurrent lock() calls from worker threads are
-    // a data race.  Building plain pointer snapshots here, serially, avoids
-    // touching any weak_ptr_fast from worker threads.
-    std::vector<monster *> mon_snap;
-    mon_snap.reserve( plannable.size() * 2 );
-    for( monster &mon : all_monsters() ) {
-        mon_snap.push_back( &mon );
-    }
-    std::vector<npc *> npc_snap;
-    for( npc &n : all_npcs() ) {
-        npc_snap.push_back( &n );
-    }
-    const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap };
-
-    // PERF-LOSS-2 / OPP-5: parallel_for_chunked with a small chunk size gives the
-    // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
-    // (no ray traces) immediately pull the next chunk rather than sitting idle
-    // while a thread blocked on a costly monster finishes its oversized slice.
     std::vector<monster_plan_t> precomputed( plannable.size() );
-    if( parallel_enabled && parallel_monster_planning ) {
-        parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
-        monster_plan_chunk_size, [&]( int i ) {
-            precomputed[i] = plannable[i]->compute_plan( plan_ctx );
-        } );
-    } else {
-        for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-            precomputed[i] = plannable[i]->compute_plan( plan_ctx );
-        }
-    }
+    parallel_for( 0, static_cast<int>( plannable.size() ), [&]( int i ) {
+        precomputed[i] = plannable[i]->compute_plan();
+    } );
 
-    // Insert plannable entries into plan_index now that precomputed[] is built.
-    plan_index.reserve( plannable.size() );
+    // Build a pointer → plan-index lookup for O(1) retrieval in the loop.
+    std::unordered_map<monster *, int> plan_lookup;
+    plan_lookup.reserve( plannable.size() );
     for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-        plan_index[plannable[i]] = i;
+        plan_lookup[plannable[i]] = i;
     }
     // -----------------------------------------------------------------------
 
-    // -----------------------------------------------------------------------
-    // LOD-B: Lifecycle loop — runs for EVERY monster regardless of tier or
-    // budget.  Effect durations, hunger, and field damage tick normally for
-    // all monsters.  The budget/tier system gates only the move loop below.
-    // -----------------------------------------------------------------------
     for( monster &critter : all_monsters() ) {
         // Critters in impassable tiles get pushed away, unless it's not impassable for them
         if( !critter.is_dead() && m.impassable( critter.pos() ) && !critter.can_move_to( critter.pos() ) ) {
@@ -4618,7 +4515,35 @@ void game::monmove()
             }
             critter.try_reproduce();
         }
-    }
+
+        // First move: use the pre-computed plan from the parallel phase.
+        // Subsequent moves: fall back to serial plan() — most monsters only
+        // take one step per turn so this covers the common case.
+        bool used_preplan = false;
+        while( critter.moves > 0 && !critter.is_dead() && !critter.has_effect( effect_ridden ) ) {
+            critter.made_footstep = false;
+            // Controlled critters don't make their own plans
+            if( !critter.has_effect( effect_ai_controlled ) ) {
+                if( !used_preplan ) {
+                    used_preplan = true;
+                    const auto it = plan_lookup.find( &critter );
+                    if( it != plan_lookup.end() && !critter.is_dead() ) {
+                        // Apply the parallel-computed plan.
+                        critter.apply_plan( precomputed[it->second] );
+                    } else {
+                        // Monster died in setup, or wasn't eligible at
+                        // collection time — plan serially.
+                        critter.plan();
+                    }
+                } else {
+                    // Subsequent steps for fast/multi-action monsters.
+                    critter.plan();
+                }
+            }
+            critter.move(); // Move one square, possibly hit u
+            critter.process_triggers();
+            m.creature_in_field( critter );
+        }
 
     // -----------------------------------------------------------------------
     // LOD-C: Build eligible list.

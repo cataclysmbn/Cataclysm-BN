@@ -212,7 +212,7 @@ map::map( int mapsize, bool zlev )
 
     dbg( DL::Info ) << "map::map(): my_MAPSIZE: " << my_MAPSIZE << " z-levels enabled:" << zlevels;
     traplocs.resize( trap::count() );
-    skew_vision_cache_mutex = std::make_unique<std::shared_mutex>();
+    skew_vision_cache_mutex = std::make_unique<std::mutex>();
 }
 
 map::~map() = default;
@@ -6797,10 +6797,10 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
         min.x << 16 | min.y << 8 | ( min.z + OVERMAP_DEPTH ),
         max.x << 16 | max.y << 8 | ( max.z + OVERMAP_DEPTH )
     );
-    // P-6 / PERF-LOSS-1: shared_lock for the cache lookup so concurrent readers
-    // don't serialize against each other.  The ray trace runs fully unlocked.
+    // P-6: acquire lock only around the cheap cache operations; the ray trace
+    // runs unlocked so parallel compute_plan() calls do not serialize here.
     {
-        std::shared_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
+        std::lock_guard<std::mutex> lock( *skew_vision_cache_mutex );
         char cached = skew_vision_cache.get( key, -1 );
         if( cached >= 0 ) {
             return cached > 0;
@@ -6828,8 +6828,8 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
             return true;
         } );
         {
-            std::unique_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
-            skew_vision_cache.insert( get_option<int>( "SKEW_VISION_CACHE_SIZE" ), key, visible ? 1 : 0 );
+            std::lock_guard<std::mutex> lock( *skew_vision_cache_mutex );
+            skew_vision_cache.insert( 100000, key, visible ? 1 : 0 );
         }
         return visible;
     }
@@ -6864,8 +6864,8 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
         return true;
     } );
     {
-        std::unique_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
-        skew_vision_cache.insert( get_option<int>( "SKEW_VISION_CACHE_SIZE" ), key, visible ? 1 : 0 );
+        std::lock_guard<std::mutex> lock( *skew_vision_cache_mutex );
+        skew_vision_cache.insert( 100000, key, visible ? 1 : 0 );
     }
     return visible;
 }
@@ -9001,7 +9001,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     // update_suspension_cache is intentionally excluded from this parallel block:
     // it calls support_dirty() which inserts into the shared support_cache_dirty
     // set and is not thread-safe.  It runs in a dedicated serial pass below.
+
     {
+        ZoneScopedN( "Phase1_parallel_caches" );
         std::mutex dirty_mutex;
         parallel_for( minz, maxz + 1, [&]( int z ) {
             // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
@@ -9010,13 +9012,18 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             build_transparency_cache( z );
             const bool floor_dirty = build_floor_cache( z ) && affects_seen_cache;
 
-            diagonal_blocks fill = {false, false};
-            std::uninitialized_fill_n( &( get_cache( z ).vehicle_obscured_cache[0][0] ),
-                                       MAPSIZE_X * MAPSIZE_Y, fill );
-            std::uninitialized_fill_n( &( get_cache( z ).vehicle_obstructed_cache[0][0] ),
-                                       MAPSIZE_X * MAPSIZE_Y, fill );
+            // Guard the 68 KB zero-fills: most z-levels have no vehicles.
+            // veh_in_active_range is set by update_vehicle_list() / clear_vehicle_list().
+            level_cache &ch = get_cache( z );
+            if( ch.veh_in_active_range ) {
+                const diagonal_blocks fill = {false, false};
+                std::uninitialized_fill_n( &ch.vehicle_obscured_cache[0][0],
+                                           MAPSIZE_X * MAPSIZE_Y, fill );
+                std::uninitialized_fill_n( &ch.vehicle_obstructed_cache[0][0],
+                                           MAPSIZE_X * MAPSIZE_Y, fill );
+            }
 
-            const bool level_seen_dirty = get_cache( z ).seen_cache_dirty;
+            const bool level_seen_dirty = ch.seen_cache_dirty;
             if( floor_dirty || level_seen_dirty ) {
                 std::lock_guard<std::mutex> lock( dirty_mutex );
                 seen_cache_dirty = true;
@@ -9028,17 +9035,25 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
     // implicit barrier; outside/transparency/floor caches for all z-levels are complete.
 
-    // update_suspension_cache calls support_dirty() which writes to the shared
-    // support_cache_dirty set; must remain serial.
-    for( int z = minz; z <= maxz; z++ ) {
-        update_suspension_cache( z );
+    {
+        ZoneScopedN( "Phase2_suspension" );
+        // update_suspension_cache calls support_dirty() which writes to the shared
+        // support_cache_dirty set; must remain serial.
+        for( int z = minz; z <= maxz; z++ ) {
+            update_suspension_cache( z );
+        }
     }
 
-    // needs a separate pass as it changes the caches on neighbour z-levels (e.g. floor_cache);
-    // otherwise such changes might be overwritten by main cache-building logic.
-    // This pass must remain serial: do_vehicle_caching() writes to neighbor z-level caches.
-    for( int z = minz; z <= maxz; z++ ) {
-        do_vehicle_caching( z );
+    {
+        ZoneScopedN( "Phase3_vehicles" );
+        // needs a separate pass as it changes the caches on neighbour z-levels (e.g. floor_cache);
+        // otherwise such changes might be overwritten by main cache-building logic.
+        // This pass must remain serial: do_vehicle_caching() writes to neighbor z-level caches.
+        for( int z = minz; z <= maxz; z++ ) {
+            if( get_cache( z ).veh_in_active_range ) {
+                do_vehicle_caching( z );
+            }
+        }
     }
 
     seen_cache_dirty |= build_vision_transparency_cache( get_player_character() );

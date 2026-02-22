@@ -22,11 +22,6 @@ struct monster_plan_t {
     // Movement goal — result of set_dest() / unset_dest() calls during planning.
     // Initialized from the monster's current goal so a no-decision pass is
     // a no-op in apply_plan.
-    //
-    // LOGIC-1: setting local_goal = pos() inside compute_plan() is equivalent
-    // to unset_dest(), because unset_dest() is defined as set_goal(pos()) and
-    // apply_plan() commits via set_goal(plan.goal).  No separate
-    // "unset_dest_requested" flag is necessary.
     tripoint goal;
 
     // Wander state.  Only written when swarm dispersal logic fires;

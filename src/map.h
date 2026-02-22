@@ -10,7 +10,6 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <shared_mutex>
 #include <set>
 #include <string>
 #include <tuple>
@@ -2072,10 +2071,7 @@ class map
          * called in parallel across monsters (P-6).
          */
         mutable lru_cache<point, char> skew_vision_cache;
-        // PERF-LOSS-1: shared_mutex allows concurrent cache reads (common case)
-        // while still serialising inserts.  Use shared_lock for reads and
-        // unique_lock for writes in map::sees().
-        mutable std::unique_ptr<std::shared_mutex> skew_vision_cache_mutex;
+        mutable std::unique_ptr<std::mutex> skew_vision_cache_mutex;
 
         /**
          * Vehicle list doesn't change often, but is pretty expensive.
