@@ -4462,7 +4462,13 @@ void game::monmove()
     // the wandf > 0 check ensures any monster that heard a sound this turn
     // is still planned normally.
     static constexpr int DEFERRAL_RADIUS = 60;
-    std::unordered_set<monster *> deferred;
+
+    // OPP-7: Unified disposition map replaces the old separate deferred set +
+    // plan_lookup table.  A single hash lookup in the execution loop suffices:
+    //   value >= 0  → index into precomputed[] (monster has a parallel plan)
+    //   value == -1 → D-1 deferred (keep existing state, no planning)
+    //   not present → not collected this turn (plan serially)
+    std::unordered_map<monster *, int> plan_index;
 
     std::vector<monster *> plannable;
     for( monster &critter : all_monsters() ) {
@@ -4473,23 +4479,35 @@ void game::monmove()
             if( rl_dist( critter.pos(), u.pos() ) > DEFERRAL_RADIUS &&
                 critter.is_wandering() &&
                 critter.wandf <= 0 ) {
-                deferred.insert( &critter );
+                plan_index[&critter] = -1;  // D-1 deferred
             } else {
                 plannable.push_back( &critter );
             }
         }
     }
 
+    // OPP-1: Pre-warm skew_vision_cache with (monster → player) visibility for
+    // every plannable monster before the parallel phase.  All inserts happen
+    // serially on the main thread, so there is zero lock contention here.  The
+    // parallel phase then predominantly hits the cache and only needs a
+    // shared_lock (PERF-LOSS-1), collapsing contention to near zero.
+    for( monster *mon : plannable ) {
+        mon->sees( u );
+    }
+
+    // PERF-LOSS-2 / OPP-5: parallel_for_chunked with a small chunk size gives the
+    // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
+    // (no ray traces) immediately pull the next chunk rather than sitting idle
+    // while a thread blocked on a costly monster finishes its oversized slice.
     std::vector<monster_plan_t> precomputed( plannable.size() );
-    parallel_for( 0, static_cast<int>( plannable.size() ), [&]( int i ) {
+    parallel_for_chunked( 0, static_cast<int>( plannable.size() ), 8, [&]( int i ) {
         precomputed[i] = plannable[i]->compute_plan();
     } );
 
-    // Build a pointer → plan-index lookup for O(1) retrieval in the loop.
-    std::unordered_map<monster *, int> plan_lookup;
-    plan_lookup.reserve( plannable.size() );
+    // Insert plannable entries into plan_index now that precomputed[] is built.
+    plan_index.reserve( plan_index.size() + plannable.size() );
     for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-        plan_lookup[plannable[i]] = i;
+        plan_index[plannable[i]] = i;
     }
     // -----------------------------------------------------------------------
 
@@ -4540,16 +4558,15 @@ void game::monmove()
             if( !critter.has_effect( effect_ai_controlled ) ) {
                 if( !used_preplan ) {
                     used_preplan = true;
-                    const auto it = plan_lookup.find( &critter );
-                    if( it != plan_lookup.end() && !critter.is_dead() ) {
+                    const auto it = plan_index.find( &critter );
+                    if( it == plan_index.end() ) {
+                        // Not collected this turn (died in setup or ineligible).
+                        critter.plan();
+                    } else if( it->second >= 0 && !critter.is_dead() ) {
                         // Apply the parallel-computed plan.
                         critter.apply_plan( precomputed[it->second] );
-                    } else if( deferred.find( &critter ) == deferred.end() ) {
-                        // Monster died in setup, or wasn't eligible at
-                        // collection time — plan serially.
-                        critter.plan();
                     }
-                    // else: D-1 deferred — monster keeps existing plan.
+                    // else: it->second == -1 → D-1 deferred, keep existing plan.
                 } else {
                     // Subsequent steps for fast/multi-action monsters.
                     critter.plan();

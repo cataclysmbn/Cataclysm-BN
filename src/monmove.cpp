@@ -304,44 +304,6 @@ void monster::wander_to( const tripoint &p, int f )
     wandf = f;
 }
 
-// P-8: per-turn symmetric sight-result cache wrapper.
-// Checks g->turn_sight_cache_ before invoking the full Creature::sees() chain.
-// Key is the sorted (lo-address, hi-address) pointer pair so A→B and B→A share
-// one cache entry (exploiting the symmetry of LOS ray traces).
-//
-// LOGIC-2 / P-5 note: x_in_y aggro-chance rolls inside compute_plan() run on
-// worker-thread RNG (tl_worker_engine).  This is data-race-free (P-5), but it
-// means aggro probabilities are no longer tied to the main-thread minstd_rand0
-// sequence, silently breaking save-file determinism and shifting all subsequent
-// main-thread RNG draws.  If determinism is required, move the x_in_y calls
-// into apply_plan() so they execute on the main thread with the shared engine.
-static bool turn_cached_sees( const Creature &seer, const Creature &target )
-{
-    const Creature *lo = &seer < &target ? &seer : &target;
-    const Creature *hi = &seer < &target ? &target : &seer;
-    const auto key = std::make_pair( lo, hi );
-    {
-        std::shared_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
-        const auto it = g->turn_sight_cache_.find( key );
-        if( it != g->turn_sight_cache_.end() ) {
-            return it->second;
-        }
-    }
-    const bool result = seer.sees( target );
-    {
-        std::unique_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
-        g->turn_sight_cache_.emplace( key, result );
-    }
-    return result;
-}
-
-void monster::prewarm_sight( const Creature &target ) const
-{
-    // Populate turn_sight_cache_ for this (monster, target) pair serially so
-    // the parallel planning phase hits only the shared_lock read path.
-    turn_cached_sees( *this, target );
-}
-
 float monster::rate_target( Creature &c, float best, bool smart, int precalc_dist ) const
 {
     // PERF-LOSS-4: use caller-supplied distance when available to avoid
@@ -443,8 +405,8 @@ monster_plan_t monster::compute_plan() const
                 local_anger += angers_hostile_near;
             }
             if( angers_hostile_near ) {
-                // NOTE: x_in_y uses global RNG — safe while planning is serial.
-                // P-5 will replace this with thread-local RNG.
+                // P-5 is active: x_in_y dispatches to the thread-local RNG engine
+                // (tl_worker_engine) on worker threads, so this is data-race-free.
                 if( x_in_y( local_anger, 100 ) ) {
                     result.aggro_triggers.push_back( "proximity" );
                 }
@@ -517,10 +479,11 @@ monster_plan_t monster::compute_plan() const
         for( monster &tmp : g->all_monsters() ) {
             if( tmp.friendly == 0 ) {
                 // P-4: distance cull — skip ray trace if target is out of range.
-                if( rl_dist( pos(), tmp.pos() ) > max_sight_range ) {
+                const int d_tmp = rl_dist( pos(), tmp.pos() );
+                if( d_tmp > max_sight_range ) {
                     continue;
                 }
-                float rating = rate_target( tmp, dist, smart_planning );
+                float rating = rate_target( tmp, dist, smart_planning, d_tmp );
                 if( rating < dist ) {
                     target = &tmp;
                     dist   = rating;
@@ -545,11 +508,12 @@ monster_plan_t monster::compute_plan() const
         }
 
         // P-4: distance cull.
-        if( rl_dist( pos(), who.pos() ) > max_sight_range ) {
+        const int d_who = rl_dist( pos(), who.pos() );
+        if( d_who > max_sight_range ) {
             continue;
         }
 
-        float rating = rate_target( who, dist, smart_planning );
+        float rating = rate_target( who, dist, smart_planning, d_who );
         bool fleeing_from = is_fleeing( who );
         if( rating == dist && ( fleeing || attitude( &who ) == MATT_ATTACK ) ) {
             ++valid_targets;
@@ -616,11 +580,12 @@ monster_plan_t monster::compute_plan() const
                 monster &mon = *shared;
 
                 // P-4: distance cull.
-                if( rl_dist( pos(), mon.pos() ) > max_sight_range ) {
+                const int d_mon = rl_dist( pos(), mon.pos() );
+                if( d_mon > max_sight_range ) {
                     continue;
                 }
 
-                float rating = rate_target( mon, dist, smart_planning );
+                float rating = rate_target( mon, dist, smart_planning, d_mon );
                 if( rating == dist ) {
                     ++valid_targets;
                     if( one_in( valid_targets ) ) {
@@ -663,11 +628,12 @@ monster_plan_t monster::compute_plan() const
             monster &mon = *shared;
 
             // P-4: distance cull for swarm/morale checks.
-            if( rl_dist( pos(), mon.pos() ) > max_sight_range ) {
+            const int d_swarm = rl_dist( pos(), mon.pos() );
+            if( d_swarm > max_sight_range ) {
                 continue;
             }
 
-            float rating = rate_target( mon, dist, smart_planning );
+            float rating = rate_target( mon, dist, smart_planning, d_swarm );
             if( group_morale && rating <= 10 ) {
                 local_morale += 10 - rating;
             }
