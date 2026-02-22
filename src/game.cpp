@@ -4244,13 +4244,27 @@ void game::monmove()
     // setup phase (process_turn, creature_in_field) simply have their
     // pre-computed plan discarded.
     // -----------------------------------------------------------------------
+    // D-1: monsters beyond this radius that have no target and no sound
+    // stimulus are deferred — they skip plan() entirely and keep their
+    // existing state from last turn.  Imperceptible at normal game speed;
+    // the wandf > 0 check ensures any monster that heard a sound this turn
+    // is still planned normally.
+    static constexpr int DEFERRAL_RADIUS = 60;
+    std::unordered_set<monster *> deferred;
+
     std::vector<monster *> plannable;
     for( monster &critter : all_monsters() ) {
         if( !critter.is_dead() &&
             !critter.has_effect( effect_ai_controlled ) &&
             critter.moves > 0 &&
             !critter.has_effect( effect_ridden ) ) {
-            plannable.push_back( &critter );
+            if( rl_dist( critter.pos(), u.pos() ) > DEFERRAL_RADIUS &&
+                critter.is_wandering() &&
+                critter.wandf <= 0 ) {
+                deferred.insert( &critter );
+            } else {
+                plannable.push_back( &critter );
+            }
         }
     }
 
@@ -4318,11 +4332,12 @@ void game::monmove()
                     if( it != plan_lookup.end() && !critter.is_dead() ) {
                         // Apply the parallel-computed plan.
                         critter.apply_plan( precomputed[it->second] );
-                    } else {
+                    } else if( deferred.find( &critter ) == deferred.end() ) {
                         // Monster died in setup, or wasn't eligible at
                         // collection time — plan serially.
                         critter.plan();
                     }
+                    // else: D-1 deferred — monster keeps existing plan.
                 } else {
                     // Subsequent steps for fast/multi-action monsters.
                     critter.plan();

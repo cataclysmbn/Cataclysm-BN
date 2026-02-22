@@ -1810,6 +1810,8 @@ class vehicle
         bool is_alarm_on = false;
         bool camera_on = false;
         bool autopilot_on = false;
+        // true if any non-broken part has the AUTOLOADER flag; maintained by refresh()
+        bool has_autoloaders = false;
         // skidding mode
         bool skidding = false;
         // has bloody or smoking parts

@@ -5277,9 +5277,25 @@ void map::process_items()
             process_items_in_vehicles( *current_submap );
         }
     }
+    // I-1: Pre-compute player position in absolute submap coordinates.
+    // Items beyond ITEM_PROCESS_RADIUS_SM submaps are skipped this turn;
+    // they have no observable effect at that distance and the deferral is
+    // imperceptible at normal play speed.  1 submap = SEEX (12) tiles, so
+    // radius 6 covers ~72 tiles — comfortably beyond player view range.
+    // Chebyshev distance avoids a sqrt and keeps the check branch-predictable.
+    // NPC/monster proximity can be added here in a future pass if needed.
+    static constexpr int ITEM_PROCESS_RADIUS_SM = 6;
+    const int player_sm_x = abs_sub.x + g->u.posx() / SEEX;
+    const int player_sm_y = abs_sub.y + g->u.posy() / SEEY;
+
     // Making a copy, in case the original variable gets modified during `process_items_in_submap`
     const std::set<tripoint> submaps_with_active_items_copy = submaps_with_active_items;
     for( const tripoint &abs_pos : submaps_with_active_items_copy ) {
+        // I-1: skip submaps too far from the player.
+        if( std::abs( abs_pos.x - player_sm_x ) > ITEM_PROCESS_RADIUS_SM ||
+            std::abs( abs_pos.y - player_sm_y ) > ITEM_PROCESS_RADIUS_SM ) {
+            continue;
+        }
         const tripoint local_pos = abs_pos - abs_sub.xy();
         submap *const current_submap = get_submap_at_grid( local_pos );
         if( !current_submap->active_items.empty() ) {
