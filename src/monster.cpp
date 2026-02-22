@@ -1246,7 +1246,9 @@ void monster::shift( point sm_shift )
 
 detached_ptr<item> monster::set_tack_item( detached_ptr<item> &&to )
 {
-    has_processable_items = true;
+    if( to && to->typeId() != itype_id::NULL_ID() ) {
+        has_processable_items = true;
+    }
     return tack_item.swap( std::move( to ) );
 }
 
@@ -1265,7 +1267,9 @@ item *monster::get_tack_item() const
 
 detached_ptr<item> monster::set_tied_item( detached_ptr<item> &&to )
 {
-    has_processable_items = true;
+    if( to && to->typeId() != itype_id::NULL_ID() ) {
+        has_processable_items = true;
+    }
     return tied_item.swap( std::move( to ) );
 }
 
@@ -1284,7 +1288,9 @@ item *monster::get_tied_item() const
 
 detached_ptr<item> monster::set_armor_item( detached_ptr<item> &&to )
 {
-    has_processable_items = true;
+    if( to && to->typeId() != itype_id::NULL_ID() ) {
+        has_processable_items = true;
+    }
     return armor_item.swap( std::move( to ) );
 }
 
@@ -1303,7 +1309,9 @@ item *monster::get_armor_item() const
 
 detached_ptr<item> monster::set_storage_item( detached_ptr<item> &&to )
 {
-    has_processable_items = true;
+    if( to && to->typeId() != itype_id::NULL_ID() ) {
+        has_processable_items = true;
+    }
     return storage_item.swap( std::move( to ) );
 }
 
@@ -1322,7 +1330,9 @@ item *monster::get_storage_item() const
 
 detached_ptr<item> monster::set_battery_item( detached_ptr<item> &&to )
 {
-    has_processable_items = true;
+    if( to && to->typeId() != itype_id::NULL_ID() ) {
+        has_processable_items = true;
+    }
     return battery_item.swap( std::move( to ) );
 }
 
