@@ -22,9 +22,7 @@ local max_penalty = 30
 local in_darkness_alert = false
 
 ---@return number
-local function nyctophobia_threshold()
-  return gapi.light_ambient_lit() - 3.0
-end
+local function nyctophobia_threshold() return gapi.light_ambient_lit() - 3.0 end
 
 ---@param duration TimeDuration
 ---@return boolean
@@ -64,7 +62,15 @@ local function apply_penalty(who, morale_id, penalty)
     return
   end
 
-  who:add_morale(morale_id, -magnitude, -magnitude, TimeDuration.from_minutes(1), TimeDuration.from_minutes(1), true, nil)
+  who:add_morale(
+    morale_id,
+    -magnitude,
+    -magnitude,
+    TimeDuration.from_minutes(1),
+    TimeDuration.from_minutes(1),
+    true,
+    nil
+  )
 end
 
 ---@param who Character
@@ -235,14 +241,10 @@ local function tick_morale_traits()
       gapi.add_msg(MsgType.bad, locale.gettext("It's so cluttered here..."))
       seen_clutter = true
     end
-    if penalty == 0 then
-      seen_clutter = false
-    end
+    if penalty == 0 then seen_clutter = false end
     if penalty > 0 then
       local chance_scale = math.max(1, math.floor(penalty / 5))
-      if gapi.rng(1, 30) <= chance_scale then
-        drain_focus(you, 1, 20)
-      end
+      if gapi.rng(1, 30) <= chance_scale then drain_focus(you, 1, 20) end
     end
   else
     you:rem_morale(morale_clutter_intolerant)
