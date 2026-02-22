@@ -30,6 +30,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
+#include "monster_plan.h"
 #include "visitable.h"
 
 class Character;
@@ -234,6 +235,18 @@ class monster : public Creature, public location_visitable<monster>
         // How good of a target is given creature (checks for visibility)
         float rate_target( Creature &c, float best, bool smart = false ) const;
         void plan();
+        /**
+         * Pure planning pass: reads game state and returns a fully-described
+         * plan without mutating *this.  Safe to call from a worker thread once
+         * P-5 (thread-local RNG) and P-6 (vision cache mutex) are in place.
+         */
+        monster_plan_t compute_plan() const;
+        /**
+         * Commit phase: applies a previously computed plan to *this.
+         * Must be called on the main thread — calls remove_effect(),
+         * add_faction_anger(), trigger_character_aggro(), etc.
+         */
+        void apply_plan( const monster_plan_t &plan );
         void move(); // Actual movement
         void footsteps( const tripoint &p ); // noise made by movement
         void shove_vehicle( const tripoint &remote_destination,

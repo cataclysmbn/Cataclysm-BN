@@ -9,6 +9,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 #include <tuple>
@@ -2062,8 +2063,11 @@ class map
 
         /**
          * Cache of coordinate pairs recently checked for visibility.
+         * Protected by skew_vision_cache_mutex so that compute_plan() can be
+         * called in parallel across monsters (P-6).
          */
         mutable lru_cache<point, char> skew_vision_cache;
+        mutable std::unique_ptr<std::mutex> skew_vision_cache_mutex;
 
         /**
          * Vehicle list doesn't change often, but is pretty expensive.

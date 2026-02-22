@@ -105,6 +105,7 @@ void map::add_light_from_items( const tripoint &p, const item_stack::iterator &b
 // TODO: Consider making this just clear the cache and dynamically fill it in as is_transparent() is called
 bool map::build_transparency_cache( const int zlev )
 {
+    ZoneScopedN( "build_transparency_cache" );
     auto &map_cache = get_cache( zlev );
     auto &transparency_cache = map_cache.transparency_cache;
     auto &outside_cache = map_cache.outside_cache;

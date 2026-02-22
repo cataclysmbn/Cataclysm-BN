@@ -338,45 +338,73 @@ float monster::rate_target( Creature &c, float best, bool smart ) const
 
 void monster::plan()
 {
+    apply_plan( compute_plan() );
+}
+
+
+monster_plan_t monster::compute_plan() const
+{
     ZoneScoped;
+
+    monster_plan_t result;
+    // Initialise final-value fields from current monster state so a no-op
+    // planning pass is a no-op in apply_plan as well.
+    result.goal     = goal;
+    result.anger    = anger;
+    result.morale   = morale;
+    result.friendly = friendly;
+    result.wander_pos = wander_pos;
+    result.wandf      = wandf;
+
+    // Shadow mutable per-monster fields with locals.  All reads and writes
+    // inside this function use these instead of the monster members.
+    int local_anger   = anger;
+    int local_morale  = morale;
+    int local_friendly = friendly;
+    tripoint local_goal = goal;
 
     const auto &factions = g->critter_tracker->factions();
 
-    // Bots are more intelligent than most living stuff
     bool smart_planning = has_flag( MF_PRIORITIZE_TARGETS );
     Creature *target = nullptr;
     int max_sight_range = std::max( type->vision_day, type->vision_night );
-    // 8.6f is rating for tank drone 60 tiles away, moose 16 or boomer 33
     float dist = !smart_planning ? max_sight_range : 8.6f;
     bool fleeing = false;
-    bool docile = friendly != 0 && has_effect( effect_docile );
+    bool docile  = local_friendly != 0 && has_effect( effect_docile );
     bool waiting = has_effect( effect_ai_waiting );
 
     const bool angers_hostile_weak = type->has_anger_trigger( mon_trigger::HOSTILE_WEAK );
-    const int angers_hostile_near = type->has_anger_trigger( mon_trigger::HOSTILE_CLOSE ) ? 5 : 0;
-    const int angers_mating_season = type->has_anger_trigger( mon_trigger::MATING_SEASON ) ? 3 : 0;
-    const int angers_cub_threatened = type->has_anger_trigger( mon_trigger::PLAYER_NEAR_BABY ) ? 8 : 0;
-    const int fears_hostile_near = type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE ) ? 5 : 0;
+    const int  angers_hostile_near =
+        type->has_anger_trigger( mon_trigger::HOSTILE_CLOSE ) ? 5 : 0;
+    const int  angers_mating_season =
+        type->has_anger_trigger( mon_trigger::MATING_SEASON ) ? 3 : 0;
+    const int  angers_cub_threatened =
+        type->has_anger_trigger( mon_trigger::PLAYER_NEAR_BABY ) ? 8 : 0;
+    const int  fears_hostile_near =
+        type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE ) ? 5 : 0;
 
-    bool group_morale = has_flag( MF_GROUP_MORALE ) && morale < type->morale;
+    bool group_morale = has_flag( MF_GROUP_MORALE ) && local_morale < type->morale;
     bool swarms = has_flag( MF_SWARMS );
-    auto mood = attitude();
+    auto mood   = attitude();
 
-    // If we can see the player, move toward them or flee, simpleminded animals are too dumb to follow the player.
-    if( friendly == 0 && sees( g->u ) && !waiting ) {
-        dist = rate_target( g->u, dist, smart_planning );
+    if( local_friendly == 0 && sees( g->u ) && !waiting ) {
+        dist    = rate_target( g->u, dist, smart_planning );
         fleeing = fleeing || is_fleeing( g->u );
-        target = &g->u;
+        target  = &g->u;
         if( dist <= 5 ) {
             if( has_flag( MF_FACTION_MEMORY ) ) {
-                add_faction_anger( mfaction_id( "player" ), angers_hostile_near );
+                result.faction_angers.push_back( { mfaction_id( "player" ), angers_hostile_near } );
             } else {
-                anger += angers_hostile_near;
+                local_anger += angers_hostile_near;
             }
             if( angers_hostile_near ) {
-                trigger_character_aggro_chance( anger, "proximity" );
+                // NOTE: x_in_y uses global RNG — safe while planning is serial.
+                // P-5 will replace this with thread-local RNG.
+                if( x_in_y( local_anger, 100 ) ) {
+                    result.aggro_triggers.push_back( "proximity" );
+                }
             }
-            morale -= fears_hostile_near;
+            local_morale -= fears_hostile_near;
             if( angers_mating_season > 0 ) {
                 bool mating_angry = false;
                 season_type season = season_of_year( calendar::turn );
@@ -391,53 +419,69 @@ void monster::plan()
                 }
                 if( mating_angry ) {
                     if( has_flag( MF_FACTION_MEMORY ) ) {
-                        add_faction_anger( mfaction_id( "player" ), angers_mating_season );
+                        result.faction_angers.push_back(
+                            { mfaction_id( "player" ), angers_mating_season } );
                     } else {
-                        anger += angers_mating_season;
+                        local_anger += angers_mating_season;
                     }
-                    trigger_character_aggro_chance( anger, "mating season" );
+                    if( x_in_y( local_anger, 100 ) ) {
+                        result.aggro_triggers.push_back( "mating season" );
+                    }
                 }
             }
         }
         if( angers_cub_threatened > 0 ) {
             for( monster &tmp : g->all_monsters() ) {
                 if( type->baby_monster == tmp.type->id ) {
-                    // baby nearby; is the player too close?
+                    // Mirrors original plan(): dist is updated so subsequent
+                    // target selection uses the baby-player distance.
                     dist = tmp.rate_target( g->u, dist, smart_planning );
                     if( dist <= 3 ) {
-                        //proximity to baby; monster gets furious and less likely to flee
                         if( has_flag( MF_FACTION_MEMORY ) ) {
-                            add_faction_anger( mfaction_id( "player" ), angers_cub_threatened );
+                            result.faction_angers.push_back(
+                                { mfaction_id( "player" ), angers_cub_threatened } );
                         } else {
-                            anger += angers_cub_threatened;
+                            local_anger += angers_cub_threatened;
                         }
-                        morale += angers_cub_threatened / 2;
-                        trigger_character_aggro( "threatening cub" );
+                        local_morale += angers_cub_threatened / 2;
+                        result.aggro_triggers.push_back( "threatening cub" );
                     }
                 }
             }
         }
-    } else if( friendly != 0 && !docile && !waiting ) {
+    } else if( local_friendly != 0 && !docile && !waiting ) {
         for( monster &tmp : g->all_monsters() ) {
             if( tmp.friendly == 0 ) {
+                // P-4: distance cull — skip ray trace if target is out of range.
+                if( rl_dist( pos(), tmp.pos() ) > max_sight_range ) {
+                    continue;
+                }
                 float rating = rate_target( tmp, dist, smart_planning );
                 if( rating < dist ) {
                     target = &tmp;
-                    dist = rating;
+                    dist   = rating;
                 }
             }
         }
     }
 
     if( waiting ) {
-        set_dest( pos() );
-        return;
+        result.goal    = pos();
+        result.anger   = local_anger;
+        result.morale  = local_morale;
+        result.friendly = local_friendly;
+        return result;
     }
 
     int valid_targets = ( target == nullptr ) ? 1 : 0;
     for( npc &who : g->all_npcs() ) {
         auto faction_att = faction.obj().attitude( who.get_monster_faction() );
         if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
+            continue;
+        }
+
+        // P-4: distance cull.
+        if( rl_dist( pos(), who.pos() ) > max_sight_range ) {
             continue;
         }
 
@@ -449,24 +493,22 @@ void monster::plan()
                 target = &who;
             }
         }
-        // Switch targets if closer and hostile or scarier than current target
         if( ( rating < dist && fleeing ) ||
             ( faction_att == MFA_HATE ) ||
             ( rating < dist && attitude( &who ) == MATT_ATTACK ) ||
             ( !fleeing && fleeing_from ) ) {
-            target = &who;
-            dist = rating;
+            target       = &who;
+            dist         = rating;
             valid_targets = 1;
         }
         fleeing = fleeing || fleeing_from;
         if( rating <= 5 ) {
-            // NPCs are part of the player faction for anger tracking purposes
             if( has_flag( MF_FACTION_MEMORY ) ) {
-                add_faction_anger( mfaction_id( "player" ), angers_hostile_near );
+                result.faction_angers.push_back( { mfaction_id( "player" ), angers_hostile_near } );
             } else {
-                anger += angers_hostile_near;
+                local_anger += angers_hostile_near;
             }
-            morale -= fears_hostile_near;
+            local_morale -= fears_hostile_near;
             if( angers_mating_season > 0 ) {
                 bool mating_angry = false;
                 season_type season = season_of_year( calendar::turn );
@@ -481,18 +523,21 @@ void monster::plan()
                 }
                 if( mating_angry ) {
                     if( has_flag( MF_FACTION_MEMORY ) ) {
-                        add_faction_anger( mfaction_id( "player" ), angers_mating_season );
+                        result.faction_angers.push_back(
+                            { mfaction_id( "player" ), angers_mating_season } );
                     } else {
-                        anger += angers_mating_season;
+                        local_anger += angers_mating_season;
                     }
-                    trigger_character_aggro_chance( anger, "mating season" );
+                    if( x_in_y( local_anger, 100 ) ) {
+                        result.aggro_triggers.push_back( "mating season" );
+                    }
                 }
             }
         }
     }
 
     fleeing = fleeing || ( mood == MATT_FLEE );
-    if( friendly == 0 ) {
+    if( local_friendly == 0 ) {
         for( const auto &fac : factions ) {
             auto faction_att = faction.obj().attitude( fac.first );
             if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
@@ -505,6 +550,12 @@ void monster::plan()
                     continue;
                 }
                 monster &mon = *shared;
+
+                // P-4: distance cull.
+                if( rl_dist( pos(), mon.pos() ) > max_sight_range ) {
+                    continue;
+                }
+
                 float rating = rate_target( mon, dist, smart_planning );
                 if( rating == dist ) {
                     ++valid_targets;
@@ -513,25 +564,23 @@ void monster::plan()
                     }
                 }
                 if( rating < dist ) {
-                    target = &mon;
-                    dist = rating;
+                    target       = &mon;
+                    dist         = rating;
                     valid_targets = 1;
                 }
                 if( rating <= 5 ) {
                     if( has_flag( MF_FACTION_MEMORY ) ) {
-                        add_faction_anger( mon.faction, angers_hostile_near );
+                        result.faction_angers.push_back( { mon.faction, angers_hostile_near } );
                     } else {
-                        anger += angers_hostile_near;
+                        local_anger += angers_hostile_near;
                     }
-                    morale -= fears_hostile_near;
+                    local_morale -= fears_hostile_near;
                 }
             }
         }
     }
 
-    // Friendly monsters here
-    // Avoid for hordes of same-faction stuff or it could get expensive
-    const auto actual_faction = friendly == 0 ? faction : mfaction_str_id( "player" );
+    const auto actual_faction = local_friendly == 0 ? faction : mfaction_str_id( "player" );
     const auto &myfaction_iter = factions.find( actual_faction );
     if( myfaction_iter == factions.end() ) {
         DebugLog( DL::Error, DC::Game ) << disp_name() << " tried to find faction "
@@ -540,7 +589,7 @@ void monster::plan()
         swarms = false;
         group_morale = false;
     }
-    swarms = swarms && target == nullptr; // Only swarm if we have no target
+    swarms = swarms && target == nullptr;
     if( group_morale || swarms ) {
         for( const weak_ptr_fast<monster> &weak : myfaction_iter->second ) {
             const shared_ptr_fast<monster> shared = weak.lock();
@@ -548,63 +597,62 @@ void monster::plan()
                 continue;
             }
             monster &mon = *shared;
+
+            // P-4: distance cull for swarm/morale checks.
+            if( rl_dist( pos(), mon.pos() ) > max_sight_range ) {
+                continue;
+            }
+
             float rating = rate_target( mon, dist, smart_planning );
             if( group_morale && rating <= 10 ) {
-                morale += 10 - rating;
+                local_morale += 10 - rating;
             }
             if( swarms ) {
-                if( rating < 5 ) { // Too crowded here
-                    wander_pos.x = posx() * rng( 1, 3 ) - mon.posx();
-                    wander_pos.y = posy() * rng( 1, 3 ) - mon.posy();
-                    wandf = 2;
+                if( rating < 5 ) {
+                    result.wander_pos.x = posx() * rng( 1, 3 ) - mon.posx();
+                    result.wander_pos.y = posy() * rng( 1, 3 ) - mon.posy();
+                    result.wandf        = 2;
+                    result.wander_updated = true;
                     target = nullptr;
-                    // Swarm to the furthest ally you can see
                 } else if( rating < FLT_MAX && rating > dist && wandf <= 0 ) {
                     target = &mon;
-                    dist = rating;
+                    dist   = rating;
                 }
             }
         }
     }
 
-    // Docile monsters should ignore targets, so place it after all possible ways target could be selected
     if( docile ) {
-        if( target != nullptr ) {
-            // Stop fighting and focus on following the player
-            target = nullptr;
-        }
+        target = nullptr;
     }
 
-    // Operating monster keep you safe while they operate, how nice....
     if( type->has_special_attack( "OPERATE" ) ) {
-        int prev_friendlyness = friendly;
         if( has_effect( effect_operating ) ) {
-            friendly = 100;
+            local_friendly = 100;
             for( auto critter : g->m.get_creatures_in_radius( pos(), 6 ) ) {
                 monster *mon = dynamic_cast<monster *>( critter );
                 if( mon != nullptr && mon->type->in_species( ZOMBIE ) ) {
-                    anger = 100;
+                    local_anger = 100;
                 } else {
-                    anger = 0;
+                    local_anger = 0;
                 }
             }
-        } else {
-            friendly = prev_friendlyness;
         }
+        // else: prev_friendlyness == local_friendly already, no-op.
     }
 
     if( has_effect( effect_dragging ) ) {
 
         if( type->has_special_attack( "OPERATE" ) ) {
-
             bool found_path_to_couch = false;
-            tripoint tmp( pos() + point( 12, 12 ) );
+            tripoint tmp_far( pos() + point( 12, 12 ) );
             tripoint couch_loc;
-            for( const auto &couch_pos : g->m.find_furnitures_or_vparts_with_flag_in_radius( pos(), 10,
-                    flag_AUTODOC_COUCH ) ) {
+            for( const auto &couch_pos :
+                 g->m.find_furnitures_or_vparts_with_flag_in_radius( pos(), 10,
+                         flag_AUTODOC_COUCH ) ) {
                 if( g->m.clear_path( pos(), couch_pos, 10, 0, 100 ) ) {
-                    if( rl_dist( pos(), couch_pos ) < rl_dist( pos(), tmp ) ) {
-                        tmp = couch_pos;
+                    if( rl_dist( pos(), couch_pos ) < rl_dist( pos(), tmp_far ) ) {
+                        tmp_far = couch_pos;
                         found_path_to_couch = true;
                         couch_loc = couch_pos;
                     }
@@ -612,10 +660,10 @@ void monster::plan()
             }
 
             if( !found_path_to_couch ) {
-                anger = 0;
-                remove_effect( effect_dragging );
+                local_anger = 0;
+                result.effects_to_remove.push_back( effect_dragging );
             } else {
-                set_dest( couch_loc );
+                local_goal = couch_loc;
             }
         }
 
@@ -624,77 +672,107 @@ void monster::plan()
         tripoint dest = target->pos();
         auto att_to_target = attitude_to( *target );
         if( att_to_target == Attitude::A_HOSTILE && !fleeing ) {
-            set_dest( dest );
+            local_goal = dest;
         } else if( fleeing ) {
-            set_dest( tripoint( posx() * 2 - dest.x, posy() * 2 - dest.y, posz() ) );
+            local_goal = tripoint( posx() * 2 - dest.x, posy() * 2 - dest.y, posz() );
         }
         if( angers_hostile_weak && att_to_target != Attitude::A_FRIENDLY ) {
             int hp_per = target->hp_percentage();
             if( hp_per <= 70 ) {
                 int anger_amount = 10 - ( hp_per / 10 );
                 if( has_flag( MF_FACTION_MEMORY ) ) {
-                    // Determine target's faction
                     const monster *target_mon = target->as_monster();
                     if( target_mon != nullptr ) {
-                        add_faction_anger( target_mon->faction, anger_amount );
+                        result.faction_angers.push_back( { target_mon->faction, anger_amount } );
                     } else if( target->is_player() || target->is_npc() ) {
-                        add_faction_anger( mfaction_id( "player" ), anger_amount );
+                        result.faction_angers.push_back(
+                            { mfaction_id( "player" ), anger_amount } );
                     }
                 } else {
-                    anger += anger_amount;
+                    local_anger += anger_amount;
                 }
-                if( anger <= 40 ) {
-                    trigger_character_aggro_chance( anger, "weakness" );
+                if( local_anger <= 40 ) {
+                    if( x_in_y( local_anger, 100 ) ) {
+                        result.aggro_triggers.push_back( "weakness" );
+                    }
                 }
             }
         }
-    } else if( friendly > 0 && one_in( 3 ) ) {
-        // Grow restless with no targets
-        friendly--;
-        // if no target, and friendly pet sees the player
-    } else if( friendly < 0 && sees( g->u ) ) {
-        // eg dogs
+    } else if( local_friendly > 0 && one_in( 3 ) ) {
+        local_friendly--;
+    } else if( local_friendly < 0 && sees( g->u ) ) {
         if( !has_flag( MF_PET_WONT_FOLLOW ) ) {
-            // if too far from the player, go to him
             if( rl_dist( pos(), g->u.pos() ) > 2 ) {
-                set_dest( g->u.pos() );
+                local_goal = g->u.pos();
             } else {
-                unset_dest();
+                local_goal = pos(); // unset_dest
             }
-            // eg cows, horses
         } else {
-            unset_dest();
+            local_goal = pos(); // unset_dest
         }
-        // when the players is close to their pet, it calms them
-        // it helps them reach an homeostatic state, for morale and anger
         const int distance_from_friend = rl_dist( pos(), get_avatar().pos() );
         if( distance_from_friend < 12 ) {
             if( one_in( distance_from_friend * 3 ) ) {
-                if( morale != type->morale ) {
-                    morale += ( morale < type->morale ) ? 1 : -1;
+                if( local_morale != type->morale ) {
+                    local_morale += ( local_morale < type->morale ) ? 1 : -1;
                 }
-                // Don't restore global anger for FACTION_MEMORY monsters
-                if( !has_flag( MF_FACTION_MEMORY ) && anger != type->agro ) {
-                    anger += ( anger < type->agro ) ? 1 : -1;
+                if( !has_flag( MF_FACTION_MEMORY ) && local_anger != type->agro ) {
+                    local_anger += ( local_anger < type->agro ) ? 1 : -1;
                 }
             }
         }
     }
 
-    // being led by a leash override other movements decisions
-    if( has_effect( effect_led_by_leash ) && friendly != 0 ) {
-        // if we have an hostile target adjacent to the payer, and we're not fleeing, we can potentially attack it
+    if( has_effect( effect_led_by_leash ) && local_friendly != 0 ) {
         if( target != nullptr && rl_dist( g->u.pos(), target->pos() ) < 2 &&
             target->attitude_to( g->u ) == Attitude::A_HOSTILE && !fleeing ) {
-            // if we're too far from the player, go back to it
             if( rl_dist( pos(), g->u.pos() ) > 5 ) {
-                set_dest( g->u.pos() );
+                local_goal = g->u.pos();
             }
         } else if( rl_dist( pos(), g->u.pos() ) > 1 ) {
-            set_dest( g->u.pos() );
+            local_goal = g->u.pos();
         } else {
-            unset_dest();
+            local_goal = pos(); // unset_dest
         }
+    }
+
+    result.goal     = local_goal;
+    result.anger    = local_anger;
+    result.morale   = local_morale;
+    result.friendly = local_friendly;
+
+    return result;
+}
+
+void monster::apply_plan( const monster_plan_t &plan )
+{
+    // Apply movement goal.
+    set_goal( plan.goal );
+
+    // Apply stat changes.
+    anger   = plan.anger;
+    morale  = plan.morale;
+    friendly = plan.friendly;
+
+    // Apply wander state if planning updated it.
+    if( plan.wander_updated ) {
+        wander_pos = plan.wander_pos;
+        wandf      = plan.wandf;
+    }
+
+    // Apply deferred effect removals.
+    for( const efftype_id &eff : plan.effects_to_remove ) {
+        remove_effect( eff );
+    }
+
+    // Apply deferred faction anger.
+    for( const auto &fa : plan.faction_angers ) {
+        add_faction_anger( fa.faction, fa.amount );
+    }
+
+    // Apply deferred character aggro triggers.
+    for( const char *reason : plan.aggro_triggers ) {
+        trigger_character_aggro( reason );
     }
 }
 

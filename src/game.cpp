@@ -65,6 +65,8 @@
 #include "coordinates.h"
 #include "crafting.h"
 #include "creature_tracker.h"
+#include "monster_plan.h"
+#include "thread_pool.h"
 #include "cursesport.h"
 #include "damage.h"
 #include "debug.h"
@@ -964,6 +966,7 @@ vehicle *game::place_vehicle_nearby(
 //Make any nearby overmap npcs active, and put them in the right location.
 void game::load_npcs()
 {
+    ZoneScoped;
     const int radius = HALF_MAPSIZE - 1;
     // uses submap coordinates
     std::vector<shared_ptr_fast<npc>> just_added;
@@ -4224,6 +4227,46 @@ void game::monmove()
     ZoneScoped;
     cleanup_dead();
 
+    // -----------------------------------------------------------------------
+    // P-7: Parallel planning pass.
+    //
+    // Collect all monsters that are alive and eligible for AI planning this
+    // turn, compute their plans in parallel, then apply and execute serially.
+    //
+    // compute_plan() is const w.r.t. *this (monster) and only reads shared
+    // game state (map caches, faction data, creature positions).  The only
+    // shared writes are:
+    //   - skew_vision_cache (protected by skew_vision_cache_mutex, P-6)
+    //   - per-thread RNG (thread-local engine, P-5)
+    // This makes the parallel phase data-race-free.
+    //
+    // Over-collection is intentional: monsters that die during the serial
+    // setup phase (process_turn, creature_in_field) simply have their
+    // pre-computed plan discarded.
+    // -----------------------------------------------------------------------
+    std::vector<monster *> plannable;
+    for( monster &critter : all_monsters() ) {
+        if( !critter.is_dead() &&
+            !critter.has_effect( effect_ai_controlled ) &&
+            critter.moves > 0 &&
+            !critter.has_effect( effect_ridden ) ) {
+            plannable.push_back( &critter );
+        }
+    }
+
+    std::vector<monster_plan_t> precomputed( plannable.size() );
+    parallel_for( 0, static_cast<int>( plannable.size() ), [&]( int i ) {
+        precomputed[i] = plannable[i]->compute_plan();
+    } );
+
+    // Build a pointer → plan-index lookup for O(1) retrieval in the loop.
+    std::unordered_map<monster *, int> plan_lookup;
+    plan_lookup.reserve( plannable.size() );
+    for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
+        plan_lookup[plannable[i]] = i;
+    }
+    // -----------------------------------------------------------------------
+
     for( monster &critter : all_monsters() ) {
         // Critters in impassable tiles get pushed away, unless it's not impassable for them
         if( !critter.is_dead() && m.impassable( critter.pos() ) && !critter.can_move_to( critter.pos() ) ) {
@@ -4260,12 +4303,30 @@ void game::monmove()
             }
             critter.try_reproduce();
         }
+
+        // First move: use the pre-computed plan from the parallel phase.
+        // Subsequent moves: fall back to serial plan() — most monsters only
+        // take one step per turn so this covers the common case.
+        bool used_preplan = false;
         while( critter.moves > 0 && !critter.is_dead() && !critter.has_effect( effect_ridden ) ) {
             critter.made_footstep = false;
             // Controlled critters don't make their own plans
             if( !critter.has_effect( effect_ai_controlled ) ) {
-                // Formulate a path to follow
-                critter.plan();
+                if( !used_preplan ) {
+                    used_preplan = true;
+                    const auto it = plan_lookup.find( &critter );
+                    if( it != plan_lookup.end() && !critter.is_dead() ) {
+                        // Apply the parallel-computed plan.
+                        critter.apply_plan( precomputed[it->second] );
+                    } else {
+                        // Monster died in setup, or wasn't eligible at
+                        // collection time — plan serially.
+                        critter.plan();
+                    }
+                } else {
+                    // Subsequent steps for fast/multi-action monsters.
+                    critter.plan();
+                }
             }
             critter.move(); // Move one square, possibly hit u
             critter.process_triggers();
@@ -12303,6 +12364,7 @@ double npc_overmap::spawn_chance_in_hour( int current_npc_count, double density 
 
 void game::perhaps_add_random_npc()
 {
+    ZoneScoped;
     static constexpr time_duration spawn_interval = 1_hours;
     if( !calendar::once_every( spawn_interval ) ) {
         return;
@@ -13340,6 +13402,7 @@ distribution_grid_tracker &get_distribution_grid_tracker()
 
 void cleanup_arenas()
 {
+    ZoneScoped;
     bool cont = true;
     while( cont ) {
         cont = false;

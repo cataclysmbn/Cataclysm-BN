@@ -1,6 +1,10 @@
 #include "thread_pool.h"
 
+#include <chrono>
+#include <functional>
 #include <thread>
+
+#include "rng.h"
 
 cata_thread_pool::cata_thread_pool( unsigned int num_workers )
 {
@@ -26,6 +30,15 @@ cata_thread_pool::~cata_thread_pool()
 
 void cata_thread_pool::worker_loop()
 {
+    // Seed this worker's thread-local RNG so compute_plan() calls do not
+    // race on the main thread's global engine (P-5).
+    // Mix thread ID with current time for a unique-ish seed per worker.
+    const unsigned int seed =
+        static_cast<unsigned int>( std::hash<std::thread::id> {}( std::this_thread::get_id() ) ) ^
+        static_cast<unsigned int>(
+            std::chrono::high_resolution_clock::now().time_since_epoch().count() );
+    rng_set_worker_seed( seed );
+
     while( true ) {
         std::function<void()> task;
         {

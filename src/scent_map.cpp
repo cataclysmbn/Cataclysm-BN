@@ -62,7 +62,7 @@ void scent_map::reset()
 
 void scent_map::decay()
 {
-    ZoneScoped;
+    ZoneScopedN( "scent_map::decay" );
     // Each row of grscent is independent; parallelize over the outer dimension.
     parallel_for( 0, static_cast<int>( grscent.size() ), [&]( int x ) {
         for( auto &val : grscent[x] ) {
@@ -153,6 +153,7 @@ bool scent_map::inbounds( const tripoint &p ) const
 }
 void scent_map::update( const tripoint &center, map &m )
 {
+    ZoneScoped;
     // Stop updating scent after X turns of the player not moving.
     // Once wind is added, need to reset this on wind shifts as well.
     if( !player_last_position || center != *player_last_position ) {
