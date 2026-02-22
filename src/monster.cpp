@@ -1246,6 +1246,7 @@ void monster::shift( point sm_shift )
 
 detached_ptr<item> monster::set_tack_item( detached_ptr<item> &&to )
 {
+    has_processable_items = true;
     return tack_item.swap( std::move( to ) );
 }
 
@@ -1264,6 +1265,7 @@ item *monster::get_tack_item() const
 
 detached_ptr<item> monster::set_tied_item( detached_ptr<item> &&to )
 {
+    has_processable_items = true;
     return tied_item.swap( std::move( to ) );
 }
 
@@ -1282,6 +1284,7 @@ item *monster::get_tied_item() const
 
 detached_ptr<item> monster::set_armor_item( detached_ptr<item> &&to )
 {
+    has_processable_items = true;
     return armor_item.swap( std::move( to ) );
 }
 
@@ -1300,6 +1303,7 @@ item *monster::get_armor_item() const
 
 detached_ptr<item> monster::set_storage_item( detached_ptr<item> &&to )
 {
+    has_processable_items = true;
     return storage_item.swap( std::move( to ) );
 }
 
@@ -1318,6 +1322,7 @@ item *monster::get_storage_item() const
 
 detached_ptr<item> monster::set_battery_item( detached_ptr<item> &&to )
 {
+    has_processable_items = true;
     return battery_item.swap( std::move( to ) );
 }
 
@@ -3018,19 +3023,22 @@ static void process_item_valptr( item *ptr, monster &mon )
 void monster::process_items()
 {
     ZoneScoped;
+    if( !inv.empty() ) {
+        inv.remove_with( [this]( detached_ptr<item> &&it ) {
+            if( it->needs_processing() ) {
+                return item::process( std::move( it ), nullptr, pos(), false );
+            }
+            return std::move( it );
+        } );
+    }
 
-    inv.remove_with( [this]( detached_ptr<item> &&it ) {
-        if( it->needs_processing() ) {
-            return item::process( std::move( it ), nullptr, pos(), false );
-        }
-        return std::move( it );
-    } );
-
-    process_item_valptr( &*storage_item, *this );
-    process_item_valptr( &*armor_item, *this );
-    process_item_valptr( &*tack_item, *this );
-    process_item_valptr( &*tied_item, *this );
-    process_item_valptr( &*battery_item, *this );
+    if( has_processable_items ) {
+        process_item_valptr( &*storage_item, *this );
+        process_item_valptr( &*armor_item, *this );
+        process_item_valptr( &*tack_item, *this );
+        process_item_valptr( &*tied_item, *this );
+        process_item_valptr( &*battery_item, *this );
+    }
 }
 
 namespace
