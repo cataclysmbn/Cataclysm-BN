@@ -321,7 +321,7 @@
     "abstract": "lit_wing_carbon_external",
     "copy-from": "lit_wing_carbon",
     "type": "vehicle_part",
-    "name": "external carbonen wing with lights",
+    "name": "external carbon wing with lights",
     "location": "structural",
     "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "BOARDABLE", "SEAT_REQUIRES_BALANCE" ] }
   },
