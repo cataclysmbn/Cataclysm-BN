@@ -1,0 +1,29 @@
+[
+  {
+    "id": "survivor_radio",
+    "type": "GENERIC",
+    "category": "deployables",
+    "name": { "str": "survivor radio" },
+    "looks_like": "f_scrap_antenna",
+    "description": "A bulky broadcast console with an integrated battery bank and antenna.  Activate to deploy it.",
+    "weight": "8000 g",
+    "volume": "10 L",
+    "price": "250 USD",
+    "price_postapoc": "30 USD",
+    "to_hit": -5,
+    "bashing": 8,
+    "material": [ "steel", "plastic" ],
+    "symbol": "6",
+    "color": "light_green",
+    "flags": [ "ALLOWS_REMOTE_USE" ],
+    "use_action": { "type": "deploy_furn", "furn_type": "f_survivor_radio" }
+  },
+  {
+    "id": "fake_survivor_radio",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str": "survivor radio" },
+    "flags": [ "TRADER_AVOID" ],
+    "use_action": [ "SURVIVOR_RADIO_BROADCAST" ]
+  }
+]

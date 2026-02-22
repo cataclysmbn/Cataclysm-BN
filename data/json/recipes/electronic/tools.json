@@ -304,31 +304,6 @@
   },
   {
     "type": "recipe",
-    "result": "survivor_radio",
-    "category": "CC_ELECTRONIC",
-    "subcategory": "CSC_ELECTRONIC_TOOLS",
-    "skill_used": "electronics",
-    "skills_required": [ "computer", 2 ],
-    "difficulty": 5,
-    "time": "2 h",
-    "reversible": true,
-    "autolearn": true,
-    "using": [ [ "soldering_standard", 20 ] ],
-    "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [
-      [ [ "two_way_radio", 1 ] ],
-      [ [ "amplifier", 1 ] ],
-      [ [ "processor", 1 ] ],
-      [ [ "RAM", 2 ] ],
-      [ [ "power_supply", 1 ] ],
-      [ [ "antenna", 1 ] ],
-      [ [ "cable", 20 ] ],
-      [ [ "sheet_metal", 2 ] ],
-      [ [ "scrap", 8 ] ]
-    ]
-  },
-  {
-    "type": "recipe",
     "result": "electrohack",
     "category": "CC_ELECTRONIC",
     "subcategory": "CSC_ELECTRONIC_TOOLS",
