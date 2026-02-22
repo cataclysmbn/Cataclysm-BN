@@ -10,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
 #include <set>
 #include <string>
 #include <tuple>
@@ -1851,6 +1852,10 @@ class map
         // Builds a transparency cache and returns true if the cache was invalidated.
         // Used to determine if seen cache should be rebuilt.
         bool build_transparency_cache( int zlev );
+        // Refreshes the weather-transparency lookup table if the sight penalty
+        // has changed.  Must be called once serially before any parallel call to
+        // build_transparency_cache() to avoid a data race on the shared table.
+        void update_weather_transparency_lookup();
         bool build_vision_transparency_cache( const Character &player );
         // fills lm with sunlight. pzlev is current player's zlevel
         void build_sunlight_cache( int pzlev );
@@ -2067,7 +2072,10 @@ class map
          * called in parallel across monsters (P-6).
          */
         mutable lru_cache<point, char> skew_vision_cache;
-        mutable std::unique_ptr<std::mutex> skew_vision_cache_mutex;
+        // PERF-LOSS-1: shared_mutex allows concurrent cache reads (common case)
+        // while still serialising inserts.  Use shared_lock for reads and
+        // unique_lock for writes in map::sees().
+        mutable std::unique_ptr<std::shared_mutex> skew_vision_cache_mutex;
 
         /**
          * Vehicle list doesn't change often, but is pretty expensive.

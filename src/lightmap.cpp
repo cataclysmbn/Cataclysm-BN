@@ -102,6 +102,19 @@ void map::add_light_from_items( const tripoint &p, const item_stack::iterator &b
     }
 }
 
+// Refresh the weather-transparency lookup table to match the current sight
+// penalty.  Must be called once serially before any parallel invocation of
+// build_transparency_cache() so that the shared table is never written by
+// more than one thread (RISK-1 fix).
+void map::update_weather_transparency_lookup()
+{
+    const float sight_penalty = get_weather().weather_id->sight_penalty;
+    if( sight_penalty != 1.0f &&
+        LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty != weather_transparency_lookup.transparency ) {
+        weather_transparency_lookup.reset( LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty );
+    }
+}
+
 // TODO: Consider making this just clear the cache and dynamically fill it in as is_transparent() is called
 bool map::build_transparency_cache( const int zlev )
 {
@@ -125,12 +138,10 @@ bool map::build_transparency_cache( const int zlev )
                                    static_cast<float>( LIGHT_TRANSPARENCY_OPEN_AIR ) );
     }
 
+    // weather_transparency_lookup is refreshed once serially by
+    // update_weather_transparency_lookup() before the Phase 1 parallel loop;
+    // reading it here is safe.
     const float sight_penalty = get_weather().weather_id->sight_penalty;
-
-    if( sight_penalty != 1.0f &&
-        LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty != weather_transparency_lookup.transparency ) {
-        weather_transparency_lookup.reset( LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty );
-    }
 
     // Traverse the submaps in order
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {

@@ -9,6 +9,7 @@
 #include <ranges>
 #include <limits>
 #include <mutex>
+#include <shared_mutex>
 #include <optional>
 #include <ostream>
 #include <queue>
@@ -211,7 +212,7 @@ map::map( int mapsize, bool zlev )
 
     dbg( DL::Info ) << "map::map(): my_MAPSIZE: " << my_MAPSIZE << " z-levels enabled:" << zlevels;
     traplocs.resize( trap::count() );
-    skew_vision_cache_mutex = std::make_unique<std::mutex>();
+    skew_vision_cache_mutex = std::make_unique<std::shared_mutex>();
 }
 
 map::~map() = default;
@@ -536,9 +537,12 @@ void map::vehmove()
 
     // (Re)build pq from vehicle_list, applying the V-2 stationary-vehicle filter.
     auto rebuild_pq = [&]() {
-        while( !pq.empty() ) {
-            pq.pop();
-        }
+        // Use swap-with-empty instead of repeated pop() to clear the queue.
+        // pop() calls std::pop_heap which invokes veh_cmp, which dereferences
+        // wrapped_vehicle* pointers.  If vehicle_list was just reassigned
+        // (vehicle-destroyed path), those pointers are dangling; the comparator
+        // dereference would be UB and can corrupt the heap allocator metadata.
+        { VehPQ tmp( veh_cmp ); std::swap( pq, tmp ); }
         for( wrapped_vehicle &w : vehicle_list ) {
             // V-2: gain_moves() sets of_turn=0.001 for velocity==0 non-falling
             // non-autopilot vehicles.  Moving and falling vehicles receive
@@ -597,12 +601,23 @@ void map::vehmove()
         cur_veh->v = cur_veh->v->act_on_map();
 
         if( cur_veh->v == nullptr ) {
-            // Vehicle destroyed; refresh the list and rebuild the heap.
+            // act_on_map() returns nullptr in two cases:
+            //   1. Vehicle destroyed (e.g., fell into void, sank).
+            //   2. Vehicle-vehicle collision: move_vehicle() yields to the hit
+            //      vehicle by returning nullptr (veh_veh_coll_flag path).
+            // In both cases refresh the list so destroyed vehicles are absent
+            // and updated of_turn values are visible to rebuild_pq.
             vehicle_list = get_vehicles();
             rebuild_pq();
-        } else if( cur_veh->v->of_turn > 0 ) {
-            // Still has movement budget this turn; re-enqueue at new priority.
-            pq.push( cur_veh );
+        } else {
+            // Rebuild on every successful move so that any vehicle whose of_turn
+            // was elevated by collision physics this step (e.g., a stationary car
+            // that was rammed) enters the queue.  A vehicle still holding budget
+            // (of_turn >= 1.0) will be re-enqueued naturally by rebuild_pq.
+            // The original vehproceed() did an O(V) scan every iteration anyway,
+            // so this preserves the same asymptotic complexity while fixing the
+            // edge case (BUG-1).
+            rebuild_pq();
         }
 
         update_active_range();
@@ -1055,7 +1070,12 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
         }
 
         veh.of_turn = avg_of_turn * .9;
-        veh2.of_turn = avg_of_turn * 1.1;
+        // Clamp veh2's of_turn to at least 1.0 so the priority-queue scheduler
+        // in vehmove() enqueues the hit vehicle for movement this turn.
+        // Without this the V-2 pq threshold (>= 1.0) would never be reached by
+        // avg * 1.1 alone, leaving the hit vehicle stuck and causing veh1 to
+        // repeatedly ram it every subsequent turn (BUG-1 follow-up).
+        veh2.of_turn = std::max( 1.0f, avg_of_turn * 1.1f );
 
         // Remember that the impulse on vehicle 1 is techncally negative, slowing it
         veh1_impulse = std::abs( m1 * ( vel1_y_a - vel1_y ) );
@@ -5278,13 +5298,16 @@ void map::process_items()
         }
     }
     // I-1: Pre-compute player position in absolute submap coordinates.
-    // Items beyond ITEM_PROCESS_RADIUS_SM submaps are skipped this turn;
-    // they have no observable effect at that distance and the deferral is
-    // imperceptible at normal play speed.  1 submap = SEEX (12) tiles, so
-    // radius 6 covers ~72 tiles — comfortably beyond player view range.
+    // Items beyond ITEM_PROCESS_RADIUS_SM submaps are skipped this turn.
+    // The radius must cover the full loaded map (MAPSIZE × MAPSIZE submaps).
+    // A player in one corner and a fire in the opposite corner are MAPSIZE-1
+    // submaps apart, so any smaller radius would stop fire spread and explosive
+    // timers from ticking.  MAPSIZE is a safe upper bound that guarantees all
+    // active items within the loaded bubble are processed (LOGIC-1 fix).
+    // A per-category exemption (cosmetic vs. critical items) can be layered on
+    // in a future pass if profiling shows this radius is too expensive.
     // Chebyshev distance avoids a sqrt and keeps the check branch-predictable.
-    // NPC/monster proximity can be added here in a future pass if needed.
-    static constexpr int ITEM_PROCESS_RADIUS_SM = 6;
+    static constexpr int ITEM_PROCESS_RADIUS_SM = MAPSIZE;
     const int player_sm_x = abs_sub.x + g->u.posx() / SEEX;
     const int player_sm_y = abs_sub.y + g->u.posy() / SEEY;
 
@@ -5370,6 +5393,12 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
     auto cargo_parts = cur_veh.get_parts_including_carried( VPFLAG_CARGO );
     for( const vpart_reference &vp : cargo_parts ) {
         process_vehicle_items( cur_veh, vp.part_index() );
+    }
+
+    // OPP-4: most vehicles have no active items in cargo; skip the
+    // get_for_processing() call and the loop body entirely.
+    if( cur_veh.active_items.empty() ) {
+        return;
     }
 
     for( item *active_item_ref : cur_veh.active_items.get_for_processing() ) {
@@ -6755,10 +6784,10 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
         min.x << 16 | min.y << 8 | ( min.z + OVERMAP_DEPTH ),
         max.x << 16 | max.y << 8 | ( max.z + OVERMAP_DEPTH )
     );
-    // P-6: acquire lock only around the cheap cache operations; the ray trace
-    // runs unlocked so parallel compute_plan() calls do not serialize here.
+    // P-6 / PERF-LOSS-1: shared_lock for the cache lookup so concurrent readers
+    // don't serialize against each other.  The ray trace runs fully unlocked.
     {
-        std::lock_guard<std::mutex> lock( *skew_vision_cache_mutex );
+        std::shared_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
         char cached = skew_vision_cache.get( key, -1 );
         if( cached >= 0 ) {
             return cached > 0;
@@ -6786,7 +6815,7 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
             return true;
         } );
         {
-            std::lock_guard<std::mutex> lock( *skew_vision_cache_mutex );
+            std::unique_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
             skew_vision_cache.insert( 100000, key, visible ? 1 : 0 );
         }
         return visible;
@@ -6822,7 +6851,7 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
         return true;
     } );
     {
-        std::lock_guard<std::mutex> lock( *skew_vision_cache_mutex );
+        std::unique_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
         skew_vision_cache.insert( 100000, key, visible ? 1 : 0 );
     }
     return visible;
@@ -8949,12 +8978,14 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     bool seen_cache_dirty = false;
     std::vector<int> dirty_seen_cache_levels;
 
+    // RISK-1: Refresh the shared weather-transparency lookup table once, serially,
+    // before the parallel Phase 1 block.  build_transparency_cache() reads the
+    // table on every call, so updating it here guarantees all workers see a
+    // consistent value without a data race.
+    update_weather_transparency_lookup();
+
     // Parallelize the expensive per-z-level cache builds across all z-levels.
     // Each build_*_cache(z) writes only to get_cache(z) — no z-level aliasing.
-    //
-    // Note: build_transparency_cache() may reset a module-level
-    // weather_transparency_lookup table on weather changes.  All z-level tasks
-    // would write the same value (idempotent), so the benign race is accepted.
     //
     // update_suspension_cache is intentionally excluded from this parallel block:
     // it calls support_dirty() which inserts into the shared support_cache_dirty
@@ -9037,12 +9068,15 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             // Multiple dirty levels: hoist shared initialization outside the
             // parallel loop so worker threads never race on cross-level writes.
             //
-            // Step 1: Clear sm and light_source_buffer for every dirty level.
-            // (lm is overwritten entirely by build_sunlight_cache below.)
+            // Step 1: Clear sm, light_source_buffer, and lm for every dirty level.
+            // lm must be explicitly zeroed here: build_sunlight_cache only writes
+            // outdoor tiles, leaving interior cells with stale values from last
+            // turn (e.g., a removed torch would leave a ghost-light patch).
             for( const int z : dirty_seen_cache_levels ) {
                 auto &c = get_cache( z );
                 std::memset( c.sm, 0, sizeof( c.sm ) );
                 std::memset( c.light_source_buffer, 0, sizeof( c.light_source_buffer ) );
+                std::memset( c.lm, 0, sizeof( c.lm ) );
             }
             // Step 2: Build sunlight (writes lm for ALL z-levels, top-to-bottom;
             // must run once and serially before the parallel loop).
@@ -9056,6 +9090,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             // Step 4: Generate per-level dynamic lighting in parallel.
             // skip_shared_init=true: each worker skips the shared-init steps above
             // and only processes entities whose position z matches its own level.
+            //
+            // Pre-warm the vehicle list cache once, serially, before workers
+            // enter generate_lightmap().  get_vehicles() writes last_full_vehicle_list
+            // when the dirty flag is set; multiple threads racing on that write
+            // corrupts the allocator heap metadata.  After this call the flag is
+            // cleared and all workers will only read the cached list — safe.
+            get_vehicles();
             parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
                 generate_lightmap( dirty_seen_cache_levels[i], /*skip_shared_init=*/true );
             } );

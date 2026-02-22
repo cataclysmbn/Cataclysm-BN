@@ -302,9 +302,12 @@ void monster::wander_to( const tripoint &p, int f )
     wandf = f;
 }
 
-float monster::rate_target( Creature &c, float best, bool smart ) const
+float monster::rate_target( Creature &c, float best, bool smart, int precalc_dist ) const
 {
-    const auto d = rl_dist_fast( pos(), c.pos() );
+    // PERF-LOSS-4: use caller-supplied distance when available to avoid
+    // recomputing rl_dist_fast() for targets that already passed a P-4 guard.
+    const auto d = precalc_dist >= 0 ? precalc_dist
+                   : static_cast<int>( rl_dist_fast( pos(), c.pos() ) );
     if( d <= 0 ) {
         return FLT_MAX;
     }
@@ -398,8 +401,8 @@ monster_plan_t monster::compute_plan() const
                 local_anger += angers_hostile_near;
             }
             if( angers_hostile_near ) {
-                // NOTE: x_in_y uses global RNG — safe while planning is serial.
-                // P-5 will replace this with thread-local RNG.
+                // P-5 is active: x_in_y dispatches to the thread-local RNG engine
+                // (tl_worker_engine) on worker threads, so this is data-race-free.
                 if( x_in_y( local_anger, 100 ) ) {
                     result.aggro_triggers.push_back( "proximity" );
                 }
@@ -453,10 +456,11 @@ monster_plan_t monster::compute_plan() const
         for( monster &tmp : g->all_monsters() ) {
             if( tmp.friendly == 0 ) {
                 // P-4: distance cull — skip ray trace if target is out of range.
-                if( rl_dist( pos(), tmp.pos() ) > max_sight_range ) {
+                const int d_tmp = rl_dist( pos(), tmp.pos() );
+                if( d_tmp > max_sight_range ) {
                     continue;
                 }
-                float rating = rate_target( tmp, dist, smart_planning );
+                float rating = rate_target( tmp, dist, smart_planning, d_tmp );
                 if( rating < dist ) {
                     target = &tmp;
                     dist   = rating;
@@ -481,11 +485,12 @@ monster_plan_t monster::compute_plan() const
         }
 
         // P-4: distance cull.
-        if( rl_dist( pos(), who.pos() ) > max_sight_range ) {
+        const int d_who = rl_dist( pos(), who.pos() );
+        if( d_who > max_sight_range ) {
             continue;
         }
 
-        float rating = rate_target( who, dist, smart_planning );
+        float rating = rate_target( who, dist, smart_planning, d_who );
         bool fleeing_from = is_fleeing( who );
         if( rating == dist && ( fleeing || attitude( &who ) == MATT_ATTACK ) ) {
             ++valid_targets;
@@ -552,11 +557,12 @@ monster_plan_t monster::compute_plan() const
                 monster &mon = *shared;
 
                 // P-4: distance cull.
-                if( rl_dist( pos(), mon.pos() ) > max_sight_range ) {
+                const int d_mon = rl_dist( pos(), mon.pos() );
+                if( d_mon > max_sight_range ) {
                     continue;
                 }
 
-                float rating = rate_target( mon, dist, smart_planning );
+                float rating = rate_target( mon, dist, smart_planning, d_mon );
                 if( rating == dist ) {
                     ++valid_targets;
                     if( one_in( valid_targets ) ) {
@@ -599,11 +605,12 @@ monster_plan_t monster::compute_plan() const
             monster &mon = *shared;
 
             // P-4: distance cull for swarm/morale checks.
-            if( rl_dist( pos(), mon.pos() ) > max_sight_range ) {
+            const int d_swarm = rl_dist( pos(), mon.pos() );
+            if( d_swarm > max_sight_range ) {
                 continue;
             }
 
-            float rating = rate_target( mon, dist, smart_planning );
+            float rating = rate_target( mon, dist, smart_planning, d_swarm );
             if( group_morale && rating <= 10 ) {
                 local_morale += 10 - rating;
             }

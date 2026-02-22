@@ -232,8 +232,11 @@ class monster : public Creature, public location_visitable<monster>
         void wander_to( const tripoint &p, int f ); // Try to get to (x, y), we don't know
         // the route.  Give up after f steps.
 
-        // How good of a target is given creature (checks for visibility)
-        float rate_target( Creature &c, float best, bool smart = false ) const;
+        // How good of a target is given creature (checks for visibility).
+        // Pass precalc_dist >= 0 to skip re-computing rl_dist_fast() internally
+        // when the caller already has the distance (PERF-LOSS-4).
+        float rate_target( Creature &c, float best, bool smart = false,
+                           int precalc_dist = -1 ) const;
         void plan();
         /**
          * Pure planning pass: reads game state and returns a fully-described
