@@ -527,29 +527,19 @@ void map::vehmove()
 
     // V-1: Priority queue keyed on of_turn (max-heap) for O(log V) scheduling
     // instead of the previous O(V) linear scan per iteration.
-    auto veh_cmp = []( const wrapped_vehicle * a, const wrapped_vehicle * b ) {
+    auto veh_cmp = []( const wrapped_vehicle *a, const wrapped_vehicle *b ) {
         return a->v->of_turn < b->v->of_turn;
     };
     using VehPQ = std::priority_queue<wrapped_vehicle *,
-          std::vector<wrapped_vehicle *>,
-          decltype( veh_cmp )>;
+                                      std::vector<wrapped_vehicle *>,
+                                      decltype( veh_cmp )>;
     VehPQ pq( veh_cmp );
 
-    // V-3: separate list of falling / aircraft-z-change vehicles, built alongside
-    // the PQ.  Phase 2 scans this small list instead of the full vehicle_list,
-    // reducing the Phase 2 fallback from O(V) to O(falling_count) per iteration.
-    std::vector<wrapped_vehicle *> falling_vehicles;
-
     // (Re)build pq from vehicle_list, applying the V-2 stationary-vehicle filter.
-    // Also rebuilds falling_vehicles.
     auto rebuild_pq = [&]() {
-        // Use swap-with-empty instead of repeated pop() to clear the queue.
-        // pop() calls std::pop_heap which invokes veh_cmp, which dereferences
-        // wrapped_vehicle* pointers.  If vehicle_list was just reassigned
-        // (vehicle-destroyed path), those pointers are dangling; the comparator
-        // dereference would be UB and can corrupt the heap allocator metadata.
-        { VehPQ tmp( veh_cmp ); std::swap( pq, tmp ); }
-        falling_vehicles.clear();
+        while( !pq.empty() ) {
+            pq.pop();
+        }
         for( wrapped_vehicle &w : vehicle_list ) {
             // V-2: gain_moves() sets of_turn=0.001 for velocity==0 non-falling
             // non-autopilot vehicles.  Moving and falling vehicles receive
@@ -557,18 +547,25 @@ void map::vehmove()
             if( w.v->of_turn >= 1.0f ) {
                 pq.push( &w );
             }
-            if( w.v->is_falling || ( w.v->is_aircraft() && w.v->get_z_change() != 0 ) ) {
-                falling_vehicles.push_back( &w );
-            }
         }
     };
     rebuild_pq();
 
-    // PERF-LOSS-2: the update_active_range lambda that previously scanned all
-    // veh_exists_at cells (up to MAPSIZE_X * MAPSIZE_Y per z-level) after every
-    // vehicle move has been removed.  veh_in_active_range is maintained
-    // incrementally by the existing update_vehicle_list() / vehicle removal
-    // paths; a full per-move scan is redundant and O(M²) in the worst case.
+    // Update veh_in_active_range after each vehicle movement (preserves the
+    // semantics of the original vehproceed() cache-maintenance step).
+    auto update_active_range = [&]() {
+        for( int zlev = minz; zlev <= maxz; ++zlev ) {
+            level_cache &cache = get_cache( zlev );
+            cache.veh_in_active_range = cache.veh_in_active_range &&
+                                        std::ranges::any_of( cache.veh_exists_at,
+            []( const auto &row ) {
+                return std::any_of( std::begin( row ), std::end( row ),
+                []( bool veh_exists ) {
+                    return veh_exists;
+                } );
+            } );
+        }
+    };
 
     // 15 equals 3 >50mph vehicles, or up to 15 slow (1 square move) ones
     // But 15 is too low for V12 death-bikes, let's put 100 here
@@ -582,17 +579,13 @@ void map::vehmove()
         }
 
         // Phase 2: Vertical-only fallback (falling / aircraft z-change).
-        // Scan the pre-built falling_vehicles list (O(falling_count)) instead of
-        // the full vehicle_list.  Entries are re-checked for staleness — a vehicle
-        // may have landed or been destroyed since falling_vehicles was last built.
-        // Vehicles that start falling mid-turn (not in falling_vehicles) are caught
-        // on the next turn when rebuild_pq() sees their updated state.
+        // Vehicles that started the turn stationary but began falling mid-turn
+        // will not be in pq; find them with a linear scan when pq is exhausted.
         if( cur_veh == nullptr ) {
-            for( wrapped_vehicle *w : falling_vehicles ) {
-                if( w->v != nullptr &&
-                    ( w->v->is_falling ||
-                      ( w->v->is_aircraft() && w->v->get_z_change() != 0 ) ) ) {
-                    cur_veh = w;
+            for( wrapped_vehicle &vehs_v : vehicle_list ) {
+                if( vehs_v.v->is_falling ||
+                    ( vehs_v.v->is_aircraft() && vehs_v.v->get_z_change() != 0 ) ) {
+                    cur_veh = &vehs_v;
                     break;
                 }
             }
@@ -605,40 +598,15 @@ void map::vehmove()
         cur_veh->v = cur_veh->v->act_on_map();
 
         if( cur_veh->v == nullptr ) {
-            // act_on_map() returns nullptr in two cases:
-            //   1. Vehicle destroyed (e.g., fell into void, sank).
-            //   2. Vehicle-vehicle collision: move_vehicle() yields to the hit
-            //      vehicle by returning nullptr (veh_veh_coll_flag path).
-            // In both cases refresh the list so destroyed vehicles are absent
-            // and updated of_turn values are visible to rebuild_pq.
+            // Vehicle destroyed; refresh the list and rebuild the heap.
             vehicle_list = get_vehicles();
             rebuild_pq();
-        } else {
-            // Re-enqueue if the vehicle still has any remaining movement
-            // budget (of_turn > 0).  This mirrors the old vehproceed() loop
-            // which re-selected a vehicle as long as of_turn > 0, allowing a
-            // fast vehicle to make many moves per vehmove() call (e.g. 27
-            // moves at cruise speed with turn_cost ≈ 0.036).
-            //
-            // The original >= 1.0f threshold was too conservative: after one
-            // move at cruise speed, of_turn drops to ~0.964, which is < 1.0
-            // but still enough budget for 26 more moves.  Dropping out of the
-            // PQ here forced those 26 moves to be deferred to future turns,
-            // causing a ~14% efficiency loss and a rail-test positional miss.
-            //
-            // Stationary vehicles (of_turn = 0.001 from gain_moves) are
-            // excluded at rebuild_pq() time and never reach this branch, so
-            // the V-2 stationary-vehicle optimisation is fully preserved.
-            //
-            // When act_on_map() takes its "can't afford this move" early-
-            // return path it explicitly sets of_turn = 0 and saves
-            // of_turn_carry before returning, so the > 0.f guard here
-            // correctly skips re-enqueueing in that case — carry is already
-            // saved inside act_on_map(), no double-write occurs.
-            if( cur_veh->v->of_turn > 0.f ) {
-                pq.push( cur_veh );
-            }
+        } else if( cur_veh->v->of_turn > 0 ) {
+            // Still has movement budget this turn; re-enqueue at new priority.
+            pq.push( cur_veh );
         }
+
+        update_active_range();
     }
     // Process item removal on the vehicles that were modified this turn.
     // Use a copy because part_removal_cleanup can modify the container.
