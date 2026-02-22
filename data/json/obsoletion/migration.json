@@ -680,15 +680,9 @@
     "flags": [ "resized_large" ]
   },
   {
-    "id": "xlhsurvivor_suit",
+    "id": ["xlhsurvivor_suit", "xlsasurvivor_suit"],
     "type": "MIGRATION",
-    "replace": "hsurvivor_suit",
-    "flags": [ "resized_large" ]
-  },
-  {
-    "id": "xlsasurvivor_suit",
-    "type": "MIGRATION",
-    "replace": "sasurvivor_suit",
+    "replace": "armor_scavenger",
     "flags": [ "resized_large" ]
   },
   {
@@ -728,5 +722,10 @@
     "id": "multi_cooker_filled",
     "type": "MIGRATION",
     "replace": "multi_cooker"
+  },
+  {
+    "id": ["hsurvivor_suit", "sasurvivor_suit", "salsurvivor_suit"],
+    "type": "MIGRATION",
+    "replace": "armor_scavenger"
   }
 ]
