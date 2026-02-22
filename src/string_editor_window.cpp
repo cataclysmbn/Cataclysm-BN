@@ -112,7 +112,7 @@ auto is_number_char( const char c ) -> bool
 
 auto is_lua_keyword( const std::string_view token ) -> bool
 {
-    static constexpr auto keywords = std::array<std::string_view, 22>{
+    static constexpr auto keywords = std::array<std::string_view, 22> {
         "and", "break", "do", "else", "elseif", "end", "false", "for", "function",
         "goto", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then",
         "true", "until", "while"

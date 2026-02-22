@@ -62,7 +62,7 @@ auto format_line_number( const int line_number, const int width ) -> std::string
 }
 
 auto build_numbered_prompt_lines( const std::string &text, const int content_width )
-    -> std::vector<numbered_prompt_line>
+-> std::vector<numbered_prompt_line>
 {
     auto lines = std::vector<numbered_prompt_line>();
     const auto logical_lines = split_prompt_lines( text );
@@ -182,10 +182,11 @@ void show_lua_console_impl()
     auto use_expanded_view = false;
     auto input_area_size = collapsed_input_area_size;
 
-    const auto get_input_area_size = [&]( const point &window_size,
+    const auto get_input_area_size = [&]( const point & window_size,
     const bool expanded ) -> int {
         const auto max_input_size = std::max( collapsed_input_area_size, window_size.y - 8 );
-        if( !expanded ) {
+        if( !expanded )
+        {
             return collapsed_input_area_size;
         }
         const auto target_size = std::max( collapsed_input_area_size, window_size.y / 2 );
@@ -294,9 +295,9 @@ void show_lua_console_impl()
         const auto prompt_text =
             history_cursor == CURRENT_INPUT ? current_input : get_input_history()[history_cursor];
         const auto prompt_line_count = std::max(
-            1,
-            static_cast<int>( split_prompt_lines( prompt_text ).size() )
-        );
+                                           1,
+                                           static_cast<int>( split_prompt_lines( prompt_text ).size() )
+                                       );
         const auto line_number_width =
             std::max( 2, static_cast<int>( std::to_string( prompt_line_count ).size() ) );
         const auto gutter_width = line_number_width + 1;
@@ -384,9 +385,9 @@ void show_lua_console_impl()
             string_editor_window ew(
                 create_string_editor,
                 history_cursor == CURRENT_INPUT ? current_input : get_input_history()[history_cursor],
-                string_editor_window::string_editor_window_options{
-                    .show_line_numbers = true,
-                }
+            string_editor_window::string_editor_window_options{
+                .show_line_numbers = true,
+            }
             );
             std::pair<bool, std::string> res = ew.query_string();
             is_editing = false;
