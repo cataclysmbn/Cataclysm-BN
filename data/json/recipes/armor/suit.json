@@ -268,14 +268,15 @@
     "skills_required": [ "fabrication", 3 ],
     "time": "1 h 20 m",
     "autolearn": true,
-    "using": [ [ "sewing_standard", 90 ], [ "soldering_standard", 18 ] ],
+    "using": [ [ "sewing_advanced", 90 ] ],
+	"tools": [ [ [ "mold_plastic", -1 ] ], [ [ "soldering_standard", 80, "LIST" ], [  "surface_heat", 80, "LIST" ]]],
     "components": [
       [ [ "jacket_army", 1 ], [ "winter_jacket_army", 1 ], [ "jacket_leather", 1 ], [ "jacket_leather_red", 1 ] ],
       [ [ "vest", 1 ], [ "tacvest", 1 ], [ "mbag", 1 ], [ "runner_bag", 1 ] ],
       [ [ "fanny", 2 ], [ "dump_pouch", 1 ], [ "legrig", 2 ] ],
       [ [ "tool_belt", 1 ], [ "legrig", 1 ] ],
       [ [ "pants_army", 1 ], [ "jeans", 1 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ],
+      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ], [ [ "kevlar_plate", 24 ] ],
       [ [ "plastic_chunk", 24 ] ]
     ]
   },
@@ -459,7 +460,7 @@
     "time": "5 h 20 m",
     "autolearn": true,
     "book_learn": [ [ "tailor_portfolio", 7 ], [ "textbook_fireman", 7 ] ],
-    "using": [ [ "sewing_standard", 200 ] ],
+    "using": [ [ "sewing_advanced", 200 ] ],
     "tools": [ [ [ "soldering_standard", 40, "LIST" ], [ "surface_heat", 40, "LIST" ] ] ],
     "components": [
       [ [ "fabric_standard", 4, "LIST" ] ],
@@ -477,7 +478,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 200 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ],[["kevlar_plate", 24]]
     ]
   },
   {
@@ -503,7 +504,7 @@
     "skills_required": [ "fabrication", 6 ],
     "time": "5 h",
     "autolearn": true,
-    "using": [ [ "sewing_standard", 200 ] ],
+    "using": [ [ "sewing_advanced", 200 ] ],
     "tools": [ [ [ "soldering_standard", 80, "LIST" ], [ "surface_heat", 80, "LIST" ] ] ],
     "components": [
       [ [ "fabric_standard", 10, "LIST" ] ],
@@ -520,7 +521,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 400 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ],[["kevlar_plate", 24]]
     ]
   },
   {
@@ -623,7 +624,7 @@
     "skills_required": [ "fabrication", 6 ],
     "time": "3 h",
     "autolearn": true,
-    "using": [ [ "sewing_standard", 100 ] ],
+    "using": [ [ "sewing_advanced", 100 ] ],
     "tools": [ [ [ "soldering_standard", 40, "LIST" ], [ "surface_heat", 40, "LIST" ] ] ],
     "components": [
       [ [ "rag", 30 ] ],
@@ -640,7 +641,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 200 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ],[["kevlar_plate", 24]]
     ]
   },
   {
@@ -711,7 +712,7 @@
     "skills_required": [ "fabrication", 6 ],
     "time": "4 h",
     "autolearn": true,
-    "using": [ [ "sewing_standard", 150 ] ],
+    "using": [ [ "sewing_advanced", 150 ] ],
     "tools": [ [ [ "soldering_standard", 40, "LIST" ], [ "surface_heat", 40, "LIST" ] ] ],
     "components": [
       [ [ "fabric_standard", 20, "LIST" ] ],
@@ -729,7 +730,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 300 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ],[["kevlar_plate", 24]]
     ]
   },
   {
@@ -885,7 +886,7 @@
     "skills_required": [ "fabrication", 6 ],
     "time": "5 h",
     "autolearn": true,
-    "using": [ [ "sewing_standard", 200 ] ],
+    "using": [ [ "sewing_advanced", 200 ] ],
     "tools": [ [ [ "soldering_standard", 40, "LIST" ], [ "surface_heat", 40, "LIST" ] ] ],
     "components": [
       [ [ "fabric_standard", 10, "LIST" ] ],
@@ -904,7 +905,7 @@
         [ "fanny", 2 ]
       ],
       [ [ "duct_tape", 300 ] ],
-      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ]
+      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ], [ "kevlar_plate", 24 ] ],[["kevlar_plate", 24]]
     ]
   },
   {
