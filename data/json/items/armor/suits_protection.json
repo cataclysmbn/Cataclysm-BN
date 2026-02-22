@@ -368,6 +368,16 @@
     "flags": [ "OUTER", "ALLOWS_TAIL" ]
   },
   {
+	  "id": "armor_scrapsuit_superalloy",
+	  "type": "ARMOR",
+    "name": { "str": "superalloy scrap suit" },
+    "description": "A suit of armor made from scraps of metal secured by simple strings, incorporating some advanced alloy plating among the random bits.  It's not comfortable, but the metal is quite strong.",
+	"copy-from": "armor_scrapsuit",
+	"material": [ "superalloy", "iron" ],
+	"proportional": { "weight": 0.8, "volume": 1.2, "price": 2,"price_postapoc": 2 },
+    "relative": { "material_thickness": 1 }
+  },
+  {
     "id": "beekeeping_suit",
     "repairs_like": "trenchcoat",
     "type": "ARMOR",

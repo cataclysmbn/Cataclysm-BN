@@ -273,6 +273,16 @@
     "flags": [ "OUTER", "ALLOWS_TAIL" ]
   },
   {
+	  "id": "legguard_scrap_superalloy",
+	  "type": "ARMOR",
+    "name": { "str": "pair of crude superalloy leg guards", "str_pl": "pairs of crude superalloy leg guards" },
+    "description": "A pair of leg guards made from scraps of metal secured by simple strings, incorporating some advanced alloy plating among the random bits.  They're not comfortable, but the metal is quite strong.",
+	"copy-from": "legguard_scrap",
+	"material": [ "superalloy", "iron" ],
+	"proportional": { "weight": 0.8, "volume": 1.2, "price": 2,"price_postapoc": 2 },
+    "relative": { "material_thickness": 1 }
+  },
+  {
     "id": "lsurvivor_pants",
     "type": "ARMOR",
     "name": { "str_sp": "light survivor cargo pants" },
@@ -385,6 +395,16 @@
     "material": [ "leather", "iron" ],
     "proportional": { "price": 4, "price_postapoc": 1.2, "encumbrance": 1.25 },
     "relative": { "weight": "500 g", "volume": "2 L" }
+  },
+  {
+    "copy-from": "skirt_armor",
+    "id": "skirt_armor_superalloy",
+    "type": "ARMOR",
+    "name": { "str_sp": "superalloy armor skirt" },
+    "description": "An armored skirt made of leather with superalloy plates sewn into it.  It's very strong and light, but covers less than proper leg armor.",
+    "material": [ "leather", "superalloy" ],
+    "proportional": { "price": 8, "price_postapoc": 3, "encumbrance": 1.25 },
+	"relative": { "weight": "400 g", "volume": "2 L" }
   },
   {
     "id": "greaves_bone",

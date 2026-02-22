@@ -13,6 +13,19 @@
     "components": [ [ [ "fabric_hides_proper", 12, "LIST" ] ] ]
   },
   {
+    "result": "armor_lorica_superalloy",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_TORSO",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "time": "6 h",
+    "autolearn": [ [ "tailor", 6 ], [ "fabrication", 7 ] ],
+    "book_learn": [ [ "textbook_armwest", 6 ] ],
+    "using": [ [ "blacksmithing_advanced", 5 ] ],
+    "components": [ [ [ "fabric_hides_proper", 12, "LIST" ] ], [["alloy_sheet", 10]] ]
+  },
+  {
     "result": "apron_leather",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -270,6 +283,20 @@
     "components": [ [ [ "scrap", 80 ], [ "sheet_metal_small", 16 ] ] ]
   },
   {
+    "result": "cuirass_scrap_superalloy",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_TORSO",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "1 h",
+    "autolearn": true,
+    "book_learn": [ [ "recipe_melee", 2 ] ],
+    "using": [ [ "cordage", 1 ] ],
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 3 }, {"id": "SAW_M", "level": 2} ],
+    "components": [ [ [ "scrap", 40 ], [ "sheet_metal_small", 8 ] ], [["alloy_sheet", 8]] ]
+  },
+  {
     "result": "duster",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -454,6 +481,36 @@
     "using": [ [ "sewing_standard", 30 ] ],
     "qualities": [ { "id": "HAMMER", "level": 2 } ],
     "components": [ [ [ "jacket_leather", 1 ], [ "jacket_leather_red", 1 ] ], [ [ "scrap", 9 ], [ "sheet_metal_small", 2 ] ] ]
+  },
+    {
+    "result": "vest_brigandine",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_TORSO",
+    "skill_used": "tailor",
+    "difficulty": 6,
+	"skills_required": [ "fabrication", 3 ],
+    "time": "90 m",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_armwest", 4 ], [ "tailor_portfolio", 4 ] ],
+    "using": [ [ "sewing_standard", 40 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 1 } ],
+  "components": [ [ [ "rag", 22 ] ], [ [ "sheet_metal_small", 18 ] ] ]
+  },
+  {
+    "result": "vest_brigandine_superalloy",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_TORSO",
+    "skill_used": "tailor",
+    "difficulty": 6,
+	"skills_required": [ "fabrication", 5 ],
+    "time": "4 h",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_armwest", 4 ], [ "tailor_portfolio", 4 ] ],
+    "using": [ [ "sewing_standard", 40 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 } ],
+  "components": [ [ [ "rag", 22 ] ], [ [ "alloy_sheet", 8 ] ] ]
   },
   {
     "result": "kevlar",

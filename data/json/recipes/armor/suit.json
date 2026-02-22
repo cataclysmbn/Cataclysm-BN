@@ -309,6 +309,20 @@
     "components": [ [ [ "cuirass_scrap", 1 ] ], [ [ "armguard_scrap", 1 ] ], [ [ "legguard_scrap", 1 ] ] ]
   },
   {
+    "result": "armor_scrapsuit_superalloy",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "20 m",
+    "reversible": true,
+    "autolearn": true,
+    "book_learn": [ [ "recipe_melee", 2 ] ],
+    "using": [ [ "cordage", 1 ] ],
+    "components": [ [ [ "cuirass_scrap_superalloy", 1 ] ], [ [ "armguard_scrap_superalloy", 1 ] ], [ [ "legguard_scrap_superalloy", 1 ] ] ]
+  },
+  {
     "result": "chainmail_hauberk",
     "type": "recipe",
     "category": "CC_ARMOR",

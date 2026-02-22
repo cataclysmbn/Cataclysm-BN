@@ -77,6 +77,17 @@
     "flags": [ "VARSIZE", "OUTER", "STURDY" ]
   },
   {
+    "id": "armor_lorica_superalloy",
+    "type": "ARMOR",
+    "name": { "str_sp": "lorica supermetallica" },
+    "description": "An ancient Roman laminar armor, reproduced with modern superalloy.  The overlapping metal strips are connected with internal leather straps.",
+	"copy-from": "armor_lorica",
+    "material": [ "superalloy", "leather" ],
+    "color": "light_cyan",
+	"encumbrance": 13,
+    "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
+  },
+  {
     "id": "bookplate",
     "type": "ARMOR",
     "name": { "str": "bookplate" },
@@ -196,6 +207,16 @@
     "flags": [ "OUTER" ]
   },
   {
+	  "id": "cuirass_scrap_superalloy",
+	  "type": "ARMOR",
+    "name": { "str": "crude superalloy cuirass", "str_pl": "crude superalloy cuirasses" },
+    "description": "A cuirass made from scraps of metal secured by simple strings, incorporating some advanced alloy plating among the random bits.  It's not comfortable, but the metal is quite strong.",
+	"copy-from": "cuirass_scrap",
+	"material": [ "superalloy", "iron" ],
+	"proportional": { "weight": 0.8, "volume": 1.2, "price": 2,"price_postapoc": 2 },
+    "relative": { "material_thickness": 1 }
+  },
+  {
     "id": "fencing_jacket",
     "repairs_like": "armor_larmor",
     "type": "ARMOR",
@@ -216,6 +237,38 @@
     "material_thickness": 3,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "STURDY", "ALLOWS_WINGS" ]
+  },
+  {
+    "id": "vest_brigandine",
+    "type": "ARMOR",
+    "name": { "str": "makeshift brigandine vest" },
+    "description": "A cloth vest with strips of sheet metal sewn inside it.  Decent armor, and fairly light to wear.",
+    "weight": "4 kg",
+    "volume": "4 L",
+    "price": "400 USD",
+    "price_postapoc": "50 USD",
+    "to_hit": -1,
+    "bashing": 2,
+    "material": [ "iron", "cotton" ],
+    "symbol": "[",
+    "looks_like": "waistcoat",
+    "color": "light_red",
+    "covers": [ "torso" ],
+    "coverage": 90,
+    "encumbrance": 8,
+    "warmth": 10,
+    "material_thickness": 3,
+    "flags": [ "OUTER" ]
+  },
+  {
+    "id": "vest_brigandine_superalloy",
+    "type": "ARMOR",
+    "name": { "str": "superalloy brigandine vest" },
+    "description": "A cloth vest with strips of superalloy sewn inside it.  Very strong and light.",
+    "copy-from": "vest_brigandine",
+    "material": [ "superalloy", "cotton" ],
+    "encumbrance": 6,
+    "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
     "id": "jacket_leather_mod",
