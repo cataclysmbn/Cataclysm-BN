@@ -1021,13 +1021,13 @@ class game
         // access it directly without an additional indirection layer.
         struct TurnSightPairHash {
             size_t operator()( const std::pair<const Creature *, const Creature *> &p ) const noexcept {
-                size_t h1 = std::hash<const Creature *>{}( p.first );
-                size_t h2 = std::hash<const Creature *>{}( p.second );
+                size_t h1 = std::hash<const Creature *> {}( p.first );
+                size_t h2 = std::hash<const Creature *> {}( p.second );
                 return h1 ^ ( h2 * 2654435761ULL );
             }
         };
         std::unordered_map<std::pair<const Creature *, const Creature *>, bool, TurnSightPairHash>
-            turn_sight_cache_;
+        turn_sight_cache_;
         std::shared_mutex turn_sight_cache_mutex_;
     private:
         shared_ptr_fast<player> u_shared_ptr;
