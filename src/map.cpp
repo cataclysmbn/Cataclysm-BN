@@ -524,12 +524,88 @@ void map::vehmove()
         }
     }
 
+    // V-1: Priority queue keyed on of_turn (max-heap) for O(log V) scheduling
+    // instead of the previous O(V) linear scan per iteration.
+    auto veh_cmp = []( const wrapped_vehicle *a, const wrapped_vehicle *b ) {
+        return a->v->of_turn < b->v->of_turn;
+    };
+    using VehPQ = std::priority_queue<wrapped_vehicle *,
+                                      std::vector<wrapped_vehicle *>,
+                                      decltype( veh_cmp )>;
+    VehPQ pq( veh_cmp );
+
+    // (Re)build pq from vehicle_list, applying the V-2 stationary-vehicle filter.
+    auto rebuild_pq = [&]() {
+        while( !pq.empty() ) {
+            pq.pop();
+        }
+        for( wrapped_vehicle &w : vehicle_list ) {
+            // V-2: gain_moves() sets of_turn=0.001 for velocity==0 non-falling
+            // non-autopilot vehicles.  Moving and falling vehicles receive
+            // of_turn = 1 + carry >= 1.0, so this threshold is unambiguous.
+            if( w.v->of_turn >= 1.0f ) {
+                pq.push( &w );
+            }
+        }
+    };
+    rebuild_pq();
+
+    // Update veh_in_active_range after each vehicle movement (preserves the
+    // semantics of the original vehproceed() cache-maintenance step).
+    auto update_active_range = [&]() {
+        for( int zlev = minz; zlev <= maxz; ++zlev ) {
+            level_cache &cache = get_cache( zlev );
+            cache.veh_in_active_range = cache.veh_in_active_range &&
+                                        std::ranges::any_of( cache.veh_exists_at,
+            []( const auto &row ) {
+                return std::any_of( std::begin( row ), std::end( row ),
+                []( bool veh_exists ) {
+                    return veh_exists;
+                } );
+            } );
+        }
+    };
+
     // 15 equals 3 >50mph vehicles, or up to 15 slow (1 square move) ones
     // But 15 is too low for V12 death-bikes, let's put 100 here
-    for( int count = 0; count < 100; count++ ) {
-        if( !vehproceed( vehicle_list ) ) {
+    for( int count = 0; count < 100; ++count ) {
+        wrapped_vehicle *cur_veh = nullptr;
+
+        // Phase 1: Horizontal movement — pop highest-of_turn vehicle from heap.
+        if( !pq.empty() ) {
+            cur_veh = pq.top();
+            pq.pop();
+        }
+
+        // Phase 2: Vertical-only fallback (falling / aircraft z-change).
+        // Vehicles that started the turn stationary but began falling mid-turn
+        // will not be in pq; find them with a linear scan when pq is exhausted.
+        if( cur_veh == nullptr ) {
+            for( wrapped_vehicle &vehs_v : vehicle_list ) {
+                if( vehs_v.v->is_falling ||
+                    ( vehs_v.v->is_aircraft() && vehs_v.v->get_z_change() != 0 ) ) {
+                    cur_veh = &vehs_v;
+                    break;
+                }
+            }
+        }
+
+        if( cur_veh == nullptr ) {
             break;
         }
+
+        cur_veh->v = cur_veh->v->act_on_map();
+
+        if( cur_veh->v == nullptr ) {
+            // Vehicle destroyed; refresh the list and rebuild the heap.
+            vehicle_list = get_vehicles();
+            rebuild_pq();
+        } else if( cur_veh->v->of_turn > 0 ) {
+            // Still has movement budget this turn; re-enqueue at new priority.
+            pq.push( cur_veh );
+        }
+
+        update_active_range();
     }
     // Process item removal on the vehicles that were modified this turn.
     // Use a copy because part_removal_cleanup can modify the container.
