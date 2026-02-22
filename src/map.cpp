@@ -526,12 +526,12 @@ void map::vehmove()
 
     // V-1: Priority queue keyed on of_turn (max-heap) for O(log V) scheduling
     // instead of the previous O(V) linear scan per iteration.
-    auto veh_cmp = []( const wrapped_vehicle *a, const wrapped_vehicle *b ) {
+    auto veh_cmp = []( const wrapped_vehicle * a, const wrapped_vehicle * b ) {
         return a->v->of_turn < b->v->of_turn;
     };
     using VehPQ = std::priority_queue<wrapped_vehicle *,
-                                      std::vector<wrapped_vehicle *>,
-                                      decltype( veh_cmp )>;
+          std::vector<wrapped_vehicle *>,
+          decltype( veh_cmp )>;
     VehPQ pq( veh_cmp );
 
     // (Re)build pq from vehicle_list, applying the V-2 stationary-vehicle filter.
@@ -557,7 +557,7 @@ void map::vehmove()
             level_cache &cache = get_cache( zlev );
             cache.veh_in_active_range = cache.veh_in_active_range &&
                                         std::ranges::any_of( cache.veh_exists_at,
-            []( const auto &row ) {
+            []( const auto & row ) {
                 return std::any_of( std::begin( row ), std::end( row ),
                 []( bool veh_exists ) {
                     return veh_exists;

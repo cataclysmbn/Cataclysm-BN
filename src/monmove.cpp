@@ -420,7 +420,7 @@ monster_plan_t monster::compute_plan() const
                 if( mating_angry ) {
                     if( has_flag( MF_FACTION_MEMORY ) ) {
                         result.faction_angers.push_back(
-                            { mfaction_id( "player" ), angers_mating_season } );
+                        { mfaction_id( "player" ), angers_mating_season } );
                     } else {
                         local_anger += angers_mating_season;
                     }
@@ -439,7 +439,7 @@ monster_plan_t monster::compute_plan() const
                     if( dist <= 3 ) {
                         if( has_flag( MF_FACTION_MEMORY ) ) {
                             result.faction_angers.push_back(
-                                { mfaction_id( "player" ), angers_cub_threatened } );
+                            { mfaction_id( "player" ), angers_cub_threatened } );
                         } else {
                             local_anger += angers_cub_threatened;
                         }
@@ -524,7 +524,7 @@ monster_plan_t monster::compute_plan() const
                 if( mating_angry ) {
                     if( has_flag( MF_FACTION_MEMORY ) ) {
                         result.faction_angers.push_back(
-                            { mfaction_id( "player" ), angers_mating_season } );
+                        { mfaction_id( "player" ), angers_mating_season } );
                     } else {
                         local_anger += angers_mating_season;
                     }
@@ -686,7 +686,7 @@ monster_plan_t monster::compute_plan() const
                         result.faction_angers.push_back( { target_mon->faction, anger_amount } );
                     } else if( target->is_player() || target->is_npc() ) {
                         result.faction_angers.push_back(
-                            { mfaction_id( "player" ), anger_amount } );
+                        { mfaction_id( "player" ), anger_amount } );
                     }
                 } else {
                     local_anger += anger_amount;
