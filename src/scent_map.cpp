@@ -7,7 +7,6 @@
 #include "assign.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "thread_pool.h"
 #include "color.h"
 #include "cuboid_rectangle.h"
 #include "cursesdef.h"
@@ -66,12 +65,16 @@ void scent_map::reset()
 void scent_map::decay()
 {
     ZoneScopedN( "scent_map::decay" );
-    // Each row of grscent is independent; parallelize over the outer dimension.
-    parallel_for( 0, static_cast<int>( grscent.size() ), [&]( int x ) {
-        for( auto &val : grscent[x] ) {
+    // PERF-LOSS-4: reverted to a serial loop.  The grscent array holds roughly
+    // 70 k integers (MAPSIZE_X * MAPSIZE_Y); decrementing each by 1 with a
+    // max(0,…) clamp takes tens of microseconds — less than the thread-dispatch
+    // and std::latch synchronisation overhead of parallel_for on most hardware.
+    // Threading here added complexity without measurable benefit.
+    for( auto &row : grscent ) {
+        for( auto &val : row ) {
             val = std::max( 0, val - 1 );
         }
-    } );
+    }
 }
 
 void scent_map::draw( const catacurses::window &win, const int div, const tripoint &center ) const

@@ -6447,6 +6447,7 @@ void vehicle::refresh()
     extra_drag = 0;
     rail_profile.clear();
     has_autoloaders = false;
+    has_cargo_recharge = false;
 
     // Used to sort part list so it displays properly when examining
     struct sort_veh_part_vector {
@@ -6540,6 +6541,9 @@ void vehicle::refresh()
         }
         if( vpi.has_flag( "AUTOLOADER" ) ) {
             has_autoloaders = true;
+        }
+        if( vpi.has_flag( VPFLAG_RECHARGE ) ) {
+            has_cargo_recharge = true;
         }
         if( vpi.has_flag( VPFLAG_WHEEL ) ) {
             wheelcache.push_back( p );
