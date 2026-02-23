@@ -227,6 +227,31 @@
   },
   {
     "type": "vehicle_part",
+    "id": "sonar_array",
+    "name": { "str": "sonar array" },
+    "symbol": "#",
+    "color": "light_blue",
+    "broken_symbol": "#",
+    "broken_color": "blue",
+    "damage_modifier": 15,
+    "durability": 150,
+    "description": "A set of sonar transducers and electronics used to scan underwater terrain.  Activate it from the vehicle controls to reveal local underwater overmap tiles.",
+    "folded_volume": "2 L",
+    "item": "sonar_device",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "SONAR", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "e_scrap", "count": [ 4, 8 ] }, { "item": "plastic_chunk", "count": [ 2, 6 ] } ]
+  },
+  {
+    "type": "vehicle_part",
     "id": "omnicam",
     "name": { "str": "security camera" },
     "symbol": "o",
