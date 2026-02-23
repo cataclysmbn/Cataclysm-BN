@@ -1094,7 +1094,8 @@ Multiple death functions can be used. Not all combinations make sense.
 - `MF_CARD_OVERRIDE` Not a mech, but can be converted to friendly using an ID card in the same way
   that mechs can.
 - `CONSOLE_DESPAWN` Despawns when a nearby console is properly hacked.
-- `IMMOBILE` Doesn't move (e.g. turrets)
+- `IMMOBILE` Doesn't move & doesn't use non-special attacks (e.g. turrets)
+- `STATIONARY` Stationary, but will fight back (e.g. training dummies )
 - `ID_CARD_DESPAWN` Despawns when a science ID card is used on a nearby console
 - `INTERIOR_AMMO` Monster contains ammo inside itself, no need to load on launch. Prevents ammo from
   being dropped on disable.
@@ -1585,6 +1586,7 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `SPAWN_FRIENDLY` Applied to eggs laid by pets and to pet bots reverted to items. Any monster that
   hatches from said egg will also spawn friendly, and deployable bots flagged with this will skip
   checking for player skills since it's already been configured correctly once already.
+- `SPAWN_HOSTILE` `place_monster` items with this flag will always deploy a monster that's always hostile, such as for a target dummy; Inverse of SPAWN_FRIENDLY
 - `USE_UPS` The tool has the UPS mod and is charged from an UPS.
 - `WARM` A hidden flag used to track an item's journey to/from hot, buffers between HOT and cold.
 - `WET` Item is wet and will slowly dry off (e.g. towel).

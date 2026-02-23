@@ -7,10 +7,10 @@
     "tools": [ [ [ "soldering_iron", 3 ], [ "soldering_ethanol", 30 ], [ "toolset", 1 ] ] ]
   },
   {
-    "id": "replace_door_or_safe_locks",
+    "id": "add_fluid_grid_connection",
     "type": "requirement",
-    "//": "Replace a door or safe lock with a new one.",
-    "components": [ [ [ "scrap", 2 ] ] ],
-    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ]
+    "//": "Connect two fluid grid tiles. Cost is multiplied by number of elements in resulting grid.",
+    "components": [ [ [ "pipe", 1 ] ], [ [ "hose", 2 ] ] ],
+    "tools": [ [ [ "oxy_torch", 5 ], [ "welder", 25 ], [ "fake_gridwelder", 25 ], [ "toolset", 50 ] ] ]
   }
 ]

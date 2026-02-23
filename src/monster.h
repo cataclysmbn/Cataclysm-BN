@@ -304,7 +304,7 @@ class monster : public Creature, public location_visitable<monster>
 
         /** Returns innate monster bash skill, without calculating additional from helpers */
         int bash_skill();
-        int bash_estimate();
+        int bash_estimate( const tripoint &target );
         /** Returns ability of monster and any cooperative helpers to
          * bash the designated target.  **/
         int group_bash_skill( const tripoint &target );
@@ -656,6 +656,7 @@ class monster : public Creature, public location_visitable<monster>
         void nursebot_operate( player *dragged_foe );
 
     protected:
+        bool has_processable_items = false;
         location_ptr<item, false> tied_item; // item used to tie the monster
         location_ptr<item, false> tack_item; // item representing saddle and reins and such
         location_ptr<item, false> armor_item; // item of armor the monster may be wearing

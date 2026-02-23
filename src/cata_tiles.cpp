@@ -21,11 +21,11 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "character_state_provider.h"
 #include "catacharset.h"
 #include "character.h"
 #include "character_id.h"
 #include "clzones.h"
-#include "color.h"
 #include "coordinate_conversions.h"
 #include "cuboid_rectangle.h"
 #include "cursesdef.h"
@@ -38,7 +38,6 @@
 #include "fstream_utils.h"
 #include "game.h"
 #include "game_constants.h"
-#include "hsv_color.h"
 #include "input.h"
 #include "int_id.h"
 #include "init.h"
@@ -57,6 +56,7 @@
 #include "mtype.h"
 #include "npc.h"
 #include "omdata.h"
+#include "options.h"
 #include "output.h"
 #include "overlay_ordering.h"
 #include "overmap_location.h"
@@ -116,7 +116,7 @@ static const std::array<std::string, 8> multitile_keys = {{
 extern int fontwidth;
 extern int fontheight;
 static const std::string empty_string;
-static const std::array<std::string, 13> TILE_CATEGORY_IDS = {{
+static const std::array<std::string, 14> TILE_CATEGORY_IDS = {{
         "", // C_NONE,
         "vehicle_part", // C_VEHICLE_PART,
         "terrain", // C_TERRAIN,
@@ -129,7 +129,8 @@ static const std::array<std::string, 13> TILE_CATEGORY_IDS = {{
         "bullet", // C_BULLET,
         "hit_entity", // C_HIT_ENTITY,
         "weather", // C_WEATHER,
-        "overmap_terrain"
+        "overmap_terrain",
+        "overmap_weather"
     }
 };
 
@@ -630,6 +631,399 @@ static bool is_contained( const SDL_Rect &smaller, const SDL_Rect &larger )
            smaller.y + smaller.h <= larger.y + larger.h;
 }
 
+/**
+ * Creates an identity UV surface for the given dimensions.
+ * In offset mode, all pixels are (127, 127) meaning no displacement.
+ * In normalized mode, pixels map directly to their own coordinates.
+ */
+static SDL_Surface_Ptr create_identity_uv_surface( int w, int h, bool offset_mode )
+{
+    SDL_Surface_Ptr surf = create_surface_32( w, h );
+    if( !surf ) {
+        return nullptr;
+    }
+
+    if( SDL_MUSTLOCK( surf.get() ) ) {
+        SDL_LockSurface( surf.get() );
+    }
+
+    for( int y = 0; y < h; ++y ) {
+        for( int x = 0; x < w; ++x ) {
+            Uint8 r, g;
+            if( offset_mode ) {
+                // 127,127 = no offset (neutral)
+                r = 127;
+                g = 127;
+            } else {
+                // Normalized: map coordinates directly (G inverted for bottom-left origin)
+                r = static_cast<Uint8>( w > 1 ? x * 255 / ( w - 1 ) : 0 );
+                g = static_cast<Uint8>( h > 1 ? 255 - y * 255 / ( h - 1 ) : 255 );
+            }
+            set_pixel_rgba( surf.get(), x, y, r, g, 0, 255 );
+        }
+    }
+
+    if( SDL_MUSTLOCK( surf.get() ) ) {
+        SDL_UnlockSurface( surf.get() );
+    }
+
+    return surf;
+}
+
+/**
+ * Chains a UV modifier onto an existing composite.
+ * In offset mode, offsets are added together.
+ * In normalized mode, the modifier is used to look up coordinates in the composite.
+ */
+static void chain_uv_modifier(
+    SDL_Surface *composite,
+    SDL_Surface *modifier,
+    bool offset_mode )
+{
+    if( !composite || !modifier ) {
+        return;
+    }
+
+    const int w = std::min( composite->w, modifier->w );
+    const int h = std::min( composite->h, modifier->h );
+
+    if( SDL_MUSTLOCK( composite ) ) {
+        SDL_LockSurface( composite );
+    }
+    if( SDL_MUSTLOCK( modifier ) ) {
+        SDL_LockSurface( modifier );
+    }
+
+    // Temporary copy to avoid reading modified values during iteration
+    struct uv_pixel {
+        Uint8 r, g;
+    };
+    std::vector<uv_pixel> temp_pixels( w * h );
+
+    for( int y = 0; y < h; ++y ) {
+        for( int x = 0; x < w; ++x ) {
+            // Read composite pixel
+            Uint8 comp_r, comp_g, comp_b, comp_a;
+            get_pixel_rgba( composite, x, y, comp_r, comp_g, comp_b, comp_a );
+
+            // Read modifier pixel
+            Uint8 mod_r, mod_g, mod_b, mod_a;
+            get_pixel_rgba( modifier, x, y, mod_r, mod_g, mod_b, mod_a );
+
+            uv_pixel &result = temp_pixels[y * w + x];
+
+            if( offset_mode ) {
+                // Add offsets together (can temporarily exceed bounds)
+                int new_r = static_cast<int>( comp_r ) + ( static_cast<int>( mod_r ) - 127 );
+                int new_g = static_cast<int>( comp_g ) + ( static_cast<int>( mod_g ) - 127 );
+                result.r = static_cast<Uint8>( std::clamp( new_r, 0, 255 ) );
+                result.g = static_cast<Uint8>( std::clamp( new_g, 0, 255 ) );
+            } else {
+                // Normalized: the modifier's UV encodes positions relative to its own
+                // dimensions. Convert to composite space (here at origin, so dst=0).
+                int sample_x = modifier->w > 1 ? ( mod_r * ( modifier->w - 1 ) + 127 ) / 255 : 0;
+                int sample_y = modifier->h > 1 ? ( ( 255 - mod_g ) * ( modifier->h - 1 ) + 127 ) / 255 : 0;
+                sample_x = std::clamp( sample_x, 0, composite->w - 1 );
+                sample_y = std::clamp( sample_y, 0, composite->h - 1 );
+
+                Uint8 sampled_r, sampled_g, sampled_b, sampled_a;
+                get_pixel_rgba( composite, sample_x, sample_y, sampled_r, sampled_g, sampled_b, sampled_a );
+
+                result.r = sampled_r;
+                result.g = sampled_g;
+            }
+        }
+    }
+
+    // Copy results back to composite
+    for( int y = 0; y < h; ++y ) {
+        for( int x = 0; x < w; ++x ) {
+            const uv_pixel &p = temp_pixels[y * w + x];
+            set_pixel_rgba( composite, x, y, p.r, p.g, 0, 255 );
+        }
+    }
+
+    if( SDL_MUSTLOCK( composite ) ) {
+        SDL_UnlockSurface( composite );
+    }
+    if( SDL_MUSTLOCK( modifier ) ) {
+        SDL_UnlockSurface( modifier );
+    }
+}
+
+/** Chains a UV modifier onto composite at a specific position. */
+static void chain_uv_modifier_at(
+    SDL_Surface *composite,
+    SDL_Surface *modifier,
+    bool offset_mode,
+    int dst_x,
+    int dst_y )
+{
+    if( !composite || !modifier ) {
+        return;
+    }
+
+    if( SDL_MUSTLOCK( composite ) ) {
+        SDL_LockSurface( composite );
+    }
+    if( SDL_MUSTLOCK( modifier ) ) {
+        SDL_LockSurface( modifier );
+    }
+
+    // Calculate the overlap region
+    const int start_x = std::max( 0, dst_x );
+    const int start_y = std::max( 0, dst_y );
+    const int end_x = std::min( composite->w, dst_x + modifier->w );
+    const int end_y = std::min( composite->h, dst_y + modifier->h );
+
+    if( start_x >= end_x || start_y >= end_y ) {
+        // No overlap
+        if( SDL_MUSTLOCK( composite ) ) {
+            SDL_UnlockSurface( composite );
+        }
+        if( SDL_MUSTLOCK( modifier ) ) {
+            SDL_UnlockSurface( modifier );
+        }
+        return;
+    }
+
+    const int overlap_w = end_x - start_x;
+    const int overlap_h = end_y - start_y;
+
+    struct uv_pixel {
+        Uint8 r, g, a;
+    };
+    std::vector<uv_pixel> temp_pixels( overlap_w * overlap_h );
+
+    for( int y = 0; y < overlap_h; ++y ) {
+        for( int x = 0; x < overlap_w; ++x ) {
+            const int comp_x = start_x + x;
+            const int comp_y = start_y + y;
+            const int mod_x = comp_x - dst_x;
+            const int mod_y = comp_y - dst_y;
+
+            // Read composite pixel
+            Uint8 comp_r, comp_g, comp_b, comp_a;
+            get_pixel_rgba( composite, comp_x, comp_y, comp_r, comp_g, comp_b, comp_a );
+
+            // Read modifier pixel
+            Uint8 mod_r, mod_g, mod_b, mod_a;
+            get_pixel_rgba( modifier, mod_x, mod_y, mod_r, mod_g, mod_b, mod_a );
+
+            uv_pixel &result = temp_pixels[y * overlap_w + x];
+
+            // If modifier alpha is 0, mark this pixel as transparent (discard)
+            if( mod_a == 0 ) {
+                result.r = 0;
+                result.g = 0;
+                result.a = 0;
+                continue;
+            }
+
+            if( offset_mode ) {
+                // Add offsets together
+                int new_r = static_cast<int>( comp_r ) + ( static_cast<int>( mod_r ) - 127 );
+                int new_g = static_cast<int>( comp_g ) + ( static_cast<int>( mod_g ) - 127 );
+                result.r = static_cast<Uint8>( std::clamp( new_r, 0, 255 ) );
+                result.g = static_cast<Uint8>( std::clamp( new_g, 0, 255 ) );
+                result.a = 255;
+            } else {
+                // Normalized: the modifier's UV encodes target positions relative to the
+                // modifier's own coordinate space. Convert to composite space by adding
+                // the destination offset.
+                int sample_x_in_mod = modifier->w > 1 ? ( mod_r * ( modifier->w - 1 ) + 127 ) / 255 : 0;
+                int sample_y_in_mod = modifier->h > 1 ? ( ( 255 - mod_g ) * ( modifier->h - 1 ) + 127 ) / 255 : 0;
+                int sample_x = dst_x + sample_x_in_mod;
+                int sample_y = dst_y + sample_y_in_mod;
+                sample_x = std::clamp( sample_x, 0, composite->w - 1 );
+                sample_y = std::clamp( sample_y, 0, composite->h - 1 );
+
+                Uint8 sampled_r, sampled_g, sampled_b, sampled_a;
+                get_pixel_rgba( composite, sample_x, sample_y, sampled_r, sampled_g, sampled_b, sampled_a );
+
+                result.r = sampled_r;
+                result.g = sampled_g;
+                result.a = 255;
+            }
+        }
+    }
+
+    // Copy results back to composite
+    for( int y = 0; y < overlap_h; ++y ) {
+        for( int x = 0; x < overlap_w; ++x ) {
+            const int comp_x = start_x + x;
+            const int comp_y = start_y + y;
+            const uv_pixel &p = temp_pixels[y * overlap_w + x];
+            set_pixel_rgba( composite, comp_x, comp_y, p.r, p.g, 0, p.a );
+        }
+    }
+
+    if( SDL_MUSTLOCK( composite ) ) {
+        SDL_UnlockSurface( composite );
+    }
+    if( SDL_MUSTLOCK( modifier ) ) {
+        SDL_UnlockSurface( modifier );
+    }
+}
+
+/**
+ * Applies a UV modifier to a source surface, producing a remapped result.
+ * Each pixel is sampled from a location determined by the UV modifier.
+ */
+static void apply_uv_remap(
+    SDL_Surface *dst, const SDL_Rect &dstRect,
+    SDL_Surface *src, const SDL_Rect &srcRect,
+    SDL_Surface *uv_modifier,
+    const point uv_modifier_offset,
+    const bool offset_mode,
+    const point sprite_offset,
+    const point output_offset,  // Offset of output rect relative to sprite origin (for expanded output)
+    const int std_tile_w,
+    const int std_tile_h,
+    color_pixel_function_pointer color_func = nullptr )
+{
+    if( !dst || !src || !uv_modifier ) {
+        return;
+    }
+
+    // Copy source to a temporary surface for consistent pixel format
+    SDL_Surface_Ptr src_copy = create_surface_32( srcRect.w, srcRect.h );
+    if( !src_copy ) {
+        return;
+    }
+    SDL_SetSurfaceBlendMode( src, SDL_BLENDMODE_NONE );
+    SDL_Rect src_copy_rect = { 0, 0, srcRect.w, srcRect.h };
+    SDL_BlitSurface( src, const_cast<SDL_Rect *>( &srcRect ), src_copy.get(), &src_copy_rect );
+
+    if( SDL_MUSTLOCK( dst ) ) {
+        SDL_LockSurface( dst );
+    }
+    if( SDL_MUSTLOCK( src_copy.get() ) ) {
+        SDL_LockSurface( src_copy.get() );
+    }
+    if( SDL_MUSTLOCK( uv_modifier ) ) {
+        SDL_LockSurface( uv_modifier );
+    }
+
+    // Clear the destination to transparent
+    for( int y = 0; y < dstRect.h; ++y ) {
+        for( int x = 0; x < dstRect.w; ++x ) {
+            set_pixel_rgba( dst, x + dstRect.x, y + dstRect.y, 0, 0, 0, 0 );
+        }
+    }
+
+    // Iterate over UV modifier bounds
+    // output_offset tells us where the output rect starts relative to sprite origin
+    // So a pixel at UV position (uv_x, uv_y) maps to:
+    //   - tile-relative position: uv_modifier_offset + (uv_x, uv_y)
+    //   - sprite-local position: tile-relative - sprite_offset
+    //   - output position: sprite-local - output_offset
+    for( int uv_y = 0; uv_y < uv_modifier->h; ++uv_y ) {
+        for( int uv_x = 0; uv_x < uv_modifier->w; ++uv_x ) {
+            // Position relative to standard tile origin
+            const int tile_rel_x = uv_modifier_offset.x + uv_x;
+            const int tile_rel_y = uv_modifier_offset.y + uv_y;
+
+            // Position relative to sprite origin
+            const int sprite_local_x = tile_rel_x - sprite_offset.x;
+            const int sprite_local_y = tile_rel_y - sprite_offset.y;
+
+            // Position in output rect (accounting for output offset)
+            const int dst_x = sprite_local_x - output_offset.x;
+            const int dst_y = sprite_local_y - output_offset.y;
+
+            // Skip if outside destination rect
+            if( dst_x < 0 || dst_x >= dstRect.w || dst_y < 0 || dst_y >= dstRect.h ) {
+                continue;
+            }
+
+            Uint8 uv_r, uv_g, uv_b, uv_a;
+            get_pixel_rgba( uv_modifier, uv_x, uv_y, uv_r, uv_g, uv_b, uv_a );
+
+            // Alpha=0 means render transparent
+            if( uv_a == 0 ) {
+                set_pixel_rgba( dst, dst_x + dstRect.x, dst_y + dstRect.y, 0, 0, 0, 0 );
+                continue;
+            }
+
+            int src_x, src_y;
+            if( offset_mode ) {
+                // Offset mode: 127 = neutral, apply offset from sprite-local position
+                src_x = sprite_local_x + ( static_cast<int>( uv_r ) - 127 );
+                src_y = sprite_local_y + ( static_cast<int>( uv_g ) - 127 );
+            } else {
+                // Normalized mode: UV maps to modifier bounds, then to sprite coords (G inverted)
+                int uv_target_x = uv_modifier->w > 1 ? ( uv_r * ( uv_modifier->w - 1 ) + 127 ) / 255 : 0;
+                int uv_target_y = uv_modifier->h > 1 ? ( ( 255 - uv_g ) * ( uv_modifier->h - 1 ) + 127 ) / 255 : 0;
+                int target_rel_x = uv_modifier_offset.x + uv_target_x;
+                int target_rel_y = uv_modifier_offset.y + uv_target_y;
+                src_x = target_rel_x - sprite_offset.x;
+                src_y = target_rel_y - sprite_offset.y;
+            }
+
+            if( src_x < 0 || src_x >= srcRect.w || src_y < 0 || src_y >= srcRect.h ) {
+                set_pixel_rgba( dst, dst_x + dstRect.x, dst_y + dstRect.y, 0, 0, 0, 0 );
+            } else {
+                Uint8 sr, sg, sb, sa;
+                get_pixel_rgba( src_copy.get(), src_x, src_y, sr, sg, sb, sa );
+                if( color_func && sa > 0 ) {
+                    SDL_Color c = color_func( SDL_Color{ sr, sg, sb, sa } );
+                    sr = c.r;
+                    sg = c.g;
+                    sb = c.b;
+                    sa = c.a;
+                }
+                set_pixel_rgba( dst, dst_x + dstRect.x, dst_y + dstRect.y, sr, sg, sb, sa );
+            }
+        }
+    }
+
+    // Fill areas outside UV modifier bounds but inside sprite bounds with original pixels
+    for( int y = 0; y < srcRect.h; ++y ) {
+        for( int x = 0; x < srcRect.w; ++x ) {
+            // Position relative to standard tile origin
+            const int tile_rel_x = x + sprite_offset.x;
+            const int tile_rel_y = y + sprite_offset.y;
+
+            // Position within UV modifier surface
+            const int uv_check_x = tile_rel_x - uv_modifier_offset.x;
+            const int uv_check_y = tile_rel_y - uv_modifier_offset.y;
+
+            const bool in_uv_bounds = uv_check_x >= 0 && uv_check_x < uv_modifier->w &&
+                                      uv_check_y >= 0 && uv_check_y < uv_modifier->h;
+
+            if( !in_uv_bounds ) {
+                // Outside UV bounds: pass-through original pixel
+                // Map sprite-local (x, y) to output position
+                const int dst_x = x - output_offset.x;
+                const int dst_y = y - output_offset.y;
+                if( dst_x >= 0 && dst_x < dstRect.w && dst_y >= 0 && dst_y < dstRect.h ) {
+                    Uint8 sr, sg, sb, sa;
+                    get_pixel_rgba( src_copy.get(), x, y, sr, sg, sb, sa );
+                    if( color_func && sa > 0 ) {
+                        SDL_Color c = color_func( SDL_Color{ sr, sg, sb, sa } );
+                        sr = c.r;
+                        sg = c.g;
+                        sb = c.b;
+                        sa = c.a;
+                    }
+                    set_pixel_rgba( dst, dst_x + dstRect.x, dst_y + dstRect.y, sr, sg, sb, sa );
+                }
+            }
+        }
+    }
+
+    if( SDL_MUSTLOCK( dst ) ) {
+        SDL_UnlockSurface( dst );
+    }
+    if( SDL_MUSTLOCK( src_copy.get() ) ) {
+        SDL_UnlockSurface( src_copy.get() );
+    }
+    if( SDL_MUSTLOCK( uv_modifier ) ) {
+        SDL_UnlockSurface( uv_modifier );
+    }
+}
+
 bool tileset_loader::copy_surface_to_texture( const SDL_Surface_Ptr &surf, const point offset,
         std::vector<texture> &target ) const
 {
@@ -709,9 +1103,13 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
             SDL_RenderCopy( renderer.get(), st_tex, &st_sub_rect, &atl_tex.second );
         }
 
-        const auto tex_key = tileset_lookup_key{ index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR };
-        auto& [at_tex, at_rect] = atl_tex;
-        ts.tile_lookup.emplace( tex_key, texture( std::move( at_tex ), at_rect ) );
+        const auto tex_key = tileset_lookup_key{ index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, TILESET_NO_WARP, point_zero };
+        auto &[at_tex, at_rect] = atl_tex;
+        auto [it, ok] = ts.tile_lookup.emplace( tex_key, tileset::tile_lookup_entry{ texture( std::move( at_tex ), at_rect ), point_zero } );
+        if( !ok ) {
+            dbg( DL::Error ) << "dynamic atlas hash collision, you will likely see minor graphical issues" <<
+                             std::endl;
+        }
     }
     sdl_restore_render_state( renderer.get(), state );
 
@@ -756,38 +1154,174 @@ static T ilerp( const T a, const T b, const U t )
 };
 
 static void apply_surf_blend_effect(
-    SDL_Surface *staging, const SDL_Color &color, const bool use_mask,
+    SDL_Surface *staging, const tint_config &tint, const bool use_mask,
     const SDL_Rect &dstRect, const SDL_Rect &srcRect, const SDL_Rect &maskRect )
 {
     ZoneScoped;
 
-    const HSVColor dest_hsv = rgb2hsv( color );
-    constexpr auto overlay = []( const uint8_t lower, const uint8_t upper ) -> uint8_t {
-        if( lower > 127 )
+    const auto blend_op = [&tint]( const SDL_Color base, const SDL_Color target,
+    std::optional<SDL_Color> mask = std::nullopt ) -> SDL_Color {
+        SDL_Color col;
+
+        switch( tint.blend_mode )
         {
-            const auto u = ( 255 - lower ) * 255 / 127;
-            const auto m = lower - ( 255 - lower );
-            const auto o = ( upper * u / 255 ) + m;
-            return std::clamp<uint8_t>( o, 0, 255 );
-        } else
-        {
-            const auto u = ( lower * 255 / 127 );
-            const auto o = upper * u / 255;
-            return std::clamp<uint8_t>( o, 0, 255 );
+            case tint_blend_mode::additive: {
+                col = RGBColor{
+                    static_cast<uint8_t>( std::min<int>( base.r + target.r, 255 ) ),
+                    static_cast<uint8_t>( std::min<int>( base.g + target.g, 255 ) ),
+                    static_cast<uint8_t>( std::min<int>( base.b + target.b, 255 ) ),
+                    static_cast<uint8_t>( std::min<int>( base.a + target.a, 255 ) ) };
+                break;
+            }
+            case tint_blend_mode::subtract: {
+                col = RGBColor{ static_cast<uint8_t>( std::max<int>( base.r - ( 255 - target.r ), 0 ) ),
+                                static_cast<uint8_t>( std::max<int>( base.g - ( 255 - target.g ), 0 ) ),
+                                static_cast<uint8_t>( std::max<int>( base.b - ( 255 - target.b ), 0 ) ), base.a };
+                break;
+            }
+            case tint_blend_mode::multiply: {
+                col = RGBColor{ static_cast<uint8_t>( base.r *target.r / 256 ),
+                                static_cast<uint8_t>( base.g *target.g / 256 ),
+                                static_cast<uint8_t>( base.b *target.b / 256 ), base.a };
+                break;
+            }
+            case tint_blend_mode::normal: {
+                // A truely accurate normal blend would use the alpha from the target, but that'd be useless here.
+                col = RGBColor{ static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.r, target.r, target.a ) ),
+                                static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.g, target.g, target.a ) ),
+                                static_cast<uint8_t>( ilerp<uint16_t, uint8_t>( base.b, target.b, target.a ) ), base.a };
+                break;
+            }
+            case tint_blend_mode::divide: {
+                col = RGBColor{ static_cast<uint8_t>( base.r / std::max<uint8_t>( 1, target.r ) ),
+                                static_cast<uint8_t>( base.g / std::max<uint8_t>( 1, target.g ) ),
+                                static_cast<uint8_t>( base.b / std::max<uint8_t>( 1, target.b ) ), base.a };
+                break;
+            }
+            case tint_blend_mode::screen: {
+                auto screen_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
+                    int result = std::clamp<int>( 255 - ( 255 - base ) * ( 255 - blend ) / 128, 0, 255 );
+                    return std::clamp<int>( result, 0, 255 );
+                };
+                col = SDL_Color{
+                    screen_channel( base.r, target.r ),
+                    screen_channel( base.g, target.g ),
+                    screen_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
+            case tint_blend_mode::softlight: {
+                auto softlight_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
+                    // Pegtop soft light formula
+                    int result = ( ( 255 - 2 * blend ) * base *base / 256 + 2 * blend * base ) / 256;
+                    return std::clamp<int>( result, 0, 255 );
+                };
+                col = SDL_Color{
+                    softlight_channel( base.r, target.r ),
+                    softlight_channel( base.g, target.g ),
+                    softlight_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
+            case tint_blend_mode::hardlight: {
+                auto hardlight_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
+                    if( blend > 127 )
+                    {
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( 255 - blend ) * ( ( std::max( 255 - base,
+                                                     1 ) ) * 255 / 127 ) / 255, 0, 255 ) );
+                    } else
+                    {
+                        return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
+                    }
+                };
+                col = SDL_Color{
+                    hardlight_channel( base.r, target.r ),
+                    hardlight_channel( base.g, target.g ),
+                    hardlight_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
+            case tint_blend_mode::overlay: {
+                auto overlay_channel = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
+                    if( base > 127 )
+                    {
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( std::max( 255 - blend,
+                                                     1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 ) );
+                    } else
+                    {
+                        return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
+                    }
+                };
+                col = SDL_Color{
+                    overlay_channel( base.r, target.r ),
+                    overlay_channel( base.g, target.g ),
+                    overlay_channel( base.b, target.b ),
+                    base.a
+                };
+                break;
+            }
+            default:
+            case tint_blend_mode::tint: {
+                auto base_hsv = rgb2hsv( base );
+                auto dest_hsv = rgb2hsv( target );
+
+                constexpr auto overlay = []( const uint8_t base, const uint8_t blend ) -> uint8_t {
+                    if( base > 127 )
+                    {
+                        return static_cast<uint8_t>( std::clamp<int>( 255 - ( std::max( 255 - blend,
+                                                     1 ) ) * ( ( 255 - base ) * 255 / 127 ) / 255, 0, 255 ) );
+                    } else
+                    {
+                        return static_cast<uint8_t>( std::clamp<int>( blend * ( base * 255 / 127 ) / 255, 0, 255 ) );
+                    }
+                };
+
+                base_hsv.H = dest_hsv.H;
+                base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S,
+                                                       mask.has_value() ? mask.value().g : 127 );
+                base_hsv.V = ilerp<uint16_t, uint8_t>( base_hsv.V, overlay( base_hsv.V, dest_hsv.V ),
+                                                       mask.has_value() ? mask.value().b : 127 );
+
+                col = hsv2rgb( base_hsv );
+                break;
+            }
         }
+        if( mask.has_value() )
+        {
+            col.r = ilerp( base.r, col.r, mask.value().r );
+            col.g = ilerp( base.g, col.g, mask.value().r );
+            col.b = ilerp( base.b, col.b, mask.value().r );
+        }
+        return col;
     };
+
+    auto postprocess = [&tint]( SDL_Color c ) -> SDL_Color {
+        auto [h, s, v, a] = rgb2hsv( c );
+        if( fabs( tint.contrast - 1.0f ) > 0.001f )
+        {
+            const float adjusted = ( ( static_cast<float>( v ) - 128.0f ) * tint.contrast ) + 128.0f;
+            v =  static_cast<uint8_t>( std::clamp( adjusted, 0.0f, 255.0f ) );
+        }
+        if( fabs( tint.saturation - 1.0f ) > 0.001f )
+        {
+            s = static_cast<uint16_t>( std::clamp( static_cast<float>( s ) * tint.saturation, 0.0f,
+                                                   65535.0f ) );
+        }
+        if( fabs( tint.brightness - 1.0f ) > 0.001f )
+        {
+            v = static_cast<uint8_t>( std::clamp( static_cast<float>( v ) * tint.brightness, 0.0f,
+                                                  255.0f ) );
+        }
+        return hsv2rgb( HSVColor{ h, s, v, a } );
+    };
+
     if( use_mask ) {
         auto effect_mask = [&]( const SDL_Color & base_rgb, const SDL_Color & mask_rgb )  -> SDL_Color {
-            HSVColor base_hsv = rgb2hsv( base_rgb );
-            base_hsv.H = dest_hsv.H;
-            base_hsv.S = ilerp<uint16_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S, mask_rgb.g );
-            base_hsv.V = ilerp( base_hsv.V, overlay( base_hsv.V, dest_hsv.V ), mask_rgb.b );
-
-            RGBColor res = hsv2rgb( base_hsv );
-            res.r = ilerp( base_rgb.r, res.r, mask_rgb.r );
-            res.g = ilerp( base_rgb.g, res.g, mask_rgb.r );
-            res.b = ilerp( base_rgb.b, res.b, mask_rgb.r );
-            return res;
+            RGBColor res = blend_op( base_rgb, tint.color, mask_rgb );
+            return postprocess( res );
         };
         apply_blend_filter(
             staging, dstRect,
@@ -797,11 +1331,8 @@ static void apply_surf_blend_effect(
         );
     } else {
         auto effect_no_mask = [&]( const SDL_Color & c )  -> SDL_Color {
-            HSVColor base_hsv = rgb2hsv( c );
-            base_hsv.H = dest_hsv.H;
-            base_hsv.S = ilerp<uint16_t, uint8_t>( std::min( base_hsv.S, dest_hsv.S ), dest_hsv.S, 127 );
-            base_hsv.V = ilerp<uint16_t, uint8_t>( base_hsv.V, overlay( base_hsv.V, dest_hsv.V ), 127 );
-            return hsv2rgb( base_hsv );
+            RGBColor res = blend_op( c, tint.color );
+            return postprocess( res );
         };
         apply_color_filter(
             staging, dstRect,
@@ -811,34 +1342,37 @@ static void apply_surf_blend_effect(
     }
 }
 
-const texture *tileset::get_or_default( const int sprite_index,
+texture_result tileset::get_or_default( const int sprite_index,
                                         const int mask_index,
                                         const tileset_fx_type &type,
-                                        const SDL_Color &color ) const
+                                        const tint_config &tint,
+                                        const size_t warp_hash,
+                                        const point sprite_offset ) const
 {
     ZoneScoped;
 
 #if defined(DYNAMIC_ATLAS)
 
-    const auto base_tex_key = tileset_lookup_key{ sprite_index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR };
-    const auto mask_tex_key = tileset_lookup_key{ mask_index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR };
-    const auto mod_tex_key = tileset_lookup_key{ sprite_index, mask_index, type, color };
+    const auto base_tex_key = tileset_lookup_key{ sprite_index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, TILESET_NO_WARP, point_zero };
+    const auto mask_tex_key = tileset_lookup_key{ mask_index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, TILESET_NO_WARP, point_zero };
+    const auto mod_tex_key = tileset_lookup_key{ sprite_index, mask_index, type, tint, warp_hash, sprite_offset };
 
     if( g->display_overlay_state( ACTION_DISPLAY_TILES_NO_VFX ) ) {
         const auto base_tex_it = tile_lookup.find( base_tex_key );
-        return base_tex_it == tile_lookup.end()
-               ? nullptr
-               : &base_tex_it->second;
+        if( base_tex_it == tile_lookup.end() ) {
+            return { nullptr, point_zero };
+        }
+        return { &base_tex_it->second.tex, base_tex_it->second.warp_offset };
     }
 
     const auto mod_tex_it = tile_lookup.find( mod_tex_key );
     if( mod_tex_it != tile_lookup.end() ) {
-        return &mod_tex_it->second;
+        return { &mod_tex_it->second.tex, mod_tex_it->second.warp_offset };
     }
 
     const auto base_tex_it = tile_lookup.find( base_tex_key );
     if( base_tex_it == tile_lookup.end() ) {
-        return nullptr;
+        return { nullptr, point_zero };
     }
 
     const auto mask_tex_it = tile_lookup.find( mask_tex_key );
@@ -854,17 +1388,101 @@ const texture *tileset::get_or_default( const int sprite_index,
         const auto &r = get_sdl_renderer();
         const auto rp = r.get();
 
-        const texture &base_tex = base_tex_it->second;
-        const texture *mask_tex = ( mask_tex_it != tile_lookup.end() ) ? &mask_tex_it->second : nullptr;
+        const texture &base_tex = base_tex_it->second.tex;
+        const texture *mask_tex = ( mask_tex_it != tile_lookup.end() ) ? &mask_tex_it->second.tex : nullptr;
 
         const auto [spr_w, spr_h] = base_tex.dimension();
-        const auto [st_tex, st_surf, st_sub_rect ] =
-            texture_atlas()->get_staging_area( spr_w * 2, spr_h * 2 );
+
+        // Calculate output bounds based on UV warp (if present)
+        // The output may be larger than the sprite if the UV warp extends beyond sprite bounds
+        int out_w = spr_w;
+        int out_h = spr_h;
+        point warp_output_offset = point_zero;  // Offset of output relative to sprite origin
+
+        if( warp_hash != TILESET_NO_WARP ) {
+            auto [warp_surf, warp_offset, offset_mode] = get_warp_surface( warp_hash );
+            if( warp_surf ) {
+                // Calculate the bounds of the output in sprite-local coordinates
+                // We need to scan the UV surface to find where pixels actually end up
+                // In offset mode, UV values can shift pixels beyond the UV modifier's physical bounds
+
+                // Start with sprite bounds as baseline
+                int min_x = 0;
+                int min_y = 0;
+                int max_x = spr_w;
+                int max_y = spr_h;
+
+                if( SDL_MUSTLOCK( warp_surf ) ) {
+                    SDL_LockSurface( warp_surf );
+                }
+
+                // Scan UV surface to find actual output bounds
+                for( int uv_y = 0; uv_y < warp_surf->h; ++uv_y ) {
+                    for( int uv_x = 0; uv_x < warp_surf->w; ++uv_x ) {
+                        Uint8 uv_r, uv_g, uv_b, uv_a;
+                        get_pixel_rgba( warp_surf, uv_x, uv_y, uv_r, uv_g, uv_b, uv_a );
+
+                        // Skip transparent pixels (they don't contribute to output)
+                        if( uv_a == 0 ) {
+                            continue;
+                        }
+
+                        // Calculate where this UV pixel renders in sprite-local coordinates
+                        const int tile_rel_x = warp_offset.x + uv_x;
+                        const int tile_rel_y = warp_offset.y + uv_y;
+                        const int sprite_local_x = tile_rel_x - sprite_offset.x;
+                        const int sprite_local_y = tile_rel_y - sprite_offset.y;
+
+                        // Check if this pixel references a valid source pixel
+                        int src_x, src_y;
+                        if( offset_mode ) {
+                            src_x = sprite_local_x + ( static_cast<int>( uv_r ) - 127 );
+                            src_y = sprite_local_y + ( static_cast<int>( uv_g ) - 127 );
+                        } else {
+                            int uv_target_x = warp_surf->w > 1 ? ( uv_r * ( warp_surf->w - 1 ) + 127 ) / 255 : 0;
+                            int uv_target_y = warp_surf->h > 1 ? ( ( 255 - uv_g ) * ( warp_surf->h - 1 ) + 127 ) / 255 : 0;
+                            int target_rel_x = warp_offset.x + uv_target_x;
+                            int target_rel_y = warp_offset.y + uv_target_y;
+                            src_x = target_rel_x - sprite_offset.x;
+                            src_y = target_rel_y - sprite_offset.y;
+                        }
+
+                        // If this UV pixel references a valid source, it will render at sprite_local position
+                        if( src_x >= 0 && src_x < spr_w && src_y >= 0 && src_y < spr_h ) {
+                            min_x = std::min( min_x, sprite_local_x );
+                            min_y = std::min( min_y, sprite_local_y );
+                            max_x = std::max( max_x, sprite_local_x + 1 );
+                            max_y = std::max( max_y, sprite_local_y + 1 );
+                        }
+                    }
+                }
+
+                if( SDL_MUSTLOCK( warp_surf ) ) {
+                    SDL_UnlockSurface( warp_surf );
+                }
+
+                out_w = max_x - min_x;
+                out_h = max_y - min_y;
+                warp_output_offset = point( min_x, min_y );
+            }
+        }
+
+        // Allocate staging area for the processing pipeline
+        // Row 0: [source (spr_w x spr_h)][mask (spr_w x spr_h)]
+        // Row 1: [tinted (spr_w x spr_h)][vfx (spr_w x spr_h)]
+        // Row 2: [warped (out_w x out_h)] - may be larger than sprite
+        // Row 3: [final (out_w x out_h)]
+        const int staging_w = std::max( spr_w * 2, out_w );
+        const int staging_h = spr_h * 2 + out_h * 2;
+        const auto [st_tex, st_surf, st_sub_rect] =
+            texture_atlas()->get_staging_area( staging_w, staging_h );
 
         const auto st_sub_rect_source = SDL_Rect{ st_sub_rect.x + 0, st_sub_rect.y + 0, spr_w, spr_h };
         const auto st_sub_rect_mask = SDL_Rect{ st_sub_rect.x + spr_w, st_sub_rect.y + 0, spr_w, spr_h };
         const auto st_sub_rect_tinted = SDL_Rect{ st_sub_rect.x + 0, st_sub_rect.y + spr_h, spr_w, spr_h };
-        const auto st_sub_rect_final = SDL_Rect{ st_sub_rect.x + spr_w, st_sub_rect.y + spr_h, spr_w, spr_h };
+        const auto st_sub_rect_vfx = SDL_Rect{ st_sub_rect.x + spr_w, st_sub_rect.y + spr_h, spr_w, spr_h };
+        const auto st_sub_rect_warped = SDL_Rect{ st_sub_rect.x + 0, st_sub_rect.y + spr_h * 2, out_w, out_h };
+        const auto st_sub_rect_final = SDL_Rect{ st_sub_rect.x + 0, st_sub_rect.y + spr_h * 2 + out_h, out_w, out_h };
 
         const auto state = sdl_save_render_state( rp );
 
@@ -884,14 +1502,39 @@ const texture *tileset::get_or_default( const int sprite_index,
 
         SDL_RenderReadPixels( rp, nullptr, st_surf->format->format, st_surf->pixels, st_surf->pitch );
 
-        if( color == TILESET_NO_COLOR ) {
+        if( !tint.has_value() ) {
             apply_color_filter( st_surf, st_sub_rect_tinted, st_surf, st_sub_rect_source, color_pixel_copy );
         } else {
-            apply_surf_blend_effect( st_surf, color, mask_tex, st_sub_rect_tinted,
+            apply_surf_blend_effect( st_surf, tint, mask_tex, st_sub_rect_tinted,
                                      st_sub_rect_source, st_sub_rect_mask );
         }
 
-        apply_color_filter( st_surf, st_sub_rect_final,  st_surf, st_sub_rect_tinted, vfx_func );
+        // Apply visual effects (shadow, night vision, etc.)
+        apply_color_filter( st_surf, st_sub_rect_vfx, st_surf, st_sub_rect_tinted, vfx_func );
+
+        // Apply UV warp if specified
+        SDL_Rect final_src_rect = st_sub_rect_vfx;
+        int final_w = spr_w;
+        int final_h = spr_h;
+        if( warp_hash != TILESET_NO_WARP ) {
+            auto [warp_surf, warp_offset, offset_mode] = get_warp_surface( warp_hash );
+            if( warp_surf ) {
+                // Apply UV remapping from vfx result to warped slot
+                // Pass the warp_output_offset so apply_uv_remap knows where to place pixels
+                apply_uv_remap( st_surf, st_sub_rect_warped,
+                                st_surf, st_sub_rect_vfx,
+                                warp_surf, warp_offset, offset_mode,
+                                sprite_offset, warp_output_offset,
+                                tile_width, tile_height,
+                                nullptr );  // color function already applied
+                final_src_rect = st_sub_rect_warped;
+                final_w = out_w;
+                final_h = out_h;
+            }
+        }
+
+        // Copy final result to the final slot (clean blit for atlas storage)
+        apply_color_filter( st_surf, st_sub_rect_final, st_surf, final_src_rect, color_pixel_copy );
 
         auto surf_hash = get_surface_hash( st_surf, &st_sub_rect_final );
         auto existing = tileset_atlas->id_search( surf_hash );
@@ -900,7 +1543,7 @@ const texture *tileset::get_or_default( const int sprite_index,
         if( existing.has_value() ) {
             atl_tex = std::move( existing.value() );
         } else {
-            atl_tex = tileset_atlas->allocate_sprite( spr_w, spr_h );
+            atl_tex = tileset_atlas->allocate_sprite( final_w, final_h );
             tileset_atlas->id_assign( surf_hash, atl_tex );
 
             SDL_UpdateTexture( st_tex, nullptr, st_surf->pixels, st_surf->pitch );
@@ -909,43 +1552,99 @@ const texture *tileset::get_or_default( const int sprite_index,
         }
 
         sdl_restore_render_state( rp, state );
-        auto& [at_tex, at_rect] = atl_tex;
-        auto [entry, ok] = tile_lookup.emplace( mod_tex_key, texture( std::move( at_tex ), at_rect ) );
-        return &entry->second;
+        auto &[at_tex, at_rect] = atl_tex;
+        auto [entry, ok] = tile_lookup.emplace( mod_tex_key,
+                                                tile_lookup_entry{ texture( std::move( at_tex ), at_rect ), warp_output_offset } );
+        if( !ok ) {
+            dbg( DL::Error ) << "dynamic atlas hash collision, you will likely see minor graphical issues" <<
+                             std::endl;
+        }
+        return { &entry->second.tex, entry->second.warp_offset };
     }
 #else
     if( sprite_index >= tile_values.size() ) {
-        return nullptr;
+        return { nullptr, point_zero };
     }
 
     switch( type ) {
         case tileset_fx_type::shadow:
-            return &shadow_tile_values[sprite_index];
-            break;
+            return { &shadow_tile_values[sprite_index], point_zero };
         case tileset_fx_type::night:
-            return &night_tile_values[sprite_index];
-            break;
+            return { &night_tile_values[sprite_index], point_zero };
         case tileset_fx_type::overexposed:
-            return &overexposed_tile_values[sprite_index];
-            break;
+            return { &overexposed_tile_values[sprite_index], point_zero };
         case tileset_fx_type::underwater:
-            return &underwater_tile_values[sprite_index];
-            break;
+            return { &underwater_tile_values[sprite_index], point_zero };
         case tileset_fx_type::underwater_dark:
-            return &underwater_dark_tile_values[sprite_index];
-            break;
+            return { &underwater_dark_tile_values[sprite_index], point_zero };
         case tileset_fx_type::memory:
-            return &memory_tile_values[sprite_index];
-            break;
+            return { &memory_tile_values[sprite_index], point_zero };
         case tileset_fx_type::z_overlay:
-            return &z_overlay_values[sprite_index];
-            break;
+            return { &z_overlay_values[sprite_index], point_zero };
         default:
-            return &tile_values[sprite_index];
-            break;
+            return { &tile_values[sprite_index], point_zero };
     }
 #endif
 }
+
+#if defined(DYNAMIC_ATLAS)
+std::tuple<bool, SDL_Surface *, SDL_Rect> tileset::get_sprite_surface( int sprite_index ) const
+{
+    const auto base_tex_key = tileset_lookup_key{
+        sprite_index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, TILESET_NO_WARP, point_zero
+    };
+
+    const auto tex_it = tile_lookup.find( base_tex_key );
+    if( tex_it == tile_lookup.end() ) {
+        return std::make_tuple( false, nullptr, SDL_Rect{} );
+    }
+
+    // Note: Caller must ensure readback_load() has been called on the atlas
+    // before calling this function. This is done once per character in
+    // draw_entity_with_overlays to avoid repeated GPU->CPU transfers.
+    return tileset_atlas->readback_find( tex_it->second.tex );
+}
+
+void tileset::ensure_readback_loaded() const
+{
+    if( tileset_atlas ) {
+        tileset_atlas->readback_load();
+    }
+}
+
+size_t tileset::register_warp_surface( SDL_Surface_Ptr surface, const point offset,
+                                       const bool offset_mode ) const
+{
+    // Compute hash of the surface content
+    const size_t hash = get_surface_hash( surface.get(), nullptr );
+    if( hash == TILESET_NO_WARP ) {
+        // Extremely unlikely, but avoid collision with "no warp" sentinel
+        // Just use the surface anyway with a modified hash
+        warp_cache[1] = warp_cache_entry{ std::move( surface ), offset, offset_mode };
+        return 1;
+    }
+    // Only store if not already cached (same UV state = same hash)
+    if( warp_cache.find( hash ) == warp_cache.end() ) {
+        warp_cache[hash] = warp_cache_entry{ std::move( surface ), offset, offset_mode };
+    }
+    return hash;
+}
+
+std::tuple<SDL_Surface *, point, bool> tileset::get_warp_surface( const size_t warp_hash ) const
+{
+    const auto it = warp_cache.find( warp_hash );
+    if( it == warp_cache.end() ) {
+        return std::make_tuple( nullptr, point_zero, true );
+    }
+    const auto &entry = it->second;
+    return std::make_tuple( entry.surface.get(), entry.offset, entry.offset_mode );
+}
+
+void tileset::clear_warp_cache() const
+{
+    warp_cache.clear();
+}
+#endif
 
 bool tileset_loader::create_textures_from_tile_atlas( const SDL_Surface_Ptr &tile_atlas,
         point offset )
@@ -1207,6 +1906,12 @@ std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_searc
             if( tmp.is_valid() ) {
                 sym = tmp->symbol;
                 col = tmp->color;
+            }
+        } else if( category == C_OVERMAP_WEATHER ) {
+            const weather_type_id weather_type_id( id );
+            if( weather_type_id.is_valid() ) {
+                sym = weather_type_id->symbol;
+                col = weather_type_id->map_color;
             }
         } else if( category == C_OVERMAP_NOTE ) {
             sym = id[5];
@@ -1486,6 +2191,23 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
             if( tile_part_def.has_member( "ascii" ) ) {
                 load_ascii( tile_part_def );
             }
+            // Load state-based UV modifiers (opt-in feature for character rendering)
+            if( tile_part_def.has_array( "state-modifiers" ) ) {
+                load_state_modifiers( tile_part_def );
+            }
+            // Load global overlay filters for UV warping
+            if( tile_part_def.has_array( "global-warp-whitelist" ) ) {
+                ts.global_warp_whitelist.clear();
+                for( const std::string &prefix : tile_part_def.get_array( "global-warp-whitelist" ) ) {
+                    ts.global_warp_whitelist.push_back( prefix );
+                }
+            }
+            if( tile_part_def.has_array( "global-warp-blacklist" ) ) {
+                ts.global_warp_blacklist.clear();
+                for( const std::string &prefix : tile_part_def.get_array( "global-warp-blacklist" ) ) {
+                    ts.global_warp_blacklist.push_back( prefix );
+                }
+            }
             // Make sure the tile definitions of the next tileset image don't
             // override the current ones.
             offset += size;
@@ -1493,19 +2215,21 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
                 inp_mngr.pump_events();
             }
         }
-    } else {
+    } else if( config.has_array( "tiles" ) ) {
+        // old system, no tile file path entry, only one array of tiles
         sprite_width = ts.tile_width;
         sprite_height = ts.tile_height;
         sprite_offset = point_zero;
         R = -1;
         G = -1;
         B = -1;
-        // old system, no tile file path entry, only one array of tiles
         dbg( DL::Info ) << "Attempting to Load Tileset file " << img_path;
         load_tileset( img_path, pump_events );
         load_tilejson_from_file( config );
         offset = size;
     }
+    // If neither tiles-new nor tiles is present, this is a tints-only mod_tileset
+    // Skip tile loading and continue to process tints, overlay_ordering, etc.
 
     // allows a tileset to override the order of mutation images being applied to a character
     if( config.has_array( "overlay_ordering" ) ) {
@@ -1515,6 +2239,165 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
     // offset should be the total number of sprites loaded from every tileset image
     // eliminate any sprite references that are too high to exist
     // also eliminate negative sprite references
+
+
+    // Tint pairs allow one overlay to tint another
+    // Hair color tints effecting hair style overlays, for example
+    // This lets you do sillier things than that, too
+    // You could potentially tint a character's armor for customization purposes
+    if( config.has_array( "tints" ) ) {
+        const auto &colors = get_all_colors();
+        // Result struct for color parsing - includes optional brightness from 4th hex pair
+        struct color_parse_result {
+            std::optional<SDL_Color> color;
+            std::optional<float> brightness;
+        };
+        // Parse color string, supporting:
+        //   - Named colors (e.g., "c_white")
+        //   - 6-digit hex (e.g., "#FF00FF")
+        //   - 8-digit hex (e.g., "#FF00FF80") - NOTE: 4th pair is BRIGHTNESS, not alpha!
+        //     The 4th byte encodes brightness: 0x00=0.0, 0x80=1.0, 0xFF≈2.0
+        //     This is intentionally NOT rgba to allow brightness > 1.0
+        auto parse_color = [&colors]( const std::string & color_str ) -> color_parse_result {
+            if( color_str.empty() )
+            {
+                return { std::nullopt, std::nullopt };
+            }
+            if( color_str.starts_with( '#' ) )
+            {
+                const std::string hex_part = color_str.substr( 1 );
+                for( const char c : hex_part ) {
+                    if( !std::isxdigit( c ) ) {
+                        return { std::nullopt, std::nullopt };
+                    }
+                }
+                if( hex_part.size() == 6 ) {
+                    // Standard #RRGGBB format
+                    return { static_cast<SDL_Color>( rgb_from_hex_string( color_str ) ), std::nullopt };
+                } else if( hex_part.size() == 8 ) {
+                    // Extended #RRGGBBMM format - 4th pair is brightness multiplier, NOT alpha
+                    // 0x00 = 0.0 brightness, 0x80 = 1.0 brightness, 0xFF ≈ 2.0 brightness
+                    const std::string rgb_str = "#" + hex_part.substr( 0, 6 );
+                    const uint8_t brightness_byte = std::stoul( hex_part.substr( 6, 2 ), nullptr, 16 );
+                    const float brightness = static_cast<float>( brightness_byte ) / 128.0f;
+                    return { static_cast<SDL_Color>( rgb_from_hex_string( rgb_str ) ), brightness };
+                }
+            }
+            const nc_color curse_color = colors.name_to_color( color_str );
+            if( curse_color == c_unset )
+            {
+                return { std::nullopt, std::nullopt };
+            }
+            return { static_cast<SDL_Color>( curses_color_to_RGB( curse_color ) ), std::nullopt };
+        };
+
+        auto parse_blend_mode = []( const std::string & str ) -> tint_blend_mode {
+            return string_to_tint_blend_mode( str );
+        };
+
+        // Parse a tint_config from either a string or an object
+        // When has_top_level is true, fg_color/bg_color must be strings (simple mode)
+        auto parse_tint_config = [&parse_color, &parse_blend_mode]( const JsonObject & obj,
+                                 const std::string & key,
+                                 bool has_top_level, tint_blend_mode top_blend_mode,
+                                 std::optional<float> top_contrast, std::optional<float> top_saturation,
+        std::optional<float> top_brightness ) -> tint_config {
+            tint_config cfg;
+            if( !obj.has_member( key ) )
+            {
+                return cfg;
+            }
+
+            if( obj.has_string( key ) )
+            {
+                // Simple string value - parse as color (may include brightness from 4th hex pair)
+                auto [color, brightness] = parse_color( obj.get_string( key ) );
+                cfg.color = color.value_or( TILESET_NO_COLOR );
+                cfg.brightness = brightness.value_or( 1.0f );
+                cfg.blend_mode = top_blend_mode;
+                if( has_top_level ) {
+                    cfg.contrast = top_contrast.value_or( 1.0f );
+                    cfg.saturation = top_saturation.value_or( 1.0f );
+                    cfg.brightness = top_brightness.value_or( 1.0f );
+                }
+            } else if( obj.has_object( key ) && !has_top_level )
+            {
+                // Complex object value - only allowed when no top-level contrast/saturation
+                JsonObject color_obj = obj.get_object( key );
+                auto [color, brightness] = parse_color( color_obj.get_string( "color", "" ) );
+                cfg.color = color.value_or( TILESET_NO_COLOR );
+                cfg.brightness = brightness.value_or( 1.0f );
+                cfg.blend_mode = parse_blend_mode( color_obj.get_string( "blend_mode", "" ) );
+                cfg.contrast = color_obj.get_float( "contrast", 1.0f );
+                cfg.saturation = color_obj.get_float( "saturation", 1.0f );
+                // Allow explicit brightness field to override hex-encoded brightness
+                if( color_obj.has_float( "brightness" ) ) {
+                    cfg.brightness = color_obj.get_float( "brightness" );
+                }
+            }
+            return cfg;
+        };
+
+        for( const JsonObject &tint_def : config.get_array( "tints" ) ) {
+            const std::string mut_id = tint_def.get_string( "id" );
+            if( mut_id.empty() ) {
+                continue;
+            }
+
+            // Check for top-level contrast/saturation
+            std::optional<float> top_contrast;
+            std::optional<float> top_saturation;
+            std::optional<float> top_brightness;
+            tint_blend_mode top_blend_mode = parse_blend_mode( tint_def.get_string( "blend_mode", "" ) );
+            const bool has_top_level = tint_def.has_float( "contrast" ) || tint_def.has_float( "saturation" );
+            if( tint_def.has_float( "contrast" ) ) {
+                top_contrast = tint_def.get_float( "contrast" );
+            }
+            if( tint_def.has_float( "saturation" ) ) {
+                top_saturation = tint_def.get_float( "saturation" );
+            }
+            if( tint_def.has_float( "brightness" ) ) {
+                top_brightness = tint_def.get_float( "brightness" );
+            }
+
+            tint_config fg = parse_tint_config( tint_def, "fg", has_top_level, top_blend_mode,
+                                                top_contrast, top_saturation, top_brightness );
+            tint_config bg = parse_tint_config( tint_def, "bg", has_top_level, top_blend_mode,
+                                                top_contrast, top_saturation, top_brightness );
+
+            if( fg.has_value() || bg.has_value() ) {
+                ts.tints[mut_id] = { bg, fg };
+            }
+        }
+    }
+
+    if( config.has_array( "tint_pairs" ) ) {
+        for( const JsonObject &tint_def : config.get_array( "tint_pairs" ) ) {
+            const std::string source_type = tint_def.get_string( "source_type" );
+            const std::string target_type = tint_def.get_string( "target_type" );
+            const bool override = tint_def.get_bool( "override", false );
+            if( source_type.empty() || target_type.empty() ) {
+                continue;
+            }
+            ts.tint_pairs[target_type] = { source_type, override };
+        }
+    }
+}
+
+std::pair<std::string, bool> tileset::get_tint_controller( const std::string &tint_type )
+{
+    if( tint_pairs.contains( tint_type ) ) {
+        return tint_pairs[tint_type];
+    }
+    return {};
+}
+
+const color_tint_pair *tileset::get_tint( const std::string &tint_id )
+{
+    if( tints.contains( tint_id ) ) {
+        return &tints[tint_id];
+    }
+    return nullptr;
 }
 
 void tileset_loader::process_variations_after_loading( weighted_int_list<std::vector<int>> &vs )
@@ -1848,6 +2731,90 @@ void tileset_loader::load_tile_spritelists( const JsonObject &entry,
     else if( entry.has_int( objname ) && entry.get_int( objname ) >= 0 ) {
         vs.add( std::vector<int>( {entry.get_int( objname ) + sprite_id_offset} ), 1 );
     }
+}
+
+void tileset_loader::load_state_modifiers( const JsonObject &config )
+{
+    if( !config.has_array( "state-modifiers" ) ) {
+        return;
+    }
+
+    for( const JsonObject &mod_group : config.get_array( "state-modifiers" ) ) {
+        state_modifier_group group;
+        group.group_id = mod_group.get_string( "id" );
+        group.override_lower = mod_group.get_bool( "override", false );
+        group.use_offset_mode = mod_group.get_bool( "use_offset", true );
+
+        // Load optional overlay filters (prefix matching after "overlay_")
+        if( mod_group.has_array( "whitelist" ) ) {
+            for( const std::string &prefix : mod_group.get_array( "whitelist" ) ) {
+                group.whitelist.push_back( prefix );
+            }
+        }
+        if( mod_group.has_array( "blacklist" ) ) {
+            for( const std::string &prefix : mod_group.get_array( "blacklist" ) ) {
+                group.blacklist.push_back( prefix );
+            }
+        }
+
+        if( !mod_group.has_array( "tiles" ) ) {
+            mod_group.throw_error( "state-modifier group must have a 'tiles' array" );
+        }
+
+        for( const JsonObject &tile_entry : mod_group.get_array( "tiles" ) ) {
+            state_modifier_tile tile;
+            tile.state_id = tile_entry.get_string( "id" );
+
+            if( tile_entry.has_null( "fg" ) ) {
+                // Null/identity modifier - no pixel modification
+                tile.fg_sprite = std::nullopt;
+            } else if( tile_entry.has_int( "fg" ) ) {
+                const int fg_val = tile_entry.get_int( "fg" );
+                if( fg_val >= 0 ) {
+                    tile.fg_sprite = fg_val + sprite_id_offset;
+                } else {
+                    tile.fg_sprite = std::nullopt;
+                }
+            } else {
+                // No fg specified - treat as null/identity
+                tile.fg_sprite = std::nullopt;
+            }
+
+            // Load optional offset for oversized UV modifier sprites
+            // Default to sprite_offset from the tileset config, but allow per-tile override
+            tile.offset.x = tile_entry.get_int( "offset_x", sprite_offset.x );
+            tile.offset.y = tile_entry.get_int( "offset_y", sprite_offset.y );
+
+            group.tiles[tile.state_id] = std::move( tile );
+        }
+
+        // Normalize filter lists (sort and deduplicate) for consistent comparison
+        std::sort( group.whitelist.begin(), group.whitelist.end() );
+        group.whitelist.erase( std::unique( group.whitelist.begin(), group.whitelist.end() ),
+                               group.whitelist.end() );
+        std::sort( group.blacklist.begin(), group.blacklist.end() );
+        group.blacklist.erase( std::unique( group.blacklist.begin(), group.blacklist.end() ),
+                               group.blacklist.end() );
+
+        // Check if a group with this ID and same filter configuration already exists.
+        // Groups with the same ID but different whitelist/blacklist are distinct entries,
+        // allowing different UV modifiers for different overlay types (e.g., wielded vs worn).
+        auto existing = std::find_if( ts.state_modifiers.begin(), ts.state_modifiers.end(),
+        [&group]( const state_modifier_group & g ) {
+            return g.group_id == group.group_id
+                   && g.whitelist == group.whitelist
+                   && g.blacklist == group.blacklist;
+        } );
+
+        if( existing != ts.state_modifiers.end() ) {
+            *existing = std::move( group );
+            dbg( DL::Info ) << "Replaced state modifier group: " << existing->group_id;
+        } else {
+            ts.state_modifiers.push_back( std::move( group ) );
+        }
+    }
+
+    dbg( DL::Info ) << "Total state modifier groups: " << ts.state_modifiers.size();
 }
 
 static int divide_round_down( int a, int b )
@@ -2696,9 +3663,11 @@ auto cata_tiles::find_tile_looks_like( const std::string &id, TILE_CATEGORY cate
 
         case C_VEHICLE_PART: {
             // vehicle parts start with vp_ for their tiles, but not their IDs
-            const vpart_id base_vpid( id.substr( 3 ) );
-            if( !base_vpid.is_valid() ) {
-                return find_tile_looks_like( id.substr( 3 ), category, looks_like_jumps_limit - 1 );
+            auto base_id = id.substr( 3 );
+            const vpart_id base_vpid( base_id );
+            if( !base_vpid.is_valid() ) {  // Fixed Fallback
+                return find_tile_looks_like( base_id, C_FURNITURE, looks_like_jumps_limit - 1 )
+                       .or_else( [ &, this] { return find_tile_looks_like( base_id, C_TERRAIN, looks_like_jumps_limit - 1 ); } );
             }
             return find_tile_looks_like( "vp_" + base_vpid.obj().looks_like, category,
                                          looks_like_jumps_limit - 1 );
@@ -2779,7 +3748,7 @@ bool cata_tiles::find_overlay_looks_like( const bool male, const std::string &ov
 
 bool cata_tiles::draw_from_id_string(
     const tile_search_params &tile, const tripoint &pos,
-    std::optional<SDL_Color> bg_color, std::optional<SDL_Color> fg_color,
+    const tint_config &bg_tint, const tint_config &fg_tint,
     lit_level ll, bool apply_visual_effects, int overlay_count,
     const bool as_independent_entity, int &height_3d )
 {
@@ -2819,7 +3788,7 @@ bool cata_tiles::draw_from_id_string(
                 tile.category, tile.subcategory, -1, tile.rota
             };
             return draw_from_id_string(
-                       multi_tile, pos, bg_color, fg_color,
+                       multi_tile, pos, bg_tint, fg_tint,
                        ll, apply_visual_effects, overlay_count, as_independent_entity, height_3d );
         }
     }
@@ -2991,14 +3960,14 @@ bool cata_tiles::draw_from_id_string(
         && display_tile.has_om_transparency
         && overmap_transparency ) {
         draw_sprite_at( display_tile, screen_pos, loc_rand, /*fg:*/ true,
-                        true_rota, fg_color, ll, apply_visual_effects,
-                        base_overlay_alpha * overlay_count, height_3d );
+                        true_rota, fg_tint, ll, apply_visual_effects,
+                        base_overlay_alpha * overlay_count, &height_3d );
         return true;
     }
 
     //draw it!
     draw_tile_at( display_tile, screen_pos, loc_rand, true_rota,
-                  bg_color, fg_color, ll, apply_visual_effects, height_3d,
+                  bg_tint, fg_tint, ll, apply_visual_effects, height_3d,
                   base_overlay_alpha * overlay_count );
 
     return true;
@@ -3031,9 +4000,9 @@ void cata_tiles::draw_om_tile_recursively( const tripoint_abs_omt omp, const std
 
 bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
                                  unsigned int loc_rand, bool is_fg, int rota,
-                                 std::optional<SDL_Color> color, lit_level ll,
+                                 const tint_config &tint, lit_level ll,
                                  bool apply_visual_effects, int overlay_count,
-                                 int &height_3d )
+                                 int *height_3d, size_t warp_hash )
 {
 
 
@@ -3071,10 +4040,12 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
      */
     const auto num_sprites = sprite_list.size();
     const auto is_single_sprite = num_sprites == 1;
-    const auto rotate_sprite = is_fg && is_single_sprite;
+    const auto rotate_sprite = ( is_fg || tile.rotates ) && is_single_sprite;
     const auto sprite_num = is_single_sprite
                             ? 0
                             : ( rota % num_sprites );
+
+    tint_config effective_tint = tint;
 
     tileset_fx_type fx_type;
     if( ll == lit_level::MEMORIZED ) {
@@ -3085,7 +4056,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
                   : tileset_fx_type::overexposed;
     } else if( overlay_count > 0 && static_z_effect ) {
         fx_type = tileset_fx_type::z_overlay;
-        color = std::nullopt;
+        effective_tint = {};
     } else if( apply_visual_effects && g->u.is_underwater() ) {
         fx_type = ll == lit_level::LOW
                   ? tileset_fx_type::underwater_dark
@@ -3099,41 +4070,60 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
     const int tile_idx = sprite_list[sprite_num];
     const int mask_idx = tint_mask_list[sprite_num];
 
-    const auto default_color = tile.default_tint.value_or( TILESET_NO_COLOR );
-
-    SDL_Color tint_color;
-    if( tile.flags.contains( flag_TINT_NONE ) ) {
-        tint_color = TILESET_NO_COLOR;
-    } else if( is_fg && tile.flags.contains( flag_TINT_NO_FG ) ) {
-        tint_color = TILESET_NO_COLOR;
-    } else if( !is_fg && tile.flags.contains( flag_TINT_NO_BG ) ) {
-        tint_color = TILESET_NO_COLOR;
-    } else {
-        tint_color = color.value_or( default_color );
+    if( tile.flags.contains( flag_TINT_NONE ) ||
+        ( is_fg && tile.flags.contains( flag_TINT_NO_FG ) ) ||
+        ( !is_fg && tile.flags.contains( flag_TINT_NO_BG ) ) ) {
+        effective_tint = {};
+    } else if( effective_tint.color == TILESET_NO_COLOR && tile.default_tint.has_value() ) {
+        effective_tint.color = tile.default_tint.value();
     }
 
-    const texture *sprite_tex = tileset_ptr->get_or_default( tile_idx, mask_idx, fx_type, tint_color );
+    // Use active_warp_hash if no explicit warp_hash provided (for character rendering)
+    const size_t effective_warp_hash = ( warp_hash == TILESET_NO_WARP ) ? active_warp_hash : warp_hash;
+
+    // Pass warp_hash and tile.offset to get_or_default - UV remapping is now handled there
+    const auto [sprite_tex, warp_offset] = tileset_ptr->get_or_default( tile_idx, mask_idx, fx_type,
+                                           effective_tint, effective_warp_hash, tile.offset );
+
+    if( !sprite_tex ) {
+        return true;
+    }
 
     int width = 0;
     int height = 0;
     std::tie( width, height ) = sprite_tex->dimension();
 
+    const int height_3d_val = height_3d ? *height_3d : 0;
+
+    // Apply warp_offset to destination position
+    // warp_offset is in sprite-local coordinates, scale to screen coordinates
+    const int warp_offset_screen_x = warp_offset.x * tile_width / tileset_ptr->get_tile_width();
+    const int warp_offset_screen_y = warp_offset.y * tile_height / tileset_ptr->get_tile_height();
+
     SDL_Rect destination;
-    destination.x = p.x + tile.offset.x * tile_width / tileset_ptr->get_tile_width();
-    destination.y = p.y + ( tile.offset.y - height_3d ) * tile_width / tileset_ptr->get_tile_width();
+    destination.x = p.x + tile.offset.x * tile_width / tileset_ptr->get_tile_width() +
+                    warp_offset_screen_x;
+    destination.y = p.y + ( tile.offset.y - height_3d_val ) * tile_width /
+                    tileset_ptr->get_tile_width() + warp_offset_screen_y;
     destination.w = width * tile_width / tileset_ptr->get_tile_width();
     destination.h = height * tile_height / tileset_ptr->get_tile_height();
 
     auto render = [&]( const int rotation, const SDL_RendererFlip flip ) {
+        int ret = 0;
+
+        // UV warping is now handled in get_or_default, so we just render normally
         sprite_tex->set_alpha_mod( 255 );
-        const int ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+        ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+
         if( !static_z_effect && overlay_count > 0 ) {
-            const auto overlay =
+            const auto [overlay_tex, overlay_warp_offset] =
                 tileset_ptr->get_or_default(
-                    tile_idx, TILESET_NO_MASK, tileset_fx_type::z_overlay, TILESET_NO_COLOR );
-            if( overlay ) {
-                overlay->set_alpha_mod( std::min( 192, overlay_count ) );
-                overlay->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+                    tile_idx, TILESET_NO_MASK, tileset_fx_type::z_overlay, TILESET_NO_COLOR,
+                    effective_warp_hash, tile.offset );
+            if( overlay_tex ) {
+                overlay_tex->set_alpha_mod( std::min( 192, overlay_count ) );
+                overlay_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+                overlay_tex->set_alpha_mod( 255 );
             }
         }
         return ret;
@@ -3224,21 +4214,23 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
     // this reference passes all the way back up the call chain back to
     // cata_tiles::draw() std::vector<tile_render_info> draw_points[].height_3d
     // where we are accumulating the height of every sprite stacked up in a tile
-    height_3d += tile.height_3d;
+    if( height_3d ) {
+        *height_3d += tile.height_3d;
+    }
     return true;
 }
 
 bool cata_tiles::draw_tile_at( const tile_type &tile, point p,
                                unsigned int loc_rand, int rota,
-                               std::optional<SDL_Color> bg_color,
-                               std::optional<SDL_Color> fg_color, lit_level ll,
+                               const tint_config &bg_tint,
+                               const tint_config &fg_tint, lit_level ll,
                                bool apply_visual_effects, int &height_3d,
                                int overlay_count )
 {
-    draw_sprite_at( tile, p, loc_rand, /*fg:*/ false, rota, bg_color, ll,
-                    apply_visual_effects, overlay_count );
-    draw_sprite_at( tile, p, loc_rand, /*fg:*/ true, rota, fg_color, ll,
-                    apply_visual_effects, overlay_count, height_3d );
+    draw_sprite_at( tile, p, loc_rand, /*fg:*/ false, rota, bg_tint, ll,
+                    apply_visual_effects, overlay_count, nullptr );
+    draw_sprite_at( tile, p, loc_rand, /*fg:*/ true, rota, fg_tint, ll,
+                    apply_visual_effects, overlay_count, &height_3d );
     return true;
 }
 
@@ -3757,8 +4749,8 @@ bool cata_tiles::draw_field_or_item( const tripoint &p, const lit_level ll, int 
         const auto it_override = item_override.find( p );
         const bool it_overridden = it_override != item_override.end();
 
-        std::optional<SDL_Color> bgCol = std::nullopt;
-        std::optional<SDL_Color> fgCol = std::nullopt;
+        tint_config bgCol;
+        tint_config fgCol;
 
         itype_id it_id;
         mtype_id mon_id;
@@ -3778,9 +4770,7 @@ bool cata_tiles::draw_field_or_item( const tripoint &p, const lit_level ll, int 
             hilite = tile.get_item_count() > 1;
             it_type = itm.type;
 
-            const auto [b, f] = get_item_color( itm, here, p );
-            fgCol = b;
-            bgCol = f;
+            std::tie( bgCol, fgCol ) = get_item_color( itm, here, p );
         } else {
             it_type = nullptr;
             hilite = false;
@@ -3888,6 +4878,18 @@ bool cata_tiles::draw_vpart( const tripoint &p, lit_level ll, int &height_3d,
         vehicle *veh = veh_pair.first;
         int veh_part = veh_pair.second;
 
+        int veh_z = veh->global_pos3().z;
+        auto part = veh->part( veh_part ).info();
+        if( veh_z - p.z <= 0 ) {
+            return false;
+        }
+        if( part.ladder_length() >= veh_z - p.z ) {
+            for( int i = p.z + 1; i <= veh_z; i++ ) {
+                if( here.ter( tripoint( p.xy(), i ) ).id().str() != "t_open_air" ) {
+                    return false;
+                }
+            }
+        }
         // Gets the visible part, should work fine once tileset vp_ids are updated to work with the vehicle part json ids
         // get the vpart_id
         char part_mod = 0;
@@ -4087,6 +5089,183 @@ bool cata_tiles::draw_zombie_revival_indicators( const tripoint &pos, const lit_
     return false;
 }
 
+// Check if overlay matches any prefix in the list
+// overlay_id is like "wielded_katana", "worn_boots", "mutation_HORNS", etc.
+static bool matches_overlay_prefix_list( const std::string &overlay_id,
+        const std::vector<std::string> &prefixes )
+{
+    for( const auto &prefix : prefixes ) {
+        if( overlay_id.compare( 0, prefix.size(), prefix ) == 0 ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Determine if a state modifier group applies to a given overlay
+static bool group_applies_to_overlay( const state_modifier_group &group,
+                                      const std::string &overlay_id,
+                                      const std::vector<std::string> &global_whitelist,
+                                      const std::vector<std::string> &global_blacklist )
+{
+    // Per-group filters override global if either list is non-empty
+    const bool group_has_filters = !group.whitelist.empty() || !group.blacklist.empty();
+    const auto &whitelist = group_has_filters ? group.whitelist : global_whitelist;
+    const auto &blacklist = group_has_filters ? group.blacklist : global_blacklist;
+
+    // Blacklist checked first - always excludes
+    if( matches_overlay_prefix_list( overlay_id, blacklist ) ) {
+        return false;
+    }
+
+    // Whitelist only active if non-empty
+    if( !whitelist.empty() ) {
+        return matches_overlay_prefix_list( overlay_id, whitelist );
+    }
+
+    return true;  // No whitelist = applies to all (that passed blacklist)
+}
+
+std::tuple<SDL_Surface_Ptr, point> cata_tiles::build_composite_uv_modifier( const Character &ch,
+        const int width, const int height, const std::vector<bool> &group_filter )
+{
+#if !defined(DYNAMIC_ATLAS)
+    // UV modifier system requires dynamic atlas for sprite surface access
+    ( void )ch;
+    ( void )width;
+    ( void )height;
+    ( void )group_filter;
+    return std::make_tuple( nullptr, point_zero );
+#else
+    const auto &state_modifiers = tileset_ptr->get_state_modifiers();
+    if( state_modifiers.empty() ) {
+        return std::make_tuple( nullptr, point_zero );
+    }
+
+    // If filter provided, check if any groups are enabled
+    const bool use_filter = !group_filter.empty();
+    if( use_filter ) {
+        bool any_enabled = false;
+        for( size_t i = 0; i < state_modifiers.size() && i < group_filter.size(); ++i ) {
+            if( group_filter[i] ) {
+                any_enabled = true;
+                break;
+            }
+        }
+        if( !any_enabled ) {
+            return std::make_tuple( nullptr, point_zero );
+        }
+    }
+
+    SDL_Surface_Ptr composite = nullptr;
+    point composite_offset = point_zero;
+    bool use_offset_mode = true;
+
+    // First pass: determine bounds
+    int min_x = 0, min_y = 0, max_x = width, max_y = height;
+
+    for( size_t i = 0; i < state_modifiers.size(); ++i ) {
+        // Skip groups not in filter
+        if( use_filter && ( i >= group_filter.size() || !group_filter[i] ) ) {
+            continue;
+        }
+
+        const auto &group = state_modifiers[i];
+        std::optional<std::string> current_state = get_character_state_for_group( ch, group.group_id );
+        if( !current_state ) {
+            continue;
+        }
+
+        auto it = group.tiles.find( *current_state );
+        if( it == group.tiles.end() || !it->second.fg_sprite ) {
+            continue;
+        }
+
+        const state_modifier_tile &tile = it->second;
+        auto [found, mod_surf, mod_rect] = tileset_ptr->get_sprite_surface( *tile.fg_sprite );
+        if( !found || !mod_surf ) {
+            continue;
+        }
+
+        min_x = std::min( min_x, tile.offset.x );
+        min_y = std::min( min_y, tile.offset.y );
+        max_x = std::max( max_x, tile.offset.x + mod_rect.w );
+        max_y = std::max( max_y, tile.offset.y + mod_rect.h );
+    }
+
+    const int comp_width = max_x - min_x;
+    const int comp_height = max_y - min_y;
+    composite_offset = point( min_x, min_y );
+
+    // Process modifiers in priority order (index 0 = highest)
+    for( size_t i = 0; i < state_modifiers.size(); ++i ) {
+        // Skip groups not in filter
+        if( use_filter && ( i >= group_filter.size() || !group_filter[i] ) ) {
+            continue;
+        }
+
+        const auto &group = state_modifiers[i];
+        std::optional<std::string> current_state = get_character_state_for_group( ch, group.group_id );
+        if( !current_state ) {
+            continue;
+        }
+
+        auto it = group.tiles.find( *current_state );
+        if( it == group.tiles.end() ) {
+            continue;
+        }
+
+        const state_modifier_tile &tile = it->second;
+
+        // If fg_sprite is null, this state is an identity (no modification).
+        // Skip to next group - override_lower only takes effect when we actually
+        // apply a UV modification.
+        if( !tile.fg_sprite ) {
+            continue;
+        }
+
+        auto [found, mod_surf, mod_rect] = tileset_ptr->get_sprite_surface( *tile.fg_sprite );
+        if( !found || !mod_surf ) {
+            // Sprite not found - skip this group, don't let it block others
+            continue;
+        }
+
+        if( !composite ) {
+            use_offset_mode = group.use_offset_mode;
+            composite = create_identity_uv_surface( comp_width, comp_height, use_offset_mode );
+            if( !composite ) {
+                return std::make_tuple( nullptr, point_zero );
+            }
+        }
+
+        SDL_Surface_Ptr mod_temp = create_surface_32( mod_rect.w, mod_rect.h );
+        if( mod_temp ) {
+            SDL_SetSurfaceBlendMode( mod_surf, SDL_BLENDMODE_NONE );
+            SDL_Rect src_rect = mod_rect;
+            SDL_Rect dst_rect = { 0, 0, mod_rect.w, mod_rect.h };
+            SDL_BlitSurface( mod_surf, &src_rect, mod_temp.get(), &dst_rect );
+
+            const int dst_x = tile.offset.x - composite_offset.x;
+            const int dst_y = tile.offset.y - composite_offset.y;
+            chain_uv_modifier_at( composite.get(), mod_temp.get(), use_offset_mode, dst_x, dst_y );
+        }
+
+        if( group.override_lower ) {
+            break;
+        }
+    }
+
+    return std::make_tuple( std::move( composite ), composite_offset );
+#endif
+}
+
+std::tuple<SDL_Surface_Ptr, point> cata_tiles::build_composite_uv_modifier( const Character &ch,
+        const int width, const int height )
+{
+    // No filter = include all groups
+    return build_composite_uv_modifier( ch, width, height, {} );
+}
+
 void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint &p, lit_level ll,
         int &height_3d, const bool as_independent_entity )
 {
@@ -4097,6 +5276,64 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
     } else {
         ent_name = ch.male ? "player_male" : "player_female";
     }
+
+    const auto &state_modifiers = tileset_ptr->get_state_modifiers();
+    const auto &global_whitelist = tileset_ptr->get_global_warp_whitelist();
+    const auto &global_blacklist = tileset_ptr->get_global_warp_blacklist();
+    const bool use_state_modifiers = get_option<bool>( "STATE_MODIFIERS" ) && !state_modifiers.empty();
+
+    // Cache for warp hashes by group filter signature
+    // Maps filter signature (vector<bool>) to registered warp hash
+    std::map<std::vector<bool>, size_t> signature_to_hash;
+
+    // Build composite for the base character sprite (not an overlay).
+    // Only include groups without a whitelist, since the base sprite won't match any overlay prefix.
+    // Groups with only a blacklist still apply (blacklist filters out overlays, not the base).
+    size_t base_warp_hash = TILESET_NO_WARP;
+    std::vector<bool> base_signature( state_modifiers.size(), false );
+    for( size_t i = 0; i < state_modifiers.size(); ++i ) {
+        // Base sprite applies if group has no whitelist (whitelist requires matching an overlay prefix)
+        base_signature[i] = state_modifiers[i].whitelist.empty();
+    }
+
+    if( use_state_modifiers ) {
+#if defined(DYNAMIC_ATLAS)
+        tileset_ptr->ensure_readback_loaded();
+
+        // Check if any groups apply to the base sprite
+        bool any_base_groups = false;
+        for( bool applies : base_signature ) {
+            if( applies ) {
+                any_base_groups = true;
+                break;
+            }
+        }
+
+        if( any_base_groups ) {
+            auto [uv_surface, uv_offset] = build_composite_uv_modifier(
+                                               ch, tileset_ptr->get_tile_width(), tileset_ptr->get_tile_height(), base_signature );
+            if( uv_surface ) {
+                // Determine offset mode from the first matching state modifier group
+                bool offset_mode = true;
+                for( size_t i = 0; i < state_modifiers.size(); ++i ) {
+                    if( base_signature[i] ) {
+                        auto state = get_character_state_for_group( ch, state_modifiers[i].group_id );
+                        if( state && state_modifiers[i].tiles.count( *state ) ) {
+                            offset_mode = state_modifiers[i].use_offset_mode;
+                            break;
+                        }
+                    }
+                }
+                // Register the warp surface with the tileset and get its content hash
+                base_warp_hash = tileset_ptr->register_warp_surface(
+                                     std::move( uv_surface ), uv_offset, offset_mode );
+            }
+        }
+        signature_to_hash[base_signature] = base_warp_hash;
+#endif
+    }
+    active_warp_hash = base_warp_hash;
+
     // first draw the character itself(i guess this means a tileset that
     // takes this seriously needs a naked sprite)
     int prev_height_3d = height_3d;
@@ -4130,30 +5367,156 @@ void cata_tiles::draw_entity_with_overlays( const Character &ch, const tripoint 
         }
     };
 
-    // next up, draw all the overlays
-    auto overlays = ch.get_overlay_ids();
-    for( const auto& [overlay_id, data] : overlays ) {
+    auto should_override = [&]<typename T>( T && arg ) {
+        auto check = [&]( const mutation & mut ) {
+            mutation_branch branch = mut.first.obj();
+            for( const std::string &mut_type : branch.types ) {
+                auto controller = tileset_ptr->get_tint_controller( mut_type );
+                if( !controller.first.empty() ) {
+                    return controller.second;
+                }
+            }
+            for( const trait_flag_str_id &mut_flag : branch.flags ) {
+                auto controller = tileset_ptr->get_tint_controller( mut_flag.str() );
+                if( !controller.first.empty() ) {
+                    return controller.second;
+                }
+            }
+            return false;
+        };
+        using Decayed = std::remove_reference_t<T>;
+        using PtrBase = std::remove_const_t<std::remove_pointer_t<Decayed>>;
+        if constexpr( std::is_same_v<PtrBase, mutation> ) {
+            return check( *arg );
+        }
+        return false;
+    };
 
-        const auto [overlay_bgCol, overlay_fgCol] = std::visit( get_overlay_color, data );
+    auto is_hair_style = [&]<typename T>( T && arg ) {
+        auto check = [&]( const mutation & mut ) {
+            if( mut.first.obj().types.contains( "hair_style" ) ) {
+                return true;
+            }
+            return false;
+        };
+        using Decayed = std::remove_reference_t<T>;
+        using PtrBase = std::remove_const_t<std::remove_pointer_t<Decayed>>;
+        if constexpr( std::is_same_v<PtrBase, mutation> ) {
+            return check( *arg );
+        }
+        return false;
+    };
+
+    // next up, draw all the overlays
+    const auto overlays = ch.get_overlay_ids();
+    for( const auto &[overlay_id, entry] : overlays ) {
+        tint_config overlay_bg_color = std::nullopt;
+        tint_config overlay_fg_color = std::nullopt;
 
         std::string draw_id = overlay_id;
-        if( find_overlay_looks_like( ch.male, overlay_id, draw_id ) ) {
-            int overlay_height_3d = prev_height_3d;
-            if( ch.facing == FD_RIGHT ) {
-                const tile_search_params tile {draw_id, C_NONE, "", corner, /*rota:*/ 0};
-                draw_from_id_string(
-                    tile, p, overlay_bgCol, overlay_fgCol,
-                    ll, false, 0, as_independent_entity, overlay_height_3d );
-            } else if( ch.facing == FD_LEFT ) {
-                const tile_search_params tile = {draw_id, C_NONE, "", corner, /*rota:*/ 4};
-                draw_from_id_string(
-                    tile, p, overlay_bgCol, overlay_fgCol,
-                    ll, false, 0, as_independent_entity, overlay_height_3d );
+        bool found = false;
+
+        if( !std::visit( should_override, entry ) ) {
+            // Legacy hair color injection: try to find a tile with the hair color in the name
+            if( std::visit( is_hair_style, entry ) ) {
+                for( const trait_id &other_mut : ch.get_mutations() ) {
+                    if( !other_mut.obj().types.contains( "hair_color" ) ) {
+                        continue;
+                    }
+                    const std::string color_id = other_mut.str();
+                    if( draw_id.find( color_id ) != std::string::npos ) {
+                        break;
+                    }
+                    const size_t hair_pos = draw_id.find( "hair_" );
+                    if( hair_pos == std::string::npos ) {
+                        continue;
+                    }
+                    const std::string prefix = draw_id.substr( 0, hair_pos );
+                    std::string suffix = draw_id.substr( hair_pos );
+                    suffix = suffix.substr( suffix.find( '_' ) );
+                    const std::string new_id = prefix + color_id + suffix;
+                    // draw_id is set to the resolved tile ID if found
+                    found = find_overlay_looks_like( ch.male, new_id, draw_id );
+                    break;
+                }
             }
+        }
+
+        if( !found ) {
+            auto pair = std::visit( get_overlay_color, entry );
+            overlay_bg_color = pair.first;
+            overlay_fg_color = pair.second;
+            found = find_overlay_looks_like( ch.male, overlay_id, draw_id );
+        }
+        if( found ) {
+            // Determine which groups apply to this overlay based on filters
+            if( use_state_modifiers ) {
+#if defined(DYNAMIC_ATLAS)
+                std::vector<bool> overlay_signature( state_modifiers.size(), false );
+                for( size_t i = 0; i < state_modifiers.size(); ++i ) {
+                    overlay_signature[i] = group_applies_to_overlay(
+                                               state_modifiers[i], overlay_id, global_whitelist, global_blacklist );
+                }
+
+                // Look up or build composite for this signature
+                auto it = signature_to_hash.find( overlay_signature );
+                if( it != signature_to_hash.end() ) {
+                    active_warp_hash = it->second;
+                } else {
+                    // Check if any groups apply
+                    bool any_apply = false;
+                    for( bool applies : overlay_signature ) {
+                        if( applies ) {
+                            any_apply = true;
+                            break;
+                        }
+                    }
+
+                    if( !any_apply ) {
+                        active_warp_hash = TILESET_NO_WARP;
+                    } else {
+                        auto [surf, off] = build_composite_uv_modifier(
+                                               ch, tileset_ptr->get_tile_width(),
+                                               tileset_ptr->get_tile_height(), overlay_signature );
+                        if( surf ) {
+                            // Determine offset mode from first matching group in this signature
+                            bool offset_mode = true;
+                            for( size_t i = 0; i < state_modifiers.size(); ++i ) {
+                                if( overlay_signature[i] ) {
+                                    auto state = get_character_state_for_group( ch, state_modifiers[i].group_id );
+                                    if( state && state_modifiers[i].tiles.count( *state ) ) {
+                                        offset_mode = state_modifiers[i].use_offset_mode;
+                                        break;
+                                    }
+                                }
+                            }
+                            active_warp_hash = tileset_ptr->register_warp_surface(
+                                                   std::move( surf ), off, offset_mode );
+                        } else {
+                            active_warp_hash = TILESET_NO_WARP;
+                        }
+                    }
+                    signature_to_hash[overlay_signature] = active_warp_hash;
+                }
+#endif
+            }
+
+            int overlay_height_3d = prev_height_3d;
+            const int rota = ch.facing == FD_RIGHT ? 0 : 4;
+            const tile_search_params tile{ draw_id, C_NONE, "", corner, rota };
+            draw_from_id_string(
+                tile, p, overlay_bg_color, overlay_fg_color,
+                ll, false, 0, as_independent_entity, overlay_height_3d );
             // the tallest height-having overlay is the one that counts
             height_3d = std::max( height_3d, overlay_height_3d );
         }
     }
+
+    // Clear the warp state after drawing is complete
+    active_warp_hash = TILESET_NO_WARP;
+#if defined(DYNAMIC_ATLAS)
+    tileset_ptr->clear_warp_cache();
+#endif
 }
 
 bool cata_tiles::draw_item_highlight( const tripoint &pos )
@@ -4187,8 +5550,10 @@ void tileset_loader::ensure_default_item_highlight()
         index,
         TILESET_NO_MASK,
         tileset_fx_type::none,
-        TILESET_NO_COLOR
-    }, texture( tex, rect ) );
+        TILESET_NO_COLOR,
+        TILESET_NO_WARP,
+        point_zero
+    }, tileset::tile_lookup_entry{ texture( tex, rect ), point_zero } );
 #else
     const Uint8 highlight_alpha = 127;
 
@@ -4642,7 +6007,7 @@ void cata_tiles::draw_highlight()
     for( const tripoint &p : highlights ) {
         draw_from_id_string(
         {"highlight", C_NONE, empty_string, 0, 0},
-        p,  std::nullopt, std::nullopt,
+        p, std::nullopt, std::nullopt,
         lit_level::LIT, false, 0, false
         );
     }

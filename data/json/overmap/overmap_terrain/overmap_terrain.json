@@ -77,7 +77,7 @@
     "sym": "0",
     "color": "yellow",
     "see_cost": 5,
-    "flags": [ "RISK_LOW", "SOURCE_SAFETY" ]
+    "flags": [ "SOURCE_SAFETY" ]
   },
   {
     "type": "overmap_terrain",
@@ -92,6 +92,14 @@
     "id": "lighthouse_z3",
     "name": "lighthouse",
     "sym": "&",
+    "color": "yellow",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "lighthouse_basement",
+    "name": "lighthouse cellar",
+    "sym": "0",
     "color": "yellow",
     "see_cost": 5
   },
@@ -266,19 +274,8 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [ "Cargoship1_0_0", "Cargoship1_1_0" ],
-    "name": "Cargoship1",
-    "sym": "H",
-    "color": "red",
-    "see_cost": 5,
-    "extras": "build",
-    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY", "LAKE" ],
-    "mondensity": 2
-  },
-  {
-    "type": "overmap_terrain",
-    "id": [ "Cargoshipu_0_0", "Cargoshipu_1_0" ],
-    "name": "Cargoshipunder",
+    "id": [ "Cargoship1_0_0", "Cargoship1_1_0", "Cargoshipu_0_0", "Cargoshipu_1_0" ],
+    "name": "cargo ship",
     "sym": "H",
     "color": "red",
     "see_cost": 5,

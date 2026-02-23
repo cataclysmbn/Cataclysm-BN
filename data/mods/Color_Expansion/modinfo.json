@@ -1,0 +1,11 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "color_expansion",
+    "name": "Color Expansion",
+    "authors": [ "Azmodius X" ],
+    "description": "Adds multiple wacky appearance colors to choose from.",
+    "category": "graphical",
+    "dependencies": [ "bn" ]
+  }
+]

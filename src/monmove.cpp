@@ -281,7 +281,7 @@ bool monster::can_squeeze_to( const tripoint &p ) const
 
 bool monster::can_move_to( const tripoint &p ) const
 {
-    return can_reach_to( p ) && will_move_to( p );
+    return can_reach_to( p ) && will_move_to( p ) && !has_flag( MF_STATIONARY );
 }
 
 void monster::set_dest( const tripoint &p )
@@ -1137,7 +1137,7 @@ void monster::move()
                 if( is_wandering() && destination == wander_pos ) {
                     continue;
                 }
-                const int estimate = here.bash_rating( bash_estimate(), candidate );
+                const int estimate = here.bash_rating( bash_estimate( candidate ), candidate );
                 if( estimate <= 0 ) {
                     continue;
                 }
@@ -1401,7 +1401,7 @@ tripoint monster::scent_move()
             ( !has_flag( MF_AQUATIC ) || g->m.is_divable( dest ) ) &&
             ( ( can_move_to( dest ) && !get_map().obstructed_by_vehicle_rotation( pos(), dest ) ) ||
               ( dest == g->u.pos() ) ||
-              ( can_bash && g->m.bash_rating( bash_estimate(), dest ) > 0 ) ) ) {
+              ( can_bash && g->m.bash_rating( bash_estimate( dest ), dest ) > 0 ) ) ) {
             if( ( !fleeing && smell > bestsmell ) || ( fleeing && smell < bestsmell ) ) {
                 smoves.clear();
                 smoves.push_back( dest );
@@ -1576,15 +1576,9 @@ bool monster::bash_at( const tripoint &p )
     return true;
 }
 
-int monster::bash_estimate()
+int monster::bash_estimate( const tripoint &target )
 {
-    int estimate = bash_skill();
-    if( has_flag( MF_GROUP_BASH ) ) {
-        // Right now just give them a boost so they try to bash a lot of stuff.
-        // TODO: base it on number of nearby friendlies.
-        estimate *= 2;
-    }
-    return estimate;
+    return group_bash_skill( target );
 }
 
 int monster::bash_skill()
@@ -1628,7 +1622,7 @@ int monster::group_bash_skill( const tripoint &target )
         // If we made it here, the last monster checked was the candidate.
         monster &helpermon = *mon;
         // Contribution falls off rapidly with distance from target.
-        bashskill += helpermon.bash_skill() / rl_dist( candidate, target );
+        bashskill += helpermon.bash_skill() / std::max( rl_dist( candidate, target ), 1 );
     }
 
     return bashskill;
@@ -2284,7 +2278,7 @@ void monster::shove_vehicle( const tripoint &remote_destination,
                     if( veh_mass < 1000_kilogram ) {
                         shove_moves_minimal = 100;
                         shove_veh_mass_moves_factor = 8;
-                        shove_velocity = 1000;
+                        shove_velocity = 447;
                         shove_damage_min = 0.00F;
                         shove_damage_max = 0.03F;
                     }
@@ -2293,7 +2287,7 @@ void monster::shove_vehicle( const tripoint &remote_destination,
                     if( veh_mass < 2000_kilogram ) {
                         shove_moves_minimal = 50;
                         shove_veh_mass_moves_factor = 4;
-                        shove_velocity = 1500;
+                        shove_velocity = 671;
                         shove_damage_min = 0.00F;
                         shove_damage_max = 0.05F;
                     }
