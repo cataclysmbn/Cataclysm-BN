@@ -1086,6 +1086,36 @@
   },
   {
     "type": "mutation",
+    "id": "CLAUSTROPHOBIA",
+    "name": { "str": "Claustrophobia" },
+    "points": -2,
+    "description": "Tight, enclosed spaces make your skin crawl.  Staying indoors drains your focus and gives you a steady morale penalty.",
+    "starting_trait": true,
+    "cancels": [ "AGORAPHOBIA" ],
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "AGORAPHOBIA",
+    "name": { "str": "Agoraphobia" },
+    "points": -2,
+    "description": "Open spaces and wide skies make you uneasy.  Spending time outdoors drains your focus and gives you a steady morale penalty.",
+    "starting_trait": true,
+    "cancels": [ "CLAUSTROPHOBIA" ],
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "CLUTTER_INTOLERANT",
+    "name": { "str": "Clutter Intolerant" },
+    "points": -1,
+    "description": "Loose junk everywhere grates on your nerves.  Piles of items scattered on the ground nearby will steadily erode your morale.",
+    "starting_trait": true,
+    "cancels": [ "HOARDER" ],
+    "valid": false
+  },
+  {
+    "type": "mutation",
     "id": "NARCOLEPTIC",
     "name": { "str": "Narcoleptic" },
     "points": -3,
@@ -1121,6 +1151,7 @@
     "points": -4,
     "description": "You don't feel right unless you're carrying as much as you can.  You suffer morale penalties for carrying less than maximum volume (weight is ignored).  Xanax can help control this anxiety.",
     "starting_trait": true,
+    "cancels": [ "CLUTTER_INTOLERANT" ],
     "valid": false
   },
   {
