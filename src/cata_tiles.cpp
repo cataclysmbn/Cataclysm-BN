@@ -2867,8 +2867,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     const bool show_zones_overlay = g->show_zone_overlay && !iso_mode;
 
     struct zone_render_data {
-        point min_local;
-        point max_local;
+        std::unordered_set<point> tiles;
         SDL_Color color;
         std::string name;
     };
@@ -2878,32 +2877,61 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
     if( show_zones_overlay ) {
         const zone_manager &mgr = zone_manager::get_manager();
-        for( const zone_data &zone : mgr.get_zones() ) {
-            if( !zone.get_enabled() || zone.get_start_point().z != center.z ) {
-                continue;
+        std::ranges::for_each( mgr.get_zones(), [&]( const zone_manager::ref_const_zone_data & ref ) {
+            const zone_data &zone = ref.get();
+            if( !zone.get_enabled() ) {
+                return;
             }
 
-            const tripoint local_start = here.getlocal( zone.get_start_point() );
-            const tripoint local_end = here.getlocal( zone.get_end_point() );
-            const point min_pt( std::min( local_start.x, local_end.x ),
-                                std::min( local_start.y, local_end.y ) );
-            const point max_pt( std::max( local_start.x, local_end.x ),
-                                std::max( local_start.y, local_end.y ) );
+            const auto covered_points = get_zone_covered_points( zone );
+            auto local_tiles = std::unordered_set<point>();
+            std::ranges::for_each( covered_points, [&]( const tripoint & pos ) {
+                if( pos.z != center.z ) {
+                    return;
+                }
+                local_tiles.insert( here.getlocal( pos ).xy() );
+            } );
 
-            zones_to_draw.push_back( { min_pt, max_pt, curses_color_to_SDL( zone.get_type().obj().color() ), zone.get_name() } );
-        }
+            if( !local_tiles.empty() ) {
+                zones_to_draw.push_back( {
+                    std::move( local_tiles ),
+                    curses_color_to_SDL( zone.get_type().obj().color() ),
+                    zone.get_name()
+                } );
+            }
+        } );
     }
 
-    const bool has_selected_zone = do_draw_zones;
+    const auto has_selected_zone = do_draw_zones;
     point selected_min = point_zero;
     point selected_max = point_zero;
-    int selected_z = 0;
+    auto selected_z = 0;
+    const auto has_custom_selected_zone = has_selected_zone && !zone_point_lookup.empty();
     if( has_selected_zone ) {
         const tripoint sel_start = zone_start + zone_offset;
         const tripoint sel_end = zone_end + zone_offset;
-        selected_min = point( std::min( sel_start.x, sel_end.x ), std::min( sel_start.y, sel_end.y ) );
-        selected_max = point( std::max( sel_start.x, sel_end.x ), std::max( sel_start.y, sel_end.y ) );
-        selected_z = sel_start.z;
+        selected_z = has_custom_selected_zone ? zone_points.front().z : sel_start.z;
+        if( has_custom_selected_zone ) {
+            const auto min_x = std::ranges::minmax_element( zone_points, {}, &tripoint::x );
+            const auto min_y = std::ranges::minmax_element( zone_points, {}, &tripoint::y );
+            selected_min = point( min_x.min->x, min_y.min->y );
+            selected_max = point( min_x.max->x, min_y.max->y );
+        } else {
+            selected_min = point( std::min( sel_start.x, sel_end.x ), std::min( sel_start.y, sel_end.y ) );
+            selected_max = point( std::max( sel_start.x, sel_end.x ), std::max( sel_start.y, sel_end.y ) );
+        }
+    }
+
+    if( has_selected_zone ) {
+        const auto width = selected_max.x - selected_min.x + 1;
+        const auto height = selected_max.y - selected_min.y + 1;
+        if( width > 0 && height > 0 ) {
+            const auto label = string_format( _( "(%dx%d)" ), width, height );
+            const auto center = point( ( selected_min.x + selected_max.x ) / 2,
+                                       ( selected_min.y + selected_max.y ) / 2 );
+            overlay_strings.emplace( player_to_screen( center ) + point( tile_width / 2, 0 ),
+                                     formatted_text( label, catacurses::white, direction::NORTH ) );
+        }
     }
 
     o = iso_mode ? center.xy() : center.xy() - point( POSX, POSY );
@@ -3240,15 +3268,16 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
 
                 const bool in_selected_zone = has_selected_zone && p.pos.z == selected_z &&
-                                              p.pos.x >= selected_min.x && p.pos.x <= selected_max.x &&
-                                              p.pos.y >= selected_min.y && p.pos.y <= selected_max.y;
+                                              ( has_custom_selected_zone
+                                                ? zone_point_lookup.contains( p.pos )
+                                                : ( p.pos.x >= selected_min.x && p.pos.x <= selected_max.x &&
+                                                    p.pos.y >= selected_min.y && p.pos.y <= selected_max.y ) );
 
                 bool selected_drawn = false;
 
                 if( show_zones_overlay ) {
                     for( const zone_render_data &zone : zones_to_draw ) {
-                        if( p.pos.x < zone.min_local.x || p.pos.x > zone.max_local.x ||
-                            p.pos.y < zone.min_local.y || p.pos.y > zone.max_local.y ) {
+                        if( !zone.tiles.contains( p.pos.xy() ) ) {
                             continue;
                         }
                         draw_zone_overlay( {
@@ -3475,7 +3504,10 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
         }
     }
 
-    if( g->debug_submap_grid_overlay && !iso_mode ) {
+    const bool draw_submap_grid = g->debug_submap_grid_overlay ||
+                                  ( g->is_zones_manager_open() && g->is_zone_submap_grid_overlay_enabled() );
+
+    if( draw_submap_grid && !iso_mode ) {
         point sm_start = ms_to_sm_copy( here.getabs( point( min_col, min_row ) + o ) );
         point sm_end = ms_to_sm_copy( here.getabs( point( max_col, max_row ) + o ) );
 
@@ -3540,8 +3572,18 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 continue;
             }
 
-            const point screen_tl = player_to_screen( zone.min_local );
-            const point screen_br = player_to_screen( zone.max_local ) + point( tile_width, tile_height );
+            if( zone.tiles.empty() ) {
+                continue;
+            }
+
+            const auto min_x = std::ranges::minmax_element( zone.tiles, {}, &point::x );
+            const auto min_y = std::ranges::minmax_element( zone.tiles, {}, &point::y );
+            const point min_local( min_x.min->x, min_y.min->y );
+            const point max_local( min_x.max->x, min_y.max->y );
+
+            const point screen_tl = player_to_screen( min_local + zone_offset.xy() );
+            const point screen_br = player_to_screen( max_local + zone_offset.xy() ) +
+                                    point( tile_width, tile_height );
             const point center_pt( screen_tl.x + ( screen_br.x - screen_tl.x ) / 2,
                                    screen_tl.y + ( screen_br.y - screen_tl.y ) / 2 );
 
@@ -5641,13 +5683,19 @@ void cata_tiles::init_draw_sct()
 {
     do_draw_sct = true;
 }
-void cata_tiles::init_draw_zones( const tripoint &_start, const tripoint &_end,
-                                  const tripoint &_offset )
+void cata_tiles::init_draw_zones( const zone_draw_options &options )
 {
     do_draw_zones = true;
-    zone_start = _start;
-    zone_end = _end;
-    zone_offset = _offset;
+    zone_start = options.start;
+    zone_end = options.end;
+    zone_offset = options.offset;
+    zone_points = options.points;
+    zone_point_lookup.clear();
+    if( !zone_points.empty() ) {
+        std::ranges::for_each( zone_points, [&]( const tripoint & point ) {
+            zone_point_lookup.insert( point );
+        } );
+    }
 }
 void cata_tiles::init_draw_radiation_override( const tripoint &p, const int rad )
 {
@@ -5748,6 +5796,8 @@ void cata_tiles::void_sct()
 void cata_tiles::void_zones()
 {
     do_draw_zones = false;
+    zone_points.clear();
+    zone_point_lookup.clear();
 }
 void cata_tiles::void_radiation_override()
 {
@@ -6079,14 +6129,33 @@ void cata_tiles::draw_sct_frame( std::multimap<point, formatted_text> &overlay_s
 
 void cata_tiles::draw_zones_frame( std::multimap<point, formatted_text> &overlay_strings )
 {
-    const point min_local = zone_offset.xy() + zone_start.xy();
-    const point max_local = zone_offset.xy() + zone_end.xy();
+    const bool has_custom_points = !zone_points.empty();
+    const point min_local = has_custom_points ?
+                            point( std::ranges::min( zone_points, {}, &tripoint::x ).x,
+                                   std::ranges::min( zone_points, {}, &tripoint::y ).y ) :
+                            zone_offset.xy() + zone_start.xy();
+    const point max_local = has_custom_points ?
+                            point( std::ranges::max( zone_points, {}, &tripoint::x ).x,
+                                   std::ranges::max( zone_points, {}, &tripoint::y ).y ) :
+                            zone_offset.xy() + zone_end.xy();
     const tripoint center_local( ( min_local.x + max_local.x ) / 2,
                                  ( min_local.y + max_local.y ) / 2, get_avatar().pos().z );
+    const tripoint lookup_local = has_custom_points ?
+                                  tripoint( zone_points.front().xy(), zone_points.front().z ) :
+                                  center_local;
 
     // get_zone_at expects absolute coordinates
     const zone_data *zone = zone_manager::get_manager().get_zone_at(
-                                get_map().getabs( center_local ) );
+                                get_map().getabs( lookup_local ) );
+
+    if( has_custom_points ) {
+        if( zone ) {
+            overlay_strings.emplace( player_to_screen( center_local.xy() ),
+                                     formatted_text( zone->get_name(), catacurses::white,
+                                             direction::NORTH ) );
+        }
+        return;
+    }
 
     const point screen_tl = player_to_screen( min_local );
     const point screen_br = player_to_screen( max_local ) + point( tile_width, tile_height );

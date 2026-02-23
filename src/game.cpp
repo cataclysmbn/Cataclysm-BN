@@ -3260,17 +3260,26 @@ void game::add_draw_callback( const shared_ptr_fast<draw_callback_t> &cb )
 
 static void draw_trail( const tripoint &start, const tripoint &end, bool bDrawX );
 
-static shared_ptr_fast<game::draw_callback_t> create_zone_callback(
-    const std::optional<tripoint> &zone_start,
-    const std::optional<tripoint> &zone_end,
-    const bool &zone_blink,
-    const bool &zone_cursor,
-    const bool &is_moving_zone = false
-)
+struct zone_callback_options {
+    std::optional<tripoint> &zone_start;
+    std::optional<tripoint> &zone_end;
+    bool &zone_blink;
+    bool &zone_cursor;
+    std::function<std::vector<tripoint>( const tripoint &, const tripoint & )> point_generator;
+    bool is_moving_zone = false;
+};
+
+static auto create_zone_callback( const zone_callback_options &options )
+- > shared_ptr_fast<game::draw_callback_t>
 {
-    ( void ) zone_blink;
+    auto &zone_start = options.zone_start;
+    auto &zone_end = options.zone_end;
+    auto &zone_cursor = options.zone_cursor;
+    auto point_generator = options.point_generator;
+    const auto is_moving_zone = options.is_moving_zone;
+    ( void ) options.zone_blink;
     return make_shared_fast<game::draw_callback_t>(
-    [&]() {
+    [ &, point_generator = std::move( point_generator ), is_moving_zone]() {
         if( zone_cursor ) {
             if( is_moving_zone ) {
                 g->draw_cursor( ( zone_start.value() + zone_end.value() ) / 2 );
@@ -3303,7 +3312,17 @@ static shared_ptr_fast<game::draw_callback_t> create_zone_callback(
             const tripoint end( std::max( zone_start->x, zone_end->x ),
                                 std::max( zone_start->y, zone_end->y ),
                                 zone_end->z );
-            g->draw_zones( start, end, offset );
+            auto points = std::vector<tripoint>();
+            if( point_generator ) {
+                points = point_generator( start, end );
+            }
+            auto zone_options = zone_draw_options{
+                .start = start,
+                .end = end,
+                .offset = offset,
+                .points = std::move( points )
+            };
+            g->draw_zones( zone_options );
         }
     } );
 }
@@ -6570,7 +6589,13 @@ bool game::is_zones_manager_open() const
     return zones_manager_open;
 }
 
-static void zones_manager_shortcuts( const catacurses::window &w_info, const bool overlay_enabled )
+bool game::is_zone_submap_grid_overlay_enabled() const
+{
+    return zone_submap_grid_overlay;
+}
+
+static void zones_manager_shortcuts( const catacurses::window &w_info, const bool overlay_enabled,
+                                     const bool submap_grid_enabled )
 {
     werase( w_info );
 
@@ -6594,6 +6619,10 @@ static void zones_manager_shortcuts( const catacurses::window &w_info, const boo
     const nc_color overlay_color = overlay_enabled ? c_light_green : c_white;
     shortcut_print( w_info, point( tmpx, 3 ), c_white, overlay_color,
                     _( "<O> - Toggle Overlays" ) );
+    tmpx += shortcut_print( w_info, point( tmpx, 3 ), c_white, c_light_green, "  " ) + 1;
+    const nc_color submap_color = submap_grid_enabled ? c_light_green : c_white;
+    shortcut_print( w_info, point( tmpx, 3 ), c_white, submap_color,
+                    _( "<G> - Submap grid" ) );
 
     wnoutrefresh( w_info );
 }
@@ -6701,6 +6730,7 @@ void game::zones_manager()
     ctxt.register_action( "DISABLE_ZONE" );
     ctxt.register_action( "SHOW_ALL_ZONES" );
     ctxt.register_action( "TOGGLE_ZONE_OVERLAY" );
+    ctxt.register_action( "debug_submap_grid" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
     auto &mgr = zone_manager::get_manager();
@@ -6757,10 +6787,28 @@ void game::zones_manager()
 
     std::optional<tripoint> zone_start;
     std::optional<tripoint> zone_end;
-    bool zone_blink = false;
-    bool zone_cursor = false;
-    shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback(
-                zone_start, zone_end, zone_blink, zone_cursor );
+    auto zone_blink = false;
+    auto zone_cursor = false;
+    auto current_zone_type = zone_type_id();
+    shared_ptr_fast<const blueprint_options> current_bp_options;
+    static const auto zone_construction_blueprint = zone_type_id( "CONSTRUCTION_BLUEPRINT" );
+    auto zone_point_generator =
+    [&]( const tripoint & start, const tripoint & end ) -> std::vector<tripoint> {
+        if( current_zone_type == zone_construction_blueprint )
+        {
+            if( current_bp_options ) {
+                return current_bp_options->get_covered_points( start, end );
+            }
+        }
+        return std::vector<tripoint>();
+    };
+    shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback( zone_callback_options{
+        .zone_start = zone_start,
+        .zone_end = zone_end,
+        .zone_blink = zone_blink,
+        .zone_cursor = zone_cursor,
+        .point_generator = zone_point_generator,
+    } );
     add_draw_callback( zone_cb );
 
     auto query_position =
@@ -6772,9 +6820,11 @@ void game::zones_manager()
         restore_on_out_of_scope<bool> show_prev( show );
         restore_on_out_of_scope<std::optional<tripoint>> zone_start_prev( zone_start );
         restore_on_out_of_scope<std::optional<tripoint>> zone_end_prev( zone_end );
+        restore_on_out_of_scope<bool> zone_cursor_prev( zone_cursor );
         show = false;
         zone_start = std::nullopt;
         zone_end = std::nullopt;
+        zone_cursor = true;
         ui.mark_resize();
 
         static_popup popup;
@@ -6814,7 +6864,8 @@ void game::zones_manager()
             return;
         }
         zones_manager_draw_borders( w_zones_border, w_zones_info_border, zone_ui_height, width );
-        zones_manager_shortcuts( w_zones_info, g->show_zone_overlay );
+        zones_manager_shortcuts( w_zones_info, g->show_zone_overlay,
+                                 g->debug_submap_grid_overlay || zone_submap_grid_overlay );
 
         if( zone_cnt == 0 ) {
             werase( w_zones );
@@ -6901,7 +6952,10 @@ void game::zones_manager()
                 }
                 const std::string &name = maybe_name.value();
 
-                const auto position = query_position();
+                current_zone_type = id;
+                current_bp_options = std::dynamic_pointer_cast<const blueprint_options>( options );
+                std::optional<std::pair<tripoint, tripoint>> position;
+                position = query_position();
                 if( !position ) {
                     break;
                 }
@@ -6920,6 +6974,8 @@ void game::zones_manager()
             active_index = 0;
         } else if( action == "TOGGLE_ZONE_OVERLAY" ) {
             g->show_zone_overlay = !g->show_zone_overlay;
+        } else if( action == "debug_submap_grid" ) {
+            zone_submap_grid_overlay = !zone_submap_grid_overlay;
         } else if( zone_cnt > 0 ) {
             if( action == "UP" ) {
                 active_index--;
@@ -6987,9 +7043,11 @@ void game::zones_manager()
                         restore_on_out_of_scope<bool> show_prev( show );
                         restore_on_out_of_scope<std::optional<tripoint>> zone_start_prev( zone_start );
                         restore_on_out_of_scope<std::optional<tripoint>> zone_end_prev( zone_end );
+                        restore_on_out_of_scope<bool> zone_cursor_prev( zone_cursor );
                         show = false;
                         zone_start = std::nullopt;
                         zone_end = std::nullopt;
+                        zone_cursor = true;
                         ui.mark_resize();
                         static_popup message_pop;
                         message_pop.on_top( true );
@@ -7057,8 +7115,13 @@ void game::zones_manager()
             const auto &zone = zones[active_index].get();
             zone_start = m.getlocal( zone.get_start_point() );
             zone_end = m.getlocal( zone.get_end_point() );
+            current_zone_type = zone.get_type();
+            current_bp_options = std::dynamic_pointer_cast<const blueprint_options>(
+                                     zone.get_options_ptr() );
         } else {
             zone_start = zone_end = std::nullopt;
+            current_zone_type = zone_type_id();
+            current_bp_options = nullptr;
         }
 
         // Actually accessed from the terrain overlay callback `zone_cb` in the
@@ -7271,8 +7334,17 @@ look_around_result game::look_around( bool show_window, tripoint &center,
     std::optional<tripoint> zone_end;
     bool zone_blink = false;
     bool zone_cursor = true;
-    shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback( zone_start, zone_end, zone_blink,
-            zone_cursor, is_moving_zone );
+    auto noop_zone_points = []( const tripoint &, const tripoint & ) {
+        return std::vector<tripoint>();
+    };
+    shared_ptr_fast<draw_callback_t> zone_cb = create_zone_callback( zone_callback_options{
+        .zone_start = zone_start,
+        .zone_end = zone_end,
+        .zone_blink = zone_blink,
+        .zone_cursor = zone_cursor,
+        .point_generator = noop_zone_points,
+        .is_moving_zone = is_moving_zone,
+    } );
     add_draw_callback( zone_cb );
 
     is_looking = true;

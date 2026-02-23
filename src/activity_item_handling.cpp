@@ -69,6 +69,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
+#include "skill.h"
 #include "translations.h"
 #include "trap.h"
 #include "units.h"
@@ -1349,8 +1350,41 @@ static bool has_skill_for_vehicle_work( const std::map<skill_id, int> &required_
     return true;
 }
 
+static auto format_skill_requirements( const std::map<skill_id, int> &skills ) -> std::string
+{
+    if( skills.empty() ) {
+        return std::string();
+    }
+    auto parts = std::vector<std::string>();
+    parts.reserve( skills.size() );
+    std::ranges::transform( skills, std::back_inserter( parts ), []( const auto & entry ) {
+        return string_format( "%s %d", entry.first->name(), entry.second );
+    } );
+    return join( parts, ", " );
+}
+
+static void set_activity_failure_message( player &p, const std::string &msg,
+        bool *notice_sent = nullptr )
+{
+    if( msg.empty() ) {
+        return;
+    }
+    if( npc *guy = p.as_npc() ) {
+        guy->set_suppress_activity_complete_message( true );
+        const std::string existing = guy->peek_activity_failure_message();
+        if( existing.empty() ) {
+            guy->set_activity_failure_message( msg );
+        }
+    }
+    if( notice_sent && !*notice_sent && p.is_avatar() && !msg.empty() ) {
+        add_msg( m_info, msg );
+        *notice_sent = true;
+    }
+}
+
 static activity_reason_info can_do_activity_there( const activity_id &act, player &p,
-        const tripoint &src_loc, const int distance = ACTIVITY_SEARCH_DISTANCE )
+        const tripoint &src_loc, const int distance = ACTIVITY_SEARCH_DISTANCE,
+        bool *failure_notice_sent = nullptr )
 {
     // see activity_handlers.h cant_do_activity_reason enums
     p.invalidate_crafting_inventory();
@@ -1359,6 +1393,9 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
     map &here = get_map();
     if( act == ACT_VEHICLE_DECONSTRUCTION ||
         act == ACT_VEHICLE_REPAIR ) {
+        bool vehicle_skill_blocked = false;
+        bool vehicle_lift_blocked = false;
+        bool vehicle_any_found = false;
         std::vector<int> already_working_indexes;
         vehicle *veh = veh_pointer_or_null( here.veh_at( src_loc ) );
         if( !veh ) {
@@ -1366,6 +1403,9 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
         }
         // if the vehicle is moving or player is controlling it.
         if( std::abs( veh->velocity ) > 100 || veh->player_in_control( g->u ) ) {
+            set_activity_failure_message( p,
+                                          _( "Vehicle work blocked: the vehicle is moving or under control." ),
+                                          failure_notice_sent );
             return activity_reason_info::fail( do_activity_reason::NO_ZONE );
         }
         for( const npc &guy : g->all_npcs() ) {
@@ -1381,6 +1421,9 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
             // then discount, don't need to move each other out of the way.
             if( here.getlocal( g->u.activity->placement ) == src_loc ||
                 guy_work_spot == src_loc || guy.pos() == src_loc || ( p.is_npc() && g->u.pos() == src_loc ) ) {
+                set_activity_failure_message( p,
+                                              _( "Vehicle work blocked: someone is already working here." ),
+                                              failure_notice_sent );
                 return activity_reason_info::fail( do_activity_reason::ALREADY_WORKING );
             }
             if( guy_work_spot != tripoint_zero ) {
@@ -1400,6 +1443,7 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
             for( vehicle_part *part_elem : parts ) {
                 const vpart_info &vpinfo = part_elem->info();
                 int vpindex = veh->index_of_part( part_elem, true );
+                vehicle_any_found = true;
                 // if part is not on this vehicle, or if its attached to another part that needs to be removed first.
                 if( vpindex == -1 || !veh->can_unmount( vpindex ) ) {
                     continue;
@@ -1411,6 +1455,17 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
                 }
                 // don't have skill to remove it
                 if( !has_skill_for_vehicle_work( vpinfo.removal_skills, p ) ) {
+                    const auto skill_text = format_skill_requirements( vpinfo.removal_skills );
+                    if( !skill_text.empty() ) {
+                        set_activity_failure_message( p,
+                                                      string_format( _( "Vehicle deconstruction blocked: requires %s." ),
+                                                              skill_text ), failure_notice_sent );
+                    } else {
+                        set_activity_failure_message( p,
+                                                      _( "Vehicle deconstruction blocked: insufficient skill for this task." ),
+                                                      failure_notice_sent );
+                    }
+                    vehicle_skill_blocked = true;
                     continue;
                 }
                 item &base = *item::spawn_temporary( vpinfo.item );
@@ -1424,6 +1479,10 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
                 const bool use_aid = max_lift >= lvl;
                 const bool use_str = character_funcs::can_lift_with_helpers( p, base.lift_strength() );
                 if( !( use_aid || use_str ) ) {
+                    const std::string lift_msg = string_format(
+                                                     _( "Vehicle deconstruction blocked: need lifting level %d here." ), lvl );
+                    set_activity_failure_message( p, lift_msg, failure_notice_sent );
+                    vehicle_lift_blocked = true;
                     continue;
                 }
                 const auto &reqs = vpinfo.removal_requirements();
@@ -1434,6 +1493,16 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
                 // temporarily store the intended index, we do this so two NPCs don't try and work on the same part at same time.
                 p.activity_vehicle_part_index = vpindex;
                 if( !can_make ) {
+                    const std::string missing_list = reqs.list_missing();
+                    if( !missing_list.empty() ) {
+                        set_activity_failure_message( p,
+                                                      string_format( _( "Vehicle deconstruction missing requirements:\n%s" ),
+                                                              missing_list ), failure_notice_sent );
+                    } else {
+                        set_activity_failure_message( p,
+                                                      _( "Vehicle deconstruction missing requirements nearby." ),
+                                                      failure_notice_sent );
+                    }
                     return activity_reason_info::fail( do_activity_reason::NEEDS_VEH_DECONST );
                 } else {
                     return activity_reason_info::ok( do_activity_reason::NEEDS_VEH_DECONST );
@@ -1445,6 +1514,7 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
             for( vehicle_part *part_elem : parts ) {
                 const vpart_info &vpinfo = part_elem->info();
                 int vpindex = veh->index_of_part( part_elem, true );
+                vehicle_any_found = true;
                 // if part is undamaged or beyond repair - can skip it.
                 if( part_elem->is_broken() || part_elem->damage() == 0 ||
                     part_elem->info().repair_requirements().is_empty() ) {
@@ -1456,6 +1526,17 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
                 }
                 // don't have skill to repair it
                 if( !has_skill_for_vehicle_work( vpinfo.repair_skills, p ) ) {
+                    const auto skill_text = format_skill_requirements( vpinfo.repair_skills );
+                    if( !skill_text.empty() ) {
+                        set_activity_failure_message( p,
+                                                      string_format( _( "Vehicle repair blocked: requires %s." ), skill_text ),
+                                                      failure_notice_sent );
+                    } else {
+                        set_activity_failure_message( p,
+                                                      _( "Vehicle repair blocked: insufficient skill for this task." ),
+                                                      failure_notice_sent );
+                    }
+                    vehicle_skill_blocked = true;
                     continue;
                 }
                 const auto &reqs = vpinfo.repair_requirements();
@@ -1465,6 +1546,16 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
                 // temporarily store the intended index, we do this so two NPCs don't try and work on the same part at same time.
                 p.activity_vehicle_part_index = vpindex;
                 if( !can_make ) {
+                    const std::string missing_list = reqs.list_missing();
+                    if( !missing_list.empty() ) {
+                        set_activity_failure_message( p,
+                                                      string_format( _( "Vehicle repair missing requirements:\n%s" ),
+                                                              missing_list ), failure_notice_sent );
+                    } else {
+                        set_activity_failure_message( p,
+                                                      _( "Vehicle repair missing requirements nearby." ),
+                                                      failure_notice_sent );
+                    }
                     return activity_reason_info::fail( do_activity_reason::NEEDS_VEH_REPAIR );
                 } else {
                     return activity_reason_info::ok( do_activity_reason::NEEDS_VEH_REPAIR );
@@ -1472,6 +1563,17 @@ static activity_reason_info can_do_activity_there( const activity_id &act, playe
             }
         }
         p.activity_vehicle_part_index = -1;
+        if( vehicle_skill_blocked ) {
+            return activity_reason_info::fail( do_activity_reason::DONT_HAVE_SKILL );
+        }
+        if( vehicle_lift_blocked ) {
+            return activity_reason_info::fail( do_activity_reason::UNKNOWN_ACTIVITY );
+        }
+        if( vehicle_any_found ) {
+            set_activity_failure_message( p,
+                                          _( "Vehicle work blocked: no suitable part to work on here." ),
+                                          failure_notice_sent );
+        }
         return activity_reason_info::fail( do_activity_reason::NO_ZONE );
     }
     if( act == ACT_MULTIPLE_MINE ) {
@@ -2607,11 +2709,26 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
         src_set = mgr.get_near( zone_type_id( zone_type ), abspos, ACTIVITY_SEARCH_DISTANCE );
         // multiple construction will form a list of targets based on blueprint zones and unfinished constructions
         if( act_id == ACT_MULTIPLE_CONSTRUCTION ) {
+            static const zone_type_id zone_type_CONSTRUCTION_IGNORE( "CONSTRUCTION_IGNORE" );
+            const auto before_filter_count = src_set.size();
             for( const tripoint &elem : here.points_in_radius( localpos, ACTIVITY_SEARCH_DISTANCE ) ) {
                 partial_con *pc = here.partial_con_at( elem );
                 if( pc ) {
                     src_set.insert( here.getabs( elem ) );
                 }
+            }
+            std::erase_if( src_set, [&]( const tripoint & point ) {
+                return mgr.has( zone_type_CONSTRUCTION_IGNORE, point );
+            } );
+            if( before_filter_count > 0 && src_set.empty() ) {
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_suppress_activity_complete_message( true );
+                    guy->set_activity_failure_message(
+                        _( "Construction tasks skipped: all targets are inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ) );
+                }
+                p.add_msg_player_or_npc( m_info,
+                                         _( "Construction tasks skipped: all targets are inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ),
+                                         _( "<npcname> reports every construction target is inside a Construction: Ignore zone.  Remove that zone or move the blueprint." ) );
             }
             // farming activities encompass tilling, planting, harvesting.
         } else if( act_id == ACT_MULTIPLE_FARM ) {
@@ -2654,6 +2771,16 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
     if( !pre_dark_check && post_dark_check ) {
         p.add_msg_if_player( m_info, _( "It is too dark to do this activity." ) );
     }
+    if( act_id == ACT_MULTIPLE_CONSTRUCTION && src_set.empty() ) {
+        if( npc *guy = p.as_npc() ) {
+            guy->set_suppress_activity_complete_message( true );
+            guy->set_activity_failure_message(
+                _( "No construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ) );
+        }
+        p.add_msg_player_or_npc( m_info,
+                                 _( "No construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ),
+                                 _( "<npcname> reports no construction sites are available.  Add a Construction: Blueprint zone or start a construction to give the order." ) );
+    }
     return src_set;
 }
 
@@ -2661,8 +2788,26 @@ static std::unordered_set<tripoint> generic_multi_activity_locations( player &p,
 static requirement_check_result generic_multi_activity_check_requirement( player &p,
         const activity_id &act_id, activity_reason_info &act_info,
         const tripoint &src, const tripoint &src_loc, const std::unordered_set<tripoint> &src_set,
-        const bool check_only = false )
+        const bool check_only = false, bool *failure_notice_sent = nullptr )
 {
+    const bool is_vehicle_activity = act_id == ACT_VEHICLE_DECONSTRUCTION ||
+                                     act_id == ACT_VEHICLE_REPAIR;
+    const auto record_activity_failure = [&]( const std::string & msg ) {
+        set_activity_failure_message( p, msg, failure_notice_sent );
+    };
+    const auto record_construction_failure = [&]( const std::string & msg ) {
+        if( act_id != ACT_MULTIPLE_CONSTRUCTION ) {
+            return;
+        }
+        record_activity_failure( msg );
+    };
+    const auto record_vehicle_failure = [&]( const std::string & msg ) {
+        if( !is_vehicle_activity ) {
+            return;
+        }
+        record_activity_failure( msg );
+    };
+
     map &here = get_map();
     const tripoint abspos = here.getabs( p.pos() );
     zone_manager &mgr = zone_manager::get_manager();
@@ -2686,6 +2831,9 @@ static requirement_check_result generic_multi_activity_check_requirement( player
     // tidy up activity doesn't - it wants things that may not be in a zone already - things that may have been left lying around.
     if( needs_to_be_in_zone && !zone ) {
         can_do_it = false;
+        record_construction_failure(
+            _( "No valid construction site here.  Check your blueprint zones and ignored areas." ) );
+        record_vehicle_failure( _( "Vehicle work ended: no valid target zone here." ) );
         return SKIP_LOCATION;
     }
     if( can_do_it ) {
@@ -2700,14 +2848,34 @@ static requirement_check_result generic_multi_activity_check_requirement( player
         reason == do_activity_reason::UNKNOWN_ACTIVITY ) {
         // we can discount this tile, the work can't be done.
         if( reason == do_activity_reason::DONT_HAVE_SKILL ) {
-            p.add_msg_if_player( m_info, _( "You don't have the skill for this task." ) );
+            if( npc *guy = p.as_npc() ) {
+                if( !guy->peek_activity_failure_message().empty() ) {
+                    return SKIP_LOCATION;
+                }
+            }
+            auto failure_msg = std::string();
+            if( act_id == ACT_MULTIPLE_CONSTRUCTION && act_info.con_idx ) {
+                const auto &skills = act_info.con_idx->obj().required_skills;
+                const auto skill_text = format_skill_requirements( skills );
+                failure_msg = skill_text.empty()
+                              ? _( "Construction blocked: insufficient skill for the selected build." )
+                              : string_format( _( "Construction blocked: requires %s." ), skill_text );
+            } else if( is_vehicle_activity ) {
+                // fall back to generic if we don't have specifics here
+                // may have already been set by a detailed message
+                failure_msg = _( "Vehicle work blocked: insufficient skill for this task." );
+            }
+            if( !failure_msg.empty() ) {
+                record_construction_failure( failure_msg );
+                record_vehicle_failure( failure_msg );
+            }
         } else if( reason == do_activity_reason::BLOCKING_TILE ) {
-            p.add_msg_if_player( m_info, _( "There is something blocking the location for this task." ) );
+            record_construction_failure( _( "Construction blocked: something is occupying the build site." ) );
+            record_vehicle_failure( _( "Vehicle work blocked: something is occupying the work site." ) );
         } else if( reason == do_activity_reason::NEEDS_WARM_WEATHER ) {
-            p.add_msg_if_player( m_info, _( "It is too cold to plant anything now." ) );
+            record_construction_failure( _( "Construction blocked: conditions are too cold for this step." ) );
         } else if( reason == do_activity_reason::NEEDS_ABOVE_GROUND ) {
-            p.add_msg_if_player( m_info,
-                                 _( "It's too cold down here to plant this type of seed underground." ) );
+            record_construction_failure( _( "Construction blocked: this step must be above ground." ) );
         }
         return SKIP_LOCATION;
     } else if( reason == do_activity_reason::NO_COMPONENTS ||
@@ -2818,7 +2986,32 @@ static requirement_check_result generic_multi_activity_check_requirement( player
         // is it even worth fetching anything if there isn't enough nearby?
         if( !are_requirements_nearby( tool_pickup ? loot_zone_spots : combined_spots, what_we_need, p,
                                       act_id, tool_pickup, src_loc ) ) {
-            p.add_msg_if_player( m_info, _( "The required items are not available to complete this task." ) );
+            const auto needs_construction = act_id == ACT_MULTIPLE_CONSTRUCTION;
+            const std::string missing_text = needs_construction
+                                             ? _( "Construction skipped: required components or tools are missing nearby." )
+                                             : _( "The required items are not available to complete this task." );
+            if( needs_construction ) {
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_suppress_activity_complete_message( true );
+                }
+                const std::string missing_list = what_we_need->list_missing();
+                auto combined = missing_text;
+                if( !missing_list.empty() ) {
+                    combined += "\n" + missing_list;
+                }
+                record_construction_failure( combined );
+            } else if( is_vehicle_activity ) {
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_suppress_activity_complete_message( true );
+                    const std::string missing_list = what_we_need->list_missing();
+                    std::string combined =
+                        _( "Vehicle work skipped: required components or tools are missing nearby." );
+                    if( !missing_list.empty() ) {
+                        combined += "\n" + missing_list;
+                    }
+                    set_activity_failure_message( p, combined, failure_notice_sent );
+                }
+            }
             if( reason == do_activity_reason::NEEDS_VEH_DECONST ||
                 reason == do_activity_reason::NEEDS_VEH_REPAIR ) {
                 p.activity_vehicle_part_index = -1;
@@ -2987,6 +3180,8 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
     const tripoint abspos = here.getabs( p.pos() );
     // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
     activity_id activity_to_restore = act.id();
+    const bool is_multi_construction = activity_to_restore == ACT_MULTIPLE_CONSTRUCTION;
+    bool construction_progress = false;
     // Nuke the current activity, leaving the backlog alone
     if( !check_only ) {
         p.activity = std::make_unique<player_activity>();
@@ -2998,6 +3193,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
     std::vector<tripoint> src_sorted = get_sorted_tiles_by_distance( abspos, src_set );
     // now loop through the work-spot tiles and judge whether its worth traveling to it yet
     // or if we need to fetch something first.
+    bool failure_notice_sent = false;
     for( const tripoint &src : src_sorted ) {
         const tripoint &src_loc = here.getlocal( src );
         if( !here.inbounds( src_loc ) && !check_only ) {
@@ -3019,13 +3215,16 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
             return false;
         }
         activity_reason_info act_info = can_do_activity_there( activity_to_restore, p,
-                                        src_loc, ACTIVITY_SEARCH_DISTANCE );
+                                        src_loc, ACTIVITY_SEARCH_DISTANCE, &failure_notice_sent );
         // see activity_handlers.h enum for requirement_check_result
         const requirement_check_result req_res = generic_multi_activity_check_requirement( p,
-                activity_to_restore, act_info, src, src_loc, src_set, check_only );
+                activity_to_restore, act_info, src, src_loc, src_set, check_only, &failure_notice_sent );
         if( req_res == SKIP_LOCATION ) {
             continue;
         } else if( req_res == RETURN_EARLY ) {
+            if( is_multi_construction ) {
+                construction_progress = true;
+            }
             return true;
         }
 
@@ -3034,6 +3233,16 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
 
             // check if we found path to source / adjacent tile
             if( route.empty() ) {
+                if( is_multi_construction ) {
+                    if( npc *guy = p.as_npc() ) {
+                        guy->set_suppress_activity_complete_message( true );
+                        const std::string existing = guy->peek_activity_failure_message();
+                        const std::string msg = existing.empty()
+                                                ? _( "Construction task ended with no progress.  Path to the site is blocked." )
+                                                : existing;
+                        guy->set_activity_failure_message( msg );
+                    }
+                }
                 check_npc_revert( p );
                 continue;
             }
@@ -3048,6 +3257,9 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
                 // activity will be restarted only if
                 // player arrives on destination tile
                 p.set_destination( route, std::make_unique<player_activity>( activity_to_restore ) );
+                if( is_multi_construction ) {
+                    construction_progress = true;
+                }
                 return true;
             }
         }
@@ -3061,10 +3273,23 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
             activity_to_restore != ACT_FETCH_REQUIRED &&
             !character_funcs::can_see_fine_details( p ) ) {
             p.add_msg_if_player( m_info, _( "It is too dark to work here." ) );
+            if( is_multi_construction ) {
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_suppress_activity_complete_message( true );
+                    const std::string existing = guy->peek_activity_failure_message();
+                    const std::string msg = existing.empty()
+                                            ? _( "Construction task ended with no progress.  It was too dark to work." )
+                                            : existing;
+                    guy->set_activity_failure_message( msg );
+                }
+            }
             return false;
         }
         if( !check_only ) {
             if( !generic_multi_activity_do( p, activity_to_restore, act_info, src, src_loc ) ) {
+                if( is_multi_construction ) {
+                    construction_progress = true;
+                }
                 // if the activity was succesful
                 // then a new activity was assigned
                 // and the backlog was given the multi-act
@@ -3083,10 +3308,33 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
         }
         // if we got here, we need to revert otherwise NPC will be stuck in AI Limbo and have a head explosion.
         if( p.backlog.empty() || src_set.empty() ) {
+            if( is_multi_construction && !construction_progress ) {
+                if( npc *guy = p.as_npc() ) {
+                    guy->set_suppress_activity_complete_message( true );
+                    const std::string existing = guy->peek_activity_failure_message();
+                    if( existing.empty() ) {
+                        guy->set_activity_failure_message(
+                            _( "Construction task ended with no progress.  Check zones and required components." ) );
+                    } else {
+                        guy->set_activity_failure_message( existing );
+                    }
+                }
+            }
             check_npc_revert( p );
             // tidy up leftover moved parts and tools left lying near the work spots.
             if( player_activity( activity_to_restore ).is_multi_type() ) {
                 p.assign_activity( ACT_TIDY_UP );
+            }
+        } else if( is_multi_construction && !construction_progress ) {
+            if( npc *guy = p.as_npc() ) {
+                guy->set_suppress_activity_complete_message( true );
+                const std::string existing = guy->peek_activity_failure_message();
+                if( existing.empty() ) {
+                    guy->set_activity_failure_message(
+                        _( "Construction task ended with no progress.  Check zones and required components." ) );
+                } else {
+                    guy->set_activity_failure_message( existing );
+                }
             }
         }
         p.activity_vehicle_part_index = -1;

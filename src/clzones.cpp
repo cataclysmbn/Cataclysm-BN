@@ -1,12 +1,15 @@
 #include "clzones.h"
 
 #include <algorithm>
+#include <array>
 #include <climits>
+#include <cmath>
 #include <iosfwd>
 #include <iterator>
 #include <string>
 #include <tuple>
 #include <utility>
+#include <ranges>
 
 #include "avatar.h"
 #include "cata_utility.h"
@@ -59,6 +62,7 @@ static const zone_type_id zone_LOOT_DUMP( "LOOT_DUMP" );
 static const zone_type_id zone_LOOT_WOOD( "LOOT_WOOD" );
 static const zone_type_id zone_NO_AUTO_PICKUP( "NO_AUTO_PICKUP" );
 static const zone_type_id zone_NO_NPC_PICKUP( "NO_NPC_PICKUP" );
+static const zone_type_id zone_CONSTRUCTION_IGNORE( "CONSTRUCTION_IGNORE" );
 
 zone_manager::zone_manager()
 {
@@ -93,6 +97,38 @@ auto zone_type::color() const -> nc_color { return color_; }
 namespace
 {
 generic_factory<zone_type> zone_type_factory( "zone_type" );
+
+struct zone_bounds {
+    tripoint min;
+    tripoint max;
+};
+
+auto make_zone_bounds( const tripoint &first, const tripoint &second ) -> zone_bounds
+{
+    return zone_bounds{
+        tripoint( std::min( first.x, second.x ), std::min( first.y, second.y ),
+                  std::min( first.z, second.z ) ),
+        tripoint( std::max( first.x, second.x ), std::max( first.y, second.y ),
+                  std::max( first.z, second.z ) )
+    };
+}
+
+auto rectangle_points( const zone_bounds &bounds ) -> std::vector<tripoint>
+{
+    auto points = std::vector<tripoint>();
+    const auto x_span = bounds.max.x - bounds.min.x + 1;
+    const auto y_span = bounds.max.y - bounds.min.y + 1;
+    const auto z_span = bounds.max.z - bounds.min.z + 1;
+    points.reserve( static_cast<size_t>( x_span * y_span * z_span ) );
+    for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
+        for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
+            for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
+                points.emplace_back( x, y, z );
+            }
+        }
+    }
+    return points;
+}
 } // namespace
 
 template<>
@@ -157,6 +193,85 @@ bool zone_options::is_valid( const zone_type_id &type, const zone_options &optio
     return !options.has_options();
 }
 
+namespace
+{
+auto blueprint_layout_to_string( const blueprint_options::blueprint_layout layout ) -> std::string
+{
+    switch( layout ) {
+        case blueprint_options::blueprint_layout::rectangle_fill:
+            return "rectangle_fill";
+        case blueprint_options::blueprint_layout::rectangle_border:
+            return "rectangle_border";
+        case blueprint_options::blueprint_layout::circle_fill:
+            return "circle_fill";
+        case blueprint_options::blueprint_layout::circle_border:
+            return "circle_border";
+    }
+    debugmsg( "Unhandled blueprint layout" );
+    return "rectangle_fill";
+}
+
+auto blueprint_layout_from_string( const std::string &value ) -> blueprint_options::blueprint_layout
+{
+    if( value == "rectangle_border" ) {
+        return blueprint_options::blueprint_layout::rectangle_border;
+    }
+    if( value == "circle_fill" ) {
+        return blueprint_options::blueprint_layout::circle_fill;
+    }
+    if( value == "circle_border" ) {
+        return blueprint_options::blueprint_layout::circle_border;
+    }
+    return blueprint_options::blueprint_layout::rectangle_fill;
+}
+
+auto blueprint_layout_description( const blueprint_options::blueprint_layout layout ) -> std::string
+{
+    switch( layout ) {
+        case blueprint_options::blueprint_layout::rectangle_fill:
+            return _( "Filled rectangle" );
+        case blueprint_options::blueprint_layout::rectangle_border:
+            return _( "Rectangle border" );
+        case blueprint_options::blueprint_layout::circle_fill:
+            return _( "Filled circle" );
+        case blueprint_options::blueprint_layout::circle_border:
+            return _( "Circle border" );
+    }
+    debugmsg( "Unhandled blueprint layout in description" );
+    return _( "Filled rectangle" );
+}
+
+struct circle_shape {
+    double center_x = 0.0;
+    double center_y = 0.0;
+    double outer_sq = 0.0;
+    double inner_sq = 0.0;
+};
+
+auto make_circle_shape( const zone_bounds &bounds, const bool border_only ) -> circle_shape
+{
+    const double center_x = static_cast<double>( bounds.min.x + bounds.max.x ) / 2.0;
+    const double center_y = static_cast<double>( bounds.min.y + bounds.max.y ) / 2.0;
+    const double radius = static_cast<double>( std::max( bounds.max.x - bounds.min.x,
+                          bounds.max.y - bounds.min.y ) ) / 2.0;
+    const double outer_radius = radius + 1.0;
+    const double inner_radius = border_only ? std::max( radius - 1.0, 0.0 ) : 0.0;
+
+    return circle_shape{
+        center_x, center_y, outer_radius * outer_radius, inner_radius *inner_radius
+    };
+}
+
+auto point_in_circle( const circle_shape &shape, const tripoint &candidate ) -> bool
+{
+    const double dx = static_cast<double>( candidate.x ) - shape.center_x;
+    const double dy = static_cast<double>( candidate.y ) - shape.center_y;
+    const double dist_sq = dx * dx + dy * dy;
+    return dist_sq <= shape.outer_sq && dist_sq >= shape.inner_sq;
+}
+
+} // namespace
+
 construction_id blueprint_options::get_final_construction(
     const std::vector<construction_id> &list_constructions,
     const construction_id &id,
@@ -182,7 +297,135 @@ construction_id blueprint_options::get_final_construction(
     return id;
 }
 
-blueprint_options::query_con_result blueprint_options::query_con()
+auto blueprint_options::get_covered_points( const tripoint &start,
+        const tripoint &end ) const -> std::vector<tripoint>
+{
+    const auto bounds = make_zone_bounds( start, end );
+    const auto circle_layout = layout == blueprint_layout::circle_fill ||
+                               layout == blueprint_layout::circle_border;
+    const auto border_only = layout == blueprint_layout::rectangle_border ||
+                             layout == blueprint_layout::circle_border;
+
+    if( !circle_layout && !border_only ) {
+        return rectangle_points( bounds );
+    }
+
+    if( !circle_layout && border_only ) {
+        auto points = std::vector<tripoint>();
+        const auto x_span = bounds.max.x - bounds.min.x + 1;
+        const auto y_span = bounds.max.y - bounds.min.y + 1;
+        const auto z_span = bounds.max.z - bounds.min.z + 1;
+        points.reserve( static_cast<size_t>( x_span * y_span * z_span ) );
+        for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
+            for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
+                for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
+                    if( x == bounds.min.x || x == bounds.max.x ||
+                        y == bounds.min.y || y == bounds.max.y ) {
+                        points.emplace_back( x, y, z );
+                    }
+                }
+            }
+        }
+        return points;
+    }
+
+    const auto shape = make_circle_shape( bounds, border_only );
+    if( circle_layout && border_only ) {
+        auto fill_set = std::unordered_set<tripoint>();
+        const auto circle_fill = make_circle_shape( bounds, false );
+        for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
+            for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
+                for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
+                    const tripoint pt( x, y, z );
+                    if( point_in_circle( circle_fill, pt ) ) {
+                        fill_set.insert( pt );
+                    }
+                }
+            }
+        }
+        auto border_set = std::unordered_set<tripoint>();
+        const auto neighbors = std::array<point, 8> {
+            point_east, point_west, point_north, point_south,
+            point_east + point_north, point_east + point_south,
+            point_west + point_north, point_west + point_south
+        };
+        std::ranges::for_each( fill_set, [&]( const tripoint & pt ) {
+            const bool at_edge = std::ranges::any_of( neighbors, [&]( const point & dir ) {
+                const tripoint neigh( pt.xy() + dir, pt.z );
+                return !fill_set.contains( neigh );
+            } );
+            if( at_edge ) {
+                border_set.insert( pt );
+            }
+        } );
+        return std::vector<tripoint>( border_set.begin(), border_set.end() );
+    }
+
+    auto points = std::vector<tripoint>();
+    const auto x_span = bounds.max.x - bounds.min.x + 1;
+    const auto y_span = bounds.max.y - bounds.min.y + 1;
+    const auto z_span = bounds.max.z - bounds.min.z + 1;
+    points.reserve( static_cast<size_t>( x_span * y_span * z_span ) );
+    for( auto z = bounds.min.z; z <= bounds.max.z; ++z ) {
+        for( auto y = bounds.min.y; y <= bounds.max.y; ++y ) {
+            for( auto x = bounds.min.x; x <= bounds.max.x; ++x ) {
+                const tripoint point( x, y, z );
+                if( point_in_circle( shape, point ) ) {
+                    points.push_back( point );
+                }
+            }
+        }
+    }
+    return points;
+}
+
+auto blueprint_options::has_inside( const tripoint &start, const tripoint &end,
+                                    const tripoint &candidate ) const -> bool
+{
+    const auto bounds = make_zone_bounds( start, end );
+    if( candidate.z < bounds.min.z || candidate.z > bounds.max.z ) {
+        return false;
+    }
+    const auto circle_layout = layout == blueprint_layout::circle_fill ||
+                               layout == blueprint_layout::circle_border;
+    if( circle_layout && layout == blueprint_layout::circle_border ) {
+        const auto shape = make_circle_shape( bounds, false );
+        if( !point_in_circle( shape, candidate ) ) {
+            return false;
+        }
+        const auto neighbors = std::array<point, 8> {
+            point_east, point_west, point_north, point_south,
+            point_east + point_north, point_east + point_south,
+            point_west + point_north, point_west + point_south
+        };
+        return std::ranges::any_of( neighbors, [&]( const point & dir ) {
+            const tripoint neigh( candidate.xy() + dir, candidate.z );
+            return !point_in_circle( shape, neigh );
+        } );
+    }
+    const auto border_only = layout == blueprint_layout::rectangle_border ||
+                             layout == blueprint_layout::circle_border;
+    if( !circle_layout ) {
+        const bool in_bounds = candidate.x >= bounds.min.x && candidate.x <= bounds.max.x &&
+                               candidate.y >= bounds.min.y && candidate.y <= bounds.max.y;
+        if( !in_bounds ) {
+            return false;
+        }
+        if( !border_only ) {
+            return true;
+        }
+        return candidate.x == bounds.min.x || candidate.x == bounds.max.x ||
+               candidate.y == bounds.min.y || candidate.y == bounds.max.y;
+    }
+    if( candidate.x < bounds.min.x || candidate.x > bounds.max.x ||
+        candidate.y < bounds.min.y || candidate.y > bounds.max.y ) {
+        return false;
+    }
+    const auto shape = make_circle_shape( bounds, border_only );
+    return point_in_circle( shape, candidate );
+}
+
+auto blueprint_options::query_con() -> query_con_result
 {
     std::optional<construction_id> con_index = construction_menu( true );
     if( !con_index ) {
@@ -206,6 +449,40 @@ blueprint_options::query_con_result blueprint_options::query_con()
     } else {
         return successful;
     }
+}
+
+auto blueprint_options::query_layout() -> query_layout_result
+{
+    static const auto layouts = std::to_array<blueprint_layout>( {
+        blueprint_layout::rectangle_fill, blueprint_layout::rectangle_border,
+        blueprint_layout::circle_fill, blueprint_layout::circle_border
+    } );
+
+    uilist layout_menu;
+    layout_menu.text = _( "Select placement layout" );
+    layout_menu.desc_enabled = false;
+    auto index = 0;
+    std::ranges::for_each( layouts, [&]( const blueprint_layout & candidate ) {
+        layout_menu.addentry( index, true, MENU_AUTOASSIGN,
+                              blueprint_layout_description( candidate ) );
+        if( candidate == layout ) {
+            layout_menu.selected = index;
+        }
+        index++;
+    } );
+
+    layout_menu.query();
+    if( layout_menu.ret < 0 || layout_menu.ret >= static_cast<int>( layouts.size() ) ) {
+        return query_layout_result::canceled;
+    }
+
+    const blueprint_layout chosen = layouts[layout_menu.ret];
+    if( chosen == layout ) {
+        return query_layout_result::successful;
+    }
+
+    layout = chosen;
+    return query_layout_result::changed;
 }
 
 loot_options::query_loot_result loot_options::query_loot()
@@ -322,7 +599,10 @@ void loot_options::deserialize( const JsonObject &jo_zone )
 
 bool blueprint_options::query_at_creation()
 {
-    return query_con() != canceled;
+    if( query_con() == canceled ) {
+        return false;
+    }
+    return query_layout() != query_layout_result::canceled;
 }
 
 bool plot_options::query_at_creation()
@@ -332,7 +612,20 @@ bool plot_options::query_at_creation()
 
 bool blueprint_options::query()
 {
-    return query_con() == changed;
+    uilist menu;
+    menu.text = _( "Edit blueprint options" );
+    menu.addentry( 0, true, 'c', _( "Change construction" ) );
+    menu.addentry( 1, true, 'l', _( "Change placement layout" ) );
+    menu.query();
+
+    switch( menu.ret ) {
+        case 0:
+            return query_con() == changed;
+        case 1:
+            return query_layout() == query_layout_result::changed;
+        default:
+            return false;
+    }
 }
 
 bool plot_options::query()
@@ -365,10 +658,9 @@ std::string plot_options::get_zone_name_suggestion() const
 
 std::vector<std::pair<std::string, std::string>> blueprint_options::get_descriptions() const
 {
-    std::vector<std::pair<std::string, std::string>> options =
-                std::vector<std::pair<std::string, std::string>>();
-    options.emplace_back( _( "Construct: " ),
-                          group ? group->name() : _( "No Construction" ) );
+    auto options = std::vector<std::pair<std::string, std::string>>();
+    options.emplace_back( _( "Construct: " ), group ? group->name() : _( "No Construction" ) );
+    options.emplace_back( _( "Layout: " ), blueprint_layout_description( layout ) );
 
     return options;
 }
@@ -388,6 +680,7 @@ void blueprint_options::serialize( JsonOut &json ) const
     json.member( "mark", mark );
     json.member( "group", group );
     json.member( "index", index.id() );
+    json.member( "layout", blueprint_layout_to_string( layout ) );
 }
 
 void blueprint_options::deserialize( const JsonObject &jo_zone )
@@ -399,6 +692,12 @@ void blueprint_options::deserialize( const JsonObject &jo_zone )
         index = construction_id( jo_zone.get_int( "index" ) );
     } else {
         index = construction_str_id( jo_zone.get_string( "index" ) ).id();
+    }
+    auto layout_name = std::string();
+    if( jo_zone.read( "layout", layout_name ) ) {
+        layout = blueprint_layout_from_string( layout_name );
+    } else {
+        layout = blueprint_layout::rectangle_fill;
     }
 }
 
@@ -412,6 +711,18 @@ void plot_options::deserialize( const JsonObject &jo_zone )
 {
     jo_zone.read( "mark", mark );
     jo_zone.read( "seed", seed );
+}
+
+auto get_zone_covered_points( const zone_data &zone ) -> std::vector<tripoint>
+{
+    const auto bounds = make_zone_bounds( zone.get_start_point(), zone.get_end_point() );
+    if( zone.get_type() == zone_CONSTRUCTION_BLUEPRINT ) {
+        const auto *bp_options = dynamic_cast<const blueprint_options *>( &zone.get_options() );
+        if( bp_options != nullptr ) {
+            return bp_options->get_covered_points( bounds.min, bounds.max );
+        }
+    }
+    return rectangle_points( bounds );
 }
 
 std::optional<std::string> zone_manager::query_name( const std::string &default_name ) const
@@ -525,6 +836,25 @@ tripoint zone_data::get_center_point() const
     return tripoint( ( start.x + end.x ) / 2, ( start.y + end.y ) / 2, ( start.z + end.z ) / 2 );
 }
 
+auto zone_data::has_inside( const tripoint &p ) const -> bool
+{
+    const zone_bounds bounds = make_zone_bounds( start, end );
+    if( p.x < bounds.min.x || p.x > bounds.max.x ||
+        p.y < bounds.min.y || p.y > bounds.max.y ||
+        p.z < bounds.min.z || p.z > bounds.max.z ) {
+        return false;
+    }
+
+    if( type == zone_CONSTRUCTION_BLUEPRINT ) {
+        const auto *bp_options = dynamic_cast<const blueprint_options *>( options.get() );
+        if( bp_options != nullptr ) {
+            return bp_options->has_inside( bounds.min, bounds.max, p );
+        }
+    }
+
+    return true;
+}
+
 std::string zone_manager::get_name_from_type( const zone_type_id &type ) const
 {
     const auto &iter = types.find( type );
@@ -550,42 +880,34 @@ void zone_manager::cache_data()
 {
     area_cache.clear();
 
-    for( auto &elem : zones ) {
+    std::ranges::for_each( zones, [&]( zone_data & elem ) {
         if( !elem.get_enabled() ) {
-            continue;
+            return;
         }
 
-        const std::string &type_hash = elem.get_type_hash();
-        auto &cache = area_cache[type_hash];
-
-        // Draw marked area
-        for( const tripoint &p : tripoint_range<tripoint>( elem.get_start_point(),
-                elem.get_end_point() ) ) {
-            cache.insert( p );
-        }
-    }
+        auto &cache = area_cache[elem.get_type_hash()];
+        const auto points = get_zone_covered_points( elem );
+        std::ranges::for_each( points, [&]( const tripoint & point ) {
+            cache.insert( point );
+        } );
+    } );
 }
 
 void zone_manager::cache_vzones()
 {
     vzone_cache.clear();
     auto vzones = get_map().get_vehicle_zones( g->get_levz() );
-    for( auto elem : vzones ) {
-        if( !elem->get_enabled() ) {
-            continue;
+    std::ranges::for_each( vzones, [&]( zone_data * elem ) {
+        if( elem == nullptr || !elem->get_enabled() ) {
+            return;
         }
 
-        const std::string &type_hash = elem->get_type_hash();
-        auto &cache = vzone_cache[type_hash];
-
-        // TODO: looks very similar to the above cache_data - maybe merge it?
-
-        // Draw marked area
-        for( const tripoint &p : tripoint_range<tripoint>( elem->get_start_point(),
-                elem->get_end_point() ) ) {
-            cache.insert( p );
-        }
-    }
+        auto &cache = vzone_cache[elem->get_type_hash()];
+        const auto points = get_zone_covered_points( *elem );
+        std::ranges::for_each( points, [&]( const tripoint & point ) {
+            cache.insert( point );
+        } );
+    } );
 }
 
 std::unordered_set<tripoint> zone_manager::get_point_set( const zone_type_id &type,
