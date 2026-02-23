@@ -20,25 +20,19 @@ local function get_locked_ter_id(closed_ter_str, prefer_interior)
     suffix = "_c_peep"
   end
 
-  if base == nil then
-    return nil
-  end
+  if base == nil then return nil end
 
   local function try_locked(locked_suffix)
     local locked_ter_str = base .. locked_suffix
     local locked_ter = TerId.new(locked_ter_str)
-    if locked_ter:is_valid() then
-      return locked_ter:int_id(), locked_ter_str
-    end
+    if locked_ter:is_valid() then return locked_ter:int_id(), locked_ter_str end
     return nil
   end
 
   if prefer_interior then
     local interior_suffix = suffix == "_c_peep" and "_locked_interior_peep" or "_locked_interior"
     local interior_id, interior_str = try_locked(interior_suffix)
-    if interior_id ~= nil then
-      return interior_id, interior_str
-    end
+    if interior_id ~= nil then return interior_id, interior_str end
   end
 
   local regular_suffix = suffix == "_c_peep" and "_locked_peep" or "_locked"
@@ -100,46 +94,34 @@ local safe_variants = {
 }
 
 local function is_safe_furn(furn_str)
-  return furn_str == safe_variants.open
-      or furn_str == safe_variants.closed
-      or furn_str == safe_variants.locked
+  return furn_str == safe_variants.open or furn_str == safe_variants.closed or furn_str == safe_variants.locked
 end
 
 local function get_furn_str(map, pos)
   local furn = map:get_furn_at(pos)
-  if not furn:is_valid() then
-    return nil
-  end
+  if not furn:is_valid() then return nil end
   return furn:str_id():str()
 end
 
 local function get_target_str(map, pos, target_type)
-  if target_type == "furn" then
-    return get_furn_str(map, pos)
-  end
+  if target_type == "furn" then return get_furn_str(map, pos) end
   return get_ter_str(map, pos)
 end
 
 local function get_target_id(target_type, id_str)
   if target_type == "furn" then
     local furn = FurnId.new(id_str)
-    if not furn:is_valid() then
-      return nil
-    end
+    if not furn:is_valid() then return nil end
     return furn:int_id()
   end
   local ter = TerId.new(id_str)
-  if not ter:is_valid() then
-    return nil
-  end
+  if not ter:is_valid() then return nil end
   return ter:int_id()
 end
 
 local function set_target(map, pos, target_type, id_str)
   local id = get_target_id(target_type, id_str)
-  if id == nil then
-    return false
-  end
+  if id == nil then return false end
   if target_type == "furn" then
     map:set_furn_at(pos, id)
     return get_furn_str(map, pos) == id_str
@@ -149,33 +131,25 @@ end
 
 local function describe_lock_message(target_type, closed_from_open)
   if target_type == "furn" then
-    return closed_from_open
-        and locale.gettext("You close and lock the safe, then set the key.")
-        or locale.gettext("You lock the safe and set the key.")
+    return closed_from_open and locale.gettext("You close and lock the safe, then set the key.")
+      or locale.gettext("You lock the safe and set the key.")
   end
-  return closed_from_open
-      and locale.gettext("You close and lock the door, then set the key.")
-      or locale.gettext("You lock the door and set the key.")
+  return closed_from_open and locale.gettext("You close and lock the door, then set the key.")
+    or locale.gettext("You lock the door and set the key.")
 end
 
 local function describe_unlock_message(target_type)
-  if target_type == "furn" then
-    return locale.gettext("You unlock the safe.")
-  end
+  if target_type == "furn" then return locale.gettext("You unlock the safe.") end
   return locale.gettext("You unlock the door.")
 end
 
 local function describe_close_message(target_type)
-  if target_type == "furn" then
-    return locale.gettext("You close the safe.")
-  end
+  if target_type == "furn" then return locale.gettext("You close the safe.") end
   return locale.gettext("You close the door.")
 end
 
 local function describe_lock_action_message(target_type)
-  if target_type == "furn" then
-    return locale.gettext("You lock the safe.")
-  end
+  if target_type == "furn" then return locale.gettext("You lock the safe.") end
   return locale.gettext("You lock the door.")
 end
 
@@ -245,7 +219,14 @@ function door_key.copy_key(who, item, pos)
   end
 
   local key = who:create_item(ItypeId.new("door_key"), 0)
-  set_key_binding(key, binding.target or "terrain", binding.pos, binding.closed_ter, binding.locked_ter, binding.open_ter)
+  set_key_binding(
+    key,
+    binding.target or "terrain",
+    binding.pos,
+    binding.closed_ter,
+    binding.locked_ter,
+    binding.open_ter
+  )
 
   local label = prompt_key_label()
   if label ~= nil then
@@ -326,43 +307,39 @@ function door_key.set_lock(who, item, pos)
   open_ter_str = select(2, get_open_ter_id(closed_ter_str))
 
   local requirement_base = get_requirement("replace_door_or_safe_locks")
-    if not requirement_base then
-      gapi.add_msg(MsgType.warning, locale.gettext("Error: requirement not found."))
-      return 0
-    end
-
-    local reqs = requirement_base * 1
-    local crafting_inv = who:crafting_inventory()
-
-    local replacement_string = string.format( locale.gettext("You are replacing a door or safe lock with a new one.") )
-
-    -- Check if player has required items/tools
-    if not reqs:can_make_with_inventory(crafting_inv) then
-      local missing_info = string.format("%s\n%s\n%s", replacement_string, reqs:list_missing(), reqs:list_all())
-      ui.popup(missing_info)
-      return 0
-    end
-
-    -- Confirm with player
-    local confirm = ui.query_yn(
-      string.format("%s\n%s\n%s", replacement_string, reqs:list_all(), locale.gettext("Are you sure?"))
-    )
-
-    if confirm then
-      -- Consume items and tools
-      for _, component_list in ipairs(reqs:get_components()) do
-        who:consume_items(component_list)
-      end
-      for _, tool_list in ipairs(reqs:get_tools()) do
-        who:consume_tools(tool_list)
-      end
-      who:invalidate_crafting_inventory()
-    end
-    
-
-  if closed_from_open and closed_ter_id ~= nil then
-    map:set_ter_at(chosen, closed_ter_id)
+  if not requirement_base then
+    gapi.add_msg(MsgType.warning, locale.gettext("Error: requirement not found."))
+    return 0
   end
+
+  local reqs = requirement_base * 1
+  local crafting_inv = who:crafting_inventory()
+
+  local replacement_string = string.format(locale.gettext("You are replacing a door or safe lock with a new one."))
+
+  -- Check if player has required items/tools
+  if not reqs:can_make_with_inventory(crafting_inv) then
+    local missing_info = string.format("%s\n%s\n%s", replacement_string, reqs:list_missing(), reqs:list_all())
+    ui.popup(missing_info)
+    return 0
+  end
+
+  -- Confirm with player
+  local confirm =
+    ui.query_yn(string.format("%s\n%s\n%s", replacement_string, reqs:list_all(), locale.gettext("Are you sure?")))
+
+  if confirm then
+    -- Consume items and tools
+    for _, component_list in ipairs(reqs:get_components()) do
+      who:consume_items(component_list)
+    end
+    for _, tool_list in ipairs(reqs:get_tools()) do
+      who:consume_tools(tool_list)
+    end
+    who:invalidate_crafting_inventory()
+  end
+
+  if closed_from_open and closed_ter_id ~= nil then map:set_ter_at(chosen, closed_ter_id) end
 
   if map:set_ter_at(chosen, locked_ter_id) then
     local key = who:create_item(ItypeId.new("door_key"), 1)
