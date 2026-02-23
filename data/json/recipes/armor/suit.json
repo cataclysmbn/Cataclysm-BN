@@ -230,7 +230,7 @@
     "difficulty": 9,
     "time": "10 h",
     "book_learn": [ [ "textbook_armwest", 8 ] ],
-    "using": [ [ "blacksmithing_advanced", 120 ], [ "steel_standard", 30 ] ],
+    "using": [ [ "blacksmithing_advanced", 120 ], [ "steel_standard", 22 ] ],
     "components": [ [ [ "fabric_hides_proper", 16, "LIST" ] ] ]
   },
   {
@@ -244,7 +244,7 @@
     "//": "Recipe difficulty capped at 10, booklearn still elevated as if it could go past 10",
     "book_learn": [ [ "textbook_armwest", 10 ] ],
     "using": [ [ "blacksmithing_advanced", 120 ] ],
-    "components": [ [ [ "alloy_sheet", 30 ] ], [ [ "fabric_hides_proper", 16, "LIST" ] ] ]
+    "components": [ [ [ "alloy_sheet", 22 ] ], [ [ "fabric_hides_proper", 16, "LIST" ] ] ]
   },
   {
     "result": "armor_samurai",
