@@ -214,7 +214,7 @@
     "name": "Folding Wagon",
     "blueprint": [ "o" ],
     "parts": [
-      { "x": 0, "y": 0, "part": "xlframe_vertical_2" },
+      { "x": 0, "y": 0, "part": "folding_frame" },
       { "x": 0, "y": 0, "part": "wheel_caster" },
       { "x": 0, "y": 0, "part": "basketlg_folding" }
     ]
