@@ -120,7 +120,7 @@
     "difficulty": 8,
     "time": "9 h 20 m",
     "book_learn": [ [ "textbook_armwest", 7 ] ],
-    "using": [ [ "blacksmithing_advanced", 80 ], [ "steel_standard", 20 ] ],
+    "using": [ [ "blacksmithing_advanced", 80 ], [ "steel_standard", 14 ] ],
     "components": [ [ [ "fabric_hides_proper", 20, "LIST" ] ] ]
   },
   {
@@ -147,7 +147,7 @@
     "time": "9 h 20 m",
     "book_learn": [ [ "textbook_armwest", 9 ] ],
     "using": [ [ "blacksmithing_advanced", 80 ] ],
-    "components": [ [ [ "alloy_sheet", 20 ] ], [ [ "fabric_hides_proper", 20, "LIST" ] ] ]
+    "components": [ [ [ "alloy_sheet", 14 ] ], [ [ "fabric_hides_proper", 20, "LIST" ] ] ]
   },
   {
     "result": "armor_lightplate_superalloy",
