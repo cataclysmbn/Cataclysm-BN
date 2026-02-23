@@ -1502,13 +1502,13 @@
     "type": "ARMOR",
     "name": { "str_sp": "pair of superalloy plated sandals" },
     "description": "A pair of strapped sandals with a superalloy plate in the front to serve as greaves, similar in style to those used by ancient Roman and Greek soldiers.",
-	"copy-from": "sandal_armor",
+    "copy-from": "sandal_armor",
     "weight": "400 g",
     "price": "400 USD",
     "price_postapoc": "5 USD",
     "material": [ "leather", "superalloy" ],
     "color": "light_cyan",
-    "encumbrance": 8,
+    "encumbrance": 8
   },
   {
     "id": "socks_thick",
