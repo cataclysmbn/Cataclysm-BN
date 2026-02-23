@@ -1,0 +1,527 @@
+[
+  {
+    "abstract": "kitchen_unit_abstract",
+    "breaks_into": [
+      { "count": [ 4, 6 ], "item": "steel_lump" },
+      { "count": [ 4, 6 ], "item": "steel_chunk" },
+      { "count": [ 4, 6 ], "item": "scrap" },
+      { "item": "pan", "prob": 50 },
+      { "item": "pot", "prob": 50 }
+    ],
+    "broken_color": "light_cyan",
+    "broken_symbol": "x",
+    "color": "light_cyan",
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 30 },
+    "description": "A small but complete kitchen unit, powered from the vehicle's batteries.",
+    "durability": 80,
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "FAUCET", "COVERED", "FLAT_SURF" ],
+    "integrated_tools": [ "pot", "pan", "hotplate" ],
+    "item": "kitchen_unit",
+    "location": "center",
+    "looks_like": "f_oven",
+    "name": { "str": "kitchen unit" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "size": "50 L",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "abstract": "welding_rig_abstract",
+    "breaks_into": [
+      { "count": [ 3, 6 ], "item": "steel_lump" },
+      { "count": [ 3, 6 ], "item": "steel_chunk" },
+      { "count": [ 3, 6 ], "item": "scrap" },
+      { "charges": 0, "item": "welder", "prob": 50 }
+    ],
+    "broken_color": "light_red",
+    "broken_symbol": "x",
+    "color": "light_red",
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 24 },
+    "description": "A welding rig mounted in the vehicle, that draws power from the vehicle's batteries.  You still need glare protection.  'e'xamine the tile with the rig to use it to repair items in your inventory.  If you attempt to craft an item or perform a repair that requires a welder, you will be given the option of using the welding rig.",
+    "durability": 80,
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "COVERED" ],
+    "integrated_tools": [ "soldering_iron", "welder" ],
+    "item": "weldrig",
+    "location": "center",
+    "name": { "str": "welding rig" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "size": "50 L",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "abstract": "craft_rig_abstract",
+    "breaks_into": [
+      { "count": [ 4, 7 ], "item": "steel_lump" },
+      { "count": [ 4, 7 ], "item": "steel_chunk" },
+      { "count": [ 4, 7 ], "item": "scrap" },
+      { "charges": 0, "item": "water_purifier", "prob": 50 },
+      { "charges": 0, "item": "vac_sealer", "prob": 50 },
+      { "charges": 0, "item": "dehydrator", "prob": 50 },
+      { "charges": 0, "item": "food_processor", "prob": 50 },
+      { "charges": 0, "item": "press", "prob": 50 }
+    ],
+    "broken_color": "light_gray",
+    "broken_symbol": "x",
+    "color": "light_green",
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 20 },
+    "description": "A multi-function crafting station, with a water purifier, food processor, food dehydrator, vacuum sealer, and hand press for making ammo.  Draws power from the vehicle's batteries.  'e'xamine the tile with the kitchen buddy to access the water faucet or to purify water in a vehicle tank or in a container in your inventory.  If you attempt to craft an item that needs one of the kitchen buddy's functions, it will automatically be selected as a tool.",
+    "durability": 80,
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "WATER_PURIFIER", "FAUCET", "COVERED" ],
+    "integrated_tools": [ "dehydrator", "vac_sealer", "food_processor", "press", "water_purifier" ],
+    "item": "craftrig",
+    "location": "center",
+    "looks_like": "f_sink",
+    "name": { "str": "FOODCO kitchen buddy" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "size": "50 L",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "abstract": "chemlab_abstract",
+    "breaks_into": [
+      { "count": [ 4, 7 ], "item": "steel_lump" },
+      { "count": [ 4, 7 ], "item": "steel_chunk" },
+      { "count": [ 4, 7 ], "item": "scrap" },
+      { "charges": [ 30, 50 ], "item": "cable" },
+      { "charges": 0, "item": "chemistry_set", "prob": 50 },
+      { "charges": 0, "item": "hotplate", "prob": 50 }
+    ],
+    "broken_color": "light_gray",
+    "broken_symbol": "x",
+    "color": "yellow",
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 19 },
+    "description": "A small chemistry station, including a hotplate and electrolysis setup powered by the vehicle's batteries.  'e'xamine the tile with the chemistry lab to access the water faucet or to heat up food with the hotplate.  If you attempt to craft an item that needs one of the chemistry lab's functions, it will automatically be selected as a tool.",
+    "durability": 80,
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "FAUCET", "COVERED" ],
+    "integrated_tools": [ "chemistry_set", "electrolysis_kit", "hotplate" ],
+    "item": "chemlab",
+    "location": "center",
+    "looks_like": "f_workbench",
+    "name": { "str": "onboard chemistry lab" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "size": "50 L",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "abstract": "veh_forge_abstract",
+    "breaks_into": [
+      { "count": [ 4, 5 ], "item": "steel_lump" },
+      { "count": [ 4, 6 ], "item": "steel_chunk" },
+      { "count": [ 4, 6 ], "item": "scrap" }
+    ],
+    "broken_color": "light_gray",
+    "broken_symbol": "x",
+    "color": "red",
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 29 },
+    "description": "A electric forge for metalworking, powered by the vehicle's batteries.  With a hammer and other tools, you could use this for metalworking.  If you attempt to craft an item that needs a forge, you will be given the option of selecting it as a tool.",
+    "durability": 80,
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER" ],
+    "integrated_tools": [ "forge" ],
+    "item": "forgerig",
+    "location": "center",
+    "looks_like": "f_forge_rock",
+    "name": { "str": "mounted electric forge" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "size": "50 L",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "abstract": "adv_butchery_abstract",
+    "breaks_into": [
+      { "count": [ 4, 6 ], "item": "steel_lump" },
+      { "count": [ 4, 6 ], "item": "steel_chunk" },
+      { "count": [ 4, 6 ], "item": "scrap" }
+    ],
+    "broken_color": "light_cyan",
+    "broken_symbol": "x",
+    "color": "light_cyan",
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 30 },
+    "description": "Combining a fixed-up dissector, workbench and advanced electronics, this is a marvel capable of butchering, dissecting and cutting like nothing else!",
+    "durability": 80,
+    "flags": [ "CARGO", "OBSTACLE", "BUTCHER_EQ", "CRAFTER", "TRANSPARENT", "FLAT_SURF" ],
+    "integrated_tools": [ "fake_adv_butchery" ],
+    "item": "adv_butchery",
+    "location": "center",
+    "looks_like": "vp_autodoc",
+    "name": { "str": "advanced butchering station" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "size": "50 L",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "abstract": "veh_kiln_abstract",
+    "breaks_into": [
+      { "count": [ 4, 5 ], "item": "steel_lump" },
+      { "count": [ 4, 6 ], "item": "steel_chunk" },
+      { "count": [ 4, 6 ], "item": "scrap" }
+    ],
+    "broken_color": "light_gray",
+    "broken_symbol": "x",
+    "color": "red",
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 25 },
+    "description": "A electric kiln for baking brick or clay, powered by the vehicle's batteries.  You could use this to harden bricks or clay.  If you attempt to craft an item that needs a kiln, you will be given the option of selecting it as a tool.",
+    "durability": 80,
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER" ],
+    "integrated_tools": [ "kiln" ],
+    "item": "kilnrig",
+    "location": "center",
+    "looks_like": "f_kiln_empty",
+    "name": { "str": "mounted electric kiln" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "size": "50 L",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "kitchen_unit_abstract",
+    "id": "kitchen_unit",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "welding_rig_abstract",
+    "id": "welding_rig",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "craft_rig_abstract",
+    "id": "craft_rig",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "chemlab_abstract",
+    "id": "chemlab",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "veh_forge_abstract",
+    "id": "veh_forge",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "veh_kiln_abstract",
+    "id": "veh_kiln",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "adv_butchery_abstract",
+    "id": "adv_butchery",
+    "symbol": "&",
+    "type": "vehicle_part"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "veh_reloading_station",
+    "name": { "str": "mounted reloading press" },
+    "description": "An all-in-one handloading tool that can both assemble ammunition and break it back down for materials, includes a hotplate for bullet molding powered by the vehicle's batteries.",
+    "location": "center",
+    "item": "press_workbench_item",
+    "durability": 80,
+    "damage_modifier": 10,
+    "color": "red",
+    "symbol": "&",
+    "broken_color": "light_gray",
+    "broken_symbol": "x",
+    "looks_like": "craft_rig",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER" ],
+    "size": "50 L",
+    "integrated_tools": [ "press_workbench", "hotplate" ],
+    "breaks_into": [
+      { "count": [ 4, 5 ], "item": "steel_lump" },
+      { "count": [ 4, 6 ], "item": "steel_chunk" },
+      { "count": [ 4, 6 ], "item": "scrap" }
+    ],
+    "damage_reduction": { "all": 25 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "veh_hydraulic_press",
+    "name": { "str": "mounted hydraulic press" },
+    "description": "If you really want to squash something a lot, this would be exactly the right industrial tool for you.",
+    "location": "center",
+    "item": "hydraulic_press",
+    "durability": 80,
+    "damage_modifier": 10,
+    "color": "red",
+    "symbol": "&",
+    "broken_color": "light_gray",
+    "broken_symbol": "x",
+    "looks_like": "craft_rig",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER" ],
+    "size": "50 L",
+    "integrated_tools": [ "hydraulic_press" ],
+    "breaks_into": [
+      { "count": [ 4, 5 ], "item": "steel_lump" },
+      { "count": [ 4, 6 ], "item": "steel_chunk" },
+      { "count": [ 4, 6 ], "item": "scrap" }
+    ],
+    "damage_reduction": { "all": 25 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "water_purifier",
+    "name": { "str": "water purifier" },
+    "symbol": "&",
+    "color": "blue",
+    "broken_symbol": "*",
+    "broken_color": "light_blue",
+    "damage_modifier": 40,
+    "durability": 200,
+    "description": "A water purifier, powered by the vehicle's batteries.  You can use it to purify water in a container or in the vehicle's tanks.  'e'xamine the tile with the purifier to use it.",
+    "item": "water_purifier",
+    "location": "anywhere",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 5 ] ],
+        "time": "15 m",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "WATER_PURIFIER", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 1, 2 ] } ],
+    "damage_reduction": { "all": 26 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "water_faucet",
+    "name": { "str": "water faucet" },
+    "symbol": "u",
+    "looks_like": "f_sink",
+    "color": "light_gray",
+    "broken_symbol": "-",
+    "broken_color": "light_gray",
+    "damage_modifier": 10,
+    "description": "A water faucet.",
+    "durability": 45,
+    "folded_volume": "250 ml",
+    "item": "water_faucet",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "5 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "5 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "20 s",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 1 ] ]
+      }
+    },
+    "flags": [ "FAUCET", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "scrap", "count": [ 1, 3 ] } ],
+    "damage_reduction": { "all": 6 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "autoclave",
+    "name": { "str": "autoclave" },
+    "symbol": "A",
+    "looks_like": "dishwasher",
+    "color": "yellow",
+    "broken_symbol": "#",
+    "broken_color": "light_blue",
+    "damage_modifier": 80,
+    "durability": 100,
+    "description": "This is an autoclave.  It's useful for sterilizing things like CBMs.  'e'xamine the tile with the autoclave to use it.",
+    "epower": -1000,
+    "size": "2750 ml",
+    "item": "vh_autoclave",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "AUTOCLAVE", "COVERED", "ENABLED_DRAINS_EPOWER" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 6, 10 ] },
+      { "item": "steel_chunk", "count": [ 6, 10 ] },
+      { "item": "scrap", "count": [ 6, 10 ] },
+      { "item": "hose", "prob": 50 }
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "workbench",
+    "name": { "str": "workbench" },
+    "symbol": "#",
+    "looks_like": "veh_table_wood",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 60,
+    "durability": 300,
+    "size": "30 L",
+    "item": "workbench",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "breaks_into": [
+      { "item": "pipe", "count": [ 4, 6 ] },
+      { "item": "sheet_metal", "count": [ 0, 1 ] },
+      { "item": "sheet_metal_small", "count": [ 12, 24 ] },
+      { "item": "steel_chunk", "count": [ 4, 8 ] },
+      { "item": "scrap", "count": [ 12, 24 ] }
+    ],
+    "workbench": { "multiplier": 1.2, "mass": "300 kg", "volume": "30L" },
+    "damage_reduction": { "all": 29 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "survivors_workbench",
+    "name": { "str": "survivors workbench" },
+    "symbol": "#",
+    "looks_like": "veh_table_wood",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 60,
+    "durability": 300,
+    "size": "30 L",
+    "item": "survivors_workbench",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "breaks_into": [
+      { "item": "pipe", "count": [ 4, 6 ] },
+      { "item": "sheet_metal", "count": [ 0, 1 ] },
+      { "item": "sheet_metal_small", "count": [ 12, 24 ] },
+      { "item": "steel_chunk", "count": [ 4, 8 ] },
+      { "item": "scrap", "count": [ 12, 24 ] }
+    ],
+    "workbench": { "multiplier": 1.5, "mass": "300 kg", "volume": "30L" },
+    "damage_reduction": { "all": 29 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "robobench",
+    "name": { "str": "robobench" },
+    "symbol": "#",
+    "looks_like": "machinery_heavy",
+    "color": "red",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 60,
+    "durability": 300,
+    "size": "30 L",
+    "item": "robobench",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "breaks_into": [
+      { "item": "pipe", "count": [ 4, 6 ] },
+      { "item": "sheet_metal", "count": [ 0, 1 ] },
+      { "item": "sheet_metal_small", "count": [ 12, 24 ] },
+      { "item": "steel_chunk", "count": [ 4, 8 ] },
+      { "item": "scrap", "count": [ 12, 24 ] }
+    ],
+    "workbench": { "multiplier": 1.8, "mass": "300 kg", "volume": "30L" },
+    "damage_reduction": { "all": 25 }
+  }
+]

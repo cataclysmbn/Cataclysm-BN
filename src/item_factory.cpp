@@ -2813,6 +2813,8 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
         }
     }
 
+    assign( jo, "crafting_speed_modifier", def.crafting_speed_modifier );
+
     if( jo.has_member( "properties" ) ) {
         set_properties_from_json( jo, "properties", def );
     }

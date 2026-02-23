@@ -3485,6 +3485,27 @@ void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *pa
         for( const std::pair<const quality_id, int> q : sorted_lex( type->qualities ) ) {
             name_quality( q );
         }
+        auto crafting_speed_modifier = type->crafting_speed_modifier;
+        std::ranges::for_each( type->qualities, [&]( const auto & quality_entry ) {
+            const auto &quality = quality_entry.first.obj();
+            const auto per_level_multiplier = quality.crafting_speed_bonus_per_level;
+            if( per_level_multiplier <= 0.0f ) {
+                return;
+            }
+            const auto extra_levels =
+                quality_entry.second - quality.crafting_speed_level_offset;
+            if( extra_levels <= 0 ) {
+                return;
+            }
+            crafting_speed_modifier *= std::pow( per_level_multiplier, extra_levels );
+        } );
+
+        if( crafting_speed_modifier != 1.0f ) {
+            const auto modifier_percent = static_cast<int>( crafting_speed_modifier * 100.0f );
+            info.emplace_back( "QUALITIES", "",
+                               string_format( _( "This item modifies crafting speed by <info>%d%%</info> when used in recipes." ),
+                                              modifier_percent ) );
+        }
     }
 
     if( parts->test( iteminfo_parts::QUALITIES_CONTAINED ) &&

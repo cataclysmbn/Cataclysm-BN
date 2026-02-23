@@ -806,6 +806,12 @@
     "info": "This item can be used to <info>pick locks</info> with <good>zero effort</good>."
   },
   {
+    "id": "DURABLE_LOCKPICK",
+    "type": "json_flag",
+    "context": [  ],
+    "//": "takes no damage from normal use"
+  },
+  {
     "id": "RAINPROOF",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],

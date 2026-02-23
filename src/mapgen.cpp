@@ -1856,11 +1856,17 @@ class jmapgen_gaspump : public jmapgen_piece
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
             const point r( x.get(), y.get() );
-            int charges = amount.get();
+            auto charges = amount.get();
             dat.m.furn_set( r, f_null );
             if( charges == 0 ) {
                 charges = rng( 10000, 50000 );
             }
+
+            const auto global_rate = get_option<float>( "ITEM_SPAWNRATE" );
+            const auto fuel_rate = get_option<float>( "SPAWN_RATE_fuel" );
+            const auto combined_rate = global_rate * fuel_rate;
+            charges = static_cast<int>( charges * combined_rate );
+
             itype_id chosen_fuel = fuel.get( dat );
             if( chosen_fuel.is_null() ) {
                 dat.m.place_gas_pump( r, charges );
@@ -1902,7 +1908,11 @@ class jmapgen_liquid_item : public jmapgen_piece
                 const auto migrated = item_controller->migrate_id( chosen_id );
                 auto newliquid = item::spawn( migrated, calendar::start_of_cataclysm );
                 if( amount.valmax > 0 ) {
-                    newliquid->charges = amount.get();
+                    auto base_charges = amount.get();
+                    const auto global_rate = get_option<float>( "ITEM_SPAWNRATE" );
+                    const auto cat_rate = dat.m.item_category_spawn_rate( *newliquid );
+                    const auto combined_rate = global_rate * cat_rate;
+                    newliquid->charges = static_cast<int>( base_charges * combined_rate );
                 }
 
                 const auto target = tripoint( x.get(), y.get(), dat.m.get_abs_sub().z );
@@ -2292,8 +2302,15 @@ class jmapgen_artifact : public jmapgen_piece
 
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
-            const auto raw_chance = chance.get();
-            if( raw_chance != 100 && !x_in_y( raw_chance, 100 ) ) {
+            auto raw_chance = chance.get();
+
+            const auto global_rate = get_option<float>( "ITEM_SPAWNRATE" );
+            const auto artifact_rate = get_option<float>( "SPAWN_RATE_artifacts" );
+            const auto combined_rate = std::min( global_rate * artifact_rate, 1.0f );
+
+            const auto final_chance = static_cast<int>( raw_chance * combined_rate );
+
+            if( final_chance != 100 && !x_in_y( final_chance, 100 ) ) {
                 return;
             }
             const tripoint p( x.get(), y.get(), dat.m.get_abs_sub().z );

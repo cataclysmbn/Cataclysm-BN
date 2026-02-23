@@ -3285,6 +3285,30 @@
   },
   {
     "type": "recipe",
+    "result": "umbrella",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "25 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "plastic_chunk", 3 ] ], [ [ "scrap", 1 ] ], [ [ "wire", 5 ] ], [ [ "spike", 1 ], [ "pointy_stick", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "teleumbrella",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "plastic_chunk", 3 ] ], [ [ "scrap", 1 ] ], [ [ "wire", 5 ] ], [ [ "spring", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "metal_file",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TOOLS",

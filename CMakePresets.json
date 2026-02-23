@@ -77,6 +77,28 @@
       }
     },
     {
+      "name": "osx-arm-slim",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "displayName": "macOS ARM Slim Build (Tiles, Sounds)",
+      "description": "Target macOS Apple Silicon (arm64).",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CMAKE_FIND_FRAMEWORK": "LAST",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CURSES": "OFF",
+        "TILES": "ON",
+        "SOUND": "ON",
+        "USE_PREFIX_DATA_DIR": "OFF",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "USE_TRACY": "OFF",
+        "LUA_DOCS_ON_BUILD": "OFF"
+      }
+    },
+    {
       "name": "linux-full",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "displayName": "Linux Full Build (Tiles, Sounds, Clang-Tidy, Tracy)",
@@ -179,6 +201,19 @@
       }
     },
     {
+      "name": "osx-arm-dist",
+      "inherits": ["osx-arm-slim"],
+      "binaryDir": "${sourceDir}/build",
+      "displayName": "macOS ARM Distribution (Tiles, Sounds, Languages)",
+      "description": "For creating portable macOS ARM distribution packages with tiles and sound.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "LANGUAGES": "all",
+        "BACKTRACE": "ON",
+        "JSON_FORMAT": "ON"
+      }
+    },
+    {
       "name": "lint",
       "binaryDir": "${sourceDir}/build",
       "displayName": "Lint and Format Only",
@@ -264,6 +299,11 @@
       "description": "The minimal build preset for Linux. Recommended for new contributors."
     },
     {
+      "name": "osx-arm-slim",
+      "configurePreset": "osx-arm-slim",
+      "description": "The minimal build preset for macOS Apple Silicon."
+    },
+    {
       "name": "linux-full",
       "configurePreset": "linux-full",
       "description": "The canonical build preset for Linux. This is the one used by the devteam."
@@ -289,6 +329,12 @@
       "configurePreset": "dist-curses",
       "targets": ["cataclysm-bn", "json_formatter", "translations"],
       "description": "Build for curses distribution."
+    },
+    {
+      "name": "osx-arm-dist",
+      "configurePreset": "osx-arm-dist",
+      "targets": ["cataclysm-bn-tiles", "json_formatter", "translations"],
+      "description": "Build for macOS ARM tiles distribution."
     },
     {
       "name": "lint",

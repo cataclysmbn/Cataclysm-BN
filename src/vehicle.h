@@ -57,7 +57,8 @@ namespace vehicles
 {
 // ratio of constant rolling resistance to the part that varies with velocity
 constexpr double rolling_constant_to_variable = 33.33;
-constexpr float vmiph_per_tile = 400.0f;
+// 1 tile/s is approximately 1.78816 m/s == 178.816 cm/s.
+constexpr float cmps_per_tile = 178.816f;
 } // namespace vehicles
 struct rider_data {
     Creature *psg = nullptr;
@@ -174,10 +175,8 @@ struct bounding_box {
 
 char keybind( const std::string &opt, const std::string &context = "VEHICLE" );
 
-int mps_to_vmiph( double mps );
-double vmiph_to_mps( int vmiph );
-int cmps_to_vmiph( int cmps );
-int vmiph_to_cmps( int vmiph );
+auto mps_to_cmps( double mps ) -> int;
+auto cmps_to_mps( int cmps ) -> double;
 float impulse_to_damage( float impulse );
 float damage_to_impulse( float damage );
 
@@ -1512,6 +1511,10 @@ class vehicle
         //mark engine as on or off
         void toggle_specific_engine( int e, bool on );
         void toggle_specific_part( int p, bool on );
+        // muscle engine validation
+        bool can_enable_muscle_engine( int e, std::string &failure_reason ) const;
+        bool has_muscle_engine_operator( int e ) const;
+        void validate_muscle_engines();
         //true if an engine exists with specified type
         //If enabled true, this engine must be enabled to return true
         bool has_engine_type( const itype_id &ft, bool enabled ) const;
@@ -1726,7 +1729,7 @@ class vehicle
          * set them directly, except when initializing the vehicle or during mapgen.
          */
         point pos;
-        // vehicle current velocity, mph * 100
+        // vehicle current velocity, cm/s
         int velocity = 0;
         // velocity vehicle's cruise control trying to achieve
         int cruise_velocity = 0;
@@ -1830,5 +1833,3 @@ namespace rot
 {
 temperature_flag temperature_flag_for_part( const vehicle &veh, size_t part );
 } // namespace rot
-
-

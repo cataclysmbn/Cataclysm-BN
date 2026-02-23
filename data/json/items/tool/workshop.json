@@ -265,6 +265,7 @@
     "symbol": ";",
     "color": "yellow",
     "ammo": "battery",
+    "crafting_speed_modifier": 1.5,
     "qualities": [ [ "DRILL", 3 ], [ "SCREW", 1 ] ],
     "magazines": [
       [

@@ -1,5 +1,28 @@
 [
   {
+    "type": "vehicle_part",
+    "id": "door_lock",
+    "name": { "str": "door lock" },
+    "symbol": "+",
+    "color": "dark_gray",
+    "broken_symbol": "+",
+    "broken_color": "light_gray",
+    "durability": 100,
+    "description": "A set of locks.  Attached to a suitable openable part, it will prevent other people from opening it.",
+    "folded_volume": "250 ml",
+    "weight_modifier": 0,
+    "item": "cargo_lock",
+    "location": "door_lock",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "12 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "12 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "6 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_small_metal", 1 ] ] }
+    },
+    "flags": [ "DOOR_LOCKING", "FOLDABLE", "SHOCK_RESISTANT", "NOREMOVE_SECURITY", "NOREMOVE_CLOSED" ],
+    "breaks_into": [ { "item": "clockworks", "count": [ 0, 2 ] }, { "item": "scrap", "count": [ 2, 6 ] } ],
+    "damage_reduction": { "all": 60 }
+  },
+  {
     "abstract": "door_abstract",
     "breaks_into": "ig_vp_frame",
     "broken_color": "cyan",
@@ -312,6 +335,220 @@
     "size": "37500 ml",
     "symbol": "+",
     "type": "vehicle_part"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "door_wood",
+    "name": { "str": "wooden door" },
+    "symbol": "+",
+    "looks_like": "t_door_c",
+    "color": "brown",
+    "broken_symbol": "&",
+    "broken_color": "brown",
+    "damage_modifier": 75,
+    "durability": 160,
+    "description": "A door.  Has a window so you can see out of it, even when closed.",
+    "item": "frame_wood",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "flags": [ "OBSTACLE", "OPENABLE", "BOARDABLE", "WINDOW" ],
+    "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] } ],
+    "damage_reduction": { "all": 8 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "door_wood_opaque",
+    "name": { "str": "opaque wooden door" },
+    "symbol": "+",
+    "looks_like": "door_wood",
+    "color": "brown",
+    "broken_symbol": "&",
+    "broken_color": "brown",
+    "damage_modifier": 75,
+    "durability": 170,
+    "description": "A door.  Solid construction means you can't see through it when closed.",
+    "item": "frame_wood",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "flags": [ "OBSTACLE", "OPENABLE", "BOARDABLE", "OPAQUE" ],
+    "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] } ],
+    "damage_reduction": { "all": 12 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "door_shutter",
+    "name": { "str": "shutter door" },
+    "looks_like": "hatch",
+    "symbol": "+",
+    "color": "white",
+    "broken_symbol": "&",
+    "broken_color": "white",
+    "damage_modifier": 80,
+    "durability": 95,
+    "description": "A strong door.  Solid construction means you can't see through it when closed.",
+    "item": "sheet_metal",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
+      }
+    },
+    "flags": [ "OPAQUE", "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE" ],
+    "breaks_into": "ig_vp_sheet_metal",
+    "damage_reduction": { "all": 24 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "door_sliding",
+    "name": { "str": "sliding door" },
+    "symbol": "+",
+    "looks_like": "door",
+    "color": "light_cyan",
+    "broken_symbol": "&",
+    "broken_color": "light_cyan",
+    "damage_modifier": 80,
+    "durability": 150,
+    "description": "A door.  A window lets you see through it when closed.",
+    "item": "frame",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE" ],
+    "breaks_into": "ig_vp_frame",
+    "damage_reduction": { "all": 26 }
+  },
+  {
+    "copy-from": "door_sliding",
+    "id": "door_sliding_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber sliding door" },
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "durability": 180,
+    "damage_reduction": { "all": 31 },
+    "folded_volume": "2500 ml",
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "door_trunk",
+    "name": { "str": "trunk door" },
+    "symbol": "+",
+    "looks_like": "hatch",
+    "color": "light_gray",
+    "broken_symbol": "&",
+    "broken_color": "light_gray",
+    "damage_modifier": 80,
+    "durability": 150,
+    "description": "A short door.  You can always see over it, open or closed.",
+    "item": "frame",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "LOW_FINAL_AIR_DRAG", "NO_ROOF_NEEDED", "WINDOW" ],
+    "breaks_into": "ig_vp_frame",
+    "damage_reduction": { "all": 25 }
+  },
+  {
+    "copy-from": "door_trunk",
+    "id": "door_trunk_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber trunk door" },
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "durability": 180,
+    "damage_reduction": { "all": 30 },
+    "folded_volume": "2500 ml",
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "hddoor_trunk",
+    "name": { "str": "heavy duty trunk door" },
+    "symbol": "+",
+    "color": "light_gray",
+    "looks_like": "door_trunk",
+    "broken_symbol": "&",
+    "broken_color": "light_gray",
+    "damage_modifier": 80,
+    "durability": 750,
+    "description": "A strong, short door.  You can always see over it, open or closed.",
+    "item": "hdframe",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "LOW_FINAL_AIR_DRAG", "WINDOW" ],
+    "breaks_into": "ig_vp_hdframe",
+    "damage_reduction": { "all": 78 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "door_motor",
+    "name": { "str": "door motor" },
+    "symbol": "*",
+    "color": "light_green",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 10,
+    "durability": 50,
+    "description": "A small electric motor.  Installed on the same frame as a door or curtain, it will allow you to remotely open the door or curtain from the vehicle controls.",
+    "item": "motor_tiny",
+    "folded_volume": "250 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ] ],
+        "time": "30 m",
+        "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
+      }
+    },
+    "flags": [ "DOOR_MOTOR", "UNMOUNT_ON_DAMAGE", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "scrap", "count": [ 4, 6 ] } ],
+    "damage_reduction": { "all": 12 }
   },
   {
     "copy-from": "door_abstract",

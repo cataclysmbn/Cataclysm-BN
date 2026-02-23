@@ -935,6 +935,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             const bool see = has_debug_vision || overmap_buffer.seen( omp );
             const bool los = see && you.overmap_los( omp, sight_points );
             // the full string from the ter_id including _north etc.
+            TILE_CATEGORY category = TILE_CATEGORY::C_OVERMAP_TERRAIN;
             std::string id;
             int rotation = 0;
             int subtile = -1;
@@ -944,6 +945,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 if( uistate.overmap_debug_weather ||
                     you.overmap_los( omp_sky, sight_points * 2 ) ) {
                     id = overmap_ui::get_weather_at_point( omp_sky.xy() ).c_str();
+                    category = TILE_CATEGORY::C_OVERMAP_WEATHER;
                 }
             }
             if( id.empty() ) {
@@ -954,7 +956,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 }
             }
 
-            if( overmap_transparency ) {
+            if( overmap_transparency && category != TILE_CATEGORY::C_OVERMAP_WEATHER ) {
                 int z_offset = 0;
                 while( id == "open_air" ) {
                     z_offset++;
@@ -975,7 +977,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 auto [bgCol, fgCol] = get_overmap_color( overmap_buffer, omp );
 
                 // light level is now used for choosing between grayscale filter and normal lit tiles.
-                const tile_search_params tile { id, C_OVERMAP_TERRAIN, "overmap_terrain", subtile, rotation };
+                const tile_search_params tile { id, category, "overmap_terrain", subtile, rotation };
                 draw_from_id_string( tile, omp.raw(), bgCol, fgCol,
                                      ll, false, 0, false,
                                      height_3d );

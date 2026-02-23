@@ -138,7 +138,7 @@ static vehicle &add_moving_vehicle(
 )
 {
     tripoint initial_veh_pos( MAPSIZE_X * 3 / 4, MAPSIZE_Y * 3 / 4, 0 );
-    vehicle *veh_ptr = here.add_vehicle( vproto_id( veh_id ), initial_veh_pos, face_dir, 100, 0 );
+    vehicle *veh_ptr = here.add_vehicle( vproto_id( veh_id ), initial_veh_pos, face_dir, 45, 0 );
     REQUIRE( veh_ptr != nullptr );
     vehicle &veh = *veh_ptr;
 
@@ -155,7 +155,7 @@ static vehicle &add_moving_vehicle(
 
     veh.tags.insert( "IN_CONTROL_OVERRIDE" );
     veh.engine_on = true;
-    constexpr int tgt_velocity = 200; // Arbitrary small speed
+    const int tgt_velocity = 89;
     REQUIRE( veh.safe_velocity( true ) >= std::abs( tgt_velocity ) );
     veh.cruise_on = true;
     veh.cruise_velocity = tgt_velocity;
@@ -208,7 +208,7 @@ static void test_rail_movement( const test_case &t,
     map &here = get_map();
     vehicle &veh = add_moving_vehicle( here, t.veh_id, vehicle_pos, face_dir );
     veh.turn_dir = normalize( face_dir + turn_delta );
-    int tgt_velocity = 200 * move_dir;
+    int tgt_velocity = 89 * move_dir;
     veh.cruise_velocity = tgt_velocity;
     veh.velocity = tgt_velocity;
 
