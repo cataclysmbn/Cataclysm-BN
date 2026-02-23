@@ -1483,7 +1483,7 @@ class repair_inventory_preset: public inventory_selector_preset
         repair_inventory_preset( const repair_item_actor *actor, const item *main_tool,
                                  player &character ) :
             actor( actor ), main_tool( main_tool ), character( character ) {
-            append_cell( [ actor, &character ]( const item * loc ) {
+            append_cell( [ this, actor, &character ]( const item * loc ) {
                 const auto comp_needed = std::max<int>( 1,
                                                         std::ceil( loc->volume() / 250_ml * actor->cost_scaling ) );
                 auto valid_entries = std::set<material_id> {};
@@ -1494,25 +1494,17 @@ class repair_inventory_preset: public inventory_selector_preset
                 } );
 
                 const auto &crafting_inv = character.crafting_inventory();
-                auto filter = is_crafting_component;
-
                 auto listed_components = std::set<itype_id> {};
                 auto material_list = std::vector<std::string> {};
-                std::ranges::for_each( valid_entries, [ &listed_components, &material_list, &crafting_inv, &filter,
+                std::ranges::for_each( valid_entries, [ this, &listed_components, &material_list, &crafting_inv,
                                     &comp_needed ]( const auto & entry ) {
                     const auto &component_id = entry.obj().repaired_with();
                     if( listed_components.contains( component_id ) ) {
                         return;
                     }
                     listed_components.emplace( component_id );
-                    if( item::count_by_charges( component_id ) ) {
-                        if( crafting_inv.has_charges( component_id, 1 ) ) {
-                            const auto num_comp = crafting_inv.charges_of( component_id );
-                            material_list.emplace_back( colorize( string_format( _( "%s (%d)" ), item::nname( component_id ),
-                                                                  num_comp ), num_comp < comp_needed ? c_red : c_unset ) );
-                        }
-                    } else if( crafting_inv.has_amount( component_id, 1, false, filter ) ) {
-                        const auto num_comp = crafting_inv.amount_of( component_id, false );
+                    const auto num_comp = get_cached_component_count( crafting_inv, component_id );
+                    if( num_comp > 0 ) {
                         material_list.emplace_back( colorize( string_format( _( "%s (%d)" ), item::nname( component_id ),
                                                               num_comp ), num_comp < comp_needed ? c_red : c_unset ) );
                     }
@@ -1545,6 +1537,23 @@ class repair_inventory_preset: public inventory_selector_preset
         }
 
     private:
+        auto get_cached_component_count( const inventory &crafting_inv,
+                                         const itype_id &component_id ) const -> int {
+            auto [ iter, inserted ] = component_count_cache.try_emplace( component_id, 0 );
+            if( !inserted ) {
+                return iter->second;
+            }
+
+            if( item::count_by_charges( component_id ) ) {
+                if( crafting_inv.has_charges( component_id, 1 ) ) {
+                    iter->second = crafting_inv.charges_of( component_id );
+                }
+            } else if( crafting_inv.has_amount( component_id, 1, false, is_crafting_component ) ) {
+                iter->second = crafting_inv.amount_of( component_id, false );
+            }
+            return iter->second;
+        }
+
         auto get_cached_repair_chance( const item &loc ) const -> std::pair<float, float> {
             auto [ iter, inserted ] = chance_cache.try_emplace( &loc );
             if( inserted ) {
@@ -1559,6 +1568,7 @@ class repair_inventory_preset: public inventory_selector_preset
         const item *main_tool;
         player &character;
         mutable std::unordered_map<const item *, std::pair<float, float>> chance_cache;
+        mutable std::unordered_map<itype_id, int> component_count_cache;
 };
 
 static auto get_repair_hint( const player &character, const repair_item_actor *actor,
