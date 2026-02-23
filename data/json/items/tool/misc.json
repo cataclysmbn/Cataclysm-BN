@@ -47,6 +47,23 @@
     "flags": [ "WATCH", "ALARMCLOCK" ]
   },
   {
+    "id": "door_key",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "unknown key" },
+    "description": "A key of some sort.  Can be used to lock or unlock something.",
+    "weight": "10 g",
+    "volume": "10 ml",
+    "price": "10 USD",
+    "price_postapoc": "50 cent",
+    "to_hit": -1,
+    "bashing": 1,
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "light_gray",
+    "use_action": [ "DOOR_KEY" ]
+  },
+  {
     "id": "cow_bell",
     "type": "GENERIC",
     "category": "tools",

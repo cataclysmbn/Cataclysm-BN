@@ -831,6 +831,21 @@
   },
   {
     "type": "item_action",
+    "id": "DOOR_KEY",
+    "name": { "str": "Open/Close door" }
+  },
+  {
+    "type": "item_action",
+    "id": "SET_LOCK",
+    "name": { "str": "Set lock" }
+  },
+  {
+    "type": "item_action",
+    "id": "COPY_KEY",
+    "name": { "str": "Copy key" }
+  },
+  {
+    "type": "item_action",
     "id": "TOWEL",
     "name": { "str": "Dry/clean yourself" }
   },

@@ -247,6 +247,12 @@
     "tools": [ [ [ "angle_grinder", 200 ], [ "oxy_torch", 20 ] ] ]
   },
   {
+    "id": "copy_key_fine_sawing",
+    "type": "requirement",
+    "//": "Tools for copying a key",
+    "qualities": [ { "id": "SAW_M_FINE", "level": 1 } ]
+  },
+  {
     "id": "object_deconstruction_advanced",
     "type": "requirement",
     "//": "Tools for doing advanced deconstruction",
@@ -328,5 +334,12 @@
       { "id": "GLASSBLOWING", "level": 1 }
     ],
     "tools": [ [ [ "forge", 5 ], [ "oxy_torch", 5 ] ] ]
+  },
+  {
+    "id": "replace_door_or_safe_locks",
+    "type": "requirement",
+    "//": "Replace a door or safe lock with a new one.",
+    "components": [ [ [ "scrap", 2 ] ] ],
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ]
   }
 ]

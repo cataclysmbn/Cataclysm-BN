@@ -6,6 +6,9 @@ local storage = game.mod_storage[game.current_mod]
 mod.storage = storage
 
 game.iuse_functions["VOLTMETER"] = function(...) return mod.voltmeter.menu(...) end
+game.iuse_functions["DOOR_KEY"] = function(...) return mod.door_key.menu(...) end
+game.iuse_functions["SET_LOCK"] = function(...) return mod.door_key.set_lock(...) end
+game.iuse_functions["COPY_KEY"] = function(...) return mod.door_key.copy_key(...) end
 game.iuse_functions["ARTIFACT_ANALYZER"] = function(...) return mod.artifact_analyzer.menu(...) end
 game.mapgen_functions["slimepit"] = function(...) return mod.slimepit.draw(...) end
 
