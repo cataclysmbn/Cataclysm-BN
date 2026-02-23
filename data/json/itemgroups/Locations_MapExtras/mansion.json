@@ -459,6 +459,7 @@
       [ "breeches", 100 ],
       [ "waistcoat", 100 ],
       { "distribution": [ { "item": "peacoat", "prob": 75 }, { "item": "greatcoat", "prob": 25 } ] },
+      [ "flintlock_pouch", 75 ],
       [ "tricorne", 100 ]
     ]
   },
@@ -483,7 +484,7 @@
     "type": "item_group",
     "subtype": "collection",
     "//": "TODO: replace army jacket with all-cotton equivalent if added, add all-steel army helmets to spawn ~75% of the time in place of berets",
-    "items": [ { "group": "soa_weapons_wwii" }, [ "boots", 100 ], [ "pants", 100 ], [ "jacket_army", 100 ], [ "beret", 100 ] ]
+    "items": [ { "group": "soa_weapons_wwii" }, [ "boots", 100 ], [ "pants", 100 ], [ "jacket_army", 100 ], [ "chestrig", 75 ], [ "rucksack", 50 ], [ "beret", 100 ] ]
   },
   {
     "id": "soa_weapons_wwii",
