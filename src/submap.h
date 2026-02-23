@@ -236,6 +236,7 @@ class submap : maptile_soa<SEEX, SEEY>
         std::vector<std::unique_ptr<vehicle>> vehicles;
         std::map<tripoint, std::unique_ptr<partial_con>> partial_constructions;
         std::map<point_sm_ms, cata::poly_serialized<active_tile_data>> active_furniture;
+        std::map<point_sm_ms, time_point> transformer_last_run;
 
         static void swap( submap &first, submap &second );
 
@@ -329,5 +330,4 @@ struct maptile {
             return **std::prev( sm->get_items( pos() ).cend() );
         }
 };
-
 

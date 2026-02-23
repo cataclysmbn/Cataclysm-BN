@@ -28,7 +28,10 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
+#include "catalua_icallback_actor.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_id.h"
@@ -746,10 +749,12 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) cons
     }
     veh->set_owner( p );
 
-    // Mark the vehicle as foldable.
-    veh->tags.insert( "convertible" );
-    // Store the id of the item the vehicle is made of.
-    veh->tags.insert( std::string( "convertible:" ) + it.typeId().str() );
+    if( !veh->is_foldable() ) {
+        // Mark the vehicle as foldable.
+        veh->tags.insert( "convertible" );
+        // Store the id of the item the vehicle is made of.
+        veh->tags.insert( std::string( "convertible:" ) + it.typeId().str() );
+    }
     if( !unfold_msg.empty() ) {
         p.add_msg_if_player( _( unfold_msg ), it.tname() );
     }
@@ -790,6 +795,9 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) cons
         } catch( const JsonError &e ) {
             debugmsg( "Error restoring vehicle: %s", e.c_str() );
         }
+    }
+    if( g->m.veh_at( p.pos() ).part_with_feature( "BOARDABLE", true ) ) {
+        g->m.board_vehicle( p.pos(), &p );
     }
     return 1;
 }
@@ -1229,6 +1237,12 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
         newmon.no_extra_death_drops = true;
         it.deactivate();
     }
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = &newmon;
+    } );
+    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+        params["monster"] = &newmon;
+    } );
     if( place_random ) {
         // place_critter_around returns the same pointer as its parameter (or null)
         // Allow position to be different from the player for tossed or launched items
@@ -1284,8 +1298,8 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
     }
     /** @EFFECT_INT increases chance of a placed turret being friendly */
     /** Full-on pets also auto-succeed if we've already succeeded before deactivating it */
-    if( rng( 0, p.int_cur ) + skill_offset < rng( 0, 2 * ( difficulty * diff_mod ) ) &&
-        !it.has_flag( flag_SPAWN_FRIENDLY ) ) {
+    if( ( rng( 0, p.int_cur ) + skill_offset < rng( 0, 2 * ( difficulty * diff_mod ) ) &&
+          !it.has_flag( flag_SPAWN_FRIENDLY ) ) || it.has_flag( flag_SPAWN_HOSTILE ) ) {
         if( hostile_msg.empty() ) {
             p.add_msg_if_player( m_bad, _( "The %s scans you and makes angry beeping noises!" ),
                                  newmon.name() );
@@ -1456,6 +1470,14 @@ int deploy_furn_actor::use( player &p, item &it, bool t, const tripoint &pos ) c
 
     if( here.has_furn( pnt ) ) {
         p.add_msg_if_player( m_info, _( "There is already furniture at that location." ) );
+        return 0;
+    }
+
+    // It shouldn't be possible to deploy a NOITEM furniture on top of items.
+    const furn_t &furn_obj = furn_type.obj();
+    if( ( furn_obj.has_flag( TFLAG_SEALED ) || furn_obj.has_flag( TFLAG_NOITEM ) ) &&
+        !here.i_at( pnt ).empty() ) {
+        p.add_msg_if_player( m_info, _( "Can't put that here - items in the way." ) );
         return 0;
     }
 
@@ -3606,6 +3628,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                 pl.add_msg_if_player( m_good, _( "You repair your %s completely!  ( %s-> %s)" ), fix.tname( 1,
                                       false ), startdurability, resultdurability );
             }
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
 
@@ -3620,6 +3646,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                 fix.set_flag( flag_FIT );
             }
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
 
@@ -3633,6 +3663,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                                   fix.tname().c_str() );
             fix.set_flag( flag_UNDERSIZE );
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
         return AS_RETRY;
@@ -3645,6 +3679,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                                   fix.tname().c_str() );
             fix.unset_flag( flag_UNDERSIZE );
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
         return AS_RETRY;
@@ -3661,6 +3699,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
             pl.add_msg_if_player( m_good, _( "You make your %s extra sturdy." ), fix.tname() );
             fix.mod_damage( -itype::damage_scale );
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
 

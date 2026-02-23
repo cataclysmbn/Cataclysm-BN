@@ -173,6 +173,7 @@
     "symbol": ")",
     "color": "dark_gray",
     "contains": "100 L",
+    "seals": true,
     "flags": [ "TRADER_AVOID" ]
   },
   {
@@ -342,7 +343,8 @@
     "material": "paper",
     "symbol": ")",
     "color": "white",
-    "contains": "84 ml"
+    "contains": "84 ml",
+    "seals": true
   },
   {
     "id": "box_small",
@@ -357,7 +359,8 @@
     "material": "cardboard",
     "symbol": ")",
     "color": "brown",
-    "contains": "1 L"
+    "contains": "1 L",
+    "seals": true
   },
   {
     "id": "box_medium",
@@ -373,7 +376,8 @@
     "material": "cardboard",
     "symbol": ")",
     "color": "brown",
-    "contains": "3 L"
+    "contains": "3 L",
+    "seals": true
   },
   {
     "id": "box_large",
@@ -390,6 +394,7 @@
     "symbol": ")",
     "color": "brown",
     "contains": "5 L",
+    "seals": true,
     "flags": [ "ALLOWS_REMOTE_USE" ],
     "use_action": { "type": "deploy_furn", "furn_type": "f_cardboard_box" }
   },
@@ -1385,5 +1390,21 @@
     "qualities": [ [ "CONTAIN", 1 ] ],
     "flags": [ "ALLOWS_REMOTE_USE" ],
     "use_action": { "type": "deploy_furn", "furn_type": "f_trashcan" }
+  },
+  {
+    "id": "dehydrator_tray",
+    "type": "CONTAINER",
+    "category": "container",
+    "name": { "str": "dehydrator tray" },
+    "description": "A flat metal tray for dehydrating meat. Intended for use in a dehydrator in stacks.",
+    "weight": "400 g",
+    "volume": "500 ml",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "material": "steel",
+    "symbol": ")",
+    "color": "white",
+    "contains": "2 L",
+    "//": "Pseudo-container in order to make the hack work."
   }
 ]

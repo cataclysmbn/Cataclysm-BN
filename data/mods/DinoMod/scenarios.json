@@ -32,12 +32,6 @@
   },
   {
     "type": "scenario",
-    "id": "fungal_start",
-    "copy-from": "fungal_start",
-    "extend": { "allowed_locs": [ "sloc_dinozoo_giftshop", "sloc_dinozoo_cages", "sloc_dinoexhibit" ] }
-  },
-  {
-    "type": "scenario",
     "id": "bad_day",
     "copy-from": "bad_day",
     "extend": { "allowed_locs": [ "sloc_dinozoo_giftshop", "sloc_dinozoo_cages", "sloc_dinoexhibit" ] }

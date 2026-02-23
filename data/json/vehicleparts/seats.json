@@ -1,28 +1,5 @@
 [
   {
-    "entries": [
-      { "count": [ 2, 8 ], "item": "rag" },
-      { "count": [ 1, 3 ], "item": "pipe" },
-      { "count": [ 0, 2 ], "item": "spring" },
-      { "count": [ 3, 5 ], "item": "scrap" }
-    ],
-    "id": "ig_vp_seat",
-    "subtype": "collection",
-    "type": "item_group"
-  },
-  {
-    "entries": [
-      { "count": [ 1, 5 ], "item": "leather" },
-      { "count": [ 1, 3 ], "item": "rag" },
-      { "count": [ 1, 3 ], "item": "pipe" },
-      { "count": [ 0, 2 ], "item": "spring" },
-      { "count": [ 3, 5 ], "item": "scrap" }
-    ],
-    "id": "ig_vp_seat_leather",
-    "subtype": "collection",
-    "type": "item_group"
-  },
-  {
     "abstract": "seat_abstract",
     "breaks_into": "ig_vp_seat",
     "broken_color": "red",
@@ -169,6 +146,108 @@
     },
     "flags": [ "SEAT", "BOARDABLE", "FOLDABLE", "SHOCK_IMMUNE" ],
     "breaks_into": [ { "item": "rag", "count": [ 1, 6 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "seat_wood",
+    "name": { "str": "wooden seat" },
+    "looks_like": "seat",
+    "symbol": "#",
+    "color": "brown",
+    "broken_symbol": "*",
+    "broken_color": "brown",
+    "damage_modifier": 60,
+    "durability": 125,
+    "description": "A place to sit.",
+    "item": "frame_wood",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "30 m", "using": [ [ "vehicle_nail_install", 15 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "30 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "flags": [ "SEAT", "BOARDABLE", "BELTABLE" ],
+    "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] } ],
+    "damage_reduction": { "all": 8 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "seat_wood_light",
+    "copy-from": "seat_wood",
+    "name": { "str": "light wooden seat" },
+    "looks_like": "seat_wood",
+    "durability": 80,
+    "item": "frame_wood_light",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "10 m", "using": [ [ "rope_natural_short", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "5 m", "using": [  ] },
+      "repair": {
+        "skills": [ [ "mechanics", 0 ] ],
+        "time": "5 m",
+        "using": [ [ "nail_any_adhesive", 1 ], [ "vehicle_repair_small_wood", 4 ] ]
+      }
+    },
+    "delete": { "flags": [ "BELTABLE" ] },
+    "breaks_into": [ { "item": "splinter", "count": [ 3, 5 ] }, { "item": "string_36", "count": [ 10, 15 ] } ],
+    "damage_reduction": { "all": 6 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "seatbelt",
+    "name": { "str": "seatbelt" },
+    "symbol": ",",
+    "color": "light_gray",
+    "broken_symbol": ",",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 35,
+    "description": "A belt, attached to a seat.",
+    "folded_volume": "500 ml",
+    "bonus": 25,
+    "item": "seatbelt",
+    "location": "on_seat",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "150 s", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ], [ "tailor", 1 ] ],
+        "time": "20 s",
+        "using": [ [ "sewing_standard", 10 ], [ "fabric_standard", 1 ] ]
+      }
+    },
+    "flags": [ "SEATBELT", "FOLDABLE", "SHOCK_IMMUNE" ],
+    "breaks_into": [ { "item": "nylon", "count": [ 0, 3 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "seatbelt_heavyduty",
+    "name": { "str": "5-point harness" },
+    "symbol": ",",
+    "color": "light_gray",
+    "broken_symbol": ",",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 100,
+    "description": "A series of straps attached to the seat, intended to fasten together after going over your shoulders and hips and between your legs.",
+    "folded_volume": "1 L",
+    "bonus": 25,
+    "item": "five-point_harness",
+    "location": "on_seat",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "5 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ], [ "tailor", 2 ] ],
+        "time": "20 s",
+        "using": [ [ "sewing_standard", 10 ], [ "fabric_standard", 1 ] ]
+      }
+    },
+    "flags": [ "SEATBELT", "FOLDABLE", "SHOCK_IMMUNE" ],
+    "breaks_into": [ { "item": "seatbelt", "count": [ 0, 3 ] } ]
   },
   {
     "copy-from": "seat_abstract",

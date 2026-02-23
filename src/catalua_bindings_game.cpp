@@ -4,16 +4,20 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include <ranges>
+
 #include "avatar.h"
 #include "distribution_grid.h"
 #include "game.h"
 #include "lightmap.h"
 #include "map.h"
+#include "catalua_log.h"
 #include "messages.h"
 #include "npc.h"
 #include "monster.h"
 #include "overmapbuffer.h"
 #include "line.h"
+#include "lua_action_menu.h"
 
 namespace
 {
@@ -51,6 +55,58 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );
     luna::set_fx( lib, "rng", sol::resolve<int( int, int )>( &rng ) );
+    DOC( "Get recent player message log entries. Returns array of { time=string, text=string }." );
+    luna::set_fx( lib, "get_messages", []( sol::this_state lua_this, const int count ) {
+        sol::state_view lua( lua_this );
+        auto out = lua.create_table();
+        const auto clamped = std::max( 0, count );
+        auto entries = Messages::recent_messages( static_cast<size_t>( clamped ) );
+        auto indices = std::views::iota( size_t{ 0 }, entries.size() );
+        std::ranges::for_each( indices, [&]( const size_t idx ) {
+            const auto &entry = entries[idx];
+            auto row = lua.create_table_with(
+                           "time", entry.first,
+                           "text", entry.second
+                       );
+            out[idx + 1] = row;
+        } );
+        return out;
+    } );
+    DOC( "Get recent Lua console log entries. Returns array of { level=string, text=string, from_user=bool }." );
+    luna::set_fx( lib, "get_lua_log", []( sol::this_state lua_this, const int count ) {
+        sol::state_view lua( lua_this );
+        auto out = lua.create_table();
+        const auto clamped = std::max( 0, count );
+        const auto &entries = cata::get_lua_log_instance().get_entries();
+        const auto take = std::min( static_cast<size_t>( clamped ), entries.size() );
+        auto indices = std::views::iota( size_t{ 0 }, take );
+        const auto level_name = []( const cata::LuaLogLevel level ) -> std::string {
+            switch( level )
+            {
+                case cata::LuaLogLevel::Input:
+                    return "input";
+                case cata::LuaLogLevel::Info:
+                    return "info";
+                case cata::LuaLogLevel::Warn:
+                    return "warn";
+                case cata::LuaLogLevel::Error:
+                    return "error";
+                case cata::LuaLogLevel::DebugMsg:
+                    return "debug";
+            }
+            return "unknown";
+        };
+        std::ranges::for_each( indices, [&]( const size_t idx ) {
+            const auto &entry = entries[idx];
+            auto row = lua.create_table_with(
+                           "level", level_name( entry.level ),
+                           "text", entry.text,
+                           "from_user", entry.level == cata::LuaLogLevel::Input
+                       );
+            out[idx + 1] = row;
+        } );
+        return out;
+    } );
     luna::set_fx( lib, "add_on_every_x_hook",
     []( sol::this_state lua_this, time_duration interval, sol::protected_function f ) {
         sol::state_view lua( lua_this );
@@ -64,6 +120,27 @@ void cata::detail::reg_game_api( sol::state &lua )
         std::vector<sol::protected_function> vec;
         vec.push_back( f );
         hooks.push_back( on_every_x_hooks{ interval, vec } );
+    } );
+
+    DOC( "Register a Lua-defined action menu entry in the in-game action menu." );
+    luna::set_fx( lib, "register_action_menu_entry", []( sol::table opts ) -> void {
+        auto id = opts.get_or( "id", std::string{} );
+        auto name = opts.get_or( "name", std::string{} );
+        auto category_id = opts.get_or( "category", std::string{ "misc" } );
+        auto hotkey = opts.get<sol::optional<std::string>>( "hotkey" );
+        auto hotkey_value = std::optional<std::string>{};
+        if( hotkey )
+        {
+            hotkey_value = std::move( *hotkey );
+        }
+        auto fn = opts.get_or<sol::protected_function>( "fn", sol::lua_nil );
+        cata::lua_action_menu::register_entry( {
+            .id = std::move( id ),
+            .name = std::move( name ),
+            .category_id = std::move( category_id ),
+            .hotkey = std::move( hotkey_value ),
+            .fn = std::move( fn ),
+        } );
     } );
 
     DOC( "Spawns a new item. Same as Item::spawn " );

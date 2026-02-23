@@ -1104,7 +1104,7 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
             d.add_topic( new_topic );
         }
     }
-    if( !enforce_first_topic ) { d.add_topic( chatbin.first_topic ); }
+    if( enforce_first_topic ) { d.add_topic( chatbin.first_topic ); }
 
     dialogue_window d_win;
     // Main dialogue loop

@@ -634,5 +634,211 @@
     "broken_color": "green",
     "breaks_into": [ { "item": "scrap", "count": 27 }, { "item": "steel_chunk", "count": 10 }, { "item": "steel_lump", "count": 6 } ],
     "requirements": { "install": { "skills": [ [ "mechanics", 5 ], [ "launcher", 3 ] ] }, "removal": { "skills": [ [ "mechanics", 3 ] ] } }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "turret_mount",
+    "name": { "str": "turret mount" },
+    "symbol": "X",
+    "color": "light_gray",
+    "broken_symbol": "X",
+    "broken_color": "light_gray",
+    "damage_modifier": 80,
+    "durability": 320,
+    "description": "A rotating, universal mount for a weapon.  Weapons installed on it can be fired from the vehicle controls.  If your hands are empty, you can also stand on the same tile as a mounted gun and 'f'ire the weapon.",
+    "folded_volume": "2500 ml",
+    "item": "turret_mount",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "20 m", "using": [ [ "welding_standard", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "10 m", "using": "vehicle_weld_removal" },
+      "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "5 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "TURRET_MOUNT", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [ { "item": "scrap", "count": [ 1, 4 ] } ],
+    "damage_reduction": { "all": 54 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "turret_mount_manual_foldablewood",
+    "copy-from": "turret_mount",
+    "name": { "str": "simple foldable wooden turret mount" },
+    "color": "brown",
+    "broken_color": "brown",
+    "durability": 15,
+    "description": "A simple hardpoint for mounting a weapon.  Can only be fired manually, and can't accept turret controls.  If your hands are empty, you can stand on the same tile as a mounted gun and 'f'ire the weapon.",
+    "folded_volume": "3750 ml",
+    "item": "foldwoodframe",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_nail_install", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "10 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "15 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "extend": { "flags": [ "MANUAL" ] },
+    "breaks_into": [ { "item": "splinter", "count": [ 0, 6 ] }, { "item": "nail", "charges": [ 1, 15 ] } ],
+    "damage_reduction": { "all": 12 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "turret_mount_manual_foldablesteel",
+    "copy-from": "turret_mount",
+    "name": { "str": "simple foldable light turret mount" },
+    "durability": 50,
+    "description": "A simple hardpoint for mounting a weapon.  Lacks the necessary electronics to support firing remotely or installing turret controls.  If your hands are empty, you can stand on the same tile as a mounted gun and 'f'ire the weapon.",
+    "item": "foldframe",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "10 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "5 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] }
+    },
+    "extend": { "flags": [ "MANUAL" ] },
+    "breaks_into": [ { "item": "steel_chunk", "count": [ 0, 2 ] }, { "item": "scrap", "count": [ 1, 2 ] } ],
+    "damage_reduction": { "all": 8 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "turret_mount_manual_wood",
+    "copy-from": "turret_mount",
+    "name": { "str": "simple wooden turret mount" },
+    "color": "brown",
+    "broken_color": "brown",
+    "durability": 150,
+    "description": "A simple hardpoint for mounting a weapon.  Lacks the necessary electronics to support firing remotely or installing turret controls.  If your hands are empty, you can stand on the same tile as a mounted gun and 'f'ire the weapon.",
+    "item": "frame_wood",
+    "folded_volume": "0 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_nail_install", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "10 m", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "15 m",
+        "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
+      }
+    },
+    "extend": { "flags": [ "MANUAL" ] },
+    "delete": { "flags": [ "FOLDABLE" ] },
+    "breaks_into": [ { "item": "splinter", "count": [ 7, 9 ] }, { "item": "nail", "charges": [ 5, 10 ] } ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "turret_mount_manual_steel",
+    "copy-from": "turret_mount",
+    "name": { "str": "simple steel turret mount" },
+    "durability": 400,
+    "description": "A simple hardpoint for mounting a weapon.  Lacks the necessary electronics to support firing remotely or installing turret controls.  If your hands are empty, you can stand on the same tile as a mounted gun and 'f'ire the weapon.",
+    "item": "frame",
+    "folded_volume": "0 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "10 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "5 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] }
+    },
+    "extend": { "flags": [ "MANUAL" ] },
+    "delete": { "flags": [ "FOLDABLE" ] },
+    "breaks_into": "ig_vp_frame"
+  },
+  {
+    "copy-from": "turret_mount",
+    "id": "turret_mount_manual_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "simple carbon fiber turret mount" },
+    "item": "frame_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 1 ] ],
+        "time": "5 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 10 ] ]
+      }
+    },
+    "folded_volume": "2500 ml",
+    "durability": 500,
+    "damage_reduction": { "all": 65 },
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "controls_turret",
+    "name": { "str": "turret control unit" },
+    "symbol": "$",
+    "color": "yellow",
+    "broken_symbol": "$",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 50,
+    "epower": -250,
+    "item": "turret_controls",
+    "description": "A set of motor, camera, and an AI unit which allows for tracking targets, friend-or-foe identification, and firing the connected turret in full automatic mode.  When installed over the turret, it will enable auto targeting mode for said turret.",
+    "folded_volume": "750 ml",
+    "flags": [ "ENABLED_DRAINS_EPOWER", "TURRET_CONTROLS", "UNMOUNT_ON_DAMAGE", "SHOCK_RESISTANT" ],
+    "requirements": {
+      "install": {
+        "time": "40 m",
+        "skills": [ [ "mechanics", 3 ], [ "electronics", 3 ] ],
+        "qualities": [ { "id": "SCREW", "level": 1 } ]
+      },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "3 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "qualities": [ { "id": "SCREW", "level": 1 } ] }
+    },
+    "breaks_into": "ig_vp_device"
+  },
+  {
+    "id": "turret_autoloader",
+    "type": "vehicle_part",
+    "name": { "str": "turret autoloader" },
+    "description": "An automated ammunition feeding system installed alongside a vehicle turret. It searches all vehicle cargo for compatible ammunition and reloads the turret. Must be installed on the same tile as a turret. The mechanical feeding system requires electrical power to operate.",
+    "item": "turret_autoloader",
+    "durability": 120,
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 30 },
+    "color": "light_gray",
+    "symbol": "=",
+    "broken_color": "dark_gray",
+    "broken_symbol": "x",
+    "size": "10 L",
+    "epower": -5,
+    "flags": [ "COVERED", "ENABLED_DRAINS_EPOWER", "AUTOLOADER" ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 5 ], [ "electronics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 6 ] ],
+        "time": "45 m",
+        "using": [ [ "welding_standard", 4 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 3, 5 ] },
+      { "item": "steel_chunk", "count": [ 4, 6 ] },
+      { "item": "scrap", "count": [ 6, 10 ] },
+      { "item": "cable", "charges": [ 10, 20 ] }
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "bomber controls",
+    "looks_like": "turret_controls",
+    "name": { "str": "bomb bay" },
+    "symbol": "$",
+    "color": "yellow",
+    "broken_symbol": "$",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 50,
+    "item": "bomber_controls",
+    "description": "A motor and attached linkage that can activate and drop items, such as explosives, from within the attached storage space.  Activating it from vehicle controls will let you select which items to arm, then release them underneath the vehicle.",
+    "folded_volume": "750 ml",
+    "flags": [ "DROPPER", "SHOCK_RESISTANT" ],
+    "requirements": {
+      "install": {
+        "time": "40 m",
+        "skills": [ [ "mechanics", 3 ], [ "electronics", 3 ] ],
+        "qualities": [ { "id": "SCREW", "level": 1 } ]
+      },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "3 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "qualities": [ { "id": "SCREW", "level": 1 } ] }
+    },
+    "breaks_into": "ig_vp_device"
   }
 ]

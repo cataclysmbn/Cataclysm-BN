@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include "avatar.h"
@@ -200,4 +201,36 @@ TEST_CASE( "vehicle_rotation_reverse" )
             }
         }
     }
+}
+
+TEST_CASE( "broken_door_and_lock_can_be_removed", "[vehicle]" )
+{
+    clear_all_state();
+    const auto origin = tripoint( 60, 60, 0 );
+    auto *veh_ptr = get_map().add_vehicle( vproto_id( "cross_split_test" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    const auto door_mount = point( 1, 0 );
+    const auto door_idx = veh_ptr->part_with_feature( door_mount, "OPENABLE", true );
+    const auto lock_idx = veh_ptr->part_with_feature( door_mount, "DOOR_LOCKING", true );
+    REQUIRE( door_idx >= 0 );
+    REQUIRE( lock_idx >= 0 );
+
+    auto &door_part = veh_ptr->part( door_idx );
+    auto &lock_part = veh_ptr->part( lock_idx );
+    // DOORS CAN SPAWN OPEN GUYS
+    if( door_part.open ) {
+        door_part.open = false;
+    }
+    REQUIRE_FALSE( door_part.open );
+
+    REQUIRE( veh_ptr->mod_hp( door_part, -( door_part.hp() + 1 ), DT_BASH ) );
+    REQUIRE( veh_ptr->mod_hp( lock_part, -( lock_part.hp() + 1 ), DT_BASH ) );
+    REQUIRE( door_part.is_broken() );
+    REQUIRE( lock_part.is_broken() );
+
+    auto door_reason = std::string{};
+    auto lock_reason = std::string{};
+    CHECK( veh_ptr->can_unmount( door_idx, door_reason ) );
+    CHECK( veh_ptr->can_unmount( lock_idx, lock_reason ) );
 }

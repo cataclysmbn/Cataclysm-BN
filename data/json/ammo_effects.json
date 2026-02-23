@@ -400,6 +400,11 @@
     "//": "Applies tied effect and may be recovered after the critter breaks free."
   },
   {
+    "id": "NET_TANGLE",
+    "type": "ammo_effect",
+    "//": "Applies tied effect to all creatures in a radius with disposable nets."
+  },
+  {
     "id": "WHIP",
     "type": "ammo_effect",
     "//": "Scares wildlife hit by it.  If user has 5+ melee, applies disarm on some reach attacks."

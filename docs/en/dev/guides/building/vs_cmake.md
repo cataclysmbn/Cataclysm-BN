@@ -4,6 +4,11 @@
 >
 > CMake build is work-in-progress.
 
+> [!TIP]
+>
+> If you prefer a prompt-driven workflow launched from Visual Studio, see
+> [Visual Studio External Tool Automation (Windows + WSL)](./vs_external_tool_wsl.md).
+
 ## Prerequisites
 
 - `cmake` >= 3.24.0

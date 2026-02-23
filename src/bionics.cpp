@@ -20,6 +20,7 @@
 #include "ballistics.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catalua_icallback_actor.h"
 #include "character.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
@@ -223,6 +224,8 @@ bool string_id<bionic_data>::is_valid() const
     return bionic_factory.is_valid( *this );
 }
 
+
+
 std::vector<bodypart_id> get_occupied_bodyparts( const bionic_id &bid )
 {
     std::vector<bodypart_id> parts;
@@ -271,6 +274,17 @@ void bionic_data::finalize_all()
 std::vector<bionic_data> bionic_data::get_all()
 {
     return bionic_factory.get_all();
+}
+
+void bionic_data::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_bionic_callback_actor>> &actors )
+{
+    for( const bionic_data &bd : bionic_factory.get_all() ) {
+        auto it = actors.find( bd.id.str() );
+        if( it != actors.end() ) {
+            bd.lua_callbacks = it->second.get();
+        }
+    }
 }
 
 void bionic_data::reset()
@@ -982,8 +996,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         // Calculate local wind power
         int vehwindspeed = 0;
         if( optional_vpart_position vp = here.veh_at( pos() ) ) {
-            // vehicle velocity in mph
-            vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+            vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
         }
         const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
         /* cache g->get_temperature( player location ) since it is used twice. No reason to recalc */
@@ -1165,6 +1178,10 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         invalidate_crafting_inventory();
     }
 
+    if( const auto *lcb = bio.info().lua_callbacks ) {
+        lcb->call_on_activate( *this, bio );
+    }
+
     return true;
 }
 
@@ -1249,6 +1266,10 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
         invalidate_crafting_inventory();
     }
 
+    if( const auto *lcb = bio.info().lua_callbacks ) {
+        lcb->call_on_deactivate( *this, bio );
+    }
+
     return true;
 }
 
@@ -1261,6 +1282,12 @@ bool Character::burn_fuel( bionic &bio, bool start )
     const bool is_metabolism_powered = bio.is_this_fuel_powered( fuel_type_metabolism );
     const bool is_cable_powered = bio.info().is_remote_fueled;
     std::vector<itype_id> fuel_available = get_fuel_available( bio.id );
+    // When a bionic has passive_fuel_efficiency, perpetual fuels are handled by
+    // passive_power_gen() while the bionic is off.  Exclude them from burn_fuel()
+    // so they don't interfere with consumable fuel processing when active.
+    if( bio.info().passive_fuel_efficiency > 0.0f ) {
+        std::erase_if( fuel_available, []( const auto & fuel ) { return fuel->has_flag( flag_PERPETUAL ); } );
+    }
     float effective_efficiency = get_effective_efficiency( bio, bio.info().fuel_efficiency );
 
     if( is_cable_powered ) {
@@ -1350,8 +1377,7 @@ bool Character::burn_fuel( bionic &bio, bool start )
                             int vehwindspeed = 0;
                             const optional_vpart_position vp = here.veh_at( pos() );
                             if( vp ) {
-                                // vehicle velocity in mph
-                                vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+                                vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
                             }
                             const weather_manager &wm = get_weather();
                             const double windpower = get_local_windpower( wm.windspeed + vehwindspeed,
@@ -1436,8 +1462,7 @@ void Character::passive_power_gen( bionic &bio )
             int vehwindspeed = 0;
             const optional_vpart_position vp = here.veh_at( pos() );
             if( vp ) {
-                // vehicle velocity in mph
-                vehwindspeed = std::abs( vp->vehicle().velocity / 100 );
+                vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
             }
             const weather_manager &weather = get_weather();
             const double windpower = get_local_windpower( weather.windspeed + vehwindspeed,
@@ -2296,6 +2321,10 @@ void Character::perform_uninstall( bionic_id bid, int difficulty, int success,
         add_msg( m_good, _( "Successfully removed %s." ), bid.obj().name );
         remove_bionic( bid );
 
+        if( const auto *lcb = bid.obj().lua_callbacks ) {
+            lcb->call_on_removed( *this, bid );
+        }
+
         // remove power bank provided by bionic
         mod_max_power_level( -power_lvl );
 
@@ -2588,6 +2617,10 @@ void Character::perform_install( bionic_id bid, bionic_id upbid, int difficulty,
     }
 
     add_bionic( bid );
+
+    if( const auto *lcb = bid.obj().lua_callbacks ) {
+        lcb->call_on_installed( *this, bid );
+    }
 
     if( !trait_to_rem.empty() ) {
         for( const trait_id &tid : trait_to_rem ) {

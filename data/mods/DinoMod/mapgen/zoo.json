@@ -109,6 +109,9 @@
       },
       "place_item": [ { "item": "rock", "repeat": 1, "x": 9, "y": 15 }, { "item": "pine_bough", "repeat": 1, "x": 9, "y": 21 } ],
       "place_items": [
+        { "chance": 75, "item": "bola_net_launcher", "x": [ 8, 12 ], "y": [ 6, 12 ] },
+        { "chance": 35, "item": "net_cartridge", "repeat": 10, "x": [ 8, 12 ], "y": [ 6, 12 ] },
+        { "chance": 25, "item": "bola_cartridge", "repeat": 10, "x": [ 8, 12 ], "y": [ 6, 12 ] },
         { "chance": 55, "item": "toy_store", "x": 12, "y": [ 6, 7 ] },
         { "chance": 75, "item": "vending_food", "x": 20, "y": 2 },
         { "chance": 55, "item": "trash", "x": 13, "y": 15 },

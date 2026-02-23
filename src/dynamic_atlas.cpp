@@ -168,8 +168,15 @@ void dynamic_atlas::readback_load()
         if( it.dirty ) {
             const auto prev_rt = SDL_GetRenderTarget( r.get() );
             SDL_SetRenderTarget( r.get(), it.texture.get() );
-            SDL_RenderReadPixels( r.get(), nullptr, 0, it.readback->pixels, it.readback->pitch );
+
+            // Read pixels using format 0 (renderer's native format) to get raw pixel data,
+            // then let SDL_BlitSurface handle any necessary format conversion when we use it.
+            // This avoids potential format conversion bugs in SDL_RenderReadPixels.
+            SDL_RenderReadPixels( r.get(), nullptr, it.readback->format->format,
+                                  it.readback->pixels, it.readback->pitch );
+
             SDL_SetRenderTarget( r.get(), prev_rt );
+            it.dirty = false;  // Mark as clean to avoid redundant readbacks
         }
     }
 }

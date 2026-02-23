@@ -179,7 +179,7 @@
     "bashing": 95,
     "to_hit": 5,
     "symbol": ";",
-    "qualities": [ [ "PRY", 2 ] ],
+    "qualities": [ [ "PRY", 4 ] ],
     "use_action": "CROWBAR",
     "flags": [ "UNBREAKABLE_MELEE" ],
     "techniques": [ "WBLOCK_3", "tec_feint", "tec_counter", "BERSERK", "DSBI", "DSINERTIAL" ]

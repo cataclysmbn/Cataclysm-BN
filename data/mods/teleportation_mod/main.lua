@@ -149,7 +149,10 @@ mod.add_anchor_to_list = function(pos)
   mod.save_anchor_omt()
 end
 
-mod.iuse_function_anchor = function(who, item, pos)
+mod.iuse_function_anchor = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   local a = { "teleporter_anchor_deployed" }
 
   local player_abs_pos = gapi.get_map():get_abs_ms(pos)
@@ -195,7 +198,10 @@ mod.add_station_to_list = function(pos)
   mod.save_station_pos(num)
 end
 
-mod.iuse_function_station = function(who, item, pos)
+mod.iuse_function_station = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   local a = { "teleporter_station_deployed" }
   local player_abs_pos = gapi.get_map():get_abs_ms(pos)
   --print(player_abs_pos)
@@ -637,7 +643,10 @@ mod.remove_placed_furniture = function(pos)
   end
 end
 
-mod.iuse_function_controller = function(who, item, pos)
+mod.iuse_function_controller = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   --print("used teleporter remote")
   mod.update_station_charge()
 

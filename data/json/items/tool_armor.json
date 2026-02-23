@@ -219,7 +219,7 @@
     "encumbrance": 60,
     "material_thickness": 3,
     "qualities": [ [ "GLARE", 3 ] ],
-    "flags": [ "SUN_GLASSES", "FLASH_PROTECTION", "BLIND" ]
+    "flags": [ "SUN_GLASSES", "FLASH_PROTECTION" ]
   },
   {
     "id": "welding_mask_crude",
@@ -272,6 +272,7 @@
     "encumbrance": 60,
     "material_thickness": 2,
     "coverage": 30,
+    "qualities": [ [ "GLARE", 2 ] ],
     "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
@@ -297,7 +298,8 @@
     "warmth": 5,
     "encumbrance": 60,
     "material_thickness": 3,
-    "coverage": 30
+    "coverage": 30,
+    "qualities": [ [ "GLARE", 3 ] ]
   },
   {
     "type": "TOOL_ARMOR",

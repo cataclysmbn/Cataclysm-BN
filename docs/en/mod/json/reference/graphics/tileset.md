@@ -341,6 +341,71 @@ ordering provided in `mutation_ordering.json`. Example:
 }
 ```
 
+## Tinting
+
+Tilesets can support tinting, and tinting pairs.
+
+### Tint pairs
+
+Tint pairs are used to have 1 "type" control the tinting of another tile base on it's "type".
+For example, hair_color controlling hair_style.
+
+```json
+"tint_pairs": [
+  { "source_type": "hair_color", "target_type": "hair_style", "override": true },
+  { "source_type": "hair_color", "target_type": "facial_hair", "override": true }
+],
+"tints": [
+			{ "id": "hair_blond", "fg": "#91631f", "contrast": 1.1, "blend_mode": "multiply" },
+			{ "id": "hair_white", "fg": "#ffffff", "blend_mode": "multiply" },
+      //...
+],
+"tiles-new": [//...
+```
+
+"override" is false by default, and enforces bypassing the legacy tile specification. This is more useful for mod_tilesets, which cannot remove entries from the main tileset.
+The "source_type" controls the "target_type" depending on what kind of overlay it is. Currently, this only effects mutations, and so it can handle "mutation_type" as input. Alternatively, target_type can match a tag instead. This allows things like tinting fur based on hair color.
+
+### Tints
+
+Tints can be used for modifying the color of a tile, preventing the need to create an entirely seperate sprite for simple color variations.
+A tint entry can accept an "id", which can refer to a tile, or a tint pair source.
+Example:
+
+```json
+"tint_pairs": [//...
+"tints": [
+  { "id": "eye_pink", "fg": "#ff00bb", "saturation": 1.5 },
+  { "id": "eye_black", "fg": "c_black", "blend_mode": "multiply" },
+  { "id": "eye_white", "fg": { "color": "#ffffff", "saturation": 0.0, "brightness": 1.2 } },
+],
+"tiles-new": [//...
+```
+
+Tints are rather flexible. You can handle fg and bg seperately. They can accept either a color input, or an entry containing the color and modifiers. You must pick which kind you'll use. You cannot utilize modifiers that apply to both, and use the entry method.
+The modifiers are "saturation", "brightness", and "contrast". These are also mostly useful for mod_tilesets, but not exclusive.
+Additionally, you can set "blend_mode" to one of the following:
+
+- `tint` (default)
+- `overlay`
+- `softlight`
+- `hardlight`
+- `multiply`
+- `additive`
+- `subtract`
+- `normal`
+- `screen`
+- `divide`
+
+References can be seen here:
+https://en.wikipedia.org/wiki/Blend_modes
+Of note:
+`tint` is bespoke. It changes the color of the texture in such a way that even black and white completely converts the resulting tile, while still preserving decent contrast. It's useful for a "painted" effect.
+`normal` uses the alpha of the tile at the moment, since the alpha of the tint would result in an awkward square halo for any effect.
+
+Colors can be hex codes, or curses color names. There's fallback logic to aquire the color from the id using curses colors, but don't rely on it.
+Tints can currently be applied to mutations, items, bionics, and effects. You can tint by id or by tag, though effect flags are unsupported.
+
 ## Projectile Sprites
 
 Custom sprites can be defined for projectiles (bullets and thrown items) using specific naming conventions:
@@ -384,3 +449,191 @@ If no custom projectile sprite is found:
 - Items with the `FLY_STRAIGHT` flag (like javelins and spears) maintain their orientation during flight
 - Other thrown items (axes, knives, etc.) will rotate during flight
 - Set `"rotates": true` in the tile definition to enable directional sprite support
+
+## State Modifiers
+
+State modifiers allow tilesets to dynamically adjust character sprites based on game state (crouching, downed, etc.) without requiring separate artwork for each state. This is achieved through UV mapping, where a modifier image controls how pixels are displaced.
+
+### How UV Mapping Works
+
+UV mapping is a technique from 3D graphics where a 2D image controls how another image is sampled. In this context:
+
+- Each pixel in a UV modifier image encodes a displacement using its red (X) and green (Y) channels
+- When rendering, instead of drawing pixel (x, y) directly, the system reads the modifier at (x, y) to determine where to sample from the source sprite
+- This allows effects like squishing, stretching, or shifting parts of a sprite
+
+### Offset Mode vs Normalized Mode
+
+State modifiers support two interpretation modes for the UV data:
+
+**Offset Mode** (`"use_offset": true`, default):
+
+- Red/Green values encode displacement relative to neutral (127, 127)
+- Value 127 = no movement, 0 = -127 pixels, 255 = +128 pixels
+- Easy to understand: paint gray (127,127) where no change is needed
+- Displacements from multiple modifiers stack additively
+
+**Normalized Mode** (`"use_offset": false`):
+
+- Red/Green values encode absolute UV coordinates normalized to tile dimensions
+- (0,0) samples bottom-left, (255,255) samples top-right
+- More precise for complex remapping but harder to intuit
+- Easier to modify quickly: rotating the uv results in a rotated result
+- Modifiers chain by re-sampling through each other
+- Marginally more computationally expensive
+
+### JSON Structure
+
+State modifiers are defined in the `"state-modifiers"` array within a tileset's tile configuration:
+
+```json
+"state-modifiers": [
+  {
+    "id": "movement_mode",
+    "override": false,
+    "use_offset": true,
+    "tiles": [
+      { "id": "walk", "fg": null },
+      { "id": "crouch", "fg": 100 },
+      { "id": "run", "fg": 101 }
+    ]
+  },
+  {
+    "id": "downed",
+    "override": true,
+    "use_offset": true,
+    "tiles": [
+      { "id": "normal", "fg": null },
+      { "id": "downed", "fg": 102 }
+    ]
+  }
+]
+```
+
+### Fields
+
+| Field        | Type   | Description                                                              |
+| ------------ | ------ | ------------------------------------------------------------------------ |
+| `id`         | string | Modifier group identifier. Must match a supported group (see below).     |
+| `override`   | bool   | If `true`, when this state is active, lower-priority groups are skipped. |
+| `use_offset` | bool   | `true` for offset mode, `false` for normalized mode. Default: `true`.    |
+| `tiles`      | array  | State-to-sprite mappings for this group.                                 |
+| `whitelist`  | array  | Optional. Only apply to overlays matching these prefixes.                |
+| `blacklist`  | array  | Optional. Never apply to overlays matching these prefixes.               |
+
+Each entry in `tiles`:
+
+| Field    | Type     | Description                                                                      |
+| -------- | -------- | -------------------------------------------------------------------------------- |
+| `id`     | string   | State identifier within the group.                                               |
+| `fg`     | int/null | Sprite index for the UV modifier image. `null` means identity (no modification). |
+| `offset` | object   | Optional `{"x": n, "y": n}` for oversized modifier sprites.                      |
+
+### Supported Modifier Groups
+
+| Group ID        | States                                     | Description                                      |
+| --------------- | ------------------------------------------ | ------------------------------------------------ |
+| `movement_mode` | `walk`, `run`, `crouch`                    | Character movement stance                        |
+| `downed`        | `normal`, `downed`                         | Whether character is knocked down                |
+| `lying_down`    | `normal`, `lying`                          | Whether character is lying down (sleeping, etc.) |
+| `activity`      | `none`, activity IDs                       | Current activity (e.g., `ACT_CRAFT`, `ACT_READ`) |
+| `body_size`     | `tiny`, `small`, `medium`, `large`, `huge` | Size of character (changed by mutations)         |
+
+### Priority and Overrides
+
+Modifier groups are processed in array order (index 0 = highest priority). When `"override": true` is set on a group and its state has an active modifier (non-null `fg`), all lower-priority groups are skipped. This allows, for example, a "downed" state to completely replace movement-based modifications.
+
+### Overlay Filtering
+
+Per-group `whitelist` and `blacklist` arrays control which overlays a modifier affects. Overlays are matched by prefix (e.g., `"wielded_"` matches `"wielded_katana"`). If a group specifies either filter, it overrides global filters. Common prefixes include `wielded_`, `worn_`, `mutation_`, `effect_`, and `bionic_`.
+
+```json
+{
+  "id": "movement_mode",
+  "blacklist": ["wielded_"],
+  "tiles": [...]
+}
+```
+
+Multiple groups can share the same `id` if they have different filters, allowing different UV modifiers for different overlay types. When doing this, **filters must be mutually exclusive**—each overlay should match at most one group per ID. Overlapping filters cause duplicate rendering artifacts.
+
+```json
+{
+  "id": "movement_mode",
+  "blacklist": ["wielded_"],
+  "tiles": [...]
+},
+{
+  "id": "movement_mode",
+  "whitelist": ["wielded_"],
+  "tiles": [...]
+}
+```
+
+**Base sprite behavior:** The base character sprite (skin, eyes, hair, etc.) is not an overlay and has no prefix. Groups with a `whitelist` never apply to the base sprite since it cannot match any prefix. Groups with only a `blacklist` (or no filters) apply to the base sprite normally. To apply different modifiers to the base sprite vs specific overlays, use a blacklist group for the base and a whitelist group for the overlays.
+
+### Creating UV Modifier Sprites
+
+#### Method 1; use_offset = true
+
+1. Start with a neutral gray image (RGBA 127, 127, 0, 255)
+2. Paint red channel to shift pixels horizontally (< 127 = left, > 127 = right)
+3. Paint green channel to shift pixels vertically (< 127 = up, > 127 = down)
+
+For a crouch effect, you might paint the lower portion of the modifier with green values < 127 to pull pixels downward, compressing the sprite vertically.
+
+---
+
+#### Method 2; use_offset = false
+
+1. Start with a base UV Identity image:
+
+<img src=".\img\uv_identity.png" width="128" height="128">
+
+2. Shift pixels around based on translation, rotation, scale, etc. to cause that effect to the result
+3. Paint green channel to shift pixels vertically (< 127 = up, > 127 = down)
+
+As this method may be harder to intuit, here's some examples:
+
+<details><summary>Standing</summary>
+As you can see, "standing" is the normal state, so the UV image is not edited.
+
+<img src=".\img\uv_identity.png" width="256" height="256">
+<img src=".\img\uv_identity_result.png" width="256" height="256">
+</details>
+
+<details><summary>Crouching</summary>
+It may be hard to notice, but the pixels just below the character have been adjusted, and the topmost pixels are missing. Most of the UVs have been lowered.
+
+<img src=".\img\uv_crouch.png" width="256" height="256">
+<img src=".\img\uv_crouch_result.png" width="256" height="256">
+</details>
+</details>
+
+<details><summary>Lying Down</summary>
+This is dead simple. There are some small adjustements to the back to lie flatter, but this largely boils down to rotating the entire UV image and moving it down slightly.
+
+<img src=".\img\uv_lying_down.png" width="256" height="256">
+<img src=".\img\uv_lying_down_result.png" width="256" height="256">
+</details>
+
+---
+
+The blue channel is ignored, and alpha 0 makes the pixel transparent.
+
+### Sprite Size
+
+When defining the tileset, you specify sprite_width and sprite_height, alongside sprite_offset_x and sprite_offset_y. For UVs, this defines the area they effect. Pixels outside these bounds remain unaffected.
+If everything were the same resolution, this wouldn't be of note. But overlays can also be offset / different sizes.
+This feature assumes consistent pixel scaling, but otherwise supports different sized sprites.
+It's recommended for state-modifiers to be authored in 64x64 with an offset of (-16,-16) in order to account for overlays that extend past the avatar, such as weapons and status indicators.
+In theory, you could reduce memory footprint for a state-modifier.
+As an example, if one were to implement facial expressions as a new modifier group, you could limit the modifier to just the facial region, using extremely small UVs. You would likely want to use offset mode in that case to avoid issues with rounding.
+
+### Sprite Bounds
+
+Pixels moved outside the original sprite bounds are supported, but there is a rendering limitation: tiles are drawn row by row from top to bottom, so if a warped sprite extends downward into the row below, that portion will be overwritten when the next row's terrain is drawn. Sprites extending upward, left, or right render correctly. This is a fundamental limitation of the tile rendering order.
+
+### Performance
+
+State modifiers are processed at render time and cached per unique state combination. The feature can be disabled in graphics options via the "State Modifiers" toggle if performance is a concern.

@@ -13,6 +13,7 @@
 #include "animation.h"
 #include "enums.h"
 #include "hash_utils.h"
+#include "hsv_color.h"
 #include "lightmap.h"
 #include "line.h"
 #include "map_memory.h"
@@ -68,6 +69,24 @@ struct tile_type {
     std::optional<SDL_Color> default_tint;
 };
 
+/** A single state within a modifier group (e.g., "crouch" within "movement_mode"). */
+struct state_modifier_tile {
+    std::string state_id;
+    std::optional<int> fg_sprite;  // nullopt = identity (no modification)
+    point offset;
+};
+
+/** A modifier group (e.g., "movement_mode" containing walk/run/crouch). */
+struct state_modifier_group {
+    std::string group_id;
+    bool override_lower = false;   // Skip lower priority groups when active
+    bool use_offset_mode = true;   // true = offset mode, false = normalized UV
+    std::unordered_map<std::string, state_modifier_tile> tiles;
+    std::vector<std::string>
+    whitelist;  // Prefix filter: only apply to matching overlays (e.g., "wielded_", "worn_")
+    std::vector<std::string> blacklist;  // Prefix filter: never apply to matching overlays
+};
+
 // Make sure to change TILE_CATEGORY_IDS if this changes!
 enum TILE_CATEGORY {
     C_NONE,
@@ -83,6 +102,7 @@ enum TILE_CATEGORY {
     C_HIT_ENTITY,
     C_WEATHER,
     C_OVERMAP_TERRAIN,
+    C_OVERMAP_WEATHER,
     C_OVERMAP_NOTE
 };
 
@@ -158,6 +178,45 @@ class texture
         }
 };
 
+enum class tint_blend_mode : uint8_t {
+    tint,
+    overlay,
+    softlight,
+    hardlight,
+    multiply,
+    additive,
+    subtract,
+    normal,
+    screen,
+    divide
+};
+
+static constexpr tint_blend_mode string_to_tint_blend_mode( const std::string &str )
+{
+    if( str == "multiply" ) {
+        return tint_blend_mode::multiply;
+    } else if( str == "overlay" ) {
+        return tint_blend_mode::overlay;
+    } else if( str == "softlight" ) {
+        return tint_blend_mode::softlight;
+    } else if( str == "hardlight" ) {
+        return tint_blend_mode::hardlight;
+    } else if( str == "normal" ) {
+        return tint_blend_mode::normal;
+    } else if( str == "screen" ) {
+        return tint_blend_mode::screen;
+    } else if( str == "divide" ) {
+        return tint_blend_mode::divide;
+    } else if( str == "additive" ) {
+        return tint_blend_mode::additive;
+    } else if( str == "additive" ) {
+        return tint_blend_mode::additive;
+    } else if( str == "subtract" ) {
+        return tint_blend_mode::subtract;
+    }
+    return tint_blend_mode::tint;
+}
+
 enum class tileset_fx_type {
     none,
     shadow,
@@ -169,17 +228,65 @@ enum class tileset_fx_type {
     z_overlay
 };
 
+constexpr size_t TILESET_NO_WARP = 0;  // 0 hash means no warp
+
+// Result from texture lookup, includes warp-induced offset for rendering
+struct texture_result {
+    const texture *tex = nullptr;
+    point warp_offset;  // Additional offset caused by UV warp extending beyond sprite bounds
+};
+
+constexpr int TILESET_NO_MASK = -1;
+constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
+
+struct tint_config {
+    SDL_Color color;
+    tint_blend_mode blend_mode = tint_blend_mode::tint;
+    float contrast = 1.0f;    // 1.0 = no change, absent = skip
+    float saturation = 1.0f;  // 1.0 = no change, absent = skip
+    float brightness = 1.0f;  // 1.0 = no change, absent = skip
+
+    bool has_value() const {
+        return color != TILESET_NO_COLOR
+               || fabs( contrast - 1.0f ) > 0.001f
+               || fabs( saturation - 1.0f ) > 0.001f
+               || fabs( brightness - 1.0f ) > 0.001f;
+    }
+
+    bool operator==( const tint_config &other ) const {
+        return color == other.color
+               && blend_mode == other.blend_mode
+               && contrast == other.contrast
+               && saturation == other.saturation
+               && brightness == other.brightness;
+    }
+
+    // Implicit conversions for backward compatibility and convenience
+    tint_config() = default;
+    tint_config( const std::optional<SDL_Color> &c ) : color( c.value_or( TILESET_NO_COLOR ) ) {}
+    tint_config( const std::nullopt_t & ) : color( TILESET_NO_COLOR ) {}
+    tint_config( const SDL_Color &c ) : color( c ) {}
+    tint_config( const RGBColor &c ) : color( static_cast<SDL_Color>( c ) ) {}
+    tint_config( const nc_color &c ) : color( static_cast<SDL_Color>( curses_color_to_RGB( c ) ) ) {}
+};
+
+using color_tint_pair = std::pair<tint_config, tint_config>;  // {bg, fg}
+
 struct tileset_lookup_key {
     int sprite_index;
     int mask_index;
     tileset_fx_type effect;
-    SDL_Color color;
+    tint_config tint;
+    size_t warp_hash;  // Hash of warp surface content, or TILESET_NO_WARP (0)
+    point sprite_offset;  // Tile offset for UV warp coordinate mapping
 
     bool operator==( const tileset_lookup_key &other ) const {
         return sprite_index == other.sprite_index
                && mask_index == other.mask_index
                && effect == other.effect
-               && color == other.color;
+               && tint == other.tint
+               && warp_hash == other.warp_hash
+               && sprite_offset == other.sprite_offset;
     }
 };
 
@@ -190,17 +297,23 @@ struct std::hash<tileset_lookup_key> {
         cata::hash_combine( seed, v.sprite_index );
         cata::hash_combine( seed, v.mask_index );
         cata::hash_combine( seed, v.effect );
-        const union {
-            SDL_Color sdl;
-            uint32_t val;
-        } color = { v.color };
-        cata::hash_combine( seed, color.val );
+        {
+            const union {
+                SDL_Color sdl;
+                uint32_t val;
+            } color = { v.tint.color };
+            cata::hash_combine( seed, color.val );
+        }
+        cata::hash_combine( seed, static_cast<uint8_t>( v.tint.blend_mode ) );
+        cata::hash_combine( seed, v.tint.contrast );
+        cata::hash_combine( seed, v.tint.saturation );
+        cata::hash_combine( seed, v.tint.brightness );
+        cata::hash_combine( seed, v.warp_hash );
+        cata::hash_combine( seed, v.sprite_offset.x );
+        cata::hash_combine( seed, v.sprite_offset.y );
         return seed;
     }
 };
-
-constexpr int TILESET_NO_MASK = -1;
-constexpr SDL_Color TILESET_NO_COLOR = {0, 0, 0, 0};
 
 class tileset
 {
@@ -220,7 +333,12 @@ class tileset
 
 #if defined(DYNAMIC_ATLAS)
         std::unique_ptr<dynamic_atlas> tileset_atlas;
-        mutable std::unordered_map<tileset_lookup_key, texture> tile_lookup;
+        // Stores texture + warp offset for each unique combination of sprite/effects/warp
+        struct tile_lookup_entry {
+            texture tex;
+            point warp_offset;  // Offset induced by UV warp extending beyond sprite bounds
+        };
+        mutable std::unordered_map<tileset_lookup_key, tile_lookup_entry> tile_lookup;
     public:
         dynamic_atlas *texture_atlas() const { return tileset_atlas.get(); }
     private:
@@ -236,10 +354,29 @@ class tileset
 #endif
 
         std::unordered_map<std::string, tile_type> tile_ids;
+        std::unordered_map<std::string, color_tint_pair> tints;
+        std::unordered_map<std::string, std::pair<std::string, bool>> tint_pairs;
         // caches both "default" and "_season_XXX" tile variants (to reduce the number of lookups)
         // either variant can be either a `nullptr` or a pointer/reference to the real value (stored inside `tile_ids`)
         std::unordered_map<std::string, season_tile_value>
         tile_ids_by_season[season_type::NUM_SEASONS];
+
+        // State-based UV modifiers (index 0 = highest priority)
+        std::vector<state_modifier_group> state_modifiers;
+        // Global overlay filters for UV warping (used when group has no filters)
+        std::vector<std::string> global_warp_whitelist;
+        std::vector<std::string> global_warp_blacklist;
+
+#if defined(DYNAMIC_ATLAS)
+        // Cached warp (UV modifier) surfaces, keyed by content hash
+        // Each entry contains: surface, offset (for oversized modifiers), and offset_mode flag
+        struct warp_cache_entry {
+            SDL_Surface_Ptr surface;
+            point offset;
+            bool offset_mode;
+        };
+        mutable std::unordered_map<size_t, warp_cache_entry> warp_cache;
+#endif
 
         friend class tileset_loader;
 
@@ -257,9 +394,11 @@ class tileset
             return tileset_id;
         }
 
-        const texture *get_or_default( int sprite_index, int mask_index,
+        texture_result get_or_default( const int sprite_index, const int mask_index,
                                        const tileset_fx_type &type,
-                                       const SDL_Color &color ) const;
+                                       const tint_config &tint = {},
+                                       const size_t warp_hash = TILESET_NO_WARP,
+                                       const point sprite_offset = point_zero ) const;
 
 
         tile_type &create_tile_type( const std::string &id, tile_type &&new_tile_type );
@@ -281,6 +420,45 @@ class tileset
          */
         std::optional<tile_lookup_res> find_tile_type_by_season( const std::string &id,
                 season_type season ) const;
+
+        const std::vector<state_modifier_group> &get_state_modifiers() const {
+            return state_modifiers;
+        }
+        const std::vector<std::string> &get_global_warp_whitelist() const {
+            return global_warp_whitelist;
+        }
+        const std::vector<std::string> &get_global_warp_blacklist() const {
+            return global_warp_blacklist;
+        }
+
+#if defined(DYNAMIC_ATLAS)
+        /** Get sprite surface data for UV remapping. Call ensure_readback_loaded() first. */
+        std::tuple<bool, SDL_Surface *, SDL_Rect> get_sprite_surface( int sprite_index ) const;
+
+        /** Ensures atlas readback surfaces are loaded. Call before get_sprite_surface(). */
+        void ensure_readback_loaded() const;
+
+        /**
+         * Register a warp (UV modifier) surface and return its content hash.
+         * The surface is moved into the cache and owned by the tileset.
+         * @param surface The UV modifier surface to register
+         * @param offset The offset for oversized modifier sprites
+         * @param offset_mode True for offset mode, false for normalized mode
+         * @return The warp_hash to use with get_or_default()
+         */
+        size_t register_warp_surface( SDL_Surface_Ptr surface, const point offset,
+                                      const bool offset_mode ) const;
+
+        /** Get a registered warp surface by hash. Returns nullptr if not found. */
+        std::tuple<SDL_Surface *, point, bool> get_warp_surface( const size_t warp_hash ) const;
+
+        /** Clear all cached warp surfaces (call at start of new character render). */
+        void clear_warp_cache() const;
+#endif
+
+        std::pair<std::string, bool> get_tint_controller( const std::string &tint_type );
+
+        const color_tint_pair *get_tint( const std::string &tint_id );
 };
 
 class tileset_loader
@@ -347,6 +525,10 @@ class tileset_loader
          * @throw std::exception On any error.
          */
         void load_tilejson_from_file( const JsonObject &config );
+
+        /** Load state-based UV modifiers from the "state-modifiers" JSON array. */
+        void load_state_modifiers( const JsonObject &config );
+
         /**
          * Helper function called by load.
          * @param pump_events Handle window events and refresh the screen when necessary.
@@ -432,7 +614,6 @@ class idle_animation_manager
  *     - The color of the block at 'point'.
  */
 using color_block_overlay_container = std::pair<SDL_BlendMode, std::multimap<point, SDL_Color>>;
-using color_tint_pair = std::pair<std::optional<SDL_Color>, std::optional<SDL_Color>>;
 
 struct tile_render_info;
 
@@ -520,14 +701,14 @@ class cata_tiles
          * @return always true
          */
         bool draw_from_id_string( const tile_search_params &tile, const tripoint &pos,
-                                  std::optional<SDL_Color> bg_color,
-                                  std::optional<SDL_Color> fg_color,
+                                  const tint_config &bg_tint,
+                                  const tint_config &fg_tint,
                                   lit_level ll, bool apply_visual_effects,
                                   int overlay_count,
                                   bool as_independent_entity ) {
             int discard = 0;
             return draw_from_id_string(
-                       tile, pos, bg_color, fg_color,
+                       tile, pos, bg_tint, fg_tint,
                        ll, apply_visual_effects, overlay_count,
                        as_independent_entity, discard
                    );
@@ -538,8 +719,8 @@ class cata_tiles
          *
          * @param tile Tile to draw from
          * @param pos Tripoint of the tile to draw.
-         * @param bg_color
-         * @param fg_color
+         * @param bg_tint
+         * @param fg_tint
          * @param ll light level
          * @param apply_visual_effects use night vision and underwater colors?
          * @param overlay_count how blue the tile looks for lower z levels
@@ -550,8 +731,8 @@ class cata_tiles
          * @return always true
          */
         bool draw_from_id_string( const tile_search_params &tile, const tripoint &pos,
-                                  std::optional<SDL_Color> bg_color,
-                                  std::optional<SDL_Color> fg_color,
+                                  const tint_config &bg_tint,
+                                  const tint_config &fg_tint,
                                   lit_level ll, bool apply_visual_effects,
                                   int overlay_count, bool as_independent_entity,
                                   int &height_3d );
@@ -567,28 +748,6 @@ class cata_tiles
                                        int subtile, int base_z_offset );
 
         /**
-         * @brief draw_sprite_at() without height_3d
-         *
-         * @param tile Tile to draw.
-         * @param p Point to draw the tile at.
-         * @param loc_rand picked random int
-         * @param is_fg is foreground layer
-         * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
-         * @param color
-         * @param ll light level
-         * @param apply_visual_effects use night vision and underwater colors?
-         * @param overlay_count how blue the tile looks for lower z levels
-         */
-        bool draw_sprite_at( const tile_type &tile, point p,
-                             unsigned int loc_rand, bool is_fg, int rota,
-                             std::optional<SDL_Color> color, lit_level ll,
-                             bool apply_visual_effects, int overlay_count ) {
-            int discard = 0;
-            return draw_sprite_at( tile, p, loc_rand, is_fg, rota, color, ll,
-                                   apply_visual_effects, overlay_count, discard );
-        }
-
-        /**
          * @brief Try to draw either foreground or background using the given reference.
          *
          * @param tile Tile to draw.
@@ -596,18 +755,19 @@ class cata_tiles
          * @param loc_rand picked random int
          * @param is_fg is foreground layer
          * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
-         * @param color
+         * @param tint tint configuration (color, contrast, saturation)
          * @param ll light level
          * @param apply_visual_effects use night vision and underwater colors?
          * @param overlay_count how blue the tile looks for lower z levels
-         * @param height_3d return parameter for height of the sprite
+         * @param height_3d return parameter for height of the sprite (use nullptr to discard)
+         * @param warp_hash UV warp surface hash, or TILESET_NO_WARP
          * @return always true.
          */
         bool draw_sprite_at( const tile_type &tile, point p,
                              unsigned int loc_rand, bool is_fg, int rota,
-                             std::optional<SDL_Color> color, lit_level ll,
+                             const tint_config &tint, lit_level ll,
                              bool apply_visual_effects, int overlay_count,
-                             int &height_3d );
+                             int *height_3d, size_t warp_hash = TILESET_NO_WARP );
 
         /**
          * @brief Calls draw_sprite_at() twice each for foreground and background.
@@ -616,8 +776,8 @@ class cata_tiles
          * @param p Point to draw the tile at.
          * @param loc_rand picked random int
          * @param rota rotation: { UP = 0, LEFT = 1, DOWN = 2, RIGHT = 3 }
-         * @param bg_color
-         * @param fg_color
+         * @param bg_tint background tint configuration
+         * @param fg_tint foreground tint configuration
          * @param ll light level
          * @param apply_visual_effects use night vision and underwater colors?
          * @param height_3d return parameter for height of the sprite
@@ -626,7 +786,7 @@ class cata_tiles
          */
         bool draw_tile_at( const tile_type &tile, point p,
                            unsigned int loc_rand, int rota,
-                           std::optional<SDL_Color> bg_color, std::optional<SDL_Color> fg_color,
+                           const tint_config &bg_tint, const tint_config &fg_tint,
                            lit_level ll, bool apply_visual_effects, int &height_3d,
                            int overlay_count );
 
@@ -683,20 +843,27 @@ class cata_tiles
         static auto get_graffiti_color( const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_trap_color( const trap &tr, const map &map, tripoint tripoint ) -> color_tint_pair;
         static auto get_field_color( const field &f, const map &m, const tripoint &p ) -> color_tint_pair;
-        static auto get_item_color( const item &i, const map &m, const tripoint &p ) -> color_tint_pair;
+        auto get_item_color( const item &i, const map &m, const tripoint &p ) -> color_tint_pair;
+        auto get_item_color( const item &i ) -> color_tint_pair;
         static auto get_vpart_color(
             const optional_vpart_position &vp, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_monster_color(
             const monster &mon, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_character_color(
             const Character &ch, const map &m, const tripoint &p ) -> color_tint_pair;
-        static auto get_effect_color(
+        auto get_effect_color(
             const effect &eff, const Character &c, const map &m, const tripoint &p ) -> color_tint_pair;
-        static auto get_bionic_color(
+        auto get_effect_color(
+            const effect &eff, const Character &c ) -> color_tint_pair;
+        auto get_bionic_color(
             const bionic &bio, const Character &c, const map &m, const tripoint &p )-> color_tint_pair;
-        static auto get_mutation_color(
+        auto get_bionic_color(
+            const bionic &bio, const Character &c )-> color_tint_pair;
+        auto get_mutation_color(
             const mutation &mut, const Character &c, const map &m,
             const tripoint &p )-> color_tint_pair;
+        auto get_mutation_color(
+            const mutation &mut, const Character &c )-> color_tint_pair;
 
         bool draw_terrain( const tripoint &p, lit_level ll, int &height_3d,
                            const bool ( &invisible )[5], int z_drop );
@@ -718,6 +885,14 @@ class cata_tiles
                                              const bool ( &invisible )[5], int z_drop );
         void draw_entity_with_overlays( const Character &ch, const tripoint &p, lit_level ll,
                                         int &height_3d, bool as_independent_entity = false );
+
+        /** Builds composite UV modifier for character's current states. Returns (surface, offset).
+         *  @param group_filter Optional filter: if non-empty, only include groups where filter[i] is true.
+         */
+        std::tuple<SDL_Surface_Ptr, point> build_composite_uv_modifier( const Character &ch,
+                const int width, const int height, const std::vector<bool> &group_filter );
+        std::tuple<SDL_Surface_Ptr, point> build_composite_uv_modifier( const Character &ch,
+                const int width, const int height );
 
         bool draw_item_highlight( const tripoint &pos );
 
@@ -968,6 +1143,9 @@ class cata_tiles
          * Allows usage of night vision tilesets during sprite rendering.
          */
         bool nv_goggles_activated = false;
+
+        // Active warp hash for character rendering (0 if none)
+        size_t active_warp_hash = TILESET_NO_WARP;
 
         pimpl<pixel_minimap> minimap;
 
