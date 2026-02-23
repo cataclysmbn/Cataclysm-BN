@@ -596,13 +596,13 @@ void Character::suffer_from_schizophrenia()
         // Weapon is concerned for player if bleeding
         // Weapon is concerned for itself if damaged
         // Otherwise random chit-chat
-        std::vector<weak_ptr_fast<monster>> mons = g->all_monsters().items;
+        auto mons = g->all_monsters().items;
 
         std::string i_talk_w;
         bool does_talk = false;
-        if( !mons.empty() && one_turn_in( 12_minutes ) ) {
+        if( !mons->empty() && one_turn_in( 12_minutes ) ) {
             std::vector<std::string> seen_mons;
-            for( weak_ptr_fast<monster> &n : mons ) {
+            for( auto &n : *mons ) {
                 if( sees( *n.lock() ) ) {
                     seen_mons.emplace_back( n.lock()->get_name() );
                 }

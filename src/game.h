@@ -327,50 +327,77 @@ class game
         friend class Creature_range;
 
         template<typename T>
-        class non_dead_range
+        class non_dead_range : public std::ranges::view_interface<non_dead_range<T>>
         {
             public:
-                std::vector<weak_ptr_fast<T>> items;
+                std::shared_ptr<std::vector<weak_ptr_fast<T>>> items;
+                non_dead_range() : items( std::make_shared<std::vector<weak_ptr_fast<T>>>() ) {}
 
                 class iterator
                 {
                     private:
-                        bool valid();
-                    public:
-                        std::vector<weak_ptr_fast<T>> &items;
+                        std::shared_ptr<std::vector<weak_ptr_fast<T>>> data_ref;
                         typename std::vector<weak_ptr_fast<T>>::iterator iter;
+
+                        auto valid() -> bool;
+
+                    public:
+                        using value_type = T;
+                        using difference_type = std::ptrdiff_t;
+                        using pointer = T *;
+                        using reference = T &;
+                        using iterator_category = std::forward_iterator_tag;
+                        using iterator_concept = std::forward_iterator_tag;
+
                         shared_ptr_fast<T> current;
 
-                        iterator( std::vector<weak_ptr_fast<T>> &i,
-                                  const typename std::vector<weak_ptr_fast<T>>::iterator t ) : items( i ), iter( t ) {
-                            while( iter != items.end() && !valid() ) {
-                                ++iter;
+                        iterator() = default;
+
+                        iterator( std::shared_ptr<std::vector<weak_ptr_fast<T>>> ref,
+                                  typename std::vector<weak_ptr_fast<T>>::iterator t )
+                            : data_ref( std::move( ref ) ), iter( t ) {
+                            if( data_ref ) {
+                                while( iter != data_ref->end() && !valid() ) {
+                                    ++iter;
+                                }
                             }
                         }
+
                         iterator( const iterator & ) = default;
                         iterator &operator=( const iterator & ) = default;
 
-                        bool operator==( const iterator &rhs ) const {
+                        auto operator==( const iterator &rhs ) const -> bool {
                             return iter == rhs.iter;
                         }
-                        bool operator!=( const iterator &rhs ) const {
-                            return !operator==( rhs );
-                        }
-                        iterator &operator++() {
+
+                        auto operator++() -> iterator& { // *NOPAD*
+                            if( !data_ref ) { return *this; }
+
                             do {
                                 ++iter;
-                            } while( iter != items.end() && !valid() );
+                            } while( iter != data_ref->end() && !valid() );
                             return *this;
                         }
-                        T &operator*() const {
+
+                        auto operator++( int ) -> iterator {
+                            auto tmp = *this;
+                            ++( *this );
+                            return tmp;
+                        }
+
+                        auto operator*() const -> reference {
                             return *current;
                         }
                 };
-                iterator begin() {
-                    return iterator( items, items.begin() );
+
+                auto begin() -> iterator {
+                    if( !items ) { return end(); }
+                    return iterator( items, items->begin() );
                 }
-                iterator end() {
-                    return iterator( items, items.end() );
+
+                auto end() -> iterator {
+                    if( !items ) { return iterator(); }
+                    return iterator( items, items->end() );
                 }
         };
 

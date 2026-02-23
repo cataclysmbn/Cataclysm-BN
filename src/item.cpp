@@ -7307,7 +7307,7 @@ bool item::only_made_of( const std::set<material_id> &mat_idents ) const
 bool item::made_of( const material_id &mat_ident ) const
 {
     const std::vector<material_id> &materials = made_of();
-    return std::ranges::find( materials, mat_ident ) != materials.end();
+    return std::ranges::contains( materials, mat_ident );
 }
 
 bool item::contents_made_of( const phase_id phase ) const
@@ -8881,12 +8881,13 @@ void item::gun_cycle_mode()
     const gun_mode_id cur = gun_get_mode_id();
     const std::map<gun_mode_id, gun_mode> modes = gun_all_modes();
 
-    for( auto iter = modes.begin(); iter != modes.end(); ++iter ) {
-        if( iter->first == cur ) {
-            if( std::next( iter ) == modes.end() ) {
-                break;
-            }
-            gun_set_mode( std::next( iter )->first );
+    const auto current_mode = std::ranges::find( modes, cur, []( const auto & pair ) {
+        return pair.first;
+    } );
+    if( current_mode != modes.end() ) {
+        const auto next_mode = std::next( current_mode );
+        if( next_mode != modes.end() ) {
+            gun_set_mode( next_mode->first );
             return;
         }
     }
@@ -10929,7 +10930,7 @@ bool item::has_effect_when_wielded( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ew = type->artifact->effects_wielded;
-    return std::ranges::find( ew, effect ) != ew.end();
+    return std::ranges::contains( ew, effect );
 }
 
 bool item::has_effect_when_worn( art_effect_passive effect ) const
@@ -10938,7 +10939,7 @@ bool item::has_effect_when_worn( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ew = type->artifact->effects_worn;
-    return std::ranges::find( ew, effect ) != ew.end();
+    return std::ranges::contains( ew, effect );
 }
 
 bool item::has_effect_when_carried( art_effect_passive effect ) const
@@ -10947,7 +10948,7 @@ bool item::has_effect_when_carried( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ec = type->artifact->effects_carried;
-    if( std::ranges::find( ec, effect ) != ec.end() ) {
+    if( std::ranges::contains( ec, effect ) ) {
         return true;
     }
     for( const item *i : contents.all_items_top() ) {
@@ -11429,12 +11430,11 @@ std::vector<detached_ptr<item>> item::remove_components()
 
 detached_ptr<item> item::remove_component( item &it )
 {
-    for( auto iter = components.begin(); iter != components.end(); iter++ ) {
-        if( *iter == &it ) {
-            detached_ptr<item> ret;
-            components.erase( iter, &ret );
-            return ret;
-        }
+    const auto iter = std::ranges::find( components, &it );
+    if( iter != components.end() ) {
+        detached_ptr<item> ret;
+        components.erase( iter, &ret );
+        return ret;
     }
     debugmsg( "Could not find component for removal" );
     return detached_ptr<item>();

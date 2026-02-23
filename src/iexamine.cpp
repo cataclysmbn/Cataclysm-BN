@@ -2751,7 +2751,7 @@ itype_id iexamine::choose_fertilizer( player &p, const std::string &pname, bool 
     std::vector<itype_id> f_types;
     std::vector<std::string> f_names;
     for( auto &f : f_inv ) {
-        if( std::ranges::find( f_types, f->typeId() ) == f_types.end() ) {
+        if( !std::ranges::contains( f_types, f->typeId() ) ) {
             f_types.push_back( f->typeId() );
             f_names.push_back( f->tname() );
         }
@@ -3282,7 +3282,7 @@ void iexamine::fvat_empty( player &p, const tripoint &examp )
         std::vector<itype_id> b_types;
         std::vector<std::string> b_names;
         for( auto &b : b_inv ) {
-            if( std::ranges::find( b_types, b->typeId() ) == b_types.end() ) {
+            if( !std::ranges::contains( b_types, b->typeId() ) ) {
                 b_types.push_back( b->typeId() );
                 b_names.push_back( item::nname( b->typeId() ) );
             }
@@ -4456,19 +4456,22 @@ void iexamine::recycle_compactor( player &, const tripoint &examp )
     sounds::sound( examp, 80, sounds::sound_t::combat, _( "Ka-klunk!" ), true, "tool", "compactor" );
     bool out_desired = false;
     bool out_any = false;
-    for( auto it = m.compacts_into().begin() + o_idx; it != m.compacts_into().end(); ++it ) {
-        const units::mass ow = item::spawn_temporary( *it, calendar::start_of_cataclysm, item::solitary_tag{} )->weight();
+    auto is_first_output = true;
+    for( const itype_id &compact_to : m.compacts_into() | std::views::drop( o_idx ) ) {
+        const units::mass ow = item::spawn_temporary( compact_to, calendar::start_of_cataclysm,
+                               item::solitary_tag{} )->weight();
         int count = sum_weight / ow;
         sum_weight -= count * ow;
         if( count > 0 ) {
-            here.spawn_item( examp, *it, count, 1, calendar::turn );
+            here.spawn_item( examp, compact_to, count, 1, calendar::turn );
             if( !out_any ) {
                 out_any = true;
-                if( it == m.compacts_into().begin() + o_idx ) {
+                if( is_first_output ) {
                     out_desired = true;
                 }
             }
         }
+        is_first_output = false;
     }
 
     // feedback to user

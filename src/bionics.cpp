@@ -250,7 +250,7 @@ itype_id bionic_data::itype() const
 
 bool bionic_data::is_included( const bionic_id &id ) const
 {
-    return std::ranges::find( included_bionics, id ) != included_bionics.end();
+    return std::ranges::contains( included_bionics, id );
 }
 
 void bionic_data::load_bionic( const JsonObject &jo, const std::string &src )
@@ -922,15 +922,14 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
             }
 
             map_stack stack = here.i_at( p );
-            for( auto it = stack.begin(); it != stack.end(); it++ ) {
-                if( ( *it )->weight() < weight_cap &&
-                    ( *it )->made_of_any( affected_materials ) ) {
-                    detached_ptr<item> obj;
-                    stack.erase( it, &obj );
+            const auto it = std::ranges::find_if( stack, [&]( item * const candidate ) {
+                return candidate->weight() < weight_cap && candidate->made_of_any( affected_materials );
+            } );
+            if( it != stack.end() ) {
+                detached_ptr<item> obj;
+                stack.erase( it, &obj );
 
-                    affected.emplace_back( std::move( obj ), p );
-                    break;
-                }
+                affected.emplace_back( std::move( obj ), p );
             }
         }
 
@@ -2977,7 +2976,7 @@ int bionic::get_quality( const quality_id &quality ) const
 bool bionic::is_this_fuel_powered( const itype_id &this_fuel ) const
 {
     const std::vector<itype_id> fuel_op = info().fuel_opts;
-    return std::ranges::find( fuel_op, this_fuel ) != fuel_op.end();
+    return std::ranges::contains( fuel_op, this_fuel );
 }
 
 void bionic::toggle_safe_fuel_mod()

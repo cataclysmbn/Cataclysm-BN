@@ -6521,20 +6521,23 @@ void game::print_items_info( const tripoint &lp, const catacurses::window &w_loo
         }
 
         const int max_width = getmaxx( w_look ) - column - 1;
-        for( auto it = item_names.begin(); it != item_names.end(); ++it ) {
+        size_t item_index = 0;
+        const size_t item_count = item_names.size();
+        for( const auto &item_entry : item_names ) {
             // last line but not last item
-            if( line + 1 >= last_line && std::next( it ) != item_names.end() ) {
+            if( line + 1 >= last_line && item_index + 1 < item_count ) {
                 mvwprintz( w_look, point( column, ++line ), c_yellow, _( "More items here…" ) );
                 break;
             }
 
-            if( it->second > 1 ) {
+            if( item_entry.second > 1 ) {
                 trim_and_print( w_look, point( column, ++line ), max_width, c_white,
                                 pgettext( "%s is the name of the item.  %d is the quantity of that item.", "%s [%d]" ),
-                                it->first.c_str(), it->second );
+                                item_entry.first.c_str(), item_entry.second );
             } else {
-                trim_and_print( w_look, point( column, ++line ), max_width, c_white, it->first );
+                trim_and_print( w_look, point( column, ++line ), max_width, c_white, item_entry.first );
             }
+            ++item_index;
         }
     }
 }
@@ -9375,17 +9378,17 @@ void game::butcher()
     // Split into corpses, disassemble-able, and salvageable items
     // It's not much additional work to just generate a corpse list and
     // clear it later, but does make the splitting process nicer.
-    for( map_stack::iterator it = items.begin(); it != items.end(); ++it ) {
-        if( ( *it )->is_corpse() ) {
-            corpses.push_back( *it );
+    for( item *const current_item : items ) {
+        if( current_item->is_corpse() ) {
+            corpses.push_back( current_item );
         } else {
-            if( salvage::try_salvage( **it, q_cache ).success() ) {
-                salvageables.push_back( *it );
+            if( salvage::try_salvage( *current_item, q_cache ).success() ) {
+                salvageables.push_back( current_item );
             }
-            if( crafting::can_disassemble( u, **it, crafting_inv ).success() ) {
-                disassembles.push_back( *it );
+            if( crafting::can_disassemble( u, *current_item, crafting_inv ).success() ) {
+                disassembles.push_back( current_item );
             } else if( !first_item_without_tools ) {
-                first_item_without_tools = *it;
+                first_item_without_tools = current_item;
             }
         }
     }
@@ -13231,20 +13234,20 @@ bool game::non_dead_range<Creature>::iterator::valid()
 game::monster_range::monster_range( game &game_ref )
 {
     const auto &monsters = game_ref.critter_tracker->get_monsters_list();
-    items.insert( items.end(), monsters.begin(), monsters.end() );
+    items->insert( items->end(), monsters.begin(), monsters.end() );
 }
 
 game::Creature_range::Creature_range( game &game_ref ) : u( &game_ref.u, []( Character * ) { } )
 {
     const auto &monsters = game_ref.critter_tracker->get_monsters_list();
-    items.insert( items.end(), monsters.begin(), monsters.end() );
-    items.insert( items.end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
-    items.emplace_back( u );
+    items->insert( items->end(), monsters.begin(), monsters.end() );
+    items->insert( items->end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
+    items->emplace_back( u );
 }
 
 game::npc_range::npc_range( game &game_ref )
 {
-    items.insert( items.end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
+    items->insert( items->end(), game_ref.active_npc.begin(), game_ref.active_npc.end() );
 }
 
 game::Creature_range game::all_creatures()

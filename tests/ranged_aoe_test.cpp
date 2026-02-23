@@ -30,7 +30,7 @@ static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
     for( const tripoint &p : here.points_in_rectangle( expanded_bb.p_min, expanded_bb.p_max ) ) {
         double signed_distance = s->distance_at( p );
         bool distance_on_shape_is_negative = signed_distance < 0.0;
-        bool point_is_covered = cov.find( p ) != cov.end() && cov.at( p ) > 0.0;
+        bool point_is_covered = cov.contains( p ) && cov.at( p ) > 0.0;
         bool in_bounding_box = bb.contains( p );
         CAPTURE( p );
         CAPTURE( signed_distance );
@@ -118,7 +118,7 @@ TEST_CASE( "character using birdshot against another character", "[shape][ranged
     gun->ammo_set( itype_id( "shot_bird" ) );
 
     REQUIRE( gun->gun_range() >= rl_dist( shooter_pos, target_pos ) );
-    REQUIRE( g->all_npcs().items.size() == 1 );
+    REQUIRE( g->all_npcs().items->size() == 1 );
     REQUIRE( target->pos() == target_pos );
     REQUIRE( g->critter_at( target_pos ) == &*target );
     const int target_hp_total_before = target->get_hp();

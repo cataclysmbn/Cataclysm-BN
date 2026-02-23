@@ -665,7 +665,7 @@ bool player_activity::can_resume_with( const player_activity &other, const Chara
             return false;
         }
         for( int foo : other.values ) {
-            if( std::ranges::find( values, foo ) == values.end() ) {
+            if( !std::ranges::contains( values, foo ) ) {
                 return false;
             }
         }

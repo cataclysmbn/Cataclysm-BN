@@ -5541,7 +5541,10 @@ auto get_hackable_friendly_monsters( game &game_ref ) -> std::vector<shared_ptr_
     auto monsters = game_ref.all_monsters();
     auto &items = monsters.items;
     auto results = std::vector<shared_ptr_fast<monster>> {};
-    std::ranges::for_each( items, [&]( const auto & weak_monster ) {
+    if( !items ) {
+        return results;
+    }
+    std::ranges::for_each( *items, [&]( const auto & weak_monster ) {
         auto current = weak_monster.lock();
         if( !current || current->is_dead() ) {
             return;
@@ -7167,7 +7170,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
                               e.c_str() );
                 }
 
-                const bool selfie = std::ranges::find( player_vec, p ) != player_vec.end();
+                const bool selfie = std::ranges::contains( player_vec, p );
 
                 if( selfie ) {
                     p->add_msg_if_player( _( "You took a selfie." ) );
