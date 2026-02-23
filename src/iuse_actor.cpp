@@ -28,7 +28,10 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
+#include "catalua_icallback_actor.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_id.h"
@@ -108,6 +111,7 @@
 #include "weather.h"
 
 static const activity_id ACT_FIRSTAID( "ACT_FIRSTAID" );
+static const activity_id ACT_HAND_CRANK( "ACT_HAND_CRANK" );
 static const activity_id ACT_MAKE_ZLAVE( "ACT_MAKE_ZLAVE" );
 static const activity_id ACT_RELOAD( "ACT_RELOAD" );
 static const activity_id ACT_REPAIR_ITEM( "ACT_REPAIR_ITEM" );
@@ -745,10 +749,12 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) cons
     }
     veh->set_owner( p );
 
-    // Mark the vehicle as foldable.
-    veh->tags.insert( "convertible" );
-    // Store the id of the item the vehicle is made of.
-    veh->tags.insert( std::string( "convertible:" ) + it.typeId().str() );
+    if( !veh->is_foldable() ) {
+        // Mark the vehicle as foldable.
+        veh->tags.insert( "convertible" );
+        // Store the id of the item the vehicle is made of.
+        veh->tags.insert( std::string( "convertible:" ) + it.typeId().str() );
+    }
     if( !unfold_msg.empty() ) {
         p.add_msg_if_player( _( unfold_msg ), it.tname() );
     }
@@ -789,6 +795,9 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint & ) cons
         } catch( const JsonError &e ) {
             debugmsg( "Error restoring vehicle: %s", e.c_str() );
         }
+    }
+    if( g->m.veh_at( p.pos() ).part_with_feature( "BOARDABLE", true ) ) {
+        g->m.board_vehicle( p.pos(), &p );
     }
     return 1;
 }
@@ -1228,6 +1237,12 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
         newmon.no_extra_death_drops = true;
         it.deactivate();
     }
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = &newmon;
+    } );
+    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+        params["monster"] = &newmon;
+    } );
     if( place_random ) {
         // place_critter_around returns the same pointer as its parameter (or null)
         // Allow position to be different from the player for tossed or launched items
@@ -1283,8 +1298,8 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint &pos ) co
     }
     /** @EFFECT_INT increases chance of a placed turret being friendly */
     /** Full-on pets also auto-succeed if we've already succeeded before deactivating it */
-    if( rng( 0, p.int_cur ) + skill_offset < rng( 0, 2 * ( difficulty * diff_mod ) ) &&
-        !it.has_flag( flag_SPAWN_FRIENDLY ) ) {
+    if( ( rng( 0, p.int_cur ) + skill_offset < rng( 0, 2 * ( difficulty * diff_mod ) ) &&
+          !it.has_flag( flag_SPAWN_FRIENDLY ) ) || it.has_flag( flag_SPAWN_HOSTILE ) ) {
         if( hostile_msg.empty() ) {
             p.add_msg_if_player( m_bad, _( "The %s scans you and makes angry beeping noises!" ),
                                  newmon.name() );
@@ -1455,6 +1470,14 @@ int deploy_furn_actor::use( player &p, item &it, bool t, const tripoint &pos ) c
 
     if( here.has_furn( pnt ) ) {
         p.add_msg_if_player( m_info, _( "There is already furniture at that location." ) );
+        return 0;
+    }
+
+    // It shouldn't be possible to deploy a NOITEM furniture on top of items.
+    const furn_t &furn_obj = furn_type.obj();
+    if( ( furn_obj.has_flag( TFLAG_SEALED ) || furn_obj.has_flag( TFLAG_NOITEM ) ) &&
+        !here.i_at( pnt ).empty() ) {
+        p.add_msg_if_player( m_info, _( "Can't put that here - items in the way." ) );
         return 0;
     }
 
@@ -3605,6 +3628,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                 pl.add_msg_if_player( m_good, _( "You repair your %s completely!  ( %s-> %s)" ), fix.tname( 1,
                                       false ), startdurability, resultdurability );
             }
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
 
@@ -3619,6 +3646,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                 fix.set_flag( flag_FIT );
             }
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
 
@@ -3632,6 +3663,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                                   fix.tname().c_str() );
             fix.set_flag( flag_UNDERSIZE );
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
         return AS_RETRY;
@@ -3644,6 +3679,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
                                   fix.tname().c_str() );
             fix.unset_flag( flag_UNDERSIZE );
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
         return AS_RETRY;
@@ -3660,6 +3699,10 @@ repair_item_actor::attempt_hint repair_item_actor::repair( player &pl, item &too
             pl.add_msg_if_player( m_good, _( "You make your %s extra sturdy." ), fix.tname() );
             fix.mod_damage( -itype::damage_scale );
             handle_components( pl, fix, false, false );
+            // Lua iequippable on_repair callback
+            if( const auto *iequip_cb = fix.type->iequippable_callbacks ) {
+                iequip_cb->call_on_repair( pl, fix );
+            }
             return AS_SUCCESS;
         }
 
@@ -5924,6 +5967,107 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint &pos ) co
 std::unique_ptr<iuse_actor> multicooker_iuse::clone() const
 {
     return std::make_unique<multicooker_iuse>( *this );
+}
+
+namespace
+{
+auto read_time_duration( const JsonObject &obj, const std::string &member,
+                         const time_duration &default_value ) -> time_duration
+{
+    if( !obj.has_member( member ) ) {
+        return default_value;
+    }
+    if( obj.has_string( member ) ) {
+        return read_from_json_string<time_duration>( *obj.get_raw( member ),
+                time_duration::units );
+    }
+    if( obj.has_int( member ) ) {
+        return time_duration::from_turns( obj.get_int( member ) );
+    }
+    obj.throw_error( "member must be a duration string or integer turns", member );
+    return default_value;
+}
+} // namespace
+
+auto hand_crank_actor::load( const JsonObject &obj ) -> void
+{
+    charge_interval = read_time_duration( obj, "charge_interval", charge_interval );
+    obj.read( "charge_amount", charge_amount );
+    obj.read( "fatigue_per_interval", fatigue_per_interval );
+    obj.read( "ammo_type", ammo_type );
+    obj.read( "activity_name", activity_name );
+    obj.read( "start_message", start_message );
+    obj.read( "already_charged_message", already_charged_message );
+    obj.read( "need_battery_message", need_battery_message );
+    obj.read( "underwater_message", underwater_message );
+    obj.read( "exhausted_message", exhausted_message );
+    obj.read( "fully_charged_message", fully_charged_message );
+}
+
+auto hand_crank_actor::can_use( const Character &who, const item &it, bool,
+                                const tripoint & ) const -> ret_val<bool>
+{
+    if( who.is_npc() ) {
+        return ret_val<bool>::make_failure();
+    }
+    if( who.is_underwater() ) {
+        return ret_val<bool>::make_failure( _( underwater_message ) );
+    }
+    if( who.get_fatigue() >= fatigue_levels::dead_tired ) {
+        return ret_val<bool>::make_failure( _( exhausted_message ) );
+    }
+    const auto *magazine = it.magazine_current();
+    if( !magazine || !magazine->has_flag( flag_RECHARGE ) ) {
+        return ret_val<bool>::make_failure( _( need_battery_message ) );
+    }
+    return ret_val<bool>::make_success();
+}
+
+auto hand_crank_actor::use( player &p, item &it, bool, const tripoint & ) const -> int
+{
+    if( p.is_npc() ) {
+        return 0;
+    }
+    if( p.is_underwater() ) {
+        p.add_msg_if_player( m_info, _( underwater_message ) );
+        return 0;
+    }
+    if( p.get_fatigue() >= fatigue_levels::dead_tired ) {
+        p.add_msg_if_player( m_info, _( exhausted_message ) );
+        return 0;
+    }
+    auto *magazine = it.magazine_current();
+    if( !magazine || !magazine->has_flag( flag_RECHARGE ) ) {
+        p.add_msg_if_player( m_info, _( need_battery_message ) );
+        return 0;
+    }
+    if( it.ammo_capacity() > it.ammo_remaining() ) {
+        p.add_msg_if_player( _( start_message ), it.tname(), magazine->tname() );
+        auto resolved_charge_interval = charge_interval;
+        if( resolved_charge_interval <= 0_turns ) {
+            resolved_charge_interval = 144_seconds;
+        }
+        const auto safe_charge_amount = std::max( 1, charge_amount );
+        const auto current = it.ammo_remaining();
+        const auto capacity = it.ammo_capacity();
+        const auto missing = capacity - current;
+        const auto required_intervals = divide_round_up( missing, safe_charge_amount );
+        const auto required_duration = resolved_charge_interval * required_intervals;
+        const auto moves = to_moves<int>( required_duration );
+        const auto interval_turns = to_turns<int>( resolved_charge_interval );
+        p.assign_activity( ACT_HAND_CRANK, moves, -1, 0, activity_name );
+        p.activity->add_tool( &it );
+        p.activity->values = { interval_turns, safe_charge_amount, fatigue_per_interval };
+        p.activity->str_values = { ammo_type.str(), fully_charged_message, exhausted_message };
+    } else {
+        p.add_msg_if_player( _( already_charged_message ), it.tname(), magazine->tname() );
+    }
+    return 0;
+}
+
+auto hand_crank_actor::clone() const -> std::unique_ptr<iuse_actor>
+{
+    return std::make_unique<hand_crank_actor>( *this );
 }
 
 void sex_toy_actor::load( JsonObject const &obj )

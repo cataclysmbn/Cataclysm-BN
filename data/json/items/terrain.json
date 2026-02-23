@@ -1,0 +1,127 @@
+[
+  {
+    "abstract": "food_bush",
+    "type": "GENERIC",
+    "name": "food bush",
+    "description": "A bush that is made of veggy and food. Seeing this is a bug.",
+    "weight": "10 kg",
+    "volume": "40 L",
+    "price": "200 USD",
+    "price_postapoc": "5 USD",
+    "material": "wood",
+    "symbol": "{",
+    "color": "green"
+  },
+  {
+    "id": "peanut_bush",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_peanut",
+    "name": "uprooted peanut bush",
+    "description": "A peanut bush that's ready for transplanting."
+  },
+  {
+    "id": "peanut_bush_h",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_peanut_harvested",
+    "name": "uprooted peanut bush",
+    "description": "A harvested peanut bush that's ready for transplanting."
+  },
+  {
+    "id": "blueberry_bush",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_blueberry",
+    "name": "uprooted blueberry bush",
+    "description": "A blueberry bush that's ready for transplanting."
+  },
+  {
+    "id": "blueberry_bush_h",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_blueberry_harvested",
+    "name": "uprooted blueberry bush",
+    "description": "A blueberry bush that's ready for transplanting."
+  },
+  {
+    "id": "strawberry_bush",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_strawberry",
+    "name": "uprooted strawberry bush",
+    "description": "A strawberry bush that's ready for transplanting."
+  },
+  {
+    "id": "strawberry_bush_h",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_strawberry_harvested",
+    "name": "uprooted strawberry bush",
+    "description": "A harvested strawberry bush that's ready for transplanting."
+  },
+  {
+    "id": "blackberry_bush",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_blackberry",
+    "name": "uprooted blackberry bush",
+    "description": "A blackberry bush that's ready for transplanting."
+  },
+  {
+    "id": "blackberry_bush_h",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_blackberry_harvested",
+    "name": "uprooted blackberry bush",
+    "description": "A harvested blackberry bush that's ready for transplanting."
+  },
+  {
+    "id": "huckleberry_bush",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_huckleberry",
+    "name": "uprooted huckleberry bush",
+    "description": "A huckleberry bush that's ready for transplanting."
+  },
+  {
+    "id": "huckleberry_bush_h",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_huckleberry_harvested",
+    "name": "uprooted huckleberry bush",
+    "description": "A harvested huckleberry bush that's ready for transplanting."
+  },
+  {
+    "id": "raspberry_bush",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_raspberry",
+    "name": "uprooted raspberry bush",
+    "description": "A raspberry bush that's ready for transplanting."
+  },
+  {
+    "id": "raspberry_bush_h",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_raspberry_harvested",
+    "name": "uprooted raspberry bush",
+    "description": "A harvested raspberry bush that's ready for transplanting."
+  },
+  {
+    "id": "grape_bush",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_grape",
+    "name": "uprooted grape bush",
+    "description": "A grape bush that's ready for transplanting."
+  },
+  {
+    "id": "grape_bush_h",
+    "type": "GENERIC",
+    "copy-from": "food_bush",
+    "looks_like": "t_shrub_grape_harvested",
+    "name": "uprooted grape bush",
+    "description": "A harvested grape bush that's ready for transplanting."
+  }
+]

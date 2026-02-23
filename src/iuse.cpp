@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bitset>
 #include <climits>
 #include <cmath>
 #include <cstdlib>
@@ -11,6 +12,7 @@
 #include <list>
 #include <map>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <unordered_map>
@@ -79,6 +81,7 @@
 #include "monattack.h"
 #include "mongroup.h"
 #include "monster.h"
+#include "fluid_grid.h"
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -135,7 +138,6 @@ static const activity_id ACT_FISH( "ACT_FISH" );
 static const activity_id ACT_GAME( "ACT_GAME" );
 static const activity_id ACT_GENERIC_GAME( "ACT_GENERIC_GAME" );
 static const activity_id ACT_HAIRCUT( "ACT_HAIRCUT" );
-static const activity_id ACT_HAND_CRANK( "ACT_HAND_CRANK" );
 static const activity_id ACT_JACKHAMMER( "ACT_JACKHAMMER" );
 static const activity_id ACT_MEDITATE( "ACT_MEDITATE" );
 static const activity_id ACT_MIND_SPLICER( "ACT_MIND_SPLICER" );
@@ -326,6 +328,8 @@ static const quality_id qual_LOCKPICK( "LOCKPICK" );
 
 static const requirement_id requirement_add_grid_connection =
     requirement_id( "add_grid_connection" );
+static const auto requirement_add_fluid_grid_connection =
+    requirement_id( "add_fluid_grid_connection" );
 
 static const species_id FUNGUS( "FUNGUS" );
 static const species_id HALLUCINATION( "HALLUCINATION" );
@@ -4060,40 +4064,6 @@ int iuse::portable_game( player *p, item *it, bool t, const tripoint & )
     return 0;
 }
 
-int iuse::hand_crank( player *p, item *it, bool, const tripoint & )
-{
-    if( p->is_npc() ) {
-        // Long action
-        return 0;
-    }
-    if( p->is_underwater() ) {
-        p->add_msg_if_player( m_info, _( "It's not waterproof enough to work underwater." ) );
-        return 0;
-    }
-    if( p->get_fatigue() >= fatigue_levels::dead_tired ) {
-        p->add_msg_if_player( m_info, _( "You're too exhausted to keep cranking." ) );
-        return 0;
-    }
-    item *magazine = it->magazine_current();
-    if( magazine && magazine->has_flag( flag_RECHARGE ) ) {
-        // 1600 minutes. It shouldn't ever run this long, but it's an upper bound.
-        // expectation is it runs until the player is too tired.
-        int moves = to_moves<int>( 1600_minutes );
-        if( it->ammo_capacity() > it->ammo_remaining() ) {
-            p->add_msg_if_player( _( "You start cranking the %s to charge its %s." ), it->tname(),
-                                  it->magazine_current()->tname() );
-            p->assign_activity( ACT_HAND_CRANK, moves, -1, 0, "hand-cranking" );
-            p->activity->add_tool( it );
-        } else {
-            p->add_msg_if_player( _( "You could use the %s to charge its %s, but it's already charged." ),
-                                  it->tname(), magazine->tname() );
-        }
-    } else {
-        p->add_msg_if_player( m_info, _( "You need a rechargeable battery cell to charge." ) );
-    }
-    return 0;
-}
-
 int iuse::vibe( player *p, item *it, bool, const tripoint & )
 {
     if( p->is_npc() ) {
@@ -5203,7 +5173,9 @@ int iuse::unfold_generic( player *p, item *it, bool, const tripoint & )
         unfold_msg = _( unfold_msg );
     }
     veh->set_owner( *p );
-    g->m.board_vehicle( p->pos(), p );
+    if( g->m.veh_at( p->pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
+        g->m.board_vehicle( p->pos(), p );
+    }
     p->add_msg_if_player( m_neutral, unfold_msg, veh->name );
 
     p->moves -= it->get_var( "moves", to_turns<int>( 5_seconds ) );
@@ -6084,11 +6056,32 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint &pos )
             p->moves -= 30;
 
             if( it->is_active() ) {
+                // Turn music off - revert to original type
+                const std::optional<itype_id> revert_to = it->type->tool->revert_to;
+                if( revert_to.has_value() ) {
+                    it->convert( revert_to.value() );
+                }
                 it->deactivate();
                 it->erase_var( "EIPC_MUSIC_ON" );
 
                 p->add_msg_if_player( m_info, _( "You turned off music on your %s." ), it->tname() );
             } else {
+                // Turn music on - find music_player action's target if it exists
+                itype_id music_type;
+                const auto music_it = it->type->use_methods.find( "music_player" );
+                if( music_it != it->type->use_methods.end() ) {
+                    const iuse_music_player *music_actor =
+                        dynamic_cast<const iuse_music_player *>( music_it->second.get_actor_ptr() );
+                    if( music_actor ) {
+                        music_type = music_actor->target;
+                    }
+                }
+
+                // Transform to music variant if found
+                if( !music_type.is_empty() && music_type.is_valid() ) {
+                    it->convert( music_type );
+                }
+
                 it->activate();
                 it->set_var( "EIPC_MUSIC_ON", "1" );
 
@@ -8404,15 +8397,16 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint & )
     if( it->has_flag( flag_WINDMETER ) ) {
         int vehwindspeed = 0;
         if( optional_vpart_position vp = g->m.veh_at( p->pos() ) ) {
-            vehwindspeed = std::abs( vp->vehicle().velocity / 100 ); // For mph
+            vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
         }
         const oter_id &cur_om_ter = overmap_buffer.ter( p->global_omt_location() );
         /* windpower defined in internal velocity units (=.01 mph) */
         const double windpower = 100 * get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
                                  p->pos(), weather.winddirection, g->is_sheltered( p->pos() ) );
+        const int windpower_vehicle_units = std::lround( windpower * 0.44704 );
         std::string dirstring = get_dirstring( weather.winddirection );
         p->add_msg_if_player( m_neutral, _( "Wind: %.1f %2$s from the %3$s.\nFeels like: %4$s." ),
-                              convert_velocity( windpower, VU_VEHICLE ),
+                              convert_velocity( windpower_vehicle_units, VU_VEHICLE ),
                               velocity_units( VU_VEHICLE ), dirstring, print_temperature(
                                   get_local_windchill( units::to_fahrenheit( weatherPoint.temperature ),
                                           weatherPoint.humidity,
@@ -8884,6 +8878,49 @@ int iuse::report_grid_connections( player *p, item *, bool, const tripoint &pos 
     return 0;
 }
 
+auto iuse::report_fluid_grid_connections( player *p, item *, bool, const tripoint &pos ) -> int
+{
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
+    const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
+    const auto fluid_stats = fluid_grid::storage_stats_at( pos_abs );
+
+    auto connection_names = std::vector<std::string> {};
+    connection_names.reserve( connections.size() );
+    std::ranges::for_each( connections, [&]( const tripoint_rel_omt & delta ) {
+        connection_names.push_back( direction_name( direction_from( delta.raw() ) ) );
+    } );
+
+    auto msg = std::string{};
+    if( connection_names.empty() ) {
+        msg = _( "This fluid grid has no connections." );
+    } else {
+        msg = string_format( _( "This fluid grid has connections: %s." ),
+                             enumerate_as_string( connection_names ) );
+    }
+    p->add_msg_if_player( msg );
+    p->add_msg_if_player( string_format( _( "Fluid stored: %1$s/%2$s %3$s." ),
+                                         format_volume( fluid_stats.stored ),
+                                         format_volume( fluid_stats.capacity ),
+                                         volume_units_abbr() ) );
+    auto fluid_entries = std::vector<std::string> {};
+    std::ranges::for_each( fluid_stats.stored_by_type, [&]( const auto & entry ) {
+        if( entry.second <= 0_ml ) {
+            return;
+        }
+        const auto name = item::nname( entry.first );
+        const auto volume = format_volume( entry.second );
+        fluid_entries.push_back( string_format( _( "%1$s: %2$s" ), name, volume ) );
+    } );
+    if( fluid_entries.empty() ) {
+        p->add_msg_if_player( _( "Fluids: empty." ) );
+    } else {
+        p->add_msg_if_player( string_format( _( "Fluids: %s." ),
+                                             enumerate_as_string( fluid_entries ) ) );
+    }
+
+    return 0;
+}
+
 int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &pos )
 {
     tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
@@ -8972,6 +9009,99 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint &po
         p->invalidate_crafting_inventory();
 
         bool success = overmap_buffer.add_grid_connection( pos_abs, destination_pos_abs );
+        if( success ) {
+            return it->type->charges_to_use();
+        }
+    }
+
+    return 0;
+}
+
+auto iuse::modify_fluid_grid_connections( player *p, item *it, bool, const tripoint &pos ) -> int
+{
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().getabs( pos ) ) );
+    const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
+
+    uilist ui;
+
+    auto connection_present = std::bitset<six_cardinal_directions.size()> {};
+    std::ranges::for_each( std::views::iota( size_t{ 0 }, six_cardinal_directions.size() ),
+    [&]( size_t i ) {
+        const auto &delta = six_cardinal_directions[i];
+        connection_present[i] = std::ranges::find( connections,
+                                tripoint_rel_omt( delta ) ) != connections.end();
+        const auto name = direction_name( direction_from( delta ) );
+        const auto i_int = static_cast<int>( i );
+        const auto format = connection_present[i]
+                            ? _( "Remove fluid grid connection in direction: %s" )
+                            : _( "Add fluid grid connection in direction: %s" );
+        const auto new_z = pos.z + delta.z;
+        const auto enabled = new_z >= -10 && new_z <= 10;
+        ui.addentry( i_int, enabled, i_int, format, name.c_str() );
+    } );
+
+    ui.query();
+    if( ui.ret < 0 ) {
+        return 0;
+    }
+
+    const auto ret = static_cast<size_t>( ui.ret );
+    const auto destination_pos_abs =
+        pos_abs + tripoint_rel_omt( six_cardinal_directions[ret] );
+    if( connection_present[ret] ) {
+        fluid_grid::remove_grid_connection( pos_abs, destination_pos_abs );
+    } else {
+        const auto lhs_locations = fluid_grid::grid_at( pos_abs );
+        const auto rhs_locations = fluid_grid::grid_at( destination_pos_abs );
+        auto cost_mult = 0;
+        if( lhs_locations != rhs_locations ) {
+            cost_mult = static_cast<int>( lhs_locations.size() + rhs_locations.size() );
+        }
+        const auto &reqs = *requirement_add_fluid_grid_connection * cost_mult;
+        const auto &crafting_inv = p->crafting_inventory();
+        auto grid_connection_string = std::string{};
+        if( cost_mult == 0 ) {
+            grid_connection_string = string_format(
+                                         _( "You are connecting two locations in the same grid, with %lu elements." ),
+                                         std::max( lhs_locations.size(), rhs_locations.size() ) );
+        } else if( lhs_locations.size() == 1 || rhs_locations.size() == 1 ) {
+            grid_connection_string = string_format(
+                                         _( "You are extending a grid with %lu elements." ),
+                                         std::max( lhs_locations.size(), rhs_locations.size() ) );
+        } else {
+            grid_connection_string = string_format(
+                                         _( "You are connecting a grid with %lu elements to a grid with %lu elements." ),
+                                         lhs_locations.size(),
+                                         rhs_locations.size() );
+        }
+
+        if( !reqs.can_make_with_inventory( crafting_inv, is_crafting_component ) ) {
+            popup( string_format( _( "%s\n%s\n%s" ),
+                                  grid_connection_string,
+                                  reqs.list_missing(),
+                                  reqs.list_all() ) );
+            return 0;
+        }
+
+        if( ( cost_mult == 0 &&
+              query_yn( string_format( _( "%s\nThis action will not consume any resources.\nAre you sure?" ),
+                                       grid_connection_string ) ) ) ||
+            query_yn( string_format( std::string( "%s\n%s\n" ) + _( "Are you sure?" ),
+                                     grid_connection_string,
+                                     reqs.list_all() ) ) )
+        {} else {
+            return 0;
+        }
+
+        std::ranges::for_each( reqs.get_components(), [&]( const auto & e ) {
+            p->consume_items( e );
+        } );
+        std::ranges::for_each( reqs.get_tools(), [&]( const auto & e ) {
+            p->consume_tools( e );
+        } );
+        p->invalidate_crafting_inventory();
+
+        const auto success = fluid_grid::add_grid_connection( pos_abs, destination_pos_abs );
         if( success ) {
             return it->type->charges_to_use();
         }

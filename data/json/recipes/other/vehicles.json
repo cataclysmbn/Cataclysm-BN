@@ -2126,6 +2126,62 @@
     "components": [ [ [ "carbon_fiber_filament", 100 ] ] ]
   },
   {
+    "result": "sheet_carbon",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "computer",
+    "difficulty": 2,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "10 m",
+    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
+    "using": [ [ "3d_printing_standard", 5 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 50 ] ] ]
+  },
+  {
+    "result": "carbon_plate",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "computer",
+    "difficulty": 2,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "10 m",
+    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
+    "using": [ [ "3d_printing_standard", 15 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 150 ] ] ]
+  },
+  {
+    "result": "wing_carbon_item",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "computer",
+    "difficulty": 2,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "10 m",
+    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
+    "using": [ [ "3d_printing_standard", 10 ] ],
+    "components": [ [ [ "carbon_fiber_filament", 75 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "lit_wing_carbon_item",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_LIGHTING",
+    "skill_used": "electronics",
+    "difficulty": 1,
+    "time": "15 m",
+    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ] ],
+    "using": [ [ "soldering_standard", 5 ] ],
+    "components": [
+      [ [ "wing_carbon_item", 1 ] ],
+      [ [ "lightstrip_inactive", 1 ], [ "light_bulb", 1 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "plastic_chunk", 1 ] ]
+    ]
+  },
+  {
     "type": "recipe",
     "result": "aluminium_sheet",
     "category": "CC_OTHER",

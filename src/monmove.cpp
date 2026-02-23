@@ -281,7 +281,7 @@ bool monster::can_squeeze_to( const tripoint &p ) const
 
 bool monster::can_move_to( const tripoint &p ) const
 {
-    return can_reach_to( p ) && will_move_to( p );
+    return can_reach_to( p ) && will_move_to( p ) && !has_flag( MF_STATIONARY );
 }
 
 void monster::set_dest( const tripoint &p )
@@ -2278,7 +2278,7 @@ void monster::shove_vehicle( const tripoint &remote_destination,
                     if( veh_mass < 1000_kilogram ) {
                         shove_moves_minimal = 100;
                         shove_veh_mass_moves_factor = 8;
-                        shove_velocity = 1000;
+                        shove_velocity = 447;
                         shove_damage_min = 0.00F;
                         shove_damage_max = 0.03F;
                     }
@@ -2287,7 +2287,7 @@ void monster::shove_vehicle( const tripoint &remote_destination,
                     if( veh_mass < 2000_kilogram ) {
                         shove_moves_minimal = 50;
                         shove_veh_mass_moves_factor = 4;
-                        shove_velocity = 1500;
+                        shove_velocity = 671;
                         shove_damage_min = 0.00F;
                         shove_damage_max = 0.05F;
                     }

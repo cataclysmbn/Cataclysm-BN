@@ -7,6 +7,8 @@ mod.storage = storage
 
 game.iuse_functions["VOLTMETER"] = function(...) return mod.voltmeter.menu(...) end
 game.iuse_functions["sonar_scan"] = function(...) return mod.sonar_scan(...) end
+game.iuse_functions["ARTIFACT_ANALYZER"] = function(...) return mod.artifact_analyzer.menu(...) end
+game.mapgen_functions["slimepit"] = function(...) return mod.slimepit.draw(...) end
 
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...) return mod.on_nyctophobia_tick(...) end)
 

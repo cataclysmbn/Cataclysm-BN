@@ -1,6 +1,7 @@
 set(CATACLYSM_DATA_DIRS
         font
         json
+        lua
         mods
         names
         raw

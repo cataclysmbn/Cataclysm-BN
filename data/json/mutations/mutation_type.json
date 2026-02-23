@@ -81,6 +81,10 @@
   },
   {
     "type": "mutation_type",
+    "id": "hair_color"
+  },
+  {
+    "type": "mutation_type",
     "id": "facial_hair"
   }
 ]

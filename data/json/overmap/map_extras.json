@@ -33,7 +33,7 @@
     "id": "mx_drugdeal",
     "type": "map_extra",
     "name": "Drug Deal",
-    "looks_like": "corpse",
+    "looks_like": "coke",
     "description": "Several corpses of drug dealers are here.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_drugdeal" },
     "sym": "d",

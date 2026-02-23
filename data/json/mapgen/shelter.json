@@ -108,7 +108,8 @@
         ">": "t_ladder_down",
         "5": "t_gutter_drop"
       },
-      "furniture": { ":": "f_standing_tank", "#": "f_solar_unit", "&": "f_roof_turbine_vent" },
+      "furniture": { ":": "f_standing_tank_plumbed", "#": "f_solar_unit", "&": "f_roof_turbine_vent" },
+      "liquids": { ":": { "liquid": "water_clean", "amount": [ 0, 100 ] } },
       "place_items": [ { "item": "roof_trash", "x": [ 5, 17 ], "y": [ 9, 22 ], "chance": 50, "repeat": [ 1, 3 ] } ]
     }
   },
@@ -192,7 +193,8 @@
         ">": "t_ladder_down",
         "5": "t_gutter_drop"
       },
-      "furniture": { ":": "f_standing_tank", "#": "f_solar_unit", "&": "f_roof_turbine_vent" },
+      "furniture": { ":": "f_standing_tank_plumbed", "#": "f_solar_unit", "&": "f_roof_turbine_vent" },
+      "liquids": { ":": { "liquid": "water_clean", "amount": [ 0, 100 ] } },
       "place_items": [ { "item": "roof_trash", "x": [ 5, 17 ], "y": [ 11, 22 ], "chance": 50, "repeat": [ 1, 3 ] } ]
     }
   },
@@ -286,7 +288,8 @@
         ">": "t_ladder_down",
         "5": "t_gutter_drop"
       },
-      "furniture": { ":": "f_standing_tank", "#": "f_solar_unit", "&": "f_roof_turbine_vent" },
+      "furniture": { ":": "f_standing_tank_plumbed", "#": "f_solar_unit", "&": "f_roof_turbine_vent" },
+      "liquids": { ":": { "liquid": "water_clean", "amount": [ 0, 100 ] } },
       "place_items": [ { "item": "roof_trash", "x": [ 8, 15 ], "y": [ 7, 22 ], "chance": 50, "repeat": [ 1, 3 ] } ]
     }
   },

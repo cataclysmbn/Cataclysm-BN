@@ -26,6 +26,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "cached_item_options.h"
+#include "catalua_icallback_actor.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
@@ -3484,6 +3485,27 @@ void item::qualities_info( std::vector<iteminfo> &info, const iteminfo_query *pa
         for( const std::pair<const quality_id, int> q : sorted_lex( type->qualities ) ) {
             name_quality( q );
         }
+        auto crafting_speed_modifier = type->crafting_speed_modifier;
+        std::ranges::for_each( type->qualities, [&]( const auto & quality_entry ) {
+            const auto &quality = quality_entry.first.obj();
+            const auto per_level_multiplier = quality.crafting_speed_bonus_per_level;
+            if( per_level_multiplier <= 0.0f ) {
+                return;
+            }
+            const auto extra_levels =
+                quality_entry.second - quality.crafting_speed_level_offset;
+            if( extra_levels <= 0 ) {
+                return;
+            }
+            crafting_speed_modifier *= std::pow( per_level_multiplier, extra_levels );
+        } );
+
+        if( crafting_speed_modifier != 1.0f ) {
+            const auto modifier_percent = static_cast<int>( crafting_speed_modifier * 100.0f );
+            info.emplace_back( "QUALITIES", "",
+                               string_format( _( "This item modifies crafting speed by <info>%d%%</info> when used in recipes." ),
+                                              modifier_percent ) );
+        }
     }
 
     if( parts->test( iteminfo_parts::QUALITIES_CONTAINED ) &&
@@ -4738,6 +4760,10 @@ void item::on_wear( Character &who )
         handle_pickup_ownership( who );
     }
     who.on_item_wear( *this );
+
+    if( type->iwearable_callbacks ) {
+        type->iwearable_callbacks->call_on_wear( who, *this );
+    }
 }
 
 void item::on_takeoff( Character &who )
@@ -4757,6 +4783,10 @@ void item::on_takeoff( Character &who )
             return;
         }
         actor->bypass( *who.as_player(), *this, false, who.pos() );
+    }
+
+    if( type->iwearable_callbacks ) {
+        type->iwearable_callbacks->call_on_takeoff( who, *this );
     }
 }
 
@@ -4819,6 +4849,17 @@ void item::on_wield( player &p, int mv )
 
     // Update encumbrance in case we were wearing it
     p.flag_encumbrance();
+
+    if( type->iwieldable_callbacks ) {
+        type->iwieldable_callbacks->call_on_wield( p, *this, mv );
+    }
+}
+
+void item::on_unwield( Character &who )
+{
+    if( type->iwieldable_callbacks ) {
+        type->iwieldable_callbacks->call_on_unwield( who, *this );
+    }
 }
 
 void item::handle_pickup_ownership( Character &c )
@@ -4882,6 +4923,10 @@ void item::on_pickup( Character &who )
     }
 
     who.flag_encumbrance();
+
+    if( type->istate_callbacks ) {
+        type->istate_callbacks->call_on_pickup( who, *this );
+    }
 }
 
 void item::on_contents_changed()
@@ -4897,6 +4942,11 @@ void item::on_damage( int qty, damage_type )
 {
     if( is_corpse() && qty + damage_ >= max_damage() ) {
         set_flag( flag_PULPED );
+    }
+
+    if( type->iequippable_callbacks ) {
+        type->iequippable_callbacks->call_on_durability_change(
+            get_avatar(), *this, damage_, damage_ + qty );
     }
 }
 
@@ -5160,6 +5210,9 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
     }
     if( has_flag( flag_SPAWN_FRIENDLY ) ) {
         tagtext += _( " (friendly)" );
+    }
+    if( has_flag( flag_SPAWN_HOSTILE ) ) {
+        tagtext += _( " (hostile)" );
     }
 
     if( is_favorite ) {
@@ -7024,6 +7077,10 @@ bool item::mod_damage( int qty, damage_type dt )
         damage_ = std::max( std::min( damage_ + qty, max_damage() ), min_damage() );
     }
 
+    if( destroy && type->iequippable_callbacks ) {
+        type->iequippable_callbacks->call_on_break( get_avatar(), *this );
+    }
+
     return destroy;
 }
 
@@ -7256,6 +7313,11 @@ bool item::made_of( const material_id &mat_ident ) const
 bool item::contents_made_of( const phase_id phase ) const
 {
     return !contents.empty() && contents.front().made_of( phase );
+}
+
+bool item::contents_normally_made_of( const phase_id phase ) const
+{
+    return !contents.empty() && contents.front().type->phase == phase;
 }
 
 bool item::made_of( phase_id phase ) const
@@ -7522,6 +7584,13 @@ bool item::is_non_resealable_container() const
     return type->container && !type->container->seals && type->container->unseals_into;
 }
 
+bool item::is_in_container() const
+{
+    auto location = static_cast<item_location *>( &*loc );
+    return location->where() == item_location_type::container || ( parent_item() &&
+            parent_item()->is_container() );
+}
+
 bool item::is_bucket() const
 {
     // That "preserves" part is a hack:
@@ -7643,7 +7712,15 @@ bool item::is_container_full( bool allow_bucket ) const
     if( is_container_empty() ) {
         return false;
     }
-    return get_remaining_capacity_for_liquid( contents.front(), allow_bucket ) == 0;
+    if( is_watertight_container() ) {
+        return get_remaining_capacity_for_liquid( contents.front(), allow_bucket ) == 0;
+    } else if( !is_reloadable_with( contents.front().typeId() ) ) {
+        return true;
+    } else {
+        int ammo = contents.front().charges_per_volume( get_container_capacity() ) -
+                   contents.front().charges;
+        return ammo <= 0;
+    }
 }
 
 bool item::can_unload_liquid() const
@@ -7680,7 +7757,13 @@ bool item::is_reloadable_helper( const itype_id &ammo, bool now ) const
     } else if( is_watertight_container() ) {
         if( ammo.is_empty() ) {
             return now ? !is_container_full() : true;
-        } else if( ammo->phase != LIQUID ) {
+        } else {
+            return now ? ( is_container_empty() || contents.front().typeId() == ammo ) : true;
+        }
+    } else if( is_container() ) {
+        if( ammo.is_empty() ) {
+            return now ? !is_container_full() : true;
+        } else if( ammo->phase == LIQUID ) {
             return false;
         } else {
             return now ? ( is_container_empty() || contents.front().typeId() == ammo ) : true;
@@ -8930,22 +9013,29 @@ int item_reload_option::moves() const
 
 void item_reload_option::qty( int val )
 {
-    bool ammo_in_container = ammo->is_ammo_container();
-    bool ammo_in_liquid_container = ammo->is_watertight_container();
-    item &ammo_obj = ( ammo_in_container || ammo_in_liquid_container ) ?
+    bool ammo_in_ammo_container = ammo->is_ammo_container();
+    bool ammo_in_container = ammo->is_container();
+    item &ammo_obj = ( ammo_in_ammo_container || ammo_in_container ) ?
                      ammo->contents.front() : *ammo;
 
-    if( ( ammo_in_container && !ammo_obj.is_ammo() ) ||
-        ( ammo_in_liquid_container && !ammo_obj.made_of( LIQUID ) ) ) {
+    if( ammo_in_ammo_container && !ammo_obj.is_ammo() ) {
         debugmsg( "Invalid reload option: %s", ammo_obj.tname() );
         return;
     }
 
     // Checking ammo capacity implicitly limits guns with removable magazines to capacity 0.
     // This gets rounded up to 1 later.
-    int remaining_capacity = target->is_watertight_container() ?
-                             target->get_remaining_capacity_for_liquid( ammo_obj, true ) :
-                             target->ammo_capacity() - target->ammo_remaining();
+    int remaining_capacity = 0;
+    if( target->is_watertight_container() && ammo_obj.made_of( LIQUID ) ) {
+        remaining_capacity = target->get_remaining_capacity_for_liquid( ammo_obj, true );
+    } else if( target->is_container() && ammo_obj.is_comestible() ) {
+        remaining_capacity = ammo_obj.charges_per_volume( target->get_container_capacity() );
+        if( !target->is_container_empty() ) {
+            remaining_capacity -= target->ammo_remaining();
+        }
+    } else {
+        remaining_capacity = target->ammo_capacity() - target->ammo_remaining();
+    }
     if( target->has_flag( flag_RELOAD_ONE ) && !ammo->has_flag( flag_SPEEDLOADER ) ) {
         remaining_capacity = 1;
     }
@@ -8956,7 +9046,7 @@ void item_reload_option::qty( int val )
         }
     }
 
-    bool ammo_by_charges = ammo_obj.is_ammo() || ammo_in_liquid_container;
+    bool ammo_by_charges = ammo_obj.is_ammo() || ammo_in_container || ammo->is_comestible();
     int available_ammo = ammo_by_charges ? ammo_obj.charges : ammo_obj.ammo_remaining();
     // constrain by available ammo, target capacity and other external factors (max_qty)
     // @ref max_qty is currently set when reloading ammo belts and limits to available linkages
@@ -9012,15 +9102,30 @@ bool item::reload( Character &who, item &loc, int qty )
     }
 
     // limit quantity of ammo loaded to remaining capacity
-    int limit = is_watertight_container()
-                ? get_remaining_capacity_for_liquid( *ammo )
-                : ammo_capacity() - ammo_remaining();
+    int limit = 0;
+    if( is_watertight_container() && ammo->made_of( LIQUID ) ) {
+        limit = get_remaining_capacity_for_liquid( *ammo, true );
+    } else if( is_container() && ammo->is_comestible() ) {
+        limit = ammo->charges_per_volume( get_container_capacity() );
+        if( !is_container_empty() ) {
+            limit -= ammo_remaining();
+        }
+    } else {
+        limit = ammo_capacity() - ammo_remaining();
+    }
 
     if( ammo->ammo_type() == ammo_plutonium ) {
         limit = limit / PLUTONIUM_CHARGES + ( limit % PLUTONIUM_CHARGES != 0 );
     }
 
     qty = std::min( qty, limit );
+
+    // Lua iranged can_reload callback: blocks reloading before ammo is consumed
+    if( const auto *iranged_cb = type->iranged_callbacks ) {
+        if( !iranged_cb->call_can_reload( who, *this ) ) {
+            return false;
+        }
+    }
 
     casings_handle( [&who]( detached_ptr<item> &&e ) {
         return who.i_add_or_drop( std::move( e ) );
@@ -9048,11 +9153,7 @@ bool item::reload( Character &who, item &loc, int qty )
             // NOLINTNEXTLINE(bugprone-use-after-move)
             put_in( std::move( to_reload ) );
         }
-    } else if( is_watertight_container() ) {
-        if( !ammo->made_of( LIQUID ) ) {
-            debugmsg( "Tried to reload liquid container with non-liquid." );
-            return false;
-        }
+    } else if( is_container() ) {
         if( container ) {
             container->on_contents_changed();
         }
@@ -9103,6 +9204,10 @@ bool item::reload( Character &who, item &loc, int qty )
                 who.inv_restack();
             }
         }
+    }
+
+    if( type->iranged_callbacks ) {
+        type->iranged_callbacks->call_on_reload( who, *this );
     }
 
     return true;
@@ -9327,7 +9432,7 @@ int item::get_remaining_capacity_for_liquid( const item &liquid, bool allow_buck
         }
         remaining_capacity = ammo_capacity() - ammo_remaining();
     } else if( is_container() ) {
-        if( !type->container->watertight ) {
+        if( !type->container->watertight && liquid.made_of( LIQUID ) ) {
             return error( string_format( _( "That %s isn't water-tight." ), tname() ) );
         } else if( !type->container->seals && ( !allow_bucket || !is_bucket() ) ) {
             return error( string_format( is_bucket() ?
@@ -10912,7 +11017,9 @@ bool item::is_reloadable() const
         return true;
 
     } else if( is_container() ) {
-        return true;
+        // TODO: Make buckets actually reloadable using reload menu
+        // This would be done via locking this off by weather or not it was wielded or on dirt most likely
+        return type->container->seals;
 
     } else if( !is_gun() && !is_tool() && !is_magazine() ) {
         return false;
@@ -11064,14 +11171,23 @@ bool item::on_drop( const tripoint &pos )
 
 bool item::on_drop( const tripoint &pos, map &m )
 {
+    avatar &you = get_avatar();
+
+    if( type->istate_callbacks ) {
+        bool prevented = type->istate_callbacks->call_on_drop( you, *this, pos );
+        if( prevented ) {
+            return true;
+        }
+    }
+
     // dropping liquids, even currently frozen ones, on the ground makes them
     // dirty
     if( made_of( LIQUID ) && !m.has_flag( flag_LIQUIDCONT, pos ) &&
         !has_own_flag( flag_DIRTY ) ) {
         set_flag( flag_DIRTY );
     }
-    avatar &you = get_avatar();
     you.flag_encumbrance();
+
     return type->drop_action && type->drop_action.call( you, *this, false, pos );
 }
 
