@@ -89,7 +89,9 @@ end
 ---@return boolean
 local function is_loot_on_floor(here, pt)
   local furn = here:get_furn_at(pt):obj()
-  if furn and (furn:has_flag("CONTAINER") or furn:has_flag("SEALED")) then return false end
+  if furn and (furn:has_flag("CONTAINER") or furn:has_flag("SEALED") or furn:has_flag("PLACE_ITEM")) then
+    return false
+  end
   return true
 end
 
@@ -108,9 +110,8 @@ local function count_loose_items(here, center)
       local key = string.format("%d:%d:%d", pt.x, pt.y, pt.z)
       if not seen[key] and is_loot_on_floor(here, pt) then
         seen[key] = true
-        for _ in pairs(here:get_items_at(pt)) do
-          total = total + 1
-        end
+        local items = here:get_items_at(pt)
+        total = total + #items
       end
     end
   end
