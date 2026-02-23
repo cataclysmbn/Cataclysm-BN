@@ -601,12 +601,28 @@ void map::vehmove()
             vehicle_list = get_vehicles();
             rebuild_pq();
         } else {
-            // PERF-LOSS-1 fix: on the non-collision path, re-enqueue only the
-            // moved vehicle if it still has budget.  Collisions (which can
-            // elevate a stationary vehicle's of_turn) are handled by the full
-            // rebuild_pq() on the nullptr path above.  This restores the O(log V)
-            // per-iteration cost that V-1 was designed to achieve.
-            if( cur_veh->v->of_turn >= 1.0f ) {
+            // Re-enqueue if the vehicle still has any remaining movement
+            // budget (of_turn > 0).  This mirrors the old vehproceed() loop
+            // which re-selected a vehicle as long as of_turn > 0, allowing a
+            // fast vehicle to make many moves per vehmove() call (e.g. 27
+            // moves at cruise speed with turn_cost ≈ 0.036).
+            //
+            // The original >= 1.0f threshold was too conservative: after one
+            // move at cruise speed, of_turn drops to ~0.964, which is < 1.0
+            // but still enough budget for 26 more moves.  Dropping out of the
+            // PQ here forced those 26 moves to be deferred to future turns,
+            // causing a ~14% efficiency loss and a rail-test positional miss.
+            //
+            // Stationary vehicles (of_turn = 0.001 from gain_moves) are
+            // excluded at rebuild_pq() time and never reach this branch, so
+            // the V-2 stationary-vehicle optimisation is fully preserved.
+            //
+            // When act_on_map() takes its "can't afford this move" early-
+            // return path it explicitly sets of_turn = 0 and saves
+            // of_turn_carry before returning, so the > 0.f guard here
+            // correctly skips re-enqueueing in that case — carry is already
+            // saved inside act_on_map(), no double-write occurs.
+            if( cur_veh->v->of_turn > 0.f ) {
                 pq.push( cur_veh );
             }
         }
