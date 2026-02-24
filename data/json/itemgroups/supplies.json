@@ -111,7 +111,7 @@
       { "item": "hinge", "prob": 60, "count": [ 5, 10 ] },
       { "item": "tempered_glass_sheet", "prob": 30, "count": [ 5, 20 ] },
       { "item": "rigid_plastic_sheet", "prob": 30, "count": [ 5, 20 ] },
-	  { "item": "bag_canvas_replanting", "prob": 10 }
+      { "item": "bag_canvas_replanting", "prob": 10 }
     ]
   },
   {
@@ -271,7 +271,7 @@
       [ "rigid_plastic_sheet", 30 ],
       [ "trash_can_empty", 25 ],
       [ "sandpaper", 15 ],
-	  [ "bag_canvas_replanting", 5 ]
+      [ "bag_canvas_replanting", 5 ]
     ]
   },
   {
@@ -350,7 +350,7 @@
       [ "fertilizer_liquid", 60 ],
       [ "material_quicklime", 80 ],
       { "item": "chem_saltpetre", "prob": 15, "charges-min": 10, "charges-max": 50 },
-	  [ "bag_canvas_replanting", 15 ]
+      [ "bag_canvas_replanting", 15 ]
     ]
   },
   {

@@ -429,11 +429,11 @@
       [ "road_roller", 80 ],
       [ "tatra_truck", 20 ],
       [ "trencher", 40 ],
-	  [ "excavator_tree", 8 ],
-	  [ "tree_trencher", 8 ],
-	  [ "tractor_treeplow", 4 ],
-	  [ "tractor_treereaper", 4 ],
-	  [ "tractor_treeseed", 4 ]
+      [ "excavator_tree", 8 ],
+      [ "tree_trencher", 8 ],
+      [ "tractor_treeplow", 4 ],
+      [ "tractor_treereaper", 4 ],
+      [ "tractor_treeseed", 4 ]
     ]
   },
   {
@@ -873,11 +873,11 @@
       [ "tractor_plow", 800 ],
       [ "cube_van", 800 ],
       [ "car_mini", 800 ],
-	  [ "excavator_tree", 100],
-	  [ "tree_trencher", 100],
-	  [ "tractor_treeplow", 100],
-	  [ "tractor_treereaper", 100],
-	  [ "tractor_treeseed", 100]
+      [ "excavator_tree", 100 ],
+      [ "tree_trencher", 100 ],
+      [ "tractor_treeplow", 100 ],
+      [ "tractor_treereaper", 100 ],
+      [ "tractor_treeseed", 100 ]
     ]
   },
   {
@@ -1009,17 +1009,16 @@
     "id": "os_work_vehicles",
     "vehicles": [ [ "wheelbarrow", 60 ], [ "portable_generator", 40 ], [ "oa_work_light", 50 ] ]
   },
-  
-   {
+  {
     "id": "tree_spade",
     "type": "vehicle_group",
     "//": "Farming, utility, and construction vehicles fitted with a tree spade.",
     "vehicles": [
-      [ "excavator_tree", 100],
-	  [ "tree_trencher", 100],
-	  [ "tractor_treeplow", 100],
-	  [ "tractor_treereaper", 100],
-	  [ "tractor_treeseed", 100]
+      [ "excavator_tree", 100 ],
+      [ "tree_trencher", 100 ],
+      [ "tractor_treeplow", 100 ],
+      [ "tractor_treereaper", 100 ],
+      [ "tractor_treeseed", 100 ]
     ]
   }
 ]

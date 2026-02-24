@@ -2377,16 +2377,15 @@
     "qualities": [ { "id": "HAMMER", "level": 2 } ],
     "components": [ [ [ "sheet_metal", 4 ] ], [ [ "scrap", 6 ] ], [ [ "amplifier", 4 ] ], [ [ "e_scrap", 6 ] ] ]
   },
-  
-   {
+  {
     "result": "treespade",
     "type": "recipe",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
     "skill_used": "mechanics",
     "skills_required": [ "fabrication", 6 ],
-	"//": "You're making a recreation of the Big John 65 Inch Tree Spade. It is huge and hydraulic-heavy." ,
-	"//2": "This version abstracts disassembling hydraulic presses into just the hydraulic systems - and cobbling them together for stabilizer legs and hydraulic actuators.",
+    "//": "You're making a recreation of the Big John 65 Inch Tree Spade. It is huge and hydraulic-heavy.",
+    "//2": "This version abstracts disassembling hydraulic presses into just the hydraulic systems - and cobbling them together for stabilizer legs and hydraulic actuators.",
     "difficulty": 6,
     "time": "4 h",
     "book_learn": [ [ "textbook_mechanics", 6 ], [ "reference_fabrication1", 6 ] ],
@@ -2394,22 +2393,27 @@
     "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 }, { "id": "WRENCH", "level": 2 } ],
     "components": [ [ [ "hydraulic_press", 2 ] ], [ [ "cable", 200 ] ], [ [ "electronics_controls", 1 ] ] ]
   },
-  
-   {
+  {
     "result": "treespade",
-	"id_suffix": "from improvised materials",
+    "id_suffix": "from improvised materials",
     "type": "recipe",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
     "skill_used": "mechanics",
     "skills_required": [ "fabrication", 6 ],
-	"//": "You're making a recreation of the Big John 65 Inch Tree Spade. It is huge and hydraulic-heavy." ,
-	"//2": "This version abstracts improvising bottle jacks, pipes, and oil into higher capacity hydraulic systems - and cobbling them together for stabilizer legs and hydraulic actuators.",
+    "//": "You're making a recreation of the Big John 65 Inch Tree Spade. It is huge and hydraulic-heavy.",
+    "//2": "This version abstracts improvising bottle jacks, pipes, and oil into higher capacity hydraulic systems - and cobbling them together for stabilizer legs and hydraulic actuators.",
     "difficulty": 6,
     "time": "4 h",
     "book_learn": [ [ "textbook_mechanics", 6 ], [ "reference_fabrication1", 6 ] ],
     "using": [ [ "welding_standard", 40 ], [ "steel_standard", 60 ] ],
     "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 }, { "id": "WRENCH", "level": 2 } ],
-    "components": [ [ [ "jack", 8 ] ], [ [ "pipe", 12 ] ], [ [ "cable", 200 ] ], [ [ "electronics_controls", 1 ] ], [ [ "motor_oil", 500 ] ] ]
+    "components": [
+      [ [ "jack", 8 ] ],
+      [ [ "pipe", 12 ] ],
+      [ [ "cable", 200 ] ],
+      [ [ "electronics_controls", 1 ] ],
+      [ [ "motor_oil", 500 ] ]
+    ]
   }
 ]

@@ -230,7 +230,6 @@
     },
     "damage_reduction": { "all": 16, "stab": 6, "cut": 8 }
   },
-  
   {
     "id": "mountedtreespade",
     "type": "vehicle_part",
@@ -245,16 +244,14 @@
     "description": "A massive digging claw designed to dig around and under a tree to scoop it out by its rootball without harming it. It can also be used handily to excavate.",
     "breaks_into": [ { "item": "steel_lump", "count": [ 12, 260 ] }, { "item": "pipe", "count": [ 10, 40 ] } ],
     "qualities": [ [ "TREE_PULL", 1 ] ],
-     "requirements": {
+    "requirements": {
       "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "qualities": [ { "id": "WRENCH", "level": 2 } ] },
       "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "qualities": [ { "id": "WRENCH", "level": 2 } ] },
       "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-	"transform_terrain": { "pre_flags": [ "DIGGABLE" ], "post_terrain": "t_pit" },
-	"integrated_tools": [ "fake_treespade" ],
+    "transform_terrain": { "pre_flags": [ "DIGGABLE" ], "post_terrain": "t_pit" },
+    "integrated_tools": [ "fake_treespade" ],
     "flags": [ "PROTRUSION", "EXTRA_DRAG", "TRANSFORM_TERRAIN", "CRAFTER" ],
     "damage_reduction": { "all": 220 }
   }
-
-  
 ]
