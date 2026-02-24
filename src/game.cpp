@@ -4359,50 +4359,29 @@ void game::cleanup_dead()
 // ---------------------------------------------------------------------------
 // LOD tier assignment — called once per monmove() pass, O(M).
 //
-// Tier 0 (Full):   dist ≤ LOD_TIER_FULL_DIST (default 20) or has an active
-//                  movement goal (non-wandering).  Full AI every turn.
-// Tier 1 (Coarse): dist LOD_TIER_FULL_DIST–LOD_TIER_COARSE_DIST (default 20–40).
-//                  Reuses cached path, skips faction-morale queries, reduces
-//                  scent tracking to 1-in-3 turns.
-// Tier 2 (Macro):  dist > LOD_TIER_COARSE_DIST (default 40) and wandering
-//                  (no active goal).  Performs a single 4-directional step
-//                  every LOD_MACRO_INTERVAL turns (default 3); idle otherwise.
+// Tier 0 (Full):   dist ≤ 20 or has an active movement goal (non-wandering).
+//                  Full AI every turn.
+// Tier 1 (Coarse): dist 20–60.  Reuses cached path, skips faction-morale
+//                  queries, reduces scent tracking to 1-in-3 turns.
+// Tier 2 (Macro):  dist > 60 and wandering (no active goal).  Performs a
+//                  single 4-directional step every MACRO_INTERVAL turns;
+//                  idle otherwise.
 //
 // Promotion (lower tier number) is always immediate.
-// Demotion respects a configurable cooldown (LOD_DEMOTION_COOLDOWN) to prevent
-// boundary oscillation.  Distances are configurable via LOD_TIER_FULL_DIST and
-// LOD_TIER_COARSE_DIST.
+// Demotion respects a 3-turn cooldown to prevent boundary oscillation.
 // ---------------------------------------------------------------------------
 int game::tier_assign_all()
 {
-    if( !monster_lod_enabled ) {
-        int count = 0;
-        for( monster &mon : all_monsters() ) {
-            mon.lod_tier     = 0;
-            mon.lod_cooldown = 0;
-            ++count;
-        }
-        TracyPlot( "LOD Tier 0 (Full AI)",  static_cast<int64_t>( count ) );
-        TracyPlot( "LOD Tier 1 (Coarse)",   static_cast<int64_t>( 0 ) );
-        TracyPlot( "LOD Tier 2 (Macro)",    static_cast<int64_t>( 0 ) );
-        return count;
-    }
-
     const tripoint player_pos = u.pos();
     int tier_counts[3] = { 0, 0, 0 };
-
-    const int tier01_dist  = lod_tier_full_dist;
-    // Clamp so Tier 1/2 boundary is always strictly greater than Tier 0/1.
-    const int tier12_dist  = std::max( lod_tier_coarse_dist, tier01_dist + 1 );
-    const int demote_cd    = lod_demotion_cooldown;
 
     for( monster &mon : all_monsters() ) {
         const int dist = rl_dist( mon.pos(), player_pos );
 
         int8_t new_tier;
-        if( dist <= tier01_dist || !mon.is_wandering() ) {
+        if( dist <= 20 || !mon.is_wandering() ) {
             new_tier = 0;
-        } else if( dist <= tier12_dist ) {
+        } else if( dist <= 60 ) {
             new_tier = 1;
         } else {
             new_tier = 2;
@@ -4415,7 +4394,7 @@ int game::tier_assign_all()
         } else if( new_tier > mon.lod_tier && mon.lod_cooldown <= 0 ) {
             // Demotion only when cooldown has expired.
             mon.lod_tier     = new_tier;
-            mon.lod_cooldown = static_cast<int8_t>( demote_cd );
+            mon.lod_cooldown = 3;
         }
 
         if( mon.lod_cooldown > 0 ) {
@@ -4442,11 +4421,18 @@ void game::monmove()
     // so results from the previous turn are not reused.
     turn_sight_cache_.clear();
 
+    // LOD-A: assign tier 0/1/2 to every monster based on distance from player.
+    // Must run before the plannable collection so Tier-2 monsters are excluded
+    // from the parallel planning pass (they use the macro step instead).
+    const int tier0_count = tier_assign_all();
+
     // -----------------------------------------------------------------------
     // P-7: Parallel planning pass.
     //
-    // Collect all monsters that are alive and eligible for AI planning this
-    // turn, compute their plans in parallel, then apply and execute serially.
+    // Collect Tier-0 and Tier-1 monsters that are alive and eligible for AI
+    // planning this turn, compute their plans in parallel, then apply and
+    // execute serially.  Tier-2 (Macro) monsters are excluded here; they take
+    // a single Manhattan step in the move execution loop below.
     //
     // compute_plan() is const w.r.t. *this (monster) and only reads shared
     // game state (map caches, faction data, creature positions).  The only
@@ -4460,27 +4446,26 @@ void game::monmove()
     // setup phase (process_turn, creature_in_field) simply have their
     // pre-computed plan discarded.
     // -----------------------------------------------------------------------
-    // D-1: monsters beyond this radius that have no target and no sound
-    // stimulus are deferred — they skip plan() entirely and keep their
-    // existing state from last turn.  Imperceptible at normal game speed;
-    // the wandf > 0 check ensures any monster that heard a sound this turn
-    // is still planned normally.
-    //
-    // LOGIC-3 (accepted approximation): wandf is only advanced by sound
-    // stimuli (sounds::process_sounds → monster::hear_sound).  It is NOT
-    // advanced by scent detection or visual-only triggers that do not also
-    // produce a sound.  A monster beyond DEFERRAL_RADIUS that followed a
-    // scent trail this turn but received no sound will have wandf == 0 and
-    // be deferred even though its AI should react.  The effect is at most a
-    // one-turn delay for far-field scent followers.  To fix this in the
-    // future, extend the condition to also check whether the monster's
-    // current scent reading exceeds its detection threshold.
-    static constexpr int DEFERRAL_RADIUS = 60;
 
-    // OPP-7: Unified disposition map replaces the old separate deferred set +
-    // plan_lookup table.  A single hash lookup in the execution loop suffices:
+    // Minimum move-loop budget per turn.  The effective budget is always at
+    // least this value, but grows to cover the current Tier-0 count so that
+    // full-AI monsters are never deferred by the cap.
+    // Set to 0 to disable the budget (all eligible monsters always run).
+    static constexpr int MONMOVE_ACTION_BUDGET = 128;
+
+    // Tier-2 (Macro) monsters perform one Manhattan step toward the player
+    // every MACRO_INTERVAL turns instead of running full AI.
+    static constexpr int MACRO_INTERVAL = 3;
+
+    // Dynamic budget: at least the floor, but expanded to cover all Tier-0
+    // monsters so the cap never defers a full-AI monster.
+    // tier0_count is from this turn's tier_assign_all(), so it is current.
+    const int effective_budget = std::max( MONMOVE_ACTION_BUDGET, tier0_count );
+    TracyPlot( "LOD Effective Budget", static_cast<int64_t>( effective_budget ) );
+
+    // OPP-7: Unified disposition map: a single hash lookup in the execution
+    // loop suffices:
     //   value >= 0  → index into precomputed[] (monster has a parallel plan)
-    //   value == -1 → D-1 deferred (keep existing state, no planning)
     //   not present → not collected this turn (plan serially)
     std::unordered_map<monster *, int> plan_index;
 
@@ -4489,14 +4474,10 @@ void game::monmove()
         if( !critter.is_dead() &&
             !critter.has_effect( effect_ai_controlled ) &&
             critter.moves > 0 &&
-            !critter.has_effect( effect_ridden ) ) {
-            if( rl_dist( critter.pos(), u.pos() ) > DEFERRAL_RADIUS &&
-                critter.is_wandering() &&
-                critter.wandf <= 0 ) {
-                plan_index[&critter] = -1;  // D-1 deferred
-            } else {
-                plannable.push_back( &critter );
-            }
+            !critter.has_effect( effect_ridden ) &&
+            critter.lod_tier < 2 ) {
+            // Tier-2 monsters skip full planning; they use the macro step.
+            plannable.push_back( &critter );
         }
     }
 
@@ -4534,6 +4515,11 @@ void game::monmove()
     }
     // -----------------------------------------------------------------------
 
+    // -----------------------------------------------------------------------
+    // LOD-B: Lifecycle loop — runs for EVERY monster regardless of tier or
+    // budget.  Effect durations, hunger, and field damage tick normally for
+    // all monsters.  The budget/tier system gates only the move loop below.
+    // -----------------------------------------------------------------------
     for( monster &critter : all_monsters() ) {
         // Critters in impassable tiles get pushed away, unless it's not impassable for them
         if( !critter.is_dead() && m.impassable( critter.pos() ) && !critter.can_move_to( critter.pos() ) ) {
@@ -4570,35 +4556,7 @@ void game::monmove()
             }
             critter.try_reproduce();
         }
-
-        // First move: use the pre-computed plan from the parallel phase.
-        // Subsequent moves: fall back to serial plan() — most monsters only
-        // take one step per turn so this covers the common case.
-        bool used_preplan = false;
-        while( critter.moves > 0 && !critter.is_dead() && !critter.has_effect( effect_ridden ) ) {
-            critter.made_footstep = false;
-            // Controlled critters don't make their own plans
-            if( !critter.has_effect( effect_ai_controlled ) ) {
-                if( !used_preplan ) {
-                    used_preplan = true;
-                    const auto it = plan_index.find( &critter );
-                    if( it == plan_index.end() ) {
-                        // Not collected this turn (died in setup or ineligible).
-                        critter.plan();
-                    } else if( it->second >= 0 && !critter.is_dead() ) {
-                        // Apply the parallel-computed plan.
-                        critter.apply_plan( precomputed[it->second] );
-                    }
-                    // else: it->second == -1 → D-1 deferred, keep existing plan.
-                } else {
-                    // Subsequent steps for fast/multi-action monsters.
-                    critter.plan();
-                }
-            }
-            critter.move(); // Move one square, possibly hit u
-            critter.process_triggers();
-            m.creature_in_field( critter );
-        }
+    }
 
     // -----------------------------------------------------------------------
     // LOD-C: Build eligible list.
@@ -4656,11 +4614,89 @@ void game::monmove()
     // Compare against "LOD Tier 0 (Full AI)" to verify the budget floor is safe.
     TracyPlot( "LOD Eligible (post-cap)", static_cast<int64_t>( eligible.size() ) );
 
-    // LOD-D: execute each eligible monster's turn.
-    // Bio-alarm helper — called after each monster finishes its move loop.
-    // static const: string_id hash lookup happens once, not every turn.
-    static const bionic_id bio_alarm( "bio_alarm" );
-    const auto check_bio_alarm = [&]( const monster & critter ) {
+    // -----------------------------------------------------------------------
+    // LOD-D: Move execution loop — runs only for eligible monsters.
+    // -----------------------------------------------------------------------
+    const bionic_id bio_alarm( "bio_alarm" );
+    for( const auto &entry : eligible ) {
+        monster &critter = *entry.second;
+
+        if( critter.is_dead() ) {
+            continue;
+        }
+
+        // ------------------------------------------------------------------
+        // Tier 2 (Macro): take a single 4-directional step toward the player
+        // every MACRO_INTERVAL turns.  No pathfinding, no candidate scoring.
+        // ------------------------------------------------------------------
+        if( critter.lod_tier == 2 ) {
+            // Tier-2 monsters are always wandering (no active target) by the
+            // tier-assignment rules, so we step toward the player position
+            // rather than a goal tripoint.
+            if( current_turn % MACRO_INTERVAL == 0 ) {
+                // Pick the adjacent tile (N/S/E/W) that minimises Chebyshev
+                // distance to the player.  Skip if all candidates are blocked.
+                const tripoint cpos = critter.pos();
+                const std::array<tripoint, 4> dirs = { {
+                    { cpos.x + 1, cpos.y,     cpos.z },
+                    { cpos.x - 1, cpos.y,     cpos.z },
+                    { cpos.x,     cpos.y + 1, cpos.z },
+                    { cpos.x,     cpos.y - 1, cpos.z }
+                } };
+                int best_dist  = rl_dist( cpos, player_pos );
+                tripoint best  = cpos;
+                for( const tripoint &t : dirs ) {
+                    const int d = rl_dist( t, player_pos );
+                    if( d < best_dist && critter.can_move_to( t ) && is_empty( t ) ) {
+                        best_dist = d;
+                        best      = t;
+                    }
+                }
+                if( best != cpos ) {
+                    critter.setpos( best );
+                }
+            }
+            // Consume moves whether we stepped or not (prevents re-entry).
+            critter.moves = 0;
+            critter.next_turn = current_turn + 1;
+            continue;
+        }
+
+        // ------------------------------------------------------------------
+        // Tier 0/1: full (or Coarse) AI execution.
+        //
+        // First move: use the pre-computed plan from the parallel phase.
+        // Subsequent moves: fall back to serial plan() — most monsters only
+        // take one step per turn so this covers the common case.
+        // ------------------------------------------------------------------
+        bool used_preplan = false;
+        while( critter.moves > 0 && !critter.is_dead() && !critter.has_effect( effect_ridden ) ) {
+            critter.made_footstep = false;
+            // Controlled critters don't make their own plans
+            if( !critter.has_effect( effect_ai_controlled ) ) {
+                if( !used_preplan ) {
+                    used_preplan = true;
+                    const auto it = plan_index.find( &critter );
+                    if( it == plan_index.end() ) {
+                        // Not collected this turn (died in setup or ineligible).
+                        critter.plan();
+                    } else if( !critter.is_dead() ) {
+                        // Apply the parallel-computed plan.
+                        critter.apply_plan( precomputed[it->second] );
+                    }
+                } else {
+                    // Subsequent steps for fast/multi-action monsters.
+                    critter.plan();
+                }
+            }
+            critter.move(); // Move one square, possibly hit u
+            critter.process_triggers();
+            m.creature_in_field( critter );
+        }
+
+        // Advance scheduling counter now that this monster has run.
+        critter.next_turn = current_turn + 1;
+
         if( !critter.is_dead() &&
             u.has_active_bionic( bio_alarm ) &&
             u.get_power_level() >= bio_alarm->power_trigger &&
