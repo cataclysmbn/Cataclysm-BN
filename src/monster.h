@@ -266,6 +266,15 @@ class monster : public Creature, public location_visitable<monster>
         monster_action_t decide_action() const;
 
         /**
+         * Pre-warm the per-turn sight cache for the (this, target) pair.
+         * Call serially before the parallel planning phase so that
+         * compute_plan() hits the shared_lock read path instead of taking
+         * a unique_lock insert for every monster-player/NPC pair.
+         * (PERF-A / GAIN-A: replaces bare mon->sees(target) pre-warm.)
+         */
+        void prewarm_sight( const Creature &target ) const;
+
+        /**
          * Phase 2+ execution pass: applies the action returned by decide_action().
          * Must run on the main thread (or a thread that has exclusive access to
          * this monster's position in the reservation map, Phase 3+).

@@ -335,6 +335,13 @@ static bool turn_cached_sees( const Creature &seer, const Creature &target )
     return result;
 }
 
+void monster::prewarm_sight( const Creature &target ) const
+{
+    // Populate turn_sight_cache_ for this (monster, target) pair serially so
+    // the parallel planning phase hits only the shared_lock read path.
+    turn_cached_sees( *this, target );
+}
+
 float monster::rate_target( Creature &c, float best, bool smart, int precalc_dist ) const
 {
     // PERF-LOSS-4: use caller-supplied distance when available to avoid
@@ -428,72 +435,70 @@ monster_plan_t monster::compute_plan() const
     bool swarms       = lod_tier == 0 && has_flag( MF_SWARMS );
     auto mood   = attitude();
 
-    if( local_friendly == 0 && turn_cached_sees( *this, g->u ) && !waiting ) {
-        dist    = rate_target( g->u, dist, smart_planning );
-        fleeing = fleeing || is_fleeing( g->u );
-        target  = &g->u;
-        if( dist <= 5 ) {
-            if( has_flag( MF_FACTION_MEMORY ) ) {
-                result.faction_angers.push_back( { mfaction_id( "player" ), angers_hostile_near } );
-            } else {
-                local_anger += angers_hostile_near;
-            }
-            if( angers_hostile_near ) {
-                // P-5 / LOGIC-2: x_in_y uses the thread-local RNG engine on
-                // worker threads — data-race-free, but aggro rolls are no longer
-                // tied to the main-thread minstd_rand0 sequence.  Save-file
-                // determinism is broken: replaying the same turns after a reload
-                // will produce different aggro outcomes because worker RNG seeds
-                // are based on thread_id ^ high_resolution_clock::now().  The
-                // main thread's RNG sequence also shifts (fewer calls per turn).
-                // To restore determinism, defer the x_in_y check to apply_plan()
-                // so it runs on the main thread with the shared engine.
-                if( x_in_y( local_anger, 100 ) ) {
-                    result.aggro_triggers.push_back( "proximity" );
+    // GAIN-B: call rate_target once (which internally calls turn_cached_sees).
+    // The redundant outer turn_cached_sees guard has been removed; player
+    // visibility is determined by the rate_target return value (FLT_MAX = not visible).
+    if( local_friendly == 0 && !waiting ) {
+        const float player_dist = rate_target( g->u, dist, smart_planning );
+        if( player_dist < FLT_MAX ) {
+            dist    = player_dist;
+            fleeing = fleeing || is_fleeing( g->u );
+            target  = &g->u;
+            if( dist <= 5 ) {
+                if( has_flag( MF_FACTION_MEMORY ) ) {
+                    result.faction_angers.push_back( { mfaction_id( "player" ), angers_hostile_near } );
+                } else {
+                    local_anger += angers_hostile_near;
                 }
-            }
-            local_morale -= fears_hostile_near;
-            if( angers_mating_season > 0 ) {
-                bool mating_angry = false;
-                season_type season = season_of_year( calendar::turn );
-                for( auto &elem : type->baby_flags ) {
-                    if( ( season == SUMMER && elem == "SUMMER" ) ||
-                        ( season == WINTER && elem == "WINTER" ) ||
-                        ( season == SPRING && elem == "SPRING" ) ||
-                        ( season == AUTUMN && elem == "AUTUMN" ) ) {
-                        mating_angry = true;
-                        break;
-                    }
-                }
-                if( mating_angry ) {
-                    if( has_flag( MF_FACTION_MEMORY ) ) {
-                        result.faction_angers.push_back(
-                        { mfaction_id( "player" ), angers_mating_season } );
-                    } else {
-                        local_anger += angers_mating_season;
-                    }
-                    // LOGIC-2: uses worker-thread RNG — see "proximity" comment above.
+                if( angers_hostile_near ) {
+                    // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
                     if( x_in_y( local_anger, 100 ) ) {
-                        result.aggro_triggers.push_back( "mating season" );
+                        result.aggro_triggers.push_back( "proximity" );
                     }
                 }
-            }
-        }
-        if( angers_cub_threatened > 0 ) {
-            for( monster &tmp : g->all_monsters() ) {
-                if( type->baby_monster == tmp.type->id ) {
-                    // Mirrors original plan(): dist is updated so subsequent
-                    // target selection uses the baby-player distance.
-                    dist = tmp.rate_target( g->u, dist, smart_planning );
-                    if( dist <= 3 ) {
+                local_morale -= fears_hostile_near;
+                if( angers_mating_season > 0 ) {
+                    bool mating_angry = false;
+                    season_type season = season_of_year( calendar::turn );
+                    for( auto &elem : type->baby_flags ) {
+                        if( ( season == SUMMER && elem == "SUMMER" ) ||
+                            ( season == WINTER && elem == "WINTER" ) ||
+                            ( season == SPRING && elem == "SPRING" ) ||
+                            ( season == AUTUMN && elem == "AUTUMN" ) ) {
+                            mating_angry = true;
+                            break;
+                        }
+                    }
+                    if( mating_angry ) {
                         if( has_flag( MF_FACTION_MEMORY ) ) {
                             result.faction_angers.push_back(
-                            { mfaction_id( "player" ), angers_cub_threatened } );
+                            { mfaction_id( "player" ), angers_mating_season } );
                         } else {
-                            local_anger += angers_cub_threatened;
+                            local_anger += angers_mating_season;
                         }
-                        local_morale += angers_cub_threatened / 2;
-                        result.aggro_triggers.push_back( "threatening cub" );
+                        // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
+                        if( x_in_y( local_anger, 100 ) ) {
+                            result.aggro_triggers.push_back( "mating season" );
+                        }
+                    }
+                }
+            }
+            if( angers_cub_threatened > 0 ) {
+                for( monster &tmp : g->all_monsters() ) {
+                    if( type->baby_monster == tmp.type->id ) {
+                        // Mirrors original plan(): dist is updated so subsequent
+                        // target selection uses the baby-player distance.
+                        dist = tmp.rate_target( g->u, dist, smart_planning );
+                        if( dist <= 3 ) {
+                            if( has_flag( MF_FACTION_MEMORY ) ) {
+                                result.faction_angers.push_back(
+                                { mfaction_id( "player" ), angers_cub_threatened } );
+                            } else {
+                                local_anger += angers_cub_threatened;
+                            }
+                            local_morale += angers_cub_threatened / 2;
+                            result.aggro_triggers.push_back( "threatening cub" );
+                        }
                     }
                 }
             }
@@ -579,7 +584,7 @@ monster_plan_t monster::compute_plan() const
                     } else {
                         local_anger += angers_mating_season;
                     }
-                    // LOGIC-2: uses worker-thread RNG — see "proximity" comment above.
+                    // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
                     if( x_in_y( local_anger, 100 ) ) {
                         result.aggro_triggers.push_back( "mating season" );
                     }
@@ -692,12 +697,9 @@ monster_plan_t monster::compute_plan() const
                 }
             }
         }
-        // else: the original plan() restored friendly from prev_friendlyness
-        // here, but that was a no-op because prev_friendlyness was set from
-        // friendly at the top of the function before any modification occurred.
-        // local_friendly is already the correct prior value; no restore needed.
-        // LOGIC-4: if future code modifies local_friendly before this block,
-        // a restore branch must be added here to avoid silently clobbering it.
+        // else: no restore needed — the original else-branch was always a no-op.
+        // LOGIC-4: if local_friendly is modified before this block in the future,
+        // add a restore branch here.
     }
 
     if( has_effect( effect_dragging ) ) {
@@ -751,7 +753,7 @@ monster_plan_t monster::compute_plan() const
                     local_anger += anger_amount;
                 }
                 if( local_anger <= 40 ) {
-                    // LOGIC-2: uses worker-thread RNG — see "proximity" comment above.
+                    // LOGIC-2: worker-thread RNG — see P-5 note above turn_cached_sees().
                     if( x_in_y( local_anger, 100 ) ) {
                         result.aggro_triggers.push_back( "weakness" );
                     }
@@ -1016,7 +1018,11 @@ monster_action_t monster::decide_action() const
         }
 
         // Signal A* repath if needed (execute_action will do the actual call).
-        if( repath_requested && lod_tier == 0 && !action.needs_repath ) {
+        // Tier-0: always repath when requested.
+        // Tier-1: also repath when repath_requested is already set (monster was
+        //   stuck last turn), breaking the perpetual stuck loop where a blocked
+        //   Tier-1 monster spends 100 moves per turn and never replans.
+        if( repath_requested && lod_tier <= 1 && !action.needs_repath ) {
             action.needs_repath = true;
         }
     } else {
@@ -1033,10 +1039,11 @@ monster_action_t monster::decide_action() const
             }
         }
 
-        // wandf will be decremented in execute_action (wandf--), so simulate
-        // the post-decrement value for this check.
-        const int effective_wandf = wandf > 0 ? wandf - 1 : 0;
-        if( effective_wandf > 0 && friendly == 0 ) {
+        // wandf and friendly are both decremented in execute_action, so simulate
+        // their post-decrement values for these checks.
+        const int effective_wandf    = wandf > 0 ? wandf - 1 : 0;
+        const int effective_friendly = friendly > 0 ? friendly - 1 : friendly;
+        if( effective_wandf > 0 && effective_friendly == 0 ) {
             // Follow sound as a fall-back (unset_dest write deferred).
             if( wander_pos != pos() ) {
                 destination = wander_pos;
@@ -1206,7 +1213,11 @@ monster_action_t monster::decide_action() const
         action.stagger_adjust = get_stagger_adjust( pos(), destination, next_step );
 
         // Determine action kind by what occupies next_step.
-        const Creature *critter_here = g->critter_at( next_step, is_hallucination() );
+        // Re-use action.target if set by the hostile-break in the candidate loop —
+        // avoids a redundant critter_at lookup for the attack case (PERF-B).
+        const Creature *critter_here = action.target != nullptr
+            ? action.target
+            : g->critter_at( next_step, is_hallucination() );
         if( !pacified && critter_here != nullptr &&
             attitude_to( *critter_here ) == Attitude::A_HOSTILE ) {
             action.kind   = monster_action_kind::attack;
@@ -1219,8 +1230,7 @@ monster_action_t monster::decide_action() const
         } else if( !pacified && critter_here != nullptr &&
                    attitude_to( *critter_here ) != Attitude::A_HOSTILE &&
                    has_flag( MF_PUSH_MON ) ) {
-            action.kind           = monster_action_kind::push;
-            action.must_serialize = true;
+            action.kind = monster_action_kind::push;
         } else {
             action.kind = monster_action_kind::move;
         }
@@ -1247,12 +1257,12 @@ monster_action_t monster::decide_action() const
 // ---------------------------------------------------------------------------
 void monster::execute_action( const monster_action_t &action )
 {
-    // (1) wandf decrement -- unconditional, matching the first line of old move().
+    // wandf decrement — unconditional, matching the first line of old move().
     if( wandf > 0 ) {
         wandf--;
     }
 
-    // (2) Hallucination death -- triggered by decide_action returning kind=die.
+    // Hallucination death — triggered by decide_action returning kind=die.
     if( action.kind == monster_action_kind::die ) {
         die( nullptr );
         return;
@@ -1304,7 +1314,7 @@ void monster::execute_action( const monster_action_t &action )
 
     const bool pacified = has_effect( effect_pacified );
 
-    // (3) Special attacks: fire any ready specials, then fall through to movement.
+    // Special attacks: fire any ready specials, then fall through to movement.
     //     This matches the original move() behaviour where specials were a side
     //     effect and the monster still moved in the same tick.  Pulling specials
     //     out into a separate action kind (with an early return) caused an infinite
@@ -1337,11 +1347,11 @@ void monster::execute_action( const monster_action_t &action )
     }
     // Fall through: execute the movement action regardless of whether a special fired.
 
-    // (4) Dragging foe / nursebot.
+    // Dragging foe / nursebot.
     player *dragged_foe = find_dragged_foe();
     nursebot_operate( dragged_foe );
 
-    // (5) Floor / drowning / moves-negative guards.
+    // Floor / drowning / moves-negative guards.
     if( !flies() && g->m.has_flag( TFLAG_NO_FLOOR, pos() ) ) {
         g->m.creature_on_trap( *this, false );
         if( is_dead() ) {
@@ -1357,7 +1367,7 @@ void monster::execute_action( const monster_action_t &action )
         return;
     }
 
-    // (6) move_effects -- may prevent movement this tick.
+    // move_effects — may prevent movement this tick.
     // TODO: Move this to attack_at/move_to/etc. functions
     bool attacking = false;
     if( !move_effects( attacking ) ) {
@@ -1365,7 +1375,14 @@ void monster::execute_action( const monster_action_t &action )
         return;
     }
 
-    // (7) Idle / stumble actions (immobile, stunned, ai_waiting, attitude-stumble,
+    // Friendly decrement — runs unconditionally here so idle-path exits
+    //     (ai_waiting, immobile, no-viable-step, etc.) also age the counter,
+    //     matching the original move() where this preceded the ai_waiting return.
+    if( friendly > 0 ) {
+        --friendly;
+    }
+
+    // Idle / stumble actions (immobile, stunned, ai_waiting, attitude-stumble,
     //     no-viable-step).  These are checked AFTER move_effects to preserve the
     //     original ordering.
     if( action.kind == monster_action_kind::idle ) {
@@ -1386,16 +1403,11 @@ void monster::execute_action( const monster_action_t &action )
         return;
     }
 
-    // (8) Friendly decrement.
-    if( friendly > 0 ) {
-        --friendly;
-    }
-
-    // (9) Vehicle harness handling (including the remove_effect write).
+    // Vehicle harness handling (including the remove_effect write).
     {
         const auto vp2        = g->m.veh_at( pos() );
         const bool harness_part = static_cast<bool>(
-                                      g->m.veh_at( pos() ).part_with_feature( "ANIMAL_CTRL", true ) );
+            g->m.veh_at( pos() ).part_with_feature( "ANIMAL_CTRL", true ) );
         if( vp2 && vp2->vehicle().is_moving() &&
             vp2->vehicle().get_pet( vp2->part_index() ) ) {
             moves = 0;
@@ -1412,7 +1424,7 @@ void monster::execute_action( const monster_action_t &action )
     // Movement execution phase.
     // -----------------------------------------------------------------------
 
-    // (10) Facing direction update.
+    // Facing direction update.
     const tripoint dest = action.dest;
     {
         const point new_d( dest.xy() - pos().xy() );
@@ -1432,14 +1444,16 @@ void monster::execute_action( const monster_action_t &action )
         }
     }
 
-    // (11) Path trimming: remove front elements that equal current position.
+    // Path trimming: remove front elements that equal current position.
     while( !this->path.empty() && this->path.front() == this->pos() ) {
         this->path.erase( this->path.begin() );
     }
 
-    // (12) A* repath if flagged by decide_action.
+    // A* repath if flagged by decide_action.
+    //      Tier 0: always.  Tier 1: when genuinely stuck (see LOGIC-E note in
+    //      decide_action).  Tier 2: never — macro step has no path.
     if( action.needs_repath && !is_wandering() ) {
-        if( lod_tier == 0 ) {
+        if( lod_tier <= 1 ) {
             std::vector<tripoint> maybe_new_path;
             if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) ) {
                 auto pf_settings = get_legacy_pathfinding_settings();
@@ -1457,10 +1471,10 @@ void monster::execute_action( const monster_action_t &action )
                 this->path.clear();
             }
         }
-        // Tier 1/2: path unchanged; straight-line fallback was used in decide_action.
+        // Tier 2: path unchanged; macro step does not use the A* path.
     }
 
-    // (13) Wandering branch writes: unset_dest and path.clear().
+    // Wandering branch writes: unset_dest and path.clear().
     if( is_wandering() ) {
         this->unset_dest();
         this->path.clear();
@@ -1469,13 +1483,15 @@ void monster::execute_action( const monster_action_t &action )
     // Clear the repath flag now that we have handled it.
     this->repath_requested = false;
 
-    // (14) Shove vehicle at the chosen destination (was inline in the candidate
+    // Shove vehicle at the chosen destination (was inline in the candidate
     //      loop in old move(); now runs once for the chosen step).
+    //      remote_destination = monster's movement goal (may be many tiles away);
+    //      nearby_destination = the immediate step being taken (action.dest).
     if( action.kind == monster_action_kind::move ) {
-        shove_vehicle( dest, dest );
+        shove_vehicle( goal, dest );
     }
 
-    // (15) Execute the chosen action.
+    // Execute the chosen action.
     const bool can_open_doors = has_flag( MF_CAN_OPEN_DOORS );
     bool did_something = false;
 
@@ -1505,7 +1521,7 @@ void monster::execute_action( const monster_action_t &action )
         this->repath_requested = true;
     }
 
-    // (16) Dragging update.
+    // Dragging update.
     if( has_effect( effect_dragging ) && dragged_foe != nullptr ) {
         if( !dragged_foe->has_effect( effect_grabbed ) ) {
             dragged_foe = nullptr;
@@ -1516,7 +1532,7 @@ void monster::execute_action( const monster_action_t &action )
         }
     }
 
-    // (17) Leash check.
+    // Leash check.
     if( has_effect( effect_led_by_leash ) ) {
         if( rl_dist( pos(), g->u.pos() ) > 8 ) {
             remove_effect( effect_led_by_leash );

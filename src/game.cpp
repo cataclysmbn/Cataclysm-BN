@@ -65,6 +65,7 @@
 #include "coordinates.h"
 #include "crafting.h"
 #include "creature_tracker.h"
+#include "monster.h"
 #include "monster_action.h"
 #include "monster_plan.h"
 #include "thread_pool.h"
@@ -4347,11 +4348,11 @@ void game::monmove()
         }
     }
 
-    // OPP-1: Pre-warm skew_vision_cache with (monster → player) and
-    // (monster → NPC) visibility pairs for every plannable monster before the
-    // parallel phase.  All inserts happen serially on the main thread so there
-    // is zero lock contention here.  The parallel phase then predominantly hits
-    // the cache and only needs a shared_lock, collapsing contention to near zero.
+    // OPP-1 (PERF-A fix): Pre-warm both turn_sight_cache_ and skew_vision_cache
+    // for (monster → player) and (monster → NPC) pairs before the parallel phase.
+    // prewarm_sight() calls turn_cached_sees(), which populates turn_sight_cache_
+    // under a unique_lock here (serial, zero contention).  The parallel phase then
+    // hits turn_sight_cache_ under shared_lock only — zero write contention.
     //
     // PERF-LOSS-5: the original pre-warm covered only monster→player pairs.
     // Adding monster→NPC pairs eliminates the remaining lock serialisation on
@@ -4359,9 +4360,9 @@ void game::monmove()
     // frequency in typical saves does not justify the O(M²) cost of checking
     // all hostile-faction combinations up-front).
     for( monster *mon : plannable ) {
-        mon->sees( u );
+        mon->prewarm_sight( u );
         for( npc &n : all_npcs() ) {
-            mon->sees( n );
+            mon->prewarm_sight( n );
         }
     }
 
@@ -4375,7 +4376,7 @@ void game::monmove()
     } );
 
     // Insert plannable entries into plan_index now that precomputed[] is built.
-    plan_index.reserve( plan_index.size() + plannable.size() );
+    plan_index.reserve( plannable.size() );
     for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
         plan_index[plannable[i]] = i;
     }
@@ -4484,7 +4485,7 @@ void game::monmove()
     // Bio-alarm helper — called after each monster finishes its move loop.
     // static const: string_id hash lookup happens once, not every turn.
     static const bionic_id bio_alarm( "bio_alarm" );
-    const auto check_bio_alarm = [&]( const monster & critter ) {
+    const auto check_bio_alarm = [&]( const monster &critter ) {
         if( !critter.is_dead() &&
             u.has_active_bionic( bio_alarm ) &&
             u.get_power_level() >= bio_alarm->power_trigger &&
@@ -4500,22 +4501,25 @@ void game::monmove()
         }
     };
 
-    // Tier-2 macro-step: once per MACRO_INTERVAL turns nudge the monster
-    // one step closer to the player without running full AI.
-    const auto do_tier2_macro = [&]( monster & critter ) {
-        if( current_turn % MACRO_INTERVAL == 0 ) {
-            const tripoint cpos = critter.pos();
+    // Tier-2 macro-step: once per MACRO_INTERVAL turns, if the monster has an
+    // active wander destination (heard a sound), nudge it one step toward that
+    // destination without running full AI.  Truly wandering monsters (wandf==0)
+    // have no goal and remain stationary — they should NOT drift toward the player.
+    const auto do_tier2_macro = [&]( monster &critter ) {
+        if( current_turn % MACRO_INTERVAL == 0 &&
+            critter.wandf > 0 && critter.wander_pos != critter.pos() ) {
+            const tripoint cpos      = critter.pos();
+            const tripoint macro_goal = critter.wander_pos;
             const std::array<tripoint, 4> dirs = { {
-                    { cpos.x + 1, cpos.y,     cpos.z },
-                    { cpos.x - 1, cpos.y,     cpos.z },
-                    { cpos.x,     cpos.y + 1, cpos.z },
-                    { cpos.x,     cpos.y - 1, cpos.z }
-                }
-            };
-            int best_dist = rl_dist( cpos, player_pos );
+                { cpos.x + 1, cpos.y,     cpos.z },
+                { cpos.x - 1, cpos.y,     cpos.z },
+                { cpos.x,     cpos.y + 1, cpos.z },
+                { cpos.x,     cpos.y - 1, cpos.z }
+            } };
+            int best_dist = rl_dist( cpos, macro_goal );
             tripoint best = cpos;
             for( const tripoint &t : dirs ) {
-                const int d = rl_dist( t, player_pos );
+                const int d = rl_dist( t, macro_goal );
                 if( d < best_dist && critter.can_move_to( t ) && is_empty( t ) ) {
                     best_dist = d;
                     best      = t;
@@ -4525,6 +4529,7 @@ void game::monmove()
                 critter.setpos( best );
             }
         }
+        // else: no active sound cue — remain stationary this macro tick.
         critter.moves = 0;
         critter.next_turn = current_turn + 1;
     };
