@@ -25,13 +25,14 @@ enum class monster_action_kind : uint8_t {
     idle,        // No viable move; consume move_cost moves and optionally stumble.
     die,         // Hallucination death; execute_action calls die(nullptr).
     stumble,     // Monster is stunned; execute_action calls stumble() then zeroes moves.
-    // special,  // Phase 3 placeholder: signal a pending serialised special attack.
-    //           // Not set by decide_action yet; see PERFORMANCE_TODO Phase 3.
+    special,     // Reserved for Phase 3: signal that a special is pending serialisation.
+                 // NOT currently set by decide_action() — specials fire as a fall-through
+                 // side effect inside execute_action() to match original move() behaviour.
     move,        // Move to dest tile.
     attack,      // Melee attack creature at dest.
     bash,        // Bash obstacle at dest.
     open_door,   // Open door at dest.
-    push,        // Push creature at dest.
+    push,        // Push creature at dest (always must_serialize — displaces another monster).
 };
 
 // ---------------------------------------------------------------------------
@@ -53,13 +54,13 @@ struct monster_action_t {
     /// Stagger multiplier passed to move_to().  1.0 = no stagger.
     float               stagger_adjust = 1.0f;
 
-    // must_serialize removed — Phase 3 infrastructure; re-add when Step 7 ships.
-    // See PERFORMANCE_TODO Phase 3 / Step 7.
+    /// Phase 3: route this action through the serial conflict queue rather than
+    /// executing it in the parallel phase.  Always true for special and push.
+    bool                must_serialize = false;
 
-    /// Path is stale; execute_action must call Pathfinding::route() before stepping.
-    /// Set for Tier-0 whenever requested; set for Tier-1 when genuinely stuck
-    /// (repath_requested was already true, i.e. stuck for 2+ turns — LOGIC-E).
-    /// Tier-2 never sets this flag (macro step does not use the path).
+    /// Tier-0 path is stale; execute_action must call Pathfinding::route()
+    /// before stepping.  Tier 1 uses the cached path as-is; Tier 2 never sets
+    /// this flag (macro step does not use the path).
     bool                needs_repath   = false;
 
     /// execute_action should call stumble() after consuming move_cost moves.

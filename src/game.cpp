@@ -65,6 +65,7 @@
 #include "coordinates.h"
 #include "crafting.h"
 #include "creature_tracker.h"
+#include "monster_action.h"
 #include "monster_plan.h"
 #include "thread_pool.h"
 #include "cursesport.h"
@@ -4614,89 +4615,11 @@ void game::monmove()
     // Compare against "LOD Tier 0 (Full AI)" to verify the budget floor is safe.
     TracyPlot( "LOD Eligible (post-cap)", static_cast<int64_t>( eligible.size() ) );
 
-    // -----------------------------------------------------------------------
-    // LOD-D: Move execution loop — runs only for eligible monsters.
-    // -----------------------------------------------------------------------
-    const bionic_id bio_alarm( "bio_alarm" );
-    for( const auto &entry : eligible ) {
-        monster &critter = *entry.second;
-
-        if( critter.is_dead() ) {
-            continue;
-        }
-
-        // ------------------------------------------------------------------
-        // Tier 2 (Macro): take a single 4-directional step toward the player
-        // every MACRO_INTERVAL turns.  No pathfinding, no candidate scoring.
-        // ------------------------------------------------------------------
-        if( critter.lod_tier == 2 ) {
-            // Tier-2 monsters are always wandering (no active target) by the
-            // tier-assignment rules, so we step toward the player position
-            // rather than a goal tripoint.
-            if( current_turn % MACRO_INTERVAL == 0 ) {
-                // Pick the adjacent tile (N/S/E/W) that minimises Chebyshev
-                // distance to the player.  Skip if all candidates are blocked.
-                const tripoint cpos = critter.pos();
-                const std::array<tripoint, 4> dirs = { {
-                    { cpos.x + 1, cpos.y,     cpos.z },
-                    { cpos.x - 1, cpos.y,     cpos.z },
-                    { cpos.x,     cpos.y + 1, cpos.z },
-                    { cpos.x,     cpos.y - 1, cpos.z }
-                } };
-                int best_dist  = rl_dist( cpos, player_pos );
-                tripoint best  = cpos;
-                for( const tripoint &t : dirs ) {
-                    const int d = rl_dist( t, player_pos );
-                    if( d < best_dist && critter.can_move_to( t ) && is_empty( t ) ) {
-                        best_dist = d;
-                        best      = t;
-                    }
-                }
-                if( best != cpos ) {
-                    critter.setpos( best );
-                }
-            }
-            // Consume moves whether we stepped or not (prevents re-entry).
-            critter.moves = 0;
-            critter.next_turn = current_turn + 1;
-            continue;
-        }
-
-        // ------------------------------------------------------------------
-        // Tier 0/1: full (or Coarse) AI execution.
-        //
-        // First move: use the pre-computed plan from the parallel phase.
-        // Subsequent moves: fall back to serial plan() — most monsters only
-        // take one step per turn so this covers the common case.
-        // ------------------------------------------------------------------
-        bool used_preplan = false;
-        while( critter.moves > 0 && !critter.is_dead() && !critter.has_effect( effect_ridden ) ) {
-            critter.made_footstep = false;
-            // Controlled critters don't make their own plans
-            if( !critter.has_effect( effect_ai_controlled ) ) {
-                if( !used_preplan ) {
-                    used_preplan = true;
-                    const auto it = plan_index.find( &critter );
-                    if( it == plan_index.end() ) {
-                        // Not collected this turn (died in setup or ineligible).
-                        critter.plan();
-                    } else if( !critter.is_dead() ) {
-                        // Apply the parallel-computed plan.
-                        critter.apply_plan( precomputed[it->second] );
-                    }
-                } else {
-                    // Subsequent steps for fast/multi-action monsters.
-                    critter.plan();
-                }
-            }
-            critter.move(); // Move one square, possibly hit u
-            critter.process_triggers();
-            m.creature_in_field( critter );
-        }
-
-        // Advance scheduling counter now that this monster has run.
-        critter.next_turn = current_turn + 1;
-
+    // LOD-D: execute each eligible monster's turn.
+    // Bio-alarm helper — called after each monster finishes its move loop.
+    // static const: string_id hash lookup happens once, not every turn.
+    static const bionic_id bio_alarm( "bio_alarm" );
+    const auto check_bio_alarm = [&]( const monster &critter ) {
         if( !critter.is_dead() &&
             u.has_active_bionic( bio_alarm ) &&
             u.get_power_level() >= bio_alarm->power_trigger &&
@@ -4712,40 +4635,30 @@ void game::monmove()
         }
     };
 
-    // Tier-2 macro-step: once per macro_interval turns, if the monster has an
-    // active wander destination (heard a sound), nudge it one step toward that
-    // destination without running full AI.  Truly wandering monsters (wandf==0)
-    // have no goal and remain stationary — they should NOT drift toward the player.
-    const auto do_tier2_macro = [&]( monster & critter ) {
-        if( current_turn % macro_interval == 0 &&
-            critter.wandf > 0 && critter.wander_pos != critter.pos() ) {
-            const tripoint cpos      = critter.pos();
-            const tripoint macro_goal = critter.wander_pos;
+    // Tier-2 macro-step: once per MACRO_INTERVAL turns nudge the monster
+    // one step closer to the player without running full AI.
+    const auto do_tier2_macro = [&]( monster &critter ) {
+        if( current_turn % MACRO_INTERVAL == 0 ) {
+            const tripoint cpos = critter.pos();
             const std::array<tripoint, 4> dirs = { {
-                    { cpos.x + 1, cpos.y,     cpos.z },
-                    { cpos.x - 1, cpos.y,     cpos.z },
-                    { cpos.x,     cpos.y + 1, cpos.z },
-                    { cpos.x,     cpos.y - 1, cpos.z }
-                }
-            };
-            int best_dist = rl_dist( cpos, macro_goal );
+                { cpos.x + 1, cpos.y,     cpos.z },
+                { cpos.x - 1, cpos.y,     cpos.z },
+                { cpos.x,     cpos.y + 1, cpos.z },
+                { cpos.x,     cpos.y - 1, cpos.z }
+            } };
+            int best_dist = rl_dist( cpos, player_pos );
             tripoint best = cpos;
             for( const tripoint &t : dirs ) {
-                const int d = rl_dist( t, macro_goal );
+                const int d = rl_dist( t, player_pos );
                 if( d < best_dist && critter.can_move_to( t ) && is_empty( t ) ) {
                     best_dist = d;
                     best      = t;
                 }
             }
             if( best != cpos ) {
-                // NOTE: setpos() updates the critter-tracker position map but
-                // does NOT call creature_in_field() for the new tile.  Field
-                // damage (fire, acid, etc.) at the macro-step destination is
-                // deferred to the next turn's LOD-B pass.
                 critter.setpos( best );
             }
         }
-        // else: no active sound cue — remain stationary this macro tick.
         critter.moves = 0;
         critter.next_turn = current_turn + 1;
     };

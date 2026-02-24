@@ -30,6 +30,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
+#include "monster_action.h"
 #include "monster_plan.h"
 #include "visitable.h"
 
@@ -251,7 +252,37 @@ class monster : public Creature, public location_visitable<monster>
          * add_faction_anger(), trigger_character_aggro(), etc.
          */
         void apply_plan( const monster_plan_t &plan );
-        void move(); // Actual movement
+
+        /**
+         * Phase 2+ decision pass: reads monster and world state to determine
+         * the single action this monster intends to take.  const — no mutations
+         * to *this.  Safe to call from a worker thread in Phase 2+ once the
+         * same thread-safety preconditions as compute_plan() are met.
+         *
+         * Key constraint: must NOT call Pathfinding::route() (d_maps/d_maps_store
+         * are global static, not thread-local; see Phase 3 / Step 10 for the fix).
+         * Sets needs_repath = true in the returned action when a fresh A* is
+         * needed; execute_action() performs the actual repath.
+         */
+        monster_action_t decide_action() const;
+
+        /**
+         * Phase 2+ execution pass: applies the action returned by decide_action().
+         * Must run on the main thread (or a thread that has exclusive access to
+         * this monster's position in the reservation map, Phase 3+).
+         *
+         * Also handles the pre-move mutations that cannot be done in the const
+         * decide pass (wandf decrement, move_effects, behavior oracle, etc.).
+         * If a pre-move guard prevents movement (move_effects returns false,
+         * drowning, etc.) the precomputed action is silently discarded and the
+         * appropriate early-exit behavior is applied.
+         *
+         * process_triggers() and map::creature_in_field() are NOT called here;
+         * the caller (game::monmove LOD-D) is responsible for those.
+         */
+        void execute_action( const monster_action_t &action );
+
+        void move(); // Thin wrapper: decide_action() → execute_action()
         void footsteps( const tripoint &p ); // noise made by movement
         void shove_vehicle( const tripoint &remote_destination,
                             const tripoint &nearby_destination ); // shove vehicles out of the way

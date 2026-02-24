@@ -1012,34 +1012,12 @@ monster_action_t monster::decide_action() const
     const map &here = g->m;
     tripoint destination = pos();
 
-    if( !this->is_wandering() ) {
-        if( this->repath_requested ) {
-            // LOD Tier 1/2: skip the A* recompute.  The cached path (if any)
-            // is reused as-is; if it is empty the fallback below uses a
-            // straight-line step toward the goal.  This avoids the heap
-            // allocation and graph traversal cost for coarse/macro monsters.
-            if( lod_tier == 0 ) {
-                std::vector<tripoint> maybe_new_path;
-
-                if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) ) {
-                    auto pf_settings = get_legacy_pathfinding_settings();
-                    maybe_new_path = g->m.route( this->pos(), this->goal, pf_settings,
-                                                 this->get_legacy_path_avoid() );
-                } else {
-                    auto pair = this->get_pathfinding_pair();
-                    maybe_new_path = Pathfinding::route( this->pos(), this->goal,
-                                                         pair.first, pair.second );
-                }
-
-                const bool is_pathfinding_successful = !maybe_new_path.empty();
-                assert( is_pathfinding_successful ? maybe_new_path.back() == this->goal : true );
-
-                if( is_pathfinding_successful ) {
-                    // Path will be retained even if we are unsuccessful this time
-                    this->path = maybe_new_path;
-                }
-            }
-            // Tier 1/2: path unchanged; straight-line fallback applies below.
+    if( !is_wandering() ) {
+        // Simulate the path trimming without erasing: find the first element
+        // that is not our current position.
+        auto path_it = path.cbegin();
+        while( path_it != path.cend() && *path_it == pos() ) {
+            ++path_it;
         }
 
         if( path_it == path.cend() ) {
@@ -1057,35 +1035,27 @@ monster_action_t monster::decide_action() const
         }
 
         // Signal A* repath if needed (execute_action will do the actual call).
-        // Tier-0: always repath when requested.
-        // Tier-1: also repath when repath_requested is already set (monster was
-        //   stuck last turn), breaking the perpetual stuck loop where a blocked
-        //   Tier-1 monster spends 100 moves per turn and never replans.
-        if( repath_requested && lod_tier <= 1 && !action.needs_repath ) {
+        if( repath_requested && lod_tier == 0 && !action.needs_repath ) {
             action.needs_repath = true;
         }
     } else {
+        // Wandering: scent -> sound fall-backs (reads only).
         // LOD Tier 1: reduce scent-tracking to ~1-in-3 turns to save CPU.
-        // Dropping it completely would break corner-rounding for out-of-sight
-        // pursuit; 1-in-3 is a good balance between cost and fidelity.
-        // Tier 0 always checks; Tier 2 never reaches this branch (handled above).
         const bool do_scent = lod_tier == 0 ||
                               ( to_turn<int>( calendar::turn ) + pos().x + pos().y ) % 3 == 0;
         if( has_flag( MF_SMELLS ) && do_scent ) {
-            // No sight... or our plans are invalid (e.g. moving through a transparent, but
-            //  solid, square of terrain).  Fall back to smell if we have it.
-            this->unset_dest();
-            tripoint tmp = this->scent_move();
+            // scent_move() is const -- reads scent map, returns a tripoint.
+            // unset_dest() (a write) is deferred to execute_action.
+            tripoint tmp = scent_move();
             if( tmp.x != -1 ) {
                 destination = tmp;
             }
         }
 
-        // wandf and friendly are both decremented in execute_action, so simulate
-        // their post-decrement values for these checks.
-        const int effective_wandf    = wandf > 0 ? wandf - 1 : 0;
-        const int effective_friendly = friendly > 0 ? friendly - 1 : friendly;
-        if( effective_wandf > 0 && effective_friendly == 0 ) {
+        // wandf will be decremented in execute_action (wandf--), so simulate
+        // the post-decrement value for this check.
+        const int effective_wandf = wandf > 0 ? wandf - 1 : 0;
+        if( effective_wandf > 0 && friendly == 0 ) {
             // Follow sound as a fall-back (unset_dest write deferred).
             if( wander_pos != pos() ) {
                 destination = wander_pos;
@@ -1255,11 +1225,7 @@ monster_action_t monster::decide_action() const
         action.stagger_adjust = get_stagger_adjust( pos(), destination, next_step );
 
         // Determine action kind by what occupies next_step.
-        // Re-use action.target if set by the hostile-break in the candidate loop —
-        // avoids a redundant critter_at lookup for the attack case (PERF-B).
-        const Creature *critter_here = action.target != nullptr
-                                       ? action.target
-                                       : g->critter_at( next_step, is_hallucination() );
+        const Creature *critter_here = g->critter_at( next_step, is_hallucination() );
         if( !pacified && critter_here != nullptr &&
             attitude_to( *critter_here ) == Attitude::A_HOSTILE ) {
             action.kind   = monster_action_kind::attack;
@@ -1272,7 +1238,8 @@ monster_action_t monster::decide_action() const
         } else if( !pacified && critter_here != nullptr &&
                    attitude_to( *critter_here ) != Attitude::A_HOSTILE &&
                    has_flag( MF_PUSH_MON ) ) {
-            action.kind = monster_action_kind::push;
+            action.kind           = monster_action_kind::push;
+            action.must_serialize = true;
         } else {
             action.kind = monster_action_kind::move;
         }
@@ -1299,12 +1266,12 @@ monster_action_t monster::decide_action() const
 // ---------------------------------------------------------------------------
 void monster::execute_action( const monster_action_t &action )
 {
-    // wandf decrement — unconditional, matching the first line of old move().
+    // (1) wandf decrement -- unconditional, matching the first line of old move().
     if( wandf > 0 ) {
         wandf--;
     }
 
-    // Hallucination death — triggered by decide_action returning kind=die.
+    // (2) Hallucination death -- triggered by decide_action returning kind=die.
     if( action.kind == monster_action_kind::die ) {
         die( nullptr );
         return;
@@ -1356,7 +1323,7 @@ void monster::execute_action( const monster_action_t &action )
 
     const bool pacified = has_effect( effect_pacified );
 
-    // Special attacks: fire any ready specials, then fall through to movement.
+    // (3) Special attacks: fire any ready specials, then fall through to movement.
     //     This matches the original move() behaviour where specials were a side
     //     effect and the monster still moved in the same tick.  Pulling specials
     //     out into a separate action kind (with an early return) caused an infinite
@@ -1389,11 +1356,11 @@ void monster::execute_action( const monster_action_t &action )
     }
     // Fall through: execute the movement action regardless of whether a special fired.
 
-    // Dragging foe / nursebot.
+    // (4) Dragging foe / nursebot.
     player *dragged_foe = find_dragged_foe();
     nursebot_operate( dragged_foe );
 
-    // Floor / drowning / moves-negative guards.
+    // (5) Floor / drowning / moves-negative guards.
     if( !flies() && g->m.has_flag( TFLAG_NO_FLOOR, pos() ) ) {
         g->m.creature_on_trap( *this, false );
         if( is_dead() ) {
@@ -1409,7 +1376,7 @@ void monster::execute_action( const monster_action_t &action )
         return;
     }
 
-    // move_effects — may prevent movement this tick.
+    // (6) move_effects -- may prevent movement this tick.
     // TODO: Move this to attack_at/move_to/etc. functions
     bool attacking = false;
     if( !move_effects( attacking ) ) {
@@ -1417,14 +1384,7 @@ void monster::execute_action( const monster_action_t &action )
         return;
     }
 
-    // Friendly decrement — runs unconditionally here so idle-path exits
-    //     (ai_waiting, immobile, no-viable-step, etc.) also age the counter,
-    //     matching the original move() where this preceded the ai_waiting return.
-    if( friendly > 0 ) {
-        --friendly;
-    }
-
-    // Idle / stumble actions (immobile, stunned, ai_waiting, attitude-stumble,
+    // (7) Idle / stumble actions (immobile, stunned, ai_waiting, attitude-stumble,
     //     no-viable-step).  These are checked AFTER move_effects to preserve the
     //     original ordering.
     if( action.kind == monster_action_kind::idle ) {
@@ -1445,11 +1405,16 @@ void monster::execute_action( const monster_action_t &action )
         return;
     }
 
-    // Vehicle harness handling (including the remove_effect write).
+    // (8) Friendly decrement.
+    if( friendly > 0 ) {
+        --friendly;
+    }
+
+    // (9) Vehicle harness handling (including the remove_effect write).
     {
         const auto vp2        = g->m.veh_at( pos() );
         const bool harness_part = static_cast<bool>(
-                                      vp2.part_with_feature( "ANIMAL_CTRL", true ) );
+            g->m.veh_at( pos() ).part_with_feature( "ANIMAL_CTRL", true ) );
         if( vp2 && vp2->vehicle().is_moving() &&
             vp2->vehicle().get_pet( vp2->part_index() ) ) {
             moves = 0;
@@ -1466,7 +1431,7 @@ void monster::execute_action( const monster_action_t &action )
     // Movement execution phase.
     // -----------------------------------------------------------------------
 
-    // Facing direction update.
+    // (10) Facing direction update.
     const tripoint dest = action.dest;
     {
         const point new_d( dest.xy() - pos().xy() );
@@ -1486,16 +1451,14 @@ void monster::execute_action( const monster_action_t &action )
         }
     }
 
-    // Path trimming: remove front elements that equal current position.
+    // (11) Path trimming: remove front elements that equal current position.
     while( !this->path.empty() && this->path.front() == this->pos() ) {
         this->path.erase( this->path.begin() );
     }
 
-    // A* repath if flagged by decide_action.
-    //      Tier 0: always.  Tier 1: when genuinely stuck (see LOGIC-E note in
-    //      decide_action).  Tier 2: never — macro step has no path.
+    // (12) A* repath if flagged by decide_action.
     if( action.needs_repath && !is_wandering() ) {
-        if( lod_tier <= 1 ) {
+        if( lod_tier == 0 ) {
             std::vector<tripoint> maybe_new_path;
             if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) ) {
                 auto pf_settings = get_legacy_pathfinding_settings();
@@ -1513,10 +1476,10 @@ void monster::execute_action( const monster_action_t &action )
                 this->path.clear();
             }
         }
-        // Tier 2: path unchanged; macro step does not use the A* path.
+        // Tier 1/2: path unchanged; straight-line fallback was used in decide_action.
     }
 
-    // Wandering branch writes: unset_dest and path.clear().
+    // (13) Wandering branch writes: unset_dest and path.clear().
     if( is_wandering() ) {
         this->unset_dest();
         this->path.clear();
@@ -1525,15 +1488,13 @@ void monster::execute_action( const monster_action_t &action )
     // Clear the repath flag now that we have handled it.
     this->repath_requested = false;
 
-    // Shove vehicle at the chosen destination (was inline in the candidate
+    // (14) Shove vehicle at the chosen destination (was inline in the candidate
     //      loop in old move(); now runs once for the chosen step).
-    //      remote_destination = monster's movement goal (may be many tiles away);
-    //      nearby_destination = the immediate step being taken (action.dest).
     if( action.kind == monster_action_kind::move ) {
-        shove_vehicle( goal, dest );
+        shove_vehicle( dest, dest );
     }
 
-    // Execute the chosen action.
+    // (15) Execute the chosen action.
     const bool can_open_doors = has_flag( MF_CAN_OPEN_DOORS );
     bool did_something = false;
 
@@ -1563,7 +1524,7 @@ void monster::execute_action( const monster_action_t &action )
         this->repath_requested = true;
     }
 
-    // Dragging update.
+    // (16) Dragging update.
     if( has_effect( effect_dragging ) && dragged_foe != nullptr ) {
         if( !dragged_foe->has_effect( effect_grabbed ) ) {
             dragged_foe = nullptr;
@@ -1574,7 +1535,7 @@ void monster::execute_action( const monster_action_t &action )
         }
     }
 
-    // Leash check.
+    // (17) Leash check.
     if( has_effect( effect_led_by_leash ) ) {
         if( rl_dist( pos(), g->u.pos() ) > 8 ) {
             remove_effect( effect_led_by_leash );
