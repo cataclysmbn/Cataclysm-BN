@@ -1235,8 +1235,8 @@ monster_action_t monster::decide_action() const
         // Re-use action.target if set by the hostile-break in the candidate loop —
         // avoids a redundant critter_at lookup for the attack case (PERF-B).
         const Creature *critter_here = action.target != nullptr
-            ? action.target
-            : g->critter_at( next_step, is_hallucination() );
+                                       ? action.target
+                                       : g->critter_at( next_step, is_hallucination() );
         if( !pacified && critter_here != nullptr &&
             attitude_to( *critter_here ) == Attitude::A_HOSTILE ) {
             action.kind   = monster_action_kind::attack;
@@ -1426,7 +1426,7 @@ void monster::execute_action( const monster_action_t &action )
     {
         const auto vp2        = g->m.veh_at( pos() );
         const bool harness_part = static_cast<bool>(
-            g->m.veh_at( pos() ).part_with_feature( "ANIMAL_CTRL", true ) );
+                                      g->m.veh_at( pos() ).part_with_feature( "ANIMAL_CTRL", true ) );
         if( vp2 && vp2->vehicle().is_moving() &&
             vp2->vehicle().get_pet( vp2->part_index() ) ) {
             moves = 0;

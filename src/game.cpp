@@ -4620,7 +4620,7 @@ void game::monmove()
     // Bio-alarm helper — called after each monster finishes its move loop.
     // static const: string_id hash lookup happens once, not every turn.
     static const bionic_id bio_alarm( "bio_alarm" );
-    const auto check_bio_alarm = [&]( const monster &critter ) {
+    const auto check_bio_alarm = [&]( const monster & critter ) {
         if( !critter.is_dead() &&
             u.has_active_bionic( bio_alarm ) &&
             u.get_power_level() >= bio_alarm->power_trigger &&
@@ -4640,17 +4640,18 @@ void game::monmove()
     // active wander destination (heard a sound), nudge it one step toward that
     // destination without running full AI.  Truly wandering monsters (wandf==0)
     // have no goal and remain stationary — they should NOT drift toward the player.
-    const auto do_tier2_macro = [&]( monster &critter ) {
+    const auto do_tier2_macro = [&]( monster & critter ) {
         if( current_turn % MACRO_INTERVAL == 0 &&
             critter.wandf > 0 && critter.wander_pos != critter.pos() ) {
             const tripoint cpos      = critter.pos();
             const tripoint macro_goal = critter.wander_pos;
             const std::array<tripoint, 4> dirs = { {
-                { cpos.x + 1, cpos.y,     cpos.z },
-                { cpos.x - 1, cpos.y,     cpos.z },
-                { cpos.x,     cpos.y + 1, cpos.z },
-                { cpos.x,     cpos.y - 1, cpos.z }
-            } };
+                    { cpos.x + 1, cpos.y,     cpos.z },
+                    { cpos.x - 1, cpos.y,     cpos.z },
+                    { cpos.x,     cpos.y + 1, cpos.z },
+                    { cpos.x,     cpos.y - 1, cpos.z }
+                }
+            };
             int best_dist = rl_dist( cpos, macro_goal );
             tripoint best = cpos;
             for( const tripoint &t : dirs ) {
