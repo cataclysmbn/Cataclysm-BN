@@ -1484,7 +1484,7 @@
       [ "one_year_old_newspaper", 2 ],
       { "group": "newspaper_recent", "prob": 15 },
       [ "foodperson_mask", 1 ],
-      [ "survnote", 1 ]
+      [ "survnote", 1 ],
 	  [ "treespade", 5 ]
     ]
   },
