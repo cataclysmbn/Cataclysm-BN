@@ -887,7 +887,11 @@ veh_collision vehicle::part_collision( int part, const tripoint &p,
         }
 
         if( critter == nullptr || !critter->is_hallucination() ) {
-            coll_velocity = mps_to_cmps( vel1_a * ( smashed ? 1 : 0.9 ) );
+            const auto new_velocity = mps_to_cmps( vel1_a * ( smashed ? 1.0 : 0.9 ) );
+            // Guarantee convergence: rounding must not prevent velocity from decreasing
+            coll_velocity = ( !smashed && std::abs( new_velocity ) >= std::abs( coll_velocity ) )
+                            ? 0
+                            : new_velocity;
         }
         // Stop processing when sign inverts, not when we reach 0
     } while( !smashed && sgn( coll_velocity ) == vel_sign );

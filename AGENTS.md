@@ -7,19 +7,20 @@
 
 Before writing **ANY** code, verify:
 
-| ❌ VIOLATION                | ✅ REQUIRED                                       |
-| --------------------------- | ------------------------------------------------- |
-| `for (auto x : collection)` | `std::ranges::*` or `collection \| std::views::*` |
-| `int foo()`                 | `auto foo() -> int`                               |
-| `Type x = value`            | `auto x = value`                                  |
-| `void fn(a, b, c, d, e)`    | `void fn(options_struct)`                         |
+| ❌ VIOLATION                       | ✅ REQUIRED                                       |
+| ---------------------------------- | ------------------------------------------------- |
+| nested `for (auto x : collection)` | `std::ranges::*` or `collection \| std::views::*` |
+| `int foo()`                        | `auto foo() -> int`                               |
+| `Type x = value`                   | `auto x = value`                                  |
+| `void fn(a, b, c, d, e)`           | `void fn(options_struct)`                         |
 
-**If you write a for-loop over a collection, your code is WRONG. Rewrite with `std::ranges`.**
+- **If you write a nested for-loop over a collection, your code is WRONG. Rewrite with `std::ranges`.**
+- single, unnested `for (auto x : collection)` loop is OK.
 
 ## Coding Convention
 
 ```c++
-auto foo = 3; //< **MUST** use `auto` for type.
+const auto foo = 3; //< **MUST** use `auto` for type. `const` **MUST** come before `auto`.
 
 auto bar() -> int; //< **MUST** use trailing return types.
 using my_callback_t = std::function<auto( int ) -> bool>; //< **MUST** use trailing return types in type aliases.

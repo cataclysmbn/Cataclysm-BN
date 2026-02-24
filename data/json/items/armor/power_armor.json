@@ -468,7 +468,7 @@
       "max_volume": "3 L",
       "min_volume": "250 ml",
       "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "BELT_CLIP" ],
-      "skills": [ "pistol", "smg", "shotgun", "rifle" ]
+      "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ]
     },
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "WAIST" ]
   },
