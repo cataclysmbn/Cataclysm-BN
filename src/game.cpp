@@ -4361,29 +4361,38 @@ void game::cleanup_dead()
 // ---------------------------------------------------------------------------
 // LOD tier assignment — called once per monmove() pass, O(M).
 //
-// Tier 0 (Full):   dist ≤ 20 or has an active movement goal (non-wandering).
-//                  Full AI every turn.
-// Tier 1 (Coarse): dist 20–60.  Reuses cached path, skips faction-morale
-//                  queries, reduces scent tracking to 1-in-3 turns.
-// Tier 2 (Macro):  dist > 60 and wandering (no active goal).  Performs a
-//                  single 4-directional step every MACRO_INTERVAL turns;
-//                  idle otherwise.
+// Tier 0 (Full):   dist ≤ LOD_TIER_FULL_DIST (default 20) or has an active
+//                  movement goal (non-wandering).  Full AI every turn.
+// Tier 1 (Coarse): dist LOD_TIER_FULL_DIST–LOD_TIER_COARSE_DIST (default 20–60).
+//                  Reuses cached path, skips faction-morale queries, reduces
+//                  scent tracking to 1-in-3 turns.
+// Tier 2 (Macro):  dist > LOD_TIER_COARSE_DIST (default 60) and wandering
+//                  (no active goal).  Performs a single 4-directional step
+//                  every LOD_MACRO_INTERVAL turns (default 3); idle otherwise.
 //
 // Promotion (lower tier number) is always immediate.
-// Demotion respects a 3-turn cooldown to prevent boundary oscillation.
+// Demotion respects a configurable cooldown (LOD_DEMOTION_COOLDOWN) to prevent
+// boundary oscillation.  Distances are configurable via LOD_TIER_FULL_DIST and
+// LOD_TIER_COARSE_DIST.
 // ---------------------------------------------------------------------------
 int game::tier_assign_all()
 {
     const tripoint player_pos = u.pos();
     int tier_counts[3] = { 0, 0, 0 };
 
+    const int tier01_dist  = get_option<int>( "LOD_TIER_FULL_DIST" );
+    // Clamp so Tier 1/2 boundary is always strictly greater than Tier 0/1.
+    const int tier12_dist  = std::max( get_option<int>( "LOD_TIER_COARSE_DIST" ),
+                                       tier01_dist + 1 );
+    const int demote_cd    = get_option<int>( "LOD_DEMOTION_COOLDOWN" );
+
     for( monster &mon : all_monsters() ) {
         const int dist = rl_dist( mon.pos(), player_pos );
 
         int8_t new_tier;
-        if( dist <= 20 || !mon.is_wandering() ) {
+        if( dist <= tier01_dist || !mon.is_wandering() ) {
             new_tier = 0;
-        } else if( dist <= 60 ) {
+        } else if( dist <= tier12_dist ) {
             new_tier = 1;
         } else {
             new_tier = 2;
@@ -4396,7 +4405,7 @@ int game::tier_assign_all()
         } else if( new_tier > mon.lod_tier && mon.lod_cooldown <= 0 ) {
             // Demotion only when cooldown has expired.
             mon.lod_tier     = new_tier;
-            mon.lod_cooldown = 3;
+            mon.lod_cooldown = static_cast<int8_t>( demote_cd );
         }
 
         if( mon.lod_cooldown > 0 ) {
@@ -4449,20 +4458,14 @@ void game::monmove()
     // pre-computed plan discarded.
     // -----------------------------------------------------------------------
 
-    // Minimum move-loop budget per turn.  The effective budget is always at
-    // least this value, but grows to cover the current Tier-0 count so that
-    // full-AI monsters are never deferred by the cap.
-    // Set to 0 to disable the budget (all eligible monsters always run).
-    static constexpr int MONMOVE_ACTION_BUDGET = 128;
-
-    // Tier-2 (Macro) monsters perform one Manhattan step toward the player
-    // every MACRO_INTERVAL turns instead of running full AI.
-    static constexpr int MACRO_INTERVAL = 3;
+    // Configurable via Debug → Performance → "Monster LOD" settings.
+    const int action_budget  = get_option<int>( "LOD_ACTION_BUDGET" );
+    const int macro_interval = get_option<int>( "LOD_MACRO_INTERVAL" );
 
     // Dynamic budget: at least the floor, but expanded to cover all Tier-0
     // monsters so the cap never defers a full-AI monster.
     // tier0_count is from this turn's tier_assign_all(), so it is current.
-    const int effective_budget = std::max( MONMOVE_ACTION_BUDGET, tier0_count );
+    const int effective_budget = std::max( action_budget, tier0_count );
     TracyPlot( "LOD Effective Budget", static_cast<int64_t>( effective_budget ) );
 
     // OPP-7: Unified disposition map: a single hash lookup in the execution
@@ -4620,7 +4623,7 @@ void game::monmove()
     // Bio-alarm helper — called after each monster finishes its move loop.
     // static const: string_id hash lookup happens once, not every turn.
     static const bionic_id bio_alarm( "bio_alarm" );
-    const auto check_bio_alarm = [&]( const monster & critter ) {
+    const auto check_bio_alarm = [&]( const monster &critter ) {
         if( !critter.is_dead() &&
             u.has_active_bionic( bio_alarm ) &&
             u.get_power_level() >= bio_alarm->power_trigger &&
@@ -4636,22 +4639,21 @@ void game::monmove()
         }
     };
 
-    // Tier-2 macro-step: once per MACRO_INTERVAL turns, if the monster has an
+    // Tier-2 macro-step: once per macro_interval turns, if the monster has an
     // active wander destination (heard a sound), nudge it one step toward that
     // destination without running full AI.  Truly wandering monsters (wandf==0)
     // have no goal and remain stationary — they should NOT drift toward the player.
-    const auto do_tier2_macro = [&]( monster & critter ) {
-        if( current_turn % MACRO_INTERVAL == 0 &&
+    const auto do_tier2_macro = [&]( monster &critter ) {
+        if( current_turn % macro_interval == 0 &&
             critter.wandf > 0 && critter.wander_pos != critter.pos() ) {
             const tripoint cpos      = critter.pos();
             const tripoint macro_goal = critter.wander_pos;
             const std::array<tripoint, 4> dirs = { {
-                    { cpos.x + 1, cpos.y,     cpos.z },
-                    { cpos.x - 1, cpos.y,     cpos.z },
-                    { cpos.x,     cpos.y + 1, cpos.z },
-                    { cpos.x,     cpos.y - 1, cpos.z }
-                }
-            };
+                { cpos.x + 1, cpos.y,     cpos.z },
+                { cpos.x - 1, cpos.y,     cpos.z },
+                { cpos.x,     cpos.y + 1, cpos.z },
+                { cpos.x,     cpos.y - 1, cpos.z }
+            } };
             int best_dist = rl_dist( cpos, macro_goal );
             tripoint best = cpos;
             for( const tripoint &t : dirs ) {
@@ -4780,28 +4782,6 @@ void game::sleep_skip_npc_process()
     //
     // NPCs whose current activity is not suspendable (e.g. ACT_OPERATION) are
     // left frozen for the turn rather than interrupted mid-activity.
-
-    // Every ~30 in-game minutes, re-examine sleeping NPCs and wake any whose
-    // sleep need is satisfied or whose player has woken up.  Otherwise, renew
-    // their lying-down effect for another 30-minute window.
-    if( calendar::once_every( 30_minutes ) ) {
-        for( npc &guy : g->all_npcs() ) {
-            if( guy.is_dead() || !guy.in_sleep_state() ) {
-                continue;
-            }
-            // Wake threshold: fatigue <= 25 mirrors the natural wake-up check in
-            // player_hardcoded_effects.cpp (effect_sleep handler).
-            const bool player_awake = !u.in_sleep_state();
-            const bool npc_rested   = guy.get_fatigue() <= 25;
-            if( player_awake || npc_rested ) {
-                guy.wake_up();
-            } else {
-                // Renew for another 30 minutes so the effect does not expire mid-sleep.
-                guy.add_effect( effect_lying_down, 30_minutes, bodypart_str_id::NULL_ID(), 1 );
-            }
-        }
-    }
-
     for( npc &guy : g->all_npcs() ) {
         if( guy.is_dead() ) {
             continue;
@@ -4817,10 +4797,8 @@ void game::sleep_skip_npc_process()
             if( *guy.activity ) {
                 guy.cancel_activity();
             }
-            // Only put the NPC to sleep if they still need rest.  This avoids
-            // re-sleeping NPCs that were just woken because their fatigue was satisfied.
-            if( !guy.has_effect( effect_lying_down ) && guy.get_fatigue() > 25 ) {
-                guy.add_effect( effect_lying_down, 30_minutes, bodypart_str_id::NULL_ID(), 1 );
+            if( !guy.has_effect( effect_lying_down ) ) {
+                guy.add_effect( effect_lying_down, 8_hours, bodypart_str_id::NULL_ID(), 1 );
             }
         }
 
