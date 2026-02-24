@@ -832,8 +832,13 @@ void monster::move()
         return;
     }
     map &here = get_map();
+    const auto pre_lua_pos = pos();
+    const auto pre_lua_moves = moves;
 
     if( run_lua_monster_ai( *this ) ) {
+        if( moves == pre_lua_moves && pos() == pre_lua_pos ) {
+            moves = std::max( 0, moves - 100 );
+        }
         return;
     }
 
@@ -1824,8 +1829,14 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
         }
     }
 
-    if( critter != nullptr && !step_on_critter ) {
-        return false;
+    if( critter != nullptr ) {
+        if( !step_on_critter ) {
+            return false;
+        }
+        const auto attitude_to_critter = attitude_to( *critter );
+        if( attitude_to_critter == Attitude::A_HOSTILE || has_flag( MF_ATTACKMON ) ) {
+            return attack_at( destination );
+        }
     }
 
     if( !can_squeeze_to( destination ) ) {

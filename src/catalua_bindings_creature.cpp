@@ -346,6 +346,7 @@ void cata::detail::reg_monster( sol::state &lua )
         } );
         SET_FX_T( move_to, bool( const tripoint & p, bool force, bool step_on_critter,
                                  float stagger_adjustment ) );
+        SET_FX_T( bash_at, bool( const tripoint & p ) );
 
         SET_FX_T( attitude, monster_attitude( const Character * ) const );
         luna::set_fx( ut, "set_attitude", []( monster & mon, monster_attitude att ) -> void {
