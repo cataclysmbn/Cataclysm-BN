@@ -20,7 +20,7 @@ Before writing **ANY** code, verify:
 ## Coding Convention
 
 ```c++
-auto foo = 3; //< **MUST** use `auto` for type.
+const auto foo = 3; //< **MUST** use `auto` for type. `const` **MUST** come before `auto`.
 
 auto bar() -> int; //< **MUST** use trailing return types.
 using my_callback_t = std::function<auto( int ) -> bool>; //< **MUST** use trailing return types in type aliases.
