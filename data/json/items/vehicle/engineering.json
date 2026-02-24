@@ -95,5 +95,21 @@
     "weight": "15 kg",
     "material": "wood",
     "color": "brown"
-  }
+  },
+  
+   {
+    "id": "treespade",
+    "type": "GENERIC",
+	"//": "Based on Dutchman 66 inch 30 degree Curved Tree Spade. Actual weight is 2585 kg and volume is 4282 l, but this has been abstracted for spawning purposes.",
+    "category": "veh_parts",
+    "name": { "str": "tree spade" },
+    "description": "A massive digging claw designed to dig around and under a tree to scoop it out by its rootball without harming it. Needs to be installed onto a vehicle to be used.",
+    "price": "234 USD",
+    "price_postapoc": "20 USD",
+     "weight": "31600 g",
+    "volume": "12500 ml",
+    "material": [ "steel" ],
+    "symbol": "&",
+    "color": "dark_gray"
+  },
 ]
