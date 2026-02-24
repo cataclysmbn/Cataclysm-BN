@@ -387,9 +387,35 @@ void monster::plan()
 }
 
 
-monster_plan_t monster::compute_plan() const
+monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx ) const
 {
     ZoneScoped;
+
+    // Thread-safe helpers: use pre-built snapshots when called from a worker
+    // thread, falling back to g->all_monsters() / g->all_npcs() on the main
+    // thread (ctx.monsters / ctx.npcs are null in that case).
+    const auto for_each_monster = [&]( auto &&fn ) {
+        if( ctx.monsters ) {
+            for( monster *mp : *ctx.monsters ) {
+                fn( *mp );
+            }
+        } else {
+            for( monster &tmp : g->all_monsters() ) {
+                fn( tmp );
+            }
+        }
+    };
+    const auto for_each_npc = [&]( auto &&fn ) {
+        if( ctx.npcs ) {
+            for( npc *np : *ctx.npcs ) {
+                fn( *np );
+            }
+        } else {
+            for( npc &who : g->all_npcs() ) {
+                fn( who );
+            }
+        }
+    };
 
     monster_plan_t result;
     // Initialise final-value fields from current monster state so a no-op
@@ -431,8 +457,7 @@ monster_plan_t monster::compute_plan() const
     // LOD Tier 1/2: skip the O(M²) faction-member scan for group morale and
     // swarming.  At 20–60 tiles these behaviours are not player-visible.
     // Tier 0 (full fidelity) runs the normal computation.
-    bool group_morale = lod_tier <= lod_group_morale_max_tier && has_flag( MF_GROUP_MORALE ) &&
-                        local_morale < type->morale;
+    bool group_morale = lod_tier <= lod_group_morale_max_tier && has_flag( MF_GROUP_MORALE ) && local_morale < type->morale;
     bool swarms       = lod_tier <= lod_group_morale_max_tier && has_flag( MF_SWARMS );
     auto mood   = attitude();
 
@@ -485,7 +510,7 @@ monster_plan_t monster::compute_plan() const
                 }
             }
             if( angers_cub_threatened > 0 ) {
-                for( monster &tmp : g->all_monsters() ) {
+                for_each_monster( [&]( monster &tmp ) {
                     if( type->baby_monster == tmp.type->id ) {
                         // Mirrors original plan(): dist is updated so subsequent
                         // target selection uses the baby-player distance.
@@ -501,16 +526,16 @@ monster_plan_t monster::compute_plan() const
                             result.aggro_triggers.push_back( "threatening cub" );
                         }
                     }
-                }
+                } );
             }
         }
     } else if( local_friendly != 0 && !docile && !waiting ) {
-        for( monster &tmp : g->all_monsters() ) {
+        for_each_monster( [&]( monster &tmp ) {
             if( tmp.friendly == 0 ) {
                 // P-4: distance cull — skip ray trace if target is out of range.
                 const int d_tmp = rl_dist( pos(), tmp.pos() );
                 if( d_tmp > max_sight_range ) {
-                    continue;
+                    return;
                 }
                 float rating = rate_target( tmp, dist, smart_planning, d_tmp );
                 if( rating < dist ) {
@@ -518,7 +543,7 @@ monster_plan_t monster::compute_plan() const
                     dist   = rating;
                 }
             }
-        }
+        } );
     }
 
     if( waiting ) {
@@ -530,16 +555,16 @@ monster_plan_t monster::compute_plan() const
     }
 
     int valid_targets = ( target == nullptr ) ? 1 : 0;
-    for( npc &who : g->all_npcs() ) {
+    for_each_npc( [&]( npc &who ) {
         auto faction_att = faction.obj().attitude( who.get_monster_faction() );
         if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
-            continue;
+            return;
         }
 
         // P-4: distance cull.
         const int d_who = rl_dist( pos(), who.pos() );
         if( d_who > max_sight_range ) {
-            continue;
+            return;
         }
 
         float rating = rate_target( who, dist, smart_planning, d_who );
@@ -592,7 +617,7 @@ monster_plan_t monster::compute_plan() const
                 }
             }
         }
-    }
+    } );
 
     fleeing = fleeing || ( mood == MATT_FLEE );
     if( local_friendly == 0 ) {
