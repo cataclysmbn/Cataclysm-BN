@@ -2266,7 +2266,7 @@ void options_manager::add_options_performance()
     };
 
     add_option_group( performance, Group( "rem_act_perf", to_translation( "Sleep Boost" ),
-                                         to_translation( "Skip expensive processing while the player sleeps." ) ),
+                                          to_translation( "Skip expensive processing while the player sleeps." ) ),
     [&]( auto & page_id ) {
         add( "SLEEP_SKIP_VEH", page_id, translate_marker( "Skip Vehicle Movement" ),
              translate_marker( "Turns off vehicle movement and autodrive while sleeping" ),
@@ -2293,7 +2293,7 @@ void options_manager::add_options_performance()
     add_empty_line();
 
     add_option_group( performance, Group( "lod_monster", to_translation( "Monster LOD" ),
-                                         to_translation( "Configure level-of-detail thresholds for monster AI." ) ),
+                                          to_translation( "Configure level-of-detail thresholds for monster AI." ) ),
     [&]( auto & page_id ) {
         add( "MONSTER_LOD_ENABLED", page_id,
              translate_marker( "Enable Monster LOD" ),
@@ -2371,7 +2371,7 @@ void options_manager::add_options_performance()
     add_empty_line();
 
     add_option_group( performance, Group( "multithreading", to_translation( "Multithreading" ),
-                                         to_translation( "Configure worker-thread parallelism for expensive per-turn computations." ) ),
+                                          to_translation( "Configure worker-thread parallelism for expensive per-turn computations." ) ),
     [&]( auto & page_id ) {
         add( "MULTITHREADING_ENABLED", page_id,
              translate_marker( "Enable Multithreading" ),

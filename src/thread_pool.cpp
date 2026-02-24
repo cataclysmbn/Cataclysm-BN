@@ -78,6 +78,7 @@ cata_thread_pool &get_thread_pool()
         // 0 = auto: hardware_concurrency()-1, leaving one core for the main/SDL thread.
         const unsigned int hc = std::thread::hardware_concurrency();
         return hc > 1u ? hc - 1u : 0u;
-    }() );
+    }
+    () );
     return pool;
 }
