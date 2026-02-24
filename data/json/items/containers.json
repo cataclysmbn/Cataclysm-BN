@@ -1407,7 +1407,6 @@
     "contains": "2 L",
     "//": "Pseudo-container in order to make the hack work."
   },
-  
   {
     "id": "bag_canvas_replanting",
     "type": "CONTAINER",
@@ -1423,6 +1422,6 @@
     "material": [ "cotton" ],
     "symbol": ")",
     "color": "brown",
-	"contains": "500 L"
+    "contains": "500 L"
   }
 ]

@@ -124,17 +124,16 @@
     "name": "uprooted grape bush",
     "description": "A harvested grape bush that's ready for transplanting."
   },
-  
   {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_appletree",
     "name": { "str": "uprooted apple tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
-	"//": "Realistically, adult trees are impossibly heavy and huge and require specialized equipment to effectively move. We're abstracting for player convenience.",
+    "//": "Realistically, adult trees are impossibly heavy and huge and require specialized equipment to effectively move. We're abstracting for player convenience.",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -142,15 +141,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
- {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_happletree",
     "name": { "str": "uprooted harvested apple tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -158,15 +157,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-{
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_peartree",
     "name": { "str": "uprooted pear tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -174,15 +173,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
- {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_hpeartree",
     "name": { "str": "uprooted harvested pear tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -190,15 +189,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-{
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_cherrytree",
     "name": { "str": "uprooted cherry tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -206,15 +205,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
- {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_hcherrytree",
     "name": { "str": "uprooted harvested cherry tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -222,15 +221,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-{
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_peachtree",
     "name": { "str": "uprooted peach tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -238,15 +237,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
- {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_hpeachtree",
     "name": { "str": "uprooted harvested peach tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -254,15 +253,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-{
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_apricottree",
     "name": { "str": "uprooted apricot tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -270,15 +269,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
- {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_hapricottree",
     "name": { "str": "uprooted harvested apricot tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -286,15 +285,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-{
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_plumtree",
     "name": { "str": "uprooted plum tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -302,16 +301,16 @@
     "price": 12000,
     "price_postapoc": 250
   },
- {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_hplumtree",
     "name": { "str": "uprooted harvested plum tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
-	"//": "Realistically, adult trees are impossibly heavy and huge and require specialized equipment to effectively move. Not even a cargo space could hold one of these.",
+    "//": "Realistically, adult trees are impossibly heavy and huge and require specialized equipment to effectively move. Not even a cargo space could hold one of these.",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -319,15 +318,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-{
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_mulberrytree",
     "name": { "str": "uprooted mulberry tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -335,15 +334,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
- {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_hmulberrytree",
     "name": { "str": "uprooted harvested mulberry tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -353,13 +352,13 @@
   },
   {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_elderberrytree",
     "name": { "str": "uprooted elderberry tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -367,15 +366,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
- {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_helderberrytree",
     "name": { "str": "uprooted harvested elderberry tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -383,16 +382,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-  
   {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_cacaotree",
     "name": { "str": "uprooted cacao tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -400,15 +398,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-   {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_hcacaotree",
     "name": { "str": "uprooted harvested cacao tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -416,16 +414,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-  
-   {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_coffeetree",
     "name": { "str": "uprooted coffee tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -433,15 +430,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-   {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_hcoffeetree",
     "name": { "str": "uprooted harvested coffee tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -449,16 +446,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-  
-   {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_cocatree",
     "name": { "str": "uprooted coca tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",
@@ -466,15 +462,15 @@
     "price": 12000,
     "price_postapoc": 250
   },
-   {
+  {
     "type": "GENERIC",
-	"category": "other",
+    "category": "other",
     "id": "up_hcocatree",
     "name": { "str": "uprooted harvested coca tree" },
     "description": "A tree that has been carefully dug out with its rootball carefully wrapped in soaked canvas to keep it from drying out. It is ready for hauling.",
     "weight": "500 kg",
     "to_hit": -6,
-	"symbol": "7",
+    "symbol": "7",
     "color": "green",
     "material": [ "wood" ],
     "volume": "500 L",

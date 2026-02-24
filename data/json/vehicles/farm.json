@@ -302,24 +302,30 @@
       [ "&    " ]
     ],
     "parts": [
-      { "x": 2, "y": 0, "part": "frame_horizontal" },{ "x": 2, "y": 0, "part": "halfboard_vertical" },
+      { "x": 2, "y": 0, "part": "frame_horizontal" },
+      { "x": 2, "y": 0, "part": "halfboard_vertical" },
       { "x": 2, "y": -1, "part": "frame_horizontal" },
       { "x": 2, "y": 1, "part": "frame_horizontal" },
       { "x": 2, "y": -1, "parts": [ "wheel_mount_medium_steerable", "wheel_wide_or" ] },
       { "x": 2, "y": 1, "parts": [ "wheel_mount_medium_steerable", "wheel_wide_or" ] },
-      { "x": 1, "y": 0, "part": "frame_horizontal" }, 
-	  { "x": 1, "y": 0, "part": "halfboard_vertical" },
-	  { "x": 1, "y": 0, "part": "battery_car" },
-	  { "x": 1, "y": 0, "part": "diesel_engine_v6" },
-	  { "x": 1, "y": 0, "part": "alternator_truck" },
-      { "x": 0, "y": 0, "part": "frame_vertical" },{ "x": 0, "y": 0, "part": "seat" },{ "x": 0, "y": 0, "part": "controls" },{ "x": 0, "y": 0, "part": "dashboard" },
-      { "x": -1, "y": 0, "part": "frame_cross" },{ "x": -1, "y": 0, "part": "tank", "fuel": "diesel" },{ "x": -1, "y": 0, "part": "halfboard_vertical" },
+      { "x": 1, "y": 0, "part": "frame_horizontal" },
+      { "x": 1, "y": 0, "part": "halfboard_vertical" },
+      { "x": 1, "y": 0, "part": "battery_car" },
+      { "x": 1, "y": 0, "part": "diesel_engine_v6" },
+      { "x": 1, "y": 0, "part": "alternator_truck" },
+      { "x": 0, "y": 0, "part": "frame_vertical" },
+      { "x": 0, "y": 0, "part": "seat" },
+      { "x": 0, "y": 0, "part": "controls" },
+      { "x": 0, "y": 0, "part": "dashboard" },
+      { "x": -1, "y": 0, "part": "frame_cross" },
+      { "x": -1, "y": 0, "part": "tank", "fuel": "diesel" },
+      { "x": -1, "y": 0, "part": "halfboard_vertical" },
       { "x": -1, "y": 1, "part": "frame_horizontal" },
       { "x": -1, "y": -1, "part": "frame_horizontal" },
       { "x": -1, "y": 1, "parts": [ "wheel_mount_medium", "wheel_wide_or" ] },
       { "x": -1, "y": -1, "parts": [ "wheel_mount_medium", "wheel_wide_or" ] },
       { "x": -2, "y": 0, "part": "frame_cross" },
-	  { "x": -2, "y": 0, "part": "mountedtreespade" }
+      { "x": -2, "y": 0, "part": "mountedtreespade" }
     ],
     "items": [  ]
   },
@@ -357,8 +363,8 @@
       { "x": -1, "y": -1, "part": "frame_horizontal" },
       { "x": -1, "y": 1, "parts": [ "wheel_mount_medium", "wheel_wide_or" ] },
       { "x": -1, "y": -1, "parts": [ "wheel_mount_medium", "wheel_wide_or" ] },
-	  { "x": -2, "y": 0, "part": "frame_cross" },
-	  { "x": -2, "y": 0, "part": "mountedtreespade" }
+      { "x": -2, "y": 0, "part": "frame_cross" },
+      { "x": -2, "y": 0, "part": "mountedtreespade" }
     ],
     "items": [  ]
   },
@@ -396,10 +402,9 @@
       { "x": -1, "y": -1, "part": "frame_horizontal" },
       { "x": -1, "y": 1, "parts": [ "wheel_mount_medium", "wheel_wide_or" ] },
       { "x": -1, "y": -1, "parts": [ "wheel_mount_medium", "wheel_wide_or" ] },
-	  { "x": -2, "y": 0, "part": "frame_cross" },
-	  { "x": -2, "y": 0, "part": "mountedtreespade" }
+      { "x": -2, "y": 0, "part": "frame_cross" },
+      { "x": -2, "y": 0, "part": "mountedtreespade" }
     ],
     "items": [  ]
   }
-  
 ]
