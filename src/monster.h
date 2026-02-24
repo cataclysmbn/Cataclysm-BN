@@ -254,7 +254,7 @@ class monster : public Creature, public location_visitable<monster>
             constexpr compute_plan_context() noexcept : monsters( nullptr ), npcs( nullptr ) {}
             constexpr compute_plan_context( const std::vector<monster *> *m,
                                             const std::vector<npc *> *n )
-                                            noexcept : monsters( m ), npcs( n ) {}
+            noexcept : monsters( m ), npcs( n ) {}
         };
 
         /**
