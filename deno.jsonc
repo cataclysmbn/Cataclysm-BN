@@ -21,6 +21,10 @@
       "description": "update available semantic commit types",
       "command": "deno run -R=data/mods -W=.github/semantic.yml scripts/semantic.ts"
     },
+    "pr-title": {
+      "description": "validate PR title type/scope using changed files",
+      "command": "deno run -R -N --allow-run=git,deno scripts/pr_title.ts"
+    },
     "affected-files": "deno run -RWEN --allow-run scripts/affected_files.ts"
   },
   "test": { "include": ["scripts", ".agents"] },
