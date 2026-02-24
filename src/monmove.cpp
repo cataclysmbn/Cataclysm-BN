@@ -431,7 +431,8 @@ monster_plan_t monster::compute_plan() const
     // LOD Tier 1/2: skip the O(M²) faction-member scan for group morale and
     // swarming.  At 20–60 tiles these behaviours are not player-visible.
     // Tier 0 (full fidelity) runs the normal computation.
-    bool group_morale = lod_tier <= lod_group_morale_max_tier && has_flag( MF_GROUP_MORALE ) && local_morale < type->morale;
+    bool group_morale = lod_tier <= lod_group_morale_max_tier && has_flag( MF_GROUP_MORALE ) &&
+                        local_morale < type->morale;
     bool swarms       = lod_tier <= lod_group_morale_max_tier && has_flag( MF_SWARMS );
     auto mood   = attitude();
 
