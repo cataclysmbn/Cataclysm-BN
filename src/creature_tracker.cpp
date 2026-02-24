@@ -180,6 +180,22 @@ bool Creature_tracker::update_pos( const monster &critter, const tripoint &new_p
     }
 }
 
+void Creature_tracker::erase_pos( const tripoint &old_pos )
+{
+    monsters_by_location.erase( old_pos );
+}
+
+void Creature_tracker::insert_pos( const monster &critter, const tripoint &new_pos )
+{
+    const auto iter = std::ranges::find_if( monsters_list,
+    [&]( const shared_ptr_fast<monster> &ptr ) {
+        return ptr.get() == &critter;
+    } );
+    if( iter != monsters_list.end() ) {
+        monsters_by_location[new_pos] = *iter;
+    }
+}
+
 void Creature_tracker::remove_from_location_map( const monster &critter )
 {
     const auto pos_iter = monsters_by_location.find( critter.pos() );

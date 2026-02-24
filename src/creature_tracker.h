@@ -75,6 +75,20 @@ class Creature_tracker
         void rebuild_cache();
         /** Swaps the positions of two monsters */
         void swap_positions( monster &first, monster &second );
+        /**
+         * Phase 3 parallel-execute helpers — two-phase position reconciliation.
+         *
+         * erase_pos() removes only the monsters_by_location entry at old_pos.
+         * insert_pos() inserts a new monsters_by_location entry for critter at
+         * new_pos.  Neither function modifies the monster's pos_ field; the
+         * caller must update pos_ separately (e.g. via monster::spawn()).
+         *
+         * These are used by the serial reconciliation pass after all parallel
+         * move winners have finished execute_action() with deferred position
+         * update (Step 7).
+         */
+        void erase_pos( const tripoint &old_pos );
+        void insert_pos( const monster &critter, const tripoint &new_pos );
         /** Kills 0 hp monsters. Returns if it killed any. */
         bool kill_marked_for_death();
         /** Removes dead monsters from. Their pointers are invalidated. */
