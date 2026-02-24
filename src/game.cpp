@@ -1842,11 +1842,33 @@ bool game::do_turn()
     const auto soundperf = asleep && get_option<bool>( "SLEEP_SKIP_SOUND" );
     const auto monperf = asleep && get_option<bool>( "SLEEP_SKIP_MON" );
     const auto npcperf = asleep && get_option<bool>( "SLEEP_SKIP_NPC" );
+    const bool sleep_skip_time = asleep && get_option<bool>( "SLEEP_SKIP_TIME" ) &&
+                                 u.get_value( "sleep_skip_time_disabled" ) != "true";
+    const bool hostile_in_reality_bubble = sleep_skip_time &&
+    !get_creatures_if( [&]( const Creature & critter ) {
+        return &critter != &u && u.attitude_to( critter ) == Attitude::A_HOSTILE;
+    } ).empty();
+    if( sleep_skip_time && !hostile_in_reality_bubble ) {
+        const auto sleep_duration = u.get_effect_dur( effect_sleep );
+        if( sleep_duration > 1_turns ) {
+            calendar::turn += sleep_duration - 1_turns;
+            m.process_items();
+            m.process_fields();
+            if( !vehperf ) {
+                for( auto &veh : m.get_vehicles() ) {
+                    veh.v->update_time( calendar::turn );
+                }
+                m.vehmove();
+            }
+        }
+    }
     // Actual stuff
     if( new_game ) {
         new_game = false;
     } else {
-        gamemode->per_turn();
+        if( gamemode != nullptr ) {
+            gamemode->per_turn();
+        }
         calendar::turn += 1_turns;
     }
     // Reset dimension swap flag now that the map is fully loaded and turn is processing

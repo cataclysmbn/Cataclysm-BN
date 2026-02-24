@@ -2304,6 +2304,9 @@ void options_manager::add_options_performance()
                                "NPCs with non-interruptible activities (e.g. surgery) are frozen "
                                "for the turn instead." ),
              is_android ? false : true );
+        add( "SLEEP_SKIP_TIME", page_id, translate_marker( "Skip Time When Sleeping" ),
+             translate_marker( "When sleeping, completely skip time until wake-up unless an interruption is detected." ),
+             false );
 #if defined(__ANDROID__)
         add( "LOAD_FROM_EXTERNAL", page_id, translate_marker( "External Storage Saving" ),
              translate_marker( "Save in data/catalcysm... instead of Documents/..." ),
