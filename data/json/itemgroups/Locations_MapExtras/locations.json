@@ -465,7 +465,7 @@
       [ "hdframe", 20 ],
       [ "cu_pipe", 25 ],
       [ "scrap_copper", 50 ],
-	  [ "treespade", 5 ]
+      [ "treespade", 5 ]
     ]
   },
   {
@@ -911,7 +911,7 @@
       [ "canister_empty", 45 ],
       [ "tongs", 10 ],
       [ "pressure_cooker", 10 ],
-	  [ "treespade", 5 ]
+      [ "treespade", 5 ]
     ]
   },
   {
@@ -1485,7 +1485,7 @@
       { "group": "newspaper_recent", "prob": 15 },
       [ "foodperson_mask", 1 ],
       [ "survnote", 1 ],
-	  [ "treespade", 5 ]
+      [ "treespade", 5 ]
     ]
   },
   {

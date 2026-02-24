@@ -272,8 +272,7 @@
     ],
     "items": [  ]
   },
-  
-   {
+  {
     "id": "excavator_tree",
     "type": "vehicle",
     "name": "Tree Excavator",
@@ -314,8 +313,7 @@
     ],
     "items": [  ]
   },
-  
-   {
+  {
     "id": "tree_trencher",
     "type": "vehicle",
     "name": "Tree Digger",
