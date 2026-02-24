@@ -71,6 +71,7 @@
 #include "mtype.h"
 #include "npc.h"
 #include "omdata.h"
+#include "options.h"
 #include "output.h"
 #include "overmapbuffer.h"
 #include "player.h"
@@ -3418,8 +3419,25 @@ void activity_handlers::try_sleep_do_turn( player_activity *act, player *p )
 {
     if( !p->has_effect( effect_sleep ) ) {
         if( character_funcs::roll_can_sleep( *p ) ) {
+            constexpr std::string_view sleep_skip_disabled_key = "sleep_skip_time_disabled";
+            const bool sleep_skip_time = get_option<bool>( "SLEEP_SKIP_TIME" );
+            const bool hostile_in_reality_bubble = sleep_skip_time && p->is_avatar() &&
+            !g->get_creatures_if( [&]( const Creature & critter ) {
+                return &critter != p && p->attitude_to( critter ) == Attitude::A_HOSTILE;
+            } ).empty();
+            const bool disable_sleep_skip_for_this_sleep = hostile_in_reality_bubble;
+            if( hostile_in_reality_bubble ) {
+                if( !query_yn(
+                        _( "you don't feel that safe. Go to sleep anyway? (do not skip time on sleeping)" ) ) ) {
+                    act->set_to_null();
+                    return;
+                }
+            }
             act->set_to_null();
             p->fall_asleep();
+            if( disable_sleep_skip_for_this_sleep ) {
+                p->set_value( sleep_skip_disabled_key.data(), "true" );
+            }
             p->remove_value( "sleep_query" );
         } else if( one_in( 1000 ) ) {
             p->add_msg_if_player( _( "You toss and turn…" ) );
