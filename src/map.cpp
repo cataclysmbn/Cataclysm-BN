@@ -6829,7 +6829,7 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
         } );
         {
             std::unique_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
-            skew_vision_cache.insert( 100000, key, visible ? 1 : 0 );
+            skew_vision_cache.insert( get_option<int>( "SKEW_VISION_CACHE_SIZE" ), key, visible ? 1 : 0 );
         }
         return visible;
     }
@@ -6865,7 +6865,7 @@ bool map::sees( const tripoint &F, const tripoint &T, const int range,
     } );
     {
         std::unique_lock<std::shared_mutex> lock( *skew_vision_cache_mutex );
-        skew_vision_cache.insert( 100000, key, visible ? 1 : 0 );
+        skew_vision_cache.insert( get_option<int>( "SKEW_VISION_CACHE_SIZE" ), key, visible ? 1 : 0 );
     }
     return visible;
 }
@@ -9006,34 +9006,63 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 
     {
         ZoneScopedN( "Phase1_parallel_caches" );
-        std::mutex dirty_mutex;
-        parallel_for( minz, maxz + 1, [&]( int z ) {
-            // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
-            const bool affects_seen_cache = z == zlev || fov_3d;
-            build_outside_cache( z );
-            build_transparency_cache( z );
-            const bool floor_dirty = build_floor_cache( z ) && affects_seen_cache;
+        if( parallel_enabled && parallel_map_cache ) {
+            std::mutex dirty_mutex;
+            parallel_for( minz, maxz + 1, [&]( int z ) {
+                // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
+                const bool affects_seen_cache = z == zlev || fov_3d;
+                build_outside_cache( z );
+                build_transparency_cache( z );
+                const bool floor_dirty = build_floor_cache( z ) && affects_seen_cache;
 
-            // Guard the 68 KB zero-fills: most z-levels have no vehicles.
-            // veh_in_active_range is set by update_vehicle_list() / clear_vehicle_list().
-            level_cache &ch = get_cache( z );
-            if( ch.veh_in_active_range ) {
-                const diagonal_blocks fill = {false, false};
-                std::uninitialized_fill_n( &ch.vehicle_obscured_cache[0][0],
-                                           MAPSIZE_X * MAPSIZE_Y, fill );
-                std::uninitialized_fill_n( &ch.vehicle_obstructed_cache[0][0],
-                                           MAPSIZE_X * MAPSIZE_Y, fill );
-            }
+                // Guard the 68 KB zero-fills: most z-levels have no vehicles.
+                // veh_in_active_range is set by update_vehicle_list() / clear_vehicle_list().
+                level_cache &ch = get_cache( z );
+                if( ch.veh_in_active_range ) {
+                    const diagonal_blocks fill = {false, false};
+                    std::uninitialized_fill_n( &ch.vehicle_obscured_cache[0][0],
+                                               MAPSIZE_X * MAPSIZE_Y, fill );
+                    std::uninitialized_fill_n( &ch.vehicle_obstructed_cache[0][0],
+                                               MAPSIZE_X * MAPSIZE_Y, fill );
+                }
 
-            const bool level_seen_dirty = ch.seen_cache_dirty;
-            if( floor_dirty || level_seen_dirty ) {
-                std::lock_guard<std::mutex> lock( dirty_mutex );
-                seen_cache_dirty = true;
-                if( level_seen_dirty ) {
-                    dirty_seen_cache_levels.push_back( z );
+                const bool level_seen_dirty = ch.seen_cache_dirty;
+                if( floor_dirty || level_seen_dirty ) {
+                    std::lock_guard<std::mutex> lock( dirty_mutex );
+                    seen_cache_dirty = true;
+                    if( level_seen_dirty ) {
+                        dirty_seen_cache_levels.push_back( z );
+                    }
+                }
+            } );
+        } else {
+            for( int z = minz; z <= maxz; ++z ) {
+                // trigger FOV recalculation only when there is a change on the player's level or if fov_3d is enabled
+                const bool affects_seen_cache = z == zlev || fov_3d;
+                build_outside_cache( z );
+                build_transparency_cache( z );
+                const bool floor_dirty = build_floor_cache( z ) && affects_seen_cache;
+
+                // Guard the 68 KB zero-fills: most z-levels have no vehicles.
+                // veh_in_active_range is set by update_vehicle_list() / clear_vehicle_list().
+                level_cache &ch = get_cache( z );
+                if( ch.veh_in_active_range ) {
+                    const diagonal_blocks fill = {false, false};
+                    std::uninitialized_fill_n( &ch.vehicle_obscured_cache[0][0],
+                                               MAPSIZE_X * MAPSIZE_Y, fill );
+                    std::uninitialized_fill_n( &ch.vehicle_obstructed_cache[0][0],
+                                               MAPSIZE_X * MAPSIZE_Y, fill );
+                }
+
+                const bool level_seen_dirty = ch.seen_cache_dirty;
+                if( floor_dirty || level_seen_dirty ) {
+                    seen_cache_dirty = true;
+                    if( level_seen_dirty ) {
+                        dirty_seen_cache_levels.push_back( z );
+                    }
                 }
             }
-        } );
+        }
     }
     // implicit barrier; outside/transparency/floor caches for all z-levels are complete.
 
@@ -9077,7 +9106,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         dirty_seen_cache_levels.erase( std::ranges::unique( dirty_seen_cache_levels ).begin(),
                                        dirty_seen_cache_levels.end() );
 
-        if( dirty_seen_cache_levels.size() > 1 ) {
+        if( dirty_seen_cache_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
             // Multiple dirty levels: hoist shared initialization outside the
             // parallel loop so worker threads never race on cross-level writes.
             //

@@ -4,6 +4,7 @@
 #include <functional>
 #include <thread>
 
+#include "options.h"
 #include "rng.h"
 
 cata_thread_pool::cata_thread_pool( unsigned int num_workers )
@@ -67,12 +68,16 @@ void cata_thread_pool::submit( std::function<void()> task )
 
 cata_thread_pool &get_thread_pool()
 {
-    // Worker count: hardware_concurrency()-1 so the main thread keeps one core
-    // for the SDL event loop.  Falls to 0 (serial) on single-core machines.
+    // Worker count is read once at first call (the static pool is constructed
+    // only once).  Changes to THREAD_POOL_WORKERS require a restart.
     static cata_thread_pool pool( []() {
+        const int workers_opt = get_option<int>( "THREAD_POOL_WORKERS" );
+        if( workers_opt > 0 ) {
+            return static_cast<unsigned int>( workers_opt );
+        }
+        // 0 = auto: hardware_concurrency()-1, leaving one core for the main/SDL thread.
         const unsigned int hc = std::thread::hardware_concurrency();
         return hc > 1u ? hc - 1u : 0u;
-    }
-    () );
+    }() );
     return pool;
 }
