@@ -75,11 +75,6 @@ class Creature_tracker
         void rebuild_cache();
         /** Swaps the positions of two monsters */
         void swap_positions( monster &first, monster &second );
-        /** Phase 3 two-phase position-reconciliation helpers (PERFORMANCE_TODO Step 7).
-         *  erase_pos() removes the monsters_by_location entry at old_pos without
-         *  touching pos_.  insert_pos() inserts a new entry for critter at new_pos. */
-        void erase_pos( const tripoint &old_pos );
-        void insert_pos( const monster &critter, const tripoint &new_pos );
         /** Kills 0 hp monsters. Returns if it killed any. */
         bool kill_marked_for_death();
         /** Removes dead monsters from. Their pointers are invalidated. */
