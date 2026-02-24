@@ -535,7 +535,13 @@ void map::vehmove()
           decltype( veh_cmp )>;
     VehPQ pq( veh_cmp );
 
+    // V-3: separate list of falling / aircraft-z-change vehicles, built alongside
+    // the PQ.  Phase 2 scans this small list instead of the full vehicle_list,
+    // reducing the Phase 2 fallback from O(V) to O(falling_count) per iteration.
+    std::vector<wrapped_vehicle *> falling_vehicles;
+
     // (Re)build pq from vehicle_list, applying the V-2 stationary-vehicle filter.
+    // Also rebuilds falling_vehicles.
     auto rebuild_pq = [&]() {
         // Use swap-with-empty instead of repeated pop() to clear the queue.
         // pop() calls std::pop_heap which invokes veh_cmp, which dereferences
@@ -543,12 +549,16 @@ void map::vehmove()
         // (vehicle-destroyed path), those pointers are dangling; the comparator
         // dereference would be UB and can corrupt the heap allocator metadata.
         { VehPQ tmp( veh_cmp ); std::swap( pq, tmp ); }
+        falling_vehicles.clear();
         for( wrapped_vehicle &w : vehicle_list ) {
             // V-2: gain_moves() sets of_turn=0.001 for velocity==0 non-falling
             // non-autopilot vehicles.  Moving and falling vehicles receive
             // of_turn = 1 + carry >= 1.0, so this threshold is unambiguous.
             if( w.v->of_turn >= 1.0f ) {
                 pq.push( &w );
+            }
+            if( w.v->is_falling || ( w.v->is_aircraft() && w.v->get_z_change() != 0 ) ) {
+                falling_vehicles.push_back( &w );
             }
         }
     };
@@ -572,13 +582,17 @@ void map::vehmove()
         }
 
         // Phase 2: Vertical-only fallback (falling / aircraft z-change).
-        // Vehicles that started the turn stationary but began falling mid-turn
-        // will not be in pq; find them with a linear scan when pq is exhausted.
+        // Scan the pre-built falling_vehicles list (O(falling_count)) instead of
+        // the full vehicle_list.  Entries are re-checked for staleness — a vehicle
+        // may have landed or been destroyed since falling_vehicles was last built.
+        // Vehicles that start falling mid-turn (not in falling_vehicles) are caught
+        // on the next turn when rebuild_pq() sees their updated state.
         if( cur_veh == nullptr ) {
-            for( wrapped_vehicle &vehs_v : vehicle_list ) {
-                if( vehs_v.v->is_falling ||
-                    ( vehs_v.v->is_aircraft() && vehs_v.v->get_z_change() != 0 ) ) {
-                    cur_veh = &vehs_v;
+            for( wrapped_vehicle *w : falling_vehicles ) {
+                if( w->v != nullptr &&
+                    ( w->v->is_falling ||
+                      ( w->v->is_aircraft() && w->v->get_z_change() != 0 ) ) ) {
+                    cur_veh = w;
                     break;
                 }
             }
@@ -5382,10 +5396,13 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
         vp.part().process_contents( vp.pos(), engine_heater_is_on );
     }
 
-    // MISSED-4: most vehicles have no RECHARGE parts; skip the cargo-part
-    // iteration entirely when the flag is clear.  process_vehicle_items() would
-    // return immediately per-part anyway, but the get_parts_including_carried()
-    // call and the loop itself are not free on vehicles with many cargo slots.
+    // OPP-4 / MISSED-4: if there is nothing to do (no active items and no cargo
+    // recharge), skip the get_parts_including_carried() call entirely.
+    // Building cargo_parts is not free on vehicles with many cargo slots.
+    if( cur_veh.active_items.empty() && !cur_veh.has_cargo_recharge ) {
+        return;
+    }
+
     auto cargo_parts = cur_veh.get_parts_including_carried( VPFLAG_CARGO );
     if( cur_veh.has_cargo_recharge ) {
         for( const vpart_reference &vp : cargo_parts ) {
@@ -5393,8 +5410,6 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
         }
     }
 
-    // OPP-4: most vehicles have no active items in cargo; skip the
-    // get_for_processing() call and the loop body entirely.
     if( cur_veh.active_items.empty() ) {
         return;
     }

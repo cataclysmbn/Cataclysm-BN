@@ -133,6 +133,7 @@
 #include "mod_manager.h"
 #include "monattack.h"
 #include "monexamine.h"
+#include "monfaction.h"
 #include "monstergenerator.h"
 #include "morale_types.h"
 #include "mtype.h"
@@ -4235,10 +4236,10 @@ void game::cleanup_dead()
 //
 // Tier 0 (Full):   dist ≤ LOD_TIER_FULL_DIST (default 20) or has an active
 //                  movement goal (non-wandering).  Full AI every turn.
-// Tier 1 (Coarse): dist LOD_TIER_FULL_DIST–LOD_TIER_COARSE_DIST (default 20–60).
+// Tier 1 (Coarse): dist LOD_TIER_FULL_DIST–LOD_TIER_COARSE_DIST (default 20–40).
 //                  Reuses cached path, skips faction-morale queries, reduces
 //                  scent tracking to 1-in-3 turns.
-// Tier 2 (Macro):  dist > LOD_TIER_COARSE_DIST (default 60) and wandering
+// Tier 2 (Macro):  dist > LOD_TIER_COARSE_DIST (default 40) and wandering
 //                  (no active goal).  Performs a single 4-directional step
 //                  every LOD_MACRO_INTERVAL turns (default 3); idle otherwise.
 //
@@ -4359,20 +4360,40 @@ void game::monmove()
     }
 
     // OPP-1 (PERF-A fix): Pre-warm both turn_sight_cache_ and skew_vision_cache
-    // for (monster → player) and (monster → NPC) pairs before the parallel phase.
-    // prewarm_sight() calls turn_cached_sees(), which populates turn_sight_cache_
-    // under a unique_lock here (serial, zero contention).  The parallel phase then
-    // hits turn_sight_cache_ under shared_lock only — zero write contention.
+    // for (monster → player), (monster → NPC), and faction-hostile (monster → monster)
+    // pairs before the parallel phase.  prewarm_sight() calls turn_cached_sees(),
+    // which populates turn_sight_cache_ under a unique_lock here (serial, zero
+    // contention).  The parallel phase then hits turn_sight_cache_ under shared_lock
+    // only — zero write contention.
     //
-    // PERF-LOSS-5: the original pre-warm covered only monster→player pairs.
-    // Adding monster→NPC pairs eliminates the remaining lock serialisation on
-    // maps with NPCs; faction-hostile monster pairs are not pre-warmed (their
-    // frequency in typical saves does not justify the O(M²) cost of checking
-    // all hostile-faction combinations up-front).
+    // NPC pairs use a distance pre-cull: monsters beyond max_sight_range of an NPC
+    // can never see them, so the ray trace and cache insert are both skipped entirely.
     for( monster *mon : plannable ) {
         mon->prewarm_sight( u );
+        const int mon_max_sight = std::max( mon->type->vision_day, mon->type->vision_night );
         for( npc &n : all_npcs() ) {
-            mon->prewarm_sight( n );
+            if( rl_dist( mon->pos(), n.pos() ) <= mon_max_sight ) {
+                mon->prewarm_sight( n );
+            }
+        }
+    }
+
+    // Pre-warm faction-hostile monster pairs within max_sight_range.
+    // Without this, hostile-faction pairs call turn_cached_sees() during the parallel
+    // phase on a cache miss, taking a unique_lock and serialising all workers that
+    // happen to need a faction-hostile LOS result at the same time.
+    // turn_cached_sees is symmetric — one prewarm_sight call covers both directions.
+    for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
+        monster *mon_a = plannable[i];
+        const int max_range_a = std::max( mon_a->type->vision_day, mon_a->type->vision_night );
+        for( int j = i + 1; j < static_cast<int>( plannable.size() ); ++j ) {
+            monster *mon_b = plannable[j];
+            if( rl_dist( mon_a->pos(), mon_b->pos() ) > max_range_a ) {
+                continue;
+            }
+            if( mon_a->faction.obj().attitude( mon_b->faction ) == MFA_HATE ) {
+                mon_a->prewarm_sight( *mon_b );
+            }
         }
     }
 
@@ -4495,7 +4516,7 @@ void game::monmove()
     // Bio-alarm helper — called after each monster finishes its move loop.
     // static const: string_id hash lookup happens once, not every turn.
     static const bionic_id bio_alarm( "bio_alarm" );
-    const auto check_bio_alarm = [&]( const monster & critter ) {
+    const auto check_bio_alarm = [&]( const monster &critter ) {
         if( !critter.is_dead() &&
             u.has_active_bionic( bio_alarm ) &&
             u.get_power_level() >= bio_alarm->power_trigger &&
@@ -4515,18 +4536,17 @@ void game::monmove()
     // active wander destination (heard a sound), nudge it one step toward that
     // destination without running full AI.  Truly wandering monsters (wandf==0)
     // have no goal and remain stationary — they should NOT drift toward the player.
-    const auto do_tier2_macro = [&]( monster & critter ) {
+    const auto do_tier2_macro = [&]( monster &critter ) {
         if( current_turn % macro_interval == 0 &&
             critter.wandf > 0 && critter.wander_pos != critter.pos() ) {
             const tripoint cpos      = critter.pos();
             const tripoint macro_goal = critter.wander_pos;
             const std::array<tripoint, 4> dirs = { {
-                    { cpos.x + 1, cpos.y,     cpos.z },
-                    { cpos.x - 1, cpos.y,     cpos.z },
-                    { cpos.x,     cpos.y + 1, cpos.z },
-                    { cpos.x,     cpos.y - 1, cpos.z }
-                }
-            };
+                { cpos.x + 1, cpos.y,     cpos.z },
+                { cpos.x - 1, cpos.y,     cpos.z },
+                { cpos.x,     cpos.y + 1, cpos.z },
+                { cpos.x,     cpos.y - 1, cpos.z }
+            } };
             int best_dist = rl_dist( cpos, macro_goal );
             tripoint best = cpos;
             for( const tripoint &t : dirs ) {
@@ -4537,6 +4557,10 @@ void game::monmove()
                 }
             }
             if( best != cpos ) {
+                // NOTE: setpos() updates the critter-tracker position map but
+                // does NOT call creature_in_field() for the new tile.  Field
+                // damage (fire, acid, etc.) at the macro-step destination is
+                // deferred to the next turn's LOD-B pass.
                 critter.setpos( best );
             }
         }
