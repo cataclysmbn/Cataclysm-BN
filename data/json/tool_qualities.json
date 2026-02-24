@@ -389,8 +389,7 @@
     "id": "SLEEP_AID",
     "name": { "str": "sleep aid" }
   },
-  
-   {
+  {
     "type": "tool_quality",
     "id": "TREE_PULL",
     "name": { "str": "tree pulling" }
