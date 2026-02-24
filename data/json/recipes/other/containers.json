@@ -819,5 +819,18 @@
     "time": "5 s",
     "autolearn": true,
     "components": [ [ [ "sheet_metal_small", 1 ] ] ]
+  },
+  
+   {
+    "type": "recipe",
+    "result": "bag_canvas_replanting",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_CONTAINERS",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "time": "50 m",
+    "autolearn": true,
+	"using": [ [ "sewing_standard", 50 ] ],
+    "components": [ [ [ "bag_canvas", 8 ] ] ]
   }
 ]
