@@ -414,5 +414,1591 @@
     "post_terrain": "t_pit_shallow",
     "group": "dig_grape_bush_h",
     "dark_craftable": true
+  },
+  
+   {
+    "type": "construction",
+    "id": "constr_dig_atree",
+    "group": "dig_up_a_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_apple",
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_appletree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+{
+    "type": "construction",
+    "id": "constr_dig_hatree",
+    "group": "dig_up_ha_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_apple_harvested",
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_happletree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_prtree",
+    "group": "dig_up_pr_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+     "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_pear",
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_peartree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_hprtree",
+    "group": "dig_up_hpr_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+     "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_pear_harvested",
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hpeartree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_ctree",
+    "group": "dig_up_c_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_cherry", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_cherrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_hctree",
+    "group": "dig_up_hc_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+	"qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_cherry_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hcherrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+{
+    "type": "construction",
+    "id": "constr_dig_petree",
+    "group": "dig_up_pe_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_peach", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_peachtree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_cpetree",
+    "group": "dig_up_hpe_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_peach_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hpeachtree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+{
+    "type": "construction",
+    "id": "constr_dig_aprtree",
+    "group": "dig_up_apr_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_apricot", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_apricottree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_haprtree",
+    "group": "dig_up_hapr_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_apricot_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hapricottree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_pltree",
+    "group": "dig_up_pl_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_plum", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_plumtree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_hpltree",
+    "group": "dig_up_hpl_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_plum_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hplumtree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_mtree",
+    "group": "dig_up_m_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_mulberry", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_mulberrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_hmtree",
+    "group": "dig_up_hm_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_mulberry_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hmulberrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_etree",
+    "group": "dig_up_e_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_elderberry", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_elderberrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_hetree",
+    "group": "dig_up_he_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_elderberry_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_helderberrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_catree",
+    "group": "dig_up_ca_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_cacao", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_cacaotree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_hcatree",
+    "group": "dig_up_hca_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_cacao_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hcacaotree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+   {
+    "type": "construction",
+    "id": "constr_dig_cotree",
+    "group": "dig_up_co_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_coffee", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_coffeetree", "count":1 },{ "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_hcotree",
+    "group": "dig_up_hco_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_coffee_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hcoffeetree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  
+     {
+    "type": "construction",
+    "id": "constr_dig_coctree",
+    "group": "dig_up_coc_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_coca", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_cocatree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_dig_hcoctree",
+    "group": "dig_up_hcoc_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_coca_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hcocatree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  
+  
+  
+  
+  
+  
+  
+  
+   {
+    "type": "construction",
+    "id": "constr_manualdig_atree",
+    "group": "dig_up_a_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+	"//": "Digging up a tree requires more specific plant knowledge than simply foraging or farming. Without it you'll just kill the tree and waste your time.",
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_apple",
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_appletree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+{
+    "type": "construction",
+    "id": "constr_manualdig_hatree",
+    "group": "dig_up_ha_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_apple_harvested",
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_happletree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_prtree",
+    "group": "dig_up_pr_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_pear",
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_peartree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_hprtree",
+    "group": "dig_up_hpr_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_pear_harvested",
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hpeartree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_ctree",
+    "group": "dig_up_c_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_cherry", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_cherrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_hctree",
+    "group": "dig_up_hc_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+	"qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_cherry_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hcherrytree", "count":1 },{ "item": "material_soil", "count": 200 } ]
+  },
+{
+    "type": "construction",
+    "id": "constr_manualdig_petree",
+    "group": "dig_up_pe_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_peach", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_peachtree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_hpetree",
+    "group": "dig_up_hpe_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_peach_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hpeachtree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+{
+    "type": "construction",
+    "id": "constr_manualdig_aprtree",
+    "group": "dig_up_apr_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_apricot", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_apricottree", "count":1 },{ "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_haprtree",
+    "group": "dig_up_hapr_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_apricot_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hapricottree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_pltree",
+    "group": "dig_up_pl_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_plum", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_plumtree", "count":1 },{ "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_hpltree",
+    "group": "dig_up_hpl_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_plum_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hplumtree", "count":1 },{ "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_mtree",
+    "group": "dig_up_m_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_mulberry", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_mulberrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_hmtree",
+    "group": "dig_up_hm_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_mulberry_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hmulberrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_etree",
+    "group": "dig_up_e_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_elderberry", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_elderberrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_hetree",
+    "group": "dig_up_he_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_elderberry_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_helderberrytree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+   {
+    "type": "construction",
+    "id": "constr_manualdig_catree",
+    "group": "dig_up_ca_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_cacao", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_cacaotree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_hcatree",
+    "group": "dig_up_hca_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_cacao_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hcacaotree", "count":1 },{ "item": "material_soil", "count": 200 } ]
+  },
+   {
+    "type": "construction",
+    "id": "constr_manualdig_cotree",
+    "group": "dig_up_co_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_coffee", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_coffeetree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_hcotree",
+    "group": "dig_up_hco_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_coffee_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hcoffeetree", "count":1 }, { "item": "material_soil", "count": 200 } ]
+  },
+  
+     {
+    "type": "construction",
+    "id": "constr_manualdig_coctree",
+    "group": "dig_up_coc_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_coca", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_cocatree", "count":1 },{ "item": "material_soil", "count": 200 } ]
+  },
+  {
+    "type": "construction",
+    "id": "constr_manualdig_hcoctree",
+    "group": "dig_up_hcoc_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "bag_canvas_replanting", 1 ] ],
+      [ [ "water", 20 ] ]
+    ],
+	"pre_terrain": "t_tree_coca_harvested", 
+    "post_terrain": "t_pit",
+    "byproducts": [ { "item": "up_hcocatree", "count":1 },{ "item": "material_soil", "count": 200 } ]
+  },
+  
+  
+  
+  
+  
+  
+  
+   {
+    "type": "construction",
+    "id": "constr_replant_atree",
+    "group": "replant_a_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+	"//": "Replanting a tree requires more specific plant knowledge than simply foraging or farming. If you don't take adequate care, you'll damage the root system, plant it crooked, or leave it to dry out and die.",
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_appletree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_apple"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_hatree",
+    "group": "replant_ha_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_happletree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_apple_harvested"
+  },
+  
+   {
+    "type": "construction",
+    "id": "constr_replant_prtree",
+    "group": "replant_pr_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_peartree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_pear"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_hprtree",
+    "group": "replant_hpr_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hpeartree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_pear_harvested"
+  },
+  
+  {
+    "type": "construction",
+    "id": "constr_replant_ctree",
+    "group": "replant_c_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_cherrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_cherry"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_hctree",
+    "group": "replant_hc_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hcherrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_cherry_harvested"
+  },
+  
+  {
+    "type": "construction",
+    "id": "constr_replant_petree",
+    "group": "replant_pe_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_peachtree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_peach"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_hpetree",
+    "group": "replant_hpe_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hpeachtree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_peach_harvested"
+  },
+  
+  {
+    "type": "construction",
+    "id": "constr_replant_aprtree",
+    "group": "replant_apr_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_apricottree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_apricot"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_haprtree",
+    "group": "replant_hapr_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hapricottree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_apricot_harvested"
+  },
+  
+   {
+    "type": "construction",
+    "id": "constr_replant_pltree",
+    "group": "replant_pl_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_plumtree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_plum"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_hpltree",
+    "group": "replant_hpl_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hplumtree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_plum_harvested"
+  },
+  
+   {
+    "type": "construction",
+    "id": "constr_replant_mtree",
+    "group": "replant_m_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_mulberrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_mulberry"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_hmtree",
+    "group": "replant_hm_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hmulberrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_mulberry_harvested"
+  },
+  
+  {
+    "type": "construction",
+    "id": "constr_replant_etree",
+    "group": "replant_e_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_elderberrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_elderberry"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_hetree",
+    "group": "replant_he_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_helderberrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_elderberry_harvested"
+  },
+  
+  {
+    "type": "construction",
+    "id": "constr_replant_catree",
+    "group": "replant_ca_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_cacaotree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_cacao"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_hcatree",
+    "group": "replant_hca_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hcacaotree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_cacao_harvested"
+  },
+  
+   {
+    "type": "construction",
+    "id": "constr_replant_cotree",
+    "group": "replant_co_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_coffeetree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_coffee"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_hcotree",
+    "group": "replant_hco_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hcoffeetree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_coffee_harvested"
+  },
+  
+    {
+    "type": "construction",
+    "id": "constr_replant_coctree",
+    "group": "replant_coc_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_cocatree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_coca"
+  },
+{
+    "type": "construction",
+    "id": "constr_replant_hcoctree",
+    "group": "replant_hcoc_tree",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "2h",
+    "on_display": true,
+    "qualities": [ {"id": "TREE_PULL", "level": 1} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hcocatree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_coca_harvested"
+  },
+  
+  
+  
+  
+  
+   {
+    "type": "construction",
+    "id": "constr_manualreplant_atree",
+    "group": "replant_a_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+	"//": "Replanting a tree by hand is extremely difficult due to the weight and size of the tree. It takes a long time accordingly.",
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_appletree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_apple"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_hatree",
+    "group": "replant_ha_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_happletree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_apple_harvested"
+  },
+  
+   {
+    "type": "construction",
+    "id": "constr_manualreplant_prtree",
+    "group": "replant_pr_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_peartree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_pear"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_hprtree",
+    "group": "replant_hpr_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hpeartree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_pear_harvested"
+  },
+  
+  {
+    "type": "construction",
+    "id": "constr_manualreplant_ctree",
+    "group": "replant_c_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_cherrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_cherry"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_hctree",
+    "group": "replant_hc_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hcherrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_cherry_harvested"
+  },
+  
+  {
+    "type": "construction",
+    "id": "constr_manualreplant_petree",
+    "group": "replant_pe_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_peachtree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_peach"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_hpetree",
+    "group": "replant_hpe_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hpeachtree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_peach_harvested"
+  },
+  
+  {
+    "type": "construction",
+    "id": "constr_manualreplant_aprtree",
+    "group": "replant_apr_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_apricottree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_apricot"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_haprtree",
+    "group": "replant_hapr_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hapricottree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_apricot_harvested"
+  },
+  
+   {
+    "type": "construction",
+    "id": "constr_manualreplant_pltree",
+    "group": "replant_pl_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_plumtree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_plum"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_hpltree",
+    "group": "replant_hpl_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hplumtree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_plum_harvested"
+  },
+  
+   {
+    "type": "construction",
+    "id": "constr_manualreplant_mtree",
+    "group": "replant_m_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_mulberrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_mulberry"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_hmtree",
+    "group": "replant_hm_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hmulberrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_mulberry_harvested"
+  },
+  
+  {
+    "type": "construction",
+    "id": "constr_manualreplant_etree",
+    "group": "replant_e_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_elderberrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_elderberry"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_hetree",
+    "group": "replant_he_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_helderberrytree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_elderberry_harvested"
+  },
+  
+   {
+    "type": "construction",
+    "id": "constr_manualreplant_catree",
+    "group": "replant_ca_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_cacaotree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_cacao"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_hcatree",
+    "group": "replant_hca_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hcacaotree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_cacao_harvested"
+  },
+  
+   {
+    "type": "construction",
+    "id": "constr_manualreplant_cotree",
+    "group": "replant_co_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_coffeetree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_coffee"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_hcotree",
+    "group": "replant_hco_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hcoffeetree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_coffee_harvested"
+  },
+  
+    {
+    "type": "construction",
+    "id": "constr_manualreplant_coctree",
+    "group": "replant_coc_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_cocatree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_coca"
+  },
+{
+    "type": "construction",
+    "id": "constr_manualreplant_hcoctree",
+    "group": "replant_coc_treem",
+    "category": "FARM_WOOD",
+	"required_skills": [ [ "survival", 4 ] ],
+    "time": "8h",
+    "on_display": true,
+    "qualities": [ {"id": "DIG", "level": 3} ],
+	"components": [
+      [ [ "material_soil", 200 ] ],
+      [ [ "water", 20 ] ],
+	  [ [ "up_hcocatree", 1] ]
+    ],
+	  "byproducts": [ { "item": "bag_canvas_replanting", "count":1 } ],
+	"pre_terrain": "t_pit",
+    "post_terrain": "t_tree_coca_harvested"
   }
 ]
