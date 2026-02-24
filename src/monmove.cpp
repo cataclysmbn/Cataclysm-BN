@@ -1395,7 +1395,7 @@ void monster::execute_action( const monster_action_t &action )
     {
         const auto vp2        = g->m.veh_at( pos() );
         const bool harness_part = static_cast<bool>(
-            g->m.veh_at( pos() ).part_with_feature( "ANIMAL_CTRL", true ) );
+                                      g->m.veh_at( pos() ).part_with_feature( "ANIMAL_CTRL", true ) );
         if( vp2 && vp2->vehicle().is_moving() &&
             vp2->vehicle().get_pet( vp2->part_index() ) ) {
             moves = 0;
