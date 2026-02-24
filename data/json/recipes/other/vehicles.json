@@ -2126,62 +2126,6 @@
     "components": [ [ [ "carbon_fiber_filament", 100 ] ] ]
   },
   {
-    "result": "sheet_carbon",
-    "type": "recipe",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_VEHICLE",
-    "skill_used": "computer",
-    "difficulty": 2,
-    "skills_required": [ [ "fabrication", 2 ] ],
-    "time": "10 m",
-    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
-    "using": [ [ "3d_printing_standard", 5 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 50 ] ] ]
-  },
-  {
-    "result": "carbon_plate",
-    "type": "recipe",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_VEHICLE",
-    "skill_used": "computer",
-    "difficulty": 2,
-    "skills_required": [ [ "fabrication", 2 ] ],
-    "time": "10 m",
-    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
-    "using": [ [ "3d_printing_standard", 15 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 150 ] ] ]
-  },
-  {
-    "result": "wing_carbon_item",
-    "type": "recipe",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_VEHICLE",
-    "skill_used": "computer",
-    "difficulty": 2,
-    "skills_required": [ [ "fabrication", 2 ] ],
-    "time": "10 m",
-    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
-    "using": [ [ "3d_printing_standard", 10 ] ],
-    "components": [ [ [ "carbon_fiber_filament", 75 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "lit_wing_carbon_item",
-    "category": "CC_ELECTRONIC",
-    "subcategory": "CSC_ELECTRONIC_LIGHTING",
-    "skill_used": "electronics",
-    "difficulty": 1,
-    "time": "15 m",
-    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ] ],
-    "using": [ [ "soldering_standard", 5 ] ],
-    "components": [
-      [ [ "wing_carbon_item", 1 ] ],
-      [ [ "lightstrip_inactive", 1 ], [ "light_bulb", 1 ] ],
-      [ [ "cable", 10 ] ],
-      [ [ "plastic_chunk", 1 ] ]
-    ]
-  },
-  {
     "type": "recipe",
     "result": "aluminium_sheet",
     "category": "CC_OTHER",
@@ -2432,5 +2376,40 @@
     "using": [ [ "welding_standard", 10 ] ],
     "qualities": [ { "id": "HAMMER", "level": 2 } ],
     "components": [ [ [ "sheet_metal", 4 ] ], [ [ "scrap", 6 ] ], [ [ "amplifier", 4 ] ], [ [ "e_scrap", 6 ] ] ]
+  },
+  
+   {
+    "result": "treespade",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "skills_required": [ "fabrication", 6 ],
+	"//": "You're making a recreation of the Big John 65 Inch Tree Spade. It is huge and hydraulic-heavy." ,
+	"//2": "This version abstracts disassembling hydraulic presses into just the hydraulic systems - and cobbling them together for stabilizer legs and hydraulic actuators.",
+    "difficulty": 6,
+    "time": "4 h",
+    "book_learn": [ [ "textbook_mechanics", 6 ], [ "reference_fabrication1", 6 ] ],
+    "using": [ [ "welding_standard", 40 ], [ "steel_standard", 60 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 }, { "id": "WRENCH", "level": 2 } ],
+    "components": [ [ [ "hydraulic_press", 2 ] ], [ [ "cable", 200 ] ], [ [ "electronics_controls", 1 ] ] ]
+  },
+  
+   {
+    "result": "treespade",
+	"id_suffix": "from improvised materials",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "skills_required": [ "fabrication", 6 ],
+	"//": "You're making a recreation of the Big John 65 Inch Tree Spade. It is huge and hydraulic-heavy." ,
+	"//2": "This version abstracts improvising bottle jacks, pipes, and oil into higher capacity hydraulic systems - and cobbling them together for stabilizer legs and hydraulic actuators.",
+    "difficulty": 6,
+    "time": "4 h",
+    "book_learn": [ [ "textbook_mechanics", 6 ], [ "reference_fabrication1", 6 ] ],
+    "using": [ [ "welding_standard", 40 ], [ "steel_standard", 60 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "SAW_M", "level": 2 }, { "id": "WRENCH", "level": 2 } ],
+    "components": [ [ [ "jack", 8 ] ], [ [ "pipe", 12 ] ], [ [ "cable", 200 ] ], [ [ "electronics_controls", 1 ] ], [ [ "motor_oil", 500 ] ] ]
   }
 ]
