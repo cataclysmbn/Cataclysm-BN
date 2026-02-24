@@ -4536,6 +4536,23 @@ void game::monmove()
         }
     }
 
+    // Build creature snapshots for thread-safe compute_plan() access.
+    // compute_plan() calls g->all_monsters() / g->all_npcs() to find targets.
+    // Those functions iterate weak_ptr_fast<T> objects whose refcounting uses
+    // _S_single (non-atomic).  Concurrent lock() calls from worker threads are
+    // a data race.  Building plain pointer snapshots here, serially, avoids
+    // touching any weak_ptr_fast from worker threads.
+    std::vector<monster *> mon_snap;
+    mon_snap.reserve( plannable.size() * 2 );
+    for( monster &mon : all_monsters() ) {
+        mon_snap.push_back( &mon );
+    }
+    std::vector<npc *> npc_snap;
+    for( npc &n : all_npcs() ) {
+        npc_snap.push_back( &n );
+    }
+    const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap };
+
     // PERF-LOSS-2 / OPP-5: parallel_for_chunked with a small chunk size gives the
     // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
     // (no ray traces) immediately pull the next chunk rather than sitting idle
@@ -4543,12 +4560,12 @@ void game::monmove()
     std::vector<monster_plan_t> precomputed( plannable.size() );
     if( parallel_enabled && parallel_monster_planning ) {
         parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
-        monster_plan_chunk_size, [&]( int i ) {
-            precomputed[i] = plannable[i]->compute_plan();
+                              monster_plan_chunk_size, [&]( int i ) {
+            precomputed[i] = plannable[i]->compute_plan( plan_ctx );
         } );
     } else {
         for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-            precomputed[i] = plannable[i]->compute_plan();
+            precomputed[i] = plannable[i]->compute_plan( plan_ctx );
         }
     }
 
@@ -4662,7 +4679,7 @@ void game::monmove()
     // Bio-alarm helper — called after each monster finishes its move loop.
     // static const: string_id hash lookup happens once, not every turn.
     static const bionic_id bio_alarm( "bio_alarm" );
-    const auto check_bio_alarm = [&]( const monster & critter ) {
+    const auto check_bio_alarm = [&]( const monster &critter ) {
         if( !critter.is_dead() &&
             u.has_active_bionic( bio_alarm ) &&
             u.get_power_level() >= bio_alarm->power_trigger &&
@@ -4682,18 +4699,17 @@ void game::monmove()
     // active wander destination (heard a sound), nudge it one step toward that
     // destination without running full AI.  Truly wandering monsters (wandf==0)
     // have no goal and remain stationary — they should NOT drift toward the player.
-    const auto do_tier2_macro = [&]( monster & critter ) {
+    const auto do_tier2_macro = [&]( monster &critter ) {
         if( current_turn % macro_interval == 0 &&
             critter.wandf > 0 && critter.wander_pos != critter.pos() ) {
             const tripoint cpos      = critter.pos();
             const tripoint macro_goal = critter.wander_pos;
             const std::array<tripoint, 4> dirs = { {
-                    { cpos.x + 1, cpos.y,     cpos.z },
-                    { cpos.x - 1, cpos.y,     cpos.z },
-                    { cpos.x,     cpos.y + 1, cpos.z },
-                    { cpos.x,     cpos.y - 1, cpos.z }
-                }
-            };
+                { cpos.x + 1, cpos.y,     cpos.z },
+                { cpos.x - 1, cpos.y,     cpos.z },
+                { cpos.x,     cpos.y + 1, cpos.z },
+                { cpos.x,     cpos.y - 1, cpos.z }
+            } };
             int best_dist = rl_dist( cpos, macro_goal );
             tripoint best = cpos;
             for( const tripoint &t : dirs ) {

@@ -241,11 +241,25 @@ class monster : public Creature, public location_visitable<monster>
                            int precalc_dist = -1 ) const;
         void plan();
         /**
+         * Snapshot of alive creature pointers passed to compute_plan() so that
+         * worker threads never call weak_ptr_fast::lock() (non-atomic, _S_single)
+         * on the main thread's creature collections.  Build both vectors serially
+         * on the main thread before launching the parallel planning pass.
+         * If either pointer is null, compute_plan() falls back to
+         * g->all_monsters() / g->all_npcs() — safe only on the main thread.
+         */
+        struct compute_plan_context {
+            const std::vector<monster *> *monsters = nullptr;
+            const std::vector<npc *>     *npcs     = nullptr;
+        };
+
+        /**
          * Pure planning pass: reads game state and returns a fully-described
          * plan without mutating *this.  Safe to call from a worker thread once
-         * P-5 (thread-local RNG) and P-6 (vision cache mutex) are in place.
+         * P-5 (thread-local RNG), P-6 (vision cache mutex), and ctx snapshots
+         * are in place.
          */
-        monster_plan_t compute_plan() const;
+        monster_plan_t compute_plan( const compute_plan_context &ctx = {} ) const;
         /**
          * Commit phase: applies a previously computed plan to *this.
          * Must be called on the main thread — calls remove_effect(),
