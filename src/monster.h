@@ -249,8 +249,9 @@ class monster : public Creature, public location_visitable<monster>
          * g->all_monsters() / g->all_npcs() — safe only on the main thread.
          */
         struct compute_plan_context {
-            const std::vector<monster *> *monsters = nullptr;
-            const std::vector<npc *>     *npcs     = nullptr;
+            const std::vector<monster *> *monsters;
+            const std::vector<npc *> *npcs;
+            constexpr compute_plan_context() noexcept : monsters( nullptr ), npcs( nullptr ) {}
         };
 
         /**
