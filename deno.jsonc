@@ -23,15 +23,15 @@
     },
     "affected-files": "deno run -RWEN --allow-run scripts/affected_files.ts"
   },
-  "test": { "include": ["scripts"] },
+  "test": { "include": ["scripts", ".agents"] },
   "lint": {
-    "include": ["scripts"],
+    "include": ["scripts", ".agents"],
     "rules": { "exclude": ["no-unversioned-import", "no-import-prefix"] }
   },
   "unstable": ["raw-imports", "fmt-component", "temporal"],
   "fmt": {
     "exclude": ["doc"],
-    "include": ["scripts", "doc", "docs", "*.md", ".github", ".claude"],
+    "include": ["scripts", ".agents", "doc", "docs", "*.md", ".github", ".claude"],
     "semiColons": false,
     "lineWidth": 100,
     "proseWrap": "preserve"
