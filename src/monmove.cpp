@@ -457,7 +457,8 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
     // LOD Tier 1/2: skip the O(M²) faction-member scan for group morale and
     // swarming.  At 20–60 tiles these behaviours are not player-visible.
     // Tier 0 (full fidelity) runs the normal computation.
-    bool group_morale = lod_tier <= lod_group_morale_max_tier && has_flag( MF_GROUP_MORALE ) && local_morale < type->morale;
+    bool group_morale = lod_tier <= lod_group_morale_max_tier && has_flag( MF_GROUP_MORALE ) &&
+                        local_morale < type->morale;
     bool swarms       = lod_tier <= lod_group_morale_max_tier && has_flag( MF_SWARMS );
     auto mood   = attitude();
 
@@ -510,7 +511,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
                 }
             }
             if( angers_cub_threatened > 0 ) {
-                for_each_monster( [&]( monster &tmp ) {
+                for_each_monster( [&]( monster & tmp ) {
                     if( type->baby_monster == tmp.type->id ) {
                         // Mirrors original plan(): dist is updated so subsequent
                         // target selection uses the baby-player distance.
@@ -530,7 +531,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             }
         }
     } else if( local_friendly != 0 && !docile && !waiting ) {
-        for_each_monster( [&]( monster &tmp ) {
+        for_each_monster( [&]( monster & tmp ) {
             if( tmp.friendly == 0 ) {
                 // P-4: distance cull — skip ray trace if target is out of range.
                 const int d_tmp = rl_dist( pos(), tmp.pos() );
@@ -555,7 +556,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
     }
 
     int valid_targets = ( target == nullptr ) ? 1 : 0;
-    for_each_npc( [&]( npc &who ) {
+    for_each_npc( [&]( npc & who ) {
         auto faction_att = faction.obj().attitude( who.get_monster_faction() );
         if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
             return;
