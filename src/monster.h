@@ -259,7 +259,7 @@ class monster : public Creature, public location_visitable<monster>
          * P-5 (thread-local RNG), P-6 (vision cache mutex), and ctx snapshots
          * are in place.
          */
-        monster_plan_t compute_plan( const compute_plan_context &ctx = {} ) const;
+        monster_plan_t compute_plan( const compute_plan_context &ctx = compute_plan_context{} ) const;
         /**
          * Commit phase: applies a previously computed plan to *this.
          * Must be called on the main thread — calls remove_effect(),
