@@ -23,17 +23,35 @@ export type ChangeEntry = {
 
 const docs_threshold = 0.8
 
+const perf_cue_pattern =
+  /\b(perf|performance|optimi[sz](?:e|ed|es|ing|ation)|speed(?:up)?|faster|latency|throughput|cpu|memory|frame(?:\s|-)?time|fps)\b/i
+const ui_cue_pattern =
+  /\b(ui|ux|user interface|interface|menu|sidebar|widget|panel|dialog|window|screen)\b/i
+const option_cue_pattern = /\b(option|options|setting|settings|toggle|toggles)\b/i
+const add_cue_pattern =
+  /\b(add|adds|added|new|introduce|introduces|introduced|create|creates|created)\b/i
+
+const ui_path_pattern =
+  /(\/ui\/|\/sidebar\/|\/menu\/|\/widget\/|\/panel\/|\/dialog\/|\/screen\/|\/interface\/|\/options\.|\/options\/)/i
+
+export type ParsedTitle = {
+  type: string
+  scope?: string
+  subject: string
+}
+
 export const parse_conventional_title = (
   title: string,
-): { type: string; scope?: string } | undefined => {
+): ParsedTitle | undefined => {
   const trimmed = title.trim()
-  const match = /^(?<type>[a-z]+)(?:\((?<scope>[^)]+)\))?:\s+.+$/.exec(trimmed)
+  const match = /^(?<type>[a-z]+)(?:\((?<scope>[^)]+)\))?:\s+(?<subject>.+)$/.exec(trimmed)
   if (!match?.groups) {
     return undefined
   }
   const type = match.groups.type
   const scope = match.groups.scope
-  return scope === undefined ? { type } : { type, scope }
+  const subject = match.groups.subject
+  return scope === undefined ? { type, subject } : { type, scope, subject }
 }
 
 export const parse_name_status = (text: string): ChangeEntry[] =>
@@ -69,9 +87,35 @@ export type ValidationResult = {
   reason?: string
 }
 
-export const validate_title_type = (
-  parsed_title: { type: string; scope?: string } | undefined,
+const has_ui_scope = (scope: string | undefined): boolean => {
+  if (scope === undefined) {
+    return false
+  }
+  return scope.split(",").map((entry) => entry.trim()).includes("UI")
+}
+
+const detect_ui_option_change = (
+  parsed_title: ParsedTitle,
   entries: ChangeEntry[],
+  context: string,
+): boolean => {
+  const text = `${parsed_title.subject} ${context}`
+  const has_add_cue = add_cue_pattern.test(text)
+  const has_option_cue = option_cue_pattern.test(text)
+  const has_ui_cue = ui_cue_pattern.test(text)
+  const has_ui_path = entries.some((entry) => ui_path_pattern.test(entry.path))
+  return has_add_cue && has_option_cue && (has_ui_cue || has_ui_path)
+}
+
+const detect_perf_change = (parsed_title: ParsedTitle, context: string): boolean => {
+  const text = `${parsed_title.subject} ${context}`
+  return perf_cue_pattern.test(text)
+}
+
+export const validate_title_type = (
+  parsed_title: ParsedTitle | undefined,
+  entries: ChangeEntry[],
+  context: string,
 ): ValidationResult => {
   if (parsed_title === undefined) {
     return {
@@ -93,6 +137,15 @@ export const validate_title_type = (
     return { ok: true }
   }
 
+  const normalized_context = context.trim()
+  if (normalized_context.length < 20) {
+    return {
+      ok: false,
+      reason:
+        "Context is required and must be meaningful (at least 20 chars). Include intent and touched areas.",
+    }
+  }
+
   const docs_count = entries.filter((entry) => is_docs_path(entry.path)).length
   const docs_ratio = docs_count / entries.length
 
@@ -101,6 +154,25 @@ export const validate_title_type = (
       ok: false,
       reason:
         "`docs/` changes exceed 80% of touched files, so PR type must be `docs` per project policy.",
+    }
+  }
+
+  if (detect_perf_change(parsed_title, normalized_context) && parsed_title.type !== "perf") {
+    return {
+      ok: false,
+      reason:
+        "Context indicates a performance-oriented change. Use `perf` type instead of feature/general types.",
+    }
+  }
+
+  if (
+    detect_ui_option_change(parsed_title, entries, normalized_context) &&
+    !has_ui_scope(parsed_title.scope)
+  ) {
+    return {
+      ok: false,
+      reason:
+        "Context indicates adding a user interface option. Include `UI` in scope (for example `feat(UI): ...`).",
     }
   }
 
@@ -142,11 +214,16 @@ if (import.meta.main) {
     .name("pr-title")
     .description("Validate PR title type/scope against changed files")
     .option("--title <title:string>", "PR title to validate", { required: true })
+    .option(
+      "--context <context:string>",
+      "brief context describing intent and touched areas",
+      { required: true },
+    )
     .option("--base <ref:string>", "base ref used for git diff", { default: "upstream/main" })
-    .action(async ({ title, base }) => {
+    .action(async ({ title, context, base }) => {
       const entries = await read_changed_files(base)
       const parsed_title = parse_conventional_title(title)
-      const validation = validate_title_type(parsed_title, entries)
+      const validation = validate_title_type(parsed_title, entries, context)
 
       if (!validation.ok) {
         console.error(`PR title invalid: ${validation.reason}`)
