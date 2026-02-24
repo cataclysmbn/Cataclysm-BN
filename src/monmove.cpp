@@ -15,6 +15,7 @@
 
 #include "avatar.h"
 #include "behavior.h"
+#include "calendar.h"
 #include "bionics.h"
 #include "cata_utility.h"
 #include "catalua_hooks.h"
@@ -420,8 +421,11 @@ monster_plan_t monster::compute_plan() const
     const int  fears_hostile_near =
         type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE ) ? 5 : 0;
 
-    bool group_morale = has_flag( MF_GROUP_MORALE ) && local_morale < type->morale;
-    bool swarms = has_flag( MF_SWARMS );
+    // LOD Tier 1/2: skip the O(M²) faction-member scan for group morale and
+    // swarming.  At 20–60 tiles these behaviours are not player-visible.
+    // Tier 0 (full fidelity) runs the normal computation.
+    bool group_morale = lod_tier == 0 && has_flag( MF_GROUP_MORALE ) && local_morale < type->morale;
+    bool swarms       = lod_tier == 0 && has_flag( MF_SWARMS );
     auto mood   = attitude();
 
     if( local_friendly == 0 && turn_cached_sees( *this, g->u ) && !waiting ) {
@@ -1069,23 +1073,32 @@ void monster::move()
 
     if( !this->is_wandering() ) {
         if( this->repath_requested ) {
-            std::vector<tripoint> maybe_new_path;
+            // LOD Tier 1/2: skip the A* recompute.  The cached path (if any)
+            // is reused as-is; if it is empty the fallback below uses a
+            // straight-line step toward the goal.  This avoids the heap
+            // allocation and graph traversal cost for coarse/macro monsters.
+            if( lod_tier == 0 ) {
+                std::vector<tripoint> maybe_new_path;
 
-            if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) ) {
-                auto pf_settings = get_legacy_pathfinding_settings();
-                maybe_new_path = g->m.route( this->pos(), this->goal, pf_settings, this->get_legacy_path_avoid() );
-            } else {
-                auto pair = this->get_pathfinding_pair();
-                maybe_new_path = Pathfinding::route( this->pos(), this->goal, pair.first, pair.second );
+                if( get_option<bool>( "USE_LEGACY_PATHFINDING" ) ) {
+                    auto pf_settings = get_legacy_pathfinding_settings();
+                    maybe_new_path = g->m.route( this->pos(), this->goal, pf_settings,
+                                                 this->get_legacy_path_avoid() );
+                } else {
+                    auto pair = this->get_pathfinding_pair();
+                    maybe_new_path = Pathfinding::route( this->pos(), this->goal,
+                                                         pair.first, pair.second );
+                }
+
+                const bool is_pathfinding_successful = !maybe_new_path.empty();
+                assert( is_pathfinding_successful ? maybe_new_path.back() == this->goal : true );
+
+                if( is_pathfinding_successful ) {
+                    // Path will be retained even if we are unsuccessful this time
+                    this->path = maybe_new_path;
+                }
             }
-
-            const bool is_pathfinding_successful = !maybe_new_path.empty();
-            assert( is_pathfinding_successful ? maybe_new_path.back() == this->goal : true );
-
-            if( is_pathfinding_successful ) {
-                // Path will be retained even if we are unsuccessful this time
-                this->path = maybe_new_path;
-            }
+            // Tier 1/2: path unchanged; straight-line fallback applies below.
         }
 
         while( !this->path.empty() && this->path.front() == this->pos() ) {
@@ -1108,7 +1121,13 @@ void monster::move()
             }
         }
     } else {
-        if( has_flag( MF_SMELLS ) ) {
+        // LOD Tier 1: reduce scent-tracking to ~1-in-3 turns to save CPU.
+        // Dropping it completely would break corner-rounding for out-of-sight
+        // pursuit; 1-in-3 is a good balance between cost and fidelity.
+        // Tier 0 always checks; Tier 2 never reaches this branch (handled above).
+        const bool do_scent = lod_tier == 0 ||
+                              ( to_turn<int>( calendar::turn ) + pos().x + pos().y ) % 3 == 0;
+        if( has_flag( MF_SMELLS ) && do_scent ) {
             // No sight... or our plans are invalid (e.g. moving through a transparent, but
             //  solid, square of terrain).  Fall back to smell if we have it.
             this->unset_dest();

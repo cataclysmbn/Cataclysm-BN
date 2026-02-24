@@ -859,6 +859,7 @@ class game
 
         // Routine loop functions, approximately in order of execution
         void monmove();          // Monster movement
+        int  tier_assign_all(); // LOD tier assignment, O(M), called from monmove(); returns Tier 0 count
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process
         void process_activity(); // Processes and enacts the player's activity

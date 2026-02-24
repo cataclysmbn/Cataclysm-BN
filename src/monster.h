@@ -512,6 +512,20 @@ class monster : public Creature, public location_visitable<monster>
         tripoint wander_pos; // Wander destination - Just try to move in that direction
         int wandf;           // Urge to wander - Increased by sound, decrements each move
 
+        // LOD-1 scheduling: game turn on which this monster next enters the
+        // move loop.  Default 0 → eligible immediately on first turn after
+        // load.  Not persisted — 0 on load is safe (all monsters become
+        // eligible on the first turn, which is correct).
+        int next_turn = 0;
+
+        // LOD tier assigned by game::tier_assign_all() each monmove() pass.
+        //   0 = Full   (≤20 tiles from player, or has an active target)
+        //   1 = Coarse (20–60 tiles: reuse cached path, skip faction queries)
+        //   2 = Macro  (>60 tiles: single Manhattan step every MACRO_INTERVAL)
+        // Transient — not saved or loaded; recalculated each monmove().
+        int8_t lod_tier     = 0;
+        int     lod_cooldown = 0;  // turns remaining before demotion is allowed
+
 
         Character *mounted_player = nullptr; // player that is mounting this creature
         character_id mounted_player_id; // id of player that is mounting this creature ( for save/load )
