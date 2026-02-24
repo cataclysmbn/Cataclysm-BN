@@ -4619,7 +4619,7 @@ void game::monmove()
     // Bio-alarm helper — called after each monster finishes its move loop.
     // static const: string_id hash lookup happens once, not every turn.
     static const bionic_id bio_alarm( "bio_alarm" );
-    const auto check_bio_alarm = [&]( const monster &critter ) {
+    const auto check_bio_alarm = [&]( const monster & critter ) {
         if( !critter.is_dead() &&
             u.has_active_bionic( bio_alarm ) &&
             u.get_power_level() >= bio_alarm->power_trigger &&
@@ -4637,15 +4637,16 @@ void game::monmove()
 
     // Tier-2 macro-step: once per MACRO_INTERVAL turns nudge the monster
     // one step closer to the player without running full AI.
-    const auto do_tier2_macro = [&]( monster &critter ) {
+    const auto do_tier2_macro = [&]( monster & critter ) {
         if( current_turn % MACRO_INTERVAL == 0 ) {
             const tripoint cpos = critter.pos();
             const std::array<tripoint, 4> dirs = { {
-                { cpos.x + 1, cpos.y,     cpos.z },
-                { cpos.x - 1, cpos.y,     cpos.z },
-                { cpos.x,     cpos.y + 1, cpos.z },
-                { cpos.x,     cpos.y - 1, cpos.z }
-            } };
+                    { cpos.x + 1, cpos.y,     cpos.z },
+                    { cpos.x - 1, cpos.y,     cpos.z },
+                    { cpos.x,     cpos.y + 1, cpos.z },
+                    { cpos.x,     cpos.y - 1, cpos.z }
+                }
+            };
             int best_dist = rl_dist( cpos, player_pos );
             tripoint best = cpos;
             for( const tripoint &t : dirs ) {

@@ -26,8 +26,8 @@ enum class monster_action_kind : uint8_t {
     die,         // Hallucination death; execute_action calls die(nullptr).
     stumble,     // Monster is stunned; execute_action calls stumble() then zeroes moves.
     special,     // Reserved for Phase 3: signal that a special is pending serialisation.
-                 // NOT currently set by decide_action() — specials fire as a fall-through
-                 // side effect inside execute_action() to match original move() behaviour.
+    // NOT currently set by decide_action() — specials fire as a fall-through
+    // side effect inside execute_action() to match original move() behaviour.
     move,        // Move to dest tile.
     attack,      // Melee attack creature at dest.
     bash,        // Bash obstacle at dest.
