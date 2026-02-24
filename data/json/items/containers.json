@@ -1406,5 +1406,23 @@
     "color": "white",
     "contains": "2 L",
     "//": "Pseudo-container in order to make the hack work."
+  },
+  
+  {
+    "id": "bag_canvas_replanting",
+    "type": "CONTAINER",
+    "category": "container",
+    "name": { "str": "arboreal canvas sack" },
+    "looks_like": "bag_plastic",
+    "description": "An enormous canvas sack, big enough to wrap around a tree's rootball and keep it hydrated.",
+    "weight": "2 kg",
+    "volume": "100 L",
+    "price": 0,
+    "price_postapoc": 10,
+    "to_hit": -5,
+    "material": [ "cotton" ],
+    "symbol": ")",
+    "color": "brown",
+	"contains": "500 L"
   }
 ]
