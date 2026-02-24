@@ -271,5 +271,97 @@
       }
     ],
     "items": [  ]
+  },
+  
+   {
+    "id": "excavator_tree",
+    "type": "vehicle",
+    "name": "Tree Excavator",
+    "blueprint": [
+      [ "o-=o" ],
+      [ "|X={" ],
+      [ "o-=o" ]
+    ],
+    "parts": [
+      { "x": -1, "y": 1, "parts": [ "frame_se", "roof", "wheel_mount_medium", "wheel", "board_se", "muffler" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_nw", "halfboard_nw", "headlight_reinforced" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_sw", "roof", "wheel_mount_medium", "wheel", "board_sw" ] },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [ "frame_cross", "roof", "reinforced_windshield", "diesel_engine_i6", "alternator_truck", "battery_car" ]
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "parts": [ "frame_vertical", "roof", "wheel_mount_medium_steerable", "wheel", "reinforced_windshield" ]
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_cross", "roof", "seat", "seatbelt", "floodlight", "controls", "dashboard", "horn_big" ]
+      },
+      { "x": 2, "y": 0, "parts": [ "mountedtreespade" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_horizontal", "roof", "hatch", { "part": "tank", "fuel": "diesel" } ] },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical", "roof", "door" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "roof", "door" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_ne", "halfboard_ne", "headlight_reinforced" ] },
+      {
+        "x": 1,
+        "y": -1,
+        "parts": [ "frame_vertical", "roof", "wheel_mount_medium_steerable", "wheel", "reinforced_windshield" ]
+      }
+    ],
+    "items": [  ]
+  },
+  
+   {
+    "id": "tree_trencher",
+    "type": "vehicle",
+    "name": "Tree Digger",
+    "blueprint": [
+      [ "o-=o " ],
+      [ "|X==&" ],
+      [ "o-=o " ]
+    ],
+    "parts": [
+      { "x": -1, "y": 1, "parts": [ "frame_se", "roof", "wheel_mount_medium", "wheel_wide_or", "board_se" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_nw", "halfboard_nw", "headlight_reinforced" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_sw", "roof", "wheel_mount_medium", "wheel_wide_or", "board_sw" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_cross", "roof", "reinforced_windshield" ] },
+      { "x": 3, "y": 0, "parts": [ "mountedtreespade" ] },
+      {
+        "x": 1,
+        "y": 1,
+        "parts": [ "frame_vertical", "roof", "wheel_mount_medium_steerable", "wheel_wide_or", "reinforced_windshield" ]
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "frame_cross",
+          "roof",
+          "seat",
+          "seatbelt",
+          "floodlight",
+          "controls",
+          "dashboard",
+          "horn_big",
+          "engine_electric",
+          "storage_battery"
+        ]
+      },
+      { "x": 2, "y": 0, "parts": [ "frame_horizontal" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_horizontal", "roof", "hatch" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical", "roof", "door" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "roof", "door" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_ne", "halfboard_ne", "headlight_reinforced" ] },
+      {
+        "x": 1,
+        "y": -1,
+        "parts": [ "frame_vertical", "roof", "wheel_mount_medium_steerable", "wheel_wide_or", "reinforced_windshield" ]
+      }
+    ],
+    "items": [  ]
   }
 ]
