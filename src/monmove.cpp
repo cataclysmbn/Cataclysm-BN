@@ -431,8 +431,8 @@ monster_plan_t monster::compute_plan() const
     // LOD Tier 1/2: skip the O(M²) faction-member scan for group morale and
     // swarming.  At 20–60 tiles these behaviours are not player-visible.
     // Tier 0 (full fidelity) runs the normal computation.
-    bool group_morale = lod_tier == 0 && has_flag( MF_GROUP_MORALE ) && local_morale < type->morale;
-    bool swarms       = lod_tier == 0 && has_flag( MF_SWARMS );
+    bool group_morale = lod_tier <= lod_group_morale_max_tier && has_flag( MF_GROUP_MORALE ) && local_morale < type->morale;
+    bool swarms       = lod_tier <= lod_group_morale_max_tier && has_flag( MF_SWARMS );
     auto mood   = attitude();
 
     // GAIN-B: call rate_target once (which internally calls turn_cached_sees).
@@ -1046,9 +1046,9 @@ monster_action_t monster::decide_action() const
         }
     } else {
         // Wandering: scent -> sound fall-backs (reads only).
-        // LOD Tier 1: reduce scent-tracking to ~1-in-3 turns to save CPU.
+        // LOD Tier 1: reduce scent-tracking frequency to save CPU.
         const bool do_scent = lod_tier == 0 ||
-                              ( to_turn<int>( calendar::turn ) + pos().x + pos().y ) % 3 == 0;
+                              ( to_turn<int>( calendar::turn ) + pos().x + pos().y ) % lod_coarse_scent_interval == 0;
         if( has_flag( MF_SMELLS ) && do_scent ) {
             // scent_move() is const -- reads scent map, returns a tripoint.
             // unset_dest() (a write) is deferred to execute_action.

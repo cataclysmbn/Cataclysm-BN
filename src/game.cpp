@@ -4377,14 +4377,26 @@ void game::cleanup_dead()
 // ---------------------------------------------------------------------------
 int game::tier_assign_all()
 {
+    if( !monster_lod_enabled ) {
+        int count = 0;
+        for( monster &mon : all_monsters() ) {
+            mon.lod_tier     = 0;
+            mon.lod_cooldown = 0;
+            ++count;
+        }
+        TracyPlot( "LOD Tier 0 (Full AI)",  static_cast<int64_t>( count ) );
+        TracyPlot( "LOD Tier 1 (Coarse)",   static_cast<int64_t>( 0 ) );
+        TracyPlot( "LOD Tier 2 (Macro)",    static_cast<int64_t>( 0 ) );
+        return count;
+    }
+
     const tripoint player_pos = u.pos();
     int tier_counts[3] = { 0, 0, 0 };
 
-    const int tier01_dist  = get_option<int>( "LOD_TIER_FULL_DIST" );
+    const int tier01_dist  = lod_tier_full_dist;
     // Clamp so Tier 1/2 boundary is always strictly greater than Tier 0/1.
-    const int tier12_dist  = std::max( get_option<int>( "LOD_TIER_COARSE_DIST" ),
-                                       tier01_dist + 1 );
-    const int demote_cd    = get_option<int>( "LOD_DEMOTION_COOLDOWN" );
+    const int tier12_dist  = std::max( lod_tier_coarse_dist, tier01_dist + 1 );
+    const int demote_cd    = lod_demotion_cooldown;
 
     for( monster &mon : all_monsters() ) {
         const int dist = rl_dist( mon.pos(), player_pos );
@@ -4459,8 +4471,8 @@ void game::monmove()
     // -----------------------------------------------------------------------
 
     // Configurable via Debug → Performance → "Monster LOD" settings.
-    const int action_budget  = get_option<int>( "LOD_ACTION_BUDGET" );
-    const int macro_interval = get_option<int>( "LOD_MACRO_INTERVAL" );
+    const int action_budget  = lod_action_budget;
+    const int macro_interval = lod_macro_interval;
 
     // Dynamic budget: at least the floor, but expanded to cover all Tier-0
     // monsters so the cap never defers a full-AI monster.
@@ -4529,9 +4541,16 @@ void game::monmove()
     // (no ray traces) immediately pull the next chunk rather than sitting idle
     // while a thread blocked on a costly monster finishes its oversized slice.
     std::vector<monster_plan_t> precomputed( plannable.size() );
-    parallel_for_chunked( 0, static_cast<int>( plannable.size() ), 8, [&]( int i ) {
-        precomputed[i] = plannable[i]->compute_plan();
-    } );
+    if( parallel_enabled && parallel_monster_planning ) {
+        parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
+                              monster_plan_chunk_size, [&]( int i ) {
+            precomputed[i] = plannable[i]->compute_plan();
+        } );
+    } else {
+        for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
+            precomputed[i] = plannable[i]->compute_plan();
+        }
+    }
 
     // Insert plannable entries into plan_index now that precomputed[] is built.
     plan_index.reserve( plannable.size() );
@@ -4643,7 +4662,7 @@ void game::monmove()
     // Bio-alarm helper — called after each monster finishes its move loop.
     // static const: string_id hash lookup happens once, not every turn.
     static const bionic_id bio_alarm( "bio_alarm" );
-    const auto check_bio_alarm = [&]( const monster & critter ) {
+    const auto check_bio_alarm = [&]( const monster &critter ) {
         if( !critter.is_dead() &&
             u.has_active_bionic( bio_alarm ) &&
             u.get_power_level() >= bio_alarm->power_trigger &&
@@ -4663,18 +4682,17 @@ void game::monmove()
     // active wander destination (heard a sound), nudge it one step toward that
     // destination without running full AI.  Truly wandering monsters (wandf==0)
     // have no goal and remain stationary — they should NOT drift toward the player.
-    const auto do_tier2_macro = [&]( monster & critter ) {
+    const auto do_tier2_macro = [&]( monster &critter ) {
         if( current_turn % macro_interval == 0 &&
             critter.wandf > 0 && critter.wander_pos != critter.pos() ) {
             const tripoint cpos      = critter.pos();
             const tripoint macro_goal = critter.wander_pos;
             const std::array<tripoint, 4> dirs = { {
-                    { cpos.x + 1, cpos.y,     cpos.z },
-                    { cpos.x - 1, cpos.y,     cpos.z },
-                    { cpos.x,     cpos.y + 1, cpos.z },
-                    { cpos.x,     cpos.y - 1, cpos.z }
-                }
-            };
+                { cpos.x + 1, cpos.y,     cpos.z },
+                { cpos.x - 1, cpos.y,     cpos.z },
+                { cpos.x,     cpos.y + 1, cpos.z },
+                { cpos.x,     cpos.y - 1, cpos.z }
+            } };
             int best_dist = rl_dist( cpos, macro_goal );
             tripoint best = cpos;
             for( const tripoint &t : dirs ) {
@@ -4807,6 +4825,28 @@ void game::sleep_skip_npc_process()
     //
     // NPCs whose current activity is not suspendable (e.g. ACT_OPERATION) are
     // left frozen for the turn rather than interrupted mid-activity.
+
+    // Every ~30 in-game minutes, re-examine sleeping NPCs and wake any whose
+    // sleep need is satisfied or whose player has woken up.  Otherwise, renew
+    // their lying-down effect for another 30-minute window.
+    if( calendar::once_every( 30_minutes ) ) {
+        for( npc &guy : g->all_npcs() ) {
+            if( guy.is_dead() || !guy.in_sleep_state() ) {
+                continue;
+            }
+            // Wake threshold: fatigue <= 25 mirrors the natural wake-up check in
+            // player_hardcoded_effects.cpp (effect_sleep handler).
+            const bool player_awake = !u.in_sleep_state();
+            const bool npc_rested   = guy.get_fatigue() <= 25;
+            if( player_awake || npc_rested ) {
+                guy.wake_up();
+            } else {
+                // Renew for another 30 minutes so the effect does not expire mid-sleep.
+                guy.add_effect( effect_lying_down, 30_minutes, bodypart_str_id::NULL_ID(), 1 );
+            }
+        }
+    }
+
     for( npc &guy : g->all_npcs() ) {
         if( guy.is_dead() ) {
             continue;
@@ -4822,8 +4862,10 @@ void game::sleep_skip_npc_process()
             if( *guy.activity ) {
                 guy.cancel_activity();
             }
-            if( !guy.has_effect( effect_lying_down ) ) {
-                guy.add_effect( effect_lying_down, 8_hours, bodypart_str_id::NULL_ID(), 1 );
+            // Only put the NPC to sleep if they still need rest.  This avoids
+            // re-sleeping NPCs that were just woken because their fatigue was satisfied.
+            if( !guy.has_effect( effect_lying_down ) && guy.get_fatigue() > 25 ) {
+                guy.add_effect( effect_lying_down, 30_minutes, bodypart_str_id::NULL_ID(), 1 );
             }
         }
 

@@ -197,9 +197,7 @@ void scent_map::update( const tripoint &center, map &m )
         squares_used_y[SCENT_RADIUS * 2][x] = 0;
     }
 
-    // Y-pass: each x column is independent — no shared writes.
-    parallel_for( 0, SCENT_RADIUS * 2 + 3, [&]( int x ) {
-        for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
+    const bool parallel_scent = parallel_enabled && parallel_scent_update;
 
     // Y-pass: each x column is independent — no shared writes.
     if( parallel_scent ) {
@@ -232,14 +230,15 @@ void scent_map::update( const tripoint &center, map &m )
                 }
             }
         }
-    } );
+    }
     // implicit barrier at end of parallel_for; sum_3_scent_y is fully populated
 
     // X-pass: reads sum_3_scent_y (now complete and read-only), writes new_scent[y][x].
     // Each output column x is independent.
-    parallel_for( 1, SCENT_RADIUS * 2 + 2, [&]( int x ) {
-        for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
-            const point abs( x + scentmap_minx - 1, y + scentmap_miny );
+    if( parallel_scent ) {
+        parallel_for( 1, SCENT_RADIUS * 2 + 2, [&]( int x ) {
+            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
+                const point abs( x + scentmap_minx - 1, y + scentmap_miny );
 
                 int squares_used = squares_used_y[y][x - 1] + squares_used_y[y][x] + squares_used_y[y][x + 1];
                 int total = sum_3_scent_y[y][x - 1] + sum_3_scent_y[y][x] + sum_3_scent_y[y][x + 1];
@@ -306,22 +305,37 @@ void scent_map::update( const tripoint &center, map &m )
                 new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x][abs.y] ) / 250;
             }
         }
-    } );
+    }
     // implicit barrier; new_scent is fully populated
     // Write-back: new_scent is read-only here; has_flag is a read-only map query;
     // each x column writes to a distinct grscent column — safe to parallelize.
-    parallel_for( 1, SCENT_RADIUS * 2 + 2, [&]( int x ) {
-        for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
-            // Don't spread scent into water unless the source is in water.
-            // Keep scent trails in the water when we exit until rain disturbs them.
-            if( ( get_map().has_flag( TFLAG_LIQUID, center ) &&
-                  rl_dist( center, tripoint( point( x + scentmap_minx - 1, y + scentmap_miny ),
-                                             g->get_levz() ) ) <= 8 ) ||
-                !get_map().has_flag( TFLAG_LIQUID, point( x + scentmap_minx - 1, y + scentmap_miny ) ) ) {
-                grscent[x + scentmap_minx - 1 ][y + scentmap_miny] = new_scent[y][x];
+    if( parallel_scent ) {
+        parallel_for( 1, SCENT_RADIUS * 2 + 2, [&]( int x ) {
+            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
+                // Don't spread scent into water unless the source is in water.
+                // Keep scent trails in the water when we exit until rain disturbs them.
+                if( ( get_map().has_flag( TFLAG_LIQUID, center ) &&
+                      rl_dist( center, tripoint( point( x + scentmap_minx - 1, y + scentmap_miny ),
+                                                 g->get_levz() ) ) <= 8 ) ||
+                    !get_map().has_flag( TFLAG_LIQUID, point( x + scentmap_minx - 1, y + scentmap_miny ) ) ) {
+                    grscent[x + scentmap_minx - 1 ][y + scentmap_miny] = new_scent[y][x];
+                }
+            }
+        } );
+    } else {
+        for( int x = 1; x < SCENT_RADIUS * 2 + 2; ++x ) {
+            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
+                // Don't spread scent into water unless the source is in water.
+                // Keep scent trails in the water when we exit until rain disturbs them.
+                if( ( get_map().has_flag( TFLAG_LIQUID, center ) &&
+                      rl_dist( center, tripoint( point( x + scentmap_minx - 1, y + scentmap_miny ),
+                                                 g->get_levz() ) ) <= 8 ) ||
+                    !get_map().has_flag( TFLAG_LIQUID, point( x + scentmap_minx - 1, y + scentmap_miny ) ) ) {
+                    grscent[x + scentmap_minx - 1 ][y + scentmap_miny] = new_scent[y][x];
+                }
             }
         }
-    } );
+    }
 }
 
 namespace
