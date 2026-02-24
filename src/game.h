@@ -859,6 +859,8 @@ class game
 
         // Routine loop functions, approximately in order of execution
         void monmove();          // Monster movement
+        void npcmove();          // NPC movement (split from monmove for per-option sleep-skip)
+        void sleep_skip_npc_process(); // Sleep-only NPC processing when SLEEP_SKIP_NPC is active
         int  tier_assign_all(); // LOD tier assignment, O(M), called from monmove(); returns Tier 0 count
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process

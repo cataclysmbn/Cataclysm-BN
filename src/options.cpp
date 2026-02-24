@@ -2271,8 +2271,47 @@ void options_manager::add_options_debug()
              translate_marker( "Sounds are not processed while sleeping" ),
              false );
         add( "SLEEP_SKIP_MON", page_id, translate_marker( "Sleep Boost: Skip Monster Movement" ),
-             translate_marker( "Monsters do not move while sleeping" ),
+             translate_marker( "Monsters do not move while the player is sleeping" ),
              false );
+        add( "SLEEP_SKIP_NPC", page_id, translate_marker( "Sleep Boost: Skip NPC Movement" ),
+             translate_marker( "NPCs are forced to sleep alongside the player, skipping movement "
+                               "but still processing rest recovery (fatigue reduction, healing, etc.).  "
+                               "NPCs with non-interruptible activities (e.g. surgery) are frozen "
+                               "for the turn instead." ),
+             false );
+        add( "LOD_ACTION_BUDGET", page_id,
+             translate_marker( "Monster LOD: Action Budget" ),
+             translate_marker( "Minimum number of monsters that enter the move loop per turn.  "
+                               "The actual budget is the larger of this value and the current Tier-0 "
+                               "(full-AI) monster count, so full-AI monsters are never skipped.  "
+                               "Higher values process more distant monsters each turn at a CPU cost.  "
+                               "0 means only Tier-0 monsters run (no extra Tier-1 budget)." ),
+             32, 2048, 128 );
+        add( "LOD_MACRO_INTERVAL", page_id,
+             translate_marker( "Monster LOD: Macro Step Interval" ),
+             translate_marker( "How many turns elapse between movement steps for Tier-2 (distant wandering) "
+                               "monsters.  At 1 they step every turn; at 3 (default) they step once every "
+                               "3 turns.  Higher values reduce CPU cost for distant hordes." ),
+             1, 8, 3 );
+        add( "LOD_TIER_FULL_DIST", page_id,
+             translate_marker( "Monster LOD: Full AI Radius" ),
+             translate_marker( "Chebyshev distance threshold for full-AI (Tier 0) monsters.  "
+                               "Monsters within this radius run the complete AI every turn.  "
+                               "Must be less than the Coarse AI Radius." ),
+             5, 100, 20 );
+        add( "LOD_TIER_COARSE_DIST", page_id,
+             translate_marker( "Monster LOD: Coarse AI Radius" ),
+             translate_marker( "Chebyshev distance threshold for coarse-AI (Tier 1) monsters.  "
+                               "Monsters between the Full AI Radius and this distance use cached "
+                               "paths and skip expensive faction queries.  Monsters beyond this "
+                               "distance are Tier-2 (macro step only)." ),
+             10, 200, 40 );
+        add( "LOD_DEMOTION_COOLDOWN", page_id,
+             translate_marker( "Monster LOD: Demotion Cooldown" ),
+             translate_marker( "Turns a monster must wait after being promoted to a higher-fidelity "
+                               "tier before it can be demoted again.  Prevents rapid tier oscillation "
+                               "at distance boundaries.  0 disables the cooldown." ),
+             0, 10, 3 );
 #if defined(__ANDROID__)
         add( "LOAD_FROM_EXTERNAL", page_id, translate_marker( "External Storage Saving" ),
              translate_marker( "Save in data/catalcysm... instead of Documents/..." ),
