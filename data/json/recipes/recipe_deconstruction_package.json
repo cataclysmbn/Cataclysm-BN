@@ -13,14 +13,14 @@
       [ [ "paper", 8 ] ],
       [ [ "bag_plastic", 1 ] ]
     ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_dessert",
     "type": "uncraft",
     "time": "4 s",
     "components": [ [ [ "dry_fruit", 1 ] ], [ [ "candy2", 1 ] ], [ [ "cookies", 1 ] ], [ [ "bag_plastic", 1 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_chilibeans_box",
@@ -28,7 +28,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_chilibeans", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_bbqbeef_box",
@@ -36,7 +36,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_bbqbeef", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_chickennoodle_box",
@@ -44,7 +44,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_chickennoodle", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_spaghetti_box",
@@ -52,7 +52,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_spaghetti", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_chicken_box",
@@ -60,7 +60,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_chicken", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_beeftaco_box",
@@ -68,7 +68,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_beeftaco", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_beef_box",
@@ -76,7 +76,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_beef", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_meatball_box",
@@ -84,7 +84,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_meatball", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_beefstew_box",
@@ -92,7 +92,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_beefstew", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_chilimac_box",
@@ -100,7 +100,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_chilimac", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_veggy_box",
@@ -108,7 +108,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_veggy", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_macaronimarinara_box",
@@ -116,7 +116,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_macaronimarinara", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_cheesetort_box",
@@ -124,7 +124,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_cheesetort", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_mushroomfettuccine_box",
@@ -132,7 +132,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_mushroomfettuccine", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_mexicanchickenstew_box",
@@ -140,7 +140,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_mexicanchickenstew", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_chickenburritobowl_box",
@@ -148,7 +148,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_chickenburritobowl", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_maplesausage_box",
@@ -156,7 +156,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_maplesausage", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_ravioli_box",
@@ -164,7 +164,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_ravioli", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_pepperjackbeef_box",
@@ -172,7 +172,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_pepperjackbeef", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_hashbrownbacon_box",
@@ -180,7 +180,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_hashbrownbacon", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_lemontuna_box",
@@ -188,7 +188,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_lemontuna", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_asianbeef_box",
@@ -196,7 +196,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_asianbeef", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_chickenpesto_box",
@@ -204,7 +204,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_chickenpesto", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_southwestbeef_box",
@@ -212,7 +212,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_southwestbeef", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_hotdog_box",
@@ -220,7 +220,7 @@
     "time": "30 s",
     "components": [ [ [ "mre_hotdog", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_omelette_box",
@@ -228,6 +228,6 @@
     "time": "30 s",
     "components": [ [ [ "mre_omelette", 1 ] ] ],
     "using": [ [ "mre_accessory_list", 1 ], [ "mre_dessert_list", 1 ], [ "mre_extras_list", 1 ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   }
 ]

@@ -46,7 +46,7 @@ void workbench_info_wrapper::adjust_multiplier( const metric &metrics )
 }
 
 activity_reqs_adapter::activity_reqs_adapter( const recipe &rec,
-        const metric &metrics ) : metrics( metrics )
+        const metric &metrics ) : metrics( metrics ), target( &rec )
 {
     for( auto &qual : rec.simple_requirements().get_qualities() ) {
         qualities.emplace_back( qual.front().type, qual.front().level );
@@ -59,6 +59,7 @@ activity_reqs_adapter::activity_reqs_adapter( const recipe &rec,
 }
 
 activity_reqs_adapter::activity_reqs_adapter( const construction &con )
+    : target( &con )
 {
     for( auto &qual : con.requirements->get_qualities() ) {
         qualities.emplace_back( qual.front().type, qual.front().level );

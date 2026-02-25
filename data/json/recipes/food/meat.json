@@ -320,7 +320,7 @@
     "time": "3 m",
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
     "components": [ [ [ "dry_meat", 1 ] ], [ [ "water_clean", 1 ] ] ]
   },
@@ -333,7 +333,7 @@
     "time": "3 m",
     "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
     "components": [ [ [ "dry_fish", 1 ] ], [ [ "water_clean", 1 ] ] ]
   },

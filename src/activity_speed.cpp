@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <optional>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "activity_type.h"
@@ -12,12 +13,20 @@
 #include "character_stat.h"
 #include "game.h"
 #include "map.h"
+#include "recipe.h"
+#include "skill.h"
 #include "type_id.h"
 #include "veh_type.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 
 static const skill_id stat_speech( "speech" );
+
+static const std::string flag_BLIND_NO_EFFECT( "BLIND_NO_EFFECT" );
+static const std::string flag_BLIND_EASY( "BLIND_EASY" );
+static const std::string flag_BLIND_HARD( "BLIND_HARD" );
+static const std::string flag_BLIND_NEARLY_IMPOSSIBLE( "BLIND_NEARLY_IMPOSSIBLE" );
+static const std::string flag_BLIND_IMPOSSIBLE( "BLIND_IMPOSSIBLE" );
 
 static const quality_id qual_BUTCHER( "BUTCHER" );
 static const quality_id qual_CUT_FINE( "CUT_FINE" );
@@ -78,18 +87,30 @@ void activity_speed::calc_all_moves( Character &who, activity_reqs_adapter &reqs
 {
     if( type->bench_affected() ) {
         find_best_bench( who.pos(), reqs.metrics );
-        calc_bench_factor( who );
+        calc_bench_factor( who, reqs.target );
     }
     if( type->tools_affected() ) {
-        calc_tools_factor( who, reqs.qualities );
+        calc_tools_factor( who, reqs.qualities, reqs.target );
     }
     if( type->skill_affected() ) {
-        calc_skill_factor( who, reqs.skills );
+        calc_skill_factor( who, reqs.skills, reqs.target );
     }
     if( type->assistable() ) {
-        calc_assistants_factor( who );
+        calc_assistants_factor( who, reqs.target );
     }
-    calc_moves( who );
+    // Use target-aware versions for all calculations
+    if( type->light_affected() ) {
+        calc_light_factor( who, reqs.target );
+    }
+    if( type->speed_affected() ) {
+        player_speed = who.get_speed() / 100.0f;
+    }
+    if( type->stats_affected() ) {
+        calc_stats_factors( who, reqs.target );
+    }
+    if( type->morale_affected() ) {
+        calc_morale_factor( who, reqs.target );
+    }
 }
 
 
@@ -107,7 +128,87 @@ void activity_speed::calc_light_factor( const Character &who )
             character_funcs::fine_detail_vision_mod( who ) -
             character_funcs::FINE_VISION_THRESHOLD
         ) / 7.0f;
-    light = limit_factor( 1.0f - darkness, 0.0f );
+    light = limit_factor( 1.0f - darkness, 0.05f );
+}
+
+void activity_speed::calc_light_factor( const Character &who, const activity_target &target )
+{
+    if( character_funcs::can_see_fine_details( who ) ) {
+        light = 1.0f;
+        return;
+    }
+
+    const float darkness = ( character_funcs::fine_detail_vision_mod( who ) -
+                             character_funcs::FINE_VISION_THRESHOLD ) / 7.0f;
+
+    if( const recipe * const *rec_ptr = std::get_if<const recipe *>( &target ) ) {
+        const recipe *rec = *rec_ptr;
+        if( rec != nullptr ) {
+            if( rec->has_flag( flag_BLIND_NO_EFFECT ) ) {
+                light = 1.0f;
+                return;
+            }
+
+            const SkillLevelMap &char_skills = who.get_all_skills();
+            int skill_bonus = char_skills.exceeds_recipe_requirements( *rec );
+            float skill_deficit = std::max( 0.0f, static_cast<float>( -skill_bonus ) );
+
+            // block_divisor: at full darkness, blocks when skill_deficit >= block_divisor
+            // base_penalty: base speed reduction at full darkness when meeting requirements
+            // deficit_scale: scales how much each point of skill deficit adds to penalty
+            // deficit_scale is set so speed hits 5% floor just before blocking threshold
+            auto calc_light_with_blocking = [&]( float block_divisor, float base_penalty,
+            float deficit_scale ) -> float {
+                // Block when skill deficit exceeds threshold for current darkness
+                if( skill_deficit >= darkness * block_divisor )
+                {
+                    return 0.0f;
+                }
+                // Base darkness penalty + skill deficit penalty
+                float deficit_penalty = ( deficit_scale > 0.0f ) ? ( skill_deficit / deficit_scale ) : 0.0f;
+                float total_penalty = darkness * ( base_penalty + deficit_penalty );
+                float result = 1.0f - total_penalty;
+                // Block if penalty drives result to 0 or below
+                if( result <= 0.0f )
+                {
+                    return 0.0f;
+                }
+                // Otherwise apply 5% floor (20x max slowdown)
+                return std::max( 0.05f, result );
+            };
+
+            if( rec->has_flag( flag_BLIND_IMPOSSIBLE ) ) {
+                // Auto-blocks at minimal light (~0.5 darkness) or worse
+                if( darkness >= 0.5f ) {
+                    light = 0.0f;
+                    return;
+                }
+                // In good light: 100% base penalty means mathematically blocks at full dark
+                // No explicit blocking - relies on mathematical blocking (result <= 0)
+                // deficit_scale=5 gives steep falloff with deficit
+                light = calc_light_with_blocking( 1000.0f, 1.0f, 5.0f );
+                return;
+            } else if( rec->has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ) {
+                // Very harsh: blocks at deficit >= 3*darkness, 25% base at full dark
+                light = calc_light_with_blocking( 3.0f, 0.75f, 10.0f );
+                return;
+            } else if( rec->has_flag( flag_BLIND_HARD ) ) {
+                // Harsh: blocks at deficit >= 6*darkness, 40% base at full dark
+                light = calc_light_with_blocking( 6.0f, 0.60f, 14.0f );
+                return;
+            } else if( rec->has_flag( flag_BLIND_EASY ) ) {
+                // Lenient: blocks at deficit >= 20*darkness, 75% base at full dark
+                light = calc_light_with_blocking( 20.0f, 0.25f, 27.0f );
+                return;
+            } else {
+                // Default: blocks at deficit >= 12*darkness, 60% base at full dark
+                light = calc_light_with_blocking( 12.0f, 0.40f, 20.0f );
+                return;
+            }
+        }
+    }
+    // Construction or monostate: use default with 5% min (20x max slowdown)
+    light = limit_factor( 1.0f - darkness, 0.05f );
 }
 
 void activity_speed::calc_skill_factor( const Character &who, const skill_reqs &skill_req )
@@ -140,6 +241,12 @@ void activity_speed::calc_skill_factor( const Character &who, const skill_reqs &
     }
 
     skills = limit_factor( f );
+}
+
+void activity_speed::calc_skill_factor( const Character &who, const skill_reqs &skill_req,
+                                        const activity_target &/*target*/ )
+{
+    calc_skill_factor( who, skill_req );
 }
 
 std::pair<character_stat, float> activity_speed::calc_single_stat( const Character &who,
@@ -183,12 +290,23 @@ void activity_speed::calc_assistants_factor( const Character &who )
     assist = 1.0f + refine_factor( f, 1, 0.0f, 200.0f );
 }
 
+void activity_speed::calc_assistants_factor( const Character &who,
+        const activity_target &/*target*/ )
+{
+    calc_assistants_factor( who );
+}
 
 void activity_speed::calc_bench_factor( const Character &/*who*/ )
 {
     bench_factor = bench
                    ? bench->wb_info.multiplier_adjusted
                    : 1.0f;
+}
+
+void activity_speed::calc_bench_factor( const Character &who,
+                                        const activity_target &/*target*/ )
+{
+    calc_bench_factor( who );
 }
 
 void activity_speed::calc_stats_factors( const Character &who )
@@ -200,6 +318,12 @@ void activity_speed::calc_stats_factors( const Character &who )
             stats.emplace_back( calc_single_stat( who, stat ) );
         }
     }
+}
+
+void activity_speed::calc_stats_factors( const Character &who,
+        const activity_target &/*target*/ )
+{
+    calc_stats_factors( who );
 }
 
 float activity_speed::get_best_qual_mod( const activity_req<quality_id> &q,
@@ -258,6 +382,12 @@ void activity_speed::calc_tools_factor( Character &who, const q_reqs &quality_re
     tools = limit_factor( f );
 }
 
+void activity_speed::calc_tools_factor( Character &who, const q_reqs &quality_reqs,
+                                        const activity_target &/*target*/ )
+{
+    calc_tools_factor( who, quality_reqs );
+}
+
 void activity_speed::calc_morale_factor( const Character &who )
 {
     const int p_morale = who.get_morale_level();
@@ -277,6 +407,12 @@ void activity_speed::calc_morale_factor( const Character &who )
         morale = 1.20f + p_morale / 100.0f;
     }
     morale = 1.0f;
+}
+
+void activity_speed::calc_morale_factor( const Character &who,
+        const activity_target &/*target*/ )
+{
+    calc_morale_factor( who );
 }
 
 void activity_speed::find_best_bench( const tripoint &pos, const metric metrics )

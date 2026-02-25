@@ -292,8 +292,7 @@
     "skill_used": "survival",
     "time": "5 m",
     "autolearn": true,
-    "components": [ [ [ "paper", 60 ] ], [ [ "duct_tape", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "paper", 60 ] ], [ [ "duct_tape", 10 ] ] ]
   },
   {
     "result": "legguard_scrap",
@@ -318,8 +317,7 @@
     "time": "3 m",
     "autolearn": true,
     "reversible": true,
-    "components": [ [ [ "rag", 4 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 4 ] ] ]
   },
   {
     "result": "loincloth_fur",

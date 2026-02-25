@@ -102,15 +102,14 @@
     "skill_used": "fabrication",
     "time": "10 s",
     "components": [ [ [ "bag_canvas", 1 ] ], [ [ "material_sand", 3000 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "spatula",
     "type": "uncraft",
     "skill_used": "fabrication",
     "time": "2 m",
-    "components": [ [ [ "chunk_rubber", 2 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "chunk_rubber", 2 ] ] ]
   },
   {
     "result": "rubber_slug",
@@ -126,7 +125,7 @@
     "skill_used": "fabrication",
     "time": "10 s",
     "components": [ [ [ "bag_canvas", 1 ] ], [ [ "material_soil", 3 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "bead_bracelet",
@@ -489,8 +488,7 @@
     "result": "bindle",
     "type": "uncraft",
     "time": "6 s",
-    "components": [ [ [ "rag", 4 ] ], [ [ "stick", 1 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 4 ] ], [ [ "stick", 1 ] ] ]
   },
   {
     "result": "binoculars",
@@ -511,14 +509,14 @@
     "type": "uncraft",
     "time": "6 s",
     "components": [ [ [ "paper", 1 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "matches",
     "type": "uncraft",
     "time": "6 s",
     "components": [ [ [ "cardboard", 1 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "broken_EMP_hack",
@@ -1545,8 +1543,7 @@
     "type": "uncraft",
     "time": "5 m",
     "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "weed", 20 ] ], [ [ "plant_fibre", 100 ] ], [ [ "withered", 1 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "weed", 20 ] ], [ [ "plant_fibre", 100 ] ], [ [ "withered", 1 ] ] ]
   },
   {
     "result": "cantilever_small",
@@ -1928,7 +1925,7 @@
     "type": "uncraft",
     "time": "6 s",
     "components": [ [ [ "paper", 3 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "fitover_sunglasses",
@@ -1942,21 +1939,21 @@
     "type": "uncraft",
     "time": "6 s",
     "components": [ [ [ "paper", 1 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "evac_pamphlet",
     "type": "uncraft",
     "time": "6 s",
     "components": [ [ [ "paper", 1 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "scorecard",
     "type": "uncraft",
     "time": "6 s",
     "components": [ [ [ "paper", 1 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "foon",
@@ -2456,14 +2453,14 @@
     "type": "uncraft",
     "time": "6 s",
     "components": [ [ [ "sheet", 1 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "flags": [ "BLIND_EASY" ]
   },
   {
     "result": "many_years_old_newspaper",
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 2 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "material_shrd_limestone",
@@ -2510,7 +2507,7 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mininuke",
@@ -2544,7 +2541,7 @@
     "time": "30 s",
     "//": "18 grams of paper, item is 20 grams",
     "components": [ [ [ "paper", 6 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "coin_quarter",
@@ -2560,7 +2557,7 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 2 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "motor",
@@ -2619,14 +2616,14 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 2 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "one_year_old_newspaper",
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 2 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "oxy_torch",
@@ -2912,7 +2909,7 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "gold_ring",
@@ -3024,7 +3021,7 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "vehicle_controls",
@@ -3321,21 +3318,20 @@
     "type": "uncraft",
     "time": "10 s",
     "components": [ [ [ "stick", 2 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "straw_doll",
     "type": "uncraft",
     "time": "1 m",
     "components": [ [ [ "straw_pile", 1 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "flags": [ "BLIND_EASY" ]
   },
   {
     "result": "sunglasses",
     "type": "uncraft",
     "time": "6 s",
-    "components": [ [ [ "glass_tinted", 1 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "components": [ [ [ "glass_tinted", 1 ] ] ]
   },
   {
     "result": "eclipse_glasses",
@@ -3349,14 +3345,14 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "survnote",
     "type": "uncraft",
     "time": "6 s",
     "components": [ [ [ "paper", 1 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "talking_doll",
@@ -3408,7 +3404,7 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "usb_drive",
@@ -3448,7 +3444,7 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 2 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "hinge",
@@ -3555,7 +3551,7 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 2 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "wristwatch",
@@ -3569,7 +3565,7 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 2 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "food_processor",
@@ -3647,7 +3643,7 @@
     "time": "1 s",
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "rag", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "bundle_leather",
@@ -3656,7 +3652,7 @@
     "time": "1 s",
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "leather", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "bundle_wool",
@@ -3665,7 +3661,7 @@
     "time": "1 s",
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "felt_patch", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "1st_aid",
@@ -3683,7 +3679,7 @@
       [ [ "scissors", 1 ] ],
       [ [ "booklet_firstaid", 1 ] ]
     ],
-    "flags": [ "BLIND_EASY", "UNCRAFT_LIQUIDS_CONTAINED" ]
+    "flags": [ "BLIND_NO_EFFECT", "UNCRAFT_LIQUIDS_CONTAINED" ]
   },
   {
     "result": "survival_kit",
@@ -3701,7 +3697,7 @@
       [ [ "pocket_survival", 1 ] ],
       [ [ "survival_kit_box", 1 ] ]
     ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "garlic",
@@ -3738,63 +3734,63 @@
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "regionaltransportmap",
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "subwaymap",
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "waterwaymap",
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "urbexmap",
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "satellitemap",
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "labmap",
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "sewermap",
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "cavemap",
     "type": "uncraft",
     "time": "30 s",
     "components": [ [ [ "paper", 10 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "spectrophotometer",

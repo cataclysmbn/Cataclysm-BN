@@ -323,7 +323,7 @@
     "time": "1 m",
     "autolearn": true,
     "charges": 4,
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "rag", 4 ] ], [ [ "disinfectant", 1 ], [ "chem_hydrogen_peroxide", 1 ] ] ]
   },
   {
@@ -336,7 +336,7 @@
     "time": "1 m",
     "autolearn": true,
     "charges": 8,
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "cotton_ball", 8 ] ], [ [ "disinfectant", 1 ], [ "chem_hydrogen_peroxide", 1 ] ] ]
   },
   {

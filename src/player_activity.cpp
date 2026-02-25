@@ -18,7 +18,6 @@
 #include "color.h"
 #include "construction_partial.h"
 #include "crafting.h"
-#include "crafting_quality.h"
 #include "distraction_manager.h"
 #include "flag.h"
 #include "game.h"
@@ -214,7 +213,6 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     const float light_mult = lighting_crafting_speed_multiplier( u, rec );
     const float bench_mult = workbench_crafting_speed_multiplier( *craft, bench );
     const float morale_mult = morale_crafting_speed_multiplier( u, rec );
-    const auto tools_mult = crafting_tools_speed_multiplier( u, rec );
     const int assistants = u.available_assistant_count( craft->get_making() );
     const float base_total_moves = std::max( 1, rec.batch_time( craft->charges, 1.0f, 0 ) );
     const float assist_total_moves = std::max( 1, rec.batch_time( craft->charges, 1.0f, assistants ) );
@@ -224,8 +222,7 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     const float game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
                                 ? 9999
                                 : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
-    const float total_mult = light_mult * bench_mult * morale_mult * tools_mult * assist_mult *
-                             speed_mult *
+    const float total_mult = light_mult * bench_mult * morale_mult * assist_mult * speed_mult *
                              mutation_mult * game_opt_mult;
 
     const double remaining_percentage = 1.0 - craft->get_counter() / 10'000'000.0;
@@ -233,13 +230,12 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     std::string time_desc = string_format( _( "Time left: %s" ),
                                            to_string( time_duration::from_turns( remaining_turns ) ) );
 
-    const std::array<std::pair<float, std::string>, 8> mults_with_data = { {
+    const std::array<std::pair<float, std::string>, 7> mults_with_data = { {
             { total_mult, _( "Total" ) },
             { speed_mult, _( "Speed" ) },
             { light_mult, _( "Light" ) },
             { bench_mult, _( "Workbench" ) },
             { morale_mult, _( "Morale" ) },
-            { tools_mult, _( "Tools" ) },
             { assist_mult, _( "Assistants" ) },
             { mutation_mult, _( "Traits" ) }
         }
@@ -311,7 +307,8 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                     progress_desc += string_format( _( "  - Processing %s out of %s\n" ), actor->progress.get_index(),
                                                     actor->progress.get_total_tasks() );
                     progress_desc += string_format( _( "  - Estimated time: %s\n" ),
-                                                    to_string( time_duration::from_turns( actor->progress.get_moves_left() / speed.total_moves() ) ) );
+                                                    to_string( time_duration::from_turns( actor->progress.get_moves_left() /
+                                                            speed.moves_per_turn() ) ) );
                     progress_desc += " - Current: ";
                 }
                 progress_desc += string_format( "%.1f%%\n",
@@ -322,7 +319,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                 }
                 progress_desc += string_format( _( "Time left: %s\n" ),
                                                 to_string( time_duration::from_turns( actor->progress.front().moves_left /
-                                                        speed.total_moves() ) ) );
+                                                        speed.moves_per_turn() ) ) );
             }
         } else {
             if( !targets.empty() && targets.front().is_accessible() ) {
@@ -334,7 +331,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
             }
             if( moves_left > 0 ) {
                 progress_desc += string_format( _( "Time left: %s\n" ),
-                                                to_string( time_duration::from_turns( moves_left / speed.total_moves() ) ) );
+                                                to_string( time_duration::from_turns( moves_left / speed.moves_per_turn() ) ) );
             }
             if( moves_total <= 0 && moves_left <= 0 ) {
                 progress_desc = "";
@@ -503,7 +500,7 @@ void player_activity::do_turn( player &p )
                 calc_moves( p );
             }
 
-            int moves_total = speed.total_moves();
+            int moves_total = speed.moves_per_turn();
 
             //fancy new system
             if( actor ) {

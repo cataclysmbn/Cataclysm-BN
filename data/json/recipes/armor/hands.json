@@ -60,8 +60,7 @@
     "skill_used": "survival",
     "time": "1 m",
     "autolearn": true,
-    "components": [ [ [ "plastic_shopping_bag", 2 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "plastic_shopping_bag", 2 ] ] ]
   },
   {
     "result": "gloves_fingerless",
@@ -465,8 +464,7 @@
     "time": "1 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 4 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 4 ] ] ]
   },
   {
     "result": "gloves_wraps_fur",
