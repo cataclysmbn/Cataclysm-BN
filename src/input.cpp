@@ -67,6 +67,19 @@ auto best_keyboard_key_for_events( const std::vector<input_event> &events ) -> s
     return best_key;
 }
 
+auto first_key_for_event_type( const std::vector<input_event> &events,
+                               const input_event_t event_type ) -> std::optional<int>
+{
+    const auto event_it = std::ranges::find_if( events, [&]( const input_event & event ) {
+        return event.type == event_type && event.sequence.size() == 1;
+    } );
+    if( event_it == events.end() ) {
+        return std::nullopt;
+    }
+
+    return event_it->sequence.front();
+}
+
 auto get_available_keys_output_path() -> const char *
 {
     static const auto *output_path = std::getenv( "CATA_AVAILABLE_KEYS_JSON" );
@@ -93,7 +106,10 @@ auto dump_available_action_keys_to_json( const input_context &ctxt ) -> void
             jsout.start_object();
             jsout.member( "id", action.id );
             jsout.member( "name", action.name );
+            jsout.member( "description", action.description );
             jsout.member( "key", action.key );
+            jsout.member( "requires_coordinate", action.requires_coordinate );
+            jsout.member( "mouse_capable", action.mouse_capable );
             jsout.end_object();
         }
         jsout.end_array();
@@ -961,22 +977,40 @@ std::vector<input_context::available_action_key>
 {
     auto result = std::vector<input_context::available_action_key>();
     for( const auto &action_id : registered_actions ) {
-        if( action_id == "ANY_INPUT" || action_id == "COORDINATE" ) {
+        if( action_id == "ANY_INPUT" ) {
             continue;
         }
 
         const auto &events = inp_mngr.get_input_for_action( action_id, category );
+        const auto mouse_capable = std::ranges::any_of( events, []( const input_event & event ) {
+            return event.type == input_event_t::mouse;
+        } );
+        const auto requires_coordinate = action_id == "COORDINATE";
+
+        auto key_name = std::string {};
         const auto best_key = best_keyboard_key_for_events( events );
-        if( !best_key.has_value() ) {
-            continue;
+        if( best_key.has_value() ) {
+            key_name = inp_mngr.get_keyname( *best_key, input_event_t::keyboard, true );
+        } else {
+            const auto first_mouse_key = first_key_for_event_type( events, input_event_t::mouse );
+            if( first_mouse_key.has_value() ) {
+                key_name = inp_mngr.get_keyname( *first_mouse_key, input_event_t::mouse, true );
+            }
         }
 
-        const auto key_name = inp_mngr.get_keyname( *best_key, input_event_t::keyboard, true );
         if( key_name.empty() ) {
             continue;
         }
 
-        result.push_back( input_context::available_action_key{ .id = action_id, .name = get_action_name( action_id ), .key = key_name } );
+        const auto action_name = get_action_name( action_id );
+        result.push_back( input_context::available_action_key{
+            .id = action_id,
+            .name = action_name,
+            .description = get_desc( action_id, action_name ),
+            .key = key_name,
+            .requires_coordinate = requires_coordinate,
+            .mouse_capable = mouse_capable,
+        } );
     }
 
 #if defined(__ANDROID__)
@@ -989,7 +1023,10 @@ std::vector<input_context::available_action_key>
         result.push_back( input_context::available_action_key{
             .id = string_format( "manual:%d", manual_key.key ),
             .name = manual_key.text.empty() ? key_name : manual_key.text,
+            .description = manual_key.text.empty() ? key_name : manual_key.text,
             .key = key_name,
+            .requires_coordinate = false,
+            .mouse_capable = false,
         } );
     }
 #endif

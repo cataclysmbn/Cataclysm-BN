@@ -17,29 +17,50 @@ Deno.test("pr_verify: sanitizeId normalizes unsafe characters", () => {
 })
 
 Deno.test("pr_verify: buildLaunchCommand includes base args, optional world, and seed", () => {
-  const withoutWorld = buildLaunchCommand("/tmp/cata", "/tmp/user", "")
+  const withoutWorld = buildLaunchCommand({
+    binPath: "/tmp/cata",
+    userdir: "/tmp/user",
+    world: "",
+  })
   assertStringIncludes(withoutWorld, "TERM=xterm-256color")
   assertStringIncludes(withoutWorld, "COLORTERM=truecolor")
   assertStringIncludes(withoutWorld, "--basepath")
   assertStringIncludes(withoutWorld, "--userdir")
 
-  const withWorld = buildLaunchCommand("/tmp/cata", "/tmp/user", "fixture_world")
+  const withWorld = buildLaunchCommand({
+    binPath: "/tmp/cata",
+    userdir: "/tmp/user",
+    world: "fixture_world",
+  })
   assertStringIncludes(withWorld, "--world")
   assertStringIncludes(withWorld, "fixture_world")
 
-  const withSeed = buildLaunchCommand("/tmp/cata", "/tmp/user", "", "seed-01")
+  const withSeed = buildLaunchCommand({
+    binPath: "/tmp/cata",
+    userdir: "/tmp/user",
+    world: "",
+    seed: "seed-01",
+  })
   assertStringIncludes(withSeed, "--seed")
   assertStringIncludes(withSeed, "seed-01")
 
-  const withAvailableKeysJson = buildLaunchCommand(
-    "/tmp/cata",
-    "/tmp/user",
-    "",
-    "",
-    "/tmp/available_keys.json",
-  )
+  const withAvailableKeysJson = buildLaunchCommand({
+    binPath: "/tmp/cata",
+    userdir: "/tmp/user",
+    world: "",
+    availableKeysJson: "/tmp/available_keys.json",
+  })
   assertStringIncludes(withAvailableKeysJson, "CATA_AVAILABLE_KEYS_JSON")
   assertStringIncludes(withAvailableKeysJson, "/tmp/available_keys.json")
+
+  const withAvailableMacrosJson = buildLaunchCommand({
+    binPath: "/tmp/cata",
+    userdir: "/tmp/user",
+    world: "",
+    availableMacrosJson: "/tmp/available_macros.json",
+  })
+  assertStringIncludes(withAvailableMacrosJson, "CATA_AVAILABLE_MACROS_JSON")
+  assertStringIncludes(withAvailableMacrosJson, "/tmp/available_macros.json")
 })
 
 Deno.test("pr_verify: resolveInputKey handles action ids and raw key ids", () => {
@@ -82,10 +103,10 @@ Deno.test({
     const indexPath = join(tempDir, "index.md")
 
     try {
-      await writeIndex(
-        indexPath,
-        "live-curses-mcp-session",
-        [
+      await writeIndex({
+        outputPath: indexPath,
+        sessionName: "live-curses-mcp-session",
+        captures: [
           {
             id: "loaded",
             caption: "Gameplay screen after load",
@@ -94,10 +115,10 @@ Deno.test({
             screenshot_file: "artifacts/pr-verify/123/captures/01-loaded.webp",
           },
         ],
-        "failed",
-        "artifacts/pr-verify/123/session.cast",
-        "timeout waiting for text",
-      )
+        status: "failed",
+        castFile: "artifacts/pr-verify/123/session.cast",
+        failureMessage: "timeout waiting for text",
+      })
 
       const rendered = await Deno.readTextFile(indexPath)
       assertStringIncludes(rendered, "# PR Verify Artifact")
