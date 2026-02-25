@@ -73,6 +73,7 @@ static const efftype_id effect_pacified( "pacified" );
 static const efftype_id effect_pushed( "pushed" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_led_by_leash( "led_by_leash" );
+static const efftype_id effect_wall_clinging( "wall_clinging" );
 
 static const itype_id itype_pressurized_tank( "pressurized_tank" );
 
@@ -102,21 +103,41 @@ auto get_wall_support( const map &here, const tripoint &anchor ) -> std::optiona
     return *support;
 }
 
+auto wall_support_count( const map &here, const tripoint &anchor ) -> int
+{
+    const auto neighbor_range = points_in_radius( anchor, 1 );
+    const std::vector<tripoint> neighbors( neighbor_range.begin(), neighbor_range.end() );
+
+    return std::ranges::count_if( neighbors, [&anchor, &here]( const tripoint &pt ) {
+        const bool same_level = pt.z == anchor.z;
+        const bool cardinal = pt.x == anchor.x || pt.y == anchor.y;
+        return same_level && cardinal && pt != anchor && here.impassable_ter_furn( pt );
+    } );
+}
+
 auto has_wall_support( const map &here, const tripoint &anchor ) -> bool
 {
-    return get_wall_support( here, anchor ).has_value();
+    return wall_support_count( here, anchor ) >= 1;
 }
 
 auto anchored_on_wall( const map &here, const tripoint &pos ) -> bool
 {
-    if( !here.has_flag( TFLAG_NO_FLOOR, pos ) ) {
-        return false;
-    }
+    const auto supports = wall_support_count( here, pos );
+    const tripoint roof_above = pos + tripoint_above;
 
-    if( has_wall_support( here, pos ) ) {
+    if( here.has_flag( "ROOF", roof_above ) && here.inbounds( roof_above ) ) {
         return true;
     }
-    return false;
+
+    if( here.has_flag( TFLAG_NO_FLOOR, pos ) ) {
+        const tripoint below = pos + tripoint_below;
+        if( here.has_floor( below ) ) {
+            return supports >= 1;
+        }
+        return supports >= 2;
+    }
+
+    return supports >= 1;
 }
 
 } // namespace
@@ -930,13 +951,32 @@ void monster::move()
     // Give nursebots a chance to do surgery.
     nursebot_operate( dragged_foe );
 
+    const bool anchored_on_wall_now = climbs_walls() && anchored_on_wall( g->m, pos() );
+    const bool anchored_on_wall_then = has_effect( effect_wall_clinging );
+
     // Allow wall-climbers to hang in open air when anchored; others should resolve traps/falls
-    if( !flies() && !( climbs_walls() && anchored_on_wall( g->m, pos() ) ) &&
+    if( !flies() && !anchored_on_wall_now &&
         g->m.has_flag( TFLAG_NO_FLOOR, pos() ) ) {
         g->m.creature_on_trap( *this, false );
         if( is_dead() ) {
             return;
         }
+    }
+
+    if( anchored_on_wall_now ) {
+        if( !anchored_on_wall_then && g->u.sees( *this ) ) {
+            const std::string support_name = [&]() {
+                const auto support = get_wall_support( g->m, pos() );
+                if( support.has_value() ) {
+                    return g->m.disp_name( *support );
+                }
+                return std::string( _( "the wall" ) );
+            }();
+            add_msg( _( "The %1$s begins to climb up %2$s." ), name(), support_name );
+        }
+        add_effect( effect_wall_clinging, 1_turns );
+    } else if( anchored_on_wall_then ) {
+        remove_effect( effect_wall_clinging );
     }
 
     // if the monster is in a deep water tile, it has a chance to drown
@@ -1953,6 +1993,14 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
             return true;
         }
     }
+
+    const bool anchored_on_wall_here = climbs_walls() && anchored_on_wall( g->m, pos() );
+    if( anchored_on_wall_here ) {
+        add_effect( effect_wall_clinging, 1_turns );
+    } else if( has_effect( effect_wall_clinging ) ) {
+        remove_effect( effect_wall_clinging );
+    }
+
     if( !will_be_water && ( digs() || can_dig() ) ) {
         set_underwater( g->m.ter( pos() )->is_diggable() );
     }

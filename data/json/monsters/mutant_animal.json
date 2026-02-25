@@ -359,7 +359,12 @@
     "//": " 201 days gestation period. The fawn will stay with its mother for approximately one year, suckling for three to four months.",
     "baby_flags": [ "SPRING", "SUMMER" ],
     "special_attacks": [ [ "EAT_CROP", 7200 ] ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "CLIMBS", "PATH_AVOID_DANGER_1", "WARM" ]
+    "petfood": {
+      "food": [ "CATTLEFOOD" ],
+      "feed": "The %s seems to like you!",
+      "pet": "The %s makes a happy arachnid-like chitter at you as you pat its head."
+    },
+    "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "CLIMBS", "CLIMBS_WALLS", "PET_MOUNTABLE", "PATH_AVOID_DANGER_1", "WARM" ]
   },
   {
     "id": "mon_deer_mutant_spider_fawn",
@@ -391,7 +396,7 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "upgrades": { "age_grow": 330, "into": "mon_deer_mutant_spider" },
-    "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "CLIMBS", "PATH_AVOID_DANGER_1", "WARM", "STUMBLES" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_DANGER_1", "WARM", "STUMBLES" ]
   },
   {
     "id": "mon_dog_mutant_mongrel",
