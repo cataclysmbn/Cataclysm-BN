@@ -218,6 +218,9 @@ struct mutation_branch {
 
         /** The item, if any, spawned by the mutation */
         itype_id spawn_item;
+        item_group_id spawn_item_group;
+        int spawn_item_count = 1;
+        int spawn_item_chance = 100;
 
         /**Species ignoring character with the mutation*/
         std::vector<species_id> ignored_by;
@@ -550,5 +553,3 @@ mutagen_attempt mutagen_common_checks( Character &guy, const item &it, bool stro
 
 void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category,
                               const unsigned short tier );
-
-

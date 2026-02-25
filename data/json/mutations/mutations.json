@@ -1456,8 +1456,8 @@
     "purifiable": false,
     "description": "Your broken limbs mend themselves without significant difficulty.  You do not require splints.",
     "prereqs": [ "FASTHEALER" ],
-    "threshreq": [ "THRESH_LIZARD" ],
-    "category": [ "LIZARD" ],
+    "threshreq": [ "THRESH_LIZARD", "THRESH_SERPENT" ],
+    "category": [ "LIZARD", "SERPENT" ],
     "mending_modifier": 1
   },
   {
