@@ -1960,7 +1960,7 @@ void activity_handlers::pulp_do_turn( player_activity *act, player *p )
 
             float stamina_ratio = static_cast<float>( p->get_stamina() ) / p->get_stamina_max();
             moves += 100 / std::max( 0.25f, stamina_ratio );
-            if( stamina_ratio < 0.33 || p->is_npc() ) {
+            if( stamina_ratio < 0.33 ) {
                 p->moves = std::min( 0, p->moves - moves );
                 return;
             }
