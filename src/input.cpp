@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <fstream>
 #include <optional>
 #include <sstream>
@@ -39,6 +40,68 @@ using std::min; // from <algorithm>
 using std::max;
 
 static const std::string default_context_id( "default" );
+
+namespace
+{
+
+auto best_keyboard_key_for_events( const std::vector<input_event> &events ) -> std::optional<int>
+{
+    auto best_key = -1;
+    for( const auto &events_event : events ) {
+        if( events_event.type != input_event_t::keyboard || events_event.sequence.size() != 1 ) {
+            continue;
+        }
+
+        const auto event_key = events_event.sequence.front();
+        const auto is_ascii_char = isprint( event_key ) && event_key < 0xFF;
+        const auto is_best_ascii_char = best_key >= 0 && isprint( best_key ) && best_key < 0xFF;
+        if( best_key < 0 || ( is_ascii_char && !is_best_ascii_char ) ) {
+            best_key = event_key;
+        }
+    }
+
+    if( best_key < 0 ) {
+        return std::nullopt;
+    }
+
+    return best_key;
+}
+
+auto get_available_keys_output_path() -> const char *
+{
+    static const auto *output_path = std::getenv( "CATA_AVAILABLE_KEYS_JSON" );
+    if( output_path == nullptr || output_path[0] == '\0' ) {
+        return nullptr;
+    }
+    return output_path;
+}
+
+auto dump_available_action_keys_to_json( const input_context &ctxt ) -> void
+{
+    const auto *output_path = get_available_keys_output_path();
+    if( output_path == nullptr ) {
+        return;
+    }
+
+    const auto actions = ctxt.get_available_action_keys();
+    write_to_file( output_path, [&actions]( std::ostream & output_stream ) {
+        JsonOut jsout( output_stream, true );
+        jsout.start_object();
+        jsout.member( "actions" );
+        jsout.start_array();
+        for( const auto &action : actions ) {
+            jsout.start_object();
+            jsout.member( "id", action.id );
+            jsout.member( "name", action.name );
+            jsout.member( "key", action.key );
+            jsout.end_object();
+        }
+        jsout.end_array();
+        jsout.end_object();
+    }, "" );
+}
+
+} // namespace
 
 template <class T1, class T2>
 struct ContainsPredicate {
@@ -893,6 +956,47 @@ std::string input_context::describe_key_and_name( const std::string &action_desc
     return get_desc( action_descriptor, get_action_name( action_descriptor ), evt_filter );
 }
 
+auto input_context::get_available_action_keys() const ->
+std::vector<input_context::available_action_key>
+{
+    auto result = std::vector<input_context::available_action_key>();
+    for( const auto &action_id : registered_actions ) {
+        if( action_id == "ANY_INPUT" || action_id == "COORDINATE" ) {
+            continue;
+        }
+
+        const auto &events = inp_mngr.get_input_for_action( action_id, category );
+        const auto best_key = best_keyboard_key_for_events( events );
+        if( !best_key.has_value() ) {
+            continue;
+        }
+
+        const auto key_name = inp_mngr.get_keyname( *best_key, input_event_t::keyboard, true );
+        if( key_name.empty() ) {
+            continue;
+        }
+
+        result.push_back( input_context::available_action_key{ .id = action_id, .name = get_action_name( action_id ), .key = key_name } );
+    }
+
+#if defined(__ANDROID__)
+    for( const auto &manual_key : registered_manual_keys ) {
+        const auto key_name = inp_mngr.get_keyname( manual_key.key, input_event_t::keyboard, true );
+        if( key_name.empty() ) {
+            continue;
+        }
+
+        result.push_back( input_context::available_action_key{
+            .id = string_format( "manual:%d", manual_key.key ),
+            .name = manual_key.text.empty() ? key_name : manual_key.text,
+            .key = key_name,
+        } );
+    }
+#endif
+
+    return result;
+}
+
 const std::string &input_context::handle_input()
 {
     return handle_input( timeout );
@@ -900,6 +1004,8 @@ const std::string &input_context::handle_input()
 
 const std::string &input_context::handle_input( const int timeout )
 {
+    dump_available_action_keys_to_json( *this );
+
     const auto old_timeout = inp_mngr.get_timeout();
     if( timeout >= 0 ) {
         inp_mngr.set_timeout( timeout );
