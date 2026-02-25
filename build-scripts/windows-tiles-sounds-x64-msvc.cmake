@@ -3,12 +3,18 @@
 windows-tiles-sounds-x64-msvc
 -----------------------------
 
-Pre-load script for Microsoft Visual Studio builds.
+Pre-load script for Windows builds with Ninja Multi-Config and MSVC.
 
 Used by CMakePresets.json -> "cacheVariables" -> "CMAKE_PROJECT_INCLUDE_BEFORE".
 
-When CMake does not run under VS environment, it sources the VsDevCmd.bat on it own.
-It then writes CMakeUserPresets.json -> "buildPresets" -> "environment"
+When CMake does not run under the VS environment (i.e. VSCMD_VER is not set),
+it runs VsDevCmd.bat to bootstrap the VS toolchain environment, then writes
+CMakeUserPresets.json with the baked environment variables so that subsequent
+terminal builds (cmake --build --preset ...) also work outside of VS.
+
+CMakeUserPresets.json is only written on the first configure run. If the file
+already exists it is left untouched, preserving any user customizations.
+See CMakeUserPresets.json.example for a reference and customization guide.
 
 #]=======================================================================]
 
@@ -23,30 +29,28 @@ endif()
 
 include(${CMAKE_SOURCE_DIR}/build-scripts/VsDevCmd.cmake)
 
-# It's fine to keep @_MSVC_DEVENV@ undefined
-set(BUILD_PRESET_NAME "windows-tiles-sounds-x64-msvc")
+# Generate CMakeUserPresets.json from the template only on first configure.
+# It is gitignored and provides the baked VS environment variables for
+# terminal builds (cmake --build --preset ...) outside of the VS IDE.
+# Subsequent configure runs leave the file alone so user customizations survive.
+# @_MSVC_DEVENV@ may be empty (e.g. when running from VS IDE); that is fine.
 set(CONFIGURE_PRESET "windows-tiles-sounds-x64-msvc")
-configure_file(
-    ${CMAKE_SOURCE_DIR}/build-scripts/CMakeUserPresets.json.in
-    ${CMAKE_SOURCE_DIR}/CMakeUserPresets.json
-    @ONLY
-)
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/CMakeUserPresets.json")
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/build-scripts/CMakeUserPresets.json.in
+        ${CMAKE_SOURCE_DIR}/CMakeUserPresets.json
+        @ONLY
+    )
+    message(STATUS "Generated CMakeUserPresets.json for terminal builds.")
+    message(STATUS "Customize it to add local build overrides (see CMakeUserPresets.json.example).")
+endif()
 
-# ccache integration for MSVC with Visual Studio generator
-# Ref: https://github.com/ccache/ccache/wiki/MS-Visual-Studio#usage-with-cmake
+# ccache integration for MSVC with Ninja
 find_program(CCACHE_EXE ccache)
 if(CCACHE_EXE)
-    file(COPY_FILE
-        ${CCACHE_EXE} ${CMAKE_BINARY_DIR}/cl.exe
-        ONLY_IF_DIFFERENT)
-
+    set(CMAKE_C_COMPILER_LAUNCHER   ccache)
+    set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
     set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
-
-    set(CMAKE_VS_GLOBALS
-        "CLToolExe=cl.exe"
-        "CLToolPath=${CMAKE_BINARY_DIR}"
-        "UseMultiToolTask=true"
-    )
 endif()
 
 # Automatic gettext setup for Windows
