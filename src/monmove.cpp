@@ -9,6 +9,7 @@
 #include <iterator>
 #include <list>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <vector>
 #include <unordered_map>
@@ -85,14 +86,25 @@ static const std::string flag_AUTODOC_COUCH( "AUTODOC_COUCH" );
 namespace
 {
 
-auto has_wall_support( const map &here, const tripoint &anchor ) -> bool
+auto get_wall_support( const map &here, const tripoint &anchor ) -> std::optional<tripoint>
 {
     const auto neighbor_range = points_in_radius( anchor, 1 );
     const std::vector<tripoint> neighbors( neighbor_range.begin(), neighbor_range.end() );
 
-    return std::ranges::any_of( neighbors, [&anchor, &here]( const tripoint &pt ) {
+    const auto support = std::ranges::find_if( neighbors, [&anchor, &here]( const tripoint &pt ) {
         return pt.z == anchor.z && pt != anchor && here.impassable_ter_furn( pt );
     } );
+
+    if( support == neighbors.end() ) {
+        return std::nullopt;
+    }
+
+    return *support;
+}
+
+auto has_wall_support( const map &here, const tripoint &anchor ) -> bool
+{
+    return get_wall_support( here, anchor ).has_value();
 }
 
 auto anchored_on_wall( const map &here, const tripoint &pos ) -> bool
@@ -104,70 +116,7 @@ auto anchored_on_wall( const map &here, const tripoint &pos ) -> bool
     if( has_wall_support( here, pos ) ) {
         return true;
     }
-
-    const tripoint below = pos + tripoint_below;
-    return here.inbounds( below ) && here.impassable( below );
-}
-
-auto report_missing_lua_ai( const std::string &method ) -> void
-{
-    static auto warned = std::unordered_set<std::string>{};
-    if( !warned.insert( method ).second ) {
-        return;
-    }
-    debugmsg( "Lua monster AI function '%s' is not defined", method );
-}
-
-auto report_invalid_lua_ai_return( const std::string &method, const sol::object &value,
-                                   sol::state &lua ) -> void
-{
-    static auto warned = std::unordered_set<std::string>{};
-    if( !warned.insert( method ).second ) {
-        return;
-    }
-    const auto type_name = get_luna_type( value );
-    const auto raw_name = type_name.value_or(
-                              std::string( sol::type_name( lua, value.get_type() ) ) );
-    debugmsg( "Lua monster AI function '%s' returned %s, expected boolean or nil",
-              method, raw_name );
-}
-
-auto run_lua_monster_ai( monster &mon ) -> bool
-{
-    const auto &lua_method = mon.type->lua_ai;
-    if( !lua_method ) {
-        return false;
-    }
-
-    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
-    if( lua_state == nullptr ) {
-        return false;
-    }
-
-    sol::state &lua = lua_state->lua;
-    sol::object ref = lua.globals()["game"]["monster_ai_functions"][*lua_method];
-    if( ref.get_type() != sol::type::function ) {
-        report_missing_lua_ai( *lua_method );
-        return false;
-    }
-
-    auto func = ref.as<sol::protected_function>();
-    sol::protected_function_result res = func( &mon );
-    check_func_result( res );
-    if( !res.valid() ) {
-        return false;
-    }
-
-    const auto value = res.get<sol::object>();
-    if( value.get_type() == sol::type::lua_nil ) {
-        return false;
-    }
-    if( value.get_type() != sol::type::boolean ) {
-        report_invalid_lua_ai_return( *lua_method, value, lua );
-        return false;
-    }
-
-    return value.as<bool>();
+    return false;
 }
 
 } // namespace
@@ -344,6 +293,12 @@ bool monster::can_reach_to( const tripoint &p ) const
 
     const bool is_z_move = p.z != pos().z;
     if( !is_z_move || is_moving_out_of_reality ) {
+        if( here.has_flag( TFLAG_NO_FLOOR, p ) && !flies() ) {
+            if( climbs_walls() ) {
+                return anchored_on_wall( here, p );
+            }
+            return false;
+        }
         return true;
     }
 
@@ -1942,8 +1897,14 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
     }
 
     if( wall_climb_move && z_move && g->u.sees( *this ) ) {
-        add_msg( _( "The %1$s climbs %2$s the wall." ), name(),
-                 destination.z > posz() ? _( "up" ) : _( "down" ) );
+        const auto anchor = destination.z > posz() ? pos() : destination;
+        const auto support = get_wall_support( g->m, anchor );
+        const std::string wall_name = support ?
+                                      g->m.disp_name( *support ) :
+                                      _( "the wall" );
+        add_msg( _( "The %1$s climbs %2$s %3$s." ), name(),
+                 destination.z > posz() ? _( "up" ) : _( "down" ),
+                 wall_name );
     }
 
     setpos( destination );

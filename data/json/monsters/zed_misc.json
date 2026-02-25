@@ -568,6 +568,14 @@
     "description": "This lithe zombie scuttles up vertical surfaces on all fours, clawing into cracks and ledges to haul itself to higher ground.",
     "color": "light_gray",
     "speed": 120,
+    "special_attacks": [
+      { "id": "scratch", "damage_max_instance": [ { "damage_type": "cut", "amount": 12 } ] },
+      {
+        "type": "bite",
+        "cooldown": 10,
+        "damage_max_instance": [ { "damage_type": "stab", "amount": 12, "armor_multiplier": 0.7 } ]
+      }
+    ],
     "extend": { "flags": [ "CLIMBS_WALLS" ] }
   },
   {
