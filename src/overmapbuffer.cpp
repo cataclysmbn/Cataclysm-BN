@@ -1064,7 +1064,7 @@ bool overmapbuffer::check_overmap_special_type( const overmap_special_id &id,
 
 void overmapbuffer::add_unique_special( const overmap_special_id &id )
 {
-    if( contains_unique_special( id ) ) {
+    if( respect_globally_unique && contains_unique_special( id ) ) {
         debugmsg( "Unique overmap special placed more than once: %s", id.str() );
     }
     placed_unique_specials.emplace( id );

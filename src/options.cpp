@@ -2858,6 +2858,12 @@ void options_manager::add_options_world_default()
          translate_marker( "If true, strength checks and/or lifting qualities no longer need to be met in order to change parts." ),
          false, COPT_ALWAYS_HIDE
        );
+
+    add( "RESPECT_GLOBALLY_UNIQUE", world_default,
+         translate_marker( "Respect globally unique specials." ),
+         translate_marker( "If false, specials marked as only spawning once will instead spawn at most once per overmap." ),
+         true
+       );
 }
 
 void options_manager::add_options_android()
@@ -3854,6 +3860,7 @@ void options_manager::cache_to_globals()
     log_from_top = ::get_option<std::string>( "LOG_FLOW" ) == "new_top";
     message_ttl = ::get_option<int>( "MESSAGE_TTL" );
     message_cooldown = ::get_option<int>( "MESSAGE_COOLDOWN" );
+    respect_globally_unique = ::get_option<bool>( "RESPECT_GLOBALLY_UNIQUE" );
     fov_3d = ::get_option<bool>( "FOV_3D" );
     fov_3d_z_range = ::get_option<int>( "FOV_3D_Z_RANGE" );
     static_z_effect = ::get_option<bool>( "STATICZEFFECT" );

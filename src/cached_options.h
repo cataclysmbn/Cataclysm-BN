@@ -41,6 +41,9 @@ extern bool log_from_top;
 extern int message_ttl;
 extern int message_cooldown;
 
+/** Whether to only spawn GLOBALLY_UNIQUE specials at most once per save or just once per overmap */
+extern bool respect_globally_unique;
+
 /** Display mod source for items, furniture, terrain and monsters.*/
 extern bool display_mod_source;
 /** Display internal IDs for items, furniture, terrain and monsters.*/
