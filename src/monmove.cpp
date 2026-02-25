@@ -92,7 +92,7 @@ auto get_wall_support( const map &here, const tripoint &anchor ) -> std::optiona
     const auto neighbor_range = points_in_radius( anchor, 1 );
     const std::vector<tripoint> neighbors( neighbor_range.begin(), neighbor_range.end() );
 
-    const auto support = std::ranges::find_if( neighbors, [&anchor, &here]( const tripoint &pt ) {
+    const auto support = std::ranges::find_if( neighbors, [&anchor, &here]( const tripoint & pt ) {
         return pt.z == anchor.z && pt != anchor && here.impassable_ter_furn( pt );
     } );
 
@@ -108,7 +108,7 @@ auto wall_support_count( const map &here, const tripoint &anchor ) -> int
     const auto neighbor_range = points_in_radius( anchor, 1 );
     const std::vector<tripoint> neighbors( neighbor_range.begin(), neighbor_range.end() );
 
-    return std::ranges::count_if( neighbors, [&anchor, &here]( const tripoint &pt ) {
+    return std::ranges::count_if( neighbors, [&anchor, &here]( const tripoint & pt ) {
         const bool same_level = pt.z == anchor.z;
         const bool cardinal = pt.x == anchor.x || pt.y == anchor.y;
         return same_level && cardinal && pt != anchor && here.impassable_ter_furn( pt );
@@ -971,7 +971,8 @@ void monster::move()
                     return g->m.disp_name( *support );
                 }
                 return std::string( _( "the wall" ) );
-            }();
+            }
+            ();
             add_msg( _( "The %1$s begins to climb up %2$s." ), name(), support_name );
         }
         add_effect( effect_wall_clinging, 1_turns );

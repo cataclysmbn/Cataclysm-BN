@@ -769,7 +769,18 @@
     "anger_triggers": [ "STALK", "PLAYER_WEAK", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_spider_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "WEBWALK", "CLIMBS", "CLIMBS_WALLS", "HARDTOSHOOT", "PUSH_MON", "PATH_AVOID_FIRE" ],
+    "flags": [
+      "SEES",
+      "SMELLS",
+      "HEARS",
+      "VENOM",
+      "WEBWALK",
+      "CLIMBS",
+      "CLIMBS_WALLS",
+      "HARDTOSHOOT",
+      "PUSH_MON",
+      "PATH_AVOID_FIRE"
+    ],
     "//": "No, they are not in fact the most venomous spider in the world."
   },
   {
