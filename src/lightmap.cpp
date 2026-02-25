@@ -564,25 +564,24 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
         }
     }
 
-    for( monster &critter : g->all_monsters() ) {
-        if( critter.is_hallucination() ) {
-            continue;
-        }
-        const tripoint &mp = critter.pos();
-        // In parallel mode only process light sources on this z-level to avoid
-        // cross-level writes to other levels' caches.
-        if( skip_shared_init && mp.z != zlev ) {
-            continue;
-        }
-        if( inbounds( mp ) ) {
-            if( critter.has_effect( effect_onfire ) ) {
-                apply_light_source( mp, 8 );
+    // Skip in parallel mode: build_map_cache has already applied monster lights
+    // serially before the parallel_for to avoid racing on weak_ptr_fast::lock().
+    if( !skip_shared_init ) {
+        for( monster &critter : g->all_monsters() ) {
+            if( critter.is_hallucination() ) {
+                continue;
             }
-            // TODO: [lightmap] Attach natural light brightness to creatures
-            // TODO: [lightmap] Allow creatures to have light attacks (i.e.: eyebot)
-            // TODO: [lightmap] Allow creatures to have facing and arc lights
-            if( critter.type->luminance > 0 ) {
-                apply_light_source( mp, critter.type->luminance );
+            const tripoint &mp = critter.pos();
+            if( inbounds( mp ) ) {
+                if( critter.has_effect( effect_onfire ) ) {
+                    apply_light_source( mp, 8 );
+                }
+                // TODO: [lightmap] Attach natural light brightness to creatures
+                // TODO: [lightmap] Allow creatures to have light attacks (i.e.: eyebot)
+                // TODO: [lightmap] Allow creatures to have facing and arc lights
+                if( critter.type->luminance > 0 ) {
+                    apply_light_source( mp, critter.type->luminance );
+                }
             }
         }
     }
