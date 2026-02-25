@@ -769,7 +769,7 @@
     "anger_triggers": [ "STALK", "PLAYER_WEAK", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_spider_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "WEBWALK", "CLIMBS", "HARDTOSHOOT", "PUSH_MON", "PATH_AVOID_FIRE" ],
+    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "WEBWALK", "CLIMBS", "CLIMBS_WALLS", "HARDTOSHOOT", "PUSH_MON", "PATH_AVOID_FIRE" ],
     "//": "No, they are not in fact the most venomous spider in the world."
   },
   {
@@ -803,7 +803,7 @@
     "harvest": "arachnid",
     "anger_triggers": [ "STALK", "PLAYER_WEAK", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "SMELLS", "HEARS", "WEBWALK", "CLIMBS", "HARDTOSHOOT", "PATH_AVOID_FIRE" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "WEBWALK", "CLIMBS", "CLIMBS_WALLS", "HARDTOSHOOT", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_spider_jumping_giant",
@@ -838,7 +838,7 @@
     "anger_triggers": [ "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_spider_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "HIT_AND_RUN", "CLIMBS", "PATH_AVOID_DANGER_1" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "HIT_AND_RUN", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_DANGER_1" ]
   },
   {
     "id": "mon_spider_trapdoor_giant",
@@ -871,7 +871,7 @@
     "harvest": "arachnid",
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_spider_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "GRABS", "CAN_DIG", "WEBWALK", "CLIMBS", "PATH_AVOID_FIRE" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "GRABS", "CAN_DIG", "WEBWALK", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_spider_web",
@@ -905,7 +905,7 @@
     "harvest": "arachnid",
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_spider_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "WEBWALK", "CLIMBS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "WEBWALK", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
   },
   {
     "id": "mon_spider_web_s",
@@ -937,7 +937,7 @@
     "vision_night": 5,
     "harvest": "arachnid",
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "SMELLS", "HEARS", "WEBWALK", "STUMBLES", "CLIMBS", "PATH_AVOID_FIRE" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "WEBWALK", "STUMBLES", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_spider_widow_giant",
@@ -972,7 +972,7 @@
     "anger_triggers": [ "PLAYER_WEAK", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_spider_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "BADVENOM", "WEBWALK", "CLIMBS", "PATH_AVOID_FIRE" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "BADVENOM", "WEBWALK", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_spider_widow_giant_s",
@@ -1006,7 +1006,7 @@
     "harvest": "arachnid",
     "anger_triggers": [ "PLAYER_WEAK", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "WEBWALK", "CLIMBS", "PATH_AVOID_FIRE" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "WEBWALK", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_spider_wolf_giant",
@@ -1041,7 +1041,7 @@
     "anger_triggers": [ "STALK", "PLAYER_WEAK", "HURT", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_spider_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "CLIMBS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
   },
   {
     "id": "mon_wasp_larva",

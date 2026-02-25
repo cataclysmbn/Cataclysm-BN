@@ -561,6 +561,16 @@
     "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "CLIMBS", "PUSH_MON" ]
   },
   {
+    "id": "mon_zombie_climber",
+    "type": "MONSTER",
+    "copy-from": "mon_zombie_hunter",
+    "name": { "str": "climbing zombie" },
+    "description": "This lithe zombie scuttles up vertical surfaces on all fours, clawing into cracks and ledges to haul itself to higher ground.",
+    "color": "light_gray",
+    "speed": 120,
+    "extend": { "flags": [ "CLIMBS_WALLS" ] }
+  },
+  {
     "id": "mon_zombie_jackson",
     "type": "MONSTER",
     "name": { "str": "Thriller" },
