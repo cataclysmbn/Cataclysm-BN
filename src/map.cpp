@@ -9130,6 +9130,24 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             for( npc &guy : g->all_npcs() ) {
                 apply_character_light( guy );
             }
+            // Step 3b: Apply monster lights serially.  g->all_monsters() iterates
+            // weak_ptr_fast (std::__weak_ptr<T,_S_single>) whose refcount is non-atomic;
+            // calling lock() from worker threads is a data race.  apply_light_source()
+            // uses get_cache(p.z) so each monster writes to its own z-level's buffer.
+            for( monster &critter : g->all_monsters() ) {
+                if( critter.is_hallucination() ) {
+                    continue;
+                }
+                const tripoint &mp = critter.pos();
+                if( inbounds( mp ) ) {
+                    if( critter.has_effect( effect_onfire ) ) {
+                        apply_light_source( mp, 8 );
+                    }
+                    if( critter.type->luminance > 0 ) {
+                        apply_light_source( mp, critter.type->luminance );
+                    }
+                }
+            }
             // Step 4: Generate per-level dynamic lighting in parallel.
             // skip_shared_init=true: each worker skips the shared-init steps above
             // and only processes entities whose position z matches its own level.
