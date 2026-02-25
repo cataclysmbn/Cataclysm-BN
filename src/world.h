@@ -1,7 +1,11 @@
 #pragma once
 
 #include <functional>
+#include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
+#include <unordered_map>
 #include "json.h"
 #include "options.h"
 #include "type_id.h"
@@ -10,6 +14,40 @@
 
 class avatar;
 class sqlite3;
+
+/**
+ * Thread-safe connection pool for SQLite databases.
+ * Each thread gets its own connection, enabling parallel reads with WAL mode.
+ */
+class sqlite_connection_pool
+{
+    public:
+        explicit sqlite_connection_pool( const std::string &db_path );
+        ~sqlite_connection_pool();
+
+        // Non-copyable, non-movable
+        sqlite_connection_pool( const sqlite_connection_pool & ) = delete;
+        sqlite_connection_pool &operator=( const sqlite_connection_pool & ) = delete;
+
+        /**
+         * Get a connection for the current thread.
+         * Creates a new connection if this thread hasn't acquired one yet.
+         */
+        sqlite3 *acquire();
+
+        /**
+         * Execute a statement on all connections in the pool.
+         * Useful for PRAGMA statements or transactions that need to apply to all connections.
+         */
+        void exec_all( const char *sql );
+
+    private:
+        std::string db_path;
+        std::mutex pool_mutex;
+        std::unordered_map<std::thread::id, sqlite3 *> connections;
+
+        sqlite3 *create_connection();
+};
 
 class save_t
 {
@@ -171,7 +209,7 @@ class world
         std::string overmap_player_filename( const point_abs_om &p ) const;
         std::string get_player_path() const;
 
-        sqlite3 *map_db = nullptr;
+        std::unique_ptr<sqlite_connection_pool> map_db_pool;
 
         sqlite3 *save_db = nullptr;
         std::string last_save_id = "";
