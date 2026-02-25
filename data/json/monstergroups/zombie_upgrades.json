@@ -33,7 +33,6 @@
       { "monster": "mon_zombie_grabber", "freq": 15, "cost_multiplier": 5 },
       { "monster": "mon_zombie_grappler", "freq": 45, "cost_multiplier": 7 },
       { "monster": "mon_zombie_hunter", "freq": 30, "cost_multiplier": 5 },
-      { "monster": "mon_zombie_climber", "freq": 15, "cost_multiplier": 5 },
       { "monster": "mon_skeleton", "freq": 45, "cost_multiplier": 5 },
       { "monster": "mon_zombie_smoker", "freq": 15, "cost_multiplier": 5 },
       { "monster": "mon_zombie_shady", "freq": 15, "cost_multiplier": 5 },
@@ -130,6 +129,7 @@
     "//": "crawling zombie upgrades",
     "monsters": [
       { "monster": "mon_zombie_crawler_pupa", "freq": 500, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_crawler_clinger", "freq": 250, "cost_multiplier": 3 },
       { "monster": "mon_zombie_crawler_pupa_decoy", "freq": 500, "cost_multiplier": 2 }
     ]
   },

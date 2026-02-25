@@ -236,7 +236,7 @@
     "special_attacks": [ [ "TAZER", 5 ] ],
     "death_drops": { "groups": [ [ "robots", 4 ], [ "skitterbot", 1 ] ] },
     "death_function": [ "BROKEN" ],
-    "flags": [ "SEES", "HEARS", "GOODHEARING", "ELECTRONIC", "COLDPROOF", "NO_BREATHE", "PATH_AVOID_DANGER_1", "BIOPROOF" ]
+    "flags": [ "SEES", "HEARS", "GOODHEARING", "ELECTRONIC", "COLDPROOF", "CLIMBS", "NO_BREATHE", "PATH_AVOID_DANGER_1", "BIOPROOF" ]
   },
   {
     "id": "mon_science_bot",
@@ -280,6 +280,7 @@
       "ELECTRONIC",
       "COLDPROOF",
       "ACIDPROOF",
+      "CLIMBS",
       "NO_BREATHE",
       "PRIORITIZE_TARGETS",
       "PATH_AVOID_DANGER_2",

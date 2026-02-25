@@ -520,7 +520,7 @@
     "harvest": "arachnid",
     "special_attacks": [ [ "FUNGUS", 200 ] ],
     "death_function": [ "NORMAL", "FUNGUS" ],
-    "flags": [ "SEES", "SMELLS", "POISON", "CLIMBS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "SEES", "SMELLS", "POISON", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_spider_fungus",
@@ -553,6 +553,6 @@
     "harvest": "arachnid",
     "special_attacks": [ [ "FUNGAL_TRAIL", 3 ] ],
     "death_function": [ "NORMAL", "FUNGUS" ],
-    "flags": [ "SEES", "SMELLS", "VENOM", "WEBWALK", "CLIMBS", "PATH_AVOID_FIRE" ]
+    "flags": [ "SEES", "SMELLS", "VENOM", "WEBWALK", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   }
 ]

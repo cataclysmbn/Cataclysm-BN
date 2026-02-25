@@ -905,7 +905,7 @@
     "harvest": "arachnid",
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_spider_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "WEBWALK", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "WEBWALK", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_spider_web_s",
@@ -1041,7 +1041,7 @@
     "anger_triggers": [ "STALK", "PLAYER_WEAK", "HURT", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_spider_fungus",
-    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "VENOM", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_wasp_larva",
@@ -1453,7 +1453,7 @@
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_ant_fungus",
     "special_attacks": [ [ "EAT_FOOD", 3600 ] ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_ant_acid",
@@ -1488,7 +1488,7 @@
     "anger_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT", "PLAYER_CLOSE" ],
     "death_function": [ "ACID", "NORMAL" ],
     "harvest": "arachnid_acid",
-    "flags": [ "ACIDPROOF", "CLIMBS", "HEARS", "POISON", "SEES", "SMELLS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "ACIDPROOF", "CLIMBS", "CLIMBS_WALLS", "HEARS", "POISON", "SEES", "SMELLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_ant_acid_larva",
@@ -1514,7 +1514,7 @@
     "upgrades": { "age_grow": 3, "into": "mon_ant_acid" },
     "death_function": [ "ACID", "NORMAL" ],
     "harvest": "arachnid_acid",
-    "flags": [ "ACIDPROOF", "LARVA", "POISON", "SMELLS" ]
+    "flags": [ "ACIDPROOF", "CLIMBS", "CLIMBS_WALLS", "LARVA", "POISON", "SMELLS" ]
   },
   {
     "id": "mon_ant_acid_queen",
@@ -1546,7 +1546,7 @@
     "anger_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "harvest": "acidant_queen",
-    "flags": [ "ACIDPROOF", "CLIMBS", "HEARS", "QUEEN", "SEES", "SMELLS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "ACIDPROOF", "CLIMBS", "CLIMBS_WALLS", "HEARS", "QUEEN", "SEES", "SMELLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_ant_acid_soldier",
@@ -1581,7 +1581,7 @@
     "anger_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT", "PLAYER_CLOSE" ],
     "death_function": [ "ACID", "NORMAL" ],
     "harvest": "arachnid_acid",
-    "flags": [ "ACIDPROOF", "SHORTACIDTRAIL", "CLIMBS", "HEARS", "POISON", "SEES", "SMELLS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "ACIDPROOF", "SHORTACIDTRAIL", "CLIMBS", "CLIMBS_WALLS", "HEARS", "POISON", "SEES", "SMELLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_ant_larva",
@@ -1607,7 +1607,7 @@
     "harvest": "arachnid",
     "upgrades": { "age_grow": 3, "into": "mon_ant" },
     "death_function": [ "NORMAL" ],
-    "flags": [ "SMELLS", "LARVA" ]
+    "flags": [ "CLIMBS", "CLIMBS_WALLS", "SMELLS", "LARVA" ]
   },
   {
     "id": "mon_ant_queen",
@@ -1638,7 +1638,7 @@
     "anger_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT" ],
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_ant_fungus",
-    "flags": [ "SMELLS", "QUEEN", "CLIMBS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "SMELLS", "QUEEN", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_ant_soldier",
@@ -1672,7 +1672,7 @@
     "anger_triggers": [ "FRIEND_ATTACKED", "FRIEND_DIED", "HURT", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "fungalize_into": "mon_ant_fungus",
-    "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "PATH_AVOID_FIRE", "PATH_AVOID_FALL" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "CLIMBS", "CLIMBS_WALLS", "PATH_AVOID_FIRE" ]
   },
   {
     "id": "mon_locust",

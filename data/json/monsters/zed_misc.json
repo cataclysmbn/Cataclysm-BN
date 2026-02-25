@@ -561,24 +561,6 @@
     "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "CLIMBS", "PUSH_MON" ]
   },
   {
-    "id": "mon_zombie_climber",
-    "type": "MONSTER",
-    "copy-from": "mon_zombie_hunter",
-    "name": { "str": "climbing zombie" },
-    "description": "This lithe zombie scuttles up vertical surfaces on all fours, clawing into cracks and ledges to haul itself to higher ground.",
-    "color": "light_gray",
-    "speed": 120,
-    "special_attacks": [
-      { "id": "scratch", "damage_max_instance": [ { "damage_type": "cut", "amount": 12 } ] },
-      {
-        "type": "bite",
-        "cooldown": 10,
-        "damage_max_instance": [ { "damage_type": "stab", "amount": 12, "armor_multiplier": 0.7 } ]
-      }
-    ],
-    "extend": { "flags": [ "CLIMBS_WALLS" ] }
-  },
-  {
     "id": "mon_zombie_jackson",
     "type": "MONSTER",
     "name": { "str": "Thriller" },
@@ -717,7 +699,7 @@
     "id": "mon_zombie_predator",
     "type": "MONSTER",
     "name": { "str": "zombie predator" },
-    "description": "With its joints in odd places and angles, this humanoid creature prowls across the landscape with surprising speed.  Its teeth and arms are sharpened into fine points, and black ooze seeps out from cuts between its muscles.",
+    "description": "With its joints in odd places and angles, this humanoid creature prowls across the landscape with surprising speed, clawing up walls as easily as it bounds across open ground.  Its teeth and arms are sharpened into fine points, and black ooze seeps out from cuts between its muscles.",
     "default_faction": "zombie",
     "bodytype": "human",
     "species": [ "ZOMBIE", "HUMAN" ],
@@ -754,7 +736,20 @@
     "death_drops": "default_zombie_death_drops",
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
-    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "PUSH_MON" ]
+    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "CLIMBS", "CLIMBS_WALLS", "PUSH_MON" ]
+  },
+  {
+    "id": "mon_zombie_crawler_clinger",
+    "type": "MONSTER",
+    "copy-from": "mon_zombie_crawler",
+    "name": { "str": "clinger crawler" },
+    "description": "Only the upper half remains of this corpse, making it eerily lightweight.  It drags itself with raw arms, wedging shattered bone into cracks to slowly clamber up walls and ceilings.",
+    "color": "light_gray",
+    "volume": "40000 ml",
+    "weight": "45000 g",
+    "hp": 50,
+    "speed": 30,
+    "extend": { "flags": [ "CLIMBS", "CLIMBS_WALLS" ] }
   },
   {
     "id": "mon_zombie_screecher",
