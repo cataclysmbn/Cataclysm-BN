@@ -112,8 +112,15 @@ const buttonCodeForMove = (button: MouseButton): number => {
   return buttonCodeForPress(button) + 32
 }
 
-const sgrMouseFrame = (code: number, x: number, y: number, pressed: boolean): string => {
-  return `\x1b[<${code};${x};${y}${pressed ? "M" : "m"}`
+type SgrMouseFrameOptions = {
+  code: number
+  x: number
+  y: number
+  pressed: boolean
+}
+
+const sgrMouseFrame = (options: SgrMouseFrameOptions): string => {
+  return `\x1b[<${options.code};${options.x};${options.y}${options.pressed ? "M" : "m"}`
 }
 
 const mouseFrames = (options: MouseEventOptions): string[] => {
@@ -123,19 +130,19 @@ const mouseFrames = (options: MouseEventOptions): string[] => {
   const y = normalizeMouseCoordinate(options.y)
 
   if (event === "move") {
-    return [sgrMouseFrame(buttonCodeForMove(button), x, y, true)]
+    return [sgrMouseFrame({ code: buttonCodeForMove(button), x, y, pressed: true })]
   }
 
   if (event === "release") {
-    return [sgrMouseFrame(buttonCodeForPress(button), x, y, false)]
+    return [sgrMouseFrame({ code: buttonCodeForPress(button), x, y, pressed: false })]
   }
 
-  const pressFrame = sgrMouseFrame(buttonCodeForPress(button), x, y, true)
+  const pressFrame = sgrMouseFrame({ code: buttonCodeForPress(button), x, y, pressed: true })
   if (event === "press" || button === "wheel_up" || button === "wheel_down") {
     return [pressFrame]
   }
 
-  return [pressFrame, sgrMouseFrame(buttonCodeForPress(button), x, y, false)]
+  return [pressFrame, sgrMouseFrame({ code: buttonCodeForPress(button), x, y, pressed: false })]
 }
 
 export const configureTmuxBinary = (path: string): void => {
@@ -143,7 +150,7 @@ export const configureTmuxBinary = (path: string): void => {
 }
 
 export const configureTmuxSocket = (socketName: string | undefined): void => {
-  tmuxSocketName = socketName
+  tmuxSocketName = socketName !== undefined && socketName.length > 0 ? socketName : undefined
 }
 
 export const ensureTmuxAvailable = async (): Promise<void> => {
@@ -205,10 +212,10 @@ export class TmuxSession {
   readonly target: string
   readonly cwd?: string
 
-  private constructor(name: string, target: string, cwd?: string) {
-    this.name = name
-    this.target = target
-    this.cwd = cwd
+  private constructor(options: { name: string; target: string; cwd?: string }) {
+    this.name = options.name
+    this.target = options.target
+    this.cwd = options.cwd
   }
 
   static async hasSession(name: string, cwd?: string): Promise<boolean> {
@@ -249,7 +256,7 @@ export class TmuxSession {
       { cwd: options.cwd },
     )
 
-    return new TmuxSession(options.name, `${options.name}:0.0`, options.cwd)
+    return new TmuxSession({ name: options.name, target: `${options.name}:0.0`, cwd: options.cwd })
   }
 
   static async attach(name: string, cwd?: string): Promise<TmuxSession> {
@@ -257,7 +264,7 @@ export class TmuxSession {
       throw new Error(`tmux session not found: ${name}`)
     }
 
-    return new TmuxSession(name, `${name}:0.0`, cwd)
+    return new TmuxSession({ name, target: `${name}:0.0`, cwd })
   }
 
   static async killByName(name: string, cwd?: string): Promise<void> {

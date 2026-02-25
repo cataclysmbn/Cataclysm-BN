@@ -39,6 +39,7 @@ type SessionState = {
   world: string
   seed?: string
   available_keys_json?: string
+  available_macros_json?: string
   tmux_bin: string
   tmux_socket?: string
   width: number
@@ -86,14 +87,33 @@ const isBinaryAvailable = async (
   }
 }
 
+const ensureLaunchBinaryExists = async (binPath: string): Promise<void> => {
+  try {
+    const stat = await Deno.stat(binPath)
+    if (!stat.isFile) {
+      throw new Error(`game binary path is not a file: ${binPath}`)
+    }
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      throw new Error(`game binary not found: ${binPath}`)
+    }
+    throw error
+  }
+}
+
+type StartDetachedCastProcessOptions = {
+  asciinemaBin: string
+  castArgs: string[]
+  castLogFile: string
+}
+
 const startDetachedCastProcess = async (
-  asciinemaBin: string,
-  castArgs: string[],
-  castLogFile: string,
+  options: StartDetachedCastProcessOptions,
 ): Promise<number> => {
-  const escapedArgs = [shellEscape(asciinemaBin), ...castArgs.map(shellEscape)].join(" ")
+  const escapedArgs = [shellEscape(options.asciinemaBin), ...options.castArgs.map(shellEscape)]
+    .join(" ")
   const launchScript = `nohup env -u TMUX ${escapedArgs} >${
-    shellEscape(castLogFile)
+    shellEscape(options.castLogFile)
   } 2>&1 < /dev/null & echo $!`
   const output = await new Deno.Command("bash", {
     args: ["-lc", launchScript],
@@ -166,9 +186,20 @@ type AvailableKeysSnapshot = {
   actions?: Array<{
     id: string
     name: string
+    description?: string
     key: string
     requires_coordinate?: boolean
     mouse_capable?: boolean
+  }>
+}
+
+type AvailableMacrosSnapshot = {
+  macros?: Array<{
+    id: string
+    name: string
+    description: string
+    category: string
+    hotkey: string
   }>
 }
 
@@ -182,6 +213,21 @@ const loadAvailableKeysSnapshot = async (
   try {
     const content = await Deno.readTextFile(state.available_keys_json)
     return JSON.parse(content) as AvailableKeysSnapshot
+  } catch {
+    return undefined
+  }
+}
+
+const loadAvailableMacrosSnapshot = async (
+  state: SessionState,
+): Promise<AvailableMacrosSnapshot | undefined> => {
+  if (state.available_macros_json === undefined || state.available_macros_json.length === 0) {
+    return undefined
+  }
+
+  try {
+    const content = await Deno.readTextFile(state.available_macros_json)
+    return JSON.parse(content) as AvailableMacrosSnapshot
   } catch {
     return undefined
   }
@@ -273,12 +319,17 @@ const requireCoordinate = (
   return { col, row }
 }
 
+type ResolveSessionInputOptions = {
+  state: SessionState
+  inputId: string
+  coordinate?: CoordinateOptions
+}
+
 const resolveSessionInput = async (
-  state: SessionState,
-  inputId: string,
-  coordinate: CoordinateOptions = {},
+  options: ResolveSessionInputOptions,
 ): Promise<ResolvedSessionInput> => {
-  const normalized = parseCompactInputId(inputId)
+  const normalized = parseCompactInputId(options.inputId)
+  const coordinate = options.coordinate ?? {}
 
   if (normalized === "mouse:waypoint") {
     const target = requireCoordinate(coordinate)
@@ -303,7 +354,7 @@ const resolveSessionInput = async (
     throw new Error("engine_action input id cannot be empty")
   }
 
-  const snapshot = await loadAvailableKeysSnapshot(state)
+  const snapshot = await loadAvailableKeysSnapshot(options.state)
   const actions = snapshot?.actions ?? []
   const matched = actions.find((action) => action.id === actionId)
 
@@ -343,13 +394,15 @@ const resolveSessionInput = async (
   }
 }
 
-const renderTextCaptureWebp = async (
-  magickBin: string,
-  textPath: string,
-  screenshotPath: string,
-  quality: number,
-): Promise<void> => {
-  const output = await new Deno.Command(magickBin, {
+type RenderTextCaptureWebpOptions = {
+  magickBin: string
+  textPath: string
+  screenshotPath: string
+  quality: number
+}
+
+const renderTextCaptureWebp = async (options: RenderTextCaptureWebpOptions): Promise<void> => {
+  const output = await new Deno.Command(options.magickBin, {
     args: [
       "-background",
       "#101010",
@@ -359,12 +412,12 @@ const renderTextCaptureWebp = async (
       "16",
       "-interline-spacing",
       "2",
-      `label:@${textPath}`,
+      `label:@${options.textPath}`,
       "-strip",
       "-colorspace",
       "sRGB",
       "-quality",
-      `${quality}`,
+      `${options.quality}`,
       "-define",
       "webp:method=6",
       "-define",
@@ -377,7 +430,7 @@ const renderTextCaptureWebp = async (
       "webp:segments=2",
       "-define",
       "webp:exact=true",
-      screenshotPath,
+      options.screenshotPath,
     ],
     stdout: "piped",
     stderr: "piped",
@@ -388,8 +441,8 @@ const renderTextCaptureWebp = async (
     const stderr = decoder.decode(output.stderr).trim()
     throw new Error(
       stderr.length > 0
-        ? `failed to render webp screenshot with ${magickBin}: ${stderr}`
-        : `failed to render webp screenshot with ${magickBin}`,
+        ? `failed to render webp screenshot with ${options.magickBin}: ${stderr}`
+        : `failed to render webp screenshot with ${options.magickBin}`,
     )
   }
 }
@@ -430,7 +483,7 @@ const stopRunningStateSession = async (
   const tmuxBin = state.tmux_bin.length > 0 ? state.tmux_bin : fallbackTmuxBin
   try {
     configureTmuxBinary(tmuxBin)
-    configureTmuxSocket(state.tmux_socket)
+    configureTmuxSocket(normalizeTmuxSocket(state.tmux_socket))
     await stopCastProcess(state.cast_pid, state.cast_file)
     await TmuxSession.killByName(state.session_name, REPO_ROOT)
   } catch (error) {
@@ -455,34 +508,46 @@ const ensureSingleSessionPerMachine = async (fallbackTmuxBin: string): Promise<v
   }
 }
 
+const normalizeTmuxSocket = (socketName: string | undefined): string =>
+  socketName !== undefined && socketName.length > 0 ? socketName : SINGLETON_TMUX_SOCKET
+
+type CaptureIntoArtifactsOptions = {
+  state: SessionState
+  session: TmuxSession
+  id: string
+  caption: string
+  lines: number
+}
+
 const captureIntoArtifacts = async (
-  state: SessionState,
-  session: TmuxSession,
-  id: string,
-  caption: string,
-  lines: number,
+  options: CaptureIntoArtifactsOptions,
 ): Promise<CaptureEntry> => {
-  const captureNumber = state.captures.length + 1
-  const fileName = `${String(captureNumber).padStart(2, "0")}-${sanitizeId(id)}.txt`
-  const absPath = join(state.captures_dir, fileName)
-  const content = stripAnsiFromPane(await session.capturePane(lines))
+  const captureNumber = options.state.captures.length + 1
+  const fileName = `${String(captureNumber).padStart(2, "0")}-${sanitizeId(options.id)}.txt`
+  const absPath = join(options.state.captures_dir, fileName)
+  const content = stripAnsiFromPane(await options.session.capturePane(options.lines))
   await Deno.writeTextFile(absPath, content)
 
   const codeBlockFileName = fileName.replace(/\.txt$/, ".md")
-  const absCodeBlockPath = join(state.captures_dir, codeBlockFileName)
+  const absCodeBlockPath = join(options.state.captures_dir, codeBlockFileName)
   await writeCodeBlockCapture(absCodeBlockPath, content)
 
   let screenshotPath: string | undefined
-  if (state.render_webp && await isBinaryAvailable(state.magick_bin)) {
+  if (options.state.render_webp && await isBinaryAvailable(options.state.magick_bin)) {
     const screenshotName = fileName.replace(/\.txt$/, ".webp")
-    const absScreenshotPath = join(state.captures_dir, screenshotName)
-    await renderTextCaptureWebp(state.magick_bin, absPath, absScreenshotPath, state.webp_quality)
+    const absScreenshotPath = join(options.state.captures_dir, screenshotName)
+    await renderTextCaptureWebp({
+      magickBin: options.state.magick_bin,
+      textPath: absPath,
+      screenshotPath: absScreenshotPath,
+      quality: options.state.webp_quality,
+    })
     screenshotPath = displayPath(absScreenshotPath)
   }
 
   return {
-    id,
-    caption,
+    id: options.id,
+    caption: options.caption,
     text_file: displayPath(absPath),
     code_block_file: displayPath(absCodeBlockPath),
     screenshot_file: screenshotPath,
@@ -508,7 +573,7 @@ const withRunningSession = async (
 ): Promise<void> => {
   const state = await requireRunningState(resolveStateFilePath(stateFile))
   configureTmuxBinary(state.tmux_bin)
-  configureTmuxSocket(state.tmux_socket)
+  configureTmuxSocket(normalizeTmuxSocket(state.tmux_socket))
   const session = await TmuxSession.attach(state.session_name, REPO_ROOT)
   await handler(state, session)
 }
@@ -520,11 +585,13 @@ class PendingTmuxSessionResource {
   #cwd: string
   #completed = false
 
-  constructor(tmuxBin: string, tmuxSocket: string | undefined, sessionName: string, cwd: string) {
-    this.#tmuxBin = tmuxBin
-    this.#tmuxSocket = tmuxSocket
-    this.#sessionName = sessionName
-    this.#cwd = cwd
+  constructor(
+    options: { tmuxBin: string; tmuxSocket: string | undefined; sessionName: string; cwd: string },
+  ) {
+    this.#tmuxBin = options.tmuxBin
+    this.#tmuxSocket = options.tmuxSocket
+    this.#sessionName = options.sessionName
+    this.#cwd = options.cwd
   }
 
   get sessionName(): string {
@@ -546,52 +613,73 @@ class PendingTmuxSessionResource {
   }
 }
 
-const createTmuxSession = async (
-  tmuxBin: string,
-  tmuxSocket: string | undefined,
-  options: {
+type CreateTmuxSessionOptions = {
+  tmuxBin: string
+  tmuxSocket: string | undefined
+  session: {
     name: string
     command: string
     cwd: string
     width: number
     height: number
-  },
+  }
+}
+
+const createTmuxSession = async (
+  options: CreateTmuxSessionOptions,
 ): Promise<PendingTmuxSessionResource> => {
-  configureTmuxBinary(tmuxBin)
-  configureTmuxSocket(tmuxSocket)
-  await TmuxSession.start(options)
+  configureTmuxBinary(options.tmuxBin)
+  configureTmuxSocket(options.tmuxSocket)
+  await TmuxSession.start(options.session)
 
   try {
-    const attached = await TmuxSession.attach(options.name, options.cwd)
+    const attached = await TmuxSession.attach(options.session.name, options.session.cwd)
     await attached.capturePane(1)
+    await delay(150)
+    const hasSession = await TmuxSession.hasSession(options.session.name, options.session.cwd)
+    if (!hasSession) {
+      throw new Error(
+        `tmux session exited immediately: ${options.session.name}. ` +
+          "verify --bin points to a runnable cataclysm-bn curses binary.",
+      )
+    }
   } catch (error) {
     try {
-      await TmuxSession.killByName(options.name, options.cwd)
+      await TmuxSession.killByName(options.session.name, options.session.cwd)
     } catch {
     }
     throw error
   }
 
-  return new PendingTmuxSessionResource(tmuxBin, tmuxSocket, options.name, options.cwd)
+  return new PendingTmuxSessionResource({
+    tmuxBin: options.tmuxBin,
+    tmuxSocket: options.tmuxSocket,
+    sessionName: options.session.name,
+    cwd: options.session.cwd,
+  })
+}
+
+type SendWaypointClicksOptions = {
+  session: TmuxSession
+  col: number
+  row: number
+  delayMs: number
+  clicks: number
 }
 
 const sendWaypointClicks = async (
-  session: TmuxSession,
-  col: number,
-  row: number,
-  delayMs: number,
-  clicks: number,
+  options: SendWaypointClicksOptions,
 ): Promise<{ clicks_sent: number }> => {
-  const clickCount = Math.max(1, clicks)
+  const clickCount = Math.max(1, options.clicks)
   for (let index = 0; index < clickCount; index += 1) {
-    await session.sendMouse({
-      x: col,
-      y: row,
+    await options.session.sendMouse({
+      x: options.col,
+      y: options.row,
       button: "left",
       event: "click",
     })
-    if (delayMs > 0 && index + 1 < clickCount) {
-      await delay(delayMs)
+    if (options.delayMs > 0 && index + 1 < clickCount) {
+      await delay(options.delayMs)
     }
   }
 
@@ -672,18 +760,18 @@ class StopCleanupResource {
   #castPid: number | undefined
   #castFile: string | undefined
 
-  constructor(
-    tmuxBin: string,
-    tmuxSocket: string | undefined,
-    sessionName: string,
-    castPid: number | undefined,
-    castFile: string | undefined,
-  ) {
-    this.#tmuxBin = tmuxBin
-    this.#tmuxSocket = tmuxSocket
-    this.#sessionName = sessionName
-    this.#castPid = castPid
-    this.#castFile = castFile
+  constructor(options: {
+    tmuxBin: string
+    tmuxSocket: string | undefined
+    sessionName: string
+    castPid: number | undefined
+    castFile: string | undefined
+  }) {
+    this.#tmuxBin = options.tmuxBin
+    this.#tmuxSocket = options.tmuxSocket
+    this.#sessionName = options.sessionName
+    this.#castPid = options.castPid
+    this.#castFile = options.castFile
   }
 
   async [Symbol.asyncDispose](): Promise<void> {
@@ -725,6 +813,7 @@ if (import.meta.main) {
             const pane = stripAnsiFromPane(await session.capturePane(options.lines))
             const inputs = listAvailableInputs(pane)
             const engineSnapshot = await loadAvailableKeysSnapshot(state)
+            const macrosSnapshot = await loadAvailableMacrosSnapshot(state)
 
             if (engineSnapshot?.actions !== undefined) {
               const hasCoordinateAction = engineSnapshot.actions.some((action) =>
@@ -758,6 +847,21 @@ if (import.meta.main) {
               }
             }
 
+            if (macrosSnapshot?.macros !== undefined) {
+              for (const macro of macrosSnapshot.macros) {
+                console.log(JSON.stringify({
+                  id: `macro:${macro.id}`,
+                  key: `/m ${macro.id}`,
+                  source: "macro_json",
+                  priority: "high",
+                  label: macro.name,
+                  description: macro.description,
+                  category: macro.category,
+                  hotkey: macro.hotkey,
+                }))
+              }
+            }
+
             for (const input of inputs) {
               console.log(JSON.stringify(input))
             }
@@ -774,6 +878,22 @@ if (import.meta.main) {
           const snapshot = await loadAvailableKeysSnapshot(state)
           if (snapshot === undefined) {
             console.log(JSON.stringify({ actions: [] }, null, 2))
+            return
+          }
+
+          console.log(JSON.stringify(snapshot, null, 2))
+        }),
+    )
+    .command(
+      "available-macros-json",
+      new Command()
+        .description("Read currently available Lua action menu macros JSON")
+        .option("--state-file <path:string>", "State file path", { default: DEFAULT_STATE_FILE })
+        .action(async (options) => {
+          const state = await requireRunningState(resolveStateFilePath(options.stateFile))
+          const snapshot = await loadAvailableMacrosSnapshot(state)
+          if (snapshot === undefined) {
+            console.log(JSON.stringify({ macros: [] }, null, 2))
             return
           }
 
@@ -812,7 +932,9 @@ if (import.meta.main) {
         )
         .action(async (options) => {
           const runId = timestamp()
-          const tmuxSocket = options.tmuxSocket ?? SINGLETON_TMUX_SOCKET
+          const tmuxSocket = normalizeTmuxSocket(options.tmuxSocket)
+          const resolvedBinPath = resolve(REPO_ROOT, options.bin)
+          await ensureLaunchBinaryExists(resolvedBinPath)
           configureTmuxBinary(options.tmuxBin)
           configureTmuxSocket(tmuxSocket)
           await ensureTmuxAvailable()
@@ -841,27 +963,29 @@ if (import.meta.main) {
           const userdir = options.userdir ??
             await Deno.makeTempDir({ dir: defaultUserdirRoot, prefix: "userdir-" })
           const availableKeysJsonPath = join(userdir, "available_keys.json")
+          const availableMacrosJsonPath = join(userdir, "available_macros.json")
           const aiStateJsonPath = join(userdir, "ai_state.json")
-          const launchCommand = buildLaunchCommand(
-            resolve(REPO_ROOT, options.bin),
+          const launchCommand = buildLaunchCommand({
+            binPath: resolvedBinPath,
             userdir,
-            options.world,
-            options.seed,
-            availableKeysJsonPath,
-            aiStateJsonPath,
-          )
+            world: options.world,
+            seed: options.seed,
+            availableKeysJson: availableKeysJsonPath,
+            availableMacrosJson: availableMacrosJsonPath,
+            aiHelperOutput: aiStateJsonPath,
+          })
 
-          await using tmuxSession = await createTmuxSession(
-            options.tmuxBin,
+          await using tmuxSession = await createTmuxSession({
+            tmuxBin: options.tmuxBin,
             tmuxSocket,
-            {
+            session: {
               name: sessionName,
               command: launchCommand,
               cwd: REPO_ROOT,
               width,
               height,
             },
-          )
+          })
 
           const castDir = resolve(TMP_CLI_ROOT, "casts")
           await ensureDir(castDir)
@@ -883,11 +1007,11 @@ if (import.meta.main) {
             castFile,
           )
 
-          const castPid = await startDetachedCastProcess(
-            options.asciinemaBin,
+          const castPid = await startDetachedCastProcess({
+            asciinemaBin: options.asciinemaBin,
             castArgs,
             castLogFile,
-          )
+          })
           rollback.setCast(castPid, castFile)
           await delay(250)
 
@@ -897,10 +1021,11 @@ if (import.meta.main) {
             captures_dir: capturesDir,
             session_name: sessionName,
             userdir,
-            bin_path: options.bin,
+            bin_path: resolvedBinPath,
             world: options.world,
             seed: options.seed,
             available_keys_json: availableKeysJsonPath,
+            available_macros_json: availableMacrosJsonPath,
             tmux_bin: options.tmuxBin,
             tmux_socket: tmuxSocket,
             width,
@@ -955,6 +1080,7 @@ if (import.meta.main) {
               cast_log_file: state.cast_log_file,
               cast_stats: castStats,
               available_keys_json: state.available_keys_json,
+              available_macros_json: state.available_macros_json,
               started_at: state.started_at,
             },
             null,
@@ -986,13 +1112,13 @@ if (import.meta.main) {
         .action(async (options) => {
           const stateFile = resolveStateFilePath(options.stateFile)
           await withRunningSession(options.stateFile, async (state, session) => {
-            const entry = await captureIntoArtifacts(
+            const entry = await captureIntoArtifacts({
               state,
               session,
-              options.id,
-              options.caption,
-              options.lines,
-            )
+              id: options.id,
+              caption: options.caption,
+              lines: options.lines,
+            })
             state.captures.push(entry)
             await saveState(stateFile, state)
             console.log(JSON.stringify(entry, null, 2))
@@ -1017,9 +1143,13 @@ if (import.meta.main) {
         })
         .action(async (options) => {
           await withRunningSession(options.stateFile, async (state, session) => {
-            const resolvedInput = await resolveSessionInput(state, options.id, {
-              col: options.col,
-              row: options.row,
+            const resolvedInput = await resolveSessionInput({
+              state,
+              inputId: options.id,
+              coordinate: {
+                col: options.col,
+                row: options.row,
+              },
             })
             const compactId = parseCompactInputId(options.id)
             const waypointMode = compactId === "mouse:waypoint" ||
@@ -1034,13 +1164,13 @@ if (import.meta.main) {
             }
 
             if (waypointMode) {
-              const waypointResult = await sendWaypointClicks(
+              const waypointResult = await sendWaypointClicks({
                 session,
-                resolvedInput.x,
-                resolvedInput.y,
-                movementDelayMs,
-                waypointClicks,
-              )
+                col: resolvedInput.x,
+                row: resolvedInput.y,
+                delayMs: movementDelayMs,
+                clicks: waypointClicks,
+              })
               console.log(JSON.stringify(
                 {
                   id: options.id,
@@ -1103,9 +1233,13 @@ if (import.meta.main) {
 
             for (let index = 0; index < repeat; index += 1) {
               for (const id of ids) {
-                const resolvedInput = await resolveSessionInput(state, id, {
-                  col: options.col,
-                  row: options.row,
+                const resolvedInput = await resolveSessionInput({
+                  state,
+                  inputId: id,
+                  coordinate: {
+                    col: options.col,
+                    row: options.row,
+                  },
                 })
                 const compactId = parseCompactInputId(id)
                 const waypointMode = compactId === "mouse:waypoint" ||
@@ -1115,13 +1249,13 @@ if (import.meta.main) {
                   await session.sendKeys([resolvedInput.key])
                   dispatched.push({ id, kind: "key", key: resolvedInput.key })
                 } else if (waypointMode) {
-                  const waypointResult = await sendWaypointClicks(
+                  const waypointResult = await sendWaypointClicks({
                     session,
-                    resolvedInput.x,
-                    resolvedInput.y,
+                    col: resolvedInput.x,
+                    row: resolvedInput.y,
                     delayMs,
-                    waypointClicks,
-                  )
+                    clicks: waypointClicks,
+                  })
                   dispatched.push({
                     id,
                     kind: "waypoint",
@@ -1244,13 +1378,13 @@ if (import.meta.main) {
           await withRunningSession(options.stateFile, async (_state, session) => {
             const delayMs = Math.max(0, options.delayMs)
             const waypointClicks = Math.max(1, options.waypointClicks)
-            const waypointResult = await sendWaypointClicks(
+            const waypointResult = await sendWaypointClicks({
               session,
-              options.col,
-              options.row,
+              col: options.col,
+              row: options.row,
               delayMs,
-              waypointClicks,
-            )
+              clicks: waypointClicks,
+            })
 
             console.log(JSON.stringify(
               {
@@ -1326,14 +1460,14 @@ if (import.meta.main) {
           const state = await loadState(stateFile)
           {
             configureTmuxBinary(state.tmux_bin)
-            configureTmuxSocket(state.tmux_socket)
-            await using _cleanup = new StopCleanupResource(
-              state.tmux_bin,
-              state.tmux_socket,
-              state.session_name,
-              state.cast_pid,
-              state.cast_file,
-            )
+            configureTmuxSocket(normalizeTmuxSocket(state.tmux_socket))
+            await using _cleanup = new StopCleanupResource({
+              tmuxBin: state.tmux_bin,
+              tmuxSocket: normalizeTmuxSocket(state.tmux_socket),
+              sessionName: state.session_name,
+              castPid: state.cast_pid,
+              castFile: state.cast_file,
+            })
 
             const hasSession = await TmuxSession.hasSession(state.session_name, REPO_ROOT)
             if (hasSession) {
@@ -1361,6 +1495,7 @@ if (import.meta.main) {
             binary: state.bin_path,
             world: state.world,
             available_keys_json: state.available_keys_json,
+            available_macros_json: state.available_macros_json,
             status: finalStatus,
             failure,
             cast_file: state.cast_file,
@@ -1374,14 +1509,14 @@ if (import.meta.main) {
             JSON.stringify(metadata, null, 2),
           )
 
-          await writeIndex(
-            join(state.artifact_dir, "index.md"),
-            "live-curses-mcp-session",
-            state.captures,
-            finalStatus,
-            state.cast_file,
-            failure,
-          )
+          await writeIndex({
+            outputPath: join(state.artifact_dir, "index.md"),
+            sessionName: "live-curses-mcp-session",
+            captures: state.captures,
+            status: finalStatus,
+            castFile: state.cast_file,
+            failureMessage: failure,
+          })
 
           await saveState(stateFile, state)
           console.log(JSON.stringify(
@@ -1391,6 +1526,8 @@ if (import.meta.main) {
               cast_log_file: state.cast_log_file,
               cast_stats: castStats,
               captures: state.captures.length,
+              available_keys_json: state.available_keys_json,
+              available_macros_json: state.available_macros_json,
               status: finalStatus,
             },
             null,

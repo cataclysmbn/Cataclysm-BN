@@ -392,14 +392,21 @@ export const listAvailableInputs = (
   return detectPromptInputs(pane)
 }
 
-export const buildLaunchCommand = (
-  binPath: string,
-  userdir: string,
-  world: string,
-  seed = "",
-  availableKeysJson = "",
-  aiHelperOutput = "",
-): string => {
+type BuildLaunchCommandOptions = {
+  binPath: string
+  userdir: string
+  world: string
+  seed?: string
+  availableKeysJson?: string
+  availableMacrosJson?: string
+  aiHelperOutput?: string
+}
+
+export const buildLaunchCommand = (options: BuildLaunchCommandOptions): string => {
+  const seed = options.seed ?? ""
+  const availableKeysJson = options.availableKeysJson ?? ""
+  const availableMacrosJson = options.availableMacrosJson ?? ""
+  const aiHelperOutput = options.aiHelperOutput ?? ""
   const parts = [
     "TERM=xterm-256color",
     "COLORTERM=truecolor",
@@ -408,16 +415,19 @@ export const buildLaunchCommand = (
     ...(availableKeysJson.length > 0
       ? [`CATA_AVAILABLE_KEYS_JSON=${shellEscape(availableKeysJson)}`]
       : []),
+    ...(availableMacrosJson.length > 0
+      ? [`CATA_AVAILABLE_MACROS_JSON=${shellEscape(availableMacrosJson)}`]
+      : []),
     ...(aiHelperOutput.length > 0 ? [`AI_HELPER_OUTPUT=${shellEscape(aiHelperOutput)}`] : []),
-    shellEscape(binPath),
+    shellEscape(options.binPath),
     "--basepath",
     shellEscape(REPO_ROOT),
     "--userdir",
-    shellEscape(userdir),
+    shellEscape(options.userdir),
   ]
 
-  if (world.length > 0) {
-    parts.push("--world", shellEscape(world))
+  if (options.world.length > 0) {
+    parts.push("--world", shellEscape(options.world))
   }
 
   if (seed.length > 0) {
@@ -435,23 +445,25 @@ export const writeCodeBlockCapture = async (
   await Deno.writeTextFile(outputPath, body)
 }
 
-export const writeIndex = async (
-  outputPath: string,
-  sessionName: string,
-  captures: CaptureEntry[],
-  status: RunStatus,
-  castFile?: string,
-  failureMessage?: string,
-): Promise<void> => {
+type WriteIndexOptions = {
+  outputPath: string
+  sessionName: string
+  captures: CaptureEntry[]
+  status: RunStatus
+  castFile?: string
+  failureMessage?: string
+}
+
+export const writeIndex = async (options: WriteIndexOptions): Promise<void> => {
   const lines = [
     "# PR Verify Artifact",
     "",
-    `Session: ${sessionName}`,
-    `Status: ${status}`,
+    `Session: ${options.sessionName}`,
+    `Status: ${options.status}`,
     "",
     "## Captures",
     "",
-    ...captures.map((capture, index) => {
+    ...options.captures.map((capture, index) => {
       const title = capture.caption.length > 0 ? capture.caption : capture.id
       const screenshotSuffix = capture.screenshot_file
         ? `, screenshot: \`${capture.screenshot_file}\``
@@ -463,19 +475,19 @@ export const writeIndex = async (
     "",
   ]
 
-  if (castFile !== undefined) {
-    lines.push(`Cast recording: \`${castFile}\``)
+  if (options.castFile !== undefined) {
+    lines.push(`Cast recording: \`${options.castFile}\``)
     lines.push("")
   }
 
-  if (failureMessage !== undefined) {
+  if (options.failureMessage !== undefined) {
     lines.push("## Failure")
     lines.push("")
     lines.push("```text")
-    lines.push(failureMessage)
+    lines.push(options.failureMessage)
     lines.push("```")
     lines.push("")
   }
 
-  await Deno.writeTextFile(outputPath, lines.join("\n"))
+  await Deno.writeTextFile(options.outputPath, lines.join("\n"))
 }

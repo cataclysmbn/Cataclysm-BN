@@ -394,7 +394,10 @@ class input_context
         struct available_action_key {
             std::string id;
             std::string name;
+            std::string description;
             std::string key;
+            bool requires_coordinate = false;
+            bool mouse_capable = false;
         };
 
 #if defined(__ANDROID__)
