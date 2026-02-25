@@ -12151,6 +12151,8 @@ int Character::item_reload_cost( const item &it, item &ammo, int qty ) const
         qty = 1;
     } else if( ammo.is_comestible() ) {
         qty = std::max( std::min( qty, ammo.charges ), 1 );
+    } else if( it.is_container() ) {
+        qty = std::max( qty, 1 );
     } else {
         debugmsg( "cannot determine reload cost as %s is neither ammo or magazine", ammo.tname() );
         return 0;
