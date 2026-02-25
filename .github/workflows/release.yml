@@ -19,21 +19,25 @@ jobs:
       yesterday_tag_name: ${{ steps.env_vars.outputs.yesterday_tag_name }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: denoland/setup-deno@v2
+        with: { cache: true }
       - id: env_vars
         run: |
-          TAG_NAME=$(date -u --iso-8601 --date='1 day ago')
-          YESTERDAY_TAG_NAME=$(date -u --iso-8601 --date='2 day ago')
-          LAST_TAG_NAME=$(git for-each-ref --sort=-creatordate --format '%(creatordate:short)' refs/tags | head -n 1)
-          COMMITS=$(git log --oneline --since="$TAG_NAME" | wc -l)
-          RELEASE_NAME="Nightly $TAG_NAME"
+          TAG_DATE=$(date -u --iso-8601 --date='1 day ago')
+          YESTERDAY_TAG_DATE=$(date -u --iso-8601 --date='2 day ago')
+          LAST_TAG_NAME=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | head -n 1)
+          COMMITS=$(git log --oneline --since="$TAG_DATE" | wc -l)
 
-          echo "commits yesterday ($TAG_NAME): $COMMITS" >> "$GITHUB_STEP_SUMMARY"
+          echo "commits since ($TAG_DATE): $COMMITS" >> "$GITHUB_STEP_SUMMARY"
 
           echo "count=$COMMITS" >> "$GITHUB_OUTPUT"
-          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
           echo "last_tag_name=$LAST_TAG_NAME" >> "$GITHUB_OUTPUT"
-          echo "yesterday_tag_name=$YESTERDAY_TAG_NAME" >> "$GITHUB_OUTPUT"
-          echo "release_name=$RELEASE_NAME" >> "$GITHUB_OUTPUT"
+          echo "yesterday_tag_name=$YESTERDAY_TAG_DATE" >> "$GITHUB_OUTPUT"
+
+          deno run --allow-run=git --allow-env=TAG_DATE,GITHUB_OUTPUT --allow-write="$GITHUB_OUTPUT" \
+            scripts/generate_nightly_tag.ts
 
   release:
     needs: metadata
