@@ -89,8 +89,11 @@ jobs:
           draft: false
           prerelease: true
 
+  build-translations:
+    uses: ./.github/workflows/build-translations.yml
+
   builds:
-    needs: [metadata, release]
+    needs: [metadata, release, build-translations]
     if: ${{ needs.release.outputs.release_already_exists == 'false' }}
     uses: ./.github/workflows/build.yml
     with:
