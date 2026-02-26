@@ -317,11 +317,14 @@ struct level_cache {
     int cache_y = 0;
     int cache_mapsize = 0;
 
-    // Flat index for tile-coordinate arrays: vec[x * cache_y + y]
-    // X-outer layout matches old C-array arr[MAPSIZE_X][MAPSIZE_Y] flat order,
-    // allowing vec.data() to be reinterpreted as T(*)[MAPSIZE_Y] for shadowcasting.
+    // Flat index for tile-coordinate arrays: vec[x * MAPSIZE_Y + y]
+    // Uses the compile-time MAPSIZE_Y stride so that vec.data() can always be
+    // safely reinterpreted as T(*)[MAPSIZE_Y] by shadowcasting, regardless of
+    // the runtime g_mapsize.  Vectors are always allocated at MAPSIZE_X*MAPSIZE_Y
+    // elements (the compile-time maximum), so no out-of-bounds access occurs even
+    // when the active map is smaller than that maximum.
     int idx( int x, int y ) const {
-        return x * cache_y + y;
+        return x * MAPSIZE_Y + y;
     }
     // Flat index for submap-coordinate bitsets: bitset[sx * cache_mapsize + sy]
     int bidx( int sx, int sy ) const {

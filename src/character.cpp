@@ -853,7 +853,7 @@ int Character::sight_range( int light_level ) const
 
 int Character::unimpaired_range() const
 {
-    return std::min( sight_max, 60 );
+    return std::min( sight_max, g_max_view_distance );
 }
 
 bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )

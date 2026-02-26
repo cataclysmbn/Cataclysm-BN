@@ -602,7 +602,7 @@ void overmapbuffer::process_mongroups()
 {
     ZoneScoped;
     // arbitrary radius to include nearby overmaps (aside from the current one)
-    const auto radius = MAPSIZE * 2;
+    const auto radius = g_mapsize * 2;
     // TODO: fix point types
     const tripoint_abs_sm center( get_player_character().global_sm_location() );
     for( auto &om : get_overmaps_near( center, radius ) ) {
@@ -615,7 +615,7 @@ void overmapbuffer::move_hordes()
     ZoneScoped;
 
     // arbitrary radius to include nearby overmaps (aside from the current one)
-    const auto radius = MAPSIZE * 2;
+    const auto radius = g_mapsize * 2;
     // TODO: fix point types
     const tripoint_abs_sm center( get_player_character().global_sm_location() );
     for( auto &om : get_overmaps_near( center, radius ) ) {

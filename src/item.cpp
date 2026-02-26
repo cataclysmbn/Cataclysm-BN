@@ -4876,7 +4876,7 @@ void item::handle_pickup_ownership( Character &c )
             std::vector<npc *> witnesses;
             for( npc &elem : g->all_npcs() ) {
                 // If they already want to murder you, no point in confronting you about theft
-                if( rl_dist( elem.pos(), you.pos() ) < MAX_VIEW_DISTANCE && elem.get_faction() &&
+                if( rl_dist( elem.pos(), you.pos() ) < g_max_view_distance && elem.get_faction() &&
                     is_owned_by( elem ) && elem.sees( you.pos() ) && !elem.guaranteed_hostile() ) {
                     elem.say( "<witnessed_thievery>", 7 );
                     npc *npc_to_add = &elem;
@@ -8249,7 +8249,7 @@ int item::gun_range( bool with_ammo ) const
         }
     }
     ret += get_range_bonus();
-    return std::min( std::max( 0, ret ), RANGE_HARD_CAP );
+    return std::min( std::max( 0, ret ), g_max_view_distance );
 }
 
 int item::gun_range( const player *p ) const

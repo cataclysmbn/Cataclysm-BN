@@ -1273,8 +1273,8 @@ void iexamine::chainfence( player &p, const tripoint &examp )
         here.unboard_vehicle( p.pos() );
     }
     p.setpos( examp );
-    if( examp.x < HALF_MAPSIZE_X || examp.y < HALF_MAPSIZE_Y ||
-        examp.x >= HALF_MAPSIZE_X + SEEX || examp.y >= HALF_MAPSIZE_Y + SEEY ) {
+    if( examp.x < g_half_mapsize_x || examp.y < g_half_mapsize_y ||
+        examp.x >= g_half_mapsize_x + SEEX || examp.y >= g_half_mapsize_y + SEEY ) {
         if( p.is_player() ) {
             g->update_map( p );
         }
@@ -1973,7 +1973,7 @@ void iexamine::fswitch( player &p, const tripoint &examp )
     tripoint tmp;
     tmp.z = examp.z;
     for( tmp.y = examp.y; tmp.y <= examp.y + 5; tmp.y++ ) {
-        for( tmp.x = 0; tmp.x < MAPSIZE_X; tmp.x++ ) {
+        for( tmp.x = 0; tmp.x < g_mapsize_x; tmp.x++ ) {
             if( terid == t_switch_rg ) {
                 if( here.ter( tmp ) == t_rock_red ) {
                     here.ter_set( tmp, t_floor_red );

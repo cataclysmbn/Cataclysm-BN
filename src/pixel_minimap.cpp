@@ -41,7 +41,8 @@ extern void set_displaybuffer_rendertarget();
 namespace
 {
 
-const point total_tiles_count = { ( MAPSIZE - 2 ) *SEEX, ( MAPSIZE - 2 ) *SEEY };
+// Updated each frame in process_cache() to reflect the runtime g_mapsize.
+static point total_tiles_count = { ( 11 - 2 ) *SEEX, ( 11 - 2 ) *SEEY }; // default size=2
 
 point get_pixel_size( point tile_size, pixel_minimap_mode mode )
 {
@@ -363,10 +364,13 @@ pixel_minimap::submap_cache &pixel_minimap::get_cache_at( const tripoint &abs_sm
 
 void pixel_minimap::process_cache( const tripoint &center )
 {
+    // Refresh the tile count to match the current runtime map size.
+    total_tiles_count = { ( g_mapsize - 2 ) * SEEX, ( g_mapsize - 2 ) * SEEY };
+
     prepare_cache_for_updates( center );
 
-    for( int y = 0; y < MAPSIZE; ++y ) {
-        for( int x = 0; x < MAPSIZE; ++x ) {
+    for( int y = 0; y < g_mapsize; ++y ) {
+        for( int x = 0; x < g_mapsize; ++x ) {
             update_cache_at( { x, y, center.z } );
         }
     }

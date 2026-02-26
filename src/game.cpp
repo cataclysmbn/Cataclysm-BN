@@ -219,6 +219,35 @@ class computer;
 
 #define dbg(x) DebugLogFL((x),DC::Game)
 
+// ---------------------------------------------------------------------------
+// Runtime reality-bubble configuration globals (declared in game_constants.h).
+// Initialised by init_bubble_config() from the REALITY_BUBBLE_SIZE option.
+// Defaults match size=2, which reproduces the original 11×11 submap grid.
+// ---------------------------------------------------------------------------
+int g_reality_bubble_size = 2;
+int g_half_mapsize = 5;
+int g_mapsize = 11;
+int g_mapsize_x = 132;
+int g_mapsize_y = 132;
+int g_half_mapsize_x = 60;
+int g_half_mapsize_y = 60;
+int g_max_view_distance = 60;
+
+/// Read REALITY_BUBBLE_SIZE from options and update all runtime globals.
+/// Must be called before map construction (game::setup) and after each load.
+static void init_bubble_config()
+{
+    const int size = get_option<int>( "REALITY_BUBBLE_SIZE" );
+    g_reality_bubble_size = size;
+    g_half_mapsize        = 2 * size + 1;
+    g_mapsize             = 2 * g_half_mapsize + 1;
+    g_mapsize_x           = SEEX * g_mapsize;
+    g_mapsize_y           = SEEY * g_mapsize;
+    g_half_mapsize_x      = SEEX * g_half_mapsize;
+    g_half_mapsize_y      = SEEY * g_half_mapsize;
+    g_max_view_distance   = SEEX * g_half_mapsize;
+}
+
 static constexpr int DANGEROUS_PROXIMITY = 5;
 
 static const activity_id ACT_OPERATION( "ACT_OPERATION" );
@@ -538,7 +567,8 @@ void game::setup( bool load_world_modfiles )
         init::load_world_modfiles( ui, get_active_world(), SAVE_ARTIFACTS );
     }
 
-    m = map();
+    init_bubble_config();
+    m = map( g_mapsize );
 
     next_npc_id = character_id( 1 );
     next_mission_id = 1;
@@ -824,13 +854,14 @@ bool game::start_game()
     // Read performance options before the first load_map so the reality bubble
     // request uses the correct radius from the very first load.
     world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
-    reality_bubble_radius_ = get_option<int>( "REALITY_BUBBLE_RADIUS" );
+    init_bubble_config();
+    reality_bubble_radius_ = g_half_mapsize;
 
     // TODO: fix point types
     tripoint lev = project_to<coords::sm>( omtstart ).raw();
     // The player is centered in the map, but lev[xyz] refers to the top left point of the map
-    lev.x -= HALF_MAPSIZE;
-    lev.y -= HALF_MAPSIZE;
+    lev.x -= g_half_mapsize;
+    lev.y -= g_half_mapsize;
     load_map( lev, /*pump_events=*/true );
 
     m.invalidate_map_cache( get_levz() );
@@ -1014,7 +1045,8 @@ bool game::start_game()
         }
     }
     world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
-    reality_bubble_radius_ = get_option<int>( "REALITY_BUBBLE_RADIUS" );
+    init_bubble_config();
+    reality_bubble_radius_ = g_half_mapsize;
 
     cata::run_hooks( "on_game_started" );
     return true;
@@ -1077,7 +1109,7 @@ vehicle *game::place_vehicle_nearby(
 void game::load_npcs()
 {
     ZoneScoped;
-    const int radius = HALF_MAPSIZE - 1;
+    const int radius = g_half_mapsize - 1;
     // uses submap coordinates
     std::vector<shared_ptr_fast<npc>> just_added;
     for( const auto &temp : overmap_buffer.get_npcs_near_player( radius ) ) {
@@ -1096,8 +1128,8 @@ void game::load_npcs()
         const tripoint sm_loc = temp->global_sm_location();
         // NPCs who are out of bounds before placement would be pushed into bounds
         // This can cause NPCs to teleport around, so we don't want that
-        if( sm_loc.x < get_levx() || sm_loc.x >= get_levx() + MAPSIZE ||
-            sm_loc.y < get_levy() || sm_loc.y >= get_levy() + MAPSIZE ||
+        if( sm_loc.x < get_levx() || sm_loc.x >= get_levx() + g_mapsize ||
+            sm_loc.y < get_levy() || sm_loc.y >= get_levy() + g_mapsize ||
             ( sm_loc.z != get_levz() && !m.has_zlevels() ) ) {
             continue;
         }
@@ -1718,7 +1750,7 @@ bool game::do_turn()
     if( !soundperf ) {
         // Process NPC sound events before they move or they hear themselves talking
         for( npc &guy : all_npcs() ) {
-            if( rl_dist( guy.pos(), u.pos() ) < MAX_VIEW_DISTANCE ) {
+            if( rl_dist( guy.pos(), u.pos() ) < g_max_view_distance ) {
                 sounds::process_sound_markers( &guy );
             }
         }
@@ -1739,7 +1771,7 @@ bool game::do_turn()
                 // Process any new sounds the player caused during their turn.
                 if( !soundperf ) {
                     for( npc &guy : all_npcs() ) {
-                        if( rl_dist( guy.pos(), u.pos() ) < MAX_VIEW_DISTANCE ) {
+                        if( rl_dist( guy.pos(), u.pos() ) < g_max_view_distance ) {
                             sounds::process_sound_markers( &guy );
                         }
                     }
@@ -2974,7 +3006,8 @@ bool game::load( const save_t &name )
     // Read performance options before update_map so the reality bubble request
     // uses the correct radius from the very first submap_loader wiring.
     world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
-    reality_bubble_radius_ = get_option<int>( "REALITY_BUBBLE_RADIUS" );
+    init_bubble_config();
+    reality_bubble_radius_ = g_half_mapsize;
     update_map( u );
     m.build_floor_cache( get_levz() );
     for( auto &e : u.inv_dump() ) {
@@ -3008,7 +3041,8 @@ bool game::load( const save_t &name )
     cata::run_on_game_load_hooks( *DynamicDataLoader::get_instance().lua );
 
     world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
-    reality_bubble_radius_ = get_option<int>( "REALITY_BUBBLE_RADIUS" );
+    init_bubble_config();
+    reality_bubble_radius_ = g_half_mapsize;
 
     // Build caches once so any immediate post-load draws don't use uninitialized lighting/visibility,
     // then re-invalidate so the first real in-game draw rebuilds everything again.
@@ -4060,7 +4094,7 @@ character_id game::assign_npc_id()
 
 Creature *game::is_hostile_nearby()
 {
-    int distance = ( get_option<int>( "SAFEMODEPROXIMITY" ) <= 0 ) ? MAX_VIEW_DISTANCE :
+    int distance = ( get_option<int>( "SAFEMODEPROXIMITY" ) <= 0 ) ? g_max_view_distance :
                    get_option<int>( "SAFEMODEPROXIMITY" );
     return is_hostile_within( distance );
 }
@@ -4300,7 +4334,7 @@ void game::mon_info_update( )
 
     int newseen = 0;
     const int safe_proxy_dist = get_option<int>( "SAFEMODEPROXIMITY" );
-    const int iProxyDist = ( safe_proxy_dist <= 0 ) ? MAX_VIEW_DISTANCE :
+    const int iProxyDist = ( safe_proxy_dist <= 0 ) ? g_max_view_distance :
                            safe_proxy_dist;
 
     monster_visible_info &mon_visible = u.get_mon_visible();
@@ -4328,7 +4362,7 @@ void game::mon_info_update( )
     const time_duration sm_ignored_time = time_duration::from_turns(
             get_option<int>( "SAFEMODEIGNORETURNS" ) );
 
-    for( Creature *c : u.get_visible_creatures( MAPSIZE_X ) ) {
+    for( Creature *c : u.get_visible_creatures( g_mapsize_x ) ) {
         monster *m = dynamic_cast<monster *>( c );
         npc *p = dynamic_cast<npc *>( c );
         const direction dir_to_mon = direction_from( view.xy(), point( c->posx(), c->posy() ) );
@@ -5087,10 +5121,10 @@ void game::monmove()
     // If so, despawn them. This is not the same as dying, they will be stored for later and the
     // monster::die function is not called.
     for( monster &critter : all_monsters() ) {
-        if( critter.posx() < 0 - ( MAPSIZE_X ) / 6 ||
-            critter.posy() < 0 - ( MAPSIZE_Y ) / 6 ||
-            critter.posx() > ( MAPSIZE_X * 7 ) / 6 ||
-            critter.posy() > ( MAPSIZE_Y * 7 ) / 6 ) {
+        if( critter.posx() < 0 - ( g_mapsize_x ) / 6 ||
+            critter.posy() < 0 - ( g_mapsize_y ) / 6 ||
+            critter.posx() > ( g_mapsize_x * 7 ) / 6 ||
+            critter.posy() > ( g_mapsize_y * 7 ) / 6 ) {
             despawn_monster( critter );
         }
     }
@@ -11374,7 +11408,7 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
     // player will be centered in the middle of the map.
     // TODO: fix point types
     const tripoint map_sm_pos(
-        project_to<coords::sm>( om_dest ).raw() + point( -HALF_MAPSIZE, -HALF_MAPSIZE ) );
+        project_to<coords::sm>( om_dest ).raw() + point( -g_half_mapsize, -g_half_mapsize ) );
     const tripoint player_pos( u.pos().xy(), map_sm_pos.z );
     load_map( map_sm_pos );
     load_npcs();
@@ -13291,19 +13325,19 @@ point game::update_map( int &x, int &y )
 {
     point shift;
 
-    while( x < HALF_MAPSIZE_X ) {
+    while( x < g_half_mapsize_x ) {
         x += SEEX;
         shift.x--;
     }
-    while( x >= HALF_MAPSIZE_X + SEEX ) {
+    while( x >= g_half_mapsize_x + SEEX ) {
         x -= SEEX;
         shift.x++;
     }
-    while( y < HALF_MAPSIZE_Y ) {
+    while( y < g_half_mapsize_y ) {
         y += SEEY;
         shift.y--;
     }
-    while( y >= HALF_MAPSIZE_Y + SEEY ) {
+    while( y >= g_half_mapsize_y + SEEY ) {
         y -= SEEY;
         shift.y++;
     }
@@ -13381,7 +13415,7 @@ point game::update_map( int &x, int &y )
     for( auto it = active_npc.begin(); it != active_npc.end(); ) {
         ( *it )->shift( shift );
         if( ( *it )->posx() < 0 - SEEX * 2 || ( *it )->posy() < 0 - SEEX * 2 ||
-            ( *it )->posx() > SEEX * ( MAPSIZE + 2 ) || ( *it )->posy() > SEEY * ( MAPSIZE + 2 ) ) {
+            ( *it )->posx() > SEEX * ( g_mapsize + 2 ) || ( *it )->posy() > SEEY * ( g_mapsize + 2 ) ) {
             //Remove the npc from the active list. It remains in the overmap list.
             ( *it )->on_unload();
             it = active_npc.erase( it );
@@ -13536,10 +13570,10 @@ void game::update_stair_monsters()
         };
 
         // We might be not be visible.
-        if( ( critter.posx() < 0 - ( MAPSIZE_X ) / 6 ||
-              critter.posy() < 0 - ( MAPSIZE_Y ) / 6 ||
-              critter.posx() > ( MAPSIZE_X * 7 ) / 6 ||
-              critter.posy() > ( MAPSIZE_Y * 7 ) / 6 ) ) {
+        if( ( critter.posx() < 0 - ( g_mapsize_x ) / 6 ||
+              critter.posy() < 0 - ( g_mapsize_y ) / 6 ||
+              critter.posx() > ( g_mapsize_x * 7 ) / 6 ||
+              critter.posy() > ( g_mapsize_y * 7 ) / 6 ) ) {
             continue;
         }
 
@@ -14593,7 +14627,7 @@ int game::get_levz() const
 overmap &game::get_cur_om() const
 {
     // The player is located in the middle submap of the map.
-    const tripoint sm = m.get_abs_sub() + tripoint( HALF_MAPSIZE, HALF_MAPSIZE, 0 );
+    const tripoint sm = m.get_abs_sub() + tripoint( g_half_mapsize, g_half_mapsize, 0 );
     const tripoint pos_om = sm_to_om_copy( sm );
     // TODO: fix point types
     return overmap_buffer.get( point_abs_om( pos_om.xy() ) );

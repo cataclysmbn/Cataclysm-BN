@@ -459,7 +459,7 @@ void editmap::uber_draw_ter( const catacurses::window &w, map *m )
         bool draw_veh=true;
     */
     bool game_map = m == &get_map() || w == g->w_terrain;
-    const int msize = MAPSIZE_X;
+    const int msize = g_mapsize_x;
     if( refresh_mplans ) {
         hilights["mplan"].points.clear();
     }
@@ -1612,8 +1612,8 @@ bool editmap::move_target( const std::string &action, int moveorigin )
     bool move_origin = moveorigin == 1 ? true :
                        moveorigin == 0 ? false : moveall;
     if( eget_direction( mp, action ) ) {
-        target.x = limited_shift( target.x, mp.x, 0, MAPSIZE_X );
-        target.y = limited_shift( target.y, mp.y, 0, MAPSIZE_Y );
+        target.x = limited_shift( target.x, mp.x, 0, g_mapsize_x );
+        target.y = limited_shift( target.y, mp.y, 0, g_mapsize_y );
         target.z = limited_shift( target.z, mp.z, -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 );
         if( move_origin ) {
             origin += mp;

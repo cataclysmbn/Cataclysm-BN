@@ -287,7 +287,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
     // This cuboid will contain negative values, it's fine
     half_open_cuboid<tripoint> prev_z_volume_local(
         tripoint( here.getlocal( Pathfinding::z_area ), -OVERMAP_DEPTH ),
-        tripoint( here.getlocal( Pathfinding::z_area + point( MAPSIZE_X, MAPSIZE_Y ) ), OVERMAP_HEIGHT + 1 )
+        tripoint( here.getlocal( Pathfinding::z_area + point( g_mapsize_x, g_mapsize_y ) ), OVERMAP_HEIGHT + 1 )
     );
 
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {

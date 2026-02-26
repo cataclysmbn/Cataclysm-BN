@@ -194,7 +194,7 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
     const level_cache &map_cache = m.get_cache_ref( u.posz() );
     const auto &visibility_cache = map_cache.visibility_cache;
 
-    const int TOTAL_VIEW = MAX_VIEW_DISTANCE * 2 + 1;
+    const int TOTAL_VIEW = g_max_view_distance * 2 + 1;
     point iStart( ( TERRAIN_WINDOW_WIDTH > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_WIDTH - TOTAL_VIEW ) / 2 : 0,
                   ( TERRAIN_WINDOW_HEIGHT > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_HEIGHT - TOTAL_VIEW ) / 2 :
                   0 );
@@ -219,8 +219,8 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
     if( tile_iso && use_tiles ) {
         iStart.x = 0;
         iStart.y = 0;
-        iEnd.x = MAPSIZE_X;
-        iEnd.y = MAPSIZE_Y;
+        iEnd.x = g_mapsize_x;
+        iEnd.y = g_mapsize_y;
         offset.x = 0;
         offset.y = 0;
     }

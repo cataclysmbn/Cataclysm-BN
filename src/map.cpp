@@ -5459,8 +5459,8 @@ std::vector<tripoint> map::check_submap_active_item_consistency()
 {
     std::vector<tripoint> result;
     for( int z = -OVERMAP_DEPTH; z < OVERMAP_HEIGHT; ++z ) {
-        for( int x = 0; x < MAPSIZE; ++x ) {
-            for( int y = 0; y < MAPSIZE; ++y ) {
+        for( int x = 0; x < my_MAPSIZE; ++x ) {
+            for( int y = 0; y < my_MAPSIZE; ++y ) {
                 tripoint p( x, y, z );
                 submap *s = get_submap_at_grid( p );
                 if( s == nullptr ) {
@@ -5476,7 +5476,7 @@ std::vector<tripoint> map::check_submap_active_item_consistency()
     }
     for( const tripoint &p : submaps_with_active_items ) {
         tripoint rel = p - abs_sub.xy();
-        half_open_rectangle<point> map( point_zero, point( MAPSIZE, MAPSIZE ) );
+        half_open_rectangle<point> map( point_zero, point( my_MAPSIZE, my_MAPSIZE ) );
         if( !map.contains( rel.xy() ) ) {
             result.push_back( p );
         }
@@ -8634,14 +8634,14 @@ void map::copy_grid( const tripoint &to, const tripoint &from )
 
 void map::spawn_monsters_submap_group( const tripoint &gp, mongroup &group, bool ignore_sight )
 {
-    const int s_range = std::min( HALF_MAPSIZE_X,
+    const int s_range = std::min( g_half_mapsize_x,
                                   g->u.sight_range( g->light_level( g->u.posz() ) ) );
     int pop = group.population;
     std::vector<tripoint> locations;
     if( !ignore_sight ) {
         // If the submap is one of the outermost submaps, assume that monsters are
         // invisible there.
-        if( gp.x == 0 || gp.y == 0 || gp.x + 1 == MAPSIZE || gp.y + 1 == MAPSIZE ) {
+        if( gp.x == 0 || gp.y == 0 || gp.x + 1 == my_MAPSIZE || gp.y + 1 == my_MAPSIZE ) {
             ignore_sight = true;
         }
     }
@@ -9176,13 +9176,16 @@ bool map::build_floor_cache( const int zlev )
             const submap *below_submap = !lowest_z_lev ? get_submap_at_grid( { smx, smy, zlev - 1 } ) : nullptr;
 
             if( cur_submap == nullptr ) {
-                if( !has_dimension_bounds() ) {
-                    debugmsg( "Tried to build floor cache at (%d,%d,%d) but the submap is not loaded", smx, smy, zlev );
+                // Suppress debugmsg in the parallel path: worker threads must not call
+                // SDL or Lua APIs (DL::Error triggers a Lua backtrace).
+                if( !has_dimension_bounds() && !( parallel_enabled && parallel_map_cache ) ) {
+                    debugmsg( "Tried to build floor cache at (%d,%d,%d) but the submap is not loaded", smx, smy,
+                              zlev );
                 }
                 continue;
             }
             if( !lowest_z_lev && below_submap == nullptr ) {
-                if( !has_dimension_bounds() ) {
+                if( !has_dimension_bounds() && !( parallel_enabled && parallel_map_cache ) ) {
                     debugmsg( "Tried to build floor cache at (%d,%d,%d) but the submap is not loaded", smx, smy,
                               zlev - 1 );
                 }
@@ -10120,24 +10123,28 @@ const level_cache &map::access_cache( int zlev ) const
 // Default constructor: zero-sized null sentinel — not for normal use.
 level_cache::level_cache() = default;
 
-// Normal constructor: mx = SEEX * mapsize, my = SEEY * mapsize.
+/// Normal constructor: mx = SEEX * mapsize, my = SEEY * mapsize.
+// Tile-coordinate vectors are always allocated at the compile-time maximum
+// MAPSIZE_X * MAPSIZE_Y so that shadowcasting can reinterpret vec.data() as
+// T(*)[MAPSIZE_Y] regardless of the active g_mapsize.  Submap-granularity
+// structures (dirty bitsets, field_cache) use the actual runtime submap count.
 level_cache::level_cache( int mx, int my )
     : cache_x( mx ), cache_y( my ), cache_mapsize( mx / SEEX ),
       transparency_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
-      lm( static_cast<size_t>( mx * my ), four_quadrants( 0.0f ) ),
-      sm( static_cast<size_t>( mx * my ), 0.0f ),
-      light_source_buffer( static_cast<size_t>( mx * my ), 0.0f ),
-      outside_cache( static_cast<size_t>( mx * my ), false ),
-      floor_cache( static_cast<size_t>( mx * my ), false ),
-      transparency_cache( static_cast<size_t>( mx * my ), 0.0f ),
-      vehicle_obscured_cache( static_cast<size_t>( mx * my ), diagonal_blocks{false, false} ),
-      vehicle_obstructed_cache( static_cast<size_t>( mx * my ), diagonal_blocks{false, false} ),
-      seen_cache( static_cast<size_t>( mx * my ), 0.0f ),
-      camera_cache( static_cast<size_t>( mx * my ), 0.0f ),
-      visibility_cache( static_cast<size_t>( mx * my ), lit_level::DARK ),
-      map_memory_seen_cache( static_cast<size_t>( mx * my ) ),
+      lm( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), four_quadrants( 0.0f ) ),
+      sm( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), 0.0f ),
+      light_source_buffer( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), 0.0f ),
+      outside_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), false ),
+      floor_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), false ),
+      transparency_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), 0.0f ),
+      vehicle_obscured_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), diagonal_blocks{false, false} ),
+      vehicle_obstructed_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), diagonal_blocks{false, false} ),
+      seen_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), 0.0f ),
+      camera_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), 0.0f ),
+      visibility_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), lit_level::DARK ),
+      map_memory_seen_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ) ),
       field_cache( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
-      veh_exists_at( static_cast<size_t>( mx * my ), false )
+      veh_exists_at( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), false )
 {
     outside_cache_dirty = true;
     transparency_cache_dirty.set();

@@ -1223,10 +1223,10 @@ class game
         // Read from OUT_OF_BUBBLE_TICK_INTERVAL in start_game() / load().
         int world_tick_interval_ = 1;
 
-        // Radius of the reality bubble in submaps.  The loaded region is
-        // (2 * radius + 1)² submaps.  Read from REALITY_BUBBLE_RADIUS in
-        // start_game() / load().  Matches HALF_MAPSIZE at the default of 5.
-        int reality_bubble_radius_ = HALF_MAPSIZE;
+        // Submap radius of the reality bubble = g_half_mapsize = 2*size+1.
+        // Set by init_bubble_config() in start_game() / load().
+        // Default 5 matches REALITY_BUBBLE_SIZE=2 (original 11×11 grid).
+        int reality_bubble_radius_ = 5;
 
         // The most recent submap-coordinate shift applied by update_map().
         // Used by submap_stream speculative loading to pre-request the edge

@@ -190,8 +190,8 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
             const bool quad_delete = delete_after_save || zlev_del ||
                                      om_addr.x < map_origin.x ||
                                      om_addr.y < map_origin.y ||
-                                     om_addr.x > map_origin.x + HALF_MAPSIZE ||
-                                     om_addr.y > map_origin.y + HALF_MAPSIZE;
+                                     om_addr.x > map_origin.x + g_half_mapsize ||
+                                     om_addr.y > map_origin.y + g_half_mapsize;
 
             quads_to_process.push_back( { om_addr, quad_delete } );
         }

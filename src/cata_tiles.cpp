@@ -3019,8 +3019,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     //limit the render area to maximum view range (121x121 square centered on player)
     const int min_visible_x = g->u.posx() % SEEX;
     const int min_visible_y = g->u.posy() % SEEY;
-    const int max_visible_x = ( g->u.posx() % SEEX ) + ( MAPSIZE - 1 ) * SEEX;
-    const int max_visible_y = ( g->u.posy() % SEEY ) + ( MAPSIZE - 1 ) * SEEY;
+    const int max_visible_x = ( g->u.posx() % SEEX ) + ( g_mapsize - 1 ) * SEEX;
+    const int max_visible_y = ( g->u.posy() % SEEY ) + ( g_mapsize - 1 ) * SEEY;
 
     // Map memory should be at least the size of the view range
     // so that new tiles can be memorized, and at least the size of the display

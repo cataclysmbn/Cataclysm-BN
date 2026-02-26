@@ -324,8 +324,8 @@ static int rate_location( map &m, const tripoint &p, const bool must_be_inside,
         st.pop_back();
 
         checked[cur.x][cur.y] = attempt;
-        if( cur.x == 0 || cur.x == MAPSIZE_X - 1 ||
-            cur.y == 0 || cur.y == MAPSIZE_Y - 1 ||
+        if( cur.x == 0 || cur.x == g_mapsize_x - 1 ||
+            cur.y == 0 || cur.y == g_mapsize_y - 1 ||
             m.has_flag( "GOES_UP", cur ) ) {
             return INT_MAX;
         }
@@ -345,8 +345,8 @@ void start_location::place_player( player &u ) const
     // Need the "real" map with it's inside/outside cache and the like.
     map &m = g->m;
     // Start us off somewhere in the center of the map
-    u.setx( HALF_MAPSIZE_X );
-    u.sety( HALF_MAPSIZE_Y );
+    u.setx( g_half_mapsize_x );
+    u.sety( g_half_mapsize_y );
     u.setz( g->get_levz() );
     m.invalidate_map_cache( m.get_abs_sub().z );
     m.build_map_cache( m.get_abs_sub().z );
@@ -381,8 +381,8 @@ void start_location::place_player( player &u ) const
     };
 
     while( !found_good_spot && tries < 100 ) {
-        tripoint rand_point( HALF_MAPSIZE_X + rng( 0, SEEX * 2 - 1 ),
-                             HALF_MAPSIZE_Y + rng( 0, SEEY * 2 - 1 ),
+        tripoint rand_point( g_half_mapsize_x + rng( 0, SEEX * 2 - 1 ),
+                             g_half_mapsize_y + rng( 0, SEEY * 2 - 1 ),
                              u.posz() );
         check_spot( rand_point );
     }
@@ -392,8 +392,8 @@ void start_location::place_player( player &u ) const
         tripoint tmp = u.pos();
         int &x = tmp.x;
         int &y = tmp.y;
-        for( x = 0; x < MAPSIZE_X; x++ ) {
-            for( y = 0; y < MAPSIZE_Y; y++ ) {
+        for( x = 0; x < g_mapsize_x; x++ ) {
+            for( y = 0; y < g_mapsize_y; y++ ) {
                 check_spot( tmp );
             }
         }
@@ -411,7 +411,7 @@ void start_location::burn( const tripoint_abs_omt &omtstart, const size_t count,
     tinymap m;
     m.load( player_location, false );
     m.build_outside_cache( m.get_abs_sub().z );
-    const point u( g->u.posx() % HALF_MAPSIZE_X, g->u.posy() % HALF_MAPSIZE_Y );
+    const point u( g->u.posx() % g_half_mapsize_x, g->u.posy() % g_half_mapsize_y );
     std::vector<tripoint> valid;
     for( const tripoint &p : m.points_on_zlevel() ) {
         if( !( m.has_flag_ter( "DOOR", p ) ||
