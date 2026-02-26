@@ -330,7 +330,7 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( swims, bool() const );
 
         SET_FX_T( move_target, tripoint() );
-        SET_FX_N_T( is_wandering, "is_wandering", bool() );
+        SET_FX_N_T( is_wandering, "is_wandering", bool() const );
 
         SET_FX_T( wander_to, void( const tripoint & p, int f ) );
         SET_FX_T( move_to, bool( const tripoint & p, bool force, bool step_on_critter,

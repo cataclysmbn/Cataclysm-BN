@@ -8,6 +8,7 @@
 #include <stdexcept>
 
 #include "calendar.h"
+#include "cached_options.h"
 #include "cached_item_options.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -154,6 +155,7 @@ options_manager &get_options()
 constexpr auto general = "general";
 constexpr auto interface = "interface";
 constexpr auto graphics = "graphics";
+constexpr auto performance = "performance";
 constexpr auto world_default = "world_default";
 constexpr auto debug = "debug";
 #if defined(__ANDROID__)
@@ -165,6 +167,7 @@ options_manager::options_manager()
     pages_.emplace_back( general, to_translation( "General" ) );
     pages_.emplace_back( interface, to_translation( "Interface" ) );
     pages_.emplace_back( graphics, to_translation( "Graphics" ) );
+    pages_.emplace_back( performance, to_translation( "Performance" ) );
     // when sharing maps only admin is allowed to change these.
     if( !MAP_SHARING::isCompetitive() || MAP_SHARING::isAdmin() ) {
         pages_.emplace_back( world_default, to_translation( "World Defaults" ) );
@@ -1205,6 +1208,7 @@ void options_manager::init()
     add_options_general();
     add_options_interface();
     add_options_graphics();
+    add_options_performance();
     add_options_debug();
     add_options_world_default();
     add_options_android();
@@ -2255,23 +2259,29 @@ void options_manager::add_options_graphics()
 
 }
 
-void options_manager::add_options_debug()
+void options_manager::add_options_performance()
 {
     const auto add_empty_line = [&]() {
-        this->add_empty_line( debug );
+        this->add_empty_line( performance );
     };
 
-    add_option_group( debug, Group( "rem_act_perf", to_translation( "Performance" ),
-                                    to_translation( "Configure performance settings that can detract from the game." ) ),
+    add_option_group( performance, Group( "rem_act_perf", to_translation( "Sleep Boost" ),
+                                          to_translation( "Skip expensive processing while the player sleeps." ) ),
     [&]( auto & page_id ) {
-        add( "SLEEP_SKIP_VEH", page_id, translate_marker( "Sleep Boost: Skip Vehicle Movement" ),
+        add( "SLEEP_SKIP_VEH", page_id, translate_marker( "Skip Vehicle Movement" ),
              translate_marker( "Turns off vehicle movement and autodrive while sleeping" ),
              true );
-        add( "SLEEP_SKIP_SOUND", page_id, translate_marker( "Sleep Boost: Skip Sound Processing On Sleep" ),
+        add( "SLEEP_SKIP_SOUND", page_id, translate_marker( "Skip Sound Processing On Sleep" ),
              translate_marker( "Sounds are not processed while sleeping" ),
              false );
-        add( "SLEEP_SKIP_MON", page_id, translate_marker( "Sleep Boost: Skip Monster Movement" ),
-             translate_marker( "Monsters do not move while sleeping" ),
+        add( "SLEEP_SKIP_MON", page_id, translate_marker( "Skip Monster Movement" ),
+             translate_marker( "Monsters do not move while the player is sleeping" ),
+             false );
+        add( "SLEEP_SKIP_NPC", page_id, translate_marker( "Skip NPC Movement" ),
+             translate_marker( "NPCs are forced to sleep alongside the player, skipping movement "
+                               "but still processing rest recovery (fatigue reduction, healing, etc.).  "
+                               "NPCs with non-interruptible activities (e.g. surgery) are frozen "
+                               "for the turn instead." ),
              false );
 #if defined(__ANDROID__)
         add( "LOAD_FROM_EXTERNAL", page_id, translate_marker( "External Storage Saving" ),
@@ -2281,6 +2291,145 @@ void options_manager::add_options_debug()
     } );
 
     add_empty_line();
+
+    add_option_group( performance, Group( "lod_monster", to_translation( "Monster LOD" ),
+                                          to_translation( "Configure level-of-detail thresholds for monster AI." ) ),
+    [&]( auto & page_id ) {
+        add( "MONSTER_LOD_ENABLED", page_id,
+             translate_marker( "Enable Monster LOD" ),
+             translate_marker( "Enable level-of-detail processing for monsters.  "
+                               "When enabled, distant or wandering monsters are assigned reduced-fidelity "
+                               "AI tiers (coarse path reuse or a simple macro step) to save CPU.  "
+                               "When disabled, every monster runs full AI every turn regardless of distance." ),
+             true );
+        add( "LOD_ACTION_BUDGET", page_id,
+             translate_marker( "Action Budget" ),
+             translate_marker( "Minimum number of monsters that enter the move loop per turn.  "
+                               "The actual budget is the larger of this value and the current Tier-0 "
+                               "(full-AI) monster count, so full-AI monsters are never skipped.  "
+                               "Higher values process more distant monsters each turn at a CPU cost.  "
+                               "0 means only Tier-0 monsters run (no extra Tier-1 budget)." ),
+             32, 2048, 128 );
+        add( "LOD_MACRO_INTERVAL", page_id,
+             translate_marker( "Macro Step Interval" ),
+             translate_marker( "How many turns elapse between movement steps for Tier-2 (distant wandering) "
+                               "monsters.  At 1 they step every turn; at 3 (default) they step once every "
+                               "3 turns.  Higher values reduce CPU cost for distant hordes." ),
+             1, 8, 3 );
+        add( "LOD_TIER_FULL_DIST", page_id,
+             translate_marker( "Full AI Radius" ),
+             translate_marker( "Chebyshev distance threshold for full-AI (Tier 0) monsters.  "
+                               "Monsters within this radius run the complete AI every turn.  "
+                               "Must be less than the Coarse AI Radius." ),
+             5, 100, 20 );
+        add( "LOD_TIER_COARSE_DIST", page_id,
+             translate_marker( "Coarse AI Radius" ),
+             translate_marker( "Chebyshev distance threshold for coarse-AI (Tier 1) monsters.  "
+                               "Monsters between the Full AI Radius and this distance use cached "
+                               "paths and skip expensive faction queries.  Monsters beyond this "
+                               "distance are Tier-2 (macro step only)." ),
+             10, 200, 40 );
+        add( "LOD_DEMOTION_COOLDOWN", page_id,
+             translate_marker( "Demotion Cooldown" ),
+             translate_marker( "Turns a monster must wait after being promoted to a higher-fidelity "
+                               "tier before it can be demoted again.  Prevents rapid tier oscillation "
+                               "at distance boundaries.  0 disables the cooldown." ),
+             0, 10, 3 );
+        add( "LOD_COARSE_SCENT_INTERVAL", page_id,
+             translate_marker( "Coarse Scent Check Interval" ),
+             translate_marker( "How many turns elapse between scent-tracking checks for Tier-1 (coarse) "
+                               "monsters.  At 1 they check scent every turn (full fidelity); at 3 (default) "
+                               "only once every 3 turns.  Higher values reduce CPU cost for mid-range hordes." ),
+             1, 5, 3 );
+        add( "LOD_GROUP_MORALE_MAX_TIER", page_id,
+             translate_marker( "Group Morale Max Tier" ),
+             translate_marker( "Highest LOD tier that participates in group-morale and swarming calculations.  "
+                               "0 = Tier-0 only (default, cheapest).  1 = Tier-0 and Tier-1 monsters also "
+                               "run group-morale/swarm checks at the cost of the extra O(M²) faction scan "
+                               "for mid-range monsters." ),
+             0, 1, 0 );
+    } );
+
+    get_option( "LOD_ACTION_BUDGET" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
+    get_option( "LOD_MACRO_INTERVAL" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
+    get_option( "LOD_TIER_FULL_DIST" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
+    get_option( "LOD_TIER_COARSE_DIST" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
+    get_option( "LOD_DEMOTION_COOLDOWN" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
+    get_option( "LOD_COARSE_SCENT_INTERVAL" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
+    get_option( "LOD_GROUP_MORALE_MAX_TIER" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
+
+    add_empty_line();
+
+    add( "SKEW_VISION_CACHE_SIZE", performance,
+         translate_marker( "LOS Cache Size" ),
+         translate_marker( "Maximum number of line-of-sight results kept in the skew-vision LRU cache.  "
+                           "Higher values reduce redundant ray traces at the cost of more RAM.  "
+                           "Reduce if memory is tight; increase on machines with spare RAM and many "
+                           "on-screen creatures." ),
+         1000, 500000, 100000 );
+
+    add_empty_line();
+
+    add_option_group( performance, Group( "multithreading", to_translation( "Multithreading" ),
+                                          to_translation( "Configure worker-thread parallelism for expensive per-turn computations." ) ),
+    [&]( auto & page_id ) {
+        add( "MULTITHREADING_ENABLED", page_id,
+             translate_marker( "Enable Multithreading" ),
+             translate_marker( "Enable worker-thread parallelism for expensive per-turn computations "
+                               "(monster planning, map-cache building, scent map updates).  "
+                               "Disable to run everything on the main thread — useful for debugging, "
+                               "reproducibility testing, or machines where thread overhead exceeds gain.  "
+                               "Requires restart." ),
+             true );
+        add( "THREAD_POOL_WORKERS", page_id,
+             translate_marker( "Thread Pool Worker Count" ),
+             translate_marker( "Number of worker threads in the persistent thread pool.  "
+                               "0 means automatic (hardware concurrency minus 1, leaving one core for "
+                               "the main/SDL thread).  Set to a lower value to cap CPU usage, e.g. when "
+                               "streaming or running other CPU-heavy applications alongside the game.  "
+                               "Requires restart." ),
+             0, 64, 0 );
+        add( "PARALLEL_MONSTER_PLANNING", page_id,
+             translate_marker( "Parallel Monster Planning" ),
+             translate_marker( "Compute monster AI plans (pathfinding target selection, LOS queries) in "
+                               "parallel across worker threads each turn.  Disable if monsters behave "
+                               "unexpectedly or for reproducible save-file testing.  Requires restart." ),
+             true );
+        add( "MONSTER_PLAN_CHUNK_SIZE", page_id,
+             translate_marker( "Monster Plan Chunk Size" ),
+             translate_marker( "Number of monsters batched into a single worker-thread task during the "
+                               "parallel planning pass.  Smaller values improve load balancing when "
+                               "planning cost varies widely (large hordes with mixed sight ranges); "
+                               "larger values reduce task-dispatch overhead.  Requires restart." ),
+             1, 64, 8 );
+        add( "PARALLEL_MAP_CACHE", page_id,
+             translate_marker( "Parallel Map Cache Build" ),
+             translate_marker( "Build per-z-level map caches (transparency, outside, floor, "
+                               "vehicle-obscured) in parallel across worker threads.  Disable on "
+                               "machines where the thread-dispatch overhead exceeds the benefit "
+                               "(typically dual-core systems or when z-levels are disabled).  "
+                               "Requires restart." ),
+             true );
+        add( "PARALLEL_SCENT_UPDATE", page_id,
+             translate_marker( "Parallel Scent Update" ),
+             translate_marker( "Compute the scent-diffusion Y-pass and X-pass across worker threads.  "
+                               "Disable on machines where the ~70 k-cell work unit is too small to "
+                               "amortize dispatch latency.  Requires restart." ),
+             true );
+    } );
+
+    get_option( "THREAD_POOL_WORKERS" ).setPrerequisite( "MULTITHREADING_ENABLED" );
+    get_option( "PARALLEL_MONSTER_PLANNING" ).setPrerequisite( "MULTITHREADING_ENABLED" );
+    get_option( "MONSTER_PLAN_CHUNK_SIZE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
+    get_option( "PARALLEL_MAP_CACHE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
+    get_option( "PARALLEL_SCENT_UPDATE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
+}
+
+void options_manager::add_options_debug()
+{
+    const auto add_empty_line = [&]() {
+        this->add_empty_line( debug );
+    };
 
     add( "STRICT_JSON_CHECKS", debug, translate_marker( "Strict JSON checks" ),
          translate_marker( "If true, will show additional warnings for JSON data correctness." ),
@@ -3859,6 +4008,21 @@ void options_manager::cache_to_globals()
     static_z_effect = ::get_option<bool>( "STATICZEFFECT" );
     overmap_transparency = ::get_option<bool>( "OVERMAP_TRANSPARENCY" );
     PICKUP_RANGE = ::get_option<int>( "PICKUP_RANGE" );
+
+    monster_lod_enabled       = ::get_option<bool>( "MONSTER_LOD_ENABLED" );
+    lod_tier_full_dist        = ::get_option<int>( "LOD_TIER_FULL_DIST" );
+    lod_tier_coarse_dist      = ::get_option<int>( "LOD_TIER_COARSE_DIST" );
+    lod_demotion_cooldown     = ::get_option<int>( "LOD_DEMOTION_COOLDOWN" );
+    lod_action_budget         = ::get_option<int>( "LOD_ACTION_BUDGET" );
+    lod_macro_interval        = ::get_option<int>( "LOD_MACRO_INTERVAL" );
+    lod_coarse_scent_interval = ::get_option<int>( "LOD_COARSE_SCENT_INTERVAL" );
+    lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
+
+    parallel_enabled          = ::get_option<bool>( "MULTITHREADING_ENABLED" );
+    parallel_monster_planning = ::get_option<bool>( "PARALLEL_MONSTER_PLANNING" );
+    monster_plan_chunk_size   = ::get_option<int>( "MONSTER_PLAN_CHUNK_SIZE" );
+    parallel_map_cache        = ::get_option<bool>( "PARALLEL_MAP_CACHE" );
+    parallel_scent_update     = ::get_option<bool>( "PARALLEL_SCENT_UPDATE" );
 
     merge_comestible_mode = ( [] {
         const auto opt = ::get_option<std::string>( "MERGE_COMESTIBLES" );

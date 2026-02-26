@@ -86,6 +86,23 @@ extern int PICKUP_RANGE;
 extern bool dont_debugmsg;
 
 
+/** Monster LOD (level-of-detail) options. */
+extern bool monster_lod_enabled;
+extern int  lod_tier_full_dist;
+extern int  lod_tier_coarse_dist;
+extern int  lod_demotion_cooldown;
+extern int  lod_action_budget;
+extern int  lod_macro_interval;
+extern int  lod_coarse_scent_interval;
+extern int  lod_group_morale_max_tier;
+
+/** Multithreading options — all require restart to take effect. */
+extern bool parallel_enabled;
+extern bool parallel_monster_planning;
+extern int  monster_plan_chunk_size;
+extern bool parallel_map_cache;
+extern bool parallel_scent_update;
+
 /* Options related to fungal activity */
 struct FungalOptions {
     /**

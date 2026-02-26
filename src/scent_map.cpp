@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 #include "assign.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "color.h"
 #include "cuboid_rectangle.h"
@@ -13,8 +14,11 @@
 #include "game.h"
 #include "generic_factory.h"
 #include "map.h"
+#include "options.h"
 #include "output.h"
+#include "profile.h"
 #include "string_id.h"
+#include "thread_pool.h"
 
 static constexpr int SCENT_RADIUS = 40;
 
@@ -60,8 +64,14 @@ void scent_map::reset()
 
 void scent_map::decay()
 {
-    for( auto &elem : grscent ) {
-        for( auto &val : elem ) {
+    ZoneScopedN( "scent_map::decay" );
+    // PERF-LOSS-4: reverted to a serial loop.  The grscent array holds roughly
+    // 70 k integers (MAPSIZE_X * MAPSIZE_Y); decrementing each by 1 with a
+    // max(0,…) clamp takes tens of microseconds — less than the thread-dispatch
+    // and std::latch synchronisation overhead of parallel_for on most hardware.
+    // Threading here added complexity without measurable benefit.
+    for( auto &row : grscent ) {
+        for( auto &val : row ) {
             val = std::max( 0, val - 1 );
         }
     }
@@ -149,6 +159,7 @@ bool scent_map::inbounds( const tripoint &p ) const
 }
 void scent_map::update( const tripoint &center, map &m )
 {
+    ZoneScoped;
     // Stop updating scent after X turns of the player not moving.
     // Once wind is added, need to reset this on wind shifts as well.
     if( !player_last_position || center != *player_last_position ) {
@@ -186,65 +197,142 @@ void scent_map::update( const tripoint &center, map &m )
         squares_used_y[SCENT_RADIUS * 2][x] = 0;
     }
 
-    for( int x = 0; x < SCENT_RADIUS * 2 + 3; ++x ) {
-        for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
+    const bool parallel_scent = parallel_enabled && parallel_scent_update;
 
-            point abs( x + scentmap_minx - 1, y + scentmap_miny );
+    // Y-pass: each x column is independent — no shared writes.
+    if( parallel_scent ) {
+        parallel_for( 0, SCENT_RADIUS * 2 + 3, [&]( int x ) {
+            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
 
-            // remember the sum of the scent val for the 3 neighboring squares that can defuse into
-            sum_3_scent_y[y][x] = 0;
-            squares_used_y[y][x] = 0;
-            for( int i = abs.y - 1; i <= abs.y + 1; ++i ) {
-                sum_3_scent_y[y][x] += scent_transfer[abs.x][i] * grscent[abs.x][i];
-                squares_used_y[y][x] += scent_transfer[abs.x][i];
+                point abs( x + scentmap_minx - 1, y + scentmap_miny );
+
+                // remember the sum of the scent val for the 3 neighboring squares that can defuse into
+                sum_3_scent_y[y][x] = 0;
+                squares_used_y[y][x] = 0;
+                for( int i = abs.y - 1; i <= abs.y + 1; ++i ) {
+                    sum_3_scent_y[y][x] += scent_transfer[abs.x][i] * grscent[abs.x][i];
+                    squares_used_y[y][x] += scent_transfer[abs.x][i];
+                }
+            }
+        } );
+    } else {
+        for( int x = 0; x < SCENT_RADIUS * 2 + 3; ++x ) {
+            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
+
+                point abs( x + scentmap_minx - 1, y + scentmap_miny );
+
+                // remember the sum of the scent val for the 3 neighboring squares that can defuse into
+                sum_3_scent_y[y][x] = 0;
+                squares_used_y[y][x] = 0;
+                for( int i = abs.y - 1; i <= abs.y + 1; ++i ) {
+                    sum_3_scent_y[y][x] += scent_transfer[abs.x][i] * grscent[abs.x][i];
+                    squares_used_y[y][x] += scent_transfer[abs.x][i];
+                }
             }
         }
     }
+    // implicit barrier at end of parallel_for; sum_3_scent_y is fully populated
 
-    for( int x = 1; x < SCENT_RADIUS * 2 + 2; ++x ) {
-        for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
-            const point abs( x + scentmap_minx - 1, y + scentmap_miny );
+    // X-pass: reads sum_3_scent_y (now complete and read-only), writes new_scent[y][x].
+    // Each output column x is independent.
+    if( parallel_scent ) {
+        parallel_for( 1, SCENT_RADIUS * 2 + 2, [&]( int x ) {
+            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
+                const point abs( x + scentmap_minx - 1, y + scentmap_miny );
 
-            int squares_used = squares_used_y[y][x - 1] + squares_used_y[y][x] + squares_used_y[y][x + 1];
-            int total = sum_3_scent_y[y][x - 1] + sum_3_scent_y[y][x] + sum_3_scent_y[y][x + 1];
+                int squares_used = squares_used_y[y][x - 1] + squares_used_y[y][x] + squares_used_y[y][x + 1];
+                int total = sum_3_scent_y[y][x - 1] + sum_3_scent_y[y][x] + sum_3_scent_y[y][x + 1];
 
-            //handle vehicle holes
-            if( blocked_cache[abs.x][abs.y].nw && scent_transfer[abs.x + 1][abs.y + 1] == 5 ) {
-                squares_used -= 4;
-                total -= 4 * grscent[abs.x + 1][abs.y + 1];
+                //handle vehicle holes
+                if( blocked_cache[abs.x][abs.y].nw && scent_transfer[abs.x + 1][abs.y + 1] == 5 ) {
+                    squares_used -= 4;
+                    total -= 4 * grscent[abs.x + 1][abs.y + 1];
+                }
+                if( blocked_cache[abs.x][abs.y].ne && scent_transfer[abs.x - 1][abs.y + 1] == 5 ) {
+                    squares_used -= 4;
+                    total -= 4 * grscent[abs.x - 1][abs.y + 1];
+                }
+                if( blocked_cache[abs.x - 1][abs.y - 1].nw && scent_transfer[abs.x - 1][abs.y - 1] == 5 ) {
+                    squares_used -= 4;
+                    total -= 4 * grscent[abs.x - 1][abs.y - 1];
+                }
+                if( blocked_cache[abs.x + 1][abs.y - 1].ne && scent_transfer[abs.x + 1][abs.y - 1] == 5 ) {
+                    squares_used -= 4;
+                    total -= 4 * grscent[abs.x + 1][abs.y - 1];
+                }
+
+                //Lingering scent
+                int temp_scent =  grscent[abs.x][abs.y] * ( 250 - squares_used  *
+                                  scent_transfer[abs.x][abs.y] ) ;
+                temp_scent -=  grscent[abs.x][abs.y] * scent_transfer[abs.x][abs.y] *
+                               ( 45 - squares_used ) / 5;
+
+                new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x][abs.y] ) / 250;
             }
-            if( blocked_cache[abs.x][abs.y].ne && scent_transfer[abs.x - 1][abs.y + 1] == 5 ) {
-                squares_used -= 4;
-                total -= 4 * grscent[abs.x - 1][abs.y + 1];
-            }
-            if( blocked_cache[abs.x - 1][abs.y - 1].nw && scent_transfer[abs.x - 1][abs.y - 1] == 5 ) {
-                squares_used -= 4;
-                total -= 4 * grscent[abs.x - 1][abs.y - 1];
-            }
-            if( blocked_cache[abs.x + 1][abs.y - 1].ne && scent_transfer[abs.x + 1][abs.y - 1] == 5 ) {
-                squares_used -= 4;
-                total -= 4 * grscent[abs.x + 1][abs.y - 1];
-            }
+        } );
+    } else {
+        for( int x = 1; x < SCENT_RADIUS * 2 + 2; ++x ) {
+            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
+                const point abs( x + scentmap_minx - 1, y + scentmap_miny );
 
-            //Lingering scent
-            int temp_scent =  grscent[abs.x][abs.y] * ( 250 - squares_used  *
-                              scent_transfer[abs.x][abs.y] ) ;
-            temp_scent -=  grscent[abs.x][abs.y] * scent_transfer[abs.x][abs.y] *
-                           ( 45 - squares_used ) / 5;
+                int squares_used = squares_used_y[y][x - 1] + squares_used_y[y][x] + squares_used_y[y][x + 1];
+                int total = sum_3_scent_y[y][x - 1] + sum_3_scent_y[y][x] + sum_3_scent_y[y][x + 1];
 
-            new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x][abs.y] ) / 250;
+                //handle vehicle holes
+                if( blocked_cache[abs.x][abs.y].nw && scent_transfer[abs.x + 1][abs.y + 1] == 5 ) {
+                    squares_used -= 4;
+                    total -= 4 * grscent[abs.x + 1][abs.y + 1];
+                }
+                if( blocked_cache[abs.x][abs.y].ne && scent_transfer[abs.x - 1][abs.y + 1] == 5 ) {
+                    squares_used -= 4;
+                    total -= 4 * grscent[abs.x - 1][abs.y + 1];
+                }
+                if( blocked_cache[abs.x - 1][abs.y - 1].nw && scent_transfer[abs.x - 1][abs.y - 1] == 5 ) {
+                    squares_used -= 4;
+                    total -= 4 * grscent[abs.x - 1][abs.y - 1];
+                }
+                if( blocked_cache[abs.x + 1][abs.y - 1].ne && scent_transfer[abs.x + 1][abs.y - 1] == 5 ) {
+                    squares_used -= 4;
+                    total -= 4 * grscent[abs.x + 1][abs.y - 1];
+                }
 
+                //Lingering scent
+                int temp_scent =  grscent[abs.x][abs.y] * ( 250 - squares_used  *
+                                  scent_transfer[abs.x][abs.y] ) ;
+                temp_scent -=  grscent[abs.x][abs.y] * scent_transfer[abs.x][abs.y] *
+                               ( 45 - squares_used ) / 5;
+
+                new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x][abs.y] ) / 250;
+            }
         }
     }
-    for( int x = 1; x < SCENT_RADIUS * 2 + 2; ++x ) {
-        for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
-            // Don't spread scent into water unless the source is in water.
-            // Keep scent trails in the water when we exit until rain disturbs them.
-            if( ( get_map().has_flag( TFLAG_LIQUID, center ) &&
-                  rl_dist( center, tripoint( point( x + scentmap_minx - 1, y + scentmap_miny ),
-                                             g->get_levz() ) ) <= 8 ) ||
-                !get_map().has_flag( TFLAG_LIQUID, point( x + scentmap_minx - 1, y + scentmap_miny ) ) ) {
-                grscent[x + scentmap_minx - 1 ][y + scentmap_miny] = new_scent[y][x];
+    // implicit barrier; new_scent is fully populated
+    // Write-back: new_scent is read-only here; has_flag is a read-only map query;
+    // each x column writes to a distinct grscent column — safe to parallelize.
+    if( parallel_scent ) {
+        parallel_for( 1, SCENT_RADIUS * 2 + 2, [&]( int x ) {
+            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
+                // Don't spread scent into water unless the source is in water.
+                // Keep scent trails in the water when we exit until rain disturbs them.
+                if( ( get_map().has_flag( TFLAG_LIQUID, center ) &&
+                      rl_dist( center, tripoint( point( x + scentmap_minx - 1, y + scentmap_miny ),
+                                                 g->get_levz() ) ) <= 8 ) ||
+                    !get_map().has_flag( TFLAG_LIQUID, point( x + scentmap_minx - 1, y + scentmap_miny ) ) ) {
+                    grscent[x + scentmap_minx - 1 ][y + scentmap_miny] = new_scent[y][x];
+                }
+            }
+        } );
+    } else {
+        for( int x = 1; x < SCENT_RADIUS * 2 + 2; ++x ) {
+            for( int y = 0; y < SCENT_RADIUS * 2 + 1; ++y ) {
+                // Don't spread scent into water unless the source is in water.
+                // Keep scent trails in the water when we exit until rain disturbs them.
+                if( ( get_map().has_flag( TFLAG_LIQUID, center ) &&
+                      rl_dist( center, tripoint( point( x + scentmap_minx - 1, y + scentmap_miny ),
+                                                 g->get_levz() ) ) <= 8 ) ||
+                    !get_map().has_flag( TFLAG_LIQUID, point( x + scentmap_minx - 1, y + scentmap_miny ) ) ) {
+                    grscent[x + scentmap_minx - 1 ][y + scentmap_miny] = new_scent[y][x];
+                }
             }
         }
     }

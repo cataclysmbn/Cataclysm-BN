@@ -10,7 +10,9 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <shared_mutex>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -857,6 +859,9 @@ class game
 
         // Routine loop functions, approximately in order of execution
         void monmove();          // Monster movement
+        void npcmove();          // NPC movement (split from monmove for per-option sleep-skip)
+        void sleep_skip_npc_process(); // Sleep-only NPC processing when SLEEP_SKIP_NPC is active
+        int  tier_assign_all(); // LOD tier assignment, O(M), called from monmove(); returns Tier 0 count
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process
         void process_activity(); // Processes and enacts the player's activity
@@ -1006,6 +1011,24 @@ class game
         int turnssincelastmon = 0; // needed for auto run mode
 
         int mostseen = 0; // # of mons seen last turn; if this increases, set safe_mode to SAFE_MODE_STOP
+
+        // P-8: per-turn symmetric sight-result cache used during parallel monster
+        // planning (monmove()).  Keyed on the sorted (lo, hi) Creature pointer
+        // pair so A→B and B→A share one entry (LOS ray is symmetric).  Cleared
+        // at the start of monmove() before the parallel phase begins.  Workers
+        // hold a shared_lock for hits and upgrade to unique_lock on a miss.
+        // Lives in the public section so turn_cached_sees() in monmove.cpp can
+        // access it directly without an additional indirection layer.
+        struct TurnSightPairHash {
+            size_t operator()( const std::pair<const Creature *, const Creature *> &p ) const noexcept {
+                size_t h1 = std::hash<const Creature *> {}( p.first );
+                size_t h2 = std::hash<const Creature *> {}( p.second );
+                return h1 ^ ( h2 * 2654435761ULL );
+            }
+        };
+        std::unordered_map<std::pair<const Creature *, const Creature *>, bool, TurnSightPairHash>
+        turn_sight_cache_;
+        std::shared_mutex turn_sight_cache_mutex_;
     private:
         shared_ptr_fast<player> u_shared_ptr;
 
