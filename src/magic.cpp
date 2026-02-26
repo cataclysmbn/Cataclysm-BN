@@ -52,6 +52,7 @@
 #include "type_id.h"
 #include "ui.h"
 #include "units.h"
+#include "faction.h"
 
 static const trait_id trait_NONE( "NONE" );
 static const trait_id trait_BRAWLER( "BRAWLER" );
@@ -1113,21 +1114,41 @@ void spell::create_field( const tripoint &at ) const
     }
 }
 
-void spell::make_sound( const tripoint &target ) const
+void spell::make_sound( const tripoint &target, Creature &caster ) const
 {
     if( !has_flag( spell_flag::SILENT ) ) {
-        int loudness = std::abs( damage() ) / 3;
+        int loudness = ( 40 + ( std::abs( damage() ) ) );
         if( has_flag( spell_flag::LOUD ) ) {
-            loudness += 1 + damage() / 3;
+            loudness += 20 + ( damage() / 2 );
         }
-        make_sound( target, loudness );
+        make_sound( target, caster, loudness );
     }
 }
 
-void spell::make_sound( const tripoint &target, int loudness ) const
+void spell::make_sound( const tripoint &target, Creature &caster, int loudness ) const
 {
-    sounds::sound( target, loudness, type->sound_type, type->sound_description.translated(),
-                   type->sound_ambient, type->sound_id, type->sound_variant );
+    sound_event se;
+    se.origin = target;
+    se.volume = loudness;
+    se.category = type->sound_type;
+    se.description = type->sound_description.translated();
+    se.movement_noise = ( type->sound_type == sounds::sound_t::movement );
+    se.from_player = caster.is_avatar();
+    se.from_npc = caster.is_npc();
+    se.from_monster = caster.is_monster();
+    se.id = type->sound_id;
+    se.variant = type->sound_variant;
+    // If we have a character, grab their associated factions.
+    if( se.from_player || se.from_npc ) {
+        const Character &nerd = dynamic_cast<const Character &>( caster );
+        se.faction = nerd.get_faction()->id;
+        se.monfaction = nerd.get_faction()->mon_faction;
+    }
+    // If we have a monster, lets grab our monster faction.
+    if( se.from_monster ) {
+        se.monfaction = caster.as_monster()->faction.id();
+    }
+    sounds::sound( se );
 }
 
 std::string spell::effect() const

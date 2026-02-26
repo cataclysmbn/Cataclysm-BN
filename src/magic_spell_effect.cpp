@@ -146,7 +146,7 @@ void spell_effect::pain_split( const spell &sp, Creature &caster, const tripoint
     if( p == nullptr ) {
         return;
     }
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.pos(), caster );
     add_msg( m_info, _( "Your injuries even out." ) );
     int num_limbs = 0; // number of limbs effected (broken don't count)
     int total_hp = 0; // total hp among limbs
@@ -487,7 +487,7 @@ static void damage_targets( const spell &sp, Creature &caster,
             continue;
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
-            sp.make_sound( target );
+            sp.make_sound( target, caster );
             sound_played = true;
         }
         sp.create_field( target );
@@ -755,7 +755,7 @@ void spell_effect::area_pull( const spell &sp, Creature &caster, const tripoint 
 
         spell_move( sp, caster, node.position, node.from );
     }
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.pos(), caster );
 }
 
 void spell_effect::area_push( const spell &sp, Creature &caster, const tripoint &center )
@@ -773,7 +773,7 @@ void spell_effect::area_push( const spell &sp, Creature &caster, const tripoint 
 
         spell_move( sp, caster, node.from, node.position );
     }
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.pos(), caster );
 }
 
 static void character_push_effects( Creature *caster, Character &guy, tripoint &push_dest,
@@ -917,7 +917,7 @@ void spell_effect::spawn_ethereal_item( const spell &sp, Creature &caster, const
             you.i_add( item::spawn( as_item ) );
         }
     }
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.pos(), caster );
 }
 
 void spell_effect::recover_energy( const spell &sp, Creature &caster, const tripoint &target )
@@ -957,7 +957,7 @@ void spell_effect::recover_energy( const spell &sp, Creature &caster, const trip
     } else {
         debugmsg( "Invalid effect_str %s for spell %s", energy_source, sp.name() );
     }
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.pos(), caster );
 }
 
 void spell_effect::timed_event( const spell &sp, Creature &caster, const tripoint & )
@@ -983,7 +983,7 @@ void spell_effect::timed_event( const spell &sp, Creature &caster, const tripoin
         spell_event = iter->second;
     }
 
-    sp.make_sound( caster.pos() );
+    sp.make_sound( caster.pos(), caster );
     g->timed_events.add( spell_event, calendar::turn + sp.duration_turns() );
 }
 
@@ -1035,7 +1035,7 @@ void spell_effect::spawn_summoned_monster( const spell &sp, Creature &caster,
             num_mons--;
             if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
                 sound_played = true;
-                sp.make_sound( *iter );
+                sp.make_sound( *iter, caster );
             }
         }
         // whether or not we succeed in spawning a monster, we don't want to try this tripoint again
@@ -1096,9 +1096,9 @@ void spell_effect::transform_blast( const spell &sp, Creature &caster,
     }
 }
 
-void spell_effect::noise( const spell &sp, Creature &, const tripoint &target )
+void spell_effect::noise( const spell &sp, Creature &caster, const tripoint &target )
 {
-    sp.make_sound( target, sp.damage() );
+    sp.make_sound( target, caster, sp.damage() );
 }
 
 void spell_effect::vomit( const spell &sp, Creature &caster, const tripoint &target )
@@ -1115,7 +1115,7 @@ void spell_effect::vomit( const spell &sp, Creature &caster, const tripoint &tar
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
             sound_played = true;
-            sp.make_sound( target );
+            sp.make_sound( target, caster );
         }
         ch->vomit();
     }
@@ -1151,7 +1151,7 @@ void spell_effect::mod_moves( const spell &sp, Creature &caster, const tripoint 
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
             sound_played = true;
-            sp.make_sound( potential_target );
+            sp.make_sound( potential_target, caster );
         }
         critter->moves += sp.damage();
     }
@@ -1192,7 +1192,7 @@ void spell_effect::morale( const spell &sp, Creature &caster, const tripoint &ta
                                    sp.duration_turns() / 10, false );
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
             sound_played = true;
-            sp.make_sound( potential_target );
+            sp.make_sound( potential_target, caster );
         }
     }
 }
@@ -1211,7 +1211,7 @@ void spell_effect::charm_monster( const spell &sp, Creature &caster, const tripo
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
             sound_played = true;
-            sp.make_sound( potential_target );
+            sp.make_sound( potential_target, caster );
         }
         if( mon->friendly == 0 && mon->get_hp() <= sp.damage() ) {
             mon->unset_dest();
@@ -1248,7 +1248,7 @@ void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint &ta
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
             sound_played = true;
-            sp.make_sound( potential_target );
+            sp.make_sound( potential_target, caster );
         }
     }
 }

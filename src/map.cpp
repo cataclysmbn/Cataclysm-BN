@@ -218,6 +218,8 @@ void map::set_transparency_cache_dirty( const int zlev )
 {
     if( inbounds_z( zlev ) ) {
         get_cache( zlev ).transparency_cache_dirty.set();
+        // If we are invalidating the entire transparency cache for this zlevel, the sound absorption cache will also be invalidated.
+        get_cache( zlev ).absorption_cache_dirty.set();
     }
 }
 
@@ -269,6 +271,14 @@ void map::set_transparency_cache_dirty( const tripoint &p )
     if( inbounds( p ) ) {
         const tripoint smp = ms_to_sm_copy( p );
         get_cache( smp.z ).transparency_cache_dirty.set( smp.x * MAPSIZE + smp.y );
+    }
+}
+
+void map::set_absorption_cache_dirty( const tripoint &p )
+{
+    if( inbounds( p ) ) {
+        const tripoint smp = ms_to_sm_copy( p );
+        get_cache( smp.z ).absorption_cache_dirty.set( smp.x * MAPSIZE + smp.y );
     }
 }
 
@@ -747,10 +757,16 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
     if( impulse > 0 ) {
         coll_turn = shake_vehicle( veh, velocity_before, facing.dir() );
         veh.stop_autodriving();
-        const int volume = std::min<int>( 100, std::sqrt( impulse ) );
+        const int volume = std::min<int>( 120, std::sqrt( impulse ) );
         // TODO: Center the sound at weighted (by impulse) average of collisions
-        sounds::sound( veh.global_pos3(), volume, sounds::sound_t::combat, _( "crash!" ),
-                       false, "smash_success", "hit_vehicle" );
+        sound_event se;
+        se.origin = veh.global_pos3();
+        se.volume = volume;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "crash!" );
+        se.id = "smash_success";
+        se.variant = "hit_vehicle";
+        sounds::sound( se );
     }
 
     if( veh_veh_coll_flag ) {
@@ -830,8 +846,15 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
         for( auto &w : wheel_indices ) {
             const tripoint wheel_p = veh.global_part_pos3( w );
             if( one_in( 2 ) && displace_water( wheel_p ) ) {
-                sounds::sound( wheel_p, 4,  sounds::sound_t::movement, _( "splash!" ), false,
-                               "environment", "splash" );
+                sound_event se;
+                se.origin = wheel_p;
+                se.volume = 50;
+                se.category = sounds::sound_t::movement;
+                se.movement_noise = true;
+                se.description = _( "splash!" );
+                se.id = "environment";
+                se.variant = "splash";
+                sounds::sound( se );
             }
 
             veh.handle_trap( wheel_p, w );
@@ -1873,6 +1896,8 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
 
     if( old_t.has_flag( TFLAG_INDOORS ) != new_t.has_flag( TFLAG_INDOORS ) ) {
         set_outside_cache_dirty( p.z );
+        // Adding or removing a roof prompts a recalc of the absorption value of that tile.
+        set_absorption_cache_dirty( p );
     }
 
     if( new_t.has_flag( TFLAG_NO_FLOOR ) != old_t.has_flag( TFLAG_NO_FLOOR ) ) {
@@ -1897,6 +1922,16 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
             level_cache &ch = get_cache( p.z );
             ch.suspension_cache.emplace_back( getabs( p ).xy() );
         }
+    }
+
+    if( new_t.has_flag( "BLOCK_WIND" ) != old_t.has_flag( "BLOCK_WIND" ) ) {
+        // Changing BLOCK_WIND prompts an absorption cache recalc around that tile.
+        set_absorption_cache_dirty( p );
+    }
+
+    if( new_t.has_flag( "CONNECT_TO_WALL" ) != old_t.has_flag( "CONNECT_TO_WALL" ) ) {
+        // Changing CONNECT_TO_WALL prompts an absorption cache recalc around that tile to see if a structure blocks sounds.
+        set_absorption_cache_dirty( p );
     }
 
     invalidate_max_populated_zlev( p.z );
@@ -3482,8 +3517,14 @@ bash_results map::bash_ter_success( const tripoint &p, const bash_params &params
     if( !bash.sound.empty() && !params.silent ) {
         static const std::string soundfxid = "smash_success";
         int sound_volume = get_sound_volume( bash );
-        sounds::sound( p, sound_volume, sounds::sound_t::combat, bash.sound, false,
-                       soundfxid, soundfxvariant );
+        sound_event se;
+        se.origin = p;
+        se.volume = sound_volume;
+        se.category = sounds::sound_t::combat;
+        se.description = bash.sound.translated();
+        se.id = soundfxid;
+        se.variant = soundfxvariant;
+        sounds::sound( se );
     }
 
     if( !zlevels ) {
@@ -3666,8 +3707,14 @@ bash_results map::bash_furn_success( const tripoint &p, const bash_params &param
     if( !bash.sound.empty() && !params.silent ) {
         static const std::string soundfxid = "smash_success";
         int sound_volume = get_sound_volume( bash );
-        sounds::sound( p, sound_volume, sounds::sound_t::combat, bash.sound, false,
-                       soundfxid, soundfxvariant );
+        sound_event se;
+        se.origin = p;
+        se.volume = sound_volume;
+        se.category = sounds::sound_t::combat;
+        se.description = bash.sound.translated();
+        se.id = soundfxid;
+        se.variant = soundfxvariant;
+        sounds::sound( se );
     }
 
     if( bash.explosive > 0 ) {
@@ -3721,8 +3768,14 @@ bash_results map::bash_ter_furn( const tripoint &p, const bash_params &params )
 
     // TODO: what if silent is true?
     if( has_flag( "ALARMED", p ) && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
-        sounds::sound( p, 40, sounds::sound_t::alarm, _( "an alarm go off!" ),
-                       false, "environment", "alarm" );
+        sound_event se;
+        se.origin = p;
+        se.volume = 90;
+        se.category = sounds::sound_t::alarm;
+        se.description = _( "an alarm go off!" );
+        se.id = "environment";
+        se.variant = "alarm";
+        sounds::sound( se );
         // Blame nearby player
         if( rl_dist( g->u.pos(), p ) <= 3 ) {
             g->events().send<event_type::triggers_alarm>( g->u.getID() );
@@ -3736,8 +3789,14 @@ bash_results map::bash_ter_furn( const tripoint &p, const bash_params &params )
         // Nothing bashable here
         if( impassable( p ) ) {
             if( !params.silent ) {
-                sounds::sound( p, 18, sounds::sound_t::combat, _( "thump!" ),
-                               false, "smash_fail", "default" );
+                sound_event se;
+                se.origin = p;
+                se.volume = 80;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "thump!" );
+                se.id = "smash_fail";
+                se.variant = "default";
+                sounds::sound( se );
             }
 
             result.did_bash = true;
@@ -3784,12 +3843,18 @@ bash_results map::bash_ter_furn( const tripoint &p, const bash_params &params )
     }
 
     if( !result.success ) {
-        int sound_volume = bash->sound_fail_vol.value_or( 12 );
+        int sound_volume = bash->sound_fail_vol.value_or( 70 );
 
         result.did_bash = true;
         if( !params.silent ) {
-            sounds::sound( p, sound_volume, sounds::sound_t::combat, bash->sound_fail, false,
-                           "smash_fail", soundfxvariant );
+            sound_event se;
+            se.origin = p;
+            se.volume = sound_volume;
+            se.category = sounds::sound_t::combat;
+            se.description = bash->sound_fail.translated();
+            se.id = "smash_fail";
+            se.variant = soundfxvariant;
+            sounds::sound( se );
         }
 
         if( !smash_ter && smax > 0 ) {
@@ -3896,8 +3961,14 @@ bash_results map::bash_items( const tripoint &p, const bash_params &params )
 
     // Add a glass sound even when something else also breaks
     if( smashed_glass && !params.silent ) {
-        sounds::sound( p, 12, sounds::sound_t::combat, _( "glass shattering" ), false,
-                       "smash_success", "smash_glass_contents" );
+        sound_event se;
+        se.origin = p;
+        se.volume = 70;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "glass shattering" );
+        se.id = "smash_success";
+        se.variant = "smash_glass_contents";
+        sounds::sound( se );
     }
     return result;
 }
@@ -3909,8 +3980,14 @@ bash_results map::bash_vehicle( const tripoint &p, const bash_params &params )
     if( const optional_vpart_position vp = veh_at( p ) ) {
         vp->vehicle().damage( vp->part_index(), params.strength, DT_BASH );
         if( !params.silent ) {
-            sounds::sound( p, 18, sounds::sound_t::combat, _( "crash!" ), false,
-                           "smash_success", "hit_vehicle" );
+            sound_event se;
+            se.origin = p;
+            se.volume = 70;
+            se.category = sounds::sound_t::combat;
+            se.description = _( "crash!" );
+            se.id = "smash_success";
+            se.variant = "hit_vehicle";
+            sounds::sound( se );
         }
 
         result.did_bash = true;
@@ -4046,8 +4123,14 @@ void map::shoot( const tripoint &origin, const tripoint &p, projectile &proj, co
     float pen = initial_arpen;
 
     if( has_flag( "ALARMED", p ) && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
-        sounds::sound( p, 30, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
-                       "alarm" );
+        sound_event se;
+        se.origin = p;
+        se.volume = 90;
+        se.category = sounds::sound_t::alarm;
+        se.description = _( "an alarm sound!" );
+        se.id = "environment";
+        se.variant = "alarm";
+        sounds::sound( se );
         const tripoint abs = ms_to_sm_copy( getabs( p ) );
         g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0, abs );
     }
@@ -4371,9 +4454,15 @@ bool map::open_door_ter(
         return false;
     }
 
-    sounds::sound(
-        p, 6, sounds::sound_t::movement, _( "swish" ),
-        true, "open_door", ter.id.str() );
+    sound_event se;
+    se.origin = p;
+    se.volume = 50;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "swish" );
+    se.id = "open_door";
+    se.variant = ter.id.str();
+    sounds::sound( se );
     ter_set( p, ter.open );
 
     const auto is_schizo = std::visit( []<typename T>( T u ) -> bool {
@@ -4425,9 +4514,15 @@ bool map::open_door_furn(
         return false;
     }
 
-    sounds::sound(
-        p, 6, sounds::sound_t::movement, _( "swish" ),
-        true, "open_door", furn.id.str() );
+    sound_event se;
+    se.origin = p;
+    se.volume = 50;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "swish" );
+    se.id = "open_door";
+    se.variant = furn.id.str();
+    sounds::sound( se );
     furn_set( p, furn.open );
     return true;
 
@@ -4559,17 +4654,23 @@ bool map::close_door( const tripoint &p, const bool inside, const bool check_onl
 
     const auto &ter = this->ter( p ).obj();
     const auto &furn = this->furn( p ).obj();
+    sound_event se;
+    se.origin = p;
+    se.volume = 60;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "swish" );
+    se.id = "close_door";
+    se.variant = ter.id.str();
     if( ter.close && !furn.id ) {
         if( !check_only ) {
-            sounds::sound( p, 10, sounds::sound_t::movement, _( "swish" ), true,
-                           "close_door", ter.id.str() );
+            sounds::sound( se );
             ter_set( p, ter.close );
         }
         return true;
     } else if( furn.close ) {
         if( !check_only ) {
-            sounds::sound( p, 10, sounds::sound_t::movement, _( "swish" ), true,
-                           "close_door", furn.id.str() );
+            sounds::sound( se );
             furn_set( p, furn.close );
         }
         return true;
@@ -8844,6 +8945,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         build_outside_cache( z );
         build_transparency_cache( z );
         update_suspension_cache( z );
+        build_absorption_cache( z );
         seen_cache_dirty |= ( build_floor_cache( z ) && affects_seen_cache );
         const bool level_seen_dirty = get_cache( z ).seen_cache_dirty;
         seen_cache_dirty |= level_seen_dirty;
@@ -9429,6 +9531,7 @@ level_cache::level_cache()
 {
     const int map_dimensions = MAPSIZE_X * MAPSIZE_Y;
     transparency_cache_dirty.set();
+    absorption_cache_dirty.set();
     outside_cache_dirty = true;
     floor_cache_dirty = false;
     constexpr four_quadrants four_zeros( 0.0f );
@@ -9446,6 +9549,7 @@ level_cache::level_cache()
     std::fill_n( &visibility_cache[0][0], map_dimensions, lit_level::DARK );
     veh_in_active_range = false;
     std::fill_n( &veh_exists_at[0][0], map_dimensions, false );
+    std::fill_n( &absorption_cache[0][0], map_dimensions, 0 );
 }
 
 pathfinding_cache::pathfinding_cache()
@@ -9491,6 +9595,7 @@ void map::invalidate_map_cache( const int zlev )
         level_cache &ch = get_cache( zlev );
         ch.floor_cache_dirty = true;
         ch.transparency_cache_dirty.set();
+        ch.absorption_cache_dirty.set();
         ch.seen_cache_dirty = true;
         ch.outside_cache_dirty = true;
         ch.suspension_cache_dirty = true;

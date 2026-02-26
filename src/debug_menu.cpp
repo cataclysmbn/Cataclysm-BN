@@ -1828,9 +1828,14 @@ void debug()
             if( volume < 0 ) {
                 return;
             }
-
-            sounds::sound( *where, volume, sounds::sound_t::order, string_format( _( "DEBUG SOUND ( %d )" ),
-                           volume ) );
+            sound_event se;
+            se.origin = *where;
+            se.volume = volume;
+            se.category = sounds::sound_t::order;
+            se.description = string_format( _( "DEBUG SOUND ( %d )" ), volume );
+            se.id = "misc";
+            se.variant = "puff";
+            sounds::sound( se );
         }
         break;
 

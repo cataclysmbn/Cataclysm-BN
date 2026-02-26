@@ -27,6 +27,7 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "type_id.h"
+#include "faction.h"
 
 static const itype_id itype_petrified_eye( "petrified_eye" );
 
@@ -83,8 +84,17 @@ void timed_event::actualize()
             }
             // You could drop the flag, you know.
             if( g->u.has_amount( itype_petrified_eye, 1 ) ) {
-                sounds::sound( g->u.pos(), 60, sounds::sound_t::alert, _( "a tortured scream!" ), false, "shout",
-                               "scream_tortured" );
+                sound_event se;
+                se.origin = g->u.pos();
+                se.volume = 100;
+                se.category = sounds::sound_t::alert;
+                se.description = _( "a tortured scream!" );
+                se.from_monster = true;
+                se.monfaction = g->u.get_faction()->mon_faction;
+                se.faction = g->u.get_faction()->id;
+                se.id = "shout";
+                se.variant = "scream_tortured";
+                sounds::sound( se );
                 if( !g->u.is_deaf() ) {
                     add_msg( _( "The eye you're carrying lets out a tortured scream!" ) );
                     g->u.add_morale( MORALE_SCREAM, -15, 0, 30_minutes, 30_seconds );

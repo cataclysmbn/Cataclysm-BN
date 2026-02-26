@@ -40,9 +40,14 @@ void migo_nerve_cage_removal( map &m, const tripoint &p, bool spawn_damaged )
     } else {
         add_msg( _( "The nerve cluster collapses in on itself, to no discernible effect." ) );
     }
-    sounds::sound( p, 120, sounds::sound_t::combat,
-                   _( "a loud alien shriek reverberating through the structure!" ), true,
-                   "shout", "scream_tortured" );
+    sound_event se;
+    se.origin = p;
+    se.volume = 120;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "a loud alien shriek reverberating through the structure!" );
+    se.id = "shout";
+    se.variant = "scream_tortured";
+    sounds::sound( se );
     monster *const spawn = g->place_critter_around( mon_mi_go_myrmidon, p, 1 );
     if( spawn_damaged ) {
         spawn->set_hp( spawn->get_hp_max() / 2 );

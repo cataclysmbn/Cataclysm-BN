@@ -1112,6 +1112,12 @@ class item : public location_visitable<item>, public game_object<item>
         /*@}*/
 
         /**
+        * Returns the normal hearing protection of the item, in dB spl
+        * If advanced is true, returns the advanced (active) hearing protection of the item, in dB spl.
+        */
+        int get_hearing_protection( bool advanced = false ) const;
+
+        /**
          * Assuming that specified du hit the armor, reduce du based on the item's resistance to the
          * damage type. This will never reduce du.amount below 0.
          */

@@ -25,7 +25,8 @@
         "SOUND": "True",
         "TESTS": "True",
         "JSON_FORMAT": "ON",
-        "CMAKE_INSTALL_MESSAGE": "NEVER"
+        "CMAKE_INSTALL_MESSAGE": "NEVER",
+        "USE_TRACY": "ON"
       }
     },
     {
@@ -152,8 +153,8 @@
         "CMAKE_INCLUDE_PATH": "/usr/include/aarch64-linux-gnu"
       }
     },
-    { "name": "linux-slim-cross-aarch64", "inherits": ["linux-slim", "linux-cross-aarch64"] },
-    { "name": "linux-full-cross-aarch64", "inherits": ["linux-full", "linux-cross-aarch64"] },
+    { "name": "linux-slim-cross-aarch64", "inherits": [ "linux-slim", "linux-cross-aarch64" ] },
+    { "name": "linux-full-cross-aarch64", "inherits": [ "linux-full", "linux-cross-aarch64" ] },
     {
       "name": "dist-tiles",
       "binaryDir": "${sourceDir}/build",
@@ -285,7 +286,7 @@
     {
       "name": "windows-msvc-build",
       "configurePreset": "windows-tiles-sounds-x64-msvc",
-      "targets": ["cataclysm-bn-tiles", "cata_test-tiles", "json_formatter", "translations"],
+      "targets": [ "cataclysm-bn-tiles", "cata_test-tiles", "json_formatter", "translations" ],
       "description": "Build for Windows with tiles and sounds using MSVC."
     },
     {
@@ -321,13 +322,13 @@
     {
       "name": "dist-tiles",
       "configurePreset": "dist-tiles",
-      "targets": ["cataclysm-bn-tiles", "json_formatter", "translations"],
+      "targets": [ "cataclysm-bn-tiles", "json_formatter", "translations" ],
       "description": "Build for tiles distribution."
     },
     {
       "name": "dist-curses",
       "configurePreset": "dist-curses",
-      "targets": ["cataclysm-bn", "json_formatter", "translations"],
+      "targets": [ "cataclysm-bn", "json_formatter", "translations" ],
       "description": "Build for curses distribution."
     },
     {
@@ -339,19 +340,19 @@
     {
       "name": "lint",
       "configurePreset": "lint",
-      "targets": ["json_formatter"],
+      "targets": [ "json_formatter" ],
       "description": "Build formatting tools only."
     },
     {
       "name": "ci-curses",
       "configurePreset": "ci-curses",
-      "targets": ["cataclysm-bn", "cata_test"],
+      "targets": [ "cataclysm-bn", "cata_test" ],
       "description": "CI build for curses."
     },
     {
       "name": "ci-tiles",
       "configurePreset": "ci-tiles",
-      "targets": ["cataclysm-bn-tiles", "cata_test-tiles"],
+      "targets": [ "cataclysm-bn-tiles", "cata_test-tiles" ],
       "description": "CI build for tiles and sound."
     }
   ]

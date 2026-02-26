@@ -639,7 +639,18 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
             // Make a rather quiet sound, to alert any nearby monsters
             if( !is_quiet() ) { // check martial arts silence
                 //sound generated later
-                sounds::sound( pos(), 8, sounds::sound_t::combat, "whack!" );
+                sound_event se;
+                se.origin = pos();
+                se.volume = 50;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "whack!" );
+                se.from_player = is_avatar();
+                se.from_npc = !se.from_player;
+                se.faction = get_faction()->id;
+                se.monfaction = get_faction()->mon_faction;
+                se.id = "misc";
+                se.variant = "puff";
+                sounds::sound( se );
             }
             std::string material = "flesh";
             if( t.is_monster() ) {
@@ -2094,8 +2105,14 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
                                    weap.tname() );
         }
 
-        sounds::sound( pos(), 16, sounds::sound_t::combat, "Crack!", true, "smash_success",
-                       "smash_glass_contents" );
+        sound_event se;
+        se.origin = pos();
+        se.volume = 70;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "Crack!" );
+        se.id = "smash_success";
+        se.variant = "smash_glass_contents";
+        sounds::sound( se );
         // Dump its contents on the ground
         weap.contents.spill_contents( pos() );
         // Take damage

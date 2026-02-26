@@ -103,8 +103,14 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
 
         // TODO: Non-glass breaking
         // TODO: Wine glass breaking vs. entire sheet of glass breaking
-        sounds::sound( pt, 16, sounds::sound_t::combat, _( "glass breaking!" ), false, "bullet_hit",
-                       "hit_glass" );
+        sound_event se;
+        se.origin = pt;
+        se.volume = 65;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "glass breaking!" );
+        se.id = "bullet_hit";
+        se.variant = "hit_glass";
+        sounds::sound( se );
         return;
     }
 
@@ -170,10 +176,19 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
         }
 
         if( proj.has_effect( ammo_effect_HEAVY_HIT ) ) {
+            sound_event se;
+            se.origin = pt;
+            se.category = sounds::sound_t::combat;
+            se.id = "bullet_hit";
+            se.variant = "hit_wall";
             if( here.has_flag( flag_LIQUID, pt ) ) {
-                sounds::sound( pt, 10, sounds::sound_t::combat, _( "splash!" ), false, "bullet_hit", "hit_water" );
+                se.description = _( "splash!" );
+                se.volume = 60;
+                sounds::sound( se );
             } else {
-                sounds::sound( pt, 8, sounds::sound_t::combat, _( "thud." ), false, "bullet_hit", "hit_wall" );
+                se.description = _( "thud." );
+                se.volume = 60;
+                sounds::sound( se );
             }
             const trap &tr = here.tr_at( pt );
             if( tr.triggered_by_item( drop_item ) ) {

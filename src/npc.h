@@ -472,6 +472,14 @@ struct dangerous_sound {
     int volume = 0;
 };
 
+struct sound_to_warn_about {
+    std::string type;
+    time_duration duration = 10_minutes;
+    std::string name;
+    int range = -1;
+    tripoint danger_pos = tripoint_zero;
+};
+
 const direction npc_threat_dir[8] = { direction::NORTHWEST, direction::NORTH, direction::NORTHEAST, direction::EAST,
                                       direction::SOUTHEAST, direction::SOUTH, direction::SOUTHWEST, direction::WEST
                                     };
@@ -500,6 +508,11 @@ struct npc_short_term_cache {
     healing_options can_heal;
     // map of positions / type / volume of suspicious sounds
     std::vector<dangerous_sound> sound_alerts;
+    // Vector of sounds to warn or complain about on NPC's turn.
+    // This is so NPCs complain during their turn not the apply sounds to NPC AI stage
+    // Which can cause other NPCs to complain about the NPC complaining, etc.
+    // This is cleared at the end of every turn.
+    std::vector<sound_to_warn_about> warn_about_queue;
     // current sound position being investigated
     tripoint s_abs_pos;
     // number of times we haven't moved when investigating a sound
@@ -1008,8 +1021,7 @@ class npc : public player
 
         int calc_spell_training_cost( bool knows, int difficulty, int level );
 
-        void handle_sound( sounds::sound_t priority, const std::string &description,
-                           int heard_volume, const tripoint &spos );
+        void handle_sound( const short heard_vol, sound_event sound );
 
         /* shift() works much like monster::shift(), and is called when the player moves
          * from one submap to an adjacent submap.  It updates our position (shifting by

@@ -1157,8 +1157,14 @@ void iexamine::cardreader_foodplace( player &p, const tripoint &examp )
         if( open ) {
             add_msg( _( "You press your face on the reader." ) );
             add_msg( m_good, _( "The nearby doors are unlocked." ) );
-            sounds::sound( examp, 6, sounds::sound_t::electronic_speech,
-                           _( "\"Hello Foodperson.  Welcome home.\"" ), true, "speech", "welcome" );
+            sound_event se;
+            se.origin = examp;
+            se.volume = 50;
+            se.category = sounds::sound_t::electronic_speech;
+            se.description =  _( "\"Hello Foodperson.  Welcome home.\"" );
+            se.id = "speech";
+            se.variant = "welcome";
+            sounds::sound( se );
         } else {
             add_msg( _( "The nearby doors are already unlocked." ) );
             if( query_yn( _( "Lock doors?" ) ) ) {
@@ -1175,13 +1181,23 @@ void iexamine::cardreader_foodplace( player &p, const tripoint &examp )
         }
     } else if( p.has_amount( itype_id( "foodperson_mask" ), 1 ) ||
                p.has_amount( itype_id( "foodperson_mask_on" ), 1 ) ) {
-        sounds::sound( examp, 6, sounds::sound_t::electronic_speech,
-                       _( "\"FOODPERSON DETECTED.  Please make yourself presentable.\"" ), true,
-                       "speech", "welcome" );
+        sound_event se;
+        se.origin = examp;
+        se.volume = 50;
+        se.category = sounds::sound_t::electronic_speech;
+        se.description = _( "\"FOODPERSON DETECTED.  Please make yourself presentable.\"" );
+        se.id = "speech";
+        se.variant = "welcome";
+        sounds::sound( se );
     } else {
-        sounds::sound( examp, 6, sounds::sound_t::electronic_speech,
-                       _( "\"Your face is inadequate.  Please go away.\"" ), true,
-                       "speech", "welcome" );
+        sound_event se;
+        se.origin = examp;
+        se.volume = 50;
+        se.category = sounds::sound_t::electronic_speech;
+        se.description = _( "\"Your face is inadequate.  Please go away.\"" );
+        se.id = "speech";
+        se.variant = "welcome";
+        sounds::sound( se );
         if( query_yn( _( "Attempt to hack this card-reader?" ) ) ) {
             try_start_hacking( p, examp );
         }
@@ -1885,8 +1901,14 @@ void iexamine::pedestal_wyrm( player &p, const tripoint &examp )
                 }
             }
 
-            sounds::sound( examp, 80, sounds::sound_t::combat, _( "an ominous grinding noise…" ), true,
-                           "misc", "stones_grinding" );
+            sound_event se;
+            se.origin = examp;
+            se.volume = 100;
+            se.category = sounds::sound_t::combat;
+            se.description = _( "an ominous grinding noise…" );
+            se.id = "misc";
+            se.variant = "stones_grinding";
+            sounds::sound( se );
             add_msg( _( "The pedestal sinks into the ground…" ) );
             here.ter_set( examp, t_rock_floor );
             g->timed_events.add( TIMED_EVENT_SPAWN_WYRMS, calendar::turn + rng( 30_seconds, 60_seconds ) );
@@ -4453,7 +4475,14 @@ void iexamine::recycle_compactor( player &, const tripoint &examp )
     // produce outputs
     double recover_factor = rng( 6, 9 ) / 10.0;
     sum_weight = sum_weight * recover_factor;
-    sounds::sound( examp, 80, sounds::sound_t::combat, _( "Ka-klunk!" ), true, "tool", "compactor" );
+    sound_event se;
+    se.origin = examp;
+    se.volume = 80;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "Ka-klunk!" );
+    se.id = "tool";
+    se.variant = "compactor";
+    sounds::sound( se );
     bool out_desired = false;
     bool out_any = false;
     for( auto it = m.compacts_into().begin() + o_idx; it != m.compacts_into().end(); ++it ) {
@@ -5389,8 +5418,14 @@ void iexamine::pay_gas( player &p, const tripoint &examp )
             return;
         }
 
-        sounds::sound( p.pos(), 6, sounds::sound_t::activity, _( "Glug Glug Glug" ), true, "tool",
-                       "gaspump" );
+        sound_event se;
+        se.origin = p.pos();
+        se.volume = 50;
+        se.category = sounds::sound_t::activity;
+        se.description = _( "Glug Glug Glug" );
+        se.id = "tool";
+        se.variant = "gaspump";
+        sounds::sound( se );
 
         int cost = liters * pricePerUnit;
         money -= cost;
@@ -5419,8 +5454,14 @@ void iexamine::pay_gas( player &p, const tripoint &examp )
                 uistate.ags_pay_gas_selected_pump );
         int amount = pGasPump ? fromPumpFuel( pTank, *pGasPump ) : 0;
         if( amount >= 0 ) {
-            sounds::sound( p.pos(), 6, sounds::sound_t::activity, _( "Glug Glug Glug" ), true, "tool",
-                           "gaspump" );
+            sound_event se;
+            se.origin = p.pos();
+            se.volume = 50;
+            se.category = sounds::sound_t::activity;
+            se.description = _( "Glug Glug Glug" );
+            se.id = "tool";
+            se.variant = "gaspump";
+            sounds::sound( se );
             cashcard->charges += amount * pricePerUnit / 1000.0f;
             add_msg( m_info, _( "Your cash cards now hold %s." ),
                      format_money( p.charges_of( itype_cash_card ) ) );
@@ -6547,13 +6588,29 @@ void iexamine::cloning_vat_finalize( const tripoint &examp, const time_point & )
         detached_ptr<item> spawned_item = item::spawn( chosen_id, calendar::turn );
         here.add_item( examp, std::move( spawned_item ) );
 
-        sounds::sound( examp, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+        // sounds::sound( examp, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+        sound_event se;
+        se.origin = examp;
+        se.volume = 50;
+        se.category = sounds::sound_t::alarm;
+        se.description = _( "beep!" );
+        se.id = "misc";
+        se.variant = "beep";
+        sounds::sound( se );
 
         return;
     }
 
     // success: spawn the completed artificial womb
-    sounds::sound( examp, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
+    // sounds::sound( examp, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
+    sound_event se;
+    se.origin = examp;
+    se.volume = 50;
+    se.category = sounds::sound_t::alarm;
+    se.description = _( "ding!" );
+    se.id = "misc";
+    se.variant = "ding";
+    sounds::sound( se );
     detached_ptr<item> spawned_embryo = item::spawn( itype_embryo, calendar::turn );
     spawned_embryo->set_var( "place_monster_override", developing_embryo.get_var( "specimen_sample" ) );
     spawned_embryo->set_var( "place_monster_override_name",
@@ -6933,7 +6990,15 @@ void iexamine::cloning_vat_examine( player &p, const tripoint &examp )
             return;
         }
 
-        sounds::sound( examp, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+        // sounds::sound( examp, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+        sound_event se;
+        se.origin = examp;
+        se.volume = 50;
+        se.category = sounds::sound_t::alarm;
+        se.description = _( "beep!" );
+        se.id = "misc";
+        se.variant = "beep";
+        sounds::sound( se );
 
         if( items_here.size() > 0 ) {
             items_here.erase( items_here.begin() );  // delete all items here

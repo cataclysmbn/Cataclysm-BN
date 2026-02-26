@@ -265,12 +265,18 @@ static void eff_fun_hallu( player &u, effect &it )
             ///\EFFECT_STR_NPC increases volume of hallucination sounds (NEGATIVE)
 
             ///\EFFECT_INT_NPC decreases volume of hallucination sounds
-            int loudness = 20 + u.str_cur - u.int_cur;
-            loudness = ( loudness > 5 ? loudness : 5 );
-            loudness = ( loudness < 30 ? loudness : 30 );
-            sounds::sound( u.pos(), loudness, sounds::sound_t::speech, _( random_entry_ref( npc_hallu ) ),
-                           false, "speech",
-                           loudness < 15 ? ( u.male ? "NPC_m" : "NPC_f" ) : ( u.male ? "NPC_m_loud" : "NPC_f_loud" ) );
+            int loudness = 60 + u.str_cur - u.int_cur;
+            loudness = ( loudness > 30 ? loudness : 30 );
+            loudness = ( loudness < 90 ? loudness : 90 );
+            sound_event se;
+            se.origin = u.pos();
+            se.volume = loudness;
+            se.category = sounds::sound_t::speech;
+            se.description = _( random_entry_ref( npc_hallu ) );
+            se.id = "speech";
+            se.variant = loudness < 70 ? ( u.male ? "NPC_m" : "NPC_f" ) : ( u.male ? "NPC_m_loud" :
+                         "NPC_f_loud" );
+            sounds::sound( se );
         }
     } else if( dur == peakTime ) {
         // Visuals start
@@ -797,7 +803,15 @@ void Character::hardcoded_effects( effect &it )
             } else {
                 sfx = _( "VRMMMMMM" );
             }
-            sounds::sound( pos(), volume, sounds::sound_t::activity, sfx, false, "humming", "machinery" );
+            sound_event se;
+            se.origin = pos();
+            se.volume = volume;
+            se.category = sounds::sound_t::activity;
+            se.description = sfx;
+            se.id = "humming";
+            se.variant = "machinery";
+
+            sounds::sound( se );
         }
     } else if( id == effect_asthma ) {
         if( has_effect( effect_adrenaline ) || has_effect( effect_datura ) ) {
@@ -1275,15 +1289,27 @@ void Character::hardcoded_effects( effect &it )
                     it.mod_duration( 10_minutes );
                 } else if( dur == 2_turns ) {
                     // let the sound code handle the wake-up part
-                    sounds::sound( pos(), 16, sounds::sound_t::alarm, _( "beep-beep-beep!" ), false, "tool",
-                                   "alarm_clock" );
+                    sound_event se;
+                    se.origin = pos();
+                    se.volume = 70;
+                    se.category = sounds::sound_t::alarm;
+                    se.description = _( "beep-beep-beep!" );
+                    se.id = "tool";
+                    se.variant = "alarm_clock";
+                    sounds::sound( se );
                 }
             }
         } else {
             if( dur == 1_turns ) {
                 if( is_avatar() && has_alarm_clock() ) {
-                    sounds::sound( pos(), 16, sounds::sound_t::alarm, _( "beep-beep-beep!" ), false, "tool",
-                                   "alarm_clock" );
+                    sound_event se;
+                    se.origin = pos();
+                    se.volume = 70;
+                    se.category = sounds::sound_t::alarm;
+                    se.description = _( "beep-beep-beep!" );
+                    se.id = "tool";
+                    se.variant = "alarm_clock";
+                    sounds::sound( se );
                     const std::string alarm = _( "Your alarm is going off." );
                     g->cancel_activity_or_ignore_query( distraction_type::alert, alarm );
                     add_msg( _( "Your alarm went off." ) );

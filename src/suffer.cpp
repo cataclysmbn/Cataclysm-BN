@@ -1063,8 +1063,19 @@ void Character::suffer_from_other_mutations()
 
     if( has_active_mutation( trait_WINGS_INSECT ) ) {
         //~Sound of buzzing Insect Wings
-        sounds::sound( pos(), 10, sounds::sound_t::movement, _( "BZZZZZ" ), false, "misc",
-                       "insect_wings" );
+        sound_event se;
+        se.origin = pos();
+        se.volume = 60;
+        se.category = sounds::sound_t::movement;
+        se.movement_noise = true;
+        se.description = _( "BZZZZZ" );
+        se.from_player = is_avatar();
+        se.from_npc = !se.from_player;
+        se.id = "misc";
+        se.variant = "insect_wings";
+        se.faction = get_faction()->id;
+        se.monfaction = get_faction()->mon_faction;
+        sounds::sound( se );
     }
 
     bool wearing_shoes = is_wearing_shoes( side::LEFT ) || is_wearing_shoes( side::RIGHT );
@@ -1321,7 +1332,16 @@ void Character::suffer_from_bad_bionics()
             add_msg_if_player( m_bad, _( "You feel your faulty bionic shuddering." ) );
             sfx::play_variant_sound( "bionics", "elec_blast_muffled", 100 );
         }
-        sounds::sound( pos(), 60, sounds::sound_t::movement, _( "Crackle!" ) ); //sfx above
+        sound_event se;
+        se.origin = pos();
+        se.volume = 90;
+        se.category = sounds::sound_t::movement;
+        se.movement_noise = true;
+        se.description = _( "Crackle!" );
+        se.from_player = is_avatar();
+        se.from_npc = !se.from_player;
+        se.id = "explosion";
+        sounds::sound( se ); //sfx above
     }
     if( has_bionic( bio_power_weakness ) && has_max_power() &&
         get_power_level() >= get_max_power_level() * .75 ) {

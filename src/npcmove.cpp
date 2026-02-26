@@ -668,6 +668,7 @@ void npc::regen_ai_cache()
     ai_cache.total_danger = 0.0f;
     ai_cache.my_weapon_value = npc_ai::wielded_value( *this );
     ai_cache.dangerous_explosives = find_dangerous_explosives();
+    ai_cache.warn_about_queue.clear();
 
     assess_danger();
     if( old_assessment > NPC_DANGER_VERY_LOW && ai_cache.danger_assessment <= 0 ) {
@@ -706,6 +707,13 @@ void npc::move()
         set_attitude( NPCATT_FLEE_TEMP );  // Only run for so many hours
     } else if( attitude == NPCATT_FLEE_TEMP && !has_effect( effect_npc_flee_player ) ) {
         set_attitude( NPCATT_NULL );
+    }
+    if( !ai_cache.warn_about_queue.empty() ) {
+        // Sound off about sound warnings right before we regenerate the AI cache, but after we apply sounds to NPC AIs.
+        for( auto &warning_sound : ai_cache.warn_about_queue ) {
+            warn_about( warning_sound.type, warning_sound.duration, warning_sound.name, warning_sound.range,
+                        warning_sound.danger_pos );
+        }
     }
     regen_ai_cache();
     adjust_power_cbms();
@@ -4478,6 +4486,7 @@ static std::string distance_string( int range )
     }
 }
 
+// This should really be in npctalk.cpp, along with complain_about and complain
 void npc::warn_about( const std::string &type, const time_duration &d, const std::string &name,
                       int range, const tripoint &danger_pos )
 {

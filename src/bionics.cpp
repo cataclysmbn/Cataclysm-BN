@@ -759,8 +759,18 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
     } else if( bio.id == bio_resonator ) {
         add_msg_activate();
         //~Sound of a bionic sonic-resonator shaking the area
-        sounds::sound( pos(), 30, sounds::sound_t::combat, _( "VRRRRMP!" ), false, "bionic",
-                       static_cast<std::string>( bio_resonator ) );
+        sound_event se;
+        se.origin = pos();
+        se.volume = 80;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "VRRRRMP!" );
+        se.from_player = is_avatar();
+        se.from_npc = !se.from_player;
+        se.faction = get_faction()->id;
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "bionic";
+        se.variant = static_cast<std::string>( bio_resonator );
+        sounds::sound( se );
         for( const tripoint &bashpoint : here.points_in_radius( pos(), 1 ) ) {
             here.bash( bashpoint, 110 );
             // Multibash effect, so that doors &c will fall
@@ -875,8 +885,18 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         add_msg_activate();
         add_msg_if_player( m_good, _( "Your muscles hiss as hydraulic strength fills them!" ) );
         //~ Sound of hissing hydraulic muscle! (not quite as loud as a car horn)
-        sounds::sound( pos(), 19, sounds::sound_t::activity, _( "HISISSS!" ), false, "bionic",
-                       static_cast<std::string>( bio_hydraulics ) );
+        sound_event se;
+        se.origin = pos();
+        se.volume = 65;
+        se.category = sounds::sound_t::activity;
+        se.description = _( "HISISSS!" );
+        se.from_player = is_avatar();
+        se.from_npc = !se.from_player;
+        se.faction = get_faction()->id;
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "bionic";
+        se.variant = static_cast<std::string>( bio_hydraulics );
+        sounds::sound( se );
     } else if( bio.id == bio_water_extractor ) {
         bool no_target = true;
         bool extracted = false;
@@ -1775,8 +1795,18 @@ void Character::process_bionic( bionic &bio )
         }
     } else if( bio.id == bio_hydraulics ) {
         // Sound of hissing hydraulic muscle! (not quite as loud as a car horn)
-        sounds::sound( pos(), 19, sounds::sound_t::activity, _( "HISISSS!" ), false, "bionic",
-                       static_cast<std::string>( bio_hydraulics ) );
+        sound_event se;
+        se.origin = pos();
+        se.volume = 65;
+        se.category = sounds::sound_t::activity;
+        se.description = _( "HISISSS!" );
+        se.from_player = is_avatar();
+        se.from_npc = !se.from_player;
+        se.faction = get_faction()->id;
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "bionic";
+        se.variant = static_cast<std::string>( bio_hydraulics );
+        sounds::sound( se );
     } else if( bio.id == bio_nanobots ) {
         int threshold_kcal = bio.info().kcal_trigger > 0 ? 0.85f * max_stored_kcal() +
                              bio.info().kcal_trigger : 0;

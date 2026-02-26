@@ -1129,9 +1129,13 @@ void vehicle::drive_to_local_target( const tripoint &target, bool follow_protoco
     }
     if( stop ) {
         if( autopilot_on ) {
-            sounds::sound( global_pos3(), 30, sounds::sound_t::alert,
-                           string_format( _( "the %s emitting a beep and saying \"Obstacle detected!\"" ),
-                                          name ) );
+            sound_event se;
+            se.origin = global_pos3();
+            se.volume = 60;
+            se.category = sounds::sound_t::alert;
+            se.description = string_format( _( "the %s emitting a beep and saying \"Obstacle detected!\"" ),
+                                            name );
+            sounds::sound( se );
         }
         stop_autodriving();
         return;
@@ -1464,11 +1468,18 @@ void vehicle::backfire( const int e ) const
 {
     const int power = part_vpower_w( engines[e], true );
     const tripoint pos = global_part_pos3( engines[e] );
-    sounds::sound( pos, 40 + power / 10000, sounds::sound_t::movement,
-                   // single space after the exclaimation mark because it does not end the sentence
-                   //~ backfire sound
-                   string_format( _( "a loud BANG! from the %s" ), // NOLINT(cata-text-style)
-                                  parts[ engines[ e ] ].name() ), true, "vehicle", "engine_backfire" );
+    sound_event se;
+    se.origin = pos;
+    se.volume = 40 + power / 10000;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = string_format( _( "a loud BANG! from the %s" ), // NOLINT(cata-text-style)
+                                    parts[engines[e]].name() );
+    // single space after the exclaimation mark because it does not end the sentence
+    //~ backfire sound
+    se.id = "vehicle";
+    se.variant = "engine_bckfire";
+    sounds::sound( se );
 }
 
 const vpart_info &vehicle::part_info( int index, bool include_removed ) const
@@ -4408,8 +4419,8 @@ void vehicle::noise_and_smoke( int load, time_duration time )
     if( is_flying && has_part( VPFLAG_ROTOR ) ) {
         noise *= 2;
     }
-    // Cap engine noise to avoid deafening.
-    noise = std::min( noise, 100.0 );
+    // Cap engine noise to avoid deafening. Deafening can occour at or above 140dBspl.
+    noise = std::min( noise, 139.0 );
     // Even a vehicle with engines off will make noise traveling at high speeds
     noise = std::max( noise, std::fabs( velocity / 224.0 ) );
     int lvl = 0;
@@ -4421,8 +4432,14 @@ void vehicle::noise_and_smoke( int load, time_duration time )
     add_msg( m_debug, "VEH NOISE final: %d", static_cast<int>( noise ) );
     vehicle_noise = static_cast<unsigned char>( noise );
     // TODO: other noises for non-rotor aircraft?
-    sounds::sound( global_pos3(), noise, sounds::sound_t::movement,
-                   _( has_part( VPFLAG_ROTOR ) ? heli_noise : sounds[lvl].first ), true );
+    sound_event se;
+    se.origin = global_pos3();
+    se.volume = noise;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( is_rotorcraft() ? heli_noise : sounds[lvl].first );
+
+    sounds::sound( se );
 }
 
 int vehicle::wheel_area() const

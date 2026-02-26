@@ -10,6 +10,7 @@
 #include <list>
 #include <memory>
 #include <ostream>
+#include <string>
 #include <unordered_map>
 
 #include "avatar.h"
@@ -51,6 +52,7 @@
 #include "tileray.h"
 #include "translations.h"
 #include "trap.h"
+#include "type_id.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
@@ -296,12 +298,14 @@ void monster::unset_dest()
 
 // Move towards p for f more turns--generally if we hear a sound there
 // "Stupid" movement; "if (wander_pos.x < posx) posx--;" etc.
+// If a louder sound then current wander force is heard, head to that instead.
 void monster::wander_to( const tripoint &p, int f )
 {
-    wander_pos = p;
-    wandf = f;
+    if( f > wandf ) {
+        wander_pos = p;
+        wandf = f;
+    }
 }
-
 float monster::rate_target( Creature &c, float best, bool smart ) const
 {
     const auto d = rl_dist_fast( pos(), c.pos() );
@@ -1256,9 +1260,15 @@ void monster::nursebot_operate( player *dragged_foe )
             add_effect( effect_countdown, 2_turns );
             add_msg( m_bad, _( "The %s produces a syringe full of some translucent liquid." ), name() );
         } else if( g->critter_at( goal ) != nullptr && has_effect( effect_dragging ) ) {
-            sounds::sound( pos(), 8, sounds::sound_t::electronic_speech,
-                           string_format(
-                               _( "a soft robotic voice say, \"Please step away from the autodoc, this patient needs immediate care.\"" ) ) );
+            sound_event se;
+            se.origin = pos();
+            se.volume = 60;
+            se.category = sounds::sound_t::electronic_speech;
+            se.from_monster = true;
+            se.description = string_format(
+                                 _( "a soft robotic voice say, \"Please step away from the autodoc, this patient needs immediate care.\"" ) );
+            se.monfaction = faction.id();
+            sounds::sound( se );
             // TODO: Make it able to push NPC/player
             push_to( goal, 4, 0 );
         }
@@ -1286,45 +1296,58 @@ void monster::nursebot_operate( player *dragged_foe )
 
 // footsteps will determine how loud a monster's normal movement is
 // and create a sound in the monsters location when they move
+// // Values converted from tiles to dB
 void monster::footsteps( const tripoint &p )
 {
     if( made_footstep ) {
         return;
     }
     made_footstep = true;
-    int volume = 6; // same as player's footsteps
+    short volume = 50; // same as player's footsteps
     if( flies() ) {
         volume = 0;    // Flying monsters don't have footsteps!
     }
     if( digging() ) {
-        volume = 10;
+        volume = 60;
     }
     switch( type->size ) {
         case creature_size::tiny:
             volume = 0; // No sound for the tinies
             break;
         case creature_size::small:
-            volume /= 3;
+            volume -= 10;
             break;
         case creature_size::medium:
             break;
         case creature_size::large:
-            volume *= 1.5;
+            volume += 10;
             break;
         case creature_size::huge:
-            volume *= 2;
+            volume += 20;
             break;
         default:
             break;
     }
     if( has_flag( MF_LOUDMOVES ) ) {
-        volume += 6;
+        volume += 10;
     }
     if( volume == 0 ) {
         return;
     }
-    int dist = rl_dist( p, g->u.pos() );
-    sounds::add_footstep( p, volume, dist, this, type->get_footsteps() );
+    const std::string &desc = type->get_footsteps();
+    const mfaction_str_id &monster_faction = this->faction.id();
+    sound_event se;
+    se.origin = p;
+    se.volume = volume;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = desc;
+    se.from_monster = true;
+    se.from_npc = false;
+    se.from_player = false;
+    se.monfaction = monster_faction;
+
+    sounds::sound( se );
     return;
 }
 

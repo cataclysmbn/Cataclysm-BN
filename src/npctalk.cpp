@@ -1,3 +1,4 @@
+#include "creature.h"
 #include "dialogue.h" // IWYU pragma: associated
 
 #include <algorithm>
@@ -870,32 +871,70 @@ void game::chat()
     u.moves -= 100;
 }
 
-void npc::handle_sound( const sounds::sound_t spriority, const std::string &description,
-                        int heard_volume, const tripoint &spos )
+void npc::handle_sound( const short heard_vol, sound_event sound )
 {
-    map &here = get_map();
-    const tripoint s_abs_pos = here.getabs( spos );
-    const tripoint my_abs_pos = here.getabs( pos() );
 
-    add_msg( m_debug, "%s heard '%s', priority %d at volume %d from %d:%d, my pos %d:%d",
-             disp_name(), description, static_cast<int>( spriority ), heard_volume,
+    // Remember that our heard volume is in milli-decibels spl
+    // Only sounds that are marked as being from a monster/npc/the player are passed to handle_sound, so we have a source creature.
+    map &here = get_map();
+    const auto &spos = sound.origin;
+
+    // What entity is the source of the sound? We effectively have two logic cases, source is a monster or source is a "player" i.e., the player character or an npc.
+    Creature *const critter = g->critter_at<Creature>( spos );
+    // If we get passed a sound and we have no critter, then its an actual enviornmental sound or said critter is dead. Jump out either way.
+    // If a sound is set to ambient but was played from a creatures tile, we blame it on the creature because we are evil.
+    if( !critter ) {
+        return;
+    }
+
+    const tripoint s_abs_pos = here.getabs( sound.origin );
+    const tripoint my_abs_pos = here.getabs( pos() );
+    const std::string &description = sound.description.empty() ? _( "a noise" ) : sound.description;
+
+    const auto &source_monster = sound.from_monster;
+    const auto &source_player = sound.from_player;
+    const auto &source_npc = sound.from_npc;
+
+    add_msg( m_debug, "%s heard '%s', priority %d at volume %d mdB from %d:%d, my pos %d:%d",
+             disp_name(), description, static_cast<int>( sound.category ), heard_vol,
              s_abs_pos.x, s_abs_pos.y, my_abs_pos.x, my_abs_pos.y );
 
-    bool player_ally = get_player_character().pos() == spos && is_player_ally();
-    player *const sound_source = g->critter_at<player>( spos );
-    bool npc_ally = sound_source && sound_source->is_npc() && is_ally( *sound_source );
 
-    if( ( player_ally || npc_ally ) && spriority == sounds::sound_t::order ) {
+    // Is the player the source of the sound, and is the NPC an ally of the player?
+    const bool player_ally = ( ( source_player || ( get_player_character().pos() == sound.origin ) ) &&
+                               is_player_ally() ) ;
+
+    // Only reference this in cases where we know the sound source is either the player or an NPC
+    player *npc_critter = dynamic_cast<player *>( critter );
+
+    // Is the sound source an NPC, and is the source NPC an ally of the hearing NPC?
+    const bool npc_ally = ( source_npc ) ? ( is_ally( *npc_critter ) ) : false;
+
+    // Is the sound source a monster, and is said monster an ally of the hearing NPC?
+
+    // Grab the attitude of our monster or set it to null if it the source is not a monster.
+    const monster_attitude mon_att = ( source_monster ) ? ( critter->as_monster()->attitude(
+                                         this->as_character() ) ) : MATT_NULL;
+
+    // NPCs should generally ignore low priority sounds from non-hostile monsters such as dogs
+    const bool mon_nonhostile = ( source_monster ) ? ( mon_att != MATT_ATTACK ) : false;
+
+    if( ( player_ally || npc_ally ) && sound.category == sounds::sound_t::order ) {
         say( "<acknowledged>" );
     }
 
+    // Dont react to a sound if the NPC sees the source. Hallucinations dont react to sound.
     if( sees( spos ) || is_hallucination() ) {
         return;
     }
+
+    // We have 2 main cases: Sound came from a monster, and sound came from a player derived entity (player character and NPCs)
+    // We split the player derived entity case internally for player character source and NPC source.
+
     // ignore low priority sounds if the NPC "knows" it came from a friend.
     // TODO: NPC will need to respond to talking noise eventually
     // but only for bantering purposes, not for investigating.
-    if( spriority < sounds::sound_t::alarm ) {
+    if( sound.category < sounds::sound_t::alarm ) {
         if( player_ally ) {
             add_msg( m_debug, "Allied NPC ignored same faction %s", name );
             return;
@@ -904,19 +943,30 @@ void npc::handle_sound( const sounds::sound_t spriority, const std::string &desc
             add_msg( m_debug, "NPC ignored same faction %s", name );
             return;
         }
-    }
-    // discount if sound source is player, or seen by player,
-    // and listener is friendly and sound source is combat or alert only.
-    if( spriority < sounds::sound_t::alarm && get_avatar().sees( spos ) ) {
-        if( is_player_ally() ) {
-            add_msg( m_debug, "NPC %s ignored low priority noise that player can see", name );
-            return;
-            // discount if sound source is player, or seen by player,
-            // listener is neutral and sound type is worth investigating.
-        } else if( spriority < sounds::sound_t::destructive_activity &&
-                   get_attitude_group( get_attitude() ) != attitude_group::hostile ) {
+        if( mon_nonhostile ) {
+            add_msg( m_debug, "NPC ignored non-hostile monster" );
             return;
         }
+        // discount if sound source is player, or seen by player,
+        // and listener is friendly and sound source is combat or alert only.
+        if( is_player_ally() ) {
+            // Moved the sees check behind a relevant filter as its a bit more expensive.
+            if( get_avatar().sees( sound.origin ) ) {
+                add_msg( m_debug, "NPC %s ignored low priority noise that player can see", name );
+                return;
+                // discount if sound source is player, or seen by player,
+                // listener is neutral and sound type is worth investigating.
+            }
+        }
+        // If the NPC is not hostile to the person and they are not breaking something, ignore the noise.
+        if( ( source_npc || source_player ) ) {
+            // Only check the attitude group if the sound source is a player.h derived entity.
+            if( sound.category < sounds::sound_t::destructive_activity &&
+                get_attitude_group( get_attitude() ) != attitude_group::hostile ) {
+                return;
+            }
+        }
+
     }
     // patrolling guards will investigate more readily than stationary NPCS
     int investigate_dist = 10;
@@ -926,38 +976,103 @@ void npc::handle_sound( const sounds::sound_t spriority, const std::string &desc
     if( rules.has_flag( ally_rule::ignore_noise ) ) {
         investigate_dist = 0;
     }
-    if( ai_cache.total_danger < 1.0f ) {
-        if( spriority == sounds::sound_t::movement && !in_vehicle ) {
-            warn_about( "movement_noise", rng( 1, 10 ) * 1_minutes, description );
-        } else if( spriority > sounds::sound_t::movement ) {
-            if( ( spriority == sounds::sound_t::speech || spriority == sounds::sound_t::alert ||
-                  spriority == sounds::sound_t::order ) && sound_source &&
-                !has_faction_relationship( *sound_source, npc_factions::knows_your_voice ) ) {
-                warn_about( "speech_noise", rng( 1, 10 ) * 1_minutes );
-            } else if( spriority > sounds::sound_t::activity ) {
-                warn_about( "combat_noise", rng( 1, 10 ) * 1_minutes );
+
+
+    bool should_check = rl_dist( pos(), sound.origin ) < investigate_dist;
+    if( should_check ) {
+        const zone_manager &mgr = zone_manager::get_manager();
+        if( mgr.has( zone_type_npc_no_investigate, s_abs_pos, fac_id ) ) {
+            should_check = false;
+        } else if( mgr.has( zone_type_npc_investigate_only, my_abs_pos, fac_id ) &&
+                   !mgr.has( zone_type_npc_investigate_only, s_abs_pos, fac_id ) ) {
+            should_check = false;
+        }
+    }
+
+    // We always want to respond to allied combat sounds unless ignore noise is set or its in a no-invstigate zone.
+    // "No matter what you hear, what I say, do not open this door!"
+    if( investigate_dist > 0 && sound.category == sounds::sound_t::combat && ( player_ally ||
+            npc_ally || mon_nonhostile ) ) {
+        // We already know we dont see the sound, so we are going to warn about it as long as the source is an ally.
+        // Only set false if the monster is a source that is not our friend, just neutral.
+        bool should_reinforce = true;
+        if( mon_nonhostile ) {
+            if( mon_att != MATT_FRIEND && mon_att != MATT_FOLLOW && mon_att != MATT_FPASSIVE ) {
+                should_reinforce = false;
             }
-            bool should_check = rl_dist( pos(), spos ) < investigate_dist;
-            if( should_check ) {
-                const zone_manager &mgr = zone_manager::get_manager();
-                if( mgr.has( zone_type_npc_no_investigate, s_abs_pos, fac_id ) ) {
-                    should_check = false;
-                } else if( mgr.has( zone_type_npc_investigate_only, my_abs_pos, fac_id ) &&
-                           !mgr.has( zone_type_npc_investigate_only, s_abs_pos, fac_id ) ) {
-                    should_check = false;
+        }
+        if( should_reinforce && should_check ) {
+            sound_to_warn_about temp_warning;
+            temp_warning.type = "combat_noise";
+            temp_warning.duration = rng( 1, 10 ) * 1_minutes;
+            ai_cache.warn_about_queue.push_back( temp_warning );
+            add_msg( m_debug, "%s added noise at pos %d:%d", name, s_abs_pos.x, s_abs_pos.y );
+            dangerous_sound temp_sound;
+            temp_sound.abs_pos = s_abs_pos;
+            // Convert out of mdB spl to dB spl
+            temp_sound.volume = std::floor( 0.01 * heard_vol );
+            temp_sound.type = sound.category;
+            if( !ai_cache.sound_alerts.empty() ) {
+                if( ai_cache.sound_alerts.back().abs_pos != s_abs_pos ) {
+                    ai_cache.sound_alerts.push_back( temp_sound );
                 }
+            } else {
+                ai_cache.sound_alerts.push_back( temp_sound );
             }
+        }
+    } else if( ai_cache.total_danger < 1.0f ) {
+
+        sound_to_warn_about temp_warning;
+        temp_warning.duration = rng( 1, 10 ) * 1_minutes;
+
+        if( sound.category == sounds::sound_t::movement && !in_vehicle ) {
+
+            // At this point we know that the movement sound is from a hostile creature, npc, or player.
+            temp_warning.type = "movement_noise";
+            temp_warning.name = description;
+            ai_cache.warn_about_queue.push_back( temp_warning );
+
+        } else if( sound.category > sounds::sound_t::movement ) {
+
+            if( ( sound.category == sounds::sound_t::speech || sound.category == sounds::sound_t::alert ||
+                  sound.category == sounds::sound_t::order ) ) {
+
+                temp_warning.type = "speech_noise";
+                if( source_npc || source_player ) {
+
+                    if( !has_faction_relationship( *npc_critter, npc_factions::knows_your_voice ) ) {
+                        //The faction does not know the voice of the NPC in question, so alert.
+                        ai_cache.warn_about_queue.push_back( temp_warning );
+                    }
+                } else if( source_monster && !mon_nonhostile ) {
+
+                    // Report if a hostile monster makes speech noise as well.
+                    ai_cache.warn_about_queue.push_back( temp_warning );
+                }
+
+            } else if( sound.category > sounds::sound_t::activity ) {
+
+                temp_warning.type = "combat_noise";
+                ai_cache.warn_about_queue.push_back( temp_warning );
+            }
+
             if( should_check ) {
+
                 add_msg( m_debug, "%s added noise at pos %d:%d", name, s_abs_pos.x, s_abs_pos.y );
                 dangerous_sound temp_sound;
                 temp_sound.abs_pos = s_abs_pos;
-                temp_sound.volume = heard_volume;
-                temp_sound.type = spriority;
+                // Convert out of mdB spl to dB spl
+                temp_sound.volume = std::floor( 0.01 * heard_vol );
+                temp_sound.type = sound.category;
                 if( !ai_cache.sound_alerts.empty() ) {
+
                     if( ai_cache.sound_alerts.back().abs_pos != s_abs_pos ) {
+
                         ai_cache.sound_alerts.push_back( temp_sound );
                     }
+
                 } else {
+
                     ai_cache.sound_alerts.push_back( temp_sound );
                 }
             }

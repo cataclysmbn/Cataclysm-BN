@@ -630,8 +630,14 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
 
     if( not_targeted || not_laser_locked ) {
         if( targeting_volume > 0 && !targeting_sound.empty() ) {
-            sounds::sound( z.pos(), targeting_volume, sounds::sound_t::alarm,
-                           _( targeting_sound ) );
+            sound_event se;
+            se.origin = z.pos();
+            se.volume = targeting_volume;
+            se.category = sounds::sound_t::alarm;
+            se.description = _( targeting_sound );
+            se.from_monster = true;
+            se.monfaction = z.faction.id();
+            sounds::sound( se );
         }
         if( not_targeted ) {
             z.add_effect( effect_targeted, time_duration::from_turns( targeting_timeout ) );
@@ -673,7 +679,14 @@ void gun_actor::shoot( monster &z, const tripoint &target, const gun_mode_id &mo
 
     if( !gun->ammo_sufficient() ) {
         if( !no_ammo_sound.empty() ) {
-            sounds::sound( z.pos(), 10, sounds::sound_t::combat, _( no_ammo_sound ) );
+            sound_event se;
+            se.origin = z.pos();
+            se.volume = 60;
+            se.category = sounds::sound_t::combat;
+            se.description = _( no_ammo_sound );
+            se.from_monster = true;
+            se.monfaction = z.faction.id();
+            sounds::sound( se );
         }
         return;
     }

@@ -190,6 +190,7 @@
 #include "weather.h"
 #include "worldfactory.h"
 #include "location_vector.h"
+#include "monfaction.h"
 class computer;
 
 #if defined(TILES)
@@ -1583,13 +1584,22 @@ bool game::do_turn()
     perhaps_add_random_npc();
     process_voluntary_act_interrupt();
     process_activity();
+
+    // Sound information and is broken up into three main blocks: Player, Monsters, NPCs
+    // Player is special in that they are immediatly informed of the sounds they made on their turn for displayed sound marker purposes
+    // Each sound block is generally a map::cull_heard_sounds(), feeding the AI in question remaining sounds, and then moving said AI.
     if( !soundperf ) {
-        // Process NPC sound events before they move or they hear themselves talking
-        for( npc &guy : all_npcs() ) {
-            if( rl_dist( guy.pos(), u.pos() ) < MAX_VIEW_DISTANCE ) {
-                sounds::process_sound_markers( &guy );
-            }
-        }
+        // Process NPC sound events from the prior turn before they move or they hear themselves talking,
+        // to prevent an infinite react to sound loop as npcs can react and announce that they hear another npc, who was react-announcing that they heard another npc talking, etc. etc.
+        // NPCs check map::sound_caches for the relative volumes of sound_event(s) in their tile instead of referencing sound markers.
+        // for( npc &guy : all_npcs() ) {
+        //     if( rl_dist( guy.pos(), u.pos() ) < MAX_VIEW_DISTANCE ) {
+        //         sounds::process_sounds_npc( &guy );
+        //     }
+        // }
+
+        // Cull sounds that have been heard by . we need to do this three times per cycle, one instance is invoked in monmove()
+        m.cull_heard_sounds();
         sounds::process_sound_markers( &u );
 
         if( u.is_deaf() ) {
@@ -1606,11 +1616,12 @@ bool game::do_turn()
                 mon_info_update();
                 // Process any new sounds the player caused during their turn.
                 if( !soundperf ) {
-                    for( npc &guy : all_npcs() ) {
-                        if( rl_dist( guy.pos(), u.pos() ) < MAX_VIEW_DISTANCE ) {
-                            sounds::process_sound_markers( &guy );
-                        }
-                    }
+                    // NPCs get to hear sounds just before their turn, not twice.
+                    // for( npc &guy : all_npcs() ) {
+                    //     if( rl_dist( guy.pos(), u.pos() ) < MAX_VIEW_DISTANCE ) {
+                    //         sounds::process_sound_markers( &guy );
+                    //     }
+                    // }
                     sounds::process_sound_markers( &u );
                 }
                 if( !u.activity && !u.has_distant_destination() && uquit != QUIT_WATCH && wait_popup ) {
@@ -1677,7 +1688,11 @@ bool game::do_turn()
     grid_tracker_ptr->update( calendar::turn );
     fluid_grid::update( calendar::turn );
 
-    // Apply sounds from previous turn to monster and NPC AI.
+    // Cull sounds that have been heard by all AIs. Should nominally catch all sounds made by the player on the prior turn.
+    m.cull_heard_sounds();
+    // Apply sounds from previous turn to monster AI.
+    // Because of turn order wierdness, we apply active sounds to NPC AI as part of monmove() just before NPCs act so that they can respond to sounds that monsters make .
+    // Process sounds marks all sounds in the sound_caches vector as heard by monsters.
     sounds::process_sounds();
     // Update vision caches for monsters. If this turns out to be expensive,
     // consider a stripped down cache just for monsters.
@@ -4347,6 +4362,9 @@ void game::monmove()
 {
     ZoneScoped;
     cleanup_dead();
+    // we need this for the sound logic for NPCs.
+    const bool asleep = u.in_sleep_state();
+    const auto soundperf = asleep && get_option<bool>( "SLEEP_SKIP_SOUND" );
 
     for( monster &critter : all_monsters() ) {
         // Critters in impassable tiles get pushed away, unless it's not impassable for them
@@ -4424,6 +4442,13 @@ void game::monmove()
             critter.posy() > ( MAPSIZE_Y * 7 ) / 6 ) {
             despawn_monster( critter );
         }
+    }
+
+    if( !soundperf ) {
+        // Cull any noises that have already been heard by everyone. This should generally cull all sounds made by monsters on the prior turn.
+        m.cull_heard_sounds();
+        // Apply remaining sounds to NPC AI here so that they are reacting to the most recent monster noises and player noises, not recent player noises and prior turn monster noises.
+        sounds::process_sounds_npc();
     }
 
     // Now, do active NPCs.
@@ -10164,19 +10189,25 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
         }
     }
     if( !u.has_artifact_with( AEP_STEALTH ) && !u.has_trait( trait_id( "DEBUG_SILENT" ) ) ) {
-        int volume = u.is_stealthy() ? 3 : 6;
+        int volume = u.is_stealthy() ? 30 : 50;
         volume *= u.mutation_value( "noise_modifier" );
         if( volume > 0 ) {
             if( u.is_wearing( itype_rm13_armor_on ) ) {
-                volume = 2;
+                volume = 20;
             } else if( u.has_bionic( bionic_id( "bio_ankles" ) ) ) {
-                volume = 12;
+                volume = 70;
             }
             if( u.movement_mode_is( CMM_RUN ) ) {
-                volume *= 1.5;
+                volume += 10;
             } else if( u.movement_mode_is( CMM_CROUCH ) ) {
                 volume /= 2;
             }
+            sound_event se;
+            se.origin = dest_loc;
+            se.category = sounds::sound_t::movement;
+            se.movement_noise = true;
+            se.id = "none";
+            se.variant = "none";
             if( u.is_mounted() ) {
                 auto mons = u.mounted_creature.get();
                 switch( mons->get_size() ) {
@@ -10184,34 +10215,53 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
                         volume = 0; // No sound for the tinies
                         break;
                     case creature_size::small:
-                        volume /= 3;
+                        volume -= 10;
                         break;
                     case creature_size::medium:
                         break;
                     case creature_size::large:
-                        volume *= 1.5;
+                        volume += 10;
                         break;
                     case creature_size::huge:
-                        volume *= 2;
+                        volume += 20;
                         break;
                     default:
                         break;
                 }
                 if( mons->has_flag( MF_LOUDMOVES ) ) {
-                    volume += 6;
+                    volume += 10;
                 }
-                sounds::sound( dest_loc, volume, sounds::sound_t::movement, mons->type->get_footsteps(), false,
-                               "none", "none" );
+                se.volume = volume;
+                se.description = mons->type->get_footsteps();
+                se.from_monster = true;
+                se.monfaction = mons->faction.id();
+                se.faction = faction_id( "your_followers" );
+                sounds::sound( se );
             } else {
-                sounds::sound( dest_loc, volume, sounds::sound_t::movement, _( "footsteps" ), true,
-                               "none", "none" );    // Sound of footsteps may awaken nearby monsters
+                se.volume = volume;
+                se.description = _( "footsteps" );
+                se.from_player = true;
+                se.faction = u.get_faction()->id;
+                se.monfaction = u.get_faction()->mon_faction;
+                sounds::sound( se );   // Sound of footsteps may awaken nearby monsters
             }
             sfx::do_footstep();
         }
 
         if( one_in( 20 ) && u.has_artifact_with( AEP_MOVEMENT_NOISE ) ) {
-            sounds::sound( u.pos(), 40, sounds::sound_t::movement, _( "a rattling sound." ), true,
-                           "misc", "rattling" );
+            sound_event se;
+            se.origin = u.pos();
+            se.volume = 80;
+            se.category = sounds::sound_t::movement;
+            se.description = _( "a rattling sound." );
+            se.movement_noise = true;
+            se.from_player = true;
+            se.id = "misc";
+            se.variant = "rattling";
+            se.faction = u.get_faction()->id;
+            se.monfaction = u.get_faction()->mon_faction;
+
+            sounds::sound( se );
         }
     }
 
@@ -10810,8 +10860,16 @@ bool game::grabbed_furn_move( const tripoint &dp )
             }
         }
     }
-    sounds::sound( fdest, furntype.move_str_req * 2, sounds::sound_t::movement,
-                   _( "a scraping noise." ), true, "misc", "scraping" );
+    sound_event se;
+    se.origin = fdest;
+    se.volume = 40 + ( furntype.move_str_req * 4 );
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "a scraping noise." );
+    se.id = "misc";
+    se.variant = "scraping";
+
+    sounds::sound( se );
 
     active_tile_data *atd = active_tiles::furn_at<active_tile_data>
                             ( tripoint_abs_ms( m.getabs( fpos ) ) );
@@ -12254,8 +12312,18 @@ void game::update_stair_monsters()
 
             add_msg( m_warning, dump );
         } else {
-            sounds::sound( dest, 5, sounds::sound_t::movement,
-                           _( "a sound nearby from the stairs!" ), true, "misc", "stairs_movement" );
+            sound_event se;
+            se.origin = dest;
+            se.volume = 60;
+            se.category = sounds::sound_t::movement;
+            se.movement_noise = true;
+            se.from_monster = true;
+            se.monfaction = critter.faction.id();
+            se.description = _( "a sound nearby from the stairs!" );
+            se.id = "misc";
+            se.variant = "stairs_movement";
+
+            sounds::sound( se );
         }
 
         if( critter.staircount > 0 ) {

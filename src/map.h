@@ -33,6 +33,7 @@
 #include "shadowcasting.h"
 #include "type_id.h"
 #include "units.h"
+#include "sounds.h"
 
 #include <variant>
 
@@ -89,6 +90,7 @@ struct pathfinding_settings;
 template<typename T>
 struct weighted_int_list;
 struct rl_vec2d;
+struct sound_event;
 
 
 /** Causes all generated maps to be empty grass and prevents saved maps from being loaded, used by the test suite */
@@ -302,6 +304,9 @@ struct level_cache {
     level_cache( const level_cache &other ) = default;
 
     std::bitset<MAPSIZE *MAPSIZE> transparency_cache_dirty;
+    // absorption_cache_dirty is for tile sound absorption checking/rebuild purposes.
+    // Should be set for a tile position if the tile in question changes significantly, or if a tile feature that affects sound propagation is added/removed.
+    std::bitset<MAPSIZE *MAPSIZE> absorption_cache_dirty;
     bool outside_cache_dirty = false;
     bool floor_cache_dirty = false;
     bool seen_cache_dirty = false;
@@ -355,6 +360,45 @@ struct level_cache {
     std::set<vehicle *> vehicle_list;
     std::set<vehicle *> zone_vehicles;
 
+    // stores cached sound absorption amounts of tiles
+    // In 100ths of decibels
+    // This is in level_cache instead of sound cache as this is a function of terrain,
+    // and we dont want to regenerate this for every single sound.
+    short absorption_cache[MAPSIZE_X][MAPSIZE_Y];
+};
+
+// Use the vector sounds_caches for most purposes when working with sounds in reference to a specific position or checking multiple sounds.
+// Each sound cache is an originating sound_event, a "volume" short that stores the mdB volume of that sound event at that map position, and some sorting bools.
+// These are kept until they have been heard by both monsters and the player, and are then discarded/removed from the sounds_caches vector.
+struct sound_cache {
+    // The origionating sound, includes volume @1m, tripoint, description, type, etc.
+    sound_event sound;
+
+    // Volume in 100ths of a dB (mdB) of the sound in question at the specified map coordinates.
+    // volume is a 2 dimensional array, and can be initialized with all elements as 0.
+    short volume[MAPSIZE_X][MAPSIZE_Y] = {{0}};
+
+    // NPCs/Monsters/the Player all get a chance to hear a sound.
+    // After everyone has heard the sound, it is deleted.
+    // This requires a little bit of juggling.
+
+    // Has a sound been heard by the player?
+    bool heard_by_player = false;
+    // Has a sound been heard by the monsters?
+    bool heard_by_monsters = false;
+    // Has a sound been heard by the NPCs?
+    bool heard_by_npcs = false;
+
+    // Is this noise from movement? For quick filtering, so monsters dont hear their own footsteps and NPCs dont investiage a noise they should know is wandering zombies.
+    bool movement_noise = false;
+    // Dis the player make this noise? for quick filtering.
+    bool from_player = false;
+    // Did a monster make this noise? For quick filtering.
+    bool from_monster = false;
+    // Did an NPC make this noise? For quick filtering.
+    bool from_npc = false;
+    // If the noise was not made by the player, a monster, or an NPC, it is ambient or enviornmental.
+
 };
 
 /**
@@ -405,12 +449,18 @@ class map
          */
         /*@{*/
 
+        // This will also set the z_levels sound absorption cache to dirty as is almost certainly invalidated as well.
+        void set_transparency_cache_dirty( const int zlev );
+
         // more granular version of the transparency cache invalidation
         // preferred over map::set_transparency_cache_dirty( const int zlev )
         // p is in local coords ("ms")
-        void set_transparency_cache_dirty( const int zlev );
-
         void set_transparency_cache_dirty( const tripoint &p );
+
+        // Invalidates a specific location's (p, in local cords "ms") absorption_cache and marks it for recalculation.
+        // Should be called whenever a tile's (or its contents) ability to absorb sound significantly changes.
+        // For example if wind blocking furniture is added or removed, the tile is set to a tile type with wind blocking, if a tile is set to a type with very high absorption, etc.
+        void set_absorption_cache_dirty( const tripoint &p );
 
         // invalidates seen cache for the whole zlevel unconditionally
 
@@ -1862,6 +1912,17 @@ class map
         void build_floor_caches();
         // Checks all suspended tiles on a z level and adds those that are invalid to the support_dirty_cache */
         void update_suspension_cache( const int &z );
+        // Builds a sound absorption cache and returns true if the cache was invalidated.
+        // If true, update the absorption cache. We want this built after the other caches, but before sounds are calced.
+        // Function logic located in sounds.cpp
+        bool build_absorption_cache( const int zlev );
+        // Builds a sound_cache by flood filling from a given sound event.
+        // Function logic located in sounds.cpp
+        void flood_fill_sound( const sound_event soundevent, int zlev );
+        // Checks and culls sound_caches from the sound_caches vector.
+        // Sounds that have been heard by monsters and by the player are culled so they are not re-heard.
+        void cull_heard_sounds();
+
     protected:
         void generate_lightmap( int zlev );
         void build_seen_cache( const tripoint &origin, int target_z );
@@ -2088,6 +2149,18 @@ class map
         const level_cache &get_cache_ref( int zlev ) const {
             return *caches[zlev + OVERMAP_DEPTH];
         }
+
+        /**
+        * Holds the caches for sounds. Each cache has a short for mdB (100th of a dB) volume at [x][y], a sound_event, and some filtering bools.
+        * Make this a vector so that we can easily add or delete sounds. We dont really care what the order of the sounds in the vector is.
+        * As the player is the center of the universe and for performance/sanity reasons we only fully consider sounds at the players z-level, other sounds are adjusted by height difference then flood filled at player z-level.
+        * After the PC, Monsters, and NPCs have all "heard" a sound an been fed information from it, that sound is deleted by map::cull_hear_sounds
+        *
+        * todo: see if moving into private and building a ref getter function similar to map::level_cache.get_cache_ref() is desirable,
+        * or rebuild sound_cache struct to be the main storage, make a ref getter func, and make a new struct to store the flood filled sound instances.
+        * this would also let us store a total rms volume for a tile and a ref to the loudest relevant sound event which could be used to speed up flood filling, informing monsters/npcs of sounds, etc.
+        */
+        std::vector< sound_cache > sound_caches;
 
         const pathfinding_cache &get_pathfinding_cache_ref( int zlev ) const;
 

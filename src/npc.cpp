@@ -1630,11 +1630,31 @@ void npc::say( const std::string &line, const sounds::sound_t spriority ) const
     }
     // Sound happens even if we can't hear it
     if( spriority == sounds::sound_t::order || spriority == sounds::sound_t::alert ) {
-        sounds::sound( pos(), get_shout_volume(), spriority, sound, false, "speech",
-                       male ? "NPC_m" : "NPC_f" );
+        sound_event se;
+        se.origin = pos();
+        se.volume = get_shout_volume();
+        se.category = spriority;
+        se.description = sound;
+        se.from_npc = true;
+        se.faction = get_fac_id();
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "speech";
+        se.variant = male ? "NPC_m" : "NPC_f";
+
+        sounds::sound( se );
     } else {
-        sounds::sound( pos(), 16, sounds::sound_t::speech, sound, false, "speech",
-                       male ? "NPC_m_loud" : "NPC_f_loud" );
+        sound_event se;
+        se.origin = pos();
+        se.volume = 80;
+        se.category = sounds::sound_t::speech;
+        se.description = sound;
+        se.from_npc = true;
+        se.faction = get_fac_id();
+        se.monfaction = get_faction()->mon_faction;
+        se.id = "speech";
+        se.variant = male ? "NPC_m_loud" : "NPC_f_loud";
+
+        sounds::sound( se );
     }
 }
 
