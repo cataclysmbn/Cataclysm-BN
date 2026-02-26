@@ -890,6 +890,7 @@ int get_lua_api_version()
 
 void lua_state_deleter::operator()( lua_state *state ) const
 {
+    cata::lua_action_menu::clear_entries();
     delete state;
 }
 
