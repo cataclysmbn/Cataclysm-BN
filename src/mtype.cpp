@@ -355,7 +355,9 @@ void mtype::faction_display( catacurses::window &w, const point &top_left, const
     if( has_flag( MF_DIGS ) ) {
         trim_and_print( w, top_left + point( 0, ++y ), width, c_white, _( "It can burrow underground." ) );
     }
-    if( has_flag( MF_CLIMBS ) ) {
+    if( has_flag( MF_CLIMBS_WALLS ) ) {
+        trim_and_print( w, top_left + point( 0, ++y ), width, c_white, _( "It can climb walls." ) );
+    } else if( has_flag( MF_CLIMBS ) ) {
         trim_and_print( w, top_left + point( 0, ++y ), width, c_white, _( "It can climb." ) );
     }
     if( has_flag( MF_GRABS ) ) {

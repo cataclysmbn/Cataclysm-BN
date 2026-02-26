@@ -129,6 +129,7 @@
     "//": "crawling zombie upgrades",
     "monsters": [
       { "monster": "mon_zombie_crawler_pupa", "freq": 500, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_crawler_clinger", "freq": 250, "cost_multiplier": 3 },
       { "monster": "mon_zombie_crawler_pupa_decoy", "freq": 500, "cost_multiplier": 2 }
     ]
   },

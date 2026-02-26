@@ -167,12 +167,13 @@ class monster : public Creature, public location_visitable<monster>
         bool can_hear() const;     // MF_HEARS and no MF_DEAF
         bool can_submerge() const; // MF_AQUATIC or swims() or MF_NO_BREATH, and not MF_ELECTRONIC
         bool can_drown() const;    // MF_AQUATIC or swims() or MF_NO_BREATHE or flies()
-        bool can_climb() const;         // climbs() or flies()
+        bool can_climb() const;         // climbs() or climbs_walls() or flies()
         bool digging() const override;  // digs() or can_dig() and diggable terrain
         bool can_dig() const;
         bool digs() const;
         bool flies() const;
         bool climbs() const;
+        bool climbs_walls() const;
         bool swims() const;
         // Returns false if the monster is stunned, has 0 moves or otherwise wouldn't act this turn
         bool can_act() const;
@@ -208,6 +209,7 @@ class monster : public Creature, public location_visitable<monster>
         bool can_move_to( const tripoint &p ) const;
         bool can_reach_to( const tripoint &p ) const;
         bool will_move_to( const tripoint &p ) const;
+        bool can_wall_climb_to( const tripoint &p ) const;
         bool can_squeeze_to( const tripoint &p ) const;
 
         bool will_reach( point p ); // Do we have plans to get to (x, y)?

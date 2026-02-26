@@ -9,7 +9,9 @@
 #include <iterator>
 #include <list>
 #include <memory>
+#include <optional>
 #include <ostream>
+#include <vector>
 #include <unordered_map>
 
 #include "avatar.h"
@@ -71,6 +73,7 @@ static const efftype_id effect_pacified( "pacified" );
 static const efftype_id effect_pushed( "pushed" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_led_by_leash( "led_by_leash" );
+static const efftype_id effect_wall_clinging( "wall_clinging" );
 
 static const itype_id itype_pressurized_tank( "pressurized_tank" );
 
@@ -80,6 +83,64 @@ static const species_id SPIDER( "SPIDER" );
 static const species_id ZOMBIE( "ZOMBIE" );
 
 static const std::string flag_AUTODOC_COUCH( "AUTODOC_COUCH" );
+
+namespace
+{
+
+auto get_wall_support( const map &here, const tripoint &anchor ) -> std::optional<tripoint>
+{
+    const auto neighbor_range = points_in_radius( anchor, 1 );
+    const std::vector<tripoint> neighbors( neighbor_range.begin(), neighbor_range.end() );
+
+    const auto support = std::ranges::find_if( neighbors, [&anchor, &here]( const tripoint & pt ) {
+        return pt.z == anchor.z && pt != anchor && here.impassable_ter_furn( pt );
+    } );
+
+    if( support == neighbors.end() ) {
+        return std::nullopt;
+    }
+
+    return *support;
+}
+
+auto wall_support_count( const map &here, const tripoint &anchor ) -> int
+{
+    const auto neighbor_range = points_in_radius( anchor, 1 );
+    const std::vector<tripoint> neighbors( neighbor_range.begin(), neighbor_range.end() );
+
+    return std::ranges::count_if( neighbors, [&anchor, &here]( const tripoint & pt ) {
+        const bool same_level = pt.z == anchor.z;
+        const bool cardinal = pt.x == anchor.x || pt.y == anchor.y;
+        return same_level && cardinal && pt != anchor && here.impassable_ter_furn( pt );
+    } );
+}
+
+auto has_wall_support( const map &here, const tripoint &anchor ) -> bool
+{
+    return wall_support_count( here, anchor ) >= 1;
+}
+
+auto anchored_on_wall( const map &here, const tripoint &pos ) -> bool
+{
+    const auto supports = wall_support_count( here, pos );
+    const tripoint roof_above = pos + tripoint_above;
+
+    if( here.has_flag( "ROOF", roof_above ) && here.inbounds( roof_above ) ) {
+        return true;
+    }
+
+    if( here.has_flag( TFLAG_NO_FLOOR, pos ) ) {
+        const tripoint below = pos + tripoint_below;
+        if( here.has_floor( below ) ) {
+            return supports >= 1;
+        }
+        return supports >= 2;
+    }
+
+    return supports >= 1;
+}
+
+} // namespace
 static const std::string flag_LIQUID( "LIQUID" );
 
 enum {
@@ -253,22 +314,29 @@ bool monster::can_reach_to( const tripoint &p ) const
 
     const bool is_z_move = p.z != pos().z;
     if( !is_z_move || is_moving_out_of_reality ) {
+        if( here.has_flag( TFLAG_NO_FLOOR, p ) && !flies() ) {
+            if( climbs_walls() ) {
+                return anchored_on_wall( here, p );
+            }
+            return false;
+        }
         return true;
     }
 
+    const auto can_wall_climb = can_wall_climb_to( p );
     const bool is_going_up = p.z > pos().z;
     if( is_going_up ) {
         const bool has_up_ramp = here.has_flag( TFLAG_RAMP_UP, p + tripoint_below );
         const bool has_stairs = here.has_flag( TFLAG_GOES_UP, pos() );
         const bool can_fly_there = this->flies() && here.has_flag( TFLAG_NO_FLOOR, p );
 
-        return has_up_ramp || has_stairs || can_fly_there;
+        return has_up_ramp || has_stairs || can_fly_there || can_wall_climb;
     } else {
         const bool has_down_ramp = here.has_flag( TFLAG_RAMP_DOWN, p + tripoint_above );
         const bool has_stairs = here.has_flag( TFLAG_GOES_DOWN, pos() );
         const bool can_fly_there = this->flies() && here.has_flag( TFLAG_NO_FLOOR, this->pos() );
 
-        return has_down_ramp || has_stairs || can_fly_there;
+        return has_down_ramp || has_stairs || can_fly_there || can_wall_climb;
     }
 }
 
@@ -281,7 +349,39 @@ bool monster::can_squeeze_to( const tripoint &p ) const
 
 bool monster::can_move_to( const tripoint &p ) const
 {
-    return can_reach_to( p ) && will_move_to( p ) && !has_flag( MF_STATIONARY );
+    return can_reach_to( p ) && will_move_to( p );
+}
+
+auto monster::can_wall_climb_to( const tripoint &p ) const -> bool
+{
+    if( !climbs_walls() ) {
+        return false;
+    }
+
+    const map &here = get_map();
+
+    if( !here.has_zlevels() ) {
+        return false;
+    }
+
+    if( !here.inbounds( p ) || !here.passable( p ) ) {
+        return false;
+    }
+
+    const auto from = pos();
+    const auto dz = p.z - from.z;
+
+    if( std::abs( dz ) != 1 ) {
+        return false;
+    }
+
+    const auto &anchor = dz > 0 ? from : p;
+    const auto climb_diff = here.climb_difficulty( anchor );
+    if( climb_diff > 10 ) {
+        return false;
+    }
+
+    return has_wall_support( here, anchor );
 }
 
 void monster::set_dest( const tripoint &p )
@@ -851,12 +951,33 @@ void monster::move()
     // Give nursebots a chance to do surgery.
     nursebot_operate( dragged_foe );
 
-    // The monster can sometimes hang in air due to last fall being blocked
-    if( !flies() && g->m.has_flag( TFLAG_NO_FLOOR, pos() ) ) {
+    const bool anchored_on_wall_now = climbs_walls() && anchored_on_wall( g->m, pos() );
+    const bool anchored_on_wall_then = has_effect( effect_wall_clinging );
+
+    // Allow wall-climbers to hang in open air when anchored; others should resolve traps/falls
+    if( !flies() && !anchored_on_wall_now &&
+        g->m.has_flag( TFLAG_NO_FLOOR, pos() ) ) {
         g->m.creature_on_trap( *this, false );
         if( is_dead() ) {
             return;
         }
+    }
+
+    if( anchored_on_wall_now ) {
+        if( !anchored_on_wall_then && g->u.sees( *this ) ) {
+            const std::string support_name = [&]() {
+                const auto support = get_wall_support( g->m, pos() );
+                if( support.has_value() ) {
+                    return g->m.disp_name( *support );
+                }
+                return std::string( _( "the wall" ) );
+            }
+            ();
+            add_msg( _( "The %1$s begins to climb up %2$s." ), name(), support_name );
+        }
+        add_effect( effect_wall_clinging, 1_turns );
+    } else if( anchored_on_wall_then ) {
+        remove_effect( effect_wall_clinging );
     }
 
     // if the monster is in a deep water tile, it has a chance to drown
@@ -1059,18 +1180,22 @@ void monster::move()
             const bool is_z_move = candidate.z != posz();
             if( is_z_move ) {
                 bool can_z_attack = fov_3d;
+                const auto wall_climb_move = can_wall_climb_to( candidate );
                 if( !here.valid_move( pos(), candidate, false, true, via_ramp ) ) {
                     // Can't phase through floor
-                    can_z_move = false;
-                    can_z_attack = false;
+                    can_z_move = wall_climb_move;
+                    can_z_attack = wall_climb_move && can_z_attack;
                 }
 
                 // If we're trying to go up but can't fly, check if we can climb. If we can't, then don't
                 // This prevents non-climb/fly enemies running up walls
-                if( can_z_move && candidate.z > posz() && !( via_ramp || flies() ) &&
-                    ( !can_climb() || !here.has_floor_or_support( candidate ) ) ) {
-                    // Can't "jump" up a whole z-level
-                    can_z_move = false;
+                if( can_z_move && candidate.z > posz() && !( via_ramp || flies() ) ) {
+                    if( wall_climb_move ) {
+                        // Wall climbers intentionally ignore floor/support checks
+                    } else if( !can_climb() || !here.has_floor_or_support( candidate ) ) {
+                        // Can't "jump" up a whole z-level
+                        can_z_move = false;
+                    }
                 }
 
                 // We can still do the z-level stair teleport bullshit that isn't removed yet
@@ -1482,10 +1607,13 @@ int monster::calc_climb_cost( const tripoint &f, const tripoint &t ) const
         return 100;
     }
 
-    if( climbs() && !g->m.has_flag( TFLAG_NO_FLOOR, t ) ) {
-        const int diff = g->m.climb_difficulty( f );
+    if( climbs() ) {
+        const auto diff = g->m.climb_difficulty( f );
         if( diff <= 10 ) {
-            return 150;
+            if( g->m.has_flag( TFLAG_NO_FLOOR, t ) && !climbs_walls() ) {
+                return 0;
+            }
+            return g->m.has_flag( TFLAG_NO_FLOOR, t ) ? 200 : 150;
         }
     }
 
@@ -1714,6 +1842,7 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
     const bool going_up = p.z > pos().z;
 
     tripoint destination = p;
+    const bool destination_has_no_floor = g->m.has_flag( TFLAG_NO_FLOOR, destination );
 
     // This is stair teleportation hackery.
     // TODO: Remove this in favor of stair alignment
@@ -1752,6 +1881,7 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
             }
         }
     }
+    const auto wall_climb_move = can_wall_climb_to( destination );
 
     if( critter != nullptr && !step_on_critter ) {
         return false;
@@ -1771,10 +1901,11 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
         // is consistent even if the monster stumbles,
         // and the same regardless of the distance measurement mode.
         // Note: Keep this as float here or else it will cancel valid moves
-        const float cost = stagger_adjustment *
-                           static_cast<float>( climbs() &&
-                                               g->m.has_flag( TFLAG_NO_FLOOR, p ) ? calc_climb_cost( pos(), destination ) : calc_movecost( pos(),
-                                                       destination ) );
+        const auto use_climb_cost = wall_climb_move || destination_has_no_floor;
+        const float base_cost = use_climb_cost ?
+                                static_cast<float>( calc_climb_cost( pos(), destination ) ) :
+                                static_cast<float>( calc_movecost( pos(), destination ) );
+        const float cost = stagger_adjustment * base_cost;
         if( cost > 0.0f ) {
             moves -= static_cast<int>( std::ceil( cost ) );
         } else {
@@ -1804,6 +1935,17 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
                      swims() || has_flag( MF_AQUATIC ) ? _( "dives" ) : _( "sinks" ),
                      g->m.tername( destination ) );
         }
+    }
+
+    if( wall_climb_move && z_move && g->u.sees( *this ) ) {
+        const auto anchor = destination.z > posz() ? pos() : destination;
+        const auto support = get_wall_support( g->m, anchor );
+        const std::string wall_name = support ?
+                                      g->m.disp_name( *support ) :
+                                      _( "the wall" );
+        add_msg( _( "The %1$s climbs %2$s %3$s." ), name(),
+                 destination.z > posz() ? _( "up" ) : _( "down" ),
+                 wall_name );
     }
 
     setpos( destination );
@@ -1844,10 +1986,22 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
         remove_effect( effect_no_sight );
     }
 
-    g->m.creature_on_trap( *this );
-    if( is_dead() ) {
-        return true;
+    const bool anchored_on_wall_move = climbs_walls() && destination_has_no_floor &&
+                                       anchored_on_wall( g->m, destination );
+    if( !( anchored_on_wall_move && on_ground ) ) {
+        g->m.creature_on_trap( *this );
+        if( is_dead() ) {
+            return true;
+        }
     }
+
+    const bool anchored_on_wall_here = climbs_walls() && anchored_on_wall( g->m, pos() );
+    if( anchored_on_wall_here ) {
+        add_effect( effect_wall_clinging, 1_turns );
+    } else if( has_effect( effect_wall_clinging ) ) {
+        remove_effect( effect_wall_clinging );
+    }
+
     if( !will_be_water && ( digs() || can_dig() ) ) {
         set_underwater( g->m.ter( pos() )->is_diggable() );
     }

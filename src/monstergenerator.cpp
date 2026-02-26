@@ -156,6 +156,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_CBM_SUBS: return "CBM_SUBS";
         case MF_SWARMS: return "SWARMS";
         case MF_CLIMBS: return "CLIMBS";
+        case MF_CLIMBS_WALLS: return "CLIMBS_WALLS";
         case MF_GROUP_MORALE: return "GROUP_MORALE";
         case MF_INTERIOR_AMMO: return "INTERIOR_AMMO";
         case MF_NIGHT_INVISIBILITY: return "NIGHT_INVISIBILITY";
@@ -1083,16 +1084,20 @@ void mtype::setup_pathfinding_deferred()
     this->route_settings.f_limit_based_on_max_dist =
         get_option<bool>( "PATHFINDING_MAX_F_LIMIT_BASED_ON_MAX_DIST" );
 
-    const bool default_override = get_option<bool>( "PATHFINDING_DEFAULT_IS_OVERRIDE" );
-    const float range_mult = get_option<float>( "PATHFINDING_RANGE_MULT" );
+    const auto default_override = get_option<bool>( "PATHFINDING_DEFAULT_IS_OVERRIDE" );
+    const auto range_mult = get_option<float>( "PATHFINDING_RANGE_MULT" );
 
-    if( this->has_flag( MF_CLIMBS ) ) {
+    const auto climbs_walls = this->has_flag( MF_CLIMBS_WALLS );
+    const auto flies = this->has_flag( MF_FLIES );
+
+    if( this->has_flag( MF_CLIMBS ) || climbs_walls ) {
         this->legacy_path_settings.climb_cost = 3;
         this->path_settings.climb_cost = 3.0;
     }
 
-    if( this->has_flag( MF_FLIES ) ) {
+    if( flies || climbs_walls ) {
         this->path_settings.can_fly = true;
+        this->path_settings.needs_wall_cling = climbs_walls && !flies;
     }
 
     const auto extract_into = [this]<typename T>( std::string field, T & out ) {
