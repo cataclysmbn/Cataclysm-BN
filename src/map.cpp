@@ -301,10 +301,21 @@ void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_i
                          ? ( lx + ly * my_MAPSIZE ) * OVERMAP_LAYERS + ( p.z + OVERMAP_HEIGHT )
                          : lx + ly * my_MAPSIZE;
     if( grid_idx >= 0 && grid_idx < static_cast<int>( grid.size() ) ) {
-        // Use the in-memory lookup; the submap was just loaded by the manager.
-        // Phase 6: loadn() now uses MAPBUFFER_REGISTRY.get(bound_dimension_), so
-        // submaps are in the correct dimension slot and this lookup is accurate.
-        grid[grid_idx] = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
+        // Look in the dimension's own registry slot first.
+        // Active submaps for non-primary dimensions may still live in the primary
+        // slot (MAPBUFFER) when generate() or restore_to_primary() placed them
+        // there before bind_dimension() moved the logical owner to this slot.
+        // Fall back to primary so we never overwrite a valid grid pointer with
+        // nullptr — loadn() may have already set the slot correctly via setsubmap().
+        submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
+        if( sm == nullptr ) {
+            sm = MAPBUFFER_REGISTRY.primary().lookup_submap_in_memory( p );
+        }
+        if( sm != nullptr ) {
+            grid[grid_idx] = sm;
+        }
+        // If sm is still null the submap is not yet in memory; leave the grid slot
+        // as set by loadn() (which may already hold a valid pointer).
     }
 }
 

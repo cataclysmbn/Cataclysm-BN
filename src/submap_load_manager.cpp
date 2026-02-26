@@ -186,6 +186,14 @@ std::vector<std::string> submap_load_manager::active_dimensions() const
 }
 
 // ---------------------------------------------------------------------------
+// flush_prev_desired
+// ---------------------------------------------------------------------------
+
+void submap_load_manager::flush_prev_desired()
+{
+    prev_desired_.clear();
+}
+
 // listener management
 // ---------------------------------------------------------------------------
 

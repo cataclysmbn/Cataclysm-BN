@@ -602,11 +602,39 @@ void game::load_map( const tripoint &pos_sm, const bool pump_events )
 void game::load_map( const tripoint_abs_sm &pos_sm,
                      const bool pump_events )
 {
+    // Determine the target dimension and bind the map BEFORE calling m.load().
+    // loadn() uses bound_dimension_ to select the MAPBUFFER_REGISTRY slot for
+    // both submap lookups and generation (tinymap + generate_uniform).  If
+    // bind_dimension() were called after m.load(), generated submaps would land
+    // in the primary slot while on_submap_loaded() later looks in the dimension
+    // slot — finding nothing — and overwrites every grid pointer with nullptr.
+    const std::string new_dim_id = get_dimension_prefix();
+    const std::string old_dim_id = m.get_bound_dimension();
+
+    // If the dimension has changed, release the old reality-bubble request now,
+    // before the map is rebound and before m.load() fires loadn() events.
+    // Also flush prev_desired_ so that update() does not evict freshly-generated
+    // submaps for the new dimension: the eviction pass compares against the old
+    // desired set keyed by old dim_id, which now overlaps in coordinate space with
+    // newly-generated submaps stored in the primary slot for the new dimension.
+    // Without this flush, unload_quad() frees those submaps while m.grid still
+    // holds raw pointers to them (use-after-free crash in field::begin()).
+    if( reality_bubble_handle_ != 0 && new_dim_id != old_dim_id ) {
+        submap_loader.release_load( reality_bubble_handle_ );
+        reality_bubble_handle_ = 0;
+        submap_loader.flush_prev_desired();
+    }
+
+    // Bind the map to the new dimension so loadn() stores generated submaps in
+    // the correct MAPBUFFER_REGISTRY slot and on_submap_loaded() can find them.
+    m.bind_dimension( new_dim_id );
+
     m.load( pos_sm, true, pump_events );
 
-    // Repopulate the primary tracker from the current mapbuffer contents.
-    // All active submaps live in the primary slot (MAPBUFFER) regardless of logical
-    // dimension until Phase 6 migrates per-dimension slots fully.
+    // Repopulate the primary distribution-grid tracker from primary-slot submaps.
+    // All active submaps (including pocket/secondary dimensions) live in the primary
+    // slot (MAPBUFFER) during active gameplay; dimension-specific slots are only used
+    // by kept/idle dimensions via capture_from_primary()/restore_to_primary().
     {
         auto &tracker = *grid_trackers_[""];
         tracker.clear();
@@ -618,19 +646,6 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     }
 
     fluid_grid::load( m );
-
-    // Wire the reality bubble load request to the submap_load_manager.
-    // This must happen after m.load() so abs_sub reflects the new position.
-    const std::string new_dim_id = get_dimension_prefix();
-
-    // If the dimension has changed, release the old request.
-    if( reality_bubble_handle_ != 0 && new_dim_id != m.get_bound_dimension() ) {
-        submap_loader.release_load( reality_bubble_handle_ );
-        reality_bubble_handle_ = 0;
-    }
-
-    // Bind the map to the new dimension.
-    m.bind_dimension( new_dim_id );
 
     // Register the map as a listener (add_listener is idempotent).
     submap_loader.add_listener( &m );

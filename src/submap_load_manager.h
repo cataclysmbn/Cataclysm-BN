@@ -157,6 +157,19 @@ class submap_load_manager
          */
         std::vector<std::string> active_dimensions() const;
 
+        /**
+         * Clear the previous desired set so the next update() call does not
+         * evict any submaps based on stale old-dimension entries.
+         *
+         * Call this when switching dimensions (in game::load_map) after
+         * releasing the old reality-bubble handle.  Without this, the
+         * eviction pass in update() would call unload_quad() on the old
+         * dimension's positions — which now hold freshly-generated submaps
+         * for the new dimension in the primary slot — freeing them while
+         * m.grid still holds raw pointers to them (use-after-free crash).
+         */
+        void flush_prev_desired();
+
         /** Register a listener to receive load/unload notifications. */
         void add_listener( submap_load_listener *listener );
 
