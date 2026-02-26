@@ -24,15 +24,16 @@ This runbook defines a durable `curses-cli` benchmark loop that survives context
 deno task pr:verify:curses-cli start --state-file /tmp/curses-bench.json --render-webp false
 deno task pr:verify:curses-cli state-dump --state-file /tmp/curses-bench.json --max-chars 4200 --output-format ai
 deno task pr:verify:curses-cli inputs-jsonl --state-file /tmp/curses-bench.json
-# ... scripted control loop ...
+# ... closed-loop control (observe -> single action -> verify) ...
 deno task pr:verify:curses-cli capture --state-file /tmp/curses-bench.json --id bench-final --caption "Final benchmark state" --lines 120
-deno task pr:verify:curses-cli stop --state-file /tmp/curses-bench.json --status passed
+deno task pr:verify:curses-cli stop --state-file /tmp/curses-bench.json --status passed --required-capture-ids-json '["bench-final"]'
 # failure example:
 # deno task pr:verify:curses-cli stop --state-file /tmp/curses-bench.json --status failed --stop-reason mode_trap --failure "targeting mode did not exit"
 ```
 
 Prefer `state-dump.available_inputs` as first-choice actions before wider prompt scans.
 `send-inputs` rejects unavailable prompt keys by default to reduce mode drift.
+Avoid long blind `ids-json` blobs; use short intent-level actions and verify each transition.
 AI output mode is default; use `--output-format json` only when full pretty JSON compatibility is required.
 
 ## Failure taxonomy

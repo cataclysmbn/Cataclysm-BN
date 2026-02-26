@@ -14,9 +14,11 @@ Use the CLI wrapper to drive game sessions directly without MCP tool orchestrati
 deno task pr:verify:curses-cli start --state-file /tmp/curses-demo.json --render-webp false
 deno task pr:verify:curses-cli inputs-jsonl --state-file /tmp/curses-demo.json
 deno task pr:verify:curses-cli send-inputs --state-file /tmp/curses-demo.json --ids-json '["Enter"]'
+deno task pr:verify:curses-cli recover-ui --state-file /tmp/curses-demo.json
 deno task pr:verify:curses-cli state-dump --state-file /tmp/curses-demo.json --output-format ai
 deno task pr:verify:curses-cli snapshot --state-file /tmp/curses-demo.json --lines 120
-deno task pr:verify:curses-cli stop --state-file /tmp/curses-demo.json
+deno task pr:verify:curses-cli capture --state-file /tmp/curses-demo.json --id demo-final --caption "Demo final state" --lines 120
+deno task pr:verify:curses-cli stop --state-file /tmp/curses-demo.json --status passed --required-capture-ids-json '["demo-final"]'
 ```
 
 ## Core commands
@@ -26,7 +28,9 @@ deno task pr:verify:curses-cli stop --state-file /tmp/curses-demo.json
 - `available-keys-json` reads game-native keybinding context.
 - `available-macros-json` reads game-native Lua action-menu macro context.
 - `send-inputs` sends one or many actions/keys (use a one-item array for single input).
+- `recover-ui` detects drifted UI modes and attempts recovery back to gameplay.
 - `snapshot` and `capture` collect text/screenshot artifacts.
+- `stop` defaults to failed; use `--status passed` only with capture evidence.
 - `wait-text` and `wait-text-gone` synchronize flows on UI text.
 - `get-game-state` reads structured state JSON from runtime userdir.
 - `state-dump` emits a compact AI-friendly payload (including `available_inputs`).
@@ -36,6 +40,14 @@ deno task pr:verify:curses-cli stop --state-file /tmp/curses-demo.json
 
 - AI mode is now the default for supported commands (native YAML with `summary` and `payload` sections).
 - In-session interaction commands (`send-inputs`, `send-mouse`, `send-waypoint`, `wait-text`, `wait-text-gone`, `stop`) also include a `screen` block rendered from current pane text.
+- `send-inputs --expect-mode gameplay --auto-recover-mode true` reduces pre-dispatch mode-drift blunders.
+- `send-inputs --require-final-mode gameplay` validates destination mode after the full sequence (without per-key mode thrash).
+
+## Control policy (required)
+
+- Use closed-loop interaction: observe (`state-dump`) -> act -> verify.
+- Prefer single intent-level actions over long replay-like key sequences.
+- If UI context changes unexpectedly, run `recover-ui` before the next action.
 - Nested structures at depth >= 3 are compacted into flow YAML (example: `prompt_inputs: [{id:'key:!',key:'!',label:'disable_safe_mode'}]`).
 - Use `--output-format json` (or `CURSES_CLI_OUTPUT_FORMAT=json`) when raw pretty JSON is required.
 

@@ -9,7 +9,8 @@ deno task pr:verify:curses-cli start --state-file /tmp/curses-macro.json --rende
 deno task pr:verify:curses-cli available-macros-json --state-file /tmp/curses-macro.json
 deno task pr:verify:curses-cli inputs-jsonl --state-file /tmp/curses-macro.json
 deno task pr:verify:curses-cli send-inputs --state-file /tmp/curses-macro.json --ids-json '["macro:bn_macro_agent_context"]'
-deno task pr:verify:curses-cli stop --state-file /tmp/curses-macro.json
+deno task pr:verify:curses-cli capture --state-file /tmp/curses-macro.json --id macro-final --caption "Macro run final state" --lines 120
+deno task pr:verify:curses-cli stop --state-file /tmp/curses-macro.json --status passed --required-capture-ids-json '["macro-final"]'
 ```
 
 Notes:
@@ -55,7 +56,8 @@ gapi.register_action_menu_entry({
 deno task pr:verify:curses-cli start --state-file /tmp/curses-macro-validate.json --render-webp false
 deno task pr:verify:curses-cli available-macros-json --state-file /tmp/curses-macro-validate.json
 deno task pr:verify:curses-cli inputs-jsonl --state-file /tmp/curses-macro-validate.json
-deno task pr:verify:curses-cli stop --state-file /tmp/curses-macro-validate.json
+deno task pr:verify:curses-cli capture --state-file /tmp/curses-macro-validate.json --id macro-validate-final --caption "Macro validation final state" --lines 120
+deno task pr:verify:curses-cli stop --state-file /tmp/curses-macro-validate.json --status passed --required-capture-ids-json '["macro-validate-final"]'
 ```
 
 Expected:

@@ -9,10 +9,26 @@ Run a deterministic scenario that validates real gameplay control quality:
 1. start as evacuee,
 2. collect baseline tools,
 3. travel toward nearest town,
-4. fight naturally encountered enemies,
+4. enter and sustain a real fight against naturally encountered enemies,
 5. archive cast and compact artifacts.
 
 The benchmark is invalid when debug spawning/wish/debug-menu actions are used.
+The benchmark is also invalid when the first-day tool bootstrap is skipped.
+
+## Mandatory scenario gates
+
+Before claiming a benchmark pass, complete these gates in order:
+
+1. `evacuee` start is confirmed in-game.
+2. First-day tool bootstrap is completed (based on gameplay guides):
+   - gather rocks outside,
+   - smash locker + bench for base materials,
+   - secure `pipe` and a `hammering >= 1` tool path,
+   - craft makeshift crowbar.
+3. Leave shelter and make hostile contact in natural exploration (no spawned enemies).
+4. Confirm real combat engagement in the run (hostile contact + exchanged attacks).
+
+If any gate is missing, stop with `--status failed --stop-reason repro_drift` and describe which gate failed.
 
 ## Standard run
 
@@ -21,10 +37,15 @@ deno task pr:verify:curses-cli start --state-file /tmp/curses-bench.json --rende
 deno task pr:verify:curses-cli state-dump --state-file /tmp/curses-bench.json --max-chars 4200 --output-format ai
 deno task pr:verify:curses-cli inputs-jsonl --state-file /tmp/curses-bench.json
 # execute scripted scenario steps with available_inputs first
+# REQUIRED: follow first-day bootstrap before travel/combat
+# - gather rocks
+# - smash locker + bench
+# - craft/carry makeshift crowbar
+# REQUIRED: confirm hostile contact and exchanged attacks before marking pass
 # if run fails, preserve taxonomy for triage:
 # deno task pr:verify:curses-cli stop --state-file /tmp/curses-bench.json --status failed --stop-reason mode_trap --failure "targeting mode did not exit"
 deno task pr:verify:curses-cli capture --state-file /tmp/curses-bench.json --id bench-final --caption "Benchmark final state" --lines 120
-deno task pr:verify:curses-cli stop --state-file /tmp/curses-bench.json --status passed
+deno task pr:verify:curses-cli stop --state-file /tmp/curses-bench.json --status passed --required-capture-ids-json '["bench-final"]'
 ```
 
 The `state-dump` payload now includes `available_inputs` and `stop_reason_candidate`.
@@ -50,6 +71,8 @@ AI output mode is default; use `--output-format json` (or `CURSES_CLI_OUTPUT_FOR
 - Persist stop reason category on failure (`menu_drift`, `mode_trap`, `safe_mode_interrupt`, `repro_drift`) with `stop --stop-reason <category>`.
 - Keep `send-inputs` strict prompt validation enabled (default) so keys that are not
   currently offered by prompt context are rejected early.
+- Treat missing first-day bootstrap (rock -> locker/bench smash -> crowbar craft) as a hard failure,
+  not as optional setup.
 
 ## Compact dump (implemented)
 
