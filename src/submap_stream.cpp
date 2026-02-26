@@ -96,17 +96,27 @@ void submap_stream::drain_completed( map &m,
     }
 
     // Second pass: non-blocking drain of all futures that are ready right now.
+    // NOTE: we intentionally do NOT call m.on_submap_loaded() here.
+    //
+    // The streamer only ever pre-loads positions for the NEXT shift's new edge
+    // (one step ahead of the current view).  drain_completed() is called at the
+    // START of shift(), before the grid-copy loop that moves existing submaps
+    // and before loadn() fills the new-edge slots.  Calling on_submap_loaded()
+    // at this point writes the new-edge submap into grid[0] (or grid[MAPSIZE-1])
+    // using the already-updated abs_sub.  The copy loop then reads grid[0] and
+    // propagates it to grid[1], making two adjacent slots share the same submap
+    // pointer — producing the visible "left and right halves of the OMT are
+    // identical" duplication bug on every movement step.
+    //
+    // The submap is already in MAPBUFFER after the worker completes.  loadn()
+    // finds it there on the fast in-memory path and calls setsubmap() correctly.
+    // No grid update is needed here.
     pending_.erase(
         std::remove_if( pending_.begin(), pending_.end(), [&]( pending_load &p ) {
             if( p.future.wait_for( std::chrono::seconds( 0 ) ) != std::future_status::ready ) {
                 return false;
             }
-            submap *sm = p.future.get();
-            if( sm ) {
-                // Insert into the live map grid and invalidate caches.
-                // Signature: on_submap_loaded(pos, dim_id)
-                m.on_submap_loaded( p.pos, p.dim );
-            }
+            p.future.get();  // consume the future; submap is already in MAPBUFFER
             return true;
         } ),
         pending_.end() );
