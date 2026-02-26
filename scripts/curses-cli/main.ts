@@ -5,6 +5,7 @@ import { basename, dirname, fromFileUrl, join, relative, resolve } from "@std/pa
 import { Command } from "@cliffy/command"
 import {
   buildLaunchCommand,
+  DEFAULT_BENCH_DELAY_MS,
   detectUiMode,
   listAvailableInputs,
   parseOutputFormat,
@@ -1863,7 +1864,9 @@ if (import.meta.main) {
           { default: true },
         )
         .option("--repeat <value:number>", "Repeat whole sequence count", { default: 1 })
-        .option("--delay-ms <value:number>", "Delay between key sends", { default: 40 })
+        .option("--delay-ms <value:number>", "Delay between key sends", {
+          default: DEFAULT_BENCH_DELAY_MS,
+        })
         .option("--waypoint-clicks <value:number>", "Repeated LMB clicks for mouse waypoint", {
           default: 2,
         })
@@ -2027,7 +2030,9 @@ if (import.meta.main) {
         })
         .option("--event <value:string>", "click|press|release|move", { default: "click" })
         .option("--repeat <value:number>", "Repeat count", { default: 1 })
-        .option("--delay-ms <value:number>", "Delay between repeats", { default: 40 })
+        .option("--delay-ms <value:number>", "Delay between repeats", {
+          default: DEFAULT_BENCH_DELAY_MS,
+        })
         .option("--output-format <value:string>", "Output format: json|ai", {
           default: DEFAULT_OUTPUT_FORMAT,
         })
@@ -2093,7 +2098,7 @@ if (import.meta.main) {
         .option("--col <value:number>", "1-based column coordinate", { required: true })
         .option("--row <value:number>", "1-based row coordinate", { required: true })
         .option("--delay-ms <value:number>", "Delay between repeated clicks", {
-          default: 40,
+          default: DEFAULT_BENCH_DELAY_MS,
         })
         .option("--waypoint-clicks <value:number>", "Repeated LMB clicks", {
           default: 2,

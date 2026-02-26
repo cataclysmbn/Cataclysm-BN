@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes } from "@std/assert"
 import { join } from "@std/path"
 import {
   buildLaunchCommand,
+  DEFAULT_BENCH_DELAY_MS,
   detectPromptInputs,
   detectUiMode,
   listAvailableInputs,
@@ -12,6 +13,10 @@ import {
   writeCodeBlockCapture,
   writeIndex,
 } from "./common.ts"
+
+Deno.test("pr_verify: default benchmark delay is fast", () => {
+  assertEquals(DEFAULT_BENCH_DELAY_MS, 20)
+})
 
 Deno.test("pr_verify: sanitizeId normalizes unsafe characters", () => {
   assertEquals(sanitizeId("open help/screen"), "open-help-screen")

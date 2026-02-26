@@ -7,6 +7,8 @@ const PROMPT_CONFIRM_KEY = "Enter"
 const PROMPT_NEXT_TAB_KEY = "Tab"
 const PROMPT_PREV_TAB_KEY = "BTab"
 
+export const DEFAULT_BENCH_DELAY_MS = 20
+
 export type CaptureEntry = {
   id: string
   caption: string
