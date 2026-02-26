@@ -165,14 +165,22 @@ bool Pathfinding::is_in_limited_domain(
     return is_in_f_limited_area || is_in_search_radius || is_in_search_cone;
 }
 
+/// Pathfinding: constructor
+Pathfinding::Pathfinding( int mx, int my )
+    : map_x_( mx ), map_y_( my )
+    , p_map( mx * my, 0.0f )
+    , g_map( mx * my, 0.0f )
+    , tile_state( ( mx + 2 ) * ( my + 2 ), State::UNVISITED )
+{}
+
 /// Pathfinding: map indexing
 float &Pathfinding::p_at( const point &p )
 {
-    return this->p_map[p.y][p.x];
+    return this->p_map[p.y * this->map_x_ + p.x];
 };
 float &Pathfinding::g_at( const point &p )
 {
-    return this->g_map[p.y][p.x];
+    return this->g_map[p.y * this->map_x_ + p.x];
 };
 float Pathfinding::get_f_unbiased( const point &p )
 {
@@ -186,7 +194,7 @@ float Pathfinding::get_f_biased( const point &p, const point &start,
 }
 Pathfinding::State &Pathfinding::tile_state_at( const point &p )
 {
-    return this->tile_state[p.y + 1][p.x + 1];
+    return this->tile_state[( p.y + 1 ) * ( this->map_x_ + 2 ) + ( p.x + 1 )];
 }
 /// Pathfinding: d-map wide changes
 void Pathfinding::produce_d_map( point dest, int z, PathfindingSettings settings )
@@ -240,13 +248,14 @@ void Pathfinding::reset_tile_state()
 
     this->tile_state_modify_set.clear();
 
-    for( int y = 0; y < MAPSIZE_Y + 2; y++ ) {
-        this->tile_state[y][0] = State::BOUNDS;
-        this->tile_state[y][MAPSIZE_Y + 1] = State::BOUNDS;
+    const int stride = this->map_x_ + 2;
+    for( int y = 0; y < this->map_y_ + 2; y++ ) {
+        this->tile_state[y * stride + 0] = State::BOUNDS;
+        this->tile_state[y * stride + ( this->map_x_ + 1 )] = State::BOUNDS;
     }
-    for( int x = 0; x < MAPSIZE_X + 2; x++ ) {
-        this->tile_state[0][x] = State::BOUNDS;
-        this->tile_state[MAPSIZE_Y + 1][x] = State::BOUNDS;
+    for( int x = 0; x < this->map_x_ + 2; x++ ) {
+        this->tile_state[0 * stride + x] = State::BOUNDS;
+        this->tile_state[( this->map_y_ + 1 ) * stride + x] = State::BOUNDS;
     }
 }
 /// Pathfinding: Z-levels

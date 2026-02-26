@@ -234,7 +234,7 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
 
         const tripoint mapp( map, u.posz() );
 
-        const lit_level lighting = visibility_cache[mapp.x][mapp.y];
+        const lit_level lighting = visibility_cache[map_cache.idx( mapp.x, mapp.y )];
 
         if( m.is_outside( mapp ) && m.get_visibility( lighting, cache ) == VIS_CLEAR &&
             !g->critter_at( mapp, true ) ) {

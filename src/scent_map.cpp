@@ -177,8 +177,10 @@ void scent_map::update( const tripoint &center, map &m )
     std::array < std::array < int, 3 + SCENT_RADIUS * 2 >, 1 + SCENT_RADIUS * 2 > sum_3_scent_y;
     std::array < std::array < char, 3 + SCENT_RADIUS * 2 >, 1 + SCENT_RADIUS * 2 > squares_used_y;
 
-    diagonal_blocks( &blocked_cache )[MAPSIZE_X][MAPSIZE_Y] = m.access_cache(
-                center.z ).vehicle_obstructed_cache;
+    auto &_scent_lc = m.access_cache( center.z );
+    diagonal_blocks( &blocked_cache )[MAPSIZE_X][MAPSIZE_Y] =
+        *reinterpret_cast<diagonal_blocks( * )[MAPSIZE_X][MAPSIZE_Y]>(
+            _scent_lc.vehicle_obstructed_cache.data() );
 
     // for loop constants
     const int scentmap_minx = center.x - SCENT_RADIUS;

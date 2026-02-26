@@ -1222,6 +1222,11 @@ class game
         // Turns between world_tick() passes.  1 = every turn (default).
         // Read from OUT_OF_BUBBLE_TICK_INTERVAL in start_game() / load().
         int world_tick_interval_ = 1;
+
+        // Radius of the reality bubble in submaps.  The loaded region is
+        // (2 * radius + 1)² submaps.  Read from REALITY_BUBBLE_RADIUS in
+        // start_game() / load().  Matches HALF_MAPSIZE at the default of 5.
+        int reality_bubble_radius_ = HALF_MAPSIZE;
     private:
         location_vector<item> fake_items;
     public:

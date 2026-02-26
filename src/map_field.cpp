@@ -148,10 +148,12 @@ void map::process_fields()
     const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
     const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
     for( int z = minz; z <= maxz; z++ ) {
-        auto &field_cache = get_cache( z ).field_cache;
+        level_cache &zfc = get_cache( z );
+        auto &field_cache = zfc.field_cache;
+        const int cache_mapsize = zfc.cache_mapsize;
         for( int x = 0; x < my_MAPSIZE; x++ ) {
             for( int y = 0; y < my_MAPSIZE; y++ ) {
-                if( field_cache[ x + y * MAPSIZE ] ) {
+                if( field_cache[ static_cast<size_t>( x + y * cache_mapsize ) ] ) {
                     submap *const current_submap = get_submap_at_grid( { x, y, z } );
                     if( current_submap == nullptr ) {
                         continue;
@@ -1207,14 +1209,16 @@ void map::process_fields_in_submap( submap *const current_submap,
     const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z;
     const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z;
     for( int z = std::max( submap.z - 1, minz ); z <= std::min( submap.z + 1, maxz ); ++z ) {
-        auto &field_cache = get_cache( z ).field_cache;
-        for( int y = std::max( submap.y - 1, 0 ); y <= std::min( submap.y + 1, MAPSIZE - 1 ); ++y ) {
-            for( int x = std::max( submap.x - 1, 0 ); x <= std::min( submap.x + 1, MAPSIZE - 1 ); ++x ) {
+        level_cache &zfc2 = get_cache( z );
+        auto &field_cache = zfc2.field_cache;
+        const int cm = zfc2.cache_mapsize;
+        for( int y = std::max( submap.y - 1, 0 ); y <= std::min( submap.y + 1, cm - 1 ); ++y ) {
+            for( int x = std::max( submap.x - 1, 0 ); x <= std::min( submap.x + 1, cm - 1 ); ++x ) {
                 const struct submap *sm = get_submap_at_grid( { x, y, z } );
                 if( sm != nullptr && sm->field_count > 0 ) {
-                    field_cache.set( x + y * MAPSIZE );
+                    field_cache.set( static_cast<size_t>( x + y * cm ) );
                 } else {
-                    field_cache.reset( x + y * MAPSIZE );
+                    field_cache.reset( static_cast<size_t>( x + y * cm ) );
                 }
             }
         }

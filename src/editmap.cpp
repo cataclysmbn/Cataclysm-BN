@@ -1,5 +1,6 @@
 #include "editmap.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
@@ -741,9 +742,9 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
                player_character.sight_range( g->light_level( player_character.posz() ) ),
                player_character.sight_range( current_daylight_level( calendar::turn ) ) );
     mvwprintw( w_info, point( 1, off++ ), _( "cache{transp:%.4f seen:%.4f cam:%.4f}" ),
-               map_cache.transparency_cache[target.x][target.y],
-               map_cache.seen_cache[target.x][target.y],
-               map_cache.camera_cache[target.x][target.y]
+               map_cache.transparency_cache[map_cache.idx( target.x, target.y )],
+               map_cache.seen_cache[map_cache.idx( target.x, target.y )],
+               map_cache.camera_cache[map_cache.idx( target.x, target.y )]
              );
     map::apparent_light_info al = map::apparent_light_helper( map_cache, target );
     int apparent_light = static_cast<int>(
@@ -754,7 +755,7 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
                static_cast<int>( here.has_floor( target ) )
              );
     mvwprintw( w_info, point( 1, off++ ), _( "light_at: %s" ),
-               map_cache.lm[target.x][target.y].to_string() );
+               map_cache.lm[map_cache.idx( target.x, target.y )].to_string() );
     mvwprintw( w_info, point( 1, off++ ), _( "apparent light: %.5f (%d)" ),
                al.apparent_light, apparent_light );
     std::string extras;
@@ -2157,7 +2158,7 @@ void editmap::cleartmpmap( tinymap &tmpmap )
     }
 
     auto &ch = tmpmap.get_cache( target.z );
-    std::memset( ch.veh_exists_at, 0, sizeof( ch.veh_exists_at ) );
+    std::fill( ch.veh_exists_at.begin(), ch.veh_exists_at.end(), false );
     ch.veh_cached_parts.clear();
     ch.vehicle_list.clear();
     ch.zone_vehicles.clear();

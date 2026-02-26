@@ -636,10 +636,10 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
 
     // The load-manager center is the middle of the loaded region, not the
     // top-left corner.  pos_sm is the top-left corner (abs_sub), so offset
-    // by HALF_MAPSIZE in each horizontal direction.
+    // by reality_bubble_radius_ in each horizontal direction.
     const tripoint_abs_sm bubble_center(
-        pos_sm.raw().x + HALF_MAPSIZE,
-        pos_sm.raw().y + HALF_MAPSIZE,
+        pos_sm.raw().x + reality_bubble_radius_,
+        pos_sm.raw().y + reality_bubble_radius_,
         pos_sm.raw().z );
 
     // Reality bubble covers all loaded z-levels when z-level mode is active.
@@ -655,7 +655,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     if( reality_bubble_handle_ == 0 ) {
         reality_bubble_handle_ = submap_loader.request_load(
                                      load_request_source::reality_bubble,
-                                     new_dim_id, bubble_center, HALF_MAPSIZE,
+                                     new_dim_id, bubble_center, reality_bubble_radius_,
                                      z_lo, z_hi );
     } else {
         submap_loader.update_request( reality_bubble_handle_, bubble_center );
@@ -787,6 +787,11 @@ bool game::start_game()
         // map is loaded.
         start_loc.add_map_extra( omtstart, scen->get_map_extra() );
     }
+
+    // Read performance options before the first load_map so the reality bubble
+    // request uses the correct radius from the very first load.
+    world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
+    reality_bubble_radius_ = get_option<int>( "REALITY_BUBBLE_RADIUS" );
 
     // TODO: fix point types
     tripoint lev = project_to<coords::sm>( omtstart ).raw();
@@ -976,6 +981,7 @@ bool game::start_game()
         }
     }
     world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
+    reality_bubble_radius_ = get_option<int>( "REALITY_BUBBLE_RADIUS" );
 
     cata::run_hooks( "on_game_started" );
     return true;
@@ -2925,6 +2931,10 @@ bool game::load( const save_t &name )
     validate_npc_followers();
     validate_mounted_npcs();
     validate_linked_vehicles();
+    // Read performance options before update_map so the reality bubble request
+    // uses the correct radius from the very first submap_loader wiring.
+    world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
+    reality_bubble_radius_ = get_option<int>( "REALITY_BUBBLE_RADIUS" );
     update_map( u );
     m.build_floor_cache( get_levz() );
     for( auto &e : u.inv_dump() ) {
@@ -2958,6 +2968,7 @@ bool game::load( const save_t &name )
     cata::run_on_game_load_hooks( *DynamicDataLoader::get_instance().lua );
 
     world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
+    reality_bubble_radius_ = get_option<int>( "REALITY_BUBBLE_RADIUS" );
 
     // Build caches once so any immediate post-load draws don't use uninitialized lighting/visibility,
     // then re-invalidate so the first real in-game draw rebuilds everything again.
@@ -13294,7 +13305,7 @@ point game::update_map( int &x, int &y )
     if( reality_bubble_handle_ != 0 ) {
         const tripoint &origin = m.get_abs_sub();
         const tripoint_abs_sm new_center(
-            origin.x + HALF_MAPSIZE, origin.y + HALF_MAPSIZE, origin.z );
+            origin.x + reality_bubble_radius_, origin.y + reality_bubble_radius_, origin.z );
         submap_loader.update_request( reality_bubble_handle_, new_center );
     }
 

@@ -1196,8 +1196,10 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
 
     map &here = get_map();
 
-    diagonal_blocks( &blocked_cache )[MAPSIZE_X][MAPSIZE_Y] = here.access_cache(
-                src.z ).vehicle_obstructed_cache;
+    auto &_exp_cache = here.access_cache( src.z );
+    diagonal_blocks( &blocked_cache )[MAPSIZE_X][MAPSIZE_Y] =
+        *reinterpret_cast<diagonal_blocks( * )[MAPSIZE_X][MAPSIZE_Y]>(
+            _exp_cache.vehicle_obstructed_cache.data() );
 
     // TODO: Calculate range based on max effective range for projectiles.
     // Basically bisect between 0 and map diameter using shrapnel_calc().

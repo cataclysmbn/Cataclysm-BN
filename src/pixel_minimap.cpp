@@ -316,7 +316,7 @@ void pixel_minimap::update_cache_at( const tripoint &sm_pos )
     for( int y = 0; y < SEEY; ++y ) {
         for( int x = 0; x < SEEX; ++x ) {
             const tripoint p = ms_pos + tripoint{ x, y, 0 };
-            const lit_level lighting = access_cache.visibility_cache[p.x][p.y];
+            const lit_level lighting = access_cache.visibility_cache[access_cache.idx( p.x, p.y )];
 
             SDL_Color color;
 
@@ -517,7 +517,7 @@ void pixel_minimap::render_critters( const tripoint &center )
     for( int y = 0; y < total_tiles_count.y; y++ ) {
         for( int x = 0; x < total_tiles_count.x; x++ ) {
             const tripoint p = tripoint{ start_x + x, start_y + y, center.z };
-            const lit_level lighting = access_cache.visibility_cache[p.x][p.y];
+            const lit_level lighting = access_cache.visibility_cache[access_cache.idx( p.x, p.y )];
 
             if( lighting == lit_level::DARK || lighting == lit_level::BLANK ) {
                 continue;

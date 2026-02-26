@@ -2446,6 +2446,15 @@ void options_manager::add_options_performance()
           { "adjacent", translate_marker( "Adjacent (one layer)" ) } },
         "adjacent"
            );
+        add( "REALITY_BUBBLE_RADIUS", page_id,
+             translate_marker( "Reality Bubble Radius" ),
+             translate_marker( "Radius of the reality bubble in submaps.  "
+                               "The loaded area is (2 * radius + 1)² submaps.  "
+                               "Smaller values reduce memory usage and cache rebuild time; "
+                               "larger values let creatures and events occur further from the player.  "
+                               "Default 5 matches the original 11×11 submap grid.  "
+                               "Requires a new game or reload to take effect." ),
+             3, 8, 5 );
     } );
 }
 

@@ -204,7 +204,7 @@ map::map( int mapsize, bool zlev )
     }
 
     for( auto &ptr : caches ) {
-        ptr = std::make_unique<level_cache>();
+        ptr = std::make_unique<level_cache>( SEEX * mapsize, SEEY * mapsize );
     }
 
     for( auto &ptr : pathfinding_caches ) {
@@ -341,8 +341,8 @@ void map::set_seen_cache_dirty( const tripoint change_location )
         if( cache.seen_cache_dirty ) {
             return;
         }
-        if( cache.seen_cache[change_location.x][change_location.y] != 0.0 ||
-            cache.camera_cache[change_location.x][change_location.y] != 0.0 ) {
+        const int ci = cache.idx( change_location.x, change_location.y );
+        if( cache.seen_cache[ci] != 0.0 || cache.camera_cache[ci] != 0.0 ) {
             cache.seen_cache_dirty = true;
         }
     }
@@ -381,7 +381,8 @@ void map::set_transparency_cache_dirty( const tripoint &p )
 {
     if( inbounds( p ) ) {
         const tripoint smp = ms_to_sm_copy( p );
-        get_cache( smp.z ).transparency_cache_dirty.set( smp.x * MAPSIZE + smp.y );
+        level_cache &ch = get_cache( smp.z );
+        ch.transparency_cache_dirty.set( static_cast<size_t>( ch.bidx( smp.x, smp.y ) ) );
     }
 }
 
@@ -491,7 +492,7 @@ void map::add_vehicle_to_cache( vehicle *veh )
             ch.veh_cached_parts[p] = std::make_pair( veh,  static_cast<int>( vpr.part_index() ) );
         }
         if( inbounds( p ) ) {
-            ch.veh_exists_at[p.x][p.y] = true;
+            ch.veh_exists_at[ch.idx( p.x, p.y )] = true;
         }
     }
 
@@ -509,7 +510,7 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint &pt )
     auto it = ch.veh_cached_parts.find( pt );
     if( it != ch.veh_cached_parts.end() && it->second.first == veh ) {
         if( inbounds( pt ) ) {
-            ch.veh_exists_at[pt.x][pt.y] = false;
+            ch.veh_exists_at[ch.idx( pt.x, pt.y )] = false;
         }
         ch.veh_cached_parts.erase( it );
         cached_veh_rope.erase( pt.xy() );
@@ -527,7 +528,7 @@ void map::clear_vehicle_cache( )
             const auto part = ch.veh_cached_parts.begin();
             const auto &p = part->first;
             if( inbounds( p ) ) {
-                ch.veh_exists_at[p.x][p.y] = false;
+                ch.veh_exists_at[ch.idx( p.x, p.y )] = false;
             }
             ch.veh_cached_parts.erase( part );
         }
@@ -822,10 +823,8 @@ bool map::vehproceed( VehicleList &vehicle_list )
         // Check if any vehicles exist in the active range for this z-level
         cache.veh_in_active_range = cache.veh_in_active_range &&
                                     std::ranges::any_of( cache.veh_exists_at,
-        []( const auto & row ) {
-            return std::any_of( std::begin( row ), std::end( row ), []( bool veh_exists ) {
-                return veh_exists;
-            } );
+        []( bool veh_exists ) {
+            return veh_exists;
         } );
     }
 
@@ -1395,7 +1394,7 @@ const vehicle *map::veh_at_internal( const tripoint &p, int &part_num ) const
 {
     // This function is called A LOT. Move as much out of here as possible.
     const level_cache &ch = get_cache( p.z );
-    if( !ch.veh_in_active_range || !ch.veh_exists_at[p.x][p.y] ) {
+    if( !ch.veh_in_active_range || !ch.veh_exists_at[ch.idx( p.x, p.y )] ) {
         part_num = -1;
         return nullptr; // Clear cache indicates no vehicle. This should optimize a great deal.
     }
@@ -1917,7 +1916,7 @@ uint8_t map::get_known_connections( const tripoint &p, int connect_group,
 #endif
 
     const bool overridden = override.contains( p );
-    const bool is_transparent = ch.transparency_cache[p.x][p.y] > LIGHT_TRANSPARENCY_SOLID;
+    const bool is_transparent = ch.transparency_cache[ch.idx( p.x, p.y )] > LIGHT_TRANSPARENCY_SOLID;
 
     // populate connection information
     for( int i = 0; i < 4; ++i ) {
@@ -1929,7 +1928,7 @@ uint8_t map::get_known_connections( const tripoint &p, int connect_group,
         const bool neighbour_overridden = neighbour_override != override.end();
         // if there's some non-memory terrain to show at the neighboring tile
         const bool may_connect = neighbour_overridden ||
-                                 get_visibility( ch.visibility_cache[neighbour.x][neighbour.y],
+                                 get_visibility( ch.visibility_cache[ch.idx( neighbour.x, neighbour.y )],
                                          get_visibility_variables_cache() ) == VIS_CLEAR ||
                                  // or if an actual center tile is transparent or next to a memorized tile
                                  ( !overridden && ( is_transparent || is_memorized( neighbour ) ) );
@@ -1968,7 +1967,7 @@ uint8_t map::get_known_connections_f( const tripoint &p, int connect_group,
 #endif
 
     const bool overridden = override.contains( p );
-    const bool is_transparent = ch.transparency_cache[p.x][p.y] > LIGHT_TRANSPARENCY_SOLID;
+    const bool is_transparent = ch.transparency_cache[ch.idx( p.x, p.y )] > LIGHT_TRANSPARENCY_SOLID;
 
     // populate connection information
     for( int i = 0; i < 4; ++i ) {
@@ -1980,7 +1979,7 @@ uint8_t map::get_known_connections_f( const tripoint &p, int connect_group,
         const bool neighbour_overridden = neighbour_override != override.end();
         // if there's some non-memory terrain to show at the neighboring tile
         const bool may_connect = neighbour_overridden ||
-                                 get_visibility( ch.visibility_cache[pt.x][pt.y],
+                                 get_visibility( ch.visibility_cache[ch.idx( pt.x, pt.y )],
                                          get_visibility_variables_cache() ) ==
                                  visibility_type::VIS_CLEAR ||
                                  // or if an actual center tile is transparent or
@@ -2469,7 +2468,8 @@ bool map::has_floor( const tripoint &p, bool visible_only ) const
         return true;
     }
 
-    return get_cache_ref( p.z ).floor_cache[p.x][p.y] || ( !visible_only &&
+    const level_cache &fch = get_cache_ref( p.z );
+    return fch.floor_cache[fch.idx( p.x, p.y )] || ( !visible_only &&
             has_flag( TFLAG_Z_TRANSPARENT, p ) );
 }
 
@@ -3022,8 +3022,8 @@ bool map::is_outside( const tripoint &p ) const
         return true;
     }
 
-    const auto &outside_cache = get_cache_ref( p.z ).outside_cache;
-    return outside_cache[p.x][p.y];
+    const level_cache &oc = get_cache_ref( p.z );
+    return oc.outside_cache[oc.idx( p.x, p.y )];
 }
 
 bool map::is_last_ter_wall( const bool no_furn, point p,
@@ -3126,12 +3126,13 @@ void map::decay_fields_and_scent( const time_duration &amount )
     // Coordinate code copied from lightmap calculations
     // TODO: Z
     const int smz = abs_sub.z;
-    const auto &outside_cache = get_cache_ref( smz ).outside_cache;
+    level_cache &smz_cache = get_cache( smz );
+    const int cache_mapsize = smz_cache.cache_mapsize;
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
             const auto cur_submap = get_submap_at_grid( { smx, smy, smz } );
             if( cur_submap == nullptr ) {
-                get_cache( smz ).field_cache.reset( smx + ( smy * MAPSIZE ) );
+                smz_cache.field_cache.reset( static_cast<size_t>( smx + smy * cache_mapsize ) );
                 continue;
             }
             int to_proc = cur_submap->field_count;
@@ -3142,7 +3143,7 @@ void map::decay_fields_and_scent( const time_duration &amount )
                                      << ( abs_sub + tripoint( smx, smy, 0 ) )
                                      << "has " << to_proc << " field_count";
                 }
-                get_cache( smz ).field_cache.reset( smx + ( smy * MAPSIZE ) );
+                smz_cache.field_cache.reset( static_cast<size_t>( smx + smy * cache_mapsize ) );
                 // This submap has no fields
                 continue;
             }
@@ -3158,7 +3159,7 @@ void map::decay_fields_and_scent( const time_duration &amount )
                     const int y = sy + smy * SEEY;
 
                     field &fields = cur_submap->get_field( { sx, sy} );
-                    if( !outside_cache[x][y] ) {
+                    if( !smz_cache.outside_cache[smz_cache.idx( x, y )] ) {
                         to_proc -= fields.field_count();
                         continue;
                     }
@@ -6240,7 +6241,9 @@ int map::get_field_intensity( const tripoint &p, const field_type_id &type ) con
 bool map::has_field_at( const tripoint &p, bool check_bounds )
 {
     const tripoint sm = ms_to_sm_copy( p );
-    return ( !check_bounds || inbounds( p ) ) && get_cache( p.z ).field_cache[sm.x + sm.y * MAPSIZE];
+    const level_cache &fc = get_cache( p.z );
+    return ( !check_bounds || inbounds( p ) ) &&
+           fc.field_cache[static_cast<size_t>( sm.x + sm.y * fc.cache_mapsize )];
 }
 
 field_entry *map::get_field( const tripoint &p, const field_type_id &type )
@@ -6292,8 +6295,8 @@ bool map::add_field( const tripoint &p, const field_type_id &type_id, int intens
     if( current_submap->get_field( l ).add_field( type_id, intensity, age ) ) {
         //Only adding it to the count if it doesn't exist.
         if( !current_submap->field_count++ ) {
-            get_cache( p.z ).field_cache.set( static_cast<size_t>( p.x / SEEX + ( (
-                                                  p.y / SEEX ) * MAPSIZE ) ) );
+            level_cache &afc = get_cache( p.z );
+            afc.field_cache.set( static_cast<size_t>( p.x / SEEX + ( p.y / SEEY ) * afc.cache_mapsize ) );
         }
     }
 
@@ -6335,8 +6338,8 @@ void map::remove_field( const tripoint &p, const field_type_id &field_to_remove 
     if( current_submap->get_field( l ).remove_field( field_to_remove ) ) {
         // Only adjust the count if the field actually existed.
         if( !--current_submap->field_count ) {
-            get_cache( p.z ).field_cache.set( static_cast<size_t>( p.x / SEEX + ( (
-                                                  p.y / SEEX ) * MAPSIZE ) ) );
+            level_cache &rfc = get_cache( p.z );
+            rfc.field_cache.set( static_cast<size_t>( p.x / SEEX + ( p.y / SEEY ) * rfc.cache_mapsize ) );
         }
         const auto &fdata = field_to_remove.obj();
         if( fdata.dirty_transparency_cache || !fdata.is_transparent() ) {
@@ -6436,8 +6439,11 @@ void map::update_visibility_cache( const int zlev )
 {
     visibility_variables_cache.variables_set = true; // Not used yet
     visibility_variables_cache.g_light_level = static_cast<int>( g->light_level( zlev ) );
-    visibility_variables_cache.vision_threshold = g->u.get_vision_threshold(
-                get_cache_ref( g->u.posz() ).lm[g->u.posx()][g->u.posy()].max() );
+    {
+        const level_cache &plr_ch = get_cache_ref( g->u.posz() );
+        visibility_variables_cache.vision_threshold = g->u.get_vision_threshold(
+                    plr_ch.lm[plr_ch.idx( g->u.posx(), g->u.posy() )].max() );
+    }
 
     visibility_variables_cache.u_clairvoyance = g->u.clairvoyance();
     visibility_variables_cache.u_sight_impaired = g->u.sight_impaired();
@@ -6451,16 +6457,17 @@ void map::update_visibility_cache( const int zlev )
 
     for( int z = min_z; z <= max_z; z++ ) {
 
-        auto &visibility_cache = get_cache( z ).visibility_cache;
+        level_cache &vc_cache = get_cache( z );
+        auto &visibility_cache = vc_cache.visibility_cache;
 
         tripoint p;
         p.z = z;
         int &x = p.x;
         int &y = p.y;
-        for( x = 0; x < MAPSIZE_X; x++ ) {
-            for( y = 0; y < MAPSIZE_Y; y++ ) {
+        for( x = 0; x < vc_cache.cache_x; x++ ) {
+            for( y = 0; y < vc_cache.cache_y; y++ ) {
                 lit_level ll = apparent_light_at( p, visibility_variables_cache );
-                visibility_cache[x][y] = ll;
+                visibility_cache[vc_cache.idx( x, y )] = ll;
                 if( z == zlev ) {
                     sm_squares_seen[ x / SEEX ][ y / SEEY ] += ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
                 }
@@ -6548,7 +6555,8 @@ void map::draw( const catacurses::window &w, const tripoint &center )
     update_visibility_cache( center.z );
     const visibility_variables &cache = get_visibility_variables_cache();
 
-    const auto &visibility_cache = get_cache_ref( center.z ).visibility_cache;
+    const level_cache &draw_lc = get_cache_ref( center.z );
+    const auto &visibility_cache = draw_lc.visibility_cache;
 
     int wnd_h = getmaxy( w );
     int wnd_w = getmaxx( w );
@@ -6612,7 +6620,7 @@ void map::draw( const catacurses::window &w, const tripoint &center )
                 continue;
             }
 
-            const lit_level lighting = visibility_cache[p.x][p.y];
+            const lit_level lighting = visibility_cache[draw_lc.idx( p.x, p.y )];
             const visibility_type vis = get_visibility( lighting, cache );
 
             if( draw_vision_effect( vis ) ) {
@@ -6639,15 +6647,15 @@ void map::draw( const catacurses::window &w, const tripoint &center )
     // Memorize off-screen tiles
     half_open_rectangle<point> display( offs.xy(), offs.xy() + point( wnd_w, wnd_h ) );
     drawsq_params mm_params = drawsq_params().memorize( true ).output( false );
-    for( int y = 0; y < MAPSIZE_Y; y++ ) {
-        for( int x = 0; x < MAPSIZE_X; x++ ) {
+    for( int y = 0; y < draw_lc.cache_y; y++ ) {
+        for( int x = 0; x < draw_lc.cache_x; x++ ) {
             const tripoint p( x, y, center.z );
             if( display.contains( p.xy() ) ) {
                 // Have been memorized during display loop
                 continue;
             }
 
-            const lit_level lighting = visibility_cache[p.x][p.y];
+            const lit_level lighting = visibility_cache[draw_lc.idx( p.x, p.y )];
             const visibility_type vis = get_visibility( lighting, cache );
 
             if( vis != VIS_CLEAR ) {
@@ -7346,21 +7354,22 @@ bool map::obstructed_by_vehicle_rotation( const tripoint &from, const tripoint &
 
     point delta = to.xy() - from.xy();
 
-    auto cache = get_cache( from.z ).vehicle_obstructed_cache;
+    const level_cache &lc = get_cache_ref( from.z );
+    const auto &cache = lc.vehicle_obstructed_cache;
 
     if( delta == point_north_west ) {
-        return cache[from.x][from.y].nw;
+        return cache[lc.idx( from.x, from.y )].nw;
     }
 
     if( delta == point_north_east ) {
-        return cache[from.x][from.y].ne;
+        return cache[lc.idx( from.x, from.y )].ne;
     }
 
     if( delta == point_south_west ) {
-        return cache[to.x][to.y].ne;
+        return cache[lc.idx( to.x, to.y )].ne;
     }
     if( delta == point_south_east ) {
-        return cache[to.x][to.y].nw;
+        return cache[lc.idx( to.x, to.y )].nw;
     }
 
     return false;
@@ -7383,21 +7392,22 @@ bool map::obscured_by_vehicle_rotation( const tripoint &from, const tripoint &to
 
     point delta = to.xy() - from.xy();
 
-    auto cache = get_cache( from.z ).vehicle_obscured_cache;
+    const level_cache &lc = get_cache_ref( from.z );
+    const auto &cache = lc.vehicle_obscured_cache;
 
     if( delta == point_north_west ) {
-        return cache[from.x][from.y].nw;
+        return cache[lc.idx( from.x, from.y )].nw;
     }
 
     if( delta == point_north_east ) {
-        return cache[from.x][from.y].ne;
+        return cache[lc.idx( from.x, from.y )].ne;
     }
 
     if( delta == point_south_west ) {
-        return cache[to.x][to.y].ne;
+        return cache[lc.idx( to.x, to.y )].ne;
     }
     if( delta == point_south_east ) {
-        return cache[to.x][to.y].nw;
+        return cache[lc.idx( to.x, to.y )].nw;
     }
 
     return false;
@@ -7512,35 +7522,28 @@ void map::shift_traps( const tripoint &shift )
     }
 }
 
-template<int SIZE, int MULTIPLIER>
-void shift_bitset_cache( std::bitset<SIZE *SIZE> &cache, point s )
+void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier, point s )
 {
     // sx shifts by MULTIPLIER rows, sy shifts by MULTIPLIER columns.
-    int shift_amount = s.x * MULTIPLIER + s.y * SIZE * MULTIPLIER;
+    int shift_amount = s.x * multiplier + s.y * size * multiplier;
     if( shift_amount > 0 ) {
         cache >>= static_cast<size_t>( shift_amount );
     } else if( shift_amount < 0 ) {
         cache <<= static_cast<size_t>( -shift_amount );
     }
-    // Shifting in the y direction shifted in 0 values, no no additional clearing is necessary, but
+    // Shifting in the y direction shifts in 0 values, so no additional clearing is necessary, but
     // a shift in the x direction makes values "wrap" to the next row, and they need to be zeroed.
     if( s.x == 0 ) {
         return;
     }
-    const size_t x_offset = s.x > 0 ? SIZE - MULTIPLIER : 0;
-    for( size_t y = 0; y < SIZE; ++y ) {
-        size_t y_offset = y * SIZE;
-        for( size_t x = 0; x < MULTIPLIER; ++x ) {
+    const size_t x_offset = s.x > 0 ? static_cast<size_t>( size - multiplier ) : 0;
+    for( size_t y = 0; y < static_cast<size_t>( size ); ++y ) {
+        size_t y_offset = y * static_cast<size_t>( size );
+        for( size_t x = 0; x < static_cast<size_t>( multiplier ); ++x ) {
             cache.reset( y_offset + x_offset + x );
         }
     }
 }
-
-template void
-shift_bitset_cache<MAPSIZE_X, SEEX>( std::bitset<MAPSIZE_X *MAPSIZE_X> &cache,
-                                     point s );
-template void
-shift_bitset_cache<MAPSIZE, 1>( std::bitset<MAPSIZE *MAPSIZE> &cache, point s );
 
 static inline void shift_tripoint_set( std::set<tripoint> &set, point offset,
                                        const half_open_rectangle<point> &boundaries )
@@ -7660,8 +7663,11 @@ void map::shift( point sp )
     // absx and absy are our position in the world, for saving/loading purposes.
     for( int gridz = zmin; gridz <= zmax; gridz++ ) {
         clear_vehicle_list( gridz );
-        shift_bitset_cache<MAPSIZE_X, SEEX>( get_cache( gridz ).map_memory_seen_cache, sp );
-        shift_bitset_cache<MAPSIZE, 1>( get_cache( gridz ).field_cache, sp );
+        {
+            level_cache &gc = get_cache( gridz );
+            shift_bitset_cache( gc.map_memory_seen_cache, gc.cache_x, SEEX, sp );
+            shift_bitset_cache( gc.field_cache, gc.cache_mapsize, 1, sp );
+        }
         if( sp.x >= 0 ) {
             for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
                 if( sp.y >= 0 ) {
@@ -7942,7 +7948,8 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
         submaps_with_active_items.emplace( grid_abs_sub );
     }
     if( tmpsub->field_count > 0 ) {
-        get_cache( grid.z ).field_cache.set( grid.x + grid.y * MAPSIZE );
+        level_cache &lnfc = get_cache( grid.z );
+        lnfc.field_cache.set( static_cast<size_t>( grid.x + grid.y * lnfc.cache_mapsize ) );
     }
     // Destroy bugged no-part vehicles
     auto &veh_vec = tmpsub->vehicles;
@@ -8941,19 +8948,15 @@ void map::build_outside_cache( const int zlev )
 
     // Make a bigger cache to avoid bounds checking
     // We will later copy it to our regular cache
-    const size_t padded_w = ( MAPSIZE_X ) + 2;
-    const size_t padded_h = ( MAPSIZE_Y ) + 2;
-    bool padded_cache[padded_w][padded_h];
+    const int padded_w = ch.cache_x + 2;
+    const int padded_h = ch.cache_y + 2;
+    std::vector<bool> padded_cache( static_cast<size_t>( padded_w * padded_h ), true );
 
     auto &outside_cache = ch.outside_cache;
     if( zlev < 0 ) {
-        std::uninitialized_fill_n(
-            &outside_cache[0][0], ( MAPSIZE_X ) * ( MAPSIZE_Y ), false );
+        std::fill( outside_cache.begin(), outside_cache.end(), false );
         return;
     }
-
-    std::uninitialized_fill_n(
-        &padded_cache[0][0], padded_w * padded_h, true );
 
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
@@ -8972,7 +8975,7 @@ void map::build_outside_cache( const int zlev )
                         // Add 1 to both coordinates, because we're operating on the padded cache
                         for( int dx = 0; dx <= 2; dx++ ) {
                             for( int dy = 0; dy <= 2; dy++ ) {
-                                padded_cache[x + dx][y + dy] = false;
+                                padded_cache[static_cast<size_t>( ( x + dx ) * padded_h + ( y + dy ) )] = false;
                             }
                         }
                     }
@@ -8981,9 +8984,14 @@ void map::build_outside_cache( const int zlev )
         }
     }
 
-    // Copy the padded cache back to the proper one, but with no padding
-    for( int x = 0; x < SEEX * my_MAPSIZE; x++ ) {
-        std::copy_n( &padded_cache[x + 1][1], SEEX * my_MAPSIZE, &outside_cache[x][0] );
+    // Copy the padded cache back to the proper one, but with no padding.
+    // Both use X-outer indexing: flat index = x * height + y.
+    // padded_cache: (x+1)*padded_h + (y+1)   outside_cache: ch.idx(x,y) = x*cache_y+y
+    for( int x = 0; x < ch.cache_x; ++x ) {
+        for( int y = 0; y < ch.cache_y; ++y ) {
+            outside_cache[static_cast<size_t>( ch.idx( x, y ) )] =
+                padded_cache[static_cast<size_t>( ( x + 1 ) * padded_h + ( y + 1 ) )];
+        }
     }
 
     ch.outside_cache_dirty = false;
@@ -9059,8 +9067,7 @@ bool map::build_floor_cache( const int zlev )
     }
 
     auto &floor_cache = ch.floor_cache;
-    std::uninitialized_fill_n(
-        &floor_cache[0][0], ( MAPSIZE_X ) * ( MAPSIZE_Y ), true );
+    std::fill( floor_cache.begin(), floor_cache.end(), true );
 
     bool lowest_z_lev = zlev <= -OVERMAP_DEPTH;
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
@@ -9092,7 +9099,7 @@ bool map::build_floor_cache( const int zlev )
                         }
                         const int x = sx + smx * SEEX;
                         const int y = sy + smy * SEEY;
-                        floor_cache[x][y] = false;
+                        floor_cache[ch.idx( x, y )] = false;
                     }
                 }
             }
@@ -9196,53 +9203,53 @@ static void vehicle_caching_internal( level_cache &zch, const vpart_reference &v
     if( vehicle_is_opaque ) {
         int dpart = v->part_with_feature( part, VPFLAG_OPENABLE, true );
         if( dpart < 0 || !v->part( dpart ).open ) {
-            transparency_cache[part_pos.x][part_pos.y] = LIGHT_TRANSPARENCY_SOLID;
+            transparency_cache[zch.idx( part_pos.x, part_pos.y )] = LIGHT_TRANSPARENCY_SOLID;
         } else {
             vehicle_is_opaque = false;
         }
     }
 
     if( vehicle_is_opaque || vp.is_inside() ) {
-        outside_cache[part_pos.x][part_pos.y] = false;
+        outside_cache[zch.idx( part_pos.x, part_pos.y )] = false;
     }
 
     if( vp.has_feature( VPFLAG_BOARDABLE ) && !vp.part().is_broken() ) {
-        floor_cache[part_pos.x][part_pos.y] = true;
+        floor_cache[zch.idx( part_pos.x, part_pos.y )] = true;
     }
 
     point t = v->tripoint_to_mount( part_pos + point_north_west );
     if( !v->allowed_light( t, vp.mount() ) ) {
-        obscured_cache[part_pos.x][part_pos.y].nw = true;
+        obscured_cache[zch.idx( part_pos.x, part_pos.y )].nw = true;
     }
     if( !v->allowed_move( t, vp.mount() ) ) {
-        obstructed_cache[part_pos.x][part_pos.y].nw = true;
+        obstructed_cache[zch.idx( part_pos.x, part_pos.y )].nw = true;
     }
 
     t = v->tripoint_to_mount( part_pos + point_north_east );
     if( !v->allowed_light( t, vp.mount() ) ) {
-        obscured_cache[part_pos.x][part_pos.y].ne = true;
+        obscured_cache[zch.idx( part_pos.x, part_pos.y )].ne = true;
     }
     if( !v->allowed_move( t, vp.mount() ) ) {
-        obstructed_cache[part_pos.x][part_pos.y].ne = true;
+        obstructed_cache[zch.idx( part_pos.x, part_pos.y )].ne = true;
     }
 
-    if( part_pos.x > 0 && part_pos.y < MAPSIZE_Y - 1 ) {
+    if( part_pos.x > 0 && part_pos.y < zch.cache_y - 1 ) {
         t = v->tripoint_to_mount( part_pos + point_south_west );
         if( !v->allowed_light( t, vp.mount() ) ) {
-            obscured_cache[part_pos.x - 1][part_pos.y + 1].ne = true;
+            obscured_cache[zch.idx( part_pos.x - 1, part_pos.y + 1 )].ne = true;
         }
         if( !v->allowed_move( t, vp.mount() ) ) {
-            obstructed_cache[part_pos.x - 1][part_pos.y + 1].ne = true;
+            obstructed_cache[zch.idx( part_pos.x - 1, part_pos.y + 1 )].ne = true;
         }
     }
 
-    if( part_pos.x < MAPSIZE_X - 1 && part_pos.y < MAPSIZE_Y - 1 ) {
+    if( part_pos.x < zch.cache_x - 1 && part_pos.y < zch.cache_y - 1 ) {
         t = v->tripoint_to_mount( part_pos + point_south_east );
         if( !v->allowed_light( t, vp.mount() ) ) {
-            obscured_cache[part_pos.x + 1][part_pos.y + 1].nw = true;
+            obscured_cache[zch.idx( part_pos.x + 1, part_pos.y + 1 )].nw = true;
         }
         if( !v->allowed_move( t, vp.mount() ) ) {
-            obstructed_cache[part_pos.x + 1][part_pos.y + 1].nw = true;
+            obstructed_cache[zch.idx( part_pos.x + 1, part_pos.y + 1 )].nw = true;
         }
     }
 }
@@ -9252,7 +9259,7 @@ static void vehicle_caching_internal_above( level_cache &zch_above, const vpart_
 {
     if( vp.has_feature( VPFLAG_ROOF ) || vp.has_feature( VPFLAG_OPAQUE ) ) {
         const tripoint &part_pos = v->global_part_pos3( vp.part() );
-        zch_above.floor_cache[part_pos.x][part_pos.y] = true;
+        zch_above.floor_cache[zch_above.idx( part_pos.x, part_pos.y )] = true;
     }
 }
 
@@ -9310,10 +9317,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 level_cache &ch = get_cache( z );
                 if( ch.veh_in_active_range ) {
                     const diagonal_blocks fill = {false, false};
-                    std::uninitialized_fill_n( &ch.vehicle_obscured_cache[0][0],
-                                               MAPSIZE_X * MAPSIZE_Y, fill );
-                    std::uninitialized_fill_n( &ch.vehicle_obstructed_cache[0][0],
-                                               MAPSIZE_X * MAPSIZE_Y, fill );
+                    std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
+                    std::fill( ch.vehicle_obstructed_cache.begin(), ch.vehicle_obstructed_cache.end(), fill );
                 }
 
                 const bool level_seen_dirty = ch.seen_cache_dirty;
@@ -9338,10 +9343,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 level_cache &ch = get_cache( z );
                 if( ch.veh_in_active_range ) {
                     const diagonal_blocks fill = {false, false};
-                    std::uninitialized_fill_n( &ch.vehicle_obscured_cache[0][0],
-                                               MAPSIZE_X * MAPSIZE_Y, fill );
-                    std::uninitialized_fill_n( &ch.vehicle_obstructed_cache[0][0],
-                                               MAPSIZE_X * MAPSIZE_Y, fill );
+                    std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
+                    std::fill( ch.vehicle_obstructed_cache.begin(), ch.vehicle_obstructed_cache.end(), fill );
                 }
 
                 const bool level_seen_dirty = ch.seen_cache_dirty;
@@ -9406,9 +9409,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             // turn (e.g., a removed torch would leave a ghost-light patch).
             for( const int z : dirty_seen_cache_levels ) {
                 auto &c = get_cache( z );
-                std::memset( c.sm, 0, sizeof( c.sm ) );
-                std::memset( c.light_source_buffer, 0, sizeof( c.light_source_buffer ) );
-                std::memset( c.lm, 0, sizeof( c.lm ) );
+                std::fill( c.sm.begin(), c.sm.end(), 0.0f );
+                std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+                std::fill( c.lm.begin(), c.lm.end(), four_quadrants( 0.0f ) );
             }
             // Step 2: Build sunlight (writes lm for ALL z-levels, top-to-bottom;
             // must run once and serially before the parallel loop).
@@ -10004,27 +10007,30 @@ const level_cache &map::access_cache( int zlev ) const
     return nullcache;
 }
 
-level_cache::level_cache()
+// Default constructor: zero-sized null sentinel — not for normal use.
+level_cache::level_cache() = default;
+
+// Normal constructor: mx = SEEX * mapsize, my = SEEY * mapsize.
+level_cache::level_cache( int mx, int my )
+    : cache_x( mx ), cache_y( my ), cache_mapsize( mx / SEEX ),
+      transparency_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
+      lm( static_cast<size_t>( mx * my ), four_quadrants( 0.0f ) ),
+      sm( static_cast<size_t>( mx * my ), 0.0f ),
+      light_source_buffer( static_cast<size_t>( mx * my ), 0.0f ),
+      outside_cache( static_cast<size_t>( mx * my ), false ),
+      floor_cache( static_cast<size_t>( mx * my ), false ),
+      transparency_cache( static_cast<size_t>( mx * my ), 0.0f ),
+      vehicle_obscured_cache( static_cast<size_t>( mx * my ), diagonal_blocks{false, false} ),
+      vehicle_obstructed_cache( static_cast<size_t>( mx * my ), diagonal_blocks{false, false} ),
+      seen_cache( static_cast<size_t>( mx * my ), 0.0f ),
+      camera_cache( static_cast<size_t>( mx * my ), 0.0f ),
+      visibility_cache( static_cast<size_t>( mx * my ), lit_level::DARK ),
+      map_memory_seen_cache( static_cast<size_t>( mx * my ) ),
+      field_cache( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
+      veh_exists_at( static_cast<size_t>( mx * my ), false )
 {
-    const int map_dimensions = MAPSIZE_X * MAPSIZE_Y;
-    transparency_cache_dirty.set();
     outside_cache_dirty = true;
-    floor_cache_dirty = false;
-    constexpr four_quadrants four_zeros( 0.0f );
-    std::fill_n( &lm[0][0], map_dimensions, four_zeros );
-    std::fill_n( &sm[0][0], map_dimensions, 0.0f );
-    std::fill_n( &light_source_buffer[0][0], map_dimensions, 0.0f );
-    std::fill_n( &outside_cache[0][0], map_dimensions, false );
-    std::fill_n( &floor_cache[0][0], map_dimensions, false );
-    std::fill_n( &transparency_cache[0][0], map_dimensions, 0.0f );
-    diagonal_blocks fill = {false, false};
-    std::fill_n( &vehicle_obscured_cache[0][0], map_dimensions, fill );
-    std::fill_n( &vehicle_obstructed_cache[0][0], map_dimensions, fill );
-    std::fill_n( &seen_cache[0][0], map_dimensions, 0.0f );
-    std::fill_n( &camera_cache[0][0], map_dimensions, 0.0f );
-    std::fill_n( &visibility_cache[0][0], map_dimensions, lit_level::DARK );
-    veh_in_active_range = false;
-    std::fill_n( &veh_exists_at[0][0], map_dimensions, false );
+    transparency_cache_dirty.set();
 }
 
 pathfinding_cache::pathfinding_cache()
@@ -10048,17 +10054,16 @@ void map::set_pathfinding_cache_dirty( const int zlev )
 
 bool map::check_seen_cache( const tripoint &p ) const
 {
-    std::bitset<MAPSIZE_X *MAPSIZE_Y> &memory_seen_cache =
-        get_cache( p.z ).map_memory_seen_cache;
-    return !memory_seen_cache[ static_cast<size_t>( p.x + p.y * MAPSIZE_Y ) ];
+    const level_cache &ch = get_cache( p.z );
+    return !ch.map_memory_seen_cache[ static_cast<size_t>( p.x + p.y * ch.cache_x ) ];
 }
 
 bool map::check_and_set_seen_cache( const tripoint &p ) const
 {
-    std::bitset<MAPSIZE_X *MAPSIZE_Y> &memory_seen_cache =
-        get_cache( p.z ).map_memory_seen_cache;
-    if( !memory_seen_cache[ static_cast<size_t>( p.x + p.y * MAPSIZE_Y ) ] ) {
-        memory_seen_cache.set( static_cast<size_t>( p.x + p.y * MAPSIZE_Y ) );
+    level_cache &ch = get_cache( p.z );
+    const size_t offset = static_cast<size_t>( p.x + p.y * ch.cache_x );
+    if( !ch.map_memory_seen_cache[ offset ] ) {
+        ch.map_memory_seen_cache.set( offset );
         return true;
     }
     return false;
@@ -10078,9 +10083,10 @@ void map::invalidate_map_cache( const int zlev )
 
 void map::set_memory_seen_cache_dirty( const tripoint &p )
 {
-    const int offset = p.x + p.y * MAPSIZE_Y;
-    if( offset >= 0 && offset < MAPSIZE_X * MAPSIZE_Y ) {
-        get_cache( p.z ).map_memory_seen_cache.reset( offset );
+    level_cache &ch = get_cache( p.z );
+    const int offset = p.x + p.y * ch.cache_x;
+    if( offset >= 0 && offset < ch.cache_x * ch.cache_y ) {
+        ch.map_memory_seen_cache.reset( static_cast<size_t>( offset ) );
     }
 }
 

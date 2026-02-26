@@ -380,8 +380,9 @@ bool Creature::sees( const tripoint &t, bool is_avatar, int range_mod ) const
             // Special case monster -> player visibility, forcing it to be symmetric with player vision.
             const float player_visibility_factor = g->u.visibility() / 100.0f;
             int adj_range = std::floor( range * player_visibility_factor );
+            const auto &_mc = here.get_cache_ref( pos().z );
             return adj_range >= wanted_range &&
-                   here.get_cache_ref( pos().z ).seen_cache[pos().x][pos().y] > LIGHT_TRANSPARENCY_SOLID;
+                   _mc.seen_cache[_mc.idx( pos().x, pos().y )] > LIGHT_TRANSPARENCY_SOLID;
         } else {
             return here.sees( pos(), t, range );
         }

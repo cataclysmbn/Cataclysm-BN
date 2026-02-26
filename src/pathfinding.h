@@ -242,12 +242,17 @@ class Pathfinding
         // Global state: We cache `z_path` information taken to prevent multiple iterations for the same target
         static std::map<std::tuple<bool, int, tripoint>, ZLevelChange> cached_closest_z_changes;
 
-        // Smallest adjacent f
-        std::array<std::array<float, MAPSIZE_X>, MAPSIZE_Y> p_map;
+        // Runtime map dimensions (default MAPSIZE_X / MAPSIZE_Y; updated when bubble size changes)
+        int map_x_;
+        int map_y_;
+
+        // Smallest adjacent f; flat Y-outer: vec[y * map_x_ + x]
+        std::vector<float> p_map;
         // Associated tile's g cost [movement, bashing down...]
-        std::array<std::array<float, MAPSIZE_X>, MAPSIZE_Y> g_map;
+        std::vector<float> g_map;
         // Tile overall state [padded on all sides by 1 tile for bounds checking]
-        std::array < std::array < State, MAPSIZE_X + 2 >, MAPSIZE_Y + 2 > tile_state;
+        // flat Y-outer: vec[(y+1) * (map_x_+2) + (x+1)]; border indices wrap with +1 offset
+        std::vector<State> tile_state;
 
         // Which points in maps have we modified thus far? Used for resetting.
         std::vector<point> map_modify_set;
@@ -324,6 +329,10 @@ class Pathfinding
         // Continue expanding the dijikstra map until we reach `origin` or nothing remains of the frontier. Returns whether a route is present.
         ExpansionOutcome expand_2d_up_to( const point &start, const RouteSettings &route_settings );
     public:
+        // Allocates flat arrays for a map of size mx × my.
+        // Default arguments match the compile-time MAPSIZE_X/Y constants.
+        explicit Pathfinding( int mx = MAPSIZE_X, int my = MAPSIZE_Y );
+
         // get `route` from `from` to `to` if available in accordance to `route_settings` while `path_settings` defines our capabilities, otherwise empty vector.
         // Found route will include `from` and `to`.
         static std::vector<tripoint> route( tripoint from, tripoint to,

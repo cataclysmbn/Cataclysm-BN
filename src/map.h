@@ -3,6 +3,7 @@
 #include <array>
 #include <bitset>
 #include <climits>
+#include "cata_dynamic_bitset.h"
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -301,11 +302,33 @@ struct diagonal_blocks {
 };
 
 struct level_cache {
-    // Zeros all relevant values
+    // Zeros all relevant values.
+    // Default constructor creates a zero-sized cache used as a null sentinel only.
     level_cache();
+    // Normal constructor: mx = SEEX * mapsize, my = SEEY * mapsize.
+    explicit level_cache( int mx, int my );
     level_cache( const level_cache &other ) = default;
+    level_cache &operator=( const level_cache &other ) = default;
 
-    std::bitset<MAPSIZE *MAPSIZE> transparency_cache_dirty;
+    // Runtime dimensions for this cache.
+    // cache_x = SEEX * mapsize, cache_y = SEEY * mapsize, cache_mapsize = mapsize.
+    int cache_x = 0;
+    int cache_y = 0;
+    int cache_mapsize = 0;
+
+    // Flat index for tile-coordinate arrays: vec[x * cache_y + y]
+    // X-outer layout matches old C-array arr[MAPSIZE_X][MAPSIZE_Y] flat order,
+    // allowing vec.data() to be reinterpreted as T(*)[MAPSIZE_Y] for shadowcasting.
+    int idx( int x, int y ) const {
+        return x * cache_y + y;
+    }
+    // Flat index for submap-coordinate bitsets: bitset[sx * cache_mapsize + sy]
+    int bidx( int sx, int sy ) const {
+        return sx * cache_mapsize + sy;
+    }
+
+    // ---- per-submap dirty bitsets (size: cache_mapsize²) ----
+    cata_dynamic_bitset transparency_cache_dirty;
     bool outside_cache_dirty = false;
     bool floor_cache_dirty = false;
     bool seen_cache_dirty = false;
@@ -313,48 +336,55 @@ struct level_cache {
     bool suspension_cache_dirty = false;
     std::list<point> suspension_cache;
 
-    four_quadrants lm[MAPSIZE_X][MAPSIZE_Y];
-    float sm[MAPSIZE_X][MAPSIZE_Y];
+    // ---- 12 tile-coordinate arrays (size: cache_x * cache_y) ----
+    // All indexed as: vec[x * cache_y + y]  (X-outer layout, matching old C-array [MAPSIZE_X][MAPSIZE_Y])
+    std::vector<four_quadrants>     lm;
+    std::vector<float>              sm;
     // To prevent redundant ray casting into neighbors: precalculate bulk light source positions.
     // This is only valid for the duration of generate_lightmap
-    float light_source_buffer[MAPSIZE_X][MAPSIZE_Y];
+    std::vector<float>              light_source_buffer;
 
     // if false, means tile is under the roof ("inside"), true means tile is "outside"
     // "inside" tiles are protected from sun, rain, etc. (see "INDOORS" flag)
-    bool outside_cache[MAPSIZE_X][MAPSIZE_Y];
+    std::vector<bool>               outside_cache;
 
     // true when vehicle below has "ROOF" or "OPAQUE" part, furniture below has "SUN_ROOF_ABOVE"
     //      or terrain doesn't have "NO_FLOOR" flag
     // false otherwise
-    // i.e. true == has floor
-    bool floor_cache[MAPSIZE_X][MAPSIZE_Y];
+    // i.e. non-zero == has floor
+    // Stored as char (not bool) for contiguous storage; non-zero means true.
+    std::vector<char>               floor_cache;
 
     // stores cached transparency of the tiles
     // units: "transparency" (see LIGHT_TRANSPARENCY_OPEN_AIR)
-    float transparency_cache[MAPSIZE_X][MAPSIZE_Y];
+    std::vector<float>              transparency_cache;
 
     // true when light entering a tile diagonally is blocked by the walls of a turned vehicle. The direction is the direction that the light must be travelling.
     // check the nw value of x+1, y+1 to find the se value of a tile and the ne of x-1, y+1 for sw
-    diagonal_blocks vehicle_obscured_cache[MAPSIZE_X][MAPSIZE_Y];
+    std::vector<diagonal_blocks>    vehicle_obscured_cache;
 
     // same as above but for obstruction rather than light
-    diagonal_blocks vehicle_obstructed_cache[MAPSIZE_X][MAPSIZE_Y];
+    std::vector<diagonal_blocks>    vehicle_obstructed_cache;
 
     // stores "visibility" of the tiles to the player
     // values range from 1 (fully visible to player) to 0 (not visible)
-    float seen_cache[MAPSIZE_X][MAPSIZE_Y];
+    std::vector<float>              seen_cache;
 
     // same as `seen_cache` (same units) but contains values for cameras and mirrors
     // effective "visibility_cache" is calculated as "max(seen_cache, camera_cache)"
-    float camera_cache[MAPSIZE_X][MAPSIZE_Y];
+    std::vector<float>              camera_cache;
 
     // stores resulting apparent brightness to player, calculated by map::apparent_light_at
-    lit_level visibility_cache[MAPSIZE_X][MAPSIZE_Y];
-    std::bitset<MAPSIZE_X *MAPSIZE_Y> map_memory_seen_cache;
-    std::bitset<MAPSIZE *MAPSIZE> field_cache;
+    std::vector<lit_level>          visibility_cache;
 
-    bool veh_in_active_range;
-    bool veh_exists_at[MAPSIZE_X][MAPSIZE_Y];
+    // per-tile map-memory seen bitset (size: cache_x * cache_y), indexed [x + y * cache_x]
+    cata_dynamic_bitset             map_memory_seen_cache;
+
+    // per-submap field presence bitset (size: cache_mapsize²), indexed [x + y * cache_mapsize]
+    cata_dynamic_bitset             field_cache;
+
+    bool veh_in_active_range = false;
+    std::vector<bool>               veh_exists_at;
     std::map< tripoint, std::pair<vehicle *, int> > veh_cached_parts;
     std::set<vehicle *> vehicle_list;
     std::set<vehicle *> zone_vehicles;
@@ -2232,8 +2262,8 @@ class map : public submap_load_listener
 
 map &get_map();
 
-template<int SIZE, int MULTIPLIER>
-void shift_bitset_cache( std::bitset<SIZE *SIZE> &cache, point s );
+// Shift a square grid bitset (side length `size`, submap stride `multiplier`) by `s` submaps.
+void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier, point s );
 
 bool ter_furn_has_flag( const ter_t &ter, const furn_t &furn, ter_bitflags flag );
 class tinymap : public map
