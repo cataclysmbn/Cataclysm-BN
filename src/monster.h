@@ -656,6 +656,15 @@ class monster : public Creature, public location_visitable<monster>
         void init_from_item( const item &itm );
 
         time_point last_updated = calendar::turn_zero;
+
+        // ID of the dimension this monster belongs to.  Empty string = primary dimension.
+        // Set when the monster is spawned or loaded from a non-primary dimension submap.
+        // Persisted across saves so cross-dimension LOD assignment survives reload.
+        std::string dimension_id_;
+        const std::string &get_dimension() const {
+            return dimension_id_;
+        }
+
         /**
          * Do some cleanup and caching as monster is being unloaded from map.
          */

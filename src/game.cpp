@@ -174,6 +174,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
+#include "fire_spread_loader.h"
 #include "submap.h"
 #include "type_id.h"
 #include "tileray.h"
@@ -974,6 +975,8 @@ bool game::start_game()
             g->events().send<event_type::gains_skill_level>( u.getID(), elem.ident(), level );
         }
     }
+    world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
+
     cata::run_hooks( "on_game_started" );
     return true;
 }
@@ -1872,6 +1875,9 @@ bool game::do_turn()
 
     // reset player noise
     u.volume = 0;
+
+    // Process out-of-bubble submaps (fields, items, vehicles) for all loaded dimensions.
+    world_tick();
 
     // Finally, clear pathfinding cache
     Pathfinding::clear_d_maps();
@@ -2950,6 +2956,8 @@ bool game::load( const save_t &name )
     cata::load_world_lua_state( get_active_world(), "lua_state.json" );
 
     cata::run_on_game_load_hooks( *DynamicDataLoader::get_instance().lua );
+
+    world_tick_interval_ = get_option<int>( "OUT_OF_BUBBLE_TICK_INTERVAL" );
 
     // Build caches once so any immediate post-load draws don't use uninitialized lighting/visibility,
     // then re-invalidate so the first real in-game draw rebuilds everything again.
@@ -4496,15 +4504,24 @@ void game::cleanup_dead()
 int game::tier_assign_all()
 {
     if( !monster_lod_enabled ) {
+        const std::string &player_dim_lod = current_player_dimension();
         int count = 0;
+        int cross_dim = 0;
         for( monster &mon : all_monsters() ) {
-            mon.lod_tier     = 0;
-            mon.lod_cooldown = 0;
-            ++count;
+            if( mon.get_dimension() != player_dim_lod ) {
+                // Monsters in other dimensions are always Tier 2, even with LOD disabled.
+                mon.lod_tier     = 2;
+                mon.lod_cooldown = 0;
+                ++cross_dim;
+            } else {
+                mon.lod_tier     = 0;
+                mon.lod_cooldown = 0;
+                ++count;
+            }
         }
         TracyPlot( "LOD Tier 0 (Full AI)",  static_cast<int64_t>( count ) );
         TracyPlot( "LOD Tier 1 (Coarse)",   static_cast<int64_t>( 0 ) );
-        TracyPlot( "LOD Tier 2 (Macro)",    static_cast<int64_t>( 0 ) );
+        TracyPlot( "LOD Tier 2 (Macro)",    static_cast<int64_t>( cross_dim ) );
         return count;
     }
 
@@ -4516,16 +4533,23 @@ int game::tier_assign_all()
     const int tier12_dist  = std::max( lod_tier_coarse_dist, tier01_dist + 1 );
     const int demote_cd    = lod_demotion_cooldown;
 
-    for( monster &mon : all_monsters() ) {
-        const int dist = rl_dist( mon.pos(), player_pos );
+    const std::string &player_dim = current_player_dimension();
 
+    for( monster &mon : all_monsters() ) {
         int8_t new_tier;
-        if( dist <= tier01_dist || !mon.is_wandering() ) {
-            new_tier = 0;
-        } else if( dist <= tier12_dist ) {
-            new_tier = 1;
-        } else {
+
+        // Monsters in a different dimension are always Tier 2 regardless of distance.
+        if( mon.get_dimension() != player_dim ) {
             new_tier = 2;
+        } else {
+            const int dist = rl_dist( mon.pos(), player_pos );
+            if( dist <= tier01_dist || !mon.is_wandering() ) {
+                new_tier = 0;
+            } else if( dist <= tier12_dist ) {
+                new_tier = 1;
+            } else {
+                new_tier = 2;
+            }
         }
 
         if( new_tier < mon.lod_tier ) {
@@ -4551,6 +4575,123 @@ int game::tier_assign_all()
     TracyPlot( "LOD Tier 1 (Coarse)",   static_cast<int64_t>( tier_counts[1] ) );
     TracyPlot( "LOD Tier 2 (Macro)",    static_cast<int64_t>( tier_counts[2] ) );
     return tier_counts[0];
+}
+
+// ---------------------------------------------------------------------------
+// Out-of-bubble world tick
+// ---------------------------------------------------------------------------
+
+/**
+ * Tick a single submap outside the player's reality bubble.
+ *
+ * Currently performs:
+ *   • Field aging / half-life decay (no spreading; the in-bubble map handles
+ *     spreading for loaded submaps; fire_spread_loader handles requests for
+ *     adjacent unloaded submaps).
+ *   • Fire-spread boundary requests when OUT_OF_BUBBLE_FIRE_SPREAD == "adjacent".
+ *
+ * Item rot and vehicle ticks are deferred to Phase 6 (they are time-delta
+ * correcting and self-heal on reload, so deferral is safe).
+ */
+void game::tick_submap( submap &sm, tripoint_abs_sm pos, const std::string &dim,
+                        bool fire_spread )
+{
+    bool has_fire = false;
+
+    // --- Field decay ---
+    for( int x = 0; x < SEEX; ++x ) {
+        for( int y = 0; y < SEEY; ++y ) {
+            field &curfield = sm.get_field( { x, y } );
+            if( !curfield.displayed_field_type() ) {
+                continue;
+            }
+            for( auto it = curfield.begin(); it != curfield.end(); ) {
+                field_entry &cur = it->second;
+
+                if( !cur.is_field_alive() ) {
+                    --sm.field_count;
+                    curfield.remove_field( it++ );
+                    continue;
+                }
+
+                cur.mod_field_age( 1_turns );
+                const field_type &fdata = cur.get_field_type().obj();
+                if( fdata.half_life > 0_turns && cur.get_field_age() > 0_turns &&
+                    dice( 2, to_turns<int>( cur.get_field_age() ) ) >
+                    to_turns<int>( fdata.half_life ) ) {
+                    cur.set_field_age( 0_turns );
+                    cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                }
+
+                if( !cur.is_field_alive() ) {
+                    --sm.field_count;
+                    curfield.remove_field( it++ );
+                } else {
+                    if( fdata.has_fire ) {
+                        has_fire = true;
+                    }
+                    ++it;
+                }
+            }
+        }
+    }
+
+    // --- Fire-spread boundary requests ---
+    // When fire is present and the option is enabled, request adjacent submaps
+    // so that fire spread is correctly resolved during the next in-bubble
+    // map::process_fields() or when the player approaches.
+    if( fire_spread && has_fire ) {
+        static const std::array<tripoint, 4> card = {{
+                tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
+                tripoint{ 0, 1, 0 }, tripoint{ 0, -1, 0 }
+            }};
+        for( const tripoint &delta : card ) {
+            const tripoint_abs_sm nbr{ pos.raw() + delta };
+            if( !submap_loader.is_requested( dim, nbr ) ) {
+                fire_loader.request_for_fire( dim, nbr );
+            }
+        }
+    }
+
+    // Item rot: time-delta based, self-corrects on reload — no per-turn pass needed.
+    // Vehicle updates: deferred to Phase 6 (batch_turns).
+}
+
+void game::world_tick()
+{
+    ZoneScoped;
+
+    // Check interval: only run every world_tick_interval_ turns.
+    if( world_tick_interval_ > 1 ) {
+        const int elapsed = to_turns<int>( calendar::turn - calendar::turn_zero );
+        if( elapsed % world_tick_interval_ != 0 ) {
+            return;
+        }
+    }
+
+    const std::string &player_dim = current_player_dimension();
+    const bool fire_spread =
+        get_option<std::string>( "OUT_OF_BUBBLE_FIRE_SPREAD" ) == "adjacent";
+
+    MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
+        const bool is_player_dim = ( dim == player_dim );
+        for( auto &[raw_pos, sm_ptr] : mb ) {
+            if( !sm_ptr ) {
+                continue;
+            }
+            const tripoint_abs_sm pos_sm( raw_pos );
+            // Skip submaps inside the player's reality bubble — already processed
+            // each turn by map::process_fields() and map::process_items().
+            if( is_player_dim && m.contains_abs_sm( pos_sm ) ) {
+                continue;
+            }
+            tick_submap( *sm_ptr, pos_sm, dim, fire_spread );
+            sm_ptr->last_touched = calendar::turn;
+        }
+    } );
+
+    // Prune fire-spread load requests that are no longer connected or lack fire.
+    fire_loader.prune_disconnected( submap_loader );
 }
 
 void game::monmove()
@@ -4910,7 +5051,20 @@ void game::npcmove()
 {
     // Active NPC processing.  Extracted from monmove() so it can be
     // individually controlled by SLEEP_SKIP_NPC without affecting monsters.
+    const std::string &player_dim = current_player_dimension();
     for( npc &guy : g->all_npcs() ) {
+        // NPCs in a different dimension skip the full move loop; only biological
+        // processing (process_turn + npc_update_body) runs for them.
+        if( guy.get_dimension() != player_dim ) {
+            if( !guy.is_dead() && !guy.has_effect( effect_npc_suspend ) ) {
+                guy.process_turn();
+            }
+            if( !guy.is_dead() ) {
+                guy.npc_update_body();
+            }
+            continue;
+        }
+
         int turns = 0;
         if( guy.is_mounted() ) {
             guy.check_mount_is_spooked();

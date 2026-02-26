@@ -1301,6 +1301,15 @@ class npc : public player
         // Dummy point that indicates that the goal is invalid.
         static constexpr tripoint_abs_omt no_goal_point{ tripoint_min };
         time_point last_updated;
+
+        // ID of the dimension this NPC belongs to.  Empty string = primary dimension.
+        // Set when the NPC is spawned or loaded from a non-primary dimension submap.
+        // Persisted across saves so cross-dimension processing survives reload.
+        std::string dimension_id_;
+        const std::string &get_dimension() const {
+            return dimension_id_;
+        }
+
         /**
          * Do some cleanup and caching as npc is being unloaded from map.
          */

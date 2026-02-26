@@ -2423,6 +2423,30 @@ void options_manager::add_options_performance()
     get_option( "MONSTER_PLAN_CHUNK_SIZE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_MAP_CACHE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_SCENT_UPDATE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
+
+    add_empty_line();
+
+    add_option_group( performance, Group( "out_of_bubble", to_translation( "Out-of-Bubble Simulation" ),
+                                          to_translation( "Configure how submaps outside the player's reality bubble are simulated." ) ),
+    [&]( auto & page_id ) {
+        add( "OUT_OF_BUBBLE_TICK_INTERVAL", page_id,
+             translate_marker( "World Tick Interval" ),
+             translate_marker( "How many turns elapse between out-of-bubble world ticks.  "
+                               "1 processes every loaded submap outside the player's reality bubble "
+                               "each turn at full fidelity.  Higher values amortize cost by batching "
+                               "N turns of simulation into a single pass — useful on slow hardware." ),
+             1, 10, 1 );
+        add( "OUT_OF_BUBBLE_FIRE_SPREAD", page_id,
+             translate_marker( "Out-of-Bubble Fire Spread" ),
+             translate_marker( "Controls whether fire in loaded submaps can spread into adjacent "
+                               "unloaded submaps.  'None': fire only decays, never spreads beyond "
+                               "the loaded set.  'Adjacent': fire requests one extra layer of "
+                               "loaded submaps at each boundary to preserve correct spread behavior." ),
+        { { "none", translate_marker( "None (pause spread)" ) },
+          { "adjacent", translate_marker( "Adjacent (one layer)" ) } },
+        "adjacent"
+           );
+    } );
 }
 
 void options_manager::add_options_debug()

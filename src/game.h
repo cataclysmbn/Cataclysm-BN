@@ -42,6 +42,7 @@ class monster;
 class secondary_world;
 class spell_events;
 class drop_token_provider;
+class submap;
 
 static constexpr int DEFAULT_TILESET_ZOOM = 16;
 
@@ -955,6 +956,10 @@ class game
         void npcmove();          // NPC movement (split from monmove for per-option sleep-skip)
         void sleep_skip_npc_process(); // Sleep-only NPC processing when SLEEP_SKIP_NPC is active
         int  tier_assign_all(); // LOD tier assignment, O(M), called from monmove(); returns Tier 0 count
+        // Out-of-bubble world simulation
+        void world_tick();       // Tick all loaded submaps outside the player's reality bubble
+        // Per-submap tick.  fire_spread=true requests adjacent submaps for fire spread.
+        void tick_submap( submap &sm, tripoint_abs_sm pos, const std::string &dim, bool fire_spread );
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process
         void process_activity(); // Processes and enacts the player's activity
@@ -1213,6 +1218,10 @@ class game
         // Handle for the reality bubble's submap_load_manager request.
         // 0 means no request has been issued yet.
         load_request_handle reality_bubble_handle_ = 0;
+
+        // Turns between world_tick() passes.  1 = every turn (default).
+        // Read from OUT_OF_BUBBLE_TICK_INTERVAL in start_game() / load().
+        int world_tick_interval_ = 1;
     private:
         location_vector<item> fake_items;
     public:
