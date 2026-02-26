@@ -18,16 +18,24 @@ The benchmark is invalid when debug spawning/wish/debug-menu actions are used.
 
 ```bash
 deno task pr:verify:curses-cli start --state-file /tmp/curses-bench.json --render-webp false
+deno task pr:verify:curses-cli state-dump --state-file /tmp/curses-bench.json --max-chars 4200 --output-format ai
 deno task pr:verify:curses-cli inputs-jsonl --state-file /tmp/curses-bench.json
-# execute scripted scenario steps
+# execute scripted scenario steps with available_inputs first
+# if run fails, preserve taxonomy for triage:
+# deno task pr:verify:curses-cli stop --state-file /tmp/curses-bench.json --status failed --stop-reason mode_trap --failure "targeting mode did not exit"
 deno task pr:verify:curses-cli capture --state-file /tmp/curses-bench.json --id bench-final --caption "Benchmark final state" --lines 120
 deno task pr:verify:curses-cli stop --state-file /tmp/curses-bench.json --status passed
 ```
 
+The `state-dump` payload now includes `available_inputs` and `stop_reason_candidate`.
+Prefer those recommendations first, then fallback to full `inputs-jsonl` when required.
+AI output mode is default; use `--output-format json` (or `CURSES_CLI_OUTPUT_FORMAT=json`) when legacy pretty JSON is required.
+
 ## Artifact contract
 
-- Cast: `/tmp/curses-cli/casts/*.cast`
-- Session manifest and captures: `/tmp/curses-cli/runs/live-*/`
+- Session-local root: `/tmp/curses-cli/<run-id>/`
+- Cast: `/tmp/curses-cli/<run-id>/casts/*.cast`
+- Session manifest and captures: `/tmp/curses-cli/<run-id>/artifacts/`
 - Runtime exports:
   - `available_keys.json`
   - `available_macros.json`
@@ -39,11 +47,13 @@ deno task pr:verify:curses-cli stop --state-file /tmp/curses-bench.json --status
 - Guard against nested UI states (`look`, map, debug, targeting, lua console).
 - Keep safe-mode policy explicit for the profile.
 - Use macro IDs (`macro:<id>`) for robust intent calls where possible.
-- Persist stop reason category on failure (`menu_drift`, `mode_trap`, `safe_mode_interrupt`, `repro_drift`).
+- Persist stop reason category on failure (`menu_drift`, `mode_trap`, `safe_mode_interrupt`, `repro_drift`) with `stop --stop-reason <category>`.
+- Keep `send-inputs` strict prompt validation enabled (default) so keys that are not
+  currently offered by prompt context are rejected early.
 
-## Planned compact dump
+## Compact dump (implemented)
 
-A compact dump should be preferred over raw repeated full snapshots for AI loops. Target payload:
+Use `state-dump` as the primary context source instead of repeated raw snapshots. Payload fields:
 
 - ASCII pane excerpt (trimmed)
 - available inputs (prompt-derived)
@@ -51,6 +61,7 @@ A compact dump should be preferred over raw repeated full snapshots for AI loops
 - available macros JSON snapshot
 - recent logs and ai_state summary
 - run metadata (turn, coords, mode, stop reason)
+- `available_inputs` (prompt-safe, directly sendable available actions)
 
 This reduces token load while preserving actionable context.
 

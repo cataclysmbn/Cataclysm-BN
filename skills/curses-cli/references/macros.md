@@ -8,7 +8,7 @@ This reference covers how to discover and use runtime Lua action-menu macros fro
 deno task pr:verify:curses-cli start --state-file /tmp/curses-macro.json --render-webp false
 deno task pr:verify:curses-cli available-macros-json --state-file /tmp/curses-macro.json
 deno task pr:verify:curses-cli inputs-jsonl --state-file /tmp/curses-macro.json
-deno task pr:verify:curses-cli send-input --state-file /tmp/curses-macro.json --id macro:bn_macro_agent_context
+deno task pr:verify:curses-cli send-inputs --state-file /tmp/curses-macro.json --ids-json '["macro:bn_macro_agent_context"]'
 deno task pr:verify:curses-cli stop --state-file /tmp/curses-macro.json
 ```
 
@@ -62,4 +62,4 @@ Expected:
 
 - New macro appears in `available-macros-json`.
 - `inputs-jsonl` contains `macro:<id>`.
-- `send-input --id macro:<id>` executes without mode drift.
+- `send-inputs --ids-json '["macro:<id>"]'` executes without mode drift.
