@@ -48,3 +48,40 @@ if(CCACHE_EXE)
         "UseMultiToolTask=true"
     )
 endif()
+
+# Automatic gettext setup for Windows
+# Download pre-built gettext binaries to avoid vcpkg MSYS2 build issues
+set(GETTEXT_VERSION "1.0-v1.18-r1")
+set(GETTEXT_DIR "${CMAKE_SOURCE_DIR}/build-data/gettext")
+set(GETTEXT_ARCHIVE "${CMAKE_SOURCE_DIR}/build-data/gettext-${GETTEXT_VERSION}.zip")
+set(GETTEXT_URL "https://github.com/mlocati/gettext-iconv-windows/releases/download/v${GETTEXT_VERSION}/gettext1.0-iconv1.18-static-64.zip")
+
+if(NOT EXISTS "${GETTEXT_DIR}/bin/msgfmt.exe")
+    message(STATUS "Downloading pre-built gettext binaries...")
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/build-data")
+    
+    file(DOWNLOAD
+        "${GETTEXT_URL}"
+        "${GETTEXT_ARCHIVE}"
+        SHOW_PROGRESS
+        STATUS DOWNLOAD_STATUS
+        TLS_VERIFY ON
+    )
+    
+    list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+    if(NOT STATUS_CODE EQUAL 0)
+        list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
+        message(FATAL_ERROR "Failed to download gettext: ${ERROR_MESSAGE}")
+    endif()
+    
+    message(STATUS "Extracting gettext binaries...")
+    file(ARCHIVE_EXTRACT
+        INPUT "${GETTEXT_ARCHIVE}"
+        DESTINATION "${GETTEXT_DIR}"
+    )
+    
+    file(REMOVE "${GETTEXT_ARCHIVE}")
+    message(STATUS "gettext installed to: ${GETTEXT_DIR}")
+endif()
+
+set(GETTEXT_MSGFMT_BINARY "${GETTEXT_DIR}/bin/msgfmt.exe" CACHE FILEPATH "Path to msgfmt executable" FORCE)
