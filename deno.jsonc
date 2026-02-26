@@ -13,6 +13,7 @@
     "docs:gen:lua": "$CATA_EXE --lua-doc docs/en/mod/lua/reference/lua.md --lua-types lua_annotations.lua",
     "migrate-unit": "deno run -A scripts/migrate_legacy_unit.ts --path data/json; deno run -A scripts/migrate_legacy_unit.ts --path data/mods; make style-all-json-parallel",
     "dprint": "deno run -A npm:dprint",
+    "pr:verify:curses-cli": "deno run --allow-run --allow-read --allow-write --allow-env scripts/curses-cli/main.ts",
     "changelog:reddit": {
       "description": "creates a weekly reddit changelog template",
       "command": "deno run -A scripts/changelog/main.ts --format reddit"

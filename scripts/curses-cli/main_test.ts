@@ -3,6 +3,7 @@ import { join } from "@std/path"
 import {
   buildLaunchCommand,
   detectPromptInputs,
+  detectUiMode,
   listAvailableInputs,
   parseOutputFormat,
   renderCommandOutput,
@@ -28,6 +29,7 @@ Deno.test("pr_verify: buildLaunchCommand includes base args, optional world, and
   assertStringIncludes(withoutWorld, "COLORTERM=truecolor")
   assertStringIncludes(withoutWorld, "--basepath")
   assertStringIncludes(withoutWorld, "--userdir")
+  assertStringIncludes(withoutWorld, "--no-blinking")
 
   const withWorld = buildLaunchCommand({
     binPath: "/tmp/cata",
@@ -110,6 +112,48 @@ Deno.test("pr_verify: detectPromptInputs extracts parenthesized choice prompts",
   assertEquals(inputs.some((input) => input.id === "key:N"), true)
 })
 
+Deno.test("pr_verify: detectPromptInputs ignores sidebar hint pseudo-prompts", () => {
+  const pane = "Press } to open sidebar options"
+  const inputs = detectPromptInputs(pane)
+  assertEquals(inputs.some((input) => input.id === "key:}"), false)
+})
+
+Deno.test("pr_verify: detectPromptInputs ignores HUD stat tokens like 0(W)", () => {
+  const pane = [
+    "Stam : █████   Speed: 100     Move : 0(W)",
+    "Str  : 10      Dex  : 11      Power: --",
+    "Int  : 9       Per  : 8       Safe : On",
+  ].join("\n")
+  const inputs = detectPromptInputs(pane)
+  assertEquals(inputs.some((input) => input.id === "key:W"), false)
+})
+
+Deno.test("pr_verify: detectUiMode classifies gameplay and overmap panes", () => {
+  assertEquals(
+    detectUiMode("Press } to open sidebar options\nNW: North: NE:\nWest: East:"),
+    "gameplay",
+  )
+  assertEquals(
+    detectUiMode("[MOTD] [New Game] [Load] [World]\nPlay Now! (Default Scenario)"),
+    "main_menu",
+  )
+  assertEquals(
+    detectUiMode("Press } to open sidebar options\nMAIN MENU\nSave and Quit"),
+    "in_game_menu",
+  )
+  assertEquals(
+    detectUiMode("Use movement keys to pan.\nPress W to preview route."),
+    "overmap",
+  )
+})
+
+Deno.test("pr_verify: detectUiMode classifies prompts and loading", () => {
+  assertEquals(detectUiMode("Examine where? (Direction button)"), "direction_prompt")
+  assertEquals(detectUiMode("You can't do that!  Press [ESC]!"), "modal_prompt")
+  assertEquals(detectUiMode("PICK Wgt 5.6/37.0\n[BACKTAB] Prev"), "modal_prompt")
+  assertEquals(detectUiMode("Loading files"), "loading")
+})
+
 Deno.test("pr_verify: listAvailableInputs merges prompt and catalog options", () => {
   const pane = "Press any key to continue"
   const inputs = listAvailableInputs(pane, true)
@@ -118,7 +162,7 @@ Deno.test("pr_verify: listAvailableInputs merges prompt and catalog options", ()
 })
 
 Deno.test({
-  name: "pr_verify: writeIndex writes captures and failure block",
+  name: "pr_verify: writeIndex writes captures and cast block",
   async fn() {
     const readPermission = await Deno.permissions.query({ name: "read" })
     const writePermission = await Deno.permissions.query({ name: "write" })
@@ -142,17 +186,13 @@ Deno.test({
             screenshot_file: "artifacts/pr-verify/123/captures/01-loaded.webp",
           },
         ],
-        status: "failed",
         castFile: "artifacts/pr-verify/123/session.cast",
-        failureMessage: "timeout waiting for text",
       })
 
       const rendered = await Deno.readTextFile(indexPath)
       assertStringIncludes(rendered, "# PR Verify Artifact")
       assertStringIncludes(rendered, "Session: live-curses-mcp-session")
-      assertStringIncludes(rendered, "Status: failed")
       assertStringIncludes(rendered, "Gameplay screen after load")
-      assertStringIncludes(rendered, "timeout waiting for text")
       assertStringIncludes(rendered, "code block")
       assertStringIncludes(rendered, "session.cast")
     } finally {

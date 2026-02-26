@@ -5,6 +5,7 @@ import { basename, dirname, fromFileUrl, join, relative, resolve } from "@std/pa
 import { Command } from "@cliffy/command"
 import {
   buildLaunchCommand,
+  detectUiMode,
   listAvailableInputs,
   parseOutputFormat,
   renderCommandOutput,
@@ -15,7 +16,7 @@ import {
   writeCodeBlockCapture,
   writeIndex,
 } from "./common.ts"
-import type { AvailableInput, CaptureEntry, OutputFormat } from "./common.ts"
+import type { AvailableInput, CaptureEntry, OutputFormat, UiMode } from "./common.ts"
 import {
   configureTmuxBinary,
   configureTmuxSocket,
@@ -33,14 +34,6 @@ const DEFAULT_OUTPUT_FORMAT: OutputFormat = parseOutputFormat(
 )
 const SINGLETON_SESSION_NAME = "curses-cli"
 const SINGLETON_TMUX_SOCKET = "curses-cli"
-const STOP_REASON_CATEGORIES = [
-  "menu_drift",
-  "mode_trap",
-  "safe_mode_interrupt",
-  "repro_drift",
-] as const
-
-type StopReasonCategory = (typeof STOP_REASON_CATEGORIES)[number]
 
 type SessionState = {
   id: string
@@ -70,7 +63,6 @@ type SessionState = {
   started_at: string
   finished_at?: string
   captures: CaptureEntry[]
-  stop_reason?: StopReasonCategory
 }
 
 const delay = (ms: number): Promise<void> =>
@@ -1100,6 +1092,165 @@ const captureScreenExcerpt = async (
   return trimMiddle(pane, maxChars)
 }
 
+type ExpectedUiMode = "any" | "gameplay"
+
+const parseExpectedUiMode = (value: string | undefined): ExpectedUiMode => {
+  const normalized = value?.trim().toLowerCase() ?? "any"
+  if (normalized === "" || normalized === "any") {
+    return "any"
+  }
+  if (normalized === "gameplay") {
+    return "gameplay"
+  }
+
+  throw new Error(`invalid --expect-mode: ${value}. use one of: any, gameplay`)
+}
+
+type GameplayRecoveryStep = {
+  step: number
+  mode: UiMode
+  action: "wait" | "escape" | "cancel"
+}
+
+type GameplayRecoveryResult = {
+  initial_mode: UiMode
+  final_mode: UiMode
+  recovered: boolean
+  steps: GameplayRecoveryStep[]
+  screen: string
+}
+
+const recoverGameplayMode = async (
+  session: TmuxSession,
+  maxSteps: number,
+): Promise<GameplayRecoveryResult> => {
+  const boundedSteps = Math.max(1, Math.min(20, Math.floor(maxSteps)))
+  const steps: GameplayRecoveryStep[] = []
+  let initialMode: UiMode = "unknown"
+  let finalMode: UiMode = "unknown"
+  let latestScreen = ""
+  let consecutiveUnknown = 0
+
+  for (let step = 1; step <= boundedSteps; step += 1) {
+    const pane = stripAnsiFromPane(await session.capturePane(220))
+    const mode = detectUiMode(pane)
+    latestScreen = trimMiddle(pane, 3200)
+    if (step === 1) {
+      initialMode = mode
+    }
+    finalMode = mode
+
+    if (mode === "gameplay") {
+      return {
+        initial_mode: initialMode,
+        final_mode: finalMode,
+        recovered: true,
+        steps,
+        screen: latestScreen,
+      }
+    }
+
+    if (mode === "loading") {
+      consecutiveUnknown = 0
+      steps.push({ step, mode, action: "wait" })
+      await delay(150)
+      continue
+    }
+
+    if (mode === "main_menu") {
+      consecutiveUnknown = 0
+      steps.push({ step, mode, action: "wait" })
+      await delay(100)
+      continue
+    }
+
+    if (mode === "in_game_menu") {
+      consecutiveUnknown = 0
+      steps.push({ step, mode, action: "escape" })
+      await session.sendKeys(["Escape"])
+      await delay(80)
+      continue
+    }
+
+    if (mode === "direction_prompt") {
+      consecutiveUnknown = 0
+      steps.push({ step, mode, action: "cancel" })
+      await session.sendKeys(["."])
+      await delay(80)
+      continue
+    }
+
+    if (mode === "unknown") {
+      consecutiveUnknown += 1
+      if (consecutiveUnknown <= 8) {
+        steps.push({ step, mode, action: "wait" })
+        await delay(120)
+        continue
+      }
+    } else {
+      consecutiveUnknown = 0
+    }
+
+    steps.push({ step, mode, action: "escape" })
+    await session.sendKeys(["Escape"])
+    await delay(80)
+  }
+
+  return {
+    initial_mode: initialMode,
+    final_mode: finalMode,
+    recovered: false,
+    steps,
+    screen: latestScreen,
+  }
+}
+
+type EnsureExpectedModeOptions = {
+  session: TmuxSession
+  expectedMode: ExpectedUiMode
+  autoRecover: boolean
+  recoverMaxSteps: number
+}
+
+type EnsureExpectedModeResult = {
+  mode: UiMode
+  recovered: boolean
+  recovery_steps: GameplayRecoveryStep[]
+  screen: string
+}
+
+const ensureExpectedMode = async (
+  options: EnsureExpectedModeOptions,
+): Promise<EnsureExpectedModeResult> => {
+  const pane = stripAnsiFromPane(await options.session.capturePane(220))
+  const mode = detectUiMode(pane)
+  const screen = trimMiddle(pane, 3200)
+
+  if (options.expectedMode === "any" || mode === options.expectedMode) {
+    return { mode, recovered: false, recovery_steps: [], screen }
+  }
+
+  if (!options.autoRecover || options.expectedMode !== "gameplay") {
+    throw new Error(
+      `unexpected ui mode: ${mode}. expected ${options.expectedMode}. use recover-ui or set --auto-recover-mode true`,
+    )
+  }
+
+  const recovery = await recoverGameplayMode(options.session, options.recoverMaxSteps)
+  if (!recovery.recovered) {
+    throw new Error(
+      `failed to recover ui mode to gameplay. initial=${recovery.initial_mode}, final=${recovery.final_mode}`,
+    )
+  }
+
+  return {
+    mode: recovery.final_mode,
+    recovered: true,
+    recovery_steps: recovery.steps,
+    screen: recovery.screen,
+  }
+}
+
 const stopCastProcess = async (
   castPid: number | undefined,
   castFile: string | undefined,
@@ -1626,6 +1777,44 @@ if (import.meta.main) {
         }),
     )
     .command(
+      "recover-ui",
+      new Command()
+        .description("Detect current UI mode and recover back to gameplay")
+        .option("--state-file <path:string>", "State file path", { default: DEFAULT_STATE_FILE })
+        .option("--expect-mode <value:string>", "Expected mode: any|gameplay", {
+          default: "gameplay",
+        })
+        .option("--max-steps <value:number>", "Maximum recovery steps", { default: 8 })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
+        .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
+          const expectedMode = parseExpectedUiMode(options.expectMode)
+          await withRunningSession(options.stateFile, async (_state, session) => {
+            const result = await ensureExpectedMode({
+              session,
+              expectedMode,
+              autoRecover: true,
+              recoverMaxSteps: options.maxSteps,
+            })
+
+            const payload = {
+              expected_mode: expectedMode,
+              mode: result.mode,
+              recovered: result.recovered,
+              recovery_steps: result.recovery_steps,
+            }
+            console.log(renderCommandOutput({
+              format: outputFormat,
+              command: "recover-ui",
+              payload,
+              screen: result.screen,
+            }))
+          })
+        }),
+    )
+    .command(
       "capture",
       new Command()
         .description("Persist capture artifacts (txt, markdown, optional webp)")
@@ -1678,11 +1867,31 @@ if (import.meta.main) {
         .option("--waypoint-clicks <value:number>", "Repeated LMB clicks for mouse waypoint", {
           default: 2,
         })
+        .option("--expect-mode <value:string>", "Expected mode before sending: any|gameplay", {
+          default: "any",
+        })
+        .option(
+          "--require-final-mode <value:string>",
+          "Required mode after sending: any|gameplay",
+          {
+            default: "any",
+          },
+        )
+        .option(
+          "--auto-recover-mode <value:boolean>",
+          "Attempt automatic UI recovery before sending when mode mismatches",
+          { default: true },
+        )
+        .option("--recover-max-steps <value:number>", "Maximum UI recovery steps", {
+          default: 8,
+        })
         .option("--output-format <value:string>", "Output format: json|ai", {
           default: DEFAULT_OUTPUT_FORMAT,
         })
         .action(async (options) => {
           const outputFormat = parseOutputFormat(options.outputFormat)
+          const expectedMode = parseExpectedUiMode(options.expectMode)
+          const requiredFinalMode = parseExpectedUiMode(options.requireFinalMode)
           await withRunningSession(options.stateFile, async (state, session) => {
             const pane = stripAnsiFromPane(await session.capturePane(220))
             let promptInputs = listAvailableInputs(pane)
@@ -1693,6 +1902,12 @@ if (import.meta.main) {
             const delayMs = Math.max(0, options.delayMs)
             const waypointClicks = Math.max(1, options.waypointClicks)
             const dispatched: Array<unknown> = []
+            const modeBefore = await ensureExpectedMode({
+              session,
+              expectedMode,
+              autoRecover: options.autoRecoverMode,
+              recoverMaxSteps: options.recoverMaxSteps,
+            })
 
             for (let index = 0; index < repeat; index += 1) {
               for (const id of ids) {
@@ -1757,18 +1972,33 @@ if (import.meta.main) {
               }
             }
 
+            const modeAfter = await ensureExpectedMode({
+              session,
+              expectedMode: requiredFinalMode,
+              autoRecover: options.autoRecoverMode,
+              recoverMaxSteps: options.recoverMaxSteps,
+            })
+
             const payload = outputFormat === "ai"
               ? {
                 ids_count: ids.length,
                 dispatched_count: dispatched.length,
                 repeat,
                 delay_ms: delayMs,
+                expected_mode: expectedMode,
+                required_final_mode: requiredFinalMode,
+                pre_recovered: modeBefore.recovered,
+                post_recovered: modeAfter.recovered,
               }
               : {
                 ids,
                 dispatched,
                 repeat,
                 delay_ms: delayMs,
+                expected_mode: expectedMode,
+                required_final_mode: requiredFinalMode,
+                mode_before: modeBefore,
+                mode_after: modeAfter,
               }
             const screen = await captureScreenExcerpt(session)
             console.log(renderCommandOutput({
@@ -1989,13 +2219,6 @@ if (import.meta.main) {
       new Command()
         .description("Stop session and finalize manifest/index artifacts")
         .option("--state-file <path:string>", "State file path", { default: DEFAULT_STATE_FILE })
-        .option("--status <value:string>", "Final status: passed or failed", { default: "passed" })
-        .option("--failure <value:string>", "Failure message", { default: "" })
-        .option(
-          "--stop-reason <value:string>",
-          "Failure category: menu_drift|mode_trap|safe_mode_interrupt|repro_drift",
-          { default: "" },
-        )
         .option("--output-format <value:string>", "Output format: json|ai", {
           default: DEFAULT_OUTPUT_FORMAT,
         })
@@ -2044,24 +2267,6 @@ if (import.meta.main) {
             console.error(`warning: failed to copy cast log into artifact dir: ${message}`)
           }
 
-          const finalStatus = options.status === "failed" ? "failed" : "passed"
-          const failure = options.failure.length > 0 ? options.failure : undefined
-          const normalizedStopReason = options.stopReason.trim()
-          if (
-            normalizedStopReason.length > 0 &&
-            !STOP_REASON_CATEGORIES.includes(normalizedStopReason as StopReasonCategory)
-          ) {
-            throw new Error(
-              `invalid --stop-reason: ${normalizedStopReason}. use one of: ${
-                STOP_REASON_CATEGORIES.join(", ")
-              }`,
-            )
-          }
-          const stopReason = normalizedStopReason.length > 0
-            ? normalizedStopReason as StopReasonCategory
-            : undefined
-          state.stop_reason = stopReason
-
           const metadata = {
             generated_at: new Date().toISOString(),
             mode: "mcp_cli",
@@ -2073,9 +2278,6 @@ if (import.meta.main) {
             world: state.world,
             available_keys_json: state.available_keys_json,
             available_macros_json: state.available_macros_json,
-            status: finalStatus,
-            failure,
-            stop_reason: stopReason,
             cast_file: state.cast_file,
             cast_log_file: state.cast_log_file,
             cast_stats: castStats,
@@ -2091,9 +2293,7 @@ if (import.meta.main) {
             outputPath: join(state.artifact_dir, "index.md"),
             sessionName: "live-curses-mcp-session",
             captures: state.captures,
-            status: finalStatus,
             castFile: state.cast_file,
-            failureMessage: failure,
           })
 
           await saveState(stateFile, state)
@@ -2105,15 +2305,12 @@ if (import.meta.main) {
             captures: state.captures.length,
             available_keys_json: state.available_keys_json,
             available_macros_json: state.available_macros_json,
-            status: finalStatus,
-            stop_reason: stopReason,
           }
           console.log(renderCommandOutput({
             format: outputFormat,
             command: "stop",
             payload,
             summary: {
-              status: finalStatus,
               captures: state.captures.length,
               has_cast: state.cast_file !== undefined,
             },

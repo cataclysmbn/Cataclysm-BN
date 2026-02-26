@@ -15,8 +15,6 @@ export type CaptureEntry = {
   screenshot_file?: string
 }
 
-type RunStatus = "passed" | "failed"
-
 type InputSource = "prompt"
 type InputPriority = "normal" | "high"
 
@@ -30,6 +28,16 @@ export type AvailableInput = {
 }
 
 export type OutputFormat = "json" | "ai"
+
+export type UiMode =
+  | "gameplay"
+  | "in_game_menu"
+  | "overmap"
+  | "main_menu"
+  | "direction_prompt"
+  | "modal_prompt"
+  | "loading"
+  | "unknown"
 
 const OUTPUT_FORMAT_ALIASES: Record<string, OutputFormat> = {
   json: "json",
@@ -50,6 +58,55 @@ export const parseOutputFormat = (value: string | undefined): OutputFormat => {
   }
 
   throw new Error(`invalid output format: ${value}. use one of: json, ai`)
+}
+
+export const detectUiMode = (pane: string): UiMode => {
+  const lowerPane = pane.toLowerCase()
+
+  if (lowerPane.includes("loading files")) {
+    return "loading"
+  }
+
+  if (
+    (lowerPane.includes("[motd]") && lowerPane.includes("[new game]")) ||
+    lowerPane.includes("play now!")
+  ) {
+    return "main_menu"
+  }
+
+  if (lowerPane.includes("main menu")) {
+    if (lowerPane.includes("press } to open sidebar options")) {
+      return "in_game_menu"
+    }
+    return "main_menu"
+  }
+
+  if (lowerPane.includes("use movement keys to pan") || lowerPane.includes("toggle overlays")) {
+    return "overmap"
+  }
+
+  if (lowerPane.includes("where? (direction button)")) {
+    return "direction_prompt"
+  }
+
+  if (
+    lowerPane.includes("press [esc]!") ||
+    lowerPane.includes("pick wgt") ||
+    lowerPane.includes("[backtab] prev") ||
+    lowerPane.includes("really step") ||
+    (lowerPane.includes("(y)es") && lowerPane.includes("(n)o"))
+  ) {
+    return "modal_prompt"
+  }
+
+  if (
+    lowerPane.includes("press } to open sidebar options") ||
+    (lowerPane.includes("nw:") && lowerPane.includes("west:") && lowerPane.includes("east:"))
+  ) {
+    return "gameplay"
+  }
+
+  return "unknown"
 }
 
 const toYamlScalar = (value: string | number | boolean): string => {
@@ -323,6 +380,14 @@ const detectInlinePromptChoices = (pane: string): AvailableInput[] => {
   const detected: AvailableInput[] = []
 
   for (const match of pane.matchAll(/\(([A-Za-z0-9!?'./;,])\)\s*([A-Za-z][A-Za-z0-9_-]*)/g)) {
+    const matchIndex = match.index ?? -1
+    if (matchIndex > 0) {
+      const previousChar = pane[matchIndex - 1]
+      if (/[A-Za-z0-9_]/.test(previousChar)) {
+        continue
+      }
+    }
+
     const promptKey = normalizePromptKey(match[1])
     if (promptKey === undefined) {
       continue
@@ -351,6 +416,9 @@ const detectInlinePromptChoices = (pane: string): AvailableInput[] => {
     }
 
     const actionText = match[2].trim()
+    if (actionText.toLowerCase().includes("open sidebar options")) {
+      continue
+    }
     const label = toPromptLabel(actionText)
     detected.push({
       id: `key:${promptKey}`,
@@ -633,6 +701,7 @@ export const buildLaunchCommand = (options: BuildLaunchCommandOptions): string =
     shellEscape(REPO_ROOT),
     "--userdir",
     shellEscape(options.userdir),
+    "--no-blinking",
   ]
 
   if (options.world.length > 0) {
@@ -658,9 +727,7 @@ type WriteIndexOptions = {
   outputPath: string
   sessionName: string
   captures: CaptureEntry[]
-  status: RunStatus
   castFile?: string
-  failureMessage?: string
 }
 
 export const writeIndex = async (options: WriteIndexOptions): Promise<void> => {
@@ -668,7 +735,6 @@ export const writeIndex = async (options: WriteIndexOptions): Promise<void> => {
     "# PR Verify Artifact",
     "",
     `Session: ${options.sessionName}`,
-    `Status: ${options.status}`,
     "",
     "## Captures",
     "",
@@ -686,15 +752,6 @@ export const writeIndex = async (options: WriteIndexOptions): Promise<void> => {
 
   if (options.castFile !== undefined) {
     lines.push(`Cast recording: \`${options.castFile}\``)
-    lines.push("")
-  }
-
-  if (options.failureMessage !== undefined) {
-    lines.push("## Failure")
-    lines.push("")
-    lines.push("```text")
-    lines.push(options.failureMessage)
-    lines.push("```")
     lines.push("")
   }
 
