@@ -2273,6 +2273,9 @@ void options_manager::add_options_debug()
         add( "SLEEP_SKIP_MON", page_id, translate_marker( "Sleep Boost: Skip Monster Movement" ),
              translate_marker( "Monsters do not move while sleeping" ),
              false );
+        add( "SLEEP_SKIP_TIME", page_id, translate_marker( "Skip Time When Sleeping" ),
+             translate_marker( "when sleeping, completely skip time like that funny block game" ),
+             false );
 #if defined(__ANDROID__)
         add( "LOAD_FROM_EXTERNAL", page_id, translate_marker( "External Storage Saving" ),
              translate_marker( "Save in data/catalcysm... instead of Documents/..." ),
