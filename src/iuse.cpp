@@ -8669,6 +8669,10 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
         return 0;
     }
 
+    if( it->get_var( "craft_tools_fully_prepaid", 0 ) == 0 ) {
+        it->set_var( "craft_tools_fully_prepaid", 1 );
+    }
+
     bench_location best_bench = find_best_bench( *p, *it );
     p->add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),
@@ -8700,6 +8704,8 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
     p->activity->values.push_back( 0 ); // Not a long craft
     // Ugly
     p->activity->values.push_back( static_cast<int>( best_bench.type ) );
+    p->activity->values.push_back( 100 );
+    p->activity->values.push_back( 0 );
 
     return 0;
 }

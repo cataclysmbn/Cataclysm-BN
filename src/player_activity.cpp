@@ -53,6 +53,8 @@ static const activity_id ACT_CONSUME_DRINK_MENU( "ACT_CONSUME_DRINK_MENU" );
 static const activity_id ACT_CONSUME_FOOD_MENU( "ACT_CONSUME_FOOD_MENU" );
 static const activity_id ACT_CONSUME_MEDS_MENU( "ACT_CONSUME_MEDS_MENU" );
 static const activity_id ACT_CRAFT( "ACT_CRAFT" );
+static constexpr auto craft_bench_type_idx = 1;
+static constexpr auto craft_tools_mult_percent_idx = 2;
 static const activity_id ACT_DIG( "ACT_DIG" );
 static const activity_id ACT_DIG_CHANNEL( "ACT_DIG_CHANNEL" );
 static const activity_id ACT_EAT_MENU( "ACT_EAT_MENU" );
@@ -207,14 +209,16 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     const recipe &rec = craft->get_making();
     const tripoint bench_pos = act.coords.front();
     // Ugly
-    bench_type bench_t = bench_type( act.values[1] );
+    const auto bench_t = bench_type( act.values[craft_bench_type_idx] );
 
     const bench_location bench{ bench_t, bench_pos };
 
     const float light_mult = lighting_crafting_speed_multiplier( u, rec );
     const float bench_mult = workbench_crafting_speed_multiplier( *craft, bench );
     const float morale_mult = morale_crafting_speed_multiplier( u, rec );
-    const auto tools_mult = crafting_tools_speed_multiplier( u, rec );
+    const auto tools_mult = ( act.values.size() > craft_tools_mult_percent_idx )
+                            ? static_cast<float>( act.values[craft_tools_mult_percent_idx] ) / 100.0f
+                            : crafting_tools_speed_multiplier( u, rec );
     const int assistants = u.available_assistant_count( craft->get_making() );
     const float base_total_moves = std::max( 1, rec.batch_time( craft->charges, 1.0f, 0 ) );
     const float assist_total_moves = std::max( 1, rec.batch_time( craft->charges, 1.0f, assistants ) );
