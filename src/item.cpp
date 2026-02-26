@@ -9639,6 +9639,23 @@ int item::get_counter() const
     return item_counter;
 }
 
+bool item::has_explicit_turn_timer() const
+{
+    return is_active() && item_counter > 0 && type->countdown_interval > 0;
+}
+
+void item::advance_timer( int n )
+{
+    if( !has_explicit_turn_timer() || n <= 0 ) {
+        return;
+    }
+    // Decrement counter, clamping at 0.  The countdown_action is deliberately
+    // NOT fired here — it will trigger on the next normal process_items() call
+    // when the submap re-enters the reality bubble, avoiding side-effects in
+    // out-of-bubble context (explosions, spawns, etc.).
+    item_counter = std::max( 0, item_counter - n );
+}
+
 void item::set_charges( int value )
 {
     if( value < 0 ) {

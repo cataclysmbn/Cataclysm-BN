@@ -506,6 +506,8 @@ class monster : public Creature, public location_visitable<monster>
         int shortest_special_cooldown() const;
 
         void process_turn() override;
+        /** Batch catchup: simulate up to MAX_CATCHUP_MONSTER missed turns. */
+        void batch_turns( int n ) override;
         /** Resets the value of all bonus fields to 0, clears special effect flags. */
         void reset_bonuses() override;
         /** Resets stats, and applies effects in an idempotent manner */

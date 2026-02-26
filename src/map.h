@@ -57,6 +57,7 @@ class computer;
 class field;
 class field_entry;
 class map_cursor;
+class mapbuffer;
 class mapgendata;
 class monster;
 class optional_vpart_position;

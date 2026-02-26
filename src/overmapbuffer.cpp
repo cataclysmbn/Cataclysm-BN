@@ -12,6 +12,7 @@
 #include <future>
 
 #include "avatar.h"
+#include "batch_turns.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "character_id.h"
@@ -1818,6 +1819,15 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         monster *const placed = g->place_critter_at( make_shared_fast<monster>( this_monster ),
                                 local );
         if( placed ) {
+            // Phase 6: batch-advance AI state for turns missed while despawned.
+            // Only applies to monsters with a valid (non-zero) last_updated timestamp.
+            // batch_turns() does NOT update last_updated so on_load() can still
+            // perform its biological catchup and sanity checks.
+            if( placed->last_updated > calendar::turn_zero &&
+                placed->last_updated < calendar::turn ) {
+                const int missed = to_turns<int>( calendar::turn - placed->last_updated );
+                placed->batch_turns( missed );
+            }
             placed->on_load();
         }
     } );

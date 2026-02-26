@@ -259,6 +259,14 @@ class Creature
 
         /** Processes effects and bonuses and allocates move points based on speed. */
         virtual void process_turn();
+        /**
+         * Batch catchup: simulate @p n missed turns for this creature.
+         * Default implementation calls process_turn() @p n times.
+         * Derived classes (monster, npc) provide specialized versions that are
+         * cheaper and/or more appropriate for out-of-bubble simulation.
+         * @p n is expected to be pre-clamped by the caller.
+         */
+        virtual void batch_turns( int n );
         /** Resets the value of all bonus fields to 0. */
         virtual void reset_bonuses();
         /** Resets stats, and applies effects in an idempotent manner */

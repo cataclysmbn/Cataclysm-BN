@@ -91,6 +91,15 @@ class mapbuffer
         void unload_submap( const tripoint_abs_sm &pos );
 
         /**
+         * Save and evict all submaps in the OMT quad at @p om_addr in one shot.
+         * This is the correct way to evict a quad: calling unload_submap() per-submap
+         * repeatedly overwrites the quad file without the previously-removed siblings,
+         * causing data loss and "file did not contain expected submap" errors on reload.
+         * Does nothing for quads that are fully uniform (they regenerate on demand).
+         */
+        void unload_quad( const tripoint &om_addr );
+
+        /**
          * Move all submaps from this buffer into @p dest, leaving this buffer empty.
          * Used by the dimension-transition system to migrate submaps between registry slots
          * without a disk round-trip.

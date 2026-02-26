@@ -11,6 +11,7 @@
 
 #include "auto_pickup.h"
 #include "avatar.h"
+#include "batch_turns.h"
 #include "bodypart.h"
 #include "character.h"
 #include "character_id.h"
@@ -2996,6 +2997,47 @@ void npc::process_turn()
 
     // TODO: Add decreasing trust/value/etc. here when player doesn't provide food
     // TODO: Make NPCs leave the player if there's a path out of map and player is sleeping/unseen/etc.
+}
+
+void npc::batch_turns( int n )
+{
+    if( n <= 0 || is_dead_state() ) {
+        return;
+    }
+    n = std::min( n, MAX_CATCHUP_NPC );
+
+    // Biological catchup (hunger, thirst, healing, etc.) in one coarse pass.
+    // Call update_body directly (bypassing the once_every throttle used in
+    // npc_update_body) since we're doing a deliberate catch-up pass.
+    if( last_updated < calendar::turn ) {
+        update_body( last_updated, calendar::turn );
+        last_updated = calendar::turn;
+    }
+
+    // Per-turn effect/bonus processing.
+    for( int i = 0; i < n; ++i ) {
+        if( is_dead_state() ) {
+            break;
+        }
+        process_turn();
+    }
+
+    // Fast-forward any ongoing activity.
+    advance_job_progress( n );
+
+    moves = 0;
+}
+
+void npc::advance_job_progress( int n )
+{
+    if( n <= 0 ) {
+        return;
+    }
+    // Grant move points proportional to elapsed turns for ongoing activities,
+    // mirroring the on_load() pattern used for NPCs with destinations or activities.
+    if( has_destination() || activity ) {
+        mod_moves( to_moves<int>( time_duration::from_turns( n ) ) );
+    }
 }
 
 bool npc::invoke_item( item *used, const tripoint &pt )

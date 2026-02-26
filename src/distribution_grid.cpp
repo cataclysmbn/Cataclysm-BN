@@ -1,5 +1,7 @@
 #include <unordered_set>
 #include <algorithm>
+#include <climits>
+#include <cstdint>
 #include <ranges>
 
 #include "cata_algo.h"
@@ -202,6 +204,20 @@ auto distribution_grid::get_power_stat() const -> power_stat
            | std::views::join
            | std::views::transform( get_loc_stats )
            | cata::ranges::fold_left( power_stat{}, std::plus<> {} );
+}
+
+void distribution_grid::apply_net_power( int64_t delta_w )
+{
+    if( delta_w == 0 ) {
+        return;
+    }
+    // Clamp to int range before calling mod_resource().
+    constexpr int64_t INT_MAX_64 = static_cast<int64_t>( INT_MAX );
+    constexpr int64_t INT_MIN_64 = static_cast<int64_t>( INT_MIN );
+    const int clamped = static_cast<int>(
+                            std::max( INT_MIN_64, std::min( INT_MAX_64, delta_w ) )
+                        );
+    mod_resource( clamped );
 }
 
 distribution_grid_tracker::distribution_grid_tracker()

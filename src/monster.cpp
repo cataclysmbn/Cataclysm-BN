@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 #include "avatar.h"
+#include "batch_turns.h"
 #include "bodypart.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
@@ -2815,6 +2816,25 @@ void monster::process_turn()
     }
 
     Creature::process_turn();
+}
+
+void monster::batch_turns( int n )
+{
+    if( n <= 0 || is_dead_state() ) {
+        return;
+    }
+    n = std::min( n, MAX_CATCHUP_MONSTER );
+
+    for( int i = 0; i < n; ++i ) {
+        if( is_dead_state() ) {
+            break;
+        }
+        process_turn();
+    }
+    // One reproduction check at the end rather than per-turn to avoid
+    // O(n) spawns for high-fecundity species catching up after long absence.
+    try_reproduce();
+    moves = 0;
 }
 
 void monster::die( Creature *nkiller )

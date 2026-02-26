@@ -736,6 +736,21 @@ class item : public location_visitable<item>, public game_object<item>
         int get_counter() const;
 
         /**
+         * Returns true if this item is currently active and uses an explicit
+         * per-turn integer countdown counter (itype::countdown_interval > 0).
+         * Used by batch_turns_items() to identify items that need timer advance.
+         */
+        bool has_explicit_turn_timer() const;
+
+        /**
+         * Advance the item's countdown counter by @p n turns (batch catchup).
+         * Clamps the counter at 0; does NOT fire the countdown_action — that
+         * happens on the next normal in-bubble process_items() call.
+         * No-op if has_explicit_turn_timer() is false.
+         */
+        void advance_timer( int n );
+
+        /**
          * Consumes specified charges (or fewer) from this and any contained items
          * @param what specific type of charge required, e.g. 'battery'
          * @param qty maximum charges to consume. On return set to number of charges not found (or zero)

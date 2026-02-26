@@ -68,6 +68,12 @@ class distribution_grid
         }
         /// Calculate total power generation (W) and consumption (W) in the grid
         auto get_power_stat() const -> power_stat;
+        /**
+         * Apply a net power delta (in watt-turns) to this grid's batteries.
+         * Positive @p delta_w charges, negative discharges.  Clamps to int
+         * before forwarding to mod_resource() to handle large batch values.
+         */
+        void apply_net_power( int64_t delta_w );
 };
 
 class distribution_grid_tracker;
@@ -215,6 +221,14 @@ class distribution_grid_tracker : public submap_load_listener
          * Clears all grids and tracked submaps. Used when changing dimensions.
          */
         void clear();
+
+        /**
+         * Returns true if this tracker has at least one tracked submap.
+         * Used by game to decide when a non-primary dimension's tracker can be destroyed.
+         */
+        bool has_tracked_submaps() const {
+            return !tracked_submaps_.empty();
+        }
 };
 
 class vehicle;

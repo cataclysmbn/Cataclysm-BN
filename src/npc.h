@@ -1021,6 +1021,19 @@ class npc : public player
         void move(); // Picks an action & a target and calls execute_action
         void execute_action( npc_action action ); // Performs action
         void process_turn() override;
+        /**
+         * Batch catchup: simulate up to MAX_CATCHUP_NPC missed turns.
+         * Calls npc_update_body() and process_turn() per iteration, then
+         * calls advance_job_progress(n) to fast-forward any ongoing activity.
+         */
+        void batch_turns( int n ) override;
+        /**
+         * Fast-forward the NPC's current activity by @p n turns.
+         * Grants the NPC enough move points (to_moves<int>(n)) to advance
+         * any ongoing player_activity, mirroring what on_load() does for
+         * destination/activity NPCs.
+         */
+        void advance_job_progress( int n );
 
         using Character::invoke_item;
         bool invoke_item( item *, const tripoint &pt ) override;

@@ -1,9 +1,13 @@
 #include "submap_load_manager.h"
 
 #include <algorithm>
+#include <set>
+#include <utility>
 
+#include "coordinate_conversions.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
+#include "point.h"
 
 submap_load_manager submap_loader;
 
@@ -93,15 +97,47 @@ void submap_load_manager::update()
         }
     }
 
-    // Positions that are no longer desired
+    // Positions that are no longer desired — notify listeners per-submap.
     for( const desired_key &key : prev_desired_ ) {
         if( new_desired.count( key ) == 0 ) {
             const tripoint_abs_sm pos( key.second );
             for( submap_load_listener *listener : listeners_ ) {
                 listener->on_submap_unloaded( pos, key.first );
             }
-            // Evict from the mapbuffer
-            MAPBUFFER_REGISTRY.get( key.first ).unload_submap( pos );
+        }
+    }
+
+    // Evict mapbuffer entries at OMT-quad granularity.
+    // Only evict when ALL 4 submaps in a quad are absent from new_desired.
+    // Partial eviction (one unload_submap call per member) progressively
+    // overwrites the quad save file without the previously-removed siblings,
+    // causing data loss and spurious "file did not contain expected submap" errors.
+    {
+        using quad_key = std::pair<std::string, tripoint>;
+        std::set<quad_key> quads_checked;
+        for( const desired_key &key : prev_desired_ ) {
+            if( new_desired.count( key ) != 0 ) {
+                continue;  // still desired — skip
+            }
+            const tripoint om_addr = sm_to_omt_copy( key.second );
+            const quad_key qk{ key.first, om_addr };
+            if( !quads_checked.insert( qk ).second ) {
+                continue;  // already handled this quad in this cycle
+            }
+            // Check whether any of the 4 siblings remain in the desired set.
+            bool any_still_desired = false;
+            const tripoint base = omt_to_sm_copy( om_addr );
+            for( const point &off : { point_zero, point_south, point_east, point_south_east } ) {
+                const tripoint sibling{ base.x + off.x, base.y + off.y, base.z };
+                if( new_desired.count( { key.first, sibling } ) ) {
+                    any_still_desired = true;
+                    break;
+                }
+            }
+            if( !any_still_desired ) {
+                // Safe: save the quad once and evict all 4 members atomically.
+                MAPBUFFER_REGISTRY.get( key.first ).unload_quad( om_addr );
+            }
         }
     }
 

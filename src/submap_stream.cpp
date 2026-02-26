@@ -32,11 +32,11 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
     // The generation mutex serialises writes to the mapbuffer from worker threads.
     // Concurrent reads (lookup_submap_in_memory) are safe without the mutex.
     // The disk-read and mapgen paths both call add_submap() — a write — so they
-    // must be serialised.  Phase 6 will add per-mapbuffer locking so that concurrent
-    // disk reads for distinct positions can overlap.
+    // must be serialised.  Per-mapbuffer locking for overlapping concurrent disk
+    // reads at distinct positions is a future optimization.
     static std::mutex gen_mutex;
 
-    auto fut = get_thread_pool().submit_returning( [dim, pos, &gen_mutex]() -> submap * {
+    auto fut = get_thread_pool().submit_returning( [dim, pos]() -> submap * {
         mapbuffer &mb = MAPBUFFER_REGISTRY.get( dim );
 
         // Step 1: early-out — submap already present (concurrent read, no lock needed).
@@ -59,17 +59,18 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
         }
 
         // Step 3: no disk file — fall back to synchronous tinymap generation.
-        // tinymap::generate() writes into MAPBUFFER via loadn(), which is why we hold
-        // gen_mutex.  Phase 6 will use a per-tinymap private buffer (drain_to_mapbuffer)
-        // to allow parallel generation; until then the generation step is serialised.
+        // bind_dimension() ensures loadn() inside generate() writes into the correct
+        // registry slot (MAPBUFFER_REGISTRY.get(dim)) for all dimensions.
+        // drain_to_mapbuffer() is therefore a true no-op.
         //
         // Note: generation rounds down to the 2×2 OMT-aligned submap quad origin,
         // matching the same rounding that map::loadn() applies.
         const tripoint_abs_omt abs_omt( sm_to_omt_copy( pos.raw() ) );
         const tripoint abs_rounded = omt_to_sm_copy( abs_omt.raw() );
         tinymap tm;
+        tm.bind_dimension( dim );
         tm.generate( abs_rounded, calendar::turn );
-        tm.drain_to_mapbuffer( mb );  // no-op for primary dim; Phase 6 extends this
+        tm.drain_to_mapbuffer( mb );  // no-op: submaps already in correct registry slot
 
         return mb.lookup_submap_in_memory( pos.raw() );
     } );

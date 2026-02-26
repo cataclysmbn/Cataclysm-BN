@@ -111,6 +111,18 @@ void mapbuffer::unload_submap( const tripoint_abs_sm &pos )
     remove_submap( p );
 }
 
+void mapbuffer::unload_quad( const tripoint &om_addr )
+{
+    // Save the quad once and collect all in-memory submaps for deletion.
+    // Using delete_after_save=true ensures save_quad() enumerates what to delete
+    // so we don't need to recompute the 4 addresses separately.
+    std::list<tripoint> to_delete;
+    save_quad( om_addr, to_delete, /*delete_after_save=*/true );
+    for( const tripoint &p : to_delete ) {
+        submaps.erase( p );
+    }
+}
+
 submap *mapbuffer::lookup_submap( const tripoint &p )
 {
     const auto iter = submaps.find( p );
@@ -347,8 +359,13 @@ void mapbuffer::deserialize( JsonIn &jsin )
         }
 
         if( !add_submap( submap_coordinates, sm ) ) {
-            debugmsg( "submap %d,%d,%d was already loaded", submap_coordinates.x, submap_coordinates.y,
-                      submap_coordinates.z );
+            // In-memory version takes precedence; the disk entry is stale.
+            // This can happen legitimately when a quad is partially reloaded after
+            // unload_submap() broke quad consistency (pre-unload_quad fix).
+            // With quad-level eviction (unload_quad) this should not occur in normal play.
+            DebugLog( DL::Warn, DC::Map ) << string_format(
+                "submap %d,%d,%d was already loaded; keeping in-memory version",
+                submap_coordinates.x, submap_coordinates.y, submap_coordinates.z );
         }
     }
 }

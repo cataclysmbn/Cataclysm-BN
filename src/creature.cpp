@@ -236,6 +236,17 @@ void Creature::process_turn()
     }
 }
 
+void Creature::batch_turns( int n )
+{
+    for( int i = 0; i < n; ++i ) {
+        if( is_dead_state() ) {
+            break;
+        }
+        process_turn();
+    }
+    moves = 0;
+}
+
 bool Creature::is_underwater() const
 {
     return underwater;

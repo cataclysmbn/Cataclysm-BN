@@ -124,6 +124,7 @@
 #include "map_iterator.h"
 #include "map_selector.h"
 #include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "mapdata.h"
 #include "mapsharing.h"
 #include "memorial_logger.h"
@@ -647,10 +648,6 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     const int z_lo = m.has_zlevels() ? -OVERMAP_DEPTH : pos_sm.raw().z;
     const int z_hi = m.has_zlevels() ? OVERMAP_HEIGHT : pos_sm.raw().z;
 
-    // NOTE: submap_loader.update() must NOT be called until map::loadn() is
-    // updated to use MAPBUFFER_REGISTRY.get(bound_dimension_) instead of the
-    // primary-slot MAPBUFFER macro (Phase 6 integration).  Until then the
-    // load manager tracks intent but fires no load/unload events.
     // Create or update the reality bubble request.
     if( reality_bubble_handle_ == 0 ) {
         reality_bubble_handle_ = submap_loader.request_load(
@@ -659,6 +656,27 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
                                      z_lo, z_hi );
     } else {
         submap_loader.update_request( reality_bubble_handle_, bubble_center );
+    }
+    // Phase 6: map::loadn() now uses MAPBUFFER_REGISTRY.get(bound_dimension_), so
+    // the load manager can safely fire on_submap_loaded/unloaded events.
+    // Ensure a distribution_grid_tracker exists for every active dimension before
+    // update() fires on_submap_loaded events.
+    for( const auto &dim_id : submap_loader.active_dimensions() ) {
+        if( grid_trackers_.find( dim_id ) == grid_trackers_.end() ) {
+            grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
+                                         MAPBUFFER_REGISTRY.get( dim_id ) );
+            submap_loader.add_listener( grid_trackers_[dim_id].get() );
+        }
+    }
+    submap_loader.update();
+    // Destroy trackers for non-primary dimensions that have no remaining tracked submaps.
+    for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
+        if( !it->first.empty() && !it->second->has_tracked_submaps() ) {
+            submap_loader.remove_listener( it->second.get() );
+            it = grid_trackers_.erase( it );
+        } else {
+            ++it;
+        }
     }
 }
 
@@ -1086,6 +1104,13 @@ void game::load_npcs()
     }
 
     for( const auto &npc : just_added ) {
+        // Phase 6: batch-advance AI state for missed turns before on_load()
+        // does the sanity checks.  batch_turns() updates last_updated so
+        // on_load() sees dt=0 and skips the redundant body-update loop.
+        if( npc->last_updated < calendar::turn ) {
+            const int missed = to_turns<int>( calendar::turn - npc->last_updated );
+            npc->batch_turns( missed );
+        }
         npc->on_load();
     }
 
@@ -13312,6 +13337,24 @@ point game::update_map( int &x, int &y )
         const tripoint_abs_sm new_center(
             origin.x + reality_bubble_radius_, origin.y + reality_bubble_radius_, origin.z );
         submap_loader.update_request( reality_bubble_handle_, new_center );
+        // Ensure trackers exist for all active dimensions before firing events.
+        for( const auto &dim_id : submap_loader.active_dimensions() ) {
+            if( grid_trackers_.find( dim_id ) == grid_trackers_.end() ) {
+                grid_trackers_[dim_id] = std::make_unique<distribution_grid_tracker>(
+                                             MAPBUFFER_REGISTRY.get( dim_id ) );
+                submap_loader.add_listener( grid_trackers_[dim_id].get() );
+            }
+        }
+        submap_loader.update();
+        // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
+        for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
+            if( !it->first.empty() && !it->second->has_tracked_submaps() ) {
+                submap_loader.remove_listener( it->second.get() );
+                it = grid_trackers_.erase( it );
+            } else {
+                ++it;
+            }
+        }
     }
 
     // Shift monsters
