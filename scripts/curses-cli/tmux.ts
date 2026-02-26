@@ -276,6 +276,23 @@ export class TmuxSession {
       return
     }
 
+    const normalizedKeys = keys.map((key) => normalizeTmuxKey(key))
+    const allNamedKeys = normalizedKeys.every((key) =>
+      isTmuxNamedKey(key) && controlKeyHex(key) === undefined
+    )
+    if (allNamedKeys) {
+      await runTmux(["send-keys", "-t", this.target, ...normalizedKeys], { cwd: this.cwd })
+      return
+    }
+
+    const allLiteralKeys = normalizedKeys.every((key) =>
+      !isTmuxNamedKey(key) && controlKeyHex(key) === undefined
+    )
+    if (allLiteralKeys) {
+      await runTmux(["send-keys", "-t", this.target, "-l", ...normalizedKeys], { cwd: this.cwd })
+      return
+    }
+
     for (const key of keys) {
       const normalizedKey = normalizeTmuxKey(key)
       const controlHex = controlKeyHex(normalizedKey)
@@ -290,9 +307,11 @@ export class TmuxSession {
 
   async sendMouse(options: MouseEventOptions): Promise<void> {
     const frames = mouseFrames(options)
-    for (const frame of frames) {
-      await runTmux(["send-keys", "-t", this.target, "-l", frame], { cwd: this.cwd })
+    if (frames.length === 0) {
+      return
     }
+
+    await runTmux(["send-keys", "-t", this.target, "-l", ...frames], { cwd: this.cwd })
   }
 
   async capturePane(lines = 250): Promise<string> {

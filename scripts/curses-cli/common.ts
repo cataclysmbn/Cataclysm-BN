@@ -29,6 +29,215 @@ export type AvailableInput = {
   description: string
 }
 
+export type OutputFormat = "json" | "ai"
+
+const OUTPUT_FORMAT_ALIASES: Record<string, OutputFormat> = {
+  json: "json",
+  ai: "ai",
+  yaml: "ai",
+  yml: "ai",
+}
+
+export const parseOutputFormat = (value: string | undefined): OutputFormat => {
+  const normalized = value?.trim().toLowerCase() ?? "ai"
+  if (normalized.length === 0) {
+    return "ai"
+  }
+
+  const mapped = OUTPUT_FORMAT_ALIASES[normalized]
+  if (mapped !== undefined) {
+    return mapped
+  }
+
+  throw new Error(`invalid output format: ${value}. use one of: json, ai`)
+}
+
+const toYamlScalar = (value: string | number | boolean): string => {
+  if (typeof value === "number" || typeof value === "boolean") {
+    return `${value}`
+  }
+
+  const escaped = value.replaceAll("'", "''")
+  return `'${escaped}'`
+}
+
+const isSimpleYamlKey = (key: string): boolean => /^[A-Za-z_][A-Za-z0-9_-]*$/.test(key)
+
+const shouldIncludeAiSummary = (): boolean => {
+  try {
+    return Deno.env.get("CURSES_CLI_AI_INCLUDE_SUMMARY") === "1"
+  } catch {
+    return false
+  }
+}
+
+type YamlNode = null | string | number | boolean | YamlNode[] | { [key: string]: YamlNode }
+
+const normalizeForYaml = (value: unknown, visited = new WeakSet<object>()): YamlNode => {
+  if (value === null || typeof value === "string" || typeof value === "boolean") {
+    return value
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : `${value}`
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeForYaml(entry, visited))
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString()
+  }
+
+  if (typeof value === "object") {
+    if (visited.has(value)) {
+      return "[Circular]"
+    }
+
+    visited.add(value)
+    const normalized: { [key: string]: YamlNode } = {}
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      if (entry === undefined) {
+        continue
+      }
+      normalized[key] = normalizeForYaml(entry, visited)
+    }
+    visited.delete(value)
+    return normalized
+  }
+
+  return `${value}`
+}
+
+const renderFlowYaml = (value: YamlNode): string => {
+  if (value === null || typeof value === "number" || typeof value === "boolean") {
+    return `${value}`
+  }
+
+  if (typeof value === "string") {
+    return toYamlScalar(value)
+  }
+
+  if (Array.isArray(value)) {
+    const entries = value.map((entry) => renderFlowYaml(entry)).join(",")
+    return `[${entries}]`
+  }
+
+  const entries = Object.entries(value as { [key: string]: YamlNode }).map(([key, entry]) => {
+    const renderedKey = isSimpleYamlKey(key) ? key : toYamlScalar(key)
+    return `${renderedKey}:${renderFlowYaml(entry)}`
+  }).join(",")
+  return `{${entries}}`
+}
+
+const toInlineYamlValue = (value: YamlNode, depth: number): string | undefined => {
+  if (value === null || typeof value === "number" || typeof value === "boolean") {
+    return `${value}`
+  }
+
+  if (typeof value === "string") {
+    if (value.includes("\n")) {
+      return undefined
+    }
+    return toYamlScalar(value)
+  }
+
+  if (depth >= 2) {
+    return renderFlowYaml(value)
+  }
+
+  return undefined
+}
+
+const renderYamlValue = (value: YamlNode, indent: number, depth: number): string[] => {
+  const padding = " ".repeat(indent)
+  const inline = toInlineYamlValue(value, depth)
+  if (inline !== undefined) {
+    return [`${padding}${inline}`]
+  }
+
+  if (typeof value === "string") {
+    const lines = value.split("\n")
+    return [
+      `${padding}|-`,
+      ...lines.map((line) => `${padding}  ${line}`),
+    ]
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return [`${padding}[]`]
+    }
+
+    const lines: string[] = []
+    for (const entry of value) {
+      const entryInline = toInlineYamlValue(entry, depth + 1)
+      if (entryInline !== undefined) {
+        lines.push(`${padding}- ${entryInline}`)
+        continue
+      }
+
+      lines.push(`${padding}-`)
+      lines.push(...renderYamlValue(entry, indent + 2, depth + 1))
+    }
+    return lines
+  }
+
+  const entries = Object.entries(value as { [key: string]: YamlNode })
+  if (entries.length === 0) {
+    return [`${padding}{}`]
+  }
+
+  const lines: string[] = []
+  for (const [key, entry] of entries) {
+    const entryInline = toInlineYamlValue(entry, depth + 1)
+    const yamlKey = isSimpleYamlKey(key) ? key : toYamlScalar(key)
+    if (entryInline !== undefined) {
+      lines.push(`${padding}${yamlKey}: ${entryInline}`)
+      continue
+    }
+
+    lines.push(`${padding}${yamlKey}:`)
+    lines.push(...renderYamlValue(entry, indent + 2, depth + 1))
+  }
+  return lines
+}
+
+type RenderCommandOutputOptions = {
+  format: OutputFormat
+  command: string
+  payload: unknown
+  summary?: Record<string, unknown>
+  screen?: string
+}
+
+export const renderCommandOutput = (options: RenderCommandOutputOptions): string => {
+  if (options.format === "json") {
+    return JSON.stringify(options.payload, null, 2)
+  }
+
+  const payload = normalizeForYaml(options.payload)
+  const lines = [
+    `command: ${toYamlScalar(options.command)}`,
+    "payload:",
+    ...renderYamlValue(payload, 2, 1),
+  ]
+
+  const includeSummary = shouldIncludeAiSummary()
+  if (includeSummary) {
+    const summary = normalizeForYaml(options.summary ?? {})
+    lines.splice(1, 0, "summary:", ...renderYamlValue(summary, 2, 1))
+  }
+
+  if (options.screen !== undefined) {
+    lines.push("screen:")
+    lines.push(...renderYamlValue(normalizeForYaml(options.screen), 2, 1))
+  }
+
+  return lines.join("\n")
+}
+
 export const timestamp = (): string =>
   new Date().toISOString().replaceAll(":", "").replaceAll(".", "-")
 
@@ -53,7 +262,7 @@ export const resolveInputKey = (inputId: string): string => {
   }
 
   if (normalized.startsWith("key:")) {
-    const key = normalized.slice("key:".length)
+    const key = normalized.slice("key:".length).trim()
     if (key.length === 0) {
       throw new Error("key input id cannot be empty")
     }

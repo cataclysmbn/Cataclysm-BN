@@ -1,9 +1,11 @@
-import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert"
+import { assertEquals, assertStringIncludes } from "@std/assert"
 import { join } from "@std/path"
 import {
   buildLaunchCommand,
   detectPromptInputs,
   listAvailableInputs,
+  parseOutputFormat,
+  renderCommandOutput,
   resolveInputKey,
   sanitizeId,
   writeCodeBlockCapture,
@@ -65,7 +67,32 @@ Deno.test("pr_verify: buildLaunchCommand includes base args, optional world, and
 
 Deno.test("pr_verify: resolveInputKey handles action ids and raw key ids", () => {
   assertEquals(resolveInputKey("key:!"), "!")
+  assertEquals(resolveInputKey("key:/"), "/")
+  assertEquals(resolveInputKey("key:Enter"), "Enter")
   assertEquals(resolveInputKey("Escape"), "Escape")
+})
+
+Deno.test("pr_verify: parseOutputFormat supports ai aliases", () => {
+  assertEquals(parseOutputFormat(undefined), "ai")
+  assertEquals(parseOutputFormat("json"), "json")
+  assertEquals(parseOutputFormat("ai"), "ai")
+  assertEquals(parseOutputFormat("yaml"), "ai")
+})
+
+Deno.test("pr_verify: renderCommandOutput emits ai yaml wrapper", () => {
+  const rendered = renderCommandOutput({
+    format: "ai",
+    command: "state-dump",
+    payload: { available_inputs: ["w"] },
+    summary: { state_id: "run-1" },
+    screen: "line 1\nline 2",
+  })
+
+  assertStringIncludes(rendered, "command: 'state-dump'")
+  assertStringIncludes(rendered, "payload:")
+  assertStringIncludes(rendered, "available_inputs: ['w']")
+  assertStringIncludes(rendered, "screen:")
+  assertStringIncludes(rendered, "|-\n    line 1")
 })
 
 Deno.test("pr_verify: detectPromptInputs catches safe mode prompt inputs", () => {

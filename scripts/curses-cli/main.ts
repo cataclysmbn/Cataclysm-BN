@@ -1,11 +1,13 @@
 #!/usr/bin/env -S deno run --allow-run --allow-read --allow-write
 
 import { ensureDir } from "@std/fs"
-import { dirname, fromFileUrl, join, relative, resolve } from "@std/path"
+import { basename, dirname, fromFileUrl, join, relative, resolve } from "@std/path"
 import { Command } from "@cliffy/command"
 import {
   buildLaunchCommand,
   listAvailableInputs,
+  parseOutputFormat,
+  renderCommandOutput,
   resolveInputKey,
   sanitizeId,
   sessionTimestamp,
@@ -13,7 +15,7 @@ import {
   writeCodeBlockCapture,
   writeIndex,
 } from "./common.ts"
-import type { CaptureEntry } from "./common.ts"
+import type { AvailableInput, CaptureEntry, OutputFormat } from "./common.ts"
 import {
   configureTmuxBinary,
   configureTmuxSocket,
@@ -26,8 +28,19 @@ const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url))
 const REPO_ROOT = resolve(SCRIPT_DIR, "..", "..")
 const TMP_CLI_ROOT = resolve("/tmp", "curses-cli")
 const DEFAULT_STATE_FILE = resolve(TMP_CLI_ROOT, "state", ".live-session.json")
+const DEFAULT_OUTPUT_FORMAT: OutputFormat = parseOutputFormat(
+  Deno.env.get("CURSES_CLI_OUTPUT_FORMAT"),
+)
 const SINGLETON_SESSION_NAME = "curses-cli"
 const SINGLETON_TMUX_SOCKET = "curses-cli"
+const STOP_REASON_CATEGORIES = [
+  "menu_drift",
+  "mode_trap",
+  "safe_mode_interrupt",
+  "repro_drift",
+] as const
+
+type StopReasonCategory = (typeof STOP_REASON_CATEGORIES)[number]
 
 type SessionState = {
   id: string
@@ -57,6 +70,7 @@ type SessionState = {
   started_at: string
   finished_at?: string
   captures: CaptureEntry[]
+  stop_reason?: StopReasonCategory
 }
 
 const delay = (ms: number): Promise<void> =>
@@ -182,6 +196,21 @@ const getCastStats = async (
   }
 }
 
+const copyFileIntoArtifactDir = async (
+  sourcePath: string | undefined,
+  artifactDir: string,
+): Promise<string | undefined> => {
+  if (sourcePath === undefined || sourcePath.length === 0) {
+    return sourcePath
+  }
+
+  const destinationDir = join(artifactDir, "casts")
+  await ensureDir(destinationDir)
+  const destinationPath = join(destinationDir, basename(sourcePath))
+  await Deno.copyFile(sourcePath, destinationPath)
+  return destinationPath
+}
+
 type AvailableKeysSnapshot = {
   actions?: Array<{
     id: string
@@ -203,40 +232,282 @@ type AvailableMacrosSnapshot = {
   }>
 }
 
-const loadAvailableKeysSnapshot = async (
-  state: SessionState,
-): Promise<AvailableKeysSnapshot | undefined> => {
-  if (state.available_keys_json === undefined || state.available_keys_json.length === 0) {
+type SnapshotCache<TSnapshot> = {
+  path?: string
+  mtimeMs?: number
+  value?: TSnapshot
+}
+
+const availableKeysSnapshotCache: SnapshotCache<AvailableKeysSnapshot> = {}
+const availableMacrosSnapshotCache: SnapshotCache<AvailableMacrosSnapshot> = {}
+
+const cacheMtimeMs = (mtime: Date | null): number => mtime?.getTime() ?? -1
+
+const loadCachedSnapshot = async <TSnapshot>(options: {
+  path: string | undefined
+  cache: SnapshotCache<TSnapshot>
+}): Promise<TSnapshot | undefined> => {
+  if (options.path === undefined || options.path.length === 0) {
     return undefined
   }
 
   try {
-    const content = await Deno.readTextFile(state.available_keys_json)
-    return JSON.parse(content) as AvailableKeysSnapshot
+    const stat = await Deno.stat(options.path)
+    const mtimeMs = cacheMtimeMs(stat.mtime)
+    if (
+      options.cache.path === options.path && options.cache.mtimeMs === mtimeMs &&
+      options.cache.value !== undefined
+    ) {
+      return options.cache.value
+    }
+
+    const content = await Deno.readTextFile(options.path)
+    const parsed = JSON.parse(content) as TSnapshot
+    options.cache.path = options.path
+    options.cache.mtimeMs = mtimeMs
+    options.cache.value = parsed
+    return parsed
   } catch {
     return undefined
   }
+}
+
+type JsonRecord = Record<string, unknown>
+
+const asRecord = (value: unknown): JsonRecord | undefined => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return undefined
+  }
+  return value as JsonRecord
+}
+
+const trimMiddle = (text: string, maxChars: number): string => {
+  if (text.length <= maxChars) {
+    return text
+  }
+  const headLength = Math.max(0, Math.floor((maxChars - 3) / 2))
+  const tailLength = Math.max(0, maxChars - 3 - headLength)
+  return `${text.slice(0, headLength)}...${text.slice(text.length - tailLength)}`
+}
+
+type StateDumpBuildOptions = {
+  paneMaxChars: number
+  inputLimit: number
+  actionLimit: number
+  macroLimit: number
+}
+
+const summarizeAiState = (gameState: unknown): JsonRecord | null => {
+  const gameStateRecord = asRecord(gameState)
+  if (gameStateRecord === undefined) {
+    return null
+  }
+
+  const keys = [
+    "turn",
+    "safe_mode",
+    "hostile_visible",
+    "has_destination",
+    "player_pos",
+    "is_sleepy",
+    "is_hungry",
+    "is_thirsty",
+    "pain",
+    "stamina",
+    "focus",
+  ]
+  const summary: JsonRecord = {}
+  for (const key of keys) {
+    if (key in gameStateRecord) {
+      summary[key] = gameStateRecord[key]
+    }
+  }
+
+  return Object.keys(summary).length > 0 ? summary : gameStateRecord
+}
+
+const detectStopReasonCandidate = (
+  aiSummary: JsonRecord | null,
+  pane: string,
+): string | undefined => {
+  if (aiSummary !== null) {
+    if (aiSummary.safe_mode === true) {
+      return "safe_mode_interrupt"
+    }
+    if (aiSummary.has_destination === true) {
+      return "travel_in_progress"
+    }
+    if (aiSummary.hostile_visible === true) {
+      return "hostile_visible"
+    }
+  }
+
+  const lowerPane = pane.toLowerCase()
+  if (lowerPane.includes("safe mode")) {
+    return "safe_mode_interrupt"
+  }
+  if (lowerPane.includes("really step") || lowerPane.includes("continue anyway")) {
+    return "confirm_prompt"
+  }
+  if (lowerPane.includes("where to") || lowerPane.includes("examine where")) {
+    return "mode_trap"
+  }
+
+  const modeTrapMarkers = [
+    "look around",
+    "examine",
+    "peek around",
+    "target",
+    "line of fire",
+    "fire mode",
+    "debug menu",
+    "lua console",
+  ]
+  if (modeTrapMarkers.some((marker) => lowerPane.includes(marker))) {
+    return "mode_trap"
+  }
+
+  return undefined
+}
+
+const summarizeActionKeys = (
+  snapshot: AvailableKeysSnapshot | undefined,
+  limit: number,
+): Array<JsonRecord> =>
+  (snapshot?.actions ?? []).slice(0, Math.max(1, limit)).map((action) => ({
+    id: action.id,
+    key: action.key,
+    name: action.name,
+  }))
+
+const summarizeMacroIds = (
+  snapshot: AvailableMacrosSnapshot | undefined,
+  limit: number,
+): string[] => (snapshot?.macros ?? []).slice(0, Math.max(1, limit)).map((macro) => macro.id)
+
+type BuildStateDumpPayloadOptions = {
+  state: SessionState
+  pane: string
+  promptInputs: AvailableInput[]
+  keysSnapshot: AvailableKeysSnapshot | undefined
+  macrosSnapshot: AvailableMacrosSnapshot | undefined
+  gameState: unknown
+  build: StateDumpBuildOptions
+}
+
+const dedupeStringList = (values: string[]): string[] => [...new Set(values)]
+
+const toSendTokenFromKey = (key: string): string => {
+  if ([...key].length === 1) {
+    return key
+  }
+  return `key:${key}`
+}
+
+const listAvailableInputTokens = (
+  promptInputs: AvailableInput[],
+  limit: number,
+): string[] => {
+  const available = promptInputs
+    .map((input) => toSendTokenFromKey(input.key))
+
+  return dedupeStringList(available).slice(0, Math.max(1, limit))
+}
+
+const buildStateDumpPayload = (
+  options: BuildStateDumpPayloadOptions,
+): JsonRecord => {
+  const aiStateSummary = summarizeAiState(options.gameState)
+  const stopReasonCandidate = detectStopReasonCandidate(aiStateSummary, options.pane)
+  return {
+    state_id: options.state.id,
+    status: options.state.status,
+    started_at: options.state.started_at,
+    pane_excerpt: trimMiddle(options.pane, options.build.paneMaxChars),
+    available_inputs: listAvailableInputTokens(options.promptInputs, options.build.inputLimit),
+    action_keys_top: summarizeActionKeys(options.keysSnapshot, options.build.actionLimit),
+    macro_ids: summarizeMacroIds(options.macrosSnapshot, options.build.macroLimit),
+    ai_state_summary: aiStateSummary,
+    stop_reason_candidate: stopReasonCandidate,
+  }
+}
+
+type CompactStateDumpOptions = {
+  state: SessionState
+  pane: string
+  promptInputs: AvailableInput[]
+  keysSnapshot: AvailableKeysSnapshot | undefined
+  macrosSnapshot: AvailableMacrosSnapshot | undefined
+  gameState: unknown
+  maxChars: number
+}
+
+const compactStateDump = (
+  options: CompactStateDumpOptions,
+): JsonRecord => {
+  const maxChars = Math.max(1200, options.maxChars)
+  let build: StateDumpBuildOptions = {
+    paneMaxChars: Math.min(2400, Math.floor(maxChars * 0.45)),
+    inputLimit: 12,
+    actionLimit: 12,
+    macroLimit: 12,
+  }
+
+  for (let pass = 0; pass < 4; pass += 1) {
+    const payload = buildStateDumpPayload({
+      state: options.state,
+      pane: options.pane,
+      promptInputs: options.promptInputs,
+      keysSnapshot: options.keysSnapshot,
+      macrosSnapshot: options.macrosSnapshot,
+      gameState: options.gameState,
+      build,
+    })
+    if (JSON.stringify(payload).length <= maxChars) {
+      return payload
+    }
+
+    build = {
+      paneMaxChars: Math.max(250, Math.floor(build.paneMaxChars * 0.65)),
+      inputLimit: Math.max(4, Math.floor(build.inputLimit * 0.65)),
+      actionLimit: Math.max(4, Math.floor(build.actionLimit * 0.65)),
+      macroLimit: Math.max(4, Math.floor(build.macroLimit * 0.65)),
+    }
+  }
+
+  const aiStateSummary = summarizeAiState(options.gameState)
+  const stopReasonCandidate = detectStopReasonCandidate(aiStateSummary, options.pane)
+  return {
+    state_id: options.state.id,
+    status: options.state.status,
+    available_inputs: listAvailableInputTokens(options.promptInputs, 8),
+    ai_state_summary: aiStateSummary,
+    stop_reason_candidate: stopReasonCandidate,
+  }
+}
+
+const loadAvailableKeysSnapshot = async (
+  state: SessionState,
+): Promise<AvailableKeysSnapshot | undefined> => {
+  return await loadCachedSnapshot({
+    path: state.available_keys_json,
+    cache: availableKeysSnapshotCache,
+  })
 }
 
 const loadAvailableMacrosSnapshot = async (
   state: SessionState,
 ): Promise<AvailableMacrosSnapshot | undefined> => {
-  if (state.available_macros_json === undefined || state.available_macros_json.length === 0) {
-    return undefined
-  }
-
-  try {
-    const content = await Deno.readTextFile(state.available_macros_json)
-    return JSON.parse(content) as AvailableMacrosSnapshot
-  } catch {
-    return undefined
-  }
+  return await loadCachedSnapshot({
+    path: state.available_macros_json,
+    cache: availableMacrosSnapshotCache,
+  })
 }
 
 type ResolvedSessionInput =
   | {
     kind: "key"
-    key: string
+    keys: string[]
   }
   | {
     kind: "mouse"
@@ -288,7 +559,15 @@ const parseCompactInputId = (inputId: string): string => {
   }
 
   if (normalized === "//") {
-    return "key:/"
+    return "/"
+  }
+
+  if (normalized.startsWith("action:")) {
+    const actionId = normalized.slice("action:".length)
+    if (actionId.length === 0) {
+      throw new Error("action input id cannot be empty")
+    }
+    return `engine_action:${actionId}`
   }
 
   const compactToken = normalized.slice(1)
@@ -298,6 +577,51 @@ const parseCompactInputId = (inputId: string): string => {
   }
 
   return `engine_action:${compactToken}`
+}
+
+const isPromptInputUnavailableError = (error: unknown): boolean =>
+  error instanceof Error &&
+  error.message.includes("input is not available in current prompt context")
+
+type ResolveSessionInputWithRefreshOptions = ResolveSessionInputOptions & {
+  session: TmuxSession
+  paneLines: number
+}
+
+const resolveSessionInputWithRefresh = async (
+  options: ResolveSessionInputWithRefreshOptions,
+): Promise<{ resolvedInput: ResolvedSessionInput; promptInputs: AvailableInput[] }> => {
+  const {
+    session,
+    paneLines,
+    ...resolveOptions
+  } = options
+  const currentPromptInputs = resolveOptions.promptInputs ?? []
+
+  try {
+    return {
+      resolvedInput: await resolveSessionInput({
+        ...resolveOptions,
+        promptInputs: currentPromptInputs,
+      }),
+      promptInputs: currentPromptInputs,
+    }
+  } catch (error) {
+    const strictPromptInputs = resolveOptions.strictPromptInputs ?? true
+    if (!strictPromptInputs || !isPromptInputUnavailableError(error)) {
+      throw error
+    }
+
+    const refreshedPane = stripAnsiFromPane(await session.capturePane(paneLines))
+    const refreshedPromptInputs = listAvailableInputs(refreshedPane)
+    return {
+      resolvedInput: await resolveSessionInput({
+        ...resolveOptions,
+        promptInputs: refreshedPromptInputs,
+      }),
+      promptInputs: refreshedPromptInputs,
+    }
+  }
 }
 
 const requireCoordinate = (
@@ -322,14 +646,70 @@ const requireCoordinate = (
 type ResolveSessionInputOptions = {
   state: SessionState
   inputId: string
+  strictPromptInputs?: boolean
+  promptInputs?: AvailableInput[]
   coordinate?: CoordinateOptions
+  availableKeysSnapshot?: AvailableKeysSnapshot
+  availableMacrosSnapshot?: AvailableMacrosSnapshot
+}
+
+const toPromptKeyId = (normalizedInputId: string): string => {
+  if (normalizedInputId.startsWith("key:")) {
+    return normalizedInputId
+  }
+
+  if (normalizedInputId.length === 1) {
+    return `key:${normalizedInputId}`
+  }
+
+  return `key:${resolveInputKey(normalizedInputId)}`
+}
+
+const rejectVerboseSingleCharacterKeyId = (normalizedInputId: string): void => {
+  if (!normalizedInputId.startsWith("key:")) {
+    return
+  }
+
+  const resolvedKey = resolveInputKey(normalizedInputId)
+  if (resolvedKey === "/") {
+    return
+  }
+  if ([...resolvedKey].length === 1) {
+    throw new Error(
+      `single-character key ids must be raw keys: ${normalizedInputId}. use '${resolvedKey}' instead`,
+    )
+  }
+}
+
+const ensurePromptInputAllowed = (
+  normalizedInputId: string,
+  promptInputs: AvailableInput[],
+): void => {
+  const availablePromptInputIds = new Set(promptInputs.map((input) => input.id))
+  if (availablePromptInputIds.size === 0) {
+    return
+  }
+
+  const requestedPromptId = toPromptKeyId(normalizedInputId)
+  if (availablePromptInputIds.has(requestedPromptId)) {
+    return
+  }
+
+  const suggestions = [...availablePromptInputIds].slice(0, 8)
+  throw new Error(
+    `input is not available in current prompt context: ${normalizedInputId}. ` +
+      `use one of: ${suggestions.join(", ")}`,
+  )
 }
 
 const resolveSessionInput = async (
   options: ResolveSessionInputOptions,
 ): Promise<ResolvedSessionInput> => {
   const normalized = parseCompactInputId(options.inputId)
+  rejectVerboseSingleCharacterKeyId(normalized)
   const coordinate = options.coordinate ?? {}
+  const strictPromptInputs = options.strictPromptInputs ?? true
+  const promptInputs = options.promptInputs ?? []
 
   if (normalized === "mouse:waypoint") {
     const target = requireCoordinate(coordinate)
@@ -343,9 +723,32 @@ const resolveSessionInput = async (
   }
 
   if (!normalized.startsWith("engine_action:")) {
+    if (strictPromptInputs) {
+      ensurePromptInputAllowed(normalized, promptInputs)
+    }
+
+    if (normalized.startsWith("macro:")) {
+      const macroId = normalized.slice("macro:".length)
+      if (macroId.length === 0) {
+        throw new Error("macro input id cannot be empty")
+      }
+
+      const macrosSnapshot = options.availableMacrosSnapshot ??
+        await loadAvailableMacrosSnapshot(options.state)
+      const macro = macrosSnapshot?.macros?.find((entry) => entry.id === macroId)
+      if (macro === undefined) {
+        throw new Error(`macro is not available in current context: ${macroId}`)
+      }
+
+      return {
+        kind: "key",
+        keys: [`/m ${macroId}`, "Enter"],
+      }
+    }
+
     return {
       kind: "key",
-      key: resolveInputKey(normalized),
+      keys: [resolveInputKey(normalized)],
     }
   }
 
@@ -354,7 +757,7 @@ const resolveSessionInput = async (
     throw new Error("engine_action input id cannot be empty")
   }
 
-  const snapshot = await loadAvailableKeysSnapshot(options.state)
+  const snapshot = options.availableKeysSnapshot ?? await loadAvailableKeysSnapshot(options.state)
   const actions = snapshot?.actions ?? []
   const matched = actions.find((action) => action.id === actionId)
 
@@ -390,7 +793,7 @@ const resolveSessionInput = async (
 
   return {
     kind: "key",
-    key: resolveInputKey(`key:${matched.key}`),
+    keys: [resolveInputKey(`key:${matched.key}`)],
   }
 }
 
@@ -688,6 +1091,15 @@ const sendWaypointClicks = async (
   }
 }
 
+const captureScreenExcerpt = async (
+  session: TmuxSession,
+  lines = 160,
+  maxChars = 3200,
+): Promise<string> => {
+  const pane = stripAnsiFromPane(await session.capturePane(lines))
+  return trimMiddle(pane, maxChars)
+}
+
 const stopCastProcess = async (
   castPid: number | undefined,
   castFile: string | undefined,
@@ -790,16 +1202,22 @@ if (import.meta.main) {
       "actions",
       new Command()
         .description("Print deprecation notice for removed static catalog")
-        .action(() => {
-          console.log(JSON.stringify(
-            {
-              deprecated: true,
-              message:
-                "Static key catalog was removed. Use 'inputs-jsonl' or 'available-keys-json' for runtime keys.",
-            },
-            null,
-            2,
-          ))
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
+        .action((options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
+          const payload = {
+            deprecated: true,
+            message:
+              "Static key catalog was removed. Use 'inputs-jsonl' or 'available-keys-json' for runtime keys.",
+          }
+          console.log(renderCommandOutput({
+            format: outputFormat,
+            command: "actions",
+            payload,
+            summary: { deprecated: true },
+          }))
         }),
     )
     .command(
@@ -827,7 +1245,7 @@ if (import.meta.main) {
                   priority: "high",
                   label: "Point-and-click move",
                   description:
-                    "Use send-input --id mouse:waypoint --col <x> --row <y> to click a tile waypoint.",
+                    "Use send-inputs --ids-json '[\"mouse:waypoint\"]' --col <x> --row <y> to click a tile waypoint.",
                   requires_coordinate: true,
                   mouse_capable: true,
                 }))
@@ -863,7 +1281,13 @@ if (import.meta.main) {
             }
 
             for (const input of inputs) {
-              console.log(JSON.stringify(input))
+              console.log(JSON.stringify({
+                key: input.key,
+                source: input.source,
+                priority: input.priority,
+                label: input.label,
+                description: input.description,
+              }))
             }
           })
         }),
@@ -873,15 +1297,21 @@ if (import.meta.main) {
       new Command()
         .description("Read currently available keybindings JSON from active game context")
         .option("--state-file <path:string>", "State file path", { default: DEFAULT_STATE_FILE })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           const state = await requireRunningState(resolveStateFilePath(options.stateFile))
           const snapshot = await loadAvailableKeysSnapshot(state)
-          if (snapshot === undefined) {
-            console.log(JSON.stringify({ actions: [] }, null, 2))
-            return
-          }
-
-          console.log(JSON.stringify(snapshot, null, 2))
+          const payload = snapshot ?? { actions: [] }
+          const summary = { actions_count: payload.actions?.length ?? 0 }
+          console.log(renderCommandOutput({
+            format: outputFormat,
+            command: "available-keys-json",
+            payload,
+            summary,
+          }))
         }),
     )
     .command(
@@ -889,15 +1319,21 @@ if (import.meta.main) {
       new Command()
         .description("Read currently available Lua action menu macros JSON")
         .option("--state-file <path:string>", "State file path", { default: DEFAULT_STATE_FILE })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           const state = await requireRunningState(resolveStateFilePath(options.stateFile))
           const snapshot = await loadAvailableMacrosSnapshot(state)
-          if (snapshot === undefined) {
-            console.log(JSON.stringify({ macros: [] }, null, 2))
-            return
-          }
-
-          console.log(JSON.stringify(snapshot, null, 2))
+          const payload = snapshot ?? { macros: [] }
+          const summary = { macros_count: payload.macros?.length ?? 0 }
+          console.log(renderCommandOutput({
+            format: outputFormat,
+            command: "available-macros-json",
+            payload,
+            summary,
+          }))
         }),
     )
     .command(
@@ -920,6 +1356,9 @@ if (import.meta.main) {
         .option("--render-webp <value:boolean>", "Render captures to webp", { default: true })
         .option("--webp-quality <value:number>", "Webp quality", { default: 70 })
         .option("--magick-bin <path:string>", "ImageMagick binary", { default: "magick" })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .option(
           "--record-cast <value:boolean>",
           "Deprecated: ignored, cast recording is always enabled",
@@ -931,6 +1370,7 @@ if (import.meta.main) {
           "Optional asciinema idle-time limit seconds",
         )
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           const runId = timestamp()
           const tmuxSocket = normalizeTmuxSocket(options.tmuxSocket)
           const resolvedBinPath = resolve(REPO_ROOT, options.bin)
@@ -949,19 +1389,19 @@ if (import.meta.main) {
 
           await using rollback = new StartRollbackResource(options.tmuxBin, tmuxSocket)
           const stateFilePath = resolveStateFilePath(options.stateFile)
-          const artifactDir = options.artifactDir
+          const runRootDir = options.artifactDir
             ? resolve(REPO_ROOT, options.artifactDir)
-            : resolve(TMP_CLI_ROOT, "runs", `live-${runId}`)
+            : resolve(TMP_CLI_ROOT, runId)
+          const artifactDir = join(runRootDir, "artifacts")
           const capturesDir = join(artifactDir, "captures")
+          await ensureDir(runRootDir)
           await ensureDir(capturesDir)
           const width = Math.max(40, Math.floor(options.width))
           const height = Math.max(12, Math.floor(options.height))
 
           const sessionName = options.session ?? SINGLETON_SESSION_NAME
-          const defaultUserdirRoot = resolve(TMP_CLI_ROOT, "userdirs")
-          await ensureDir(defaultUserdirRoot)
-          const userdir = options.userdir ??
-            await Deno.makeTempDir({ dir: defaultUserdirRoot, prefix: "userdir-" })
+          const userdir = options.userdir ?? join(runRootDir, "userdir")
+          await ensureDir(userdir)
           const availableKeysJsonPath = join(userdir, "available_keys.json")
           const availableMacrosJsonPath = join(userdir, "available_macros.json")
           const aiStateJsonPath = join(userdir, "ai_state.json")
@@ -987,10 +1427,11 @@ if (import.meta.main) {
             },
           })
 
-          const castDir = resolve(TMP_CLI_ROOT, "casts")
+          const castDir = join(runRootDir, "casts")
           await ensureDir(castDir)
-          const castFile = join(castDir, `curses-session_${sessionTimestamp()}.cast`)
-          const castLogFile = join(castDir, `curses-session_${sessionTimestamp()}-asciinema.log`)
+          const castTimestamp = sessionTimestamp()
+          const castFile = join(castDir, `curses-session_${castTimestamp}.cast`)
+          const castLogFile = join(castDir, `curses-session_${castTimestamp}-asciinema.log`)
           const castArgs = [
             "record",
             "--overwrite",
@@ -1047,7 +1488,17 @@ if (import.meta.main) {
           await saveState(stateFilePath, state)
           tmuxSession.markCompleted()
           rollback.markCompleted()
-          console.log(JSON.stringify(state, null, 2))
+          console.log(renderCommandOutput({
+            format: outputFormat,
+            command: "start",
+            payload: state,
+            summary: {
+              state_id: state.id,
+              artifact_dir: displayPath(state.artifact_dir),
+              session_name: state.session_name,
+              status: state.status,
+            },
+          }))
         }),
     )
     .command(
@@ -1056,7 +1507,11 @@ if (import.meta.main) {
         .description("Read current game state JSON from active session userdir")
         .option("--state-file <path:string>", "State file path", { default: DEFAULT_STATE_FILE })
         .option("--include-cast-stats <value:boolean>", "Include cast stats", { default: true })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           const state = await requireRunningState(resolveStateFilePath(options.stateFile))
           const gameStatePath = join(state.userdir, "ai_state.json")
           let gameState: unknown = null
@@ -1070,8 +1525,20 @@ if (import.meta.main) {
           const castStats = options.includeCastStats
             ? await getCastStats(state.cast_file)
             : undefined
-          console.log(JSON.stringify(
-            {
+          const payload = outputFormat === "ai"
+            ? {
+              state_id: state.id,
+              status: state.status,
+              game_state_path: gameStatePath,
+              ai_state_summary: summarizeAiState(gameState),
+              cast_file: state.cast_file,
+              cast_log_file: state.cast_log_file,
+              cast_stats: castStats,
+              available_keys_json: state.available_keys_json,
+              available_macros_json: state.available_macros_json,
+              started_at: state.started_at,
+            }
+            : {
               state_id: state.id,
               status: state.status,
               game_state_path: gameStatePath,
@@ -1082,10 +1549,67 @@ if (import.meta.main) {
               available_keys_json: state.available_keys_json,
               available_macros_json: state.available_macros_json,
               started_at: state.started_at,
+            }
+          console.log(renderCommandOutput({
+            format: outputFormat,
+            command: "get-game-state",
+            payload,
+            summary: {
+              state_id: state.id,
+              status: state.status,
+              include_full_game_state: outputFormat === "json",
             },
-            null,
-            2,
-          ))
+          }))
+        }),
+    )
+    .command(
+      "state-dump",
+      new Command()
+        .description("Print compact state dump (pane excerpt + inputs + ai_state summary)")
+        .option("--state-file <path:string>", "State file path", { default: DEFAULT_STATE_FILE })
+        .option("--lines <value:number>", "Pane lines to capture", { default: 140 })
+        .option("--max-chars <value:number>", "Maximum JSON character budget", { default: 6000 })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
+        .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
+          await withRunningSession(options.stateFile, async (state, session) => {
+            const pane = stripAnsiFromPane(await session.capturePane(options.lines))
+            const promptInputs = listAvailableInputs(pane)
+            const keysSnapshot = await loadAvailableKeysSnapshot(state)
+            const macrosSnapshot = await loadAvailableMacrosSnapshot(state)
+
+            const gameStatePath = join(state.userdir, "ai_state.json")
+            let gameState: unknown = null
+            try {
+              const content = await Deno.readTextFile(gameStatePath)
+              gameState = JSON.parse(content)
+            } catch (_error) {
+              void _error
+            }
+
+            const payload = compactStateDump({
+              state,
+              pane,
+              promptInputs,
+              keysSnapshot,
+              macrosSnapshot,
+              gameState,
+              maxChars: options.maxChars,
+            })
+            console.log(renderCommandOutput({
+              format: outputFormat,
+              command: "state-dump",
+              payload,
+              summary: {
+                state_id: state.id,
+                status: state.status,
+                available_inputs: (payload.available_inputs as string[] | undefined)
+                  ?.length ?? 0,
+              },
+            }))
+          })
         }),
     )
     .command(
@@ -1109,7 +1633,11 @@ if (import.meta.main) {
         .option("--id <value:string>", "Capture id", { required: true })
         .option("--caption <value:string>", "Capture caption", { default: "" })
         .option("--lines <value:number>", "Lines to capture", { default: 350 })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           const stateFile = resolveStateFilePath(options.stateFile)
           await withRunningSession(options.stateFile, async (state, session) => {
             const entry = await captureIntoArtifacts({
@@ -1121,90 +1649,12 @@ if (import.meta.main) {
             })
             state.captures.push(entry)
             await saveState(stateFile, state)
-            console.log(JSON.stringify(entry, null, 2))
-          })
-        }),
-    )
-    .command(
-      "send-input",
-      new Command()
-        .description(
-          "Send one input id (raw key, engine_action:<id>, mouse:waypoint, /alias, or arrows: ↑↓←→)",
-        )
-        .option("--state-file <path:string>", "State file path", { default: DEFAULT_STATE_FILE })
-        .option("--id <value:string>", "Input id or raw key", { required: true })
-        .option("--col <value:number>", "1-based column for coordinate/mouse inputs")
-        .option("--row <value:number>", "1-based row for coordinate/mouse inputs")
-        .option("--delay-ms <value:number>", "Delay between repeated waypoint clicks", {
-          default: 40,
-        })
-        .option("--waypoint-clicks <value:number>", "Repeated LMB clicks for mouse waypoint", {
-          default: 2,
-        })
-        .action(async (options) => {
-          await withRunningSession(options.stateFile, async (state, session) => {
-            const resolvedInput = await resolveSessionInput({
-              state,
-              inputId: options.id,
-              coordinate: {
-                col: options.col,
-                row: options.row,
-              },
-            })
-            const compactId = parseCompactInputId(options.id)
-            const waypointMode = compactId === "mouse:waypoint" ||
-              compactId === "engine_action:COORDINATE"
-            const movementDelayMs = Math.max(0, options.delayMs)
-            const waypointClicks = Math.max(1, options.waypointClicks)
-
-            if (resolvedInput.kind === "key") {
-              await session.sendKeys([resolvedInput.key])
-              console.log(JSON.stringify({ id: options.id, key: resolvedInput.key }, null, 2))
-              return
-            }
-
-            if (waypointMode) {
-              const waypointResult = await sendWaypointClicks({
-                session,
-                col: resolvedInput.x,
-                row: resolvedInput.y,
-                delayMs: movementDelayMs,
-                clicks: waypointClicks,
-              })
-              console.log(JSON.stringify(
-                {
-                  id: options.id,
-                  waypoint: {
-                    x: resolvedInput.x,
-                    y: resolvedInput.y,
-                  },
-                  clicks_sent: waypointResult.clicks_sent,
-                },
-                null,
-                2,
-              ))
-              return
-            }
-
-            await session.sendMouse({
-              x: resolvedInput.x,
-              y: resolvedInput.y,
-              button: resolvedInput.button,
-              event: resolvedInput.event,
-            })
-            console.log(JSON.stringify(
-              {
-                id: options.id,
-                mouse: {
-                  x: resolvedInput.x,
-                  y: resolvedInput.y,
-                  button: resolvedInput.button,
-                  event: resolvedInput.event,
-                },
-              },
-              null,
-              2,
-            ))
+            console.log(renderCommandOutput({
+              format: outputFormat,
+              command: "capture",
+              payload: entry,
+              summary: { id: entry.id, has_screenshot: entry.screenshot_file !== undefined },
+            }))
           })
         }),
     )
@@ -1218,13 +1668,26 @@ if (import.meta.main) {
         .option("--ids-json <value:string>", "JSON array of input ids", { required: true })
         .option("--col <value:number>", "1-based column for coordinate/mouse ids")
         .option("--row <value:number>", "1-based row for coordinate/mouse ids")
+        .option(
+          "--strict-prompt-inputs <value:boolean>",
+          "Reject unavailable key inputs while prompt options are visible",
+          { default: true },
+        )
         .option("--repeat <value:number>", "Repeat whole sequence count", { default: 1 })
         .option("--delay-ms <value:number>", "Delay between key sends", { default: 40 })
         .option("--waypoint-clicks <value:number>", "Repeated LMB clicks for mouse waypoint", {
           default: 2,
         })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           await withRunningSession(options.stateFile, async (state, session) => {
+            const pane = stripAnsiFromPane(await session.capturePane(220))
+            let promptInputs = listAvailableInputs(pane)
+            const availableKeysSnapshot = await loadAvailableKeysSnapshot(state)
+            const availableMacrosSnapshot = await loadAvailableMacrosSnapshot(state)
             const ids = parseInputIdsJson(options.idsJson)
             const repeat = Math.max(1, options.repeat)
             const delayMs = Math.max(0, options.delayMs)
@@ -1233,21 +1696,29 @@ if (import.meta.main) {
 
             for (let index = 0; index < repeat; index += 1) {
               for (const id of ids) {
-                const resolvedInput = await resolveSessionInput({
+                const resolution = await resolveSessionInputWithRefresh({
                   state,
+                  session,
+                  paneLines: 220,
                   inputId: id,
+                  strictPromptInputs: options.strictPromptInputs,
+                  promptInputs,
+                  availableKeysSnapshot,
+                  availableMacrosSnapshot,
                   coordinate: {
                     col: options.col,
                     row: options.row,
                   },
                 })
+                promptInputs = resolution.promptInputs
+                const resolvedInput = resolution.resolvedInput
                 const compactId = parseCompactInputId(id)
                 const waypointMode = compactId === "mouse:waypoint" ||
                   compactId === "engine_action:COORDINATE"
 
                 if (resolvedInput.kind === "key") {
-                  await session.sendKeys([resolvedInput.key])
-                  dispatched.push({ id, kind: "key", key: resolvedInput.key })
+                  await session.sendKeys(resolvedInput.keys)
+                  dispatched.push({ id, kind: "key", keys: resolvedInput.keys })
                 } else if (waypointMode) {
                   const waypointResult = await sendWaypointClicks({
                     session,
@@ -1286,16 +1757,31 @@ if (import.meta.main) {
               }
             }
 
-            console.log(JSON.stringify(
-              {
+            const payload = outputFormat === "ai"
+              ? {
+                ids_count: ids.length,
+                dispatched_count: dispatched.length,
+                repeat,
+                delay_ms: delayMs,
+              }
+              : {
                 ids,
                 dispatched,
                 repeat,
                 delay_ms: delayMs,
+              }
+            const screen = await captureScreenExcerpt(session)
+            console.log(renderCommandOutput({
+              format: outputFormat,
+              command: "send-inputs",
+              payload,
+              summary: {
+                ids_count: ids.length,
+                dispatched_count: dispatched.length,
+                repeat,
               },
-              null,
-              2,
-            ))
+              screen,
+            }))
           })
         }),
     )
@@ -1312,7 +1798,11 @@ if (import.meta.main) {
         .option("--event <value:string>", "click|press|release|move", { default: "click" })
         .option("--repeat <value:number>", "Repeat count", { default: 1 })
         .option("--delay-ms <value:number>", "Delay between repeats", { default: 40 })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           await withRunningSession(options.stateFile, async (_state, session) => {
             const allowedButtons: MouseButton[] = [
               "left",
@@ -1346,18 +1836,22 @@ if (import.meta.main) {
               }
             }
 
-            console.log(JSON.stringify(
-              {
-                x: options.col,
-                y: options.row,
-                button,
-                event,
-                repeat,
-                delay_ms: delayMs,
-              },
-              null,
-              2,
-            ))
+            const payload = {
+              x: options.col,
+              y: options.row,
+              button,
+              event,
+              repeat,
+              delay_ms: delayMs,
+            }
+            const screen = await captureScreenExcerpt(session)
+            console.log(renderCommandOutput({
+              format: outputFormat,
+              command: "send-mouse",
+              payload,
+              summary: { repeat, button, event },
+              screen,
+            }))
           })
         }),
     )
@@ -1374,7 +1868,11 @@ if (import.meta.main) {
         .option("--waypoint-clicks <value:number>", "Repeated LMB clicks", {
           default: 2,
         })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           await withRunningSession(options.stateFile, async (_state, session) => {
             const delayMs = Math.max(0, options.delayMs)
             const waypointClicks = Math.max(1, options.waypointClicks)
@@ -1386,19 +1884,23 @@ if (import.meta.main) {
               clicks: waypointClicks,
             })
 
-            console.log(JSON.stringify(
-              {
-                waypoint: {
-                  x: options.col,
-                  y: options.row,
-                },
-                clicks_sent: waypointResult.clicks_sent,
-                delay_ms: delayMs,
-                waypoint_clicks: waypointClicks,
+            const payload = {
+              waypoint: {
+                x: options.col,
+                y: options.row,
               },
-              null,
-              2,
-            ))
+              clicks_sent: waypointResult.clicks_sent,
+              delay_ms: delayMs,
+              waypoint_clicks: waypointClicks,
+            }
+            const screen = await captureScreenExcerpt(session)
+            console.log(renderCommandOutput({
+              format: outputFormat,
+              command: "send-waypoint",
+              payload,
+              summary: { clicks_sent: waypointResult.clicks_sent, waypoint_clicks: waypointClicks },
+              screen,
+            }))
           })
         }),
     )
@@ -1410,13 +1912,25 @@ if (import.meta.main) {
         .option("--text <value:string>", "Text to wait for", { required: true })
         .option("--timeout-ms <value:number>", "Timeout ms", { default: 120000 })
         .option("--poll-interval-ms <value:number>", "Poll interval ms", { default: 120 })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           await withRunningSession(options.stateFile, async (_state, session) => {
             await session.waitForText(options.text, {
               timeoutMs: options.timeoutMs,
               pollIntervalMs: options.pollIntervalMs,
             })
-            console.log(JSON.stringify({ ok: true, text: options.text }, null, 2))
+            const payload = { ok: true, text: options.text }
+            const screen = await captureScreenExcerpt(session)
+            console.log(renderCommandOutput({
+              format: outputFormat,
+              command: "wait-text",
+              payload,
+              summary: { ok: true },
+              screen,
+            }))
           })
         }),
     )
@@ -1428,13 +1942,25 @@ if (import.meta.main) {
         .option("--text <value:string>", "Text to wait to disappear", { required: true })
         .option("--timeout-ms <value:number>", "Timeout ms", { default: 120000 })
         .option("--poll-interval-ms <value:number>", "Poll interval ms", { default: 120 })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           await withRunningSession(options.stateFile, async (_state, session) => {
             await session.waitForTextGone(options.text, {
               timeoutMs: options.timeoutMs,
               pollIntervalMs: options.pollIntervalMs,
             })
-            console.log(JSON.stringify({ ok: true, text_gone: options.text }, null, 2))
+            const payload = { ok: true, text_gone: options.text }
+            const screen = await captureScreenExcerpt(session)
+            console.log(renderCommandOutput({
+              format: outputFormat,
+              command: "wait-text-gone",
+              payload,
+              summary: { ok: true },
+              screen,
+            }))
           })
         }),
     )
@@ -1443,9 +1969,19 @@ if (import.meta.main) {
       new Command()
         .description("Wait in-session workflow")
         .option("--ms <value:number>", "Milliseconds", { required: true })
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           await delay(options.ms)
-          console.log(JSON.stringify({ ok: true, slept_ms: options.ms }, null, 2))
+          const payload = { ok: true, slept_ms: options.ms }
+          console.log(renderCommandOutput({
+            format: outputFormat,
+            command: "sleep",
+            payload,
+            summary: { ok: true },
+          }))
         }),
     )
     .command(
@@ -1455,9 +1991,19 @@ if (import.meta.main) {
         .option("--state-file <path:string>", "State file path", { default: DEFAULT_STATE_FILE })
         .option("--status <value:string>", "Final status: passed or failed", { default: "passed" })
         .option("--failure <value:string>", "Failure message", { default: "" })
+        .option(
+          "--stop-reason <value:string>",
+          "Failure category: menu_drift|mode_trap|safe_mode_interrupt|repro_drift",
+          { default: "" },
+        )
+        .option("--output-format <value:string>", "Output format: json|ai", {
+          default: DEFAULT_OUTPUT_FORMAT,
+        })
         .action(async (options) => {
+          const outputFormat = parseOutputFormat(options.outputFormat)
           const stateFile = resolveStateFilePath(options.stateFile)
           const state = await loadState(stateFile)
+          let finalScreen: string | undefined
           {
             configureTmuxBinary(state.tmux_bin)
             configureTmuxSocket(normalizeTmuxSocket(state.tmux_socket))
@@ -1473,6 +2019,7 @@ if (import.meta.main) {
             if (hasSession) {
               const session = await TmuxSession.attach(state.session_name, REPO_ROOT)
               const finalPane = stripAnsiFromPane(await session.capturePane(500))
+              finalScreen = trimMiddle(finalPane, 3200)
               await Deno.writeTextFile(join(state.artifact_dir, "final-pane.txt"), finalPane)
             }
           }
@@ -1481,9 +2028,39 @@ if (import.meta.main) {
           state.finished_at = new Date().toISOString()
 
           const castStats = await getCastStats(state.cast_file)
+          try {
+            state.cast_file = await copyFileIntoArtifactDir(state.cast_file, state.artifact_dir)
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error)
+            console.error(`warning: failed to copy cast file into artifact dir: ${message}`)
+          }
+          try {
+            state.cast_log_file = await copyFileIntoArtifactDir(
+              state.cast_log_file,
+              state.artifact_dir,
+            )
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error)
+            console.error(`warning: failed to copy cast log into artifact dir: ${message}`)
+          }
 
           const finalStatus = options.status === "failed" ? "failed" : "passed"
           const failure = options.failure.length > 0 ? options.failure : undefined
+          const normalizedStopReason = options.stopReason.trim()
+          if (
+            normalizedStopReason.length > 0 &&
+            !STOP_REASON_CATEGORIES.includes(normalizedStopReason as StopReasonCategory)
+          ) {
+            throw new Error(
+              `invalid --stop-reason: ${normalizedStopReason}. use one of: ${
+                STOP_REASON_CATEGORIES.join(", ")
+              }`,
+            )
+          }
+          const stopReason = normalizedStopReason.length > 0
+            ? normalizedStopReason as StopReasonCategory
+            : undefined
+          state.stop_reason = stopReason
 
           const metadata = {
             generated_at: new Date().toISOString(),
@@ -1498,6 +2075,7 @@ if (import.meta.main) {
             available_macros_json: state.available_macros_json,
             status: finalStatus,
             failure,
+            stop_reason: stopReason,
             cast_file: state.cast_file,
             cast_log_file: state.cast_log_file,
             cast_stats: castStats,
@@ -1519,20 +2097,28 @@ if (import.meta.main) {
           })
 
           await saveState(stateFile, state)
-          console.log(JSON.stringify(
-            {
-              artifact_dir: displayPath(state.artifact_dir),
-              cast_file: state.cast_file,
-              cast_log_file: state.cast_log_file,
-              cast_stats: castStats,
-              captures: state.captures.length,
-              available_keys_json: state.available_keys_json,
-              available_macros_json: state.available_macros_json,
+          const payload = {
+            artifact_dir: displayPath(state.artifact_dir),
+            cast_file: state.cast_file,
+            cast_log_file: state.cast_log_file,
+            cast_stats: castStats,
+            captures: state.captures.length,
+            available_keys_json: state.available_keys_json,
+            available_macros_json: state.available_macros_json,
+            status: finalStatus,
+            stop_reason: stopReason,
+          }
+          console.log(renderCommandOutput({
+            format: outputFormat,
+            command: "stop",
+            payload,
+            summary: {
               status: finalStatus,
+              captures: state.captures.length,
+              has_cast: state.cast_file !== undefined,
             },
-            null,
-            2,
-          ))
+            screen: finalScreen,
+          }))
         }),
     )
     .parse(Deno.args)
