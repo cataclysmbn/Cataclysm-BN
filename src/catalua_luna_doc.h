@@ -140,6 +140,8 @@ struct islot_gunmod;
 struct islot_magazine;
 struct islot_battery;
 struct islot_bionic;
+struct bionic_data;
+struct bionic_bonuses;
 struct islot_ammo;
 struct islot_artifact;
 struct islot_seed;
@@ -229,6 +231,7 @@ LUNA_ID( ammunition_type, "AmmunitionType" )
 LUNA_ID( ammo_effect, "AmmunitionEffect" )
 LUNA_ID( activity_type, "ActivityType" )
 LUNA_ID( bionic_data, "BionicData" )
+LUNA_ID( bionic_bonuses, "bionic_bonuses" )
 LUNA_ID( body_part_type, "BodyPartType" )
 LUNA_ID( disease_type, "DiseaseType" )
 LUNA_ID( effect_type, "EffectType" )

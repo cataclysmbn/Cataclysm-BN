@@ -2453,10 +2453,52 @@ int Character::get_mod_stat_from_bionic( const character_stat &Stat ) const
     int ret = 0;
     for( const bionic &i : get_bionic_collection() ) {
         const bionic_id &bid = i.id;
+        if( bid->activated && !i.powered ) { continue; }
         const auto St_bn = bid->stat_bonus.find( Stat );
         if( St_bn != bid->stat_bonus.end() ) {
             ret += St_bn->second;
         }
+    }
+    return ret;
+}
+
+const bionic_bonuses &Character::get_bionic_effective_bonuses( const bionic &bio ) const
+{
+    const bionic_id &bid = bio.id;
+    if( bid->activated ) {
+        // Active bionic: use active_bonuses if powered, passive_bonuses if not
+        return bio.powered ? bid->active_bonuses : bid->passive_bonuses;
+    }
+    // Passive bionic: always use passive_bonuses
+    return bid->passive_bonuses;
+}
+
+float Character::get_bionic_bonus_additive( float bionic_bonuses::*member ) const
+{
+    float ret = 0.0f;
+    for( const bionic &bio : get_bionic_collection() ) {
+        const bionic_bonuses &bonuses = get_bionic_effective_bonuses( bio );
+        ret += bonuses.*member;
+    }
+    return ret;
+}
+
+float Character::get_bionic_bonus_multiplicative( float bionic_bonuses::*member ) const
+{
+    float ret = 1.0f;
+    for( const bionic &bio : get_bionic_collection() ) {
+        const bionic_bonuses &bonuses = get_bionic_effective_bonuses( bio );
+        ret *= bonuses.*member;
+    }
+    return ret;
+}
+
+int Character::get_bionic_bonus_additive( int bionic_bonuses::*member ) const
+{
+    int ret = 0;
+    for( const bionic &bio : get_bionic_collection() ) {
+        const bionic_bonuses &bonuses = get_bionic_effective_bonuses( bio );
+        ret += bonuses.*member;
     }
     return ret;
 }
@@ -3110,6 +3152,7 @@ units::mass Character::weight_capacity() const
     units::mass bio_weight_bonus = 0_gram;
     for( const bionic &i : get_bionic_collection() ) {
         const bionic_id &bid = i.id;
+        if( bid->activated && !i.powered ) { continue; }
         ret *= bid->weight_capacity_modifier;
         bio_weight_bonus +=  bid->weight_capacity_bonus;
     }
@@ -5349,12 +5392,20 @@ void Character::update_health( int external_modifiers )
         set_healthy_mod( -200 );
     }
 
-    // Active leukocyte breeder will keep your health near 100
+    // Calculate effective healthy mod with bionic modifiers
     float effective_healthy_mod = get_healthy_mod();
-    if( has_active_bionic( bio_leukocyte ) ) {
-        // Side effect: dependency
-        mod_healthy_mod( -50, -200 );
-        effective_healthy_mod = 100;
+
+    // Apply bionic healthy_rate as a multiplier to the target health level
+    // healthy_rate > 1.0 boosts health toward max, < 1.0 reduces it toward negative
+    float bionic_healthy_rate = get_bionic_bonus_multiplicative( &bionic_bonuses::healthy_rate );
+    if( bionic_healthy_rate > 1.0f ) {
+        // Positive effect: push effective_healthy_mod toward get_max_healthy()
+        effective_healthy_mod = effective_healthy_mod +
+                                ( get_max_healthy() - effective_healthy_mod ) * ( bionic_healthy_rate - 1.0f );
+    } else if( bionic_healthy_rate < 1.0f ) {
+        // Negative effect: push effective_healthy_mod toward -200
+        effective_healthy_mod = effective_healthy_mod +
+                                ( -200.0f - effective_healthy_mod ) * ( 1.0f - bionic_healthy_rate );
     }
 
     // Health tends toward healthy_mod.
@@ -7762,6 +7813,7 @@ int Character::get_armor_bash_base( bodypart_id bp ) const
     }
     for( const bionic &i : get_bionic_collection() ) {
         const bionic_id &bid = i.id;
+        if( bid->activated && !i.powered ) { continue; }
         const auto bash_prot = bid->bash_protec.find( bp.id() );
         if( bash_prot != bid->bash_protec.end() ) {
             ret += bash_prot->second;
@@ -7782,6 +7834,7 @@ int Character::get_armor_cut_base( bodypart_id bp ) const
     }
     for( const bionic &i : get_bionic_collection() ) {
         const bionic_id &bid = i.id;
+        if( bid->activated && !i.powered ) { continue; }
         const auto cut_prot = bid->cut_protec.find( bp.id() );
         if( cut_prot != bid->cut_protec.end() ) {
             ret += cut_prot->second;
@@ -7803,6 +7856,7 @@ int Character::get_armor_bullet_base( bodypart_id bp ) const
 
     for( const bionic &i : get_bionic_collection() ) {
         const bionic_id &bid = i.id;
+        if( bid->activated && !i.powered ) { continue; }
         const auto bullet_prot = bid->bullet_protec.find( bp.id() );
         if( bullet_prot != bid->bullet_protec.end() ) {
             ret += bullet_prot->second;
@@ -7825,6 +7879,7 @@ int Character::get_env_resist( bodypart_id bp ) const
 
     for( const bionic &i : get_bionic_collection() ) {
         const bionic_id &bid = i.id;
+        if( bid->activated && !i.powered ) { continue; }
         const auto EP = bid->env_protec.find( bp.id() );
         if( ( !bid->activated || has_active_bionic( bid ) ) && EP != bid->env_protec.end() ) {
             ret += EP->second;
@@ -9115,6 +9170,7 @@ float Character::bionic_armor_bonus( const bodypart_id &bp, damage_type dt ) con
     if( dt == DT_CUT || dt == DT_STAB ) {
         for( const bionic &i : get_bionic_collection() ) {
             const bionic_id &bid = i.id;
+            if( bid->activated && !i.powered ) { continue; }
             const auto cut_prot = bid->cut_protec.find( bp.id() );
             if( cut_prot != bid->cut_protec.end() ) {
                 result += cut_prot->second;
@@ -9123,6 +9179,7 @@ float Character::bionic_armor_bonus( const bodypart_id &bp, damage_type dt ) con
     } else if( dt == DT_BASH ) {
         for( const bionic &i : get_bionic_collection() ) {
             const bionic_id &bid = i.id;
+            if( bid->activated && !i.powered ) { continue; }
             const auto bash_prot = bid->bash_protec.find( bp.id() );
             if( bash_prot != bid->bash_protec.end() ) {
                 result += bash_prot->second;
@@ -9131,6 +9188,7 @@ float Character::bionic_armor_bonus( const bodypart_id &bp, damage_type dt ) con
     } else if( dt == DT_BULLET ) {
         for( const bionic &i : get_bionic_collection() ) {
             const bionic_id &bid = i.id;
+            if( bid->activated && !i.powered ) { continue; }
             const auto bullet_prot = bid->bullet_protec.find( bp.id() );
             if( bullet_prot != bid->bullet_protec.end() ) {
                 result += bullet_prot->second;

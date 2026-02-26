@@ -972,8 +972,8 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_colors( lua );
     reg_enums( lua );
     reg_game_ids( lua );
-    mod_bionic_data( lua );
     mod_mutation_branch( lua );
+    mod_bionic_data( lua );
     reg_bionics( lua );
     reg_magic( lua );
     reg_names( lua );

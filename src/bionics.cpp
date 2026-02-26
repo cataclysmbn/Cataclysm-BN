@@ -198,6 +198,7 @@ static const trait_id trait_THRESH_MEDICAL( "THRESH_MEDICAL" );
 static const flag_id flag_BIONIC_GUN( "BIONIC_GUN" );
 static const flag_id flag_BIONIC_WEAPON( "BIONIC_WEAPON" );
 static const flag_id flag_BIONIC_TOGGLED( "BIONIC_TOGGLED" );
+static const flag_id flag_BIONIC_POWER_SOURCE( "BIONIC_POWER_SOURCE" );
 static const std::string flag_SAFE_FUEL_OFF( "SAFE_FUEL_OFF" );
 static const std::string flag_SEALED( "SEALED" );
 
@@ -240,6 +241,26 @@ std::vector<bodypart_id> get_occupied_bodyparts( const bionic_id &bid )
 bool bionic_data::has_flag( const flag_id &flag ) const
 {
     return flags.contains( flag );
+}
+
+bool bionic_data::is_power_source() const
+{
+    return has_flag( flag_BIONIC_POWER_SOURCE );
+}
+
+bool bionic_data::is_toggled() const
+{
+    return has_flag( flag_BIONIC_TOGGLED );
+}
+
+bool bionic_data::is_gun() const
+{
+    return has_flag( flag_BIONIC_GUN );
+}
+
+bool bionic_data::is_weapon() const
+{
+    return has_flag( flag_BIONIC_WEAPON );
 }
 
 itype_id bionic_data::itype() const
@@ -293,6 +314,186 @@ void bionic_data::reset()
     faulty_bionics.clear();
 }
 
+static social_modifiers load_bionic_social_mods( const JsonObject &jo )
+{
+    social_modifiers ret;
+    jo.read( "lie", ret.lie );
+    jo.read( "persuade", ret.persuade );
+    jo.read( "intimidate", ret.intimidate );
+    return ret;
+}
+
+bool bionic_bonuses::has_any() const
+{
+    // Check if any field differs from its default value
+    // Additive fields (default 0)
+    if( str_modifier != 0.0f ) {
+        return true;
+    }
+    if( pain_recovery != 0.0f || healing_awake != 0.0f || healing_resting != 0.0f ) {
+        return true;
+    }
+    if( mending_modifier != 0.0f || hp_modifier != 0.0f || hp_modifier_secondary != 0.0f ) {
+        return true;
+    }
+    if( hp_adjustment != 0.0f || bleed_resist != 0.0f ) {
+        return true;
+    }
+    if( cut_dmg_bonus != 0 || pierce_dmg_bonus != 0.0f || bash_dmg_bonus != 0 ) {
+        return true;
+    }
+    if( dodge_modifier != 0.0f || stealth_modifier != 0.0f || night_vision_range != 0.0f ) {
+        return true;
+    }
+    if( bodytemp_min != 0 || bodytemp_max != 0 || bodytemp_sleep != 0 ) {
+        return true;
+    }
+    if( temperature_speed_modifier != 0.0f ) {
+        return true;
+    }
+    if( metabolism_modifier != 0.0f || thirst_modifier != 0.0f || fatigue_modifier != 0.0f ) {
+        return true;
+    }
+    if( fatigue_regen_modifier != 0.0f || stamina_regen_modifier != 0.0f ) {
+        return true;
+    }
+    if( overmap_sight != 0.0f || mana_modifier != 0.0f ) {
+        return true;
+    }
+    if( social_mods.lie != 0 || social_mods.persuade != 0 || social_mods.intimidate != 0 ) {
+        return true;
+    }
+    if( !craft_skill_bonus.empty() ) {
+        return true;
+    }
+
+    // Multiplicative fields (default 1.0)
+    if( healthy_rate != 1.0f ) {
+        return true;
+    }
+    if( speed_modifier != 1.0f || movecost_modifier != 1.0f ) {
+        return true;
+    }
+    if( movecost_flatground_modifier != 1.0f || movecost_obstacle_modifier != 1.0f ) {
+        return true;
+    }
+    if( movecost_swim_modifier != 1.0f || attackcost_modifier != 1.0f ) {
+        return true;
+    }
+    if( falling_damage_multiplier != 1.0f || max_stamina_modifier != 1.0f ) {
+        return true;
+    }
+    if( weight_capacity_modifier != 1.0f ) {
+        return true;
+    }
+    if( hearing_modifier != 1.0f || noise_modifier != 1.0f || scent_modifier != 1.0f ) {
+        return true;
+    }
+    if( reading_speed_multiplier != 1.0f || skill_rust_multiplier != 1.0f ) {
+        return true;
+    }
+    if( crafting_speed_modifier != 1.0f || construction_speed_modifier != 1.0f ) {
+        return true;
+    }
+    if( packmule_modifier != 1.0f || overmap_multiplier != 1.0f ) {
+        return true;
+    }
+    if( mana_multiplier != 1.0f || mana_regen_multiplier != 1.0f ) {
+        return true;
+    }
+
+    return false;
+}
+
+void bionic_bonuses::load( const JsonObject &jo, bool /* strict */ )
+{
+    // Stat modifiers
+    optional( jo, false, "str_modifier", str_modifier, 0.0f );
+    optional( jo, false, "dex_modifier", dex_modifier, 0.0f );
+    optional( jo, false, "int_modifier", int_modifier, 0.0f );
+    optional( jo, false, "per_modifier", per_modifier, 0.0f );
+
+    // Health & Healing
+    optional( jo, false, "pain_recovery", pain_recovery, 0.0f );
+    optional( jo, false, "healing_awake", healing_awake, 0.0f );
+    optional( jo, false, "healing_resting", healing_resting, 0.0f );
+    optional( jo, false, "mending_modifier", mending_modifier, 0.0f );
+    optional( jo, false, "hp_modifier", hp_modifier, 0.0f );
+    optional( jo, false, "hp_modifier_secondary", hp_modifier_secondary, 0.0f );
+    optional( jo, false, "hp_adjustment", hp_adjustment, 0.0f );
+    optional( jo, false, "healthy_rate", healthy_rate, 1.0f );
+    optional( jo, false, "bleed_resist", bleed_resist, 0.0f );
+
+    // Combat bonuses
+    optional( jo, false, "cut_dmg_bonus", cut_dmg_bonus, 0 );
+    optional( jo, false, "pierce_dmg_bonus", pierce_dmg_bonus, 0.0f );
+    optional( jo, false, "bash_dmg_bonus", bash_dmg_bonus, 0 );
+
+    // Movement & Speed
+    optional( jo, false, "dodge_modifier", dodge_modifier, 0.0f );
+    optional( jo, false, "speed_modifier", speed_modifier, 1.0f );
+    optional( jo, false, "movecost_modifier", movecost_modifier, 1.0f );
+    optional( jo, false, "movecost_flatground_modifier", movecost_flatground_modifier, 1.0f );
+    optional( jo, false, "movecost_obstacle_modifier", movecost_obstacle_modifier, 1.0f );
+    optional( jo, false, "movecost_swim_modifier", movecost_swim_modifier, 1.0f );
+    optional( jo, false, "attackcost_modifier", attackcost_modifier, 1.0f );
+
+    // Physical capabilities
+    optional( jo, false, "falling_damage_multiplier", falling_damage_multiplier, 1.0f );
+    optional( jo, false, "max_stamina_modifier", max_stamina_modifier, 1.0f );
+    optional( jo, false, "stamina_regen_modifier", stamina_regen_modifier, 0.0f );
+    optional( jo, false, "weight_capacity_modifier", weight_capacity_modifier, 1.0f );
+
+    // Perception & Stealth
+    optional( jo, false, "hearing_modifier", hearing_modifier, 1.0f );
+    optional( jo, false, "noise_modifier", noise_modifier, 1.0f );
+    optional( jo, false, "stealth_modifier", stealth_modifier, 0.0f );
+    optional( jo, false, "night_vision_range", night_vision_range, 0.0f );
+
+    // Environment
+    optional( jo, false, "bodytemp_min", bodytemp_min, 0 );
+    optional( jo, false, "bodytemp_max", bodytemp_max, 0 );
+    optional( jo, false, "bodytemp_sleep", bodytemp_sleep, 0 );
+    optional( jo, false, "temperature_speed_modifier", temperature_speed_modifier, 0.0f );
+    optional( jo, false, "scent_modifier", scent_modifier, 1.0f );
+
+    // Resource consumption
+    optional( jo, false, "metabolism_modifier", metabolism_modifier, 0.0f );
+    optional( jo, false, "thirst_modifier", thirst_modifier, 0.0f );
+    optional( jo, false, "fatigue_modifier", fatigue_modifier, 0.0f );
+    optional( jo, false, "fatigue_regen_modifier", fatigue_regen_modifier, 0.0f );
+
+    // Skills & Crafting
+    optional( jo, false, "reading_speed_multiplier", reading_speed_multiplier, 1.0f );
+    optional( jo, false, "skill_rust_multiplier", skill_rust_multiplier, 1.0f );
+    optional( jo, false, "crafting_speed_modifier", crafting_speed_modifier, 1.0f );
+    optional( jo, false, "construction_speed_modifier", construction_speed_modifier, 1.0f );
+    optional( jo, false, "packmule_modifier", packmule_modifier, 1.0f );
+
+    // Load craft_skill_bonus as array of [skill_id, bonus] pairs
+    for( JsonArray ja : jo.get_array( "craft_skill_bonus" ) ) {
+        const skill_id skid( ja.next_string() );
+        if( skid.is_valid() ) {
+            craft_skill_bonus.emplace( skid, ja.next_int() );
+        }
+    }
+
+    // Overmap
+    optional( jo, false, "overmap_sight", overmap_sight, 0.0f );
+    optional( jo, false, "overmap_multiplier", overmap_multiplier, 1.0f );
+
+    // Social
+    if( jo.has_object( "social_modifiers" ) ) {
+        JsonObject sm = jo.get_object( "social_modifiers" );
+        social_mods = load_bionic_social_mods( sm );
+    }
+
+    // Mana
+    optional( jo, false, "mana_modifier", mana_modifier, 0.0f );
+    optional( jo, false, "mana_multiplier", mana_multiplier, 1.0f );
+    optional( jo, false, "mana_regen_multiplier", mana_regen_multiplier, 1.0f );
+}
+
 void bionic_data::load( const JsonObject &jsobj, const std::string &src )
 {
     const bool strict = is_strict_enabled( src );
@@ -311,6 +512,15 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
     assign( jsobj, "weight_capacity_modifier", weight_capacity_modifier, strict, 1.0f );
     assign( jsobj, "weight_capacity_bonus", weight_capacity_bonus, strict, 0_gram );
     assign_map_from_array( jsobj, "stat_bonus", stat_bonus, strict );
+
+    // Load passive and active bonus structs
+    if( jsobj.has_object( "passive_bonuses" ) ) {
+        passive_bonuses.load( jsobj.get_object( "passive_bonuses" ), strict );
+    }
+    if( jsobj.has_object( "active_bonuses" ) ) {
+        active_bonuses.load( jsobj.get_object( "active_bonuses" ), strict );
+    }
+
     assign( jsobj, "remote_fuel_draw", remote_fuel_draw, strict, 0_J );
     is_remote_fueled = remote_fuel_draw > 0_J;
     assign( jsobj, "fuel_options", fuel_opts, strict );
@@ -333,6 +543,7 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
     assign_map_from_array( jsobj, "learned_spells", learned_spells, strict );
     assign( jsobj, "included_bionics", included_bionics, strict );
     assign( jsobj, "required_bionics", required_bionics, strict );
+    assign( jsobj, "conflicting_bionics", conflicting_bionics, strict );
     assign( jsobj, "upgraded_bionic", upgraded_bionic, strict );
     assign( jsobj, "available_upgrades", available_upgrades, strict );
     assign( jsobj, "flags", flags, strict );
@@ -343,8 +554,7 @@ void bionic_data::load( const JsonObject &jsobj, const std::string &src )
 
 
     activated = has_flag( flag_BIONIC_TOGGLED ) ||
-                power_activate > 0_kJ ||
-                charge_time > 0;
+                has_flag( flag_BIONIC_POWER_SOURCE );
 }
 
 void bionic_data::finalize() const
@@ -441,6 +651,15 @@ void bionic_data::check() const
                 rep.warn( "The CBM %s requires itself as a prerequisite for installation", it.str() );
             } else if( !it.is_valid() ) {
                 rep.warn( "The CBM %s requires undefined bionic %s", id.str(), it.str() );
+            }
+        }
+    }
+    if( !conflicting_bionics.empty() ) {
+        for( const bionic_id &it : conflicting_bionics ) {
+            if( it == id ) {
+                rep.warn( "The CBM %s prevents itself from being installed", it.str() );
+            } else if( !it.is_valid() ) {
+                rep.warn( "The CBM %s is mutually exclusive with undefined bionic %s", id.str(), it.str() );
             }
         }
     }
@@ -1276,7 +1495,7 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
 bool Character::burn_fuel( bionic &bio, bool start )
 {
     if( ( bio.info().fuel_opts.empty() && !bio.info().is_remote_fueled ) ||
-        bio.is_this_fuel_powered( fuel_type_muscle ) ) {
+        bio.is_this_fuel_powered( fuel_type_muscle ) && bio.info().has_flag( flag_BIONIC_POWER_SOURCE ) ) {
         return true;
     }
     const bool is_metabolism_powered = bio.is_this_fuel_powered( fuel_type_metabolism );
@@ -1442,7 +1661,7 @@ void Character::passive_power_gen( bionic &bio )
 {
     const float passive_fuel_efficiency = bio.info().passive_fuel_efficiency;
     if( bio.info().fuel_opts.empty() || bio.is_this_fuel_powered( fuel_type_muscle ) ||
-        passive_fuel_efficiency == 0.0 ) {
+        passive_fuel_efficiency == 0.0 || !bio.info().has_flag( flag_BIONIC_POWER_SOURCE ) ) {
         return;
     }
     const float effective_passive_efficiency = get_effective_efficiency( bio, passive_fuel_efficiency );
@@ -1705,7 +1924,8 @@ static bool attempt_recharge( Character &p, bionic &bio, units::energy &amount, 
 
 void Character::process_bionic( bionic &bio )
 {
-    if( ( !bio.id->fuel_opts.empty() || bio.id->is_remote_fueled ) && bio.is_auto_start_on() ) {
+    if( ( !bio.id->fuel_opts.empty() || bio.id->is_remote_fueled ) && bio.is_auto_start_on() &&
+        bio.info().has_flag( flag_BIONIC_POWER_SOURCE ) ) {
         const float start_threshold = bio.get_auto_start_thresh();
         std::vector<itype_id> fuel_available = get_fuel_available( bio.id );
         if( bio.id->is_remote_fueled ) {
@@ -1730,7 +1950,7 @@ void Character::process_bionic( bionic &bio )
     }
 
     // Only powered bionics should be processed
-    if( !bio.powered ) {
+    if( !bio.powered && bio.info().has_flag( flag_BIONIC_POWER_SOURCE ) ) {
         passive_power_gen( bio );
         return;
     }
@@ -1743,7 +1963,7 @@ void Character::process_bionic( bionic &bio )
         bio.charge_timer -= discharge_rate;
     } else {
         if( bio.info().charge_time > 0 ) {
-            if( bio.info().has_flag( STATIC( flag_id( "BIONIC_POWER_SOURCE" ) ) ) ) {
+            if( bio.info().has_flag( flag_BIONIC_POWER_SOURCE ) ) {
                 // Convert fuel to bionic power
                 burn_fuel( bio );
                 // This is our first turn of charging, so subtract a turn from the recharge delay.
@@ -1753,10 +1973,27 @@ void Character::process_bionic( bionic &bio )
                 units::energy cost = 0_J;
                 bool recharged = attempt_recharge( *this, bio, cost, discharge_factor, discharge_rate );
                 if( !recharged ) {
-                    // No power to recharge, so deactivate
-                    add_msg_if_player( m_neutral, _( "Your %s powers down." ), bio.info().name );
-                    // This purposely bypasses the deactivation cost
-                    deactivate_bionic( bio, true );
+                    // We take this to mean the bionic can draw directly from matabolism if needed
+                    const bool is_metabolism_powered = bio.is_this_fuel_powered( fuel_type_metabolism );
+                    if( is_metabolism_powered ) {
+                        int stored_kcals = max_stored_kcal();
+                        if( stored_kcals > 0 ) {
+                            const item &met_fuel = *item::spawn_temporary( fuel_type_metabolism );
+                            int power_draw = units::to_joule( bio.info().power_over_time );
+                            const int kcal_consumed = std::min( stored_kcals,
+                                                                static_cast<int>( met_fuel.fuel_energy() * power_draw ) );
+                            const float effective_efficiency = get_effective_efficiency( bio, bio.info().fuel_efficiency );
+                            // 1kcal = 4187 J
+                            cost = kcal_consumed * 4184_J * effective_efficiency;
+                            mod_stored_kcal( -kcal_consumed );
+                        }
+                        // We'll just not worry about having none. Starving is enough of a downside.
+                    } else {
+                        // No power to recharge, so deactivate
+                        add_msg_if_player( m_neutral, _( "Your %s powers down." ), bio.info().name );
+                        // This purposely bypasses the deactivation cost
+                        deactivate_bionic( bio, true );
+                    }
                     return;
                 }
                 if( cost > 0_J ) {
@@ -2463,6 +2700,34 @@ bool Character::can_install_bionics( const itype &type, Character &installer, bo
         }
     }
 
+    std::string list_of_conflicting_bionics;
+    if( !bioid->conflicting_bionics.empty() ) {
+        for( const bionic_id &conf_bid : bioid->conflicting_bionics ) {
+            if( has_bionic( conf_bid ) ) {
+                list_of_conflicting_bionics += " " + conf_bid->name;
+                if( conf_bid != bioid->conflicting_bionics.back() ) {
+                    list_of_conflicting_bionics += ",";
+                }
+            }
+        }
+    }
+
+    for( const bionic &check_bio : get_bionic_collection() ) {
+        if( std::find( check_bio.info().conflicting_bionics.begin(),
+                       check_bio.info().conflicting_bionics.end(),
+                       bioid ) != check_bio.info().conflicting_bionics.end() ) {
+            list_of_conflicting_bionics += " " + check_bio.info().name;
+            if( bioid != check_bio.info().conflicting_bionics.back() ) {
+                list_of_conflicting_bionics += ",";
+            }
+        }
+    }
+
+    if( !list_of_conflicting_bionics.empty() ) {
+        popup( _( "CBM installation blocked by prior installation of%s." ), list_of_conflicting_bionics );
+        return false;
+    }
+
     std::vector<std::string> conflicting_muts;
     for( const trait_id &mid : bioid->canceled_mutations ) {
         if( has_trait( mid ) ) {
@@ -2809,12 +3074,18 @@ std::map<bodypart_id, int> Character::bionic_installation_issues( const bionic_i
 
 int Character::get_total_bionics_slots( const bodypart_id &bp ) const
 {
-    return bp->bionic_slots();
+    int used_slots = get_used_bionics_slots( bp );
+    int bio_slots = bp->bionic_slots();
+    if( used_slots < 0 ) { return bio_slots - used_slots; }
+    return bio_slots;
 }
 
 int Character::get_free_bionics_slots( const bodypart_id &bp ) const
 {
-    return get_total_bionics_slots( bp ) - get_used_bionics_slots( bp );
+    int total_slots = get_total_bionics_slots( bp );
+    int used_slots = get_used_bionics_slots( bp );
+    if( used_slots < 0 ) { return total_slots; }
+    return total_slots - used_slots;
 }
 
 bool cbm_needs_anesthesia( const Character &who )
