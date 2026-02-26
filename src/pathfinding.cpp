@@ -63,7 +63,7 @@ constexpr auto max_wall_climb_difficulty = 10;
 auto has_cardinal_wall_support( const map &here, const tripoint &anchor ) -> bool
 {
     const auto neighbor_range = points_in_radius( anchor, 1 );
-    return std::ranges::any_of( neighbor_range, [&anchor, &here]( const tripoint &pt ) {
+    return std::ranges::any_of( neighbor_range, [&anchor, &here]( const tripoint & pt ) {
         const bool same_level = pt.z == anchor.z;
         const bool cardinal = pt != anchor && ( pt.x == anchor.x || pt.y == anchor.y );
         return same_level && cardinal && here.impassable_ter_furn( pt );
