@@ -28,6 +28,7 @@ void gaspump( player &p, const tripoint &examp );
 void atm( player &p, const tripoint &examp );
 void vending( player &p, const tripoint &examp );
 void toilet( player &p, const tripoint &examp );
+auto fluid_grid_fixture( player &p, const tripoint &examp ) -> void;
 void elevator( player &p, const tripoint &examp );
 void nanofab( player &p, const tripoint &examp );
 void toggle_lights( player &p, const tripoint &examp );
@@ -106,6 +107,8 @@ void translocator( player &p, const tripoint &examp );
 void on_smoke_out( const tripoint &examp,
                    const time_point &start_time ); //activates end of smoking effects
 void mill_finalize( player &, const tripoint &examp, const time_point &start_time );
+void cloning_vat_finalize( const tripoint &examp, const time_point &start_time );
+void cloning_vat_examine( player &p, const tripoint &examp );
 void quern_examine( player &p, const tripoint &examp );
 void smoker_options( player &p, const tripoint &examp );
 void open_safe( player &p, const tripoint &examp );
@@ -141,5 +144,3 @@ void practice_survival_while_foraging( player *p );
 
 using iexamine_function = void ( * )( player &, const tripoint & );
 iexamine_function iexamine_function_from_string( const std::string &function_name );
-
-

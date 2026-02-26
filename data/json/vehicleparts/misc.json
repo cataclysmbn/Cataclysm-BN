@@ -1,0 +1,99 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "null",
+    "name": { "str": "null part" },
+    "symbol": "?",
+    "color": "red",
+    "broken_symbol": "?",
+    "broken_color": "red",
+    "durability": 100,
+    "item": "null",
+    "difficulty": 0,
+    "flags": [ "NOINSTALL" ],
+    "breaks_into": [  ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "black_box",
+    "name": { "str": "military black box" },
+    "item": "black_box",
+    "description": "An armored black box, a device meant to record and preserve data of a military vehicle in the field in case it gets destroyed.",
+    "durability": 400,
+    "symbol": ";",
+    "color": "light_gray",
+    "broken_symbol": "*",
+    "broken_color": "dark_gray",
+    "flags": [ "NO_REPAIR", "SHOCK_IMMUNE" ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "qualities": [ { "id": "SCREW", "level": 3 }, { "id": "WRENCH", "level": 3 } ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "using": [ [ "vehicle_screw", 1 ] ] }
+    },
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 0, 2 ] },
+      { "item": "steel_chunk", "count": [ 1, 3 ] },
+      { "item": "e_scrap", "count": [ 1, 2 ] }
+    ],
+    "damage_reduction": { "all": 80 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "vehicle_scoop",
+    "name": { "str": "scoop" },
+    "symbol": "R",
+    "color": "light_gray",
+    "broken_symbol": ";",
+    "broken_color": "dark_gray",
+    "durability": 100,
+    "description": "A scoop.  Use the vehicle controls to turn it on or off.  When turned on, it will scoop up any loose items that it travels over, putting them into the vehicle's storage.",
+    "epower": -10,
+    "size": "100 L",
+    "damage_modifier": 10,
+    "item": "v_scoop_item",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
+    },
+    "flags": [ "SCOOP", "CARGO", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ],
+    "location": "under",
+    "breaks_into": [ { "item": "scrap", "count": [ 2, 5 ] }, { "item": "plastic_chunk", "count": [ 1, 5 ] } ],
+    "damage_reduction": { "all": 24 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "sea_scooter_hull",
+    "name": { "str": "sea scooter hull" },
+    "description": "The hull of a Rivtech sea scooter. Includes a built-in motor.",
+    "symbol": "o",
+    "color": "brown",
+    "looks_like": "inflatable_airbag",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "epower": 60,
+    "power": 7040,
+    "energy_consumption": 1500,
+    "noise_factor": 5,
+    "m2c": 90,
+    "fuel_type": "battery",
+    "durability": 120,
+    "item": "plastic_boat_hull",
+    "location": "structure",
+    "flags": [
+      "FLOATS",
+      "MOUNTABLE",
+      "SEAT",
+      "SEAT_REQUIRES_BALANCE",
+      "BOARDABLE",
+      "SOLAR_PANEL",
+      "CONTROLS",
+      "ENGINE",
+      "E_HIGHER_SKILL",
+      "E_HEATER",
+      "LIGHT"
+    ],
+    "breaks_into": [ { "item": "plastic_chunk", "count": [ 4, 8 ] } ],
+    "damage_reduction": { "all": 12, "stab": 4, "cut": 4 }
+  }
+]

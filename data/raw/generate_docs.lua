@@ -245,7 +245,7 @@ and should not be edited directly.
 >   print(Angle.to_degrees(a))
 >   ```
 
-[generate_docs]: https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/data/raw/generate_docs.lua
+[generate_docs]: https://github.com/cataclysmbn/Cataclysm-BN/blob/main/data/raw/generate_docs.lua
 ]]
 
   local dt = catadoc

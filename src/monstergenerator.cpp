@@ -76,6 +76,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_KEENNOSE: return "KEENNOSE";
         case MF_STUMBLES: return "STUMBLES";
         case MF_WARM: return "WARM";
+        case MF_NEMESIS: return "NEMESIS";
         case MF_NOHEAD: return "NOHEAD";
         case MF_HARDTOSHOOT: return "HARDTOSHOOT";
         case MF_GRABS: return "GRABS";
@@ -125,6 +126,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_FAT: return "FAT";
         case MF_CONSOLE_DESPAWN: return "CONSOLE_DESPAWN";
         case MF_IMMOBILE: return "IMMOBILE";
+        case MF_STATIONARY: return "STATIONARY";
         case MF_ID_CARD_DESPAWN: return "ID_CARD_DESPAWN";
         case MF_RIDEABLE_MECH: return "RIDEABLE_MECH";
         case MF_CARD_OVERRIDE: return "CARD_OVERRIDE";
@@ -195,8 +197,12 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_PROJECTILE_RESISTANT_2: return "PROJECTILE_RESISTANT_2";
         case MF_PROJECTILE_RESISTANT_3: return "PROJECTILE_RESISTANT_3";
         case MF_PROJECTILE_RESISTANT_4: return "PROJECTILE_RESISTANT_4";
-        case MF_VOLATILE: return "VOLATILE";
-        // *INDENT-ON*
+         case MF_VOLATILE: return "VOLATILE";
+         case MF_CANT_CLONE: return "CANT_CLONE";
+         case MF_MOUNTABLE_STAIRS: return "MOUNTABLE_STAIRS";
+         case MF_MOUNTABLE_OBSTACLES: return "MOUNTABLE_OBSTACLES";
+         case MF_FACTION_MEMORY: return "FACTION_MEMORY";
+         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
     }

@@ -287,6 +287,6 @@
     "to_hit": 2,
     "qualities": [ [ "HAMMER", 1 ] ],
     "techniques": [ "WBLOCK_1", "BRUTAL" ],
-    "flags": [ "UNARMED_WEAPON", "DURABLE_MELEE", "TRADER_AVOID", "MAGIC_FOCUS" ]
+    "flags": [ "UNARMED_WEAPON", "DURABLE_MELEE", "TRADER_AVOID", "MAGIC_FOCUS", "BELT_CLIP" ]
   }
 ]

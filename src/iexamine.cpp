@@ -8,6 +8,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <ranges>
 #include <set>
 #include <type_traits>
 #include <utility>
@@ -15,7 +16,7 @@
 #include "action.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
-// TODO (https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1612):
+// TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that include after repair_activity_actor.
 #include "activity_handlers.h"
 #include "active_tile_data_def.h"
@@ -25,6 +26,7 @@
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_unreachable.h"
 #include "cata_utility.h"
@@ -69,9 +71,12 @@
 #include "map_selector.h"
 #include "map_functions.h"
 #include "mapdata.h"
+#include "mapbuffer.h"
 #include "material.h"
 #include "messages.h"
+#include "submap.h"
 #include "monster.h"
+#include "mongroup.h"
 #include "mtype.h"
 #include "mutation.h"
 #include "npc.h"
@@ -79,6 +84,7 @@
 #include "output.h"
 #include "overmapbuffer.h"
 #include "pickup.h"
+#include "fluid_grid.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
@@ -89,6 +95,7 @@
 #include "requirements.h"
 #include "rng.h"
 #include "sounds.h"
+#include "cloning_utils.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
@@ -134,9 +141,13 @@ static const itype_id itype_cash_card( "cash_card" );
 static const itype_id itype_money_bundle( "money_bundle" );
 static const itype_id itype_charcoal( "charcoal" );
 static const itype_id itype_chem_carbide( "chem_carbide" );
+static const itype_id itype_water( "water" );
+static const itype_id itype_water_clean( "water_clean" );
 static const itype_id itype_corpse( "corpse" );
 static const itype_id itype_electrohack( "electrohack" );
+static const auto itype_plumber_toolkit = itype_id( "plumber_toolkit" );
 static const itype_id itype_fake_milling_item( "fake_milling_item" );
+static const itype_id itype_fake_cloning_vat( "fake_cloning_vat_item" );
 static const itype_id itype_fake_smoke_plume( "fake_smoke_plume" );
 static const itype_id itype_fertilizer( "fertilizer" );
 static const itype_id itype_fire( "fire" );
@@ -161,7 +172,9 @@ static const itype_id itype_tree_spile( "tree_spile" );
 static const itype_id itype_unfinished_cac2( "unfinished_cac2" );
 static const itype_id itype_unfinished_charcoal( "unfinished_charcoal" );
 static const itype_id itype_UPS( "UPS" );
-static const itype_id itype_water( "water" );
+static const itype_id itype_dna( "dna" );
+static const itype_id itype_embryo( "embryo" );
+static const itype_id itype_embryo_empty( "embryo_empty" );
 
 static const trap_str_id tr_unfinished_construction( "tr_unfinished_construction" );
 
@@ -379,7 +392,7 @@ void iexamine::nanofab( player &p, const tripoint &examp )
 
     // we're sticking an item from our inventory under the nanofabrication dispenser
     if( new_item->made_of( LIQUID ) ) {
-        liquid_handler::handle_liquid( std::move( new_item ) );  // let it own the pointer
+        liquid_handler::handle_all_liquid( std::move( new_item ), PICKUP_RANGE );  // let it own the pointer
         return;
     }
 
@@ -401,6 +414,10 @@ void iexamine::gaspump( player &p, const tripoint &examp )
     for( auto item_it = items.begin(); item_it != items.end(); ++item_it ) {
         item *content = *item_it;
         if( content->made_of( LIQUID ) ) {
+            if( content->charges <= 0 ) {
+                add_msg( m_info, _( "Out of order." ) );
+                return;
+            }
             item_it = location_vector<item>::iterator();
             ///\EFFECT_DEX decreases chance of spilling gas from a pump
             if( one_in( 10 + p.get_dex() ) ) {
@@ -1825,6 +1842,7 @@ void iexamine::transform( player &p, const tripoint &pos )
                 }
                 g->m.ter_set( pos, g->m.get_ter_transforms_into( pos ) );
             }
+            p.moves -= to_moves<int>( 2_seconds );
             return;
         }
         case 2: {
@@ -3429,9 +3447,72 @@ void iexamine::fvat_full( player &p, const tripoint &examp )
     }
 }
 
-static units::volume get_keg_capacity( const tripoint &pos )
+static auto fluid_grid_tank_capacity( const furn_t &furn ) -> std::optional<units::volume>
+{
+    if( !furn.fluid_grid ) {
+        return std::nullopt;
+    }
+    const auto &fluid_grid = *furn.fluid_grid;
+    if( fluid_grid.role != fluid_grid_role::tank ) {
+        return std::nullopt;
+    }
+    if( fluid_grid.capacity ) {
+        return fluid_grid.capacity;
+    }
+    if( fluid_grid.use_keg_capacity ) {
+        return furn.keg_capacity;
+    }
+    return std::nullopt;
+}
+
+static auto is_fluid_grid_tank( const furn_t &furn ) -> bool
+{
+    return fluid_grid_tank_capacity( furn ).has_value();
+}
+
+static auto confirm_fluid_grid_contamination( const tripoint_abs_omt &pos_abs_omt,
+        const itype_id &liquid_type ) -> bool
+{
+    if( !fluid_grid::would_contaminate( pos_abs_omt, liquid_type ) ) {
+        return true;
+    }
+    const auto clean_available =
+        fluid_grid::liquid_charges_at( pos_abs_omt, itype_water_clean ) > 0;
+    const auto dirty_available =
+        fluid_grid::liquid_charges_at( pos_abs_omt, itype_water ) > 0;
+    if( liquid_type == itype_water_clean && dirty_available ) {
+        return query_yn(
+                   _( "Adding clean water to this grid containing tainted water will contaminate your clean water.  Continue?" ) );
+    }
+    if( liquid_type == itype_water && clean_available ) {
+        return query_yn(
+                   _( "Adding tainted water to this grid containing clean water will contaminate your clean water.  Continue?" ) );
+    }
+    return query_yn( string_format(
+                         _( "Adding %s will contaminate the fluid grid's water supply.  Continue?" ),
+                         item::nname( liquid_type ) ) );
+}
+
+static auto confirm_fluid_grid_contamination_for_items( const tripoint_abs_omt &pos_abs_omt,
+        const map_stack &items ) -> bool
+{
+    const auto contaminating = std::ranges::find_if( items, [&]( const item * it ) {
+        return it != nullptr && it->made_of( LIQUID ) &&
+               fluid_grid::would_contaminate( pos_abs_omt, it->typeId() );
+    } );
+    if( contaminating == items.end() ) {
+        return true;
+    }
+    return confirm_fluid_grid_contamination( pos_abs_omt, ( *contaminating )->typeId() );
+}
+
+static auto get_keg_capacity( const tripoint &pos ) -> units::volume
 {
     const furn_t &furn = get_map().furn( pos ).obj();
+    const auto capacity = fluid_grid_tank_capacity( furn );
+    if( capacity ) {
+        return *capacity;
+    }
     return furn.keg_capacity;
 }
 
@@ -3477,6 +3558,245 @@ void iexamine::keg( player &p, const tripoint &examp )
     map &here = get_map();
     const auto keg_name = here.name( examp );
     units::volume keg_cap = get_keg_capacity( examp );
+    const auto furn_id = here.furn( examp );
+    const auto &furn = furn_id.obj();
+    const auto is_plumbed_tank = is_fluid_grid_tank( furn );
+    const auto connected_variant = fluid_grid_connected_variant( furn_id );
+    const auto disconnected_variant = fluid_grid_disconnected_variant( furn_id );
+    const auto can_plumb_tank = connected_variant && p.has_amount( itype_plumber_toolkit, 1 );
+    const auto can_disconnect_tank = disconnected_variant && p.has_amount( itype_plumber_toolkit, 1 );
+    const auto notify_contents_changed = [&]( const tripoint & where ) {
+        if( is_fluid_grid_tank( here.furn( where ).obj() ) ) {
+            fluid_grid::on_contents_changed( here.getglobal( where ) );
+        }
+    };
+    const auto tank_contains_only_water = [&]( const tripoint & where ) -> bool {
+        auto items = here.i_at( where );
+        const auto has_non_water = std::ranges::any_of( items, [&]( const item * it )
+        {
+            return it != nullptr && it->made_of( LIQUID ) &&
+            it->typeId() != itype_water && it->typeId() != itype_water_clean;
+        } );
+        if( has_non_water )
+        {
+            add_msg( m_info, _( "The %s contains non-water liquids and cannot be connected." ), keg_name );
+            return false;
+        }
+        return true;
+    };
+    const auto transfer_tank_liquid_to_grid = [&]( const tripoint & where ) {
+        const auto pos_abs_omt = project_to<coords::omt>( here.getglobal( where ) );
+        auto items = here.i_at( where );
+        std::ranges::for_each( items, [&]( item * it ) {
+            if( it != nullptr && it->made_of( LIQUID ) ) {
+                fluid_grid::add_liquid_charges( pos_abs_omt, it->typeId(), it->charges );
+            }
+        } );
+        here.i_clear( where );
+    };
+
+    if( is_plumbed_tank ) {
+        const auto pos_abs_ms = here.getglobal( examp );
+        const auto pos_abs_omt = project_to<coords::omt>( pos_abs_ms );
+        const auto clean_available = fluid_grid::liquid_charges_at( pos_abs_omt, itype_water_clean );
+        const auto dirty_available = fluid_grid::liquid_charges_at( pos_abs_omt, itype_water );
+        const auto available = clean_available > 0 ? clean_available : dirty_available;
+        const auto &liquid_type = clean_available > 0 ? itype_water_clean : itype_water;
+
+        if( available <= 0 ) {
+            add_msg( m_info, _( "It is empty." ) );
+        }
+
+        enum options {
+            DISPENSE,
+            HAVE_A_DRINK,
+            FILL,
+            EXAMINE,
+            DISCONNECT_FROM_FLUID_GRID,
+        };
+        uilist selectmenu;
+        selectmenu.addentry( DISPENSE, available > 0, MENU_AUTOASSIGN,
+                             _( "Dispense or dump %s" ), item::nname( liquid_type ) );
+        selectmenu.addentry( HAVE_A_DRINK, available > 0, MENU_AUTOASSIGN,
+                             _( "Have a drink" ) );
+        selectmenu.addentry( FILL, true, MENU_AUTOASSIGN, _( "Fill" ) );
+        selectmenu.addentry( EXAMINE, true, MENU_AUTOASSIGN, _( "Examine" ) );
+        if( can_disconnect_tank ) {
+            selectmenu.addentry( DISCONNECT_FROM_FLUID_GRID, true, MENU_AUTOASSIGN,
+                                 _( "Disconnect from fluid grid" ) );
+        }
+        selectmenu.text = _( "Select an action" );
+        selectmenu.query();
+
+        const auto use_grid_liquid = [&]( const auto & fn ) -> int {
+            auto target_sm = tripoint_abs_sm{};
+            auto target_pos = point_sm_ms{};
+            std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
+            auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+            if( target_submap == nullptr )
+            {
+                return 0;
+            }
+
+            auto &items = target_submap->get_items( target_pos.raw() );
+            auto liquid_item = item::spawn( liquid_type, calendar::turn, available );
+            auto iter = items.insert( items.end(), std::move( liquid_item ) );
+            item *water_item = *iter;
+            const auto before = water_item->charges;
+            fn( *water_item );
+            const auto &item_ptrs = items.as_vector();
+            const auto still_here = std::ranges::find( item_ptrs, water_item ) != item_ptrs.end();
+            if( still_here )
+            {
+                const auto used = before - water_item->charges;
+                items.remove( water_item );
+                return used;
+            }
+            return before;
+        };
+
+        switch( selectmenu.ret ) {
+            case DISPENSE: {
+                const auto used = use_grid_liquid( [&]( item & water_item ) {
+                    liquid_handler::handle_liquid( water_item );
+                } );
+                if( used > 0 ) {
+                    fluid_grid::drain_liquid_charges( pos_abs_omt, liquid_type, used );
+                }
+                return;
+            }
+
+            case HAVE_A_DRINK: {
+                auto target_sm = tripoint_abs_sm{};
+                auto target_pos = point_sm_ms{};
+                std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
+                auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+                if( target_submap == nullptr ) {
+                    return;
+                }
+
+                auto &items = target_submap->get_items( target_pos.raw() );
+                auto liquid_item = item::spawn( liquid_type, calendar::turn, available );
+                auto iter = items.insert( items.end(), std::move( liquid_item ) );
+                item *water_item = *iter;
+                const auto before = water_item->charges;
+                if( !p.eat( *water_item ) ) {
+                    const auto &item_ptrs = items.as_vector();
+                    const auto still_here = std::ranges::find( item_ptrs, water_item ) != item_ptrs.end();
+                    if( still_here ) {
+                        items.remove( water_item );
+                    }
+                    return;
+                }
+                auto used = 0;
+                const auto &item_ptrs = items.as_vector();
+                const auto still_here = std::ranges::find( item_ptrs, water_item ) != item_ptrs.end();
+                if( still_here ) {
+                    used = before - water_item->charges;
+                    items.remove( water_item );
+                } else {
+                    used = before;
+                }
+                if( used > 0 ) {
+                    fluid_grid::drain_liquid_charges( pos_abs_omt, liquid_type, used );
+                    p.moves -= to_moves<int>( 5_seconds );
+                }
+                return;
+            }
+
+            case FILL: {
+                auto drinks_inv = p.items_with( []( const item & it ) {
+                    return it.typeId() == itype_water || it.typeId() == itype_water_clean;
+                } );
+                if( drinks_inv.empty() ) {
+                    add_msg( m_info, _( "You don't have any water to fill the %s with." ), keg_name );
+                    return;
+                }
+                auto drink_types = std::vector<itype_id> {};
+                auto drink_names = std::vector<std::string> {};
+                std::ranges::for_each( drinks_inv, [&]( const auto & drink ) {
+                    if( std::ranges::find( drink_types, drink->typeId() ) == drink_types.end() ) {
+                        drink_types.push_back( drink->typeId() );
+                        drink_names.push_back( item::nname( drink->typeId() ) );
+                    }
+                } );
+
+                auto drink_index = 0;
+                if( drink_types.size() > 1 ) {
+                    drink_index = uilist( _( "Store which drink?" ), drink_names );
+                    if( drink_index < 0 || static_cast<size_t>( drink_index ) >= drink_types.size() ) {
+                        drink_index = -1;
+                    }
+                } else {
+                    if( !query_yn( _( "Fill the %1$s with %2$s?" ),
+                                   keg_name, drink_names[0].c_str() ) ) {
+                        drink_index = -1;
+                    }
+                }
+                if( drink_index < 0 ) {
+                    return;
+                }
+
+                const auto drink_type = drink_types[ drink_index ];
+                const auto charges_held = p.charges_of( drink_type );
+                if( !confirm_fluid_grid_contamination( pos_abs_omt, drink_type ) ) {
+                    return;
+                }
+                const auto added = fluid_grid::add_liquid_charges( pos_abs_omt, drink_type, charges_held );
+                if( added <= 0 ) {
+                    add_msg( m_info, _( "The %s cannot hold any more water." ), keg_name );
+                    return;
+                }
+                p.use_charges( drink_type, added );
+                add_msg( _( "You fill the %1$s with %2$s." ), keg_name, item::nname( drink_type ) );
+                p.moves -= to_moves<int>( 10_seconds );
+                return;
+            }
+
+            case EXAMINE: {
+                const auto fluid_stats = fluid_grid::storage_stats_at( pos_abs_omt );
+                add_msg( m_info, _( "Fluid stored: %1$s/%2$s %3$s." ),
+                         format_volume( fluid_stats.stored ),
+                         format_volume( fluid_stats.capacity ),
+                         volume_units_abbr() );
+                const auto stored_count = std::ranges::count_if( fluid_stats.stored_by_type,
+                []( const auto & entry ) {
+                    return entry.second > 0_ml;
+                } );
+                auto fluid_type = std::string{};
+                if( stored_count == 0 ) {
+                    fluid_type = _( "empty" );
+                } else if( stored_count == 1 ) {
+                    const auto iter = std::ranges::find_if( fluid_stats.stored_by_type,
+                    []( const auto & entry ) {
+                        return entry.second > 0_ml;
+                    } );
+                    if( iter != fluid_stats.stored_by_type.end() ) {
+                        fluid_type = item::nname( iter->first );
+                    } else {
+                        fluid_type = _( "empty" );
+                    }
+                } else {
+                    fluid_type = _( "mixed fluids" );
+                }
+                add_msg( m_info, _( "Fluid type: %s." ), fluid_type );
+                return;
+            }
+
+            case DISCONNECT_FROM_FLUID_GRID:
+                fluid_grid::disconnect_tank( pos_abs_ms );
+                if( !disconnected_variant ) {
+                    return;
+                }
+                here.furn_set( examp, *disconnected_variant );
+                fluid_grid::on_structure_changed( pos_abs_ms );
+                add_msg( m_info, _( "You disconnect the %s from the fluid grid." ), keg_name );
+                return;
+
+            default:
+                return;
+        }
+    }
 
     const bool has_container_with_liquid = map_cursor( examp ).has_item_with( []( const item & it ) {
         return !it.is_container_empty() && it.can_unload_liquid();
@@ -3487,6 +3807,54 @@ void iexamine::keg( player &p, const tripoint &examp )
 
     if( !liquid_present || has_container_with_liquid ) {
         add_msg( m_info, _( "It is empty." ) );
+        if( can_plumb_tank || can_disconnect_tank ) {
+            enum options {
+                ADD_TO_FLUID_GRID,
+                DISCONNECT_FROM_FLUID_GRID,
+                FILL,
+            };
+            uilist selectmenu;
+            if( can_plumb_tank ) {
+                selectmenu.addentry( ADD_TO_FLUID_GRID, true, MENU_AUTOASSIGN,
+                                     _( "Add to fluid grid" ) );
+            }
+            if( can_disconnect_tank ) {
+                selectmenu.addentry( DISCONNECT_FROM_FLUID_GRID, true, MENU_AUTOASSIGN,
+                                     _( "Disconnect from fluid grid" ) );
+            }
+            selectmenu.addentry( FILL, true, MENU_AUTOASSIGN, _( "Fill" ) );
+            selectmenu.text = _( "Select an action" );
+            selectmenu.query();
+            if( selectmenu.ret == ADD_TO_FLUID_GRID ) {
+                if( !tank_contains_only_water( examp ) ) {
+                    return;
+                }
+                displace_items_except_one_liquid( examp );
+                if( !connected_variant ) {
+                    return;
+                }
+                const auto pos_abs_omt = project_to<coords::omt>( here.getglobal( examp ) );
+                if( !confirm_fluid_grid_contamination_for_items( pos_abs_omt, here.i_at( examp ) ) ) {
+                    return;
+                }
+                here.furn_set( examp, *connected_variant );
+                fluid_grid::on_structure_changed( here.getglobal( examp ) );
+                transfer_tank_liquid_to_grid( examp );
+                add_msg( m_info, _( "You connect the %s to the fluid grid." ), keg_name );
+                return;
+            } else if( selectmenu.ret == DISCONNECT_FROM_FLUID_GRID ) {
+                fluid_grid::disconnect_tank( here.getglobal( examp ) );
+                if( !disconnected_variant ) {
+                    return;
+                }
+                here.furn_set( examp, *disconnected_variant );
+                fluid_grid::on_structure_changed( here.getglobal( examp ) );
+                add_msg( m_info, _( "You disconnect the %s from the fluid grid." ), keg_name );
+                return;
+            } else if( selectmenu.ret < 0 ) {
+                return;
+            }
+        }
         // Get list of all drinks
         auto drinks_inv = p.items_with( []( const item & it ) {
             return it.made_of( LIQUID );
@@ -3553,6 +3921,7 @@ void iexamine::keg( player &p, const tripoint &examp )
         p.moves -= to_moves<int>( 10_seconds );
         here.i_clear( examp );
         here.add_item( examp, std::move( drink ) );
+        notify_contents_changed( examp );
         return;
     } else {
         // First empty the keg of foreign objects
@@ -3567,6 +3936,8 @@ void iexamine::keg( player &p, const tripoint &examp )
             HAVE_A_DRINK,
             REFILL,
             EXAMINE,
+            ADD_TO_FLUID_GRID,
+            DISCONNECT_FROM_FLUID_GRID,
         };
         uilist selectmenu;
         selectmenu.addentry( DISPENSE, drink.made_of( LIQUID ), MENU_AUTOASSIGN,
@@ -3575,16 +3946,26 @@ void iexamine::keg( player &p, const tripoint &examp )
                              MENU_AUTOASSIGN, _( "Have a drink" ) );
         selectmenu.addentry( REFILL, true, MENU_AUTOASSIGN, _( "Refill" ) );
         selectmenu.addentry( EXAMINE, true, MENU_AUTOASSIGN, _( "Examine" ) );
+        if( can_plumb_tank ) {
+            selectmenu.addentry( ADD_TO_FLUID_GRID, true, MENU_AUTOASSIGN,
+                                 _( "Add to fluid grid" ) );
+        }
+        if( can_disconnect_tank ) {
+            selectmenu.addentry( DISCONNECT_FROM_FLUID_GRID, true, MENU_AUTOASSIGN,
+                                 _( "Disconnect from fluid grid" ) );
+        }
 
         selectmenu.text = _( "Select an action" );
         selectmenu.query();
 
+        const auto pos_abs_omt = project_to<coords::omt>( here.getglobal( examp ) );
         switch( selectmenu.ret ) {
             case DISPENSE:
                 if( liquid_handler::handle_liquid( **items.begin() ) ) {
                     add_msg( _( "You squeeze the last drops of %1$s from the %2$s." ),
                              drink_tname, keg_name );
                 }
+                notify_contents_changed( examp );
                 return;
 
             case HAVE_A_DRINK:
@@ -3597,6 +3978,7 @@ void iexamine::keg( player &p, const tripoint &examp )
                              drink_tname, keg_name );
                     here.i_clear( examp );
                 }
+                notify_contents_changed( examp );
                 p.moves -= to_moves<int>( 5_seconds );
                 return;
 
@@ -3615,6 +3997,7 @@ void iexamine::keg( player &p, const tripoint &examp )
                 tmp = pour_into_keg( examp, std::move( tmp ) );
                 p.use_charges( drink.typeId(), charges_held - tmp->charges );
                 add_msg( _( "You fill the %1$s with %2$s." ), keg_name, drink_nname );
+                notify_contents_changed( examp );
                 p.moves -= to_moves<int>( 10_seconds );
                 return;
             }
@@ -3624,6 +4007,34 @@ void iexamine::keg( player &p, const tripoint &examp )
                          drink_tname, drink.charges, drink.volume() * 100.0 / keg_cap );
                 return;
             }
+
+            case ADD_TO_FLUID_GRID: {
+                if( !tank_contains_only_water( examp ) ) {
+                    return;
+                }
+                displace_items_except_one_liquid( examp );
+                if( !connected_variant ) {
+                    return;
+                }
+                if( !confirm_fluid_grid_contamination_for_items( pos_abs_omt, here.i_at( examp ) ) ) {
+                    return;
+                }
+                here.furn_set( examp, *connected_variant );
+                fluid_grid::on_structure_changed( here.getglobal( examp ) );
+                transfer_tank_liquid_to_grid( examp );
+                add_msg( m_info, _( "You connect the %s to the fluid grid." ), keg_name );
+                return;
+            }
+
+            case DISCONNECT_FROM_FLUID_GRID:
+                fluid_grid::disconnect_tank( here.getglobal( examp ) );
+                if( !disconnected_variant ) {
+                    return;
+                }
+                here.furn_set( examp, *disconnected_variant );
+                fluid_grid::on_structure_changed( here.getglobal( examp ) );
+                add_msg( m_info, _( "You disconnect the %s from the fluid grid." ), keg_name );
+                return;
 
             default:
                 return;
@@ -3643,10 +4054,37 @@ detached_ptr<item> iexamine::pour_into_keg( const tripoint &pos, detached_ptr<it
         return std::move( liquid );
     }
     map &here = get_map();
+    const auto is_plumbed = is_fluid_grid_tank( here.furn( pos ).obj() );
+    const auto notify_contents_changed = [&]( const tripoint & where ) {
+        if( is_fluid_grid_tank( here.furn( where ).obj() ) ) {
+            fluid_grid::on_contents_changed( here.getglobal( where ) );
+        }
+    };
     const auto keg_name = here.name( pos );
     item &obj = *liquid;
 
-    map_stack stack = here.i_at( pos );
+    if( is_plumbed ) {
+        if( liquid->typeId() != itype_water && liquid->typeId() != itype_water_clean ) {
+            add_msg( _( "The %s only accepts water." ), keg_name );
+            return std::move( liquid );
+        }
+        const auto pos_abs_omt = project_to<coords::omt>( here.getglobal( pos ) );
+        if( !confirm_fluid_grid_contamination( pos_abs_omt, liquid->typeId() ) ) {
+            return std::move( liquid );
+        }
+        const auto added = fluid_grid::add_liquid_charges( pos_abs_omt, liquid->typeId(),
+                           liquid->charges );
+        if( added > 0 ) {
+            add_msg( _( "You pour %1$s into the %2$s." ), obj.tname(), keg_name );
+            liquid->charges -= added;
+        }
+        if( liquid->charges == 0 ) {
+            return detached_ptr<item>();
+        }
+        return std::move( liquid );
+    }
+
+    auto stack = here.i_at( pos );
     if( stack.empty() ) {
         int charges = liquid->charges;
         here.add_item( pos, std::move( liquid ) );
@@ -3659,8 +4097,10 @@ detached_ptr<item> iexamine::pour_into_keg( const tripoint &pos, detached_ptr<it
         if( charges > 0 ) {
             detached_ptr<item> ret = item::spawn( obj );
             ret->charges = charges;
+            notify_contents_changed( pos );
             return ret;
         }
+        notify_contents_changed( pos );
         return detached_ptr<item>();
     } else if( stack.only_item().typeId() != liquid->typeId() ) {
         add_msg( _( "The %s already contains some %s, you can't add a different liquid to it." ),
@@ -3678,10 +4118,12 @@ detached_ptr<item> iexamine::pour_into_keg( const tripoint &pos, detached_ptr<it
         }
         add_msg( _( "You pour %1$s into the %2$s." ), obj.tname(), keg_name );
         if( liquid->charges == 0 ) {
+            notify_contents_changed( pos );
             return detached_ptr<item>();
         }
     }
 
+    notify_contents_changed( pos );
     return std::move( liquid );
 }
 
@@ -4118,6 +4560,82 @@ void iexamine::liquid_source( player &, const tripoint &examp )
                                    calendar::turn, item::INFINITE_CHARGES ) );
 }
 
+auto iexamine::fluid_grid_fixture( player &p, const tripoint &examp ) -> void
+{
+    map &here = get_map();
+    const auto has_lootable_items = !here.i_at( examp ).empty();
+    if( has_lootable_items ) {
+        uilist selection_menu;
+        selection_menu.text = _( "Select an action" );
+        selection_menu.addentry( 0, true, 'g', _( "Get items" ) );
+        selection_menu.addentry( 1, true, 'w', _( "Use fixture" ) );
+        selection_menu.query();
+        if( selection_menu.ret == 0 ) {
+            none( p, examp );
+            pickup::pick_up( examp, 0 );
+            return;
+        }
+        if( selection_menu.ret != 1 ) {
+            return;
+        }
+    }
+
+    const auto &furn = here.furn( examp ).obj();
+    if( !furn.fluid_grid || furn.fluid_grid->role != fluid_grid_role::fixture ) {
+        add_msg( m_info, _( "It is not connected to a fluid grid fixture." ) );
+        return;
+    }
+    const auto &fluid_grid = *furn.fluid_grid;
+    const auto fixture_name = here.name( examp );
+    if( !fluid_grid.allow_output ) {
+        add_msg( m_info, _( "The %s has no usable output." ), fixture_name );
+        return;
+    }
+
+    const auto pos_abs_ms = here.getglobal( examp );
+    const auto pos_abs_omt = project_to<coords::omt>( pos_abs_ms );
+
+    const auto available_liquid = std::ranges::find_if( fluid_grid.allowed_liquids,
+    [&]( const itype_id & liquid ) {
+        return fluid_grid::liquid_charges_at( pos_abs_omt, liquid ) > 0;
+    } );
+    if( available_liquid == fluid_grid.allowed_liquids.end() ) {
+        add_msg( m_info, _( "The %s is dry." ), fixture_name );
+        return;
+    }
+
+    const auto &liquid_type = *available_liquid;
+    const auto available = fluid_grid::liquid_charges_at( pos_abs_omt, liquid_type );
+    auto target_sm = tripoint_abs_sm{};
+    auto target_pos = point_sm_ms{};
+    std::tie( target_sm, target_pos ) = project_remain<coords::sm>( pos_abs_ms );
+    auto *target_submap = MAPBUFFER.lookup_submap( target_sm );
+    if( target_submap == nullptr ) {
+        return;
+    }
+
+    auto &items = target_submap->get_items( target_pos.raw() );
+    auto liquid_item = item::spawn( liquid_type, calendar::turn, available );
+    auto iter = items.insert( items.end(), std::move( liquid_item ) );
+    item *water_item = *iter;
+    const auto before = water_item->charges;
+    liquid_handler::handle_liquid( *water_item );
+    auto used = 0;
+    const auto &item_ptrs = items.as_vector();
+    const auto still_here = std::ranges::find( item_ptrs, water_item ) != item_ptrs.end();
+    if( still_here ) {
+        used = before - water_item->charges;
+        items.remove( water_item );
+    } else {
+        used = before;
+    }
+    if( used <= 0 ) {
+        return;
+    }
+
+    fluid_grid::drain_liquid_charges( pos_abs_omt, liquid_type, used );
+}
+
 std::vector<itype> furn_t::crafting_pseudo_item_types() const
 {
     std::vector<itype> conversion;
@@ -4153,6 +4671,15 @@ static int count_charges_in_list( const itype *type, const map_stack &items )
     }
     return 0;
 }
+
+namespace sm_rack
+{
+const int MIN_CHARCOAL = 100;
+const int CHARCOAL_PER_LITER = 25;
+const units::volume MAX_FOOD_VOLUME_MILLING = units::from_liter( 100 );
+const units::volume MAX_FOOD_VOLUME = units::from_liter( 20 );
+const units::volume MAX_FOOD_VOLUME_PORTABLE = units::from_liter( 15 );
+} // namespace sm_rack
 
 void iexamine::reload_furniture( player &p, const tripoint &examp )
 {
@@ -4217,27 +4744,96 @@ void iexamine::reload_furniture( player &p, const tripoint &examp )
     if( max_reload_amount <= 0 ) {
         return;
     }
-    if( amount_in_inv == 0 ) {
+
+    // Check for charcoal to load around the rack as if crafting
+    int amount_nearby = 0;
+    if( cur_ammo->get_id() == itype_charcoal ) {
+        for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
+            if( pt == examp ) {
+                continue;
+            }
+            for( const item *it : here.i_at( pt ) ) {
+                if( it->typeId() == itype_charcoal ) {
+                    amount_nearby += it->charges;
+                }
+            }
+        }
+    }
+
+    const int total_available = amount_in_inv + amount_nearby;
+    if( total_available == 0 ) {
         //~ Reloading or restocking a piece of furniture, for example a forge.
         add_msg( m_info, _( "You need some %1$s to reload this %2$s." ),
                  cur_ammo->nname( 2 ),
                  f.name() );
         return;
     }
-    const int max_amount = std::min( amount_in_inv, max_reload_amount );
+    const int max_amount = std::min( total_available, max_reload_amount );
+
+    // For smoking racks, use total available as default (no artificial limits)
+    int default_amount = max_amount;
+    int actual_max = max_amount;
+
     //~ Loading fuel or other items into a piece of furniture.
-    const std::string popupmsg = string_format( _( "Put how many of the %1$s into the %2$s?" ),
-                                 cur_ammo->nname( max_amount ), f.name() );
+    std::string source_desc = "";
+    if( amount_in_inv > 0 && amount_nearby > 0 ) {
+        source_desc = string_format( _( " (%d in inventory, %d nearby)" ), amount_in_inv, amount_nearby );
+    } else if( amount_nearby > 0 ) {
+        source_desc = string_format( _( " (%d nearby)" ), amount_nearby );
+    }
+
+    const std::string popupmsg = string_format( _( "Put how much %1$s into the %2$s?%3$s" ),
+                                 cur_ammo->nname( actual_max ), f.name(), source_desc );
     int amount = string_input_popup()
                  .title( popupmsg )
                  .width( 20 )
-                 .text( std::to_string( max_amount ) )
+                 .text( std::to_string( default_amount ) )
                  .only_digits( true )
                  .query_int();
-    if( amount <= 0 || amount > max_amount ) {
+    if( amount <= 0 ) {
         return;
     }
-    p.use_charges( cur_ammo->get_id(), amount );
+
+    // Prevent putting in too much coal
+    if( amount > actual_max ) {
+        amount = actual_max;
+    }
+
+    // First use from inventory,
+    int remaining = amount;
+    if( amount_in_inv > 0 ) {
+        const int from_inv = std::min( remaining, amount_in_inv );
+        p.use_charges( cur_ammo->get_id(), from_inv );
+        remaining -= from_inv;
+    }
+
+    // Then use from nearby ground
+    if( remaining > 0 && amount_nearby > 0 ) {
+        for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
+            if( pt == examp || remaining <= 0 ) {
+                continue;
+            }
+            auto ground_items = here.i_at( pt );
+            for( auto iter = ground_items.begin(); iter != ground_items.end() && remaining > 0; ) {
+                item *it = *iter;
+                if( it->typeId() == itype_charcoal ) {
+                    const int to_take = std::min( remaining, it->charges );
+                    if( to_take >= it->charges ) {
+                        detached_ptr<item> det;
+                        iter = ground_items.erase( iter, &det );
+                        remaining -= to_take;
+                    } else {
+                        it->charges -= to_take;
+                        remaining -= to_take;
+                        ++iter;
+                    }
+                } else {
+                    ++iter;
+                }
+            }
+        }
+    }
+
     auto items = here.i_at( examp );
     for( auto &itm : items ) {
         if( itm->type == cur_ammo ) {
@@ -4839,7 +5435,7 @@ void iexamine::pay_gas( player &p, const tripoint &examp )
 
 void iexamine::ledge( player &p, const tripoint &examp )
 {
-    enum ledge_action : int { jump_over, climb_down, spin_web_bridge };
+    enum ledge_action : int { jump_over, climb_down, pull_up_rope, spin_web_bridge };
     if( p.in_vehicle ) {
         if( !character_funcs::can_fly( p ) &&
             !query_yn( _( "Do you really want to jump off the vehicle?" ) ) ) {
@@ -4871,6 +5467,13 @@ void iexamine::ledge( player &p, const tripoint &examp )
     cmenu.text = _( "There is a ledge here.  What do you want to do?" );
     cmenu.addentry( ledge_action::jump_over, true, 'j', _( "Jump over." ) );
     cmenu.addentry( ledge_action::climb_down, true, 'c', _( "Climb down." ) );
+    //if the tile below has a grappling hook, you can pull it up
+    tripoint below_rope = examp;
+    below_rope.z--;
+    if( get_map().has_flag_furn( "REMOVE_FROM_ABOVE", below_rope ) ) {
+        cmenu.addentry( ledge_action::pull_up_rope, true, 'r', _( "Pull up the %s." ),
+                        get_map().furn( below_rope ).obj().name() );
+    }
     if( p.has_trait( trait_WEB_BRIDGE ) ) {
         cmenu.addentry( ledge_action::spin_web_bridge, true, 'w', _( "Spin Web Bridge." ) );
     }
@@ -4983,6 +5586,15 @@ void iexamine::ledge( player &p, const tripoint &examp )
                 g->vertical_move( -1, true );
             }
             here.creature_on_trap( p );
+            break;
+        }
+        case ledge_action::pull_up_rope: {
+            map &here = get_map();
+            p.add_msg_if_player( m_info, _( "You pull up the %s." ),
+                                 here.furn( below_rope ).obj().name() );
+            const auto furn_item = here.furn( below_rope ).obj().deployed_item;
+            here.add_item_or_charges( p.pos(), item::spawn( furn_item, calendar::turn ) );
+            here.furn_set( below_rope, f_null );
             break;
         }
         case ledge_action::spin_web_bridge: {
@@ -5562,15 +6174,6 @@ void iexamine::autodoc( player &p, const tripoint &examp )
     }
 }
 
-namespace sm_rack
-{
-const int MIN_CHARCOAL = 100;
-const int CHARCOAL_PER_LITER = 25;
-const units::volume MAX_FOOD_VOLUME_MILLING = units::from_liter( 100 );
-const units::volume MAX_FOOD_VOLUME = units::from_liter( 20 );
-const units::volume MAX_FOOD_VOLUME_PORTABLE = units::from_liter( 15 );
-} // namespace sm_rack
-
 static int get_charcoal_charges( units::volume food )
 {
     const int charcoal = to_liter( food ) * sm_rack::CHARCOAL_PER_LITER;
@@ -5638,6 +6241,132 @@ static void mill_activate( player &p, const tripoint &examp )
     add_msg( _( "You remove the brake on the millstone and it slowly starts to turn." ) );
 }
 
+static void cloning_vat_activate( player &p, const tripoint &examp )
+{
+    map &here = get_map();
+    // 86400 = 1 day, so this is 12 hrs per size increment
+    const int turns_to_clone = 43200;
+
+    // filter out faulty carriers
+    auto carriers = p.wielded_items();
+    for( size_t i = 0; i < carriers.size(); ) {
+        item *const carrier = carriers[i];  // already a pointer
+        if( carrier->has_fault( fault_id( "fault_bionic_nonsterile" ) ) ||
+            carrier->typeId() != itype_embryo_empty ) {
+            carriers.erase( carriers.begin() + i ); // erase by iterator
+            // do NOT increment i here
+        } else {
+            i++; // increment only if we didn't erase
+        }
+    }
+    if( carriers.empty() ) {
+        popup( "You need a sterilized artificial womb and DNA to begin incubation." );
+        return;
+    }
+    if( ( *carriers.begin() )->has_flag( flag_RADIO_MOD ) ) {
+        popup( "You need to remove the radio mod first." );
+        return;
+    }
+
+    // choose specimen sample
+    auto syringes = p.all_items_with_id( itype_dna );
+    if( syringes.size() == 0 ) {
+        popup( "You have no valid specimen samples." );
+        return;
+    }
+    uilist specimen_menu;
+    specimen_menu.text = _( "Select specimen sample:" );
+    for( size_t z = 0; z < syringes.size(); z++ ) {
+        const auto specimen_id = mtype_id( syringes[z]->get_var( "specimen_sample" ) );
+        const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_id ) );
+        specimen_menu.addentry( z, true, MENU_AUTOASSIGN, string_format( "%s [%s]",
+                                syringes[z]->display_name(),
+                                to_string( time_duration::from_turns( turns_to_clone * size ) ) ) );
+    }
+    specimen_menu.query();
+    const int choice = specimen_menu.ret;
+    if( choice < 0 ) {
+        return;
+    }
+
+    // reference to the original detached_ptr
+    auto &selected_syringe = syringes[choice];
+    p.mod_moves( -250 );
+
+    // Only try to remove if the pointer is valid
+    if( !selected_syringe ) {
+        return;
+    }
+    // remove the clean carrier
+    detached_ptr<item> weapon = p.remove_primary_weapon();
+
+    // search for DNA and begin process
+    std::vector<item *> items = p.all_items_with_id( itype_dna );
+    for( size_t x = 0; x < items.size(); x++ ) {
+        if( selected_syringe->get_var( "specimen_sample" ) == items[x]->get_var( "specimen_sample" ) ) {
+            if( items[x]->units_remaining( p ) <= 1 ) {
+                // this consumes the container. need to figure that out
+                detached_ptr<item> garbage = p.i_rem( p.inv_position_by_item( items[x] ) );
+            } else {
+                items[x]->mod_charges( -1 );
+            }
+
+            add_msg( m_info, _( "The cloning vat begins its rapid incubation process." ) );
+            here.furn_set( examp, furn_str_id( "f_cloning_vat_active" ) );
+            detached_ptr<item> result = item::spawn( "fake_cloning_vat_item", calendar::turn );
+
+            // 100 turns = 1 second, so 180000 = 30 min per size increment
+            result->set_var( "specimen_name", selected_syringe->get_var( "specimen_name" ) );
+            result->set_var( "specimen_sample", selected_syringe->get_var( "specimen_sample" ) );
+
+            // cloning vat random upgrade logic
+            if( rng( 1, 100 ) < 90 ) {
+                const mtype_id id( selected_syringe->get_var( "specimen_sample" ) );
+                const mtype &type = id.obj();
+
+                mongroup_id upgrade_group = mongroup_id::NULL_ID();
+                upgrade_group = type.upgrade_group;
+                const auto mons = upgrade_group.obj().monsters;
+
+                if( !mons.empty() ) {
+                    // calculate total weight (sum of frequencies), pick random, then iterate until we find it
+                    int total_freq = 0;
+                    for( const MonsterGroupEntry &entry : mons ) {
+                        total_freq += entry.frequency;
+                    }
+                    int roll = rng( 1, total_freq );
+                    const MonsterGroupEntry *chosen = nullptr;
+                    for( const MonsterGroupEntry &entry : mons ) {
+                        roll -= entry.frequency;
+                        if( roll <= 0 ) {
+                            chosen = &entry;
+                            break;
+                        }
+                    }
+                    const shared_ptr_fast<monster> newmon_ptr = make_shared_fast<monster>
+                            ( mtype_id( chosen->name.str() ) );
+                    monster &newmon = *newmon_ptr;
+
+                    if( chosen ) {
+                        result->set_var( "specimen_sample", chosen->name.str() );
+                        result->set_var( "specimen_name", newmon.name() );
+                    }
+                }
+            }
+
+            const auto specimen_id = mtype_id( selected_syringe->get_var( "specimen_sample" ) );
+            const auto size = std::max( 1, cloning_utils::specimen_required_sample_size( specimen_id ) );
+            result->set_counter( turns_to_clone * size );
+            result->activate();
+            here.add_item( examp, std::move( result ) );
+
+            return;
+        }
+    }
+
+    return;
+}
+
 static void smoker_activate( player &p, const tripoint &examp )
 {
     map &here = get_map();
@@ -5661,9 +6390,11 @@ static void smoker_activate( player &p, const tripoint &examp )
     item *charcoal = nullptr;
 
     for( item * const &it : items ) {
-        if( it->has_flag( flag_SMOKED ) && !it->has_flag( flag_SMOKABLE ) ) {
-            add_msg( _( "This rack already contains smoked food." ) );
-            add_msg( _( "Remove it before firing the smoking rack again." ) );
+        // Check for finished items (either has SMOKED flag, or is not smokable and not charcoal)
+        if( ( it->has_flag( flag_SMOKED ) && !it->has_flag( flag_SMOKABLE ) ) ||
+            ( !it->has_flag( flag_SMOKABLE ) && it->typeId() != itype_charcoal ) ) {
+            add_msg( _( "This rack already contains finished items." ) );
+            add_msg( _( "Remove them before firing the smoking rack again." ) );
             return;
         }
         if( it->has_flag( flag_SMOKABLE ) ) {
@@ -5675,16 +6406,8 @@ static void smoker_activate( player &p, const tripoint &examp )
             charcoal_present = true;
             charcoal = it;
         }
-        if( it->typeId() != itype_charcoal && !it->has_flag( flag_SMOKABLE ) ) {
-            add_msg( m_bad, _( "This rack contains %s, which can't be smoked!" ), it->tname( 1,
-                     false ) );
-            add_msg( _( "You remove %s from the rack." ), it->tname() );
-            here.add_item_or_charges( p.pos(), here.i_rem( examp, it ) );
-            p.mod_moves( -p.item_handling_cost( *it ) );
-            return;
-        }
         if( it->has_flag( flag_SMOKED ) && it->has_flag( flag_SMOKABLE ) ) {
-            add_msg( _( "This rack has some smoked food that might be dehydrated by smoking it again." ) );
+            add_msg( _( "This rack has some smoked items that might be dehydrated by smoking them again." ) );
         }
     }
     if( !food_present ) {
@@ -5793,9 +6516,51 @@ void iexamine::mill_finalize( player &, const tripoint &examp, const time_point 
     }
 
     for( detached_ptr<item> &it : results ) {
-        items.insert( std::move( it ) );
+        here.add_item( examp, std::move( it ) );
     }
     here.furn_set( examp, next_mill_type );
+}
+
+void iexamine::cloning_vat_finalize( const tripoint &examp, const time_point & )
+{
+    // grab items in the vat
+    map &here = get_map();
+    map_stack items_here = here.i_at( examp );
+    item developing_embryo;
+    if( items_here.size() == 1 &&
+        ( *items_here.begin() )->typeId() == itype_id( "fake_cloning_vat_item" ) ) {
+        if( here.furn( examp ) == furn_str_id( "f_cloning_vat_active" ) ) {
+            here.furn_set( examp, furn_str_id( "f_cloning_vat" ) );
+        }
+        developing_embryo = **items_here.begin();
+    }
+
+    here.furn_set( examp, furn_str_id( "f_cloning_vat" ) );
+
+    // cloning vat failure: choose random garbage item and faulty womb
+    if( rng( 1, 100 ) < 10 ) {
+        const std::vector<itype_id> item_results{ itype_id( "arm" ), itype_id( "leg" ), itype_id( "fetus" ) };
+        const itype_id &chosen_id = random_entry( item_results );
+        detached_ptr<item> spawned_womb = item::spawn( itype_embryo_empty, calendar::turn );
+        spawned_womb->faults.emplace( fault_id( "fault_bionic_nonsterile" ) );
+        here.add_item( examp, std::move( spawned_womb ) );
+        detached_ptr<item> spawned_item = item::spawn( chosen_id, calendar::turn );
+        here.add_item( examp, std::move( spawned_item ) );
+
+        sounds::sound( examp, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+
+        return;
+    }
+
+    // success: spawn the completed artificial womb
+    sounds::sound( examp, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
+    detached_ptr<item> spawned_embryo = item::spawn( itype_embryo, calendar::turn );
+    spawned_embryo->set_var( "place_monster_override", developing_embryo.get_var( "specimen_sample" ) );
+    spawned_embryo->set_var( "place_monster_override_name",
+                             developing_embryo.get_var( "specimen_name" ) );
+    here.add_item( examp, std::move( spawned_embryo ) );
+
+    return;
 }
 
 static void smoker_finalize( player &, const tripoint &examp, const time_point &start_time )
@@ -5862,7 +6627,7 @@ static void smoker_finalize( player &, const tripoint &examp, const time_point &
     }
 
     for( detached_ptr<item> &it : results ) {
-        items.insert( std::move( it ) );
+        here.add_item( examp, std::move( it ) );
     }
 
     here.furn_set( examp, next_smoker_type );
@@ -5879,6 +6644,19 @@ static void smoker_load_food( player &p, const tripoint &examp,
         p.add_msg_if_player( _( "You can't place more food while it's smoking." ) );
         return;
     }
+
+    // Already finished items have to be removed before adding more items for smoker to operate properly
+    map_stack items = here.i_at( examp );
+    for( item * const &it : items ) {
+        // Check for finished items (either has SMOKED flag, or is not smokable and not charcoal)
+        if( ( it->has_flag( flag_SMOKED ) && !it->has_flag( flag_SMOKABLE ) ) ||
+            ( !it->has_flag( flag_SMOKABLE ) && it->typeId() != itype_charcoal ) ) {
+            add_msg( _( "This rack already contains finished items." ) );
+            add_msg( _( "Remove them before loading the smoking rack again." ) );
+            return;
+        }
+    }
+
     // filter SMOKABLE food
     inventory inv = p.crafting_inventory();
     inv.remove_items_with( []( const item & it ) {
@@ -5889,7 +6667,7 @@ static void smoker_load_food( player &p, const tripoint &examp,
     } );
 
     uilist smenu;
-    smenu.text = _( "Load smoking rack with what kind of food?" );
+    smenu.text = _( "Load smoking rack with what kind of item?" );
     // count and ask for item to be placed ...
     std::list<std::string> names;
     std::vector<const item *> entries;
@@ -6093,6 +6871,84 @@ void iexamine::on_smoke_out( const tripoint &examp, const time_point &start_time
     if( here.furn( examp ) == furn_str_id( "f_smoking_rack_active" ) ||
         here.furn( examp ) == furn_str_id( "f_metal_smoking_rack_active" ) ) {
         smoker_finalize( g->u, examp, start_time );
+    }
+}
+
+void iexamine::cloning_vat_examine( player &p, const tripoint &examp )
+{
+    map &here = get_map();
+    const bool active = here.furn( examp ) == furn_str_id( "f_cloning_vat_active" );
+    map_stack items_here = here.i_at( examp );
+
+    if( !active ) {
+        // handle inactive vat: load or unload
+        uilist menu;
+        menu.text = "What to do with the cloning vat?";
+        if( items_here.size() > 0 ) {
+            menu.addentry( "Get contents" );
+            menu.query();
+            if( menu.ret != 0 ) {
+                return;
+            }
+
+            // get pointer to first item, ask user if they want to wield
+            item *it = *items_here.begin();
+            if( !query_yn( string_format( "Take %s from the cloning vat?", it->tname().c_str() ) ) ) {
+                return;
+            }
+            // remove from map, store in det
+            detached_ptr<item> det;
+            items_here.erase( items_here.begin(), &det );
+            p.wield( std::move( det ) );
+
+            return;
+        }
+
+        menu.addentry( "Begin incubation" );
+        menu.query();
+
+        if( menu.ret != 0 ) {
+            return;
+        }
+
+        cloning_vat_activate( p, examp );
+    } else {
+        // handle active vat: cancel process
+        if( items_here.size() == 0 ) {
+            return;
+        }
+
+        const std::string prompt = string_format( _( "Cancel incubation (%s left)" ),
+                                   to_string( time_duration::from_turns( ( *items_here.begin() )->get_counter() ) ) );
+
+        uilist menu;
+        menu.text = "What to do with the active cloning vat?";
+        menu.addentry( prompt );
+        menu.query();
+        if( menu.ret != 0 ) {
+            return;
+        }
+        // Ask using the item's name
+        if( !query_yn( _( "Cancel incubation process?  This will kill the specimen inside." ) ) ) {
+            return;
+        }
+
+        sounds::sound( examp, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+
+        if( items_here.size() > 0 ) {
+            items_here.erase( items_here.begin() );  // delete all items here
+        }
+
+        // cloning vat failure
+        const std::vector<itype_id> item_results{ itype_id( "arm" ), itype_id( "leg" ), itype_id( "fetus" ) };
+        const itype_id &chosen_id = random_entry( item_results );
+        detached_ptr<item> spawned_remains = item::spawn( chosen_id, calendar::turn, 1 );
+        detached_ptr<item> spawned_womb = item::spawn( itype_embryo_empty, calendar::turn, 1 );
+        spawned_womb->faults.emplace( fault_id( "fault_bionic_nonsterile" ) );
+        here.add_item( examp, std::move( spawned_womb ) );
+        here.add_item( examp, std::move( spawned_remains ) );
+
+        here.furn_set( examp, furn_str_id( "f_cloning_vat" ) );
     }
 }
 
@@ -6310,8 +7166,13 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
     bool f_check = false;
 
     for( const item * const &it : items_here ) {
-        if( it->is_food() ) {
+        const bool has_smokable_item = it->typeId() != itype_charcoal && it->has_flag( flag_SMOKABLE );
+        const bool has_removable_item = it->typeId() != itype_charcoal &&
+                                        it->typeId() != itype_fake_smoke_plume;
+        if( has_removable_item ) {
             f_check = true;
+        }
+        if( has_smokable_item ) {
             f_volume += it->volume();
         }
         if( active && it->typeId() == itype_fake_smoke_plume ) {
@@ -6326,7 +7187,27 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
     const bool full_portable = f_volume >= sm_rack::MAX_FOOD_VOLUME_PORTABLE;
     const auto remaining_capacity = sm_rack::MAX_FOOD_VOLUME - f_volume;
     const auto remaining_capacity_portable = sm_rack::MAX_FOOD_VOLUME_PORTABLE - f_volume;
-    const auto has_coal_in_inventory = p.charges_of( itype_charcoal ) > 0;
+
+    // Check for charcoal in inventory and nearby ground
+    int charcoal_nearby = 0;
+    for( const tripoint &pt : here.points_in_radius( examp, PICKUP_RANGE ) ) {
+        if( pt == examp ) {
+            continue;
+        }
+        for( const item *it : here.i_at( pt ) ) {
+            if( it->typeId() == itype_charcoal ) {
+                charcoal_nearby += it->charges;
+                if( charcoal_nearby > 0 ) {
+                    break;
+                }
+            }
+        }
+        if( charcoal_nearby > 0 ) {
+            break;
+        }
+    }
+    const auto has_coal_in_inventory = p.charges_of( itype_charcoal ) > 0 || charcoal_nearby > 0;
+
     const auto coal_charges = count_charges_in_list( &*itype_charcoal, items_here );
     const auto need_charges = get_charcoal_charges( f_volume );
     const bool has_coal = coal_charges > 0;
@@ -6340,18 +7221,18 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
 
     if( !active ) {
         smenu.addentry_desc( 1, !empty && has_enough_coal, 'l',
-                             empty ?  _( "Light up and smoke food… insert some food for smoking first" ) :
+                             empty ?  _( "Light up and start smoking… insert some items for smoking first" ) :
                              !has_enough_coal ? string_format(
-                                 _( "Light up and smoke food… need extra %d charges of charcoal" ),
+                                 _( "Light up and start smoking… need extra %d charges of charcoal" ),
                                  need_charges - coal_charges ) :
-                             _( "Light up and smoke food" ),
+                             _( "Light up and start smoking" ),
                              _( "Light up the smoking rack and start smoking.  Smoking will take about 6 hours." ) );
         if( portable ) {
             smenu.addentry_desc( 2, !full_portable, 'f',
-                                 full_portable ? _( "Insert food for smoking… smoking rack is full" ) :
-                                 string_format( _( "Insert food for smoking… remaining capacity is %s %s" ),
+                                 full_portable ? _( "Insert items for smoking… smoking rack is full" ) :
+                                 string_format( _( "Insert items for smoking… remaining capacity is %s %s" ),
                                                 format_volume( remaining_capacity_portable ), volume_units_abbr() ),
-                                 _( "Fill the smoking rack with raw meat, fish or sausages for smoking or fruit or vegetable or smoked meat for drying." ) );
+                                 _( "Fill the smoking rack with raw meat, fish, sausages, hides, or other smokable items." ) );
 
             smenu.addentry_desc( 8, !active, 'z',
                                  active ? _( "You cannot disassemble this smoking rack while it is active!" ) :
@@ -6359,14 +7240,14 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
 
         } else {
             smenu.addentry_desc( 2, !full, 'f',
-                                 full ? _( "Insert food for smoking… smoking rack is full" ) :
-                                 string_format( _( "Insert food for smoking… remaining capacity is %s %s" ),
+                                 full ? _( "Insert items for smoking… smoking rack is full" ) :
+                                 string_format( _( "Insert items for smoking… remaining capacity is %s %s" ),
                                                 format_volume( remaining_capacity ), volume_units_abbr() ),
-                                 _( "Fill the smoking rack with raw meat, fish or sausages for smoking or fruit or vegetable or smoked meat for drying." ) );
+                                 _( "Fill the smoking rack with raw meat, fish, sausages, hides, or other smokable items." ) );
         }
 
         if( f_check ) {
-            smenu.addentry( 4, f_check, 'e', _( "Remove food from smoking rack" ) );
+            smenu.addentry( 4, f_check, 'e', _( "Remove items from smoking rack" ) );
         }
 
         smenu.addentry_desc( 3, has_coal_in_inventory, 'r',
@@ -6455,8 +7336,10 @@ void iexamine::smoker_options( player &p, const tripoint &examp )
         case 5: {
             //remove charcoal
             for( map_stack::iterator it = items_here.begin(); it != items_here.end(); ) {
-                if( ( rem_f_opt && ( *it )->is_food() ) || ( !rem_f_opt &&
-                        ( ( *it )->typeId() == itype_charcoal ) ) ) {
+                // Remove everything except charcoal when removing food, or only charcoal when removing charcoal
+                const bool should_remove = ( rem_f_opt && ( *it )->typeId() != itype_charcoal ) ||
+                                           ( !rem_f_opt && ( *it )->typeId() == itype_charcoal );
+                if( should_remove ) {
                     // get handling cost before the item reference is invalidated
                     const int handling_cost = -p.item_handling_cost( **it );
 
@@ -6658,6 +7541,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "water_source", &iexamine::water_source },
             { "clean_water_source", &iexamine::clean_water_source },
             { "liquid_source", &iexamine::liquid_source },
+            { "fluid_grid_fixture", &iexamine::fluid_grid_fixture },
             { "reload_furniture", &iexamine::reload_furniture },
             { "use_furn_fake_item", &iexamine::use_furn_fake_item },
             { "curtains", &iexamine::curtains },
@@ -6676,6 +7560,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "ledge", &iexamine::ledge },
             { "autodoc", &iexamine::autodoc },
             { "quern_examine", &iexamine::quern_examine },
+            { "cloning_vat_examine", &iexamine::cloning_vat_examine },
             { "smoker_options", &iexamine::smoker_options },
             { "open_safe", &iexamine::open_safe },
             { "workbench", &iexamine::workbench },

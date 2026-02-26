@@ -212,7 +212,8 @@
     "bashing": 6,
     "material": [ "bone" ],
     "symbol": ";",
-    "color": "white"
+    "color": "white",
+    "flags": [ "MISSION_ITEM" ]
   },
   {
     "id": "flamable_arrow",
@@ -468,7 +469,7 @@
     "use_action": "MIND_SPLICER",
     "volume": "1 L",
     "weight": "600 g",
-    "flags": [ "TRADER_AVOID" ]
+    "flags": [ "TRADER_AVOID", "MISSION_ITEM" ]
   },
   {
     "id": "permanent_marker",
@@ -564,7 +565,7 @@
     "symbol": ";",
     "color": "light_gray",
     "qualities": [ [ "HAMMER", 1 ] ],
-    "flags": [ "DURABLE_MELEE" ]
+    "flags": [ "DURABLE_MELEE", "MISSION_ITEM" ]
   },
   {
     "id": "sarcophagus_access_code",
@@ -580,7 +581,8 @@
     "bashing": 1,
     "material": "paper",
     "symbol": ";",
-    "color": "white"
+    "color": "white",
+    "flags": [ "MISSION_ITEM" ]
   },
   {
     "id": "small_space_heater",
@@ -888,5 +890,43 @@
     "price": "250 USD",
     "price_postapoc": "1 USD",
     "material": [ "iron", "glass" ]
+  },
+  {
+    "id": "embryo",
+    "type": "TOOL",
+    "looks_like": "pet_carrier",
+    "weight": "60 kg",
+    "volume": "60 L",
+    "price": "2000 USD",
+    "price_postapoc": "5 USD",
+    "symbol": "=",
+    "color": "dark_gray",
+    "//": "used by the cloning vat and adds a var called 'place_monster_override'",
+    "name": { "str": "artificial womb" },
+    "description": "This artificial womb holds a nearly fully grown clone, nurtured from extracted DNA within a cloning vat.  Activate it, and the organism will swiftly complete its development and emerge ready to function.  Ideal for quickly repopulating herds, restoring endangered species, or deploying engineered creatures with minimal wait.",
+    "flags": [ "RADIO_MODABLE", "ALLOWS_REMOTE_USE" ],
+    "use_action": {
+      "type": "place_monster",
+      "monster_id": "debug_mon",
+      "friendly_msg": "The cloned creature seems to enjoy your presence.",
+      "hostile_msg": "The cloned creature seems aloof to you!",
+      "difficulty": 10,
+      "moves": 250,
+      "skills": [ "survival" ]
+    }
+  },
+  {
+    "id": "embryo_empty",
+    "type": "TOOL",
+    "looks_like": "pet_carrier",
+    "weight": "60 kg",
+    "volume": "60 L",
+    "price": "2000 USD",
+    "price_postapoc": "5 USD",
+    "symbol": "=",
+    "color": "dark_gray",
+    "//": "used by the cloning vat and adds a var called 'place_monster_override'",
+    "name": { "str": "artificial womb" },
+    "description": "A single-use vessel for transporting clones safely from the cloning vat to the field.  Currently empty, if sufficiently sterile it can be used by a cloning vat to grow a creature from a viable DNA sample. "
   }
 ]

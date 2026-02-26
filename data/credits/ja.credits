@@ -1,0 +1,25 @@
+# 1行の最大長は78文字です。以下の行は参照用
+# 長い行は自動的に折り返されます
+##############################################################################
+<color_white>プロジェクト管理者:</color>
+<color_yellow>Coolthulhu</color>
+
+<color_white>オリジナルの作者:</color>
+<color_yellow>Whales, TheDarklingWolf, GlyphGryph</color> (<color_dark_gray>引退</color>)    
+<color_yellow>KevinGranade</color> (<color_dark_gray>DDAフォークより</color>)
+
+<color_white>スペシャルサンクス:</color>
+<color_yellow>Coolthulhu</color> - プロジェクトの再スタートをした方。
+<color_yellow>貢献者達</color> - 開発に協力してくれた方々。
+<color_yellow>翻訳者達</color> - 翻訳に協力してくれた方々。
+<color_yellow>コミュニティ</color> - 私たちへのサポートをしてくれた方々。
+<color_yellow>SomeDeadGuy</color> - BNおよびDDA向けに優れたタイルセットを提供してくれた方。
+<color_yellow>Cataclysm: Dark Days Ahead 開発チーム</color> - フォークの堅実な基盤を提供、および支援をしてくれた方々。
+
+<color_white>貢献者一覧は以下のリンクをご確認ください。:</color>
+<color_cyan>https://github.com/cataclysmbn/Cataclysm-BN/contributors</color>
+
+<color_light_cyan>Cataclysm</color>: <color_light_blue>Bright Nights</color> は <color_white>CC-BY-SA 3.0</color>ライセンスの下でリリースされています。:
+<color_cyan>https://creativecommons.org/licenses/by-sa/3.0/</color>
+
+<color_white>Cataclysm: Bright Night は Cataclysm: Dark Days Aheadのフォークとして開始されました。</color>

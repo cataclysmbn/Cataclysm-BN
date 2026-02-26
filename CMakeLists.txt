@@ -26,7 +26,14 @@ option(SOUND "Support for in-game sounds & music." "OFF")
 option(BACKTRACE "Support for printing stack backtraces on crash" "ON")
 option(LIBBACKTRACE "Print backtrace with libbacktrace." "OFF")
 option(USE_XDG_DIR "Use XDG directories for save and config files." "OFF")
-option(USE_HOME_DIR "Use user's home directory for save and config files." "ON")
+# On Windows, default to current directory for backwards compatibility
+# On other platforms, use home directory
+if(WIN32)
+    set(USE_HOME_DIR_DEFAULT OFF)
+else()
+    set(USE_HOME_DIR_DEFAULT ON)
+endif()
+option(USE_HOME_DIR "Use user's home directory for save and config files." ${USE_HOME_DIR_DEFAULT})
 cmake_dependent_option(USE_PREFIX_DATA_DIR
     "Use UNIX system directories for game data in release build." ON
     "UNIX" OFF
@@ -41,6 +48,13 @@ option(USE_UNITY_BUILD "Use unity build." "OFF")
 option(JSON_FORMAT "Build JSON formatter" "OFF")
 option(CATA_CCACHE "Try to find and build with ccache" "ON")
 option(TESTS "Compile Cata's tests" "ON")
+find_program(DENO_BINARY deno)
+if(DENO_BINARY)
+    set(LUA_DOCS_DEFAULT ON)
+else()
+    set(LUA_DOCS_DEFAULT OFF)
+endif()
+option(LUA_DOCS_ON_BUILD "Generate Lua reference/annotations after building cataclysm-bn-tiles (requires deno)." ${LUA_DOCS_DEFAULT})
 option(CATA_CLANG_TIDY_PLUGIN "Build Cata's custom clang-tidy plugin" "OFF")
 option(USE_TRACY "Use Tracy profiler" "OFF")
 set(CATA_CLANG_TIDY_INCLUDE_DIR "" CACHE STRING
@@ -74,8 +88,9 @@ include(GetGitRevisionDescription)
 git_describe(GIT_VERSION --tags --always --match "[0-9A-Z]*.[0-9A-Z]*")
 if (NOT "${GIT_VERSION}" MATCHES "GIT-NOTFOUND")
     string(REPLACE "-NOTFOUND" "" GIT_VERSION ${GIT_VERSION})
+    string(TIMESTAMP _timestamp %Y-%m-%d-%H%M)
     file(WRITE ${CMAKE_SOURCE_DIR}/src/version.h
-         "// NOLINT(cata-header-guard)\n\#define VERSION \"${GIT_VERSION}\"\n")
+         "// NOLINT(cata-header-guard)\n\#define VERSION \"${GIT_VERSION}\"\n\#define BUILD_TIMESTAMP \"${_timestamp}\"\n")
     message(STATUS "${PROJECT_NAME} build version is: ${GIT_VERSION}")
     add_definitions(-DGIT_VERSION)
 
@@ -84,12 +99,11 @@ if (NOT "${GIT_VERSION}" MATCHES "GIT-NOTFOUND")
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         OUTPUT_VARIABLE _sha1
         OUTPUT_STRIP_TRAILING_WHITESPACE)
-    string(TIMESTAMP _timestamp %Y-%m-%d-%H%M)
     file(WRITE VERSION.txt "\
 build type: ${BUILD_PRESET_NAME}\n\
 build number: ${_timestamp}\n\
 commit sha: ${_sha1}\n\
-commit url: https://github.com/cataclysmbnteam/Cataclysm-BN/commit/${_sha1}"
+commit url: https://github.com/cataclysmbn/Cataclysm-BN/commit/${_sha1}"
     )
 endif ()
 
@@ -256,6 +270,10 @@ if (NOT MSVC)
     # Add debug symbols for non-release builds or when backtrace is enabled
     if (BACKTRACE OR NOT RELEASE)
         set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -g1")
+        # Use debug prefix map for ccache compatibility with git worktrees
+        # see https://ccache.dev/manual/latest.html#_compiling_in_different_directories
+        file(RELATIVE_PATH REL_SRC_PATH "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}")
+        set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -ffile-prefix-map=${REL_SRC_PATH}=.")
     endif()
     # Compact the whitespace in the warning string
     string(REGEX REPLACE "[\t ]+" " " CATA_WARNINGS "${CATA_WARNINGS}")
@@ -487,10 +505,20 @@ endif ()
 
 find_program(CCACHE_FOUND ccache)
 if (CCACHE_FOUND AND CATA_CCACHE)
-    set(CMAKE_C_COMPILER_LAUNCHER ccache)
-    set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
-    set(CMAKE_C_LINKER_LAUNCHER ccache)
-    set(CMAKE_CXX_LINKER_LAUNCHER ccache)
+    # Configure ccache for git worktrees
+    # Set base_dir to make paths relative, enabling cache sharing across worktrees
+    # see https://ccache.dev/manual/latest.html#_configuration_options
+    set(CATA_CCACHE_CMD
+        "${CMAKE_COMMAND}" -E env
+        "CCACHE_BASEDIR=${CMAKE_SOURCE_DIR}"
+        "CCACHE_NOHASHDIR=true"
+        "${CCACHE_FOUND}"
+    )
+
+    set(CMAKE_C_COMPILER_LAUNCHER   ${CATA_CCACHE_CMD})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CATA_CCACHE_CMD})
+    set(CMAKE_C_LINKER_LAUNCHER     ${CATA_CCACHE_CMD})
+    set(CMAKE_CXX_LINKER_LAUNCHER   ${CATA_CCACHE_CMD})
 endif ()
 
 add_subdirectory(src)

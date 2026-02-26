@@ -16,6 +16,8 @@
 #include "character_id.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "clzones.h"
 #include "coordinate_conversions.h"
 #include "damage.h"
@@ -2627,6 +2629,37 @@ void npc::die( Creature *nkiller )
     place_corpse();
 }
 
+void npc::erase()
+{
+    if( dead ) {
+        return;
+    }
+    if( in_vehicle ) {
+        g->m.unboard_vehicle( pos(), true );
+    }
+    if( is_mounted() ) {
+        monster *critter = mounted_creature.get();
+        critter->remove_effect( effect_ridden );
+        critter->mounted_player = nullptr;
+        critter->mounted_player_id = character_id();
+    }
+    if( my_fac ) {
+        if( !is_fake() && !is_hallucination() ) {
+            if( my_fac->members.size() == 1 ) {
+                for( auto elem : inv_dump() ) {
+                    elem->remove_owner();
+                    elem->remove_old_owner();
+                }
+            }
+            my_fac->remove_member( getID() );
+        }
+    }
+    dead = true;
+    g->remove_npc_follower( getID() );
+    overmap_buffer.remove_npc( getID() );
+    g->cleanup_dead();
+}
+
 std::string npc_attitude_id( npc_attitude att )
 {
     static const std::map<npc_attitude, std::string> npc_attitude_ids = {
@@ -2856,6 +2889,13 @@ void npc::on_load()
     if( has_trait( trait_HALLUCINATION ) ) {
         hallucination = true;
     }
+
+    cata::run_hooks( "on_creature_loaded", [this]( sol::table & params ) {
+        params["creature"] = this;
+    } );
+    cata::run_hooks( "on_npc_loaded", [this]( sol::table & params ) {
+        params["npc"] = this;
+    } );
 }
 
 void npc_chatbin::add_new_mission( mission *miss )

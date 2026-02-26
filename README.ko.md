@@ -3,7 +3,7 @@
 <header align="center">
   <a><img src="docs/en/contribute/img/readme-title.png" title="우측 위부터 시계방향으로 Chaosvolt (x2), ExecutorBill, scarf005의 스크린샷"></a>
 
-[![en][icon-en]][en] [![ko][icon-ko]][ko]
+[![en][icon-en]][en] [![ko][icon-ko]][ko] [![ja][icon-ja]][ja]
 
 </header>
 
@@ -11,6 +11,8 @@
 [icon-en]: https://img.shields.io/badge/lang-en-red?style=flat-square
 [ko]: ./README.ko.md
 [icon-ko]: https://img.shields.io/badge/lang-ko-orange?style=flat-square
+[ja]: ./README.ja.md
+[icon-ja]: https://img.shields.io/badge/lang-ja-green?style=flat-square
 
 카타클리즘: 밝은 밤은 포스트 아포칼립스 세계에서 벌어지는 공상과학 로그라이크입니다.
 
@@ -37,15 +39,15 @@
 
 [![Source Code][source-badge]][source] [![Zip Archive][clone-badge]][clone]
 
-[stable-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases/latest "안정판 실행 파일 내려받기"
-[stable-releases-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=success&label=안정판
-[all-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases?q=prerelease%3Atrue&expanded=true "실험판 실행 파일 내려받기"
-[all-releases-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=important&label=최신%20실험판&include_prereleases&sort=date
-[experimental-releases]: https://github.com/cataclysmbnteam/Cataclysm-BN/releases/tag/experimental
-[experimental-badge]: https://img.shields.io/github/v/release/cataclysmbnteam/Cataclysm-BN?style=for-the-badge&color=salmon&label=Experimental%20Release&include_prereleases&sort=date
-[source]: https://github.com/cataclysmbnteam/Cataclysm-BN/archive/master.zip "소스 코드를 .zip 아카이브로 다운로드할 수 있습니다"
+[stable-releases]: https://github.com/cataclysmbn/Cataclysm-BN/releases/latest "안정판 실행 파일 내려받기"
+[stable-releases-badge]: https://img.shields.io/github/v/release/cataclysmbn/Cataclysm-BN?style=for-the-badge&color=success&label=안정판
+[all-releases]: https://github.com/cataclysmbn/Cataclysm-BN/releases?q=prerelease%3Atrue&expanded=true "실험판 실행 파일 내려받기"
+[all-releases-badge]: https://img.shields.io/github/v/release/cataclysmbn/Cataclysm-BN?style=for-the-badge&color=important&label=최신%20실험판&include_prereleases&sort=date
+[experimental-releases]: https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/experimental
+[experimental-badge]: https://img.shields.io/github/v/release/cataclysmbn/Cataclysm-BN?style=for-the-badge&color=salmon&label=Experimental%20Release&include_prereleases&sort=date
+[source]: https://github.com/cataclysmbn/Cataclysm-BN/archive/master.zip "소스 코드를 .zip 아카이브로 다운로드할 수 있습니다"
 [source-badge]: https://img.shields.io/badge/ZIP%20아카이브로%20내려받기-black?style=for-the-badge&logo=github
-[clone]: https://github.com/cataclysmbnteam/Cataclysm-BN/ "GitHub 저장소에서 클론할 수 있습니다"
+[clone]: https://github.com/cataclysmbn/Cataclysm-BN/ "GitHub 저장소에서 클론할 수 있습니다"
 [clone-badge]: https://img.shields.io/badge/저장소에서%20클론하기-black?style=for-the-badge&logo=github
 
 ## 빌드하기
@@ -85,7 +87,7 @@
 [![Discord](https://img.shields.io/discord/830879262763909202?style=for-the-badge&logo=discord&label=공식%20디스코드%20서버)][discord]
 [![Discussions](https://img.shields.io/badge/CDDA%20모딩%20커뮤니티-green?style=for-the-badge&logo=discord)][modding]
 
-[discussion]: https://github.com/cataclysmbnteam/cataclysm-BN/discussions
+[discussion]: https://github.com/cataclysmbn/cataclysm-BN/discussions
 [discord]: https://discord.gg/XW7XhXuZ89
 [modding]: https://discord.gg/B5q4XCa "비공식 DDA모딩 커뮤니티에도 BN 채널이 있습니다."
 [docs]: https://docs.cataclysmbn.org "공식 BN 개발문서"
@@ -109,7 +111,7 @@
 #### 버그를 발견했어요. 어떻게 해야 하나요?
 
 디버그 메뉴에서
-[버그 리포트](https://github.com/cataclysmbnteam/cataclysm-BN/issues/new?template=bug_report.yml)를
+[버그 리포트](https://github.com/cataclysmbn/cataclysm-BN/issues/new?template=bug_report.yml)를
 제출할 수 있습니다.
 
 게임 내에서 `Submit a bug report on github`를 실행하여 이슈를 제출할 수 있습니다.
@@ -124,5 +126,5 @@
 
 #### 제안을 하고 싶어요. 어떻게 해야 하나요?
 
-[토론 페이지](https://github.com/cataclysmbnteam/cataclysm-BN/discussions/categories/ideas)에서
+[토론 페이지](https://github.com/cataclysmbn/cataclysm-BN/discussions/categories/ideas)에서
 아이디어를 제안할 수 있습니다. 새 기능, 포팅 요청, 모드 아이디어, 무엇이든지요!

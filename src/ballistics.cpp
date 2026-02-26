@@ -6,6 +6,8 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <ranges>
+#include <array>
 #include <string>
 #include <utility>
 #include <vector>
@@ -14,6 +16,10 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#if defined(TILES)
+#   include "cata_tiles.h"
+#   include "sdltiles.h"
+#endif // TILES
 #include "cata_utility.h" // for normal_cdf
 #include "creature.h"
 #include "damage.h"
@@ -25,6 +31,7 @@
 #include "item.h"
 #include "line.h"
 #include "map.h"
+#include "map_iterator.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
@@ -45,21 +52,28 @@ static const ammo_effect_str_id ammo_effect_BURST( "BURST" );
 static const ammo_effect_str_id ammo_effect_DRAW_AS_LINE( "DRAW_AS_LINE" );
 static const ammo_effect_str_id ammo_effect_HEAVY_HIT( "HEAVY_HIT" );
 static const ammo_effect_str_id ammo_effect_JET( "JET" );
+static const ammo_effect_str_id ammo_effect_NET_TANGLE( "NET_TANGLE" );
 static const ammo_effect_str_id ammo_effect_MUZZLE_SMOKE( "MUZZLE_SMOKE" );
 static const ammo_effect_str_id ammo_effect_NO_EMBED( "NO_EMBED" );
 static const ammo_effect_str_id ammo_effect_NO_ITEM_DAMAGE( "NO_ITEM_DAMAGE" );
 static const ammo_effect_str_id ammo_effect_NO_OVERSHOOT( "NO_OVERSHOOT" );
 static const ammo_effect_str_id ammo_effect_NO_PENETRATE_OBSTACLES( "NO_PENETRATE_OBSTACLES" );
+static const auto ammo_effect_NO_DAMAGE = ammo_effect_str_id( "NO_DAMAGE" );
 static const ammo_effect_str_id ammo_effect_NULL_SOURCE( "NULL_SOURCE" );
 static const ammo_effect_str_id ammo_effect_SHATTER_SELF( "SHATTER_SELF" );
 static const ammo_effect_str_id ammo_effect_STREAM( "STREAM" );
 static const ammo_effect_str_id ammo_effect_STREAM_BIG( "STREAM_BIG" );
 static const ammo_effect_str_id ammo_effect_TANGLE( "TANGLE" );
+static const ammo_effect_str_id ammo_effect_THROWN( "THROWN" );
+
+static const efftype_id effect_tied( "tied" );
 
 static const efftype_id effect_bounced( "bounced" );
 
 static const std::string flag_LIQUID( "LIQUID" );
 static const std::string flag_THIN_OBSTACLE( "THIN_OBSTACLE" );
+
+static const flag_id flag_FLY_STRAIGHT( "FLY_STRAIGHT" );
 
 namespace
 {
@@ -141,7 +155,8 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
         // if they aren't friendly they will try and break out of the net/bolas/lasso
         // players and NPCs just get the downed effect, and item is dropped.
         // TODO: storing the item on player until they recover from downed
-        if( proj.has_effect( ammo_effect_TANGLE ) && mon_there ) {
+        if( ( proj.has_effect( ammo_effect_TANGLE ) || proj.has_effect( ammo_effect_NET_TANGLE ) ) &&
+            mon_there ) {
             do_drop = false;
         }
         if( proj.has_effect( ammo_effect_ACT_ON_RANGED_HIT ) ) {
@@ -178,6 +193,59 @@ auto blood_trail_len( int damage ) -> size_t
         return 1;
     }
     return 0;
+}
+
+static bool can_be_tangled_by_net( const monster &z )
+{
+    static const species_id species_fish( "FISH" );
+    static const species_id species_mollusk( "MOLLUSK" );
+    static const species_id species_robot( "ROBOT" );
+    static const bodytype_id bodytype_snake( "snake" );
+    static const bodytype_id bodytype_blob( "blob" );
+    return !( z.type->in_species( species_fish ) || z.type->in_species( species_mollusk ) ||
+              z.type->in_species( species_robot ) || z.type->bodytype == bodytype_snake ||
+              z.type->bodytype == bodytype_blob );
+}
+
+static void tie_monster_with_net( monster &z )
+{
+    if( z.has_effect( effect_tied ) || !can_be_tangled_by_net( z ) ) {
+        return;
+    }
+    detached_ptr<item> net_drop = item::spawn( itype_id( "net" ), calendar::turn, 1 );
+    if( !net_drop ) {
+        return;
+    }
+    z.add_effect( effect_tied, 1_turns );
+    z.set_tied_item( std::move( net_drop ) );
+}
+
+static void apply_net_tangle_aoe( const tripoint &center )
+{
+    map &here = get_map();
+    static constexpr std::array<tripoint, 9> net_offsets = {
+        tripoint_zero,
+        tripoint_west,
+        tripoint_east,
+        tripoint_north,
+        tripoint_south,
+        tripoint_west + tripoint_north,
+        tripoint_west + tripoint_south,
+        tripoint_east + tripoint_north,
+        tripoint_east + tripoint_south
+    };
+
+    std::ranges::for_each( net_offsets, [&]( const tripoint & offset ) {
+        const tripoint pt = center + offset;
+        if( !here.inbounds( pt ) ) {
+            return;
+        }
+        if( Creature *cre = g->critter_at( pt, true ) ) {
+            if( monster *mon = dynamic_cast<monster *>( cre ) ) {
+                tie_monster_with_net( *mon );
+            }
+        }
+    } );
 }
 } // namespace
 
@@ -242,9 +310,10 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 
     projectile &proj = attack.proj;
 
-    const bool stream = proj.has_effect( ammo_effect_STREAM ) ||
+    const auto stream = proj.has_effect( ammo_effect_STREAM ) ||
                         proj.has_effect( ammo_effect_STREAM_BIG ) ||
                         proj.has_effect( ammo_effect_JET );
+    const auto no_damage = proj.has_effect( ammo_effect_NO_DAMAGE );
     const char bullet = stream ? '#' : '*';
     const bool no_item_damage = proj.has_effect( ammo_effect_NO_ITEM_DAMAGE );
     const bool do_draw_line = proj.has_effect( ammo_effect_DRAW_AS_LINE ) ||
@@ -254,6 +323,33 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
     const bool is_bullet = proj_arg.speed >= 200 &&
                            !proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES );
 
+    const auto is_thrown = proj.has_effect( ammo_effect_THROWN );
+    const auto *thrown_item = proj.get_drop();
+    auto custom_bullet_sprite = std::string{};
+#if defined(TILES)
+    if( tilecontext ) {
+        const auto set_sprite_from_lookup = [&]( const std::string & candidate, TILE_CATEGORY category ) {
+            if( !custom_bullet_sprite.empty() ) { return; }
+            auto lookup = tilecontext->find_tile_looks_like( candidate, category );
+            if( lookup ) { custom_bullet_sprite = lookup->id(); }
+        };
+
+        const auto set_sprite_from_item = [&]( const item & it, const bool allow_item_fallback ) {
+            const auto id = it.typeId().str();
+            set_sprite_from_lookup( "animation_bullet_" + id, C_BULLET );
+            if( allow_item_fallback ) { set_sprite_from_lookup( id, C_ITEM ); }
+        };
+
+        if( thrown_item ) { set_sprite_from_item( *thrown_item, is_thrown ); }
+
+        if( custom_bullet_sprite.empty() && source_weapon ) {
+            const auto ammo_type = source_weapon->ammo_current();
+            if( !ammo_type.is_null() ) {
+                set_sprite_from_lookup( "animation_bullet_" + ammo_type.str(), C_BULLET );
+            }
+        }
+    }
+#endif // TILES
 
     // If we were targetting a tile rather than a monster, don't overshoot
     // Unless the target was a wall, then we are aiming high enough to overshoot
@@ -388,7 +484,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
         if( do_animation && !do_draw_line ) {
             // TODO: Make this draw thrown item/launched grenade/arrow
             if( projectile_skip_current_frame >= projectile_skip_calculation ) {
-                g->draw_bullet( tp, static_cast<int>( i ), trajectory, bullet );
+                g->draw_bullet( tp, static_cast<int>( i ), trajectory, bullet, custom_bullet_sprite );
                 projectile_skip_current_frame = 0;
                 // If we missed recalculate the skip factor so they spread out.
                 projectile_skip_calculation =
@@ -513,7 +609,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             const float dmg_before_penetration = proj.impact.total_damage();
             here.shoot( source, tp, proj, !no_item_damage && tp == target );
             const float dmg_after_penetration = proj.impact.total_damage();
-            has_momentum = dmg_after_penetration > 0;
+            has_momentum = dmg_after_penetration > 0 || ( no_damage && here.passable( tp ) );
             // We lost momentum from hitting something, penalize range.
             if( dmg_before_penetration > dmg_after_penetration ) {
                 apply_overpenetration_penalty( is_projectile_modify_overpenetration );
@@ -526,15 +622,16 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             break;
         }
     }
-    // Done with the trajectory!
     if( do_animation && do_draw_line && traj_len > 2 ) {
         trajectory.erase( trajectory.begin() );
         trajectory.resize( traj_len-- );
+        auto should_rotate = is_thrown && thrown_item &&
+                             !thrown_item->has_flag( flag_FLY_STRAIGHT );
         draw_line_of( {
             .p = tp,
             .points = trajectory,
-            .bullet_0deg = "animation_bullet_normal_0deg",
-            .bullet_45deg = "animation_bullet_normal_45deg",
+            .sprite = custom_bullet_sprite,
+            .rotate = should_rotate,
         } );
     }
 
@@ -543,6 +640,10 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
     }
 
     drop_or_embed_projectile( attack );
+
+    if( proj.has_effect( ammo_effect_NET_TANGLE ) ) {
+        apply_net_tangle_aoe( tp );
+    }
 
     apply_ammo_effects( tp, proj.get_ammo_effects(), origin );
     const auto &expl = proj.get_custom_explosion();

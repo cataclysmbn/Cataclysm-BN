@@ -76,6 +76,7 @@ enum m_flag : int {
     MF_KEENNOSE,            //Keen sense of smell
     MF_STUMBLES,            // Stumbles in its movement
     MF_WARM,                // Warm blooded
+    MF_NEMESIS,             // Is a nemesis monster
     MF_NOHEAD,              // Headshots not allowed!
     MF_HARDTOSHOOT,         // It's one size smaller for ranged attacks, no less then creature_size::tiny
     MF_GRABS,               // Its attacks may grab us!
@@ -119,7 +120,8 @@ enum m_flag : int {
     MF_BONES,               // May produce bones and sinews when butchered; if combined with POISON flag, tainted bones, if combined with HUMAN, human bones
     MF_FAT,                 // May produce fat when butchered; if combined with POISON flag, tainted fat
     MF_CONSOLE_DESPAWN,     // Despawns when a nearby console is properly hacked
-    MF_IMMOBILE,            // Doesn't move (e.g. turrets)
+    MF_IMMOBILE,            // Doesn't move & doesn't use non-special attacks (e.g. turrets)
+    MF_STATIONARY,          // Stationary, but will fight back (e.g. training dummies)
     MF_ID_CARD_DESPAWN,     // Despawns when a science ID card is used on a nearby console
     MF_RIDEABLE_MECH,       // A rideable mech that is immobile until ridden.
     MF_CARD_OVERRIDE,        // Not a mech, but can be converted to friendly using an ID card in the same way that mechs can.
@@ -196,6 +198,10 @@ enum m_flag : int {
     MF_PROJECTILE_RESISTANT_3,      // This monster has a torso and limbs that are extremely resistant to projectiles, with a default x0.5 damage mult cap.
     MF_PROJECTILE_RESISTANT_4,      // This monster has a torso and limbs that are almost immune to projectiles, with a default x0.2 damage mult cap.
     MF_VOLATILE,            // This monster tends to explode if hit by fire or bullets, fire weapons will always catch them on fire.
+    MF_CANT_CLONE,            // This monster can't be recreated using cloning vats, genome samples will fail if used on it.
+    MF_MOUNTABLE_STAIRS,     // When ridden, this monster can go up or down stairs and climb.
+    MF_MOUNTABLE_OBSTACLES,     // When ridden, this monster can pass obstacles like fences or doorways when mounted.
+    MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };
@@ -473,5 +479,4 @@ struct mtype {
 };
 
 mon_effect_data load_mon_effect_data( const JsonObject &e );
-
 

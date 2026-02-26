@@ -1,9 +1,9 @@
 {
   "imports": {
-    "lume/": "https://deno.land/x/lume@v3.0.8/",
-    "lume/jsx-runtime": "https://deno.land/x/ssx@v0.1.12/jsx-runtime.ts",
-    "wiki/": "https://deno.land/x/lume_theme_simple_wiki@v0.14.3/",
-    "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.12.5/"
+    "lume/": "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.4/",
+    "lume/jsx-runtime": "https://cdn.jsdelivr.net/gh/oscarotero/ssx@0.1.14/jsx-runtime.ts",
+    "wiki/": "https://raw.githubusercontent.com/lumeland/theme-simple-wiki/6b99ddbdc006da13a91dcd71fc667448a0751ecc/",
+    "lume/cms/": "https://cdn.jsdelivr.net/gh/lumeland/cms@0.14.9/"
   },
   "lock": false,
   "tasks": {
@@ -11,8 +11,14 @@
       "description": "serve local documentation site in your browser",
       "command": "deno task lume -s"
     },
-    "lume": "echo \"import 'lume/cli.ts'\" | deno run -A -",
-    "build": "deno task lume",
+    "lume": {
+      "description": "Run Lume command",
+      "command": "deno run -P=lume lume/cli.ts"
+    },
+    "build": {
+      "description": "Build the site for production",
+      "command": "deno task lume"
+    },
     "cms": "deno task lume cms"
   },
   "fmt": {
@@ -35,8 +41,42 @@
   ],
   "lint": {
     "plugins": [
-      "https://deno.land/x/lume@v3.0.8/lint.ts"
+      "https://cdn.jsdelivr.net/gh/lumeland/lume@3.1.4/lint.ts"
     ],
-    "rules": { "exclude": ["no-unversioned-import", "no-import-prefix"] }
+    "rules": {
+      "exclude": [
+        "no-unversioned-import",
+        "no-import-prefix"
+      ]
+    }
+  },
+  "permissions": {
+    "lume": {
+      "read": true,
+      "write": [
+        "./"
+      ],
+      "import": [
+        "cdn.jsdelivr.net:443",
+        "jsr.io:443",
+        "deno.land:443",
+        "esm.sh:443",
+        "raw.githubusercontent.com:443"
+      ],
+      "net": [
+        "0.0.0.0",
+        "cdn.jsdelivr.net:443",
+        "data.jsdelivr.com:443",
+        "jsr.io:443",
+        "deno.land:443",
+        "esm.sh:443",
+        "registry.npmjs.org:443",
+        "raw.githubusercontent.com:443"
+      ],
+      "env": true,
+      "run": true,
+      "ffi": true,
+      "sys": true
+    }
   }
 }

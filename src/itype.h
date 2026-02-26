@@ -32,6 +32,12 @@ class Item_factory;
 class item;
 class JsonObject;
 class JsonIn;
+class lua_iwieldable_actor;
+class lua_iwearable_actor;
+class lua_iequippable_actor;
+class lua_istate_actor;
+class lua_imelee_actor;
+class lua_iranged_actor;
 class player;
 class relic;
 struct tripoint;
@@ -950,6 +956,7 @@ struct itype {
 
         std::map<quality_id, int> qualities; //Tool quality indicators
         std::map<std::string, std::string> properties;
+        float crafting_speed_modifier = 1.0f;
 
         // A list of conditional names, in order of ascending priority.
         std::vector<conditional_name> conditional_names;
@@ -963,6 +970,14 @@ struct itype {
 
         /** Action to take BEFORE the item is placed on map. If it returns non-zero, item won't be placed. */
         use_function drop_action;
+
+        /** Lua callback actors (non-owning, owned by Item_factory) */
+        const lua_iwieldable_actor *iwieldable_callbacks = nullptr;
+        const lua_iwearable_actor *iwearable_callbacks = nullptr;
+        const lua_iequippable_actor *iequippable_callbacks = nullptr;
+        const lua_istate_actor *istate_callbacks = nullptr;
+        const lua_imelee_actor *imelee_callbacks = nullptr;
+        const lua_iranged_actor *iranged_callbacks = nullptr;
 
         /** Fields to emit when item is in active state */
         std::set<emit_id> emits;
@@ -1027,6 +1042,9 @@ struct itype {
         // If non-rigid volume (and if worn encumbrance) increases proportional to contents
         bool rigid = true;
 
+        // Default item vars for the resulting item
+        std::map<std::string, std::string> item_vars;
+
         /** Damage output in melee for zero or more damage types */
         std::array<int, NUM_DT> melee;
         /**
@@ -1075,6 +1093,10 @@ struct itype {
          */
         float solar_efficiency = 0;
 
+        // Sets repair difficulty for items
+        // Overrides recipe difficulty
+        int repair_difficulty = -1;
+
         FlagsSetType item_tags;
 
         std::string get_item_type_string() const;
@@ -1122,5 +1144,3 @@ struct itype {
         bool is_fuel() const;
         bool is_seed() const;
 };
-
-

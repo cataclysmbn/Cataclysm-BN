@@ -9,6 +9,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 
 #include "action.h"
@@ -42,6 +43,7 @@
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
+#include "overmap_ui.h"
 #include "overmapbuffer.h"
 #include "path_info.h"
 #include "panels_utility.h"
@@ -156,55 +158,9 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
 
                 const std::string &note_text = overmap_buffer.note( omp );
 
-                ter_color = c_yellow;
-                ter_sym = "N";
-
-                int symbolIndex = note_text.find( ':' );
-                int colorIndex = note_text.find( ';' );
-
-                const bool symbolFirst = symbolIndex < colorIndex;
-
-                if( colorIndex > -1 && symbolIndex > -1 ) {
-                    if( symbolFirst ) {
-                        if( colorIndex > 4 ) {
-                            colorIndex = -1;
-                        }
-                        if( symbolIndex > 1 ) {
-                            symbolIndex = -1;
-                            colorIndex = -1;
-                        }
-                    } else {
-                        if( symbolIndex > 4 ) {
-                            symbolIndex = -1;
-                        }
-                        if( colorIndex > 2 ) {
-                            colorIndex = -1;
-                        }
-                    }
-                } else if( colorIndex > 2 ) {
-                    colorIndex = -1;
-                } else if( symbolIndex > 1 ) {
-                    symbolIndex = -1;
-                }
-
-                if( symbolIndex > -1 ) {
-                    int symbolStart = 0;
-                    if( colorIndex > -1 && !symbolFirst ) {
-                        symbolStart = colorIndex + 1;
-                    }
-                    ter_sym = note_text.substr( symbolStart, symbolIndex - symbolStart );
-                }
-
-                if( colorIndex > -1 ) {
-                    int colorStart = 0;
-                    if( symbolIndex > -1 && symbolFirst ) {
-                        colorStart = symbolIndex + 1;
-                    }
-
-                    std::string sym = note_text.substr( colorStart, colorIndex - colorStart );
-
-                    ter_color = get_note_color( sym );
-                }
+                const auto note_info = overmap_ui::get_note_display_info( note_text );
+                ter_color = std::get<1>( note_info );
+                ter_sym = std::string( 1, std::get<0>( note_info ) );
             } else if( !seen ) {
                 ter_sym = " ";
                 ter_color = c_black;
@@ -1117,34 +1073,21 @@ static void draw_limb_narrow( avatar &u, const catacurses::window &w )
     for( const bodypart_id &bp : u.get_all_body_parts( true ) ) {
         int ny;
         int nx;
-        if( i < 3 ) {
-            ny = i;
-            nx = 8;
-        } else {
+        if( i % 2 ) {
             ny = ny2++;
             nx = 26;
+        } else {
+            ny = ny2;
+            nx = 8;
         }
         wmove( w, point( nx, ny ) );
         draw_limb_health( u, w, bp.id() );
-        i++;
-    }
 
-    ny2 = 0;
-    for( const bodypart_id &bp : u.get_all_body_parts( true ) ) {
-        int ny;
-        int nx;
-        if( i < 3 ) {
-            ny = i;
-            nx = 1;
-        } else {
-            ny = ny2++;
-            nx = 19;
-        }
-
+        wmove( w, point( nx - 7, ny ) );
         std::string str = body_part_hp_bar_ui_text( bp );
-        wmove( w, point( nx, ny ) );
         str = left_justify( str, 5 );
         wprintz( w, u.limb_color( bp.id(), true, true, true ), str + ":" );
+        i++;
     }
     wnoutrefresh( w );
 }
@@ -2194,6 +2137,15 @@ static void draw_mana_wide( const player &u, const catacurses::window &w )
 
 static bool spell_panel()
 {
+    // If a mod says to always show it, then return early
+    if( get_option<bool>( "ALWAYS_SHOW_MANA" ) ) {
+        return true;
+    }
+    // Also return early if we're below our maximum capacity
+    if( get_avatar().magic->available_mana() < get_avatar().magic->max_mana( get_avatar() ) ) {
+        return true;
+    }
+    // Determine if any of the spells the player has take mana to cast
     std::vector<spell_id> spells = get_avatar().magic->spells();
     bool has_manacasting = false;
     for( spell_id sp : spells ) {

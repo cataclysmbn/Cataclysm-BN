@@ -16,6 +16,8 @@
 #include "behavior.h"
 #include "bionics.h"
 #include "cata_utility.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "creature_tracker.h"
 #include "debug.h"
 #include "effect.h"
@@ -279,7 +281,7 @@ bool monster::can_squeeze_to( const tripoint &p ) const
 
 bool monster::can_move_to( const tripoint &p ) const
 {
-    return can_reach_to( p ) && will_move_to( p );
+    return can_reach_to( p ) && will_move_to( p ) && !has_flag( MF_STATIONARY );
 }
 
 void monster::set_dest( const tripoint &p )
@@ -366,7 +368,11 @@ void monster::plan()
         fleeing = fleeing || is_fleeing( g->u );
         target = &g->u;
         if( dist <= 5 ) {
-            anger += angers_hostile_near;
+            if( has_flag( MF_FACTION_MEMORY ) ) {
+                add_faction_anger( mfaction_id( "player" ), angers_hostile_near );
+            } else {
+                anger += angers_hostile_near;
+            }
             if( angers_hostile_near ) {
                 trigger_character_aggro_chance( anger, "proximity" );
             }
@@ -384,7 +390,11 @@ void monster::plan()
                     }
                 }
                 if( mating_angry ) {
-                    anger += angers_mating_season;
+                    if( has_flag( MF_FACTION_MEMORY ) ) {
+                        add_faction_anger( mfaction_id( "player" ), angers_mating_season );
+                    } else {
+                        anger += angers_mating_season;
+                    }
                     trigger_character_aggro_chance( anger, "mating season" );
                 }
             }
@@ -396,7 +406,11 @@ void monster::plan()
                     dist = tmp.rate_target( g->u, dist, smart_planning );
                     if( dist <= 3 ) {
                         //proximity to baby; monster gets furious and less likely to flee
-                        anger += angers_cub_threatened;
+                        if( has_flag( MF_FACTION_MEMORY ) ) {
+                            add_faction_anger( mfaction_id( "player" ), angers_cub_threatened );
+                        } else {
+                            anger += angers_cub_threatened;
+                        }
                         morale += angers_cub_threatened / 2;
                         trigger_character_aggro( "threatening cub" );
                     }
@@ -446,7 +460,12 @@ void monster::plan()
         }
         fleeing = fleeing || fleeing_from;
         if( rating <= 5 ) {
-            anger += angers_hostile_near;
+            // NPCs are part of the player faction for anger tracking purposes
+            if( has_flag( MF_FACTION_MEMORY ) ) {
+                add_faction_anger( mfaction_id( "player" ), angers_hostile_near );
+            } else {
+                anger += angers_hostile_near;
+            }
             morale -= fears_hostile_near;
             if( angers_mating_season > 0 ) {
                 bool mating_angry = false;
@@ -461,7 +480,11 @@ void monster::plan()
                     }
                 }
                 if( mating_angry ) {
-                    anger += angers_mating_season;
+                    if( has_flag( MF_FACTION_MEMORY ) ) {
+                        add_faction_anger( mfaction_id( "player" ), angers_mating_season );
+                    } else {
+                        anger += angers_mating_season;
+                    }
                     trigger_character_aggro_chance( anger, "mating season" );
                 }
             }
@@ -495,7 +518,11 @@ void monster::plan()
                     valid_targets = 1;
                 }
                 if( rating <= 5 ) {
-                    anger += angers_hostile_near;
+                    if( has_flag( MF_FACTION_MEMORY ) ) {
+                        add_faction_anger( mon.faction, angers_hostile_near );
+                    } else {
+                        anger += angers_hostile_near;
+                    }
                     morale -= fears_hostile_near;
                 }
             }
@@ -604,7 +631,18 @@ void monster::plan()
         if( angers_hostile_weak && att_to_target != Attitude::A_FRIENDLY ) {
             int hp_per = target->hp_percentage();
             if( hp_per <= 70 ) {
-                anger += 10 - ( hp_per / 10 );
+                int anger_amount = 10 - ( hp_per / 10 );
+                if( has_flag( MF_FACTION_MEMORY ) ) {
+                    // Determine target's faction
+                    const monster *target_mon = target->as_monster();
+                    if( target_mon != nullptr ) {
+                        add_faction_anger( target_mon->faction, anger_amount );
+                    } else if( target->is_player() || target->is_npc() ) {
+                        add_faction_anger( mfaction_id( "player" ), anger_amount );
+                    }
+                } else {
+                    anger += anger_amount;
+                }
                 if( anger <= 40 ) {
                     trigger_character_aggro_chance( anger, "weakness" );
                 }
@@ -635,7 +673,8 @@ void monster::plan()
                 if( morale != type->morale ) {
                     morale += ( morale < type->morale ) ? 1 : -1;
                 }
-                if( anger != type->agro ) {
+                // Don't restore global anger for FACTION_MEMORY monsters
+                if( !has_flag( MF_FACTION_MEMORY ) && anger != type->agro ) {
                     anger += ( anger < type->agro ) ? 1 : -1;
                 }
             }
@@ -1098,7 +1137,7 @@ void monster::move()
                 if( is_wandering() && destination == wander_pos ) {
                     continue;
                 }
-                const int estimate = here.bash_rating( bash_estimate(), candidate );
+                const int estimate = here.bash_rating( bash_estimate( candidate ), candidate );
                 if( estimate <= 0 ) {
                     continue;
                 }
@@ -1362,7 +1401,7 @@ tripoint monster::scent_move()
             ( !has_flag( MF_AQUATIC ) || g->m.is_divable( dest ) ) &&
             ( ( can_move_to( dest ) && !get_map().obstructed_by_vehicle_rotation( pos(), dest ) ) ||
               ( dest == g->u.pos() ) ||
-              ( can_bash && g->m.bash_rating( bash_estimate(), dest ) > 0 ) ) ) {
+              ( can_bash && g->m.bash_rating( bash_estimate( dest ), dest ) > 0 ) ) ) {
             if( ( !fleeing && smell > bestsmell ) || ( fleeing && smell < bestsmell ) ) {
                 smoves.clear();
                 smoves.push_back( dest );
@@ -1537,15 +1576,9 @@ bool monster::bash_at( const tripoint &p )
     return true;
 }
 
-int monster::bash_estimate()
+int monster::bash_estimate( const tripoint &target )
 {
-    int estimate = bash_skill();
-    if( has_flag( MF_GROUP_BASH ) ) {
-        // Right now just give them a boost so they try to bash a lot of stuff.
-        // TODO: base it on number of nearby friendlies.
-        estimate *= 2;
-    }
-    return estimate;
+    return group_bash_skill( target );
 }
 
 int monster::bash_skill()
@@ -1589,7 +1622,7 @@ int monster::group_bash_skill( const tripoint &target )
         // If we made it here, the last monster checked was the candidate.
         monster &helpermon = *mon;
         // Contribution falls off rapidly with distance from target.
-        bashskill += helpermon.bash_skill() / rl_dist( candidate, target );
+        bashskill += helpermon.bash_skill() / std::max( rl_dist( candidate, target ), 1 );
     }
 
     return bashskill;
@@ -1662,6 +1695,19 @@ static tripoint find_closest_stair( const tripoint &near_this, const ter_bitflag
 bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
                        const float stagger_adjustment )
 {
+    const auto hook_results = cata::run_hooks(
+                                  "on_monster_try_move",
+    [ &, this]( sol::table & params ) {
+        params["monster"] = this;
+        params["from"] = pos();
+        params["to"] = p;
+        params["force"] = force;
+    } );
+    const auto can_move = hook_results.get_or( "allowed", true );
+    if( !can_move ) {
+        return false;
+    }
+
     const bool on_ground = !digging() && !flies();
 
     const bool z_move = p.z != pos().z;
@@ -2232,7 +2278,7 @@ void monster::shove_vehicle( const tripoint &remote_destination,
                     if( veh_mass < 1000_kilogram ) {
                         shove_moves_minimal = 100;
                         shove_veh_mass_moves_factor = 8;
-                        shove_velocity = 1000;
+                        shove_velocity = 447;
                         shove_damage_min = 0.00F;
                         shove_damage_max = 0.03F;
                     }
@@ -2241,7 +2287,7 @@ void monster::shove_vehicle( const tripoint &remote_destination,
                     if( veh_mass < 2000_kilogram ) {
                         shove_moves_minimal = 50;
                         shove_veh_mass_moves_factor = 4;
-                        shove_velocity = 1500;
+                        shove_velocity = 671;
                         shove_damage_min = 0.00F;
                         shove_damage_max = 0.05F;
                     }

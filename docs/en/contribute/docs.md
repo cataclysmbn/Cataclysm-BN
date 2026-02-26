@@ -69,6 +69,8 @@ Lua and CLI docs are generated automatically from the source code. To generate t
 (Cataclysm-BN) $ deno task docs:gen
 ```
 
+This regenerates `docs/en/mod/lua/reference/lua.md` and `lua_annotations.lua` (used for Lua IDE autocompletion).
+
 ## License
 
 - By contributing to markdown files (including, but not limited to `.md` and `.mdx` files), you agree to license your contributions under [CC-BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), the same license as the game.

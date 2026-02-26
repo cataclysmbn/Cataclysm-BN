@@ -12,7 +12,7 @@ on:
 
 jobs:
   push-template:
-    if: github.repository == 'cataclysmbnteam/Cataclysm-BN'
+    if: github.repository == 'cataclysmbn/Cataclysm-BN'
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"

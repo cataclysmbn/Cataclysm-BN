@@ -29,8 +29,8 @@ override flag inheritance, but will not delete flags that are part of the item t
 
 These are handled through `ammo_types.json`. You can tag a weapon with these to have it chamber
 existing ammo, or make your own ammo there. The first column in this list is the tag's "id", the
-internal identifier DDA uses to track the tag, and the second is a brief description of the ammo
-tagged. Use the id to search for ammo listings, as ids are constant throughout DDA's code. Happy
+internal identifier BN uses to track the tag, and the second is a brief description of the ammo
+tagged. Use the id to search for ammo listings, as ids are constant throughout BN's code. Happy
 chambering! :-)
 
 - `120mm` 120mm HEAT
@@ -541,6 +541,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `BLOCK_WIND` This terrain will block the effects of wind.
 - `BURROWABLE` Burrowing monsters can travel under this terrain, while most others can't (e.g.
   graboid will traverse under the chain link fence, while ordinary zombie will be stopped by it).
+- `BUTCHER_EQ` Butcher's equipment - required for full butchery of corpses.
 - `CAN_SIT` Furniture the player can sit on. Player sitting near furniture with the "FLAT_SURF" tag
   will get mood bonus for eating.
 - `CHIP` Used in construction menu to determine if wall can have paint chipped off.
@@ -732,6 +733,8 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
   item::process_fake_smoke, where conditions for its removal are set.
 - `FIREWOOD` ... This item can serve as a firewood. Items with this flag are sorted out to "Loot:
   Wood" zone
+- `FLY_STRAIGHT` ... This thrown item flies straight without rotating in the air, maintaining its
+  aerodynamic orientation. Typically used for javelins, spears, and darts.
 - `FRAGILE_MELEE` ... Fragile items that fall apart easily when used as a weapon due to poor
   construction quality and will break into components when broken.
 - `GAS_DISCOUNT` ... Discount cards for the automated gas stations.
@@ -1091,7 +1094,8 @@ Multiple death functions can be used. Not all combinations make sense.
 - `MF_CARD_OVERRIDE` Not a mech, but can be converted to friendly using an ID card in the same way
   that mechs can.
 - `CONSOLE_DESPAWN` Despawns when a nearby console is properly hacked.
-- `IMMOBILE` Doesn't move (e.g. turrets)
+- `IMMOBILE` Doesn't move & doesn't use non-special attacks (e.g. turrets)
+- `STATIONARY` Stationary, but will fight back (e.g. training dummies )
 - `ID_CARD_DESPAWN` Despawns when a science ID card is used on a nearby console
 - `INTERIOR_AMMO` Monster contains ammo inside itself, no need to load on launch. Prevents ammo from
   being dropped on disable.
@@ -1138,6 +1142,8 @@ Multiple death functions can be used. Not all combinations make sense.
 - `VERMIN` Obsolete flag for inconsequential monsters, now prevents loading.
 - `VOLATILE` Hitting this with fire damage always ignites it and has a high chance to deal massive damage,
   bullet and electric damage also have a chance to deal increased damage and set this monster on fire.
+- `FACTION_MEMORY` Calculate anger against factions separately, so that anger against one faction (e.g zombie)
+  doesn't spill into another (e.g player). In other words, truly neutral towards players until attacked. Use case: making extremely dangerous monsters spawned in streets to prevent crushing newbie players into pulp.
 - `WARM` Warm blooded.
 - `WEBWALK` Doesn't destroy webs.
 - `WOOL` May produce wool when butchered.
@@ -1344,6 +1350,8 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `FUNGAL` Location is related to fungi. Used to classify location.
 - `TRIFFID` Location is related to triffids. Used to classify location.
 - `LAKE` Location is is placed on a lake and will be ignored for placement if the overmap doesn't
+  contain any lake terrain.
+- `RIVER` Location is is placed on a lake and will be ignored for placement if the overmap doesn't
   contain any lake terrain.
 - `UNIQUE` Location is unique and will only occur once per overmap. `occurrences` is overridden to
   define a percent chance (e.g. `"occurrences" : [75, 100]` is 75%)
@@ -1578,6 +1586,7 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `SPAWN_FRIENDLY` Applied to eggs laid by pets and to pet bots reverted to items. Any monster that
   hatches from said egg will also spawn friendly, and deployable bots flagged with this will skip
   checking for player skills since it's already been configured correctly once already.
+- `SPAWN_HOSTILE` `place_monster` items with this flag will always deploy a monster that's always hostile, such as for a target dummy; Inverse of SPAWN_FRIENDLY
 - `USE_UPS` The tool has the UPS mod and is charged from an UPS.
 - `WARM` A hidden flag used to track an item's journey to/from hot, buffers between HOT and cold.
 - `WET` Item is wet and will slowly dry off (e.g. towel).
@@ -1690,6 +1699,10 @@ Those flags are added by the game code to specific items (that specific welder, 
 - `NEEDS_WHEEL_MOUNT_MEDIUM` Can only be installed on a part with `WHEEL_MOUNT_MEDIUM` flag.
 - `NEEDS_WINDOW` Can only be installed on a part with `WINDOW` flag.
 - `NO_JACK`
+- `NOCOLLIDE`
+- `NOCOLLIDEABOVE` Feature that simply doesn't collide when going up a z-level, or something goes down onto it, requires NOCOLLIDE.
+- `NOCOLLIDEBELOW` Feature that simply doesn't collide when going down a z-level, or something goes up onto it, requires NOCOLLIDE.
+- `NOSMASH`
 - `NOINSTALL` Cannot be installed.
 - `NOFIELDS` Prevents fields ( smoke radiation etc ) from affecting anything on the same tile
 - `NOREMOVE_SECURITY` Cannot be uninstalled if the vehicle has a working security system.

@@ -34,10 +34,10 @@ In order to compile localization files, you'll also need `gettext` package.
 ## Build Environment
 
 You can obtain the source code tarball for the latest version from
-[git](https://github.com/cataclysmbnteam/Cataclysm-BN).
+[git](https://github.com/cataclysmbn/Cataclysm-BN).
 
 ```sh
-git clone --filter=blob:none https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone --filter=blob:none https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 
@@ -114,6 +114,36 @@ Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 > sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
 > sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
 > ```
+
+### macOS Environment
+
+Install dependencies via [Homebrew](https://brew.sh/):
+
+```sh
+brew install cmake ninja ccache sdl2 sdl2_image sdl2_ttf sdl2_mixer \
+  freetype gettext sqlite pkg-config
+```
+
+> [!NOTE]
+> Apple Clang shipped with Xcode 16+ supports the C++23 features required by CataclysmBN.
+> You do **not** need to install a separate compiler.
+
+#### Building on Apple Silicon (Recommended)
+
+```sh
+cmake --preset osx-arm-slim
+cmake --build --preset osx-arm-slim
+```
+
+This places executables into `out/build/osx-arm-slim/`.
+
+#### Creating a macOS Distribution
+
+```sh
+cmake --preset osx-arm-dist
+cmake --build --preset osx-arm-dist
+cmake --install build --prefix cataclysmbn-osx-tiles
+```
 
 ### Windows Subsystem for Linux (WSL)
 
@@ -253,11 +283,12 @@ tar -czvf cataclysmbn-linux-tiles.tar.gz cataclysmbn-linux-tiles
 
 #### Distribution Presets
 
-| Preset        | Description                             |
-| ------------- | --------------------------------------- |
-| `dist-tiles`  | Tiles + Sound + Languages               |
-| `dist-curses` | Curses + Languages                      |
-| `lint`        | Minimal build for formatting tools only |
+| Preset         | Description                             |
+| -------------- | --------------------------------------- |
+| `dist-tiles`   | Linux: Tiles + Sound + Languages        |
+| `dist-curses`  | Linux: Curses + Languages               |
+| `osx-arm-dist` | macOS ARM: Tiles + Sound + Languages    |
+| `lint`         | Minimal build for formatting tools only |
 
 #### Portable vs System Install
 

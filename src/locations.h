@@ -232,4 +232,17 @@ class fake_item_location : public item_location
         std::string describe( const Character *ch, const item *it ) const override;
 };
 
+class temp_item_location : public item_location
+{
+    public:
+        temp_item_location() = default;
+        detached_ptr<item> detach( item *it ) override;
+        void attach( detached_ptr<item> &&it ) override;
+        bool is_loaded( const item *it ) const override;
+        tripoint position( const item *it ) const override;
+        item_location_type where() const override;
+        int obtain_cost( const Character &ch, int qty, const item *it ) const override;
+        std::string describe( const Character *ch, const item *it ) const override;
+};
+
 

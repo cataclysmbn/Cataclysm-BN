@@ -595,7 +595,8 @@
       "style_pankration",
       "style_kickboxing"
     ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -613,7 +614,8 @@
       "style_zui_quan",
       "style_wingchun"
     ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -623,7 +625,8 @@
     "description": "You have studied the arts of the Shaolin monks.  You start with one of the five animal fighting styles: Tiger, Crane, Leopard, Snake, or Dragon.",
     "starting_trait": true,
     "initial_ma_styles": [ "style_tiger", "style_crane", "style_leopard", "style_snake", "style_dragon" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -642,7 +645,8 @@
       "style_swordsmanship",
       "style_medievalpole"
     ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -652,7 +656,8 @@
     "description": "You were an avid fencer, starting with foil and moving onto saber, then épée.  You competed nationally and dabbled with some of the historical fencing weapons afforded by HEMA's popularity.",
     "starting_trait": false,
     "initial_ma_styles": [ "style_fencing" ],
-    "valid": false
+    "valid": false,
+    "purifiable": false
   },
   {
     "type": "mutation",
@@ -1072,6 +1077,15 @@
   },
   {
     "type": "mutation",
+    "id": "NYCTOPHOBIA",
+    "name": { "str": "Nyctophobia" },
+    "points": -3,
+    "description": "You are terribly afraid of the dark.  You refuse to enter very dark areas.  If you somehow still happen to stay in dark areas, you suffer from various detrimental mental and physical effects.",
+    "starting_trait": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
     "id": "NARCOLEPTIC",
     "name": { "str": "Narcoleptic" },
     "points": -3,
@@ -1187,6 +1201,7 @@
     "points": -1,
     "description": "You lack skin pigmentation due to a genetic problem.  You sunburn extremely easily, and typically use an umbrella and sunglasses when going out in the sun.",
     "starting_trait": true,
+    "prereqs": [ "eye_red" ],
     "changes_to": [ "SUNBURN" ],
     "category": [ "TROGLOBITE", "MOUSE", "RABBIT" ],
     "types": [ "skin_tone" ]
@@ -1769,7 +1784,8 @@
     "category": [ "CHIMERA", "SPIDER", "MOUSE" ],
     "types": [ "SKIN" ],
     "prereqs": [ "SKIN_ROUGH" ],
-    "changes_to": [ "FUR", "FELINE_FUR", "LUPINE_FUR", "URSINE_FUR", "CHITIN_FUR", "PATCHSKIN1", "RABBIT_FUR" ]
+    "changes_to": [ "FUR", "FELINE_FUR", "LUPINE_FUR", "URSINE_FUR", "CHITIN_FUR", "PATCHSKIN1", "RABBIT_FUR" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1785,7 +1801,8 @@
     "changes_to": [ "URSINE_FUR" ],
     "prereqs": [ "LIGHTFUR" ],
     "category": [ "BEAST", "CATTLE", "RAT" ],
-    "armor": [ { "parts": "ALL", "bash": 3 } ]
+    "armor": [ { "parts": "ALL", "bash": 3 } ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1800,7 +1817,8 @@
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR" ],
     "category": [ "URSINE" ],
-    "armor": [ { "parts": "ALL", "bash": 5 } ]
+    "armor": [ { "parts": "ALL", "bash": 5 } ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1815,7 +1833,8 @@
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR" ],
     "category": [ "LUPINE" ],
-    "armor": [ { "parts": "ALL", "bash": 3 } ]
+    "armor": [ { "parts": "ALL", "bash": 3 } ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1830,7 +1849,8 @@
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR" ],
     "leads_to": [ "LYNX_FUR" ],
-    "category": [ "BEAST", "FELINE", "MOUSE" ]
+    "category": [ "BEAST", "FELINE", "MOUSE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1842,7 +1862,8 @@
     "description": "Your fur has grown out significantly around your cheeks and neck.",
     "types": [ "SKIN" ],
     "prereqs": [ "FELINE_FUR" ],
-    "category": [ "FELINE" ]
+    "category": [ "FELINE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1871,7 +1892,8 @@
     "category": [ "CHIMERA" ],
     "types": [ "SKIN" ],
     "prereqs": [ "LIGHTFUR", "SCALES" ],
-    "changes_to": [ "PATCHSKIN2" ]
+    "changes_to": [ "PATCHSKIN2" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -1899,7 +1921,8 @@
     "armor": [ { "parts": "ALL", "physical": 5 } ],
     "category": [ "CHIMERA" ],
     "types": [ "SKIN" ],
-    "prereqs": [ "PATCHSKIN1" ]
+    "prereqs": [ "PATCHSKIN1" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -2010,7 +2033,8 @@
     "prereqs": [ "CHITIN", "LIGHTFUR" ],
     "category": [ "SPIDER" ],
     "changes_to": [ "CHITIN_FUR2" ],
-    "armor": [ { "parts": "ALL", "physical": 5 } ]
+    "armor": [ { "parts": "ALL", "physical": 5 } ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -2026,7 +2050,8 @@
     "prereqs": [ "CHITIN_FUR" ],
     "category": [ "SPIDER" ],
     "changes_to": [ "CHITIN_FUR3", "CHITIN3" ],
-    "armor": [ { "parts": "ALL", "physical": 7, "bash": 10 } ]
+    "armor": [ { "parts": "ALL", "physical": 7, "bash": 10 } ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -2055,7 +2080,8 @@
     "threshreq": [ "THRESH_SPIDER" ],
     "category": [ "SPIDER" ],
     "armor": [ { "parts": "ALL", "physical": 10, "bash": 15 } ],
-    "passive_mods": { "dex_mod": -1 }
+    "passive_mods": { "dex_mod": -1 },
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -2111,9 +2137,8 @@
     "visibility": 3,
     "ugliness": 2,
     "description": "Your skin is light green and has a slightly woody quality to it.  This provides 2 points of cut and stab armor and 1 point of ballistic armor, and helps you retain moisture, resulting in less thirst.  Greatly decreases wet penalties.",
-    "types": [ "SKIN", "skin_tone" ],
-    "changes_to": [ "BARK" ],
-    "leads_to": [ "THORNS", "LEAVES" ],
+    "types": [ "skin_tone" ],
+    "leads_to": [ "THORNS", "LEAVES", "BARK" ],
     "category": [ "PLANT", "ELFA" ],
     "wet_protection": [
       { "part": "head", "neutral": 4 },
@@ -2137,23 +2162,23 @@
     "points": 5,
     "visibility": 10,
     "ugliness": 3,
-    "description": "Your skin is coated in a light bark, like that of a tree.  This provides 5 points of cutting and piercing damage, 4 points of ballistic armor, and one point of protection from fire.  Greatly reduces wet effects.",
-    "types": [ "SKIN", "skin_tone" ],
+    "description": "Your skin has grown over with bark, like that of a tree.  This provides an additional 3 points of cutting, piercing, and ballistic armor, along with 1 point of protection from fire.  Further reduces wet effects.",
+    "types": [ "SKIN" ],
     "prereqs": [ "PLANTSKIN" ],
     "category": [ "PLANT" ],
     "wet_protection": [
-      { "part": "head", "ignored": 5 },
-      { "part": "leg_l", "ignored": 16 },
-      { "part": "leg_r", "ignored": 16 },
-      { "part": "foot_l", "ignored": 5 },
-      { "part": "foot_r", "ignored": 5 },
-      { "part": "arm_l", "ignored": 14 },
-      { "part": "arm_r", "ignored": 14 },
-      { "part": "hand_l", "ignored": 4 },
-      { "part": "hand_r", "ignored": 4 },
-      { "part": "torso", "ignored": 30 }
+      { "part": "head", "ignored": 1 },
+      { "part": "leg_l", "ignored": 11 },
+      { "part": "leg_r", "ignored": 11 },
+      { "part": "foot_l", "ignored": 4 },
+      { "part": "foot_r", "ignored": 4 },
+      { "part": "arm_l", "ignored": 10 },
+      { "part": "arm_r", "ignored": 10 },
+      { "part": "hand_l", "ignored": 3 },
+      { "part": "hand_r", "ignored": 3 },
+      { "part": "torso", "ignored": 20 }
     ],
-    "armor": [ { "parts": "ALL", "cut": 5, "stab": 5, "bullet": 4, "heat": 1 } ]
+    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ]
   },
   {
     "type": "mutation",
@@ -2833,6 +2858,7 @@
     "description": "We have streamlined our nutritional requirements.  We rely on the Mycus for sustenance, as it relies on us.  We may locate sources of sustenance in close proximity to Mycus core towers, and in forested areas that the Mycus has grown into.",
     "valid": false,
     "purifiable": false,
+    "prereqs": [ "M_IMMUNE" ],
     "threshreq": [ "THRESH_MYCUS" ],
     "cancels": [ "GOURMAND", "BEAK", "BEAK_PECK", "BEAK_HUM" ],
     "category": [ "MYCUS" ]
@@ -3063,7 +3089,8 @@
     "movecost_swim_modifier": 0.75,
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
-    "allowed_items": [ "ALLOWS_TAIL" ]
+    "allowed_items": [ "ALLOWS_TAIL" ],
+    "flags": [ "MUTATION_SWIM" ]
   },
   {
     "type": "mutation",
@@ -3079,7 +3106,8 @@
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
     "allowed_items": [ "ALLOWS_TAIL" ],
-    "dodge_modifier": 2
+    "dodge_modifier": 2,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3094,7 +3122,8 @@
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
     "allowed_items": [ "ALLOWS_TAIL" ],
-    "dodge_modifier": 1
+    "dodge_modifier": 1,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3162,7 +3191,8 @@
     "allow_soft_gear": true,
     "allowed_items": [ "ALLOWS_TAIL" ],
     "social_modifiers": { "lie": -20, "persuade": 10 },
-    "dodge_modifier": 4
+    "dodge_modifier": 4,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3597,7 +3627,8 @@
     "types": [ "EARS" ],
     "category": [ "BEAST", "CATTLE", "CHIMERA" ],
     "changes_to": [ "LUPINE_EARS" ],
-    "hearing_modifier": 1.5
+    "hearing_modifier": 1.5,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3609,7 +3640,8 @@
     "description": "Your hearing has evolved further and is now on par with that of wolves.  You can hear things significantly farther away.",
     "types": [ "EARS" ],
     "category": [ "LUPINE" ],
-    "hearing_modifier": 1.75
+    "hearing_modifier": 1.75,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3621,7 +3653,8 @@
     "description": "You've grown an extra pair of feline ears.  You find it easier to tune in on sounds from afar.  They are also very fluffy!",
     "types": [ "EARS" ],
     "category": [ "FELINE" ],
-    "hearing_modifier": 1.25
+    "hearing_modifier": 1.25,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3633,7 +3666,8 @@
     "description": "You've grown an extra pair of ursine ears.  You can hear things a little farther away.",
     "types": [ "EARS" ],
     "category": [ "URSINE" ],
-    "hearing_modifier": 1.25
+    "hearing_modifier": 1.25,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -3658,7 +3692,8 @@
     "valid": false,
     "types": [ "EARS" ],
     "category": [ "MOUSE", "RAT" ],
-    "hearing_modifier": 2
+    "hearing_modifier": 2,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4351,19 +4386,6 @@
   },
   {
     "type": "mutation",
-    "id": "PALE",
-    "name": { "str": "Pale Skin" },
-    "points": 0,
-    "visibility": 3,
-    "ugliness": 1,
-    "description": "Your skin is rather pale.",
-    "changes_to": [ "ALBINO" ],
-    "leads_to": [ "TROGLO" ],
-    "category": [ "LUPINE" ],
-    "types": [ "skin_tone" ]
-  },
-  {
-    "type": "mutation",
     "id": "SPOTS",
     "name": { "str": "Spots" },
     "points": 0,
@@ -4481,7 +4503,8 @@
       "MUZZLE_RAT",
       "RABBIT_NOSE"
     ],
-    "category": [ "FELINE" ]
+    "category": [ "FELINE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4521,7 +4544,8 @@
       "body_part": "mouth",
       "chance": 18,
       "base_damage": { "damage_type": "cut", "amount": 4 }
-    }
+    },
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4544,7 +4568,8 @@
       "body_part": "mouth",
       "chance": 20,
       "base_damage": { "damage_type": "cut", "amount": 5 }
-    }
+    },
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4558,7 +4583,8 @@
     "prereqs": [ "SNOUT" ],
     "category": [ "RAT" ],
     "restricts_gear": [ "mouth" ],
-    "allowed_items": [ "ALLOWS_MUZZLE" ]
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4671,6 +4697,20 @@
     "changes_to": [ "HUNGER2", "MET_RAT" ],
     "category": [ "RAT", "ALPHA", "MEDICAL", "ELFA", "BEAST", "SLIME", "RAPTOR", "CHIMERA", "MOUSE", "RABBIT" ],
     "metabolism_modifier": 0.5
+  },
+  {
+    "type": "mutation",
+    "id": "BODYHAIR",
+    "name": { "str": "Hairy" },
+    "points": 0,
+    "visibility": 4,
+    "starting_trait": true,
+    "bodytemp_modifiers": [ 0, 80 ],
+    "description": "Your body is covered in thick body hair, making you slightly warmer.",
+    "category": [ "CHIMERA", "SPIDER", "MOUSE" ],
+    "types": [ "SKIN" ],
+    "changes_to": [ "LIGHTFUR" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4903,7 +4943,8 @@
     "prereqs": [ "CLAWS", "CLAWS_RETRACT", "CLAWS_RAT" ],
     "cancels": [ "TALONS" ],
     "changes_to": [ "PAWS_LARGE" ],
-    "category": [ "LUPINE", "RAT", "FELINE" ]
+    "category": [ "LUPINE", "RAT", "FELINE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -4930,7 +4971,8 @@
     "types": [ "HANDS" ],
     "prereqs": [ "PAWS" ],
     "cancels": [ "TALONS" ],
-    "category": [ "BEAST", "URSINE" ]
+    "category": [ "BEAST", "URSINE" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -5738,7 +5780,8 @@
     "allowed_items": [ "ALLOWS_HOOVES" ],
     "allowed_items_only": true,
     "movecost_modifier": 1.2,
-    "noise_modifier": 0
+    "noise_modifier": 0,
+    "flags": [ "MUTATION_SWIM" ]
   },
   {
     "type": "mutation",
@@ -6022,7 +6065,8 @@
     "valid": false,
     "types": [ "EARS" ],
     "category": [ "RABBIT" ],
-    "hearing_modifier": 1.8
+    "hearing_modifier": 1.8,
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -6034,7 +6078,8 @@
     "description": "Your stubby tail has become fuzzy and more round.  It looks adorable, but doesn't seem to serve another purpose beyond that.",
     "types": [ "TAIL" ],
     "cancels": [ "TAIL_STUB" ],
-    "category": [ "RABBIT", "BEAST" ]
+    "category": [ "RABBIT", "BEAST" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -6054,7 +6099,8 @@
         "parts": [ "torso", "head", "arm_l", "arm_r", "hand_l", "hand_r", "leg_l", "leg_r", "foot_l", "foot_r", "mouth" ],
         "bash": 1
       }
-    ]
+    ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -6089,7 +6135,8 @@
     "description": "Your nose has morphed into a cute bunny nose, along with the snout.  It's extremely twitchy too.",
     "types": [ "MUZZLE" ],
     "prereqs": [ "SNOUT" ],
-    "category": [ "RABBIT" ]
+    "category": [ "RABBIT" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -6104,7 +6151,8 @@
     "types": [ "HANDS" ],
     "prereqs": [ "NAILS" ],
     "cancels": [ "TALONS" ],
-    "category": [ "RABBIT" ]
+    "category": [ "RABBIT" ],
+    "flags": [ "FURRY" ]
   },
   {
     "type": "mutation",
@@ -6779,6 +6827,17 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
+    "cancels": [ "GUNSHY" ],
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "GUNSHY",
+    "name": { "str": "Gun Shy" },
+    "points": -4,
+    "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
+    "starting_trait": true,
+    "cancels": [ "BRAWLER" ],
     "valid": false
   },
   {
@@ -6833,6 +6892,16 @@
     "valid": false,
     "purifiable": false,
     "profession": false
+  },
+  {
+    "type": "mutation",
+    "id": "HAS_NEMESIS",
+    "name": { "str": "Hunted" },
+    "points": -1,
+    "description": "Since the start of the Cataclysm, something has been hunting you relentlessly.  You can outrun it, but it always seems to find you eventually.  The only escape is for one of you to die.",
+    "valid": false,
+    "starting_trait": false,
+    "purifiable": false
   },
   {
     "type": "mutation",

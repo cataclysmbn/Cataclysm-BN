@@ -102,6 +102,56 @@
   },
   {
     "type": "furniture",
+    "id": "f_artifact_analyzer_console",
+    "name": "artifact analyzer console",
+    "looks_like": "t_console",
+    "description": "A research console configured to analyze artifacts.  Use it to scan any artifacts you are carrying.",
+    "symbol": "6",
+    "color": "green",
+    "move_cost_mod": -1,
+    "coverage": 50,
+    "required_str": -1,
+    "light_emitted": 10,
+    "flags": [ "TRANSPARENT", "NOITEM", "INDOORS", "SHORT", "PERMEABLE" ],
+    "crafting_pseudo_item": "fake_artifact_analyzer_console",
+    "examine_action": "use_furn_fake_item",
+    "deconstruct": {
+      "furn_set": "f_table",
+      "items": [
+        { "item": "processor", "count": [ 1, 2 ] },
+        { "item": "RAM", "count": [ 2, 6 ] },
+        { "item": "cable", "charges": [ 2, 4 ] },
+        { "item": "large_lcd_screen", "count": 1 },
+        { "item": "e_scrap", "count": [ 8, 12 ] },
+        { "item": "circuit", "count": [ 4, 8 ] },
+        { "item": "power_supply", "count": [ 1, 2 ] },
+        { "item": "plastic_chunk", "count": [ 6, 10 ] },
+        { "item": "scrap", "count": [ 4, 8 ] }
+      ]
+    },
+    "bash": {
+      "str_min": 8,
+      "str_max": 75,
+      "sound": "crunch!",
+      "sound_fail": "whack!",
+      "furn_set": "f_console_broken_table",
+      "items": [
+        { "item": "processor", "prob": 25 },
+        { "item": "RAM", "count": [ 0, 2 ], "prob": 50 },
+        { "item": "cable", "charges": [ 1, 2 ], "prob": 50 },
+        { "item": "large_lcd_screen", "prob": 25 },
+        { "item": "e_scrap", "count": [ 1, 4 ], "prob": 50 },
+        { "item": "circuit", "count": [ 0, 2 ], "prob": 50 },
+        { "item": "power_supply", "prob": 25 },
+        { "item": "plastic_chunk", "count": [ 4, 10 ], "prob": 50 },
+        { "item": "scrap", "count": [ 2, 6 ], "prob": 50 }
+      ],
+      "//": "reduction equal to broken version, but destroy_threshold equal to str_min since fragile",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 8, "block_unaimed_chance": "50%" }
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_forge",
     "name": "forge",
     "description": "Metalworking station typically used in combination with an anvil.",
@@ -505,6 +555,28 @@
       "items": [ { "item": "rock", "count": [ 20, 30 ] } ],
       "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 36, 36 ], "destroy_threshold": 36, "block_unaimed_chance": "25%" }
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_char_purifier",
+    "name": "charcoal purifier",
+    "description": "A makeshift filter constructed to hold a supply of charcoal, for purifying water.",
+    "symbol": "=",
+    "looks_like": "char_purifier",
+    "bgcolor": "brown",
+    "move_cost_mod": -1,
+    "required_str": -1,
+    "flags": [ "SEALED", "CONTAINER", "NOITEM", "EASY_DECONSTRUCT" ],
+    "crafting_pseudo_item": "char_purifier_fake",
+    "examine_action": "reload_furniture",
+    "deconstruct": { "items": [ { "item": "withered", "count": 24 }, { "item": "stick", "count": 6 } ] },
+    "bash": {
+      "str_min": 8,
+      "str_max": 30,
+      "sound": "crunch!",
+      "sound_fail": "whump!",
+      "items": [ { "item": "withered", "count": [ 1, 4 ] }, { "item": "stick", "count": [ 2, 4 ] } ]
     }
   },
   {
@@ -1382,7 +1454,7 @@
     "color": "white",
     "move_cost_mod": 1,
     "required_str": -1,
-    "flags": [ "LADDER", "TRANSPARENT", "SEEN_FROM_ABOVE" ],
+    "flags": [ "LADDER", "TRANSPARENT", "SEEN_FROM_ABOVE", "REMOVE_FROM_ABOVE" ],
     "examine_action": "deployed_furniture",
     "deployed_item": "grapnel",
     "bash": {

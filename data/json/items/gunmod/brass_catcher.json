@@ -23,7 +23,8 @@
       [ "SHOTGUNS" ],
       [ "GRENADE_LAUNCHERS" ],
       [ "ROCKET_LAUNCHERS" ],
-      [ "FLAMETHROWERS" ]
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
     ]
   }
 ]

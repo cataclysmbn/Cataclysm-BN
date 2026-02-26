@@ -54,6 +54,12 @@
     "default": "arrow_wood"
   },
   {
+    "id": "atlatl",
+    "name": "atlatl dart",
+    "default": "atlatl_dart_wood",
+    "type": "ammunition_type"
+  },
+  {
     "type": "ammunition_type",
     "id": "pebble",
     "name": "pebbles",
@@ -350,6 +356,12 @@
   },
   {
     "type": "ammunition_type",
+    "id": "dna",
+    "name": "DNA",
+    "default": "dna"
+  },
+  {
+    "type": "ammunition_type",
     "id": "8x40mm",
     "name": "8x40mm caseless",
     "default": "8mm_caseless"
@@ -401,6 +413,12 @@
     "id": "thrown",
     "name": "throwing weapon",
     "default": "thrown"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "bola",
+    "name": "bola",
+    "default": "bolas"
   },
   {
     "type": "ammunition_type",
@@ -617,5 +635,11 @@
     "id": "pitch_wood",
     "name": "pitch",
     "default": "pitch_wood"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "bola_launcher",
+    "name": "bola cartridge",
+    "default": "bola_cartridge"
   }
 ]

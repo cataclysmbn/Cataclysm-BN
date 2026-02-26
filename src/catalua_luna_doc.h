@@ -1,5 +1,6 @@
 #pragma once
 
+#include "calendar.h"
 #include "catalua_luna.h"
 #include "mission.h"
 #include "type_id.h"
@@ -25,6 +26,8 @@ enum art_charge_req : int;
 enum art_effect_active : int;
 enum art_effect_passive : int;
 enum vitamin_type : int;
+enum class ot_match_type : int;
+enum moon_phase : int;
 
 namespace sfx
 {
@@ -35,15 +38,18 @@ class avatar;
 class Character;
 class character_id;
 class Creature;
+struct power_stat;
 class distribution_grid;
 class distribution_grid_tracker;
 class effect;
+class overmapbuffer;
 class effect_type;
 class item;
 class item_stack;
 class ma_technique;
 class ma_buff;
 class map;
+class mapgendata;
 class map_stack;
 class material_type;
 class mission;
@@ -63,6 +69,7 @@ class time_point;
 class tinymap;
 class uilist;
 class relic;
+struct bionic;
 struct body_part_type;
 struct damage_instance;
 struct damage_unit;
@@ -73,6 +80,8 @@ struct mutation_branch;
 struct mission_type;
 struct npc_opinion;
 struct npc_personality;
+struct omt_find_params;
+struct oter_t;
 struct point;
 struct species_type;
 struct tripoint;
@@ -92,6 +101,10 @@ struct quality;
 struct resistances;
 struct armor_portion_data;
 class vitamin;
+struct explosion_data;
+struct requirement_data;
+class inventory;
+class known_magic;
 
 namespace units
 {
@@ -166,10 +179,12 @@ LUNA_VAL( damage_instance, "DamageInstance" );
 LUNA_VAL( damage_unit, "DamageUnit" );
 LUNA_VAL( dealt_damage_instance, "DealtDamageInstance" );
 LUNA_VAL( distribution_grid, "DistributionGrid" );
+LUNA_VAL( power_stat, "PowerStat" );
 LUNA_VAL( distribution_grid_tracker, "DistributionGridTracker" );
 LUNA_PTR_VAL( item, "Item" );
 LUNA_VAL( item_stack, "ItemStack" );
 LUNA_VAL( map, "Map" );
+LUNA_VAL( mapgendata, "MapgenData" );
 LUNA_VAL( map_stack, "MapStack" );
 LUNA_VAL( mission, "Mission" );
 LUNA_VAL( mission_type, "MissionType" );
@@ -177,6 +192,8 @@ LUNA_VAL( monster, "Monster" );
 LUNA_VAL( npc, "Npc" );
 LUNA_VAL( npc_opinion, "NpcOpinion" );
 LUNA_VAL( npc_personality, "NpcPersonality" );
+LUNA_VAL( omt_find_params, "OmtFindParams" );
+LUNA_VAL( overmapbuffer, "OvermapBuffer" );
 LUNA_VAL( player, "Player" );
 LUNA_VAL( point, "Point" );
 LUNA_VAL( string_input_popup, "PopupInputStr" );
@@ -185,6 +202,7 @@ LUNA_VAL( SkillLevelMap, "SkillLevelMap" );
 LUNA_VAL( SkillLevel, "SkillLevel" );
 LUNA_VAL( fake_spell, "SpellSimple" )
 LUNA_VAL( spell, "Spell" )
+LUNA_VAL( known_magic, "KnownMagic" )
 LUNA_VAL( time_duration, "TimeDuration" );
 LUNA_VAL( time_point, "TimePoint" );
 LUNA_VAL( tinymap, "Tinymap" );
@@ -201,7 +219,10 @@ LUNA_VAL( common_ranged_data, "RangedData" );
 LUNA_VAL( resistances, "Resistances" );
 LUNA_VAL( armor_portion_data, "ArmorPortionData" );
 LUNA_VAL( effect, "Effect" );
-
+LUNA_VAL( explosion_data, "ExplosionData" );
+LUNA_VAL( requirement_data, "RequirementData" );
+LUNA_VAL( inventory, "Inventory" );
+LUNA_VAL( bionic, "Bionic" );
 
 // Ids for in-game objects
 LUNA_ID( ammunition_type, "AmmunitionType" )
@@ -228,6 +249,7 @@ LUNA_ID( mission_type_id, "MissionTypeId" )
 LUNA_ID( mtype, "MonsterType" )
 LUNA_ID( mutation_branch, "MutationBranch" )
 LUNA_ID( mutation_category_trait, "MutationCategoryTrait" )
+LUNA_ID( oter_t, "Oter" )
 LUNA_ID( recipe, "Recipe" )
 LUNA_ID( Skill, "Skill" )
 LUNA_ID( species_type, "SpeciesType" )
@@ -254,6 +276,7 @@ LUNA_ENUM( monster_attitude, "MonsterAttitude" )
 LUNA_ENUM( creature_size, "MonsterSize" )
 LUNA_ENUM( npc_attitude, "NpcAttitude" )
 LUNA_ENUM( npc_need, "NpcNeed" )
+LUNA_ENUM( ot_match_type, "OtMatchType" )
 LUNA_ENUM( sfx::channel, "SfxChannel" )
 LUNA_ENUM( mission_origin, "MissionOrigin" )
 LUNA_ENUM( mission_goal, "MissionGoal" )
@@ -263,6 +286,7 @@ LUNA_ENUM( art_effect_active, "ArtifactEffectPassive" )
 LUNA_ENUM( art_effect_passive, "ArtifactEffectActive" )
 LUNA_ENUM( phase_id, "Phase" )
 LUNA_ENUM( vitamin_type, "VitaminType" )
+LUNA_ENUM( moon_phase, "MoonPhase" );
 
 // ISlot
 LUNA_VAL( islot_container, "IslotContainer" );

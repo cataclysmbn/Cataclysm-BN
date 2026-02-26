@@ -88,7 +88,7 @@ end
 Then connect the hook to the function ONLY ONCE.
 
 ```lua
-table.insert(game.hooks.on_creature_performed_technique, function(...) return on_creature_performed_technique(...) end)
+game.add_hook("on_creature_performed_technique", function(...) return on_creature_performed_technique(...) end)
 ```
 
 <details>
@@ -99,3 +99,521 @@ Ramiro Waters performed Power Hit on zombie (DI: 27.96 , MC: 58)
 ```
 
 </details>
+
+## Item Durability
+
+### Checking and modifying item damage
+
+```lua
+local you = gapi.get_avatar()
+local wielding = you:all_items(false)[1]
+print(wielding:get_damage())
+print(wielding:get_damage_level(4))
+wielding:mod_damage(2000)
+print(wielding:get_damage_level(4))
+```
+
+## Monsters
+
+### Adding items to a monster's inventory
+
+```lua
+local target_monster = -- [[ your monster reference ]]
+local scraps = gapi.create_item(ItypeId.new("scrap"), 3)
+target_monster:as_monster():add_item(scraps)
+```
+
+## NPCs
+
+### Spawning and erasing NPCs
+
+```lua
+local player = gapi.get_avatar()
+local map = gapi.get_map()
+local player_pos = player:get_pos_ms()
+local place_point = player_pos:xy() + Point.new(0, 2)
+local new_npc = map:place_npc(place_point, "thug")
+
+-- Later, you can erase the NPC silently
+new_npc:erase()
+```
+
+## Weather Hooks
+
+### Reacting to weather changes
+
+First, set up the hook in your preload.lua:
+
+```lua
+local mod = game.mod_runtime[game.current_mod]
+game.add_hook("on_weather_changed", function(...) mod.weather_changed_alert(...) end)
+game.add_hook("on_weather_updated", function(...) mod.weather_report(...) end)
+```
+
+Then define the handlers in your main.lua:
+
+```lua
+local mod = game.mod_runtime[game.current_mod]
+
+-- Called when weather changes (e.g., clear -> rain)
+mod.weather_changed_alert = function(params)
+    local msg = string.format(
+        "Weather changed from %s to %s!",
+        params.old_weather_id,
+        params.weather_id
+    )
+    gdebug.log_info(msg)
+end
+
+-- Called every 5 minutes with current weather data
+mod.weather_report = function(params)
+    local msg = string.format(
+        "Current Weather: %s, Temperature: %.1f°C, Wind: %d, Humidity: %d%%",
+        params.weather_id,
+        params.temperature,
+        params.windspeed,
+        params.humidity
+    )
+    gdebug.log_info(msg)
+end
+```
+
+## Combat Ranged
+
+### Reacting to shots fired and thrown items
+
+First, set up the hooks in your preload.lua:
+
+```lua
+local mod = game.mod_runtime[game.current_mod]
+game.add_hook("on_shoot", function(...) return mod.on_shoot_fun(...) end)
+game.add_hook("on_throw", function(...) return mod.on_throw_fun(...) end)
+```
+
+Then define the handlers in your main.lua:
+
+```lua
+local mod = game.mod_runtime[game.current_mod]
+
+mod.on_shoot_fun = function(params)
+    ---@type Item
+    local gun = params.gun
+    ---@type Item
+    local ammo_item = params.ammo
+    local ammo = ItypeId.NULL_ID()
+    if not ammo_item then
+        ammo = gun:ammo_current()
+    else
+        ammo = ammo_item:get_type()
+    end
+    local shoot_noise = ammo:obj():slot_ammo().loudness
+    gdebug.log_info(string.format("Gun sound: %d.", shoot_noise))
+end
+
+mod.on_throw_fun = function(params)
+    ---@type Character
+    local thrower = params.thrower
+    ---@type Item
+    local thrown = params.thrown
+    if thrown:is_gun() then
+        gdebug.log_info("Hey! Guns are not for throwing!")
+    end
+end
+```
+
+## Overmap Queries
+
+### Finding and manipulating items on the overmap
+
+```lua
+-- Find all items on the overmap at a specific location
+local om_pos = OmPos.new(0, 0, 0)
+local items = gapi.overmap_find_items_around(om_pos, 0)
+
+-- Get an item from the map and keep it in Lua even if the map unloads
+local map_pos = MapPos.new(100, 100, 0)
+local item = gapi.get_map():find_item_at(map_pos)
+if item then
+    local detached = gapi.create_detached_item(item)
+    -- Later, you can reattach it to a location
+    local reattached = gapi.reattach_item(detached, map_pos)
+end
+
+-- Teleport items within the same map
+local source_pos = MapPos.new(100, 100, 0)
+local dest_pos = MapPos.new(110, 110, 0)
+gapi.get_map():move_item_at(source_pos, dest_pos)
+```
+
+## Death Hooks
+
+### Tracking when monsters die
+
+```lua
+-- In preload.lua
+local mod = game.mod_runtime[game.current_mod]
+game.add_hook("on_mon_death", function(...) return mod.on_mon_death(...) end)
+```
+
+```lua
+-- In main.lua
+local mod = game.mod_runtime[game.current_mod]
+
+mod.on_mon_death = function(params)
+    ---@type Creature
+    local monster = params.creature
+    ---@type Character|nil
+    local killer = params.killer
+
+    local killer_name = killer and killer:get_name() or "Unknown"
+    gdebug.log_info(string.format("%s was killed by %s", monster:get_name(), killer_name))
+end
+```
+
+### Tracking character deaths
+
+```lua
+-- In preload.lua
+local mod = game.mod_runtime[game.current_mod]
+game.add_hook("on_char_death", function(...) return mod.on_char_death(...) end)
+```
+
+```lua
+-- In main.lua
+local mod = game.mod_runtime[game.current_mod]
+
+mod.on_char_death = function(params)
+    ---@type Character
+    local char = params.char
+    ---@type Character|nil
+    local killer = params.killer
+
+    if char == gapi.get_avatar() then
+        gdebug.log_info("You have died!")
+    end
+end
+```
+
+## Character Combat Stats
+
+### Getting attack and stamina costs
+
+```lua
+local you = gapi.get_avatar()
+local items = you:all_items(false)
+
+for _, item in pairs(items) do
+    print(
+        item:tname(1, false, 0) 
+        .. " { attack cost: " .. item:attack_cost() 
+        .. ", stamina cost: " .. item:stamina_cost()
+        .. ", melee stamina cost: " .. you:get_melee_stamina_cost(item)
+        .. " }"
+    )
+end
+
+-- Check for special abilities
+print("Uncanny dodge: " .. (you:uncanny_dodge() and "yes" or "no"))
+```
+
+## Character Magics
+
+### Learn a new spell and forget it
+
+learning a spell:
+
+```lua
+local u = gapi.get_avatar()
+local km = u:get_magic()
+local ex_sp = SpellTypeId.new("example_template")
+km:learn_spell(ex_sp, u, true) -- learn forced
+print( km:knows_spell(ex_sp) ) -- check
+```
+
+forgetting a spell:
+
+```lua
+local u = gapi.get_avatar()
+local km = u:get_magic()
+local ex_sp = SpellTypeId.new("example_template")
+km:forget_spell(ex_sp)         -- forget
+print( km:knows_spell(ex_sp) ) -- check again
+```
+
+## Dynamic Item Actions
+
+All item, bionic, and mutation callback tables are keyed by string id and take a
+table of optional callback functions. Every callback receives a single `params`
+table with named fields.
+
+### game.iuse_functions
+
+| Callbacks | params fields         |
+| --------- | --------------------- |
+| `use`     | `user`, `item`, `pos` |
+| `can_use` | `user`, `item`, `pos` |
+
+`use` returns an `int` (time cost in moves). `can_use` returns `bool`.
+
+```lua
+game.iuse_functions["my_custom_item"] = {
+    use = function(params)
+        local user = params.user
+        local item = params.item
+        gdebug.log_info("Using: " .. item:tname(1))
+        return 0  -- Return time cost in moves
+    end,
+
+    can_use = function(params)
+        -- Return true to allow use, false to prevent
+        return true
+    end
+}
+```
+
+### Item lifecycle callbacks
+
+Several additional callback tables let you react to item events.
+
+### game.iwieldable_functions
+
+| Callbacks                                | params fields               |
+| ---------------------------------------- | --------------------------- |
+| `on_wield`                               | `user`, `item`, `move_cost` |
+| `on_unwield`, `can_wield`, `can_unwield` | `user`, `item`              |
+
+---
+### game.iwearable_functions
+| Callbacks | params fields |
+|-----------|---------------|
+| `on_wear`, `on_takeoff`, `can_wear`, `can_takeoff` | `user`, `item` |
+---
+
+### game.iequippable_functions
+
+| Callbacks               | params fields                              |
+| ----------------------- | ------------------------------------------ |
+| `on_durability_change`  | `user`, `item`, `old_damage`, `new_damage` |
+| `on_repair`, `on_break` | `user`, `item`                             |
+
+---
+### game.istate_functions
+| Callbacks            | params fields         |
+|--------------------- | --------------------- |
+| `on_tick`, `on_drop` | `user`, `item`, `pos` |
+| `on_pickup`          | `user`, `item`        |
+---
+
+### game.imelee_functions
+
+| Callbacks         | params fields                               |
+| ----------------- | ------------------------------------------- |
+| `on_melee_attack` | `user`, `target`, `item`                    |
+| `on_hit`          | `user`, `target`, `item`, `damage_instance` |
+| `on_block`        | `user`, `source`, `item`, `damage_blocked`  |
+| `on_miss`         | `user`, `item`                              |
+
+---
+### game.iranged_functions
+| Callbacks                             | params fields                         |
+| ------------------------------------- | ------------------------------------- |
+| `on_fire`                             | `user`, `item`, `target_pos`, `shots` |
+| `on_reload`, `can_fire`, `can_reload` | `user`, `item`                        |
+---
+
+`can_*` callbacks return `bool` — return `false` to block the action.
+
+```lua
+game.iwieldable_functions["cursed_sword"] = {
+    on_wield = function(params)
+        gdebug.log_info(params.user:get_name() .. " draws " .. params.item:tname(1))
+    end,
+    can_unwield = function(params)
+        -- Cursed sword can't be put down
+        return false
+    end
+}
+```
+
+### Bionic callbacks
+
+`game.bionic_functions` is keyed by bionic string id. Each callback receives
+a single `params` table.
+
+| Callback        | params fields       | When fired                  |
+| --------------- | ------------------- | --------------------------- |
+| `on_activate`   | `user`, `bionic`    | After bionic is activated   |
+| `on_deactivate` | `user`, `bionic`    | After bionic is deactivated |
+| `on_installed`  | `user`, `bionic_id` | After bionic is installed   |
+| `on_removed`    | `user`, `bionic_id` | After bionic is removed     |
+
+```lua
+game.bionic_functions["bio_laser"] = {
+    on_activate = function(params)
+        gdebug.log_info(params.user:get_name() .. " activated bio_laser")
+    end,
+    on_installed = function(params)
+        gdebug.log_info("Installed: " .. tostring(params.bionic_id))
+    end
+}
+```
+
+### Mutation callbacks
+
+`game.mutation_functions` is keyed by trait string id.
+
+| Callback        | params fields      | When fired                    |
+| --------------- | ------------------ | ----------------------------- |
+| `on_activate`   | `user`, `trait_id` | After mutation is toggled on  |
+| `on_deactivate` | `user`, `trait_id` | After mutation is toggled off |
+| `on_gain`       | `user`, `trait_id` | After mutation is gained      |
+| `on_loss`       | `user`, `trait_id` | After mutation is lost        |
+
+```lua
+game.mutation_functions["TRAIT_QUICK"] = {
+    on_gain = function(params)
+        gdebug.log_info(params.user:get_name() .. " gained " .. tostring(params.trait_id))
+    end,
+    on_loss = function(params)
+        gdebug.log_info(params.user:get_name() .. " lost " .. tostring(params.trait_id))
+    end
+}
+```
+
+## More Combat Hooks
+
+### Reacting to dodge, block, and technique events
+
+```lua
+-- In preload.lua
+local mod = game.mod_runtime[game.current_mod]
+game.add_hook("on_creature_dodged", function(...) return mod.on_creature_dodged(...) end)
+game.add_hook("on_creature_blocked", function(...) return mod.on_creature_blocked(...) end)
+game.add_hook("on_creature_performed_technique", function(...) return mod.on_creature_performed_technique(...) end)
+game.add_hook("on_creature_melee_attacked", function(...) return mod.on_creature_melee_attacked(...) end)
+```
+
+```lua
+-- In main.lua
+local mod = game.mod_runtime[game.current_mod]
+
+mod.on_creature_dodged = function(params)
+    ---@type Character
+    local char = params.char
+    ---@type Creature
+    local source = params.source
+    local difficulty = params.difficulty
+    gdebug.log_info(string.format("%s dodged %s (DC: %d)", char:get_name(), source:get_name(), difficulty))
+end
+
+mod.on_creature_blocked = function(params)
+    ---@type Character
+    local char = params.char
+    ---@type Creature
+    local source = params.source
+    local bodypart_id = params.bodypart_id
+    local damage_blocked = params.damage_blocked
+    gdebug.log_info(string.format(
+        "%s blocked %s on %s (blocked: %.1f damage)",
+        char:get_name(),
+        source:get_name(),
+        bodypart_id,
+        damage_blocked
+    ))
+end
+
+mod.on_creature_melee_attacked = function(params)
+    ---@type Character
+    local char = params.char
+    ---@type Creature
+    local target = params.target
+    if params.success then
+        gdebug.log_info(string.format("%s hit %s", char:get_name(), target:get_name()))
+    else
+        gdebug.log_info(string.format("%s missed %s", char:get_name(), target:get_name()))
+    end
+end
+```
+
+## Item Type Information
+
+### Querying item type properties via ItypeId
+
+```lua
+local item_type = ItypeId.new("9mm")
+
+-- Get the item type object (ItypeRaw)
+local itype_raw = item_type:obj()
+
+-- Access item type specific data (e.g., for ammo)
+if itype_raw:slot_ammo() then
+    local ammo_data = itype_raw:slot_ammo()
+    print("Ammo damage: " .. ammo_data.damage)
+    print("Ammo range: " .. ammo_data.range)
+end
+
+-- For containers
+if itype_raw:slot_container() then
+    local container_data = itype_raw:slot_container()
+    print("Capacity: " .. container_data.capacity)
+end
+
+-- For tools
+if itype_raw:slot_tool() then
+    local tool_data = itype_raw:slot_tool()
+    print("Tool quality: " .. tool_data.quality)
+end
+```
+
+## Character Trap Awareness
+
+### Checking and remembering traps
+
+First, set a trap at a location:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+-- tr_landmine_buried has visibility 20. very hard to find.
+local mine = TrapId.new("tr_landmine_buried"):int_id()
+m:set_trap_at(pos4x, mine)
+print(tostring(u:knows_trap(pos4x)))
+```
+
+Then, make the character aware of the trap:
+
+```lua
+local u = gapi.get_avatar()
+local m = gapi.get_map()
+local pos = u:get_pos_ms()
+local pos4x = pos + Tripoint.new(4, 0, 0)
+u:add_known_trap(pos4x, m:get_trap_at(pos4x))
+print(tostring(u:knows_trap(pos4x)))
+```
+
+After running the second script, you can see where the trap is located instead of stepping on it.
+
+## Time and Space
+
+### Sun and moon, inside and outside
+
+```lua
+local u_pos = gapi.get_avatar():get_pos_ms()
+local map = gapi.get_map()
+local now = gapi.current_turn()
+
+-- Found the key name from MoonPhase entries
+local moon = ""
+for name, num in pairs(MoonPhase) do
+   if num == now:moon_phase() then
+      moon = name
+   end
+end
+
+print( "Are you outside?: " .. tostring(map:is_outside(u_pos)) )
+print( "Are you sheltered?: " .. tostring(map:is_sheltered(u_pos)) )
+print( "Today moon phase is: " .. moon )
+print( "Sunset time is: " .. now:sunset():to_string_time_of_day() )
+```

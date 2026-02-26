@@ -1487,17 +1487,9 @@ void lockpick_activity_actor::start( player_activity &/*act*/, Character & )
     const optional_vpart_position veh = get_map().veh_at( target );
     const auto door_lock = veh.part_with_feature( "DOOR_LOCKING", true );
 
-    if( furn_type != f_null ) {
-        if( furn_type->lockpick_result.is_null() ) {
-            debugmsg( "%s lockpick_result is null", furn_type.id().str() );
-            return;
-        }
+    if( furn_type != f_null && !furn_type->lockpick_result.is_null() ) {
         progress.emplace( furn_type->name(), moves_total );
-    } else if( veh ) {
-        if( !door_lock ) {
-            debugmsg( "%s has no pickable part", furn_type.id().str() );
-            return;
-        }
+    } else if( veh && door_lock ) {
         progress.emplace( veh->vehicle().name, moves_total );
     } else {
         if( ter_type->lockpick_result.is_null() ) {
@@ -1570,6 +1562,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     }
 
     bool perfect = it->has_flag( flag_PERFECT_LOCKPICK );
+    bool durable = it->has_flag( flag_DURABLE_LOCKPICK );
     bool destroy = false;
 
     /** @EFFECT_DEX improves chances of successfully picking door lock, reduces chances of bad outcomes */
@@ -1592,7 +1585,8 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         }
 
         who.add_msg_if_player( m_good, open_message );
-    } else if( lock_roll > ( 1.5 * pick_roll ) ) {
+    } else if( lock_roll > ( 1.5 * pick_roll ) && !durable ) {
+        // damage lockpick on a low result, unless it's durable
         if( it->inc_damage() ) {
             who.add_msg_if_player( m_bad,
                                    _( "The lock stumps your efforts to pick it, and you destroy your tool." ) );

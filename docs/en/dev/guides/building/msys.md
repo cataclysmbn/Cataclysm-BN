@@ -100,7 +100,7 @@ PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/share/pkgconfig:/lib/pkgconfig:/mingw64
 
 ```bash
 cd /c/dev/
-git clone https://github.com/cataclysmbnteam/Cataclysm-BN.git
+git clone https://github.com/cataclysmbn/Cataclysm-BN.git
 cd Cataclysm-BN
 ```
 

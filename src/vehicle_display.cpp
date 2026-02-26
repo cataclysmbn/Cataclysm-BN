@@ -155,18 +155,26 @@ nc_color vehicle::part_color( const int p, const bool exact ) const
  * @param p The index of the part being examined.
  * @param hl The index of the part to highlight (if any).
  * @param detail Whether or not to show detailed contents for fuel components.
+ * @param start_at Index of first part to display (for scrolling).
  */
 int vehicle::print_part_list( const catacurses::window &win, int y1, const int max_y, int width,
-                              int p, int hl /*= -1*/, bool detail ) const
+                              int p, int hl /*= -1*/, bool detail, int start_at ) const
 {
     if( p < 0 || p >= static_cast<int>( parts.size() ) ) {
         return y1;
     }
     std::vector<int> pl = this->parts_at_relative( parts[p].mount, true );
     int y = y1;
-    for( size_t i = 0; i < pl.size(); i++ ) {
+
+    // Show indicator if we've scrolled down
+    if( start_at > 0 && y < max_y ) {
+        mvwprintz( win, point( 1, y ), c_yellow, _( "^ More parts above…" ) );
+        ++y;
+    }
+
+    for( size_t i = start_at; i < pl.size(); i++ ) {
         if( y >= max_y ) {
-            mvwprintz( win, point( 1, y ), c_yellow, _( "More parts here…" ) );
+            mvwprintz( win, point( 1, y ), c_yellow, _( "v More parts below…" ) );
             ++y;
             break;
         }

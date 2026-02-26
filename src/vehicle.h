@@ -57,7 +57,8 @@ namespace vehicles
 {
 // ratio of constant rolling resistance to the part that varies with velocity
 constexpr double rolling_constant_to_variable = 33.33;
-constexpr float vmiph_per_tile = 400.0f;
+// 1 tile/s is approximately 1.78816 m/s == 178.816 cm/s.
+constexpr float cmps_per_tile = 178.816f;
 } // namespace vehicles
 struct rider_data {
     Creature *psg = nullptr;
@@ -99,6 +100,7 @@ enum veh_coll_type : int {
     veh_coll_veh,      // 2 - vehicle
     veh_coll_bashable, // 3 - bashable
     veh_coll_other,    // 4 - other
+    veh_coll_veh_nocollide, // 5 - vehicle NOCOLLIDE
     num_veh_coll_types
 };
 
@@ -173,10 +175,8 @@ struct bounding_box {
 
 char keybind( const std::string &opt, const std::string &context = "VEHICLE" );
 
-int mps_to_vmiph( double mps );
-double vmiph_to_mps( int vmiph );
-int cmps_to_vmiph( int cmps );
-int vmiph_to_cmps( int vmiph );
+auto mps_to_cmps( double mps ) -> int;
+auto cmps_to_mps( int cmps ) -> double;
 float impulse_to_damage( float impulse );
 float damage_to_impulse( float damage );
 
@@ -530,7 +530,7 @@ class vehicle
         void deserialize( JsonIn &jsin );
         // Vehicle parts list - all the parts on a single tile
         int print_part_list( const catacurses::window &win, int y1, int max_y, int width, int p,
-                             int hl = -1, bool detail = false ) const;
+                             int hl = -1, bool detail = false, int start_at = 0 ) const;
 
         // Vehicle parts descriptions - descriptions for all the parts on a single tile
         void print_vparts_descs( const catacurses::window &win, int max_y, int width, int p,
@@ -1148,8 +1148,10 @@ class vehicle
         /**
          * total lift of all lifters
          */
-        double total_lift( bool fuelled, bool safe = false, bool ideal = false ) const;
-        bool has_sufficient_lift() const;
+        double total_lift( bool fuelled, bool safe = false, bool ideal = false,
+                           bool unpowered = false ) const;
+        bool has_sufficient_lift( bool unpowered = false ) const;
+        double get_lift_percent( bool unpowered = false ) const;
         int get_z_change() const;
         bool is_flying_in_air() const;
         void set_flying( bool new_flying_value );
@@ -1509,6 +1511,10 @@ class vehicle
         //mark engine as on or off
         void toggle_specific_engine( int e, bool on );
         void toggle_specific_part( int p, bool on );
+        // muscle engine validation
+        bool can_enable_muscle_engine( int e, std::string &failure_reason ) const;
+        bool has_muscle_engine_operator( int e ) const;
+        void validate_muscle_engines();
         //true if an engine exists with specified type
         //If enabled true, this engine must be enabled to return true
         bool has_engine_type( const itype_id &ft, bool enabled ) const;
@@ -1723,7 +1729,7 @@ class vehicle
          * set them directly, except when initializing the vehicle or during mapgen.
          */
         point pos;
-        // vehicle current velocity, mph * 100
+        // vehicle current velocity, cm/s
         int velocity = 0;
         // velocity vehicle's cruise control trying to achieve
         int cruise_velocity = 0;
@@ -1827,5 +1833,3 @@ namespace rot
 {
 temperature_flag temperature_flag_for_part( const vehicle &veh, size_t part );
 } // namespace rot
-
-

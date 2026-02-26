@@ -68,6 +68,7 @@ scopes:
   - mods/no_reviving_zombies
   - mods/no_zombify
   - mods/novitamins
+  - mods/nuclear_tear
   - mods/pathfinding_stockfish
   - mods/pride_flags
   - mods/resurrection_tech

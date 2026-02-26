@@ -433,6 +433,23 @@
     "components": [ [ [ "water", 3 ], [ "water_clean", 3 ] ], [ [ "ammonia", 1 ] ] ]
   },
   {
+    "//": "abstracted Birkeland-Eyde process, using electric arc to fix nitrogen from air into nitric oxide, which is then oxidized to nitrogen dioxide and absorbed into water to form nitric acid",
+    "type": "recipe",
+    "result": "chem_nitric_acid",
+    "id_suffix": "birkeland_eyde",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_CHEMICALS",
+    "skill_used": "cooking",
+    "difficulty": 4,
+    "time": "60 m",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 5 ],
+    "book_learn": [ [ "textbook_chemistry", 3 ], [ "adv_chemistry", 3 ], [ "reference_cooking", 3 ] ],
+    "qualities": [ { "id": "CONTAIN", "level": 1 }, { "id": "CHEM", "level": 1 }, { "id": "GLARE", "level": 2 } ],
+    "tools": [ [ [ "welder", 500 ], [ "toolset", 750 ] ] ],
+    "components": [ [ [ "water", 3 ], [ "water_clean", 3 ] ] ]
+  },
+  {
     "type": "recipe",
     "result": "chem_nitric_acid",
     "id_suffix": "from muriatic",
@@ -499,6 +516,23 @@
     "time": "30 s",
     "autolearn": true,
     "components": [ [ [ "fertilizer_commercial", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "chem_ammonium_nitrate_pellets",
+    "id_suffix": "from_powder",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_CHEMICALS",
+    "skill_used": "cooking",
+    "difficulty": 2,
+    "charges": 100,
+    "time": "20 m",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 4 ],
+    "//": "Wet granulation: dampening ammonium nitrate powder with water to form cohesive pellets, then drying them. Requires gentle heating to evaporate moisture without decomposing the compound.",
+    "qualities": [ { "id": "CONTAIN", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 5, "LIST" ] ] ],
+    "components": [ [ [ "chem_ammonium_nitrate", 100 ] ], [ [ "water", 1 ], [ "water_clean", 1 ] ] ]
   },
   {
     "type": "recipe",

@@ -47,12 +47,15 @@
 #include "map_iterator.h"
 #include "mapbuffer.h"
 #include "mission.h"
+#include "messages.h"
 #include "mongroup.h"
 #include "npc.h"
 #include "omdata.h"
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
+#include "overmap_label.h"
+#include "overmap_label_note.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
 #include "overmap_special.h"
@@ -80,6 +83,7 @@
 static const activity_id ACT_TRAVELLING( "ACT_TRAVELLING" );
 
 static const mongroup_id GROUP_FOREST( "GROUP_FOREST" );
+static const mongroup_id GROUP_NEMESIS( "GROUP_NEMESIS" );
 
 static const trait_id trait_DEBUG_NIGHTVISION( "DEBUG_NIGHTVISION" );
 
@@ -200,15 +204,22 @@ auto fmt_omt_coords( const tripoint_abs_omt &coord ) -> std::string
 
 static void create_note( const tripoint_abs_omt &curs );
 
-// {note symbol, note color, offset to text}
-std::tuple<char, nc_color, size_t> get_note_display_info( const std::string &note )
+struct note_display_info {
+    char symbol = 'N';
+    nc_color color = c_yellow;
+    size_t text_offset = 0;
+    std::optional<std::string> sprite_id;
+};
+
+static note_display_info get_note_display_info_full( const std::string &note )
 {
-    std::tuple<char, nc_color, size_t> result {'N', c_yellow, 0};
-    bool set_color  = false;
+    note_display_info result;
+    bool set_color = false;
     bool set_symbol = false;
+    bool set_sprite = false;
 
     size_t pos = 0;
-    for( int i = 0; i < 2; ++i ) {
+    for( int i = 0; i < 4; ++i ) {
         // find the first non-whitespace non-delimiter
         pos = note.find_first_not_of( " :;", pos, 3 );
         if( pos == std::string::npos ) {
@@ -222,20 +233,60 @@ std::tuple<char, nc_color, size_t> get_note_display_info( const std::string &not
         }
 
         // set color or symbol
-        if( !set_symbol && note[end] == ':' ) {
-            std::get<0>( result ) = note[end - 1];
-            std::get<2>( result ) = end + 1;
+        const char delimiter = note[end];
+        const std::string token = note.substr( pos, end - pos );
+        if( !set_sprite && delimiter == ':' && token == "SPRITE" ) {
+            size_t sprite_start = end + 1;
+            if( sprite_start >= note.size() ) {
+                result.text_offset = sprite_start;
+                return result;
+            }
+            size_t sprite_end = note.find_first_of( " :;", sprite_start, 3 );
+            if( sprite_end == std::string::npos ) {
+                sprite_end = note.size();
+            }
+            std::string sprite_id = note.substr( sprite_start, sprite_end - sprite_start );
+            if( !sprite_id.empty() ) {
+                result.sprite_id = sprite_id;
+                set_sprite = true;
+            }
+            if( sprite_end >= note.size() ) {
+                result.text_offset = sprite_end;
+                return result;
+            }
+            pos = sprite_end + 1;
+            result.text_offset = pos;
+            continue;
+        } else if( !set_symbol && delimiter == ':' && token != "SPRITE" ) {
+            result.symbol = note[end - 1];
+            result.text_offset = end + 1;
             set_symbol = true;
-        } else if( !set_color && note[end] == ';' ) {
-            std::get<1>( result ) = get_note_color( note.substr( pos, end - pos ) );
-            std::get<2>( result ) = end + 1;
+        } else if( !set_color && delimiter == ';' ) {
+            result.color = get_note_color( note.substr( pos, end - pos ) );
+            result.text_offset = end + 1;
             set_color = true;
+        } else if( !set_color && !set_symbol && !set_sprite ) {
+            return result;
+        } else {
+            return result;
         }
 
         pos = end + 1;
     }
 
     return result;
+}
+
+// {note symbol, note color, offset to text}
+std::tuple<char, nc_color, size_t> get_note_display_info( const std::string &note )
+{
+    const note_display_info result = get_note_display_info_full( note );
+    return std::make_tuple( result.symbol, result.color, result.text_offset );
+}
+
+std::optional<std::string> get_note_sprite_id( const std::string &note )
+{
+    return get_note_display_info_full( note ).sprite_id;
 }
 
 static std::array<std::pair<nc_color, std::string>, npm_width *npm_height> get_overmap_neighbors(
@@ -285,7 +336,7 @@ static void update_note_preview( const std::string &note,
     wnoutrefresh( *w_preview );
 
     werase( *w_preview_title );
-    nc_color default_color = c_unset;
+    nc_color default_color = note_color;
     print_colored_text( *w_preview_title, point_zero, default_color, note_color, note_text,
                         report_color_error::no );
     int note_text_width = utf8_width( note_text );
@@ -358,6 +409,12 @@ static bool get_scent_glyph( const tripoint_abs_omt &pos, nc_color &ter_color,
     return false;
 }
 
+static auto has_player_label( const tripoint_abs_omt &pos ) -> bool
+{
+    const auto player_label = overmap_label_note::extract_label( overmap_buffer.note( pos ) );
+    return player_label.has_value() && !player_label->empty();
+}
+
 static void draw_city_labels( const catacurses::window &w, const tripoint_abs_omt &center )
 {
     const int win_x_max = getmaxx( w );
@@ -391,11 +448,75 @@ static void draw_city_labels( const catacurses::window &w, const tripoint_abs_om
             continue;   // right under the cursor.
         }
 
-        if( !overmap_buffer.seen( tripoint_abs_omt( city_pos, center.z() ) ) ) {
+        const auto label_pos = tripoint_abs_omt( city_pos, center.z() );
+        if( !overmap_buffer.seen( label_pos ) ) {
             continue;   // haven't seen it.
+        }
+        if( has_player_label( label_pos ) ) {
+            continue;
         }
 
         mvwprintz( w, point( text_x_min, text_y ), i_yellow, element.city->name );
+    }
+}
+
+static auto get_map_label_text( const tripoint_abs_omt &pos ) -> std::optional<std::string>
+{
+    if( const auto player_label = overmap_label_note::extract_label( overmap_buffer.note( pos ) );
+        player_label.has_value() && !player_label->empty() ) {
+        return player_label;
+    }
+
+    const auto &terrain = overmap_buffer.ter( pos );
+    if( const auto static_label = overmap_labels::get_label( terrain->get_type_id() );
+        static_label.has_value() && !static_label->empty() ) {
+        return _( *static_label );
+    }
+
+    return std::nullopt;
+}
+
+static auto draw_map_labels( const catacurses::window &w, const tripoint_abs_omt &center ) -> void
+{
+    const auto win_x_max = getmaxx( w );
+    const auto win_y_max = getmaxy( w );
+    const auto screen_center_pos = point( win_x_max / 2, win_y_max / 2 );
+    for( auto x = 0; x < win_x_max; ++x ) {
+        for( auto y = 0; y < win_y_max; ++y ) {
+            const auto map_pos = center.xy() + point( x - screen_center_pos.x, y - screen_center_pos.y );
+            const auto map_pos_z = tripoint_abs_omt( map_pos, center.z() );
+
+            if( !overmap_buffer.seen( map_pos_z ) ) {
+                continue;
+            }
+
+            const auto label_text = get_map_label_text( map_pos_z );
+            if( !label_text.has_value() ) {
+                continue;
+            }
+
+            const auto screen_pos = point_rel_omt( point( x, y ) );
+            const auto text_width = utf8_width( *label_text, true );
+            const auto text_x_min = screen_pos.x() - text_width / 2;
+            const auto text_x_max = text_x_min + text_width;
+            const auto text_y = screen_pos.y();
+
+            if( text_x_min < 0 ||
+                text_x_max > win_x_max ||
+                text_y < 0 ||
+                text_y > win_y_max ) {
+                continue;   // outside of the window bounds.
+            }
+
+            if( screen_center_pos.x >= ( text_x_min - 1 ) &&
+                screen_center_pos.x <= ( text_x_max ) &&
+                screen_center_pos.y >= ( text_y - 1 ) &&
+                screen_center_pos.y <= ( text_y + 1 ) ) {
+                continue;   // right under the cursor.
+            }
+
+            mvwprintz( w, point( text_x_min, text_y ), i_yellow, *label_text );
+        }
     }
 }
 
@@ -975,7 +1096,8 @@ static void draw_ascii( ui_adaptor &ui,
                 } else if( target.z() < center.z() ) {
                     ter_sym = "v";
                 }
-            } else if( blink && uistate.overmap_show_map_notes && overmap_buffer.has_note( omp ) ) {
+            } else if( blink && uistate.overmap_show_map_notes && overmap_buffer.has_note( omp ) &&
+                       !get_map_label_text( omp ).has_value() ) {
                 // Display notes in all situations, even when not seen
                 std::tie( ter_sym, ter_color, std::ignore ) =
                     get_note_display_info( overmap_buffer.note( omp ) );
@@ -1047,6 +1169,12 @@ static void draw_ascii( ui_adaptor &ui,
                             // Don't flood the map with forest creatures.
                             continue;
                         }
+                        if( mgp->type == GROUP_NEMESIS ) {
+                            // Nemesis horde shows as &
+                            ter_sym = "&";
+                            ter_color = c_red;
+                            break;
+                        }
                         if( mgp->horde ) {
                             // Hordes show as +
                             ter_sym = "+";
@@ -1117,6 +1245,7 @@ static void draw_ascii( ui_adaptor &ui,
 
     if( center.z() == 0 && uistate.overmap_show_city_labels ) {
         draw_city_labels( w, center );
+        draw_map_labels( w, center );
     }
 
     half_open_rectangle<point_abs_omt> screen_bounds(
@@ -1161,7 +1290,7 @@ static void draw_ascii( ui_adaptor &ui,
 
     if( uistate.overmap_show_map_notes ) {
         const std::string &note_text = overmap_buffer.note( center );
-        if( !note_text.empty() ) {
+        if( !note_text.empty() && !overmap_label_note::is_label_only( note_text ) ) {
             const std::tuple<char, nc_color, size_t> note_info = get_note_display_info(
                         note_text );
             const size_t pos = std::get<2>( note_info );
@@ -1203,7 +1332,7 @@ static void draw_ascii( ui_adaptor &ui,
             // clear line, print line, print vertical line on each side.
             mvwputch( w, point( 1, i + 2 ), c_white, LINE_XOXO );
             mvwprintz( w, point( 2, i + 2 ), c_yellow, spacer );
-            nc_color default_color = c_unset;
+            nc_color default_color = pr.first;
             print_colored_text( w, point( 2, i + 2 ), default_color, pr.first, pr.second,
                                 report_color_error::no );
             mvwputch( w, point( maxlen + 2, i + 2 ), c_white, LINE_XOXO );
@@ -1473,11 +1602,12 @@ static void create_note( const tripoint_abs_omt &curs )
                                       _( color_pair.second ), replace_all( color_pair.second, " ", "_" ) );
     }
 
-    std::string helper_text = string_format( ".\n\n%s\n%s\n%s\n",
+    std::string helper_text = string_format( ".\n\n%s\n%s\n%s\n%s\n",
                               _( "Type GLYPH:TEXT to set a custom glyph." ),
                               _( "Type COLOR;TEXT to set a custom color." ),
+                              _( "Type SPRITE:TILE_ID to set a custom sprite." ),
                               // NOLINTNEXTLINE(cata-text-style): literal exclaimation mark
-                              _( "Examples: B:Base | g;Loot | !:R;Minefield" ) );
+                              _( "Examples: B:Base | g;Loot | SPRITE:toolbox;g;Tools" ) );
     color_notes = color_notes.replace( color_notes.end() - 2, color_notes.end(), helper_text );
     std::string title = _( "Note:" );
 

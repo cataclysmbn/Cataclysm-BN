@@ -34,7 +34,7 @@
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
-// TODO (https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1612):
+// TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that include after implementing repair_activity_actor.
 #include "distribution_grid.h"
 #include "enums.h"
@@ -730,7 +730,7 @@ static void set_up_butchery_activity( player_activity &act, player &u, const but
     }
 
     print_reasons();
-    act.tools.clear();
+    act.get_tools_mut().clear();
     act.speed.calc_all_moves( u );
     act.moves_left = setup.move_cost;
     act.moves_total = setup.move_cost;
@@ -1886,8 +1886,8 @@ void activity_handlers::pickaxe_finish( player_activity *act, player *p )
     } else {
         here.destroy( pos, true );
     }
-    if( !act->tools.empty() ) {
-        item &it = *act->tools.front();
+    if( !act->get_tools().empty() ) {
+        item &it = *act->get_tools().front();
         p->consume_charges( it, it.ammo_required() );
     } else {
         debugmsg( "pickaxe activity has no tool" );
@@ -2048,7 +2048,7 @@ void activity_handlers::reload_finish( player_activity *act, player *p )
             sounds::ambient_sound( p->pos(), reloadable.type->gun->reload_noise_volume,
                                    sounds::sound_t::activity, reloadable.type->gun->reload_noise );
         }
-    } else if( reloadable.is_watertight_container() ) {
+    } else if( reloadable.is_container() ) {
         msg = _( "You refill the %s." );
     }
     add_msg( m_neutral, msg, reloadable.tname(), ammo_name );
@@ -2058,7 +2058,7 @@ void activity_handlers::start_fire_finish( player_activity *act, player *p )
 {
     static const std::string iuse_name_string( "firestarter" );
 
-    item &it = *act->tools.front();
+    item &it = *act->get_tools().front();
     item *used_tool = it.get_usable_item( iuse_name_string );
     if( used_tool == nullptr ) {
         debugmsg( "Lost tool used for starting fire" );
@@ -2090,7 +2090,7 @@ void activity_handlers::start_fire_finish( player_activity *act, player *p )
 void activity_handlers::start_fire_do_turn( player_activity *act, player *p )
 {
     map &here = get_map();
-    item &firestarter = *act->tools.front();
+    item &firestarter = *act->get_tools().front();
     // Try fueling the fire if we don't already have fuel, OR if the tool needs to look for tinder to work
     if( !here.is_flammable( act->placement ) || ( firestarter.has_flag( flag_REQUIRES_TINDER ) &&
             !here.tinder_at( act->placement ) ) ) {
@@ -2235,20 +2235,64 @@ void activity_handlers::hand_crank_do_turn( player_activity *act, player *p )
     // to 10 watt (suspicious claims from some manufacturers) sustained output.
     // It takes 2.4 minutes to produce 1kj at just slightly under 7 watts (25 kj per hour)
     // time-based instead of speed based because it's a sustained activity
-    item &hand_crank_item = *act->tools.front();
+    auto &hand_crank_item = *act->get_tools().front();
+    constexpr auto interval_turns_index = 0;
+    constexpr auto charge_amount_index = 1;
+    constexpr auto fatigue_amount_index = 2;
+    constexpr auto ammo_type_index = 0;
+    constexpr auto fully_charged_message_index = 1;
+    constexpr auto exhausted_message_index = 2;
+    auto charge_interval = 144_seconds;
+    auto charge_amount = 1;
+    auto fatigue_amount = 1;
+    auto ammo_type = itype_id( "battery" );
+    auto fully_charged_message = std::string( "You've charged the battery completely." );
+    auto exhausted_message = std::string( "You're too exhausted to keep cranking." );
 
-    if( calendar::once_every( 144_seconds ) ) {
-        p->mod_fatigue( 1 );
+    if( act->values.size() > interval_turns_index ) {
+        charge_interval = time_duration::from_turns( act->values[interval_turns_index] );
+    }
+    if( act->values.size() > charge_amount_index ) {
+        charge_amount = std::max( 1, act->values[charge_amount_index] );
+    }
+    if( act->values.size() > fatigue_amount_index ) {
+        fatigue_amount = std::max( 0, act->values[fatigue_amount_index] );
+    }
+    if( act->str_values.size() > ammo_type_index &&
+        !act->str_values[ammo_type_index].empty() ) {
+        ammo_type = itype_id( act->str_values[ammo_type_index] );
+    }
+    if( act->str_values.size() > fully_charged_message_index &&
+        !act->str_values[fully_charged_message_index].empty() ) {
+        fully_charged_message = act->str_values[fully_charged_message_index];
+    }
+    if( act->str_values.size() > exhausted_message_index &&
+        !act->str_values[exhausted_message_index].empty() ) {
+        exhausted_message = act->str_values[exhausted_message_index];
+    }
+    if( charge_interval <= 0_turns ) {
+        charge_interval = 144_seconds;
+    }
+
+    if( calendar::once_every( charge_interval ) ) {
+        p->mod_fatigue( fatigue_amount );
         if( hand_crank_item.ammo_capacity() > hand_crank_item.ammo_remaining() ) {
-            hand_crank_item.ammo_set( itype_battery, hand_crank_item.ammo_remaining() + 1 );
+            const auto current = hand_crank_item.ammo_remaining();
+            const auto capacity = hand_crank_item.ammo_capacity();
+            const auto next_charges = std::min( capacity, current + charge_amount );
+            hand_crank_item.ammo_set( ammo_type, next_charges );
+            if( next_charges >= capacity ) {
+                act->moves_left = 0;
+                add_msg( m_info, _( fully_charged_message ) );
+            }
         } else {
             act->moves_left = 0;
-            add_msg( m_info, _( "You've charged the battery completely." ) );
+            add_msg( m_info, _( fully_charged_message ) );
         }
     }
     if( p->get_fatigue() >= fatigue_levels::dead_tired ) {
         act->moves_left = 0;
-        add_msg( m_info, _( "You're too exhausted to keep cranking." ) );
+        add_msg( m_info, _( exhausted_message ) );
     }
 
 }
@@ -2258,7 +2302,7 @@ void activity_handlers::vibe_do_turn( player_activity *act, player *p )
     //Using a vibrator takes time (10 minutes), not speed
     //Linear increase in morale during action with a small boost at end
     //Deduct 1 battery charge for every minute in use, or vibrator is much less effective
-    item &vibrator_item = *act->tools.front();
+    item &vibrator_item = *act->get_tools().front();
 
     if( p->encumb( body_part_mouth ) >= 30 ) {
         act->moves_left = 0;
@@ -2370,7 +2414,7 @@ void activity_handlers::cracking_finish( player_activity *act, player *p )
     act->set_to_null();
 }
 
-// TODO (https://github.com/cataclysmbnteam/Cataclysm-BN/issues/1612):
+// TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that repair code after repair_activity_actor.
 
 enum repeat_type : int {
@@ -2607,7 +2651,7 @@ void activity_handlers::train_skill_do_turn( player_activity *act, player *p )
             hack_original_charges = main_tool ? main_tool->charges : 0;
         }
     } else {
-        main_tool = &*act->tools.front();
+        main_tool = &*act->get_tools().front();
     }
     if( main_tool == nullptr ) {
         debugmsg( "train skill tools array and hack values are empty. this would have caused invalid safe reference error" );
@@ -2617,9 +2661,20 @@ void activity_handlers::train_skill_do_turn( player_activity *act, player *p )
     item &skill_training_item = *main_tool;
     int training_skill_interval = atoi( p->get_value( "training_iuse_skill_interval" ).c_str() );
 
+    if( training_skill_interval <= 0 ) {
+        debugmsg( "training_iuse_skill_interval is invalid ( %d )", training_skill_interval );
+        act->moves_left = 0;
+        return;
+    }
+
     if( calendar::once_every( 1_minutes * training_skill_interval ) ) {
         // pull metadata. this is probably the easiest way to get this data from the JSON definition
         std::string training_skill = p->get_value( "training_iuse_skill" );
+        if( training_skill.empty() ) {
+            debugmsg( "training_iuse_skill is empty" );
+            act->moves_left = 0;
+            return;
+        }
         int training_skill_xp = atoi( p->get_value( "training_iuse_skill_xp" ).c_str() );
         int training_skill_max_level = atoi( p->get_value( "training_iuse_skill_xp_max_level" ).c_str() );
         int training_skill_xp_chance = atoi( p->get_value( "training_iuse_skill_xp_chance" ).c_str() );
@@ -2980,11 +3035,11 @@ void activity_handlers::gunmod_add_finish( player_activity *act, player *p )
 void activity_handlers::toolmod_add_finish( player_activity *act, player *p )
 {
     act->set_to_null();
-    if( act->targets.size() != 1 || !act->tools[0] || !act->targets[0] ) {
+    if( act->targets.size() != 1 || !act->get_tools()[0] || !act->targets[0] ) {
         debugmsg( "Incompatible arguments to ACT_TOOLMOD_ADD" );
         return;
     }
-    item &tool = *act->tools[0];
+    item &tool = *act->get_tools()[0];
     item &mod = *act->targets[0];
     p->add_msg_if_player( m_good, _( "You successfully attached the %1$s to your %2$s." ),
                           mod.tname(), tool.tname() );
@@ -3153,7 +3208,7 @@ void activity_handlers::fish_do_turn( player_activity *act, player *p )
         }
         return;
     }
-    item &rod = *act->tools.front();
+    item &rod = *act->get_tools().front();
     int fish_chance = 1;
     int survival_mod = p->get_skill_level( skill_survival );
     if( rod.has_flag( flag_FISH_POOR ) ) {
@@ -3959,13 +4014,13 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
     act->set_to_null();
 
     // Quality of tool used and assistants can together both reduce intensity of work.
-    if( act->tools.empty() ) {
+    if( act->get_tools().empty() ) {
         debugmsg( "woodcutting item location not set" );
         resume_for_multi_activities( *p );
         return;
     }
 
-    safe_reference<item> &loc = act->tools[ 0 ];
+    safe_reference<item> &loc = act->get_tools_mut()[ 0 ];
     if( !loc ) {
         debugmsg( "woodcutting item location lost" );
         resume_for_multi_activities( *p );
@@ -4028,7 +4083,7 @@ void activity_handlers::chop_logs_finish( player_activity *act, player *p )
 
     // Quality of tool used and assistants can together both reduce intensity of work.
 
-    safe_reference<item> &loc = act->tools[ 0 ];
+    safe_reference<item> &loc = act->get_tools_mut()[ 0 ];
     if( !loc ) {
         debugmsg( "woodcutting item location lost" );
         return;
@@ -4110,8 +4165,8 @@ void activity_handlers::jackhammer_finish( player_activity *act, player *p )
                               _( "You finish drilling." ),
                               _( "<npcname> finishes drilling." ) );
     act->set_to_null();
-    if( !act->tools.empty() ) {
-        item &it = *act->tools.front();
+    if( !act->get_tools().empty() ) {
+        item &it = *act->get_tools().front();
         p->consume_charges( it, it.ammo_required() );
     } else {
         debugmsg( "unable to find tool" );

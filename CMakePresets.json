@@ -29,6 +29,30 @@
       }
     },
     {
+      "name": "linux-curses",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "displayName": "Linux Slim Build (Curses)",
+      "description": "Target Linux.",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_AR": "llvm-ar",
+        "CMAKE_RANLIB": "llvm-ranlib",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CURSES": "ON",
+        "TILES": "OFF",
+        "SOUND": "OFF",
+        "USE_PREFIX_DATA_DIR": "OFF",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "LINKER": "mold",
+        "USE_TRACY": "OFF"
+      }
+    },
+    {
       "name": "linux-slim",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "displayName": "Linux Slim Build (Tiles, Sounds)",
@@ -40,6 +64,8 @@
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_AR": "llvm-ar",
+        "CMAKE_RANLIB": "llvm-ranlib",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CURSES": "OFF",
         "TILES": "ON",
@@ -48,6 +74,28 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "LINKER": "mold",
         "USE_TRACY": "OFF"
+      }
+    },
+    {
+      "name": "osx-arm-slim",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "displayName": "macOS ARM Slim Build (Tiles, Sounds)",
+      "description": "Target macOS Apple Silicon (arm64).",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CMAKE_FIND_FRAMEWORK": "LAST",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CURSES": "OFF",
+        "TILES": "ON",
+        "SOUND": "ON",
+        "USE_PREFIX_DATA_DIR": "OFF",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "USE_TRACY": "OFF",
+        "LUA_DOCS_ON_BUILD": "OFF"
       }
     },
     {
@@ -62,6 +110,8 @@
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_AR": "llvm-ar",
+        "CMAKE_RANLIB": "llvm-ranlib",
         "CMAKE_INSTALL_PREFIX": "$env{XDG_DATA_HOME}",
         "JSON_FORMAT": "ON",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
@@ -82,6 +132,28 @@
         "TRACY_ONLY_IPV4": "ON"
       }
     },
+    {
+      "name": "linux-cross-aarch64",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "generator": "Ninja",
+      "environment": { "PKG_CONFIG_LIBDIR": "/usr/lib/aarch64-linux-gnu/pkgconfig" },
+      "cacheVariables": {
+        "CMAKE_SYSTEM_NAME": "Linux",
+        "CMAKE_SYSTEM_PROCESSOR": "aarch64",
+        "CMAKE_CXX_FLAGS": "--target=aarch64-linux-gnu --gcc-toolchain=/usr -I/usr/include/aarch64-linux-gnu",
+        "CMAKE_C_FLAGS": "--target=aarch64-linux-gnu --gcc-toolchain=/usr -I/usr/include/aarch64-linux-gnu",
+        "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+        "CMAKE_INSTALL_RPATH_USE_LINK_PATH": "ON",
+        "CMAKE_FIND_ROOT_PATH": "/usr/lib/aarch64-linux-gnu",
+        "CMAKE_FIND_ROOT_PATH_MODE_PACKAGE": "BOTH",
+        "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY": "BOTH",
+        "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE": "BOTH",
+        "CMAKE_LIBRARY_PATH": "/usr/lib/aarch64-linux-gnu",
+        "CMAKE_INCLUDE_PATH": "/usr/include/aarch64-linux-gnu"
+      }
+    },
+    { "name": "linux-slim-cross-aarch64", "inherits": ["linux-slim", "linux-cross-aarch64"] },
+    { "name": "linux-full-cross-aarch64", "inherits": ["linux-full", "linux-cross-aarch64"] },
     {
       "name": "dist-tiles",
       "binaryDir": "${sourceDir}/build",
@@ -126,6 +198,19 @@
         "JSON_FORMAT": "ON",
         "LINKER": "mold",
         "USE_PREFIX_DATA_DIR": "OFF"
+      }
+    },
+    {
+      "name": "osx-arm-dist",
+      "inherits": ["osx-arm-slim"],
+      "binaryDir": "${sourceDir}/build",
+      "displayName": "macOS ARM Distribution (Tiles, Sounds, Languages)",
+      "description": "For creating portable macOS ARM distribution packages with tiles and sound.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "LANGUAGES": "all",
+        "BACKTRACE": "ON",
+        "JSON_FORMAT": "ON"
       }
     },
     {
@@ -204,14 +289,34 @@
       "description": "Build for Windows with tiles and sounds using MSVC."
     },
     {
+      "name": "linux-curses",
+      "configurePreset": "linux-curses",
+      "description": "The minimal curses build preset for Linux."
+    },
+    {
       "name": "linux-slim",
       "configurePreset": "linux-slim",
       "description": "The minimal build preset for Linux. Recommended for new contributors."
     },
     {
+      "name": "osx-arm-slim",
+      "configurePreset": "osx-arm-slim",
+      "description": "The minimal build preset for macOS Apple Silicon."
+    },
+    {
       "name": "linux-full",
       "configurePreset": "linux-full",
       "description": "The canonical build preset for Linux. This is the one used by the devteam."
+    },
+    {
+      "name": "linux-slim-cross-aarch64",
+      "configurePreset": "linux-slim-cross-aarch64",
+      "description": "The minimal build preset for Linux aarch64."
+    },
+    {
+      "name": "linux-full-cross-aarch64",
+      "configurePreset": "linux-full-cross-aarch64",
+      "description": "The canonical build preset for Linux aarch64."
     },
     {
       "name": "dist-tiles",
@@ -224,6 +329,12 @@
       "configurePreset": "dist-curses",
       "targets": ["cataclysm-bn", "json_formatter", "translations"],
       "description": "Build for curses distribution."
+    },
+    {
+      "name": "osx-arm-dist",
+      "configurePreset": "osx-arm-dist",
+      "targets": ["cataclysm-bn-tiles", "json_formatter", "translations"],
+      "description": "Build for macOS ARM tiles distribution."
     },
     {
       "name": "lint",

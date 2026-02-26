@@ -6,6 +6,8 @@
 
 #include "catacharset.h"
 #include "color.h"
+#include <optional>
+
 #include "string_id.h"
 #include "translations.h"
 
@@ -39,6 +41,7 @@ class map_extra
         bool autonote = false;
         uint32_t symbol = UTF8_getch( "X" );
         nc_color color = c_red;
+        std::optional<std::string> looks_like;
 
         std::string get_symbol() const {
             return utf32_to_utf8( symbol );
@@ -80,5 +83,3 @@ void debug_spawn_test();
 const generic_factory<map_extra> &mapExtraFactory();
 
 } // namespace MapExtras
-
-

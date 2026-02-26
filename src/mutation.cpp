@@ -11,6 +11,7 @@
 
 #include "avatar_action.h"
 #include "bionics.h"
+#include "catalua_icallback_actor.h"
 #include "character.h"
 #include "color.h"
 #include "creature.h"
@@ -354,6 +355,10 @@ void Character::mutation_effect( const trait_id &mut )
     }
 
     on_mutation_gain( mut );
+
+    if( const auto *lcb = mut.obj().lua_callbacks ) {
+        lcb->call_on_gain( *this, mut );
+    }
 }
 
 void Character::mutation_loss_effect( const trait_id &mut )
@@ -398,6 +403,10 @@ void Character::mutation_loss_effect( const trait_id &mut )
     }
 
     on_mutation_loss( mut );
+
+    if( const auto *lcb = mut.obj().lua_callbacks ) {
+        lcb->call_on_loss( *this, mut );
+    }
 }
 
 bool Character::has_active_mutation( const trait_id &b ) const
@@ -519,6 +528,10 @@ void Character::activate_mutation( const trait_id &mut )
     }
     mutation_spend_resources( mut );
     tdata.powered = true;
+
+    if( const auto *lcb = mdata.lua_callbacks ) {
+        lcb->call_on_activate( *this, mut );
+    }
 
     if( !mut->enchantments.empty() ) {
         recalculate_enchantment_cache();
@@ -657,6 +670,10 @@ void Character::deactivate_mutation( const trait_id &mut )
 
     if( !mut->enchantments.empty() ) {
         recalculate_enchantment_cache();
+    }
+
+    if( const auto *lcb = mut.obj().lua_callbacks ) {
+        lcb->call_on_deactivate( *this, mut );
     }
 }
 
@@ -976,7 +993,8 @@ void Character::old_mutate()
             }
 
             // ...consider whether its in our highest category
-            if( has_trait( base_mutation ) && !has_base_trait( base_mutation ) ) {
+            if( has_trait( base_mutation ) && ( !has_base_trait( base_mutation ) ||
+                                                get_option<bool>( "canmutprofmut" ) ) ) {
                 // Starting traits don't count toward categories
                 std::vector<trait_id> group = mutations_category[cat];
                 bool in_cat = false;
@@ -1171,7 +1189,7 @@ bool Character::mutate_towards( const trait_id &mut )
         if( !has_trait( cancel[i] ) ) {
             cancel.erase( cancel.begin() + i );
             i--;
-        } else if( has_base_trait( cancel[i] ) ) {
+        } else if( has_base_trait( cancel[i] ) && !get_option<bool>( "canmutprofmut" ) ) {
             //If we have the trait, but it's a base trait, don't allow it to be removed normally
             canceltrait.push_back( cancel[i] );
             cancel.erase( cancel.begin() + i );
@@ -1401,7 +1419,7 @@ void Character::remove_mutation( const trait_id &mut, bool silent )
         //Check each mutation until we reach the end or find a trait to revert to
         for( auto &iter : mutation_branch::get_all() ) {
             //See if it's in our list of base traits but not active
-            if( has_base_trait( iter.id ) && !has_trait( iter.id ) ) {
+            if( has_base_trait( iter.id ) && !get_option<bool>( "canmutprofmut" ) && !has_trait( iter.id ) ) {
                 //See if that base trait cancels the mutation we are using
                 std::vector<trait_id> traitcheck = iter.cancels;
                 if( !traitcheck.empty() ) {
@@ -1423,7 +1441,7 @@ void Character::remove_mutation( const trait_id &mut, bool silent )
         //Check each mutation until we reach the end or find a trait to revert to
         for( auto &iter : mutation_branch::get_all() ) {
             //See if it's in our list of base traits but not active
-            if( has_base_trait( iter.id ) && !has_trait( iter.id ) ) {
+            if( has_base_trait( iter.id ) && !get_option<bool>( "canmutprofmut" ) && !has_trait( iter.id ) ) {
                 //See if that base trait cancels the mutation we are using
                 std::vector<trait_id> traitcheck = iter.cancels;
                 if( !traitcheck.empty() ) {

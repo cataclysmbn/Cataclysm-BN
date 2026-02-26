@@ -8,13 +8,16 @@
 #include "activity_handlers.h"
 #include "assign.h"
 #include "debug.h"
+#include "flag.h"
 #include "enum_conversions.h"
 #include "json.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
-
+#include "game.h"
+#include "player_activity.h"
+#include "item.h"
 // activity_type functions
 static std::map< activity_id, activity_type > activity_type_all;
 
@@ -200,6 +203,12 @@ bool activity_type::call_finish( player_activity *act, player *p ) const
         pair->second( act, p );
         // kill activity sounds at finish
         sfx::end_activity_sounds();
+        if( !act->get_tools().empty() ) {
+            auto &tool = *act->get_tools().front();
+            if( tool.has_flag( flag_TEMPORARY_ITEM ) ) {
+                g->remove_fake_item( &tool );
+            }
+        }
         return true;
     }
     return false;

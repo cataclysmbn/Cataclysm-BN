@@ -219,7 +219,7 @@
     "encumbrance": 60,
     "material_thickness": 3,
     "qualities": [ [ "GLARE", 3 ] ],
-    "flags": [ "SUN_GLASSES", "FLASH_PROTECTION", "BLIND" ]
+    "flags": [ "SUN_GLASSES", "FLASH_PROTECTION" ]
   },
   {
     "id": "welding_mask_crude",
@@ -272,6 +272,7 @@
     "encumbrance": 60,
     "material_thickness": 2,
     "coverage": 30,
+    "qualities": [ [ "GLARE", 2 ] ],
     "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
   },
   {
@@ -297,7 +298,8 @@
     "warmth": 5,
     "encumbrance": 60,
     "material_thickness": 3,
-    "coverage": 30
+    "coverage": 30,
+    "qualities": [ [ "GLARE", 3 ] ]
   },
   {
     "type": "TOOL_ARMOR",
@@ -904,6 +906,7 @@
     ],
     "turns_per_charge": 18,
     "revert_to": "rm13_armor",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] },
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "Your RM13 combat armor turns off.", "target": "rm13_armor" },
     "environmental_protection": 40,
     "encumbrance": 10,
@@ -1757,7 +1760,8 @@
     "price_postapoc": "5 cent",
     "material": [ "plastic" ],
     "weight": "4 g",
-    "flags": [ "FANCY" ]
+    "flags": [ "FANCY" ],
+    "repair_difficulty": 2
   },
   {
     "id": "towel",

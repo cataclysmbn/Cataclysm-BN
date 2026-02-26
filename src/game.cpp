@@ -49,6 +49,7 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "catacharset.h"
 #include "character.h"
 #include "character_display.h"
@@ -72,6 +73,7 @@
 #include "distraction_manager.h"
 #include "distribution_grid.h"
 #include "drop_token.h"
+#include "fluid_grid.h"
 #include "editmap.h"
 #include "enums.h"
 #include "event.h"
@@ -109,6 +111,7 @@
 #include "line.h"
 #include "live_view.h"
 #include "loading_ui.h"
+#include "locations.h"
 #include "npc.h"
 #include "magic.h"
 #include "map.h"
@@ -175,6 +178,7 @@
 #include "ui_manager.h"
 #include "uistate.h"
 #include "units.h"
+#include "units_utility.h"
 #include "value_ptr.h"
 #include "veh_interact.h"
 #include "veh_type.h"
@@ -185,7 +189,7 @@
 #include "wcwidth.h"
 #include "weather.h"
 #include "worldfactory.h"
-
+#include "location_vector.h"
 class computer;
 
 #if defined(TILES)
@@ -272,9 +276,10 @@ static const trait_id trait_THICKSKIN( "THICKSKIN" );
 static const trait_id trait_WEB_ROPE( "WEB_ROPE" );
 static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
 static const trait_id trait_WAYFARER( "WAYFARER" );
+static const trait_id trait_HAS_NEMESIS( "HAS_NEMESIS" );
 
 static const trait_flag_str_id trait_flag_MUTATION_FLIGHT( "MUTATION_FLIGHT" );
-static const trait_flag_str_id trait_flag_TAIL_FIN( "TAIL_FIN" );
+static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
 
 static const trap_str_id tr_unfinished_construction( "tr_unfinished_construction" );
 
@@ -326,7 +331,8 @@ game::game() :
     user_action_counter( 0 ),
     tileset_zoom( DEFAULT_TILESET_ZOOM ),
     seed( 0 ),
-    last_mouse_edge_scroll( std::chrono::steady_clock::now() )
+    last_mouse_edge_scroll( std::chrono::steady_clock::now() ),
+    fake_items( new temp_item_location( ) )
 {
     first_redraw_since_waiting_started = true;
     reset_light_level();
@@ -441,6 +447,7 @@ void game::reload_tileset( [[maybe_unused]] const std::function<void( std::strin
     ui_adaptor ui( ui_adaptor::disable_uis_below {} );
     const auto tilesName = get_option<std::string>( "TILES" );
     const auto omTilesName = get_option<std::string>( "OVERMAP_TILES" );
+    const auto saved_zoom = g->get_zoom();
     try {
         tilecontext->reinit();
         std::vector<mod_id> dummy;
@@ -473,7 +480,10 @@ void game::reload_tileset( [[maybe_unused]] const std::function<void( std::strin
             popup( _( "Loading the overmap tileset failed: %s" ), err.what() );
         }
     }
-    g->reset_zoom();
+    // Reload resets the tile context scale to its default; reapply the previous zoom explicitly
+    // even when the numeric zoom value did not change.
+    tileset_zoom = saved_zoom;
+    rescale_tileset( tileset_zoom );
     g->mark_main_ui_adaptor_resize();
 #endif // TILES
 }
@@ -576,6 +586,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
 {
     m.load( pos_sm, true, pump_events );
     grid_tracker_ptr->load( m );
+    fluid_grid::load( m );
 }
 
 std::optional<tripoint> game::find_local_stairs_leading_to( map &mp, const int z_after )
@@ -759,6 +770,12 @@ bool game::start_game()
             tmp->mission = NPC_MISSION_NULL;
             tmp->set_attitude( NPCATT_FOLLOW );
             add_npc_follower( tmp->getID() );
+            cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+                params["creature"] = tmp.get();
+            } );
+            cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+                params["npc"] = tmp.get();
+            } );
         }
     }
     //Load NPCs. Set nearby npcs to active.
@@ -1041,6 +1058,12 @@ void game::create_starting_npcs()
     //One random starting NPC mission
     tmp->add_new_mission( mission::reserve_random( ORIGIN_OPENER_NPC, tmp->global_omt_location(),
                           tmp->getID() ) );
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = tmp.get();
+    } );
+    cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+        params["npc"] = tmp.get();
+    } );
 }
 
 static std::string generate_memorial_filename( const std::string &char_name )
@@ -1076,6 +1099,9 @@ bool game::cleanup_at_end()
         // Put (non-hallucinations) into the overmap so they are not lost.
         for( monster &critter : all_monsters() ) {
             despawn_monster( critter );
+        }
+        if( u.has_trait( trait_HAS_NEMESIS ) ) {
+            overmap_buffer.remove_nemesis();
         }
         // Reset NPC factions and disposition
         reset_npc_dispositions();
@@ -1399,14 +1425,14 @@ void game::calc_driving_offset( vehicle *veh )
                       ( getmaxy( w_terrain ) + 1 ) / 2 - border_range - 1 );
 
     // velocity at or below this results in no offset at all
-    static const float min_offset_vel = 1 * vehicles::vmiph_per_tile;
+    static const float min_offset_vel = 1 * vehicles::cmps_per_tile;
     // velocity at or above this results in maximal offset
     static const float max_offset_vel = std::min( max_offset.y, max_offset.x ) *
-                                        vehicles::vmiph_per_tile;
+                                        vehicles::cmps_per_tile;
     float velocity = veh->velocity;
     rl_vec2d offset = veh->move_vec();
     if( !veh->skidding && veh->player_in_control( u ) &&
-        std::abs( veh->cruise_velocity - veh->velocity ) < 7 * vehicles::vmiph_per_tile ) {
+        std::abs( veh->cruise_velocity - veh->velocity ) < 7 * vehicles::cmps_per_tile ) {
         // Use the cruise controlled velocity, but only if
         // it is not too different from the actual velocity.
         // The actual velocity changes too often (see above slowdown).
@@ -1532,6 +1558,9 @@ bool game::do_turn()
     // Move hordes every 2.5 min
     if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
         overmap_buffer.move_hordes();
+        if( u.has_trait( trait_HAS_NEMESIS ) ) {
+            overmap_buffer.move_nemesis();
+        }
         // Hordes that reached the reality bubble need to spawn,
         // make them spawn in invisible areas only.
         m.spawn_monsters( false );
@@ -1646,6 +1675,7 @@ bool game::do_turn()
     m.process_items();
     m.creature_in_field( u );
     grid_tracker_ptr->update( calendar::turn );
+    fluid_grid::update( calendar::turn );
 
     // Apply sounds from previous turn to monster and NPC AI.
     sounds::process_sounds();
@@ -2375,6 +2405,7 @@ input_context get_default_mode_input_context()
 #endif
 #if defined(TILES)
     ctxt.register_action( "toggle_pixel_minimap" );
+    ctxt.register_action( "toggle_zone_overlay" );
 #endif // TILES
     ctxt.register_action( "toggle_panel_adm" );
     ctxt.register_action( "reload_tileset" );
@@ -2727,9 +2758,13 @@ bool game::load( const save_t &name )
             std::bind( &game::unserialize, this, _1 ) ) ) {
         return false;
     }
-    // This needs to be here for some reason for quickload() to work
-    ui_manager::redraw();
-    refresh_display();
+    // This needs to be here for some reason for quickload() to work.
+    // Prevent underlying game UI from drawing while we're still in the loading popup.
+    {
+        ui_adaptor ui( ui_adaptor::disable_uis_below {} );
+        ui_manager::redraw();
+        refresh_display();
+    }
     u.load_map_memory();
     u.get_avatar_diary()->load();
 
@@ -2798,6 +2833,13 @@ bool game::load( const save_t &name )
     cata::load_world_lua_state( get_active_world(), "lua_state.json" );
 
     cata::run_on_game_load_hooks( *DynamicDataLoader::get_instance().lua );
+
+    // Build caches once so any immediate post-load draws don't use uninitialized lighting/visibility,
+    // then re-invalidate so the first real in-game draw rebuilds everything again.
+    m.invalidate_map_cache( get_levz() );
+    m.build_map_cache( get_levz() );
+    m.update_visibility_cache( get_levz() );
+    m.invalidate_map_cache( get_levz() );
 
     return true;
 }
@@ -3226,6 +3268,7 @@ static shared_ptr_fast<game::draw_callback_t> create_zone_callback(
     const bool &is_moving_zone = false
 )
 {
+    ( void ) zone_blink;
     return make_shared_fast<game::draw_callback_t>(
     [&]() {
         if( zone_cursor ) {
@@ -3239,7 +3282,7 @@ static shared_ptr_fast<game::draw_callback_t> create_zone_callback(
                 }
             }
         }
-        if( zone_blink && zone_start && zone_end ) {
+        if( zone_start && zone_end ) {
             const point offset2( g->u.view_offset.xy() + point( g->u.posx() - getmaxx( g->w_terrain ) / 2,
                                  g->u.posy() - getmaxy( g->w_terrain ) / 2 ) );
 
@@ -3287,8 +3330,13 @@ void game::draw( ui_adaptor &ui )
 
     //temporary fix for updating visibility for minimap
     ter_view_p.z = ( u.pos() + u.view_offset ).z;
-    m.build_map_cache( ter_view_p.z );
-    m.update_visibility_cache( ter_view_p.z );
+    if( is_looking && ter_view_p.z != u.posz() ) {
+        // Keep visibility calculations based on the player position while still building the viewed z-level cache.
+        m.build_map_cache( ter_view_p.z );
+    }
+    const auto cache_z = is_looking ? u.posz() : ter_view_p.z;
+    m.build_map_cache( cache_z );
+    m.update_visibility_cache( cache_z );
 
     werase( w_terrain );
     draw_ter();
@@ -3510,90 +3558,9 @@ void game::draw_minimap()
 
                 const std::string &note_text = overmap_buffer.note( omp );
 
-                ter_color = c_yellow;
-                ter_sym = "N";
-
-                int symbolIndex = note_text.find( ':' );
-                int colorIndex = note_text.find( ';' );
-
-                bool symbolFirst = symbolIndex < colorIndex;
-
-                if( colorIndex > -1 && symbolIndex > -1 ) {
-                    if( symbolFirst ) {
-                        if( colorIndex > 4 ) {
-                            colorIndex = -1;
-                        }
-                        if( symbolIndex > 1 ) {
-                            symbolIndex = -1;
-                            colorIndex = -1;
-                        }
-                    } else {
-                        if( symbolIndex > 4 ) {
-                            symbolIndex = -1;
-                        }
-                        if( colorIndex > 2 ) {
-                            colorIndex = -1;
-                        }
-                    }
-                } else if( colorIndex > 2 ) {
-                    colorIndex = -1;
-                } else if( symbolIndex > 1 ) {
-                    symbolIndex = -1;
-                }
-
-                if( symbolIndex > -1 ) {
-                    int symbolStart = 0;
-                    if( colorIndex > -1 && !symbolFirst ) {
-                        symbolStart = colorIndex + 1;
-                    }
-                    ter_sym = note_text.substr( symbolStart, symbolIndex - symbolStart ).c_str()[0];
-                }
-
-                if( colorIndex > -1 ) {
-
-                    int colorStart = 0;
-
-                    if( symbolIndex > -1 && symbolFirst ) {
-                        colorStart = symbolIndex + 1;
-                    }
-
-                    std::string sym = note_text.substr( colorStart, colorIndex - colorStart );
-
-                    if( sym.length() == 2 ) {
-                        if( sym == "br" ) {
-                            ter_color = c_brown;
-                        } else if( sym == "lg" ) {
-                            ter_color = c_light_gray;
-                        } else if( sym == "dg" ) {
-                            ter_color = c_dark_gray;
-                        }
-                    } else {
-                        char colorID = sym.c_str()[0];
-                        if( colorID == 'r' ) {
-                            ter_color = c_light_red;
-                        } else if( colorID == 'R' ) {
-                            ter_color = c_red;
-                        } else if( colorID == 'g' ) {
-                            ter_color = c_light_green;
-                        } else if( colorID == 'G' ) {
-                            ter_color = c_green;
-                        } else if( colorID == 'b' ) {
-                            ter_color = c_light_blue;
-                        } else if( colorID == 'B' ) {
-                            ter_color = c_blue;
-                        } else if( colorID == 'W' ) {
-                            ter_color = c_white;
-                        } else if( colorID == 'C' ) {
-                            ter_color = c_cyan;
-                        } else if( colorID == 'c' ) {
-                            ter_color = c_light_cyan;
-                        } else if( colorID == 'P' ) {
-                            ter_color = c_pink;
-                        } else if( colorID == 'm' ) {
-                            ter_color = c_magenta;
-                        }
-                    }
-                }
+                const auto note_info = overmap_ui::get_note_display_info( note_text );
+                ter_color = std::get<1>( note_info );
+                ter_sym = std::string( 1, std::get<0>( note_info ) );
             } else if( !seen ) {
                 ter_sym = " ";
                 ter_color = c_black;
@@ -4851,7 +4818,14 @@ monster *game::place_critter_around( const mtype_id &id, const tripoint &center,
     if( id.is_null() ) {
         return nullptr;
     }
-    return place_critter_around( make_shared_fast<monster>( id ), center, radius );
+    const auto temp = make_shared_fast<monster>( id );
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = temp.get();
+    } );
+    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+        params["monster"] = temp.get();
+    } );
+    return place_critter_around( temp, center, radius );
 }
 
 monster *game::place_critter_around( const shared_ptr_fast<monster> &mon,
@@ -4883,7 +4857,14 @@ monster *game::place_critter_within( const mtype_id &id, const tripoint_range<tr
     if( id.is_null() ) {
         return nullptr;
     }
-    return place_critter_within( make_shared_fast<monster>( id ), range );
+    const auto temp = make_shared_fast<monster>( id );
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = temp.get();
+    } );
+    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+        params["monster"] = temp.get();
+    } );
+    return place_critter_within( temp, range );
 }
 
 monster *game::place_critter_within( const shared_ptr_fast<monster> &mon,
@@ -4929,6 +4910,12 @@ bool game::spawn_hallucination( const tripoint &p )
         shared_ptr_fast<npc> tmp = make_shared_fast<npc>();
         tmp->randomize( NC_HALLU );
         tmp->spawn_at_precise( { get_levx(), get_levy() }, p );
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = tmp.get();
+        } );
+        cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+            params["npc"] = tmp.get();
+        } );
         if( !critter_at( p, true ) ) {
             overmap_buffer.insert_npc( tmp );
             load_npcs();
@@ -4942,6 +4929,12 @@ bool game::spawn_hallucination( const tripoint &p )
     const shared_ptr_fast<monster> phantasm = make_shared_fast<monster>( mt );
     phantasm->hallucination = true;
     phantasm->spawn( p );
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = phantasm.get();
+    } );
+    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+        params["monster"] = phantasm.get();
+    } );
 
     //Don't attempt to place phantasms inside of other creatures
     if( !critter_at( phantasm->pos(), true ) ) {
@@ -5074,6 +5067,12 @@ bool game::revive_corpse( const tripoint &p, item &it )
         }
     }
 
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = &critter;
+    } );
+    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+        params["monster"] = &critter;
+    } );
     return place_critter_at( newmon_ptr, p );
 }
 
@@ -5142,6 +5141,12 @@ void game::save_cyborg( item *cyborg, const tripoint &couch_pos, Character &inst
         overmap_buffer.insert_npc( tmp );
         tmp->hurtall( dmg_lvl * 10, nullptr );
         tmp->add_effect( effect_downed, rng( 1_turns, 4_turns ), bodypart_str_id::NULL_ID(), 0, true );
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = tmp.get();
+        } );
+        cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+            params["npc"] = tmp.get();
+        } );
         load_npcs();
 
     } else {
@@ -5457,8 +5462,14 @@ void game::control_vehicle()
     }
 }
 
-bool game::npc_menu( npc &who )
+bool game::npc_menu( npc &who, const bool &force )
 {
+    if( !force ) {
+        const auto allowed = cata::run_hooks( "on_try_npc_interaction",
+        [&]( auto & params ) { params["npc"] = &who; }, { .exit_early = true } ).get_or( "allowed", true );
+        if( !allowed ) { return false; }
+    }
+    cata::run_hooks( "on_npc_interaction", [&]( auto & params ) { params["npc"] = &who; } );
     enum choices : int {
         talk = 0,
         swap_pos,
@@ -5469,7 +5480,8 @@ bool game::npc_menu( npc &who )
         attack,
         disarm,
         steal,
-        control
+        control,
+        tutorial
     };
 
     const bool obeys = debug_mode || ( who.is_player_ally() && !who.in_sleep_state() );
@@ -5491,6 +5503,7 @@ bool game::npc_menu( npc &who )
     }
     if( who.is_player_ally() ) {
         amenu.addentry( control, who.is_player_ally(), 'c', _( "Control" ) );
+        amenu.addentry( tutorial, true, 'T', _( "NPC Ally Tutorial" ) );
     }
 
     amenu.query();
@@ -5567,6 +5580,328 @@ bool game::npc_menu( npc &who )
         avatar_funcs::try_steal_from_npc( u, who );
     } else if( choice == control ) {
         get_avatar().control_npc( who );
+    } else if( choice == tutorial ) {
+        enum tutorial_opts : int {
+            tut_mutiny = 0,
+            tut_instructions,
+            tut_radio,
+            tut_shout,
+            tut_combat,
+            tut_training,
+            tut_inventory,
+            tut_medic,
+            tut_activities,
+            tut_movement,
+            tut_horses,
+            tut_guard,
+            tut_bionics,
+            tut_social,
+            tut_misc,
+            tut_factions
+        };
+
+        bool show_tutorial = true;
+        while( show_tutorial ) {
+            uilist tutorial_menu;
+            tutorial_menu.text = _( "NPC Ally Tutorial" );
+            tutorial_menu.desc_enabled = true;
+
+            tutorial_menu.addentry_desc( tut_mutiny, true, 'u',
+                                         _( "Mutiny" ),
+                                         _( "How to keep your allies happy and prevent mutiny." ) );
+            tutorial_menu.addentry_desc( tut_instructions, true, 'i',
+                                         _( "Giving Instructions" ),
+                                         _( "How to communicate with allies through conversation." ) );
+            tutorial_menu.addentry_desc( tut_radio, true, 'r',
+                                         _( "Radio Communication" ),
+                                         _( "Using two-way radios to contact allies remotely." ) );
+            tutorial_menu.addentry_desc( tut_shout, true, 's',
+                                         _( "Shouted Commands" ),
+                                         _( "Quick orders you can shout during emergencies." ) );
+            tutorial_menu.addentry_desc( tut_combat, true, 'c',
+                                         _( "Combat" ),
+                                         _( "How allies behave in combat and weapon usage rules." ) );
+            tutorial_menu.addentry_desc( tut_training, true, 't',
+                                         _( "Training and Learning" ),
+                                         _( "Teaching and learning skills." ) );
+            tutorial_menu.addentry_desc( tut_inventory, true, 'n',
+                                         _( "Inventory and Equipment" ),
+                                         _( "How allies carry items and manage their gear." ) );
+            tutorial_menu.addentry_desc( tut_medic, true, 'm',
+                                         _( "First Aid" ),
+                                         _( "How allies perform medical treatment." ) );
+            tutorial_menu.addentry_desc( tut_activities, true, 'a',
+                                         _( "Work Activities" ),
+                                         _( "Tasks allies can perform: farming, construction, etc." ) );
+            tutorial_menu.addentry_desc( tut_movement, true, 'v',
+                                         _( "Movement and Travel" ),
+                                         _( "Ordering allies to travel to distant locations." ) );
+            tutorial_menu.addentry_desc( tut_horses, true, 'h',
+                                         _( "Riding Horses" ),
+                                         _( "Mounting and riding horses for faster travel." ) );
+            tutorial_menu.addentry_desc( tut_guard, true, 'g',
+                                         _( "Guard Duty" ),
+                                         _( "How allies guard areas and investigate noises." ) );
+            tutorial_menu.addentry_desc( tut_bionics, true, 'b',
+                                         _( "Bionics" ),
+                                         _( "Installing and using bionic augmentations." ) );
+            tutorial_menu.addentry_desc( tut_social, true, 'S',
+                                         _( "Social Interaction" ),
+                                         _( "Chatting, morale, and asking for advice." ) );
+            tutorial_menu.addentry_desc( tut_misc, true, 'M',
+                                         _( "Miscellaneous Rules" ),
+                                         _( "Doors, item pickup, vehicle seats, and other settings." ) );
+            tutorial_menu.addentry_desc( tut_factions, true, 'f',
+                                         _( "Other Survivors and Factions" ),
+                                         _( "Information about other survivors and faction dynamics." ) );
+
+            tutorial_menu.query();
+
+            std::string info_text;
+            std::string info_title;
+
+            switch( tutorial_menu.ret ) {
+                case tut_mutiny:
+                    info_title = _( "Mutiny" );
+                    info_text = _(
+                                    "Allies follow you to improve their chances of survival, but they have limits. "
+                                    "Mistreating allies or failing to keep them cared for will lower their opinion of you. "
+                                    "If it gets too bad, they may mutiny.\n\n"
+                                    "When an ally mutinies, they will leave your group. If you have other followers, "
+                                    "they may convince some to join them. A mutinied ally becomes hostile and may "
+                                    "fight you for resources. "
+                                    "You can prevent this by keeping them fed and hydrated, avoiding suicidal orders, "
+                                    "and keeping them in safe areas while you're away." );
+                    break;
+
+                case tut_instructions:
+                    info_title = _( "Giving Instructions" );
+                    info_text = _(
+                                    "DIRECT CONVERSATION:\n"
+                                    "Walk into an adjacent ally to start talking. Through conversation you can give "
+                                    "detailed instructions about combat, sleep, activities, and more.\n\n"
+                                    "SHOUTING (Chat Command):\n"
+                                    "Use the Chat command (default: 'C') to shout orders to allies who aren't adjacent. "
+                                    "They must be able to hear you.\n\n"
+                                    "RADIO:\n"
+                                    "If both you and an ally have two-way radios, use the Faction Manager\n"
+                                    " (default: '#') to contact them at greater distances.\n\n"
+                                    "INSTRUCTION OVERRIDES:\n"
+                                    "Some shouted commands create temporary overrides to standing instructions. "
+                                    "Allies will inform you which instructions are currently overridden. "
+                                    "You can clear overrides through conversation or by shouting the appropriate command." );
+                    break;
+
+                case tut_radio:
+                    info_title = _( "Radio Communication" );
+                    info_text = _(
+                                    "REQUIREMENTS:\n"
+                                    "You must have a two-way radio\n"
+                                    "The ally must have a two-way radio\n"
+                                    "The ally must be within radio range\n"
+                                    "The signal must not be blocked by terrain\n\n"
+                                    "Open the Faction Manager (default keybind: '#') to contact allies by radio.\n"
+                                    "While you can have normal conversations via radio, you cannot trade items, "
+                                    "receive training, or transfer physical items. "
+                                    "Radio is particularly useful for ordering distant allies to travel to your location." );
+                    break;
+
+                case tut_shout:
+                    info_title = _( "Shouted Commands" );
+                    info_text = _(
+                                    "The Chat command (default: 'C') allows you to shout quick orders. "
+                                    "All allies who hear you will respond to the command. You can also "
+                                    "use it to chat at a distance.\n\n"
+                                    "Some shouted commands create temporary overrides to standing instructions. "
+                                    "For example, telling allies to prepare for danger will override their normal "
+                                    "door, sleep, and retreat behaviors until you tell them to relax.\n"
+                                    "NOTE: Shouting may attract unwanted attention from nearby enemies." );
+                    break;
+
+                case tut_combat:
+                    info_title = _( "Combat" );
+                    info_text = _(
+                                    "Allies will fight to survive and to protect you. "
+                                    "If the situation becomes too dangerous, allies will flee. You cannot prevent this, "
+                                    "but you can designate retreat points using the Zone Manager (default: 'Y').\n"
+                                    "Allies will flee toward the nearest designated safe zone. "
+                                    "Zones can be set on vehicles, so allies can retreat to your car.\n\n"
+                                    "If you're fleeing but an ally thinks it's safe, they may stay and fight. "
+                                    "You can order them to flee with you, and they'll try to stick close.\n\n"
+                                    "You can set rules for combat through dialogue. This includes:\n"
+                                    "When, how, and what enemies to engage\n"
+                                    "How much they care about aiming accuracy\n"
+                                    "How close they stick to you\n"
+                                    "Grenade usage\n"
+                                    "If they try to avoid hitting allies with ranged weapons (unreliable) "
+                                    "To hold a chokepoint, but they may leave to fight threats elsewhere\n\n" );
+                    break;
+
+                case tut_training:
+                    info_title = _( "Training and Learning" );
+                    info_text = _(
+                                    "If an ally has higher skill than you, they can teach you. Teaching is tedious, "
+                                    "so they won't do it often. They won't teach during danger, hunger, tiredness, "
+                                    "or while driving\n\n"
+                                    "When you read a skill book in a safe location, nearby allies without that skill "
+                                    "will listen and learn. You can even read books for skills you already have.\n\n"
+                                    "You can give an ally a skill book appropriate for their level, then talk to them "
+                                    "about their current activity and tell them to read it. They'll study on their own.\n"
+                                    "Note: While reading, they won't follow you - ensure they're in a safe location.\n"
+                                    "Allies cannot learn or teach martial arts styles." );
+                    break;
+
+                case tut_inventory:
+                    info_title = _( "Inventory and Equipment" );
+                    info_text = _(
+                                    "Allies can carry items and manage their own equipment.\n"
+                                    "Give items to allies and they'll carry them. They have limited pocket space "
+                                    "and strength - items that are too heavy or bulky will be dropped.\n\n"
+                                    "Allies choose what to wear themselves. If they're wearing something inappropriate, "
+                                    "bump into them and use 'Sort armor' to help them adjust. "
+                                    "Allies dislike wearing bulky or ill-fitting gear and may remove such items.\n\n"
+                                    "Friendly allies will give you any item they're carrying without question. "
+                                    "Be careful what you give allies food or drink; They may eat or drink it. "
+                                    "Allies with bionics will consume bionic fuel they're carrying" );
+                    break;
+
+                case tut_medic:
+                    info_title = _( "First Aid" );
+                    info_text = _(
+                                    "Allies can perform first aid if supply them with bandages or antiseptic. "
+                                    "Give these supplies to an ally and they'll use them to treat wounds.\n"
+                                    "Allies prioritize treatment in the order of themselves, you, and other allies.\n"
+                                    "Allies with medical training will be more effective at treating injuries. "
+                                    "Check an ally's skills through conversation to see their first aid ability." );
+                    break;
+
+                case tut_activities:
+                    info_title = _( "Work Activities" );
+                    info_text = _(
+                                    "Allies can perform various tasks when you designate work areas in "
+                                    "the zone manager. (default: 'Y')\n"
+                                    "Use the Zone Manager to designate loot sorting zones, construction blueprints, "
+                                    "farming areas, tree cutting areas, vehicle disassembly/repair zones, and fishing spots.\n"
+                                    "You can assign tasks to allies by talking to them about their current activity. "
+                                    "Leave required tools in a loot zone near the work area. "
+                                    "Allies will return tools to an unsorted loot zone when finished.\n"
+                                    "They can do the following tasks:\n"
+                                    "Sort loot\n"
+                                    "Building structures\n"
+                                    "Cutting down trees (needs axes)\n"
+                                    "Repairing or dismantling vehicles (needs wrenches, hacksaws, or toolboxes)\n"
+                                    "Farming (needs shovels, seeds, and fertilizer)\n"
+                                    "Fishing" );
+                    break;
+                case tut_movement:
+                    info_title = _( "Movement and Travel" );
+                    info_text = _(
+                                    "Allies can travel to distant locations on command.\n"
+                                    "You can contact an ally by radio and tell them to come to you. "
+                                    "They'll walk to your location and then guard the area. "
+                                    "Travel takes time depending on distance. Allies avoid dangers along the way. "
+                                    "Allies on horseback will travel faster.\n\n"
+                                    "By default, allies follow you. Use 'Guard' commands to make them stay in place, "
+                                    "and 'Follow' commands to resume following." );
+                    break;
+
+                case tut_horses:
+                    info_title = _( "Riding Horses" );
+                    info_text = _(
+                                    "Allies can ride horses for faster travel. They need a friendly horse (tamed) with "
+                                    "a saddle installed on it.\n\n"
+                                    "Feed a feral horse cattlefodder to make it friendly.\n"
+                                    "Examine (default: 'e') the horse while you have a saddle in your inventory to install it.\n\n"
+                                    "Tell an ally to mount up and they'll find a nearby saddled, friendly horse.\n"
+                                    "Tell an ally to dismount, or they can use vehicle controls.\n"
+                                    "You can dismount yourself using the vehicle control key (default: '^'). "
+                                    "While mounted, you and allies move normally but much faster than on foot." );
+                    break;
+
+
+                case tut_guard:
+                    info_title = _( "Guard Duty" );
+                    info_text = _(
+                                    "Allies can guard locations and protect your belongings. "
+                                    "Tell an ally to guard and they'll stay at their current position. "
+                                    "If in a vehicle, they'll stay with the vehicle. "
+                                    "Guards deter other survivors from stealing your stuff.\n\n"
+                                    "Guards who hear suspicious noises will investigate unless told not to. "
+                                    "This can be dangerous as they might find enemies, but they won't get ambushed in the dark.\n\n"
+                                    "Use zones to control noise investigation.\n"
+                                    "NO-INVESTIGATE ZONE: Allies ignore noises from this area\n"
+                                    "INVESTIGATE-ONLY ZONE: Allies only investigate noises from this area\n"
+                                    "No-investigate zones take priority over investigate-only zones.\n"
+                                    "WARNING: If you set an investigate-only zone anywhere, allies won't investigate "
+                                    "noises from outside that zone, even if it's far away. Use carefully." );
+                    break;
+
+                case tut_bionics:
+                    info_title = _( "Bionics" );
+                    info_text = _(
+                                    "Examine a CBM to see if an ally can use it. Allies can use most passive bionics, but "
+                                    "only some active bionics will be used.\n"
+                                    "To install buonics in an ally, follow these steps:\n"
+                                    "  1. Find a programmable surgical installer or autodoc\n"
+                                    "  2. Position the ally on the operating couch\n"
+                                    "  3. Activate the installer and select the CBM to install\n"
+                                    "If the ally has better installation skill, they'll do the procedure themselves. "
+                                    "Similarly, skilled allies can install CBMs into you.\n\n"
+                                    "Allies use active bionics sensibly in normal situations. "
+                                    "In danger, they'll activate anything that gives an edge. "
+                                    "Allies use bionic weapons if they're better than carried weapons. "
+                                    "You can set an energy reserve level if you want them to save power for defense/healing. "
+                                    "Allies try to keep bionic energy topped off. You can tell them to stop recharging "
+                                    "when not full if supplies are low. They'll warn you if they're low on energy or fuel." );
+                    break;
+
+                case tut_social:
+                    info_title = _( "Social Interaction" );
+                    info_text = _(
+                                    "Allies are social beings who benefit from interaction. "
+                                    "Light conversation improves morale. However, allies don't want to chat constantly. "
+                                    "If you've talked recently, they may not want to chat again right away.\n\n"
+                                    "You can ask allies about their background, but some may not want to discuss it.\n"
+                                    "You can allies for advice. They may share survival tips they've picked up.\n"
+                                    "Note: Advice may not always be relevant to your current situation." );
+                    break;
+
+                case tut_misc:
+                    info_title = _( "Miscellaneous Rules" );
+                    info_text = _(
+                                    "You can configure various rules for allies that control their behavior.\n\n"
+                                    "Allies report danger, injuries, hunger, and other important information.\n"
+                                    "You can tell them to be quiet if you don't want these notifications.\n\n"
+                                    "Allies can pulp zombie corpses to prevent revival. Most prefer to do this.\n\n"
+                                    "Allies investigate suspicious noises by default. You can disable this.\n\n"
+                                    "You can decide if they leave doors open while passing through them or not,"
+                                    "and if they go through closed doors.\n\n"
+                                    "Allies can pick up items automatically.  You can specify what types to collect.\n"
+                                    "Tip: If allies have bows or crossbows, tell them to pick up ammunition.\n\n"
+                                    "Examine a vehicle and use the crew 'w' command to assign allies to specific seats.\n" );
+                    break;
+
+                case tut_factions:
+                    info_title = _( "Other Survivors and Factions" );
+                    info_text = _(
+                                    "You're not the only survivor out there.\n"
+                                    "Other survivors scavenge just like you. Unattended loot looks like fair game to them. "
+                                    "If you or an ally isn't around to claim your stuff, other survivors may take it. "
+                                    "A solution is to have someone guard your base or vehicle.\n\n"
+                                    "Survivors form groups for better survival chances. Your group is one such faction.\n\n"
+                                    "In the faction manager (default: '#') you can view a list of all your allies, "
+                                    "and all factions you've encountered.\n"
+                                    "Some factions are lone survivors, others have many members and fortified bases." );
+                    break;
+                default:
+                    show_tutorial = false;
+                    break;
+            }
+
+            if( show_tutorial && !info_text.empty() ) {
+                full_screen_popup( "%s\n\n%s", info_title, info_text );
+            }
+        }
     }
 
     return true;
@@ -5795,6 +6130,7 @@ void game::examine( const tripoint &examp )
             add_msg( _( "It is empty." ) );
         } else if( ( m.has_flag( TFLAG_FIRE_CONTAINER, examp ) &&
                      xfurn_t.examine == &iexamine::fireplace ) ||
+                   xfurn_t.examine == &iexamine::fluid_grid_fixture ||
                    xfurn_t.examine == &iexamine::workbench ||
                    xfurn_t.examine == &iexamine::transform ) {
             return;
@@ -6234,25 +6570,30 @@ bool game::is_zones_manager_open() const
     return zones_manager_open;
 }
 
-static void zones_manager_shortcuts( const catacurses::window &w_info )
+static void zones_manager_shortcuts( const catacurses::window &w_info, const bool overlay_enabled )
 {
     werase( w_info );
 
     int tmpx = 1;
-    tmpx += shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<A>dd" ) ) + 2;
-    tmpx += shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<R>emove" ) ) + 2;
-    tmpx += shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<E>nable" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<D>isable" ) );
+    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<A>dd" ) ) + 2;
+    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<R>emove" ) ) + 2;
+    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<E>nable" ) ) + 2;
+    shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<D>isable" ) );
+
+    tmpx = 1;
+    tmpx += shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green,
+                            _( "<+-> Move up/down" ) ) + 2;
+    shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<Enter>-Edit" ) );
 
     tmpx = 1;
     tmpx += shortcut_print( w_info, point( tmpx, 2 ), c_white, c_light_green,
-                            _( "<+-> Move up/down" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 2 ), c_white, c_light_green, _( "<Enter>-Edit" ) );
+                            _( "<S>how all / hide distant" ) ) + 2;
+    shortcut_print( w_info, point( tmpx, 2 ), c_white, c_light_green, _( "<M>ap" ) );
 
     tmpx = 1;
-    tmpx += shortcut_print( w_info, point( tmpx, 3 ), c_white, c_light_green,
-                            _( "<S>how all / hide distant" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 3 ), c_white, c_light_green, _( "<M>ap" ) );
+    const nc_color overlay_color = overlay_enabled ? c_light_green : c_white;
+    shortcut_print( w_info, point( tmpx, 3 ), c_white, overlay_color,
+                    _( "<O> - Toggle Overlays" ) );
 
     wnoutrefresh( w_info );
 }
@@ -6359,12 +6700,12 @@ void game::zones_manager()
     ctxt.register_action( "ENABLE_ZONE" );
     ctxt.register_action( "DISABLE_ZONE" );
     ctxt.register_action( "SHOW_ALL_ZONES" );
+    ctxt.register_action( "TOGGLE_ZONE_OVERLAY" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
     auto &mgr = zone_manager::get_manager();
     int start_index = 0;
     int active_index = 0;
-    bool blink = false;
     bool stuff_changed = false;
     bool show_all_zones = false;
     int zone_cnt = 0;
@@ -6473,7 +6814,7 @@ void game::zones_manager()
             return;
         }
         zones_manager_draw_borders( w_zones_border, w_zones_info_border, zone_ui_height, width );
-        zones_manager_shortcuts( w_zones_info );
+        zones_manager_shortcuts( w_zones_info, g->show_zone_overlay );
 
         if( zone_cnt == 0 ) {
             werase( w_zones );
@@ -6573,36 +6914,31 @@ void game::zones_manager()
 
                 stuff_changed = true;
             } while( false );
-
-            blink = false;
         } else if( action == "SHOW_ALL_ZONES" ) {
             show_all_zones = !show_all_zones;
             zones = get_zones();
             active_index = 0;
+        } else if( action == "TOGGLE_ZONE_OVERLAY" ) {
+            g->show_zone_overlay = !g->show_zone_overlay;
         } else if( zone_cnt > 0 ) {
             if( action == "UP" ) {
                 active_index--;
                 if( active_index < 0 ) {
                     active_index = zone_cnt - 1;
                 }
-                blink = false;
             } else if( action == "DOWN" ) {
                 active_index++;
                 if( active_index >= zone_cnt ) {
                     active_index = 0;
                 }
-                blink = false;
             } else if( action == "REMOVE_ZONE" ) {
                 if( active_index < zone_cnt ) {
                     mgr.remove( zones[active_index] );
                     zones = get_zones();
                     active_index--;
 
-                    if( active_index < 0 ) {
-                        active_index = 0;
-                    }
+                    active_index = std::max( active_index, 0 );
                 }
-                blink = false;
                 stuff_changed = true;
 
             } else if( action == "CONFIRM" ) {
@@ -6682,14 +7018,12 @@ void game::zones_manager()
                         break;
                 }
 
-                blink = false;
             } else if( action == "MOVE_ZONE_UP" && zone_cnt > 1 ) {
                 if( active_index < zone_cnt - 1 ) {
                     mgr.swap( zones[active_index], zones[active_index + 1] );
                     zones = get_zones();
                     active_index++;
                 }
-                blink = false;
                 stuff_changed = true;
 
             } else if( action == "MOVE_ZONE_DOWN" && zone_cnt > 1 ) {
@@ -6698,7 +7032,6 @@ void game::zones_manager()
                     zones = get_zones();
                     active_index--;
                 }
-                blink = false;
                 stuff_changed = true;
 
             } else if( action == "SHOW_ZONE_ON_MAP" ) {
@@ -6721,22 +7054,18 @@ void game::zones_manager()
         }
 
         if( zone_cnt > 0 ) {
-            blink = !blink;
             const auto &zone = zones[active_index].get();
             zone_start = m.getlocal( zone.get_start_point() );
             zone_end = m.getlocal( zone.get_end_point() );
-            ctxt.set_timeout( get_option<int>( "BLINK_SPEED" ) );
         } else {
-            blink = false;
             zone_start = zone_end = std::nullopt;
-            ctxt.reset_timeout();
         }
 
         // Actually accessed from the terrain overlay callback `zone_cb` in the
         // call to `ui_manager::redraw`.
         //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
-        zone_blink = blink;
-        invalidate_main_ui_adaptor();
+        zone_blink = zone_cnt > 0;
+        g->invalidate_main_ui_adaptor();
 
         ui_manager::redraw();
 
@@ -6880,6 +7209,7 @@ look_around_result game::look_around( bool show_window, tripoint &center,
     }
 #if defined(TILES)
     ctxt.register_action( "toggle_pixel_minimap" );
+    ctxt.register_action( "toggle_zone_overlay" );
 #endif // TILES
 
     const int old_levz = get_levz();
@@ -6891,7 +7221,6 @@ look_around_result game::look_around( bool show_window, tripoint &center,
     m.update_visibility_cache( old_levz );
     const visibility_variables &cache = m.get_visibility_variables_cache();
 
-    bool blink = true;
     look_around_result result;
 
     shared_ptr_fast<draw_callback_t> ter_indicator_cb;
@@ -6966,25 +7295,16 @@ look_around_result game::look_around( bool show_window, tripoint &center,
                 zone_start = lp;
                 zone_end = std::nullopt;
             }
-            // Actually accessed from the terrain overlay callback `zone_cb` in the
-            // call to `ui_manager::redraw`.
-            //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
-            zone_blink = blink;
+            zone_blink = zone_start.has_value();
         }
 
         if( is_moving_zone ) {
             zone_start = lp - ( start_point + end_point ) / 2 + start_point;
             zone_end = lp - ( start_point + end_point ) / 2 + end_point;
-            // Actually accessed from the terrain overlay callback `zone_cb` in the
-            // call to `ui_manager::redraw`.
-            //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
-            zone_blink = blink;
+            zone_blink = true;
         }
-        invalidate_main_ui_adaptor();
+        g->invalidate_main_ui_adaptor();
         ui_manager::redraw();
-        if( ( select_zone && has_first_point ) || is_moving_zone ) {
-            ctxt.set_timeout( get_option<int>( "BLINK_SPEED" ) );
-        }
 
         if( pixel_minimap_option ) {
             ctxt.set_timeout( 125 );
@@ -7001,12 +7321,7 @@ look_around_result game::look_around( bool show_window, tripoint &center,
         } else {
             action = ctxt.handle_input();
         }
-        if( ( action == "LEVEL_UP" || action == "LEVEL_DOWN" || action == "MOUSE_MOVE" ||
-              ctxt.get_direction( action ) ) && ( ( select_zone && has_first_point ) || is_moving_zone ) ) {
-            blink = true; // Always draw blink symbols when moving cursor
-        } else if( action == "TIMEOUT" ) {
-            blink = !blink;
-        }
+        ( void ) zone_blink; // kept for callback signature
         if( action == "LIST_ITEMS" ) {
             list_items_monsters();
         } else if( action == "TOGGLE_FAST_SCROLL" ) {
@@ -7017,6 +7332,8 @@ look_around_result game::look_around( bool show_window, tripoint &center,
             if( show_window && ui ) {
                 ui->mark_resize();
             }
+        } else if( action == "toggle_zone_overlay" ) {
+            g->show_zone_overlay = !g->show_zone_overlay;
         } else if( action == "LEVEL_UP" || action == "LEVEL_DOWN" ) {
             if( !allow_zlev_move ) {
                 continue;
@@ -7471,6 +7788,7 @@ void game::reset_item_list_state( const catacurses::window &window, int height,
     tokens.emplace_back( _( "<C>ompare" ) );
     tokens.emplace_back( _( "<F>ilter" ) );
     tokens.emplace_back( _( "<+/->Priority" ) );
+    tokens.emplace_back( _( "<T>ravel to" ) );
 
     int gaps = tokens.size() + 1;
     letters = 0;
@@ -7490,14 +7808,370 @@ void game::reset_item_list_state( const catacurses::window &window, int height,
     }
 }
 
+struct nearby_vehicle_entry {
+    vehicle *veh = nullptr;
+    tripoint pos = tripoint_zero;
+    int dist = 0;
+};
+
+using vehicle_list_t = std::vector<nearby_vehicle_entry>;
+
+enum class vehicle_menu_ret : int {
+    CHANGE_TAB,
+    QUIT,
+};
+
+static int vmenu_tab_delta = 1;
+
+static auto find_visible_vehicles( avatar &viewer, map &here, int radius ) -> vehicle_list_t
+{
+    vehicle_list_t vehicles;
+    if( viewer.is_blind() && viewer.clairvoyance() < 1 ) {
+        return vehicles;
+    }
+
+    for( wrapped_vehicle &wrapped : here.get_vehicles() ) {
+        vehicle *veh = wrapped.v;
+        if( veh == nullptr ) {
+            continue;
+        }
+
+        int best_dist = INT_MAX;
+        std::optional<tripoint> best_pos;
+        for( const vpart_reference &vpr : veh->get_all_parts() ) {
+            if( vpr.part().removed ) {
+                continue;
+            }
+            const tripoint part_pos = veh->global_part_pos3( vpr.part() );
+            const int dist = rl_dist( viewer.pos(), part_pos );
+            if( dist > radius || !viewer.sees( part_pos ) ) {
+                continue;
+            }
+            if( dist < best_dist ) {
+                best_dist = dist;
+                best_pos = part_pos;
+                if( dist == 0 ) {
+                    break;
+                }
+            }
+        }
+
+        if( best_pos ) {
+            vehicles.push_back( { veh, *best_pos, best_dist } );
+        }
+    }
+
+    std::sort( vehicles.begin(), vehicles.end(),
+    []( const nearby_vehicle_entry & lhs, const nearby_vehicle_entry & rhs ) {
+        if( lhs.dist != rhs.dist ) {
+            return lhs.dist < rhs.dist;
+        }
+        return lhs.veh->name < rhs.veh->name;
+    } );
+
+    return vehicles;
+}
+
+static auto vehicle_damage_summary( const vehicle &veh ) -> std::pair<std::string, nc_color>
+{
+    const vehicle_part_range vpr = veh.get_all_parts();
+    const int total_damage = std::accumulate( vpr.begin(), vpr.end(), 0,
+    []( int lhs, const vpart_reference & rhs ) {
+        return lhs + std::max( rhs.part().damage(), 0 );
+    } );
+    const int total_max = std::accumulate( vpr.begin(), vpr.end(), 0,
+    []( int lhs, const vpart_reference & rhs ) {
+        return lhs + rhs.part().max_damage();
+    } );
+    const int pct = total_max ? 100 * total_damage / total_max : 0;
+
+    if( pct < 5 ) {
+        return { _( "like new" ), c_light_green };
+    } else if( pct < 33 ) {
+        return { _( "dented" ), c_yellow };
+    } else if( pct < 66 ) {
+        return { _( "battered" ), c_magenta };
+    } else if( pct < 100 ) {
+        return { _( "wrecked" ), c_red };
+    }
+    return { _( "destroyed" ), c_dark_gray };
+}
+
+static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_ret
+{
+    avatar &viewer = get_avatar();
+    int iInfoHeight = 0;
+    const int width = 45;
+    int offsetX = 0;
+    int iMaxRows = 0;
+
+    catacurses::window w_vehicles;
+    catacurses::window w_vehicles_border;
+    catacurses::window w_vehicle_info;
+    catacurses::window w_vehicle_info_border;
+
+    vehicle *cur_vehicle = nullptr;
+    tripoint active_pos = tripoint_zero;
+    bool hide_ui = false;
+
+    ui_adaptor ui;
+    ui.on_screen_resize( [&]( ui_adaptor & ui ) {
+        if( hide_ui ) {
+            ui.position( point_zero, point_zero );
+        } else {
+            constexpr int info_lines = 9;
+            const int desired_info_height = info_lines + 2;
+            offsetX = TERMX - width;
+            iInfoHeight = std::min( desired_info_height, TERMY - 3 );
+            iMaxRows = TERMY - iInfoHeight - 1;
+
+            w_vehicles = catacurses::newwin( iMaxRows, width - 2, point( offsetX + 1, 1 ) );
+            w_vehicles_border = catacurses::newwin( iMaxRows + 1, width, point( offsetX, 0 ) );
+            w_vehicle_info = catacurses::newwin( iInfoHeight - 2, width - 2,
+                                                 point( offsetX + 1, TERMY - iInfoHeight + 1 ) );
+            w_vehicle_info_border = catacurses::newwin( iInfoHeight, width, point( offsetX,
+                                    TERMY - iInfoHeight ) );
+
+            if( cur_vehicle ) {
+                centerlistview( active_pos, width );
+            }
+
+            ui.position( point( offsetX, 0 ), point( width, TERMY ) );
+        }
+    } );
+    ui.mark_resize();
+
+    const tripoint stored_view_offset = viewer.view_offset;
+    viewer.view_offset = tripoint_zero;
+
+    int iActive = 0;
+    std::string action;
+    input_context ctxt( "LIST_VEHICLES" );
+    ctxt.register_action( "UP", to_translation( "Move cursor up" ) );
+    ctxt.register_action( "DOWN", to_translation( "Move cursor down" ) );
+    ctxt.register_action( "NEXT_TAB" );
+    ctxt.register_action( "PREV_TAB" );
+    ctxt.register_action( "QUIT" );
+    ctxt.register_action( "HELP_KEYBINDINGS" );
+
+    ui.on_redraw( [&]( ui_adaptor & ui ) {
+        if( hide_ui ) {
+            return;
+        }
+
+        draw_custom_border( w_vehicles_border, true, true, true, true, true, true, LINE_XOXO, LINE_XOXO );
+        draw_custom_border( w_vehicle_info_border, true, true, true, true, LINE_XXXO, LINE_XOXX, true,
+                            true );
+
+        mvwprintz( w_vehicles_border, point( 2, 0 ), c_light_green, "<Tab> " );
+        wprintz( w_vehicles_border, c_white, _( "Vehicles" ) );
+
+        if( vehicle_list.empty() ) {
+            werase( w_vehicles );
+            mvwprintz( w_vehicles, point( 2, iMaxRows / 3 ), c_white,
+                       _( "You don't see any vehicles around you!" ) );
+        } else {
+            werase( w_vehicles );
+
+            const int iNumVehicles = vehicle_list.size();
+            const int numw = iNumVehicles > 999 ? 4 :
+                             iNumVehicles > 99 ? 3 :
+                             iNumVehicles > 9 ? 2 : 1;
+
+            int iStartPos = 0;
+            calcStartPos( iStartPos, iActive, iMaxRows - 1, iNumVehicles );
+
+            const int endY = std::min( iMaxRows - 1, iNumVehicles );
+            for( int y = 0; y < endY; ++y ) {
+                const int idx = iStartPos + y;
+                const nearby_vehicle_entry &entry = vehicle_list[idx];
+                const bool selected = idx == iActive;
+                nc_color name_color = selected ? hilite( c_light_gray ) : c_light_gray;
+
+                trim_and_print( w_vehicles, point( 1, y ), width - 18, name_color,
+                                entry.veh->name );
+
+                const int dist = entry.dist;
+                const int numd = dist > 999 ? 4 :
+                                 dist > 99 ? 3 :
+                                 dist > 9 ? 2 : 1;
+                trim_and_print( w_vehicles, point( width - ( 8 + numd ), y ), 6 + numd,
+                                selected ? c_light_green : c_light_gray, "%*d %s",
+                                numd, dist,
+                                direction_name_short( direction_from( viewer.pos(), entry.pos ) ) );
+            }
+
+            mvwprintz( w_vehicles_border, point( ( width / 2 ) - numw - 2, 0 ), c_light_green, " %*d",
+                       numw, iActive + 1 );
+            wprintz( w_vehicles_border, c_white, " / %*d ", numw, static_cast<int>( vehicle_list.size() ) );
+
+            werase( w_vehicle_info );
+            if( cur_vehicle ) {
+                const int speed = static_cast<int>( convert_velocity( cur_vehicle->velocity, VU_VEHICLE ) );
+                const bool moving = cur_vehicle->is_moving();
+                const std::string speed_text = string_format( _( "%d %s" ), speed,
+                                               velocity_units( VU_VEHICLE ) );
+                const std::string engine_text = string_format( _( "Engine: %s" ),
+                                                cur_vehicle->engine_on ? _( "on" ) : _( "off" ) );
+                const std::string moving_text = string_format( _( "Moving: %s" ),
+                                                moving ? _( "yes" ) : _( "no" ) );
+                const std::string id_text = string_format( "[%s]", cur_vehicle->type.str() );
+                const bool wheels_ok = cur_vehicle->sufficient_wheel_config();
+                const std::string wheels_text = wheels_ok ?
+                                                _( "This vehicle has enough wheels." ) :
+                                                _( "This vehicle does not have enough wheels." );
+                const int info_width = getmaxx( w_vehicle_info );
+                const bool is_boat = !cur_vehicle->floating.empty();
+                const auto [status_text, status_color] = vehicle_damage_summary( *cur_vehicle );
+                units::volume total_cargo = 0_ml;
+                units::volume free_cargo = 0_ml;
+                for( const vpart_reference &vp : cur_vehicle->get_any_parts( "CARGO" ) ) {
+                    const size_t p = vp.part_index();
+                    total_cargo += cur_vehicle->max_volume( p );
+                    free_cargo += cur_vehicle->free_volume( p );
+                }
+                static const itype_id fuel_type_battery( "battery" );
+                bool leaking_fuel = false;
+                for( const vpart_reference &vpr : cur_vehicle->get_all_parts() ) {
+                    const vehicle_part &part = vpr.part();
+                    if( !part.is_leaking() || part.ammo_remaining() <= 0 ) {
+                        continue;
+                    }
+                    const itype_id fuel = part.ammo_current();
+                    if( fuel == fuel_type_battery ) {
+                        continue;
+                    }
+                    leaking_fuel = true;
+                    break;
+                }
+                const std::string cargo_value = string_format( _( "%s / %s %s" ),
+                                                format_volume( total_cargo - free_cargo ),
+                                                format_volume( total_cargo ),
+                                                volume_units_abbr() );
+                const std::string leak_text = _( "This vehicle is leaking fuel." );
+                const bool can_float = cur_vehicle->can_float();
+                const std::string float_text = string_format( _( "Floats: %s" ),
+                                               can_float ? _( "yes" ) : _( "no" ) );
+
+                int line = 0;
+                trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4, c_light_gray,
+                                cur_vehicle->name );
+                trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4, c_light_blue, id_text );
+                mvwprintz( w_vehicle_info, point( 1, line ), c_light_gray, _( "Speed: " ) );
+                const int speed_label_width = utf8_width( _( "Speed: " ) );
+                trim_and_print( w_vehicle_info, point( 1 + speed_label_width, line ),
+                                info_width - 2 - speed_label_width, c_light_green, speed_text );
+                line++;
+                mvwprintz( w_vehicle_info, point( 1, line ), c_light_gray, _( "Engine: " ) );
+                wprintz( w_vehicle_info, cur_vehicle->engine_on ? c_light_green : c_light_red,
+                         cur_vehicle->engine_on ? _( "on" ) : _( "off" ) );
+                line++;
+                trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4,
+                                wheels_ok ? c_light_green : c_light_red, wheels_text );
+                mvwprintz( w_vehicle_info, point( 1, line ), c_light_gray, _( "Status: " ) );
+                wprintz( w_vehicle_info, status_color, status_text );
+                line++;
+                mvwprintz( w_vehicle_info, point( 1, line ), c_light_gray, _( "Cargo: " ) );
+                const int cargo_label_width = utf8_width( _( "Cargo: " ) );
+                trim_and_print( w_vehicle_info, point( 1 + cargo_label_width, line ),
+                                info_width - 2 - cargo_label_width, c_yellow, cargo_value );
+                line++;
+                if( leaking_fuel ) {
+                    trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4,
+                                    c_light_red, leak_text );
+                }
+                if( is_boat ) {
+                    const std::string float_text = can_float ?
+                                                   _( "This vehicle can float." ) :
+                                                   _( "This vehicle can't float." );
+                    trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4,
+                                    can_float ? c_light_green : c_light_red, float_text );
+                }
+            }
+
+            draw_custom_border( w_vehicle_info_border, true, true, true, true, LINE_XXXO, LINE_XOXX, true,
+                                true );
+
+            draw_scrollbar( w_vehicles_border, iActive, iMaxRows, static_cast<int>( vehicle_list.size() ),
+                            point_south );
+
+            if( iNumVehicles > 0 ) {
+                ui.set_cursor( w_vehicles, point( 1, iActive - iStartPos ) );
+            }
+        }
+
+        wnoutrefresh( w_vehicles_border );
+        wnoutrefresh( w_vehicle_info_border );
+        wnoutrefresh( w_vehicles );
+        wnoutrefresh( w_vehicle_info );
+    } );
+
+    std::optional<tripoint> trail_start;
+    std::optional<tripoint> trail_end;
+    bool trail_end_x = false;
+    shared_ptr_fast<game::draw_callback_t> trail_cb = create_trail_callback( trail_start, trail_end,
+            trail_end_x );
+    g->add_draw_callback( trail_cb );
+
+    do {
+        if( action == "UP" ) {
+            iActive--;
+            if( iActive < 0 ) {
+                iActive = vehicle_list.empty() ? 0 : static_cast<int>( vehicle_list.size() ) - 1;
+            }
+        } else if( action == "DOWN" ) {
+            iActive++;
+            if( iActive >= static_cast<int>( vehicle_list.size() ) ) {
+                iActive = 0;
+            }
+        } else if( action == "NEXT_TAB" || action == "PREV_TAB" ) {
+            vmenu_tab_delta = action == "NEXT_TAB" ? 1 : -1;
+            viewer.view_offset = stored_view_offset;
+            return vehicle_menu_ret::CHANGE_TAB;
+        }
+
+        if( iActive >= 0 && static_cast<size_t>( iActive ) < vehicle_list.size() ) {
+            cur_vehicle = vehicle_list[iActive].veh;
+            active_pos = vehicle_list[iActive].pos - viewer.pos();
+            centerlistview( active_pos, width );
+            trail_start = viewer.pos();
+            trail_end = vehicle_list[iActive].pos;
+            // Actually accessed from the terrain overlay callback `trail_cb` in the
+            // call to `ui_manager::redraw`.
+            //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
+            trail_end_x = false;
+        } else {
+            cur_vehicle = nullptr;
+            active_pos = tripoint_zero;
+            viewer.view_offset = stored_view_offset;
+            trail_start = trail_end = std::nullopt;
+        }
+        g->invalidate_main_ui_adaptor();
+
+        ui_manager::redraw();
+        action = ctxt.handle_input();
+    } while( action != "QUIT" );
+
+    viewer.view_offset = stored_view_offset;
+    return vehicle_menu_ret::QUIT;
+}
+
 void game::list_items_monsters()
 {
+    static int vmenu_tab = [] {
+        return uistate.vmenu_show_items ? 0 : 1;
+    }();
+
+    avatar &viewer = get_avatar();
+    map &here = get_map();
+
     std::vector<Creature *> mons = u.get_visible_creatures( current_daylight_level( calendar::turn ) );
     // whole reality bubble
     const std::vector<map_item_stack> items = find_nearby_items( 60 );
+    const vehicle_list_t vehicles = find_visible_vehicles( viewer, here, 60 );
 
-    if( mons.empty() && items.empty() ) {
-        add_msg( m_info, _( "You don't see any items or monsters around you!" ) );
+    if( mons.empty() && items.empty() && vehicles.empty() ) {
+        add_msg( m_info, _( "You don't see any items, monsters, or vehicles around you!" ) );
         return;
     }
 
@@ -7513,21 +8187,52 @@ void game::list_items_monsters()
         }
     } );
 
-    // If the current list is empty, switch to the non-empty list
-    if( uistate.vmenu_show_items ) {
-        if( items.empty() ) {
-            uistate.vmenu_show_items = false;
+    const auto tab_empty = [&]( int tab ) {
+        if( tab == 0 ) {
+            return items.empty();
+        } else if( tab == 1 ) {
+            return mons.empty();
         }
-    } else if( mons.empty() ) {
-        uistate.vmenu_show_items = true;
+        return vehicles.empty();
+    };
+
+    if( vmenu_tab < 0 || vmenu_tab > 2 ) {
+        vmenu_tab = 0;
+    }
+    if( tab_empty( vmenu_tab ) ) {
+        for( int tab = 0; tab < 3; ++tab ) {
+            if( !tab_empty( tab ) ) {
+                vmenu_tab = tab;
+                break;
+            }
+        }
     }
 
     temp_exit_fullscreen();
     game::vmenu_ret ret;
     while( true ) {
-        ret = uistate.vmenu_show_items ? list_items( items ) : list_monsters( mons );
+        if( vmenu_tab == 0 ) {
+            ret = list_items( items );
+        } else if( vmenu_tab == 1 ) {
+            ret = list_monsters( mons );
+        } else {
+            ret = list_vehicles( vehicles ) == vehicle_menu_ret::CHANGE_TAB ?
+                  game::vmenu_ret::CHANGE_TAB : game::vmenu_ret::QUIT;
+        }
         if( ret == game::vmenu_ret::CHANGE_TAB ) {
-            uistate.vmenu_show_items = !uistate.vmenu_show_items;
+            int next_tab = vmenu_tab;
+            for( int i = 0; i < 3; ++i ) {
+                next_tab = ( next_tab + vmenu_tab_delta + 3 ) % 3;
+                if( !tab_empty( next_tab ) ) {
+                    vmenu_tab = next_tab;
+                    break;
+                }
+            }
+            if( vmenu_tab == 0 ) {
+                uistate.vmenu_show_items = true;
+            } else if( vmenu_tab == 1 ) {
+                uistate.vmenu_show_items = false;
+            }
         } else {
             break;
         }
@@ -7545,15 +8250,24 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
     int iInfoHeight = 0;
     int iMaxRows = 0;
     int width = 0;
+    int width_nob = 0;
     int max_name_width = 0;
+
+    const bool highlight_unread_items = get_option<bool>( "HIGHLIGHT_UNREAD_ITEMS" );
+    const nc_color item_new_col = c_light_green;
+    const std::string item_new_str = pgettext( "list items", "NEW!" );
+    const int item_new_str_width = utf8_width( item_new_str );
+    const int left_padding = 1;
+    const int right_padding = 2 + 1 + 2 + 1;
+    const int padding = left_padding + right_padding;
 
     //find max length of item name and resize window width
     for( const map_item_stack &cur_item : ground_items ) {
-        const int item_len = utf8_width( remove_color_tags( cur_item.example->display_name() ) ) + 15;
-        if( item_len > max_name_width ) {
-            max_name_width = item_len;
-        }
+        max_name_width = std::max( max_name_width,
+                                   utf8_width( remove_color_tags( cur_item.example->display_name() ) ) );
     }
+    max_name_width = max_name_width + padding + 6 +
+                     ( highlight_unread_items ? item_new_str_width : 0 );
 
     tripoint active_pos;
     map_item_stack *activeItem = nullptr;
@@ -7568,11 +8282,12 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
         iMaxRows = TERMY - iInfoHeight - 2;
 
         width = clamp( max_name_width, 45, TERMX / 3 );
+        width_nob = width - 2;
 
         const int offsetX = TERMX - width;
 
         w_items = catacurses::newwin( TERMY - 2 - iInfoHeight,
-                                      width - 2, point( offsetX + 1, 1 ) );
+                                      width_nob, point( offsetX + 1, 1 ) );
         w_items_border = catacurses::newwin( TERMY - iInfoHeight,
                                              width, point( offsetX, 0 ) );
         w_item_info = catacurses::newwin( iInfoHeight, width,
@@ -7656,8 +8371,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             werase( w_items );
             calcStartPos( iStartPos, iActive, iMaxRows, iItemNum );
             int iNum = 0;
-            bool high = false;
-            bool low = false;
+            // ITEM LIST
             int index = 0;
             int iCatSortOffset = 0;
 
@@ -7666,60 +8380,55 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
                     iNum++;
                 }
             }
-            for( auto iter = filtered_items.begin(); iter != filtered_items.end(); ++index ) {
-                if( highPEnd > 0 && index < highPEnd + iCatSortOffset ) {
-                    high = true;
-                    low = false;
-                } else if( index >= lowPStart + iCatSortOffset ) {
-                    high = false;
-                    low = true;
-                } else {
-                    high = false;
-                    low = false;
-                }
-
-                if( iNum >= iStartPos && iNum < iStartPos + ( iMaxRows > iItemNum ? iItemNum : iMaxRows ) ) {
-                    int iThisPage = 0;
-                    if( !mSortCategory[iNum].empty() ) {
-                        iCatSortOffset++;
-                        mvwprintz( w_items, point( 1, iNum - iStartPos ), c_magenta, mSortCategory[iNum] );
-                    } else {
-                        if( iNum == iActive ) {
-                            iThisPage = page_num;
-                        }
-                        std::string sText;
-                        if( iter->vIG.size() > 1 ) {
-                            sText += string_format( "[%d/%d] (%d) ", iThisPage + 1, iter->vIG.size(), iter->totalcount );
-                        }
-                        sText += iter->example->tname();
-                        if( iter->vIG[iThisPage].count > 1 ) {
-                            sText += string_format( "[%d]", iter->vIG[iThisPage].count );
-                        }
-
-                        nc_color col = c_light_gray;
-                        if( iNum == iActive ) {
-                            col = hilite( c_white );
-                        } else if( high ) {
-                            col = c_yellow;
-                        } else if( low ) {
-                            col = c_red;
-                        } else {
-                            col = iter->example->color_in_inventory();
-                        }
-                        trim_and_print( w_items, point( 1, iNum - iStartPos ), width - 9, col, sText );
-                        const int numw = iItemNum > 9 ? 2 : 1;
-                        const int x = iter->vIG[iThisPage].pos.x;
-                        const int y = iter->vIG[iThisPage].pos.y;
-                        mvwprintz( w_items, point( width - 6 - numw, iNum - iStartPos ),
-                                   iNum == iActive ? c_light_green : c_light_gray,
-                                   "%*d %s", numw, rl_dist( point_zero, point( x, y ) ),
-                                   direction_name_short( direction_from( point_zero, point( x, y ) ) ) );
-                        ++iter;
-                    }
-                } else {
+            for( auto iter = filtered_items.begin(); iter != filtered_items.end(); ++index, iNum++ ) {
+                if( iNum < iStartPos || iNum >= iStartPos + std::min( iMaxRows, iItemNum ) ) {
                     ++iter;
+                    continue;
                 }
-                iNum++;
+                int iThisPage = 0;
+                if( !mSortCategory[iNum].empty() ) {
+                    iCatSortOffset++;
+                    mvwprintz( w_items, point( 1, iNum - iStartPos ), c_magenta, mSortCategory[iNum] );
+                    continue;
+                }
+                if( iNum == iActive ) {
+                    iThisPage = page_num;
+                }
+                std::string sText;
+                if( iter->vIG.size() > 1 ) {
+                    sText += string_format( "[%d/%d] (%d) ", iThisPage + 1, iter->vIG.size(), iter->totalcount );
+                }
+                sText += iter->example->tname();
+                if( iter->vIG[iThisPage].count > 1 ) {
+                    sText += string_format( "[%d]", iter->vIG[iThisPage].count );
+                }
+
+                nc_color col = c_light_gray;
+                if( iNum == iActive ) {
+                    col = hilite( c_white );
+                } else if( highPEnd > 0 && index < highPEnd + iCatSortOffset ) {
+                    col = c_yellow;
+                } else if( index >= lowPStart + iCatSortOffset ) {
+                    col = c_red;
+                } else {
+                    col = iter->example->color_in_inventory();
+                }
+                const bool print_new = highlight_unread_items &&
+                                       !uistate.read_items.contains( iter->example->typeId() );
+                const int new_width = print_new ? item_new_str_width + 1 : 1;
+                trim_and_print( w_items, point( 1, iNum - iStartPos ),
+                                width_nob - padding - new_width, col, sText );
+                const point p( iter->vIG[iThisPage].pos.xy() );
+                if( print_new ) {
+                    mvwprintz( w_items,
+                               point( width_nob - right_padding - new_width + 1, iNum - iStartPos ),
+                               item_new_col, item_new_str );
+                }
+                mvwprintz( w_items, point( width_nob - right_padding, iNum - iStartPos ),
+                           iNum == iActive ? c_light_green : c_light_gray,
+                           "%2d %s", rl_dist( point_zero, p ),
+                           direction_name_short( direction_from( point_zero, p ) ) );
+                ++iter;
             }
             iNum = 0;
             for( int i = 0; i < iActive; i++ ) {
@@ -7777,8 +8486,10 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
     add_draw_callback( trail_cb );
 
     do {
+        bool recalc_unread = false;
         if( action == "COMPARE" && activeItem ) {
             game_menus::inv::compare( u, active_pos );
+            recalc_unread = highlight_unread_items;
         } else if( action == "FILTER" ) {
             filter_type = item_filter_type::FILTER;
             ui.invalidate_ui();
@@ -7813,6 +8524,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             draw_item_info( [&]() -> catacurses::window {
                 return catacurses::newwin( TERMY, width - 5, point_zero );
             }, info_data );
+            recalc_unread = highlight_unread_items;
         } else if( action == "PRIORITY_INCREASE" ) {
             filter_type = item_filter_type::HIGH_PRIORITY;
             ui.invalidate_ui();
@@ -7867,6 +8579,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             if( route.size() > 1 ) {
                 route.pop_back();
                 u.set_destination( route );
+                recalc_unread = highlight_unread_items;
                 break;
             } else {
                 add_msg( m_info, _( "You can't travel there." ) );
@@ -7924,6 +8637,7 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             if( iActive < 0 ) {
                 iActive = iItemNum - 1;
             }
+            recalc_unread = highlight_unread_items;
         } else if( action == "DOWN" ) {
             do {
                 iActive++;
@@ -7934,19 +8648,23 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             if( iActive >= iItemNum ) {
                 iActive = mSortCategory[0].empty() ? 0 : 1;
             }
+            recalc_unread = highlight_unread_items;
         } else if( action == "RIGHT" ) {
             if( !filtered_items.empty() && activeItem ) {
                 if( ++page_num >= static_cast<int>( activeItem->vIG.size() ) ) {
                     page_num = activeItem->vIG.size() - 1;
                 }
             }
+            recalc_unread = highlight_unread_items;
         } else if( action == "LEFT" ) {
             page_num = std::max( 0, page_num - 1 );
+            recalc_unread = highlight_unread_items;
         } else if( action == "PAGE_UP" ) {
             iScrollPos--;
         } else if( action == "PAGE_DOWN" ) {
             iScrollPos++;
         } else if( action == "NEXT_TAB" || action == "PREV_TAB" ) {
+            vmenu_tab_delta = action == "NEXT_TAB" ? 1 : -1;
             u.view_offset = stored_view_offset;
             return game::vmenu_ret::CHANGE_TAB;
         }
@@ -7975,6 +8693,9 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             // call to `ui_manager::redraw`.
             //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
             trail_end_x = true;
+            if( recalc_unread ) {
+                uistate.read_items.insert( activeItem->example->typeId() );
+            }
         } else {
             u.view_offset = stored_view_offset;
             trail_start = trail_end = std::nullopt;
@@ -8259,6 +8980,7 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
                 iActive = 0;
             }
         } else if( action == "NEXT_TAB" || action == "PREV_TAB" ) {
+            vmenu_tab_delta = action == "NEXT_TAB" ? 1 : -1;
             u.view_offset = stored_view_offset;
             return game::vmenu_ret::CHANGE_TAB;
         } else if( action == "SAFEMODE_BLACKLIST_REMOVE" ) {
@@ -8950,7 +9672,13 @@ bool game::prompt_dangerous_tile( const tripoint &dest_loc ) const
         }
         ledge_examine( u, dest_loc );
         return false;
+    } else {
+        auto crit = u.mounted_creature.get();
+        if( crit->has_flag( MF_RIDEABLE_MECH ) ) {
+            return true; // mount can climb down ledges
+        }
     }
+
 
     add_msg( m_warning, _( "Your %s refuses to move over that ledge!" ),
              u.mounted_creature->get_name() );
@@ -9114,6 +9842,43 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     }
     u.set_underwater( false );
 
+    const auto hook_results = cata::run_hooks(
+                                  "on_player_try_move",
+    [ &, this]( sol::table & params ) {
+        params["player"] = &u;
+        params["from"] = u.pos();
+        params["to"] = dest_loc;
+        params["movement_mode"] = u.get_movement_mode();
+        params["via_ramp"] = via_ramp;
+        if( u.is_mounted() ) {
+            params["mounted"] = true;
+            params["mount"] = u.mounted_creature.get();
+        } else {
+            params["mounted"] = false;
+        }
+    } );
+
+    const auto char_hook_results = cata::run_hooks(
+                                       "on_character_try_move",
+    [ &, this]( sol::table & params ) {
+        params["char"] = static_cast<Character *>( &u );
+        params["from"] = u.pos();
+        params["to"] = dest_loc;
+        params["movement_mode"] = u.get_movement_mode();
+        params["via_ramp"] = via_ramp;
+        if( u.is_mounted() ) {
+            params["mounted"] = true;
+            params["mount"] = u.mounted_creature.get();
+        } else {
+            params["mounted"] = false;
+        }
+    } );
+
+    if( !hook_results.get_or( "allowed", true ) ||
+        !char_hook_results.get_or( "allowed", true ) ) {
+        return false;
+    }
+
     if( !shifting_furniture && !pushing && is_dangerous_tile( dest_loc ) ) {
         std::vector<std::string> harmful_stuff = get_dangerous_tile( dest_loc );
         const auto dangerous_terrain_opt = get_option<std::string>( "DANGEROUS_TERRAIN_WARNING_PROMPT" );
@@ -9169,7 +9934,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
     const int previous_moves = u.moves;
     if( u.is_mounted() ) {
         auto crit = u.mounted_creature.get();
-        if( !crit->has_flag( MF_RIDEABLE_MECH ) &&
+        if( !crit->has_flag( MF_RIDEABLE_MECH ) && !crit->has_flag( MF_MOUNTABLE_OBSTACLES ) &&
             ( m.has_flag_ter_or_furn( "MOUNTABLE", dest_loc ) ||
               m.has_flag_ter_or_furn( "BARRICADABLE_DOOR", dest_loc ) ||
               m.has_flag_ter_or_furn( "OPENCLOSE_INSIDE", dest_loc ) ||
@@ -10535,7 +11300,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
                 // ... and we're already submerged
                 if( u.is_underwater() ) {
                     if( u.swim_speed() < 500 || u.shoe_type_count( itype_swim_fins ) ||
-                        u.has_trait_flag( trait_flag_TAIL_FIN ) ) {
+                        u.has_trait_flag( trait_flag_MUTATION_SWIM ) ) {
                         u.set_underwater( false );
                         add_msg( _( "You surface." ) );
                         surfacing = true;
@@ -10678,6 +11443,12 @@ void game::vertical_move( int movez, bool force, bool peeking )
         }
     } else {
         u.moves -= move_cost;
+        // Risk of failing, simple stuff like ladders are exempt
+        if( climbing && movez == 1 && m.climb_difficulty( u.pos() ) > 1 ) {
+            if( g->slip_down() ) {
+                return;
+            }
+        }
     }
     for( const auto &np : npcs_to_bring ) {
         if( np->in_vehicle ) {
@@ -10813,6 +11584,11 @@ void game::vertical_move( int movez, bool force, bool peeking )
     if( u.is_hauling() ) {
         const tripoint adjusted_pos = old_pos - sm_to_ms_copy( submap_shift );
         start_hauling( adjusted_pos );
+    }
+    if( m.has_flag( "UNSTABLE", u.pos() ) && !u.is_mounted() ) {
+        u.add_effect( effect_bouldering, 1_turns, bodypart_str_id::NULL_ID() );
+    } else if( u.has_effect( effect_bouldering ) ) {
+        u.remove_effect( effect_bouldering );
     }
 
     m.invalidate_map_cache( g->get_levz() );
@@ -11586,6 +12362,12 @@ void game::perhaps_add_random_npc()
     tmp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, tmp->global_omt_location(),
                           tmp->getID() ) );
     dbg( DL::Debug ) << "Spawning a random NPC at " << spawn_point;
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = tmp.get();
+    } );
+    cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+        params["npc"] = tmp.get();
+    } );
     // This will make the new NPC active- if its nearby to the player
     load_npcs();
 }
@@ -12506,8 +13288,9 @@ bool game::slip_down()
 {
     ///\EFFECT_DEX decreases chances of slipping while climbing
     int climb = u.dex_cur;
-    if( u.has_trait( trait_BADKNEES ) ) {
-        climb = climb / 2;
+    // Parkour and Bad Knees affect it too, avoid division by zero
+    if( u.mutation_value( "movecost_obstacle_modifier" ) != 0.0f ) {
+        climb = climb / u.mutation_value( "movecost_obstacle_modifier" );
     }
     if( one_in( climb ) ) {
         add_msg( m_bad, _( "You slip while climbing and fall down again." ) );
@@ -12518,7 +13301,17 @@ bool game::slip_down()
     }
     return false;
 }
+item *game::add_fake_item( detached_ptr<item> &&it )
+{
+    it->set_flag( flag_TEMPORARY_ITEM );
+    fake_items.push_back( std::move( it ) );
+    return fake_items.back();
+}
 
+void game::remove_fake_item( item *it )
+{
+    fake_items.remove( it );
+}
 namespace cata_event_dispatch
 {
 void avatar_moves( const avatar &u, const map &m, const tripoint &p )
