@@ -23,10 +23,10 @@ class mapbuffer
         /** Store all submaps in this instance into savefiles.
          * @param delete_after_save If true, the saved submaps are removed
          * from the mapbuffer (and deleted).
-         * @param notify_tracker If true, notify the distribution_grid_tracker
-         * via on_saved() after saving.  Pass false when saving a non-primary
-         * dimension's mapbuffer so that the primary tracker is not spuriously
-         * rebuilt.
+         * @param notify_tracker If true, fire on_submap_unloaded() on the
+         * distribution_grid_tracker for each submap evicted during save.
+         * Pass false when saving a non-primary dimension's mapbuffer so that
+         * the primary tracker is not spuriously updated.
          **/
         void save( bool delete_after_save = false, bool notify_tracker = true );
 

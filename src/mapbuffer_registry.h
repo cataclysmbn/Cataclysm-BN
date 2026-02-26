@@ -63,8 +63,9 @@ class mapbuffer_registry
 
         /**
          * Save all registered dimensions.
-         * The distribution_grid_tracker is notified (on_saved) only for the
-         * primary dimension to avoid spurious rebuilds from secondary buffers.
+         * on_submap_unloaded() is fired for evicted submaps only for the
+         * primary dimension's tracker to avoid spurious updates from secondary
+         * dimension buffers.
          */
         void save_all( bool delete_after_save = false );
 

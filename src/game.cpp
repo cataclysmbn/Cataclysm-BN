@@ -322,7 +322,6 @@ game::game() :
     liveview( *liveview_ptr ),
     scent_ptr( *this ),
     achievements_tracker_ptr( *stats_tracker_ptr, *kill_tracker_ptr, achievement_attained ),
-    grid_tracker_ptr( MAPBUFFER ),
     m( *map_ptr ),
     u( *u_ptr ),
     scent( *scent_ptr ),
@@ -344,6 +343,13 @@ game::game() :
 {
     // Force thread pool startup before first turn to avoid a latency spike.
     get_thread_pool();
+
+    // Create the primary dimension's grid tracker and register it as a listener
+    // with the submap load manager so it receives per-submap events.
+    // The primary dimension key is "" (mapbuffer_registry::PRIMARY_DIMENSION_ID).
+    grid_trackers_[""] = std::make_unique<distribution_grid_tracker>( MAPBUFFER );
+    submap_loader.add_listener( grid_trackers_[""].get() );
+
     first_redraw_since_waiting_started = true;
     reset_light_level();
     events().subscribe( &*kill_tracker_ptr );
@@ -595,7 +601,20 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
                      const bool pump_events )
 {
     m.load( pos_sm, true, pump_events );
-    grid_tracker_ptr->load( m );
+
+    // Repopulate the primary tracker from the current mapbuffer contents.
+    // All active submaps live in the primary slot (MAPBUFFER) regardless of logical
+    // dimension until Phase 6 migrates per-dimension slots fully.
+    {
+        auto &tracker = *grid_trackers_[""];
+        tracker.clear();
+        for( auto &[raw_pos, sm_ptr] : MAPBUFFER ) {
+            if( sm_ptr ) {
+                tracker.on_submap_loaded( tripoint_abs_sm( raw_pos ), "" );
+            }
+        }
+    }
+
     fluid_grid::load( m );
 
     // Wire the reality bubble load request to the submap_load_manager.
@@ -1738,7 +1757,11 @@ bool game::do_turn()
     m.process_fields();
     m.process_items();
     m.creature_in_field( u );
-    grid_tracker_ptr->update( calendar::turn );
+    for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
+        if( tracker_ptr ) {
+            tracker_ptr->update( calendar::turn );
+        }
+    }
     fluid_grid::update( calendar::turn );
 
     // Apply sounds from previous turn to monster and NPC AI.
@@ -11468,7 +11491,11 @@ void game::on_options_changed()
 #if defined(TILES)
     tilecontext->on_options_changed();
 #endif
-    grid_tracker_ptr->on_options_changed();
+    for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
+        if( tracker_ptr ) {
+            tracker_ptr->on_options_changed();
+        }
+    }
 }
 
 void game::fling_creature( Creature *c, const units::angle &dir, float flvel, bool controlled )
@@ -12440,7 +12467,7 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
                                pocket_instance_id_ );
                 here.clear_grid();
                 kept_origin_->capture_from_primary( current_bounds, current_abs_sm );
-                grid_tracker_ptr->clear();
+                grid_trackers_[""]->clear();
                 add_msg( m_debug, "[DIM] Keeping origin loaded" );
             } else {
                 // Leaving pocket to enter origin: capture pocket into kept_pocket_
@@ -12449,7 +12476,7 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
                                pocket_instance_id_ );
                 here.clear_grid();
                 kept_pocket_->capture_from_primary( current_bounds, current_abs_sm );
-                grid_tracker_ptr->clear();
+                grid_trackers_[""]->clear();
                 add_msg( m_debug, "[DIM] Keeping pocket loaded" );
             }
         } else {
@@ -12460,7 +12487,7 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
             overmap_buffer.clear();
             here.clear_grid();
             MAPBUFFER.clear();
-            grid_tracker_ptr->clear();
+            grid_trackers_[""]->clear();
         }
 
         // Restore from the appropriate kept world
@@ -12670,13 +12697,13 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
         }
 
         // Grid tracker still needs to be cleared
-        grid_tracker_ptr->clear();
+        grid_trackers_[""]->clear();
     } else {
         // Normal clear behavior
         overmap_buffer.clear();
         here.clear_grid();
         MAPBUFFER.clear();
-        grid_tracker_ptr->clear();
+        grid_trackers_[""]->clear();
     }
 
     add_msg( m_debug, "[DIM] Cleared/captured buffers (kept=%s)", should_keep_old ? "yes" : "no" );
@@ -13097,7 +13124,17 @@ point game::update_map( int &x, int &y )
         remaining_shift -= this_shift;
     }
 
-    grid_tracker_ptr->load( m );
+    // Repopulate the primary tracker after map shift (incremental via load manager
+    // in Phase 6; for now, clear and reload from current mapbuffer contents).
+    {
+        auto &tracker = *grid_trackers_[""];
+        tracker.clear();
+        for( auto &[raw_pos, sm_ptr] : MAPBUFFER ) {
+            if( sm_ptr ) {
+                tracker.on_submap_loaded( tripoint_abs_sm( raw_pos ), "" );
+            }
+        }
+    }
 
     // Keep the reality bubble request center in sync with the shifted map.
     if( reality_bubble_handle_ != 0 ) {
@@ -14505,7 +14542,17 @@ event_bus &get_event_bus()
 
 distribution_grid_tracker &get_distribution_grid_tracker()
 {
-    return *g->grid_tracker_ptr;
+    // Return the tracker for the current player dimension.  All active submaps
+    // live in the primary slot until Phase 6 finishes the per-dimension migration,
+    // so the primary tracker ("") handles all grid lookups for now.
+    // If a secondary-dimension tracker exists and the player is in that dimension,
+    // prefer it; otherwise fall back to "".
+    const std::string &dim = g->m.get_bound_dimension();
+    auto it = g->grid_trackers_.find( dim );
+    if( it != g->grid_trackers_.end() && it->second ) {
+        return *it->second;
+    }
+    return *g->grid_trackers_.at( "" );
 }
 
 void cleanup_arenas()

@@ -178,8 +178,13 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker )
         remove_submap( elem );
     }
 
+    // Notify the grid tracker for each submap that was evicted from memory.
+    // This keeps tracked_submaps_ in sync without a full O(bounds) rescan.
     if( notify_tracker ) {
-        get_distribution_grid_tracker().on_saved();
+        auto &tracker = get_distribution_grid_tracker();
+        for( const tripoint &pos : submaps_to_delete ) {
+            tracker.on_submap_unloaded( tripoint_abs_sm( pos ), "" );
+        }
     }
 }
 

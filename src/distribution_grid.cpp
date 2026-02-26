@@ -11,7 +11,6 @@
 #include "active_tile_data_def.h"
 #include "map.h"
 #include "mapbuffer.h"
-#include "map_iterator.h"
 #include "messages.h"
 #include "submap.h"
 #include "options.h"
@@ -252,54 +251,101 @@ distribution_grid &distribution_grid_tracker::make_distribution_grid_at(
     // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
-// TODO: Ugly, there should be a cleaner way
-#include "worldfactory.h"
-
-void distribution_grid_tracker::on_saved()
+std::array<tripoint_abs_sm, 4> distribution_grid_tracker::get_submaps_for_omt(
+    tripoint_abs_omt omt_pos )
 {
-    if( !get_option<bool>( "ELECTRIC_GRID" ) ||
-        world_generator->active_world == nullptr ) {
-        return;
-    }
-    tripoint_abs_sm min_bounds( bounds.p_min, -OVERMAP_DEPTH );
-    tripoint_abs_sm max_bounds( bounds.p_max, OVERMAP_HEIGHT );
-    tripoint_range<tripoint_abs_sm> bounds_range( min_bounds, max_bounds );
-    // Remove all grids that are no longer in the bounds
-    for( auto iter = parent_distribution_grids.begin(); iter != parent_distribution_grids.end(); ) {
-        if( !bounds_range.is_point_inside( iter->first ) ) {
-            grids_requiring_updates.erase( iter->second );
-            iter = parent_distribution_grids.erase( iter );
-        } else {
-            ++iter;
+    // An OMT at omt_pos contains exactly 4 submaps: SW, SE, NW, NE corners.
+    const tripoint_abs_sm base = project_to<coords::sm>( omt_pos );
+    return { {
+            base,
+            base + point_east,
+            base + point_south,
+            base + point_south_east
+        }
+    };
+}
+
+std::array<tripoint_abs_omt, 5> distribution_grid_tracker::get_omt_and_cardinal_neighbors(
+    tripoint_abs_omt omt_pos )
+{
+    // The OMT itself plus the 4 cardinal neighbors (no diagonals: connections
+    // run along cardinal axes only).
+    return { {
+            omt_pos,
+            omt_pos + point_north,
+            omt_pos + point_south,
+            omt_pos + point_west,
+            omt_pos + point_east
+        }
+    };
+}
+
+void distribution_grid_tracker::on_submap_loaded( const tripoint_abs_sm &pos,
+        const std::string & /*dim_id*/ )
+{
+    tracked_submaps_.insert( pos );
+    make_distribution_grid_at( pos );
+}
+
+void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
+        const std::string & /*dim_id*/ )
+{
+    tracked_submaps_.erase( pos );
+
+    // One OMT spans exactly 4 submaps. When one of the 4 is unloaded, the shared
+    // distribution_grid for that OMT must be invalidated for ALL 4 submaps, not just
+    // the one being removed. Otherwise the other 3 tracked submaps keep stale entries
+    // in parent_distribution_grids pointing to a grid that is being torn down.
+    const tripoint_abs_omt omt_pos = project_to<coords::omt>( pos );
+    for( const tripoint_abs_sm &smp : get_submaps_for_omt( omt_pos ) ) {
+        auto it = parent_distribution_grids.find( smp );
+        if( it != parent_distribution_grids.end() ) {
+            grids_requiring_updates.erase( it->second );
+            parent_distribution_grids.erase( it );
         }
     }
-    for( const tripoint_abs_sm &sm_pos : bounds_range ) {
-        if( !parent_distribution_grids.contains( sm_pos ) ) {
-            make_distribution_grid_at( sm_pos );
-        }
-    }
+    // The remaining tracked submaps of this OMT (if any) will re-register their
+    // grid on the next on_changed() call or make_distribution_grid_at() call.
 }
 
 void distribution_grid_tracker::on_changed( const tripoint_abs_ms &p )
 {
-    tripoint_abs_sm sm_pos = project_to<coords::sm>( p );
-    // TODO: If not in bounds, just drop the grid, rebuild lazily
-    if( parent_distribution_grids.contains( sm_pos ) ||
-        bounds.contains( sm_pos.xy() ) ) {
-        // TODO: Don't rebuild, update
-        make_distribution_grid_at( sm_pos );
+    const tripoint_abs_sm sm_pos = project_to<coords::sm>( p );
+    // 3D check: only process if this submap is actually loaded.
+    // The old code used a 2D bounds rectangle which would fire spuriously for
+    // unloaded z-levels whose XY happened to fall inside the bubble.
+    if( !tracked_submaps_.contains( sm_pos ) ) {
+        return;
+    }
+    const tripoint_abs_omt omt_pos = project_to<coords::omt>( sm_pos );
+    // Rebuild only the affected OMT cluster (5 OMTs max = 20 submaps).
+    // One submap rebuild per OMT is sufficient since make_distribution_grid_at
+    // covers all 4 submaps of the OMT anyway.
+    for( const tripoint_abs_omt &omt : get_omt_and_cardinal_neighbors( omt_pos ) ) {
+        for( const tripoint_abs_sm &smp : get_submaps_for_omt( omt ) ) {
+            if( tracked_submaps_.contains( smp ) ) {
+                make_distribution_grid_at( smp );
+                break;  // one call per OMT is sufficient
+            }
+        }
     }
 }
 
 void distribution_grid_tracker::clear()
 {
+    tracked_submaps_.clear();
     parent_distribution_grids.clear();
     grids_requiring_updates.clear();
 }
 
 void distribution_grid_tracker::on_options_changed()
 {
-    on_saved();
+    // Rebuild all tracked grids from scratch (e.g. ELECTRIC_GRID option toggled).
+    parent_distribution_grids.clear();
+    grids_requiring_updates.clear();
+    for( const tripoint_abs_sm &sm_pos : tracked_submaps_ ) {
+        make_distribution_grid_at( sm_pos );
+    }
 }
 
 distribution_grid &distribution_grid_tracker::grid_at( const tripoint_abs_ms &p )
@@ -397,15 +443,3 @@ void distribution_grid_tracker::update( time_point to )
     transform_queue.clear();
 }
 
-void distribution_grid_tracker::load( half_open_rectangle<point_abs_sm> area )
-{
-    bounds = area;
-    on_saved();
-}
-
-void distribution_grid_tracker::load( const map &m )
-{
-    point_abs_sm p_min( m.get_abs_sub().xy() );
-    point_abs_sm p_max( p_min + point( m.getmapsize(), m.getmapsize() ) );
-    load( half_open_rectangle<point_abs_sm>( p_min, p_max ) );
-}

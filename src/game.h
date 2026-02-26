@@ -24,6 +24,7 @@
 #include "creature.h"
 #include "dimension_bounds.h"
 #include "cursesdef.h"
+#include "distribution_grid.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "mapdata.h"
@@ -116,7 +117,6 @@ class timed_event_manager;
 class ui_adaptor;
 struct visibility_variables;
 
-class distribution_grid_tracker;
 struct weather_printable;
 class weather_manager;
 
@@ -1037,7 +1037,7 @@ class game
         pimpl<achievements_tracker> achievements_tracker_ptr;
         pimpl<memorial_logger> memorial_logger_ptr;
         pimpl<spell_events> spell_events_ptr;
-        pimpl<distribution_grid_tracker> grid_tracker_ptr;
+        std::map<std::string, std::unique_ptr<distribution_grid_tracker>> grid_trackers_;
         pimpl<weather_manager> weather_manager_ptr;
 
     public:
