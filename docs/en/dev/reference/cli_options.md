@@ -33,6 +33,10 @@ print the paths used by the game and exit.
 
 Sets the random number generator's seed value.
 
+### `--no-blinking`
+
+Disable blinking display attribute..
+
 ### `--jsonverify`
 
 Checks the BN json files.

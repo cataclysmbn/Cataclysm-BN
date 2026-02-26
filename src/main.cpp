@@ -38,12 +38,14 @@
 #include "string_formatter.h"
 #include "main_menu.h"
 #include "mapsharing.h"
+#include "no_blinking.h"
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
 #include "rng.h"
 #include "type_id.h"
 #include "ui_manager.h"
+#include "uistate.h"
 #include "path_display.h"
 #include "get_version.h"
 
@@ -243,7 +245,7 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 15> first_pass_arguments = {{
+        const std::array<arg_handler, 16> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
@@ -256,6 +258,15 @@ int main( int argc, char *argv[] )
                         const unsigned char *hash_input = reinterpret_cast<const unsigned char *>( params[0] );
                         seed = djb2_hash( hash_input );
                         return 1;
+                    }
+                },
+                {
+                    "--no-blinking", nullptr,
+                    "Disable blinking display attribute.",
+                    section_default,
+                    []( int, const char ** ) -> int {
+                        no_blinking = true;
+                        return 0;
                     }
                 },
                 {
@@ -750,6 +761,11 @@ int main( int argc, char *argv[] )
     }
     set_language();
 #endif
+
+    if( no_blinking ) {
+        uistate.overmap_blinking = false;
+        uistate.overmap_show_overlays = true;
+    }
 
     rng_set_engine_seed( seed );
 

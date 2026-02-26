@@ -24,6 +24,7 @@
 #include "catacharset.h"
 #include "color.h"
 #include "game_ui.h"
+#include "no_blinking.h"
 #include "output.h"
 #include "ui_manager.h"
 
@@ -470,11 +471,17 @@ bool nc_color::is_bold() const
 
 nc_color nc_color::blink() const
 {
+    if( no_blinking ) {
+        return *this;
+    }
     return nc_color( attribute_value | A_BLINK );
 }
 
 bool nc_color::is_blink() const
 {
+    if( no_blinking ) {
+        return false;
+    }
     return attribute_value & A_BLINK;
 }
 

@@ -50,6 +50,7 @@
 #include "mission.h"
 #include "messages.h"
 #include "mongroup.h"
+#include "no_blinking.h"
 #include "npc.h"
 #include "omdata.h"
 #include "options.h"
@@ -2134,6 +2135,11 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
     tripoint_abs_omt ret = overmap::invalid_tripoint;
     tripoint_abs_omt curs( orig );
 
+    if( no_blinking ) {
+        uistate.overmap_blinking = false;
+        uistate.overmap_show_overlays = true;
+    }
+
     if( data.select != tripoint_abs_omt( -1, -1, -1 ) ) {
         curs = data.select;
     }
@@ -2283,6 +2289,11 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
                 }
             }
         } else if( action == "TOGGLE_BLINKING" ) {
+            if( no_blinking ) {
+                uistate.overmap_blinking = false;
+                uistate.overmap_show_overlays = true;
+                continue;
+            }
             uistate.overmap_blinking = !uistate.overmap_blinking;
             // if we turn off overmap blinking, show overlays and explored status
             if( !uistate.overmap_blinking ) {

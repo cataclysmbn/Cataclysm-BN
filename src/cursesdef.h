@@ -135,5 +135,3 @@ int getbegy( const window &win );
 int getcurx( const window &win );
 int getcury( const window &win );
 } // namespace catacurses
-
-

@@ -13,6 +13,7 @@
 #include "fstream_utils.h"
 #include "input.h"
 #include "json.h"
+#include "no_blinking.h"
 #include "output.h"
 #include "path_info.h"
 #include "point.h"
@@ -21,6 +22,8 @@
 #include "translations.h"
 #include "ui.h"
 #include "ui_manager.h"
+
+bool no_blinking = false;
 
 void nc_color::serialize( JsonOut &jsout ) const
 {
