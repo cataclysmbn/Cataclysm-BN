@@ -55,12 +55,40 @@ static constexpr bool is_inf( float x )
 #endif
 }
 
+namespace
+{
+
+constexpr auto max_wall_climb_difficulty = 10;
+
+auto has_cardinal_wall_support( const map &here, const tripoint &anchor ) -> bool
+{
+    const auto neighbor_range = points_in_radius( anchor, 1 );
+    return std::ranges::any_of( neighbor_range, [&anchor, &here]( const tripoint &pt ) {
+        const bool same_level = pt.z == anchor.z;
+        const bool cardinal = pt != anchor && ( pt.x == anchor.x || pt.y == anchor.y );
+        return same_level && cardinal && here.impassable_ter_furn( pt );
+    } );
+}
+
+auto can_wall_cling_to_change( const map &here, const Pathfinding::ZLevelChange &change,
+                               bool we_go_up ) -> bool
+{
+    const tripoint &anchor = we_go_up ? change.from : change.to;
+    if( here.climb_difficulty( anchor ) > max_wall_climb_difficulty ) {
+        return false;
+    }
+    return has_cardinal_wall_support( here, anchor );
+}
+
+} // namespace
+
 // PathfindingSettings impls
 int PathfindingSettings::z_move_type() const
 {
     int result = 0;
     result += this->can_fly ? 1 << 0 : 0;
     result += this->can_climb_stairs ? 1 << 1 : 0;
+    result += this->needs_wall_cling ? 1 << 2 : 0;
     return result;
 }
 // RouteSettings impls
@@ -908,6 +936,8 @@ std::vector<tripoint> Pathfinding::get_route_3d(
     // Instead, we will **only** consider taking z_changes that bring us closer to target's Z level.
     const bool we_go_up = to.z > from.z;
 
+    const map &here = get_map();
+
     Pathfinding::update_z_caches( path_settings.can_fly );
 
     // Determine our Z-path
@@ -1001,18 +1031,26 @@ std::vector<tripoint> Pathfinding::get_route_3d(
                             continue;
                         }
                         Pathfinding::ZLevelChangeOpenAirPair z_pair = target[p];
+                        const Pathfinding::ZLevelChange *candidate = nullptr;
                         if( we_go_up && z_pair.reach_from_below.has_value() ) {
-                            const float dist = rl_dist_exact( tripoint( cur_origin_point, 0 ), tripoint( p, 0 ) );
-                            if( dist < best_distance ) {
-                                best_z_change = *z_pair.reach_from_below;
-                                best_distance = dist;
-                            }
+                            candidate = &*z_pair.reach_from_below;
                         } else if( !we_go_up && z_pair.reach_from_above.has_value() ) {
-                            const float dist = rl_dist_exact( tripoint( cur_origin_point, 0 ), tripoint( p, 0 ) );
-                            if( dist < best_distance ) {
-                                best_z_change = *z_pair.reach_from_above;
-                                best_distance = dist;
-                            }
+                            candidate = &*z_pair.reach_from_above;
+                        }
+
+                        if( candidate == nullptr ) {
+                            continue;
+                        }
+
+                        if( path_settings.needs_wall_cling &&
+                            !can_wall_cling_to_change( here, *candidate, we_go_up ) ) {
+                            continue;
+                        }
+
+                        const float dist = rl_dist_exact( tripoint( cur_origin_point, 0 ), tripoint( p, 0 ) );
+                        if( dist < best_distance ) {
+                            best_z_change = *candidate;
+                            best_distance = dist;
                         }
                     }
                 }

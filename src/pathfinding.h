@@ -56,6 +56,10 @@ struct PathfindingSettings {
     //   and travel over open air and go up and down from there
     bool can_fly = false;
 
+    // Do we require adjacent wall support to use open-air z-level changes?
+    // Used by wall climbers that are not true fliers.
+    bool needs_wall_cling = false;
+
     // Can we climb stairs? `can_fly == true` overrides this value to be true.
     bool can_climb_stairs = false;
 
@@ -337,4 +341,3 @@ class Pathfinding
         //   such as change in terrain
         static void mark_dirty_z_cache();
 };
-
