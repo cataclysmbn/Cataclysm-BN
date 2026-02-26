@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 class mapbuffer;
 
@@ -62,12 +63,22 @@ class mapbuffer_registry
         mapbuffer &primary();
 
         /**
-         * Save all registered dimensions.
-         * on_submap_unloaded() is fired for evicted submaps only for the
-         * primary dimension's tracker to avoid spurious updates from secondary
-         * dimension buffers.
+         * Save all registered dimensions in parallel.
+         * All dimension saves are dispatched concurrently via parallel_for so that
+         * independent file I/O (or SQLite writes) for different dimensions overlap.
+         * on_submap_unloaded() is fired for evicted submaps only for the primary
+         * dimension's tracker to avoid spurious updates from secondary-dimension
+         * buffers.  Progress popups are suppressed in the parallel dispatch path
+         * (UI calls are main-thread-only).
          */
         void save_all( bool delete_after_save = false );
+
+        /**
+         * Return a snapshot of all currently registered dimension IDs.
+         * Used by save_all() to enumerate dimensions before the parallel phase
+         * (iterating buffers_ while modifying it would be unsafe).
+         */
+        std::vector<std::string> active_dimension_ids() const;
 
     private:
         std::map<std::string, std::unique_ptr<mapbuffer>> buffers_;

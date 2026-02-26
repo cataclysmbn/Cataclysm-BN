@@ -39,6 +39,7 @@
 #include "popup.h"
 #include "rng.h"
 #include "simple_pathfinding.h"
+#include "thread_pool.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
@@ -118,37 +119,56 @@ void overmapbuffer::create_custom_overmap( const point_abs_om &p, overmap_specia
 
 void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
 {
-    using overmap_loc = std::pair<point_abs_om, std::unique_ptr<overmap>>;
+    struct pending {
+        point_abs_om                          loc;
+        std::future<std::unique_ptr<overmap>> future;
+    };
+    std::vector<pending> futures;
+    futures.reserve( locs.size() );
 
-    std::vector<std::future<overmap_loc>> async_data;
-    for( auto &loc : locs ) {
-        if( overmap_buffer.has( loc ) ) {
-            continue;
+    for( const point_abs_om &loc : locs ) {
+        {
+            std::shared_lock lock( mutex );
+            if( overmaps.count( loc ) ) {
+                continue;
+            }
         }
-
-        auto gen_func = [&]() {
-            auto map = std::make_unique<overmap>( loc );
-            map->populate();
-            fix_mongroups( *map );
-            fix_npcs( *map );
-            return std::make_pair( loc, std::move( map ) );
-        };
-        async_data.push_back( std::async( std::launch::async, gen_func ) );
+        // Capture loc by value — [&] would reference the loop variable, which
+        // advances each iteration, creating a latent race if threads outlive the loop.
+        // fix_mongroups / fix_nemesis / fix_npcs access shared overmap state and must
+        // run inside the write lock below, NOT inside the async lambda.
+        futures.push_back( { loc, get_thread_pool().submit_returning( [loc] {
+            auto om = std::make_unique<overmap>( loc );
+            om->populate();
+            return om;
+        } ) } );
     }
 
+    // Non-blocking scan: insert each overmap as soon as its future is ready rather
+    // than waiting for all futures to complete before any insertion occurs.
+    // This reduces peak memory (overmaps are freed as inserted) and allows early
+    // results to be visible to subsequent generate() calls.
     auto popup = make_shared_fast<throbber_popup>( _( "Please wait..." ) );
-    for( auto &f : async_data ) {
-        while( f.wait_for( std::chrono::milliseconds( 10 ) ) != std::future_status::ready ) {
-            popup->refresh();
-        }
-    }
-
-    {
-        write_lock<std::shared_mutex> _l( mutex );
-        for( auto &m : async_data ) {
-            auto result = m.get();
-            overmaps[result.first] = std::move( result.second );
-        }
+    while( !futures.empty() ) {
+        futures.erase( std::remove_if( futures.begin(), futures.end(), [&]( pending &p ) {
+            if( p.future.wait_for( std::chrono::milliseconds( 0 ) ) !=
+                    std::future_status::ready ) {
+                return false;
+            }
+            auto om = p.future.get();
+            {
+                write_lock<std::shared_mutex> _l( mutex );
+                // fix_mongroups, fix_nemesis, and fix_npcs all access shared overmap
+                // state (iterating / relocating mongroups and NPCs across overmaps).
+                // Running them inside the write lock prevents data races with readers.
+                fix_mongroups( *om );
+                fix_nemesis( *om );  // was absent in the original; added here
+                fix_npcs( *om );
+                overmaps.emplace( p.loc, std::move( om ) );
+            }
+            return true;
+        } ), futures.end() );
+        popup->refresh();
     }
 }
 
@@ -1389,7 +1409,7 @@ std::vector<tripoint_abs_omt> overmapbuffer::find_all_async( const tripoint_abs_
             return result;
         };
 
-        auto task = std::async( std::launch::async, task_func, task_om, std::move( task_omts ) );
+        auto task = get_thread_pool().submit_returning( task_func, task_om, std::move( task_omts ) );
 
         tasks.push_back( std::move( task ) );
 

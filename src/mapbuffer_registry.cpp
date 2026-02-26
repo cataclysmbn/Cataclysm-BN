@@ -1,6 +1,9 @@
 #include "mapbuffer_registry.h"
 
+#include <vector>
+
 #include "mapbuffer.h"
+#include "thread_pool.h"
 
 mapbuffer_registry MAPBUFFER_REGISTRY;
 
@@ -53,13 +56,30 @@ mapbuffer &mapbuffer_registry::primary()
     return get( PRIMARY_DIMENSION_ID );
 }
 
+std::vector<std::string> mapbuffer_registry::active_dimension_ids() const
+{
+    std::vector<std::string> ids;
+    ids.reserve( buffers_.size() );
+    for( const auto &kv : buffers_ ) {
+        ids.push_back( kv.first );
+    }
+    return ids;
+}
+
 void mapbuffer_registry::save_all( bool delete_after_save )
 {
-    for( auto &kv : buffers_ ) {
-        // Only notify the distribution_grid_tracker for the primary dimension.
-        // Secondary dimensions use a stub save (Phase 4 TODO) and should never
-        // trigger a tracker rebuild based on primary-world global state.
-        const bool is_primary = ( kv.first == PRIMARY_DIMENSION_ID );
-        kv.second->save( delete_after_save, is_primary );
-    }
+    // Snapshot dimension IDs before entering the parallel phase.
+    // We must not iterate buffers_ while it could be mutated.
+    const std::vector<std::string> dim_ids = active_dimension_ids();
+
+    // Dispatch all dimension saves concurrently. Each buffer's save() is internally
+    // parallelised over OMT quads, so this gives a second level of parallelism when
+    // multiple dimensions are loaded.  show_progress=false suppresses UI popup calls
+    // that are not safe off the main thread.
+    parallel_for( 0, static_cast<int>( dim_ids.size() ), [&]( int i ) {
+        const std::string &dim_id = dim_ids[i];
+        const bool is_primary = ( dim_id == PRIMARY_DIMENSION_ID );
+        // notify_tracker only for primary; show_progress=false (worker thread).
+        buffers_.at( dim_id )->save( delete_after_save, is_primary, /*show_progress=*/false );
+    } );
 }

@@ -13289,6 +13289,11 @@ point game::update_map( int &x, int &y )
         remaining_shift -= this_shift;
     }
 
+    // Track the most recent non-zero shift direction for speculative streaming.
+    // Retained across zero-shift calls so submap_streamer can continue pre-loading
+    // in the direction the player was moving even on turns with no map shift.
+    last_move_delta_ = tripoint( shift, 0 );
+
     // Repopulate the primary tracker after map shift (incremental via load manager
     // in Phase 6; for now, clear and reload from current mapbuffer contents).
     {

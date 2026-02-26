@@ -27,8 +27,13 @@ class mapbuffer
          * distribution_grid_tracker for each submap evicted during save.
          * Pass false when saving a non-primary dimension's mapbuffer so that
          * the primary tracker is not spuriously updated.
+         * @param show_progress If true (default), show a UI progress popup
+         * during Phase 1 collection. Pass false when save() is called from a
+         * worker thread (e.g. via mapbuffer_registry::save_all parallel path)
+         * because UI functions must only be called on the main thread.
          **/
-        void save( bool delete_after_save = false, bool notify_tracker = true );
+        void save( bool delete_after_save = false, bool notify_tracker = true,
+                   bool show_progress = true );
 
         /** Delete all buffered submaps. **/
         void clear();

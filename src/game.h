@@ -1227,6 +1227,11 @@ class game
         // (2 * radius + 1)² submaps.  Read from REALITY_BUBBLE_RADIUS in
         // start_game() / load().  Matches HALF_MAPSIZE at the default of 5.
         int reality_bubble_radius_ = HALF_MAPSIZE;
+
+        // The most recent submap-coordinate shift applied by update_map().
+        // Used by submap_stream speculative loading to pre-request the edge
+        // row that would be needed if the player keeps moving in the same direction.
+        tripoint last_move_delta_;
     private:
         location_vector<item> fake_items;
     public:

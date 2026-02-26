@@ -5,9 +5,13 @@
 #include <deque>
 #include <exception>
 #include <functional>
+#include <future>
 #include <latch>
+#include <memory>
 #include <mutex>
 #include <thread>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 /**
@@ -35,6 +39,37 @@ class cata_thread_pool
 
         /** Enqueue a callable for execution on a worker thread. */
         void submit( std::function<void()> task );
+
+        /**
+         * Enqueue a callable that returns a value and get a future for its result.
+         *
+         * std::packaged_task is move-only, so it is wrapped in a shared_ptr to satisfy
+         * the copyability requirement of std::function<void()>.
+         *
+         * Usage:
+         *   std::future<int> f = pool.submit_returning( []() { return 42; } );
+         *   int result = f.get();
+         */
+        template<typename F, typename... Args>
+        auto submit_returning( F &&f, Args &&...args )
+            -> std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>
+        {
+            using R = std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>;
+            auto task = std::make_shared<std::packaged_task<R()>>(
+                std::bind( std::forward<F>( f ), std::forward<Args>( args )... )
+            );
+            std::future<R> fut = task->get_future();
+            if( num_workers() == 0 ) {
+                // Single-core fallback: execute synchronously on the calling thread
+                // to avoid enqueuing work that would never be processed by a worker.
+                ( *task )();
+            } else {
+                submit( [task]() {
+                    ( *task )();
+                } );
+            }
+            return fut;
+        }
 
     private:
         void worker_loop();
