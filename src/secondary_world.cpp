@@ -1,15 +1,13 @@
 #include "secondary_world.h"
 
-#include <algorithm>
 #include <utility>
 
 #include "debug.h"
-#include "game.h"
-#include "map.h"
 #include "mapbuffer.h"
-#include "overmap.h"
+#include "mapbuffer_registry.h"
 #include "overmapbuffer.h"
 #include "submap.h"
+#include "world_type.h"
 
 secondary_world::secondary_world( const world_type_id &type, const std::string &instance_id )
     : world_type_( type )
@@ -24,29 +22,46 @@ secondary_world::~secondary_world()
     }
 }
 
-void secondary_world::capture_from_primary(
-    const std::optional<dimension_bounds> &bounds,
-    const tripoint_abs_sm &simulation_center )
+std::string secondary_world::get_dimension_id() const
 {
-    // Transfer submaps from MAPBUFFER
-    for( auto it = MAPBUFFER.begin(); it != MAPBUFFER.end(); ++it ) {
-        submaps_[it->first] = std::move( it->second );
+    // Format: save_prefix + instance_id + "_" (if instance_id is non-empty),
+    // or just save_prefix (if instance_id is empty).
+    // This must match game::get_dimension_prefix() exactly so that the two
+    // systems agree on which registry slot belongs to which dimension.
+    //
+    // Collision risk: there is no separator between save_prefix and instance_id,
+    // so a prefix "foo" with instance "bar_" and a prefix "foobar" with instance "_"
+    // would produce the same key.  In practice, save_prefix values are short
+    // alphabetic strings and instance IDs are UUIDs, so collisions are impossible.
+    // If that assumption ever changes, add an explicit separator character here
+    // and in game::get_dimension_prefix().
+    std::string dim_id;
+    if( world_type_.is_valid() ) {
+        dim_id = world_type_.obj().save_prefix;
     }
+    if( !instance_id_.empty() ) {
+        dim_id += instance_id_ + "_";
+    }
+    return dim_id;
+}
 
-    // Overmaps are already saved to disk by the caller (travel_to_dimension)
-    // with the correct dimension prefix BEFORE the world type switch.
-    // Do NOT call overmap_buffer.save() here — the prefix has already changed
-    // to the destination dimension, so saving here would corrupt the destination's
-    // overmap files with this dimension's (mostly empty) overmap data.
+void secondary_world::capture_from_primary(
+    const std::optional<dimension_bounds> & /*bounds*/,
+    const tripoint_abs_sm & /*simulation_center*/ )
+{
+    // Move submaps from the primary registry slot into this dimension's own slot.
+    // This replaces the old approach of storing them in secondary_world::submaps_.
+    const std::string dim_id = get_dimension_id();
+    mapbuffer &primary = MAPBUFFER_REGISTRY.primary();
+    mapbuffer &dim_buf  = MAPBUFFER_REGISTRY.get( dim_id );
 
-    bounds_ = bounds;
-    simulation_center_ = simulation_center;
-    loaded_ = true;
+    primary.transfer_all_to( dim_buf );
 
-    // Clear the primary buffers after transfer
-    // MAPBUFFER submaps were moved, so just clear the container
-    MAPBUFFER.clear();
+    // Overmaps are already saved to disk by the caller before the prefix switch;
+    // they will reload from disk when needed in the dimension's context.
     overmap_buffer.clear();
+
+    loaded_ = true;
 }
 
 void secondary_world::restore_to_primary()
@@ -56,17 +71,20 @@ void secondary_world::restore_to_primary()
         return;
     }
 
-    // Save secondary state before restoring
+    // Save the dimension's state to disk first.
     save_state();
 
-    // Transfer submaps back to MAPBUFFER
-    for( auto &pair : submaps_ ) {
-        MAPBUFFER.add_submap( pair.first, pair.second );
-    }
-    submaps_.clear();
+    // Move submaps back from this dimension's registry slot into primary.
+    const std::string dim_id = get_dimension_id();
+    mapbuffer &dim_buf  = MAPBUFFER_REGISTRY.get( dim_id );
+    mapbuffer &primary  = MAPBUFFER_REGISTRY.primary();
 
-    // Overmaps will be loaded from disk by the normal load path
-    // since we saved them above
+    dim_buf.transfer_all_to( primary );
+
+    // Remove the now-empty dimension slot from the registry.
+    MAPBUFFER_REGISTRY.unload_dimension( dim_id );
+
+    // Overmaps will be loaded from disk by the normal load path.
 
     loaded_ = false;
 }
@@ -77,32 +95,18 @@ void secondary_world::save_state()
         return;
     }
 
-    // Save is handled by the normal save path which writes to dimension-prefixed files
-    // The submaps and overmaps in this secondary world are already associated with
-    // the correct dimension through the game's dimension prefix system
-}
-
-void secondary_world::simulate_tick( const std::string &level, time_duration delta )
-{
-    if( !loaded_ ) {
-        return;
-    }
-
-    // "none" level means keep loaded but frozen - no simulation
-    if( level == "none" || level == "off" ) {
-        return;
-    }
-
-    if( level == "minimal" ) {
-        simulate_minimal( delta );
-    } else if( level == "moderate" ) {
-        simulate_minimal( delta );
-        simulate_moderate( delta );
-    } else if( level == "full" ) {
-        simulate_minimal( delta );
-        simulate_moderate( delta );
-        simulate_full( delta );
-    }
+    // TODO Phase 4: Replace this stub with a proper dimension-aware save.
+    // mapbuffer::save() currently relies on global game state (active map origin,
+    // get_active_world()) and cannot correctly save a non-primary dimension's
+    // submaps while a different dimension is active.
+    //
+    // In the meantime, secondary dimension submaps are implicitly saved when
+    // restore_to_primary() moves them back into MAPBUFFER_REGISTRY.primary()
+    // and the normal game save path runs.  Mid-session autosaves while a
+    // dimension is kept as secondary will NOT persist its latest state —
+    // this matches the behaviour of the legacy secondary_world implementation.
+    //
+    // Target: MAPBUFFER_REGISTRY.get( get_dimension_id() ).save();
 }
 
 void secondary_world::unload()
@@ -111,60 +115,30 @@ void secondary_world::unload()
         return;
     }
 
-    // Save before unloading
     save_state();
 
+    // Remove the dimension's submaps from the registry.
+    const std::string dim_id = get_dimension_id();
+    MAPBUFFER_REGISTRY.unload_dimension( dim_id );
+
+    // Clear any legacy in-memory submaps (old-save deserialization remnants).
     submaps_.clear();
-    overmaps_.clear();
-    bounds_.reset();
+
     loaded_ = false;
 }
 
-bool secondary_world::is_in_bounds( const tripoint &sm_pos ) const
+void secondary_world::migrate_submaps_to_registry()
 {
-    if( !bounds_ ) {
-        // No bounds means everything is in bounds (infinite dimension)
-        return true;
+    if( submaps_.empty() ) {
+        return;
     }
-    return bounds_->contains( tripoint_abs_sm( sm_pos ) );
-}
 
-void secondary_world::simulate_minimal( time_duration /*delta*/ )
-{
-    // Minimal simulation: process fields (fire, gas)
-    // This would iterate over loaded submaps and process their fields
-    // For now, this is a stub - full implementation would require
-    // creating a temporary map context or refactoring field processing
-    // to work without the global map object
+    // Move submaps from the legacy field into the appropriate registry slot.
+    const std::string dim_id = get_dimension_id();
+    mapbuffer &dim_buf = MAPBUFFER_REGISTRY.get( dim_id );
 
-    // TODO: Implement field processing for secondary worlds
-    // This requires either:
-    // 1. Creating a lightweight field processor that works on raw submaps
-    // 2. Temporarily swapping buffers, creating a map, processing, then swapping back
-    // Option 2 is simpler but has more overhead
-}
-
-void secondary_world::simulate_moderate( time_duration /*delta*/ )
-{
-    // Moderate simulation: vehicle systems (solar charging, battery drain)
-    // Vehicles are stored in submaps, so we'd need to iterate and process them
-    // Similar challenges to minimal simulation
-
-    // TODO: Implement vehicle idle processing for secondary worlds
-    // Vehicle::idle() handles solar charging, fuel consumption, etc.
-    // Would need to call this for each vehicle in loaded submaps
-}
-
-void secondary_world::simulate_full( time_duration /*delta*/ )
-{
-    // Full simulation: everything including monsters, NPCs, combat
-    // This is the most complex and would essentially require running
-    // a parallel game loop
-
-    // TODO: Implement full simulation for secondary worlds
-    // This would include:
-    // - Monster AI and movement
-    // - NPC needs and activities
-    // - Combat resolution
-    // For now, this level of simulation is not implemented
+    for( auto &kv : submaps_ ) {
+        dim_buf.add_submap( kv.first, kv.second );
+    }
+    submaps_.clear();
 }

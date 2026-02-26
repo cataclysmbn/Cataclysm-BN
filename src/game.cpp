@@ -597,6 +597,49 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     m.load( pos_sm, true, pump_events );
     grid_tracker_ptr->load( m );
     fluid_grid::load( m );
+
+    // Wire the reality bubble load request to the submap_load_manager.
+    // This must happen after m.load() so abs_sub reflects the new position.
+    const std::string new_dim_id = get_dimension_prefix();
+
+    // If the dimension has changed, release the old request.
+    if( reality_bubble_handle_ != 0 && new_dim_id != m.get_bound_dimension() ) {
+        submap_loader.release_load( reality_bubble_handle_ );
+        reality_bubble_handle_ = 0;
+    }
+
+    // Bind the map to the new dimension.
+    m.bind_dimension( new_dim_id );
+
+    // Register the map as a listener (add_listener is idempotent).
+    submap_loader.add_listener( &m );
+
+    // The load-manager center is the middle of the loaded region, not the
+    // top-left corner.  pos_sm is the top-left corner (abs_sub), so offset
+    // by HALF_MAPSIZE in each horizontal direction.
+    const tripoint_abs_sm bubble_center(
+        pos_sm.raw().x + HALF_MAPSIZE,
+        pos_sm.raw().y + HALF_MAPSIZE,
+        pos_sm.raw().z );
+
+    // Reality bubble covers all loaded z-levels when z-level mode is active.
+    // For non-z-level builds only the player's current z-level is relevant.
+    const int z_lo = m.has_zlevels() ? -OVERMAP_DEPTH : pos_sm.raw().z;
+    const int z_hi = m.has_zlevels() ? OVERMAP_HEIGHT : pos_sm.raw().z;
+
+    // NOTE: submap_loader.update() must NOT be called until map::loadn() is
+    // updated to use MAPBUFFER_REGISTRY.get(bound_dimension_) instead of the
+    // primary-slot MAPBUFFER macro (Phase 6 integration).  Until then the
+    // load manager tracks intent but fires no load/unload events.
+    // Create or update the reality bubble request.
+    if( reality_bubble_handle_ == 0 ) {
+        reality_bubble_handle_ = submap_loader.request_load(
+                                     load_request_source::reality_bubble,
+                                     new_dim_id, bubble_center, HALF_MAPSIZE,
+                                     z_lo, z_hi );
+    } else {
+        submap_loader.update_request( reality_bubble_handle_, bubble_center );
+    }
 }
 
 std::optional<tripoint> game::find_local_stairs_leading_to( map &mp, const int z_after )
@@ -1715,11 +1758,9 @@ bool game::do_turn()
         overmap_npc_move();
     }
 
-    // Simulate kept pocket dimension if loaded
-    if( kept_pocket_ && kept_pocket_->is_loaded() ) {
-        std::string sim_level = get_option<std::string>( "POCKET_SIMULATION_LEVEL" );
-        kept_pocket_->simulate_tick( sim_level );
-    }
+    // TODO Phase 3: call world_tick() here to simulate all loaded out-of-bubble submaps
+    // (including kept pocket/origin dimensions).  simulate_tick() was removed from
+    // secondary_world in Phase 1; per-submap simulation is handled by game::world_tick().
 
     if( calendar::once_every( 10_seconds ) ) {
         ZoneScopedN( "field_emits" );
@@ -12307,6 +12348,11 @@ void game::clear_kept_origin()
     }
 }
 
+const std::string &game::current_player_dimension() const
+{
+    return m.get_bound_dimension();
+}
+
 bool game::travel_to_dimension( const world_type_id &new_world_type,
                                 const std::string &pocket_instance_id,
                                 const std::optional<dimension_bounds> &bounds,
@@ -12383,9 +12429,9 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
         swapping_dimensions = true;
 
         // Capture current dimension into the opposite slot before clearing,
-        // unless this is a nested pocket-to-pocket transition
-        std::string sim_level = get_option<std::string>( "POCKET_SIMULATION_LEVEL" );
-        if( !nested && sim_level != "off" ) {
+        // unless this is a nested pocket-to-pocket transition.
+        // capture_from_primary() moves registry slots — no simulation involved.
+        if( !nested ) {
             std::optional<dimension_bounds> current_bounds = here.get_dimension_bounds();
             if( fast_to_pocket ) {
                 // Leaving origin to enter pocket: capture origin into kept_origin_
@@ -12407,12 +12453,10 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
                 add_msg( m_debug, "[DIM] Keeping pocket loaded" );
             }
         } else {
-            // Nested or disabled: clear everything normally
-            if( nested ) {
-                add_msg( m_debug, "[DIM] Nested pocket transition: clearing all kept worlds" );
-                clear_kept_pocket();
-                clear_kept_origin();
-            }
+            // Nested pocket-to-pocket: clear everything normally
+            add_msg( m_debug, "[DIM] Nested pocket transition: clearing all kept worlds" );
+            clear_kept_pocket();
+            clear_kept_origin();
             overmap_buffer.clear();
             here.clear_grid();
             MAPBUFFER.clear();
@@ -12551,13 +12595,15 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
     bool new_is_pocket = !pocket_instance_id.empty();
     bool nested = old_is_pocket && new_is_pocket;
 
-    // Check if we should keep the old dimension loaded
-    std::string sim_level = get_option<std::string>( "POCKET_SIMULATION_LEVEL" );
+    // Check if we should keep the old dimension loaded.
+    // The old POCKET_SIMULATION_LEVEL "off" gate is removed: keeping a dimension
+    // loaded now has no simulation cost (submaps stay in the registry).
+    // The infinite_bounds check below is the correct constraint.
     bool should_keep_old = false;
     enum class keep_target { none, as_pocket, as_origin };
     keep_target keep_as = keep_target::none;
 
-    if( sim_level != "off" && old_world_type.is_valid() && !nested ) {
+    if( old_world_type.is_valid() && !nested ) {
         if( !old_is_pocket && new_is_pocket ) {
             // Entering pocket from non-pocket: keep origin
             should_keep_old = true;
@@ -13052,6 +13098,14 @@ point game::update_map( int &x, int &y )
     }
 
     grid_tracker_ptr->load( m );
+
+    // Keep the reality bubble request center in sync with the shifted map.
+    if( reality_bubble_handle_ != 0 ) {
+        const tripoint &origin = m.get_abs_sub();
+        const tripoint_abs_sm new_center(
+            origin.x + HALF_MAPSIZE, origin.y + HALF_MAPSIZE, origin.z );
+        submap_loader.update_request( reality_bubble_handle_, new_center );
+    }
 
     // Shift monsters
     shift_monsters( tripoint( shift, 0 ) );

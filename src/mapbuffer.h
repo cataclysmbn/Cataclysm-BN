@@ -23,8 +23,12 @@ class mapbuffer
         /** Store all submaps in this instance into savefiles.
          * @param delete_after_save If true, the saved submaps are removed
          * from the mapbuffer (and deleted).
+         * @param notify_tracker If true, notify the distribution_grid_tracker
+         * via on_saved() after saving.  Pass false when saving a non-primary
+         * dimension's mapbuffer so that the primary tracker is not spuriously
+         * rebuilt.
          **/
-        void save( bool delete_after_save = false );
+        void save( bool delete_after_save = false, bool notify_tracker = true );
 
         /** Delete all buffered submaps. **/
         void clear();
@@ -66,6 +70,28 @@ class mapbuffer
             return iter != submaps.end() ? iter->second.get() : nullptr;
         }
 
+        /**
+         * Load a submap from disk (if not already in memory) and return it.
+         * This is the public disk-read counterpart to the internal lookup path,
+         * intended for use by submap_load_manager and related systems.
+         * Returns nullptr if the submap does not exist on disk.
+         */
+        submap *load_submap( const tripoint_abs_sm &pos );
+
+        /**
+         * Conditionally save and then remove the submap at @p pos from the buffer.
+         * The containing OMT quad is saved to disk first (unless it is fully uniform),
+         * then the submap is erased from memory.  Does nothing if @p pos is not loaded.
+         */
+        void unload_submap( const tripoint_abs_sm &pos );
+
+        /**
+         * Move all submaps from this buffer into @p dest, leaving this buffer empty.
+         * Used by the dimension-transition system to migrate submaps between registry slots
+         * without a disk round-trip.
+         */
+        void transfer_all_to( mapbuffer &dest );
+
     private:
         using submap_map_t = std::map<tripoint, std::unique_ptr<submap>>;
 
@@ -81,6 +107,11 @@ class mapbuffer
             return submaps.contains( p );
         }
 
+        /** Return true if no submaps are currently held in this buffer. */
+        bool is_empty() const {
+            return submaps.empty();
+        }
+
     private:
         // There's a very good reason this is private,
         // if not handled carefully, this can erase in-use submaps and crash the game.
@@ -92,6 +123,12 @@ class mapbuffer
         submap_map_t submaps;
 };
 
-extern mapbuffer MAPBUFFER;
-
-
+// mapbuffer_registry.h provides the MAPBUFFER backward-compatibility macro and the
+// MAPBUFFER_REGISTRY global.  It is included at the end of this header (after the
+// full mapbuffer class definition) so that mapbuffer_registry.h can forward-declare
+// mapbuffer without a circular-header dependency.
+// Side-effect: any translation unit that includes mapbuffer.h also gets the MAPBUFFER
+// macro and MAPBUFFER_REGISTRY without explicitly including mapbuffer_registry.h.
+// This is intentional — the macro is needed wherever mapbuffer objects are used — but
+// be aware of it when auditing include chains.
+#include "mapbuffer_registry.h"

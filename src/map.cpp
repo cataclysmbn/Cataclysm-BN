@@ -261,6 +261,72 @@ std::optional<dimension_bounds> map::get_dimension_bounds() const
     return current_bounds_;
 }
 
+void map::bind_dimension( const std::string &dim )
+{
+    bound_dimension_ = dim;
+}
+
+bool map::contains_abs_sm( const tripoint_abs_sm &pos ) const
+{
+    const tripoint &p = pos.raw();
+    if( p.x < abs_sub.x || p.x >= abs_sub.x + my_MAPSIZE ) {
+        return false;
+    }
+    if( p.y < abs_sub.y || p.y >= abs_sub.y + my_MAPSIZE ) {
+        return false;
+    }
+    if( zlevels ) {
+        return p.z >= -OVERMAP_DEPTH && p.z <= OVERMAP_HEIGHT;
+    }
+    return p.z == abs_sub.z;
+}
+
+void map::on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_id )
+{
+    if( dim_id != bound_dimension_ ) {
+        return;
+    }
+    if( !contains_abs_sm( pos ) ) {
+        return;
+    }
+    const tripoint &p = pos.raw();
+    const int lx = p.x - abs_sub.x;
+    const int ly = p.y - abs_sub.y;
+    // Index formula must match get_nonant(): in z-level builds the layout is
+    //   (x + y * MAPSIZE) * OVERMAP_LAYERS + (z + OVERMAP_HEIGHT)
+    // i.e. z is the INNERMOST (fastest-changing) dimension, not the outermost.
+    const int grid_idx = zlevels
+                         ? ( lx + ly * my_MAPSIZE ) * OVERMAP_LAYERS + ( p.z + OVERMAP_HEIGHT )
+                         : lx + ly * my_MAPSIZE;
+    if( grid_idx >= 0 && grid_idx < static_cast<int>( grid.size() ) ) {
+        // Use the in-memory lookup; the submap was just loaded by the manager.
+        // NOTE: until map::loadn() is updated to use MAPBUFFER_REGISTRY.get(bound_dimension_)
+        // (Phase 6 integration), the active dimension's submaps live in the primary slot.
+        // The lookup here uses dim_id which is correct once Phase 6 is in place.
+        grid[grid_idx] = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
+    }
+}
+
+void map::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim_id )
+{
+    if( dim_id != bound_dimension_ ) {
+        return;
+    }
+    if( !contains_abs_sm( pos ) ) {
+        return;
+    }
+    const tripoint &p = pos.raw();
+    const int lx = p.x - abs_sub.x;
+    const int ly = p.y - abs_sub.y;
+    // Index formula must match get_nonant() — see on_submap_loaded for details.
+    const int grid_idx = zlevels
+                         ? ( lx + ly * my_MAPSIZE ) * OVERMAP_LAYERS + ( p.z + OVERMAP_HEIGHT )
+                         : lx + ly * my_MAPSIZE;
+    if( grid_idx >= 0 && grid_idx < static_cast<int>( grid.size() ) ) {
+        grid[grid_idx] = nullptr;
+    }
+}
+
 void map::set_transparency_cache_dirty( const int zlev )
 {
     if( inbounds_z( zlev ) ) {
@@ -7821,6 +7887,11 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
     const int old_abs_z = abs_sub.z; // Ugly, but necessary at the moment
     abs_sub.z = grid.z;
 
+    // TODO Phase 6: Replace MAPBUFFER with MAPBUFFER_REGISTRY.get(bound_dimension_) so
+    // that each dimension's submaps live in their own registry slot rather than always
+    // in the primary slot.  This is the prerequisite for enabling
+    // submap_loader.update() — without it, on_submap_loaded() will look in the wrong
+    // registry slot and return nullptr, corrupting the grid.
     submap *tmpsub = MAPBUFFER.lookup_submap( grid_abs_sub );
     // Diagnostic: log in-bounds submap loading for dimension transition debugging
     if( current_bounds_ ) {

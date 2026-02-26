@@ -34,6 +34,7 @@
 #include "memory_fast.h"
 #include "point.h"
 #include "shadowcasting.h"
+#include "submap_load_manager.h"
 #include "type_id.h"
 #include "units.h"
 
@@ -381,7 +382,7 @@ struct level_cache {
  * When the player moves between submaps, the whole map is shifted, so that if the player moves one submap to the right,
  * (0, 0) now points to a tile one submap to the right from before
  */
-class map
+class map : public submap_load_listener
 {
         friend class editmap;
         friend class visitable<map_cursor>;
@@ -433,6 +434,36 @@ class map
          * Returns the full bounds structure for secondary world capture.
          */
         std::optional<dimension_bounds> get_dimension_bounds() const;
+
+        // ----------------------------------------------------------------
+        // Dimension binding (for mapbuffer_registry / submap_load_manager)
+        // ----------------------------------------------------------------
+
+        /**
+         * Return the dimension ID this map is currently bound to.
+         * An empty string means the primary (default) dimension.
+         */
+        const std::string &get_bound_dimension() const {
+            return bound_dimension_;
+        }
+
+        /**
+         * Bind this map to a specific dimension.
+         * Should be called when the player transitions to another dimension.
+         */
+        void bind_dimension( const std::string &dim );
+
+        /**
+         * Return true if the submap at absolute-submap coordinates @p pos
+         * falls within the current loaded region of this map.
+         */
+        bool contains_abs_sm( const tripoint_abs_sm &pos ) const;
+
+        // submap_load_listener implementation
+        void on_submap_loaded( const tripoint_abs_sm &pos,
+                               const std::string &dim_id ) override;
+        void on_submap_unloaded( const tripoint_abs_sm &pos,
+                                 const std::string &dim_id ) override;
 
         /**
          * Sets a dirty flag on the a given cache.
@@ -2135,6 +2166,9 @@ class map
 
         // Dimension bounds for bounded pocket dimensions (nullopt for infinite dimensions)
         std::optional<dimension_bounds> current_bounds_;
+
+        // The dimension ID this map is bound to (empty = primary dimension)
+        std::string bound_dimension_;
 
     public:
         bool has_rope_at( tripoint pt ) const;

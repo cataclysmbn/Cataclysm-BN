@@ -26,8 +26,6 @@
 #include "ui_manager.h"
 #include "world.h"
 
-mapbuffer MAPBUFFER;
-
 mapbuffer::mapbuffer() = default;
 mapbuffer::~mapbuffer() = default;
 
@@ -69,6 +67,46 @@ void mapbuffer::remove_submap( tripoint addr )
     submaps.erase( m_target );
 }
 
+void mapbuffer::transfer_all_to( mapbuffer &dest )
+{
+    for( auto &kv : submaps ) {
+        if( dest.submaps.count( kv.first ) ) {
+            // Destination already has a submap at this position.  This should
+            // never happen when the callers (capture_from_primary /
+            // restore_to_primary) clear the destination first.  Log an error
+            // and keep the destination entry rather than silently losing either.
+            debugmsg( "transfer_all_to: collision at %s; destination entry retained, source lost",
+                      kv.first.to_string() );
+            continue;
+        }
+        dest.submaps.emplace( kv.first, std::move( kv.second ) );
+    }
+    submaps.clear();
+}
+
+submap *mapbuffer::load_submap( const tripoint_abs_sm &pos )
+{
+    // lookup_submap already handles the disk-read path transparently.
+    return lookup_submap( pos.raw() );
+}
+
+void mapbuffer::unload_submap( const tripoint_abs_sm &pos )
+{
+    const tripoint &p = pos.raw();
+    if( !submaps.contains( p ) ) {
+        return;
+    }
+
+    // Save the quad containing this submap to disk before evicting it.
+    const tripoint om_addr = sm_to_omt_copy( p );
+    std::list<tripoint> ignored_delete;
+    // Save without deleting the other three submaps from the buffer —
+    // only this specific submap is being evicted by the caller.
+    save_quad( om_addr, ignored_delete, false );
+
+    remove_submap( p );
+}
+
 submap *mapbuffer::lookup_submap( const tripoint &p )
 {
     const auto iter = submaps.find( p );
@@ -84,7 +122,7 @@ submap *mapbuffer::lookup_submap( const tripoint &p )
     return iter->second.get();
 }
 
-void mapbuffer::save( bool delete_after_save )
+void mapbuffer::save( bool delete_after_save, bool notify_tracker )
 {
     int num_saved_submaps = 0;
     int num_total_submaps = submaps.size();
@@ -140,7 +178,9 @@ void mapbuffer::save( bool delete_after_save )
         remove_submap( elem );
     }
 
-    get_distribution_grid_tracker().on_saved();
+    if( notify_tracker ) {
+        get_distribution_grid_tracker().on_saved();
+    }
 }
 
 void mapbuffer::save_quad( const tripoint &om_addr, std::list<tripoint> &submaps_to_delete,

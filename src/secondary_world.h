@@ -2,25 +2,24 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 
-#include "calendar.h"
 #include "coordinates.h"
 #include "dimension_bounds.h"
 #include "type_id.h"
 
 class submap;
-class overmap;
 
 /**
- * Holds the state of a secondary dimension that is kept loaded in memory
- * for fast travel and optional background simulation.
+ * Lightweight metadata holder for a secondary dimension that is kept loaded
+ * in the mapbuffer_registry.
  *
- * This class maintains separate map and overmap buffers from the primary world,
- * allowing the game to keep a pocket dimension loaded while the player is in
- * another dimension.
+ * In the old design, this class owned the submaps directly (submaps_ field).
+ * In the new design, submaps live in MAPBUFFER_REGISTRY.get(get_dimension_id()).
+ * The submaps_ field is retained only for backwards-compatible deserialization
+ * of old save files; it is migrated to the registry via
+ * migrate_submaps_to_registry() at load time and is otherwise unused.
  */
 class secondary_world
 {
@@ -41,40 +40,48 @@ class secondary_world
         ~secondary_world();
 
         /**
-         * Transfer buffers from the primary world into this secondary world.
+         * Transfer buffers from the primary world into this secondary world's
+         * registry slot.
+         *
          * Called when leaving a dimension that should be kept loaded.
-         * @param bounds The dimension bounds (for bounded pocket dimensions)
-         * @param simulation_center The last player position for simulation purposes
+         * Submaps are moved from MAPBUFFER_REGISTRY.primary() into
+         * MAPBUFFER_REGISTRY.get(get_dimension_id()).
+         *
+         * @param bounds The dimension bounds (stored for compatibility; unused now)
+         * @param simulation_center Last player position (unused; kept for compat)
          */
         void capture_from_primary( const std::optional<dimension_bounds> &bounds,
                                    const tripoint_abs_sm &simulation_center );
 
         /**
-         * Restore buffers back to the primary world.
-         * Called when returning to this kept-loaded dimension.
-         * After calling this, the secondary_world is in an invalid state
-         * and should be destroyed.
+         * Restore buffers from this secondary world's registry slot to the
+         * primary world.
+         *
+         * Called when returning to this kept-loaded dimension.  Submaps are
+         * moved from MAPBUFFER_REGISTRY.get(get_dimension_id()) back into
+         * MAPBUFFER_REGISTRY.primary().  After this call the secondary_world
+         * should be destroyed.
          */
         void restore_to_primary();
 
         /**
-         * Save the secondary world state to disk.
+         * Save the secondary world state to disk via the registry.
          */
         void save_state();
 
         /**
-         * Simulate one tick of time passing in this dimension.
-         * What gets simulated depends on the simulation level setting.
-         * @param level The simulation level ("minimal", "moderate", "full")
-         * @param delta Time duration to simulate (defaults to 1 turn, for future batch processing)
-         */
-        void simulate_tick( const std::string &level, time_duration delta = 1_turns );
-
-        /**
-         * Free all memory held by this secondary world.
-         * After calling this, is_loaded() will return false.
+         * Free all memory held by this secondary world (including any submaps
+         * still in the registry slot).  After calling this, is_loaded() is false.
          */
         void unload();
+
+        /**
+         * Migrate any submaps that were deserialized from an old save file
+         * (stored in the legacy submaps_ field) into the mapbuffer_registry.
+         * Should be called once during game::load() for each secondary world
+         * that was present in the save.
+         */
+        void migrate_submaps_to_registry();
 
         bool is_loaded() const {
             return loaded_;
@@ -88,27 +95,18 @@ class secondary_world
             return instance_id_;
         }
 
+        /**
+         * Compute the dimension ID (registry key) for this secondary world.
+         * This matches the save-file prefix for the dimension.
+         */
+        std::string get_dimension_id() const;
+
     private:
         world_type_id world_type_;
         std::string instance_id_;
         bool loaded_ = false;
 
-        // Separate buffers for this dimension
-        // Using raw map instead of unique_ptr to mapbuffer to avoid circular dependencies
+        // Legacy field: submaps read from old save files before registry migration.
+        // Populated only during old-save deserialization; empty in normal operation.
         std::map<tripoint, std::unique_ptr<submap>> submaps_;
-        std::unordered_map<point_abs_om, std::unique_ptr<overmap>> overmaps_;
-
-        // Cached bounds for simulation
-        std::optional<dimension_bounds> bounds_;
-
-        // Simulation state
-        tripoint_abs_sm simulation_center_;
-
-        // Simulation methods for each level
-        void simulate_minimal( time_duration delta );
-        void simulate_moderate( time_duration delta );
-        void simulate_full( time_duration delta );
-
-        // Helper to check if a position is within bounds
-        bool is_in_bounds( const tripoint &sm_pos ) const;
 };

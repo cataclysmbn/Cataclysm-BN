@@ -56,8 +56,6 @@ using write_lock = std::unique_lock< _Mutex >;
 template<typename _Mutex>
 using read_lock = std::shared_lock< _Mutex >;
 
-overmapbuffer overmap_buffer;
-
 overmapbuffer::overmapbuffer()
 {
 }

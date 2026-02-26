@@ -663,4 +663,5 @@ class overmapbuffer
         bool remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &rhs );
 };
 
-extern overmapbuffer overmap_buffer;
+// Provides the overmap_buffer macro (expands to get_primary_overmapbuffer()).
+#include "overmapbuffer_registry.h"

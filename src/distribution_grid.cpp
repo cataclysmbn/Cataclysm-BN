@@ -18,8 +18,6 @@
 #include "overmapbuffer.h"
 #include "profile.h"
 
-static distribution_grid empty_grid( {}, MAPBUFFER );
-
 distribution_grid::distribution_grid( const std::vector<tripoint_abs_sm> &global_submap_coords,
                                       mapbuffer &buffer ) :
     submap_coords( global_submap_coords ),
@@ -220,6 +218,7 @@ distribution_grid &distribution_grid_tracker::make_distribution_grid_at(
     const tripoint_abs_sm &sm_pos )
 {
     if( !get_option<bool>( "ELECTRIC_GRID" ) ) {
+        static distribution_grid empty_grid( {}, MAPBUFFER );
         return empty_grid;
     }
     const std::set<tripoint_abs_omt> overmap_positions = overmap_buffer.electric_grid_at(

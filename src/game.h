@@ -30,6 +30,7 @@
 #include "memory_fast.h"
 #include "pimpl.h"
 #include "point.h"
+#include "submap_load_manager.h"
 #include "type_id.h"
 #include "location_vector.h"
 
@@ -322,6 +323,12 @@ class game
          * Used for file naming (maps, overmaps, etc.)
          */
         std::string get_dimension_prefix() const;
+        /**
+         * Return the dimension ID the player is currently in.
+         * This is the same as m.get_bound_dimension().
+         * An empty string means the primary (default) dimension.
+         */
+        const std::string &current_player_dimension() const;
         /** Returns the other end of the stairs (if any). May query, affect u etc.  */
         std::optional<tripoint> find_stairs( map &mp, int z_after, bool peeking );
         std::optional<tripoint> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
@@ -1202,6 +1209,10 @@ class game
         std::unique_ptr<secondary_world> kept_pocket_;  // Last visited pocket dimension (if kept loaded)
         std::unique_ptr<secondary_world>
         kept_origin_;  // Origin dimension when inside a pocket (if kept loaded)
+
+        // Handle for the reality bubble's submap_load_manager request.
+        // 0 means no request has been issued yet.
+        load_request_handle reality_bubble_handle_ = 0;
     private:
         location_vector<item> fake_items;
     public:
