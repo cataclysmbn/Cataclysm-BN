@@ -1223,7 +1223,8 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
 
     // Now visited_caches are populated with density and velocity of fragments.
     for( const tripoint &target : area ) {
-        if( visited_cache[target.x * exp_sy + target.y] <= 0.0f || rl_dist( src, target ) > fragment.range ) {
+        if( visited_cache[target.x * exp_sy + target.y] <= 0.0f ||
+            rl_dist( src, target ) > fragment.range ) {
             continue;
         }
         auto critter = g->critter_at( target );

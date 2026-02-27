@@ -51,7 +51,7 @@ static const efftype_id effect_onfire( "onfire" );
 // Replaces the former compile-time `lightmap_boundaries` constant (which used
 // MAPSIZE_X/Y and prevented runtime-sized level-cache allocations).
 static inline auto make_lightmap_bounds( const level_cache &lc )
--> half_open_rectangle<point>
+- > half_open_rectangle<point>
 {
     return { point_zero, point( lc.cache_x, lc.cache_y ) };
 }
@@ -208,9 +208,11 @@ bool map::build_transparency_cache( const int zlev )
                         transparency_cache[map_cache.idx( x, y )] = calc_transp( { x, y } );
 
                         //Nudge things towards fast paths
-                        if( std::fabs( transparency_cache[map_cache.idx( x, y )] - openair_transparency_lookup.transparency ) <= 0.0001 ) {
+                        if( std::fabs( transparency_cache[map_cache.idx( x,
+                                                                         y )] - openair_transparency_lookup.transparency ) <= 0.0001 ) {
                             transparency_cache[map_cache.idx( x, y )] = openair_transparency_lookup.transparency;
-                        } else if( std::fabs( transparency_cache[map_cache.idx( x, y )] - weather_transparency_lookup.transparency ) <=
+                        } else if( std::fabs( transparency_cache[map_cache.idx( x,
+                                                             y )] - weather_transparency_lookup.transparency ) <=
                                    0.0001 ) {
                             transparency_cache[map_cache.idx( x, y )] = weather_transparency_lookup.transparency;
                         }
@@ -374,11 +376,13 @@ void map::build_sunlight_cache( int pzlev )
                     // && semantics below is important, we want to skip the evaluation if possible, do not replace with &=
 
                     // fully_outside stays true if tile is transparent and there is no floor
-                    fully_outside = fully_outside && this_transparency_cache[map_cache.idx( x, y )] >= LIGHT_TRANSPARENCY_OPEN_AIR
+                    fully_outside = fully_outside &&
+                                    this_transparency_cache[map_cache.idx( x, y )] >= LIGHT_TRANSPARENCY_OPEN_AIR
                                     && !this_floor_cache[map_cache.idx( x, y )];
                     // fully_inside stays true if tile is opaque OR there is floor
-                    fully_inside = fully_inside && ( this_transparency_cache[map_cache.idx( x, y )] <= LIGHT_TRANSPARENCY_SOLID ||
-                                                     this_floor_cache[map_cache.idx( x, y )] );
+                    fully_inside = fully_inside &&
+                                   ( this_transparency_cache[map_cache.idx( x, y )] <= LIGHT_TRANSPARENCY_SOLID ||
+                                     this_floor_cache[map_cache.idx( x, y )] );
                 }
             }
             continue;
@@ -525,7 +529,8 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                     const int y = sy + smy * SEEY;
                     const tripoint p( x, y, zlev );
                     // Project light into any openings into buildings.
-                    if( !outside_cache[map_cache.idx( p.x, p.y )] || ( !top_floor && prev_floor_cache[map_cache.idx( p.x, p.y )] ) ) {
+                    if( !outside_cache[map_cache.idx( p.x, p.y )] || ( !top_floor &&
+                            prev_floor_cache[map_cache.idx( p.x, p.y )] ) ) {
                         // Apply light sources for external/internal divide
                         for( int i = 0; i < 4; ++i ) {
                             point neighbour = p.xy() + point( dir_x[i], dir_y[i] );
@@ -701,7 +706,8 @@ void map::add_light_source( const tripoint &p, float luminance )
 {
     auto &cache = get_cache( p.z );
     auto &light_source_buffer = cache.light_source_buffer;
-    light_source_buffer[cache.idx( p.x, p.y )] = std::max( luminance, light_source_buffer[cache.idx( p.x, p.y )] );
+    light_source_buffer[cache.idx( p.x, p.y )] = std::max( luminance,
+            light_source_buffer[cache.idx( p.x, p.y )] );
 }
 
 // Tile light/transparency: 3D
@@ -757,7 +763,8 @@ float map::light_transparency( const tripoint &p ) const
 map::apparent_light_info map::apparent_light_helper( const level_cache &map_cache,
         const tripoint &p )
 {
-    const float vis = std::max( map_cache.seen_cache[map_cache.idx( p.x, p.y )], map_cache.camera_cache[map_cache.idx( p.x, p.y )] );
+    const float vis = std::max( map_cache.seen_cache[map_cache.idx( p.x, p.y )],
+                                map_cache.camera_cache[map_cache.idx( p.x, p.y )] );
     const bool obstructed = vis <= LIGHT_TRANSPARENCY_SOLID + 0.1;
 
     auto is_opaque = [&map_cache]( point  p ) {
@@ -973,7 +980,7 @@ void cast_zlight_segment(
 
     constexpr quadrant quad = quadrant_from_x_y( xx + xy, yx + yy );
 
-    const auto check_blocked = [=]( const tripoint & p ) -> bool{
+    const auto check_blocked = [ = ]( const tripoint & p ) -> bool{
         const auto &bc = blocked_caches[p.z + OVERMAP_DEPTH];
         switch( quad )
         {
@@ -1276,7 +1283,7 @@ void castLight( Out *output_cache, const T *input_array,
 {
     constexpr quadrant quad = quadrant_from_x_y( -xx - xy, -yx - yy );
 
-    const auto check_blocked = [=]( point p ) {
+    const auto check_blocked = [ = ]( point p ) {
         switch( quad ) {
             case quadrant::NW:
                 return blocked_array[p.x * sy + p.y].nw;
@@ -1451,12 +1458,14 @@ void castLightWithLookup( Out *output_cache, const T *input_array,
         first.x < sx && first.y < sy ) {
         if( input_array[first.x * sy + first.y] == LIGHT_TRANSPARENCY_OPEN_AIR ) {
             castLight<xx, xy, yx, yy, T, Out, calc, check, update_output, accumulate, &openair_transparency_lookup, lookup_calc>
-            ( output_cache, input_array, blocked_array, sx, sy, offset, offsetDistance, numerator, row, start, end,
+            ( output_cache, input_array, blocked_array, sx, sy, offset, offsetDistance, numerator, row, start,
+              end,
               cumulative_transparency );
             return;
         } else if( input_array[first.x * sy + first.y] == weather_transparency_lookup.transparency ) {
             castLight<xx, xy, yx, yy, T, Out, calc, check, update_output, accumulate, &weather_transparency_lookup, lookup_calc>
-            ( output_cache, input_array, blocked_array, sx, sy, offset, offsetDistance, numerator, row, start, end,
+            ( output_cache, input_array, blocked_array, sx, sy, offset, offsetDistance, numerator, row, start,
+              end,
               weather_transparency_lookup.transparency );
             return;
         }
@@ -1464,7 +1473,8 @@ void castLightWithLookup( Out *output_cache, const T *input_array,
     }
 
     castLight <xx, xy, yx, yy, T, Out, calc, check, update_output, accumulate, nullptr, nullptr>
-    ( output_cache, input_array, blocked_array, sx, sy, offset, offsetDistance, numerator, row, start, end,
+    ( output_cache, input_array, blocked_array, sx, sy, offset, offsetDistance, numerator, row, start,
+      end,
       cumulative_transparency );
     return;
 
@@ -1617,17 +1627,17 @@ void castLightAllWithLookup( Out *output_cache, const T *input_array,
 
 template void castLightAllWithLookup<float, float, sight_calc, sight_check,
                                      update_light, accumulate_transparency, sight_from_lookup>(
-                                         float *output_cache, const float *input_array,
-                                         const diagonal_blocks *blocked_array,
-                                         int sx, int sy,
-                                         const point &offset, int offsetDistance, float numerator );
+                                             float *output_cache, const float *input_array,
+                                             const diagonal_blocks *blocked_array,
+                                             int sx, int sy,
+                                             const point &offset, int offsetDistance, float numerator );
 
 template void castLightAllWithLookup<float, four_quadrants, sight_calc, sight_check,
                                      update_light_quadrants, accumulate_transparency, sight_from_lookup>(
-                                         four_quadrants *output_cache, const float *input_array,
-                                         const diagonal_blocks *blocked_array,
-                                         int sx, int sy,
-                                         const point &offset, int offsetDistance, float numerator );
+                                             four_quadrants *output_cache, const float *input_array,
+                                             const diagonal_blocks *blocked_array,
+                                             int sx, int sy,
+                                             const point &offset, int offsetDistance, float numerator );
 
 
 /**
@@ -1650,7 +1660,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
 
     constexpr float light_transparency_solid = LIGHT_TRANSPARENCY_SOLID;
 
-    std::fill( target_cache.camera_cache.begin(), target_cache.camera_cache.end(), light_transparency_solid );
+    std::fill( target_cache.camera_cache.begin(), target_cache.camera_cache.end(),
+               light_transparency_solid );
 
     float vision_restore_cache [9] = {0};
     bool blocked_restore_cache[8] = {false};
@@ -1726,7 +1737,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         // We can utilize the current state of the seen cache to determine
         // if the player can see the mirror from their position.
         if( !vp.info().has_flag( "CAMERA" ) &&
-            target_cache.seen_cache[target_cache.idx( mirror_pos.x, mirror_pos.y )] < LIGHT_TRANSPARENCY_SOLID + 0.1 ) {
+            target_cache.seen_cache[target_cache.idx( mirror_pos.x,
+                                                      mirror_pos.y )] < LIGHT_TRANSPARENCY_SOLID + 0.1 ) {
             continue;
         } else if( !vp.info().has_flag( "CAMERA_CONTROL" ) ) {
             mirrors.emplace_back( static_cast<int>( vp.part_index() ) );
@@ -1753,7 +1765,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         } else {
             offsetDistance = 60 - veh->part_info( mirror ).bonus *
                              veh->part( mirror ).hp() / veh->part_info( mirror ).durability;
-            target_cache.camera_cache[target_cache.idx( mirror_pos.x, mirror_pos.y )] = LIGHT_TRANSPARENCY_OPEN_AIR;
+            target_cache.camera_cache[target_cache.idx( mirror_pos.x,
+                                                        mirror_pos.y )] = LIGHT_TRANSPARENCY_OPEN_AIR;
         }
 
         // TODO: Factor in the mirror facing and only cast in the

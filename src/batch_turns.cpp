@@ -93,7 +93,7 @@ void batch_turns_field( submap &sm, int n )
                     const int intensity    = cur.get_field_intensity();
                     int remaining_age      = 0;
                     const int drops        = compute_field_decay( intensity, hl,
-                                            current_age, n, remaining_age );
+                                             current_age, n, remaining_age );
                     if( drops > 0 ) {
                         cur.set_field_intensity( intensity - drops );
                         cur.set_field_age( time_duration::from_turns( remaining_age ) );
@@ -129,12 +129,12 @@ void batch_turns_items( submap &sm, int n )
     n = std::min( n, MAX_CATCHUP_ITEMS );
 
     std::ranges::for_each(
-        sm.active_items.get() | std::views::filter( []( const item *it ) {
-            return it != nullptr && it->has_explicit_turn_timer();
-        } ),
-        [n]( item *it ) {
-            it->advance_timer( n );
-        }
+    sm.active_items.get() | std::views::filter( []( const item * it ) {
+        return it != nullptr && it->has_explicit_turn_timer();
+    } ),
+    [n]( item * it ) {
+        it->advance_timer( n );
+    }
     );
 }
 

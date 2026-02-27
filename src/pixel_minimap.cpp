@@ -365,7 +365,7 @@ pixel_minimap::submap_cache &pixel_minimap::get_cache_at( const tripoint &abs_sm
 void pixel_minimap::process_cache( const tripoint &center )
 {
     // Refresh the tile count to match the current runtime map size.
-    total_tiles_count = { ( g_mapsize - 2 ) * SEEX, ( g_mapsize - 2 ) * SEEY };
+    total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) *SEEY };
 
     prepare_cache_for_updates( center );
 

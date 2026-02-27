@@ -235,19 +235,23 @@ void scent_map::update( const tripoint &center, map &m )
                 int total = sum_3_scent_y[y][x - 1] + sum_3_scent_y[y][x] + sum_3_scent_y[y][x + 1];
 
                 //handle vehicle holes
-                if( blocked_data[abs.x * st_sy + abs.y].nw && scent_transfer[( abs.x + 1 ) * st_sy + abs.y + 1] == 5 ) {
+                if( blocked_data[abs.x * st_sy + abs.y].nw &&
+                    scent_transfer[( abs.x + 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
                     total -= 4 * grscent[( abs.x + 1 ) * scent_sy + abs.y + 1];
                 }
-                if( blocked_data[abs.x * st_sy + abs.y].ne && scent_transfer[( abs.x - 1 ) * st_sy + abs.y + 1] == 5 ) {
+                if( blocked_data[abs.x * st_sy + abs.y].ne &&
+                    scent_transfer[( abs.x - 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
                     total -= 4 * grscent[( abs.x - 1 ) * scent_sy + abs.y + 1];
                 }
-                if( blocked_data[( abs.x - 1 ) * st_sy + abs.y - 1].nw && scent_transfer[( abs.x - 1 ) * st_sy + abs.y - 1] == 5 ) {
+                if( blocked_data[( abs.x - 1 ) * st_sy + abs.y - 1].nw &&
+                    scent_transfer[( abs.x - 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
                     total -= 4 * grscent[( abs.x - 1 ) * scent_sy + abs.y - 1];
                 }
-                if( blocked_data[( abs.x + 1 ) * st_sy + abs.y - 1].ne && scent_transfer[( abs.x + 1 ) * st_sy + abs.y - 1] == 5 ) {
+                if( blocked_data[( abs.x + 1 ) * st_sy + abs.y - 1].ne &&
+                    scent_transfer[( abs.x + 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
                     total -= 4 * grscent[( abs.x + 1 ) * scent_sy + abs.y - 1];
                 }
@@ -270,19 +274,23 @@ void scent_map::update( const tripoint &center, map &m )
                 int total = sum_3_scent_y[y][x - 1] + sum_3_scent_y[y][x] + sum_3_scent_y[y][x + 1];
 
                 //handle vehicle holes
-                if( blocked_data[abs.x * st_sy + abs.y].nw && scent_transfer[( abs.x + 1 ) * st_sy + abs.y + 1] == 5 ) {
+                if( blocked_data[abs.x * st_sy + abs.y].nw &&
+                    scent_transfer[( abs.x + 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
                     total -= 4 * grscent[( abs.x + 1 ) * scent_sy + abs.y + 1];
                 }
-                if( blocked_data[abs.x * st_sy + abs.y].ne && scent_transfer[( abs.x - 1 ) * st_sy + abs.y + 1] == 5 ) {
+                if( blocked_data[abs.x * st_sy + abs.y].ne &&
+                    scent_transfer[( abs.x - 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
                     total -= 4 * grscent[( abs.x - 1 ) * scent_sy + abs.y + 1];
                 }
-                if( blocked_data[( abs.x - 1 ) * st_sy + abs.y - 1].nw && scent_transfer[( abs.x - 1 ) * st_sy + abs.y - 1] == 5 ) {
+                if( blocked_data[( abs.x - 1 ) * st_sy + abs.y - 1].nw &&
+                    scent_transfer[( abs.x - 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
                     total -= 4 * grscent[( abs.x - 1 ) * scent_sy + abs.y - 1];
                 }
-                if( blocked_data[( abs.x + 1 ) * st_sy + abs.y - 1].ne && scent_transfer[( abs.x + 1 ) * st_sy + abs.y - 1] == 5 ) {
+                if( blocked_data[( abs.x + 1 ) * st_sy + abs.y - 1].ne &&
+                    scent_transfer[( abs.x + 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
                     total -= 4 * grscent[( abs.x + 1 ) * scent_sy + abs.y - 1];
                 }

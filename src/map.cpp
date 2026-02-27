@@ -6498,7 +6498,8 @@ void map::update_visibility_cache( const int zlev )
                 lit_level ll = apparent_light_at( p, visibility_variables_cache );
                 visibility_cache[vc_cache.idx( x, y )] = ll;
                 if( z == zlev ) {
-                    sm_squares_seen[ ( x / SEEX ) * my_MAPSIZE + y / SEEY ] += ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
+                    sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY ] += ( ll == lit_level::BRIGHT ||
+                            ll == lit_level::LIT );
                 }
             }
         }
@@ -9925,7 +9926,8 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
         vehicle &veh = *( wrapped_veh.v );
         for( const vpart_reference &vp : veh.get_any_parts( VPFLAG_OBSTACLE ) ) {
             const tripoint part_pos = vp.pos();
-            if( local_bounds.contains( part_pos.xy() ) && scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
+            if( local_bounds.contains( part_pos.xy() ) &&
+                scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
                 scent_transfer[part_pos.x * st_sy + part_pos.y] = 1;
             }
         }
@@ -9937,7 +9939,8 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
             }
 
             const tripoint part_pos = vp.pos();
-            if( local_bounds.contains( part_pos.xy() ) && scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
+            if( local_bounds.contains( part_pos.xy() ) &&
+                scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
                 scent_transfer[part_pos.x * st_sy + part_pos.y] = 1;
             }
         }
