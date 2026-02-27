@@ -285,6 +285,7 @@ extern const flag_id flag_REACH;
 extern const flag_id flag_REACH_ATTACK;
 extern const flag_id flag_REBREATHER;
 extern const flag_id flag_RECHARGE;
+extern const flag_id flag_RECON_VISION;
 extern const flag_id flag_REDUCED_BASHING;
 extern const flag_id flag_REDUCED_WEIGHT;
 extern const flag_id flag_RELOAD_AND_SHOOT;

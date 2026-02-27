@@ -1966,7 +1966,7 @@ void Character::recalc_sight_limits()
     for( const mutation_branch *mut : cached_mutations ) {
         best_bonus_nv = std::max( best_bonus_nv, mut->night_vision_range );
     }
-    if( is_wearing( itype_rm13_armor_on ) ||
+    if( worn_with_flag( flag_RECON_VISION ) ||
         ( is_mounted() && mounted_creature->has_flag( MF_MECH_RECON_VISION ) ) ) {
         best_bonus_nv = std::max( best_bonus_nv, 10.0f );
     }
