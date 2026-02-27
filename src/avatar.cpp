@@ -309,6 +309,14 @@ tripoint_abs_omt avatar::get_custom_mission_target()
     return *custom_waypoint;
 }
 
+auto avatar::get_custom_mission_target() const -> tripoint_abs_omt
+{
+    if( custom_waypoint == nullptr ) {
+        return overmap::invalid_tripoint;
+    }
+    return *custom_waypoint;
+}
+
 void avatar::set_active_mission( mission &cur_mission )
 {
     const auto iter = std::ranges::find( active_missions, &cur_mission );

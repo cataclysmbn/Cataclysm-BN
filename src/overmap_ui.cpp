@@ -1255,6 +1255,9 @@ static void draw_ascii( ui_adaptor &ui,
     if( has_target && blink && !screen_bounds.contains( target.xy() ) ) {
         point_rel_omt marker = clamp( target.xy(), screen_bounds ) - corner.xy();
         std::string marker_sym = " ";
+        if( marker.x() == om_map_width - 1 ) {
+            marker.x() = std::max( 0, marker.x() - 1 );
+        }
 
         switch( direction_from( center.xy(), target.xy() ) ) {
             case direction::NORTH:

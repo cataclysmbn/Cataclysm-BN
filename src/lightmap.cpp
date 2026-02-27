@@ -102,9 +102,23 @@ void map::add_light_from_items( const tripoint &p, const item_stack::iterator &b
     }
 }
 
+// Refresh the weather-transparency lookup table to match the current sight
+// penalty.  Must be called once serially before any parallel invocation of
+// build_transparency_cache() so that the shared table is never written by
+// more than one thread (RISK-1 fix).
+void map::update_weather_transparency_lookup()
+{
+    const float sight_penalty = get_weather().weather_id->sight_penalty;
+    if( sight_penalty != 1.0f &&
+        LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty != weather_transparency_lookup.transparency ) {
+        weather_transparency_lookup.reset( LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty );
+    }
+}
+
 // TODO: Consider making this just clear the cache and dynamically fill it in as is_transparent() is called
 bool map::build_transparency_cache( const int zlev )
 {
+    ZoneScopedN( "build_transparency_cache" );
     auto &map_cache = get_cache( zlev );
     auto &transparency_cache = map_cache.transparency_cache;
     auto &outside_cache = map_cache.outside_cache;
@@ -124,12 +138,10 @@ bool map::build_transparency_cache( const int zlev )
                                    static_cast<float>( LIGHT_TRANSPARENCY_OPEN_AIR ) );
     }
 
+    // weather_transparency_lookup is refreshed once serially by
+    // update_weather_transparency_lookup() before the Phase 1 parallel loop;
+    // reading it here is safe.
     const float sight_penalty = get_weather().weather_id->sight_penalty;
-
-    if( sight_penalty != 1.0f &&
-        LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty != weather_transparency_lookup.transparency ) {
-        weather_transparency_lookup.reset( LIGHT_TRANSPARENCY_OPEN_AIR * sight_penalty );
-    }
 
     // Traverse the submaps in order
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
@@ -443,7 +455,7 @@ void map::build_sunlight_cache( int pzlev )
     }
 }
 
-void map::generate_lightmap( const int zlev )
+void map::generate_lightmap( const int zlev, bool skip_shared_init )
 {
     ZoneScoped;
     auto &map_cache = get_cache( zlev );
@@ -452,8 +464,6 @@ void map::generate_lightmap( const int zlev )
     auto &outside_cache = map_cache.outside_cache;
     auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).floor_cache;
     bool top_floor = zlev == OVERMAP_DEPTH;
-    std::memset( lm, 0, sizeof( lm ) );
-    std::memset( sm, 0, sizeof( sm ) );
 
     /* Bulk light sources wastefully cast rays into neighbors; a burning hospital can produce
          significant slowdown, so for stuff like fire and lava:
@@ -465,7 +475,27 @@ void map::generate_lightmap( const int zlev )
      * Step 4: Profit!
      */
     auto &light_source_buffer = map_cache.light_source_buffer;
-    std::memset( light_source_buffer, 0, sizeof( light_source_buffer ) );
+
+    if( !skip_shared_init ) {
+        // Serial path: this call is responsible for its own initialization.
+        // build_sunlight_cache() writes to all z-levels' lm, so it must not
+        // run concurrently with other generate_lightmap() calls.
+        std::memset( lm, 0, sizeof( lm ) );
+        std::memset( sm, 0, sizeof( sm ) );
+        std::memset( light_source_buffer, 0, sizeof( light_source_buffer ) );
+
+        build_sunlight_cache( zlev );
+
+        apply_character_light( get_player_character() );
+        for( npc &guy : g->all_npcs() ) {
+            apply_character_light( guy );
+        }
+    }
+    // When skip_shared_init is true the caller has already:
+    //   - cleared sm[zlev] and light_source_buffer[zlev]
+    //   - called build_sunlight_cache() once (fills all lm[])
+    //   - applied character/NPC lights
+    // We only collect dynamic sources that belong to this z-level.
 
     constexpr std::array<int, 4> dir_x = { {  0, -1, 1, 0 } };    //    [0]
     constexpr std::array<int, 4> dir_y = { { -1,  0, 0, 1 } };    // [1][X][2]
@@ -479,13 +509,6 @@ void map::generate_lightmap( const int zlev )
     };
 
     const float natural_light = g->natural_light_level( zlev );
-
-    build_sunlight_cache( zlev );
-
-    apply_character_light( get_player_character() );
-    for( npc &guy : g->all_npcs() ) {
-        apply_character_light( guy );
-    }
 
     std::vector<std::pair<tripoint, float>> lm_override;
     // Traverse the submaps in order
@@ -553,20 +576,24 @@ void map::generate_lightmap( const int zlev )
         }
     }
 
-    for( monster &critter : g->all_monsters() ) {
-        if( critter.is_hallucination() ) {
-            continue;
-        }
-        const tripoint &mp = critter.pos();
-        if( inbounds( mp ) ) {
-            if( critter.has_effect( effect_onfire ) ) {
-                apply_light_source( mp, 8 );
+    // Skip in parallel mode: build_map_cache has already applied monster lights
+    // serially before the parallel_for to avoid racing on weak_ptr_fast::lock().
+    if( !skip_shared_init ) {
+        for( monster &critter : g->all_monsters() ) {
+            if( critter.is_hallucination() ) {
+                continue;
             }
-            // TODO: [lightmap] Attach natural light brightness to creatures
-            // TODO: [lightmap] Allow creatures to have light attacks (i.e.: eyebot)
-            // TODO: [lightmap] Allow creatures to have facing and arc lights
-            if( critter.type->luminance > 0 ) {
-                apply_light_source( mp, critter.type->luminance );
+            const tripoint &mp = critter.pos();
+            if( inbounds( mp ) ) {
+                if( critter.has_effect( effect_onfire ) ) {
+                    apply_light_source( mp, 8 );
+                }
+                // TODO: [lightmap] Attach natural light brightness to creatures
+                // TODO: [lightmap] Allow creatures to have light attacks (i.e.: eyebot)
+                // TODO: [lightmap] Allow creatures to have facing and arc lights
+                if( critter.type->luminance > 0 ) {
+                    apply_light_source( mp, critter.type->luminance );
+                }
             }
         }
     }
@@ -595,6 +622,11 @@ void map::generate_lightmap( const int zlev )
             tripoint src = v->global_part_pos3( *pt );
 
             if( !inbounds( src ) ) {
+                continue;
+            }
+            // In parallel mode skip parts not on this z-level to avoid
+            // cross-level cache writes.
+            if( skip_shared_init && src.z != zlev ) {
                 continue;
             }
 
@@ -634,6 +666,10 @@ void map::generate_lightmap( const int zlev )
             const size_t p = vp.part_index();
             const tripoint pp = vp.pos();
             if( !inbounds( pp ) ) {
+                continue;
+            }
+            // In parallel mode skip parts not on this z-level.
+            if( skip_shared_init && pp.z != zlev ) {
                 continue;
             }
             if( vp.has_feature( VPFLAG_CARGO ) && !vp.has_feature( "COVERED" ) ) {

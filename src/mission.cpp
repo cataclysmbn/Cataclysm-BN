@@ -27,6 +27,7 @@
 #include "npc_class.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
+#include "profile.h"
 #include "requirements.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -97,6 +98,7 @@ void mission::add_existing( const mission &m )
 
 void mission::process_all()
 {
+    ZoneScoped;
     for( auto &e : world_missions ) {
         e.second.process();
     }

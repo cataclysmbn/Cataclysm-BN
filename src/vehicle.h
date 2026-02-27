@@ -1810,6 +1810,12 @@ class vehicle
         bool is_alarm_on = false;
         bool camera_on = false;
         bool autopilot_on = false;
+        // true if any non-broken part has the AUTOLOADER flag; maintained by refresh()
+        bool has_autoloaders = false;
+        // MISSED-4: true if any non-broken part has the RECHARGE flag; maintained by
+        // refresh().  Gates the cargo recharge loop in process_items_in_vehicle()
+        // (analogous to has_autoloaders gating process_autoloaders() in idle()).
+        bool has_cargo_recharge = false;
         // skidding mode
         bool skidding = false;
         // has bloody or smoking parts

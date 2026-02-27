@@ -65,6 +65,10 @@
 #include "coordinates.h"
 #include "crafting.h"
 #include "creature_tracker.h"
+#include "monster.h"
+#include "monster_action.h"
+#include "monster_plan.h"
+#include "thread_pool.h"
 #include "cursesport.h"
 #include "damage.h"
 #include "debug.h"
@@ -129,6 +133,7 @@
 #include "mod_manager.h"
 #include "monattack.h"
 #include "monexamine.h"
+#include "monfaction.h"
 #include "monstergenerator.h"
 #include "morale_types.h"
 #include "mtype.h"
@@ -242,6 +247,7 @@ static const efftype_id effect_feral_killed_recently( "feral_killed_recently" );
 static const efftype_id effect_flu( "flu" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_laserlocked( "laserlocked" );
+static const efftype_id effect_lying_down( "lying_down" );
 static const efftype_id effect_no_sight( "no_sight" );
 static const efftype_id effect_npc_suspend( "npc_suspend" );
 static const efftype_id effect_onfire( "onfire" );
@@ -336,6 +342,8 @@ game::game() :
     last_mouse_edge_scroll( std::chrono::steady_clock::now() ),
     fake_items( new temp_item_location( ) )
 {
+    // Force thread pool startup before first turn to avoid a latency spike.
+    get_thread_pool();
     first_redraw_since_waiting_started = true;
     reset_light_level();
     events().subscribe( &*kill_tracker_ptr );
@@ -964,6 +972,7 @@ vehicle *game::place_vehicle_nearby(
 //Make any nearby overmap npcs active, and put them in the right location.
 void game::load_npcs()
 {
+    ZoneScoped;
     const int radius = HALF_MAPSIZE - 1;
     // uses submap coordinates
     std::vector<shared_ptr_fast<npc>> just_added;
@@ -1531,6 +1540,7 @@ bool game::do_turn()
                          get_option<bool>( "SLEEP_SKIP_VEH" );
     const auto soundperf = asleep && get_option<bool>( "SLEEP_SKIP_SOUND" );
     const auto monperf = asleep && get_option<bool>( "SLEEP_SKIP_MON" );
+    const auto npcperf = asleep && get_option<bool>( "SLEEP_SKIP_NPC" );
     // Actual stuff
     if( new_game ) {
         new_game = false;
@@ -1695,6 +1705,11 @@ bool game::do_turn()
     m.build_map_cache( get_levz(), true );
     if( !monperf ) {
         monmove();
+    }
+    if( !npcperf ) {
+        npcmove();
+    } else {
+        sleep_skip_npc_process();
     }
     if( calendar::once_every( 5_minutes ) ) {
         overmap_npc_move();
@@ -3534,6 +3549,126 @@ void game::draw_ter( const bool draw_sounds )
               draw_sounds );
 }
 
+namespace
+{
+
+struct mission_direction_indicator {
+    point pos;
+    std::string glyph;
+    nc_color color = c_red;
+};
+
+auto get_active_or_custom_target( const avatar &you ) -> tripoint_abs_omt
+{
+    const auto custom_targ = you.get_custom_mission_target();
+    if( custom_targ != overmap::invalid_tripoint ) {
+        return custom_targ;
+    }
+    return you.get_active_mission_target();
+}
+
+auto direction_glyph( const direction dir ) -> std::optional<std::string>
+{
+    switch( dir ) {
+        case direction::NORTH:
+            return "^";
+        case direction::NORTHEAST:
+            return LINE_OOXX_S;
+        case direction::EAST:
+            return ">";
+        case direction::SOUTHEAST:
+            return LINE_XOOX_S;
+        case direction::SOUTH:
+            return "v";
+        case direction::SOUTHWEST:
+            return LINE_XXOO_S;
+        case direction::WEST:
+            return "<";
+        case direction::NORTHWEST:
+            return LINE_OXXO_S;
+        default:
+            return std::nullopt;
+    }
+}
+
+auto get_mission_edge_pos( const point &window_size,
+                           const point &screen_center,
+                           const point &delta ) -> std::optional<point>
+{
+    const auto max_x = window_size.x - 1;
+    const auto max_y = window_size.y - 1;
+    if( max_x < 0 || max_y < 0 ) {
+        return std::nullopt;
+    }
+
+    const auto clamped_center = point( clamp( screen_center.x, 0, max_x ),
+                                       clamp( screen_center.y, 0, max_y ) );
+    if( delta == point_zero ) {
+        return std::nullopt;
+    }
+
+    const auto scale = std::max( window_size.x, window_size.y ) * 2;
+    const auto target = clamped_center + point( delta.x * scale, delta.y * scale );
+    const auto edge_path = line_to( clamped_center, target );
+    if( edge_path.empty() ) {
+        return std::nullopt;
+    }
+
+    const auto in_bounds = [max_x, max_y]( const point & pos ) {
+        return pos.x >= 0 && pos.x <= max_x && pos.y >= 0 && pos.y <= max_y;
+    };
+
+    auto edge_view = edge_path | std::views::reverse;
+    const auto edge_it = std::ranges::find_if( edge_view, in_bounds );
+    if( edge_it == edge_view.end() ) {
+        return std::nullopt;
+    }
+
+    auto edge_pos = *edge_it;
+    if( edge_pos.x == max_x ) {
+        edge_pos.x = clamp( max_x - 1, 0, max_x );
+    }
+    if( edge_pos.y == max_y ) {
+        edge_pos.y = clamp( max_y - 1, 0, max_y );
+    }
+
+    return edge_pos;
+}
+
+auto get_mission_direction_indicator( const avatar &you,
+                                      const point &window_size )
+-> std::optional<mission_direction_indicator>
+{
+    const auto targ = get_active_or_custom_target( you );
+    if( targ == overmap::invalid_tripoint ) {
+        return std::nullopt;
+    }
+
+    const auto player_omt = you.global_omt_location();
+    if( targ.xy() == player_omt.xy() ) {
+        return std::nullopt;
+    }
+
+    const auto dir = direction_from( player_omt.xy(), targ.xy() );
+    const auto marker_sym = direction_glyph( dir );
+    if( !marker_sym ) {
+        return std::nullopt;
+    }
+
+    const auto delta = targ.xy().raw() - player_omt.xy().raw();
+    const auto marker = get_mission_edge_pos( window_size, point( POSX, POSY ), delta );
+    if( !marker ) {
+        return std::nullopt;
+    }
+    return mission_direction_indicator{
+        .pos = *marker,
+        .glyph = *marker_sym,
+        .color = c_red,
+    };
+}
+
+} // namespace
+
 void game::draw_ter( const tripoint &center, const bool looking, const bool draw_sounds )
 {
     ter_view_p = center;
@@ -3560,6 +3695,11 @@ void game::draw_ter( const tripoint &center, const bool looking, const bool draw
     if( u.controlling_vehicle && !looking ) {
         draw_veh_dir_indicator( false );
         draw_veh_dir_indicator( true );
+    }
+
+    if( const auto indicator = get_mission_direction_indicator(
+                                   u, point( getmaxx( w_terrain ), getmaxy( w_terrain ) ) ) ) {
+        mvwputch( w_terrain, indicator->pos, indicator->color, indicator->glyph );
     }
     // Place the cursor over the player as is expected by screen readers.
     wmove( w_terrain, -center.xy() + g->u.pos().xy() + point( POSX, POSY ) );
@@ -3597,8 +3737,10 @@ void game::draw_minimap()
 
     const tripoint_abs_omt curs = u.global_omt_location();
     const point_abs_omt curs2( curs.xy() );
-    const tripoint_abs_omt targ = u.get_active_mission_target();
-    bool drew_mission = targ == overmap::invalid_tripoint;
+    const auto custom_targ = u.get_custom_mission_target();
+    const auto mission_targ = u.get_active_mission_target();
+    const auto targ = custom_targ != overmap::invalid_tripoint ? custom_targ : mission_targ;
+    auto drew_mission = targ == overmap::invalid_tripoint;
 
     for( int i = -2; i <= 2; i++ ) {
         for( int j = -2; j <= 2; j++ ) {
@@ -4270,11 +4412,229 @@ void game::cleanup_dead()
     critter_died = false;
 }
 
+// ---------------------------------------------------------------------------
+// LOD tier assignment — called once per monmove() pass, O(M).
+//
+// Tier 0 (Full):   dist ≤ LOD_TIER_FULL_DIST (default 20) or has an active
+//                  movement goal (non-wandering).  Full AI every turn.
+// Tier 1 (Coarse): dist LOD_TIER_FULL_DIST–LOD_TIER_COARSE_DIST (default 20–40).
+//                  Reuses cached path, skips faction-morale queries, reduces
+//                  scent tracking to 1-in-3 turns.
+// Tier 2 (Macro):  dist > LOD_TIER_COARSE_DIST (default 40) and wandering
+//                  (no active goal).  Performs a single 4-directional step
+//                  every LOD_MACRO_INTERVAL turns (default 3); idle otherwise.
+//
+// Promotion (lower tier number) is always immediate.
+// Demotion respects a configurable cooldown (LOD_DEMOTION_COOLDOWN) to prevent
+// boundary oscillation.  Distances are configurable via LOD_TIER_FULL_DIST and
+// LOD_TIER_COARSE_DIST.
+// ---------------------------------------------------------------------------
+int game::tier_assign_all()
+{
+    if( !monster_lod_enabled ) {
+        int count = 0;
+        for( monster &mon : all_monsters() ) {
+            mon.lod_tier     = 0;
+            mon.lod_cooldown = 0;
+            ++count;
+        }
+        TracyPlot( "LOD Tier 0 (Full AI)",  static_cast<int64_t>( count ) );
+        TracyPlot( "LOD Tier 1 (Coarse)",   static_cast<int64_t>( 0 ) );
+        TracyPlot( "LOD Tier 2 (Macro)",    static_cast<int64_t>( 0 ) );
+        return count;
+    }
+
+    const tripoint player_pos = u.pos();
+    int tier_counts[3] = { 0, 0, 0 };
+
+    const int tier01_dist  = lod_tier_full_dist;
+    // Clamp so Tier 1/2 boundary is always strictly greater than Tier 0/1.
+    const int tier12_dist  = std::max( lod_tier_coarse_dist, tier01_dist + 1 );
+    const int demote_cd    = lod_demotion_cooldown;
+
+    for( monster &mon : all_monsters() ) {
+        const int dist = rl_dist( mon.pos(), player_pos );
+
+        int8_t new_tier;
+        if( dist <= tier01_dist || !mon.is_wandering() ) {
+            new_tier = 0;
+        } else if( dist <= tier12_dist ) {
+            new_tier = 1;
+        } else {
+            new_tier = 2;
+        }
+
+        if( new_tier < mon.lod_tier ) {
+            // Promotion is always immediate.
+            mon.lod_tier     = new_tier;
+            mon.lod_cooldown = 0;
+        } else if( new_tier > mon.lod_tier && mon.lod_cooldown <= 0 ) {
+            // Demotion only when cooldown has expired.
+            mon.lod_tier     = new_tier;
+            mon.lod_cooldown = static_cast<int8_t>( demote_cd );
+        }
+
+        if( mon.lod_cooldown > 0 ) {
+            mon.lod_cooldown--;
+        }
+
+        tier_counts[mon.lod_tier]++;
+    }
+
+    // Emit per-tier monster counts as continuous Tracy plots.
+    // "LOD Eligible" (after budget cap) is emitted from monmove().
+    TracyPlot( "LOD Tier 0 (Full AI)",  static_cast<int64_t>( tier_counts[0] ) );
+    TracyPlot( "LOD Tier 1 (Coarse)",   static_cast<int64_t>( tier_counts[1] ) );
+    TracyPlot( "LOD Tier 2 (Macro)",    static_cast<int64_t>( tier_counts[2] ) );
+    return tier_counts[0];
+}
+
 void game::monmove()
 {
     ZoneScoped;
     cleanup_dead();
 
+    // P-8: clear the per-turn sight cache at the top of every monmove() call
+    // so results from the previous turn are not reused.
+    turn_sight_cache_.clear();
+
+    // LOD-A: assign tier 0/1/2 to every monster based on distance from player.
+    // Must run before the plannable collection so Tier-2 monsters are excluded
+    // from the parallel planning pass (they use the macro step instead).
+    const int tier0_count = tier_assign_all();
+
+    // -----------------------------------------------------------------------
+    // P-7: Parallel planning pass.
+    //
+    // Collect Tier-0 and Tier-1 monsters that are alive and eligible for AI
+    // planning this turn, compute their plans in parallel, then apply and
+    // execute serially.  Tier-2 (Macro) monsters are excluded here; they take
+    // a single Manhattan step in the move execution loop below.
+    //
+    // compute_plan() is const w.r.t. *this (monster) and only reads shared
+    // game state (map caches, faction data, creature positions).  The only
+    // shared writes are:
+    //   - skew_vision_cache (protected by skew_vision_cache_mutex, P-6)
+    //   - turn_sight_cache_ (protected by turn_sight_cache_mutex_, P-8)
+    //   - per-thread RNG (thread-local engine, P-5)
+    // This makes the parallel phase data-race-free.
+    //
+    // Over-collection is intentional: monsters that die during the serial
+    // setup phase (process_turn, creature_in_field) simply have their
+    // pre-computed plan discarded.
+    // -----------------------------------------------------------------------
+
+    // Configurable via Debug → Performance → "Monster LOD" settings.
+    const int action_budget  = lod_action_budget;
+    const int macro_interval = lod_macro_interval;
+
+    // Dynamic budget: at least the floor, but expanded to cover all Tier-0
+    // monsters so the cap never defers a full-AI monster.
+    // tier0_count is from this turn's tier_assign_all(), so it is current.
+    const int effective_budget = std::max( action_budget, tier0_count );
+    TracyPlot( "LOD Effective Budget", static_cast<int64_t>( effective_budget ) );
+
+    // OPP-7: Unified disposition map: a single hash lookup in the execution
+    // loop suffices:
+    //   value >= 0  → index into precomputed[] (monster has a parallel plan)
+    //   not present → not collected this turn (plan serially)
+    std::unordered_map<monster *, int> plan_index;
+
+    std::vector<monster *> plannable;
+    for( monster &critter : all_monsters() ) {
+        if( !critter.is_dead() &&
+            !critter.has_effect( effect_ai_controlled ) &&
+            critter.moves > 0 &&
+            !critter.has_effect( effect_ridden ) &&
+            critter.lod_tier < 2 ) {
+            // Tier-2 monsters skip full planning; they use the macro step.
+            plannable.push_back( &critter );
+        }
+    }
+
+    // OPP-1 (PERF-A fix): Pre-warm both turn_sight_cache_ and skew_vision_cache
+    // for (monster → player), (monster → NPC), and faction-hostile (monster → monster)
+    // pairs before the parallel phase.  prewarm_sight() calls turn_cached_sees(),
+    // which populates turn_sight_cache_ under a unique_lock here (serial, zero
+    // contention).  The parallel phase then hits turn_sight_cache_ under shared_lock
+    // only — zero write contention.
+    //
+    // NPC pairs use a distance pre-cull: monsters beyond max_sight_range of an NPC
+    // can never see them, so the ray trace and cache insert are both skipped entirely.
+    for( monster *mon : plannable ) {
+        mon->prewarm_sight( u );
+        const int mon_max_sight = std::max( mon->type->vision_day, mon->type->vision_night );
+        for( npc &n : all_npcs() ) {
+            if( rl_dist( mon->pos(), n.pos() ) <= mon_max_sight ) {
+                mon->prewarm_sight( n );
+            }
+        }
+    }
+
+    // Pre-warm faction-hostile monster pairs within max_sight_range.
+    // Without this, hostile-faction pairs call turn_cached_sees() during the parallel
+    // phase on a cache miss, taking a unique_lock and serialising all workers that
+    // happen to need a faction-hostile LOS result at the same time.
+    // turn_cached_sees is symmetric — one prewarm_sight call covers both directions.
+    for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
+        monster *mon_a = plannable[i];
+        const int max_range_a = std::max( mon_a->type->vision_day, mon_a->type->vision_night );
+        for( int j = i + 1; j < static_cast<int>( plannable.size() ); ++j ) {
+            monster *mon_b = plannable[j];
+            if( rl_dist( mon_a->pos(), mon_b->pos() ) > max_range_a ) {
+                continue;
+            }
+            if( mon_a->faction.obj().attitude( mon_b->faction ) == MFA_HATE ) {
+                mon_a->prewarm_sight( *mon_b );
+            }
+        }
+    }
+
+    // Build creature snapshots for thread-safe compute_plan() access.
+    // compute_plan() calls g->all_monsters() / g->all_npcs() to find targets.
+    // Those functions iterate weak_ptr_fast<T> objects whose refcounting uses
+    // _S_single (non-atomic).  Concurrent lock() calls from worker threads are
+    // a data race.  Building plain pointer snapshots here, serially, avoids
+    // touching any weak_ptr_fast from worker threads.
+    std::vector<monster *> mon_snap;
+    mon_snap.reserve( plannable.size() * 2 );
+    for( monster &mon : all_monsters() ) {
+        mon_snap.push_back( &mon );
+    }
+    std::vector<npc *> npc_snap;
+    for( npc &n : all_npcs() ) {
+        npc_snap.push_back( &n );
+    }
+    const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap };
+
+    // PERF-LOSS-2 / OPP-5: parallel_for_chunked with a small chunk size gives the
+    // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
+    // (no ray traces) immediately pull the next chunk rather than sitting idle
+    // while a thread blocked on a costly monster finishes its oversized slice.
+    std::vector<monster_plan_t> precomputed( plannable.size() );
+    if( parallel_enabled && parallel_monster_planning ) {
+        parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
+        monster_plan_chunk_size, [&]( int i ) {
+            precomputed[i] = plannable[i]->compute_plan( plan_ctx );
+        } );
+    } else {
+        for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
+            precomputed[i] = plannable[i]->compute_plan( plan_ctx );
+        }
+    }
+
+    // Insert plannable entries into plan_index now that precomputed[] is built.
+    plan_index.reserve( plannable.size() );
+    for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
+        plan_index[plannable[i]] = i;
+    }
+    // -----------------------------------------------------------------------
+
+    // -----------------------------------------------------------------------
+    // LOD-B: Lifecycle loop — runs for EVERY monster regardless of tier or
+    // budget.  Effect durations, hunger, and field damage tick normally for
+    // all monsters.  The budget/tier system gates only the move loop below.
+    // -----------------------------------------------------------------------
     for( monster &critter : all_monsters() ) {
         // Critters in impassable tiles get pushed away, unless it's not impassable for them
         if( !critter.is_dead() && m.impassable( critter.pos() ) && !critter.can_move_to( critter.pos() ) ) {
@@ -4311,19 +4671,69 @@ void game::monmove()
             }
             critter.try_reproduce();
         }
-        while( critter.moves > 0 && !critter.is_dead() && !critter.has_effect( effect_ridden ) ) {
-            critter.made_footstep = false;
-            // Controlled critters don't make their own plans
-            if( !critter.has_effect( effect_ai_controlled ) ) {
-                // Formulate a path to follow
-                critter.plan();
-            }
-            critter.move(); // Move one square, possibly hit u
-            critter.process_triggers();
-            m.creature_in_field( critter );
-        }
+    }
 
-        const bionic_id bio_alarm( "bio_alarm" );
+    // -----------------------------------------------------------------------
+    // LOD-C: Build eligible list.
+    //
+    // Include only monsters whose next_turn <= current_turn (i.e., not
+    // deliberately deferred from a previous turn — currently all monsters
+    // advance next_turn by 1 so this simply re-includes every monster that
+    // is alive and has moves this turn).
+    //
+    // Sort ascending by Chebyshev distance to player so the budget cap
+    // removes the farthest monsters rather than arbitrary ones.  Monsters
+    // skipped by the budget retain their current next_turn value so they
+    // are guaranteed to run on the following turn.
+    // -----------------------------------------------------------------------
+    const tripoint player_pos = u.pos();
+    const int current_turn   = to_turn<int>( calendar::turn );
+
+    // Build eligible list paired with pre-computed distances so each monster's
+    // distance is calculated exactly once.  The pair is (dist, monster*) so
+    // the default comparator orders by distance first.
+    std::vector<std::pair<int, monster *>> eligible;
+    eligible.reserve( all_monsters().items.size() );
+    for( monster &critter : all_monsters() ) {
+        if( !critter.is_dead() &&
+            !critter.has_effect( effect_ridden ) &&
+            critter.moves > 0 &&
+            critter.next_turn <= current_turn ) {
+            eligible.emplace_back( rl_dist( critter.pos(), player_pos ), &critter );
+        }
+    }
+
+    // Apply the budget cap.  Excess monsters (farthest) are not processed
+    // this turn; next_turn is NOT advanced for them so they are highest-
+    // priority next turn (no starvation).
+    //
+    // nth_element is O(M) average — it partitions the N closest to the front
+    // without fully ordering them, which is all we need for the budget cut.
+    // Only pay the ordering cost when the budget actually fires.
+    if( effective_budget > 0 &&
+        static_cast<int>( eligible.size() ) > effective_budget ) {
+        std::nth_element( eligible.begin(),
+                          eligible.begin() + effective_budget,
+                          eligible.end() );
+        // Drain moves for budget-cut monsters to prevent accumulation.
+        // Without this, a monster deferred for N turns accumulates N turns
+        // of moves from process_turn(), then bursts through N actions when
+        // it finally gets a slot — no net savings at the budget boundary.
+        for( int i = effective_budget; i < static_cast<int>( eligible.size() ); ++i ) {
+            eligible[i].second->moves = 0;
+        }
+        eligible.resize( effective_budget );
+    }
+
+    // How many monsters will actually enter the move loop this turn (after cap).
+    // Compare against "LOD Tier 0 (Full AI)" to verify the budget floor is safe.
+    TracyPlot( "LOD Eligible (post-cap)", static_cast<int64_t>( eligible.size() ) );
+
+    // LOD-D: execute each eligible monster's turn.
+    // Bio-alarm helper — called after each monster finishes its move loop.
+    // static const: string_id hash lookup happens once, not every turn.
+    static const bionic_id bio_alarm( "bio_alarm" );
+    const auto check_bio_alarm = [&]( const monster & critter ) {
         if( !critter.is_dead() &&
             u.has_active_bionic( bio_alarm ) &&
             u.get_power_level() >= bio_alarm->power_trigger &&
@@ -4337,6 +4747,82 @@ void game::monmove()
                 u.wake_up();
             }
         }
+    };
+
+    // Tier-2 macro-step: once per macro_interval turns, if the monster has an
+    // active wander destination (heard a sound), nudge it one step toward that
+    // destination without running full AI.  Truly wandering monsters (wandf==0)
+    // have no goal and remain stationary — they should NOT drift toward the player.
+    const auto do_tier2_macro = [&]( monster & critter ) {
+        if( current_turn % macro_interval == 0 &&
+            critter.wandf > 0 && critter.wander_pos != critter.pos() ) {
+            const tripoint cpos      = critter.pos();
+            const tripoint macro_goal = critter.wander_pos;
+            const std::array<tripoint, 4> dirs = { {
+                    { cpos.x + 1, cpos.y,     cpos.z },
+                    { cpos.x - 1, cpos.y,     cpos.z },
+                    { cpos.x,     cpos.y + 1, cpos.z },
+                    { cpos.x,     cpos.y - 1, cpos.z }
+                }
+            };
+            int best_dist = rl_dist( cpos, macro_goal );
+            tripoint best = cpos;
+            for( const tripoint &t : dirs ) {
+                const int d = rl_dist( t, macro_goal );
+                if( d < best_dist && critter.can_move_to( t ) && is_empty( t ) ) {
+                    best_dist = d;
+                    best      = t;
+                }
+            }
+            if( best != cpos ) {
+                // NOTE: setpos() updates the critter-tracker position map but
+                // does NOT call creature_in_field() for the new tile.  Field
+                // damage (fire, acid, etc.) at the macro-step destination is
+                // deferred to the next turn's LOD-B pass.
+                critter.setpos( best );
+            }
+        }
+        // else: no active sound cue — remain stationary this macro tick.
+        critter.moves = 0;
+        critter.next_turn = current_turn + 1;
+    };
+
+    for( int i = 0; i < static_cast<int>( eligible.size() ); ++i ) {
+        monster &critter = *eligible[i].second;
+        if( critter.is_dead() ) {
+            continue;
+        }
+        if( critter.lod_tier == 2 ) {
+            do_tier2_macro( critter );
+            check_bio_alarm( critter );
+            continue;
+        }
+        bool used_preplan = false;
+        while( critter.moves > 0 && !critter.is_dead() &&
+               !critter.has_effect( effect_ridden ) ) {
+            critter.made_footstep = false;
+            if( !critter.has_effect( effect_ai_controlled ) ) {
+                if( !used_preplan ) {
+                    used_preplan = true;
+                    const auto it = plan_index.find( &critter );
+                    if( it == plan_index.end() ) {
+                        critter.plan();
+                    } else {
+                        critter.apply_plan( precomputed[it->second] );
+                    }
+                } else {
+                    critter.plan();
+                }
+                const monster_action_t action = critter.decide_action();
+                critter.execute_action( action );
+            } else {
+                critter.move();
+            }
+            critter.process_triggers();
+            m.creature_in_field( critter );
+        }
+        critter.next_turn = current_turn + 1;
+        check_bio_alarm( critter );
     }
 
     cleanup_dead();
@@ -4353,7 +4839,13 @@ void game::monmove()
         }
     }
 
-    // Now, do active NPCs.
+    cleanup_dead();
+}
+
+void game::npcmove()
+{
+    // Active NPC processing.  Extracted from monmove() so it can be
+    // individually controlled by SLEEP_SKIP_NPC without affecting monsters.
     for( npc &guy : g->all_npcs() ) {
         int turns = 0;
         if( guy.is_mounted() ) {
@@ -4393,6 +4885,74 @@ void game::monmove()
         if( !guy.is_dead() ) {
             guy.npc_update_body();
         }
+    }
+    cleanup_dead();
+}
+
+void game::sleep_skip_npc_process()
+{
+    // SLEEP_SKIP_NPC is active: NPC movement is suppressed while the player
+    // sleeps.  Instead, NPCs are forced to sleep alongside the player so they
+    // recover fatigue, heal wounds, etc. via the normal sleep path.
+    //
+    // NPCs whose current activity is not suspendable (e.g. ACT_OPERATION) are
+    // left frozen for the turn rather than interrupted mid-activity.
+
+    // Every ~30 in-game minutes, re-examine sleeping NPCs and wake any whose
+    // sleep need is satisfied or whose player has woken up.  Otherwise, renew
+    // their lying-down effect for another 30-minute window.
+    if( calendar::once_every( 30_minutes ) ) {
+        for( npc &guy : g->all_npcs() ) {
+            if( guy.is_dead() || !guy.in_sleep_state() ) {
+                continue;
+            }
+            // Wake threshold: fatigue <= 25 mirrors the natural wake-up check in
+            // player_hardcoded_effects.cpp (effect_sleep handler).
+            const bool player_awake = !u.in_sleep_state();
+            const bool npc_rested   = guy.get_fatigue() <= 25;
+            if( player_awake || npc_rested ) {
+                guy.wake_up();
+            } else {
+                // Renew for another 30 minutes so the effect does not expire mid-sleep.
+                guy.add_effect( effect_lying_down, 30_minutes, bodypart_str_id::NULL_ID(), 1 );
+            }
+        }
+    }
+
+    for( npc &guy : g->all_npcs() ) {
+        if( guy.is_dead() ) {
+            continue;
+        }
+
+        if( !guy.in_sleep_state() ) {
+            // If the NPC has an active non-suspendable activity, leave them alone.
+            if( *guy.activity && !guy.activity->is_suspendable() ) {
+                continue;
+            }
+            // Cancel any suspendable activity (it goes to the backlog for later
+            // resumption) and begin sleep via effect_lying_down.
+            if( *guy.activity ) {
+                guy.cancel_activity();
+            }
+            // Only put the NPC to sleep if they still need rest.  This avoids
+            // re-sleeping NPCs that were just woken because their fatigue was satisfied.
+            if( !guy.has_effect( effect_lying_down ) && guy.get_fatigue() > 25 ) {
+                guy.add_effect( effect_lying_down, 30_minutes, bodypart_str_id::NULL_ID(), 1 );
+            }
+        }
+
+        // Run the same per-turn housekeeping that normal npcmove() would:
+        // field damage, effect ticking via process_turn(), and sleep-recovery
+        // body updates (fatigue, healing, etc.) via npc_update_body().
+        // The move loop is intentionally skipped — sleeping NPCs don't move.
+        if( guy.is_mounted() ) {
+            guy.check_mount_is_spooked();
+        }
+        m.creature_in_field( guy );
+        if( !guy.has_effect( effect_npc_suspend ) ) {
+            guy.process_turn();
+        }
+        guy.npc_update_body();
     }
     cleanup_dead();
 }
@@ -12858,6 +13418,7 @@ double npc_overmap::spawn_chance_in_hour( int current_npc_count, double density 
 
 void game::perhaps_add_random_npc()
 {
+    ZoneScoped;
     static constexpr time_duration spawn_interval = 1_hours;
     if( !calendar::once_every( spawn_interval ) ) {
         return;
@@ -13895,6 +14456,7 @@ distribution_grid_tracker &get_distribution_grid_tracker()
 
 void cleanup_arenas()
 {
+    ZoneScoped;
     bool cont = true;
     while( cont ) {
         cont = false;

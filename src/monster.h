@@ -30,6 +30,8 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
+#include "monster_action.h"
+#include "monster_plan.h"
 #include "visitable.h"
 
 class Character;
@@ -38,6 +40,7 @@ class JsonObject;
 class JsonOut;
 class effect;
 class item;
+class npc;
 class player;
 struct dealt_projectile_attack;
 struct pathfinding_settings;
@@ -193,7 +196,7 @@ class monster : public Creature, public location_visitable<monster>
         void shift( point sm_shift ); // Shifts the monster to the appropriate submap
         void set_goal( const tripoint &p );
         // Updates current pos AND our plans
-        bool is_wandering(); // Returns true if we have no plans
+        bool is_wandering() const; // Returns true if we have no plans
 
         /**
          * Checks whether we can move to/through p. This does not account for bashing.
@@ -231,10 +234,82 @@ class monster : public Creature, public location_visitable<monster>
         void wander_to( const tripoint &p, int f ); // Try to get to (x, y), we don't know
         // the route.  Give up after f steps.
 
-        // How good of a target is given creature (checks for visibility)
-        float rate_target( Creature &c, float best, bool smart = false ) const;
+        // How good of a target is given creature (checks for visibility).
+        // Pass precalc_dist >= 0 to skip re-computing rl_dist_fast() internally
+        // when the caller already has the distance (PERF-LOSS-4).
+        float rate_target( Creature &c, float best, bool smart = false,
+                           int precalc_dist = -1 ) const;
         void plan();
-        void move(); // Actual movement
+        /**
+         * Snapshot of alive creature pointers passed to compute_plan() so that
+         * worker threads never call weak_ptr_fast::lock() (non-atomic, _S_single)
+         * on the main thread's creature collections.  Build both vectors serially
+         * on the main thread before launching the parallel planning pass.
+         * If either pointer is null, compute_plan() falls back to
+         * g->all_monsters() / g->all_npcs() — safe only on the main thread.
+         */
+        struct compute_plan_context {
+            const std::vector<monster *> *monsters;
+            const std::vector<npc *> *npcs;
+            constexpr compute_plan_context() noexcept : monsters( nullptr ), npcs( nullptr ) {}
+            constexpr compute_plan_context( const std::vector<monster *> *m,
+                                            const std::vector<npc *> *n )
+            noexcept : monsters( m ), npcs( n ) {}
+        };
+
+        /**
+         * Pure planning pass: reads game state and returns a fully-described
+         * plan without mutating *this.  Safe to call from a worker thread once
+         * P-5 (thread-local RNG), P-6 (vision cache mutex), and ctx snapshots
+         * are in place.
+         */
+        monster_plan_t compute_plan( const compute_plan_context &ctx = compute_plan_context{} ) const;
+        /**
+         * Commit phase: applies a previously computed plan to *this.
+         * Must be called on the main thread — calls remove_effect(),
+         * add_faction_anger(), trigger_character_aggro(), etc.
+         */
+        void apply_plan( const monster_plan_t &plan );
+
+        /**
+         * Phase 2+ decision pass: reads monster and world state to determine
+         * the single action this monster intends to take.  const — no mutations
+         * to *this.  Safe to call from a worker thread in Phase 2+ once the
+         * same thread-safety preconditions as compute_plan() are met.
+         *
+         * Key constraint: must NOT call Pathfinding::route() (d_maps/d_maps_store
+         * are global static, not thread-local; see Phase 3 / Step 10 for the fix).
+         * Sets needs_repath = true in the returned action when a fresh A* is
+         * needed; execute_action() performs the actual repath.
+         */
+        monster_action_t decide_action() const;
+
+        /**
+         * Pre-warm the per-turn sight cache for the (this, target) pair.
+         * Call serially before the parallel planning phase so that
+         * compute_plan() hits the shared_lock read path instead of taking
+         * a unique_lock insert for every monster-player/NPC pair.
+         * (PERF-A / GAIN-A: replaces bare mon->sees(target) pre-warm.)
+         */
+        void prewarm_sight( const Creature &target ) const;
+
+        /**
+         * Phase 2+ execution pass: applies the action returned by decide_action().
+         * Must run on the main thread (or a thread that has exclusive access to
+         * this monster's position in the reservation map, Phase 3+).
+         *
+         * Also handles the pre-move mutations that cannot be done in the const
+         * decide pass (wandf decrement, move_effects, behavior oracle, etc.).
+         * If a pre-move guard prevents movement (move_effects returns false,
+         * drowning, etc.) the precomputed action is silently discarded and the
+         * appropriate early-exit behavior is applied.
+         *
+         * process_triggers() and map::creature_in_field() are NOT called here;
+         * the caller (game::monmove LOD-D) is responsible for those.
+         */
+        void execute_action( const monster_action_t &action );
+
+        void move(); // Thin wrapper: decide_action() → execute_action()
         void footsteps( const tripoint &p ); // noise made by movement
         void shove_vehicle( const tripoint &remote_destination,
                             const tripoint &nearby_destination ); // shove vehicles out of the way
@@ -247,7 +322,7 @@ class monster : public Creature, public location_visitable<monster>
         // chance is the one_in( chance ) that the monster will drown
         bool die_if_drowning( const tripoint &at_pos, int chance = 1 );
 
-        tripoint scent_move();
+        tripoint scent_move() const;
         int calc_movecost( const tripoint &f, const tripoint &t ) const;
         int calc_climb_cost( const tripoint &f, const tripoint &t ) const;
 
@@ -303,11 +378,11 @@ class monster : public Creature, public location_visitable<monster>
         bool push_to( const tripoint &p, int boost, size_t depth );
 
         /** Returns innate monster bash skill, without calculating additional from helpers */
-        int bash_skill();
-        int bash_estimate( const tripoint &target );
+        int bash_skill() const;
+        int bash_estimate( const tripoint &target ) const;
         /** Returns ability of monster and any cooperative helpers to
          * bash the designated target.  **/
-        int group_bash_skill( const tripoint &target );
+        int group_bash_skill( const tripoint &target ) const;
 
         void stumble();
         void knock_back_to( const tripoint &to ) override;
@@ -495,6 +570,20 @@ class monster : public Creature, public location_visitable<monster>
         // TEMP VALUES
         tripoint wander_pos; // Wander destination - Just try to move in that direction
         int wandf;           // Urge to wander - Increased by sound, decrements each move
+
+        // LOD-1 scheduling: game turn on which this monster next enters the
+        // move loop.  Default 0 → eligible immediately on first turn after
+        // load.  Not persisted — 0 on load is safe (all monsters become
+        // eligible on the first turn, which is correct).
+        int next_turn = 0;
+
+        // LOD tier assigned by game::tier_assign_all() each monmove() pass.
+        //   0 = Full   (≤20 tiles from player, or has an active target)
+        //   1 = Coarse (20–60 tiles: reuse cached path, skip faction queries)
+        //   2 = Macro  (>60 tiles: single Manhattan step every MACRO_INTERVAL)
+        // Transient — not saved or loaded; recalculated each monmove().
+        int8_t lod_tier     = 0;
+        int     lod_cooldown = 0;  // turns remaining before demotion is allowed
 
 
         Character *mounted_player = nullptr; // player that is mounting this creature
