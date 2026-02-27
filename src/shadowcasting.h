@@ -108,13 +108,39 @@ inline float sight_from_lookup( const float &numerator, const float &transparenc
     return numerator * transparency;
 }
 
+/// Lightweight, non-owning view of one z-level's flat map-cache array.
+///
+/// Stores a raw pointer and the runtime tile dimensions so that the
+/// shadowcasting templates can compute `data[x * sy + y]` without
+/// relying on a compile-time MAPSIZE_Y stride.  This replaces the
+/// former `T(*)[MAPSIZE_X][MAPSIZE_Y]` pointer type used in
+/// `array_of_grids_of` and eliminates the `as_grid()` reinterpret_cast
+/// pattern that prevented runtime-sized level-cache allocations.
+template<typename T>
+struct cache_grid_ref {
+    T  *data = nullptr;
+    int sx   = 0;  ///< tile width  = cache_x = SEEX * g_mapsize
+    int sy   = 0;  ///< tile height = cache_y = SEEY * g_mapsize
+    /// Element access: grid[x][y] equivalent.
+    auto at( int x, int y ) const -> T & { return data[x * sy + y]; }
+};
+
+template<typename T>
+using array_of_grids_of = std::array<cache_grid_ref<T>, OVERMAP_LAYERS>;
+
+/// Run shadowcasting for all 8 octants.
+///
+/// @p output_cache, @p input_array, @p blocked_array are flat row-major
+/// arrays; element (x, y) is at index `x * sy + y`.
+/// @p sx  tile width  of the loaded area (= g_mapsize_x)
+/// @p sy  tile height of the loaded area (= g_mapsize_y)
 template<typename T, typename Out, T( *calc )( const T &, const T &, const int & ),
          bool( *check )( const T &, const T & ),
          void( *update_output )( Out &, const T &, quadrant ),
          T( *accumulate )( const T &, const T &, const int & ) >
-void castLightAll( Out( &output_cache )[MAPSIZE_X][MAPSIZE_Y],
-                   const T( &input_array )[MAPSIZE_X][MAPSIZE_Y],
-                   const diagonal_blocks( &blocked_array )[MAPSIZE_X][MAPSIZE_Y],
+void castLightAll( Out *output_cache, const T *input_array,
+                   const diagonal_blocks *blocked_array,
+                   int sx, int sy,
                    point offset, int offsetDistance = 0,
                    T numerator = 1.0 );
 
@@ -123,13 +149,10 @@ template<typename T, typename Out, T( *calc )( const T &, const T &, const int &
          void( *update_output )( Out &, const T &, quadrant ),
          T( *accumulate )( const T &, const T &, const int & ),
          T( *lookup_calc )( const T &, const T &, const int & )>
-void castLightAllWithLookup( Out( &output_cache )[MAPSIZE_X][MAPSIZE_Y],
-                             const T( &input_array )[MAPSIZE_X][MAPSIZE_Y],
-                             const diagonal_blocks( &blocked_array )[MAPSIZE_X][MAPSIZE_Y],
+void castLightAllWithLookup( Out *output_cache, const T *input_array,
+                             const diagonal_blocks *blocked_array,
+                             int sx, int sy,
                              const point &offset, int offsetDistance = 0, T numerator = 1.0 );
-
-template<typename T>
-using array_of_grids_of = std::array<T( * )[MAPSIZE_X][MAPSIZE_Y], OVERMAP_LAYERS>;
 
 // TODO: Generalize the floor check, allow semi-transparent floors
 template< typename T, T( *calc )( const T &, const T &, const int & ),

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <climits>
 #include <cstdint>
+#include <ranges>
 
 #include "calendar.h"
 #include "distribution_grid.h"
@@ -44,6 +45,24 @@ static int compute_field_decay( int current_intensity, int half_life_turns,
 // ---------------------------------------------------------------------------
 // batch_turns_field
 // ---------------------------------------------------------------------------
+// NOTE: Divergence from tick_submap (intentional approximation)
+// ---------------------------------------------------------------
+// tick_submap (world_tick_interval_ == 1) uses the canonical stochastic
+// dice-roll decay from map::process_fields_in_submap():
+//
+//   if( fdata.half_life > 0 && dice(2, age) > half_life )
+//       intensity--;
+//
+// batch_turns_field (world_tick_interval_ > 1) uses compute_field_decay(),
+// a deterministic linear approximation: one intensity drop per half_life
+// turns elapsed.  Over large N the expected number of drops is the same,
+// but individual fields will not follow the exact probabilistic curve.
+//
+// This divergence is accepted for performance: the stochastic path requires
+// one dice-roll per field per elapsed turn, whereas the deterministic path
+// requires only integer division.  Fields with very short half-lives (<10 t)
+// may decay slightly faster or slower than the stochastic path at low N,
+// but the long-run averages converge.
 
 void batch_turns_field( submap &sm, int n )
 {
@@ -74,7 +93,7 @@ void batch_turns_field( submap &sm, int n )
                     const int intensity    = cur.get_field_intensity();
                     int remaining_age      = 0;
                     const int drops        = compute_field_decay( intensity, hl,
-                                             current_age, n, remaining_age );
+                                            current_age, n, remaining_age );
                     if( drops > 0 ) {
                         cur.set_field_intensity( intensity - drops );
                         cur.set_field_age( time_duration::from_turns( remaining_age ) );
@@ -107,14 +126,16 @@ void batch_turns_items( submap &sm, int n )
     if( n <= 0 || sm.active_items.empty() ) {
         return;
     }
-    n = std::min( n, MAX_CATCHUP_FIELDS );
+    n = std::min( n, MAX_CATCHUP_ITEMS );
 
-    for( item *it : sm.active_items.get() ) {
-        if( it == nullptr ) {
-            continue;
+    std::ranges::for_each(
+        sm.active_items.get() | std::views::filter( []( const item *it ) {
+            return it != nullptr && it->has_explicit_turn_timer();
+        } ),
+        [n]( item *it ) {
+            it->advance_timer( n );
         }
-        it->advance_timer( n );
-    }
+    );
 }
 
 // ---------------------------------------------------------------------------

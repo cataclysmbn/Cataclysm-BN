@@ -92,6 +92,12 @@ class submap_stream
 
         std::vector<pending_load> pending_;
         mutable std::mutex mutex_;
+
+        // Serialises submap generation (step 3 of request_load) across all
+        // worker threads of this instance.  Using a member rather than a
+        // static local prevents workers for separate submap_stream instances
+        // (e.g. different dimensions) from blocking each other unnecessarily.
+        std::mutex gen_mutex_;
 };
 
 /** Process-lifetime streaming instance used by map::shift() and game::update_map(). */

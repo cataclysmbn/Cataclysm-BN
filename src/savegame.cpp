@@ -170,18 +170,16 @@ std::string scent_map::serialize( bool is_type ) const
     } else {
         int rle_lastval = -1;
         int rle_count = 0;
-        for( auto &elem : grscent ) {
-            for( auto &val : elem ) {
-                if( val == rle_lastval ) {
-                    rle_count++;
-                } else {
-                    if( rle_count ) {
-                        rle_out << rle_count << " ";
-                    }
-                    rle_out << val << " ";
-                    rle_lastval = val;
-                    rle_count = 1;
+        for( auto val : grscent ) {
+            if( val == rle_lastval ) {
+                rle_count++;
+            } else {
+                if( rle_count ) {
+                    rle_out << rle_count << " ";
                 }
+                rle_out << val << " ";
+                rle_lastval = val;
+                rle_count = 1;
             }
         }
         rle_out << rle_count;
@@ -373,14 +371,12 @@ void scent_map::deserialize( const std::string &data, bool is_type )
     } else {
         int stmp = 0;
         int count = 0;
-        for( auto &elem : grscent ) {
-            for( auto &val : elem ) {
-                if( count == 0 ) {
-                    buffer >> stmp >> count;
-                }
-                count--;
-                val = stmp;
+        for( auto &val : grscent ) {
+            if( count == 0 ) {
+                buffer >> stmp >> count;
             }
+            count--;
+            val = stmp;
         }
     }
 }

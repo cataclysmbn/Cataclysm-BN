@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "game.h"
+#include "game_constants.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "point.h"
@@ -200,7 +201,7 @@ Pathfinding::State &Pathfinding::tile_state_at( const point &p )
 void Pathfinding::produce_d_map( point dest, int z, PathfindingSettings settings )
 {
     if( Pathfinding::d_maps_store.empty() ) {
-        std::unique_ptr<Pathfinding> d_map = std::make_unique<Pathfinding>();
+        std::unique_ptr<Pathfinding> d_map = std::make_unique<Pathfinding>( g_mapsize_x, g_mapsize_y );
         Pathfinding::d_maps_store.push_back( std::move( d_map ) );
     }
 
@@ -287,8 +288,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
     // This cuboid will contain negative values, it's fine
     half_open_cuboid<tripoint> prev_z_volume_local(
         tripoint( here.getlocal( Pathfinding::z_area ), -OVERMAP_DEPTH ),
-        tripoint( here.getlocal( Pathfinding::z_area + point( g_mapsize_x, g_mapsize_y ) ),
-                  OVERMAP_HEIGHT + 1 )
+        tripoint( here.getlocal( Pathfinding::z_area + point( g_mapsize_x, g_mapsize_y ) ), OVERMAP_HEIGHT + 1 )
     );
 
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {

@@ -12319,13 +12319,3 @@ detached_ptr<item> Character::reduce_charges( item *it, int quantity )
     return taken;
 }
 
-// signal_lost getter and setter
-bool Character::get_signal_lost() const
-{
-    return signal_lost;
-}
-
-void Character::set_signal_lost( bool lost )
-{
-    signal_lost = lost;
-}

@@ -325,11 +325,6 @@ class game
          */
         std::string get_dimension_prefix() const;
         /**
-         * Return the dimension ID the player is currently in.
-         * This is the same as m.get_bound_dimension().
-         * An empty string means the primary (default) dimension.
-         */
-        const std::string &current_player_dimension() const;
         /** Returns the other end of the stairs (if any). May query, affect u etc.  */
         std::optional<tripoint> find_stairs( map &mp, int z_after, bool peeking );
         std::optional<tripoint> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,

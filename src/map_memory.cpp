@@ -6,6 +6,7 @@
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "game.h"
+#include "game_constants.h"
 #include "line.h"
 #include "translations.h"
 #include "map.h"
@@ -13,7 +14,7 @@
 const memorized_terrain_tile mm_submap::default_tile { "", 0, 0 };
 const int mm_submap::default_symbol = 0;
 
-#define MM_SIZE (MAPSIZE * 2)
+// MM_SIZE = g_mapsize * 2 (runtime; used inline where needed)
 
 #define dbg(x) DebugLog((x),DC::MapMem)
 
@@ -281,12 +282,13 @@ void map_memory::load( const tripoint &pos )
 {
     clear_cache();
 
+    const int mm_size = g_mapsize * 2;
     coord_pair p( pos );
-    tripoint start = p.sm - tripoint( MM_SIZE / 2, MM_SIZE / 2, 0 );
+    tripoint start = p.sm - tripoint( mm_size / 2, mm_size / 2, 0 );
     dbg( DL::Info ) << "[LOAD] Loading memory map around " << p.sm << ". Loading submaps within "
-                    << start << "->" << start + tripoint( MM_SIZE, MM_SIZE, 0 );
-    for( int dy = 0; dy < MM_SIZE; dy++ ) {
-        for( int dx = 0; dx < MM_SIZE; dx++ ) {
+                    << start << "->" << start + tripoint( mm_size, mm_size, 0 );
+    for( int dy = 0; dy < mm_size; dy++ ) {
+        for( int dx = 0; dx < mm_size; dx++ ) {
             fetch_submap( start + tripoint( dx, dy, 0 ) );
         }
     }
@@ -310,8 +312,8 @@ bool map_memory::save( const tripoint &pos )
     }
     submaps.clear();
 
-    constexpr point MM_HSIZE_P = point( MM_SIZE / 2, MM_SIZE / 2 );
-    half_open_rectangle<point> rect_keep( sm_center.xy() - MM_HSIZE_P, sm_center.xy() + MM_HSIZE_P );
+    const point mm_hsize_p( g_mapsize, g_mapsize );
+    half_open_rectangle<point> rect_keep( sm_center.xy() - mm_hsize_p, sm_center.xy() + mm_hsize_p );
 
     dbg( DL::Info ) << "[SAVE] Saving memory map around " << sm_center << ". Keeping submaps within "
                     << rect_keep.p_min << "->" << rect_keep.p_max;

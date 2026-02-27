@@ -54,11 +54,7 @@ static nc_color sev( const size_t level )
 
 void scent_map::reset()
 {
-    for( auto &elem : grscent ) {
-        for( auto &val : elem ) {
-            val = 0;
-        }
-    }
+    std::fill( grscent.begin(), grscent.end(), 0 );
     typescent = scenttype_id();
 }
 
@@ -66,14 +62,12 @@ void scent_map::decay()
 {
     ZoneScopedN( "scent_map::decay" );
     // PERF-LOSS-4: reverted to a serial loop.  The grscent array holds roughly
-    // 70 k integers (MAPSIZE_X * MAPSIZE_Y); decrementing each by 1 with a
+    // 70 k integers (scent_sx * scent_sy); decrementing each by 1 with a
     // max(0,…) clamp takes tens of microseconds — less than the thread-dispatch
     // and std::latch synchronisation overhead of parallel_for on most hardware.
     // Threading here added complexity without measurable benefit.
-    for( auto &row : grscent ) {
-        for( auto &val : row ) {
-            val = std::max( 0, val - 1 );
-        }
+    for( auto &val : grscent ) {
+        val = std::max( 0, val - 1 );
     }
 }
 
@@ -91,19 +85,19 @@ void scent_map::draw( const catacurses::window &win, const int div, const tripoi
 
 void scent_map::shift( point sm_shift )
 {
-    scent_array<int> new_scent;
-    for( size_t x = 0; x < MAPSIZE_X; ++x ) {
-        for( size_t y = 0; y < MAPSIZE_Y; ++y ) {
+    auto new_scent = std::vector<int>( static_cast<size_t>( scent_sx ) * scent_sy, 0 );
+    for( int x = 0; x < scent_sx; ++x ) {
+        for( int y = 0; y < scent_sy; ++y ) {
             const point p = point( x, y ) + sm_shift;
-            new_scent[x][y] = inbounds( p ) ? grscent[ p.x ][ p.y ] : 0;
+            new_scent[x * scent_sy + y] = inbounds( p ) ? grscent[p.x * scent_sy + p.y] : 0;
         }
     }
-    grscent = new_scent;
+    grscent = std::move( new_scent );
 }
 
 int scent_map::get( const tripoint &p ) const
 {
-    if( inbounds( p ) && grscent[p.x][p.y] > 0 ) {
+    if( inbounds( p ) && grscent[p.x * scent_sy + p.y] > 0 ) {
         return get_unsafe( p );
     }
     return 0;
@@ -118,20 +112,20 @@ void scent_map::set( const tripoint &p, int value, const scenttype_id &type )
 
 void scent_map::set_unsafe( const tripoint &p, int value, const scenttype_id &type )
 {
-    grscent[p.x][p.y] = value;
+    grscent[p.x * scent_sy + p.y] = value;
     if( !type.is_empty() ) {
         typescent = type;
     }
 }
 int scent_map::get_unsafe( const tripoint &p ) const
 {
-    return grscent[p.x][p.y] - std::abs( gm.get_levz() - p.z );
+    return grscent[p.x * scent_sy + p.y] - std::abs( gm.get_levz() - p.z );
 }
 
 scenttype_id scent_map::get_type( const tripoint &p ) const
 {
     scenttype_id id;
-    if( inbounds( p ) && grscent[p.x][p.y] > 0 ) {
+    if( inbounds( p ) && grscent[p.x * scent_sy + p.y] > 0 ) {
         id = typescent;
     }
     return id;
@@ -149,11 +143,8 @@ bool scent_map::inbounds( const tripoint &p ) const
     if( !scent_map_z_level_inbounds ) {
         return false;
     }
-    static constexpr point scent_map_boundary_min{};
-    static constexpr point scent_map_boundary_max( MAPSIZE_X, MAPSIZE_Y );
-
-    static constexpr half_open_rectangle<point> scent_map_boundaries(
-        scent_map_boundary_min, scent_map_boundary_max );
+    const half_open_rectangle<point> scent_map_boundaries(
+        point_zero, point( scent_sx, scent_sy ) );
 
     return scent_map_boundaries.contains( p.xy() );
 }
@@ -171,16 +162,14 @@ void scent_map::update( const tripoint &center, map &m )
 
     //the block and reduce scent properties are folded into a single scent_transfer value here
     //block=0 reduce=1 normal=5
-    scent_array<char> scent_transfer{};
+    auto &_scent_lc = m.access_cache( center.z );
+    const int st_sy = _scent_lc.cache_y;
+    auto scent_transfer = std::vector<char>( static_cast<size_t>( _scent_lc.cache_x ) * st_sy, 0 );
+    const auto *blocked_data = _scent_lc.vehicle_obstructed_cache.data();
 
     std::array < std::array < int, 3 + SCENT_RADIUS * 2 >, 1 + SCENT_RADIUS * 2 > new_scent;
     std::array < std::array < int, 3 + SCENT_RADIUS * 2 >, 1 + SCENT_RADIUS * 2 > sum_3_scent_y;
     std::array < std::array < char, 3 + SCENT_RADIUS * 2 >, 1 + SCENT_RADIUS * 2 > squares_used_y;
-
-    auto &_scent_lc = m.access_cache( center.z );
-    diagonal_blocks( &blocked_cache )[MAPSIZE_X][MAPSIZE_Y] =
-        *reinterpret_cast<diagonal_blocks( * )[MAPSIZE_X][MAPSIZE_Y]>(
-            _scent_lc.vehicle_obstructed_cache.data() );
 
     // for loop constants
     const int scentmap_minx = center.x - SCENT_RADIUS;
@@ -189,7 +178,7 @@ void scent_map::update( const tripoint &center, map &m )
     const int scentmap_maxy = center.y + SCENT_RADIUS;
 
     // The new scent flag searching function. Should be wayyy faster than the old one.
-    m.scent_blockers( scent_transfer, point( scentmap_minx - 1, scentmap_miny - 1 ),
+    m.scent_blockers( scent_transfer, st_sy, point( scentmap_minx - 1, scentmap_miny - 1 ),
                       point( scentmap_maxx + 1, scentmap_maxy + 1 ) );
 
     for( int x = 0; x < SCENT_RADIUS * 2 + 3; ++x ) {
@@ -212,8 +201,8 @@ void scent_map::update( const tripoint &center, map &m )
                 sum_3_scent_y[y][x] = 0;
                 squares_used_y[y][x] = 0;
                 for( int i = abs.y - 1; i <= abs.y + 1; ++i ) {
-                    sum_3_scent_y[y][x] += scent_transfer[abs.x][i] * grscent[abs.x][i];
-                    squares_used_y[y][x] += scent_transfer[abs.x][i];
+                    sum_3_scent_y[y][x] += scent_transfer[abs.x * st_sy + i] * grscent[abs.x * scent_sy + i];
+                    squares_used_y[y][x] += scent_transfer[abs.x * st_sy + i];
                 }
             }
         } );
@@ -227,8 +216,8 @@ void scent_map::update( const tripoint &center, map &m )
                 sum_3_scent_y[y][x] = 0;
                 squares_used_y[y][x] = 0;
                 for( int i = abs.y - 1; i <= abs.y + 1; ++i ) {
-                    sum_3_scent_y[y][x] += scent_transfer[abs.x][i] * grscent[abs.x][i];
-                    squares_used_y[y][x] += scent_transfer[abs.x][i];
+                    sum_3_scent_y[y][x] += scent_transfer[abs.x * st_sy + i] * grscent[abs.x * scent_sy + i];
+                    squares_used_y[y][x] += scent_transfer[abs.x * st_sy + i];
                 }
             }
         }
@@ -246,30 +235,30 @@ void scent_map::update( const tripoint &center, map &m )
                 int total = sum_3_scent_y[y][x - 1] + sum_3_scent_y[y][x] + sum_3_scent_y[y][x + 1];
 
                 //handle vehicle holes
-                if( blocked_cache[abs.x][abs.y].nw && scent_transfer[abs.x + 1][abs.y + 1] == 5 ) {
+                if( blocked_data[abs.x * st_sy + abs.y].nw && scent_transfer[( abs.x + 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * grscent[abs.x + 1][abs.y + 1];
+                    total -= 4 * grscent[( abs.x + 1 ) * scent_sy + abs.y + 1];
                 }
-                if( blocked_cache[abs.x][abs.y].ne && scent_transfer[abs.x - 1][abs.y + 1] == 5 ) {
+                if( blocked_data[abs.x * st_sy + abs.y].ne && scent_transfer[( abs.x - 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * grscent[abs.x - 1][abs.y + 1];
+                    total -= 4 * grscent[( abs.x - 1 ) * scent_sy + abs.y + 1];
                 }
-                if( blocked_cache[abs.x - 1][abs.y - 1].nw && scent_transfer[abs.x - 1][abs.y - 1] == 5 ) {
+                if( blocked_data[( abs.x - 1 ) * st_sy + abs.y - 1].nw && scent_transfer[( abs.x - 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * grscent[abs.x - 1][abs.y - 1];
+                    total -= 4 * grscent[( abs.x - 1 ) * scent_sy + abs.y - 1];
                 }
-                if( blocked_cache[abs.x + 1][abs.y - 1].ne && scent_transfer[abs.x + 1][abs.y - 1] == 5 ) {
+                if( blocked_data[( abs.x + 1 ) * st_sy + abs.y - 1].ne && scent_transfer[( abs.x + 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * grscent[abs.x + 1][abs.y - 1];
+                    total -= 4 * grscent[( abs.x + 1 ) * scent_sy + abs.y - 1];
                 }
 
                 //Lingering scent
-                int temp_scent =  grscent[abs.x][abs.y] * ( 250 - squares_used  *
-                                  scent_transfer[abs.x][abs.y] ) ;
-                temp_scent -=  grscent[abs.x][abs.y] * scent_transfer[abs.x][abs.y] *
+                int temp_scent =  grscent[abs.x * scent_sy + abs.y] * ( 250 - squares_used  *
+                                  scent_transfer[abs.x * st_sy + abs.y] ) ;
+                temp_scent -=  grscent[abs.x * scent_sy + abs.y] * scent_transfer[abs.x * st_sy + abs.y] *
                                ( 45 - squares_used ) / 5;
 
-                new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x][abs.y] ) / 250;
+                new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x * st_sy + abs.y] ) / 250;
             }
         } );
     } else {
@@ -281,30 +270,30 @@ void scent_map::update( const tripoint &center, map &m )
                 int total = sum_3_scent_y[y][x - 1] + sum_3_scent_y[y][x] + sum_3_scent_y[y][x + 1];
 
                 //handle vehicle holes
-                if( blocked_cache[abs.x][abs.y].nw && scent_transfer[abs.x + 1][abs.y + 1] == 5 ) {
+                if( blocked_data[abs.x * st_sy + abs.y].nw && scent_transfer[( abs.x + 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * grscent[abs.x + 1][abs.y + 1];
+                    total -= 4 * grscent[( abs.x + 1 ) * scent_sy + abs.y + 1];
                 }
-                if( blocked_cache[abs.x][abs.y].ne && scent_transfer[abs.x - 1][abs.y + 1] == 5 ) {
+                if( blocked_data[abs.x * st_sy + abs.y].ne && scent_transfer[( abs.x - 1 ) * st_sy + abs.y + 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * grscent[abs.x - 1][abs.y + 1];
+                    total -= 4 * grscent[( abs.x - 1 ) * scent_sy + abs.y + 1];
                 }
-                if( blocked_cache[abs.x - 1][abs.y - 1].nw && scent_transfer[abs.x - 1][abs.y - 1] == 5 ) {
+                if( blocked_data[( abs.x - 1 ) * st_sy + abs.y - 1].nw && scent_transfer[( abs.x - 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * grscent[abs.x - 1][abs.y - 1];
+                    total -= 4 * grscent[( abs.x - 1 ) * scent_sy + abs.y - 1];
                 }
-                if( blocked_cache[abs.x + 1][abs.y - 1].ne && scent_transfer[abs.x + 1][abs.y - 1] == 5 ) {
+                if( blocked_data[( abs.x + 1 ) * st_sy + abs.y - 1].ne && scent_transfer[( abs.x + 1 ) * st_sy + abs.y - 1] == 5 ) {
                     squares_used -= 4;
-                    total -= 4 * grscent[abs.x + 1][abs.y - 1];
+                    total -= 4 * grscent[( abs.x + 1 ) * scent_sy + abs.y - 1];
                 }
 
                 //Lingering scent
-                int temp_scent =  grscent[abs.x][abs.y] * ( 250 - squares_used  *
-                                  scent_transfer[abs.x][abs.y] ) ;
-                temp_scent -=  grscent[abs.x][abs.y] * scent_transfer[abs.x][abs.y] *
+                int temp_scent =  grscent[abs.x * scent_sy + abs.y] * ( 250 - squares_used  *
+                                  scent_transfer[abs.x * st_sy + abs.y] ) ;
+                temp_scent -=  grscent[abs.x * scent_sy + abs.y] * scent_transfer[abs.x * st_sy + abs.y] *
                                ( 45 - squares_used ) / 5;
 
-                new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x][abs.y] ) / 250;
+                new_scent[y][x] = ( temp_scent + total * scent_transfer[abs.x * st_sy + abs.y] ) / 250;
             }
         }
     }
@@ -320,7 +309,7 @@ void scent_map::update( const tripoint &center, map &m )
                       rl_dist( center, tripoint( point( x + scentmap_minx - 1, y + scentmap_miny ),
                                                  g->get_levz() ) ) <= 8 ) ||
                     !get_map().has_flag( TFLAG_LIQUID, point( x + scentmap_minx - 1, y + scentmap_miny ) ) ) {
-                    grscent[x + scentmap_minx - 1 ][y + scentmap_miny] = new_scent[y][x];
+                    grscent[( x + scentmap_minx - 1 ) * scent_sy + y + scentmap_miny] = new_scent[y][x];
                 }
             }
         } );
@@ -333,7 +322,7 @@ void scent_map::update( const tripoint &center, map &m )
                       rl_dist( center, tripoint( point( x + scentmap_minx - 1, y + scentmap_miny ),
                                                  g->get_levz() ) ) <= 8 ) ||
                     !get_map().has_flag( TFLAG_LIQUID, point( x + scentmap_minx - 1, y + scentmap_miny ) ) ) {
-                    grscent[x + scentmap_minx - 1 ][y + scentmap_miny] = new_scent[y][x];
+                    grscent[( x + scentmap_minx - 1 ) * scent_sy + y + scentmap_miny] = new_scent[y][x];
                 }
             }
         }

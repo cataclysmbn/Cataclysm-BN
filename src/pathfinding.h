@@ -330,8 +330,7 @@ class Pathfinding
         ExpansionOutcome expand_2d_up_to( const point &start, const RouteSettings &route_settings );
     public:
         // Allocates flat arrays for a map of size mx × my.
-        // Default arguments match the compile-time MAPSIZE_X/Y constants.
-        explicit Pathfinding( int mx = MAPSIZE_X, int my = MAPSIZE_Y );
+        explicit Pathfinding( int mx, int my );
 
         // get `route` from `from` to `to` if available in accordance to `route_settings` while `path_settings` defines our capabilities, otherwise empty vector.
         // Found route will include `from` and `to`.

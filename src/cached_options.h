@@ -96,6 +96,8 @@ extern int  lod_macro_interval;
 extern int  lod_coarse_scent_interval;
 extern int  lod_group_morale_max_tier;
 
+extern bool out_of_bubble_fire_spread;
+
 /** Multithreading options — all require restart to take effect. */
 extern bool parallel_enabled;
 extern bool parallel_monster_planning;

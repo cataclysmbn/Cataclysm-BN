@@ -317,15 +317,10 @@ struct level_cache {
     int cache_y = 0;
     int cache_mapsize = 0;
 
-    // Flat index for tile-coordinate arrays: vec[x * MAPSIZE_Y + y]
-    // Uses the compile-time MAPSIZE_Y stride so that vec.data() can always be
-    // safely reinterpreted as T(*)[MAPSIZE_Y] by shadowcasting, regardless of
-    // the runtime g_mapsize.  Vectors are always allocated at MAPSIZE_X*MAPSIZE_Y
-    // elements (the compile-time maximum), so no out-of-bounds access occurs even
-    // when the active map is smaller than that maximum.
-    int idx( int x, int y ) const {
-        return x * MAPSIZE_Y + y;
-    }
+    /// Flat index for tile-coordinate arrays: vec[x * cache_y + y].
+    /// Uses the runtime cache_y stride (= SEEY * mapsize) so that all
+    /// vector accesses correctly reflect the actual loaded-area dimensions.
+    auto idx( int x, int y ) const -> int { return x * cache_y + y; }
     // Flat index for submap-coordinate bitsets: bitset[sx * cache_mapsize + sy]
     int bidx( int sx, int sy ) const {
         return sx * cache_mapsize + sy;
@@ -1663,7 +1658,7 @@ class map : public submap_load_listener
          * Build the map of scent-resistant tiles.
          * Should be way faster than if done in `game.cpp` using public map functions.
          */
-        void scent_blockers( std::array<std::array<char, MAPSIZE_X>, MAPSIZE_Y> &scent_transfer,
+        void scent_blockers( std::vector<char> &scent_transfer, int st_sy,
                              point min, point max );
 
         // Computers
@@ -1749,7 +1744,7 @@ class map : public submap_load_listener
         void build_map_cache( int zlev, bool skip_lightmap = false );
         // Unlike the other caches, this populates a supplied cache instead of an internal cache.
         void build_obstacle_cache( const tripoint &start, const tripoint &end,
-                                   float( &obstacle_cache )[MAPSIZE_X][MAPSIZE_Y] );
+                                   float *obstacle_cache, int cache_sy );
 
         vehicle *add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
                               const std::variant<tripoint, point> &p_,
@@ -2089,7 +2084,7 @@ class map : public submap_load_listener
         void apply_directional_light( const tripoint &p, int direction, float luminance );
         void apply_light_arc( const tripoint &p, units::angle, float luminance,
                               units::angle wideangle = 30_degrees );
-        void apply_light_ray( bool lit[MAPSIZE_X][MAPSIZE_Y],
+        void apply_light_ray( std::vector<bool> &lit,
                               const tripoint &s, const tripoint &e, float luminance );
         void add_light_from_items( const tripoint &p, const item_stack::iterator &begin,
                                    const item_stack::iterator &end );

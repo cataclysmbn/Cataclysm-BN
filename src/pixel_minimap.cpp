@@ -133,7 +133,7 @@ class pixel_minimap::shared_texture_pool
 {
     public:
         shared_texture_pool( const std::function<SDL_Texture_Ptr()> &generator ) {
-            const size_t pool_size = ( MAPSIZE + 1 ) * ( MAPSIZE + 1 );
+            const size_t pool_size = static_cast<size_t>( g_mapsize + 1 ) * ( g_mapsize + 1 );
 
             texture_pool.reserve( pool_size );
             inactive_index.reserve( pool_size );
@@ -365,7 +365,7 @@ pixel_minimap::submap_cache &pixel_minimap::get_cache_at( const tripoint &abs_sm
 void pixel_minimap::process_cache( const tripoint &center )
 {
     // Refresh the tile count to match the current runtime map size.
-    total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) *SEEY };
+    total_tiles_count = { ( g_mapsize - 2 ) * SEEX, ( g_mapsize - 2 ) * SEEY };
 
     prepare_cache_for_updates( center );
 

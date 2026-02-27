@@ -40,10 +40,10 @@ class scent_type
 class scent_map
 {
     protected:
-        template<typename T>
-        using scent_array = std::array<std::array<T, MAPSIZE_Y>, MAPSIZE_X>;
-
-        scent_array<int> grscent;
+        /// Flat tile-scent grid, indexed as grscent[x * scent_sy + y].
+        std::vector<int>  grscent = std::vector<int>( static_cast<size_t>( MAPSIZE_X ) * MAPSIZE_Y, 0 );
+        int               scent_sx = MAPSIZE_X;
+        int               scent_sy = MAPSIZE_Y;
         scenttype_id typescent;
         std::optional<tripoint> player_last_position;
         time_point player_last_moved = calendar::before_time_starts;

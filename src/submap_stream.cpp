@@ -36,30 +36,25 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
     // protected by mapbuffer::submaps_mutex_ (a recursive_mutex), which guards
     // concurrent access to the underlying std::map between worker threads and the
     // main thread's lookup_submap() calls in loadn().
-    static std::mutex gen_mutex;
-
-    auto fut = get_thread_pool().submit_returning( [dim, pos]() -> submap * {
+    auto fut = get_thread_pool().submit_returning( [this, dim, pos]() -> submap * {
         mapbuffer &mb = MAPBUFFER_REGISTRY.get( dim );
 
         // Step 1: early-out — submap already present (concurrent read, no lock needed).
-        if( submap *existing = mb.lookup_submap_in_memory( pos.raw() ) )
-        {
+        if( submap *existing = mb.lookup_submap_in_memory( pos.raw() ) ) {
             return existing;
         }
 
         // Steps 2 and 3 write to the mapbuffer and must be serialised.
-        std::lock_guard<std::mutex> lk( gen_mutex );
+        std::lock_guard<std::mutex> lk( gen_mutex_ );
 
         // Re-check after acquiring lock: another worker may have loaded it already.
-        if( submap *existing = mb.lookup_submap_in_memory( pos.raw() ) )
-        {
+        if( submap *existing = mb.lookup_submap_in_memory( pos.raw() ) ) {
             return existing;
         }
 
         // Step 2: try to load from disk.  Returns nullptr if no saved file exists.
         submap *sm = mb.load_submap( pos );
-        if( sm )
-        {
+        if( sm ) {
             return sm;
         }
 
@@ -117,20 +112,20 @@ void submap_stream::drain_completed( map &m,
     // finds it there on the fast in-memory path and calls setsubmap() correctly.
     // No grid update is needed here.
     pending_.erase(
-    std::remove_if( pending_.begin(), pending_.end(), [&]( pending_load & p ) {
-        if( p.future.wait_for( std::chrono::seconds( 0 ) ) != std::future_status::ready ) {
-            return false;
-        }
-        p.future.get();  // consume the future; submap is already in MAPBUFFER
-        return true;
-    } ),
-    pending_.end() );
+        std::remove_if( pending_.begin(), pending_.end(), [&]( pending_load &p ) {
+            if( p.future.wait_for( std::chrono::seconds( 0 ) ) != std::future_status::ready ) {
+                return false;
+            }
+            p.future.get();  // consume the future; submap is already in MAPBUFFER
+            return true;
+        } ),
+        pending_.end() );
 }
 
 auto submap_stream::flush_all() -> void
 {
     std::lock_guard<std::mutex> lk( mutex_ );
-    std::ranges::for_each( pending_, []( auto & p ) {
+    std::ranges::for_each( pending_, []( auto &p ) {
         p.future.wait();
         p.future.get(); // consume result; submap data already in mapbuffer
     } );

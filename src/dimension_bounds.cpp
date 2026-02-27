@@ -1,10 +1,7 @@
 #include "dimension_bounds.h"
 
+#include "coordinates.h"
 #include "map.h"
-
-// Number of map squares per submap
-static constexpr int SEEX_SIZE = SEEX;
-static constexpr int SEEY_SIZE = SEEY;
 
 bool dimension_bounds::contains( const tripoint_abs_sm &p ) const
 {
@@ -15,9 +12,9 @@ bool dimension_bounds::contains( const tripoint_abs_sm &p ) const
 
 bool dimension_bounds::contains_ms( const tripoint_abs_ms &p ) const
 {
-    // Convert map square coordinates to submap coordinates
-    // Each submap is SEEX * SEEY map squares
-    tripoint_abs_sm sm_pos( p.x() / SEEX_SIZE, p.y() / SEEY_SIZE, p.z() );
+    // Plain integer division (p.x() / SEEX) would truncate toward zero, incorrectly
+    // mapping tiles at e.g. x=-1 to submap 0 instead of submap -1.
+    const auto sm_pos = project_to<coords::sm>( p );
     return contains( sm_pos );
 }
 
@@ -32,8 +29,8 @@ bool dimension_bounds::contains_local( const tripoint &p, const tripoint_abs_sm 
 {
     // Convert local map position to absolute submap coordinates
     // Local position is in map squares, origin is in submaps
-    int abs_x = map_origin.x() * SEEX_SIZE + p.x;
-    int abs_y = map_origin.y() * SEEY_SIZE + p.y;
+    int abs_x = map_origin.x() * SEEX + p.x;
+    int abs_y = map_origin.y() * SEEY + p.y;
     tripoint_abs_ms abs_ms( abs_x, abs_y, p.z );
     return contains_ms( abs_ms );
 }

@@ -1978,19 +1978,6 @@ void options_manager::add_options_graphics()
          true
        );
 
-    add( "NIGHT_VISION_DEFAULT_COLOR", graphics, translate_marker( "Night Vision Default Colors" ),
-    translate_marker( "Choose from default night vision colors." ), {
-        { "#2eab01", translate_marker( "Green" ) },
-        { "#ff141c", translate_marker( "Red" ) },
-        { "#888888", translate_marker( "Gray" ) },
-        { "custom", translate_marker( "Custom" ) }
-    }, "#2eab01" );
-
-    add( "NIGHT_VISION_COLOR", graphics, translate_marker( "Night Vision Color" ),
-         translate_marker( "Sets custom night vision color." ), "#2eab01", 60 );
-
-    get_option( "NIGHT_VISION_COLOR" ).setPrerequisite( "NIGHT_VISION_DEFAULT_COLOR", "custom" );
-
     add_empty_line();
 
     add( "TERMINAL_X", graphics, translate_marker( "Terminal width" ),
@@ -2454,10 +2441,9 @@ void options_manager::add_options_performance()
              translate_marker( "Controls whether fire in loaded submaps can spread into adjacent "
                                "unloaded submaps.  'None': fire only decays, never spreads beyond "
                                "the loaded set.  'Adjacent': fire requests one extra layer of "
-        "loaded submaps at each boundary to preserve correct spread behavior." ), {
-            { "none", translate_marker( "None (pause spread)" ) },
-            { "adjacent", translate_marker( "Adjacent (one layer)" ) }
-        },
+                               "loaded submaps at each boundary to preserve correct spread behavior." ),
+        { { "none", translate_marker( "None (pause spread)" ) },
+          { "adjacent", translate_marker( "Adjacent (one layer)" ) } },
         "adjacent"
            );
         add( "REALITY_BUBBLE_SIZE", page_id,
@@ -3902,11 +3888,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
                 pixel_minimap_changed = true;
 
             } else if( iter.first == "TILES" || iter.first == "USE_TILES" || iter.first == "STATICZEFFECT" ||
-                       iter.first == "MEMORY_MAP_MODE" || iter.first == "OVERMAP_TILES" ||
-                       iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ) {
+                       iter.first == "MEMORY_MAP_MODE" || iter.first == "OVERMAP_TILES" ) {
                 used_tiles_changed = true;
-                if( iter.first == "STATICZEFFECT" || iter.first == "MEMORY_MAP_MODE" ||
-                    iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ) {
+                if( iter.first == "STATICZEFFECT" || iter.first == "MEMORY_MAP_MODE" ) {
                     force_tile_change = true;
                 }
             } else if( iter.first == "USE_LANG" ) {
@@ -4082,6 +4066,9 @@ void options_manager::cache_to_globals()
     lod_macro_interval        = ::get_option<int>( "LOD_MACRO_INTERVAL" );
     lod_coarse_scent_interval = ::get_option<int>( "LOD_COARSE_SCENT_INTERVAL" );
     lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
+
+    out_of_bubble_fire_spread =
+        ::get_option<std::string>( "OUT_OF_BUBBLE_FIRE_SPREAD" ) == "adjacent";
 
     parallel_enabled          = ::get_option<bool>( "MULTITHREADING_ENABLED" );
     parallel_monster_planning = ::get_option<bool>( "PARALLEL_MONSTER_PLANNING" );

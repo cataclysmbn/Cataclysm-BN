@@ -24,6 +24,7 @@ class vehicle;
 // Catchup caps — keep these conservative; they limit worst-case load time.
 // ---------------------------------------------------------------------------
 inline constexpr int MAX_CATCHUP_FIELDS  = 1000;
+inline constexpr int MAX_CATCHUP_ITEMS   = 1000;
 inline constexpr int MAX_CATCHUP_VEHICLE = 100;
 inline constexpr int MAX_CATCHUP_MONSTER = 10000;
 inline constexpr int MAX_CATCHUP_NPC    = 10000;

@@ -1191,39 +1191,39 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
     projectile proj = fragment;
     proj.add_effect( ammo_effect_NULL_SOURCE );
 
-    float obstacle_cache[MAPSIZE_X][MAPSIZE_Y] = {};
-    float visited_cache[MAPSIZE_X][MAPSIZE_Y] = {};
-
     map &here = get_map();
 
     auto &_exp_cache = here.access_cache( src.z );
-    diagonal_blocks( &blocked_cache )[MAPSIZE_X][MAPSIZE_Y] =
-        *reinterpret_cast<diagonal_blocks( * )[MAPSIZE_X][MAPSIZE_Y]>(
-            _exp_cache.vehicle_obstructed_cache.data() );
+    const int exp_sx = _exp_cache.cache_x;
+    const int exp_sy = _exp_cache.cache_y;
+    auto obstacle_cache = std::vector<float>( static_cast<size_t>( exp_sx ) * exp_sy, 0.0f );
+    auto visited_cache  = std::vector<float>( static_cast<size_t>( exp_sx ) * exp_sy, 0.0f );
 
     // TODO: Calculate range based on max effective range for projectiles.
     // Basically bisect between 0 and map diameter using shrapnel_calc().
     // Need to update shadowcasting to support limiting range without adjusting initial distance.
     const tripoint_range<tripoint> area = here.points_on_zlevel( src.z );
 
-    here.build_obstacle_cache( area.min(), area.max() + tripoint_south_east, obstacle_cache );
+    here.build_obstacle_cache( area.min(), area.max() + tripoint_south_east,
+                               obstacle_cache.data(), exp_sy );
 
     // Shadowcasting normally ignores the origin square,
     // so apply it manually to catch monsters standing on the explosive.
     // This "blocks" some fragments, but does not apply deceleration.
-    visited_cache[src.x][src.y] = 1.0f;
+    visited_cache[src.x * exp_sy + src.y] = 1.0f;
 
     // This is used to limit radius
     // By default, the radius is 60, so negative values can be helpful here
     const int offset_distance = 60 - 1 - fragment.range;
     castLightAll<float, float, shrapnel_calc, shrapnel_check,
                  update_fragment_cloud, accumulate_fragment_cloud>
-                 ( visited_cache, obstacle_cache, blocked_cache, src.xy(),
-                   offset_distance, fragment.range + 1.0f );
+                 ( visited_cache.data(), obstacle_cache.data(),
+                   _exp_cache.vehicle_obstructed_cache.data(), exp_sx, exp_sy,
+                   src.xy(), offset_distance, fragment.range + 1.0f );
 
     // Now visited_caches are populated with density and velocity of fragments.
     for( const tripoint &target : area ) {
-        if( visited_cache[target.x][target.y] <= 0.0f || rl_dist( src, target ) > fragment.range ) {
+        if( visited_cache[target.x * exp_sy + target.y] <= 0.0f || rl_dist( src, target ) > fragment.range ) {
             continue;
         }
         auto critter = g->critter_at( target );
@@ -1276,7 +1276,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
         blast_center + tripoint( raw_blast_radius, raw_blast_radius, z_levels_affected )
     );
 
-    static std::vector<dist_point_pair> blast_map( MAPSIZE_X * MAPSIZE_Y );
+    static std::vector<dist_point_pair> blast_map;
     static std::map<tripoint, nc_color> explosion_colors;
     blast_map.clear();
     explosion_colors.clear();
@@ -1906,7 +1906,9 @@ void explosion_funcs::resonance_cascade( const queued_explosion &qe )
         g->u.add_effect( effect_teleglow, rng( minglow, maxglow ) * 100 );
     }
 
-    constexpr half_open_rectangle<point> map_bounds( point_zero, point( MAPSIZE_X, MAPSIZE_Y ) );
+    const auto &qe_cache = get_map().access_cache( p.z );
+    const half_open_rectangle<point> map_bounds( point_zero,
+            point( qe_cache.cache_x, qe_cache.cache_y ) );
     constexpr point cascade_reach( 8, 8 );
 
     point start = clamp( p.xy() - cascade_reach, map_bounds );

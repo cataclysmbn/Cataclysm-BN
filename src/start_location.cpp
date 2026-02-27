@@ -290,23 +290,23 @@ void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
  */
 static int rate_location( map &m, const tripoint &p, const bool must_be_inside,
                           const int bash_str, const int attempt,
-                          int ( &checked )[MAPSIZE_X][MAPSIZE_Y] )
+                          std::vector<int> &checked, int checked_sy )
 {
     if( ( must_be_inside && m.is_outside( p ) ) ||
         m.impassable( p ) ||
-        checked[p.x][p.y] > 0 ) {
+        checked[p.x * checked_sy + p.y] > 0 ) {
         return 0;
     }
 
     // Vector that will be used as a stack
     std::vector<tripoint> st;
-    st.reserve( MAPSIZE_X * MAPSIZE_Y );
+    st.reserve( checked.size() );
     st.push_back( p );
 
     // If not checked yet and either can be moved into, can be bashed down or opened,
     // add it on the top of the stack.
     const auto maybe_add = [&]( const tripoint & pt, const tripoint & from ) {
-        if( checked[pt.x][pt.y] >= attempt ) {
+        if( checked[pt.x * checked_sy + pt.y] >= attempt ) {
             return;
         }
 
@@ -323,7 +323,7 @@ static int rate_location( map &m, const tripoint &p, const bool must_be_inside,
         const tripoint cur = st.back();
         st.pop_back();
 
-        checked[cur.x][cur.y] = attempt;
+        checked[cur.x * checked_sy + cur.y] = attempt;
         if( cur.x == 0 || cur.x == g_mapsize_x - 1 ||
             cur.y == 0 || cur.y == g_mapsize_y - 1 ||
             m.has_flag( "GOES_UP", cur ) ) {
@@ -361,8 +361,9 @@ void start_location::place_player( player &u ) const
     int best_rate = 0;
     // In which attempt did this area get checked?
     // We can overwrite earlier attempts, but not start in them
-    int checked[MAPSIZE_X][MAPSIZE_Y];
-    std::fill_n( &checked[0][0], MAPSIZE_X * MAPSIZE_Y, 0 );
+    auto &start_lc = m.access_cache( g->get_levz() );
+    const int checked_sy = start_lc.cache_y;
+    auto checked = std::vector<int>( static_cast<size_t>( start_lc.cache_x ) * checked_sy, 0 );
 
     bool found_good_spot = false;
     // Try some random points at start
@@ -370,7 +371,7 @@ void start_location::place_player( player &u ) const
     int tries = 0;
     const auto check_spot = [&]( const tripoint & pt ) {
         tries++;
-        const int rate = rate_location( m, pt, must_be_inside, bash, tries, checked );
+        const int rate = rate_location( m, pt, must_be_inside, bash, tries, checked, checked_sy );
         if( best_rate < rate ) {
             best_rate = rate;
             u.setpos( pt );

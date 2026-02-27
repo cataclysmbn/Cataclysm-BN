@@ -210,7 +210,7 @@ map::map( int mapsize, bool zlev )
     }
 
     for( auto &ptr : pathfinding_caches ) {
-        ptr = std::make_unique<pathfinding_cache>();
+        ptr = std::make_unique<pathfinding_cache>( SEEX * mapsize, SEEY * mapsize );
     }
 
     dbg( DL::Info ) << "map::map(): my_MAPSIZE: " << my_MAPSIZE << " z-levels enabled:" << zlevels;
@@ -6479,8 +6479,7 @@ void map::update_visibility_cache( const int zlev )
     visibility_variables_cache.u_sight_impaired = g->u.sight_impaired();
     visibility_variables_cache.u_is_boomered = g->u.has_effect( effect_boomered );
 
-    int sm_squares_seen[MAPSIZE][MAPSIZE];
-    std::memset( sm_squares_seen, 0, sizeof( sm_squares_seen ) );
+    auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
 
     int min_z = fov_3d ? -OVERMAP_DEPTH : ( zlevels ? std::max( zlev - 1, -OVERMAP_DEPTH ) : zlev );
     int max_z = fov_3d ? OVERMAP_HEIGHT : zlev;
@@ -6499,7 +6498,7 @@ void map::update_visibility_cache( const int zlev )
                 lit_level ll = apparent_light_at( p, visibility_variables_cache );
                 visibility_cache[vc_cache.idx( x, y )] = ll;
                 if( z == zlev ) {
-                    sm_squares_seen[ x / SEEX ][ y / SEEY ] += ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
+                    sm_squares_seen[ ( x / SEEX ) * my_MAPSIZE + y / SEEY ] += ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
                 }
             }
         }
@@ -6507,7 +6506,7 @@ void map::update_visibility_cache( const int zlev )
 
     for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
         for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-            if( sm_squares_seen[gridx][gridy] > 36 ) { // 25% of the submap is visible
+            if( sm_squares_seen[gridx * my_MAPSIZE + gridy] > 36 ) { // 25% of the submap is visible
                 const tripoint sm( gridx, gridy, 0 );
                 const auto abs_sm = map::abs_sub + sm;
                 // TODO: fix point types
@@ -6600,8 +6599,8 @@ void map::draw( const catacurses::window &w, const tripoint &center )
                                  std::min( 0, offs.y )
                              );
     const point max_mm_reg = point(
-                                 std::max( MAPSIZE_X, offs.x + wnd_w ),
-                                 std::max( MAPSIZE_Y, offs.y + wnd_h )
+                                 std::max( g_mapsize_x, offs.x + wnd_w ),
+                                 std::max( g_mapsize_y, offs.y + wnd_h )
                              );
     g->u.prepare_map_memory_region(
         g->m.getabs( tripoint( min_mm_reg, center.z ) ),
@@ -7683,7 +7682,7 @@ void map::shift( point sp )
         }
     }
 
-    constexpr half_open_rectangle<point> boundaries_2d( point_zero, point( MAPSIZE_Y, MAPSIZE_X ) );
+    const half_open_rectangle<point> boundaries_2d( point_zero, point( g_mapsize_x, g_mapsize_y ) );
     const point shift_offset_pt( -sp.x * SEEX, -sp.y * SEEY );
 
     // Phase 4: Background streaming — block on submaps the main loop is about to need.
@@ -9118,7 +9117,7 @@ void map::build_outside_cache( const int zlev )
 }
 
 void map::build_obstacle_cache( const tripoint &start, const tripoint &end,
-                                float( &obstacle_cache )[MAPSIZE_X][MAPSIZE_Y] )
+                                float *obstacle_cache, int cache_sy )
 {
     const point min_submap{ std::max( 0, start.x / SEEX ), std::max( 0, start.y / SEEY ) };
     const point max_submap{
@@ -9134,7 +9133,7 @@ void map::build_obstacle_cache( const tripoint &start, const tripoint &end,
             if( cur_submap == nullptr ) {
                 for( int sx = 0; sx < SEEX; ++sx ) {
                     for( int sy = 0; sy < SEEY; ++sy ) {
-                        obstacle_cache[sx + smx * SEEX][sy + smy * SEEY] = 1000.0f;
+                        obstacle_cache[( sx + smx * SEEX ) * cache_sy + ( sy + smy * SEEY )] = 1000.0f;
                     }
                 }
                 continue;
@@ -9149,9 +9148,9 @@ void map::build_obstacle_cache( const tripoint &start, const tripoint &end,
                     const int x = sx + smx * SEEX;
                     const int y = sy + smy * SEEY;
                     if( ter_move == 0 || furn_move < 0 || ter_move + furn_move == 0 ) {
-                        obstacle_cache[x][y] = 1000.0f;
+                        obstacle_cache[x * cache_sy + y] = 1000.0f;
                     } else {
-                        obstacle_cache[x][y] = 0.0f;
+                        obstacle_cache[x * cache_sy + y] = 0.0f;
                     }
                 }
             }
@@ -9171,7 +9170,7 @@ void map::build_obstacle_cache( const tripoint &start, const tripoint &end,
             }
 
             if( vp.obstacle_at_part() ) {
-                obstacle_cache[p.x][p.y] = 1000.0f;
+                obstacle_cache[p.x * cache_sy + p.y] = 1000.0f;
             }
         }
     }
@@ -9895,7 +9894,7 @@ void map::function_over( const tripoint &start, const tripoint &end, Functor fun
     }
 }
 
-void map::scent_blockers( std::array<std::array<char, MAPSIZE_X>, MAPSIZE_Y> &scent_transfer,
+void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
                           point min, point max )
 {
     auto reduce = TFLAG_REDUCE_SCENT;
@@ -9904,12 +9903,12 @@ void map::scent_blockers( std::array<std::array<char, MAPSIZE_X>, MAPSIZE_Y> &sc
         // We need to generate the x/y coordinates, because we can't get them "for free"
         const point p = lp + sm_to_ms_copy( gp.xy() );
         if( sm->get_ter( lp ).obj().has_flag( block ) ) {
-            scent_transfer[p.x][p.y] = 0;
+            scent_transfer[p.x * st_sy + p.y] = 0;
         } else if( sm->get_ter( lp ).obj().has_flag( reduce ) ||
                    sm->get_furn( lp ).obj().has_flag( reduce ) ) {
-            scent_transfer[p.x][p.y] = 1;
+            scent_transfer[p.x * st_sy + p.y] = 1;
         } else {
-            scent_transfer[p.x][p.y] = 5;
+            scent_transfer[p.x * st_sy + p.y] = 5;
         }
 
         return ITER_CONTINUE;
@@ -9926,8 +9925,8 @@ void map::scent_blockers( std::array<std::array<char, MAPSIZE_X>, MAPSIZE_Y> &sc
         vehicle &veh = *( wrapped_veh.v );
         for( const vpart_reference &vp : veh.get_any_parts( VPFLAG_OBSTACLE ) ) {
             const tripoint part_pos = vp.pos();
-            if( local_bounds.contains( part_pos.xy() ) && scent_transfer[part_pos.x][part_pos.y] == 5 ) {
-                scent_transfer[part_pos.x][part_pos.y] = 1;
+            if( local_bounds.contains( part_pos.xy() ) && scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
+                scent_transfer[part_pos.x * st_sy + part_pos.y] = 1;
             }
         }
 
@@ -9938,8 +9937,8 @@ void map::scent_blockers( std::array<std::array<char, MAPSIZE_X>, MAPSIZE_Y> &sc
             }
 
             const tripoint part_pos = vp.pos();
-            if( local_bounds.contains( part_pos.xy() ) && scent_transfer[part_pos.x][part_pos.y] == 5 ) {
-                scent_transfer[part_pos.x][part_pos.y] = 1;
+            if( local_bounds.contains( part_pos.xy() ) && scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
+                scent_transfer[part_pos.x * st_sy + part_pos.y] = 1;
             }
         }
     }
@@ -10144,36 +10143,35 @@ const level_cache &map::access_cache( int zlev ) const
 level_cache::level_cache() = default;
 
 /// Normal constructor: mx = SEEX * mapsize, my = SEEY * mapsize.
-// Tile-coordinate vectors are always allocated at the compile-time maximum
-// MAPSIZE_X * MAPSIZE_Y so that shadowcasting can reinterpret vec.data() as
-// T(*)[MAPSIZE_Y] regardless of the active g_mapsize.  Submap-granularity
-// structures (dirty bitsets, field_cache) use the actual runtime submap count.
+// Tile-coordinate vectors are allocated at the runtime mx * my so that the
+// cache correctly tracks the actual loaded-area dimensions.  idx() now uses
+// the runtime cache_y stride, matching these allocations.
 level_cache::level_cache( int mx, int my )
     : cache_x( mx ), cache_y( my ), cache_mapsize( mx / SEEX ),
       transparency_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
-      lm( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), four_quadrants( 0.0f ) ),
-      sm( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), 0.0f ),
-      light_source_buffer( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), 0.0f ),
-      outside_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), false ),
-      floor_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), false ),
-      transparency_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), 0.0f ),
-      vehicle_obscured_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), diagonal_blocks{false, false} ),
-      vehicle_obstructed_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), diagonal_blocks{false, false} ),
-      seen_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), 0.0f ),
-      camera_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), 0.0f ),
-      visibility_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), lit_level::DARK ),
-      map_memory_seen_cache( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ) ),
+      lm( static_cast<size_t>( mx * my ), four_quadrants( 0.0f ) ),
+      sm( static_cast<size_t>( mx * my ), 0.0f ),
+      light_source_buffer( static_cast<size_t>( mx * my ), 0.0f ),
+      outside_cache( static_cast<size_t>( mx * my ), false ),
+      floor_cache( static_cast<size_t>( mx * my ), false ),
+      transparency_cache( static_cast<size_t>( mx * my ), 0.0f ),
+      vehicle_obscured_cache( static_cast<size_t>( mx * my ), diagonal_blocks{false, false} ),
+      vehicle_obstructed_cache( static_cast<size_t>( mx * my ), diagonal_blocks{false, false} ),
+      seen_cache( static_cast<size_t>( mx * my ), 0.0f ),
+      camera_cache( static_cast<size_t>( mx * my ), 0.0f ),
+      visibility_cache( static_cast<size_t>( mx * my ), lit_level::DARK ),
+      map_memory_seen_cache( static_cast<size_t>( mx * my ) ),
       field_cache( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
-      veh_exists_at( static_cast<size_t>( MAPSIZE_X * MAPSIZE_Y ), false )
+      veh_exists_at( static_cast<size_t>( mx * my ), false )
 {
     outside_cache_dirty = true;
     transparency_cache_dirty.set();
 }
 
-pathfinding_cache::pathfinding_cache()
-{
-    dirty = true;
-}
+pathfinding_cache::pathfinding_cache( int mx, int my )
+    : dirty( true ), cache_x( mx ), cache_y( my ),
+      special( static_cast<size_t>( mx * my ), PF_NORMAL )
+{}
 
 
 
@@ -10248,7 +10246,7 @@ void map::update_pathfinding_cache( int zlev ) const
         return;
     }
 
-    std::uninitialized_fill_n( &cache.special[0][0], MAPSIZE_X * MAPSIZE_Y, PF_NORMAL );
+    std::fill( cache.special.begin(), cache.special.end(), PF_NORMAL );
 
     for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
@@ -10311,7 +10309,7 @@ void map::update_pathfinding_cache( int zlev ) const
                         cur_value |= PF_SHARP;
                     }
 
-                    cache.special[p.x][p.y] = cur_value;
+                    cache.special[p.x * cache.cache_y + p.y] = cur_value;
                 }
             }
         }
