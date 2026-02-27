@@ -1975,7 +1975,7 @@ void options_manager::add_options_graphics()
        );
 
     add( "NIGHT_VISION_COLOR", graphics, translate_marker( "Night Vision Color" ),
-         translate_marker( "Sets night vision color. Requires a restart" ), "#083205", 60 );
+         translate_marker( "Sets night vision color. Requires a restart" ), "#2eab01", 60 );
 
     add_empty_line();
 
