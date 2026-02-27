@@ -1652,6 +1652,11 @@
     "context": [  ]
   },
   {
+    "id": "RECON_VISION",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "HELMET_COMPAT",
     "type": "json_flag",
     "context": [  ]
