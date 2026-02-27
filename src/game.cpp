@@ -177,6 +177,7 @@
 #include "string_input_popup.h"
 #include "fire_spread_loader.h"
 #include "submap.h"
+#include "submap_stream.h"
 #include "type_id.h"
 #include "tileray.h"
 #include "timed_event.h"
@@ -3113,6 +3114,11 @@ bool game::save_artifacts()
 bool game::save_maps()
 {
     try {
+        // Flush background streamer tasks before save so that save_quad workers
+        // (which call submaps.find() without the mutex) do not race with
+        // submap_stream workers calling add_submap() (which holds the mutex).
+        // std::map concurrent read+write is UB even if the write side is locked.
+        submap_streamer.flush_all();
         m.save();
         overmap_buffer.save(); // can throw
         MAPBUFFER.save(); // can throw
@@ -12679,6 +12685,10 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
         here.reset_vehicle_cache();
 
         // Save and clear current buffers, wrapped in a transaction for performance
+        // Flush background streamer tasks first to avoid a concurrent read+write race
+        // between save_quad workers (submaps.find, no mutex) and submap_stream workers
+        // (add_submap, with mutex).
+        submap_streamer.flush_all();
         world *active_world = get_active_world();
         if( active_world ) {
             active_world->start_save_tx();
@@ -12813,6 +12823,8 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
     // All saved with CURRENT save_prefix
     // Wrap in a transaction so all DB writes are batched into a single commit,
     // avoiding individual fsync per write which is extremely slow.
+    // Flush background streamer tasks first — see save_maps() comment for rationale.
+    submap_streamer.flush_all();
     world *active_world = get_active_world();
     try {
         if( active_world ) {
@@ -13394,6 +13406,13 @@ point game::update_map( int &x, int &y )
                 submap_loader.add_listener( grid_trackers_[dim_id].get() );
             }
         }
+        // Flush all pending background streamer tasks before submap_loader.update().
+        // Background workers access mapbuffer::submaps (via lookup_submap_in_memory /
+        // add_submap) without a mapbuffer-level mutex.  update() calls unload_quad()
+        // which erases from submaps; concurrent std::map read+write is UB and causes
+        // the access violation seen at submap.h:11 (active_item_cache access through
+        // a corrupted map-tree pointer).
+        submap_streamer.flush_all();
         submap_loader.update();
         // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {

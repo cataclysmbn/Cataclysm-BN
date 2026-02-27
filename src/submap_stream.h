@@ -68,6 +68,18 @@ class submap_stream
          */
         void drain_completed( map &m, const std::vector<tripoint_abs_sm> &must_have );
 
+        /**
+         * Block until all pending background load tasks finish, then clear the
+         * pending list.
+         *
+         * MUST be called before any main-thread code that mutates mapbuffer::submaps
+         * (e.g. unload_quad, save).  Background workers access submaps via
+         * lookup_submap_in_memory / add_submap without a mapbuffer-level lock; the
+         * only safety guarantee is that the main thread does not mutate the map
+         * concurrently.  Flushing before mutation preserves that contract.
+         */
+        auto flush_all() -> void;
+
         /** Returns true if an in-flight request exists for (dim, pos). */
         bool is_pending( const std::string &dim, tripoint_abs_sm pos ) const;
 

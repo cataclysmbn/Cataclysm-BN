@@ -1736,6 +1736,9 @@ furn_id map::furn( const tripoint &p ) const
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return f_null;
+    }
 
     return current_submap->get_furn( l );
 }
@@ -1749,6 +1752,9 @@ void map::furn_set( const tripoint &p, const furn_id &new_furniture,
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
     const furn_id old_id = current_submap->get_furn( l );
     if( old_id == new_furniture ) {
         // Nothing changed
@@ -1901,6 +1907,9 @@ ter_id map::ter( const tripoint &p ) const
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return t_null;
+    }
 
     return current_submap->get_ter( l );
 }
@@ -2096,6 +2105,9 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return false;
+    }
     const ter_id old_id = current_submap->get_ter( l );
     if( old_id == new_terrain ) {
         // Nothing changed
@@ -6301,6 +6313,9 @@ bool map::add_field( const tripoint &p, const field_type_id &type_id, int intens
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return false;
+    }
     current_submap->is_uniform = false;
     invalidate_max_populated_zlev( p.z );
 
@@ -6346,6 +6361,9 @@ void map::remove_field( const tripoint &p, const field_type_id &field_to_remove 
 
     point l;
     submap *const current_submap = get_submap_at( p, l );
+    if( current_submap == nullptr ) {
+        return;
+    }
 
     if( current_submap->get_field( l ).remove_field( field_to_remove ) ) {
         // Only adjust the count if the field actually existed.
@@ -8902,12 +8920,14 @@ bool map::inbounds( const tripoint_abs_ms &p ) const
 
 bool map::inbounds( const tripoint &p ) const
 {
-    static constexpr tripoint map_boundary_min( 0, 0, -OVERMAP_DEPTH );
-    static constexpr tripoint map_boundary_max( MAPSIZE_Y, MAPSIZE_X, OVERMAP_HEIGHT + 1 );
-
-    static constexpr half_open_cuboid<tripoint> map_boundaries(
-        map_boundary_min, map_boundary_max );
-
+    // Use runtime my_MAPSIZE so this agrees with get_nonant()'s grid indexing.
+    // MAPSIZE (and MAPSIZE_X/Y) are compile-time constants sized for the maximum
+    // reality bubble; using them here when the live map is smaller allows p values
+    // that pass inbounds() but produce an out-of-bounds grid[] index in get_nonant().
+    const auto max_xy = my_MAPSIZE * SEEX;
+    const auto map_boundary_min = tripoint( 0, 0, -OVERMAP_DEPTH );
+    const auto map_boundary_max = tripoint( max_xy, max_xy, OVERMAP_HEIGHT + 1 );
+    const auto map_boundaries = half_open_cuboid<tripoint>( map_boundary_min, map_boundary_max );
     return map_boundaries.contains( p );
 }
 

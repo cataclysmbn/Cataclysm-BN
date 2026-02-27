@@ -3,6 +3,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include "coordinates.h"
@@ -69,8 +70,11 @@ class mapbuffer
          * Unlike lookup_submap(), this does NOT query the database for missing submaps.
          * Use this for out-of-bounds positions where we know there's no DB entry,
          * to avoid ~2400 wasted SQLite queries per pocket dimension map load.
+         *
+         * Thread-safe: may be called from background worker threads (under gen_mutex).
          */
         submap *lookup_submap_in_memory( const tripoint &p ) {
+            std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
             const auto iter = submaps.find( p );
             return iter != submaps.end() ? iter->second.get() : nullptr;
         }
@@ -108,6 +112,13 @@ class mapbuffer
 
     private:
         using submap_map_t = std::map<tripoint, std::unique_ptr<submap>>;
+
+        /// Guards all accesses to `submaps` that may overlap with background
+        /// worker threads calling add_submap().  std::recursive_mutex is used
+        /// so that the main-thread call chain
+        ///   lookup_submap → unserialize_submaps → add_submap
+        /// can re-acquire the mutex without deadlocking.
+        mutable std::recursive_mutex submaps_mutex_;
 
     public:
         submap_map_t::iterator begin() {

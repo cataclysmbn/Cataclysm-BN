@@ -40,6 +40,7 @@ void mapbuffer::clear()
 
 bool mapbuffer::add_submap( const tripoint &p, std::unique_ptr<submap> &sm )
 {
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
     if( submaps.contains( p ) ) {
         return false;
     }
@@ -125,6 +126,11 @@ void mapbuffer::unload_quad( const tripoint &om_addr )
 
 submap *mapbuffer::lookup_submap( const tripoint &p )
 {
+    // Hold submaps_mutex_ for the entire call so that concurrent background
+    // add_submap() calls cannot race with our submaps.find() or the subsequent
+    // unserialize_submaps() → add_submap() path.  std::recursive_mutex allows
+    // the nested add_submap() call (inside unserialize_submaps) to re-acquire.
+    std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
     const auto iter = submaps.find( p );
     if( iter == submaps.end() ) {
         try {

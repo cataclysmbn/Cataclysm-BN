@@ -1,5 +1,6 @@
 #include "submap_stream.h"
 
+#include <algorithm>
 #include <chrono>
 #include <mutex>
 #include <string>
@@ -29,11 +30,12 @@ void submap_stream::request_load( const std::string &dim, tripoint_abs_sm pos )
         }
     }
 
-    // The generation mutex serialises writes to the mapbuffer from worker threads.
-    // Concurrent reads (lookup_submap_in_memory) are safe without the mutex.
-    // The disk-read and mapgen paths both call add_submap() — a write — so they
-    // must be serialised.  Per-mapbuffer locking for overlapping concurrent disk
-    // reads at distinct positions is a future optimization.
+    // The generation mutex serialises writes to the mapbuffer from worker threads
+    // so that two workers never race on the same position's add_submap() call.
+    // mapbuffer::add_submap() and lookup_submap_in_memory() are also individually
+    // protected by mapbuffer::submaps_mutex_ (a recursive_mutex), which guards
+    // concurrent access to the underlying std::map between worker threads and the
+    // main thread's lookup_submap() calls in loadn().
     static std::mutex gen_mutex;
 
     auto fut = get_thread_pool().submit_returning( [dim, pos]() -> submap * {
@@ -120,6 +122,16 @@ void submap_stream::drain_completed( map &m,
             return true;
         } ),
         pending_.end() );
+}
+
+auto submap_stream::flush_all() -> void
+{
+    std::lock_guard<std::mutex> lk( mutex_ );
+    std::ranges::for_each( pending_, []( auto &p ) {
+        p.future.wait();
+        p.future.get(); // consume result; submap data already in mapbuffer
+    } );
+    pending_.clear();
 }
 
 bool submap_stream::is_pending( const std::string &dim, tripoint_abs_sm pos ) const
