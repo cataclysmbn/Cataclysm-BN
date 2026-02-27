@@ -96,9 +96,15 @@ void recipe::load( const JsonObject &jo, const std::string &src )
     const bool strict = is_strict_enabled( src );
 
     abstract = jo.has_string( "abstract" );
+    const std::string type = jo.get_string( "type" );
 
     if( abstract ) {
         ident_ = recipe_id( jo.get_string( "abstract" ) );
+    } else if( type == "nested_category" ) {
+        ident_ = recipe_id( jo.get_string( "id" ) );
+        if( jo.has_member( "result" ) ) {
+            jo.throw_error( "nested category should not have result" );
+        }
     } else {
         jo.read( "result", result_, true );
         ident_ = recipe_id( result_.str() );
@@ -117,6 +123,10 @@ void recipe::load( const JsonObject &jo, const std::string &src )
     }
     assign( jo, "difficulty", difficulty, strict, 0, MAX_SKILL );
     assign( jo, "flags", flags );
+
+    if( jo.has_string( "nested_name" ) ) {
+        assign( jo, "nested_name", nested_name );
+    }
 
     // automatically set contained if we specify as container
     assign( jo, "contained", contained, strict );
@@ -213,8 +223,6 @@ void recipe::load( const JsonObject &jo, const std::string &src )
         }
     }
 
-    const std::string type = jo.get_string( "type" );
-
     // inline requirements are always replaced (cannot be inherited)
     reqs_internal.clear();
 
@@ -243,6 +251,12 @@ void recipe::load( const JsonObject &jo, const std::string &src )
         }
     } else if( type == "uncraft" ) {
         reversible = true;
+    } else if( type == "nested_category" ) {
+        assign( jo, "nested_name", nested_name );
+        assign( jo, "category", category );
+        assign( jo, "subcategory", subcategory );
+        assign( jo, "description", description, strict );
+        assign( jo, "nested_category_data", nested_category_data );
     } else {
         jo.throw_error( "unknown recipe type", "type" );
     }
@@ -525,9 +539,9 @@ std::string recipe::batch_savings_string() const
            : _( "none" );
 }
 
-std::string recipe::result_name( const bool decorated ) const
+auto recipe::result_name( const bool decorated ) const -> std::string
 {
-    std::string name = item::nname( result_ );
+    auto name = nested_name.empty() ? item::nname( result_ ) : nested_name;
     if( decorated && uistate.favorite_recipes.contains( this->ident() ) ) {
         name = "* " + name;
     }
@@ -688,4 +702,10 @@ int recipe::disassembly_batch_size() const
     } else {
         return result_->charges_default();
     }
+}
+
+
+bool recipe::is_nested() const
+{
+    return !nested_category_data.empty();
 }

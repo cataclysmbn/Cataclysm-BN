@@ -10,6 +10,9 @@ title: Recipes
 
 Recipes represent both craft and uncraft (disassembly) recipes.
 
+See [Nested Recipe Categories](nested_categories) for creating hierarchical
+crafting menu groupings.
+
 ```json
 "type": "recipe",            // Recipe type. Possible values: 'recipe' (craft recipe) and 'uncraft' (uncraft recipe).
 "reversible": false,         // Generate an uncraft recipe that is a reverse of this craft recipe.

@@ -4510,6 +4510,7 @@ void uistatedata::serialize( JsonOut &json ) const
     json.member( "list_item_priority_active", list_item_priority_active );
     json.member( "hidden_recipes", hidden_recipes );
     json.member( "favorite_recipes", favorite_recipes );
+    json.member( "expanded_recipes", expanded_recipes );
     json.member( "read_recipes", read_recipes );
     json.member( "recent_recipes", recent_recipes );
     json.member( "favorite_construct_recipes", favorite_construct_recipes );
@@ -4562,6 +4563,7 @@ void uistatedata::deserialize( const JsonObject &jo )
     jo.read( "overmap_highlighted_omts", overmap_highlighted_omts );
     jo.read( "hidden_recipes", hidden_recipes );
     jo.read( "favorite_recipes", favorite_recipes );
+    jo.read( "expanded_recipes", expanded_recipes );
     jo.read( "read_recipes", read_recipes );
     jo.read( "recent_recipes", recent_recipes );
     jo.read( "favorite_construct_recipes", favorite_construct_recipes );
