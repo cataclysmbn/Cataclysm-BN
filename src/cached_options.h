@@ -85,6 +85,7 @@ extern int PICKUP_RANGE;
  */
 extern bool dont_debugmsg;
 
+
 /* Options related to fungal activity */
 struct FungalOptions {
     /**
