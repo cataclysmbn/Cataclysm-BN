@@ -139,10 +139,10 @@ void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
         // fix_mongroups / fix_nemesis / fix_npcs access shared overmap state and must
         // run inside the write lock below, NOT inside the async lambda.
         futures.push_back( { loc, get_thread_pool().submit_returning( [loc] {
-            auto om = std::make_unique<overmap>( loc );
-            om->populate();
-            return om;
-        } ) } );
+                auto om = std::make_unique<overmap>( loc );
+                om->populate();
+                return om;
+            } ) } );
     }
 
     // Non-blocking scan: insert each overmap as soon as its future is ready rather
@@ -151,9 +151,9 @@ void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
     // results to be visible to subsequent generate() calls.
     auto popup = make_shared_fast<throbber_popup>( _( "Please wait..." ) );
     while( !futures.empty() ) {
-        futures.erase( std::remove_if( futures.begin(), futures.end(), [&]( pending &p ) {
+        futures.erase( std::remove_if( futures.begin(), futures.end(), [&]( pending & p ) {
             if( p.future.wait_for( std::chrono::milliseconds( 0 ) ) !=
-                    std::future_status::ready ) {
+                std::future_status::ready ) {
                 return false;
             }
             auto om = p.future.get();

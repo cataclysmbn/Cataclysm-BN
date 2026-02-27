@@ -1397,11 +1397,13 @@ void computer_session::failure_amigara()
 {
     g->timed_events.add( TIMED_EVENT_AMIGARA, calendar::turn + 30_seconds );
     g->u.add_effect( effect_amigara, 2_minutes );
-    explosion_handler::explosion( tripoint( rng( 0, g_mapsize_x ), rng( 0, g_mapsize_y ), g->get_levz() ),
+    explosion_handler::explosion( tripoint( rng( 0, g_mapsize_x ), rng( 0, g_mapsize_y ),
+                                            g->get_levz() ),
                                   nullptr,
                                   10,
                                   0.7, false, 10 );
-    explosion_handler::explosion( tripoint( rng( 0, g_mapsize_x ), rng( 0, g_mapsize_y ), g->get_levz() ),
+    explosion_handler::explosion( tripoint( rng( 0, g_mapsize_x ), rng( 0, g_mapsize_y ),
+                                            g->get_levz() ),
                                   nullptr,
                                   10,
                                   0.7, false, 10 );

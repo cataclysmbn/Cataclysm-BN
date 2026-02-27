@@ -4735,7 +4735,8 @@ void game::tick_submap( submap &sm, tripoint_abs_sm pos, const std::string &dim,
         static const std::array<tripoint, 4> card = {{
                 tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
                 tripoint{ 0, 1, 0 }, tripoint{ 0, -1, 0 }
-            }};
+            }
+        };
         for( const tripoint &delta : card ) {
             const tripoint_abs_sm nbr{ pos.raw() + delta };
             if( !submap_loader.is_requested( dim, nbr ) ) {

@@ -59,18 +59,15 @@ const half_open_rectangle<point> lightmap_boundaries(
 // Reinterpret a flat X-outer vector as a 2D C-array compatible with shadowcasting.
 // Valid only when cache_x == MAPSIZE_X && cache_y == MAPSIZE_Y (always true in Phase 3b-i).
 template<typename T>
-static inline T ( &as_grid( std::vector<T> &v ) )[MAPSIZE_X][MAPSIZE_Y]
-{
-    return *reinterpret_cast<T ( * )[MAPSIZE_X][MAPSIZE_Y]>( v.data() );
+static inline T( &as_grid( std::vector<T> &v ) )[MAPSIZE_X][MAPSIZE_Y] {
+    return *reinterpret_cast<T( * )[MAPSIZE_X][MAPSIZE_Y]>( v.data() );
 }
 template<typename T>
-static inline const T ( &as_grid( const std::vector<T> &v ) )[MAPSIZE_X][MAPSIZE_Y]
-{
-    return *reinterpret_cast<const T ( * )[MAPSIZE_X][MAPSIZE_Y]>( v.data() );
+static inline const T( &as_grid( const std::vector<T> &v ) )[MAPSIZE_X][MAPSIZE_Y] {
+    return *reinterpret_cast<const T( * )[MAPSIZE_X][MAPSIZE_Y]>( v.data() );
 }
 // floor_cache is std::vector<char>; reinterpret as bool for shadowcasting.
-static inline const bool ( &floor_as_grid( const std::vector<char> &v ) )[MAPSIZE_X][MAPSIZE_Y]
-{
+static inline const bool ( &floor_as_grid( const std::vector<char> &v ) )[MAPSIZE_X][MAPSIZE_Y] {
     return *reinterpret_cast<const bool ( * )[MAPSIZE_X][MAPSIZE_Y]>( v.data() );
 }
 
@@ -226,9 +223,11 @@ bool map::build_transparency_cache( const int zlev )
                         transparency_cache[map_cache.idx( x, y )] = calc_transp( { x, y } );
 
                         //Nudge things towards fast paths
-                        if( std::fabs( transparency_cache[map_cache.idx( x, y )] - openair_transparency_lookup.transparency ) <= 0.0001 ) {
+                        if( std::fabs( transparency_cache[map_cache.idx( x,
+                                                                         y )] - openair_transparency_lookup.transparency ) <= 0.0001 ) {
                             transparency_cache[map_cache.idx( x, y )] = openair_transparency_lookup.transparency;
-                        } else if( std::fabs( transparency_cache[map_cache.idx( x, y )] - weather_transparency_lookup.transparency ) <=
+                        } else if( std::fabs( transparency_cache[map_cache.idx( x,
+                                                             y )] - weather_transparency_lookup.transparency ) <=
                                    0.0001 ) {
                             transparency_cache[map_cache.idx( x, y )] = weather_transparency_lookup.transparency;
                         }
@@ -392,11 +391,13 @@ void map::build_sunlight_cache( int pzlev )
                     // && semantics below is important, we want to skip the evaluation if possible, do not replace with &=
 
                     // fully_outside stays true if tile is transparent and there is no floor
-                    fully_outside = fully_outside && this_transparency_cache[map_cache.idx( x, y )] >= LIGHT_TRANSPARENCY_OPEN_AIR
+                    fully_outside = fully_outside &&
+                                    this_transparency_cache[map_cache.idx( x, y )] >= LIGHT_TRANSPARENCY_OPEN_AIR
                                     && !this_floor_cache[map_cache.idx( x, y )];
                     // fully_inside stays true if tile is opaque OR there is floor
-                    fully_inside = fully_inside && ( this_transparency_cache[map_cache.idx( x, y )] <= LIGHT_TRANSPARENCY_SOLID ||
-                                                     this_floor_cache[map_cache.idx( x, y )] );
+                    fully_inside = fully_inside &&
+                                   ( this_transparency_cache[map_cache.idx( x, y )] <= LIGHT_TRANSPARENCY_SOLID ||
+                                     this_floor_cache[map_cache.idx( x, y )] );
                 }
             }
             continue;
@@ -543,7 +544,8 @@ void map::generate_lightmap( const int zlev, bool skip_shared_init )
                     const int y = sy + smy * SEEY;
                     const tripoint p( x, y, zlev );
                     // Project light into any openings into buildings.
-                    if( !outside_cache[map_cache.idx( p.x, p.y )] || ( !top_floor && prev_floor_cache[map_cache.idx( p.x, p.y )] ) ) {
+                    if( !outside_cache[map_cache.idx( p.x, p.y )] || ( !top_floor &&
+                            prev_floor_cache[map_cache.idx( p.x, p.y )] ) ) {
                         // Apply light sources for external/internal divide
                         for( int i = 0; i < 4; ++i ) {
                             point neighbour = p.xy() + point( dir_x[i], dir_y[i] );
@@ -718,7 +720,8 @@ void map::add_light_source( const tripoint &p, float luminance )
 {
     auto &cache = get_cache( p.z );
     auto &light_source_buffer = cache.light_source_buffer;
-    light_source_buffer[cache.idx( p.x, p.y )] = std::max( luminance, light_source_buffer[cache.idx( p.x, p.y )] );
+    light_source_buffer[cache.idx( p.x, p.y )] = std::max( luminance,
+            light_source_buffer[cache.idx( p.x, p.y )] );
 }
 
 // Tile light/transparency: 3D
@@ -774,7 +777,8 @@ float map::light_transparency( const tripoint &p ) const
 map::apparent_light_info map::apparent_light_helper( const level_cache &map_cache,
         const tripoint &p )
 {
-    const float vis = std::max( map_cache.seen_cache[map_cache.idx( p.x, p.y )], map_cache.camera_cache[map_cache.idx( p.x, p.y )] );
+    const float vis = std::max( map_cache.seen_cache[map_cache.idx( p.x, p.y )],
+                                map_cache.camera_cache[map_cache.idx( p.x, p.y )] );
     const bool obstructed = vis <= LIGHT_TRANSPARENCY_SOLID + 0.1;
 
     auto is_opaque = [&map_cache]( point  p ) {
@@ -1668,7 +1672,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
 
     constexpr float light_transparency_solid = LIGHT_TRANSPARENCY_SOLID;
 
-    std::fill( target_cache.camera_cache.begin(), target_cache.camera_cache.end(), light_transparency_solid );
+    std::fill( target_cache.camera_cache.begin(), target_cache.camera_cache.end(),
+               light_transparency_solid );
 
     float vision_restore_cache [9] = {0};
     bool blocked_restore_cache[8] = {false};
@@ -1744,7 +1749,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         // We can utilize the current state of the seen cache to determine
         // if the player can see the mirror from their position.
         if( !vp.info().has_flag( "CAMERA" ) &&
-            target_seen_cache[mirror_pos.x][mirror_pos.y] < LIGHT_TRANSPARENCY_SOLID + 0.1 ) {  // uses as_grid binding
+            target_seen_cache[mirror_pos.x][mirror_pos.y] < LIGHT_TRANSPARENCY_SOLID +
+            0.1 ) {  // uses as_grid binding
             continue;
         } else if( !vp.info().has_flag( "CAMERA_CONTROL" ) ) {
             mirrors.emplace_back( static_cast<int>( vp.part_index() ) );
@@ -1781,7 +1787,8 @@ void map::build_seen_cache( const tripoint &origin, const int target_z )
         // at an offset appears to give reasonable results though.
         castLightAllWithLookup<float, float, sight_calc, sight_check, update_light, accumulate_transparency, sight_from_lookup>
         (
-            target_camera_cache, as_grid( target_cache.transparency_cache ), as_grid( target_cache.vehicle_obscured_cache ),
+            target_camera_cache, as_grid( target_cache.transparency_cache ),
+            as_grid( target_cache.vehicle_obscured_cache ),
             mirror_pos.xy(), offsetDistance );
     }
 }

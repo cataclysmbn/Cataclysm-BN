@@ -370,8 +370,8 @@ void mapbuffer::deserialize( JsonIn &jsin )
             // unload_submap() broke quad consistency (pre-unload_quad fix).
             // With quad-level eviction (unload_quad) this should not occur in normal play.
             DebugLog( DL::Warn, DC::Map ) << string_format(
-                "submap %d,%d,%d was already loaded; keeping in-memory version",
-                submap_coordinates.x, submap_coordinates.y, submap_coordinates.z );
+                                              "submap %d,%d,%d was already loaded; keeping in-memory version",
+                                              submap_coordinates.x, submap_coordinates.y, submap_coordinates.z );
         }
     }
 }

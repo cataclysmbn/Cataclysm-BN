@@ -81,7 +81,8 @@ void fire_spread_loader::prune_disconnected( submap_load_manager &loader )
     static const std::array<tripoint, 4> card = {{
             tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
             tripoint{ 0, 1, 0 }, tripoint{ 0, -1, 0 }
-        }};
+        }
+    };
 
     std::vector<dim_pos_key> to_release;
 

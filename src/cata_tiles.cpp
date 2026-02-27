@@ -3271,7 +3271,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
                 if( ( fov_3d || z == center.z ) && in_map_bounds ) {
                     ll = ch.visibility_cache[ch.idx( x, y )];
-                    if( !would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( x, y )], cache ) ) ) {
+                    if( !would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( x, y )],
+                                                     cache ) ) ) {
                         last_vis = z;
                     }
                 }
@@ -3304,7 +3305,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                         const tripoint np = pos + neighborhood[i];
                         invisible[1 + i] = np.y < min_visible_y || np.y > max_visible_y ||
                                            np.x < min_visible_x || np.x > max_visible_x ||
-                                           would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x, np.y )], cache ) );
+                                           would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x, np.y )],
+                                                   cache ) );
                     }
 
                     if( !invisible[0] && apply_vision_effects( pos, here.get_visibility( ll, cache ) ) ) {
@@ -3526,7 +3528,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 const tripoint np = p + neighborhood[i];
                 invisible[1 + i] = np.y < min_visible_y || np.y > max_visible_y ||
                                    np.x < min_visible_x || np.x > max_visible_x ||
-                                   would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x, np.y )], cache ) );
+                                   would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x, np.y )],
+                                           cache ) );
             }
             //calling draw to memorize everything.
             //bypass cache check in case we learn something new about the terrain's connections

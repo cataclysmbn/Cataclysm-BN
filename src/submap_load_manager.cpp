@@ -149,7 +149,7 @@ void submap_load_manager::update()
 // ---------------------------------------------------------------------------
 
 bool submap_load_manager::is_requested( const std::string &dim_id,
-        const tripoint_abs_sm &pos ) const
+                                        const tripoint_abs_sm &pos ) const
 {
     return prev_desired_.count( { dim_id, pos.raw() } ) > 0;
 }
