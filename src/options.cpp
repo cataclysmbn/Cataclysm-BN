@@ -3693,9 +3693,11 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
                 pixel_minimap_changed = true;
 
             } else if( iter.first == "TILES" || iter.first == "USE_TILES" || iter.first == "STATICZEFFECT" ||
-                       iter.first == "MEMORY_MAP_MODE" || iter.first == "OVERMAP_TILES" ) {
+                       iter.first == "MEMORY_MAP_MODE" || iter.first == "OVERMAP_TILES" ||
+                       iter.first == "NIGHT_VISION_COLOR" ) {
                 used_tiles_changed = true;
-                if( iter.first == "STATICZEFFECT" || iter.first == "MEMORY_MAP_MODE" ) {
+                if( iter.first == "STATICZEFFECT" || iter.first == "MEMORY_MAP_MODE" ||
+                    iter.first == "NIGHT_VISION_COLOR" ) {
                     force_tile_change = true;
                 }
             } else if( iter.first == "USE_LANG" ) {
