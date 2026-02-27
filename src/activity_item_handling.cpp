@@ -3304,7 +3304,7 @@ void try_fuel_fire( player_activity &act, player &p, const bool starting_fire )
     // Maybe TODO: - refueling in the rain could use more fuel
     // First, simulate expected burn per turn, to see if we need more fuel
     map_stack fuel_on_fire = here.i_at( *best_fire );
-    for( item*&it : fuel_on_fire ) {
+    for( item *&it : fuel_on_fire ) {
         it->simulate_burn( fd );
         // Unconstrained fires grow below -50_minutes age
         if( !contained && fire_age < -40_minutes && fd.fuel_produced > 1.0f && !it->made_of( LIQUID ) ) {
@@ -3326,7 +3326,7 @@ void try_fuel_fire( player_activity &act, player &p, const bool starting_fire )
     map_stack potential_fuel = here.i_at( *refuel_spot );
     item *found = nullptr;
     item *found_tinder = nullptr;
-    for( item*&it : potential_fuel ) {
+    for( item *&it : potential_fuel ) {
         if( it->made_of( LIQUID ) ) {
             continue;
         }

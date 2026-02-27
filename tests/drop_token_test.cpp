@@ -329,7 +329,7 @@ TEST_CASE( "full backpack pickup", "[drop_token]" )
             std::vector<item *> target_locations;
             std::vector<int> quantities;
             map_cursor mc( pos );
-            for( item*&it : stack ) {
+            for( item *&it : stack ) {
                 target_locations.push_back( it );
                 quantities.push_back( 0 );
             }
