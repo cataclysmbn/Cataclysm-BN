@@ -613,22 +613,39 @@ std::list<act_item> reorder_for_dropping( Character &p, const drop_locations &dr
                                      - p.volume_capacity_reduced_by( dropped_worn_storage );
     if( excessive_volume > 0_ml ) {
         const_invslice old_inv = p.inv_const_slice();
-        for( size_t i = 0; i < old_inv.size() && excessive_volume > 0_ml; i++ ) {
-            // TODO: Reimplement random dropping?
+        std::vector<item *> non_favorite_candidates;
+        std::vector<item *> favorite_candidates;
+        for( size_t i = 0; i < old_inv.size(); i++ ) {
             if( inv_indices.contains( i ) ) {
                 continue;
             }
             const std::vector<item *> &inv_stack = *old_inv[i];
-            for( item * const &item : inv_stack ) {
-                // Note: zero cost, but won't be contained on drop
-                act_item to_drop = act_item( *item, item->count(), 0 );
-                inv.push_back( to_drop );
-                excessive_volume -= to_drop.loc->volume();
-                if( excessive_volume <= 0_ml ) {
-                    break;
-                }
-            }
+            std::ranges::copy_if( inv_stack, std::back_inserter( non_favorite_candidates ),
+            []( const item * const it ) {
+                return !it->is_favorite && it->volume() > 0_ml;
+            } );
+            std::ranges::copy_if( inv_stack, std::back_inserter( favorite_candidates ),
+            []( const item * const it ) {
+                return it->is_favorite && it->volume() > 0_ml;
+            } );
         }
+
+        auto drop_from_pool_until_fits = [&]( std::vector<item *> &pool ) {
+            while( excessive_volume > 0_ml && !pool.empty() ) {
+                const size_t chosen_index = rng( 0, pool.size() - 1 );
+                item * const selected = pool[chosen_index];
+                pool[chosen_index] = pool.back();
+                pool.pop_back();
+
+                // Note: zero cost, but won't be contained on drop.
+                inv.emplace_back( *selected, selected->count(), 0 );
+                excessive_volume -= selected->volume();
+            }
+        };
+
+        drop_from_pool_until_fits( non_favorite_candidates );
+        drop_from_pool_until_fits( favorite_candidates );
+
         // Need to re-sort
         inv.sort( []( const act_item & first, const act_item & second ) {
             return first.loc->volume() < second.loc->volume();
