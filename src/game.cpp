@@ -6577,23 +6577,29 @@ void game::examine( const tripoint &examp )
                 add_msg( _( "There is a %s." ), mon->get_name() );
             }
 
+            const auto allowed = cata::run_hooks( "on_try_monster_interaction",
+            [&]( auto & params ) { params["monster"] = mon; }, { .exit_early = true } ).get_or( "allowed",
+                    true );
+            if( allowed ) {
+                cata::run_hooks( "on_monster_interaction", [&]( auto & params ) { params["monster"] = mon; } );
 
-            if( mon->has_effect( effect_pet ) && !u.is_mounted() ) {
-                if( monexamine::pet_menu( *mon ) ) {
-                    return;
-                }
-            } else if( ( mon->has_flag( MF_RIDEABLE_MECH ) || mon->has_flag( MF_CARD_OVERRIDE ) ) &&
-                       !mon->has_effect( effect_pet ) && mon->attitude_to( u ) != Attitude::A_HOSTILE ) {
-                if( monexamine::mech_hack( *mon ) ) {
-                    return;
-                }
-            } else if( mon->has_flag( MF_PAY_BOT ) ) {
-                if( monexamine::pay_bot( *mon ) ) {
-                    return;
-                }
-            } else if( mon->attitude_to( u ) == Attitude::A_FRIENDLY && !u.is_mounted() ) {
-                if( monexamine::mfriend_menu( *mon ) ) {
-                    return;
+                if( mon->has_effect( effect_pet ) && !u.is_mounted() ) {
+                    if( monexamine::pet_menu( *mon ) ) {
+                        return;
+                    }
+                } else if( ( mon->has_flag( MF_RIDEABLE_MECH ) || mon->has_flag( MF_CARD_OVERRIDE ) ) &&
+                           !mon->has_effect( effect_pet ) && mon->attitude_to( u ) != Attitude::A_HOSTILE ) {
+                    if( monexamine::mech_hack( *mon ) ) {
+                        return;
+                    }
+                } else if( mon->has_flag( MF_PAY_BOT ) ) {
+                    if( monexamine::pay_bot( *mon ) ) {
+                        return;
+                    }
+                } else if( mon->attitude_to( u ) == Attitude::A_FRIENDLY && !u.is_mounted() ) {
+                    if( monexamine::mfriend_menu( *mon ) ) {
+                        return;
+                    }
                 }
             }
         } else if( u.is_mounted() ) {

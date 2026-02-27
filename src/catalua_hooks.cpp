@@ -13,6 +13,8 @@ constexpr auto hook_names = std::array
     "on_weather_updated",
     "on_try_npc_interaction",
     "on_npc_interaction",
+    "on_try_monster_interaction",
+    "on_monster_interaction",
     "on_dialogue_start",
     "on_dialogue_option",
     "on_dialogue_end",

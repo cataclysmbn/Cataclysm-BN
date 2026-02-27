@@ -584,6 +584,19 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_npc_interaction", []( const sol::table & ) {} );
 
+    DOC( "Called when the player tries to interact with a monster.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster): The monster being interacted with  " );
+    DOC( "Return false to prevent monster interaction actions from running.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_try_monster_interaction", []( const sol::table & ) {} );
+
+    DOC( "Called when the player interacts with a monster.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster): The monster being interacted with  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_monster_interaction", []( const sol::table & ) {} );
+
     DOC( "Called just before the dialogue window opens and the first topic is chosen.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `npc` (NPC): The NPC speaking  " );
