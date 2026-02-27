@@ -1858,5 +1858,445 @@
     "type": "construction_group",
     "id": "place_roulette",
     "name": "Place Roulette Table"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_a_tree",
+    "name": "Dig Up An Apple Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_ha_tree",
+    "name": "Dig Up A Harvested Apple Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_pr_tree",
+    "name": "Dig Up A Pear Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hpr_tree",
+    "name": "Dig Up A Harvested Pear Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_c_tree",
+    "name": "Dig Up A Cherry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hc_tree",
+    "name": "Dig Up A Harvested Cherry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_pe_tree",
+    "name": "Dig Up A Peach Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hpe_tree",
+    "name": "Dig Up A Harvested Peach Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_apr_tree",
+    "name": "Dig Up An Apricot Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hapr_tree",
+    "name": "Dig Up A Harvested Apricot Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_pl_tree",
+    "name": "Dig Up A Plum Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hpl_tree",
+    "name": "Dig Up A Harvested Plum Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_m_tree",
+    "name": "Dig Up A Mulberry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hm_tree",
+    "name": "Dig Up A Harvested Mulberry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_e_tree",
+    "name": "Dig Up An Elderberry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_he_tree",
+    "name": "Dig Up A Harvested Elderberry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_ca_tree",
+    "name": "Dig Up A Cacao Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hca_tree",
+    "name": "Dig Up A Harvested Cacao Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_co_tree",
+    "name": "Dig Up A Coffee Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hco_tree",
+    "name": "Dig Up A Harvested Coffee Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_coc_tree",
+    "name": "Dig Up A Coca Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hcoc_tree",
+    "name": "Dig Up A Harvested Coca Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_a_treem",
+    "name": "Dig Up An Apple Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_ha_treem",
+    "name": "Dig Up A Harvested Apple Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_pr_treem",
+    "name": "Dig Up A Pear Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hpr_treem",
+    "name": "Dig Up A Harvested Pear Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_c_treem",
+    "name": "Dig Up A Cherry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hc_treem",
+    "name": "Dig Up A Harvested Cherry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_pe_treem",
+    "name": "Dig Up A Peach Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hpe_treem",
+    "name": "Dig Up A Harvested Peach Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_apr_treem",
+    "name": "Dig Up An Apricot Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hapr_treem",
+    "name": "Dig Up A Harvested Apricot Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_pl_treem",
+    "name": "Dig Up A Plum Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hpl_treem",
+    "name": "Dig Up A Harvested Plum Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_m_treem",
+    "name": "Dig Up A Mulberry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hm_treem",
+    "name": "Dig Up A Harvested Mulberry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_e_treem",
+    "name": "Dig Up An Elderberry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_he_treem",
+    "name": "Dig Up A Harvested Elderberry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_ca_treem",
+    "name": "Dig Up A Cacao Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hca_treem",
+    "name": "Dig Up A Harvested Cacao Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_co_treem",
+    "name": "Dig Up A Coffee Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hco_treem",
+    "name": "Dig Up A Harvested Coffee Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_coc_treem",
+    "name": "Dig Up A Coca Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_up_hcoc_treem",
+    "name": "Dig Up A Harvested Coca Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_a_tree",
+    "name": "Replant An Apple Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_ha_tree",
+    "name": "Replant A Harvested Apple Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_pr_tree",
+    "name": "Replant A Pear Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hpr_tree",
+    "name": "Replant A Harvested Pear Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_c_tree",
+    "name": "Replant A Cherry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hc_tree",
+    "name": "Replant A Harvested Cherry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_pe_tree",
+    "name": "Replant A Pear Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hpe_tree",
+    "name": "Replant A Harvested Pear Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_apr_tree",
+    "name": "Replant An Apricot Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hapr_tree",
+    "name": "Replant A Harvested Apricot Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_pl_tree",
+    "name": "Replant A Plum Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hpl_tree",
+    "name": "Replant A Harvested Plum Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_m_tree",
+    "name": "Replant A Mulberry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hm_tree",
+    "name": "Replant A Harvested Mulberry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_e_tree",
+    "name": "Replant An Elderberry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_he_tree",
+    "name": "Replant A Harvested Elderberry Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_ca_tree",
+    "name": "Replant A Cacao Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hca_tree",
+    "name": "Replant A Harvested Cacao Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_co_tree",
+    "name": "Replant A Coffee Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hco_tree",
+    "name": "Replant A Harvested Coffee Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_coc_tree",
+    "name": "Replant A Coca Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hcoc_tree",
+    "name": "Replant A Harvested Coca Tree"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_a_treem",
+    "name": "Replant An Apple Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_ha_treem",
+    "name": "Replant A Harvested Apple Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_pr_treem",
+    "name": "Replant A Pear Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hpr_treem",
+    "name": "Replant A Harvested Pear Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_c_treem",
+    "name": "Replant A Cherry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hc_treem",
+    "name": "Replant A Harvested Cherry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_pe_treem",
+    "name": "Replant A Peach Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hpe_treem",
+    "name": "Replant A Harvested Peach Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_apr_treem",
+    "name": "Replant An Apricot Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hapr_treem",
+    "name": "Replant A Harvested Apricot Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_pl_treem",
+    "name": "Replant A Plum Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hpl_treem",
+    "name": "Replant A Harvested Plum Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_m_treem",
+    "name": "Replant A Mulberry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hm_treem",
+    "name": "Replant A Harvested Mulberry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_e_treem",
+    "name": "Replant An Elderberry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_he_treem",
+    "name": "Replant A Harvested Elderberry Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_ca_treem",
+    "name": "Replant A Cacao Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hca_treem",
+    "name": "Replant A Cacao Harvested Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_co_treem",
+    "name": "Replant A Coffee Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hco_treem",
+    "name": "Replant A Harvested Coffee Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_coc_treem",
+    "name": "Replant A Coca Tree Manually"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_hcoc_treem",
+    "name": "Replant A Harvested Coca Tree Manually"
   }
 ]

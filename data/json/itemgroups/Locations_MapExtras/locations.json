@@ -464,7 +464,8 @@
       [ "frame", 20 ],
       [ "hdframe", 20 ],
       [ "cu_pipe", 25 ],
-      [ "scrap_copper", 50 ]
+      [ "scrap_copper", 50 ],
+      [ "treespade", 5 ]
     ]
   },
   {
@@ -909,7 +910,8 @@
       [ "tourist_table", 10 ],
       [ "canister_empty", 45 ],
       [ "tongs", 10 ],
-      [ "pressure_cooker", 10 ]
+      [ "pressure_cooker", 10 ],
+      [ "treespade", 5 ]
     ]
   },
   {
@@ -1482,7 +1484,8 @@
       [ "one_year_old_newspaper", 2 ],
       { "group": "newspaper_recent", "prob": 15 },
       [ "foodperson_mask", 1 ],
-      [ "survnote", 1 ]
+      [ "survnote", 1 ],
+      [ "treespade", 5 ]
     ]
   },
   {
