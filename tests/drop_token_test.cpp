@@ -405,7 +405,8 @@ TEST_CASE( "drop overflow prefers non-favorites", "[activity][drop_token][favori
     CHECK( dropped_non_favorites == non_favorite_count );
 }
 
-TEST_CASE( "backpack drop keeps favorites when non-favorites are sufficient", "[activity][drop_token][favorite]" )
+TEST_CASE( "backpack drop keeps favorites when non-favorites are sufficient",
+           "[activity][drop_token][favorite]" )
 {
     clear_all_state();
     avatar dummy;

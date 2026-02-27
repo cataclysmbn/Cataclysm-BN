@@ -633,7 +633,7 @@ std::list<act_item> reorder_for_dropping( Character &p, const drop_locations &dr
         auto drop_from_pool_until_fits = [&]( std::vector<item *> &pool ) {
             while( excessive_volume > 0_ml && !pool.empty() ) {
                 const size_t chosen_index = rng( 0, pool.size() - 1 );
-                item * const selected = pool[chosen_index];
+                item *const selected = pool[chosen_index];
                 pool[chosen_index] = pool.back();
                 pool.pop_back();
 
