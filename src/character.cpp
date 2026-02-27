@@ -89,6 +89,7 @@
 #include "player.h"
 #include "player_activity.h"
 #include "profession.h"
+#include "profile.h"
 #include "recipe_dictionary.h"
 #include "regen.h"
 #include "ret_val.h"
@@ -5387,6 +5388,7 @@ void Character::update_body()
 
 void Character::update_body( const time_point &from, const time_point &to )
 {
+    ZoneScoped;
     update_stamina( to_turns<int>( to - from ) );
     update_stomach( from, to );
     recalculate_enchantment_cache();

@@ -26,6 +26,7 @@
 #include "overmapbuffer.h"
 #include "output.h"
 #include "point.h"
+#include "profile.h"
 #include "rng.h"
 #include "submap.h"
 #include "translations.h"
@@ -1585,6 +1586,7 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
 
 auto update( time_point to ) -> void
 {
+    ZoneScoped;
     get_fluid_grid_tracker().update( to );
 }
 

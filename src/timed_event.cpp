@@ -22,6 +22,7 @@
 #include "monster.h"
 #include "morale_types.h"
 #include "options.h"
+#include "profile.h"
 #include "rng.h"
 #include "sounds.h"
 #include "text_snippets.h"
@@ -304,6 +305,7 @@ void timed_event::per_turn()
 
 void timed_event_manager::process()
 {
+    ZoneScoped;
     for( auto it = events.begin(); it != events.end(); ) {
         it->per_turn();
         if( it->when <= calendar::turn ) {

@@ -5996,7 +5996,10 @@ void vehicle::idle( bool on_map )
         alarm();
     }
 
-    vehicle_funcs::process_autoloaders( *this );
+    // V-3: skip the full part scan when no AUTOLOADER parts are installed.
+    if( has_autoloaders ) {
+        vehicle_funcs::process_autoloaders( *this );
+    }
 }
 
 void vehicle::on_move()
@@ -6443,6 +6446,8 @@ void vehicle::refresh()
     alternator_load = 0;
     extra_drag = 0;
     rail_profile.clear();
+    has_autoloaders = false;
+    has_cargo_recharge = false;
 
     // Used to sort part list so it displays properly when examining
     struct sort_veh_part_vector {
@@ -6533,6 +6538,12 @@ void vehicle::refresh()
         }
         if( vpi.has_flag( "EMITTER" ) ) {
             emitters.push_back( p );
+        }
+        if( vpi.has_flag( "AUTOLOADER" ) ) {
+            has_autoloaders = true;
+        }
+        if( vpi.has_flag( VPFLAG_RECHARGE ) ) {
+            has_cargo_recharge = true;
         }
         if( vpi.has_flag( VPFLAG_WHEEL ) ) {
             wheelcache.push_back( p );
