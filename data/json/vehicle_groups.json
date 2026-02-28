@@ -105,6 +105,7 @@
       [ "CG_patrol_boat", 75 ],
       [ "CG_cutter", 25 ],
       [ "sailboat", 125 ],
+      [ "carbon_catamaran", 10 ],
       [ "pirate_ship", 25 ],
       [ "DUKW", 75 ],
       [ "hovercraft_motor_single", 25 ]

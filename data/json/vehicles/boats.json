@@ -1620,5 +1620,49 @@
       { "x": 0, "y": 0, "part": "metal_boat_hull" },
       { "x": -1, "y": 0, "part": "vehicle_scoop" }
     ]
+  },
+  {
+    "type": "vehicle",
+    "id": "carbon_catamaran",
+    "name": "Carbon Catamaran",
+    "blueprint": [
+      "y======-++---u",
+      "/.CeeC#......$",
+      "<I_cc_>___I__!",
+      "'_____[___S__!",
+      "<I____>___I__!",
+      "/.ssss#......$",
+      "b======-++---n"
+    ],
+    "blueprint_origin": { "x": 10, "y": 3 },
+    "palette": {
+      "c": [ "frame_carbon_horizontal", "seat", "roof_carbon" ],
+      "C": [ "frame_carbon_horizontal", "carbonfiber_boat_hull", "seat", "roof_carbon" ],
+      "e": [ "frame_carbon_horizontal", "carbonfiber_boat_hull", "veh_table", "roof_carbon" ],
+      "_": [ "frame_carbon_horizontal", "aisle_carbon_horizontal", "roof_carbon" ],
+      ".": [ "frame_carbon_horizontal", "aisle_carbon_horizontal", "roof_carbon", "carbonfiber_boat_hull" ],
+      ">": [ "frame_carbon_horizontal", "carbon_board_horizontal" ],
+      "#": [ "frame_carbon_horizontal", "carbon_board_horizontal", "carbonfiber_boat_hull" ],
+      "<": [ "frame_carbon_horizontal", "carbon_board_horizontal_rear" ],
+      "/": [ "frame_carbon_horizontal", "carbon_board_horizontal_rear", "carbonfiber_boat_hull" ],
+      "[": [ "frame_carbon_horizontal", "door_carbon_opaque" ],
+      "+": [ "frame_carbon_horizontal", "door_carbon", "carbonfiber_boat_hull" ],
+      "s": [ "frame_carbon_horizontal", "bed", "roof_carbon", "carbonfiber_boat_hull" ],
+      "!": [ "frame_carbon_horizontal", "carbon_halfboard_horizontal_2_front" ],
+      "$": [ "frame_carbon_horizontal", "carbon_halfboard_horizontal_2_front", "carbonfiber_boat_hull" ],
+      "-": [ "frame_carbon_horizontal", "carbon_halfboard_vertical", "carbonfiber_boat_hull" ],
+      "=": [ "frame_carbon_horizontal", "carbon_board_vertical", "carbonfiber_boat_hull" ],
+      "I": [ "frame_carbon_horizontal", "box_carbon", "roof_carbon" ],
+      "y": [ "frame_carbon_horizontal", "carbon_board_sw", "carbonfiber_boat_hull" ],
+      "b": [ "frame_carbon_horizontal", "carbon_board_se", "carbonfiber_boat_hull" ],
+      "x": [ "frame_carbon_horizontal", "carbon_halfboard_sw", "carbonfiber_boat_hull" ],
+      "z": [ "frame_carbon_horizontal", "carbon_halfboard_se", "carbonfiber_boat_hull" ],
+      "Y": [ "frame_carbon_horizontal", "carbon_halfboard_sw" ],
+      "B": [ "frame_carbon_horizontal", "carbon_halfboard_se" ],
+      "u": [ "frame_carbon_horizontal", "carbon_board_nw", "carbonfiber_boat_hull" ],
+      "n": [ "frame_carbon_horizontal", "carbon_board_ne", "carbonfiber_boat_hull" ],
+      "'": [ "frame_carbon_horizontal", "windshield", "v_curtain" ],
+      "S": [ "frame_carbon_vertical", "seat", "sail_large" ]
+    }
   }
 ]
