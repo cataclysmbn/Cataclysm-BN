@@ -50,8 +50,7 @@ static const efftype_id effect_onfire( "onfire" );
 // Build a runtime bounding rectangle for the loaded tile grid from a level_cache.
 // Replaces the former compile-time `lightmap_boundaries` constant (which used
 // MAPSIZE_X/Y and prevented runtime-sized level-cache allocations).
-static inline auto make_lightmap_bounds( const level_cache &lc )
-- > half_open_rectangle<point>
+static inline half_open_rectangle<point> make_lightmap_bounds( const level_cache &lc )
 {
     return { point_zero, point( lc.cache_x, lc.cache_y ) };
 }
