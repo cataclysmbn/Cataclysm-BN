@@ -674,16 +674,21 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
 
     m.load( pos_sm, true, pump_events );
 
-    // Repopulate the primary distribution-grid tracker from primary-slot submaps.
-    // All active submaps (including pocket/secondary dimensions) live in the primary
-    // slot (MAPBUFFER) during active gameplay; dimension-specific slots are only used
-    // by kept/idle dimensions via capture_from_primary()/restore_to_primary().
+    // Phase 6: Repopulate the distribution-grid tracker for the current dimension.
+    // With dimension-aware generation, each dimension's submaps live in their own
+    // registry slot, so we iterate over the bound dimension's buffer.
     {
-        auto &tracker = *grid_trackers_[""];
+        // Ensure a tracker exists for this dimension.
+        if( grid_trackers_.find( new_dim_id ) == grid_trackers_.end() ) {
+            grid_trackers_[new_dim_id] = std::make_unique<distribution_grid_tracker>(
+                                             MAPBUFFER_REGISTRY.get( new_dim_id ) );
+            submap_loader.add_listener( grid_trackers_[new_dim_id].get() );
+        }
+        auto &tracker = *grid_trackers_[new_dim_id];
         tracker.clear();
-        for( auto &[raw_pos, sm_ptr] : MAPBUFFER ) {
+        for( auto &[raw_pos, sm_ptr] : MAPBUFFER_REGISTRY.get( new_dim_id ) ) {
             if( sm_ptr ) {
-                tracker.on_submap_loaded( tripoint_abs_sm( raw_pos ), "" );
+                tracker.on_submap_loaded( tripoint_abs_sm( raw_pos ), new_dim_id );
             }
         }
     }
@@ -1544,6 +1549,11 @@ bool game::cleanup_at_end()
     clear_kept_pocket();
     clear_kept_origin();
 
+    // Phase 6: Clear the current dimension's slot first, then primary for safety.
+    const std::string cur_dim = m.get_bound_dimension();
+    if( !cur_dim.empty() ) {
+        MAPBUFFER_REGISTRY.get( cur_dim ).clear();
+    }
     MAPBUFFER.clear();
     overmap_buffer.clear();
 
@@ -3122,7 +3132,8 @@ bool game::save_maps()
         submap_streamer.flush_all();
         m.save();
         overmap_buffer.save(); // can throw
-        MAPBUFFER.save(); // can throw
+        // Phase 6: Save the dimension-aware mapbuffer slot, not always primary.
+        MAPBUFFER_REGISTRY.get( m.get_bound_dimension() ).save(); // can throw
         return true;
     } catch( const std::exception &err ) {
         popup( _( "Failed to save the maps: %s" ), err.what() );
@@ -12573,7 +12584,8 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
         }
         here.save();
         overmap_buffer.save();
-        MAPBUFFER.save();
+        // Phase 6: Save the dimension-aware mapbuffer slot, not always primary.
+        MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).save();
         if( active_world ) {
             active_world->commit_save_tx();
         }
@@ -12582,9 +12594,10 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
         // cleared and rebuilt.  Must be set BEFORE clear_grid() to close the window.
         swapping_dimensions = true;
 
-        // Capture current dimension into the opposite slot before clearing,
-        // unless this is a nested pocket-to-pocket transition.
-        // capture_from_primary() moves registry slots — no simulation involved.
+        // Phase 6: With dimension-aware generation, submaps are already in their
+        // own registry slots. capture_from_primary() / restore_to_primary() are
+        // now no-ops that just track "kept" state.  The secondary_world objects
+        // serve as metadata markers for which dimensions are kept loaded.
         if( !nested ) {
             std::optional<dimension_bounds> current_bounds = here.get_dimension_bounds();
             if( fast_to_pocket ) {
@@ -12613,7 +12626,8 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
             clear_kept_origin();
             overmap_buffer.clear();
             here.clear_grid();
-            MAPBUFFER.clear();
+            // Phase 6: Clear the current dimension's slot, not primary.
+            MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).clear();
             grid_trackers_[""]->clear();
         }
 
@@ -12710,7 +12724,8 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
         }
         here.save();
         overmap_buffer.save();  // Save with current save_prefix
-        MAPBUFFER.save();
+        // Phase 6: Save the dimension-aware mapbuffer slot, not always primary.
+        MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).save();
         if( !save_dimension_data() ) {
             if( active_world ) {
                 active_world->commit_save_tx();
@@ -12831,7 +12846,8 @@ bool game::travel_to_dimension( const world_type_id &new_world_type,
         // Normal clear behavior
         overmap_buffer.clear();
         here.clear_grid();
-        MAPBUFFER.clear();
+        // Phase 6: Clear the current dimension's slot, not primary.
+        MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).clear();
         grid_trackers_[""]->clear();
     }
 
@@ -13933,6 +13949,11 @@ void game::quickload()
     }
 
     if( active_world->info->save_exists( save_t::from_save_id( u.get_save_id() ) ) ) {
+        // Phase 6: Clear the current dimension's slot first, then primary.
+        const std::string cur_dim = m.get_bound_dimension();
+        if( !cur_dim.empty() ) {
+            MAPBUFFER_REGISTRY.get( cur_dim ).clear();
+        }
         MAPBUFFER.clear();
         overmap_buffer.clear();
         try {

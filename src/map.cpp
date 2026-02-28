@@ -6498,8 +6498,7 @@ void map::update_visibility_cache( const int zlev )
                 lit_level ll = apparent_light_at( p, visibility_variables_cache );
                 visibility_cache[vc_cache.idx( x, y )] = ll;
                 if( z == zlev ) {
-                    sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY ] += ( ll == lit_level::BRIGHT ||
-                            ll == lit_level::LIT );
+                    sm_squares_seen[ ( x / SEEX ) * my_MAPSIZE + y / SEEY ] += ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
                 }
             }
         }
@@ -7942,12 +7941,13 @@ void map::saven( const tripoint &grid )
     }
 
     submap_to_save->last_touched = calendar::turn;
-    MAPBUFFER.add_submap( abs, submap_to_save );
+    // Phase 6: Add to the dimension-aware mapbuffer slot, not always primary.
+    MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( abs, submap_to_save );
 }
 
 // Optimized mapgen function that only works properly for very simple overmap types
 // Does not create or require a temporary map and does its own saving
-static void generate_uniform( const tripoint &p, const ter_id &terrain_type )
+static void generate_uniform( const tripoint &p, const ter_id &terrain_type, mapbuffer &dest )
 {
     dbg( DL::Info ) << "generate_uniform p: " << p
                     << "  terrain_type: " << terrain_type.id().str();
@@ -7959,7 +7959,7 @@ static void generate_uniform( const tripoint &p, const ter_id &terrain_type )
             sm->is_uniform = true;
             sm->set_all_ter( terrain_type );
             sm->last_touched = calendar::turn;
-            MAPBUFFER.add_submap( pos, sm );
+            dest.add_submap( pos, sm );
         }
     }
 }
@@ -7980,7 +7980,8 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
     // on cache miss. For pocket dimensions, ~2400 of ~2541 submaps are out-of-bounds,
     // so avoiding those DB queries is a major performance win.
     if( current_bounds_ && !current_bounds_->contains( tripoint_abs_sm( grid_abs_sub ) ) ) {
-        submap *bsub = MAPBUFFER.lookup_submap_in_memory( grid_abs_sub );
+        mapbuffer &dim_buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
+        submap *bsub = dim_buf.lookup_submap_in_memory( grid_abs_sub );
         // Diagnostic: log boundary submap creation for dimension debugging
         if( bsub == nullptr ) {
             add_msg( m_debug, "[DIM-DIAG] loadn: creating boundary submap at (%d,%d,%d)",
@@ -7989,8 +7990,8 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
             sm->is_uniform = true;
             sm->set_all_ter( get_boundary_terrain() );
             sm->last_touched = calendar::turn;
-            MAPBUFFER.add_submap( grid_abs_sub, sm );
-            bsub = MAPBUFFER.lookup_submap_in_memory( grid_abs_sub );
+            dim_buf.add_submap( grid_abs_sub, sm );
+            bsub = dim_buf.lookup_submap_in_memory( grid_abs_sub );
         }
         if( bsub != nullptr ) {
             setsubmap( gridn, bsub );
@@ -8024,21 +8025,22 @@ void map::loadn( const tripoint &grid, const bool update_vehicles )
 
         // Short-circuit if the map tile is uniform
         // TODO: Replace with json mapgen functions.
+        mapbuffer &dim_buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
         if( terrain_type == air ) {
-            generate_uniform( grid_abs_sub_rounded, t_open_air );
+            generate_uniform( grid_abs_sub_rounded, t_open_air, dim_buf );
         } else if( terrain_type == rock ) {
-            generate_uniform( grid_abs_sub_rounded, t_rock );
+            generate_uniform( grid_abs_sub_rounded, t_rock, dim_buf );
         } else {
             tinymap tmp_map;
+            // Phase 6: bind the tinymap to this map's dimension so generated submaps
+            // land in the correct registry slot via loadn()'s dimension-aware lookup.
+            tmp_map.bind_dimension( bound_dimension_ );
             tmp_map.generate( grid_abs_sub_rounded, calendar::turn );
         }
 
+        // Phase 6: All generation paths now bind to bound_dimension_, so submaps
+        // land directly in the correct registry slot.  No fallback to primary needed.
         tmpsub = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap( grid_abs_sub );
-        if( tmpsub == nullptr ) {
-            // Freshly generated submaps land in the primary slot via tinymap::generate().
-            // Fall back to primary if the dimension slot is empty (e.g. first generation).
-            tmpsub = MAPBUFFER.lookup_submap( grid_abs_sub );
-        }
         if( tmpsub == nullptr ) {
             debugmsg( "failed to generate a submap at %s", grid_abs_sub.to_string() );
             return;
@@ -9926,8 +9928,7 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
         vehicle &veh = *( wrapped_veh.v );
         for( const vpart_reference &vp : veh.get_any_parts( VPFLAG_OBSTACLE ) ) {
             const tripoint part_pos = vp.pos();
-            if( local_bounds.contains( part_pos.xy() ) &&
-                scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
+            if( local_bounds.contains( part_pos.xy() ) && scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
                 scent_transfer[part_pos.x * st_sy + part_pos.y] = 1;
             }
         }
@@ -9939,8 +9940,7 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
             }
 
             const tripoint part_pos = vp.pos();
-            if( local_bounds.contains( part_pos.xy() ) &&
-                scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
+            if( local_bounds.contains( part_pos.xy() ) && scent_transfer[part_pos.x * st_sy + part_pos.y] == 5 ) {
                 scent_transfer[part_pos.x * st_sy + part_pos.y] = 1;
             }
         }

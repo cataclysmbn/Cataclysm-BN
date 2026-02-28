@@ -40,27 +40,24 @@ class secondary_world
         ~secondary_world();
 
         /**
-         * Transfer buffers from the primary world into this secondary world's
-         * registry slot.
+         * Mark this dimension as kept-loaded.
          *
-         * Called when leaving a dimension that should be kept loaded.
-         * Submaps are moved from MAPBUFFER_REGISTRY.primary() into
-         * MAPBUFFER_REGISTRY.get(get_dimension_id()).
+         * With Phase 6 dimension-aware generation, submaps are already in
+         * their own registry slot (MAPBUFFER_REGISTRY.get(get_dimension_id())).
+         * This method no longer transfers submaps; it just marks loaded_=true.
          *
-         * @param bounds The dimension bounds (stored for compatibility; unused now)
-         * @param simulation_center Last player position (unused; kept for compat)
+         * @param bounds Unused (kept for API compatibility)
+         * @param simulation_center Unused (kept for API compatibility)
          */
         void capture_from_primary( const std::optional<dimension_bounds> &bounds,
                                    const tripoint_abs_sm &simulation_center );
 
         /**
-         * Restore buffers from this secondary world's registry slot to the
-         * primary world.
+         * Mark this kept-loaded dimension as being restored to active use.
          *
-         * Called when returning to this kept-loaded dimension.  Submaps are
-         * moved from MAPBUFFER_REGISTRY.get(get_dimension_id()) back into
-         * MAPBUFFER_REGISTRY.primary().  After this call the secondary_world
-         * should be destroyed.
+         * With Phase 6 dimension-aware generation, submaps stay in their
+         * registry slot.  The caller just rebinds the map to this dimension.
+         * This method no longer transfers submaps; it just marks loaded_=false.
          */
         void restore_to_primary();
 

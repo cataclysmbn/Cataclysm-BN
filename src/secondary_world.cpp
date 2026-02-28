@@ -49,13 +49,10 @@ void secondary_world::capture_from_primary(
     const std::optional<dimension_bounds> & /*bounds*/,
     const tripoint_abs_sm & /*simulation_center*/ )
 {
-    // Move submaps from the primary registry slot into this dimension's own slot.
-    // This replaces the old approach of storing them in secondary_world::submaps_.
-    const std::string dim_id = get_dimension_id();
-    mapbuffer &primary = MAPBUFFER_REGISTRY.primary();
-    mapbuffer &dim_buf  = MAPBUFFER_REGISTRY.get( dim_id );
-
-    primary.transfer_all_to( dim_buf );
+    // Phase 6: With dimension-aware generation, submaps are already in their
+    // dimension's registry slot (MAPBUFFER_REGISTRY.get(dim_id)).  No transfer
+    // from primary is needed.  This method now just marks the dimension as
+    // kept-loaded so we know to preserve its submaps across dimension travel.
 
     // Overmaps are already saved to disk by the caller before the prefix switch;
     // they will reload from disk when needed in the dimension's context.
@@ -71,20 +68,15 @@ void secondary_world::restore_to_primary()
         return;
     }
 
-    // Save the dimension's state to disk first.
-    save_state();
-
-    // Move submaps back from this dimension's registry slot into primary.
-    const std::string dim_id = get_dimension_id();
-    mapbuffer &dim_buf  = MAPBUFFER_REGISTRY.get( dim_id );
-    mapbuffer &primary  = MAPBUFFER_REGISTRY.primary();
-
-    dim_buf.transfer_all_to( primary );
-
-    // Remove the now-empty dimension slot from the registry.
-    MAPBUFFER_REGISTRY.unload_dimension( dim_id );
-
+    // Phase 6: With dimension-aware generation, submaps are already in their
+    // dimension's registry slot.  No transfer to primary is needed.  The caller
+    // will rebind the map to this dimension and load submaps from the dimension's
+    // slot directly.
+    //
     // Overmaps will be loaded from disk by the normal load path.
+    //
+    // We do NOT unload the dimension here — the submaps are about to be used.
+    // The dimension slot stays populated for the map to reference.
 
     loaded_ = false;
 }
@@ -95,18 +87,16 @@ void secondary_world::save_state()
         return;
     }
 
-    // TODO Phase 4: Replace this stub with a proper dimension-aware save.
-    // mapbuffer::save() currently relies on global game state (active map origin,
-    // get_active_world()) and cannot correctly save a non-primary dimension's
-    // submaps while a different dimension is active.
+    // Phase 6: Kept dimensions have their submaps in their own registry slot.
+    // Saving a kept dimension while another dimension is active would require
+    // temporarily switching map contexts, which is complex and risky.
     //
-    // In the meantime, secondary dimension submaps are implicitly saved when
-    // restore_to_primary() moves them back into MAPBUFFER_REGISTRY.primary()
-    // and the normal game save path runs.  Mid-session autosaves while a
-    // dimension is kept as secondary will NOT persist its latest state —
-    // this matches the behaviour of the legacy secondary_world implementation.
+    // For now, kept dimensions are saved when they become active again (via the
+    // normal game::save_maps() path after travel_to_dimension()).  Mid-session
+    // autosaves while a dimension is kept will NOT persist its state.
     //
-    // Target: MAPBUFFER_REGISTRY.get( get_dimension_id() ).save();
+    // Future improvement: call MAPBUFFER_REGISTRY.get(get_dimension_id()).save()
+    // with appropriate map context switching.
 }
 
 void secondary_world::unload()
