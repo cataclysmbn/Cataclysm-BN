@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "curses_mcp": {
+      "type": "local",
+      "command": [
+        "deno",
+        "task",
+        "pr:verify:curses-mcp:server"
+      ],
+      "enabled": true,
+      "timeout": 15000
+    }
+  }
+}

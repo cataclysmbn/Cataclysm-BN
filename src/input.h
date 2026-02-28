@@ -391,6 +391,15 @@ extern input_manager inp_mngr;
 class input_context
 {
     public:
+        struct available_action_key {
+            std::string id;
+            std::string name;
+            std::string description;
+            std::string key;
+            bool requires_coordinate = false;
+            bool mouse_capable = false;
+        };
+
 #if defined(__ANDROID__)
         // Whatever's on top is our current input context.
         static std::list<input_context *> input_context_stack;
@@ -662,6 +671,8 @@ class input_context
          */
         std::string get_action_name( const std::string &action_id ) const;
 
+        auto get_available_action_keys() const -> std::vector<available_action_key>;
+
         /* For the future, something like this might be nice:
          * const std::string register_action(const std::string& action_descriptor, x, y, width, height);
          * (x, y, width, height) would describe an area on the visible window that, if clicked, triggers the action.
@@ -768,5 +779,3 @@ bool gamepad_available();
 
 // rotate a delta direction clockwise
 void rotate_direction_cw( int &dx, int &dy );
-
-
