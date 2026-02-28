@@ -773,7 +773,7 @@ static SDL_Surface_Ptr create_identity_uv_surface( int w, int h, bool offset_mod
  * In offset mode, offsets are added together.
  * In normalized mode, the modifier is used to look up coordinates in the composite.
  */
-static void chain_uv_modifier(
+[[maybe_unused]] static void chain_uv_modifier(
     SDL_Surface *composite,
     SDL_Surface *modifier,
     bool offset_mode )
@@ -976,8 +976,8 @@ static void apply_uv_remap(
     const bool offset_mode,
     const point sprite_offset,
     const point output_offset,  // Offset of output rect relative to sprite origin (for expanded output)
-    const int std_tile_w,
-    const int std_tile_h,
+    const int std_tile_w [[maybe_unused]],
+    const int std_tile_h [[maybe_unused]],
     color_pixel_function_pointer color_func = nullptr )
 {
     if( !dst || !src || !uv_modifier ) {
