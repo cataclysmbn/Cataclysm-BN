@@ -38,6 +38,7 @@
         { "item": "rope_30", "x": 9, "y": [ 13, 15 ], "chance": 30 },
         { "item": "rope_30", "x": 14, "y": [ 13, 15 ], "chance": 70 },
         { "item": "sea_scooter", "x": [ 14, 15 ], "y": [ 11, 16 ], "chance": 50 },
+        { "item": "sonar_device", "x": [ 14, 15 ], "y": [ 11, 16 ], "chance": 50 },
         { "item": "sea_scooter", "x": [ 9, 10 ], "y": [ 11, 16 ], "chance": 50 }
       ],
       "items": { "#": { "item": "fishing_items", "chance": 10 } },

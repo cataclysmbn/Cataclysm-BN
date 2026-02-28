@@ -146,6 +146,12 @@
     "info": "Armor plate.  Will partially protect other components on the same frame from the shock damage of a distant collision but not from direct attacks."
   },
   {
+    "id": "SONAR",
+    "type": "json_flag",
+    "context": [ "vehicle_part" ],
+    "info": "This part can be activated to perform a sonar scan from the vehicle."
+  },
+  {
     "id": "STABLE",
     "type": "json_flag",
     "context": [ "vehicle_part" ],

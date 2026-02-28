@@ -1560,7 +1560,7 @@
       { "x": -2, "y": 0, "parts": [ "battery_car", "alternator_car", "engine_inline4" ] },
       { "x": 3, "y": -1, "part": "halfboard_nw" },
       { "x": 3, "y": 0, "part": "halfboard_ne" },
-      { "x": 1, "y": -1, "part": "minifridge" },
+      { "x": 1, "y": -1, "parts": [ "minifridge", "sonar_array" ] },
       { "x": -1, "y": -1, "part": "trunk_floor" },
       { "x": -2, "y": 0, "part": "folding_seat" },
       { "x": -3, "y": 0, "part": "folding_seat" },
