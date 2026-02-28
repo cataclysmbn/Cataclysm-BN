@@ -27,7 +27,8 @@
       "o": "f_oven",
       "r": "f_rack",
       "F": "f_vending_c",
-      "v": "f_vending_c"
+      "v": "f_vending_c",
+      "N": "f_bulletin"
     },
     "terrain": {
       "$": "t_carpet_green",
