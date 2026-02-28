@@ -1306,8 +1306,6 @@ bool vehicle::can_enable_muscle_engine( int e, std::string &failure_reason ) con
 {
     const int part_idx = engines[e];
     const vpart_info &engine_info = part_info( part_idx );
-    const point engine_mount = parts[part_idx].mount;
-
 
     const player *passenger = get_passenger( part_idx );
     if( passenger != nullptr ) {
@@ -1333,7 +1331,6 @@ bool vehicle::has_muscle_engine_operator( int e ) const
 {
     const int part_idx = engines[e];
     const vpart_info &engine_info = part_info( part_idx );
-    const point engine_mount = parts[part_idx].mount;
 
     const player *passenger = get_passenger( part_idx );
     if( passenger != nullptr ) {
