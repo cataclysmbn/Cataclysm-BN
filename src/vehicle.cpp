@@ -4548,7 +4548,6 @@ double vehicle::coeff_air_drag() const
             d_check_max( drag[ col ].panel, pa, pa.info().has_flag( "SOLAR_PANEL" ) );
             d_check_max( drag[ col ].windmill, pa, pa.info().has_flag( "WIND_TURBINE" ) );
             d_check_max( drag[ col ].rotor, pa, pa.info().has_flag( "ROTOR" ) );
-            d_check_max( drag[ col ].ballon, pa, pa.info().has_flag( "BALLOON" ) );
             d_check_max( drag[ col ].sail, pa, pa.info().has_flag( "WIND_POWERED" ) );
             d_check_max( drag[ col ].exposed, pa, d_exposed( pa ) );
             d_check_min( drag[ col ].last, pa, pa.info().has_flag( "LOW_FINAL_AIR_DRAG" ) ||
@@ -4583,8 +4582,6 @@ double vehicle::coeff_air_drag() const
         c_air_drag_c += ( dc.windmill > minrow ) ? 5 * c_air_mod : 0;
         // rotors are not great for drag!
         c_air_drag_c += ( dc.rotor > minrow ) ? 6 * c_air_mod : 0;
-        // Neither are balloons
-        c_air_drag_c += ( dc.ballon > minrow ) ? 6 * c_air_mod : 0;
         // having a sail is terrible for your drag
         c_air_drag_c += ( dc.sail > minrow ) ? 7 * c_air_mod : 0;
         c_air_drag += c_air_drag_c;
@@ -4614,11 +4611,24 @@ double vehicle::coeff_air_drag() const
     double cross_area = height * tile_to_width( width );
     add_msg( m_debug, "%s: height %3.2fm, width %3.2fm (%d tiles), c_air %3.2f\n", name, height,
              tile_to_width( width ), width, c_air_drag );
+    if( !balloons.empty() ) {
+        c_air_drag += coeff_balloon_drag();
+    }
     // F_air_drag = c_air_drag * cross_area * 1/2 * air_density * v^2
     // coeff_air_resistance = c_air_drag * cross_area * 1/2 * air_density
     coefficient_air_resistance = std::max( 0.1, c_air_drag * cross_area * 0.5 * air_density );
     coeff_air_dirty = false;
     return coefficient_air_resistance;
+}
+
+double vehicle::coeff_balloon_drag() const
+{
+    double volume = std::accumulate( balloons.begin(), balloons.end(), double{0.0},
+    [&]( double acc, int balloon ) {
+        const double height{ parts[ balloon ].info().balloon_height() };
+        return acc + height;
+    } );
+    return std::pow( volume, 2 / 3 );
 }
 
 double vehicle::coeff_rolling_drag() const
