@@ -146,7 +146,6 @@ void game::serialize( std::ostream &fout )
     // save stats.
     json.member( "kill_tracker", *kill_tracker_ptr );
     json.member( "stats_tracker", *stats_tracker_ptr );
-    json.member( "achievements_tracker", *achievements_tracker_ptr );
 
     json.member( "token_provider", *token_provider_ptr );
 
@@ -371,7 +370,6 @@ auto game::unserialize( std::istream &fin ) -> bool
         data.read( "player", u );
         inp_mngr.pump_events();
         data.read( "stats_tracker", *stats_tracker_ptr );
-        data.read( "achievements_tracker", *achievements_tracker_ptr );
         data.read( "token_provider", token_provider_ptr );
         inp_mngr.pump_events();
         Messages::deserialize( data );
