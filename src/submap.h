@@ -108,10 +108,20 @@ class submap : maptile_soa<SEEX, SEEY>
         void set_furn( point p, furn_id furn ) {
             is_uniform = false;
             frn[p.x][p.y] = furn;
+            if( furn != f_null ) {
+                return;
+            }
+            // Reset furniture vars on clear
+            frn_vars.erase( p );
         }
 
         void set_all_furn( const furn_id &furn ) {
             std::uninitialized_fill_n( &frn[0][0], elements, furn );
+            if( furn != f_null ) {
+                return;
+            }
+            // Reset furniture vars on clear
+            frn_vars.clear();
         }
 
         ter_id get_ter( point p ) const {
@@ -171,6 +181,30 @@ class submap : maptile_soa<SEEX, SEEY>
         const field &get_field( point p ) const {
             return fld[p.x][p.y];
         }
+
+        data_vars::data_set &get_ter_vars( point p ) {
+            return ter_vars[p];
+        };
+
+        data_vars::data_set &get_furn_vars( point p ) {
+            return frn_vars[p];
+        };
+
+        const data_vars::data_set &get_ter_vars( point p ) const {
+            const auto it = ter_vars.find( p );
+            if( it == ter_vars.end() ) {
+                return EMPTY_VARS;
+            }
+            return it->second;
+        };
+
+        const data_vars::data_set &get_furn_vars( point p ) const {
+            const auto it = ter_vars.find( p );
+            if( it == ter_vars.end() ) {
+                return EMPTY_VARS;
+            }
+            return it->second;
+        };
 
         struct cosmetic_t {
             point pos;
@@ -241,6 +275,10 @@ class submap : maptile_soa<SEEX, SEEY>
         static void swap( submap &first, submap &second );
 
     private:
+        static const data_vars::data_set EMPTY_VARS;
+        std::unordered_map<point, data_vars::data_set> ter_vars;
+        std::unordered_map<point, data_vars::data_set> frn_vars;
+
         std::map<point, computer> computers;
         std::unique_ptr<computer> legacy_computer;
         int temperature = 0;

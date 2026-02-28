@@ -1769,6 +1769,29 @@ ter_id map::ter( const tripoint &p ) const
     return current_submap->get_ter( l );
 }
 
+data_vars::data_set *map::ter_vars( const tripoint &p ) const
+{
+    if( !inbounds( p ) ) {
+        return nullptr;
+    }
+
+    point l;
+    const auto sm = get_submap_at( p, l );
+    return &sm->get_ter_vars( l );
+}
+
+
+data_vars::data_set *map::furn_vars( const tripoint &p ) const
+{
+    if( !inbounds( p ) ) {
+        return nullptr;
+    }
+
+    point l;
+    const auto sm = get_submap_at( p, l );
+    return &sm->get_furn_vars( l );
+}
+
 uint8_t map::get_known_connections( const tripoint &p, int connect_group,
                                     const std::map<tripoint, ter_id> &override ) const
 {

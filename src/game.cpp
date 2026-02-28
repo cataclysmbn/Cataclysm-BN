@@ -11249,6 +11249,13 @@ bool game::grabbed_furn_move( const tripoint &dp )
     active_tile_data *atd = active_tiles::furn_at<active_tile_data>
                             ( tripoint_abs_ms( m.getabs( fpos ) ) );
 
+    // Swap furniture vars between tiles beforehand
+    // because the furn_set call will clear the vars
+    // when furniture is set to f_null
+    const auto dstVars = m.furn_vars( fdest );
+    const auto srcVars = m.furn_vars( fpos );
+    std::swap( *srcVars, *dstVars );
+
     // Actually move the furniture.
     m.furn_set( fdest, m.furn( fpos ), atd ? atd->clone() : nullptr );
     m.furn_set( fpos, f_null );

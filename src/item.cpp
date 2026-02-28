@@ -288,7 +288,7 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
     contents( this ),
     components( new component_item_location( this ) ), bday( turn )
 {
-    item_vars = type->item_vars;
+    item_vars_ = type->item_vars;
     corpse = has_flag( flag_CORPSE ) ? &mtype_id::NULL_ID().obj() : nullptr;
     item_counter = type->countdown_interval;
 
@@ -451,7 +451,7 @@ item::item( const item &source ) : game_object<item>( source ), contents( this )
     faults = source.faults;
     item_tags = source.item_tags;
     curammo = source.curammo;
-    item_vars = source.item_vars;
+    item_vars_ = source.item_vars_;
     corpse = source.corpse;
     corpse_name = source.corpse_name;
     techniques = source.techniques;
@@ -496,7 +496,7 @@ item &item::operator=( const item &source )
     faults = source.faults;
     item_tags = source.item_tags;
     curammo = source.curammo;
-    item_vars = source.item_vars;
+    item_vars_ = source.item_vars_;
     corpse = source.corpse;
     corpse_name = source.corpse_name;
     techniques = source.techniques;
@@ -1082,7 +1082,7 @@ bool item::stacks_with( const item &rhs, bool check_components, bool skip_type_c
     if( techniques != rhs.techniques ) {
         return false;
     }
-    if( item_vars != rhs.item_vars ) {
+    if( item_vars_ != rhs.item_vars_ ) {
         return false;
     }
 
@@ -1199,96 +1199,6 @@ void item::put_in( detached_ptr<item> &&payload )
         return;
     }
     contents.insert_item( std::move( payload ) );
-}
-
-void item::set_var( const std::string &name, const int value )
-{
-    std::ostringstream tmpstream;
-    tmpstream.imbue( std::locale::classic() );
-    tmpstream << value;
-    item_vars[name] = tmpstream.str();
-}
-
-void item::set_var( const std::string &name, const long long value )
-{
-    std::ostringstream tmpstream;
-    tmpstream.imbue( std::locale::classic() );
-    tmpstream << value;
-    item_vars[name] = tmpstream.str();
-}
-
-// NOLINTNEXTLINE(cata-no-long)
-void item::set_var( const std::string &name, const long value )
-{
-    std::ostringstream tmpstream;
-    tmpstream.imbue( std::locale::classic() );
-    tmpstream << value;
-    item_vars[name] = tmpstream.str();
-}
-
-void item::set_var( const std::string &name, const double value )
-{
-    item_vars[name] = string_format( "%f", value );
-}
-
-double item::get_var( const std::string &name, const double default_value ) const
-{
-    const auto it = item_vars.find( name );
-    if( it == item_vars.end() ) {
-        return default_value;
-    }
-    return atof( it->second.c_str() );
-}
-
-void item::set_var( const std::string &name, const tripoint &value )
-{
-    item_vars[name] = string_format( "%d,%d,%d", value.x, value.y, value.z );
-}
-
-tripoint item::get_var( const std::string &name, const tripoint &default_value ) const
-{
-    const auto it = item_vars.find( name );
-    if( it == item_vars.end() ) {
-        return default_value;
-    }
-    std::vector<std::string> values = string_split( it->second, ',' );
-    return tripoint( atoi( values[0].c_str() ),
-                     atoi( values[1].c_str() ),
-                     atoi( values[2].c_str() ) );
-}
-
-void item::set_var( const std::string &name, const std::string &value )
-{
-    item_vars[name] = value;
-}
-
-std::string item::get_var( const std::string &name, const std::string &default_value ) const
-{
-    const auto it = item_vars.find( name );
-    if( it == item_vars.end() ) {
-        return default_value;
-    }
-    return it->second;
-}
-
-std::string item::get_var( const std::string &name ) const
-{
-    return get_var( name, "" );
-}
-
-bool item::has_var( const std::string &name ) const
-{
-    return item_vars.contains( name );
-}
-
-void item::erase_var( const std::string &name )
-{
-    item_vars.erase( name );
-}
-
-void item::clear_vars()
-{
-    item_vars.clear();
 }
 
 void item::add_item_with_id( const itype_id &itype, int count )
@@ -1754,8 +1664,7 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
 
     if( parts->test( iteminfo_parts::DESCRIPTION ) ) {
         insert_separation_line( info );
-        const std::map<std::string, std::string>::const_iterator idescription =
-            item_vars.find( "description" );
+        const auto idescription = item_vars_.find( "description" );
         const std::optional<translation> snippet = SNIPPET.get_snippet_by_id( snip_id );
         if( snippet.has_value() && ( !get_avatar().has_trait( trait_ILLITERATE ) ||
                                      !has_flag( flag_SNIPPET_NEEDS_LITERACY ) ) ) {
@@ -1766,7 +1675,7 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                 //note that you have seen the snippet
                 get_avatar().add_snippet( snip_id );
             }
-        } else if( idescription != item_vars.end() ) {
+        } else if( idescription != item_vars_.end() ) {
             info.emplace_back( "DESCRIPTION", idescription->second );
         } else {
             if( is_craft() ) {
@@ -1780,14 +1689,13 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                 info.emplace_back( "DESCRIPTION", type->description.translated() );
             }
         }
-        std::map<std::string, std::string>::const_iterator item_note = item_vars.find( "item_note" );
-        std::map<std::string, std::string>::const_iterator item_note_tool =
-            item_vars.find( "item_note_tool" );
+        const auto item_note = item_vars_.find( "item_note" );
+        const auto item_note_tool = item_vars_.find( "item_note_tool" );
 
-        if( item_note != item_vars.end() && parts->test( iteminfo_parts::DESCRIPTION_NOTES ) ) {
+        if( item_note != item_vars_.end() && parts->test( iteminfo_parts::DESCRIPTION_NOTES ) ) {
             std::string ntext;
             const inscribe_actor *use_actor = nullptr;
-            if( item_note_tool != item_vars.end() ) {
+            if( item_note_tool != item_vars_.end() ) {
                 const use_function *use_func = itype_id( item_note_tool->second )->get_use( "inscribe" );
                 use_actor = dynamic_cast<const inscribe_actor *>( use_func->get_actor_ptr() );
             }
@@ -1877,7 +1785,7 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
             const std::string tags_listed = enumerate_as_string( item_tags, f, enumeration_conjunction::none );
             info.emplace_back( "BASE", string_format( _( "tags: %s" ), tags_listed ) );
 
-            for( auto const &imap : item_vars ) {
+            for( auto const &imap : item_vars_ ) {
                 info.emplace_back( "BASE",
                                    string_format( _( "item var: %s, %s" ), imap.first,
                                                   imap.second ) );
@@ -5023,7 +4931,7 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
     }
 
     std::string maintext;
-    if( is_corpse() || item_vars.contains( "name" ) ) {
+    if( is_corpse() || item_vars_.contains( "name" ) ) {
         maintext = type_name( quantity );
     } else if( is_craft() ) {
         maintext = string_format( _( "in progress %s" ), craft_data_->making->result_name() );
@@ -5238,7 +5146,7 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         ret = utf8_truncate( ret, truncate + truncate_override );
     }
 
-    if( item_vars.contains( "item_note" ) ) {
+    if( item_vars_.contains( "item_note" ) ) {
         //~ %s is an item name. This style is used to denote items with notes.
         return string_format( _( "*%s*" ), ret );
     } else {
@@ -9879,8 +9787,8 @@ bool item_compare_by_charges( const item &left, const item &right )
 static const std::string USED_BY_IDS( "USED_BY_IDS" );
 bool item::already_used_by_player( const player &p ) const
 {
-    const auto it = item_vars.find( USED_BY_IDS );
-    if( it == item_vars.end() ) {
+    const auto it = item_vars_.find( USED_BY_IDS );
+    if( it == item_vars_.end() ) {
         return false;
     }
     // USED_BY_IDS always starts *and* ends with a ';', the search string
@@ -9892,7 +9800,7 @@ bool item::already_used_by_player( const player &p ) const
 
 void item::mark_as_used_by_player( const player &p )
 {
-    std::string &used_by_ids = item_vars[ USED_BY_IDS ];
+    std::string &used_by_ids = item_vars_[ USED_BY_IDS ];
     if( used_by_ids.empty() ) {
         // *always* start with a ';'
         used_by_ids = ";";
@@ -11033,9 +10941,9 @@ bool item::is_reloadable() const
 
 std::string item::type_name( unsigned int quantity ) const
 {
-    const auto iter = item_vars.find( "name" );
+    const auto iter = item_vars_.find( "name" );
     std::string ret_name;
-    if( iter != item_vars.end() ) {
+    if( iter != item_vars_.end() ) {
         return iter->second;
     } else {
         ret_name = type->nname( quantity );

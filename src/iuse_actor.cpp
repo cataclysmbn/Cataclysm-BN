@@ -1482,6 +1482,7 @@ int deploy_furn_actor::use( player &p, item &it, bool t, const tripoint &pos ) c
     }
 
     here.furn_set( pnt, furn_type );
+    here.furn_vars( pnt )->merge( it.item_vars() );
     p.mod_moves( to_turns<int>( 2_seconds ) );
     return 1;
 }

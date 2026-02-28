@@ -1318,7 +1318,8 @@ void iexamine::deployed_furniture( player &p, const tripoint &pos )
     p.add_msg_if_player( m_info, _( "You take down the %s." ),
                          here.furn( pos ).obj().name() );
     const auto furn_item = here.furn( pos ).obj().deployed_item;
-    here.add_item_or_charges( pos, item::spawn( furn_item, calendar::turn ) );
+    const auto item = here.add_item_or_charges( pos, item::spawn( furn_item, calendar::turn ) );
+    item->item_vars().merge( *here.furn_vars( pos ) );
     here.furn_set( pos, f_null );
 }
 

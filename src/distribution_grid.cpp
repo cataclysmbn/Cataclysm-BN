@@ -337,6 +337,7 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
 
         submap *sm = mb.lookup_submap( p_abs_sm );
         if( sm == nullptr ) {
+            // Something transforming on a non-existant map...?
             return;
         }
 
@@ -344,19 +345,21 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
         const furn_t &new_t = qt.id.obj();
         const tripoint pos_local = m.getlocal( qt.p.raw() );
 
-        if( m.inbounds( pos_local ) ) {
-            m.furn_set( pos_local, qt.id );
-        } else {
-            sm->set_furn( p_within_sm.raw(), qt.id );
-        }
-
         if( !qt.msg.empty() ) {
             if( u.sees( pos_local ) ) {
                 add_msg( "%s", _( qt.msg ) );
             }
         }
 
+        if( m.inbounds( pos_local ) ) {
+            m.furn_set( pos_local, qt.id );
+            return;
+        }
+
+        // Something is transforming from an unloaded map...?
+
         // TODO: this is copy-pasted from map.cpp
+        sm->set_furn( p_within_sm.raw(), qt.id );
         if( old_t.active ) {
             sm->active_furniture.erase( p_within_sm );
             // TODO: Only for g->m? Observer pattern?

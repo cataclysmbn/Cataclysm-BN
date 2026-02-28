@@ -13,6 +13,7 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 
+const data_vars::data_set submap::EMPTY_VARS{};
 
 template<int sx, int sy>
 void maptile_soa<sx, sy>::swap_soa_tile( point p1, point p2 )
@@ -49,6 +50,8 @@ void submap::swap( submap &first, submap &second )
     std::swap( first.legacy_computer, second.legacy_computer );
     std::swap( first.temperature, second.temperature );
     std::swap( first.cosmetics, second.cosmetics );
+    std::swap( first.frn_vars, second.frn_vars );
+    std::swap( first.ter_vars, second.ter_vars );
 
     for( int x = 0; x < SEEX; x++ ) {
         for( int y = 0; y < SEEY; y++ ) {
@@ -535,6 +538,17 @@ void submap::rotate( int turns )
     }
     active_furniture = rot_active_furn;
 
+    std::unordered_map<point, data_vars::data_set> rot_frn_vars;
+    for( auto &elem : frn_vars ) {
+        rot_frn_vars.emplace( rotate_point( elem.first ), elem.second );
+    }
+    frn_vars = rot_frn_vars;
+
+    std::unordered_map<point, data_vars::data_set> rot_ter_vars;
+    for( auto &elem : ter_vars ) {
+        rot_ter_vars.emplace( rotate_point( elem.first ), elem.second );
+    }
+    ter_vars = rot_ter_vars;
     std::map<point_sm_ms, time_point> rot_transformer_last_run;
     for( auto &elem : transformer_last_run ) {
         rot_transformer_last_run.emplace( point_sm_ms( rotate_point( elem.first.raw() ) ), elem.second );
