@@ -277,7 +277,7 @@
       [ [ "tool_belt", 1 ], [ "legrig", 1 ] ],
       [ [ "pants_army", 1 ], [ "jeans", 1 ] ],
       [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 48 ] ],
+      [ [ "kevlar_plate", 24 ] ],
       [ [ "plastic_chunk", 24 ] ]
     ]
   },
@@ -480,7 +480,7 @@
       ],
       [ [ "duct_tape", 200 ] ],
       [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 48 ] ]
+      [ [ "kevlar_plate", 24 ] ]
     ]
   },
   {
@@ -524,7 +524,7 @@
       ],
       [ [ "duct_tape", 400 ] ],
       [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 48 ] ]
+      [ [ "kevlar_plate", 24 ] ]
     ]
   },
   {
@@ -557,7 +557,7 @@
       ],
       [ [ "duct_tape", 300 ] ],
       [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 48 ] ]
+      [ [ "kevlar_plate", 24 ] ]
     ]
   },
   {
@@ -590,7 +590,7 @@
       ],
       [ [ "duct_tape", 300 ] ],
       [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 48 ] ]
+      [ [ "kevlar_plate", 24 ] ]
     ]
   },
   {
@@ -647,7 +647,7 @@
       ],
       [ [ "duct_tape", 200 ] ],
       [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 48 ] ]
+      [ [ "kevlar_plate", 24 ] ]
     ]
   },
   {
@@ -679,7 +679,7 @@
       ],
       [ [ "duct_tape", 200 ] ],
       [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 48 ] ]
+      [ [ "kevlar_plate", 24 ] ]
     ]
   },
   {
@@ -738,7 +738,7 @@
       ],
       [ [ "duct_tape", 300 ] ],
       [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 48 ] ]
+      [ [ "kevlar_plate", 24 ] ]
     ]
   },
   {
@@ -914,7 +914,7 @@
       ],
       [ [ "duct_tape", 300 ] ],
       [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
-      [ [ "kevlar_plate", 48 ] ]
+      [ [ "kevlar_plate", 24 ] ]
     ]
   },
   {
