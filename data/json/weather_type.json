@@ -228,7 +228,7 @@
     "name": "Acidic Drizzle",
     "color": "c_light_green",
     "map_color": "c_yellow_green",
-    "glyph": ".",
+    "glyph": ";",
     "ranged_penalty": 2,
     "sight_penalty": 1.03,
     "light_modifier": -20,
