@@ -1,0 +1,19 @@
+{
+  "version": "0.2.1",
+  "configurations": [
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "cataclysm-bn-tiles.exe (src\\cataclysm-bn-tiles.exe)",
+      "name": "cataclysm-bn-tiles",
+      "currentDir": "${workspaceRoot}"
+    },
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "cata_test-tiles.exe (tests\\cata_test-tiles.exe)",
+      "name": "cata_test-tiles",
+      "currentDir": "${workspaceRoot}"
+    }
+  ]
+}
