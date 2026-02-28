@@ -51,7 +51,7 @@ static auto view_tiles_count = total_tiles_count;
 // The view_tiles_count that the current projector / main_tex were built from.
 // Updated whenever set_screen_rect actually rebuilds; used to detect stale projectors
 // whose tile_size happens to match even though view_tiles_count changed.
-static auto built_view_tiles_count = point{0, 0};
+static auto built_view_tiles_count = point {0, 0};
 
 point get_pixel_size( point tile_size, pixel_minimap_mode mode )
 {
@@ -374,7 +374,7 @@ pixel_minimap::submap_cache &pixel_minimap::get_cache_at( const tripoint &abs_sm
 void pixel_minimap::process_cache( const tripoint &center )
 {
     // Refresh the tile count to match the current runtime map size.
-    total_tiles_count = { ( g_mapsize - 2 ) * SEEX, ( g_mapsize - 2 ) * SEEY };
+    total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) *SEEY };
 
     prepare_cache_for_updates( center );
 
@@ -567,7 +567,7 @@ void pixel_minimap::draw( const SDL_Rect &screen_rect, const tripoint &center )
 
     // Update the tile count from the current runtime bubble size BEFORE set_screen_rect
     // so the projector is always built with the correct grid dimensions.
-    total_tiles_count = { ( g_mapsize - 2 ) * SEEX, ( g_mapsize - 2 ) * SEEY };
+    total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) *SEEY };
 
     // view_tiles_count is the geographic tile grid the projector and renderer use.
     // The two cases are handled separately to avoid them fighting each other:
