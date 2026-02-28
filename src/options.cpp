@@ -2441,9 +2441,10 @@ void options_manager::add_options_performance()
              translate_marker( "Controls whether fire in loaded submaps can spread into adjacent "
                                "unloaded submaps.  'None': fire only decays, never spreads beyond "
                                "the loaded set.  'Adjacent': fire requests one extra layer of "
-                               "loaded submaps at each boundary to preserve correct spread behavior." ),
-        { { "none", translate_marker( "None (pause spread)" ) },
-          { "adjacent", translate_marker( "Adjacent (one layer)" ) } },
+        "loaded submaps at each boundary to preserve correct spread behavior." ), {
+            { "none", translate_marker( "None (pause spread)" ) },
+            { "adjacent", translate_marker( "Adjacent (one layer)" ) }
+        },
         "adjacent"
            );
         add( "REALITY_BUBBLE_SIZE", page_id,
