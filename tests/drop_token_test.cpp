@@ -360,6 +360,99 @@ TEST_CASE( "full backpack pickup", "[drop_token]" )
     }
 }
 
+TEST_CASE( "drop overflow prefers non-favorites", "[activity][drop_token][favorite]" )
+{
+    clear_all_state();
+    avatar dummy;
+    item &non_favorite_item = *item::spawn_temporary( "bottle_plastic" );
+    item &favorite_item = *item::spawn_temporary( "bottle_glass" );
+    item &backpack = *item::spawn_temporary( "backpack" );
+    item &duffel_bag = *item::spawn_temporary( "duffelbag" );
+
+    REQUIRE( !dummy.wear_item( item::spawn( backpack ), false ) );
+    REQUIRE( !dummy.wear_item( item::spawn( duffel_bag ), false ) );
+
+    const auto &worn_items = dummy.worn;
+    auto backpack_iter = std::ranges::find_if( worn_items, [&]( const item * const it ) {
+        return it->typeId() == backpack.typeId();
+    } );
+    REQUIRE( backpack_iter != worn_items.end() );
+
+    constexpr int non_favorite_count = 20;
+    for( auto i = 0; i < non_favorite_count; i++ ) {
+        dummy.i_add( item::spawn( non_favorite_item ) );
+    }
+    while( dummy.can_pick_weight( favorite_item, true ) && dummy.can_pick_volume( favorite_item ) ) {
+        auto det = item::spawn( favorite_item );
+        det->set_favorite( true );
+        dummy.i_add( std::move( det ) );
+    }
+
+    auto drop = drop_locations{};
+    drop.push_back( drop_location( **backpack_iter, 1 ) );
+    auto drop_list = pickup::reorder_for_dropping( dummy, drop );
+
+    const auto dropped_favorites = std::count_if( drop_list.begin(), drop_list.end(),
+    [&]( const pickup::act_item & ait ) {
+        return !dummy.is_worn( *ait.loc ) && ait.loc->is_favorite;
+    } );
+    const auto dropped_non_favorites = std::count_if( drop_list.begin(), drop_list.end(),
+    [&]( const pickup::act_item & ait ) {
+        return !dummy.is_worn( *ait.loc ) && !ait.loc->is_favorite;
+    } );
+
+    CHECK( dropped_favorites > 0 );
+    CHECK( dropped_non_favorites == non_favorite_count );
+}
+
+TEST_CASE( "backpack drop keeps favorites when non-favorites are sufficient",
+           "[activity][drop_token][favorite]" )
+{
+    clear_all_state();
+    avatar dummy;
+    item &non_favorite_item = *item::spawn_temporary( "bottle_plastic" );
+    item &favorite_item = *item::spawn_temporary( "bottle_glass" );
+    item &backpack = *item::spawn_temporary( "backpack" );
+    item &duffel_bag = *item::spawn_temporary( "duffelbag" );
+
+    REQUIRE( !dummy.wear_item( item::spawn( backpack ), false ) );
+    REQUIRE( !dummy.wear_item( item::spawn( duffel_bag ), false ) );
+
+    const auto &worn_items = dummy.worn;
+    auto backpack_iter = std::ranges::find_if( worn_items, [&]( const item * const it ) {
+        return it->typeId() == backpack.typeId();
+    } );
+    REQUIRE( backpack_iter != worn_items.end() );
+
+    constexpr int favorite_count = 3;
+    for( auto i = 0; i < favorite_count; i++ ) {
+        auto det = item::spawn( favorite_item );
+        det->set_favorite( true );
+        dummy.i_add( std::move( det ) );
+    }
+
+    while( dummy.can_pick_weight( non_favorite_item, true ) &&
+           dummy.can_pick_volume( non_favorite_item ) ) {
+        dummy.i_add( item::spawn( non_favorite_item ) );
+    }
+
+    auto drop = drop_locations{};
+    drop.push_back( drop_location( **backpack_iter, 1 ) );
+    auto drop_list = pickup::reorder_for_dropping( dummy, drop );
+
+    const auto dropped_favorites = std::count_if( drop_list.begin(), drop_list.end(),
+    [&]( const pickup::act_item & ait ) {
+        return !dummy.is_worn( *ait.loc ) && ait.loc->is_favorite;
+    } );
+    const auto dropped_non_favorites = std::count_if( drop_list.begin(), drop_list.end(),
+    [&]( const pickup::act_item & ait ) {
+        return !dummy.is_worn( *ait.loc ) && !ait.loc->is_favorite;
+    } );
+
+    CHECK( dropped_non_favorites > 0 );
+    CHECK( dropped_favorites == 0 );
+}
+
 static std::vector<item_stack::iterator> iterators_in_vector( item_stack &the_stack )
 {
     std::vector<item_stack::iterator> unstacked;
